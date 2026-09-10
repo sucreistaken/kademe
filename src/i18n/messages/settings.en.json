@@ -1,0 +1,228 @@
+{
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Organization, retention periods and panel users. All on one screen.",
+    "org": {
+      "title": "Organization",
+      "name": "Company name",
+      "nameHint": "Shown to candidates exactly as it is typed.",
+      "mediaRetention": "Recording retention",
+      "mediaRetentionHint": "Days a recording is kept after the decision is made.",
+      "candidateRetention": "Candidate record retention",
+      "candidateRetentionHint": "Days a candidate record is kept after the last contact.",
+      "days": "days",
+      "save": "Save",
+      "saved": "Settings saved.",
+      "purgeNotice": "The nightly deletion job is not switched on, so nothing is deleted automatically.",
+      "readOnly": "Your role cannot change settings.",
+      "readOnlyHint": "Only the organization owner can change these."
+    },
+    "users": {
+      "title": "Users",
+      "hint": "{count, plural, one {# account} other {# accounts}}. The role decides what a person can do in the panel.",
+      "person": "Person",
+      "role": "Role",
+      "lastLogin": "Last sign in",
+      "status": "Status",
+      "neverSignedIn": "never signed in",
+      "you": "you",
+      "active": "Active",
+      "disabled": "Disabled",
+      "disable": "Disable",
+      "enable": "Re-enable",
+      "invite": "Invite a user",
+      "pending": "Invitation pending",
+      "pendingReason": "The setup link has not been used yet.",
+      "roleLabel": "Role for {name}",
+      "readOnlyHint": "Only the organization owner can change roles.",
+      "selfReason": "You cannot change your own role or access.",
+      "lastOwnerReason": "This is the only owner. If the role drops, nobody can change the settings.",
+      "roleChanged": "{name} is now {role}.",
+      "userDisabled": "{name} was disabled.",
+      "userEnabled": "{name} was re-enabled."
+    },
+    "roles": {
+      "OWNER": "Owner",
+      "RECRUITER": "Recruiter",
+      "REVIEWER": "Reviewer"
+    },
+    "roleHelp": {
+      "OWNER": "Everything: settings, audit log, export, deletion.",
+      "RECRUITER": "Builds positions and templates, invites candidates, scores. No settings, no audit log.",
+      "REVIEWER": "Scores only. No deletion, no export, no invitations."
+    },
+    "audit": {
+      "title": "Audit log",
+      "hint": "Who watched which recording and when is kept here.",
+      "open": "Open the audit log",
+      "noPermission": "Only the organization owner can read the audit log."
+    },
+    "errors": {
+      "name": "The company name cannot be empty.",
+      "retention": "Retention has to be between 1 and 3650 days.",
+      "self": "You cannot make this change on your own account.",
+      "lastOwner": "The organization has to keep at least one active owner."
+    }
+  },
+  "audit": {
+    "title": "Audit log",
+    "subtitle": "Every action that touches candidate data lands here. Nothing is deleted, so it still reads months later.",
+    "back": "Settings",
+    "count": "{count, plural, one {# entry} other {# entries}}",
+    "countFiltered": "{count} of {total, plural, one {# entry} other {# entries}}",
+    "filters": {
+      "actor": "Who",
+      "action": "Action",
+      "from": "From",
+      "to": "To",
+      "allActors": "Who: everyone",
+      "allActions": "Action: all",
+      "system": "System",
+      "apply": "Filter",
+      "mediaViews": "Recording views",
+      "subject": "Record: {id}",
+      "clearAll": "Clear every filter",
+      "remove": "Remove the {label} filter"
+    },
+    "columns": {
+      "time": "Time",
+      "actor": "Who",
+      "action": "Action",
+      "subject": "Subject",
+      "detail": "Detail",
+      "ip": "IP"
+    },
+    "deletedActor": "deleted user",
+    "systemActor": "System",
+    "noIp": "none",
+    "noDetail": "none",
+    "subjectFilter": "Show the history of this record",
+    "empty": {
+      "title": "No audit entries yet.",
+      "hint": "A row lands here when a recording is watched, a decision is written or a link is minted.",
+      "next": "Go to the candidate list"
+    },
+    "zero": {
+      "title": "No entry matches these filters.",
+      "hint": "{count, plural, one {# filter is on} other {# filters are on}}."
+    },
+    "page": "Page {page} of {pages}",
+    "prev": "Previous",
+    "next": "Next",
+    "noAccess": {
+      "title": "You do not have access to the audit log.",
+      "hint": "Only the organization owner can open this screen.",
+      "back": "Back to settings"
+    },
+    "export": {
+      "link": "Download CSV",
+      "none": "Nothing to download.",
+      "capped": "At most {count} rows are downloaded.",
+      "columns": {
+        "actionCode": "Action code",
+        "subjectId": "Subject id"
+      }
+    },
+    "subjects": {
+      "assessment": "Assessment",
+      "assessment_link": "Candidate link",
+      "attempt": "Attempt",
+      "competency": "Competency",
+      "media_asset": "Recording",
+      "organization": "Organization",
+      "position": "Position",
+      "stage": "Stage",
+      "template_version": "Template version",
+      "user": "User"
+    },
+    "actions": {
+      "attempt_set_primary": "Primary attempt selected",
+      "audit_export": "Audit log exported",
+      "candidate_invite": "Candidate invited",
+      "competency_archive": "Competency archived",
+      "competency_create": "Competency added",
+      "competency_restore": "Competency restored",
+      "competency_update": "Competency edited",
+      "decision_undo": "Decision undone",
+      "decision_write": "Decision written",
+      "link_extend": "Link extended",
+      "link_extend_undo": "Link extension undone",
+      "media_view": "Recording watched",
+      "option_archive": "Observation chip archived",
+      "option_create": "Observation chip added",
+      "option_restore": "Observation chip restored",
+      "org_update": "Organization settings changed",
+      "position_create": "Position created",
+      "position_job_description_set": "Job ad saved",
+      "retake_request": "Retake requested",
+      "scale_update": "Rating scale changed",
+      "template_ai_competency_accepted": "AI competency suggestion accepted",
+      "template_ai_competency_undone": "AI competency suggestion undone",
+      "template_ai_stage_accepted": "AI stage suggestion accepted",
+      "template_ai_stage_undone": "AI stage suggestion undone",
+      "template_archive": "Template archived",
+      "template_create": "Template created",
+      "template_rename": "Template renamed",
+      "template_restore": "Template restored",
+      "user_disable": "User disabled",
+      "user_enable": "User re-enabled",
+      "user_invite": "User invited",
+      "user_role_change": "User role changed",
+      "user_setup_complete": "User completed setup",
+      "version_draft_from": "Draft opened from a version",
+      "version_publish": "Version published",
+      "weights_disable": "Weighted score turned off",
+      "weights_enable": "Weighted score turned on",
+      "weights_recalculate": "Scores recalculated",
+      "weights_save": "Weights saved"
+    }
+  },
+  "userInvite": {
+    "title": "Invite a user",
+    "subtitle": "You open the account; the person sets their own password.",
+    "back": "Settings",
+    "name": "Full name",
+    "email": "Email",
+    "role": "Role",
+    "create": "Create the invitation",
+    "creating": "Creating…",
+    "noEmailSent": "No email is sent. You pass the link on yourself.",
+    "reinviteHint": "Inviting the same address again cancels the older link.",
+    "ready": "The account for {name} is open.",
+    "readyReissued": "A new link for {name} is ready. The old one is dead.",
+    "readyHint": "This link will not be shown again. Copy it now.",
+    "linkLabel": "Setup link",
+    "copy": "Copy",
+    "copied": "Copied",
+    "expiresOn": "The link stops working on {date}.",
+    "inviteAnother": "Invite someone else",
+    "goToSettings": "Back to settings",
+    "noAccessTitle": "You cannot invite users.",
+    "noAccessHint": "Only the organization owner can open this screen.",
+    "noAccessBack": "Back to settings"
+  },
+  "userInviteErrors": {
+    "NAME_REQUIRED": "The full name cannot be empty.",
+    "EMAIL_INVALID": "Type a valid email address.",
+    "ROLE_INVALID": "Pick a role.",
+    "EMAIL_TAKEN": "That email already belongs to an account."
+  },
+  "setup": {
+    "title": "Set your password",
+    "greeting": "Hello {name}.",
+    "subtitle": "Your account is open on {email}. Set a password to enter the panel.",
+    "password": "Password",
+    "passwordHint": "At least {min} characters.",
+    "confirm": "Password again",
+    "submit": "Save the password",
+    "submitting": "Saving…",
+    "invalidTitle": "This link does not work.",
+    "invalidHint": "It may be used or expired. Ask the person who invited you for a new one.",
+    "invalidBack": "Go to the sign in screen"
+  },
+  "setupErrors": {
+    "TOO_SHORT": "The password has to be at least {min} characters.",
+    "MISMATCH": "The two passwords do not match.",
+    "TOKEN_INVALID": "This link is no longer valid."
+  }
+}

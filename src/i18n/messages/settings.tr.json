@@ -1,0 +1,228 @@
+{
+  "settings": {
+    "title": "Ayarlar",
+    "subtitle": "Organizasyon, saklama süreleri ve panel kullanıcıları. Hepsi tek ekranda.",
+    "org": {
+      "title": "Organizasyon",
+      "name": "Şirket adı",
+      "nameHint": "Aday davet sayfasında yazıldığı gibi görünür.",
+      "mediaRetention": "Video saklama",
+      "mediaRetentionHint": "Karar verildikten sonra kayıtların tutulacağı gün sayısı.",
+      "candidateRetention": "Aday kaydı saklama",
+      "candidateRetentionHint": "Son temastan sonra aday kaydının tutulacağı gün sayısı.",
+      "days": "gün",
+      "save": "Kaydet",
+      "saved": "Ayarlar kaydedildi.",
+      "purgeNotice": "Gecelik silme işi henüz açık değil, hiçbir kayıt kendiliğinden silinmiyor.",
+      "readOnly": "Rolün ayarları değiştiremiyor.",
+      "readOnlyHint": "Bu değerleri yalnızca organizasyon sahibi değiştirebilir."
+    },
+    "users": {
+      "title": "Kullanıcılar",
+      "hint": "{count} hesap. Rol, kişinin panelde ne yapabileceğini belirler.",
+      "person": "Kişi",
+      "role": "Rol",
+      "lastLogin": "Son giriş",
+      "status": "Durum",
+      "neverSignedIn": "hiç giriş yapmadı",
+      "you": "sen",
+      "active": "Etkin",
+      "disabled": "Devre dışı",
+      "disable": "Devre dışı bırak",
+      "enable": "Geri aç",
+      "invite": "Kullanıcı davet et",
+      "pending": "Davet bekliyor",
+      "pendingReason": "Kurulum linki henüz kullanılmadı.",
+      "roleLabel": "{name} için rol",
+      "readOnlyHint": "Rolleri yalnızca organizasyon sahibi değiştirebilir.",
+      "selfReason": "Kendi rolünü ve erişimini değiştiremezsin.",
+      "lastOwnerReason": "Tek sahip bu hesap. Rolü düşerse ayarları kimse değiştiremez.",
+      "roleChanged": "{name} rolü {role} olarak değiştirildi.",
+      "userDisabled": "{name} devre dışı bırakıldı.",
+      "userEnabled": "{name} yeniden açıldı."
+    },
+    "roles": {
+      "OWNER": "Sahip",
+      "RECRUITER": "İşe alım",
+      "REVIEWER": "Değerlendirici"
+    },
+    "roleHelp": {
+      "OWNER": "Her şey: ayarlar, denetim kaydı, dışa aktarma, silme.",
+      "RECRUITER": "Pozisyon ve şablon kurar, aday davet eder, puanlar. Ayarlara ve denetim kaydına giremez.",
+      "REVIEWER": "Yalnızca puanlar. Silemez, dışa aktaramaz, davet edemez."
+    },
+    "audit": {
+      "title": "Denetim kaydı",
+      "hint": "Kimin hangi videoyu ne zaman izlediği burada duruyor.",
+      "open": "Denetim kaydını aç",
+      "noPermission": "Denetim kaydını yalnızca organizasyon sahibi görebilir."
+    },
+    "errors": {
+      "name": "Şirket adı boş bırakılamaz.",
+      "retention": "Saklama süresi 1 ile 3650 gün arasında olmalı.",
+      "self": "Kendi hesabında bu değişikliği yapamazsın.",
+      "lastOwner": "Organizasyonda en az bir etkin sahip kalmalı."
+    }
+  },
+  "audit": {
+    "title": "Denetim kaydı",
+    "subtitle": "Aday verisine dokunan her işlem buraya düşer. Aylar sonra da okunabilir olsun diye silinmez.",
+    "back": "Ayarlar",
+    "count": "{count} kayıt",
+    "countFiltered": "{total} kaydın {count} tanesi",
+    "filters": {
+      "actor": "Kim",
+      "action": "İşlem",
+      "from": "Başlangıç",
+      "to": "Bitiş",
+      "allActors": "Kim: herkes",
+      "allActions": "İşlem: hepsi",
+      "system": "Sistem",
+      "apply": "Filtrele",
+      "mediaViews": "Video izlemeleri",
+      "subject": "Kayıt: {id}",
+      "clearAll": "Tüm filtreleri temizle",
+      "remove": "{label} filtresini kaldır"
+    },
+    "columns": {
+      "time": "Zaman",
+      "actor": "Kim",
+      "action": "İşlem",
+      "subject": "Konu",
+      "detail": "Ayrıntı",
+      "ip": "IP"
+    },
+    "deletedActor": "silinmiş kullanıcı",
+    "systemActor": "Sistem",
+    "noIp": "yok",
+    "noDetail": "yok",
+    "subjectFilter": "Bu kaydın geçmişini göster",
+    "empty": {
+      "title": "Henüz denetim kaydı yok.",
+      "hint": "Video izlendiğinde, karar yazıldığında ya da link üretildiğinde satır buraya düşer.",
+      "next": "Aday listesine git"
+    },
+    "zero": {
+      "title": "Bu filtrelerle eşleşen kayıt yok.",
+      "hint": "{count} filtre açık."
+    },
+    "page": "Sayfa {page} / {pages}",
+    "prev": "Önceki",
+    "next": "Sonraki",
+    "noAccess": {
+      "title": "Denetim kaydına erişimin yok.",
+      "hint": "Bu ekranı yalnızca organizasyon sahibi açabilir.",
+      "back": "Ayarlara dön"
+    },
+    "export": {
+      "link": "CSV indir",
+      "none": "İndirilecek kayıt yok.",
+      "capped": "En çok {count} satır iniyor.",
+      "columns": {
+        "actionCode": "İşlem kodu",
+        "subjectId": "Konu kimliği"
+      }
+    },
+    "subjects": {
+      "assessment": "Değerlendirme",
+      "assessment_link": "Aday linki",
+      "attempt": "Deneme",
+      "competency": "Yetkinlik",
+      "media_asset": "Kayıt",
+      "organization": "Organizasyon",
+      "position": "Pozisyon",
+      "stage": "Aşama",
+      "template_version": "Şablon versiyonu",
+      "user": "Kullanıcı"
+    },
+    "actions": {
+      "attempt_set_primary": "Birincil deneme seçildi",
+      "audit_export": "Denetim kaydı dışa aktarıldı",
+      "candidate_invite": "Aday davet edildi",
+      "competency_archive": "Yetkinlik arşivlendi",
+      "competency_create": "Yetkinlik eklendi",
+      "competency_restore": "Yetkinlik geri getirildi",
+      "competency_update": "Yetkinlik düzenlendi",
+      "decision_undo": "Karar geri alındı",
+      "decision_write": "Karar verildi",
+      "link_extend": "Link uzatıldı",
+      "link_extend_undo": "Link uzatması geri alındı",
+      "media_view": "Video izlendi",
+      "option_archive": "Gözlem etiketi arşivlendi",
+      "option_create": "Gözlem etiketi eklendi",
+      "option_restore": "Gözlem etiketi geri getirildi",
+      "org_update": "Organizasyon ayarları değiştirildi",
+      "position_create": "Pozisyon oluşturuldu",
+      "position_job_description_set": "İlan metni kaydedildi",
+      "retake_request": "Tekrar istendi",
+      "scale_update": "Puan skalası değiştirildi",
+      "template_ai_competency_accepted": "AI yetkinlik önerisi kabul edildi",
+      "template_ai_competency_undone": "AI yetkinlik önerisi geri alındı",
+      "template_ai_stage_accepted": "AI aşama önerisi kabul edildi",
+      "template_ai_stage_undone": "AI aşama önerisi geri alındı",
+      "template_archive": "Şablon arşivlendi",
+      "template_create": "Şablon oluşturuldu",
+      "template_rename": "Şablon adı değiştirildi",
+      "template_restore": "Şablon geri getirildi",
+      "user_disable": "Kullanıcı devre dışı bırakıldı",
+      "user_enable": "Kullanıcı yeniden açıldı",
+      "user_invite": "Kullanıcı davet edildi",
+      "user_role_change": "Kullanıcı rolü değiştirildi",
+      "user_setup_complete": "Kullanıcı parolasını belirledi",
+      "version_draft_from": "Versiyondan taslak açıldı",
+      "version_publish": "Versiyon yayınlandı",
+      "weights_disable": "Ağırlıklı skor kapatıldı",
+      "weights_enable": "Ağırlıklı skor açıldı",
+      "weights_recalculate": "Skorlar yeniden hesaplandı",
+      "weights_save": "Ağırlıklar kaydedildi"
+    }
+  },
+  "userInvite": {
+    "title": "Kullanıcı davet et",
+    "subtitle": "Hesabı sen açarsın, parolayı kişi kendisi belirler.",
+    "back": "Ayarlar",
+    "name": "Ad soyad",
+    "email": "E-posta",
+    "role": "Rol",
+    "create": "Daveti oluştur",
+    "creating": "Oluşturuluyor…",
+    "noEmailSent": "E-posta gönderilmiyor, linki sen iletiyorsun.",
+    "reinviteHint": "Aynı adresi yeniden davet etmek eski linki iptal eder.",
+    "ready": "{name} için hesap açıldı.",
+    "readyReissued": "{name} için yeni link üretildi, eskisi geçersiz.",
+    "readyHint": "Bu link bir daha gösterilmeyecek, şimdi kopyala.",
+    "linkLabel": "Kurulum linki",
+    "copy": "Kopyala",
+    "copied": "Kopyalandı",
+    "expiresOn": "Link {date} tarihinde geçersiz olur.",
+    "inviteAnother": "Başka birini davet et",
+    "goToSettings": "Ayarlara dön",
+    "noAccessTitle": "Kullanıcı davet etme yetkin yok.",
+    "noAccessHint": "Bu ekranı yalnızca organizasyon sahibi açabilir.",
+    "noAccessBack": "Ayarlara dön"
+  },
+  "userInviteErrors": {
+    "NAME_REQUIRED": "Ad soyad boş bırakılamaz.",
+    "EMAIL_INVALID": "Geçerli bir e-posta adresi yaz.",
+    "ROLE_INVALID": "Bir rol seç.",
+    "EMAIL_TAKEN": "Bu e-posta zaten bir hesaba bağlı."
+  },
+  "setup": {
+    "title": "Parolanı belirle",
+    "greeting": "Merhaba {name}.",
+    "subtitle": "Hesabın {email} adresine açıldı. Panele girmek için bir parola belirle.",
+    "password": "Parola",
+    "passwordHint": "En az {min} karakter.",
+    "confirm": "Parola tekrar",
+    "submit": "Parolayı kaydet",
+    "submitting": "Kaydediliyor…",
+    "invalidTitle": "Bu link çalışmıyor.",
+    "invalidHint": "Link kullanılmış ya da süresi dolmuş olabilir. Seni davet eden kişiden yenisini iste.",
+    "invalidBack": "Giriş ekranına git"
+  },
+  "setupErrors": {
+    "TOO_SHORT": "Parola en az {min} karakter olmalı.",
+    "MISMATCH": "İki parola aynı değil.",
+    "TOKEN_INVALID": "Bu link artık geçerli değil."
+  }
+}

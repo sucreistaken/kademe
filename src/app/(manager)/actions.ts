@@ -1,0 +1,196 @@
+"use server";
+
+import { desc, eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { db } from "@/db";
+import { assessmentLinks, auditLogs, decisions } from "@/db/schema";
+import { decisionStatus, linkStatus } from "@/db/schema";
+import { requireUser } from "@/server/session";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const UNDO_WINDOW_MS = 60 * 60 * 1000; // one hour, as promised next to the decision button
+
+/**
+ * Every action here follows the same shape: do the thing immediately, then hand
+ * back an undo. No confirmation dialog exists anywhere in this product.
+ */
+
+export async function extendLink(formData: FormData) {
+  const user = await requireUser("candidate:invite");
+
+  const linkId = String(formData.get("linkId") ?? "");
+  const days = Number(formData.get("days") ?? 3);
+  const back = safeBack(formData.get("back"));
+  // No fallback name here: an empty `who` lets the screen name the candidate in
+  // the manager's own language instead of shipping a Turkish word in a URL.
+  const candidateName = String(formData.get("candidateName") ?? "").trim();
+
+  const [link] = await db
+    .select({
+      id: assessmentLinks.id,
+      expiresAt: assessmentLinks.expiresAt,
+      status: assessmentLinks.status,
+    })
+    .from(assessmentLinks)
+    .where(eq(assessmentLinks.id, linkId))
+    .limit(1);
+  if (!link) redirect(back);
+
+  // Extend from now when the link has already lapsed, otherwise from its own
+  // deadline. Extending an expired link from its old date would add nothing.
+  const from = Math.max(Date.now(), link.expiresAt.getTime());
+  const next = new Date(from + days * DAY_MS);
+
+  // Only an EXPIRED link is revived. A candidate who is halfway through keeps
+  // IN_PROGRESS: giving them more time must not rewind where they are.
+  const nextStatus = link.status === "EXPIRED" ? "NOT_STARTED" : link.status;
+
+  await db
+    .update(assessmentLinks)
+    .set({ expiresAt: next, status: nextStatus })
+    .where(eq(assessmentLinks.id, linkId));
+
+  await db.insert(auditLogs).values({
+    orgId: user.orgId,
+    actorId: user.id,
+    action: "link.extend",
+    subjectType: "assessment_link",
+    subjectId: linkId,
+    meta: { days, from: link.expiresAt.toISOString(), to: next.toISOString() },
+  });
+
+  revalidatePath(back);
+  const who = candidateName ? `&who=${encodeURIComponent(candidateName)}` : "";
+  redirect(
+    `${back}?undo=link&linkId=${linkId}&prev=${encodeURIComponent(
+      link.expiresAt.toISOString(),
+    )}&prevStatus=${link.status}${who}&days=${days}`,
+  );
+}
+
+export async function undoExtendLink(formData: FormData) {
+  const user = await requireUser("candidate:invite");
+
+  const linkId = String(formData.get("linkId") ?? "");
+  const previous = new Date(String(formData.get("prev") ?? ""));
+  const previousStatus = String(formData.get("prevStatus") ?? "");
+  const back = safeBack(formData.get("back"));
+  if (!linkId || Number.isNaN(previous.getTime())) redirect(back);
+
+  await db
+    .update(assessmentLinks)
+    .set({
+      expiresAt: previous,
+      // Restoring the date without the status would leave a revived expired
+      // link looking live, which is the opposite of what undo promised.
+      ...(isLinkStatus(previousStatus) ? { status: previousStatus } : {}),
+    })
+    .where(eq(assessmentLinks.id, linkId));
+
+  await db.insert(auditLogs).values({
+    orgId: user.orgId,
+    actorId: user.id,
+    action: "link.extend.undo",
+    subjectType: "assessment_link",
+    subjectId: linkId,
+    meta: { restoredTo: previous.toISOString() },
+  });
+
+  revalidatePath(back);
+  redirect(back);
+}
+
+export async function saveDecision(formData: FormData) {
+  const user = await requireUser("decision:write");
+
+  const assessmentId = String(formData.get("assessmentId") ?? "");
+  const status = String(formData.get("status") ?? "");
+  const note = String(formData.get("note") ?? "").trim();
+  const back = safeBack(formData.get("back"));
+
+  if (!assessmentId || !isDecisionStatus(status)) redirect(back);
+
+  const [inserted] = await db
+    .insert(decisions)
+    .values({
+      assessmentId,
+      status,
+      note: note.length > 0 ? note : null,
+      decidedBy: user.id,
+    })
+    .returning({ id: decisions.id });
+
+  await db.insert(auditLogs).values({
+    orgId: user.orgId,
+    actorId: user.id,
+    action: "decision.write",
+    subjectType: "assessment",
+    subjectId: assessmentId,
+    meta: { status },
+  });
+
+  revalidatePath(back);
+  redirect(`${back}?undo=decision&decisionId=${inserted.id}`);
+}
+
+/**
+ * Undo removes the row that was just written rather than writing a reversing
+ * one, so an undone decision leaves no trace in the history the team reads.
+ * Only the newest decision, and only within the promised hour.
+ */
+export async function undoDecision(formData: FormData) {
+  const user = await requireUser("decision:write");
+
+  const decisionId = String(formData.get("decisionId") ?? "");
+  const back = safeBack(formData.get("back"));
+  if (!decisionId) redirect(back);
+
+  const [row] = await db
+    .select({ id: decisions.id, assessmentId: decisions.assessmentId, at: decisions.at })
+    .from(decisions)
+    .where(eq(decisions.id, decisionId))
+    .limit(1);
+  if (!row) redirect(back);
+
+  const [newest] = await db
+    .select({ id: decisions.id })
+    .from(decisions)
+    .where(eq(decisions.assessmentId, row.assessmentId))
+    .orderBy(desc(decisions.at))
+    .limit(1);
+
+  const stillUndoable = Date.now() - row.at.getTime() < UNDO_WINDOW_MS;
+  if (newest?.id === row.id && stillUndoable) {
+    await db.delete(decisions).where(eq(decisions.id, decisionId));
+    await db.insert(auditLogs).values({
+      orgId: user.orgId,
+      actorId: user.id,
+      action: "decision.undo",
+      subjectType: "assessment",
+      subjectId: row.assessmentId,
+      meta: { decisionId },
+    });
+  }
+
+  revalidatePath(back);
+  redirect(back);
+}
+
+/** Only ever redirect back inside the manager area. */
+function safeBack(value: FormDataEntryValue | null): string {
+  const raw = String(value ?? "/dashboard");
+  return raw.startsWith("/") && !raw.startsWith("//") ? raw : "/dashboard";
+}
+
+function isLinkStatus(
+  value: string,
+): value is (typeof linkStatus.enumValues)[number] {
+  return (linkStatus.enumValues as readonly string[]).includes(value);
+}
+
+function isDecisionStatus(
+  value: string,
+): value is (typeof decisionStatus.enumValues)[number] {
+  return (decisionStatus.enumValues as readonly string[]).includes(value);
+}

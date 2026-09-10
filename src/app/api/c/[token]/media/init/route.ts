@@ -1,0 +1,59 @@
+import type { NextRequest } from "next/server";
+import { candidateJson } from "@/lib/candidate-safe";
+import { activityAt, currentStage, writeWindow } from "@/lib/candidate-flow";
+import { createMediaAsset, normaliseMime } from "@/lib/candidate-media";
+import { getStorage } from "@/lib/storage";
+import { badRequest, conflict, readJson, withCandidate } from "@/lib/candidate-api";
+
+/** How many part targets are handed out up front. More are fetched lazily. */
+const PREFETCH_PARTS = 24;
+
+type Body = { activityIndex?: number; mime?: string; kind?: "video" | "audio" | "file" };
+
+/**
+ * Opens the upload before recording starts, so the first chunk has somewhere to
+ * go the instant it is produced. `minPartBytes` tells the recorder how much it
+ * may coalesce: object storage refuses parts under 5 MiB, local disk does not
+ * care and takes every five second chunk as it arrives.
+ */
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ token: string }> },
+) {
+  return withCandidate(req, params, async (request, ctx) => {
+    const body = await readJson<Body>(request);
+    if (!body || typeof body.activityIndex !== "number") {
+      return badRequest(ctx, "ACTIVITY_INDEX_REQUIRED");
+    }
+
+    const current = await currentStage(ctx);
+    if (!current) return conflict(ctx, "NO_STAGE");
+    const run = current.target.run;
+    if (!run) return conflict(ctx, "STAGE_NOT_STARTED");
+    if (!writeWindow(run, current.target.stage).allowed) {
+      return conflict(ctx, "STAGE_EXPIRED");
+    }
+
+    const activity = activityAt(current, body.activityIndex);
+    if (!activity) return badRequest(ctx, "ACTIVITY_NOT_FOUND");
+
+    const fallback = activity.type === "AUDIO" ? "audio/webm" : "video/webm";
+    const mime = normaliseMime(body.mime, fallback);
+    const asset = await createMediaAsset(ctx, run, activity, mime);
+
+    const storage = getStorage();
+    const targets = await storage.signPartUrls(
+      asset.storageKey,
+      asset.uploadId!,
+      Array.from({ length: PREFETCH_PARTS }, (_, i) => i + 1),
+    );
+
+    return candidateJson({
+      uploadRef: asset.id,
+      mime,
+      minPartBytes: storage.minPartBytes,
+      proxy: targets[0]?.proxy ?? true,
+      partTargets: targets,
+    });
+  });
+}

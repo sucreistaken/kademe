@@ -1,0 +1,21 @@
+# Local development database only. Production runs Neon in Frankfurt.
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: kademe-db
+    environment:
+      POSTGRES_USER: kademe
+      POSTGRES_PASSWORD: kademe
+      POSTGRES_DB: kademe
+    ports:
+      - "5434:5432"
+    volumes:
+      - kademe-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kademe"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  kademe-pgdata:

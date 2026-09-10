@@ -1,0 +1,37 @@
+import { CandidateShell, LanguageSwitch } from "@/components/candidate/Shell";
+import { CandidateIntl } from "@/components/candidate/Intl";
+import { InfoForm } from "@/components/candidate/InfoForm";
+import { supportedLocales } from "@/lib/candidate-flow";
+import { candidateSafe } from "@/lib/candidate-safe";
+import { enter, headerMeta, type SearchParams } from "@/app/a/[token]/shared";
+
+export const dynamic = "force-dynamic";
+
+export default async function CandidateInfoPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ token: string }>;
+  searchParams: SearchParams;
+}) {
+  const { token } = await params;
+  const entry = await enter(token, "INFO", searchParams, `/a/${token}/info`);
+  if (entry.kind === "problem") return entry.node;
+
+  return (
+    <CandidateIntl locale={entry.locale}>
+      <CandidateShell
+        locale={entry.locale}
+        meta={headerMeta(entry.ctx)}
+        language={
+          <LanguageSwitch
+            locales={supportedLocales(entry.ctx)}
+            current={entry.locale}
+          />
+        }
+      >
+        <InfoForm token={token} state={candidateSafe(entry.state)} />
+      </CandidateShell>
+    </CandidateIntl>
+  );
+}

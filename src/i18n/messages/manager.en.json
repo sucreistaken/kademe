@@ -1,0 +1,41 @@
+{
+  "nav": {
+    "dashboard": "Today",
+    "positions": "Positions",
+    "candidates": "Candidates",
+    "compare": "Compare",
+    "library": "Library",
+    "settings": "Settings",
+    "signOut": "Sign out",
+    "language": "Language",
+    "languageTr": "TR",
+    "languageEn": "EN"
+  },
+  "common": {
+    "save": "Save",
+    "saving": "Saving",
+    "saved": "Saved",
+    "cancel": "Cancel",
+    "back": "Back",
+    "loading": "Loading",
+    "undo": "Undo",
+    "search": "Search",
+    "none": "None"
+  },
+  "templateSteps": {
+    "label": "Steps to build the template",
+    "content": "Content",
+    "review": "Review",
+    "publish": "Publish"
+  },
+  "login": {
+    "title": "Sign in",
+    "lead": "Sign in with your account to reach the assessment panel.",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "checking": "Checking…",
+    "invalid": "Wrong email or password.",
+    "candidate": "Are you a candidate? Your assessment link was emailed to you, you do not sign in here."
+  }
+}

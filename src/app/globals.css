@@ -1,26 +1,103 @@
 @import "tailwindcss";
 
+/*
+ * Kademe design tokens.
+ * Source of truth: Claude Design canvas "Kademe Canvas.dc.html" (artboard t0).
+ *
+ * Hard rules from the canvas, do not break them:
+ *  - One accent colour, used in exactly three places: primary CTA, active state, timer.
+ *  - Card borders, background blocks and secondary buttons are NEVER accent-coloured.
+ *  - One filled button per screen. Everything else is outline or text.
+ *  - Status is a dot plus text, never a badge pill.
+ *  - Shadows only on sticky panels and modals.
+ */
+
+@theme {
+  /* Neutral axis */
+  --color-surface: #ffffff;
+  --color-canvas: #f6f5f2;
+  --color-line: #e7e7e4;
+  --color-muted: #6e6e69;
+  --color-ink: #131311;
+
+  /* The single accent. Deep green: calm, trustworthy, far from Airbnb coral. */
+  --color-accent: #0e6a57;
+  --color-accent-hover: #0a5245;
+  --color-accent-soft: #f1f7f5; /* selection tint, read off the canvas */
+
+  /*
+   * Inline validation only. There is NO amber in this product: the canvas shows
+   * "half scored", "expiring" and "expired" as plain grey dots, because a table
+   * full of traffic lights reads as a verdict the system has not earned. Anything
+   * that wants to warn uses `--color-ink-3` through StatusDot's "warn" tone.
+   */
+  --color-danger: #8c2f2a;
+
+  /*
+   * The rest of the neutral ramp, read straight off the canvas artboards. The
+   * five above cover most of the UI, but the candidate screens use a finer set
+   * of tints (a softer page ground, a second and third text weight, a lighter
+   * hairline) and those had no names. Naming them here keeps the screens off
+   * arbitrary hex values.
+   */
+  --color-paper: #fbfbf9; /* candidate page ground, softer than canvas */
+  --color-ink-2: #4a4a45; /* body copy under a heading */
+  --color-ink-3: #a8a8a3; /* the quietest text on a screen */
+  --color-hairline: #efefec; /* lighter than line, used under bars */
+  --color-line-strong: #d8d8d3; /* an input border that must be findable */
+  --color-line-mute: #c0c0ba; /* an unchecked control outline */
+  --color-underline: #c8c8c3; /* underline colour for inline links */
+  --color-disabled: #f2f2ef; /* a disabled filled button */
+  --color-row-line: #f4f4f1; /* divider inside a summary card */
+  --color-panel: #1a1a17; /* the bar under a video panel */
+  --color-panel-top: #26261f; /* video placeholder gradient, start */
+  --color-panel-bottom: #131311; /* video placeholder gradient, end */
+
+  /* The dark "manager only" column in the template builder (canvas Y2). */
+  --color-vault: #1a1a17; /* panel ground */
+  --color-vault-box: #242420; /* a field inside the panel */
+  --color-vault-line: #33332e; /* its border */
+  --color-vault-chip: #44443e; /* competency chip border */
+  --color-vault-flag: #3a2f2c; /* red flag row border */
+  --color-vault-mark: #c08a7e; /* the em dash before a red flag */
+  --color-vault-label: #8a8a83; /* field labels on the dark ground */
+  --color-vault-text: #f2f1ed; /* body text on the dark ground */
+
+  --font-sans: var(--font-figtree), system-ui, sans-serif;
+
+  /* Radius scale: 6 / 10 / 14 */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  /* Shadows are reserved for sticky panels and modals */
+  --shadow-panel: 0 1px 3px rgba(0, 0, 0, 0.07);
+  --shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.16);
+
+  /* Canvas widths: manager is dense, candidate is deliberately narrower */
+  --container-manager: 1360px;
+  --container-candidate: 1000px;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  color-scheme: light;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Keyboard focus stays visible everywhere. The evaluation screen is driven by
+   the keyboard, so this is load-bearing, not decoration. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Tabular figures for every countdown and score, so digits do not jump. */
+.tnum {
+  font-variant-numeric: tabular-nums;
 }

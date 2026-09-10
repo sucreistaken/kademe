@@ -1,0 +1,41 @@
+{
+  "nav": {
+    "dashboard": "Bugün",
+    "positions": "Pozisyonlar",
+    "candidates": "Adaylar",
+    "compare": "Karşılaştır",
+    "library": "Kütüphane",
+    "settings": "Ayarlar",
+    "signOut": "Çıkış",
+    "language": "Dil",
+    "languageTr": "TR",
+    "languageEn": "EN"
+  },
+  "common": {
+    "save": "Kaydet",
+    "saving": "Kaydediliyor",
+    "saved": "Kaydedildi",
+    "cancel": "Vazgeç",
+    "back": "Geri",
+    "loading": "Yükleniyor",
+    "undo": "Geri al",
+    "search": "Ara",
+    "none": "Yok"
+  },
+  "templateSteps": {
+    "label": "Şablon kurma adımları",
+    "content": "İçerik",
+    "review": "Gözden geçir",
+    "publish": "Yayınla"
+  },
+  "login": {
+    "title": "Giriş yap",
+    "lead": "Değerlendirme paneline erişmek için hesabınla giriş yap.",
+    "email": "E-posta",
+    "password": "Parola",
+    "submit": "Giriş yap",
+    "checking": "Kontrol ediliyor…",
+    "invalid": "E-posta veya parola hatalı.",
+    "candidate": "Aday mısın? Değerlendirme linkin e-postayla gönderildi, buradan giriş yapmana gerek yok."
+  }
+}
