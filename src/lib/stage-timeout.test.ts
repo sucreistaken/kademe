@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { decideClose, hasAnswer } from "./stage-timeout";
+import {
+  SALVAGE_MIN_AGE_MS,
+  SALVAGE_QUIET_MS,
+  decideClose,
+  decideSalvage,
+  hasAnswer,
+  isDueForClose,
+} from "./stage-timeout";
 
 const base = {
   behaviour: "AUTO_SUBMIT" as const,
@@ -111,5 +118,102 @@ describe("what a stage looks like in a retake attempt", () => {
     expect(
       carryDecision({ inRetakeScope: false, priorCompletion: "PENDING" }),
     ).toBe("FRESH");
+  });
+});
+
+describe("which runs the close sweep should even look at", () => {
+  const now = new Date("2026-09-11T10:00:00.000Z");
+  const overdue = {
+    behaviour: "AUTO_SUBMIT" as const,
+    completion: "PENDING" as const,
+    submittedAt: null,
+    deadlineAt: new Date(now.getTime() - 60_000),
+  };
+
+  it("picks an open run whose deadline has passed", () => {
+    expect(isDueForClose(overdue, now)).toBe(true);
+  });
+
+  it("never picks an ALLOW_LATE run, so fifty abandoned ones cannot fill the batch", () => {
+    // The bug this guards: ALLOW_LATE runs were selected, left open, and
+    // selected again every tick. With no ORDER BY, fifty of them starved every
+    // other stage in the system.
+    expect(isDueForClose({ ...overdue, behaviour: "ALLOW_LATE" }, now)).toBe(false);
+  });
+
+  it("ignores runs already settled, submitted, unstarted, or still in time", () => {
+    expect(isDueForClose({ ...overdue, completion: "COMPLETE" }, now)).toBe(false);
+    expect(isDueForClose({ ...overdue, submittedAt: now }, now)).toBe(false);
+    expect(isDueForClose({ ...overdue, deadlineAt: null }, now)).toBe(false);
+    expect(
+      isDueForClose({ ...overdue, deadlineAt: new Date(now.getTime() + 1) }, now),
+    ).toBe(false);
+  });
+
+  it("is exclusive at the deadline itself", () => {
+    expect(isDueForClose({ ...overdue, deadlineAt: now }, now)).toBe(false);
+  });
+});
+
+describe("when the server may finish an upload the browser abandoned", () => {
+  const now = new Date("2026-09-11T10:00:00.000Z");
+  const old = new Date(now.getTime() - SALVAGE_MIN_AGE_MS - 1);
+  const closedRun = {
+    completion: "EXPIRED" as const,
+    deadlineAt: new Date(now.getTime() - 3_600_000),
+    lastHeartbeatAt: new Date(now.getTime() - 3_600_000),
+  };
+
+  it("salvages an old upload on a run that is already closed", () => {
+    expect(decideSalvage({ assetCreatedAt: old, run: closedRun }, now)).toEqual({
+      action: "SALVAGE",
+    });
+  });
+
+  it("salvages an old upload on a PENDING run whose deadline has passed", () => {
+    expect(
+      decideSalvage(
+        { assetCreatedAt: old, run: { ...closedRun, completion: "PENDING" } },
+        now,
+      ),
+    ).toEqual({ action: "SALVAGE" });
+  });
+
+  it("leaves a recording alone while it is younger than the threshold", () => {
+    // Half an hour: a recording in progress is minutes old, and cutting it
+    // short would turn a live answer into a truncated one.
+    const fresh = new Date(now.getTime() - SALVAGE_MIN_AGE_MS + 1);
+    expect(decideSalvage({ assetCreatedAt: fresh, run: closedRun }, now)).toMatchObject({
+      action: "SKIP",
+    });
+  });
+
+  it("leaves a run alone while its tab is still sending heartbeats", () => {
+    const alive = {
+      ...closedRun,
+      completion: "PENDING" as const,
+      lastHeartbeatAt: new Date(now.getTime() - SALVAGE_QUIET_MS + 1),
+    };
+    expect(decideSalvage({ assetCreatedAt: old, run: alive }, now)).toMatchObject({
+      action: "SKIP",
+      reason: expect.stringMatching(/alive/),
+    });
+  });
+
+  it("leaves an open run that is still inside its deadline", () => {
+    const open = {
+      completion: "PENDING" as const,
+      deadlineAt: new Date(now.getTime() + 60_000),
+      lastHeartbeatAt: null,
+    };
+    expect(decideSalvage({ assetCreatedAt: old, run: open }, now)).toMatchObject({
+      action: "SKIP",
+    });
+  });
+
+  it("salvages an old upload that belongs to no run at all", () => {
+    expect(decideSalvage({ assetCreatedAt: old, run: null }, now)).toEqual({
+      action: "SALVAGE",
+    });
   });
 });

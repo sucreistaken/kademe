@@ -1,6 +1,6 @@
 # Kademe - durum ve devir belgesi
 
-Son güncelleme: 2026-09-09 (ikinci tur). Bir oturum sıfırlandığında buradan devam edilir.
+Son güncelleme: 2026-09-11 (canlı hata turu). Bir oturum sıfırlandığında buradan devam edilir.
 
 ## Ürün tek cümlede
 
@@ -16,7 +16,10 @@ Y1-Y7 yönetici, A8-A12 aday). i18n yapısı: `docs/I18N.md`.
 
 ```bash
 docker compose up -d          # Postgres, port 5434 (5433 başka projede dolu)
-pnpm db:setup                 # drizzle push + drizzle/sql/*.sql. SADECE push YETMEZ.
+pnpm db:setup:local           # drizzle push --force + drizzle/sql/*.sql. SADECE push YETMEZ.
+                              # --force veri kaybettiren ifadeleri sormadan kabul eder,
+                              # bu yüzden yalnızca atılabilir yerel DB için. Paylaşılan
+                              # ya da üretim DB'de `pnpm db:setup` (sorar, --force yok).
                               # 2026-09-09: templates.archived_at eklendi, eski bir
                               # veritabaninda `pnpm db:push` gerekir.
                               # pg-boss ilk çalışmada kendi "pgboss" şemasını açar,
@@ -77,6 +80,40 @@ Hepsi gerçek Chrome'da tıklanarak test edildi, sadece derlenmiş değil.
 | /settings ve /settings/audit | bitti, owner olarak render doğrulandı |
 | Saklama raporu (`purge-retention`) | bitti ama SİLME KAPALI, aşağıya bak |
 | R2 denetimi ve doğrulama scripti | kod hazır, bucket olmadan doğrulanamaz |
+
+## Canlı hata turu (2026-09-11)
+
+Canlıda görülen iki hata (kayıt sırasında aday kendini görmüyordu, son aşamada
+"Karar ver" 404 veriyordu) düzeltildi, ardından üç paralel tarama 31 bulgu daha
+çıkardı ve hepsi aynı gün koda alındı. Tam liste, kanıt satırları ve derecelendirme:
+`investigations/live-bugs-investigation.md`. Öne çıkanlar:
+
+- Ağırlıklar artık gerçekten uygulanıyor (`selectWeights`, `src/lib/scoring.ts`):
+  aktif set yoksa düz ortalama; değerlendirme bir sete sabitlenmişse yeniden hesap
+  yapılana kadar o set. Seed'deki bütün ağırlıklar eşit olduğu için yerelde görünür
+  bir fark yok, gerçek ağırlıklarla denenmedi.
+- `evaluations.submitted_at` artık yazılıyor (tüm yetkinlikler puanlanınca), aday
+  "Puanlandı" durumuna geçebiliyor.
+- Aday linkleri `?assessment=` taşıyor; aynı aday iki pozisyondaysa doğru olan açılır.
+- Aday API'sinde yazma uçları `stagePosition` istiyor, uyuşmazsa 409 `STAGE_MISMATCH`.
+  `pnpm verify:candidate` buna göre güncellendi ve geçiyor.
+- `maxTakes` sunucuda zorlanıyor (409 `TAKES_EXHAUSTED`), FILE_UPLOAD dosyaları kendi
+  mime'ıyla saklanıyor ve transkripsiyona girmiyor.
+- close-expired cron'u artık yarım kalan yüklemeleri de kurtarıyor (`salvage`), ALLOW_LATE
+  koşularını dışlıyor, aday gönderimiyle yarışmıyor.
+- Saklama çapası yalnızca nihai karar (ACCEPTED/REJECTED); karar yoksa medya silinmez.
+- REVIEWER rolüne yetkisi olmayan kontroller görünmüyor; `src/app/(manager)/error.tsx`
+  yasak hatasını cümleyle gösteriyor.
+
+**Deploy öncesi zorunlu (depolama artık üretimde sessizce diske düşmüyor):** ya dört R2
+değişkeni birden, ya da `STORAGE_ALLOW_LOCAL=true` + gerçek `AUTH_SECRET`. İkisi de
+yoksa ilk yükleme/oynatma isteği çalışma zamanında hata verir. Ayrıntı `docs/STORAGE.md`.
+
+Gerçek tarayıcıda hâlâ doğrulanmamış olanlar: kayıt sırasında aday önizlemesi, "şimdi
+başlat" yolunda tek MediaRecorder açılması, DONE'da kameranın kapanması, retake'te
+düşünme süresinin atlanması, FAILED ekranındaki "tekrar dene", builder'da yazarken
+autosave'in yereli ezmemesi. Hepsi kod ve birim testiyle doğrulandı, kamera
+otomasyondan açılamadığı için tarayıcı kanıtı yok.
 
 ## Saklama silme: kapalı, bilerek
 

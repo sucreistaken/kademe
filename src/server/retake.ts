@@ -25,7 +25,8 @@ export type RetakeErrorCode =
   | "NEVER_STARTED"
   | "NO_STAGES"
   | "STAGES_NOT_IN_TEMPLATE"
-  | "ATTEMPT_NOT_FOUND";
+  | "ATTEMPT_NOT_FOUND"
+  | "NO_LINK";
 
 export type RetakeResult =
   | { ok: true; attemptId: string; attemptNumber: number }
@@ -57,7 +58,11 @@ export async function requestRetake(input: {
   const user = await requireUser("candidate:invite");
 
   const [assessment] = await db
-    .select({ id: assessments.id, versionId: assessments.versionId })
+    .select({
+      id: assessments.id,
+      versionId: assessments.versionId,
+      candidateId: assessments.candidateId,
+    })
     .from(assessments)
     .where(
       and(
@@ -103,6 +108,30 @@ export async function requestRetake(input: {
     .select()
     .from(stageRuns)
     .where(eq(stageRuns.attemptId, source.id));
+
+  /**
+   * Which link carries the retake. The live one when there is one (the partial
+   * unique index allows at most one). When the only links left are EXPIRED,
+   * the newest of those is revived rather than refused: the candidate already
+   * holds that URL, and a retake on a lapsed invitation is the common case,
+   * not the exception. Reviving is safe under the index precisely because no
+   * live link exists at that moment. Decided before the transaction so an
+   * assessment with no link at all gets an answer instead of a new attempt
+   * nobody can reach.
+   */
+  const linkRows = await db
+    .select({
+      id: assessmentLinks.id,
+      status: assessmentLinks.status,
+      expiresAt: assessmentLinks.expiresAt,
+      createdAt: assessmentLinks.createdAt,
+    })
+    .from(assessmentLinks)
+    .where(eq(assessmentLinks.assessmentId, assessment.id))
+    .orderBy(desc(assessmentLinks.createdAt));
+  const link =
+    linkRows.find((l) => l.status !== "EXPIRED") ?? linkRows[0] ?? null;
+  if (!link) return { ok: false, code: "NO_LINK" };
 
   const created = await db.transaction(async (tx) => {
     const [attempt] = await tx
@@ -170,22 +199,25 @@ export async function requestRetake(input: {
       resultingAttemptId: attempt.id,
     });
 
-    // Same link, new permission. Extending the expiry is the common case: a
-    // link that is already dead cannot carry a retake.
+    // Same link, new permission. The expiry only ever moves later: a link
+    // with three weeks left must not be cut back to seven days by a retake,
+    // and a lapsed one is pushed out from now.
     const extendMs = (input.extendDays ?? 7) * 24 * 60 * 60 * 1000;
-    await tx
+    const expiresAt = new Date(
+      Math.max(link.expiresAt.getTime(), Date.now() + extendMs),
+    );
+    const updated = await tx
       .update(assessmentLinks)
       .set({
         status: "RETAKE_AVAILABLE",
         attemptsAllowed: sql`${assessmentLinks.attemptsAllowed} + 1`,
-        expiresAt: new Date(Date.now() + extendMs),
+        expiresAt,
       })
-      .where(
-        and(
-          eq(assessmentLinks.assessmentId, assessment.id),
-          sql`${assessmentLinks.status} <> 'EXPIRED'`,
-        ),
-      );
+      .where(eq(assessmentLinks.id, link.id))
+      .returning({ id: assessmentLinks.id });
+    // The row was read a moment ago; losing it now means the transaction
+    // must not hand out an attempt the candidate cannot open.
+    if (updated.length === 0) throw new Error("retake: link vanished");
 
     // The decision history records that the manager asked for more, so the
     // candidate does not sit in "Accepted" or "Rejected" while redoing a stage.
@@ -212,7 +244,8 @@ export async function requestRetake(input: {
     },
   });
 
-  revalidatePath(`/candidates/${assessment.id}`);
+  // The detail route is keyed by candidate id, not assessment id.
+  revalidatePath(`/candidates/${assessment.candidateId}`);
   revalidatePath("/candidates");
   revalidatePath("/dashboard");
   return { ok: true, attemptId: created.id, attemptNumber: created.attemptNumber };
@@ -228,7 +261,11 @@ export async function setPrimaryAttempt(
   const user = await requireUser("evaluation:write");
 
   const [row] = await db
-    .select({ assessmentId: attempts.assessmentId, orgId: assessments.orgId })
+    .select({
+      assessmentId: attempts.assessmentId,
+      orgId: assessments.orgId,
+      candidateId: assessments.candidateId,
+    })
     .from(attempts)
     .innerJoin(assessments, eq(assessments.id, attempts.assessmentId))
     .where(eq(attempts.id, attemptId))
@@ -256,7 +293,7 @@ export async function setPrimaryAttempt(
     subjectId: attemptId,
   });
 
-  revalidatePath(`/candidates/${row.assessmentId}`);
+  revalidatePath(`/candidates/${row.candidateId}`);
   revalidatePath("/compare");
   return { ok: true };
 }

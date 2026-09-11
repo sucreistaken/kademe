@@ -4,6 +4,7 @@ import {
   TRANSCRIPTION_QUEUE,
   enqueueTranscription,
   queue,
+  superviseQueue,
   type TranscriptionJob,
 } from "@/lib/queue";
 import { findUntranscribed, runTranscription } from "@/lib/transcribe-job";
@@ -45,7 +46,11 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Safety net first: anything that should have been queued and was not.
+  // Maintenance first: fail jobs left `active` by a killed process, so their
+  // singleton key stops blocking a fresh send. See superviseQueue().
+  const supervised = await superviseQueue();
+
+  // Safety net next: anything that should have been queued and was not.
   const missed = await findUntranscribed();
   for (const asset of missed) await enqueueTranscription(asset.id);
 
@@ -75,6 +80,7 @@ export async function POST(req: NextRequest) {
 
   return Response.json({
     provider: transcriber.name,
+    supervised,
     swept: missed.length,
     fetched: jobs.length,
     results,

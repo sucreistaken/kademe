@@ -17,29 +17,61 @@ this document is careful about the difference.
 | `R2_ENDPOINT` | R2 | `https://<account id>.r2.cloudflarestorage.com`. Bucket name is not part of it. |
 | `R2_BUCKET` | R2 | Bucket name, for example `kademe-media`. |
 | `LOCAL_STORAGE_DIR` | local | Where objects are written. Defaults to `.storage/` under the working directory. |
-| `AUTH_SECRET` | local | Signs the local playback URLs. Falls back to a fixed development string. |
-| `STORAGE_REQUIRE_R2` | both | When set, a missing or partial R2 configuration throws instead of falling back to disk. Set it in production. |
+| `AUTH_SECRET` | local | Signs the local playback URLs. Falls back to a fixed development string outside production; in production a missing value throws. |
+| `STORAGE_ALLOW_LOCAL` | local | `true` lets a production process use local disk storage. An explicit operator opt in; nothing else is accepted. Requires `AUTH_SECRET`. |
+| `STORAGE_REQUIRE_R2` | both | When set, a missing or partial R2 configuration throws instead of falling back to disk, in any environment. Production behaves this way without it. |
 
 `R2_ACCOUNT_ID` appears in `.env.example` but the code never reads it; the
 account id is already inside `R2_ENDPOINT`.
 
 ## How the provider is chosen
 
-`getStorage()` returns `R2StorageProvider` when all four `R2_*` variables are
-present, and `LocalStorageProvider` otherwise. The result is cached for the life
-of the process (`resetStorageCache()` exists for tests and scripts).
+`getStorage()` calls `resolveStorageMode(process.env)`, a pure function whose
+rules are unit tested in `src/lib/storage.test.ts`, and caches the result for
+the life of the process (`resetStorageCache()` exists for tests and scripts).
+The rules, in order:
 
-Two guards were added because the failure they prevent is silent:
+1. **All four `R2_*` variables set: R2.** In every environment.
+2. **Production without them: refuse.** When `NODE_ENV` is `production` and
+   the R2 configuration is missing or partial, the first storage call throws
+   with a message naming the missing variables. Before this rule a production
+   deploy with no bucket silently wrote every recording to the container disk,
+   where the next deploy threw them away, and only a *partial* configuration
+   produced so much as a warning. The throw is lazy (first `getStorage()`
+   call, not import), so `next build` still succeeds; the first candidate
+   upload or playback is what fails, with the reason in the log.
+3. **`STORAGE_ALLOW_LOCAL=true` in production: local disk, with a warning on
+   every start.** This is the operator saying "I know the recordings live on
+   this disk" (a single VM with a persistent volume, for instance). The literal
+   string `true` is the only accepted value. `AUTH_SECRET` must also be set,
+   because local playback URLs are signed with it and the development default
+   is public.
+4. **`STORAGE_REQUIRE_R2` set anywhere else: refuse.** The pre-existing switch,
+   kept for development and CI environments that want the production rule.
+5. **Otherwise local disk.** A partial configuration still warns: three of the
+   four variables set means somebody tried to configure R2 and mistyped one.
+   The repository's own `.env` is in exactly this state today
+   (`R2_BUCKET=kademe-media` and nothing else), so a warning is printed on the
+   first `getStorage()` call in development.
 
-- **Partial configuration warns.** Three of the four variables set means
-  somebody tried to configure R2 and mistyped one. Without a warning the
-  application quietly writes every recording to the container filesystem, and
-  the next deploy throws them away. The repository's own `.env` is in exactly
-  this state today: `R2_BUCKET=kademe-media` and nothing else, so a warning is
-  printed on the first `getStorage()` call in development.
-- **`STORAGE_REQUIRE_R2` turns that warning into a refusal to start.** This is
-  the setting production wants: a deployment with no bucket should fail loudly
-  rather than accept a candidate's interview and lose it.
+What a production deploy therefore needs before it starts: either all four
+`R2_*` variables, or `STORAGE_ALLOW_LOCAL=true` together with `AUTH_SECRET`.
+
+## Abandoned uploads
+
+A recording is uploaded part by part while it is being made and the
+`media_assets` row sits in `UPLOADING` until the browser posts the completion.
+When the tab dies mid answer that post never arrives. `salvageAbandonedUploads()`
+in `src/lib/close-expired.ts`, run by `POST /api/cron/close-expired`, finishes
+those on the server: an `UPLOADING` asset older than 30 minutes whose stage run
+is closed, past its deadline, or missing, and whose run has had no heartbeat for
+5 minutes, is assembled with the provider's `salvage()`. With parts it becomes
+`INCOMPLETE` with its real size, is attached to the answer it was recorded for
+(unless that answer already has a recording or was typed instead), and is
+queued for transcription, exactly what the completion route does for a
+recording the browser itself reported as cut short. With no parts it becomes
+`FAILED`. The decision is `decideSalvage()` in `src/lib/stage-timeout.ts`, which
+is pure and unit tested; the storage round trip is not, see below.
 
 ## What differs between the two implementations
 
@@ -138,6 +170,10 @@ described as working until `pnpm verify:r2` has been run and has passed.
 - **The retention job against a bucket.** `deleteObject` in `src/lib/retention.ts`
   treats a throw as a failure and keeps the row, which is right, but it has only
   ever been run against local disk.
+- **The abandoned upload sweep against a bucket.** `salvageAbandonedUploads()`
+  calls `R2StorageProvider.salvage()`, which is `ListParts` followed by
+  `CompleteMultipartUpload`; both need the token permissions listed above.
+  Only the selection rule has a test.
 
 Related: `docs/PLAN.md` storage section, `docs/TRANSCRIPTION.md` provider
 section.

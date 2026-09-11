@@ -192,7 +192,9 @@
     "finishFailed": "The recording could not be completed.",
     "noRetake": "No retake",
     "takesLeft": "{count} takes left",
-    "thinkNoteCameraOpening": "Take notes if you like. The camera opens in a moment."
+    "thinkNoteCameraOpening": "Take notes if you like. The camera opens in a moment.",
+    "hintFailed": "The recording could not be completed. It did not use up a take, you can try again.",
+    "tryAgain": "Try again"
   },
   "done": {
     "title": "All done, thank you {name}",
@@ -273,7 +275,10 @@
     "NO_PARTS": "No recording parts arrived.",
     "KIND_REQUIRED": "No request type was chosen.",
     "RIGHTS_RECEIVED": "Your request reached the hiring team.",
-    "PROBLEM_RECEIVED": "Your report reached the hiring team."
+    "PROBLEM_RECEIVED": "Your report reached the hiring team.",
+    "STAGE_MISMATCH": "This page is out of date. Reload it to continue.",
+    "TAKES_EXHAUSTED": "You have no takes left for this question.",
+    "FILE_TYPE_REJECTED": "This file type is not accepted."
   },
   "invite": {
     "subject": "{position} assessment",

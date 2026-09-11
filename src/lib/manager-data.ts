@@ -33,6 +33,9 @@ import {
   templateVersions,
   templates,
   transcripts,
+  users,
+  weightSets,
+  weights,
 } from "@/db/schema";
 import type {
   I18nText,
@@ -43,7 +46,13 @@ import type {
   runCompletion,
   technicalEventType,
 } from "@/db/schema";
-import { averageScore, overallScore, type CompetencyScore } from "./scoring";
+import {
+  averageScore,
+  overallScore,
+  selectWeights,
+  type CompetencyScore,
+  type Weight,
+} from "./scoring";
 
 type LinkStatus = (typeof linkStatus.enumValues)[number];
 type DecisionStatus = (typeof decisionStatus.enumValues)[number];
@@ -83,6 +92,8 @@ export type AssessmentRow = {
   lastActivityAt: Date | null;
   evaluationId: string | null;
   evaluationSubmittedAt: Date | null;
+  /** Who wrote the evaluation the scores below come from. See pickEvaluation. */
+  evaluatorName: string | null;
   competencyScores: CompetencyScoreView[];
   overall: number | null;
   decisionStatus: DecisionStatus | null;
@@ -171,7 +182,7 @@ export async function loadAssessmentRows(orgId: string): Promise<AssessmentRow[]
   const assessmentIds = base.map((r) => r.assessmentId);
   const versionIds = [...new Set(base.map((r) => r.versionId))];
 
-  const [linkRows, attemptRows, stageRows, decisionRows, competencyRows] =
+  const [linkRows, attemptRows, stageRows, decisionRows, competencyRows, weightSetRows] =
     await Promise.all([
       db
         .select({
@@ -209,12 +220,22 @@ export async function loadAssessmentRows(orgId: string): Promise<AssessmentRow[]
         .select({ id: competencies.id, name: competencies.name })
         .from(competencies)
         .where(eq(competencies.orgId, orgId)),
+      // Every set of every version in play, not just the active ones: an
+      // evaluation may be pinned to a retired set and must keep reading it.
+      db
+        .select({
+          id: weightSets.id,
+          versionId: weightSets.versionId,
+          isActive: weightSets.isActive,
+        })
+        .from(weightSets)
+        .where(inArray(weightSets.versionId, versionIds)),
     ]);
 
   const primaryAttempts = attemptRows.filter((a) => a.isPrimary);
   const attemptIds = primaryAttempts.map((a) => a.id);
 
-  const [runRows, evaluationRows] = await Promise.all([
+  const [runRows, evaluationRows, weightRows] = await Promise.all([
     attemptIds.length
       ? db
           .select({
@@ -234,9 +255,27 @@ export async function loadAssessmentRows(orgId: string): Promise<AssessmentRow[]
             id: evaluations.id,
             attemptId: evaluations.attemptId,
             submittedAt: evaluations.submittedAt,
+            weightSetId: evaluations.weightSetId,
+            evaluatorName: users.name,
           })
           .from(evaluations)
+          .leftJoin(users, eq(users.id, evaluations.evaluatorId))
           .where(inArray(evaluations.attemptId, attemptIds))
+      : Promise.resolve([]),
+    weightSetRows.length
+      ? db
+          .select({
+            weightSetId: weights.weightSetId,
+            competencyId: weights.competencyId,
+            percentage: weights.percentage,
+          })
+          .from(weights)
+          .where(
+            inArray(
+              weights.weightSetId,
+              weightSetRows.map((w) => w.id),
+            ),
+          )
       : Promise.resolve([]),
   ]);
 
@@ -295,13 +334,40 @@ export async function loadAssessmentRows(orgId: string): Promise<AssessmentRow[]
     runsByAttempt.set(run.attemptId, list);
   }
 
-  const evaluationByAttempt = new Map(evaluationRows.map((e) => [e.attemptId, e]));
-
   const itemsByEvaluation = new Map<string, typeof itemRows>();
   for (const item of itemRows) {
     const list = itemsByEvaluation.get(item.evaluationId) ?? [];
     list.push(item);
     itemsByEvaluation.set(item.evaluationId, list);
+  }
+
+  /**
+   * One evaluation row per evaluator per attempt, and opening the review
+   * screen creates an empty one for whoever opened it. A plain "last row wins"
+   * map let a colleague's empty row hide the scores that exist, so a second
+   * manager glancing at a candidate turned every list cell into "-". The pick
+   * is deterministic: the most scored items, then a submitted one, then the
+   * lowest id so the same row wins on every load.
+   */
+  const scoredCount = (evaluationId: string) =>
+    (itemsByEvaluation.get(evaluationId) ?? []).filter((i) => i.score !== null).length;
+  const evaluationByAttempt = new Map<string, (typeof evaluationRows)[number]>();
+  for (const evaluation of evaluationRows) {
+    const current = evaluationByAttempt.get(evaluation.attemptId);
+    if (!current || pickEvaluation(evaluation, current, scoredCount) === evaluation) {
+      evaluationByAttempt.set(evaluation.attemptId, evaluation);
+    }
+  }
+
+  const activeWeightSetByVersion = new Map<string, string>();
+  for (const set of weightSetRows) {
+    if (set.isActive === 1) activeWeightSetByVersion.set(set.versionId, set.id);
+  }
+  const weightsBySet = new Map<string, Weight[]>();
+  for (const w of weightRows) {
+    const list = weightsBySet.get(w.weightSetId) ?? [];
+    list.push({ competencyId: w.competencyId, percentage: Number(w.percentage) });
+    weightsBySet.set(w.weightSetId, list);
   }
 
   const latestDecision = new Map<string, (typeof decisionRows)[number]>();
@@ -351,18 +417,37 @@ export async function loadAssessmentRows(orgId: string): Promise<AssessmentRow[]
         : null,
       evaluationId: evaluation?.id ?? null,
       evaluationSubmittedAt: evaluation?.submittedAt ?? null,
+      evaluatorName: evaluation?.evaluatorName ?? null,
       competencyScores,
+      // The weight rule itself is in scoring.ts (selectWeights), unit tested.
       overall: overallScore(
         competencyScores.map<CompetencyScore>((c) => ({
           competencyId: c.competencyId,
           score: c.score,
         })),
-        null,
+        selectWeights(
+          activeWeightSetByVersion.get(row.versionId) ?? null,
+          evaluation?.weightSetId ?? null,
+          weightsBySet,
+        ),
       ),
       decisionStatus: decision?.status ?? null,
       decidedAt: decision?.at ?? null,
     };
   });
+}
+
+/** Which of two evaluations of the same attempt the lists should show. */
+function pickEvaluation<T extends { id: string; submittedAt: Date | null }>(
+  a: T,
+  b: T,
+  scoredCount: (evaluationId: string) => number,
+): T {
+  const byScores = scoredCount(b.id) - scoredCount(a.id);
+  if (byScores !== 0) return byScores < 0 ? a : b;
+  const bySubmitted = Number(b.submittedAt !== null) - Number(a.submittedAt !== null);
+  if (bySubmitted !== 0) return bySubmitted < 0 ? a : b;
+  return a.id <= b.id ? a : b;
 }
 
 /**
@@ -478,12 +563,24 @@ export type CandidateDetail = {
   decisions: Array<{ status: DecisionStatus; note: string | null; at: Date }>;
 };
 
+/**
+ * `preferredAssessmentId` is the `?assessment=` every list link carries. A
+ * candidate invited to two positions has two rows here, and without it the
+ * page opened whichever one the query happened to return first, so the
+ * decision form could post against the wrong position. The fallback is the
+ * newest invitation, the same rule as resolveAssessmentId in server/review.ts.
+ */
 export async function loadCandidateDetail(
   orgId: string,
   candidateId: string,
+  preferredAssessmentId?: string,
 ): Promise<CandidateDetail | null> {
   const rows = await loadAssessmentRows(orgId);
-  const row = rows.find((r) => r.candidateId === candidateId);
+  const mine = rows.filter((r) => r.candidateId === candidateId);
+  const row =
+    mine.find((r) => r.assessmentId === preferredAssessmentId) ??
+    mine.sort((a, b) => b.invitedAt.getTime() - a.invitedAt.getTime())[0] ??
+    null;
   if (!row) return null;
 
   const [attemptRows, stageRows] = await Promise.all([
@@ -532,33 +629,39 @@ export async function loadCandidateDetail(
           id: stageRuns.id,
           stageId: stageRuns.stageId,
           completion: stageRuns.completion,
+          carriedFromStageRunId: stageRuns.carriedFromStageRunId,
         })
         .from(stageRuns)
         .where(eq(stageRuns.attemptId, row.attemptId))
     : [];
 
-  const runIds = runRows.map((r) => r.id);
+  // On a partial retake the stages that were not redone point at the previous
+  // run instead of copying it, so answers are read from whichever run actually
+  // holds them. Same rule as loadReview in server/review.ts.
+  const sourceRunIds = runRows.map((r) => r.carriedFromStageRunId ?? r.id);
   const [responseRows, mediaRows, eventRows, decisionRows] = await Promise.all([
-    runIds.length
+    sourceRunIds.length
       ? db
           .select({
+            stageRunId: responses.stageRunId,
             activityId: responses.activityId,
             payload: responses.payload,
           })
           .from(responses)
-          .where(inArray(responses.stageRunId, runIds))
+          .where(inArray(responses.stageRunId, sourceRunIds))
       : Promise.resolve([]),
-    runIds.length
+    sourceRunIds.length
       ? db
           .select({
             id: mediaAssets.id,
+            stageRunId: mediaAssets.stageRunId,
             activityId: mediaAssets.activityId,
             durationMs: mediaAssets.durationMs,
             transcriptId: transcripts.id,
           })
           .from(mediaAssets)
           .leftJoin(transcripts, eq(transcripts.mediaAssetId, mediaAssets.id))
-          .where(inArray(mediaAssets.stageRunId, runIds))
+          .where(inArray(mediaAssets.stageRunId, sourceRunIds))
       : Promise.resolve([]),
     // Technical events of every attempt, not just the primary one: the dropped
     // first attempt is exactly what the manager wants to see here.
@@ -591,11 +694,21 @@ export async function loadCandidateDetail(
   }
 
   const runByStage = new Map(runRows.map((r) => [r.stageId, r]));
+  // Keyed by (run, activity): the run a stage reads from is its own or the one
+  // it was carried from, and an activity must not pick up an answer from any
+  // other run of the same attempt chain.
+  const answerKey = (runId: string | null, activityId: string | null) =>
+    `${runId ?? ""}:${activityId ?? ""}`;
   const responseByActivity = new Map(
-    responseRows.map((r) => [r.activityId, r.payload as ResponsePayload]),
+    responseRows.map((r) => [
+      answerKey(r.stageRunId, r.activityId),
+      r.payload as ResponsePayload,
+    ]),
   );
   const mediaByActivity = new Map(
-    mediaRows.filter((m) => m.activityId).map((m) => [m.activityId as string, m]),
+    mediaRows
+      .filter((m) => m.activityId)
+      .map((m) => [answerKey(m.stageRunId, m.activityId), m]),
   );
 
   // Per stage competency averages, so each stage block can carry its own number.
@@ -624,6 +737,7 @@ export async function loadCandidateDetail(
 
   const detailStages: DetailStage[] = stageRows.map((stage) => {
     const run = runByStage.get(stage.id) ?? null;
+    const sourceRunId = run ? (run.carriedFromStageRunId ?? run.id) : null;
     return {
       stageRunId: run?.id ?? null,
       stageId: stage.id,
@@ -634,8 +748,8 @@ export async function loadCandidateDetail(
       activities: activityRows
         .filter((a) => a.stageId === stage.id)
         .map((activity) => {
-          const payload = responseByActivity.get(activity.id);
-          const media = mediaByActivity.get(activity.id);
+          const payload = responseByActivity.get(answerKey(sourceRunId, activity.id));
+          const media = mediaByActivity.get(answerKey(sourceRunId, activity.id));
           const transcript = media ? (transcriptTexts.get(media.id) ?? null) : null;
           return {
             activityId: activity.id,

@@ -37,5 +37,14 @@
     "checking": "Kontrol ediliyor…",
     "invalid": "E-posta veya parola hatalı.",
     "candidate": "Aday mısın? Değerlendirme linkin e-postayla gönderildi, buradan giriş yapmana gerek yok."
+  },
+  "errorPage": {
+    "forbiddenTitle": "Rolünüz bunu yapamaz",
+    "forbiddenBody": "Bu ekran ya da işlem için yetkiniz yok. Değerlendirici rolü adayları puanlar; davet, şablon ve kütüphane değişiklikleri işe alım uzmanı ve sahip rollerine açıktır.",
+    "genericTitle": "Bir şeyler ters gitti",
+    "genericBody": "Sayfa yüklenirken beklenmeyen bir hata oluştu. Yeniden deneyebilir ya da panele dönebilirsiniz.",
+    "retry": "Yeniden dene",
+    "toDashboard": "Panele dön",
+    "reference": "Hata kodu: {digest}"
   }
 }

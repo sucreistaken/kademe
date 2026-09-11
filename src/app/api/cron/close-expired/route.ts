@@ -1,6 +1,10 @@
 import type { NextRequest } from "next/server";
 import { safeEqual } from "@/lib/auth";
-import { closeExpiredRuns, expireLinks } from "@/lib/close-expired";
+import {
+  closeExpiredRuns,
+  expireLinks,
+  salvageAbandonedUploads,
+} from "@/lib/close-expired";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -9,8 +13,15 @@ export const maxDuration = 60;
 const BATCH = 50;
 
 /**
- * Closes stage runs whose deadline has passed, and expires links past their
- * date. Meant to be called every minute by Cloud Scheduler.
+ * Salvaging talks to object storage once per asset, so it gets a smaller
+ * batch than the pure database work above.
+ */
+const SALVAGE_BATCH = 20;
+
+/**
+ * Closes stage runs whose deadline has passed, expires links past their date,
+ * and finalises recordings whose browser died mid upload. Meant to be called
+ * every minute by Cloud Scheduler.
  *
  * Without it the server clock is right but nothing acts on it: a candidate who
  * closes the tab leaves the stage PENDING forever, the manager sees "in
@@ -33,8 +44,18 @@ export async function POST(req: NextRequest) {
   }
 
   const now = new Date();
+  // Salvage before closing: a clip rescued here is attached to its answer, so
+  // a run being closed in the same tick counts it and lands as PARTIAL rather
+  // than EXPIRED. Best effort, so a storage outage cannot stop runs closing.
+  let uploads;
+  try {
+    uploads = await salvageAbandonedUploads(now, SALVAGE_BATCH);
+  } catch (error) {
+    console.error("[close-expired] upload salvage sweep failed", error);
+    uploads = { error: error instanceof Error ? error.message : String(error) };
+  }
   const runs = await closeExpiredRuns(now, BATCH);
   const links = await expireLinks(now);
 
-  return Response.json({ at: now.toISOString(), runs, links });
+  return Response.json({ at: now.toISOString(), runs, links, uploads });
 }

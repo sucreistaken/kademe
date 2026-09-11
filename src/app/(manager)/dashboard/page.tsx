@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { InlineLink } from "@/components/ui/inline-link";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button, DisabledReason } from "@/components/ui/button";
 import { StatusDot } from "@/components/ui/status-dot";
 import { Avatar } from "@/components/ui/avatar";
 import { UndoStrip } from "@/components/ui/undo-strip";
 import { requireUser } from "@/server/session";
+import { can } from "@/lib/authorize";
 import {
   loadAssessmentRows,
   loadPositions,
@@ -33,6 +34,10 @@ export default async function DashboardPage({
   const rows = await loadAssessmentRows(user.orgId);
   const positions = await loadPositions(user.orgId, rows);
   const now = new Date();
+  // A reviewer scores and nothing else. The invite and extend controls land on
+  // requireUser("candidate:invite"), so for them the controls say why they are
+  // off instead of opening an error page.
+  const mayInvite = can(user, "candidate:invite");
 
   // Oldest first: the queue is ordered by how long someone has been waiting,
   // not by when they were invited.
@@ -80,9 +85,24 @@ export default async function DashboardPage({
           </p>
         </div>
         {/* The only filled button on this screen. */}
-        <Button asChild variant="primary" size="md">
-          <Link href="/candidates/new">{t("shared.inviteCandidate")}</Link>
-        </Button>
+        {mayInvite ? (
+          <Button asChild variant="primary" size="md">
+            <Link href="/candidates/new">{t("shared.inviteCandidate")}</Link>
+          </Button>
+        ) : (
+          <div className="flex flex-col items-end gap-1.5">
+            <Button
+              id="invite-cta"
+              variant="primary"
+              size="md"
+              disabled
+              disabledReason={t("shared.noRolePermission")}
+            >
+              {t("shared.inviteCandidate")}
+            </Button>
+            <DisabledReason id="invite-cta-why">{t("shared.noRolePermission")}</DisabledReason>
+          </div>
+        )}
       </div>
 
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
@@ -97,8 +117,8 @@ export default async function DashboardPage({
             {queue.length === 0 ? (
               <EmptyBlock
                 title={t("dashboard.queueEmpty")}
-                actionLabel={t("shared.inviteCandidate")}
-                actionHref="/candidates/new"
+                actionLabel={mayInvite ? t("shared.inviteCandidate") : t("dashboard.seeAllCandidates")}
+                actionHref={mayInvite ? "/candidates/new" : "/candidates"}
               />
             ) : (
               <>
@@ -200,15 +220,26 @@ export default async function DashboardPage({
                     >
                       {remaining(row.linkExpiresAt!, locale, now)}
                     </span>
-                    <form action={extendLink}>
-                      <input type="hidden" name="linkId" value={row.linkId ?? ""} />
-                      <input type="hidden" name="days" value="3" />
-                      <input type="hidden" name="back" value="/dashboard" />
-                      <input type="hidden" name="candidateName" value={row.candidateName} />
-                      <Button type="submit" variant="secondary" size="sm">
+                    {mayInvite ? (
+                      <form action={extendLink}>
+                        <input type="hidden" name="linkId" value={row.linkId ?? ""} />
+                        <input type="hidden" name="days" value="3" />
+                        <input type="hidden" name="back" value="/dashboard" />
+                        <input type="hidden" name="candidateName" value={row.candidateName} />
+                        <Button type="submit" variant="secondary" size="sm">
+                          {t("dashboard.extendDays", { days: 3 })}
+                        </Button>
+                      </form>
+                    ) : (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled
+                        disabledReason={t("shared.noRolePermission")}
+                      >
                         {t("dashboard.extendDays", { days: 3 })}
                       </Button>
-                    </form>
+                    )}
                   </li>
                 ))}
               </ul>

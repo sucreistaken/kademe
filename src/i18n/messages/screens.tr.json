@@ -151,7 +151,8 @@
     "answerNone": "cevap yok",
     "openInReview": "Puanlama ekranında aç",
     "showFull": "Tamamını göster",
-    "collapse": "Kısalt"
+    "collapse": "Kısalt",
+    "decisionError": "Karar kaydedilemedi: bu değerlendirme sizin organizasyonunuza ait değil."
   },
   "techEvent": {
     "VISIBILITY_HIDDEN": "sekme arkaya alındı",
@@ -694,6 +695,7 @@
     "NEVER_STARTED": "Bu aday değerlendirmeye hiç başlamadı, tekrar istenecek bir şey yok.",
     "NO_STAGES": "Bu şablonda aşama yok.",
     "STAGES_NOT_IN_TEMPLATE": "Seçilen aşamalar bu şablona ait değil.",
-    "ATTEMPT_NOT_FOUND": "Deneme bulunamadı."
+    "ATTEMPT_NOT_FOUND": "Deneme bulunamadı.",
+    "NO_LINK": "Bu adayın hiç linki yok, önce yeni bir davet gönderin."
   }
 }

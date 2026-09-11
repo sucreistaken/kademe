@@ -45,6 +45,90 @@ export function decideClose(input: {
   return { action: "CLOSE", completion: "EXPIRED", late: true };
 }
 
+/**
+ * The SQL predicate in `closeExpiredRuns()` spelled out as a function, so the
+ * rule it encodes can be tested without Postgres. The two have to agree.
+ *
+ * ALLOW_LATE runs are not due: `decideClose()` would only leave them open, and
+ * a query that keeps returning them fills the batch with rows nothing will ever
+ * settle, until fifty abandoned late-allowed runs starve every other stage.
+ */
+export function isDueForClose(
+  run: {
+    behaviour: TimeoutBehaviour;
+    completion: "PENDING" | "COMPLETE" | "PARTIAL" | "SKIPPED" | "EXPIRED";
+    submittedAt: Date | null;
+    deadlineAt: Date | null;
+  },
+  now: Date,
+): boolean {
+  if (run.behaviour === "ALLOW_LATE") return false;
+  if (run.completion !== "PENDING") return false;
+  if (run.submittedAt !== null) return false;
+  if (run.deadlineAt === null) return false;
+  return run.deadlineAt.getTime() < now.getTime();
+}
+
+/**
+ * An upload has to be at least this old before the sweep considers it
+ * abandoned. A recording in progress is minutes old; the browser that started
+ * one half an hour ago and never completed it is not coming back.
+ */
+export const SALVAGE_MIN_AGE_MS = 30 * 60 * 1000;
+
+/**
+ * A heartbeat inside this window means the candidate's tab is alive (it beats
+ * every 15 seconds), so the browser will finish or fail the upload itself and
+ * the server must keep its hands off.
+ */
+export const SALVAGE_QUIET_MS = 5 * 60 * 1000;
+
+export type SalvageDecision =
+  | { action: "SALVAGE" }
+  | { action: "SKIP"; reason: string };
+
+/**
+ * Whether the server should finalise an UPLOADING media asset on the browser's
+ * behalf. Pure, and deliberately conservative: salvaging too early turns a
+ * live recording into a truncated one, while salvaging too late only delays a
+ * clip nobody was going to see anyway.
+ */
+export function decideSalvage(
+  input: {
+    assetCreatedAt: Date;
+    /** Null when the asset is not attached to any stage run. */
+    run: {
+      completion: "PENDING" | "COMPLETE" | "PARTIAL" | "SKIPPED" | "EXPIRED";
+      deadlineAt: Date | null;
+      lastHeartbeatAt: Date | null;
+    } | null;
+  },
+  now: Date,
+): SalvageDecision {
+  const age = now.getTime() - input.assetCreatedAt.getTime();
+  if (age < SALVAGE_MIN_AGE_MS) {
+    return { action: "SKIP", reason: "upload is too recent to call abandoned" };
+  }
+
+  // No run at all: nothing will ever complete this upload, so the age alone
+  // is enough.
+  if (!input.run) return { action: "SALVAGE" };
+
+  const { run } = input;
+  if (
+    run.lastHeartbeatAt &&
+    now.getTime() - run.lastHeartbeatAt.getTime() < SALVAGE_QUIET_MS
+  ) {
+    return { action: "SKIP", reason: "candidate tab is still alive" };
+  }
+
+  if (run.completion !== "PENDING") return { action: "SALVAGE" };
+  if (run.deadlineAt && run.deadlineAt.getTime() < now.getTime()) {
+    return { action: "SALVAGE" };
+  }
+  return { action: "SKIP", reason: "stage run is still open and in time" };
+}
+
 /** True when a response actually carries something worth keeping. */
 export function hasAnswer(payload: ResponsePayload | null | undefined): boolean {
   if (!payload) return false;

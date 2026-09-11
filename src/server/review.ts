@@ -22,6 +22,7 @@ import {
   technicalEvents,
   evaluationItemRevisions,
   users,
+  weightSets,
 } from "@/db/schema";
 import type { SessionUser } from "@/lib/auth";
 
@@ -239,9 +240,25 @@ export async function loadReview(
     .limit(1);
 
   if (!evaluation) {
+    // Pinned to the weight set in force when the evaluation is opened, so a
+    // set saved next month does not silently move this score; the manager's
+    // "recalculate" is what re-pins. Null when weighting is off, in which case
+    // the row follows whatever is active once it is turned on (selectWeights
+    // in lib/scoring.ts spells out the rule).
+    const [activeSet] = await db
+      .select({ id: weightSets.id })
+      .from(weightSets)
+      .where(
+        and(eq(weightSets.versionId, head.versionId), eq(weightSets.isActive, 1)),
+      )
+      .limit(1);
     [evaluation] = await db
       .insert(evaluations)
-      .values({ attemptId: active.id, evaluatorId: user.id })
+      .values({
+        attemptId: active.id,
+        evaluatorId: user.id,
+        weightSetId: activeSet?.id ?? null,
+      })
       .returning();
   }
 

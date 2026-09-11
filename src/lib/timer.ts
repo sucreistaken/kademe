@@ -54,6 +54,54 @@ export function isLate(deadlineAt: Date, now: Date = new Date()): boolean {
   return now.getTime() > deadlineAt.getTime() + SUBMIT_SLACK_MS;
 }
 
+export type SubmitDecision =
+  /** Required answers are missing and the candidate still has time to give them. */
+  | { kind: "REJECT_REQUIRED" }
+  /** Close the run. `expired` selects the PARTIAL / EXPIRED completion path. */
+  | { kind: "SUBMIT"; expired: boolean; late: boolean };
+
+/**
+ * What a submit request does to a started run.
+ *
+ * The required-answers check only makes sense while the candidate can still
+ * act on it. Once the deadline has passed, even inside the latency slack that
+ * `acceptsWrite` allows, there is nothing left they can answer, so refusing the
+ * submit would leave them on a screen with a dead clock and no way off it. That
+ * is exactly what the client's auto-submit at 0:00 used to hit: it arrived a
+ * few hundred milliseconds after the deadline, inside the slack, and got a 422.
+ *
+ * `deadlineAt` is null for a run that has not started; the caller rejects that
+ * case before asking here, but the function stays total.
+ */
+export function submitDecision(input: {
+  deadlineAt: Date | null;
+  behaviour: TimeoutBehaviour;
+  missingRequired: number;
+  now?: Date;
+}): SubmitDecision {
+  const { deadlineAt, behaviour, missingRequired } = input;
+  const now = input.now ?? new Date();
+
+  if (!deadlineAt) {
+    return missingRequired > 0
+      ? { kind: "REJECT_REQUIRED" }
+      : { kind: "SUBMIT", expired: false, late: false };
+  }
+
+  // Past the write window entirely: the run is closed with whatever it has.
+  if (!acceptsWrite(deadlineAt, behaviour, now)) {
+    return { kind: "SUBMIT", expired: true, late: false };
+  }
+
+  const late = isLate(deadlineAt, now);
+  if (missingRequired === 0) return { kind: "SUBMIT", expired: false, late };
+
+  // Required answers are missing. Before the deadline that is the candidate's
+  // to fix; after it, the stage closes as PARTIAL (or EXPIRED if empty).
+  if (!isExpired(deadlineAt, now)) return { kind: "REJECT_REQUIRED" };
+  return { kind: "SUBMIT", expired: true, late };
+}
+
 /**
  * Video activities run think time first, then answer time. Recording starts when
  * think time ends, or earlier if the candidate says they are ready.

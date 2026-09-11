@@ -67,6 +67,37 @@ export function overallScore(
     : averageScore(items);
 }
 
+/**
+ * Which weight set an evaluation is scored against. This is the whole of the
+ * "weight changes never rewrite past scores" rule, so it lives in one place:
+ *
+ *  1. Weighting is a per version switch. No active set on the version means
+ *     weighting is off, and everyone gets the plain average, pinned or not.
+ *     Turning it off has to mean off.
+ *  2. With weighting on, an evaluation that is pinned to a set (the column
+ *     `evaluations.weight_set_id`, written when the evaluation was opened,
+ *     completed, or recalculated) keeps using THAT set. Saving new weights
+ *     opens a new set and leaves the pin alone, so last month's candidate does
+ *     not move until the manager presses "recalculate", which re-pins.
+ *  3. An evaluation with no pin was never computed against anything, so there
+ *     is nothing to protect: it follows the active set. This is also what makes
+ *     the toggle visibly do something for candidates scored while it was off.
+ *
+ * A pin whose set has no rows any more (deleted set, `on delete set null`
+ * races) falls back to the active set rather than to an average, because the
+ * manager did switch weighting on.
+ */
+export function selectWeights(
+  activeSetId: string | null,
+  pinnedSetId: string | null,
+  weightsBySet: Map<string, Weight[]>,
+): Weight[] | null {
+  if (!activeSetId) return null;
+  const pinned = pinnedSetId ? weightsBySet.get(pinnedSetId) : undefined;
+  if (pinned && pinned.length > 0) return pinned;
+  return weightsBySet.get(activeSetId) ?? null;
+}
+
 /** Percentage of auto-scored questions answered correctly. Kept separate. */
 export function knowledgeScore(
   answers: Array<{ correct: boolean }>,

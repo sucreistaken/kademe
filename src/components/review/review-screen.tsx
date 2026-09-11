@@ -66,6 +66,7 @@ export function ReviewScreen({
   stages: initialStages,
   canScore,
   queue,
+  decisionHref,
 }: {
   evaluationId: string;
   candidateName: string;
@@ -79,6 +80,12 @@ export function ReviewScreen({
     previousHref: string | null;
     nextHref: string | null;
   } | null;
+  /**
+   * Where "Decide" goes. The decision form lives on the candidate detail page;
+   * a `/decision` route was planned and never built, and a relative link to it
+   * sent every fully scored review to a 404.
+   */
+  decisionHref: string;
 }) {
   const t = useMT("review");
   const shared = useMT("shared");
@@ -520,7 +527,7 @@ export function ReviewScreen({
                   asChild={allScored}
                 >
                   {allScored ? (
-                    <a href="./decision">{t("decide")}</a>
+                    <a href={decisionHref}>{t("decide")}</a>
                   ) : (
                     <span>{t("decide")}</span>
                   )}

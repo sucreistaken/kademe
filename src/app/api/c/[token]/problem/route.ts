@@ -10,6 +10,11 @@ type Body = { area?: string; message?: string };
  * "Bir sorun var" from the candidate side. A candidate whose camera will not
  * open must have somewhere to go other than abandoning the assessment, so the
  * report lands in the manager's outbox queue with enough context to answer it.
+ *
+ * It is addressed to the hiring team (`ctx.contactEmail`: the recruiter who
+ * sent the link, or the org fallback). The candidate's own address goes in the
+ * body so the team can reply; it used to be the recipient, which mailed the
+ * complaint back to the person who made it.
  */
 export async function POST(
   req: NextRequest,
@@ -26,10 +31,11 @@ export async function POST(
       await db.insert(messageOutbox).values({
         orgId: ctx.assessment.orgId,
         kind: "CANDIDATE_PROBLEM",
-        toEmail: ctx.candidate.email ?? "bilinmiyor",
+        toEmail: ctx.contactEmail,
         subject: `Aday sorun bildirdi: ${ctx.candidate.fullName ?? "isimsiz"} (${area})`,
         body:
           `Aday: ${ctx.candidate.fullName ?? "-"} <${ctx.candidate.email ?? "-"}>\n` +
+          `Cevap adresi: ${ctx.candidate.email ?? "bilinmiyor"}\n` +
           `Alan: ${area}\n` +
           `Mesaj: ${note || "-"}\n` +
           `Tarayıcı: ${request.headers.get("user-agent") ?? "-"}`,

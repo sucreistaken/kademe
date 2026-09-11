@@ -192,7 +192,9 @@
     "finishFailed": "Kayıt tamamlanamadı.",
     "noRetake": "Yeniden çekim yok",
     "takesLeft": "{count} çekim hakkın kaldı",
-    "thinkNoteCameraOpening": "Not alabilirsin. Kamera birazdan açılıyor."
+    "thinkNoteCameraOpening": "Not alabilirsin. Kamera birazdan açılıyor.",
+    "hintFailed": "Kayıt tamamlanamadı. Hakkın yanmadı, tekrar deneyebilirsin.",
+    "tryAgain": "Tekrar dene"
   },
   "done": {
     "title": "Tamamlandı, teşekkürler {name}",
@@ -273,7 +275,10 @@
     "NO_PARTS": "Hiç kayıt parçası ulaşmadı.",
     "KIND_REQUIRED": "Talep türü seçilmedi.",
     "RIGHTS_RECEIVED": "Talebin işe alım ekibine iletildi.",
-    "PROBLEM_RECEIVED": "Bildirimin işe alım ekibine iletildi."
+    "PROBLEM_RECEIVED": "Bildirimin işe alım ekibine iletildi.",
+    "STAGE_MISMATCH": "Bu sayfa güncel değil. Devam etmek için sayfayı yenile.",
+    "TAKES_EXHAUSTED": "Bu soru için çekim hakkın kalmadı.",
+    "FILE_TYPE_REJECTED": "Bu dosya türü kabul edilmiyor."
   },
   "invite": {
     "subject": "{position} değerlendirmesi",

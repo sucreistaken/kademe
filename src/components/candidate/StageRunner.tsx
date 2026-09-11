@@ -8,13 +8,24 @@ import { ChoiceActivity } from "@/components/candidate/activities/ChoiceActivity
 import { FileActivity } from "@/components/candidate/activities/FileActivity";
 import { MediaActivity } from "@/components/candidate/activities/MediaActivity";
 import { TextActivity } from "@/components/candidate/activities/TextActivity";
+import { StageSessionContext } from "@/components/candidate/activities/shared";
 import { apiSend } from "@/lib/client/api";
+import { FlushRegistry } from "@/lib/client/flush-registry";
 import { useStageClock } from "@/lib/client/use-stage-clock";
 import { useTechnicalEvents } from "@/lib/client/use-technical-events";
-import { formatCountdown } from "@/lib/timer";
+import { formatCountdown, SUBMIT_SLACK_MS } from "@/lib/timer";
 import { stepPath } from "@/lib/candidate-routes";
 import type { CandidateState, StageActivity } from "@/lib/candidate-flow";
 import { useT } from "@/i18n/candidate-client";
+
+/**
+ * How long an auto-submit that failed at 0:00 waits before its one retry. Past
+ * the server's write slack the submit takes the expired path unconditionally,
+ * so the retry is timed to land just after it.
+ */
+const AUTO_SUBMIT_RETRY_MS = SUBMIT_SLACK_MS + 1_000;
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Artboards A10 and A11. Runs one stage: one question on screen at a time, a
@@ -42,6 +53,10 @@ export function StageRunner({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const startedRef = useRef(false);
+  /* Pending autosaves, so a submit never overtakes the draft it should include. */
+  const flushesRef = useRef<FlushRegistry | null>(null);
+  if (!flushesRef.current) flushesRef.current = new FlushRegistry();
+  const flushes = flushesRef.current;
 
   const stage = state.stage;
 
@@ -102,15 +117,27 @@ export function StageRunner({
   async function submit(auto = false) {
     setBusy(true);
     setError(null);
+    // The text field debounces its save by 800 ms. Posting the submit before
+    // that draft is on the server closed the stage without the last sentence.
+    await flushes.flushAll();
     try {
-      const next = await apiSend<CandidateState>(token, "/stage/submit", {});
+      let next: CandidateState;
+      try {
+        next = await apiSend<CandidateState>(token, "/stage/submit", {});
+      } catch (err) {
+        // An auto-submit at 0:00 can still be refused if the request raced the
+        // server's own clock. Past the slack the server closes the stage no
+        // matter what, so one retry after it is enough; if that fails too the
+        // candidate must see why, not a frozen screen.
+        if (!auto) throw err;
+        await wait(AUTO_SUBMIT_RETRY_MS);
+        next = await apiSend<CandidateState>(token, "/stage/submit", {});
+      }
       setState(next);
       router.push(stepPath(token, next));
       router.refresh();
     } catch (err) {
-      if (!auto) {
-        setError(err instanceof Error ? err.message : t("submitFailed"));
-      }
+      setError(err instanceof Error ? err.message : t("submitFailed"));
       setBusy(false);
     }
   }
@@ -129,8 +156,9 @@ export function StageRunner({
       : "";
 
   return (
-    /* The subtree carries its own `lang` so uppercase styling and screen
-       readers follow the candidate's language, not the document's. */
+    <StageSessionContext.Provider value={{ position: stage.position, flushes }}>
+    {/* The subtree carries its own `lang` so uppercase styling and screen
+        readers follow the candidate's language, not the document's. */}
     <div lang={locale} className="min-h-dvh bg-surface">
       {/* Think time is a single centred countdown on artboard A10, with no
           header above it. Leaving the shell in place put a second, accent
@@ -254,6 +282,7 @@ export function StageRunner({
         </div>
       </main>
     </div>
+    </StageSessionContext.Provider>
   );
 }
 

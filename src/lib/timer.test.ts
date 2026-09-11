@@ -7,6 +7,7 @@ import {
   videoPhase,
   isMediaOverlong,
   formatCountdown,
+  submitDecision,
   SUBMIT_SLACK_MS,
 } from "./timer";
 
@@ -56,6 +57,64 @@ describe("write acceptance", () => {
     const now = at(600_000);
     expect(acceptsWrite(deadline, "ALLOW_LATE", now)).toBe(true);
     expect(isLate(deadline, now)).toBe(true);
+  });
+});
+
+describe("submit decision", () => {
+  const deadline = computeDeadline(t0, 60, 0);
+  const base = { deadlineAt: deadline, behaviour: "AUTO_SUBMIT" as const };
+
+  it("closes a fully answered stage as complete while there is time", () => {
+    expect(
+      submitDecision({ ...base, missingRequired: 0, now: at(30_000) }),
+    ).toEqual({ kind: "SUBMIT", expired: false, late: false });
+  });
+
+  it("refuses to close early while required answers are missing", () => {
+    expect(
+      submitDecision({ ...base, missingRequired: 1, now: at(30_000) }),
+    ).toEqual({ kind: "REJECT_REQUIRED" });
+  });
+
+  it("lets the auto-submit at 0:00 through even inside the slack", () => {
+    // The client fires at the deadline; the request lands a moment later, still
+    // inside the write window. That used to be a 422 and a stuck candidate.
+    expect(
+      submitDecision({ ...base, missingRequired: 1, now: at(60_400) }),
+    ).toEqual({ kind: "SUBMIT", expired: true, late: false });
+  });
+
+  it("still records a stage answered in full as complete at the deadline", () => {
+    expect(
+      submitDecision({ ...base, missingRequired: 0, now: at(60_400) }),
+    ).toEqual({ kind: "SUBMIT", expired: false, late: false });
+  });
+
+  it("takes the expired path once the slack has passed too", () => {
+    expect(
+      submitDecision({
+        ...base,
+        missingRequired: 1,
+        now: at(60_000 + SUBMIT_SLACK_MS + 1),
+      }),
+    ).toEqual({ kind: "SUBMIT", expired: true, late: false });
+  });
+
+  it("flags a late ALLOW_LATE submit without rejecting it", () => {
+    expect(
+      submitDecision({
+        deadlineAt: deadline,
+        behaviour: "ALLOW_LATE",
+        missingRequired: 0,
+        now: at(600_000),
+      }),
+    ).toEqual({ kind: "SUBMIT", expired: false, late: true });
+  });
+
+  it("applies the required check to a run with no deadline yet", () => {
+    expect(
+      submitDecision({ deadlineAt: null, behaviour: "AUTO_SUBMIT", missingRequired: 2 }),
+    ).toEqual({ kind: "REJECT_REQUIRED" });
   });
 });
 

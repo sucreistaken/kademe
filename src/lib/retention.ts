@@ -297,40 +297,79 @@ function orgClock(
 }
 
 /**
- * Latest decision per assessment. The media clock starts at the decision, not at
- * the recording: a candidate still under review keeps their video however long
- * the review takes.
+ * The decisions that end a review. Only these start the media clock. Every
+ * other value of `decision_status` (NEW, IN_REVIEW, SHORTLISTED, INTERVIEW,
+ * RETAKE_REQUESTED, ON_HOLD) is a step inside the review, during which the
+ * manager may still need to watch the recording.
  */
-function latestDecision() {
+export const TERMINAL_DECISION_STATUSES = ["ACCEPTED", "REJECTED"] as const;
+
+export type TerminalDecisionStatus = (typeof TERMINAL_DECISION_STATUSES)[number];
+
+export function isTerminalDecision(status: string): status is TerminalDecisionStatus {
+  return (TERMINAL_DECISION_STATUSES as readonly string[]).includes(status);
+}
+
+/**
+ * The instant the media clock starts for one assessment, given its decision
+ * history: the latest terminal decision, or null when there is none. Null means
+ * "not on the clock at all", not "count from something else". This is the rule
+ * `latestTerminalDecision()` expresses in SQL; the two have to agree, and this
+ * one is the testable half.
+ */
+export function mediaAnchorFrom(
+  history: ReadonlyArray<{ status: string; at: Date }>,
+): Date | null {
+  let anchor: Date | null = null;
+  for (const decision of history) {
+    if (!isTerminalDecision(decision.status)) continue;
+    if (anchor === null || decision.at.getTime() > anchor.getTime()) anchor = decision.at;
+  }
+  return anchor;
+}
+
+/**
+ * Latest terminal decision per assessment. The media clock starts there, not at
+ * the recording, the invitation, or an intermediate decision: a candidate still
+ * under review keeps their video however long the review takes. An earlier
+ * version anchored on any decision row and fell back to the invitation date,
+ * which put a video on the clock the moment somebody clicked "in review".
+ */
+function latestTerminalDecision() {
   return db
     .select({
       assessmentId: decisions.assessmentId,
       decidedAt: sql<Date>`max(${decisions.at})`.as("decided_at"),
     })
     .from(decisions)
+    .where(inArray(decisions.status, [...TERMINAL_DECISION_STATUSES]))
     .groupBy(decisions.assessmentId)
-    .as("latest_decision");
+    .as("latest_terminal_decision");
 }
 
 /**
- * The date the media clock counts from: the decision if there is one, else the
- * invitation, else the row itself. The fallbacks matter because media_assets
- * .stage_run_id is nullable, so an orphaned upload would otherwise have no
- * anchor at all and would live forever.
+ * The date the media clock counts from. Deliberately no fallback: media whose
+ * assessment has no terminal decision is not selected at all, and that includes
+ * an upload not attached to any stage run. Such a row is kept by the candidate
+ * clock instead (`candidates` cascades to everything under it), so nothing
+ * lives forever, it just does not get the shorter media window.
  */
-const MEDIA_ANCHOR_SQL = (ld: ReturnType<typeof latestDecision>) =>
-  sql<Date>`coalesce(${ld.decidedAt}, ${assessments.createdAt}, ${mediaAssets.createdAt})`;
+const MEDIA_ANCHOR_SQL = (ld: ReturnType<typeof latestTerminalDecision>) =>
+  sql<Date>`${ld.decidedAt}`;
 
 /** The candidate clock counts from the last contact, else from the row itself. */
 const CANDIDATE_ANCHOR_SQL = sql<Date>`coalesce(${candidates.lastContactAt}, ${candidates.createdAt})`;
 
 /** Media that has fallen out of retention and is not yet on the purge clock. */
 async function planSoftMedia(clock: OrgClock, batch: number): Promise<MediaPlan> {
-  const ld = latestDecision();
+  const ld = latestTerminalDecision();
   const anchor = MEDIA_ANCHOR_SQL(ld);
   const where = and(
     eq(mediaAssets.orgId, clock.orgId),
     isNull(mediaAssets.purgeAfter),
+    // A missing anchor is a review still open. `null < cutoff` is already not
+    // true in SQL, but the intent is worth stating rather than relying on it.
+    isNotNull(ld.decidedAt),
     sql`${anchor} < ${clock.mediaCutoff.toISOString()}::timestamptz`,
   );
 

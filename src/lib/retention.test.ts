@@ -17,8 +17,11 @@ import {
   hardDeleteDueAt,
   isExpired,
   isPurgeDue,
+  isTerminalDecision,
+  mediaAnchorFrom,
   retentionCutoff,
   settingsProblem,
+  TERMINAL_DECISION_STATUSES,
 } from "./retention";
 
 // No database here on purpose. Everything below is the arithmetic that decides
@@ -229,5 +232,54 @@ describe("batch boundaries", () => {
       remaining: 0,
       complete: true,
     });
+  });
+});
+
+describe("what starts the media clock", () => {
+  const d = (iso: string, status: string) => ({ status, at: new Date(iso) });
+
+  it("treats only ACCEPTED and REJECTED as the end of a review", () => {
+    expect([...TERMINAL_DECISION_STATUSES].sort()).toEqual(["ACCEPTED", "REJECTED"]);
+    for (const s of ["NEW", "IN_REVIEW", "SHORTLISTED", "INTERVIEW", "RETAKE_REQUESTED", "ON_HOLD"]) {
+      expect(isTerminalDecision(s)).toBe(false);
+    }
+  });
+
+  it("has no anchor at all while nobody has decided", () => {
+    // Null, not the invitation date and not the recording date: a candidate
+    // under review keeps the video however long the review takes.
+    expect(mediaAnchorFrom([])).toBeNull();
+  });
+
+  it("is not started by an intermediate decision", () => {
+    // The bug this guards: any decisions row, even IN_REVIEW, used to start
+    // the 180 day clock, which is the opposite of the documented intent.
+    expect(
+      mediaAnchorFrom([
+        d("2026-01-01T00:00:00Z", "IN_REVIEW"),
+        d("2026-02-01T00:00:00Z", "RETAKE_REQUESTED"),
+        d("2026-03-01T00:00:00Z", "ON_HOLD"),
+      ]),
+    ).toBeNull();
+  });
+
+  it("starts at the terminal decision even when later notes follow it", () => {
+    expect(
+      mediaAnchorFrom([
+        d("2026-01-01T00:00:00Z", "IN_REVIEW"),
+        d("2026-02-01T00:00:00Z", "REJECTED"),
+        d("2026-03-01T00:00:00Z", "ON_HOLD"),
+      ])?.toISOString(),
+    ).toBe("2026-02-01T00:00:00.000Z");
+  });
+
+  it("takes the latest terminal decision when the outcome was revised", () => {
+    expect(
+      mediaAnchorFrom([
+        d("2026-02-01T00:00:00Z", "REJECTED"),
+        d("2026-04-01T00:00:00Z", "ACCEPTED"),
+        d("2026-01-01T00:00:00Z", "ACCEPTED"),
+      ])?.toISOString(),
+    ).toBe("2026-04-01T00:00:00.000Z");
   });
 });

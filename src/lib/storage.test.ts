@@ -12,6 +12,8 @@ import {
   mimeExtension,
   r2ConfigStatus,
   resetStorageCache,
+  resolveSigningSecret,
+  resolveStorageMode,
   signLocalKey,
   verifyLocalKeySignature,
 } from "@/lib/storage";
@@ -90,6 +92,34 @@ describe("key and mime derivation", () => {
     ]) {
       expect(extensionMime(`x.${mimeExtension(mime)}`)).toBe(mime);
     }
+  });
+
+  it("gives FILE_UPLOAD documents a real extension, not .bin", () => {
+    // Every mime in DOCUMENT_MIME (src/lib/candidate-media.ts) has to map to a
+    // named extension and back, so a CV lands as ".docx" and is served with
+    // its own type instead of as an opaque download.
+    const expected: Array<[string, string]> = [
+      ["application/pdf", "pdf"],
+      ["image/png", "png"],
+      ["image/jpeg", "jpg"],
+      ["image/webp", "webp"],
+      ["image/gif", "gif"],
+      ["text/plain", "txt"],
+      ["text/csv", "csv"],
+      ["application/msword", "doc"],
+      ["application/vnd.openxmlformats-officedocument.wordprocessingml.document", "docx"],
+      ["application/vnd.ms-excel", "xls"],
+      ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "xlsx"],
+      ["application/vnd.ms-powerpoint", "ppt"],
+      ["application/vnd.openxmlformats-officedocument.presentationml.presentation", "pptx"],
+      ["application/zip", "zip"],
+    ];
+    for (const [mime, ext] of expected) {
+      expect(mimeExtension(mime)).toBe(ext);
+      expect(extensionMime(`media/o/a/r/id.${ext}`)).toBe(mime);
+    }
+    // A charset parameter, as browsers send for text uploads, does not matter.
+    expect(mimeExtension("text/plain; charset=utf-8")).toBe("txt");
   });
 
   it("falls back rather than inventing a type", () => {
@@ -310,6 +340,7 @@ describe("provider selection", () => {
       "R2_ENDPOINT",
       "R2_BUCKET",
       "STORAGE_REQUIRE_R2",
+      "STORAGE_ALLOW_LOCAL",
     ]) {
       if (saved[name] === undefined) delete process.env[name];
       else process.env[name] = saved[name];
@@ -364,5 +395,108 @@ describe("provider selection", () => {
     expect(getStorage()).toBe(first);
     resetStorageCache();
     expect(getStorage()).not.toBe(first);
+  });
+});
+
+describe("the production storage rule, as a pure decision", () => {
+  // resolveStorageMode is tested on plain objects so that no test has to
+  // mutate NODE_ENV, which vitest and Next both read.
+  const r2 = {
+    R2_ACCESS_KEY_ID: "k",
+    R2_SECRET_ACCESS_KEY: "s",
+    R2_ENDPOINT: "https://example.r2.cloudflarestorage.com",
+    R2_BUCKET: "kademe-media",
+  };
+
+  it("chooses R2 whenever all four variables are set, in any environment", () => {
+    expect(resolveStorageMode({ ...r2, NODE_ENV: "production" })).toEqual({
+      provider: "r2",
+      bucket: "kademe-media",
+    });
+    expect(resolveStorageMode({ ...r2, NODE_ENV: "development" })).toMatchObject({
+      provider: "r2",
+    });
+  });
+
+  it("refuses to start in production with no R2 configuration at all", () => {
+    // The bug this guards: production with no bucket used to fall back to the
+    // container disk without a word, and every recording died on redeploy.
+    const mode = resolveStorageMode({ NODE_ENV: "production", AUTH_SECRET: "x" });
+    expect(mode.provider).toBe("refuse");
+    if (mode.provider === "refuse") {
+      expect(mode.reason).toMatch(/production/);
+      expect(mode.reason).toMatch(/STORAGE_ALLOW_LOCAL/);
+    }
+  });
+
+  it("refuses to start in production with a partial R2 configuration, naming the gap", () => {
+    const { R2_ENDPOINT: _dropped, ...partial } = r2;
+    void _dropped;
+    const mode = resolveStorageMode({ ...partial, NODE_ENV: "production" });
+    expect(mode.provider).toBe("refuse");
+    if (mode.provider === "refuse") expect(mode.reason).toMatch(/R2_ENDPOINT/);
+  });
+
+  it("lets an operator opt into disk storage in production, loudly", () => {
+    const mode = resolveStorageMode({
+      NODE_ENV: "production",
+      STORAGE_ALLOW_LOCAL: "true",
+      AUTH_SECRET: "real-secret",
+    });
+    expect(mode.provider).toBe("local");
+    if (mode.provider === "local") expect(mode.warning).toMatch(/redeploy/);
+  });
+
+  it("only accepts the literal string true as the opt in", () => {
+    for (const value of ["1", "yes", "TRUE", ""]) {
+      expect(
+        resolveStorageMode({
+          NODE_ENV: "production",
+          STORAGE_ALLOW_LOCAL: value,
+          AUTH_SECRET: "x",
+        }).provider,
+      ).toBe("refuse");
+    }
+  });
+
+  it("still requires AUTH_SECRET when disk storage is allowed in production", () => {
+    const mode = resolveStorageMode({ NODE_ENV: "production", STORAGE_ALLOW_LOCAL: "true" });
+    expect(mode.provider).toBe("refuse");
+    if (mode.provider === "refuse") expect(mode.reason).toMatch(/AUTH_SECRET/);
+  });
+
+  it("keeps development on local disk with no warning when nothing is configured", () => {
+    expect(resolveStorageMode({ NODE_ENV: "development" })).toEqual({
+      provider: "local",
+      warning: null,
+    });
+    expect(resolveStorageMode({})).toEqual({ provider: "local", warning: null });
+  });
+
+  it("warns in development about a partial configuration instead of refusing", () => {
+    const mode = resolveStorageMode({ R2_BUCKET: "kademe-media", NODE_ENV: "development" });
+    expect(mode.provider).toBe("local");
+    if (mode.provider === "local") expect(mode.warning).toMatch(/R2_ACCESS_KEY_ID/);
+  });
+
+  it("honours STORAGE_REQUIRE_R2 outside production too", () => {
+    expect(
+      resolveStorageMode({ NODE_ENV: "test", STORAGE_REQUIRE_R2: "1" }).provider,
+    ).toBe("refuse");
+  });
+});
+
+describe("the local signing secret", () => {
+  it("uses AUTH_SECRET when it is set", () => {
+    expect(resolveSigningSecret({ AUTH_SECRET: "abc", NODE_ENV: "production" })).toBe("abc");
+  });
+
+  it("falls back to the development string only outside production", () => {
+    expect(resolveSigningSecret({ NODE_ENV: "development" })).toBe("dev-only-storage-secret");
+    expect(resolveSigningSecret({})).toBe("dev-only-storage-secret");
+  });
+
+  it("refuses to sign with the development string in production", () => {
+    expect(() => resolveSigningSecret({ NODE_ENV: "production" })).toThrow(/AUTH_SECRET/);
   });
 });

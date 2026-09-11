@@ -56,6 +56,32 @@ export function queue(): Promise<PgBoss> {
 }
 
 /**
+ * Runs pg-boss maintenance for our queue right now, instead of waiting for the
+ * timer that `boss.start()` arms.
+ *
+ * `expireInSeconds` is only enforced by that maintenance pass: an active job
+ * whose process was killed mid transcription stays `active` until a supervise
+ * pass fails it as timed out. Under scale to zero the timer lives in whichever
+ * instance happened to start the boss and dies with it, so it may never fire.
+ * With policy `stately` that one stuck job then blocks every later `send()`
+ * for the same media asset, and the recording is never transcribed. Calling
+ * `supervise()` at the top of each drain makes the cron the clock. pg-boss
+ * still rate limits the pass internally (`monitorIntervalSeconds`), so calling
+ * it every minute is cheap. Best effort: a failed pass is logged, and the
+ * drain that follows still fetches whatever is ready.
+ */
+export async function superviseQueue(): Promise<boolean> {
+  try {
+    const boss = await queue();
+    await boss.supervise(TRANSCRIPTION_QUEUE);
+    return true;
+  } catch (error) {
+    console.error("[queue] supervise failed, continuing with the drain", error);
+    return false;
+  }
+}
+
+/**
  * Enqueues a recording for transcription. Deliberately swallows its own
  * failures: a candidate finishing an answer must never see an error because a
  * background job could not be written. The cron sweep picks up anything missed.

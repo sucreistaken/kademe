@@ -8,6 +8,7 @@ import {
   candidates,
   consents,
   consentTexts,
+  mediaAssets,
   organizations,
   positions,
   responses,
@@ -220,6 +221,20 @@ export async function loadActivities(
     .from(activities)
     .where(inArray(activities.stageId, stageIds))
     .orderBy(asc(activities.stageId), asc(activities.orderIndex))) as ActivityRow[];
+}
+
+/**
+ * One activity by an id the SERVER already holds (a media asset's
+ * `activityId`). The id never comes from the client; the candidate surface
+ * still addresses activities by position only.
+ */
+export async function loadActivity(activityId: string): Promise<ActivityRow | null> {
+  const [row] = await db
+    .select(candidateActivityColumns)
+    .from(activities)
+    .where(eq(activities.id, activityId))
+    .limit(1);
+  return (row as ActivityRow | undefined) ?? null;
 }
 
 /* ------------------------------------------------------------------ *
@@ -479,6 +494,32 @@ export async function loadResponses(runId: string) {
   return db.select().from(responses).where(eq(responses.stageRunId, runId));
 }
 
+/**
+ * Takes used so far in this run, per activity. A take is a recording that
+ * finished (READY) or was cut short but kept (INCOMPLETE); an upload that never
+ * produced a playable asset did not cost the candidate one. This is the number
+ * `maxTakes` is enforced against, both when the client asks for another
+ * recording and when the state payload tells the screen how many are left. It
+ * used to live only in component state, which reset to zero on every reload.
+ */
+export async function takeCounts(runId: string): Promise<Map<string, number>> {
+  const rows = await db
+    .select({ activityId: mediaAssets.activityId })
+    .from(mediaAssets)
+    .where(
+      and(
+        eq(mediaAssets.stageRunId, runId),
+        inArray(mediaAssets.status, ["READY", "INCOMPLETE"]),
+      ),
+    );
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    if (!row.activityId) continue;
+    counts.set(row.activityId, (counts.get(row.activityId) ?? 0) + 1);
+  }
+  return counts;
+}
+
 /* ------------------------------------------------------------------ *
  * Submitting and finishing
  * ------------------------------------------------------------------ */
@@ -700,6 +741,8 @@ export type CandidateStateStage = {
     thinkSeconds: number;
     answerSeconds: number | null;
     maxTakes: number;
+    /** Recordings already kept for this activity in this run. See `takeCounts`. */
+    takeCount: number;
     config: ActivityConfig;
     payload: ResponsePayload | null;
   }>;
@@ -780,6 +823,7 @@ export async function loadState(ctx: CandidateContext): Promise<CandidateState> 
   );
   const saved = run ? await loadResponses(run.id) : [];
   const byActivity = new Map(saved.map((r) => [r.activityId, r.payload]));
+  const takes = run ? await takeCounts(run.id) : new Map<string, number>();
 
   return {
     ...base,
@@ -805,6 +849,7 @@ export async function loadState(ctx: CandidateContext): Promise<CandidateState> 
         thinkSeconds: a.thinkSeconds,
         answerSeconds: a.answerSeconds,
         maxTakes: a.maxTakes,
+        takeCount: takes.get(a.id) ?? 0,
         config: a.config ?? {},
         payload: byActivity.get(a.id) ?? null,
       })),

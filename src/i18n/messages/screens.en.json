@@ -151,7 +151,8 @@
     "answerNone": "no answer",
     "openInReview": "Open in the scoring screen",
     "showFull": "Show all",
-    "collapse": "Collapse"
+    "collapse": "Collapse",
+    "decisionError": "The decision was not saved: this assessment does not belong to your organisation."
   },
   "techEvent": {
     "VISIBILITY_HIDDEN": "tab moved to the background",
@@ -694,6 +695,7 @@
     "NEVER_STARTED": "This candidate never started, so there is nothing to retake.",
     "NO_STAGES": "This template has no stages.",
     "STAGES_NOT_IN_TEMPLATE": "The selected stages do not belong to this template.",
-    "ATTEMPT_NOT_FOUND": "Attempt not found."
+    "ATTEMPT_NOT_FOUND": "Attempt not found.",
+    "NO_LINK": "This candidate has no link at all; send a new invitation first."
   }
 }

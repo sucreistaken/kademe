@@ -36,6 +36,55 @@ export function normaliseMime(raw: string | undefined, fallback: string): string
 }
 
 /**
+ * What a FILE_UPLOAD activity may receive when the manager did not name the
+ * types themselves. Documents and images, nothing that plays: a file answer is
+ * read by a person, never sent to the transcription queue.
+ */
+export const DOCUMENT_MIME = [
+  "application/pdf",
+  "image/png",
+  "image/jpeg",
+  "text/plain",
+  "text/csv",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/zip",
+];
+
+/** Anything the allowlists do not name is stored opaque and served as such. */
+export const OPAQUE_MIME = "application/octet-stream";
+
+/**
+ * Mime for a FILE_UPLOAD asset. Files used to run through `normaliseMime`,
+ * which knows only recordings, so a PDF came out as `video/webm`, got a
+ * `.webm` key and was queued for transcription.
+ *
+ * With an `acceptedMimeTypes` list on the activity the file must be on it, and
+ * `null` tells the route to refuse it (the client already filtered, so this is
+ * the server repeating a check it cannot delegate). Without a list, known
+ * document types keep their own mime and anything else is stored opaque rather
+ * than rejected: a manager who left the list empty asked for "any file".
+ */
+export function normaliseFileMime(
+  raw: string | undefined,
+  accepted: string[] | undefined,
+): string | null {
+  const base = (raw ?? "").split(";")[0].trim().toLowerCase();
+  const configured = (accepted ?? [])
+    .map((m) => m.trim().toLowerCase())
+    .filter(Boolean);
+  if (configured.length > 0) {
+    return configured.includes(base) ? base : null;
+  }
+  if (!base) return OPAQUE_MIME;
+  return DOCUMENT_MIME.includes(base) ? base : OPAQUE_MIME;
+}
+
+/**
  * Opens a multipart upload and the row that tracks it. The storage key is
  * derived from ids the server owns; the client never chooses where bytes land.
  */

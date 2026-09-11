@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import { db } from "@/db";
 import { auditLogs, organizations, userSetupTokens, users } from "@/db/schema";
 import { hashPassword, mintToken, sha256, type SessionUser } from "@/lib/auth";
+import { ORG_TIMEZONE, zonedDayStart } from "@/lib/org-timezone";
 
 /**
  * Reads for /settings and /settings/audit. Kept out of the pages for the same
@@ -170,21 +171,18 @@ export type AuditPage = {
   pageCount: number;
 };
 
+/**
+ * The operator picks "8 September" meaning their own day. That day is counted
+ * in the organisation's zone (lib/org-timezone.ts), not the process zone: the
+ * server runs in UTC in production and this used to shift every export by the
+ * three hour difference.
+ */
 function dayStart(value: string): Date | null {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
-  // Parsed in the server's zone on purpose: the operator picks "8 September"
-  // meaning their own day, and every other timestamp on the screen is rendered
-  // in that same zone.
-  const date = new Date(`${value}T00:00:00`);
-  return Number.isNaN(date.getTime()) ? null : date;
+  return zonedDayStart(value, ORG_TIMEZONE);
 }
 
 function nextDayStart(value: string): Date | null {
-  const start = dayStart(value);
-  if (!start) return null;
-  const end = new Date(start);
-  end.setDate(end.getDate() + 1);
-  return end;
+  return zonedDayStart(value, ORG_TIMEZONE, 1);
 }
 
 function auditWhere(orgId: string, filters: AuditFilters) {

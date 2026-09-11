@@ -13,13 +13,15 @@
     "db:push": "drizzle-kit push",
     "db:seed": "tsx src/db/seed.ts",
     "db:sql": "tsx src/db/migrate-sql.mts",
-    "db:setup": "drizzle-kit push --force && tsx src/db/migrate-sql.mts",
+    "db:setup": "drizzle-kit push && tsx src/db/migrate-sql.mts",
+    "db:setup:local": "drizzle-kit push --force && tsx src/db/migrate-sql.mts",
     "dev:link": "tsx scripts/dev-link.ts",
     "verify:candidate": "bash scripts/verify-candidate-flow.sh",
     "verify:ai": "tsx scripts/verify-ai-draft.ts",
     "verify:transcription": "tsx scripts/verify-transcription.ts",
     "verify:transcription:drain": "tsx scripts/verify-transcription-drain.ts",
-    "verify:r2": "tsx scripts/verify-r2.ts"
+    "verify:r2": "tsx scripts/verify-r2.ts",
+    "verify:queue": "tsx scripts/verify-queue-supervise.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1127.0",

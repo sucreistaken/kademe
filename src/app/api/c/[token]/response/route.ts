@@ -11,6 +11,13 @@ import {
 import { badRequest, conflict, readJson, withCandidate } from "@/lib/candidate-api";
 
 type Body = {
+  /**
+   * Which stage the tab believes it is on, 1 based. Still not an id, but it is
+   * what stops a tab left open on stage 2 from writing into stage 3's answers
+   * after the candidate submitted from another tab: "current stage + index"
+   * alone resolves to a real activity either way.
+   */
+  stagePosition?: number;
   /** Position of the activity inside the current stage. Never an id. */
   activityIndex?: number;
   text?: string;
@@ -37,6 +44,13 @@ export async function PUT(
     if (!current) return conflict(ctx, "NO_STAGE");
     const run = current.target.run;
     if (!run) return conflict(ctx, "STAGE_NOT_STARTED");
+
+    // A missing position is treated like a wrong one: the only client that
+    // omits it is one running code from before the check existed, and that is
+    // a stale tab by definition.
+    if (body.stagePosition !== current.target.position) {
+      return conflict(ctx, "STAGE_MISMATCH");
+    }
 
     const window = writeWindow(run, current.target.stage);
     if (!window.allowed) {

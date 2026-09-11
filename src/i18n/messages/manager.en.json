@@ -37,5 +37,14 @@
     "checking": "Checking…",
     "invalid": "Wrong email or password.",
     "candidate": "Are you a candidate? Your assessment link was emailed to you, you do not sign in here."
+  },
+  "errorPage": {
+    "forbiddenTitle": "Your role cannot do this",
+    "forbiddenBody": "You do not have permission for this screen or action. A reviewer scores candidates; invitations, templates and library changes are open to recruiters and owners.",
+    "genericTitle": "Something went wrong",
+    "genericBody": "An unexpected error happened while loading this page. You can try again or go back to the dashboard.",
+    "retry": "Try again",
+    "toDashboard": "Back to the dashboard",
+    "reference": "Error code: {digest}"
   }
 }

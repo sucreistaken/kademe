@@ -1,10 +1,10 @@
 "use server";
 
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { assessmentLinks, auditLogs, decisions } from "@/db/schema";
+import { assessmentLinks, assessments, auditLogs, decisions } from "@/db/schema";
 import { decisionStatus, linkStatus } from "@/db/schema";
 import { requireUser } from "@/server/session";
 
@@ -61,11 +61,15 @@ export async function extendLink(formData: FormData) {
   });
 
   revalidatePath(back);
-  const who = candidateName ? `&who=${encodeURIComponent(candidateName)}` : "";
   redirect(
-    `${back}?undo=link&linkId=${linkId}&prev=${encodeURIComponent(
-      link.expiresAt.toISOString(),
-    )}&prevStatus=${link.status}${who}&days=${days}`,
+    withQuery(back, {
+      undo: "link",
+      linkId,
+      prev: link.expiresAt.toISOString(),
+      prevStatus: link.status,
+      ...(candidateName ? { who: candidateName } : {}),
+      days: String(days),
+    }),
   );
 }
 
@@ -111,6 +115,14 @@ export async function saveDecision(formData: FormData) {
 
   if (!assessmentId || !isDecisionStatus(status)) redirect(back);
 
+  // The assessment id comes from a hidden form field. Without this check a
+  // manager could write a decision onto another organisation's candidate by
+  // editing it, so the row must be one of ours. Not a throw: a page has no way
+  // to show a thrown error as a sentence, so it goes back with a code instead.
+  if (!(await ownsAssessment(assessmentId, user.orgId))) {
+    redirect(withQuery(back, { error: "decision" }));
+  }
+
   const [inserted] = await db
     .insert(decisions)
     .values({
@@ -131,7 +143,7 @@ export async function saveDecision(formData: FormData) {
   });
 
   revalidatePath(back);
-  redirect(`${back}?undo=decision&decisionId=${inserted.id}`);
+  redirect(withQuery(back, { undo: "decision", decisionId: inserted.id }));
 }
 
 /**
@@ -147,11 +159,19 @@ export async function undoDecision(formData: FormData) {
   if (!decisionId) redirect(back);
 
   const [row] = await db
-    .select({ id: decisions.id, assessmentId: decisions.assessmentId, at: decisions.at })
+    .select({
+      id: decisions.id,
+      assessmentId: decisions.assessmentId,
+      at: decisions.at,
+      orgId: assessments.orgId,
+    })
     .from(decisions)
+    .innerJoin(assessments, eq(assessments.id, decisions.assessmentId))
     .where(eq(decisions.id, decisionId))
     .limit(1);
   if (!row) redirect(back);
+  // Same scoping as saveDecision: the decision id arrives from the undo strip.
+  if (row.orgId !== user.orgId) redirect(withQuery(back, { error: "decision" }));
 
   const [newest] = await db
     .select({ id: decisions.id })
@@ -181,6 +201,28 @@ export async function undoDecision(formData: FormData) {
 function safeBack(value: FormDataEntryValue | null): string {
   const raw = String(value ?? "/dashboard");
   return raw.startsWith("/") && !raw.startsWith("//") ? raw : "/dashboard";
+}
+
+/**
+ * `back` may already carry a query (the candidate page keeps `?assessment=`
+ * so a candidate in two positions lands on the right one), so parameters are
+ * appended with URLSearchParams rather than a hand-written "?".
+ */
+function withQuery(back: string, params: Record<string, string>): string {
+  const [path, existing = ""] = back.split("?", 2);
+  const query = new URLSearchParams(existing);
+  for (const [key, value] of Object.entries(params)) query.set(key, value);
+  const suffix = query.toString();
+  return suffix ? `${path}?${suffix}` : path;
+}
+
+async function ownsAssessment(assessmentId: string, orgId: string) {
+  const [row] = await db
+    .select({ id: assessments.id })
+    .from(assessments)
+    .where(and(eq(assessments.id, assessmentId), eq(assessments.orgId, orgId)))
+    .limit(1);
+  return Boolean(row);
 }
 
 function isLinkStatus(

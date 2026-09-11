@@ -106,7 +106,8 @@ export function TemplateActions({
         </Button>
       ) : null}
 
-      {!empty ? (
+      {/* The weights screen is requireUser("template:write"), like the builder. */}
+      {!empty && mayWrite ? (
         <Button variant="ghost" size="sm" asChild>
           <Link href={`${base}/weights`}>{t("weights")}</Link>
         </Button>

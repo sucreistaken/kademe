@@ -172,8 +172,27 @@ function localRoot(): string {
     : path.resolve(process.cwd(), ".storage");
 }
 
+/**
+ * The secret behind local playback URLs. Pure so the rule can be tested
+ * without mutating NODE_ENV: a fixed development string is fine on a laptop
+ * and a forgeable URL to every recording in production, so there it is an
+ * error, not a default.
+ */
+export function resolveSigningSecret(env: {
+  AUTH_SECRET?: string;
+  NODE_ENV?: string;
+}): string {
+  if (env.AUTH_SECRET) return env.AUTH_SECRET;
+  if (env.NODE_ENV === "production") {
+    throw new Error(
+      "[storage] AUTH_SECRET is not set. Local storage signs playback URLs with it, and production must not sign them with the development default.",
+    );
+  }
+  return "dev-only-storage-secret";
+}
+
 function signingSecret(): string {
-  return process.env.AUTH_SECRET ?? "dev-only-storage-secret";
+  return resolveSigningSecret(process.env);
 }
 
 /** Keys are server generated, but never trust one that walked in from a URL. */
@@ -711,6 +730,90 @@ export function r2ConfigStatus(): { present: string[]; missing: string[] } {
   return { present, missing };
 }
 
+/** The environment keys `resolveStorageMode()` reads. Nothing else is looked at. */
+export type StorageEnv = Partial<
+  Record<
+    | (typeof R2_VARS)[number]
+    | "NODE_ENV"
+    | "STORAGE_REQUIRE_R2"
+    | "STORAGE_ALLOW_LOCAL"
+    | "AUTH_SECRET",
+    string
+  >
+>;
+
+export type StorageMode =
+  | { provider: "r2"; bucket: string }
+  | { provider: "local"; warning: string | null }
+  | { provider: "refuse"; reason: string };
+
+/**
+ * Which provider the environment asks for. Pure, so the rules below are unit
+ * tested against plain objects instead of by mutating NODE_ENV in a test.
+ *
+ * The rules, in order:
+ *
+ * 1. All four R2 variables set: R2.
+ * 2. Production without a complete R2 configuration: refuse to start. Before
+ *    this rule a production deploy with no bucket silently wrote every
+ *    recording to the container disk, where the next deploy threw them away,
+ *    and nothing in the logs said so unless the configuration was partial.
+ *    `STORAGE_ALLOW_LOCAL=true` is the operator's explicit opt in ("I know
+ *    the recordings live on this disk"), and even then `AUTH_SECRET` has to
+ *    be real because local playback URLs are signed with it.
+ * 3. `STORAGE_REQUIRE_R2` set anywhere: refuse, same as before. Kept for
+ *    development and CI environments that want the production behaviour.
+ * 4. Otherwise local disk, with a warning when the R2 configuration is partial
+ *    (somebody tried to set it up and mistyped one variable).
+ */
+export function resolveStorageMode(env: StorageEnv): StorageMode {
+  const present: string[] = [];
+  const missing: string[] = [];
+  for (const name of R2_VARS) {
+    if (env[name]) present.push(name);
+    else missing.push(name);
+  }
+
+  if (missing.length === 0) return { provider: "r2", bucket: env.R2_BUCKET! };
+
+  const partial =
+    present.length > 0
+      ? `R2 is partly configured (${present.join(", ")}) but ${missing.join(", ")} ${missing.length === 1 ? "is" : "are"} missing`
+      : `none of ${R2_VARS.join(", ")} are set`;
+
+  if (env.NODE_ENV === "production") {
+    if (env.STORAGE_ALLOW_LOCAL !== "true") {
+      return {
+        provider: "refuse",
+        reason: `[storage] refusing to start in production without object storage: ${partial}. Recordings written to the container disk are lost on the next deploy. Set all four R2 variables, or set STORAGE_ALLOW_LOCAL=true to accept disk storage knowingly.`,
+      };
+    }
+    if (!env.AUTH_SECRET) {
+      return {
+        provider: "refuse",
+        reason:
+          "[storage] STORAGE_ALLOW_LOCAL=true in production also needs AUTH_SECRET, because local playback URLs are signed with it and the development default is public.",
+      };
+    }
+    return {
+      provider: "local",
+      warning: `[storage] STORAGE_ALLOW_LOCAL=true: production is writing recordings to the container disk (${partial}). They do not survive a redeploy.`,
+    };
+  }
+
+  if (env.STORAGE_REQUIRE_R2) {
+    return { provider: "refuse", reason: `[storage] STORAGE_REQUIRE_R2 is set but ${partial}` };
+  }
+
+  // A half configured bucket is the dangerous case: it looks like storage was
+  // set up, and every recording quietly goes to disk instead.
+  return {
+    provider: "local",
+    warning:
+      present.length > 0 ? `[storage] ${partial}, so local disk storage is being used` : null,
+  };
+}
+
 let cached: StorageProvider | null = null;
 
 /** For tests and scripts that change the environment after this module loaded. */
@@ -720,26 +823,15 @@ export function resetStorageCache(): void {
 
 export function getStorage(): StorageProvider {
   if (cached) return cached;
-  const { present, missing } = r2ConfigStatus();
+  const mode = resolveStorageMode(process.env);
 
-  if (missing.length === 0) {
-    cached = new R2StorageProvider(process.env.R2_BUCKET!);
+  if (mode.provider === "refuse") throw new Error(mode.reason);
+  if (mode.provider === "r2") {
+    cached = new R2StorageProvider(mode.bucket);
     return cached;
   }
 
-  // A half configured bucket is the dangerous case: it looks like production
-  // was set up, and it silently writes every recording to the container disk
-  // instead, where the next deploy throws it away.
-  if (present.length > 0) {
-    const message = `[storage] R2 is partly configured (${present.join(", ")}) but ${missing.join(", ")} ${missing.length === 1 ? "is" : "are"} missing, so local disk storage is being used`;
-    if (process.env.STORAGE_REQUIRE_R2) throw new Error(message);
-    console.warn(message);
-  } else if (process.env.STORAGE_REQUIRE_R2) {
-    throw new Error(
-      `[storage] STORAGE_REQUIRE_R2 is set but none of ${R2_VARS.join(", ")} are`,
-    );
-  }
-
+  if (mode.warning) console.warn(mode.warning);
   cached = new LocalStorageProvider();
   return cached;
 }
@@ -769,6 +861,17 @@ export function extensionMime(key: string): string {
     pdf: "application/pdf",
     png: "image/png",
     jpg: "image/jpeg",
+    webp: "image/webp",
+    gif: "image/gif",
+    txt: "text/plain",
+    csv: "text/csv",
+    doc: "application/msword",
+    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    xls: "application/vnd.ms-excel",
+    xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ppt: "application/vnd.ms-powerpoint",
+    pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    zip: "application/zip",
   };
   return table[ext] ?? "application/octet-stream";
 }
@@ -786,6 +889,20 @@ export function mimeExtension(mime: string): string {
     "application/pdf": "pdf",
     "image/png": "png",
     "image/jpeg": "jpg",
+    "image/webp": "webp",
+    "image/gif": "gif",
+    // FILE_UPLOAD documents (DOCUMENT_MIME in candidate-media.ts). Without
+    // these a .docx landed under a ".bin" key and was served back as an
+    // opaque download with no usable name.
+    "text/plain": "txt",
+    "text/csv": "csv",
+    "application/msword": "doc",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+    "application/vnd.ms-excel": "xls",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+    "application/vnd.ms-powerpoint": "ppt",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
+    "application/zip": "zip",
   };
   return table[base] ?? "bin";
 }

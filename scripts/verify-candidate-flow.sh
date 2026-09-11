@@ -73,12 +73,15 @@ say "heartbeat"
 call POST /stage/heartbeat '{}' | jq_py "print('remainingMs', d['remainingMs'], 'active', d['active'])"
 
 REMAINING=$(call GET /state | jq_py "print(d['stage']['remainingMs'] if d.get('stage') else 0)")
+# Writes carry the stage position since 2026-09-11, so a stale tab cannot
+# write into the next stage; a missing or wrong position is a 409 STAGE_MISMATCH.
+POS=$(call GET /state | jq_py "print(d['stage']['position'] if d.get('stage') else 0)")
 
 if [ "$REMAINING" = "0" ]; then
   # This candidate arrived with a stage whose deadline had already passed, so
   # the expired path is what there is to check: writes refused, close allowed.
   say "stage is already past its deadline: checking the expiry path instead"
-  WRITE=$(call POST /media/init '{"activityIndex":0,"mime":"video/webm"}')
+  WRITE=$(call POST /media/init "{\"activityIndex\":0,\"stagePosition\":$POS,\"mime\":\"video/webm\"}")
   printf '%s' "$WRITE" | grep -q STAGE_EXPIRED \
     && ok "writes refused after the deadline" || bad "a write was accepted after the deadline"
   CODE=$(curl -s -o "$TMP/submit.json" -w '%{http_code}' -X POST -H 'content-type: application/json' -d '{}' "$B/stage/submit")
@@ -92,21 +95,25 @@ else
                       || bad "expected 422, got $CODE"
 
   say "chunked upload: init, three parts, complete"
-  INIT=$(call POST /media/init '{"activityIndex":0,"mime":"video/webm;codecs=vp9"}')
+  say "stale tab guard: a write without the stage position is refused"
+  STALE=$(call POST /media/init '{"activityIndex":0,"mime":"video/webm"}')
+  printf '%s' "$STALE" | grep -q STAGE_MISMATCH && ok "write without stage position refused" || bad "write without stage position accepted"
+
+  INIT=$(call POST /media/init "{\"activityIndex\":0,\"stagePosition\":$POS,\"mime\":\"video/webm;codecs=vp9\"}")
   REF=$(printf '%s' "$INIT" | jq_py "print(d['uploadRef'])")
   printf '%s' "$INIT" | jq_py "print('minPartBytes', d['minPartBytes'], 'proxy', d['proxy'], 'targets', len(d['partTargets']))"
   head -c 120000 /dev/urandom > "$TMP/chunk.bin"
   for n in 1 2 3; do
     curl -s -X PUT --data-binary "@$TMP/chunk.bin" "$B/media/part?ref=$REF&part=$n" >> "$ALL"
   done
-  DONE=$(call POST /media/complete "{\"uploadRef\":\"$REF\",\"activityIndex\":0,\"durationMs\":15000}")
+  DONE=$(call POST /media/complete "{\"uploadRef\":\"$REF\",\"durationMs\":15000}")
   printf '%s' "$DONE" | jq_py "print('status', d['status'], 'bytes', d['bytes'])"
   [ "$(printf '%s' "$DONE" | jq_py "print(d['bytes'])")" = "360000" ] \
     && ok "three parts assembled into one object" || bad "assembled size wrong"
 fi
 
 say "another candidate's upload reference is refused"
-STOLEN=$(call POST /media/complete '{"uploadRef":"00000000-0000-0000-0000-000000000000","activityIndex":0}')
+STOLEN=$(call POST /media/complete '{"uploadRef":"00000000-0000-0000-0000-000000000000"}')
 printf '%s' "$STOLEN" | grep -q UPLOAD_NOT_FOUND && ok "foreign upload ref rejected" || bad "foreign upload ref accepted"
 
 say "technical events: only real ones are stored"

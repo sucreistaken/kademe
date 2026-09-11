@@ -60,13 +60,20 @@ export default async function CandidateDetailPage({
   const t = managerT(locale);
   const { id } = await params;
   const query = await searchParams;
-  const detail = await loadCandidateDetail(user.orgId, id);
+  const detail = await loadCandidateDetail(
+    user.orgId,
+    id,
+    typeof query.assessment === "string" ? query.assessment : undefined,
+  );
   if (!detail) notFound();
 
   const { row, stages, attempts, events, decisions } = detail;
   const now = new Date();
   const state = pipelineState(row, now);
-  const back = `/candidates/${id}`;
+  // Every link and redirect from here names the assessment, so a candidate
+  // invited to two positions never bounces to the other one on the way back.
+  const back = `/candidates/${id}?assessment=${row.assessmentId}`;
+  const reviewHref = `/candidates/${id}/review?assessment=${row.assessmentId}`;
 
   const scoredStages = stages.filter((stage) => stage.average !== null).length;
   const allStagesScored = stages.length > 0 && scoredStages === stages.length;
@@ -147,7 +154,7 @@ export default async function CandidateDetailPage({
               <StageBlock
                 key={stage.stageId}
                 stage={stage}
-                candidateId={id}
+                reviewHref={reviewHref}
                 locale={locale}
                 t={t}
               />
@@ -213,10 +220,7 @@ export default async function CandidateDetailPage({
                 <p className="text-[13px] text-muted">
                   {t("candidateDetail.notScoredYet")}
                 </p>
-                <InlineLink
-                  href={`/candidates/${id}/review`}
-                  className="mt-2 inline-block text-[13px]"
-                >
+                <InlineLink href={reviewHref} className="mt-2 inline-block text-[13px]">
                   {t("candidateDetail.startScoring")}
                 </InlineLink>
               </div>
@@ -253,7 +257,8 @@ export default async function CandidateDetailPage({
               </>
             )}
 
-          <div className="px-5 pt-5 pb-1">
+          {/* `#decision` is where the review screen's "Decide" button lands. */}
+          <div id="decision" className="scroll-mt-6 px-5 pt-5 pb-1">
             <h2 className="text-[13.5px] font-semibold">
               {t("candidateDetail.decisionTitle")}
             </h2>
@@ -261,6 +266,12 @@ export default async function CandidateDetailPage({
             <form action={saveDecision} className="px-5 py-4">
               <input type="hidden" name="assessmentId" value={row.assessmentId} />
               <input type="hidden" name="back" value={back} />
+
+              {query.error === "decision" ? (
+                <p role="alert" className="mb-3 text-[13px] text-danger">
+                  {t("candidateDetail.decisionError")}
+                </p>
+              ) : null}
 
               <fieldset className="space-y-2" disabled={Boolean(decisionBlockedReason)}>
                 <legend className="sr-only">{t("candidateDetail.decisionOptions")}</legend>
@@ -442,12 +453,12 @@ function AnswerText({ text, t }: { text: string; t: T }) {
  */
 function StageBlock({
   stage,
-  candidateId,
+  reviewHref,
   locale,
   t,
 }: {
   stage: DetailStage;
-  candidateId: string;
+  reviewHref: string;
   locale: Locale;
   t: T;
 }) {
@@ -457,7 +468,8 @@ function StageBlock({
 
   return (
     <div className="border-b border-line last:border-b-0">
-      <details className="group" open={stage.orderIndex === 1}>
+      {/* orderIndex is 0-based: the first stage is the one open on arrival. */}
+      <details className="group" open={stage.orderIndex === 0}>
         <summary className="flex cursor-pointer items-center justify-between gap-4 px-[18px] py-3.5">
           <span>
             <span className="block text-[13.5px] font-semibold">
@@ -529,7 +541,7 @@ function StageBlock({
 
                       {activity.media && (
                         <InlineLink
-                          href={`/candidates/${candidateId}/review`}
+                          href={reviewHref}
                           className="mt-1.5 inline-block text-[12px]"
                         >
                           {t("candidateDetail.openInReview")}

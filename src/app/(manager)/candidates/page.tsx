@@ -7,6 +7,7 @@ import { UndoStrip } from "@/components/ui/undo-strip";
 import { FilterForm } from "@/components/manager/filter-form";
 import { ScoreBar } from "@/components/manager/score-bar";
 import { requireUser } from "@/server/session";
+import { can } from "@/lib/authorize";
 import {
   loadAssessmentRows,
   loadPositions,
@@ -58,6 +59,9 @@ export default async function CandidatesPage({
   const scale = await loadScale(user.orgId);
   const scaleMax = scale?.maxValue ?? 5;
   const now = new Date();
+  // Invite and extend both land on requireUser("candidate:invite"); a reviewer
+  // gets a disabled control that says so rather than an error page.
+  const mayInvite = can(user, "candidate:invite");
 
   const filters: Filters = {
     q: single(params.q),
@@ -98,7 +102,7 @@ export default async function CandidatesPage({
         </div>
         {/* The zero-result state carries its own primary button. Two filled
             buttons on one screen breaks the single-emphasis rule. */}
-        {visible.length > 0 && (
+        {visible.length > 0 && mayInvite && (
           <Button asChild variant="primary" size="md">
             <Link href="/candidates/new">{t("shared.inviteCandidate")}</Link>
           </Button>
@@ -183,6 +187,7 @@ export default async function CandidatesPage({
             rows={rows}
             now={now}
             totalInPosition={inPosition.length}
+            mayInvite={mayInvite}
             t={t}
           />
         ) : (
@@ -206,6 +211,7 @@ export default async function CandidatesPage({
                     now={now}
                     scaleMax={scaleMax}
                     locale={locale}
+                    mayInvite={mayInvite}
                     t={t}
                   />
                 ))}
@@ -244,12 +250,14 @@ function CandidateRow({
   now,
   scaleMax,
   locale,
+  mayInvite,
   t,
 }: {
   row: AssessmentRow;
   now: Date;
   scaleMax: number;
   locale: Locale;
+  mayInvite: boolean;
   t: T;
 }) {
   const state = pipelineState(row, now);
@@ -280,7 +288,9 @@ function CandidateRow({
           <Avatar name={row.candidateName} />
           <div className="min-w-0">
             <Link
-              href={`/candidates/${row.candidateId}`}
+              // The assessment travels with the link: a candidate invited to
+              // two positions has two rows here and each must open its own.
+              href={`/candidates/${row.candidateId}?assessment=${row.assessmentId}`}
               className="block truncate font-medium hover:underline"
             >
               {row.candidateName}
@@ -316,15 +326,26 @@ function CandidateRow({
       </td>
       <td className="px-5 py-3.5 text-right">
         {state === "NOT_STARTED" || state === "EXPIRED" ? (
-          <form action={extendLink} className="inline">
-            <input type="hidden" name="linkId" value={row.linkId ?? ""} />
-            <input type="hidden" name="days" value="3" />
-            <input type="hidden" name="back" value="/candidates" />
-            <input type="hidden" name="candidateName" value={row.candidateName} />
-            <Button type="submit" variant="secondary" size="sm">
+          mayInvite ? (
+            <form action={extendLink} className="inline">
+              <input type="hidden" name="linkId" value={row.linkId ?? ""} />
+              <input type="hidden" name="days" value="3" />
+              <input type="hidden" name="back" value="/candidates" />
+              <input type="hidden" name="candidateName" value={row.candidateName} />
+              <Button type="submit" variant="secondary" size="sm">
+                {state === "EXPIRED" ? t("candidates.reopen") : t("candidates.extend")}
+              </Button>
+            </form>
+          ) : (
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled
+              disabledReason={t("shared.noRolePermission")}
+            >
               {state === "EXPIRED" ? t("candidates.reopen") : t("candidates.extend")}
             </Button>
-          </form>
+          )
         ) : state === "IN_PROGRESS" ? (
           // The candidate is still recording. Opening the review screen now
           // would show a half-written answer and invite scoring it, so the
@@ -349,7 +370,7 @@ function CandidateRow({
           <Link
             href={
               state === "DECIDED" || state === "SCORED"
-                ? `/candidates/${row.candidateId}`
+                ? `/candidates/${row.candidateId}?assessment=${row.assessmentId}`
                 : `/candidates/${row.candidateId}/review?assessment=${row.assessmentId}`
             }
             className="rounded-[8px] border border-line px-3 py-1.5 text-[13px] hover:bg-canvas"
@@ -384,6 +405,7 @@ function ZeroResults({
   rows,
   now,
   totalInPosition,
+  mayInvite,
   t,
 }: {
   filters: Filters;
@@ -391,6 +413,7 @@ function ZeroResults({
   rows: AssessmentRow[];
   now: Date;
   totalInPosition: number;
+  mayInvite: boolean;
   t: T;
 }) {
   return (
@@ -442,11 +465,23 @@ function ZeroResults({
         {active.length === 0 && totalInPosition === 0 && (
           <p className="text-[13px] text-muted">{t("candidates.noneInvited")}</p>
         )}
-        <Button asChild variant="primary" size="md">
-          <Link href="/candidates/new" className="mt-2">
+        {mayInvite ? (
+          <Button asChild variant="primary" size="md">
+            <Link href="/candidates/new" className="mt-2">
+              {t("shared.inviteCandidate")}
+            </Link>
+          </Button>
+        ) : (
+          <Button
+            variant="primary"
+            size="md"
+            className="mt-2"
+            disabled
+            disabledReason={t("shared.noRolePermission")}
+          >
             {t("shared.inviteCandidate")}
-          </Link>
-        </Button>
+          </Button>
+        )}
       </div>
     </div>
   );

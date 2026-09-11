@@ -21,23 +21,33 @@ aşağıda, "Silmeyi açmak" bölümünde.
 
 | Ayar | Varsayılan | Neyi siler | Saat ne zaman başlar |
 |---|---|---|---|
-| `mediaRetentionDays` | 180 gün | Kayıtlar (`media_assets` + depodaki nesne) | **Karar** verildiği an |
+| `mediaRetentionDays` | 180 gün | Kayıtlar (`media_assets` + depodaki nesne) | **Nihai karar** (ACCEPTED ya da REJECTED) verildiği an |
 | `candidateRetentionDays` | 730 gün | Aday kaydının tamamı (`candidates`, cascade ile altındaki her şey) | **Son temas** |
 
 Medya saatinin kayıttan değil karardan başlaması bilinçli: incelemesi üç ay süren bir aday
 videosunu, henüz kimse izlememişken silmek anlamsız olurdu. Kararı verilmiş bir adayın
 videosu ise işini görmüştür, aday kaydı hâlâ dursa bile.
 
-**Çapa (anchor) alanları ve yedekleri.** Bir satırın yaşını hangi tarihten sayıyoruz:
+**Çapa (anchor) alanları.** Bir satırın yaşını hangi tarihten sayıyoruz:
 
 ```
-medya   : coalesce(en son decisions.at, assessments.created_at, media_assets.created_at)
+medya   : en son NİHAİ decisions.at (status IN ('ACCEPTED', 'REJECTED')); yoksa saat hiç başlamaz
 aday    : coalesce(candidates.last_contact_at, candidates.created_at)
 ```
 
-Yedekler önemli. `media_assets.stage_run_id` nullable, yani hiçbir aşamaya bağlanmamış
-öksüz bir yükleme olabilir; çapası olmasa sonsuza kadar yaşardı. Aynı şekilde kararı hiç
-verilmemiş bir aday, davet tarihinden sayılarak eninde sonunda kapsama girer.
+Medya için yedek çapa bilerek YOK. Önceki sürüm `coalesce(en son decisions.at,
+assessments.created_at, media_assets.created_at)` kullanıyordu; bu, herhangi bir karar
+satırının (IN_REVIEW, RETAKE_REQUESTED, ON_HOLD dahil) hatta davet tarihinin bile saati
+başlatması demekti ve yukarıdaki "karar verilene kadar video durur" ilkesiyle çelişiyordu.
+Şimdi kural: nihai karar yoksa o değerlendirmenin medyası medya planına hiç girmez.
+İnceleme sürüyorsa video durur. Bu kural `mediaAnchorFrom()` ile saf fonksiyon olarak
+`retention.test.ts` içinde sınanıyor; SQL tarafı (`latestTerminalDecision()`) aynı kuralı
+uygular.
+
+Sonucu: `media_assets.stage_run_id` nullable olduğundan hiçbir aşamaya bağlanmamış
+öksüz bir yükleme medya saatiyle silinmez. Sonsuza kadar da yaşamaz: aday saati
+(730 gün) dolunca `candidates` cascade ile altındaki her şeyi götürür. Kararı hiç
+verilmemiş bir adayın videosu da ancak o yoldan kapsama girer.
 
 Sınır dışlayıcı: çapası tam kesim anına eşit olan satır bu koşuda değil, bir sonrakinde
 alınır.

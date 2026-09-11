@@ -77,7 +77,9 @@ export default async function ReviewPage({
           <p className="mt-1.5 text-[13px] text-muted">{t("review.notStartedBody")}</p>
           <div className="mt-4">
             <Button variant="secondary" size="md" asChild>
-              <Link href={`/candidates/${id}`}>{t("review.goToCandidate")}</Link>
+              <Link href={`/candidates/${id}?assessment=${assessmentId}`}>
+                {t("review.goToCandidate")}
+              </Link>
             </Button>
           </div>
         </Card>
@@ -101,8 +103,14 @@ export default async function ReviewPage({
           const payload = (activity.response?.payload ?? {}) as ResponsePayload;
           // Playback URLs are minted per request and expire in five minutes.
           // The bucket is never public and the key never reaches the client.
+          // Only for an asset that has an object to play: READY, or INCOMPLETE
+          // (the parts that did arrive are playable). An UPLOADING asset has no
+          // object yet and a signed URL for it is a player that errors out;
+          // the screen shows "not ready" from mediaStatus instead.
           const mediaUrl =
-            activity.media && activity.media.status !== "FAILED"
+            activity.media &&
+            (activity.media.status === "READY" ||
+              activity.media.status === "INCOMPLETE")
               ? await storage.getSignedUrl(
                   activity.media.storageKey,
                   MEDIA_URL_TTL_SECONDS,
@@ -168,6 +176,7 @@ export default async function ReviewPage({
       stages={stages}
       canScore={can(user, "evaluation:write")}
       queue={queue}
+      decisionHref={`/candidates/${id}?assessment=${assessmentId}#decision`}
     />
   );
 }

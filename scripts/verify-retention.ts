@@ -37,10 +37,11 @@ function ago(iso: string | null, now: Date): string {
 }
 
 async function main() {
-  const { count, isNotNull, like } = await import("drizzle-orm");
+  const { count, eq, inArray, isNotNull, like } = await import("drizzle-orm");
   const { db } = await import("../src/db");
-  const { auditLogs, candidates, mediaAssets } = await import("../src/db/schema");
-  const { runRetention, SOFT_DELETE_GRACE_DAYS } = await import(
+  const { assessments, attempts, auditLogs, candidates, decisions, mediaAssets, stageRuns } =
+    await import("../src/db/schema");
+  const { runRetention, SOFT_DELETE_GRACE_DAYS, TERMINAL_DECISION_STATUSES } = await import(
     "../src/lib/retention"
   );
 
@@ -62,6 +63,23 @@ async function main() {
       .from(candidates)
       .where(isNotNull(candidates.deletedAt));
     const [media] = await db.select({ n: count() }).from(mediaAssets);
+    // Media whose assessment has at least one terminal decision: the only rows
+    // the media clock can ever select.
+    const [decided] = await db
+      .select({ n: count() })
+      .from(mediaAssets)
+      .innerJoin(stageRuns, eq(stageRuns.id, mediaAssets.stageRunId))
+      .innerJoin(attempts, eq(attempts.id, stageRuns.attemptId))
+      .innerJoin(assessments, eq(assessments.id, attempts.assessmentId))
+      .where(
+        inArray(
+          assessments.id,
+          db
+            .select({ id: decisions.assessmentId })
+            .from(decisions)
+            .where(inArray(decisions.status, [...TERMINAL_DECISION_STATUSES])),
+        ),
+      );
     const [cands] = await db.select({ n: count() }).from(candidates);
     const [audit] = await db
       .select({ n: count() })
@@ -71,6 +89,7 @@ async function main() {
       mediaMarked: marked?.n ?? 0,
       candidatesSoftDeleted: softDeleted?.n ?? 0,
       mediaRows: media?.n ?? 0,
+      mediaRowsDecided: decided?.n ?? 0,
       candidateRows: cands?.n ?? 0,
       retentionAuditRows: audit?.n ?? 0,
     };
@@ -190,12 +209,26 @@ async function main() {
         }`,
     );
   }
-  if (probe.totals.mediaToMark === 0 && before.mediaRows > 0) {
+  // Only media behind a terminal decision is ever on the media clock, so that
+  // is the denominator. Comparing against every media row would flag a healthy
+  // database with open reviews as a broken join.
+  if (probe.totals.mediaToMark === 0 && before.mediaRowsDecided > 0) {
     bad(
-      `${before.mediaRows} media rows exist but none matched even ${PROBE_DAYS} days out. The anchor join is probably wrong.`,
+      `${before.mediaRowsDecided} media rows sit behind an ACCEPTED/REJECTED decision but none matched even ${PROBE_DAYS} days out. The anchor join is probably wrong.`,
+    );
+  } else if (before.mediaRowsDecided > 0) {
+    ok(
+      `the media anchor join matches rows (${probe.totals.mediaToMark} of ${before.mediaRowsDecided} decided, ${before.mediaRows} total)`,
     );
   } else if (before.mediaRows > 0) {
-    ok(`the media anchor join matches rows (${probe.totals.mediaToMark} of ${before.mediaRows})`);
+    ok(
+      `${before.mediaRows} media rows, none behind a terminal decision, so none on the media clock. Expected, not a join failure.`,
+    );
+  }
+  if (probe.totals.mediaToMark > before.mediaRowsDecided) {
+    bad(
+      `${probe.totals.mediaToMark} media rows would be marked but only ${before.mediaRowsDecided} sit behind a terminal decision. Something without a decision is on the clock.`,
+    );
   }
   if (probe.totals.candidatesToMark === 0 && before.candidateRows > 0) {
     bad(

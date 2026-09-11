@@ -68,12 +68,15 @@ export default async function LibraryPage({
               <div className="px-5 py-10 text-center">
                 <p className="text-sm font-medium">{t("library.emptyTitle")}</p>
                 <p className="mt-1.5 text-[13px] text-muted">{t("library.emptyBody")}</p>
-                <InlineLink
-                  href="/library/competencies/new"
-                  className="mt-3 inline-block text-[13px]"
-                >
-                  {t("library.addFirst")}
-                </InlineLink>
+                {/* /library/competencies/new is template:write only. */}
+                {mayEdit ? (
+                  <InlineLink
+                    href="/library/competencies/new"
+                    className="mt-3 inline-block text-[13px]"
+                  >
+                    {t("library.addFirst")}
+                  </InlineLink>
+                ) : null}
               </div>
             ) : (
               <ul>
@@ -219,11 +222,15 @@ export default async function LibraryPage({
                   </li>
                 ))}
               </ul>
-              <div className="border-t border-line px-5 py-3.5">
-                <InlineLink href="/library/scale" className="text-[13px]">
-                  {t("shared.editScale")}
-                </InlineLink>
-              </div>
+              {/* /library/scale is template:write only; the scale is still
+                  listed above, so nothing is hidden from a reviewer but the door. */}
+              {mayEdit ? (
+                <div className="border-t border-line px-5 py-3.5">
+                  <InlineLink href="/library/scale" className="text-[13px]">
+                    {t("shared.editScale")}
+                  </InlineLink>
+                </div>
+              ) : null}
             </>
           ) : (
             <div className="px-5 py-6">

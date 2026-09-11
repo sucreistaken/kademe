@@ -1,8 +1,37 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { apiSend } from "@/lib/client/api";
+import type { FlushRegistry } from "@/lib/client/flush-registry";
 import { useT } from "@/i18n/candidate-client";
+
+/**
+ * What every activity inside a running stage needs from the stage around it:
+ * which stage position it is writing to (sent with every write, so a stale tab
+ * is refused rather than silently answering the wrong stage) and where to
+ * register a pending save so the submit can wait for it.
+ */
+export type StageSession = {
+  position: number;
+  flushes: FlushRegistry;
+};
+
+export const StageSessionContext = createContext<StageSession | null>(null);
+
+export function useStageSession(): StageSession {
+  const session = useContext(StageSessionContext);
+  if (!session) {
+    throw new Error("useStageSession must be used inside a StageRunner");
+  }
+  return session;
+}
 
 /**
  * Draft autosave. Nothing the candidate types is ever lost to a closed tab, and
@@ -13,24 +42,47 @@ import { useT } from "@/i18n/candidate-client";
 export type SaveState = "idle" | "saving" | "saved" | "error";
 
 export function useAutosave(token: string, activityIndex: number, delayMs = 800) {
+  const { position, flushes } = useStageSession();
   const [status, setStatus] = useState<SaveState>("idle");
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const timer = useRef<number | null>(null);
   const pending = useRef<Record<string, unknown> | null>(null);
+  /**
+   * Saves are chained, one request after the other, for two reasons: a slow
+   * earlier draft can then never overwrite a later one on the server, and
+   * "wait until my draft is saved" is one promise, whether the pending body
+   * is still debounced or already on the wire.
+   */
+  const inflight = useRef<Promise<void>>(Promise.resolve());
 
-  const flush = useCallback(async () => {
+  const flush = useCallback(() => {
     const body = pending.current;
-    if (!body) return;
-    pending.current = null;
-    setStatus("saving");
-    try {
-      await apiSend(token, "/response", { activityIndex, ...body }, "PUT");
-      setStatus("saved");
-      setSavedAt(Date.now());
-    } catch {
-      setStatus("error");
+    if (body) {
+      pending.current = null;
+      if (timer.current) {
+        window.clearTimeout(timer.current);
+        timer.current = null;
+      }
+      setStatus("saving");
+      inflight.current = inflight.current
+        .then(() =>
+          apiSend(
+            token,
+            "/response",
+            { stagePosition: position, activityIndex, ...body },
+            "PUT",
+          ),
+        )
+        .then(
+          () => {
+            setStatus("saved");
+            setSavedAt(Date.now());
+          },
+          () => setStatus("error"),
+        );
     }
-  }, [token, activityIndex]);
+    return inflight.current;
+  }, [token, position, activityIndex]);
 
   const save = useCallback(
     (body: Record<string, unknown>, immediate = false) => {
@@ -45,12 +97,13 @@ export function useAutosave(token: string, activityIndex: number, delayMs = 800)
     [flush, delayMs],
   );
 
-  useEffect(() => {
-    return () => {
-      if (timer.current) window.clearTimeout(timer.current);
-      void flush();
-    };
-  }, [flush]);
+  // The registry fires the flush once more on unregister (unmount), so a
+  // debounced draft goes out when the candidate moves to the next question
+  // and the stage submit still waits for it.
+  useEffect(
+    () => flushes.register(String(activityIndex), flush),
+    [flushes, activityIndex, flush],
+  );
 
   return { save, flush, status, savedAt };
 }
@@ -72,7 +125,7 @@ export function SavedMark({
     const update = () => {
       const seconds = Math.max(1, Math.round((Date.now() - savedAt) / 1000));
       setAge(
-        seconds < 60 ? t("secondsAgo", { seconds }) : t("justNow"),
+        seconds < 60 ? t("justNow") : t("secondsAgo", { seconds }),
       );
     };
     const first = window.setTimeout(update, 0);

@@ -10,7 +10,10 @@ import {
 } from "@/lib/client/recorder";
 import { formatCountdown } from "@/lib/timer";
 import type { StageActivity } from "@/lib/candidate-flow";
-import { ActivityKicker } from "@/components/candidate/activities/shared";
+import {
+  ActivityKicker,
+  useStageSession,
+} from "@/components/candidate/activities/shared";
 import { TextActivity } from "@/components/candidate/activities/TextActivity";
 import { useT } from "@/i18n/candidate-client";
 
@@ -53,6 +56,7 @@ export function MediaActivity({
   onThinking?: (thinking: boolean) => void;
 }) {
   const t = useT("media");
+  const { position: stagePosition } = useStageSession();
   const isAudio = activity.type === "AUDIO";
   const answerSeconds = activity.answerSeconds ?? 180;
 
@@ -61,6 +65,14 @@ export function MediaActivity({
   const recorderRef = useRef<MediaRecorder | null>(null);
   const uploaderRef = useRef<ChunkedUploader | null>(null);
   const startedAtRef = useRef<number>(0);
+  /**
+   * Set from the moment `beginRecording` is entered until the take is over.
+   * The effect that calls it re-runs on every render that touches its inputs,
+   * and `/media/init` takes long enough that several of those happen before
+   * the phase flips to RECORDING; without this guard each one opened another
+   * MediaRecorder and another media asset for the same answer.
+   */
+  const beginningRef = useRef(false);
 
   const [phase, setPhase] = useState<Phase>(
     activity.payload?.mediaAssetId ? "DONE" : "THINKING",
@@ -76,9 +88,20 @@ export function MediaActivity({
     stalled: false,
   });
   const [error, setError] = useState<string | null>(null);
-  const [takes, setTakes] = useState(0);
+  // Seeded from the server's count of kept recordings, so a reload cannot
+  // hand the candidate a fresh set of takes. The server enforces it too.
+  const [takes, setTakes] = useState(activity.takeCount);
   const [useText, setUseText] = useState(!!activity.payload?.usedTextAlternative);
   const [startRequested, setStartRequested] = useState(false);
+  /**
+   * A retake has no think time: the candidate has already thought. This is an
+   * explicit flag rather than "thinkLeft is zero" because the countdown effect
+   * derives its end from `thinkSeconds` and would otherwise start the full
+   * think time over again 200 ms after the retake began.
+   */
+  const [skipThink, setSkipThink] = useState(false);
+  /* The server said no more takes. Offering "try again" would only repeat it. */
+  const [exhausted, setExhausted] = useState(false);
 
   useEffect(() => {
     onRecording?.(phase === "RECORDING");
@@ -87,10 +110,10 @@ export function MediaActivity({
   useEffect(() => {
     // An activity with no think time passes through this phase in one frame,
     // and hiding the shell for that frame would only make the header blink.
-    const thinking = phase === "THINKING" && activity.thinkSeconds > 0;
+    const thinking = phase === "THINKING" && activity.thinkSeconds > 0 && !skipThink;
     onThinking?.(thinking);
     return () => onThinking?.(false);
-  }, [phase, activity.thinkSeconds, onThinking]);
+  }, [phase, activity.thinkSeconds, skipThink, onThinking]);
 
   /*
    * The camera is closed while the candidate is thinking, and the screen says
@@ -103,12 +126,15 @@ export function MediaActivity({
    * starts on time. Permission was already granted during the device check, so
    * this is a device open, not a prompt.
    */
+  // Once the take is over (DONE, FAILED) nothing here wants the camera,
+  // whatever got it opened during think time. `startRequested` used to count
+  // on its own, which kept the light on after a "start now" answer was saved.
+  const thinkOver = skipThink || startRequested || thinkLeft <= 0;
   const cameraWanted =
     !useText &&
     (phase === "RECORDING" ||
       phase === "UPLOADING" ||
-      startRequested ||
-      (phase === "THINKING" && thinkLeft <= CAMERA_WARMUP_MS));
+      (phase === "THINKING" && (thinkOver || thinkLeft <= CAMERA_WARMUP_MS)));
 
   useEffect(() => {
     if (!cameraWanted) return;
@@ -150,24 +176,44 @@ export function MediaActivity({
     // tracks down underneath it would end the recording it just started.
   }, [cameraWanted, activity.index, isAudio, onStream, t]);
 
+  /*
+   * The camera opens during think time, and the think screen has no <video>
+   * element: it is a countdown and the question, nothing else. So when the
+   * stream arrives above there is nothing to attach it to, and the element
+   * that appears with the recording screen would stay black for the whole
+   * answer while MediaRecorder happily records off the same stream. The
+   * candidate cannot see themselves, the manager can. Attach on every phase
+   * change instead, whenever both the element and the stream exist.
+   */
+  useEffect(() => {
+    const video = videoRef.current;
+    const stream = streamRef.current;
+    if (!video || !stream || isAudio) return;
+    if (video.srcObject !== stream) {
+      video.srcObject = stream;
+      void video.play().catch(() => undefined);
+    }
+  }, [phase, streamReady, isAudio]);
+
   /* ---- think countdown, camera off ---- */
   useEffect(() => {
-    if (phase !== "THINKING" || activity.thinkSeconds === 0) return;
+    if (phase !== "THINKING" || activity.thinkSeconds === 0 || skipThink) return;
     const endsAt = Date.now() + activity.thinkSeconds * 1000;
     const timer = window.setInterval(() => {
       setThinkLeft(Math.max(0, endsAt - Date.now()));
     }, 200);
     return () => window.clearInterval(timer);
-  }, [phase, activity.index, activity.thinkSeconds]);
+  }, [phase, activity.index, activity.thinkSeconds, skipThink]);
 
   /* Recording begins when think time is over AND the camera is actually ready,
-   * or as soon as the camera opens for a candidate who said they were ready. */
+   * or as soon as the camera opens for a candidate who said they were ready.
+   * Keyed on the boolean, not on `thinkLeft` itself, so the ticking countdown
+   * does not re-run it every 200 ms while `/media/init` is still in flight. */
   useEffect(() => {
-    if (phase !== "THINKING" || !streamReady) return;
-    if (thinkLeft > 0 && !startRequested) return;
+    if (phase !== "THINKING" || !streamReady || !thinkOver) return;
     void beginRecording();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, streamReady, thinkLeft, startRequested]);
+  }, [phase, streamReady, thinkOver]);
 
   /* ---- recording countdown ---- */
   useEffect(() => {
@@ -192,21 +238,20 @@ export function MediaActivity({
       if (phase !== "RECORDING" || !uploader) return;
       apiBeacon(token, "/media/complete", {
         uploadRef: uploader.uploadRef,
-        activityIndex: activity.index,
         durationMs: Date.now() - startedAtRef.current,
         incomplete: true,
       });
     };
     window.addEventListener("pagehide", onHide);
     return () => window.removeEventListener("pagehide", onHide);
-  }, [token, activity.index, phase]);
+  }, [token, phase]);
 
   const finishRecording = useCallback(async () => {
     const uploader = uploaderRef.current;
     if (!uploader) return;
     try {
       const durationMs = Date.now() - startedAtRef.current;
-      const res = await uploader.finish(activity.index, durationMs);
+      const res = await uploader.finish(durationMs);
       setPhase("DONE");
       setTakes((n) => n + 1);
       onAnswered(true);
@@ -215,16 +260,17 @@ export function MediaActivity({
       setError(t("finishFailed"));
       setPhase("FAILED");
     }
-  }, [activity.index, onAnswered, t]);
+  }, [onAnswered, t]);
 
   const beginRecording = useCallback(async () => {
     const stream = streamRef.current;
-    if (!stream) return;
+    if (!stream || beginningRef.current) return;
+    beginningRef.current = true;
     try {
       const mime = pickRecorderMime(isAudio ? "audio" : "video");
       const uploader = await ChunkedUploader.open(
         token,
-        activity.index,
+        { stagePosition, activityIndex: activity.index },
         mime || (isAudio ? "audio/webm" : "video/webm"),
         setUpload,
       );
@@ -246,11 +292,18 @@ export function MediaActivity({
       setRecordLeft(answerSeconds * 1000);
       setElapsed(0);
       setPhase("RECORDING");
-    } catch {
-      setError(t("startFailed"));
+    } catch (err) {
+      // The server's own words when it refused (no takes left, stale stage),
+      // the generic line when the recorder itself would not start.
+      const fromServer =
+        err instanceof Error && "code" in err ? err.message : null;
+      if (err instanceof Error && "code" in err && err.code === "TAKES_EXHAUSTED") {
+        setExhausted(true);
+      }
+      setError(fromServer ?? t("startFailed"));
       setPhase("FAILED");
     }
-  }, [token, activity.index, isAudio, answerSeconds, finishRecording, t]);
+  }, [token, stagePosition, activity.index, isAudio, answerSeconds, finishRecording, t]);
 
   function stopRecording() {
     const recorder = recorderRef.current;
@@ -260,12 +313,20 @@ export function MediaActivity({
     }
   }
 
+  /**
+   * Back to the start of a take, without the think time. Also the way out of
+   * FAILED: nothing was saved there, so it costs no take, and the server counts
+   * only finished recordings anyway.
+   */
   function retake() {
     uploaderRef.current = null;
+    recorderRef.current = null;
+    beginningRef.current = false;
     setStartRequested(false);
     setError(null);
     setUpload({ uploadedBytes: 0, queuedBytes: 0, stalled: false });
     setThinkLeft(0);
+    setSkipThink(true);
     setPhase("THINKING");
   }
 
@@ -485,7 +546,9 @@ export function MediaActivity({
               ? t("hintUploading")
               : phase === "DONE"
                 ? t("hintDone")
-                : t("hintPreparing")}
+                : phase === "FAILED"
+                  ? t("hintFailed")
+                  : t("hintPreparing")}
         </span>
         <div className="flex items-center gap-3">
           {phase === "DONE" && takes < activity.maxTakes ? (
@@ -495,6 +558,15 @@ export function MediaActivity({
               className="rounded-lg border border-ink bg-surface px-4 py-2.5 text-[13px] font-semibold text-ink"
             >
               {t("retake")}
+            </button>
+          ) : null}
+          {phase === "FAILED" && !exhausted ? (
+            <button
+              type="button"
+              onClick={retake}
+              className="rounded-lg border border-ink bg-surface px-4 py-2.5 text-[13px] font-semibold text-ink"
+            >
+              {t("tryAgain")}
             </button>
           ) : null}
           {recording ? (
@@ -511,7 +583,10 @@ export function MediaActivity({
 
       {error ? <p className="mt-3 text-[13px] text-danger">{error}</p> : null}
 
-      {activity.config.textAlternativeEnabled && phase !== "DONE" ? (
+      {/* Only once the take has failed. While recording or uploading the
+          switch would stop the tracks, which fires the recorder's onstop and
+          saves the half-finished clip as the answer, take included. */}
+      {activity.config.textAlternativeEnabled && phase === "FAILED" ? (
         <button
           type="button"
           onClick={() => setUseText(true)}

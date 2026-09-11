@@ -21,6 +21,13 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/cn";
 import { useMT } from "@/i18n/manager-client";
+import {
+  EMPTY_DIRTY,
+  clearDirty,
+  markDirty,
+  mergeDirty,
+  type DirtyMap,
+} from "./merge-dirty";
 import { Button, DisabledReason } from "@/components/ui/button";
 import { TemplateSteps } from "@/components/manager/template-steps";
 import { Card } from "@/components/ui/card";
@@ -229,6 +236,8 @@ export function BuilderScreen({
 
   const router = useRouter();
   const [stages, setStages] = useState(initialStages);
+  // Fields edited locally and not yet handed to a save. See merge-dirty.ts.
+  const [dirty, setDirty] = useState<DirtyMap>(EMPTY_DIRTY);
 
   /**
    * Local state seeded from a prop goes stale the moment the server sends new
@@ -236,11 +245,16 @@ export function BuilderScreen({
    * list kept showing the old one. Resetting during render when the incoming
    * prop actually changed is React's own answer to that, and it is cheaper and
    * less surprising than an effect that fires after a paint.
+   *
+   * Not a plain reset, though. Every save triggers a refresh, and the manager
+   * has usually tabbed into the next field by the time it lands; replacing the
+   * tree wholesale threw away what they had typed there. Dirty fields keep
+   * their local value, everything else takes the server's.
    */
   const [seenStages, setSeenStages] = useState(initialStages);
   if (seenStages !== initialStages) {
     setSeenStages(initialStages);
-    setStages(initialStages);
+    setStages(mergeDirty(initialStages, stages, dirty));
   }
   const [selected, setSelected] = useState<string | null>(
     initialStages[0]?.activities[0]?.id ?? null,
@@ -305,6 +319,7 @@ export function BuilderScreen({
   /** Local echo for a stage field, so typing does not wait on the server. */
   const patchStage = (id: string, patch: Partial<BuilderStage>) => {
     setStages((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+    setDirty((prev) => markDirty(prev, id, Object.keys(patch)));
   };
 
   const patchActivity = (id: string, patch: Partial<BuilderActivity>) => {
@@ -314,6 +329,21 @@ export function BuilderScreen({
         activities: s.activities.map((a) => (a.id === id ? { ...a, ...patch } : a)),
       })),
     );
+    setDirty((prev) => markDirty(prev, id, Object.keys(patch)));
+  };
+
+  /**
+   * A field handed to a save is clean again: from here the server's copy is
+   * the truth, and the refresh that follows the save is allowed to replace it.
+   */
+  const saveStage = (id: string, patch: Parameters<typeof updateStage>[1]) => {
+    setDirty((prev) => clearDirty(prev, id, Object.keys(patch)));
+    run(() => updateStage(id, patch));
+  };
+
+  const saveActivity = (id: string, patch: Parameters<typeof updateActivity>[1]) => {
+    setDirty((prev) => clearDirty(prev, id, Object.keys(patch)));
+    run(() => updateActivity(id, patch));
   };
 
   const onStageDragEnd = (event: DragEndEvent) => {
@@ -521,14 +551,10 @@ export function BuilderScreen({
                                 if (e.key === "Enter") {
                                   e.preventDefault();
                                   e.currentTarget.blur();
-                                  run(() =>
-                                    updateStage(stage.id, { name: stage.name }),
-                                  );
+                                  saveStage(stage.id, { name: stage.name });
                                 }
                               }}
-                              onBlur={() =>
-                                run(() => updateStage(stage.id, { name: stage.name }))
-                              }
+                              onBlur={() => saveStage(stage.id, { name: stage.name })}
                               className="min-w-0 flex-1 rounded-[6px] border border-transparent
                                          bg-transparent px-1.5 py-0.5 text-[13.5px] font-medium
                                          hover:border-line focus:border-line-strong
@@ -640,8 +666,8 @@ export function BuilderScreen({
             contentLang={contentLang}
             onContentLang={setContentLang}
             onPatch={patchActivity}
-            onSave={(patch) => run(() => updateActivity(found.activity.id, patch))}
-            onSaveStage={(patch) => run(() => updateStage(found.stage.id, patch))}
+            onSave={(patch) => saveActivity(found.activity.id, patch)}
+            onSaveStage={(patch) => saveStage(found.stage.id, patch)}
             onDelete={() => {
               setSelected(null);
               run(() => deleteActivity(found.activity.id));

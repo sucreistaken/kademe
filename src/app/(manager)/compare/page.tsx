@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button, DisabledReason } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { requireUser } from "@/server/session";
+import { can } from "@/lib/authorize";
 import {
   loadAssessmentRows,
   loadPositions,
@@ -25,6 +26,9 @@ export default async function ComparePage({
   const params = await searchParams;
   const rows = await loadAssessmentRows(user.orgId);
   const positions = await loadPositions(user.orgId, rows);
+  // The weights screen is requireUser("template:write"); a reviewer gets the
+  // same disabled control the mixed-versions case already uses.
+  const mayEditWeights = can(user, "template:write");
 
   // Only candidates somebody has actually opened and scored belong in a
   // comparison. Comparing unscored people would invent a ranking.
@@ -126,7 +130,7 @@ export default async function ComparePage({
                         <div className="flex items-center gap-3">
                           <Avatar name={row.candidateName} />
                           <Link
-                            href={`/candidates/${row.candidateId}`}
+                            href={`/candidates/${row.candidateId}?assessment=${row.assessmentId}`}
                             className="font-medium hover:underline"
                           >
                             {row.candidateName}
@@ -170,7 +174,7 @@ export default async function ComparePage({
       {selected.length > 0 && (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
           <p className="text-[13px] text-muted">{t("compare.footnote")}</p>
-          {sharedVersion ? (
+          {sharedVersion && mayEditWeights ? (
             <InlineLink
               href={`/positions/${sharedVersion.positionId}/templates/${sharedVersion.templateId}/versions/${sharedVersion.versionId}/weights`}
               className="text-[13px]"
@@ -183,11 +187,17 @@ export default async function ComparePage({
                 variant="secondary"
                 size="sm"
                 disabled
-                disabledReason={t("compare.differentVersions")}
+                disabledReason={
+                  mayEditWeights ? t("compare.differentVersions") : t("shared.noRolePermission")
+                }
               >
                 {t("compare.editWeights")}
               </Button>
-              <DisabledReason>{t("compare.differentVersionsLong")}</DisabledReason>
+              <DisabledReason>
+                {mayEditWeights
+                  ? t("compare.differentVersionsLong")
+                  : t("shared.roleCannotEditLibrary")}
+              </DisabledReason>
             </div>
           )}
         </div>

@@ -4,6 +4,7 @@ import {
   averageScore,
   weightedScore,
   overallScore,
+  selectWeights,
   knowledgeScore,
   weightsAreValid,
   formatScore,
@@ -57,6 +58,41 @@ describe("weighted average", () => {
 describe("overall score", () => {
   it("uses a plain average when weighting is off, which is the default", () => {
     expect(overallScore([s("a", 5), s("b", 4)], null)).toBe(4.5);
+  });
+});
+
+describe("weight set selection", () => {
+  const setA = [{ competencyId: "comm", percentage: 70 }, { competencyId: "sales", percentage: 30 }];
+  const setB = [{ competencyId: "comm", percentage: 30 }, { competencyId: "sales", percentage: 70 }];
+  const bySet = new Map([
+    ["A", setA],
+    ["B", setB],
+  ]);
+
+  it("is a plain average while weighting is off, even for a pinned evaluation", () => {
+    expect(selectWeights(null, "A", bySet)).toBe(null);
+  });
+
+  it("keeps a pinned evaluation on its own set after a new set becomes active", () => {
+    // Set B was saved and switched on later. The old score stays on A until
+    // the manager recalculates, which is what re-pins it.
+    expect(selectWeights("B", "A", bySet)).toBe(setA);
+  });
+
+  it("lets an unpinned evaluation follow the active set", () => {
+    expect(selectWeights("B", null, bySet)).toBe(setB);
+  });
+
+  it("falls back to the active set when the pinned set has no rows", () => {
+    expect(selectWeights("B", "gone", bySet)).toBe(setB);
+  });
+
+  it("changes the overall only through the selected set", () => {
+    const items = [s("comm", 5), s("sales", 3)];
+    // A: 5*.7 + 3*.3 = 4.4. B: 5*.3 + 3*.7 = 3.6. Off: 4.
+    expect(overallScore(items, selectWeights("B", "A", bySet))).toBe(4.4);
+    expect(overallScore(items, selectWeights("B", null, bySet))).toBe(3.6);
+    expect(overallScore(items, selectWeights(null, "A", bySet))).toBe(4);
   });
 });
 

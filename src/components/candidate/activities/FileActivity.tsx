@@ -9,6 +9,7 @@ import type { StageActivity } from "@/lib/candidate-flow";
 import {
   ActivityKicker,
   ActivityPrompt,
+  useStageSession,
 } from "@/components/candidate/activities/shared";
 import { useT } from "@/i18n/candidate-client";
 
@@ -25,6 +26,7 @@ export function FileActivity({
   onAnswered: (answered: boolean) => void;
 }) {
   const t = useT("activity");
+  const { position: stagePosition } = useStageSession();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [uploaded, setUploaded] = useState<string[]>(
     activity.payload?.fileAssetIds ?? [],
@@ -53,7 +55,7 @@ export function FileActivity({
     try {
       const uploader = await ChunkedUploader.open(
         token,
-        activity.index,
+        { stagePosition, activityIndex: activity.index },
         file.type || "application/octet-stream",
         (status) => {
           const total = status.uploadedBytes + status.queuedBytes;
@@ -63,7 +65,7 @@ export function FileActivity({
       for (let offset = 0; offset < file.size; offset += SLICE_BYTES) {
         uploader.push(file.slice(offset, offset + SLICE_BYTES));
       }
-      await uploader.finish(activity.index, 0);
+      await uploader.finish(0);
       setUploaded((prev) => [...prev, uploader.uploadRef]);
       setNames((prev) => [...prev, file.name]);
       setProgress(1);
