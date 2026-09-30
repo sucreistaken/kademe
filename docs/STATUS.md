@@ -50,24 +50,24 @@ pnpm dev --port 3100
 | Öğretmen paneli, Chrome'da | Bugün kuyruğu, sonuç ekranı, AI önerisini onaylama, gerekçeyle değiştirme, kesinleştirme, bütünlük sekmesi ve işaret onaylama |
 | Panel rotaları | 15 rota × TR/EN, hepsi 200 |
 
-## DOĞRULANMADI (gerçek tarayıcıda, gerçek cihazla denenmeli)
+## Canlıda gerçek cihazla doğrulandı (2026-09-30, kullanıcının Chrome'u, macOS)
 
-Otomasyon sekmesinde kamera izni ve gerçek tam ekran yok. Şunlar hiç denenmedi:
+Test öğrencisi "Test Öğrenci (Kadir)" ile uçtan uca, veritabanından kontrol edildi:
+gerçek kamera ve mikrofon (önizlemede yüz), MediaPipe gerçek yüzde (yüz sayısı 1),
+oda sessizliği kalibrasyonu, tüm ekran paylaşımı, tam ekran, başlangıç ve periyodik
+kareler, sekme/pencere değişimi olayları ve ihlal ekran kareleri, Gemini ikinci bakışı
+(ekranda sınav yerine terminal görünen anı CONFIRMED, temiz kareleri NOT_CONFIRMED
+dedi), uyarlanabilir dilbilgisi (10 soruda SE hedefine ulaştı), gerçek konuşma kaydı
+(video/mp4) → ElevenLabs Scribe (Almanca) → Gemini puanlama önerisi, yazma puanlaması.
+Zamanlayıcılar 1-2 dakikada bir çalıştığı için transkripsiyon ve puanlama bu kadar gecikir.
 
-1. Gerçek kamera ve mikrofon ile sistem kontrolü ve MediaPipe'ın gerçek yüzde çalışması
-   (yüz sayısı, bakış, telefon). Baş açısı işareti (aşağı bakış negatif) varsayımdır.
-2. Gerçek `getDisplayMedia` seçicisi, "Tüm ekran" doğrulaması, macOS Ekran Kaydı izni.
-3. Gerçek tam ekran, Esc davranışı, `keyboard.lock`.
-4. Çift monitör ve sınav ortasında monitör takma.
-5. Firefox / Safari (ikinci ekran doğrulanamaz görünmeli), telefonda engel ekranı.
-6. Gerçek konuşma kaydının ElevenLabs Scribe ile transkripsiyonu ve ardından AI puanlama
-   zinciri (her parça ayrı ayrı doğrulandı, zincir gerçek sesle hiç koşmadı).
-7. Ses etkinliği algılama (VAD) eşiği gerçek odada.
-8. Dinleme seslerinin Almanca telaffuz kalitesi (dinlenmedi).
+## Hâlâ doğrulanmadı
 
-10 dakikalık sabah kontrolü: `pnpm dev:link`, linki kendi Chrome'unda aç, kamerayı ve
-tüm ekranı paylaş, tam ekrana geç, bir bölüm çöz, bir sekme değiştir, telefonu kameraya
-göster; sonra panelde öğrencinin Bütünlük sekmesine bak.
+1. Telefonun kamerada gerçekten algılanması ve bakış işareti (canlı testte oluşmadı).
+2. Ses algılama eşiği: canlı testte 4 "konuşma sesi" işareti oluştu; gerçek mi yanlış
+   alarm mı bilinmiyor, öğretmen karelere bakıp karar verir.
+3. Çift monitör, Firefox / Safari, telefonda engel ekranı.
+4. Dinleme seslerinin telaffuz kalitesi (dinlenmedi).
 
 ## Değişmezler
 
