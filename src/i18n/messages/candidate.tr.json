@@ -430,7 +430,9 @@
     "mobileBody": "Telefon ve tablet tarayıcıları ekran paylaşımını desteklemediği için sınava bilgisayardan (Chrome veya Edge) girmeniz gerekiyor.",
     "copyLink": "Linki kopyala",
     "copied": "Kopyalandı",
-    "mobileHint": "Linki bilgisayarınızda açın; e-postanızdaki link de aynıdır."
+    "mobileHint": "Linki bilgisayarınızda açın; e-postanızdaki link de aynıdır.",
+    "permissionWaiting": "Tarayıcının üst kısmında açılan izin penceresinden \"İzin ver\"i seçin.",
+    "screenPicking": "Açılan pencerede \"Tüm ekran\"ı seçip \"Paylaş\"a basın."
   },
   "proctor": {
     "recoverFULLSCREEN": "Tam ekrandan çıktınız",
@@ -451,7 +453,10 @@
     "resumeFULLSCREEN": "Tam ekran",
     "resumeAction": "Devam et",
     "pipLabel": "Kameranız",
-    "terminated": "Sınav, okulunuzun kurallarına göre sonlandırıldı."
+    "terminated": "Sınav, okulunuzun kurallarına göre sonlandırıldı.",
+    "enterFULLSCREEN": "Tam ekrana geçin",
+    "enterFULLSCREENAction": "Tam ekrana geç",
+    "enterBody": "Sınav tam ekranda yapılır. Süre işlemeye devam ediyor."
   },
   "result": {
     "title": "Sınavınız tamamlandı",

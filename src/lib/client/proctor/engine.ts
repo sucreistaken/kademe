@@ -139,6 +139,8 @@ export class ProctorEngine {
 
   /** Where the session began: the exam page means the tab was reloaded mid-exam. */
   startedFrom: "check" | "exam" | null = null;
+  /** Whether this tab has been in fullscreen at least once (changes the wording). */
+  everFullscreen = false;
 
   async start(env: Record<string, unknown>, from: "check" | "exam" = "check") {
     if (this.sessionId) return;
@@ -431,6 +433,7 @@ export class ProctorEngine {
       if (!document.fullscreenElement) await document.documentElement.requestFullscreen({ navigationUI: "hide" });
       const kb = (navigator as Navigator & { keyboard?: { lock?: (keys: string[]) => Promise<void> } }).keyboard;
       await kb?.lock?.(["Escape"]).catch(() => undefined);
+      this.everFullscreen = true;
       this.set({ fullscreen: true });
       this.end("FULLSCREEN_EXIT");
       this.clearBanner("FULLSCREEN");

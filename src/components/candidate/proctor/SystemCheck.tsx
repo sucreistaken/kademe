@@ -336,7 +336,13 @@ function RowDetail({
     case "CAMERA":
       return (
         <div className="pl-[18px]">
-          {status === "fail" ? <p className="mt-1.5 text-[13px] leading-[1.55] text-muted">{t("cameraDenied")}</p> : status === "ok" ? <p className="mt-1.5 text-[13px] leading-[1.55] text-muted">{t("cameraOk")}</p> : null}
+          {status === "fail" ? (
+            <p className="mt-1.5 text-[13px] leading-[1.55] text-muted">{t("cameraDenied")}</p>
+          ) : status === "ok" ? (
+            <p className="mt-1.5 text-[13px] leading-[1.55] text-muted">{t("cameraOk")}</p>
+          ) : snap?.camera === "asking" ? (
+            <p className="mt-1.5 text-[13px] font-medium leading-[1.55] text-ink">{t("permissionWaiting")}</p>
+          ) : null}
           <div className={cn("mt-2.5 flex items-center gap-4", status !== "ok" && "hidden")}>
             <video ref={previewRef} muted playsInline className="h-[120px] w-[160px] rounded-[8px] bg-ink object-cover" />
             <MicMeter level={snap?.micLevel ?? 0} />
@@ -357,6 +363,8 @@ function RowDetail({
               ? t("screenOk")
               : snap?.surface === "WRONG_SURFACE"
                 ? t("screenWrong")
+                : snap?.screen === "asking"
+                  ? t("screenPicking")
                 : status === "fail"
                   ? t("screenDenied")
                   : t("screenHint"),

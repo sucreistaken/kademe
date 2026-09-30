@@ -430,7 +430,9 @@
     "mobileBody": "Phone and tablet browsers cannot share the screen, so please open the exam on a computer (Chrome or Edge).",
     "copyLink": "Copy the link",
     "copied": "Copied",
-    "mobileHint": "Open the link on your computer; the one in your email is the same."
+    "mobileHint": "Open the link on your computer; the one in your email is the same.",
+    "permissionWaiting": "Choose \"Allow\" in the permission prompt at the top of your browser.",
+    "screenPicking": "In the dialog, choose \"Entire screen\" and press \"Share\"."
   },
   "proctor": {
     "recoverFULLSCREEN": "You left full screen",
@@ -451,7 +453,10 @@
     "resumeFULLSCREEN": "Full screen",
     "resumeAction": "Continue",
     "pipLabel": "Your camera",
-    "terminated": "The exam was ended under your school's rules."
+    "terminated": "The exam was ended under your school's rules.",
+    "enterFULLSCREEN": "Switch to full screen",
+    "enterFULLSCREENAction": "Go full screen",
+    "enterBody": "The exam runs in full screen. The clock keeps running."
   },
   "result": {
     "title": "Your exam is complete",

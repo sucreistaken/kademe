@@ -338,15 +338,17 @@ function RecoverPanel({ reasons, resume }: { reasons: Array<"FULLSCREEN" | "SCRE
       setBusy(false);
     }
   }
-  const title = resume ? p("resumeTitle") : p(`recover${first}` as "recoverFULLSCREEN");
-  const action = p(`recover${first}Action` as "recoverFULLSCREENAction");
+  // Someone who was never in fullscreen did not "leave" it.
+  const firstEntry = !resume && first === "FULLSCREEN" && !engine?.everFullscreen;
+  const title = resume ? p("resumeTitle") : firstEntry ? p("enterFULLSCREEN") : p(`recover${first}` as "recoverFULLSCREEN");
+  const action = firstEntry ? p("enterFULLSCREENAction") : p(`recover${first}Action` as "recoverFULLSCREENAction");
   return (
     <div className="fixed inset-0 z-40 flex items-start justify-center bg-paper/70 px-4 pt-[18vh]">
       <div role="alertdialog" aria-labelledby="recover-title" className="w-full max-w-[460px] rounded-[14px] border border-line bg-surface p-6 shadow-modal">
         <h2 id="recover-title" className="text-[20px] font-bold text-ink">
           {title}
         </h2>
-        <p className="mt-2 text-[14px] leading-[1.6] text-ink-2">{resume ? p("resumeBody") : p("clockRuns")}</p>
+        <p className="mt-2 text-[14px] leading-[1.6] text-ink-2">{resume ? p("resumeBody") : firstEntry ? p("enterBody") : p("clockRuns")}</p>
         {resume ? (
           <ul className="mt-3 flex list-disc flex-col gap-1 pl-5 text-[13.5px] text-ink-2">
             {reasons.map((r) => (
