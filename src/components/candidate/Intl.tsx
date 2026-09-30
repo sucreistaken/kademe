@@ -20,7 +20,7 @@ export function CandidateIntl({
   children: React.ReactNode;
 }) {
   return (
-    <NextIntlClientProvider locale={locale} messages={messagesFor(locale)}>
+    <NextIntlClientProvider locale={locale} messages={messagesFor(locale)} timeZone="Europe/Istanbul">
       {children}
     </NextIntlClientProvider>
   );

@@ -1,5 +1,7 @@
 import type { TimeoutBehaviour } from "./timer";
-import type { ResponsePayload } from "@/db/schema/types";
+
+/** The answer shape these helpers inspect. Kept local; the exam stores `ItemAnswer`. */
+type ResponsePayload = { text?: string; choiceIds?: string[]; mediaAssetId?: string; fileAssetIds?: string[] };
 
 /**
  * The rules for what happens to a stage when its deadline passes.

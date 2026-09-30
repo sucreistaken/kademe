@@ -49,6 +49,6 @@ export async function PUT(
 
       return candidateJson(part, { headers: { ETag: part.etag } });
     },
-    { limit: 600, windowMs: 60_000 },
+    { limit: 600, windowMs: 60_000, allowProblems: ["COMPLETED"] },
   );
 }

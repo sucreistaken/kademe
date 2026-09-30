@@ -1,73 +1,42 @@
 import { pgEnum } from "drizzle-orm/pg-core";
+import { PROCTOR_EVENT_TYPES } from "../../lib/proctor/taxonomy";
+import { CEFR_LEVELS, EXAM_MODES, ITEM_TYPES, SECTIONS } from "../../lib/exam/types";
 
 /**
- * Every fixed status list in the product. These come straight from the product
- * brief and the design canvas; adding a value is a product decision, not a
- * refactor, so they live in one place.
+ * Every fixed status list in the product, in one place. Adding a value is a
+ * product decision, not a refactor.
  */
 
 export const userRole = pgEnum("user_role", [
-  "OWNER", // everything, including deletion and export
-  "RECRUITER", // create, invite, evaluate
-  "REVIEWER", // evaluate only. Cannot delete or export.
+  "OWNER", // everything, including deletion, export and settings
+  "TEACHER", // build exams, run the bank, invite, grade, finalize
+  "REVIEWER", // grade and look at evidence only
 ]);
 
-export const versionStatus = pgEnum("version_status", [
-  "DRAFT",
-  "PUBLISHED", // immutable from here on, enforced by a DB trigger
-  "ARCHIVED",
-]);
+export const examMode = pgEnum("exam_mode", EXAM_MODES);
+export const section = pgEnum("section", SECTIONS);
+export const cefrLevel = pgEnum("cefr_level", CEFR_LEVELS);
+export const itemType = pgEnum("item_type", ITEM_TYPES);
 
-export const activityType = pgEnum("activity_type", [
-  "VIDEO",
-  "AUDIO",
-  "LONG_TEXT",
-  "SHORT_TEXT",
-  "SINGLE_CHOICE",
-  "MULTI_CHOICE",
-  "FILE_UPLOAD",
-  "SCENARIO",
-]);
-
-/** What happens when a stage runs out of time. */
-export const timeoutBehaviour = pgEnum("timeout_behaviour", [
-  "AUTO_SUBMIT", // default: whatever exists is submitted
-  "AUTO_CLOSE", // stage closes, nothing further accepted
-  "ALLOW_GRACE", // grace period starts
-  "ALLOW_LATE", // candidate may finish, the run is flagged late
-]);
-
-export const linkStatus = pgEnum("link_status", [
-  "NOT_STARTED",
-  "IN_PROGRESS",
-  "COMPLETED",
-  "EXPIRED",
-  "RETAKE_REQUESTED",
-  "RETAKE_AVAILABLE",
-]);
-
-export const decisionStatus = pgEnum("decision_status", [
-  "NEW",
-  "IN_REVIEW",
-  "SHORTLISTED",
-  "INTERVIEW",
-  "RETAKE_REQUESTED",
-  "ACCEPTED",
+export const itemStatus = pgEnum("item_status", [
+  "DRAFT", // written or generated, not yet approved; never served
+  "APPROVED",
   "REJECTED",
-  "ON_HOLD",
+  "RETIRED", // was live, taken out of rotation; kept for old reports
 ]);
 
-export const attemptScope = pgEnum("attempt_scope", [
-  "FULL",
-  "PARTIAL", // only the stages the manager asked to be redone
-]);
+export const itemOrigin = pgEnum("item_origin", ["SEED", "TEACHER", "AI"]);
+
+export const blueprintStatus = pgEnum("blueprint_status", ["DRAFT", "PUBLISHED", "ARCHIVED"]);
+
+export const linkStatus = pgEnum("link_status", ["NOT_STARTED", "IN_PROGRESS", "COMPLETED", "EXPIRED"]);
 
 export const runCompletion = pgEnum("run_completion", [
   "PENDING",
   "COMPLETE",
-  "PARTIAL", // candidate answered some of it
+  "PARTIAL", // submitted with unanswered items
   "SKIPPED",
-  "EXPIRED",
+  "EXPIRED", // closed by the clock
 ]);
 
 export const mediaStatus = pgEnum("media_status", [
@@ -77,40 +46,50 @@ export const mediaStatus = pgEnum("media_status", [
   "FAILED",
 ]);
 
-export const optionPolarity = pgEnum("option_polarity", [
-  "POSITIVE",
-  "NEGATIVE",
+export const gradingStatus = pgEnum("grading_status", [
+  "PENDING", // waiting for the answer to be ready or for the AI
+  "AI_PROPOSED", // the AI suggested a level; a teacher has not looked yet
+  "AI_FAILED", // no proposal; the teacher grades from scratch
+  "CONFIRMED", // the teacher accepted the AI proposal
+  "OVERRIDDEN", // the teacher set a different level, with a reason
 ]);
+
+export const decider = pgEnum("decider", ["ENGINE", "AI", "TEACHER"]);
+
+export const resultStatus = pgEnum("result_status", [
+  "IN_PROGRESS",
+  "AWAITING_GRADING",
+  "AWAITING_REVIEW",
+  "FINAL",
+]);
+
+export const verificationOutcome = pgEnum("verification_outcome", ["PASS", "FAIL", "INCONCLUSIVE"]);
+
+export const integrityOutcome = pgEnum("integrity_outcome", ["VALID", "RETAKE", "INVALID"]);
 
 /**
- * Only three AI purposes exist, and none of them score or rank a candidate.
- * Inferring emotion or personality from video or voice is a prohibited practice
- * under the EU AI Act, so there is deliberately no enum value for it.
+ * What the AI is used for. Placing a student and grading their writing and
+ * speaking are high-risk uses under the EU AI Act (Annex III, education), so
+ * every one of these is a proposal a teacher confirms or changes, and every
+ * call lands in `ai_runs`. Inferring emotion, personality or identity is a
+ * prohibited practice in education and has no purpose here.
  */
 export const aiPurpose = pgEnum("ai_purpose", [
-  "TEMPLATE_DRAFT", // job description -> suggested assessment, manager approves each item
-  "TRANSCRIPTION", // speech to text
-  "EVALUATION_SUMMARY", // summarises the manager's OWN scores and notes, nothing else
+  "ITEM_GENERATION", // draft questions; a teacher approves each before use
+  "TTS", // listening audio from a script
+  "TRANSCRIPTION", // speech to text for speaking answers
+  "WRITING_GRADING", // proposed CEFR level with quoted evidence
+  "SPEAKING_GRADING", // same, from the transcript
+  "PROCTOR_REVIEW", // observable facts in proctoring frames, never intent
 ]);
 
-/** Technical events we can actually observe in a browser. Nothing aspirational. */
-export const technicalEventType = pgEnum("technical_event_type", [
-  "VISIBILITY_HIDDEN",
-  "VISIBILITY_VISIBLE",
-  "WINDOW_BLUR",
-  "WINDOW_FOCUS",
-  "FULLSCREEN_ENTER",
-  "FULLSCREEN_EXIT",
-  "CAMERA_MUTED",
-  "CAMERA_UNMUTED",
-  "MIC_MUTED",
-  "MIC_UNMUTED",
-  "OFFLINE",
-  "ONLINE",
-  "PAGE_UNLOAD",
-  "UPLOAD_STALLED",
-  "UPLOAD_RESUMED",
-  "DEVICE_CHECK_FAILED",
-]);
+export const proctorEventType = pgEnum("proctor_event_type", PROCTOR_EVENT_TYPES);
+export const proctorSeverity = pgEnum("proctor_severity", ["INFO", "LOW", "MEDIUM", "HIGH"]);
+export const proctorSource = pgEnum("proctor_source", ["BROWSER", "MODEL", "SERVER"]);
+export const evidenceKind = pgEnum("evidence_kind", ["WEBCAM_FRAME", "SCREEN_FRAME", "CLIP_VIDEO", "CLIP_AUDIO"]);
+export const evidenceTrigger = pgEnum("evidence_trigger", ["REFERENCE", "PERIODIC", "VIOLATION"]);
+export const aiReviewStatus = pgEnum("ai_review_status", ["QUEUED", "DONE", "FAILED", "SKIPPED"]);
+export const aiVerdict = pgEnum("ai_verdict", ["CONFIRMED", "NOT_CONFIRMED", "UNCLEAR"]);
+export const teacherFlagStatus = pgEnum("teacher_flag_status", ["OPEN", "CONFIRMED", "DISMISSED"]);
 
 export const locale = pgEnum("locale", ["tr", "en"]);

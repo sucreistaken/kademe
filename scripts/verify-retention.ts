@@ -39,9 +39,9 @@ function ago(iso: string | null, now: Date): string {
 async function main() {
   const { count, eq, inArray, isNotNull, like } = await import("drizzle-orm");
   const { db } = await import("../src/db");
-  const { assessments, attempts, auditLogs, candidates, decisions, mediaAssets, stageRuns } =
+  const { assessments, attempts, auditLogs, candidates, examResults, mediaAssets, sectionRuns } =
     await import("../src/db/schema");
-  const { runRetention, SOFT_DELETE_GRACE_DAYS, TERMINAL_DECISION_STATUSES } = await import(
+  const { runRetention, SOFT_DELETE_GRACE_DAYS } = await import(
     "../src/lib/retention"
   );
 
@@ -68,16 +68,17 @@ async function main() {
     const [decided] = await db
       .select({ n: count() })
       .from(mediaAssets)
-      .innerJoin(stageRuns, eq(stageRuns.id, mediaAssets.stageRunId))
-      .innerJoin(attempts, eq(attempts.id, stageRuns.attemptId))
+      .innerJoin(sectionRuns, eq(sectionRuns.id, mediaAssets.sectionRunId))
+      .innerJoin(attempts, eq(attempts.id, sectionRuns.attemptId))
       .innerJoin(assessments, eq(assessments.id, attempts.assessmentId))
       .where(
         inArray(
           assessments.id,
           db
-            .select({ id: decisions.assessmentId })
-            .from(decisions)
-            .where(inArray(decisions.status, [...TERMINAL_DECISION_STATUSES])),
+            .select({ id: attempts.assessmentId })
+            .from(examResults)
+            .innerJoin(attempts, eq(attempts.id, examResults.attemptId))
+            .where(isNotNull(examResults.finalizedAt)),
         ),
       );
     const [cands] = await db.select({ n: count() }).from(candidates);

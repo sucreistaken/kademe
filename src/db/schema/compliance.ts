@@ -9,13 +9,13 @@ import {
   index,
 } from "drizzle-orm/pg-core";
 import { organizations, users } from "./org";
-import { candidates, assessments, stageRuns } from "./assessment";
-import { aiPurpose, technicalEventType, locale } from "./enums";
+import { candidates, assessments } from "./assessment";
+import { aiPurpose, locale } from "./enums";
 import type { I18nText } from "./types";
 
 /**
  * Consent copy is versioned so that a year later we can prove exactly what the
- * candidate agreed to. Editing consent copy always creates a new row.
+ * student agreed to. Editing consent copy always creates a new row.
  */
 export const consentTexts = pgTable("consent_texts", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -47,26 +47,6 @@ export const consents = pgTable(
     userAgent: text("user_agent"),
   },
   (t) => [index("consents_assessment_idx").on(t.assessmentId)],
-);
-
-/**
- * Only events a browser genuinely reports. Nothing here claims to detect a
- * second monitor, a phone, or another person in the room, because none of that
- * is observable and pretending otherwise would be dishonest to both sides.
- * These are logged for the manager to read; they never fail a candidate.
- */
-export const technicalEvents = pgTable(
-  "technical_events",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    stageRunId: uuid("stage_run_id")
-      .notNull()
-      .references(() => stageRuns.id, { onDelete: "cascade" }),
-    type: technicalEventType("type").notNull(),
-    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
-    meta: jsonb("meta").$type<Record<string, unknown>>(),
-  },
-  (t) => [index("events_run_at_idx").on(t.stageRunId, t.at)],
 );
 
 /**

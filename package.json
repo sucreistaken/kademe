@@ -16,12 +16,17 @@
     "db:setup": "drizzle-kit push && tsx src/db/migrate-sql.mts",
     "db:setup:local": "drizzle-kit push --force && tsx src/db/migrate-sql.mts",
     "dev:link": "tsx scripts/dev-link.ts",
-    "verify:candidate": "bash scripts/verify-candidate-flow.sh",
-    "verify:ai": "tsx scripts/verify-ai-draft.ts",
     "verify:transcription": "tsx scripts/verify-transcription.ts",
     "verify:transcription:drain": "tsx scripts/verify-transcription-drain.ts",
     "verify:r2": "tsx scripts/verify-r2.ts",
-    "verify:queue": "tsx scripts/verify-queue-supervise.ts"
+    "verify:queue": "tsx scripts/verify-queue-supervise.ts",
+    "db:reset": "tsx scripts/db-reset.ts",
+    "bank:tts": "tsx scripts/bank-tts.ts",
+    "verify:exam": "tsx scripts/verify-exam-flow.ts",
+    "verify:grading": "tsx scripts/verify-grading.ts",
+    "verify:proctor": "tsx scripts/verify-proctor.ts",
+    "prebuild": "tsx scripts/fetch-proctor-assets.ts",
+    "proctor:assets": "tsx scripts/fetch-proctor-assets.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1127.0",
@@ -30,6 +35,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "^5.9.1",
+    "@mediapipe/tasks-vision": "^1.0.1",
     "@node-rs/argon2": "^2.2.0",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.2",

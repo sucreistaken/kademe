@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { candidates } from "@/db/schema";
 import { candidateJson } from "@/lib/candidate-safe";
-import { loadState } from "@/lib/candidate-flow";
+import { loadState } from "@/lib/exam-flow";
 import { badRequest, readJson, withCandidate } from "@/lib/candidate-api";
 
 type InfoBody = {

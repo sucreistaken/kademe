@@ -5,7 +5,7 @@ import {
   resolveToken,
   type CandidateContext,
   type LinkProblem,
-} from "@/lib/candidate-flow";
+} from "@/lib/exam-flow";
 import { candidateT, type CandidateMessages } from "@/i18n/candidate";
 import { localeFromAcceptLanguage, type Locale } from "@/i18n/locale";
 

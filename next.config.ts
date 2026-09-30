@@ -12,6 +12,23 @@ import type { NextConfig } from "next";
  */
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  /**
+   * The proctoring models live under a versioned path, so they can be cached
+   * for good; the wasm type is set explicitly because streaming compilation
+   * refuses anything else.
+   */
+  async headers() {
+    return [
+      {
+        source: "/proctor/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+      },
+      {
+        source: "/proctor/:version/wasm/:file*.wasm",
+        headers: [{ key: "Content-Type", value: "application/wasm" }],
+      },
+    ];
+  },
   experimental: {
     serverActions: {
       allowedOrigins: ["kademe.kadiray.com"],

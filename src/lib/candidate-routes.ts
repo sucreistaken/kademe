@@ -1,11 +1,13 @@
-import type { CandidateState } from "@/lib/candidate-flow";
+import type { CandidateState } from "@/lib/exam-flow";
 
 /**
  * Where a given state belongs on screen. Both the server redirect and the
  * client navigation read this, so there is exactly one answer to "which page
- * should this candidate be on".
+ * should this student be on". Section introductions and items share one page,
+ * so moving between questions never reloads the document (a reload would drop
+ * the screen share and fullscreen).
  */
-export function stepPath(token: string, state: CandidateState): string {
+export function stepPath(token: string, state: Pick<CandidateState, "step">): string {
   const base = `/a/${encodeURIComponent(token)}`;
   switch (state.step) {
     case "CONSENT":
@@ -14,8 +16,9 @@ export function stepPath(token: string, state: CandidateState): string {
       return `${base}/info`;
     case "CHECK":
       return `${base}/check`;
-    case "STAGE":
-      return `${base}/stage/${state.stage?.position ?? 1}`;
+    case "SECTION_INTRO":
+    case "ITEM":
+      return `${base}/exam`;
     case "DONE":
       return `${base}/done`;
   }

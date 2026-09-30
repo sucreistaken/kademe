@@ -43,12 +43,12 @@
     },
     "roles": {
       "OWNER": "Owner",
-      "RECRUITER": "Recruiter",
+      "TEACHER": "Teacher",
       "REVIEWER": "Reviewer"
     },
     "roleHelp": {
       "OWNER": "Everything: settings, audit log, export, deletion.",
-      "RECRUITER": "Builds positions and templates, invites candidates, scores. No settings, no audit log.",
+      "TEACHER": "Builds exams, runs the question bank, invites students, grades and finalizes results. No settings, no audit log.",
       "REVIEWER": "Scores only. No deletion, no export, no invitations."
     },
     "audit": {
@@ -174,7 +174,27 @@
       "weights_disable": "Weighted score turned off",
       "weights_enable": "Weighted score turned on",
       "weights_recalculate": "Scores recalculated",
-      "weights_save": "Weights saved"
+      "weights_save": "Weights saved",
+      "student_invite": "Student invited",
+      "grading_confirm": "AI proposal confirmed",
+      "grading_override": "Level changed",
+      "result_override_overall": "Overall level changed",
+      "result_finalize": "Result finalized",
+      "result_release": "Result shown to student",
+      "integrity_flag_confirmed": "Integrity flag confirmed",
+      "integrity_flag_dismissed": "Integrity flag dismissed",
+      "integrity_flag_open": "Integrity flag reopened",
+      "integrity_outcome": "Integrity decision made",
+      "blueprint_create": "Exam created",
+      "blueprint_publish": "Exam published",
+      "blueprint_copy": "Exam copied",
+      "blueprint_archive": "Exam archived",
+      "bank_generate": "Items generated with AI",
+      "bank_approved": "Item approved",
+      "bank_rejected": "Item rejected",
+      "bank_retired": "Item retired",
+      "bank_draft": "Item back to draft",
+      "bank_edit": "Item edited"
     }
   },
   "userInvite": {

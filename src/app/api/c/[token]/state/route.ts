@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { candidateJson } from "@/lib/candidate-safe";
-import { loadState } from "@/lib/candidate-flow";
+import { loadState } from "@/lib/exam-flow";
 import { withCandidate } from "@/lib/candidate-api";
 
 /**

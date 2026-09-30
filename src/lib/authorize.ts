@@ -6,13 +6,14 @@ import type { SessionUser } from "./auth";
  * nobody has it.
  */
 export type Capability =
-  | "position:write"
-  | "template:write"
-  | "template:publish"
-  | "candidate:invite"
-  | "candidate:delete"
-  | "evaluation:write"
-  | "decision:write"
+  | "blueprint:write"
+  | "bank:write"
+  | "bank:approve"
+  | "student:invite"
+  | "student:delete"
+  | "result:grade"
+  | "result:finalize"
+  | "integrity:decide"
   | "media:view"
   | "data:export"
   | "settings:write"
@@ -20,29 +21,32 @@ export type Capability =
 
 const BY_ROLE: Record<SessionUser["role"], Capability[]> = {
   OWNER: [
-    "position:write",
-    "template:write",
-    "template:publish",
-    "candidate:invite",
-    "candidate:delete",
-    "evaluation:write",
-    "decision:write",
+    "blueprint:write",
+    "bank:write",
+    "bank:approve",
+    "student:invite",
+    "student:delete",
+    "result:grade",
+    "result:finalize",
+    "integrity:decide",
     "media:view",
     "data:export",
     "settings:write",
     "audit:read",
   ],
-  RECRUITER: [
-    "position:write",
-    "template:write",
-    "template:publish",
-    "candidate:invite",
-    "evaluation:write",
-    "decision:write",
+  TEACHER: [
+    "blueprint:write",
+    "bank:write",
+    "bank:approve",
+    "student:invite",
+    "result:grade",
+    "result:finalize",
+    "integrity:decide",
     "media:view",
   ],
-  // A reviewer scores candidates and nothing else. No deletion, no export.
-  REVIEWER: ["evaluation:write", "media:view"],
+  // A reviewer grades writing and speaking and looks at evidence. They do not
+  // finalize a result, publish anything, delete or export.
+  REVIEWER: ["result:grade", "media:view"],
 };
 
 export function can(user: SessionUser, capability: Capability) {

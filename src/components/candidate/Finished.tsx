@@ -1,122 +1,113 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import { CandidateColumn } from "@/components/candidate/Shell";
-import { apiSend } from "@/lib/client/api";
+import { useProctor } from "@/components/candidate/proctor/ProctorProvider";
+import type { StudentResult } from "@/lib/exam-flow";
 import { useT } from "@/i18n/candidate-client";
-import { dateTime, shortDate } from "@/i18n/dates";
-import type { Locale } from "@/i18n/locale";
 
 /**
- * Artboard A12, the left card. The end of the flow is still a screen with a
- * next action on it: what happens now, who to contact, and how to ask for the
- * data back or deleted.
+ * The end. Every device is switched off first and the student is told so. The
+ * result appears only as far as the school allows and only once a teacher has
+ * finalized it; there is no course recommendation here or anywhere else.
+ * The next step is always concrete: who to write to.
  */
 export function Finished({
   token,
-  locale,
   name,
-  stageCount,
-  submittedAt,
-  responseByAt,
-  orgName,
+  result,
+  terminated,
+  terminationReason,
   contactEmail,
 }: {
   token: string;
-  locale: Locale;
   name: string;
-  stageCount: number;
-  submittedAt: number;
-  /** When the hiring team promises to have written back. */
-  responseByAt: number | null;
-  orgName: string;
-  contactEmail: string;
+  result: StudentResult;
+  terminated: boolean;
+  terminationReason: string | null;
+  contactEmail: string | null;
 }) {
-  const t = useT("done");
-  const [copyState, setCopyState] = useState<"idle" | "sent">("idle");
+  const t = useT("result");
+  const sec = useT("section");
+  const { engine } = useProctor();
+  const [streamsOff, setStreamsOff] = useState(false);
 
-  async function requestCopy() {
-    await apiSend(token, "/rights", {
-      kind: "COPY",
-      message: t("copyMessage"),
-    }).catch(() => undefined);
-    setCopyState("sent");
-  }
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (engine) await engine.stop();
+      if (!cancelled) setStreamsOff(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [engine]);
 
-  const firstName = name.split(" ")[0];
-
+  const released = result.released && result.visibility !== "NONE";
   return (
-    <CandidateColumn width={490} padding="px-[34px] pt-11 pb-[46px]">
-      <div className="flex size-[34px] items-center justify-center rounded-full border-[1.5px] border-ink text-sm font-semibold text-ink">
-        ✓
-      </div>
-      <h1 className="mt-[18px] text-2xl font-bold leading-[1.25] tracking-[-0.02em] text-ink">
-        {firstName ? t("title", { name: firstName }) : t("titleNoName")}
-      </h1>
-      <p className="mt-2.5 text-sm leading-[1.65] text-ink-2">
-        {t("body", { count: stageCount, org: orgName })}
-      </p>
-
-      <div className="mt-[22px] rounded-[10px] border border-line bg-surface px-4 py-3.5">
-        <Row label={t("sentAt")} value={dateTime(new Date(submittedAt), locale)} />
-        {/* Artboard A12 promises a date, and a promise with no date is not one.
-            Shown only when there is a real submission to count from. */}
-        {responseByAt ? (
-          <Row
-            label={t("responseBy")}
-            value={t("responseByValue", {
-              date: shortDate(new Date(responseByAt), locale),
-            })}
-            divider
-          />
+    <CandidateColumn width={520}>
+      <div className="rounded-[14px] border border-line bg-surface px-7 py-8">
+        <h1 className="text-[26px] font-bold leading-[1.25] tracking-[-0.02em] text-ink">
+          {terminated ? t("terminatedTitle") : t("title")}
+        </h1>
+        {name ? <p className="mt-1 text-[14px] text-muted">{name}</p> : null}
+        <p className="mt-4 text-[15px] leading-[1.65] text-ink-2">
+          {terminated
+            ? `${terminationReason === "SCREEN_SHARE_GONE" || terminationReason === "FULLSCREEN_EXITS" ? t(`reason${terminationReason}`) : ""} ${t("terminatedNext")}`
+            : t("body")}
+        </p>
+        {streamsOff ? (
+          <p className="mt-3 flex items-center gap-2 text-[13px] text-muted">
+            <span className="size-1.5 rounded-full bg-ink-3" aria-hidden />
+            {t("streamsOff")}
+          </p>
         ) : null}
-        <Row label={t("contact")} value={contactEmail} divider />
-      </div>
 
-      <p className="mt-[18px] text-[13px] leading-[1.6] text-muted">
-        {t("nextStep")}
-      </p>
+        {!terminated ? (
+          <div className="mt-6 border-t border-line pt-5">
+            {released ? (
+              <>
+                <div className="text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted">{t("overall")}</div>
+                <div className="tnum mt-1 text-[44px] font-bold leading-none text-ink">{result.overall ?? "-"}</div>
+                {result.outcome ? (
+                  <p className="mt-3 text-[14px] text-ink-2">{t(`outcome${result.outcome}`)}</p>
+                ) : null}
+                {result.skills?.length ? (
+                  <>
+                    <div className="mt-5 text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted">{t("skills")}</div>
+                    <ul className="mt-2 divide-y divide-line">
+                      {result.skills.map((s) => (
+                        <li key={s.section} className="flex justify-between py-2 text-[14px]">
+                          <span className="text-ink-2">{sec(s.section)}</span>
+                          <span className="tnum font-semibold text-ink">{s.level ?? "-"}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : null}
+              </>
+            ) : (
+              <p className="text-[14px] leading-[1.6] text-ink-2">
+                {result.visibility === "NONE" ? t("none") : result.awaitingTeacher ? t("pending") : t("notReleased")}
+              </p>
+            )}
+          </div>
+        ) : null}
 
-      <button
-        type="button"
-        disabled={copyState === "sent"}
-        onClick={requestCopy}
-        className="mt-[18px] rounded-lg border border-line-strong bg-surface px-4 py-2.5 text-[13px] font-semibold text-ink hover:bg-paper disabled:cursor-not-allowed disabled:border-line disabled:text-ink-3"
-      >
-        {copyState === "sent" ? t("requestSent") : t("requestCopy")}
-      </button>
-      <div className="mt-3">
-        <Link
-          href={`/a/${encodeURIComponent(token)}/rights`}
-          className="text-[12.5px] text-muted underline decoration-line underline-offset-2"
-        >
-          {t("rightsLink")}
-        </Link>
+        <div className="mt-6 flex flex-col gap-1.5 text-[13px] text-muted">
+          {contactEmail ? (
+            <span>
+              {t("contact", { email: "" })}
+              <a className="text-ink underline decoration-line-strong underline-offset-2" href={`mailto:${contactEmail}`}>
+                {contactEmail}
+              </a>
+            </span>
+          ) : null}
+          <a className="underline decoration-line-strong underline-offset-2" href={`/a/${encodeURIComponent(token)}/rights`}>
+            {t("rights")}
+          </a>
+        </div>
       </div>
     </CandidateColumn>
-  );
-}
-
-function Row({
-  label,
-  value,
-  divider,
-}: {
-  label: string;
-  value: string;
-  divider?: boolean;
-}) {
-  return (
-    <div
-      className={
-        divider
-          ? "flex items-center justify-between border-t border-row-line py-1.5"
-          : "flex items-center justify-between py-1.5"
-      }
-    >
-      <span className="text-[13px] text-muted">{label}</span>
-      <span className="text-[13px] font-medium text-ink">{value}</span>
-    </div>
   );
 }

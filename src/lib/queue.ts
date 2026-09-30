@@ -14,8 +14,15 @@ import { PgBoss } from "pg-boss";
  */
 
 export const TRANSCRIPTION_QUEUE = "transcription";
+export const GRADING_QUEUE = "grading";
+export const PROCTOR_REVIEW_QUEUE = "proctor-review";
 
 export type TranscriptionJob = { mediaAssetId: string };
+export type GradingJob = { gradingId: string };
+export type ProctorReviewJob = { eventId: string };
+
+const QUEUES = [TRANSCRIPTION_QUEUE, GRADING_QUEUE, PROCTOR_REVIEW_QUEUE] as const;
+export type QueueName = (typeof QUEUES)[number];
 
 /** Hot reload in development would otherwise open a new pool on every edit. */
 const globalForBoss = globalThis as unknown as {
@@ -36,17 +43,19 @@ async function connect(): Promise<PgBoss> {
     console.error("[queue] pg-boss error", error);
   });
   await boss.start();
-  await boss.createQueue(TRANSCRIPTION_QUEUE, {
-    // One job per media asset, queued or active: a sweep that re-enqueues an
-    // asset already waiting must not create a second copy of the same work.
-    policy: "stately",
-    retryLimit: 4,
-    retryDelay: 60,
-    retryBackoff: true,
-    // Transcribing a three minute answer is minutes, not seconds; a stuck job
-    // should be reclaimed rather than left active forever.
-    expireInSeconds: 900,
-  });
+  for (const name of QUEUES) {
+    await boss.createQueue(name, {
+      // One job per subject, queued or active: a sweep that re-enqueues work
+      // already waiting must not create a second copy of it.
+      policy: "stately",
+      retryLimit: name === PROCTOR_REVIEW_QUEUE ? 3 : 4,
+      retryDelay: 60,
+      retryBackoff: true,
+      // Transcribing or grading a long answer is minutes, not seconds; a stuck
+      // job should be reclaimed rather than left active forever.
+      expireInSeconds: 900,
+    });
+  }
   return boss;
 }
 
@@ -70,10 +79,10 @@ export function queue(): Promise<PgBoss> {
  * it every minute is cheap. Best effort: a failed pass is logged, and the
  * drain that follows still fetches whatever is ready.
  */
-export async function superviseQueue(): Promise<boolean> {
+export async function superviseQueue(name: QueueName = TRANSCRIPTION_QUEUE): Promise<boolean> {
   try {
     const boss = await queue();
-    await boss.supervise(TRANSCRIPTION_QUEUE);
+    await boss.supervise(name);
     return true;
   } catch (error) {
     console.error("[queue] supervise failed, continuing with the drain", error);
@@ -100,3 +109,21 @@ export async function enqueueTranscription(mediaAssetId: string) {
     return false;
   }
 }
+
+async function enqueue(name: QueueName, data: object, singletonKey: string) {
+  try {
+    const boss = await queue();
+    await boss.send(name, data, { singletonKey });
+    return true;
+  } catch (error) {
+    console.error(`[queue] could not enqueue ${name}`, error);
+    return false;
+  }
+}
+
+/** Same contract as transcription: never throws, the cron sweep catches misses. */
+export const enqueueGrading = (gradingId: string) =>
+  enqueue(GRADING_QUEUE, { gradingId } satisfies GradingJob, gradingId);
+
+export const enqueueProctorReview = (eventId: string) =>
+  enqueue(PROCTOR_REVIEW_QUEUE, { eventId } satisfies ProctorReviewJob, eventId);

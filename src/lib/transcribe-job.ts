@@ -5,7 +5,7 @@ import {
   assessments,
   attempts,
   mediaAssets,
-  stageRuns,
+  sectionRuns,
   transcripts,
 } from "@/db/schema";
 import {
@@ -20,7 +20,7 @@ import {
  * Deliberately does nothing on the unhappy paths except record them: a media
  * asset with no transcript renders as "no transcript yet" on the review screen,
  * which is honest. Writing an approximation, or an empty row, would be read as
- * "this is what the candidate said".
+ * "this is what the student said".
  */
 
 export type TranscriptionOutcome =
@@ -41,8 +41,8 @@ export async function runTranscription(
       locale: assessments.locale,
     })
     .from(mediaAssets)
-    .leftJoin(stageRuns, eq(stageRuns.id, mediaAssets.stageRunId))
-    .leftJoin(attempts, eq(attempts.id, stageRuns.attemptId))
+    .leftJoin(sectionRuns, eq(sectionRuns.id, mediaAssets.sectionRunId))
+    .leftJoin(attempts, eq(attempts.id, sectionRuns.attemptId))
     .leftJoin(assessments, eq(assessments.id, attempts.assessmentId))
     .where(eq(mediaAssets.id, mediaAssetId))
     .limit(1);
@@ -75,9 +75,10 @@ export async function runTranscription(
     const result = await transcriber.transcribe({
       storageKey: asset.storageKey,
       mime: asset.mime,
-      // A hint, not a constraint: the provider is free to disagree, because a
-      // candidate invited in Turkish may answer in English.
-      languageHint: row.locale ?? null,
+      // Speaking answers are German whatever the interface language is. Still
+      // a hint: a student who answers in Turkish is transcribed as such, and
+      // the grader flags NOT_GERMAN.
+      languageHint: "de",
     });
 
     const [written] = await db
@@ -101,6 +102,10 @@ export async function runTranscription(
       costUsd: result.costUsd === null ? null : String(result.costUsd),
     });
 
+    // A speaking answer waits on its transcript; now it can be graded.
+    const { gradeAfterTranscript } = await import("@/lib/exam-results");
+    await gradeAfterTranscript(asset.id);
+
     return { status: "DONE", words: result.words.length };
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
@@ -120,7 +125,7 @@ export async function runTranscription(
 /**
  * Recordings that should have a transcript and do not.
  *
- * This is the safety net for an enqueue that failed silently while a candidate
+ * This is the safety net for an enqueue that failed silently while a student
  * was finishing an answer. It is bounded to the last day on purpose: an asset
  * the provider genuinely cannot read would otherwise be re-queued forever after
  * its retries were exhausted.

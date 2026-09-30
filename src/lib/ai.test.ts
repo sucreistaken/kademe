@@ -8,8 +8,9 @@ import {
   isRetryableStatus,
   readGeminiBody,
   toGeminiSchema,
+  withImagesOpenAi,
 } from "@/lib/ai";
-import { TEMPLATE_DRAFT_JSON_SCHEMA } from "@/lib/template-draft";
+import { GRADING_JSON_SCHEMA as TEMPLATE_DRAFT_JSON_SCHEMA } from "@/lib/exam/grading";
 
 /**
  * Which provider a deployment ends up talking to is a money question as much as
@@ -353,5 +354,32 @@ describe("readGeminiBody", () => {
     expect(() =>
       readGeminiBody({ candidates: [{ finishReason: "SAFETY" }] }),
     ).toThrow(/SAFETY/);
+  });
+});
+
+describe("images for the proctoring second look", () => {
+  const request = {
+    messages: [
+      { role: "system" as const, content: "rules" },
+      { role: "user" as const, content: "look at these" },
+    ],
+    schemaName: "x",
+    jsonSchema: { type: "object" },
+    images: [{ mime: "image/jpeg", base64: "AAAA" }],
+  };
+
+  it("puts images on the last user turn as data URLs for chat completions", () => {
+    const out = withImagesOpenAi(request) as Array<{ role: string; content: unknown }>;
+    expect(out[0]).toEqual({ role: "system", content: "rules" });
+    expect(out[1].content).toEqual([
+      { type: "text", text: "look at these" },
+      { type: "image_url", image_url: { url: "data:image/jpeg;base64,AAAA" } },
+    ]);
+  });
+
+  it("leaves text-only requests unchanged", () => {
+    const { images: _drop, ...plain } = request;
+    void _drop;
+    expect(withImagesOpenAi(plain)).toBe(plain.messages);
   });
 });

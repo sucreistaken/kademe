@@ -1,3 +1,9 @@
+> **2026-09-30:** Bu belge eski işe alım ürününü anlatır. Ürün Almanca seviye sınavına
+> dönüştürüldü (`pivot/language-exam` dalı). Güncel durum: `docs/STATUS.md`,
+> `docs/EXAM-ENGINE.md`, `docs/PROCTORING.md`. Madde 15 ("tespit edilemeyenler iddia
+> edilmez") artık geçerli değil: gözetim bilerek güçlendirildi ve neyin ne kadar
+> güvenilir görüldüğü `docs/PROCTORING.md`de yazılı.
+
 # Recruitment Assessment Platform - Uygulama Planı
 
 ## Context

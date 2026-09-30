@@ -5,10 +5,10 @@ import {
   attempts,
   auditLogs,
   candidates,
-  decisions,
+  examResults,
   mediaAssets,
   organizations,
-  stageRuns,
+  sectionRuns,
 } from "@/db/schema";
 import { getStorage } from "@/lib/storage";
 
@@ -336,14 +336,17 @@ export function mediaAnchorFrom(
  * which put a video on the clock the moment somebody clicked "in review".
  */
 function latestTerminalDecision() {
+  // In the exam product the review ends when a teacher (or, for an exam with
+  // no writing or speaking, the engine) finalizes the result.
   return db
     .select({
-      assessmentId: decisions.assessmentId,
-      decidedAt: sql<Date>`max(${decisions.at})`.as("decided_at"),
+      assessmentId: attempts.assessmentId,
+      decidedAt: sql<Date>`max(${examResults.finalizedAt})`.as("decided_at"),
     })
-    .from(decisions)
-    .where(inArray(decisions.status, [...TERMINAL_DECISION_STATUSES]))
-    .groupBy(decisions.assessmentId)
+    .from(examResults)
+    .innerJoin(attempts, eq(attempts.id, examResults.attemptId))
+    .where(isNotNull(examResults.finalizedAt))
+    .groupBy(attempts.assessmentId)
     .as("latest_terminal_decision");
 }
 
@@ -379,8 +382,8 @@ async function planSoftMedia(clock: OrgClock, batch: number): Promise<MediaPlan>
       bytes: sql<string>`coalesce(sum(${mediaAssets.bytes}), 0)`,
     })
     .from(mediaAssets)
-    .leftJoin(stageRuns, eq(stageRuns.id, mediaAssets.stageRunId))
-    .leftJoin(attempts, eq(attempts.id, stageRuns.attemptId))
+    .leftJoin(sectionRuns, eq(sectionRuns.id, mediaAssets.sectionRunId))
+    .leftJoin(attempts, eq(attempts.id, sectionRuns.attemptId))
     .leftJoin(assessments, eq(assessments.id, attempts.assessmentId))
     .leftJoin(ld, eq(ld.assessmentId, assessments.id))
     .where(where);
@@ -394,8 +397,8 @@ async function planSoftMedia(clock: OrgClock, batch: number): Promise<MediaPlan>
       anchor: anchor,
     })
     .from(mediaAssets)
-    .leftJoin(stageRuns, eq(stageRuns.id, mediaAssets.stageRunId))
-    .leftJoin(attempts, eq(attempts.id, stageRuns.attemptId))
+    .leftJoin(sectionRuns, eq(sectionRuns.id, mediaAssets.sectionRunId))
+    .leftJoin(attempts, eq(attempts.id, sectionRuns.attemptId))
     .leftJoin(assessments, eq(assessments.id, attempts.assessmentId))
     .leftJoin(ld, eq(ld.assessmentId, assessments.id))
     .where(where)
@@ -532,8 +535,8 @@ async function candidateMediaKeys(
       storageKey: mediaAssets.storageKey,
     })
     .from(mediaAssets)
-    .innerJoin(stageRuns, eq(stageRuns.id, mediaAssets.stageRunId))
-    .innerJoin(attempts, eq(attempts.id, stageRuns.attemptId))
+    .innerJoin(sectionRuns, eq(sectionRuns.id, mediaAssets.sectionRunId))
+    .innerJoin(attempts, eq(attempts.id, sectionRuns.attemptId))
     .innerJoin(assessments, eq(assessments.id, attempts.assessmentId))
     .where(inArray(assessments.candidateId, candidateIds));
 }
@@ -543,8 +546,8 @@ async function countCandidateObjects(candidateIds: string[]): Promise<number> {
   const [row] = await db
     .select({ n: count() })
     .from(mediaAssets)
-    .innerJoin(stageRuns, eq(stageRuns.id, mediaAssets.stageRunId))
-    .innerJoin(attempts, eq(attempts.id, stageRuns.attemptId))
+    .innerJoin(sectionRuns, eq(sectionRuns.id, mediaAssets.sectionRunId))
+    .innerJoin(attempts, eq(attempts.id, sectionRuns.attemptId))
     .innerJoin(assessments, eq(assessments.id, attempts.assessmentId))
     .where(inArray(assessments.candidateId, candidateIds));
   return row?.n ?? 0;

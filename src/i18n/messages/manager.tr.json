@@ -1,10 +1,9 @@
 {
   "nav": {
     "dashboard": "Bugün",
-    "positions": "Pozisyonlar",
-    "candidates": "Adaylar",
-    "compare": "Karşılaştır",
-    "library": "Kütüphane",
+    "students": "Öğrenciler",
+    "exams": "Sınavlar",
+    "bank": "Soru bankası",
     "settings": "Ayarlar",
     "signOut": "Çıkış",
     "language": "Dil",
@@ -22,25 +21,19 @@
     "search": "Ara",
     "none": "Yok"
   },
-  "templateSteps": {
-    "label": "Şablon kurma adımları",
-    "content": "İçerik",
-    "review": "Gözden geçir",
-    "publish": "Yayınla"
-  },
   "login": {
     "title": "Giriş yap",
-    "lead": "Değerlendirme paneline erişmek için hesabınla giriş yap.",
+    "lead": "Sınav paneline erişmek için hesabınızla giriş yapın.",
     "email": "E-posta",
     "password": "Parola",
     "submit": "Giriş yap",
     "checking": "Kontrol ediliyor…",
     "invalid": "E-posta veya parola hatalı.",
-    "candidate": "Aday mısın? Değerlendirme linkin e-postayla gönderildi, buradan giriş yapmana gerek yok."
+    "candidate": "Öğrenci misiniz? Sınav linkiniz e-postayla gönderildi, buradan giriş yapmanıza gerek yok."
   },
   "errorPage": {
     "forbiddenTitle": "Rolünüz bunu yapamaz",
-    "forbiddenBody": "Bu ekran ya da işlem için yetkiniz yok. Değerlendirici rolü adayları puanlar; davet, şablon ve kütüphane değişiklikleri işe alım uzmanı ve sahip rollerine açıktır.",
+    "forbiddenBody": "Bu ekran ya da işlem için yetkiniz yok. Değerlendirici rolü yazma ve konuşma cevaplarını puanlar; sınav, banka ve davet işlemleri öğretmen ve sahip rollerine açıktır.",
     "genericTitle": "Bir şeyler ters gitti",
     "genericBody": "Sayfa yüklenirken beklenmeyen bir hata oluştu. Yeniden deneyebilir ya da panele dönebilirsiniz.",
     "retry": "Yeniden dene",

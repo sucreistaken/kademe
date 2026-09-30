@@ -22,5 +22,5 @@ export async function POST(
       Array.from({ length: count }, (_, i) => from + i),
     );
     return candidateJson({ partTargets: targets });
-  });
+  }, { allowProblems: ["COMPLETED"] });
 }

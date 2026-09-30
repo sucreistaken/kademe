@@ -1,13 +1,13 @@
 import { CandidateShell, LanguageSwitch } from "@/components/candidate/Shell";
 import { CandidateIntl } from "@/components/candidate/Intl";
-import { DeviceCheck } from "@/components/candidate/DeviceCheck";
-import { supportedLocales } from "@/lib/candidate-flow";
+import { SystemCheck } from "@/components/candidate/proctor/SystemCheck";
+import { supportedLocales } from "@/lib/exam-flow";
 import { candidateT } from "@/i18n/candidate";
 import { enter, type SearchParams } from "@/app/a/[token]/shared";
 
 export const dynamic = "force-dynamic";
 
-/** Nothing is recorded on this screen, and the header says so. */
+/** The system check: every device and permission proved before the first clock starts. */
 export default async function CandidateCheckPage({
   params,
   searchParams,
@@ -31,7 +31,7 @@ export default async function CandidateCheckPage({
           />
         }
       >
-        <DeviceCheck token={token} />
+        <SystemCheck token={token} policy={entry.state.proctoring} />
       </CandidateShell>
     </CandidateIntl>
   );

@@ -509,19 +509,19 @@ function inputClass(editable: boolean, extra: string) {
   ].join(" ");
 }
 
-function roleLabel(t: Translator, role: "OWNER" | "RECRUITER" | "REVIEWER") {
+function roleLabel(t: Translator, role: "OWNER" | "TEACHER" | "REVIEWER") {
   if (role === "OWNER") return t("settings.roles.OWNER");
-  if (role === "RECRUITER") return t("settings.roles.RECRUITER");
+  if (role === "TEACHER") return t("settings.roles.TEACHER");
   return t("settings.roles.REVIEWER");
 }
 
-function roleHelp(t: Translator, role: "OWNER" | "RECRUITER" | "REVIEWER") {
+function roleHelp(t: Translator, role: "OWNER" | "TEACHER" | "REVIEWER") {
   if (role === "OWNER") return t("settings.roleHelp.OWNER");
-  if (role === "RECRUITER") return t("settings.roleHelp.RECRUITER");
+  if (role === "TEACHER") return t("settings.roleHelp.TEACHER");
   return t("settings.roleHelp.REVIEWER");
 }
 
-function asRole(value: string): "OWNER" | "RECRUITER" | "REVIEWER" {
+function asRole(value: string): "OWNER" | "TEACHER" | "REVIEWER" {
   return isRole(value) ? value : "REVIEWER";
 }
 

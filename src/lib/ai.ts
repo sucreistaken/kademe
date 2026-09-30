@@ -10,8 +10,10 @@ import { createHash } from "node:crypto";
  *     from a real one and would go on to interview people with it.
  *  2. Every call lands in `ai_runs`, successful or not.
  *
- * Only the three purposes in `ai_purpose` may use this. Scoring, ranking or
- * reading emotion off a candidate are not among them and never will be.
+ * Only the purposes in `ai_purpose` may use this. Grading is one of them now,
+ * and it only ever proposes: a teacher confirms or changes every level. Reading
+ * emotion, personality or identity off a student is not a purpose and never
+ * will be.
  */
 
 export type AiMessage = {
@@ -26,6 +28,12 @@ export type AiJsonRequest = {
   /** JSON Schema the answer must satisfy. Validation still happens locally. */
   jsonSchema: Record<string, unknown>;
   maxTokens?: number;
+  /**
+   * Images attached to the last user turn (proctoring frames). Gemini and
+   * OpenRouter take them; NVIDIA's text model refuses, rather than answering
+   * about pictures it never saw.
+   */
+  images?: Array<{ mime: string; base64: string }>;
 };
 
 export type AiJsonResponse = {
@@ -363,6 +371,9 @@ class OpenAiCompatibleProvider implements AiProvider {
     attempts: number,
     transientErrors: string[],
   ): Promise<AiJsonResponse> {
+    if (request.images?.length && this.config.kind === "nvidia") {
+      throw new AiUnavailable(`${this.name} cannot read images`);
+    }
     let res: Response;
     try {
       res = await fetch(this.config.baseUrl, {
@@ -375,7 +386,7 @@ class OpenAiCompatibleProvider implements AiProvider {
         body: JSON.stringify({
           ...this.config.extraBody,
           model: this.config.model,
-          messages: request.messages,
+          messages: withImagesOpenAi(request),
           max_tokens: request.maxTokens ?? this.config.maxTokens,
           response_format: {
             type: "json_schema",
@@ -758,12 +769,19 @@ class GeminiProvider implements AiProvider {
       .filter((message) => message.role === "system")
       .map((message) => message.content)
       .join("\n\n");
-    const contents = request.messages
-      .filter((message) => message.role !== "system")
-      .map((message) => ({
-        role: message.role === "assistant" ? "model" : "user",
-        parts: [{ text: message.content }],
-      }));
+    const turns = request.messages.filter((message) => message.role !== "system");
+    const lastUser = turns.map((m) => m.role).lastIndexOf("user");
+    const contents = turns.map((message, index) => ({
+      role: message.role === "assistant" ? "model" : "user",
+      parts: [
+        { text: message.content },
+        ...(index === lastUser
+          ? (request.images ?? []).map((image) => ({
+              inlineData: { mimeType: image.mime, data: image.base64 },
+            }))
+          : []),
+      ],
+    }));
 
     let res: Response;
     try {
@@ -920,6 +938,26 @@ function buildAiProvider(env: Record<string, string | undefined>): AiProvider {
   const backup = chooseProvider({ ...env, AI_PROVIDER: "nvidia" });
   if (!backup) return primary;
   return new FallbackAiProvider(primary, createProvider(backup));
+}
+
+/** Chat-completions shape: images become data-URL parts of the last user turn. */
+export function withImagesOpenAi(request: AiJsonRequest): unknown[] {
+  if (!request.images?.length) return request.messages;
+  const lastUser = request.messages.map((m) => m.role).lastIndexOf("user");
+  return request.messages.map((message, index) =>
+    index === lastUser
+      ? {
+          role: message.role,
+          content: [
+            { type: "text", text: message.content },
+            ...request.images!.map((image) => ({
+              type: "image_url",
+              image_url: { url: `data:${image.mime};base64,${image.base64}` },
+            })),
+          ],
+        }
+      : message,
+  );
 }
 
 export function getAiProvider(): AiProvider {

@@ -98,20 +98,20 @@ export class ChunkedUploader {
   }
 
   /**
-   * `stagePosition` travels with the request so the server can refuse a tab
-   * that is still on an earlier stage. After this call the upload is addressed
+   * `sectionPosition` and `sequence` travel with the request so the server can
+   * refuse a tab that is still on an earlier item. After this call the upload is addressed
    * by `uploadRef` alone: the server remembers which run and activity it was
    * opened for, and `finish` does not repeat them.
    */
   static async open(
     token: string,
-    target: { stagePosition: number; activityIndex: number },
+    target: { sectionPosition: number; sequence: number },
     mime: string,
     onStatus?: (status: UploaderStatus) => void,
   ) {
     const init = await apiSend<InitResponse>(token, "/media/init", {
-      stagePosition: target.stagePosition,
-      activityIndex: target.activityIndex,
+      sectionPosition: target.sectionPosition,
+      sequence: target.sequence,
       mime,
     });
     return new ChunkedUploader(token, init, onStatus);

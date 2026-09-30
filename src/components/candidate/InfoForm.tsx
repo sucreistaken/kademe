@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { CandidateColumn } from "@/components/candidate/Shell";
 import { apiSend } from "@/lib/client/api";
 import { stepPath } from "@/lib/candidate-routes";
-import type { CandidateState } from "@/lib/candidate-flow";
+import type { CandidateState } from "@/lib/exam-flow";
+
+type InfoValues = { fullName: string; email: string; phone: string; location: string };
 import { useT } from "@/i18n/candidate-client";
 
 /**
@@ -15,15 +17,15 @@ import { useT } from "@/i18n/candidate-client";
  */
 export function InfoForm({
   token,
-  state,
+  initial,
 }: {
   token: string;
-  state: CandidateState;
+  initial: InfoValues;
 }) {
   const router = useRouter();
   const t = useT("info");
   const common = useT("common");
-  const [form, setForm] = useState(state.candidate);
+  const [form, setForm] = useState<InfoValues>(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

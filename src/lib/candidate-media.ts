@@ -1,16 +1,14 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { attempts, mediaAssets, stageRuns } from "@/db/schema";
+import { attempts, itemResponses, mediaAssets, sectionRuns } from "@/db/schema";
 import type { UploadPart } from "@/db/schema/types";
-import type { ActivityRow, CandidateContext } from "@/lib/candidate-flow";
+import type { CandidateContext } from "@/lib/exam-flow";
 import { getStorage, mediaKey } from "@/lib/storage";
 
 /**
  * Recording is uploaded while it is still being made. The browser hands us a
  * chunk every five seconds; each chunk becomes a multipart part as soon as it
- * exists, and nothing larger than one part is ever held in memory. That is what
- * keeps iOS Safari alive past the one minute mark, so it is not an optimisation
- * to trade away later.
+ * exists, and nothing larger than one part is ever held in memory.
  *
  * The consequence for this file: a media asset is a long lived row that starts
  * in UPLOADING, collects parts one at a time, and is completed at the end. If
@@ -90,16 +88,16 @@ export function normaliseFileMime(
  */
 export async function createMediaAsset(
   ctx: CandidateContext,
-  run: typeof stageRuns.$inferSelect,
-  activity: ActivityRow,
+  run: typeof sectionRuns.$inferSelect,
+  response: typeof itemResponses.$inferSelect,
   mime: string,
 ) {
   const [asset] = await db
     .insert(mediaAssets)
     .values({
       orgId: ctx.assessment.orgId,
-      stageRunId: run.id,
-      activityId: activity.id,
+      sectionRunId: run.id,
+      itemResponseId: response.id,
       storageKey: "pending",
       mime,
       status: "UPLOADING",
@@ -125,7 +123,20 @@ export async function createMediaAsset(
 }
 
 /**
- * An upload reference is an id the server minted and handed to this candidate.
+ * Recordings that count as a take: finished, cut short but playable, or still
+ * uploading. An upload in progress counts so that several parallel `init`
+ * calls cannot buy extra takes; a failed one does not.
+ */
+export async function takeCount(itemResponseId: string): Promise<number> {
+  const [row] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(mediaAssets)
+    .where(and(eq(mediaAssets.itemResponseId, itemResponseId), inArray(mediaAssets.status, ["READY", "INCOMPLETE", "UPLOADING"])));
+  return row?.n ?? 0;
+}
+
+/**
+ * An upload reference is an id the server minted and handed to this student.
  * It is still checked against the token's own assessment on every use, so it
  * cannot be pointed at anybody else's recording.
  */
@@ -135,10 +146,10 @@ export async function resolveOwnedMedia(
 ) {
   if (typeof uploadRef !== "string" || uploadRef.length !== 36) return null;
   const [row] = await db
-    .select({ asset: mediaAssets, run: stageRuns })
+    .select({ asset: mediaAssets, run: sectionRuns })
     .from(mediaAssets)
-    .innerJoin(stageRuns, eq(stageRuns.id, mediaAssets.stageRunId))
-    .innerJoin(attempts, eq(attempts.id, stageRuns.attemptId))
+    .innerJoin(sectionRuns, eq(sectionRuns.id, mediaAssets.sectionRunId))
+    .innerJoin(attempts, eq(attempts.id, sectionRuns.attemptId))
     .where(
       and(
         eq(mediaAssets.id, uploadRef),

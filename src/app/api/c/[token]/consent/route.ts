@@ -5,7 +5,7 @@ import {
   hasConsented,
   loadState,
   recordConsent,
-} from "@/lib/candidate-flow";
+} from "@/lib/exam-flow";
 import {
   badRequest,
   clientIp,

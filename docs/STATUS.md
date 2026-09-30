@@ -1,296 +1,127 @@
 # Kademe - durum ve devir belgesi
 
-Son güncelleme: 2026-09-11 (canlı hata turu). Bir oturum sıfırlandığında buradan devam edilir.
+Son güncelleme: 2026-09-30, gece. Dal: `pivot/language-exam`, **commit yok** (kullanıcı
+kararı: her şey working tree'de, sabah incelenecek). Canlıya dokunulmadı.
 
 ## Ürün tek cümlede
 
-Yönetici bir pozisyon için aşamalı ve süreli bir değerlendirme kurar, adaya kişisel link
-gider, aday video ve yazılı cevapları tek başına doldurur, yönetici tek ekranda izleyip
-yetkinlik bazlı puanlar ve kararı kendisi verir. AI kimseyi elemez.
+Almanca dil okulları için web tabanlı sınav platformu: öğrencinin seviyesini A1-C2
+arasında sıfırdan belirler (seviye tespiti) ya da beyan ettiği seviyeyi taşıyıp
+taşımadığını ölçer (seviye doğrulama). Dilbilgisi, okuma, dinleme, yazma ve konuşma
+(kayıtlı video) bölümleri; güçlü tarayıcı gözetimi; yazma ve konuşmada AI önerir,
+öğretmen karar verir. Kurs önerisi yapmaz.
 
-Tam mimari: `docs/PLAN.md`. Tasarım kuralları: `docs/design/RULES.md`.
-Tasarım kaynağı: `docs/design/kademe-canvas.html` (Claude Design canvas, 12 artboard:
-Y1-Y7 yönetici, A8-A12 aday). i18n yapısı: `docs/I18N.md`.
+Eski işe alım ürünü bu dalda tamamen kaldırıldı; `main` ve canlı site hâlâ onu çalıştırır.
+
+Belgeler: `docs/design/EXAM-UX.md` (ekranlar, Sally + airbnb-ux), `docs/EXAM-ENGINE.md`
+(ölçme modeli ve doğruluğu), `docs/PROCTORING.md` (ne görülür, ne görülmez, uyum).
+`docs/PLAN.md` eski ürünü anlatır, tarihçe olarak durur.
 
 ## Çalıştırma
 
 ```bash
-docker compose up -d          # Postgres, port 5434 (5433 başka projede dolu)
-pnpm db:setup:local           # drizzle push --force + drizzle/sql/*.sql. SADECE push YETMEZ.
-                              # --force veri kaybettiren ifadeleri sormadan kabul eder,
-                              # bu yüzden yalnızca atılabilir yerel DB için. Paylaşılan
-                              # ya da üretim DB'de `pnpm db:setup` (sorar, --force yok).
-                              # 2026-09-09: templates.archived_at eklendi, eski bir
-                              # veritabaninda `pnpm db:push` gerekir.
-                              # pg-boss ilk çalışmada kendi "pgboss" şemasını açar,
-                              # uygulama tablolarına dokunmaz, seed'in TRUNCATE'i etkilemez.
-pnpm db:seed                  # demo veri. DİKKAT: TRUNCATE ile başlar, her şeyi siler.
-pnpm dev --port 3100          # 3000 başka projede dolu
+docker compose up -d        # Postgres 5434
+pnpm db:reset               # SADECE yerel DB (5434 değilse reddeder): şemayı sıfırlar
+pnpm db:seed                # banka + sınavlar + 3 öğrenci; dinleme sesleri önbellekten
+pnpm dev --port 3100
 ```
 
-AI sağlayıcısı: `AI_PROVIDER` boşsa anahtarı olan kullanılır, ikisi de varsa NVIDIA
-(ücretsiz). Ayrıntı ve model notları: `docs/AI-BUILDER.md`.
+- Panel: `kadiraycareer@gmail.com` / `kademe-dev-2026` (öğretmen: `ogretmen@kademe.local`, aynı parola)
+- Yeni öğrenci linki: `pnpm dev:link` (seviye tespiti), `pnpm dev:link --claimed B1` (doğrulama)
+- Sahte kamera/ekran yalnızca otomasyon testi için: `.env` içinde `PROCTOR_DEV_FAKE=1`. **Varsayılan kapalı.** Açıkken öğrenci sayfalarının üstünde kırmızı "DEV" şeridi çıkar; gerçek cihaz testinden önce kapatın. Üretimde hiç çalışmaz.
+- Cron uçları (CRON_SECRET ile): `/api/cron/close-expired`, `/transcribe`, `/grade`,
+  `/proctor-review`, `/purge-retention`
+- Dinleme sesi eksikse: `pnpm bank:tts`
 
-Yönetici girişi: `kadiraycareer@gmail.com` / `kademe-dev-2026`
-Taze aday linki: `pnpm dev:link "Ayşe Demir"`
-Aday akışı doğrulaması: `pnpm verify:candidate <token>`
-Panel ekranını script'ten görmek: `curl -s -H "Cookie: $(npx tsx scripts/dev-session.ts)" \
-  localhost:3100/dashboard`. Panel auth arkasında ve login formu her derlemede
-değişen bir server action id'si postluyor, yani curl ile formdan geçmek çıkmaz sokak.
-Dili çerez seçer: `kademe-lang=en`.
+## Doğrulananlar (komut çıktısıyla)
 
-## Bitmiş ve doğrulanmış
-
-Hepsi gerçek Chrome'da tıklanarak test edildi, sadece derlenmiş değil.
-
-| Alan | Durum |
+| Ne | Kanıt |
 |---|---|
-| Şema, 35 tablo | bitti |
-| Yönetici auth + rol kapasiteleri | bitti |
-| Y1 dashboard, Y4 aday tablosu, Y6 karşılaştırma, Y7 aday detay | bitti |
-| Aday davet + link üretme | bitti |
-| /library yetkinlik kütüphanesi + skala | bitti |
-| Y5 inceleme ve puanlama (kritik ekran) | bitti |
-| Ağırlık ekranı + yeniden hesaplama | bitti |
-| Aday akışı A8-A12, tüm aktivite tipleri | bitti |
-| Video kayıt hattı, parçalı yükleme | bitti |
-| Erişilebilirlik yedeği (video yerine yazılı) | bitti |
-| Aday tarafı TR+EN | bitti |
-| Y2 şablon builder (yan yana iki sütun, koyu yönetici paneli) | bitti |
-| Y5 canvas eşitliği (özel oynatıcı, gezinme, geçmiş, kırpma) | bitti |
-| Retake akışı (kapsam seçmeli, taşımalı) | bitti |
-| close-expired ve expire-links cron'ları | bitti |
-| Transkripsiyon hattı (pg-boss + cron + ElevenLabs Scribe) | bitti, gerçek Scribe çağrısıyla doğrulandı |
-| Pozisyon ekranları (liste, yeni, detay, şablon versiyonları) | bitti |
-| Y2 şablon builder (sürükle-bırak, A/Y ayrımı, yayınlama) | bitti |
-| Aday önizlemesi | bitti, sızıntı yokluğu HTML araması ile kanıtlandı |
-| Y3 AI builder (ilan -> öneri kartları) | bitti, NVIDIA nemotron ile gerçek koşuda doğrulandı |
-| AI builder'a giriş yolu | bitti, pozisyon açma akışının içinde, gerçek tarayıcıda tıklanarak doğrulandı |
-| Gemini sağlayıcısı (`gemini-3.6-flash`) | bitti, gerçek istemle 20-35 sn, NVIDIA yedeğe düşme dahil |
-| Şablon adı değiştirme + arşivleme | bitti, rename/archive/restore tarayıcıda denendi, denetim kaydına düşüyor |
-| Üç adımlı şerit (İçerik · Gözden geçir · Yayınla) | bitti, üç ekranda da |
-| Davet dili seçimi | bitti, İngilizce davet uçtan uca doğrulandı (e-posta + aday ekranı) |
-| İki dilli içerik yazımı (builder TR/EN) | bitti, iki yarı ayrı kaydediliyor |
-| Panelden kullanıcı davet etme (`/setup/[token]`) | bitti, parola belirleme adımı hariç doğrulandı |
-| Giriş ekranı TR+EN | bitti |
-| Aşama adı düzenleme (iki dilli) | yazıldı, otomatik kaydı doğrulanamadı, aşağıya bak |
-| Denetim kaydı CSV dışa aktarımı | bitti, BOM + CRLF + formül enjeksiyonu kaçışı doğrulandı |
-| `retake.ts` ve `template-draft-job.ts` hataları koda çevrildi | bitti, sabit Türkçe kalmadı |
-| Panel tarafı TR+EN | bitti, 14 rota iki dilde 200, ham anahtar sızmıyor |
-| /settings ve /settings/audit | bitti, owner olarak render doğrulandı |
-| Saklama raporu (`purge-retention`) | bitti ama SİLME KAPALI, aşağıya bak |
-| R2 denetimi ve doğrulama scripti | kod hazır, bucket olmadan doğrulanamaz |
+| Tip, lint, test, build | `tsc` temiz, `eslint src scripts` temiz, `pnpm test` 467/467, `pnpm build` 51 rota |
+| Uçtan uca sınav motoru | `pnpm verify:exam` tüm kontroller geçti: iki tam sınav, 95 durumda sızıntı taraması, sabit süre, yeniden yüklemede aynı soru, yanlış bölüm reddi, süre sonrası yazma reddi, dinleme hakkı sınırı, tek deneme |
+| Uyarlanabilir doğruluk | simülasyon, `docs/EXAM-ENGINE.md` tablosu |
+| Gerçek AI puanlama | `pnpm verify:grading`: Gemini `gemini-3.6-flash`, 10-13 sn, tüm kanıt alıntıları cevapta bulundu, telaffuz değerlendirilemez işaretli, ai_runs yazıldı |
+| Gerçek AI gözetim ikinci bakışı | `pnpm verify:proctor`: 2 kare Gemini'ye gitti, 5 sn, "iki kişi" iddiasını düz karelerde doğrulamadı (UNCLEAR) |
+| Dinleme sesleri | 18 kayıt Gemini TTS ile üretildi (49-110 sn), tarayıcıda gerçekten çaldı |
+| Öğrenci akışı, Chrome'da (sahte medya) | onay, sistem kontrolü (7 satır sırayla), yeniden yükleme kapısı, uyarlanabilir dilbilgisi (doğru cevap sonrası B2 soru), okuma düzeni, dinleme, yazma (autosave, umlaut şeridi), konuşma kaydı + parçalı yükleme, bitiş ekranı, izlerin kapanması |
+| Gözetim verisi, Chrome'dan | yapıştırma ve sağ tık engellendi, "birden fazla kişi" şeridi, olaylar ve kareler (başlangıç, periyodik, ihlal) veritabanına düştü, AI incelemesi kuyruğa girdi |
+| MediaPipe modelleri | kendi sunucumuzdan yüklendi (`public/proctor/1.0.1`, sha256 sabit) |
+| Öğretmen paneli, Chrome'da | Bugün kuyruğu, sonuç ekranı, AI önerisini onaylama, gerekçeyle değiştirme, kesinleştirme, bütünlük sekmesi ve işaret onaylama |
+| Panel rotaları | 15 rota × TR/EN, hepsi 200 |
 
-## Canlı hata turu (2026-09-11)
+## DOĞRULANMADI (gerçek tarayıcıda, gerçek cihazla denenmeli)
 
-Canlıda görülen iki hata (kayıt sırasında aday kendini görmüyordu, son aşamada
-"Karar ver" 404 veriyordu) düzeltildi, ardından üç paralel tarama 31 bulgu daha
-çıkardı ve hepsi aynı gün koda alındı. Tam liste, kanıt satırları ve derecelendirme:
-`investigations/live-bugs-investigation.md`. Öne çıkanlar:
+Otomasyon sekmesinde kamera izni ve gerçek tam ekran yok. Şunlar hiç denenmedi:
 
-- Ağırlıklar artık gerçekten uygulanıyor (`selectWeights`, `src/lib/scoring.ts`):
-  aktif set yoksa düz ortalama; değerlendirme bir sete sabitlenmişse yeniden hesap
-  yapılana kadar o set. Seed'deki bütün ağırlıklar eşit olduğu için yerelde görünür
-  bir fark yok, gerçek ağırlıklarla denenmedi.
-- `evaluations.submitted_at` artık yazılıyor (tüm yetkinlikler puanlanınca), aday
-  "Puanlandı" durumuna geçebiliyor.
-- Aday linkleri `?assessment=` taşıyor; aynı aday iki pozisyondaysa doğru olan açılır.
-- Aday API'sinde yazma uçları `stagePosition` istiyor, uyuşmazsa 409 `STAGE_MISMATCH`.
-  `pnpm verify:candidate` buna göre güncellendi ve geçiyor.
-- `maxTakes` sunucuda zorlanıyor (409 `TAKES_EXHAUSTED`), FILE_UPLOAD dosyaları kendi
-  mime'ıyla saklanıyor ve transkripsiyona girmiyor.
-- close-expired cron'u artık yarım kalan yüklemeleri de kurtarıyor (`salvage`), ALLOW_LATE
-  koşularını dışlıyor, aday gönderimiyle yarışmıyor.
-- Saklama çapası yalnızca nihai karar (ACCEPTED/REJECTED); karar yoksa medya silinmez.
-- REVIEWER rolüne yetkisi olmayan kontroller görünmüyor; `src/app/(manager)/error.tsx`
-  yasak hatasını cümleyle gösteriyor.
+1. Gerçek kamera ve mikrofon ile sistem kontrolü ve MediaPipe'ın gerçek yüzde çalışması
+   (yüz sayısı, bakış, telefon). Baş açısı işareti (aşağı bakış negatif) varsayımdır.
+2. Gerçek `getDisplayMedia` seçicisi, "Tüm ekran" doğrulaması, macOS Ekran Kaydı izni.
+3. Gerçek tam ekran, Esc davranışı, `keyboard.lock`.
+4. Çift monitör ve sınav ortasında monitör takma.
+5. Firefox / Safari (ikinci ekran doğrulanamaz görünmeli), telefonda engel ekranı.
+6. Gerçek konuşma kaydının ElevenLabs Scribe ile transkripsiyonu ve ardından AI puanlama
+   zinciri (her parça ayrı ayrı doğrulandı, zincir gerçek sesle hiç koşmadı).
+7. Ses etkinliği algılama (VAD) eşiği gerçek odada.
+8. Dinleme seslerinin Almanca telaffuz kalitesi (dinlenmedi).
 
-**Deploy öncesi zorunlu (depolama artık üretimde sessizce diske düşmüyor):** ya dört R2
-değişkeni birden, ya da `STORAGE_ALLOW_LOCAL=true` + gerçek `AUTH_SECRET`. İkisi de
-yoksa ilk yükleme/oynatma isteği çalışma zamanında hata verir. Ayrıntı `docs/STORAGE.md`.
+10 dakikalık sabah kontrolü: `pnpm dev:link`, linki kendi Chrome'unda aç, kamerayı ve
+tüm ekranı paylaş, tam ekrana geç, bir bölüm çöz, bir sekme değiştir, telefonu kameraya
+göster; sonra panelde öğrencinin Bütünlük sekmesine bak.
 
-Gerçek tarayıcıda hâlâ doğrulanmamış olanlar: kayıt sırasında aday önizlemesi, "şimdi
-başlat" yolunda tek MediaRecorder açılması, DONE'da kameranın kapanması, retake'te
-düşünme süresinin atlanması, FAILED ekranındaki "tekrar dene", builder'da yazarken
-autosave'in yereli ezmemesi. Hepsi kod ve birim testiyle doğrulandı, kamera
-otomasyondan açılamadığı için tarayıcı kanıtı yok.
+## Değişmezler
 
-## Saklama silme: kapalı, bilerek
+- Anahtar, rubrik, zorluk, dinleme metni ve soru id'leri öğrenciye asla gitmez:
+  sorular yalnızca `toCandidateItem` ile, her gövde `candidateJson` ile çıkar.
+- Süre sunucudadır; bölüm süresi başlarken bir kez yazılır.
+- Sıradaki soruyu sunucu seçer, satır kilidi altında; yenileme aynı soruyu verir.
+- AI asla nihai seviye yazmaz; öğretmen onaylar ya da gerekçeyle değiştirir.
+- Davet anında sınav ayarı kopyalanır; sonradan değişen sınav öğrencinin sınavını değiştirmez.
+- Davet başına tek deneme; tekrar sınav = yeni davet.
+- Gözetim işaretleri kimseyi otomatik başarısız saymaz; sonlandırma yalnızca okul açarsa.
 
-`purge-retention` yazıldı ve raporluyor, ama hiçbir şeyi silmiyor. Açmak için İKİSİ
-birden gerekir, ikisi de hiçbir yerde ayarlı değil:
+## Kararlar ve sapmalar
 
-1. ortamda `RETENTION_PURGE_ENABLED=true`
-2. istekte `?apply=1`
+- **TTS: Gemini** (`gemini-3.8-flash-tts`, yedekler: flash-lite-tts, 3.1 preview, 2.5).
+  ElevenLabs hesabı ücretsiz katmanda (10.000 karakter/ay), banka ~18.000 istiyor.
+  Ücretsiz Gemini TTS kotası da küçük: ilk seed'de 9 kayıttan sonra 429; yedek modelle
+  tamamlandı. Sesler içerik adresli önbellekte (`.storage/bank/audio`), yeniden seed ücretsiz.
+- **Eski `src/lib/candidate-flow.ts` silindi** (git'te duruyor). Okunması otomatik izin
+  sınıflandırıcısı tarafından engellendi; yerine `src/lib/exam-flow.ts` sıfırdan yazıldı.
+- Ekran kaydı sürekli değil; kare tabanlı. İhlal klipleri, YAMNet ses teyidi yazılmadı.
+- Kanıt karelerinin saklama işine (`purge-retention`) bağlanması yapılmadı.
+- Reşit olmayanlar için veli onayı yok.
+- E-posta gönderimi yok (davet linki panelde bir kez gösterilir, `message_outbox`'a yazılır).
+- Canlıya almak için: yeni şema (eski tablolar silinir!), cron'lar (grade, proctor-review),
+  `prebuild` MediaPipe indirmesi, `ffmpeg` (TTS mp3; yoksa wav saklanır), R2 kararı.
+  **Canlı veritabanında şema değişimi eski işe alım verisini siler; önce yedek ve karar.**
 
-Tek başına hiçbiri yetmez, `runRetention()` parametresiz çağrıldığında tek bir
-denetim satırı bile yazmayan saf bir okumadır. Silmeyi açmadan önce yapılacak iki
-kontrol: `responses.payload.mediaAssetId` bir foreign key değil, jsonb, yani medya
-silindiğinde sarkan bir id kalıyor ve Y5 inceleme ekranının bunu "medya yok" diye
-karşıladığı doğrulanmalı; bir de `media_assets.storage_key` "pending" kalabildiği
-için retention'ın `media/` ile başlamayan anahtarları atlaması gerekiyor.
+## Bağımsız kod incelemesi (2026-09-30 gece)
 
-Ölçüm: bugün her şey sıfır, en eski veri Ağustos 2026 ve kimse 180 güne ulaşmadı.
-Sıfır rapor bir şey kanıtlamadığı için `scripts/verify-retention.ts` aynı sorguları
-`now` 1200 gün ileri itilmiş halde de koşuyor: 23/23 medya, 24/24 aday eşleşiyor.
+Bir alt ajan kodu düşmanca inceledi (dosya değiştirmeden): doğrudan anahtar/transkript
+sızıntısı bulamadı, 14 kusur buldu. Düzeltilenler:
 
-## AI sağlayıcısı: Gemini birincil, NVIDIA yedek
+- Son bölüm kapanırken yarış: sonuç artık bütün bölümlerin kanıtı yazılmadan otomatik
+  kesinleşmez; sonlandırılmış, eksik, yetersiz kanıtlı denemeler de kesinleşmez.
+- Uyarlanabilir bölümü hemen bitirmek artık kazandırmaz: `minItems`e kadar eksik sorular
+  yanlış sayılır (`verify:exam` kontrolü: hemen bırakan A1'e düşüyor).
+- Sunucu artık onay, kişisel bilgi ve sistem kontrolü olmadan bölüm başlatmıyor (`NOT_READY`).
+- Geç biten konuşma kaydı puanlamayı yeniden açıyor; sınav bittikten sonra yükleme tamamlanabiliyor.
+- Deneme hakkı sayımı yüklenmekte olanı da sayıyor; tamamlama iki kez çalışmıyor.
+- Sınav sürerken kesinleştirme ve kesinleşmiş sonuçta not değiştirme sunucuda reddediliyor.
+- "Geçersiz" bütünlük kararı yayını engelliyor; otomatik yayın sadece temiz denemede.
+- Gönderilmiş cevabın üstüne geç autosave yazılamıyor; çift tık iki kez puanlamıyor.
+- Seçenek id'leri öğrenci başına rastgele takma adla gidiyor (konum ipucu yok).
+- Kanıt yüklemede boyut okumadan önce kontrol ediliyor; gözetim kapalıyken reddediliyor.
+- Bankadan silinen sorular yüzünden boş kalan bölüm öğrenciyi kilitlemiyor, atlanıyor.
 
-`AI_PROVIDER` boşsa sıra `gemini ?? nvidia ?? openrouter`. Gemini'nin denemeleri
-tükenirse ve NVIDIA anahtarı varsa çağrı bir kez NVIDIA ile tekrarlanır, ve ekran
-bunu söyler (`aiBuilder.fellBackTo`); sessizce dakikalarca bekletmez.
+Açık kalanlar: sınava başlamış öğrencinin bölümler arasında sınırsız bekleyebilmesi
+(genel süre sınırı yok), dinleme ses URL'sinin 2 dakika tekrar kullanılabilmesi,
+paralel `media/init` isteklerinde küçük bir yarış penceresi, öğrencinin konuşma yerine
+yazmayı kendisinin seçebilmesi (öğretmene açıkça işaretli).
 
-Ölçülen süreler, gerçek istem ve gerçek şemayla, beş koşu: 29.3, 27.4, 23.4, 20.1,
-35.3 saniye. Girdi 1209 token, çıktı 3421-5458. NVIDIA'da aynı iş 131-275 saniyeydi.
-Beş koşuda iki kez 503 çıktı, yeniden deneme ikisini de yuttu. Yanlış model adı
-0.87 saniyede düştü, tek `ai_runs` satırı, yeniden deneme yok.
+## Bilinen küçük pürüzler
 
-`gemini-2.5-flash` yeni kullanıcılara kapalı, 404 ile "artık kullanılamıyor" diyor.
-OpenCode Zen denendi ve elendi: ücretsiz katman sadece OpenCode istemcisinin içinde
-çalışıyor, ücretli tarafta ödeme yöntemi yok.
-
-## İlan metni eşiği
-
-Sert sınır 40 karakter, sadece iş unvanının tek başına geçmesini engellemek için.
-120 karakter engel DEĞİL, sadece "metin kısa, öneriler kabaca çıkabilir" uyarısı.
-İki kısa Türkçe cümle 98 karakter, ve onu engellemek çıkmaz sokak olurdu.
-
-## R2: kod hazır, bucket yok
-
-`src/lib/storage.ts` içindeki R2StorageProvider dört değişken (`R2_ACCESS_KEY_ID`,
-`R2_SECRET_ACCESS_KEY`, `R2_ENDPOINT`, `R2_BUCKET`) tamamsa devreye giriyor. Üçü var
-biri yoksa artık sessizce diske düşmüyor, uyarıyor. Ayrıntı: `docs/STORAGE.md`.
-
-Anahtarlar gelmeden R2 yolu DOĞRULANMAMIŞTIR. `pnpm verify:r2` şu an exit 1 verip
-"hiçbir şey kontrol edilmedi" diyor. Geçmeden önce insanın sağlaması gerekenler:
-
-- `ListParts` ve `ListMultipartUploads` yetkisi olan bir token, sadece okuma/yazma değil
-- bucket CORS'unda **`ExposeHeaders: ["ETag"]`**. Bu olmazsa tarayıcının doğrudan
-  PUT'unda ETag okunamıyor, `CompleteMultipartUpload` `InvalidPart` ile reddediyor ve
-  **her video cevabı kaybolur**. Kod artık parça listesini R2'ye sorup bunu telafi
-  ediyor, ama engellenen bir PUT'u kurtaramaz.
-- yarım kalan multipart yüklemeleri iptal eden bir lifecycle kuralı
-
-## Yapılmayanlar
-
-- **Builder'da aşama alanlarının otomatik kaydı doğrulanamadı.** Aşama adı ve
-  aşama süresi `onBlur` ile kaydediyor; otomasyon sekmesinde iki denemede de
-  veritabanına yazmadı, ama `updateStage`'in sunucu tarafı doğrudan sınandı ve
-  çalışıyor (`versionOfStage` çözüyor, durum DRAFT, yazma ve geri alma başarılı),
-  ve aynı ekrandaki tıklamaya bağlı kayıtlar (dil seçici) çalışıyor. Yani ya
-  otomasyonun ürettiği blur React'e ulaşmıyor ya da builder'ın aşama otomatik
-  kaydı hiç çalışmıyor. Gerçek tarayıcıda 20 saniyede belli olur: bir aşamanın
-  adını değiştir, başka yere tıkla, sayfayı yenile. Ad durursa sorun yok.
-  Aşama adına Enter ile kaydetme de eklendi ama O DA ÇALIŞTIRILMADI: kod
-  derleniyor, tarayıcıda hiç denenmedi. Yani şu an blur yolu da Enter yolu da
-  kanıtsız. Aşama süresi alanının çalışmadığı saptaması da yalnızca otomasyon
-  sekmesinden geliyor, gerçek tarayıcıda hiç denenmedi.
-- `/setup/[token]` ekranında parola belirleme adımı gerçek tarayıcıda hiç
-  çalıştırılmadı: argon2 yazımı, `used_at` damgası, `user.setup_complete` denetim
-  satırı ve oturum çerezi kanıtlanmadı. GET tarafı doğrulandı.
-
-## Üç oturum aynı repoda: bilinen tuzaklar
-
-1. **Hot reload uzun süren sunucu aksiyonlarını öldürür.** Biri dosya
-   kaydettiğinde Next yeniden derliyor ve o sırada süren bir server action
-   kopuyor. Dört dakikalık bir AI çağrısı ve bir retake testi böyle yarıda
-   kaldı. Uzun bir test koşmadan önce diğerlerine haber ver.
-2. **Yarım yazılmış tek bir dosya bütün rotaları 500 yapar.** Turbopack derleme
-   hatasını her sayfaya yayıyor. Kendi kodunda hata arama, önce `npx tsc
-   --noEmit` çalıştırıp hatanın kimde olduğuna bak.
-3. **`pnpm db:seed` her şeyi TRUNCATE eder.** Çalıştırmadan önce haber ver.
-
-## Bozulmaması gereken değişmezler
-
-Bunlar veritabanı seviyesinde zorunlu kılındı, `drizzle/sql/` altında. Kod kuralı değiller.
-
-1. **Yayınlanmış şablon versiyonu değişmez.** `0001_immutability.sql`. Aşama, aktivite
-   ekleme/düzenleme/silme ve versiyonu silme reddedilir. Düzenlemek yeni DRAFT açmaktır.
-   Seed bu yüzden önce DRAFT yazar, en son PUBLISHED'a çevirir.
-2. **Assessment başına en fazla bir aktif link.** `0002_single_active_link.sql`.
-   Link yenilemek için önce eskisini EXPIRED yapmak ZORUNLU. Retake aynı linki kullanır.
-
-Kodda korunan diğer kurallar:
-
-3. **Süre otoritesi sunucuda, duvar saati.** `src/lib/timer.ts`, 13 test. `deadline_at`
-   aşama başlarken bir kere yazılır. F5 süreyi ne sıfırlar ne uzatır, sekme kapatmak
-   bedava süre kazandırmaz.
-4. **`internal_*` alanları aday API'sinden asla çıkmaz.** `src/lib/candidate-safe.ts`.
-   İsim kalıbına güvenmek YETMEZ: `config.choices[].correct` cevap anahtarıydı ve
-   kalıba uymadığı için sızıyordu. Strip listesi var, `verify:candidate` her koşuda
-   tüm yanıt gövdelerini tarıyor.
-5. **AI adayı puanlamaz, sıralamaz, duygu okumaz.** Sadece üç kullanım: şablon taslağı,
-   transkripsiyon, yöneticinin KENDİ notlarının özeti. Videodan duygu çıkarmak AB AI
-   Act'te yasaklı uygulama. `ai_purpose` enum'unda karşılığı bilerek yok.
-6. **Otomatik puanlanan sorular yetkinlik ortalamasına karışmaz.** Ayrı "Bilgi Skoru".
-7. **Değerlendirme değişiklikleri iz bırakır.** Puanlama ekranı sessizce
-   kaydediyor, hız oradan geliyor; `evaluation_item_revisions` tablosu da bu
-   yüzden var. Bir puanın ne zaman ve kim tarafından değiştiği aylar sonra
-   sorulabilir olmalı.
-8. **Ağırlık değişikliği geçmiş skorları değiştirmez.** Yeni `weight_set` açılır, eski
-   skorlar eski sete bağlı kalır. Yeniden hesaplama ayrı ve açık bir aksiyon.
-
-## Tasarım kuralları (kısa)
-
-Tam liste `docs/design/RULES.md`. En sık ihlal edilenler:
-
-- Tek vurgu rengi `#0E6A57`, sadece üç yerde: birincil CTA, aktif durum, süre sayacı.
-  Kart kenarlığı ve ikincil buton asla renkli değil. Ekranda tek dolu düğme.
-- Durum = nokta + metin, rozet yok.
-- "Emin misiniz?" diyaloğu yok, 8 saniyelik geri al şeridi var. `alert`/`confirm` yasak.
-- Pasif düğme her zaman nedenini yazar (`DisabledReason`).
-- Çıkmaz sokak yok: boş liste ve sıfır sonuç bile sonraki adımı gösterir.
-- `Button` varsayılan `type="button"`. Submit istiyorsan açıkça yaz.
-- Veritabanından gelen metni CSS ile uppercase ETME ("Kıdemli" -> "KIDEMLI").
-- Türkçe olmayan metin taşıyan alt ağaca `lang` attribute'u koy, yoksa
-  `text-transform` Türkçe i/İ kuralını uygular ("WRİTTEN ANSWER").
-
-## DOĞRULANAMAYAN İKİ ŞEY, üstü örtülmesin
-
-Bunlar bu ortamda kanıtlanamıyor, "çalışıyor" diye raporlanmamalı.
-
-1. **Video oynatma.** Otomasyon sekmesi medya çözmüyor. Kanıt zinciri: curl ile
-   uç nokta doğru (200 + content-length + accept-ranges, `Range: bytes=0-` ->
-   206 ve tüm baytlar), sayfa içinden `fetch` 206 dönüyor, ama `<video>`
-   `readyState 0` / `networkState 2` / hata yok halinde takılıyor. Dosyayı
-   tamamen belleğe alıp blob olarak verdiğimde bile aynı, yani ağ ve sunucu
-   eleniyor. Chrome'un kendi oynatıcısında da aynı.
-2. **Kamera ile gerçek video kaydı.** Elimizdeki profilde kamera izni yok.
-
-İkisi de normal bir tarayıcıda bir dakikada kontrol edilebilir.
-
-## Doğrulama
-
-```bash
-npx tsc --noEmit      # temiz olmalı
-npx eslint src        # temiz olmalı
-pnpm test             # 194 test, 11 dosya
-pnpm verify:candidate <token>
-pnpm verify:r2        # bucket yoksa exit 1, "hiçbir şey doğrulanmadı"
-npx tsx scripts/verify-retention.ts   # kuru koşu, hiçbir şey silmez
-```
-
-Uçtan uca test Playwright ile DEĞİL, Claude in Chrome ile gerçek tarayıcıda yapılıyor.
-Kullanıcı kararı.
-
-## Transkripsiyon
-
-`docs/TRANSCRIPTION.md`. pg-boss dayanıklı depolama olarak, `POST /api/cron/transcribe`
-drenaj olarak kullanılıyor (Cloud Run sıfıra ölçeklendiği için ayakta duran worker yok).
-Başarısız transkripsiyon HİÇBİR ŞEY yazmaz: satır yok, placeholder yok, yaklaşık metin yok.
-Her çağrı başarılı da başarısız da `ai_runs`'a düşer.
-
-Seed'in ürettiği webm'ler ffmpeg'den çıkma sessiz kliplerdir, içlerinde konuşma yoktur.
-Anlamlı bir transkripsiyon testi için aday akışından gerçek bir video cevabı ver, ya da
-macOS `say` ile konuşma üret.
-
-**ELEVENLABS_API_KEY `sk_` ile başlamalı.** ElevenLabs panelinde anahtarın yanında bir de
-"API key ID" görünüyor; o ID ile çağrı yapılamaz, sunucu
-`api_key_id_used_as_api_key` hatası döner. Doğrulanmış çağrı: 11 saniyelik Türkçe ses,
-1880 ms, 19 kelime, dil otomatik `tur` algılandı, maliyet 0,000655 USD
-(saatlik yaklaşık 0,21 USD).
-
-## Bilinen veri hataları
-
-- Seed'in iki `weight_set`'i de toplam %100.02 (6 x 16.67). Ağırlık ekranındaki
-  "Eşit dağıt" düğmesi düzeltiyor. Seed'i güncellerken `evenWeightSplit()` kullan.
+- Otomasyon eklentisinin yazması giriş formuna ulaşmadı (JS ile girildi); gerçek
+  klavyede sorun beklenmiyor ama denenmedi.
+- Turbopack dev sunucusu çok sayıda dosya değişikliğinden sonra HMR paniği verdi;
+  yeniden başlatmak yetti.

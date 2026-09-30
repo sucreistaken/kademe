@@ -63,14 +63,12 @@ export function useStageClock(
     const beat = window.setInterval(async () => {
       try {
         const res = await apiSend<{
-          active: boolean;
-          serverNow: number;
-          deadlineAt: number | null;
-          remainingMs: number;
-        }>(token, "/stage/heartbeat", {});
-        if (!res.active) return;
-        offsetRef.current = res.serverNow - Date.now();
-        if (res.deadlineAt) deadlineRef.current = res.deadlineAt;
+          serverNow: string;
+          deadlineAt: string | null;
+          remainingMs: number | null;
+        }>(token, "/heartbeat", {});
+        offsetRef.current = Date.parse(res.serverNow) - Date.now();
+        if (res.deadlineAt) deadlineRef.current = Date.parse(res.deadlineAt);
       } catch {
         // A missed heartbeat is not a reason to stop the countdown. The stage
         // is closed by the server either way.

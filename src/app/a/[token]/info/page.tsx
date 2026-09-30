@@ -1,8 +1,7 @@
 import { CandidateShell, LanguageSwitch } from "@/components/candidate/Shell";
 import { CandidateIntl } from "@/components/candidate/Intl";
 import { InfoForm } from "@/components/candidate/InfoForm";
-import { supportedLocales } from "@/lib/candidate-flow";
-import { candidateSafe } from "@/lib/candidate-safe";
+import { supportedLocales } from "@/lib/exam-flow";
 import { enter, headerMeta, type SearchParams } from "@/app/a/[token]/shared";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +29,15 @@ export default async function CandidateInfoPage({
           />
         }
       >
-        <InfoForm token={token} state={candidateSafe(entry.state)} />
+        <InfoForm
+          token={token}
+          initial={{
+            fullName: entry.ctx.candidate.fullName ?? "",
+            email: entry.ctx.candidate.email ?? "",
+            phone: entry.ctx.candidate.phone ?? "",
+            location: entry.ctx.candidate.location ?? "",
+          }}
+        />
       </CandidateShell>
     </CandidateIntl>
   );

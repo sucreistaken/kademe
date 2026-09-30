@@ -1,8 +1,10 @@
 import type { NextRequest } from "next/server";
-import type { ResponsePayload } from "@/db/schema/types";
+import { eq } from "drizzle-orm";
+import { db } from "@/db";
+import { itemResponses } from "@/db/schema";
 import { candidateJson } from "@/lib/candidate-safe";
-import { loadActivity, loadResponses, saveResponse } from "@/lib/candidate-flow";
 import { completeMedia, failMedia, resolveOwnedMedia } from "@/lib/candidate-media";
+import { reopenGradingForMedia } from "@/lib/exam-results";
 import { enqueueTranscription } from "@/lib/queue";
 import { isTranscribableMime } from "@/lib/transcription";
 import { badRequest, conflict, readJson, withCandidate } from "@/lib/candidate-api";
@@ -15,15 +17,9 @@ type Body = {
 };
 
 /**
- * Assembles the parts and attaches the finished asset to the answer. A recording
- * that was cut short still completes, marked INCOMPLETE, so the manager sees
- * however much of it exists instead of an empty player.
- *
- * The asset knows which run and which activity it was opened for; those are
- * what the answer is attached to. The client used to send an activity index
- * that was resolved against whatever stage is current NOW, so a completion
- * arriving after a stage change (a slow upload, a stale tab) was attached to a
- * different question in a different stage.
+ * Assembles the parts and attaches the finished recording to the answer it was
+ * opened for. The asset carries its own item response, so a completion that
+ * arrives after the student moved on still lands on the right task.
  */
 export async function POST(
   req: NextRequest,
@@ -33,56 +29,33 @@ export async function POST(
     const body = await readJson<Body>(request);
     const owned = await resolveOwnedMedia(ctx, body?.uploadRef);
     if (!owned) return badRequest(ctx, "UPLOAD_NOT_FOUND");
+    // Completing twice (a retry, a beacon plus a fetch) changes nothing.
+    if (owned.asset.status !== "UPLOADING")
+      return candidateJson({ status: owned.asset.status, bytes: owned.asset.bytes, durationMs: owned.asset.durationMs });
 
     const parts = owned.asset.parts ?? [];
     if (parts.length === 0) {
       await failMedia(owned.asset.id);
       return conflict(ctx, "NO_PARTS");
     }
-
     const durationMs =
-      typeof body?.durationMs === "number" && body.durationMs > 0
-        ? Math.round(body.durationMs)
-        : null;
+      typeof body?.durationMs === "number" && body.durationMs > 0 ? Math.round(body.durationMs) : null;
+    const asset = await completeMedia(owned.asset, parts, durationMs, body?.incomplete ? "INCOMPLETE" : "READY");
 
-    const asset = await completeMedia(
-      owned.asset,
-      parts,
-      durationMs,
-      body?.incomplete ? "INCOMPLETE" : "READY",
-    );
+    // Never throws: a queue problem cannot fail the student's answer.
+    if (isTranscribableMime(asset.mime)) await enqueueTranscription(asset.id);
 
-    const activity = asset.activityId ? await loadActivity(asset.activityId) : null;
-
-    // A finished recording is worth reading, so it goes into the transcription
-    // queue here. INCOMPLETE assets are queued too: a cut-short answer is
-    // exactly the one a manager would rather read than watch. Enqueueing never
-    // throws, so a queue problem cannot fail the candidate's submission.
-    // A file upload is never a recording, whatever its mime says.
-    if (activity?.type !== "FILE_UPLOAD" && isTranscribableMime(asset.mime)) {
-      await enqueueTranscription(asset.id);
-    }
-
-    // Attach it to the answer, keeping whatever text the candidate already wrote.
-    if (activity) {
-      const rows = await loadResponses(owned.run.id);
-      const before = rows.find((r) => r.activityId === activity.id)?.payload;
-      const payload: ResponsePayload = { ...(before ?? {}) };
-      // A recording supersedes the written alternative, so the flag that told
-      // the manager "this was typed instead of recorded" has to go with it.
-      delete payload.usedTextAlternative;
-      if (activity.type === "FILE_UPLOAD") {
-        payload.fileAssetIds = [...(before?.fileAssetIds ?? []), asset.id];
-      } else {
-        payload.mediaAssetId = asset.id;
+    if (asset.itemResponseId) {
+      const [response] = await db.select().from(itemResponses).where(eq(itemResponses.id, asset.itemResponseId));
+      if (response) {
+        // The newest take is the answer. It supersedes a typed alternative.
+        const answer = { ...(response.answer ?? {}), mediaAssetId: asset.id };
+        delete answer.usedTextAlternative;
+        await db.update(itemResponses).set({ answer, updatedAt: new Date() }).where(eq(itemResponses.id, response.id));
+        await reopenGradingForMedia(response.id);
       }
-      await saveResponse(owned.run.id, activity, payload);
     }
 
-    return candidateJson({
-      status: asset.status,
-      bytes: asset.bytes,
-      durationMs: asset.durationMs,
-    });
-  });
+    return candidateJson({ status: asset.status, bytes: asset.bytes, durationMs: asset.durationMs });
+  }, { allowProblems: ["COMPLETED"] });
 }

@@ -9,16 +9,16 @@ import {
   supportedLocales,
   type CandidateContext,
   type CandidateState,
-} from "@/lib/candidate-flow";
+} from "@/lib/exam-flow";
 import { stepPath } from "@/lib/candidate-routes";
 import { candidateT } from "@/i18n/candidate";
 import { shortDate } from "@/i18n/dates";
 import { isLocale, DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
-import { resolveToken } from "@/lib/candidate-flow";
+import { resolveToken } from "@/lib/exam-flow";
 
 /**
- * Every candidate page starts the same way: resolve the token on the server,
- * settle the language, and either render the error screen or send the candidate
+ * Every student page starts the same way: resolve the token on the server,
+ * settle the language, and either render the error screen or send the student
  * to the one screen their state belongs on. The client is never asked where it
  * thinks it is.
  */
@@ -56,16 +56,20 @@ async function settleLocale(
 
 export async function enter(
   token: string,
-  expected: CandidateState["step"],
+  expected: CandidateState["step"] | CandidateState["step"][],
   searchParams?: SearchParams,
   path?: string,
 ): Promise<PageEntry> {
   const resolved = await resolveToken(token);
 
+  // A finished exam's link is the student's way back to the result.
+  if (!resolved.ok && resolved.problem === "COMPLETED" && resolved.ctx) redirect(`/a/${token}/done`);
+
   if (!resolved.ok) {
     const ctx = resolved.ctx;
     const locale = (ctx?.locale as Locale | undefined) ?? DEFAULT_LOCALE;
-    const progress = ctx ? await progressSummary(ctx) : undefined;
+    const summary = ctx ? await progressSummary(ctx) : undefined;
+    const progress = summary ? { completed: summary.done, total: summary.total } : undefined;
     return {
       kind: "problem",
       node: (
@@ -78,7 +82,7 @@ export async function enter(
               expiresAt={ctx?.link.expiresAt.getTime()}
               notBefore={ctx?.link.notBefore?.getTime()}
               progress={progress}
-              contactEmail={ctx?.contactEmail ?? "destek@kademe.local"}
+              contactEmail={ctx?.contactEmail ?? "okul@kademe.local"}
             contactName={ctx?.contactName ?? null}
             />
           </CandidateShell>
@@ -90,7 +94,8 @@ export async function enter(
   await settleLocale(resolved.ctx, searchParams, path ?? `/a/${token}`);
 
   const state = await loadState(resolved.ctx);
-  if (state.step !== expected) redirect(stepPath(token, state));
+  const allowed = Array.isArray(expected) ? expected : [expected];
+  if (!allowed.includes(state.step)) redirect(stepPath(token, state));
   return {
     kind: "ok",
     ctx: resolved.ctx,

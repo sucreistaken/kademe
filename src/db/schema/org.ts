@@ -22,6 +22,10 @@ export const organizations = pgTable("organizations", {
   candidateRetentionDays: integer("candidate_retention_days")
     .notNull()
     .default(730),
+  /** Proctoring frames and clips. Shorter than answers: they are evidence, not work. */
+  evidenceRetentionDays: integer("evidence_retention_days").notNull().default(90),
+  /** Shown to students on the finish screen as the next step. */
+  contactEmail: text("contact_email"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -37,7 +41,7 @@ export const users = pgTable(
     email: text("email").notNull().unique(),
     name: text("name").notNull(),
     passwordHash: text("password_hash").notNull(),
-    role: userRole("role").notNull().default("RECRUITER"),
+    role: userRole("role").notNull().default("TEACHER"),
     /** TOTP secret, encrypted at rest. Mandatory for OWNER. */
     totpSecret: text("totp_secret"),
     totpConfirmedAt: timestamp("totp_confirmed_at", { withTimezone: true }),

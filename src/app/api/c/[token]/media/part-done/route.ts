@@ -33,6 +33,6 @@ export async function POST(
       });
       return candidateJson({ recorded: true });
     },
-    { limit: 600, windowMs: 60_000 },
+    { limit: 600, windowMs: 60_000, allowProblems: ["COMPLETED"] },
   );
 }

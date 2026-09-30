@@ -9,18 +9,26 @@ import {
   boolean,
   jsonb,
   index,
+  real,
+  check,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
+import type { BlueprintConfig } from "@/lib/exam/blueprint";
+import type { IntegrityResult } from "@/lib/proctor/integrity";
+import type { ItemAnswer, ItemSnapshot, Presentation } from "@/lib/exam/types";
 import { organizations, users } from "./org";
-import { templateVersions, stages, activities } from "./catalog";
+import { examBlueprints, items } from "./exam";
 import {
   linkStatus,
-  attemptScope,
   runCompletion,
   mediaStatus,
   locale,
+  examMode,
+  cefrLevel,
+  section,
+  integrityOutcome,
 } from "./enums";
-import type { ResponsePayload, TranscriptWord, UploadPart } from "./types";
+import type { TranscriptWord, UploadPart } from "./types";
 
 export const candidates = pgTable(
   "candidates",
@@ -47,7 +55,10 @@ export const candidates = pgTable(
   ],
 );
 
-/** One candidate invited to one frozen template version. The invitation itself. */
+/**
+ * One student invited to one exam. The blueprint config is copied here at
+ * invite time, so the exam this student takes never changes under them.
+ */
 export const assessments = pgTable(
   "assessments",
   {
@@ -58,10 +69,15 @@ export const assessments = pgTable(
     candidateId: uuid("candidate_id")
       .notNull()
       .references(() => candidates.id, { onDelete: "cascade" }),
-    versionId: uuid("version_id")
+    blueprintId: uuid("blueprint_id")
       .notNull()
-      .references(() => templateVersions.id, { onDelete: "restrict" }),
-    /** Which language the candidate is taking it in. */
+      .references(() => examBlueprints.id, { onDelete: "restrict" }),
+    blueprintName: text("blueprint_name").notNull(),
+    blueprintSnapshot: jsonb("blueprint_snapshot").$type<BlueprintConfig>().notNull(),
+    mode: examMode("mode").notNull(),
+    /** The level the student says they hold. Required for a verification exam. */
+    claimedLevel: cefrLevel("claimed_level"),
+    /** Interface language. The exam content itself is German. */
     locale: locale("locale").notNull().default("tr"),
     invitedBy: uuid("invited_by").references(() => users.id, {
       onDelete: "set null",
@@ -73,6 +89,10 @@ export const assessments = pgTable(
   (t) => [
     index("assessments_org_idx").on(t.orgId),
     index("assessments_candidate_idx").on(t.candidateId),
+    check(
+      "claimed_for_verification",
+      sql`${t.mode} <> 'LEVEL_VERIFICATION' OR ${t.claimedLevel} IS NOT NULL`,
+    ),
   ],
 );
 
@@ -105,10 +125,9 @@ export const assessmentLinks = pgTable(
     index("links_assessment_idx").on(t.assessmentId),
     /**
      * At most one usable link per assessment. Two live tokens would mean a link
-     * the manager thinks they revoked still opens the assessment, and "which
-     * link did they use" becomes unanswerable. A retake reuses this same link
-     * (status moves to RETAKE_AVAILABLE), so this is the rule, not a limitation.
-     * Superseded links stay as EXPIRED rows rather than being deleted.
+     * the teacher thinks they revoked still opens the exam, and "which link did
+     * they use" becomes unanswerable. A retake is a new invitation with its own
+     * link. Superseded links stay as EXPIRED rows rather than being deleted.
      */
     uniqueIndex("one_active_link_per_assessment")
       .on(t.assessmentId)
@@ -117,9 +136,8 @@ export const assessmentLinks = pgTable(
 );
 
 /**
- * A retake never deletes anything. It opens a new attempt; stages outside the
- * retake scope get a stage_run that points back at the previous run through
- * carriedFromStageRunId rather than copying data.
+ * The single sitting of an exam. One per assessment: a second try is a new
+ * invitation, so every attempt has exactly one result and one evidence trail.
  */
 export const attempts = pgTable(
   "attempts",
@@ -128,86 +146,113 @@ export const attempts = pgTable(
     assessmentId: uuid("assessment_id")
       .notNull()
       .references(() => assessments.id, { onDelete: "cascade" }),
-    attemptNumber: integer("attempt_number").notNull(),
-    scope: attemptScope("scope").notNull().default("FULL"),
-    /** Only one attempt per assessment drives the score and the comparison table. */
+    attemptNumber: integer("attempt_number").notNull().default(1),
     isPrimary: boolean("is_primary").notNull().default(true),
     createdReason: text("created_reason"),
-    /**
-     * Device check is per attempt, not per candidate: a retake may happen on a
-     * different machine, and a candidate invited to a second position must not
-     * inherit a stale "camera already verified" flag from the first.
-     */
+    /** Set when every required system check passed (camera, screen, ...). */
     deviceCheckedAt: timestamp("device_checked_at", { withTimezone: true }),
     startedAt: timestamp("started_at", { withTimezone: true }),
     completedAt: timestamp("completed_at", { withTimezone: true }),
+    /** Proctoring summary, recomputed when events, AI reviews or teacher flags change. */
+    integritySummary: jsonb("integrity_summary").$type<IntegrityResult>(),
+    integrityComputedAt: timestamp("integrity_computed_at", { withTimezone: true }),
+    integrityOutcome: integrityOutcome("integrity_outcome"),
+    integrityNote: text("integrity_note"),
+    integrityDecidedBy: uuid("integrity_decided_by").references(() => users.id, { onDelete: "set null" }),
+    integrityDecidedAt: timestamp("integrity_decided_at", { withTimezone: true }),
+    /** Only when the school enabled termination rules. Never set by AI flags. */
+    terminatedAt: timestamp("terminated_at", { withTimezone: true }),
+    terminationReason: text("termination_reason"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
   (t) => [
-    uniqueIndex("attempt_number_per_assessment").on(
-      t.assessmentId,
-      t.attemptNumber,
-    ),
+    uniqueIndex("one_attempt_per_assessment").on(t.assessmentId),
     index("attempts_assessment_idx").on(t.assessmentId),
   ],
 );
 
-/** One execution of one stage inside one attempt. Owns the authoritative clock. */
-export const stageRuns = pgTable(
-  "stage_runs",
+/** One section inside one attempt. Owns the authoritative clock. */
+export const sectionRuns = pgTable(
+  "section_runs",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     attemptId: uuid("attempt_id")
       .notNull()
       .references(() => attempts.id, { onDelete: "cascade" }),
-    stageId: uuid("stage_id")
-      .notNull()
-      .references(() => stages.id, { onDelete: "restrict" }),
-    /** Set on a PARTIAL retake: this stage was not redone, read the old run. */
-    carriedFromStageRunId: uuid("carried_from_stage_run_id"),
-    /** Written by the server when the stage is served. Never trusted from the client. */
+    section: section("section").notNull(),
+    orderIndex: integer("order_index").notNull(),
+    /** Written by the server when the section starts. Never trusted from the client. */
     startedAt: timestamp("started_at", { withTimezone: true }),
     deadlineAt: timestamp("deadline_at", { withTimezone: true }),
     submittedAt: timestamp("submitted_at", { withTimezone: true }),
     lastHeartbeatAt: timestamp("last_heartbeat_at", { withTimezone: true }),
     completion: runCompletion("completion").notNull().default("PENDING"),
     wasLate: boolean("was_late").notNull().default(false),
+    /** Fixed forms: the planned item ids in order. Null for adaptive sections. */
+    itemPlan: jsonb("item_plan").$type<string[]>(),
+    /** Writing / speaking: the level each task is drawn at. */
+    taskLevels: jsonb("task_levels").$type<string[]>(),
+    /** Listening: how often each clip was started, keyed by stimulus id. */
+    stimulusPlays: jsonb("stimulus_plays").$type<Record<string, number>>().notNull().default({}),
+    /** Adaptive: why the section stopped serving. */
+    stopReason: text("stop_reason"),
+    /** Final posterior for objective sections, cached for lists. */
+    thetaMean: real("theta_mean"),
+    thetaSd: real("theta_sd"),
   },
   (t) => [
-    uniqueIndex("stage_run_per_attempt").on(t.attemptId, t.stageId),
-    index("stage_runs_attempt_idx").on(t.attemptId),
-    index("stage_runs_deadline_idx").on(t.deadlineAt),
+    uniqueIndex("section_run_per_attempt").on(t.attemptId, t.section),
+    index("section_runs_attempt_idx").on(t.attemptId),
+    index("section_runs_deadline_idx").on(t.deadlineAt),
   ],
 );
 
-export const responses = pgTable(
-  "responses",
+/**
+ * One served item. The whole item, key included, is frozen into
+ * `itemSnapshot` when it is served, so the report stays right even if the bank
+ * item is edited or retired later.
+ */
+export const itemResponses = pgTable(
+  "item_responses",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    stageRunId: uuid("stage_run_id")
+    sectionRunId: uuid("section_run_id")
       .notNull()
-      .references(() => stageRuns.id, { onDelete: "cascade" }),
-    activityId: uuid("activity_id")
+      .references(() => sectionRuns.id, { onDelete: "cascade" }),
+    itemId: uuid("item_id")
       .notNull()
-      .references(() => activities.id, { onDelete: "restrict" }),
-    payload: jsonb("payload").$type<ResponsePayload>().notNull().default({}),
+      .references(() => items.id, { onDelete: "restrict" }),
+    sequence: integer("sequence").notNull(),
+    itemSnapshot: jsonb("item_snapshot").$type<ItemSnapshot>().notNull(),
+    presentation: jsonb("presentation").$type<Presentation>().notNull().default({}),
+    answer: jsonb("answer").$type<ItemAnswer>(),
+    servedAt: timestamp("served_at", { withTimezone: true }).notNull().defaultNow(),
+    /** Set when the student moves on. Until then the answer is a draft. */
     answeredAt: timestamp("answered_at", { withTimezone: true }),
+    /** 0..1 for objective items; null for writing and speaking. */
+    score: real("score"),
+    isCorrect: boolean("is_correct"),
+    thetaAfter: real("theta_after"),
+    seAfter: real("se_after"),
+    /** Planned but never reached before the section closed. Scored 0. */
+    notReached: boolean("not_reached").notNull().default(false),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
   (t) => [
-    uniqueIndex("response_per_activity").on(t.stageRunId, t.activityId),
-    index("responses_run_idx").on(t.stageRunId),
+    uniqueIndex("item_response_sequence").on(t.sectionRunId, t.sequence),
+    uniqueIndex("item_response_item").on(t.sectionRunId, t.itemId),
+    index("item_responses_run_idx").on(t.sectionRunId),
   ],
 );
 
 /**
  * Recorded media. Parts are uploaded straight to R2 while the candidate is still
  * talking, so a browser crash leaves a playable INCOMPLETE asset rather than
- * nothing. This is also what keeps iOS Safari from dying on long recordings.
+ * nothing.
  */
 export const mediaAssets = pgTable(
   "media_assets",
@@ -216,10 +261,10 @@ export const mediaAssets = pgTable(
     orgId: uuid("org_id")
       .notNull()
       .references(() => organizations.id, { onDelete: "cascade" }),
-    stageRunId: uuid("stage_run_id").references(() => stageRuns.id, {
+    sectionRunId: uuid("section_run_id").references(() => sectionRuns.id, {
       onDelete: "cascade",
     }),
-    activityId: uuid("activity_id").references(() => activities.id, {
+    itemResponseId: uuid("item_response_id").references(() => itemResponses.id, {
       onDelete: "set null",
     }),
     storageKey: text("storage_key").notNull(),
@@ -238,12 +283,12 @@ export const mediaAssets = pgTable(
       .defaultNow(),
   },
   (t) => [
-    index("media_run_idx").on(t.stageRunId),
+    index("media_run_idx").on(t.sectionRunId),
     index("media_purge_idx").on(t.purgeAfter),
   ],
 );
 
-/** Lets the manager read instead of watch, and click a line to seek the video. */
+/** Lets the teacher read instead of watch, click a line to seek, and feeds speaking grading. */
 export const transcripts = pgTable(
   "transcripts",
   {

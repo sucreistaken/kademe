@@ -3,41 +3,29 @@ import { CandidateShell } from "@/components/candidate/Shell";
 import { CandidateIntl } from "@/components/candidate/Intl";
 import { Finished } from "@/components/candidate/Finished";
 import { LinkProblem } from "@/components/candidate/LinkProblem";
-import {
-  completionInfo,
-  loadState,
-  progressSummary,
-  resolveToken,
-} from "@/lib/candidate-flow";
+import { loadState, progressSummary, resolveToken } from "@/lib/exam-flow";
 import { stepPath } from "@/lib/candidate-routes";
 import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 
 export const dynamic = "force-dynamic";
 
 /**
- * The closing screen. Finishing flips the link to COMPLETED, so this page has
- * to treat that "problem" as the success case rather than as an error, which is
- * exactly why it does its own resolve instead of going through `enter()`.
+ * The closing screen. Finishing flips the link to COMPLETED, so this page
+ * treats that "problem" as the success case, and it stays the page a student
+ * comes back to for the result.
  */
-export default async function CandidateDonePage({
-  params,
-}: {
-  params: Promise<{ token: string }>;
-}) {
+export default async function DonePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const resolved = await resolveToken(token);
   const ctx = resolved.ctx;
   const locale = (ctx?.locale as Locale | undefined) ?? DEFAULT_LOCALE;
 
-  const finished = resolved.ok
-    ? (await loadState(resolved.ctx)).step === "DONE"
-    : resolved.problem === "COMPLETED";
-
-  if (!ctx || !finished) {
-    if (resolved.ok) {
-      redirect(stepPath(token, await loadState(resolved.ctx)));
-    }
-    const problemCtx = resolved.ok ? null : resolved.ctx;
+  if (resolved.ok) {
+    const state = await loadState(resolved.ctx);
+    if (state.step !== "DONE") redirect(stepPath(token, state));
+  }
+  if (!ctx || (!resolved.ok && resolved.problem !== "COMPLETED")) {
+    const summary = ctx ? await progressSummary(ctx) : undefined;
     return (
       <CandidateIntl locale={locale}>
         <CandidateShell locale={locale} header={false}>
@@ -45,30 +33,29 @@ export default async function CandidateDonePage({
             token={token}
             locale={locale}
             problem={resolved.ok ? "INVALID" : resolved.problem}
-            expiresAt={problemCtx?.link.expiresAt.getTime()}
-            notBefore={problemCtx?.link.notBefore?.getTime()}
-            progress={problemCtx ? await progressSummary(problemCtx) : undefined}
-            contactEmail={problemCtx?.contactEmail ?? "destek@kademe.local"}
-            contactName={problemCtx?.contactName ?? null}
+            expiresAt={ctx?.link.expiresAt.getTime()}
+            notBefore={ctx?.link.notBefore?.getTime()}
+            progress={summary ? { completed: summary.done, total: summary.total } : undefined}
+            contactEmail={ctx?.contactEmail ?? "okul@kademe.local"}
+            contactName={ctx?.contactName ?? null}
           />
         </CandidateShell>
       </CandidateIntl>
     );
   }
 
-  const info = await completionInfo(ctx);
-
+  // COMPLETED links resolve with a context; read the finished state from it.
+  const state = await loadState(ctx);
+  const finished = state.finished;
   return (
     <CandidateIntl locale={locale}>
       <CandidateShell locale={locale} header={false}>
         <Finished
           token={token}
-          locale={locale}
           name={ctx.candidate.fullName ?? ""}
-          stageCount={info.stageCount}
-          submittedAt={(info.completedAt ?? new Date()).getTime()}
-          responseByAt={info.responseByAt?.getTime() ?? null}
-          orgName={ctx.orgName}
+          result={finished?.result ?? { visibility: "NONE", released: false, awaitingTeacher: true }}
+          terminated={finished?.terminated ?? false}
+          terminationReason={finished?.terminationReason ?? null}
           contactEmail={ctx.contactEmail}
         />
       </CandidateShell>

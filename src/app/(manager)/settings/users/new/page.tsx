@@ -71,12 +71,12 @@ type Translator = ReturnType<typeof managerT>;
 
 function roleLabel(t: Translator, role: Role) {
   if (role === "OWNER") return t("settings.roles.OWNER");
-  if (role === "RECRUITER") return t("settings.roles.RECRUITER");
+  if (role === "TEACHER") return t("settings.roles.TEACHER");
   return t("settings.roles.REVIEWER");
 }
 
 function roleHelp(t: Translator, role: Role) {
   if (role === "OWNER") return t("settings.roleHelp.OWNER");
-  if (role === "RECRUITER") return t("settings.roleHelp.RECRUITER");
+  if (role === "TEACHER") return t("settings.roleHelp.TEACHER");
   return t("settings.roleHelp.REVIEWER");
 }

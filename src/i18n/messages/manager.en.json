@@ -1,10 +1,9 @@
 {
   "nav": {
     "dashboard": "Today",
-    "positions": "Positions",
-    "candidates": "Candidates",
-    "compare": "Compare",
-    "library": "Library",
+    "students": "Students",
+    "exams": "Exams",
+    "bank": "Question bank",
     "settings": "Settings",
     "signOut": "Sign out",
     "language": "Language",
@@ -22,25 +21,19 @@
     "search": "Search",
     "none": "None"
   },
-  "templateSteps": {
-    "label": "Steps to build the template",
-    "content": "Content",
-    "review": "Review",
-    "publish": "Publish"
-  },
   "login": {
     "title": "Sign in",
-    "lead": "Sign in with your account to reach the assessment panel.",
+    "lead": "Sign in to the exam panel.",
     "email": "Email",
     "password": "Password",
     "submit": "Sign in",
     "checking": "Checking…",
     "invalid": "Wrong email or password.",
-    "candidate": "Are you a candidate? Your assessment link was emailed to you, you do not sign in here."
+    "candidate": "Are you a student? Your exam link was emailed to you; you do not need to sign in here."
   },
   "errorPage": {
     "forbiddenTitle": "Your role cannot do this",
-    "forbiddenBody": "You do not have permission for this screen or action. A reviewer scores candidates; invitations, templates and library changes are open to recruiters and owners.",
+    "forbiddenBody": "You do not have permission for this screen or action. Reviewers grade writing and speaking; exams, the bank and invitations are for teachers and owners.",
     "genericTitle": "Something went wrong",
     "genericBody": "An unexpected error happened while loading this page. You can try again or go back to the dashboard.",
     "retry": "Try again",

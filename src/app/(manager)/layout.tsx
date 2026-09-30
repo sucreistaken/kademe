@@ -7,7 +7,9 @@ import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
 
 /**
- * Manager shell. Dense by design: the candidate side is the calm one.
+ * Teacher panel shell. Five items, one per job: what to review today, the
+ * students, the exams, the question bank, settings. Dense by design: the
+ * student side is the calm one.
  *
  * NAV deliberately lists only routes that exist. A navigation item that lands
  * on a 404 is a dead end, and dead ends are the one thing the design rules do
@@ -15,10 +17,9 @@ import { managerT } from "@/i18n/manager";
  */
 const NAV = [
   { href: "/dashboard", key: "dashboard" },
-  { href: "/positions", key: "positions" },
-  { href: "/candidates", key: "candidates" },
-  { href: "/compare", key: "compare" },
-  { href: "/library", key: "library" },
+  { href: "/students", key: "students" },
+  { href: "/exams", key: "exams" },
+  { href: "/bank", key: "bank" },
   { href: "/settings", key: "settings" },
 ] as const;
 

@@ -43,12 +43,12 @@
     },
     "roles": {
       "OWNER": "Sahip",
-      "RECRUITER": "İşe alım",
+      "TEACHER": "Öğretmen",
       "REVIEWER": "Değerlendirici"
     },
     "roleHelp": {
       "OWNER": "Her şey: ayarlar, denetim kaydı, dışa aktarma, silme.",
-      "RECRUITER": "Pozisyon ve şablon kurar, aday davet eder, puanlar. Ayarlara ve denetim kaydına giremez.",
+      "TEACHER": "Sınav kurar, soru bankasını yönetir, öğrenci davet eder, puanlar ve sonucu kesinleştirir. Ayarlara ve denetim kaydına giremez.",
       "REVIEWER": "Yalnızca puanlar. Silemez, dışa aktaramaz, davet edemez."
     },
     "audit": {
@@ -174,7 +174,27 @@
       "weights_disable": "Ağırlıklı skor kapatıldı",
       "weights_enable": "Ağırlıklı skor açıldı",
       "weights_recalculate": "Skorlar yeniden hesaplandı",
-      "weights_save": "Ağırlıklar kaydedildi"
+      "weights_save": "Ağırlıklar kaydedildi",
+      "student_invite": "Öğrenci davet edildi",
+      "grading_confirm": "AI önerisi onaylandı",
+      "grading_override": "Seviye değiştirildi",
+      "result_override_overall": "Genel seviye değiştirildi",
+      "result_finalize": "Sonuç kesinleştirildi",
+      "result_release": "Sonuç öğrenciye gösterildi",
+      "integrity_flag_confirmed": "Bütünlük işareti onaylandı",
+      "integrity_flag_dismissed": "Bütünlük işareti yoksayıldı",
+      "integrity_flag_open": "Bütünlük işareti yeniden açıldı",
+      "integrity_outcome": "Bütünlük kararı verildi",
+      "blueprint_create": "Sınav oluşturuldu",
+      "blueprint_publish": "Sınav yayınlandı",
+      "blueprint_copy": "Sınav kopyalandı",
+      "blueprint_archive": "Sınav arşivlendi",
+      "bank_generate": "AI ile soru üretildi",
+      "bank_approved": "Soru onaylandı",
+      "bank_rejected": "Soru reddedildi",
+      "bank_retired": "Soru rotasyondan çıkarıldı",
+      "bank_draft": "Soru taslağa alındı",
+      "bank_edit": "Soru düzenlendi"
     }
   },
   "userInvite": {

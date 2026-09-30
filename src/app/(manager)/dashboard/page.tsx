@@ -1,327 +1,134 @@
 import Link from "next/link";
-import { InlineLink } from "@/components/ui/inline-link";
-import { Card } from "@/components/ui/card";
 import { Button, DisabledReason } from "@/components/ui/button";
-import { StatusDot } from "@/components/ui/status-dot";
-import { Avatar } from "@/components/ui/avatar";
-import { UndoStrip } from "@/components/ui/undo-strip";
-import { requireUser } from "@/server/session";
+import { Card } from "@/components/ui/card";
+import { Dot, INTEGRITY_TONE, Level, PageHead, STATUS_TONE, shortDateTime } from "@/components/panel/bits";
+import { extendLink } from "@/app/(manager)/actions";
 import { can } from "@/lib/authorize";
-import {
-  loadAssessmentRows,
-  loadPositions,
-  needsReview,
-  pipelineState,
-} from "@/lib/manager-data";
-import { remaining, waiting } from "@/lib/format";
-import { managerT } from "@/i18n/manager";
+import { expiringLinks, listStudents } from "@/server/panel";
+import { requireUser } from "@/server/session";
 import { managerLocale } from "@/i18n/manager-locale";
-import { extendLink, undoExtendLink } from "../actions";
+import { managerT } from "@/i18n/manager";
 
-/** Rough planning number for the queue footer. Four stages, five minutes each. */
-const MINUTES_PER_CANDIDATE = 8;
-const EXPIRING_WINDOW_MS = 48 * 60 * 60 * 1000;
+export const dynamic = "force-dynamic";
 
-export default async function DashboardPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
+/**
+ * "Today": one question, "what should I look at?". The review queue, oldest
+ * first, is the page. Exams in progress and links about to lapse come after.
+ * No stat tiles: every row here leads to an action.
+ */
+export default async function TodayPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const user = await requireUser();
   const locale = await managerLocale();
   const t = managerT(locale);
-  const params = await searchParams;
-  const rows = await loadAssessmentRows(user.orgId);
-  const positions = await loadPositions(user.orgId, rows);
-  const now = new Date();
-  // A reviewer scores and nothing else. The invite and extend controls land on
-  // requireUser("candidate:invite"), so for them the controls say why they are
-  // off instead of opening an error page.
-  const mayInvite = can(user, "candidate:invite");
-
-  // Oldest first: the queue is ordered by how long someone has been waiting,
-  // not by when they were invited.
+  const sp = await searchParams;
+  const rows = await listStudents(user.orgId);
   const queue = rows
-    .filter((row) => needsReview(pipelineState(row, now)))
-    .sort(
-      (a, b) => (a.lastActivityAt?.getTime() ?? 0) - (b.lastActivityAt?.getTime() ?? 0),
-    );
-
-  // Already lapsed links belong in this card too. Dropping them would hide the
-  // one case where the manager has to act, and the candidate cannot.
-  const expiring = rows
-    .filter((row) => {
-      const state = pipelineState(row, now);
-      if ((state !== "NOT_STARTED" && state !== "EXPIRED") || !row.linkExpiresAt) return false;
-      return row.linkExpiresAt.getTime() - now.getTime() < EXPIRING_WINDOW_MS;
-    })
-    .sort((a, b) => a.linkExpiresAt!.getTime() - b.linkExpiresAt!.getTime());
-
-  const workCount = queue.length + expiring.length;
+    .filter((r) => r.status === "AWAITING_REVIEW" || r.status === "AWAITING_GRADING")
+    .sort((a, b) => (a.completedAt?.getTime() ?? 0) - (b.completedAt?.getTime() ?? 0));
+  const running = rows.filter((r) => r.status === "IN_EXAM");
+  const expiring = await expiringLinks(user.orgId);
+  const canInvite = can(user, "student:invite");
 
   return (
     <main className="mx-auto max-w-[1360px] px-6 py-8">
-      <div className="flex items-start justify-between gap-6">
-        <div>
-          <p className="text-[13px] text-muted">{t("dashboard.kicker")}</p>
-          <h1 className="mt-1 text-[26px] font-semibold tracking-tight">
-            {workCount > 0
-              ? t("dashboard.workWaiting", { count: workCount })
-              : t("dashboard.noWork")}
-          </h1>
-          <p className="mt-1 text-sm text-muted">
-            {workCount > 0
-              ? [
-                  queue.length > 0
-                    ? t("dashboard.queueSummary", { count: queue.length })
-                    : null,
-                  expiring.length > 0
-                    ? t("dashboard.expiringSummary", { count: expiring.length })
-                    : null,
-                ]
-                  .filter(Boolean)
-                  .join(", ")
-              : t("dashboard.queueClear")}
-          </p>
-        </div>
-        {/* The only filled button on this screen. */}
-        {mayInvite ? (
-          <Button asChild variant="primary" size="md">
-            <Link href="/candidates/new">{t("shared.inviteCandidate")}</Link>
-          </Button>
-        ) : (
-          <div className="flex flex-col items-end gap-1.5">
-            <Button
-              id="invite-cta"
-              variant="primary"
-              size="md"
-              disabled
-              disabledReason={t("shared.noRolePermission")}
-            >
-              {t("shared.inviteCandidate")}
+      <PageHead
+        title={t("today.title", { count: queue.length })}
+        sub={queue[0]?.completedAt ? t("today.oldest", { date: shortDateTime(queue[0].completedAt, locale) }) : undefined}
+        action={
+          <div className="flex flex-col items-end">
+            <Button asChild={canInvite} variant="primary" disabled={!canInvite} disabledReason={canInvite ? undefined : t("today.noInvitePermission")}>
+              {canInvite ? <Link href="/students/new">{t("today.invite")}</Link> : t("today.invite")}
             </Button>
-            <DisabledReason id="invite-cta-why">{t("shared.noRolePermission")}</DisabledReason>
+            {!canInvite ? <DisabledReason>{t("today.noInvitePermission")}</DisabledReason> : null}
           </div>
+        }
+      />
+
+      <section className="mt-8">
+        <h2 className="mb-3 text-[15px] font-semibold text-ink">{t("today.queueTitle")}</h2>
+        {queue.length === 0 ? (
+          <Card className="px-6 py-8 text-center">
+            <p className="text-[15px] font-medium text-ink">{t("today.queueEmpty")}</p>
+            <p className="mt-1 text-[13.5px] text-muted">{t("today.queueEmptyHint")}</p>
+          </Card>
+        ) : (
+          <Card className="divide-y divide-line">
+            {queue.map((r) => (
+              <Link
+                key={r.assessmentId}
+                href={`/students/${r.assessmentId}`}
+                className="grid grid-cols-1 items-center gap-2 px-5 py-4 hover:bg-canvas md:grid-cols-[1.6fr_1.3fr_0.6fr_1.4fr_1.2fr_auto]"
+              >
+                <span>
+                  <span className="block text-[14.5px] font-semibold text-ink">{r.name}</span>
+                  <span className="text-[12.5px] text-muted">{shortDateTime(r.completedAt, locale)}</span>
+                </span>
+                <span className="text-[13.5px] text-ink-2">
+                  {t(`mode.${r.mode}`)}
+                  {r.claimed ? ` · ${t("mode.claimed", { level: r.claimed })}` : ""}
+                </span>
+                <Level level={r.level} muted={!r.levelFinal} />
+                <Dot tone={r.status === "AWAITING_GRADING" ? "neutral" : "warn"}>
+                  {r.status === "AWAITING_GRADING"
+                    ? t("today.aiRunning")
+                    : r.aiProposals > 0
+                      ? t("today.aiPending", { n: r.aiProposals })
+                      : t("today.readyToFinalize")}
+                </Dot>
+                <Dot tone={INTEGRITY_TONE[r.integrity]}>{t(`integrityLevel.${r.integrity}`)}</Dot>
+                <span className="text-[13px] font-medium text-ink underline decoration-underline underline-offset-2">{t("today.review")}</span>
+              </Link>
+            ))}
+          </Card>
         )}
-      </div>
+      </section>
 
-      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
-        <div className="space-y-6">
-          {/* ---- review queue ---- */}
-          <Card>
-            <div className="flex items-baseline justify-between border-b border-line px-5 py-4">
-              <h2 className="text-[15px] font-semibold">{t("dashboard.queueTitle")}</h2>
-              <span className="text-[13px] text-muted">{t("dashboard.queueOrder")}</span>
-            </div>
-
-            {queue.length === 0 ? (
-              <EmptyBlock
-                title={t("dashboard.queueEmpty")}
-                actionLabel={mayInvite ? t("shared.inviteCandidate") : t("dashboard.seeAllCandidates")}
-                actionHref={mayInvite ? "/candidates/new" : "/candidates"}
-              />
+      <div className="mt-10 grid gap-8 lg:grid-cols-2">
+        <section>
+          <h2 className="mb-3 text-[15px] font-semibold text-ink">{t("today.runningTitle")}</h2>
+          <Card className="divide-y divide-line">
+            {running.length === 0 ? (
+              <p className="px-5 py-4 text-[13.5px] text-muted">{t("today.runningEmpty")}</p>
             ) : (
-              <>
-                <ul>
-                  {queue.map((row) => {
-                    const state = pipelineState(row, now);
-                    return (
-                      <li
-                        key={row.assessmentId}
-                        className="flex items-center gap-4 border-b border-line px-5 py-3.5 last:border-b-0"
-                      >
-                        <Avatar name={row.candidateName} />
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">{row.candidateName}</p>
-                          <p className="truncate text-[13px] text-muted">
-                            {row.positionName} ·{" "}
-                            {t("dashboard.stageProgress", {
-                              done: row.stagesCompleted,
-                              total: row.stagesTotal,
-                            })}
-                          </p>
-                        </div>
-                        <span className="tnum w-28 text-right text-[13px] text-muted">
-                          {row.lastActivityAt ? waiting(row.lastActivityAt, locale, now) : "-"}
-                        </span>
-                        <span className="w-36">
-                          <StatusDot tone={state === "PARTIALLY_SCORED" ? "warn" : "neutral"}>
-                            {t(`pipeline.${state}`)}
-                          </StatusDot>
-                        </span>
-                        <Link
-                          // A candidate can be invited to two positions, so the
-                          // queue row must name its own assessment. Without it
-                          // both rows open whichever one is newest.
-                          href={`/candidates/${row.candidateId}/review?assessment=${row.assessmentId}`}
-                          className="rounded-[8px] border border-line px-3 py-1.5 text-[13px]
-                                     text-ink hover:bg-canvas"
-                        >
-                          {state === "PARTIALLY_SCORED"
-                            ? t("shared.continue")
-                            : t("shared.review")}
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-                <div className="flex items-center justify-between px-5 py-3.5">
-                  <span className="text-[13px] text-muted">
-                    {t("dashboard.queueFooter", {
-                      count: queue.length,
-                      minutes: queue.length * MINUTES_PER_CANDIDATE,
-                    })}
-                  </span>
-                  <InlineLink
-                    href={`/candidates/${queue[0].candidateId}/review?assessment=${queue[0].assessmentId}`}
-                    className="text-[13px]"
-                  >
-                    {t("dashboard.startWithFirst")}
-                  </InlineLink>
-                </div>
-              </>
+              running.map((r) => (
+                <Link key={r.assessmentId} href={`/students/${r.assessmentId}`} className="flex items-center justify-between px-5 py-3 hover:bg-canvas">
+                  <span className="text-[14px] font-medium text-ink">{r.name}</span>
+                  <Dot tone={STATUS_TONE.IN_EXAM}>
+                    {r.currentSection ? t("today.sectionNow", { section: t(`sectionName.${r.currentSection}`) }) : t("status.IN_EXAM")}
+                  </Dot>
+                </Link>
+              ))
             )}
           </Card>
-
-          {/* ---- links about to lapse ---- */}
-          <Card>
-            <div className="flex items-baseline justify-between border-b border-line px-5 py-4">
-              <h2 className="text-[15px] font-semibold">{t("dashboard.expiringTitle")}</h2>
-              <span className="text-[13px] text-muted">
-                {t("dashboard.expiringHint")}
-              </span>
-            </div>
-
+        </section>
+        <section>
+          <h2 className="mb-3 text-[15px] font-semibold text-ink">{t("today.expiringTitle")}</h2>
+          {sp.extended ? <p className="mb-2 text-[13px] text-muted">{t("today.extended")}</p> : null}
+          <Card className="divide-y divide-line">
             {expiring.length === 0 ? (
-              <EmptyBlock
-                title={t("dashboard.expiringEmpty")}
-                actionLabel={t("dashboard.seeAllCandidates")}
-                actionHref="/candidates"
-              />
+              <p className="px-5 py-4 text-[13.5px] text-muted">-</p>
             ) : (
-              <ul>
-                {expiring.map((row) => (
-                  <li
-                    key={row.assessmentId}
-                    className="flex items-center gap-4 border-b border-line px-5 py-3.5 last:border-b-0"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{row.candidateName}</p>
-                      <p className="truncate text-[13px] text-muted">{row.positionName}</p>
-                    </div>
-                    {/* The countdown is the third and last place the accent is allowed.
-                        A lapsed link is not a countdown, so it loses the accent. */}
-                    <span
-                      className={
-                        row.linkExpiresAt!.getTime() > now.getTime()
-                          ? "tnum w-24 text-right text-[13px] font-medium text-accent"
-                          : "tnum w-24 text-right text-[13px] text-muted"
-                      }
-                    >
-                      {remaining(row.linkExpiresAt!, locale, now)}
-                    </span>
-                    {mayInvite ? (
-                      <form action={extendLink}>
-                        <input type="hidden" name="linkId" value={row.linkId ?? ""} />
-                        <input type="hidden" name="days" value="3" />
-                        <input type="hidden" name="back" value="/dashboard" />
-                        <input type="hidden" name="candidateName" value={row.candidateName} />
-                        <Button type="submit" variant="secondary" size="sm">
-                          {t("dashboard.extendDays", { days: 3 })}
-                        </Button>
-                      </form>
-                    ) : (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        disabled
-                        disabledReason={t("shared.noRolePermission")}
-                      >
-                        {t("dashboard.extendDays", { days: 3 })}
+              expiring.map((e) => (
+                <div key={e.link.id} className="flex items-center justify-between gap-4 px-5 py-3">
+                  <span>
+                    <span className="block text-[14px] font-medium text-ink">{e.name}</span>
+                    <span className="text-[12.5px] text-muted">{shortDateTime(e.link.expiresAt, locale)}</span>
+                  </span>
+                  {canInvite ? (
+                    <form action={extendLink}>
+                      <input type="hidden" name="linkId" value={e.link.id} />
+                      <input type="hidden" name="back" value="/dashboard" />
+                      <Button type="submit" size="sm">
+                        {t("today.extend")}
                       </Button>
-                    )}
-                  </li>
-                ))}
-              </ul>
+                    </form>
+                  ) : null}
+                </div>
+              ))
             )}
           </Card>
-        </div>
-
-        {/* ---- open positions ---- */}
-        <Card className="h-fit">
-          <div className="border-b border-line px-5 py-4">
-            <h2 className="text-[15px] font-semibold">{t("dashboard.positionsTitle")}</h2>
-          </div>
-          {positions.length === 0 ? (
-            <div className="px-5 py-6">
-              <p className="text-sm text-muted">{t("dashboard.positionsEmpty")}</p>
-            </div>
-          ) : (
-            <ul>
-              {positions.map((position) => (
-                <li
-                  key={position.id}
-                  className="flex items-center justify-between gap-3 border-b border-line
-                             px-5 py-3.5 last:border-b-0"
-                >
-                  <span className="min-w-0 truncate text-sm">{position.name}</span>
-                  {position.hasPublishedVersion ? (
-                    <Link
-                      href={`/candidates?position=${position.id}`}
-                      className="shrink-0 text-[13px] text-muted hover:text-ink hover:underline"
-                    >
-                      {t("dashboard.candidateCount", { count: position.candidateCount })}
-                    </Link>
-                  ) : (
-                    <StatusDot tone="neutral" className="shrink-0">
-                      {t("positionDetail.statusDRAFT")}
-                    </StatusDot>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
+        </section>
       </div>
-
-      {params.undo === "link" && typeof params.linkId === "string" && (
-        <UndoStrip
-          message={t("dashboard.undoExtend", {
-            name:
-              typeof params.who === "string" && params.who
-                ? params.who
-                : t("shared.candidate"),
-            days: typeof params.days === "string" ? params.days : 3,
-          })}
-          action={undoExtendLink}
-          hiddenFields={{
-            linkId: params.linkId,
-            prev: typeof params.prev === "string" ? params.prev : "",
-            prevStatus: typeof params.prevStatus === "string" ? params.prevStatus : "",
-            back: "/dashboard",
-          }}
-        />
-      )}
     </main>
-  );
-}
-
-/** No empty list is a dead end: each one names the next concrete step. */
-function EmptyBlock({
-  title,
-  actionLabel,
-  actionHref,
-}: {
-  title: string;
-  actionLabel: string;
-  actionHref: string;
-}) {
-  return (
-    <div className="px-5 py-8 text-center">
-      <p className="text-sm text-muted">{title}</p>
-      <InlineLink href={actionHref} className="mt-2 inline-block text-[13px]">
-        {actionLabel}
-      </InlineLink>
-    </div>
   );
 }

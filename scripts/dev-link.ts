@@ -1,72 +1,48 @@
 /**
- * Mints a fresh candidate link for development and prints the URL.
+ * Mints a fresh student invitation for development and prints its link.
  *
- * The seed prints its raw tokens once and never again, which is the correct
- * behaviour but unhelpful an hour later. This adds a link rather than replacing
- * one, so nothing already in the database is disturbed.
- *
- * Run with: npx tsx scripts/dev-link.ts [candidate email]
+ * Run with:
+ *   pnpm dev:link                          # placement exam
+ *   pnpm dev:link --claimed B1             # B1 verification exam
+ *   pnpm dev:link --name "Ayşe Demir" --lang en
  */
-
 import "dotenv/config";
-import { and, asc, eq, ne } from "drizzle-orm";
-import { db } from "../src/db";
-import { assessmentLinks, assessments, candidates } from "../src/db/schema";
-import { mintToken } from "../src/lib/auth";
+
+function arg(name: string): string | undefined {
+  const i = process.argv.indexOf(`--${name}`);
+  return i > 0 ? process.argv[i + 1] : undefined;
+}
 
 async function main() {
-  const wanted = process.argv[2];
-
-  const rows = await db
-    .select({
-      assessmentId: assessments.id,
-      name: candidates.fullName,
-      email: candidates.email,
-    })
-    .from(assessments)
-    .innerJoin(candidates, eq(candidates.id, assessments.candidateId))
-    .orderBy(asc(candidates.fullName));
-
-  const targets = wanted
-    ? rows.filter((r) => r.email === wanted || r.name === wanted)
-    : rows;
-
-  if (targets.length === 0) {
-    console.log("No candidate matched. Known candidates:");
-    for (const row of rows) console.log(`  ${row.name} <${row.email}>`);
-    process.exit(1);
-  }
-
-  const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
-  console.log("\n  Fresh candidate links (raw tokens are shown only here):\n");
-
-  for (const target of targets) {
-    // An assessment may only hold one usable link at a time
-    // (drizzle/sql/0002_single_active_link.sql), so the current one is retired
-    // first, exactly the way re-issuing a link from the manager side would.
-    await db
-      .update(assessmentLinks)
-      .set({ status: "EXPIRED" })
-      .where(
-        and(
-          eq(assessmentLinks.assessmentId, target.assessmentId),
-          ne(assessmentLinks.status, "EXPIRED"),
-        ),
-      );
-
-    const token = mintToken();
-    await db.insert(assessmentLinks).values({
-      assessmentId: target.assessmentId,
-      tokenHash: token.hash,
-      status: "NOT_STARTED",
-      expiresAt,
-      attemptsAllowed: 1,
-    });
-    console.log(`  ${target.name?.padEnd(14)} http://localhost:3100/a/${token.raw}`);
-  }
-
-  console.log("");
+  const { and, eq } = await import("drizzle-orm");
+  const { db } = await import("../src/db");
+  const s = await import("../src/db/schema");
+  const { createInvitation } = await import("../src/server/invite");
+  const claimed = arg("claimed") as "A1" | "A2" | "B1" | "B2" | "C1" | "C2" | undefined;
+  const mode = claimed ? "LEVEL_VERIFICATION" : "PLACEMENT";
+  const [org] = await db.select().from(s.organizations).limit(1);
+  if (!org) throw new Error("no organisation: run pnpm db:seed first");
+  const [blueprint] = await db
+    .select()
+    .from(s.examBlueprints)
+    .where(and(eq(s.examBlueprints.mode, mode), eq(s.examBlueprints.status, "PUBLISHED")))
+    .limit(1);
+  if (!blueprint) throw new Error(`no published ${mode} exam`);
+  const result = await createInvitation({
+    orgId: org.id,
+    blueprintId: blueprint.id,
+    fullName: arg("name") ?? "Dev Öğrenci",
+    email: arg("email") ?? `dev-${Date.now()}@example.com`,
+    claimedLevel: claimed ?? null,
+    locale: arg("lang") === "en" ? "en" : "tr",
+    invitedBy: null,
+  });
+  if (!result.ok) throw new Error(result.code);
+  console.log(`\n  ${blueprint.name}${claimed ? ` (claimed ${claimed})` : ""}\n  ${result.url}\n`);
   process.exit(0);
 }
 
-void main();
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

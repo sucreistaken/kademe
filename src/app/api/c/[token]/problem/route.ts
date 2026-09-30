@@ -30,11 +30,12 @@ export async function POST(
 
       await db.insert(messageOutbox).values({
         orgId: ctx.assessment.orgId,
-        kind: "CANDIDATE_PROBLEM",
-        toEmail: ctx.contactEmail,
-        subject: `Aday sorun bildirdi: ${ctx.candidate.fullName ?? "isimsiz"} (${area})`,
+        kind: "STUDENT_PROBLEM",
+        toEmail: ctx.contactEmail ?? "okul@kademe.local",
+        subject: `Öğrenci sorun bildirdi: ${ctx.candidate.fullName ?? "isimsiz"} (${area})`,
         body:
-          `Aday: ${ctx.candidate.fullName ?? "-"} <${ctx.candidate.email ?? "-"}>\n` +
+          `Öğrenci: ${ctx.candidate.fullName ?? "-"} <${ctx.candidate.email ?? "-"}>\n` +
+          `Sınav: ${ctx.assessment.examName}\n` +
           `Cevap adresi: ${ctx.candidate.email ?? "bilinmiyor"}\n` +
           `Alan: ${area}\n` +
           `Mesaj: ${note || "-"}\n` +

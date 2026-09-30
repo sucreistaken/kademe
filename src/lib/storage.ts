@@ -71,6 +71,11 @@ export interface StorageProvider {
   readonly publicSignedUrls: boolean;
 
   initUpload(key: string, mime: string): Promise<{ uploadId: string }>;
+  /**
+   * One small object in one request: proctoring frames and listening audio.
+   * Recordings keep using the multipart path, which survives a dead browser.
+   */
+  putObject(key: string, mime: string, body: Uint8Array): Promise<{ bytes: number }>;
   /** Server side part write. Used by the proxy route and by tests. */
   uploadPart(
     key: string,
@@ -267,6 +272,13 @@ export class LocalStorageProvider implements StorageProvider {
 
   private partFile(dir: string, partNumber: number) {
     return path.join(dir, `${String(partNumber).padStart(5, "0")}.part`);
+  }
+
+  async putObject(key: string, _mime: string, body: Uint8Array) {
+    const file = this.objectPath(key);
+    await mkdir(path.dirname(file), { recursive: true });
+    await writeFile(file, body);
+    return { bytes: body.byteLength };
   }
 
   async initUpload(key: string, mime: string) {
@@ -467,6 +479,15 @@ export class R2StorageProvider implements StorageProvider {
     }
     return this.clientPromise;
   }
+  async putObject(key: string, mime: string, body: Uint8Array) {
+    const { PutObjectCommand } = await import("@aws-sdk/client-s3");
+    const client = await this.client();
+    await client.send(
+      new PutObjectCommand({ Bucket: this.bucket, Key: assertSafeKey(key), Body: body, ContentType: mime }),
+    );
+    return { bytes: body.byteLength };
+  }
+
 
   async initUpload(key: string, mime: string) {
     const { CreateMultipartUploadCommand } = await import("@aws-sdk/client-s3");
@@ -846,6 +867,22 @@ export function mediaKey(input: {
 }): string {
   const ext = mimeExtension(input.mime);
   return `media/${input.orgId}/${input.assessmentId}/${input.stageRunId}/${input.mediaId}.${ext}`;
+}
+
+/** Proctoring evidence: attempt scoped, never chosen by the client. */
+export function proctorEvidenceKey(input: {
+  orgId: string;
+  assessmentId: string;
+  evidenceId: string;
+  mime: string;
+}): string {
+  const ext = input.mime === "image/webp" ? "webp" : input.mime === "image/jpeg" ? "jpg" : mimeExtension(input.mime);
+  return `proctor/${input.orgId}/${input.assessmentId}/${input.evidenceId}.${ext}`;
+}
+
+/** Listening audio for a bank stimulus. The hash changes when the script or voices do. */
+export function stimulusAudioKey(orgId: string, stimulusId: string, hash: string): string {
+  return `bank/${orgId}/audio/${stimulusId}-${hash.slice(0, 12)}.mp3`;
 }
 
 /** Reverse of `mimeExtension`, for serving a stored object back. */

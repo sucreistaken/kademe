@@ -1,16 +1,15 @@
 import { CandidateShell, LanguageSwitch } from "@/components/candidate/Shell";
 import { CandidateIntl } from "@/components/candidate/Intl";
 import { IntroConsent } from "@/components/candidate/IntroConsent";
-import { getConsentText, supportedLocales } from "@/lib/candidate-flow";
+import { getConsentText, supportedLocales } from "@/lib/exam-flow";
 import { candidateSafe } from "@/lib/candidate-safe";
 import { enter, headerMeta, type SearchParams } from "@/app/a/[token]/shared";
 
 export const dynamic = "force-dynamic";
 
 /**
- * The entry screen. It shows what the assessment is, how long it takes and that
- * a recording will be made, and it shows no question at all: the candidate
- * consents before seeing anything they could prepare an answer to.
+ * The entry screen: what the exam is, how long it takes and what is watched.
+ * No question is shown before consent.
  */
 export default async function CandidateEntryPage({
   params,
