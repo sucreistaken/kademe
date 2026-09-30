@@ -1,7 +1,8 @@
 # Kademe - durum ve devir belgesi
 
-Son güncelleme: 2026-09-30, gece. Dal: `pivot/language-exam`, **commit yok** (kullanıcı
-kararı: her şey working tree'de, sabah incelenecek). Canlıya dokunulmadı.
+Son güncelleme: 2026-09-30. **Canlıda**: https://kademe.kadiray.com, commit `3f2b8a8`
+(`main`). Canlı veritabanı kullanıcı onayıyla sıfırlandı: eski işe alım verisi yok,
+panel kullanıcıları (parolalarıyla) taşındı, banka ve iki sınav yüklendi.
 
 ## Ürün tek cümlede
 
@@ -11,7 +12,7 @@ taşımadığını ölçer (seviye doğrulama). Dilbilgisi, okuma, dinleme, yazm
 (kayıtlı video) bölümleri; güçlü tarayıcı gözetimi; yazma ve konuşmada AI önerir,
 öğretmen karar verir. Kurs önerisi yapmaz.
 
-Eski işe alım ürünü bu dalda tamamen kaldırıldı; `main` ve canlı site hâlâ onu çalıştırır.
+Eski işe alım ürünü kaldırıldı; son hali `610da60` commit'inde.
 
 Belgeler: `docs/design/EXAM-UX.md` (ekranlar, Sally + airbnb-ux), `docs/EXAM-ENGINE.md`
 (ölçme modeli ve doğruluğu), `docs/PROCTORING.md` (ne görülür, ne görülmez, uyum).
@@ -91,9 +92,10 @@ göster; sonra panelde öğrencinin Bütünlük sekmesine bak.
 - Kanıt karelerinin saklama işine (`purge-retention`) bağlanması yapılmadı.
 - Reşit olmayanlar için veli onayı yok.
 - E-posta gönderimi yok (davet linki panelde bir kez gösterilir, `message_outbox`'a yazılır).
-- Canlıya almak için: yeni şema (eski tablolar silinir!), cron'lar (grade, proctor-review),
-  `prebuild` MediaPipe indirmesi, `ffmpeg` (TTS mp3; yoksa wav saklanır), R2 kararı.
-  **Canlı veritabanında şema değişimi eski işe alım verisini siler; önce yedek ve karar.**
+- Canlı kurulum (2026-09-30): `scripts/setup-production.ts --confirm-host=<db host>` ile
+  şema değişti (kullanıcılar korundu), dinleme sesleri VM'e kopyalandı (TTS çağrısı
+  yapılmadı), `APP_ORIGIN` eklendi, yeni timer'lar `kademe-grade` (1 dk) ve
+  `kademe-proctor-review` (2 dk). Depolama hâlâ VM diskinde (R2 kararı açık).
 
 ## Bağımsız kod incelemesi (2026-09-30 gece)
 
