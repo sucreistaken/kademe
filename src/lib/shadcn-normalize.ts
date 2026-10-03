@@ -11,9 +11,10 @@
  *  - RULES.md: shadows only on sticky panels and modals. Overlay shadows become
  *    the HIRING-UX overlay token; small decorative shadows are removed.
  */
-const UTILITY = "(bg|text|border|ring|outline|fill|stroke|from|via|to|divide|decoration|placeholder|caret)";
+const BORDER = "border(?:-[xytrblse])?";
+const UTILITY = `(bg|text|${BORDER}|ring|outline|fill|stroke|from|via|to|divide|decoration|placeholder|caret)`;
 /** `text-muted` already means grey text in Kademe, so text is not renamed. */
-const SURFACE_UTILITY = "(bg|border|ring|outline|fill|stroke|from|via|to|divide|decoration|placeholder|caret)";
+const SURFACE_UTILITY = `(bg|${BORDER}|ring|outline|fill|stroke|from|via|to|divide|decoration|placeholder|caret)`;
 
 export function normalizeShadcnSource(source: string): string {
   return source
@@ -21,6 +22,8 @@ export function normalizeShadcnSource(source: string): string {
     .replace(new RegExp(`\\b${UTILITY}-accent-foreground\\b`, "g"), "$1-subtle-foreground")
     .replace(new RegExp(`\\b${UTILITY}-accent(?![\\w-])`, "g"), "$1-subtle")
     .replace(new RegExp(`\\b${SURFACE_UTILITY}-muted(?![\\w-])`, "g"), "$1-muted-surface")
-    .replace(/\bshadow-(md|lg|xl|2xl)\b/g, "shadow-overlay")
-    .replace(/\bshadow-(xs|sm)\b/g, "shadow-none");
+    // Lookbehind: only a standalone shadow-* utility (after optional variant
+    // prefixes), never drop-shadow-*, inset-shadow-* or text-shadow-*.
+    .replace(/(?<![\w-])shadow-(md|lg|xl|2xl)\b/g, "shadow-overlay")
+    .replace(/(?<![\w-])shadow-(xs|sm)\b/g, "shadow-none");
 }
