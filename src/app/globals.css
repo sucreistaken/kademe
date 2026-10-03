@@ -1,8 +1,19 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/*
+ * shadcn components carry `dark:` classes. Kademe has no dark theme
+ * (HIRING-UX 9), so `dark:` applies only under an explicit .dark ancestor,
+ * which nothing renders. Without this line `dark:` would follow the operating
+ * system and the components would change colour on a dark-mode laptop.
+ */
+@custom-variant dark (&:is(.dark *));
 
 /*
  * Kademe design tokens.
- * Source of truth: Claude Design canvas "Kademe Canvas.dc.html" (artboard t0).
+ * Source of truth: Claude Design canvas "Kademe Canvas.dc.html" (artboard t0),
+ * and for the "soft" values docs/design/HIRING-UX.md section 8.
  *
  * Hard rules from the canvas, do not break them:
  *  - One accent colour, used in exactly three places: primary CTA, active state, timer.
@@ -65,22 +76,127 @@
 
   --font-sans: var(--font-figtree), system-ui, sans-serif;
 
-  /* Radius scale: 6 / 10 / 14 */
-  --radius-sm: 6px;
+  /*
+   * Radius scale 8 / 10 / 12 / 16 (HIRING-UX 8.3, accepted for both solutions
+   * in 10.4). Existing screens use literal px radii (rounded-[10px] and so on),
+   * so this scale changes nothing they draw; it is the scale new screens and
+   * the shadcn parts read.
+   */
+  --radius-sm: 8px;
   --radius-md: 10px;
-  --radius-lg: 14px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
 
-  /* Shadows are reserved for sticky panels and modals */
+  /*
+   * Shadows are reserved for sticky panels and modals. `panel` and `modal`
+   * are the values the exam screens use today and keep until they migrate;
+   * `panel-soft` and `overlay` are HIRING-UX 8.3 and are what new screens and
+   * shadcn overlays use. When the exam screens move over, `--shadow-panel`
+   * takes the soft value and the `-soft` name goes away.
+   */
   --shadow-panel: 0 1px 3px rgba(0, 0, 0, 0.07);
   --shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.16);
+  --shadow-panel-soft: 0 1px 2px rgb(19 19 17 / 0.04), 0 4px 16px rgb(19 19 17 / 0.05);
+  --shadow-overlay: 0 12px 40px rgb(19 19 17 / 0.12);
+
+  /* Spacing, HIRING-UX 8.3. Base unit 4px stays Tailwind's. */
+  --spacing-page: 2rem; /* panel page edge */
+  --spacing-section: 2rem; /* between sections */
+  --spacing-card: 1.25rem; /* inside a panel card */
+  --spacing-card-candidate: 1.75rem; /* inside a candidate card */
+  --spacing-row: 3.25rem; /* table row height */
+  --spacing-field: 1rem; /* between form fields */
+
+  /* Motion, HIRING-UX 8.5: open/close and sheet/dialog curve. */
+  --ease-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
 
   /* Canvas widths: manager is dense, candidate is deliberately narrower */
   --container-manager: 1360px;
   --container-candidate: 1000px;
 }
 
+/*
+ * shadcn variables, values from HIRING-UX 8.2. Two renames keep Kademe names
+ * intact: shadcn's `accent` (a hover ground) is `subtle` here, because
+ * `accent` is the brand colour; and shadcn's background `muted` is exposed as
+ * the utility `muted-surface`, because Kademe's `muted` is a text colour.
+ * The copied components are rewritten accordingly by scripts/shadcn-normalize.ts.
+ */
 :root {
   color-scheme: light;
+  --radius: 0.75rem;
+  --background: #f6f5f2;
+  --foreground: #131311;
+  --card: #ffffff;
+  --card-foreground: #131311;
+  --popover: #ffffff;
+  --popover-foreground: #131311;
+  --primary: #0e6a57;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f0ec;
+  --secondary-foreground: #131311;
+  --muted: #f1f0ec;
+  --muted-foreground: #6e6e69;
+  --subtle: #f1f0ec;
+  --subtle-foreground: #131311;
+  --brand-soft: #eef6f3;
+  --destructive: #8c2f2a;
+  --border: #e7e7e4;
+  --input: #d8d8d3;
+  --ring: #0e6a57;
+  --sidebar: #fbfbf9;
+  --sidebar-foreground: #131311;
+  --sidebar-primary: #0e6a57;
+  --sidebar-primary-foreground: #ffffff;
+  /* Hover ground in the menu. The active item is styled by the nav itself
+     (brand-soft ground, accent text, 2px accent line), HIRING-UX 4.1. */
+  --sidebar-accent: #f1f0ec;
+  --sidebar-accent-foreground: #131311;
+  --sidebar-border: #e7e7e4;
+  --sidebar-ring: #0e6a57;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted-surface: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle: var(--subtle);
+  --color-subtle-foreground: var(--subtle-foreground);
+  --color-brand-soft: var(--brand-soft);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/*
+ * shadcn parts draw bare `border` and `border-b` and expect a global border
+ * colour. A global `*` rule would recolour every existing Kademe border that
+ * relies on currentColor, so the default applies only to elements that carry
+ * a shadcn `data-slot` attribute.
+ */
+@layer base {
+  [data-slot] {
+    border-color: var(--border);
+    outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
+  }
 }
 
 body {
