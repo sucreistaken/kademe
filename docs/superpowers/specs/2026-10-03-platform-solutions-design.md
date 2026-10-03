@@ -68,8 +68,10 @@ bunları referansla kullanır ve davet anında kendi şablon sürümüne donduru
    kaydeder. Sınav bunu `section_run` olarak doldurur, işe alım `stage_run` olarak.
 6. `link_status`: işe alım tekrar hakkı için `RETAKE_AVAILABLE` geri gelir. Sınav bu değeri
    hiç üretmez.
-7. Kullanıcı rolleri değişmez: `OWNER`, `TEACHER`, `REVIEWER`. İki çözümü de kullanan
-   kullanıcı için `TEACHER` UI'da ortak adla "Yönetici" diye görünür; bu sadece i18n işi.
+7. Kullanıcı rolü `TEACHER` → `MANAGER` olarak yeniden adlandırılır (`ALTER TYPE ... RENAME
+   VALUE`, veri kaybı yok). Roller: `OWNER`, `MANAGER` (TR "Yönetici"), `REVIEWER`.
+   `HIRING-UX.md`deki "Recruiter" bu roldür. Alım başına roller (değerlendirici, karar veren)
+   işe alım çözümünün tablosudur, global rol değildir.
 
 ### 2.2 Göç (migration) stratejisi
 
