@@ -522,7 +522,7 @@ Ayrıntı 5.1'de.
 
 ### 4.6 Roller
 
-Global roller korunur: `OWNER` · `RECRUITER` · `REVIEWER`. Yeni olan **alım başına atama**:
+Global roller: `OWNER` · `MANAGER` (eski adıyla Recruiter; TR "Yönetici") · `REVIEWER`. Yeni olan **alım başına atama**:
 
 | Alım rolü | Kim olabilir | Ne yapar |
 |---|---|---|
@@ -1253,6 +1253,12 @@ ilk pilotta aday anketinde gözetim yorumları izlenir, gerekirse açılır.
    sonrasına kadar gizlidir.
 
 ## 8. Görsel yön: "yumuşak"
+
+> **Plan sırasında düzeltilenler (2026-10-04):** (1) shadcn'in `--muted` değişkeni bir zemin
+> rengidir, Kademe'nin `text-muted`'ı gri metindir; shadcn'inki `muted-surface` adıyla açılır.
+> (2) Geri alma için Sonner yerine mevcut `UndoStrip` kalır (8 sn, sunucu eylemi sözleşmesi).
+> (3) Sınav ekranları yeni köşe ve gölgelere kendiliğinden geçmez; ekran ekran taşınır.
+> Ayrıntı: `docs/superpowers/plans/2026-10-04-ui-foundation-shadcn.md`.
 
 "Yumuşak" bu üründe dört şey demek: bol boşluk, yuvarlak ama gevşek olmayan köşeler, sıcak
 nötrler ve alarm renginin yokluğu. Marka aynı: accent `#0E6A57`, font Figtree. RULES.md'nin

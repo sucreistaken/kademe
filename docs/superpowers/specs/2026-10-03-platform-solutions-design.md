@@ -110,6 +110,8 @@ export interface SolutionModule {
 }
 ```
 
+Sözleşme plan sırasında genişledi (çekirdek aday rotaları ve gözetim sınav motorunu import etmesin diye): `candidate.loadState`, `candidate.title`, `candidate.heartbeat`, `attempts.openSegment`, `attempts.terminate`, `attempts.onMediaComplete`; `today()` görüntüleyenin dilini de alır; `personSummary` çağıran olmadığı için ertelendi. Kesin tipler: `docs/superpowers/plans/2026-10-04-core-separation.md`.
+
 Kayıt tek yerde: `src/solutions/registry.ts`. Çekirdek çözümleri sadece bu kayıttan tanır;
 `import "@/solutions/hiring/..."` çekirdekte yasak (eslint `no-restricted-imports` ile).
 
@@ -117,8 +119,8 @@ Kayıt tek yerde: `src/solutions/registry.ts`. Çekirdek çözümleri sadece bu 
 
 **Panel.** Ortak: `/dashboard` (Bugün), `/people/[id]` (kişi, iki çözümün özetiyle),
 `/settings`. Çözümler: `/exam/students`, `/exam/exams`, `/exam/bank`;
-`/hiring/positions`, `/hiring/candidates`, `/hiring/library`, `/hiring/compare` (kesin
-liste UX belgesinden). Eski adresler (`/students`, `/exams`, `/bank`) `next.config.ts`
+`/hiring/candidates`, `/hiring/openings/...` (karşılaştırma alımın sekmesi); kurum
+kütüphanesi ortak: `/library/positions`, `/library/competencies` (kesin liste `HIRING-UX.md` 4.3). Eski adresler (`/students`, `/exams`, `/bank`) `next.config.ts`
 yönlendirmesiyle yeni yerlerine gider. Menü çözüme göre gruplu; tek kurum ikisini de
 kullandığı için çözüm değiştirici yerine gruplu yan menü (UX belgesi kesinleştirir).
 
