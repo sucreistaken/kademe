@@ -26,7 +26,8 @@
     "verify:grading": "tsx scripts/verify-grading.ts",
     "verify:proctor": "tsx scripts/verify-proctor.ts",
     "prebuild": "tsx scripts/fetch-proctor-assets.ts",
-    "proctor:assets": "tsx scripts/fetch-proctor-assets.ts"
+    "proctor:assets": "tsx scripts/fetch-proctor-assets.ts",
+    "ui:normalize": "tsx scripts/shadcn-normalize.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1127.0",
