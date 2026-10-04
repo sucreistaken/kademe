@@ -20,21 +20,34 @@ export type NavGroupView = {
   items: Array<{ href: string; label: string }>;
 };
 
+export type LibraryLabels = { label: string; positions: string; competencies: string };
+
 /**
- * The panel menu (HIRING-UX 4.1): Today, one group per solution, Settings.
- * Group headers appear only when more than one solution is registered ("nobody
- * sees the menu of something they do not use"). The Library group joins when
- * its routes exist (sub-project 3).
+ * The panel menu (HIRING-UX 4.1): Today, one group per solution, the shared
+ * Library, Settings. Group headers appear only when more than one solution is
+ * registered ("nobody sees the menu of something they do not use").
  */
-export function buildNav(locale: Locale, shared: { today: string; settings: string }): NavGroupView[] {
-  const several = SOLUTION_MANIFESTS.length > 1;
+export function buildNav(
+  locale: Locale,
+  shared: { today: string; settings: string; library: LibraryLabels },
+  manifests: readonly SolutionManifest[] = SOLUTION_MANIFESTS,
+): NavGroupView[] {
+  const several = manifests.length > 1;
   return [
     { key: "today", label: null, items: [{ href: "/dashboard", label: shared.today }] },
-    ...SOLUTION_MANIFESTS.map((m) => ({
+    ...manifests.map((m) => ({
       key: m.key,
       label: several ? m.label[locale] : null,
       items: m.nav.map((n) => ({ href: n.href, label: n.label[locale] })),
     })),
+    {
+      key: "library",
+      label: several ? shared.library.label : null,
+      items: [
+        { href: "/library/positions", label: shared.library.positions },
+        { href: "/library/competencies", label: shared.library.competencies },
+      ],
+    },
     { key: "settings", label: null, items: [{ href: "/settings", label: shared.settings }] },
   ];
 }

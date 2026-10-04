@@ -135,7 +135,9 @@ export async function listPositions(orgId: string): Promise<PositionRow[]> {
       team: positions.team,
       archivedAt: positions.archivedAt,
       // Only competencies of the same organisation count (the FK is single-column).
-      competencyCount: sql<number>`(select count(*)::int from ${positionCompetencies} pc join ${competencies} c on c.id = pc.competency_id where pc.position_id = ${positions.id} and c.org_id = ${orgId})`,
+      // The outer row is named in full: in a single-table select drizzle writes
+      // ${positions.id} as a bare "id", which inside this subquery would bind to c.id.
+      competencyCount: sql<number>`(select count(*)::int from ${positionCompetencies} pc join ${competencies} c on c.id = pc.competency_id where pc.position_id = ${sql.identifier("positions")}.${sql.identifier("id")} and c.org_id = ${orgId})`,
     })
     .from(positions)
     .where(eq(positions.orgId, orgId))

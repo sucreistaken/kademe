@@ -83,11 +83,15 @@ vi.mock("@/db/library-seed", () => ({
 
 import {
   createCompetency,
+  createPosition,
   saveCompetency,
+  savePosition,
   saveScaleLabels,
   setCompetencyArchived,
+  setPositionArchived,
   startLibrary,
   type CompetencyInput,
+  type PositionInput,
 } from "./library-write";
 
 const ORG = "11111111-1111-4111-8111-111111111111";
@@ -97,6 +101,9 @@ const SCALE = "44444444-4444-4444-8444-444444444444";
 const OWN_TAG = "55555555-5555-4555-8555-555555555555";
 const FOREIGN_TAG = "66666666-6666-4666-8666-666666666666";
 const NEW_TAG = "77777777-7777-4777-8777-777777777777";
+const POSITION = "88888888-8888-4888-8888-888888888888";
+const COMP_A = "99999999-9999-4999-8999-999999999999";
+const COMP_B = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 
 const text = (s: string) => ({ tr: s, en: s });
 const validInput = (over: Partial<CompetencyInput> = {}): CompetencyInput => ({
@@ -338,5 +345,191 @@ describe("startLibrary", () => {
     seedLibrary.mockResolvedValue({ scaleCreated: false, competenciesCreated: 0 });
     await startLibrary(ORG, ACTOR);
     expect(auditRows()).toEqual([]);
+  });
+});
+
+describe("createPosition", () => {
+  it("creates the row in the caller's organisation with trimmed text, and audits it", async () => {
+    respond = (op) => (op.kind === "insert" && op.table === "positions" ? [{ id: POSITION }] : []);
+    const result = await createPosition(ORG, ACTOR, { name: " Ürün Tasarımcısı ", team: " ", jobDescription: " İlan " });
+    expect(result).toEqual({ ok: true, id: POSITION });
+    const row = ops.find((o) => o.kind === "insert" && o.table === "positions")?.values;
+    expect(row).toEqual({ orgId: ORG, name: "Ürün Tasarımcısı", team: null, jobDescription: "İlan" });
+    expect(auditRows()[0].values).toMatchObject({ orgId: ORG, actorId: ACTOR, subjectId: POSITION, action: "library.position.create" });
+  });
+
+  it("writes nothing without a name", async () => {
+    expect(await createPosition(ORG, ACTOR, { name: "  " })).toEqual({ ok: false, code: "NAME_REQUIRED" });
+    expect(ops).toEqual([]);
+  });
+});
+
+describe("savePosition", () => {
+  const stored = {
+    id: POSITION,
+    name: "Tasarımcı",
+    team: null as string | null,
+    shortDescription: null,
+    jobDescription: null,
+    skills: [] as string[],
+    languages: [] as string[],
+    archivedAt: null as Date | null,
+  };
+  const input = (over: Partial<PositionInput> = {}): PositionInput => ({
+    name: "Tasarımcı",
+    team: "",
+    shortDescription: "",
+    jobDescription: "",
+    skills: [],
+    languages: [],
+    profile: [],
+    ...over,
+  });
+  /** The position row, its stored profile and the competencies the organisation owns. */
+  const world =
+    (opts: { position?: typeof stored | null; profile?: Array<{ competencyId: string; weight: number; expectedLevel: number | null }>; owned?: Array<{ id: string; archivedAt: Date | null }> }) =>
+    (op: Op) => {
+      if (op.kind === "select" && op.table === "positions") return opts.position === null ? [] : [opts.position ?? stored];
+      if (op.kind === "select" && op.table === "position_competencies") return opts.profile ?? [];
+      if (op.kind === "select" && op.table === "competencies") return opts.owned ?? [];
+      return [];
+    };
+
+  it("locks the position by id and organisation, and writes nothing when it is not the caller's", async () => {
+    respond = world({ position: null });
+    expect(await savePosition(ORG, ACTOR, POSITION, input())).toEqual({ ok: false, code: "NOT_FOUND" });
+    expect(ops).toHaveLength(1);
+    expect(ops[0]).toMatchObject({ kind: "select", table: "positions", lock: "update" });
+    expect(ops[0].where).toContain('"positions"."id" = $');
+    expect(ops[0].where).toContain('"positions"."org_id" = $');
+    expect(ops[0].params).toEqual(expect.arrayContaining([POSITION, ORG]));
+  });
+
+  it("refuses a blank name before touching the database", async () => {
+    expect(await savePosition(ORG, ACTOR, POSITION, input({ name: " " }))).toEqual({ ok: false, code: "NAME_REQUIRED" });
+    expect(ops).toEqual([]);
+  });
+
+  it("does not write anything to an archived position", async () => {
+    respond = world({ position: { ...stored, archivedAt: new Date() } });
+    expect(await savePosition(ORG, ACTOR, POSITION, input({ name: "Yeni ad" }))).toEqual({ ok: false, code: "ARCHIVED" });
+    expect(writes()).toEqual([]);
+  });
+
+  it("refuses a competency of another organisation, checked with the caller's org id, and writes nothing", async () => {
+    // COMP_B is not among the caller's competencies: the scoped read returns only COMP_A.
+    respond = world({ owned: [{ id: COMP_A, archivedAt: null }] });
+    const profile = [
+      { competencyId: COMP_A, weight: 50, expectedLevel: null },
+      { competencyId: COMP_B, weight: 50, expectedLevel: null },
+    ];
+    expect(await savePosition(ORG, ACTOR, POSITION, input({ profile }))).toEqual({ ok: false, code: "COMPETENCY" });
+    const read = ops.find((o) => o.kind === "select" && o.table === "competencies");
+    expect(read?.where).toContain('"competencies"."org_id" = $');
+    expect(read?.params).toEqual(expect.arrayContaining([ORG, COMP_A, COMP_B]));
+    expect(writes()).toEqual([]);
+  });
+
+  it("refuses to add an archived competency, but keeps one the profile already had", async () => {
+    respond = world({ owned: [{ id: COMP_A, archivedAt: new Date() }] });
+    const profile = [{ competencyId: COMP_A, weight: 40, expectedLevel: null }];
+    expect(await savePosition(ORG, ACTOR, POSITION, input({ profile }))).toEqual({ ok: false, code: "COMPETENCY" });
+    expect(writes()).toEqual([]);
+
+    ops.length = 0;
+    respond = world({ owned: [{ id: COMP_A, archivedAt: new Date() }], profile: [{ competencyId: COMP_A, weight: 50, expectedLevel: null }] });
+    expect(await savePosition(ORG, ACTOR, POSITION, input({ profile }))).toMatchObject({ ok: true });
+    expect(writes().find((o) => o.kind === "insert" && o.table === "position_competencies")?.values).toEqual([
+      { positionId: POSITION, competencyId: COMP_A, weight: 40, expectedLevel: null, orderIndex: 0 },
+    ]);
+  });
+
+  it("writes the definition by id and organisation, replaces this position's profile once per competency, and audits", async () => {
+    respond = world({ owned: [{ id: COMP_A, archivedAt: null }, { id: COMP_B, archivedAt: null }] });
+    const result = await savePosition(
+      ORG,
+      ACTOR,
+      POSITION,
+      input({
+        name: " Kıdemli Tasarımcı ",
+        team: " Ürün ",
+        skills: ["Figma", " figma ", "Figma", ""],
+        languages: [" İngilizce "],
+        profile: [
+          { competencyId: COMP_A, weight: 60, expectedLevel: null },
+          { competencyId: COMP_B, weight: 20, expectedLevel: 3 },
+          { competencyId: COMP_A, weight: 10, expectedLevel: 5 },
+        ],
+      }),
+    );
+    expect(result).toEqual({
+      ok: true,
+      position: {
+        name: "Kıdemli Tasarımcı",
+        team: "Ürün",
+        shortDescription: "",
+        jobDescription: "",
+        skills: ["Figma", "figma"],
+        languages: ["İngilizce"],
+        profile: [
+          { competencyId: COMP_A, weight: 60, expectedLevel: null },
+          { competencyId: COMP_B, weight: 20, expectedLevel: 3 },
+        ],
+      },
+    });
+    const update = writes().find((o) => o.kind === "update" && o.table === "positions");
+    expect(update?.where).toContain('"positions"."org_id" = $');
+    expect(update?.params).toEqual(expect.arrayContaining([POSITION, ORG]));
+    expect(update?.values).toMatchObject({ name: "Kıdemli Tasarımcı", team: "Ürün", shortDescription: null, skills: ["Figma", "figma"] });
+    const del = writes().find((o) => o.kind === "delete");
+    expect(del).toMatchObject({ table: "position_competencies" });
+    expect(del?.params).toEqual([POSITION]);
+    expect(writes().find((o) => o.kind === "insert" && o.table === "position_competencies")?.values).toEqual([
+      { positionId: POSITION, competencyId: COMP_A, weight: 60, expectedLevel: null, orderIndex: 0 },
+      { positionId: POSITION, competencyId: COMP_B, weight: 20, expectedLevel: 3, orderIndex: 1 },
+    ]);
+    expect(auditRows()[0].values).toMatchObject({
+      orgId: ORG,
+      actorId: ACTOR,
+      subjectId: POSITION,
+      action: "library.position.save",
+      meta: { competencies: 2 },
+    });
+  });
+
+  it("writes nothing and no audit row when the save changes nothing", async () => {
+    respond = world({
+      position: { ...stored, team: "Ürün", skills: ["Figma"] },
+      profile: [{ competencyId: COMP_A, weight: 60, expectedLevel: 3 }],
+      owned: [{ id: COMP_A, archivedAt: null }],
+    });
+    const same = input({ team: " Ürün ", skills: ["Figma"], profile: [{ competencyId: COMP_A, weight: 60, expectedLevel: 3 }] });
+    expect(await savePosition(ORG, ACTOR, POSITION, same)).toMatchObject({ ok: true });
+    expect(writes()).toEqual([]);
+  });
+
+  it("leaves the profile rows alone when only the definition changed", async () => {
+    respond = world({ profile: [{ competencyId: COMP_A, weight: 60, expectedLevel: null }], owned: [{ id: COMP_A, archivedAt: null }] });
+    await savePosition(ORG, ACTOR, POSITION, input({ name: "Başka ad", profile: [{ competencyId: COMP_A, weight: 60, expectedLevel: null }] }));
+    expect(writes().map((o) => `${o.kind}:${o.table}`)).toEqual(["update:positions", "insert:audit_logs"]);
+  });
+});
+
+describe("setPositionArchived", () => {
+  it("archives by id and organisation only a row that is not archived yet, and audits only a change", async () => {
+    expect(await setPositionArchived(ORG, ACTOR, POSITION, true)).toBe(false);
+    expect(ops).toHaveLength(1);
+    expect(ops[0]).toMatchObject({ kind: "update", table: "positions" });
+    expect(ops[0].where).toContain('"positions"."org_id" = $');
+    expect(ops[0].where).toContain('"positions"."archived_at" is null');
+    expect(ops[0].params).toEqual(expect.arrayContaining([POSITION, ORG]));
+    expect(auditRows()).toEqual([]);
+
+    ops.length = 0;
+    respond = (op) => (op.kind === "update" ? [{ id: POSITION }] : []);
+    expect(await setPositionArchived(ORG, ACTOR, POSITION, false)).toBe(true);
+    expect(ops[0].where).toContain('"positions"."archived_at" is not null');
+    expect((ops[0].values as { archivedAt: unknown }).archivedAt).toBeNull();
+    expect(auditRows()[0].values).toMatchObject({ orgId: ORG, actorId: ACTOR, subjectId: POSITION, action: "library.position.restore" });
   });
 });

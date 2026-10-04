@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { UndoStrip } from "@/components/ui/undo-strip";
 import { PageTitle } from "@/components/manager/page-title";
+import { ArchiveForm } from "@/components/library/archive-form";
 import { CompetencyForm, type CompetencyFormValue } from "@/components/library/competency-form";
 import { UsageBlock } from "@/components/library/usage-block";
 import { managerLocale } from "@/i18n/manager-locale";
@@ -79,13 +79,15 @@ export default async function CompetencyPage({
             lineLabel={(g) => t("libCompetencies.usageLine", { solution: g.label, count: g.entry.total })}
           />
           {canWrite ? (
-            <form action={competency.archivedAt ? restoreCompetencyAction : archiveCompetencyAction} className="space-y-2">
-              <input type="hidden" name="id" value={competency.id} />
-              <Button type="submit" variant="secondary" size="sm">
-                {competency.archivedAt ? t("libCompetencies.restore") : t("libCompetencies.archive")}
-              </Button>
-              {competency.archivedAt ? null : <p className="text-[13px] text-muted">{t("libCompetencies.archiveHint")}</p>}
-            </form>
+            <ArchiveForm
+              id={competency.id}
+              archived={competency.archivedAt !== null}
+              archiveAction={archiveCompetencyAction}
+              restoreAction={restoreCompetencyAction}
+              archiveLabel={t("libCompetencies.archive")}
+              restoreLabel={t("libCompetencies.restore")}
+              hint={t("libCompetencies.archiveHint")}
+            />
           ) : null}
         </aside>
       </div>

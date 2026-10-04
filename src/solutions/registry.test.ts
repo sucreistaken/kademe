@@ -4,7 +4,8 @@ vi.mock("@/db", () => ({ db: {} }));
 
 import { buildNav, manifestByKind, SOLUTION_MANIFESTS } from "./registry";
 import { candidateSolution, solutionModule, solutionModules } from "./registry.server";
-import type { SolutionModule } from "./types";
+import { languageExamManifest } from "./language-exam/manifest";
+import type { SolutionManifest, SolutionModule } from "./types";
 
 describe("solution registry", () => {
   it("knows the language exam by its database kind", () => {
@@ -41,12 +42,25 @@ describe("solution registry", () => {
     expect(m.candidateStepPath("tok", { step: "SOMETHING_ELSE" })).toBe("/a/tok");
   });
 
-  it("builds the HIRING-UX 4.1 menu: Today, solutions, Settings, no group header for a single solution", () => {
-    const nav = buildNav("tr", { today: "Bugün", settings: "Ayarlar" });
-    expect(nav.map((g) => g.key)).toEqual(["today", "language-exam", "settings"]);
+  const shared = { today: "Bugün", settings: "Ayarlar", library: { label: "Kütüphane", positions: "Pozisyonlar", competencies: "Yetkinlikler" } };
+
+  it("builds the HIRING-UX 4.1 menu: Today, solutions, Library, Settings, no group header for a single solution", () => {
+    const nav = buildNav("tr", shared, [languageExamManifest]);
+    expect(nav.map((g) => g.key)).toEqual(["today", "language-exam", "library", "settings"]);
     expect(nav[1].label).toBeNull();
+    expect(nav[2].label).toBeNull();
     expect(nav[1].items.map((i) => i.label)).toEqual(["Öğrenciler", "Sınavlar", "Soru bankası"]);
-    expect(buildNav("en", { today: "Today", settings: "Settings" })[1].items[2].label).toBe("Question bank");
+    expect(nav[2].items).toEqual([
+      { href: "/library/positions", label: "Pozisyonlar" },
+      { href: "/library/competencies", label: "Yetkinlikler" },
+    ]);
+    expect(buildNav("en", { ...shared, today: "Today", settings: "Settings" })[1].items[2].label).toBe("Question bank");
+  });
+
+  it("shows group headers once there is more than one solution", () => {
+    const second = { ...languageExamManifest, key: "hiring", dbKind: "HIRING", basePath: "/hiring", label: { tr: "İşe alım", en: "Hiring" } } as SolutionManifest;
+    const nav = buildNav("tr", shared, [second, languageExamManifest]);
+    expect(nav.map((g) => g.label)).toEqual([null, "İşe alım", "Sınav", "Kütüphane", null]);
   });
 });
 

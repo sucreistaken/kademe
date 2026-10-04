@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { SOLUTION_MANIFESTS } from "@/solutions/registry";
+import { buildNav, SOLUTION_MANIFESTS } from "@/solutions/registry";
 import { LEGACY_CANDIDATE_API_REWRITES, LEGACY_PANEL_REDIRECTS } from "./legacy-routes";
 
 const app = path.resolve(process.cwd(), "src/app");
@@ -28,10 +28,12 @@ describe("legacy panel redirects", () => {
 
 describe("menu", () => {
   it("links only to pages that exist (RULES.md rule 7)", () => {
+    const groups = buildNav("tr", { today: "", settings: "", library: { label: "", positions: "", competencies: "" } });
+    for (const href of groups.flatMap((g) => g.items.map((i) => i.href))) {
+      expect(existsSync(path.join(manager, href, "page.tsx")), href).toBe(true);
+    }
     for (const m of SOLUTION_MANIFESTS) {
-      for (const href of [...m.nav.map((n) => n.href), m.inviteHref]) {
-        expect(existsSync(path.join(manager, href, "page.tsx")), href).toBe(true);
-      }
+      if (m.inviteHref) expect(existsSync(path.join(manager, m.inviteHref, "page.tsx")), m.inviteHref).toBe(true);
     }
   });
 });

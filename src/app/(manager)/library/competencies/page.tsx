@@ -7,6 +7,7 @@ import { StatusDot } from "@/components/ui/status-dot";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PageTitle } from "@/components/manager/page-title";
 import { RouteTabs } from "@/components/manager/route-tabs";
+import { LibraryAddButton } from "@/components/library/add-button";
 import { ScaleForm } from "@/components/library/scale-form";
 import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
@@ -123,18 +124,12 @@ export default async function CompetenciesPage({ searchParams }: { searchParams:
         title={t("libCompetencies.title")}
         sub={t("libCompetencies.sub")}
         action={
-          canWrite ? (
-            <Button asChild variant="primary">
-              <Link href="/library/competencies/new">{t("libCompetencies.add")}</Link>
-            </Button>
-          ) : (
-            <>
-              <Button variant="primary" disabled disabledReason={t("libCompetencies.noPermission")}>
-                {t("libCompetencies.add")}
-              </Button>
-              <DisabledReason>{t("libCompetencies.noPermission")}</DisabledReason>
-            </>
-          )
+          <LibraryAddButton
+            href="/library/competencies/new"
+            label={t("libCompetencies.add")}
+            canWrite={canWrite}
+            noPermission={t("libCompetencies.noPermission")}
+          />
         }
       />
       <div className="mt-6">{tabs}</div>

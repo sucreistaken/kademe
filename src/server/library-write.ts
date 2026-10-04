@@ -1,9 +1,20 @@
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import type { Executor } from "@/db/executor";
 import { ensureDefaultScale, seedLibrary } from "@/db/library-seed";
-import { auditLogs, competencies, competencyAnchors, observationTags, ratingScales, scaleLevels, type I18nText } from "@/db/schema";
+import {
+  auditLogs,
+  competencies,
+  competencyAnchors,
+  observationTags,
+  positionCompetencies,
+  positions,
+  ratingScales,
+  scaleLevels,
+  type I18nText,
+} from "@/db/schema";
 import { hasText, MAX_TAGS_PER_SIDE, missingAnchorLevels } from "@/lib/library/anchors";
+import { POSITION_SKILLS_MAX } from "@/lib/library/positions";
 
 /**
  * Library writes. Every write is scoped by organisation and leaves an audit row.
@@ -148,17 +159,33 @@ export async function saveCompetency(
   });
 }
 
-export async function setCompetencyArchived(orgId: string, actorId: string, id: string, archived: boolean): Promise<boolean> {
+/**
+ * Archive and its undo for a library row. Only a row of the caller's
+ * organisation that is not already in the asked state changes, and only a
+ * change is audited.
+ */
+async function setArchived(
+  table: typeof competencies | typeof positions,
+  subject: "competency" | "position",
+  orgId: string,
+  actorId: string,
+  id: string,
+  archived: boolean,
+): Promise<boolean> {
   return db.transaction(async (tx) => {
     const rows = await tx
-      .update(competencies)
+      .update(table)
       .set({ archivedAt: archived ? new Date() : null, updatedAt: new Date() })
-      .where(and(eq(competencies.id, id), eq(competencies.orgId, orgId)))
-      .returning({ id: competencies.id });
+      .where(and(eq(table.id, id), eq(table.orgId, orgId), archived ? isNull(table.archivedAt) : isNotNull(table.archivedAt)))
+      .returning({ id: table.id });
     if (rows.length === 0) return false;
-    await audit(tx, orgId, actorId, archived ? "library.competency.archive" : "library.competency.restore", "competency", id);
+    await audit(tx, orgId, actorId, `library.${subject}.${archived ? "archive" : "restore"}`, subject, id);
     return true;
   });
+}
+
+export async function setCompetencyArchived(orgId: string, actorId: string, id: string, archived: boolean): Promise<boolean> {
+  return setArchived(competencies, "competency", orgId, actorId, id, archived);
 }
 
 export async function saveScaleLabels(
@@ -207,4 +234,149 @@ export async function startLibrary(orgId: string, actorId: string) {
     await audit(db, orgId, actorId, "library.seed", "organization", orgId, result);
   }
   return result;
+}
+
+export type PositionInput = {
+  name: string;
+  team: string;
+  shortDescription: string;
+  jobDescription: string;
+  skills: string[];
+  languages: string[];
+  profile: Array<{ competencyId: string; weight: number; expectedLevel: number | null }>;
+};
+export type PositionWriteError = "NAME_REQUIRED" | "NOT_FOUND" | "ARCHIVED" | "COMPETENCY";
+
+const orNull = (s: string | undefined) => (s && s.trim() ? s.trim() : null);
+const list = (items: string[]) => [...new Set(items.map((s) => s.trim()).filter(Boolean))].slice(0, POSITION_SKILLS_MAX);
+
+/** The input as it is stored: trimmed text, clean lists, one profile row per competency. */
+function normalizePosition(input: PositionInput): PositionInput {
+  const seen = new Set<string>();
+  return {
+    name: input.name.trim(),
+    team: input.team.trim(),
+    shortDescription: input.shortDescription.trim(),
+    jobDescription: input.jobDescription.trim(),
+    skills: list(input.skills),
+    languages: list(input.languages),
+    profile: input.profile
+      .filter((p) => (seen.has(p.competencyId) ? false : (seen.add(p.competencyId), true)))
+      .map((p) => ({ competencyId: p.competencyId, weight: p.weight, expectedLevel: p.expectedLevel })),
+  };
+}
+
+const sameList = <T>(a: readonly T[], b: readonly T[], eqItem: (x: T, y: T) => boolean = (x, y) => x === y) =>
+  a.length === b.length && a.every((x, i) => eqItem(x, b[i]));
+
+/** HIRING-UX 4.2 rule 4: an opening can create its position in place; it is still an org row. */
+export async function createPosition(
+  orgId: string,
+  actorId: string,
+  input: { name: string; jobDescription?: string; team?: string },
+  x: Executor = db,
+): Promise<{ ok: true; id: string } | { ok: false; code: "NAME_REQUIRED" }> {
+  if (!input.name.trim()) return { ok: false, code: "NAME_REQUIRED" };
+  const [row] = await x
+    .insert(positions)
+    .values({ orgId, name: input.name.trim(), team: orNull(input.team), jobDescription: orNull(input.jobDescription) })
+    .returning({ id: positions.id });
+  await audit(x, orgId, actorId, "library.position.create", "position", row.id);
+  return { ok: true, id: row.id };
+}
+
+/**
+ * Saves the definition and the competency profile. Returns the stored value so
+ * the form shows exactly what the next save sends. A save that changes nothing
+ * writes nothing, audit included.
+ */
+export async function savePosition(
+  orgId: string,
+  actorId: string,
+  id: string,
+  input: PositionInput,
+): Promise<{ ok: true; position: PositionInput } | { ok: false; code: PositionWriteError }> {
+  if (!input.name.trim()) return { ok: false, code: "NAME_REQUIRED" };
+  const next = normalizePosition(input);
+  return db.transaction(async (tx) => {
+    const [row] = await tx
+      .select({
+        id: positions.id,
+        name: positions.name,
+        team: positions.team,
+        shortDescription: positions.shortDescription,
+        jobDescription: positions.jobDescription,
+        skills: positions.skills,
+        languages: positions.languages,
+        archivedAt: positions.archivedAt,
+      })
+      .from(positions)
+      .where(and(eq(positions.id, id), eq(positions.orgId, orgId)))
+      .for("update");
+    if (!row) return { ok: false as const, code: "NOT_FOUND" as const };
+    // An archived position is read-only until it is restored (HIRING-UX 4.2 rule 3).
+    if (row.archivedAt) return { ok: false as const, code: "ARCHIVED" as const };
+    // The position is the caller's, so its profile rows are too.
+    const storedProfile = await tx
+      .select({
+        competencyId: positionCompetencies.competencyId,
+        weight: positionCompetencies.weight,
+        expectedLevel: positionCompetencies.expectedLevel,
+      })
+      .from(positionCompetencies)
+      .where(eq(positionCompetencies.positionId, id))
+      .orderBy(asc(positionCompetencies.orderIndex));
+    const ids = next.profile.map((p) => p.competencyId);
+    if (ids.length) {
+      // The FK is single-column: only the caller's competencies may be linked, and an
+      // archived one only when the profile already had it (it stays, it is not picked anew).
+      const owned = await tx
+        .select({ id: competencies.id, archivedAt: competencies.archivedAt })
+        .from(competencies)
+        .where(and(eq(competencies.orgId, orgId), inArray(competencies.id, ids)));
+      const had = new Set(storedProfile.map((p) => p.competencyId));
+      if (owned.length !== ids.length || owned.some((c) => c.archivedAt && !had.has(c.id))) {
+        return { ok: false as const, code: "COMPETENCY" as const };
+      }
+    }
+    const fields = {
+      name: next.name,
+      team: orNull(next.team),
+      shortDescription: orNull(next.shortDescription),
+      jobDescription: orNull(next.jobDescription),
+      skills: next.skills,
+      languages: next.languages,
+    };
+    const fieldsChanged =
+      fields.name !== row.name ||
+      fields.team !== row.team ||
+      fields.shortDescription !== row.shortDescription ||
+      fields.jobDescription !== row.jobDescription ||
+      !sameList(fields.skills, row.skills) ||
+      !sameList(fields.languages, row.languages);
+    const profileChanged = !sameList(
+      next.profile,
+      storedProfile,
+      (a, b) => a.competencyId === b.competencyId && a.weight === b.weight && a.expectedLevel === b.expectedLevel,
+    );
+    if (!fieldsChanged && !profileChanged) return { ok: true as const, position: next };
+    if (fieldsChanged) {
+      await tx
+        .update(positions)
+        .set({ ...fields, updatedAt: new Date() })
+        .where(and(eq(positions.id, id), eq(positions.orgId, orgId)));
+    }
+    if (profileChanged) {
+      // The profile is copied into an opening at publish; nothing refers to these rows.
+      await tx.delete(positionCompetencies).where(eq(positionCompetencies.positionId, id));
+      const rows = next.profile.map((p, orderIndex) => ({ positionId: id, ...p, orderIndex }));
+      if (rows.length) await tx.insert(positionCompetencies).values(rows);
+    }
+    await audit(tx, orgId, actorId, "library.position.save", "position", id, { competencies: next.profile.length });
+    return { ok: true as const, position: next };
+  });
+}
+
+export async function setPositionArchived(orgId: string, actorId: string, id: string, archived: boolean): Promise<boolean> {
+  return setArchived(positions, "position", orgId, actorId, id, archived);
 }
