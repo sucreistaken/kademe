@@ -71,7 +71,7 @@ Soru: "Neye bakmalıyım?"
 - **Boş:** "Bekleyen sonuç yok." + "Öğrenci davet et" ikincil bağlantısı + kaç sınavın sürdüğü.
 - **Hata:** sayfa hata sınırı, "Tekrar dene".
 
-### 4.2 Öğrenciler (`/students`)
+### 4.2 Öğrenciler (`/exam/students`)
 
 - Sekmeler: Tümü · İnceleme bekleyen · Süren · Kesinleşen.
 - Arama + filtre çipleri (mod, sınav, seviye, bütünlük). Sıfır sonuç: aktif filtreler kaldırılabilir çip, "filtreleri temizle".
@@ -80,7 +80,7 @@ Soru: "Neye bakmalıyım?"
 - **Tek dolu buton:** "Öğrenci davet et".
 - **Boş (hiç öğrenci):** "İlk öğrencinizi davet edin. Link tek kullanımlıktır." + dolu buton.
 
-### 4.3 Davet (`/students/new`)
+### 4.3 Davet (`/exam/students/new`)
 
 Tek sütun form: Ad soyad · E-posta · Sınav (yayınlı blueprint listesi, modu yazar) · Beyan
 seviyesi (sadece doğrulama modunda görünür, A1-C2 segment) · Arayüz dili (TR/EN).
@@ -91,7 +91,7 @@ seviyesi (sadece doğrulama modunda görünür, A1-C2 segment) · Arayüz dili (
 - **Başarı:** aynı sayfada link bir kez gösterilir, "Kopyala" (dolu), "Bu link bir daha gösterilmez."
   Altında "Başka öğrenci davet et" ve "Öğrenciler listesine dön".
 
-### 4.4 Sonuç ekranı (`/students/[id]`) : kritik ekran
+### 4.4 Sonuç ekranı (`/exam/students/[id]`) : kritik ekran
 
 Soru: "Bu seviyeye güvenebilir miyim, ve imzamı atayım mı?"
 
@@ -140,7 +140,7 @@ Doğrulanmadı / Karar için kanıt yetersiz" + "Tutma olasılığı %82" | Duru
   seçilen aktif durum).
 - **Boş:** "Bu sınavda gözetim kapalıydı." ya da "Hiç olay yok. Kapsam: ...".
 
-### 4.5 Sınavlar (`/exams`, `/exams/[id]`)
+### 4.5 Sınavlar (`/exam/exams`, `/exam/exams/[id]`)
 
 Liste: ad · mod · bölümler · tahmini süre · durum (dot+metin) · kullanım sayısı. Dolu buton:
 "Yeni sınav" (mod seçimi: iki büyük seçenek kartı "Seviye tespiti" / "Seviye doğrulama", her birinde
@@ -160,14 +160,14 @@ Editör (Y2 düzeni, iki sütun):
   nedenli kapalı).
 - Yayınlı sınav düzenlenemez; "Kopyasını düzenle". Autosave, "kaydedildi 14:02".
 
-### 4.6 Soru bankası (`/bank`)
+### 4.6 Soru bankası (`/exam/bank`)
 
 - Varsayılan görünüm: "Onay bekleyen" (AI taslakları). Sekmeler: Onay bekleyen · Onaylı · Reddedilen.
 - Filtre çipleri: bölüm, seviye, tip, köken (Başlangıç / Öğretmen / AI).
 - Üstte kapsam tablosu (bölüm × seviye, onaylı sayısı; eksik hücre mürekkep, dolu hücre soluk).
   Tıklanınca o filtre.
 - Satır: soru kökü (kısa) · bölüm · seviye · tip · köken · durum.
-- Detay (`/bank/[id]`): öğrencinin göreceği önizleme (sol) + anahtar, açıklama, zorluk, beceri
+- Detay (`/exam/bank/[id]`): öğrencinin göreceği önizleme (sol) + anahtar, açıklama, zorluk, beceri
   etiketi (sağ vault). Eylemler: "Onayla" (dolu, taslakta) · "Reddet" · "Düzenle". Dinleme:
   ses oynatıcı + "Sesi yeniden üret"; ses yoksa onay kapalı + neden.
 - **"AI ile üret"** (dolu buton, liste sayfasında): bölüm, seviye, tip, adet (≤10), konu (ops.).

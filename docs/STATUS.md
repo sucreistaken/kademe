@@ -1,6 +1,7 @@
 # Kademe - durum ve devir belgesi
 
-Son güncelleme: 2026-09-30. **Canlıda**: https://kademe.kadiray.com, commit `3f2b8a8`
+Son güncelleme: 2026-10-04 (çekirdek ayrımı `platform/solutions` dalında, yerelde doğrulandı;
+canlıya çıkmadı). **Canlıda**: https://kademe.kadiray.com, commit `3f2b8a8`
 (`main`). Canlı veritabanı kullanıcı onayıyla sıfırlandı: eski işe alım verisi yok,
 panel kullanıcıları (parolalarıyla) taşındı, banka ve iki sınav yüklendi.
 
@@ -22,10 +23,19 @@ Belgeler: `docs/design/EXAM-UX.md` (ekranlar, Sally + airbnb-ux), `docs/EXAM-ENG
 
 ```bash
 docker compose up -d        # Postgres 5434
-pnpm db:reset               # SADECE yerel DB (5434 değilse reddeder): şemayı sıfırlar
+pnpm db:migrate             # sürümlü göçler (drizzle/migrations) + drizzle/sql
+pnpm db:reset               # SADECE yerel DB (5434 değilse reddeder): şemayı sıfırlar, göçleri baştan uygular
 pnpm db:seed                # banka + sınavlar + 3 öğrenci; dinleme sesleri önbellekten
 pnpm dev --port 3100
 ```
+
+- Şema değişikliği: `src/db/schema` düzenle, `pnpm db:generate --name <ad>`, üretilen SQL'i gözden geçir (veri taşıyan adım elle yazılır), `pnpm db:fingerprint` ile boş bir push veritabanına karşı karşılaştır. `drizzle-kit push` kalıcı bir veritabanında artık kullanılmaz.
+- Push ile kurulmuş eski bir veritabanı: önce `pg_dump`, sonra bir kez `pnpm db:migrate --adopt-baseline`.
+- Platform yapısı: çekirdek + çözümler. Çözümler `src/solutions/<ad>/`, kayıt `src/solutions/registry.ts` (istemci) ve `registry.server.ts` (sunucu). Çekirdek kodun çözüm klasörüne doğrudan import'u ESLint ile yasak.
+- Panel: sınav sayfaları `/exam/students`, `/exam/exams`, `/exam/bank` (eski adresler 307 ile yönlenir). Yan menü HIRING-UX 4.1.
+- Aday API: sınava özel uçlar `/api/c/[token]/exam/*`; eski yollar bir sürüm boyunca rewrite ile çalışır (`src/lib/legacy-routes.ts`, sonra silinecek).
+- Rol adı: `TEACHER` artık `MANAGER` ("Yönetici").
+- Ortak yerel `kademe` veritabanı hâlâ eski şemada (rolü hâlâ `TEACHER`). Bu dalı ona karşı çalıştırmak için orada da bir kez `pnpm db:migrate --adopt-baseline` gerekir; başka oturumlar da bu veritabanını kullandığı için karar kullanıcıda. Bu dalın doğrulamaları ayrı `kademe_platform` veritabanında yapıldı.
 
 - Panel: `kadiraycareer@gmail.com` / `kademe-dev-2026` (öğretmen: `ogretmen@kademe.local`, aynı parola)
 - Yeni öğrenci linki: `pnpm dev:link` (seviye tespiti), `pnpm dev:link --claimed B1` (doğrulama)
@@ -49,6 +59,9 @@ pnpm dev --port 3100
 | MediaPipe modelleri | kendi sunucumuzdan yüklendi (`public/proctor/1.0.1`, sha256 sabit) |
 | Öğretmen paneli, Chrome'da | Bugün kuyruğu, sonuç ekranı, AI önerisini onaylama, gerekçeyle değiştirme, kesinleştirme, bütünlük sekmesi ve işaret onaylama |
 | Panel rotaları | 15 rota × TR/EN, hepsi 200 |
+| Çekirdek ayrımı (yerel) | `tsc` temiz, `eslint src scripts` temiz, `pnpm test` 631/631, `pnpm build` 52 rota; `pnpm verify:exam` ve `pnpm verify:guard` tüm kontroller geçti (`kademe_platform` veritabanında) |
+| Göç provası (yerel 5434) | `kademe` yedeği geri yüklendi, `--adopt-baseline` ile 0001-0003 uygulandı, `verify:migration check` tüm satırlar ok; yedek ikinci kez geri yüklenip aynı sayımlar alındı |
+| Çekirdek ayrımı, Chrome'da (yerel, 2026-10-04) | Panel: `/students` 307 ile `/exam/students`'a gitti, sonuç ekranının özet, yazma, konuşma ve bütünlük sekmeleri açıldı, AI önerisi onaylandı (sayfa `/exam/students/<id>?tab=...` üstünde kaldı), davet linki bir kez gösterildi, `/exam/exams`, `/exam/exams/new`, `/exam/bank` ve bir soru açıldı, `/dashboard` açıldı, ayarlarda roller Sahip / Yönetici / Değerlendirici (EN: Owner / Manager / Reviewer). Aday (sahte medya, kırmızı DEV şeridi görünür): onay (davette ad ve e-posta olduğu için bilgi adımı atlandı), sistem kontrolü (7 satır; bu makinede ikinci monitör bağlı olduğundan tek ekran satırı sayfa içinden elle geçildi), dilbilgisi girişi, iki cevap, yeniden yüklemede aynı soru, bölümü erken bitirme, okuma girişi; istekler `/api/c/<token>/exam/answer`, `/exam/answer/commit`, `/exam/section/start`, `/exam/section/submit` yollarına, gözetim ve kalp atışı çekirdek yollara gitti, hiç 404 yok. Sahte medya kapatılınca DEV şeridi kalktı |
 
 ## Canlıda gerçek cihazla doğrulandı (2026-09-30, kullanıcının Chrome'u, macOS)
 
@@ -68,6 +81,48 @@ Zamanlayıcılar 1-2 dakikada bir çalıştığı için transkripsiyon ve puanla
    alarm mı bilinmiyor, öğretmen karelere bakıp karar verir.
 3. Çift monitör, Firefox / Safari, telefonda engel ekranı.
 4. Dinleme seslerinin telaffuz kalitesi (dinlenmedi).
+5. Çekirdek ayrımı canlıda uygulanmadı. Canlı göç ayrı onay ister: canlı yedeğin yerel kopyasında (5434) prova, sonra servis durdur, `pg_dump`, `pnpm db:migrate --adopt-baseline`, deploy.
+6. Çekirdek ayrımından sonra gerçek cihazla (sahte medya kapalı) uçtan uca sınav.
+7. İşe alım çözümünün aday akışı ve paneli yok; bu plan yalnızca çekirdek ile sınav çözümünü ayırdı (işe alım alt proje 3).
+8. Chrome turunda `/dashboard` üstünde 48 saat içinde dolacak link yoktu, bu yüzden link uzatma ve geri alma şeridi bu turda denenmedi.
+
+## Canlıya çıkış (yapılmadı, ayrı onay)
+
+Eski kod ile yeni kod 0001-0003 göçleri boyunca birbiriyle uyumsuz: eski kod yeni şemada, yeni kod eski şemada çalışmaz. Bu yüzden göç sırasında uygulama durdurulur. Adımlar sırayla:
+
+1. Servisi ve bütün zamanlayıcıları durdur:
+   ```bash
+   sudo systemctl stop kademe.service
+   sudo systemctl stop 'kademe-*.timer'
+   ```
+2. Canlı veritabanının yedeğini al:
+   ```bash
+   pg_dump -Fc "$DATABASE_URL" -f kademe-$(date +%Y%m%d-%H%M).dump
+   ```
+3. Göç öncesi sayımları KAYNAK (canlı) veritabanında yakala:
+   ```bash
+   pnpm verify:migration capture /tmp/kademe-prod-before.json
+   ```
+4. Benimsemeden önce şemanın temel şemayla aynı olduğunu kontrol et: canlının parmak izini temel şemanın parmak iziyle karşılaştır. Depoda hazır bir temel parmak izi dosyası yok; boş bir yerel veritabanına yalnızca `drizzle/migrations/0000_baseline.sql` uygulanarak üretilir. Fark varsa durulur.
+   ```bash
+   pnpm db:fingerprint > /tmp/prod.fp
+   DATABASE_URL=<boş yerel db, yalnızca 0000_baseline.sql> pnpm db:fingerprint > /tmp/baseline.fp
+   diff /tmp/baseline.fp /tmp/prod.fp
+   ```
+5. Göç oturumuna kilit bekleme sınırı koy ve benimseyerek göç et. Bekleyen bütün göçler tek işlemde (transaction) çalışır; benimseme satırı ondan önce ayrı yazılır, bu yüzden göç yarıda kalırsa yeniden çalıştırma bayraksız (`pnpm db:migrate`) kaldığı yerden devam eder:
+   ```bash
+   PGOPTIONS='-c lock_timeout=10s' pnpm db:migrate --adopt-baseline
+   ```
+6. Taşınan veriyi doğrula (bütün satırlar `ok` olmalı):
+   ```bash
+   pnpm verify:migration check /tmp/kademe-prod-before.json
+   ```
+7. Yeni kodu deploy et.
+8. Servisi ve zamanlayıcıları başlat:
+   ```bash
+   sudo systemctl start kademe.service
+   sudo systemctl start 'kademe-*.timer'
+   ```
 
 ## Değişmezler
 
@@ -92,6 +147,10 @@ Zamanlayıcılar 1-2 dakikada bir çalıştığı için transkripsiyon ve puanla
 - Kanıt karelerinin saklama işine (`purge-retention`) bağlanması yapılmadı.
 - Reşit olmayanlar için veli onayı yok.
 - E-posta gönderimi yok (davet linki panelde bir kez gösterilir, `message_outbox`'a yazılır).
+- **Göç stratejisi:** expand (0001) / rol adı (0002) / contract (0003). Arada kod iki yere birden yazdı, sonra okuyucular taşındı; 0003'ten sonra `tsc` eski kolona okuyan kod kalmadığını kanıtladı.
+- `proctorPolicy` sınavda kapalı (OFF) politikayı da döndürür; `null` yalnızca gözetimi olmayan çözüm içindir. Davranışı bire bir korumak için.
+- `close-expired` kurtarma işi bölüm saatini `media_assets.section_run_id` üstünden okumaya devam eder (sınavın kendi bağı).
+- Aday sayfaları (`/a/[token]`, `/info`, `/check`, `/done`) bu adımda sınava bağlı kaldı; işe alım için çözüme göre dağıtım alt proje 3'te.
 - Canlı kurulum (2026-09-30): `scripts/setup-production.ts --confirm-host=<db host>` ile
   şema değişti (kullanıcılar korundu), dinleme sesleri VM'e kopyalandı (TTS çağrısı
   yapılmadı), `APP_ORIGIN` eklendi, yeni timer'lar `kademe-grade` (1 dk) ve

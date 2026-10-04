@@ -94,7 +94,7 @@ a chunk every five seconds and coalesces chunks until it has at least
 `minPartBytes` before flushing a part (`src/lib/client/recorder.ts:119`), which
 on local storage means every chunk goes out on its own and on R2 means roughly
 5 MiB at a time. It is read from the provider and sent to the client by
-`POST /api/c/[token]/media/init` (`src/app/api/c/[token]/media/init/route.ts:54`),
+`POST /api/c/[token]/exam/media/init` (`src/app/api/c/[token]/exam/media/init/route.ts:52`),
 so nothing in the client assumes a value.
 
 `publicSignedUrls` is the difference that reaches third parties. A local signed
