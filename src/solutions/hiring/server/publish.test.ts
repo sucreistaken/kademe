@@ -71,6 +71,8 @@ type World = {
   lockedStatus?: "DRAFT" | "PUBLISHED";
   anchors?: number[];
   failUpdate?: unknown;
+  /** The live version's newest weight set; none by default (the scorecard's own percentages apply). */
+  set?: { isActive: boolean; weights: Record<string, number> };
 };
 
 /** One organisation with one opening, one draft (or live) version, one stage, one video question. */
@@ -119,6 +121,8 @@ const world =
       if (op.table === t.scales) return [{ id: SET, minValue: 1, maxValue: 5 }];
       if (op.table === t.levels) return [{ value: 1, label: text("1") }];
       if (op.table === t.profile) return [{ competencyId: COMP, weight: 60 }];
+      if (op.table === "hiring_weight_sets" && w.set) return [{ id: SET, isActive: w.set.isActive, label: "v1", reason: null, createdAt: new Date() }];
+      if (op.table === "hiring_weights" && w.set) return Object.entries(w.set.weights).map(([competencyId, p]) => ({ weightSetId: SET, competencyId, percentage: p.toFixed(2) }));
       return [];
     }
     if (op.kind === "update" && op.table === t.versions && w.failUpdate) throw w.failUpdate;
@@ -292,7 +296,7 @@ describe("addWeightSet", () => {
   });
 
   it("weighting off keeps the scorecard's percentages and leaves no active set", async () => {
-    fake.respond = live();
+    fake.respond = live({ set: { isActive: true, weights: { [COMP]: 70, [COMP2]: 30 } } });
     await addWeightSet(ORG, OPENING, input({ enabled: false, weights: { [COMP]: -5 } }), ACTOR);
     const set = fake.ops.find((o) => o.kind === "insert" && o.table === "hiring_weight_sets");
     expect(set!.values).toMatchObject({ isActive: false });
@@ -310,6 +314,15 @@ describe("addWeightSet", () => {
     fake.respond = live();
     await expect(addWeightSet(ORG, OPENING, input({ weights: { [COMP]: 70.5, [COMP2]: 29.5 } }), ACTOR)).resolves.toEqual({ ok: false, code: "NOT_WHOLE", total: 100 });
     await expect(addWeightSet(ORG, OPENING, input({ weights: { [COMP]: 100 } }), ACTOR)).resolves.toEqual({ ok: false, code: "NOT_WHOLE", total: 100 });
+    expect(writesOf(fake.ops)).toEqual([]);
+  });
+
+  it("a change that changes nothing (same as the newest set, or the scorecard before any set) is NO_CHANGE and writes nothing", async () => {
+    fake.respond = live({ set: { isActive: true, weights: { [COMP]: 70, [COMP2]: 30 } } });
+    await expect(addWeightSet(ORG, OPENING, input(), ACTOR)).resolves.toEqual({ ok: false, code: "NO_CHANGE" });
+    fake.respond = live();
+    // No set yet: the published scorecard is plain average (weightsEnabled false).
+    await expect(addWeightSet(ORG, OPENING, input({ enabled: false, weights: {} }), ACTOR)).resolves.toEqual({ ok: false, code: "NO_CHANGE" });
     expect(writesOf(fake.ops)).toEqual([]);
   });
 

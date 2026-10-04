@@ -17,7 +17,8 @@ import type { I18nText } from "@/db/schema/types";
 import { useMT } from "@/i18n/manager-client";
 import { cn } from "@/lib/cn";
 import { missingAnchorLevels } from "@/lib/library/anchors";
-import { WEIGHT_REASON_MIN } from "@/solutions/hiring/rules/weights";
+import { sameWeightSet, WEIGHT_REASON_MIN } from "@/solutions/hiring/rules/weights";
+import type { MatrixColumn } from "@/app/(manager)/hiring/openings/[id]/assessment/scorecard/data";
 import { addWeightSetAction, saveDraftWeightsAction } from "@/app/(manager)/hiring/openings/[id]/assessment/scorecard/actions";
 import type { ScorecardCode } from "@/app/(manager)/hiring/openings/[id]/assessment/scorecard/result";
 import { AnchorSheet } from "./anchor-sheet";
@@ -45,15 +46,17 @@ type Outcome = { kind: "saved" } | { kind: "refused"; code: ScorecardCode | "NET
  * "Puan kartını kaydet" that states why it is off. On a draft it saves the
  * draft's weights; on a live version it adds a weight set with a reason. Both
  * send the version the form was loaded for, so a version published meanwhile
- * answers STALE. While the anchor Sheet is open its own save is the one filled
- * button (ruling C21).
+ * answers STALE. A live change must differ from the current set (NO_CHANGE).
+ * While the anchor Sheet is open its own save is the one filled button
+ * (ruling C21). Question columns carry a visible legend and a full name for
+ * screen readers (review Important 2).
  */
 export function ScorecardView({
   openingId,
   versionId,
   mode,
   liveNumber,
-  activeSetLabel,
+  baseline,
   rows,
   columns,
   choiceCount,
@@ -69,9 +72,10 @@ export function ScorecardView({
   versionId: string;
   mode: "draft" | "live";
   liveNumber: number | null;
-  activeSetLabel: string | null;
+  /** Live only: the current weight set (or the published card before any), which a change must differ from. */
+  baseline: { enabled: boolean; weights: Record<string, number> } | null;
   rows: ScorecardRow[];
-  columns: Array<{ id: string; label: string; title: string }>;
+  columns: MatrixColumn[];
   choiceCount: number;
   initialEnabled: boolean;
   /** As typed: a measured competency without a weight starts empty. */
@@ -97,6 +101,8 @@ export function ScorecardView({
   const [anchorsSaved, setAnchorsSaved] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const [outcome, setOutcome] = useState<Outcome>(null);
+  /** The set this form just saved: the current one until the refreshed page brings it as `baseline`. */
+  const [savedSet, setSavedSet] = useState<{ enabled: boolean; weights: Record<string, number> } | null>(null);
 
   const shown = rows.map((row) =>
     adopted[row.id] ? { ...row, anchors: adopted[row.id], missingLevels: missingAnchorLevels(adopted[row.id]) } : row,
@@ -109,15 +115,19 @@ export function ScorecardView({
     if (p.code === "NOT_100") return p.total < 100 ? t("missing", { total: p.total, gap: p.gap }) : t("over", { total: p.total, gap: p.gap });
     return t(p.code === "MISSING" ? "weightMissing" : "weightNotWhole", { competency: nameOf(p.competencyId) || t("unknownCompetency") });
   };
+  const current = savedSet ?? baseline;
+  const unchanged = mode === "live" && current !== null && sameWeightSet({ enabled, weights: read.weights }, current, used);
   const saveReason = !canEdit
     ? editReason
     : rows.length === 0
       ? t("noCompetencies")
       : enabled && read.problem
         ? problemText(read.problem)
-        : mode === "live" && reason.trim().length < WEIGHT_REASON_MIN
-          ? t("reasonRequired")
-          : null;
+        : unchanged
+          ? t("errNoChange")
+          : mode === "live" && reason.trim().length < WEIGHT_REASON_MIN
+            ? t("reasonRequired")
+            : null;
   const faultyId = enabled && read.problem && read.problem.code !== "NOT_100" ? read.problem.competencyId : null;
 
   function save() {
@@ -128,6 +138,7 @@ export function ScorecardView({
         const res = mode === "draft" ? await saveDraftWeightsAction(openingId, payload) : await addWeightSetAction(openingId, { ...payload, reason });
         if (res.ok) {
           setOutcome({ kind: "saved" });
+          if (mode === "live") setSavedSet({ enabled, weights: read.weights });
           setReason("");
           router.refresh();
         } else {
@@ -143,13 +154,6 @@ export function ScorecardView({
 
   return (
     <div className="mt-section space-y-section">
-      {mode === "live" ? (
-        <p className="tnum text-[13px] text-muted">
-          {t("liveMode", { number: liveNumber ?? 0 })}
-          {activeSetLabel ? ` ${t("activeSet", { label: activeSetLabel })}` : ""}
-        </p>
-      ) : null}
-
       <Card className="p-card">
         <h2 className="text-[16px] leading-6 font-semibold text-ink">{t("matrixTitle")}</h2>
         {rows.length === 0 ? (
@@ -171,9 +175,9 @@ export function ScorecardView({
                   <TableHead className="text-[13px] font-medium text-muted">{t("colCompetency")}</TableHead>
                   {columns.map((c) => (
                     <TableHead key={c.id} className="tnum text-center text-[13px] font-medium text-muted">
-                      <abbr title={c.title} className="no-underline">
-                        {c.label}
-                      </abbr>
+                      {/* The number is what sighted readers match with the legend; a screen reader hears the question. */}
+                      <span aria-hidden>{c.label}</span>
+                      <span className="sr-only">{c.srName}</span>
                     </TableHead>
                   ))}
                   <TableHead className="text-right text-[13px] font-medium text-muted">{t("colCount")}</TableHead>
@@ -236,6 +240,19 @@ export function ScorecardView({
                 ))}
               </TableBody>
             </Table>
+            <ul aria-label={t("legendLabel")} className="mt-3 space-y-1 border-t border-line pt-3">
+              {columns.map((c) => (
+                <li key={c.id} className="flex min-w-0 items-baseline gap-2 text-[13px] leading-5">
+                  <span className="tnum shrink-0 font-medium text-ink">{c.label}</span>
+                  <span aria-hidden className="shrink-0 text-muted">
+                    ·
+                  </span>
+                  <span className="min-w-0 truncate text-ink-2" title={c.prompt}>
+                    {c.prompt}
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
         {choiceCount > 0 ? <p className="mt-3 text-[13px] text-muted">{t("knowledgeLine", { count: choiceCount })}</p> : null}

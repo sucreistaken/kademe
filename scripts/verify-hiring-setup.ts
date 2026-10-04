@@ -414,6 +414,8 @@ async function main() {
   check((await loadScorecard(orgB.id, live1.id)) === null && (await liveWeights(orgB.id, live1.id)) === null, "another organisation reads neither");
   const added = await addWeightSet(org.id, id, { versionId: live1.id, enabled: true, weights: { [communication]: 70, [problem]: 30 }, reason: "Kalibrasyon sonrası" }, owner.id);
   check(added.ok, "a new weight set with a reason is added");
+  const same = await addWeightSet(org.id, id, { versionId: live1.id, enabled: true, weights: { [communication]: 70, [problem]: 30 }, reason: "Aynısı" }, owner.id);
+  check(!same.ok && same.code === "NO_CHANGE", "the same weights again are NO_CHANGE, no new set", JSON.stringify(same));
   const setsAfter = await db.select().from(s.hiringWeightSets).where(eq(s.hiringWeightSets.versionId, live1.id));
   check(setsAfter.length === 2 && setsAfter.filter((x) => x.isActive).length === 1, "it is the one active set");
   const [stillSame] = await db.select().from(s.hiringVersions).where(eq(s.hiringVersions.id, live1.id));
@@ -450,6 +452,11 @@ async function main() {
   const v2draft = await loadVersionContent(org.id, draft2.versionId);
   check(v2draft!.number === 2 && v2draft!.stages.length === 1 && v2draft!.stages[0].id !== firstStage.id, "v2 is a copy with new ids");
   check(v2draft!.weightsEnabled && v2draft!.draftWeights?.[communication] === 70, "v2 starts from the newest weight set");
+  const whileDraft = await addWeightSet(org.id, id, { versionId: live1.id, enabled: true, weights: { [communication]: 65, [problem]: 35 }, reason: "Taslak varken" }, owner.id);
+  const v2stillDraft = await loadVersionContent(org.id, draft2.versionId);
+  check(whileDraft.ok && v2stillDraft!.status === "DRAFT" && v2stillDraft!.draftWeights?.[communication] === 70, "the live weights still change while v2 is a draft, and the draft keeps its own", JSON.stringify(whileDraft));
+  const missingDraft = await versions.saveDraftWeights(org.id, id, { enabled: true, weights: { [communication]: 100 } });
+  check(!missingDraft.ok && missingDraft.code === "WEIGHTS_MISSING", "draft weights leaving a measured competency out are WEIGHTS_MISSING, not a silent 0", JSON.stringify(missingDraft));
   await versions.updateStage(org.id, id, v2draft!.stages[0].id, { durationSeconds: 900 });
   const v1again = await loadVersionContent(org.id, live1.id);
   check(v1again!.stages[0].durationSeconds === firstStage.durationSeconds, "editing v2 leaves v1 alone");
@@ -462,7 +469,7 @@ async function main() {
   const stale = await addWeightSet(org.id, id, { versionId: live1.id, enabled: true, weights: { [communication]: 60, [problem]: 40 }, reason: "Eski sekmeden" }, owner.id);
   const v1setsAfter = await db.select().from(s.hiringWeightSets).where(eq(s.hiringWeightSets.versionId, live1.id));
   const v2setsAfter = await db.select().from(s.hiringWeightSets).where(eq(s.hiringWeightSets.versionId, draft2.versionId));
-  check(!stale.ok && stale.code === "STALE" && v1setsAfter.length === 4 && v2setsAfter.length === 1, "a form loaded for v1 is STALE once v2 is live, and writes no set", JSON.stringify(stale));
+  check(!stale.ok && stale.code === "STALE" && v1setsAfter.length === 5 && v2setsAfter.length === 1, "a form loaded for v1 is STALE once v2 is live, and writes no set", JSON.stringify(stale));
 
   console.log("\nThe scorecard's anchor Sheet writes the library, never a published card");
   const { saveAnchors } = await import("@/server/library-write");

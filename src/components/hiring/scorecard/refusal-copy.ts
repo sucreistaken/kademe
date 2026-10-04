@@ -16,6 +16,8 @@ const KEYS: Record<ScorecardCode | "NETWORK", ScorecardKey> = {
   REASON_REQUIRED: "reasonRequired",
   NOT_WHOLE: "errNotWhole",
   NOT_100: "errNot100",
+  WEIGHTS_MISSING: "errWeightsMissing",
+  NO_CHANGE: "errNoChange",
   ANCHORS_REQUIRED: "errAnchorsRequired",
   ARCHIVED: "errArchived",
   NETWORK: "saveFailed",

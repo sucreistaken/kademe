@@ -85,21 +85,49 @@ export function AnchorSheet({
           <SheetTitle className="text-[16px] leading-6 font-semibold text-ink">{t("sheetTitle", { competency: competency.name })}</SheetTitle>
           <SheetDescription className="text-[13px] leading-5 text-muted">{editable ? t("sheetDescription") : note}</SheetDescription>
         </SheetHeader>
-        <div className="space-y-field px-6">
-          {ANCHOR_LEVELS.map((level) => {
-            const required = (REQUIRED_ANCHOR_LEVELS as readonly number[]).includes(level);
-            return (
-              <I18nPair
-                key={level}
-                multiline
-                disabled={!editable || pending}
-                label={`${level} · ${levelName(level)}${required ? "" : ` (${t("sheetOptional")})`}`}
-                value={anchors[level] ?? empty()}
-                onChange={(next) => setAnchors((current) => ({ ...current, [level]: next }))}
-              />
-            );
-          })}
-        </div>
+        {editable ? (
+          <div className="space-y-field px-6">
+            {ANCHOR_LEVELS.map((level) => {
+              const required = (REQUIRED_ANCHOR_LEVELS as readonly number[]).includes(level);
+              return (
+                <I18nPair
+                  key={level}
+                  multiline
+                  disabled={pending}
+                  label={`${level} · ${levelName(level)}${required ? "" : ` (${t("sheetOptional")})`}`}
+                  value={anchors[level] ?? empty()}
+                  onChange={(next) => setAnchors((current) => ({ ...current, [level]: next }))}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          // Read-only (a published copy, an archived competency, a closed opening): text to read, not greyed-out fields.
+          <dl className="space-y-4 px-6">
+            {ANCHOR_LEVELS.map((level) => {
+              const body = anchors[level];
+              return (
+                <div key={level} className="space-y-1">
+                  <dt className="text-[13px] font-medium text-ink">{`${level} · ${levelName(level)}`}</dt>
+                  {body && hasText(body) ? (
+                    <dd className="space-y-1 text-[14px] leading-[22px] text-ink">
+                      {(["tr", "en"] as const)
+                        .filter((lang) => body[lang].trim())
+                        .map((lang) => (
+                          <p key={lang} lang={lang} className={lang === "en" ? "text-ink-2" : undefined}>
+                            <span className="mr-1.5 text-[12px] font-medium text-muted">{lang.toUpperCase()}</span>
+                            {body[lang]}
+                          </p>
+                        ))}
+                    </dd>
+                  ) : (
+                    <dd className="text-[13px] text-muted">{t("sheetEmptyLevel")}</dd>
+                  )}
+                </div>
+              );
+            })}
+          </dl>
+        )}
         <div className="flex flex-wrap items-center gap-3 px-6 pt-6 pb-8">
           {editable ? (
             <>

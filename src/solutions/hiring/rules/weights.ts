@@ -101,3 +101,18 @@ export function weightSetPercentages(
   const problem = weightsProblem(given, used);
   return problem ? { ok: false, ...problem } : { ok: true, weights: given };
 }
+
+/**
+ * True when a live weight change would change nothing (HIRING-UX 5.7, a new
+ * set needs a real change): both off is the same plain average whatever the
+ * stored percentages; both on compares every measured competency.
+ */
+export function sameWeightSet(
+  a: { enabled: boolean; weights: Record<string, number> },
+  b: { enabled: boolean; weights: Record<string, number> },
+  used: string[],
+): boolean {
+  if (a.enabled !== b.enabled) return false;
+  if (!a.enabled) return true;
+  return used.every((id) => a.weights[id] === b.weights[id]);
+}

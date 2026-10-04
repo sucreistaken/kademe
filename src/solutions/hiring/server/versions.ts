@@ -493,8 +493,9 @@ export async function setActivityCompetencies(orgId: string, openingId: string, 
 }
 
 /**
- * HIRING-UX 5.7 for a draft: weighting off means a plain average; on needs
- * whole percentages adding up to 100 (NOT_WHOLE / NOT_100, rules/weights).
+ * HIRING-UX 5.7 for a draft: weighting off means a plain average; on needs a
+ * weight for every measured competency (WEIGHTS_MISSING), whole percentages
+ * adding up to 100 (NOT_WHOLE / NOT_100, rules/weights).
  * `versionId`, when given, is the draft the form was loaded for: compared under
  * the opening's lock, so weights chosen for a draft that was published (and
  * replaced by a new draft) meanwhile answer STALE instead of landing elsewhere.
@@ -503,13 +504,16 @@ export async function saveDraftWeights(
   orgId: string,
   openingId: string,
   input: { versionId?: string; enabled: boolean; weights: Record<string, number> },
-): Promise<{ ok: true } | { ok: false; code: "STALE" } | ({ ok: false } & WeightsProblem)> {
+): Promise<{ ok: true } | { ok: false; code: "STALE" } | { ok: false; code: "WEIGHTS_MISSING"; competencyId: string } | ({ ok: false } & WeightsProblem)> {
   return draftWrite(async (tx) => {
     const versionId = await draftOf(tx, orgId, openingId);
     if (input.versionId !== undefined && input.versionId !== versionId) return { ok: false as const, code: "STALE" as const };
     const content = await loadVersionContent(orgId, versionId, tx);
     if (!content) throw new HiringNotFound("version");
     const used = usedCompetencyIds(content);
+    // Weighting on: every measured competency needs its own weight (the gate's WEIGHTS_MISSING), never a silent 0.
+    const left = input.enabled ? used.find((id) => !Object.hasOwn(input.weights, id)) : undefined;
+    if (left) return { ok: false as const, code: "WEIGHTS_MISSING" as const, competencyId: left };
     const weights = Object.fromEntries(used.map((id) => [id, Object.hasOwn(input.weights, id) ? input.weights[id] : 0]));
     if (input.enabled) {
       const problem = weightsProblem(weights, used);

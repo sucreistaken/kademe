@@ -22,6 +22,8 @@ const CODES: { [C in ScorecardCode | "NETWORK"]: true } = {
   REASON_REQUIRED: true,
   NOT_WHOLE: true,
   NOT_100: true,
+  WEIGHTS_MISSING: true,
+  NO_CHANGE: true,
   ANCHORS_REQUIRED: true,
   ARCHIVED: true,
   NETWORK: true,

@@ -317,7 +317,6 @@
     "reasonRequired": "Write the reason for the change.",
     "liveWeightsNote": "Existing scores keep the old weights. Recalculating is a separate step.",
     "liveMode": "The live v{number} scorecard. Anchors and competencies do not change once live; a weight change is saved as a new weight set.",
-    "activeSet": "Current weight set: {label}",
     "noEdit": "Your role cannot change the scorecard.",
     "closed": "This opening is closed; its scorecard no longer changes.",
     "noCompetencies": "Add competencies to the questions first.",
@@ -341,7 +340,19 @@
     "errNoLive": "No version is live; weights change in the draft.",
     "errNotWhole": "Each weight must be a whole number from 0 to 100.",
     "errNot100": "Weights add up to {total}%; they must add up to 100%.",
+    "errWeightsMissing": "Give every measured competency a weight; the total must be 100%.",
+    "errNoChange": "The weights match the current set; change a value to save.",
     "errAnchorsRequired": "Anchors are saved only once levels 1, 3 and 5 are written.",
-    "errArchived": "This competency is archived; its anchors do not change."
+    "errArchived": "This competency is archived; its anchors do not change.",
+    "colQuestionSr": "Stage {stage}, question {n}: {prompt}",
+    "noPrompt": "No question text",
+    "legendLabel": "Questions",
+    "draftNote": "Draft v{draft}. The live v{live} stays unchanged for invited candidates.",
+    "versionSwitchLabel": "Version shown",
+    "switchLive": "Live v{number}",
+    "switchDraft": "Draft v{number}",
+    "activeSetPublished": "The current weight set was created at publishing ({date}).",
+    "activeSetDated": "The current weight set is from {date}. Reason: {reason}",
+    "sheetEmptyLevel": "Not written"
   }
 }

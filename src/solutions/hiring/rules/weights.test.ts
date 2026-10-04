@@ -1,7 +1,7 @@
 import { PgDialect, getTableConfig } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 import { hiringWeights } from "@/db/schema";
-import { defaultWeights, evenSplit, missingWeights, toPercentages, weightSetPercentages, weightsProblem } from "./weights";
+import { defaultWeights, evenSplit, missingWeights, sameWeightSet, toPercentages, weightSetPercentages, weightsProblem } from "./weights";
 
 describe("weights", () => {
   it("splits evenly, earlier rows take the remainder", () => {
@@ -131,5 +131,17 @@ describe("weightSetPercentages (a weight set after publishing)", () => {
   it("a scorecard without competencies: on is refused (total 0), off is an empty set", () => {
     expect(weightSetPercentages({ competencies: [] }, { enabled: true, weights: {} })).toEqual({ ok: false, code: "NOT_100", total: 0 });
     expect(weightSetPercentages({ competencies: [] }, { enabled: false, weights: {} })).toEqual({ ok: true, weights: {} });
+  });
+});
+
+describe("sameWeightSet (a live change must change something)", () => {
+  const used = ["c1", "c2"];
+  it("both off is the same plain average, whatever the stored percentages", () => {
+    expect(sameWeightSet({ enabled: false, weights: { c1: 75, c2: 25 } }, { enabled: false, weights: {} }, used)).toBe(true);
+  });
+  it("on and off differ; on compares every measured competency", () => {
+    expect(sameWeightSet({ enabled: true, weights: { c1: 75, c2: 25 } }, { enabled: false, weights: { c1: 75, c2: 25 } }, used)).toBe(false);
+    expect(sameWeightSet({ enabled: true, weights: { c1: 75, c2: 25 } }, { enabled: true, weights: { c2: 25, c1: 75, other: 9 } }, used)).toBe(true);
+    expect(sameWeightSet({ enabled: true, weights: { c1: 70, c2: 30 } }, { enabled: true, weights: { c1: 75, c2: 25 } }, used)).toBe(false);
   });
 });

@@ -111,6 +111,13 @@ describe("weights", () => {
     expect(m.saveDraftWeights.mock.calls[0][2]).toMatchObject({ weights: { [COMP]: 99.5 } });
   });
 
+  it("passes a measured competency left out (WEIGHTS_MISSING) and a live change that changes nothing (NO_CHANGE) through", async () => {
+    m.saveDraftWeights.mockResolvedValueOnce({ ok: false, code: "WEIGHTS_MISSING", competencyId: COMP });
+    await expect(saveDraftWeightsAction(OPENING, weights)).resolves.toEqual({ ok: false, code: "WEIGHTS_MISSING", competencyId: COMP });
+    m.addWeightSet.mockResolvedValueOnce({ ok: false, code: "NO_CHANGE" });
+    await expect(addWeightSetAction(OPENING, live)).resolves.toEqual({ ok: false, code: "NO_CHANGE" });
+  });
+
   it("passes the rules' NOT_100 with its total, and STALE", async () => {
     m.saveDraftWeights.mockResolvedValueOnce({ ok: false, code: "NOT_100", total: 95 });
     await expect(saveDraftWeightsAction(OPENING, weights)).resolves.toEqual({ ok: false, code: "NOT_100", total: 95 });

@@ -3,19 +3,21 @@ import { db } from "@/db";
 import { auditLogs, hiringWeightSets, hiringWeights } from "@/db/schema";
 import { isUuid } from "@/server/settings";
 import { workingVersions } from "../rules/versions";
-import { WEIGHT_REASON_MIN, weightSetPercentages } from "../rules/weights";
+import { sameWeightSet, WEIGHT_REASON_MIN, weightSetPercentages } from "../rules/weights";
 import { frozenAsConflict, HiringNotFound } from "./errors";
 import { assertActiveUser, latestWeights, lockOpening, versionRow, versionsOf } from "./versions";
 
 /**
  * NO_LIVE: nothing is published. STALE: the form was loaded for another live
  * version (a newer one went live meanwhile); reload before changing weights.
- * REASON_REQUIRED: the reason is shorter than WEIGHT_REASON_MIN. NOT_WHOLE /
+ * REASON_REQUIRED: the reason is shorter than WEIGHT_REASON_MIN. NO_CHANGE: the
+ * weights equal the newest set (or the published scorecard before any set), so a
+ * new set would only add noise to the history. NOT_WHOLE /
  * NOT_100: see WeightsProblem (rules/weights), with the total of the values.
  */
 export type WeightSetOutcome =
   | { ok: true }
-  | { ok: false; code: "NO_LIVE" | "STALE" | "REASON_REQUIRED" }
+  | { ok: false; code: "NO_LIVE" | "STALE" | "REASON_REQUIRED" | "NO_CHANGE" }
   | { ok: false; code: "NOT_WHOLE" | "NOT_100"; total: number };
 
 export { WEIGHT_REASON_MIN };
@@ -59,6 +61,12 @@ export async function addWeightSet(
       if (!version || version.status !== "PUBLISHED" || !version.scorecard) return { ok: false, code: "NO_LIVE" };
       const result = weightSetPercentages(version.scorecard, { enabled: input.enabled === true, weights: input.weights ?? {} });
       if (!result.ok) return { ok: false, code: result.code, total: result.total };
+      const current = (await latestWeights(tx, orgId, version.id)) ?? {
+        enabled: version.scorecard.weightsEnabled,
+        weights: Object.fromEntries(version.scorecard.competencies.map((c) => [c.id, c.weight])),
+      };
+      const used = version.scorecard.competencies.map((c) => c.id);
+      if (sameWeightSet({ enabled: input.enabled === true, weights: result.weights }, current, used)) return { ok: false, code: "NO_CHANGE" };
 
       await tx
         .update(hiringWeightSets)

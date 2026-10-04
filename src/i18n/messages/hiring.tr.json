@@ -317,7 +317,6 @@
     "reasonRequired": "Değişikliğin gerekçesini yaz.",
     "liveWeightsNote": "Mevcut puanlar eski ağırlıklarla kalır. Yeniden hesaplamak ayrı bir adımdır.",
     "liveMode": "Yayındaki v{number} puan kartı. Çapalar ve yetkinlikler yayında değişmez; ağırlık değişikliği yeni bir ağırlık seti olarak kaydedilir.",
-    "activeSet": "Geçerli ağırlık seti: {label}",
     "noEdit": "Rolün puan kartını değiştiremez.",
     "closed": "Bu alım kapalı; puan kartı artık değişmez.",
     "noCompetencies": "Önce sorulara yetkinlik ekle.",
@@ -341,7 +340,19 @@
     "errNoLive": "Yayında bir sürüm yok; ağırlıklar taslakta değişir.",
     "errNotWhole": "Her ağırlık 0 ile 100 arasında bir tam sayı olmalı.",
     "errNot100": "Ağırlık toplamı %{total}; %100 olmalı.",
+    "errWeightsMissing": "Ölçülen her yetkinliğe bir ağırlık gir; toplam %100 olmalı.",
+    "errNoChange": "Ağırlıklar geçerli setle aynı; bir değeri değiştirince kaydedilir.",
     "errAnchorsRequired": "1, 3 ve 5. seviyelerin tanımı yazılmadan çapalar kaydedilmez.",
-    "errArchived": "Bu yetkinlik arşivlenmiş; çapaları değişmez."
+    "errArchived": "Bu yetkinlik arşivlenmiş; çapaları değişmez.",
+    "colQuestionSr": "Aşama {stage}, soru {n}: {prompt}",
+    "noPrompt": "Soru metni yok",
+    "legendLabel": "Sorular",
+    "draftNote": "Taslak v{draft}. Yayındaki v{live} davetli adaylar için değişmeden kalır.",
+    "versionSwitchLabel": "Gösterilen sürüm",
+    "switchLive": "Yayındaki v{number}",
+    "switchDraft": "Taslak v{number}",
+    "activeSetPublished": "Geçerli ağırlık seti yayınla birlikte oluştu ({date}).",
+    "activeSetDated": "Geçerli ağırlık seti {date} tarihli. Gerekçe: {reason}",
+    "sheetEmptyLevel": "Yazılmamış"
   }
 }

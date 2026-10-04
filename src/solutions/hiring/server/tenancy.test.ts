@@ -303,6 +303,12 @@ describe("saveDraftWeights", () => {
     expect(writes()).toEqual([]);
   });
 
+  it("weighting on: a measured competency left out is WEIGHTS_MISSING, not filled with 0, and nothing is written", async () => {
+    respond = weightsWorld;
+    await expect(versions.saveDraftWeights(ORG, OPENING, { enabled: true, weights: { [STAGE]: 100 } })).resolves.toEqual({ ok: false, code: "WEIGHTS_MISSING", competencyId: COMP });
+    expect(writes()).toEqual([]);
+  });
+
   it("a form loaded for another version (published meanwhile, a new draft opened) is STALE and writes nothing", async () => {
     respond = weightsWorld;
     await expect(versions.saveDraftWeights(ORG, OPENING, { versionId: STAGE, enabled: true, weights: { [COMP]: 100 } })).resolves.toEqual({ ok: false, code: "STALE" });
