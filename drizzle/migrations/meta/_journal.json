@@ -36,6 +36,13 @@
       "when": 1791117383184,
       "tag": "0004_library",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791122016598,
+      "tag": "0005_hiring_openings",
+      "breakpoints": true
     }
   ]
 }

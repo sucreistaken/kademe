@@ -92,6 +92,8 @@ export const aiPurpose = pgEnum("ai_purpose", [
   "SPEAKING_GRADING", // same, from the transcript
   "PROCTOR_REVIEW", // observable facts in proctoring frames, never intent
   "ANCHOR_DRAFT", // proposed 1-5 behavioural anchors for a competency; a person accepts or edits them
+  "HIRING_DRAFT", // a hiring assessment proposed from a job ad; a person accepts each card
+  "QUESTION_CHECK", // flags leading, double, vague or protected-trait questions; suggestions only
 ]);
 
 export const proctorEventType = pgEnum("proctor_event_type", PROCTOR_EVENT_TYPES);
@@ -107,3 +109,19 @@ export const locale = pgEnum("locale", ["tr", "en"]);
 
 /** Observation tags under a competency: evidence for (+) or against (-). */
 export const observationPolarity = pgEnum("observation_polarity", ["POSITIVE", "NEGATIVE"]);
+
+/** Hiring (hiring solution design 2). A published version is frozen by triggers (migration 0006). */
+export const hiringOpeningStatus = pgEnum("hiring_opening_status", ["DRAFT", "OPEN", "CLOSED"]);
+export const hiringVersionStatus = pgEnum("hiring_version_status", ["DRAFT", "PUBLISHED"]);
+export const hiringProctorLevel = pgEnum("hiring_proctor_level", ["OFF", "BASIC", "STANDARD", "STRICT"]);
+export const hiringActivityType = pgEnum("hiring_activity_type", [
+  "VIDEO",
+  "AUDIO",
+  "LONG_TEXT",
+  "SHORT_TEXT",
+  "SINGLE_CHOICE",
+  "MULTI_CHOICE",
+  "FILE_UPLOAD",
+]);
+export const hiringStageTimeout = pgEnum("hiring_stage_timeout", ["AUTO_SUBMIT", "AUTO_CLOSE", "ALLOW_GRACE", "ALLOW_LATE"]);
+export const hiringMemberRole = pgEnum("hiring_member_role", ["EVALUATOR"]);

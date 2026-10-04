@@ -121,3 +121,77 @@ describe("0004_library", () => {
     expect(sql).toMatch(/CREATE UNIQUE INDEX "one_default_scale_per_org" ON "rating_scales" USING btree \("org_id"\) WHERE is_default/);
   });
 });
+
+describe("0005_hiring_openings", () => {
+  const sql = read("0005_hiring_openings");
+
+  it.each([
+    "hiring_openings",
+    "hiring_opening_members",
+    "hiring_versions",
+    "hiring_stages",
+    "hiring_activities",
+    "hiring_activity_competencies",
+    "hiring_weight_sets",
+    "hiring_weights",
+  ])("creates %s", (table) => {
+    expect(sql).toContain(`CREATE TABLE "${table}"`);
+  });
+
+  it.each([
+    "hiring_opening_status",
+    "hiring_version_status",
+    "hiring_proctor_level",
+    "hiring_activity_type",
+    "hiring_stage_timeout",
+    "hiring_member_role",
+  ])("creates the enum %s", (name) => {
+    expect(sql).toContain(`CREATE TYPE "public"."${name}"`);
+  });
+
+  it("adds the two hiring AI purposes in place, and no purpose that scores or ranks", () => {
+    expect(sql).toContain(`ALTER TYPE "public"."ai_purpose" ADD VALUE 'HIRING_DRAFT';`);
+    expect(sql).toContain(`ALTER TYPE "public"."ai_purpose" ADD VALUE 'QUESTION_CHECK';`);
+    expect(sql).not.toMatch(/ADD VALUE '[A-Z_]*(SCOR|RANK|DECI|EMOTION|PERSONAL)[A-Z_]*'/);
+  });
+
+  it("keeps the database rules of spec 2.2", () => {
+    expect(sql).toMatch(/CONSTRAINT "hiring_at_most_two_competencies" CHECK \("hiring_activity_competencies"\."order_index" IN \(0, 1\)\)/);
+    expect(sql).toMatch(/CREATE UNIQUE INDEX "hiring_activity_competency_slot"/);
+    expect(sql).toMatch(/CREATE UNIQUE INDEX "one_draft_per_opening" ON "hiring_versions" USING btree \("opening_id"\) WHERE status = 'DRAFT'/);
+    expect(sql).toMatch(/CONSTRAINT "hiring_published_has_scorecard"/);
+  });
+
+  it("pins the other unique indexes and CHECKs", () => {
+    expect(sql).toMatch(/CREATE UNIQUE INDEX "hiring_version_number" ON "hiring_versions" USING btree \("opening_id","version_number"\)/);
+    expect(sql).toMatch(/CREATE UNIQUE INDEX "one_active_weight_set" ON "hiring_weight_sets" USING btree \("version_id"\) WHERE is_active/);
+    for (const name of [
+      "hiring_min_evaluations",
+      "hiring_feedback_days",
+      "hiring_stage_duration",
+      "hiring_activity_takes",
+      "hiring_activity_think",
+      "hiring_weight_percentage",
+    ]) {
+      expect(sql, name).toContain(`CONSTRAINT "${name}" CHECK`);
+    }
+  });
+
+  it("restricts every foreign key that a frozen row or the library depends on", () => {
+    const fk = (table: string, column: string, target: string) =>
+      new RegExp(
+        `ALTER TABLE "${table}" ADD CONSTRAINT "[a-z0-9_]+" FOREIGN KEY \\("${column}"\\) REFERENCES "public"\\."${target}"\\("id"\\) ON DELETE restrict`,
+      );
+    // Users are disabled, never deleted; a SET NULL on a published version would be an UPDATE the freeze trigger refuses.
+    expect(sql).toMatch(fk("hiring_versions", "published_by", "users"));
+    expect(sql).toMatch(fk("hiring_versions", "consent_text_id", "consent_texts"));
+    expect(sql).toMatch(fk("hiring_openings", "position_id", "positions"));
+    expect(sql).toMatch(fk("hiring_activity_competencies", "competency_id", "competencies"));
+    expect(sql).toMatch(fk("hiring_weights", "competency_id", "competencies"));
+    expect(sql).not.toMatch(/"published_by"\) REFERENCES[^;]*ON DELETE set null/);
+  });
+
+  it("only adds", () => {
+    expect(sql).not.toMatch(/DROP (TABLE|COLUMN|TYPE)/);
+  });
+});
