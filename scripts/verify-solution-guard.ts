@@ -27,7 +27,7 @@ async function call(method: "GET" | "POST" | "PUT", path: string, body?: unknown
 }
 
 async function main() {
-  const { eq } = await import("drizzle-orm");
+  const { eq, inArray } = await import("drizzle-orm");
   const { db } = await import("../src/db");
   const s = await import("../src/db/schema");
   const { mintToken } = await import("../src/lib/auth");
@@ -103,6 +103,29 @@ async function main() {
     const [seen] = await db.select({ ip: s.assessmentLinks.firstSeenIp }).from(s.assessmentLinks).where(eq(s.assessmentLinks.tokenHash, token.hash));
     if (seen && seen.ip === null) ok("an exam endpoint does not record first-seen on a hiring link");
     else bad(`first_seen_ip on the hiring link: ${JSON.stringify(seen)}`);
+
+    console.log("\nShared core endpoints answer a hiring invitation like an unknown token");
+    const keysOf = (j: Record<string, unknown> | null) => Object.keys(j ?? {}).sort().join(",");
+    for (const [label, raw] of [["open", token.raw], ["EXPIRED", expired.raw]] as const) {
+      for (const [method, path, body] of [
+        ["GET", "/consent", undefined],
+        ["POST", "/bandwidth", {}],
+        ["POST", "/rights", { kind: "ACCESS" }],
+        ["POST", "/media/part-urls", {}],
+      ] as const) {
+        const unknownRes = await call(method, `/api/c/${"z".repeat(43)}${path}`, body);
+        const r = await call(method, `/api/c/${raw}${path}`, body);
+        if (r.status === 404 && r.status === unknownRes.status && keysOf(r.json) === keysOf(unknownRes.json) && r.json?.error === "INVALID" && r.json?.error === unknownRes.json?.error)
+          ok(`${label} hiring link, ${method} ${path}: 404 INVALID, same as unknown`);
+        else bad(`${label} hiring link, ${method} ${path}: ${r.status} ${JSON.stringify(r.json)} vs unknown ${unknownRes.status} ${JSON.stringify(unknownRes.json)}`);
+      }
+    }
+    const [seenAfter] = await db.select({ ip: s.assessmentLinks.firstSeenIp }).from(s.assessmentLinks).where(eq(s.assessmentLinks.tokenHash, token.hash));
+    if (seenAfter && seenAfter.ip === null) ok("shared core endpoints do not record first-seen on a hiring link");
+    else bad(`first_seen_ip after the core calls: ${JSON.stringify(seenAfter)}`);
+    const requests = await db.select({ id: s.deletionRequests.id }).from(s.deletionRequests).where(inArray(s.deletionRequests.candidateId, personIds));
+    if (requests.length === 0) ok("no deletion request was written for a hiring invitation");
+    else bad(`${requests.length} deletion request(s) written for hiring candidates`);
 
     console.log("\nThe exam invitation still reaches its endpoints");
     const examState = await call("GET", `/api/c/${exam.rawToken}/state`);

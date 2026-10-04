@@ -82,6 +82,7 @@ export type CandidateRouteOptions = {
    * Which solutions' invitations this endpoint serves. Checked the moment the
    * token resolves, before link problems and before anything is recorded, so a
    * mismatch is answered exactly like an unknown token whatever the link's state.
+   * Defaults to "the solution has a registered module".
    */
   acceptSolution?: (kind: SolutionKind) => boolean;
 };
@@ -125,7 +126,10 @@ export async function withCandidate(
   }
 
   const resolved = await resolveToken(token);
-  if (resolved.ctx && options.acceptSolution && !options.acceptSolution(resolved.ctx.assessment.solution)) {
+  // Default: only solutions with a registered module are served, so no core
+  // route can reveal an invitation of a solution the platform cannot answer for.
+  const accept = options.acceptSolution ?? ((kind: SolutionKind) => solutionModule(kind) !== null);
+  if (resolved.ctx && !accept(resolved.ctx.assessment.solution)) {
     return unknownTokenResponse(req);
   }
   if (!resolved.ok) {
@@ -173,6 +177,7 @@ export function withSolution(
       if (!solution) return notFoundForSolution(request);
       return handler(request, ctx, solution);
     },
+    // Sets acceptSolution itself: a value in `options` is overridden.
     { ...options, acceptSolution: (kind) => solutionModule(kind) !== null },
   );
 }
