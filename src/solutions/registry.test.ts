@@ -3,7 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("@/db", () => ({ db: {} }));
 
 import { buildNav, manifestByKind, SOLUTION_MANIFESTS } from "./registry";
-import { solutionModule, solutionModules } from "./registry.server";
+import { candidateSolution, solutionModule, solutionModules } from "./registry.server";
+import type { SolutionModule } from "./types";
 
 describe("solution registry", () => {
   it("knows the language exam by its database kind", () => {
@@ -46,5 +47,23 @@ describe("solution registry", () => {
     expect(nav[1].label).toBeNull();
     expect(nav[1].items.map((i) => i.label)).toEqual(["Öğrenciler", "Sınavlar", "Soru bankası"]);
     expect(buildNav("en", { today: "Today", settings: "Settings" })[1].items[2].label).toBe("Question bank");
+  });
+});
+
+describe("candidate flow", () => {
+  it("serves candidates only for a registered module whose candidate flow is live", () => {
+    const exam = solutionModule("LANGUAGE_EXAM")!;
+    const hiringNotLive = {
+      ...exam,
+      key: "hiring",
+      dbKind: "HIRING",
+      basePath: "/hiring",
+      candidateFlowLive: false,
+    } as SolutionModule;
+    expect(exam.candidateFlowLive).toBe(true);
+    expect(candidateSolution("LANGUAGE_EXAM")?.key).toBe("language-exam");
+    expect(candidateSolution("HIRING", [exam])).toBeNull();
+    expect(candidateSolution("HIRING", [exam, hiringNotLive])).toBeNull();
+    expect(candidateSolution("HIRING", [exam, { ...hiringNotLive, candidateFlowLive: true }])?.key).toBe("hiring");
   });
 });

@@ -16,6 +16,7 @@ export const languageExamManifest: SolutionManifest = {
     { href: "/exam/bank", label: { tr: "Soru bankası", en: "Question bank" } },
   ],
   inviteHref: "/exam/students/new",
+  candidateFlowLive: true,
   candidateStepPath(token: string, state: CandidateStepState) {
     return isExamStep(state.step) ? stepPath(token, { step: state.step }) : `/a/${encodeURIComponent(token)}`;
   },

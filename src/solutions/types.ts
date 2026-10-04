@@ -30,6 +30,12 @@ export interface SolutionManifest {
   nav: NavLink[];
   /** Where "invite" on the shared Today screen leads for this solution. */
   inviteHref: string;
+  /**
+   * True once this solution's candidate screens and endpoints exist. Until
+   * then every core candidate route and page answers its invitations exactly
+   * like an unknown token, even though the panel already uses the module.
+   */
+  candidateFlowLive: boolean;
   /** Where `/a/[token]` sends the candidate for a given state of this solution. */
   candidateStepPath(token: string, state: CandidateStepState): string;
 }

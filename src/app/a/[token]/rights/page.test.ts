@@ -11,6 +11,11 @@ vi.mock("@/lib/candidate-context", () => ({
   resolveToken: (...args: unknown[]) => resolveToken(...args),
 }));
 
+// Stubbed registry: the exam is live, hiring is registered but not live yet.
+vi.mock("@/solutions/registry.server", () => ({
+  candidateSolution: (kind: string) => (kind === "LANGUAGE_EXAM" ? { key: "language-exam", dbKind: kind, candidateFlowLive: true } : null),
+}));
+
 import CandidateRightsPage from "./page";
 import { RightsForm } from "@/components/candidate/RightsForm";
 import { LinkProblem } from "@/components/candidate/LinkProblem";
@@ -50,7 +55,7 @@ describe("candidate rights page", () => {
     ["an open", "NOT_STARTED", null],
     ["an EXPIRED", "EXPIRED", "EXPIRED"],
     ["a COMPLETED", "COMPLETED", "COMPLETED"],
-  ] as const)("renders %s HIRING link (no module) exactly like an unknown token", async (_label, status, problem) => {
+  ] as const)("renders %s HIRING link (no live candidate flow) exactly like an unknown token", async (_label, status, problem) => {
     const unknown = await render({ ok: false, problem: "INVALID" });
     const hiring = ctx("HIRING", status);
     const other = await render(problem ? { ok: false, problem, ctx: hiring } : { ok: true, ctx: hiring });

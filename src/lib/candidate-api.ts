@@ -9,7 +9,7 @@ import {
 } from "@/lib/candidate-context";
 import { candidateT, type CandidateMessages } from "@/i18n/candidate";
 import { localeFromAcceptLanguage, type Locale } from "@/i18n/locale";
-import { solutionModule } from "@/solutions/registry.server";
+import { candidateSolution } from "@/solutions/registry.server";
 import type { SolutionModule } from "@/solutions/types";
 
 /**
@@ -82,7 +82,7 @@ export type CandidateRouteOptions = {
    * Which solutions' invitations this endpoint serves. Checked the moment the
    * token resolves, before link problems and before anything is recorded, so a
    * mismatch is answered exactly like an unknown token whatever the link's state.
-   * Defaults to "the solution has a registered module".
+   * Defaults to "the solution has a module whose candidate flow is live".
    */
   acceptSolution?: (kind: SolutionKind) => boolean;
 };
@@ -126,9 +126,9 @@ export async function withCandidate(
   }
 
   const resolved = await resolveToken(token);
-  // Default: only solutions with a registered module are served, so no core
-  // route can reveal an invitation of a solution the platform cannot answer for.
-  const accept = options.acceptSolution ?? ((kind: SolutionKind) => solutionModule(kind) !== null);
+  // Default: only solutions whose candidate flow is live are served, so no core
+  // route can reveal an invitation of a solution that cannot answer for it yet.
+  const accept = options.acceptSolution ?? ((kind: SolutionKind) => candidateSolution(kind) !== null);
   if (resolved.ctx && !accept(resolved.ctx.assessment.solution)) {
     return unknownTokenResponse(req);
   }
@@ -158,8 +158,8 @@ export type SolutionHandler = (
 
 /**
  * `withCandidate` for core endpoints whose answer depends on the solution
- * (state, consent, proctoring). An invitation of a solution with no registered
- * module gets the unknown-token 404. The check runs inside `withCandidate`, as
+ * (state, consent, proctoring). An invitation of a solution with no live candidate
+ * flow gets the unknown-token 404. The check runs inside `withCandidate`, as
  * soon as the token resolves, so it cannot be told apart from an unknown token
  * by the link's state either.
  */
@@ -173,12 +173,12 @@ export function withSolution(
     req,
     params,
     async (request, ctx) => {
-      const solution = solutionModule(ctx.assessment.solution);
+      const solution = candidateSolution(ctx.assessment.solution);
       if (!solution) return notFoundForSolution(request);
       return handler(request, ctx, solution);
     },
     // Sets acceptSolution itself: a value in `options` is overridden.
-    { ...options, acceptSolution: (kind) => solutionModule(kind) !== null },
+    { ...options, acceptSolution: (kind) => candidateSolution(kind) !== null },
   );
 }
 

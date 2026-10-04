@@ -71,7 +71,7 @@ async function main() {
       else bad(`${method} ${path}: ${r.status} ${JSON.stringify(r.json)}`);
     }
 
-    console.log("\nCore endpoints refuse a solution with no registered module");
+    console.log("\nCore endpoints refuse a solution with no live candidate flow");
     const state = await call("GET", `/api/c/${token.raw}/state`);
     if (state.status === 404) ok("GET /state: 404");
     else bad(`GET /state: ${state.status}`);
