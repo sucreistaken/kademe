@@ -3,9 +3,22 @@ import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandShortcut,
+} from "@/components/ui/command";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
 import { Kbd } from "@/components/ui/kbd";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -13,6 +26,16 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+} from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { StatusDot } from "@/components/ui/status-dot";
@@ -149,6 +172,107 @@ export default function UiGalleryPage() {
               </Tabs>
               <Separator className="my-4" />
               <p className="text-sm text-muted-foreground">muted-foreground text</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Form fields</CardTitle>
+              <CardDescription>Field, input group and the 40px control height.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <FieldGroup>
+                <Field>
+                  <FieldLabel htmlFor="g-email">Email</FieldLabel>
+                  <Input id="g-email" type="email" placeholder="deniz@example.com" />
+                  <FieldDescription>Used only for the invitation.</FieldDescription>
+                </Field>
+                <Field data-invalid="true">
+                  <FieldLabel htmlFor="g-code">Code</FieldLabel>
+                  <Input id="g-code" aria-invalid="true" defaultValue="12" />
+                  <FieldError>The code has six digits.</FieldError>
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="g-search">Search</FieldLabel>
+                  <InputGroup>
+                    <InputGroupInput id="g-search" placeholder="Candidate or opening" />
+                    <InputGroupAddon align="inline-end">
+                      <InputGroupButton size="sm">Search</InputGroupButton>
+                    </InputGroupAddon>
+                  </InputGroup>
+                </Field>
+              </FieldGroup>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Navigation</CardTitle>
+              <CardDescription>A static sidebar and the command list.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2">
+              <div className="h-64 overflow-hidden rounded-xl border">
+                <SidebarProvider className="min-h-0">
+                  <Sidebar collapsible="none">
+                    <SidebarContent>
+                      <SidebarGroup>
+                        <SidebarGroupLabel>Hiring</SidebarGroupLabel>
+                        <SidebarMenu>
+                          <SidebarMenuItem>
+                            <SidebarMenuButton isActive>Candidates</SidebarMenuButton>
+                          </SidebarMenuItem>
+                          <SidebarMenuItem>
+                            <SidebarMenuButton>Openings</SidebarMenuButton>
+                          </SidebarMenuItem>
+                        </SidebarMenu>
+                      </SidebarGroup>
+                      <SidebarGroup>
+                        <SidebarGroupLabel>Exam</SidebarGroupLabel>
+                        <SidebarMenu>
+                          <SidebarMenuItem>
+                            <SidebarMenuButton>Students</SidebarMenuButton>
+                          </SidebarMenuItem>
+                        </SidebarMenu>
+                      </SidebarGroup>
+                    </SidebarContent>
+                  </Sidebar>
+                </SidebarProvider>
+              </div>
+              <Command className="h-64 border">
+                <CommandInput placeholder="Search people, openings" />
+                <CommandList>
+                  <CommandEmpty>No match.</CommandEmpty>
+                  <CommandGroup heading="Actions">
+                    <CommandItem>
+                      Invite a candidate
+                      <CommandShortcut>⌘I</CommandShortcut>
+                    </CommandItem>
+                    <CommandItem>Invite a student</CommandItem>
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Empty and collapsible</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+              <Empty className="border">
+                <EmptyHeader>
+                  <EmptyTitle>No candidates yet</EmptyTitle>
+                  <EmptyDescription>Invite the first one; the list fills as they finish.</EmptyDescription>
+                </EmptyHeader>
+                <EmptyContent>
+                  <Button variant="primary">Invite a candidate</Button>
+                </EmptyContent>
+              </Empty>
+              <Collapsible className="rounded-lg border p-3">
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm">Show the rubric</Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-2 text-sm text-muted-foreground">
+                  Anchors for 1 to 5, one line each.
+                </CollapsibleContent>
+              </Collapsible>
             </CardContent>
           </Card>
         </div>

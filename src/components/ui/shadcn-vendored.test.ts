@@ -1,6 +1,12 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
+import * as React from "react";
 import { describe, expect, it } from "vitest";
+import { Button } from "./button";
+import { Input } from "./input";
+import { InputGroup, InputGroupButton } from "./input-group";
+import { SelectTrigger } from "./select";
+import { TableCell, TableRow } from "./table";
 import { NORMALIZED_HOOKS, SHADCN_PATTERNS, isKademeOwned, normalizeShadcnSource } from "@/lib/shadcn-normalize";
 
 const UI = path.resolve(process.cwd(), "src/components/ui");
@@ -47,5 +53,46 @@ describe("copied shadcn components", () => {
   it("the cn package is not a dependency", () => {
     const pkg = JSON.parse(readFileSync(path.resolve(process.cwd(), "package.json"), "utf8"));
     expect(pkg.dependencies?.cn).toBeUndefined();
+  });
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyElement = React.ReactElement<Record<string, any>>;
+/** The classes a component renders, read off the element it returns. */
+function classesOf<P>(component: (props: P) => React.ReactNode, props: P): string[] {
+  return String((component(props) as AnyElement).props.className).split(/\s+/);
+}
+
+describe("Kademe adjustments to the copied parts", () => {
+  it("fields are 40px tall, like the Kademe md Button", () => {
+    expect(classesOf(Input, {})).toContain("h-10");
+    expect(classesOf(Input, {})).not.toContain("h-8");
+    expect(classesOf(SelectTrigger, {})).toContain("data-[size=default]:h-10");
+    expect(classesOf(InputGroup, {})).toContain("h-10");
+  });
+
+  it("a small input-group button fits inside the 40px group", () => {
+    const el = InputGroupButton({ size: "sm", children: "Go" }) as AnyElement;
+    const classes = classesOf(Button, el.props);
+    expect(classes).toContain("h-8");
+    expect(classes).not.toContain("h-10");
+  });
+
+  it("the sidebar switches at 1024px, the same breakpoint as useIsMobile", () => {
+    // md: is 768px; between 768 and 1023 the server-rendered desktop sidebar
+    // would flash before the mobile sheet takes over, and touch tablets would
+    // lose the menu actions.
+    expect(read("sidebar.tsx")).not.toMatch(/(?<![\w-])md:/);
+  });
+
+  it("the dialog carries the overlay shadow (RULES 6: modals may)", () => {
+    expect(read("dialog.tsx")).toMatch(/data-slot="dialog-content"\s*className=\{cn\(\s*"[^"]*\bshadow-overlay\b/);
+  });
+
+  it("table rows are 52px and a selected row uses the brand-soft ground", () => {
+    expect(classesOf(TableCell, {})).toContain("h-row");
+    const row = classesOf(TableRow, {});
+    expect(row).toContain("data-[state=selected]:bg-brand-soft");
+    expect(row).not.toContain("data-[state=selected]:bg-muted-surface");
   });
 });

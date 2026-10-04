@@ -18,7 +18,7 @@ export function Card({
     <div
       data-slot="card"
       className={cn(
-        "rounded-[14px] border border-line bg-surface [--card-spacing:--spacing(5)]",
+        "rounded-[var(--card-radius,14px)] border border-line bg-surface [--card-spacing:--spacing(5)]",
         elevated && "shadow-[0_1px_3px_rgba(0,0,0,0.07)]",
         className,
       )}

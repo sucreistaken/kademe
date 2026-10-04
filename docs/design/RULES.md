@@ -81,6 +81,15 @@ Defined in `src/app/globals.css` and nowhere else.
 - Never add: `badge` (status is a dot plus text), `alert-dialog` (no "are you
   sure"), `chart`, `toast`, `sonner` (undo is `UndoStrip`). A disabled
   button's reason never goes in a `Tooltip`.
+- `Card` draws `rounded-[var(--card-radius,14px)]`: exam screens keep their
+  14px cards, and a solution whose screens use the 12px card of HIRING-UX 8.3
+  sets `--card-radius: 12px` once on its layout root instead of overriding
+  every card.
+- Fields (`Input`, `SelectTrigger`, `InputGroup`) are 40px tall (`h-10`),
+  like the Kademe md `Button`. Table cells are `h-row` (52px) and a selected
+  row uses `bg-brand-soft`. `shadcn-vendored.test.ts` guards these and the
+  sidebar's 1024px (`lg:`) breakpoint, so a part re-added from the registry
+  fails the test until the change is made again.
 - `Tooltip` needs a `TooltipProvider` above it; add it to the screen that first
   uses a tooltip, not to the root layout.
 - `dark:` classes in copied components are inert: there is no dark theme.
