@@ -9,6 +9,7 @@ import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
 import { can } from "@/lib/authorize";
 import { pickText } from "@/lib/i18n-text";
+import { formTags } from "@/lib/library/form-tags";
 import { liveCount } from "@/lib/library/usage";
 import { libraryUsage, loadCompetency, loadDefaultScale, type CompetencyDetail } from "@/server/library";
 import { isUuid } from "@/server/settings";
@@ -22,7 +23,7 @@ function formValue(c: CompetencyDetail): CompetencyFormValue {
     name: c.name,
     description: c.description,
     anchors: Object.fromEntries([1, 2, 3, 4, 5].map((l) => [l, c.anchors[l] ?? { tr: "", en: "" }])),
-    tags: c.tags.map((tag) => ({ key: tag.id, id: tag.id, polarity: tag.polarity, label: tag.label })),
+    tags: formTags(c.tags),
   };
 }
 

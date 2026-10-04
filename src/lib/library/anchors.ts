@@ -12,6 +12,10 @@ export const ANCHOR_LEVELS = [1, 2, 3, 4, 5] as const;
 /** HIRING-UX 5.10: at most six observation tags on each side. */
 export const MAX_TAGS_PER_SIDE = 6;
 
+/** Length bounds per language, checked by the server actions and set as maxLength on the inputs. */
+export const COMPETENCY_NAME_MAX = 120;
+export const TAG_LABEL_MAX = 80;
+
 /** Written in at least one language. A one-language org must not be blocked. */
 export function hasText(text: I18nText | null | undefined): boolean {
   return !!text && (text.tr.trim().length > 0 || text.en.trim().length > 0);

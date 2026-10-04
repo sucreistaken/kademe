@@ -42,6 +42,7 @@
     "saving": "Kaydediliyor",
     "saved": "Kaydedildi.",
     "saveFailed": "Kaydedilemedi. Tekrar dene.",
+    "archivedNoSave": "Arşivdeki yetkinlik değiştirilemez. Önce arşivden çıkar.",
     "nameRequired": "Yetkinliğe bir ad ver.",
     "anchorRequired": "Seviye {level} tanımını yaz.",
     "noPermission": "Rolün kütüphaneyi değiştiremez.",

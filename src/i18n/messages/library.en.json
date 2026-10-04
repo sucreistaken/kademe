@@ -42,6 +42,7 @@
     "saving": "Saving",
     "saved": "Saved.",
     "saveFailed": "Could not save. Try again.",
+    "archivedNoSave": "An archived competency cannot be changed. Restore it first.",
     "nameRequired": "Give the competency a name.",
     "anchorRequired": "Write the level {level} definition.",
     "noPermission": "Your role cannot change the library.",

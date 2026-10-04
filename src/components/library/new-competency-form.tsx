@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { I18nPair } from "@/components/manager/i18n-pair";
 import type { I18nText } from "@/db/schema/types";
 import { useMT } from "@/i18n/manager-client";
-import { hasText } from "@/lib/library/anchors";
+import { COMPETENCY_NAME_MAX, hasText } from "@/lib/library/anchors";
 import { createCompetencyAction } from "@/app/(manager)/library/actions";
 
 export function NewCompetencyForm() {
@@ -18,7 +18,7 @@ export function NewCompetencyForm() {
   const reason = hasText(name) ? null : t("nameRequired");
   return (
     <Card className="space-y-field p-card">
-      <I18nPair label={t("name")} value={name} onChange={setName} />
+      <I18nPair label={t("name")} value={name} maxLength={COMPETENCY_NAME_MAX} onChange={setName} />
       <I18nPair label={t("description")} multiline value={description} onChange={setDescription} />
       <div className="flex flex-wrap items-center gap-4">
         <Button

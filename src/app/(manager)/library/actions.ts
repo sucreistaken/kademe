@@ -3,41 +3,44 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { seedLibrary } from "@/db/library-seed";
 import {
   createCompetency,
   saveCompetency,
   saveScaleLabels,
   setCompetencyArchived,
+  startLibrary,
   type CompetencyInput,
   type CompetencyWriteError,
+  type SavedTag,
 } from "@/server/library-write";
+import { COMPETENCY_NAME_MAX, TAG_LABEL_MAX } from "@/lib/library/anchors";
 import { isUuid } from "@/server/settings";
 import { requireUser } from "@/server/session";
 
-const i18n = z.object({ tr: z.string().max(2000), en: z.string().max(2000) });
+const i18nMax = (max: number) => z.object({ tr: z.string().max(max), en: z.string().max(max) });
+const i18n = i18nMax(2000);
 const level = z.enum(["1", "2", "3", "4", "5"]);
 
 const competencySchema = z.object({
-  name: i18n,
+  name: i18nMax(COMPETENCY_NAME_MAX),
   description: i18n,
   anchors: z.partialRecord(level, i18n),
-  tags: z.array(z.object({ id: z.uuid().nullable(), polarity: z.enum(["POSITIVE", "NEGATIVE"]), label: i18n })).max(24),
+  tags: z.array(z.object({ id: z.uuid().nullable(), polarity: z.enum(["POSITIVE", "NEGATIVE"]), label: i18nMax(TAG_LABEL_MAX) })).max(24),
   markReviewed: z.boolean(),
 });
 
-export type LibraryActionResult = { ok: true } | { ok: false; code: CompetencyWriteError | "INVALID" };
+export type LibraryActionResult = { ok: true; tags: SavedTag[] } | { ok: false; code: CompetencyWriteError | "INVALID" };
 
 /** The "Başlangıç içeriğini ekle" button: same idempotent seeding as the script. */
 export async function startLibraryAction() {
   const user = await requireUser("library:write");
-  await seedLibrary(user.orgId);
+  await startLibrary(user.orgId, user.id);
   revalidatePath("/library/competencies");
 }
 
 export async function createCompetencyAction(input: { name: { tr: string; en: string }; description: { tr: string; en: string } }) {
   const user = await requireUser("library:write");
-  const parsed = z.object({ name: i18n, description: i18n }).safeParse(input);
+  const parsed = z.object({ name: i18nMax(COMPETENCY_NAME_MAX), description: i18n }).safeParse(input);
   if (!parsed.success) return { ok: false as const, code: "INVALID" as const };
   const result = await createCompetency(user.orgId, user.id, parsed.data);
   if (!result.ok) return result;

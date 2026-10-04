@@ -13,6 +13,7 @@ export function I18nPair({
   multiline = false,
   hint,
   disabled = false,
+  maxLength,
 }: {
   label: string;
   value: I18nText;
@@ -20,6 +21,7 @@ export function I18nPair({
   multiline?: boolean;
   hint?: React.ReactNode;
   disabled?: boolean;
+  maxLength?: number;
 }) {
   return (
     <div className="space-y-2">
@@ -33,6 +35,7 @@ export function I18nPair({
               placeholder={lang.toUpperCase()}
               value={value[lang]}
               disabled={disabled}
+              maxLength={maxLength}
               onChange={(e) => onChange({ ...value, [lang]: e.target.value })}
             />
           ) : (
@@ -42,6 +45,7 @@ export function I18nPair({
               placeholder={lang.toUpperCase()}
               value={value[lang]}
               disabled={disabled}
+              maxLength={maxLength}
               onChange={(e) => onChange({ ...value, [lang]: e.target.value })}
             />
           ),

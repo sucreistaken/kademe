@@ -1,7 +1,7 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import type { Executor } from "@/db/executor";
-import { ensureDefaultScale } from "@/db/library-seed";
+import { ensureDefaultScale, seedLibrary } from "@/db/library-seed";
 import { auditLogs, competencies, competencyAnchors, observationTags, ratingScales, scaleLevels, type I18nText } from "@/db/schema";
 import { hasText, MAX_TAGS_PER_SIDE, missingAnchorLevels } from "@/lib/library/anchors";
 
@@ -34,7 +34,9 @@ export type CompetencyInput = {
   tags: TagInput[];
   markReviewed: boolean;
 };
-export type CompetencyWriteError = "NAME_REQUIRED" | "ANCHORS_REQUIRED" | "TOO_MANY_TAGS" | "NOT_FOUND";
+export type CompetencyWriteError = "NAME_REQUIRED" | "ANCHORS_REQUIRED" | "TOO_MANY_TAGS" | "NOT_FOUND" | "ARCHIVED";
+/** A tag as stored after a save, in form order: the form adopts these ids so the next save keeps them. */
+export type SavedTag = { id: string; polarity: "POSITIVE" | "NEGATIVE"; label: I18nText };
 
 /** The written levels only, trimmed, keyed by level number. */
 export function anchorRecord(input: AnchorInput): Record<number, I18nText> {
@@ -77,7 +79,7 @@ export async function saveCompetency(
   actorId: string,
   id: string,
   input: CompetencyInput,
-): Promise<{ ok: true } | { ok: false; code: CompetencyWriteError }> {
+): Promise<{ ok: true; tags: SavedTag[] } | { ok: false; code: CompetencyWriteError }> {
   if (!hasText(input.name)) return { ok: false, code: "NAME_REQUIRED" };
   const anchors = anchorRecord(input.anchors);
   if (missingAnchorLevels(anchors).length) return { ok: false, code: "ANCHORS_REQUIRED" };
@@ -87,21 +89,24 @@ export async function saveCompetency(
   }
   return db.transaction(async (tx) => {
     const [row] = await tx
-      .select({ id: competencies.id, reviewedAt: competencies.reviewedAt })
+      .select({ id: competencies.id, reviewedAt: competencies.reviewedAt, archivedAt: competencies.archivedAt })
       .from(competencies)
       .where(and(eq(competencies.id, id), eq(competencies.orgId, orgId)))
       .for("update");
     if (!row) return { ok: false as const, code: "NOT_FOUND" as const };
+    // An archived competency is read-only until it is restored (HIRING-UX 4.2 rule 3).
+    if (row.archivedAt) return { ok: false as const, code: "ARCHIVED" as const };
     const now = new Date();
+    const reviewedNow = input.markReviewed && !row.reviewedAt;
     await tx
       .update(competencies)
       .set({
         name: cleanText(input.name),
         description: cleanText(input.description),
         updatedAt: now,
-        ...(input.markReviewed && !row.reviewedAt ? { reviewedAt: now } : {}),
+        ...(reviewedNow ? { reviewedAt: now } : {}),
       })
-      .where(and(eq(competencies.id, id), eq(competencies.orgId, orgId)));
+      .where(and(eq(competencies.id, id), eq(competencies.orgId, orgId), isNull(competencies.archivedAt)));
     await replaceAnchors(tx, id, anchors);
     // Tag ids are kept: a published scorecard copies them. A removed tag is
     // archived. Only ids this competency owns are honoured; any other id (another
@@ -120,18 +125,26 @@ export async function saveCompetency(
         .set({ archivedAt: now })
         .where(and(inArray(observationTags.id, gone), eq(observationTags.competencyId, id)));
     }
+    const saved: SavedTag[] = [];
     for (const [orderIndex, tag] of tags.entries()) {
+      let tagId: string;
       if (isOwned(tag.id)) {
+        tagId = tag.id;
         await tx
           .update(observationTags)
           .set({ label: tag.label, polarity: tag.polarity, orderIndex, archivedAt: null })
           .where(and(eq(observationTags.id, tag.id), eq(observationTags.competencyId, id)));
       } else {
-        await tx.insert(observationTags).values({ competencyId: id, polarity: tag.polarity, label: tag.label, orderIndex });
+        const [created] = await tx
+          .insert(observationTags)
+          .values({ competencyId: id, polarity: tag.polarity, label: tag.label, orderIndex })
+          .returning({ id: observationTags.id });
+        tagId = created.id;
       }
+      saved.push({ id: tagId, polarity: tag.polarity, label: tag.label });
     }
-    await audit(tx, orgId, actorId, "library.competency.save", "competency", id, { markReviewed: input.markReviewed });
-    return { ok: true as const };
+    await audit(tx, orgId, actorId, "library.competency.save", "competency", id, reviewedNow ? { markReviewed: true } : undefined);
+    return { ok: true as const, tags: saved };
   });
 }
 
@@ -153,21 +166,45 @@ export async function saveScaleLabels(
   actorId: string,
   levels: Array<{ value: number; label: I18nText }>,
 ): Promise<{ ok: boolean }> {
-  if (levels.some((l) => !hasText(l.label))) return { ok: false };
+  if (levels.length === 0 || levels.some((l) => !hasText(l.label))) return { ok: false };
   const [scale] = await db
     .select({ id: ratingScales.id })
     .from(ratingScales)
     .where(and(eq(ratingScales.orgId, orgId), eq(ratingScales.isDefault, true)))
     .limit(1);
   if (!scale) return { ok: false };
+  const stored = await db
+    .select({ value: scaleLevels.value, label: scaleLevels.label })
+    .from(scaleLevels)
+    .where(eq(scaleLevels.scaleId, scale.id));
+  // Exactly the scale's own levels: no missing, extra or repeated value.
+  const values = new Set(levels.map((l) => l.value));
+  const sameSet = values.size === levels.length && levels.length === stored.length && stored.every((l) => values.has(l.value));
+  if (!sameSet) return { ok: false };
+  const changed = levels
+    .map((l) => ({ value: l.value, label: cleanText(l.label) }))
+    .filter((l) => {
+      const before = stored.find((s) => s.value === l.value)!.label;
+      return before.tr !== l.label.tr || before.en !== l.label.en;
+    });
+  if (changed.length === 0) return { ok: true };
   await db.transaction(async (tx) => {
-    for (const level of levels) {
+    for (const level of changed) {
       await tx
         .update(scaleLevels)
-        .set({ label: cleanText(level.label) })
+        .set({ label: level.label })
         .where(and(eq(scaleLevels.scaleId, scale.id), eq(scaleLevels.value, level.value)));
     }
-    await audit(tx, orgId, actorId, "library.scale.save", "rating_scale", scale.id);
+    await audit(tx, orgId, actorId, "library.scale.save", "rating_scale", scale.id, { levels: changed.map((l) => l.value) });
   });
   return { ok: true };
+}
+
+/** The empty library's "Başlangıç içeriğini ekle": idempotent seeding, audited when it added anything. */
+export async function startLibrary(orgId: string, actorId: string) {
+  const result = await seedLibrary(orgId);
+  if (result.scaleCreated || result.competenciesCreated > 0) {
+    await audit(db, orgId, actorId, "library.seed", "organization", orgId, result);
+  }
+  return result;
 }

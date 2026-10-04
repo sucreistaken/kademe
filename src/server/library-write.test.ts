@@ -75,9 +75,20 @@ function fakeDb() {
 vi.mock("@/db", () => ({ db: fakeDb() }));
 
 const ensureDefaultScale = vi.fn<(orgId: string) => Promise<{ id: string; created: boolean }>>();
-vi.mock("@/db/library-seed", () => ({ ensureDefaultScale: (orgId: string) => ensureDefaultScale(orgId) }));
+const seedLibrary = vi.fn<(orgId: string) => Promise<{ scaleCreated: boolean; competenciesCreated: number }>>();
+vi.mock("@/db/library-seed", () => ({
+  ensureDefaultScale: (orgId: string) => ensureDefaultScale(orgId),
+  seedLibrary: (orgId: string) => seedLibrary(orgId),
+}));
 
-import { createCompetency, saveCompetency, saveScaleLabels, setCompetencyArchived, type CompetencyInput } from "./library-write";
+import {
+  createCompetency,
+  saveCompetency,
+  saveScaleLabels,
+  setCompetencyArchived,
+  startLibrary,
+  type CompetencyInput,
+} from "./library-write";
 
 const ORG = "11111111-1111-4111-8111-111111111111";
 const ACTOR = "22222222-2222-4222-8222-222222222222";
@@ -85,6 +96,7 @@ const ID = "33333333-3333-4333-8333-333333333333";
 const SCALE = "44444444-4444-4444-8444-444444444444";
 const OWN_TAG = "55555555-5555-4555-8555-555555555555";
 const FOREIGN_TAG = "66666666-6666-4666-8666-666666666666";
+const NEW_TAG = "77777777-7777-4777-8777-777777777777";
 
 const text = (s: string) => ({ tr: s, en: s });
 const validInput = (over: Partial<CompetencyInput> = {}): CompetencyInput => ({
@@ -103,6 +115,7 @@ beforeEach(() => {
   respond = () => [];
   ensureDefaultScale.mockReset();
   ensureDefaultScale.mockResolvedValue({ id: SCALE, created: false });
+  seedLibrary.mockReset();
 });
 
 describe("createCompetency", () => {
@@ -148,6 +161,7 @@ describe("saveCompetency", () => {
     respond = (op) => {
       if (op.kind === "select" && op.table === "competencies") return [{ id: ID, reviewedAt: null }];
       if (op.kind === "select" && op.table === "observation_tags") return [{ id: OWN_TAG, archivedAt: null }];
+      if (op.kind === "insert" && op.table === "observation_tags") return [{ id: NEW_TAG }];
       return [];
     };
     const result = await saveCompetency(
@@ -162,7 +176,7 @@ describe("saveCompetency", () => {
         ],
       }),
     );
-    expect(result).toEqual({ ok: true });
+    expect(result).toMatchObject({ ok: true });
 
     const tagWrites = writes().filter((o) => o.table === "observation_tags");
     expect(tagWrites.flatMap((o) => o.params)).not.toContain(FOREIGN_TAG);
@@ -177,7 +191,51 @@ describe("saveCompetency", () => {
     expect(anchorWrites.every((o) => o.kind === "insert" || o.params.includes(ID))).toBe(true);
     const competencyUpdate = writes().find((o) => o.table === "competencies");
     expect(competencyUpdate?.values).toHaveProperty("reviewedAt");
-    expect(auditRows()[0].values).toMatchObject({ orgId: ORG, actorId: ACTOR, subjectId: ID, action: "library.competency.save" });
+    expect(auditRows()[0].values).toMatchObject({
+      orgId: ORG,
+      actorId: ACTOR,
+      subjectId: ID,
+      action: "library.competency.save",
+      meta: { markReviewed: true },
+    });
+  });
+
+  it("a tag added in one save keeps its id on the next save, and nothing is archived", async () => {
+    const newTag = { id: null, polarity: "POSITIVE" as const, label: text("yeni etiket") };
+    respond = (op) => {
+      if (op.kind === "select" && op.table === "competencies") return [{ id: ID, reviewedAt: new Date(), archivedAt: null }];
+      if (op.kind === "insert" && op.table === "observation_tags") return [{ id: NEW_TAG }];
+      return [];
+    };
+    const first = await saveCompetency(ORG, ACTOR, ID, validInput({ tags: [newTag] }));
+    expect(first).toEqual({ ok: true, tags: [{ id: NEW_TAG, polarity: "POSITIVE", label: text("yeni etiket") }] });
+
+    // The form sends back the id it was given; the competency now owns that tag.
+    ops.length = 0;
+    respond = (op) => {
+      if (op.kind === "select" && op.table === "competencies") return [{ id: ID, reviewedAt: new Date(), archivedAt: null }];
+      if (op.kind === "select" && op.table === "observation_tags") return [{ id: NEW_TAG, archivedAt: null }];
+      return [];
+    };
+    const second = await saveCompetency(ORG, ACTOR, ID, validInput({ tags: [{ ...newTag, id: NEW_TAG }] }));
+    expect(second).toEqual({ ok: true, tags: [{ id: NEW_TAG, polarity: "POSITIVE", label: text("yeni etiket") }] });
+    const tagWrites = writes().filter((o) => o.table === "observation_tags");
+    expect(tagWrites).toHaveLength(1);
+    expect(tagWrites[0]).toMatchObject({ kind: "update", values: { archivedAt: null } });
+    expect(tagWrites[0].params).toContain(NEW_TAG);
+  });
+
+  it("does not write anything to an archived competency", async () => {
+    respond = (op) => (op.kind === "select" && op.table === "competencies" ? [{ id: ID, reviewedAt: null, archivedAt: new Date() }] : []);
+    expect(await saveCompetency(ORG, ACTOR, ID, validInput())).toEqual({ ok: false, code: "ARCHIVED" });
+    expect(writes()).toEqual([]);
+  });
+
+  it("audits the reviewed mark only when this save applied it", async () => {
+    respond = (op) => (op.kind === "select" && op.table === "competencies" ? [{ id: ID, reviewedAt: new Date(), archivedAt: null }] : []);
+    await saveCompetency(ORG, ACTOR, ID, validInput({ markReviewed: true }));
+    expect(writes().find((o) => o.table === "competencies")?.values).not.toHaveProperty("reviewedAt");
+    expect(auditRows()[0].values).toMatchObject({ action: "library.competency.save", meta: null });
   });
 
   it("archives a removed tag instead of deleting it", async () => {
@@ -212,6 +270,8 @@ describe("setCompetencyArchived", () => {
 
 describe("saveScaleLabels", () => {
   const levels = [{ value: 1, label: text("Belirgin eksik") }];
+  const stored = [1, 2, 3, 4, 5].map((value) => ({ value, label: text(`Seviye ${value}`) }));
+  const withScale = (op: Op) => (op.kind === "select" ? (op.table === "rating_scales" ? [{ id: SCALE }] : stored) : []);
 
   it("finds the default scale of the caller's organisation and writes nothing when there is none", async () => {
     expect(await saveScaleLabels(ORG, ACTOR, levels)).toEqual({ ok: false });
@@ -221,9 +281,14 @@ describe("saveScaleLabels", () => {
   });
 
   it("renames levels of that scale only", async () => {
-    respond = (op) => (op.kind === "select" ? [{ id: SCALE }] : []);
-    expect(await saveScaleLabels(ORG, ACTOR, levels)).toEqual({ ok: true });
-    const update = writes().find((o) => o.table === "scale_levels");
+    respond = withScale;
+    const next = stored.map((l) => (l.value === 1 ? { value: 1, label: text("Belirgin eksik") } : l));
+    expect(await saveScaleLabels(ORG, ACTOR, next)).toEqual({ ok: true });
+    const levelReads = ops.filter((o) => o.kind === "select" && o.table === "scale_levels");
+    expect(levelReads[0].params).toContain(SCALE);
+    const updates = writes().filter((o) => o.table === "scale_levels");
+    expect(updates).toHaveLength(1);
+    const update = updates[0];
     expect(update?.where).toContain('"scale_levels"."scale_id" = $');
     expect(update?.params).toEqual(expect.arrayContaining([SCALE, 1]));
     expect(auditRows()[0].values).toMatchObject({ orgId: ORG, subjectId: SCALE, action: "library.scale.save" });
@@ -232,5 +297,46 @@ describe("saveScaleLabels", () => {
   it("refuses an empty level name", async () => {
     expect(await saveScaleLabels(ORG, ACTOR, [{ value: 1, label: text(" ") }])).toEqual({ ok: false });
     expect(ops).toEqual([]);
+  });
+
+  it("refuses a level set that is not exactly the scale's levels", async () => {
+    respond = withScale;
+    const cases = [
+      stored.slice(0, 4),
+      [...stored.slice(0, 4), { value: 4, label: text("iki kez") }],
+      [...stored, { value: 6, label: text("fazla") }],
+      [],
+    ];
+    for (const set of cases) expect(await saveScaleLabels(ORG, ACTOR, set)).toEqual({ ok: false });
+    expect(writes()).toEqual([]);
+  });
+
+  it("writes no audit row when nothing changed", async () => {
+    respond = withScale;
+    expect(await saveScaleLabels(ORG, ACTOR, stored.map((l) => ({ ...l, label: { tr: ` ${l.label.tr}`, en: l.label.en } })))).toEqual({ ok: true });
+    expect(writes()).toEqual([]);
+  });
+});
+
+describe("startLibrary", () => {
+  it("seeds the caller's organisation and audits what it added", async () => {
+    seedLibrary.mockResolvedValue({ scaleCreated: true, competenciesCreated: 8 });
+    expect(await startLibrary(ORG, ACTOR)).toEqual({ scaleCreated: true, competenciesCreated: 8 });
+    expect(seedLibrary).toHaveBeenCalledWith(ORG);
+    expect(auditRows()).toHaveLength(1);
+    expect(auditRows()[0].values).toMatchObject({
+      orgId: ORG,
+      actorId: ACTOR,
+      action: "library.seed",
+      subjectType: "organization",
+      subjectId: ORG,
+      meta: { scaleCreated: true, competenciesCreated: 8 },
+    });
+  });
+
+  it("writes no audit row when the library was already there", async () => {
+    seedLibrary.mockResolvedValue({ scaleCreated: false, competenciesCreated: 0 });
+    await startLibrary(ORG, ACTOR);
+    expect(auditRows()).toEqual([]);
   });
 });

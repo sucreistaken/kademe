@@ -11,10 +11,19 @@ import type { I18nText } from "@/db/schema/types";
 import { useMT } from "@/i18n/manager-client";
 import type { Locale } from "@/i18n/locale";
 import { pickText } from "@/lib/i18n-text";
-import { ANCHOR_LEVELS, anchorHint, hasText, MAX_TAGS_PER_SIDE, REQUIRED_ANCHOR_LEVELS } from "@/lib/library/anchors";
+import {
+  ANCHOR_LEVELS,
+  anchorHint,
+  COMPETENCY_NAME_MAX,
+  hasText,
+  MAX_TAGS_PER_SIDE,
+  REQUIRED_ANCHOR_LEVELS,
+  TAG_LABEL_MAX,
+} from "@/lib/library/anchors";
+import { formTags, type FormTag } from "@/lib/library/form-tags";
 import { saveCompetencyAction } from "@/app/(manager)/library/actions";
 
-export type FormTag = { key: string; id: string | null; polarity: "POSITIVE" | "NEGATIVE"; label: I18nText };
+export type { FormTag };
 export type CompetencyFormValue = {
   name: I18nText;
   description: I18nText;
@@ -54,7 +63,7 @@ export function CompetencyForm({
   const [value, setValue] = useState(initial);
   const [markReviewed, setMarkReviewed] = useState(false);
   const [pending, start] = useTransition();
-  const [result, setResult] = useState<"saved" | "error" | null>(null);
+  const [result, setResult] = useState<"saved" | "error" | "archived" | null>(null);
 
   const missing = REQUIRED_ANCHOR_LEVELS.filter((level) => !hasText(value.anchors[level]));
   const reason = !canWrite
@@ -82,15 +91,21 @@ export function CompetencyForm({
         tags: value.tags.map(({ id: tagId, polarity, label }) => ({ id: tagId, polarity, label })),
         markReviewed,
       });
-      setResult(res.ok ? "saved" : "error");
-      if (res.ok) router.refresh();
+      if (res.ok) {
+        // Adopt the stored ids: a tag added in this save is updated, not re-created, by the next one.
+        setValue((v) => ({ ...v, tags: formTags(res.tags) }));
+        setResult("saved");
+        router.refresh();
+      } else {
+        setResult(res.code === "ARCHIVED" ? "archived" : "error");
+      }
     });
   }
 
   return (
     <div className="space-y-section">
       <Card className="space-y-field p-card">
-        <I18nPair label={t("name")} value={value.name} disabled={!canWrite} onChange={(name) => setValue((v) => ({ ...v, name }))} />
+        <I18nPair label={t("name")} value={value.name} maxLength={COMPETENCY_NAME_MAX} disabled={!canWrite} onChange={(name) => setValue((v) => ({ ...v, name }))} />
         <I18nPair
           label={t("description")}
           multiline
@@ -137,8 +152,8 @@ export function CompetencyForm({
               <h3 className="text-[14px] font-semibold text-ink">{t(polarity === "POSITIVE" ? "tagsPositive" : "tagsNegative")}</h3>
               {side(polarity).map((tag) => (
                 <div key={tag.key} className="flex items-start gap-2">
-                  <Input aria-label={`${t("tag")} TR`} placeholder="TR" disabled={!canWrite} value={tag.label.tr} onChange={(e) => setTag(tag.key, { ...tag.label, tr: e.target.value })} />
-                  <Input aria-label={`${t("tag")} EN`} placeholder="EN" disabled={!canWrite} value={tag.label.en} onChange={(e) => setTag(tag.key, { ...tag.label, en: e.target.value })} />
+                  <Input aria-label={`${t("tag")} TR`} placeholder="TR" maxLength={TAG_LABEL_MAX} disabled={!canWrite} value={tag.label.tr} onChange={(e) => setTag(tag.key, { ...tag.label, tr: e.target.value })} />
+                  <Input aria-label={`${t("tag")} EN`} placeholder="EN" maxLength={TAG_LABEL_MAX} disabled={!canWrite} value={tag.label.en} onChange={(e) => setTag(tag.key, { ...tag.label, en: e.target.value })} />
                   {canWrite ? (
                     <Button variant="ghost" size="sm" onClick={() => removeTag(tag.key)}>
                       {t("removeTag")}
@@ -173,6 +188,7 @@ export function CompetencyForm({
           {reason ? <DisabledReason id="competency-save-why">{reason}</DisabledReason> : null}
           {result === "saved" ? <span role="status" className="text-[13px] text-muted">{t("saved")}</span> : null}
           {result === "error" ? <span role="status" className="text-[13px] text-destructive">{t("saveFailed")}</span> : null}
+          {result === "archived" ? <span role="status" className="text-[13px] text-destructive">{t("archivedNoSave")}</span> : null}
         </div>
       )}
     </div>
