@@ -10,6 +10,10 @@
  * question bank (listening audio is reused from storage when present,
  * otherwise made with Gemini TTS) and two published exams. No demo students.
  *
+ * Superseded for schema changes by versioned migrations (pnpm db:migrate). Kept for
+ * the record of the 2026-09-30 switch; do not run it on a database with data you want
+ * to keep.
+ *
  * Run with, and only with, the database host spelled out:
  *   npx tsx scripts/setup-production.ts --confirm-host=<host of DATABASE_URL>
  */
@@ -46,9 +50,9 @@ async function main() {
     : [];
   console.log(`Keeping ${orgs.length} organisation(s) and ${users.length} user(s).`);
 
-  await sql.unsafe("DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public; DROP SCHEMA IF EXISTS pgboss CASCADE;");
+  await sql.unsafe("DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public; DROP SCHEMA IF EXISTS pgboss CASCADE; DROP SCHEMA IF EXISTS drizzle CASCADE;");
   await sql.end();
-  for (const cmd of [["drizzle-kit", "push", "--force"], ["tsx", "src/db/migrate-sql.mts"]]) {
+  for (const cmd of [["tsx", "src/db/migrate.mts"]]) {
     const r = spawnSync("npx", cmd, { stdio: "inherit" });
     if (r.status !== 0) process.exit(r.status ?? 1);
   }

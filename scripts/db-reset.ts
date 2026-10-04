@@ -1,9 +1,8 @@
 /**
- * Drops and recreates the LOCAL database schema, then pushes the current one.
+ * Drops and recreates the LOCAL database schema, then applies every migration.
  *
- * `drizzle-kit push` stops to ask "was this table renamed?" when the schema
- * changes shape, which stalls any unattended run. Against an empty schema it
- * never asks. This refuses to run against anything but the local Docker
+ * Migrations are reviewed SQL files, so nothing here asks questions.
+ * This refuses to run against anything but the local Docker
  * database on port 5434.
  *
  * Run with: pnpm db:reset   (then pnpm db:seed)
@@ -20,10 +19,10 @@ async function main() {
     process.exit(2);
   }
   const sql = postgres(url, { max: 1 });
-  await sql.unsafe("DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public; DROP SCHEMA IF EXISTS pgboss CASCADE;");
+  await sql.unsafe("DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public; DROP SCHEMA IF EXISTS pgboss CASCADE; DROP SCHEMA IF EXISTS drizzle CASCADE;");
   await sql.end();
-  console.log("Schema dropped. Pushing...");
-  for (const cmd of [["drizzle-kit", "push", "--force"], ["tsx", "src/db/migrate-sql.mts"]]) {
+  console.log("Schema dropped. Migrating...");
+  for (const cmd of [["tsx", "src/db/migrate.mts"]]) {
     const r = spawnSync("npx", cmd, { stdio: "inherit" });
     if (r.status !== 0) process.exit(r.status ?? 1);
   }
