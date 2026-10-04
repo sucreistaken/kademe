@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ORG_TIMEZONE, resolveTimeZone, zonedDayStart } from "./org-timezone";
+import { ORG_TIMEZONE, orgDay, resolveTimeZone, zonedDayStart } from "./org-timezone";
 
 describe("org time zone", () => {
   it("defaults to Istanbul", () => {
@@ -52,5 +52,24 @@ describe("day start in the org zone", () => {
     expect(zonedDayStart("2026-02-30", "Europe/Istanbul")).toBe(null);
     expect(zonedDayStart("8 Eylül", "Europe/Istanbul")).toBe(null);
     expect(zonedDayStart("", "Europe/Istanbul")).toBe(null);
+  });
+});
+
+describe("orgDay", () => {
+  it("names the calendar day an instant falls on in the zone", () => {
+    // 21:30 UTC on 3 October is already 4 October in Istanbul (+03:00).
+    expect(orgDay(new Date("2026-10-03T21:30:00Z"), "Europe/Istanbul")).toBe("2026-10-04");
+    expect(orgDay(new Date("2026-10-03T20:59:59Z"), "Europe/Istanbul")).toBe("2026-10-03");
+    expect(orgDay(new Date("2026-10-03T21:30:00Z"), "America/New_York")).toBe("2026-10-03");
+  });
+
+  it("defaults to the organisation's zone and to now", () => {
+    const at = new Date("2026-01-05T12:00:00Z");
+    expect(orgDay(at)).toBe(orgDay(at, ORG_TIMEZONE));
+    expect(orgDay()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it("round-trips with zonedDayStart", () => {
+    expect(orgDay(zonedDayStart("2026-03-29", "Europe/Berlin")!, "Europe/Berlin")).toBe("2026-03-29");
   });
 });

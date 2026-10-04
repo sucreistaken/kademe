@@ -33,7 +33,7 @@ async function main() {
     console.error(`Refusing: ${url.pathname} is not a throw-away *_check database.`);
     process.exit(2);
   }
-  const { and, eq } = await import("drizzle-orm");
+  const { and, eq, sql } = await import("drizzle-orm");
   const { db } = await import("@/db");
   const s = await import("@/db/schema");
   const { seedLibrary } = await import("@/db/library-seed");
@@ -331,6 +331,99 @@ async function main() {
   check((await versions.markPreviewed(org.id, frozen.openingId, v2.versionId)) === true, "the draft the preview showed is stamped");
   check((await previewedOf(v2.versionId)) !== null && (await previewedOf(fv1.id)) === null, "v2 is stamped, v1 still is not");
   await expectCode("a closed opening's draft is not stamped", () => versions.markPreviewed(org.id, closing.openingId), "CLOSED");
+
+  console.log("\nTeam and rules (Ekip ve kurallar)");
+  const { deadlineToDate } = await import("@/solutions/hiring/rules/opening-rules");
+  const { ORG_TIMEZONE, orgDay } = await import("@/lib/org-timezone");
+  const person = async (role: "MANAGER" | "REVIEWER", name: string, disabled = false) =>
+    (
+      await db
+        .insert(s.users)
+        .values({ orgId: org.id, email: `${name.toLowerCase()}-${Date.now()}@check.local`, name, role, passwordHash: "x", disabledAt: disabled ? new Date() : null })
+        .returning()
+    )[0];
+  const manager = await person("MANAGER", "Manager");
+  const reviewer = await person("REVIEWER", "Reviewer");
+  const bystander = await person("REVIEWER", "Bystander");
+  const gone = await person("MANAGER", "Gone", true);
+  const team = await openings.createOpening(user, { position: { kind: "existing", id: position.id }, start: "BLANK", copyFrom: null });
+  if (!team.ok) throw new Error(team.code);
+  const rules = {
+    name: "Tasarımcı · Ekip",
+    memberIds: [reviewer.id, manager.id],
+    decisionMakerId: owner.id,
+    backupDecisionMakerId: manager.id,
+    minEvaluations: 3,
+    blindMode: true,
+    deadline: "2099-12-31",
+    feedbackDays: 14,
+    candidateContactEmail: "ik@check.local",
+  };
+  const teamRow = async () => (await db.select().from(s.hiringOpenings).where(eq(s.hiringOpenings.id, team.openingId)))[0];
+  const panelOf = async () => (await db.select().from(s.hiringOpeningMembers).where(eq(s.hiringOpeningMembers.openingId, team.openingId))).map((m) => m.userId).sort();
+  const saved = await openings.saveOpeningRules(org.id, owner.id, team.openingId, rules);
+  check(saved.ok, "the rules save", JSON.stringify(saved));
+  const afterSave = await teamRow();
+  check(
+    afterSave.name === rules.name && afterSave.decisionMakerId === owner.id && afterSave.backupDecisionMakerId === manager.id && afterSave.minEvaluations === 3 && afterSave.blindMode && afterSave.feedbackDays === 14 && afterSave.candidateContactEmail === "ik@check.local",
+    "name, decision maker, backup, minimum, blind mode, reply promise and address are stored",
+  );
+  check(afterSave.deadlineAt?.getTime() === deadlineToDate("2099-12-31").getTime(), "the deadline is stored as the end of that day", afterSave.deadlineAt?.toISOString());
+  const [wall] = await db.execute<{ local: string }>(sql`select to_char(deadline_at at time zone ${ORG_TIMEZONE}, 'YYYY-MM-DD HH24:MI:SS') as local from hiring_openings where id = ${team.openingId}`);
+  check(wall.local === "2099-12-31 23:59:59", `in ${ORG_TIMEZONE} it reads 23:59:59 on the day (database clock)`, wall.local);
+  check(orgDay(afterSave.deadlineAt!) === "2099-12-31", "and the form shows the same day back");
+  check((await panelOf()).join() === [reviewer.id, manager.id].sort().join(), "the panel holds the two evaluators");
+  const [audit] = await db.select().from(s.auditLogs).where(and(eq(s.auditLogs.subjectId, team.openingId), eq(s.auditLogs.action, "hiring.opening.rules")));
+  check(audit?.actorId === owner.id && audit.orgId === org.id, "the change is audited with who made it");
+
+  const refusedWith = async (label: string, patch: Partial<typeof rules>, problem: string) => {
+    const result = await openings.saveOpeningRules(org.id, owner.id, team.openingId, { ...rules, ...patch });
+    check(!result.ok && result.problems.includes(problem as never), label, JSON.stringify(result));
+  };
+  await refusedWith("another organisation's user cannot be on the panel", { memberIds: [ownerB.id] }, "MEMBER_UNKNOWN");
+  await refusedWith("nor decide", { decisionMakerId: ownerB.id }, "DECISION_MAKER_ROLE");
+  await refusedWith("a disabled manager cannot be the backup", { backupDecisionMakerId: gone.id }, "BACKUP_ROLE");
+  await refusedWith("a reviewer cannot decide", { decisionMakerId: reviewer.id }, "DECISION_MAKER_ROLE");
+  await refusedWith("the backup is someone else", { backupDecisionMakerId: owner.id }, "BACKUP_SAME");
+  await refusedWith("a past deadline is refused", { deadline: "2020-01-01" }, "DEADLINE_PAST");
+  await refusedWith("so is an address that is not one", { candidateContactEmail: "ik@" }, "EMAIL");
+  await expectCode("another organisation cannot change the rules", () => openings.saveOpeningRules(orgB.id, ownerB.id, team.openingId, rules), "NOT_FOUND");
+  await expectCode("a user of another organisation cannot change them here", () => openings.saveOpeningRules(org.id, ownerB.id, team.openingId, rules), "NOT_FOUND");
+  check((await teamRow()).updatedAt.getTime() === afterSave.updatedAt.getTime() && (await panelOf()).length === 2, "and no refusal changed anything");
+
+  const seen = async (who: { id: string; role: "OWNER" | "MANAGER" | "REVIEWER" }) =>
+    (await openings.listOpenings(org.id, who, "DRAFT")).some((o) => o.id === team.openingId);
+  check(await seen({ id: reviewer.id, role: "REVIEWER" }), "a reviewer on the panel sees the opening");
+  check(!(await seen({ id: bystander.id, role: "REVIEWER" })), "a reviewer outside it does not");
+  check((await openings.saveOpeningRules(org.id, owner.id, team.openingId, { ...rules, memberIds: [manager.id] })).ok, "taking the reviewer off the panel saves");
+  check(!(await seen({ id: reviewer.id, role: "REVIEWER" })), "and the opening is gone from their list");
+
+  await expectCode("another organisation cannot close it", () => openings.setOpeningClosed(orgB.id, ownerB.id, team.openingId, true), "NOT_FOUND");
+  await openings.setOpeningClosed(org.id, owner.id, team.openingId, true);
+  const closedRow = await teamRow();
+  check(closedRow.status === "CLOSED" && closedRow.closedAt !== null, "closing makes it CLOSED with the time");
+  await expectCode("a closed opening's rules cannot change", () => openings.saveOpeningRules(org.id, owner.id, team.openingId, rules), "CLOSED");
+  await openings.setOpeningClosed(org.id, owner.id, team.openingId, true);
+  check((await teamRow()).closedAt?.getTime() === closedRow.closedAt?.getTime(), "closing it again changes nothing");
+  await openings.setOpeningClosed(org.id, owner.id, team.openingId, false);
+  const reopened = await teamRow();
+  check(reopened.status === "DRAFT" && reopened.closedAt === null, "reopening without a published version gives DRAFT");
+  const trail = await db.select({ action: s.auditLogs.action }).from(s.auditLogs).where(eq(s.auditLogs.subjectId, team.openingId));
+  check(
+    trail.filter((a) => a.action === "hiring.opening.close").length === 1 && trail.filter((a) => a.action === "hiring.opening.reopen").length === 1,
+    "one close and one reopen are audited",
+    trail.map((a) => a.action).join(),
+  );
+  const liveTeam = await openings.createOpening(user, { position: { kind: "existing", id: position.id }, start: "BLANK", copyFrom: null });
+  if (!liveTeam.ok) throw new Error(liveTeam.code);
+  const [liveV1] = await versions.versionsOf(org.id, liveTeam.openingId);
+  await db
+    .update(s.hiringVersions)
+    .set({ status: "PUBLISHED", scorecard: { scale: { min: 1, max: 5, levels: [] }, competencies: [], weightsEnabled: false }, publishedAt: new Date(), publishedBy: owner.id })
+    .where(eq(s.hiringVersions.id, liveV1.id));
+  await openings.setOpeningClosed(org.id, owner.id, liveTeam.openingId, true);
+  await openings.setOpeningClosed(org.id, owner.id, liveTeam.openingId, false);
+  check((await db.select().from(s.hiringOpenings).where(eq(s.hiringOpenings.id, liveTeam.openingId)))[0].status === "OPEN", "reopening with a published version gives OPEN");
 
   console.log("\nThe publish gate");
   const bare = await createCompetency(org.id, owner.id, { name: { tr: "Analitik düşünme", en: "" }, description: { tr: "", en: "" } });

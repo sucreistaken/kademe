@@ -14,7 +14,7 @@ import { openingFor } from "./access";
 import { publishOpeningAction, type PublishNotice } from "./actions";
 import { OpeningHeader } from "./opening-header";
 import { describeProblem } from "./problems";
-import { readinessRows, type ReadinessKey, type ReadinessState } from "./readiness";
+import { readinessRows, rowAction, rowHref, type ReadinessKey, type ReadinessState } from "./readiness";
 
 export const dynamic = "force-dynamic";
 
@@ -33,15 +33,6 @@ const LABELS: Record<ReadinessKey, "rowAssessment" | "rowAnchors" | "rowWeights"
   team: "rowTeam",
   preview: "rowPreview",
 };
-/** The link's words follow where it goes: the builder, a library competency, the scorecard or the preview. */
-const actionFor = (href: string): "goBuilder" | "goLibrary" | "goScorecard" | "goPreview" =>
-  href.startsWith("/library/")
-    ? "goLibrary"
-    : href.includes("/assessment/scorecard")
-      ? "goScorecard"
-      : href.includes("/assessment/preview")
-        ? "goPreview"
-        : "goBuilder";
 const STATE_WORD = { done: "stateDone", missing: "stateMissing", advisory: "stateAdvisory" } as const;
 const STATE_SR = { done: "srDone", missing: "srMissing", advisory: "srAdvisory" } as const;
 const ICON = { done: Check, missing: Circle, advisory: CircleDashed } as const;
@@ -189,14 +180,7 @@ export default async function OpeningOverviewPage({
                     : row.state === "advisory"
                       ? t("hiringOverview.advisory")
                       : fix?.text;
-                // Nothing measured yet: the questions are picked in the builder. "Önizleme" opens the candidate preview.
-                const href =
-                  fix?.href ??
-                  (row.reason === "NO_COMPETENCIES"
-                    ? `/hiring/openings/${opening.id}/assessment/edit`
-                    : row.key === "preview"
-                      ? `/hiring/openings/${opening.id}/assessment/preview`
-                      : null);
+                const href = rowHref(row, fix?.href, opening.id);
                 return (
                   <Row
                     key={row.key}
@@ -206,7 +190,7 @@ export default async function OpeningOverviewPage({
                     stateSr={t(`hiringOverview.${STATE_SR[row.state]}`)}
                     detail={detail}
                     href={href}
-                    action={href ? t(`hiringOverview.${actionFor(href)}`) : undefined}
+                    action={href ? t(`hiringOverview.${rowAction(href)}`) : undefined}
                   />
                 );
               })}

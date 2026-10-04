@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { publishProblems } from "@/solutions/hiring/rules/gate";
 import { activity, content, stage } from "@/solutions/hiring/rules/test-fixtures";
-import { readinessRows } from "./readiness";
+import { readinessRows, rowAction, rowHref } from "./readiness";
 
 const COMP = "77777777-7777-4777-8777-777777777777";
 const measured = content([stage("s1", [activity("a1", { competencyIds: [COMP] })])]);
@@ -58,5 +58,28 @@ describe("readinessRows", () => {
     ]);
     const done = readinessRows({ memberCount: 2, previewed: true, problems: [], content: measured });
     expect(done.slice(-2).map((r) => r.state)).toEqual(["done", "done"]);
+  });
+});
+
+describe("rowHref and rowAction (ruling C7: a link only to a page that exists)", () => {
+  const OPENING = "33333333-3333-4333-8333-333333333333";
+  const base = `/hiring/openings/${OPENING}`;
+  const rowsOf = (memberCount: number) => readinessRows({ memberCount, previewed: false, problems: [], content: measured });
+
+  it("sends the team row to team and rules (Task 20), worded as 'Ekibi ata'", () => {
+    const team = rowsOf(0).find((r) => r.key === "team")!;
+    expect(rowHref(team, null, OPENING)).toBe(`${base}/settings`);
+    expect(rowAction(`${base}/settings`)).toBe("goTeam");
+  });
+
+  it("keeps the other targets: the gate's own fix, the builder when nothing is measured, the preview", () => {
+    const empty = readinessRows({ memberCount: 0, previewed: false, problems: [], content: content([]) });
+    expect(rowHref(empty.find((r) => r.key === "anchors")!, null, OPENING)).toBe(`${base}/assessment/edit`);
+    expect(rowHref(rowsOf(0).find((r) => r.key === "preview")!, null, OPENING)).toBe(`${base}/assessment/preview`);
+    expect(rowHref(rowsOf(0).find((r) => r.key === "assessment")!, `${base}/assessment/scorecard`, OPENING)).toBe(`${base}/assessment/scorecard`);
+    expect(rowAction(`${base}/assessment/edit`)).toBe("goBuilder");
+    expect(rowAction(`${base}/assessment/scorecard`)).toBe("goScorecard");
+    expect(rowAction(`${base}/assessment/preview`)).toBe("goPreview");
+    expect(rowAction("/library/competencies/x")).toBe("goLibrary");
   });
 });

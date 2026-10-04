@@ -28,8 +28,8 @@ export function BackToOpenings({ t }: { t: T }) {
 
 /**
  * HIRING-UX 5.4: name, status, deadline, and the opening's route tabs. Only
- * tabs whose route exists are listed (ruling C7): the overview and the
- * assessment; team and rules (Task 20) joins with its route.
+ * tabs whose route exists are listed (ruling C7): the overview, the
+ * assessment, and team and rules (Task 20).
  */
 export function OpeningHeader({
   opening,
@@ -66,6 +66,7 @@ export function OpeningHeader({
         items={[
           { href: base, label: t("hiringCommon.tabOverview"), active: active === "overview" },
           { href: `${base}/assessment`, label: t("hiringCommon.tabAssessment"), active: active === "assessment" },
+          { href: `${base}/settings`, label: t("hiringCommon.tabSettings"), active: active === "settings" },
         ]}
       />
     </div>

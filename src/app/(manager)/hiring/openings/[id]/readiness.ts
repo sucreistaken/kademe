@@ -45,3 +45,26 @@ export function readinessRows(input: { problems: PublishProblem[]; content: Vers
   );
   return rows;
 }
+
+/**
+ * Where a row that is not done sends the editor (ruling C7: only to pages that
+ * exist): the gate's own fix when it has one, the builder when nothing is
+ * measured yet, team and rules for the team, the candidate preview.
+ */
+export function rowHref(row: ReadinessRow, fixHref: string | null | undefined, openingId: string): string | null {
+  const base = `/hiring/openings/${openingId}`;
+  if (fixHref) return fixHref;
+  if (row.reason === "NO_COMPETENCIES") return `${base}/assessment/edit`;
+  if (row.key === "team") return `${base}/settings`;
+  if (row.key === "preview") return `${base}/assessment/preview`;
+  return null;
+}
+
+/** The link's words follow where it goes: the builder, a library competency, the scorecard, the preview or the team. */
+export function rowAction(href: string): "goBuilder" | "goLibrary" | "goScorecard" | "goPreview" | "goTeam" {
+  if (href.startsWith("/library/")) return "goLibrary";
+  if (href.endsWith("/settings")) return "goTeam";
+  if (href.includes("/assessment/scorecard")) return "goScorecard";
+  if (href.includes("/assessment/preview")) return "goPreview";
+  return "goBuilder";
+}

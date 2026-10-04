@@ -2,13 +2,14 @@ import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { auditLogs, hiringOpeningMembers, hiringOpenings, hiringVersions, positionCompetencies, positions, users } from "@/db/schema";
 import { DEFAULT_LOCALE } from "@/i18n/locale";
-import { ORG_TIMEZONE } from "@/lib/org-timezone";
+import { ORG_TIMEZONE, orgDay } from "@/lib/org-timezone";
 import { createPosition } from "@/server/library-write";
-import { isUuid } from "@/server/settings";
+import { isUuid, loadPanelUsers } from "@/server/settings";
 import { openingAccess, type Viewer } from "../rules/access";
+import { deadlineToDate, openingRulesProblems, type OpeningRulesInput, type RulesProblem } from "../rules/opening-rules";
 import { workingVersions } from "../rules/versions";
 import { HiringNotFound } from "./errors";
-import { cloneContent, inheritedSettings, versionRow, versionsOf } from "./versions";
+import { assertActiveUser, cloneContent, inheritedSettings, lockOpening, versionRow, versionsOf } from "./versions";
 
 export type OpeningStatus = "DRAFT" | "OPEN" | "CLOSED";
 export type OpeningDetail = typeof hiringOpenings.$inferSelect & { positionName: string; memberIds: string[] };
@@ -240,4 +241,97 @@ export async function positionOptions(orgId: string): Promise<Array<{ id: string
     .where(and(eq(positions.orgId, orgId), isNull(positions.archivedAt)))
     .orderBy(positions.name, positions.id);
   return rows.map((r) => ({ id: r.id, name: r.name, hasJobAd: r.hasJobAd, competencyCount: r.competencyCount, weightsEqual: r.distinctWeights <= 1 }));
+}
+
+/**
+ * HIRING-UX 5.18 "Kaydet": team, fair review and candidate contact, checked
+ * with the same rules as the form (the client is never trusted). The opening
+ * is locked by id AND org_id first, so a CLOSED opening refuses (history is
+ * read-only) and a foreign one is not found; the people are the organisation's
+ * own users, read after the lock, so a member, decision maker or backup from
+ * anywhere else, or a disabled one, is refused. A refusal writes nothing.
+ */
+export async function saveOpeningRules(
+  orgId: string,
+  actorId: string,
+  openingId: string,
+  input: OpeningRulesInput,
+): Promise<{ ok: true } | { ok: false; problems: RulesProblem[] }> {
+  return db.transaction(async (tx) => {
+    await lockOpening(tx, orgId, openingId);
+    await assertActiveUser(tx, orgId, actorId);
+    const people = (await loadPanelUsers(orgId)).map((u) => ({ id: u.id, role: u.role, disabled: u.disabledAt !== null }));
+    const problems = openingRulesProblems(input, people, orgDay());
+    if (problems.length) return { ok: false as const, problems };
+    const members = [...new Set(input.memberIds)];
+    const deadlineAt = input.deadline ? deadlineToDate(input.deadline) : null;
+    await tx
+      .update(hiringOpenings)
+      .set({
+        name: input.name.trim(),
+        decisionMakerId: input.decisionMakerId,
+        backupDecisionMakerId: input.backupDecisionMakerId,
+        minEvaluations: input.minEvaluations,
+        blindMode: input.blindMode,
+        deadlineAt,
+        feedbackDays: input.feedbackDays,
+        candidateContactEmail: input.candidateContactEmail.trim() || null,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(hiringOpenings.id, openingId), eq(hiringOpenings.orgId, orgId)));
+    // The opening was just locked as the caller's, so its panel is replaced by its id.
+    await tx.delete(hiringOpeningMembers).where(eq(hiringOpeningMembers.openingId, openingId));
+    if (members.length) await tx.insert(hiringOpeningMembers).values(members.map((userId) => ({ openingId, userId })));
+    await tx.insert(auditLogs).values({
+      orgId,
+      actorId,
+      action: "hiring.opening.rules",
+      subjectType: "hiring_opening",
+      subjectId: openingId,
+      meta: {
+        members,
+        decisionMakerId: input.decisionMakerId,
+        backupDecisionMakerId: input.backupDecisionMakerId,
+        minEvaluations: input.minEvaluations,
+        blindMode: input.blindMode,
+        deadlineAt: deadlineAt?.toISOString() ?? null,
+        feedbackDays: input.feedbackDays,
+      },
+    });
+    return { ok: true as const };
+  });
+}
+
+/**
+ * Close, or reopen (also the undo of a close). A reopened opening is OPEN when
+ * it has a published version, else DRAFT. Asking for the state the opening is
+ * already in changes and audits nothing, so a double click or a late undo is
+ * harmless. Not found when the opening is not the caller's.
+ */
+export async function setOpeningClosed(orgId: string, actorId: string, openingId: string, closed: boolean): Promise<void> {
+  if (!isUuid(openingId)) throw new HiringNotFound("opening");
+  await db.transaction(async (tx) => {
+    const [opening] = await tx
+      .select({ id: hiringOpenings.id, status: hiringOpenings.status })
+      .from(hiringOpenings)
+      .where(and(eq(hiringOpenings.id, openingId), eq(hiringOpenings.orgId, orgId)))
+      .for("update");
+    if (!opening) throw new HiringNotFound("opening");
+    await assertActiveUser(tx, orgId, actorId);
+    if ((opening.status === "CLOSED") === closed) return;
+    const { live } = workingVersions(await versionsOf(orgId, openingId, tx));
+    const status: OpeningStatus = closed ? "CLOSED" : live ? "OPEN" : "DRAFT";
+    await tx
+      .update(hiringOpenings)
+      .set({ status, closedAt: closed ? new Date() : null, updatedAt: new Date() })
+      .where(and(eq(hiringOpenings.id, openingId), eq(hiringOpenings.orgId, orgId)));
+    await tx.insert(auditLogs).values({
+      orgId,
+      actorId,
+      action: closed ? "hiring.opening.close" : "hiring.opening.reopen",
+      subjectType: "hiring_opening",
+      subjectId: openingId,
+      meta: { status },
+    });
+  });
 }

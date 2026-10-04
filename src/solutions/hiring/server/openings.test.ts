@@ -1,11 +1,13 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_LOCALE } from "@/i18n/locale";
-import { ORG_TIMEZONE } from "@/lib/org-timezone";
-import { fake } from "./test-fake-db";
+import { ORG_TIMEZONE, orgDay } from "@/lib/org-timezone";
+import { deadlineToDate, type OpeningRulesInput } from "../rules/opening-rules";
+import { HiringConflict, HiringNotFound } from "./errors";
+import { fake, writesOf, type Op } from "./test-fake-db";
 
 vi.mock("@/db", async () => ({ db: (await import("./test-fake-db")).fakeDb() }));
 
-import { createOpening, positionOptions, uniqueOpeningName } from "./openings";
+import { createOpening, positionOptions, saveOpeningRules, setOpeningClosed, uniqueOpeningName } from "./openings";
 
 /**
  * The new-opening position picker (HIRING-UX 5.3) on a recording fake
@@ -137,5 +139,221 @@ describe("createOpening month", () => {
     const insert = fake.ops.find((o) => o.table === "hiring_openings" && o.kind === "insert");
     const month = new Intl.DateTimeFormat(DEFAULT_LOCALE === "tr" ? "tr-TR" : "en-GB", { month: "long", timeZone: ORG_TIMEZONE }).format(new Date());
     expect((insert?.values as { name: string }).name).toBe(`Destek Uzmanı · ${month}`);
+  });
+});
+
+/**
+ * HIRING-UX 5.18 "Kaydet" on the fake database (Task 20, carries 1 and 5):
+ * the rules run on the server against the organisation's own users, a
+ * refusal writes nothing, a closed opening is history, and every write is
+ * scoped to the caller's organisation and audited.
+ */
+describe("saveOpeningRules", () => {
+  const OWNER = ACTOR;
+  const MANAGER = "88888888-8888-4888-8888-888888888888";
+  const REVIEWER = "99999999-9999-4999-8999-999999999999";
+  const DISABLED = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const FOREIGN = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+  const panel = [
+    { id: OWNER, name: "Sahip", email: "o@x.test", role: "OWNER", lastLoginAt: null, disabledAt: null },
+    { id: MANAGER, name: "Yönetici", email: "m@x.test", role: "MANAGER", lastLoginAt: null, disabledAt: null },
+    { id: REVIEWER, name: "Değerlendirici", email: "r@x.test", role: "REVIEWER", lastLoginAt: null, disabledAt: null },
+    { id: DISABLED, name: "Ayrıldı", email: "d@x.test", role: "MANAGER", lastLoginAt: null, disabledAt: new Date("2026-01-01T00:00:00Z") },
+  ];
+  const input = (over: Partial<OpeningRulesInput> = {}): OpeningRulesInput => ({
+    name: "  Tasarımcı · Ekim  ",
+    memberIds: [REVIEWER, MANAGER, REVIEWER],
+    decisionMakerId: OWNER,
+    backupDecisionMakerId: MANAGER,
+    minEvaluations: 2,
+    blindMode: true,
+    deadline: null,
+    feedbackDays: 7,
+    candidateContactEmail: " ik@example.com ",
+    ...over,
+  });
+  let status: "DRAFT" | "OPEN" | "CLOSED" | null;
+  let actorActive: boolean;
+  const respond = (op: Op) => {
+    if (op.table === "hiring_openings" && op.kind === "select") return status ? [{ id: OPENING, status, positionId: POS_A }] : [];
+    if (op.table === "users") {
+      // assertActiveUser asks for one active user; loadPanelUsers for the whole organisation.
+      if (op.where.includes('"users"."disabled_at" is null')) return actorActive ? [{ id: OWNER }] : [];
+      return panel;
+    }
+    return [];
+  };
+  beforeEach(() => {
+    status = "DRAFT";
+    actorActive = true;
+    fake.respond = respond;
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("saves the rules, the panel (once per person) and an audit row, all in the caller's organisation", async () => {
+    const result = await saveOpeningRules(ORG, OWNER, OPENING, input({ deadline: "2099-10-31" }));
+    expect(result).toEqual({ ok: true });
+
+    const lock = fake.ops.find((o) => o.table === "hiring_openings" && o.kind === "select");
+    expect(lock?.lock).toBe("update");
+    expect(lock?.where).toContain('"hiring_openings"."org_id" = $');
+    expect(lock?.params).toEqual(expect.arrayContaining([OPENING, ORG]));
+    const people = fake.ops.filter((o) => o.table === "users");
+    expect(people.length).toBeGreaterThan(0);
+    for (const read of people) {
+      expect(read.where).toContain('"users"."org_id" = $');
+      expect(read.params).toContain(ORG);
+    }
+
+    const writes = writesOf(fake.ops);
+    expect(writes.map((w) => `${w.kind} ${w.table}`)).toEqual([
+      "update hiring_openings",
+      "delete hiring_opening_members",
+      "insert hiring_opening_members",
+      "insert audit_logs",
+    ]);
+    const [update, remove, insert, audit] = writes;
+    expect(update.where).toContain('"hiring_openings"."org_id" = $');
+    expect(update.params).toEqual(expect.arrayContaining([OPENING, ORG]));
+    expect(update.values).toMatchObject({
+      name: "Tasarımcı · Ekim",
+      decisionMakerId: OWNER,
+      backupDecisionMakerId: MANAGER,
+      minEvaluations: 2,
+      blindMode: true,
+      deadlineAt: deadlineToDate("2099-10-31"),
+      feedbackDays: 7,
+      candidateContactEmail: "ik@example.com",
+    });
+    expect(remove.params).toEqual([OPENING]);
+    expect(insert.values).toEqual([
+      { openingId: OPENING, userId: REVIEWER },
+      { openingId: OPENING, userId: MANAGER },
+    ]);
+    expect(audit.values).toMatchObject({
+      orgId: ORG,
+      actorId: OWNER,
+      action: "hiring.opening.rules",
+      subjectType: "hiring_opening",
+      subjectId: OPENING,
+      meta: { members: [REVIEWER, MANAGER], decisionMakerId: OWNER, backupDecisionMakerId: MANAGER, minEvaluations: 2, blindMode: true },
+    });
+  });
+
+  it("stores no deadline and no address when they are empty, and clears the panel when nobody is ticked", async () => {
+    await saveOpeningRules(ORG, OWNER, OPENING, input({ memberIds: [], deadline: null, candidateContactEmail: "  " }));
+    const writes = writesOf(fake.ops);
+    expect(writes.map((w) => `${w.kind} ${w.table}`)).toEqual(["update hiring_openings", "delete hiring_opening_members", "insert audit_logs"]);
+    expect(writes[0].values).toMatchObject({ deadlineAt: null, candidateContactEmail: null });
+  });
+
+  it("refuses with the problems and writes nothing", async () => {
+    const result = await saveOpeningRules(ORG, OWNER, OPENING, input({ decisionMakerId: REVIEWER, backupDecisionMakerId: REVIEWER, minEvaluations: 9, candidateContactEmail: "ik@" }));
+    expect(result).toEqual({ ok: false, problems: ["DECISION_MAKER_ROLE", "BACKUP_SAME", "MIN_EVALUATIONS", "EMAIL"] });
+    expect(writesOf(fake.ops)).toEqual([]);
+  });
+
+  it("never trusts the client about people: another organisation's user or a disabled one is refused", async () => {
+    expect(await saveOpeningRules(ORG, OWNER, OPENING, input({ memberIds: [FOREIGN] }))).toEqual({ ok: false, problems: ["MEMBER_UNKNOWN"] });
+    expect(await saveOpeningRules(ORG, OWNER, OPENING, input({ decisionMakerId: FOREIGN }))).toEqual({ ok: false, problems: ["DECISION_MAKER_ROLE"] });
+    expect(await saveOpeningRules(ORG, OWNER, OPENING, input({ backupDecisionMakerId: DISABLED }))).toEqual({ ok: false, problems: ["BACKUP_ROLE"] });
+    expect(await saveOpeningRules(ORG, OWNER, OPENING, input({ memberIds: [DISABLED] }))).toEqual({ ok: false, problems: ["MEMBER_UNKNOWN"] });
+    expect(writesOf(fake.ops)).toEqual([]);
+  });
+
+  it("judges a past deadline by the organisation's day, not the server's", async () => {
+    // 21:30 UTC: in a zone east of UTC (the Istanbul default) the next day has already begun.
+    vi.useFakeTimers({ now: new Date("2026-10-04T21:30:00Z"), toFake: ["Date"] });
+    const today = orgDay();
+    const yesterday = orgDay(new Date(Date.now() - 24 * 3600 * 1000));
+    expect(await saveOpeningRules(ORG, OWNER, OPENING, input({ deadline: yesterday }))).toEqual({ ok: false, problems: ["DEADLINE_PAST"] });
+    expect(await saveOpeningRules(ORG, OWNER, OPENING, input({ deadline: today }))).toEqual({ ok: true });
+  });
+
+  it("refuses a closed opening (history is read-only) before looking at the rules", async () => {
+    status = "CLOSED";
+    await expect(saveOpeningRules(ORG, OWNER, OPENING, input({ decisionMakerId: null }))).rejects.toEqual(new HiringConflict("CLOSED"));
+    expect(writesOf(fake.ops)).toEqual([]);
+  });
+
+  it("answers not found for an opening of another organisation, and for a disabled actor", async () => {
+    status = null;
+    await expect(saveOpeningRules(ORG, OWNER, OPENING, input())).rejects.toBeInstanceOf(HiringNotFound);
+    status = "OPEN";
+    actorActive = false;
+    await expect(saveOpeningRules(ORG, OWNER, OPENING, input())).rejects.toBeInstanceOf(HiringNotFound);
+    expect(writesOf(fake.ops)).toEqual([]);
+  });
+
+  it("answers not found for a malformed opening id without a statement", async () => {
+    await expect(saveOpeningRules(ORG, OWNER, "not-a-uuid", input())).rejects.toBeInstanceOf(HiringNotFound);
+    expect(fake.ops.filter((o) => o.table === "hiring_openings")).toEqual([]);
+  });
+});
+
+describe("setOpeningClosed", () => {
+  let status: "DRAFT" | "OPEN" | "CLOSED" | null;
+  let versions: Array<{ id: string; number: number; status: "DRAFT" | "PUBLISHED"; publishedAt: Date | null; previewedAt: Date | null }>;
+  beforeEach(() => {
+    status = "OPEN";
+    versions = [];
+    fake.respond = (op) =>
+      op.table === "hiring_openings" && op.kind === "select"
+        ? status
+          ? [{ id: OPENING, status }]
+          : []
+        : op.table === "users"
+          ? [{ id: ACTOR }]
+          : op.table === "hiring_versions"
+            ? versions
+            : [];
+  });
+
+  it("closes an opening in the caller's organisation and audits it", async () => {
+    await setOpeningClosed(ORG, ACTOR, OPENING, true);
+    const lock = fake.ops.find((o) => o.table === "hiring_openings" && o.kind === "select");
+    expect(lock?.lock).toBe("update");
+    expect(lock?.params).toEqual(expect.arrayContaining([OPENING, ORG]));
+    const writes = writesOf(fake.ops);
+    expect(writes.map((w) => `${w.kind} ${w.table}`)).toEqual(["update hiring_openings", "insert audit_logs"]);
+    expect(writes[0].where).toContain('"hiring_openings"."org_id" = $');
+    expect(writes[0].values).toMatchObject({ status: "CLOSED", closedAt: expect.any(Date) });
+    expect(writes[1].values).toMatchObject({ orgId: ORG, actorId: ACTOR, action: "hiring.opening.close", subjectId: OPENING });
+  });
+
+  it("reopens as OPEN when a version is published, else as DRAFT, and audits the reopen", async () => {
+    status = "CLOSED";
+    versions = [
+      { id: VERSION, number: 2, status: "DRAFT", publishedAt: null, previewedAt: null },
+      { id: "12121212-1212-4212-8212-121212121212", number: 1, status: "PUBLISHED", publishedAt: new Date(), previewedAt: null },
+    ];
+    await setOpeningClosed(ORG, ACTOR, OPENING, false);
+    let writes = writesOf(fake.ops);
+    expect(writes[0].values).toMatchObject({ status: "OPEN", closedAt: null });
+    expect(writes[1].values).toMatchObject({ action: "hiring.opening.reopen" });
+    const read = fake.ops.find((o) => o.table === "hiring_versions");
+    expect(read?.params).toEqual(expect.arrayContaining([OPENING, ORG]));
+
+    fake.ops = [];
+    versions = [{ id: VERSION, number: 1, status: "DRAFT", publishedAt: null, previewedAt: null }];
+    await setOpeningClosed(ORG, ACTOR, OPENING, false);
+    writes = writesOf(fake.ops);
+    expect(writes[0].values).toMatchObject({ status: "DRAFT", closedAt: null });
+  });
+
+  it("does nothing (and audits nothing) when the opening is already in the asked state", async () => {
+    status = "CLOSED";
+    await setOpeningClosed(ORG, ACTOR, OPENING, true);
+    status = "DRAFT";
+    await setOpeningClosed(ORG, ACTOR, OPENING, false);
+    expect(writesOf(fake.ops)).toEqual([]);
+  });
+
+  it("answers not found for an opening of another organisation", async () => {
+    status = null;
+    await expect(setOpeningClosed(ORG, ACTOR, OPENING, true)).rejects.toBeInstanceOf(HiringNotFound);
+    expect(writesOf(fake.ops)).toEqual([]);
   });
 });

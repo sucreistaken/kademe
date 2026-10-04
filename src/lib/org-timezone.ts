@@ -64,6 +64,23 @@ export function zonedDayStart(
   return new Date(wall - offsetMs(timeZone, new Date(first)));
 }
 
+/**
+ * The calendar day (YYYY-MM-DD) that `at` falls on in `timeZone`: "today" for
+ * a date rule, or a stored instant shown back in a date field. The one
+ * formatter for that, so a page and the server it posts to agree on the day.
+ */
+export function orgDay(at: Date = new Date(), timeZone: string = ORG_TIMEZONE): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(at);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? "";
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
+
 /** Offset of `timeZone` from UTC at `at`, in milliseconds (positive east). */
 function offsetMs(timeZone: string, at: Date): number {
   const parts = new Intl.DateTimeFormat("en-US", {
