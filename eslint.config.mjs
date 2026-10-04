@@ -9,7 +9,7 @@ const eslintConfig = defineConfig([
     // Spec 3 and 6: core code reaches solutions only through the registries and
     // the contract. Solution folders and solution route folders are exempt.
     files: ["src/**/*.{ts,tsx,mts}"],
-    ignores: ["src/solutions/**", "src/app/**/exam/**"],
+    ignores: ["src/solutions/**", "src/app/**/exam/**", "src/app/**/hiring/**", "src/components/hiring/**"],
     rules: {
       "no-restricted-imports": [
         "error",

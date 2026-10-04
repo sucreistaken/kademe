@@ -1,0 +1,77 @@
+import { hasText, missingAnchorLevels } from "@/lib/library/anchors";
+import { isChoice, MAX_COMPETENCIES_PER_ACTIVITY, usedCompetencyIds, type CompetencyFacts, type VersionContent } from "./content";
+import { weightsProblem } from "./weights";
+
+export type PublishProblem =
+  | { code: "NO_STAGE" }
+  | { code: "EMPTY_STAGE_NAME"; stageId: string }
+  | { code: "EMPTY_STAGE"; stageId: string }
+  | { code: "EMPTY_PROMPT"; activityId: string }
+  | { code: "NO_COMPETENCY"; activityId: string }
+  | { code: "TOO_MANY_COMPETENCIES"; activityId: string }
+  | { code: "CHOICE_WITH_COMPETENCY"; activityId: string }
+  | { code: "CHOICE_NEEDS_OPTIONS"; activityId: string }
+  | { code: "CHOICE_NEEDS_ANSWER"; activityId: string }
+  | { code: "COMPETENCY_MISSING"; competencyId: string }
+  | { code: "COMPETENCY_ARCHIVED"; competencyId: string }
+  | { code: "ANCHOR_MISSING"; competencyId: string; level: number }
+  | { code: "WEIGHTS_NOT_100"; total: number };
+
+/** Readiness rows (HIRING-UX 5.4): "Değerlendirme kuruldu" and "Puan kartında her yetkinliğin çapası var". */
+export const STRUCTURE_PROBLEMS: ReadonlyArray<PublishProblem["code"]> = [
+  "NO_STAGE",
+  "EMPTY_STAGE_NAME",
+  "EMPTY_STAGE",
+  "EMPTY_PROMPT",
+  "NO_COMPETENCY",
+  "TOO_MANY_COMPETENCIES",
+  "CHOICE_WITH_COMPETENCY",
+  "CHOICE_NEEDS_OPTIONS",
+  "CHOICE_NEEDS_ANSWER",
+];
+export const ANCHOR_PROBLEMS: ReadonlyArray<PublishProblem["code"]> = ["COMPETENCY_MISSING", "COMPETENCY_ARCHIVED", "ANCHOR_MISSING", "WEIGHTS_NOT_100"];
+
+/**
+ * The server-side publish gate. Every reason the draft cannot be published, in
+ * screen order; an empty list means it can. Pure: the caller loads the draft
+ * and the library facts inside the publishing transaction.
+ */
+export function publishProblems(content: VersionContent, facts: ReadonlyMap<string, CompetencyFacts>): PublishProblem[] {
+  const problems: PublishProblem[] = [];
+  if (content.stages.length === 0) problems.push({ code: "NO_STAGE" });
+  for (const stage of content.stages) {
+    if (!hasText(stage.name)) problems.push({ code: "EMPTY_STAGE_NAME", stageId: stage.id });
+    if (stage.activities.length === 0) problems.push({ code: "EMPTY_STAGE", stageId: stage.id });
+    for (const activity of stage.activities) {
+      if (!hasText(activity.prompt)) problems.push({ code: "EMPTY_PROMPT", activityId: activity.id });
+      if (isChoice(activity.type)) {
+        if (activity.competencyIds.length > 0) problems.push({ code: "CHOICE_WITH_COMPETENCY", activityId: activity.id });
+        const choices = (activity.config.choices ?? []).filter((c) => hasText(c.label));
+        const correct = choices.filter((c) => c.correct).length;
+        if (choices.length < 2) problems.push({ code: "CHOICE_NEEDS_OPTIONS", activityId: activity.id });
+        else if (activity.type === "SINGLE_CHOICE" ? correct !== 1 : correct < 1) {
+          problems.push({ code: "CHOICE_NEEDS_ANSWER", activityId: activity.id });
+        }
+      } else if (activity.competencyIds.length === 0) {
+        problems.push({ code: "NO_COMPETENCY", activityId: activity.id });
+      } else if (activity.competencyIds.length > MAX_COMPETENCIES_PER_ACTIVITY) {
+        problems.push({ code: "TOO_MANY_COMPETENCIES", activityId: activity.id });
+      }
+    }
+  }
+  const used = usedCompetencyIds(content);
+  for (const id of used) {
+    const f = facts.get(id);
+    if (!f) {
+      problems.push({ code: "COMPETENCY_MISSING", competencyId: id });
+      continue;
+    }
+    if (f.archived) problems.push({ code: "COMPETENCY_ARCHIVED", competencyId: id });
+    for (const level of missingAnchorLevels(f.anchors)) problems.push({ code: "ANCHOR_MISSING", competencyId: id, level });
+  }
+  if (content.weightsEnabled) {
+    const problem = weightsProblem(content.draftWeights ?? {}, used);
+    if (problem) problems.push({ code: "WEIGHTS_NOT_100", total: problem.total });
+  }
+  return problems;
+}
