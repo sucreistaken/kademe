@@ -276,6 +276,19 @@ describe("startDraftAction", () => {
     expect(v.ensureDraftVersion).not.toHaveBeenCalled();
   });
 
+  it("returns to the AI screen when it was started there, and to the builder for any other value", async () => {
+    v.ensureDraftVersion.mockResolvedValue({ versionId: "v2", created: true });
+    const fromAi = form();
+    fromAi.set("back", "ai");
+    await expect(startDraftAction(fromAi)).rejects.toThrow(`redirect:/hiring/openings/${OPENING}/assessment/ai`);
+    v.ensureDraftVersion.mockRejectedValue(new HiringNotFound("opening"));
+    await expect(startDraftAction(fromAi)).rejects.toThrow(`redirect:/hiring/openings/${OPENING}/assessment/ai?draft=failed`);
+    const elsewhere = form();
+    elsewhere.set("back", "https://evil.example");
+    v.ensureDraftVersion.mockResolvedValue({ versionId: "v2", created: true });
+    await expect(startDraftAction(elsewhere)).rejects.toThrow(`redirect:${builder}`);
+  });
+
   it("answers a refusal with a notice, never a raw error", async () => {
     v.ensureDraftVersion.mockRejectedValue(new HiringConflict("CLOSED"));
     await expect(startDraftAction(form())).rejects.toThrow(`redirect:${builder}?draft=closed`);

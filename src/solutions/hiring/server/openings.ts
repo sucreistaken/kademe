@@ -216,9 +216,8 @@ export async function createOpening(user: { id: string; orgId: string }, input: 
       subjectId: opening.id,
       meta: { positionId, start: input.start, copyFrom: input.start === "COPY" ? input.copyFrom : null },
     });
-    // Ruling C7: only routes that exist. A blank or copied start opens the
-    // builder; an AI start lands on the overview until the AI screen (Task 17).
-    const next = input.start === "AI" ? `/hiring/openings/${opening.id}` : `/hiring/openings/${opening.id}/assessment/edit`;
+    // A blank or copied start opens the builder; an AI start opens the AI draft screen.
+    const next = `/hiring/openings/${opening.id}/assessment/${input.start === "AI" ? "ai" : "edit"}`;
     return { ok: true as const, openingId: opening.id, next };
   });
 }

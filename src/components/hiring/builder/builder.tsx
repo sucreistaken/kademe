@@ -384,10 +384,18 @@ export function Builder({
           <p className="text-[16px] leading-6 font-semibold text-ink">{t("emptyTitle")}</p>
           <p className="mt-1 text-[14px] text-muted">{t("emptyBody")}</p>
           {editable ? (
-            <Button variant="secondary" className="mt-4" onClick={() => void addStage()}>
-              <Plus className="size-4" strokeWidth={1.5} aria-hidden />
-              {t("addStage")}
-            </Button>
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <Button variant="secondary" onClick={() => void addStage()}>
+                <Plus className="size-4" strokeWidth={1.5} aria-hidden />
+                {t("addStage")}
+              </Button>
+              <Link
+                href={`/hiring/openings/${openingId}/assessment/ai`}
+                className="text-[14px] font-medium text-ink underline decoration-line-strong underline-offset-4 hover:decoration-ink"
+              >
+                {t("emptyAi")}
+              </Link>
+            </div>
           ) : null}
         </Card>
       ) : (

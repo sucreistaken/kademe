@@ -52,9 +52,8 @@ describe("positionOptions", () => {
 });
 
 describe("createOpening", () => {
-  // Ruling C7: no link to a page that does not exist yet. The builder exists
-  // (Task 15), so a blank or copied start opens it; the AI screen comes with
-  // Task 17, so an AI start still lands on the opening's overview.
+  // Ruling C7: no link to a page that does not exist yet. A blank or copied
+  // start opens the builder (Task 15); an AI start opens the AI screen (Task 17).
   const respond = (op: { table: string }) =>
     op.table === "users"
       ? [{ id: ACTOR }]
@@ -72,10 +71,10 @@ describe("createOpening", () => {
     expect(result).toEqual({ ok: true, openingId: OPENING, next: `/hiring/openings/${OPENING}/assessment/edit` });
   });
 
-  it("an AI start lands on the opening overview until the AI screen exists", async () => {
+  it("an AI start opens the AI draft screen", async () => {
     fake.respond = respond;
     const result = await createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "existing", id: POS_A }, start: "AI", copyFrom: null });
-    expect(result).toEqual({ ok: true, openingId: OPENING, next: `/hiring/openings/${OPENING}` });
+    expect(result).toEqual({ ok: true, openingId: OPENING, next: `/hiring/openings/${OPENING}/assessment/ai` });
   });
 });
 

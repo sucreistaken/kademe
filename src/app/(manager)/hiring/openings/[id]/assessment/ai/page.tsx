@@ -1,0 +1,66 @@
+import { notFound } from "next/navigation";
+import { AiDraft } from "@/components/hiring/ai/ai-draft";
+import { managerLocale } from "@/i18n/manager-locale";
+import { managerT } from "@/i18n/manager";
+import { pickText } from "@/lib/i18n-text";
+import { activeCompetencyOptions, loadPosition } from "@/server/library";
+import { workingState } from "@/solutions/hiring/server/working";
+import { openingFor } from "../../access";
+import { AssessmentTabs, OpeningHeader } from "../../opening-header";
+
+export const dynamic = "force-dynamic";
+
+/** What "Düzenlemeye başla" (?draft=) answered when it was started here. */
+const DRAFT_NOTICES = { closed: "hiringBuilder.draftClosed", failed: "hiringBuilder.draftFailed" } as const;
+
+/**
+ * HIRING-UX 5.6: the AI draft. The job ad comes from the position; proposals
+ * live in the browser only and are written one accepted card at a time. With
+ * only a published version, the screen offers "Düzenlemeye başla" first
+ * (ruling C5); a closed opening or a viewer who may not edit sees it read-only.
+ */
+export default async function AiDraftPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const { id } = await params;
+  const { user, opening, access } = await openingFor(id, "view");
+  const locale = await managerLocale();
+  const t = managerT(locale);
+  const sp = await searchParams;
+  const [state, position, options] = await Promise.all([
+    workingState(user.orgId, opening.id),
+    loadPosition(user.orgId, opening.positionId),
+    activeCompetencyOptions(user.orgId),
+  ]);
+  const content = state.content;
+  if (!content) notFound();
+  const draftNotice = typeof sp.draft === "string" && Object.hasOwn(DRAFT_NOTICES, sp.draft) ? t(DRAFT_NOTICES[sp.draft as keyof typeof DRAFT_NOTICES]) : null;
+
+  return (
+    <main className="mx-auto max-w-[1360px] px-page py-8">
+      <OpeningHeader opening={opening} active="assessment" locale={locale} t={t} />
+      <div className="mt-4">
+        <AssessmentTabs openingId={opening.id} active="ai" t={t} />
+      </div>
+      {draftNotice ? (
+        <p role="status" className="mt-6 text-[14px] font-medium text-ink">
+          {draftNotice}
+        </p>
+      ) : null}
+      <AiDraft
+        openingId={opening.id}
+        initialJobAd={position?.jobDescription ?? ""}
+        library={options.map((o) => ({ id: o.id, name: pickText(o.name, locale) }))}
+        locales={content.localeSet}
+        mode={opening.status === "CLOSED" ? "closed" : state.draft ? "draft" : "live"}
+        canEdit={access.edit}
+        liveNumber={state.live?.number ?? null}
+        versionNumber={content.number}
+      />
+    </main>
+  );
+}

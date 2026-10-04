@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, isNotNull, isNull } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import type { Executor } from "@/db/executor";
 import { ensureDefaultScale, seedLibrary } from "@/db/library-seed";
@@ -14,7 +14,9 @@ import {
   type I18nText,
 } from "@/db/schema";
 import { hasText, MAX_TAGS_PER_SIDE, missingAnchorLevels } from "@/lib/library/anchors";
+import { DEFAULT_LOCALE } from "@/i18n/locale";
 import { POSITION_LANGUAGES_MAX, POSITION_SKILLS_MAX } from "@/lib/library/positions";
+import { libraryUsage } from "@/server/library";
 import { isUuid } from "@/server/settings";
 
 /**
@@ -70,6 +72,8 @@ export async function createCompetency(
   actorId: string,
   input: { name: I18nText; description: I18nText; anchors?: AnchorInput },
   x: Executor = db,
+  /** Where the row came from, kept on its audit row (e.g. an accepted AI card). */
+  origin?: { via: string },
 ): Promise<{ ok: true; id: string } | { ok: false; code: "NAME_REQUIRED" }> {
   if (!hasText(input.name)) return { ok: false, code: "NAME_REQUIRED" };
   // The organisation's own default scale: the only scale a new row may point at.
@@ -81,7 +85,7 @@ export async function createCompetency(
       .values({ orgId, name: cleanText(input.name), description: cleanText(input.description), scaleId: scale.id, reviewedAt: new Date() })
       .returning({ id: competencies.id });
     await replaceAnchors(tx, row.id, anchorRecord(input.anchors ?? {}));
-    await audit(tx, orgId, actorId, "library.competency.create", "competency", row.id);
+    await audit(tx, orgId, actorId, "library.competency.create", "competency", row.id, origin);
     return { ok: true as const, id: row.id };
   });
 }
@@ -418,4 +422,108 @@ export async function savePosition(
 
 export async function setPositionArchived(orgId: string, actorId: string, id: string, archived: boolean): Promise<boolean> {
   return setArchived(positions, "position", orgId, actorId, id, archived);
+}
+
+/**
+ * An accepted AI competency card (HIRING-UX 5.6): an active competency of the
+ * organisation with the same name (Turkish or English, any case) is reused;
+ * otherwise the proposal joins the library with its anchors, which stay
+ * editable there and in the scorecard (the publish gate still asks for levels
+ * 1, 3 and 5). Archived rows are not looked at: an archived competency is
+ * never brought back silently, a new row is made instead.
+ */
+export async function findOrCreateCompetency(
+  orgId: string,
+  actorId: string,
+  proposal: { name: I18nText; description: I18nText; anchors: AnchorInput },
+  /** Recorded on the create audit row; archiveCompetencyIfUnused asks for the same value. */
+  via: string,
+): Promise<{ ok: true; id: string; created: boolean } | { ok: false; code: "NAME_REQUIRED" }> {
+  if (!hasText(proposal.name)) return { ok: false, code: "NAME_REQUIRED" };
+  const key = (name: string) => name.trim().toLocaleLowerCase("tr");
+  const wanted = [proposal.name.tr, proposal.name.en].map(key).filter(Boolean);
+  const rows = await db
+    .select({ id: competencies.id, name: competencies.name })
+    .from(competencies)
+    .where(and(eq(competencies.orgId, orgId), isNull(competencies.archivedAt)));
+  const existing = rows.find((r) => [r.name.tr, r.name.en].some((n) => wanted.includes(key(n))));
+  if (existing) return { ok: true, id: existing.id, created: false };
+  const created = await createCompetency(orgId, actorId, proposal, db, { via });
+  return created.ok ? { ok: true, id: created.id, created: true } : created;
+}
+
+/**
+ * "Geri al" on an accepted AI competency (ruling C1: the library never
+ * deletes, it archives). Only a row this acceptance created is touched: its
+ * create audit row names this actor and `via` (findOrCreateCompetency wrote
+ * it), so a reused library competency is never archived (NOT_CREATED). It is
+ * archived only while nothing uses it: no position profile and no solution
+ * (libraryUsage asks each one, e.g. a question of any opening's version); a
+ * used one stays active (IN_USE). The row is locked by id AND organisation first.
+ */
+export async function archiveCompetencyIfUnused(
+  orgId: string,
+  actorId: string,
+  id: string,
+  via: string,
+): Promise<{ ok: true } | { ok: false; code: "NOT_FOUND" | "NOT_CREATED" | "IN_USE" }> {
+  if (!isUuid(id)) return { ok: false, code: "NOT_FOUND" };
+  return db.transaction(async (tx) => {
+    const [row] = await tx
+      .select({ id: competencies.id })
+      .from(competencies)
+      .where(and(eq(competencies.id, id), eq(competencies.orgId, orgId), isNull(competencies.archivedAt)))
+      .for("update");
+    if (!row) return { ok: false as const, code: "NOT_FOUND" as const };
+    const [createdHere] = await tx
+      .select({ id: auditLogs.id })
+      .from(auditLogs)
+      .where(
+        and(
+          eq(auditLogs.orgId, orgId),
+          eq(auditLogs.action, "library.competency.create"),
+          eq(auditLogs.subjectId, id),
+          eq(auditLogs.actorId, actorId),
+          sql`${auditLogs.meta}->>'via' = ${via}`,
+        ),
+      )
+      .limit(1);
+    if (!createdHere) return { ok: false as const, code: "NOT_CREATED" as const };
+    // The competency is the caller's, so a profile row that names it is the caller's too (writes check that).
+    const [inProfile] = await tx
+      .select({ id: positionCompetencies.positionId })
+      .from(positionCompetencies)
+      .where(eq(positionCompetencies.competencyId, id))
+      .limit(1);
+    if (inProfile) return { ok: false as const, code: "IN_USE" as const };
+    const usage = await libraryUsage(orgId, { positionIds: [], competencyIds: [id] }, DEFAULT_LOCALE);
+    if ((usage.competencies[id] ?? []).length > 0) return { ok: false as const, code: "IN_USE" as const };
+    await tx
+      .update(competencies)
+      .set({ archivedAt: new Date(), updatedAt: new Date() })
+      .where(and(eq(competencies.id, id), eq(competencies.orgId, orgId), isNull(competencies.archivedAt)));
+    await audit(tx, orgId, actorId, "library.competency.archive", "competency", id, { reason: "hiring-ai-undo" });
+    return { ok: true as const };
+  });
+}
+
+/**
+ * The AI screen saves the pasted job ad onto the position, but never over one
+ * the team wrote: one conditional update, so two tabs cannot overwrite each other.
+ */
+export async function setPositionJobAdIfEmpty(orgId: string, actorId: string, positionId: string, text: string): Promise<void> {
+  const ad = text.trim();
+  if (!ad || !isUuid(positionId)) return;
+  const rows = await db
+    .update(positions)
+    .set({ jobDescription: ad, updatedAt: new Date() })
+    .where(
+      and(
+        eq(positions.id, positionId),
+        eq(positions.orgId, orgId),
+        or(isNull(positions.jobDescription), sql`trim(${positions.jobDescription}) = ${""}`),
+      ),
+    )
+    .returning({ id: positions.id });
+  if (rows.length) await audit(db, orgId, actorId, "library.position.job-ad", "position", positionId);
 }

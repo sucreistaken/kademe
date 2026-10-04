@@ -60,20 +60,24 @@ async function run<T>(openingId: string, work: (orgId: string) => Promise<T>): P
   }
 }
 
-/** "Düzenlemeye başla": opens v(n+1) as a copy of the live version (carry 6: editing a live version is explicit). */
+/**
+ * "Düzenlemeye başla": opens v(n+1) as a copy of the live version (carry 6:
+ * editing a live version is explicit). The builder and the AI screen (ruling
+ * C5) both offer it; `back=ai` returns to the AI screen, anything else to the builder.
+ */
 export async function startDraftAction(formData: FormData) {
   const openingId = String(formData.get("openingId") ?? "");
   const { user, opening, access } = await openingFor(openingId, "view");
-  const builder = `/hiring/openings/${opening.id}/assessment/edit`;
+  const screen = `/hiring/openings/${opening.id}/assessment/${formData.get("back") === "ai" ? "ai" : "edit"}`;
   // A closed opening is history: say so before the role check, which would answer "your role cannot".
-  if (opening.status === "CLOSED") redirect(`${builder}?draft=closed`);
+  if (opening.status === "CLOSED") redirect(`${screen}?draft=closed`);
   if (!access.edit) throw new ForbiddenError("opening:write");
-  let destination = builder;
+  let destination = screen;
   try {
     await ensureDraftVersion(user.orgId, opening.id);
   } catch (error) {
-    if (error instanceof HiringConflict && error.code === "CLOSED") destination = `${builder}?draft=closed`;
-    else if (refusalOf(error)) destination = `${builder}?draft=failed`;
+    if (error instanceof HiringConflict && error.code === "CLOSED") destination = `${screen}?draft=closed`;
+    else if (refusalOf(error)) destination = `${screen}?draft=failed`;
     else throw error;
   }
   revalidatePath("/hiring/openings/[id]", "layout");

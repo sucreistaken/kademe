@@ -92,16 +92,25 @@ vi.mock("@/db/library-seed", () => ({
   seedLibrary: (orgId: string) => seedLibrary(orgId),
 }));
 
+type UsageCall = (orgId: string, refs: { positionIds: string[]; competencyIds: string[] }, locale: string) => Promise<{ positions: Record<string, unknown[]>; competencies: Record<string, unknown[]> }>;
+const libraryUsage = vi.fn<UsageCall>();
+vi.mock("@/server/library", () => ({
+  libraryUsage: (...a: Parameters<UsageCall>) => libraryUsage(...a),
+}));
+
 import { POSITION_LANGUAGES_MAX, POSITION_SKILLS_MAX } from "@/lib/library/positions";
 import {
+  archiveCompetencyIfUnused,
   createCompetency,
   createPosition,
+  findOrCreateCompetency,
   saveAnchors,
   saveCompetency,
   savePosition,
   saveScaleLabels,
   setCompetencyArchived,
   setPositionArchived,
+  setPositionJobAdIfEmpty,
   startLibrary,
   type CompetencyInput,
   type PositionInput,
@@ -137,6 +146,8 @@ beforeEach(() => {
   ensureDefaultScale.mockReset();
   ensureDefaultScale.mockResolvedValue({ id: SCALE, created: false });
   seedLibrary.mockReset();
+  libraryUsage.mockReset();
+  libraryUsage.mockResolvedValue({ positions: {}, competencies: { [ID]: [] } });
 });
 
 describe("createCompetency", () => {
@@ -610,5 +621,119 @@ describe("setPositionArchived", () => {
     expect(ops[0].where).toContain('"positions"."archived_at" is not null');
     expect((ops[0].values as { archivedAt: unknown }).archivedAt).toBeNull();
     expect(auditRows()[0].values).toMatchObject({ orgId: ORG, actorId: ACTOR, subjectId: POSITION, action: "library.position.restore" });
+  });
+});
+
+const VIA = `hiring-ai:${POSITION}`;
+
+describe("findOrCreateCompetency (an accepted AI competency card)", () => {
+  const proposal = { name: { tr: "İletişim", en: "" }, description: text(""), anchors: { "1": text("a"), "3": text("b"), "5": text("c") } };
+
+  it("writes nothing without a name", async () => {
+    expect(await findOrCreateCompetency(ORG, ACTOR, { ...proposal, name: text(" ") }, VIA)).toEqual({ ok: false, code: "NAME_REQUIRED" });
+    expect(ops).toEqual([]);
+  });
+
+  it("reuses an active competency of the caller's organisation with the same name, whatever the case", async () => {
+    respond = (op) => (op.kind === "select" && op.table === "competencies" ? [{ id: COMP_A, name: { tr: "iletişim", en: "Communication" } }] : []);
+    expect(await findOrCreateCompetency(ORG, ACTOR, proposal, VIA)).toEqual({ ok: true, id: COMP_A, created: false });
+    expect(ops).toHaveLength(1);
+    expect(ops[0].where).toContain('"competencies"."org_id" = $');
+    expect(ops[0].where).toContain('"competencies"."archived_at" is null');
+    expect(ops[0].params).toEqual([ORG]);
+    expect(writes()).toEqual([]);
+  });
+
+  it("creates a new library row with the proposed anchors, and never brings an archived one back", async () => {
+    // The lookup reads active rows only, so an archived "İletişim" is not found and stays archived.
+    respond = (op) => (op.kind === "insert" && op.table === "competencies" ? [{ id: COMP_B }] : []);
+    expect(await findOrCreateCompetency(ORG, ACTOR, proposal, VIA)).toEqual({ ok: true, id: COMP_B, created: true });
+    expect(ops[0].where).toContain('"competencies"."archived_at" is null');
+    expect(ops.filter((o) => o.kind === "update")).toEqual([]);
+    expect(ops.find((o) => o.kind === "insert" && o.table === "competencies")?.values).toMatchObject({ orgId: ORG, name: { tr: "İletişim", en: "" } });
+    const anchors = ops.find((o) => o.kind === "insert" && o.table === "competency_anchors")?.values as Array<{ value: number }>;
+    expect(anchors.map((a) => a.value).sort()).toEqual([1, 3, 5]);
+    expect(auditRows()[0].values).toMatchObject({ orgId: ORG, actorId: ACTOR, action: "library.competency.create", subjectId: COMP_B, meta: { via: VIA } });
+  });
+});
+
+describe("archiveCompetencyIfUnused (undo of an accepted AI competency, ruling C1)", () => {
+  const competencyRow = (op: Op) =>
+    op.kind === "select" && op.table === "competencies" ? [{ id: ID }] : op.kind === "select" && op.table === "audit_logs" ? [{ id: "audit-1" }] : [];
+
+  it("refuses a malformed id before touching the database", async () => {
+    expect(await archiveCompetencyIfUnused(ORG, ACTOR, "not-a-uuid", VIA)).toEqual({ ok: false, code: "NOT_FOUND" });
+    expect(ops).toEqual([]);
+  });
+
+  it("locks the active competency by id and organisation, and writes nothing when it is not the caller's", async () => {
+    expect(await archiveCompetencyIfUnused(ORG, ACTOR, ID, VIA)).toEqual({ ok: false, code: "NOT_FOUND" });
+    expect(ops[0]).toMatchObject({ kind: "select", table: "competencies", lock: "update" });
+    expect(ops[0].where).toContain('"competencies"."id" = $');
+    expect(ops[0].where).toContain('"competencies"."org_id" = $');
+    expect(ops[0].where).toContain('"competencies"."archived_at" is null');
+    expect(writes()).toEqual([]);
+  });
+
+  it("leaves alone a competency this actor did not create from this screen (a reused library row)", async () => {
+    respond = (op) => (op.table === "audit_logs" ? [] : competencyRow(op));
+    expect(await archiveCompetencyIfUnused(ORG, ACTOR, ID, VIA)).toEqual({ ok: false, code: "NOT_CREATED" });
+    const lookup = ops.find((o) => o.kind === "select" && o.table === "audit_logs")!;
+    expect(lookup.where).toContain('"audit_logs"."org_id" = $');
+    expect(lookup.where).toContain('"audit_logs"."actor_id" = $');
+    expect(lookup.where).toContain(`"audit_logs"."meta"->>'via' = $`);
+    expect(lookup.params).toEqual(expect.arrayContaining([ORG, "library.competency.create", ID, ACTOR, VIA]));
+    expect(writes()).toEqual([]);
+  });
+
+  it("keeps a competency a position profile uses", async () => {
+    respond = (op) => (op.table === "position_competencies" ? [{ id: POSITION }] : competencyRow(op));
+    expect(await archiveCompetencyIfUnused(ORG, ACTOR, ID, VIA)).toEqual({ ok: false, code: "IN_USE" });
+    expect(ops.find((o) => o.table === "position_competencies")?.params).toEqual([ID]);
+    expect(writes()).toEqual([]);
+  });
+
+  it("keeps a competency a solution uses (a question of any opening)", async () => {
+    respond = competencyRow;
+    libraryUsage.mockResolvedValue({ positions: {}, competencies: { [ID]: [{ solution: "hiring" }] } });
+    expect(await archiveCompetencyIfUnused(ORG, ACTOR, ID, VIA)).toEqual({ ok: false, code: "IN_USE" });
+    expect(libraryUsage).toHaveBeenCalledWith(ORG, { positionIds: [], competencyIds: [ID] }, expect.any(String));
+    expect(writes()).toEqual([]);
+  });
+
+  it("archives an unused one (never a DELETE) and audits why, in one transaction", async () => {
+    respond = (op) => (op.kind === "update" ? [{ id: ID }] : competencyRow(op));
+    expect(await archiveCompetencyIfUnused(ORG, ACTOR, ID, VIA)).toEqual({ ok: true });
+    expect(ops.some((o) => o.kind === "delete")).toBe(false);
+    const update = ops.find((o) => o.kind === "update" && o.table === "competencies")!;
+    expect((update.values as { archivedAt: unknown }).archivedAt).toBeInstanceOf(Date);
+    expect(update.where).toContain('"competencies"."org_id" = $');
+    expect(update.params).toEqual(expect.arrayContaining([ID, ORG]));
+    expect(auditRows()[0].values).toMatchObject({ orgId: ORG, actorId: ACTOR, action: "library.competency.archive", subjectId: ID, meta: { reason: "hiring-ai-undo" } });
+    expect(writes().every((o) => inTransaction.has(o))).toBe(true);
+  });
+});
+
+describe("setPositionJobAdIfEmpty", () => {
+  it("writes the ad only onto the caller's position when it has none, and audits a change", async () => {
+    respond = (op) => (op.kind === "update" ? [{ id: POSITION }] : []);
+    await setPositionJobAdIfEmpty(ORG, ACTOR, POSITION, "  İlan metni  ");
+    const update = ops.find((o) => o.kind === "update" && o.table === "positions")!;
+    expect(update.values).toMatchObject({ jobDescription: "İlan metni" });
+    expect(update.where).toContain('"positions"."org_id" = $');
+    expect(update.where).toMatch(/"positions"\."job_description" is null or trim\("positions"\."job_description"\) = \$/);
+    expect(update.params).toEqual(expect.arrayContaining([POSITION, ORG]));
+    expect(auditRows()[0].values).toMatchObject({ orgId: ORG, action: "library.position.job-ad", subjectId: POSITION });
+  });
+
+  it("leaves a written ad alone and writes no audit row", async () => {
+    await setPositionJobAdIfEmpty(ORG, ACTOR, POSITION, "İlan metni");
+    expect(auditRows()).toEqual([]);
+  });
+
+  it("does nothing for an empty text or a malformed id", async () => {
+    await setPositionJobAdIfEmpty(ORG, ACTOR, POSITION, "   ");
+    await setPositionJobAdIfEmpty(ORG, ACTOR, "x", "İlan");
+    expect(ops).toEqual([]);
   });
 });

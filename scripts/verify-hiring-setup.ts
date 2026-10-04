@@ -495,6 +495,68 @@ async function main() {
   const anchorAudit = await db.select().from(s.auditLogs).where(and(eq(s.auditLogs.orgId, org.id), eq(s.auditLogs.action, "library.competency.anchors")));
   check(anchorAudit.length === 1 && anchorAudit[0].subjectId === communication, "the change is in the audit log once");
 
+  console.log("\nAI draft accepts (Task 17): strict inserts, no draft opened here, archive never delete");
+  const { findOrCreateCompetency, archiveCompetencyIfUnused, setPositionJobAdIfEmpty } = await import("@/server/library-write");
+  const aiStage = (competencyIds: string[]) => ({
+    name: { tr: "Araştırma", en: "" },
+    description: { tr: "", en: "" },
+    internalPurpose: "Bulguyu sade anlatma",
+    durationSeconds: 480,
+    graceSeconds: 0,
+    onTimeout: "AUTO_SUBMIT" as const,
+    backNavigation: false,
+    activities: [{ ...emptyActivity("VIDEO"), prompt: { tr: "Bir araştırma bulgusunu paydaşlara nasıl anlattığını anlat.", en: "" }, answerExamples: { 3: "Bulguyu ve bir örneği verir." }, competencyIds }],
+  });
+  const aiAnchors = { "1": { tr: "Veriye bakmadan karar verir.", en: "" }, "3": { tr: "Kararını bir veriyle gerekçelendirir.", en: "" }, "5": { tr: "Veriyi sınar ve eksik veriyi söyler.", en: "" } };
+  const liveVersions = (await versions.versionsOf(org.id, id)).length;
+  await expectCode("accepting a stage on a live opening is NO_DRAFT", () => versions.insertStage(org.id, id, aiStage([communication])), "NO_DRAFT");
+  check((await versions.versionsOf(org.id, id)).length === liveVersions, "and no draft was opened by it (C5)");
+  const aiStart = await openings.createOpening(user, { position: { kind: "existing", id: position.id }, start: "AI", copyFrom: null });
+  if (!aiStart.ok) throw new Error(aiStart.code);
+  check(aiStart.next === `/hiring/openings/${aiStart.openingId}/assessment/ai`, "an AI start opens the AI screen (C7)", aiStart.next);
+  const via = `hiring-ai:${aiStart.openingId}`;
+  const reusedComp = await findOrCreateCompetency(org.id, owner.id, { name: { tr: " iletişim ", en: "" }, description: { tr: "", en: "" }, anchors: aiAnchors }, via);
+  check(reusedComp.ok && !reusedComp.created && reusedComp.id === communication, "a proposal named like an active competency reuses it (any case)", JSON.stringify(reusedComp));
+  const problemName = library.find((c) => c.id === problem)!.name.tr;
+  await setCompetencyArchived(org.id, owner.id, problem, true);
+  const notRevived = await findOrCreateCompetency(org.id, owner.id, { name: { tr: problemName, en: "" }, description: { tr: "", en: "" }, anchors: aiAnchors }, via);
+  const [problemRow] = await db.select().from(s.competencies).where(eq(s.competencies.id, problem));
+  check(notRevived.ok && notRevived.created && notRevived.id !== problem && problemRow.archivedAt !== null, "an archived competency with that name is not brought back; a new row is made", JSON.stringify(notRevived));
+  await setCompetencyArchived(org.id, owner.id, problem, false);
+  const aiComp = await findOrCreateCompetency(org.id, owner.id, { name: { tr: "Veriyle karar", en: "" }, description: { tr: "", en: "" }, anchors: aiAnchors }, via);
+  if (!aiComp.ok) throw new Error("aiComp competency");
+  const freshAnchors = (await loadCompetencyFacts(org.id, [aiComp.id])).get(aiComp.id)?.anchors ?? {};
+  check(aiComp.created && freshAnchors[3]?.tr === "Kararını bir veriyle gerekçelendirir.", "a new proposal joins the library with its 1/3/5 anchors");
+  const aiStageId = await versions.insertStage(org.id, aiStart.openingId, aiStage([communication, aiComp.id]));
+  const aiContent = await loadVersionContent(org.id, (await versions.versionsOf(org.id, aiStart.openingId))[0].id);
+  check(
+    aiContent!.stages[0].id === aiStageId && aiContent!.stages[0].activities[0].competencyIds.join() === [communication, aiComp.id].join() && aiContent!.stages[0].activities[0].answerExamples[3] === "Bulguyu ve bir örneği verir.",
+    "an accepted stage lands in the draft with its competencies and examples",
+  );
+  const foreignUndo = await archiveCompetencyIfUnused(orgB.id, ownerB.id, aiComp.id, via);
+  check(!foreignUndo.ok && foreignUndo.code === "NOT_FOUND", "another organisation cannot archive it");
+  const inUse = await archiveCompetencyIfUnused(org.id, owner.id, aiComp.id, via);
+  check(!inUse.ok && inUse.code === "IN_USE", "undo while a question measures it keeps it active", JSON.stringify(inUse));
+  const notOurs = await archiveCompetencyIfUnused(org.id, owner.id, communication, via);
+  const [communicationRow] = await db.select().from(s.competencies).where(eq(s.competencies.id, communication));
+  check(!notOurs.ok && notOurs.code === "NOT_CREATED" && communicationRow.archivedAt === null, "a reused library competency is never archived by an undo");
+  await versions.deleteStage(org.id, aiStart.openingId, aiStageId);
+  const undone = await archiveCompetencyIfUnused(org.id, owner.id, aiComp.id, via);
+  const [freshRow] = await db.select().from(s.competencies).where(eq(s.competencies.id, aiComp.id));
+  check(undone.ok && freshRow !== undefined && freshRow.archivedAt !== null, "undo after the stage is gone archives it, the row stays (C1: no delete)", JSON.stringify(undone));
+  const archiveAudit = await db.select().from(s.auditLogs).where(and(eq(s.auditLogs.orgId, org.id), eq(s.auditLogs.subjectId, aiComp.id), eq(s.auditLogs.action, "library.competency.archive")));
+  check(archiveAudit.length === 1 && (archiveAudit[0].meta as { reason?: string } | null)?.reason === "hiring-ai-undo", "the archive is audited once with its reason");
+  await expectCode("a strict insert refuses the archived competency", () => versions.insertStage(org.id, aiStart.openingId, aiStage([aiComp.id])), "COMPETENCY");
+  const adBefore = (await db.select().from(s.positions).where(eq(s.positions.id, position.id)))[0].jobDescription;
+  await setPositionJobAdIfEmpty(org.id, owner.id, position.id, "Başka bir ilan metni, kısa değil.");
+  check((await db.select().from(s.positions).where(eq(s.positions.id, position.id)))[0].jobDescription === adBefore, "a written job ad is never overwritten");
+  const adless = await createPosition(org.id, owner.id, { name: "İlansız pozisyon", jobDescription: "" });
+  if (!adless.ok) throw new Error("adless position");
+  await setPositionJobAdIfEmpty(orgB.id, ownerB.id, adless.id, "Yabancı ilan metni.");
+  check(!(await db.select().from(s.positions).where(eq(s.positions.id, adless.id)))[0].jobDescription, "another organisation cannot write it");
+  await setPositionJobAdIfEmpty(org.id, owner.id, adless.id, "  Yeni ilan metni.  ");
+  check((await db.select().from(s.positions).where(eq(s.positions.id, adless.id)))[0].jobDescription === "Yeni ilan metni.", "an empty position gets the pasted ad, trimmed");
+
   console.log("\nTwo connections: publish takes the opening lock first (READ COMMITTED)");
   // Deterministic: every step waits for a state Postgres reports (pg_stat_activity, NOWAIT), never for a time.
   const race = await openings.createOpening(user, { position: { kind: "existing", id: position.id }, start: "COPY", copyFrom: id });
