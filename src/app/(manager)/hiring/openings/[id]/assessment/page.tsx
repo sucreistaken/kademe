@@ -39,13 +39,14 @@ export default async function AssessmentSummaryPage({ params }: { params: Promis
   const builder = `/hiring/openings/${opening.id}/assessment/edit`;
 
   return (
-    <main className="mx-auto max-w-[960px] px-page py-8">
+    // The same page width as the builder, so switching the assessment tabs never moves the header.
+    <main className="mx-auto max-w-[1360px] px-page py-8">
       <OpeningHeader opening={opening} active="assessment" locale={locale} t={t} />
       <div className="mt-4">
         <AssessmentTabs openingId={opening.id} active="summary" t={t} />
       </div>
 
-      <div className="mt-section space-y-section">
+      <div className="mt-section max-w-[960px] space-y-section">
         <Card className="p-card">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>

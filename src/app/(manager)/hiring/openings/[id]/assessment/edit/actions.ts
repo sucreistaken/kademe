@@ -20,7 +20,9 @@ import {
   setActivityCompetencies,
   updateActivity,
   updateStage,
+  versionsOf,
 } from "@/solutions/hiring/server/versions";
+import { workingVersions } from "@/solutions/hiring/rules/versions";
 import { editableOpening, openingFor } from "../../access";
 import type { ActionResult, UndoTicket } from "./result";
 import { signUndo, verifyUndo } from "./undo-token";
@@ -108,6 +110,13 @@ export async function setCompetenciesAction(openingId: string, activityId: strin
   return run(openingId, (orgId) => setActivityCompetencies(orgId, openingId, activityId, ids));
 }
 
+/** The opening's draft version id, which every undo ticket is bound to; NO_DRAFT when there is none. */
+async function draftId(orgId: string, openingId: string): Promise<string> {
+  const { draft } = workingVersions(await versionsOf(orgId, openingId));
+  if (!draft) throw new HiringConflict("NO_DRAFT");
+  return draft.id;
+}
+
 /**
  * Deletes answer with an undo ticket: the removed content as the exact JSON
  * string the server signed, its place, and the signature (undo-token.ts).
@@ -115,17 +124,19 @@ export async function setCompetenciesAction(openingId: string, activityId: strin
 export async function deleteStageAction(openingId: string, stageId: string): Promise<ActionResult<UndoTicket>> {
   if (!allStrings(openingId, stageId)) return invalidId;
   return run(openingId, async (orgId) => {
+    const versionId = await draftId(orgId, openingId);
     const { payload, index } = await deleteStage(orgId, openingId, stageId);
     const json = JSON.stringify(payload);
-    return { payload: json, index, token: signUndo({ orgId, openingId, kind: "stage", stageId: "", index, payload: json }) };
+    return { payload: json, index, token: signUndo({ orgId, openingId, versionId, kind: "stage", stageId: "", index, payload: json }) };
   });
 }
 export async function deleteActivityAction(openingId: string, activityId: string): Promise<ActionResult<UndoTicket & { stageId: string }>> {
   if (!allStrings(openingId, activityId)) return invalidId;
   return run(openingId, async (orgId) => {
+    const versionId = await draftId(orgId, openingId);
     const { payload, stageId, index } = await deleteActivity(orgId, openingId, activityId);
     const json = JSON.stringify(payload);
-    return { payload: json, stageId, index, token: signUndo({ orgId, openingId, kind: "activity", stageId, index, payload: json }) };
+    return { payload: json, stageId, index, token: signUndo({ orgId, openingId, versionId, kind: "activity", stageId, index, payload: json }) };
   });
 }
 
@@ -158,7 +169,8 @@ async function restore<T>(
 ): Promise<ActionResult<T>> {
   const ticket = ticketOf(formData);
   return run(ticket.openingId, async (orgId) => {
-    const subject = { orgId, openingId: ticket.openingId, kind, stageId: kind === "stage" ? "" : ticket.stageId, index: ticket.index, payload: ticket.payload };
+    const versionId = await draftId(orgId, ticket.openingId);
+    const subject = { orgId, openingId: ticket.openingId, versionId, kind, stageId: kind === "stage" ? "" : ticket.stageId, index: ticket.index, payload: ticket.payload };
     if (ticket.index < 0 || !verifyUndo(subject, ticket.token)) throw new UndoRefused();
     let raw: unknown;
     try {

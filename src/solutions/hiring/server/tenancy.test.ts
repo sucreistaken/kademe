@@ -334,14 +334,14 @@ describe("createOpening", () => {
   it("locks a copy source by id and organisation FOR SHARE before reading its versions", async () => {
     respond = (op) =>
       op.table === "users" ? [{ id: ACTOR }] : op.table === "positions" ? [{ id: POSITION, name: "P", jobDescription: null }] : op.table === "hiring_openings" ? [{ id: OPENING }] : [];
-    await createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "existing", id: POSITION }, start: "COPY", copyFrom: OPENING, locale: "tr" });
+    await createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "existing", id: POSITION }, start: "COPY", copyFrom: OPENING });
     const source = ops.find((o) => o.table === "hiring_openings");
     expect(source?.lock).toBe("share");
     scopedToOrg(source, '"hiring_openings"."org_id"');
     expect(ops.indexOf(source!)).toBeLessThan(ops.findIndex((o) => o.table === "hiring_versions"));
   });
 
-  const input = { position: { kind: "existing" as const, id: POSITION }, start: "BLANK" as const, copyFrom: null, locale: "tr" as const };
+  const input = { position: { kind: "existing" as const, id: POSITION }, start: "BLANK" as const, copyFrom: null };
 
   it("checks that the creator is an active user of the organisation, and writes nothing otherwise", async () => {
     await expect(createOpening({ id: ACTOR, orgId: ORG }, input)).rejects.toMatchObject({ code: "NOT_FOUND", what: "user" });

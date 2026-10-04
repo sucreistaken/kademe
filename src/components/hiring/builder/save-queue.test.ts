@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { activity as fixtureActivity, stage as fixtureStage } from "@/solutions/hiring/rules/test-fixtures";
+import { withUnsaved } from "./overlay";
 import { createSaveQueue, type SaveEntry, type SaverState, type SaveTarget } from "./save-queue";
 
 /**
@@ -127,11 +129,11 @@ describe("save queue", () => {
     const q = queue();
     q.edit(activity("a1"), "prompt", { tr: "Uzun bir cevap", en: "" });
     await q.flush();
-    expect(last()).toEqual({ kind: "error", retrying: true });
+    expect(last()).toEqual({ kind: "error", retrying: true, retryable: true });
     expect(stored.map((e) => e.value)).toEqual([{ tr: "Uzun bir cevap", en: "" }]);
     await vi.advanceTimersByTimeAsync(3000);
     expect(calls).toHaveLength(2);
-    expect(last()).toEqual({ kind: "error", retrying: false });
+    expect(last()).toEqual({ kind: "error", retrying: false, retryable: true });
     await vi.advanceTimersByTimeAsync(10_000);
     expect(calls).toHaveLength(2);
     answer = async () => ({ ok: true, value: null, at: "2026-10-04T11:05:00.000Z" });
@@ -185,14 +187,15 @@ describe("save queue", () => {
     expect(stored).toEqual([]);
   });
 
-  it("answers a structural change that could not reach the server as a failure, without repeating it", async () => {
+  it("answers a structural change that could not reach the server as a failure that offers no retry", async () => {
     const q = queue();
     const op = vi.fn(async () => {
       throw new Error("offline");
     });
     const result = await q.run(op);
     expect(result).toEqual({ ok: false, code: "NETWORK" });
-    expect(last()).toEqual({ kind: "error", retrying: false });
+    // "Tekrar dene" only re-sends typed values; a delete or an undo that may have happened is not repeated.
+    expect(last()).toEqual({ kind: "error", retrying: false, retryable: false });
     await vi.advanceTimersByTimeAsync(5000);
     expect(op).toHaveBeenCalledTimes(1);
   });
@@ -214,5 +217,34 @@ describe("save queue", () => {
     q.edit(stage("s1"), "name", { tr: "A", en: "" });
     expect(stored).toEqual([{ target: stage("s1"), field: "name", value: { tr: "A", en: "" } }]);
     expect(q.unsaved()).toBe(true);
+  });
+
+  // Review Important 1: type in A, pick B, come back to A while the save is
+  // waiting, on its way or failed. The editor is rebuilt from the loaded
+  // content plus every value the queue still holds, so A shows the typed text,
+  // and the next keystroke continues it instead of replacing it with old text.
+  it("keeps every value it still holds visible: waiting, on its way and failed", async () => {
+    const loaded = [fixtureStage("s1", [fixtureActivity("a1"), fixtureActivity("a2")])];
+    const shown = (q: ReturnType<typeof queue>) => withUnsaved(loaded, q.entries())[0].activities[0].prompt.tr;
+    let fail: () => void = () => undefined;
+    answer = () => new Promise((_resolve, reject) => (fail = () => reject(new Error("offline"))));
+    const q = queue();
+    q.edit(activity("a1"), "prompt", { tr: "Yazılan", en: "" });
+    expect(shown(q)).toBe("Yazılan");
+    const sending = q.flush();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(shown(q)).toBe("Yazılan");
+    fail();
+    await sending;
+    expect(last()).toMatchObject({ kind: "error" });
+    expect(shown(q)).toBe("Yazılan");
+    // Back on A, the next keystroke continues the shown text.
+    answer = async () => ({ ok: true, value: null, at: "2026-10-04T11:09:00.000Z" });
+    q.edit(activity("a1"), "prompt", { tr: `${shown(q)}!`, en: "" });
+    await q.flush();
+    expect(calls[calls.length - 1].patch).toEqual({ prompt: { tr: "Yazılan!", en: "" } });
+    expect(q.entries()).toEqual([]);
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(calls.filter((c) => (c.patch.prompt as { tr: string }).tr === "Yazılan!")).toHaveLength(1);
   });
 });

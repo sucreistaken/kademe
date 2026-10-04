@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { DEFAULT_LOCALE } from "@/i18n/locale";
 import { ORG_TIMEZONE } from "@/lib/org-timezone";
 import { fake } from "./test-fake-db";
 
@@ -67,13 +68,13 @@ describe("createOpening", () => {
 
   it("a BLANK start opens the builder", async () => {
     fake.respond = respond;
-    const result = await createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "existing", id: POS_A }, start: "BLANK", copyFrom: null, locale: "tr" });
+    const result = await createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "existing", id: POS_A }, start: "BLANK", copyFrom: null });
     expect(result).toEqual({ ok: true, openingId: OPENING, next: `/hiring/openings/${OPENING}/assessment/edit` });
   });
 
   it("an AI start lands on the opening overview until the AI screen exists", async () => {
     fake.respond = respond;
-    const result = await createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "existing", id: POS_A }, start: "AI", copyFrom: null, locale: "tr" });
+    const result = await createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "existing", id: POS_A }, start: "AI", copyFrom: null });
     expect(result).toEqual({ ok: true, openingId: OPENING, next: `/hiring/openings/${OPENING}` });
   });
 });
@@ -108,11 +109,34 @@ describe("createOpening naming", () => {
               : op.table === "hiring_versions"
                 ? [{ id: VERSION }]
                 : [];
-    await createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "existing", id: POS_A }, start: "BLANK", copyFrom: null, locale: "tr" });
+    await createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "existing", id: POS_A }, start: "BLANK", copyFrom: null });
     const names = fake.ops.find((o) => o.table === "hiring_openings" && o.kind === "select");
     expect(names?.where).toContain('"hiring_openings"."org_id" = $');
     expect(names?.params).toContain(ORG);
     const insert = fake.ops.find((o) => o.table === "hiring_openings" && o.kind === "insert");
     expect((insert?.values as { name: string }).name).toMatch(/^Destek Uzmanı · \S+ \(2\)$/);
+  });
+});
+
+describe("createOpening month", () => {
+  // Review minor 11: the name is the organisation's label, so its month is in the
+  // organisation's language (DEFAULT_LOCALE; there is no per-organisation locale
+  // column), not in the language of whoever happened to create it.
+  it("names the month in the organisation's language, whatever the creator's language", async () => {
+    fake.respond = (op) =>
+      op.table === "users"
+        ? [{ id: ACTOR }]
+        : op.table === "positions"
+          ? [{ id: POS_A, name: "Destek Uzmanı", jobDescription: null }]
+          : op.table === "hiring_openings" && op.kind === "insert"
+            ? [{ id: OPENING }]
+            : op.table === "hiring_versions"
+              ? [{ id: VERSION }]
+              : [];
+    const englishCreator = { position: { kind: "existing", id: POS_A }, start: "BLANK", copyFrom: null, locale: "en" } as unknown as Parameters<typeof createOpening>[1];
+    await createOpening({ id: ACTOR, orgId: ORG }, englishCreator);
+    const insert = fake.ops.find((o) => o.table === "hiring_openings" && o.kind === "insert");
+    const month = new Intl.DateTimeFormat(DEFAULT_LOCALE === "tr" ? "tr-TR" : "en-GB", { month: "long", timeZone: ORG_TIMEZONE }).format(new Date());
+    expect((insert?.values as { name: string }).name).toBe(`Destek Uzmanı · ${month}`);
   });
 });

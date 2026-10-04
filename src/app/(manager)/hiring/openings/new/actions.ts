@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { managerLocale } from "@/i18n/manager-locale";
 import { POSITION_JOB_AD_MAX, POSITION_NAME_MAX } from "@/lib/library/positions";
 import { requireUser } from "@/server/session";
 import { HiringConflict, HiringInvalid, HiringNotFound } from "@/solutions/hiring/server/errors";
@@ -26,7 +25,7 @@ export async function createOpeningAction(input: z.input<typeof schema>): Promis
   if (!parsed.success) return { ok: false, code: "INVALID" };
   let result: CreateOpeningResult;
   try {
-    result = await createOpening(user, { ...parsed.data, locale: await managerLocale() });
+    result = await createOpening(user, parsed.data);
   } catch (error) {
     // A disabled creator or a row gone meanwhile: a sentence, never a raw error.
     if (error instanceof HiringNotFound || error instanceof HiringConflict || error instanceof HiringInvalid) return { ok: false, code: "FAILED" };

@@ -20,9 +20,10 @@ const ACTIVITY_FIELDS = new Set<string>([
 ]);
 
 /**
- * The loaded stages with the values a reload left unsaved laid over them, so
- * the editors open with what was typed while the replay is on its way to the
- * server (carry 7). Only known editable fields of items still on screen.
+ * The loaded stages with every value the save queue still holds laid over
+ * them (waiting, on its way, failed, or replayed after a reload), so an editor
+ * that opens again shows what was typed, not the older server text (carry 7,
+ * review Important 1). Only known editable fields of items still on screen.
  */
 export function withUnsaved(stages: ContentStage[], entries: SaveEntry[]): ContentStage[] {
   if (entries.length === 0) return stages;

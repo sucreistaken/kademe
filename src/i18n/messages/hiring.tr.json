@@ -270,6 +270,8 @@
     "readOnlyLive": "Bu, yayındaki v{live}; alanlar yalnızca okunabilir. Değiştirmek için aşağıdan Düzenlemeye başla.",
     "goToProblem": "Göster",
     "draftOfLive": "Taslak v{number}. Yayındaki v{live} adaylar için değişmeden kalır.",
-    "stageFull": "Bu aşamada 20 soru var; bir aşama en fazla bu kadar soru alır."
+    "stageFull": "Bu aşamada 20 soru var; bir aşama en fazla bu kadar soru alır.",
+    "unsavedFirst": "Önce yazdıkların kaydedilsin; kaydedilince yayınlayabilirsin.",
+    "opFailed": "Bu değişiklik sunucuya ulaşmadı. Sayfayı yenileyip tekrar dene."
   }
 }

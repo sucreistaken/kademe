@@ -78,7 +78,7 @@ async function main() {
   ok("position saved with İletişim 60 and Problem Çözme 20");
 
   console.log("\nOpening an opening");
-  const created = await openings.createOpening(user, { position: { kind: "existing", id: position.id }, start: "BLANK", copyFrom: null, locale: "tr" });
+  const created = await openings.createOpening(user, { position: { kind: "existing", id: position.id }, start: "BLANK", copyFrom: null });
   if (!created.ok) throw new Error(created.code);
   const id = created.openingId;
   const opening = await openings.loadOpening(org.id, id);
@@ -86,7 +86,7 @@ async function main() {
   check(created.next === `/hiring/openings/${id}/assessment/edit`, "a blank start opens the builder (C7)", created.next);
   const [v1] = await versions.versionsOf(org.id, id);
   check(v1?.number === 1 && v1.status === "DRAFT", "v1 is a draft");
-  const refused = await openings.createOpening(user, { position: { kind: "new", name: "İlansız", jobDescription: " " }, start: "AI", copyFrom: null, locale: "tr" });
+  const refused = await openings.createOpening(user, { position: { kind: "new", name: "İlansız", jobDescription: " " }, start: "AI", copyFrom: null });
   check(!refused.ok && refused.code === "JOB_AD_REQUIRED", "an AI start without a job ad is refused");
   const positionsNow = await db.select().from(s.positions).where(eq(s.positions.orgId, org.id));
   check(positionsNow.length === 1, "and it wrote nothing", `${positionsNow.length} positions`);
@@ -117,7 +117,7 @@ async function main() {
   );
   await versions.deleteStage(org.id, id, s2);
   await versions.deleteStage(org.id, id, s3);
-  const other = await openings.createOpening(user, { position: { kind: "existing", id: position.id }, start: "BLANK", copyFrom: null, locale: "tr" });
+  const other = await openings.createOpening(user, { position: { kind: "existing", id: position.id }, start: "BLANK", copyFrom: null });
   if (!other.ok) throw new Error(other.code);
   await expectCode("a stage of one opening cannot be edited through another", () => versions.updateStage(org.id, other.openingId, restored, { durationSeconds: 300 }), "NOT_FOUND");
 
@@ -174,7 +174,7 @@ async function main() {
     .update(s.hiringVersions)
     .set({ defaultLocale: "en", localeSet: ["tr", "en"], introTitle: intro, introBody: intro, proctorLevel: "STRICT", practiceEnabled: false, weightsEnabled: true, draftWeights: { [communication]: 75, [problem]: 25 } })
     .where(eq(s.hiringVersions.id, v1.id));
-  const copy = await openings.createOpening(user, { position: { kind: "existing", id: position.id }, start: "COPY", copyFrom: id, locale: "tr" });
+  const copy = await openings.createOpening(user, { position: { kind: "existing", id: position.id }, start: "COPY", copyFrom: id });
   if (!copy.ok) throw new Error(copy.code);
   check(copy.next === `/hiring/openings/${copy.openingId}/assessment/edit`, "a copied start opens the builder (C7)", copy.next);
   const [copyVersion] = await versions.versionsOf(org.id, copy.openingId);
@@ -230,13 +230,13 @@ async function main() {
     () => versions.insertActivity(org.id, id, restored, { ...emptyActivity("VIDEO"), competencyIds: [foreignCompetency.id] }),
     "COMPETENCY",
   );
-  const foreignPosition = await openings.createOpening(userB, { position: { kind: "existing", id: position.id }, start: "BLANK", copyFrom: null, locale: "tr" });
+  const foreignPosition = await openings.createOpening(userB, { position: { kind: "existing", id: position.id }, start: "BLANK", copyFrom: null });
   check(!foreignPosition.ok && foreignPosition.code === "POSITION_NOT_FOUND", "a position of another organisation is not found");
-  const foreignCopy = await openings.createOpening(userB, { position: { kind: "new", name: "B pozisyonu", jobDescription: "" }, start: "COPY", copyFrom: id, locale: "tr" });
+  const foreignCopy = await openings.createOpening(userB, { position: { kind: "new", name: "B pozisyonu", jobDescription: "" }, start: "COPY", copyFrom: id });
   check(!foreignCopy.ok && foreignCopy.code === "COPY_SOURCE_NOT_FOUND", "an opening of another organisation is not a copy source");
   await expectCode(
     "a user of another organisation cannot open an opening here",
-    () => openings.createOpening({ id: ownerB.id, orgId: org.id }, { position: { kind: "existing", id: position.id }, start: "BLANK", copyFrom: null, locale: "tr" }),
+    () => openings.createOpening({ id: ownerB.id, orgId: org.id }, { position: { kind: "existing", id: position.id }, start: "BLANK", copyFrom: null }),
     "NOT_FOUND",
   );
   const bOpenings = await db.select().from(s.hiringOpenings).where(eq(s.hiringOpenings.orgId, orgB.id));
@@ -247,7 +247,7 @@ async function main() {
   const spare = await createPosition(org.id, owner.id, { name: "Arşivlik pozisyon" });
   if (!spare.ok) throw new Error("spare position");
   await setPositionArchived(org.id, owner.id, spare.id, true);
-  const archivedStart = await openings.createOpening(user, { position: { kind: "existing", id: spare.id }, start: "BLANK", copyFrom: null, locale: "tr" });
+  const archivedStart = await openings.createOpening(user, { position: { kind: "existing", id: spare.id }, start: "BLANK", copyFrom: null });
   check(!archivedStart.ok && archivedStart.code === "POSITION_NOT_FOUND", "an archived position cannot start an opening");
   const teamwork = byKey("teamwork");
   const kept = await versions.addActivity(org.id, id, restored, "LONG_TEXT");
@@ -284,14 +284,14 @@ async function main() {
   );
 
   console.log("\nA closed opening is history");
-  const closing = await openings.createOpening(user, { position: { kind: "existing", id: position.id }, start: "BLANK", copyFrom: null, locale: "tr" });
+  const closing = await openings.createOpening(user, { position: { kind: "existing", id: position.id }, start: "BLANK", copyFrom: null });
   if (!closing.ok) throw new Error(closing.code);
   await db.update(s.hiringOpenings).set({ status: "CLOSED", closedAt: new Date() }).where(eq(s.hiringOpenings.id, closing.openingId));
   await expectCode("its draft cannot be edited", () => versions.addStage(org.id, closing.openingId), "CLOSED");
   await expectCode("no new draft can be opened", () => versions.ensureDraftVersion(org.id, closing.openingId), "CLOSED");
 
   console.log("\nA published version is frozen");
-  const frozen = await openings.createOpening(user, { position: { kind: "existing", id: position.id }, start: "COPY", copyFrom: id, locale: "tr" });
+  const frozen = await openings.createOpening(user, { position: { kind: "existing", id: position.id }, start: "COPY", copyFrom: id });
   if (!frozen.ok) throw new Error(frozen.code);
   const [fv1] = await versions.versionsOf(org.id, frozen.openingId);
   // Task 12 owns publishing; this marks the version published directly to exercise the frozen paths.
@@ -447,7 +447,7 @@ async function main() {
 
   console.log("\nTwo connections: publish takes the opening lock first (READ COMMITTED)");
   // Deterministic: every step waits for a state Postgres reports (pg_stat_activity, NOWAIT), never for a time.
-  const race = await openings.createOpening(user, { position: { kind: "existing", id: position.id }, start: "COPY", copyFrom: id, locale: "tr" });
+  const race = await openings.createOpening(user, { position: { kind: "existing", id: position.id }, start: "COPY", copyFrom: id });
   if (!race.ok) throw new Error(race.code);
   const [raceDraft] = await versions.versionsOf(org.id, race.openingId);
   const stagesBefore = (await loadVersionContent(org.id, raceDraft.id))!.stages.length;

@@ -25,7 +25,12 @@ export type SaverState =
   | { kind: "saving" }
   | { kind: "saved"; at: string }
   | { kind: "refused"; code: ActionCode; fields: string[]; targetId: string | null }
-  | { kind: "error"; retrying: boolean };
+  /**
+   * Something did not reach the server. `retryable`: typed values are kept and
+   * "Tekrar dene" sends them again; a structural change (add, move, delete,
+   * undo) is never repeated, so the bar offers no retry for it.
+   */
+  | { kind: "error"; retrying: boolean; retryable: boolean };
 
 export type SaveStorage = { load(): SaveEntry[]; save(entries: SaveEntry[]): void };
 
@@ -55,10 +60,13 @@ export function createSaveQueue(options: {
   let retryTimer: ReturnType<typeof setTimeout> | null = null;
   let autoRetried = false;
 
+  /** Every value the server does not have yet, newest per field: waiting, on its way, or failed. */
+  function entries(): SaveEntry[] {
+    return [...new Map<string, SaveEntry>([...failed, ...inflight, ...pending]).values()];
+  }
+
   function persist() {
-    if (!options.storage) return;
-    const all = new Map<string, SaveEntry>([...failed, ...inflight, ...pending]);
-    options.storage.save([...all.values()]);
+    options.storage?.save(entries());
   }
 
   function clearTimers() {
@@ -107,7 +115,7 @@ export function createSaveQueue(options: {
           failed.delete(key);
         }
       }
-      if (result === null) outcome = { kind: "error", retrying: false };
+      if (result === null) outcome = { kind: "error", retrying: false, retryable: true };
       else if (!result.ok) {
         if (outcome?.kind !== "error") outcome = { kind: "refused", code: result.code, fields: result.fields ?? [], targetId: target.id };
       } else if (!outcome || outcome.kind === "saved") outcome = { kind: "saved", at: result.at };
@@ -115,7 +123,7 @@ export function createSaveQueue(options: {
     persist();
     if (outcome?.kind === "error") {
       const retrying = !autoRetried;
-      options.onState({ kind: "error", retrying });
+      options.onState({ kind: "error", retrying, retryable: true });
       if (retrying) {
         autoRetried = true;
         retryTimer = setTimeout(() => void retry(), retryMs);
@@ -165,7 +173,7 @@ export function createSaveQueue(options: {
         options.onState(result.ok ? { kind: "saved", at: result.at } : { kind: "refused", code: result.code, fields: result.fields ?? [], targetId: null });
         return result;
       } catch {
-        options.onState({ kind: "error", retrying: false });
+        options.onState({ kind: "error", retrying: false, retryable: false });
         return { ok: false as const, code: "NETWORK" as const };
       }
     });
@@ -191,6 +199,7 @@ export function createSaveQueue(options: {
     retry,
     run,
     replay,
+    entries,
     unsaved: () => pending.size + inflight.size + failed.size > 0,
     dispose: () => {
       clearTimers();

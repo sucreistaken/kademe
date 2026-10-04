@@ -270,6 +270,8 @@
     "readOnlyLive": "This is the live v{live}; the fields are read-only. To change it, press Start editing below.",
     "goToProblem": "Show",
     "draftOfLive": "Draft v{number}. The live v{live} stays as it is for candidates.",
-    "stageFull": "This stage has 20 questions, the most a stage can hold."
+    "stageFull": "This stage has 20 questions, the most a stage can hold.",
+    "unsavedFirst": "What you typed is saved first; you can publish once it is.",
+    "opFailed": "This change did not reach the server. Reload the page and try again."
   }
 }

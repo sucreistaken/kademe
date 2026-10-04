@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { signUndo, verifyUndo } from "./undo-token";
 
 const SECRET = "test-secret";
-const base = { orgId: "o1", openingId: "op1", kind: "activity" as const, stageId: "s1", index: 2, payload: '{"a":1}' };
+const base = { orgId: "o1", openingId: "op1", versionId: "v2", kind: "activity" as const, stageId: "s1", index: 2, payload: '{"a":1}' };
 
 describe("undo tokens", () => {
   it("accepts exactly what the server handed out, within its lifetime", () => {
@@ -15,6 +15,7 @@ describe("undo tokens", () => {
     ["another place", { index: 0 }],
     ["another stage", { stageId: "s2" }],
     ["another opening", { openingId: "op2" }],
+    ["another draft version (v2's ticket in v3)", { versionId: "v3" }],
     ["another organisation", { orgId: "o2" }],
     ["the other kind", { kind: "stage" as const }],
   ])("refuses %s", (_label, change) => {

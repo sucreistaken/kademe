@@ -10,7 +10,8 @@ import type { ContentStage } from "@/solutions/hiring/rules/content";
 import { ColumnHeading, FieldError, invalidProps, ItemActions, type EditorBinding } from "./fields";
 
 const LANGS = ["tr", "en"] as const;
-export const VAULT_SECTION = "space-y-field rounded-xl bg-vault p-card text-vault-text [&_:focus-visible]:outline-vault-text";
+/** `vault` gives focus a light outline on the dark panel (globals.css, unlayered so it beats the global accent one). */
+export const VAULT_SECTION = "vault space-y-field rounded-xl bg-vault p-card text-vault-text";
 export const VAULT_FIELD = "border-vault-line bg-vault-box text-vault-text placeholder:text-vault-label";
 
 /**

@@ -1,7 +1,7 @@
 import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { auditLogs, hiringOpeningMembers, hiringOpenings, hiringVersions, positionCompetencies, positions, users } from "@/db/schema";
-import type { Locale } from "@/i18n/locale";
+import { DEFAULT_LOCALE } from "@/i18n/locale";
 import { ORG_TIMEZONE } from "@/lib/org-timezone";
 import { createPosition } from "@/server/library-write";
 import { isUuid } from "@/server/settings";
@@ -107,7 +107,6 @@ export type CreateOpeningInput = {
   position: { kind: "existing"; id: string } | { kind: "new"; name: string; jobDescription: string };
   start: "AI" | "COPY" | "BLANK";
   copyFrom: string | null;
-  locale: Locale;
 };
 
 export type CreateOpeningResult =
@@ -129,8 +128,13 @@ export function uniqueOpeningName(base: string, taken: readonly string[]): strin
   }
 }
 
-/** The month in the organisation's own time zone (ORG_TIMEZONE), in the manager's language. */
-const monthName = (locale: Locale) => new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "tr-TR", { month: "long", timeZone: ORG_TIMEZONE }).format(new Date());
+/**
+ * The month in the organisation's own time zone (ORG_TIMEZONE) and language.
+ * There is no per-organisation locale column: the organisation's language is
+ * DEFAULT_LOCALE, the one new assessment versions start in too. The name is a
+ * shared label, so it never follows the creator's own interface language.
+ */
+const monthName = () => new Intl.DateTimeFormat(DEFAULT_LOCALE === "en" ? "en-GB" : "tr-TR", { month: "long", timeZone: ORG_TIMEZONE }).format(new Date());
 
 /**
  * HIRING-UX 5.3. Everything is checked before anything is written, so a refused
@@ -188,7 +192,7 @@ export async function createOpening(user: { id: string; orgId: string }, input: 
       positionId = created.id;
     }
     // Two openings for one position in one month would read the same in the list: number the later ones.
-    const base = `${position.name} · ${monthName(input.locale)}`;
+    const base = `${position.name} · ${monthName()}`;
     const taken = await tx
       .select({ name: hiringOpenings.name })
       .from(hiringOpenings)

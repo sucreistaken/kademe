@@ -239,6 +239,13 @@ body {
   outline-offset: var(--focus-offset, 2px);
 }
 
+/* The team-only panel is near black: the accent ring would be about 2.7:1 there,
+   so focus on it is drawn in the panel's text colour (#F2F1ED on #1A1A17, about
+   15:1). Unlayered like the rule above, and more specific, so it wins. */
+.vault :focus-visible {
+  outline-color: var(--color-vault-text);
+}
+
 /* An input group is one control: the frame shows focus, not the borderless
    input inside it (shadcn's Command search field is built the same way). */
 :is([data-slot="input-group-control"], [data-slot="command-input"]):focus-visible {

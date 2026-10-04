@@ -1,4 +1,5 @@
 import { createHash, createHmac, randomUUID, timingSafeEqual } from "node:crypto";
+import { resolveSigningSecret } from "./signing-secret";
 import { createReadStream } from "node:fs";
 import { mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -177,24 +178,8 @@ function localRoot(): string {
     : path.resolve(process.cwd(), ".storage");
 }
 
-/**
- * The secret behind local playback URLs. Pure so the rule can be tested
- * without mutating NODE_ENV: a fixed development string is fine on a laptop
- * and a forgeable URL to every recording in production, so there it is an
- * error, not a default.
- */
-export function resolveSigningSecret(env: {
-  AUTH_SECRET?: string;
-  NODE_ENV?: string;
-}): string {
-  if (env.AUTH_SECRET) return env.AUTH_SECRET;
-  if (env.NODE_ENV === "production") {
-    throw new Error(
-      "[storage] AUTH_SECRET is not set. Local storage signs playback URLs with it, and production must not sign them with the development default.",
-    );
-  }
-  return "dev-only-storage-secret";
-}
+// Moved to a small module so other signers need not import storage; kept exported here for existing callers.
+export { resolveSigningSecret } from "./signing-secret";
 
 function signingSecret(): string {
   return resolveSigningSecret(process.env);

@@ -39,10 +39,10 @@ function sessionStore(openingId: string): SaveStorage {
  * The builder's save line (HIRING-UX 5.5): typed values are debounced and
  * sent through one queue (save-queue.ts); "Kaydedildi 14:02" comes from the
  * server's `at`. Leaving the tab sends what is waiting at once; anything a
- * reload still cut off is replayed on the next load, and `onReplay` hands
- * those values to the builder at once, before the server has them.
+ * reload still cut off is replayed on the next load (only where the draft can
+ * be edited); the builder shows queued values through `queue.entries()`.
  */
-export function useSaver(openingId: string, onReplay: (entries: SaveEntry[], done: Promise<void>) => void) {
+export function useSaver(openingId: string, editable: boolean, onReplay: () => void) {
   const [state, setState] = useState<SaverState>({ kind: "idle" });
   const [queue] = useState(() =>
     createSaveQueue({
@@ -57,8 +57,9 @@ export function useSaver(openingId: string, onReplay: (entries: SaveEntry[], don
   );
 
   useEffect(() => {
-    const replayed = queue.replay();
-    if (replayed.entries.length) onReplay(replayed.entries, replayed.done);
+    // A read-only view (a live version, a closed opening, a viewer's role) replays nothing and keeps
+    // what is stored for when the draft can be edited again.
+    if (editable && queue.replay().entries.length) onReplay();
     const leave = () => void queue.flush();
     const hidden = () => {
       if (document.visibilityState === "hidden") leave();
@@ -71,7 +72,7 @@ export function useSaver(openingId: string, onReplay: (entries: SaveEntry[], don
       void queue.flush();
       queue.dispose();
     };
-    // The queue and the opening live as long as the page; onReplay only sets builder state.
+    // The queue, the opening and the edit right live as long as the page; onReplay only bumps a counter.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queue]);
 

@@ -34,7 +34,6 @@ import type { EditorBinding } from "./fields";
 import { refusalKey } from "./refusal-copy";
 import { StageEditor } from "./stage-editor";
 import { withUnsaved } from "./overlay";
-import type { SaveEntry } from "./save-queue";
 import { useSaver } from "./use-saver";
 
 export const TYPE_ICON: Record<ActivityType, typeof Video> = {
@@ -101,14 +100,15 @@ export function Builder({
   const t = useMT("hiringBuilder");
   const editable = canEdit && mode === "draft";
   const [epoch, setEpoch] = useState(0);
-  // Values a reload left unsaved, shown at once (the editors reopen with them) until the replay is sent.
-  const [unsaved, setUnsaved] = useState<SaveEntry[]>([]);
-  const saver = useSaver(openingId, (entries, done) => {
-    setUnsaved(entries);
-    setEpoch((e) => e + 1);
-    void done.then(() => setUnsaved([]));
-  });
-  const stages = orderedStages({ stages: withUnsaved(unordered, unsaved) }).map((s) => ({ ...s, activities: orderedActivities(s) }));
+  // A reload's unsaved values are replayed into the queue (only where the draft can be edited);
+  // the editors reopen so they show them.
+  const saver = useSaver(openingId, editable, () => setEpoch((e) => e + 1));
+  // Editors are built from the loaded content plus every value the queue still holds (waiting,
+  // on its way, failed), so leaving an item and coming back never shows older text than was typed.
+  const stages = orderedStages({ stages: withUnsaved(unordered, editable ? saver.queue.entries() : []) }).map((s) => ({
+    ...s,
+    activities: orderedActivities(s),
+  }));
   const [selection, setSelection] = useState<Selection>(() => initialSelection(stages, initial));
   const [undo, setUndo] = useState<Undo>(null);
   const [context, setContext] = useState<"edit" | "undo">("edit");
@@ -239,12 +239,23 @@ export function Builder({
         : state.kind === "refused"
           ? t(refusalKey(state.code, state.fields, context))
           : state.kind === "error"
-            ? state.retrying
-              ? t("saveRetrying")
-              : t("saveFailed")
+            ? !state.retryable
+              ? t("opFailed")
+              : state.retrying
+                ? t("saveRetrying")
+                : t("saveFailed")
             : "";
   const firstProblem = problems[0] ?? null;
-  const publishReason = !canEdit ? t("readOnly") : (firstProblem?.text ?? null);
+  // Publishing waits for what was typed: the gate the server runs must see it (review minor 5).
+  const waiting = state.kind === "saving" || (state.kind === "error" && state.retryable);
+  const publishReason = !canEdit ? t("readOnly") : waiting ? t("unsavedFirst") : (firstProblem?.text ?? null);
+  const reasonIsProblem = canEdit && !waiting && firstProblem !== null;
+  /** "Yayınla": typed values are sent first; anything still unsaved keeps the draft from publishing. */
+  const publish = async (formData: FormData) => {
+    await queue.flush();
+    if (queue.unsaved()) return;
+    await publishOpeningAction(formData);
+  };
   const readOnlyNote = closed ? t("closedNote") : !canEdit ? t("readOnly") : mode === "live" ? t("readOnlyLive", { live: liveNumber ?? versionNumber }) : null;
 
   const tree = (
@@ -380,55 +391,61 @@ export function Builder({
           ) : null}
         </Card>
       ) : (
-        <div className="mt-section grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+        <div className="mt-section grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
           {tree}
-          <div
-            ref={editorRef}
-            className={cn(
-              "grid scroll-mt-4 content-start items-start gap-6 2xl:grid-cols-2",
-              // Read-only fields look settled, not like empty inputs waiting for text.
-              !editable && "[&_input:read-only]:bg-canvas [&_textarea:read-only]:bg-canvas [&_section.bg-vault_textarea:read-only]:bg-vault",
-            )}
-            data-editor={selectedActivity ? `${selectedActivity.id}:${selectedActivity.type}` : (selectedStage?.id ?? "")}
-          >
-            {selectedActivity && owner ? (
-              <ActivityEditor
-                key={`${selectedActivity.id}:${selectedActivity.type}:${epoch}`}
-                activity={selectedActivity}
-                index={activityIndex}
-                count={owner.activities.length}
-                competencies={competencies}
-                binding={binding("activity", selectedActivity.id)}
-                autoFocus={justAdded === selectedActivity.id}
-                onChangeType={async (type) => {
-                  setJustAdded(null);
-                  const res = await structural(() => saveActivityAction(openingId, selectedActivity.id, { type }));
-                  if (res.ok) {
-                    fieldFocus.current = { id: "activity-type", key: `${selectedActivity.id}:${type}` };
-                    setAnnouncement(t(`type${type}`));
-                  }
-                }}
-                onSetCompetencies={(ids) => {
-                  queue.edit({ kind: "competencies", id: selectedActivity.id }, "ids", ids);
-                  void queue.flush();
-                }}
-                onMove={(direction) => void moveActivity(selectedActivity.id, activityIndex, direction)}
-                onDelete={() => void removeActivity(owner, activityIndex)}
-              />
-            ) : selectedStage ? (
-              <StageEditor
-                key={`${selectedStage.id}:${epoch}`}
-                stage={selectedStage}
-                index={stageIndex}
-                count={stages.length}
-                binding={binding("stage", selectedStage.id)}
-                autoFocus={justAdded === selectedStage.id}
-                onMove={(direction) => void moveStage(selectedStage.id, stageIndex, direction)}
-                onDelete={() => void removeStage(selectedStage.id, stageIndex)}
-              />
-            ) : (
-              <p className="text-[14px] text-muted 2xl:col-span-2">{t("selectHint")}</p>
-            )}
+          {/* The two panels sit side by side once the editor itself is wide enough (container
+              query, HIRING-UX 5.5: three columns at a 1360 wide panel), not at a viewport width. */}
+          <div className="@container min-w-0">
+            <div
+              ref={editorRef}
+              className={cn(
+                "grid scroll-mt-4 content-start items-start gap-6 @min-[740px]:grid-cols-2",
+                // Read-only fields look settled, not like empty inputs waiting for text.
+                !editable &&
+                  "[&_input:read-only]:border-line [&_input:read-only]:bg-canvas [&_textarea:read-only]:resize-none [&_textarea:read-only]:border-line [&_textarea:read-only]:bg-canvas [&_.vault_textarea:read-only]:border-vault-line [&_.vault_textarea:read-only]:bg-vault",
+              )}
+              data-editor={selectedActivity ? `${selectedActivity.id}:${selectedActivity.type}` : (selectedStage?.id ?? "")}
+            >
+              {selectedActivity && owner ? (
+                <ActivityEditor
+                  key={`${selectedActivity.id}:${selectedActivity.type}:${epoch}`}
+                  activity={selectedActivity}
+                  index={activityIndex}
+                  count={owner.activities.length}
+                  competencies={competencies}
+                  binding={binding("activity", selectedActivity.id)}
+                  autoFocus={justAdded === selectedActivity.id}
+                  onChangeType={async (type) => {
+                    setJustAdded(null);
+                    const res = await structural(() => saveActivityAction(openingId, selectedActivity.id, { type }));
+                    if (res.ok) {
+                      fieldFocus.current = { id: "activity-type", key: `${selectedActivity.id}:${type}` };
+                      setAnnouncement(t(`type${type}`));
+                    }
+                    return res.ok;
+                  }}
+                  onSetCompetencies={(ids) => {
+                    queue.edit({ kind: "competencies", id: selectedActivity.id }, "ids", ids);
+                    void queue.flush();
+                  }}
+                  onMove={(direction) => void moveActivity(selectedActivity.id, activityIndex, direction)}
+                  onDelete={() => void removeActivity(owner, activityIndex)}
+                />
+              ) : selectedStage ? (
+                <StageEditor
+                  key={`${selectedStage.id}:${epoch}`}
+                  stage={selectedStage}
+                  index={stageIndex}
+                  count={stages.length}
+                  binding={binding("stage", selectedStage.id)}
+                  autoFocus={justAdded === selectedStage.id}
+                  onMove={(direction) => void moveStage(selectedStage.id, stageIndex, direction)}
+                  onDelete={() => void removeStage(selectedStage.id, stageIndex)}
+                />
+              ) : (
+                <p className="text-[14px] text-muted @min-[740px]:col-span-2">{t("selectHint")}</p>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -446,7 +463,7 @@ export function Builder({
             className={cn("flex min-h-8 min-w-0 flex-1 items-center gap-2 text-[13px] text-muted sm:min-w-[200px] sm:flex-none", !saveLine && "max-sm:sr-only")}
           >
             <span className={cn("tnum", (state.kind === "refused" || state.kind === "error") && "font-medium text-ink")}>{saveLine}</span>
-            {state.kind === "error" ? (
+            {state.kind === "error" && state.retryable ? (
               <Button variant="ghost" size="sm" className="font-medium text-ink underline decoration-line-strong underline-offset-4" onClick={() => void queue.retry()}>
                 {t("retry")}
               </Button>
@@ -456,14 +473,14 @@ export function Builder({
           <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-x-3 gap-y-1">
             {mode === "draft" ? (
               closed ? null : (
-                <form action={publishOpeningAction} className="flex max-w-full flex-wrap items-center justify-end gap-x-3 gap-y-1">
+                <form action={publish} className="flex max-w-full flex-wrap items-center justify-end gap-x-3 gap-y-1">
                   <input type="hidden" name="openingId" value={openingId} />
                   <input type="hidden" name="back" value="builder" />
                   {publishReason ? (
                     <DisabledReason id="builder-publish-why" className="max-w-[420px] text-right">
                       {publishReason}
-                      {problems.length > 1 && canEdit ? ` ${t("moreProblems", { count: problems.length - 1 })}` : ""}
-                      {canEdit && firstProblem?.href?.includes("?") ? (
+                      {reasonIsProblem && problems.length > 1 ? ` ${t("moreProblems", { count: problems.length - 1 })}` : ""}
+                      {reasonIsProblem && firstProblem?.href?.includes("?") ? (
                         <>
                           {" "}
                           <Link href={firstProblem.href} className="font-medium text-ink underline decoration-line-strong underline-offset-4 hover:decoration-ink">

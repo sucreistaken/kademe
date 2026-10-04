@@ -1,17 +1,19 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { resolveSigningSecret } from "@/lib/storage";
+import { resolveSigningSecret } from "@/lib/signing-secret";
 
 /**
  * "Geri al" hands a deleted stage or question back to the server. The client
  * only carries it: the server signs the exact payload string, its place and
- * its opening when it deletes, and accepts it back only unchanged, for the
- * same organisation and opening, within a few minutes (the strip shows 8
+ * its opening and draft version when it deletes, and accepts it back only
+ * unchanged, for the same organisation, opening and draft, within a few minutes (the strip shows 8
  * seconds). The restore then validates the payload again with the schema, so
  * nothing the browser could have edited reaches the draft.
  */
 export type UndoSubject = {
   orgId: string;
   openingId: string;
+  /** The draft the item was deleted from: a ticket never restores into a later draft. */
+  versionId: string;
   kind: "stage" | "activity";
   /** The stage a question goes back into; empty for a stage. */
   stageId: string;
@@ -25,7 +27,7 @@ const secretOf = (options?: { secret?: string }) => options?.secret ?? resolveSi
 
 function mac(subject: UndoSubject, expiresAt: number, secret: string): string {
   return createHmac("sha256", secret)
-    .update(JSON.stringify(["hiring-undo", subject.orgId, subject.openingId, subject.kind, subject.stageId, subject.index, expiresAt, subject.payload]))
+    .update(JSON.stringify(["hiring-undo", subject.orgId, subject.openingId, subject.versionId, subject.kind, subject.stageId, subject.index, expiresAt, subject.payload]))
     .digest("hex");
 }
 

@@ -53,6 +53,7 @@ const v = vi.hoisted(() => ({
   insertActivity: vi.fn<typeof Versions.insertActivity>(),
   setActivityCompetencies: vi.fn<typeof Versions.setActivityCompetencies>(),
   ensureDraftVersion: vi.fn<typeof Versions.ensureDraftVersion>(),
+  versionsOf: vi.fn<typeof Versions.versionsOf>(),
 }));
 vi.mock("@/solutions/hiring/server/versions", () => Object.fromEntries(Object.entries(v).map(([name, fn]) => [name, (...a: unknown[]) => (fn as (...x: unknown[]) => unknown)(...a)])));
 
@@ -88,7 +89,16 @@ beforeEach(() => {
   viewer = { status: "DRAFT", edit: true };
   editableOpening.mockClear();
   for (const fn of Object.values(v)) fn.mockReset();
+  draftNow("v2");
 });
+
+/** The opening's current draft: undo tickets are bound to it (review minor 4). */
+function draftNow(versionId: string | null) {
+  v.versionsOf.mockResolvedValue([
+    { id: "v1", number: 1, status: "PUBLISHED", publishedAt: new Date(), previewedAt: null },
+    ...(versionId ? [{ id: versionId, number: Number(versionId.slice(1)), status: "DRAFT" as const, publishedAt: null, previewedAt: null }] : []),
+  ]);
+}
 
 /** Every client-called write, with what it calls and the arguments after the organisation. */
 const WRITES = [
@@ -156,7 +166,7 @@ describe("undo", () => {
     f.set("openingId", over.openingId ?? OPENING);
     f.set("payload", payload);
     f.set("index", over.index ?? "1");
-    f.set("token", over.token ?? signUndo({ orgId: "o1", openingId: OPENING, kind: "stage", stageId: "", index: 1, payload: JSON.stringify(STAGE_PAYLOAD) }));
+    f.set("token", over.token ?? signUndo({ orgId: "o1", openingId: OPENING, versionId: "v2", kind: "stage", stageId: "", index: 1, payload: JSON.stringify(STAGE_PAYLOAD) }));
     return f;
   };
   const activityForm = (over: Partial<Record<"stageId" | "token", string>> = {}) => {
@@ -166,7 +176,7 @@ describe("undo", () => {
     f.set("stageId", over.stageId ?? STAGE);
     f.set("payload", payload);
     f.set("index", "0");
-    f.set("token", over.token ?? signUndo({ orgId: "o1", openingId: OPENING, kind: "activity", stageId: STAGE, index: 0, payload }));
+    f.set("token", over.token ?? signUndo({ orgId: "o1", openingId: OPENING, versionId: "v2", kind: "activity", stageId: STAGE, index: 0, payload }));
     return f;
   };
 
@@ -202,10 +212,10 @@ describe("undo", () => {
 
   it("validates a signed payload again with the schema", async () => {
     const bad = JSON.stringify({ ...STAGE_PAYLOAD, durationSeconds: 5 });
-    const token = signUndo({ orgId: "o1", openingId: OPENING, kind: "stage", stageId: "", index: 1, payload: bad });
+    const token = signUndo({ orgId: "o1", openingId: OPENING, versionId: "v2", kind: "stage", stageId: "", index: 1, payload: bad });
     expect(await restoreStageFormAction(stageForm({ payload: bad, token }))).toEqual({ ok: false, code: "INVALID", fields: ["durationSeconds"] });
     const broken = "{not json";
-    const token2 = signUndo({ orgId: "o1", openingId: OPENING, kind: "stage", stageId: "", index: 1, payload: broken });
+    const token2 = signUndo({ orgId: "o1", openingId: OPENING, versionId: "v2", kind: "stage", stageId: "", index: 1, payload: broken });
     expect(await restoreStageFormAction(stageForm({ payload: broken, token: token2 }))).toEqual({ ok: false, code: "INVALID", fields: [] });
     expect(v.insertStage).not.toHaveBeenCalled();
   });
@@ -219,6 +229,18 @@ describe("undo", () => {
   it("answers a full stage on undo with its own code", async () => {
     v.insertActivity.mockRejectedValue(new HiringConflict("STAGE_FULL"));
     expect(await restoreActivityFormAction(activityForm())).toEqual({ ok: false, code: "STAGE_FULL" });
+  });
+
+  it("refuses a ticket from another draft version: v2's delete never restores into v3", async () => {
+    draftNow("v3");
+    expect(await restoreActivityFormAction(activityForm())).toEqual({ ok: false, code: "UNDO_EXPIRED" });
+    expect(v.insertActivity).not.toHaveBeenCalled();
+  });
+
+  it("answers NO_DRAFT when the draft was published meanwhile", async () => {
+    draftNow(null);
+    expect(await restoreActivityFormAction(activityForm())).toEqual({ ok: false, code: "NO_DRAFT" });
+    expect(v.insertActivity).not.toHaveBeenCalled();
   });
 
   it("checks the right to edit before restoring", async () => {

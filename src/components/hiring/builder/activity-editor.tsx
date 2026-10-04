@@ -58,7 +58,8 @@ export function ActivityEditor({
   competencies: Array<{ id: string; name: string; archived: boolean }>;
   binding: EditorBinding;
   autoFocus: boolean;
-  onChangeType: (type: ActivityType) => void;
+  /** Resolves false when the server refused the new type; the select then shows the old one again. */
+  onChangeType: (type: ActivityType) => Promise<boolean>;
   onSetCompetencies: (ids: string[]) => void;
   onMove: (direction: -1 | 1) => void;
   onDelete: () => void;
@@ -152,8 +153,11 @@ export function ActivityEditor({
               value={a.type}
               disabled={!editable}
               onValueChange={(type) => {
+                const previous = a.type;
                 setA((current) => ({ ...current, type: type as ActivityType }));
-                onChangeType(type as ActivityType);
+                void onChangeType(type as ActivityType).then((ok) => {
+                  if (!ok) setA((current) => ({ ...current, type: previous }));
+                });
               }}
             >
               <SelectTrigger id="activity-type" className="w-full">
@@ -432,7 +436,7 @@ export function ActivityEditor({
                     );
                   })}
               </div>
-              {a.competencyIds.length >= MAX_COMPETENCIES_PER_ACTIVITY ? (
+              {editable && a.competencyIds.length >= MAX_COMPETENCIES_PER_ACTIVITY ? (
                 <p id="competency-limit" className="text-[13px] text-vault-label">
                   {t("competencyLimit")}
                 </p>
