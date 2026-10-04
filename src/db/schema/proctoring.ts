@@ -1,4 +1,5 @@
-import { bigint, index, integer, jsonb, pgTable, real, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { bigint, check, index, integer, jsonb, pgTable, real, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { attempts, sectionRuns } from "./assessment";
 import { aiRuns } from "./compliance";
 import {
@@ -53,7 +54,15 @@ export const proctorEvents = pgTable(
     attemptId: uuid("attempt_id")
       .notNull()
       .references(() => attempts.id, { onDelete: "cascade" }),
+    /** DEPRECATED: replaced by segment_kind + segment_run_id. Dropped by migration 0003. */
     sectionRunId: uuid("section_run_id").references(() => sectionRuns.id, { onDelete: "set null" }),
+    /**
+     * Which part of the attempt was running, as the solution names it
+     * ("section_run" for the exam). No foreign key: proctoring records, it does
+     * not need to know the solution's tables.
+     */
+    segmentKind: text("segment_kind"),
+    segmentRunId: uuid("segment_run_id"),
     sessionId: uuid("session_id").references(() => proctorSessions.id, { onDelete: "set null" }),
     /** Idempotency and interval closing. Server events get a generated one. */
     clientEventId: text("client_event_id").notNull(),
@@ -72,6 +81,7 @@ export const proctorEvents = pgTable(
   (t) => [
     uniqueIndex("proctor_event_client_id").on(t.attemptId, t.clientEventId),
     index("proctor_events_attempt_idx").on(t.attemptId, t.startedAt),
+    check("proctor_events_segment_pair", sql`(${t.segmentKind} IS NULL) = (${t.segmentRunId} IS NULL)`),
   ],
 );
 

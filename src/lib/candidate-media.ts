@@ -96,6 +96,7 @@ export async function createMediaAsset(
     .insert(mediaAssets)
     .values({
       orgId: ctx.assessment.orgId,
+      attemptId: run.attemptId,
       sectionRunId: run.id,
       itemResponseId: response.id,
       storageKey: "pending",

@@ -71,7 +71,7 @@ export type LinkProblem = "INVALID" | "NOT_YET" | "EXPIRED" | "COMPLETED";
 export type CandidateContext = {
   link: {
     id: string;
-    status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | "EXPIRED";
+    status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | "EXPIRED" | "RETAKE_AVAILABLE";
     expiresAt: Date;
     notBefore: Date | null;
     firstSeenIp: string | null;
@@ -127,11 +127,12 @@ export async function resolveToken(rawToken: string): Promise<ResolveResult> {
     assessment: {
       id: row.assessment.id,
       orgId: row.assessment.orgId,
-      blueprintId: row.assessment.blueprintId,
-      examName: row.assessment.blueprintName,
-      mode: row.assessment.mode,
+      // Non-null by the dual write; Task 7 moves this reader to exam_assessments.
+      blueprintId: row.assessment.blueprintId!,
+      examName: row.assessment.blueprintName!,
+      mode: row.assessment.mode!,
       claimedLevel: row.assessment.claimedLevel,
-      config: row.assessment.blueprintSnapshot,
+      config: row.assessment.blueprintSnapshot!,
     },
     candidate: {
       id: row.candidate.id,
@@ -212,7 +213,7 @@ export async function workingAttempt(assessmentId: string) {
   if (existing) return { attempt: existing, finished: !!existing.completedAt || !!existing.terminatedAt };
   const [created] = await db
     .insert(attempts)
-    .values({ assessmentId, attemptNumber: 1, isPrimary: true })
+    .values({ assessmentId, solution: "LANGUAGE_EXAM", attemptNumber: 1, isPrimary: true })
     .onConflictDoNothing()
     .returning();
   if (created) return { attempt: created, finished: false };
@@ -926,9 +927,10 @@ export async function closeSectionRun(runId: string, reason: "DONE" | "SUBMIT" |
     .from(attempts)
     .innerJoin(assessments, eq(assessments.id, attempts.assessmentId))
     .where(eq(attempts.id, run.attemptId));
-  const cfg = ctxRow.assessment.blueprintSnapshot;
+  // Non-null by the dual write; Task 7 moves this reader to exam_assessments.
+  const cfg = ctxRow.assessment.blueprintSnapshot!;
   const s = cfg.sections.find((x) => x.section === run.section)!;
-  const mode = ctxRow.assessment.mode;
+  const mode = ctxRow.assessment.mode!;
   const claimedLevel = ctxRow.assessment.claimedLevel;
 
   const responses = await db.select().from(itemResponses).where(eq(itemResponses.sectionRunId, runId));

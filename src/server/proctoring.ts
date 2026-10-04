@@ -195,6 +195,8 @@ async function upsertEvent(
     .values({
       attemptId,
       sectionRunId,
+      segmentKind: sectionRunId ? "section_run" : null,
+      segmentRunId: sectionRunId,
       sessionId,
       clientEventId: e.clientEventId,
       type: e.type,

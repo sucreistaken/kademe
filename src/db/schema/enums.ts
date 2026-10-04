@@ -29,7 +29,17 @@ export const itemOrigin = pgEnum("item_origin", ["SEED", "TEACHER", "AI"]);
 
 export const blueprintStatus = pgEnum("blueprint_status", ["DRAFT", "PUBLISHED", "ARCHIVED"]);
 
-export const linkStatus = pgEnum("link_status", ["NOT_STARTED", "IN_PROGRESS", "COMPLETED", "EXPIRED"]);
+/**
+ * Which solution an invitation belongs to. A new solution adds one value here
+ * and nothing else in the core schema.
+ */
+export const solution = pgEnum("solution", ["LANGUAGE_EXAM", "HIRING"]);
+
+/**
+ * RETAKE_AVAILABLE belongs to hiring: a retake reuses the same link and opens
+ * a new attempt. The language exam never produces it.
+ */
+export const linkStatus = pgEnum("link_status", ["NOT_STARTED", "IN_PROGRESS", "COMPLETED", "EXPIRED", "RETAKE_AVAILABLE"]);
 
 export const runCompletion = pgEnum("run_completion", [
   "PENDING",

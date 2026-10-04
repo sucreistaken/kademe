@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { assessmentLinks, assessments, auditLogs, candidates, examBlueprints, messageOutbox } from "@/db/schema";
+import { assessmentLinks, assessments, auditLogs, candidates, examAssessments, examBlueprints, messageOutbox } from "@/db/schema";
 import { mintToken } from "@/lib/auth";
 import type { Cefr } from "@/lib/exam/types";
 
@@ -53,6 +53,8 @@ export async function createInvitation(input: InviteInput): Promise<InviteResult
       .values({
         orgId: input.orgId,
         candidateId: candidate.id,
+        solution: "LANGUAGE_EXAM",
+        // Dual write until migration 0003 drops these columns (Task 8).
         blueprintId: blueprint.id,
         blueprintName: blueprint.name,
         blueprintSnapshot: blueprint.config,
@@ -62,6 +64,14 @@ export async function createInvitation(input: InviteInput): Promise<InviteResult
         invitedBy: input.invitedBy,
       })
       .returning();
+    await tx.insert(examAssessments).values({
+      assessmentId: assessment.id,
+      blueprintId: blueprint.id,
+      blueprintName: blueprint.name,
+      blueprintSnapshot: blueprint.config,
+      mode: blueprint.mode,
+      claimedLevel: blueprint.mode === "LEVEL_VERIFICATION" ? input.claimedLevel : null,
+    });
     await tx.insert(assessmentLinks).values({
       assessmentId: assessment.id,
       tokenHash: token.hash,

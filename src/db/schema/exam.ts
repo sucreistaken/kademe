@@ -1,5 +1,6 @@
+import { sql } from "drizzle-orm";
 import {
-
+  check,
   index,
   integer,
   jsonb,
@@ -7,14 +8,13 @@ import {
   real,
   text,
   timestamp,
-
   uuid,
 } from "drizzle-orm/pg-core";
 import type { BlueprintConfig } from "@/lib/exam/blueprint";
 import type { GradingProposal } from "@/lib/exam/grading";
 import type { ComputedResult } from "@/lib/exam/result";
 import type { ItemContent, ItemKey, ItemRubric } from "@/lib/exam/types";
-import { attempts, itemResponses } from "./assessment";
+import { assessments, attempts, itemResponses } from "./assessment";
 import { aiRuns } from "./compliance";
 import {
   blueprintStatus,
@@ -55,6 +55,35 @@ export const examBlueprints = pgTable(
     archivedAt: timestamp("archived_at", { withTimezone: true }),
   },
   (t) => [index("blueprints_org_idx").on(t.orgId)],
+);
+
+/**
+ * The language exam's half of an invitation. The blueprint is copied here at
+ * invite time, so the exam this student takes never changes under them. The
+ * core `assessments` row knows nothing about this table.
+ */
+export const examAssessments = pgTable(
+  "exam_assessments",
+  {
+    assessmentId: uuid("assessment_id")
+      .primaryKey()
+      .references(() => assessments.id, { onDelete: "cascade" }),
+    blueprintId: uuid("blueprint_id")
+      .notNull()
+      .references(() => examBlueprints.id, { onDelete: "restrict" }),
+    blueprintName: text("blueprint_name").notNull(),
+    blueprintSnapshot: jsonb("blueprint_snapshot").$type<BlueprintConfig>().notNull(),
+    mode: examMode("mode").notNull(),
+    /** The level the student says they hold. Required for a verification exam. */
+    claimedLevel: cefrLevel("claimed_level"),
+  },
+  (t) => [
+    index("exam_assessments_blueprint_idx").on(t.blueprintId),
+    check(
+      "claimed_for_verification",
+      sql`${t.mode} <> 'LEVEL_VERIFICATION' OR ${t.claimedLevel} IS NOT NULL`,
+    ),
+  ],
 );
 
 /** A reading passage or a listening clip that several items share. */

@@ -280,7 +280,8 @@ export async function recomputeResult(attemptId: string) {
     .innerJoin(assessments, eq(assessments.id, attempts.assessmentId))
     .where(eq(attempts.id, attemptId));
   if (!row) return;
-  const cfg = row.assessment.blueprintSnapshot;
+  // Non-null by the dual write; Task 7 moves this reader to exam_assessments.
+  const cfg = row.assessment.blueprintSnapshot!;
   const runs = await db.select().from(sectionRuns).where(eq(sectionRuns.attemptId, attemptId));
   const runIds = runs.map((r) => r.id);
   const gradings = runIds.length
@@ -342,7 +343,7 @@ export async function recomputeResult(attemptId: string) {
     ) as Partial<Record<Section, Cefr>>,
   };
   const computed = computeResult({
-    mode: row.assessment.mode,
+    mode: row.assessment.mode!,
     claimed: row.assessment.claimedLevel,
     sections: evidence,
     rules: cfg.passRules,
@@ -401,7 +402,7 @@ export async function finalizeResult(attemptId: string, userId: string | null, r
   const [att] = await db.select().from(attempts).where(eq(attempts.id, attemptId));
   // Automatic release only for a clean attempt: a teacher releases the rest by hand.
   const release =
-    (assessment?.config.autoRelease ?? false) &&
+    (assessment?.config?.autoRelease ?? false) &&
     att?.integrityOutcome !== "INVALID" &&
     att?.integritySummary?.level !== "ATTENTION" &&
     !att?.terminatedAt;

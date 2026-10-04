@@ -105,15 +105,16 @@ export async function listStudents(orgId: string): Promise<StudentRow[]> {
     else if (attempt?.startedAt) status = "IN_EXAM";
     else if (link?.status === "EXPIRED") status = "EXPIRED";
     else status = "NOT_STARTED";
-    const proctored = assessment.blueprintSnapshot.proctoring.preset !== "OFF";
+    // Non-null by the dual write; Task 7 moves this reader to exam_assessments.
+    const proctored = assessment.blueprintSnapshot!.proctoring.preset !== "OFF";
     const integrity = !proctored ? "NONE" : attempt?.integritySummary?.level ?? "PENDING";
     const final = result?.status === "FINAL";
     return {
       assessmentId: assessment.id,
       name: candidate.fullName ?? "",
       email: candidate.email ?? "",
-      examName: assessment.blueprintName,
-      mode: assessment.mode,
+      examName: assessment.blueprintName!,
+      mode: assessment.mode!,
       claimed: assessment.claimedLevel,
       status,
       level: ((final ? result?.finalOverall : result?.computed?.overall) ?? null) as Cefr | null,
@@ -192,7 +193,8 @@ export async function loadResultView(orgId: string, assessmentId: string) {
     .where(and(eq(assessments.id, assessmentId), eq(assessments.orgId, orgId)));
   if (!head) return null;
   const attempt = head.attempt;
-  const cfg = head.assessment.blueprintSnapshot;
+  // Non-null by the dual write; Task 7 moves this reader to exam_assessments.
+  const cfg = head.assessment.blueprintSnapshot!;
   const runs = attempt
     ? await db.select().from(sectionRuns).where(eq(sectionRuns.attemptId, attempt.id)).orderBy(asc(sectionRuns.orderIndex))
     : [];
@@ -239,7 +241,7 @@ export async function loadResultView(orgId: string, assessmentId: string) {
   const nameOf = Object.fromEntries(people.map((p) => [p.id, p.name]));
 
   return {
-    assessment: head.assessment,
+    assessment: { ...head.assessment, blueprintSnapshot: cfg, blueprintName: head.assessment.blueprintName!, mode: head.assessment.mode! },
     candidate: head.candidate,
     attempt,
     result: head.result,

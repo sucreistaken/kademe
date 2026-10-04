@@ -10,7 +10,8 @@ import {
   jsonb,
   index,
   real,
-  check,
+  foreignKey,
+  unique,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import type { BlueprintConfig } from "@/lib/exam/blueprint";
@@ -19,6 +20,7 @@ import type { ItemAnswer, ItemSnapshot, Presentation } from "@/lib/exam/types";
 import { organizations, users } from "./org";
 import { examBlueprints, items } from "./exam";
 import {
+  solution,
   linkStatus,
   runCompletion,
   mediaStatus,
@@ -69,13 +71,17 @@ export const assessments = pgTable(
     candidateId: uuid("candidate_id")
       .notNull()
       .references(() => candidates.id, { onDelete: "cascade" }),
-    blueprintId: uuid("blueprint_id")
-      .notNull()
-      .references(() => examBlueprints.id, { onDelete: "restrict" }),
-    blueprintName: text("blueprint_name").notNull(),
-    blueprintSnapshot: jsonb("blueprint_snapshot").$type<BlueprintConfig>().notNull(),
-    mode: examMode("mode").notNull(),
-    /** The level the student says they hold. Required for a verification exam. */
+    /** Copied onto every attempt; decides which solution's endpoints answer. */
+    solution: solution("solution").notNull(),
+    /** DEPRECATED: moved to exam_assessments. Dropped by migration 0003. */
+    blueprintId: uuid("blueprint_id").references(() => examBlueprints.id, { onDelete: "restrict" }),
+    /** DEPRECATED: moved to exam_assessments. Dropped by migration 0003. */
+    blueprintName: text("blueprint_name"),
+    /** DEPRECATED: moved to exam_assessments. Dropped by migration 0003. */
+    blueprintSnapshot: jsonb("blueprint_snapshot").$type<BlueprintConfig>(),
+    /** DEPRECATED: moved to exam_assessments. Dropped by migration 0003. */
+    mode: examMode("mode"),
+    /** DEPRECATED: moved to exam_assessments. Dropped by migration 0003. */
     claimedLevel: cefrLevel("claimed_level"),
     /** Interface language. The exam content itself is German. */
     locale: locale("locale").notNull().default("tr"),
@@ -89,10 +95,8 @@ export const assessments = pgTable(
   (t) => [
     index("assessments_org_idx").on(t.orgId),
     index("assessments_candidate_idx").on(t.candidateId),
-    check(
-      "claimed_for_verification",
-      sql`${t.mode} <> 'LEVEL_VERIFICATION' OR ${t.claimedLevel} IS NOT NULL`,
-    ),
+    /** Target of the composite key on attempts, so an attempt's solution always matches its invitation. */
+    unique("assessments_id_solution_unique").on(t.id, t.solution),
   ],
 );
 
@@ -136,8 +140,7 @@ export const assessmentLinks = pgTable(
 );
 
 /**
- * The single sitting of an exam. One per assessment: a second try is a new
- * invitation, so every attempt has exactly one result and one evidence trail.
+ * One sitting. The language exam allows exactly one per invitation (partial unique index); hiring retakes add attempt 2, 3 on the same invitation.
  */
 export const attempts = pgTable(
   "attempts",
@@ -146,6 +149,8 @@ export const attempts = pgTable(
     assessmentId: uuid("assessment_id")
       .notNull()
       .references(() => assessments.id, { onDelete: "cascade" }),
+    /** Copied from the assessment; the composite key below keeps the two equal. */
+    solution: solution("solution").notNull(),
     attemptNumber: integer("attempt_number").notNull().default(1),
     isPrimary: boolean("is_primary").notNull().default(true),
     createdReason: text("created_reason"),
@@ -168,8 +173,18 @@ export const attempts = pgTable(
       .defaultNow(),
   },
   (t) => [
-    uniqueIndex("one_attempt_per_assessment").on(t.assessmentId),
+    /** The language exam keeps "one attempt per invitation" in the database. */
+    uniqueIndex("one_attempt_per_exam_assessment")
+      .on(t.assessmentId)
+      .where(sql`solution = 'LANGUAGE_EXAM'`),
+    /** Hiring retakes open attempt 2, 3, ... on the same invitation. */
+    uniqueIndex("attempt_number_per_assessment").on(t.assessmentId, t.attemptNumber),
     index("attempts_assessment_idx").on(t.assessmentId),
+    foreignKey({
+      name: "attempts_assessment_solution_fk",
+      columns: [t.assessmentId, t.solution],
+      foreignColumns: [assessments.id, assessments.solution],
+    }).onDelete("cascade"),
   ],
 );
 
@@ -261,6 +276,11 @@ export const mediaAssets = pgTable(
     orgId: uuid("org_id")
       .notNull()
       .references(() => organizations.id, { onDelete: "cascade" }),
+    /** Retention, transcription and salvage find a recording's attempt through this. */
+    attemptId: uuid("attempt_id")
+      .notNull()
+      .references(() => attempts.id, { onDelete: "cascade" }),
+    /** The exam's own link: which section recorded it. Null for other solutions. */
     sectionRunId: uuid("section_run_id").references(() => sectionRuns.id, {
       onDelete: "cascade",
     }),
@@ -284,6 +304,7 @@ export const mediaAssets = pgTable(
   },
   (t) => [
     index("media_run_idx").on(t.sectionRunId),
+    index("media_attempt_idx").on(t.attemptId),
     index("media_purge_idx").on(t.purgeAfter),
   ],
 );

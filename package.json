@@ -23,6 +23,7 @@
     "db:reset": "tsx scripts/db-reset.ts",
     "bank:tts": "tsx scripts/bank-tts.ts",
     "verify:exam": "tsx scripts/verify-exam-flow.ts",
+    "verify:migration": "tsx scripts/verify-platform-migration.ts",
     "verify:grading": "tsx scripts/verify-grading.ts",
     "verify:proctor": "tsx scripts/verify-proctor.ts",
     "prebuild": "tsx scripts/fetch-proctor-assets.ts",

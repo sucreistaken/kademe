@@ -48,7 +48,7 @@ async function main() {
   const bytes = new Uint8Array(Buffer.concat(chunks));
   const [asset] = await db
     .insert(s.mediaAssets)
-    .values({ orgId: row.a.orgId, sectionRunId: row.run.id, itemResponseId: row.r.id, storageKey: "pending", mime: audio.mime, status: "READY", bytes: bytes.byteLength, durationMs: audio.durationMs ?? 30000, parts: [] })
+    .values({ orgId: row.a.orgId, attemptId: row.run.attemptId, sectionRunId: row.run.id, itemResponseId: row.r.id, storageKey: "pending", mime: audio.mime, status: "READY", bytes: bytes.byteLength, durationMs: audio.durationMs ?? 30000, parts: [] })
     .returning();
   const key = `media/${row.a.orgId}/${row.a.id}/${row.run.id}/${asset.id}.${audio.mime === "audio/mpeg" ? "mp3" : "wav"}`;
   await getStorage().putObject(key, audio.mime, bytes);
