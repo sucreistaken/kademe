@@ -40,12 +40,17 @@ describe("Kademe tokens keep their meaning", () => {
     expect(theme[name]).toBe(value);
   });
 
-  it("uses the 8/12/16 radius scale from HIRING-UX 8.3", () => {
-    expect(theme["--radius-sm"]).toBe("8px");
-    expect(theme["--radius-md"]).toBe("10px");
-    expect(theme["--radius-lg"]).toBe("12px");
-    expect(theme["--radius-xl"]).toBe("16px");
-    expect(root["--radius"]).toBe("0.75rem");
+  it("names the radius steps by shadcn role, with the HIRING-UX 8.3 pixels", () => {
+    // shadcn radix-nova draws fields, menus and buttons with rounded-lg, cards
+    // and dialogs with rounded-xl, items inside fields and menus with
+    // rounded-md. The names follow those roles; the pixels per role are the
+    // ones HIRING-UX 8.3 fixed (8 item, 10 button and field, 12 card, 16 sheet).
+    expect(root["--radius"]).toBe("0.625rem");
+    expect(theme["--radius-sm"]).toBe("6px");
+    expect(theme["--radius-md"]).toBe("8px");
+    expect(theme["--radius-lg"]).toBe("10px");
+    expect(theme["--radius-xl"]).toBe("12px");
+    expect(theme["--radius-2xl"]).toBe("16px");
   });
 
   it("never lets a shadcn mapping redefine a Kademe colour", () => {
@@ -104,6 +109,12 @@ describe("shadcn variables carry the HIRING-UX 8.2 values", () => {
     ]) {
       expect(inline[utility], utility).toBe(variable);
     }
+  });
+
+  it("does not let test fixtures leak utilities into the build", () => {
+    // Test files hold class names as fixtures (normalizer inputs); Tailwind
+    // would otherwise turn them into real CSS.
+    expect(css).toContain('@source not "../**/*.test.ts";');
   });
 
   it("keeps dark: inert", () => {
