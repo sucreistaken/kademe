@@ -6,6 +6,7 @@ import { Finished } from "@/components/candidate/Finished";
 import { LinkProblem } from "@/components/candidate/LinkProblem";
 import { loadState, progressSummary, resolveExamToken } from "@/lib/exam-flow";
 import { stepPath } from "@/lib/candidate-routes";
+import { solutionPage, type PageSearchParams } from "@/lib/candidate-pages";
 import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 
 export const dynamic = "force-dynamic";
@@ -15,8 +16,16 @@ export const dynamic = "force-dynamic";
  * treats that "problem" as the success case, and it stays the page a student
  * comes back to for the result.
  */
-export default async function DonePage({ params }: { params: Promise<{ token: string }> }) {
+export default async function DonePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ token: string }>;
+  searchParams?: PageSearchParams;
+}) {
   const { token } = await params;
+  const hosted = await solutionPage(token, "done", searchParams);
+  if (hosted !== undefined) return hosted;
   const resolved = await resolveExamToken(token);
   const ctx = resolved.ctx;
   const locale = (ctx?.locale as Locale | undefined) ?? DEFAULT_LOCALE;

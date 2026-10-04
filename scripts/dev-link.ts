@@ -1,12 +1,14 @@
 /**
  * Mints a fresh student invitation for development and prints its link.
  *
- * Run with:
- *   pnpm dev:link                          # placement exam
- *   pnpm dev:link --claimed B1             # B1 verification exam
- *   pnpm dev:link --name "Ayşe Demir" --lang en
+ * Run with an explicit working database (it refuses the shared `kademe`
+ * database, any other host and any port but 5434):
+ *   DATABASE_URL=postgresql://kademe:kademe@localhost:5434/kademe_platform pnpm dev:link
+ *   DATABASE_URL=... pnpm dev:link --claimed B1             # B1 verification exam
+ *   DATABASE_URL=... pnpm dev:link --name "Ayşe Demir" --lang en
  */
 import "dotenv/config";
+import { refuseUnlessWorkingDb } from "../src/db/working-db-guard";
 
 function arg(name: string): string | undefined {
   const i = process.argv.indexOf(`--${name}`);
@@ -42,7 +44,14 @@ async function main() {
   process.exit(0);
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+// Checked before the database module is even loaded: nothing connects to a refused url.
+const refusal = refuseUnlessWorkingDb(process.env.DATABASE_URL);
+if (refusal) {
+  console.error(`Refusing: ${refusal}`);
+  process.exit(2);
+} else {
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}

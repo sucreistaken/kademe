@@ -3,6 +3,7 @@ import { CandidateIntl } from "@/components/candidate/Intl";
 import { ORG_TIMEZONE } from "@/lib/org-timezone";
 import { InfoForm } from "@/components/candidate/InfoForm";
 import { supportedLocales } from "@/lib/candidate-context";
+import { solutionPage } from "@/lib/candidate-pages";
 import { enter, headerMeta, type SearchParams } from "@/app/a/[token]/shared";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +16,8 @@ export default async function CandidateInfoPage({
   searchParams: SearchParams;
 }) {
   const { token } = await params;
+  const hosted = await solutionPage(token, "info", searchParams);
+  if (hosted !== undefined) return hosted;
   const entry = await enter(token, "INFO", searchParams, `/a/${token}/info`);
   if (entry.kind === "problem") return entry.node;
 

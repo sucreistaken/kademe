@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { db } from "@/db";
-import { messageOutbox } from "@/db/schema";
+import { candidateRequests, messageOutbox } from "@/db/schema";
 import { candidateJson } from "@/lib/candidate-safe";
 import { message, readJson, withSolution } from "@/lib/candidate-api";
 
@@ -15,6 +15,11 @@ type Body = { area?: string; message?: string };
  * sent the link, or the org fallback). The candidate's own address goes in the
  * body so the team can reply; it used to be the recipient, which mailed the
  * complaint back to the person who made it.
+ *
+ * The mail keeps the exam's wording for exam invitations and reads neutrally
+ * for every other solution, named by its label (ruling C28). "Yeni link iste"
+ * (area LINK) also files a NEW_LINK candidate request where the solution reads
+ * them (ruling C7), so the team sees it next to the candidate.
  */
 export async function POST(
   req: NextRequest,
@@ -28,19 +33,35 @@ export async function POST(
       const area = (body?.area ?? "GENERAL").slice(0, 40);
       const note = (body?.message ?? "").slice(0, 2000);
 
+      const title = await solution.candidate.title(ctx);
+      const exam = solution.dbKind === "LANGUAGE_EXAM";
+      const person = exam ? "Öğrenci" : "Aday";
+      const assessmentLine = exam ? `Sınav: ${title}` : `Değerlendirme: ${solution.label.tr} · ${title}`;
+
       await db.insert(messageOutbox).values({
         orgId: ctx.assessment.orgId,
         kind: "STUDENT_PROBLEM",
         toEmail: ctx.contactEmail ?? "okul@kademe.local",
-        subject: `Öğrenci sorun bildirdi: ${ctx.candidate.fullName ?? "isimsiz"} (${area})`,
+        subject: `${person} sorun bildirdi: ${ctx.candidate.fullName ?? "isimsiz"} (${area})`,
         body:
-          `Öğrenci: ${ctx.candidate.fullName ?? "-"} <${ctx.candidate.email ?? "-"}>\n` +
-          `Sınav: ${await solution.candidate.title(ctx)}\n` +
+          `${person}: ${ctx.candidate.fullName ?? "-"} <${ctx.candidate.email ?? "-"}>\n` +
+          `${assessmentLine}\n` +
           `Cevap adresi: ${ctx.candidate.email ?? "bilinmiyor"}\n` +
           `Alan: ${area}\n` +
           `Mesaj: ${note || "-"}\n` +
           `Tarayıcı: ${request.headers.get("user-agent") ?? "-"}`,
       });
+
+      // The outbox row alone reaches nobody until mail exists. `note` is at most
+      // 2000 UTF-16 units, so it always fits candidate_requests' 2000 CHECK.
+      if (area === "LINK" && solution.accommodationRequests) {
+        await db.insert(candidateRequests).values({
+          orgId: ctx.assessment.orgId,
+          assessmentId: ctx.assessment.id,
+          kind: "NEW_LINK",
+          message: note || null,
+        });
+      }
 
       return candidateJson({
         received: true,

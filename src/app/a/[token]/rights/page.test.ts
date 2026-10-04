@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
-import type { ReactElement, ReactNode } from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createElement, type ReactElement, type ReactNode } from "react";
 
 // The page resolves the token through a mock; nothing may reach the database.
 vi.mock("@/db", () => ({
@@ -11,14 +11,21 @@ vi.mock("@/lib/candidate-context", () => ({
   resolveToken: (...args: unknown[]) => resolveToken(...args),
 }));
 
-// Stubbed registry: the exam is live, hiring is registered but not live yet.
+// Stubbed registry: the exam is live and serves its invitations; hiring is live only in the tests that say so.
+const serving = vi.hoisted(() => ({ hiring: false }));
 vi.mock("@/solutions/registry.server", () => ({
-  candidateSolution: (kind: string) => (kind === "LANGUAGE_EXAM" ? { key: "language-exam", dbKind: kind, candidateFlowLive: true } : null),
+  servingSolution: async (ctx: { assessment: { solution: string } }) =>
+    ctx.assessment.solution === "LANGUAGE_EXAM"
+      ? { key: "language-exam", dbKind: "LANGUAGE_EXAM", candidateFlowLive: true, accommodationRequests: false }
+      : serving.hiring
+        ? { key: "hiring", dbKind: "HIRING", candidateFlowLive: true, accommodationRequests: true }
+        : null,
 }));
 
 import CandidateRightsPage from "./page";
 import { RightsForm } from "@/components/candidate/RightsForm";
 import { LinkProblem } from "@/components/candidate/LinkProblem";
+import { UnknownLink } from "@/components/candidate/UnknownLink";
 import type { CandidateContext } from "@/lib/candidate-context";
 
 const TOKEN = "t".repeat(43);
@@ -38,10 +45,21 @@ function ctx(solution: CandidateContext["assessment"]["solution"], status: Candi
   };
 }
 
-async function render(resolved: unknown) {
+async function render(resolved: unknown, search: Record<string, string> = {}) {
   resolveToken.mockResolvedValueOnce(resolved);
-  return (await CandidateRightsPage({ params: Promise.resolve({ token: TOKEN }) })) as ReactElement;
+  return (await CandidateRightsPage({ params: Promise.resolve({ token: TOKEN }), searchParams: Promise.resolve(search) })) as ReactElement;
 }
+
+function find(node: ReactNode, type: unknown): ReactElement[] {
+  if (!node || typeof node !== "object") return [];
+  if (Array.isArray(node)) return node.flatMap((child) => find(child, type));
+  const element = node as ReactElement<{ children?: ReactNode }>;
+  return [...(element.type === type ? [element] : []), ...find(element.props?.children, type)];
+}
+
+beforeEach(() => {
+  serving.hiring = false;
+});
 
 function contains(node: ReactNode, type: unknown): boolean {
   if (!node || typeof node !== "object") return false;
@@ -60,7 +78,8 @@ describe("candidate rights page", () => {
     const hiring = ctx("HIRING", status);
     const other = await render(problem ? { ok: false, problem, ctx: hiring } : { ok: true, ctx: hiring });
     expect(other).toEqual(unknown);
-    expect(contains(other, LinkProblem)).toBe(true);
+    // Ruling C19: the one unknown-link card, not a copy of it.
+    expect(other).toEqual(createElement(UnknownLink, { token: TOKEN }));
     expect(contains(other, RightsForm)).toBe(false);
   });
 
@@ -69,5 +88,27 @@ describe("candidate rights page", () => {
     const page = await render({ ok: false, problem: "EXPIRED", ctx: exam });
     expect(contains(page, RightsForm)).toBe(true);
     expect(contains(page, LinkProblem)).toBe(false);
+  });
+
+  it("offers the exam's candidates only the three data rights", async () => {
+    const page = await render({ ok: true, ctx: ctx("LANGUAGE_EXAM", "NOT_STARTED") });
+    expect(find(page, RightsForm)[0].props).toMatchObject({ kinds: ["ACCESS", "COPY", "DELETE"], initialKind: null });
+  });
+
+  it("does not preselect an accommodation request where the solution does not read them", async () => {
+    const page = await render({ ok: true, ctx: ctx("LANGUAGE_EXAM", "NOT_STARTED") }, { type: "accommodation" });
+    expect(find(page, RightsForm)[0].props).toMatchObject({ kinds: ["ACCESS", "COPY", "DELETE"], initialKind: null });
+  });
+
+  it("offers a live hiring invitation the accommodation request, preselected from ?type=accommodation", async () => {
+    serving.hiring = true;
+    const page = await render({ ok: true, ctx: ctx("HIRING", "NOT_STARTED") }, { type: "accommodation" });
+    expect(find(page, RightsForm)[0].props).toMatchObject({ kinds: ["ACCOMMODATION", "ACCESS", "COPY", "DELETE"], initialKind: "ACCOMMODATION" });
+  });
+
+  it("keeps a served hiring invitation's rights form on a closed link, with nothing preselected by default", async () => {
+    serving.hiring = true;
+    const page = await render({ ok: false, problem: "EXPIRED", ctx: ctx("HIRING", "EXPIRED") });
+    expect(find(page, RightsForm)[0].props).toMatchObject({ initialKind: null });
   });
 });

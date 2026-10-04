@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CandidateColumn } from "@/components/candidate/Shell";
 import { apiSend } from "@/lib/client/api";
-import { stepPath } from "@/lib/candidate-routes";
+import { nextPath } from "@/lib/candidate-routes";
 import type { CandidateState } from "@/lib/exam-flow";
 
 type InfoValues = { fullName: string; email: string; phone: string; location: string };
@@ -43,8 +43,8 @@ export function InfoForm({
     setBusy(true);
     setError(null);
     try {
-      const next = await apiSend<CandidateState>(token, "/info", form);
-      router.push(stepPath(token, next));
+      const next = await apiSend<CandidateState & { path?: string }>(token, "/info", form);
+      router.push(nextPath(token, next));
     } catch (err) {
       setError(err instanceof Error ? err.message : common("somethingWrong"));
       setBusy(false);

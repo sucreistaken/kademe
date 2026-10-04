@@ -23,3 +23,12 @@ export function stepPath(token: string, state: Pick<CandidateState, "step">): st
       return `${base}/done`;
   }
 }
+
+/**
+ * Where to go after a core step (consent, details, device check) answered with
+ * a solution's state: the path the state names, else the exam's mapping.
+ */
+export function nextPath(token: string, state: { step: string; path?: string }): string {
+  // A solution's state names its page relative to /a/[token] ("" for the landing).
+  return state.path !== undefined ? `/a/${encodeURIComponent(token)}${state.path}` : stepPath(token, state as Pick<CandidateState, "step">);
+}

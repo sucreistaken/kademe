@@ -4,6 +4,7 @@ import { ORG_TIMEZONE } from "@/lib/org-timezone";
 import { IntroConsent } from "@/components/candidate/IntroConsent";
 import { getConsentText, supportedLocales } from "@/lib/candidate-context";
 import { candidateSafe } from "@/lib/candidate-safe";
+import { solutionPage } from "@/lib/candidate-pages";
 import { enter, headerMeta, type SearchParams } from "@/app/a/[token]/shared";
 
 export const dynamic = "force-dynamic";
@@ -20,9 +21,13 @@ export default async function CandidateEntryPage({
   searchParams: SearchParams;
 }) {
   const { token } = await params;
+  const hosted = await solutionPage(token, "landing", searchParams);
+  if (hosted !== undefined) return hosted;
   const entry = await enter(token, "CONSENT", searchParams, `/a/${token}`);
   if (entry.kind === "problem") return entry.node;
 
+  // The core consent read is the exam's alone: another solution's invitation
+  // was answered by solutionPage above or stopped at enter() as an unknown token.
   const consent = await getConsentText(entry.ctx);
 
   return (

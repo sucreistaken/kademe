@@ -4,6 +4,7 @@ import { ORG_TIMEZONE } from "@/lib/org-timezone";
 import { SystemCheck } from "@/components/candidate/proctor/SystemCheck";
 import { supportedLocales } from "@/lib/candidate-context";
 import { candidateT } from "@/i18n/candidate";
+import { solutionPage } from "@/lib/candidate-pages";
 import { enter, type SearchParams } from "@/app/a/[token]/shared";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,8 @@ export default async function CandidateCheckPage({
   searchParams: SearchParams;
 }) {
   const { token } = await params;
+  const hosted = await solutionPage(token, "check", searchParams);
+  if (hosted !== undefined) return hosted;
   const entry = await enter(token, "CHECK", searchParams, `/a/${token}/check`);
   if (entry.kind === "problem") return entry.node;
 

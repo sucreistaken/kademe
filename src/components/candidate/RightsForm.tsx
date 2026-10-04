@@ -8,25 +8,38 @@ import { apiSend } from "@/lib/client/api";
 import { cn } from "@/lib/cn";
 import { useT } from "@/i18n/candidate-client";
 
-type Kind = "ACCESS" | "COPY" | "DELETE";
+export type RightsKind = "ACCESS" | "COPY" | "DELETE" | "ACCOMMODATION";
 
-const OPTIONS: Array<{
-  kind: Kind;
-  titleKey: "accessTitle" | "copyTitle" | "deleteTitle";
-  bodyKey: "accessBody" | "copyBody" | "deleteBody";
-}> = [
-  { kind: "ACCESS", titleKey: "accessTitle", bodyKey: "accessBody" },
-  { kind: "COPY", titleKey: "copyTitle", bodyKey: "copyBody" },
-  { kind: "DELETE", titleKey: "deleteTitle", bodyKey: "deleteBody" },
-];
+const OPTIONS: Record<
+  RightsKind,
+  {
+    titleKey: "accessTitle" | "copyTitle" | "deleteTitle" | "accommodationTitle";
+    bodyKey: "accessBody" | "copyBody" | "deleteBody" | "accommodationBody";
+  }
+> = {
+  ACCOMMODATION: { titleKey: "accommodationTitle", bodyKey: "accommodationBody" },
+  ACCESS: { titleKey: "accessTitle", bodyKey: "accessBody" },
+  COPY: { titleKey: "copyTitle", bodyKey: "copyBody" },
+  DELETE: { titleKey: "deleteTitle", bodyKey: "deleteBody" },
+};
 
 /**
- * The candidate's own copy of the data rights flow. Nothing is deleted from
- * here: the request lands in the manager's queue and a person answers it.
+ * The candidate's own copy of the data rights flow, plus an accommodation
+ * request where the solution reads them (`kinds`, listed in this order).
+ * Nothing is deleted from here: the request lands in the team's queue and a
+ * person answers it.
  */
-export function RightsForm({ token }: { token: string }) {
+export function RightsForm({
+  token,
+  kinds = ["ACCESS", "COPY", "DELETE"],
+  initialKind = null,
+}: {
+  token: string;
+  kinds?: RightsKind[];
+  initialKind?: RightsKind | null;
+}) {
   const t = useT("rights");
-  const [kind, setKind] = useState<Kind | null>(null);
+  const [kind, setKind] = useState<RightsKind | null>(initialKind);
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -60,31 +73,34 @@ export function RightsForm({ token }: { token: string }) {
       <p className="mt-2.5 text-sm leading-[1.65] text-ink/80">{t("body")}</p>
 
       <div className="mt-6 flex flex-col gap-2">
-        {OPTIONS.map((option) => (
-          <label
-            key={option.kind}
-            className={cn(
-              "flex cursor-pointer items-start gap-3 rounded-[10px] border bg-surface px-4 py-3.5",
-              kind === option.kind ? "border-ink" : "border-line hover:bg-canvas",
-            )}
-          >
-            <input
-              type="radio"
-              name="rights"
-              checked={kind === option.kind}
-              onChange={() => setKind(option.kind)}
-              className="mt-0.5 size-4 shrink-0 accent-accent"
-            />
-            <span>
-              <span className="block text-sm font-medium text-ink">
-                {t(option.titleKey)}
+        {kinds.map((kindOption) => {
+          const option = OPTIONS[kindOption];
+          return (
+            <label
+              key={kindOption}
+              className={cn(
+                "flex cursor-pointer items-start gap-3 rounded-[10px] border bg-surface px-4 py-3.5",
+                kind === kindOption ? "border-ink" : "border-line hover:bg-canvas",
+              )}
+            >
+              <input
+                type="radio"
+                name="rights"
+                checked={kind === kindOption}
+                onChange={() => setKind(kindOption)}
+                className="mt-0.5 size-4 shrink-0 accent-accent"
+              />
+              <span>
+                <span className="block text-sm font-medium text-ink">
+                  {t(option.titleKey)}
+                </span>
+                <span className="mt-0.5 block text-[13px] text-muted">
+                  {t(option.bodyKey)}
+                </span>
               </span>
-              <span className="mt-0.5 block text-[13px] text-muted">
-                {t(option.bodyKey)}
-              </span>
-            </span>
-          </label>
-        ))}
+            </label>
+          );
+        })}
       </div>
 
       <Card className="mt-4 overflow-hidden p-0">

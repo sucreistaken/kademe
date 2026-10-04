@@ -72,7 +72,11 @@ export interface SolutionManifest {
   candidateFlowLive: boolean;
   /** Language hint for transcribing this solution's recordings; null lets the provider detect it. */
   transcriptionHint: string | null;
-  /** True when this solution reads accommodation requests (HIRING-UX 6.1 "Başka düzenleme"). */
+  /**
+   * True when this solution reads candidate requests (candidate_requests): an
+   * accommodation (HIRING-UX 6.1 "Başka düzenleme") from the rights page and a
+   * new link ("Yeni link iste") from the problem route. False: neither is filed.
+   */
   accommodationRequests: boolean;
   /** An action this solution offers on a position page (the primary button there). */
   positionAction?: { label: I18nLabel; href(positionId: string): string };
