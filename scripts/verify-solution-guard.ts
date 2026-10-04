@@ -16,10 +16,10 @@ const bad = (m: string) => {
   console.log(`  FAIL ${m}`);
 };
 
-async function call(method: "GET" | "POST" | "PUT", path: string, body?: unknown) {
+async function call(method: "GET" | "POST" | "PUT", path: string, body?: unknown, headers: Record<string, string> = {}) {
   const res = await fetch(`${BASE}${path}`, {
     method,
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", ...headers },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const json = (await res.json().catch(() => null)) as Record<string, unknown> | null;
@@ -44,10 +44,16 @@ async function main() {
   if (!exam.ok) throw new Error(exam.code);
 
   // A hiring invitation exists only as core rows until sub-project 3.
-  const token = mintToken();
-  const [person] = await db.insert(s.candidates).values({ orgId: org.id, fullName: "Guard hiring", email: `guard-h-${Date.now()}@example.com` }).returning();
-  const [hiring] = await db.insert(s.assessments).values({ orgId: org.id, candidateId: person.id, solution: "HIRING", locale: "tr" }).returning();
-  await db.insert(s.assessmentLinks).values({ assessmentId: hiring.id, tokenHash: token.hash, status: "NOT_STARTED", expiresAt: new Date(Date.now() + 86_400_000) });
+  const personIds: string[] = [];
+  async function hiringInvitation(status: "NOT_STARTED" | "EXPIRED" | "COMPLETED") {
+    const token = mintToken();
+    const [person] = await db.insert(s.candidates).values({ orgId: org.id, fullName: `Guard hiring ${status}`, email: `guard-h-${status}-${Date.now()}@example.com` }).returning();
+    personIds.push(person.id);
+    const [hiring] = await db.insert(s.assessments).values({ orgId: org.id, candidateId: person.id, solution: "HIRING", locale: "tr" }).returning();
+    await db.insert(s.assessmentLinks).values({ assessmentId: hiring.id, tokenHash: token.hash, status, expiresAt: new Date(Date.now() + 86_400_000) });
+    return token;
+  }
+  const token = await hiringInvitation("NOT_STARTED");
 
   try {
     console.log("\nExam endpoints refuse a hiring invitation");
@@ -78,6 +84,26 @@ async function main() {
       ok(`same status (${unknown.status}), same fields (${keys(unknown.json)}), same code`);
     else bad(`unknown ${unknown.status} ${JSON.stringify(unknown.json)} vs hiring ${hiringAnswer.status} ${JSON.stringify(hiringAnswer.json)}`);
 
+    console.log("\nA closed hiring link and another language change nothing");
+    const sameAsUnknown = async (label: string, raw: string, headers: Record<string, string>, method: "PUT" | "POST" = "PUT", path = "/exam/answer") => {
+      const unknownRes = await call(method, `/api/c/${"y".repeat(43)}${path}`, {}, headers);
+      const r = await call(method, `/api/c/${raw}${path}`, {}, headers);
+      if (r.status === unknownRes.status && JSON.stringify(r.json) === JSON.stringify(unknownRes.json) && r.status === 404)
+        ok(`${label}: 404, identical body (${JSON.stringify(r.json?.message)})`);
+      else bad(`${label}: ${r.status} ${JSON.stringify(r.json)} vs unknown ${unknownRes.status} ${JSON.stringify(unknownRes.json)}`);
+    };
+    const expired = await hiringInvitation("EXPIRED");
+    const completed = await hiringInvitation("COMPLETED");
+    await sameAsUnknown("EXPIRED hiring link, PUT /exam/answer", expired.raw, {});
+    await sameAsUnknown("COMPLETED hiring link, POST /exam/section/start", completed.raw, {}, "POST", "/exam/section/start");
+    await sameAsUnknown("EXPIRED hiring link, legacy PUT /answer", expired.raw, {}, "PUT", "/answer");
+    await sameAsUnknown("tr hiring link, Accept-Language en", token.raw, { "accept-language": "en" });
+    await sameAsUnknown("COMPLETED hiring link, Accept-Language en", completed.raw, { "accept-language": "en" });
+
+    const [seen] = await db.select({ ip: s.assessmentLinks.firstSeenIp }).from(s.assessmentLinks).where(eq(s.assessmentLinks.tokenHash, token.hash));
+    if (seen && seen.ip === null) ok("an exam endpoint does not record first-seen on a hiring link");
+    else bad(`first_seen_ip on the hiring link: ${JSON.stringify(seen)}`);
+
     console.log("\nThe exam invitation still reaches its endpoints");
     const examState = await call("GET", `/api/c/${exam.rawToken}/state`);
     if (examState.status === 200 && examState.json?.step === "CONSENT") ok("GET /state: 200 CONSENT");
@@ -89,7 +115,7 @@ async function main() {
     if (legacy.status === 409) ok(`PUT /answer (legacy path, rewritten): 409 ${legacy.json?.error}`);
     else bad(`PUT /answer legacy: ${legacy.status} ${JSON.stringify(legacy.json)}`);
   } finally {
-    await db.delete(s.candidates).where(eq(s.candidates.id, person.id));
+    for (const id of personIds) await db.delete(s.candidates).where(eq(s.candidates.id, id));
     await db.delete(s.candidates).where(eq(s.candidates.id, exam.candidateId));
   }
 

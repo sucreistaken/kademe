@@ -20,9 +20,11 @@ export function withExamCandidate(
     params,
     async (request, ctx) => {
       const exam = await loadExamContext(ctx);
-      if (!exam) return notFoundForSolution(ctx);
+      // Second check: acceptSolution already turned other solutions away; this
+      // also covers a language exam invitation whose exam terms are missing.
+      if (!exam) return notFoundForSolution(request);
       return handler(request, exam);
     },
-    options,
+    { ...options, acceptSolution: (kind) => kind === "LANGUAGE_EXAM" },
   );
 }

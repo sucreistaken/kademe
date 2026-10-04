@@ -5,6 +5,7 @@ import {
   resolveToken,
   type CandidateContext,
   type LinkProblem,
+  type SolutionKind,
 } from "@/lib/candidate-context";
 import { candidateT, type CandidateMessages } from "@/i18n/candidate";
 import { localeFromAcceptLanguage, type Locale } from "@/i18n/locale";
@@ -75,7 +76,27 @@ export type CandidateRouteOptions = {
    * candidate whose link just closed still needs a way to reach a human.
    */
   allowProblems?: LinkProblem[];
+  /**
+   * Which solutions' invitations this endpoint serves. Checked the moment the
+   * token resolves, before link problems and before anything is recorded, so a
+   * mismatch is answered exactly like an unknown token whatever the link's state.
+   */
+  acceptSolution?: (kind: SolutionKind) => boolean;
 };
+
+/**
+ * The one answer for a token this endpoint will not serve: an unknown token, or
+ * another solution's invitation. Both go through here so they cannot drift. The
+ * language is the browser's, because an unknown token has no other hint and a
+ * known one must not reveal itself through the invitation's own language.
+ */
+function unknownTokenResponse(req: NextRequest) {
+  const locale = localeFromAcceptLanguage(req.headers.get("accept-language"));
+  return candidateJson(
+    { error: "INVALID", message: message(locale, "INVALID") },
+    { status: PROBLEM_STATUS.INVALID },
+  );
+}
 
 /**
  * Resolves the token, applies the rate limit, and hands the handler a context it
@@ -102,15 +123,15 @@ export async function withCandidate(
   }
 
   const resolved = await resolveToken(token);
+  if (resolved.ctx && options.acceptSolution && !options.acceptSolution(resolved.ctx.assessment.solution)) {
+    return unknownTokenResponse(req);
+  }
   if (!resolved.ok) {
     const tolerated =
       !!resolved.ctx && (options.allowProblems ?? []).includes(resolved.problem);
     if (!tolerated) {
-      // An unknown token tells us nothing about the person holding it, so the
-      // only language hint left is the one their browser sent.
-      const locale =
-        (resolved.ctx?.locale as Locale | undefined) ??
-        localeFromAcceptLanguage(req.headers.get("accept-language"));
+      if (!resolved.ctx) return unknownTokenResponse(req);
+      const locale = resolved.ctx.locale as Locale;
       return candidateJson(
         { error: resolved.problem, message: message(locale, resolved.problem) },
         { status: PROBLEM_STATUS[resolved.problem] },
@@ -149,12 +170,8 @@ export async function readJson<T>(req: NextRequest): Promise<T | null> {
 
 /**
  * A valid token for another solution's invitation gets exactly the answer an
- * unknown token gets (spec 6: no leak). Only the language differs, because the
- * invitation's own locale is known.
+ * unknown token gets (spec 6: no leak), in the browser's language.
  */
-export function notFoundForSolution(ctx: CandidateContext) {
-  return candidateJson(
-    { error: "INVALID", message: message(ctx.locale, "INVALID") },
-    { status: PROBLEM_STATUS.INVALID },
-  );
+export function notFoundForSolution(req: NextRequest) {
+  return unknownTokenResponse(req);
 }
