@@ -39,7 +39,7 @@ function ago(iso: string | null, now: Date): string {
 async function main() {
   const { count, eq, inArray, isNotNull, like } = await import("drizzle-orm");
   const { db } = await import("../src/db");
-  const { assessments, attempts, auditLogs, candidates, examResults, mediaAssets, sectionRuns } =
+  const { assessments, attempts, auditLogs, candidates, examResults, mediaAssets } =
     await import("../src/db/schema");
   const { runRetention, SOFT_DELETE_GRACE_DAYS } = await import(
     "../src/lib/retention"
@@ -68,8 +68,7 @@ async function main() {
     const [decided] = await db
       .select({ n: count() })
       .from(mediaAssets)
-      .innerJoin(sectionRuns, eq(sectionRuns.id, mediaAssets.sectionRunId))
-      .innerJoin(attempts, eq(attempts.id, sectionRuns.attemptId))
+      .innerJoin(attempts, eq(attempts.id, mediaAssets.attemptId))
       .innerJoin(assessments, eq(assessments.id, attempts.assessmentId))
       .where(
         inArray(

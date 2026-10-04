@@ -5,6 +5,7 @@ import {
   assessments,
   attempts,
   candidates,
+  examAssessments,
   examBlueprints,
   examResultRevisions,
   examResults,
@@ -64,15 +65,17 @@ export async function listStudents(orgId: string): Promise<StudentRow[]> {
   const rows = await db
     .select({
       assessment: assessments,
+      exam: examAssessments,
       candidate: candidates,
       attempt: attempts,
       result: examResults,
     })
     .from(assessments)
     .innerJoin(candidates, eq(candidates.id, assessments.candidateId))
+    .innerJoin(examAssessments, eq(examAssessments.assessmentId, assessments.id))
     .leftJoin(attempts, eq(attempts.assessmentId, assessments.id))
     .leftJoin(examResults, eq(examResults.attemptId, attempts.id))
-    // Exam readers only: a hiring invitation has no exam terms (Task 7 moves this reader).
+    // Exam readers only: a hiring invitation has no exam terms (the inner join already excludes it).
     .where(and(eq(assessments.orgId, orgId), eq(assessments.solution, "LANGUAGE_EXAM"), sql`${candidates.deletedAt} is null`))
     .orderBy(desc(assessments.createdAt));
   if (rows.length === 0) return [];
@@ -95,7 +98,7 @@ export async function listStudents(orgId: string): Promise<StudentRow[]> {
         .groupBy(sectionRuns.attemptId)
     : [];
 
-  return rows.map(({ assessment, candidate, attempt, result }) => {
+  return rows.map(({ assessment, exam, candidate, attempt, result }) => {
     const myLinks = links.filter((l) => l.assessmentId === assessment.id);
     const link = myLinks.find((l) => l.status !== "EXPIRED") ?? myLinks[0] ?? null;
     let status: StudentStatus;
@@ -106,17 +109,16 @@ export async function listStudents(orgId: string): Promise<StudentRow[]> {
     else if (attempt?.startedAt) status = "IN_EXAM";
     else if (link?.status === "EXPIRED") status = "EXPIRED";
     else status = "NOT_STARTED";
-    // Non-null by the dual write; Task 7 moves this reader to exam_assessments.
-    const proctored = assessment.blueprintSnapshot!.proctoring.preset !== "OFF";
+    const proctored = exam.blueprintSnapshot.proctoring.preset !== "OFF";
     const integrity = !proctored ? "NONE" : attempt?.integritySummary?.level ?? "PENDING";
     const final = result?.status === "FINAL";
     return {
       assessmentId: assessment.id,
       name: candidate.fullName ?? "",
       email: candidate.email ?? "",
-      examName: assessment.blueprintName!,
-      mode: assessment.mode!,
-      claimed: assessment.claimedLevel,
+      examName: exam.blueprintName,
+      mode: exam.mode,
+      claimed: exam.claimedLevel,
       status,
       level: ((final ? result?.finalOverall : result?.computed?.overall) ?? null) as Cefr | null,
       levelFinal: final,
@@ -186,17 +188,17 @@ export async function expiringLinks(orgId: string) {
 
 export async function loadResultView(orgId: string, assessmentId: string) {
   const [head] = await db
-    .select({ assessment: assessments, candidate: candidates, attempt: attempts, result: examResults })
+    .select({ assessment: assessments, exam: examAssessments, candidate: candidates, attempt: attempts, result: examResults })
     .from(assessments)
     .innerJoin(candidates, eq(candidates.id, assessments.candidateId))
+    .innerJoin(examAssessments, eq(examAssessments.assessmentId, assessments.id))
     .leftJoin(attempts, eq(attempts.assessmentId, assessments.id))
     .leftJoin(examResults, eq(examResults.attemptId, attempts.id))
-    // Exam readers only: a hiring invitation has no exam terms (Task 7 moves this reader).
+    // Exam readers only: a hiring invitation has no exam terms (the inner join already excludes it).
     .where(and(eq(assessments.id, assessmentId), eq(assessments.orgId, orgId), eq(assessments.solution, "LANGUAGE_EXAM")));
   if (!head) return null;
   const attempt = head.attempt;
-  // Non-null by the dual write; Task 7 moves this reader to exam_assessments.
-  const cfg = head.assessment.blueprintSnapshot!;
+  const cfg = head.exam.blueprintSnapshot;
   const runs = attempt
     ? await db.select().from(sectionRuns).where(eq(sectionRuns.attemptId, attempt.id)).orderBy(asc(sectionRuns.orderIndex))
     : [];
@@ -243,7 +245,15 @@ export async function loadResultView(orgId: string, assessmentId: string) {
   const nameOf = Object.fromEntries(people.map((p) => [p.id, p.name]));
 
   return {
-    assessment: { ...head.assessment, blueprintSnapshot: cfg, blueprintName: head.assessment.blueprintName!, mode: head.assessment.mode! },
+    // The page reads the exam terms as fields of the invitation, as before.
+    assessment: {
+      ...head.assessment,
+      blueprintId: head.exam.blueprintId,
+      blueprintName: head.exam.blueprintName,
+      blueprintSnapshot: head.exam.blueprintSnapshot,
+      mode: head.exam.mode,
+      claimedLevel: head.exam.claimedLevel,
+    },
     candidate: head.candidate,
     attempt,
     result: head.result,

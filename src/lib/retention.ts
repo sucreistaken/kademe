@@ -8,7 +8,6 @@ import {
   examResults,
   mediaAssets,
   organizations,
-  sectionRuns,
 } from "@/db/schema";
 import { getStorage } from "@/lib/storage";
 
@@ -353,7 +352,7 @@ function latestTerminalDecision() {
 /**
  * The date the media clock counts from. Deliberately no fallback: media whose
  * assessment has no terminal decision is not selected at all, and that includes
- * an upload not attached to any stage run. Such a row is kept by the candidate
+ * an upload whose attempt has no terminal decision. Such a row is kept by the candidate
  * clock instead (`candidates` cascades to everything under it), so nothing
  * lives forever, it just does not get the shorter media window.
  */
@@ -382,8 +381,7 @@ async function planSoftMedia(clock: OrgClock, batch: number): Promise<MediaPlan>
       bytes: sql<string>`coalesce(sum(${mediaAssets.bytes}), 0)`,
     })
     .from(mediaAssets)
-    .leftJoin(sectionRuns, eq(sectionRuns.id, mediaAssets.sectionRunId))
-    .leftJoin(attempts, eq(attempts.id, sectionRuns.attemptId))
+    .leftJoin(attempts, eq(attempts.id, mediaAssets.attemptId))
     .leftJoin(assessments, eq(assessments.id, attempts.assessmentId))
     .leftJoin(ld, eq(ld.assessmentId, assessments.id))
     .where(where);
@@ -397,8 +395,7 @@ async function planSoftMedia(clock: OrgClock, batch: number): Promise<MediaPlan>
       anchor: anchor,
     })
     .from(mediaAssets)
-    .leftJoin(sectionRuns, eq(sectionRuns.id, mediaAssets.sectionRunId))
-    .leftJoin(attempts, eq(attempts.id, sectionRuns.attemptId))
+    .leftJoin(attempts, eq(attempts.id, mediaAssets.attemptId))
     .leftJoin(assessments, eq(assessments.id, attempts.assessmentId))
     .leftJoin(ld, eq(ld.assessmentId, assessments.id))
     .where(where)
@@ -535,8 +532,7 @@ async function candidateMediaKeys(
       storageKey: mediaAssets.storageKey,
     })
     .from(mediaAssets)
-    .innerJoin(sectionRuns, eq(sectionRuns.id, mediaAssets.sectionRunId))
-    .innerJoin(attempts, eq(attempts.id, sectionRuns.attemptId))
+    .innerJoin(attempts, eq(attempts.id, mediaAssets.attemptId))
     .innerJoin(assessments, eq(assessments.id, attempts.assessmentId))
     .where(inArray(assessments.candidateId, candidateIds));
 }
@@ -546,8 +542,7 @@ async function countCandidateObjects(candidateIds: string[]): Promise<number> {
   const [row] = await db
     .select({ n: count() })
     .from(mediaAssets)
-    .innerJoin(sectionRuns, eq(sectionRuns.id, mediaAssets.sectionRunId))
-    .innerJoin(attempts, eq(attempts.id, sectionRuns.attemptId))
+    .innerJoin(attempts, eq(attempts.id, mediaAssets.attemptId))
     .innerJoin(assessments, eq(assessments.id, attempts.assessmentId))
     .where(inArray(assessments.candidateId, candidateIds));
   return row?.n ?? 0;

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dot, PageHead } from "@/components/panel/bits";
 import { db } from "@/db";
-import { assessments, examBlueprints } from "@/db/schema";
+import { assessments, examAssessments, examBlueprints } from "@/db/schema";
 import { can } from "@/lib/authorize";
 import { enabledSections, estimatedMinutes } from "@/lib/exam/blueprint";
 import { requireUser } from "@/server/session";
@@ -23,10 +23,11 @@ export default async function ExamsPage() {
     .where(and(eq(examBlueprints.orgId, user.orgId), sql`${examBlueprints.status} <> 'ARCHIVED'`))
     .orderBy(desc(examBlueprints.updatedAt));
   const counts = await db
-    .select({ id: assessments.blueprintId, n: sql<number>`count(*)::int` })
-    .from(assessments)
+    .select({ id: examAssessments.blueprintId, n: sql<number>`count(*)::int` })
+    .from(examAssessments)
+    .innerJoin(assessments, eq(assessments.id, examAssessments.assessmentId))
     .where(eq(assessments.orgId, user.orgId))
-    .groupBy(assessments.blueprintId);
+    .groupBy(examAssessments.blueprintId);
   const rows = list.map((b) => ({ b, uses: counts.find((c) => c.id === b.id)?.n ?? 0 }));
   return (
     <main className="mx-auto max-w-[1360px] px-6 py-8">

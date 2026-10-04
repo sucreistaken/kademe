@@ -5,7 +5,6 @@ import {
   assessments,
   attempts,
   mediaAssets,
-  sectionRuns,
   transcripts,
 } from "@/db/schema";
 import {
@@ -41,8 +40,7 @@ export async function runTranscription(
       locale: assessments.locale,
     })
     .from(mediaAssets)
-    .leftJoin(sectionRuns, eq(sectionRuns.id, mediaAssets.sectionRunId))
-    .leftJoin(attempts, eq(attempts.id, sectionRuns.attemptId))
+    .leftJoin(attempts, eq(attempts.id, mediaAssets.attemptId))
     .leftJoin(assessments, eq(assessments.id, attempts.assessmentId))
     .where(eq(mediaAssets.id, mediaAssetId))
     .limit(1);

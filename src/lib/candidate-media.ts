@@ -141,22 +141,13 @@ export async function takeCount(itemResponseId: string): Promise<number> {
  * It is still checked against the token's own assessment on every use, so it
  * cannot be pointed at anybody else's recording.
  */
-export async function resolveOwnedMedia(
-  ctx: CandidateContext,
-  uploadRef: unknown,
-) {
+export async function resolveOwnedMedia(ctx: CandidateContext, uploadRef: unknown) {
   if (typeof uploadRef !== "string" || uploadRef.length !== 36) return null;
   const [row] = await db
-    .select({ asset: mediaAssets, run: sectionRuns })
+    .select({ asset: mediaAssets })
     .from(mediaAssets)
-    .innerJoin(sectionRuns, eq(sectionRuns.id, mediaAssets.sectionRunId))
-    .innerJoin(attempts, eq(attempts.id, sectionRuns.attemptId))
-    .where(
-      and(
-        eq(mediaAssets.id, uploadRef),
-        eq(attempts.assessmentId, ctx.assessment.id),
-      ),
-    )
+    .innerJoin(attempts, eq(attempts.id, mediaAssets.attemptId))
+    .where(and(eq(mediaAssets.id, uploadRef), eq(attempts.assessmentId, ctx.assessment.id)))
     .limit(1);
   return row ?? null;
 }

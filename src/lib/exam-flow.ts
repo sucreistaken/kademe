@@ -2,7 +2,6 @@ import { and, asc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   assessmentLinks,
-  assessments,
   attempts,
   examAssessments,
   examResults,
@@ -827,15 +826,14 @@ export async function closeSectionRun(runId: string, reason: "DONE" | "SUBMIT" |
   const run = claimed[0];
 
   const [ctxRow] = await db
-    .select({ assessment: assessments, attempt: attempts })
+    .select({ exam: examAssessments })
     .from(attempts)
-    .innerJoin(assessments, eq(assessments.id, attempts.assessmentId))
+    .innerJoin(examAssessments, eq(examAssessments.assessmentId, attempts.assessmentId))
     .where(eq(attempts.id, run.attemptId));
-  // Non-null by the dual write; Task 7 moves this reader to exam_assessments.
-  const cfg = ctxRow.assessment.blueprintSnapshot!;
+  const cfg = ctxRow.exam.blueprintSnapshot;
   const s = cfg.sections.find((x) => x.section === run.section)!;
-  const mode = ctxRow.assessment.mode!;
-  const claimedLevel = ctxRow.assessment.claimedLevel;
+  const mode = ctxRow.exam.mode;
+  const claimedLevel = ctxRow.exam.claimedLevel;
 
   const responses = await db.select().from(itemResponses).where(eq(itemResponses.sectionRunId, runId));
   for (const r of responses.filter((x) => !x.answeredAt && !x.notReached)) {

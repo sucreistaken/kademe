@@ -3,6 +3,7 @@ import { db } from "@/db";
 import {
   assessments,
   attempts,
+  examAssessments,
   examResults,
   itemResponses,
   mediaAssets,
@@ -275,13 +276,12 @@ export function gradingLevel(g: GradingRow): { level: Cefr | null; decider: Deci
 
 export async function recomputeResult(attemptId: string) {
   const [row] = await db
-    .select({ attempt: attempts, assessment: assessments })
+    .select({ attempt: attempts, exam: examAssessments })
     .from(attempts)
-    .innerJoin(assessments, eq(assessments.id, attempts.assessmentId))
+    .innerJoin(examAssessments, eq(examAssessments.assessmentId, attempts.assessmentId))
     .where(eq(attempts.id, attemptId));
   if (!row) return;
-  // Non-null by the dual write; Task 7 moves this reader to exam_assessments.
-  const cfg = row.assessment.blueprintSnapshot!;
+  const cfg = row.exam.blueprintSnapshot;
   const runs = await db.select().from(sectionRuns).where(eq(sectionRuns.attemptId, attemptId));
   const runIds = runs.map((r) => r.id);
   const gradings = runIds.length
@@ -343,8 +343,8 @@ export async function recomputeResult(attemptId: string) {
     ) as Partial<Record<Section, Cefr>>,
   };
   const computed = computeResult({
-    mode: row.assessment.mode!,
-    claimed: row.assessment.claimedLevel,
+    mode: row.exam.mode,
+    claimed: row.exam.claimedLevel,
     sections: evidence,
     rules: cfg.passRules,
     overrides,
@@ -376,9 +376,9 @@ export async function finalizeResult(attemptId: string, userId: string | null, r
   const [result] = await db.select().from(examResults).where(eq(examResults.attemptId, attemptId));
   if (!result?.computed) return { ok: false as const, code: "NOT_READY" };
   const [assessment] = await db
-    .select({ config: assessments.blueprintSnapshot })
+    .select({ config: examAssessments.blueprintSnapshot })
     .from(attempts)
-    .innerJoin(assessments, eq(assessments.id, attempts.assessmentId))
+    .innerJoin(examAssessments, eq(examAssessments.assessmentId, attempts.assessmentId))
     .where(eq(attempts.id, attemptId));
   const c = result.computed;
   if (c.status === "AWAITING_GRADING" || !c.overall) return { ok: false as const, code: "NOT_READY" };
@@ -402,7 +402,7 @@ export async function finalizeResult(attemptId: string, userId: string | null, r
   const [att] = await db.select().from(attempts).where(eq(attempts.id, attemptId));
   // Automatic release only for a clean attempt: a teacher releases the rest by hand.
   const release =
-    (assessment?.config?.autoRelease ?? false) &&
+    (assessment?.config.autoRelease ?? false) &&
     att?.integrityOutcome !== "INVALID" &&
     att?.integritySummary?.level !== "ATTENTION" &&
     !att?.terminatedAt;
