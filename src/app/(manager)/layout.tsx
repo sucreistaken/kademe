@@ -3,31 +3,18 @@ import { requireUser } from "@/server/session";
 import { ManagerNav } from "@/components/manager/nav";
 import { LangSwitch } from "@/components/manager/lang-switch";
 import { ManagerIntl } from "@/components/manager/Intl";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
+import { buildNav } from "@/solutions/registry";
 
 /**
- * Teacher panel shell. Five items, one per job: what to review today, the
- * students, the exams, the question bank, settings. Dense by design: the
- * student side is the calm one.
- *
- * NAV deliberately lists only routes that exist. A navigation item that lands
- * on a 404 is a dead end, and dead ends are the one thing the design rules do
- * not allow. Add the entry in the same commit as the screen.
+ * Panel shell (HIRING-UX 4.1): a 240px grouped side menu (Today, one group per
+ * solution, Settings) and the page. Below 1024px the menu becomes a sheet
+ * opened from a top bar. The menu comes from the solution registry and lists
+ * only routes that exist; a test checks every entry against its page file.
  */
-const NAV = [
-  { href: "/dashboard", key: "dashboard" },
-  { href: "/exam/students", key: "students" },
-  { href: "/exam/exams", key: "exams" },
-  { href: "/exam/bank", key: "bank" },
-  { href: "/settings", key: "settings" },
-] as const;
-
-export default async function ManagerLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function ManagerLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
   const locale = await managerLocale();
   const t = managerT(locale);
@@ -38,34 +25,34 @@ export default async function ManagerLayout({
     .slice(0, 2)
     .join("")
     .toLocaleUpperCase(locale === "tr" ? "tr" : "en");
+  const groups = buildNav(locale, { today: t("nav.dashboard"), settings: t("nav.settings") });
 
   return (
-    <div className="min-h-screen" lang={locale}>
-      <header className="border-b border-line bg-surface">
-        <div className="mx-auto flex h-14 max-w-[1360px] items-center gap-8 px-6">
-          <Link href="/dashboard" className="text-[15px] font-semibold tracking-tight">
-            Kademe
-          </Link>
-          <ManagerNav
-            items={NAV.map((item) => ({
-              href: item.href,
-              label: t(`nav.${item.key}`),
-            }))}
-          />
-          <div className="ml-auto flex items-center gap-2.5">
+    <SidebarProvider lang={locale} style={{ "--sidebar-width": "240px" } as React.CSSProperties}>
+      <ManagerNav
+        groups={groups}
+        footer={
+          <div className="flex items-center gap-2.5">
             <LangSwitch locale={locale} />
-            <span className="text-[13.5px] text-muted">{user.name}</span>
+            <span className="truncate text-[13px] text-muted">{user.name}</span>
             <span
-              className="grid size-7 place-items-center rounded-full bg-canvas
-                         text-[11px] font-semibold text-muted"
+              className="ml-auto grid size-7 shrink-0 place-items-center rounded-full bg-canvas text-[11px] font-semibold text-muted"
               aria-hidden
             >
               {initials}
             </span>
           </div>
-        </div>
-      </header>
-      <ManagerIntl locale={locale}>{children}</ManagerIntl>
-    </div>
+        }
+      />
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+        <header className="flex h-14 items-center gap-3 border-b border-line bg-surface px-4 lg:hidden">
+          <SidebarTrigger />
+          <Link href="/dashboard" className="text-[15px] font-semibold tracking-tight">
+            Kademe
+          </Link>
+        </header>
+        <ManagerIntl locale={locale}>{children}</ManagerIntl>
+      </div>
+    </SidebarProvider>
   );
 }

@@ -1,43 +1,56 @@
 import Link from "next/link";
 import { Button, DisabledReason } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Dot, INTEGRITY_TONE, Level, PageHead, STATUS_TONE, shortDateTime } from "@/components/panel/bits";
+import { Dot, Level, PageHead, shortDateTime } from "@/components/panel/bits";
 import { extendLink } from "@/app/(manager)/actions";
 import { can } from "@/lib/authorize";
-import { expiringLinks, listStudents } from "@/server/panel";
+import { expiringLinks } from "@/server/links";
 import { requireUser } from "@/server/session";
+import { solutionModules } from "@/solutions/registry.server";
+import type { TodayCell, TodayItem } from "@/solutions/types";
 import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
 
 export const dynamic = "force-dynamic";
 
+function Cell({ cell }: { cell: TodayCell }) {
+  if (cell.kind === "text") return <span className="text-[13.5px] text-ink-2">{cell.text}</span>;
+  if (cell.kind === "level") return <Level level={cell.text} muted={!cell.final} />;
+  return <Dot tone={cell.tone}>{cell.text}</Dot>;
+}
+
 /**
- * "Today": one question, "what should I look at?". The review queue, oldest
- * first, is the page. Exams in progress and links about to lapse come after.
- * No stat tiles: every row here leads to an action.
+ * "Today": one question, "what should I look at?". Every registered solution
+ * contributes rows (spec 3, `today()`); the review queue, oldest first, is the
+ * page. Work in progress and links about to lapse come after. No stat tiles:
+ * every row here leads to an action. With one solution this draws exactly what
+ * the exam dashboard drew; the solution label column arrives with the second
+ * solution (HIRING-UX 4.5).
  */
 export default async function TodayPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const user = await requireUser();
   const locale = await managerLocale();
   const t = managerT(locale);
   const sp = await searchParams;
-  const rows = await listStudents(user.orgId);
-  const queue = rows
-    .filter((r) => r.status === "AWAITING_REVIEW" || r.status === "AWAITING_GRADING")
-    .sort((a, b) => (a.completedAt?.getTime() ?? 0) - (b.completedAt?.getTime() ?? 0));
-  const running = rows.filter((r) => r.status === "IN_EXAM");
+  const modules = solutionModules();
+  const items: TodayItem[] = (await Promise.all(modules.map((m) => m.today(user.orgId, user.id, locale)))).flat();
+  const queue = items
+    .filter((i) => i.lane === "review")
+    .sort((a, b) => (a.sortAt?.getTime() ?? 0) - (b.sortAt?.getTime() ?? 0));
+  const running = items.filter((i) => i.lane === "running");
   const expiring = await expiringLinks(user.orgId);
   const canInvite = can(user, "student:invite");
+  const inviteHref = modules[0]?.inviteHref ?? "/dashboard";
 
   return (
     <main className="mx-auto max-w-[1360px] px-6 py-8">
       <PageHead
         title={t("today.title", { count: queue.length })}
-        sub={queue[0]?.completedAt ? t("today.oldest", { date: shortDateTime(queue[0].completedAt, locale) }) : undefined}
+        sub={queue[0]?.sortAt ? t("today.oldest", { date: shortDateTime(queue[0].sortAt, locale) }) : undefined}
         action={
           <div className="flex flex-col items-end">
             <Button asChild={canInvite} variant="primary" disabled={!canInvite} disabledReason={canInvite ? undefined : t("today.noInvitePermission")}>
-              {canInvite ? <Link href="/exam/students/new">{t("today.invite")}</Link> : t("today.invite")}
+              {canInvite ? <Link href={inviteHref}>{t("today.invite")}</Link> : t("today.invite")}
             </Button>
             {!canInvite ? <DisabledReason>{t("today.noInvitePermission")}</DisabledReason> : null}
           </div>
@@ -55,27 +68,17 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
           <Card className="divide-y divide-line">
             {queue.map((r) => (
               <Link
-                key={r.assessmentId}
-                href={`/exam/students/${r.assessmentId}`}
+                key={r.id}
+                href={r.href}
                 className="grid grid-cols-1 items-center gap-2 px-5 py-4 hover:bg-canvas md:grid-cols-[1.6fr_1.3fr_0.6fr_1.4fr_1.2fr_auto]"
               >
                 <span>
-                  <span className="block text-[14.5px] font-semibold text-ink">{r.name}</span>
-                  <span className="text-[12.5px] text-muted">{shortDateTime(r.completedAt, locale)}</span>
+                  <span className="block text-[14.5px] font-semibold text-ink">{r.title}</span>
+                  <span className="text-[12.5px] text-muted">{r.subtitle}</span>
                 </span>
-                <span className="text-[13.5px] text-ink-2">
-                  {t(`mode.${r.mode}`)}
-                  {r.claimed ? ` · ${t("mode.claimed", { level: r.claimed })}` : ""}
-                </span>
-                <Level level={r.level} muted={!r.levelFinal} />
-                <Dot tone={r.status === "AWAITING_GRADING" ? "neutral" : "warn"}>
-                  {r.status === "AWAITING_GRADING"
-                    ? t("today.aiRunning")
-                    : r.aiProposals > 0
-                      ? t("today.aiPending", { n: r.aiProposals })
-                      : t("today.readyToFinalize")}
-                </Dot>
-                <Dot tone={INTEGRITY_TONE[r.integrity]}>{t(`integrityLevel.${r.integrity}`)}</Dot>
+                {r.cells.map((cell, i) => (
+                  <Cell key={i} cell={cell} />
+                ))}
                 <span className="text-[13px] font-medium text-ink underline decoration-underline underline-offset-2">{t("today.review")}</span>
               </Link>
             ))}
@@ -91,11 +94,11 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
               <p className="px-5 py-4 text-[13.5px] text-muted">{t("today.runningEmpty")}</p>
             ) : (
               running.map((r) => (
-                <Link key={r.assessmentId} href={`/exam/students/${r.assessmentId}`} className="flex items-center justify-between px-5 py-3 hover:bg-canvas">
-                  <span className="text-[14px] font-medium text-ink">{r.name}</span>
-                  <Dot tone={STATUS_TONE.IN_EXAM}>
-                    {r.currentSection ? t("today.sectionNow", { section: t(`sectionName.${r.currentSection}`) }) : t("status.IN_EXAM")}
-                  </Dot>
+                <Link key={r.id} href={r.href} className="flex items-center justify-between px-5 py-3 hover:bg-canvas">
+                  <span className="text-[14px] font-medium text-ink">{r.title}</span>
+                  {r.cells.map((cell, i) => (
+                    <Cell key={i} cell={cell} />
+                  ))}
                 </Link>
               ))
             )}

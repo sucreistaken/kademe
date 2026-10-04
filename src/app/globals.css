@@ -210,7 +210,7 @@
 @layer base {
   [data-slot] {
     border-color: var(--border);
-    outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
+    outline-color: var(--ring);
   }
 
   /* Menu, list and command items sit inside scroll containers that would clip

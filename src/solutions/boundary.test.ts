@@ -13,7 +13,6 @@ import { describe, expect, it } from "vitest";
  * The codebase imports them only through the @/ alias.
  */
 const KNOWN_COUPLINGS = [
-  "src/app/(manager)/dashboard/page.tsx",
   "src/app/a/[token]/done/page.tsx",
   "src/app/a/[token]/shared.tsx",
   "src/app/api/cron/grade/route.ts",

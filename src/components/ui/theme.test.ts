@@ -71,6 +71,13 @@ describe("focus is drawn once, by the global outline", () => {
     expect(focus).toContain("outline-offset: var(--focus-offset, 2px);");
   });
 
+  it("gives shadcn parts the full accent as outline colour, never a faded one", () => {
+    // A 50% mix measured 2.24:1 on the canvas, below WCAG 1.4.11 (3:1); the
+    // solid accent is 5.99:1.
+    expect(css).toMatch(/\[data-slot\] \{[^}]*outline-color: var\(--ring\);/);
+    expect(css).not.toMatch(/outline-color: color-mix\(/);
+  });
+
   it("draws it inside menu and list items, which sit in scroll containers", () => {
     expect(css).toMatch(/\[data-slot\$="-item"\][^{]*\{\s*--focus-offset: -2px;/);
   });
