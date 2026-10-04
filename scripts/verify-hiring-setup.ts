@@ -41,7 +41,7 @@ async function main() {
   const versions = await import("@/solutions/hiring/server/versions");
   const { loadCompetencyFacts, loadVersionContent, positionProfile } = await import("@/solutions/hiring/server/content");
   const { frozenAsConflict } = await import("@/solutions/hiring/server/errors");
-  const { emptyActivity } = await import("@/solutions/hiring/rules/patches");
+  const { emptyActivity, MAX_ACTIVITIES_PER_STAGE } = await import("@/solutions/hiring/rules/patches");
 
   const [org] = await db.insert(s.organizations).values({ name: "Hiring setup check" }).returning();
   const [owner] = await db
@@ -164,6 +164,11 @@ async function main() {
   check(!again.created && again.versionId === v1.id, "an opening with a draft keeps it");
 
   console.log("\nCopying an opening");
+  const intro = { tr: "Hoş geldiniz", en: "Welcome" };
+  await db
+    .update(s.hiringVersions)
+    .set({ defaultLocale: "en", localeSet: ["tr", "en"], introTitle: intro, introBody: intro, proctorLevel: "STRICT", practiceEnabled: false, weightsEnabled: true, draftWeights: { [communication]: 75, [problem]: 25 } })
+    .where(eq(s.hiringVersions.id, v1.id));
   const copy = await openings.createOpening(user, { position: { kind: "existing", id: position.id }, start: "COPY", copyFrom: id, locale: "tr" });
   if (!copy.ok) throw new Error(copy.code);
   const [copyVersion] = await versions.versionsOf(org.id, copy.openingId);
@@ -175,6 +180,22 @@ async function main() {
     JSON.stringify(copied!.stages[0].activities.map((a) => a.competencyIds)) === JSON.stringify(source!.stages[0].activities.map((a) => a.competencyIds)),
     "competencies copied in their order",
   );
+  const [copiedRow] = await db.select().from(s.hiringVersions).where(eq(s.hiringVersions.id, copyVersion.id));
+  check(
+    copiedRow.defaultLocale === "en" &&
+      copiedRow.localeSet.join() === "tr,en" &&
+      copiedRow.introTitle?.en === "Welcome" &&
+      copiedRow.introBody?.tr === "Hoş geldiniz" &&
+      copiedRow.proctorLevel === "STRICT" &&
+      !copiedRow.practiceEnabled,
+    "languages, intro, proctoring and practice come with the copy",
+  );
+  check(!copiedRow.weightsEnabled && copiedRow.draftWeights === null, "weights do not");
+  // Back to the defaults, so later sections start from a plain draft.
+  await db
+    .update(s.hiringVersions)
+    .set({ defaultLocale: "tr", localeSet: ["tr"], introTitle: null, introBody: null, proctorLevel: "BASIC", practiceEnabled: true, weightsEnabled: false, draftWeights: null })
+    .where(eq(s.hiringVersions.id, v1.id));
 
   console.log("\nAnother organisation sees and changes nothing");
   const [orgB] = await db.insert(s.organizations).values({ name: "Hiring setup check B" }).returning();
@@ -231,8 +252,37 @@ async function main() {
   const fresh = await versions.addStage(org.id, other.openingId);
   const freshQuestion = await versions.addActivity(org.id, other.openingId, fresh, "VIDEO");
   await expectCode("an archived competency cannot be newly chosen", () => versions.setActivityCompetencies(org.id, other.openingId, freshQuestion, [teamwork]), "COMPETENCY");
-  await versions.deleteActivity(org.id, id, kept);
+
+  console.log("\nUndo gives back what a delete removed");
+  const keptGone = await versions.deleteActivity(org.id, id, kept);
+  const keptBack = await versions.insertActivity(org.id, id, keptGone.stageId, keptGone.payload, keptGone.index, { restore: true });
+  content = await loadVersionContent(org.id, v1.id);
+  check(
+    content!.stages[0].activities.find((a) => a.id === keptBack)?.competencyIds.join() === teamwork,
+    "a question with a competency archived since comes back with it",
+  );
+  await expectCode("a new question may still not bring the archived competency", () => versions.insertActivity(org.id, id, restored, keptGone.payload), "COMPETENCY");
+  await versions.deleteActivity(org.id, id, keptBack);
   await setCompetencyArchived(org.id, owner.id, teamwork, false);
+  for (let i = 1; i < MAX_ACTIVITIES_PER_STAGE; i += 1) await versions.addActivity(org.id, other.openingId, fresh, i % 2 ? "LONG_TEXT" : "VIDEO");
+  await expectCode(`a stage holds at most ${MAX_ACTIVITIES_PER_STAGE} questions`, () => versions.addActivity(org.id, other.openingId, fresh, "VIDEO"), "STAGE_FULL");
+  await expectCode("also through an insert", () => versions.insertActivity(org.id, other.openingId, fresh, emptyActivity("VIDEO")), "STAGE_FULL");
+  const fullGone = await versions.deleteStage(org.id, other.openingId, fresh);
+  const fullBack = await versions.insertStage(org.id, other.openingId, fullGone.payload, fullGone.index, { restore: true });
+  const [otherVersion] = await versions.versionsOf(org.id, other.openingId);
+  const otherContent = await loadVersionContent(org.id, otherVersion.id);
+  check(
+    otherContent!.stages.length === 1 && otherContent!.stages[0].id === fullBack && otherContent!.stages[0].activities.length === MAX_ACTIVITIES_PER_STAGE,
+    "a full stage comes back whole after delete and undo",
+    `${otherContent!.stages[0]?.activities.length} questions`,
+  );
+
+  console.log("\nA closed opening is history");
+  const closing = await openings.createOpening(user, { position: { kind: "existing", id: position.id }, start: "BLANK", copyFrom: null, locale: "tr" });
+  if (!closing.ok) throw new Error(closing.code);
+  await db.update(s.hiringOpenings).set({ status: "CLOSED", closedAt: new Date() }).where(eq(s.hiringOpenings.id, closing.openingId));
+  await expectCode("its draft cannot be edited", () => versions.addStage(org.id, closing.openingId), "CLOSED");
+  await expectCode("no new draft can be opened", () => versions.ensureDraftVersion(org.id, closing.openingId), "CLOSED");
 
   console.log("\nA published version is frozen");
   const frozen = await openings.createOpening(user, { position: { kind: "existing", id: position.id }, start: "COPY", copyFrom: id, locale: "tr" });

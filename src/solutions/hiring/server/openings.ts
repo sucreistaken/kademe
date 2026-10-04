@@ -8,7 +8,7 @@ import { isUuid } from "@/server/settings";
 import { openingAccess, type Viewer } from "../rules/access";
 import { workingVersions } from "../rules/versions";
 import { HiringNotFound } from "./errors";
-import { cloneContent, versionsOf } from "./versions";
+import { cloneContent, inheritedSettings, versionRow, versionsOf } from "./versions";
 
 export type OpeningStatus = "DRAFT" | "OPEN" | "CLOSED";
 export type OpeningDetail = typeof hiringOpenings.$inferSelect & { positionName: string; memberIds: string[] };
@@ -55,7 +55,7 @@ export async function listOpenings(orgId: string, viewer: Viewer, status: Openin
       ownerName: users.name,
     })
     .from(hiringOpenings)
-    .innerJoin(positions, eq(positions.id, hiringOpenings.positionId))
+    .innerJoin(positions, and(eq(positions.id, hiringOpenings.positionId), eq(positions.orgId, orgId)))
     .leftJoin(users, and(eq(users.id, hiringOpenings.ownerId), eq(users.orgId, orgId)))
     .where(and(eq(hiringOpenings.orgId, orgId), eq(hiringOpenings.status, status)))
     .orderBy(desc(hiringOpenings.createdAt), desc(hiringOpenings.id));
@@ -158,7 +158,8 @@ export async function createOpening(user: { id: string; orgId: string }, input: 
               .select({ id: hiringOpenings.id })
               .from(hiringOpenings)
               .where(and(eq(hiringOpenings.id, input.copyFrom), eq(hiringOpenings.orgId, user.orgId)))
-              .limit(1)
+              // Its draft must not change (or be renumbered) while it is copied.
+              .for("share")
           : [];
       const { live, draft } = source ? workingVersions(await versionsOf(user.orgId, source.id, tx)) : { live: null, draft: null };
       sourceVersionId = (live ?? draft)?.id ?? null;
@@ -175,7 +176,12 @@ export async function createOpening(user: { id: string; orgId: string }, input: 
       .insert(hiringOpenings)
       .values({ orgId: user.orgId, positionId, name: `${position.name} · ${monthName(input.locale)}`, ownerId: user.id, decisionMakerId: user.id })
       .returning({ id: hiringOpenings.id });
-    const [version] = await tx.insert(hiringVersions).values({ orgId: user.orgId, openingId: opening.id, versionNumber: 1 }).returning({ id: hiringVersions.id });
+    // A copy takes the source's languages, intro, proctoring and practice; weights start over.
+    const settings = sourceVersionId ? inheritedSettings(await versionRow(tx, user.orgId, sourceVersionId)) : {};
+    const [version] = await tx
+      .insert(hiringVersions)
+      .values({ orgId: user.orgId, openingId: opening.id, versionNumber: 1, ...settings })
+      .returning({ id: hiringVersions.id });
     if (sourceVersionId) await cloneContent(tx, user.orgId, sourceVersionId, version.id);
     await tx.insert(auditLogs).values({
       orgId: user.orgId,

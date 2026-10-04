@@ -1,6 +1,7 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import type { Executor } from "@/db/executor";
+import { isUuid } from "@/server/settings";
 import {
   competencies,
   competencyAnchors,
@@ -24,6 +25,8 @@ import type { CompetencyFacts, VersionContent } from "../rules/content";
  * come in (order_index, id) order, so the rules see one deterministic order.
  */
 export async function loadVersionContent(orgId: string, versionId: string, x: Executor = db): Promise<VersionContent | null> {
+  // A malformed id is no row, not a 22P02 from the uuid cast.
+  if (!isUuid(versionId)) return null;
   const [version] = await x
     .select()
     .from(hiringVersions)
@@ -88,8 +91,9 @@ export async function loadVersionContent(orgId: string, versionId: string, x: Ex
 }
 
 export async function loadCompetencyFacts(orgId: string, ids: string[], x: Executor = db): Promise<Map<string, CompetencyFacts>> {
-  if (ids.length === 0) return new Map();
-  const rows = await x.select().from(competencies).where(and(eq(competencies.orgId, orgId), inArray(competencies.id, ids)));
+  const wanted = ids.filter(isUuid);
+  if (wanted.length === 0) return new Map();
+  const rows = await x.select().from(competencies).where(and(eq(competencies.orgId, orgId), inArray(competencies.id, wanted)));
   const found = rows.map((r) => r.id);
   if (found.length === 0) return new Map();
   // Anchors and tags are read only for the competencies just proven to be the organisation's.
@@ -126,10 +130,11 @@ export async function loadScaleSnapshot(orgId: string, x: Executor = db): Promis
 
 /** The position's competency profile, read through a position of the caller's organisation. */
 export async function positionProfile(orgId: string, positionId: string, x: Executor = db): Promise<Array<{ competencyId: string; weight: number }>> {
+  if (!isUuid(positionId)) return [];
   return x
     .select({ competencyId: positionCompetencies.competencyId, weight: positionCompetencies.weight })
     .from(positionCompetencies)
     .innerJoin(positions, eq(positions.id, positionCompetencies.positionId))
     .where(and(eq(positionCompetencies.positionId, positionId), eq(positions.orgId, orgId)))
-    .orderBy(asc(positionCompetencies.orderIndex));
+    .orderBy(asc(positionCompetencies.orderIndex), asc(positionCompetencies.competencyId));
 }

@@ -9,7 +9,11 @@ export class HiringNotFound extends Error {
   }
 }
 
-export type ConflictCode = "NO_DRAFT" | "COMPETENCY" | "CHOICE_COMPETENCY" | "TOO_MANY_COMPETENCIES";
+/**
+ * CLOSED: the opening is closed, so it is history and nothing in it is edited.
+ * STAGE_FULL: the stage already has MAX_ACTIVITIES_PER_STAGE questions.
+ */
+export type ConflictCode = "NO_DRAFT" | "COMPETENCY" | "CHOICE_COMPETENCY" | "TOO_MANY_COMPETENCIES" | "CLOSED" | "STAGE_FULL";
 
 /** A request that is well formed but not allowed in the current state. */
 export class HiringConflict extends Error {

@@ -71,7 +71,12 @@ const stageFields = {
   backNavigation: z.boolean(),
 };
 export const stagePatchSchema = z.object(stageFields).partial().strict();
-export const stagePayloadSchema = z.object({ ...stageFields, activities: z.array(activityPayloadSchema).max(20) });
+/**
+ * Questions per stage. addActivity and insertActivity enforce it too, so the
+ * payload of any stage that can exist validates again on undo.
+ */
+export const MAX_ACTIVITIES_PER_STAGE = 20;
+export const stagePayloadSchema = z.object({ ...stageFields, activities: z.array(activityPayloadSchema).max(MAX_ACTIVITIES_PER_STAGE) });
 
 /** An opening's review rules (hiring_openings CHECKs); Task 20's settings write validates with it. */
 export const openingRulesSchema = z

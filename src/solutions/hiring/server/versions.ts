@@ -14,6 +14,7 @@ import {
   emptyActivity,
   stagePatchSchema,
   stagePayloadOf,
+  MAX_ACTIVITIES_PER_STAGE,
   stagePayloadSchema,
   versionLocalesSchema,
   type ActivityPatch,
@@ -55,14 +56,16 @@ export async function versionsOf(orgId: string, openingId: string, x: Executor =
     .orderBy(desc(hiringVersions.versionNumber));
 }
 
+/** Locks the caller's opening for a draft write; a CLOSED opening is history and refuses every edit. */
 async function lockOpening(x: Executor, orgId: string, openingId: string) {
   if (!isUuid(openingId)) throw new HiringNotFound("opening");
   const [row] = await x
-    .select({ id: hiringOpenings.id })
+    .select({ id: hiringOpenings.id, status: hiringOpenings.status })
     .from(hiringOpenings)
     .where(and(eq(hiringOpenings.id, openingId), eq(hiringOpenings.orgId, orgId)))
     .for("update");
   if (!row) throw new HiringNotFound("opening");
+  if (row.status === "CLOSED") throw new HiringConflict("CLOSED");
 }
 
 async function draftOf(x: Executor, orgId: string, openingId: string): Promise<string> {
@@ -168,6 +171,45 @@ async function insertStageRows(x: Executor, versionId: string, orderIndex: numbe
 const payloadCompetencies = (activities: ActivityPayload[]) => activities.flatMap((a) => (isChoice(a.type) ? [] : a.competencyIds));
 
 /**
+ * How an inserted payload's competencies are checked. `restore: true` is the
+ * undo of a delete: the payload held links the question already had, so a
+ * competency archived since is accepted (it must still be the organisation's).
+ * Anything new (an accepted AI card) may only link active competencies.
+ */
+export type InsertOptions = { restore?: boolean };
+const keptOnRestore = (ids: string[], options: InsertOptions) => (options.restore ? ids : []);
+
+/** The settings a version passes on to a version made from it (a new draft or a copy); never the weights of a copy. */
+export function inheritedSettings(source: typeof hiringVersions.$inferSelect | undefined) {
+  // A stored row passed the locale CHECKs; anything else starts in the default language.
+  const locales = versionLocalesSchema.safeParse({ defaultLocale: source?.defaultLocale, localeSet: source?.localeSet });
+  return {
+    defaultLocale: locales.success ? locales.data.defaultLocale : DEFAULT_LOCALE,
+    localeSet: locales.success ? locales.data.localeSet : [DEFAULT_LOCALE],
+    introTitle: source?.introTitle ?? null,
+    introBody: source?.introBody ?? null,
+    proctorLevel: source?.proctorLevel ?? "BASIC",
+    practiceEnabled: source?.practiceEnabled ?? true,
+  };
+}
+
+/** A version row of the caller's organisation, or undefined. */
+export async function versionRow(x: Executor, orgId: string, versionId: string) {
+  const [row] = await x
+    .select()
+    .from(hiringVersions)
+    .where(and(eq(hiringVersions.id, versionId), eq(hiringVersions.orgId, orgId)))
+    .limit(1);
+  return row;
+}
+
+async function assertRoom(x: Executor, stageId: string): Promise<string[]> {
+  const ids = await activityIds(x, stageId);
+  if (ids.length >= MAX_ACTIVITIES_PER_STAGE) throw new HiringConflict("STAGE_FULL");
+  return ids;
+}
+
+/**
  * Copies the content of a version into a draft of the same organisation, as new
  * rows (the source is never touched). Links to competencies archived since are
  * copied as they are; the publish gate names them.
@@ -227,27 +269,15 @@ export async function ensureDraftVersion(orgId: string, openingId: string): Prom
     const list = await versionsOf(orgId, openingId, tx);
     const { draft, live } = workingVersions(list);
     if (draft) return { versionId: draft.id, created: false };
-    const [source] = live
-      ? await tx
-          .select()
-          .from(hiringVersions)
-          .where(and(eq(hiringVersions.id, live.id), eq(hiringVersions.orgId, orgId)))
-      : [];
+    const source = live ? await versionRow(tx, orgId, live.id) : undefined;
     const weights = live ? await latestWeights(tx, orgId, live.id) : null;
-    // A published row passed the locale CHECKs; anything else starts in the default language.
-    const locales = versionLocalesSchema.safeParse({ defaultLocale: source?.defaultLocale, localeSet: source?.localeSet });
     const [created] = await tx
       .insert(hiringVersions)
       .values({
         orgId,
         openingId,
         versionNumber: (list[0]?.number ?? 0) + 1,
-        defaultLocale: locales.success ? locales.data.defaultLocale : DEFAULT_LOCALE,
-        localeSet: locales.success ? locales.data.localeSet : [DEFAULT_LOCALE],
-        introTitle: source?.introTitle ?? null,
-        introBody: source?.introBody ?? null,
-        proctorLevel: source?.proctorLevel ?? "BASIC",
-        practiceEnabled: source?.practiceEnabled ?? true,
+        ...inheritedSettings(source),
         weightsEnabled: weights?.enabled ?? false,
         draftWeights: weights?.enabled ? weights.weights : null,
       })
@@ -323,12 +353,13 @@ export async function deleteStage(orgId: string, openingId: string, stageId: str
   });
 }
 
-/** Undo of a delete, and an accepted AI stage card. */
-export async function insertStage(orgId: string, openingId: string, payload: StagePayload, index: number | null = null): Promise<string> {
+/** Undo of a delete (`{ restore: true }`), and an accepted AI stage card. */
+export async function insertStage(orgId: string, openingId: string, payload: StagePayload, index: number | null = null, options: InsertOptions = {}): Promise<string> {
   const parsed = parseOrInvalid(stagePayloadSchema, payload);
   return draftWrite(async (tx) => {
     const versionId = await draftOf(tx, orgId, openingId);
-    await assertCompetencies(tx, orgId, payloadCompetencies(parsed.activities));
+    const linked = payloadCompetencies(parsed.activities);
+    await assertCompetencies(tx, orgId, linked, keptOnRestore(linked, options));
     const ids = await stageIds(tx, versionId);
     const at = insertAt(index, ids.length);
     const id = await insertStageRows(tx, versionId, at, parsed);
@@ -342,7 +373,7 @@ export async function addActivity(orgId: string, openingId: string, stageId: str
   return draftWrite(async (tx) => {
     const versionId = await draftOf(tx, orgId, openingId);
     await ownStage(tx, versionId, stageId);
-    const ids = await activityIds(tx, stageId);
+    const ids = await assertRoom(tx, stageId);
     return insertActivityRow(tx, stageId, ids.length, emptyActivity(parsedType));
   });
 }
@@ -395,13 +426,22 @@ export async function deleteActivity(orgId: string, openingId: string, activityI
   });
 }
 
-export async function insertActivity(orgId: string, openingId: string, stageId: string, payload: ActivityPayload, index: number | null = null): Promise<string> {
+/** Undo of a delete (`{ restore: true }`), and a new question from a payload. */
+export async function insertActivity(
+  orgId: string,
+  openingId: string,
+  stageId: string,
+  payload: ActivityPayload,
+  index: number | null = null,
+  options: InsertOptions = {},
+): Promise<string> {
   const parsed = parseOrInvalid(activityPayloadSchema, payload);
   return draftWrite(async (tx) => {
     const versionId = await draftOf(tx, orgId, openingId);
     await ownStage(tx, versionId, stageId);
-    await assertCompetencies(tx, orgId, payloadCompetencies([parsed]));
-    const ids = await activityIds(tx, stageId);
+    const ids = await assertRoom(tx, stageId);
+    const linked = payloadCompetencies([parsed]);
+    await assertCompetencies(tx, orgId, linked, keptOnRestore(linked, options));
     const at = insertAt(index, ids.length);
     const id = await insertActivityRow(tx, stageId, at, parsed);
     await renumberActivities(tx, stageId, [...ids.slice(0, at), id, ...ids.slice(at)]);

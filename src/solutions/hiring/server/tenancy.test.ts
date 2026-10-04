@@ -103,7 +103,7 @@ vi.mock("../rules/access", async (importOriginal) => {
 import { loadCompetencyFacts, loadScaleSnapshot, loadVersionContent, positionProfile } from "./content";
 import { createOpening, copySources, listOpenings, loadOpening } from "./openings";
 import * as versions from "./versions";
-import { emptyActivity, type StagePayload } from "../rules/patches";
+import { emptyActivity, MAX_ACTIVITIES_PER_STAGE, stagePayloadSchema, type StagePayload } from "../rules/patches";
 
 const ORG = "11111111-1111-4111-8111-111111111111";
 const ACTOR = "22222222-2222-4222-8222-222222222222";
@@ -216,6 +216,54 @@ describe("draft writes", () => {
     expect(writes()).toEqual([]);
   });
 
+  it.each(draftWrites)("%s refuses a CLOSED opening and writes nothing", async (_name, run) => {
+    respond = draftWorld((op) => (op.kind === "select" && op.table === "hiring_openings" ? [{ id: OPENING, status: "CLOSED" }] : undefined));
+    await expect(run()).rejects.toMatchObject({ name: "HiringConflict", code: "CLOSED" });
+    expect(writes()).toEqual([]);
+  });
+
+  /** A competency the organisation owns, archived after a question chose it. */
+  const archivedWorld = (owned: Array<{ id: string; archivedAt: Date | null }>) =>
+    draftWorld((op) => {
+      if (op.kind === "select" && op.table === "competencies") return owned;
+      if (op.kind === "select" && op.table === "hiring_stages") return [{ id: STAGE }];
+      return undefined;
+    });
+  const archivedQuestion = { ...emptyActivity("VIDEO"), competencyIds: [COMP] };
+
+  it("undo restores a question and a stage whose competency was archived since, when the organisation owns it", async () => {
+    respond = archivedWorld([{ id: COMP, archivedAt: new Date() }]);
+    await expect(versions.insertActivity(ORG, OPENING, STAGE, archivedQuestion, 0, { restore: true })).resolves.toBe(STAGE);
+    expect(writes().some((o) => o.kind === "insert" && o.table === "hiring_activity_competencies")).toBe(true);
+    ops.length = 0;
+    await expect(versions.insertStage(ORG, OPENING, { ...stagePayload, activities: [archivedQuestion] }, 0, { restore: true })).resolves.toBe(STAGE);
+    expect(writes().some((o) => o.kind === "insert" && o.table === "hiring_activity_competencies")).toBe(true);
+  });
+
+  it("a new question (an accepted AI card) may not bring an archived competency, and undo may not bring another organisation's", async () => {
+    respond = archivedWorld([{ id: COMP, archivedAt: new Date() }]);
+    await expect(versions.insertActivity(ORG, OPENING, STAGE, archivedQuestion)).rejects.toMatchObject({ code: "COMPETENCY" });
+    await expect(versions.insertStage(ORG, OPENING, { ...stagePayload, activities: [archivedQuestion] })).rejects.toMatchObject({ code: "COMPETENCY" });
+    respond = archivedWorld([]);
+    await expect(versions.insertActivity(ORG, OPENING, STAGE, archivedQuestion, 0, { restore: true })).rejects.toMatchObject({ code: "COMPETENCY" });
+    await expect(versions.insertStage(ORG, OPENING, stagePayload, 0, { restore: true })).rejects.toMatchObject({ code: "COMPETENCY" });
+    expect(writes()).toEqual([]);
+  });
+
+  it("a stage holds at most MAX_ACTIVITIES_PER_STAGE questions, so a deleted stage always fits its undo payload", async () => {
+    const full = Array.from({ length: MAX_ACTIVITIES_PER_STAGE }, (_, i) => ({ id: `${i}` }));
+    respond = draftWorld((op) => {
+      if (op.kind === "select" && op.table === "hiring_stages") return [{ id: STAGE }];
+      if (op.kind === "select" && op.table === "hiring_activities") return full;
+      return undefined;
+    });
+    await expect(versions.addActivity(ORG, OPENING, STAGE, "VIDEO")).rejects.toMatchObject({ name: "HiringConflict", code: "STAGE_FULL" });
+    await expect(versions.insertActivity(ORG, OPENING, STAGE, emptyActivity("VIDEO"), null, { restore: true })).rejects.toMatchObject({ code: "STAGE_FULL" });
+    expect(writes()).toEqual([]);
+    expect(MAX_ACTIVITIES_PER_STAGE).toBe(20);
+    expect(stagePayloadSchema.safeParse({ ...stagePayload, activities: Array.from({ length: MAX_ACTIVITIES_PER_STAGE }, () => emptyActivity("VIDEO")) }).success).toBe(true);
+  });
+
   it("a value outside the database CHECKs is INVALID before any statement", async () => {
     await expect(versions.updateStage(ORG, OPENING, STAGE, { durationSeconds: 30 })).rejects.toMatchObject({ code: "INVALID" });
     await expect(versions.updateActivity(ORG, OPENING, ACTIVITY, { maxTakes: 9 })).rejects.toMatchObject({ code: "INVALID" });
@@ -241,6 +289,13 @@ describe("loaders", () => {
     expect(await loadVersionContent(ORG, VERSION)).toBeNull();
     scopedToOrg(ops[0], '"hiring_versions"."org_id"');
     expect(ops[0].params).toContain(VERSION);
+  });
+
+  it("a malformed id finds nothing and sends no statement (no 22P02)", async () => {
+    expect(await loadVersionContent(ORG, "not-an-id")).toBeNull();
+    expect((await loadCompetencyFacts(ORG, ["not-an-id"])).size).toBe(0);
+    expect(await positionProfile(ORG, "not-an-id")).toEqual([]);
+    expect(ops).toEqual([]);
   });
 
   it("reads competency facts, the scale and a position profile within the caller's organisation", async () => {
@@ -269,12 +324,23 @@ describe("loaders", () => {
         : [];
     const rows = await listOpenings(ORG, { id: ACTOR, role: "MANAGER" }, "CLOSED");
     scopedToOrg(ops[0], '"hiring_openings"."org_id"');
+    expect(ops[0].joins.join(" ")).toContain('"positions"."org_id" = $');
     expect(rows).toHaveLength(1);
     expect(access.calls).toEqual([expect.objectContaining({ status: "CLOSED" })]);
   });
 });
 
 describe("createOpening", () => {
+  it("locks a copy source by id and organisation FOR SHARE before reading its versions", async () => {
+    respond = (op) =>
+      op.table === "users" ? [{ id: ACTOR }] : op.table === "positions" ? [{ id: POSITION, name: "P", jobDescription: null }] : op.table === "hiring_openings" ? [{ id: OPENING }] : [];
+    await createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "existing", id: POSITION }, start: "COPY", copyFrom: OPENING, locale: "tr" });
+    const source = ops.find((o) => o.table === "hiring_openings");
+    expect(source?.lock).toBe("share");
+    scopedToOrg(source, '"hiring_openings"."org_id"');
+    expect(ops.indexOf(source!)).toBeLessThan(ops.findIndex((o) => o.table === "hiring_versions"));
+  });
+
   const input = { position: { kind: "existing" as const, id: POSITION }, start: "BLANK" as const, copyFrom: null, locale: "tr" as const };
 
   it("checks that the creator is an active user of the organisation, and writes nothing otherwise", async () => {
