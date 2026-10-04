@@ -23,11 +23,14 @@ export function UndoStrip({
   message,
   action,
   hiddenFields,
+  onSubmitted,
 }: {
   message: string;
   /** Server action that reverses what just happened. */
   action: (formData: FormData) => void | Promise<void>;
   hiddenFields: Record<string, string>;
+  /** Called when 'Geri al' is pressed, so the caller can forget what it was holding. */
+  onSubmitted?: () => void;
 }) {
   const t = useMT("common");
   const [secondsLeft, setSecondsLeft] = useState(UNDO_SECONDS);
@@ -48,7 +51,7 @@ export function UndoStrip({
         aria-live="polite"
       >
         <span className="text-sm text-ink">{message}</span>
-        <form action={action} className="contents">
+        <form action={action} className="contents" onSubmit={() => onSubmitted?.()}>
           {Object.entries(hiddenFields).map(([name, value]) => (
             <input key={name} type="hidden" name={name} value={value} />
           ))}

@@ -28,8 +28,8 @@ export function BackToOpenings({ t }: { t: T }) {
 
 /**
  * HIRING-UX 5.4: name, status, deadline, and the opening's route tabs. Only
- * tabs whose route exists are listed (ruling C7): the overview now; the
- * assessment (Task 15) and team and rules (Task 20) tabs join with their routes.
+ * tabs whose route exists are listed (ruling C7): the overview and the
+ * assessment; team and rules (Task 20) joins with its route.
  */
 export function OpeningHeader({
   opening,
@@ -61,7 +61,32 @@ export function OpeningHeader({
         }
         action={action}
       />
-      <RouteTabs label={t("hiringCommon.tabsLabel")} items={[{ href: base, label: t("hiringCommon.tabOverview"), active: active === "overview" }]} />
+      <RouteTabs
+        label={t("hiringCommon.tabsLabel")}
+        items={[
+          { href: base, label: t("hiringCommon.tabOverview"), active: active === "overview" },
+          { href: `${base}/assessment`, label: t("hiringCommon.tabAssessment"), active: active === "assessment" },
+        ]}
+      />
     </div>
+  );
+}
+
+/**
+ * The assessment's own tabs (HIRING-UX 4.3): the summary with the version
+ * history and the builder. The AI draft (Task 17), the scorecard (Task 16)
+ * and the preview (Task 19) join when their routes exist (ruling C7).
+ */
+export function AssessmentTabs({ openingId, active, t }: { openingId: string; active: "summary" | "edit"; t: T }) {
+  const base = `/hiring/openings/${openingId}/assessment`;
+  return (
+    <RouteTabs
+      size="sm"
+      label={t("hiringCommon.assessmentTabsLabel")}
+      items={[
+        { href: base, label: t("hiringCommon.tabSummary"), active: active === "summary" },
+        { href: `${base}/edit`, label: t("hiringCommon.tabBuilder"), active: active === "edit" },
+      ]}
+    />
   );
 }

@@ -83,7 +83,7 @@ async function main() {
   const id = created.openingId;
   const opening = await openings.loadOpening(org.id, id);
   check(opening?.status === "DRAFT" && opening.ownerId === owner.id && opening.decisionMakerId === owner.id, "DRAFT, owned and decided by its creator");
-  check(created.next === `/hiring/openings/${id}`, "a blank start lands on the overview (C7: the builder is not built yet)", created.next);
+  check(created.next === `/hiring/openings/${id}/assessment/edit`, "a blank start opens the builder (C7)", created.next);
   const [v1] = await versions.versionsOf(org.id, id);
   check(v1?.number === 1 && v1.status === "DRAFT", "v1 is a draft");
   const refused = await openings.createOpening(user, { position: { kind: "new", name: "İlansız", jobDescription: " " }, start: "AI", copyFrom: null, locale: "tr" });
@@ -176,6 +176,7 @@ async function main() {
     .where(eq(s.hiringVersions.id, v1.id));
   const copy = await openings.createOpening(user, { position: { kind: "existing", id: position.id }, start: "COPY", copyFrom: id, locale: "tr" });
   if (!copy.ok) throw new Error(copy.code);
+  check(copy.next === `/hiring/openings/${copy.openingId}/assessment/edit`, "a copied start opens the builder (C7)", copy.next);
   const [copyVersion] = await versions.versionsOf(org.id, copy.openingId);
   const copied = await loadVersionContent(org.id, copyVersion.id);
   const source = await loadVersionContent(org.id, v1.id);

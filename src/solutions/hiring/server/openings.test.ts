@@ -51,21 +51,29 @@ describe("positionOptions", () => {
 });
 
 describe("createOpening", () => {
-  // Ruling C7: no link to a page that does not exist yet. Until the builder
-  // (Task 15) and the AI screen (Task 17) are built, every start lands on the
-  // opening's overview; those tasks point `next` at their own routes.
-  it.each(["AI", "BLANK"] as const)("a %s start lands on the opening overview", async (start) => {
-    fake.respond = (op) =>
-      op.table === "users"
-        ? [{ id: ACTOR }]
-        : op.table === "positions"
-          ? [{ id: POS_A, name: "Destek Uzmanı", jobDescription: "Müşteri sorularını yanıtlayacak bir uzman arıyoruz." }]
-          : op.table === "hiring_openings"
-            ? [{ id: OPENING }]
-            : op.table === "hiring_versions"
-              ? [{ id: VERSION }]
-              : [];
-    const result = await createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "existing", id: POS_A }, start, copyFrom: null, locale: "tr" });
+  // Ruling C7: no link to a page that does not exist yet. The builder exists
+  // (Task 15), so a blank or copied start opens it; the AI screen comes with
+  // Task 17, so an AI start still lands on the opening's overview.
+  const respond = (op: { table: string }) =>
+    op.table === "users"
+      ? [{ id: ACTOR }]
+      : op.table === "positions"
+        ? [{ id: POS_A, name: "Destek Uzmanı", jobDescription: "Müşteri sorularını yanıtlayacak bir uzman arıyoruz." }]
+        : op.table === "hiring_openings"
+          ? [{ id: OPENING }]
+          : op.table === "hiring_versions"
+            ? [{ id: VERSION }]
+            : [];
+
+  it("a BLANK start opens the builder", async () => {
+    fake.respond = respond;
+    const result = await createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "existing", id: POS_A }, start: "BLANK", copyFrom: null, locale: "tr" });
+    expect(result).toEqual({ ok: true, openingId: OPENING, next: `/hiring/openings/${OPENING}/assessment/edit` });
+  });
+
+  it("an AI start lands on the opening overview until the AI screen exists", async () => {
+    fake.respond = respond;
+    const result = await createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "existing", id: POS_A }, start: "AI", copyFrom: null, locale: "tr" });
     expect(result).toEqual({ ok: true, openingId: OPENING, next: `/hiring/openings/${OPENING}` });
   });
 });

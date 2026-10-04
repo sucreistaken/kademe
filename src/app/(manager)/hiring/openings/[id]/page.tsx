@@ -33,7 +33,9 @@ const LABELS: Record<ReadinessKey, "rowAssessment" | "rowAnchors" | "rowWeights"
   team: "rowTeam",
   preview: "rowPreview",
 };
-const ACTIONS: Partial<Record<ReadinessKey, "goBuilder" | "goLibrary" | "goScorecard">> = { assessment: "goBuilder", anchors: "goLibrary", weights: "goScorecard" };
+/** The link's words follow where it goes: the builder, a library competency, or (Task 16) the scorecard. */
+const actionFor = (href: string): "goBuilder" | "goLibrary" | "goScorecard" =>
+  href.startsWith("/library/") ? "goLibrary" : href.includes("/assessment/scorecard") ? "goScorecard" : "goBuilder";
 const STATE_WORD = { done: "stateDone", missing: "stateMissing", advisory: "stateAdvisory" } as const;
 const STATE_SR = { done: "srDone", missing: "srMissing", advisory: "srAdvisory" } as const;
 const ICON = { done: Check, missing: Circle, advisory: CircleDashed } as const;
@@ -181,7 +183,8 @@ export default async function OpeningOverviewPage({
                     : row.state === "advisory"
                       ? t("hiringOverview.advisory")
                       : fix?.text;
-                const actionKey = ACTIONS[row.key];
+                // Nothing measured yet: the questions are picked in the builder.
+                const href = fix?.href ?? (row.reason === "NO_COMPETENCIES" ? `/hiring/openings/${opening.id}/assessment/edit` : null);
                 return (
                   <Row
                     key={row.key}
@@ -190,8 +193,8 @@ export default async function OpeningOverviewPage({
                     stateWord={t(`hiringOverview.${STATE_WORD[row.state]}`)}
                     stateSr={t(`hiringOverview.${STATE_SR[row.state]}`)}
                     detail={detail}
-                    href={fix?.href}
-                    action={actionKey ? t(`hiringOverview.${actionKey}`) : undefined}
+                    href={href}
+                    action={href ? t(`hiringOverview.${actionFor(href)}`) : undefined}
                   />
                 );
               })}

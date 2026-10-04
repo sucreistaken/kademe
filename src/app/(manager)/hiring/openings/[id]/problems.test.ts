@@ -68,14 +68,34 @@ describe("describeProblem", () => {
     expect(describe_(SAMPLES.WEIGHTS_NOT_100, "en").text).toBe("Weights add up to 80%; they must add up to 100%.");
   });
 
-  // Ruling C7: a link only to a page that exists. The builder (Task 15) and the
-  // scorecard (Task 16) are not built yet, so those problems carry no link; a
-  // missing anchor is fixed on the library competency page, which exists.
+  // Ruling C7: a link only to a page that exists. Structure problems open the
+  // builder (Task 15) on the stage or question at fault; a missing anchor is
+  // fixed on the library competency; weights wait for the scorecard (Task 16).
   it("links only to pages that exist", () => {
-    for (const problem of Object.values(SAMPLES)) {
-      const { href } = describe_(problem, "tr");
-      if (problem.code === "ANCHOR_MISSING") expect(href).toBe(`/library/competencies/${COMP}`);
-      else expect(href, problem.code).toBeNull();
-    }
+    const builder = `/hiring/openings/${OPENING}/assessment/edit`;
+    const expected: Record<PublishProblem["code"], string | null> = {
+      NO_STAGE: builder,
+      EMPTY_STAGE_NAME: `${builder}?stage=s2`,
+      EMPTY_STAGE: `${builder}?stage=s2`,
+      EMPTY_PROMPT: `${builder}?activity=a2`,
+      NO_COMPETENCY: `${builder}?activity=a2`,
+      TOO_MANY_COMPETENCIES: `${builder}?activity=a2`,
+      CHOICE_WITH_COMPETENCY: `${builder}?activity=a2`,
+      CHOICE_NEEDS_OPTIONS: `${builder}?activity=a2`,
+      CHOICE_NEEDS_ANSWER: `${builder}?activity=a2`,
+      NO_MEASURED_COMPETENCY: builder,
+      COMPETENCY_MISSING: builder,
+      COMPETENCY_ARCHIVED: builder,
+      ANCHOR_MISSING: `/library/competencies/${COMP}`,
+      WEIGHTS_NOT_100: null,
+      WEIGHTS_MISSING: null,
+    };
+    for (const problem of Object.values(SAMPLES)) expect(describe_(problem, "tr").href, problem.code).toBe(expected[problem.code]);
+  });
+
+  it("sends an archived or missing competency to the first question that measures it", () => {
+    const used = content([stage("s1", [activity("a0"), activity("a1", { orderIndex: 1, competencyIds: [COMP] })])]);
+    const { href } = describeProblem(SAMPLES.COMPETENCY_ARCHIVED, { content: used, facts: FACTS, locale: "tr", openingId: OPENING }, managerT("tr"));
+    expect(href).toBe(`/hiring/openings/${OPENING}/assessment/edit?activity=a1`);
   });
 });
