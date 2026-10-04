@@ -505,11 +505,23 @@ export function Builder({
           </div>
           <BuilderCheckContext value={check}>{checkSlot}</BuilderCheckContext>
           <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-x-3 gap-y-1">
-            <Button asChild variant="secondary">
-              <Link href={previewHref} onClick={openPreview}>
-                {t("preview")}
-              </Link>
-            </Button>
+            {/* Like "Yayınla": the preview reads the server, so it waits for what is still being saved. */}
+            {waiting ? (
+              <>
+                <DisabledReason id="builder-preview-why" className="max-w-[260px] text-right">
+                  {t("previewUnsaved")}
+                </DisabledReason>
+                <Button id="builder-preview" variant="secondary" disabled disabledReason={t("previewUnsaved")}>
+                  {t("preview")}
+                </Button>
+              </>
+            ) : (
+              <Button asChild variant="secondary">
+                <Link href={previewHref} onClick={openPreview}>
+                  {t("preview")}
+                </Link>
+              </Button>
+            )}
             {mode === "draft" ? (
               closed ? null : (
                 <form action={publish} className="flex max-w-full flex-wrap items-center justify-end gap-x-3 gap-y-1">

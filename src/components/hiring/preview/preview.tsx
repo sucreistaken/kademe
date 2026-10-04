@@ -12,19 +12,11 @@ import { ManagerIntl } from "@/components/manager/Intl";
 import { useMT } from "@/i18n/manager-client";
 import type { Locale } from "@/i18n/locale";
 import { cn } from "@/lib/cn";
-import { pickText } from "@/lib/i18n-text";
+import { pickTextLang } from "@/lib/i18n-text";
+import { useStepFocus } from "@/hooks/use-step-focus";
 import type { CandidateActivity, CandidateVersion } from "@/solutions/hiring/rules/candidate-view";
 import { markPreviewedAction } from "@/app/(manager)/hiring/openings/[id]/assessment/preview/actions";
-
-type Step = { kind: "intro" } | { kind: "stage"; stage: number } | { kind: "activity"; stage: number; activity: number } | { kind: "done" };
-
-function steps(version: CandidateVersion): Step[] {
-  return [
-    { kind: "intro" },
-    ...version.stages.flatMap((s, si): Step[] => [{ kind: "stage", stage: si }, ...s.activities.map((_, ai): Step => ({ kind: "activity", stage: si, activity: ai }))]),
-    { kind: "done" },
-  ];
-}
+import { announcementOf, primaryOf, progressOf, stepsOf, type Step } from "./steps";
 
 /** A language picker names each language in itself. */
 const LANGUAGE_NAMES: Record<Locale, string> = { tr: "Türkçe", en: "English" };
@@ -40,6 +32,13 @@ const MIME_LABELS: Record<string, string> = {
   "application/zip": "ZIP",
 };
 const mimeLabel = (mime: string) => MIME_LABELS[mime] ?? (mime.split("/")[1] ?? mime).toUpperCase();
+
+/** A version text in the frame's language; one shown through the other-language fallback carries its own lang. */
+function Text({ value, lang }: { value: { tr: string; en: string }; lang: Locale }) {
+  const shown = pickTextLang(value, lang);
+  return shown.lang === lang ? <>{shown.text}</> : <span lang={shown.lang}>{shown.text}</span>;
+}
+const hasText = (value: { tr: string; en: string }, lang: Locale) => pickTextLang(value, lang).text !== "";
 
 type Props = {
   openingId: string;
@@ -68,7 +67,7 @@ export function Preview({ openingId, stampVersionId, mode, number, companyName, 
   const [mobile, setMobile] = useState(false);
   const [lang, setLang] = useState<Locale>(locales.includes(defaultLocale) ? defaultLocale : locales[0]);
   const stamped = useRef<string | null>(null);
-  const all = steps(version);
+  const all = stepsOf(version);
   const step = all[Math.min(index, all.length - 1)];
 
   useEffect(() => {
@@ -140,6 +139,7 @@ export function Preview({ openingId, stampVersionId, mode, number, companyName, 
             total={all.length}
             companyName={companyName}
             positionName={positionName}
+            positionLang={defaultLocale}
             builderHref={builderHref}
             onNext={() => setIndex((i) => Math.min(all.length - 1, i + 1))}
             onRestart={() => setIndex(0)}
@@ -159,6 +159,7 @@ function Frame({
   total,
   companyName,
   positionName,
+  positionLang,
   builderHref,
   onNext,
   onRestart,
@@ -171,22 +172,22 @@ function Frame({
   total: number;
   companyName: string;
   positionName: string;
+  /** A position name is stored in one language: the organisation's, taken as the version's default. */
+  positionLang: Locale;
   builderHref: string;
   onNext: () => void;
   onRestart: () => void;
 }) {
   const t = useMT("hiringPreview");
-  const text = (v: { tr: string; en: string }) => pickText(v, lang);
   const stages = version.stages;
   const empty = stages.length === 0;
-
-  let primary: string | null = null;
-  if (!empty && step.kind === "intro") primary = t("start");
-  else if (step.kind === "stage") primary = stages[step.stage].activities.length ? t("stageStart") : t("next");
-  else if (step.kind === "activity") {
-    const lastInStage = step.activity === stages[step.stage].activities.length - 1;
-    primary = !lastInStage ? t("next") : step.stage === stages.length - 1 ? t("finish") : t("finishStage");
-  }
+  // Focus follows the screen: the new heading takes it whenever the step changes (never on first render).
+  const heading = useStepFocus<HTMLHeadingElement>(index);
+  const primaryKey = primaryOf(version, step);
+  const primary = primaryKey ? t(primaryKey) : null;
+  const progress = progressOf(version, step);
+  const announcement = announcementOf(version, step);
+  const headingClass = "text-[28px] leading-9 font-semibold text-ink";
 
   function body(): React.ReactNode {
     if (empty) {
@@ -203,7 +204,9 @@ function Frame({
       return (
         <div className="space-y-6">
           <div className="space-y-3">
-            <h1 className="text-[28px] leading-9 font-semibold text-ink">{positionName}</h1>
+            <h2 ref={heading} tabIndex={-1} lang={positionLang !== lang ? positionLang : undefined} className={headingClass}>
+              {positionName}
+            </h2>
             <p className="text-[16px] leading-[26px] text-ink-2">{t("introPurpose")}</p>
             <p className="tnum text-[16px] leading-[26px] text-ink">
               {t("introBody", { stages: stages.length, minutes: minutesOf(version.totalSeconds) })}
@@ -213,7 +216,7 @@ function Frame({
             {stages.map((s, i) => (
               <li key={s.id} className="tnum flex items-baseline justify-between gap-4 px-4 py-3 text-[16px] text-ink">
                 <span>
-                  {i + 1}. {text(s.name)}
+                  {i + 1}. <Text value={s.name} lang={lang} />
                 </span>
                 <span className="shrink-0 text-[14px] text-muted">{t("stageMinutes", { minutes: minutesOf(s.durationSeconds) })}</span>
               </li>
@@ -225,7 +228,9 @@ function Frame({
     if (step.kind === "done") {
       return (
         <div className="space-y-3">
-          <h1 className="text-[28px] leading-9 font-semibold text-ink">{t("doneTitle")}</h1>
+          <h2 ref={heading} tabIndex={-1} className={headingClass}>
+            {t("doneTitle")}
+          </h2>
           <p className="text-[16px] leading-[26px] text-ink-2">{t("doneBody")}</p>
           <div className="pt-3">
             <Button variant="secondary" onClick={onRestart}>
@@ -239,9 +244,14 @@ function Frame({
     if (step.kind === "stage") {
       return (
         <div className="space-y-3">
-          <p className="tnum text-[14px] text-muted">{t("stageOf", { n: step.stage + 1, total: stages.length })}</p>
-          <h1 className="text-[28px] leading-9 font-semibold text-ink">{text(stage.name)}</h1>
-          {text(stage.description) ? <p className="text-[16px] leading-[26px] text-ink-2">{text(stage.description)}</p> : null}
+          <h2 ref={heading} tabIndex={-1} className={headingClass}>
+            <Text value={stage.name} lang={lang} />
+          </h2>
+          {hasText(stage.description, lang) ? (
+            <p className="text-[16px] leading-[26px] text-ink-2">
+              <Text value={stage.description} lang={lang} />
+            </p>
+          ) : null}
           <p className="tnum text-[16px] leading-[26px] text-ink">
             {t("stageTime", { minutes: minutesOf(stage.durationSeconds) })} · {t("stageQuestions", { count: stage.activities.length })}
           </p>
@@ -254,7 +264,7 @@ function Frame({
         key={stage.activities[step.activity].id}
         activity={stage.activities[step.activity]}
         lang={lang}
-        position={{ stage: step.stage + 1, stages: stages.length, n: step.activity + 1, total: stage.activities.length }}
+        headingRef={heading}
       />
     );
   }
@@ -270,11 +280,19 @@ function Frame({
       )}
     >
       <div className={cn("space-y-3", mobile ? "px-5 pt-5" : "px-card-candidate pt-card-candidate")}>
-        <p className="text-[13px] font-medium text-muted">{companyName}</p>
+        <div className="flex items-baseline justify-between gap-4">
+          <p className="text-[13px] font-medium text-muted">{companyName}</p>
+          {/* HIRING-UX 6: progress is the thin bar plus "Aşama 2 / 3", nothing else. */}
+          {progress ? <p className="tnum shrink-0 text-[13px] text-muted">{t("stageOf", progress)}</p> : null}
+        </div>
+        {/* The bar repeats the text above for the eye; the live region below speaks the position. */}
         <div className="h-1 rounded-full bg-hairline" aria-hidden>
           <div className="h-1 rounded-full bg-ink-3 transition-[width] duration-[180ms] ease-out" style={{ width: `${Math.round((index / Math.max(1, total - 1)) * 100)}%` }} />
         </div>
       </div>
+      <p className="sr-only" aria-live="polite" aria-atomic="true">
+        {empty ? "" : t(announcement.key, announcement.values)}
+      </p>
       <div className={cn("flex-1", mobile ? "px-5 py-8" : "px-card-candidate py-10")}>
         <div className={cn("mx-auto", recorded ? "max-w-[960px]" : "max-w-[640px]")}>{body()}</div>
       </div>
@@ -291,28 +309,33 @@ function Frame({
   );
 }
 
-function ActivityView({ activity, lang, position }: { activity: CandidateActivity; lang: Locale; position: { stage: number; stages: number; n: number; total: number } }) {
+function ActivityView({ activity, lang, headingRef }: { activity: CandidateActivity; lang: Locale; headingRef: React.Ref<HTMLHeadingElement> }) {
   const t = useMT("hiringPreview");
-  const text = (v: { tr: string; en: string }) => pickText(v, lang);
   const [written, setWritten] = useState("");
   const recorded = activity.type === "VIDEO" || activity.type === "AUDIO";
-  const prompt = text(activity.prompt);
   const promptId = `preview-prompt-${activity.id}`;
   const mb = new Intl.NumberFormat(lang, { maximumFractionDigits: 1 }).format((activity.maxFileBytes ?? 0) / 1024 / 1024);
 
   return (
     <div className="space-y-5">
-      <div className="space-y-1">
-        <p className="tnum text-[14px] text-muted">{t("questionOf", position)}</p>
-        <p className="text-[13px] text-muted">
-          {t(`type${activity.type}`)}
-          {!activity.required ? ` · ${t("optional")}` : ""}
-        </p>
-      </div>
-      <p id={promptId} className={cn("whitespace-pre-line text-ink", recorded ? "text-[22px] leading-8 font-medium" : "text-[18px] leading-7")}>
-        {prompt}
+      <p className="text-[13px] text-muted">
+        {t(`type${activity.type}`)}
+        {!activity.required ? ` · ${t("optional")}` : ""}
       </p>
-      {text(activity.note) ? <p className="whitespace-pre-line text-[16px] leading-[26px] text-ink-2">{text(activity.note)}</p> : null}
+      {/* The question is the screen's heading: it takes focus when the screen opens. */}
+      <h2
+        ref={headingRef}
+        tabIndex={-1}
+        id={promptId}
+        className={cn("whitespace-pre-line text-ink", recorded ? "text-[22px] leading-8 font-medium" : "text-[18px] leading-7 font-normal")}
+      >
+        <Text value={activity.prompt} lang={lang} />
+      </h2>
+      {hasText(activity.note, lang) ? (
+        <p className="whitespace-pre-line text-[16px] leading-[26px] text-ink-2">
+          <Text value={activity.note} lang={lang} />
+        </p>
+      ) : null}
 
       {recorded ? (
         <div className="space-y-3">
@@ -362,7 +385,7 @@ function ActivityView({ activity, lang, position }: { activity: CandidateActivit
               className="flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border border-line bg-surface px-4 py-2.5 text-[16px] text-ink transition-colors duration-[120ms] ease-out hover:bg-canvas has-[[data-state=checked]]:border-accent has-[[data-state=checked]]:bg-brand-soft"
             >
               <RadioGroupItem value={c.id} />
-              {text(c.label)}
+              <Text value={c.label} lang={lang} />
             </label>
           ))}
         </RadioGroup>
@@ -377,7 +400,7 @@ function ActivityView({ activity, lang, position }: { activity: CandidateActivit
               className="flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border border-line bg-surface px-4 py-2.5 text-[16px] text-ink transition-colors duration-[120ms] ease-out hover:bg-canvas has-[[data-state=checked]]:border-accent has-[[data-state=checked]]:bg-brand-soft"
             >
               <Checkbox />
-              {text(c.label)}
+              <Text value={c.label} lang={lang} />
             </label>
           ))}
         </div>

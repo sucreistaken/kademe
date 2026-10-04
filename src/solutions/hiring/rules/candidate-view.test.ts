@@ -67,6 +67,32 @@ describe("candidate view (HIRING-UX 5.8, spec 7)", () => {
     expect(view.totalSeconds).toBe(600);
   });
 
+  it("copies a text as its two languages only: an extra key on a stored object never reaches the candidate", () => {
+    const extra = <T extends object>(v: T) => ({ ...v, internal: `${SECRET} extra` }) as T;
+    const view = toCandidateVersion(
+      content([
+        stage(
+          "s1",
+          [
+            activity("a1", {
+              prompt: extra({ tr: "Soru", en: "Question" }),
+              note: extra({ tr: "Not", en: "Note" }),
+              type: "SINGLE_CHOICE",
+              config: { choices: [{ id: "x", label: extra({ tr: "Evet", en: "Yes" }) }] },
+            }),
+          ],
+          { name: extra({ tr: "Aşama", en: "Stage" }), description: extra({ tr: "Açıklama", en: "About" }) },
+        ),
+      ]),
+    );
+    expect(JSON.stringify(view)).not.toContain(SECRET);
+    const [s] = view.stages;
+    for (const text of [s.name, s.description, s.activities[0].prompt, s.activities[0].note, s.activities[0].choices![0].label]) {
+      expect(Object.keys(text).sort()).toEqual(["en", "tr"]);
+    }
+    expect(s.activities[0].prompt).toEqual({ tr: "Soru", en: "Question" });
+  });
+
   it("is a copy: editing the draft afterwards changes nothing in it", () => {
     const local = content([stage("s1", [activity("a1", { prompt: { tr: "önce", en: "" } })])]);
     const view = toCandidateVersion(local);

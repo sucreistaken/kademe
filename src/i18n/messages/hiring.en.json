@@ -274,7 +274,8 @@
     "stageFull": "This stage has 20 questions, the most a stage can hold.",
     "unsavedFirst": "What you typed is saved first; you can publish once it is.",
     "opFailed": "This change did not reach the server. Reload the page and try again.",
-    "preview": "Preview"
+    "preview": "Preview",
+    "previewUnsaved": "You can preview once what you typed is saved."
   },
   "hiringScorecard": {
     "matrixTitle": "What do we measure, with which question?",
@@ -496,6 +497,8 @@
     "introPurpose": "This assessment helps us understand how you think before we meet you. You do it on your own, in your own time.",
     "introBody": "{stages, plural, one {# stage} other {# stages}} · about {minutes} minutes",
     "stageOf": "Stage {n} of {total}",
+    "announceIntro": "Start of the assessment",
+    "announceStage": "Stage {n} of {total}, stage introduction",
     "questionOf": "Stage {stage} of {stages} · Question {n} of {total}",
     "stageTime": "{minutes} minutes for this stage",
     "stageQuestions": "{count, plural, one {# question} other {# questions}}",

@@ -274,7 +274,8 @@
     "stageFull": "Bu aşamada 20 soru var; bir aşama en fazla bu kadar soru alır.",
     "unsavedFirst": "Önce yazdıkların kaydedilsin; kaydedilince yayınlayabilirsin.",
     "opFailed": "Bu değişiklik sunucuya ulaşmadı. Sayfayı yenileyip tekrar dene.",
-    "preview": "Önizle"
+    "preview": "Önizle",
+    "previewUnsaved": "Yazdıkların kaydedilince önizleyebilirsin."
   },
   "hiringScorecard": {
     "matrixTitle": "Neyi, hangi soruyla ölçüyoruz?",
@@ -496,6 +497,8 @@
     "introPurpose": "Bu değerlendirme, seninle tanışmadan önce nasıl düşündüğünü anlamamız için hazırlandı. Kendi zamanında, tek başına yapacaksın.",
     "introBody": "{stages} aşama · yaklaşık {minutes} dakika",
     "stageOf": "Aşama {n} / {total}",
+    "announceIntro": "Değerlendirmenin başı",
+    "announceStage": "Aşama {n} / {total}, aşama girişi",
     "questionOf": "Aşama {stage} / {stages} · Soru {n} / {total}",
     "stageTime": "Bu aşama için {minutes} dakika",
     "stageQuestions": "{count} soru",

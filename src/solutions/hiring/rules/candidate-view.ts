@@ -23,6 +23,9 @@ export type CandidateActivity = {
 export type CandidateStage = { id: string; name: I18nText; description: I18nText; durationSeconds: number; activities: CandidateActivity[] };
 export type CandidateVersion = { stages: CandidateStage[]; totalSeconds: number };
 
+/** A text as its two languages and nothing else: a stored object carrying any other key never passes it on. */
+const textOf = (v: I18nText): I18nText => ({ tr: v.tr, en: v.en });
+
 /**
  * What a candidate may see of a version, built field by field (a whitelist,
  * like the exam's toCandidateItem). Team-only fields, answer examples, the
@@ -34,22 +37,22 @@ export function toCandidateVersion(content: { stages: ContentStage[] }): Candida
   const stages = orderedStages(content).map(
     (stage): CandidateStage => ({
     id: stage.id,
-    name: stage.name,
-    description: stage.description,
+    name: textOf(stage.name),
+    description: textOf(stage.description),
     durationSeconds: stage.durationSeconds,
     activities: orderedActivities(stage).map(
       (a): CandidateActivity => ({
         id: a.id,
         type: a.type,
         required: a.required,
-        prompt: a.prompt,
-        note: a.note,
+        prompt: textOf(a.prompt),
+        note: textOf(a.note),
         thinkSeconds: a.thinkSeconds,
         flexibleThink: a.flexibleThink,
         answerSeconds: a.answerSeconds,
         maxTakes: a.maxTakes,
         choices: a.config.choices
-          ? a.config.choices.filter((c) => hasText(c.label)).map((c): CandidateChoice => ({ id: c.id, label: c.label }))
+          ? a.config.choices.filter((c) => hasText(c.label)).map((c): CandidateChoice => ({ id: c.id, label: textOf(c.label) }))
           : null,
         minChars: a.config.minChars ?? null,
         maxChars: a.config.maxChars ?? null,
