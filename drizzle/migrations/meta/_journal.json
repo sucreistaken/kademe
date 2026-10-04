@@ -57,6 +57,20 @@
       "when": 1791122663812,
       "tag": "0007_hiring_schema_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791123193898,
+      "tag": "0008_hiring_immutability_locks",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791123220194,
+      "tag": "0009_hiring_locale_set_array",
+      "breakpoints": true
     }
   ]
 }

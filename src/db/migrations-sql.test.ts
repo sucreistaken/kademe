@@ -281,3 +281,51 @@ describe("0007_hiring_schema_guards", () => {
     expect(sql).not.toMatch(/^\s*(INSERT|UPDATE|DELETE)\b/im);
   });
 });
+
+describe("0008_hiring_immutability_locks", () => {
+  const sql = read("0008_hiring_immutability_locks");
+
+  it.each([
+    "hiring_block_published_version",
+    "hiring_block_published_stage",
+    "hiring_block_published_activity",
+    "hiring_block_published_mapping",
+  ])("replaces %s in place (the 0006 triggers keep calling it)", (fn) => {
+    expect(sql).toContain(`CREATE OR REPLACE FUNCTION ${fn}() RETURNS trigger AS $$`);
+  });
+
+  it("locks the parent version in every lookup, so a publish and a child edit cannot interleave", () => {
+    const lookups = [...sql.matchAll(/SELECT [^;]*INTO v_status [^;]*;/g)].map((m) => m[0]);
+    expect(lookups).toHaveLength(6);
+    expect(lookups.filter((l) => / FROM hiring_versions WHERE id = (OLD|NEW)\.version_id FOR SHARE;$/.test(l))).toHaveLength(2);
+    expect(lookups.filter((l) => /JOIN hiring_versions v ON v\.id = s\.version_id WHERE [^;]* FOR SHARE OF v;$/.test(l))).toHaveLength(4);
+  });
+
+  it("names the refusal hiring_version_frozen in every RAISE, with SQLSTATE 23514", () => {
+    const raises = [...sql.matchAll(/RAISE EXCEPTION [^;]*;/g)].map((m) => m[0]);
+    expect(raises).toHaveLength(7);
+    for (const r of raises) expect(r, r).toMatch(/USING ERRCODE = '23514', CONSTRAINT = 'hiring_version_frozen';$/);
+    expect(sql).not.toMatch(/RETURN NULL/);
+  });
+
+  it("sends one statement per chunk (the migrator prepares each chunk)", () => {
+    for (const chunk of sql.split("--> statement-breakpoint")) {
+      const outside = chunk.replace(/\$\$[\s\S]*?\$\$/g, "").replace(/--.*$/gm, "");
+      expect((outside.match(/;/g) ?? []).length, chunk.slice(0, 80)).toBeLessThanOrEqual(1);
+    }
+  });
+});
+
+describe("0009_hiring_locale_set_array", () => {
+  const sql = read("0009_hiring_locale_set_array");
+
+  it("keeps locale_set a JSON array (a bare string would pass the `?` membership check)", () => {
+    expect(sql).toContain(
+      `ALTER TABLE "hiring_versions" ADD CONSTRAINT "hiring_locale_set_is_array" CHECK (jsonb_typeof("hiring_versions"."locale_set") = 'array');`,
+    );
+  });
+
+  it("only adds that check", () => {
+    expect(sql).not.toMatch(/DROP |INSERT |UPDATE |DELETE /);
+  });
+});

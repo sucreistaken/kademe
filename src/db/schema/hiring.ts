@@ -167,6 +167,8 @@ export const hiringVersions = pgTable(
     check("hiring_version_number_positive", sql`${t.versionNumber} >= 1`),
     /** locale_set is a jsonb array of locale strings; `?` tests array membership. */
     check("hiring_default_locale_in_set", sql`${t.localeSet} ? ${t.defaultLocale}::text`),
+    /** `?` also matches a bare JSON string, so locale_set must be an array. */
+    check("hiring_locale_set_is_array", sql`jsonb_typeof(${t.localeSet}) = 'array'`),
     /** The opening belongs to the same organisation as the version. */
     foreignKey({
       name: "hiring_versions_opening_org_fk",

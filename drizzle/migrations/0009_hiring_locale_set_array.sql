@@ -1,0 +1,1 @@
+ALTER TABLE "hiring_versions" ADD CONSTRAINT "hiring_locale_set_is_array" CHECK (jsonb_typeof("hiring_versions"."locale_set") = 'array');
