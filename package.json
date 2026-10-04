@@ -24,6 +24,7 @@
     "db:reset": "tsx scripts/db-reset.ts",
     "bank:tts": "tsx scripts/bank-tts.ts",
     "verify:exam": "tsx scripts/verify-exam-flow.ts",
+    "verify:hiring-immutability": "tsx scripts/verify-hiring-immutability.ts",
     "verify:guard": "tsx scripts/verify-solution-guard.ts",
     "verify:migration": "tsx scripts/verify-platform-migration.ts",
     "verify:grading": "tsx scripts/verify-grading.ts",

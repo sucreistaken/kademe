@@ -195,3 +195,37 @@ describe("0005_hiring_openings", () => {
     expect(sql).not.toMatch(/DROP (TABLE|COLUMN|TYPE)/);
   });
 });
+
+describe("0006_hiring_immutability", () => {
+  const sql = read("0006_hiring_immutability");
+
+  it.each([
+    ["hiring_versions", "BEFORE UPDATE OR DELETE"],
+    ["hiring_stages", "BEFORE INSERT OR UPDATE OR DELETE"],
+    ["hiring_activities", "BEFORE INSERT OR UPDATE OR DELETE"],
+    ["hiring_activity_competencies", "BEFORE INSERT OR UPDATE OR DELETE"],
+  ])("guards %s", (table, when) => {
+    expect(sql).toMatch(new RegExp(`CREATE TRIGGER \\w+ ${when} ON "${table}" FOR EACH ROW`));
+  });
+
+  it("refuses with a check violation, never by silently skipping the row", () => {
+    expect(sql).toContain("ERRCODE = '23514'");
+    expect(sql).not.toMatch(/RETURN NULL/);
+  });
+
+  it("checks both the old and the new parent, so rows cannot be moved into a published version", () => {
+    expect(sql.match(/TG_OP <> 'INSERT'/g)?.length).toBe(3);
+    expect(sql.match(/TG_OP <> 'DELETE'/g)?.length).toBe(3);
+  });
+
+  it("leaves weight sets writable after publishing", () => {
+    expect(sql).not.toMatch(/ON "hiring_weight/);
+  });
+
+  it("sends one statement per chunk (the migrator prepares each chunk)", () => {
+    for (const chunk of sql.split("--> statement-breakpoint")) {
+      const outside = chunk.replace(/\$\$[\s\S]*?\$\$/g, "").replace(/--.*$/gm, "");
+      expect((outside.match(/;/g) ?? []).length, chunk.slice(0, 80)).toBeLessThanOrEqual(1);
+    }
+  });
+});
