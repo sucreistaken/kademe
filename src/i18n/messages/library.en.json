@@ -123,5 +123,16 @@
     "competencyRefused": "A competency in the profile can no longer be picked. Reload the page and try again.",
     "profileLimit": "A profile holds at most {max} competencies.",
     "listInvalid": "Up to {skills} skills ({skillMax} characters each) and {languages} languages ({languageMax} characters each)."
+  },
+  "libAnchorAi": {
+    "suggest": "Suggest anchors with AI",
+    "working": "Preparing suggestions, usually 10-20 s.",
+    "label": "AI suggestion. Nothing changes until you copy it into the fields; read and correct it before saving.",
+    "apply": "Copy suggestions into the fields",
+    "dismiss": "Close",
+    "failed": "No suggestion could be made. You can write the anchors yourself.",
+    "unconfigured": "AI is not connected. You can write the anchors yourself.",
+    "applied": "Suggestions copied into the fields. Read and correct them before saving.",
+    "needName": "Give the competency a name first."
   }
 }

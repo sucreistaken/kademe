@@ -18,7 +18,7 @@ import {
   type PositionWriteError,
   type SavedTag,
 } from "@/server/library-write";
-import { COMPETENCY_NAME_MAX, TAG_LABEL_MAX } from "@/lib/library/anchors";
+import { COMPETENCY_NAME_MAX, hasText, TAG_LABEL_MAX } from "@/lib/library/anchors";
 import {
   POSITION_JOB_AD_MAX,
   POSITION_LANGUAGE_MAX,
@@ -30,6 +30,8 @@ import {
   POSITION_SKILLS_MAX,
   POSITION_TEAM_MAX,
 } from "@/lib/library/positions";
+import { draftAnchors, type AnchorDraftOutcome } from "@/server/anchor-draft-job";
+import { loadCompetency, loadDefaultScale } from "@/server/library";
 import { isUuid } from "@/server/settings";
 import { requireUser } from "@/server/session";
 
@@ -144,4 +146,22 @@ export async function archivePositionAction(formData: FormData) {
 
 export async function restorePositionAction(formData: FormData) {
   await setArchivedFromForm(formData, false, setPositionArchived, "/library/positions");
+}
+
+/**
+ * "AI ile çapa öner" (HIRING-UX 5.10): a proposal for the form, never written
+ * to the competency. Reads the org's own row (tenancy) and refuses an archived
+ * one, which is read-only; no AI call and no ai_runs row on any refusal.
+ */
+export async function draftAnchorsAction(
+  competencyId: string,
+  input: { name: { tr: string; en: string }; description: { tr: string; en: string } },
+): Promise<AnchorDraftOutcome> {
+  const user = await requireUser("library:write");
+  const parsed = z.object({ name: i18nMax(COMPETENCY_NAME_MAX), description: i18n }).safeParse(input);
+  if (!isUuid(competencyId) || !parsed.success || !hasText(parsed.data.name)) return { status: "FAILED" };
+  const competency = await loadCompetency(user.orgId, competencyId);
+  if (!competency || competency.archivedAt) return { status: "FAILED" };
+  const scale = await loadDefaultScale(user.orgId);
+  return draftAnchors(user.orgId, user.id, competencyId, { ...parsed.data, levels: scale?.levels ?? [] });
 }

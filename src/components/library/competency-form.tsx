@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { I18nPair } from "@/components/manager/i18n-pair";
+import { AnchorAssist } from "@/components/library/anchor-assist";
 import type { I18nText } from "@/db/schema/types";
 import { useMT } from "@/i18n/manager-client";
 import type { Locale } from "@/i18n/locale";
@@ -20,6 +21,7 @@ import {
   REQUIRED_ANCHOR_LEVELS,
   TAG_LABEL_MAX,
 } from "@/lib/library/anchors";
+import { mergeAnchorProposal } from "@/lib/library/anchor-draft";
 import { formTags, type FormTag } from "@/lib/library/form-tags";
 import { saveCompetencyAction } from "@/app/(manager)/library/actions";
 
@@ -122,7 +124,14 @@ export function CompetencyForm({
             <h2 className="text-[16px] leading-6 font-semibold text-ink">{t("anchorsTitle")}</h2>
             <p className="text-[13px] text-muted">{t("anchorsSub")}</p>
           </div>
-          {/* Task 7: the AI anchor assist goes here. */}
+          {canWrite ? (
+            <AnchorAssist
+              competencyId={id}
+              name={value.name}
+              description={value.description}
+              onApply={(anchors) => setValue((v) => ({ ...v, anchors: mergeAnchorProposal(v.anchors, anchors) }))}
+            />
+          ) : null}
         </div>
         {ANCHOR_LEVELS.map((level) => {
           const body = value.anchors[level] ?? empty();

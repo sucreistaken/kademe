@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SessionUser } from "@/lib/auth";
 import type * as LibraryWrite from "@/server/library-write";
+import type * as LibraryRead from "@/server/library";
+import type * as AnchorJob from "@/server/anchor-draft-job";
 
 /**
  * The library server actions run the real session check (`requireUser` and
@@ -40,11 +42,23 @@ vi.mock("@/server/library-write", () => ({
   setPositionArchived: (...a: Parameters<typeof LibraryWrite.setPositionArchived>) => setPositionArchived(...a),
 }));
 
+const loadCompetency = vi.fn<typeof LibraryRead.loadCompetency>();
+const loadDefaultScale = vi.fn<typeof LibraryRead.loadDefaultScale>();
+vi.mock("@/server/library", () => ({
+  loadCompetency: (...a: Parameters<typeof LibraryRead.loadCompetency>) => loadCompetency(...a),
+  loadDefaultScale: (...a: Parameters<typeof LibraryRead.loadDefaultScale>) => loadDefaultScale(...a),
+}));
+const draftAnchors = vi.fn<typeof AnchorJob.draftAnchors>();
+vi.mock("@/server/anchor-draft-job", () => ({
+  draftAnchors: (...a: Parameters<typeof AnchorJob.draftAnchors>) => draftAnchors(...a),
+}));
+
 import {
   archiveCompetencyAction,
   archivePositionAction,
   createCompetencyAction,
   createPositionAction,
+  draftAnchorsAction,
   restoreCompetencyAction,
   restorePositionAction,
   saveCompetencyAction,
@@ -201,5 +215,54 @@ describe("position actions: bounds", () => {
     await archivePositionAction(f);
     await restorePositionAction(f);
     expect(setPositionArchived).not.toHaveBeenCalled();
+  });
+});
+
+describe("anchor draft action", () => {
+  const detail = (archivedAt: Date | null = null): LibraryRead.CompetencyDetail => ({
+    id: ID,
+    name: text("İletişim"),
+    description: text(""),
+    seededUnreviewed: false,
+    archivedAt,
+    anchors: {},
+    tags: [],
+  });
+  const levels = [{ value: 3, label: text("Beklenen") }];
+
+  beforeEach(() => {
+    loadCompetency.mockReset();
+    loadDefaultScale.mockReset();
+    draftAnchors.mockReset();
+    loadCompetency.mockResolvedValue(detail());
+    loadDefaultScale.mockResolvedValue({ id: "scale", name: "Varsayılan", minValue: 1, maxValue: 5, levels });
+    draftAnchors.mockResolvedValue({ status: "UNCONFIGURED" });
+  });
+
+  it("refuses a REVIEWER before reading or calling the AI", async () => {
+    current = as("REVIEWER");
+    await expect(draftAnchorsAction(ID, { name: text("x"), description: text("") })).rejects.toThrow("missing capability: library:write");
+    expect(loadCompetency).not.toHaveBeenCalled();
+    expect(draftAnchors).not.toHaveBeenCalled();
+  });
+
+  it("asks for a draft for a MANAGER with the org's own competency and scale", async () => {
+    current = as("MANAGER");
+    expect(await draftAnchorsAction(ID, { name: text("İletişim"), description: text("Açık anlatır") })).toEqual({ status: "UNCONFIGURED" });
+    expect(loadCompetency).toHaveBeenCalledWith(ORG, ID);
+    expect(loadDefaultScale).toHaveBeenCalledWith(ORG);
+    expect(draftAnchors).toHaveBeenCalledWith(ORG, "user-MANAGER", ID, { name: text("İletişim"), description: text("Açık anlatır"), levels });
+  });
+
+  it("makes no call for bad input, another org's competency or an archived one", async () => {
+    current = as("OWNER");
+    expect(await draftAnchorsAction("not-a-uuid", { name: text("x"), description: text("") })).toEqual({ status: "FAILED" });
+    expect(await draftAnchorsAction(ID, { name: text("a".repeat(121)), description: text("") })).toEqual({ status: "FAILED" });
+    expect(await draftAnchorsAction(ID, { name: text(" "), description: text("") })).toEqual({ status: "FAILED" });
+    loadCompetency.mockResolvedValueOnce(null);
+    expect(await draftAnchorsAction(ID, { name: text("x"), description: text("") })).toEqual({ status: "FAILED" });
+    loadCompetency.mockResolvedValueOnce(detail(new Date()));
+    expect(await draftAnchorsAction(ID, { name: text("x"), description: text("") })).toEqual({ status: "FAILED" });
+    expect(draftAnchors).not.toHaveBeenCalled();
   });
 });

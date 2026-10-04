@@ -123,5 +123,16 @@
     "competencyRefused": "Profildeki bir yetkinlik artık seçilemiyor. Sayfayı yenileyip tekrar dene.",
     "profileLimit": "Bir profilde en fazla {max} yetkinlik olur.",
     "listInvalid": "En fazla {skills} beceri (her biri {skillMax} karakter) ve {languages} dil (her biri {languageMax} karakter) yazılabilir."
+  },
+  "libAnchorAi": {
+    "suggest": "AI ile çapa öner",
+    "working": "Öneriler hazırlanıyor, genelde 10-20 sn.",
+    "label": "AI önerisi. Alanlara yazmadan hiçbir şey değişmez; kaydetmeden önce oku ve düzelt.",
+    "apply": "Önerileri alanlara yaz",
+    "dismiss": "Kapat",
+    "failed": "Öneri üretilemedi. Çapaları kendin yazabilirsin.",
+    "unconfigured": "AI bağlı değil. Çapaları kendin yazabilirsin.",
+    "applied": "Öneriler alanlara yazıldı. Kaydetmeden önce oku ve düzelt.",
+    "needName": "Önce yetkinliğe bir ad ver."
   }
 }
