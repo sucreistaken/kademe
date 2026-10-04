@@ -160,12 +160,15 @@ export function responseAnswered(a: Shape, payload: HiringResponsePayload, hasTa
 
 /**
  * Decision 10: 1 when the chosen set equals the right set, else 0; null for a
- * question that is not a choice or has no right answer. Never shown to the candidate.
+ * question that is not a choice, has no right answer, or has a right answer the
+ * candidate could not see (unlabelled, dropped by sanitizeResponse). Never shown to the candidate.
  */
 export function autoScore(a: Pick<ContentActivity, "type" | "config">, payload: HiringResponsePayload): number | null {
   if (!isChoice(a.type)) return null;
-  const right = (a.config.choices ?? []).filter((c) => c.correct).map((c) => c.id).sort();
-  if (right.length === 0) return null;
+  const correct = (a.config.choices ?? []).filter((c) => c.correct);
+  // A right answer the candidate could not see (no label) cannot be judged fairly: no score, the reviewer decides.
+  if (correct.length === 0 || correct.some((c) => !hasText(c.label))) return null;
+  const right = correct.map((c) => c.id).sort();
   const chosen = [...new Set(Array.isArray(payload.choiceIds) ? payload.choiceIds : [])].sort();
   return chosen.length === right.length && chosen.every((id, i) => id === right[i]) ? 1 : 0;
 }
@@ -192,6 +195,9 @@ export function runCompletion(input: {
   if (input.reason === "SUBMIT") return { completion: byCounts, late: input.late };
   const decided = decideClose({ behaviour: input.behaviour, requiredCount: input.requiredCount, answeredRequired: input.answeredRequired, answeredAny: input.answeredAny });
   if (decided.action === "LEAVE_OPEN") return { completion: byCounts, late: true };
+  // decideClose calls a stage with nothing required PARTIAL; a submit would call it COMPLETE, so the clock does too.
+  // AUTO_CLOSE (EXPIRED) and a stage with nothing answered (EXPIRED) stay as decided.
+  if (decided.completion === "PARTIAL" && input.requiredCount === 0) return { completion: "COMPLETE", late: true };
   return { completion: decided.completion, late: true };
 }
 

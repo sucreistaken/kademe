@@ -329,6 +329,25 @@ describe("hostile input", () => {
     expect(runCompletion({ reason: "CLOCK", late: false, behaviour: "ALLOW_GRACE", requiredCount: 1, answeredRequired: 1, answeredAny: 1 })).toEqual({ completion: "COMPLETE", late: true });
   });
 
+  it("a clock close of a stage with nothing required is COMPLETE when something was answered, as a submit would be", () => {
+    const none = { reason: "CLOCK" as const, late: false, requiredCount: 0, answeredRequired: 0 };
+    expect(runCompletion({ ...none, behaviour: "AUTO_SUBMIT", answeredAny: 1 })).toEqual({ completion: "COMPLETE", late: true });
+    expect(runCompletion({ ...none, behaviour: "ALLOW_GRACE", answeredAny: 2 })).toEqual({ completion: "COMPLETE", late: true });
+    expect(runCompletion({ ...none, behaviour: "AUTO_SUBMIT", answeredAny: 0 })).toEqual({ completion: "EXPIRED", late: true });
+    expect(runCompletion({ ...none, behaviour: "AUTO_CLOSE", answeredAny: 1 })).toEqual({ completion: "EXPIRED", late: true });
+    expect(runCompletion({ ...none, behaviour: "ALLOW_LATE", answeredAny: 1 })).toEqual({ completion: "COMPLETE", late: true });
+  });
+
+  it("gives no score when a right answer is one the candidate could not see", () => {
+    const hidden = [{ id: "a", label: { tr: "A", en: "" }, correct: true }, { id: "b", label: { tr: "", en: "" }, correct: true }, { id: "c", label: { tr: "C", en: "" } }];
+    const multi = activity("m", { type: "MULTI_CHOICE", config: { choices: hidden } });
+    expect(autoScore(multi, { choiceIds: ["a"] })).toBeNull();
+    expect(autoScore(multi, { choiceIds: ["a", "b"] })).toBeNull();
+    // An unlabelled wrong choice does not matter.
+    const fine = [{ id: "a", label: { tr: "A", en: "" }, correct: true }, { id: "b", label: { tr: "", en: "" } }];
+    expect(autoScore(activity("s", { type: "SINGLE_CHOICE", config: { choices: fine } }), { choiceIds: ["a"] })).toBe(1);
+  });
+
   it("refuses hostile write requests without throwing", () => {
     const current = { position: 1, startedAt: T0, deadlineAt: at(600), onTimeout: "AUTO_SUBMIT" as const, backNavigation: false };
     const activities = [{ id: "a1", closed: false }];
