@@ -72,7 +72,8 @@ export async function listStudents(orgId: string): Promise<StudentRow[]> {
     .innerJoin(candidates, eq(candidates.id, assessments.candidateId))
     .leftJoin(attempts, eq(attempts.assessmentId, assessments.id))
     .leftJoin(examResults, eq(examResults.attemptId, attempts.id))
-    .where(and(eq(assessments.orgId, orgId), sql`${candidates.deletedAt} is null`))
+    // Exam readers only: a hiring invitation has no exam terms (Task 7 moves this reader).
+    .where(and(eq(assessments.orgId, orgId), eq(assessments.solution, "LANGUAGE_EXAM"), sql`${candidates.deletedAt} is null`))
     .orderBy(desc(assessments.createdAt));
   if (rows.length === 0) return [];
   const ids = rows.map((r) => r.assessment.id);
@@ -190,7 +191,8 @@ export async function loadResultView(orgId: string, assessmentId: string) {
     .innerJoin(candidates, eq(candidates.id, assessments.candidateId))
     .leftJoin(attempts, eq(attempts.assessmentId, assessments.id))
     .leftJoin(examResults, eq(examResults.attemptId, attempts.id))
-    .where(and(eq(assessments.id, assessmentId), eq(assessments.orgId, orgId)));
+    // Exam readers only: a hiring invitation has no exam terms (Task 7 moves this reader).
+    .where(and(eq(assessments.id, assessmentId), eq(assessments.orgId, orgId), eq(assessments.solution, "LANGUAGE_EXAM")));
   if (!head) return null;
   const attempt = head.attempt;
   // Non-null by the dual write; Task 7 moves this reader to exam_assessments.

@@ -9,7 +9,7 @@ import {
   proctorSessions,
   sectionRuns,
 } from "@/db/schema";
-import { closeSectionRun, currentSection, finishAttempt, type CandidateContext } from "@/lib/exam-flow";
+import { closeSectionRun, currentSection, finishAttempt, type ExamCandidateContext as CandidateContext } from "@/lib/exam-flow";
 import { normalizeBatch, type NormalizedEvent } from "@/lib/proctor/events";
 import { computeIntegrity, type IntegrityEvent } from "@/lib/proctor/integrity";
 import { TAXONOMY, effectiveSeverity, type ProctorEventType } from "@/lib/proctor/taxonomy";

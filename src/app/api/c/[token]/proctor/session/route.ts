@@ -2,7 +2,8 @@ import type { NextRequest } from "next/server";
 import { candidateJson } from "@/lib/candidate-safe";
 import { workingAttempt } from "@/lib/exam-flow";
 import { registerSession } from "@/server/proctoring";
-import { clientIp, conflict, readJson, withCandidate } from "@/lib/candidate-api";
+import { clientIp, conflict, readJson } from "@/lib/candidate-api";
+import { withExamCandidate } from "@/lib/exam-candidate-api";
 
 type Body = { clientSessionId?: string; env?: Record<string, unknown> };
 
@@ -12,7 +13,7 @@ type Body = { clientSessionId?: string; env?: Record<string, unknown> };
  * by the server, and never outside development.
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
-  return withCandidate(req, params, async (request, ctx) => {
+  return withExamCandidate(req, params, async (request, ctx) => {
     const body = await readJson<Body>(request);
     const { attempt, finished } = await workingAttempt(ctx.assessment.id);
     if (finished) return conflict(ctx, "ALREADY_COMPLETED");

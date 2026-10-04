@@ -1,13 +1,14 @@
 import type { NextRequest } from "next/server";
 import { candidateJson } from "@/lib/candidate-safe";
 import { checkWrite, saveDraft } from "@/lib/exam-flow";
-import { conflict, readJson, withCandidate } from "@/lib/candidate-api";
+import { conflict, readJson } from "@/lib/candidate-api";
+import { withExamCandidate } from "@/lib/exam-candidate-api";
 
 type Body = { sectionPosition?: number; sequence?: number; answer?: unknown };
 
 /** Autosave of the open item. Nothing is scored until the student moves on. */
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
-  return withCandidate(
+  return withExamCandidate(
     req,
     params,
     async (request, ctx) => {

@@ -51,7 +51,7 @@ export function ListeningPlayer({
   async function play() {
     setError(null);
     try {
-      const res = await apiSend<{ src: string; playsLeft: number }>(token, "/listening-audio", { sectionPosition, sequence });
+      const res = await apiSend<{ src: string; playsLeft: number }>(token, "/exam/listening-audio", { sectionPosition, sequence });
       setPlaysLeft(res.playsLeft);
       const audio = audioRef.current!;
       audio.src = res.src;
@@ -191,7 +191,7 @@ export function SpeakingItem({
     }
     try {
       const mime = pickRecorderMime("video");
-      const uploader = await ChunkedUploader.open(token, { sectionPosition, sequence: item.sequence }, mime || "video/webm");
+      const uploader = await ChunkedUploader.open(token, "/exam/media/init", { sectionPosition, sequence: item.sequence }, mime || "video/webm");
       // Record a copy of the tracks so stopping the recorder never touches the proctoring camera.
       const recStream = new MediaStream(streamRef.current.getTracks().map((tr) => tr.clone()));
       const recorder = new MediaRecorder(recStream, mime ? { mimeType: mime, videoBitsPerSecond: 600_000 } : undefined);

@@ -6,7 +6,7 @@ import { apiSend } from "@/lib/client/api";
 import { useT } from "@/i18n/candidate-client";
 import { dateTime, shortDate } from "@/i18n/dates";
 import type { Locale } from "@/i18n/locale";
-import type { LinkProblem as Problem } from "@/lib/exam-flow";
+import type { LinkProblem as Problem } from "@/lib/candidate-context";
 
 /**
  * Artboard A12, the right card, in four variants. None of the four ways a link

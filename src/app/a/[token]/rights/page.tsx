@@ -2,7 +2,7 @@ import { CandidateShell } from "@/components/candidate/Shell";
 import { CandidateIntl } from "@/components/candidate/Intl";
 import { LinkProblem } from "@/components/candidate/LinkProblem";
 import { RightsForm } from "@/components/candidate/RightsForm";
-import { resolveToken } from "@/lib/exam-flow";
+import { resolveToken } from "@/lib/candidate-context";
 import { candidateT } from "@/i18n/candidate";
 import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 

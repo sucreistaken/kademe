@@ -91,7 +91,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(async () => {
       try {
-        await apiSend(token, "/answer", { sectionPosition: cur.position, sequence: item.sequence, answer: next }, "PUT");
+        await apiSend(token, "/exam/answer", { sectionPosition: cur.position, sequence: item.sequence, answer: next }, "PUT");
         setSavedAt(Date.now());
       } catch {
         /* commit sends it again */
@@ -120,7 +120,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
     const id = window.setTimeout(() => {
       if (finishing <= 1) {
         setFinishing(null);
-        void act("/section/submit", { sectionPosition: cur.position });
+        void act("/exam/section/submit", { sectionPosition: cur.position });
       } else setFinishing(finishing - 1);
     }, 1000);
     return () => window.clearTimeout(id);
@@ -192,7 +192,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
             <button
               type="button"
               disabled={busy}
-              onClick={() => act("/section/start", { sectionPosition: cur.position })}
+              onClick={() => act("/exam/section/start", { sectionPosition: cur.position })}
               className="mt-8 h-12 w-full rounded-[10px] bg-accent text-[15px] font-semibold text-white hover:bg-accent-hover disabled:bg-line disabled:text-muted"
             >
               {busy ? t("saving") : t("startSection")}
@@ -241,7 +241,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
                     type="button"
                     disabled={busy || !hasAnyAnswer(item, answer)}
                     aria-describedby={!hasAnyAnswer(item, answer) ? "save-why" : undefined}
-                    onClick={() => act("/answer/commit", { sectionPosition: cur.position, sequence: item.sequence, answer })}
+                    onClick={() => act("/exam/answer/commit", { sectionPosition: cur.position, sequence: item.sequence, answer })}
                     className="h-12 w-full rounded-[10px] bg-accent text-[15px] font-semibold text-white hover:bg-accent-hover disabled:cursor-not-allowed disabled:bg-line disabled:text-muted"
                   >
                     {busy ? t("saving") : t("saveNext")}
@@ -254,7 +254,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
                       <button
                         type="button"
                         disabled={busy}
-                        onClick={() => act("/answer/commit", { sectionPosition: cur.position, sequence: item.sequence, answer: {} })}
+                        onClick={() => act("/exam/answer/commit", { sectionPosition: cur.position, sequence: item.sequence, answer: {} })}
                         className="text-muted underline decoration-underline underline-offset-2 hover:text-ink"
                       >
                         {t("skip")}

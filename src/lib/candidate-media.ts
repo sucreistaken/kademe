@@ -2,7 +2,7 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { attempts, itemResponses, mediaAssets, sectionRuns } from "@/db/schema";
 import type { UploadPart } from "@/db/schema/types";
-import type { CandidateContext } from "@/lib/exam-flow";
+import type { CandidateContext } from "@/lib/candidate-context";
 import { getStorage, mediaKey } from "@/lib/storage";
 
 /**

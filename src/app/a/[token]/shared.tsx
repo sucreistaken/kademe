@@ -5,16 +5,15 @@ import { LinkProblem } from "@/components/candidate/LinkProblem";
 import {
   loadState,
   progressSummary,
-  setAssessmentLocale,
-  supportedLocales,
-  type CandidateContext,
+  resolveExamToken,
   type CandidateState,
+  type ExamCandidateContext,
 } from "@/lib/exam-flow";
+import { setAssessmentLocale, supportedLocales } from "@/lib/candidate-context";
 import { stepPath } from "@/lib/candidate-routes";
 import { candidateT } from "@/i18n/candidate";
 import { shortDate } from "@/i18n/dates";
 import { isLocale, DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
-import { resolveToken } from "@/lib/exam-flow";
 
 /**
  * Every student page starts the same way: resolve the token on the server,
@@ -26,7 +25,7 @@ export type SearchParams = Promise<Record<string, string | string[] | undefined>
 
 export type PageEntry =
   | { kind: "problem"; node: React.ReactNode }
-  | { kind: "ok"; ctx: CandidateContext; state: CandidateState; locale: Locale };
+  | { kind: "ok"; ctx: ExamCandidateContext; state: CandidateState; locale: Locale };
 
 function readLang(params: Record<string, string | string[] | undefined>) {
   const raw = params.lang;
@@ -40,7 +39,7 @@ function readLang(params: Record<string, string | string[] | undefined>) {
  * the choice without every link having to repeat it.
  */
 async function settleLocale(
-  ctx: CandidateContext,
+  ctx: ExamCandidateContext,
   searchParams: SearchParams | undefined,
   path: string,
 ) {
@@ -60,7 +59,7 @@ export async function enter(
   searchParams?: SearchParams,
   path?: string,
 ): Promise<PageEntry> {
-  const resolved = await resolveToken(token);
+  const resolved = await resolveExamToken(token);
 
   // A finished exam's link is the student's way back to the result.
   if (!resolved.ok && resolved.problem === "COMPLETED" && resolved.ctx) redirect(`/a/${token}/done`);
@@ -105,7 +104,7 @@ export async function enter(
 }
 
 /** The line in the top bar: who this was prepared for and until when. */
-export function headerMeta(ctx: CandidateContext) {
+export function headerMeta(ctx: ExamCandidateContext) {
   const locale = ctx.locale as Locale;
   const t = candidateT(locale);
   const date = shortDate(ctx.link.expiresAt, locale);

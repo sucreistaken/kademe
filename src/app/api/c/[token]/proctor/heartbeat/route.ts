@@ -2,13 +2,14 @@ import type { NextRequest } from "next/server";
 import { candidateJson } from "@/lib/candidate-safe";
 import { workingAttempt } from "@/lib/exam-flow";
 import { heartbeat } from "@/server/proctoring";
-import { readJson, withCandidate } from "@/lib/candidate-api";
+import { readJson } from "@/lib/candidate-api";
+import { withExamCandidate } from "@/lib/exam-candidate-api";
 
 type Body = { sessionId?: string; state?: Record<string, unknown> };
 
 /** Every 15 seconds: what the tab believes is on (share, fullscreen, camera, model). */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
-  return withCandidate(
+  return withExamCandidate(
     req,
     params,
     async (request, ctx) => {

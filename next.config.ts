@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { LEGACY_CANDIDATE_API_REWRITES } from "./src/lib/legacy-routes";
 
 /**
  * Behind a reverse proxy Next compares a Server Action's `Origin` against
@@ -28,6 +29,10 @@ const nextConfig: NextConfig = {
         headers: [{ key: "Content-Type", value: "application/wasm" }],
       },
     ];
+  },
+  /** See src/lib/legacy-routes.ts. An array is applied after the filesystem (rewrites.md). */
+  async rewrites() {
+    return LEGACY_CANDIDATE_API_REWRITES;
   },
   experimental: {
     serverActions: {

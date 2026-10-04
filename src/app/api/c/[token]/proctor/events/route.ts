@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { candidateJson } from "@/lib/candidate-safe";
 import { workingAttempt } from "@/lib/exam-flow";
 import { ingestEvents } from "@/server/proctoring";
-import { withCandidate } from "@/lib/candidate-api";
+import { withExamCandidate } from "@/lib/exam-candidate-api";
 
 type Body = { sessionId?: string; clientOffsetMs?: number; events?: unknown };
 
@@ -12,7 +12,7 @@ type Body = { sessionId?: string; clientOffsetMs?: number; events?: unknown };
  * pause between sections matter as much as the questions.
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
-  return withCandidate(
+  return withExamCandidate(
     req,
     params,
     async (request, ctx) => {

@@ -3,7 +3,7 @@ import { CandidateShell } from "@/components/candidate/Shell";
 import { CandidateIntl } from "@/components/candidate/Intl";
 import { Finished } from "@/components/candidate/Finished";
 import { LinkProblem } from "@/components/candidate/LinkProblem";
-import { loadState, progressSummary, resolveToken } from "@/lib/exam-flow";
+import { loadState, progressSummary, resolveExamToken } from "@/lib/exam-flow";
 import { stepPath } from "@/lib/candidate-routes";
 import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 
@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
  */
 export default async function DonePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  const resolved = await resolveToken(token);
+  const resolved = await resolveExamToken(token);
   const ctx = resolved.ctx;
   const locale = (ctx?.locale as Locale | undefined) ?? DEFAULT_LOCALE;
 

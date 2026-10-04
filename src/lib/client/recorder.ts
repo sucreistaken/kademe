@@ -105,11 +105,13 @@ export class ChunkedUploader {
    */
   static async open(
     token: string,
+    /** The solution's init endpoint, e.g. "/exam/media/init". The parts and completion are core. */
+    initPath: string,
     target: { sectionPosition: number; sequence: number },
     mime: string,
     onStatus?: (status: UploaderStatus) => void,
   ) {
-    const init = await apiSend<InitResponse>(token, "/media/init", {
+    const init = await apiSend<InitResponse>(token, initPath, {
       sectionPosition: target.sectionPosition,
       sequence: target.sequence,
       mime,

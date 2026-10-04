@@ -1,7 +1,8 @@
 import type { NextRequest } from "next/server";
 import { candidateJson } from "@/lib/candidate-safe";
 import { checkWrite, commitAnswer, loadState } from "@/lib/exam-flow";
-import { conflict, readJson, withCandidate } from "@/lib/candidate-api";
+import { conflict, readJson } from "@/lib/candidate-api";
+import { withExamCandidate } from "@/lib/exam-candidate-api";
 
 type Body = { sectionPosition?: number; sequence?: number; answer?: unknown };
 
@@ -11,7 +12,7 @@ type Body = { sectionPosition?: number; sequence?: number; answer?: unknown };
  * does not, and the teacher sees it in the report.
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
-  return withCandidate(req, params, async (request, ctx) => {
+  return withExamCandidate(req, params, async (request, ctx) => {
     const body = await readJson<Body>(request);
     const check = await checkWrite(ctx, body?.sectionPosition, body?.sequence);
     if (!check.ok) return conflict(ctx, check.code);

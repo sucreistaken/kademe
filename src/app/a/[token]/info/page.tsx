@@ -1,7 +1,7 @@
 import { CandidateShell, LanguageSwitch } from "@/components/candidate/Shell";
 import { CandidateIntl } from "@/components/candidate/Intl";
 import { InfoForm } from "@/components/candidate/InfoForm";
-import { supportedLocales } from "@/lib/exam-flow";
+import { supportedLocales } from "@/lib/candidate-context";
 import { enter, headerMeta, type SearchParams } from "@/app/a/[token]/shared";
 
 export const dynamic = "force-dynamic";

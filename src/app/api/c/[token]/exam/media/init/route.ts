@@ -3,7 +3,8 @@ import { candidateJson } from "@/lib/candidate-safe";
 import { checkWrite } from "@/lib/exam-flow";
 import { createMediaAsset, normaliseMime, takeCount } from "@/lib/candidate-media";
 import { getStorage } from "@/lib/storage";
-import { badRequest, conflict, readJson, withCandidate } from "@/lib/candidate-api";
+import { badRequest, conflict, readJson } from "@/lib/candidate-api";
+import { withExamCandidate } from "@/lib/exam-candidate-api";
 
 /** How many part targets are handed out up front. More are fetched lazily. */
 const PREFETCH_PARTS = 24;
@@ -25,7 +26,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ token: string }> },
 ) {
-  return withCandidate(req, params, async (request, ctx) => {
+  return withExamCandidate(req, params, async (request, ctx) => {
     const body = await readJson<Body>(request);
     const check = await checkWrite(ctx, body?.sectionPosition, body?.sequence);
     if (!check.ok) return conflict(ctx, check.code);

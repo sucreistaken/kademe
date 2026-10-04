@@ -2,7 +2,8 @@ import type { NextRequest } from "next/server";
 import { db } from "@/db";
 import { messageOutbox } from "@/db/schema";
 import { candidateJson } from "@/lib/candidate-safe";
-import { message, readJson, withCandidate } from "@/lib/candidate-api";
+import { message, readJson } from "@/lib/candidate-api";
+import { withExamCandidate } from "@/lib/exam-candidate-api";
 
 type Body = { area?: string; message?: string };
 
@@ -20,7 +21,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ token: string }> },
 ) {
-  return withCandidate(
+  return withExamCandidate(
     req,
     params,
     async (request, ctx) => {

@@ -5,7 +5,7 @@ import {
   resolveToken,
   type CandidateContext,
   type LinkProblem,
-} from "@/lib/exam-flow";
+} from "@/lib/candidate-context";
 import { candidateT, type CandidateMessages } from "@/i18n/candidate";
 import { localeFromAcceptLanguage, type Locale } from "@/i18n/locale";
 
@@ -66,6 +66,17 @@ export type Handler = (
   ctx: CandidateContext,
 ) => Promise<Response>;
 
+export type CandidateRouteOptions = {
+  limit?: number;
+  windowMs?: number;
+  /**
+   * Endpoints that must keep working on a link that is expired, not yet open
+   * or already finished. Data rights and problem reports are the two: a
+   * candidate whose link just closed still needs a way to reach a human.
+   */
+  allowProblems?: LinkProblem[];
+};
+
 /**
  * Resolves the token, applies the rate limit, and hands the handler a context it
  * can trust. A handler never sees a raw id from the client.
@@ -74,16 +85,7 @@ export async function withCandidate(
   req: NextRequest,
   params: Promise<{ token: string }>,
   handler: Handler,
-  options: {
-    limit?: number;
-    windowMs?: number;
-    /**
-     * Endpoints that must keep working on a link that is expired, not yet open
-     * or already finished. Data rights and problem reports are the two: a
-     * candidate whose link just closed still needs a way to reach a human.
-     */
-    allowProblems?: LinkProblem[];
-  } = {},
+  options: CandidateRouteOptions = {},
 ): Promise<Response> {
   const { token } = await params;
   const ip = clientIp(req) ?? "unknown";
@@ -143,4 +145,16 @@ export async function readJson<T>(req: NextRequest): Promise<T | null> {
   } catch {
     return null;
   }
+}
+
+/**
+ * A valid token for another solution's invitation gets exactly the answer an
+ * unknown token gets (spec 6: no leak). Only the language differs, because the
+ * invitation's own locale is known.
+ */
+export function notFoundForSolution(ctx: CandidateContext) {
+  return candidateJson(
+    { error: "INVALID", message: message(ctx.locale, "INVALID") },
+    { status: PROBLEM_STATUS.INVALID },
+  );
 }

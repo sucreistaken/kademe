@@ -11,7 +11,7 @@ import {
   loadState,
   recordConsent,
   recordDeviceCheck,
-  resolveToken,
+  resolveExamToken,
   startSection,
   workingAttempt,
   type CandidateState,
@@ -72,7 +72,7 @@ export function answerFor(snap: ItemSnapshot, correct: boolean): ItemAnswer {
 }
 
 export async function simulateStudent(rawToken: string, student: SimulatedStudent) {
-  const resolved = await resolveToken(rawToken);
+  const resolved = await resolveExamToken(rawToken);
   if (!resolved.ok) throw new Error(`token does not resolve: ${resolved.problem}`);
   const ctx = resolved.ctx;
   if (!(await hasConsented(ctx.assessment.id))) {

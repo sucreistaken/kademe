@@ -1,7 +1,7 @@
 import { CandidateShell, LanguageSwitch } from "@/components/candidate/Shell";
 import { CandidateIntl } from "@/components/candidate/Intl";
 import { IntroConsent } from "@/components/candidate/IntroConsent";
-import { getConsentText, supportedLocales } from "@/lib/exam-flow";
+import { getConsentText, supportedLocales } from "@/lib/candidate-context";
 import { candidateSafe } from "@/lib/candidate-safe";
 import { enter, headerMeta, type SearchParams } from "@/app/a/[token]/shared";
 

@@ -4,11 +4,11 @@ import { db } from "@/db";
 import { sectionRuns } from "@/db/schema";
 import { candidateJson } from "@/lib/candidate-safe";
 import { currentSection } from "@/lib/exam-flow";
-import { withCandidate } from "@/lib/candidate-api";
+import { withExamCandidate } from "@/lib/exam-candidate-api";
 
 /** Keeps the student's clock anchored to the server's. */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
-  return withCandidate(
+  return withExamCandidate(
     req,
     params,
     async (_request, ctx) => {

@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { candidateJson } from "@/lib/candidate-safe";
 import { loadState } from "@/lib/exam-flow";
-import { withCandidate } from "@/lib/candidate-api";
+import { withExamCandidate } from "@/lib/exam-candidate-api";
 
 /**
  * The one read every candidate screen is built from: is the link usable, which
@@ -12,7 +12,7 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ token: string }> },
 ) {
-  return withCandidate(req, params, async (_req, ctx) =>
+  return withExamCandidate(req, params, async (_req, ctx) =>
     candidateJson(await loadState(ctx)),
   );
 }

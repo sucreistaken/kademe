@@ -4,7 +4,8 @@ import { db } from "@/db";
 import { proctorEvidence, proctorSessions } from "@/db/schema";
 import { candidateJson } from "@/lib/candidate-safe";
 import { loadState, recordDeviceCheck, workingAttempt } from "@/lib/exam-flow";
-import { conflict, withCandidate } from "@/lib/candidate-api";
+import { conflict } from "@/lib/candidate-api";
+import { withExamCandidate } from "@/lib/exam-candidate-api";
 
 /**
  * Marks the system check as passed. The server does not take the tab's word for
@@ -12,7 +13,7 @@ import { conflict, withCandidate } from "@/lib/candidate-api";
  * required, the reference frame the teacher will compare the rest against.
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
-  return withCandidate(req, params, async (_request, ctx) => {
+  return withExamCandidate(req, params, async (_request, ctx) => {
     const { attempt, finished } = await workingAttempt(ctx.assessment.id);
     if (finished) return conflict(ctx, "ALREADY_COMPLETED");
     const policy = ctx.assessment.config.proctoring;

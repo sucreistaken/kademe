@@ -2,7 +2,8 @@ import type { NextRequest } from "next/server";
 import { candidateJson } from "@/lib/candidate-safe";
 import { workingAttempt } from "@/lib/exam-flow";
 import { EVIDENCE_MIME, MAX_CLIP_BYTES, MAX_FRAME_BYTES, storeEvidence } from "@/server/proctoring";
-import { badRequest, conflict, withCandidate } from "@/lib/candidate-api";
+import { badRequest, conflict } from "@/lib/candidate-api";
+import { withExamCandidate } from "@/lib/exam-candidate-api";
 
 const KINDS = ["WEBCAM_FRAME", "SCREEN_FRAME", "CLIP_VIDEO", "CLIP_AUDIO"] as const;
 const TRIGGERS = ["REFERENCE", "PERIODIC", "VIOLATION"] as const;
@@ -12,7 +13,7 @@ const TRIGGERS = ["REFERENCE", "PERIODIC", "VIOLATION"] as const;
  * is derived here from the token's own attempt; the client names nothing.
  */
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
-  return withCandidate(
+  return withExamCandidate(
     req,
     params,
     async (request, ctx) => {

@@ -4,7 +4,8 @@ import { db } from "@/db";
 import { candidates } from "@/db/schema";
 import { candidateJson } from "@/lib/candidate-safe";
 import { loadState } from "@/lib/exam-flow";
-import { badRequest, readJson, withCandidate } from "@/lib/candidate-api";
+import { badRequest, readJson } from "@/lib/candidate-api";
+import { withExamCandidate } from "@/lib/exam-candidate-api";
 
 type InfoBody = {
   fullName?: string;
@@ -21,7 +22,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ token: string }> },
 ) {
-  return withCandidate(req, params, async (request, ctx) => {
+  return withExamCandidate(req, params, async (request, ctx) => {
     const body = (await readJson<InfoBody>(request)) ?? {};
     const fullName = trim(body.fullName, 120);
     const email = trim(body.email, 160);

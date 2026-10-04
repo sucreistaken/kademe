@@ -107,7 +107,7 @@ async function main() {
     if (gradings.length > 0) ok(`${gradings.length} writing/speaking answer(s) opened for grading (${gradings.map((g) => g.status).join(", ")})`);
     else bad("no grading rows for writing/speaking");
 
-    const resolved = await flow.resolveToken(invite.rawToken);
+    const resolved = await flow.resolveExamToken(invite.rawToken);
     if (!resolved.ok && resolved.problem === "COMPLETED") ok("finished link no longer opens the exam");
     else bad("finished link still resolves");
     const again = await flow.workingAttempt(invite.assessmentId);
@@ -147,7 +147,7 @@ async function main() {
     orgId: org.id, blueprintId: placement.id, fullName: "Verify clock", email: `clock-${Date.now()}@example.com`, claimedLevel: null, locale: "en", invitedBy: null,
   });
   if (!invite.ok) throw new Error(invite.code);
-  const ctxResolved = await flow.resolveToken(invite.rawToken);
+  const ctxResolved = await flow.resolveExamToken(invite.rawToken);
   if (!ctxResolved.ok) throw new Error("fresh link does not resolve");
   const ctx = ctxResolved.ctx;
   const skipped = await flow.startSection(ctx, 1);
@@ -218,7 +218,7 @@ async function main() {
     orgId: org.id, blueprintId: placement.id, fullName: "Verify quitter", email: `quit-${Date.now()}@example.com`, claimedLevel: null, locale: "tr", invitedBy: null,
   });
   if (!quitter.ok) throw new Error(quitter.code);
-  const qr = await flow.resolveToken(quitter.rawToken);
+  const qr = await flow.resolveExamToken(quitter.rawToken);
   if (!qr.ok) throw new Error("quitter link");
   const qctx = qr.ctx;
   await flow.recordConsent(qctx, (await flow.getConsentText(qctx)).id, null, null);

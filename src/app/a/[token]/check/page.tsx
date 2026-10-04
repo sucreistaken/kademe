@@ -1,7 +1,7 @@
 import { CandidateShell, LanguageSwitch } from "@/components/candidate/Shell";
 import { CandidateIntl } from "@/components/candidate/Intl";
 import { SystemCheck } from "@/components/candidate/proctor/SystemCheck";
-import { supportedLocales } from "@/lib/exam-flow";
+import { supportedLocales } from "@/lib/candidate-context";
 import { candidateT } from "@/i18n/candidate";
 import { enter, type SearchParams } from "@/app/a/[token]/shared";
 

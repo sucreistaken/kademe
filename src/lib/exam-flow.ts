@@ -1,20 +1,16 @@
-import { and, asc, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   assessmentLinks,
   assessments,
   attempts,
-  candidates,
-  consents,
-  consentTexts,
+  examAssessments,
   examResults,
   itemResponses,
   items,
-  organizations,
   sectionRuns,
   stimuli,
 } from "@/db/schema";
-import { sha256 } from "@/lib/auth";
 import {
   eap,
   mulberry32,
@@ -50,7 +46,6 @@ import {
 } from "@/lib/exam/types";
 import { isProctored, type ProctoringPolicy } from "@/lib/proctor/policy";
 import { SUBMIT_SLACK_MS } from "@/lib/timer";
-import type { Locale } from "@/i18n/locale";
 
 /**
  * The student side of an exam, server only.
@@ -66,169 +61,78 @@ import type { Locale } from "@/i18n/locale";
  *  - One attempt per invitation. A second try is a new invitation.
  */
 
-export type LinkProblem = "INVALID" | "NOT_YET" | "EXPIRED" | "COMPLETED";
+import {
+  currentAttempt,
+  hasConsented,
+  resolveToken,
+  type CandidateContext,
+  type ResolveResult,
+} from "@/lib/candidate-context";
 
-export type CandidateContext = {
-  link: {
-    id: string;
-    status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | "EXPIRED" | "RETAKE_AVAILABLE";
-    expiresAt: Date;
-    notBefore: Date | null;
-    firstSeenIp: string | null;
-  };
-  assessment: {
-    id: string;
-    orgId: string;
-    blueprintId: string;
-    examName: string;
-    mode: ExamMode;
-    claimedLevel: Cefr | null;
-    config: BlueprintConfig;
-  };
-  candidate: {
-    id: string;
-    fullName: string | null;
-    email: string | null;
-    phone: string | null;
-    location: string | null;
-  };
-  orgName: string;
-  locale: Locale;
-  contactEmail: string | null;
-  contactName: string | null;
-  mediaRetentionDays: number;
-  evidenceRetentionDays: number;
+// Core helpers the exam flow used to own. Re-exported so existing imports keep
+// working; new code imports them from @/lib/candidate-context.
+export {
+  getConsentText,
+  hasConsented,
+  recordConsent,
+  recordDeviceCheck,
+  recordFirstSeen,
+  setAssessmentLocale,
+  supportedLocales,
+  type LinkProblem,
+} from "@/lib/candidate-context";
+
+/** What the language exam froze onto the invitation (exam_assessments). */
+export type ExamTerms = {
+  blueprintId: string;
+  examName: string;
+  mode: ExamMode;
+  claimedLevel: Cefr | null;
+  config: BlueprintConfig;
 };
 
-export type ResolveResult =
-  | { ok: true; ctx: CandidateContext }
-  | { ok: false; problem: LinkProblem; ctx?: CandidateContext };
+/** The core candidate context plus the exam's terms. Every exam function takes this. */
+export type ExamCandidateContext = Omit<CandidateContext, "assessment"> & {
+  assessment: CandidateContext["assessment"] & ExamTerms;
+};
 
-export async function resolveToken(rawToken: string): Promise<ResolveResult> {
-  if (!rawToken || rawToken.length < 20 || rawToken.length > 200) return { ok: false, problem: "INVALID" };
-  const [row] = await db
-    .select({ link: assessmentLinks, assessment: assessments, candidate: candidates, org: organizations })
-    .from(assessmentLinks)
-    .innerJoin(assessments, eq(assessments.id, assessmentLinks.assessmentId))
-    .innerJoin(candidates, eq(candidates.id, assessments.candidateId))
-    .innerJoin(organizations, eq(organizations.id, assessments.orgId))
-    .where(eq(assessmentLinks.tokenHash, sha256(rawToken)))
-    .limit(1);
-  if (!row || row.candidate.deletedAt) return { ok: false, problem: "INVALID" };
-
-  const ctx: CandidateContext = {
-    link: {
-      id: row.link.id,
-      status: row.link.status,
-      expiresAt: row.link.expiresAt,
-      notBefore: row.link.notBefore,
-      firstSeenIp: row.link.firstSeenIp,
-    },
+/**
+ * The exam's view of an invitation, or null when it is not a language exam.
+ * Null is answered with the same 404 as an unknown token, so an exam endpoint
+ * never reveals that a hiring invitation exists.
+ */
+export async function loadExamContext(ctx: CandidateContext): Promise<ExamCandidateContext | null> {
+  if (ctx.assessment.solution !== "LANGUAGE_EXAM") return null;
+  const [exam] = await db.select().from(examAssessments).where(eq(examAssessments.assessmentId, ctx.assessment.id)).limit(1);
+  if (!exam) return null;
+  return {
+    ...ctx,
     assessment: {
-      id: row.assessment.id,
-      orgId: row.assessment.orgId,
-      // Non-null by the dual write; Task 7 moves this reader to exam_assessments.
-      blueprintId: row.assessment.blueprintId!,
-      examName: row.assessment.blueprintName!,
-      mode: row.assessment.mode!,
-      claimedLevel: row.assessment.claimedLevel,
-      config: row.assessment.blueprintSnapshot!,
+      ...ctx.assessment,
+      blueprintId: exam.blueprintId,
+      examName: exam.blueprintName,
+      mode: exam.mode,
+      claimedLevel: exam.claimedLevel,
+      config: exam.blueprintSnapshot,
     },
-    candidate: {
-      id: row.candidate.id,
-      fullName: row.candidate.fullName,
-      email: row.candidate.email,
-      phone: row.candidate.phone,
-      location: row.candidate.location,
-    },
-    orgName: row.org.name,
-    locale: row.assessment.locale,
-    contactEmail: row.org.contactEmail,
-    contactName: row.org.name,
-    mediaRetentionDays: row.org.mediaRetentionDays,
-    evidenceRetentionDays: row.org.evidenceRetentionDays,
   };
-
-  const now = Date.now();
-  if (row.link.status === "COMPLETED") return { ok: false, problem: "COMPLETED", ctx };
-  if (row.link.status === "EXPIRED") return { ok: false, problem: "EXPIRED", ctx };
-  if (row.link.notBefore && row.link.notBefore.getTime() > now) return { ok: false, problem: "NOT_YET", ctx };
-  // A student already inside the exam keeps going past the link's expiry; the
-  // section clocks, not the link, decide when writing stops.
-  if (row.link.expiresAt.getTime() < now && row.link.status === "NOT_STARTED")
-    return { ok: false, problem: "EXPIRED", ctx };
-  return { ok: true, ctx };
 }
 
-export async function recordFirstSeen(ctx: CandidateContext, ip: string | null, userAgent: string | null) {
-  if (ctx.link.firstSeenIp) return;
-  await db
-    .update(assessmentLinks)
-    .set({ firstSeenIp: ip ?? "unknown", firstSeenUserAgent: userAgent })
-    .where(and(eq(assessmentLinks.id, ctx.link.id), isNull(assessmentLinks.firstSeenIp)));
+/** resolveToken for exam pages and scripts: a non-exam invitation is INVALID here. */
+export async function resolveExamToken(rawToken: string): Promise<ResolveResult<ExamCandidateContext>> {
+  const resolved = await resolveToken(rawToken);
+  if (!resolved.ok && !resolved.ctx) return { ok: false, problem: resolved.problem };
+  const exam = await loadExamContext(resolved.ctx!);
+  if (!exam) return { ok: false, problem: "INVALID" };
+  return resolved.ok ? { ok: true, ctx: exam } : { ok: false, problem: resolved.problem, ctx: exam };
 }
 
-/** Interface languages offered to every student. Exam content is German either way. */
-export const supportedLocales = (ctx: CandidateContext): Locale[] => (ctx ? ["tr", "en"] : ["tr"]);
-
-export async function setAssessmentLocale(ctx: CandidateContext, locale: Locale) {
-  await db.update(assessments).set({ locale }).where(eq(assessments.id, ctx.assessment.id));
-  ctx.locale = locale;
-}
-
-export async function getConsentText(ctx: CandidateContext) {
-  const [text] = await db
-    .select()
-    .from(consentTexts)
-    .where(eq(consentTexts.orgId, ctx.assessment.orgId))
-    .orderBy(desc(consentTexts.version))
-    .limit(1);
-  if (!text) throw new Error("no consent text configured for this organisation");
-  return text;
-}
-
-export async function hasConsented(assessmentId: string) {
-  const [row] = await db.select({ id: consents.id }).from(consents).where(eq(consents.assessmentId, assessmentId)).limit(1);
-  return !!row;
-}
-
-export async function recordConsent(
-  ctx: CandidateContext,
-  consentTextId: string,
-  ip: string | null,
-  userAgent: string | null,
-) {
-  await db.insert(consents).values({
-    assessmentId: ctx.assessment.id,
-    consentTextId,
-    locale: ctx.locale,
-    ip,
-    userAgent,
-  });
-}
-
-/** The single attempt of this invitation, created on first need. */
+/** The single attempt of this exam invitation, created on first need. */
 export async function workingAttempt(assessmentId: string) {
-  const [existing] = await db.select().from(attempts).where(eq(attempts.assessmentId, assessmentId)).limit(1);
-  if (existing) return { attempt: existing, finished: !!existing.completedAt || !!existing.terminatedAt };
-  const [created] = await db
-    .insert(attempts)
-    .values({ assessmentId, solution: "LANGUAGE_EXAM", attemptNumber: 1, isPrimary: true })
-    .onConflictDoNothing()
-    .returning();
-  if (created) return { attempt: created, finished: false };
-  const [again] = await db.select().from(attempts).where(eq(attempts.assessmentId, assessmentId)).limit(1);
-  return { attempt: again, finished: !!again.completedAt || !!again.terminatedAt };
+  return currentAttempt({ id: assessmentId, solution: "LANGUAGE_EXAM" });
 }
 
-export async function recordDeviceCheck(attemptId: string) {
-  await db
-    .update(attempts)
-    .set({ deviceCheckedAt: new Date() })
-    .where(and(eq(attempts.id, attemptId), isNull(attempts.deviceCheckedAt)));
-}
-
-export const policyOf = (ctx: CandidateContext): ProctoringPolicy => ctx.assessment.config.proctoring;
+export const policyOf = (ctx: ExamCandidateContext): ProctoringPolicy => ctx.assessment.config.proctoring;
 
 // ---------------------------------------------------------------------------
 // State
@@ -293,7 +197,7 @@ async function runsOf(attemptId: string) {
   return db.select().from(sectionRuns).where(eq(sectionRuns.attemptId, attemptId)).orderBy(asc(sectionRuns.orderIndex));
 }
 
-export async function progressSummary(ctx: CandidateContext) {
+export async function progressSummary(ctx: ExamCandidateContext) {
   const [attempt] = await db.select().from(attempts).where(eq(attempts.assessmentId, ctx.assessment.id)).limit(1);
   const total = enabledSections(ctx.assessment.config).length;
   if (!attempt) return { done: 0, total };
@@ -301,7 +205,7 @@ export async function progressSummary(ctx: CandidateContext) {
   return { done: runs.filter((r) => r.submittedAt).length, total };
 }
 
-export async function loadState(ctx: CandidateContext): Promise<CandidateState> {
+export async function loadState(ctx: ExamCandidateContext): Promise<CandidateState> {
   const cfg = ctx.assessment.config;
   const sections = enabledSections(cfg);
   const base: CandidateState = {
@@ -404,7 +308,7 @@ async function countAnswered(runId: string) {
 }
 
 async function finishedState(
-  ctx: CandidateContext,
+  ctx: ExamCandidateContext,
   base: CandidateState,
   attempt: typeof attempts.$inferSelect,
 ): Promise<CandidateState> {
@@ -443,7 +347,7 @@ async function finishedState(
 // ---------------------------------------------------------------------------
 
 /** The section the student is on, or null when all are done. */
-export async function currentSection(ctx: CandidateContext) {
+export async function currentSection(ctx: ExamCandidateContext) {
   const { attempt, finished } = await workingAttempt(ctx.assessment.id);
   if (finished) return null;
   const sections = enabledSections(ctx.assessment.config);
@@ -520,7 +424,7 @@ export type StartResult = { ok: true } | { ok: false; code: "SECTION_MISMATCH" |
  * system check. The pages enforce the order too, but a hand-made request must
  * not be able to skip them.
  */
-async function readyForExam(ctx: CandidateContext, attempt: typeof attempts.$inferSelect): Promise<boolean> {
+async function readyForExam(ctx: ExamCandidateContext, attempt: typeof attempts.$inferSelect): Promise<boolean> {
   if (!(await hasConsented(ctx.assessment.id))) return false;
   if (!ctx.candidate.fullName || !ctx.candidate.email) return false;
   if (isProctored(ctx.assessment.config.proctoring) && !attempt.deviceCheckedAt) return false;
@@ -531,7 +435,7 @@ async function readyForExam(ctx: CandidateContext, attempt: typeof attempts.$inf
  * Starts the current section. Idempotent: a second call, a double click or a
  * reload return the section as it is, and the deadline never moves.
  */
-export async function startSection(ctx: CandidateContext, position: number): Promise<StartResult> {
+export async function startSection(ctx: ExamCandidateContext, position: number): Promise<StartResult> {
   const current = await currentSection(ctx);
   if (!current) return { ok: false, code: "NO_SECTION" };
   if (!(await readyForExam(ctx, current.attempt))) return { ok: false, code: "NOT_READY" };
@@ -670,7 +574,7 @@ async function serve(tx: Tx, runId: string, itemIds: string[], startSequence: nu
   }
 }
 
-function sectionConfigFor(ctx: CandidateContext, section: Section): SectionConfig {
+function sectionConfigFor(ctx: ExamCandidateContext, section: Section): SectionConfig {
   const s = ctx.assessment.config.sections.find((x) => x.section === section);
   if (!s) throw new Error(`section ${section} is not in this exam`);
   return s;
@@ -680,7 +584,7 @@ function sectionConfigFor(ctx: CandidateContext, section: Section): SectionConfi
  * The item the student should see now, creating it if needed. Returns null
  * when the section has nothing left to serve.
  */
-export async function ensureCurrentItem(ctx: CandidateContext, runId: string): Promise<CandidateItem | null> {
+export async function ensureCurrentItem(ctx: ExamCandidateContext, runId: string): Promise<CandidateItem | null> {
   const servedId = await db.transaction(async (tx) => {
     const [run] = await tx.select().from(sectionRuns).where(eq(sectionRuns.id, runId)).for("update");
     if (!run || run.submittedAt) return null;
@@ -730,7 +634,7 @@ export async function ensureCurrentItem(ctx: CandidateContext, runId: string): P
   return candidateItemFor(ctx, servedId);
 }
 
-export async function candidateItemFor(ctx: CandidateContext, responseId: string): Promise<CandidateItem> {
+export async function candidateItemFor(ctx: ExamCandidateContext, responseId: string): Promise<CandidateItem> {
   const [row] = await db
     .select({ response: itemResponses, run: sectionRuns })
     .from(itemResponses)
@@ -758,7 +662,7 @@ export type WriteCheck =
  * on. If the server disagrees (a second tab, a stale screen) the write is
  * refused rather than landing on the wrong item.
  */
-export async function checkWrite(ctx: CandidateContext, position: unknown, sequence: unknown): Promise<WriteCheck> {
+export async function checkWrite(ctx: ExamCandidateContext, position: unknown, sequence: unknown): Promise<WriteCheck> {
   const current = await currentSection(ctx);
   if (!current) return { ok: false, code: "NO_SECTION" };
   if (!(await readyForExam(ctx, current.attempt))) return { ok: false, code: "NOT_READY" };
@@ -838,7 +742,7 @@ export function sanitizeAnswer(
   return out;
 }
 
-export async function saveDraft(ctx: CandidateContext, response: typeof itemResponses.$inferSelect, raw: unknown) {
+export async function saveDraft(ctx: ExamCandidateContext, response: typeof itemResponses.$inferSelect, raw: unknown) {
   const answer = sanitizeAnswer(response.itemSnapshot, raw, response.answer ?? null, response.presentation);
   // An autosave still in flight after "continue" must not overwrite the committed answer.
   await db
@@ -850,7 +754,7 @@ export async function saveDraft(ctx: CandidateContext, response: typeof itemResp
 
 /** Scores and closes one item. Never tells the student whether it was right. */
 export async function commitAnswer(
-  ctx: CandidateContext,
+  ctx: ExamCandidateContext,
   run: typeof sectionRuns.$inferSelect,
   response: typeof itemResponses.$inferSelect,
   raw: unknown,
@@ -861,7 +765,7 @@ export async function commitAnswer(
 }
 
 async function scoreAndClose(
-  ctx: CandidateContext,
+  ctx: ExamCandidateContext,
   run: typeof sectionRuns.$inferSelect,
   responseId: string,
   snap: ItemSnapshot,
@@ -884,7 +788,7 @@ async function scoreAndClose(
 }
 
 /** Stores the running estimate after each objective answer, for the teacher's trajectory chart. */
-async function updateTheta(ctx: CandidateContext, run: typeof sectionRuns.$inferSelect, responseId: string) {
+async function updateTheta(ctx: ExamCandidateContext, run: typeof sectionRuns.$inferSelect, responseId: string) {
   const s = sectionConfigFor(ctx, run.section);
   const cfg = adaptiveConfigFor(s, ctx.assessment.mode, ctx.assessment.claimedLevel);
   const rows = await db.select().from(itemResponses).where(eq(itemResponses.sectionRunId, run.id));
@@ -1049,7 +953,7 @@ export async function finishAttempt(attemptId: string) {
 
 /** Records one more play of a listening clip, refusing past the limit. */
 export async function recordPlay(
-  ctx: CandidateContext,
+  ctx: ExamCandidateContext,
   run: typeof sectionRuns.$inferSelect,
   stimulusId: string,
 ): Promise<{ ok: true; playsUsed: number } | { ok: false }> {
