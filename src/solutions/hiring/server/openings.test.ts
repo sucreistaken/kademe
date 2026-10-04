@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ORG_TIMEZONE } from "@/lib/org-timezone";
 import { fake } from "./test-fake-db";
 
 vi.mock("@/db", async () => ({ db: (await import("./test-fake-db")).fakeDb() }));
 
-import { createOpening, positionOptions } from "./openings";
+import { createOpening, positionOptions, uniqueOpeningName } from "./openings";
 
 /**
  * The new-opening position picker (HIRING-UX 5.3) on a recording fake
@@ -66,5 +67,44 @@ describe("createOpening", () => {
               : [];
     const result = await createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "existing", id: POS_A }, start, copyFrom: null, locale: "tr" });
     expect(result).toEqual({ ok: true, openingId: OPENING, next: `/hiring/openings/${OPENING}` });
+  });
+});
+
+describe("uniqueOpeningName", () => {
+  it("keeps a free name", () => {
+    expect(uniqueOpeningName("Destek Uzmanı · Ekim", ["Satış · Ekim"])).toBe("Destek Uzmanı · Ekim");
+  });
+
+  it("numbers a taken name from (2), filling the first gap", () => {
+    expect(uniqueOpeningName("Destek · Ekim", ["Destek · Ekim"])).toBe("Destek · Ekim (2)");
+    expect(uniqueOpeningName("Destek · Ekim", ["Destek · Ekim", "Destek · Ekim (2)"])).toBe("Destek · Ekim (3)");
+    expect(uniqueOpeningName("Destek · Ekim", ["Destek · Ekim", "Destek · Ekim (3)"])).toBe("Destek · Ekim (2)");
+  });
+
+  it("ignores names that only start the same way", () => {
+    expect(uniqueOpeningName("Destek · Ekim", ["Destek · Ekim kıdemli", "Destek · Ekim (x)"])).toBe("Destek · Ekim");
+  });
+});
+
+describe("createOpening naming", () => {
+  it("reads the organisation's names and appends (2) to a duplicate", async () => {
+    fake.respond = (op) =>
+      op.table === "users"
+        ? [{ id: ACTOR }]
+        : op.table === "positions"
+          ? [{ id: POS_A, name: "Destek Uzmanı", jobDescription: null }]
+          : op.table === "hiring_openings" && op.kind === "select"
+            ? [{ name: `Destek Uzmanı · ${new Intl.DateTimeFormat("tr-TR", { month: "long", timeZone: ORG_TIMEZONE }).format(new Date())}` }]
+            : op.table === "hiring_openings"
+              ? [{ id: OPENING }]
+              : op.table === "hiring_versions"
+                ? [{ id: VERSION }]
+                : [];
+    await createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "existing", id: POS_A }, start: "BLANK", copyFrom: null, locale: "tr" });
+    const names = fake.ops.find((o) => o.table === "hiring_openings" && o.kind === "select");
+    expect(names?.where).toContain('"hiring_openings"."org_id" = $');
+    expect(names?.params).toContain(ORG);
+    const insert = fake.ops.find((o) => o.table === "hiring_openings" && o.kind === "insert");
+    expect((insert?.values as { name: string }).name).toMatch(/^Destek Uzmanı · \S+ \(2\)$/);
   });
 });

@@ -15,8 +15,13 @@ vi.mock("next/navigation", () => ({
   },
 }));
 const OPENING = "33333333-3333-4333-8333-333333333333";
+let current: { status: "DRAFT" | "OPEN" | "CLOSED"; edit: boolean } = { status: "DRAFT", edit: true };
 vi.mock("./access", () => ({
-  openingFor: async () => ({ user: { id: "u1", orgId: "o1", role: "OWNER" }, opening: { id: OPENING }, access: { view: true, edit: true } }),
+  openingFor: async () => ({
+    user: { id: "u1", orgId: "o1", role: "OWNER" },
+    opening: { id: OPENING, status: current.status },
+    access: { view: true, edit: current.edit },
+  }),
 }));
 const publishDraft = vi.fn<typeof Publish.publishDraft>();
 vi.mock("@/solutions/hiring/server/publish", () => ({
@@ -35,6 +40,7 @@ const base = `/hiring/openings/${OPENING}`;
 
 beforeEach(() => {
   publishDraft.mockReset();
+  current = { status: "DRAFT", edit: true };
 });
 
 describe("publishOpeningAction", () => {
@@ -57,6 +63,18 @@ describe("publishOpeningAction", () => {
   ])("maps %s to its notice", async (error, notice) => {
     publishDraft.mockRejectedValue(error);
     await expect(publishOpeningAction(form())).rejects.toThrow(`redirect:${base}?publish=${notice}`);
+  });
+
+  it("answers a closed opening with its notice before the edit check, and publishes nothing", async () => {
+    current = { status: "CLOSED", edit: false };
+    await expect(publishOpeningAction(form())).rejects.toThrow(`redirect:${base}?publish=closed`);
+    expect(publishDraft).not.toHaveBeenCalled();
+  });
+
+  it("refuses a viewer who may see but not edit the opening", async () => {
+    current = { status: "DRAFT", edit: false };
+    await expect(publishOpeningAction(form())).rejects.toMatchObject({ name: "ForbiddenError" });
+    expect(publishDraft).not.toHaveBeenCalled();
   });
 
   it("lets an unexpected error reach the error boundary", async () => {

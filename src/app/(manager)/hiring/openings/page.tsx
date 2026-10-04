@@ -53,11 +53,21 @@ export default async function OpeningsPage({ searchParams }: { searchParams: Pro
       <main className="mx-auto max-w-[1360px] px-page py-8">
         <PageTitle title={t("hiringOpenings.title")} sub={t("hiringOpenings.sub")} />
         <Empty className="mt-section border border-line bg-surface py-16">
-          <EmptyHeader>
-            <EmptyTitle>{t("hiringOpenings.emptyTitle")}</EmptyTitle>
-            <EmptyDescription>{t("hiringOpenings.emptyBody")}</EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>{addButton}</EmptyContent>
+          {canWrite ? (
+            <>
+              <EmptyHeader>
+                <EmptyTitle>{t("hiringOpenings.emptyTitle")}</EmptyTitle>
+                <EmptyDescription>{t("hiringOpenings.emptyBody")}</EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>{addButton}</EmptyContent>
+            </>
+          ) : (
+            // A reviewer sees only the openings they work on and cannot open one: no button to stare at.
+            <EmptyHeader>
+              <EmptyTitle>{t("hiringOpenings.emptyViewerTitle")}</EmptyTitle>
+              <EmptyDescription>{t("hiringOpenings.emptyViewerBody")}</EmptyDescription>
+            </EmptyHeader>
+          )}
         </Empty>
       </main>
     );
@@ -111,6 +121,10 @@ export default async function OpeningsPage({ searchParams }: { searchParams: Pro
                         {row.liveNumber ? ` · v${row.liveNumber}` : ""}
                       </span>
                     </StatusDot>
+                    {/* A live opening with an edit in progress: the draft is not lost behind "Yayında". */}
+                    {row.liveNumber && row.draftNumber ? (
+                      <p className="tnum mt-0.5 pl-3.5 text-[12px] leading-4 text-muted">{t("hiringOpenings.draftWaiting", { number: row.draftNumber })}</p>
+                    ) : null}
                   </TableCell>
                   <TableCell className="text-[13px] text-muted">{t("hiringOpenings.funnelEmpty")}</TableCell>
                   <TableCell className="tnum text-[13px] text-muted">{row.deadlineAt ? shortDate(row.deadlineAt, locale) : "-"}</TableCell>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronsUpDown, Copy, FilePlus2, Plus, Sparkles } from "lucide-react";
 import { Button, DisabledReason } from "@/components/ui/button";
@@ -28,7 +29,7 @@ export function NewOpeningForm({
   initialPositionId,
 }: {
   positions: PositionOption[];
-  sources: Array<{ id: string; name: string }>;
+  sources: Array<{ id: string; name: string; detail: string }>;
   initialPositionId: string | null;
 }) {
   const t = useMT("hiringNew");
@@ -60,6 +61,21 @@ export function NewOpeningForm({
     FAILED: t("failed"),
   };
 
+  // Closing the picker keeps what was typed: an exact match is picked, any other name
+  // becomes the new position unless a position is already picked.
+  function onOpenChange(next: boolean) {
+    setOpen(next);
+    if (next || !typed) return;
+    const match = positions.find((p) => p.name.toLocaleLowerCase("tr") === typed.toLocaleLowerCase("tr"));
+    if (match) {
+      setPicked(match);
+      setNewName(null);
+    } else if (!picked) {
+      setPicked(null);
+      setNewName(typed);
+    }
+  }
+
   function submit() {
     setRefusal(null);
     startTransition(async () => {
@@ -90,7 +106,7 @@ export function NewOpeningForm({
         <h2 id="new-opening-position" className="text-[16px] leading-6 font-semibold text-ink">
           {t("stepPosition")}
         </h2>
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover open={open} onOpenChange={onOpenChange}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
@@ -109,7 +125,8 @@ export function NewOpeningForm({
             <Command>
               <CommandInput placeholder={t("positionSearch")} value={query} onValueChange={setQuery} maxLength={POSITION_NAME_MAX} />
               <CommandList>
-                <CommandEmpty>{t("positionNone")}</CommandEmpty>
+                {/* "No position with this name" only once something is typed. */}
+                {typed ? <CommandEmpty>{t("positionNone")}</CommandEmpty> : null}
                 {positions.length ? (
                   <CommandGroup>
                     {positions.map((p) => (
@@ -197,6 +214,15 @@ export function NewOpeningForm({
                   <span id={`start-${value}`} className="mt-1 block text-[13px] leading-5 text-muted">
                     {disabled ? t("startAiDisabled") : body}
                   </span>
+                  {/* A library position without an ad: the ad is added on the position, not here. */}
+                  {disabled && picked ? (
+                    <Link
+                      href={`/library/positions/${picked.id}`}
+                      className="mt-1 inline-block text-[13px] font-medium text-ink underline decoration-line-strong underline-offset-4 hover:decoration-ink"
+                    >
+                      {t("addJobAd")}
+                    </Link>
+                  ) : null}
                 </span>
               </label>
             );
@@ -212,7 +238,8 @@ export function NewOpeningForm({
               <SelectContent>
                 {sources.map((s) => (
                   <SelectItem key={s.id} value={s.id}>
-                    {s.name}
+                    <span className="truncate">{s.name}</span>
+                    <span className="tnum truncate text-muted">{s.detail}</span>
                   </SelectItem>
                 ))}
               </SelectContent>

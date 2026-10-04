@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { ForbiddenError } from "@/lib/authorize";
 import { HiringConflict, HiringInvalid, HiringNotFound } from "@/solutions/hiring/server/errors";
 import { publishDraft } from "@/solutions/hiring/server/publish";
 import { openingFor } from "./access";
@@ -25,8 +26,11 @@ export async function publishOpeningAction(formData: FormData) {
   const openingId = String(formData.get("openingId") ?? "");
   // Only the builder (Task 15) sends "builder"; until it exists every publish returns to the overview.
   const back = formData.get("back") === "builder" ? "builder" : "overview";
-  const { user, opening } = await openingFor(openingId, "edit");
+  const { user, opening, access } = await openingFor(openingId, "view");
   const target = back === "builder" ? `/hiring/openings/${opening.id}/assessment/edit` : `/hiring/openings/${opening.id}`;
+  // A closed opening is history: say so before the role check, which would answer "your role cannot".
+  if (opening.status === "CLOSED") redirect(`${target}?publish=closed`);
+  if (!access.edit) throw new ForbiddenError("opening:write");
   let destination: string;
   try {
     const result = await publishDraft(user.orgId, opening.id, user.id);

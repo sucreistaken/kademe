@@ -95,9 +95,9 @@ export async function listOpenings(orgId: string, viewer: Viewer, status: Openin
 }
 
 /** Openings whose assessment can be copied into a new one (HIRING-UX 5.3 "Önceki bir alımdan kopyala"). */
-export async function copySources(orgId: string): Promise<Array<{ id: string; name: string }>> {
+export async function copySources(orgId: string): Promise<Array<{ id: string; name: string; status: OpeningStatus; createdAt: Date }>> {
   return db
-    .select({ id: hiringOpenings.id, name: hiringOpenings.name })
+    .select({ id: hiringOpenings.id, name: hiringOpenings.name, status: hiringOpenings.status, createdAt: hiringOpenings.createdAt })
     .from(hiringOpenings)
     .where(eq(hiringOpenings.orgId, orgId))
     .orderBy(desc(hiringOpenings.createdAt), desc(hiringOpenings.id));
@@ -113,6 +113,21 @@ export type CreateOpeningInput = {
 export type CreateOpeningResult =
   | { ok: true; openingId: string; next: string }
   | { ok: false; code: "POSITION_NAME_REQUIRED" | "POSITION_NOT_FOUND" | "JOB_AD_REQUIRED" | "COPY_SOURCE_NOT_FOUND" };
+
+/**
+ * `base` when no opening of the organisation has that name, otherwise
+ * `base (n)` with the smallest free n from 2. Two openings created at the same
+ * instant can still collide (there is no unique index); the name is a label,
+ * the id is the identity.
+ */
+export function uniqueOpeningName(base: string, taken: readonly string[]): string {
+  const names = new Set(taken.filter((n): n is string => typeof n === "string"));
+  if (!names.has(base)) return base;
+  for (let n = 2; ; n += 1) {
+    const candidate = `${base} (${n})`;
+    if (!names.has(candidate)) return candidate;
+  }
+}
 
 /** The month in the organisation's own time zone (ORG_TIMEZONE), in the manager's language. */
 const monthName = (locale: Locale) => new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "tr-TR", { month: "long", timeZone: ORG_TIMEZONE }).format(new Date());
@@ -172,9 +187,15 @@ export async function createOpening(user: { id: string; orgId: string }, input: 
       if (!created.ok) return { ok: false as const, code: "POSITION_NAME_REQUIRED" as const };
       positionId = created.id;
     }
+    // Two openings for one position in one month would read the same in the list: number the later ones.
+    const base = `${position.name} · ${monthName(input.locale)}`;
+    const taken = await tx
+      .select({ name: hiringOpenings.name })
+      .from(hiringOpenings)
+      .where(and(eq(hiringOpenings.orgId, user.orgId), sql`starts_with(${hiringOpenings.name}, ${base})`));
     const [opening] = await tx
       .insert(hiringOpenings)
-      .values({ orgId: user.orgId, positionId, name: `${position.name} · ${monthName(input.locale)}`, ownerId: user.id, decisionMakerId: user.id })
+      .values({ orgId: user.orgId, positionId, name: uniqueOpeningName(base, taken.map((r) => r.name)), ownerId: user.id, decisionMakerId: user.id })
       .returning({ id: hiringOpenings.id });
     // A copy takes the source's languages, intro, proctoring and practice; weights start over.
     const settings = sourceVersionId ? inheritedSettings(await versionRow(tx, user.orgId, sourceVersionId)) : {};
