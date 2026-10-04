@@ -41,7 +41,7 @@ export const users = pgTable(
     email: text("email").notNull().unique(),
     name: text("name").notNull(),
     passwordHash: text("password_hash").notNull(),
-    role: userRole("role").notNull().default("TEACHER"),
+    role: userRole("role").notNull().default("MANAGER"),
     /** TOTP secret, encrypted at rest. Mandatory for OWNER. */
     totpSecret: text("totp_secret"),
     totpConfirmedAt: timestamp("totp_confirmed_at", { withTimezone: true }),

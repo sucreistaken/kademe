@@ -3,7 +3,7 @@
  * product. DESTRUCTIVE: every table is dropped and recreated.
  *
  * What survives: organisations and panel users (with their password hashes,
- * so everybody keeps their login; RECRUITER becomes TEACHER). Everything else
+ * so everybody keeps their login; RECRUITER becomes MANAGER). Everything else
  * (candidates, recordings, evaluations, audit log) is gone.
  *
  * Then it adds what a school needs to start: the consent text, the starter
@@ -76,7 +76,7 @@ async function main() {
         email: u.email,
         name: u.name,
         passwordHash: u.password_hash,
-        role: u.role === "OWNER" ? "OWNER" : u.role === "REVIEWER" ? "REVIEWER" : "TEACHER",
+        role: u.role === "OWNER" ? "OWNER" : u.role === "REVIEWER" ? "REVIEWER" : "MANAGER",
         totpSecret: u.totp_secret,
         totpConfirmedAt: u.totp_confirmed_at,
         disabledAt: u.disabled_at,

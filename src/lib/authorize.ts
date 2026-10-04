@@ -34,7 +34,7 @@ const BY_ROLE: Record<SessionUser["role"], Capability[]> = {
     "settings:write",
     "audit:read",
   ],
-  TEACHER: [
+  MANAGER: [
     "blueprint:write",
     "bank:write",
     "bank:approve",

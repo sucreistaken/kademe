@@ -43,12 +43,12 @@
     },
     "roles": {
       "OWNER": "Owner",
-      "TEACHER": "Teacher",
+      "MANAGER": "Manager",
       "REVIEWER": "Reviewer"
     },
     "roleHelp": {
       "OWNER": "Everything: settings, audit log, export, deletion.",
-      "TEACHER": "Builds exams, runs the question bank, invites students, grades and finalizes results. No settings, no audit log.",
+      "MANAGER": "Builds exams and assessments, runs the question bank, invites people, grades and finalizes results. No settings, no audit log.",
       "REVIEWER": "Scores only. No deletion, no export, no invitations."
     },
     "audit": {

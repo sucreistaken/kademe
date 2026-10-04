@@ -9,7 +9,7 @@ import { CEFR_LEVELS, EXAM_MODES, ITEM_TYPES, SECTIONS } from "../../lib/exam/ty
 
 export const userRole = pgEnum("user_role", [
   "OWNER", // everything, including deletion, export and settings
-  "TEACHER", // build exams, run the bank, invite, grade, finalize
+  "MANAGER", // build exams and assessments, run the bank, invite, grade, finalize
   "REVIEWER", // grade and look at evidence only
 ]);
 

@@ -18,7 +18,7 @@ export const RETENTION_MAX_DAYS = 3650;
 export const AUDIT_PAGE_SIZE = 50;
 
 /** Roles in the order they are listed on screen, not alphabetical. */
-export const ROLE_ORDER = ["OWNER", "TEACHER", "REVIEWER"] as const;
+export const ROLE_ORDER = ["OWNER", "MANAGER", "REVIEWER"] as const;
 export type Role = (typeof ROLE_ORDER)[number];
 
 export function isRole(value: unknown): value is Role {

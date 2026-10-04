@@ -147,7 +147,7 @@ async function main() {
     orgId: org.id,
     email: "ogretmen@kademe.local",
     name: "Elif Yıldız",
-    role: "TEACHER",
+    role: "MANAGER",
     passwordHash: await argon2Hash(DEV_PASSWORD),
   });
   await db.insert(s.consentTexts).values({ orgId: org.id, version: 1, body: { tr: CONSENT_TR, en: CONSENT_EN } });

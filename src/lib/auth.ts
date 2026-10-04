@@ -58,7 +58,7 @@ export type SessionUser = {
   orgId: string;
   email: string;
   name: string;
-  role: "OWNER" | "TEACHER" | "REVIEWER";
+  role: "OWNER" | "MANAGER" | "REVIEWER";
 };
 
 /** Resolves a raw cookie value to a user, or null. Expired sessions never resolve. */

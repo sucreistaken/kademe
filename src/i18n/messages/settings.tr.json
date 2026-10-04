@@ -43,12 +43,12 @@
     },
     "roles": {
       "OWNER": "Sahip",
-      "TEACHER": "Öğretmen",
+      "MANAGER": "Yönetici",
       "REVIEWER": "Değerlendirici"
     },
     "roleHelp": {
       "OWNER": "Her şey: ayarlar, denetim kaydı, dışa aktarma, silme.",
-      "TEACHER": "Sınav kurar, soru bankasını yönetir, öğrenci davet eder, puanlar ve sonucu kesinleştirir. Ayarlara ve denetim kaydına giremez.",
+      "MANAGER": "Sınavları ve değerlendirmeleri kurar, soru bankasını yönetir, davet eder, puanlar ve sonucu kesinleştirir. Ayarlara ve denetim kaydına giremez.",
       "REVIEWER": "Yalnızca puanlar. Silemez, dışa aktaramaz, davet edemez."
     },
     "audit": {

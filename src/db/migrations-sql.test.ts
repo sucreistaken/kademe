@@ -67,3 +67,12 @@ describe("0001_platform_expand", () => {
     expect(sql).not.toMatch(/DROP (TABLE|COLUMN)/);
   });
 });
+
+describe("0002_manager_role", () => {
+  const sql = read("0002_manager_role");
+  it("renames the value in place instead of recreating the enum", () => {
+    expect(sql).toContain(`ALTER TYPE "public"."user_role" RENAME VALUE 'TEACHER' TO 'MANAGER';`);
+    expect(sql).not.toMatch(/DROP TYPE/);
+    expect(sql).not.toMatch(/SET DATA TYPE/);
+  });
+});
