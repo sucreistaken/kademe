@@ -112,7 +112,10 @@
     "srMissing": "Missing, blocks publishing:",
     "srAdvisory": "Recommended, does not block publishing:",
     "anchorsNoCompetency": "Add a question and pick its competencies first.",
-    "publishing": "Publishing"
+    "publishing": "Publishing",
+    "closedNotice": "This opening is closed; its assessment and records stay readable.",
+    "goReopen": "Reopen it in Team and rules",
+    "teamNoDecisionMaker": "No active decision maker. Choose an owner or a manager in Team and rules."
   },
   "hiringGate": {
     "stageLabel": "Stage {n}",
@@ -590,6 +593,11 @@
     "closedTitle": "Opening closed",
     "closedBody": "It takes no new invitations; its assessment and records stay readable. Reopen it to change anything.",
     "closedReadOnly": "This opening is closed. Its team and rules stay readable.",
-    "reopen": "Reopen"
+    "reopen": "Reopen",
+    "minEvaluationsShort": "{count, plural, one {# reviewer is} other {# reviewers are}} chosen now; a candidate cannot get {min} reviews.",
+    "minEvaluationsOverride": "The decision maker can still decide below this number by writing a reason.",
+    "savedRenamed": "Saved. Another opening already had this name, so it is now \"{name}\".",
+    "closing": "Closing",
+    "reopening": "Reopening"
   }
 }

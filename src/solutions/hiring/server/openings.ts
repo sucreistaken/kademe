@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { auditLogs, hiringOpeningMembers, hiringOpenings, hiringVersions, positionCompetencies, positions, users } from "@/db/schema";
 import { DEFAULT_LOCALE } from "@/i18n/locale";
@@ -245,37 +245,51 @@ export async function positionOptions(orgId: string): Promise<Array<{ id: string
 
 /**
  * HIRING-UX 5.18 "Kaydet": team, fair review and candidate contact, checked
- * with the same rules as the form (the client is never trusted). The opening
- * is locked by id AND org_id first, so a CLOSED opening refuses (history is
- * read-only) and a foreign one is not found; the people are the organisation's
- * own users, read after the lock, so a member, decision maker or backup from
- * anywhere else, or a disabled one, is refused. A refusal writes nothing.
+ * with the same rules as the form (the client is never trusted). In one
+ * transaction: the opening is locked by id AND org_id first (lockOpening), so
+ * a CLOSED opening refuses (history is read-only) and a foreign one is not
+ * found; the stored deadline comes from that locked row, so a deadline that
+ * has passed is refused only when it changes; the people are the
+ * organisation's own users, read through the same transaction after the lock,
+ * so a member, decision maker or backup from anywhere else, or a disabled one,
+ * is refused. A refusal writes nothing. A new name that another opening of the
+ * organisation already has is numbered (uniqueOpeningName); the stored name is
+ * returned so the form can show it.
  */
 export async function saveOpeningRules(
   orgId: string,
   actorId: string,
   openingId: string,
   input: OpeningRulesInput,
-): Promise<{ ok: true } | { ok: false; problems: RulesProblem[] }> {
+): Promise<{ ok: true; name: string } | { ok: false; problems: RulesProblem[] }> {
   return db.transaction(async (tx) => {
-    await lockOpening(tx, orgId, openingId);
+    const opening = await lockOpening(tx, orgId, openingId);
     await assertActiveUser(tx, orgId, actorId);
-    const people = (await loadPanelUsers(orgId)).map((u) => ({ id: u.id, role: u.role, disabled: u.disabledAt !== null }));
-    const problems = openingRulesProblems(input, people, orgDay());
+    const people = (await loadPanelUsers(orgId, tx)).map((u) => ({ id: u.id, role: u.role, disabled: u.disabledAt !== null }));
+    const savedDeadline = opening.deadlineAt ? orgDay(opening.deadlineAt) : null;
+    const problems = openingRulesProblems(input, people, orgDay(), savedDeadline);
     if (problems.length) return { ok: false as const, problems };
     const members = [...new Set(input.memberIds)];
-    const deadlineAt = input.deadline ? deadlineToDate(input.deadline) : null;
+    // The day as stored when it did not change, so an untouched deadline keeps its exact instant.
+    const deadlineAt = input.deadline === savedDeadline ? opening.deadlineAt : input.deadline ? deadlineToDate(input.deadline) : null;
+    const wanted = input.name.trim();
+    const taken = await tx
+      .select({ name: hiringOpenings.name })
+      .from(hiringOpenings)
+      .where(and(eq(hiringOpenings.orgId, orgId), ne(hiringOpenings.id, openingId), sql`starts_with(${hiringOpenings.name}, ${wanted})`));
+    const name = uniqueOpeningName(wanted, taken.map((r) => r.name));
+    const candidateContactEmail = input.candidateContactEmail.trim() || null;
     await tx
       .update(hiringOpenings)
       .set({
-        name: input.name.trim(),
+        name,
         decisionMakerId: input.decisionMakerId,
         backupDecisionMakerId: input.backupDecisionMakerId,
         minEvaluations: input.minEvaluations,
         blindMode: input.blindMode,
         deadlineAt,
         feedbackDays: input.feedbackDays,
-        candidateContactEmail: input.candidateContactEmail.trim() || null,
+        candidateContactEmail,
         updatedAt: new Date(),
       })
       .where(and(eq(hiringOpenings.id, openingId), eq(hiringOpenings.orgId, orgId)));
@@ -289,6 +303,7 @@ export async function saveOpeningRules(
       subjectType: "hiring_opening",
       subjectId: openingId,
       meta: {
+        name,
         members,
         decisionMakerId: input.decisionMakerId,
         backupDecisionMakerId: input.backupDecisionMakerId,
@@ -296,9 +311,10 @@ export async function saveOpeningRules(
         blindMode: input.blindMode,
         deadlineAt: deadlineAt?.toISOString() ?? null,
         feedbackDays: input.feedbackDays,
+        candidateContactEmail,
       },
     });
-    return { ok: true as const };
+    return { ok: true as const, name };
   });
 }
 

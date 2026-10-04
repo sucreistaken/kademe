@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactElement, ReactNode } from "react";
-import { ORG_TIMEZONE, orgDay } from "@/lib/org-timezone";
+import { orgDay, zoneLabel } from "@/lib/org-timezone";
 import { deadlineToDate } from "@/solutions/hiring/rules/opening-rules";
 
 /**
@@ -66,6 +66,7 @@ vi.mock("./actions", () => ({ closeOpeningAction: async function closeOpeningAct
 import SettingsPage from "./page";
 import { OpeningSettingsForm } from "@/components/hiring/opening-settings-form";
 import { UndoStrip } from "@/components/ui/undo-strip";
+import { PendingSubmitButton } from "@/components/hiring/pending-submit-button";
 import { OpeningHeader } from "../opening-header";
 import { closeOpeningAction, reopenOpeningAction } from "./actions";
 
@@ -113,12 +114,15 @@ describe("team and rules page", () => {
       viewer = { role, view: true, edit: true };
       const page = await render();
       const props = formProps(page);
-      expect(props).toMatchObject({ canEdit: true, closed: false, today: orgDay(), zone: ORG_TIMEZONE });
+      expect(props).toMatchObject({ canEdit: true, closed: false, today: orgDay(), zone: zoneLabel("tr") });
       expect(props.users.map((u) => u.id)).toEqual([OWNER, MANAGER, REVIEWER, OUTSIDER, GONE]);
       expect(props.users.find((u) => u.id === GONE)?.disabled).toBe(true);
       expect(JSON.stringify(props.users)).not.toContain("@x.test");
       expect(props.initial).toMatchObject({ deadline: "2026-10-31", memberIds: [REVIEWER, GONE], decisionMakerId: OWNER, feedbackDays: 10, candidateContactEmail: "" });
-      expect(forms(page, closeOpeningAction)).toHaveLength(1);
+      const close = forms(page, closeOpeningAction);
+      expect(close).toHaveLength(1);
+      // Fix round 1, Important 2: the button says it is working and takes no second click.
+      expect(find(close[0], ofType(PendingSubmitButton)).map((b) => [b.props.label, b.props.pendingLabel])).toEqual([["Alımı kapat", "Kapatılıyor"]]);
       expect(forms(page, reopenOpeningAction)).toHaveLength(0);
     }
   });
@@ -146,8 +150,8 @@ describe("team and rules page", () => {
     expect(forms(page, closeOpeningAction)).toHaveLength(0);
     const reopen = forms(page, reopenOpeningAction);
     expect(reopen).toHaveLength(1);
-    const buttons = find(reopen[0], (el) => el.props.type === "submit");
-    expect(buttons.map((b) => [b.props.variant, text(b)])).toEqual([["primary", "Yeniden aç"]]);
+    const buttons = find(reopen[0], ofType(PendingSubmitButton));
+    expect(buttons.map((b) => [b.props.variant, b.props.label, b.props.pendingLabel])).toEqual([["primary", "Yeniden aç", "Açılıyor"]]);
     expect(find(page, ofType(UndoStrip))).toHaveLength(0);
   });
 

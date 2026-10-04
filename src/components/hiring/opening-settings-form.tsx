@@ -18,7 +18,7 @@ import { saveOpeningRulesAction } from "@/app/(manager)/hiring/openings/[id]/set
 
 export type SettingsUser = { id: string; name: string; role: "OWNER" | "MANAGER" | "REVIEWER"; disabled: boolean };
 
-type Notice = { kind: "saved" } | { kind: "problem"; problem: RulesProblem } | { kind: "code"; code: "NOT_FOUND" | "FORBIDDEN" | "CLOSED" | "INVALID" } | { kind: "failed" };
+type Notice = { kind: "saved"; renamed: string | null } | { kind: "problem"; problem: RulesProblem } | { kind: "code"; code: "NOT_FOUND" | "FORBIDDEN" | "CLOSED" | "INVALID" } | { kind: "failed" };
 
 const NONE = "none";
 /** A whole number as typed, or NaN (which the rules refuse) for anything else. */
@@ -59,12 +59,26 @@ export function OpeningSettingsForm({
     setNotice(null);
     setValue((s) => ({ ...s, [key]: v }));
   };
-  const problems = openingRulesProblems(value, users, today);
+  // The saved day comes from the server: a deadline that has already passed blocks only a change.
+  const savedDeadline = initial.deadline;
+  const problems = openingRulesProblems(value, users, today, savedDeadline);
   const reason = !canEdit ? t("noPermission") : problems.length ? t(`p${problems[0]}`) : null;
   const deciders = users.filter((u) => !u.disabled && canDecide(u.role));
   // A disabled person stays listed while they are still on the panel, so they can be taken off it.
   const panel = users.filter((u) => !u.disabled || initial.memberIds.includes(u.id));
-  const decider = (id: string | null) => (id && deciders.some((u) => u.id === id) ? id : "");
+  // A saved decision maker who can no longer decide (disabled, or no longer an owner or manager)
+  // stays visible in the select, marked, until someone else is chosen; it cannot be chosen again.
+  const stale = (id: string | null) => (id && !deciders.some((u) => u.id === id) ? (users.find((u) => u.id === id) ?? null) : null);
+  const selectValue = (id: string | null) => (id && (deciders.some((u) => u.id === id) || stale(id)) ? id : "");
+  const staleItem = (id: string | null) => {
+    const u = stale(id);
+    return u ? (
+      <SelectItem key={u.id} value={u.id} disabled>
+        {`${u.name} (${u.disabled ? t("inactive") : t(`role${u.role}`)})`}
+      </SelectItem>
+    ) : null;
+  };
+  const activeReviewers = value.memberIds.filter((id) => users.some((u) => u.id === id && !u.disabled)).length;
   const locked = !canEdit || pending;
 
   const save = () =>
@@ -72,7 +86,10 @@ export function OpeningSettingsForm({
       try {
         const res = await saveOpeningRulesAction(openingId, value);
         if (res.ok) {
-          setNotice({ kind: "saved" });
+          // A name another opening already has was numbered on the server: show what was stored.
+          const renamed = res.name !== value.name.trim() ? res.name : null;
+          if (renamed) setValue((s) => ({ ...s, name: renamed }));
+          setNotice({ kind: "saved", renamed });
           router.refresh();
         } else if ("problems" in res) setNotice(res.problems[0] ? { kind: "problem", problem: res.problems[0] } : { kind: "failed" });
         else setNotice({ kind: "code", code: res.code });
@@ -83,7 +100,9 @@ export function OpeningSettingsForm({
 
   const noticeText =
     notice?.kind === "saved"
-      ? t("saved")
+      ? notice.renamed
+        ? t("savedRenamed", { name: notice.renamed })
+        : t("saved")
       : notice?.kind === "problem"
         ? t(`p${notice.problem}`)
         : notice?.kind === "code"
@@ -128,11 +147,12 @@ export function OpeningSettingsForm({
           <div className="grid gap-field md:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="decision-maker">{t("decisionMaker")}</Label>
-              <Select value={decider(value.decisionMakerId)} disabled={locked} onValueChange={(v) => set("decisionMakerId", v)}>
+              <Select value={selectValue(value.decisionMakerId)} disabled={locked} onValueChange={(v) => set("decisionMakerId", v)}>
                 <SelectTrigger id="decision-maker" className="w-full">
                   <SelectValue placeholder={t("choose")} />
                 </SelectTrigger>
                 <SelectContent>
+                  {staleItem(value.decisionMakerId)}
                   {deciders.map((u) => (
                     <SelectItem key={u.id} value={u.id}>
                       {u.name}
@@ -144,7 +164,7 @@ export function OpeningSettingsForm({
             <div className="space-y-2">
               <Label htmlFor="backup-decision-maker">{t("backup")}</Label>
               <Select
-                value={value.backupDecisionMakerId ? decider(value.backupDecisionMakerId) : NONE}
+                value={value.backupDecisionMakerId ? selectValue(value.backupDecisionMakerId) : NONE}
                 disabled={locked}
                 onValueChange={(v) => set("backupDecisionMakerId", v === NONE ? null : v)}
               >
@@ -153,6 +173,7 @@ export function OpeningSettingsForm({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={NONE}>{t("noBackup")}</SelectItem>
+                  {staleItem(value.backupDecisionMakerId)}
                   {deciders.map((u) => (
                     <SelectItem key={u.id} value={u.id}>
                       {u.name}
@@ -177,7 +198,11 @@ export function OpeningSettingsForm({
               </Select>
             </div>
           </div>
+          {value.minEvaluations > activeReviewers ? (
+            <p className="tnum text-[13px] text-ink">{t("minEvaluationsShort", { count: activeReviewers, min: value.minEvaluations })}</p>
+          ) : null}
           <p className="text-[13px] text-muted">{t("decisionMakerHint")}</p>
+          <p className="text-[13px] text-muted">{t("minEvaluationsOverride")}</p>
         </div>
       </Card>
 
@@ -212,7 +237,8 @@ export function OpeningSettingsForm({
               id="deadline"
               type="date"
               className="tnum"
-              min={today}
+              // The earliest day applies only to a new value; a passed deadline left as it is stays valid.
+              min={value.deadline === savedDeadline ? undefined : today}
               value={value.deadline ?? ""}
               disabled={locked}
               aria-describedby="deadline-hint"

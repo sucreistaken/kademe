@@ -391,6 +391,27 @@ async function main() {
   await expectCode("a user of another organisation cannot change them here", () => openings.saveOpeningRules(org.id, ownerB.id, team.openingId, rules), "NOT_FOUND");
   check((await teamRow()).updatedAt.getTime() === afterSave.updatedAt.getTime() && (await panelOf()).length === 2, "and no refusal changed anything");
 
+  // Fix round 1: a passed deadline blocks only a change of it; a rename stays unique in the organisation.
+  const passedDay = orgDay(new Date(Date.now() - 3 * 24 * 3600 * 1000));
+  await db.update(s.hiringOpenings).set({ deadlineAt: deadlineToDate(passedDay) }).where(eq(s.hiringOpenings.id, team.openingId));
+  const keptPassed = await openings.saveOpeningRules(org.id, owner.id, team.openingId, { ...rules, deadline: passedDay, feedbackDays: 21 });
+  check(keptPassed.ok && (await teamRow()).feedbackDays === 21, "with the deadline passed, the rest still saves when the deadline is left as it is", JSON.stringify(keptPassed));
+  check((await teamRow()).deadlineAt?.getTime() === deadlineToDate(passedDay).getTime(), "and the passed deadline is kept as it was");
+  await refusedWith("moving it to another past day is refused", { deadline: orgDay(new Date(Date.now() - 2 * 24 * 3600 * 1000)) }, "DEADLINE_PAST");
+  check((await openings.saveOpeningRules(org.id, owner.id, team.openingId, rules)).ok, "moving it to a future day saves");
+  const twin = await openings.createOpening(user, { position: { kind: "existing", id: position.id }, start: "BLANK", copyFrom: null });
+  if (!twin.ok) throw new Error(twin.code);
+  const renamed = await openings.saveOpeningRules(org.id, owner.id, twin.openingId, rules);
+  check(renamed.ok && renamed.name === `${rules.name} (2)`, "renaming another opening to a taken name numbers it", JSON.stringify(renamed));
+  const sameName = await openings.saveOpeningRules(org.id, owner.id, team.openingId, rules);
+  check(sameName.ok && sameName.name === rules.name, "saving an opening under its own name keeps it", JSON.stringify(sameName));
+  const [rulesAudit] = await db
+    .select({ meta: s.auditLogs.meta })
+    .from(s.auditLogs)
+    .where(and(eq(s.auditLogs.subjectId, twin.openingId), eq(s.auditLogs.action, "hiring.opening.rules")));
+  const meta = rulesAudit?.meta as { name?: string; candidateContactEmail?: string } | undefined;
+  check(meta?.name === `${rules.name} (2)` && meta?.candidateContactEmail === "ik@check.local", "the audit row records the stored name and the contact address");
+
   const seen = async (who: { id: string; role: "OWNER" | "MANAGER" | "REVIEWER" }) =>
     (await openings.listOpenings(org.id, who, "DRAFT")).some((o) => o.id === team.openingId);
   check(await seen({ id: reviewer.id, role: "REVIEWER" }), "a reviewer on the panel sees the opening");

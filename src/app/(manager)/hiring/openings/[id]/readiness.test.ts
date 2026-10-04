@@ -13,7 +13,7 @@ const choiceOnly = content([
     }),
   ]),
 ]);
-const base = { memberCount: 0, previewed: false };
+const base = { memberCount: 0, previewed: false, decisionMakerActive: true };
 
 describe("readinessRows", () => {
   it("lists assessment, anchors, team and preview in screen order; weights only with weighting on", () => {
@@ -50,13 +50,19 @@ describe("readinessRows", () => {
     expect(readinessRows({ ...base, problems: [problem], content: measured })[1]).toEqual({ key: "anchors", state: "missing", problem, reason: null });
   });
 
+  // Fix round 1, Minor 3: reviewers alone are not a team; someone active must be able to decide.
+  it("keeps the team row advisory, saying why, while there is no active decision maker", () => {
+    const rows = readinessRows({ memberCount: 2, previewed: false, decisionMakerActive: false, problems: [], content: measured });
+    expect(rows.find((r) => r.key === "team")).toEqual({ key: "team", state: "advisory", problem: null, reason: "NO_DECISION_MAKER" });
+  });
+
   it("team and preview are advisory until done", () => {
     const open = readinessRows({ ...base, problems: [], content: measured });
     expect(open.slice(-2).map((r) => [r.key, r.state])).toEqual([
       ["team", "advisory"],
       ["preview", "advisory"],
     ]);
-    const done = readinessRows({ memberCount: 2, previewed: true, problems: [], content: measured });
+    const done = readinessRows({ memberCount: 2, previewed: true, decisionMakerActive: true, problems: [], content: measured });
     expect(done.slice(-2).map((r) => r.state)).toEqual(["done", "done"]);
   });
 });
@@ -64,7 +70,7 @@ describe("readinessRows", () => {
 describe("rowHref and rowAction (ruling C7: a link only to a page that exists)", () => {
   const OPENING = "33333333-3333-4333-8333-333333333333";
   const base = `/hiring/openings/${OPENING}`;
-  const rowsOf = (memberCount: number) => readinessRows({ memberCount, previewed: false, problems: [], content: measured });
+  const rowsOf = (memberCount: number) => readinessRows({ memberCount, previewed: false, decisionMakerActive: true, problems: [], content: measured });
 
   it("sends the team row to team and rules (Task 20), worded as 'Ekibi ata'", () => {
     const team = rowsOf(0).find((r) => r.key === "team")!;
@@ -73,7 +79,7 @@ describe("rowHref and rowAction (ruling C7: a link only to a page that exists)",
   });
 
   it("keeps the other targets: the gate's own fix, the builder when nothing is measured, the preview", () => {
-    const empty = readinessRows({ memberCount: 0, previewed: false, problems: [], content: content([]) });
+    const empty = readinessRows({ memberCount: 0, previewed: false, decisionMakerActive: true, problems: [], content: content([]) });
     expect(rowHref(empty.find((r) => r.key === "anchors")!, null, OPENING)).toBe(`${base}/assessment/edit`);
     expect(rowHref(rowsOf(0).find((r) => r.key === "preview")!, null, OPENING)).toBe(`${base}/assessment/preview`);
     expect(rowHref(rowsOf(0).find((r) => r.key === "assessment")!, `${base}/assessment/scorecard`, OPENING)).toBe(`${base}/assessment/scorecard`);

@@ -9,6 +9,8 @@ import { managerT } from "@/i18n/manager";
 import { cn } from "@/lib/cn";
 import { shortDate } from "@/lib/format";
 import type { PublishProblem } from "@/solutions/hiring/rules/gate";
+import { loadPanelUsers } from "@/server/settings";
+import { canDecide } from "@/solutions/hiring/rules/access";
 import { workingState } from "@/solutions/hiring/server/working";
 import { openingFor } from "./access";
 import { publishOpeningAction, type PublishNotice } from "./actions";
@@ -109,7 +111,10 @@ export default async function OpeningOverviewPage({
   const locale = await managerLocale();
   const t = managerT(locale);
   const sp = await searchParams;
-  const state = await workingState(user.orgId, opening.id);
+  const [state, people] = await Promise.all([workingState(user.orgId, opening.id), loadPanelUsers(user.orgId)]);
+  // Reviewers alone are not a team: someone active must be able to decide (HIRING-UX 4.6).
+  const decider = people.find((u) => u.id === opening.decisionMakerId && u.disabledAt === null);
+  const decisionMakerActive = decider !== undefined && canDecide(decider.role);
   const content = state.content;
   const describe = (p: PublishProblem) => (content ? describeProblem(p, { content, facts: state.facts, locale, openingId: opening.id }, t) : null);
   const closed = opening.status === "CLOSED";
@@ -146,7 +151,13 @@ export default async function OpeningOverviewPage({
 
   const rows =
     state.draft && content
-      ? readinessRows({ problems: state.problems, content, memberCount: opening.memberIds.length, previewed: state.draft.previewedAt !== null })
+      ? readinessRows({
+          problems: state.problems,
+          content,
+          memberCount: opening.memberIds.length,
+          previewed: state.draft.previewedAt !== null,
+          decisionMakerActive,
+        })
       : [];
 
   return (
@@ -158,6 +169,20 @@ export default async function OpeningOverviewPage({
           <StatusDot tone="active">
             <span className="tnum text-[14px] text-ink">{t("hiringOverview.published", { number: published })}</span>
           </StatusDot>
+        </p>
+      ) : null}
+      {closed ? (
+        // "Yeniden aç" lives on team and rules; an owner or manager is pointed there.
+        <p className="mt-6 text-[14px] text-ink">
+          {t("hiringOverview.closedNotice")}{" "}
+          {canDecide(user.role) ? (
+            <Link
+              href={`/hiring/openings/${opening.id}/settings`}
+              className="font-medium underline decoration-line-strong underline-offset-4 transition-colors duration-[120ms] ease-out hover:decoration-ink"
+            >
+              {t("hiringOverview.goReopen")}
+            </Link>
+          ) : null}
         </p>
       ) : null}
       {notice ? (
@@ -177,9 +202,11 @@ export default async function OpeningOverviewPage({
                 const detail =
                   row.reason === "NO_COMPETENCIES"
                     ? t("hiringOverview.anchorsNoCompetency")
-                    : row.state === "advisory"
-                      ? t("hiringOverview.advisory")
-                      : fix?.text;
+                    : row.reason === "NO_DECISION_MAKER"
+                      ? t("hiringOverview.teamNoDecisionMaker")
+                      : row.state === "advisory"
+                        ? t("hiringOverview.advisory")
+                        : fix?.text;
                 const href = rowHref(row, fix?.href, opening.id);
                 return (
                   <Row

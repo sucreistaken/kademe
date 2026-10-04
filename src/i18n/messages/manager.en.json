@@ -25,7 +25,8 @@
     "loading": "Loading",
     "undo": "Undo",
     "search": "Search",
-    "none": "None"
+    "none": "None",
+    "undoing": "Undoing"
   },
   "login": {
     "title": "Sign in",

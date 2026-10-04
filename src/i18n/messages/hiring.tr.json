@@ -112,7 +112,10 @@
     "srMissing": "Eksik, yayını engeller:",
     "srAdvisory": "Önerilir, yayını engellemez:",
     "anchorsNoCompetency": "Önce soru ekleyip yetkinlik seç.",
-    "publishing": "Yayınlanıyor"
+    "publishing": "Yayınlanıyor",
+    "closedNotice": "Bu alım kapalı; değerlendirme ve kayıtlar okunur kalır.",
+    "goReopen": "Ekip ve kurallarda yeniden aç",
+    "teamNoDecisionMaker": "Aktif bir karar veren yok. Ekip ve kurallarda bir sahip ya da yönetici seç."
   },
   "hiringGate": {
     "stageLabel": "Aşama {n}",
@@ -590,6 +593,11 @@
     "closedTitle": "Alım kapalı",
     "closedBody": "Yeni davet yapılamaz; değerlendirme ve kayıtlar okunur kalır. Bir şeyi değiştirmek için önce yeniden aç.",
     "closedReadOnly": "Bu alım kapalı. Ekip ve kurallar okunur kalır.",
-    "reopen": "Yeniden aç"
+    "reopen": "Yeniden aç",
+    "minEvaluationsShort": "Şu an {count} değerlendirici seçili; her aday {min} değerlendirme alamaz.",
+    "minEvaluationsOverride": "Karar veren, gerekçesini yazarak bu sayıya ulaşmadan da karar verebilir.",
+    "savedRenamed": "Kaydedildi. Bu ad başka bir alımda kullanıldığı için ad \"{name}\" oldu.",
+    "closing": "Kapatılıyor",
+    "reopening": "Açılıyor"
   }
 }

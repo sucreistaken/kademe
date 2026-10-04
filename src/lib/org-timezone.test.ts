@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ORG_TIMEZONE, orgDay, resolveTimeZone, zonedDayStart } from "./org-timezone";
+import { ORG_TIMEZONE, orgDay, resolveTimeZone, zonedDayStart, zoneLabel } from "./org-timezone";
 
 describe("org time zone", () => {
   it("defaults to Istanbul", () => {
@@ -71,5 +71,18 @@ describe("orgDay", () => {
 
   it("round-trips with zonedDayStart", () => {
     expect(orgDay(zonedDayStart("2026-03-29", "Europe/Berlin")!, "Europe/Berlin")).toBe("2026-03-29");
+  });
+});
+
+describe("zoneLabel", () => {
+  it("names the zone in words, in the reader's language, not by its IANA id", () => {
+    expect(zoneLabel("tr", "Europe/Istanbul")).toMatch(/^Türkiye/);
+    expect(zoneLabel("en", "Europe/Istanbul")).toMatch(/Time$/);
+    expect(zoneLabel("en", "Europe/Berlin")).toBe("Central European Time");
+    expect(zoneLabel("tr", ORG_TIMEZONE)).not.toContain("/");
+  });
+
+  it("prefers a spelled-out name over a bare GMT offset", () => {
+    expect(zoneLabel("en", "UTC")).toBe("Coordinated Universal Time");
   });
 });

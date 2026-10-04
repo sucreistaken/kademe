@@ -1,10 +1,10 @@
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { UndoStrip } from "@/components/ui/undo-strip";
 import { OpeningSettingsForm, type SettingsUser } from "@/components/hiring/opening-settings-form";
+import { PendingSubmitButton } from "@/components/hiring/pending-submit-button";
 import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
-import { ORG_TIMEZONE, orgDay } from "@/lib/org-timezone";
+import { orgDay, zoneLabel } from "@/lib/org-timezone";
 import { loadPanelUsers } from "@/server/settings";
 import { canDecide } from "@/solutions/hiring/rules/access";
 import { openingFor } from "../access";
@@ -50,9 +50,7 @@ export default async function OpeningSettingsPage({
           {runs ? (
             <form action={reopenOpeningAction}>
               <input type="hidden" name="openingId" value={opening.id} />
-              <Button type="submit" variant="primary">
-                {t("hiringSettings.reopen")}
-              </Button>
+              <PendingSubmitButton variant="primary" label={t("hiringSettings.reopen")} pendingLabel={t("hiringSettings.reopening")} />
             </form>
           ) : null}
         </Card>
@@ -60,12 +58,13 @@ export default async function OpeningSettingsPage({
       <div className="mt-section">
         <OpeningSettingsForm
           // A reopen gives the form fresh values; a save keeps the form (and its "Kaydedildi.").
+          // `initial.deadline` is also the saved day: a passed deadline blocks only a change.
           key={opening.status}
           openingId={opening.id}
           canEdit={access.edit}
           closed={closed}
           today={orgDay()}
-          zone={ORG_TIMEZONE}
+          zone={zoneLabel(locale)}
           users={users}
           initial={{
             name: opening.name,
@@ -86,9 +85,7 @@ export default async function OpeningSettingsPage({
           <p className="text-[13px] text-muted">{t("hiringSettings.closeBody")}</p>
           <form action={closeOpeningAction}>
             <input type="hidden" name="openingId" value={opening.id} />
-            <Button type="submit" variant="secondary">
-              {t("hiringSettings.close")}
-            </Button>
+            <PendingSubmitButton label={t("hiringSettings.close")} pendingLabel={t("hiringSettings.closing")} />
           </form>
         </Card>
       ) : null}

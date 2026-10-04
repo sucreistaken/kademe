@@ -1,6 +1,7 @@
 import { and, asc, count, desc, eq, gt, gte, isNull, lt } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import { db } from "@/db";
+import type { Executor } from "@/db/executor";
 import { auditLogs, organizations, userSetupTokens, users } from "@/db/schema";
 import { hashPassword, mintToken, sha256, type SessionUser } from "@/lib/auth";
 import { ORG_TIMEZONE, zonedDayStart } from "@/lib/org-timezone";
@@ -67,8 +68,9 @@ export type PanelUser = {
   disabledAt: Date | null;
 };
 
-export async function loadPanelUsers(orgId: string): Promise<PanelUser[]> {
-  const rows = await db
+/** The organisation's users; `x` lets a caller read them inside its own transaction. */
+export async function loadPanelUsers(orgId: string, x: Executor = db): Promise<PanelUser[]> {
+  const rows = await x
     .select({
       id: users.id,
       name: users.name,

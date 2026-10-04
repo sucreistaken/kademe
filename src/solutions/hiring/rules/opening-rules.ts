@@ -33,8 +33,11 @@ export type PanelUser = { id: string; role: "OWNER" | "MANAGER" | "REVIEWER"; di
  * HIRING-UX 5.18 and 4.6, shared by the form (the disabled reason) and the
  * server (the refusal). `users` are the organisation's own users, so an id from
  * anywhere else is unknown. `today` is the organisation's calendar day (orgDay).
+ * `savedDeadline` is the stored deadline day: a deadline that has already
+ * passed is refused only when it is being changed, so a passed deadline never
+ * locks the team.
  */
-export function openingRulesProblems(input: OpeningRulesInput, users: PanelUser[], today: string): RulesProblem[] {
+export function openingRulesProblems(input: OpeningRulesInput, users: PanelUser[], today: string, savedDeadline: string | null = null): RulesProblem[] {
   const problems: RulesProblem[] = [];
   const active = (id: string | null) => users.find((u) => u.id === id && !u.disabled) ?? null;
   if (!input.name.trim()) problems.push("NAME_REQUIRED");
@@ -57,7 +60,7 @@ export function openingRulesProblems(input: OpeningRulesInput, users: PanelUser[
   if (input.deadline) {
     // zonedDayStart answers null for anything that is not a real YYYY-MM-DD.
     if (!zonedDayStart(input.deadline)) problems.push("DEADLINE_INVALID");
-    else if (input.deadline < today) problems.push("DEADLINE_PAST");
+    else if (input.deadline !== savedDeadline && input.deadline < today) problems.push("DEADLINE_PAST");
   }
   const email = input.candidateContactEmail.trim();
   if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) problems.push("EMAIL");

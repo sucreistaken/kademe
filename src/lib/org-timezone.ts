@@ -81,6 +81,21 @@ export function orgDay(at: Date = new Date(), timeZone: string = ORG_TIMEZONE): 
   return `${part("year")}-${part("month")}-${part("day")}`;
 }
 
+/**
+ * The zone's name in words for `locale` (for example "Türkiye Standart Saati"),
+ * so a screen never shows a raw IANA id. Intl's generic name is preferred; a
+ * bare "GMT+00:00" falls back to the long name, and the id is the last resort.
+ */
+export function zoneLabel(locale: string, timeZone: string = ORG_TIMEZONE): string {
+  const name = (style: "longGeneric" | "long") =>
+    new Intl.DateTimeFormat(locale, { timeZone, timeZoneName: style })
+      .formatToParts(new Date())
+      .find((p) => p.type === "timeZoneName")?.value;
+  const generic = name("longGeneric");
+  if (generic && !/^GMT/.test(generic)) return generic;
+  return name("long") ?? timeZone;
+}
+
 /** Offset of `timeZone` from UTC at `at`, in milliseconds (positive east). */
 function offsetMs(timeZone: string, at: Date): number {
   const parts = new Intl.DateTimeFormat("en-US", {

@@ -25,7 +25,8 @@
     "loading": "Yükleniyor",
     "undo": "Geri al",
     "search": "Ara",
-    "none": "Yok"
+    "none": "Yok",
+    "undoing": "Geri alınıyor"
   },
   "login": {
     "title": "Giriş yap",

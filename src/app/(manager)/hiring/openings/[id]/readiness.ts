@@ -13,8 +13,10 @@ export type ReadinessRow = {
    * NO_COMPETENCIES: nothing is measured yet and the gate names no anchor problem (no question yet,
    * or an open question without a competency, which the assessment row reports). A choice-only
    * draft gets the gate's own NO_MEASURED_COMPETENCY instead, so the row and the gate agree.
+   * NO_DECISION_MAKER: the team row while nobody active can decide (no decision maker, or a
+   * disabled or demoted one); reviewers alone are not a team.
    */
-  reason: "NO_COMPETENCIES" | null;
+  reason: "NO_COMPETENCIES" | "NO_DECISION_MAKER" | null;
 };
 
 const row = (key: ReadinessKey, problems: PublishProblem[]): ReadinessRow => ({
@@ -28,7 +30,14 @@ const row = (key: ReadinessKey, problems: PublishProblem[]): ReadinessRow => ({
  * The readiness list of a draft (HIRING-UX 5.4), in screen order. The weights
  * row appears only with weighting on (or when the gate names a weights problem).
  */
-export function readinessRows(input: { problems: PublishProblem[]; content: VersionContent; memberCount: number; previewed: boolean }): ReadinessRow[] {
+export function readinessRows(input: {
+  problems: PublishProblem[];
+  content: VersionContent;
+  memberCount: number;
+  previewed: boolean;
+  /** The decision maker is an active owner or manager of the organisation. */
+  decisionMakerActive: boolean;
+}): ReadinessRow[] {
   const of = (group: ReadonlyArray<PublishProblem["code"]>) => input.problems.filter((p) => group.includes(p.code));
   const anchors = of(ANCHOR_PROBLEMS);
   const weights = of(WEIGHT_PROBLEMS);
@@ -40,7 +49,12 @@ export function readinessRows(input: { problems: PublishProblem[]; content: Vers
   ];
   if (input.content.weightsEnabled || weights.length) rows.push(row("weights", weights));
   rows.push(
-    { key: "team", state: input.memberCount > 0 ? "done" : "advisory", problem: null, reason: null },
+    {
+      key: "team",
+      state: input.memberCount > 0 && input.decisionMakerActive ? "done" : "advisory",
+      problem: null,
+      reason: input.decisionMakerActive ? null : "NO_DECISION_MAKER",
+    },
     { key: "preview", state: input.previewed ? "done" : "advisory", problem: null, reason: null },
   );
   return rows;

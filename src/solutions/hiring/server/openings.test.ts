@@ -174,8 +174,11 @@ describe("saveOpeningRules", () => {
   });
   let status: "DRAFT" | "OPEN" | "CLOSED" | null;
   let actorActive: boolean;
+  let savedDeadlineAt: Date | null;
+  let takenNames: Array<{ name: string }>;
   const respond = (op: Op) => {
-    if (op.table === "hiring_openings" && op.kind === "select") return status ? [{ id: OPENING, status, positionId: POS_A }] : [];
+    // The locked read of the opening itself, then the organisation's other names (a rename stays unique).
+    if (op.table === "hiring_openings" && op.kind === "select") return op.lock ? (status ? [{ id: OPENING, status, positionId: POS_A, deadlineAt: savedDeadlineAt }] : []) : takenNames;
     if (op.table === "users") {
       // assertActiveUser asks for one active user; loadPanelUsers for the whole organisation.
       if (op.where.includes('"users"."disabled_at" is null')) return actorActive ? [{ id: OWNER }] : [];
@@ -186,6 +189,8 @@ describe("saveOpeningRules", () => {
   beforeEach(() => {
     status = "DRAFT";
     actorActive = true;
+    savedDeadlineAt = null;
+    takenNames = [];
     fake.respond = respond;
   });
   afterEach(() => {
@@ -194,7 +199,7 @@ describe("saveOpeningRules", () => {
 
   it("saves the rules, the panel (once per person) and an audit row, all in the caller's organisation", async () => {
     const result = await saveOpeningRules(ORG, OWNER, OPENING, input({ deadline: "2099-10-31" }));
-    expect(result).toEqual({ ok: true });
+    expect(result).toEqual({ ok: true, name: "Tasarımcı · Ekim" });
 
     const lock = fake.ops.find((o) => o.table === "hiring_openings" && o.kind === "select");
     expect(lock?.lock).toBe("update");
@@ -238,7 +243,15 @@ describe("saveOpeningRules", () => {
       action: "hiring.opening.rules",
       subjectType: "hiring_opening",
       subjectId: OPENING,
-      meta: { members: [REVIEWER, MANAGER], decisionMakerId: OWNER, backupDecisionMakerId: MANAGER, minEvaluations: 2, blindMode: true },
+      meta: {
+        name: "Tasarımcı · Ekim",
+        members: [REVIEWER, MANAGER],
+        decisionMakerId: OWNER,
+        backupDecisionMakerId: MANAGER,
+        minEvaluations: 2,
+        blindMode: true,
+        candidateContactEmail: "ik@example.com",
+      },
     });
   });
 
@@ -269,7 +282,40 @@ describe("saveOpeningRules", () => {
     const today = orgDay();
     const yesterday = orgDay(new Date(Date.now() - 24 * 3600 * 1000));
     expect(await saveOpeningRules(ORG, OWNER, OPENING, input({ deadline: yesterday }))).toEqual({ ok: false, problems: ["DEADLINE_PAST"] });
-    expect(await saveOpeningRules(ORG, OWNER, OPENING, input({ deadline: today }))).toEqual({ ok: true });
+    expect(await saveOpeningRules(ORG, OWNER, OPENING, input({ deadline: today }))).toMatchObject({ ok: true });
+  });
+
+  // Fix round 1, Important 1: the stored day is read in the locked select; a passed deadline blocks only a change.
+  it("saves a team change while a passed deadline stays as it was, and refuses moving it to another past day", async () => {
+    vi.useFakeTimers({ now: new Date("2026-10-04T12:00:00Z"), toFake: ["Date"] });
+    savedDeadlineAt = deadlineToDate("2026-10-01");
+    expect(await saveOpeningRules(ORG, OWNER, OPENING, input({ deadline: "2026-10-01", memberIds: [REVIEWER] }))).toMatchObject({ ok: true });
+    const update = writesOf(fake.ops).find((w) => w.kind === "update");
+    expect((update?.values as { deadlineAt: Date }).deadlineAt).toEqual(savedDeadlineAt);
+    fake.ops = [];
+    expect(await saveOpeningRules(ORG, OWNER, OPENING, input({ deadline: "2026-10-02" }))).toEqual({ ok: false, problems: ["DEADLINE_PAST"] });
+    expect(writesOf(fake.ops)).toEqual([]);
+  });
+
+  // Minor 5: the people are read through the transaction, after the opening is locked.
+  it("reads the organisation's people after the lock", async () => {
+    await saveOpeningRules(ORG, OWNER, OPENING, input());
+    const lockAt = fake.ops.findIndex((o) => o.table === "hiring_openings" && o.lock === "update");
+    const peopleAt = fake.ops.findIndex((o) => o.table === "users" && !o.where.includes("disabled_at"));
+    expect(lockAt).toBeGreaterThanOrEqual(0);
+    expect(peopleAt).toBeGreaterThan(lockAt);
+  });
+
+  // Minor 9: a rename never takes another opening's name in the organisation.
+  it("numbers a renamed opening whose name another opening of the organisation already has", async () => {
+    takenNames = [{ name: "Tasarımcı · Ekim" }];
+    expect(await saveOpeningRules(ORG, OWNER, OPENING, input())).toEqual({ ok: true, name: "Tasarımcı · Ekim (2)" });
+    const names = fake.ops.find((o) => o.table === "hiring_openings" && o.kind === "select" && !o.lock);
+    expect(names?.where).toContain('"hiring_openings"."org_id" = $');
+    expect(names?.where).toContain('"hiring_openings"."id" <> $');
+    expect(names?.params).toEqual(expect.arrayContaining([ORG, OPENING]));
+    const update = writesOf(fake.ops).find((w) => w.kind === "update");
+    expect(update?.values).toMatchObject({ name: "Tasarımcı · Ekim (2)" });
   });
 
   it("refuses a closed opening (history is read-only) before looking at the rules", async () => {

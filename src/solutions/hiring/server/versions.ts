@@ -65,7 +65,7 @@ export async function versionsOf(orgId: string, openingId: string, x: Executor =
 export async function lockOpening(x: Executor, orgId: string, openingId: string) {
   if (!isUuid(openingId)) throw new HiringNotFound("opening");
   const [row] = await x
-    .select({ id: hiringOpenings.id, status: hiringOpenings.status, positionId: hiringOpenings.positionId })
+    .select({ id: hiringOpenings.id, status: hiringOpenings.status, positionId: hiringOpenings.positionId, deadlineAt: hiringOpenings.deadlineAt })
     .from(hiringOpenings)
     .where(and(eq(hiringOpenings.id, openingId), eq(hiringOpenings.orgId, orgId)))
     .for("update");

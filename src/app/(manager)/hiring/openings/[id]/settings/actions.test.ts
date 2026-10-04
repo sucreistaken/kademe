@@ -78,14 +78,14 @@ beforeEach(() => {
   openingFor.mockClear();
   editableOpening.mockClear();
   saveOpeningRules.mockReset();
-  saveOpeningRules.mockResolvedValue({ ok: true });
+  saveOpeningRules.mockResolvedValue({ ok: true, name: rules.name });
   setOpeningClosed.mockReset();
   setOpeningClosed.mockResolvedValue(undefined);
 });
 
 describe("saveOpeningRulesAction", () => {
   it("re-checks the opening and saves with the session's organisation and user", async () => {
-    await expect(saveOpeningRulesAction(OPENING, rules)).resolves.toEqual({ ok: true });
+    await expect(saveOpeningRulesAction(OPENING, rules)).resolves.toEqual({ ok: true, name: rules.name });
     expect(editableOpening).toHaveBeenCalledWith(OPENING);
     expect(saveOpeningRules).toHaveBeenCalledWith("o1", "u1", OPENING, rules);
     expect(revalidatePath).toHaveBeenCalled();
@@ -93,7 +93,7 @@ describe("saveOpeningRulesAction", () => {
 
   it("a manager may save too", async () => {
     viewer = { role: "MANAGER", view: true, edit: true, status: "OPEN" };
-    await expect(saveOpeningRulesAction(OPENING, rules)).resolves.toEqual({ ok: true });
+    await expect(saveOpeningRulesAction(OPENING, rules)).resolves.toEqual({ ok: true, name: rules.name });
   });
 
   it("passes the server's refusal through and refreshes nothing", async () => {
@@ -139,16 +139,23 @@ describe("saveOpeningRulesAction", () => {
 describe("closeOpeningAction", () => {
   it("closes with the session's organisation and returns with the undo", async () => {
     await expect(closeOpeningAction(form())).rejects.toThrow(`redirect:/hiring/openings/${OPENING}/settings?closed=1`);
-    expect(openingFor).toHaveBeenCalledWith(OPENING, "edit");
+    expect(openingFor).toHaveBeenCalledWith(OPENING, "view");
     expect(setOpeningClosed).toHaveBeenCalledWith("o1", "u1", OPENING, true);
   });
 
-  it("refuses a reviewer and an already closed opening", async () => {
+  it("refuses a reviewer, and hides the opening from one who cannot see it", async () => {
     viewer = { role: "REVIEWER", view: true, edit: false, status: "OPEN" };
     await expect(closeOpeningAction(form())).rejects.toBeInstanceOf(ForbiddenError);
-    viewer = { role: "OWNER", view: true, edit: false, status: "CLOSED" };
-    await expect(closeOpeningAction(form())).rejects.toBeInstanceOf(ForbiddenError);
+    viewer = { role: "REVIEWER", view: false, edit: false, status: "OPEN" };
+    await expect(closeOpeningAction(form())).rejects.toThrow("notFound");
     expect(setOpeningClosed).not.toHaveBeenCalled();
+  });
+
+  // Fix round 1, Important 2: a second "Alımı kapat" queued behind the first lands on a closed opening.
+  it("answers a repeated close of an already closed opening with the same harmless redirect", async () => {
+    viewer = { role: "MANAGER", view: true, edit: false, status: "CLOSED" };
+    await expect(closeOpeningAction(form())).rejects.toThrow(`redirect:/hiring/openings/${OPENING}/settings?closed=1`);
+    expect(setOpeningClosed).toHaveBeenCalledWith("o1", "u1", OPENING, true);
   });
 });
 

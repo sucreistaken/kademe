@@ -51,9 +51,16 @@ export async function saveOpeningRulesAction(openingId: string, input: unknown):
   }
 }
 
-/** "Alımı kapat": an owner or manager of an open or draft opening; the page then offers the undo. */
+/**
+ * "Alımı kapat": an owner or manager; the page then offers the undo. Asked
+ * like the reopen (see it, then the role), not with "edit": a second click
+ * queued behind the first lands on an opening that is already CLOSED, and
+ * setOpeningClosed answers that with a no-op, so it is the same redirect
+ * instead of the error boundary.
+ */
 export async function closeOpeningAction(formData: FormData) {
-  const { user, opening } = await openingFor(String(formData.get("openingId") ?? ""), "edit");
+  const { user, opening } = await openingFor(String(formData.get("openingId") ?? ""), "view");
+  if (!canDecide(user.role)) throw new ForbiddenError("opening:write");
   await setOpeningClosed(user.orgId, user.id, opening.id, true);
   revalidatePath("/hiring/openings", "layout");
   redirect(`/hiring/openings/${opening.id}/settings?closed=1`);

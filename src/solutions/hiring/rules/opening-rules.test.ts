@@ -84,4 +84,15 @@ describe("opening rules (HIRING-UX 5.18, 4.6)", () => {
   it("lets the decision maker also be an evaluator, and a reviewer be only an evaluator", () => {
     expect(openingRulesProblems({ ...ok, memberIds: ["owner", "reviewer"] }, users, "2026-10-04")).toEqual([]);
   });
+
+  // Fix round 1, Important 1: a deadline that has already passed blocks nothing until it is changed.
+  it("checks a past deadline only when the deadline changes", () => {
+    const passed = { ...ok, deadline: "2026-10-01" };
+    expect(openingRulesProblems(passed, users, "2026-10-04", "2026-10-01")).toEqual([]);
+    expect(openingRulesProblems({ ...passed, memberIds: ["reviewer"] }, users, "2026-10-04", "2026-10-01")).toEqual([]);
+    expect(openingRulesProblems({ ...ok, deadline: "2026-10-02" }, users, "2026-10-04", "2026-10-01")).toEqual(["DEADLINE_PAST"]);
+    expect(openingRulesProblems(passed, users, "2026-10-04", null)).toEqual(["DEADLINE_PAST"]);
+    expect(openingRulesProblems(passed, users, "2026-10-04")).toEqual(["DEADLINE_PAST"]);
+    expect(openingRulesProblems({ ...ok, deadline: null }, users, "2026-10-04", "2026-10-01")).toEqual([]);
+  });
 });
