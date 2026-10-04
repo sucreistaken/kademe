@@ -6,6 +6,7 @@ import { extendLink } from "@/app/(manager)/actions";
 import { can } from "@/lib/authorize";
 import { expiringLinks } from "@/server/links";
 import { requireUser } from "@/server/session";
+import { inviteTargets } from "@/solutions/registry";
 import { solutionModules } from "@/solutions/registry.server";
 import type { TodayCell, TodayItem } from "@/solutions/types";
 import { managerLocale } from "@/i18n/manager-locale";
@@ -40,7 +41,8 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   const running = items.filter((i) => i.lane === "running");
   const expiring = await expiringLinks(user.orgId);
   const canInvite = can(user, "student:invite");
-  const inviteHref = modules[0]?.inviteHref ?? "/dashboard";
+  // The first solution that can invite. Hiring is first in the menu but invites only from plan 2 on.
+  const inviteHref = inviteTargets()[0]?.href ?? "/dashboard";
 
   return (
     <main className="mx-auto max-w-[1360px] px-6 py-8">

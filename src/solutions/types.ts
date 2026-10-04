@@ -42,8 +42,8 @@ export interface SolutionManifest {
   label: I18nLabel;
   /** Menu entries, in menu order. Only routes that exist (RULES.md rule 7). */
   nav: NavLink[];
-  /** Where "invite" on the shared Today screen leads for this solution. */
-  inviteHref: string;
+  /** Where "invite" on Today leads for this solution; null while it cannot invite yet. */
+  inviteHref: string | null;
   /**
    * True once this solution's candidate screens and endpoints exist. Until
    * then every core candidate route and page answers its invitations exactly

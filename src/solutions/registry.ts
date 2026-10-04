@@ -1,13 +1,13 @@
 import type { Locale } from "@/i18n/locale";
+import { hiringManifest } from "@/solutions/hiring/manifest";
 import { languageExamManifest } from "@/solutions/language-exam/manifest";
 import type { SolutionKind, SolutionManifest } from "@/solutions/types";
 
 /**
- * Every registered solution, in menu order (HIRING-UX 4.1: hiring will come
- * before the exam). Client-safe. Adding a solution: one folder, one line here,
+ * Every registered solution, in menu order (hiring first, HIRING-UX 4.1). Client-safe. Adding a solution: one folder, one line here,
  * one line in registry.server.ts, one enum value.
  */
-export const SOLUTION_MANIFESTS: readonly SolutionManifest[] = [languageExamManifest];
+export const SOLUTION_MANIFESTS: readonly SolutionManifest[] = [hiringManifest, languageExamManifest];
 
 export function manifestByKind(kind: SolutionKind): SolutionManifest | null {
   return SOLUTION_MANIFESTS.find((m) => m.dbKind === kind) ?? null;
@@ -50,4 +50,12 @@ export function buildNav(
     },
     { key: "settings", label: null, items: [{ href: "/settings", label: shared.settings }] },
   ];
+}
+
+/**
+ * Solutions Today can invite for, in menu order. Today must not pick the first
+ * solution blindly: hiring is first in the menu but cannot invite until plan 2.
+ */
+export function inviteTargets(manifests: readonly SolutionManifest[] = SOLUTION_MANIFESTS): Array<{ key: SolutionManifest["key"]; href: string }> {
+  return manifests.flatMap((m) => (m.inviteHref ? [{ key: m.key, href: m.inviteHref }] : []));
 }

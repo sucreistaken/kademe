@@ -1,8 +1,9 @@
+import { hiringModule } from "@/solutions/hiring/module";
 import { languageExamModule } from "@/solutions/language-exam/module";
 import type { SolutionKind, SolutionModule } from "@/solutions/types";
 
 /** Server modules, same order as SOLUTION_MANIFESTS (a test keeps them aligned). */
-const MODULES: readonly SolutionModule[] = [languageExamModule];
+const MODULES: readonly SolutionModule[] = [hiringModule, languageExamModule];
 
 export function solutionModules(): readonly SolutionModule[] {
   return MODULES;
