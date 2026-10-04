@@ -229,3 +229,55 @@ describe("0006_hiring_immutability", () => {
     }
   });
 });
+
+describe("0007_hiring_schema_guards", () => {
+  const sql = read("0007_hiring_schema_guards");
+  const at = (needle: string) => {
+    const i = sql.indexOf(needle);
+    expect(i, needle).toBeGreaterThanOrEqual(0);
+    return i;
+  };
+
+  it("names the mapping's activity foreign key explicitly, within Postgres' 63 characters", () => {
+    expect(sql).toContain(
+      `ALTER TABLE "hiring_activity_competencies" ADD CONSTRAINT "hiring_activity_competencies_activity_fk" FOREIGN KEY ("activity_id") REFERENCES "public"."hiring_activities"("id") ON DELETE cascade`,
+    );
+    for (const [, name] of sql.matchAll(/ADD CONSTRAINT "(\w+)"/g)) expect(name.length, name).toBeLessThanOrEqual(63);
+  });
+
+  it("ties a version to an opening of the same organisation, after the unique target it needs", () => {
+    const index = `ALTER TABLE "hiring_openings" ADD CONSTRAINT "hiring_openings_id_org" UNIQUE("id","org_id");`;
+    const fk = `ALTER TABLE "hiring_versions" ADD CONSTRAINT "hiring_versions_opening_org_fk" FOREIGN KEY ("opening_id","org_id") REFERENCES "public"."hiring_openings"("id","org_id") ON DELETE cascade`;
+    expect(at(index)).toBeLessThan(at(fk));
+  });
+
+  it("replaces exactly the two single-column foreign keys, and drops nothing else", () => {
+    const drops = [...sql.matchAll(/ALTER TABLE "(\w+)" DROP CONSTRAINT "(\w+)"/g)].map((m) => `${m[1]}.${m[2]}`).sort();
+    expect(drops).toEqual([
+      "hiring_activity_competencies.hiring_activity_competencies_activity_id_hiring_activities_id_fk",
+      "hiring_versions.hiring_versions_opening_id_hiring_openings_id_fk",
+    ]);
+    expect(sql).not.toMatch(/DROP (TABLE|COLUMN|TYPE|INDEX)/);
+  });
+
+  it.each([
+    ["hiring_stages", "hiring_stage_grace", `"hiring_stages"."grace_seconds" >= 0`],
+    ["hiring_stages", "hiring_stage_order", `"hiring_stages"."order_index" >= 0`],
+    ["hiring_activities", "hiring_activity_answer", `"hiring_activities"."answer_seconds" IS NULL OR "hiring_activities"."answer_seconds" > 0`],
+    ["hiring_activities", "hiring_activity_order", `"hiring_activities"."order_index" >= 0`],
+    ["hiring_versions", "hiring_version_number_positive", `"hiring_versions"."version_number" >= 1`],
+    [
+      "hiring_versions",
+      "hiring_published_has_publisher",
+      `"hiring_versions"."status" <> 'PUBLISHED' OR ("hiring_versions"."published_at" IS NOT NULL AND "hiring_versions"."published_by" IS NOT NULL)`,
+    ],
+    // locale_set is a jsonb array of strings: `?` is membership, default_locale is the locale enum.
+    ["hiring_versions", "hiring_default_locale_in_set", `"hiring_versions"."locale_set" ? "hiring_versions"."default_locale"::text`],
+  ])("%s keeps %s", (table, name, expression) => {
+    expect(sql).toContain(`ALTER TABLE "${table}" ADD CONSTRAINT "${name}" CHECK (${expression});`);
+  });
+
+  it("changes no row, so the 0006 freeze triggers have nothing to fire on", () => {
+    expect(sql).not.toMatch(/^\s*(INSERT|UPDATE|DELETE)\b/im);
+  });
+});

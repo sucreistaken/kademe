@@ -1,5 +1,6 @@
 /**
- * Proves the hiring immutability triggers (migration 0006) on a real database.
+ * Proves the hiring immutability triggers (migration 0006) and the schema
+ * guards (migration 0007) on a real database.
  *
  * Every row it writes lives in ONE transaction that is always rolled back, so
  * the database is left exactly as it was. Rolling back is also the only way to
@@ -22,6 +23,8 @@ const bad = (m: string) => {
 
 /** Thrown at the end to roll the whole run back. */
 class RollBack extends Error {}
+/** Thrown inside a savepoint when a write that should be refused went through, to undo it. */
+class WasAllowed extends Error {}
 
 async function main() {
   const refusal = refuseUnlessWorkingDb(process.env.DATABASE_URL);
@@ -43,9 +46,13 @@ async function main() {
       /** 23514 = check_violation (triggers and CHECKs), 23505 = unique_violation. */
       async function refused(label: string, run: (tx: Tx) => Promise<unknown>, expected = "23514") {
         try {
-          await sql.savepoint((tx) => run(tx));
-          bad(`${label}: was allowed`);
+          // A write that wrongly goes through is undone, so it cannot change what later checks see.
+          await sql.savepoint(async (tx) => {
+            await run(tx);
+            throw new WasAllowed();
+          });
         } catch (error) {
+          if (error instanceof WasAllowed) return bad(`${label}: was allowed`);
           const code = (error as { code?: string }).code;
           if (code === expected) ok(`${label}: refused (${expected})`);
           else bad(`${label}: ${code} ${(error as Error).message}`);
@@ -119,6 +126,47 @@ async function main() {
 
       console.log("\nWeight sets stay writable after publishing (HIRING-UX R10)");
       await allowed("add a weight set to the published version", (tx) => tx`insert into hiring_weight_sets (version_id, label, reason) values (${v1.id}, 'v1-b', 'check')`);
+
+      console.log("\nSchema guards (migration 0007)");
+      const [otherOrg] = await sql`insert into organizations (name) values ('Immutability check, other') returning id`;
+      const [opening2] = await sql`insert into hiring_openings (org_id, position_id, name) values (${org.id}, ${position.id}, 'Check 2') returning id`;
+      await refused(
+        "a version under another organisation's opening",
+        (tx) => tx`insert into hiring_versions (org_id, opening_id, version_number) values (${otherOrg.id}, ${opening2.id}, 1)`,
+        "23503",
+      );
+      const [v3] = await sql`insert into hiring_versions (org_id, opening_id, version_number) values (${org.id}, ${opening2.id}, 1) returning id`;
+      await refused("version number 0", (tx) => tx`insert into hiring_versions (org_id, opening_id, version_number, status, published_at, published_by, scorecard)
+        values (${org.id}, ${opening2.id}, 0, 'PUBLISHED', now(), ${user.id}, ${json(scorecard)})`);
+      await refused(
+        "publish without a publisher",
+        (tx) => tx`update hiring_versions set status = 'PUBLISHED', published_at = now(), scorecard = ${json(scorecard)} where id = ${v3.id}`,
+      );
+      await refused(
+        "publish without a date",
+        (tx) => tx`update hiring_versions set status = 'PUBLISHED', published_by = ${user.id}, scorecard = ${json(scorecard)} where id = ${v3.id}`,
+      );
+      await refused("a default locale outside the locale set", (tx) => tx`update hiring_versions set default_locale = 'en' where id = ${v3.id}`);
+      await allowed(
+        "a default locale inside the locale set",
+        (tx) => tx`update hiring_versions set locale_set = ${json(["tr", "en"])}, default_locale = 'en' where id = ${v3.id}`,
+      );
+      await refused("a negative grace period", (tx) => tx`update hiring_stages set grace_seconds = -1 where id = ${stage2.id}`);
+      await refused("a negative stage position", (tx) => tx`update hiring_stages set order_index = -1 where id = ${stage2.id}`);
+      await refused("a zero answer time", (tx) => tx`update hiring_activities set answer_seconds = 0 where id = ${act2.id}`);
+      await refused("a negative question position", (tx) => tx`update hiring_activities set order_index = -1 where id = ${act2.id}`);
+      await allowed("no answer time limit", (tx) => tx`update hiring_activities set answer_seconds = null where id = ${act2.id}`);
+      await allowed("deleting a draft question removes its competency links", async (tx) => {
+        await tx`insert into hiring_activity_competencies (activity_id, competency_id, order_index) values (${act2.id}, ${c1.id}, 0)`;
+        await tx`delete from hiring_activities where id = ${act2.id}`;
+        const [{ n }] = await tx`select count(*)::int as n from hiring_activity_competencies where activity_id = ${act2.id}`;
+        if (n !== 0) throw new Error(`${n} link(s) left`);
+      });
+      await allowed("deleting a draft-only opening removes its versions", async (tx) => {
+        await tx`delete from hiring_openings where id = ${opening2.id}`;
+        const [{ n }] = await tx`select count(*)::int as n from hiring_versions where id = ${v3.id}`;
+        if (n !== 0) throw new Error(`${n} version(s) left`);
+      });
 
       throw new RollBack();
     });

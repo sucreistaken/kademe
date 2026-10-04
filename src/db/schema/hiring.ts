@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, check, index, integer, jsonb, numeric, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { boolean, check, foreignKey, index, integer, jsonb, numeric, pgTable, primaryKey, text, timestamp, unique, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { organizations, users } from "./org";
 import { consentTexts } from "./compliance";
 import { competencies, positions } from "./library";
@@ -18,11 +18,13 @@ import type { I18nText } from "./types";
  * Hiring solution tables (hiring solution design 2). Core tables never refer
  * to these; these refer to the core and to the organisation library.
  *
- * Tenancy: foreign keys are single-column, so the database does not stop a row
- * from pointing at another organisation's parent. `org_id` lives on
- * `hiring_openings` and `hiring_versions`; every other table reaches its
- * organisation through its parent chain (stage -> version, activity -> stage,
- * weight set -> version, member -> opening). Every write must load the parent
+ * Tenancy: `org_id` lives on `hiring_openings` and `hiring_versions`, and a
+ * version's opening must belong to the version's organisation (composite
+ * foreign key, migration 0007). Every other foreign key is single-column, so
+ * the database does not stop a row from pointing at another organisation's
+ * parent. Every other table reaches its organisation through its parent chain
+ * (stage -> version, activity -> stage, weight set -> version, member ->
+ * opening). Every write must load the parent
  * through a query that filters by the caller's org_id, and a linked library row
  * (position, competency) or user must be checked to belong to the same
  * organisation in that query. The server code in src/solutions/hiring/server
@@ -93,6 +95,12 @@ export const hiringOpenings = pgTable(
   (t) => [
     index("hiring_openings_org_status_idx").on(t.orgId, t.status),
     index("hiring_openings_position_idx").on(t.positionId),
+    /**
+     * Target of the composite (opening_id, org_id) foreign key on hiring_versions.
+     * A UNIQUE constraint, not a unique index: drizzle-kit push creates foreign
+     * keys before indexes, and a foreign key needs its target to exist.
+     */
+    unique("hiring_openings_id_org").on(t.id, t.orgId),
     check("hiring_min_evaluations", sql`${t.minEvaluations} BETWEEN 1 AND 5`),
     check("hiring_feedback_days", sql`${t.feedbackDays} BETWEEN 1 AND 60`),
   ],
@@ -122,9 +130,8 @@ export const hiringVersions = pgTable(
     orgId: uuid("org_id")
       .notNull()
       .references(() => organizations.id, { onDelete: "cascade" }),
-    openingId: uuid("opening_id")
-      .notNull()
-      .references(() => hiringOpenings.id, { onDelete: "cascade" }),
+    /** With org_id, references hiring_openings(id, org_id): see hiring_versions_opening_org_fk. */
+    openingId: uuid("opening_id").notNull(),
     versionNumber: integer("version_number").notNull(),
     status: hiringVersionStatus("status").notNull().default("DRAFT"),
     defaultLocale: locale("default_locale").notNull().default("tr"),
@@ -153,6 +160,19 @@ export const hiringVersions = pgTable(
     uniqueIndex("hiring_version_number").on(t.openingId, t.versionNumber),
     uniqueIndex("one_draft_per_opening").on(t.openingId).where(sql`status = 'DRAFT'`),
     check("hiring_published_has_scorecard", sql`${t.status} <> 'PUBLISHED' OR ${t.scorecard} IS NOT NULL`),
+    check(
+      "hiring_published_has_publisher",
+      sql`${t.status} <> 'PUBLISHED' OR (${t.publishedAt} IS NOT NULL AND ${t.publishedBy} IS NOT NULL)`,
+    ),
+    check("hiring_version_number_positive", sql`${t.versionNumber} >= 1`),
+    /** locale_set is a jsonb array of locale strings; `?` tests array membership. */
+    check("hiring_default_locale_in_set", sql`${t.localeSet} ? ${t.defaultLocale}::text`),
+    /** The opening belongs to the same organisation as the version. */
+    foreignKey({
+      name: "hiring_versions_opening_org_fk",
+      columns: [t.openingId, t.orgId],
+      foreignColumns: [hiringOpenings.id, hiringOpenings.orgId],
+    }).onDelete("cascade"),
   ],
 );
 
@@ -177,6 +197,8 @@ export const hiringStages = pgTable(
   (t) => [
     index("hiring_stages_version_idx").on(t.versionId, t.orderIndex),
     check("hiring_stage_duration", sql`${t.durationSeconds} BETWEEN 60 AND 7200`),
+    check("hiring_stage_grace", sql`${t.graceSeconds} >= 0`),
+    check("hiring_stage_order", sql`${t.orderIndex} >= 0`),
   ],
 );
 
@@ -212,6 +234,8 @@ export const hiringActivities = pgTable(
     index("hiring_activities_stage_idx").on(t.stageId, t.orderIndex),
     check("hiring_activity_takes", sql`${t.maxTakes} BETWEEN 1 AND 5`),
     check("hiring_activity_think", sql`${t.thinkSeconds} BETWEEN 0 AND 600`),
+    check("hiring_activity_answer", sql`${t.answerSeconds} IS NULL OR ${t.answerSeconds} > 0`),
+    check("hiring_activity_order", sql`${t.orderIndex} >= 0`),
   ],
 );
 
@@ -219,15 +243,19 @@ export const hiringActivities = pgTable(
 export const hiringActivityCompetencies = pgTable(
   "hiring_activity_competencies",
   {
-    activityId: uuid("activity_id")
-      .notNull()
-      .references(() => hiringActivities.id, { onDelete: "cascade" }),
+    /** FK named explicitly: the default name is 64 characters and Postgres cuts it to 63. */
+    activityId: uuid("activity_id").notNull(),
     competencyId: uuid("competency_id")
       .notNull()
       .references(() => competencies.id, { onDelete: "restrict" }),
     orderIndex: integer("order_index").notNull(),
   },
   (t) => [
+    foreignKey({
+      name: "hiring_activity_competencies_activity_fk",
+      columns: [t.activityId],
+      foreignColumns: [hiringActivities.id],
+    }).onDelete("cascade"),
     primaryKey({ columns: [t.activityId, t.competencyId] }),
     uniqueIndex("hiring_activity_competency_slot").on(t.activityId, t.orderIndex),
     index("hiring_activity_competencies_competency_idx").on(t.competencyId),

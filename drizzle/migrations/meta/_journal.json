@@ -50,6 +50,13 @@
       "when": 1791122415669,
       "tag": "0006_hiring_immutability",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791122663812,
+      "tag": "0007_hiring_schema_guards",
+      "breakpoints": true
     }
   ]
 }
