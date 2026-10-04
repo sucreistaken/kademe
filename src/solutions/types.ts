@@ -19,6 +19,20 @@ export type NavLink = { href: string; label: I18nLabel };
 /** The part of a solution's candidate state the core routes on. */
 export type CandidateStepState = { step: string };
 
+/** Library rows a screen asks about (HIRING-UX 4.2 "Nerede kullanılıyor"). */
+export type LibraryRefs = { positionIds: string[]; competencyIds: string[] };
+export type LibraryUsageEntry = {
+  /** Everything in this solution that uses the row (e.g. openings). */
+  total: number;
+  /** Of those, how many have a published assessment that copied the row. */
+  live: number;
+  items: Array<{ label: string; href: string }>;
+};
+export type LibraryUsage = {
+  positions: Record<string, LibraryUsageEntry>;
+  competencies: Record<string, LibraryUsageEntry>;
+};
+
 /** Client-safe: plain data and pure functions only. */
 export interface SolutionManifest {
   key: SolutionKey;
@@ -36,6 +50,8 @@ export interface SolutionManifest {
    * like an unknown token, even though the panel already uses the module.
    */
   candidateFlowLive: boolean;
+  /** An action this solution offers on a position page (the primary button there). */
+  positionAction?: { label: I18nLabel; href(positionId: string): string };
   /** Where `/a/[token]` sends the candidate for a given state of this solution. */
   candidateStepPath(token: string, state: CandidateStepState): string;
 }
@@ -84,5 +100,9 @@ export interface SolutionModule extends SolutionManifest {
     terminate(attemptId: string): Promise<void>;
     /** A recording finished uploading; attach it wherever the solution keeps answers. */
     onMediaComplete(asset: MediaAssetRow): Promise<void>;
+  };
+  /** Where this solution uses library rows. Optional: a solution that never reads the library omits it. */
+  library?: {
+    usage(orgId: string, refs: LibraryRefs): Promise<LibraryUsage>;
   };
 }

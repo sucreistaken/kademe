@@ -23,3 +23,15 @@ describe("roles", () => {
     expect(can(user("MANAGER"), "audit:read")).toBe(false);
   });
 });
+
+describe("library and hiring capabilities", () => {
+  it("lets owners and managers write the library and openings, and only owners rename scale levels", () => {
+    for (const capability of ["library:write", "opening:write"] as const) {
+      expect(can(user("OWNER"), capability)).toBe(true);
+      expect(can(user("MANAGER"), capability)).toBe(true);
+      expect(can(user("REVIEWER"), capability)).toBe(false);
+    }
+    expect(can(user("OWNER"), "library:scale")).toBe(true);
+    expect(can(user("MANAGER"), "library:scale")).toBe(false);
+  });
+});

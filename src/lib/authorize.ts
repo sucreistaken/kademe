@@ -17,7 +17,10 @@ export type Capability =
   | "media:view"
   | "data:export"
   | "settings:write"
-  | "audit:read";
+  | "audit:read"
+  | "library:write"
+  | "library:scale"
+  | "opening:write";
 
 const BY_ROLE: Record<SessionUser["role"], Capability[]> = {
   OWNER: [
@@ -33,6 +36,9 @@ const BY_ROLE: Record<SessionUser["role"], Capability[]> = {
     "data:export",
     "settings:write",
     "audit:read",
+    "library:write",
+    "library:scale",
+    "opening:write",
   ],
   MANAGER: [
     "blueprint:write",
@@ -43,6 +49,8 @@ const BY_ROLE: Record<SessionUser["role"], Capability[]> = {
     "result:finalize",
     "integrity:decide",
     "media:view",
+    "library:write",
+    "opening:write",
   ],
   // A reviewer grades writing and speaking and looks at evidence. They do not
   // finalize a result, publish anything, delete or export.
