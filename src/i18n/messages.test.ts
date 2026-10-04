@@ -7,6 +7,8 @@ import settingsTr from "@/i18n/messages/settings.tr.json";
 import settingsEn from "@/i18n/messages/settings.en.json";
 import screensTr from "@/i18n/messages/screens.tr.json";
 import screensEn from "@/i18n/messages/screens.en.json";
+import libraryTr from "@/i18n/messages/library.tr.json";
+import libraryEn from "@/i18n/messages/library.en.json";
 
 /**
  * A key present in one locale and missing in the other renders as the raw key
@@ -25,6 +27,7 @@ const PAIRS: Array<[string, unknown, unknown]> = [
   ["manager", managerTr, managerEn],
   ["settings", settingsTr, settingsEn],
   ["screens", screensTr, screensEn],
+  ["library", libraryTr, libraryEn],
 ];
 
 describe("dictionaries", () => {
@@ -32,8 +35,8 @@ describe("dictionaries", () => {
     expect(leafKeys(en).sort()).toEqual(leafKeys(tr).sort());
   });
 
-  it("manager namespaces do not collide across the three files", () => {
-    const names = [managerTr, settingsTr, screensTr].flatMap((file) =>
+  it("manager namespaces do not collide across files", () => {
+    const names = [managerTr, settingsTr, screensTr, libraryTr].flatMap((file) =>
       Object.keys(file as Record<string, unknown>),
     );
     expect(new Set(names).size).toBe(names.length);
@@ -53,6 +56,12 @@ describe("dictionaries", () => {
         });
         expect(empty, `${name}`).toEqual([]);
       }
+    }
+  });
+
+  it("no message contains an em dash (HIRING-UX E5)", () => {
+    for (const [name, tr, en] of PAIRS) {
+      expect(JSON.stringify([tr, en]), name).not.toContain("\u2014");
     }
   });
 });
