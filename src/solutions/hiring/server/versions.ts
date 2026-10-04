@@ -1,8 +1,8 @@
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import type { Executor } from "@/db/executor";
-import { competencies, hiringActivities, hiringActivityCompetencies, hiringOpenings, hiringStages, hiringVersions, hiringWeightSets, hiringWeights } from "@/db/schema";
+import { competencies, hiringActivities, hiringActivityCompetencies, hiringOpenings, hiringStages, hiringVersions, hiringWeightSets, hiringWeights, users } from "@/db/schema";
 import { DEFAULT_LOCALE } from "@/i18n/locale";
 import { isUuid } from "@/server/settings";
 import { isChoice, MAX_COMPETENCIES_PER_ACTIVITY, usedCompetencyIds, type ActivityType } from "../rules/content";
@@ -56,16 +56,33 @@ export async function versionsOf(orgId: string, openingId: string, x: Executor =
     .orderBy(desc(hiringVersions.versionNumber));
 }
 
-/** Locks the caller's opening for a draft write; a CLOSED opening is history and refuses every edit. */
-async function lockOpening(x: Executor, orgId: string, openingId: string) {
+/**
+ * Locks the caller's opening for a write to its assessment; a CLOSED opening is
+ * history and refuses every edit. Draft writes, publishing and weight sets all
+ * take this lock first, so they run one at a time per opening and never
+ * deadlock on each other (publishing then locks the version: same order).
+ */
+export async function lockOpening(x: Executor, orgId: string, openingId: string) {
   if (!isUuid(openingId)) throw new HiringNotFound("opening");
   const [row] = await x
-    .select({ id: hiringOpenings.id, status: hiringOpenings.status })
+    .select({ id: hiringOpenings.id, status: hiringOpenings.status, positionId: hiringOpenings.positionId })
     .from(hiringOpenings)
     .where(and(eq(hiringOpenings.id, openingId), eq(hiringOpenings.orgId, orgId)))
     .for("update");
   if (!row) throw new HiringNotFound("opening");
   if (row.status === "CLOSED") throw new HiringConflict("CLOSED");
+  return row;
+}
+
+/** The acting user must be an active (not disabled) user of the caller's organisation. */
+export async function assertActiveUser(x: Executor, orgId: string, userId: string) {
+  if (!isUuid(userId)) throw new HiringNotFound("user");
+  const [row] = await x
+    .select({ id: users.id })
+    .from(users)
+    .where(and(eq(users.id, userId), eq(users.orgId, orgId), isNull(users.disabledAt)))
+    .limit(1);
+  if (!row) throw new HiringNotFound("user");
 }
 
 async function draftOf(x: Executor, orgId: string, openingId: string): Promise<string> {

@@ -66,3 +66,26 @@ export function weightsProblem(weights: Record<string, number>, used: string[]):
   });
   return whole && total === 100 ? null : { total };
 }
+
+/**
+ * The percentages of a weight set added after publishing (HIRING-UX 5.7, R10).
+ * The set holds exactly the published scorecard's competencies, in its order:
+ * an id outside the scorecard is never part of it. Weighting on: each one needs
+ * a whole percentage 0-100 (own keys, finite numbers only) and they add up to
+ * 100. Weighting off is a plain average, so the scorecard's own percentages are
+ * kept and switching on later starts from them.
+ */
+export function weightSetPercentages(
+  scorecard: { competencies: ReadonlyArray<{ id: string; weight: number }> },
+  input: { enabled: boolean; weights: Record<string, number> },
+): { ok: true; weights: Record<string, number> } | { ok: false; total: number } {
+  const used = scorecard.competencies.map((c) => c.id);
+  if (!input.enabled) return { ok: true, weights: Object.fromEntries(scorecard.competencies.map((c) => [c.id, c.weight])) };
+  const given: Record<string, number> = {};
+  for (const id of used) {
+    const value: unknown = Object.hasOwn(input.weights, id) ? input.weights[id] : undefined;
+    if (typeof value === "number" && Number.isFinite(value)) given[id] = value;
+  }
+  const problem = weightsProblem(given, used);
+  return problem ? { ok: false, total: problem.total } : { ok: true, weights: given };
+}

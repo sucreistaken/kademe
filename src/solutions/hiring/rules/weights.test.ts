@@ -1,7 +1,7 @@
 import { PgDialect, getTableConfig } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 import { hiringWeights } from "@/db/schema";
-import { defaultWeights, evenSplit, missingWeights, toPercentages, weightsProblem } from "./weights";
+import { defaultWeights, evenSplit, missingWeights, toPercentages, weightSetPercentages, weightsProblem } from "./weights";
 
 describe("weights", () => {
   it("splits evenly, earlier rows take the remainder", () => {
@@ -75,5 +75,53 @@ describe("weights", () => {
 
   it("refuses a percentage outside 0-100 even when the total is 100", () => {
     expect(weightsProblem({ c1: 120, c2: -20 }, ["c1", "c2"])).toEqual({ total: 100 });
+  });
+});
+
+describe("weightSetPercentages (a weight set after publishing)", () => {
+  const scorecard = {
+    competencies: [
+      { id: "c1", weight: 75 },
+      { id: "c2", weight: 25 },
+    ],
+  };
+
+  it("weighting on: whole percentages adding up to 100, in the scorecard's order", () => {
+    expect(weightSetPercentages(scorecard, { enabled: true, weights: { c2: 30, c1: 70 } })).toEqual({ ok: true, weights: { c1: 70, c2: 30 } });
+  });
+
+  it("holds exactly the published competencies: an extra or foreign id is never part of the set", () => {
+    const result = weightSetPercentages(scorecard, { enabled: true, weights: { c1: 70, c2: 30, other: 0, foreign: 50 } });
+    expect(result).toEqual({ ok: true, weights: { c1: 70, c2: 30 } });
+  });
+
+  it("refuses a total other than 100 with the total, and a missing competency", () => {
+    expect(weightSetPercentages(scorecard, { enabled: true, weights: { c1: 70, c2: 25 } })).toEqual({ ok: false, total: 95 });
+    expect(weightSetPercentages(scorecard, { enabled: true, weights: { c1: 100 } })).toEqual({ ok: false, total: 100 });
+  });
+
+  it("refuses values the database would refuse or round (hiring_weight_percentage, numeric(5,2))", () => {
+    expect(weightSetPercentages(scorecard, { enabled: true, weights: { c1: 120, c2: -20 } })).toEqual({ ok: false, total: 100 });
+    expect(weightSetPercentages(scorecard, { enabled: true, weights: { c1: 70.5, c2: 29.5 } })).toEqual({ ok: false, total: 100 });
+  });
+
+  it("a value that is not a finite number counts as missing, so the total stays a number", () => {
+    const weights = { c1: "70", c2: Number.NaN } as unknown as Record<string, number>;
+    expect(weightSetPercentages(scorecard, { enabled: true, weights })).toEqual({ ok: false, total: 0 });
+  });
+
+  it("an inherited key is not a weight", () => {
+    const weights = Object.create({ c1: 70 }) as Record<string, number>;
+    weights.c2 = 30;
+    expect(weightSetPercentages(scorecard, { enabled: true, weights })).toEqual({ ok: false, total: 30 });
+  });
+
+  it("weighting off (plain average): the scorecard's percentages are kept, whatever came in", () => {
+    expect(weightSetPercentages(scorecard, { enabled: false, weights: { c1: -5 } })).toEqual({ ok: true, weights: { c1: 75, c2: 25 } });
+  });
+
+  it("a scorecard without competencies: on is refused (total 0), off is an empty set", () => {
+    expect(weightSetPercentages({ competencies: [] }, { enabled: true, weights: {} })).toEqual({ ok: false, total: 0 });
+    expect(weightSetPercentages({ competencies: [] }, { enabled: false, weights: {} })).toEqual({ ok: true, weights: {} });
   });
 });

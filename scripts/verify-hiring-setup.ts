@@ -1,7 +1,8 @@
 /**
  * End to end check of the hiring setup (plan 1), in process, against a
  * THROW-AWAY database (name ends in _check) with every migration applied:
- * openings, versions, draft editing, copying; Task 12 adds publishing.
+ * openings, versions, draft editing, copying, publishing, weight sets after
+ * publishing, and the publish lock order on two connections.
  *
  *   DATABASE_URL=postgresql://kademe:kademe@localhost:5434/kademe_hiring_check pnpm verify:hiring-setup
  */
@@ -40,6 +41,10 @@ async function main() {
   const openings = await import("@/solutions/hiring/server/openings");
   const versions = await import("@/solutions/hiring/server/versions");
   const { loadCompetencyFacts, loadVersionContent, positionProfile } = await import("@/solutions/hiring/server/content");
+  const { publishDraft } = await import("@/solutions/hiring/server/publish");
+  const { addWeightSet } = await import("@/solutions/hiring/server/weight-sets");
+  const { saveCompetency, createCompetency } = await import("@/server/library-write");
+  const postgres = (await import("postgres")).default;
   const { frozenAsConflict } = await import("@/solutions/hiring/server/errors");
   const { emptyActivity, MAX_ACTIVITIES_PER_STAGE } = await import("@/solutions/hiring/rules/patches");
 
@@ -311,7 +316,186 @@ async function main() {
   await versions.updateStage(org.id, frozen.openingId, v2content!.stages[0].id, { durationSeconds: 900 });
   check((await loadVersionContent(org.id, fv1.id))!.stages[0].durationSeconds === v1content!.stages[0].durationSeconds, "editing v2 leaves v1 as published");
 
-  // TASK 12: publishing checks go here.
+  console.log("\nThe publish gate");
+  const bare = await createCompetency(org.id, owner.id, { name: { tr: "Analitik düşünme", en: "" }, description: { tr: "", en: "" } });
+  if (!bare.ok) throw new Error("competency");
+  const [live1] = await versions.versionsOf(org.id, id);
+  const firstStage = (await loadVersionContent(org.id, live1.id))!.stages[0];
+  // Found by type: the editing sections above leave the choice question first.
+  const videoId = firstStage.activities.find((a) => a.type === "VIDEO")!.id;
+  const choiceId = firstStage.activities.find((a) => a.type === "SINGLE_CHOICE")!.id;
+  await versions.setActivityCompetencies(org.id, id, videoId, [communication, bare.id]);
+  let outcome = await publishDraft(org.id, id, owner.id);
+  check(
+    !outcome.ok && outcome.problems.some((p) => p.code === "ANCHOR_MISSING" && p.competencyId === bare.id && p.level === 1),
+    "a competency without anchors blocks publishing",
+    JSON.stringify(outcome),
+  );
+  check(!outcome.ok && outcome.problems.some((p) => p.code === "CHOICE_NEEDS_ANSWER" || p.code === "CHOICE_NEEDS_OPTIONS"), "so does a choice question without options");
+  check((await versions.versionsOf(org.id, id))[0].status === "DRAFT", "a refused publish changes nothing");
+  await saveCompetency(org.id, owner.id, bare.id, {
+    name: { tr: "Analitik düşünme", en: "" },
+    description: { tr: "", en: "" },
+    anchors: {
+      1: { tr: "Veriye bakmadan sonuca atlıyor.", en: "" },
+      3: { tr: "Veriyi iki boyutta ayırıyor ve bir sonuç çıkarıyor.", en: "" },
+      5: { tr: "Veriyi ayırıyor, sonucu sınıyor ve eksik veriyi söylüyor.", en: "" },
+    },
+    tags: [],
+    markReviewed: false,
+  });
+  await versions.updateActivity(org.id, id, choiceId, {
+    prompt: { tr: "Hangisi bir kullanıcı araştırması yöntemidir?", en: "" },
+    config: {
+      choices: [
+        { id: "a", label: { tr: "Görüşme", en: "Interview" }, correct: true },
+        { id: "b", label: { tr: "Fatura", en: "Invoice" } },
+      ],
+    },
+  });
+  await versions.setActivityCompetencies(org.id, id, videoId, [communication, problem]);
+  await expectCode("another organisation cannot publish it", () => publishDraft(orgB.id, id, ownerB.id), "NOT_FOUND");
+  await expectCode("a user of another organisation cannot publish here", () => publishDraft(org.id, id, ownerB.id), "NOT_FOUND");
+  check((await versions.versionsOf(org.id, id))[0].status === "DRAFT", "and neither refusal changed anything");
+  outcome = await publishDraft(org.id, id, owner.id);
+  check(outcome.ok, "a complete draft publishes", JSON.stringify(outcome));
+
+  console.log("\nWhat publishing wrote");
+  const [published] = await db.select().from(s.hiringVersions).where(eq(s.hiringVersions.id, live1.id));
+  check(published.status === "PUBLISHED" && published.publishedBy === owner.id && published.publishedAt !== null, "v1 is published, by whom and when");
+  check(published.scorecard!.competencies.map((c) => c.id).join() === [communication, problem].join(), "the scorecard lists exactly the measured competencies");
+  check(published.scorecard!.competencies.map((c) => c.weight).join() === "75,25", "weights come from the profile, scaled to 100", published.scorecard!.competencies.map((c) => c.weight).join());
+  check(published.scorecard!.weightsEnabled === false, "weighting is off by default (plain average)");
+  const sets = await db.select().from(s.hiringWeightSets).where(eq(s.hiringWeightSets.versionId, live1.id));
+  check(sets.length === 1 && sets[0].isActive === false, "the first weight set is written from the scorecard");
+  const firstWeights = await db.select().from(s.hiringWeights).where(eq(s.hiringWeights.weightSetId, sets[0].id));
+  check(
+    firstWeights.length === 2 && Number(firstWeights.find((w) => w.competencyId === communication)?.percentage) === 75 && Number(firstWeights.find((w) => w.competencyId === problem)?.percentage) === 25,
+    "with the scorecard's percentages",
+    JSON.stringify(firstWeights),
+  );
+  check((await openings.loadOpening(org.id, id))?.status === "OPEN", "the opening is open");
+  const publishAudit = await db.select().from(s.auditLogs).where(and(eq(s.auditLogs.orgId, org.id), eq(s.auditLogs.action, "hiring.version.publish")));
+  check(publishAudit.length === 1 && publishAudit[0].subjectId === live1.id && publishAudit[0].actorId === owner.id, "the publish is in the audit log");
+
+  console.log("\nThe library changes, the published scorecard does not");
+  const anchorBefore = published.scorecard!.competencies[0].anchors[3].tr;
+  await db.update(s.competencyAnchors).set({ body: { tr: "DEĞİŞTİ", en: "" } }).where(eq(s.competencyAnchors.competencyId, communication));
+  const [after] = await db.select().from(s.hiringVersions).where(eq(s.hiringVersions.id, live1.id));
+  check(after.scorecard!.competencies[0].anchors[3].tr === anchorBefore, "anchor text in v1 is unchanged");
+
+  console.log("\nThe database refuses edits to the published version");
+  const raw = postgres(process.env.DATABASE_URL!, { max: 1, onnotice: () => {} });
+  await expectCode("a direct update of a published stage", () => raw`update hiring_stages set duration_seconds = 900 where id = ${firstStage.id}`, "23514");
+  await raw.end();
+  await expectCode("the builder has no draft to edit", () => versions.addStage(org.id, id), "NO_DRAFT");
+  await expectCode("publishing again finds no draft", () => publishDraft(org.id, id, owner.id), "NO_DRAFT");
+
+  console.log("\nWeights after publishing (HIRING-UX 5.7, R10)");
+  const refusedReason = await addWeightSet(org.id, id, { enabled: true, weights: { [communication]: 70, [problem]: 30 }, reason: " " }, owner.id);
+  check(!refusedReason.ok && refusedReason.code === "REASON_REQUIRED", "a reason is required");
+  const refused95 = await addWeightSet(org.id, id, { enabled: true, weights: { [communication]: 70, [problem]: 25 }, reason: "Kalibrasyon" }, owner.id);
+  check(!refused95.ok && refused95.code === "NOT_100" && refused95.total === 95, "the total must be 100");
+  const added = await addWeightSet(org.id, id, { enabled: true, weights: { [communication]: 70, [problem]: 30 }, reason: "Kalibrasyon sonrası" }, owner.id);
+  check(added.ok, "a new weight set with a reason is added");
+  const setsAfter = await db.select().from(s.hiringWeightSets).where(eq(s.hiringWeightSets.versionId, live1.id));
+  check(setsAfter.length === 2 && setsAfter.filter((x) => x.isActive).length === 1, "it is the one active set");
+  const [stillSame] = await db.select().from(s.hiringVersions).where(eq(s.hiringVersions.id, live1.id));
+  check(stillSame.scorecard!.competencies.map((c) => c.weight).join() === "75,25", "the published scorecard keeps its weights");
+  await expectCode("another organisation cannot change them", () => addWeightSet(orgB.id, id, { enabled: true, weights: { [communication]: 70, [problem]: 30 }, reason: "Kalibrasyon" }, ownerB.id), "NOT_FOUND");
+  await expectCode("nor a user of another organisation here", () => addWeightSet(org.id, id, { enabled: true, weights: { [communication]: 70, [problem]: 30 }, reason: "Kalibrasyon" }, ownerB.id), "NOT_FOUND");
+  const draftOnly = await addWeightSet(org.id, other.openingId, { enabled: true, weights: { [communication]: 100 }, reason: "Kalibrasyon" }, owner.id);
+  check(!draftOnly.ok && draftOnly.code === "NO_LIVE", "an opening with nothing published has no weight sets");
+  const plain = await addWeightSet(org.id, id, { enabled: false, weights: {}, reason: "Düz ortalamaya dönüş" }, owner.id);
+  const setsPlain = await db.select().from(s.hiringWeightSets).where(eq(s.hiringWeightSets.versionId, live1.id));
+  check(plain.ok && setsPlain.length === 3 && setsPlain.every((x) => !x.isActive), "switching weighting off leaves no active set (plain average)");
+  const extra = await addWeightSet(
+    org.id,
+    id,
+    { enabled: true, weights: { [communication]: 70, [problem]: 30, [byKey("teamwork")]: 0, [foreignCompetency.id]: 0 }, reason: "Kalibrasyon sonrası" },
+    owner.id,
+  );
+  const [newest] = await db
+    .select()
+    .from(s.hiringWeightSets)
+    .where(and(eq(s.hiringWeightSets.versionId, live1.id), eq(s.hiringWeightSets.isActive, true)));
+  const newestRows = newest ? await db.select().from(s.hiringWeights).where(eq(s.hiringWeights.weightSetId, newest.id)) : [];
+  check(
+    extra.ok && newestRows.map((w) => w.competencyId).sort().join() === [communication, problem].sort().join(),
+    "a set holds exactly the published competencies, never an extra or foreign one",
+    newestRows.map((w) => w.competencyId).join(),
+  );
+
+  console.log("\nEditing after publishing opens v2");
+  const draft2 = await versions.ensureDraftVersion(org.id, id);
+  check(draft2.created, "v2 is created");
+  const againDraft = await versions.ensureDraftVersion(org.id, id);
+  check(!againDraft.created && againDraft.versionId === draft2.versionId, "asking again returns the same draft");
+  const v2draft = await loadVersionContent(org.id, draft2.versionId);
+  check(v2draft!.number === 2 && v2draft!.stages.length === 1 && v2draft!.stages[0].id !== firstStage.id, "v2 is a copy with new ids");
+  check(v2draft!.weightsEnabled && v2draft!.draftWeights?.[communication] === 70, "v2 starts from the newest weight set");
+  await versions.updateStage(org.id, id, v2draft!.stages[0].id, { durationSeconds: 900 });
+  const v1again = await loadVersionContent(org.id, live1.id);
+  check(v1again!.stages[0].durationSeconds === firstStage.durationSeconds, "editing v2 leaves v1 alone");
+  outcome = await publishDraft(org.id, id, owner.id);
+  check(outcome.ok && outcome.number === 2, "v2 publishes");
+  const finalList = await versions.versionsOf(org.id, id);
+  check(finalList.map((v) => `${v.number}${v.status[0]}`).join() === "2P,1P", "both versions stay published", finalList.map((v) => `${v.number}${v.status}`).join());
+  const v2sets = await db.select().from(s.hiringWeightSets).where(eq(s.hiringWeightSets.versionId, draft2.versionId));
+  check(v2sets.length === 1 && v2sets[0].isActive, "v2's first set is active, as its weighting is on");
+
+  console.log("\nTwo connections: publish takes the opening lock first (READ COMMITTED)");
+  // Deterministic: every step waits for a state Postgres reports (pg_stat_activity, NOWAIT), never for a time.
+  const race = await openings.createOpening(user, { position: { kind: "existing", id: position.id }, start: "COPY", copyFrom: id, locale: "tr" });
+  if (!race.ok) throw new Error(race.code);
+  const [raceDraft] = await versions.versionsOf(org.id, race.openingId);
+  const stagesBefore = (await loadVersionContent(org.id, raceDraft.id))!.stages.length;
+  const holder = postgres(process.env.DATABASE_URL!, { max: 1, onnotice: () => {} });
+  const probe = postgres(process.env.DATABASE_URL!, { max: 1, onnotice: () => {} });
+  const lockWaiters = async () => {
+    const [row] = await probe`
+      select count(*)::int as n from pg_stat_activity
+      where datname = current_database() and pid <> pg_backend_pid()
+        and wait_event_type = 'Lock' and query ilike '%from "hiring_openings"%for update%'`;
+    return row.n as number;
+  };
+  const waitForWaiters = async (n: number) => {
+    // A guard against a hang, not a timing assumption: the state is polled until it appears.
+    for (let i = 0; i < 1000; i += 1) {
+      if ((await lockWaiters()) >= n) return true;
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+    return false;
+  };
+  // An in-flight draft write holds the opening.
+  await holder`begin`;
+  await holder`select id from hiring_openings where id = ${race.openingId} for update`;
+  const publishing = publishDraft(org.id, race.openingId, owner.id).then(
+    (value) => ({ value, error: null as unknown }),
+    (error: unknown) => ({ value: null, error }),
+  );
+  check(await waitForWaiters(1), "a publish waits while a draft write holds the opening");
+  let versionFree = true;
+  try {
+    await probe.begin((sql) => sql`select id from hiring_versions where id = ${raceDraft.id} for update nowait`);
+  } catch (error) {
+    if ((error as { code?: string }).code === "55P03") versionFree = false;
+    else throw error;
+  }
+  check(versionFree, "and it has not locked the version yet: the opening comes first");
+  const editing = versions.addStage(org.id, race.openingId).then(
+    (value) => ({ value, error: null as unknown }),
+    (error: unknown) => ({ value: null, error }),
+  );
+  check(await waitForWaiters(2), "a second draft write queues behind the publish");
+  await holder`commit`;
+  await holder.end();
+  const published2 = await publishing;
+  check(published2.value?.ok === true && published2.value.number === 1, "the publish goes first", String(published2.error ?? JSON.stringify(published2.value)));
+  const edited = await editing;
+  check((edited.error as { code?: string } | null)?.code === "NO_DRAFT", "the queued draft write is refused NO_DRAFT, not 23514", String(edited.error ?? edited.value));
+  check((await loadVersionContent(org.id, raceDraft.id))!.stages.length === stagesBefore, "and the published version did not change");
+  await probe.end();
 
   console.log(failed === 0 ? "\nall checks passed" : `\n${failed} check(s) failed`);
   process.exit(failed === 0 ? 0 : 1);
