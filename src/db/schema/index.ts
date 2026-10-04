@@ -5,3 +5,4 @@ export * from "./exam";
 export * from "./assessment";
 export * from "./proctoring";
 export * from "./compliance";
+export * from "./library";

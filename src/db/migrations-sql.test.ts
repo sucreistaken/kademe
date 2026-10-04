@@ -92,3 +92,32 @@ describe("0003_platform_contract", () => {
     expect(sql).not.toMatch(/DROP TABLE/);
   });
 });
+
+describe("0004_library", () => {
+  const sql = read("0004_library");
+
+  it.each([
+    "rating_scales",
+    "scale_levels",
+    "competencies",
+    "competency_anchors",
+    "observation_tags",
+    "positions",
+    "position_competencies",
+  ])("creates %s", (table) => {
+    expect(sql).toContain(`CREATE TABLE "${table}"`);
+  });
+
+  it("adds the AI purpose in place instead of recreating the enum", () => {
+    expect(sql).toContain(`ALTER TYPE "public"."ai_purpose" ADD VALUE 'ANCHOR_DRAFT';`);
+    expect(sql).not.toMatch(/DROP TYPE/);
+  });
+
+  it("only adds: no table, column or type is dropped", () => {
+    expect(sql).not.toMatch(/DROP (TABLE|COLUMN|TYPE)/);
+  });
+
+  it("keeps one default scale per organisation in the database", () => {
+    expect(sql).toMatch(/CREATE UNIQUE INDEX "one_default_scale_per_org" ON "rating_scales" USING btree \("org_id"\) WHERE is_default/);
+  });
+});

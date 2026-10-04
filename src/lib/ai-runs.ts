@@ -1,5 +1,6 @@
 import { db } from "@/db";
 import { aiRuns } from "@/db/schema";
+import type { aiPurpose } from "@/db/schema";
 import { getAiProvider, hashPrompt, type AiJsonResponse, type AiMessage } from "@/lib/ai";
 
 /**
@@ -8,13 +9,8 @@ import { getAiProvider, hashPrompt, type AiJsonResponse, type AiMessage } from "
  * school uses to place students: which model, what it cost, what went wrong.
  */
 
-export type AiPurpose =
-  | "ITEM_GENERATION"
-  | "TTS"
-  | "TRANSCRIPTION"
-  | "WRITING_GRADING"
-  | "SPEAKING_GRADING"
-  | "PROCTOR_REVIEW";
+/** Every purpose the database accepts; a new one is a migration, not a string. */
+export type AiPurpose = (typeof aiPurpose.enumValues)[number];
 
 export async function recordAiRun(input: {
   orgId: string;

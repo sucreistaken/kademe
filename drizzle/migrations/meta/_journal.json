@@ -29,6 +29,13 @@
       "when": 1791106134825,
       "tag": "0003_platform_contract",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791117383184,
+      "tag": "0004_library",
+      "breakpoints": true
     }
   ]
 }

@@ -91,6 +91,7 @@ export const aiPurpose = pgEnum("ai_purpose", [
   "WRITING_GRADING", // proposed CEFR level with quoted evidence
   "SPEAKING_GRADING", // same, from the transcript
   "PROCTOR_REVIEW", // observable facts in proctoring frames, never intent
+  "ANCHOR_DRAFT", // proposed 1-5 behavioural anchors for a competency; a person accepts or edits them
 ]);
 
 export const proctorEventType = pgEnum("proctor_event_type", PROCTOR_EVENT_TYPES);
@@ -103,3 +104,6 @@ export const aiVerdict = pgEnum("ai_verdict", ["CONFIRMED", "NOT_CONFIRMED", "UN
 export const teacherFlagStatus = pgEnum("teacher_flag_status", ["OPEN", "CONFIRMED", "DISMISSED"]);
 
 export const locale = pgEnum("locale", ["tr", "en"]);
+
+/** Observation tags under a competency: evidence for (+) or against (-). */
+export const observationPolarity = pgEnum("observation_polarity", ["POSITIVE", "NEGATIVE"]);
