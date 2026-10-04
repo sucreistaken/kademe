@@ -26,6 +26,10 @@ import { requireUser } from "@/server/session";
  * Teacher decisions on one result. Every change is written three times on
  * purpose: the value itself, a revision row with the reason, and an audit row.
  * A level the AI proposed never becomes final without one of these actions.
+ *
+ * Every lookup below is scoped to the user's organisation AND to the language
+ * exam: an id from the form must never reach another solution's invitation,
+ * attempt or proctor flag in the same organisation.
  */
 
 async function gradingInOrg(gradingId: string, orgId: string) {
@@ -42,7 +46,7 @@ async function gradingInOrg(gradingId: string, orgId: string) {
     .innerJoin(sectionRuns, eq(sectionRuns.id, itemResponses.sectionRunId))
     .innerJoin(attempts, eq(attempts.id, sectionRuns.attemptId))
     .innerJoin(assessments, eq(assessments.id, attempts.assessmentId))
-    .where(and(eq(responseGradings.id, gradingId), eq(assessments.orgId, orgId)));
+    .where(and(eq(responseGradings.id, gradingId), eq(assessments.orgId, orgId), eq(assessments.solution, "LANGUAGE_EXAM")));
   return row ?? null;
 }
 
@@ -52,7 +56,7 @@ async function resultInOrg(assessmentId: string, orgId: string) {
     .from(assessments)
     .innerJoin(attempts, eq(attempts.assessmentId, assessments.id))
     .leftJoin(examResults, eq(examResults.attemptId, attempts.id))
-    .where(and(eq(assessments.id, assessmentId), eq(assessments.orgId, orgId)));
+    .where(and(eq(assessments.id, assessmentId), eq(assessments.orgId, orgId), eq(assessments.solution, "LANGUAGE_EXAM")));
   return row ?? null;
 }
 
@@ -211,7 +215,7 @@ export async function decideFlag(formData: FormData) {
     .from(proctorEvents)
     .innerJoin(attempts, eq(attempts.id, proctorEvents.attemptId))
     .innerJoin(assessments, eq(assessments.id, attempts.assessmentId))
-    .where(and(eq(proctorEvents.id, eventId), eq(assessments.orgId, user.orgId)));
+    .where(and(eq(proctorEvents.id, eventId), eq(assessments.orgId, user.orgId), eq(assessments.solution, "LANGUAGE_EXAM")));
   if (!row) redirect("/exam/students");
   await db
     .update(proctorEvents)
