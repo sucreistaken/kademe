@@ -12,6 +12,7 @@ import {
   getTranscriber,
   isTranscribableMime,
 } from "@/lib/transcription";
+import { transcriptionHintFor } from "@/solutions/registry";
 
 /**
  * One unit of transcription work.
@@ -38,6 +39,7 @@ export async function runTranscription(
     .select({
       asset: mediaAssets,
       locale: assessments.locale,
+      solution: assessments.solution,
     })
     .from(mediaAssets)
     .leftJoin(attempts, eq(attempts.id, mediaAssets.attemptId))
@@ -73,10 +75,10 @@ export async function runTranscription(
     const result = await transcriber.transcribe({
       storageKey: asset.storageKey,
       mime: asset.mime,
-      // Speaking answers are German whatever the interface language is. Still
-      // a hint: a student who answers in Turkish is transcribed as such, and
-      // the grader flags NOT_GERMAN.
-      languageHint: "de",
+      // The solution names the language: the exam's speaking answers are German
+      // whatever the interface language is; a hiring candidate answers in their own
+      // language, which the provider detects (null). Still only a hint.
+      languageHint: transcriptionHintFor(row.solution),
     });
 
     const [written] = await db

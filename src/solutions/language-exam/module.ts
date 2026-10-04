@@ -1,7 +1,7 @@
 import { and, eq, isNotNull, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import { examAssessments, itemResponses, sectionRuns } from "@/db/schema";
-import type { CandidateContext } from "@/lib/candidate-context";
+import { getConsentText, type CandidateContext } from "@/lib/candidate-context";
 import {
   closeSectionRun,
   currentSection,
@@ -54,6 +54,9 @@ export const languageExamModule: SolutionModule = {
         await db.update(sectionRuns).set({ lastHeartbeatAt: new Date() }).where(eq(sectionRuns.id, run.id));
       }
       return { deadlineAt: run?.deadlineAt ?? null };
+    },
+    async consentText(ctx) {
+      return getConsentText(ctx);
     },
   },
 

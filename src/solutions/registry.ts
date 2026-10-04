@@ -1,7 +1,8 @@
 import type { Locale } from "@/i18n/locale";
+import type { Capability } from "@/lib/authorize";
 import { hiringManifest } from "@/solutions/hiring/manifest";
 import { languageExamManifest } from "@/solutions/language-exam/manifest";
-import type { SolutionKind, SolutionManifest } from "@/solutions/types";
+import type { I18nLabel, SolutionKey, SolutionKind, SolutionManifest } from "@/solutions/types";
 
 /**
  * Every registered solution, in menu order (hiring first, HIRING-UX 4.1). Client-safe. Adding a solution: one folder, one line here,
@@ -52,10 +53,18 @@ export function buildNav(
   ];
 }
 
+export type InviteTarget = { key: SolutionKey; href: string; label: I18nLabel; capability: Capability };
+
 /**
- * Solutions Today can invite for, in menu order. Today must not pick the first
- * solution blindly: hiring is first in the menu but cannot invite until plan 2.
+ * Solutions Today can invite for, in menu order, with their own label and the
+ * capability that invite needs. Today shows only the ones the user may use.
  */
-export function inviteTargets(manifests: readonly SolutionManifest[] = SOLUTION_MANIFESTS): Array<{ key: SolutionManifest["key"]; href: string }> {
-  return manifests.flatMap((m) => (m.inviteHref ? [{ key: m.key, href: m.inviteHref }] : []));
+export function inviteTargets(manifests: readonly SolutionManifest[] = SOLUTION_MANIFESTS): InviteTarget[] {
+  return manifests.flatMap((m) => (m.inviteHref ? [{ key: m.key, href: m.inviteHref, label: m.inviteLabel, capability: m.inviteCapability }] : []));
+}
+
+/** The language hint for transcribing a solution's recordings; null lets the provider detect it. */
+export function transcriptionHintFor(kind: SolutionKind | null, manifests: readonly SolutionManifest[] = SOLUTION_MANIFESTS): string | null {
+  if (!kind) return null;
+  return manifests.find((m) => m.dbKind === kind)?.transcriptionHint ?? null;
 }

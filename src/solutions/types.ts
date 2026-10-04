@@ -1,8 +1,10 @@
+import type { ReactNode } from "react";
 import type { StatusTone } from "@/components/ui/status-dot";
-import type { mediaAssets } from "@/db/schema";
+import type { consentTexts, mediaAssets } from "@/db/schema";
 import type { solution } from "@/db/schema/enums";
 import type { Locale } from "@/i18n/locale";
-import type { CandidateContext } from "@/lib/candidate-context";
+import type { Capability } from "@/lib/authorize";
+import type { CandidateContext, ResolveResult } from "@/lib/candidate-context";
 import type { ProctoringPolicy } from "@/lib/proctor/policy";
 
 /**
@@ -16,8 +18,20 @@ export type SolutionKind = (typeof solution.enumValues)[number];
 export type SolutionKey = "language-exam" | "hiring";
 export type I18nLabel = { tr: string; en: string };
 export type NavLink = { href: string; label: I18nLabel };
-/** The part of a solution's candidate state the core routes on. */
-export type CandidateStepState = { step: string };
+/** The part of a solution's candidate state the core routes on. `position` is the running part's number, when the solution has one. */
+export type CandidateStepState = { step: string; position?: number | null };
+
+/** The pages `/a/[token]/*` hosts. A solution renders the ones its flow uses (renderPage). */
+export type CandidatePageSlot = "landing" | "info" | "check" | "practice" | "stage" | "done";
+export type CandidatePageInput = {
+  token: string;
+  /** The resolved link, problems included: the solution decides how an expired or finished link of its own looks. */
+  resolved: ResolveResult & { ctx: CandidateContext };
+  searchParams: Record<string, string | string[] | undefined>;
+  /** Route parameters beyond the token, e.g. `{ n: "2" }` on /stage/[n]. */
+  params: Record<string, string>;
+};
+export type ConsentTextRow = typeof consentTexts.$inferSelect;
 
 /** Library rows a screen asks about (HIRING-UX 4.2 "Nerede kullanılıyor"). */
 export type LibraryRefs = { positionIds: string[]; competencyIds: string[] };
@@ -47,12 +61,19 @@ export interface SolutionManifest {
   nav: NavLink[];
   /** Where "invite" on Today leads for this solution; null while it cannot invite yet. */
   inviteHref: string | null;
+  /** The words of this solution's invite on Today ("Aday davet et"), and who may use it. */
+  inviteLabel: I18nLabel;
+  inviteCapability: Capability;
   /**
    * True once this solution's candidate screens and endpoints exist. Until
    * then every core candidate route and page answers its invitations exactly
    * like an unknown token, even though the panel already uses the module.
    */
   candidateFlowLive: boolean;
+  /** Language hint for transcribing this solution's recordings; null lets the provider detect it. */
+  transcriptionHint: string | null;
+  /** True when this solution reads accommodation requests (HIRING-UX 6.1 "Başka düzenleme"). */
+  accommodationRequests: boolean;
   /** An action this solution offers on a position page (the primary button there). */
   positionAction?: { label: I18nLabel; href(positionId: string): string };
   /** Where `/a/[token]` sends the candidate for a given state of this solution. */
@@ -89,12 +110,22 @@ export interface SolutionModule extends SolutionManifest {
   /** The proctoring policy frozen on this invitation; null when the solution has no proctoring. */
   proctorPolicy(assessmentId: string): Promise<ProctoringPolicy | null>;
   candidate: {
+    /**
+     * False when this invitation lacks the solution's own terms (no row of its
+     * own); the core then answers it exactly like an unknown token. Omitted:
+     * every invitation of this solution is served.
+     */
+    serves?(ctx: CandidateContext): Promise<boolean>;
     /** The state document the candidate screens read; its `step` drives routing. */
     loadState(ctx: CandidateContext): Promise<CandidateStepState>;
     /** What the invitation is called, for problem reports. */
     title(ctx: CandidateContext): Promise<string>;
     /** Keeps the solution's clock alive; returns the running deadline, if any. */
     heartbeat(ctx: CandidateContext): Promise<{ deadlineAt: Date | null }>;
+    /** The consent copy this invitation shows and records (a consent_texts row). */
+    consentText(ctx: CandidateContext): Promise<ConsentTextRow>;
+    /** Renders a core candidate page for this solution. Omitted: the core's own pages (the exam's) render. */
+    renderPage?(slot: CandidatePageSlot, input: CandidatePageInput): Promise<ReactNode>;
   };
   attempts: {
     /** The timed part of the attempt that is running now, for proctoring records. */
@@ -103,6 +134,8 @@ export interface SolutionModule extends SolutionManifest {
     terminate(attemptId: string): Promise<void>;
     /** A recording finished uploading; attach it wherever the solution keeps answers. */
     onMediaComplete(asset: MediaAssetRow): Promise<void>;
+    /** Cron: close this solution's timed parts whose clock ran out. Omitted: the core's own sweep covers it. */
+    closeExpired?(now: Date, limit: number): Promise<{ scanned: number; closed: number }>;
   };
   /** Where this solution uses library rows. Optional: a solution that never reads the library omits it. */
   library?: {

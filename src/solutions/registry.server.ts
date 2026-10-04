@@ -1,3 +1,4 @@
+import type { CandidateContext } from "@/lib/candidate-context";
 import { hiringModule } from "@/solutions/hiring/module";
 import { languageExamModule } from "@/solutions/language-exam/module";
 import type { SolutionKind, SolutionModule } from "@/solutions/types";
@@ -25,4 +26,20 @@ export function candidateSolution(
 ): SolutionModule | null {
   const found = modules.find((m) => m.dbKind === kind) ?? null;
   return found && found.candidateFlowLive ? found : null;
+}
+
+/**
+ * The live module that serves this invitation, or null. Null for an unknown
+ * or not-live solution and for an invitation the module does not serve (no row
+ * of its own). Every core candidate route and page answers null exactly like an
+ * unknown token (spec 6). `modules` exists for tests.
+ */
+export async function servingSolution(
+  ctx: CandidateContext,
+  modules: readonly SolutionModule[] = MODULES,
+): Promise<SolutionModule | null> {
+  const found = candidateSolution(ctx.assessment.solution, modules);
+  if (!found) return null;
+  if (found.candidate.serves && !(await found.candidate.serves(ctx))) return null;
+  return found;
 }

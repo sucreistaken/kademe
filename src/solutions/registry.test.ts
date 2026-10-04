@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/db", () => ({ db: {} }));
 
-import { buildNav, inviteTargets, manifestByKind, SOLUTION_MANIFESTS } from "./registry";
-import { candidateSolution, solutionModule, solutionModules } from "./registry.server";
+import { buildNav, inviteTargets, manifestByKind, SOLUTION_MANIFESTS, transcriptionHintFor } from "./registry";
+import { candidateSolution, servingSolution, solutionModule, solutionModules } from "./registry.server";
 import { languageExamManifest } from "./language-exam/manifest";
 import type { SolutionManifest, SolutionModule } from "./types";
 
@@ -68,12 +68,38 @@ describe("solution registry", () => {
   });
 
   it("invites from Today with the first solution that can invite, not the first in the menu", () => {
-    expect(inviteTargets()).toEqual([{ key: "language-exam", href: "/exam/students/new" }]);
+    expect(inviteTargets()).toEqual([
+      { key: "language-exam", href: "/exam/students/new", label: { tr: "Öğrenci davet et", en: "Invite a student" }, capability: "student:invite" },
+    ]);
     const noInvite = { ...languageExamManifest, inviteHref: null } as SolutionManifest;
     expect(inviteTargets([noInvite])).toEqual([]);
   });
 
   it("offers hiring's action on a position page", () => {
     expect(manifestByKind("HIRING")?.positionAction?.href("p1")).toBe("/hiring/openings/new?position=p1");
+  });
+});
+
+describe("contract additions (plan 2)", () => {
+  it("transcribes exam recordings as German and lets the provider detect hiring answers", () => {
+    expect(transcriptionHintFor("LANGUAGE_EXAM")).toBe("de");
+    expect(transcriptionHintFor("HIRING")).toBeNull();
+    expect(transcriptionHintFor(null)).toBeNull();
+  });
+
+  it("offers accommodation requests where the solution reads them", () => {
+    expect(manifestByKind("HIRING")?.accommodationRequests).toBe(true);
+    expect(manifestByKind("LANGUAGE_EXAM")?.accommodationRequests).toBe(false);
+  });
+
+  it("serves an invitation only through a live module that serves it", async () => {
+    const exam = solutionModule("LANGUAGE_EXAM")!;
+    const ctxOf = (solution: "HIRING" | "LANGUAGE_EXAM") => ({ assessment: { id: "a", orgId: "o", solution } }) as Parameters<typeof servingSolution>[0];
+    const hiring = (serves: boolean) =>
+      ({ ...exam, key: "hiring", dbKind: "HIRING", candidateFlowLive: true, candidate: { ...exam.candidate, serves: async () => serves } }) as SolutionModule;
+    expect((await servingSolution(ctxOf("LANGUAGE_EXAM"), [exam]))?.key).toBe("language-exam");
+    expect(await servingSolution(ctxOf("HIRING"), [exam, hiring(false)])).toBeNull();
+    expect((await servingSolution(ctxOf("HIRING"), [exam, hiring(true)]))?.key).toBe("hiring");
+    expect(await servingSolution(ctxOf("HIRING"), [exam, { ...hiring(true), candidateFlowLive: false }])).toBeNull();
   });
 });

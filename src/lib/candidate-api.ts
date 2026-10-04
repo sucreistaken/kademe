@@ -9,7 +9,7 @@ import {
 } from "@/lib/candidate-context";
 import { candidateT, type CandidateMessages } from "@/i18n/candidate";
 import { localeFromAcceptLanguage, type Locale } from "@/i18n/locale";
-import { candidateSolution } from "@/solutions/registry.server";
+import { servingSolution } from "@/solutions/registry.server";
 import type { SolutionModule } from "@/solutions/types";
 
 /**
@@ -82,9 +82,18 @@ export type CandidateRouteOptions = {
    * Which solutions' invitations this endpoint serves. Checked the moment the
    * token resolves, before link problems and before anything is recorded, so a
    * mismatch is answered exactly like an unknown token whatever the link's state.
-   * Defaults to "the solution has a module whose candidate flow is live".
+   * Defaults to "a live module serves this invitation" (servingSolution).
    */
   acceptSolution?: (kind: SolutionKind) => boolean;
+  /**
+   * An async check that the invitation carries the solution's own terms (for
+   * example `candidate.serves`). Runs right after the solution check, before
+   * link problems and before anything is recorded, so a refusal is answered
+   * exactly like an unknown token whatever the link's state. Meant for
+   * endpoints that pass `acceptSolution`, which replaces the default serving
+   * check (spec 6, ruling C6).
+   */
+  serves?: (ctx: CandidateContext) => Promise<boolean>;
 };
 
 /**
@@ -100,6 +109,9 @@ function unknownTokenResponse(req: NextRequest) {
     { status: PROBLEM_STATUS.INVALID },
   );
 }
+
+/** The module withCandidate found for a context, so withSolution does not ask twice. */
+const servedBy = new WeakMap<CandidateContext, SolutionModule>();
 
 /**
  * Resolves the token, applies the rate limit, and hands the handler a context it
@@ -126,11 +138,18 @@ export async function withCandidate(
   }
 
   const resolved = await resolveToken(token);
-  // Default: only solutions whose candidate flow is live are served, so no core
-  // route can reveal an invitation of a solution that cannot answer for it yet.
-  const accept = options.acceptSolution ?? ((kind: SolutionKind) => candidateSolution(kind) !== null);
-  if (resolved.ctx && !accept(resolved.ctx.assessment.solution)) {
-    return unknownTokenResponse(req);
+  // Default: only invitations a live module serves (servingSolution), so no core
+  // route can reveal an invitation of a solution that cannot answer for it, or an
+  // invitation that lacks its solution's own terms.
+  if (resolved.ctx) {
+    if (options.acceptSolution) {
+      if (!options.acceptSolution(resolved.ctx.assessment.solution)) return unknownTokenResponse(req);
+    } else {
+      const served = await servingSolution(resolved.ctx);
+      if (!served) return unknownTokenResponse(req);
+      servedBy.set(resolved.ctx, served);
+    }
+    if (options.serves && !(await options.serves(resolved.ctx))) return unknownTokenResponse(req);
   }
   if (!resolved.ok) {
     const tolerated =
@@ -158,10 +177,10 @@ export type SolutionHandler = (
 
 /**
  * `withCandidate` for core endpoints whose answer depends on the solution
- * (state, consent, proctoring). An invitation of a solution with no live candidate
- * flow gets the unknown-token 404. The check runs inside `withCandidate`, as
- * soon as the token resolves, so it cannot be told apart from an unknown token
- * by the link's state either.
+ * (state, consent, proctoring). An invitation no live module serves gets the
+ * unknown-token 404. The check runs inside `withCandidate`, as soon as the
+ * token resolves, so it cannot be told apart from an unknown token by the
+ * link's state either.
  */
 export function withSolution(
   req: NextRequest,
@@ -173,12 +192,12 @@ export function withSolution(
     req,
     params,
     async (request, ctx) => {
-      const solution = candidateSolution(ctx.assessment.solution);
+      const solution = servedBy.get(ctx) ?? (await servingSolution(ctx));
       if (!solution) return notFoundForSolution(request);
       return handler(request, ctx, solution);
     },
-    // Sets acceptSolution itself: a value in `options` is overridden.
-    { ...options, acceptSolution: (kind) => candidateSolution(kind) !== null },
+    // The serving check is the default; an `acceptSolution` in `options` is dropped.
+    { ...options, acceptSolution: undefined },
   );
 }
 

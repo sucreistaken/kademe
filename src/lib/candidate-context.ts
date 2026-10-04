@@ -123,14 +123,15 @@ export async function setAssessmentLocale(ctx: CandidateContext, locale: Locale)
   ctx.locale = locale;
 }
 
+/** The newest consent text of the invitation's own solution: the exam's and hiring's copy differ. */
 export async function getConsentText(ctx: CandidateContext) {
   const [text] = await db
     .select()
     .from(consentTexts)
-    .where(eq(consentTexts.orgId, ctx.assessment.orgId))
+    .where(and(eq(consentTexts.orgId, ctx.assessment.orgId), eq(consentTexts.solution, ctx.assessment.solution)))
     .orderBy(desc(consentTexts.version))
     .limit(1);
-  if (!text) throw new Error("no consent text configured for this organisation");
+  if (!text) throw new Error(`no ${ctx.assessment.solution} consent text configured for this organisation`);
   return text;
 }
 

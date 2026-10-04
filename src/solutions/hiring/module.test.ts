@@ -17,6 +17,7 @@ describe("hiring module before the candidate flow exists", () => {
     await expect(hiringModule.candidate.loadState(ctx)).rejects.toThrow(/not live/);
     await expect(hiringModule.candidate.title(ctx)).rejects.toThrow(/not live/);
     await expect(hiringModule.candidate.heartbeat(ctx)).rejects.toThrow(/not live/);
+    await expect(hiringModule.candidate.consentText(ctx)).rejects.toThrow(/not live/);
     await expect(hiringModule.attempts.terminate("t")).rejects.toThrow(/not live/);
   });
 });

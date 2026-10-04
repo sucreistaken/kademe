@@ -5,6 +5,7 @@ import {
   expireLinks,
   salvageAbandonedUploads,
 } from "@/lib/close-expired";
+import { solutionModules } from "@/solutions/registry.server";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -56,6 +57,17 @@ export async function POST(req: NextRequest) {
   }
   const runs = await closeExpiredRuns(now, BATCH);
   const links = await expireLinks(now);
+  // Solutions with their own timed parts close them here (hiring stage runs).
+  const solutions: Record<string, unknown> = {};
+  for (const solution of solutionModules()) {
+    if (!solution.attempts.closeExpired) continue;
+    try {
+      solutions[solution.key] = await solution.attempts.closeExpired(now, BATCH);
+    } catch (error) {
+      console.error(`[close-expired] ${solution.key} sweep failed`, error);
+      solutions[solution.key] = { error: error instanceof Error ? error.message : String(error) };
+    }
+  }
 
-  return Response.json({ at: now.toISOString(), runs, links, uploads });
+  return Response.json({ at: now.toISOString(), runs, links, uploads, solutions });
 }

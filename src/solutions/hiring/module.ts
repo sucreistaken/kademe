@@ -27,6 +27,9 @@ export const hiringModule: SolutionModule = {
     async heartbeat() {
       return notLive("heartbeat");
     },
+    async consentText() {
+      return notLive("consentText");
+    },
   },
   attempts: {
     async openSegment() {
