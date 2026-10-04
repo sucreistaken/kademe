@@ -15,6 +15,11 @@ describe("model JSON packaging", () => {
     expect(withoutEmDash("Somut \u2014 ölçülebilir")).toBe("Somut, ölçülebilir");
   });
 
+  it("leaves no stray comma where the em dash opened or closed the text", () => {
+    expect(withoutEmDash("\u2014 Somut \u2014 ölçülebilir \u2014")).toBe("Somut, ölçülebilir");
+    expect(withoutEmDash("  \u2014Somut")).toBe("Somut");
+  });
+
   it("sends the broken answer back once with the reason", () => {
     const messages = buildRepairMessages([{ role: "user", content: "q" }], "broken", "missing level3Tr");
     expect(messages.map((m) => m.role)).toEqual(["user", "assistant", "user"]);

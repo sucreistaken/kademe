@@ -23,9 +23,16 @@ export function parseModelJson(text: string): { ok: true; value: unknown } | { o
   }
 }
 
-/** The product never prints an em dash (RULES.md); a model sometimes does. */
+/**
+ * The product never prints an em dash (RULES.md); a model sometimes does. One
+ * between words becomes a comma; one that opens or closes the text is dropped,
+ * so no stray ", " is left at either end.
+ */
 export function withoutEmDash(text: string): string {
-  return text.replace(/\s*\u2014\s*/g, ", ");
+  return text
+    .replace(/^\s*\u2014\s*/, "")
+    .replace(/\s*\u2014\s*$/, "")
+    .replace(/\s*\u2014\s*/g, ", ");
 }
 
 /** The single repair attempt: the broken answer goes back with the reason it was rejected. */

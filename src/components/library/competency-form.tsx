@@ -21,7 +21,6 @@ import {
   REQUIRED_ANCHOR_LEVELS,
   TAG_LABEL_MAX,
 } from "@/lib/library/anchors";
-import { mergeAnchorProposal } from "@/lib/library/anchor-draft";
 import { formTags, type FormTag } from "@/lib/library/form-tags";
 import { saveCompetencyAction } from "@/app/(manager)/library/actions";
 
@@ -129,7 +128,8 @@ export function CompetencyForm({
               competencyId={id}
               name={value.name}
               description={value.description}
-              onApply={(anchors) => setValue((v) => ({ ...v, anchors: mergeAnchorProposal(v.anchors, anchors) }))}
+              anchors={value.anchors}
+              onAnchorsChange={(anchors) => setValue((v) => ({ ...v, anchors }))}
             />
           ) : null}
         </div>

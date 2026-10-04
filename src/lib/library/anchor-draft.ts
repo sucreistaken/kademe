@@ -76,14 +76,35 @@ export function parseAnchorAnswer(text: string): { ok: true; anchors: AnchorProp
   return { ok: true, anchors };
 }
 
+export type AnchorLevel = (typeof ANCHOR_LEVELS)[number];
+
 /**
- * Copying a proposal into the form (C19): only the levels the AI actually wrote
- * replace the field. An empty optional level 2 or 4 leaves what the person typed.
+ * "Önerileri alanlara yaz": a proposal fills only the levels that are empty in
+ * both languages. A level the person already wrote is kept and listed in
+ * `kept`, so the card can offer it one level at a time; a proposal level that is
+ * itself empty is never applied and never offered (C19).
  */
-export function mergeAnchorProposal(current: Record<number, I18nText>, proposal: AnchorProposal): Record<number, I18nText> {
-  const next = { ...current };
+export function fillEmptyAnchors(
+  current: Record<number, I18nText>,
+  proposal: AnchorProposal,
+): { anchors: Record<number, I18nText>; filled: AnchorLevel[]; kept: AnchorLevel[] } {
+  const anchors = { ...current };
+  const filled: AnchorLevel[] = [];
+  const kept: AnchorLevel[] = [];
   for (const level of ANCHOR_LEVELS) {
-    if (hasText(proposal[level])) next[level] = proposal[level];
+    if (!hasText(proposal[level])) continue;
+    if (hasText(current[level])) {
+      kept.push(level);
+    } else {
+      anchors[level] = proposal[level];
+      filled.push(level);
+    }
   }
-  return next;
+  return { anchors, filled, kept };
+}
+
+/** "Bununla değiştir": exactly one level, both languages, and only with a written proposal. */
+export function replaceAnchorLevel(current: Record<number, I18nText>, proposal: AnchorProposal, level: AnchorLevel): Record<number, I18nText> {
+  if (!hasText(proposal[level])) return current;
+  return { ...current, [level]: proposal[level] };
 }

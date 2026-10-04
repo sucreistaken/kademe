@@ -18,6 +18,7 @@ import {
   type PositionWriteError,
   type SavedTag,
 } from "@/server/library-write";
+import { aiLimitReached } from "@/lib/ai-limit";
 import { COMPETENCY_NAME_MAX, hasText, TAG_LABEL_MAX } from "@/lib/library/anchors";
 import {
   POSITION_JOB_AD_MAX,
@@ -148,20 +149,24 @@ export async function restorePositionAction(formData: FormData) {
   await setArchivedFromForm(formData, false, setPositionArchived, "/library/positions");
 }
 
+export type AnchorDraftActionResult = AnchorDraftOutcome | { status: "RATE_LIMITED" };
+
 /**
  * "AI ile çapa öner" (HIRING-UX 5.10): a proposal for the form, never written
- * to the competency. Reads the org's own row (tenancy) and refuses an archived
- * one, which is read-only; no AI call and no ai_runs row on any refusal.
+ * to the competency. Reads the org's own row (tenancy), refuses an archived
+ * one, which is read-only, and stops at the AI call limit (ai-limit.ts); no AI
+ * call and no ai_runs row on any refusal.
  */
 export async function draftAnchorsAction(
   competencyId: string,
   input: { name: { tr: string; en: string }; description: { tr: string; en: string } },
-): Promise<AnchorDraftOutcome> {
+): Promise<AnchorDraftActionResult> {
   const user = await requireUser("library:write");
   const parsed = z.object({ name: i18nMax(COMPETENCY_NAME_MAX), description: i18n }).safeParse(input);
   if (!isUuid(competencyId) || !parsed.success || !hasText(parsed.data.name)) return { status: "FAILED" };
   const competency = await loadCompetency(user.orgId, competencyId);
   if (!competency || competency.archivedAt) return { status: "FAILED" };
+  if (await aiLimitReached(user.orgId, user.id, "ANCHOR_DRAFT")) return { status: "RATE_LIMITED" };
   const scale = await loadDefaultScale(user.orgId);
   return draftAnchors(user.orgId, user.id, competencyId, { ...parsed.data, levels: scale?.levels ?? [] });
 }

@@ -132,7 +132,13 @@
     "dismiss": "Kapat",
     "failed": "Öneri üretilemedi. Çapaları kendin yazabilirsin.",
     "unconfigured": "AI bağlı değil. Çapaları kendin yazabilirsin.",
-    "applied": "Öneriler alanlara yazıldı. Kaydetmeden önce oku ve düzelt.",
-    "needName": "Önce yetkinliğe bir ad ver."
+    "applied": "Öneriler boş alanlara yazıldı. Kaydetmeden önce oku ve düzelt.",
+    "needName": "Önce yetkinliğe bir ad ver.",
+    "replace": "Bununla değiştir",
+    "keptNote": "Bu seviyelerde zaten metin vardı, onlara dokunulmadı. Öneriyi istersen seviye seviye kullan.",
+    "current": "Şu anki",
+    "suggestion": "Öneri",
+    "level": "Seviye {level}",
+    "rateLimited": "Kısa sürede çok fazla öneri istendi. Biraz bekleyip tekrar dene; çapaları kendin de yazabilirsin."
   }
 }

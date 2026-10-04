@@ -132,7 +132,13 @@
     "dismiss": "Close",
     "failed": "No suggestion could be made. You can write the anchors yourself.",
     "unconfigured": "AI is not connected. You can write the anchors yourself.",
-    "applied": "Suggestions copied into the fields. Read and correct them before saving.",
-    "needName": "Give the competency a name first."
+    "applied": "Suggestions copied into the empty fields. Read and correct them before saving.",
+    "needName": "Give the competency a name first.",
+    "replace": "Replace with this",
+    "keptNote": "These levels already had text and were left as they were. Use the suggestion level by level if you want it.",
+    "current": "Current",
+    "suggestion": "Suggestion",
+    "level": "Level {level}",
+    "rateLimited": "Too many suggestions were requested in a short time. Wait a little and try again, or write the anchors yourself."
   }
 }

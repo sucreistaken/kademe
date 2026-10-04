@@ -4,7 +4,8 @@ import type * as AiRuns from "@/lib/ai-runs";
 
 /**
  * The anchor draft job with the model faked: no test reaches Gemini. The spies
- * are the logged call (`callJson`) and the extra failure row (`recordAiRun`).
+ * are the logged call (`callJson`), the error mark on an existing run
+ * (`markAiRunError`) and `recordAiRun`, which this job must never call itself.
  */
 let available = true;
 vi.mock("@/lib/ai", async (importOriginal) => ({
@@ -13,9 +14,11 @@ vi.mock("@/lib/ai", async (importOriginal) => ({
 }));
 const callJson = vi.fn<typeof AiRuns.callJson>();
 const recordAiRun = vi.fn<typeof AiRuns.recordAiRun>();
+const markAiRunError = vi.fn<typeof AiRuns.markAiRunError>();
 vi.mock("@/lib/ai-runs", () => ({
   callJson: (...a: Parameters<typeof AiRuns.callJson>) => callJson(...a),
   recordAiRun: (...a: Parameters<typeof AiRuns.recordAiRun>) => recordAiRun(...a),
+  markAiRunError: (...a: Parameters<typeof AiRuns.markAiRunError>) => markAiRunError(...a),
 }));
 
 import { draftAnchors } from "./anchor-draft-job";
@@ -38,8 +41,8 @@ const answer = (over: Record<string, string> = {}) =>
     level5En: "Summarises.",
     ...over,
   });
-const reply = (text: string) => ({
-  runId: "run",
+const reply = (text: string, runId = "run") => ({
+  runId,
   response: { text, model: "gemini-test", inputTokens: 1, outputTokens: 1, costUsd: null, attempts: 1, transientErrors: [], fellBackTo: null } satisfies AiJsonResponse,
 });
 
@@ -48,6 +51,8 @@ beforeEach(() => {
   callJson.mockReset();
   recordAiRun.mockReset();
   recordAiRun.mockResolvedValue("row");
+  markAiRunError.mockReset();
+  markAiRunError.mockResolvedValue(undefined);
 });
 
 describe("draftAnchors", () => {
@@ -72,9 +77,11 @@ describe("draftAnchors", () => {
     expect(recordAiRun).not.toHaveBeenCalled();
   });
 
-  it("repairs once with the broken answer and the reason", async () => {
-    callJson.mockResolvedValueOnce(reply("not json")).mockResolvedValueOnce(reply(answer()));
+  it("repairs once with the broken answer and the reason, and marks the broken run", async () => {
+    callJson.mockResolvedValueOnce(reply("not json", "run-1")).mockResolvedValueOnce(reply(answer(), "run-2"));
     expect((await draftAnchors(ORG, USER, COMP, request)).status).toBe("OK");
+    expect(markAiRunError.mock.calls).toEqual([["run-1", "invalid answer: no JSON object in the answer"]]);
+    expect(recordAiRun).not.toHaveBeenCalled();
     expect(callJson).toHaveBeenCalledTimes(2);
     const repair = callJson.mock.calls[1][2];
     expect(repair.map((m) => m.role)).toEqual(["system", "user", "assistant", "user"]);
@@ -82,12 +89,17 @@ describe("draftAnchors", () => {
     expect(repair[3].content).toContain("no JSON object");
   });
 
-  it("gives up after the repair and logs why, without a third call", async () => {
-    callJson.mockResolvedValue(reply(answer({ level3Tr: "", level3En: "" })));
+  it("gives up after the repair, marks both runs invalid and inserts no row without a call", async () => {
+    callJson
+      .mockResolvedValueOnce(reply(answer({ level3Tr: "", level3En: "" }), "run-1"))
+      .mockResolvedValueOnce(reply(answer({ level5Tr: "", level5En: "" }), "run-2"));
     expect(await draftAnchors(ORG, USER, COMP, request)).toEqual({ status: "FAILED" });
     expect(callJson).toHaveBeenCalledTimes(2);
-    expect(recordAiRun).toHaveBeenCalledTimes(1);
-    expect(recordAiRun.mock.calls[0][0]).toMatchObject({ orgId: ORG, purpose: "ANCHOR_DRAFT", model: "gemini-test", error: expect.stringContaining("levels 3") });
+    expect(recordAiRun).not.toHaveBeenCalled();
+    expect(markAiRunError.mock.calls).toEqual([
+      ["run-1", "invalid answer: levels 3 are empty"],
+      ["run-2", "repair still invalid: levels 5 are empty"],
+    ]);
   });
 
   it("reports a failed call as FAILED; callJson has already logged it", async () => {
@@ -95,5 +107,6 @@ describe("draftAnchors", () => {
     expect(await draftAnchors(ORG, USER, COMP, request)).toEqual({ status: "FAILED" });
     expect(callJson).toHaveBeenCalledTimes(1);
     expect(recordAiRun).not.toHaveBeenCalled();
+    expect(markAiRunError).not.toHaveBeenCalled();
   });
 });

@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { aiRuns } from "@/db/schema";
 import type { aiPurpose } from "@/db/schema";
@@ -42,6 +43,15 @@ export async function recordAiRun(input: {
     })
     .returning({ id: aiRuns.id });
   return row.id;
+}
+
+/**
+ * A model call that answered but whose answer was unusable (it failed the
+ * schema or the local checks) is still the same call: its existing row gets the
+ * reason, and no second row is written for something that was not a call.
+ */
+export async function markAiRunError(runId: string, error: string): Promise<void> {
+  await db.update(aiRuns).set({ error: error.slice(0, 2000) }).where(eq(aiRuns.id, runId));
 }
 
 export type CallMeta = {

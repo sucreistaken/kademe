@@ -3,6 +3,7 @@ import type { SessionUser } from "@/lib/auth";
 import type * as LibraryWrite from "@/server/library-write";
 import type * as LibraryRead from "@/server/library";
 import type * as AnchorJob from "@/server/anchor-draft-job";
+import type * as AiLimit from "@/lib/ai-limit";
 
 /**
  * The library server actions run the real session check (`requireUser` and
@@ -47,6 +48,10 @@ const loadDefaultScale = vi.fn<typeof LibraryRead.loadDefaultScale>();
 vi.mock("@/server/library", () => ({
   loadCompetency: (...a: Parameters<typeof LibraryRead.loadCompetency>) => loadCompetency(...a),
   loadDefaultScale: (...a: Parameters<typeof LibraryRead.loadDefaultScale>) => loadDefaultScale(...a),
+}));
+const aiLimitReached = vi.fn<typeof AiLimit.aiLimitReached>();
+vi.mock("@/lib/ai-limit", () => ({
+  aiLimitReached: (...a: Parameters<typeof AiLimit.aiLimitReached>) => aiLimitReached(...a),
 }));
 const draftAnchors = vi.fn<typeof AnchorJob.draftAnchors>();
 vi.mock("@/server/anchor-draft-job", () => ({
@@ -237,12 +242,15 @@ describe("anchor draft action", () => {
     loadCompetency.mockResolvedValue(detail());
     loadDefaultScale.mockResolvedValue({ id: "scale", name: "Varsayılan", minValue: 1, maxValue: 5, levels });
     draftAnchors.mockResolvedValue({ status: "UNCONFIGURED" });
+    aiLimitReached.mockReset();
+    aiLimitReached.mockResolvedValue(false);
   });
 
   it("refuses a REVIEWER before reading or calling the AI", async () => {
     current = as("REVIEWER");
     await expect(draftAnchorsAction(ID, { name: text("x"), description: text("") })).rejects.toThrow("missing capability: library:write");
     expect(loadCompetency).not.toHaveBeenCalled();
+    expect(aiLimitReached).not.toHaveBeenCalled();
     expect(draftAnchors).not.toHaveBeenCalled();
   });
 
@@ -251,7 +259,15 @@ describe("anchor draft action", () => {
     expect(await draftAnchorsAction(ID, { name: text("İletişim"), description: text("Açık anlatır") })).toEqual({ status: "UNCONFIGURED" });
     expect(loadCompetency).toHaveBeenCalledWith(ORG, ID);
     expect(loadDefaultScale).toHaveBeenCalledWith(ORG);
+    expect(aiLimitReached).toHaveBeenCalledWith(ORG, "user-MANAGER", "ANCHOR_DRAFT");
     expect(draftAnchors).toHaveBeenCalledWith(ORG, "user-MANAGER", ID, { name: text("İletişim"), description: text("Açık anlatır"), levels });
+  });
+
+  it("answers RATE_LIMITED over the AI limit and makes no call", async () => {
+    current = as("MANAGER");
+    aiLimitReached.mockResolvedValueOnce(true);
+    expect(await draftAnchorsAction(ID, { name: text("İletişim"), description: text("") })).toEqual({ status: "RATE_LIMITED" });
+    expect(draftAnchors).not.toHaveBeenCalled();
   });
 
   it("makes no call for bad input, another org's competency or an archived one", async () => {

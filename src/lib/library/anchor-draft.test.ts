@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { ANCHOR_DRAFT_JSON_SCHEMA, buildAnchorMessages, mergeAnchorProposal, parseAnchorAnswer, type AnchorProposal } from "./anchor-draft";
+import {
+  ANCHOR_DRAFT_JSON_SCHEMA,
+  buildAnchorMessages,
+  fillEmptyAnchors,
+  parseAnchorAnswer,
+  replaceAnchorLevel,
+  type AnchorProposal,
+} from "./anchor-draft";
 
 const full = {
   level1Tr: "Soruyu cevaplamıyor ve örnek vermiyor.",
@@ -50,26 +57,43 @@ describe("applying a proposal to the form", () => {
     4: { tr: " ", en: "" },
     5: { tr: "AI 5", en: "AI 5 en" },
   };
+  const typed = () => ({
+    1: { tr: "benim 1", en: "" },
+    2: { tr: "benim 2", en: "my 2" },
+    3: { tr: "", en: "" },
+    4: { tr: "", en: "my 4" },
+    5: { tr: "", en: " " },
+  });
 
-  it("copies only the levels the AI wrote and keeps what the person typed in empty 2 and 4", () => {
-    const current = {
-      1: { tr: "benim 1", en: "" },
-      2: { tr: "benim 2", en: "my 2" },
-      3: { tr: "", en: "" },
-      4: { tr: "", en: "my 4" },
-      5: { tr: "", en: "" },
-    };
-    const merged = mergeAnchorProposal(current, proposal);
-    expect(merged[1]).toEqual({ tr: "AI 1", en: "AI 1 en" });
-    expect(merged[2]).toEqual({ tr: "benim 2", en: "my 2" });
-    expect(merged[3]).toEqual({ tr: "AI 3", en: "" });
-    expect(merged[4]).toEqual({ tr: "", en: "my 4" });
-    expect(merged[5]).toEqual({ tr: "AI 5", en: "AI 5 en" });
+  it("fills only the levels that are empty in both languages and keeps every typed level", () => {
+    const result = fillEmptyAnchors(typed(), proposal);
+    expect(result.anchors[3]).toEqual({ tr: "AI 3", en: "" });
+    expect(result.anchors[5]).toEqual({ tr: "AI 5", en: "AI 5 en" });
+    expect(result.anchors[1]).toEqual({ tr: "benim 1", en: "" });
+    expect(result.filled).toEqual([3, 5]);
+    expect(result.kept).toEqual([1]);
+  });
+
+  it("never lets an empty proposal level overwrite or offer to replace typed text (C19)", () => {
+    const result = fillEmptyAnchors(typed(), proposal);
+    expect(result.anchors[2]).toEqual({ tr: "benim 2", en: "my 2" });
+    expect(result.anchors[4]).toEqual({ tr: "", en: "my 4" });
+    expect(result.kept).not.toContain(2);
+    expect(result.kept).not.toContain(4);
+    expect(replaceAnchorLevel(typed(), proposal, 2)[2]).toEqual({ tr: "benim 2", en: "my 2" });
+  });
+
+  it("replaces exactly one level, both languages, on request", () => {
+    const next = replaceAnchorLevel(typed(), proposal, 1);
+    expect(next[1]).toEqual({ tr: "AI 1", en: "AI 1 en" });
+    const before = typed();
+    for (const level of [2, 3, 4, 5]) expect(next[level]).toEqual(before[level as 2 | 3 | 4 | 5]);
   });
 
   it("does not change the object it was given", () => {
-    const current = { 2: { tr: "benim 2", en: "" } };
-    mergeAnchorProposal(current, proposal);
-    expect(current).toEqual({ 2: { tr: "benim 2", en: "" } });
+    const current = typed();
+    fillEmptyAnchors(current, proposal);
+    replaceAnchorLevel(current, proposal, 1);
+    expect(current).toEqual(typed());
   });
 });
