@@ -526,3 +526,32 @@ export async function saveDraftWeights(
     return { ok: true as const };
   });
 }
+
+/**
+ * "Önizleme yapıldı" (HIRING-UX 5.4): an editor opened the candidate preview.
+ * Only a draft is stamped (a published version is frozen; the WHERE never
+ * names one, and a freeze refusal still answers NO_DRAFT). The opening is
+ * locked first like every draft write, so a CLOSED opening refuses and a
+ * publish running at the same moment goes first or second, never between.
+ * `versionId` is the draft the preview showed: if it was published meanwhile
+ * (and a new draft opened), nothing is stamped. True when a row was stamped.
+ */
+export async function markPreviewed(orgId: string, openingId: string, versionId?: string): Promise<boolean> {
+  if (versionId !== undefined && !isUuid(versionId)) return false;
+  return draftWrite(async (tx) => {
+    await lockOpening(tx, orgId, openingId);
+    const rows = await tx
+      .update(hiringVersions)
+      .set({ previewedAt: new Date() })
+      .where(
+        and(
+          eq(hiringVersions.openingId, openingId),
+          eq(hiringVersions.orgId, orgId),
+          eq(hiringVersions.status, "DRAFT"),
+          versionId === undefined ? undefined : eq(hiringVersions.id, versionId),
+        ),
+      )
+      .returning({ id: hiringVersions.id });
+    return rows.length > 0;
+  });
+}

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useFormStatus } from "react-dom";
 import { AlignLeft, CircleDot, ListChecks, Mic, Paperclip, Plus, Type, Video } from "lucide-react";
 import { Button, DisabledReason } from "@/components/ui/button";
@@ -252,6 +253,15 @@ export function Builder({
   const waiting = state.kind === "saving" || (state.kind === "error" && state.retryable);
   const publishReason = !canEdit ? t("readOnly") : waiting ? t("unsavedFirst") : (firstProblem?.text ?? null);
   const reasonIsProblem = canEdit && !waiting && firstProblem !== null;
+  const router = useRouter();
+  const previewHref = `/hiring/openings/${openingId}/assessment/preview`;
+  /** "Önizle": typed values are sent first, so the preview shows what was just typed. A new tab opens as usual. */
+  const openPreview = async (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    await queue.flush();
+    router.push(previewHref);
+  };
   /** "Yayınla": typed values are sent first; anything still unsaved keeps the draft from publishing. */
   const publish = async (formData: FormData) => {
     await queue.flush();
@@ -495,6 +505,11 @@ export function Builder({
           </div>
           <BuilderCheckContext value={check}>{checkSlot}</BuilderCheckContext>
           <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-x-3 gap-y-1">
+            <Button asChild variant="secondary">
+              <Link href={previewHref} onClick={openPreview}>
+                {t("preview")}
+              </Link>
+            </Button>
             {mode === "draft" ? (
               closed ? null : (
                 <form action={publish} className="flex max-w-full flex-wrap items-center justify-end gap-x-3 gap-y-1">

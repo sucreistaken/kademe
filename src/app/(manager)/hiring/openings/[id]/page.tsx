@@ -33,9 +33,15 @@ const LABELS: Record<ReadinessKey, "rowAssessment" | "rowAnchors" | "rowWeights"
   team: "rowTeam",
   preview: "rowPreview",
 };
-/** The link's words follow where it goes: the builder, a library competency, or (Task 16) the scorecard. */
-const actionFor = (href: string): "goBuilder" | "goLibrary" | "goScorecard" =>
-  href.startsWith("/library/") ? "goLibrary" : href.includes("/assessment/scorecard") ? "goScorecard" : "goBuilder";
+/** The link's words follow where it goes: the builder, a library competency, the scorecard or the preview. */
+const actionFor = (href: string): "goBuilder" | "goLibrary" | "goScorecard" | "goPreview" =>
+  href.startsWith("/library/")
+    ? "goLibrary"
+    : href.includes("/assessment/scorecard")
+      ? "goScorecard"
+      : href.includes("/assessment/preview")
+        ? "goPreview"
+        : "goBuilder";
 const STATE_WORD = { done: "stateDone", missing: "stateMissing", advisory: "stateAdvisory" } as const;
 const STATE_SR = { done: "srDone", missing: "srMissing", advisory: "srAdvisory" } as const;
 const ICON = { done: Check, missing: Circle, advisory: CircleDashed } as const;
@@ -183,8 +189,14 @@ export default async function OpeningOverviewPage({
                     : row.state === "advisory"
                       ? t("hiringOverview.advisory")
                       : fix?.text;
-                // Nothing measured yet: the questions are picked in the builder.
-                const href = fix?.href ?? (row.reason === "NO_COMPETENCIES" ? `/hiring/openings/${opening.id}/assessment/edit` : null);
+                // Nothing measured yet: the questions are picked in the builder. "Önizleme" opens the candidate preview.
+                const href =
+                  fix?.href ??
+                  (row.reason === "NO_COMPETENCIES"
+                    ? `/hiring/openings/${opening.id}/assessment/edit`
+                    : row.key === "preview"
+                      ? `/hiring/openings/${opening.id}/assessment/preview`
+                      : null);
                 return (
                   <Row
                     key={row.key}

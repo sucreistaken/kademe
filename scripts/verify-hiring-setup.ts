@@ -321,6 +321,17 @@ async function main() {
   await versions.updateStage(org.id, frozen.openingId, v2content!.stages[0].id, { durationSeconds: 900 });
   check((await loadVersionContent(org.id, fv1.id))!.stages[0].durationSeconds === v1content!.stages[0].durationSeconds, "editing v2 leaves v1 as published");
 
+  console.log("\nThe preview stamp (Önizleme yapıldı)");
+  const previewedOf = async (versionId: string) =>
+    (await db.select({ at: s.hiringVersions.previewedAt }).from(s.hiringVersions).where(eq(s.hiringVersions.id, versionId)))[0].at;
+  await expectCode("another organisation cannot stamp it", () => versions.markPreviewed(orgB.id, frozen.openingId, v2.versionId), "NOT_FOUND");
+  check((await previewedOf(v2.versionId)) === null, "and the draft is not stamped by it");
+  check((await versions.markPreviewed(org.id, frozen.openingId, fv1.id)) === false, "the published v1 is never stamped (only a draft is)");
+  check((await previewedOf(fv1.id)) === null, "v1 has no stamp");
+  check((await versions.markPreviewed(org.id, frozen.openingId, v2.versionId)) === true, "the draft the preview showed is stamped");
+  check((await previewedOf(v2.versionId)) !== null && (await previewedOf(fv1.id)) === null, "v2 is stamped, v1 still is not");
+  await expectCode("a closed opening's draft is not stamped", () => versions.markPreviewed(org.id, closing.openingId), "CLOSED");
+
   console.log("\nThe publish gate");
   const bare = await createCompetency(org.id, owner.id, { name: { tr: "Analitik düşünme", en: "" }, description: { tr: "", en: "" } });
   if (!bare.ok) throw new Error("competency");
