@@ -9,7 +9,11 @@ export type ReadinessRow = {
   state: ReadinessState;
   /** The first gate problem of this row, in screen order. */
   problem: PublishProblem | null;
-  /** NO_COMPETENCIES: nothing is measured yet, so "every competency has its anchors" is not met. */
+  /**
+   * NO_COMPETENCIES: nothing is measured yet and the gate names no anchor problem (no question yet,
+   * or an open question without a competency, which the assessment row reports). A choice-only
+   * draft gets the gate's own NO_MEASURED_COMPETENCY instead, so the row and the gate agree.
+   */
   reason: "NO_COMPETENCIES" | null;
 };
 

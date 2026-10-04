@@ -24,6 +24,7 @@ const SAMPLES: { [C in PublishProblem["code"]]: Extract<PublishProblem, { code: 
   CHOICE_WITH_COMPETENCY: { code: "CHOICE_WITH_COMPETENCY", activityId: "a2" },
   CHOICE_NEEDS_OPTIONS: { code: "CHOICE_NEEDS_OPTIONS", activityId: "a2" },
   CHOICE_NEEDS_ANSWER: { code: "CHOICE_NEEDS_ANSWER", activityId: "a2" },
+  NO_MEASURED_COMPETENCY: { code: "NO_MEASURED_COMPETENCY" },
   COMPETENCY_MISSING: { code: "COMPETENCY_MISSING", competencyId: COMP },
   COMPETENCY_ARCHIVED: { code: "COMPETENCY_ARCHIVED", competencyId: COMP },
   ANCHOR_MISSING: { code: "ANCHOR_MISSING", competencyId: COMP, level: 3 },

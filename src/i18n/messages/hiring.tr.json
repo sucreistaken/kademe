@@ -129,6 +129,7 @@
     "competencyArchived": "{competency} arşivde; o soruda başka bir yetkinlik seç.",
     "anchorMissing": "Puan kartında {competency} için {level}. seviye çapası eksik.",
     "weights": "Ağırlık toplamı %{total}; %100 olmalı.",
-    "weightsMissing": "{competency} için ağırlık girilmemiş; ağırlıkların toplamı %100 olmalı."
+    "weightsMissing": "{competency} için ağırlık girilmemiş; ağırlıkların toplamı %100 olmalı.",
+    "noMeasuredCompetency": "En az bir soru bir yetkinliği ölçmeli."
   }
 }

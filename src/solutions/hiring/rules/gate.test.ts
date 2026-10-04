@@ -63,6 +63,8 @@ describe("publish gate (hiring solution design 2.2, HIRING-UX R2)", () => {
           choice("one-option", "SINGLE_CHOICE", [opt("a", true)]),
           choice("with-competency", "SINGLE_CHOICE", [opt("a", true), opt("b")], ["c1"]),
           choice("fine", "MULTI_CHOICE", [opt("a", true), opt("b", true), opt("c")]),
+          // One measured question, so this test is only about the choice rules (NO_MEASURED_COMPETENCY has its own).
+          activity("measured", { competencyIds: ["c1"] }),
         ].map((a, i) => ({ ...a, orderIndex: i })),
       ),
     ]);
@@ -73,6 +75,23 @@ describe("publish gate (hiring solution design 2.2, HIRING-UX R2)", () => {
       { code: "CHOICE_NEEDS_OPTIONS", activityId: "one-option" },
       { code: "CHOICE_WITH_COMPETENCY", activityId: "with-competency" },
     ]);
+  });
+
+  it("needs at least one measured competency: a choice-only draft is refused, one measured competency passes", () => {
+    const choiceOnly = content([stage("s1", [activity("q1", { type: "SINGLE_CHOICE", config: { choices: [opt("a", true), opt("b")] } })])]);
+    expect(publishProblems(choiceOnly, two())).toEqual([{ code: "NO_MEASURED_COMPETENCY" }]);
+    const withOne = content([
+      stage("s1", [
+        activity("q1", { type: "SINGLE_CHOICE", config: { choices: [opt("a", true), opt("b")] }, orderIndex: 0 }),
+        activity("q2", { competencyIds: ["c1"], orderIndex: 1 }),
+      ]),
+    ]);
+    expect(publishProblems(withOne, two())).toEqual([]);
+  });
+
+  it("does not add NO_MEASURED_COMPETENCY where a structure problem already explains it", () => {
+    expect(publishProblems(content([]), two())).toEqual([{ code: "NO_STAGE" }]);
+    expect(publishProblems(content([stage("s1", [activity("a1")])]), two())).toEqual([{ code: "NO_COMPETENCY", activityId: "a1" }]);
   });
 
   it("needs anchors 1, 3 and 5 of every measured competency", () => {
@@ -118,6 +137,8 @@ describe("publish gate (hiring solution design 2.2, HIRING-UX R2)", () => {
           activity("blank", { type: "SINGLE_CHOICE", config: { choices: [opt("a", true), blank, opt("c")] } }),
           activity("dup", { type: "MULTI_CHOICE", config: { choices: [opt("a", true), opt("a"), opt("c")] } }),
           activity("en-only", { type: "SINGLE_CHOICE", config: { choices: [{ id: "x", label: { tr: "", en: "Yes" }, correct: true }, opt("y")] } }),
+          // One measured question, so this test is only about the choice rules.
+          activity("measured", { competencyIds: ["c1"] }),
         ].map((a, i) => ({ ...a, orderIndex: i })),
       ),
     ]);
@@ -157,6 +178,7 @@ describe("publish gate (hiring solution design 2.2, HIRING-UX R2)", () => {
       COMPETENCY_MISSING: true,
       COMPETENCY_ARCHIVED: true,
       ANCHOR_MISSING: true,
+      NO_MEASURED_COMPETENCY: true,
       WEIGHTS_NOT_100: true,
       WEIGHTS_MISSING: true,
     };

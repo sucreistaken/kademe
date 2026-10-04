@@ -50,6 +50,8 @@ export function describeProblem(
       return { text: t("hiringGate.choiceOptions", { activity: activity(problem.activityId) }), href: null };
     case "CHOICE_NEEDS_ANSWER":
       return { text: t("hiringGate.choiceAnswer", { activity: activity(problem.activityId) }), href: null };
+    case "NO_MEASURED_COMPETENCY":
+      return { text: t("hiringGate.noMeasuredCompetency"), href: null };
     case "COMPETENCY_MISSING":
       return { text: t("hiringGate.competencyMissing"), href: null };
     case "COMPETENCY_ARCHIVED":

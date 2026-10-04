@@ -15,6 +15,8 @@ export type PublishProblem =
   | { code: "COMPETENCY_MISSING"; competencyId: string }
   | { code: "COMPETENCY_ARCHIVED"; competencyId: string }
   | { code: "ANCHOR_MISSING"; competencyId: string; level: number }
+  /** Every question is a choice, so the version would measure no competency and give no scorecard. */
+  | { code: "NO_MEASURED_COMPETENCY" }
   | { code: "WEIGHTS_NOT_100"; total: number }
   | { code: "WEIGHTS_MISSING"; competencyId: string };
 
@@ -34,7 +36,7 @@ export const STRUCTURE_PROBLEMS: ReadonlyArray<PublishProblem["code"]> = [
   "CHOICE_NEEDS_OPTIONS",
   "CHOICE_NEEDS_ANSWER",
 ];
-export const ANCHOR_PROBLEMS: ReadonlyArray<PublishProblem["code"]> = ["COMPETENCY_MISSING", "COMPETENCY_ARCHIVED", "ANCHOR_MISSING"];
+export const ANCHOR_PROBLEMS: ReadonlyArray<PublishProblem["code"]> = ["NO_MEASURED_COMPETENCY", "COMPETENCY_MISSING", "COMPETENCY_ARCHIVED", "ANCHOR_MISSING"];
 export const WEIGHT_PROBLEMS: ReadonlyArray<PublishProblem["code"]> = ["WEIGHTS_NOT_100", "WEIGHTS_MISSING"];
 
 /**
@@ -68,6 +70,10 @@ export function publishProblems(content: VersionContent, facts: ReadonlyMap<stri
     }
   }
   const used = usedCompetencyIds(content);
+  // A version must measure at least one competency. Only said when every question is a choice:
+  // no question at all is NO_STAGE / EMPTY_STAGE, an unmeasured open question is NO_COMPETENCY.
+  const questions = content.stages.flatMap((s) => s.activities);
+  if (used.length === 0 && questions.length > 0 && questions.every((a) => isChoice(a.type))) problems.push({ code: "NO_MEASURED_COMPETENCY" });
   for (const id of used) {
     const f = facts.get(id);
     if (!f) {

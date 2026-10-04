@@ -129,6 +129,7 @@
     "competencyArchived": "{competency} is archived; pick another competency on that question.",
     "anchorMissing": "On the scorecard, {competency} has no level {level} anchor.",
     "weights": "Weights add up to {total}%; they must add up to 100%.",
-    "weightsMissing": "{competency} has no weight; the weights must add up to 100%."
+    "weightsMissing": "{competency} has no weight; the weights must add up to 100%.",
+    "noMeasuredCompetency": "At least one question must measure a competency."
   }
 }
