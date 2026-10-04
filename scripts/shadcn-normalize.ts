@@ -1,29 +1,32 @@
 /**
- * Applies normalizeShadcnSource to every shadcn component on disk. The six
- * Kademe primitives are hand-maintained and skipped.
+ * Applies normalizeShadcnSource to every shadcn component on disk and to the
+ * hooks the CLI copied. Kademe files are skipped: the six primitives listed in
+ * KADEME_OWNED and any file whose first line is `// kademe-owned`.
  *
- *   pnpm exec shadcn add <names> --yes && pnpm ui:normalize
+ *   yes n | pnpm exec shadcn add <names> && pnpm ui:normalize
  */
-import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { normalizeShadcnSource } from "../src/lib/shadcn-normalize";
+import { NORMALIZED_HOOKS, isKademeOwned, normalizeShadcnSource } from "../src/lib/shadcn-normalize";
 
-const KADEME_OWNED = new Set(["button.tsx", "card.tsx", "status-dot.tsx", "undo-strip.tsx", "inline-link.tsx", "avatar.tsx"]);
+const UI = "src/components/ui";
+const HOOKS = "src/hooks";
+
 const targets = [
-  ...readdirSync("src/components/ui")
-    .filter((f) => f.endsWith(".tsx") && !KADEME_OWNED.has(f))
-    .map((f) => path.join("src/components/ui", f)),
-  ...(() => {
-    try {
-      return readdirSync("src/hooks").filter((f) => f.endsWith(".ts")).map((f) => path.join("src/hooks", f));
-    } catch {
-      return [];
-    }
-  })(),
+  ...readdirSync(UI)
+    .filter((f) => f.endsWith(".tsx"))
+    .map((f) => path.join(UI, f)),
+  ...NORMALIZED_HOOKS.map((f) => path.join(HOOKS, f)).filter((f) => existsSync(f)),
 ];
+
 let changed = 0;
+let skipped = 0;
 for (const file of targets) {
   const before = readFileSync(file, "utf8");
+  if (isKademeOwned(path.basename(file), before)) {
+    skipped += 1;
+    continue;
+  }
   const after = normalizeShadcnSource(before);
   if (after !== before) {
     writeFileSync(file, after);
@@ -31,4 +34,4 @@ for (const file of targets) {
     console.log(`normalized ${file}`);
   }
 }
-console.log(`${changed} of ${targets.length} file(s) changed`);
+console.log(`${changed} of ${targets.length - skipped} file(s) changed (${skipped} Kademe-owned skipped)`);

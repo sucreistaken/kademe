@@ -12,7 +12,8 @@ import { describe, expect, it } from "vitest";
 const css = readFileSync(path.resolve(process.cwd(), "src/app/globals.css"), "utf8");
 
 function block(header: string): Record<string, string> {
-  const start = css.indexOf(`${header} {`);
+  // A rule at the start of a line, so a selector that merely ends the same way does not match.
+  const start = css.indexOf(`\n${header} {`);
   if (start < 0) throw new Error(`no "${header} {" block in globals.css`);
   const end = css.indexOf("\n}", start);
   const body = css.slice(start, end);
@@ -57,6 +58,26 @@ describe("Kademe tokens keep their meaning", () => {
     expect(inline["--color-accent"]).toBeUndefined();
     expect(inline["--color-muted"]).toBeUndefined();
     expect(inline["--color-accent-foreground"]).toBeUndefined();
+  });
+});
+
+describe("focus is drawn once, by the global outline", () => {
+  const start = css.indexOf("\n:focus-visible {");
+  const focus = css.slice(start, css.indexOf("\n}", start));
+
+  it("keeps the 2px accent outline with a 2px gap by default", () => {
+    expect(start).toBeGreaterThan(-1);
+    expect(focus).toContain("outline: 2px solid var(--color-accent);");
+    expect(focus).toContain("outline-offset: var(--focus-offset, 2px);");
+  });
+
+  it("draws it inside menu and list items, which sit in scroll containers", () => {
+    expect(css).toMatch(/\[data-slot\$="-item"\][^{]*\{\s*--focus-offset: -2px;/);
+  });
+
+  it("draws it on an input group's frame instead of the bare inner input", () => {
+    expect(css).toMatch(/:is\(\[data-slot="input-group-control"\][^)]*\):focus-visible \{\s*outline: none;/);
+    expect(css).toContain('[data-slot="input-group"]:has(> :is([data-slot="input-group-control"]');
   });
 });
 

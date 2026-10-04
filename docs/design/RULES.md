@@ -84,6 +84,16 @@ Defined in `src/app/globals.css` and nowhere else.
 - `Tooltip` needs a `TooltipProvider` above it; add it to the screen that first
   uses a tooltip, not to the root layout.
 - `dark:` classes in copied components are inert: there is no dark theme.
+- Focus has one indicator: the global `:focus-visible` outline in
+  `globals.css` (2px accent, 2px gap). The normalizer removes the extra
+  `focus-visible:ring-*` rings the copied parts carry. Items in menus and
+  lists (`data-slot` ending in `-item`) draw the outline 2px inside, because
+  their scroll container would clip it; an input group shows it on its frame.
+- The normalizer and `shadcn-vendored.test.ts` share their rules
+  (`src/lib/shadcn-normalize.ts`). They skip the Kademe files listed there
+  and any file whose first line is `// kademe-owned`; a new Kademe primitive
+  in `src/components/ui/` carries that header. Of `src/hooks/`, only
+  `use-mobile.ts` came from the CLI and is normalized.
 
 ## Copy
 
