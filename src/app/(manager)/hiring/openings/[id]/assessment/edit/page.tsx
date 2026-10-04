@@ -96,7 +96,7 @@ export default async function BuilderPage({
         canEdit={access.edit}
         closed={opening.status === "CLOSED"}
         // The question check reads drafts only: a live version cannot change, so advice on it would lead nowhere.
-        checkSlot={state.draft ? <QuestionCheck openingId={opening.id} canRun={access.edit} /> : null}
+        checkSlot={state.draft ? <QuestionCheck openingId={opening.id} canRun={access.edit} closed={opening.status === "CLOSED"} /> : null}
       />
     </main>
   );

@@ -21,9 +21,12 @@ type AiRun = { findings: Finding[]; checked: CheckedActivity[]; at: string };
  * check says it read the saved text. An AI finding whose words are no longer
  * in its question is dropped, and the bar says the questions changed. Every
  * finding is a suggestion with "Soruya git", which opens the question; nothing
- * here edits it. Text from the model is rendered as text only.
+ * here edits it. A rule finding names its protected ground and shows that
+ * ground's calm note (plus the AI's note when it raised the same point). On a
+ * closed opening the AI part says the opening is closed. Text from the model
+ * is rendered as text only.
  */
-export function QuestionCheck({ openingId, canRun }: { openingId: string; canRun: boolean }) {
+export function QuestionCheck({ openingId, canRun, closed }: { openingId: string; canRun: boolean; closed: boolean }) {
   const t = useMT("hiringCheck");
   const g = useMT("hiringGate");
   const builder = useBuilderCheck();
@@ -93,10 +96,17 @@ export function QuestionCheck({ openingId, canRun }: { openingId: string; canRun
                 // Two findings of one kind on one question can come back (C20): the index keeps keys apart.
                 <li key={`${f.activityId}:${f.kind}:${i}`} className="space-y-1 border-t border-line pt-3 first:border-t-0 first:pt-0">
                   <p className="text-[13px] font-medium text-ink">
-                    {label} · {t(`kind${f.kind}`)} · <span className="font-normal text-muted">{t(`source${f.source}`)}</span>
+                    {label} · {f.category ? t("kindPROTECTEDCategory", { category: t(`cat${f.category}`) }) : t(`kind${f.kind}`)} ·{" "}
+                    <span className="font-normal text-muted">{t(`source${f.source}`)}</span>
                   </p>
                   <p className="text-[13px] break-words text-muted">&ldquo;{f.excerpt}&rdquo;</p>
-                  {f.note ? <p className="text-[13px] break-words text-ink-2">{f.note}</p> : null}
+                  {f.category ? <p className="text-[13px] break-words text-ink-2">{t(`note${f.category}`)}</p> : null}
+                  {f.note ? (
+                    <p className="text-[13px] break-words text-ink-2">
+                      {f.category ? `${t("sourceAI")}: ` : null}
+                      {f.note}
+                    </p>
+                  ) : null}
                   <Button
                     variant="ghost"
                     size="sm"
@@ -112,7 +122,9 @@ export function QuestionCheck({ openingId, canRun }: { openingId: string; canRun
           </ul>
         )}
         <div className="space-y-2 border-t border-line pt-3">
-          {canRun ? (
+          {closed ? (
+            <p className="text-[13px] text-muted">{checkRefusal("CLOSED", t)}</p>
+          ) : canRun ? (
             <Button variant="secondary" size="sm" disabled={pending} aria-busy={pending || undefined} onClick={check}>
               {pending ? t("running") : t("runAi")}
             </Button>

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { CheckCode } from "@/app/(manager)/hiring/openings/[id]/assessment/edit/check-result";
 import { managerT } from "@/i18n/manager";
+import { PROTECTED_CATEGORIES } from "@/solutions/hiring/ai/protected-terms";
 import { checkRefusal, type CheckKey } from "./check-copy";
 
 const say = (locale: "tr" | "en") => {
@@ -39,5 +40,23 @@ describe("question check refusal copy", () => {
     expect(checkRefusal("RATE_LIMITED", say("tr"))).toMatch(/kural kontrolü geçerli/);
     expect(checkRefusal("PROVIDER_FAILED", say("en"))).toBe("The AI check could not run; the rule check stands.");
     expect(checkRefusal("SCHEMA_FAILED", say("en"))).toBe("The AI check could not run; the rule check stands.");
+  });
+
+  it.each(["tr", "en"] as const)("names every protected ground and gives it a calm note in %s", (locale) => {
+    const t = say(locale);
+    for (const category of PROTECTED_CATEGORIES) {
+      for (const key of [`cat${category}`, `note${category}`] as const) {
+        const text = t(key);
+        expect(text.trim()).not.toBe("");
+        expect(text).not.toMatch(/hiringCheck|[{}]|!/);
+        expect(text).not.toContain("\u2014");
+      }
+    }
+    expect(t("kindPROTECTEDCategory", { category: t("catAGE") })).toBe(locale === "tr" ? "Korunan bir özelliğe dokunuyor olabilir: yaş" : "May touch a protected characteristic: age");
+  });
+
+  it("says a closed opening and a read-only role apart", () => {
+    expect(say("tr")("aiReadOnly")).toBe("AI kontrolünü yalnızca değerlendirmeyi düzenleyebilenler çalıştırabilir.");
+    expect(checkRefusal("CLOSED", say("tr"))).toBe("Bu alım kapalı; soruları değişmez.");
   });
 });
