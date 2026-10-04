@@ -62,6 +62,7 @@ kapalı, ya da tam ekrandan M kereden fazla çıkış. AI işaretleri asla sonla
 ## Test
 
 Otomasyon sekmesinde kamera ve gerçek tam ekran yoktur. Geliştirmede
-`PROCTOR_DEV_FAKE=1` sunucu tarafından açılır (üretimde asla): sahte kamera/ekran
+`PROCTOR_DEV_FAKE=1` sunucu tarafından açılır (üretimde asla; `.env`'e yazılmaz, yalnızca
+dev sunucusunun kabuğunda verilir ve iş bitince bayraksız yeniden başlatılır): sahte kamera/ekran
 akışı, yüz sayısı `window.__proctorDev.setFaces(n)`, olaylar `__proctorDev.emit(type)`.
 Gerçek cihaz ve tarayıcı matrisi elle denenmeli (STATUS.md'deki liste).

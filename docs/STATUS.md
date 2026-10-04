@@ -39,7 +39,7 @@ pnpm dev --port 3100
 
 - Panel: `kadiraycareer@gmail.com` / `kademe-dev-2026` (öğretmen: `ogretmen@kademe.local`, aynı parola)
 - Yeni öğrenci linki: `pnpm dev:link` (seviye tespiti), `pnpm dev:link --claimed B1` (doğrulama)
-- Sahte kamera/ekran yalnızca otomasyon testi için: `.env` içinde `PROCTOR_DEV_FAKE=1`. **Varsayılan kapalı.** Açıkken öğrenci sayfalarının üstünde kırmızı "DEV" şeridi çıkar; gerçek cihaz testinden önce kapatın. Üretimde hiç çalışmaz.
+- Sahte kamera/ekran yalnızca otomasyon testi için: `.env`'e YAZMAYIN; yalnızca dev sunucusunun kabuğunda `PROCTOR_DEV_FAKE=1 pnpm dev --port 3100` ile başlatın, iş bitince bayraksız yeniden başlatın. **Varsayılan kapalı.** Açıkken öğrenci sayfalarının üstünde kırmızı "DEV" şeridi çıkar; gerçek cihaz testinden önce kapatın. Üretimde hiç çalışmaz.
 - Cron uçları (CRON_SECRET ile): `/api/cron/close-expired`, `/transcribe`, `/grade`,
   `/proctor-review`, `/purge-retention`
 - Dinleme sesi eksikse: `pnpm bank:tts`
@@ -59,8 +59,8 @@ pnpm dev --port 3100
 | MediaPipe modelleri | kendi sunucumuzdan yüklendi (`public/proctor/1.0.1`, sha256 sabit) |
 | Öğretmen paneli, Chrome'da | Bugün kuyruğu, sonuç ekranı, AI önerisini onaylama, gerekçeyle değiştirme, kesinleştirme, bütünlük sekmesi ve işaret onaylama |
 | Panel rotaları | 15 rota × TR/EN, hepsi 200 |
-| Çekirdek ayrımı (yerel) | `tsc` temiz, `eslint src scripts` temiz, `pnpm test` 631/631, `pnpm build` 52 rota; `pnpm verify:exam` ve `pnpm verify:guard` tüm kontroller geçti (`kademe_platform` veritabanında) |
-| Göç provası (yerel 5434) | `kademe` yedeği geri yüklendi, `--adopt-baseline` ile 0001-0003 uygulandı, `verify:migration check` tüm satırlar ok; yedek ikinci kez geri yüklenip aynı sayımlar alındı |
+| Çekirdek ayrımı (yerel) | `tsc` temiz, `eslint src scripts` temiz, `pnpm test` 631/631, `pnpm build` 52 rota (`/_not-found` dahil); `pnpm verify:exam` ve `pnpm verify:guard` tüm kontroller geçti (`kademe_platform` veritabanında) |
+| Göç provası (yerel 5434) | `kademe` yedeği geri yüklendi, `--adopt-baseline` ile 0001-0003 uygulandı, `verify:migration check` tüm satırlar ok (`dualWriteDrift` atlandı: 0001-0003 tek `db:migrate` içinde çalıştığı için eski kolonlar kontrolden önce silinmişti); yedek ikinci kez geri yüklenip aynı sayımlar alındı |
 | Çekirdek ayrımı, Chrome'da (yerel, 2026-10-04) | Panel: `/students` 307 ile `/exam/students`'a gitti, sonuç ekranının özet, yazma, konuşma ve bütünlük sekmeleri açıldı, AI önerisi onaylandı (sayfa `/exam/students/<id>?tab=...` üstünde kaldı), davet linki bir kez gösterildi, `/exam/exams`, `/exam/exams/new`, `/exam/bank` ve bir soru açıldı, `/dashboard` açıldı, ayarlarda roller Sahip / Yönetici / Değerlendirici (EN: Owner / Manager / Reviewer). Aday (sahte medya, kırmızı DEV şeridi görünür): onay (davette ad ve e-posta olduğu için bilgi adımı atlandı), sistem kontrolü (7 satır; bu makinede ikinci monitör bağlı olduğundan tek ekran satırı sayfa içinden elle geçildi), dilbilgisi girişi, iki cevap, yeniden yüklemede aynı soru, bölümü erken bitirme, okuma girişi; istekler `/api/c/<token>/exam/answer`, `/exam/answer/commit`, `/exam/section/start`, `/exam/section/submit` yollarına, gözetim ve kalp atışı çekirdek yollara gitti, hiç 404 yok. Sahte medya kapatılınca DEV şeridi kalktı |
 
 ## Canlıda gerçek cihazla doğrulandı (2026-09-30, kullanıcının Chrome'u, macOS)
@@ -88,14 +88,22 @@ Zamanlayıcılar 1-2 dakikada bir çalıştığı için transkripsiyon ve puanla
 
 ## Canlıya çıkış (yapılmadı, ayrı onay)
 
-Eski kod ile yeni kod 0001-0003 göçleri boyunca birbiriyle uyumsuz: eski kod yeni şemada, yeni kod eski şemada çalışmaz. Bu yüzden göç sırasında uygulama durdurulur. Adımlar sırayla:
+Eski kod ile yeni kod 0001-0003 göçleri boyunca birbiriyle uyumsuz: eski kod yeni şemada, yeni kod eski şemada çalışmaz. Bu yüzden göç sırasında uygulama durdurulur.
+
+Komutlar VM'de `/srv/kademe` içinde çalışır. `DATABASE_URL` VM'in ortam dosyasından gelir (`/etc/kademe/kademe.env`, yalnızca root okur); bu yüzden root kabuğunda (`sudo -i`) önce yüklenir:
+
+```bash
+set -a; . /etc/kademe/kademe.env; set +a
+```
+
+Adımlar sırayla:
 
 1. Servisi ve bütün zamanlayıcıları durdur:
    ```bash
    sudo systemctl stop kademe.service
    sudo systemctl stop 'kademe-*.timer'
    ```
-2. Canlı veritabanının yedeğini al:
+2. Canlı veritabanının yedeğini al. `pg_dump` bütün tabloları okuyabilen bir veritabanı kullanıcısıyla çalışmalı (okuyamadığı tablo olursa yedek eksik kalır ya da hata verir):
    ```bash
    pg_dump -Fc "$DATABASE_URL" -f kademe-$(date +%Y%m%d-%H%M).dump
    ```
@@ -109,11 +117,12 @@ Eski kod ile yeni kod 0001-0003 göçleri boyunca birbiriyle uyumsuz: eski kod y
    DATABASE_URL=<boş yerel db, yalnızca 0000_baseline.sql> pnpm db:fingerprint > /tmp/baseline.fp
    diff /tmp/baseline.fp /tmp/prod.fp
    ```
-5. Göç oturumuna kilit bekleme sınırı koy ve benimseyerek göç et. Bekleyen bütün göçler tek işlemde (transaction) çalışır; benimseme satırı ondan önce ayrı yazılır, bu yüzden göç yarıda kalırsa yeniden çalıştırma bayraksız (`pnpm db:migrate`) kaldığı yerden devam eder:
+5. Göç oturumuna kilit bekleme sınırı koy ve benimseyerek göç et. Sınır bağlantı adresine parametre olarak eklenir; `PGOPTIONS` kullanılmaz, çünkü `db:migrate` postgres.js ile bağlanır ve postgres.js `PGOPTIONS`'ı okumaz (yerelde `show lock_timeout` 0 verdi, adres parametresiyle 10s). Adreste zaten `?` varsa `&` ile eklenir. Bekleyen bütün göçler tek işlemde (transaction) çalışır; benimseme satırı ondan önce ayrı yazılır, bu yüzden göç yarıda kalırsa yeniden çalıştırma bayraksız (`pnpm db:migrate`) kaldığı yerden devam eder:
    ```bash
-   PGOPTIONS='-c lock_timeout=10s' pnpm db:migrate --adopt-baseline
+   case "$DATABASE_URL" in *\?*) SEP='&' ;; *) SEP='?' ;; esac
+   DATABASE_URL="${DATABASE_URL}${SEP}lock_timeout=10s" pnpm db:migrate --adopt-baseline
    ```
-6. Taşınan veriyi doğrula (bütün satırlar `ok` olmalı):
+6. Taşınan veriyi doğrula (bütün satırlar `ok` olmalı). 0001-0003 tek `db:migrate` içinde çalıştığı için `dualWriteDrift` satırı "skipped" çıkar; bu beklenir, eski kolonlar artık yoktur:
    ```bash
    pnpm verify:migration check /tmp/kademe-prod-before.json
    ```
