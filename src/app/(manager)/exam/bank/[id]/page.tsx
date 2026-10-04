@@ -58,7 +58,7 @@ export default async function BankItemPage({ params, searchParams }: { params: P
       {sp.error === "tts" ? <p className="mt-2 text-[13px] text-danger">{t("bank.audioFailed", { reason: sp.reason ?? "" })}</p> : null}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_420px]">
-        <section className="flex flex-col gap-4">
+        <section className="flex min-w-0 flex-col gap-4">
           <div className="text-[12px] font-medium uppercase tracking-[0.04em] text-muted">{t("bank.preview")}</div>
           {stimulus ? (
             <Card className="p-5">

@@ -31,6 +31,8 @@ export default async function ManagerLayout({ children }: { children: React.Reac
     <SidebarProvider lang={locale} style={{ "--sidebar-width": "240px" } as React.CSSProperties}>
       <ManagerNav
         groups={groups}
+        mobileTitle={t("nav.menuTitle")}
+        mobileDescription={t("nav.menuDescription")}
         footer={
           <div className="flex items-center gap-2.5">
             <LangSwitch locale={locale} />
@@ -46,7 +48,7 @@ export default async function ManagerLayout({ children }: { children: React.Reac
       />
       <div className="flex min-h-screen min-w-0 flex-1 flex-col">
         <header className="flex h-14 items-center gap-3 border-b border-line bg-surface px-4 lg:hidden">
-          <SidebarTrigger />
+          <SidebarTrigger aria-label={t("nav.openMenu")} />
           <Link href="/dashboard" className="text-[15px] font-semibold tracking-tight">
             Kademe
           </Link>

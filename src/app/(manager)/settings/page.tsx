@@ -68,8 +68,8 @@ export default async function SettingsPage({
         <p className="mt-1 text-sm text-muted">{t("settings.subtitle")}</p>
       </div>
 
-      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
-        <div className="space-y-6">
+      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="min-w-0 space-y-6">
           {/* ---- organization ---- */}
           <Card>
             <div className="border-b border-line px-5 py-4">
@@ -244,7 +244,7 @@ export default async function SettingsPage({
         </div>
 
         {/* ---- right column ---- */}
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <Card className="h-fit">
             <div className="border-b border-line px-5 py-4">
               <h2 className="text-[15px] font-semibold">{t("settings.audit.title")}</h2>

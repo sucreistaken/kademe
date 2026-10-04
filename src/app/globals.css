@@ -249,6 +249,13 @@ body {
   outline-offset: var(--focus-offset, 2px);
 }
 
+/* The panel menu as a sheet below 1024px: Sheet's `data-[side=left]:w-3/4`
+   and `sm:max-w-sm` outrank the sidebar's own `w-(--sidebar-width)`, which
+   made it 384px wide. Unlayered, so it wins over both utilities. */
+[data-slot="sidebar"][data-mobile="true"] {
+  width: var(--sidebar-width);
+}
+
 /*
  * Motion for Dialog and Sheet, HIRING-UX 8.5: 240ms in, 180ms out, on the soft
  * curve. tw-animate reads --tw-animation-duration before the duration-*

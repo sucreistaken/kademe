@@ -357,8 +357,8 @@ export function BlueprintEditor({
         </section>
       </div>
 
-      {/* Sticky bar: coverage, length, one action */}
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-surface/95 shadow-panel backdrop-blur">
+      {/* Sticky bar: coverage, length, one action. From 1024px it starts after the side menu. */}
+      <div className="fixed inset-x-0 bottom-0 z-20 lg:left-(--sidebar-width) border-t border-line bg-surface/95 shadow-panel backdrop-blur">
         <div className="mx-auto flex max-w-[1360px] flex-wrap items-center gap-4 px-6 py-3">
           <span className={cn("text-[13px]", missing.length ? "text-ink" : "text-muted")}>
             {missing.length

@@ -35,10 +35,21 @@ const ACTIVE =
   "data-active:before:absolute data-active:before:inset-y-1.5 data-active:before:left-0 " +
   "data-active:before:w-0.5 data-active:before:rounded-full data-active:before:bg-accent";
 
-export function ManagerNav({ groups, footer }: { groups: NavGroupView[]; footer: React.ReactNode }) {
+export function ManagerNav({
+  groups,
+  footer,
+  mobileTitle,
+  mobileDescription,
+}: {
+  groups: NavGroupView[];
+  footer: React.ReactNode;
+  /** Screen-reader title and description of the sheet the menu becomes below 1024px. */
+  mobileTitle: string;
+  mobileDescription: string;
+}) {
   const pathname = usePathname();
   return (
-    <Sidebar>
+    <Sidebar mobileTitle={mobileTitle} mobileDescription={mobileDescription}>
       <SidebarHeader className="px-4 py-4">
         <Link href="/dashboard" className="text-[15px] font-semibold tracking-tight text-ink">
           Kademe
