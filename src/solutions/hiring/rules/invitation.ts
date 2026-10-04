@@ -4,7 +4,10 @@ import type { Locale } from "@/i18n/locale";
 
 const EMAIL_RE = /^[^@\s<>",;]+@[^@\s<>",;.]+(\.[^@\s<>",;.]+)+$/;
 const MAX_EMAIL_LENGTH = 254;
-const MAX_NAME_LENGTH = 120;
+/** One cap for a person's name, in the pasted list and in the message. */
+export const MAX_NAME_LENGTH = 120;
+const MAX_ORG_LENGTH = 80;
+const MAX_POSITION_LENGTH = 120;
 
 export const isEmail = (value: string): boolean => {
   const v = value.trim();
@@ -18,17 +21,22 @@ export const SURVEY_MIN_ANSWERS = 5;
  * Text that came from a person (a candidate's name, an organisation, a
  * position) made safe to drop into the plain text message: one line, no
  * angle brackets (so no markup survives if a mail client ever renders the
- * body as HTML), no control characters, no em dash, and a length cap so one
- * field cannot swallow the message.
+ * body as HTML), no control, zero width or bidi characters, no scheme:// run
+ * (the e-mail carries one link, ours), no em dash, and a cap counted in
+ * characters (never through a surrogate pair) so one field cannot swallow the
+ * message.
  */
 function plainText(value: string, max: number): string {
   const clean = value
+    .replace(/[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g, "")
+    .replace(/[a-z][a-z0-9+.-]*:\/\/\S*/gi, " ")
     .replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]+/g, " ")
     .replace(/[<>]/g, "")
     .replace(/\u2014/g, "-")
     .replace(/\s+/g, " ")
     .trim();
-  return clean.length > max ? `${clean.slice(0, max).trimEnd()}...` : clean;
+  const chars = Array.from(clean);
+  return chars.length > max ? `${chars.slice(0, max).join("").trimEnd()}...` : clean;
 }
 
 /** The link goes in as one token: whitespace or angle brackets would break the line it sits on. */
@@ -50,30 +58,36 @@ export function inviteMessage(input: {
   minutes: number;
   contactEmail: string | null;
 }): { subject: string; body: string } {
-  const name = plainText(input.candidateName, 80);
-  const org = plainText(input.orgName, 80);
-  const position = plainText(input.positionName, 120);
-  const deadline = plainText(input.deadline, 40);
+  const name = plainText(input.candidateName, MAX_NAME_LENGTH);
+  const org = plainText(input.orgName, MAX_ORG_LENGTH);
+  const position = plainText(input.positionName, MAX_POSITION_LENGTH);
+  const deadline = plainText(input.deadline, 80);
   const url = plainUrl(input.url);
-  const minutes = Math.max(1, Math.round(input.minutes));
+  if (!url) throw new Error("inviteMessage needs the candidate's link");
+  const minutes = Number.isFinite(input.minutes) ? Math.round(input.minutes) : 0;
   const contact = input.contactEmail && isEmail(input.contactEmail) ? plainText(input.contactEmail, MAX_EMAIL_LENGTH) : null;
   if (input.locale === "en") {
+    const subject = org && position ? `${org}: ${position} assessment` : org ? `${org}: assessment` : position ? `${position} assessment` : "Assessment";
+    const time = minutes >= 1 ? `, in about ${minutes} minutes` : "";
     return {
-      subject: `${org}: ${position} assessment`,
+      subject,
       body: [
         name ? `Hi ${name},` : "Hi,",
-        `We prepared a short assessment for your application for ${position} at ${org}. You can complete it in your own time, in about ${minutes} minutes.`,
+        `We prepared a short assessment for your application for ${position || "this role"}${org ? ` at ${org}` : ""}. You can complete it in your own time${time}.`,
         `To start: ${url}`,
         `Deadline: ${deadline}. If you stop halfway, the same link brings you back to where you left off.`,
         ...(contact ? [`If anything goes wrong, write to ${contact}.`] : []),
       ].join("\n\n"),
     };
   }
+  const subject = org && position ? `${org}: ${position} değerlendirmesi` : org ? `${org}: değerlendirme` : position ? `${position} değerlendirmesi` : "Değerlendirme";
+  const lead = org ? `${org} bünyesindeki ${position || "bu pozisyon"}` : position || "Bu pozisyon";
+  const time = minutes >= 1 ? `, yaklaşık ${minutes} dakikada` : "";
   return {
-    subject: `${org}: ${position} değerlendirmesi`,
+    subject,
     body: [
       name ? `Merhaba ${name},` : "Merhaba,",
-      `${org} için yaptığın ${position} başvurusu için kısa bir değerlendirme hazırladık. Kendi zamanında, yaklaşık ${minutes} dakikada tamamlayabilirsin.`,
+      `${lead} başvurun için kısa bir değerlendirme hazırladık. Kendi zamanında${time} tamamlayabilirsin.`,
       `Başlamak için: ${url}`,
       `Son tarih: ${deadline}. Yarıda bırakırsan aynı linkten kaldığın yerden devam edersin.`,
       ...(contact ? [`Bir sorun olursa ${contact} adresine yazabilirsin.`] : []),
@@ -146,7 +160,7 @@ export function parseInviteRows(text: string): { rows: InviteRow[]; tooMany: boo
     email = email.replace(/^mailto:/i, "").trim();
     const fullName = cells.join(" ").replace(/\s+/g, " ").trim();
     const key = email.toLowerCase();
-    const nameOk = fullName.length >= 2 && fullName.length <= MAX_NAME_LENGTH && !/[<>@]/.test(fullName);
+    const nameOk = Array.from(fullName).length >= 2 && Array.from(fullName).length <= MAX_NAME_LENGTH && !/[<>@]/.test(fullName);
     const problem: InviteRow["problem"] = !isEmail(email) ? "EMAIL" : !nameOk ? "NAME" : seen.has(key) ? "DUPLICATE" : null;
     if (isEmail(email)) seen.add(key);
     rows.push({ line: i + 1, fullName, email, problem });
@@ -180,14 +194,21 @@ export function addDays(day: string, days: number): string {
 }
 
 /**
- * Decision 16: the chosen day, else the opening's deadline while it is ahead,
- * else 14 days from today. `today` is the org's day (`orgDay`); a malformed
- * chosen or deadline day is ignored rather than trusted.
+ * Decision 16: the chosen day, held inside [today, the opening's deadline],
+ * else the opening's deadline while it is ahead, else 14 days from today.
+ * `today` is the org's day (`orgDay`). A chosen day in the past becomes today,
+ * one past the deadline becomes the deadline; the upper bound exists only
+ * while a deadline is ahead (a deadline already behind today is ignored, as
+ * in the default). A malformed chosen or deadline day is ignored rather than
+ * trusted.
  */
 export function linkExpiryDay(input: { chosen: string | null; openingDeadlineDay: string | null; today: string }): string {
-  if (input.chosen && dayParts(input.chosen)) return input.chosen;
-  if (input.openingDeadlineDay && dayParts(input.openingDeadlineDay) && input.openingDeadlineDay >= input.today) return input.openingDeadlineDay;
-  return addDays(input.today, 14);
+  const deadline = input.openingDeadlineDay && dayParts(input.openingDeadlineDay) && input.openingDeadlineDay >= input.today ? input.openingDeadlineDay : null;
+  if (input.chosen && dayParts(input.chosen)) {
+    const lifted = input.chosen < input.today ? input.today : input.chosen;
+    return deadline && lifted > deadline ? deadline : lifted;
+  }
+  return deadline ?? addDays(input.today, 14);
 }
 
 const MONTHS: Record<Locale, readonly string[]> = {
@@ -202,9 +223,25 @@ export function formatInviteDay(day: string, locale: Locale): string {
   return `${parts[2]} ${MONTHS[locale][parts[1] - 1]}`;
 }
 
+/**
+ * The deadline the way the message states it: the end of the org's day with
+ * the zone named ("14 Eki 23:59 (Türkiye Standart Saati)", "14 Oct, 23:59
+ * (Türkiye Standard Time)"). `zoneName` is `zoneLabel(locale)` from
+ * org-timezone, passed in so these rules stay free of environment reads.
+ */
+export function formatInviteDeadline(day: string, locale: Locale, zoneName: string): string {
+  const date = formatInviteDay(day, locale);
+  return locale === "en" ? `${date}, 23:59 (${zoneName})` : `${date} 23:59 (${zoneName})`;
+}
+
 export type CandidateProgress = "INVITED" | "OPENED" | "IN_PROGRESS" | "COMPLETED" | "EXPIRED";
 
-/** One word for the Candidates tab: an unopened link past its date is expired, a started one never is. */
+/**
+ * One word for the Candidates tab. Only a NOT_STARTED link past its date is
+ * expired (the same rule as candidate-context: anyone already inside, or with
+ * a retake open, is not cut off by the link); a started one never is. A link
+ * ending exactly now is not yet expired.
+ */
 export function candidateProgress(input: {
   linkStatus: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | "EXPIRED" | "RETAKE_AVAILABLE";
   linkExpiresAt: Date;
@@ -215,6 +252,7 @@ export function candidateProgress(input: {
 }): CandidateProgress {
   if (input.completed) return "COMPLETED";
   if (input.started) return "IN_PROGRESS";
-  if (input.linkStatus === "EXPIRED" || input.linkExpiresAt.getTime() < input.now.getTime()) return "EXPIRED";
+  if (input.linkStatus === "EXPIRED") return "EXPIRED";
+  if (input.linkStatus === "NOT_STARTED" && input.linkExpiresAt.getTime() < input.now.getTime()) return "EXPIRED";
   return input.firstSeen ? "OPENED" : "INVITED";
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { addDays, candidateProgress, formatInviteDay, inviteMessage, isEmail, linkExpiryDay, MAX_INVITE_ROWS, parseInviteRows } from "./invitation";
-import { orgDay, zonedDayStart } from "@/lib/org-timezone";
+import { addDays, candidateProgress, formatInviteDay, formatInviteDeadline, inviteMessage, isEmail, linkExpiryDay, MAX_INVITE_ROWS, MAX_NAME_LENGTH, parseInviteRows } from "./invitation";
+import { orgDay, zonedDayStart, zoneLabel } from "@/lib/org-timezone";
 
 describe("the ready message (HIRING-UX 5.11)", () => {
   const base = { candidateName: "Elif Kaya", orgName: "Örnek A.Ş.", positionName: "Ürün Tasarımcısı", url: "https://kademe.test/a/abc", deadline: "14 Eki", minutes: 25, contactEmail: "deniz@ornek.com" };
@@ -61,7 +61,8 @@ describe("a pasted list of candidates", () => {
 
 describe("the link's last day (decision 16)", () => {
   it("is the chosen day, else the opening's deadline while it is ahead, else 14 days from today", () => {
-    expect(linkExpiryDay({ chosen: "2026-11-01", openingDeadlineDay: "2026-10-20", today: "2026-10-05" })).toBe("2026-11-01");
+    expect(linkExpiryDay({ chosen: "2026-10-12", openingDeadlineDay: "2026-10-20", today: "2026-10-05" })).toBe("2026-10-12");
+    expect(linkExpiryDay({ chosen: "2026-11-01", openingDeadlineDay: null, today: "2026-10-05" })).toBe("2026-11-01");
     expect(linkExpiryDay({ chosen: null, openingDeadlineDay: "2026-10-20", today: "2026-10-05" })).toBe("2026-10-20");
     expect(linkExpiryDay({ chosen: null, openingDeadlineDay: "2026-10-01", today: "2026-10-05" })).toBe("2026-10-19");
     expect(linkExpiryDay({ chosen: null, openingDeadlineDay: null, today: "2026-12-25" })).toBe("2027-01-08");
@@ -202,5 +203,114 @@ describe("days are org days, not machine days", () => {
     expect(formatInviteDay("2026-10-14", "en")).toBe("14 Oct");
     expect(formatInviteDay("2026-09-03", "en")).toBe("3 Sep");
     expect(formatInviteDay("2026-09-03", "tr")).toBe("3 Eyl");
+  });
+});
+
+describe("a chosen last day is held inside [today, the opening's deadline] (fix round 1)", () => {
+  it("raises a day in the past to today and lowers a day past the deadline to the deadline", () => {
+    expect(linkExpiryDay({ chosen: "2026-09-01", openingDeadlineDay: "2026-10-20", today: "2026-10-05" })).toBe("2026-10-05");
+    expect(linkExpiryDay({ chosen: "2026-11-01", openingDeadlineDay: "2026-10-20", today: "2026-10-05" })).toBe("2026-10-20");
+  });
+
+  it("keeps today itself and the deadline itself, and has no upper bound without a deadline", () => {
+    expect(linkExpiryDay({ chosen: "2026-10-05", openingDeadlineDay: "2026-10-20", today: "2026-10-05" })).toBe("2026-10-05");
+    expect(linkExpiryDay({ chosen: "2026-10-20", openingDeadlineDay: "2026-10-20", today: "2026-10-05" })).toBe("2026-10-20");
+    expect(linkExpiryDay({ chosen: "2030-01-01", openingDeadlineDay: null, today: "2026-10-05" })).toBe("2030-01-01");
+  });
+
+  it("ignores a deadline that is already behind today instead of clamping to a past day", () => {
+    expect(linkExpiryDay({ chosen: "2026-10-12", openingDeadlineDay: "2026-10-01", today: "2026-10-05" })).toBe("2026-10-12");
+  });
+});
+
+describe("candidateProgress, links that are not NOT_STARTED (fix round 1)", () => {
+  const now = new Date("2026-10-05T09:00:00Z");
+  const past = new Date("2026-10-01T00:00:00Z");
+  const base = { linkStatus: "NOT_STARTED" as const, linkExpiresAt: new Date("2026-10-10T09:00:00Z"), firstSeen: false, started: false, completed: false, now };
+
+  it("expires only an unstarted NOT_STARTED link, like the candidate context does", () => {
+    expect(candidateProgress({ ...base, linkStatus: "RETAKE_AVAILABLE", linkExpiresAt: past })).toBe("INVITED");
+    expect(candidateProgress({ ...base, linkStatus: "RETAKE_AVAILABLE", linkExpiresAt: past, firstSeen: true })).toBe("OPENED");
+    expect(candidateProgress({ ...base, linkStatus: "RETAKE_AVAILABLE", started: true, linkExpiresAt: past })).toBe("IN_PROGRESS");
+    expect(candidateProgress({ ...base, linkStatus: "IN_PROGRESS", firstSeen: true, linkExpiresAt: past })).toBe("OPENED");
+  });
+
+  it("is not yet expired at the very instant the link ends, and is a millisecond later", () => {
+    expect(candidateProgress({ ...base, linkExpiresAt: now })).toBe("INVITED");
+    expect(candidateProgress({ ...base, linkExpiresAt: new Date(now.getTime() - 1) })).toBe("EXPIRED");
+  });
+});
+
+describe("message minor fixes (fix round 1)", () => {
+  const base = { locale: "en" as const, candidateName: "Ali", orgName: "Acme", positionName: "Dev", url: "https://kademe.test/a/abc", deadline: "14 Oct", minutes: 25, contactEmail: null };
+
+  it("strips bidi and zero width controls from inserted names", () => {
+    const { subject, body } = inviteMessage({ ...base, candidateName: "Al\u202Ei\u200B\u2066 Ve\u200Fli", orgName: "Ac\u202Dme", positionName: "D\u2069ev" });
+    expect(subject + body).not.toMatch(/[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/);
+    expect(body).toContain("Hi Ali Veli,");
+    expect(subject).toBe("Acme: Dev assessment");
+  });
+
+  it("removes scheme:// runs from names so the link appears once", () => {
+    const { subject, body } = inviteMessage({ ...base, candidateName: "Ali https://evil.test/login?x=1 Veli", orgName: "Acme http://x.test", positionName: "ftp://a.b Dev" });
+    expect(body.match(/:\/\//g)).toHaveLength(1);
+    expect(subject).not.toContain("://");
+    expect(body).toContain("Hi Ali Veli,");
+  });
+
+  it("cuts by characters, never through a surrogate pair", () => {
+    const { body } = inviteMessage({ ...base, candidateName: "\u{1F600}".repeat(500) });
+    const hi = body.split("\n\n")[0];
+    expect(hi).toBe(`Hi ${"\u{1F600}".repeat(MAX_NAME_LENGTH)}...,`);
+    expect(hi).not.toMatch(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/);
+  });
+
+  it("uses the one name cap the pasted list uses", () => {
+    const long = "N".repeat(MAX_NAME_LENGTH + 1);
+    expect(parseInviteRows(`${long}, a@example.com`).rows[0].problem).toBe("NAME");
+    expect(parseInviteRows(`${"N".repeat(MAX_NAME_LENGTH)}, a@example.com`).rows[0].problem).toBeNull();
+    expect(inviteMessage({ ...base, candidateName: long }).body).toContain(`Hi ${"N".repeat(MAX_NAME_LENGTH)}...,`);
+  });
+
+  it("leaves the minutes out when they are not a usable number, and refuses an empty link", () => {
+    for (const minutes of [Number.NaN, -5, 0, 0.2, Number.POSITIVE_INFINITY]) {
+      for (const locale of ["tr", "en"] as const) {
+        const { body } = inviteMessage({ ...base, locale, minutes });
+        expect(body).not.toMatch(/NaN|Infinity|-5|\b0\b/);
+        expect(body).not.toMatch(/minutes|dakika/);
+      }
+    }
+    expect(inviteMessage({ ...base, minutes: 25.4 }).body).toContain("about 25 minutes");
+    expect(() => inviteMessage({ ...base, url: "  <> " })).toThrow();
+  });
+
+  it("gives an empty organisation or position a neutral wording", () => {
+    const noOrg = inviteMessage({ ...base, orgName: " <> " });
+    expect(noOrg.subject).toBe("Dev assessment");
+    expect(noOrg.body).toContain("application for Dev.");
+    const noPos = inviteMessage({ ...base, positionName: "" });
+    expect(noPos.subject).toBe("Acme: assessment");
+    expect(noPos.body).toContain("application for this role at Acme.");
+    const neither = inviteMessage({ ...base, locale: "tr", orgName: "", positionName: "" });
+    expect(neither.subject).toBe("Değerlendirme");
+    expect(neither.body).toContain("Bu pozisyon başvurun için kısa bir değerlendirme hazırladık.");
+    expect(neither.body).not.toMatch(/undefined|null/);
+  });
+
+  it("says 'için' once in the Turkish opening line", () => {
+    const { body } = inviteMessage({ ...base, locale: "tr", orgName: "Örnek A.Ş.", positionName: "Ürün Tasarımcısı" });
+    expect(body).toContain("Örnek A.Ş. bünyesindeki Ürün Tasarımcısı başvurun için kısa bir değerlendirme hazırladık.");
+    expect(body.split("\n\n")[1].match(/için/g)).toHaveLength(1);
+  });
+});
+
+describe("the deadline as the end of the org's day", () => {
+  it("names the time and the zone, in the candidate's language", () => {
+    const tr = formatInviteDeadline("2026-10-14", "tr", zoneLabel("tr", "Europe/Istanbul"));
+    const en = formatInviteDeadline("2026-10-14", "en", zoneLabel("en", "Europe/Istanbul"));
+    expect(tr).toBe("14 Eki 23:59 (Türkiye Standart Saati)");
+    expect(en).toBe("14 Oct, 23:59 (Türkiye Standard Time)");
+    const { body } = inviteMessage({ locale: "tr", candidateName: "Ali", orgName: "Acme", positionName: "Dev", url: "https://kademe.test/a/abc", deadline: tr, minutes: 25, contactEmail: null });
+    expect(body).toContain("Son tarih: 14 Eki 23:59 (Türkiye Standart Saati).");
   });
 });
