@@ -1,16 +1,14 @@
 import type { NextRequest } from "next/server";
 import { candidateJson } from "@/lib/candidate-safe";
 import { getConsentText, hasConsented, recordConsent } from "@/lib/candidate-context";
-import { loadState } from "@/lib/exam-flow";
-import { badRequest, clientIp, readJson, userAgent } from "@/lib/candidate-api";
-import { withExamCandidate } from "@/lib/exam-candidate-api";
+import { badRequest, clientIp, readJson, userAgent, withCandidate, withSolution } from "@/lib/candidate-api";
 
 /** The exact consent copy on screen, with the version that will be recorded. */
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ token: string }> },
 ) {
-  return withExamCandidate(req, params, async (_req, ctx) => {
+  return withCandidate(req, params, async (_req, ctx) => {
     const text = await getConsentText(ctx);
     return candidateJson({
       version: text.version,
@@ -28,7 +26,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ token: string }> },
 ) {
-  return withExamCandidate(req, params, async (request, ctx) => {
+  return withSolution(req, params, async (request, ctx, solution) => {
     const body = await readJson<{ accepted?: boolean }>(request);
     if (!body?.accepted) {
       return badRequest(ctx, "CONSENT_REQUIRED");
@@ -37,6 +35,6 @@ export async function POST(
       const text = await getConsentText(ctx);
       await recordConsent(ctx, text.id, clientIp(request), userAgent(request));
     }
-    return candidateJson(await loadState(ctx));
+    return candidateJson(await solution.candidate.loadState(ctx));
   });
 }

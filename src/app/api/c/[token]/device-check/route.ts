@@ -3,9 +3,8 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { proctorEvidence, proctorSessions } from "@/db/schema";
 import { candidateJson } from "@/lib/candidate-safe";
-import { loadState, recordDeviceCheck, workingAttempt } from "@/lib/exam-flow";
-import { conflict } from "@/lib/candidate-api";
-import { withExamCandidate } from "@/lib/exam-candidate-api";
+import { currentAttempt, recordDeviceCheck } from "@/lib/candidate-context";
+import { conflict, withSolution } from "@/lib/candidate-api";
 
 /**
  * Marks the system check as passed. The server does not take the tab's word for
@@ -13,11 +12,11 @@ import { withExamCandidate } from "@/lib/exam-candidate-api";
  * required, the reference frame the teacher will compare the rest against.
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
-  return withExamCandidate(req, params, async (_request, ctx) => {
-    const { attempt, finished } = await workingAttempt(ctx.assessment.id);
+  return withSolution(req, params, async (_request, ctx, solution) => {
+    const { attempt, finished } = await currentAttempt(ctx.assessment);
     if (finished) return conflict(ctx, "ALREADY_COMPLETED");
-    const policy = ctx.assessment.config.proctoring;
-    if (policy.preset !== "OFF") {
+    const policy = await solution.proctorPolicy(ctx.assessment.id);
+    if (policy && policy.preset !== "OFF") {
       const [session] = await db
         .select({ id: proctorSessions.id })
         .from(proctorSessions)
@@ -34,6 +33,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
       }
     }
     await recordDeviceCheck(attempt.id);
-    return candidateJson(await loadState(ctx));
+    return candidateJson(await solution.candidate.loadState(ctx));
   });
 }

@@ -7,15 +7,15 @@ import {
   proctorEvents,
   proctorEvidence,
   proctorSessions,
-  sectionRuns,
 } from "@/db/schema";
-import { closeSectionRun, currentSection, finishAttempt, type ExamCandidateContext as CandidateContext } from "@/lib/exam-flow";
+import type { CandidateContext } from "@/lib/candidate-context";
 import { normalizeBatch, type NormalizedEvent } from "@/lib/proctor/events";
 import { computeIntegrity, type IntegrityEvent } from "@/lib/proctor/integrity";
 import { TAXONOMY, effectiveSeverity, type ProctorEventType } from "@/lib/proctor/taxonomy";
 import { shouldTerminate } from "@/lib/proctor/termination";
 import { enqueueProctorReview } from "@/lib/queue";
 import { getStorage, proctorEvidenceKey } from "@/lib/storage";
+import type { SegmentRef, SolutionModule } from "@/solutions/types";
 
 /**
  * The server half of proctoring.
@@ -100,7 +100,7 @@ async function checkDuplicate(attemptId: string, sessionId: string) {
 }
 
 export async function heartbeat(
-  ctx: CandidateContext,
+  solution: SolutionModule,
   attemptId: string,
   sessionId: unknown,
   state: Record<string, unknown>,
@@ -109,10 +109,9 @@ export async function heartbeat(
   if (!session) return null;
   const now = new Date();
   const gap = now.getTime() - session.lastSeenAt.getTime();
-  const current = await currentSection(ctx);
-  // Only a gap inside a running section means anything: between sections and
-  // on the check screen the student may simply be reading.
-  if (gap > HEARTBEAT_GAP_MS && current?.run?.startedAt && !current.run.submittedAt) {
+  // Only a gap inside a running segment means anything: between sections and
+  // on the check screen the candidate may simply be reading.
+  if (gap > HEARTBEAT_GAP_MS && (await solution.attempts.openSegment(attemptId))) {
     await serverEvent(attemptId, "HEARTBEAT_GAP", { gapMs: gap }, session.lastSeenAt, now);
   }
   await db
@@ -122,21 +121,13 @@ export async function heartbeat(
   return { serverNow: now.getTime() };
 }
 
-async function runningSectionRunId(attemptId: string): Promise<string | null> {
-  const [run] = await db
-    .select({ id: sectionRuns.id })
-    .from(sectionRuns)
-    .where(and(eq(sectionRuns.attemptId, attemptId), sql`${sectionRuns.startedAt} is not null`, sql`${sectionRuns.submittedAt} is null`))
-    .limit(1);
-  return run?.id ?? null;
-}
-
 /**
  * Stores a batch from the browser. Intervals arrive twice (start, then end) and
  * are merged by their client id. Returns whether the attempt was terminated.
  */
 export async function ingestEvents(
   ctx: CandidateContext,
+  solution: SolutionModule,
   attempt: typeof attempts.$inferSelect,
   sessionId: unknown,
   raw: unknown,
@@ -149,22 +140,22 @@ export async function ingestEvents(
     attemptStartedAt: (attempt.startedAt ?? attempt.createdAt).getTime(),
     clientOffsetMs: Number.isFinite(clientOffsetMs) ? clientOffsetMs : 0,
   });
-  const sectionRunId = await runningSectionRunId(attempt.id);
-  const policy = ctx.assessment.config.proctoring;
+  const segment = await solution.attempts.openSegment(attempt.id);
+  const policy = await solution.proctorPolicy(ctx.assessment.id);
   for (const e of accepted) {
-    const stored = await upsertEvent(attempt.id, session?.id ?? null, sectionRunId, e);
-    if (stored.fresh && policy.aiSecondLook && TAXONOMY[e.type].aiReview) {
+    const stored = await upsertEvent(attempt.id, session?.id ?? null, segment, e);
+    if (stored.fresh && policy?.aiSecondLook && TAXONOMY[e.type].aiReview) {
       await maybeQueueReview(attempt.id, stored.id, policy.maxAiReviewsPerAttempt);
     }
   }
   await recomputeIntegrity(attempt.id);
-  return checkTermination(ctx, attempt.id);
+  return checkTermination(solution, policy, attempt.id);
 }
 
 async function upsertEvent(
   attemptId: string,
   sessionId: string | null,
-  sectionRunId: string | null,
+  segment: SegmentRef | null,
   e: NormalizedEvent,
 ): Promise<{ id: string; fresh: boolean }> {
   const [existing] = await db
@@ -194,9 +185,10 @@ async function upsertEvent(
     .insert(proctorEvents)
     .values({
       attemptId,
-      sectionRunId,
-      segmentKind: sectionRunId ? "section_run" : null,
-      segmentRunId: sectionRunId,
+      // Dual write until migration 0003 (Task 8).
+      sectionRunId: segment?.kind === "section_run" ? segment.runId : null,
+      segmentKind: segment?.kind ?? null,
+      segmentRunId: segment?.runId ?? null,
       sessionId,
       clientEventId: e.clientEventId,
       type: e.type,
@@ -280,9 +272,12 @@ export async function storeEvidence(
   return { id };
 }
 
-async function checkTermination(ctx: CandidateContext, attemptId: string): Promise<boolean> {
-  const policy = ctx.assessment.config.proctoring;
-  if (!policy.termination.enabled) return false;
+async function checkTermination(
+  solution: SolutionModule,
+  policy: Awaited<ReturnType<SolutionModule["proctorPolicy"]>>,
+  attemptId: string,
+): Promise<boolean> {
+  if (!policy?.termination.enabled) return false;
   const events = await db
     .select({ type: proctorEvents.type, startedAt: proctorEvents.startedAt, endedAt: proctorEvents.endedAt })
     .from(proctorEvents)
@@ -293,11 +288,11 @@ async function checkTermination(ctx: CandidateContext, attemptId: string): Promi
     Date.now(),
   );
   if (!decision.terminate) return false;
-  await terminateAttempt(attemptId, decision.reason ?? "POLICY");
+  await terminateAttempt(solution, attemptId, decision.reason ?? "POLICY");
   return true;
 }
 
-export async function terminateAttempt(attemptId: string, reason: string) {
+export async function terminateAttempt(solution: SolutionModule, attemptId: string, reason: string) {
   const updated = await db
     .update(attempts)
     .set({ terminatedAt: new Date(), terminationReason: reason })
@@ -305,9 +300,7 @@ export async function terminateAttempt(attemptId: string, reason: string) {
     .returning();
   if (updated.length === 0) return;
   await serverEvent(attemptId, "TERMINATED", { reason });
-  const runs = await db.select().from(sectionRuns).where(eq(sectionRuns.attemptId, attemptId));
-  for (const r of runs.filter((x) => x.startedAt && !x.submittedAt)) await closeSectionRun(r.id, "SUBMIT");
-  await finishAttempt(attemptId);
+  await solution.attempts.terminate(attemptId);
 }
 
 /** Recomputes the attempt's integrity summary from everything stored. */

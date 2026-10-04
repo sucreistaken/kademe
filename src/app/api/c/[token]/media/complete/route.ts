@@ -1,13 +1,9 @@
 import type { NextRequest } from "next/server";
-import { eq } from "drizzle-orm";
-import { db } from "@/db";
-import { itemResponses } from "@/db/schema";
 import { candidateJson } from "@/lib/candidate-safe";
 import { completeMedia, failMedia, resolveOwnedMedia } from "@/lib/candidate-media";
-import { reopenGradingForMedia } from "@/lib/exam-results";
 import { enqueueTranscription } from "@/lib/queue";
 import { isTranscribableMime } from "@/lib/transcription";
-import { badRequest, conflict, readJson, withCandidate } from "@/lib/candidate-api";
+import { badRequest, conflict, readJson, withSolution } from "@/lib/candidate-api";
 
 type Body = {
   uploadRef?: string;
@@ -25,7 +21,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ token: string }> },
 ) {
-  return withCandidate(req, params, async (request, ctx) => {
+  return withSolution(req, params, async (request, ctx, solution) => {
     const body = await readJson<Body>(request);
     const owned = await resolveOwnedMedia(ctx, body?.uploadRef);
     if (!owned) return badRequest(ctx, "UPLOAD_NOT_FOUND");
@@ -45,16 +41,7 @@ export async function POST(
     // Never throws: a queue problem cannot fail the student's answer.
     if (isTranscribableMime(asset.mime)) await enqueueTranscription(asset.id);
 
-    if (asset.itemResponseId) {
-      const [response] = await db.select().from(itemResponses).where(eq(itemResponses.id, asset.itemResponseId));
-      if (response) {
-        // The newest take is the answer. It supersedes a typed alternative.
-        const answer = { ...(response.answer ?? {}), mediaAssetId: asset.id };
-        delete answer.usedTextAlternative;
-        await db.update(itemResponses).set({ answer, updatedAt: new Date() }).where(eq(itemResponses.id, response.id));
-        await reopenGradingForMedia(response.id);
-      }
-    }
+    await solution.attempts.onMediaComplete(asset);
 
     return candidateJson({ status: asset.status, bytes: asset.bytes, durationMs: asset.durationMs });
   }, { allowProblems: ["COMPLETED"] });

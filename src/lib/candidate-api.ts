@@ -9,6 +9,8 @@ import {
 } from "@/lib/candidate-context";
 import { candidateT, type CandidateMessages } from "@/i18n/candidate";
 import { localeFromAcceptLanguage, type Locale } from "@/i18n/locale";
+import { solutionModule } from "@/solutions/registry.server";
+import type { SolutionModule } from "@/solutions/types";
 
 /**
  * Shared plumbing for `/api/c/*`. There is no cookie and no session here: the
@@ -142,6 +144,37 @@ export async function withCandidate(
 
   await recordFirstSeen(resolved.ctx, ip === "unknown" ? null : ip, userAgent(req));
   return handler(req, resolved.ctx);
+}
+
+export type SolutionHandler = (
+  req: NextRequest,
+  ctx: CandidateContext,
+  solution: SolutionModule,
+) => Promise<Response>;
+
+/**
+ * `withCandidate` for core endpoints whose answer depends on the solution
+ * (state, consent, proctoring). An invitation of a solution with no registered
+ * module gets the unknown-token 404. The check runs inside `withCandidate`, as
+ * soon as the token resolves, so it cannot be told apart from an unknown token
+ * by the link's state either.
+ */
+export function withSolution(
+  req: NextRequest,
+  params: Promise<{ token: string }>,
+  handler: SolutionHandler,
+  options: CandidateRouteOptions = {},
+): Promise<Response> {
+  return withCandidate(
+    req,
+    params,
+    async (request, ctx) => {
+      const solution = solutionModule(ctx.assessment.solution);
+      if (!solution) return notFoundForSolution(request);
+      return handler(request, ctx, solution);
+    },
+    { ...options, acceptSolution: (kind) => solutionModule(kind) !== null },
+  );
 }
 
 export function fail(ctx: CandidateContext, code: ErrorCode, status: number) {

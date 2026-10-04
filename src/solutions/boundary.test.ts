@@ -16,17 +16,6 @@ const KNOWN_COUPLINGS = [
   "src/app/(manager)/dashboard/page.tsx",
   "src/app/a/[token]/done/page.tsx",
   "src/app/a/[token]/shared.tsx",
-  "src/app/api/c/[token]/consent/route.ts",
-  "src/app/api/c/[token]/device-check/route.ts",
-  "src/app/api/c/[token]/heartbeat/route.ts",
-  "src/app/api/c/[token]/info/route.ts",
-  "src/app/api/c/[token]/media/complete/route.ts",
-  "src/app/api/c/[token]/problem/route.ts",
-  "src/app/api/c/[token]/proctor/events/route.ts",
-  "src/app/api/c/[token]/proctor/evidence/route.ts",
-  "src/app/api/c/[token]/proctor/heartbeat/route.ts",
-  "src/app/api/c/[token]/proctor/session/route.ts",
-  "src/app/api/c/[token]/state/route.ts",
   "src/app/api/cron/grade/route.ts",
   "src/components/candidate/Finished.tsx",
   "src/components/candidate/InfoForm.tsx",
@@ -36,7 +25,6 @@ const KNOWN_COUPLINGS = [
   "src/lib/close-expired.ts",
   "src/lib/transcribe-job.ts",
   "src/server/proctor-review-job.ts",
-  "src/server/proctoring.ts",
 ];
 
 const EXEMPT = [

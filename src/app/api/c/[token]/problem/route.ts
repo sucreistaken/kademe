@@ -2,8 +2,7 @@ import type { NextRequest } from "next/server";
 import { db } from "@/db";
 import { messageOutbox } from "@/db/schema";
 import { candidateJson } from "@/lib/candidate-safe";
-import { message, readJson } from "@/lib/candidate-api";
-import { withExamCandidate } from "@/lib/exam-candidate-api";
+import { message, readJson, withSolution } from "@/lib/candidate-api";
 
 type Body = { area?: string; message?: string };
 
@@ -21,10 +20,10 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ token: string }> },
 ) {
-  return withExamCandidate(
+  return withSolution(
     req,
     params,
-    async (request, ctx) => {
+    async (request, ctx, solution) => {
       const body = await readJson<Body>(request);
       const area = (body?.area ?? "GENERAL").slice(0, 40);
       const note = (body?.message ?? "").slice(0, 2000);
@@ -36,7 +35,7 @@ export async function POST(
         subject: `Öğrenci sorun bildirdi: ${ctx.candidate.fullName ?? "isimsiz"} (${area})`,
         body:
           `Öğrenci: ${ctx.candidate.fullName ?? "-"} <${ctx.candidate.email ?? "-"}>\n` +
-          `Sınav: ${ctx.assessment.examName}\n` +
+          `Sınav: ${await solution.candidate.title(ctx)}\n` +
           `Cevap adresi: ${ctx.candidate.email ?? "bilinmiyor"}\n` +
           `Alan: ${area}\n` +
           `Mesaj: ${note || "-"}\n` +

@@ -1,9 +1,8 @@
 import type { NextRequest } from "next/server";
 import { candidateJson } from "@/lib/candidate-safe";
-import { workingAttempt } from "@/lib/exam-flow";
+import { currentAttempt } from "@/lib/candidate-context";
 import { EVIDENCE_MIME, MAX_CLIP_BYTES, MAX_FRAME_BYTES, storeEvidence } from "@/server/proctoring";
-import { badRequest, conflict } from "@/lib/candidate-api";
-import { withExamCandidate } from "@/lib/exam-candidate-api";
+import { badRequest, conflict, withSolution } from "@/lib/candidate-api";
 
 const KINDS = ["WEBCAM_FRAME", "SCREEN_FRAME", "CLIP_VIDEO", "CLIP_AUDIO"] as const;
 const TRIGGERS = ["REFERENCE", "PERIODIC", "VIOLATION"] as const;
@@ -13,24 +12,25 @@ const TRIGGERS = ["REFERENCE", "PERIODIC", "VIOLATION"] as const;
  * is derived here from the token's own attempt; the client names nothing.
  */
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
-  return withExamCandidate(
+  return withSolution(
     req,
     params,
-    async (request, ctx) => {
+    async (request, ctx, solution) => {
       const url = new URL(request.url);
       const kind = url.searchParams.get("kind") as (typeof KINDS)[number];
       const trigger = url.searchParams.get("trigger") as (typeof TRIGGERS)[number];
       if (!KINDS.includes(kind) || !TRIGGERS.includes(trigger)) return badRequest(ctx, "EVIDENCE_INVALID");
       const mime = (request.headers.get("content-type") ?? "").split(";")[0].trim();
       if (!EVIDENCE_MIME.includes(mime)) return badRequest(ctx, "EVIDENCE_INVALID");
-      if (ctx.assessment.config.proctoring.preset === "OFF") return badRequest(ctx, "EVIDENCE_INVALID");
+      const policy = await solution.proctorPolicy(ctx.assessment.id);
+      if (!policy || policy.preset === "OFF") return badRequest(ctx, "EVIDENCE_INVALID");
       const max = kind.startsWith("CLIP") ? MAX_CLIP_BYTES : MAX_FRAME_BYTES;
       // Refuse an oversized body before reading it into memory.
       if (Number(request.headers.get("content-length") ?? 0) > max) return badRequest(ctx, "EVIDENCE_INVALID");
       const body = new Uint8Array(await request.arrayBuffer());
       if (body.byteLength === 0 || body.byteLength > max) return badRequest(ctx, "EVIDENCE_INVALID");
 
-      const { attempt, finished } = await workingAttempt(ctx.assessment.id);
+      const { attempt, finished } = await currentAttempt(ctx.assessment);
       if (finished) return conflict(ctx, "ALREADY_COMPLETED");
       const at = Number(url.searchParams.get("at"));
       const capturedAt = Number.isFinite(at) && Math.abs(at - Date.now()) < 10 * 60_000 ? new Date(at) : new Date();
