@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import { bigint, check, index, integer, jsonb, pgTable, real, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
-import { attempts, sectionRuns } from "./assessment";
+import { attempts } from "./assessment";
 import { aiRuns } from "./compliance";
 import {
   aiReviewStatus,
@@ -54,8 +54,6 @@ export const proctorEvents = pgTable(
     attemptId: uuid("attempt_id")
       .notNull()
       .references(() => attempts.id, { onDelete: "cascade" }),
-    /** DEPRECATED: replaced by segment_kind + segment_run_id. Dropped by migration 0003. */
-    sectionRunId: uuid("section_run_id").references(() => sectionRuns.id, { onDelete: "set null" }),
     /**
      * Which part of the attempt was running, as the solution names it
      * ("section_run" for the exam). No foreign key: proctoring records, it does

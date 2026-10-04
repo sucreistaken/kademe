@@ -54,12 +54,6 @@ export async function createInvitation(input: InviteInput): Promise<InviteResult
         orgId: input.orgId,
         candidateId: candidate.id,
         solution: "LANGUAGE_EXAM",
-        // Dual write until migration 0003 drops these columns (Task 8).
-        blueprintId: blueprint.id,
-        blueprintName: blueprint.name,
-        blueprintSnapshot: blueprint.config,
-        mode: blueprint.mode,
-        claimedLevel: blueprint.mode === "LEVEL_VERIFICATION" ? input.claimedLevel : null,
         locale: input.locale,
         invitedBy: input.invitedBy,
       })

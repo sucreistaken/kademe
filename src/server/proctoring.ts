@@ -185,8 +185,6 @@ async function upsertEvent(
     .insert(proctorEvents)
     .values({
       attemptId,
-      // Dual write until migration 0003 (Task 8).
-      sectionRunId: segment?.kind === "section_run" ? segment.runId : null,
       segmentKind: segment?.kind ?? null,
       segmentRunId: segment?.runId ?? null,
       sessionId,

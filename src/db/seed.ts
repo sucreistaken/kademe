@@ -219,8 +219,6 @@ async function main() {
     const [a] = await db.select().from(s.examAssessments).where(eq(s.examAssessments.assessmentId, demo.assessmentId));
     const snapshot = { ...a.blueprintSnapshot, sections: a.blueprintSnapshot.sections.map((x) => (x.section === "LISTENING" ? { ...x, enabled: false } : x)) };
     await db.update(s.examAssessments).set({ blueprintSnapshot: snapshot }).where(eq(s.examAssessments.assessmentId, demo.assessmentId));
-    // Dual write until migration 0003 (Task 8).
-    await db.update(s.assessments).set({ blueprintSnapshot: snapshot }).where(eq(s.assessments.id, demo.assessmentId));
   }
   log(`Running the demo student through the exam${demoCfgNote}...`);
   await simulateStudent(demo.rawToken, {

@@ -76,3 +76,19 @@ describe("0002_manager_role", () => {
     expect(sql).not.toMatch(/SET DATA TYPE/);
   });
 });
+
+describe("0003_platform_contract", () => {
+  const sql = read("0003_platform_contract");
+  it("drops exactly the columns that moved, and nothing else", () => {
+    const drops = [...sql.matchAll(/ALTER TABLE "(\w+)" DROP COLUMN "(\w+)"/g)].map((m) => `${m[1]}.${m[2]}`).sort();
+    expect(drops).toEqual([
+      "assessments.blueprint_id",
+      "assessments.blueprint_name",
+      "assessments.blueprint_snapshot",
+      "assessments.claimed_level",
+      "assessments.mode",
+      "proctor_events.section_run_id",
+    ]);
+    expect(sql).not.toMatch(/DROP TABLE/);
+  });
+});

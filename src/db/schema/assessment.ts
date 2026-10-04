@@ -14,19 +14,16 @@ import {
   unique,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import type { BlueprintConfig } from "@/lib/exam/blueprint";
 import type { IntegrityResult } from "@/lib/proctor/integrity";
 import type { ItemAnswer, ItemSnapshot, Presentation } from "@/lib/exam/types";
 import { organizations, users } from "./org";
-import { examBlueprints, items } from "./exam";
+import { items } from "./exam";
 import {
   solution,
   linkStatus,
   runCompletion,
   mediaStatus,
   locale,
-  examMode,
-  cefrLevel,
   section,
   integrityOutcome,
 } from "./enums";
@@ -58,8 +55,8 @@ export const candidates = pgTable(
 );
 
 /**
- * One student invited to one exam. The blueprint config is copied here at
- * invite time, so the exam this student takes never changes under them.
+ * One person invited to one solution's assessment. Solution-specific terms live
+ * in the solution's own table (exam_assessments for the language exam).
  */
 export const assessments = pgTable(
   "assessments",
@@ -73,16 +70,6 @@ export const assessments = pgTable(
       .references(() => candidates.id, { onDelete: "cascade" }),
     /** Copied onto every attempt; decides which solution's endpoints answer. */
     solution: solution("solution").notNull(),
-    /** DEPRECATED: moved to exam_assessments. Dropped by migration 0003. */
-    blueprintId: uuid("blueprint_id").references(() => examBlueprints.id, { onDelete: "restrict" }),
-    /** DEPRECATED: moved to exam_assessments. Dropped by migration 0003. */
-    blueprintName: text("blueprint_name"),
-    /** DEPRECATED: moved to exam_assessments. Dropped by migration 0003. */
-    blueprintSnapshot: jsonb("blueprint_snapshot").$type<BlueprintConfig>(),
-    /** DEPRECATED: moved to exam_assessments. Dropped by migration 0003. */
-    mode: examMode("mode"),
-    /** DEPRECATED: moved to exam_assessments. Dropped by migration 0003. */
-    claimedLevel: cefrLevel("claimed_level"),
     /** Interface language. The exam content itself is German. */
     locale: locale("locale").notNull().default("tr"),
     invitedBy: uuid("invited_by").references(() => users.id, {

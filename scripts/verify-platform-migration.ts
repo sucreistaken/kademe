@@ -75,6 +75,33 @@ async function main() {
       (select count(*)::int from media_assets where attempt_id is null) as "mediaWithoutAttempt"`;
   const after: Facts = { ...counts, examTerms: d.examTerms, mediaAttempts: d.mediaAttempts, eventSegments: d.eventSegments };
   let failed = 0;
+  // Pre-drop drift gate: while the deprecated assessments exam columns still exist,
+  // they must agree with exam_assessments. After migration 0003 they are gone and
+  // the gate is skipped, so this script keeps working on the final shape.
+  const [{ legacy }] = await sql<{ legacy: number }[]>`
+    select count(*)::int as legacy from information_schema.columns
+    where table_schema = 'public' and table_name = 'assessments'
+      and column_name in ('blueprint_id', 'blueprint_name', 'blueprint_snapshot', 'mode', 'claimed_level')`;
+  if (legacy === 5) {
+    const [{ drift }] = await sql<{ drift: number }[]>`
+      select count(*)::int as drift
+      from assessments s
+      left join exam_assessments e on e.assessment_id = s.id
+      where (s.solution = 'LANGUAGE_EXAM' and e.assessment_id is null)
+         or (e.assessment_id is not null and (
+              s.blueprint_id is distinct from e.blueprint_id
+           or s.blueprint_name is distinct from e.blueprint_name
+           or s.blueprint_snapshot is distinct from e.blueprint_snapshot
+           or s.mode is distinct from e.mode
+           or s.claimed_level is distinct from e.claimed_level))`;
+    if (drift !== 0) failed += 1;
+    console.log(`${drift === 0 ? "ok  " : "FAIL"} dualWriteDrift: ${drift}`);
+  } else if (legacy === 0) {
+    console.log("dualWriteDrift: skipped (columns already dropped)");
+  } else {
+    failed += 1;
+    console.log(`FAIL dualWriteDrift: ${legacy} of 5 deprecated columns exist (partial state)`);
+  }
   for (const key of Object.keys(before) as Array<keyof Facts>) {
     const same = before[key] === after[key];
     if (!same) failed += 1;
