@@ -8,6 +8,8 @@ import screensTr from "@/i18n/messages/screens.tr.json";
 import screensEn from "@/i18n/messages/screens.en.json";
 import libraryTr from "@/i18n/messages/library.tr.json";
 import libraryEn from "@/i18n/messages/library.en.json";
+import hiringTr from "@/i18n/messages/hiring.tr.json";
+import hiringEn from "@/i18n/messages/hiring.en.json";
 
 /**
  * Manager-side dictionaries, mirroring `@/i18n/candidate`: the panel never ships
@@ -20,6 +22,7 @@ import libraryEn from "@/i18n/messages/library.en.json";
  *   settings.*.json   the settings and audit screens.
  *   screens.*.json    dashboard, positions, candidates, compare, library, review.
  *   library.*.json    organisation library (positions, competencies, scales).
+ *   hiring.*.json     hiring screens.
  *
  * The split is not cosmetic. Several people edit this panel at once, and a
  * single dictionary file means one of them silently overwrites the other's
@@ -35,14 +38,16 @@ import libraryEn from "@/i18n/messages/library.en.json";
 export type ManagerMessages = typeof baseTr &
   typeof settingsTr &
   typeof screensTr &
-  typeof libraryTr;
+  typeof libraryTr &
+  typeof hiringTr;
 
-const tr: ManagerMessages = { ...baseTr, ...settingsTr, ...screensTr, ...libraryTr };
+const tr: ManagerMessages = { ...baseTr, ...settingsTr, ...screensTr, ...libraryTr, ...hiringTr };
 const en: ManagerMessages = {
   ...baseEn,
   ...settingsEn,
   ...screensEn,
   ...libraryEn,
+  ...hiringEn,
 } satisfies ManagerMessages;
 
 export const managerMessages: Record<Locale, ManagerMessages> = { tr, en };

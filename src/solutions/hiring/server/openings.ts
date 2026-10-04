@@ -1,6 +1,6 @@
-import { and, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { auditLogs, hiringOpeningMembers, hiringOpenings, hiringVersions, positions, users } from "@/db/schema";
+import { auditLogs, hiringOpeningMembers, hiringOpenings, hiringVersions, positionCompetencies, positions, users } from "@/db/schema";
 import type { Locale } from "@/i18n/locale";
 import { ORG_TIMEZONE } from "@/lib/org-timezone";
 import { createPosition } from "@/server/library-write";
@@ -191,7 +191,28 @@ export async function createOpening(user: { id: string; orgId: string }, input: 
       subjectId: opening.id,
       meta: { positionId, start: input.start, copyFrom: input.start === "COPY" ? input.copyFrom : null },
     });
-    const base = `/hiring/openings/${opening.id}`;
-    return { ok: true as const, openingId: opening.id, next: input.start === "AI" ? `${base}/assessment/ai` : `${base}/assessment/edit` };
+    // Ruling C7: only routes that exist. Every start lands on the overview until
+    // the builder (Task 15) and the AI screen (Task 17) point this at their routes.
+    return { ok: true as const, openingId: opening.id, next: `/hiring/openings/${opening.id}` };
   });
+}
+
+/**
+ * Positions an opening may start from (HIRING-UX 5.3), with "has a job ad" and
+ * the profile summary. Archived positions are read-only and start nothing new
+ * (HIRING-UX 4.2 rule 3), so they are not offered.
+ */
+export async function positionOptions(orgId: string): Promise<Array<{ id: string; name: string; hasJobAd: boolean; competencyCount: number; weightsEqual: boolean }>> {
+  const rows = await db
+    .select({
+      id: positions.id,
+      name: positions.name,
+      hasJobAd: sql<boolean>`coalesce(length(trim(${positions.jobDescription})) > 0, false)`,
+      competencyCount: sql<number>`(select count(*)::int from ${positionCompetencies} pc where pc.position_id = ${positions.id})`,
+      distinctWeights: sql<number>`(select count(distinct pc.weight)::int from ${positionCompetencies} pc where pc.position_id = ${positions.id})`,
+    })
+    .from(positions)
+    .where(and(eq(positions.orgId, orgId), isNull(positions.archivedAt)))
+    .orderBy(positions.name, positions.id);
+  return rows.map((r) => ({ id: r.id, name: r.name, hasJobAd: r.hasJobAd, competencyCount: r.competencyCount, weightsEqual: r.distinctWeights <= 1 }));
 }

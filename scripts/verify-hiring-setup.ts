@@ -83,7 +83,7 @@ async function main() {
   const id = created.openingId;
   const opening = await openings.loadOpening(org.id, id);
   check(opening?.status === "DRAFT" && opening.ownerId === owner.id && opening.decisionMakerId === owner.id, "DRAFT, owned and decided by its creator");
-  check(created.next === `/hiring/openings/${id}/assessment/edit`, "a blank start lands in the builder", created.next);
+  check(created.next === `/hiring/openings/${id}`, "a blank start lands on the overview (C7: the builder is not built yet)", created.next);
   const [v1] = await versions.versionsOf(org.id, id);
   check(v1?.number === 1 && v1.status === "DRAFT", "v1 is a draft");
   const refused = await openings.createOpening(user, { position: { kind: "new", name: "İlansız", jobDescription: " " }, start: "AI", copyFrom: null, locale: "tr" });
