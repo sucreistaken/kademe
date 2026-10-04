@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
-import { inviteStudent, type InviteState } from "@/app/(manager)/students/new/actions";
+import { inviteStudent, type InviteState } from "@/app/(manager)/exam/students/new/actions";
 import { bankCoverage, type BankCount, type BlueprintConfig } from "@/lib/exam/blueprint";
 import { CEFR_LEVELS, type Cefr } from "@/lib/exam/types";
 import { useMT } from "@/i18n/manager-client";
@@ -53,7 +53,7 @@ export function InviteForm({ blueprints, counts }: { blueprints: Bp[]; counts: B
           <button type="button" onClick={() => window.location.reload()} className="underline underline-offset-2">
             {t("another")}
           </button>
-          <Link href="/students" className="underline underline-offset-2">
+          <Link href="/exam/students" className="underline underline-offset-2">
             {t("toList")}
           </Link>
         </div>
@@ -126,7 +126,7 @@ export function InviteForm({ blueprints, counts }: { blueprints: Bp[]; counts: B
         {missing && !needsClaim ? (
           <p className="mt-2 text-[13px] text-muted">
             {t("coverageBlocked", { section: sec(missing.section), level: missing.level, available: missing.available, needed: missing.needed })}{" "}
-            <Link href="/bank" className="text-ink underline underline-offset-2">
+            <Link href="/exam/bank" className="text-ink underline underline-offset-2">
               {t("toBank")}
             </Link>
           </p>

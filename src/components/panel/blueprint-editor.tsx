@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { archiveBlueprint, copyBlueprint, publishBlueprint, saveBlueprint } from "@/app/(manager)/exams/actions";
+import { archiveBlueprint, copyBlueprint, publishBlueprint, saveBlueprint } from "@/app/(manager)/exam/exams/actions";
 import { bankCoverage, estimatedMinutes, type BankCount, type BlueprintConfig, type SectionConfig } from "@/lib/exam/blueprint";
 import { isObjectiveSection, type ExamMode } from "@/lib/exam/types";
 import { PRESETS, type PolicyPreset, type ProctoringPolicy } from "@/lib/proctor/policy";

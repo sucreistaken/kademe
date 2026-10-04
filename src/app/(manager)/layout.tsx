@@ -17,9 +17,9 @@ import { managerT } from "@/i18n/manager";
  */
 const NAV = [
   { href: "/dashboard", key: "dashboard" },
-  { href: "/students", key: "students" },
-  { href: "/exams", key: "exams" },
-  { href: "/bank", key: "bank" },
+  { href: "/exam/students", key: "students" },
+  { href: "/exam/exams", key: "exams" },
+  { href: "/exam/bank", key: "bank" },
   { href: "/settings", key: "settings" },
 ] as const;
 

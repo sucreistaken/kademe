@@ -21,7 +21,7 @@ export default async function InvitePage() {
       {blueprints.length === 0 ? (
         <Card className="mt-8 px-6 py-8 text-center">
           <p className="text-[15px] font-medium text-ink">{t("invite.noExam")}</p>
-          <Link href="/exams/new" className="mt-2 inline-block text-[13.5px] underline underline-offset-2">
+          <Link href="/exam/exams/new" className="mt-2 inline-block text-[13.5px] underline underline-offset-2">
             {t("invite.createExam")}
           </Link>
         </Card>

@@ -15,3 +15,15 @@ export const LEGACY_CANDIDATE_API_REWRITES = [
   { source: "/api/c/:token/listening-audio", destination: "/api/c/:token/exam/listening-audio" },
   { source: "/api/c/:token/media/init", destination: "/api/c/:token/exam/media/init" },
 ];
+
+/**
+ * Panel: the exam pages moved under /exam (spec 4). Old bookmarks and links
+ * pasted into chats keep working. Temporary (307) on purpose: HIRING-UX may
+ * still rename the exam paths, and a cached 308 cannot be taken back.
+ * `:path*` also matches the bare path, and the query string passes through.
+ */
+export const LEGACY_PANEL_REDIRECTS = [
+  { source: "/students/:path*", destination: "/exam/students/:path*", permanent: false },
+  { source: "/exams/:path*", destination: "/exam/exams/:path*", permanent: false },
+  { source: "/bank/:path*", destination: "/exam/bank/:path*", permanent: false },
+];

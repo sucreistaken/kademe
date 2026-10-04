@@ -53,7 +53,7 @@ export default async function BankPage({ searchParams }: { searchParams: Promise
     const p = new URLSearchParams();
     const merged = { tab, section, level, ...patch };
     for (const [k, v] of Object.entries(merged)) if (v) p.set(k, v);
-    return `/bank?${p}`;
+    return `/exam/bank?${p}`;
   };
 
   return (
@@ -112,7 +112,7 @@ export default async function BankPage({ searchParams }: { searchParams: Promise
             </Link>
           ))}
         </nav>
-        <form className="flex gap-2" action="/bank">
+        <form className="flex gap-2" action="/exam/bank">
           <input type="hidden" name="tab" value={tab} />
           <select name="section" defaultValue={section ?? ""} className="h-9 rounded-[8px] border border-line bg-surface px-2 text-[13px]">
             <option value="">{t("bank.allSections")}</option>
@@ -143,7 +143,7 @@ export default async function BankPage({ searchParams }: { searchParams: Promise
       ) : (
         <Card className="mt-4 divide-y divide-line">
           {rows.map(({ item, title }) => (
-            <Link key={item.id} href={`/bank/${item.id}`} className="grid grid-cols-1 items-center gap-2 px-5 py-3 hover:bg-canvas md:grid-cols-[3fr_0.8fr_0.5fr_1.2fr_0.9fr]">
+            <Link key={item.id} href={`/exam/bank/${item.id}`} className="grid grid-cols-1 items-center gap-2 px-5 py-3 hover:bg-canvas md:grid-cols-[3fr_0.8fr_0.5fr_1.2fr_0.9fr]">
               <span lang="de" className="text-[13.5px] text-ink">
                 {title ? <span className="block text-[11.5px] text-muted">{title}</span> : null}
                 {item.prompt.replace(/\{\{[^}]+\}\}/g, "___").slice(0, 140)}

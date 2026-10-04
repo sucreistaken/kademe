@@ -1,4 +1,4 @@
-import { decideFlag, setIntegrityOutcome } from "@/app/(manager)/students/[id]/actions";
+import { decideFlag, setIntegrityOutcome } from "@/app/(manager)/exam/students/[id]/actions";
 import { Dot, INTEGRITY_TONE } from "@/components/panel/bits";
 import { FlagKeys } from "@/components/panel/result/flag-keys";
 import type { loadIntegrityView } from "@/server/panel";

@@ -37,7 +37,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
         action={
           <div className="flex flex-col items-end">
             <Button asChild={canInvite} variant="primary" disabled={!canInvite} disabledReason={canInvite ? undefined : t("today.noInvitePermission")}>
-              {canInvite ? <Link href="/students/new">{t("today.invite")}</Link> : t("today.invite")}
+              {canInvite ? <Link href="/exam/students/new">{t("today.invite")}</Link> : t("today.invite")}
             </Button>
             {!canInvite ? <DisabledReason>{t("today.noInvitePermission")}</DisabledReason> : null}
           </div>
@@ -56,7 +56,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
             {queue.map((r) => (
               <Link
                 key={r.assessmentId}
-                href={`/students/${r.assessmentId}`}
+                href={`/exam/students/${r.assessmentId}`}
                 className="grid grid-cols-1 items-center gap-2 px-5 py-4 hover:bg-canvas md:grid-cols-[1.6fr_1.3fr_0.6fr_1.4fr_1.2fr_auto]"
               >
                 <span>
@@ -91,7 +91,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
               <p className="px-5 py-4 text-[13.5px] text-muted">{t("today.runningEmpty")}</p>
             ) : (
               running.map((r) => (
-                <Link key={r.assessmentId} href={`/students/${r.assessmentId}`} className="flex items-center justify-between px-5 py-3 hover:bg-canvas">
+                <Link key={r.assessmentId} href={`/exam/students/${r.assessmentId}`} className="flex items-center justify-between px-5 py-3 hover:bg-canvas">
                   <span className="text-[14px] font-medium text-ink">{r.name}</span>
                   <Dot tone={STATUS_TONE.IN_EXAM}>
                     {r.currentSection ? t("today.sectionNow", { section: t(`sectionName.${r.currentSection}`) }) : t("status.IN_EXAM")}

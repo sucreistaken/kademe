@@ -32,7 +32,7 @@ export async function createBlueprint(formData: FormData) {
     .values({ orgId: user.orgId, name, mode, status: "DRAFT", config: defaultBlueprint(mode), createdBy: user.id })
     .returning();
   await audit(user.orgId, user.id, "blueprint.create", b.id, { mode });
-  redirect(`/exams/${b.id}`);
+  redirect(`/exam/exams/${b.id}`);
 }
 
 export type SaveResult = { ok: true; at: string } | { ok: false; error: string };
@@ -58,35 +58,35 @@ export async function publishBlueprint(formData: FormData) {
   const user = await requireUser("blueprint:write");
   const id = String(formData.get("id"));
   const b = await own(id, user.orgId);
-  if (!b || b.status !== "DRAFT") redirect(`/exams/${id}`);
+  if (!b || b.status !== "DRAFT") redirect(`/exam/exams/${id}`);
   // Placement: every level must be covered. Verification: every claim a
   // teacher could choose at invite time.
   const coverage = bankCoverage(await bankCounts(user.orgId), b.config, b.mode, null);
-  if (!coverage.ok) redirect(`/exams/${id}?error=coverage`);
+  if (!coverage.ok) redirect(`/exam/exams/${id}?error=coverage`);
   await db.update(examBlueprints).set({ status: "PUBLISHED", publishedAt: new Date(), updatedAt: new Date() }).where(eq(examBlueprints.id, id));
   await audit(user.orgId, user.id, "blueprint.publish", id);
-  revalidatePath("/exams");
-  redirect(`/exams/${id}`);
+  revalidatePath("/exam/exams");
+  redirect(`/exam/exams/${id}`);
 }
 
 export async function copyBlueprint(formData: FormData) {
   const user = await requireUser("blueprint:write");
   const b = await own(String(formData.get("id")), user.orgId);
-  if (!b) redirect("/exams");
+  if (!b) redirect("/exam/exams");
   const [c] = await db
     .insert(examBlueprints)
     .values({ orgId: user.orgId, name: `${b.name} (2)`, description: b.description, mode: b.mode, status: "DRAFT", config: b.config, createdBy: user.id })
     .returning();
   await audit(user.orgId, user.id, "blueprint.copy", c.id, { from: b.id });
-  redirect(`/exams/${c.id}`);
+  redirect(`/exam/exams/${c.id}`);
 }
 
 export async function archiveBlueprint(formData: FormData) {
   const user = await requireUser("blueprint:write");
   const b = await own(String(formData.get("id")), user.orgId);
-  if (!b) redirect("/exams");
+  if (!b) redirect("/exam/exams");
   await db.update(examBlueprints).set({ status: "ARCHIVED", archivedAt: new Date() }).where(eq(examBlueprints.id, b.id));
   await audit(user.orgId, user.id, "blueprint.archive", b.id);
-  revalidatePath("/exams");
-  redirect("/exams");
+  revalidatePath("/exam/exams");
+  redirect("/exam/exams");
 }

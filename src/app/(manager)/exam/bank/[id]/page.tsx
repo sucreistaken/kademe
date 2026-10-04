@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
-import { makeAudio, savePrompt, setItemStatus } from "@/app/(manager)/bank/actions";
+import { makeAudio, savePrompt, setItemStatus } from "@/app/(manager)/exam/bank/actions";
 import { Card } from "@/components/ui/card";
 import { Dot } from "@/components/panel/bits";
 import { keyText } from "@/components/panel/result/format";
@@ -45,7 +45,7 @@ export default async function BankItemPage({ params, searchParams }: { params: P
 
   return (
     <main className="mx-auto max-w-[1360px] px-6 py-8">
-      <Link href="/bank" className="text-[13px] text-muted hover:text-ink">
+      <Link href="/exam/bank" className="text-[13px] text-muted hover:text-ink">
         {t("bank.backToBank")}
       </Link>
       <div className="mt-2 flex flex-wrap items-center gap-4">

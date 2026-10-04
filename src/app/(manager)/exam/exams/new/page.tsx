@@ -1,4 +1,4 @@
-import { createBlueprint } from "@/app/(manager)/exams/actions";
+import { createBlueprint } from "@/app/(manager)/exam/exams/actions";
 import { PageHead } from "@/components/panel/bits";
 import { requireUser } from "@/server/session";
 import { managerLocale } from "@/i18n/manager-locale";

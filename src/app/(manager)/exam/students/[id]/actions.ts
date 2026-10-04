@@ -56,13 +56,13 @@ async function resultInOrg(assessmentId: string, orgId: string) {
   return row ?? null;
 }
 
-const back = (assessmentId: string, tab?: string) => `/students/${assessmentId}${tab ? `?tab=${tab}` : ""}`;
+const back = (assessmentId: string, tab?: string) => `/exam/students/${assessmentId}${tab ? `?tab=${tab}` : ""}`;
 
 export async function confirmGrading(formData: FormData) {
   const user = await requireUser("result:grade");
   const row = await gradingInOrg(String(formData.get("gradingId")), user.orgId);
   const tab = String(formData.get("tab") ?? "");
-  if (!row || row.grading.status !== "AI_PROPOSED" || !row.grading.aiLevel) redirect("/students");
+  if (!row || row.grading.status !== "AI_PROPOSED" || !row.grading.aiLevel) redirect("/exam/students");
   // A final result is frozen; a running exam is not graded yet.
   if (row.final || !row.ended) redirect(back(row.assessmentId, tab));
   const now = new Date();
@@ -96,7 +96,7 @@ export async function overrideGrading(formData: FormData) {
   const tab = String(formData.get("tab") ?? "");
   const level = String(formData.get("level") ?? "");
   const reason = String(formData.get("reason") ?? "").trim();
-  if (!row) redirect("/students");
+  if (!row) redirect("/exam/students");
   if (row.final || !row.ended) redirect(back(row.assessmentId, tab));
   if (!isCefr(level) || reason.length < 3) redirect(withQuery(back(row.assessmentId, tab), { error: "reason" }));
   const now = new Date();
@@ -130,7 +130,7 @@ export async function overrideOverall(formData: FormData) {
   const level = String(formData.get("level") ?? "");
   const reason = String(formData.get("reason") ?? "").trim();
   const row = await resultInOrg(assessmentId, user.orgId);
-  if (!row?.result) redirect("/students");
+  if (!row?.result) redirect("/exam/students");
   if (row.result.status === "FINAL") redirect(back(assessmentId));
   if (!isCefr(level) || reason.length < 3) redirect(withQuery(back(assessmentId), { error: "reason" }));
   await db
@@ -162,7 +162,7 @@ export async function finalize(formData: FormData) {
   const user = await requireUser("result:finalize");
   const assessmentId = String(formData.get("assessmentId"));
   const row = await resultInOrg(assessmentId, user.orgId);
-  if (!row?.result) redirect("/students");
+  if (!row?.result) redirect("/exam/students");
   if (!row.attempt.completedAt && !row.attempt.terminatedAt) redirect(withQuery(back(assessmentId), { error: "running" }));
   await recomputeResult(row.attempt.id);
   const done = await finalizeResult(row.attempt.id, user.id, null);
@@ -205,14 +205,14 @@ export async function decideFlag(formData: FormData) {
   const eventId = String(formData.get("eventId"));
   const status = String(formData.get("status"));
   const note = String(formData.get("note") ?? "").trim() || null;
-  if (!["OPEN", "CONFIRMED", "DISMISSED"].includes(status)) redirect("/students");
+  if (!["OPEN", "CONFIRMED", "DISMISSED"].includes(status)) redirect("/exam/students");
   const [row] = await db
     .select({ event: proctorEvents, assessmentId: assessments.id })
     .from(proctorEvents)
     .innerJoin(attempts, eq(attempts.id, proctorEvents.attemptId))
     .innerJoin(assessments, eq(assessments.id, attempts.assessmentId))
     .where(and(eq(proctorEvents.id, eventId), eq(assessments.orgId, user.orgId)));
-  if (!row) redirect("/students");
+  if (!row) redirect("/exam/students");
   await db
     .update(proctorEvents)
     .set({ teacherStatus: status as "OPEN" | "CONFIRMED" | "DISMISSED", teacherNote: note, decidedBy: user.id, decidedAt: new Date() })
@@ -236,7 +236,7 @@ export async function setIntegrityOutcome(formData: FormData) {
   const outcome = String(formData.get("outcome"));
   if (!["VALID", "RETAKE", "INVALID"].includes(outcome)) redirect(back(assessmentId, "integrity"));
   const row = await resultInOrg(assessmentId, user.orgId);
-  if (!row) redirect("/students");
+  if (!row) redirect("/exam/students");
   await db
     .update(attempts)
     .set({ integrityOutcome: outcome as "VALID" | "RETAKE" | "INVALID", integrityDecidedBy: user.id, integrityDecidedAt: new Date() })

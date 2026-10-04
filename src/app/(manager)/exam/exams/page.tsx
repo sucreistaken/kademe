@@ -36,7 +36,7 @@ export default async function ExamsPage() {
         action={
           can(user, "blueprint:write") ? (
             <Button asChild variant="primary">
-              <Link href="/exams/new">{t("exams.new")}</Link>
+              <Link href="/exam/exams/new">{t("exams.new")}</Link>
             </Button>
           ) : undefined
         }
@@ -46,7 +46,7 @@ export default async function ExamsPage() {
       ) : (
         <Card className="mt-6 divide-y divide-line">
           {rows.map(({ b, uses }) => (
-            <Link key={b.id} href={`/exams/${b.id}`} className="grid grid-cols-1 items-center gap-2 px-5 py-4 hover:bg-canvas md:grid-cols-[2fr_1fr_2fr_0.6fr_1fr_0.5fr]">
+            <Link key={b.id} href={`/exam/exams/${b.id}`} className="grid grid-cols-1 items-center gap-2 px-5 py-4 hover:bg-canvas md:grid-cols-[2fr_1fr_2fr_0.6fr_1fr_0.5fr]">
               <span className="text-[14.5px] font-semibold text-ink">{b.name}</span>
               <span className="text-[13.5px] text-ink-2">{t(`mode.${b.mode}`)}</span>
               <span className="text-[13px] text-muted">{enabledSections(b.config).map((s) => t(`sectionName.${s.section}`)).join(" · ")}</span>

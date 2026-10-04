@@ -20,7 +20,7 @@ export default async function ExamEditorPage({ params, searchParams }: { params:
   if (!b) notFound();
   return (
     <main className="mx-auto max-w-[1360px] px-6 py-8">
-      <Link href="/exams" className="text-[13px] text-muted hover:text-ink">
+      <Link href="/exam/exams" className="text-[13px] text-muted hover:text-ink">
         {t("exams.title")}
       </Link>
       <p className="mt-1 text-[13px] text-muted">

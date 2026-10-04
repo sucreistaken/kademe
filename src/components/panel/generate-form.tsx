@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { generate, type GenerateState } from "@/app/(manager)/bank/actions";
+import { generate, type GenerateState } from "@/app/(manager)/exam/bank/actions";
 import { ALLOWED_TYPES } from "@/lib/exam/item-generation";
 import { CEFR_LEVELS, SECTIONS, type Section } from "@/lib/exam/types";
 import { useMT } from "@/i18n/manager-client";

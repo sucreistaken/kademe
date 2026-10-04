@@ -30,7 +30,6 @@ const KNOWN_COUPLINGS = [
 const EXEMPT = [
   /^src\/solutions\//,
   /^src\/app\/.*\/exam\//,
-  /^src\/app\/\(manager\)\/(students|exams|bank)\//,
   /^src\/components\/panel\//,
   /^src\/components\/candidate\/exam\//,
   /^src\/lib\/exam\//,

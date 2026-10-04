@@ -1,4 +1,4 @@
-import { confirmGrading, overrideGrading } from "@/app/(manager)/students/[id]/actions";
+import { confirmGrading, overrideGrading } from "@/app/(manager)/exam/students/[id]/actions";
 import type { GradingProposal } from "@/lib/exam/grading";
 import { CEFR_LEVELS } from "@/lib/exam/types";
 import type { managerT } from "@/i18n/manager";

@@ -39,7 +39,7 @@ export async function generate(_prev: GenerateState, formData: FormData): Promis
     const r = await generateItems(user.orgId, user.id, spec.data);
     if (!r.ok) return { ok: false, error: r.error.slice(0, 200) };
     await db.insert(auditLogs).values({ orgId: user.orgId, actorId: user.id, action: "bank.generate", subjectType: "item", meta: { ...spec.data, created: r.created } });
-    revalidatePath("/bank");
+    revalidatePath("/exam/bank");
     return { ok: true, created: r.created, firstId: null };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message.slice(0, 200) : "failed" };
@@ -51,19 +51,19 @@ export async function setItemStatus(formData: FormData) {
   const status = String(formData.get("status")) as "APPROVED" | "REJECTED" | "RETIRED" | "DRAFT";
   const user = await requireUser(status === "APPROVED" ? "bank:approve" : "bank:write");
   const row = await ownItem(id, user.orgId);
-  if (!row) redirect("/bank");
+  if (!row) redirect("/exam/bank");
   if (status === "APPROVED") {
     const problems = validateItem({ type: row.item.type, prompt: row.item.prompt, content: row.item.content, key: row.item.answerKey, rubric: row.item.rubric });
-    if (problems.length) redirect(`/bank/${id}?error=invalid`);
-    if (row.item.section === "LISTENING" && !row.stimulus?.audioKey) redirect(`/bank/${id}?error=audio`);
+    if (problems.length) redirect(`/exam/bank/${id}?error=invalid`);
+    if (row.item.section === "LISTENING" && !row.stimulus?.audioKey) redirect(`/exam/bank/${id}?error=audio`);
   }
   await db
     .update(items)
     .set({ status, reviewedBy: user.id, reviewedAt: new Date(), updatedAt: new Date() })
     .where(eq(items.id, id));
   await db.insert(auditLogs).values({ orgId: user.orgId, actorId: user.id, action: `bank.${status.toLowerCase()}`, subjectType: "item", subjectId: id });
-  revalidatePath("/bank");
-  redirect(`/bank/${id}`);
+  revalidatePath("/exam/bank");
+  redirect(`/exam/bank/${id}`);
 }
 
 export async function savePrompt(formData: FormData) {
@@ -71,18 +71,18 @@ export async function savePrompt(formData: FormData) {
   const id = String(formData.get("id"));
   const prompt = String(formData.get("prompt") ?? "").trim();
   const row = await ownItem(id, user.orgId);
-  if (!row || prompt.length < 3) redirect(`/bank/${id}`);
+  if (!row || prompt.length < 3) redirect(`/exam/bank/${id}`);
   // Editing an approved item sends it back to review.
   await db.update(items).set({ prompt, status: "DRAFT", updatedAt: new Date() }).where(eq(items.id, id));
   await db.insert(auditLogs).values({ orgId: user.orgId, actorId: user.id, action: "bank.edit", subjectType: "item", subjectId: id });
-  redirect(`/bank/${id}`);
+  redirect(`/exam/bank/${id}`);
 }
 
 export async function makeAudio(formData: FormData) {
   const user = await requireUser("bank:write");
   const id = String(formData.get("id"));
   const row = await ownItem(id, user.orgId);
-  if (!row?.stimulus) redirect(`/bank/${id}`);
+  if (!row?.stimulus) redirect(`/exam/bank/${id}`);
   try {
     const audio = await synthesize(row.stimulus.body, row.stimulus.speakers ?? []);
     await db
@@ -94,7 +94,7 @@ export async function makeAudio(formData: FormData) {
   } catch (error) {
     const reason = error instanceof Error ? error.message.slice(0, 120) : "failed";
     await recordAiRun({ orgId: user.orgId, purpose: "TTS", model: "gemini-tts", requestedBy: user.id, inputRef: `stimulus:${row.stimulus.id}`, error: reason });
-    redirect(`/bank/${id}?error=tts&reason=${encodeURIComponent(reason.slice(0, 80))}`);
+    redirect(`/exam/bank/${id}?error=tts&reason=${encodeURIComponent(reason.slice(0, 80))}`);
   }
-  redirect(`/bank/${id}`);
+  redirect(`/exam/bank/${id}`);
 }

@@ -46,7 +46,7 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
         action={
           can(user, "student:invite") ? (
             <Button asChild variant="primary">
-              <Link href="/students/new">{t("today.invite")}</Link>
+              <Link href="/exam/students/new">{t("today.invite")}</Link>
             </Button>
           ) : undefined
         }
@@ -56,7 +56,7 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
           {TABS.map((k) => (
             <Link
               key={k}
-              href={`/students?tab=${k}${q ? `&q=${encodeURIComponent(sp.q ?? "")}` : ""}`}
+              href={`/exam/students?tab=${k}${q ? `&q=${encodeURIComponent(sp.q ?? "")}` : ""}`}
               className={cn(
                 "rounded-[8px] px-3 py-1.5 text-[13.5px]",
                 k === tab ? "bg-accent-soft font-medium text-accent" : "text-muted hover:bg-canvas hover:text-ink",
@@ -85,7 +85,7 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
       ) : rows.length === 0 ? (
         <Card className="mt-6 px-6 py-10 text-center">
           <p className="text-[15px] font-medium text-ink">{t("students.noMatch")}</p>
-          <Link href="/students" className="mt-2 inline-block text-[13.5px] text-ink underline underline-offset-2">
+          <Link href="/exam/students" className="mt-2 inline-block text-[13.5px] text-ink underline underline-offset-2">
             {t("students.clearFilters")}
           </Link>
         </Card>
@@ -107,7 +107,7 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
               {rows.map((r) => (
                 <tr key={r.assessmentId} className="hover:bg-canvas">
                   <td className="px-5 py-3">
-                    <Link href={`/students/${r.assessmentId}`} className="block">
+                    <Link href={`/exam/students/${r.assessmentId}`} className="block">
                       <span className="block text-[14px] font-semibold text-ink">{r.name}</span>
                       <span className="text-[12.5px] text-muted">{r.email}</span>
                     </Link>

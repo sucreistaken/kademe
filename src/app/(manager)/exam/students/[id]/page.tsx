@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { finalize, overrideOverall, release } from "@/app/(manager)/students/[id]/actions";
+import { finalize, overrideOverall, release } from "@/app/(manager)/exam/students/[id]/actions";
 import { Card } from "@/components/ui/card";
 import { Dot, INTEGRITY_TONE, STATUS_TONE, shortDateTime } from "@/components/panel/bits";
 import { GradingCard } from "@/components/panel/result/grading-card";
@@ -69,7 +69,7 @@ export default async function ResultPage({
 
   return (
     <main className="mx-auto max-w-[1360px] px-6 py-8">
-      <Link href="/students" className="text-[13px] text-muted hover:text-ink">
+      <Link href="/exam/students" className="text-[13px] text-muted hover:text-ink">
         {t("result.back")}
       </Link>
 
@@ -109,7 +109,7 @@ export default async function ResultPage({
             {tabs.map((k) => (
               <Link
                 key={k}
-                href={`/students/${id}?tab=${k}`}
+                href={`/exam/students/${id}?tab=${k}`}
                 className={cn(
                   "rounded-[8px] px-3 py-1.5 text-[13.5px]",
                   k === tab ? "bg-accent-soft font-medium text-accent" : "text-muted hover:bg-canvas hover:text-ink",
@@ -146,7 +146,7 @@ export default async function ResultPage({
                 const precision = sd === null ? "" : sd < 0.45 ? t("result.precisionGood") : sd < 0.7 ? t("result.precisionFair") : t("result.precisionLow");
                 const decider = skill?.decider;
                 return (
-                  <Link key={s} href={`/students/${id}?tab=${s}`} className="grid grid-cols-[140px_60px_1fr] items-center gap-4 px-5 py-4 hover:bg-canvas">
+                  <Link key={s} href={`/exam/students/${id}?tab=${s}`} className="grid grid-cols-[140px_60px_1fr] items-center gap-4 px-5 py-4 hover:bg-canvas">
                     <span className="text-[14px] font-semibold text-ink">{t(`sectionName.${s as Section}`)}</span>
                     <span className={cn("tnum text-[18px] font-bold", decider === "TEACHER" || decider === "ENGINE" ? "text-ink" : "text-ink-3")}>
                       {skill?.level ?? "-"}
@@ -317,7 +317,7 @@ export default async function ResultPage({
               <div className="mt-5 border-t border-line pt-4">
                 <Dot tone={INTEGRITY_TONE[row.integrity]}>{t("result.integrityLine", { level: t(`integrityLevel.${row.integrity}`) })}</Dot>
                 {cfg.proctoring.preset !== "OFF" ? (
-                  <Link href={`/students/${id}?tab=integrity`} className="mt-1 block text-[12.5px] text-ink underline underline-offset-2">
+                  <Link href={`/exam/students/${id}?tab=integrity`} className="mt-1 block text-[12.5px] text-ink underline underline-offset-2">
                     {t("result.openIntegrity")}
                   </Link>
                 ) : null}
