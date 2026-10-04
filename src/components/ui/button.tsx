@@ -61,6 +61,40 @@ type ButtonProps = React.ComponentProps<"button"> &
     asChild?: boolean;
   };
 
+type AnyProps = Record<string, unknown>;
+type Handler = (...args: unknown[]) => unknown;
+
+function setRef<T>(ref: React.Ref<T> | undefined, node: T | null) {
+  if (typeof ref === "function") ref(node);
+  else if (ref) (ref as React.RefObject<T | null>).current = node;
+}
+
+/**
+ * The props an asChild Button gives its child, merged the way Radix Slot
+ * merges them: the child's own props win, both event handlers run (the
+ * child's first), styles combine, and both refs receive the node. Classes are
+ * merged by the caller with `cn` (tailwind-merge), which Slot does not do.
+ */
+function mergeIntoChild(slotProps: AnyProps, childProps: AnyProps): AnyProps {
+  const merged: AnyProps = { ...slotProps };
+  for (const [key, childValue] of Object.entries(childProps)) {
+    if (childValue === undefined) continue;
+    const slotValue = slotProps[key];
+    if (/^on[A-Z]/.test(key) && typeof slotValue === "function" && typeof childValue === "function") {
+      merged[key] = (...args: unknown[]) => {
+        const result = (childValue as Handler)(...args);
+        (slotValue as Handler)(...args);
+        return result;
+      };
+    } else if (key === "style" && slotValue && typeof slotValue === "object") {
+      merged[key] = { ...slotValue, ...(childValue as object) };
+    } else {
+      merged[key] = childValue;
+    }
+  }
+  return merged;
+}
+
 export function Button({
   className,
   variant = "secondary",
@@ -69,22 +103,39 @@ export function Button({
   disabledReason,
   asChild = false,
   children,
+  id,
+  "aria-describedby": describedBy,
   ...props
 }: ButtonProps) {
   const classes = cn(buttonVariants({ variant, size }), className);
   const slot = { "data-slot": "button", "data-variant": variant ?? "secondary", "data-size": size ?? "md" };
+  // The reason is linked only when there is an element to point at: the
+  // caller renders <DisabledReason id={`${id}-why`}> next to the button.
+  const whyId = disabled && disabledReason && id ? `${id}-why` : undefined;
+  const ariaDescribedBy = [describedBy, whyId].filter(Boolean).join(" ") || undefined;
 
   if (asChild) {
     if (!React.isValidElement(children)) {
       throw new Error("Button asChild expects exactly one element child");
     }
-    // cloneElement + cn rather than Radix Slot: Slot joins class names without
-    // tailwind-merge, which would change existing asChild links.
-    const child = children as React.ReactElement<{ className?: string }>;
-    return React.cloneElement(child, {
-      ...slot,
-      className: cn(classes, child.props.className),
-    });
+    // Everything a caller or a Radix trigger (`<TooltipTrigger asChild>`)
+    // passes reaches the child: handlers, aria-*, data-state and the ref.
+    const { ref, ...rest } = props;
+    const { ref: childRef, ...childProps } = children.props as AnyProps & { ref?: React.Ref<unknown> };
+    const merged = mergeIntoChild(
+      { ...slot, ...rest, id, "aria-describedby": ariaDescribedBy },
+      childProps,
+    );
+    merged.className = cn(classes, childProps.className as string | undefined);
+    if (ref && childRef) {
+      merged.ref = (node: unknown) => {
+        setRef(ref as React.Ref<unknown>, node);
+        setRef(childRef, node);
+      };
+    } else if (ref ?? childRef) {
+      merged.ref = ref ?? childRef;
+    }
+    return React.cloneElement(children, merged);
   }
 
   return (
@@ -96,8 +147,9 @@ export function Button({
       {...slot}
       className={classes}
       disabled={disabled}
-      aria-describedby={disabled && disabledReason ? props.id + "-why" : undefined}
       {...props}
+      id={id}
+      aria-describedby={ariaDescribedBy}
     >
       {children}
     </button>
