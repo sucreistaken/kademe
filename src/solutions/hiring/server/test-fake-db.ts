@@ -18,6 +18,8 @@ export type Op = {
   joins: string[];
   values?: unknown;
   lock?: string;
+  /** The keys a select asked for, so a test can prove a column was never read. */
+  fields?: string[];
 };
 
 export const fake: { ops: Op[]; respond: (op: Op) => unknown[] } = { ops: [], respond: () => [] };
@@ -29,8 +31,16 @@ function sqlOf(condition: unknown) {
   return dialect.sqlToQuery(condition);
 }
 
-function statement(kind: Op["kind"], table?: unknown, distinct = false) {
-  const op: Op = { kind, table: table instanceof Table ? getTableName(table) : "", where: "", params: [], joins: [], ...(distinct ? { distinct } : {}) };
+function statement(kind: Op["kind"], table?: unknown, distinct = false, fields?: unknown) {
+  const op: Op = {
+    kind,
+    table: table instanceof Table ? getTableName(table) : "",
+    where: "",
+    params: [],
+    joins: [],
+    ...(distinct ? { distinct } : {}),
+    ...(fields && typeof fields === "object" ? { fields: Object.keys(fields) } : {}),
+  };
   const join = (t: unknown, condition: unknown) => {
     const { sql, params } = sqlOf(condition);
     op.joins.push(`${getTableName(t as Table)} ON ${sql}`);
@@ -63,6 +73,9 @@ function statement(kind: Op["kind"], table?: unknown, distinct = false) {
       return chain;
     },
     limit: () => chain,
+    groupBy: () => chain,
+    onConflictDoNothing: () => chain,
+    onConflictDoUpdate: () => chain,
     orderBy: () => chain,
     returning: () => chain,
     then: (resolve: (rows: unknown[]) => unknown, reject?: (e: unknown) => unknown) => {
@@ -77,11 +90,18 @@ function statement(kind: Op["kind"], table?: unknown, distinct = false) {
 
 export function fakeDb() {
   const x = {
-    select: () => statement("select"),
-    selectDistinct: () => statement("select", undefined, true),
+    select: (fields?: unknown) => statement("select", undefined, false, fields),
+    selectDistinct: (fields?: unknown) => statement("select", undefined, true, fields),
     insert: (t: unknown) => statement("insert", t),
     update: (t: unknown) => statement("update", t),
     delete: (t: unknown) => statement("delete", t),
+    /** A raw statement (an advisory lock, for instance): recorded as a read with table "(execute)". */
+    execute: async (query: unknown) => {
+      const { sql, params } = sqlOf(query);
+      const op: Op = { kind: "select", table: "(execute)", where: sql, params, joins: [] };
+      fake.ops.push(op);
+      return fake.respond(op);
+    },
     transaction: async <T>(fn: (tx: unknown) => Promise<T>) => fn(x),
   };
   return x;
