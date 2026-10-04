@@ -258,6 +258,16 @@ describe("message minor fixes (fix round 1)", () => {
     expect(body).toContain("Hi Ali Veli,");
   });
 
+  it("does not let removing angle brackets or control characters rebuild a scheme:// run", () => {
+    const probes = ["https<>://evil.test/x", "Ali https:<>//evil.test", "https:/<>/evil.test", "https:\u0001//evil.test", "ht<>tps<>:<>/<>/evil.test", "hhttps<>://a.test c://b.test"];
+    for (const candidateName of probes) {
+      const { subject, body } = inviteMessage({ ...base, candidateName, orgName: candidateName, positionName: candidateName });
+      expect(body.match(/:\/\//g)).toHaveLength(1);
+      expect(subject).not.toContain("://");
+      expect(body).not.toContain("evil.test");
+    }
+  });
+
   it("cuts by characters, never through a surrogate pair", () => {
     const { body } = inviteMessage({ ...base, candidateName: "\u{1F600}".repeat(500) });
     const hi = body.split("\n\n")[0];

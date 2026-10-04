@@ -27,14 +27,18 @@ export const SURVEY_MIN_ANSWERS = 5;
  * message.
  */
 function plainText(value: string, max: number): string {
-  const clean = value
-    .replace(/[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g, "")
-    .replace(/[a-z][a-z0-9+.-]*:\/\/\S*/gi, " ")
-    .replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]+/g, " ")
-    .replace(/[<>]/g, "")
-    .replace(/\u2014/g, "-")
-    .replace(/\s+/g, " ")
-    .trim();
+  // Remove everything that could sit inside a scheme:// run first, so that
+  // removing it cannot assemble one; line breaks become spaces only after
+  // that. Then strip scheme runs until none is left.
+  let clean = value
+    .replace(/[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF<>]/g, "")
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, "")
+    .replace(/[\t\n\r\u2028\u2029]+/g, " ");
+  for (let previous = ""; previous !== clean; ) {
+    previous = clean;
+    clean = clean.replace(/[a-z][a-z0-9+.-]*:\/\/\S*/gi, " ").replace(/:\/\//g, " ");
+  }
+  clean = clean.replace(/\u2014/g, "-").replace(/\s+/g, " ").trim();
   const chars = Array.from(clean);
   return chars.length > max ? `${chars.slice(0, max).join("").trimEnd()}...` : clean;
 }
