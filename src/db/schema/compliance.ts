@@ -9,6 +9,7 @@ import {
   numeric,
   index,
   check,
+  foreignKey,
 } from "drizzle-orm/pg-core";
 import { organizations, users } from "./org";
 import { candidates, assessments } from "./assessment";
@@ -141,9 +142,8 @@ export const candidateRequests = pgTable(
     orgId: uuid("org_id")
       .notNull()
       .references(() => organizations.id, { onDelete: "cascade" }),
-    assessmentId: uuid("assessment_id")
-      .notNull()
-      .references(() => assessments.id, { onDelete: "cascade" }),
+    /** With org_id, references assessments(id, org_id): see candidate_requests_assessment_org_fk. */
+    assessmentId: uuid("assessment_id").notNull(),
     kind: text("kind").notNull(),
     message: text("message"),
     handledBy: uuid("handled_by").references(() => users.id, {
@@ -158,5 +158,12 @@ export const candidateRequests = pgTable(
     index("candidate_requests_org_created_idx").on(t.orgId, t.createdAt),
     index("candidate_requests_assessment_idx").on(t.assessmentId),
     check("candidate_request_kind", sql`${t.kind} IN ('ACCOMMODATION', 'NEW_LINK')`),
+    check("candidate_request_message_length", sql`char_length(${t.message}) <= 2000`),
+    /** The request's organisation is its invitation's, enforced by the database. */
+    foreignKey({
+      name: "candidate_requests_assessment_org_fk",
+      columns: [t.assessmentId, t.orgId],
+      foreignColumns: [assessments.id, assessments.orgId],
+    }).onDelete("cascade"),
   ],
 );

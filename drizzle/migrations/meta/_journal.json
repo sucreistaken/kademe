@@ -78,6 +78,13 @@
       "when": 1791154488242,
       "tag": "0010_hiring_candidate_flow",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791154819533,
+      "tag": "0011_hiring_tenancy_keys",
+      "breakpoints": true
     }
   ]
 }

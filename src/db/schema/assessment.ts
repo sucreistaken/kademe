@@ -84,6 +84,8 @@ export const assessments = pgTable(
     index("assessments_candidate_idx").on(t.candidateId),
     /** Target of the composite key on attempts, so an attempt's solution always matches its invitation. */
     unique("assessments_id_solution_unique").on(t.id, t.solution),
+    /** Target of the (assessment_id, org_id) keys on hiring_assessments and candidate_requests (migration 0011), so a row of another table can never name another organisation than its invitation's. */
+    unique("assessments_id_org_unique").on(t.id, t.orgId),
   ],
 );
 

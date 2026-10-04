@@ -34,6 +34,16 @@ import type { I18nText } from "./types";
  * side, by the token's own invitation), and a linked library row or user must
  * be checked to belong to the same organisation in that query. The server code
  * in src/solutions/hiring/server owns this check and tests it.
+ *
+ * `hiring_assessments.org_id` equals its core invitation's org_id and
+ * `candidate_requests.org_id` equals theirs: the database enforces both
+ * (composite foreign keys to assessments(id, org_id), migration 0011).
+ *
+ * Same-version invariants the database does NOT enforce, so every writer
+ * derives and tests them: a stage run's `stage_id` and a response's
+ * `activity_id` come from the invitation's frozen version (the server derives
+ * them, the client never names them), and an invitation's `consent_text_id` is
+ * a HIRING consent text of the same organisation.
  */
 
 export type HiringLocale = "tr" | "en";
@@ -364,6 +374,12 @@ export const hiringAssessments = pgTable(
     index("hiring_assessments_opening_idx").on(t.openingId),
     check("hiring_assessment_is_hiring", sql`${t.solution} = 'HIRING'`),
     check("hiring_extra_time_pct", sql`${t.extraTimePct} IN (0, 25, 50)`),
+    /** The invitation's organisation is the core invitation's (migration 0011). */
+    foreignKey({
+      name: "hiring_assessments_org_fk",
+      columns: [t.assessmentId, t.orgId],
+      foreignColumns: [assessments.id, assessments.orgId],
+    }).onDelete("cascade"),
     foreignKey({
       name: "hiring_assessments_assessment_fk",
       columns: [t.assessmentId, t.solution],
@@ -429,6 +445,8 @@ export const hiringStageRuns = pgTable(
   (t) => [
     uniqueIndex("hiring_stage_run_per_attempt").on(t.attemptId, t.stageId),
     index("hiring_stage_runs_deadline_idx").on(t.deadlineAt),
+    index("hiring_stage_runs_stage_idx").on(t.stageId),
+    index("hiring_stage_runs_carried_from_idx").on(t.carriedFromStageRunId).where(sql`carried_from_stage_run_id IS NOT NULL`),
     check("hiring_stage_run_order", sql`${t.orderIndex} >= 0`),
     foreignKey({
       name: "hiring_stage_runs_carried_from_fk",
@@ -452,7 +470,7 @@ export const hiringResponses = pgTable(
     payload: jsonb("payload").$type<HiringResponsePayload>().notNull().default({}),
     /** The take that is the answer (the newest one). Purging media leaves the response. */
     mediaAssetId: uuid("media_asset_id").references(() => mediaAssets.id, { onDelete: "set null" }),
-    /** Every take opened for this question, oldest first; takes are counted from these rows. */
+    /** Every take opened for this question, oldest first. `takes_used` (at most 5) is authoritative for the limit; this lists the takes. */
     takeAssetIds: jsonb("take_asset_ids").$type<string[]>().notNull().default([]),
     fileAssetIds: jsonb("file_asset_ids").$type<string[]>().notNull().default([]),
     takesUsed: integer("takes_used").notNull().default(0),
@@ -467,7 +485,9 @@ export const hiringResponses = pgTable(
   (t) => [
     uniqueIndex("hiring_response_per_activity").on(t.stageRunId, t.activityId),
     index("hiring_responses_media_idx").on(t.mediaAssetId),
+    index("hiring_responses_activity_idx").on(t.activityId),
     check("hiring_response_takes", sql`${t.takesUsed} >= 0`),
+    check("hiring_response_takes_max", sql`${t.takesUsed} <= 5`),
     check("hiring_response_auto_score", sql`${t.autoScore} IS NULL OR (${t.autoScore} >= 0 AND ${t.autoScore} <= 1)`),
   ],
 );
@@ -483,6 +503,7 @@ export const hiringSurveyResponses = pgTable(
   },
   (t) => [
     check("hiring_survey_rating", sql`${t.rating} BETWEEN 1 AND 5`),
+    check("hiring_survey_comment_length", sql`char_length(${t.comment}) <= 2000`),
     foreignKey({
       name: "hiring_survey_assessment_fk",
       columns: [t.assessmentId],

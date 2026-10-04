@@ -398,3 +398,71 @@ describe("0010_hiring_candidate_flow", () => {
     expect(sql).toMatch(/CREATE INDEX "candidate_requests_assessment_idx" ON "candidate_requests" USING btree \("assessment_id"\)/);
   });
 });
+
+describe("0011_hiring_tenancy_keys", () => {
+  const sql = read("0011_hiring_tenancy_keys");
+  const at = (needle: string) => sql.indexOf(needle);
+
+  it("makes the core invitation a composite target of (id, org_id)", () => {
+    expect(sql).toContain(`ALTER TABLE "assessments" ADD CONSTRAINT "assessments_id_org_unique" UNIQUE("id","org_id");`);
+  });
+
+  it("creates the (id, org_id) UNIQUE before both foreign keys that need it", () => {
+    const unique = at(`ADD CONSTRAINT "assessments_id_org_unique" UNIQUE`);
+    expect(unique).toBeGreaterThanOrEqual(0);
+    expect(at(`"hiring_assessments_org_fk" FOREIGN KEY`)).toBeGreaterThan(unique);
+    expect(at(`"candidate_requests_assessment_org_fk" FOREIGN KEY`)).toBeGreaterThan(unique);
+  });
+
+  it("ties a hiring invitation to the core invitation's organisation", () => {
+    expect(sql).toMatch(
+      /"hiring_assessments_org_fk" FOREIGN KEY \("assessment_id","org_id"\) REFERENCES "public"\."assessments"\("id","org_id"\) ON DELETE cascade/,
+    );
+  });
+
+  it("replaces the single-column request foreign key with the organisation-tied one", () => {
+    expect(sql).toContain(`ALTER TABLE "candidate_requests" DROP CONSTRAINT "candidate_requests_assessment_id_assessments_id_fk";`);
+    expect(sql).toMatch(
+      /"candidate_requests_assessment_org_fk" FOREIGN KEY \("assessment_id","org_id"\) REFERENCES "public"\."assessments"\("id","org_id"\) ON DELETE cascade/,
+    );
+    expect(at(`DROP CONSTRAINT "candidate_requests_assessment_id_assessments_id_fk"`)).toBeLessThan(at(`"candidate_requests_assessment_org_fk" FOREIGN KEY`));
+  });
+
+  it("indexes the foreign keys that deletes and joins walk", () => {
+    expect(sql).toContain(`CREATE INDEX "hiring_responses_activity_idx" ON "hiring_responses" USING btree ("activity_id");`);
+    expect(sql).toContain(`CREATE INDEX "hiring_stage_runs_stage_idx" ON "hiring_stage_runs" USING btree ("stage_id");`);
+    expect(sql).toContain(
+      `CREATE INDEX "hiring_stage_runs_carried_from_idx" ON "hiring_stage_runs" USING btree ("carried_from_stage_run_id") WHERE carried_from_stage_run_id IS NOT NULL;`,
+    );
+  });
+
+  it("bounds candidate-written text and the number of takes in the database", () => {
+    expect(sql).toContain(
+      `ALTER TABLE "hiring_survey_responses" ADD CONSTRAINT "hiring_survey_comment_length" CHECK (char_length("hiring_survey_responses"."comment") <= 2000);`,
+    );
+    expect(sql).toContain(
+      `ALTER TABLE "candidate_requests" ADD CONSTRAINT "candidate_request_message_length" CHECK (char_length("candidate_requests"."message") <= 2000);`,
+    );
+    expect(sql).toContain(`ALTER TABLE "hiring_responses" ADD CONSTRAINT "hiring_response_takes_max" CHECK ("hiring_responses"."takes_used" <= 5);`);
+  });
+
+  it("names every constraint within Postgres' 63 characters", () => {
+    const names = [...sql.matchAll(/CONSTRAINT "([^"]+)"/g)].map((m) => m[1]);
+    expect(names.length).toBeGreaterThan(5);
+    for (const name of names) expect(name.length, name).toBeLessThanOrEqual(63);
+  });
+
+  it("only adds, apart from swapping the one request foreign key, and writes no rows", () => {
+    expect(sql).not.toMatch(/DROP (TABLE|COLUMN|TYPE|INDEX)/);
+    expect([...sql.matchAll(/DROP CONSTRAINT "([^"]+)"/g)].map((m) => m[1])).toEqual(["candidate_requests_assessment_id_assessments_id_fk"]);
+    expect(sql).not.toMatch(/^\s*(INSERT|UPDATE|DELETE)\b/im);
+    expect(sql).not.toMatch(/ALTER TABLE "hiring_(stages|activities|activity_competencies|versions)"/);
+  });
+
+  it("sends one statement per chunk (the migrator prepares each chunk)", () => {
+    for (const chunk of sql.split("--> statement-breakpoint")) {
+      const outside = chunk.replace(/\$\$[\s\S]*?\$\$/g, "").replace(/--.*$/gm, "");
+      expect((outside.match(/;/g) ?? []).length, chunk.slice(0, 80)).toBeLessThanOrEqual(1);
+    }
+  });
+});
