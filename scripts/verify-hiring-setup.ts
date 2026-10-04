@@ -153,7 +153,11 @@ async function main() {
 
   console.log("\nDraft weights");
   const half = await versions.saveDraftWeights(org.id, id, { enabled: true, weights: { [communication]: 50, [problem]: 40 } });
-  check(!half.ok && half.total === 90, "weights that do not add up to 100 are refused with the total", JSON.stringify(half));
+  check(!half.ok && half.code === "NOT_100" && half.total === 90, "weights that do not add up to 100 are refused with the total", JSON.stringify(half));
+  const notWhole = await versions.saveDraftWeights(org.id, id, { enabled: true, weights: { [communication]: 70.5, [problem]: 29.5 } });
+  check(!notWhole.ok && notWhole.code === "NOT_WHOLE", "a weight that is not whole is NOT_WHOLE, not NOT_100 (it adds up to 100)", JSON.stringify(notWhole));
+  const staleDraft = await versions.saveDraftWeights(org.id, id, { versionId: (await versions.versionsOf(org.id, other.openingId))[0].id, enabled: true, weights: { [communication]: 75, [problem]: 25 } });
+  check(!staleDraft.ok && staleDraft.code === "STALE", "weights for another version than the draft are STALE", JSON.stringify(staleDraft));
   const full = await versions.saveDraftWeights(org.id, id, { enabled: true, weights: { [communication]: 75, [problem]: 25, [byKey("teamwork")]: 100 } });
   content = await loadVersionContent(org.id, v1.id);
   const savedWeights = content!.draftWeights ?? {};
@@ -393,27 +397,38 @@ async function main() {
   await expectCode("publishing again finds no draft", () => publishDraft(org.id, id, owner.id), "NO_DRAFT");
 
   console.log("\nWeights after publishing (HIRING-UX 5.7, R10)");
-  const refusedReason = await addWeightSet(org.id, id, { enabled: true, weights: { [communication]: 70, [problem]: 30 }, reason: " " }, owner.id);
+  const refusedReason = await addWeightSet(org.id, id, { versionId: live1.id, enabled: true, weights: { [communication]: 70, [problem]: 30 }, reason: " " }, owner.id);
   check(!refusedReason.ok && refusedReason.code === "REASON_REQUIRED", "a reason is required");
-  const refused95 = await addWeightSet(org.id, id, { enabled: true, weights: { [communication]: 70, [problem]: 25 }, reason: "Kalibrasyon" }, owner.id);
+  const refused95 = await addWeightSet(org.id, id, { versionId: live1.id, enabled: true, weights: { [communication]: 70, [problem]: 25 }, reason: "Kalibrasyon" }, owner.id);
   check(!refused95.ok && refused95.code === "NOT_100" && refused95.total === 95, "the total must be 100");
-  const added = await addWeightSet(org.id, id, { enabled: true, weights: { [communication]: 70, [problem]: 30 }, reason: "Kalibrasyon sonrası" }, owner.id);
+  const refusedHalf = await addWeightSet(org.id, id, { versionId: live1.id, enabled: true, weights: { [communication]: 70.5, [problem]: 29.5 }, reason: "Kalibrasyon" }, owner.id);
+  check(!refusedHalf.ok && refusedHalf.code === "NOT_WHOLE", "a weight that is not whole is NOT_WHOLE, never NOT_100 with a total of 100", JSON.stringify(refusedHalf));
+  const { liveWeights } = await import("@/solutions/hiring/server/weight-sets");
+  const { loadScorecard } = await import("@/solutions/hiring/server/content");
+  const liveSet = await liveWeights(org.id, live1.id);
+  check(
+    (await loadScorecard(org.id, live1.id)) !== null && liveSet !== null && Object.keys(liveSet.weights).sort().join() === [communication, problem].sort().join(),
+    "the scorecard page reads the live card and its newest weight set (the one publishing wrote)",
+    JSON.stringify(liveSet),
+  );
+  check((await loadScorecard(orgB.id, live1.id)) === null && (await liveWeights(orgB.id, live1.id)) === null, "another organisation reads neither");
+  const added = await addWeightSet(org.id, id, { versionId: live1.id, enabled: true, weights: { [communication]: 70, [problem]: 30 }, reason: "Kalibrasyon sonrası" }, owner.id);
   check(added.ok, "a new weight set with a reason is added");
   const setsAfter = await db.select().from(s.hiringWeightSets).where(eq(s.hiringWeightSets.versionId, live1.id));
   check(setsAfter.length === 2 && setsAfter.filter((x) => x.isActive).length === 1, "it is the one active set");
   const [stillSame] = await db.select().from(s.hiringVersions).where(eq(s.hiringVersions.id, live1.id));
   check(stillSame.scorecard!.competencies.map((c) => c.weight).join() === "75,25", "the published scorecard keeps its weights");
-  await expectCode("another organisation cannot change them", () => addWeightSet(orgB.id, id, { enabled: true, weights: { [communication]: 70, [problem]: 30 }, reason: "Kalibrasyon" }, ownerB.id), "NOT_FOUND");
-  await expectCode("nor a user of another organisation here", () => addWeightSet(org.id, id, { enabled: true, weights: { [communication]: 70, [problem]: 30 }, reason: "Kalibrasyon" }, ownerB.id), "NOT_FOUND");
-  const draftOnly = await addWeightSet(org.id, other.openingId, { enabled: true, weights: { [communication]: 100 }, reason: "Kalibrasyon" }, owner.id);
+  await expectCode("another organisation cannot change them", () => addWeightSet(orgB.id, id, { versionId: live1.id, enabled: true, weights: { [communication]: 70, [problem]: 30 }, reason: "Kalibrasyon" }, ownerB.id), "NOT_FOUND");
+  await expectCode("nor a user of another organisation here", () => addWeightSet(org.id, id, { versionId: live1.id, enabled: true, weights: { [communication]: 70, [problem]: 30 }, reason: "Kalibrasyon" }, ownerB.id), "NOT_FOUND");
+  const draftOnly = await addWeightSet(org.id, other.openingId, { versionId: live1.id, enabled: true, weights: { [communication]: 100 }, reason: "Kalibrasyon" }, owner.id);
   check(!draftOnly.ok && draftOnly.code === "NO_LIVE", "an opening with nothing published has no weight sets");
-  const plain = await addWeightSet(org.id, id, { enabled: false, weights: {}, reason: "Düz ortalamaya dönüş" }, owner.id);
+  const plain = await addWeightSet(org.id, id, { versionId: live1.id, enabled: false, weights: {}, reason: "Düz ortalamaya dönüş" }, owner.id);
   const setsPlain = await db.select().from(s.hiringWeightSets).where(eq(s.hiringWeightSets.versionId, live1.id));
   check(plain.ok && setsPlain.length === 3 && setsPlain.every((x) => !x.isActive), "switching weighting off leaves no active set (plain average)");
   const extra = await addWeightSet(
     org.id,
     id,
-    { enabled: true, weights: { [communication]: 70, [problem]: 30, [byKey("teamwork")]: 0, [foreignCompetency.id]: 0 }, reason: "Kalibrasyon sonrası" },
+    { versionId: live1.id, enabled: true, weights: { [communication]: 70, [problem]: 30, [byKey("teamwork")]: 0, [foreignCompetency.id]: 0 }, reason: "Kalibrasyon sonrası" },
     owner.id,
   );
   const [newest] = await db
@@ -444,6 +459,34 @@ async function main() {
   check(finalList.map((v) => `${v.number}${v.status[0]}`).join() === "2P,1P", "both versions stay published", finalList.map((v) => `${v.number}${v.status}`).join());
   const v2sets = await db.select().from(s.hiringWeightSets).where(eq(s.hiringWeightSets.versionId, draft2.versionId));
   check(v2sets.length === 1 && v2sets[0].isActive, "v2's first set is active, as its weighting is on");
+  const stale = await addWeightSet(org.id, id, { versionId: live1.id, enabled: true, weights: { [communication]: 60, [problem]: 40 }, reason: "Eski sekmeden" }, owner.id);
+  const v1setsAfter = await db.select().from(s.hiringWeightSets).where(eq(s.hiringWeightSets.versionId, live1.id));
+  const v2setsAfter = await db.select().from(s.hiringWeightSets).where(eq(s.hiringWeightSets.versionId, draft2.versionId));
+  check(!stale.ok && stale.code === "STALE" && v1setsAfter.length === 4 && v2setsAfter.length === 1, "a form loaded for v1 is STALE once v2 is live, and writes no set", JSON.stringify(stale));
+
+  console.log("\nThe scorecard's anchor Sheet writes the library, never a published card");
+  const { saveAnchors } = await import("@/server/library-write");
+  const { loadScorecard: scorecardOf } = await import("@/solutions/hiring/server/content");
+  const anchorText = (card: Awaited<ReturnType<typeof scorecardOf>>) => card!.competencies.find((c) => c.id === communication)!.anchors[3]?.tr;
+  const [v1Card, v2Card] = [await scorecardOf(org.id, live1.id), await scorecardOf(org.id, draft2.versionId)];
+  const sheetAnchors = { "1": { tr: " Soruyu tekrar etmeden cevaplar ", en: "" }, "3": { tr: "Ana noktayı özetler", en: "" }, "5": { tr: "Karşı tarafın sorusunu özetler", en: "" } };
+  const savedAnchors = await saveAnchors(org.id, owner.id, communication, sheetAnchors);
+  check(savedAnchors.ok && savedAnchors.anchors[1]?.tr === "Soruyu tekrar etmeden cevaplar", "the Sheet's anchors are saved trimmed and handed back", JSON.stringify(savedAnchors));
+  check((await loadCompetencyFacts(org.id, [communication])).get(communication)?.anchors[3]?.tr === "Ana noktayı özetler", "the library competency now has them");
+  check(
+    anchorText(await scorecardOf(org.id, live1.id)) === anchorText(v1Card) && anchorText(await scorecardOf(org.id, draft2.versionId)) === anchorText(v2Card) && anchorText(v2Card) !== "Ana noktayı özetler",
+    "the published v1 and v2 scorecards keep their copies",
+  );
+  const foreignAnchors = await saveAnchors(orgB.id, ownerB.id, communication, sheetAnchors);
+  check(!foreignAnchors.ok && foreignAnchors.code === "NOT_FOUND", "another organisation cannot change them");
+  const missingThree = await saveAnchors(org.id, owner.id, communication, { "1": sheetAnchors["1"], "5": sheetAnchors["5"] });
+  check(!missingThree.ok && missingThree.code === "ANCHORS_REQUIRED", "level 3 is required");
+  await setCompetencyArchived(org.id, owner.id, problem, true);
+  const archivedAnchors = await saveAnchors(org.id, owner.id, problem, sheetAnchors);
+  check(!archivedAnchors.ok && archivedAnchors.code === "ARCHIVED", "an archived competency is read-only");
+  await setCompetencyArchived(org.id, owner.id, problem, false);
+  const anchorAudit = await db.select().from(s.auditLogs).where(and(eq(s.auditLogs.orgId, org.id), eq(s.auditLogs.action, "library.competency.anchors")));
+  check(anchorAudit.length === 1 && anchorAudit[0].subjectId === communication, "the change is in the audit log once");
 
   console.log("\nTwo connections: publish takes the opening lock first (READ COMMITTED)");
   // Deterministic: every step waits for a state Postgres reports (pg_stat_activity, NOWAIT), never for a time.

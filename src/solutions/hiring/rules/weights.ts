@@ -57,14 +57,26 @@ export function missingWeights(weights: Record<string, number>, used: string[]):
   return used.filter((id) => weights[id] === undefined);
 }
 
+/** Shortest reason accepted for a weight change after publishing (HIRING-UX 5.7). */
+export const WEIGHT_REASON_MIN = 3;
+
+/**
+ * Why a set of weights is refused. NOT_WHOLE: a measured competency has no
+ * weight, or one that is not a whole number 0-100; it is named first, because
+ * the total of such values says nothing (70.5 + 29.5 is 100 and still refused).
+ * NOT_100: every value is whole, and they add up to `total`, not 100.
+ */
+export type WeightsProblem = { code: "NOT_WHOLE" | "NOT_100"; total: number };
+
 /** Null when every measured competency has a whole percentage 0-100 and they add up to 100. A missing one is a problem. */
-export function weightsProblem(weights: Record<string, number>, used: string[]): { total: number } | null {
+export function weightsProblem(weights: Record<string, number>, used: string[]): WeightsProblem | null {
   const total = weightsTotal(weights, used);
   const whole = used.every((id) => {
     const w = weights[id];
     return w !== undefined && Number.isInteger(w) && w >= 0 && w <= 100;
   });
-  return whole && total === 100 ? null : { total };
+  if (!whole) return { code: "NOT_WHOLE", total };
+  return total === 100 ? null : { code: "NOT_100", total };
 }
 
 /**
@@ -78,7 +90,7 @@ export function weightsProblem(weights: Record<string, number>, used: string[]):
 export function weightSetPercentages(
   scorecard: { competencies: ReadonlyArray<{ id: string; weight: number }> },
   input: { enabled: boolean; weights: Record<string, number> },
-): { ok: true; weights: Record<string, number> } | { ok: false; total: number } {
+): { ok: true; weights: Record<string, number> } | ({ ok: false } & WeightsProblem) {
   const used = scorecard.competencies.map((c) => c.id);
   if (!input.enabled) return { ok: true, weights: Object.fromEntries(scorecard.competencies.map((c) => [c.id, c.weight])) };
   const given: Record<string, number> = {};
@@ -87,5 +99,5 @@ export function weightSetPercentages(
     if (typeof value === "number" && Number.isFinite(value)) given[id] = value;
   }
   const problem = weightsProblem(given, used);
-  return problem ? { ok: false, total: problem.total } : { ok: true, weights: given };
+  return problem ? { ok: false, ...problem } : { ok: true, weights: given };
 }

@@ -69,10 +69,11 @@ describe("describeProblem", () => {
   });
 
   // Ruling C7: a link only to a page that exists. Structure problems open the
-  // builder (Task 15) on the stage or question at fault; a missing anchor is
-  // fixed on the library competency; weights wait for the scorecard (Task 16).
+  // builder (Task 15) on the stage or question at fault; a missing anchor and
+  // the weights are fixed on the scorecard (Task 16), the anchor in its Sheet.
   it("links only to pages that exist", () => {
     const builder = `/hiring/openings/${OPENING}/assessment/edit`;
+    const scorecard = `/hiring/openings/${OPENING}/assessment/scorecard`;
     const expected: Record<PublishProblem["code"], string | null> = {
       NO_STAGE: builder,
       EMPTY_STAGE_NAME: `${builder}?stage=s2`,
@@ -86,9 +87,9 @@ describe("describeProblem", () => {
       NO_MEASURED_COMPETENCY: builder,
       COMPETENCY_MISSING: builder,
       COMPETENCY_ARCHIVED: builder,
-      ANCHOR_MISSING: `/library/competencies/${COMP}`,
-      WEIGHTS_NOT_100: null,
-      WEIGHTS_MISSING: null,
+      ANCHOR_MISSING: `${scorecard}?anchors=${COMP}`,
+      WEIGHTS_NOT_100: `${scorecard}?weights=1`,
+      WEIGHTS_MISSING: `${scorecard}?weights=1`,
     };
     for (const problem of Object.values(SAMPLES)) expect(describe_(problem, "tr").href, problem.code).toBe(expected[problem.code]);
   });

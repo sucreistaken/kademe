@@ -9,9 +9,9 @@ type T = ReturnType<typeof managerT>;
 /**
  * One gate problem as a sentence and the place that fixes it (HIRING-UX R2:
  * "Yayınla" states its reason). Structure problems open the builder on the
- * stage or question at fault (`?stage=` / `?activity=`); a missing anchor is
- * fixed on the library competency. Weights are fixed on the scorecard, which
- * does not exist yet (Task 16), so they carry no link (ruling C7).
+ * stage or question at fault (`?stage=` / `?activity=`). A missing anchor and
+ * the weights are fixed on the scorecard (Task 16): `?anchors=` opens that
+ * competency's anchor Sheet, `?weights=1` opens the weights section.
  *
  * Stages and questions are named by their place on screen (orderIndex), the
  * same order the gate reports them in.
@@ -34,6 +34,7 @@ export function describeProblem(
   const builder = `/hiring/openings/${ctx.openingId}/assessment/edit`;
   const atStage = (stageId: string) => `${builder}?stage=${stageId}`;
   const atActivity = (activityId: string) => `${builder}?activity=${activityId}`;
+  const scorecard = `/hiring/openings/${ctx.openingId}/assessment/scorecard`;
   /** The first question (in screen order) that measures this competency, where it can be removed or replaced. */
   const usedAt = (competencyId: string) => {
     for (const s of stages) for (const a of orderedActivities(s)) if (a.competencyIds.includes(competencyId)) return atActivity(a.id);
@@ -67,12 +68,12 @@ export function describeProblem(
     case "ANCHOR_MISSING":
       return {
         text: t("hiringGate.anchorMissing", { competency: competency(problem.competencyId), level: problem.level }),
-        href: `/library/competencies/${problem.competencyId}`,
+        href: `${scorecard}?anchors=${problem.competencyId}`,
       };
     case "WEIGHTS_NOT_100":
-      return { text: t("hiringGate.weights", { total: problem.total }), href: null };
+      return { text: t("hiringGate.weights", { total: problem.total }), href: `${scorecard}?weights=1` };
     case "WEIGHTS_MISSING":
-      return { text: t("hiringGate.weightsMissing", { competency: competency(problem.competencyId) }), href: null };
+      return { text: t("hiringGate.weightsMissing", { competency: competency(problem.competencyId) }), href: `${scorecard}?weights=1` };
     default: {
       // A new PublishProblem code is a type error here until it has its sentence.
       const unhandled: never = problem;

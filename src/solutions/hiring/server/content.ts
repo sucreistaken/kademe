@@ -138,3 +138,18 @@ export async function positionProfile(orgId: string, positionId: string, x: Exec
     .where(and(eq(positionCompetencies.positionId, positionId), eq(positions.orgId, orgId)))
     .orderBy(asc(positionCompetencies.orderIndex), asc(positionCompetencies.competencyId));
 }
+
+/**
+ * The scorecard a published version of the caller's organisation copied at
+ * publish (anchors, tags, percentages as they were then); null on a draft, on
+ * another organisation's version, or on a malformed id.
+ */
+export async function loadScorecard(orgId: string, versionId: string, x: Executor = db): Promise<ScorecardSnapshot | null> {
+  if (!isUuid(versionId)) return null;
+  const [row] = await x
+    .select({ scorecard: hiringVersions.scorecard })
+    .from(hiringVersions)
+    .where(and(eq(hiringVersions.id, versionId), eq(hiringVersions.orgId, orgId)))
+    .limit(1);
+  return row?.scorecard ?? null;
+}

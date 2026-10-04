@@ -23,7 +23,7 @@ import {
   type StagePayload,
 } from "../rules/patches";
 import { workingVersions, type VersionSummary } from "../rules/versions";
-import { weightsProblem } from "../rules/weights";
+import { weightsProblem, type WeightsProblem } from "../rules/weights";
 import { loadVersionContent } from "./content";
 import { frozenAsConflict, HiringConflict, HiringInvalid, HiringNotFound, parseOrInvalid } from "./errors";
 
@@ -492,21 +492,28 @@ export async function setActivityCompetencies(orgId: string, openingId: string, 
   });
 }
 
-/** HIRING-UX 5.7 for a draft: weighting off means a plain average; on needs 100%. */
+/**
+ * HIRING-UX 5.7 for a draft: weighting off means a plain average; on needs
+ * whole percentages adding up to 100 (NOT_WHOLE / NOT_100, rules/weights).
+ * `versionId`, when given, is the draft the form was loaded for: compared under
+ * the opening's lock, so weights chosen for a draft that was published (and
+ * replaced by a new draft) meanwhile answer STALE instead of landing elsewhere.
+ */
 export async function saveDraftWeights(
   orgId: string,
   openingId: string,
-  input: { enabled: boolean; weights: Record<string, number> },
-): Promise<{ ok: true } | { ok: false; total: number }> {
+  input: { versionId?: string; enabled: boolean; weights: Record<string, number> },
+): Promise<{ ok: true } | { ok: false; code: "STALE" } | ({ ok: false } & WeightsProblem)> {
   return draftWrite(async (tx) => {
     const versionId = await draftOf(tx, orgId, openingId);
+    if (input.versionId !== undefined && input.versionId !== versionId) return { ok: false as const, code: "STALE" as const };
     const content = await loadVersionContent(orgId, versionId, tx);
     if (!content) throw new HiringNotFound("version");
     const used = usedCompetencyIds(content);
     const weights = Object.fromEntries(used.map((id) => [id, Object.hasOwn(input.weights, id) ? input.weights[id] : 0]));
     if (input.enabled) {
       const problem = weightsProblem(weights, used);
-      if (problem) return { ok: false as const, total: problem.total };
+      if (problem) return { ok: false as const, ...problem };
     }
     await tx
       .update(hiringVersions)

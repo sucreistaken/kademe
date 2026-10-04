@@ -62,19 +62,27 @@ describe("weights", () => {
 
   it("accepts whole percentages adding up to exactly 100 over the measured competencies", () => {
     expect(weightsProblem({ c1: 60, c2: 40 }, ["c1", "c2"])).toBeNull();
-    expect(weightsProblem({ c1: 60, c2: 35 }, ["c1", "c2"])).toEqual({ total: 95 });
-    expect(weightsProblem({ c1: 60.5, c2: 39.5 }, ["c1", "c2"])).toEqual({ total: 100 });
+    expect(weightsProblem({ c1: 60, c2: 35 }, ["c1", "c2"])).toEqual({ code: "NOT_100", total: 95 });
+    expect(weightsProblem({ c1: 60.5, c2: 39.5 }, ["c1", "c2"])).toEqual({ code: "NOT_WHOLE", total: 100 });
     expect(weightsProblem({ c1: 100, gone: 50 }, ["c1"])).toBeNull();
   });
 
   it("treats a measured competency with no weight as a problem, even when the rest adds up to 100", () => {
-    expect(weightsProblem({ c1: 60, c2: 40 }, ["c1", "c2", "c3"])).toEqual({ total: 100 });
+    expect(weightsProblem({ c1: 60, c2: 40 }, ["c1", "c2", "c3"])).toEqual({ code: "NOT_WHOLE", total: 100 });
     expect(missingWeights({ c1: 60, c2: 40 }, ["c1", "c3", "c2", "c4"])).toEqual(["c3", "c4"]);
     expect(missingWeights({ c1: 0 }, ["c1"])).toEqual([]);
   });
 
   it("refuses a percentage outside 0-100 even when the total is 100", () => {
-    expect(weightsProblem({ c1: 120, c2: -20 }, ["c1", "c2"])).toEqual({ total: 100 });
+    expect(weightsProblem({ c1: 120, c2: -20 }, ["c1", "c2"])).toEqual({ code: "NOT_WHOLE", total: 100 });
+  });
+
+  it("names a value that is not a whole 0-100 NOT_WHOLE before any total, so the sentence never contradicts the total shown", () => {
+    // 70.5 + 30 is not 100 either, but the first thing to fix is the value itself.
+    expect(weightsProblem({ c1: 70.5, c2: 30 }, ["c1", "c2"])).toEqual({ code: "NOT_WHOLE", total: 100.5 });
+    expect(weightsProblem({ c1: 101, c2: 0 }, ["c1", "c2"])).toEqual({ code: "NOT_WHOLE", total: 101 });
+    expect(weightsProblem({ c1: 70, c2: 25 }, ["c1", "c2"])).toEqual({ code: "NOT_100", total: 95 });
+    expect(weightsProblem({}, [])).toEqual({ code: "NOT_100", total: 0 });
   });
 });
 
@@ -96,24 +104,24 @@ describe("weightSetPercentages (a weight set after publishing)", () => {
   });
 
   it("refuses a total other than 100 with the total, and a missing competency", () => {
-    expect(weightSetPercentages(scorecard, { enabled: true, weights: { c1: 70, c2: 25 } })).toEqual({ ok: false, total: 95 });
-    expect(weightSetPercentages(scorecard, { enabled: true, weights: { c1: 100 } })).toEqual({ ok: false, total: 100 });
+    expect(weightSetPercentages(scorecard, { enabled: true, weights: { c1: 70, c2: 25 } })).toEqual({ ok: false, code: "NOT_100", total: 95 });
+    expect(weightSetPercentages(scorecard, { enabled: true, weights: { c1: 100 } })).toEqual({ ok: false, code: "NOT_WHOLE", total: 100 });
   });
 
   it("refuses values the database would refuse or round (hiring_weight_percentage, numeric(5,2))", () => {
-    expect(weightSetPercentages(scorecard, { enabled: true, weights: { c1: 120, c2: -20 } })).toEqual({ ok: false, total: 100 });
-    expect(weightSetPercentages(scorecard, { enabled: true, weights: { c1: 70.5, c2: 29.5 } })).toEqual({ ok: false, total: 100 });
+    expect(weightSetPercentages(scorecard, { enabled: true, weights: { c1: 120, c2: -20 } })).toEqual({ ok: false, code: "NOT_WHOLE", total: 100 });
+    expect(weightSetPercentages(scorecard, { enabled: true, weights: { c1: 70.5, c2: 29.5 } })).toEqual({ ok: false, code: "NOT_WHOLE", total: 100 });
   });
 
   it("a value that is not a finite number counts as missing, so the total stays a number", () => {
     const weights = { c1: "70", c2: Number.NaN } as unknown as Record<string, number>;
-    expect(weightSetPercentages(scorecard, { enabled: true, weights })).toEqual({ ok: false, total: 0 });
+    expect(weightSetPercentages(scorecard, { enabled: true, weights })).toEqual({ ok: false, code: "NOT_WHOLE", total: 0 });
   });
 
   it("an inherited key is not a weight", () => {
     const weights = Object.create({ c1: 70 }) as Record<string, number>;
     weights.c2 = 30;
-    expect(weightSetPercentages(scorecard, { enabled: true, weights })).toEqual({ ok: false, total: 30 });
+    expect(weightSetPercentages(scorecard, { enabled: true, weights })).toEqual({ ok: false, code: "NOT_WHOLE", total: 30 });
   });
 
   it("weighting off (plain average): the scorecard's percentages are kept, whatever came in", () => {
@@ -121,7 +129,7 @@ describe("weightSetPercentages (a weight set after publishing)", () => {
   });
 
   it("a scorecard without competencies: on is refused (total 0), off is an empty set", () => {
-    expect(weightSetPercentages({ competencies: [] }, { enabled: true, weights: {} })).toEqual({ ok: false, total: 0 });
+    expect(weightSetPercentages({ competencies: [] }, { enabled: true, weights: {} })).toEqual({ ok: false, code: "NOT_100", total: 0 });
     expect(weightSetPercentages({ competencies: [] }, { enabled: false, weights: {} })).toEqual({ ok: true, weights: {} });
   });
 });

@@ -15,6 +15,7 @@ import {
 } from "@/db/schema";
 import { hasText, MAX_TAGS_PER_SIDE, missingAnchorLevels } from "@/lib/library/anchors";
 import { POSITION_LANGUAGES_MAX, POSITION_SKILLS_MAX } from "@/lib/library/positions";
+import { isUuid } from "@/server/settings";
 
 /**
  * Library writes. Every write is scoped by organisation and leaves an audit row.
@@ -156,6 +157,41 @@ export async function saveCompetency(
     }
     await audit(tx, orgId, actorId, "library.competency.save", "competency", id, reviewedNow ? { markReviewed: true } : undefined);
     return { ok: true as const, tags: saved };
+  });
+}
+
+/**
+ * The scorecard's "Düzenle" (HIRING-UX 5.7): a competency's anchors only, from
+ * the anchor Sheet. Still a library write: it changes the competency for every
+ * draft that measures it, never a published version (its scorecard holds a
+ * copy). Same rules as saveCompetency: levels 1, 3 and 5 required, the row
+ * locked by id AND organisation, an archived competency read-only. Answers the
+ * stored anchors, so the Sheet adopts what was saved (trimmed, empty levels gone).
+ */
+export async function saveAnchors(
+  orgId: string,
+  actorId: string,
+  competencyId: string,
+  input: AnchorInput,
+): Promise<{ ok: true; anchors: Record<number, I18nText> } | { ok: false; code: "ANCHORS_REQUIRED" | "NOT_FOUND" | "ARCHIVED" }> {
+  const anchors = anchorRecord(input);
+  if (missingAnchorLevels(anchors).length) return { ok: false, code: "ANCHORS_REQUIRED" };
+  if (!isUuid(competencyId)) return { ok: false, code: "NOT_FOUND" };
+  return db.transaction(async (tx) => {
+    const [row] = await tx
+      .select({ id: competencies.id, archivedAt: competencies.archivedAt })
+      .from(competencies)
+      .where(and(eq(competencies.id, competencyId), eq(competencies.orgId, orgId)))
+      .for("update");
+    if (!row) return { ok: false as const, code: "NOT_FOUND" as const };
+    if (row.archivedAt) return { ok: false as const, code: "ARCHIVED" as const };
+    await replaceAnchors(tx, competencyId, anchors);
+    await tx
+      .update(competencies)
+      .set({ updatedAt: new Date() })
+      .where(and(eq(competencies.id, competencyId), eq(competencies.orgId, orgId)));
+    await audit(tx, orgId, actorId, "library.competency.anchors", "competency", competencyId, { levels: Object.keys(anchors).map(Number) });
+    return { ok: true as const, anchors };
   });
 }
 

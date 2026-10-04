@@ -100,7 +100,8 @@ vi.mock("../rules/access", async (importOriginal) => {
   };
 });
 
-import { loadCompetencyFacts, loadScaleSnapshot, loadVersionContent, positionProfile } from "./content";
+import { loadCompetencyFacts, loadScaleSnapshot, loadScorecard, loadVersionContent, positionProfile } from "./content";
+import { liveWeights } from "./weight-sets";
 import { createOpening, copySources, listOpenings, loadOpening } from "./openings";
 import * as versions from "./versions";
 import { emptyActivity, MAX_ACTIVITIES_PER_STAGE, stagePayloadSchema, type StagePayload } from "../rules/patches";
@@ -284,6 +285,40 @@ describe("draft writes", () => {
   });
 });
 
+describe("saveDraftWeights", () => {
+  /** A draft measuring COMP with one video question, in the caller's organisation. */
+  const weightsWorld = (op: Op): unknown[] => {
+    if (op.kind === "select" && op.table === "hiring_openings") return [{ id: OPENING }];
+    if (op.kind === "select" && op.table === "hiring_versions") return [{ id: VERSION, number: 2, versionNumber: 2, status: "DRAFT", publishedAt: null, previewedAt: null }];
+    if (op.kind === "select" && op.table === "hiring_stages") return [{ id: STAGE, orderIndex: 0 }];
+    if (op.kind === "select" && op.table === "hiring_activities") return [{ id: ACTIVITY, stageId: STAGE, orderIndex: 0, type: "VIDEO" }];
+    if (op.kind === "select" && op.table === "hiring_activity_competencies") return [{ activityId: ACTIVITY, competencyId: COMP, orderIndex: 0 }];
+    return [];
+  };
+
+  it("names a value that is not a whole 0-100 NOT_WHOLE and a wrong total NOT_100, and writes nothing", async () => {
+    respond = weightsWorld;
+    await expect(versions.saveDraftWeights(ORG, OPENING, { enabled: true, weights: { [COMP]: 99.5 } })).resolves.toEqual({ ok: false, code: "NOT_WHOLE", total: 99.5 });
+    await expect(versions.saveDraftWeights(ORG, OPENING, { enabled: true, weights: { [COMP]: 90 } })).resolves.toEqual({ ok: false, code: "NOT_100", total: 90 });
+    expect(writes()).toEqual([]);
+  });
+
+  it("a form loaded for another version (published meanwhile, a new draft opened) is STALE and writes nothing", async () => {
+    respond = weightsWorld;
+    await expect(versions.saveDraftWeights(ORG, OPENING, { versionId: STAGE, enabled: true, weights: { [COMP]: 100 } })).resolves.toEqual({ ok: false, code: "STALE" });
+    expect(writes()).toEqual([]);
+  });
+
+  it("writes the draft it was loaded for, by id and organisation", async () => {
+    respond = weightsWorld;
+    await expect(versions.saveDraftWeights(ORG, OPENING, { versionId: VERSION, enabled: true, weights: { [COMP]: 100 } })).resolves.toEqual({ ok: true });
+    const update = writes().find((o) => o.kind === "update" && o.table === "hiring_versions");
+    expect(update?.values).toMatchObject({ weightsEnabled: true, draftWeights: { [COMP]: 100 } });
+    scopedToOrg(update, '"hiring_versions"."org_id"');
+    expect(update?.params).toContain(VERSION);
+  });
+});
+
 describe("loaders", () => {
   it("loads a version only within the caller's organisation", async () => {
     expect(await loadVersionContent(ORG, VERSION)).toBeNull();
@@ -291,7 +326,19 @@ describe("loaders", () => {
     expect(ops[0].params).toContain(VERSION);
   });
 
+  it("reads a published scorecard and its newest weight set only within the caller's organisation", async () => {
+    expect(await loadScorecard(ORG, VERSION)).toBeNull();
+    scopedToOrg(ops[0], '"hiring_versions"."org_id"');
+    expect(ops[0].params).toContain(VERSION);
+    ops.length = 0;
+    expect(await liveWeights(ORG, VERSION)).toBeNull();
+    scopedToOrg(ops[0], '"hiring_versions"."org_id"');
+    expect(ops[0].params).toContain(VERSION);
+  });
+
   it("a malformed id finds nothing and sends no statement (no 22P02)", async () => {
+    expect(await loadScorecard(ORG, "not-an-id")).toBeNull();
+    expect(await liveWeights(ORG, "not-an-id")).toBeNull();
     expect(await loadVersionContent(ORG, "not-an-id")).toBeNull();
     expect((await loadCompetencyFacts(ORG, ["not-an-id"])).size).toBe(0);
     expect(await positionProfile(ORG, "not-an-id")).toEqual([]);

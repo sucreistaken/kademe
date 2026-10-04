@@ -96,6 +96,7 @@ import { POSITION_LANGUAGES_MAX, POSITION_SKILLS_MAX } from "@/lib/library/posit
 import {
   createCompetency,
   createPosition,
+  saveAnchors,
   saveCompetency,
   savePosition,
   saveScaleLabels,
@@ -270,6 +271,55 @@ describe("saveCompetency", () => {
     expect(tagWrites[0]).toMatchObject({ kind: "update" });
     expect(tagWrites[0].values).toHaveProperty("archivedAt");
     expect(tagWrites[0].params).toContain(OWN_TAG);
+  });
+});
+
+describe("saveAnchors (the scorecard's anchor Sheet)", () => {
+  const anchors = { "1": text(" kısa cevap verir "), "2": text(""), "3": text("ana noktayı özetler"), "5": text("soruyu kendi cümleleriyle özetler") };
+
+  it("refuses a missing level 1, 3 or 5 before touching the database", async () => {
+    expect(await saveAnchors(ORG, ACTOR, ID, { "1": text("a b c d"), "5": text("a b c d") })).toEqual({ ok: false, code: "ANCHORS_REQUIRED" });
+    expect(ops).toEqual([]);
+  });
+
+  it("a malformed id is not found without a statement (no 22P02)", async () => {
+    expect(await saveAnchors(ORG, ACTOR, "not-an-id", anchors)).toEqual({ ok: false, code: "NOT_FOUND" });
+    expect(ops).toEqual([]);
+  });
+
+  it("locks the competency by id and organisation, and writes nothing when it is not the caller's", async () => {
+    expect(await saveAnchors(ORG, ACTOR, ID, anchors)).toEqual({ ok: false, code: "NOT_FOUND" });
+    expect(ops).toHaveLength(1);
+    expect(ops[0]).toMatchObject({ kind: "select", table: "competencies", lock: "update" });
+    expect(ops[0].where).toContain('"competencies"."org_id" = $');
+    expect(ops[0].params).toEqual(expect.arrayContaining([ID, ORG]));
+  });
+
+  it("does not write anything to an archived competency", async () => {
+    respond = (op) => (op.kind === "select" && op.table === "competencies" ? [{ id: ID, archivedAt: new Date() }] : []);
+    expect(await saveAnchors(ORG, ACTOR, ID, anchors)).toEqual({ ok: false, code: "ARCHIVED" });
+    expect(writes()).toEqual([]);
+  });
+
+  it("replaces only this competency's anchors with the written levels, trimmed, audits, and answers what it stored", async () => {
+    respond = (op) => (op.kind === "select" && op.table === "competencies" ? [{ id: ID, archivedAt: null }] : []);
+    const result = await saveAnchors(ORG, ACTOR, ID, anchors);
+    const stored = { 1: text("kısa cevap verir"), 3: text("ana noktayı özetler"), 5: text("soruyu kendi cümleleriyle özetler") };
+    expect(result).toEqual({ ok: true, anchors: stored });
+    const anchorWrites = writes().filter((o) => o.table === "competency_anchors");
+    expect(anchorWrites[0]).toMatchObject({ kind: "delete" });
+    expect(anchorWrites[0].params).toEqual([ID]);
+    expect(anchorWrites[1].values).toEqual([
+      { competencyId: ID, value: 1, body: stored[1] },
+      { competencyId: ID, value: 3, body: stored[3] },
+      { competencyId: ID, value: 5, body: stored[5] },
+    ]);
+    const touch = writes().find((o) => o.kind === "update" && o.table === "competencies");
+    expect(touch?.where).toContain('"competencies"."org_id" = $');
+    expect(touch?.values).toHaveProperty("updatedAt");
+    expect(touch?.values).not.toHaveProperty("name");
+    expect(auditRows()[0].values).toMatchObject({ orgId: ORG, actorId: ACTOR, subjectId: ID, action: "library.competency.anchors", meta: { levels: [1, 3, 5] } });
+    expect(writes().every((o) => inTransaction.has(o))).toBe(true);
   });
 });
 

@@ -74,10 +74,10 @@ export function OpeningHeader({
 
 /**
  * The assessment's own tabs (HIRING-UX 4.3): the summary with the version
- * history and the builder. The AI draft (Task 17), the scorecard (Task 16)
- * and the preview (Task 19) join when their routes exist (ruling C7).
+ * history, the builder and the scorecard. The AI draft (Task 17) and the
+ * preview (Task 19) join when their routes exist (ruling C7).
  */
-export function AssessmentTabs({ openingId, active, t }: { openingId: string; active: "summary" | "edit"; t: T }) {
+export function AssessmentTabs({ openingId, active, t }: { openingId: string; active: "summary" | "edit" | "scorecard"; t: T }) {
   const base = `/hiring/openings/${openingId}/assessment`;
   return (
     <RouteTabs
@@ -86,6 +86,7 @@ export function AssessmentTabs({ openingId, active, t }: { openingId: string; ac
       items={[
         { href: base, label: t("hiringCommon.tabSummary"), active: active === "summary" },
         { href: `${base}/edit`, label: t("hiringCommon.tabBuilder"), active: active === "edit" },
+        { href: `${base}/scorecard`, label: t("hiringCommon.tabScorecard"), active: active === "scorecard" },
       ]}
     />
   );

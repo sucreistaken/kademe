@@ -247,7 +247,8 @@ describe("publishDraft", () => {
 
 describe("addWeightSet", () => {
   const live = (w: World = {}) => world({ status: "PUBLISHED", ...w });
-  const input = (over: Partial<{ enabled: boolean; weights: Record<string, number>; reason: string }> = {}) => ({
+  const input = (over: Partial<{ versionId: string; enabled: boolean; weights: Record<string, number>; reason: string }> = {}) => ({
+    versionId: VERSION,
     enabled: true,
     weights: { [COMP]: 70, [COMP2]: 30 },
     reason: "Kalibrasyon sonrası",
@@ -302,6 +303,24 @@ describe("addWeightSet", () => {
   it("a total other than 100 is refused with the total and writes nothing", async () => {
     fake.respond = live();
     await expect(addWeightSet(ORG, OPENING, input({ weights: { [COMP]: 70, [COMP2]: 25 } }), ACTOR)).resolves.toEqual({ ok: false, code: "NOT_100", total: 95 });
+    expect(writesOf(fake.ops)).toEqual([]);
+  });
+
+  it("a value that is not a whole 0-100 is NOT_WHOLE, not NOT_100, so the message never contradicts the total shown", async () => {
+    fake.respond = live();
+    await expect(addWeightSet(ORG, OPENING, input({ weights: { [COMP]: 70.5, [COMP2]: 29.5 } }), ACTOR)).resolves.toEqual({ ok: false, code: "NOT_WHOLE", total: 100 });
+    await expect(addWeightSet(ORG, OPENING, input({ weights: { [COMP]: 100 } }), ACTOR)).resolves.toEqual({ ok: false, code: "NOT_WHOLE", total: 100 });
+    expect(writesOf(fake.ops)).toEqual([]);
+  });
+
+  it("a form loaded for an older live version is STALE (a newer one went live meanwhile) and writes nothing", async () => {
+    fake.respond = live();
+    await expect(addWeightSet(ORG, OPENING, input({ versionId: FOREIGN }), ACTOR)).resolves.toEqual({ ok: false, code: "STALE" });
+    // The live version is read under the opening's lock, the same lock publishing takes first.
+    expect(fake.ops[0]).toMatchObject({ table: t.openings, lock: "update" });
+    expect(writesOf(fake.ops)).toEqual([]);
+    fake.ops.length = 0;
+    await expect(addWeightSet(ORG, OPENING, input({ versionId: "not-an-id" }), ACTOR)).resolves.toEqual({ ok: false, code: "STALE" });
     expect(writesOf(fake.ops)).toEqual([]);
   });
 
