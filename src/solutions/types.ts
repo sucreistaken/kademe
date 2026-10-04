@@ -24,10 +24,13 @@ export type LibraryRefs = { positionIds: string[]; competencyIds: string[] };
 export type LibraryUsageEntry = {
   /** Everything in this solution that uses the row (e.g. openings). */
   total: number;
-  /** Of those, how many have a published assessment that copied the row. */
+  /** Of those, the open openings whose published version uses the row. */
   live: number;
+  /** Only what the viewer may open; total - items.length are counted but not named. */
   items: Array<{ label: string; href: string }>;
 };
+/** Who asks: a solution names and links only what this person may open. */
+export type LibraryViewer = { id: string; role: "OWNER" | "MANAGER" | "REVIEWER" };
 export type LibraryUsage = {
   positions: Record<string, LibraryUsageEntry>;
   competencies: Record<string, LibraryUsageEntry>;
@@ -103,6 +106,7 @@ export interface SolutionModule extends SolutionManifest {
   };
   /** Where this solution uses library rows. Optional: a solution that never reads the library omits it. */
   library?: {
-    usage(orgId: string, refs: LibraryRefs): Promise<LibraryUsage>;
+    /** `viewer` null asks for counts only (no names, no links), e.g. an "is it used" check. */
+    usage(orgId: string, refs: LibraryRefs, viewer: LibraryViewer | null): Promise<LibraryUsage>;
   };
 }

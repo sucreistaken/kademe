@@ -52,11 +52,16 @@ export type AnswerExamples = { 1?: string; 3?: string; 5?: string };
 
 /** Copied into the version at publish and never changed again (hiring solution design 2.3). */
 export type ScorecardSnapshot = {
+  /** Shape version of this JSON; bump it (and keep a reader for the old one) when the shape changes. */
+  schemaVersion: 1;
   scale: { min: number; max: number; levels: Array<{ value: number; label: I18nText }> };
   competencies: Array<{
     id: string;
     name: I18nText;
+    /** The library description at publish; may be empty. */
+    description: I18nText;
     anchors: Record<number, I18nText>;
+    /** In the library's order (order_index, then id). */
     tags: Array<{ id: string; polarity: "POSITIVE" | "NEGATIVE"; label: I18nText }>;
     weight: number;
   }>;

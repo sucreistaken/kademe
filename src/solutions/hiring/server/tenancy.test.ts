@@ -1,92 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getTableName, SQL, Table } from "drizzle-orm";
-import { PgDialect } from "drizzle-orm/pg-core";
+import { fake, type Op } from "./test-fake-db";
 
 /**
  * Hiring child tables reach their organisation only through their parent
  * chain, and library foreign keys are single-column (schema/hiring.ts). The
- * fake database below records every statement (table, WHERE with its bound
+ * fake database (test-fake-db.ts) records every statement (table, WHERE with its bound
  * parameters, lock, written values); each test proves a read or write is
  * scoped to the caller's organisation, and that an id of another organisation
  * ends the call before anything is written. verify:hiring-setup proves the
  * same on a real database.
  */
-const dialect = new PgDialect();
-type Op = {
-  kind: "select" | "insert" | "update" | "delete";
-  table: string;
-  where: string;
-  params: unknown[];
-  joins: string[];
-  values?: unknown;
-  lock?: string;
-};
-const ops: Op[] = [];
-let respond: (op: Op) => unknown[] = () => [];
-
-function sqlOf(condition: unknown) {
-  if (!(condition instanceof SQL)) return { sql: "", params: [] as unknown[] };
-  return dialect.sqlToQuery(condition);
-}
-
-function statement(kind: Op["kind"], table?: unknown) {
-  const op: Op = { kind, table: table instanceof Table ? getTableName(table) : "", where: "", params: [], joins: [] };
-  const join = (t: unknown, condition: unknown) => {
-    const { sql, params } = sqlOf(condition);
-    op.joins.push(`${getTableName(t as Table)} ON ${sql}`);
-    op.params.push(...params);
-    return chain;
-  };
-  const chain = {
-    from: (t: unknown) => {
-      op.table = getTableName(t as Table);
-      return chain;
-    },
-    innerJoin: join,
-    leftJoin: join,
-    values: (v: unknown) => {
-      op.values = v;
-      return chain;
-    },
-    set: (v: unknown) => {
-      op.values = v;
-      return chain;
-    },
-    where: (condition: unknown) => {
-      const { sql, params } = sqlOf(condition);
-      op.where = sql;
-      op.params.push(...params);
-      return chain;
-    },
-    for: (lock: string) => {
-      op.lock = lock;
-      return chain;
-    },
-    limit: () => chain,
-    orderBy: () => chain,
-    returning: () => chain,
-    then: (resolve: (rows: unknown[]) => unknown, reject?: (e: unknown) => unknown) => {
-      ops.push(op);
-      return Promise.resolve()
-        .then(() => respond(op))
-        .then(resolve, reject);
-    },
-  };
-  return chain;
-}
-
-// A function declaration, because vi.mock factories run before module-level consts exist.
-function fakeDb() {
-  const x = {
-    select: () => statement("select"),
-    insert: (t: unknown) => statement("insert", t),
-    update: (t: unknown) => statement("update", t),
-    delete: (t: unknown) => statement("delete", t),
-    transaction: async <T>(fn: (tx: unknown) => Promise<T>) => fn(x),
-  };
-  return x;
-}
-vi.mock("@/db", () => ({ db: fakeDb() }));
+vi.mock("@/db", async () => ({ db: (await import("./test-fake-db")).fakeDb() }));
+const ops = fake.ops;
 
 const access = vi.hoisted(() => ({ calls: [] as unknown[] }));
 vi.mock("../rules/access", async (importOriginal) => {
@@ -153,7 +78,7 @@ const draftWrites: Array<[string, () => Promise<unknown>]> = [
 beforeEach(() => {
   ops.length = 0;
   access.calls.length = 0;
-  respond = () => [];
+  fake.respond = () => [];
 });
 
 describe("draft writes", () => {
@@ -176,7 +101,7 @@ describe("draft writes", () => {
   };
 
   it("finds the draft among the caller's organisation's versions", async () => {
-    respond = draftWorld();
+    fake.respond = draftWorld();
     await versions.addStage(ORG, OPENING);
     scopedToOrg(
       ops.find((o) => o.kind === "select" && o.table === "hiring_versions"),
@@ -185,13 +110,13 @@ describe("draft writes", () => {
   });
 
   it("answers NO_DRAFT when the opening has only published versions", async () => {
-    respond = draftWorld((op) => (op.table === "hiring_versions" ? [{ id: VERSION, number: 1, status: "PUBLISHED", publishedAt: new Date(), previewedAt: null }] : undefined));
+    fake.respond = draftWorld((op) => (op.table === "hiring_versions" ? [{ id: VERSION, number: 1, status: "PUBLISHED", publishedAt: new Date(), previewedAt: null }] : undefined));
     await expect(versions.addStage(ORG, OPENING)).rejects.toMatchObject({ code: "NO_DRAFT" });
     expect(writes()).toEqual([]);
   });
 
   it("a stage of another version is not found, and nothing is written", async () => {
-    respond = draftWorld();
+    fake.respond = draftWorld();
     await expect(versions.updateStage(ORG, OPENING, STAGE, { durationSeconds: 300 })).rejects.toMatchObject({ code: "NOT_FOUND", what: "stage" });
     const lookup = ops.find((o) => o.kind === "select" && o.table === "hiring_stages");
     expect(lookup?.params).toEqual(expect.arrayContaining([STAGE, VERSION]));
@@ -199,7 +124,7 @@ describe("draft writes", () => {
   });
 
   it("a competency is checked against the caller's organisation, and one it does not own writes nothing", async () => {
-    respond = draftWorld((op) => (op.table === "hiring_activities" ? [{ stageId: STAGE, type: "VIDEO" }] : undefined));
+    fake.respond = draftWorld((op) => (op.table === "hiring_activities" ? [{ stageId: STAGE, type: "VIDEO" }] : undefined));
     await expect(versions.setActivityCompetencies(ORG, OPENING, ACTIVITY, [COMP])).rejects.toMatchObject({ code: "COMPETENCY" });
     const lookup = ops.find((o) => o.kind === "select" && o.table === "competencies");
     scopedToOrg(lookup, '"competencies"."org_id"');
@@ -208,7 +133,7 @@ describe("draft writes", () => {
   });
 
   it("an undo payload's competencies are checked the same way before anything is inserted", async () => {
-    respond = draftWorld();
+    fake.respond = draftWorld();
     await expect(versions.insertStage(ORG, OPENING, stagePayload)).rejects.toMatchObject({ code: "COMPETENCY" });
     scopedToOrg(
       ops.find((o) => o.kind === "select" && o.table === "competencies"),
@@ -218,7 +143,7 @@ describe("draft writes", () => {
   });
 
   it.each(draftWrites)("%s refuses a CLOSED opening and writes nothing", async (_name, run) => {
-    respond = draftWorld((op) => (op.kind === "select" && op.table === "hiring_openings" ? [{ id: OPENING, status: "CLOSED" }] : undefined));
+    fake.respond = draftWorld((op) => (op.kind === "select" && op.table === "hiring_openings" ? [{ id: OPENING, status: "CLOSED" }] : undefined));
     await expect(run()).rejects.toMatchObject({ name: "HiringConflict", code: "CLOSED" });
     expect(writes()).toEqual([]);
   });
@@ -233,7 +158,7 @@ describe("draft writes", () => {
   const archivedQuestion = { ...emptyActivity("VIDEO"), competencyIds: [COMP] };
 
   it("undo restores a question and a stage whose competency was archived since, when the organisation owns it", async () => {
-    respond = archivedWorld([{ id: COMP, archivedAt: new Date() }]);
+    fake.respond = archivedWorld([{ id: COMP, archivedAt: new Date() }]);
     await expect(versions.insertActivity(ORG, OPENING, STAGE, archivedQuestion, 0, { restore: true })).resolves.toBe(STAGE);
     expect(writes().some((o) => o.kind === "insert" && o.table === "hiring_activity_competencies")).toBe(true);
     ops.length = 0;
@@ -242,10 +167,10 @@ describe("draft writes", () => {
   });
 
   it("a new question (an accepted AI card) may not bring an archived competency, and undo may not bring another organisation's", async () => {
-    respond = archivedWorld([{ id: COMP, archivedAt: new Date() }]);
+    fake.respond = archivedWorld([{ id: COMP, archivedAt: new Date() }]);
     await expect(versions.insertActivity(ORG, OPENING, STAGE, archivedQuestion)).rejects.toMatchObject({ code: "COMPETENCY" });
     await expect(versions.insertStage(ORG, OPENING, { ...stagePayload, activities: [archivedQuestion] })).rejects.toMatchObject({ code: "COMPETENCY" });
-    respond = archivedWorld([]);
+    fake.respond = archivedWorld([]);
     await expect(versions.insertActivity(ORG, OPENING, STAGE, archivedQuestion, 0, { restore: true })).rejects.toMatchObject({ code: "COMPETENCY" });
     await expect(versions.insertStage(ORG, OPENING, stagePayload, 0, { restore: true })).rejects.toMatchObject({ code: "COMPETENCY" });
     expect(writes()).toEqual([]);
@@ -253,7 +178,7 @@ describe("draft writes", () => {
 
   it("a stage holds at most MAX_ACTIVITIES_PER_STAGE questions, so a deleted stage always fits its undo payload", async () => {
     const full = Array.from({ length: MAX_ACTIVITIES_PER_STAGE }, (_, i) => ({ id: `${i}` }));
-    respond = draftWorld((op) => {
+    fake.respond = draftWorld((op) => {
       if (op.kind === "select" && op.table === "hiring_stages") return [{ id: STAGE }];
       if (op.kind === "select" && op.table === "hiring_activities") return full;
       return undefined;
@@ -274,7 +199,7 @@ describe("draft writes", () => {
 
   it("moving a stage only renumbers rows of the draft and never changes a parent id", async () => {
     const other = "99999999-9999-4999-8999-999999999999";
-    respond = draftWorld((op) => (op.kind === "select" && op.table === "hiring_stages" ? [{ id: other }, { id: STAGE }] : undefined));
+    fake.respond = draftWorld((op) => (op.kind === "select" && op.table === "hiring_stages" ? [{ id: other }, { id: STAGE }] : undefined));
     await versions.moveStage(ORG, OPENING, STAGE, -1);
     const updates = writes();
     expect(updates.length).toBeGreaterThan(0);
@@ -297,26 +222,26 @@ describe("saveDraftWeights", () => {
   };
 
   it("names a value that is not a whole 0-100 NOT_WHOLE and a wrong total NOT_100, and writes nothing", async () => {
-    respond = weightsWorld;
+    fake.respond = weightsWorld;
     await expect(versions.saveDraftWeights(ORG, OPENING, { enabled: true, weights: { [COMP]: 99.5 } })).resolves.toEqual({ ok: false, code: "NOT_WHOLE", total: 99.5 });
     await expect(versions.saveDraftWeights(ORG, OPENING, { enabled: true, weights: { [COMP]: 90 } })).resolves.toEqual({ ok: false, code: "NOT_100", total: 90 });
     expect(writes()).toEqual([]);
   });
 
   it("weighting on: a measured competency left out is WEIGHTS_MISSING, not filled with 0, and nothing is written", async () => {
-    respond = weightsWorld;
+    fake.respond = weightsWorld;
     await expect(versions.saveDraftWeights(ORG, OPENING, { enabled: true, weights: { [STAGE]: 100 } })).resolves.toEqual({ ok: false, code: "WEIGHTS_MISSING", competencyId: COMP });
     expect(writes()).toEqual([]);
   });
 
   it("a form loaded for another version (published meanwhile, a new draft opened) is STALE and writes nothing", async () => {
-    respond = weightsWorld;
+    fake.respond = weightsWorld;
     await expect(versions.saveDraftWeights(ORG, OPENING, { versionId: STAGE, enabled: true, weights: { [COMP]: 100 } })).resolves.toEqual({ ok: false, code: "STALE" });
     expect(writes()).toEqual([]);
   });
 
   it("writes the draft it was loaded for, by id and organisation", async () => {
-    respond = weightsWorld;
+    fake.respond = weightsWorld;
     await expect(versions.saveDraftWeights(ORG, OPENING, { versionId: VERSION, enabled: true, weights: { [COMP]: 100 } })).resolves.toEqual({ ok: true });
     const update = writes().find((o) => o.kind === "update" && o.table === "hiring_versions");
     expect(update?.values).toMatchObject({ weightsEnabled: true, draftWeights: { [COMP]: 100 } });
@@ -371,7 +296,7 @@ describe("loaders", () => {
   });
 
   it("lists openings with their status, so a closed one is read-only", async () => {
-    respond = (op) =>
+    fake.respond = (op) =>
       op.table === "hiring_openings"
         ? [{ id: OPENING, name: "A", status: "CLOSED", deadlineAt: null, decisionMakerId: null, backupDecisionMakerId: null, positionName: "P", ownerName: null }]
         : [];
@@ -385,7 +310,7 @@ describe("loaders", () => {
 
 describe("createOpening", () => {
   it("locks a copy source by id and organisation FOR SHARE before reading its versions", async () => {
-    respond = (op) =>
+    fake.respond = (op) =>
       op.table === "users" ? [{ id: ACTOR }] : op.table === "positions" ? [{ id: POSITION, name: "P", jobDescription: null }] : op.table === "hiring_openings" ? [{ id: OPENING }] : [];
     await createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "existing", id: POSITION }, start: "COPY", copyFrom: OPENING });
     const source = ops.find((o) => o.table === "hiring_openings");
@@ -404,7 +329,7 @@ describe("createOpening", () => {
   });
 
   it("finds an existing position only within the organisation and not archived", async () => {
-    respond = (op) => (op.table === "users" ? [{ id: ACTOR }] : []);
+    fake.respond = (op) => (op.table === "users" ? [{ id: ACTOR }] : []);
     expect(await createOpening({ id: ACTOR, orgId: ORG }, input)).toEqual({ ok: false, code: "POSITION_NOT_FOUND" });
     const lookup = ops.find((o) => o.table === "positions");
     scopedToOrg(lookup, '"positions"."org_id"');
@@ -413,7 +338,7 @@ describe("createOpening", () => {
   });
 
   it("finds a copy source only within the organisation", async () => {
-    respond = (op) => (op.table === "users" ? [{ id: ACTOR }] : op.table === "positions" ? [{ id: POSITION, name: "P", jobDescription: null }] : []);
+    fake.respond = (op) => (op.table === "users" ? [{ id: ACTOR }] : op.table === "positions" ? [{ id: POSITION, name: "P", jobDescription: null }] : []);
     expect(await createOpening({ id: ACTOR, orgId: ORG }, { ...input, start: "COPY", copyFrom: OPENING })).toEqual({ ok: false, code: "COPY_SOURCE_NOT_FOUND" });
     scopedToOrg(
       ops.find((o) => o.table === "hiring_openings"),

@@ -697,7 +697,8 @@ describe("archiveCompetencyIfUnused (undo of an accepted AI competency, ruling C
     respond = competencyRow;
     libraryUsage.mockResolvedValue({ positions: {}, competencies: { [ID]: [{ solution: "hiring" }] } });
     expect(await archiveCompetencyIfUnused(ORG, ACTOR, ID, VIA)).toEqual({ ok: false, code: "IN_USE" });
-    expect(libraryUsage).toHaveBeenCalledWith(ORG, { positionIds: [], competencyIds: [ID] }, expect.any(String));
+    // Counts only: no viewer, so no opening is named to anyone.
+    expect(libraryUsage).toHaveBeenCalledWith(ORG, { positionIds: [], competencyIds: [ID] }, expect.any(String), null);
     expect(writes()).toEqual([]);
   });
 

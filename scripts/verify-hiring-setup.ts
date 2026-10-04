@@ -301,7 +301,7 @@ async function main() {
   // Task 12 owns publishing; this marks the version published directly to exercise the frozen paths.
   await db
     .update(s.hiringVersions)
-    .set({ status: "PUBLISHED", scorecard: { scale: { min: 1, max: 5, levels: [] }, competencies: [], weightsEnabled: false }, publishedAt: new Date(), publishedBy: owner.id })
+    .set({ status: "PUBLISHED", scorecard: { schemaVersion: 1, scale: { min: 1, max: 5, levels: [] }, competencies: [], weightsEnabled: false }, publishedAt: new Date(), publishedBy: owner.id })
     .where(eq(s.hiringVersions.id, fv1.id));
   await expectCode("the builder has no draft to edit", () => versions.addStage(org.id, frozen.openingId), "NO_DRAFT");
   await expectCode(
@@ -440,7 +440,7 @@ async function main() {
   const [liveV1] = await versions.versionsOf(org.id, liveTeam.openingId);
   await db
     .update(s.hiringVersions)
-    .set({ status: "PUBLISHED", scorecard: { scale: { min: 1, max: 5, levels: [] }, competencies: [], weightsEnabled: false }, publishedAt: new Date(), publishedBy: owner.id })
+    .set({ status: "PUBLISHED", scorecard: { schemaVersion: 1, scale: { min: 1, max: 5, levels: [] }, competencies: [], weightsEnabled: false }, publishedAt: new Date(), publishedBy: owner.id })
     .where(eq(s.hiringVersions.id, liveV1.id));
   await openings.setOpeningClosed(org.id, owner.id, liveTeam.openingId, true);
   await openings.setOpeningClosed(org.id, owner.id, liveTeam.openingId, false);
@@ -510,7 +510,18 @@ async function main() {
 
   console.log("\nThe library changes, the published scorecard does not");
   const anchorBefore = published.scorecard!.competencies[0].anchors[3].tr;
-  await db.update(s.competencyAnchors).set({ body: { tr: "DEĞİŞTİ", en: "" } }).where(eq(s.competencyAnchors.competencyId, communication));
+  // The library is changed through the app's own write path; v2 (published below) must carry the new text, v1 the old.
+  const anchorAfter = "Mesajı dinleyenin düzeyine göre kurar ve bir örnekle destekler.";
+  const commFacts = (await loadCompetencyFacts(org.id, [communication])).get(communication)!;
+  const levelText = (level: number) => commFacts.anchors[level] ?? { tr: "", en: "" };
+  const changedAnchor = await saveCompetency(org.id, owner.id, communication, {
+    name: commFacts.name,
+    description: commFacts.description,
+    anchors: { "1": levelText(1), "2": levelText(2), "3": { tr: anchorAfter, en: "" }, "4": levelText(4), "5": levelText(5) },
+    tags: commFacts.tags.filter((t) => !t.archived).map((t) => ({ id: t.id, polarity: t.polarity, label: t.label })),
+    markReviewed: false,
+  });
+  check(changedAnchor.ok && anchorBefore !== anchorAfter, "the library anchor is changed with saveCompetency", JSON.stringify(changedAnchor));
   const [after] = await db.select().from(s.hiringVersions).where(eq(s.hiringVersions.id, live1.id));
   check(after.scorecard!.competencies[0].anchors[3].tr === anchorBefore, "anchor text in v1 is unchanged");
 
@@ -587,6 +598,16 @@ async function main() {
   check(v1again!.stages[0].durationSeconds === firstStage.durationSeconds, "editing v2 leaves v1 alone");
   outcome = await publishDraft(org.id, id, owner.id);
   check(outcome.ok && outcome.number === 2, "v2 publishes");
+  const [v1Published, v2Published] = await Promise.all(
+    [live1.id, draft2.versionId].map(async (vid) => (await db.select().from(s.hiringVersions).where(eq(s.hiringVersions.id, vid)))[0]),
+  );
+  const levelThree = (row: typeof v1Published) => row.scorecard!.competencies.find((c) => c.id === communication)!.anchors[3]?.tr;
+  check(
+    levelThree(v2Published) === anchorAfter && levelThree(v1Published) === anchorBefore,
+    "v2's scorecard has the library's new anchor text, v1's keeps the old",
+    `${levelThree(v1Published)} | ${levelThree(v2Published)}`,
+  );
+  check(v2Published.scorecard!.schemaVersion === 1, "the snapshot records its schema version");
   const finalList = await versions.versionsOf(org.id, id);
   check(finalList.map((v) => `${v.number}${v.status[0]}`).join() === "2P,1P", "both versions stay published", finalList.map((v) => `${v.number}${v.status}`).join());
   const v2sets = await db.select().from(s.hiringWeightSets).where(eq(s.hiringWeightSets.versionId, draft2.versionId));

@@ -30,7 +30,7 @@ export default async function PositionsPage() {
   );
 
   const usage = rows.length
-    ? await libraryUsage(user.orgId, { positionIds: rows.map((r) => r.id), competencyIds: [] }, locale)
+    ? await libraryUsage(user.orgId, { positionIds: rows.map((r) => r.id), competencyIds: [] }, locale, user)
     : { positions: {}, competencies: {} };
   const table = (list: PositionRow[]) => (
     <Table>

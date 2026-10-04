@@ -56,10 +56,11 @@ const t = {
 
 const text = (tr: string) => ({ tr, en: "" });
 const scorecard = {
+  schemaVersion: 1,
   scale: { min: 1, max: 5, levels: [] },
   competencies: [
-    { id: COMP, name: text("İletişim"), anchors: {}, tags: [], weight: 75 },
-    { id: COMP2, name: text("Problem Çözme"), anchors: {}, tags: [], weight: 25 },
+    { id: COMP, name: text("İletişim"), description: text(""), anchors: {}, tags: [], weight: 75 },
+    { id: COMP2, name: text("Problem Çözme"), description: text(""), anchors: {}, tags: [], weight: 25 },
   ],
   weightsEnabled: false,
 };
@@ -115,7 +116,7 @@ const world =
         ];
       if (op.table === t.activities) return [{ id: ACTIVITY, stageId: STAGE, orderIndex: 0, type: "VIDEO", required: true, prompt: text("Anlat"), note: text(""), config: {} }];
       if (op.table === t.mappings) return [{ activityId: ACTIVITY, competencyId: COMP, orderIndex: 0 }];
-      if (op.table === t.competencies) return [{ id: COMP, name: text("İletişim"), archivedAt: null }];
+      if (op.table === t.competencies) return [{ id: COMP, name: text("İletişim"), description: text("Açık anlatır."), archivedAt: null }];
       if (op.table === t.anchors) return (w.anchors ?? [1, 3, 5]).map((value) => ({ competencyId: COMP, value, body: text(`Seviye ${value}`) }));
       if (op.table === t.tags) return [];
       if (op.table === t.scales) return [{ id: SET, minValue: 1, maxValue: 5 }];
@@ -178,7 +179,7 @@ describe("publishDraft", () => {
     const values = update!.values as Record<string, unknown>;
     expect(values).toMatchObject({ status: "PUBLISHED", publishedBy: ACTOR });
     expect(values.publishedAt).toBeInstanceOf(Date);
-    expect(values.scorecard).toMatchObject({ competencies: [{ id: COMP, weight: 100 }], weightsEnabled: false });
+    expect(values.scorecard).toMatchObject({ schemaVersion: 1, competencies: [{ id: COMP, description: text("Açık anlatır."), weight: 100 }], weightsEnabled: false });
     expect(Object.keys(values)).not.toContain("defaultLocale");
     expect(Object.keys(values)).not.toContain("localeSet");
   });

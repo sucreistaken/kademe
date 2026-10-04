@@ -107,11 +107,12 @@ export async function loadCompetencyFacts(orgId: string, ids: string[], x: Execu
       {
         id: c.id,
         name: c.name,
+        description: c.description,
         archived: c.archivedAt !== null,
         anchors: Object.fromEntries(anchors.filter((a) => a.competencyId === c.id).map((a) => [a.value, a.body])),
         tags: tags
           .filter((t) => t.competencyId === c.id)
-          .map((t) => ({ id: t.id, polarity: t.polarity, label: t.label, archived: t.archivedAt !== null })),
+          .map((t) => ({ id: t.id, orderIndex: t.orderIndex, polarity: t.polarity, label: t.label, archived: t.archivedAt !== null })),
       },
     ]),
   );

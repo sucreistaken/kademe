@@ -496,7 +496,8 @@ export async function archiveCompetencyIfUnused(
       .where(eq(positionCompetencies.competencyId, id))
       .limit(1);
     if (inProfile) return { ok: false as const, code: "IN_USE" as const };
-    const usage = await libraryUsage(orgId, { positionIds: [], competencyIds: [id] }, DEFAULT_LOCALE);
+    // Counts only: whether anything uses it, not which openings.
+    const usage = await libraryUsage(orgId, { positionIds: [], competencyIds: [id] }, DEFAULT_LOCALE, null);
     if ((usage.competencies[id] ?? []).length > 0) return { ok: false as const, code: "IN_USE" as const };
     await tx
       .update(competencies)

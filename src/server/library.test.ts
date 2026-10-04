@@ -50,7 +50,7 @@ function selectChain(fields?: Record<string, unknown>) {
 
 vi.mock("@/db", () => ({ db: { select: (fields?: Record<string, unknown>) => selectChain(fields) } }));
 
-type Hook = (orgId: string, refs: { positionIds: string[]; competencyIds: string[] }) => Promise<{
+type Hook = (orgId: string, refs: { positionIds: string[]; competencyIds: string[] }, viewer: { id: string; role: "OWNER" | "MANAGER" | "REVIEWER" } | null) => Promise<{
   positions: Record<string, { total: number; live: number; items: Array<{ label: string; href: string }> }>;
   competencies: Record<string, { total: number; live: number; items: Array<{ label: string; href: string }> }>;
 }>;
@@ -146,9 +146,10 @@ describe("libraryUsage", () => {
       positions: {},
       competencies: { c1: { total: 2, live: 1, items: [{ label: "Opening", href: "/hiring/openings/o1" }] } },
     });
-    const grouped = await libraryUsage(ORG, refs, "en");
+    const viewer = { id: ID, role: "REVIEWER" as const };
+    const grouped = await libraryUsage(ORG, refs, "en", viewer);
     expect(usageHook).toHaveBeenCalledTimes(1);
-    expect(usageHook).toHaveBeenCalledWith(ORG, refs);
+    expect(usageHook).toHaveBeenCalledWith(ORG, refs, viewer);
     expect(grouped.competencies.c1.map((g) => g.label)).toEqual(["Hiring"]);
     expect(grouped.positions.p1).toEqual([]);
   });

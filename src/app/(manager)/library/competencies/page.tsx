@@ -73,7 +73,7 @@ export default async function CompetenciesPage({ searchParams }: { searchParams:
   }
 
   const rows = await listCompetencies(user.orgId);
-  const usage = await libraryUsage(user.orgId, { positionIds: [], competencyIds: rows.map((r) => r.id) }, locale);
+  const usage = await libraryUsage(user.orgId, { positionIds: [], competencyIds: rows.map((r) => r.id) }, locale, user);
   const active = rows.filter((r) => !r.archivedAt);
   const archived = rows.filter((r) => r.archivedAt);
 

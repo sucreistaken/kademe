@@ -11,8 +11,8 @@ const library = () =>
       facts("c2", {
         anchors: { 1: { tr: "bir", en: "one" }, 2: { tr: " ", en: "" }, 3: { tr: "üç", en: "" }, 5: { tr: "beş", en: "" } },
         tags: [
-          { id: "t1", polarity: "POSITIVE", label: { tr: "Örnek verdi", en: "Gave an example" }, archived: false },
-          { id: "t2", polarity: "NEGATIVE", label: { tr: "eski", en: "old" }, archived: true },
+          { id: "t1", orderIndex: 0, polarity: "POSITIVE", label: { tr: "Örnek verdi", en: "Gave an example" }, archived: false },
+          { id: "t2", orderIndex: 1, polarity: "NEGATIVE", label: { tr: "eski", en: "old" }, archived: true },
         ],
       }),
     ],
@@ -66,15 +66,28 @@ describe("scorecard snapshot (hiring solution design 2.3)", () => {
     const shuffled = content([...ordered.stages].reverse().map((s) => ({ ...s, activities: [...s.activities].reverse() })));
     const lib = library();
     const reversedLib = library();
-    reversedLib.get("c2")!.tags.reverse();
-    lib.get("c2")!.tags.push({ id: "t0", polarity: "NEGATIVE", label: { tr: "b", en: "b" }, archived: false });
-    reversedLib.get("c2")!.tags.push({ id: "t0", polarity: "NEGATIVE", label: { tr: "b", en: "b" }, archived: false });
+    // t0 sorts before t1 by id but comes after it in the library's order: the library's order wins.
+    const late = { id: "t0", orderIndex: 2, polarity: "NEGATIVE" as const, label: { tr: "b", en: "b" }, archived: false };
+    const tie = { id: "t3", orderIndex: 2, polarity: "POSITIVE" as const, label: { tr: "c", en: "c" }, archived: false };
+    lib.get("c2")!.tags.push(late, tie);
+    reversedLib.get("c2")!.tags.push(tie, late);
     reversedLib.get("c2")!.tags.reverse();
     const one = buildScorecard({ content: ordered, facts: lib, scale: structuredClone(scale), profile: [] });
     const two = buildScorecard({ content: shuffled, facts: reversedLib, scale: structuredClone(scale), profile: [] });
     expect(JSON.stringify(two)).toBe(JSON.stringify(one));
     expect(one.competencies.map((c) => c.id)).toEqual(["c2", "c1"]);
-    expect(one.competencies[0].tags.map((t) => t.id)).toEqual(["t0", "t1"]);
+    expect(one.competencies[0].tags.map((t) => t.id)).toEqual(["t1", "t0", "t3"]);
+  });
+
+  it("records its schema version and each competency's description", () => {
+    const lib = library();
+    lib.get("c2")!.description = { tr: "Açıkça anlatır.", en: "Explains clearly." };
+    const snapshot = buildScorecard({ content: draft, facts: lib, scale, profile: [] });
+    expect(snapshot.schemaVersion).toBe(1);
+    expect(snapshot.competencies.map((c) => c.description)).toEqual([
+      { tr: "Açıkça anlatır.", en: "Explains clearly." },
+      { tr: "", en: "" },
+    ]);
   });
 
   it("is a copy: editing the library afterwards changes nothing in it", () => {

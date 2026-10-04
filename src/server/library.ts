@@ -14,7 +14,7 @@ import type { Locale } from "@/i18n/locale";
 import { missingAnchorLevels } from "@/lib/library/anchors";
 import { groupUsage, type SolutionUsage } from "@/lib/library/usage";
 import { solutionModules } from "@/solutions/registry.server";
-import type { LibraryRefs } from "@/solutions/types";
+import type { LibraryRefs, LibraryViewer } from "@/solutions/types";
 
 /**
  * Read model for the organisation library (core: no solution table here).
@@ -197,12 +197,16 @@ export async function loadPosition(orgId: string, id: string): Promise<PositionD
   };
 }
 
-/** Asks every registered solution where these rows are used (contract hook, spec 3). */
-export async function libraryUsage(orgId: string, refs: LibraryRefs, locale: Locale) {
+/**
+ * Asks every registered solution where these rows are used (contract hook,
+ * spec 3). Each solution names only what `viewer` may open; null asks for
+ * counts only.
+ */
+export async function libraryUsage(orgId: string, refs: LibraryRefs, locale: Locale, viewer: LibraryViewer | null) {
   const results: SolutionUsage[] = await Promise.all(
     solutionModules()
       .filter((m) => m.library)
-      .map(async (m) => ({ solution: m.key, label: m.label[locale], usage: await m.library!.usage(orgId, refs) })),
+      .map(async (m) => ({ solution: m.key, label: m.label[locale], usage: await m.library!.usage(orgId, refs, viewer) })),
   );
   return groupUsage(results, refs);
 }

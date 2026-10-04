@@ -41,6 +41,25 @@ export const INTERNAL_FIELDS = [
   "audio_key",
   "storageKey",
   "storage_key",
+  // Hiring: the builder's team-only fields (HIRING-UX 5.5 "Sadece ekip görür") and the scoring data.
+  "internalQuestion",
+  "internal_question",
+  "expectedBehaviours",
+  "expected_behaviours",
+  "redFlags",
+  "red_flags",
+  "managerNotes",
+  "manager_notes",
+  "answerExamples",
+  "answer_examples",
+  "internalPurpose",
+  "internal_purpose",
+  "competencyIds",
+  "scorecard",
+  "draftWeights",
+  "draft_weights",
+  "weights",
+  "anchors",
 ] as const;
 
 const INTERNAL_SET: ReadonlySet<string> = new Set(INTERNAL_FIELDS);

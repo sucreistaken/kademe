@@ -65,9 +65,10 @@ export type VersionContent = {
 export type CompetencyFacts = {
   id: string;
   name: I18nText;
+  description: I18nText;
   archived: boolean;
   anchors: Partial<Record<number, I18nText>>;
-  tags: Array<{ id: string; polarity: "POSITIVE" | "NEGATIVE"; label: I18nText; archived: boolean }>;
+  tags: Array<{ id: string; orderIndex: number; polarity: "POSITIVE" | "NEGATIVE"; label: I18nText; archived: boolean }>;
 };
 
 /** Stable reading order: by position, ties by id, so the loader's row order never matters. */

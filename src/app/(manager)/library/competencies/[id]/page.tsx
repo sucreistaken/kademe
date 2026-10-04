@@ -43,7 +43,7 @@ export default async function CompetencyPage({
   if (!competency) notFound();
   const [scale, usage, sp] = await Promise.all([
     loadDefaultScale(user.orgId),
-    libraryUsage(user.orgId, { positionIds: [], competencyIds: [id] }, locale),
+    libraryUsage(user.orgId, { positionIds: [], competencyIds: [id] }, locale, user),
     searchParams,
   ]);
   const groups = usage.competencies[id] ?? [];
@@ -77,6 +77,7 @@ export default async function CompetencyPage({
             empty={t("libCompetencies.usageEmpty")}
             groups={groups}
             lineLabel={(g) => t("libCompetencies.usageLine", { solution: g.label, count: g.entry.total })}
+            hiddenLabel={(count) => t("libCompetencies.usageHidden", { count })}
           />
           {canWrite ? (
             <ArchiveForm

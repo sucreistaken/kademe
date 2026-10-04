@@ -1,7 +1,7 @@
 import type { ScorecardSnapshot } from "@/db/schema";
 import type { I18nText } from "@/db/schema/types";
 import { hasText } from "@/lib/library/anchors";
-import { usedCompetencyIds, type CompetencyFacts, type VersionContent } from "./content";
+import { byOrder, usedCompetencyIds, type CompetencyFacts, type VersionContent } from "./content";
 import { defaultWeights, missingWeights } from "./weights";
 
 /**
@@ -22,6 +22,7 @@ export function buildScorecard(input: {
   const unweighted = missingWeights(weights, used);
   if (unweighted.length > 0) throw new Error(`competency ${unweighted.join(", ")} has no weight`);
   const snapshot: ScorecardSnapshot = {
+    schemaVersion: 1,
     scale: input.scale,
     competencies: used.map((id) => {
       const f = input.facts.get(id);
@@ -33,10 +34,12 @@ export function buildScorecard(input: {
       return {
         id,
         name: f.name,
+        description: { tr: f.description.tr, en: f.description.en },
         anchors,
+        // The library's order (as the manager arranged the tags), ties by id, so the loader's row order never matters.
         tags: f.tags
           .filter((t) => !t.archived)
-          .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+          .sort(byOrder)
           .map((t) => ({ id: t.id, polarity: t.polarity, label: t.label })),
         weight: weights[id],
       };

@@ -35,7 +35,7 @@ export default async function PositionPage({
   const [options, scale, usage, sp] = await Promise.all([
     activeCompetencyOptions(user.orgId),
     loadDefaultScale(user.orgId),
-    libraryUsage(user.orgId, { positionIds: [id], competencyIds: [] }, locale),
+    libraryUsage(user.orgId, { positionIds: [id], competencyIds: [] }, locale, user),
     searchParams,
   ]);
   const canWrite = can(user, "library:write");
@@ -80,6 +80,7 @@ export default async function PositionPage({
             empty={t("libPositions.usageEmpty")}
             groups={usage.positions[id] ?? []}
             lineLabel={(g) => t("libPositions.usageLine", { solution: g.label, count: g.entry.total })}
+            hiddenLabel={(count) => t("libPositions.usageHidden", { count })}
           />
           {canWrite ? (
             <ArchiveForm

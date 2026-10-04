@@ -47,6 +47,7 @@ export function facts(id: string, over: Partial<CompetencyFacts> = {}): Competen
   return {
     id,
     name: { tr: `Yetkinlik ${id}`, en: `Competency ${id}` },
+    description: { tr: "", en: "" },
     archived: false,
     anchors: { 1: { tr: "bir", en: "one" }, 3: { tr: "üç", en: "three" }, 5: { tr: "beş", en: "five" } },
     tags: [],
