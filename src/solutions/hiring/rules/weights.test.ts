@@ -1,7 +1,7 @@
 import { PgDialect, getTableConfig } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 import { hiringWeights } from "@/db/schema";
-import { defaultWeights, evenSplit, toPercentages, weightsProblem } from "./weights";
+import { defaultWeights, evenSplit, missingWeights, toPercentages, weightsProblem } from "./weights";
 
 describe("weights", () => {
   it("splits evenly, earlier rows take the remainder", () => {
@@ -24,6 +24,19 @@ describe("weights", () => {
     }
   });
 
+  it("breaks exact ties toward the earlier row", () => {
+    // 57.5 and 42.5 are both exact halves: the earlier row takes the spare point.
+    expect(toPercentages([23, 17])).toEqual([58, 42]);
+    expect(toPercentages([17, 23])).toEqual([43, 57]);
+    expect(toPercentages([1, 1])).toEqual([50, 50]);
+    expect(toPercentages([1, 1, 1, 1, 1, 1, 1])).toEqual([15, 15, 14, 14, 14, 14, 14]);
+  });
+
+  it("falls back to an even split when the importances cannot be added up", () => {
+    expect(toPercentages([Number.MAX_VALUE, Number.MAX_VALUE])).toEqual([50, 50]);
+    expect(toPercentages([Number.POSITIVE_INFINITY, 1])).toEqual([0, 100]);
+  });
+
   it("agrees with the database: every percentage is a whole number between 0 and 100 (hiring_weight_percentage)", () => {
     const check = getTableConfig(hiringWeights).checks.find((c) => c.name === "hiring_weight_percentage");
     expect(check).toBeDefined();
@@ -43,6 +56,8 @@ describe("weights", () => {
     expect(defaultWeights(["c1", "c2"], profile)).toEqual({ c1: 75, c2: 25 });
     expect(defaultWeights(["c1", "c2", "c3"], profile)).toEqual({ c1: 50, c2: 17, c3: 33 });
     expect(defaultWeights(["c1", "c2"], [])).toEqual({ c1: 50, c2: 50 });
+    // an average that is not a whole number (42.5) is still ranked exactly
+    expect(defaultWeights(["c1", "c2", "c3"], [{ competencyId: "c1", weight: 60 }, { competencyId: "c2", weight: 25 }])).toEqual({ c1: 47, c2: 20, c3: 33 });
   });
 
   it("accepts whole percentages adding up to exactly 100 over the measured competencies", () => {
@@ -50,6 +65,12 @@ describe("weights", () => {
     expect(weightsProblem({ c1: 60, c2: 35 }, ["c1", "c2"])).toEqual({ total: 95 });
     expect(weightsProblem({ c1: 60.5, c2: 39.5 }, ["c1", "c2"])).toEqual({ total: 100 });
     expect(weightsProblem({ c1: 100, gone: 50 }, ["c1"])).toBeNull();
+  });
+
+  it("treats a measured competency with no weight as a problem, even when the rest adds up to 100", () => {
+    expect(weightsProblem({ c1: 60, c2: 40 }, ["c1", "c2", "c3"])).toEqual({ total: 100 });
+    expect(missingWeights({ c1: 60, c2: 40 }, ["c1", "c3", "c2", "c4"])).toEqual(["c3", "c4"]);
+    expect(missingWeights({ c1: 0 }, ["c1"])).toEqual([]);
   });
 
   it("refuses a percentage outside 0-100 even when the total is 100", () => {

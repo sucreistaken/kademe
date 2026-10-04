@@ -73,4 +73,46 @@ describe("candidate view (HIRING-UX 5.8, spec 7)", () => {
     local.stages[0].activities[0].prompt.tr = "sonra";
     expect(view.stages[0].activities[0].prompt.tr).toBe("önce");
   });
+
+  it("copies the configured limits and drops options without text", () => {
+    const view = toCandidateVersion(
+      content([
+        stage("s1", [
+          activity("t", {
+            type: "LONG_TEXT",
+            config: { minChars: 50, maxChars: 900, acceptedMimeTypes: ["application/pdf"], maxFileBytes: 1024, textAlternativeEnabled: true },
+          }),
+          activity("c", {
+            orderIndex: 1,
+            type: "MULTI_CHOICE",
+            config: {
+              choices: [
+                { id: "a", label: { tr: "Var", en: "" }, correct: true },
+                { id: "b", label: { tr: " ", en: "" } },
+                { id: "c", label: { tr: "", en: "Maybe" } },
+              ],
+            },
+          }),
+        ]),
+      ]),
+    );
+    const [text, choice] = view.stages[0].activities;
+    expect(text).toMatchObject({ minChars: 50, maxChars: 900, acceptedMimeTypes: ["application/pdf"], maxFileBytes: 1024, textAlternativeEnabled: true, choices: null });
+    expect(choice.choices).toEqual([
+      { id: "a", label: { tr: "Var", en: "" } },
+      { id: "c", label: { tr: "", en: "Maybe" } },
+    ]);
+  });
+
+  it("orders stages and questions by their order, whatever order they were loaded in", () => {
+    const stages = [
+      stage("s2", [activity("late", { orderIndex: 1 }), activity("early", { orderIndex: 0 })], { orderIndex: 1 }),
+      stage("s1", [activity("only")], { orderIndex: 0 }),
+    ];
+    const one = toCandidateVersion(content(stages));
+    const two = toCandidateVersion(content([...stages].reverse().map((s) => ({ ...s, activities: [...s.activities].reverse() }))));
+    expect(JSON.stringify(two)).toBe(JSON.stringify(one));
+    expect(one.stages.map((s) => s.id)).toEqual(["s1", "s2"]);
+    expect(one.stages[1].activities.map((a) => a.id)).toEqual(["early", "late"]);
+  });
 });

@@ -19,6 +19,24 @@ describe("opening access", () => {
     expect(openingAccess({ id: "r", role: "REVIEWER" }, none)).toEqual({ view: false, edit: false });
   });
 
+  it("is judged on people loaded for the viewer's own organisation (caller's precondition)", () => {
+    // The function trusts `people`: it cannot tell organisations apart, so the
+    // server must load them with the opening's org in the query. A member id
+    // of another org never appears in a correct load.
+    const otherOrg = { decisionMakerId: null, backupDecisionMakerId: null, memberIds: ["someone-else"] };
+    expect(openingAccess({ id: "r", role: "REVIEWER" }, otherOrg)).toEqual({ view: false, edit: false });
+  });
+
+  it("keeps a closed opening readable and read-only for everyone", () => {
+    const closed = { ...people, status: "CLOSED" as const };
+    expect(openingAccess({ id: "x", role: "OWNER" }, closed)).toEqual({ view: true, edit: false });
+    expect(openingAccess({ id: "x", role: "MANAGER" }, closed)).toEqual({ view: true, edit: false });
+    expect(openingAccess({ id: "m1", role: "REVIEWER" }, closed)).toEqual({ view: true, edit: false });
+    expect(openingAccess({ id: "stranger", role: "REVIEWER" }, closed)).toEqual({ view: false, edit: false });
+    expect(openingAccess({ id: "x", role: "OWNER" }, { ...people, status: "OPEN" })).toEqual({ view: true, edit: true });
+    expect(openingAccess({ id: "x", role: "OWNER" }, { ...people, status: "DRAFT" })).toEqual({ view: true, edit: true });
+  });
+
   it("lets only owners and managers decide (HIRING-UX 4.6)", () => {
     expect(canDecide("OWNER")).toBe(true);
     expect(canDecide("MANAGER")).toBe(true);

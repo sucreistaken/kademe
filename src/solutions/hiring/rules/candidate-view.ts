@@ -1,6 +1,8 @@
 import type { I18nText } from "@/db/schema/types";
-import type { ActivityType, ContentStage } from "./content";
+import { hasText } from "@/lib/library/anchors";
+import { orderedActivities, orderedStages, type ActivityType, type ContentStage } from "./content";
 
+export type CandidateChoice = { id: string; label: I18nText };
 export type CandidateActivity = {
   id: string;
   type: ActivityType;
@@ -11,7 +13,7 @@ export type CandidateActivity = {
   flexibleThink: boolean;
   answerSeconds: number | null;
   maxTakes: number;
-  choices: Array<{ id: string; label: I18nText }> | null;
+  choices: CandidateChoice[] | null;
   minChars: number | null;
   maxChars: number | null;
   acceptedMimeTypes: string[] | null;
@@ -29,12 +31,13 @@ export type CandidateVersion = { stages: CandidateStage[]; totalSeconds: number 
  * sends the same.
  */
 export function toCandidateVersion(content: { stages: ContentStage[] }): CandidateVersion {
-  const stages = content.stages.map((stage) => ({
+  const stages = orderedStages(content).map(
+    (stage): CandidateStage => ({
     id: stage.id,
     name: stage.name,
     description: stage.description,
     durationSeconds: stage.durationSeconds,
-    activities: stage.activities.map(
+    activities: orderedActivities(stage).map(
       (a): CandidateActivity => ({
         id: a.id,
         type: a.type,
@@ -45,7 +48,9 @@ export function toCandidateVersion(content: { stages: ContentStage[] }): Candida
         flexibleThink: a.flexibleThink,
         answerSeconds: a.answerSeconds,
         maxTakes: a.maxTakes,
-        choices: a.config.choices ? a.config.choices.map((c) => ({ id: c.id, label: c.label })) : null,
+        choices: a.config.choices
+          ? a.config.choices.filter((c) => hasText(c.label)).map((c): CandidateChoice => ({ id: c.id, label: c.label }))
+          : null,
         minChars: a.config.minChars ?? null,
         maxChars: a.config.maxChars ?? null,
         acceptedMimeTypes: a.config.acceptedMimeTypes ?? null,
@@ -53,6 +58,7 @@ export function toCandidateVersion(content: { stages: ContentStage[] }): Candida
         textAlternativeEnabled: a.config.textAlternativeEnabled ?? false,
       }),
     ),
-  }));
+    }),
+  );
   return structuredClone({ stages, totalSeconds: stages.reduce((sum, s) => sum + s.durationSeconds, 0) });
 }

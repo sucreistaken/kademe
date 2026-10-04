@@ -54,18 +54,36 @@ describe("scorecard snapshot (hiring solution design 2.3)", () => {
     expect(on.competencies.map((c) => c.weight)).toEqual([70, 30]);
   });
 
-  it("falls back to the profile defaults when weighting is on but no weights were saved yet", () => {
-    const snapshot = buildScorecard({ content: { ...draft, weightsEnabled: true, draftWeights: null }, facts: library(), scale, profile: [] });
-    expect(snapshot.weightsEnabled).toBe(true);
-    expect(snapshot.competencies.map((c) => c.weight)).toEqual([50, 50]);
+  it("refuses to snapshot a measured competency that has no weight while weighting is on", () => {
+    const missing = { ...draft, weightsEnabled: true, draftWeights: { c2: 100 } };
+    expect(() => buildScorecard({ content: missing, facts: library(), scale, profile: [] })).toThrow(/c1/);
+    expect(() => buildScorecard({ content: { ...draft, weightsEnabled: true, draftWeights: null }, facts: library(), scale, profile: [] })).toThrow(/weight/);
+  });
+
+  it("builds the same snapshot from shuffled input", () => {
+    const a = (id: string, n: number, ids: string[]) => activity(id, { orderIndex: n, competencyIds: ids });
+    const ordered = content([stage("s1", [a("a1", 0, ["c2"]), a("a2", 1, ["c1"])], { orderIndex: 0 }), stage("s2", [a("a3", 0, ["c1"])], { orderIndex: 1 })]);
+    const shuffled = content([...ordered.stages].reverse().map((s) => ({ ...s, activities: [...s.activities].reverse() })));
+    const lib = library();
+    const reversedLib = library();
+    reversedLib.get("c2")!.tags.reverse();
+    lib.get("c2")!.tags.push({ id: "t0", polarity: "NEGATIVE", label: { tr: "b", en: "b" }, archived: false });
+    reversedLib.get("c2")!.tags.push({ id: "t0", polarity: "NEGATIVE", label: { tr: "b", en: "b" }, archived: false });
+    reversedLib.get("c2")!.tags.reverse();
+    const one = buildScorecard({ content: ordered, facts: lib, scale: structuredClone(scale), profile: [] });
+    const two = buildScorecard({ content: shuffled, facts: reversedLib, scale: structuredClone(scale), profile: [] });
+    expect(JSON.stringify(two)).toBe(JSON.stringify(one));
+    expect(one.competencies.map((c) => c.id)).toEqual(["c2", "c1"]);
+    expect(one.competencies[0].tags.map((t) => t.id)).toEqual(["t0", "t1"]);
   });
 
   it("is a copy: editing the library afterwards changes nothing in it", () => {
     const lib = library();
-    const snapshot = buildScorecard({ content: draft, facts: lib, scale, profile: [] });
+    const localScale = structuredClone(scale);
+    const snapshot = buildScorecard({ content: draft, facts: lib, scale: localScale, profile: [] });
     lib.get("c2")!.anchors[3]!.tr = "değişti";
     lib.get("c2")!.tags[0].label.tr = "değişti";
-    scale.levels[0].label.tr = "değişti";
+    localScale.levels[0].label.tr = "değişti";
     expect(snapshot.competencies[0].anchors[3].tr).toBe("üç");
     expect(snapshot.competencies[0].tags[0].label.tr).toBe("Örnek verdi");
     expect(snapshot.scale.levels[0].label.tr).toBe("Beklenen düzeyde");

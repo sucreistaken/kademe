@@ -2,7 +2,7 @@ import type { ScorecardSnapshot } from "@/db/schema";
 import type { I18nText } from "@/db/schema/types";
 import { hasText } from "@/lib/library/anchors";
 import { usedCompetencyIds, type CompetencyFacts, type VersionContent } from "./content";
-import { defaultWeights } from "./weights";
+import { defaultWeights, missingWeights } from "./weights";
 
 /**
  * The scorecard copied into a version at publish (hiring solution design 2.3).
@@ -17,7 +17,10 @@ export function buildScorecard(input: {
 }): ScorecardSnapshot {
   const used = usedCompetencyIds(input.content);
   // Defaults are stored even when weighting is off, so switching it on later starts from the profile.
-  const weights = input.content.weightsEnabled && input.content.draftWeights ? input.content.draftWeights : defaultWeights(used, input.profile);
+  const weights = input.content.weightsEnabled ? (input.content.draftWeights ?? {}) : defaultWeights(used, input.profile);
+  // The publish gate refuses this first; never write a competency into the snapshot at an invented 0%.
+  const unweighted = missingWeights(weights, used);
+  if (unweighted.length > 0) throw new Error(`competency ${unweighted.join(", ")} has no weight`);
   const snapshot: ScorecardSnapshot = {
     scale: input.scale,
     competencies: used.map((id) => {
@@ -31,8 +34,11 @@ export function buildScorecard(input: {
         id,
         name: f.name,
         anchors,
-        tags: f.tags.filter((t) => !t.archived).map((t) => ({ id: t.id, polarity: t.polarity, label: t.label })),
-        weight: weights[id] ?? 0,
+        tags: f.tags
+          .filter((t) => !t.archived)
+          .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+          .map((t) => ({ id: t.id, polarity: t.polarity, label: t.label })),
+        weight: weights[id],
       };
     }),
     weightsEnabled: input.content.weightsEnabled,

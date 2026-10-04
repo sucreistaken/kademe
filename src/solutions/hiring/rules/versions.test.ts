@@ -9,4 +9,8 @@ describe("working versions", () => {
     expect(workingVersions([v(1, "DRAFT")])).toMatchObject({ draft: { id: "v1" }, live: null });
     expect(workingVersions([])).toEqual({ draft: null, live: null });
   });
+
+  it("does not rely on the list order", () => {
+    expect(workingVersions([v(1, "PUBLISHED"), v(2, "PUBLISHED"), v(3, "DRAFT")])).toMatchObject({ draft: { id: "v3" }, live: { id: "v2" } });
+  });
 });

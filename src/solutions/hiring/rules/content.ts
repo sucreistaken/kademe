@@ -70,11 +70,18 @@ export type CompetencyFacts = {
   tags: Array<{ id: string; polarity: "POSITIVE" | "NEGATIVE"; label: I18nText; archived: boolean }>;
 };
 
+/** Stable reading order: by position, ties by id, so the loader's row order never matters. */
+export function byOrder<T extends { orderIndex: number; id: string }>(a: T, b: T): number {
+  return a.orderIndex - b.orderIndex || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+}
+export const orderedStages = (content: { stages: ContentStage[] }): ContentStage[] => [...content.stages].sort(byOrder);
+export const orderedActivities = (stage: { activities: ContentActivity[] }): ContentActivity[] => [...stage.activities].sort(byOrder);
+
 /** Competencies the questions measure, in the order they first appear. Choice questions measure none. */
 export function usedCompetencyIds(content: { stages: ContentStage[] }): string[] {
   const seen: string[] = [];
-  for (const stage of content.stages) {
-    for (const activity of stage.activities) {
+  for (const stage of orderedStages(content)) {
+    for (const activity of orderedActivities(stage)) {
       if (isChoice(activity.type)) continue;
       for (const id of activity.competencyIds) if (!seen.includes(id)) seen.push(id);
     }

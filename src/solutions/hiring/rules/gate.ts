@@ -1,6 +1,6 @@
 import { hasText, missingAnchorLevels } from "@/lib/library/anchors";
-import { isChoice, MAX_COMPETENCIES_PER_ACTIVITY, usedCompetencyIds, type CompetencyFacts, type VersionContent } from "./content";
-import { weightsProblem } from "./weights";
+import { isChoice, MAX_COMPETENCIES_PER_ACTIVITY, orderedActivities, orderedStages, usedCompetencyIds, type CompetencyFacts, type VersionContent } from "./content";
+import { missingWeights, weightsProblem } from "./weights";
 
 export type PublishProblem =
   | { code: "NO_STAGE" }
@@ -15,9 +15,14 @@ export type PublishProblem =
   | { code: "COMPETENCY_MISSING"; competencyId: string }
   | { code: "COMPETENCY_ARCHIVED"; competencyId: string }
   | { code: "ANCHOR_MISSING"; competencyId: string; level: number }
-  | { code: "WEIGHTS_NOT_100"; total: number };
+  | { code: "WEIGHTS_NOT_100"; total: number }
+  | { code: "WEIGHTS_MISSING"; competencyId: string };
 
-/** Readiness rows (HIRING-UX 5.4): "Değerlendirme kuruldu" and "Puan kartında her yetkinliğin çapası var". */
+/**
+ * The readiness rows (HIRING-UX 5.4) each problem belongs to: "Değerlendirme
+ * kuruldu", "Puan kartında her yetkinliğin çapası var" and the weights row.
+ * Every code is in exactly one group (a test pins it).
+ */
 export const STRUCTURE_PROBLEMS: ReadonlyArray<PublishProblem["code"]> = [
   "NO_STAGE",
   "EMPTY_STAGE_NAME",
@@ -29,7 +34,8 @@ export const STRUCTURE_PROBLEMS: ReadonlyArray<PublishProblem["code"]> = [
   "CHOICE_NEEDS_OPTIONS",
   "CHOICE_NEEDS_ANSWER",
 ];
-export const ANCHOR_PROBLEMS: ReadonlyArray<PublishProblem["code"]> = ["COMPETENCY_MISSING", "COMPETENCY_ARCHIVED", "ANCHOR_MISSING", "WEIGHTS_NOT_100"];
+export const ANCHOR_PROBLEMS: ReadonlyArray<PublishProblem["code"]> = ["COMPETENCY_MISSING", "COMPETENCY_ARCHIVED", "ANCHOR_MISSING"];
+export const WEIGHT_PROBLEMS: ReadonlyArray<PublishProblem["code"]> = ["WEIGHTS_NOT_100", "WEIGHTS_MISSING"];
 
 /**
  * The server-side publish gate. Every reason the draft cannot be published, in
@@ -39,16 +45,18 @@ export const ANCHOR_PROBLEMS: ReadonlyArray<PublishProblem["code"]> = ["COMPETEN
 export function publishProblems(content: VersionContent, facts: ReadonlyMap<string, CompetencyFacts>): PublishProblem[] {
   const problems: PublishProblem[] = [];
   if (content.stages.length === 0) problems.push({ code: "NO_STAGE" });
-  for (const stage of content.stages) {
+  for (const stage of orderedStages(content)) {
     if (!hasText(stage.name)) problems.push({ code: "EMPTY_STAGE_NAME", stageId: stage.id });
     if (stage.activities.length === 0) problems.push({ code: "EMPTY_STAGE", stageId: stage.id });
-    for (const activity of stage.activities) {
+    for (const activity of orderedActivities(stage)) {
       if (!hasText(activity.prompt)) problems.push({ code: "EMPTY_PROMPT", activityId: activity.id });
       if (isChoice(activity.type)) {
         if (activity.competencyIds.length > 0) problems.push({ code: "CHOICE_WITH_COMPETENCY", activityId: activity.id });
-        const choices = (activity.config.choices ?? []).filter((c) => hasText(c.label));
+        // Every option needs text and its own id; a blank or repeated one is not a usable option.
+        const choices = activity.config.choices ?? [];
         const correct = choices.filter((c) => c.correct).length;
-        if (choices.length < 2) problems.push({ code: "CHOICE_NEEDS_OPTIONS", activityId: activity.id });
+        const usable = choices.length >= 2 && choices.every((c) => hasText(c.label)) && new Set(choices.map((c) => c.id)).size === choices.length;
+        if (!usable) problems.push({ code: "CHOICE_NEEDS_OPTIONS", activityId: activity.id });
         else if (activity.type === "SINGLE_CHOICE" ? correct !== 1 : correct < 1) {
           problems.push({ code: "CHOICE_NEEDS_ANSWER", activityId: activity.id });
         }
@@ -70,7 +78,11 @@ export function publishProblems(content: VersionContent, facts: ReadonlyMap<stri
     for (const level of missingAnchorLevels(f.anchors)) problems.push({ code: "ANCHOR_MISSING", competencyId: id, level });
   }
   if (content.weightsEnabled) {
-    const problem = weightsProblem(content.draftWeights ?? {}, used);
+    const weights = content.draftWeights ?? {};
+    // A competency added after the weights were saved would be published at 0%: name it instead of the total.
+    const missing = missingWeights(weights, used);
+    for (const id of missing) problems.push({ code: "WEIGHTS_MISSING", competencyId: id });
+    const problem = missing.length === 0 ? weightsProblem(weights, used) : null;
     if (problem) problems.push({ code: "WEIGHTS_NOT_100", total: problem.total });
   }
   return problems;

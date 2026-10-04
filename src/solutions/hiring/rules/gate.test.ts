@@ -2,7 +2,7 @@ import { PgDialect, getTableConfig } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 import { hiringActivityCompetencies } from "@/db/schema";
 import { MAX_COMPETENCIES_PER_ACTIVITY } from "./content";
-import { publishProblems } from "./gate";
+import { ANCHOR_PROBLEMS, publishProblems, STRUCTURE_PROBLEMS, WEIGHT_PROBLEMS, type PublishProblem } from "./gate";
 import { activity, content, facts, stage } from "./test-fixtures";
 
 const two = () => new Map([["c1", facts("c1")], ["c2", facts("c2")]]);
@@ -54,14 +54,17 @@ describe("publish gate (hiring solution design 2.2, HIRING-UX R2)", () => {
     const choice = (id: string, type: "SINGLE_CHOICE" | "MULTI_CHOICE", choices: ReturnType<typeof opt>[], competencyIds: string[] = []) =>
       activity(id, { type, config: { choices }, competencyIds });
     const draft = content([
-      stage("s1", [
-        choice("single-none", "SINGLE_CHOICE", [opt("a"), opt("b")]),
-        choice("single-two", "SINGLE_CHOICE", [opt("a", true), opt("b", true)]),
-        choice("multi-none", "MULTI_CHOICE", [opt("a"), opt("b"), opt("c")]),
-        choice("one-option", "SINGLE_CHOICE", [opt("a", true)]),
-        choice("with-competency", "SINGLE_CHOICE", [opt("a", true), opt("b")], ["c1"]),
-        choice("fine", "MULTI_CHOICE", [opt("a", true), opt("b", true), opt("c")]),
-      ]),
+      stage(
+        "s1",
+        [
+          choice("single-none", "SINGLE_CHOICE", [opt("a"), opt("b")]),
+          choice("single-two", "SINGLE_CHOICE", [opt("a", true), opt("b", true)]),
+          choice("multi-none", "MULTI_CHOICE", [opt("a"), opt("b"), opt("c")]),
+          choice("one-option", "SINGLE_CHOICE", [opt("a", true)]),
+          choice("with-competency", "SINGLE_CHOICE", [opt("a", true), opt("b")], ["c1"]),
+          choice("fine", "MULTI_CHOICE", [opt("a", true), opt("b", true), opt("c")]),
+        ].map((a, i) => ({ ...a, orderIndex: i })),
+      ),
     ]);
     expect(publishProblems(draft, two())).toEqual([
       { code: "CHOICE_NEEDS_ANSWER", activityId: "single-none" },
@@ -104,5 +107,78 @@ describe("publish gate (hiring solution design 2.2, HIRING-UX R2)", () => {
     expect(publishProblems(content(stages, { weightsEnabled: true, draftWeights: { c1: 120, c2: -20 } }), two())).toEqual([
       { code: "WEIGHTS_NOT_100", total: 100 },
     ]);
+  });
+
+  it("refuses a choice option with no text and two options sharing an id", () => {
+    const blank = { id: "b", label: { tr: " ", en: "" }, correct: false };
+    const draft = content([
+      stage(
+        "s1",
+        [
+          activity("blank", { type: "SINGLE_CHOICE", config: { choices: [opt("a", true), blank, opt("c")] } }),
+          activity("dup", { type: "MULTI_CHOICE", config: { choices: [opt("a", true), opt("a"), opt("c")] } }),
+          activity("en-only", { type: "SINGLE_CHOICE", config: { choices: [{ id: "x", label: { tr: "", en: "Yes" }, correct: true }, opt("y")] } }),
+        ].map((a, i) => ({ ...a, orderIndex: i })),
+      ),
+    ]);
+    expect(publishProblems(draft, two())).toEqual([
+      { code: "CHOICE_NEEDS_OPTIONS", activityId: "blank" },
+      { code: "CHOICE_NEEDS_OPTIONS", activityId: "dup" },
+    ]);
+  });
+
+  it("names a measured competency that has no weight (weights saved, then a competency added)", () => {
+    const library = new Map([...two(), ["c3", facts("c3")]]);
+    const stages = [stage("s1", [activity("a1", { competencyIds: ["c1", "c2"] }), activity("a2", { orderIndex: 1, competencyIds: ["c3"] })])];
+    // 60 + 40 = 100 over the saved competencies, but c3 would be published at 0%.
+    expect(publishProblems(content(stages, { weightsEnabled: true, draftWeights: { c1: 60, c2: 40 } }), library)).toEqual([
+      { code: "WEIGHTS_MISSING", competencyId: "c3" },
+    ]);
+    expect(publishProblems(content(stages, { weightsEnabled: true, draftWeights: { c1: 50, c2: 30, c3: 20 } }), library)).toEqual([]);
+    expect(publishProblems(content(stages, { weightsEnabled: true, draftWeights: null }), library)).toEqual([
+      { code: "WEIGHTS_MISSING", competencyId: "c1" },
+      { code: "WEIGHTS_MISSING", competencyId: "c2" },
+      { code: "WEIGHTS_MISSING", competencyId: "c3" },
+    ]);
+    expect(publishProblems(content(stages, { weightsEnabled: false, draftWeights: { c1: 60, c2: 40 } }), library)).toEqual([]);
+  });
+
+  it("splits its problem codes into the three readiness groups, each code exactly once", () => {
+    const all: Record<PublishProblem["code"], true> = {
+      NO_STAGE: true,
+      EMPTY_STAGE_NAME: true,
+      EMPTY_STAGE: true,
+      EMPTY_PROMPT: true,
+      NO_COMPETENCY: true,
+      TOO_MANY_COMPETENCIES: true,
+      CHOICE_WITH_COMPETENCY: true,
+      CHOICE_NEEDS_OPTIONS: true,
+      CHOICE_NEEDS_ANSWER: true,
+      COMPETENCY_MISSING: true,
+      COMPETENCY_ARCHIVED: true,
+      ANCHOR_MISSING: true,
+      WEIGHTS_NOT_100: true,
+      WEIGHTS_MISSING: true,
+    };
+    const grouped = [...STRUCTURE_PROBLEMS, ...ANCHOR_PROBLEMS, ...WEIGHT_PROBLEMS];
+    expect([...grouped].sort()).toEqual(Object.keys(all).sort());
+    expect(new Set(grouped).size).toBe(grouped.length);
+    expect([...WEIGHT_PROBLEMS].sort()).toEqual(["WEIGHTS_MISSING", "WEIGHTS_NOT_100"]);
+  });
+
+  it("judges stages and questions by their order, not by the order they were loaded in", () => {
+    const stages = [
+      stage("s2", [activity("late", { orderIndex: 1 }), activity("early", { orderIndex: 0 })], { orderIndex: 1 }),
+      stage("s1", [], { orderIndex: 0 }),
+    ];
+    const draft = content(stages);
+    const reversed = content([...stages].reverse().map((s) => ({ ...s, activities: [...s.activities].reverse() })));
+    const expected = [
+      { code: "EMPTY_STAGE", stageId: "s1" },
+      { code: "NO_COMPETENCY", activityId: "early" },
+      { code: "NO_COMPETENCY", activityId: "late" },
+    ];
+    expect(publishProblems(draft, two())).toEqual(expected);
+    expect(publishProblems(reversed, two())).toEqual(expected);
   });
 });
