@@ -420,12 +420,17 @@
     "errLibraryForbidden": "Your role cannot change the library.",
     "errInvalid": "This suggestion was not accepted; edit the card and try again.",
     "errNoDraft": "The live version does not change; start editing first to add suggestions.",
-    "errCompetency": "A competency can no longer be used (archived or gone); pick another one on the card.",
+    "errCompetency": "A competency was archived; pick another one on the card.",
     "errTooMany": "A question measures at most 2 competencies.",
     "errStageFull": "This stage has reached its question limit.",
     "errNameRequired": "Give the competency a name.",
     "errInUse": "This competency is used by a question or a profile now; it stays in the library. Undo the stage that measures it first.",
     "errNotCreated": "This competency was already in the library; undoing does not change it.",
-    "errNetwork": "Could not connect. Try again."
+    "errNetwork": "Could not connect. Try again.",
+    "acceptOneFirst": "Accept at least one suggestion first.",
+    "toPrevious": "Back to the previous suggestions",
+    "toNewer": "Back to the newer suggestions",
+    "nameLabelEn": "Competency name (EN)",
+    "anchorLabelEn": "Level {level} behaviour (EN)"
   }
 }

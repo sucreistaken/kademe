@@ -86,13 +86,13 @@ const VIA = `hiring-ai:${OPENING}`;
 
 type State = Awaited<ReturnType<typeof Working.workingState>>;
 const version = (status: "DRAFT" | "PUBLISHED", number: number) => ({ id: `v${number}`, number, status, publishedAt: null, previewedAt: null });
-function stateWith(draft: boolean, localeSet: Array<"tr" | "en"> = ["tr"]): State {
+function stateWith(draft: boolean, localeSet: Array<"tr" | "en"> = ["tr"], defaultLocale: "tr" | "en" = "tr"): State {
   const v = draft ? version("DRAFT", 2) : version("PUBLISHED", 1);
   return {
     list: [v],
     draft: draft ? v : null,
     live: draft ? null : v,
-    content: { localeSet } as unknown as State["content"],
+    content: { localeSet, defaultLocale } as unknown as State["content"],
     facts: new Map(),
     problems: [],
   };
@@ -193,8 +193,15 @@ describe("generateDraftAction", () => {
     expect(anyWrite()).toBe(0);
   });
 
-  it("asks for a proposal with the org's own library, the version's languages and the session's language", async () => {
-    m.workingState.mockResolvedValue(stateWith(true, ["tr", "en"]));
+  it("writes team-only text in the version's default language, whatever the manager's own interface language", async () => {
+    // The manager's cookie says English (managerLocale is mocked to "en"); the version is Turkish only.
+    m.workingState.mockResolvedValue(stateWith(true, ["tr"], "tr"));
+    await generateDraftAction(OPENING, AD);
+    expect(m.generateHiringDraft.mock.calls[0][0]).toMatchObject({ locales: ["tr"], teamLocale: "tr" });
+  });
+
+  it("asks for a proposal with the org's own library and the version's languages", async () => {
+    m.workingState.mockResolvedValue(stateWith(true, ["tr", "en"], "en"));
     const draft = { stages: [], competencies: [] };
     m.generateHiringDraft.mockResolvedValueOnce({ status: "OK", draft, budgetWarning: "Toplam süre 41 dakika" });
     await expect(generateDraftAction(OPENING, `  ${AD}  `)).resolves.toEqual({ ok: true, draft, budgetWarning: "Toplam süre 41 dakika" });

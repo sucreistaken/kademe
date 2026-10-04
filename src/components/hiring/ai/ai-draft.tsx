@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore, useTransition } from "react";
 import Link from "next/link";
 import { useFormStatus } from "react-dom";
 import { Button, DisabledReason } from "@/components/ui/button";
@@ -17,13 +17,14 @@ import {
   draftTotalSeconds,
   isJobAdThin,
   jobAdProblem,
+  JOB_AD_MAX_CHARS,
   pendingCompetencies,
+  sameQuote,
   stagePayloadFrom,
   toggleCompetency,
   visibleProposals,
   type ActivitySuggestion,
   type CompetencySuggestion,
-  type HiringDraft,
   type StageSuggestion,
 } from "@/solutions/hiring/ai/draft";
 import { isChoice, MAX_COMPETENCIES_PER_ACTIVITY } from "@/solutions/hiring/rules/content";
@@ -37,11 +38,11 @@ import {
 import type { AiCode } from "@/app/(manager)/hiring/openings/[id]/assessment/ai/result";
 import { startDraftAction } from "@/app/(manager)/hiring/openings/[id]/assessment/edit/actions";
 import { aiRefusal } from "./refusal-copy";
+import { parseSession, sessionKey, staleKeys, withGeneration, type AiSession, type Generation } from "./session";
 
 /** The record without one key. */
 const without = <V,>(record: Record<string, V>, key: string): Record<string, V> => Object.fromEntries(Object.entries(record).filter(([k]) => k !== key));
 
-type Outcome = { kind: "none" } | { kind: "refused"; code: AiCode | "NETWORK" } | { kind: "ready"; draft: HiringDraft; jobAd: string; budgetWarning: boolean };
 type Mode = "draft" | "live" | "closed";
 
 /** Card keys come from the model: stage and competency cards keep apart by a prefix. */
@@ -50,6 +51,7 @@ const competencyId = (key: string) => `c:${key}`;
 const LEVELS = [1, 3, 5] as const;
 const exampleOf = (a: ActivitySuggestion, level: (typeof LEVELS)[number]) => (level === 1 ? a.example1 : level === 3 ? a.example3 : a.example5);
 const anchorOf = (c: CompetencySuggestion, level: (typeof LEVELS)[number]) => (level === 1 ? c.anchor1Tr : level === 3 ? c.anchor3Tr : c.anchor5Tr);
+const anchorEnOf = (c: CompetencySuggestion, level: (typeof LEVELS)[number]) => (level === 1 ? c.anchor1En : level === 3 ? c.anchor3En : c.anchor5En);
 
 /**
  * HIRING-UX 5.6 (canvas Y3): the AI's proposal as cards, none applied by
@@ -58,16 +60,7 @@ const anchorOf = (c: CompetencySuggestion, level: (typeof LEVELS)[number]) => (l
  * one of those can be undone. A stage that measures a new competency waits
  * until that competency is accepted. Model text is shown as text only.
  */
-export function AiDraft({
-  openingId,
-  initialJobAd,
-  library,
-  locales,
-  mode,
-  canEdit,
-  liveNumber,
-  versionNumber,
-}: {
+type AiDraftProps = {
   openingId: string;
   initialJobAd: string;
   /** The organisation's active competencies, named in the viewer's language. */
@@ -77,19 +70,91 @@ export function AiDraft({
   canEdit: boolean;
   liveNumber: number | null;
   versionNumber: number;
-}) {
+};
+
+const noSubscription = () => () => {};
+
+/** This draft version's stored proposals, or null (no entry, invalid, or storage unavailable). */
+function readStored(openingId: string, versionNumber: number): AiSession | null {
+  try {
+    return parseSession(window.sessionStorage.getItem(sessionKey(openingId, versionNumber)), openingId, versionNumber);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The server never sees this tab's storage, so the screen first renders
+ * without stored proposals and, once hydrated, renders again from them
+ * (keyed, so its state starts from what was stored).
+ */
+export function AiDraft(props: AiDraftProps) {
+  const hydrated = useSyncExternalStore(noSubscription, () => true, () => false);
+  const { mode, openingId, versionNumber } = props;
+  const restored = useMemo(() => (hydrated && mode === "draft" ? readStored(openingId, versionNumber) : null), [hydrated, mode, openingId, versionNumber]);
+  return <AiDraftScreen key={hydrated ? "stored" : "server"} {...props} restored={restored} persist={hydrated} />;
+}
+
+function AiDraftScreen({
+  openingId,
+  initialJobAd,
+  library,
+  locales,
+  mode,
+  canEdit,
+  liveNumber,
+  versionNumber,
+  restored,
+  persist,
+}: AiDraftProps & { restored: AiSession | null; persist: boolean }) {
   const t = useMT("hiringAi");
   const tb = useMT("hiringBuilder");
-  const [jobAd, setJobAd] = useState(initialJobAd);
-  const [outcome, setOutcome] = useState<Outcome>({ kind: "none" });
+  const [jobAd, setJobAd] = useState(restored?.jobAd ?? initialJobAd);
+  // Proposals and what was done with them, kept per opening and draft version in sessionStorage (session.ts).
+  const [session, setSession] = useState<AiSession | null>(restored);
+  // A refused or failed request is shown above the cards; it never replaces them.
+  const [refusal, setRefusal] = useState<AiCode | "NETWORK" | null>(null);
   const [generating, startGenerating] = useTransition();
   const [working, startWorking] = useTransition();
-  const [acceptedStages, setAcceptedStages] = useState<Record<string, string>>({});
-  const [acceptedCompetencies, setAcceptedCompetencies] = useState<Record<string, { id: string; created: boolean }>>({});
-  const [removed, setRemoved] = useState<Record<string, true>>({});
+  const gen = session ? (session.generations[session.current] ?? null) : null;
+  const genId = gen?.generationId ?? null;
+  const acceptedStages = gen?.acceptedStages ?? {};
+  const acceptedCompetencies = gen?.acceptedCompetencies ?? {};
+  const removed = gen?.removed ?? {};
+  const stageEdits = gen?.stageEdits ?? {};
+  const competencyEdits = gen?.competencyEdits ?? {};
+  /** Updates one field of the proposal the action started on (by generationId), even if another is shown by then. */
+  const field =
+    <K extends keyof Generation>(name: K) =>
+    (update: (value: Generation[K]) => Generation[K]) => {
+      const target = genId;
+      if (!target) return;
+      setSession((s) => s && { ...s, generations: s.generations.map((g) => (g.generationId === target ? { ...g, [name]: update(g[name]) } : g)) });
+    };
+  const setAcceptedStages = field("acceptedStages");
+  const setAcceptedCompetencies = field("acceptedCompetencies");
+  const setRemoved = field("removed");
+  const setStageEdits = field("stageEdits");
+  const setCompetencyEdits = field("competencyEdits");
+
+  const storageKey = sessionKey(openingId, versionNumber);
+  useEffect(() => {
+    if (!persist) return;
+    const pasted = jobAd !== initialJobAd && jobAd.length <= JOB_AD_MAX_CHARS ? jobAd : null;
+    try {
+      const store = window.sessionStorage;
+      const keys = Array.from({ length: store.length }, (_, i) => store.key(i) ?? "");
+      // Another version's proposals, or any once there is no draft, are dropped.
+      for (const key of staleKeys(keys, openingId, mode === "draft" ? storageKey : null)) store.removeItem(key);
+      if (mode !== "draft") return;
+      if (!session?.generations.length && pasted === null) window.sessionStorage.removeItem(storageKey);
+      else window.sessionStorage.setItem(storageKey, JSON.stringify({ ...(session ?? { openingId, versionNumber, generations: [], current: 0 }), jobAd: pasted }));
+    } catch {
+      // Storage unavailable or full: the screen still works, a reload just starts over.
+    }
+  }, [initialJobAd, jobAd, mode, openingId, persist, session, storageKey, versionNumber]);
+
   const [editing, setEditing] = useState<string | null>(null);
-  const [stageEdits, setStageEdits] = useState<Record<string, StageSuggestion>>({});
-  const [competencyEdits, setCompetencyEdits] = useState<Record<string, CompetencySuggestion>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const busy = generating || working;
 
@@ -108,7 +173,7 @@ export function AiDraft({
               ? t("jobAdTooLong")
               : null;
 
-  const ready = outcome.kind === "ready" ? outcome : null;
+  const ready = gen;
   const visible = ready ? visibleProposals(ready.draft, ready.jobAd) : null;
   const competencyOf = (c: CompetencySuggestion) => competencyEdits[c.key] ?? c;
   // A new competency the manager removed is no longer measured; a stage that named it can still be accepted.
@@ -133,22 +198,41 @@ export function AiDraft({
   const note = (card: string, text: string | null) => setNotes((all) => (text ? { ...all, [card]: text } : without(all, card)));
 
   function generate() {
-    setNotes({});
+    setRefusal(null);
+    const ad = jobAd;
     startGenerating(async () => {
       try {
-        const result = await generateDraftAction(openingId, jobAd);
-        setOutcome(result.ok ? { kind: "ready", draft: result.draft, jobAd: jobAd.trim(), budgetWarning: result.budgetWarning !== null } : { kind: "refused", code: result.code });
+        const result = await generateDraftAction(openingId, ad);
+        if (!result.ok) {
+          setRefusal(result.code);
+          return;
+        }
+        const generation: Generation = {
+          generationId: crypto.randomUUID(),
+          draft: result.draft,
+          jobAd: ad.trim(),
+          budgetWarning: result.budgetWarning !== null,
+          acceptedStages: {},
+          acceptedCompetencies: {},
+          removed: {},
+          stageEdits: {},
+          competencyEdits: {},
+        };
+        // The proposal on screen stays restorable ("Önceki önerilere dön"); what was accepted is in the builder.
+        setSession((s) => withGeneration(s, openingId, versionNumber, generation));
+        setNotes({});
+        setEditing(null);
       } catch {
-        setOutcome({ kind: "refused", code: "NETWORK" });
+        setRefusal("NETWORK");
       }
-      // A new proposal starts from clean cards; what was accepted is already in the builder.
-      setAcceptedStages({});
-      setAcceptedCompetencies({});
-      setRemoved({});
-      setStageEdits({});
-      setCompetencyEdits({});
-      setEditing(null);
     });
+  }
+
+  function switchGeneration() {
+    setSession((s) => (s && s.generations.length === 2 ? { ...s, current: s.current === 0 ? 1 : 0 } : s));
+    setNotes({});
+    setEditing(null);
+    setRefusal(null);
   }
 
   function run<T extends { ok: boolean }>(card: string, action: () => Promise<T>, done: (result: T & { ok: true }) => string | null) {
@@ -340,9 +424,12 @@ export function AiDraft({
                     ) : null}
                   </>
                 )}
-                <p className="text-[12px] break-words text-muted">
-                  <span className="font-medium">{t("why")}</span> &ldquo;{a.quote}&rdquo;
-                </p>
+                {/* The stage's own "Neden?" already says it when the quote is the same. */}
+                {sameQuote(a.quote, stage.quote) ? null : (
+                  <p className="text-[12px] break-words text-muted">
+                    <span className="font-medium">{t("why")}</span> &ldquo;{a.quote}&rdquo;
+                  </p>
+                )}
               </li>
             );
           })}
@@ -403,6 +490,13 @@ export function AiDraft({
               <Label htmlFor={`${card}-name`}>{t("nameLabel")}</Label>
               <Input id={`${card}-name`} value={c.nameTr} maxLength={120} onChange={(e) => change({ nameTr: e.target.value })} />
             </div>
+            {/* With English in the version the English name is edited too, so a stale one cannot match another library row. */}
+            {locales.includes("en") ? (
+              <div className="space-y-1.5">
+                <Label htmlFor={`${card}-name-en`}>{t("nameLabelEn")}</Label>
+                <Input id={`${card}-name-en`} value={c.nameEn} maxLength={120} onChange={(e) => change({ nameEn: e.target.value })} />
+              </div>
+            ) : null}
             <div className="grid gap-3 md:grid-cols-3">
               {LEVELS.map((level) => (
                 <div key={level} className="space-y-1.5">
@@ -416,6 +510,21 @@ export function AiDraft({
                 </div>
               ))}
             </div>
+            {locales.includes("en") ? (
+              <div className="grid gap-3 md:grid-cols-3">
+                {LEVELS.map((level) => (
+                  <div key={level} className="space-y-1.5">
+                    <Label htmlFor={`${card}-anchor-en-${level}`}>{t("anchorLabelEn", { level })}</Label>
+                    <Textarea
+                      id={`${card}-anchor-en-${level}`}
+                      value={anchorEnOf(c, level)}
+                      maxLength={600}
+                      onChange={(e) => change({ [`anchor${level}En`]: e.target.value } as Partial<CompetencySuggestion>)}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : null}
             <p className="text-[12px] text-muted">{t("anchorsLater")}</p>
           </div>
         ) : (
@@ -454,10 +563,11 @@ export function AiDraft({
     );
   };
 
-  const anyAccepted = Object.keys(acceptedStages).length > 0;
+  // Anything accepted from any proposal of this draft is already in the builder or the library.
+  const anyAccepted = (session?.generations ?? []).some((g) => Object.keys(g.acceptedStages).length > 0 || Object.keys(g.acceptedCompetencies).length > 0);
   const builderHref = `/hiring/openings/${openingId}/assessment/edit`;
-  const refused = outcome.kind === "refused" ? outcome : null;
-  const failedToGenerate = refused && (refused.code === "PROVIDER_FAILED" || refused.code === "SCHEMA_FAILED" || refused.code === "UNCONFIGURED");
+  const failedToGenerate = refusal === "PROVIDER_FAILED" || refusal === "SCHEMA_FAILED" || refusal === "UNCONFIGURED";
+  const otherGeneration = session && session.generations.length === 2 ? (session.current === 1 ? "toPrevious" : "toNewer") : null;
 
   return (
     <div className="mt-section max-w-[960px] space-y-section">
@@ -498,10 +608,11 @@ export function AiDraft({
         />
         {isJobAdThin(jobAd) ? <p className="text-[13px] text-muted">{t("jobAdThin")}</p> : null}
         <div className="flex flex-wrap items-center gap-3">
-          {/* One filled button: "Önerileri üret" until a stage is accepted, then "Kabul edilenlerle kurucuya geç"; on a live version "Düzenlemeye başla". */}
+          {/* One filled button (HIRING-UX 5.6): "Önerileri üret" before any card, then "Kabul edilenlerle kurucuya geç"
+              (disabled with its reason until something is accepted); on a live version "Düzenlemeye başla". */}
           <Button
             id="ai-generate"
-            variant={anyAccepted || mode !== "draft" ? "secondary" : "primary"}
+            variant={ready || mode !== "draft" ? "secondary" : "primary"}
             disabled={busy || generateReason !== null}
             disabledReason={generateReason ?? undefined}
             aria-busy={generating || undefined}
@@ -510,9 +621,21 @@ export function AiDraft({
             {generating ? t("generating") : ready ? t("regenerate") : t("generate")}
           </Button>
           {generateReason ? <DisabledReason id="ai-generate-why">{generateReason}</DisabledReason> : null}
-          {anyAccepted ? (
+          {ready && anyAccepted ? (
             <Button asChild variant="primary">
               <Link href={builderHref}>{t("toBuilder")}</Link>
+            </Button>
+          ) : ready ? (
+            <>
+              <Button id="ai-to-builder" variant="primary" disabled disabledReason={t("acceptOneFirst")}>
+                {t("toBuilder")}
+              </Button>
+              <DisabledReason id="ai-to-builder-why">{t("acceptOneFirst")}</DisabledReason>
+            </>
+          ) : null}
+          {otherGeneration && !generating ? (
+            <Button variant="ghost" onClick={switchGeneration} disabled={busy}>
+              {t(otherGeneration)}
             </Button>
           ) : null}
         </div>
@@ -527,12 +650,13 @@ export function AiDraft({
             <Skeleton key={i} className="h-32 w-full rounded-xl" />
           ))}
         </div>
-      ) : refused ? (
+      ) : refusal ? (
+        // Above the cards, which stay as they were.
         <Card className="space-y-2 p-card">
           <p role="status" className="text-[14px] text-ink">
-            {say(refused.code)}
+            {say(refusal)}
           </p>
-          {failedToGenerate ? (
+          {failedToGenerate && !ready ? (
             <Link href={builderHref} className="text-[14px] font-medium text-ink underline decoration-line-strong underline-offset-4 hover:decoration-ink">
               {t("startBlank")}
             </Link>

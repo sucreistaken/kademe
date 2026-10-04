@@ -77,7 +77,7 @@ const activitySchema = z.object({
   quote: str(600),
 });
 
-const stageSchema = z.object({
+export const stageSuggestionSchema = z.object({
   key: z.string().min(1).max(40),
   nameTr: z.string().min(1).max(160),
   nameEn: str(160),
@@ -89,7 +89,7 @@ const stageSchema = z.object({
   activities: z.array(activitySchema).min(1).max(20),
 });
 
-const competencySchema = z.object({
+export const competencySuggestionSchema = z.object({
   key: z.string().min(1).max(40),
   libraryId: str(64),
   nameTr: z.string().min(1).max(160),
@@ -106,14 +106,14 @@ const competencySchema = z.object({
 });
 
 export const hiringDraftSchema = z.object({
-  stages: z.array(stageSchema).min(1).max(20),
-  competencies: z.array(competencySchema).max(20),
+  stages: z.array(stageSuggestionSchema).min(1).max(20),
+  competencies: z.array(competencySuggestionSchema).max(20),
 });
 
 export type HiringDraft = z.infer<typeof hiringDraftSchema>;
-export type StageSuggestion = z.infer<typeof stageSchema>;
+export type StageSuggestion = z.infer<typeof stageSuggestionSchema>;
 export type ActivitySuggestion = z.infer<typeof activitySchema>;
-export type CompetencySuggestion = z.infer<typeof competencySchema>;
+export type CompetencySuggestion = z.infer<typeof competencySuggestionSchema>;
 
 const obj = (properties: Record<string, unknown>) => ({ type: "object", additionalProperties: false, required: Object.keys(properties), properties });
 const S = { type: "string" };
@@ -225,7 +225,8 @@ export function buildDraftMessages(request: DraftRequest): AiMessage[] {
         "",
         "İş ilanı metni:",
         '"""',
-        request.jobAd.trim(),
+        // A pasted triple quote would close the block early: shortened, so the ad cannot end its own quoting.
+        request.jobAd.trim().replace(/"{3,}/g, '""'),
         '"""',
         "",
         "Kurumun yetkinlikleri (libraryId | ad):",
@@ -360,6 +361,11 @@ const normalizeText = (s: string) =>
 export function quoteFound(quote: string, jobAd: string): boolean {
   const q = normalizeText(quote);
   return q.length >= 8 && normalizeText(jobAd).includes(q);
+}
+
+/** Two quotes that read the same once case, spacing, quote marks and end punctuation are set aside. */
+export function sameQuote(a: string, b: string): boolean {
+  return normalizeText(a) === normalizeText(b);
 }
 
 export function visibleProposals(draft: HiringDraft, jobAd: string): { stages: StageSuggestion[]; newCompetencies: CompetencySuggestion[]; hidden: number } {

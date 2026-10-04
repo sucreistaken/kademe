@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { managerLocale } from "@/i18n/manager-locale";
+import { DEFAULT_LOCALE } from "@/i18n/locale";
 import { aiLimitReached } from "@/lib/ai-limit";
 import { can } from "@/lib/authorize";
 import { COMPETENCY_NAME_MAX } from "@/lib/library/anchors";
@@ -75,7 +75,8 @@ export async function generateDraftAction(openingId: string, jobAd: string): Pro
     positionName: opening.positionName,
     jobAd: jobAd.trim(),
     locales: state.content?.localeSet ?? ["tr"],
-    teamLocale: await managerLocale(),
+    // Team-only text (purpose, behaviours, flags, 1/3/5 examples) is written in the version's language, not the viewer's.
+    teamLocale: state.content?.defaultLocale ?? DEFAULT_LOCALE,
     library: await draftLibrary(user.orgId, opening.positionId),
   });
   if (outcome.status === "OK") return { ok: true, draft: outcome.draft, budgetWarning: outcome.budgetWarning };

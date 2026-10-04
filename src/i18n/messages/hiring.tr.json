@@ -420,12 +420,17 @@
     "errLibraryForbidden": "Rolün kütüphaneyi değiştiremez.",
     "errInvalid": "Bu öneri kabul edilmedi; kartı düzenleyip tekrar dene.",
     "errNoDraft": "Yayındaki sürüm değişmez; önerileri eklemek için önce düzenlemeye başla.",
-    "errCompetency": "Bir yetkinlik artık kullanılamıyor (arşivlenmiş ya da silinmiş); kartta başka bir yetkinlik seç.",
+    "errCompetency": "Bir yetkinlik arşivlenmiş; kartta başka bir yetkinlik seç.",
     "errTooMany": "Bir soru en fazla 2 yetkinlik ölçer.",
     "errStageFull": "Bu aşamada soru sınırına ulaşıldı.",
     "errNameRequired": "Yetkinliğe bir ad yaz.",
     "errInUse": "Bu yetkinlik artık bir soruda ya da profilde kullanılıyor; kütüphanede kalıyor. Önce onu ölçen aşamayı geri al.",
     "errNotCreated": "Bu yetkinlik kütüphanede zaten vardı; geri almak onu değiştirmez.",
-    "errNetwork": "Bağlantı kurulamadı. Tekrar dene."
+    "errNetwork": "Bağlantı kurulamadı. Tekrar dene.",
+    "acceptOneFirst": "Önce en az bir öneriyi kabul et.",
+    "toPrevious": "Önceki önerilere dön",
+    "toNewer": "Yeni önerilere dön",
+    "nameLabelEn": "Yetkinlik adı (EN)",
+    "anchorLabelEn": "Seviye {level} davranışı (EN)"
   }
 }
