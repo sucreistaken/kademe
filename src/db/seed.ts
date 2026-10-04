@@ -34,6 +34,7 @@ import { simulateStudent } from "../server/simulate";
 import { recomputeIntegrity } from "../server/proctoring";
 import { recomputeResult } from "../lib/exam-results";
 import { CONSENT_EN, CONSENT_TR } from "./consent-text";
+import { seedLibrary } from "./library-seed";
 
 const DEV_PASSWORD = "kademe-dev-2026";
 const OWNER_EMAIL = "kadiraycareer@gmail.com";
@@ -151,6 +152,9 @@ async function main() {
     passwordHash: await argon2Hash(DEV_PASSWORD),
   });
   await db.insert(s.consentTexts).values({ orgId: org.id, version: 1, body: { tr: CONSENT_TR, en: CONSENT_EN } });
+
+  log("Writing the starter library...");
+  await seedLibrary(org.id);
 
   log("Importing the starter bank (listening audio is made once and reused)...");
   const bank = await importSeedBank(org.id, { log });

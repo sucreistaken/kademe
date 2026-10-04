@@ -13,6 +13,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/migrate.mts",
     "db:seed": "tsx src/db/seed.ts",
+    "db:seed-library": "tsx scripts/seed-library.ts",
     "db:setup": "tsx src/db/migrate.mts",
     "db:fingerprint": "tsx scripts/schema-fingerprint.ts",
     "dev:link": "tsx scripts/dev-link.ts",
