@@ -62,7 +62,7 @@ function input(over: Partial<StateInput> = {}): StateInput {
 const started = (over: Partial<StateInput> = {}) =>
   input({
     invitation: { ...input().invitation, started: true },
-    runs: [{ stageId: "s1", startedAt: T0, deadlineAt: new Date(T0.getTime() + 600_000), submittedAt: null, wasLate: false }],
+    runs: [{ stageId: "s1", startedAt: T0, deadlineAt: new Date(T0.getTime() + 600_000), submittedAt: null, closedByClock: false }],
     responses: [
       { stageId: "s1", activityId: "a1", payload: {}, takesUsed: 1, answeredAt: null, recording: { ref: "m1", status: "READY", durationMs: 4000 } },
       { stageId: "s1", activityId: "a2", payload: { choiceIds: ["x"] }, takesUsed: 0, answeredAt: null, recording: null },
@@ -153,7 +153,7 @@ describe("the running stage", () => {
     const state = buildCandidateState(
       input({
         invitation: { ...input().invitation, started: true, extraTimePct: 50 },
-        runs: [{ stageId: "s1", startedAt: T0, deadlineAt: T0, submittedAt: T0, wasLate: true }],
+        runs: [{ stageId: "s1", startedAt: T0, deadlineAt: T0, submittedAt: T0, closedByClock: true }],
       }),
     );
     expect(state).toMatchObject({ step: "STAGE", position: 2 });
@@ -178,7 +178,7 @@ describe("the grace is told, not hidden (C25)", () => {
       input({
         version: { ...input().version, stages: graceStages },
         invitation: { ...input().invitation, started: true },
-        runs: [{ stageId: "s1", startedAt: T0, deadlineAt: new Date(T0.getTime() + 660_000), submittedAt: null, wasLate: false }],
+        runs: [{ stageId: "s1", startedAt: T0, deadlineAt: new Date(T0.getTime() + 660_000), submittedAt: null, closedByClock: false }],
       }),
     );
     expect(state.stages.map((s) => [s.minutes, s.graceSeconds])).toEqual([
@@ -191,7 +191,7 @@ describe("the grace is told, not hidden (C25)", () => {
   });
 
   it("exposes no grace for a stage whose timeout rule is not ALLOW_GRACE", () => {
-    const state = buildCandidateState(input({ version: { ...input().version, stages: graceStages }, invitation: { ...input().invitation, started: true, extraTimePct: 25 }, runs: [{ stageId: "s1", startedAt: T0, deadlineAt: T0, submittedAt: T0, wasLate: false }] }));
+    const state = buildCandidateState(input({ version: { ...input().version, stages: graceStages }, invitation: { ...input().invitation, started: true, extraTimePct: 25 }, runs: [{ stageId: "s1", startedAt: T0, deadlineAt: T0, submittedAt: T0, closedByClock: false }] }));
     expect(state.current).toMatchObject({ position: 2, graceSeconds: 0 });
   });
 });
@@ -203,6 +203,87 @@ describe("what is recorded follows the question types, not the payload (C24)", (
     const textAnswerOnly = buildCandidateState(started({ responses: [{ stageId: "s1", activityId: "a1", payload: { text: "x", file: { name: "f.mp4", bytes: 1 } } as never, takesUsed: 0, answeredAt: null, recording: null }] }));
     expect(textAnswerOnly.signals).toEqual(["VIDEO_ANSWER", "TECHNICAL"]);
     expect(JSON.stringify(state.signals)).not.toMatch(/PROCTOR|SCREEN|FOCUS/i);
+  });
+});
+
+describe("the response payload leaks no storage detail (spec 7)", () => {
+  const fileStages = content([
+    stage("s1", [
+      activity("f1", { orderIndex: 0, type: "FILE_UPLOAD", config: { acceptedMimeTypes: ["application/pdf"] } }),
+      activity("v1", { orderIndex: 1, type: "VIDEO" }),
+    ]),
+  ]).stages;
+
+  it("shows the candidate's file name and size, the recording reference, and never the mime, asset id or pending upload", () => {
+    const state = buildCandidateState(
+      started({
+        version: { ...input().version, stages: fileStages },
+        responses: [
+          {
+            stageId: "s1",
+            activityId: "f1",
+            payload: {
+              file: { name: "cv.pdf", bytes: 1234, mime: `application/${SECRET}_mime` },
+              pendingFile: { assetId: `${SECRET}_asset`, name: "new.pdf", bytes: 99, mime: `application/${SECRET}_pending` },
+            },
+            takesUsed: 0,
+            answeredAt: null,
+            recording: null,
+          },
+          { stageId: "s1", activityId: "v1", payload: {}, takesUsed: 1, answeredAt: null, recording: { ref: "ref-opaque-1", status: "READY", durationMs: 1000 } },
+        ],
+      }),
+    );
+    expect(state.current?.responses[0]).toMatchObject({ activityId: "f1", file: { name: "cv.pdf", bytes: 1234 }, answered: true });
+    expect(state.current?.responses[1]).toMatchObject({ activityId: "v1", recording: { ref: "ref-opaque-1", status: "READY", durationMs: 1000 } });
+    for (const sent of [JSON.stringify(state), JSON.stringify(candidateSafe(state))]) {
+      expect(sent).not.toContain(SECRET);
+      expect(sent).not.toMatch(/assetId|pendingFile|"mime"/);
+    }
+    expect(candidateSafe(state)).toEqual(state);
+  });
+});
+
+describe("how the previous stage ended", () => {
+  it("says the clock closed it only when the clock did, not for a late hand submit under ALLOW_LATE", () => {
+    const lateStages = content([
+      stage("s1", [activity("a1", { type: "LONG_TEXT", config: {} })], { onTimeout: "ALLOW_LATE" }),
+      stage("s2", [activity("b1", { type: "LONG_TEXT", config: {} })], { orderIndex: 1 }),
+    ]).stages;
+    const base = { ...input().invitation, started: true };
+    const handLate = buildCandidateState(input({ version: { ...input().version, stages: lateStages }, invitation: base, runs: [{ stageId: "s1", startedAt: T0, deadlineAt: T0, submittedAt: T0, closedByClock: false }] }));
+    expect(handLate.current?.previous).toEqual({ position: 1, closedByClock: false });
+    const clock = buildCandidateState(input({ version: { ...input().version, stages: lateStages }, invitation: base, runs: [{ stageId: "s1", startedAt: T0, deadlineAt: T0, submittedAt: T0, closedByClock: true }] }));
+    expect(clock.current?.previous).toEqual({ position: 1, closedByClock: true });
+  });
+});
+
+describe("a DRAFT opening is not open", () => {
+  it("stops a candidate who has not started, like a closed one, and lets one inside finish", () => {
+    expect(buildCandidateState(input({ opening: { ...input().opening, status: "DRAFT" } })).step).toBe("CLOSED");
+    expect(buildCandidateState(started({ opening: { ...input().opening, status: "DRAFT" } })).step).toBe("STAGE");
+  });
+});
+
+describe("DONE always carries the finish (no null screen data)", () => {
+  const submitted = (id: string) => ({ stageId: id, startedAt: T0, deadlineAt: T0, submittedAt: new Date(T0.getTime() + (id === "s1" ? 1000 : 5000)), closedByClock: false });
+
+  it("falls back to the latest submit when every stage is done but completedAt is not written yet", () => {
+    const state = buildCandidateState(input({ invitation: { ...input().invitation, started: true }, runs: [submitted("s1"), submitted("s2")] }));
+    const at = new Date(T0.getTime() + 5000);
+    expect(state.step).toBe("DONE");
+    expect(state.finished).toEqual({ completedAt: at.toISOString(), stagesDone: 2, feedbackBy: new Date(at.getTime() + 7 * 86_400_000).toISOString(), survey: { enabled: true, answered: false } });
+  });
+
+  it("falls back to now for a version with no stages", () => {
+    const state = buildCandidateState(input({ version: { ...input().version, stages: [] } }));
+    expect(state.step).toBe("DONE");
+    expect(state.current).toBeNull();
+    expect(state.finished).toEqual({ completedAt: T0.toISOString(), stagesDone: 0, feedbackBy: new Date(T0.getTime() + 7 * 86_400_000).toISOString(), survey: { enabled: true, answered: false } });
+  });
+
+  it("is null only while the step is not DONE", () => {
+    expect(buildCandidateState(input()).finished).toBeNull();
   });
 });
 

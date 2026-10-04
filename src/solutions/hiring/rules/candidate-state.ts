@@ -1,6 +1,6 @@
 import type { HiringResponsePayload } from "@/db/schema";
 import type { I18nText } from "@/db/schema/types";
-import { effectiveSeconds, hiringStepSuffix, responseAnswered, stageRules, type ExtraTimePct, type HiringStep, type StageRule } from "./candidate-flow";
+import { effectiveSeconds, extraTimeRefusal, hiringStepSuffix, responseAnswered, stageRules, type ExtraTimePct, type HiringStep, type StageRule } from "./candidate-flow";
 import { toCandidateVersion, type CandidateStage } from "./candidate-view";
 import { orderedActivities, orderedStages, type ContentStage } from "./content";
 import { devicesNeeded, estimatedMinutes, recordedSignals, type RecordedSignal } from "./disclosure";
@@ -19,7 +19,11 @@ export type CandidateResponseView = {
   choiceIds: string[];
   usedTextAlternative: boolean;
   takesUsed: number;
-  /** The newest usable take; `ref` is the candidate's own upload reference (for playback). */
+  /**
+   * The newest usable take. `ref` is an OPAQUE id the candidate's own page
+   * hands back to the server for playback: never a storage key, bucket path or
+   * asset path (the caller maps its storage key to an id before building the state).
+   */
   recording: { ref: string; status: "UPLOADING" | "READY" | "INCOMPLETE"; durationMs: number | null } | null;
   file: { name: string; bytes: number } | null;
   answered: boolean;
@@ -44,7 +48,11 @@ export type CurrentStage = {
   autoSubmit: boolean;
   rules: StageRule[];
   responses: CandidateResponseView[];
-  /** The stage just before this one, for "Aşama 1 tamamlandı" or "Süre doldu" (HIRING-UX 6.10, 6.11). */
+  /**
+   * The stage just before this one, for "Aşama 1 tamamlandı" or "Süre doldu"
+   * (HIRING-UX 6.10, 6.11). `closedByClock` is true only when the server's
+   * clock closed that run; a late hand submit (ALLOW_LATE) is not "Süre doldu".
+   */
   previous: { position: number; closedByClock: boolean } | null;
   last: boolean;
 };
@@ -92,7 +100,8 @@ export type StateInput = {
     completedAt: Date | null;
     surveyAnswered: boolean;
   };
-  runs: Array<{ stageId: string; startedAt: Date | null; deadlineAt: Date | null; submittedAt: Date | null; wasLate: boolean }>;
+  /** `closedByClock`: the run ended because the clock ran out, not because the candidate submitted. */
+  runs: Array<{ stageId: string; startedAt: Date | null; deadlineAt: Date | null; submittedAt: Date | null; closedByClock: boolean }>;
   responses: Array<{
     stageId: string;
     activityId: string;
@@ -117,12 +126,17 @@ export function buildCandidateState(input: StateInput): HiringCandidateState {
   const openIndex = view.stages.findIndex((s) => !runOf(s.id)?.submittedAt);
   let step: HiringStep;
   if (inv.completedAt) step = "DONE";
-  else if (input.opening.status === "CLOSED" && !inv.started) step = "CLOSED";
+  else if (input.opening.status !== "OPEN" && !inv.started) step = "CLOSED";
   else if (!inv.consented) step = "CONSENT";
   else if (!inv.candidateName || !inv.candidateEmail) step = "INFO";
   else if (devices.microphone && !inv.deviceChecked) step = "CHECK";
   else step = openIndex === -1 ? "DONE" : "STAGE";
   const position = step === "STAGE" ? openIndex + 1 : null;
+
+  // DONE always carries its finish. When completion is not written yet (every
+  // stage submitted, or a version with no stages) the latest submit stands in, else now.
+  const latestSubmit = input.runs.reduce<Date | null>((latest, r) => (r.submittedAt && (!latest || r.submittedAt > latest) ? r.submittedAt : latest), null);
+  const finishedAt = inv.completedAt ?? latestSubmit ?? input.now;
 
   let current: CurrentStage | null = null;
   if (step === "STAGE") {
@@ -160,7 +174,7 @@ export function buildCandidateState(input: StateInput): HiringCandidateState {
           closed: !!row?.answeredAt,
         };
       }),
-      previous: openIndex > 0 ? { position: openIndex, closedByClock: !!before?.wasLate } : null,
+      previous: openIndex > 0 ? { position: openIndex, closedByClock: before?.closedByClock === true } : null,
       last: openIndex === view.stages.length - 1,
     };
   }
@@ -186,18 +200,19 @@ export function buildCandidateState(input: StateInput): HiringCandidateState {
     signals: recordedSignals(view),
     devices,
     extraTimePct: pct,
-    extraTimeLocked: !!inv.completedAt || input.runs.some((r) => r.startedAt && !r.submittedAt),
+    extraTimeLocked: !!inv.completedAt || extraTimeRefusal(input.runs) !== null,
     practice: input.version.practiceEnabled && devices.microphone,
     contactEmail: input.contactEmail,
     retention: input.retention,
     current,
-    finished: inv.completedAt
-      ? {
-          completedAt: inv.completedAt.toISOString(),
-          stagesDone: input.runs.filter((r) => r.submittedAt).length,
-          feedbackBy: new Date(inv.completedAt.getTime() + input.opening.feedbackDays * 86_400_000).toISOString(),
-          survey: { enabled: input.opening.finishSurveyEnabled, answered: inv.surveyAnswered },
-        }
-      : null,
+    finished:
+      step === "DONE"
+        ? {
+            completedAt: finishedAt.toISOString(),
+            stagesDone: input.runs.filter((r) => r.submittedAt).length,
+            feedbackBy: new Date(finishedAt.getTime() + input.opening.feedbackDays * 86_400_000).toISOString(),
+            survey: { enabled: input.opening.finishSurveyEnabled, answered: inv.surveyAnswered },
+          }
+        : null,
   };
 }
