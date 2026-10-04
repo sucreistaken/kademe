@@ -1,10 +1,12 @@
 import { Card } from "@/components/ui/card";
 import { UndoStrip } from "@/components/ui/undo-strip";
 import { OpeningSettingsForm, type SettingsUser } from "@/components/hiring/opening-settings-form";
-import { PendingSubmitButton } from "@/components/hiring/pending-submit-button";
+import { PendingButton } from "@/components/ui/pending-button";
+import { UrlNotice } from "@/components/ui/url-notice";
 import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
 import { orgDay, zoneLabel } from "@/lib/org-timezone";
+import { one } from "@/lib/url-notice";
 import { loadPanelUsers } from "@/server/settings";
 import { canDecide } from "@/solutions/hiring/rules/access";
 import { openingFor } from "../access";
@@ -50,7 +52,7 @@ export default async function OpeningSettingsPage({
           {runs ? (
             <form action={reopenOpeningAction}>
               <input type="hidden" name="openingId" value={opening.id} />
-              <PendingSubmitButton variant="primary" label={t("hiringSettings.reopen")} pendingLabel={t("hiringSettings.reopening")} />
+              <PendingButton variant="primary" label={t("hiringSettings.reopen")} pendingLabel={t("hiringSettings.reopening")} />
             </form>
           ) : null}
         </Card>
@@ -85,12 +87,15 @@ export default async function OpeningSettingsPage({
           <p className="text-[13px] text-muted">{t("hiringSettings.closeBody")}</p>
           <form action={closeOpeningAction}>
             <input type="hidden" name="openingId" value={opening.id} />
-            <PendingSubmitButton label={t("hiringSettings.close")} pendingLabel={t("hiringSettings.closing")} />
+            <PendingButton label={t("hiringSettings.close")} pendingLabel={t("hiringSettings.closing")} />
           </form>
         </Card>
       ) : null}
-      {sp.closed === "1" && closed && runs ? (
-        <UndoStrip message={t("hiringSettings.closedUndo")} action={reopenOpeningAction} hiddenFields={{ openingId: opening.id }} />
+      {one(sp.closed) === "1" && closed && runs ? (
+        // Shown once after closing; a reload does not bring the strip back.
+        <UrlNotice params={["closed"]}>
+          <UndoStrip message={t("hiringSettings.closedUndo")} action={reopenOpeningAction} hiddenFields={{ openingId: opening.id }} />
+        </UrlNotice>
       ) : null}
     </main>
   );

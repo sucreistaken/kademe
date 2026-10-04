@@ -1,16 +1,19 @@
 import Link from "next/link";
 import { Check, Circle, CircleDashed } from "lucide-react";
-import { PublishButton } from "@/components/hiring/publish-button";
 import { Button, DisabledReason } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { PendingButton } from "@/components/ui/pending-button";
+import { UrlNotice } from "@/components/ui/url-notice";
 import { StatusDot } from "@/components/ui/status-dot";
 import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
 import { cn } from "@/lib/cn";
+import { noticeOf, one } from "@/lib/url-notice";
 import { shortDate } from "@/lib/format";
 import type { PublishProblem } from "@/solutions/hiring/rules/gate";
 import { loadPanelUsers } from "@/server/settings";
 import { canDecide } from "@/solutions/hiring/rules/access";
+import { previewIsCurrent } from "@/solutions/hiring/rules/versions";
 import { workingState } from "@/solutions/hiring/server/working";
 import { openingFor } from "./access";
 import { publishOpeningAction, type PublishNotice } from "./actions";
@@ -27,6 +30,9 @@ const NOTICES: Record<PublishNotice, "publishRefused" | "publishNoDraft" | "publ
   invalid: "publishInvalid",
   failed: "publishFailed",
 };
+
+/** The redirect after "Yayınla" brings one of these; shown once, then taken out of the address. */
+const NOTICE_PARAMS = ["publish", "published"] as const;
 
 const LABELS: Record<ReadinessKey, "rowAssessment" | "rowAnchors" | "rowWeights" | "rowTeam" | "rowPreview"> = {
   assessment: "rowAssessment",
@@ -125,20 +131,19 @@ export default async function OpeningOverviewPage({
       : state.problems.length
         ? (describe(state.problems[0])?.text ?? null)
         : null;
-  const published = typeof sp.published === "string" && /^\d{1,6}$/.test(sp.published) ? sp.published : null;
-  const notice = typeof sp.publish === "string" && Object.hasOwn(NOTICES, sp.publish) ? NOTICES[sp.publish as PublishNotice] : null;
+  const published = /^\d{1,6}$/.test(one(sp.published) ?? "") ? one(sp.published)! : null;
+  const notice = noticeOf(sp, "publish", NOTICES);
 
   const action = state.draft ? (
     <form action={publishOpeningAction} className="flex w-full flex-col items-start gap-1 sm:w-auto sm:max-w-[360px] sm:items-end sm:text-right">
       <input type="hidden" name="openingId" value={opening.id} />
       <input type="hidden" name="back" value="overview" />
-      <PublishButton
-        id="publish-opening"
-        label={t("hiringOverview.publish")}
-        pendingLabel={t("hiringOverview.publishing")}
-        reason={reason}
-        note={t("hiringOverview.publishNote")}
-      />
+      <PendingButton id="publish-opening" variant="primary" label={t("hiringOverview.publish")} pendingLabel={t("hiringOverview.publishing")} reason={reason} />
+      {reason ? (
+        <DisabledReason id="publish-opening-why">{reason}</DisabledReason>
+      ) : (
+        <p className="text-[12px] leading-4 text-muted">{t("hiringOverview.publishNote")}</p>
+      )}
     </form>
   ) : (
     <div className="flex w-full flex-col items-start gap-1 sm:w-auto sm:max-w-[360px] sm:items-end sm:text-right">
@@ -155,7 +160,7 @@ export default async function OpeningOverviewPage({
           problems: state.problems,
           content,
           memberCount: opening.memberIds.length,
-          previewed: state.draft.previewedAt !== null,
+          previewed: previewIsCurrent(state.draft),
           decisionMakerActive,
         })
       : [];
@@ -165,11 +170,13 @@ export default async function OpeningOverviewPage({
     <main className="mx-auto max-w-[960px] px-page py-8">
       <OpeningHeader opening={opening} active="overview" locale={locale} t={t} action={action} />
       {published ? (
-        <p role="status" className="mt-6 flex items-center gap-2 text-[14px] text-ink">
-          <StatusDot tone="active">
-            <span className="tnum text-[14px] text-ink">{t("hiringOverview.published", { number: published })}</span>
-          </StatusDot>
-        </p>
+        <UrlNotice params={NOTICE_PARAMS}>
+          <p role="status" className="mt-6 flex items-center gap-2 text-[14px] text-ink">
+            <StatusDot tone="active">
+              <span className="tnum text-[14px] text-ink">{t("hiringOverview.published", { number: published })}</span>
+            </StatusDot>
+          </p>
+        </UrlNotice>
       ) : null}
       {closed ? (
         // "Yeniden aç" lives on team and rules; an owner or manager is pointed there.
@@ -186,9 +193,11 @@ export default async function OpeningOverviewPage({
         </p>
       ) : null}
       {notice ? (
-        <p role="status" className="mt-6 text-[14px] font-medium text-ink">
-          {t(`hiringOverview.${notice}`)}
-        </p>
+        <UrlNotice params={NOTICE_PARAMS}>
+          <p role="status" className="mt-6 text-[14px] font-medium text-ink">
+            {t(`hiringOverview.${notice}`)}
+          </p>
+        </UrlNotice>
       ) : null}
 
       <div className="mt-section space-y-section">

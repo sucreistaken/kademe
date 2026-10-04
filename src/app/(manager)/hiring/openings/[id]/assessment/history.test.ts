@@ -8,6 +8,7 @@ const v = (number: number, status: VersionSummary["status"]): VersionSummary => 
   status,
   publishedAt: status === "PUBLISHED" ? new Date(Date.UTC(2026, 9, number)) : null,
   previewedAt: null,
+  updatedAt: new Date(0),
 });
 
 describe("versionHistory (HIRING-UX 4.3)", () => {

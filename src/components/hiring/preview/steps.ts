@@ -31,15 +31,19 @@ export function progressOf(version: CandidateVersion, step: Step): { n: number; 
   return step.kind === "stage" || step.kind === "activity" ? { n: step.stage + 1, total: version.stages.length } : null;
 }
 
-/** What the polite live region says when this screen opens. */
+/**
+ * What the polite live region says when this screen opens. Null on the done
+ * screen: its heading takes focus and is read, so the region stays empty and
+ * the end is not announced twice.
+ */
 export function announcementOf(
   version: CandidateVersion,
   step: Step,
-): { key: "announceIntro" | "announceStage" | "questionOf" | "doneTitle"; values: Record<string, number> } {
+): { key: "announceIntro" | "announceStage" | "questionOf"; values: Record<string, number> } | null {
   const total = version.stages.length;
   if (step.kind === "stage") return { key: "announceStage", values: { n: step.stage + 1, total } };
   if (step.kind === "activity")
     return { key: "questionOf", values: { stage: step.stage + 1, stages: total, n: step.activity + 1, total: version.stages[step.stage].activities.length } };
-  if (step.kind === "done") return { key: "doneTitle", values: {} };
+  if (step.kind === "done") return null;
   return { key: "announceIntro", values: {} };
 }

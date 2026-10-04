@@ -50,7 +50,7 @@ const live = { versionId: LIVE, enabled: true, weights: { [COMP]: 100 }, reason:
 
 /** The opening's draft measures COMP with one video question. */
 function draftMeasures(...ids: string[]) {
-  m.versionsOf.mockResolvedValue([{ id: DRAFT, number: 2, status: "DRAFT", publishedAt: null, previewedAt: null }]);
+  m.versionsOf.mockResolvedValue([{ id: DRAFT, number: 2, status: "DRAFT", publishedAt: null, previewedAt: null, updatedAt: new Date(0) }]);
   m.loadVersionContent.mockResolvedValue({
     id: DRAFT,
     stages: [{ id: "s1", orderIndex: 0, activities: [{ id: "a1", orderIndex: 0, type: "VIDEO", competencyIds: ids }] }],
@@ -169,7 +169,7 @@ describe("anchors", () => {
   });
 
   it("without a draft (the scorecard is live) anchors are not edited here: NO_DRAFT", async () => {
-    m.versionsOf.mockResolvedValue([{ id: LIVE, number: 1, status: "PUBLISHED", publishedAt: new Date(), previewedAt: null }]);
+    m.versionsOf.mockResolvedValue([{ id: LIVE, number: 1, status: "PUBLISHED", publishedAt: new Date(), previewedAt: null, updatedAt: new Date(0) }]);
     await expect(saveAnchorsAction(OPENING, COMP, ANCHORS)).resolves.toEqual({ ok: false, code: "NO_DRAFT" });
     expect(anyWrite()).toBe(0);
   });

@@ -331,6 +331,16 @@ async function main() {
   check((await versions.markPreviewed(org.id, frozen.openingId, v2.versionId)) === true, "the draft the preview showed is stamped");
   check((await previewedOf(v2.versionId)) !== null && (await previewedOf(fv1.id)) === null, "v2 is stamped, v1 still is not");
   await expectCode("a closed opening's draft is not stamped", () => versions.markPreviewed(org.id, closing.openingId), "CLOSED");
+  const { previewIsCurrent } = await import("@/solutions/hiring/rules/versions");
+  const draftSummary = async () => (await versions.versionsOf(org.id, frozen.openingId)).find((v) => v.id === v2.versionId)!;
+  check(previewIsCurrent(await draftSummary()), "a fresh stamp counts as previewed");
+  const fv1Updated = (await versions.versionsOf(org.id, frozen.openingId)).find((v) => v.id === fv1.id)!.updatedAt.getTime();
+  await versions.updateStage(org.id, frozen.openingId, v2content!.stages[0].id, { durationSeconds: 960 });
+  check(!previewIsCurrent(await draftSummary()), "a draft edit after the preview resets it (updated_at moved past previewed_at)");
+  await expectCode("a refused edit (another version's stage)", () => versions.updateStage(org.id, frozen.openingId, v1content!.stages[0].id, { durationSeconds: 300 }), "NOT_FOUND");
+  check((await versions.versionsOf(org.id, frozen.openingId)).find((v) => v.id === fv1.id)!.updatedAt.getTime() === fv1Updated, "the published v1 keeps its updated_at");
+  await versions.markPreviewed(org.id, frozen.openingId, v2.versionId);
+  check(previewIsCurrent(await draftSummary()), "previewing again counts again");
 
   console.log("\nTeam and rules (Ekip ve kurallar)");
   const { deadlineToDate } = await import("@/solutions/hiring/rules/opening-rules");

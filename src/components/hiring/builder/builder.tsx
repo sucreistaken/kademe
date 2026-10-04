@@ -3,11 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useFormStatus } from "react-dom";
 import { AlignLeft, CircleDot, ListChecks, Mic, Paperclip, Plus, Type, Video } from "lucide-react";
 import { Button, DisabledReason } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { PendingButton } from "@/components/ui/pending-button";
 import { UndoStrip } from "@/components/ui/undo-strip";
 import { useMT } from "@/i18n/manager-client";
 import type { Locale } from "@/i18n/locale";
@@ -541,7 +541,7 @@ export function Builder({
                       ) : null}
                     </DisabledReason>
                   ) : null}
-                  <SubmitButton id="builder-publish" label={t("publish")} pendingLabel={t("publishing")} reason={publishReason} />
+                  <PendingButton id="builder-publish" variant="primary" label={t("publish")} pendingLabel={t("publishing")} reason={publishReason} />
                 </form>
               )
             ) : closed ? null : (
@@ -550,7 +550,7 @@ export function Builder({
                 <p id="builder-start-why" className="max-w-[460px] text-right text-[13px] text-muted">
                   {canEdit ? t("liveNote", { live: liveNumber ?? versionNumber, next: versionNumber + 1 }) : t("readOnly")}
                 </p>
-                <SubmitButton id="builder-start" label={t("startEditing")} pendingLabel={t("starting")} reason={canEdit ? null : t("readOnly")} />
+                <PendingButton id="builder-start" variant="primary" label={t("startEditing")} pendingLabel={t("starting")} reason={canEdit ? null : t("readOnly")} />
               </form>
             )}
           </div>
@@ -579,12 +579,3 @@ export function Builder({
   );
 }
 
-/** The bar's one filled button; while its form is on its way it says so and cannot be pressed twice. */
-function SubmitButton({ id, label, pendingLabel, reason }: { id: string; label: string; pendingLabel: string; reason: string | null }) {
-  const { pending } = useFormStatus();
-  return (
-    <Button id={id} type="submit" variant="primary" disabled={pending || reason !== null} disabledReason={reason ?? undefined} aria-busy={pending || undefined}>
-      {pending ? pendingLabel : label}
-    </Button>
-  );
-}

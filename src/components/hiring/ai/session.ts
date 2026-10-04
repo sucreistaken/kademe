@@ -98,3 +98,13 @@ export function staleKeys(keys: readonly string[], openingId: string, keep: stri
   const prefix = `${SESSION_PREFIX}${openingId}.v`;
   return keys.filter((k) => k.startsWith(prefix) && k !== keep);
 }
+
+/**
+ * Whether an undo answer clears the card's "accepted" mark: yes when it worked,
+ * and on NOT_FOUND (the stage was deleted in the builder or the competency was
+ * archived elsewhere, so a kept mark would leave the card stuck until a paid
+ * regenerate). Any other refusal keeps it, so the person can try again.
+ */
+export function clearsAcceptedMark(result: { ok: true } | { ok: false; code: string }): boolean {
+  return result.ok || result.code === "NOT_FOUND";
+}

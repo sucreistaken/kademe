@@ -114,7 +114,12 @@ const TERMS: Record<ProtectedCategory, string[]> = {
     "have any children",
     "how many kids",
     "how many children",
-    "plan to have*",
+    // Only family phrases: "plan to have the release ready" is a job question.
+    "plan to have kid*",
+    "plan to have child*",
+    "plan to have a baby",
+    "plan to have babies",
+    "plan to have a family",
     "start a family",
     "childcare arrangement*",
   ],

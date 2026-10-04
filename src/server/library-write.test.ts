@@ -727,6 +727,13 @@ describe("setPositionJobAdIfEmpty", () => {
     expect(auditRows()[0].values).toMatchObject({ orgId: ORG, action: "library.position.job-ad", subjectId: POSITION });
   });
 
+  it("never writes onto an archived position (archived positions are read-only)", async () => {
+    respond = (op) => (op.kind === "update" ? [{ id: POSITION }] : []);
+    await setPositionJobAdIfEmpty(ORG, ACTOR, POSITION, "İlan metni");
+    const update = ops.find((o) => o.kind === "update" && o.table === "positions")!;
+    expect(update.where).toContain('"positions"."archived_at" is null');
+  });
+
   it("leaves a written ad alone and writes no audit row", async () => {
     await setPositionJobAdIfEmpty(ORG, ACTOR, POSITION, "İlan metni");
     expect(auditRows()).toEqual([]);

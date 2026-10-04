@@ -13,10 +13,11 @@ import { generateHiringDraft } from "@/solutions/hiring/ai/draft-job";
 import { stagePayloadSchema, type StagePayload } from "@/solutions/hiring/rules/patches";
 import { draftLibrary } from "@/solutions/hiring/server/draft-context";
 import { HiringConflict, HiringInvalid, HiringNotFound } from "@/solutions/hiring/server/errors";
-import { deleteStage, insertStage } from "@/solutions/hiring/server/versions";
+import { insertStage } from "@/solutions/hiring/server/versions";
 import { workingState } from "@/solutions/hiring/server/working";
 import { editableOpening } from "../../access";
-import type { AcceptCompetencyResult, AcceptStageResult, AiDone, AiRefusal, GenerateResult } from "./result";
+import { deleteStageWithTicket } from "../edit/stage-ticket";
+import type { AcceptCompetencyResult, AcceptStageResult, AiDone, AiRefusal, GenerateResult, RemoveStageResult } from "./result";
 
 /**
  * The AI draft screen (HIRING-UX 5.6). AI proposes, people decide: generating
@@ -106,15 +107,20 @@ export async function acceptStageAction(openingId: string, payload: StagePayload
   }
 }
 
-/** "Geri al" on an accepted stage card: the stage leaves the draft again. */
-export async function removeAcceptedStageAction(openingId: string, stageId: string): Promise<AiDone> {
+/**
+ * "Geri al" on an accepted stage card: the stage leaves the draft again. It may
+ * have been edited in the builder since it was accepted, so the delete answers
+ * the builder's signed undo ticket and the screen shows the undo strip
+ * (restoreStageFormAction puts it back exactly as it was).
+ */
+export async function removeAcceptedStageAction(openingId: string, stageId: string): Promise<RemoveStageResult> {
   if (typeof openingId !== "string" || typeof stageId !== "string" || !isUuid(stageId)) return INVALID;
   const gate = await editableOpening(openingId);
   if (!gate.ok) return { ok: false, code: gate.code };
   try {
-    await deleteStage(gate.user.orgId, openingId, stageId);
+    const ticket = await deleteStageWithTicket(gate.user.orgId, openingId, stageId);
     revalidate();
-    return { ok: true };
+    return { ok: true, ticket };
   } catch (error) {
     const refusal = refusalOf(error);
     if (refusal) return refusal;

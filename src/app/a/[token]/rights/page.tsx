@@ -1,5 +1,6 @@
 import { CandidateShell } from "@/components/candidate/Shell";
 import { CandidateIntl } from "@/components/candidate/Intl";
+import { ORG_TIMEZONE } from "@/lib/org-timezone";
 import { LinkProblem } from "@/components/candidate/LinkProblem";
 import { RightsForm } from "@/components/candidate/RightsForm";
 import { resolveToken } from "@/lib/candidate-context";
@@ -34,7 +35,7 @@ export default async function CandidateRightsPage({
 
   if (!ctx) {
     return (
-      <CandidateIntl locale={locale}>
+      <CandidateIntl locale={locale} timeZone={ORG_TIMEZONE}>
         <CandidateShell locale={locale} header={false}>
           <LinkProblem
             token={token}
@@ -48,7 +49,7 @@ export default async function CandidateRightsPage({
   }
 
   return (
-    <CandidateIntl locale={locale}>
+    <CandidateIntl locale={locale} timeZone={ORG_TIMEZONE}>
       <CandidateShell
         locale={locale}
         meta={t("header.rights", {

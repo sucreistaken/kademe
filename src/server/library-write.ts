@@ -510,7 +510,8 @@ export async function archiveCompetencyIfUnused(
 
 /**
  * The AI screen saves the pasted job ad onto the position, but never over one
- * the team wrote: one conditional update, so two tabs cannot overwrite each other.
+ * the team wrote and never onto an archived position (read-only until it is
+ * restored): one conditional update, so two tabs cannot overwrite each other.
  */
 export async function setPositionJobAdIfEmpty(orgId: string, actorId: string, positionId: string, text: string): Promise<void> {
   const ad = text.trim();
@@ -522,6 +523,7 @@ export async function setPositionJobAdIfEmpty(orgId: string, actorId: string, po
       and(
         eq(positions.id, positionId),
         eq(positions.orgId, orgId),
+        isNull(positions.archivedAt),
         or(isNull(positions.jobDescription), sql`trim(${positions.jobDescription}) = ${""}`),
       ),
     )

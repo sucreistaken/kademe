@@ -34,3 +34,17 @@ export function readWeights(raw: Record<string, string>, used: string[]): { weig
   }
   return { weights, total, problem };
 }
+
+export type WeightSet = { enabled: boolean; weights: Record<string, number> };
+
+const sameSet = (a: WeightSet | null, b: WeightSet | null) => JSON.stringify(a) === JSON.stringify(b);
+
+/**
+ * The live set the form compares against for "nothing changed". A set this
+ * form just saved counts only while the server still shows the set it was
+ * saved over (the refresh has not arrived yet); once the server shows any
+ * other set (this save, or another person's newer one), the server's wins.
+ */
+export function currentWeightSet(saved: { set: WeightSet; over: WeightSet | null } | null, baseline: WeightSet | null): WeightSet | null {
+  return saved && sameSet(saved.over, baseline) ? saved.set : baseline;
+}

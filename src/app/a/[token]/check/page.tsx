@@ -1,5 +1,6 @@
 import { CandidateShell, LanguageSwitch } from "@/components/candidate/Shell";
 import { CandidateIntl } from "@/components/candidate/Intl";
+import { ORG_TIMEZONE } from "@/lib/org-timezone";
 import { SystemCheck } from "@/components/candidate/proctor/SystemCheck";
 import { supportedLocales } from "@/lib/candidate-context";
 import { candidateT } from "@/i18n/candidate";
@@ -20,7 +21,7 @@ export default async function CandidateCheckPage({
   if (entry.kind === "problem") return entry.node;
 
   return (
-    <CandidateIntl locale={entry.locale}>
+    <CandidateIntl locale={entry.locale} timeZone={ORG_TIMEZONE}>
       <CandidateShell
         locale={entry.locale}
         meta={candidateT(entry.locale)("header.preparing")}

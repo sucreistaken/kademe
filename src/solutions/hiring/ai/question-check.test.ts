@@ -54,6 +54,8 @@ describe("question check: the rule part (no network)", () => {
     ["Are you married?", "FAMILY"],
     ["Are you single?", "FAMILY"],
     ["Do you have kids?", "FAMILY"],
+    ["Do you plan to have children?", "FAMILY"],
+    ["Do you plan to have a baby soon?", "FAMILY"],
     ["Gebe misiniz?", "PREGNANCY"],
     ["Hamile misin?", "PREGNANCY"],
     ["Are you pregnant?", "PREGNANCY"],
@@ -115,6 +117,8 @@ describe("question check: the rule part (no network)", () => {
     ["Askerlik durumun nedir?"],
     ["Hangi dinamikler ekibi etkiler?"],
     ["Tell us about the European Union market."],
+    ["Do you plan to have the release ready by Friday?"],
+    ["What do you plan to have done in your first month?"],
   ])("leaves %s alone", (text) => {
     expect(protectedTraitFindings([q("a", text), q("b", "", text)])).toEqual([]);
   });

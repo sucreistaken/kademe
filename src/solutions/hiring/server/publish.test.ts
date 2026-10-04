@@ -20,6 +20,7 @@ vi.mock("@/db", async () => ({ db: (await import("./test-fake-db")).fakeDb() }))
 
 import { publishDraft } from "./publish";
 import { addWeightSet } from "./weight-sets";
+import { orgDay } from "@/lib/org-timezone";
 
 /**
  * Publishing and weight sets on a recording fake database: the lock order
@@ -284,6 +285,22 @@ describe("addWeightSet", () => {
     expect(writes[off].values).toEqual({ isActive: false });
     expect(writes[off].params).toContain(VERSION);
     expect(writes[on].values).toMatchObject({ versionId: VERSION, isActive: true, reason: "Kalibrasyon sonrası", createdBy: ACTOR });
+  });
+
+  it("labels the set with the organisation's day, not the UTC date", async () => {
+    fake.respond = live();
+    // 22:30 UTC on 4 Oct is already 5 Oct in Istanbul (UTC+3).
+    const now = new Date("2026-10-04T22:30:00Z");
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(now);
+    try {
+      await addWeightSet(ORG, OPENING, input(), ACTOR);
+    } finally {
+      vi.useRealTimers();
+    }
+    const insert = fake.ops.find((o) => o.kind === "insert" && o.table === "hiring_weight_sets")!;
+    expect((insert.values as { label: string }).label).toBe(orgDay(now));
+    expect(orgDay(now, "Europe/Istanbul")).toBe("2026-10-05");
   });
 
   it("writes exactly the published competencies: an extra or foreign id in the input is never written", async () => {

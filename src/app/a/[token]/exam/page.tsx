@@ -1,5 +1,6 @@
 import { CandidateShell } from "@/components/candidate/Shell";
 import { CandidateIntl } from "@/components/candidate/Intl";
+import { ORG_TIMEZONE } from "@/lib/org-timezone";
 import { ExamRunner } from "@/components/candidate/exam/ExamRunner";
 import { candidateSafe } from "@/lib/candidate-safe";
 import { enter, type SearchParams } from "@/app/a/[token]/shared";
@@ -22,7 +23,7 @@ export default async function ExamPage({
   const entry = await enter(token, ["SECTION_INTRO", "ITEM"], searchParams, `/a/${token}/exam`);
   if (entry.kind === "problem") return entry.node;
   return (
-    <CandidateIntl locale={entry.locale}>
+    <CandidateIntl locale={entry.locale} timeZone={ORG_TIMEZONE}>
       <CandidateShell locale={entry.locale} header={entry.state.step === "SECTION_INTRO"}>
         <ExamRunner token={token} initial={candidateSafe(entry.state)} />
       </CandidateShell>

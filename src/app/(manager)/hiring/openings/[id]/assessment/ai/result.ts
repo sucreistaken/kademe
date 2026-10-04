@@ -1,4 +1,5 @@
 import type { HiringDraft } from "@/solutions/hiring/ai/draft";
+import type { UndoTicket } from "../edit/result";
 
 /**
  * Why an AI screen action was refused. Each code has its own sentence on
@@ -43,3 +44,5 @@ export type GenerateResult = { ok: true; draft: HiringDraft; budgetWarning: stri
 export type AcceptStageResult = { ok: true; stageId: string } | AiRefusal;
 export type AcceptCompetencyResult = { ok: true; id: string; created: boolean } | AiRefusal;
 export type AiDone = { ok: true } | AiRefusal;
+/** The removed stage's undo ticket, the same the builder's delete answers (restoreStageFormAction takes it back). */
+export type RemoveStageResult = { ok: true; ticket: UndoTicket } | AiRefusal;

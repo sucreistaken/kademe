@@ -62,6 +62,10 @@ describe("dictionaries", () => {
     }
   });
 
+  it("says an opening is a hiring opening, not a role (the EN word 'role' already means the user's role)", () => {
+    expect(hiringEn.hiringOpenings.noPermission).toBe("Your role cannot open a hiring opening.");
+  });
+
   it("no message contains an em dash (HIRING-UX E5)", () => {
     for (const [name, tr, en] of PAIRS) {
       expect(JSON.stringify([tr, en]), name).not.toContain("\u2014");

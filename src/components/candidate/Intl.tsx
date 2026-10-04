@@ -14,13 +14,16 @@ import type { Locale } from "@/i18n/locale";
  */
 export function CandidateIntl({
   locale,
+  timeZone,
   children,
 }: {
   locale: Locale;
+  /** ORG_TIMEZONE, read on the server: the browser has no access to it. */
+  timeZone: string;
   children: React.ReactNode;
 }) {
   return (
-    <NextIntlClientProvider locale={locale} messages={messagesFor(locale)} timeZone="Europe/Istanbul">
+    <NextIntlClientProvider locale={locale} messages={messagesFor(locale)} timeZone={timeZone}>
       {children}
     </NextIntlClientProvider>
   );

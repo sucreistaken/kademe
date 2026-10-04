@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useFormStatus } from "react-dom";
 import { useMT } from "@/i18n/manager-client";
-import { Button } from "./button";
+import { PendingButton } from "./pending-button";
 
 const UNDO_SECONDS = 8;
 
@@ -56,21 +55,12 @@ export function UndoStrip({
           {Object.entries(hiddenFields).map(([name, value]) => (
             <input key={name} type="hidden" name={name} value={value} />
           ))}
-          <UndoButton label={t("undo")} pendingLabel={t("undoing")} />
+          {/* "Geri al" says it is working and takes no second click while the undo runs. */}
+          <PendingButton size="sm" label={t("undo")} pendingLabel={t("undoing")} />
         </form>
         <span className="tnum w-6 text-right text-[13px] text-muted">{secondsLeft}</span>
       </div>
     </div>
-  );
-}
-
-/** "Geri al" says it is working and takes no second click while the undo runs. */
-function UndoButton({ label, pendingLabel }: { label: string; pendingLabel: string }) {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" variant="secondary" size="sm" disabled={pending} aria-busy={pending || undefined}>
-      {pending ? pendingLabel : label}
-    </Button>
   );
 }
 

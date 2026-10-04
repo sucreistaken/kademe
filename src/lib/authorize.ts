@@ -57,7 +57,8 @@ const BY_ROLE: Record<SessionUser["role"], Capability[]> = {
   REVIEWER: ["result:grade", "media:view"],
 };
 
-export function can(user: SessionUser, capability: Capability) {
+/** Only the role decides; anything with a role can be asked (a session user, an opening's viewer). */
+export function can(user: Pick<SessionUser, "role">, capability: Capability) {
   return BY_ROLE[user.role].includes(capability);
 }
 

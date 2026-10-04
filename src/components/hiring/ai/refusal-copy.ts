@@ -58,3 +58,16 @@ export function aiRefusal(code: AiCode | "NETWORK", t: Say): string {
     }
   }
 }
+
+/** After this long the usual "20-40 s" is no longer true; the line says so (a provider fallback took 3 minutes). */
+export const SLOW_AFTER_SECONDS = 40;
+
+/** The waiting line for `seconds` since "Önerileri üret". No client cap: the request runs until the server answers. */
+export function waitingKey(seconds: number): "working" | "workingSlow" {
+  return seconds >= SLOW_AFTER_SECONDS ? "workingSlow" : "working";
+}
+
+/** The note under a card whose "Geri al" was refused; NOT_FOUND clears the mark (session.ts clearsAcceptedMark) and says so. */
+export function undoNote(code: AiCode | "NETWORK", t: Say): string {
+  return code === "NOT_FOUND" ? t("goneElsewhere") : aiRefusal(code, t);
+}

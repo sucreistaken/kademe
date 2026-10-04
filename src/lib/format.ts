@@ -30,13 +30,13 @@ export function initials(fullName: string | null, locale: Locale = "tr"): string
 }
 
 /** "8 Eyl" / "8 Sep" */
-export function shortDate(date: Date, locale: Locale): string {
-  return intlShortDate(date, locale);
+export function shortDate(date: Date, locale: Locale, timeZone?: string): string {
+  return intlShortDate(date, locale, timeZone);
 }
 
 /** "12 Eyl 09:41" / "12 Sep 09:41" */
-export function dateTime(date: Date, locale: Locale): string {
-  return intlDateTime(date, locale);
+export function dateTime(date: Date, locale: Locale, timeZone?: string): string {
+  return intlDateTime(date, locale, timeZone);
 }
 
 /** "09:41:02". The same in both locales, so it takes no locale. */

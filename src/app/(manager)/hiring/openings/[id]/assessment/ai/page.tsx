@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
 import { AiDraft } from "@/components/hiring/ai/ai-draft";
+import { UrlNotice } from "@/components/ui/url-notice";
 import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
 import { pickText } from "@/lib/i18n-text";
+import { noticeOf } from "@/lib/url-notice";
 import { activeCompetencyOptions, loadPosition } from "@/server/library";
 import { workingState } from "@/solutions/hiring/server/working";
 import { openingFor } from "../../access";
@@ -38,7 +40,8 @@ export default async function AiDraftPage({
   ]);
   const content = state.content;
   if (!content) notFound();
-  const draftNotice = typeof sp.draft === "string" && Object.hasOwn(DRAFT_NOTICES, sp.draft) ? t(DRAFT_NOTICES[sp.draft as keyof typeof DRAFT_NOTICES]) : null;
+  const draftKey = noticeOf(sp, "draft", DRAFT_NOTICES);
+  const draftNotice = draftKey ? t(draftKey) : null;
 
   return (
     <main className="mx-auto max-w-[1360px] px-page py-8">
@@ -47,9 +50,11 @@ export default async function AiDraftPage({
         <AssessmentTabs openingId={opening.id} active="ai" t={t} />
       </div>
       {draftNotice ? (
-        <p role="status" className="mt-6 text-[14px] font-medium text-ink">
-          {draftNotice}
-        </p>
+        <UrlNotice params={["draft"]}>
+          <p role="status" className="mt-6 text-[14px] font-medium text-ink">
+            {draftNotice}
+          </p>
+        </UrlNotice>
       ) : null}
       <AiDraft
         openingId={opening.id}

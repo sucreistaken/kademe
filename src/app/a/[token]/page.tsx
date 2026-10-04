@@ -1,5 +1,6 @@
 import { CandidateShell, LanguageSwitch } from "@/components/candidate/Shell";
 import { CandidateIntl } from "@/components/candidate/Intl";
+import { ORG_TIMEZONE } from "@/lib/org-timezone";
 import { IntroConsent } from "@/components/candidate/IntroConsent";
 import { getConsentText, supportedLocales } from "@/lib/candidate-context";
 import { candidateSafe } from "@/lib/candidate-safe";
@@ -25,7 +26,7 @@ export default async function CandidateEntryPage({
   const consent = await getConsentText(entry.ctx);
 
   return (
-    <CandidateIntl locale={entry.locale}>
+    <CandidateIntl locale={entry.locale} timeZone={ORG_TIMEZONE}>
       <CandidateShell
         locale={entry.locale}
         meta={headerMeta(entry.ctx)}

@@ -23,7 +23,7 @@ import { addWeightSetAction, saveDraftWeightsAction } from "@/app/(manager)/hiri
 import type { ScorecardCode } from "@/app/(manager)/hiring/openings/[id]/assessment/scorecard/result";
 import { AnchorSheet } from "./anchor-sheet";
 import { refusalText } from "./refusal-copy";
-import { readWeights, type WeightsFormProblem } from "./weights-form";
+import { currentWeightSet, readWeights, type WeightSet, type WeightsFormProblem } from "./weights-form";
 
 export type ScorecardRow = {
   id: string;
@@ -101,8 +101,8 @@ export function ScorecardView({
   const [anchorsSaved, setAnchorsSaved] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const [outcome, setOutcome] = useState<Outcome>(null);
-  /** The set this form just saved: the current one until the refreshed page brings it as `baseline`. */
-  const [savedSet, setSavedSet] = useState<{ enabled: boolean; weights: Record<string, number> } | null>(null);
+  /** The set this form just saved and the server set it replaced; see currentWeightSet. */
+  const [savedSet, setSavedSet] = useState<{ set: WeightSet; over: WeightSet | null } | null>(null);
 
   const shown = rows.map((row) =>
     adopted[row.id] ? { ...row, anchors: adopted[row.id], missingLevels: missingAnchorLevels(adopted[row.id]) } : row,
@@ -115,7 +115,7 @@ export function ScorecardView({
     if (p.code === "NOT_100") return p.total < 100 ? t("missing", { total: p.total, gap: p.gap }) : t("over", { total: p.total, gap: p.gap });
     return t(p.code === "MISSING" ? "weightMissing" : "weightNotWhole", { competency: nameOf(p.competencyId) || t("unknownCompetency") });
   };
-  const current = savedSet ?? baseline;
+  const current = currentWeightSet(savedSet, baseline);
   const unchanged = mode === "live" && current !== null && sameWeightSet({ enabled, weights: read.weights }, current, used);
   const saveReason = !canEdit
     ? editReason
@@ -138,7 +138,7 @@ export function ScorecardView({
         const res = mode === "draft" ? await saveDraftWeightsAction(openingId, payload) : await addWeightSetAction(openingId, { ...payload, reason });
         if (res.ok) {
           setOutcome({ kind: "saved" });
-          if (mode === "live") setSavedSet({ enabled, weights: read.weights });
+          if (mode === "live") setSavedSet({ set: { enabled, weights: read.weights }, over: baseline });
           setReason("");
           router.refresh();
         } else {

@@ -8,7 +8,7 @@ import { matrixOf, pickVersion, viewContent } from "./data";
  * default, the live version on ?version=live while a draft exists, and the
  * live view always reads the live version's own questions.
  */
-const v = (id: string, number: number, status: "DRAFT" | "PUBLISHED") => ({ id, number, status, publishedAt: null, previewedAt: null });
+const v = (id: string, number: number, status: "DRAFT" | "PUBLISHED") => ({ id, number, status, publishedAt: null, previewedAt: null, updatedAt: new Date(0) });
 const LIVE = v("v1", 1, "PUBLISHED");
 const DRAFT = v("v2", 2, "DRAFT");
 

@@ -202,10 +202,12 @@ describe("draft writes", () => {
     fake.respond = draftWorld((op) => (op.kind === "select" && op.table === "hiring_stages" ? [{ id: other }, { id: STAGE }] : undefined));
     await versions.moveStage(ORG, OPENING, STAGE, -1);
     const updates = writes();
-    expect(updates.length).toBeGreaterThan(0);
+    expect(updates.filter((u) => u.table === "hiring_stages").length).toBeGreaterThan(0);
     for (const u of updates) {
-      expect(u).toMatchObject({ kind: "update", table: "hiring_stages" });
-      expect(Object.keys(u.values as object)).toEqual(["orderIndex"]);
+      expect(u.kind).toBe("update");
+      // Stage rows only get a new order; the draft row only its updated_at (the preview stamp reset).
+      expect(Object.keys(u.values as object)).toEqual(u.table === "hiring_stages" ? ["orderIndex"] : ["updatedAt"]);
+      expect(u.table === "hiring_stages" || u.table === "hiring_versions").toBe(true);
     }
   });
 });

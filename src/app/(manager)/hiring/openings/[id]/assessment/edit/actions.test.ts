@@ -95,8 +95,8 @@ beforeEach(() => {
 /** The opening's current draft: undo tickets are bound to it (review minor 4). */
 function draftNow(versionId: string | null) {
   v.versionsOf.mockResolvedValue([
-    { id: "v1", number: 1, status: "PUBLISHED", publishedAt: new Date(), previewedAt: null },
-    ...(versionId ? [{ id: versionId, number: Number(versionId.slice(1)), status: "DRAFT" as const, publishedAt: null, previewedAt: null }] : []),
+    { id: "v1", number: 1, status: "PUBLISHED", publishedAt: new Date(), previewedAt: null, updatedAt: new Date(0) },
+    ...(versionId ? [{ id: versionId, number: Number(versionId.slice(1)), status: "DRAFT" as const, publishedAt: null, previewedAt: null, updatedAt: new Date(0) }] : []),
   ]);
 }
 

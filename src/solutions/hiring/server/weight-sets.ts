@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { auditLogs, hiringWeightSets, hiringWeights } from "@/db/schema";
+import { orgDay } from "@/lib/org-timezone";
 import { isUuid } from "@/server/settings";
 import { workingVersions } from "../rules/versions";
 import { sameWeightSet, WEIGHT_REASON_MIN, weightSetPercentages } from "../rules/weights";
@@ -74,7 +75,7 @@ export async function addWeightSet(
         .where(and(eq(hiringWeightSets.versionId, version.id), eq(hiringWeightSets.isActive, true)));
       const [set] = await tx
         .insert(hiringWeightSets)
-        .values({ versionId: version.id, label: new Date().toISOString().slice(0, 10), isActive: input.enabled === true, reason, createdBy: userId })
+        .values({ versionId: version.id, label: orgDay(), isActive: input.enabled === true, reason, createdBy: userId })
         .returning({ id: hiringWeightSets.id });
       const rows = Object.entries(result.weights).map(([competencyId, percentage]) => ({ weightSetId: set.id, competencyId, percentage: percentage.toFixed(2) }));
       if (rows.length) await tx.insert(hiringWeights).values(rows);

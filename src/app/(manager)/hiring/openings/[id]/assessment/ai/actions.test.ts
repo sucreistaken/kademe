@@ -7,6 +7,7 @@ import type * as Versions from "@/solutions/hiring/server/versions";
 import type * as Working from "@/solutions/hiring/server/working";
 import { emptyActivity, type StagePayload } from "@/solutions/hiring/rules/patches";
 import { HiringConflict, HiringInvalid, HiringNotFound } from "@/solutions/hiring/server/errors";
+import { verifyUndo } from "../edit/undo-token";
 
 /**
  * The AI screen's actions (HIRING-UX 5.6, Task 17 carries): every action asks
@@ -42,6 +43,7 @@ vi.mock("../../access", () => ({ editableOpening: (id: string) => editableOpenin
 const m = vi.hoisted(() => ({
   insertStage: vi.fn<typeof Versions.insertStage>(),
   deleteStage: vi.fn<typeof Versions.deleteStage>(),
+  versionsOf: vi.fn<typeof Versions.versionsOf>(),
   ensureDraftVersion: vi.fn<typeof Versions.ensureDraftVersion>(),
   workingState: vi.fn<typeof Working.workingState>(),
   findOrCreateCompetency: vi.fn<typeof LibraryWrite.findOrCreateCompetency>(),
@@ -55,6 +57,7 @@ const forward = vi.hoisted(() => (name: string) => (...a: unknown[]) => (m[name 
 vi.mock("@/solutions/hiring/server/versions", () => ({
   insertStage: forward("insertStage"),
   deleteStage: forward("deleteStage"),
+  versionsOf: forward("versionsOf"),
   ensureDraftVersion: forward("ensureDraftVersion"),
 }));
 vi.mock("@/solutions/hiring/server/working", () => ({ workingState: forward("workingState") }));
@@ -85,7 +88,7 @@ const proposal = { name: text("Veriyle karar"), description: text(""), anchors: 
 const VIA = `hiring-ai:${OPENING}`;
 
 type State = Awaited<ReturnType<typeof Working.workingState>>;
-const version = (status: "DRAFT" | "PUBLISHED", number: number) => ({ id: `v${number}`, number, status, publishedAt: null, previewedAt: null });
+const version = (status: "DRAFT" | "PUBLISHED", number: number) => ({ id: `v${number}`, number, status, publishedAt: null, previewedAt: null, updatedAt: new Date(0) });
 function stateWith(draft: boolean, localeSet: Array<"tr" | "en"> = ["tr"], defaultLocale: "tr" | "en" = "tr"): State {
   const v = draft ? version("DRAFT", 2) : version("PUBLISHED", 1);
   return {
@@ -113,6 +116,10 @@ beforeEach(() => {
   for (const fn of Object.values(m)) fn.mockReset();
   m.insertStage.mockResolvedValue(STAGE);
   m.deleteStage.mockResolvedValue({ payload: payload(), index: 0 });
+  m.versionsOf.mockResolvedValue([
+    { id: "v2", number: 2, status: "DRAFT", publishedAt: null, previewedAt: null, updatedAt: new Date(0) },
+    { id: "v1", number: 1, status: "PUBLISHED", publishedAt: new Date(), previewedAt: null, updatedAt: new Date(0) },
+  ]);
   m.workingState.mockResolvedValue(stateWith(true));
   m.findOrCreateCompetency.mockResolvedValue({ ok: true, id: COMP, created: true });
   m.archiveCompetencyIfUnused.mockResolvedValue({ ok: true });
@@ -270,8 +277,18 @@ describe("acceptStageAction", () => {
 });
 
 describe("removeAcceptedStageAction", () => {
+  it("answers the builder's signed undo ticket, bound to this organisation, opening and draft", async () => {
+    const result = await removeAcceptedStageAction(OPENING, STAGE);
+    if (!result.ok) throw new Error(result.code);
+    const json = JSON.stringify(payload());
+    expect(result.ticket).toMatchObject({ payload: json, index: 0 });
+    const subject = { orgId: "o1", openingId: OPENING, versionId: "v2", kind: "stage" as const, stageId: "", index: 0, payload: json };
+    expect(verifyUndo(subject, result.ticket.token)).toBe(true);
+    expect(verifyUndo({ ...subject, versionId: "v1" }, result.ticket.token)).toBe(false);
+  });
+
   it("removes the stage from the draft and answers NO_DRAFT once it is published", async () => {
-    await expect(removeAcceptedStageAction(OPENING, STAGE)).resolves.toEqual({ ok: true });
+    await expect(removeAcceptedStageAction(OPENING, STAGE)).resolves.toMatchObject({ ok: true });
     m.deleteStage.mockRejectedValueOnce(new HiringConflict("NO_DRAFT"));
     await expect(removeAcceptedStageAction(OPENING, STAGE)).resolves.toEqual({ ok: false, code: "NO_DRAFT" });
     m.deleteStage.mockRejectedValueOnce(new HiringNotFound("stage"));

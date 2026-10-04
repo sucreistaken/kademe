@@ -12,13 +12,16 @@ import type { Locale } from "@/i18n/locale";
  */
 export function ManagerIntl({
   locale,
+  timeZone,
   children,
 }: {
   locale: Locale;
+  /** ORG_TIMEZONE, read on the server: the browser has no access to it. */
+  timeZone: string;
   children: React.ReactNode;
 }) {
   return (
-    <NextIntlClientProvider locale={locale} messages={managerMessagesFor(locale)}>
+    <NextIntlClientProvider locale={locale} messages={managerMessagesFor(locale)} timeZone={timeZone}>
       {children}
     </NextIntlClientProvider>
   );

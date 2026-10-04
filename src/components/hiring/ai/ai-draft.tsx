@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState, useSyncExternalStore, useTransition } from "react";
 import Link from "next/link";
-import { useFormStatus } from "react-dom";
 import { Button, DisabledReason } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -36,9 +35,13 @@ import {
   undoCompetencyAction,
 } from "@/app/(manager)/hiring/openings/[id]/assessment/ai/actions";
 import type { AiCode } from "@/app/(manager)/hiring/openings/[id]/assessment/ai/result";
-import { startDraftAction } from "@/app/(manager)/hiring/openings/[id]/assessment/edit/actions";
-import { aiRefusal } from "./refusal-copy";
-import { parseSession, sessionKey, staleKeys, withGeneration, type AiSession, type Generation } from "./session";
+import { restoreStageFormAction, startDraftAction } from "@/app/(manager)/hiring/openings/[id]/assessment/edit/actions";
+import type { UndoTicket } from "@/app/(manager)/hiring/openings/[id]/assessment/edit/result";
+import { refusalKey } from "@/components/hiring/builder/refusal-copy";
+import { PendingButton } from "@/components/ui/pending-button";
+import { UndoStrip } from "@/components/ui/undo-strip";
+import { aiRefusal, undoNote, waitingKey } from "./refusal-copy";
+import { clearsAcceptedMark, parseSession, sessionKey, staleKeys, withGeneration, type AiSession, type Generation } from "./session";
 
 /** The record without one key. */
 const without = <V,>(record: Record<string, V>, key: string): Record<string, V> => Object.fromEntries(Object.entries(record).filter(([k]) => k !== key));
@@ -156,6 +159,19 @@ function AiDraftScreen({
 
   const [editing, setEditing] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
+  /** The stage card whose "Geri al" just removed it, with the builder's undo ticket (8 s strip). */
+  const [stageUndo, setStageUndo] = useState<(UndoTicket & { generationId: string; key: string }) | null>(null);
+  /** Seconds since "Önerileri üret", for the honest waiting line. */
+  const [waited, setWaited] = useState(0);
+  useEffect(() => {
+    if (!generating) return;
+    const started = Date.now();
+    const timer = setInterval(() => setWaited(Math.floor((Date.now() - started) / 1000)), 1000);
+    return () => {
+      clearInterval(timer);
+      setWaited(0);
+    };
+  }, [generating]);
   const busy = generating || working;
 
   const writable = canEdit && mode === "draft";
@@ -258,12 +274,55 @@ function AiDraftScreen({
     });
   }
 
+  /** Runs a card's "Geri al": the mark is cleared when it worked and when the item is already gone elsewhere (NOT_FOUND). */
+  function undo<T extends { ok: true }>(card: string, action: () => Promise<T | { ok: false; code: AiCode }>, clear: () => void, done: (result: T) => string | null) {
+    note(card, null);
+    startWorking(async () => {
+      try {
+        const result = await action();
+        if (clearsAcceptedMark(result)) clear();
+        note(card, result.ok ? done(result) : undoNote(result.code, (key, values) => t(key, values)));
+      } catch {
+        note(card, say("NETWORK"));
+      }
+    });
+  }
+
   function undoStage(key: string) {
     const id = acceptedStages[key];
-    run(stageId(key), () => removeAcceptedStageAction(openingId, id), () => {
-      setAcceptedStages((s) => without(s, key));
-      return t("stageUndone");
-    });
+    const target = genId;
+    undo(
+      stageId(key),
+      () => removeAcceptedStageAction(openingId, id),
+      () => setAcceptedStages((s) => without(s, key)),
+      (result) => {
+        // The stage may have been edited in the builder since; the strip puts it back exactly as it was.
+        if (target) setStageUndo({ ...result.ticket, generationId: target, key });
+        return null;
+      },
+    );
+  }
+
+  /** The undo strip's "Geri al": the builder's restore, then the card is marked accepted again with the restored stage. */
+  async function restoreStage(formData: FormData, ticket: NonNullable<typeof stageUndo>) {
+    const card = stageId(ticket.key);
+    try {
+      const result = await restoreStageFormAction(formData);
+      if (result.ok) {
+        setSession(
+          (s) =>
+            s && {
+              ...s,
+              generations: s.generations.map((g) => (g.generationId === ticket.generationId ? { ...g, acceptedStages: { ...g.acceptedStages, [ticket.key]: result.value } } : g)),
+            },
+        );
+        note(card, null);
+      } else {
+        note(card, tb(refusalKey(result.code, result.fields, "undo")));
+      }
+    } catch {
+      note(card, say("NETWORK"));
+    }
   }
 
   function acceptCompetency(c: CompetencySuggestion) {
@@ -287,10 +346,12 @@ function AiDraftScreen({
       note(competencyId(key), null);
       return;
     }
-    run(competencyId(key), () => undoCompetencyAction(openingId, accepted.id), () => {
-      setAcceptedCompetencies((s) => without(s, key));
-      return t("competencyArchived");
-    });
+    undo(
+      competencyId(key),
+      () => undoCompetencyAction(openingId, accepted.id),
+      () => setAcceptedCompetencies((s) => without(s, key)),
+      () => t("competencyArchived"),
+    );
   }
 
   const editActivity = (stage: StageSuggestion, index: number, change: Partial<ActivitySuggestion>) =>
@@ -580,7 +641,7 @@ function AiDraftScreen({
               <input type="hidden" name="openingId" value={openingId} />
               <input type="hidden" name="back" value="ai" />
               <p className="max-w-[560px] text-[14px] text-ink">{tb("liveNote", { live: liveNumber ?? versionNumber, next: versionNumber + 1 })}</p>
-              <StartButton label={tb("startEditing")} pendingLabel={tb("starting")} />
+              <PendingButton variant="primary" label={tb("startEditing")} pendingLabel={tb("starting")} />
             </form>
           ) : (
             <p className="text-[14px] text-ink">{t("noPermission")}</p>
@@ -644,7 +705,7 @@ function AiDraftScreen({
       {generating ? (
         <div className="space-y-3" aria-busy="true">
           <p role="status" className="text-[13px] text-muted">
-            {t("working")}
+            {t(waitingKey(waited))}
           </p>
           {[0, 1, 2].map((i) => (
             <Skeleton key={i} className="h-32 w-full rounded-xl" />
@@ -671,6 +732,16 @@ function AiDraftScreen({
           {visible.newCompetencies.map(competencyCard)}
           {visible.stages.map(stageCard)}
         </div>
+      ) : null}
+
+      {stageUndo ? (
+        <UndoStrip
+          key={stageUndo.token}
+          message={t("stageUndone")}
+          action={(formData) => restoreStage(formData, stageUndo)}
+          onSubmitted={() => setStageUndo(null)}
+          hiddenFields={{ openingId, stageId: "", payload: stageUndo.payload, index: String(stageUndo.index), token: stageUndo.token }}
+        />
       ) : null}
     </div>
   );
@@ -740,12 +811,3 @@ function CardActions({
   );
 }
 
-/** "Düzenlemeye başla" while its form is on its way says so and cannot be pressed twice. */
-function StartButton({ label, pendingLabel }: { label: string; pendingLabel: string }) {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" variant="primary" disabled={pending} aria-busy={pending || undefined}>
-      {pending ? pendingLabel : label}
-    </Button>
-  );
-}

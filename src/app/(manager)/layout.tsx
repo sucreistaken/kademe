@@ -3,6 +3,7 @@ import { requireUser } from "@/server/session";
 import { ManagerNav } from "@/components/manager/nav";
 import { LangSwitch } from "@/components/manager/lang-switch";
 import { ManagerIntl } from "@/components/manager/Intl";
+import { ORG_TIMEZONE } from "@/lib/org-timezone";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
@@ -57,7 +58,7 @@ export default async function ManagerLayout({ children }: { children: React.Reac
             Kademe
           </Link>
         </header>
-        <ManagerIntl locale={locale}>{children}</ManagerIntl>
+        <ManagerIntl locale={locale} timeZone={ORG_TIMEZONE}>{children}</ManagerIntl>
       </div>
     </SidebarProvider>
   );

@@ -44,6 +44,7 @@ describe("candidate flow steps", () => {
     expect(announcementOf(version, { kind: "intro" })).toEqual({ key: "announceIntro", values: {} });
     expect(announcementOf(version, { kind: "stage", stage: 1 })).toEqual({ key: "announceStage", values: { n: 2, total: 2 } });
     expect(announcementOf(version, { kind: "activity", stage: 0, activity: 1 })).toEqual({ key: "questionOf", values: { stage: 1, stages: 2, n: 2, total: 2 } });
-    expect(announcementOf(version, { kind: "done" })).toEqual({ key: "doneTitle", values: {} });
+    // The done screen's focused heading already speaks; the live region stays empty so it is not read twice.
+    expect(announcementOf(version, { kind: "done" })).toBeNull();
   });
 });

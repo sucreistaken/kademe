@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useTimeZone } from "next-intl";
 import { ChevronLeft, MicOff, Upload, VideoOff } from "lucide-react";
 import { Button, DisabledReason } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,6 +13,7 @@ import { ManagerIntl } from "@/components/manager/Intl";
 import { useMT } from "@/i18n/manager-client";
 import type { Locale } from "@/i18n/locale";
 import { cn } from "@/lib/cn";
+import { ORG_TIMEZONE } from "@/lib/org-timezone";
 import { pickTextLang } from "@/lib/i18n-text";
 import { useStepFocus } from "@/hooks/use-step-focus";
 import type { CandidateActivity, CandidateVersion } from "@/solutions/hiring/rules/candidate-view";
@@ -63,6 +65,8 @@ type Props = {
  */
 export function Preview({ openingId, stampVersionId, mode, number, companyName, positionName, version, locales, defaultLocale }: Props) {
   const t = useMT("hiringPreview");
+  // The candidate frame keeps the manager tree's zone (ORG_TIMEZONE from the server), only the language changes.
+  const timeZone = useTimeZone() ?? ORG_TIMEZONE;
   const [index, setIndex] = useState(0);
   const [mobile, setMobile] = useState(false);
   const [lang, setLang] = useState<Locale>(locales.includes(defaultLocale) ? defaultLocale : locales[0]);
@@ -129,7 +133,7 @@ export function Preview({ openingId, stampVersionId, mode, number, companyName, 
 
       <div className={cn("rounded-2xl bg-canvas", mobile ? "px-2 py-6" : "p-0")}>
         {/* The candidate's frame speaks the candidate's language, not the manager's. */}
-        <ManagerIntl locale={lang}>
+        <ManagerIntl locale={lang} timeZone={timeZone}>
           <Frame
             lang={lang}
             mobile={mobile}
@@ -291,7 +295,7 @@ function Frame({
         </div>
       </div>
       <p className="sr-only" aria-live="polite" aria-atomic="true">
-        {empty ? "" : t(announcement.key, announcement.values)}
+        {empty || !announcement ? "" : t(announcement.key, announcement.values)}
       </p>
       <div className={cn("flex-1", mobile ? "px-5 py-8" : "px-card-candidate py-10")}>
         <div className={cn("mx-auto", recorded ? "max-w-[960px]" : "max-w-[640px]")}>{body()}</div>

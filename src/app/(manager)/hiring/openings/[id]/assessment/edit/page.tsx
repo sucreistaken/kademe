@@ -2,9 +2,11 @@ import { notFound } from "next/navigation";
 import { Builder } from "@/components/hiring/builder/builder";
 import { QuestionCheck } from "@/components/hiring/builder/question-check";
 import { StatusDot } from "@/components/ui/status-dot";
+import { UrlNotice } from "@/components/ui/url-notice";
 import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
 import { pickText } from "@/lib/i18n-text";
+import { noticeOf, one } from "@/lib/url-notice";
 import { activeCompetencyOptions } from "@/server/library";
 import { isUuid } from "@/server/settings";
 import { workingState } from "@/solutions/hiring/server/working";
@@ -25,7 +27,8 @@ const PUBLISH_NOTICES: Record<PublishNotice, "hiringBuilder.publishRefused" | `h
 };
 const DRAFT_NOTICES = { closed: "hiringBuilder.draftClosed", failed: "hiringBuilder.draftFailed" } as const;
 
-const one = (value: string | string[] | undefined) => (typeof value === "string" ? value : undefined);
+/** Redirects after "Yayınla" and "Düzenlemeye başla" bring these; shown once, then taken out of the address. */
+const NOTICE_PARAMS = ["publish", "published", "draft"] as const;
 
 /** HIRING-UX 5.5: the assessment builder. A live version is shown read-only until "Düzenlemeye başla". */
 export default async function BuilderPage({
@@ -51,14 +54,8 @@ export default async function BuilderPage({
   ];
   const problems = state.problems.map((p) => describeProblem(p, { content, facts: state.facts, locale, openingId: opening.id }, t));
   const published = /^\d{1,6}$/.test(one(sp.published) ?? "") ? one(sp.published)! : null;
-  const publishNotice = one(sp.publish);
-  const draftNotice = one(sp.draft);
-  const notice =
-    publishNotice && Object.hasOwn(PUBLISH_NOTICES, publishNotice)
-      ? t(PUBLISH_NOTICES[publishNotice as PublishNotice])
-      : draftNotice && Object.hasOwn(DRAFT_NOTICES, draftNotice)
-        ? t(DRAFT_NOTICES[draftNotice as keyof typeof DRAFT_NOTICES])
-        : null;
+  const noticeKey = noticeOf(sp, "publish", PUBLISH_NOTICES) ?? noticeOf(sp, "draft", DRAFT_NOTICES);
+  const notice = noticeKey ? t(noticeKey) : null;
   const stageParam = one(sp.stage);
   const activityParam = one(sp.activity);
 
@@ -69,16 +66,20 @@ export default async function BuilderPage({
         <AssessmentTabs openingId={opening.id} active="edit" t={t} />
       </div>
       {published ? (
-        <p role="status" className="mt-6 text-[14px] text-ink">
-          <StatusDot tone="active">
-            <span className="tnum text-[14px] text-ink">{t("hiringBuilder.published", { number: published })}</span>
-          </StatusDot>
-        </p>
+        <UrlNotice params={NOTICE_PARAMS}>
+          <p role="status" className="mt-6 text-[14px] text-ink">
+            <StatusDot tone="active">
+              <span className="tnum text-[14px] text-ink">{t("hiringBuilder.published", { number: published })}</span>
+            </StatusDot>
+          </p>
+        </UrlNotice>
       ) : null}
       {notice ? (
-        <p role="status" className="mt-6 text-[14px] font-medium text-ink">
-          {notice}
-        </p>
+        <UrlNotice params={NOTICE_PARAMS}>
+          <p role="status" className="mt-6 text-[14px] font-medium text-ink">
+            {notice}
+          </p>
+        </UrlNotice>
       ) : null}
       <Builder
         openingId={opening.id}

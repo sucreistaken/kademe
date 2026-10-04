@@ -61,12 +61,14 @@ vi.mock("@/server/settings", async (importOriginal) => ({
 }));
 vi.mock("@/components/hiring/opening-settings-form", () => ({ OpeningSettingsForm: function OpeningSettingsForm() {} }));
 vi.mock("@/components/ui/undo-strip", () => ({ UndoStrip: function UndoStrip() {} }));
+vi.mock("@/components/ui/url-notice", () => ({ UrlNotice: function UrlNotice() {} }));
 vi.mock("./actions", () => ({ closeOpeningAction: async function closeOpeningAction() {}, reopenOpeningAction: async function reopenOpeningAction() {} }));
 
 import SettingsPage from "./page";
 import { OpeningSettingsForm } from "@/components/hiring/opening-settings-form";
 import { UndoStrip } from "@/components/ui/undo-strip";
-import { PendingSubmitButton } from "@/components/hiring/pending-submit-button";
+import { UrlNotice } from "@/components/ui/url-notice";
+import { PendingButton } from "@/components/ui/pending-button";
 import { OpeningHeader } from "../opening-header";
 import { closeOpeningAction, reopenOpeningAction } from "./actions";
 
@@ -122,7 +124,7 @@ describe("team and rules page", () => {
       const close = forms(page, closeOpeningAction);
       expect(close).toHaveLength(1);
       // Fix round 1, Important 2: the button says it is working and takes no second click.
-      expect(find(close[0], ofType(PendingSubmitButton)).map((b) => [b.props.label, b.props.pendingLabel])).toEqual([["Alımı kapat", "Kapatılıyor"]]);
+      expect(find(close[0], ofType(PendingButton)).map((b) => [b.props.label, b.props.pendingLabel])).toEqual([["Alımı kapat", "Kapatılıyor"]]);
       expect(forms(page, reopenOpeningAction)).toHaveLength(0);
     }
   });
@@ -150,7 +152,7 @@ describe("team and rules page", () => {
     expect(forms(page, closeOpeningAction)).toHaveLength(0);
     const reopen = forms(page, reopenOpeningAction);
     expect(reopen).toHaveLength(1);
-    const buttons = find(reopen[0], ofType(PendingSubmitButton));
+    const buttons = find(reopen[0], ofType(PendingButton));
     expect(buttons.map((b) => [b.props.variant, b.props.label, b.props.pendingLabel])).toEqual([["primary", "Yeniden aç", "Açılıyor"]]);
     expect(find(page, ofType(UndoStrip))).toHaveLength(0);
   });
@@ -161,6 +163,15 @@ describe("team and rules page", () => {
     const strip = find(await render({ closed: "1" }), ofType(UndoStrip));
     expect(strip).toHaveLength(1);
     expect(strip[0].props).toMatchObject({ action: reopenOpeningAction, hiddenFields: { openingId: OPENING }, message: "Alım kapatıldı." });
+  });
+
+  it("the strip takes ?closed=1 out of the address once shown, so a reload does not bring it back", async () => {
+    status = "CLOSED";
+    viewer = { role: "OWNER", view: true, edit: false };
+    const notices = find(await render({ closed: "1" }), ofType(UrlNotice));
+    expect(notices).toHaveLength(1);
+    expect(notices[0].props.params).toEqual(["closed"]);
+    expect(find(notices[0], ofType(UndoStrip))).toHaveLength(1);
   });
 
   it("a reviewer on a closed opening reads it and cannot reopen it", async () => {

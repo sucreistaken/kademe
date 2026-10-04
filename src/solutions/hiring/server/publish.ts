@@ -20,8 +20,12 @@ export type PublishOutcome = { ok: true; versionId: string; number: number } | {
  *    refuses). Every draft write takes this lock first too, so a draft write
  *    either finished before the publish or waits and then finds no draft;
  * 2. the draft version, FOR UPDATE by id AND org_id, and still a DRAFT;
- * 3. the measured competencies, FOR SHARE (a library save takes them FOR
- *    UPDATE), so the gate and the snapshot read one state of the library;
+ * 3. the measured competencies, FOR SHARE. Every library write to a
+ *    competency (its row, its anchors, its tags) first locks the competency
+ *    row FOR UPDATE or updates it, so the gate and the snapshot read one state
+ *    of each competency with its anchors and tags. The rating scale and the
+ *    position profile are read without a lock: a scale or profile save that
+ *    commits meanwhile may or may not be in the snapshot;
  * 4. the gate on the draft as stored; any problem returns before a write;
  * 5. the scorecard snapshot (anchors, tags, weights), the status change with
  *    published_at and published_by together, the first weight set, the opening

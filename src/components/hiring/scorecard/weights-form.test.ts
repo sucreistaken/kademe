@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readWeights } from "./weights-form";
+import { currentWeightSet, readWeights } from "./weights-form";
 
 /**
  * The weights form reads what is typed the way the rules will (Task 10
@@ -37,5 +37,25 @@ describe("readWeights", () => {
 
   it("only measured competencies count", () => {
     expect(readWeights({ c1: "100", gone: "50" }, ["c1"])).toEqual({ weights: { c1: 100 }, total: 100, problem: null });
+  });
+});
+
+describe("the set the form compares against", () => {
+  const before = { enabled: true, weights: { c1: 50, c2: 50 } };
+  const mine = { enabled: true, weights: { c1: 70, c2: 30 } };
+  const theirs = { enabled: true, weights: { c1: 40, c2: 60 } };
+
+  it("is the set this form just saved while the server still shows the set it was saved over", () => {
+    expect(currentWeightSet({ set: mine, over: before }, before)).toEqual(mine);
+  });
+
+  it("is the server's set once the server shows a newer one (this save refreshed, or another person saved)", () => {
+    expect(currentWeightSet({ set: mine, over: before }, mine)).toEqual(mine);
+    expect(currentWeightSet({ set: mine, over: before }, theirs)).toEqual(theirs);
+  });
+
+  it("is the server's set when nothing was saved here", () => {
+    expect(currentWeightSet(null, theirs)).toEqual(theirs);
+    expect(currentWeightSet(null, null)).toBeNull();
   });
 });

@@ -11,7 +11,6 @@ import {
   addActivity,
   addStage,
   deleteActivity,
-  deleteStage,
   ensureDraftVersion,
   insertActivity,
   insertStage,
@@ -20,11 +19,10 @@ import {
   setActivityCompetencies,
   updateActivity,
   updateStage,
-  versionsOf,
 } from "@/solutions/hiring/server/versions";
-import { workingVersions } from "@/solutions/hiring/rules/versions";
 import { editableOpening, openingFor } from "../../access";
 import type { ActionResult, UndoTicket } from "./result";
+import { deleteStageWithTicket, draftId } from "./stage-ticket";
 import { signUndo, verifyUndo } from "./undo-token";
 
 /**
@@ -114,25 +112,13 @@ export async function setCompetenciesAction(openingId: string, activityId: strin
   return run(openingId, (orgId) => setActivityCompetencies(orgId, openingId, activityId, ids));
 }
 
-/** The opening's draft version id, which every undo ticket is bound to; NO_DRAFT when there is none. */
-async function draftId(orgId: string, openingId: string): Promise<string> {
-  const { draft } = workingVersions(await versionsOf(orgId, openingId));
-  if (!draft) throw new HiringConflict("NO_DRAFT");
-  return draft.id;
-}
-
 /**
  * Deletes answer with an undo ticket: the removed content as the exact JSON
  * string the server signed, its place, and the signature (undo-token.ts).
  */
 export async function deleteStageAction(openingId: string, stageId: string): Promise<ActionResult<UndoTicket>> {
   if (!allStrings(openingId, stageId)) return invalidId;
-  return run(openingId, async (orgId) => {
-    const versionId = await draftId(orgId, openingId);
-    const { payload, index } = await deleteStage(orgId, openingId, stageId);
-    const json = JSON.stringify(payload);
-    return { payload: json, index, token: signUndo({ orgId, openingId, versionId, kind: "stage", stageId: "", index, payload: json }) };
-  });
+  return run(openingId, (orgId) => deleteStageWithTicket(orgId, openingId, stageId));
 }
 export async function deleteActivityAction(openingId: string, activityId: string): Promise<ActionResult<UndoTicket & { stageId: string }>> {
   if (!allStrings(openingId, activityId)) return invalidId;

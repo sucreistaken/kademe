@@ -8,6 +8,7 @@ import { cn } from "@/lib/cn";
 import { shortDate } from "@/lib/format";
 import { pickText } from "@/lib/i18n-text";
 import { missingAnchorLevels } from "@/lib/library/anchors";
+import { one } from "@/lib/url-notice";
 import { loadDefaultScale } from "@/server/library";
 import { isUuid } from "@/server/settings";
 import { usedCompetencyIds } from "@/solutions/hiring/rules/content";
@@ -21,7 +22,6 @@ import { matrixOf, pickVersion, viewContent } from "./data";
 
 export const dynamic = "force-dynamic";
 
-const one = (value: string | string[] | undefined) => (typeof value === "string" ? value : undefined);
 
 /**
  * HIRING-UX 5.7: the scorecard of the version being worked on. A draft shows

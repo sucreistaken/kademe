@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { CandidateShell } from "@/components/candidate/Shell";
 import { CandidateIntl } from "@/components/candidate/Intl";
+import { ORG_TIMEZONE } from "@/lib/org-timezone";
 import { Finished } from "@/components/candidate/Finished";
 import { LinkProblem } from "@/components/candidate/LinkProblem";
 import { loadState, progressSummary, resolveExamToken } from "@/lib/exam-flow";
@@ -27,7 +28,7 @@ export default async function DonePage({ params }: { params: Promise<{ token: st
   if (!ctx || (!resolved.ok && resolved.problem !== "COMPLETED")) {
     const summary = ctx ? await progressSummary(ctx) : undefined;
     return (
-      <CandidateIntl locale={locale}>
+      <CandidateIntl locale={locale} timeZone={ORG_TIMEZONE}>
         <CandidateShell locale={locale} header={false}>
           <LinkProblem
             token={token}
@@ -48,7 +49,7 @@ export default async function DonePage({ params }: { params: Promise<{ token: st
   const state = await loadState(ctx);
   const finished = state.finished;
   return (
-    <CandidateIntl locale={locale}>
+    <CandidateIntl locale={locale} timeZone={ORG_TIMEZONE}>
       <CandidateShell locale={locale} header={false}>
         <Finished
           token={token}

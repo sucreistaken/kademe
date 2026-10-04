@@ -50,6 +50,7 @@ export async function versionsOf(orgId: string, openingId: string, x: Executor =
       status: hiringVersions.status,
       publishedAt: hiringVersions.publishedAt,
       previewedAt: hiringVersions.previewedAt,
+      updatedAt: hiringVersions.updatedAt,
     })
     .from(hiringVersions)
     .where(and(eq(hiringVersions.openingId, openingId), eq(hiringVersions.orgId, orgId)))
@@ -85,16 +86,47 @@ export async function assertActiveUser(x: Executor, orgId: string, userId: strin
   if (!row) throw new HiringNotFound("user");
 }
 
-async function draftOf(x: Executor, orgId: string, openingId: string): Promise<string> {
+/** The draft (and its organisation) a draft write's transaction went to, set by draftOf, read once by draftWrite. */
+const touchedDraft = new WeakMap<object, { versionId: string; orgId: string }>();
+
+/**
+ * The draft every builder write goes to, under the opening lock. `touch: false`
+ * for a write that moves updated_at itself only when it changes something
+ * (saveDraftWeights answers its refusals as values, not throws).
+ */
+async function draftOf(x: Executor, orgId: string, openingId: string, options: { touch?: boolean } = {}): Promise<string> {
   await lockOpening(x, orgId, openingId);
   const { draft } = workingVersions(await versionsOf(orgId, openingId, x));
   if (!draft) throw new HiringConflict("NO_DRAFT");
+  if (options.touch !== false) touchedDraft.set(x, { versionId: draft.id, orgId });
   return draft.id;
 }
 
-/** A draft write: one transaction, and a freeze refusal answered as NO_DRAFT. */
+/**
+ * A draft write: one transaction, and a freeze refusal answered as NO_DRAFT.
+ * When the write went through draftOf, the draft's updated_at moves as the
+ * transaction's last statement (still under the opening lock), so a preview
+ * stamped before the change no longer counts (previewIsCurrent). A refused
+ * write throws first and moves nothing; markPreviewed never calls draftOf.
+ */
 function draftWrite<T>(run: (tx: Executor) => Promise<T>): Promise<T> {
-  return frozenAsConflict(() => db.transaction((tx) => run(tx)));
+  return frozenAsConflict(() =>
+    db.transaction(async (tx) => {
+      try {
+        const result = await run(tx);
+        const touched = touchedDraft.get(tx);
+        if (touched) {
+          await tx
+            .update(hiringVersions)
+            .set({ updatedAt: new Date() })
+            .where(and(eq(hiringVersions.id, touched.versionId), eq(hiringVersions.orgId, touched.orgId)));
+        }
+        return result;
+      } finally {
+        touchedDraft.delete(tx);
+      }
+    }),
+  );
 }
 
 async function stageIds(x: Executor, versionId: string): Promise<string[]> {
@@ -506,7 +538,8 @@ export async function saveDraftWeights(
   input: { versionId?: string; enabled: boolean; weights: Record<string, number> },
 ): Promise<{ ok: true } | { ok: false; code: "STALE" } | { ok: false; code: "WEIGHTS_MISSING"; competencyId: string } | ({ ok: false } & WeightsProblem)> {
   return draftWrite(async (tx) => {
-    const versionId = await draftOf(tx, orgId, openingId);
+    // Its own update below moves updated_at; a refusal (answered, not thrown) moves nothing.
+    const versionId = await draftOf(tx, orgId, openingId, { touch: false });
     if (input.versionId !== undefined && input.versionId !== versionId) return { ok: false as const, code: "STALE" as const };
     const content = await loadVersionContent(orgId, versionId, tx);
     if (!content) throw new HiringNotFound("version");

@@ -1,3 +1,5 @@
+import { can } from "@/lib/authorize";
+
 export type Viewer = { id: string; role: "OWNER" | "MANAGER" | "REVIEWER" };
 export type OpeningPeople = {
   decisionMakerId: string | null;
@@ -18,7 +20,8 @@ export type OpeningPeople = {
  * A CLOSED opening is history: everyone who may see it can read it, nobody edits it.
  */
 export function openingAccess(viewer: Viewer, people: OpeningPeople): { view: boolean; edit: boolean } {
-  const runs = viewer.role === "OWNER" || viewer.role === "MANAGER";
+  // From the capability table, so this and the actions' checks cannot drift apart.
+  const runs = can(viewer, "opening:write");
   const edit = runs && people.status !== "CLOSED";
   const view =
     runs ||
@@ -28,7 +31,7 @@ export function openingAccess(viewer: Viewer, people: OpeningPeople): { view: bo
   return { view, edit };
 }
 
-/** HIRING-UX 4.6: a decision maker (or backup) is an owner or a manager. */
+/** HIRING-UX 4.6: a decision maker (or backup) is someone who runs openings (owners and managers today). */
 export function canDecide(role: Viewer["role"]): boolean {
-  return role === "OWNER" || role === "MANAGER";
+  return can({ role }, "opening:write");
 }

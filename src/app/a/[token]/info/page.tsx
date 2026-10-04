@@ -1,5 +1,6 @@
 import { CandidateShell, LanguageSwitch } from "@/components/candidate/Shell";
 import { CandidateIntl } from "@/components/candidate/Intl";
+import { ORG_TIMEZONE } from "@/lib/org-timezone";
 import { InfoForm } from "@/components/candidate/InfoForm";
 import { supportedLocales } from "@/lib/candidate-context";
 import { enter, headerMeta, type SearchParams } from "@/app/a/[token]/shared";
@@ -18,7 +19,7 @@ export default async function CandidateInfoPage({
   if (entry.kind === "problem") return entry.node;
 
   return (
-    <CandidateIntl locale={entry.locale}>
+    <CandidateIntl locale={entry.locale} timeZone={ORG_TIMEZONE}>
       <CandidateShell
         locale={entry.locale}
         meta={headerMeta(entry.ctx)}

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { CandidateShell } from "@/components/candidate/Shell";
 import { CandidateIntl } from "@/components/candidate/Intl";
+import { ORG_TIMEZONE } from "@/lib/org-timezone";
 import { LinkProblem } from "@/components/candidate/LinkProblem";
 import {
   loadState,
@@ -72,7 +73,7 @@ export async function enter(
     return {
       kind: "problem",
       node: (
-        <CandidateIntl locale={locale}>
+        <CandidateIntl locale={locale} timeZone={ORG_TIMEZONE}>
           <CandidateShell locale={locale} header={false}>
             <LinkProblem
               token={token}

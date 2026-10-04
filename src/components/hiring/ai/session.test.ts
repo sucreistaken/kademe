@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CompetencySuggestion, HiringDraft, StageSuggestion } from "@/solutions/hiring/ai/draft";
-import { parseSession, sessionKey, staleKeys, withGeneration, type AiSession, type Generation } from "./session";
+import { clearsAcceptedMark, parseSession, sessionKey, staleKeys, withGeneration, type AiSession, type Generation } from "./session";
 
 /** The AI screen's proposals kept per opening and draft version in sessionStorage (fix round 1, Important 4). */
 const OPENING = "33333333-3333-4333-8333-333333333333";
@@ -122,5 +122,17 @@ describe("AI screen session", () => {
     const keys = [sessionKey(OPENING, 1), sessionKey(OPENING, 2), sessionKey("other", 1), "kademe.builder.unsaved.x"];
     expect(staleKeys(keys, OPENING, sessionKey(OPENING, 2))).toEqual([sessionKey(OPENING, 1)]);
     expect(staleKeys(keys, OPENING, null)).toEqual([sessionKey(OPENING, 1), sessionKey(OPENING, 2)]);
+  });
+});
+
+describe("an undo answer and the card's accepted mark", () => {
+  it("clears the mark when the undo worked, and when the stage or competency is already gone elsewhere", () => {
+    expect(clearsAcceptedMark({ ok: true })).toBe(true);
+    // Deleted in the builder or archived in the library meanwhile: the mark would keep the card stuck until a paid regenerate.
+    expect(clearsAcceptedMark({ ok: false, code: "NOT_FOUND" })).toBe(true);
+  });
+
+  it("keeps the mark on any other refusal, so the person can try again", () => {
+    for (const code of ["IN_USE", "NO_DRAFT", "CLOSED", "FORBIDDEN", "NOT_CREATED", "NETWORK"]) expect(clearsAcceptedMark({ ok: false, code })).toBe(false);
   });
 });
