@@ -1,8 +1,9 @@
 import { sql } from "drizzle-orm";
-import { boolean, check, foreignKey, index, integer, jsonb, numeric, pgTable, primaryKey, text, timestamp, unique, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { boolean, check, foreignKey, index, integer, jsonb, numeric, pgTable, primaryKey, real, text, timestamp, unique, uniqueIndex, uuid, type AnyPgColumn } from "drizzle-orm/pg-core";
 import { organizations, users } from "./org";
 import { consentTexts } from "./compliance";
 import { competencies, positions } from "./library";
+import { assessments, attempts, mediaAssets } from "./assessment";
 import {
   hiringActivityType,
   hiringMemberRole,
@@ -11,6 +12,8 @@ import {
   hiringStageTimeout,
   hiringVersionStatus,
   locale,
+  runCompletion,
+  solution,
 } from "./enums";
 import type { I18nText } from "./types";
 
@@ -18,17 +21,19 @@ import type { I18nText } from "./types";
  * Hiring solution tables (hiring solution design 2). Core tables never refer
  * to these; these refer to the core and to the organisation library.
  *
- * Tenancy: `org_id` lives on `hiring_openings` and `hiring_versions`, and a
- * version's opening must belong to the version's organisation (composite
- * foreign key, migration 0007). Every other foreign key is single-column, so
- * the database does not stop a row from pointing at another organisation's
- * parent. Every other table reaches its organisation through its parent chain
- * (stage -> version, activity -> stage, weight set -> version, member ->
- * opening). Every write must load the parent
- * through a query that filters by the caller's org_id, and a linked library row
- * (position, competency) or user must be checked to belong to the same
- * organisation in that query. The server code in src/solutions/hiring/server
- * owns this check and tests it.
+ * Tenancy: `org_id` lives on `hiring_openings`, `hiring_versions` and
+ * `hiring_assessments`. A version's opening must belong to the version's
+ * organisation (composite foreign key, migration 0007), and an invitation's
+ * version must belong to its opening and both to the invitation's
+ * organisation (composite foreign keys, migration 0010). Every other table
+ * reaches its organisation through its parent chain: stage -> version,
+ * activity -> stage, weight set -> version, member -> opening, assignment ->
+ * invitation, stage run -> attempt -> core invitation (org_id), response ->
+ * stage run, survey answer -> invitation. Every write must load the parent
+ * through a query that filters by the caller's org_id (or, on the candidate
+ * side, by the token's own invitation), and a linked library row or user must
+ * be checked to belong to the same organisation in that query. The server code
+ * in src/solutions/hiring/server owns this check and tests it.
  */
 
 export type HiringLocale = "tr" | "en";
@@ -49,6 +54,18 @@ export type HiringActivityConfig = {
 
 /** "İyi cevap örnekleri" for levels 1, 3 and 5 of this question (HIRING-UX 3.1), team language. */
 export type AnswerExamples = { 1?: string; 3?: string; 5?: string };
+
+/** A candidate's answer to one question, as stored. Recordings and files are attached by the server, never named by the client. */
+export type HiringResponsePayload = {
+  text?: string;
+  choiceIds?: string[];
+  /** A video or audio question answered in writing (HIRING-UX A7), shown to reviewers as the penalty-free alternative. */
+  usedTextAlternative?: boolean;
+  /** FILE_UPLOAD: the attached file as the candidate named it (one file per question). */
+  file?: { name: string; bytes: number; mime: string };
+  /** FILE_UPLOAD: an upload that was opened and has not completed yet. */
+  pendingFile?: { assetId: string; name: string; bytes: number; mime: string };
+};
 
 /** Copied into the version at publish and never changed again (hiring solution design 2.3). */
 export type ScorecardSnapshot = {
@@ -93,6 +110,8 @@ export const hiringOpenings = pgTable(
     /** The dated promise on the candidate's finish screen. */
     feedbackDays: integer("feedback_days").notNull().default(7),
     candidateContactEmail: text("candidate_contact_email"),
+    /** HIRING-UX 5.18 / 6.13: the short experience survey on the candidate's finish screen. */
+    finishSurveyEnabled: boolean("finish_survey_enabled").notNull().default(true),
     closedAt: timestamp("closed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -164,6 +183,8 @@ export const hiringVersions = pgTable(
   (t) => [
     uniqueIndex("hiring_version_number").on(t.openingId, t.versionNumber),
     uniqueIndex("one_draft_per_opening").on(t.openingId).where(sql`status = 'DRAFT'`),
+    /** Target of the invitation's composite key: a version, its opening and its organisation together. */
+    unique("hiring_versions_id_opening_org").on(t.id, t.openingId, t.orgId),
     check("hiring_published_has_scorecard", sql`${t.status} <> 'PUBLISHED' OR ${t.scorecard} IS NOT NULL`),
     check(
       "hiring_published_has_publisher",
@@ -309,5 +330,163 @@ export const hiringWeights = pgTable(
   (t) => [
     primaryKey({ columns: [t.weightSetId, t.competencyId] }),
     check("hiring_weight_percentage", sql`${t.percentage} BETWEEN 0 AND 100`),
+  ],
+);
+
+/**
+ * One person invited to one opening's published version (hiring solution
+ * design 2.4). The version, the consent text and the proctoring level are
+ * frozen here at invite, so a later version or setting never changes what
+ * this candidate was promised.
+ */
+export const hiringAssessments = pgTable(
+  "hiring_assessments",
+  {
+    assessmentId: uuid("assessment_id").primaryKey(),
+    /** Always HIRING: with assessment_id it references assessments(id, solution). */
+    solution: solution("solution").notNull().default("HIRING"),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    openingId: uuid("opening_id").notNull(),
+    versionId: uuid("version_id").notNull(),
+    /** 0, 25 or 50; chosen by the candidate without a reason (HIRING-UX 6.1). Never read for reviewers. */
+    extraTimePct: integer("extra_time_pct").notNull().default(0),
+    extraTimeChosenAt: timestamp("extra_time_chosen_at", { withTimezone: true }),
+    consentTextId: uuid("consent_text_id")
+      .notNull()
+      .references(() => consentTexts.id, { onDelete: "restrict" }),
+    /** Plan 2 freezes OFF; plan 4 copies the version's level onto new invitations. */
+    proctorLevel: hiringProctorLevel("proctor_level").notNull().default("OFF"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("hiring_assessments_opening_idx").on(t.openingId),
+    check("hiring_assessment_is_hiring", sql`${t.solution} = 'HIRING'`),
+    check("hiring_extra_time_pct", sql`${t.extraTimePct} IN (0, 25, 50)`),
+    foreignKey({
+      name: "hiring_assessments_assessment_fk",
+      columns: [t.assessmentId, t.solution],
+      foreignColumns: [assessments.id, assessments.solution],
+    }).onDelete("cascade"),
+    /** NO ACTION (checked at the end of the statement), so deleting an organisation still cascades through both parents. */
+    foreignKey({
+      name: "hiring_assessments_opening_fk",
+      columns: [t.openingId, t.orgId],
+      foreignColumns: [hiringOpenings.id, hiringOpenings.orgId],
+    }),
+    foreignKey({
+      name: "hiring_assessments_version_fk",
+      columns: [t.versionId, t.openingId, t.orgId],
+      foreignColumns: [hiringVersions.id, hiringVersions.openingId, hiringVersions.orgId],
+    }),
+  ],
+);
+
+/** Who evaluates this candidate: the opening's active panel, copied at invite (spec 2.1). */
+export const hiringAssignments = pgTable(
+  "hiring_assignments",
+  {
+    assessmentId: uuid("assessment_id").notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.assessmentId, t.userId] }),
+    index("hiring_assignments_user_idx").on(t.userId),
+    foreignKey({
+      name: "hiring_assignments_assessment_fk",
+      columns: [t.assessmentId],
+      foreignColumns: [hiringAssessments.assessmentId],
+    }).onDelete("cascade"),
+  ],
+);
+
+/** One stage inside one attempt. Owns the authoritative clock (written once at start). */
+export const hiringStageRuns = pgTable(
+  "hiring_stage_runs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    attemptId: uuid("attempt_id")
+      .notNull()
+      .references(() => attempts.id, { onDelete: "cascade" }),
+    /** NO ACTION: a stage with runs belongs to a published version, which the triggers never let go. */
+    stageId: uuid("stage_id")
+      .notNull()
+      .references(() => hiringStages.id),
+    orderIndex: integer("order_index").notNull(),
+    startedAt: timestamp("started_at", { withTimezone: true }),
+    deadlineAt: timestamp("deadline_at", { withTimezone: true }),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }),
+    lastHeartbeatAt: timestamp("last_heartbeat_at", { withTimezone: true }),
+    completion: runCompletion("completion").notNull().default("PENDING"),
+    wasLate: boolean("was_late").notNull().default(false),
+    /** Retakes (plan 3): a stage outside the retake scope points at the run it carries over. */
+    carriedFromStageRunId: uuid("carried_from_stage_run_id"),
+  },
+  (t) => [
+    uniqueIndex("hiring_stage_run_per_attempt").on(t.attemptId, t.stageId),
+    index("hiring_stage_runs_deadline_idx").on(t.deadlineAt),
+    check("hiring_stage_run_order", sql`${t.orderIndex} >= 0`),
+    foreignKey({
+      name: "hiring_stage_runs_carried_from_fk",
+      columns: [t.carriedFromStageRunId],
+      foreignColumns: [t.id as AnyPgColumn],
+    }).onDelete("set null"),
+  ],
+);
+
+/** The candidate's answer to one question in one stage run (hiring solution design 2.4). */
+export const hiringResponses = pgTable(
+  "hiring_responses",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    stageRunId: uuid("stage_run_id")
+      .notNull()
+      .references(() => hiringStageRuns.id, { onDelete: "cascade" }),
+    activityId: uuid("activity_id")
+      .notNull()
+      .references(() => hiringActivities.id),
+    payload: jsonb("payload").$type<HiringResponsePayload>().notNull().default({}),
+    /** The take that is the answer (the newest one). Purging media leaves the response. */
+    mediaAssetId: uuid("media_asset_id").references(() => mediaAssets.id, { onDelete: "set null" }),
+    /** Every take opened for this question, oldest first; takes are counted from these rows. */
+    takeAssetIds: jsonb("take_asset_ids").$type<string[]>().notNull().default([]),
+    fileAssetIds: jsonb("file_asset_ids").$type<string[]>().notNull().default([]),
+    takesUsed: integer("takes_used").notNull().default(0),
+    usedTextAlternative: boolean("used_text_alternative").notNull().default(false),
+    /** Choice questions only, 0..1, for the separate knowledge score; never sent to the candidate. */
+    autoScore: real("auto_score"),
+    /** When the candidate closed this question (moved on, submitted, or the stage closed). */
+    answeredAt: timestamp("answered_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("hiring_response_per_activity").on(t.stageRunId, t.activityId),
+    index("hiring_responses_media_idx").on(t.mediaAssetId),
+    check("hiring_response_takes", sql`${t.takesUsed} >= 0`),
+    check("hiring_response_auto_score", sql`${t.autoScore} IS NULL OR (${t.autoScore} >= 0 AND ${t.autoScore} <= 1)`),
+  ],
+);
+
+/** HIRING-UX 6.13: the optional experience survey, one answer per invitation. */
+export const hiringSurveyResponses = pgTable(
+  "hiring_survey_responses",
+  {
+    assessmentId: uuid("assessment_id").primaryKey(),
+    rating: integer("rating").notNull(),
+    comment: text("comment"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check("hiring_survey_rating", sql`${t.rating} BETWEEN 1 AND 5`),
+    foreignKey({
+      name: "hiring_survey_assessment_fk",
+      columns: [t.assessmentId],
+      foreignColumns: [hiringAssessments.assessmentId],
+    }).onDelete("cascade"),
   ],
 );

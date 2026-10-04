@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   pgTable,
   uuid,
@@ -7,10 +8,11 @@ import {
   jsonb,
   numeric,
   index,
+  check,
 } from "drizzle-orm/pg-core";
 import { organizations, users } from "./org";
 import { candidates, assessments } from "./assessment";
-import { aiPurpose, locale } from "./enums";
+import { aiPurpose, locale, solution } from "./enums";
 import type { I18nText } from "./types";
 
 /**
@@ -22,6 +24,8 @@ export const consentTexts = pgTable("consent_texts", {
   orgId: uuid("org_id")
     .notNull()
     .references(() => organizations.id, { onDelete: "cascade" }),
+  /** Which solution's candidates read this text: the exam's and hiring's consent copy differ. */
+  solution: solution("solution").notNull().default("LANGUAGE_EXAM"),
   version: integer("version").notNull(),
   body: jsonb("body").$type<I18nText>().notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
@@ -120,4 +124,39 @@ export const deletionRequests = pgTable(
       .defaultNow(),
   },
   (t) => [index("deletion_requests_candidate_idx").on(t.candidateId)],
+);
+
+/**
+ * A candidate asking for something about their invitation that a person must
+ * answer: an accommodation, or a new link. Core (any solution may write it),
+ * and it carries org_id itself so the manager queue filters by organisation
+ * without a join. `kind` is a CHECKed text, not a pg enum, so a solution can
+ * add a kind with a reviewed constraint change instead of a type rebuild.
+ * handled_by is RESTRICT: users are disabled, never deleted.
+ */
+export const candidateRequests = pgTable(
+  "candidate_requests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    assessmentId: uuid("assessment_id")
+      .notNull()
+      .references(() => assessments.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(),
+    message: text("message"),
+    handledBy: uuid("handled_by").references(() => users.id, {
+      onDelete: "restrict",
+    }),
+    handledAt: timestamp("handled_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("candidate_requests_org_created_idx").on(t.orgId, t.createdAt),
+    index("candidate_requests_assessment_idx").on(t.assessmentId),
+    check("candidate_request_kind", sql`${t.kind} IN ('ACCOMMODATION', 'NEW_LINK')`),
+  ],
 );

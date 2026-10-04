@@ -71,6 +71,13 @@
       "when": 1791123220194,
       "tag": "0009_hiring_locale_set_array",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791154488242,
+      "tag": "0010_hiring_candidate_flow",
+      "breakpoints": true
     }
   ]
 }

@@ -329,3 +329,72 @@ describe("0009_hiring_locale_set_array", () => {
     expect(sql).not.toMatch(/DROP |INSERT |UPDATE |DELETE /);
   });
 });
+
+describe("0010_hiring_candidate_flow", () => {
+  const sql = read("0010_hiring_candidate_flow");
+
+  it.each(["hiring_assessments", "hiring_assignments", "hiring_stage_runs", "hiring_responses", "hiring_survey_responses", "candidate_requests"])("creates %s", (table) => {
+    expect(sql).toContain(`CREATE TABLE "${table}"`);
+  });
+
+  it("gives every consent text a solution, the exam's for every existing row", () => {
+    expect(sql).toMatch(/ALTER TABLE "consent_texts" ADD COLUMN "solution" "solution" DEFAULT 'LANGUAGE_EXAM' NOT NULL;/);
+  });
+
+  it("turns the finish survey on by default", () => {
+    expect(sql).toMatch(/ALTER TABLE "hiring_openings" ADD COLUMN "finish_survey_enabled" boolean DEFAULT true NOT NULL;/);
+  });
+
+  it("ties an invitation to a HIRING invitation and to one version of one opening of its organisation", () => {
+    expect(sql).toMatch(/CONSTRAINT "hiring_assessment_is_hiring" CHECK \("hiring_assessments"\."solution" = 'HIRING'\)/);
+    expect(sql).toMatch(/CONSTRAINT "hiring_extra_time_pct" CHECK \("hiring_assessments"\."extra_time_pct" IN \(0, 25, 50\)\)/);
+    expect(sql).toMatch(/"hiring_assessments_assessment_fk" FOREIGN KEY \("assessment_id","solution"\) REFERENCES "public"\."assessments"\("id","solution"\) ON DELETE cascade/);
+    expect(sql).toMatch(/"hiring_assessments_opening_fk" FOREIGN KEY \("opening_id","org_id"\) REFERENCES "public"\."hiring_openings"\("id","org_id"\)/);
+    expect(sql).toMatch(/"hiring_assessments_version_fk" FOREIGN KEY \("version_id","opening_id","org_id"\) REFERENCES "public"\."hiring_versions"\("id","opening_id","org_id"\)/);
+  });
+
+  it("creates the version UNIQUE before the foreign key that needs it", () => {
+    const unique = sql.indexOf(`ADD CONSTRAINT "hiring_versions_id_opening_org" UNIQUE("id","opening_id","org_id")`);
+    const fk = sql.indexOf(`"hiring_assessments_version_fk" FOREIGN KEY`);
+    expect(unique).toBeGreaterThanOrEqual(0);
+    expect(fk).toBeGreaterThan(unique);
+  });
+
+  it("keeps one run per stage and attempt and one response per question and run", () => {
+    expect(sql).toMatch(/CREATE UNIQUE INDEX "hiring_stage_run_per_attempt" ON "hiring_stage_runs" USING btree \("attempt_id","stage_id"\)/);
+    expect(sql).toMatch(/CREATE UNIQUE INDEX "hiring_response_per_activity" ON "hiring_responses" USING btree \("stage_run_id","activity_id"\)/);
+  });
+
+  it("keeps assignments when a user would be deleted (users are disabled, never deleted)", () => {
+    expect(sql).toMatch(/"hiring_assignments_user_id_users_id_fk" FOREIGN KEY \("user_id"\) REFERENCES "public"\."users"\("id"\) ON DELETE restrict/);
+  });
+
+  it("keeps a response when its media is purged, and ranges in the database", () => {
+    expect(sql).toMatch(/"hiring_responses_media_asset_id_media_assets_id_fk" FOREIGN KEY \("media_asset_id"\) REFERENCES "public"\."media_assets"\("id"\) ON DELETE set null/);
+    expect(sql).toMatch(/CONSTRAINT "hiring_survey_rating" CHECK \("hiring_survey_responses"\."rating" BETWEEN 1 AND 5\)/);
+    expect(sql).toMatch(/CONSTRAINT "hiring_response_auto_score" CHECK/);
+  });
+
+  it("names every constraint within Postgres' 63 characters", () => {
+    const names = [...sql.matchAll(/CONSTRAINT "([^"]+)"/g)].map((m) => m[1]);
+    expect(names.length).toBeGreaterThan(5);
+    for (const name of names) expect(name.length, name).toBeLessThanOrEqual(63);
+  });
+
+  it("only adds, and never touches a frozen hiring version", () => {
+    expect(sql).not.toMatch(/DROP (TABLE|COLUMN|TYPE|CONSTRAINT|INDEX)/);
+    // drizzle writes ON UPDATE no action on every foreign key, so only a statement that starts with a DML verb counts.
+    expect(sql).not.toMatch(/^\s*(INSERT|UPDATE|DELETE)\b/im);
+    expect(sql).not.toMatch(/ALTER TABLE "hiring_(stages|activities|activity_competencies)"/);
+  });
+
+  it("gives core candidate requests an organisation, a closed kind, a RESTRICT handler and cascade with the invitation", () => {
+    expect(sql).toMatch(/CREATE TABLE "candidate_requests" \(\s*"id" uuid PRIMARY KEY DEFAULT gen_random_uuid\(\) NOT NULL,\s*"org_id" uuid NOT NULL,\s*"assessment_id" uuid NOT NULL,\s*"kind" text NOT NULL,/);
+    expect(sql).toMatch(/CONSTRAINT "candidate_request_kind" CHECK \("candidate_requests"\."kind" IN \('ACCOMMODATION', 'NEW_LINK'\)\)/);
+    expect(sql).toMatch(/"candidate_requests_org_id_organizations_id_fk" FOREIGN KEY \("org_id"\) REFERENCES "public"\."organizations"\("id"\) ON DELETE cascade/);
+    expect(sql).toMatch(/"candidate_requests_assessment_id_assessments_id_fk" FOREIGN KEY \("assessment_id"\) REFERENCES "public"\."assessments"\("id"\) ON DELETE cascade/);
+    expect(sql).toMatch(/"candidate_requests_handled_by_users_id_fk" FOREIGN KEY \("handled_by"\) REFERENCES "public"\."users"\("id"\) ON DELETE restrict/);
+    expect(sql).toMatch(/CREATE INDEX "candidate_requests_org_created_idx" ON "candidate_requests" USING btree \("org_id","created_at"\)/);
+    expect(sql).toMatch(/CREATE INDEX "candidate_requests_assessment_idx" ON "candidate_requests" USING btree \("assessment_id"\)/);
+  });
+});
