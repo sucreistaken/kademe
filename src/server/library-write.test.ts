@@ -19,6 +19,9 @@ type Op = {
   lock?: string;
 };
 const ops: Op[] = [];
+/** Statements run inside a transaction (or a savepoint) of the fake database. */
+const inTransaction = new Set<Op>();
+let txDepth = 0;
 let respond: (op: Op) => unknown[] = () => [];
 
 function whereOf(condition: unknown) {
@@ -55,6 +58,7 @@ function statement(kind: Op["kind"], table?: unknown) {
     returning: () => chain,
     then: (resolve: (rows: unknown[]) => unknown, reject?: (e: unknown) => unknown) => {
       ops.push(op);
+      if (txDepth > 0) inTransaction.add(op);
       return Promise.resolve(respond(op)).then(resolve, reject);
     },
   };
@@ -68,7 +72,14 @@ function fakeDb() {
     insert: (t: unknown) => statement("insert", t),
     update: (t: unknown) => statement("update", t),
     delete: (t: unknown) => statement("delete", t),
-    transaction: async <T>(fn: (tx: unknown) => Promise<T>) => fn(x),
+    transaction: async <T>(fn: (tx: unknown) => Promise<T>) => {
+      txDepth += 1;
+      try {
+        return await fn(x);
+      } finally {
+        txDepth -= 1;
+      }
+    },
   };
   return x;
 }
@@ -81,6 +92,7 @@ vi.mock("@/db/library-seed", () => ({
   seedLibrary: (orgId: string) => seedLibrary(orgId),
 }));
 
+import { POSITION_LANGUAGES_MAX, POSITION_SKILLS_MAX } from "@/lib/library/positions";
 import {
   createCompetency,
   createPosition,
@@ -119,6 +131,7 @@ const auditRows = () => ops.filter((o) => o.kind === "insert" && o.table === "au
 
 beforeEach(() => {
   ops.length = 0;
+  inTransaction.clear();
   respond = () => [];
   ensureDefaultScale.mockReset();
   ensureDefaultScale.mockResolvedValue({ id: SCALE, created: false });
@@ -362,6 +375,13 @@ describe("createPosition", () => {
     expect(await createPosition(ORG, ACTOR, { name: "  " })).toEqual({ ok: false, code: "NAME_REQUIRED" });
     expect(ops).toEqual([]);
   });
+
+  it("writes the row and its audit in one transaction", async () => {
+    respond = (op) => (op.kind === "insert" && op.table === "positions" ? [{ id: POSITION }] : []);
+    await createPosition(ORG, ACTOR, { name: "Tasarımcı" });
+    expect(writes().map((o) => o.table)).toEqual(["positions", "audit_logs"]);
+    expect(writes().every((o) => inTransaction.has(o))).toBe(true);
+  });
 });
 
 describe("savePosition", () => {
@@ -495,6 +515,15 @@ describe("savePosition", () => {
       action: "library.position.save",
       meta: { competencies: 2 },
     });
+  });
+
+  it("keeps at most POSITION_SKILLS_MAX skills and POSITION_LANGUAGES_MAX languages", async () => {
+    respond = world({});
+    const many = (prefix: string, n: number) => Array.from({ length: n }, (_, i) => `${prefix}${i}`);
+    const result = await savePosition(ORG, ACTOR, POSITION, input({ skills: many("s", 40), languages: many("l", 15) }));
+    expect(result.ok && result.position.skills).toHaveLength(POSITION_SKILLS_MAX);
+    expect(result.ok && result.position.languages).toHaveLength(POSITION_LANGUAGES_MAX);
+    expect(writes().find((o) => o.kind === "update" && o.table === "positions")?.values).toMatchObject({ languages: many("l", POSITION_LANGUAGES_MAX) });
   });
 
   it("writes nothing and no audit row when the save changes nothing", async () => {

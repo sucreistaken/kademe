@@ -14,7 +14,7 @@ import {
   type I18nText,
 } from "@/db/schema";
 import { hasText, MAX_TAGS_PER_SIDE, missingAnchorLevels } from "@/lib/library/anchors";
-import { POSITION_SKILLS_MAX } from "@/lib/library/positions";
+import { POSITION_LANGUAGES_MAX, POSITION_SKILLS_MAX } from "@/lib/library/positions";
 
 /**
  * Library writes. Every write is scoped by organisation and leaves an audit row.
@@ -248,7 +248,7 @@ export type PositionInput = {
 export type PositionWriteError = "NAME_REQUIRED" | "NOT_FOUND" | "ARCHIVED" | "COMPETENCY";
 
 const orNull = (s: string | undefined) => (s && s.trim() ? s.trim() : null);
-const list = (items: string[]) => [...new Set(items.map((s) => s.trim()).filter(Boolean))].slice(0, POSITION_SKILLS_MAX);
+const list = (items: string[], max: number) => [...new Set(items.map((s) => s.trim()).filter(Boolean))].slice(0, max);
 
 /** The input as it is stored: trimmed text, clean lists, one profile row per competency. */
 function normalizePosition(input: PositionInput): PositionInput {
@@ -258,8 +258,8 @@ function normalizePosition(input: PositionInput): PositionInput {
     team: input.team.trim(),
     shortDescription: input.shortDescription.trim(),
     jobDescription: input.jobDescription.trim(),
-    skills: list(input.skills),
-    languages: list(input.languages),
+    skills: list(input.skills, POSITION_SKILLS_MAX),
+    languages: list(input.languages, POSITION_LANGUAGES_MAX),
     profile: input.profile
       .filter((p) => (seen.has(p.competencyId) ? false : (seen.add(p.competencyId), true)))
       .map((p) => ({ competencyId: p.competencyId, weight: p.weight, expectedLevel: p.expectedLevel })),
@@ -277,12 +277,15 @@ export async function createPosition(
   x: Executor = db,
 ): Promise<{ ok: true; id: string } | { ok: false; code: "NAME_REQUIRED" }> {
   if (!input.name.trim()) return { ok: false, code: "NAME_REQUIRED" };
-  const [row] = await x
-    .insert(positions)
-    .values({ orgId, name: input.name.trim(), team: orNull(input.team), jobDescription: orNull(input.jobDescription) })
-    .returning({ id: positions.id });
-  await audit(x, orgId, actorId, "library.position.create", "position", row.id);
-  return { ok: true, id: row.id };
+  // Inside a caller's transaction this is a savepoint; on `db` it is the transaction.
+  return x.transaction(async (tx) => {
+    const [row] = await tx
+      .insert(positions)
+      .values({ orgId, name: input.name.trim(), team: orNull(input.team), jobDescription: orNull(input.jobDescription) })
+      .returning({ id: positions.id });
+    await audit(tx, orgId, actorId, "library.position.create", "position", row.id);
+    return { ok: true as const, id: row.id };
+  });
 }
 
 /**
