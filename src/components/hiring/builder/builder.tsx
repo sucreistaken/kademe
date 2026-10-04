@@ -30,6 +30,7 @@ import {
 } from "@/app/(manager)/hiring/openings/[id]/assessment/edit/actions";
 import type { ActionResult, UndoTicket } from "@/app/(manager)/hiring/openings/[id]/assessment/edit/result";
 import { ActivityEditor } from "./activity-editor";
+import { BuilderCheckContext, type BuilderCheck } from "./check-context";
 import type { EditorBinding } from "./fields";
 import { refusalKey } from "./refusal-copy";
 import { StageEditor } from "./stage-editor";
@@ -62,8 +63,9 @@ function initialSelection(stages: ContentStage[], initial: { stageId: string | n
 /**
  * HIRING-UX 5.5 (canvas Y2): the structure on the left, what the candidate
  * sees in the middle, the team-only vault on the right, and a sticky bar with
- * the save line, the question check (Task 18 fills `checkSlot`) and the one
- * filled button: "Yayınla" on a draft, "Düzenlemeye başla" on a live version.
+ * the save line, the question check (`checkSlot`, which reads the stages and
+ * the save queue through BuilderCheckContext) and the one filled button:
+ * "Yayınla" on a draft, "Düzenlemeye başla" on a live version.
  *
  * Writes go through one save queue (use-saver.ts): typed text is debounced and
  * always sent before a structural change, so nothing typed is lost to a
@@ -255,6 +257,20 @@ export function Builder({
     await queue.flush();
     if (queue.unsaved()) return;
     await publishOpeningAction(formData);
+  };
+  /** The question check in the bar: the stages as shown, typed text saved first, a finding opens its question. */
+  const check: BuilderCheck = {
+    stages,
+    saveFirst: async () => {
+      await queue.flush();
+      return !queue.unsaved();
+    },
+    focusActivity: (activityId) => {
+      const activity = stages.flatMap((s) => s.activities).find((a) => a.id === activityId);
+      if (!activity) return;
+      pick({ kind: "activity", id: activityId });
+      fieldFocus.current = { id: "prompt-tr", key: `${activity.id}:${activity.type}` };
+    },
   };
   const readOnlyNote = closed ? t("closedNote") : !canEdit ? t("readOnly") : mode === "live" ? t("readOnlyLive", { live: liveNumber ?? versionNumber }) : null;
 
@@ -477,7 +493,7 @@ export function Builder({
               </Button>
             ) : null}
           </div>
-          {checkSlot}
+          <BuilderCheckContext value={check}>{checkSlot}</BuilderCheckContext>
           <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-x-3 gap-y-1">
             {mode === "draft" ? (
               closed ? null : (

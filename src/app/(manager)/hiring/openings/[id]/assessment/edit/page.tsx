@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { Builder } from "@/components/hiring/builder/builder";
+import { QuestionCheck } from "@/components/hiring/builder/question-check";
 import { StatusDot } from "@/components/ui/status-dot";
 import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
@@ -94,6 +95,8 @@ export default async function BuilderPage({
         locale={locale}
         canEdit={access.edit}
         closed={opening.status === "CLOSED"}
+        // The question check reads drafts only: a live version cannot change, so advice on it would lead nowhere.
+        checkSlot={state.draft ? <QuestionCheck openingId={opening.id} canRun={access.edit} /> : null}
       />
     </main>
   );
