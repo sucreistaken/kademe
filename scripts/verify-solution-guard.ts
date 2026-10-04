@@ -127,6 +127,32 @@ async function main() {
     if (requests.length === 0) ok("no deletion request was written for a hiring invitation");
     else bad(`${requests.length} deletion request(s) written for hiring candidates`);
 
+    console.log("\nThe rights page renders a hiring invitation like an unknown token");
+    // Visible text only: scripts (RSC payload) and tags removed, the token itself masked.
+    const page = async (raw: string) => {
+      const res = await fetch(`${BASE}/a/${raw}/rights`);
+      const html = await res.text();
+      const text = html
+        .replace(/<script[\s\S]*?<\/script>/g, " ")
+        .replace(/<style[\s\S]*?<\/style>/g, " ")
+        .replace(/<[^>]+>/g, " ")
+        .split(raw).join("<token>")
+        .replace(/\s+/g, " ")
+        .trim();
+      return { status: res.status, html, text };
+    };
+    const unknownRights = await page("w".repeat(43));
+    for (const [label, raw, name] of [["open", token.raw, "Guard hiring NOT_STARTED"], ["EXPIRED", expired.raw, "Guard hiring EXPIRED"]] as const) {
+      const r = await page(raw);
+      if (r.status === unknownRights.status && r.text === unknownRights.text && !r.html.includes(name) && r.text.includes("Bu link geçerli değil"))
+        ok(`${label} hiring link, GET /a/<token>/rights: ${r.status}, same visible text as unknown, no name`);
+      else bad(`${label} hiring link, GET /a/<token>/rights: ${r.status} vs unknown ${unknownRights.status}; name shown: ${r.html.includes(name)}; text: ${r.text.slice(0, 200)} | unknown: ${unknownRights.text.slice(0, 200)}`);
+    }
+    const examRights = await page(exam.rawToken);
+    if (examRights.status === 200 && examRights.html.includes("Guard exam") && !examRights.text.includes("Bu link geçerli değil"))
+      ok("exam link, GET /a/<token>/rights: 200, the rights form with the name");
+    else bad(`exam link, GET /a/<token>/rights: ${examRights.status}; text: ${examRights.text.slice(0, 200)}`);
+
     console.log("\nThe exam invitation still reaches its endpoints");
     const examState = await call("GET", `/api/c/${exam.rawToken}/state`);
     if (examState.status === 200 && examState.json?.step === "CONSENT") ok("GET /state: 200 CONSENT");
