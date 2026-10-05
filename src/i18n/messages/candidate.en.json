@@ -520,7 +520,8 @@
     "reportEmpty": "Write what happened first.",
     "languages": "Language",
     "reportFailed": "It did not go through. Check your connection and try again.",
-    "languageWait": "You can switch the language when the recording is done."
+    "languageWait": "You can switch the language when the recording is done.",
+    "languageWaitUpload": "You can switch the language when the upload is done."
   },
   "hiringRequest": {
     "linkHint": "Your request goes to the hiring team. If it is urgent, write to <mail>{email}</mail>.",
@@ -886,13 +887,15 @@
   },
   "hiringFile": {
     "kicker": "File upload",
-    "drop": "Drop the file here or choose it.",
+    "drop": "Drop your file here",
     "choose": "Choose a file",
     "change": "Change",
     "limits": "{types} · up to {mb} MB",
     "limitsAny": "Up to {mb} MB",
     "uploading": "Uploading · {percent}%",
     "uploaded": "{name} · {size} · uploaded",
+    "size": "{size} · uploaded",
+    "chooseFromComputer": "Choose a file from your computer",
     "wrongType": "This file type is not accepted. Upload {types}.",
     "tooBig": "This file is larger than {mb} MB. Upload a smaller one.",
     "empty": "The file looks empty. Choose another one.",

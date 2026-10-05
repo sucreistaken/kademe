@@ -69,15 +69,32 @@ export function keepsStage(next: Pick<HiringCandidateState, "current">, position
 
 /**
  * Task 9 carry: "Geri al" took the strip away, so focus goes back to the
- * button that was pressed: the runner's own, or on a recorded question its
+ * button that was pressed: the runner's own (or the outline "Sonraki soru" of
+ * an optional file question without a file), or on a recorded question its
  * "Bu cevabı kullan" (or the written answer's send); with none of them, the
  * question's heading.
  */
-export const UNDO_FOCUS_IDS = ["activity-next", "record-use", "send-written"] as const;
+export const UNDO_FOCUS_IDS = ["activity-next", "activity-skip", "record-use", "send-written"] as const;
 export function undoFocus(byId: (id: string) => Focusable | null, heading: Focusable | null): void {
   for (const id of UNDO_FOCUS_IDS) {
     const target = byId(id);
     if (target) return target.focus();
   }
   heading?.focus();
+}
+
+/** G2, 3.9: whether the filled button should open the file picker (a file question with no file, open, nothing in flight). */
+export function needsFileChoice(input: { type: CandidateActivity["type"] | null | undefined; answered: boolean; uploading: boolean; inputsOff: boolean; retrying: boolean }): boolean {
+  return input.type === "FILE_UPLOAD" && !input.answered && !input.uploading && !input.inputsOff && !input.retrying;
+}
+
+/**
+ * G2: while the file question has no file, "Dosya seç" is the one filled
+ * button; an optional question can still be passed with the runner's own
+ * button drawn as the outline one (id "activity-skip"). Data only (no
+ * handlers), like runnerPrimary: the runner adds the clicks where it renders.
+ */
+export function fileFooterPlan(input: { choosing: boolean; required: boolean }): { primary: "choose" | "next"; secondary: "skip" | null } {
+  if (!input.choosing) return { primary: "next", secondary: null };
+  return { primary: "choose", secondary: input.required ? null : "skip" };
 }

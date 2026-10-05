@@ -520,7 +520,8 @@
     "reportEmpty": "Önce ne olduğunu yaz.",
     "languages": "Dil seçimi",
     "reportFailed": "Gönderilemedi. Bağlantını kontrol edip tekrar dener misin?",
-    "languageWait": "Kayıt bitince dili değiştirebilirsin."
+    "languageWait": "Kayıt bitince dili değiştirebilirsin.",
+    "languageWaitUpload": "Yükleme bitince dili değiştirebilirsin."
   },
   "hiringRequest": {
     "linkHint": "Talebin işe alım ekibine gider. Acil bir durumda <mail>{email}</mail> adresine yaz.",
@@ -886,13 +887,15 @@
   },
   "hiringFile": {
     "kicker": "Dosya yükleme",
-    "drop": "Dosyayı buraya bırak ya da seç.",
+    "drop": "Dosyanı buraya bırak",
     "choose": "Dosya seç",
     "change": "Değiştir",
     "limits": "{types} · en fazla {mb} MB",
     "limitsAny": "En fazla {mb} MB",
     "uploading": "Yükleniyor · %{percent}",
     "uploaded": "{name} · {size} · yüklendi",
+    "size": "{size} · yüklendi",
+    "chooseFromComputer": "Bilgisayarından dosya seç",
     "wrongType": "Bu dosya türü kabul edilmiyor. {types} yükle.",
     "tooBig": "Bu dosya {mb} MB'tan büyük. Daha küçük bir dosya yükle.",
     "empty": "Dosya boş görünüyor. Başka bir dosya seç.",

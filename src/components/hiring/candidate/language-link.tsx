@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore, type ReactNode } from "react";
 import type { Locale } from "@/i18n/locale";
-import { captureHeld, captureHeldOnServer, subscribeCapture } from "@/lib/client/capture-hold";
+import { captureHeld, captureHeldOnServer, captureUploadOnly, captureUploadOnlyOnServer, subscribeCapture } from "@/lib/client/capture-hold";
 import { subscribeHash } from "@/lib/client/hash-step";
 import { cn } from "@/lib/cn";
 import { langHref } from "./lang-href";
@@ -11,6 +11,11 @@ const currentHash = () => window.location.hash;
 const noHash = () => "";
 
 export const LANGUAGE_WAIT_ID = "language-wait";
+
+/** Task 5 carry: the reason a held link gives names what holds the page, an upload or (otherwise) a recording. */
+export function languageWaitText(uploadOnly: boolean, words: { recording: string; upload: string }): string {
+  return uploadOnly ? words.upload : words.recording;
+}
 
 /** While a capture holds the page the click goes nowhere (no confirm, no beforeunload: the reason says it). */
 export function onLanguageClick(held: boolean, event: { preventDefault(): void }) {
@@ -63,11 +68,26 @@ export function LanguageLinkView({
  * cut a recording or an upload, so while one runs (capture-hold) the link is
  * inert and says why.
  */
-export function LanguageLink({ locale, waitReason, className, children }: { locale: Locale; waitReason: string; className: string; children: ReactNode }) {
+export function LanguageLink({
+  locale,
+  waitReason,
+  uploadWaitReason,
+  className,
+  children,
+}: {
+  locale: Locale;
+  /** The reason while a recording holds the page. */
+  waitReason: string;
+  /** The reason while only a file upload does. */
+  uploadWaitReason: string;
+  className: string;
+  children: ReactNode;
+}) {
   const hash = useSyncExternalStore(subscribeHash, currentHash, noHash);
   const held = useSyncExternalStore(subscribeCapture, captureHeld, captureHeldOnServer);
+  const uploadOnly = useSyncExternalStore(subscribeCapture, captureUploadOnly, captureUploadOnlyOnServer);
   return (
-    <LanguageLinkView href={langHref(locale, hash)} locale={locale} held={held} waitReason={waitReason} className={className}>
+    <LanguageLinkView href={langHref(locale, hash)} locale={locale} held={held} waitReason={languageWaitText(uploadOnly, { recording: waitReason, upload: uploadWaitReason })} className={className}>
       {children}
     </LanguageLinkView>
   );

@@ -18,12 +18,12 @@ import type { HiringCandidateState } from "@/solutions/hiring/rules/candidate-st
 import type { CandidateActivity } from "@/solutions/hiring/rules/candidate-view";
 import { ChoiceActivity } from "./choice-activity";
 import { noSubscribe } from "./desktop-gate";
-import { FileActivity } from "./file-activity";
+import { FileActivity, fileInputId } from "./file-activity";
 import { clearDraft, draftKey, lostWords, markLostWords, sessionDrafts, type LostKind } from "./draft-store";
 import { answeredLocally, isLastMinute, minutesLeft, ownsPrimary, primaryKey, resumeOf, tabReply, type LocalAnswer, type TabMessage } from "./runner-model";
 import { RecordedActivity } from "./recorded-activity";
 import { useRescueFocus } from "./recorded-footer";
-import { keepsStage, requiredKey, runnerPrimary, undoFocus } from "./runner-footer";
+import { fileFooterPlan, keepsStage, needsFileChoice, requiredKey, runnerPrimary, undoFocus } from "./runner-footer";
 import { closeQuestion, commitNeeded, recoveryFor, settleWithin, withTimeout } from "./runner-steps";
 import { serverMessage } from "./server-message";
 import { StageIntro } from "./stage-intro";
@@ -388,6 +388,18 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
     },
   });
   const primary: FooterAction = { ...primaryLook, onClick: () => (retrying ? retry() : advance()) };
+  // G2, 3.9: while the file question has no file, the filled button opens the picker (the keyboard path to it, C5);
+  // an optional one can still be passed with the outline "Sonraki soru". The optional line below stays.
+  const choosing = needsFileChoice({ type: activity?.type, answered, uploading: uploadingHere, inputsOff, retrying });
+  const chooseFile: FooterAction = {
+    kind: "button",
+    id: "file-choose",
+    label: tf("choose"),
+    onClick: () => document.getElementById(activity ? fileInputId(activity.id) : "")?.click(),
+  };
+  const plan = fileFooterPlan({ choosing, required: !!activity?.required });
+  const footerPrimary = plan.primary === "choose" ? chooseFile : primary;
+  const footerSecondary: FooterAction | null = plan.secondary === "skip" ? { ...primary, id: "activity-skip" } : null;
   const optional = activity && !activity.required && !answered && !busy && !closedHere && !uploadingHere ? t("optionalHint") : null;
   // Task 4 carry 9: closed inputs point at the line that says why (never by colour alone); while busy the button says it works.
   const reasonId = closedLine && activity ? `closed-${activity.id}` : locked ? TIME_UP_LINE : runnerFooter && primaryLook.waitReason ? "activity-next-why" : undefined;
@@ -534,7 +546,8 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
       {runnerFooter ? (
         <StepFooter
           back={current.backNavigation && index > 0 && !inputsOff && !uploadingHere ? { label: t("previous"), onClick: () => setIndex(index - 1) } : null}
-          primary={primary}
+          primary={footerPrimary}
+          secondary={footerSecondary}
           // Fix round 1, Minor 4: the optional line sits in the footer's polite region (shown when the button does not wait), so it is announced as before.
           hint={optional}
         />

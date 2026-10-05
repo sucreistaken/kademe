@@ -165,6 +165,20 @@ describe("hiring candidate copy", () => {
     expect(en.hiringFrame.languageWait).toBe("You can switch the language when the recording is done.");
   });
 
+  it("says why the language cannot change during an upload in its own words (Task 5 carry)", () => {
+    expect(tr.hiringFrame.languageWaitUpload).toBe("Yükleme bitince dili değiştirebilirsin.");
+    expect(en.hiringFrame.languageWaitUpload).toBe("You can switch the language when the upload is done.");
+  });
+
+  it("words the file question's drop zone and card (Task 11)", () => {
+    expect(tr.hiringFile.drop).toBe("Dosyanı buraya bırak");
+    expect(en.hiringFile.drop).toBe("Drop your file here");
+    expect(tr.hiringFile.size).toBe("{size} · yüklendi");
+    expect(en.hiringFile.size).toBe("{size} · uploaded");
+    expect(tr.hiringFile.chooseFromComputer).toBe("Bilgisayarından dosya seç");
+    expect(en.hiringFile.chooseFromComputer).toBe("Choose a file from your computer");
+  });
+
   it("no longer says the assessment can be done on a phone (K2)", () => {
     expect(tr.hiringFrame.faqPhoneA).toBe("Hayır, bu değerlendirme bilgisayardan yapılır. Linki bilgisayarında aç.");
     expect(en.hiringFrame.faqPhoneA).toBe("No, this assessment is done on a computer. Open the link on your computer.");

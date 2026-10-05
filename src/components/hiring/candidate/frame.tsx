@@ -46,6 +46,7 @@ export function HiringFrame({
                     key={l}
                     locale={l}
                     waitReason={t("hiringFrame.languageWait")}
+                    uploadWaitReason={t("hiringFrame.languageWaitUpload")}
                     className="flex min-h-11 items-center rounded-lg px-2 text-[14px] text-muted underline decoration-underline underline-offset-4 hover:text-ink"
                   >
                     {NAMES[l]}

@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { captureHeld, captureHeldOnServer, holdCapture, holdUntilSettled, holdWhile, releaseCapture, subscribeCapture } from "./capture-hold";
+import { UPLOAD_HOLD_PREFIX, captureHeld, captureHeldOnServer, captureUploadOnly, captureUploadOnlyOnServer, holdCapture, holdUntilSettled, holdWhile, releaseCapture, subscribeCapture } from "./capture-hold";
 
 /**
  * Task 5 fix round 2: a recording or an upload in progress holds the page, so
  * the frame's language link (a full page load) cannot cut it.
  */
 afterEach(() => {
-  for (const id of ["a", "b", "take", "file", "outcome"]) releaseCapture(id);
+  for (const id of ["a", "b", "take", "file", "outcome", `${UPLOAD_HOLD_PREFIX}1`, `${UPLOAD_HOLD_PREFIX}2`]) releaseCapture(id);
 });
 
 describe("the capture-in-progress store", () => {
@@ -77,5 +77,32 @@ describe("the capture-in-progress store", () => {
     expect(captureHeld()).toBe(false);
     idle();
     expect(captureHeld()).toBe(false);
+  });
+});
+
+describe("which kind of capture holds the page (Task 11, the Task 5 carry)", () => {
+  it("is upload-only while every holder is an upload, so the language link can say the upload's own wait", () => {
+    expect(captureUploadOnly()).toBe(false);
+    holdCapture(`${UPLOAD_HOLD_PREFIX}1`);
+    expect(captureUploadOnly()).toBe(true);
+    holdCapture(`${UPLOAD_HOLD_PREFIX}2`);
+    expect(captureUploadOnly()).toBe(true);
+    releaseCapture(`${UPLOAD_HOLD_PREFIX}1`);
+    releaseCapture(`${UPLOAD_HOLD_PREFIX}2`);
+    expect(captureUploadOnly()).toBe(false);
+  });
+
+  it("falls back to the recording wording as soon as a take also holds the page", () => {
+    holdCapture(`${UPLOAD_HOLD_PREFIX}1`);
+    holdCapture("take");
+    expect(captureHeld()).toBe(true);
+    expect(captureUploadOnly()).toBe(false);
+    releaseCapture("take");
+    expect(captureUploadOnly()).toBe(true);
+  });
+
+  it("is never upload-only on the server", () => {
+    holdCapture(`${UPLOAD_HOLD_PREFIX}1`);
+    expect(captureUploadOnlyOnServer()).toBe(false);
   });
 });

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { ChunkedUploader, PATIENT_RETRY, type UploaderStatus } from "@/lib/client/recorder";
 import { serverMessage } from "./server-message";
 import {
+  beginUploadNote,
   clearCutUpload,
   cutUploadKey,
   fileFailure,
@@ -323,5 +324,23 @@ describe("fileFailure: what a file question says when an upload ends without the
 
   it("without a type list a type refusal is said in the server's words", () => {
     expect(fileFailure(Object.assign(new Error("Bu dosya türü kabul edilmiyor."), { code: "FILE_TYPE_REJECTED", status: 400 }), false)).toEqual({ server: "Bu dosya türü kabul edilmiyor.", retry: false });
+  });
+});
+
+describe("a cut note speaks about one upload (Task 15 N1)", () => {
+  it("forgets an earlier cut note as soon as a new upload starts; only a cut of the new upload marks it again", () => {
+    const store = new Map<string, string>();
+    const storage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v), removeItem: (k: string) => void store.delete(k) };
+    const key = cutUploadKey("tok", 1, "run-1", "act-1");
+    markCutUpload(storage, key, "Eski.pdf");
+    expect(readCutUpload(storage, key)).toBe("Eski.pdf");
+    beginUploadNote(storage, key);
+    expect(readCutUpload(storage, key)).toBeNull();
+    markCutUpload(storage, key, "Yeni.pdf");
+    expect(readCutUpload(storage, key)).toBe("Yeni.pdf");
+  });
+
+  it("does nothing without storage", () => {
+    expect(() => beginUploadNote(null, "k")).not.toThrow();
   });
 });

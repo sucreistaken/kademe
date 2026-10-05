@@ -32,6 +32,16 @@ export function subscribeCapture(listener: () => void) {
 }
 
 export const captureHeld = () => holders.size > 0;
+
+/** The id prefix of a file upload's hold (file-activity); every other holder is a take. */
+export const UPLOAD_HOLD_PREFIX = "upload:";
+/**
+ * Task 5 carry: whether only file uploads hold the page, so the language link
+ * can say "Yükleme bitince" and not "Kayıt bitince". A take holding it as
+ * well keeps the recording wording.
+ */
+export const captureUploadOnly = () => holders.size > 0 && [...holders].every((id) => id.startsWith(UPLOAD_HOLD_PREFIX));
+export const captureUploadOnlyOnServer = () => false;
 /** The server never holds anything: the link renders live, the browser settles it. */
 export const captureHeldOnServer = () => false;
 

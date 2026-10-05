@@ -2,7 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { StepFooter } from "@/components/visual/step-footer";
-import { keepsStage, requiredKey, runnerPrimary, undoFocus, type RunnerFooterState } from "./runner-footer";
+import { fileFooterPlan, keepsStage, needsFileChoice, requiredKey, runnerPrimary, undoFocus, type RunnerFooterState } from "./runner-footer";
 
 /**
  * STATUS item 23 ("soluk, nedensiz"): before Task 10 the runner's own button was
@@ -117,5 +117,34 @@ describe("where focus goes after Geri al (Task 9 carry)", () => {
     undoFocus((id) => (id === "send-written" ? target(id, log) : null), target("heading", log));
     undoFocus(() => null, target("heading", log));
     expect(log).toEqual(["record-use", "send-written", "heading"]);
+  });
+});
+
+describe("the file question's footer (Task 11, G2)", () => {
+  const free = { type: "FILE_UPLOAD" as const, answered: false, uploading: false, inputsOff: false, retrying: false };
+
+  it("asks for a file only on a file question that has none and is open", () => {
+    expect(needsFileChoice(free)).toBe(true);
+    expect(needsFileChoice({ ...free, type: "LONG_TEXT" })).toBe(false);
+    expect(needsFileChoice({ ...free, answered: true })).toBe(false);
+    expect(needsFileChoice({ ...free, uploading: true })).toBe(false);
+    expect(needsFileChoice({ ...free, inputsOff: true })).toBe(false);
+    expect(needsFileChoice({ ...free, retrying: true })).toBe(false);
+  });
+
+  it("puts the filled button on 'Dosya seç' and, on an optional question, passes with the outline 'Sonraki soru'", () => {
+    expect(fileFooterPlan({ choosing: true, required: false })).toEqual({ primary: "choose", secondary: "skip" });
+    expect(fileFooterPlan({ choosing: true, required: true })).toEqual({ primary: "choose", secondary: null });
+  });
+
+  it("leaves the runner's own button alone when a file is there or the question is waiting", () => {
+    expect(fileFooterPlan({ choosing: false, required: true })).toEqual({ primary: "next", secondary: null });
+    expect(fileFooterPlan({ choosing: false, required: false })).toEqual({ primary: "next", secondary: null });
+  });
+
+  it("returns focus to the skip button too after Geri al", () => {
+    const log: string[] = [];
+    undoFocus((id) => (id === "activity-skip" ? { focus: () => void log.push(id) } : null), { focus: () => void log.push("heading") });
+    expect(log).toEqual(["activity-skip"]);
   });
 });

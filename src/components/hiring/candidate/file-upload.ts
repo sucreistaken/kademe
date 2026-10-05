@@ -194,6 +194,15 @@ export function clearCutUpload(storage: DraftStorage | null, key: string): void 
   }
 }
 
+/**
+ * Task 15 N1: a cut note speaks about one upload. A new upload forgets the
+ * old note at once (a reload during the new one must not name the old file);
+ * if the new upload is cut, `onCut` marks it again with its own name.
+ */
+export function beginUploadNote(storage: DraftStorage | null, key: string): void {
+  clearCutUpload(storage, key);
+}
+
 const errCode = (err: unknown) => (err && typeof err === "object" && typeof (err as { code?: unknown }).code === "string" ? (err as { code: string }).code : "");
 
 /** Refusals of the core upload routes (parts, completion, rate limit): the file did not arrive, and another try may work. */
