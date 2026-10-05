@@ -11,4 +11,10 @@ describe("nextPath", () => {
     expect(nextPath("tok", { step: "CHECK" })).toBe("/a/tok/check");
     expect(nextPath("tok", { step: "ITEM" })).toBe("/a/tok/exam");
   });
+
+  it("sends a state that is not the exam's and names no path to the landing, never to an undefined page", () => {
+    expect(nextPath("tok", { step: "STAGE" })).toBe("/a/tok");
+    expect(nextPath("t k", { step: "CLOSED" })).toBe("/a/t%20k");
+    expect(nextPath("tok", { step: "" })).toBe("/a/tok");
+  });
 });

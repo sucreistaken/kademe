@@ -24,11 +24,16 @@ export function stepPath(token: string, state: Pick<CandidateState, "step">): st
   }
 }
 
+const EXAM_STEPS: ReadonlySet<string> = new Set<CandidateState["step"]>(["CONSENT", "INFO", "CHECK", "SECTION_INTRO", "ITEM", "DONE"]);
+
 /**
  * Where to go after a core step (consent, details, device check) answered with
- * a solution's state: the path the state names, else the exam's mapping.
+ * a solution's state: the path the state names, else the exam's mapping for an
+ * exam step, else the landing (which redirects to the state's own page).
  */
 export function nextPath(token: string, state: { step: string; path?: string }): string {
+  const base = `/a/${encodeURIComponent(token)}`;
   // A solution's state names its page relative to /a/[token] ("" for the landing).
-  return state.path !== undefined ? `/a/${encodeURIComponent(token)}${state.path}` : stepPath(token, state as Pick<CandidateState, "step">);
+  if (state.path !== undefined) return `${base}${state.path}`;
+  return EXAM_STEPS.has(state.step) ? stepPath(token, state as Pick<CandidateState, "step">) : base;
 }
