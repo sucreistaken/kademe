@@ -517,7 +517,8 @@
     "reportSentContact": "Bildirimin kaydedildi. Acil bir durumda <mail>{email}</mail> adresine yaz.",
     "reportEmpty": "Önce ne olduğunu yaz.",
     "languages": "Dil seçimi",
-    "reportFailed": "Gönderilemedi. Bağlantını kontrol edip tekrar dener misin?"
+    "reportFailed": "Gönderilemedi. Bağlantını kontrol edip tekrar dener misin?",
+    "languageWait": "Kayıt bitince dili değiştirebilirsin."
   },
   "hiringRequest": {
     "linkHint": "Talebin işe alım ekibine gider. Acil bir durumda <mail>{email}</mail> adresine yaz.",

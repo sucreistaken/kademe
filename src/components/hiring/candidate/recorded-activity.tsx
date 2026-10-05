@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Button, DisabledReason } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useCaptureHold } from "@/lib/client/capture-hold";
 import type { FlushRegistry } from "@/lib/client/flush-registry";
 import { CHUNK_MS, pickChunkedRecorderMime } from "@/lib/client/recorder";
 import { formatCountdown } from "@/lib/timer";
@@ -14,7 +15,7 @@ import { ActivityHeader } from "./activity-header";
 import type { RecordingResult, RecordingSink, TakeProgress } from "./recording-sink";
 import { serverMessage } from "./server-message";
 import { trackStream } from "./streams";
-import { canTryAgain, finishFailure, retakesLeft, startFailure, Take, usedAfterStartFailure, type RecorderLike, type TakeOutcome } from "./take";
+import { canTryAgain, finishFailure, retakesLeft, startFailure, Take, takeHoldsCapture, usedAfterStartFailure, type RecorderLike, type TakeOutcome } from "./take";
 
 export type RecordedPhase = "think" | "record" | "saving" | "review" | "saved" | "failed";
 /** Strict think time: the camera opens this long before recording starts by itself. */
@@ -87,6 +88,9 @@ export function RecordedActivity(props: RecordedProps) {
   const [canRetryFinish, setCanRetryFinish] = useState(false);
   const [notes, setNotes] = useState("");
   const [opening, setOpening] = useState(false);
+  // From the think time until the take is saved the page is held: the frame's language link (a full
+  // page load) would cut the take, and the take would still count (Task 5 fix round 2).
+  useCaptureHold(`take:${useId()}`, takeHoldsCapture(phase, writing));
   const self = useRef<HTMLVideoElement | null>(null);
   const stream = useRef<MediaStream | null>(null);
   const pending = useRef<Promise<MediaStream | null> | null>(null);

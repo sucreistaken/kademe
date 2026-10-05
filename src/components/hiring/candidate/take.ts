@@ -176,3 +176,12 @@ export function startFailure(err: unknown): "noTakes" | "server" | "failed" {
 export function finishFailure(err: unknown): "retry" | "givenBack" {
   return isRetryable(err) ? "retry" : "givenBack";
 }
+
+/**
+ * Whether a take on screen holds the page (Task 5 fix round 2): from the think
+ * time until the take is saved, in the answer and the warm-up alike; never
+ * while the candidate writes the text alternative instead.
+ */
+export function takeHoldsCapture(phase: "think" | "record" | "saving" | "review" | "saved" | "failed", writing: boolean): boolean {
+  return !writing && (phase === "think" || phase === "record" || phase === "saving");
+}

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { OpenTake, RecordingResult, RecordingSink } from "./recording-sink";
-import { canTryAgain, finishFailure, retakesLeft, startFailure, Take, usedAfterStartFailure, type RecorderLike } from "./take";
+import { canTryAgain, finishFailure, retakesLeft, startFailure, Take, takeHoldsCapture, usedAfterStartFailure, type RecorderLike } from "./take";
 
 /** A MediaRecorder stand-in: chunks and stops are driven by the test. */
 class FakeRecorder implements RecorderLike {
@@ -236,5 +236,16 @@ describe("takes and failures", () => {
     expect(finishFailure(Object.assign(new Error("x"), { code: "UNAVAILABLE", status: 503 }))).toBe("retry");
     expect(finishFailure(Object.assign(new Error("x"), { code: "NO_PARTS", status: 409 }))).toBe("givenBack");
     expect(finishFailure(Object.assign(new Error("x"), { code: "UPLOAD_NOT_FOUND", status: 400 }))).toBe("givenBack");
+  });
+});
+
+describe("a take holds the page while it runs (Task 5 fix round 2)", () => {
+  it("holds in think, record and saving, in the answer and in the warm-up, so a language switch cannot cut it", () => {
+    for (const phase of ["think", "record", "saving"] as const) expect(takeHoldsCapture(phase, false), phase).toBe(true);
+  });
+
+  it("lets go once the take is settled, and never while the candidate writes the text alternative", () => {
+    for (const phase of ["review", "saved", "failed"] as const) expect(takeHoldsCapture(phase, false), phase).toBe(false);
+    expect(takeHoldsCapture("think", true)).toBe(false);
   });
 });

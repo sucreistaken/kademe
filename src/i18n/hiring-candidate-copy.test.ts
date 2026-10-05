@@ -151,6 +151,11 @@ describe("hiring candidate copy", () => {
     expect(tr.hiringGate.wrongFailed).toBe(tr.hiringFrame.reportFailed);
   });
 
+  it("says why the language cannot change during a recording, in the ruled words (Task 5 fix round 2)", () => {
+    expect(tr.hiringFrame.languageWait).toBe("Kayıt bitince dili değiştirebilirsin.");
+    expect(en.hiringFrame.languageWait).toBe("You can switch the language when the recording is done.");
+  });
+
   it("no longer says the assessment can be done on a phone (K2)", () => {
     expect(tr.hiringFrame.faqPhoneA).toBe("Hayır, bu değerlendirme bilgisayardan yapılır. Linki bilgisayarında aç.");
     expect(en.hiringFrame.faqPhoneA).toBe("No, this assessment is done on a computer. Open the link on your computer.");
