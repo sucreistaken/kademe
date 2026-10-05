@@ -43,6 +43,8 @@ export const hiringModule: SolutionModule = {
       return notLive("terminate");
     },
     onMediaComplete: attachMedia,
+    // A failed take gives its place back: the newest finished take becomes the answer again.
+    onMediaFailed: attachMedia,
     async closeExpired(now, limit) {
       // Salvage first, so a rescued take is attached before its stage closes.
       // Best effort: a storage outage must not keep stages open.

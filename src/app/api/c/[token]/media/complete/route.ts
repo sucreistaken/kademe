@@ -32,6 +32,8 @@ export async function POST(
     const parts = owned.asset.parts ?? [];
     if (parts.length === 0) {
       await failMedia(owned.asset.id);
+      // The solution decides that answer again (hiring: an older finished take becomes it).
+      await solution.attempts.onMediaFailed?.({ ...owned.asset, status: "FAILED" });
       return conflict(ctx, "NO_PARTS");
     }
     const durationMs =

@@ -138,6 +138,12 @@ export interface SolutionModule extends SolutionManifest {
     terminate(attemptId: string): Promise<void>;
     /** A recording finished uploading; attach it wherever the solution keeps answers. */
     onMediaComplete(asset: MediaAssetRow): Promise<void>;
+    /**
+     * An upload failed for good (the asset is FAILED, e.g. completed with no
+     * parts); the solution decides its answer again (an older finished take may
+     * become it). Omitted: nothing to decide.
+     */
+    onMediaFailed?(asset: MediaAssetRow): Promise<void>;
     /** Cron: close this solution's timed parts whose clock ran out. Omitted: the core's own sweep covers it. */
     closeExpired?(now: Date, limit: number): Promise<{ scanned: number; closed: number }>;
   };

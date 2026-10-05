@@ -66,4 +66,10 @@ describe("hiring's cron sweep and media hook (Task 8)", () => {
     await hiringModule.attempts.onMediaComplete(asset);
     expect(c.attachMedia.mock.calls[0][0]).toBe(asset);
   });
+
+  it("decides the answer again when an upload fails for good", async () => {
+    const asset = { id: "m2", status: "FAILED" } as MediaAssetRow;
+    await hiringModule.attempts.onMediaFailed!(asset);
+    expect(c.attachMedia.mock.calls[0][0]).toBe(asset);
+  });
 });
