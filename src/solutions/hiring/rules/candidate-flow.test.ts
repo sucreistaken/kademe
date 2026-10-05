@@ -7,6 +7,7 @@ import { activityConfigSchema, HIRING_LIMITS } from "./patches";
 import {
   autoScore,
   cleanFileName,
+  closedByOf,
   DEFAULT_MAX_FILE_BYTES,
   effectiveSeconds,
   EXTRA_TIME_OPTIONS,
@@ -467,5 +468,28 @@ describe("agreement with the database (migrations 0010 and 0011)", () => {
     expect(activityConfigSchema.safeParse({ maxChars: MAX_TEXT_CHARS + 1 }).success).toBe(false);
     expect(DEFAULT_MAX_FILE_BYTES).toBe(10 * 1024 * 1024);
     expect(activityConfigSchema.safeParse({ maxFileBytes: DEFAULT_MAX_FILE_BYTES }).success).toBe(true);
+  });
+});
+
+describe("how a stage run ended (hiring_stage_runs.closed_by)", () => {
+  const deadlineAt = at(600);
+
+  it("is the clock whenever the server's clock closes it", () => {
+    expect(closedByOf({ reason: "CLOCK", deadlineAt, onTimeout: "AUTO_SUBMIT", now: at(700) })).toBe("CLOCK");
+    expect(closedByOf({ reason: "CLOCK", deadlineAt: null, onTimeout: "AUTO_CLOSE", now: at(700) })).toBe("CLOCK");
+  });
+
+  it("is the candidate for a submit while the clock still runs", () => {
+    expect(closedByOf({ reason: "SUBMIT", deadlineAt, onTimeout: "AUTO_SUBMIT", now: at(599) })).toBe("CANDIDATE");
+    expect(closedByOf({ reason: "SUBMIT", deadlineAt: null, onTimeout: "AUTO_SUBMIT", now: at(599) })).toBe("CANDIDATE");
+  });
+
+  it("is the clock for a submit that arrives once the time is over (the client's 0:00 submit), whatever was answered", () => {
+    expect(closedByOf({ reason: "SUBMIT", deadlineAt, onTimeout: "AUTO_SUBMIT", now: at(600) })).toBe("CLOCK");
+    expect(closedByOf({ reason: "SUBMIT", deadlineAt, onTimeout: "ALLOW_GRACE", now: at(603) })).toBe("CLOCK");
+  });
+
+  it("is never the clock for a late hand submit under ALLOW_LATE (no \"Süre doldu\")", () => {
+    expect(closedByOf({ reason: "SUBMIT", deadlineAt, onTimeout: "ALLOW_LATE", now: at(6000) })).toBe("CANDIDATE");
   });
 });

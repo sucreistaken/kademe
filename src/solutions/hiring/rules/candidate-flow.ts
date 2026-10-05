@@ -1,4 +1,4 @@
-import type { HiringActivityConfig, HiringResponsePayload } from "@/db/schema";
+import type { HiringActivityConfig, HiringResponsePayload, HiringRunClosedBy } from "@/db/schema";
 import { hasText } from "@/lib/library/anchors";
 import { decideClose } from "@/lib/stage-timeout";
 import { acceptsWrite, computeDeadline, SUBMIT_SLACK_MS } from "@/lib/timer";
@@ -199,6 +199,21 @@ export function runCompletion(input: {
   // AUTO_CLOSE (EXPIRED) and a stage with nothing answered (EXPIRED) stay as decided.
   if (decided.completion === "PARTIAL" && input.requiredCount === 0) return { completion: "COMPLETE", late: true };
   return { completion: decided.completion, late: true };
+}
+
+/**
+ * How a closing run ended (hiring_stage_runs.closed_by), which the next stage
+ * reads for "Süre doldu" (HIRING-UX 6.11). The server's clock (the sweep, a
+ * reload after the deadline) is CLOCK. A submit is the candidate's while the
+ * clock still runs; one that arrives once the time is over (the client's
+ * submit at 0:00, or a press in the same moment) closes a stage whose time
+ * ran out, so it is CLOCK too. ALLOW_LATE has no end of time: a late submit
+ * there is always the candidate's.
+ */
+export function closedByOf(input: { reason: "SUBMIT" | "CLOCK"; deadlineAt: Date | null; onTimeout: StageTimeout; now: Date }): HiringRunClosedBy {
+  if (input.reason === "CLOCK") return "CLOCK";
+  if (input.onTimeout === "ALLOW_LATE" || !input.deadlineAt) return "CANDIDATE";
+  return input.now.getTime() >= input.deadlineAt.getTime() ? "CLOCK" : "CANDIDATE";
 }
 
 export type WriteRefusal =
