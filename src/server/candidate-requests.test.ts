@@ -45,7 +45,10 @@ vi.mock("@/db", async () => {
       seen.ops.push({ kind: "execute", table: "", where: sql, params });
       return [];
     },
-    transaction: async <T>(fn: (tx: unknown) => Promise<T>) => fn(x),
+    transaction: async <T>(fn: (tx: unknown) => Promise<T>) => {
+      seen.ops.push({ kind: "begin", table: "", where: "", params: [] });
+      return fn(x);
+    },
   };
   return { db: x };
 });
@@ -86,5 +89,17 @@ describe("fileCandidateRequest", () => {
     seen.open = [{ id: "r1" }];
     expect(await fileCandidateRequest(input)).toEqual({ filed: false });
     expect(writes()).toEqual([]);
+  });
+
+  it("runs inside the caller's transaction when one is passed, opening none of its own", async () => {
+    const own: Op[] = [];
+    const tx = {
+      execute: async () => void own.push({ kind: "execute", table: "", where: "", params: [] }),
+      select: () => ({ from: () => ({ where: () => ({ limit: async () => [] }) }) }),
+      insert: () => ({ values: async (values: unknown) => void own.push({ kind: "insert", table: "candidate_requests", where: "", params: [], values }) }),
+    };
+    expect(await fileCandidateRequest(input, tx as never)).toEqual({ filed: true });
+    expect(seen.ops).toEqual([]);
+    expect(own.map((o) => o.kind)).toEqual(["execute", "insert"]);
   });
 });

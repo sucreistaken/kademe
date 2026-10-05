@@ -20,7 +20,8 @@ type Body = { area?: string; message?: string };
  * The mail keeps the exam's wording for exam invitations and reads neutrally
  * for every other solution, named by its label (ruling C28). "Yeni link iste"
  * (area LINK) also files a NEW_LINK candidate request where the solution reads
- * them (ruling C7), so the team sees it next to the candidate.
+ * them (ruling C7), so the team sees it next to the candidate; a repeat while
+ * that request is open files nothing and mails nothing.
  */
 export async function POST(
   req: NextRequest,
@@ -39,9 +40,9 @@ export async function POST(
       const person = exam ? "Öğrenci" : "Aday";
       const assessmentLine = exam ? `Sınav: ${title}` : `Değerlendirme: ${solution.label.tr} · ${title}`;
 
-      await db.insert(messageOutbox).values({
+      const mail = {
         orgId: ctx.assessment.orgId,
-        kind: "STUDENT_PROBLEM",
+        kind: "STUDENT_PROBLEM" as const,
         toEmail: ctx.contactEmail ?? "okul@kademe.local",
         subject: `${person} sorun bildirdi: ${ctx.candidate.fullName ?? "isimsiz"} (${area})`,
         body:
@@ -51,20 +52,23 @@ export async function POST(
           `Alan: ${area}\n` +
           `Mesaj: ${note || "-"}\n` +
           `Tarayıcı: ${request.headers.get("user-agent") ?? "-"}`,
-      });
+      };
 
-      // The outbox row alone reaches nobody until mail exists. `note` is at most
-      // 2000 UTF-16 units, so it always fits candidate_requests' 2000 CHECK.
-      // While one NEW_LINK request is open a second is not filed; the answer
-      // is the same (fileCandidateRequest).
-      if (area === "LINK" && solution.accommodationRequests) {
-        await fileCandidateRequest({
-          orgId: ctx.assessment.orgId,
-          assessmentId: ctx.assessment.id,
-          kind: "NEW_LINK",
-          message: note || null,
-        });
-      }
+      // The NEW_LINK request and the team's mail are written together or not
+      // at all. `note` is at most 2000 UTF-16 units, so it always fits
+      // candidate_requests' 2000 CHECK. While one NEW_LINK request is open a
+      // second is not filed and the team is not mailed again; the candidate's
+      // answer is the same (fileCandidateRequest).
+      await db.transaction(async (tx) => {
+        if (area === "LINK" && solution.accommodationRequests) {
+          const { filed } = await fileCandidateRequest(
+            { orgId: ctx.assessment.orgId, assessmentId: ctx.assessment.id, kind: "NEW_LINK", message: note || null },
+            tx,
+          );
+          if (!filed) return;
+        }
+        await tx.insert(messageOutbox).values(mail);
+      });
 
       return candidateJson({
         received: true,

@@ -18,6 +18,10 @@ const EXAM: Served = {
 
 const h = vi.hoisted(() => ({
   inserted: [] as Inserted[],
+  /** Where each write ran: "tx" inside the route's transaction, "db" outside it. */
+  via: [] as string[],
+  /** The executor fileCandidateRequest was handed. */
+  fileExecutor: null as unknown,
   /** fileCandidateRequest's answer: false when a request of that kind is already open (dedup, Task 3 carry). */
   filed: true,
   solution: null as unknown,
@@ -31,16 +35,25 @@ const h = vi.hoisted(() => ({
 
 vi.mock("@/db", async () => {
   const { getTableName } = await import("drizzle-orm");
-  return {
-    db: {
-      insert: (table: never) => ({ values: async (values: Record<string, unknown>) => void h.inserted.push({ table: getTableName(table), values }) }),
-    },
-  };
+  const executor = (via: string) => ({
+    insert: (table: never) => ({
+      values: async (values: Record<string, unknown>) => {
+        h.via.push(via);
+        h.inserted.push({ table: getTableName(table), values });
+      },
+    }),
+  });
+  const tx = executor("tx");
+  return { db: { ...executor("db"), transaction: async <T>(fn: (t: unknown) => Promise<T>) => fn(tx) } };
 });
 vi.mock("@/server/candidate-requests", () => ({
   // The dedup lives in fileCandidateRequest (its own test); a filed request is recorded like an insert.
-  fileCandidateRequest: async (values: Record<string, unknown>) => {
-    if (h.filed) h.inserted.push({ table: "candidate_requests", values });
+  fileCandidateRequest: async (values: Record<string, unknown>, x?: unknown) => {
+    h.fileExecutor = x ?? null;
+    if (h.filed) {
+      h.via.push(x ? "tx" : "db");
+      h.inserted.push({ table: "candidate_requests", values });
+    }
     return { filed: h.filed };
   },
 }));
@@ -59,15 +72,20 @@ const outbox = () => h.inserted.find((i) => i.table === "message_outbox")?.value
 
 beforeEach(() => {
   h.inserted = [];
+  h.via = [];
+  h.fileExecutor = null;
   h.filed = true;
   h.solution = HIRING;
   h.ctx.assessment.solution = "HIRING";
 });
 
 describe("problem route", () => {
-  it("files a new-link request in the invitation's organisation, next to the outbox message", async () => {
+  it("files a new-link request in the invitation's organisation, next to the outbox message, in one transaction", async () => {
     expect((await send({ area: "LINK", message: "Aday yeni link talep etti." })).status).toBe(200);
     expect(h.inserted.map((i) => i.table).sort()).toEqual(["candidate_requests", "message_outbox"]);
+    // Both writes, or neither: the request and the team's mail run in the route's transaction.
+    expect(h.via).toEqual(["tx", "tx"]);
+    expect(h.fileExecutor).not.toBeNull();
     expect(h.inserted.find((i) => i.table === "candidate_requests")?.values).toEqual({
       orgId: "o1",
       assessmentId: "a1",
@@ -76,12 +94,12 @@ describe("problem route", () => {
     });
   });
 
-  it("answers the same to a second new-link request while the first is open, filing nothing new", async () => {
+  it("answers the same to a second new-link request while the first is open, filing nothing new and mailing the team nothing new", async () => {
     h.filed = false;
     const res = await send({ area: "LINK", message: "Tekrar" });
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({ received: true });
-    expect(h.inserted.map((i) => i.table)).toEqual(["message_outbox"]);
+    expect(h.inserted).toEqual([]);
   });
 
   it("bounds the new-link note to the 2000 the table allows", async () => {
