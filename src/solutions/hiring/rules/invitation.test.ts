@@ -1,5 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { addDays, candidateProgress, feedbackDay, formatInviteDay, formatInviteDeadline, inviteMessage, isEmail, linkExpiryDay, MAX_INVITE_ROWS, MAX_NAME_LENGTH, parseInviteRows } from "./invitation";
+import {
+  addDays,
+  candidateProgress,
+  cleanInviteName,
+  feedbackDay,
+  firstInviteLines,
+  formatInviteDay,
+  formatInviteDeadline,
+  inviteMessage,
+  isEmail,
+  linkExpiryDay,
+  MAX_INVITE_ROWS,
+  MAX_INVITE_TEXT,
+  MAX_NAME_LENGTH,
+  parseInviteRows,
+} from "./invitation";
 import { orgDay, zonedDayStart, zoneLabel } from "@/lib/org-timezone";
 
 describe("the ready message (HIRING-UX 5.11)", () => {
@@ -333,5 +348,53 @@ describe("the reply promise's day (Task 16 fix round 1, I2)", () => {
     expect(feedbackDay(new Date("2026-10-05T22:30:00.000Z"), 7, "UTC")).toBe("2026-10-12");
     // By the calendar across a month end.
     expect(feedbackDay(new Date("2026-10-28T09:00:00.000Z"), 7, "Europe/Istanbul")).toBe("2026-11-04");
+  });
+});
+
+describe("a long spreadsheet paste is cut to the rows that are read (Task 17 fix round 1)", () => {
+  const sheet = Array.from({ length: 700 }, (_, i) => `Aday Numara ${i + 1}\taday${i + 1}@example.com\tİstanbul\t+90 555 000 00 00`).join("\r\n");
+
+  it("keeps the lines up to the MAX_INVITE_ROWS-th non-blank one, blank lines and line numbers included", () => {
+    const cut = firstInviteLines(`\n${sheet}`);
+    expect(cut.split("\n")).toHaveLength(MAX_INVITE_ROWS + 1);
+    const all = parseInviteRows(`\n${sheet}`);
+    const kept = parseInviteRows(cut);
+    expect(all.tooMany).toBe(true);
+    expect(kept.tooMany).toBe(false);
+    // The same rows, with the same line numbers, as the manager saw them.
+    expect(kept.rows).toEqual(all.rows);
+    expect(cut.length).toBeLessThanOrEqual(MAX_INVITE_TEXT);
+  });
+
+  it("leaves a short list as it is (line breaks normalised) and counts a byte order mark line as blank", () => {
+    expect(firstInviteLines("Elif Kaya, elif@example.com\r\nCan, can@example.com")).toBe("Elif Kaya, elif@example.com\nCan, can@example.com");
+    expect(firstInviteLines("")).toBe("");
+    const withBom = `\uFEFF\n${Array.from({ length: 60 }, (_, i) => `A${i}, a${i}@example.com`).join("\n")}`;
+    expect(parseInviteRows(firstInviteLines(withBom)).rows).toHaveLength(MAX_INVITE_ROWS);
+  });
+
+  it("has room for MAX_INVITE_ROWS rows of the longest name and e-mail, quoted", () => {
+    const longest = `"${"ş".repeat(MAX_NAME_LENGTH)}", <${"a".repeat(64)}@${"b".repeat(180)}.com>`;
+    const text = Array.from({ length: MAX_INVITE_ROWS }, () => longest).join("\n");
+    expect(text.length).toBeLessThanOrEqual(MAX_INVITE_TEXT);
+  });
+});
+
+describe("one name rule for the pasted list, the form and the server (Task 17 fix round 1)", () => {
+  it("collapses spaces and refuses short, long, bracketed or address-like names, counting code points", () => {
+    expect(cleanInviteName("  Elif   Kaya ")).toBe("Elif Kaya");
+    expect(cleanInviteName("E")).toBeNull();
+    expect(cleanInviteName("Elif <b>")).toBeNull();
+    expect(cleanInviteName("elif@example")).toBeNull();
+    expect(cleanInviteName("x".repeat(MAX_NAME_LENGTH))).toBe("x".repeat(MAX_NAME_LENGTH));
+    expect(cleanInviteName("x".repeat(MAX_NAME_LENGTH + 1))).toBeNull();
+    // Two code points, four UTF-16 units: a name, not a cut.
+    expect(cleanInviteName("😀😀")).toBe("😀😀");
+    expect(cleanInviteName("😀".repeat(MAX_NAME_LENGTH))).not.toBeNull();
+  });
+
+  it("is the rule the pasted list marks NAME with", () => {
+    expect(parseInviteRows("Elif <b>, elif@example.com").rows[0].problem).toBe("NAME");
+    expect(parseInviteRows("😀😀, elif@example.com").rows[0].problem).toBeNull();
   });
 });

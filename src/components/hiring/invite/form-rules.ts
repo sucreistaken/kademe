@@ -1,4 +1,4 @@
-import { isEmail, type InviteRow } from "@/solutions/hiring/rules/invitation";
+import { cleanInviteName, isEmail, linkExpiryDay, type InviteRow } from "@/solutions/hiring/rules/invitation";
 
 /**
  * An opening the invite form offers: OPEN, of the session's organisation
@@ -30,7 +30,8 @@ export function inviteReason(input: {
   if (input.opening.deadlineDay && input.opening.deadlineDay < input.today) return "openingDeadline";
   if (input.deadline && input.deadline < input.today) return "deadline";
   if (input.mode === "single") {
-    if (input.fullName.trim().length < 2) return "name";
+    // The server's rule (cleanInviteName), so the button never lets through a name it refuses.
+    if (cleanInviteName(input.fullName) === null) return "name";
     if (!isEmail(input.email)) return "email";
     return null;
   }
@@ -49,4 +50,24 @@ export function inviteReason(input: {
 export function panelShortfall(opening: InviteOpening | null): { evaluators: number; min: number } | null {
   if (!opening || !opening.live || opening.evaluators === 0) return null;
   return opening.evaluators < opening.minEvaluations ? { evaluators: opening.evaluators, min: opening.minEvaluations } : null;
+}
+
+/**
+ * The Sheet stays open while a request runs or links are shown: Escape and a
+ * click outside would drop a link that is shown only once. Its close button
+ * still closes it.
+ */
+export function sheetLocked(state: { pending: boolean; done: boolean }): boolean {
+  return state.pending || state.done;
+}
+
+/**
+ * The day the date field shows: the day the server will use (linkExpiryDay
+ * holds a later day to the opening's deadline), except a past day, which
+ * stays as typed so the reason next to the button speaks about what is seen.
+ */
+export function deadlineInputValue(input: { opening: InviteOpening | null; deadline: string | null; today: string }): string {
+  if (!input.opening) return "";
+  if (input.deadline !== null && input.deadline < input.today) return input.deadline;
+  return linkExpiryDay({ chosen: input.deadline, openingDeadlineDay: input.opening.deadlineDay, today: input.today });
 }

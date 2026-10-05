@@ -9,7 +9,7 @@ import { managerLocale } from "@/i18n/manager-locale";
 import type { Locale } from "@/i18n/locale";
 import { requireUser } from "@/server/session";
 import { openingAccess } from "@/solutions/hiring/rules/access";
-import { formatInviteDeadline, parseInviteRows } from "@/solutions/hiring/rules/invitation";
+import { firstInviteLines, formatInviteDeadline, MAX_INVITE_TEXT, parseInviteRows } from "@/solutions/hiring/rules/invitation";
 import { createHiringInvitation, type InviteRefusal } from "@/solutions/hiring/server/invitations";
 import { loadOpening } from "@/solutions/hiring/server/openings";
 
@@ -28,7 +28,21 @@ const oneSchema = z.object({
   deadline: day,
   allowDuplicate: z.boolean().optional(),
 });
-const manySchema = z.object({ openingId: z.uuid(), text: z.string().max(20_000), locale: z.enum(["tr", "en"]), deadline: day });
+/**
+ * The pasted text is first cut to the rows that are read (firstInviteLines,
+ * the same cut the form sends), then its length is checked: a long
+ * spreadsheet paste invites its first MAX_INVITE_ROWS rows instead of failing
+ * as a whole. The request body itself is bounded by the server action limit.
+ */
+const manySchema = z.object({
+  openingId: z.uuid(),
+  text: z
+    .string()
+    .transform(firstInviteLines)
+    .pipe(z.string().max(MAX_INVITE_TEXT)),
+  locale: z.enum(["tr", "en"]),
+  deadline: day,
+});
 
 type Refused = { ok: false; code: InviteRefusal | "FORBIDDEN" };
 
@@ -72,7 +86,11 @@ async function inviteOne(user: { id: string; orgId: string }, input: z.infer<typ
   }
 }
 
-/** HIRING-UX 5.11 "Davet linkini oluştur": one candidate; the link is returned once and never stored. */
+/**
+ * HIRING-UX 5.11 "Davet linkini oluştur": one candidate. The panel shows the
+ * link once; the database keeps only its hash on the link row, and the ready
+ * message with the link in it in message_outbox.body (the mail path).
+ */
 export async function inviteCandidateAction(input: unknown): Promise<InviteOneResult> {
   const parsed = oneSchema.safeParse(input);
   if (!parsed.success) return { ok: false, code: "FAILED" };

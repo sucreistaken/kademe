@@ -12,10 +12,10 @@ import { StatusDot } from "@/components/ui/status-dot";
 import { Textarea } from "@/components/ui/textarea";
 import { useMT } from "@/i18n/manager-client";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/i18n/locale";
-import { formatInviteDay, linkExpiryDay, parseInviteRows } from "@/solutions/hiring/rules/invitation";
+import { firstInviteLines, formatInviteDay, linkExpiryDay, MAX_INVITE_ROWS, parseInviteRows } from "@/solutions/hiring/rules/invitation";
 import { inviteCandidateAction, inviteManyAction, type InviteOneResult } from "@/app/(manager)/hiring/invite/actions";
 import { CopyField } from "./copy-field";
-import { inviteReason, panelShortfall, type InviteOpening } from "./form-rules";
+import { deadlineInputValue, inviteReason, panelShortfall, sheetLocked, type InviteOpening } from "./form-rules";
 
 type Ready = Extract<InviteOneResult, { ok: true }>;
 type Refusal = Extract<InviteOneResult, { ok: false }>;
@@ -35,9 +35,24 @@ const LINK = "underline decoration-underline underline-offset-4";
  * list. The button waits with its reason, said next to it. On success the
  * link is shown once with "Linki kopyala" as the filled button and the ready
  * message below; a pasted list gets each row's result, a link and a message
- * per invitation, and "Tümünü kopyala".
+ * per invitation, and "Tümünü kopyala". `onLockChange` tells a Sheet when it
+ * must not close on Escape or an outside click (sheetLocked).
  */
-export function InviteForm({ openings, initialOpeningId, today, zone, onDone }: { openings: InviteOpening[]; initialOpeningId: string | null; today: string; zone: string; onDone?: () => void }) {
+export function InviteForm({
+  openings,
+  initialOpeningId,
+  today,
+  zone,
+  onDone,
+  onLockChange,
+}: {
+  openings: InviteOpening[];
+  initialOpeningId: string | null;
+  today: string;
+  zone: string;
+  onDone?: () => void;
+  onLockChange?: (locked: boolean) => void;
+}) {
   const t = useMT("hiringInvite");
   const appLocale = useLocale();
   const uiLocale: Locale = isLocale(appLocale) ? appLocale : DEFAULT_LOCALE;
@@ -67,6 +82,11 @@ export function InviteForm({ openings, initialOpeningId, today, zone, onDone }: 
     if (done) doneHeading.current?.focus();
   }, [done]);
 
+  const locked = sheetLocked({ pending, done: done !== null });
+  useEffect(() => {
+    onLockChange?.(locked);
+  }, [locked, onLockChange]);
+
   /** A change to what is being sent retires the last refusal: it spoke about the previous input. */
   function edit(change: () => void) {
     setRefusal(null);
@@ -87,12 +107,13 @@ export function InviteForm({ openings, initialOpeningId, today, zone, onDone }: 
     start(async () => {
       try {
         if (mode === "single") {
-          const result = await inviteCandidateAction({ openingId, fullName, email, locale, deadline, allowDuplicate });
+          const result = await inviteCandidateAction({ openingId, fullName, email: email.trim(), locale, deadline, allowDuplicate });
           if (result.ok) setDone({ kind: "one", result });
           else setRefusal({ result, name });
           return;
         }
-        const { results } = await inviteManyAction({ openingId, text, locale, deadline });
+        // Only the rows that are read travel (the server cuts the same way).
+        const { results } = await inviteManyAction({ openingId, text: firstInviteLines(text), locale, deadline });
         // Line 0 is a refusal of the whole list (role, opening, day) or malformed input.
         const whole = results.find((r) => r.line === 0);
         if (whole && !whole.result.ok) {
@@ -183,7 +204,7 @@ export function InviteForm({ openings, initialOpeningId, today, zone, onDone }: 
                 </li>
               ))}
             </ul>
-            <p className="text-[13px] text-muted">{t("onceNote")}</p>
+            <p className="text-[13px] text-muted">{t("onceNoteMany")}</p>
           </>
         ) : null}
         <div className="flex flex-wrap items-center gap-4">
@@ -260,9 +281,9 @@ export function InviteForm({ openings, initialOpeningId, today, zone, onDone }: 
       ) : (
         <div className="space-y-2">
           <Label htmlFor="invite-paste">{t("pasteLabel")}</Label>
-          <Textarea id="invite-paste" rows={6} value={text} onChange={(e) => edit(() => setText(e.target.value))} aria-describedby="invite-paste-hint invite-paste-rows" />
+          <Textarea id="invite-paste" rows={6} className="max-h-72 overflow-y-auto" value={text} onChange={(e) => edit(() => setText(e.target.value))} aria-describedby="invite-paste-hint invite-paste-rows" />
           <p id="invite-paste-hint" className="text-[13px] text-muted">
-            {t("pasteHint")}
+            {t("pasteHint", { max: MAX_INVITE_ROWS })}
           </p>
           <div id="invite-paste-rows" aria-live="polite" className="space-y-1">
             {parsed.rows.some((r) => r.problem) ? (
@@ -278,7 +299,7 @@ export function InviteForm({ openings, initialOpeningId, today, zone, onDone }: 
                   ))}
               </ul>
             ) : null}
-            {parsed.tooMany ? <p className="text-[13px] text-ink">{t("tooMany")}</p> : null}
+            {parsed.tooMany ? <p className="text-[13px] text-ink">{t("tooMany", { max: MAX_INVITE_ROWS })}</p> : null}
             {parsed.rows.length && !parsed.rows.some((r) => r.problem) ? <p className="tnum text-[13px] text-muted">{t("rowsReady", { count: parsed.rows.length })}</p> : null}
           </div>
         </div>
@@ -286,7 +307,7 @@ export function InviteForm({ openings, initialOpeningId, today, zone, onDone }: 
 
       <div className="space-y-2">
         <Label id="invite-language">{t("language")}</Label>
-        <RadioGroup value={locale} onValueChange={(v) => setLocale(v as Locale)} className="flex flex-wrap gap-x-6 gap-y-1" aria-labelledby="invite-language">
+        <RadioGroup value={locale} onValueChange={(v) => edit(() => setLocale(v as Locale))} className="flex flex-wrap gap-x-6 gap-y-1" aria-labelledby="invite-language">
           {(["tr", "en"] as const).map((l) => (
             <label key={l} lang={l} className="flex min-h-10 cursor-pointer items-center gap-2 text-[14px] text-ink">
               <RadioGroupItem value={l} />
@@ -307,8 +328,8 @@ export function InviteForm({ openings, initialOpeningId, today, zone, onDone }: 
               type="date"
               min={today}
               max={openingDeadline ?? undefined}
-              value={deadline ?? shownDay ?? ""}
-              onChange={(e) => setDeadline(e.target.value || null)}
+              value={deadlineInputValue({ opening, deadline, today })}
+              onChange={(e) => edit(() => setDeadline(e.target.value || null))}
               className="w-48"
               aria-describedby={openingDeadline ? "invite-deadline-max" : undefined}
             />
@@ -321,7 +342,7 @@ export function InviteForm({ openings, initialOpeningId, today, zone, onDone }: 
         ) : (
           <p className="tnum flex flex-wrap items-center gap-x-3 text-[14px] text-ink">
             {shownDay ? <span>{t("deadlineValue", { date: formatInviteDay(shownDay, uiLocale), zone })}</span> : null}
-            <button type="button" onClick={() => setChanging(true)} className={`min-h-10 text-[13px] font-medium ${LINK}`}>
+            <button type="button" onClick={() => edit(() => setChanging(true))} className={`min-h-10 text-[13px] font-medium ${LINK}`}>
               {t("change")}
             </button>
           </p>

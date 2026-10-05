@@ -140,6 +140,22 @@ describe("inviteManyAction", () => {
     expect(create).toHaveBeenCalledTimes(50);
   });
 
+  it("takes a 700-line spreadsheet paste: the first MAX_INVITE_ROWS rows are invited, not a FAILED list (fix round 1)", async () => {
+    const text = Array.from({ length: 700 }, (_, i) => `Aday Numara ${i + 1}\taday${i + 1}@example.com\tİstanbul\t+90 555 000 00 00\tNot: ${"x".repeat(20)}`).join("\r\n");
+    expect(text.length).toBeGreaterThan(40_000);
+    const { results } = await inviteManyAction({ ...many, text });
+    expect(results).toHaveLength(50);
+    expect(results.every((r) => r.result.ok)).toBe(true);
+    expect(results.at(-1)!.line).toBe(50);
+    expect(create).toHaveBeenCalledTimes(50);
+  });
+
+  it("still refuses a cut list longer than 50 rows can be (FAILED, line 0)", async () => {
+    const text = Array.from({ length: 3 }, () => "x".repeat(30_000)).join("\n");
+    expect(await inviteManyAction({ ...many, text })).toEqual({ results: [{ line: 0, fullName: "", email: "", result: { ok: false, code: "FAILED" } }] });
+    expect(create).not.toHaveBeenCalled();
+  });
+
   it("refuses the whole list once (line 0) for a reviewer, a closed opening, a passed deadline or a past chosen day", async () => {
     h.user.role = "REVIEWER";
     expect(await inviteManyAction({ ...many, text: "Elif Kaya, elif@example.com" })).toEqual({ results: [{ line: 0, fullName: "", email: "", result: { ok: false, code: "FORBIDDEN" } }] });

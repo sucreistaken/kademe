@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseInviteRows } from "@/solutions/hiring/rules/invitation";
-import { inviteReason, panelShortfall, type InviteOpening } from "./form-rules";
+import { deadlineInputValue, inviteReason, panelShortfall, sheetLocked, type InviteOpening } from "./form-rules";
 
 const opening: InviteOpening = { id: "o", name: "Tasarımcı · Ekim", live: true, evaluators: 2, minEvaluations: 2, deadlineDay: null };
 const base = { opening, mode: "single" as const, fullName: "Elif Kaya", email: "elif@example.com", rows: [], deadline: null, today: "2026-10-05" };
@@ -45,5 +45,37 @@ describe("a panel smaller than the decision minimum (ledger Task 11 carry)", () 
     expect(panelShortfall({ ...opening, evaluators: 0, minEvaluations: 2 })).toBeNull();
     expect(panelShortfall({ ...opening, live: false, evaluators: 1, minEvaluations: 2 })).toBeNull();
     expect(panelShortfall(null)).toBeNull();
+  });
+});
+
+describe("the form uses the server's name rule (Task 17 fix round 1)", () => {
+  it("waits on a name the server would refuse", () => {
+    expect(inviteReason({ ...base, fullName: "Elif <b>" })).toBe("name");
+    expect(inviteReason({ ...base, fullName: "elif@example.com" })).toBe("name");
+    expect(inviteReason({ ...base, fullName: "x".repeat(121) })).toBe("name");
+    expect(inviteReason({ ...base, fullName: "  Elif   Kaya  " })).toBeNull();
+  });
+});
+
+describe("the Sheet holds while a request runs or links are shown (Task 17 fix round 1)", () => {
+  it("is locked while pending or done, open to Escape and outside clicks otherwise", () => {
+    expect(sheetLocked({ pending: true, done: false })).toBe(true);
+    expect(sheetLocked({ pending: false, done: true })).toBe(true);
+    expect(sheetLocked({ pending: false, done: false })).toBe(false);
+  });
+});
+
+describe("the date field shows the day that will be used (Task 17 fix round 1)", () => {
+  const withDeadline = { ...opening, deadlineDay: "2026-10-20" };
+  it("shows the opening's deadline for a later chosen day, and the default when nothing is chosen", () => {
+    expect(deadlineInputValue({ opening: withDeadline, deadline: "2026-10-30", today: "2026-10-05" })).toBe("2026-10-20");
+    expect(deadlineInputValue({ opening: withDeadline, deadline: "2026-10-12", today: "2026-10-05" })).toBe("2026-10-12");
+    expect(deadlineInputValue({ opening: withDeadline, deadline: null, today: "2026-10-05" })).toBe("2026-10-20");
+    expect(deadlineInputValue({ opening, deadline: null, today: "2026-10-05" })).toBe("2026-10-19");
+  });
+
+  it("keeps a past day as typed, so its reason reads next to it", () => {
+    expect(deadlineInputValue({ opening: withDeadline, deadline: "2026-10-01", today: "2026-10-05" })).toBe("2026-10-01");
+    expect(deadlineInputValue({ opening: null, deadline: null, today: "2026-10-05" })).toBe("");
   });
 });

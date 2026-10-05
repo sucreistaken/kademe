@@ -10,7 +10,12 @@ import { requireUser } from "@/server/session";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** Gives a not-yet-opened link seven more days. */
+/**
+ * Gives a not-yet-opened exam link seven more days (Today's "7 gün uzat").
+ * Only an exam invitation of the session's organisation: hiring links get
+ * their own extend on the opening (ruling C8), so a hiring link id here is
+ * treated like an unknown one (Task 17 fix round 1).
+ */
 export async function extendLink(formData: FormData) {
   const user = await requireUser("student:invite");
   const linkId = String(formData.get("linkId") ?? "");
@@ -19,7 +24,7 @@ export async function extendLink(formData: FormData) {
     .select({ link: assessmentLinks })
     .from(assessmentLinks)
     .innerJoin(assessments, eq(assessments.id, assessmentLinks.assessmentId))
-    .where(and(eq(assessmentLinks.id, linkId), eq(assessments.orgId, user.orgId)));
+    .where(and(eq(assessmentLinks.id, linkId), eq(assessments.orgId, user.orgId), eq(assessments.solution, "LANGUAGE_EXAM")));
   if (!row) redirect(back);
   const next = new Date(Math.max(Date.now(), row.link.expiresAt.getTime()) + 7 * DAY_MS);
   await db

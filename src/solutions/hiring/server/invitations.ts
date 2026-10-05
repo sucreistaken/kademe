@@ -29,11 +29,11 @@ import { isUuid } from "@/server/settings";
 import {
   addDays,
   candidateProgress,
+  cleanInviteName,
   formatInviteDeadline,
   inviteMessage,
   isEmail,
   linkExpiryDay,
-  MAX_NAME_LENGTH,
   SURVEY_MIN_ANSWERS,
   type CandidateProgress,
 } from "../rules/invitation";
@@ -100,12 +100,6 @@ const origin = (baseUrl?: string) => baseUrl ?? process.env.APP_ORIGIN ?? "http:
 /** Separates this lock's keys from any other advisory lock (pg_advisory_xact_lock(int, int)). */
 const INVITE_LOCK_CLASS = 0x48495245; // "HIRE"
 
-/** The same name rule as the pasted list (parseInviteRows): 2 to MAX_NAME_LENGTH characters, no angle brackets, no "@". */
-function cleanName(value: string): string | null {
-  const name = value.replace(/\s+/g, " ").trim();
-  const length = Array.from(name).length;
-  return length >= 2 && length <= MAX_NAME_LENGTH && !/[<>@]/.test(name) ? name : null;
-}
 
 /** The words of the ready message: organisation, position, minutes on the clock (without extra time), contact. */
 async function messageParts(x: Executor, orgId: string, positionId: string, versionId: string) {
@@ -126,7 +120,8 @@ export async function createHiringInvitation(
   options: { baseUrl?: string; now?: Date } = {},
 ): Promise<InviteOutcome> {
   const now = options.now ?? new Date();
-  const fullName = cleanName(input.fullName);
+  // The one name rule of the pasted list and the form (cleanInviteName).
+  const fullName = cleanInviteName(input.fullName);
   // Never cut an address: a cut one is someone else's. isEmail caps the length.
   const email = input.email.trim();
   if (!fullName) return { ok: false, code: "NAME" };

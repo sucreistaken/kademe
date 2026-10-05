@@ -15,6 +15,24 @@ export const isEmail = (value: string): boolean => {
   return v.length <= MAX_EMAIL_LENGTH && EMAIL_RE.test(v);
 };
 export const MAX_INVITE_ROWS = 50;
+/**
+ * The longest pasted text read after the cut to MAX_INVITE_ROWS lines
+ * (firstInviteLines): room for that many rows of the longest quoted name and
+ * address with separators, generously; a longer line is not a candidate row.
+ */
+export const MAX_INVITE_TEXT = MAX_INVITE_ROWS * 1024;
+
+/**
+ * One name rule for the pasted list, the invite form and the server: spaces
+ * collapsed, 2 to MAX_NAME_LENGTH characters counted as code points (an emoji
+ * is one), no angle brackets and no "@" (an address in the name cell). The
+ * cleaned name, or null.
+ */
+export function cleanInviteName(value: string): string | null {
+  const name = value.replace(/\s+/g, " ").trim();
+  const length = Array.from(name).length;
+  return length >= 2 && length <= MAX_NAME_LENGTH && !/[<>@]/.test(name) ? name : null;
+}
 /** The overview shows the candidate experience only from this many survey answers (HIRING-UX 5.4: no noisy signal). */
 export const SURVEY_MIN_ANSWERS = 5;
 
@@ -165,12 +183,34 @@ export function parseInviteRows(text: string): { rows: InviteRow[]; tooMany: boo
     email = email.replace(/^mailto:/i, "").trim();
     const fullName = cells.join(" ").replace(/\s+/g, " ").trim();
     const key = email.toLowerCase();
-    const nameOk = Array.from(fullName).length >= 2 && Array.from(fullName).length <= MAX_NAME_LENGTH && !/[<>@]/.test(fullName);
+    const nameOk = cleanInviteName(fullName) !== null;
     const problem: InviteRow["problem"] = !isEmail(email) ? "EMAIL" : !nameOk ? "NAME" : seen.has(key) ? "DUPLICATE" : null;
     if (isEmail(email)) seen.add(key);
     rows.push({ line: i + 1, fullName, email, problem });
   }
   return { rows, tooMany };
+}
+
+/**
+ * The pasted text up to its MAX_INVITE_ROWS-th non-blank line, the only rows
+ * parseInviteRows reads, with line breaks as "\n" (so line numbers stay the
+ * same). The form sends this and the server cuts the same way before its
+ * length check, so a long spreadsheet paste invites its first rows instead of
+ * failing as a whole.
+ */
+export function firstInviteLines(text: string): string {
+  const lines = text.split(LINE_BREAK_RE);
+  let rows = 0;
+  let end = lines.length;
+  for (let i = 0; i < lines.length; i += 1) {
+    if (!lines[i].replace(/\uFEFF/g, "").trim()) continue;
+    rows += 1;
+    if (rows === MAX_INVITE_ROWS) {
+      end = i + 1;
+      break;
+    }
+  }
+  return lines.slice(0, end).join("\n");
 }
 
 const DAY_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
