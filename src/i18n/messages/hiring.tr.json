@@ -644,7 +644,7 @@
     "rowDUPLICATE": "Satır {line}: bu e-posta listede iki kez var.",
     "tooMany": "İlk {max} satır alındı; kalanları ayrı bir davette gönder.",
     "rowsReady": "{count} aday davete hazır.",
-    "previewTitle": "Kaydedilecek adaylar",
+    "previewTitle": "Listeden okunan adaylar",
     "previewLine": "Satır {line}",
     "previewNoName": "(ad yok)",
     "previewNoEmail": "(e-posta yok)",

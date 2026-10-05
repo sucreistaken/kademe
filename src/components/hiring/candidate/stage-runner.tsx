@@ -28,7 +28,12 @@ import { uploadSink } from "./upload-sink";
 
 /** Minor 10: how long a start, commit or submit may take before the runner stops waiting and offers a retry. */
 const REQUEST_MS = 20_000;
-/** Fix round 2: how long a close waits for pending autosaves; the commit carries its own answer, so a hung save never blocks it. */
+/**
+ * Fix round 2: how long a close waits for pending autosaves. A commit carries
+ * its own answer, so a hung save never blocks it; a submit (the candidate's or
+ * the one when time is up) carries no answer, so a draft whose save has not
+ * landed within this bound is not part of what the stage closes with.
+ */
 const FLUSH_MS = 5_000;
 /**
  * Task 14: how long a close waits for a take that is still finishing (its last

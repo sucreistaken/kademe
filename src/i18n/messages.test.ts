@@ -66,6 +66,11 @@ describe("dictionaries", () => {
     expect(hiringEn.hiringOpenings.noPermission).toBe("Your role cannot open a hiring opening.");
   });
 
+  it("heads the invite preview without saying every row will be saved (marked rows are not)", () => {
+    expect(hiringTr.hiringInvite.previewTitle).toBe("Listeden okunan adaylar");
+    expect(hiringEn.hiringInvite.previewTitle).toBe("Candidates read from your list");
+  });
+
   it("no message contains an em dash (HIRING-UX E5)", () => {
     for (const [name, tr, en] of PAIRS) {
       expect(JSON.stringify([tr, en]), name).not.toContain("\u2014");

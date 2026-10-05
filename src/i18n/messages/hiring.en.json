@@ -644,7 +644,7 @@
     "rowDUPLICATE": "Line {line}: this e-mail is in the list twice.",
     "tooMany": "The first {max} lines were taken; send the rest in another invitation.",
     "rowsReady": "{count, plural, one {One candidate is ready to invite.} other {# candidates are ready to invite.}}",
-    "previewTitle": "Candidates as they will be saved",
+    "previewTitle": "Candidates read from your list",
     "previewLine": "Line {line}",
     "previewNoName": "(no name)",
     "previewNoEmail": "(no e-mail)",
