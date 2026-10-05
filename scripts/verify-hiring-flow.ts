@@ -559,11 +559,12 @@ async function main() {
   console.log("\nThe overview's survey, released in batches of five (Task 19 fix round 1)");
   // Its own organisation, so the mail count above stays as it is. The real statement on Postgres:
   // the oldest whole batches only, ordered by created_at then assessment_id, trimmed comments.
+  // Answers count only once they are a day old (fix round 2), so these are dated in January.
   const quiet = await freshOrganisation();
   const quietOwner = { id: quiet.ownerId, orgId: quiet.orgId };
   const surveyOpening = await buildPublishedOpening({ orgId: quiet.orgId, ownerId: quiet.ownerId, memberIds: [quiet.ownerId], kind: "text" });
   const surveyed: string[] = [];
-  for (let i = 0; i < 11; i++) {
+  for (let i = 0; i < 15; i++) {
     const r = await createHiringInvitation(quietOwner, { openingId: surveyOpening.openingId, fullName: `Anket Aday ${i}`, email: `anket${i}-${Date.now()}@example.com`, locale: "tr", deadline: null }, { baseUrl: "https://kademe.test" });
     if (!r.ok) throw new Error(`survey invite: ${r.code}`);
     surveyed.push(r.assessmentId);
@@ -593,6 +594,14 @@ async function main() {
   await db.update(s.hiringSurveyResponses).set({ createdAt: new Date(surveyBase + 9 * 60_000) }).where(eq(s.hiringSurveyResponses.assessmentId, surveyed[10]));
   const tied = JSON.stringify(await surveyNow());
   check(tied === JSON.stringify(await surveyNow()) && JSON.parse(tied).count === 10, "a tie at the edge of a batch is released the same way on every read", tied);
+  // Fix round 2: three more old answers make 14; a fifteenth written just now does not count yet.
+  for (let i = 11; i < 14; i++) await answerAt(i, 3, `Eski ${i}`);
+  await db.insert(s.hiringSurveyResponses).values({ assessmentId: surveyed[14], rating: 5, comment: "Az önce" });
+  const young = await surveyNow();
+  check(young.count === 10 && !young.comments.includes("Az önce"), "an answer younger than a day does not count toward the next batch", young);
+  await db.update(s.hiringSurveyResponses).set({ createdAt: new Date(surveyBase + 14 * 60_000) }).where(eq(s.hiringSurveyResponses.assessmentId, surveyed[14]));
+  const aged = await surveyNow();
+  check(aged.count === 15 && aged.comments.length === 3, "once it is a day old, the fifteenth releases the third batch", aged);
 
   console.log(failed === 0 ? "\nall checks passed" : `\n${failed} check(s) failed`);
   process.exit(failed === 0 ? 0 : 1);

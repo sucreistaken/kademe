@@ -125,10 +125,10 @@
     "funnelOver": "Ortanca süre tahminden belirgin uzun.",
     "experienceTitle": "Aday deneyimi",
     "experienceOff": "Bitiş anketi kapalı.",
-    "experienceWaiting": "{needed} cevap gelince görünür.",
+    "experienceWaiting": "{needed} cevap gelince, en az bir gün sonra görünür.",
     "experienceAverage": "{average}/5 · {count} cevap",
     "experienceComments": "Rastgele seçilmiş isimsiz yorumlar",
-    "experienceBatch": "Gizlilik için {batch} cevapta bir güncellenir."
+    "experienceBatch": "Gizlilik için her {batch} cevapta ve bir gün gecikmeyle güncellenir."
   },
   "hiringGate": {
     "stageLabel": "Aşama {n}",

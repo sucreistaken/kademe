@@ -668,6 +668,43 @@ describe("openingFunnel", () => {
     expect(batch.where).toMatch(/order by r\.created_at asc, r\.assessment_id asc\s+limit \$\d+/i);
     expect(batch.where).toMatch(/avg\(rating\)/i);
     expect(batch.where).toMatch(/order by created_at desc, assessment_id desc\s+limit 20/i);
+    // Fix round 2 (4): the array keeps that order explicitly.
+    expect(batch.where).toMatch(/array_agg\(comment order by created_at desc, assessment_id desc\)/i);
+  });
+
+  // Fix round 2 (1): the release moment is never tied to one completion.
+  it("counts only answers older than a day, in the total and in the released batch", async () => {
+    fake.respond = funnelWorld([say(5, "İyi"), say(4), say(3), say(4), say(5)]);
+    await openingFunnel(ORG, OPENING);
+    const count = fake.ops.find((o) => o.table === "hiring_survey_responses")!;
+    expect(count.where).toContain(`"hiring_survey_responses"."created_at" < now() - interval '24 hours'`);
+    expect(released()!.where).toMatch(/r\.created_at < now\(\) - interval '24 hours'/);
+  });
+
+  // Fix round 2 (3): a deletion between the two reads must not show a smaller, revealing batch.
+  it("waits when the batch read finds fewer answers than were released", async () => {
+    const five = [say(5, "a"), say(4, "b"), say(3, "c"), say(4, "d"), say(5, "e")];
+    fake.respond = (op) => {
+      if (op.table === "(execute)") return [{ count: 4, average: "4", comments: ["a", "b", "c", "d"] }];
+      return funnelWorld(five)(op);
+    };
+    expect((await openingFunnel(ORG, OPENING)).survey).toEqual({ count: 0, average: null, comments: [] });
+  });
+
+  // Fix round 2 (2): the shown order carries no time, only the seed and the words themselves.
+  it("samples from the pool sorted by content, so the order the database gave changes nothing", async () => {
+    const pool = ["kiraz", "Elma", "armut", "Çilek", "  incir "];
+    const answers = pool.map((c) => say(4, c));
+    fake.respond = funnelWorld(answers);
+    const first = (await openingFunnel(ORG, OPENING)).survey.comments;
+    fake.respond = funnelWorld([...answers].reverse());
+    expect((await openingFunnel(ORG, OPENING)).survey.comments).toEqual(first);
+    const seen: string[][] = [];
+    const prng = () => () => 0.999999;
+    // With a shuffle that keeps every item in place, the trio is the first three by content (code units).
+    fake.respond = funnelWorld(answers);
+    seen.push((await openingFunnel(ORG, OPENING, prng)).survey.comments);
+    expect(seen[0]).toEqual(["Elma", "armut", "incir"]);
   });
 
   it("shows nothing before five answers, and asks nothing more than the count", async () => {

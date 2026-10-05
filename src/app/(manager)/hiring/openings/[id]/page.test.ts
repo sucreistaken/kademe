@@ -220,6 +220,7 @@ describe("the overview's funnel (HIRING-UX 5.4)", () => {
     const body = text(page);
     // Fix round 1, I1: six answers release the oldest five; the sixth ("Kısa", rating 4) is nowhere.
     expect(body).toContain("4,2/5 · 5 cevap");
+    expect(body).toContain("Gizlilik için her 5 cevapta ve bir gün gecikmeyle güncellenir.");
     expect(["Akıcıydı", "Uzundu", "Net"].filter((c) => body.includes(c))).toHaveLength(3);
     expect(dump(page)).not.toContain("Kısa");
     // Only the average carries "/5": no comment has its own rating beside it.
@@ -250,7 +251,7 @@ describe("the overview's funnel (HIRING-UX 5.4)", () => {
     ];
     const page = await render();
     const body = text(page);
-    expect(body).toContain("5 cevap gelince görünür.");
+    expect(body).toContain("5 cevap gelince, en az bir gün sonra görünür.");
     expect(body).not.toContain("şu an");
     for (const c of ["Kötüydü", "Uzundu", "İyi", "Net"]) expect(dump(page)).not.toContain(c);
   });

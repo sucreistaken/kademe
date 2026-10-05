@@ -730,14 +730,15 @@ export async function openingFunnel(orgId: string, openingId: string, prng: (see
       .select({ assessmentId: attempts.assessmentId, startedAt: attempts.startedAt, completedAt: attempts.completedAt })
       .from(attempts)
       .where(and(inArray(attempts.assessmentId, ids), eq(attempts.isPrimary, true), isNotNull(attempts.startedAt))),
-    // The survey is read for the opening through its invitations (M2), never by a list of ids.
+    // The survey is read for the opening through its invitations (M2), never by a list of ids;
+    // only answers older than a day count (fix round 2), in this total and in the batch read.
     db
       .select({ n: sql<number>`count(*)::int` })
       .from(hiringSurveyResponses)
       .innerJoin(hiringAssessments, eq(hiringAssessments.assessmentId, hiringSurveyResponses.assessmentId))
       .innerJoin(assessments, and(eq(assessments.id, hiringAssessments.assessmentId), eq(assessments.orgId, orgId)))
       .innerJoin(candidates, and(eq(candidates.id, assessments.candidateId), isNull(candidates.deletedAt)))
-      .where(and(eq(hiringAssessments.orgId, orgId), eq(hiringAssessments.openingId, openingId))),
+      .where(and(eq(hiringAssessments.orgId, orgId), eq(hiringAssessments.openingId, openingId), sql`${hiringSurveyResponses.createdAt} < now() - interval '24 hours'`)),
     versionsOf(orgId, openingId),
   ]);
   const { live } = workingVersions(versions);
@@ -770,11 +771,16 @@ export async function openingFunnel(orgId: string, openingId: string, prng: (see
 }
 
 /**
- * The released part of the opening's finish survey (Task 19 fix round 1, I1
- * and M2): the oldest releasedSurveyCount(total) answers, ordered by when they
- * came (then by invitation id, so ties are stable), counted and averaged in
- * SQL; the comment pool is the 20 newest non-empty comments among them. No
- * date and no rating per comment leaves the database.
+ * The released part of the opening's finish survey (Task 19 fix rounds 1 and
+ * 2): of the answers older than a day (so a release is never the moment one
+ * candidate finished), the oldest releasedSurveyCount(total), ordered by when
+ * they came (then by invitation id, so ties are stable), counted and averaged
+ * in SQL; the comment pool is the 20 newest non-empty comments among them. No
+ * date and no rating per comment leaves the database. If the batch read finds
+ * fewer answers than were released (one was deleted between the two reads),
+ * it waits: a smaller batch would tell what the missing answer was. The pool
+ * is sorted by its words before the seeded sample, so the order shown carries
+ * no time.
  */
 async function releasedSurvey(orgId: string, openingId: string, total: number, prng: (seed: number) => () => number): Promise<OpeningFunnel["survey"]> {
   const released = releasedSurveyCount(total);
@@ -787,25 +793,28 @@ async function releasedSurvey(orgId: string, openingId: string, total: number, p
       join assessments a on a.id = h.assessment_id and a.org_id = ${orgId}
       join candidates c on c.id = a.candidate_id and c.deleted_at is null
       where h.org_id = ${orgId} and h.opening_id = ${openingId}
+        and r.created_at < now() - interval '24 hours'
       order by r.created_at asc, r.assessment_id asc
       limit ${released}
     )
     select
       (select count(*)::int from released) as count,
       (select avg(rating) from released) as average,
-      (select coalesce(array_agg(comment), '{}') from (
-        select comment from released
+      (select coalesce(array_agg(comment order by created_at desc, assessment_id desc), '{}') from (
+        select comment, created_at, assessment_id from released
         where btrim(coalesce(comment, '')) <> ''
         order by created_at desc, assessment_id desc
         limit 20
       ) pool) as comments
   `)) as unknown as Array<{ count: number; average: string | number | null; comments: Array<string | null> | null }>;
   const count = Number(row?.count ?? 0);
-  if (count === 0 || row?.average === null || row?.average === undefined) return { count: 0, average: null, comments: [] };
+  if (count !== released || row?.average === null || row?.average === undefined) return { count: 0, average: null, comments: [] };
   const pool = (row.comments ?? [])
     .map((c) => (c ?? "").trim())
     .filter((c) => c !== "")
-    .slice(0, SURVEY_COMMENTS_POOL);
+    .slice(0, SURVEY_COMMENTS_POOL)
+    // By code units: the same order on every server, whatever its locale.
+    .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
   return {
     count,
     average: Math.round(Number(row.average) * 10) / 10,

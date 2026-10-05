@@ -125,10 +125,10 @@
     "funnelOver": "The median is clearly longer than the estimate.",
     "experienceTitle": "Candidate experience",
     "experienceOff": "The finish survey is off.",
-    "experienceWaiting": "Shows from {needed} answers.",
+    "experienceWaiting": "Shows from {needed} answers, at least a day later.",
     "experienceAverage": "{average}/5 · {count} answers",
     "experienceComments": "Unnamed comments, picked at random",
-    "experienceBatch": "Updates every {batch} answers, for privacy."
+    "experienceBatch": "Updates every {batch} answers and a day late, for privacy."
   },
   "hiringGate": {
     "stageLabel": "Stage {n}",
