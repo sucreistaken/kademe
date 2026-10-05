@@ -161,6 +161,11 @@ export class ChunkedUploader {
     return this.failed;
   }
 
+  /** Recorded bytes that have not landed yet (buffered, or cut into parts waiting in line). */
+  get pendingBytes() {
+    return this.bufferedBytes + this.waitingBytes;
+  }
+
   /**
    * Opens the upload through the solution's init endpoint (`initPath`, e.g.
    * "/exam/media/init" or "/hiring/media/init"), which names what the take

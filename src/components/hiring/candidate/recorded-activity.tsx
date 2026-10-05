@@ -14,12 +14,12 @@ import { ActivityHeader } from "./activity-header";
 import type { RecordingResult, RecordingSink, TakeProgress } from "./recording-sink";
 import { serverMessage } from "./server-message";
 import { trackStream } from "./streams";
-import { finishFailure, retakesLeft, startFailure, Take, type RecorderLike, type TakeOutcome } from "./take";
+import { canTryAgain, finishFailure, retakesLeft, startFailure, Take, usedAfterStartFailure, type RecorderLike, type TakeOutcome } from "./take";
 
 export type RecordedPhase = "think" | "record" | "saving" | "review" | "saved" | "failed";
 /** Strict think time: the camera opens this long before recording starts by itself. */
 const WARMUP_MS = 3000;
-/** Video takes are capped near the exam's bitrate (600 kbps) so the parts keep up on a phone's upload. */
+/** Video takes are capped at 1 Mbps (the exam uses 600 kbps) so the parts keep up on a phone's upload. */
 const VIDEO_BITS_PER_SECOND = 1_000_000;
 /** A take still uploading after a reload (C14): its playback is asked again every 3 s, for about 2 minutes. */
 const PLAYBACK_POLL_MS = 3000;
@@ -226,6 +226,12 @@ export function RecordedActivity(props: RecordedProps) {
         chunkMs: CHUNK_MS,
         onProgress: setProgress,
         makeRecorder: () => new MediaRecorder(media, options) as unknown as RecorderLike,
+        // Fix round 1 (Minor 4): the take itself listens for the page going away until it is finished,
+        // also after this screen is gone (the question changed, or the stage closed past its wait).
+        watchPageHide: (onHide) => {
+          window.addEventListener("pagehide", onHide);
+          return () => window.removeEventListener("pagehide", onHide);
+        },
       });
       if (!mounted.current) {
         if (mode === "practice") next.discard();
@@ -242,6 +248,9 @@ export function RecordedActivity(props: RecordedProps) {
       void next.outcome.then((outcome) => settle(next, outcome));
     } catch (err) {
       const why = startFailure(err);
+      // No takes left on the server: none is offered here either (the "Tekrar dene" would only be refused again).
+      usedRef.current = usedAfterStartFailure(err, usedRef.current, activity.maxTakes);
+      setUsed(usedRef.current);
       setNote(why === "noTakes" ? t("noTakes") : why === "server" ? (serverMessage(err) ?? t("failed")) : t("failed"));
       setCanRetryFinish(false);
       setPhase("failed");
@@ -249,7 +258,7 @@ export function RecordedActivity(props: RecordedProps) {
     } finally {
       beginning.current = false;
     }
-  }, [disabled, timeUp, openStream, t, audioOnly, sink, mode, closeStream, answerMs, setPhase, settle]);
+  }, [disabled, timeUp, openStream, t, audioOnly, sink, mode, closeStream, answerMs, setPhase, settle, activity.maxTakes]);
 
   // The strict think time's own start reads the latest state (time up, disabled), not the first render's.
   const beginRef = useRef(begin);
@@ -338,15 +347,12 @@ export function RecordedActivity(props: RecordedProps) {
     });
   }, [flushes, activity.id]);
 
-  // A page that goes away mid-take keeps what landed. Leaving the question stops a take (an answer
-  // finishes in the background; the warm-up's is dropped) and closes the camera.
+  // Leaving the question stops a take (an answer finishes in the background; the warm-up's is
+  // dropped) and closes the camera. A page that goes away mid-take is the take's own listener (take.ts).
   useEffect(() => {
     mounted.current = true;
-    const onHide = () => take.current?.hide();
-    window.addEventListener("pagehide", onHide);
     return () => {
       mounted.current = false;
-      window.removeEventListener("pagehide", onHide);
       const current = take.current;
       if (current) {
         if (mode === "practice") current.discard();
@@ -589,7 +595,7 @@ export function RecordedActivity(props: RecordedProps) {
           <p role="alert" className="text-[16px] text-ink">
             {note ?? t("failed")}
           </p>
-          {!hidePrimary && (canRetryFinish || unlimited || used < activity.maxTakes) ? (
+          {!hidePrimary && canTryAgain({ canRetryFinish, maxTakes: activity.maxTakes, used }) ? (
             <ActionBar>
               <Button
                 id="record-again"
@@ -607,6 +613,13 @@ export function RecordedActivity(props: RecordedProps) {
                   {t("timeUpReason")}
                 </DisabledReason>
               ) : null}
+            </ActionBar>
+          ) : !hidePrimary && mode === "answer" ? (
+            // Every take is used (TAKES_EXHAUSTED): the server holds them, so the answer can still be used.
+            <ActionBar>
+              <Button id="record-use" variant="primary" size="lg" className="w-full text-[16px] sm:w-auto" disabled={disabled} onClick={() => latest.current.onUse?.()}>
+                {disabled && !timeUp ? t("saving") : t("use")}
+              </Button>
             </ActionBar>
           ) : null}
         </div>

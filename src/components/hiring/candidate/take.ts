@@ -9,7 +9,9 @@ import { isRetryable } from "./save-queue";
  *
  * - stopped (the candidate, the answer clock, the stage clock, a recorder
  *   error or leaving the question): the sink finishes it with its length;
- * - the page going away: the sink keeps what landed (abandon), once;
+ * - the page going away: the sink keeps what landed (abandon), once; the
+ *   take listens for that from its start until it is finished, also after
+ *   the screen that started it is gone (`watchPageHide`);
  * - the warm-up left: dropped, nothing finished.
  *
  * A finish that fails is never thrown: `outcome` says it, and `retry()`
@@ -35,13 +37,16 @@ export class Take {
   private hidden = false;
   private current: Promise<TakeOutcome>;
   private readonly startedAt: number;
+  private unwatch: (() => void) | null = null;
 
   private constructor(
     private readonly opened: OpenTake,
     private readonly recorder: RecorderLike,
     private readonly now: () => number,
     chunkMs: number,
+    watchPageHide?: (onHide: () => void) => () => void,
   ) {
+    this.unwatch = watchPageHide?.(() => this.hide()) ?? null;
     recorder.ondataavailable = (e) => {
       if (!this.dropped && e.data.size > 0) opened.push(e.data);
     };
@@ -66,6 +71,8 @@ export class Take {
     chunkMs: number;
     now?: () => number;
     onProgress?: (p: TakeProgress) => void;
+    /** Registers `onHide` for the page going away (pagehide); returns its removal. */
+    watchPageHide?: (onHide: () => void) => () => void;
   }): Promise<Take> {
     const opened = await input.sink.open(input.mime, input.onProgress);
     let recorder: RecorderLike;
@@ -76,7 +83,7 @@ export class Take {
       opened.abandon(0);
       throw err;
     }
-    return new Take(opened, recorder, input.now ?? Date.now, input.chunkMs);
+    return new Take(opened, recorder, input.now ?? Date.now, input.chunkMs, input.watchPageHide);
   }
 
   get recording(): boolean {
@@ -104,27 +111,46 @@ export class Take {
   hide(): void {
     if (this.settled || this.dropped || this.hidden) return;
     this.hidden = true;
-    this.opened.abandon(this.durationMs ?? this.now() - this.startedAt);
+    // Still recording (or stopped before the recorder's last chunk came): the take is cut.
+    const cut = this.recording || this.durationMs === null;
+    this.opened.abandon(this.durationMs ?? this.now() - this.startedAt, cut);
   }
 
   /** The warm-up's page is left: nothing is kept or finished. */
   discard(): void {
     if (this.dropped) return;
     this.dropped = true;
+    this.stopWatching();
     this.recorder.ondataavailable = null;
     this.stop();
     this.opened.abandon(0);
+  }
+
+  private stopWatching() {
+    this.unwatch?.();
+    this.unwatch = null;
   }
 
   private finish(): Promise<TakeOutcome> {
     return this.opened.finish(this.durationMs ?? 0).then(
       (result): TakeOutcome => {
         this.settled = true;
+        this.stopWatching();
         return { ok: true, result };
       },
       (error: unknown): TakeOutcome => ({ ok: false, error }),
     );
   }
+}
+
+/** Takes the screen counts after a start failed: TAKES_EXHAUSTED means the server holds them all (fix round 1, Minor 6). */
+export function usedAfterStartFailure(err: unknown, used: number, maxTakes: number): number {
+  return startFailure(err) === "noTakes" && Number.isFinite(maxTakes) ? Math.max(used, maxTakes) : used;
+}
+
+/** Whether the failure screen offers "Tekrar dene": the same take's finish again, or a new take while one is left. */
+export function canTryAgain(input: { canRetryFinish: boolean; maxTakes: number; used: number }): boolean {
+  return input.canRetryFinish || !Number.isFinite(input.maxTakes) || input.used < input.maxTakes;
 }
 
 /** Retakes left after `used` takes; the first take is not a retake (HIRING-UX 6.6 "1 hakkın kaldı"). */

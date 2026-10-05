@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { OpenTake, RecordingResult, RecordingSink } from "./recording-sink";
-import { finishFailure, retakesLeft, startFailure, Take, type RecorderLike } from "./take";
+import { canTryAgain, finishFailure, retakesLeft, startFailure, Take, usedAfterStartFailure, type RecorderLike } from "./take";
 
 /** A MediaRecorder stand-in: chunks and stops are driven by the test. */
 class FakeRecorder implements RecorderLike {
@@ -30,7 +30,7 @@ function fakeSink(finish?: (durationMs: number) => Promise<RecordingResult>) {
   const opened = {
     push: (chunk: Blob) => void chunk.text().then((t) => pushed.push(t)),
     finish: vi.fn<(durationMs: number) => Promise<RecordingResult>>(finish ?? (async () => ({ status: "READY", ref: "t1" }))),
-    abandon: vi.fn<(durationMs: number) => void>(),
+    abandon: vi.fn<(durationMs: number, cut?: boolean) => void>(),
   } satisfies OpenTake;
   const sink = { open: vi.fn<RecordingSink["open"]>(async () => opened) };
   return { sink, opened, pushed };
@@ -97,7 +97,8 @@ describe("one take", () => {
     take.hide();
     take.hide();
     expect(opened.abandon).toHaveBeenCalledTimes(1);
-    expect(opened.abandon).toHaveBeenCalledWith(4000);
+    // Still recording: the recorder had not handed its last seconds over, so the take is cut.
+    expect(opened.abandon).toHaveBeenCalledWith(4000, true);
 
     const other = fakeSink();
     const rec2 = new FakeRecorder();
@@ -115,6 +116,55 @@ describe("one take", () => {
     take.stop();
     take.hide();
     expect(opened.abandon).toHaveBeenCalledTimes(1);
+    // The recording had ended: whether it is whole is the sink's to say (fix round 1, Minor 3).
+    expect(opened.abandon.mock.calls[0][1]).toBe(false);
+  });
+
+  it("listens for the page going away from its start until it is finished, even after its screen is gone (fix round 1, Minor 4)", async () => {
+    const { sink, opened } = fakeSink();
+    let handler: (() => void) | null = null;
+    const unwatch = vi.fn(() => {
+      handler = null;
+    });
+    const watchPageHide = vi.fn((h: () => void) => {
+      handler = h;
+      return unwatch;
+    });
+    const rec = new FakeRecorder();
+    const take = await Take.begin({ sink, mime: "video/webm", makeRecorder: () => rec, chunkMs: 5000, watchPageHide });
+    expect(watchPageHide).toHaveBeenCalledTimes(1);
+    // The screen that started the take may be gone by now; the page going away still keeps what landed.
+    handler!();
+    expect(opened.abandon).toHaveBeenCalledTimes(1);
+    expect(unwatch).not.toHaveBeenCalled();
+    take.stop();
+    await take.outcome;
+    expect(unwatch).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps listening after a failed finish (the take still waits), and stops when the retry finishes it", async () => {
+    let fail = true;
+    const { sink } = fakeSink(async () => {
+      if (fail) throw new TypeError("Failed to fetch");
+      return { status: "READY", ref: "t1" };
+    });
+    const unwatch = vi.fn();
+    const rec = new FakeRecorder();
+    const take = await Take.begin({ sink, mime: "video/webm", makeRecorder: () => rec, chunkMs: 5000, watchPageHide: () => unwatch });
+    take.stop();
+    await take.outcome;
+    expect(unwatch).not.toHaveBeenCalled();
+    fail = false;
+    await take.retry();
+    expect(unwatch).toHaveBeenCalledTimes(1);
+  });
+
+  it("a dropped warm-up take stops listening at once", async () => {
+    const { sink } = fakeSink();
+    const unwatch = vi.fn();
+    const take = await Take.begin({ sink, mime: "video/webm", makeRecorder: () => new FakeRecorder(), chunkMs: 5000, watchPageHide: () => unwatch });
+    take.discard();
+    expect(unwatch).toHaveBeenCalledTimes(1);
   });
 
   it("the warm-up's take is dropped when its page is left: nothing finished, later chunks not kept", async () => {
@@ -168,6 +218,17 @@ describe("takes and failures", () => {
     expect(startFailure(Object.assign(new Error("x"), { code: "TAKES_EXHAUSTED", status: 409 }))).toBe("noTakes");
     expect(startFailure(Object.assign(new Error("Süre doldu."), { code: "STAGE_EXPIRED", status: 409 }))).toBe("server");
     expect(startFailure(new TypeError("Failed to fetch"))).toBe("failed");
+  });
+
+  it("no takes left on the server: the screen counts every take as used, so it offers no new one (fix round 1, Minor 6)", () => {
+    const exhausted = Object.assign(new Error("x"), { code: "TAKES_EXHAUSTED", status: 409 });
+    expect(usedAfterStartFailure(exhausted, 1, 2)).toBe(2);
+    expect(usedAfterStartFailure(new TypeError("Failed to fetch"), 1, 2)).toBe(1);
+    const used = usedAfterStartFailure(exhausted, 1, 2);
+    expect(canTryAgain({ canRetryFinish: false, maxTakes: 2, used })).toBe(false);
+    expect(canTryAgain({ canRetryFinish: false, maxTakes: 2, used: 1 })).toBe(true);
+    expect(canTryAgain({ canRetryFinish: true, maxTakes: 2, used: 2 })).toBe(true);
+    expect(canTryAgain({ canRetryFinish: false, maxTakes: Number.POSITIVE_INFINITY, used: 9 })).toBe(true);
   });
 
   it("tells a finish worth trying again from a take the server gave back", () => {

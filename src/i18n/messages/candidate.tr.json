@@ -736,7 +736,7 @@
     "autoStopPractice": "Süre dolunca kayıt kendiliğinden biter.",
     "saving": "Kaydediliyor",
     "saved": "Kaydedildi.",
-    "incomplete": "Bağlantı koptuğu için kaydın bir kısmı yüklenemedi; elimizdeki kadarı kaydedildi.",
+    "incomplete": "Kaydının bir kısmı bize ulaşmadı; ulaşan kadarı kaydedildi.",
     "reviewTitle": "Kaydını izle",
     "reviewTitleAudio": "Kaydını dinle",
     "use": "Bu cevabı kullan",

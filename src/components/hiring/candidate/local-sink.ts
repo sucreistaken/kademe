@@ -15,6 +15,8 @@ export function localSink(): RecordingSink & { release(): void } {
       return {
         push: (chunk) => void chunks.push(chunk),
         async finish() {
+          // Fix round 1 (Minor 8): a new take replaces the one before it; its blob is freed now, not at the end.
+          for (const old of urls.splice(0)) URL.revokeObjectURL(old);
           const url = URL.createObjectURL(new Blob(chunks, { type: mime }));
           urls.push(url);
           return { status: "READY", ref: null, localUrl: url };

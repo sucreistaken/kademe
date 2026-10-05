@@ -6,6 +6,8 @@ const h = vi.hoisted(() => ({
   beacon: vi.fn(() => true),
   uploader: null as null | {
     uploadRef: string;
+    interrupted: boolean;
+    pendingBytes: number;
     push: ReturnType<typeof vi.fn>;
     finish: ReturnType<typeof vi.fn>;
   },
@@ -34,7 +36,7 @@ describe("uploadSink: an answer's take", () => {
     vi.useFakeTimers();
     h.open.mockClear();
     h.beacon.mockClear();
-    h.uploader = { uploadRef: "take-1", push: vi.fn(), finish: vi.fn(async () => ({ status: "READY", bytes: 10, durationMs: 1000 })) };
+    h.uploader = { uploadRef: "take-1", interrupted: false, pendingBytes: 0, push: vi.fn(), finish: vi.fn(async () => ({ status: "READY", bytes: 10, durationMs: 1000 })) };
   });
   afterEach(() => vi.useRealTimers());
 
@@ -92,8 +94,25 @@ describe("uploadSink: an answer's take", () => {
 
   it("a page going away mid-take completes what landed with a beacon, marked incomplete", async () => {
     const take = await uploadSink("tok", 1, "a").open("video/webm");
-    take.abandon(4200);
+    take.abandon(4200, true);
     expect(h.beacon).toHaveBeenCalledWith("tok", "/media/complete", { uploadRef: "take-1", durationMs: 4200, incomplete: true });
+  });
+
+  it("marks the beaconed take incomplete only when something is missing (fix round 1, Minor 3)", async () => {
+    const take = await uploadSink("tok", 1, "a").open("video/webm");
+    const incompleteOf = () => (h.beacon.mock.calls.at(-1) as unknown as [string, string, { incomplete: boolean }])[2].incomplete;
+    // The recording had stopped and every part landed: the take is whole.
+    take.abandon(4200, false);
+    expect(incompleteOf()).toBe(false);
+    // Parts still waiting in line will not land.
+    h.uploader!.pendingBytes = 10;
+    take.abandon(4200, false);
+    expect(incompleteOf()).toBe(true);
+    // A part was given up on the way.
+    h.uploader!.pendingBytes = 0;
+    h.uploader!.interrupted = true;
+    take.abandon(4200, false);
+    expect(incompleteOf()).toBe(true);
   });
 });
 
@@ -132,6 +151,20 @@ describe("localSink: the warm-up's take", () => {
     take.abandon(0);
     expect(fetchMock).not.toHaveBeenCalled();
     expect(beaconMock).not.toHaveBeenCalled();
+  });
+
+  it("frees the previous take's URL when a new take finishes (fix round 1, Minor 8)", async () => {
+    const sink = localSink();
+    const first = await sink.open("video/webm");
+    first.push(new Blob(["a"]));
+    const one = await first.finish(1000);
+    expect(revoked).toEqual([]);
+    const second = await sink.open("video/webm");
+    second.push(new Blob(["b"]));
+    const two = await second.finish(1000);
+    expect(revoked).toEqual([one.localUrl]);
+    sink.release();
+    expect(revoked).toEqual([one.localUrl, two.localUrl]);
   });
 
   it("drops an abandoned take and frees every URL it made on release", async () => {

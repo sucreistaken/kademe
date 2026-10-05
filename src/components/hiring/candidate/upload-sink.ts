@@ -44,8 +44,10 @@ export function uploadSink(token: string, stagePosition: number, activityId: str
             }
           }
         },
-        abandon(durationMs) {
-          apiBeacon(token, "/media/complete", { uploadRef: uploader.uploadRef, durationMs, incomplete: true });
+        abandon(durationMs, cut = true) {
+          // Fix round 1 (Minor 3): a take whose recording had ended and whose parts all landed is whole.
+          const incomplete = cut || uploader.interrupted || uploader.pendingBytes > 0;
+          apiBeacon(token, "/media/complete", { uploadRef: uploader.uploadRef, durationMs, incomplete });
         },
       };
     },

@@ -736,7 +736,7 @@
     "autoStopPractice": "When the time is up, recording stops by itself.",
     "saving": "Saving",
     "saved": "Saved.",
-    "incomplete": "Part of your recording could not upload because the connection dropped; what we have is saved.",
+    "incomplete": "Part of your recording did not reach us; what did is saved.",
     "reviewTitle": "Watch your recording",
     "reviewTitleAudio": "Listen to your recording",
     "use": "Use this answer",
