@@ -51,6 +51,11 @@ export const hiringModule: SolutionModule = {
       const h = await requireHiring(ctx);
       return loadConsentText(h.assessment.orgId, h.hiring.consentTextId);
     },
+    async renderPage(slot, input) {
+      // Loaded on demand: the candidate screens are not needed by any endpoint.
+      const { renderHiringPage } = await import("./candidate/pages");
+      return renderHiringPage(slot, input);
+    },
   },
   attempts: {
     openSegment: runningSegment,

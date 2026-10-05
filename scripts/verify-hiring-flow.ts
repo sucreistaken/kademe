@@ -381,20 +381,80 @@ async function main() {
 
   console.log("\nWhat a page can reach in process");
   // Every candidate page asks solutionPage first; the module's title is the page header's.
-  // Hiring renders no page of its own yet (module.renderPage arrives with the candidate
-  // screens), so the rendered document and RSC payload are scanned in the browser check (C10).
+  // Hiring renders the landing and the details form (Task 11); the check, stage, warm-up and
+  // finish slots answer with the invalid-link card until their tasks (12, 13, 14, 16) replace
+  // them. Every node rendered here joins the leak scan; the browser check scans the real
+  // document and RSC payload (C10).
   const pageRead = (node: unknown) => JSON.stringify(node ?? null, (_key, value) => (typeof value === "function" || typeof value === "symbol" ? undefined : value));
+  /** A rendered page, or the address Next's redirect() sends it to (its digest is "NEXT_REDIRECT;type;url;status;"). */
+  async function page(raw: string, slot: "landing" | "info" | "check" | "practice" | "stage" | "done", params: Record<string, string> = {}, query: Record<string, string> = {}): Promise<{ node?: string; to?: string }> {
+    try {
+      const node = await solutionPage(raw, slot, Promise.resolve(query), params);
+      const read = node === undefined ? undefined : pageRead(node);
+      if (read !== undefined) sent.push(read);
+      return { node: read };
+    } catch (error) {
+      const digest = (error as { digest?: unknown }).digest;
+      if (typeof digest === "string" && digest.startsWith("NEXT_REDIRECT;")) return { to: digest.split(";").slice(2, -2).join(";") };
+      throw error;
+    }
+  }
+  const invalidCard = (r: { node?: string }) => !!r.node && r.node.includes('"problem":"INVALID"');
+  check(typeof hiringModule.candidate.renderPage === "function", "hiring renders its own candidate pages (module.renderPage)");
   for (const [label, raw, slot, params] of [
     ["finished, landing", token, "landing", {}],
     ["finished, stage 2", token, "stage", { n: "2" }],
-    ["finished by hand, done", token3, "done", {}],
   ] as const) {
-    const node = await solutionPage(raw, slot, undefined, { ...params });
-    // Flips when hiring gets its own pages: then this scan must be extended, not the line deleted.
-    check(node === undefined, `${label}: solutionPage hands no hiring page yet (the core page answers)`, typeof node);
-    if (node !== undefined) sent.push(pageRead(node));
+    const r = await page(raw, slot, { ...params });
+    check(r.to === `/a/${token}/done`, `${label}: sent to its finish page`, r);
   }
-  check(hiringModule.candidate.renderPage === undefined, "hiring has no renderPage yet: the rendered page and RSC scan is the browser check's (C10)");
+  const handDone = await page(token3, "done");
+  check(invalidCard(handDone), "finished by hand, done: the invalid-link card until Task 16", handDone.to ?? handDone.node?.slice(0, 120));
+
+  const fresh = await createHiringInvitation(owner, { openingId: fixture.openingId, fullName: "Leyla Şahin", email: `leyla-${Date.now()}@example.com`, locale: "tr", deadline: null }, { baseUrl: "https://kademe.test" });
+  if (!fresh.ok) throw new Error(fresh.code);
+  const token6 = fresh.url.split("/a/")[1];
+  const toInfo = await page(token6, "info");
+  check(toInfo.to === `/a/${token6}`, "a new candidate asking for /info is sent to the landing", toInfo);
+  const switched = await page(token6, "landing", {}, { lang: "en" });
+  const [inEnglish] = await db.select({ locale: s.assessments.locale }).from(s.assessments).where(eq(s.assessments.id, fresh.assessmentId));
+  check(switched.to === `/a/${token6}` && inEnglish.locale === "en", "?lang=en is written to the invitation and dropped from the address", { to: switched.to, locale: inEnglish.locale });
+  const landing = await page(token6, "landing");
+  check(!!landing.node && landing.node.includes('"consentBody"') && landing.node.includes(JSON.stringify(consentText.body.en)), "the landing renders, with the invitation's frozen hiring consent text in English", landing.to ?? landing.node?.slice(0, 120));
+  check(!!landing.node && landing.node.includes('"orgName":"Örnek A.Ş."') && (landing.node.match(/LEAKVISIBLE_[A-Z]+/g) ?? []).length >= 1, "positive control: the landing's props carry the organisation and a LEAKVISIBLE text", landing.node?.match(/LEAKVISIBLE_[A-Z]+/g));
+  check(!!landing.node && !landing.node.includes("TEAMSECRET"), "and no TEAMSECRET text", landing.node?.match(/TEAMSECRET_[A-Z_]+/g));
+  check((await call("POST /consent", token6, { accepted: true })).json.step === "CHECK", "the landing's consent leads to the device check");
+  const [leyla] = await db.select({ id: s.assessments.candidateId }).from(s.assessments).where(eq(s.assessments.id, fresh.assessmentId));
+  await db.update(s.candidates).set({ email: null }).where(eq(s.candidates.id, leyla.id));
+  const info = await page(token6, "info");
+  check(!!info.node && info.node.includes('"initial"') && info.node.includes("Leyla Şahin"), "without an e-mail address the details form renders, filled from the invitation", info.to ?? info.node?.slice(0, 120));
+  await db.update(s.candidates).set({ email: `leyla-${Date.now()}@example.com` }).where(eq(s.candidates.id, leyla.id));
+  const checkPage = await page(token6, "check");
+  check(invalidCard(checkPage), "the device check slot: the invalid-link card until Task 12", checkPage.to);
+  const toCheck = await page(token6, "info");
+  check(toCheck.to === `/a/${token6}/check`, "with the details given, /info sends on to /check", toCheck);
+  state = await call("POST /device-check", token6);
+  check(state.status === 200 && state.json.step === "STAGE", "the device check leads to stage 1", state.json.step);
+  const stagePage = await page(token6, "stage", { n: "1" });
+  check(invalidCard(stagePage), "the stage slot: the invalid-link card until Task 13", stagePage.to);
+  const practicePage = await page(token6, "practice");
+  check(state.json.practice ? invalidCard(practicePage) : practicePage.to === `/a/${token6}/stage/1`, `the warm-up slot: ${state.json.practice ? "the invalid-link card until Task 14" : "no warm-up in this version, sent to stage 1"}`, practicePage);
+
+  const expiring = await createHiringInvitation(owner, { openingId: fixture.openingId, fullName: "Mert Aydın", email: `mert-${Date.now()}@example.com`, locale: "tr", deadline: null }, { baseUrl: "https://kademe.test" });
+  if (!expiring.ok) throw new Error(expiring.code);
+  const token7 = expiring.url.split("/a/")[1];
+  await db.update(s.assessmentLinks).set({ expiresAt: new Date(Date.now() - 60_000) }).where(eq(s.assessmentLinks.assessmentId, expiring.assessmentId));
+  const expired = await page(token7, "landing");
+  check(!!expired.node && expired.node.includes('"problem":"EXPIRED"'), "an expired link shows the expired-link card", expired.to ?? expired.node?.slice(0, 120));
+  await db.update(s.assessmentLinks).set({ expiresAt: new Date(Date.now() + 86_400_000) }).where(eq(s.assessmentLinks.assessmentId, expiring.assessmentId));
+  await db.update(s.hiringOpenings).set({ status: "CLOSED" }).where(eq(s.hiringOpenings.id, fixture.openingId));
+  const closed = await page(token7, "landing");
+  check(!!closed.node && closed.node.includes('"contactEmail":"deniz@ornek.test"') && !closed.node.includes('"consentBody"'), "a closed opening shows a not-started candidate the closed card, not the landing", closed.to ?? closed.node?.slice(0, 120));
+  const notStarted = await page(token6, "stage", { n: "1" });
+  check(notStarted.to === `/a/${token6}`, "a candidate who has not started a stage is stopped by the closed opening too", notStarted);
+  const stillIn = await page(token4, "stage", { n: "1" });
+  check(invalidCard(stillIn), "a candidate already inside a stage of the closed opening still reaches their stage slot", stillIn.to);
+
   for (const raw of [token, token3]) {
     const resolved = await resolveToken(raw);
     check(!!resolved.ctx, "the finished token still resolves for the page header");
@@ -404,7 +464,7 @@ async function main() {
   // The invitation e-mails reach the candidate too.
   const mails = await db.select({ kind: s.messageOutbox.kind, subject: s.messageOutbox.subject, body: s.messageOutbox.body }).from(s.messageOutbox).where(eq(s.messageOutbox.orgId, team.orgId));
   const invites = mails.filter((m) => m.kind === "INVITE");
-  check(invites.length === 5 && invites.every((m) => m.body.includes("https://kademe.test/a/")), `the five invitation e-mails (with their links) join the scan, with every other outbox mail (${mails.length} in all)`, mails.map((m) => m.kind));
+  check(invites.length === 7 && invites.every((m) => m.body.includes("https://kademe.test/a/")), `the seven invitation e-mails (with their links) join the scan, with every other outbox mail (${mails.length} in all)`, mails.map((m) => m.kind));
   for (const m of mails) sent.push(`${m.subject}\n${m.body}`);
 
   console.log("\nLeak scan over every body the candidate received");
