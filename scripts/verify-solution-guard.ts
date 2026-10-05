@@ -4,7 +4,8 @@
  * token. Runs against a dev server (default http://localhost:3100) on the same
  * database as DATABASE_URL. Adds its invitations, and for the hiring positive
  * control a DRAFT opening (a draft is deletable, a published one is not), and
- * removes all of them at the end. That control proves only the serving gate
+ * removes all of them at the end, with the audit_logs and message_outbox rows
+ * its invitations wrote (it checks both tables hold as many rows as before). That control proves only the serving gate
  * (hiring terms -> the endpoint answers); an invitation to a PUBLISHED version,
  * walked through every endpoint, is verify:hiring-flow's (throw-away database).
  * Refuses the shared `kademe` (which .env names) and anything but the local
@@ -53,11 +54,20 @@ async function main() {
   const [placement] = await db.select().from(s.examBlueprints).where(eq(s.examBlueprints.mode, "PLACEMENT")).limit(1);
   if (!org || !placement) throw new Error("no organisation or placement exam in this database");
 
+  // What the run must leave as it found it (the invitation writes one of each).
+  const tally = async () => {
+    const [row] = await db.execute<{ audit: number; outbox: number }>(sql`select (select count(*) from audit_logs)::int as audit, (select count(*) from message_outbox)::int as outbox`);
+    return { audit: Number(row.audit), outbox: Number(row.outbox) };
+  };
+  const before = await tally();
+
+  const examEmail = `guard-${Date.now()}@example.com`;
   const exam = await createInvitation({
-    orgId: org.id, blueprintId: placement.id, fullName: "Guard exam", email: `guard-${Date.now()}@example.com`,
+    orgId: org.id, blueprintId: placement.id, fullName: "Guard exam", email: examEmail,
     claimedLevel: null, locale: "tr", invitedBy: null,
   });
   if (!exam.ok) throw new Error(exam.code);
+  const assessmentIds: string[] = [exam.assessmentId];
 
   // A HIRING invitation of core rows only: no hiring terms, so no endpoint serves it.
   const personIds: string[] = [];
@@ -67,6 +77,7 @@ async function main() {
     const [person] = await db.insert(s.candidates).values({ orgId: org.id, fullName: `Guard hiring ${label}`, email: `guard-h-${label.replace(/\W+/g, "-")}-${Date.now()}@example.com` }).returning();
     personIds.push(person.id);
     const [hiring] = await db.insert(s.assessments).values({ orgId: org.id, candidateId: person.id, solution: "HIRING", locale: "tr" }).returning();
+    assessmentIds.push(hiring.id);
     await db.insert(s.assessmentLinks).values({ assessmentId: hiring.id, tokenHash: token.hash, status, expiresAt: shape.expiresAt ?? new Date(Date.now() + 86_400_000), notBefore: shape.notBefore ?? null });
     return { ...token, assessmentId: hiring.id };
   }
@@ -260,6 +271,9 @@ async function main() {
     if (legacy.status === 409) ok(`PUT /answer (legacy path, rewritten): 409 ${legacy.json?.error}`);
     else bad(`PUT /answer legacy: ${legacy.status} ${JSON.stringify(legacy.json)}`);
   } finally {
+    // The rows the invitations wrote outside their own cascade: the invite mail and its audit entry.
+    await db.delete(s.auditLogs).where(and(eq(s.auditLogs.orgId, org.id), inArray(s.auditLogs.subjectId, assessmentIds)));
+    await db.delete(s.messageOutbox).where(and(eq(s.messageOutbox.orgId, org.id), eq(s.messageOutbox.toEmail, examEmail)));
     // People first (their invitations, hiring terms, links and attempts cascade), then the draft.
     for (const id of personIds) await db.delete(s.candidates).where(eq(s.candidates.id, id));
     await db.delete(s.candidates).where(eq(s.candidates.id, exam.candidateId));
@@ -276,6 +290,9 @@ async function main() {
          + (select count(*) from positions where id = ${draft.positionId ?? null}) as n`);
   if (Number(leftovers[0]?.n ?? -1) === 0) ok("cleanup: no guard invitation, hiring term or draft opening is left");
   else bad(`cleanup left ${leftovers[0]?.n} row(s)`);
+  const after = await tally();
+  if (after.audit === before.audit && after.outbox === before.outbox) ok(`cleanup: audit_logs (${after.audit}) and message_outbox (${after.outbox}) hold as many rows as before the run`);
+  else bad(`cleanup: audit_logs ${before.audit} -> ${after.audit}, message_outbox ${before.outbox} -> ${after.outbox}`);
 
   console.log(failed === 0 ? "\nAll checks passed." : `\n${failed} check(s) failed.`);
   process.exit(failed === 0 ? 0 : 1);
