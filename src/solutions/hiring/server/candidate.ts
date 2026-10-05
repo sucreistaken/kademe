@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNotNull, isNull, like, lt, ne, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull, like, lt, ne, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import type { Executor } from "@/db/executor";
 import {
@@ -6,6 +6,7 @@ import {
   assessments,
   attempts,
   candidates,
+  consents,
   hiringActivities,
   hiringAssessments,
   hiringAssignments,
@@ -74,6 +75,10 @@ import { loadVersionContent } from "./content";
  *    a late recording still attaches, an abandoned upload is salvaged.
  *  - Every closed run records who closed it (closed_by), and the last closed
  *    stage writes the invitation's completion.
+ *  - A transaction reads and writes only through its own `tx`: a read on the
+ *    global `db` inside one waits for a second pool connection, and enough
+ *    simultaneous requests then hang every query in the app (Task 8 review).
+ *    transaction-executor.test.ts checks this file for it.
  */
 
 export type HiringContext = CandidateContext & {
@@ -114,17 +119,38 @@ export async function hiringServes(ctx: CandidateContext): Promise<boolean> {
   return (await loadHiringContext(ctx)) !== null;
 }
 
-/**
- * The invitation's version, its current attempt and that attempt's runs. With
- * `lock`, the runs are read only after the attempt's row lock is held (inside
- * the caller's transaction), so nothing closes or starts a run under the caller.
- */
-async function loadFlow(h: HiringContext, x: Executor = db, options: { lock?: boolean } = {}): Promise<Flow> {
-  const content = await loadVersionContent(h.assessment.orgId, h.hiring.versionId, x);
+/** Outside any transaction: the invitation's version, its current attempt (created on first need) and that attempt's runs. */
+async function loadFlow(h: HiringContext): Promise<Flow> {
+  const content = await loadVersionContent(h.assessment.orgId, h.hiring.versionId);
   if (!content) throw new Error(`hiring version ${h.hiring.versionId} of invitation ${h.assessment.id} is missing`);
   const { attempt } = await currentAttempt(h.assessment);
-  if (options.lock) await lockAttempt(x, attempt.id);
-  const runs = await x.select().from(hiringStageRuns).where(eq(hiringStageRuns.attemptId, attempt.id));
+  const runs = await db.select().from(hiringStageRuns).where(eq(hiringStageRuns.attemptId, attempt.id));
+  return { content, stages: orderedStages(content), attempt, runs };
+}
+
+/** Attempt 1 is created before the transaction that then locks it (lockFlow never reaches the global db). */
+async function ensureAttempt(h: HiringContext): Promise<void> {
+  await currentAttempt(h.assessment);
+}
+
+/**
+ * Inside a transaction, on its connection only: the version, the invitation's
+ * newest attempt read and locked FOR NO KEY UPDATE, then that attempt's runs,
+ * so nothing closes or starts a run under the caller. The caller ran
+ * ensureAttempt before the transaction.
+ */
+async function lockFlow(h: HiringContext, tx: Executor): Promise<Flow> {
+  const content = await loadVersionContent(h.assessment.orgId, h.hiring.versionId, tx);
+  if (!content) throw new Error(`hiring version ${h.hiring.versionId} of invitation ${h.assessment.id} is missing`);
+  const [attempt] = await tx
+    .select()
+    .from(attempts)
+    .where(eq(attempts.assessmentId, h.assessment.id))
+    .orderBy(desc(attempts.attemptNumber))
+    .limit(1)
+    .for("no key update");
+  if (!attempt) throw new Error(`invitation ${h.assessment.id} has no attempt`);
+  const runs = await tx.select().from(hiringStageRuns).where(eq(hiringStageRuns.attemptId, attempt.id));
   return { content, stages: orderedStages(content), attempt, runs };
 }
 
@@ -138,8 +164,24 @@ function currentOf(flow: Pick<Flow, "stages" | "runs">): { index: number; stage:
   return null;
 }
 
+/** NO KEY UPDATE: serialises the attempt's writers without blocking inserts that reference the attempt (media assets). */
 async function lockAttempt(x: Executor, attemptId: string) {
-  await x.select({ id: attempts.id }).from(attempts).where(eq(attempts.id, attemptId)).for("update");
+  await x.select({ id: attempts.id }).from(attempts).where(eq(attempts.id, attemptId)).for("no key update");
+}
+
+/** Consent read on the caller's executor (the core hasConsented reads the global db). */
+async function consentedOn(x: Executor, assessmentId: string): Promise<boolean> {
+  const [row] = await x.select({ id: consents.id }).from(consents).where(eq(consents.assessmentId, assessmentId)).limit(1);
+  return !!row;
+}
+
+/**
+ * Whether the question carries an answer right now: rules/candidate-flow
+ * responseAnswered, plus a file still uploading, which counts like a take still
+ * uploading (the stage may close before the upload ends; the file attaches afterwards).
+ */
+function answeredNow(activity: ContentActivity, payload: HiringResponsePayload, usableTakes: number): boolean {
+  return responseAnswered(activity, payload, usableTakes > 0) || (activity.type === "FILE_UPLOAD" && !!payload.pendingFile);
 }
 
 /** Takes per response: how many count (not FAILED: an upload in progress counts) and the newest that counts. */
@@ -157,8 +199,8 @@ async function takeInfo(x: Executor, rows: ResponseRow[]) {
 }
 
 /** The server's own check that consent, details and (when something is recorded) the device check happened. */
-async function ready(h: HiringContext, flow: Flow): Promise<boolean> {
-  if (!(await hasConsented(h.assessment.id))) return false;
+async function ready(h: HiringContext, flow: Flow, x: Executor): Promise<boolean> {
+  if (!(await consentedOn(x, h.assessment.id))) return false;
   if (!h.candidate.fullName || !h.candidate.email) return false;
   if (devicesNeeded(toCandidateVersion(flow.content)).microphone && !flow.attempt.deviceCheckedAt) return false;
   return true;
@@ -183,14 +225,15 @@ async function closeRun(
     .where(and(eq(hiringStageRuns.id, run.id), isNull(hiringStageRuns.submittedAt)))
     .returning({ id: hiringStageRuns.id });
   if (claimed.length === 0) return false;
-  const rows = await x.select().from(hiringResponses).where(eq(hiringResponses.stageRunId, run.id));
+  // Locked, so an attachment finishing meanwhile waits and is not overwritten.
+  const rows = await x.select().from(hiringResponses).where(eq(hiringResponses.stageRunId, run.id)).for("update");
   const takes = await takeInfo(x, rows);
   let requiredCount = 0;
   let answeredRequired = 0;
   let answeredAny = 0;
   for (const activity of orderedActivities(stage)) {
     const row = rows.find((r) => r.activityId === activity.id);
-    const answered = row ? responseAnswered(activity, row.payload, takes(row).usable > 0) : false;
+    const answered = row ? answeredNow(activity, row.payload, takes(row).usable) : false;
     if (activity.required) {
       requiredCount += 1;
       if (answered) answeredRequired += 1;
@@ -325,12 +368,13 @@ export type StartRefusal = "NO_STAGE" | "NOT_READY" | "STAGE_MISMATCH" | "OPENIN
  * and the link marked as started. Idempotent: a started stage is left as it is.
  */
 export async function startStage(h: HiringContext, position: unknown, now: Date = new Date()): Promise<{ ok: true } | { ok: false; code: StartRefusal }> {
+  await ensureAttempt(h);
   return db.transaction(async (tx) => {
-    const flow = await loadFlow(h, tx, { lock: true });
+    const flow = await lockFlow(h, tx);
     const current = currentOf(flow);
     if (!current) return { ok: false as const, code: "NO_STAGE" as const };
     if (position !== current.index + 1) return { ok: false as const, code: "STAGE_MISMATCH" as const };
-    if (!(await ready(h, flow))) return { ok: false as const, code: "NOT_READY" as const };
+    if (!(await ready(h, flow, tx))) return { ok: false as const, code: "NOT_READY" as const };
     if (current.run?.startedAt) return { ok: true as const };
     if (!flow.runs.some((r) => r.startedAt)) {
       // Decision 12: a closed opening stops only candidates who have not started (a DRAFT one is not open either).
@@ -373,7 +417,7 @@ type Target = { run: RunRow; stage: ContentStage; activity: ContentActivity; res
  * and `current` is never a submitted run, so a submitted stage refuses writes.
  */
 async function writeTarget(h: HiringContext, x: Executor, position: unknown, activityId: unknown, now: Date): Promise<{ ok: true; target: Target } | { ok: false; code: WriteRefusal }> {
-  const flow = await loadFlow(h, x, { lock: true });
+  const flow = await lockFlow(h, x);
   const current = currentOf(flow);
   const rows = current?.run ? await x.select().from(hiringResponses).where(eq(hiringResponses.stageRunId, current.run.id)) : [];
   const activities = current ? orderedActivities(current.stage) : [];
@@ -395,12 +439,21 @@ async function writeTarget(h: HiringContext, x: Executor, position: unknown, act
   return { ok: true, target: { run: current.run, stage: current.stage, activity, response } };
 }
 
+/** Writes the draft of an open question (any question of a stage with a way back). */
+async function autosave(tx: Executor, target: Target, payload: HiringResponsePayload, now: Date) {
+  await tx
+    .update(hiringResponses)
+    .set({ payload, usedTextAlternative: !!payload.usedTextAlternative, updatedAt: now })
+    .where(target.stage.backNavigation ? eq(hiringResponses.id, target.response.id) : and(eq(hiringResponses.id, target.response.id), isNull(hiringResponses.answeredAt)));
+}
+
 /** Autosave of one question. Nothing is closed or scored until the candidate moves on. */
 export async function saveResponse(
   h: HiringContext,
   input: { position: unknown; activityId: unknown; answer: unknown },
   now: Date = new Date(),
 ): Promise<{ ok: true; at: string } | { ok: false; code: WriteRefusal }> {
+  await ensureAttempt(h);
   return db.transaction(async (tx) => {
     const found = await writeTarget(h, tx, input.position, input.activityId, now);
     if (!found.ok) return found;
@@ -408,10 +461,7 @@ export async function saveResponse(
     // Locked, so an upload attached meanwhile is part of `previous` and kept.
     const [row] = await tx.select().from(hiringResponses).where(eq(hiringResponses.id, target.response.id)).for("update");
     const payload = sanitizeResponse(target.activity, input.answer, row?.payload ?? target.response.payload);
-    await tx
-      .update(hiringResponses)
-      .set({ payload, usedTextAlternative: !!payload.usedTextAlternative, updatedAt: now })
-      .where(target.stage.backNavigation ? eq(hiringResponses.id, target.response.id) : and(eq(hiringResponses.id, target.response.id), isNull(hiringResponses.answeredAt)));
+    await autosave(tx, target, payload, now);
     return { ok: true as const, at: now.toISOString() };
   });
 }
@@ -422,6 +472,7 @@ export async function commitResponse(
   input: { position: unknown; activityId: unknown; answer?: unknown },
   now: Date = new Date(),
 ): Promise<{ ok: true } | { ok: false; code: WriteRefusal | "REQUIRED_MISSING" }> {
+  await ensureAttempt(h);
   return db.transaction(async (tx) => {
     const found = await writeTarget(h, tx, input.position, input.activityId, now);
     if (!found.ok) return found;
@@ -430,8 +481,12 @@ export async function commitResponse(
     const current = row ?? target.response;
     const payload = input.answer === undefined ? current.payload : sanitizeResponse(target.activity, input.answer, current.payload);
     const takes = await takeInfo(tx, [current]);
-    const answered = responseAnswered(target.activity, payload, takes(current).usable > 0);
-    if (target.activity.required && !answered) return { ok: false as const, code: "REQUIRED_MISSING" as const };
+    const answered = answeredNow(target.activity, payload, takes(current).usable);
+    if (target.activity.required && !answered) {
+      // What the candidate sent is kept as a draft, the question stays open.
+      if (input.answer !== undefined) await autosave(tx, target, payload, now);
+      return { ok: false as const, code: "REQUIRED_MISSING" as const };
+    }
     await tx
       .update(hiringResponses)
       .set({
@@ -459,8 +514,9 @@ export async function submitStage(
   position: unknown,
   now: Date = new Date(),
 ): Promise<{ ok: true } | { ok: false; code: SubmitRefusal; missing?: string[] }> {
+  await ensureAttempt(h);
   return db.transaction(async (tx) => {
-    const flow = await loadFlow(h, tx, { lock: true });
+    const flow = await lockFlow(h, tx);
     const current = currentOf(flow);
     if (!current) return { ok: false as const, code: "NO_STAGE" as const };
     if (position !== current.index + 1) return { ok: false as const, code: "STAGE_MISMATCH" as const };
@@ -472,12 +528,13 @@ export async function submitStage(
     const missing = missingRequired(activities, (id) => {
       const row = rows.find((r) => r.activityId === id);
       const activity = activities.find((a) => a.id === id)!;
-      return !!row && responseAnswered(activity, row.payload, takes(row).usable > 0);
+      return !!row && answeredNow(activity, row.payload, takes(row).usable);
     });
     const decision = submitDecision({ deadlineAt: run.deadlineAt, behaviour: current.stage.onTimeout, missingRequired: missing.length, now });
     if (decision.kind === "REJECT_REQUIRED") return { ok: false as const, code: "REQUIRED_MISSING" as const, missing };
     const reason = decision.expired ? "CLOCK" : "SUBMIT";
-    const closedBy = closedByOf({ reason, deadlineAt: run.deadlineAt, onTimeout: current.stage.onTimeout, now });
+    // This is a submit (by hand or the client's 0:00), whatever completion path it takes: under ALLOW_LATE it is always the candidate's.
+    const closedBy = closedByOf({ reason: "SUBMIT", deadlineAt: run.deadlineAt, onTimeout: current.stage.onTimeout, now });
     await closeRun(tx, run, current.stage, { reason, late: decision.late, closedBy }, now);
     await finishIfDone(tx, flow.attempt.id, h.assessment.id, h.candidate.id, flow.stages.map((s) => s.id), now);
     return { ok: true as const };
@@ -491,8 +548,10 @@ export async function setExtraTime(
   now: Date = new Date(),
 ): Promise<{ ok: true } | { ok: false; code: "EXTRA_TIME_INVALID" | "EXTRA_TIME_LOCKED" | "ALREADY_COMPLETED" }> {
   if (!isExtraTimePct(pct)) return { ok: false, code: "EXTRA_TIME_INVALID" };
+  await ensureAttempt(h);
   return db.transaction(async (tx) => {
-    const flow = await loadFlow(h, tx, { lock: true });
+    // completedAt and the runs are read after the attempt's lock.
+    const flow = await lockFlow(h, tx);
     if (flow.attempt.completedAt) return { ok: false as const, code: "ALREADY_COMPLETED" as const };
     if (extraTimeRefusal(flow.runs)) return { ok: false as const, code: "EXTRA_TIME_LOCKED" as const };
     await tx
@@ -506,11 +565,12 @@ export async function setExtraTime(
 
 /** The core heartbeat: marks the running stage alive (salvage waits for a quiet tab) and returns its deadline. */
 export async function stageHeartbeat(h: HiringContext, now: Date = new Date()): Promise<{ deadlineAt: Date | null }> {
+  // Only the invitation's current attempt: a retake's older attempt never takes the beat.
+  const { attempt } = await currentAttempt(h.assessment);
   const [run] = await db
     .select({ id: hiringStageRuns.id, deadlineAt: hiringStageRuns.deadlineAt })
     .from(hiringStageRuns)
-    .innerJoin(attempts, eq(attempts.id, hiringStageRuns.attemptId))
-    .where(and(eq(attempts.assessmentId, h.assessment.id), isNotNull(hiringStageRuns.startedAt), isNull(hiringStageRuns.submittedAt)))
+    .where(and(eq(hiringStageRuns.attemptId, attempt.id), isNotNull(hiringStageRuns.startedAt), isNull(hiringStageRuns.submittedAt)))
     .orderBy(asc(hiringStageRuns.orderIndex))
     .limit(1);
   if (!run) return { deadlineAt: null };
@@ -528,19 +588,43 @@ export async function runningSegment(attemptId: string): Promise<{ kind: string;
   return run ? { kind: "stage_run", runId: run.id } : null;
 }
 
-export type MediaRefusal = WriteRefusal | "NOT_A_RECORDING" | "NOT_A_FILE" | "TAKES_EXHAUSTED" | "FILE_TYPE_REJECTED" | "FILE_TOO_LARGE" | "FILE_EMPTY";
-export type UploadOpened = { uploadRef: string; mime: string; minPartBytes: number; proxy: boolean; partTargets: Array<{ partNumber: number; url: string; proxy: boolean }> };
+export type MediaRefusal =
+  | WriteRefusal
+  | "NOT_A_RECORDING"
+  | "NOT_A_FILE"
+  | "TAKES_EXHAUSTED"
+  | "FILE_TYPE_REJECTED"
+  | "FILE_TOO_LARGE"
+  | "FILE_EMPTY"
+  | "RECORDING_TYPE_REJECTED"
+  | "RECORDING_TOO_LARGE";
+export type UploadOpened = {
+  uploadRef: string;
+  mime: string;
+  minPartBytes: number;
+  proxy: boolean;
+  partTargets: Array<{ partNumber: number; url: string; proxy: boolean }>;
+  /** A recording's caps, for the recorder to stop at: bytes always, duration when the question sets an answer time. */
+  limits: { maxBytes: number; maxDurationMs: number | null } | null;
+};
 
 /** Part targets handed out with the upload; more come from the core /media/part-urls. */
 const PREFETCH_PARTS = 24;
+/** The most one take may weigh (well above a 10 minute 1080p WebM). */
+export const RECORDING_MAX_BYTES = 1024 * 1024 * 1024;
+/** Same margin as lib/timer isMediaOverlong: encoder overshoot on the last chunk, not a bonus. */
+const durationCapMs = (answerSeconds: number | null): number | null => (answerSeconds && answerSeconds > 0 ? Math.ceil(answerSeconds * 1000 * 1.1) : null);
 
 /**
  * Opens one upload for the running question: a take of a video or audio
- * question (decision 8: counted on the server under the response's lock) or
- * the file of a file question (decision 11). The asset belongs to the
- * invitation's organisation and attempt, and its storage key is derived from
- * ids the server owns. A take whose storage upload cannot open is FAILED and
- * so given back.
+ * question (decision 8: counted on the server under the response's lock; its
+ * container must be of the question's kind) or the file of a file question
+ * (decision 11). The asset belongs to the invitation's organisation and
+ * attempt, and its storage key is derived from ids the server owns. A take
+ * whose storage upload cannot open is FAILED and so given back, and the
+ * question's answer is decided again. A crash before the storage upload opens
+ * leaves an UPLOADING row without an upload id, which salvageHiringUploads
+ * expires (FAILED) after SALVAGE_MIN_AGE_MS.
  */
 export async function openUpload(
   h: HiringContext,
@@ -548,6 +632,7 @@ export async function openUpload(
   now: Date = new Date(),
 ): Promise<{ ok: true; upload: UploadOpened } | { ok: false; code: MediaRefusal }> {
   const rawMime = typeof input.mime === "string" ? input.mime : undefined;
+  await ensureAttempt(h);
   const opened = await db.transaction(async (tx) => {
     const found = await writeTarget(h, tx, input.position, input.activityId, now);
     if (!found.ok) return found;
@@ -567,12 +652,17 @@ export async function openUpload(
         .returning();
       const payload: HiringResponsePayload = { ...response.payload, pendingFile: { assetId: asset.id, name: cleanFileName(input.name), bytes: Math.round(bytes), mime } };
       await tx.update(hiringResponses).set({ payload, updatedAt: now }).where(eq(hiringResponses.id, response.id));
-      return { ok: true as const, asset, runId: target.run.id };
+      return { ok: true as const, asset, runId: target.run.id, limits: null };
     }
     if (input.kind !== "recording" || !isRecorded(target.activity.type)) return { ok: false as const, code: "NOT_A_RECORDING" as const };
+    const family = target.activity.type === "AUDIO" ? "audio/" : "video/";
+    const base = (rawMime ?? "").split(";")[0].trim().toLowerCase();
+    // An audio question never stores a video, and a video question never only sound.
+    if (base && !base.startsWith(family)) return { ok: false as const, code: "RECORDING_TYPE_REJECTED" as const };
+    if (input.bytes !== undefined && !(Number(input.bytes) <= RECORDING_MAX_BYTES)) return { ok: false as const, code: "RECORDING_TOO_LARGE" as const };
     const used = (await takeInfo(tx, [response]))(response).usable;
     if (used >= target.activity.maxTakes) return { ok: false as const, code: "TAKES_EXHAUSTED" as const };
-    const mime = normaliseMime(rawMime, target.activity.type === "AUDIO" ? "audio/webm" : "video/webm");
+    const mime = normaliseMime(rawMime, `${family}webm`);
     const [asset] = await tx
       .insert(mediaAssets)
       .values({ orgId: h.assessment.orgId, attemptId: target.run.attemptId, storageKey: "pending", mime, status: "UPLOADING", parts: [] })
@@ -581,7 +671,7 @@ export async function openUpload(
       .update(hiringResponses)
       .set({ takeAssetIds: [...response.takeAssetIds, asset.id], takesUsed: used + 1, updatedAt: now })
       .where(eq(hiringResponses.id, response.id));
-    return { ok: true as const, asset, runId: target.run.id };
+    return { ok: true as const, asset, runId: target.run.id, limits: { maxBytes: RECORDING_MAX_BYTES, maxDurationMs: durationCapMs(target.activity.answerSeconds) } };
   });
   if (!opened.ok) return opened;
   try {
@@ -590,9 +680,14 @@ export async function openUpload(
     const { uploadId } = await storage.initUpload(key, opened.asset.mime);
     await db.update(mediaAssets).set({ storageKey: key, uploadId }).where(eq(mediaAssets.id, opened.asset.id));
     const partTargets = await storage.signPartUrls(key, uploadId, Array.from({ length: PREFETCH_PARTS }, (_, i) => i + 1));
-    return { ok: true, upload: { uploadRef: opened.asset.id, mime: opened.asset.mime, minPartBytes: storage.minPartBytes, proxy: partTargets[0]?.proxy ?? true, partTargets } };
+    return {
+      ok: true,
+      upload: { uploadRef: opened.asset.id, mime: opened.asset.mime, minPartBytes: storage.minPartBytes, proxy: partTargets[0]?.proxy ?? true, partTargets, limits: opened.limits },
+    };
   } catch (error) {
     await failMedia(opened.asset.id);
+    // The take is given back: an older finished take becomes the answer again, a pending file is cleared.
+    await attachMedia({ ...opened.asset, status: "FAILED" }).catch((settleError: unknown) => console.error(`[hiring] could not settle ${opened.asset.id}`, settleError));
     throw error;
   }
 }
@@ -602,14 +697,18 @@ const ownsAsset = (assetId: string) =>
   sql`(${hiringResponses.takeAssetIds} @> ${JSON.stringify([assetId])}::jsonb OR ${hiringResponses.payload} -> 'pendingFile' ->> 'assetId' = ${assetId})`;
 
 /**
- * The module's onMediaComplete (and the salvage's): a finished take becomes the
- * answer when no newer take can still become it (decision 8: the newest wins;
- * a newer take that FAILED gives the place back), a finished file is attached
- * under the candidate's own name when it is complete and within its size
- * (decision 11). The response is found through the asset's own attempt and is
- * held FOR UPDATE while this decides (C14), so a save or a new take in the
- * same moment cannot overwrite it. A completion after the stage closed still
- * attaches: the answer is the candidate's.
+ * Decides the answer of the response that owns this asset, whenever one of its
+ * uploads ends: the module's onMediaComplete and onMediaFailed, the salvage,
+ * and an upload that could not open all call it with the asset's new status.
+ *
+ * A recording question's answer is the newest take that finished (READY or
+ * INCOMPLETE) with no newer take that can still become it (decision 8): a
+ * newer take still uploading keeps the decision open, a newer FAILED take
+ * gives the place back. A finished file is attached under the candidate's own
+ * name when it is complete and within its size, a failed or partial one only
+ * clears the pending upload (decision 11). The response is found through the
+ * asset's own attempt and held FOR UPDATE while this decides (C14). A
+ * completion after the stage closed still attaches: the answer is the candidate's.
  */
 export async function attachMedia(asset: MediaAssetRow): Promise<void> {
   await db.transaction(async (tx) => {
@@ -627,6 +726,8 @@ export async function attachMedia(asset: MediaAssetRow): Promise<void> {
     if (activity.type === "FILE_UPLOAD") {
       const pending = response.payload.pendingFile;
       if (!pending || pending.assetId !== asset.id) return;
+      // Still uploading: nothing to decide yet.
+      if (asset.status === "UPLOADING") return;
       const { pendingFile: _done, ...rest } = response.payload;
       void _done;
       const max = activity.config.maxFileBytes ?? DEFAULT_MAX_FILE_BYTES;
@@ -640,18 +741,23 @@ export async function attachMedia(asset: MediaAssetRow): Promise<void> {
         .where(eq(hiringResponses.id, response.id));
       return;
     }
-    if (asset.status !== "READY" && asset.status !== "INCOMPLETE") return;
-    const index = response.takeAssetIds.indexOf(asset.id);
-    if (index === -1) return;
-    const newer = response.takeAssetIds.slice(index + 1);
-    if (newer.length) {
-      const states = await tx.select({ id: mediaAssets.id, status: mediaAssets.status }).from(mediaAssets).where(inArray(mediaAssets.id, newer));
-      // A newer take still uploading or finished is (or will be) the answer.
-      if (newer.some((id) => states.find((m) => m.id === id)?.status !== "FAILED")) return;
+    if (!response.takeAssetIds.includes(asset.id)) return;
+    const others = response.takeAssetIds.filter((id) => id !== asset.id);
+    const states = others.length ? await tx.select({ id: mediaAssets.id, status: mediaAssets.status }).from(mediaAssets).where(inArray(mediaAssets.id, others)) : [];
+    // The asset in hand carries its new status; the others are read under the response's lock.
+    const statusOf = (id: string) => (id === asset.id ? asset.status : states.find((m) => m.id === id)?.status);
+    let answer: string | null = null;
+    for (const id of [...response.takeAssetIds].reverse()) {
+      const status = statusOf(id);
+      if (status === "FAILED") continue;
+      if (status === "READY" || status === "INCOMPLETE") answer = id;
+      // Uploading (or unknown): this newer take may still become the answer, so the decision waits.
+      break;
     }
+    if (!answer || (answer === response.mediaAssetId && !response.payload.usedTextAlternative)) return;
     const { usedTextAlternative: _alternative, ...payload } = response.payload;
     void _alternative;
-    await tx.update(hiringResponses).set({ mediaAssetId: asset.id, payload, usedTextAlternative: false, updatedAt: now }).where(eq(hiringResponses.id, response.id));
+    await tx.update(hiringResponses).set({ mediaAssetId: answer, payload, usedTextAlternative: false, updatedAt: now }).where(eq(hiringResponses.id, response.id));
   });
 }
 
@@ -765,10 +871,32 @@ export async function closeExpiredStageRuns(now: Date = new Date(), limit = 50):
  * decideSalvage on the owning stage run), as INCOMPLETE, attaches them like a
  * completion would, and sends recordings to transcription (the job reads the
  * hiring manifest's transcriptionHint: none, the provider detects the
- * language). The exam's sweep takes only uploads with a section run.
+ * language). A row whose storage upload never opened is expired (FAILED).
+ * Every FAILED take re-decides its question's answer (attachMedia). The
+ * exam's sweep takes only uploads with a section run.
  */
 export async function salvageHiringUploads(now: Date = new Date(), limit = 20): Promise<{ scanned: number; salvaged: number; failed: number; skipped: number }> {
   const oldEnough = new Date(now.getTime() - SALVAGE_MIN_AGE_MS);
+  const result = { scanned: 0, salvaged: 0, failed: 0, skipped: 0 };
+  // An upload whose storage side never opened (a crash between the row and the
+  // storage call) can never complete: it is given back, and its answer decided again.
+  const neverOpened = await db
+    .update(mediaAssets)
+    .set({ status: "FAILED" })
+    .where(
+      and(
+        sql`${mediaAssets.attemptId} in (select ${attempts.id} from ${attempts} where ${attempts.solution} = 'HIRING')`,
+        isNull(mediaAssets.sectionRunId),
+        eq(mediaAssets.status, "UPLOADING"),
+        lt(mediaAssets.createdAt, oldEnough),
+        or(isNull(mediaAssets.uploadId), eq(mediaAssets.storageKey, "pending")),
+      ),
+    )
+    .returning();
+  for (const asset of neverOpened) {
+    result.failed += 1;
+    await attachMedia(asset).catch((error: unknown) => console.error(`[hiring] could not settle ${asset.id}`, error));
+  }
   const rows = await db
     .select({ asset: mediaAssets })
     .from(mediaAssets)
@@ -785,7 +913,7 @@ export async function salvageHiringUploads(now: Date = new Date(), limit = 20): 
     )
     .orderBy(asc(mediaAssets.createdAt))
     .limit(limit);
-  const result = { scanned: rows.length, salvaged: 0, failed: 0, skipped: 0 };
+  result.scanned = rows.length;
   const storage = getStorage();
   for (const { asset } of rows) {
     try {
@@ -801,8 +929,14 @@ export async function salvageHiringUploads(now: Date = new Date(), limit = 20): 
       }
       const { bytes, parts } = await storage.salvage(asset.storageKey, asset.uploadId!);
       if (bytes === 0) {
-        await db.update(mediaAssets).set({ status: "FAILED" }).where(and(eq(mediaAssets.id, asset.id), eq(mediaAssets.status, "UPLOADING")));
+        const [failedAsset] = await db
+          .update(mediaAssets)
+          .set({ status: "FAILED" })
+          .where(and(eq(mediaAssets.id, asset.id), eq(mediaAssets.status, "UPLOADING")))
+          .returning();
         result.failed += 1;
+        // The take is given back: an older finished take becomes the answer again.
+        if (failedAsset) await attachMedia(failedAsset);
         continue;
       }
       const [updated] = await db

@@ -4,6 +4,7 @@ import { fake, writesOf, type Op } from "./test-fake-db";
 const io = vi.hoisted(() => ({
   enqueueTranscription: vi.fn<(id: string) => Promise<boolean>>(async () => true),
   salvage: vi.fn<(key: string, uploadId: string) => Promise<{ bytes: number; parts: Array<{ partNumber: number; etag: string; bytes: number }> }>>(),
+  initUpload: vi.fn<(key: string, mime: string) => Promise<{ uploadId: string }>>(async () => ({ uploadId: "up-1" })),
 }));
 
 vi.mock("@/db", async () => ({ db: (await import("./test-fake-db")).fakeDb() }));
@@ -11,7 +12,7 @@ vi.mock("@/lib/queue", () => ({ enqueueTranscription: io.enqueueTranscription })
 vi.mock("@/lib/storage", () => ({
   getStorage: () => ({
     minPartBytes: 0,
-    initUpload: async () => ({ uploadId: "up-1" }),
+    initUpload: io.initUpload,
     signPartUrls: async (_key: string, _id: string, numbers: number[]) => numbers.map((n) => ({ partNumber: n, url: `/p/${n}`, proxy: true })),
     getSignedUrl: async (key: string, seconds: number) => `/signed/${key}?s=${seconds}`,
     salvage: io.salvage,
@@ -160,6 +161,7 @@ beforeEach(() => {
   fake.respond = respond;
   io.enqueueTranscription.mockClear();
   io.salvage.mockReset();
+  io.initUpload.mockClear();
   world = {
     stages: [stageRow("s1", 0), stageRow("s2", 1)],
     activities: [activityRow("a1", "s1", 0), activityRow("a2", "s1", 1, { required: false }), activityRow("b1", "s2", 0)],
@@ -198,7 +200,8 @@ describe("startStage", () => {
   it("writes the deadline once, from now plus the chosen extra time, under the attempt's lock", async () => {
     const result = await startStage(h(), 1, NOW);
     expect(result).toEqual({ ok: true });
-    expect(fake.ops.find((o) => o.table === "attempts" && o.lock === "update")).toBeTruthy();
+    // Read and locked on the transaction's own connection (fix round 1: NO KEY UPDATE).
+    expect(fake.ops.find((o) => o.table === "attempts" && o.lock === "no key update")).toBeTruthy();
     const run = writesOf(fake.ops).find((w) => w.kind === "insert" && w.table === "hiring_stage_runs")!;
     expect(run.values).toEqual({ attemptId: ATTEMPT, stageId: "s1", orderIndex: 0, startedAt: NOW, deadlineAt: new Date(NOW.getTime() + 750_000) });
     const responses = writesOf(fake.ops).find((w) => w.kind === "insert" && w.table === "hiring_responses")!;
@@ -279,7 +282,7 @@ describe("writes reach only the running stage of the invitation's own version", 
   it("reads the runs only after it holds the attempt's lock, so a submit cannot close the stage under a write", async () => {
     running();
     await saveResponse(h(), { position: 1, activityId: "a1", answer: { text: "x" } }, NOW);
-    const lock = fake.ops.findIndex((o) => o.table === "attempts" && o.lock === "update");
+    const lock = fake.ops.findIndex((o) => o.table === "attempts" && o.lock === "no key update");
     const runs = fake.ops.findIndex((o) => o.table === "hiring_stage_runs" && o.kind === "select");
     expect(lock).toBeGreaterThanOrEqual(0);
     expect(runs).toBeGreaterThan(lock);
@@ -591,7 +594,7 @@ describe("closeExpiredStageRuns", () => {
     fake.respond = due(world.runs[1]);
     const now = later(700_000);
     expect(await closeExpiredStageRuns(now, 50)).toEqual({ scanned: 1, closed: 1 });
-    expect(fake.ops.find((o) => o.table === "attempts" && o.lock === "update")).toBeTruthy();
+    expect(fake.ops.find((o) => o.table === "attempts" && o.lock === "no key update")).toBeTruthy();
     expect(claimsOf(fake.ops)[0].values).toEqual({ submittedAt: now, closedBy: "CLOCK" });
     expect(claimsOf(fake.ops)[1].values).toEqual({ completion: "EXPIRED", wasLate: true });
     expect(writesOf(fake.ops).find((w) => w.table === "attempts")?.values).toEqual({ completedAt: now });
@@ -615,6 +618,8 @@ describe("salvageHiringUploads", () => {
   const upload = (over: Record<string, unknown>) => ({ id: TAKE, attemptId: ATTEMPT, createdAt: old, storageKey: `media/${ORG}/${ASSESSMENT}/${RUN}/${TAKE}.webm`, uploadId: "u1", mime: "video/webm", status: "UPLOADING", ...over });
 
   const scripted = (asset: Record<string, unknown>, type: string) => (op: Op) => {
+    // The expiry of never-opened uploads finds nothing here.
+    if (op.table === "media_assets" && op.kind === "update" && (op.values as { status?: string }).status === "FAILED" && op.where.includes("upload_id")) return [];
     if (op.table === "media_assets" && op.kind === "select") return [{ asset }];
     if (op.table === "media_assets" && op.kind === "update") return [{ ...asset, status: "INCOMPLETE", bytes: 300 }];
     if (op.table === "hiring_responses" && op.fields?.includes("completion")) return [{ completion: "EXPIRED", deadlineAt: old, lastHeartbeatAt: null }];
@@ -626,7 +631,7 @@ describe("salvageHiringUploads", () => {
   it("takes only hiring uploads, never an exam section's", async () => {
     fake.respond = () => [];
     await salvageHiringUploads(NOW, 20);
-    const query = fake.ops[0];
+    const query = fake.ops.find((o) => o.kind === "select" && o.table === "media_assets")!;
     expect(query.where).toContain('"attempts"."solution" = $');
     expect(query.params).toContain("HIRING");
     expect(query.where).toContain('"media_assets"."section_run_id" is null');
@@ -659,10 +664,13 @@ describe("salvageHiringUploads", () => {
 });
 
 describe("heartbeat, segment, survey", () => {
-  it("keeps the running stage of this invitation alive and returns its deadline", async () => {
-    fake.respond = (op) => (op.kind === "select" ? [{ id: RUN, deadlineAt: later(600_000) }] : []);
+  it("keeps the running stage of this invitation's current attempt alive and returns its deadline", async () => {
+    fake.respond = (op) => (op.table === "attempts" ? [world.attempt] : op.kind === "select" ? [{ id: RUN, deadlineAt: later(600_000) }] : []);
     expect(await stageHeartbeat(h(), NOW)).toEqual({ deadlineAt: later(600_000) });
     expect(fake.ops[0].params).toContain(ASSESSMENT);
+    const runs = fake.ops.find((o) => o.table === "hiring_stage_runs")!;
+    expect(runs.where).toContain('"hiring_stage_runs"."attempt_id" = $');
+    expect(runs.params).toContain(ATTEMPT);
     expect(writesOf(fake.ops)[0].values).toEqual({ lastHeartbeatAt: NOW });
     fake.respond = () => [];
     expect(await runningSegment(ATTEMPT)).toBeNull();
@@ -677,5 +685,151 @@ describe("heartbeat, segment, survey", () => {
     fake.respond = (op) => (op.table === "attempts" ? [{ completedAt: NOW, enabled: true }] : op.kind === "insert" ? [{ id: ASSESSMENT }] : []);
     expect(await saveSurvey(h(), { rating: 4, comment: "  İyiydi  " })).toEqual({ ok: true });
     expect(writesOf(fake.ops).find((w) => w.table === "hiring_survey_responses")?.values).toEqual({ assessmentId: ASSESSMENT, rating: 4, comment: "İyiydi" });
+  });
+});
+
+describe("fix round 1 (Task 8 review)", () => {
+  const running = () => {
+    world.runs = [runRow(RUN, "s1")];
+    world.responses = [responseRow("r1", RUN, "a1"), responseRow("r2", RUN, "a2")];
+  };
+
+  it("reads the attempt inside a write on the transaction itself, newest first and locked, after attempt 1 exists", async () => {
+    running();
+    await saveResponse(h(), { position: 1, activityId: "a1", answer: { text: "x" } }, NOW);
+    const reads = fake.ops.filter((o) => o.table === "attempts");
+    // First the core's currentAttempt (before the transaction, may create attempt 1), then the locked read.
+    expect(reads[0].lock).toBeUndefined();
+    expect(reads[1].lock).toBe("no key update");
+    expect(reads[1].where).toContain('"attempts"."assessment_id" = $');
+    expect(reads[1].params).toContain(ASSESSMENT);
+  });
+
+  it("records a hand submit after the deadline under ALLOW_LATE as the candidate's, even with a required answer missing", async () => {
+    world.stages = [stageRow("s1", 0, { onTimeout: "ALLOW_LATE" }), stageRow("s2", 1)];
+    running();
+    const at = later(900_000);
+    expect(await submitStage(h(), 1, at)).toEqual({ ok: true });
+    expect(claimsOf(fake.ops)[0].values).toEqual({ submittedAt: at, closedBy: "CANDIDATE" });
+  });
+
+  it("keeps the answer sent with a refused commit as a draft (the question stays open)", async () => {
+    running();
+    expect(await commitResponse(h(), { position: 1, activityId: "a1", answer: { text: "   " } }, NOW)).toEqual({ ok: false, code: "REQUIRED_MISSING" });
+    const write = writesOf(fake.ops).find((w) => w.table === "hiring_responses")!;
+    expect(write.values).toEqual({ payload: { text: "   " }, usedTextAlternative: false, updatedAt: NOW });
+    expect(write.where).toContain('"hiring_responses"."answered_at" is null');
+  });
+
+  it("closes a run holding its responses FOR UPDATE, and counts a file still uploading as an answer", async () => {
+    world.activities = [activityRow("f1", "s1", 0, { type: "FILE_UPLOAD" }), activityRow("b1", "s2", 0)];
+    world.runs = [runRow(RUN, "s1")];
+    world.responses = [responseRow("r1", RUN, "f1", { payload: { pendingFile: { assetId: "pf", name: "cv.pdf", bytes: 10, mime: "application/pdf" } } })];
+    const now = later(700_000);
+    fake.respond = (op) =>
+      op.table === "hiring_stage_runs" && op.kind === "select" && op.fields?.includes("run")
+        ? [{ run: world.runs[0], versionId: VERSION, orgId: ORG, assessmentId: ASSESSMENT, candidateId: "c-1" }]
+        : respond(op);
+    expect(await closeExpiredStageRuns(now, 50)).toEqual({ scanned: 1, closed: 1 });
+    expect(fake.ops.find((o) => o.table === "hiring_responses" && o.kind === "select")?.lock).toBe("update");
+    expect(claimsOf(fake.ops)[1].values).toEqual({ completion: "COMPLETE", wasLate: true });
+    expect(writesOf(fake.ops).find((w) => w.table === "hiring_responses")?.values).toMatchObject({ answeredAt: now });
+  });
+
+  describe("a failed take gives its place back to the newest finished one", () => {
+    const owner = (takes: string[], mediaAssetId: string | null = null) => ({ response: { id: "r1", takeAssetIds: takes, payload: {}, mediaAssetId }, activity: { type: "VIDEO", config: {} } });
+
+    it("attaches the older READY take when the newer take fails", async () => {
+      fake.respond = (op) => {
+        if (op.table === "hiring_responses") return [owner(["m1", "m2"])];
+        if (op.table === "media_assets") return [{ id: "m1", status: "READY" }];
+        return [];
+      };
+      await attachMedia({ id: "m2", attemptId: ATTEMPT, status: "FAILED", mime: "video/webm", bytes: 0 } as never);
+      expect(writesOf(fake.ops)[0].values).toMatchObject({ mediaAssetId: "m1", usedTextAlternative: false });
+    });
+
+    it("writes nothing when the decided answer is already the answer, or every take failed", async () => {
+      fake.respond = (op) => (op.table === "hiring_responses" ? [owner(["m1", "m2"], "m1")] : op.table === "media_assets" ? [{ id: "m1", status: "READY" }] : []);
+      await attachMedia({ id: "m2", attemptId: ATTEMPT, status: "FAILED" } as never);
+      fake.respond = (op) => (op.table === "hiring_responses" ? [owner(["m1", "m2"])] : op.table === "media_assets" ? [{ id: "m1", status: "FAILED" }] : []);
+      await attachMedia({ id: "m2", attemptId: ATTEMPT, status: "FAILED" } as never);
+      expect(writesOf(fake.ops)).toEqual([]);
+    });
+
+    it("when the storage upload cannot open: the take is FAILED and the question decided again", async () => {
+      world.activities = [activityRow("v1", "s1", 0, { type: "VIDEO", maxTakes: 3 })];
+      world.runs = [runRow(RUN, "s1")];
+      world.responses = [responseRow("r1", RUN, "v1", { takeAssetIds: ["m1"] })];
+      world.media = [{ id: "m1", status: "READY", durationMs: 1 }];
+      io.initUpload.mockRejectedValueOnce(new Error("storage down"));
+      const quiet = vi.spyOn(console, "error").mockImplementation(() => undefined);
+      fake.respond = (op) =>
+        op.table === "hiring_responses" && op.fields?.includes("response") ? [owner(["m1", "m-new"])] : op.table === "media_assets" && op.kind === "select" ? [{ id: "m1", status: "READY" }] : respond(op);
+      await expect(openUpload(h(), { position: 1, activityId: "v1", kind: "recording", mime: "video/webm" }, NOW)).rejects.toThrow(/storage down/);
+      quiet.mockRestore();
+      const writes = writesOf(fake.ops);
+      expect(writes.find((w) => w.table === "media_assets" && w.kind === "update")?.values).toEqual({ status: "FAILED" });
+      expect(writes.filter((w) => w.table === "hiring_responses").at(-1)?.values).toMatchObject({ mediaAssetId: "m1" });
+    });
+
+    it("when the salvage finds no bytes, and when an upload never opened its storage side", async () => {
+      const old = new Date(NOW.getTime() - 60 * 60 * 1000);
+      const take = { id: "m2", attemptId: ATTEMPT, createdAt: old, storageKey: `media/${ORG}/${ASSESSMENT}/${RUN}/m2.webm`, uploadId: "u2", mime: "video/webm", status: "UPLOADING" };
+      io.salvage.mockResolvedValueOnce({ bytes: 0, parts: [] });
+      fake.respond = (op) => {
+        if (op.table === "media_assets" && op.kind === "update" && op.where.includes("upload_id")) return [];
+        if (op.table === "media_assets" && op.kind === "update") return [{ ...take, status: "FAILED" }];
+        if (op.table === "media_assets" && op.kind === "select" && op.fields?.includes("asset")) return [{ asset: take }];
+        if (op.table === "media_assets") return [{ id: "m1", status: "READY" }];
+        if (op.table === "hiring_responses" && op.fields?.includes("completion")) return [{ completion: "EXPIRED", deadlineAt: old, lastHeartbeatAt: null }];
+        if (op.table === "hiring_responses") return [owner(["m1", "m2"])];
+        return [];
+      };
+      expect(await salvageHiringUploads(NOW, 20)).toEqual({ scanned: 1, salvaged: 0, failed: 1, skipped: 0 });
+      expect(writesOf(fake.ops).find((w) => w.table === "hiring_responses")?.values).toMatchObject({ mediaAssetId: "m1" });
+
+      fake.ops = [];
+      const pending = { ...take, id: "m3", storageKey: "pending", uploadId: null };
+      fake.respond = (op) => {
+        if (op.table === "media_assets" && op.kind === "update") return [{ ...pending, status: "FAILED" }];
+        if (op.table === "media_assets" && op.kind === "select" && op.fields?.includes("asset")) return [];
+        if (op.table === "media_assets") return [{ id: "m1", status: "READY" }];
+        if (op.table === "hiring_responses") return [owner(["m1", "m3"])];
+        return [];
+      };
+      expect(await salvageHiringUploads(NOW, 20)).toEqual({ scanned: 0, salvaged: 0, failed: 1, skipped: 0 });
+      const expiry = writesOf(fake.ops)[0];
+      expect(expiry.values).toEqual({ status: "FAILED" });
+      expect(expiry.where).toContain('"media_assets"."upload_id" is null');
+      expect(expiry.where).toContain('"media_assets"."storage_key" = $');
+      expect(expiry.params).toContain(new Date(NOW.getTime() - 30 * 60 * 1000).toISOString());
+      expect(writesOf(fake.ops).find((w) => w.table === "hiring_responses")?.values).toMatchObject({ mediaAssetId: "m1" });
+    });
+  });
+
+  describe("recordings are opened for their own kind and within their caps", () => {
+    const question = (type: string, over: Record<string, unknown> = {}) => {
+      world.activities = [activityRow("v1", "s1", 0, { type, maxTakes: 2, ...over })];
+      world.runs = [runRow(RUN, "s1")];
+      world.responses = [responseRow("r1", RUN, "v1")];
+    };
+
+    it("refuses a video for an audio question and sound only for a video question", async () => {
+      question("AUDIO");
+      expect(await openUpload(h(), { position: 1, activityId: "v1", kind: "recording", mime: "video/webm" }, NOW)).toEqual({ ok: false, code: "RECORDING_TYPE_REJECTED" });
+      question("VIDEO");
+      expect(await openUpload(h(), { position: 1, activityId: "v1", kind: "recording", mime: "audio/webm;codecs=opus" }, NOW)).toEqual({ ok: false, code: "RECORDING_TYPE_REJECTED" });
+      expect(writesOf(fake.ops)).toEqual([]);
+    });
+
+    it("refuses a declared size above the cap and hands the recorder its caps", async () => {
+      question("AUDIO", { answerSeconds: 60 });
+      expect(await openUpload(h(), { position: 1, activityId: "v1", kind: "recording", mime: "audio/webm", bytes: 2 * 1024 * 1024 * 1024 }, NOW)).toEqual({ ok: false, code: "RECORDING_TOO_LARGE" });
+      const opened = await openUpload(h(), { position: 1, activityId: "v1", kind: "recording", mime: "audio/webm" }, NOW);
+      expect(opened.ok && opened.upload.limits).toEqual({ maxBytes: 1024 * 1024 * 1024, maxDurationMs: 66_000 });
+      const asset = writesOf(fake.ops).find((w) => w.kind === "insert" && w.table === "media_assets")!;
+      expect((asset.values as { mime: string }).mime).toBe("audio/webm");
+    });
   });
 });
