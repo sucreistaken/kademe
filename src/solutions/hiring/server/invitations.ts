@@ -106,14 +106,22 @@ const origin = (baseUrl?: string) => baseUrl ?? process.env.APP_ORIGIN ?? "http:
 const INVITE_LOCK_CLASS = 0x48495245; // "HIRE"
 
 
-/** The words of the ready message: organisation, position, minutes on the clock (without extra time), contact. */
+/**
+ * The words of the ready message: organisation, position, contact, and the
+ * minutes on the clock the way the landing counts them (C25): the stages'
+ * minutes plus the grace of ALLOW_GRACE stages, without extra time.
+ */
 async function messageParts(x: Executor, orgId: string, positionId: string, versionId: string) {
-  const [[org], [position], [length]] = await Promise.all([
+  const [[org], [position], stages] = await Promise.all([
     x.select({ name: organizations.name, contactEmail: organizations.contactEmail }).from(organizations).where(eq(organizations.id, orgId)).limit(1),
     x.select({ name: positions.name }).from(positions).where(and(eq(positions.id, positionId), eq(positions.orgId, orgId))).limit(1),
-    x.select({ total: sql<number>`coalesce(sum(${hiringStages.durationSeconds}), 0)::int` }).from(hiringStages).where(eq(hiringStages.versionId, versionId)),
+    x
+      .select({ id: hiringStages.id, durationSeconds: hiringStages.durationSeconds, graceSeconds: hiringStages.graceSeconds, onTimeout: hiringStages.onTimeout })
+      .from(hiringStages)
+      .where(eq(hiringStages.versionId, versionId)),
   ]);
-  return { orgName: org?.name ?? "", orgContact: org?.contactEmail ?? null, positionName: position?.name ?? "", minutes: Math.ceil(Number(length?.total ?? 0) / 60) };
+  const minutes = estimatedMinutes({ stages }, 0, Object.fromEntries(stages.map((st) => [st.id, st.onTimeout === "ALLOW_GRACE" ? st.graceSeconds : 0])));
+  return { orgName: org?.name ?? "", orgContact: org?.contactEmail ?? null, positionName: position?.name ?? "", minutes };
 }
 
 /** The message's deadline: the last day in the organisation's zone, with the zone named (Task 6 ruling). */

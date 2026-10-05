@@ -22,7 +22,7 @@ const NOW = new Date("2026-10-05T09:00:00Z");
 const user = { id: USER, orgId: ORG };
 const input = { openingId: OPENING, fullName: "Elif Kaya", email: "elif@example.com", locale: "tr" as const, deadline: null };
 
-type World = { opening: Record<string, unknown> | null; versions: unknown[]; panel: unknown[]; existing: unknown[]; actor: unknown[] };
+type World = { opening: Record<string, unknown> | null; versions: unknown[]; panel: unknown[]; existing: unknown[]; actor: unknown[]; stages: unknown[] };
 let world: World;
 
 function respond(op: Op): unknown[] {
@@ -31,7 +31,7 @@ function respond(op: Op): unknown[] {
   if (op.kind === "select" && op.table === "hiring_versions") return world.versions;
   if (op.kind === "select" && op.table === "hiring_opening_members") return world.panel;
   if (op.kind === "select" && op.table === "hiring_assessments") return world.existing;
-  if (op.kind === "select" && op.table === "hiring_stages") return [{ total: 1500 }];
+  if (op.kind === "select" && op.table === "hiring_stages") return world.stages;
   if (op.kind === "select" && op.table === "organizations") return [{ name: "Örnek A.Ş.", contactEmail: "ik@ornek.com" }];
   if (op.kind === "select" && op.table === "positions") return [{ name: "Ürün Tasarımcısı" }];
   if (op.kind === "insert" && op.table === "candidates") return [{ id: "c-1" }];
@@ -51,10 +51,22 @@ beforeEach(() => {
     panel: [{ userId: EVAL_A }, { userId: EVAL_B }],
     existing: [],
     actor: [{ id: USER }],
+    stages: [{ id: "s1", durationSeconds: 1500, graceSeconds: 0, onTimeout: "AUTO_SUBMIT" }],
   };
 });
 
 describe("createHiringInvitation", () => {
+  it("counts the grace of ALLOW_GRACE stages in the message's minutes, like the landing (C25)", async () => {
+    world.stages = [
+      { id: "s1", durationSeconds: 600, graceSeconds: 120, onTimeout: "ALLOW_GRACE" },
+      // Grace set on a stage whose rule does not grant it counts for nothing.
+      { id: "s2", durationSeconds: 900, graceSeconds: 300, onTimeout: "AUTO_SUBMIT" },
+    ];
+    const result = await createHiringInvitation(user, input, { now: NOW, baseUrl: "https://kademe.test" });
+    expect(result.ok && result.message.body).toContain("yaklaşık 27 dakikada");
+    expect(fake.ops.find((o) => o.table === "hiring_stages")!.params).toContain(VERSION);
+  });
+
   it("refuses a missing name, a bad e-mail or a bad day before reading anything", async () => {
     expect(await createHiringInvitation(user, { ...input, fullName: " " }, { now: NOW })).toEqual({ ok: false, code: "NAME" });
     expect(await createHiringInvitation(user, { ...input, fullName: "x".repeat(121) }, { now: NOW })).toEqual({ ok: false, code: "NAME" });
