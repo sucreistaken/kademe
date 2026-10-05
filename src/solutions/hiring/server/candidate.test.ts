@@ -194,6 +194,16 @@ describe("loadHiringContext", () => {
     expect(await loadHiringContext(ctx())).toBeNull();
     expect(await hiringServes(ctx())).toBe(false);
   });
+
+  it("keeps the serves() contract: false for a missing row or another solution's invitation, a throw only on infrastructure failure", async () => {
+    fake.respond = () => [];
+    await expect(hiringServes(ctx())).resolves.toBe(false);
+    await expect(hiringServes(ctx("LANGUAGE_EXAM"))).resolves.toBe(false);
+    fake.respond = () => {
+      throw new Error("connection refused");
+    };
+    await expect(hiringServes(ctx())).rejects.toThrow(/connection refused/);
+  });
 });
 
 describe("startStage", () => {

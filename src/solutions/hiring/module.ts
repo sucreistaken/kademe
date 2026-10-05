@@ -1,15 +1,30 @@
+import type { CandidateContext } from "@/lib/candidate-context";
 import type { SolutionModule } from "@/solutions/types";
 import { hiringManifest } from "./manifest";
-import { attachMedia, closeExpiredStageRuns, salvageHiringUploads } from "./server/candidate";
+import {
+  attachMedia,
+  closeExpiredStageRuns,
+  hiringServes,
+  hiringTitle,
+  loadHiringContext,
+  loadHiringState,
+  runningSegment,
+  salvageHiringUploads,
+  stageHeartbeat,
+  type HiringContext,
+} from "./server/candidate";
+import { loadConsentText } from "./server/consent";
 import { hiringLibraryUsage } from "./server/library-usage";
+
+/** The core only routes invitations hiring serves (serves), so a missing row here is a bug, said loudly. */
+async function requireHiring(ctx: CandidateContext): Promise<HiringContext> {
+  const h = await loadHiringContext(ctx);
+  if (!h) throw new Error(`assessment ${ctx.assessment.id} has no hiring terms`);
+  return h;
+}
 
 /** Abandoned uploads per cron tick; storage is touched once per asset. */
 const SALVAGE_BATCH = 20;
-
-/** Thrown if a candidate path ever reaches hiring before plan 2; the core never routes one here (candidateFlowLive). */
-function notLive(what: string): never {
-  throw new Error(`hiring candidate flow is not live yet (${what}); plan 2 builds it`);
-}
 
 export const hiringModule: SolutionModule = {
   ...hiringManifest,
@@ -17,31 +32,32 @@ export const hiringModule: SolutionModule = {
   async today() {
     return [];
   },
-  // Proctoring for hiring arrives with plan 4.
+  // No proctoring in plan 2: every invitation freezes proctor_level OFF (plan 4 adds levels).
   async proctorPolicy() {
     return null;
   },
   candidate: {
-    async loadState() {
-      return notLive("loadState");
+    serves: hiringServes,
+    async loadState(ctx) {
+      return loadHiringState(await requireHiring(ctx));
     },
-    async title() {
-      return notLive("title");
+    async title(ctx) {
+      return hiringTitle(await requireHiring(ctx));
     },
-    async heartbeat() {
-      return notLive("heartbeat");
+    async heartbeat(ctx) {
+      return stageHeartbeat(await requireHiring(ctx));
     },
-    async consentText() {
-      return notLive("consentText");
+    async consentText(ctx) {
+      const h = await requireHiring(ctx);
+      return loadConsentText(h.assessment.orgId, h.hiring.consentTextId);
     },
   },
   attempts: {
-    async openSegment() {
-      return null;
-    },
-    async terminate() {
-      return notLive("terminate");
-    },
+    openSegment: runningSegment,
+    // HIRING-UX R13: nothing ends a hiring attempt by machine, at any level. The
+    // core asks only when a proctoring policy enables termination, which hiring never does.
+    async terminate() {},
+    // attachMedia never throws: a failure is logged and decided again on the question's next upload event.
     onMediaComplete: attachMedia,
     // A failed take gives its place back: the newest finished take becomes the answer again.
     onMediaFailed: attachMedia,

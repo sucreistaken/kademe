@@ -2,6 +2,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import type { Executor } from "@/db/executor";
 import { consentTexts, organizations } from "@/db/schema";
+import type { ConsentTextRow } from "@/solutions/types";
 import { HIRING_CONSENT_EN, HIRING_CONSENT_TR } from "../consent-default";
 
 /**
@@ -35,4 +36,15 @@ export async function ensureHiringConsentText(orgId: string, x: Executor = db): 
     .values({ orgId, solution: "HIRING", version: 1, body: { tr: HIRING_CONSENT_TR, en: HIRING_CONSENT_EN } })
     .returning({ id: consentTexts.id });
   return created.id;
+}
+
+/** The consent text frozen on an invitation, read inside its organisation. */
+export async function loadConsentText(orgId: string, id: string, x: Executor = db): Promise<ConsentTextRow> {
+  const [text] = await x
+    .select()
+    .from(consentTexts)
+    .where(and(eq(consentTexts.id, id), eq(consentTexts.orgId, orgId)))
+    .limit(1);
+  if (!text) throw new Error(`consent text ${id} of organisation ${orgId} is missing`);
+  return text;
 }

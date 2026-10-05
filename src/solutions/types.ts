@@ -118,7 +118,8 @@ export interface SolutionModule extends SolutionManifest {
     /**
      * False when this invitation lacks the solution's own terms (no row of its
      * own); the core then answers it exactly like an unknown token. Omitted:
-     * every invitation of this solution is served.
+     * every invitation of this solution is served. Contract: returns false for
+     * a missing or partial row; throws only on infrastructure failure.
      */
     serves?(ctx: CandidateContext): Promise<boolean>;
     /** The state document the candidate screens read; its `step` drives routing. */

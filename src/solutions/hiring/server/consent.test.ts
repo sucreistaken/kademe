@@ -4,7 +4,7 @@ import { fake, writesOf } from "./test-fake-db";
 vi.mock("@/db", async () => ({ db: (await import("./test-fake-db")).fakeDb() }));
 
 import { HIRING_CONSENT_EN, HIRING_CONSENT_TR } from "../consent-default";
-import { ensureHiringConsentText } from "./consent";
+import { ensureHiringConsentText, loadConsentText } from "./consent";
 
 const ORG = "11111111-1111-4111-8111-111111111111";
 
@@ -50,5 +50,18 @@ describe("ensureHiringConsentText", () => {
     expect(HIRING_CONSENT_EN).toContain("not monitored");
     expect(HIRING_CONSENT_EN).toContain("does not score");
     for (const text of [HIRING_CONSENT_TR, HIRING_CONSENT_EN]) expect(text).not.toContain("\u2014");
+  });
+});
+
+describe("loadConsentText", () => {
+  it("reads the frozen text by its id inside the invitation's organisation", async () => {
+    fake.respond = (op) => (op.table === "consent_texts" ? [{ id: "ct-9", orgId: ORG, solution: "HIRING", version: 1, body: { tr: "a", en: "b" } }] : []);
+    expect((await loadConsentText(ORG, "ct-9")).id).toBe("ct-9");
+    expect(fake.ops[0].params).toEqual(expect.arrayContaining(["ct-9", ORG]));
+  });
+
+  it("refuses loudly when the frozen text is gone (consents keep it with RESTRICT)", async () => {
+    fake.respond = () => [];
+    await expect(loadConsentText(ORG, "ct-9")).rejects.toThrow(/consent text/);
   });
 });
