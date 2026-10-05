@@ -88,7 +88,10 @@ export const MediaInitBody = z.object({
   name: z.string().max(1000).optional(),
   bytes: z.number().optional(),
 });
-export const SurveyBody = z.object({ rating: z.number().int().min(1).max(5), comment: z.string().nullish() });
+/** The survey's shape: a comment that is not text is a malformed body (REQUEST_INVALID); the rating is checked on its own. */
+export const SurveyBody = z.object({ rating: z.unknown().optional(), comment: z.string().nullish() });
+/** A rating outside 1-5 is the survey's own refusal (SURVEY_INVALID). */
+export const SurveyRating = z.number().int().min(1).max(5);
 
 /** The JSON body in the endpoint's shape, or null (empty, not JSON, or another shape). */
 export async function readBody<T>(req: NextRequest, schema: z.ZodType<T>): Promise<T | null> {
