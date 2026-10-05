@@ -128,6 +128,92 @@ describe("ChunkedUploader parts", () => {
   });
 });
 
+// From main 739f218 (production hotfix): the exam's uploader tries a failed
+// lookup of more part addresses again with the part, and caches the batch.
+describe("ChunkedUploader exam part-address lookups", () => {
+  type PartTarget = { partNumber: number; url: string; proxy: boolean };
+  const fetchMock = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>();
+  let lookupFailures = 0;
+  let lookups = 0;
+  const callsTo = (path: string) => h.apiSend.mock.calls.filter((c) => c[1] === path);
+  beforeEach(() => {
+    vi.useFakeTimers();
+    fetchMock.mockReset();
+    h.apiSend.mockClear();
+    lookupFailures = 0;
+    lookups = 0;
+    h.apiSend.mockImplementation(async (_t: string, path: string, body: { mime?: string; from?: number }) => {
+      if (path === "/media/part-urls") {
+        lookups += 1;
+        if (lookups <= lookupFailures) throw new TypeError("Failed to fetch");
+        const from = body.from ?? 1;
+        const partTargets: PartTarget[] = [];
+        for (let n = from; n < from + 24; n += 1) partTargets.push({ partNumber: n, url: `https://bucket.example/part-${n}`, proxy: false });
+        return { partTargets };
+      }
+      if (path === "/media/complete") return { status: "READY", bytes: 1, durationMs: 1 };
+      if (path === "/media/part-done") return { ok: true };
+      // Only part 1 is known up front, so part 2 needs a lookup
+      // (in production the first batch is 24 parts and part 25 needs one).
+      return { uploadRef: "r", mime: body.mime, minPartBytes: 0, proxy: false, partTargets: [{ partNumber: 1, url: "https://bucket.example/part-1", proxy: false }] };
+    });
+    vi.stubGlobal("fetch", fetchMock);
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it("sends each part as the same plain PUT to its target and looks the next batch up once", async () => {
+    fetchMock.mockResolvedValue(ok());
+    const up = await ChunkedUploader.open("tok", "/exam/media/init", { sectionPosition: 1, sequence: 1 }, "video/mp4");
+    up.push(chunk());
+    up.push(chunk());
+    up.push(chunk());
+    const done = up.finish(1000);
+    await vi.advanceTimersByTimeAsync(5_000);
+    await done;
+    expect(fetchMock.mock.calls.map((c) => c[0])).toEqual(["https://bucket.example/part-1", "https://bucket.example/part-2", "https://bucket.example/part-3"]);
+    expect(fetchMock.mock.calls[0][1]).toEqual({ method: "PUT", body: expect.any(Blob) });
+    expect(callsTo("/media/part-urls")).toEqual([["tok", "/media/part-urls", { uploadRef: "r", from: 2, count: 24 }]]);
+    expect(completeBody()).toEqual({ uploadRef: "r", durationMs: 1000, incomplete: false });
+  });
+
+  it("retries a part-address lookup that fails once, lands the part and the parts after it", async () => {
+    fetchMock.mockResolvedValue(ok());
+    lookupFailures = 1;
+    const up = await ChunkedUploader.open("tok", "/exam/media/init", { sectionPosition: 1, sequence: 1 }, "video/mp4");
+    up.push(chunk());
+    up.push(chunk());
+    up.push(chunk());
+    const done = up.finish(1000);
+    await vi.advanceTimersByTimeAsync(5_000);
+    await done;
+    expect(lookups).toBe(2);
+    expect(up.parts.map((p) => p.partNumber)).toEqual([1, 2, 3]);
+    expect(up.interrupted).toBe(false);
+    expect(completeBody()).toEqual({ uploadRef: "r", durationMs: 1000, incomplete: false });
+  });
+
+  it("gives a part up after three failed lookups, like three failed PUTs, and still completes the take as incomplete", async () => {
+    fetchMock.mockResolvedValue(ok());
+    lookupFailures = 3;
+    const up = await ChunkedUploader.open("tok", "/exam/media/init", { sectionPosition: 1, sequence: 1 }, "video/mp4");
+    up.push(chunk());
+    up.push(chunk());
+    up.push(chunk());
+    const done = up.finish(1000);
+    await vi.advanceTimersByTimeAsync(5_000);
+    await done;
+    // Part 2 was tried three times (0.4 s and 0.8 s apart) and given up; part 3
+    // still went out after it, through the lookup that then answered.
+    expect(lookups).toBe(4);
+    expect(up.parts.map((p) => p.partNumber)).toEqual([1, 3]);
+    expect(up.interrupted).toBe(true);
+    expect(completeBody()).toEqual({ uploadRef: "r", durationMs: 1000, incomplete: true });
+  });
+});
+
 describe("the container a take records in", () => {
   afterEach(() => vi.unstubAllGlobals());
   const browser = (supported: string[]) => vi.stubGlobal("MediaRecorder", { isTypeSupported: (mime: string) => supported.includes(mime) });

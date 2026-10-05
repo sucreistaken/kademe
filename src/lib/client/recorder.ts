@@ -101,8 +101,11 @@ export type RetryPolicy = {
   stopOnRefusal: boolean;
 };
 
-/** The exam's policy, unchanged: three tries, 0.4 s and 0.8 s apart. */
-const EXAM_RETRY: RetryPolicy = { attempts: 3, delayMs: (attempt) => 400 * attempt, partTimeoutMs: null, retryTargets: false, stopOnRefusal: false };
+/**
+ * The exam's policy: three tries, 0.4 s and 0.8 s apart; a failed address
+ * lookup is tried again with the part (production hotfix 739f218).
+ */
+const EXAM_RETRY: RetryPolicy = { attempts: 3, delayMs: (attempt) => 400 * attempt, partTimeoutMs: null, retryTargets: true, stopOnRefusal: false };
 
 /**
  * Hiring's policy (HIRING-UX 6.12, A2): a connection that drops for a while
@@ -228,8 +231,10 @@ export class ChunkedUploader {
   }
 
   private async sendPart(partNumber: number, body: Blob) {
-    // The exam looks its target up once, before the tries (as it always has);
-    // a patient uploader looks it up inside them, so a dropped lookup is tried again.
+    // With retryTargets (both policies) the lookup of the part's address
+    // (part-urls, after the first batch) is tried with the part: if it threw
+    // outside these tries, the queue would skip every later part and the take
+    // would never be completed (main 739f218).
     let target = this.retry.retryTargets ? null : await this.targetFor(partNumber);
 
     for (let attempt = 1; attempt <= this.retry.attempts; attempt += 1) {
