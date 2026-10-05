@@ -30,6 +30,7 @@ vi.mock("@/components/hiring/candidate/frame", () => ({ HiringFrame: function Hi
 vi.mock("@/components/candidate/UnknownLink", () => ({ UnknownLink: function UnknownLink() {} }));
 vi.mock("@/components/hiring/candidate/device-check", () => ({ DeviceCheck: function DeviceCheck() {} }));
 vi.mock("@/components/hiring/candidate/stage-runner", () => ({ StageRunner: function StageRunner() {} }));
+vi.mock("@/components/hiring/candidate/practice", () => ({ Practice: function Practice() {} }));
 
 import { Landing } from "@/components/hiring/candidate/landing";
 import { ClosedCard } from "@/components/hiring/candidate/closed";
@@ -38,6 +39,7 @@ import { HiringFrame } from "@/components/hiring/candidate/frame";
 import { UnknownLink } from "@/components/candidate/UnknownLink";
 import { DeviceCheck } from "@/components/hiring/candidate/device-check";
 import { StageRunner } from "@/components/hiring/candidate/stage-runner";
+import { Practice } from "@/components/hiring/candidate/practice";
 import { createElement } from "react";
 import { formatInviteDeadline } from "../rules/invitation";
 import { zoneLabel } from "@/lib/org-timezone";
@@ -62,7 +64,7 @@ function find(node: ReactNode, type: unknown): ReactElement[] {
   return [...(element.type === type ? [element] : []), ...find(element.props?.children, type)];
 }
 
-const render = (slot: "landing" | "check" | "stage" | "done", over: Record<string, unknown> = {}) =>
+const render = (slot: "landing" | "check" | "practice" | "stage" | "done", over: Record<string, unknown> = {}) =>
   renderHiringPage(slot, { token: "tok", resolved: { ok: true, ctx } as never, searchParams: {}, params: {}, ...over }) as Promise<ReactNode>;
 
 beforeEach(() => {
@@ -219,6 +221,44 @@ describe("renderHiringPage", () => {
     expect(sent).not.toMatch(/"correct"/);
     expect(find(node, HiringFrame)[0].props).toMatchObject({ orgName: "Örnek A.Ş.", locale: "tr" });
     expect(find(node, LinkProblem)).toHaveLength(0);
+  });
+
+  it("renders the warm-up with the camera flag and the language only, inside the frame (Task 14)", async () => {
+    // Stage 1 not started, the warm-up switched on: the slot is open. The state carries question,
+    // stage and team text (sentinels); none of it reaches the warm-up, which has its own question.
+    h.state = {
+      ...(h.state as object),
+      step: "STAGE",
+      position: 1,
+      path: "/stage/1",
+      practice: true,
+      devices: { camera: true, microphone: true },
+      current: {
+        position: 1,
+        startedAt: null,
+        stage: { id: "s1", name: { tr: "Tanışma LEAKVISIBLE_STAGE", en: "Intro" }, internalPurpose: "TEAMSECRET_STAGE_PURPOSE", activities: [{ id: "q1", type: "VIDEO", prompt: { tr: "Anlat LEAKVISIBLE_PROMPT", en: "Tell" }, managerNotes: "TEAMSECRET_NOTE" }] },
+        responses: [],
+      },
+    };
+    const node = await render("practice");
+    const [practice] = find(node, Practice);
+    expect(practice.props).toEqual({ token: "tok", camera: true, locale: "tr" });
+    expect(JSON.stringify(practice.props)).not.toMatch(/LEAKVISIBLE|TEAMSECRET/);
+    // Positive control: the same state does carry the sentinels the warm-up is kept from, and the frame names the organisation.
+    expect(JSON.stringify(h.state)).toMatch(/LEAKVISIBLE_PROMPT/);
+    expect(find(node, HiringFrame)[0].props).toMatchObject({ orgName: "Örnek A.Ş.", locale: "tr" });
+    expect(find(node, LinkProblem)).toHaveLength(0);
+    // An audio-only version: the warm-up records sound only.
+    h.state = { ...(h.state as object), devices: { camera: false, microphone: true } };
+    expect(find(await render("practice"), Practice)[0].props).toMatchObject({ camera: false });
+  });
+
+  it("sends a candidate away from the warm-up when it is off or stage 1 has started", async () => {
+    const base = { step: "STAGE", position: 1, path: "/stage/1", devices: { camera: true, microphone: true } };
+    h.state = { ...(h.state as object), ...base, practice: false, current: { position: 1, startedAt: null } };
+    await expect(render("practice")).rejects.toMatchObject({ to: "/a/tok/stage/1" });
+    h.state = { ...(h.state as object), ...base, practice: true, current: { position: 1, startedAt: "2026-10-05T10:00:00Z" } };
+    await expect(render("practice")).rejects.toMatchObject({ to: "/a/tok/stage/1" });
   });
 
   it("renders the finish slot as the invalid-link card until Task 16", async () => {

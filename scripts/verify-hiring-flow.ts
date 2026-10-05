@@ -381,9 +381,9 @@ async function main() {
 
   console.log("\nWhat a page can reach in process");
   // Every candidate page asks solutionPage first; the module's title is the page header's.
-  // Hiring renders the landing and the details form (Task 11), the device check (Task 12) and
-  // the stage runner (Task 13); the warm-up and finish slots answer with the invalid-link card
-  // until their tasks (14, 16) replace them. Every node rendered here joins the leak scan; the
+  // Hiring renders the landing and the details form (Task 11), the device check (Task 12), the
+  // stage runner (Task 13) and the warm-up (Task 14); the finish slot answers with the
+  // invalid-link card until Task 16 replaces it. Every node rendered here joins the leak scan; the
   // browser check scans the real document and RSC payload (C10).
   const pageRead = (node: unknown) => JSON.stringify(node ?? null, (_key, value) => (typeof value === "function" || typeof value === "symbol" ? undefined : value));
   /** A rendered page, or the address Next's redirect() sends it to (its digest is "NEXT_REDIRECT;type;url;status;"). */
@@ -450,7 +450,20 @@ async function main() {
     stagePage.node?.match(/(LEAKVISIBLE|TEAMSECRET)_[A-Z_]+|"correct"/g),
   );
   const practicePage = await page(token6, "practice");
-  check(state.json.practice ? invalidCard(practicePage) : practicePage.to === `/a/${token6}/stage/1`, `the warm-up slot: ${state.json.practice ? "the invalid-link card until Task 14" : "no warm-up in this version, sent to stage 1"}`, practicePage);
+  if (state.json.practice) {
+    check(
+      !!practicePage.node && !invalidCard(practicePage) && /"camera":(true|false),"locale":"(tr|en)"/.test(practicePage.node),
+      "the warm-up slot renders the warm-up (Task 14) with the camera flag and the language",
+      practicePage.to ?? practicePage.node?.slice(0, 160),
+    );
+    check(
+      !!practicePage.node && practicePage.node.includes('"orgName":"Örnek A.Ş."') && !/LEAKVISIBLE_|TEAMSECRET/.test(practicePage.node),
+      "the warm-up carries the frame's organisation (positive control) and no question, stage or team text",
+      practicePage.node?.match(/(LEAKVISIBLE|TEAMSECRET)_[A-Z_]+/g),
+    );
+  } else {
+    check(practicePage.to === `/a/${token6}/stage/1`, "the warm-up slot: no warm-up in this version, sent to stage 1", practicePage);
+  }
 
   const expiring = await createHiringInvitation(owner, { openingId: fixture.openingId, fullName: "Mert Aydın", email: `mert-${Date.now()}@example.com`, locale: "tr", deadline: null }, { baseUrl: "https://kademe.test" });
   if (!expiring.ok) throw new Error(expiring.code);

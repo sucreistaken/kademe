@@ -42,6 +42,28 @@ export function pickRecorderMime(kind: RecorderKind): string {
   return "";
 }
 
+/**
+ * Hiring's choice of container: one whose chunks really arrive every
+ * timeslice, so the parts leave while the candidate talks. Chrome now records
+ * MP4 too, but (seen in Chrome 154 with a synthetic canvas stream) it handed
+ * its MP4 data over only at stop: nothing for 21 seconds at a 5 second
+ * timeslice, while WebM arrived every 5 seconds. So WebM comes first, except
+ * on Apple's engine (Safari, and every browser on iOS), which keeps the
+ * exam's MP4-first order, the one its recorder is proven with.
+ */
+export function pickChunkedRecorderMime(
+  kind: RecorderKind,
+  vendor: string = typeof navigator === "undefined" ? "" : navigator.vendor,
+): string {
+  if (typeof MediaRecorder === "undefined") return "";
+  if (vendor.startsWith("Apple")) return pickRecorderMime(kind);
+  const order = kind === "audio" ? ["audio/webm;codecs=opus", "audio/webm", ...AUDIO_MIME_ORDER] : ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm", ...VIDEO_MIME_ORDER];
+  for (const mime of order) {
+    if (MediaRecorder.isTypeSupported(mime)) return mime;
+  }
+  return "";
+}
+
 export const CHUNK_MS = 5000;
 
 type PartTarget = { partNumber: number; url: string; proxy: boolean };
@@ -58,14 +80,52 @@ export type UploadedPart = { partNumber: number; etag: string; bytes: number };
 
 export type UploaderStatus = {
   uploadedBytes: number;
+  /** Bytes recorded but not uploaded yet: the buffer plus the parts waiting in line. */
   queuedBytes: number;
+  /** The last try of a part failed; stays true until a part lands again. */
   stalled: boolean;
 };
 
 /**
+ * How hard a part is tried before it is given up (and the recording becomes
+ * INCOMPLETE). `retryTargets`: a failed lookup of more part addresses is tried
+ * again with the part instead of ending the queue. `partTimeoutMs`: a part
+ * request that does not answer is aborted and tried again. `stopOnRefusal`: a
+ * part the server refuses for good is given up at once.
+ */
+export type RetryPolicy = {
+  attempts: number;
+  delayMs(attempt: number): number;
+  partTimeoutMs: number | null;
+  retryTargets: boolean;
+  stopOnRefusal: boolean;
+};
+
+/** The exam's policy, unchanged: three tries, 0.4 s and 0.8 s apart. */
+const EXAM_RETRY: RetryPolicy = { attempts: 3, delayMs: (attempt) => 400 * attempt, partTimeoutMs: null, retryTargets: false, stopOnRefusal: false };
+
+/**
+ * Hiring's policy (HIRING-UX 6.12, A2): a connection that drops for a while
+ * during a take must not cost the take. A part is tried for about two minutes
+ * (1, 2, 4, then every 8 s) while the recording goes on and its parts wait in
+ * line; a part the server refuses (4xx other than 408/429) is not tried again.
+ */
+export const PATIENT_RETRY: RetryPolicy = {
+  attempts: 16,
+  delayMs: (attempt) => Math.min(8000, 1000 * 2 ** (attempt - 1)),
+  partTimeoutMs: 60_000,
+  retryTargets: true,
+  stopOnRefusal: true,
+};
+
+/** A refusal that another try cannot change (the upload is closed, the part is too large). */
+const refusedForGood = (status: number) => status >= 400 && status < 500 && status !== 408 && status !== 429;
+
+/**
  * Sequential part uploader. Parts must arrive in order for the assembled file
  * to be playable, so there is exactly one in flight at a time; a failure is
- * retried three times before the recording is treated as interrupted.
+ * retried (three times for the exam, PATIENT_RETRY for hiring) before the
+ * recording is treated as interrupted.
  */
 export class ChunkedUploader {
   private buffer: Blob[] = [];
@@ -75,12 +135,16 @@ export class ChunkedUploader {
   private queue: Promise<void> = Promise.resolve();
   readonly parts: UploadedPart[] = [];
   private uploadedBytes = 0;
+  /** Bytes cut into parts that have not landed (or been given up) yet. */
+  private waitingBytes = 0;
+  private stalled = false;
   private failed = false;
 
   constructor(
     private readonly token: string,
     private readonly init: InitResponse,
     private readonly onStatus?: (status: UploaderStatus) => void,
+    private readonly retry: RetryPolicy = EXAM_RETRY,
   ) {
     for (const target of init.partTargets) this.targets.set(target.partNumber, target);
   }
@@ -98,25 +162,22 @@ export class ChunkedUploader {
   }
 
   /**
-   * `sectionPosition` and `sequence` travel with the request so the server can
-   * refuse a tab that is still on an earlier item. After this call the upload is addressed
-   * by `uploadRef` alone: the server remembers which run and activity it was
-   * opened for, and `finish` does not repeat them.
+   * Opens the upload through the solution's init endpoint (`initPath`, e.g.
+   * "/exam/media/init" or "/hiring/media/init"), which names what the take
+   * belongs to from `body` and refuses a tab that is out of date. After this
+   * call the upload is addressed by `uploadRef` alone; the parts and the
+   * completion are core routes.
    */
   static async open(
     token: string,
-    /** The solution's init endpoint, e.g. "/exam/media/init". The parts and completion are core. */
     initPath: string,
-    target: { sectionPosition: number; sequence: number },
+    body: Record<string, unknown>,
     mime: string,
     onStatus?: (status: UploaderStatus) => void,
+    retry?: RetryPolicy,
   ) {
-    const init = await apiSend<InitResponse>(token, initPath, {
-      sectionPosition: target.sectionPosition,
-      sequence: target.sequence,
-      mime,
-    });
-    return new ChunkedUploader(token, init, onStatus);
+    const init = await apiSend<InitResponse>(token, initPath, { ...body, mime });
+    return new ChunkedUploader(token, init, onStatus, retry);
   }
 
   /** Called on every MediaRecorder chunk. Returns immediately. */
@@ -136,6 +197,7 @@ export class ChunkedUploader {
     const body = new Blob(this.buffer, { type: this.init.mime });
     this.buffer = [];
     this.bufferedBytes = 0;
+    this.waitingBytes += body.size;
 
     this.queue = this.queue.then(() => this.sendPart(partNumber, body));
   }
@@ -161,13 +223,23 @@ export class ChunkedUploader {
   }
 
   private async sendPart(partNumber: number, body: Blob) {
-    const target = await this.targetFor(partNumber);
-    const url = target.proxy ? this.proxyUrl(partNumber) : target.url;
+    // The exam looks its target up once, before the tries (as it always has);
+    // a patient uploader looks it up inside them, so a dropped lookup is tried again.
+    let target = this.retry.retryTargets ? null : await this.targetFor(partNumber);
 
-    for (let attempt = 1; attempt <= 3; attempt += 1) {
+    for (let attempt = 1; attempt <= this.retry.attempts; attempt += 1) {
       try {
-        const res = await fetch(url, { method: "PUT", body });
-        if (!res.ok) throw new Error(`part ${partNumber}: ${res.status}`);
+        target ??= await this.targetFor(partNumber);
+        const url = target.proxy ? this.proxyUrl(partNumber) : target.url;
+        const res = await this.put(url, body);
+        if (!res.ok) {
+          if (this.retry.stopOnRefusal && refusedForGood(res.status)) {
+            // Tried again it would be refused again: what landed is kept, the take is INCOMPLETE.
+            this.giveUp(body);
+            return;
+          }
+          throw new Error(`part ${partNumber}: ${res.status}`);
+        }
 
         let etag = (res.headers.get("etag") ?? "").replaceAll('"', "");
         if (target.proxy && !etag) {
@@ -179,7 +251,9 @@ export class ChunkedUploader {
 
         this.parts.push({ partNumber, etag, bytes: body.size });
         this.uploadedBytes += body.size;
-        this.report(false);
+        this.waitingBytes -= body.size;
+        this.stalled = false;
+        this.report();
 
         // On the direct-to-bucket path the server never saw these bytes, so it
         // is told which part landed. Otherwise the proxy route already knows.
@@ -193,21 +267,41 @@ export class ChunkedUploader {
         }
         return;
       } catch {
-        this.report(true);
-        if (attempt === 3) {
-          this.failed = true;
+        this.stalled = true;
+        this.report();
+        if (attempt === this.retry.attempts) {
+          this.giveUp(body);
           return;
         }
-        await new Promise((r) => setTimeout(r, 400 * attempt));
+        await new Promise((r) => setTimeout(r, this.retry.delayMs(attempt)));
       }
     }
   }
 
-  private report(stalled = false) {
+  /** One part request; under a patient policy one that does not answer is aborted (and tried again). */
+  private async put(url: string, body: Blob): Promise<Response> {
+    const timeoutMs = this.retry.partTimeoutMs;
+    if (timeoutMs === null) return fetch(url, { method: "PUT", body });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(url, { method: "PUT", body, signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  private giveUp(body: Blob) {
+    this.failed = true;
+    this.waitingBytes -= body.size;
+    this.report();
+  }
+
+  private report() {
     this.onStatus?.({
       uploadedBytes: this.uploadedBytes,
-      queuedBytes: this.bufferedBytes,
-      stalled,
+      queuedBytes: this.bufferedBytes + this.waitingBytes,
+      stalled: this.stalled,
     });
   }
 

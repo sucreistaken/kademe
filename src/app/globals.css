@@ -309,3 +309,14 @@ body {
 .tnum {
   font-variant-numeric: tabular-nums;
 }
+
+/* HIRING-UX 8.5: the recording dot breathes (1 to .45 over 1.6 s); used with motion-safe only. */
+@keyframes rec-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}

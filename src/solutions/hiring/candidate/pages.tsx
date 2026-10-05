@@ -8,6 +8,7 @@ import { ClosedCard } from "@/components/hiring/candidate/closed";
 import { DeviceCheck } from "@/components/hiring/candidate/device-check";
 import { HiringFrame } from "@/components/hiring/candidate/frame";
 import { Landing } from "@/components/hiring/candidate/landing";
+import { Practice } from "@/components/hiring/candidate/practice";
 import { StageRunner } from "@/components/hiring/candidate/stage-runner";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/i18n/locale";
 import { setAssessmentLocale, type CandidateContext, type LinkProblem as Problem } from "@/lib/candidate-context";
@@ -141,8 +142,10 @@ export async function renderHiringPage(slot: CandidatePageSlot, input: Candidate
           locale={locale}
         />,
       );
-    // Replaced by Tasks 14 (practice) and 16 (done).
     case "practice":
+      // HIRING-UX 6.4: the camera flag and the page's language only; the warm-up's question is its own, nothing of the version reaches it.
+      return frame(<Practice token={token} camera={safe.devices.camera} locale={locale} />);
+    // Replaced by Task 16 (done).
     case "done":
       return frame(problemCard(token, locale, "INVALID", h));
   }

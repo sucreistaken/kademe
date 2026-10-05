@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import { useRouter } from "next/navigation";
 import { Button, DisabledReason } from "@/components/ui/button";
 import { useStepFocus } from "@/hooks/use-step-focus";
-import { apiSend } from "@/lib/client/api";
+import { apiGet, apiSend } from "@/lib/client/api";
 import { FlushRegistry } from "@/lib/client/flush-registry";
 import { useStageClock } from "@/lib/client/use-stage-clock";
 import { formatCountdown, SUBMIT_SLACK_MS } from "@/lib/timer";
@@ -17,16 +17,24 @@ import { ActionBar } from "./action-bar";
 import { ChoiceActivity } from "./choice-activity";
 import { clearDraft, draftKey, lostWords, markLostWords, sessionDrafts, type LostKind } from "./draft-store";
 import { answeredLocally, isLastMinute, minutesLeft, ownsPrimary, primaryKey, resumeOf, tabReply, type LocalAnswer, type TabMessage } from "./runner-model";
+import { RecordedActivity } from "./recorded-activity";
 import { closeQuestion, commitNeeded, recoveryFor, settleWithin, withTimeout } from "./runner-steps";
 import { serverMessage } from "./server-message";
 import { StageIntro } from "./stage-intro";
 import { SubmitDelay } from "./submit-delay";
 import { TextActivity } from "./text-activity";
+import { uploadSink } from "./upload-sink";
 
 /** Minor 10: how long a start, commit or submit may take before the runner stops waiting and offers a retry. */
 const REQUEST_MS = 20_000;
 /** Fix round 2: how long a close waits for pending autosaves; the commit carries its own answer, so a hung save never blocks it. */
 const FLUSH_MS = 5_000;
+/**
+ * Task 14: how long a close waits for a take that is still finishing (its last
+ * part and its completion). Past it the stage still closes (the server counts
+ * an uploading take) and the upload goes on in this tab.
+ */
+const TAKE_FLUSH_MS = 30_000;
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const codeOf = (err: unknown) => (err && typeof err === "object" && typeof (err as { code?: unknown }).code === "string" ? (err as { code: string }).code : "");
 
@@ -37,6 +45,8 @@ type Failure = { message: string; stale: boolean; retry?: "submit" | "auto" };
 function answerOf(activity: CandidateActivity, a: LocalAnswer | undefined): unknown {
   if (activity.type === "LONG_TEXT" || activity.type === "SHORT_TEXT") return { text: a?.text ?? "" };
   if (activity.type === "SINGLE_CHOICE" || activity.type === "MULTI_CHOICE") return { choiceIds: a?.choiceIds ?? [] };
+  // HIRING-UX A7: the written alternative closes with its text; a take is already on the server.
+  if ((activity.type === "VIDEO" || activity.type === "AUDIO") && a?.usedTextAlternative) return { usedTextAlternative: true, text: a.text ?? "" };
   return undefined;
 }
 
@@ -69,6 +79,7 @@ const subscribeOnline = (notify: () => void) => {
  */
 export function StageRunner({ token, initial, deadline, locale }: { token: string; initial: HiringCandidateState; deadline: string; locale: Locale }) {
   const t = useT("hiringStage");
+  const tm = useT("hiringMedia");
   const router = useRouter();
   const [state, setState] = useState(initial);
   const current = state.current!;
@@ -85,6 +96,8 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
   const [timeUp, setTimeUp] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const [flushes] = useState(() => new FlushRegistry());
+  // Takes that are recording or finishing (Task 14): a close stops them and waits for their finish.
+  const [takes] = useState(() => new FlushRegistry());
   const online = useSyncExternalStore(subscribeOnline, () => navigator.onLine, () => true);
   const activity = activities[Math.min(index, activities.length - 1)] as CandidateActivity | undefined;
   const heading = useStepFocus<HTMLHeadingElement>(`${phase}-${index}`);
@@ -103,6 +116,12 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
     document.getElementById("activity-next")?.focus();
   }, [delayed]);
 
+  /** Every pending save, and every take still finishing, each within its own bound; never fails. */
+  const settlePending = useCallback(
+    () => Promise.all([settleWithin(flushes.flushAll(), FLUSH_MS), settleWithin(takes.flushAll(), TAKE_FLUSH_MS)]),
+    [flushes, takes],
+  );
+
   const failureOf = useCallback((err: unknown, retry?: Failure["retry"]): Failure => {
     // A server refusal speaks the candidate's language; a dropped connection's browser text is never shown (C15/ruling 5).
     return { message: serverMessage(err) ?? t("failed"), stale: recoveryFor(codeOf(err)) === "reload", retry };
@@ -120,7 +139,7 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
     async (auto: boolean) => {
       setBusy(true);
       setFailure(null);
-      await settleWithin(flushes.flushAll(), FLUSH_MS);
+      await settlePending();
       try {
         let next: HiringCandidateState;
         try {
@@ -129,7 +148,7 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
           // At 0:00 the request can race the server's own clock; past the slack the server closes the stage either way.
           if (!auto) throw err;
           await wait(SUBMIT_SLACK_MS + 1000);
-          await settleWithin(flushes.flushAll(), FLUSH_MS);
+          await settlePending();
           next = await withTimeout(apiSend<HiringCandidateState>(token, "/hiring/stage/submit", { stagePosition: current.position }), REQUEST_MS);
         }
         go(next);
@@ -141,7 +160,7 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
         setBusy(false);
       }
     },
-    [flushes, token, current.position, go, failureOf],
+    [settlePending, token, current.position, go, failureOf],
   );
 
   const clock = useStageClock(token, { serverNow: Date.parse(current.serverNow), deadlineAt: current.deadlineAt ? Date.parse(current.deadlineAt) : null }, () => {
@@ -225,7 +244,7 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
       setDelayed(null);
       setBusy(true);
       setFailure(null);
-      await settleWithin(flushes.flushAll(), FLUSH_MS);
+      await settlePending();
       try {
         const result = await closeQuestion({
           last,
@@ -348,7 +367,45 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
       case "MULTI_CHOICE":
         body = <ChoiceActivity key={activity.id} {...common} />;
         break;
-      // VIDEO and AUDIO arrive with Task 14, FILE_UPLOAD with Task 15.
+      case "VIDEO":
+      case "AUDIO": {
+        const response = current.responses.find((r) => r.activityId === activity.id);
+        const local = answers[activity.id] ?? {};
+        body = (
+          <RecordedActivity
+            key={activity.id}
+            mode="answer"
+            activity={activity}
+            locale={locale}
+            headingRef={heading}
+            sink={uploadSink(token, current.position, activity.id)}
+            takesUsed={response?.takesUsed ?? 0}
+            existingRef={response?.recording?.ref ?? null}
+            existingStatus={response?.recording?.status ?? null}
+            // Only the candidate's own take plays (media/play, Task 9); one still saving answers MEDIA_NOT_READY.
+            playbackSrc={async (result) => (result.ref ? (await apiGet<{ src: string }>(token, `/hiring/media/play?ref=${encodeURIComponent(result.ref)}`)).src : null)}
+            onTake={() => common.onChange({ hasTake: true })}
+            onUse={advance}
+            flushes={takes}
+            timeUp={locked}
+            disabled={inputsOff}
+            hidePrimary={retrying || closedHere}
+            alternative={
+              activity.textAlternativeEnabled
+                ? {
+                    node: <TextActivity {...common} alternative kicker={activity.type === "AUDIO" ? tm("writingKickerAudio") : tm("writingKicker")} />,
+                    ready: answeredLocally({ type: "LONG_TEXT", minChars: null }, local),
+                    using: !!local.usedTextAlternative && !response?.recording,
+                    onChoose: (using) => common.onChange({ usedTextAlternative: using }),
+                    send: advance,
+                  }
+                : null
+            }
+          />
+        );
+        break;
+      }
+      // FILE_UPLOAD arrives with Task 15.
       default:
         body = null;
     }
@@ -409,7 +466,7 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
         {body}
         {closedHere ? <p className="mt-4 text-[16px] leading-[26px] text-ink-2">{t("closedQuestion")}</p> : null}
         {failureLine}
-        {activity && ownsPrimary(activity.type) && !retrying ? null : (
+        {activity && ownsPrimary(activity.type) && !retrying && !closedHere ? null : (
           <ActionBar>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
               <Button
