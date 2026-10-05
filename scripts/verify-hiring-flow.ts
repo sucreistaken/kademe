@@ -140,8 +140,8 @@ async function main() {
   const thirty = await call("POST /hiring/extra-time", token, { pct: 30 });
   check(thirty.status === 400 && thirty.json.error === "EXTRA_TIME_INVALID", "30% is refused (400 EXTRA_TIME_INVALID)", thirty.json);
   const consentCopy = await call("GET /consent", token);
-  // `accepted` is in INTERNAL_FIELDS, so candidateJson strips it from this body (the exam's too).
   check(consentCopy.status === 200 && consentCopy.json.version === consentText?.version && consentCopy.json.body === (consentText?.body as Record<string, string>).tr, "the consent copy shown is the invitation's frozen text", consentCopy.json.version);
+  check(consentCopy.json.consented === false, "and says consent is not on record yet (`consented`, not stripped)", consentCopy.json);
   state = await call("POST /consent", token, { accepted: true });
   check(state.json.step === "CHECK" && state.json.path === "/check", "consent leads to the device check (name and e-mail came with the invitation)", state.json);
   const [consent] = await db.select().from(s.consents).where(eq(s.consents.assessmentId, invite.assessmentId));

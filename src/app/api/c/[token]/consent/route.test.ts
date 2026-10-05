@@ -43,6 +43,14 @@ describe("consent route", () => {
     expect(h.consentText).toHaveBeenCalledTimes(1);
   });
 
+  it("says whether consent is on record as `consented`, which candidateJson never strips (`accepted` was stripped)", async () => {
+    const get = async () => (await GET(new NextRequest("http://localhost/api/c/x/consent"), { params })).json();
+    h.hasConsented.mockResolvedValueOnce(false);
+    expect(await get()).toEqual({ version: 2, body: "İşe alım metni", consented: false });
+    h.hasConsented.mockResolvedValueOnce(true);
+    expect(await get()).toEqual({ version: 2, body: "İşe alım metni", consented: true });
+  });
+
   it("records exactly that text's id", async () => {
     const res = await POST(new NextRequest("http://localhost/api/c/x/consent", { method: "POST", body: JSON.stringify({ accepted: true }) }), { params });
     expect(res.status).toBe(200);

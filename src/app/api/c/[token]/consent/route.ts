@@ -3,7 +3,11 @@ import { candidateJson } from "@/lib/candidate-safe";
 import { hasConsented, recordConsent } from "@/lib/candidate-context";
 import { badRequest, clientIp, readJson, userAgent, withSolution } from "@/lib/candidate-api";
 
-/** The exact consent copy on screen, with the version that will be recorded. The solution names the text. */
+/**
+ * The exact consent copy on screen, with the version that will be recorded.
+ * The solution names the text. `consented` says whether consent is already on
+ * record (named so candidateJson keeps it: `accepted` is an internal field).
+ */
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ token: string }> },
@@ -13,7 +17,7 @@ export async function GET(
     return candidateJson({
       version: text.version,
       body: text.body[ctx.locale] || text.body.tr,
-      accepted: await hasConsented(ctx.assessment.id),
+      consented: await hasConsented(ctx.assessment.id),
     });
   });
 }
