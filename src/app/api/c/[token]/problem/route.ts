@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { messageOutbox } from "@/db/schema";
 import { candidateJson } from "@/lib/candidate-safe";
 import { message, readJson, withSolution } from "@/lib/candidate-api";
-import { fileCandidateRequest } from "@/server/candidate-requests";
+import { fileCandidateRequestIn } from "@/server/candidate-requests";
 
 type Body = { area?: string; message?: string };
 
@@ -58,13 +58,15 @@ export async function POST(
       // at all. `note` is at most 2000 UTF-16 units, so it always fits
       // candidate_requests' 2000 CHECK. While one NEW_LINK request is open a
       // second is not filed and the team is not mailed again; the candidate's
-      // answer is the same (fileCandidateRequest).
+      // answer is the same (fileCandidateRequestIn).
       await db.transaction(async (tx) => {
         if (area === "LINK" && solution.accommodationRequests) {
-          const { filed } = await fileCandidateRequest(
-            { orgId: ctx.assessment.orgId, assessmentId: ctx.assessment.id, kind: "NEW_LINK", message: note || null },
-            tx,
-          );
+          const { filed } = await fileCandidateRequestIn(tx, {
+            orgId: ctx.assessment.orgId,
+            assessmentId: ctx.assessment.id,
+            kind: "NEW_LINK",
+            message: note || null,
+          });
           if (!filed) return;
         }
         await tx.insert(messageOutbox).values(mail);

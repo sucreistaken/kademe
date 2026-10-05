@@ -53,7 +53,7 @@ vi.mock("@/db", async () => {
   return { db: x };
 });
 
-import { fileCandidateRequest } from "./candidate-requests";
+import { fileCandidateRequest, fileCandidateRequestIn } from "./candidate-requests";
 
 const input = { orgId: "o1", assessmentId: "a1", kind: "NEW_LINK" as const, message: "Linkim açılmıyor." };
 const writes = () => seen.ops.filter((o) => o.kind === "insert");
@@ -91,14 +91,14 @@ describe("fileCandidateRequest", () => {
     expect(writes()).toEqual([]);
   });
 
-  it("runs inside the caller's transaction when one is passed, opening none of its own", async () => {
+  it("fileCandidateRequestIn runs inside the caller's transaction, opening none of its own", async () => {
     const own: Op[] = [];
     const tx = {
       execute: async () => void own.push({ kind: "execute", table: "", where: "", params: [] }),
       select: () => ({ from: () => ({ where: () => ({ limit: async () => [] }) }) }),
       insert: () => ({ values: async (values: unknown) => void own.push({ kind: "insert", table: "candidate_requests", where: "", params: [], values }) }),
     };
-    expect(await fileCandidateRequest(input, tx as never)).toEqual({ filed: true });
+    expect(await fileCandidateRequestIn(tx as never, input)).toEqual({ filed: true });
     expect(seen.ops).toEqual([]);
     expect(own.map((o) => o.kind)).toEqual(["execute", "insert"]);
   });

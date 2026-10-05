@@ -20,9 +20,9 @@ const h = vi.hoisted(() => ({
   inserted: [] as Inserted[],
   /** Where each write ran: "tx" inside the route's transaction, "db" outside it. */
   via: [] as string[],
-  /** The executor fileCandidateRequest was handed. */
+  /** The executor fileCandidateRequestIn was handed. */
   fileExecutor: null as unknown,
-  /** fileCandidateRequest's answer: false when a request of that kind is already open (dedup, Task 3 carry). */
+  /** fileCandidateRequestIn's answer: false when a request of that kind is already open (dedup, Task 3 carry). */
   filed: true,
   solution: null as unknown,
   ctx: {
@@ -47,8 +47,8 @@ vi.mock("@/db", async () => {
   return { db: { ...executor("db"), transaction: async <T>(fn: (t: unknown) => Promise<T>) => fn(tx) } };
 });
 vi.mock("@/server/candidate-requests", () => ({
-  // The dedup lives in fileCandidateRequest (its own test); a filed request is recorded like an insert.
-  fileCandidateRequest: async (values: Record<string, unknown>, x?: unknown) => {
+  // The dedup lives in fileCandidateRequestIn (its own test); a filed request is recorded like an insert.
+  fileCandidateRequestIn: async (x: unknown, values: Record<string, unknown>) => {
     h.fileExecutor = x ?? null;
     if (h.filed) {
       h.via.push(x ? "tx" : "db");
