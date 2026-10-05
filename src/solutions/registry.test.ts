@@ -30,9 +30,9 @@ describe("solution registry", () => {
     expect(new Set(SOLUTION_MANIFESTS.map((m) => m.dbKind)).size).toBe(SOLUTION_MANIFESTS.length);
   });
 
-  it("does not serve hiring candidates until plan 2 turns the flag on", () => {
-    expect(manifestByKind("HIRING")?.candidateFlowLive).toBe(false);
-    expect(candidateSolution("HIRING")).toBeNull();
+  it("serves hiring candidates since plan 2 proved the flow (Task 10)", () => {
+    expect(manifestByKind("HIRING")?.candidateFlowLive).toBe(true);
+    expect(candidateSolution("HIRING")?.key).toBe("hiring");
     expect(candidateSolution("LANGUAGE_EXAM")?.key).toBe("language-exam");
   });
 
