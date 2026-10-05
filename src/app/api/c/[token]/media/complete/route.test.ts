@@ -71,9 +71,10 @@ describe("POST /media/complete when the solution's hook throws", () => {
     log.mockRestore();
   });
 
-  it("lets an attach failure of the solution fail the request as before (the exam's student re-records on the error)", async () => {
+  it("lets an attach failure of the solution propagate out of the route, uncaught as before (the exam's student re-records on the error)", async () => {
     h.asset = { id: "m2", attemptId: "att", status: "UPLOADING", parts: [{ partNumber: 1, etag: "e", bytes: 100 }], mime: "video/webm", uploadId: "u" };
-    // The exam's hook: it does not catch, so a database error reaches the route and Next answers 500.
+    // The exam's hook does not catch, and neither does the route: the error leaves the handler
+    // (what Next then answers, a 500, is not pinned here).
     const onMediaComplete = vi.fn<Hook>(async () => {
       throw new Error("db down");
     });

@@ -186,7 +186,26 @@ function answeredNow(activity: ContentActivity, payload: HiringResponsePayload, 
   return responseAnswered(activity, payload, usableTakes > 0) || (activity.type === "FILE_UPLOAD" && !!payload.pendingFile);
 }
 
-/** Takes per response: how many count (not FAILED: an upload in progress counts) and the newest that counts. */
+/**
+ * The take that is the answer by decision 8 (as decideMediaAnswer): the newest
+ * finished take (READY or INCOMPLETE) with no newer take still uploading; a
+ * newer FAILED take gives its place back. Null while the decision is open.
+ */
+function answerTake(takeIds: string[], statusOf: (id: string) => string | undefined): string | null {
+  for (const id of [...takeIds].reverse()) {
+    const status = statusOf(id);
+    if (status === "FAILED") continue;
+    if (status === "READY" || status === "INCOMPLETE") return id;
+    // Uploading (or unknown): this newer take may still become the answer.
+    return null;
+  }
+  return null;
+}
+
+/**
+ * Takes per response: how many count (not FAILED: an upload in progress
+ * counts), the newest that counts, and the take that is the answer now.
+ */
 async function takeInfo(x: Executor, rows: ResponseRow[]) {
   const ids = rows.flatMap((r) => r.takeAssetIds);
   const media = ids.length
@@ -196,7 +215,7 @@ async function takeInfo(x: Executor, rows: ResponseRow[]) {
   return (row: ResponseRow) => {
     const usable = row.takeAssetIds.map((id) => byId.get(id)).filter((m) => m && m.status !== "FAILED");
     const newest = [...row.takeAssetIds].reverse().map((id) => byId.get(id)).find((m) => m && m.status !== "FAILED") ?? null;
-    return { usable: usable.length, newest };
+    return { usable: usable.length, newest, answer: answerTake(row.takeAssetIds, (id) => byId.get(id)?.status) };
   };
 }
 
@@ -211,8 +230,10 @@ async function ready(h: HiringContext, flow: Flow, x: Executor): Promise<boolean
 /**
  * Closes one run, idempotently (the first claim wins): the claim records who
  * closed it, every question with content counts as closed now, choice
- * questions get their score (0 when unanswered), and the completion follows
- * rules/candidate-flow runCompletion.
+ * questions get their score (0 when unanswered), a recording question with no
+ * attached take gets the take that is its answer by decision 8 (an upload
+ * hook that failed is made good here; a take still uploading attaches on its
+ * own completion), and the completion follows rules/candidate-flow runCompletion.
  */
 async function closeRun(
   x: Executor,
@@ -242,9 +263,11 @@ async function closeRun(
     }
     if (answered) answeredAny += 1;
     if (!row) continue;
+    const missedTake = row.mediaAssetId == null && (activity.type === "VIDEO" || activity.type === "AUDIO") ? takes(row).answer : null;
     await x
       .update(hiringResponses)
       .set({
+        ...(missedTake ? { mediaAssetId: missedTake } : {}),
         answeredAt: row.answeredAt ?? (answered ? now : null),
         autoScore: isChoice(activity.type) ? autoScore(activity, answered ? row.payload : {}) : null,
         usedTextAlternative: !!row.payload.usedTextAlternative,
@@ -739,8 +762,10 @@ const ownsAsset = (assetId: string) =>
  *
  * As the module's hook it never throws: a failure is logged and the upload's
  * request still succeeds. The answer is decided again on the question's next
- * upload event (another take, a failure, the salvage), and closing the stage
- * counts any usable take whether attached or not.
+ * upload event (another take, a failure, the salvage) or when the stage
+ * closes (closeRun attaches the answer take if none is attached yet). A take
+ * that finishes after the stage closed, with no later event, can stay
+ * unattached if this hook fails then.
  */
 export async function attachMedia(asset: MediaAssetRow): Promise<void> {
   try {
@@ -786,14 +811,7 @@ async function decideMediaAnswer(asset: MediaAssetRow): Promise<void> {
     const states = others.length ? await tx.select({ id: mediaAssets.id, status: mediaAssets.status }).from(mediaAssets).where(inArray(mediaAssets.id, others)) : [];
     // The asset in hand carries its new status; the others are read under the response's lock.
     const statusOf = (id: string) => (id === asset.id ? asset.status : states.find((m) => m.id === id)?.status);
-    let answer: string | null = null;
-    for (const id of [...response.takeAssetIds].reverse()) {
-      const status = statusOf(id);
-      if (status === "FAILED") continue;
-      if (status === "READY" || status === "INCOMPLETE") answer = id;
-      // Uploading (or unknown): this newer take may still become the answer, so the decision waits.
-      break;
-    }
+    const answer = answerTake(response.takeAssetIds, statusOf);
     if (!answer || (answer === response.mediaAssetId && !response.payload.usedTextAlternative)) return;
     const { usedTextAlternative: _alternative, ...payload } = response.payload;
     void _alternative;

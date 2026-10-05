@@ -398,6 +398,34 @@ describe("submitStage", () => {
     expect(fake.ops.find((o) => o.table === "hiring_openings" && o.kind === "select" && o.fields?.includes("feedbackDays"))).toBeTruthy();
   });
 
+  describe("closing attaches a finished take the upload hook missed (I5)", () => {
+    const recording = (takes: string[], media: Array<{ id: string; status: string }>, over: Record<string, unknown> = {}) => {
+      world.activities = [activityRow("a1", "s1", 0, { type: "VIDEO" }), activityRow("b1", "s2", 0)];
+      world.runs = [runRow(RUN, "s1")];
+      world.responses = [responseRow("r1", RUN, "a1", { takeAssetIds: takes, mediaAssetId: null, ...over })];
+      world.media = media.map((m) => ({ ...m, durationMs: 1000 }));
+    };
+    const responseWrite = () => writesOf(fake.ops).find((w) => w.table === "hiring_responses" && w.kind === "update");
+
+    it("sets the newest READY or INCOMPLETE take when none is attached, skipping a newer FAILED one", async () => {
+      recording(["m1", "m2", "m3"], [{ id: "m1", status: "READY" }, { id: "m2", status: "INCOMPLETE" }, { id: "m3", status: "FAILED" }]);
+      expect(await submitStage(h(), 1, later(60_000))).toEqual({ ok: true });
+      expect(responseWrite()?.values).toMatchObject({ mediaAssetId: "m2" });
+    });
+
+    it("leaves the answer open while a newer take is still uploading (its own completion decides)", async () => {
+      recording(["m1", "m2"], [{ id: "m1", status: "READY" }, { id: "m2", status: "UPLOADING" }]);
+      expect(await submitStage(h(), 1, later(60_000))).toEqual({ ok: true });
+      expect(responseWrite()?.values).not.toHaveProperty("mediaAssetId");
+    });
+
+    it("never replaces a take that is already the answer", async () => {
+      recording(["m1", "m2"], [{ id: "m1", status: "READY" }, { id: "m2", status: "READY" }], { mediaAssetId: "m1" });
+      expect(await submitStage(h(), 1, later(60_000))).toEqual({ ok: true });
+      expect(responseWrite()?.values).not.toHaveProperty("mediaAssetId");
+    });
+  });
+
   it("refuses a stage that has not started and a stale number", async () => {
     expect(await submitStage(h(), 1, NOW)).toEqual({ ok: false, code: "STAGE_NOT_STARTED" });
     running();
