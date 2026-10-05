@@ -77,6 +77,9 @@ export type HiringResponsePayload = {
   pendingFile?: { assetId: string; name: string; bytes: number; mime: string };
 };
 
+/** Who ended a stage run (hiring_stage_runs.closed_by). */
+export type HiringRunClosedBy = "CANDIDATE" | "CLOCK";
+
 /** Copied into the version at publish and never changed again (hiring solution design 2.3). */
 export type ScorecardSnapshot = {
   /** Shape version of this JSON; bump it (and keep a reader for the old one) when the shape changes. */
@@ -439,6 +442,13 @@ export const hiringStageRuns = pgTable(
     lastHeartbeatAt: timestamp("last_heartbeat_at", { withTimezone: true }),
     completion: runCompletion("completion").notNull().default("PENDING"),
     wasLate: boolean("was_late").notNull().default(false),
+    /**
+     * How the run ended: CANDIDATE (the candidate submitted it while the clock
+     * still ran, or under ALLOW_LATE) or CLOCK (the time ran out: the server's
+     * sweep, a reload after the deadline, or a submit that arrived after it).
+     * Null while the run is open. The next stage's "Süre doldu" reads it.
+     */
+    closedBy: text("closed_by").$type<HiringRunClosedBy>(),
     /** Retakes (plan 3): a stage outside the retake scope points at the run it carries over. */
     carriedFromStageRunId: uuid("carried_from_stage_run_id"),
   },
@@ -448,6 +458,8 @@ export const hiringStageRuns = pgTable(
     index("hiring_stage_runs_stage_idx").on(t.stageId),
     index("hiring_stage_runs_carried_from_idx").on(t.carriedFromStageRunId).where(sql`carried_from_stage_run_id IS NOT NULL`),
     check("hiring_stage_run_order", sql`${t.orderIndex} >= 0`),
+    check("hiring_stage_run_closed_by", sql`${t.closedBy} IN ('CANDIDATE', 'CLOCK')`),
+    check("hiring_stage_run_closed_by_closed", sql`${t.closedBy} IS NULL OR ${t.submittedAt} IS NOT NULL`),
     foreignKey({
       name: "hiring_stage_runs_carried_from_fk",
       columns: [t.carriedFromStageRunId],

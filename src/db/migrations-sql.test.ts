@@ -466,3 +466,28 @@ describe("0011_hiring_tenancy_keys", () => {
     }
   });
 });
+
+describe("0012_hiring_run_closed_by", () => {
+  const sql = read("0012_hiring_run_closed_by");
+
+  it("adds how a stage run ended as a nullable column (null while open)", () => {
+    expect(sql).toContain(`ALTER TABLE "hiring_stage_runs" ADD COLUMN "closed_by" text;`);
+    expect(sql).not.toMatch(/"closed_by" text (NOT NULL|DEFAULT)/);
+  });
+
+  it("allows only CANDIDATE and CLOCK, and only on a closed run", () => {
+    expect(sql).toContain(
+      `ALTER TABLE "hiring_stage_runs" ADD CONSTRAINT "hiring_stage_run_closed_by" CHECK ("hiring_stage_runs"."closed_by" IN ('CANDIDATE', 'CLOCK'));`,
+    );
+    expect(sql).toContain(
+      `ALTER TABLE "hiring_stage_runs" ADD CONSTRAINT "hiring_stage_run_closed_by_closed" CHECK ("hiring_stage_runs"."closed_by" IS NULL OR "hiring_stage_runs"."submitted_at" IS NOT NULL);`,
+    );
+  });
+
+  it("only adds, touches no other table and writes no rows", () => {
+    expect(sql).not.toMatch(/\bDROP\b/);
+    expect(sql).not.toMatch(/^\s*(INSERT|UPDATE|DELETE)\b/im);
+    expect([...sql.matchAll(/ALTER TABLE "([^"]+)"/g)].every((m) => m[1] === "hiring_stage_runs")).toBe(true);
+    for (const name of [...sql.matchAll(/CONSTRAINT "([^"]+)"/g)].map((m) => m[1])) expect(name.length, name).toBeLessThanOrEqual(63);
+  });
+});

@@ -85,6 +85,13 @@
       "when": 1791154819533,
       "tag": "0011_hiring_tenancy_keys",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791159097091,
+      "tag": "0012_hiring_run_closed_by",
+      "breakpoints": true
     }
   ]
 }
