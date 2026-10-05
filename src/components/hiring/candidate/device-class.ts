@@ -8,11 +8,15 @@
  *    No laptop sends either; DevTools phone emulation does, on purpose.
  * 2. A tablet UA (iPad, Android without "Mobile", or "Macintosh" with touch
  *    points, which is iPadOS asking for the desktop site) is a tablet, with or
- *    without a keyboard (K11). The server cannot see touch points or pointers,
- *    so it says "unknown" and the browser decides.
- * 3. In the browser, a coarse-only pointer AND no screen sharing together are a
- *    tablet (a touch device asking for the desktop site). One weak signal alone
- *    (a touch screen, a small window) never blocks anyone.
+ *    without a keyboard (K11). For an iPad or Android tablet UA the server says
+ *    "unknown" and the browser decides. The server cannot see touch points, so
+ *    every "Macintosh" UA is a desktop there; an iPad asking for the desktop
+ *    site is caught by the browser, which decides before consent or any
+ *    recording (the client verdict is the one that counts).
+ * 3. In the browser, a coarse pointer AND no fine pointer AND no screen sharing,
+ *    all three said outright, are a tablet (a touch device asking for the
+ *    desktop site). A signal left out fails open, and one weak signal alone (a
+ *    touch screen, a small window) never blocks anyone.
  * 4. Everything else is a desktop. Window width is never an input here: a
  *    narrow desktop window gets a strip, never a block.
  *
@@ -41,7 +45,7 @@ export function classifyDevice(s: DeviceSignals): DeviceClass {
   const tabletUa = TABLET_UA.test(s.ua) || (/Macintosh/.test(s.ua) && (s.maxTouchPoints ?? 0) > 1);
   if (tabletUa) return inBrowser ? "tablet" : "unknown";
   if (!inBrowser) return "desktop";
-  if (s.coarse && !s.anyFine && !s.hasDisplayMedia) return "tablet";
+  if (s.coarse === true && s.anyFine === false && s.hasDisplayMedia === false) return "tablet";
   return "desktop";
 }
 

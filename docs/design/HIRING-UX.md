@@ -1016,7 +1016,7 @@ davet eski kuralla devam eder."
 5. **Ne kaydediliyor** kartı (gözetim seviyesine göre, 7.2): her satır bir ikon + bir cümle.
    "Ayrıntılar" açılır: tam liste, saklama süreleri, alt işleyiciler.
 6. **İhtiyacın olanlar:** sessiz bir yer, kamera ve mikrofon (video sorusu varsa), ~25 dk kesintisiz
-   zaman, telefon ya da bilgisayar (gözetim izin veriyorsa).
+   zaman, bilgisayar (K2, 6.15).
 7. **"Bir ihtiyacın mı var?"** satırı (`Collapsible`):
    - **Ek süre, kendin seç:** "+%25" / "+%50" (`RadioGroup`). Neden sorulmaz, onay beklenmez, hemen
      uygulanır. Değerlendiriciler bunu görmez; alım sahibi yalnızca "süre uyarlaması uygulandı" görür,
@@ -1158,13 +1158,16 @@ Her biri bir sonraki somut adımla:
 | Tekrar isteği | "Ekip 2. aşamayı yeniden yapmanı istedi: <mesaj>." | "The team asked you to redo stage 2..." | **"Başlayalım"** |
 | Alım kapandı | "Bu pozisyon için değerlendirme kapandı. İlgin için teşekkürler." | "This role is no longer..." | iletişim adresi |
 
-### 6.15 Mobil
+### 6.15 Cihaz (yerine geçti: HIRING-VISUAL-FLOW 3.0, kullanıcı kararı K2, 2026-10-05)
 
-- Gözetim Kapalı veya Temel ise değerlendirme **telefonda tamamen yapılabilir**: tek sütun, alt sabit
-  dolu buton, video dikey çerçeve, kayıt 5 sn parçalarla anında yüklenir (iOS Safari bulgusu, PLAN 1.4).
-- Gözetim Standart ise telefon izinli ama "Bilgisayar önerilir" notu; Sıkı ise yalnızca bilgisayar:
-  engel ekranı neden + "Linki kopyala" (dolu) + "Linki e-postama gönder" (e-posta hizmeti gelince).
-- Dokunma hedefi ≥ 44px, yazı ≥ 16px (iOS zoom'u tetiklemesin).
+İşe alım aday akışı gözetim seviyesinden bağımsız olarak **yalnızca bilgisayardan** yapılır.
+Telefon ve tablet `DesktopOnlyScreen` görür: neden (dürüst, gözetim iddiası yok), linki kopyala,
+isteğe bağlı "linki e-postama gönder" (sunucu ucu ve e-posta gönderimi gelince; K11 ile şimdilik
+yok). Masaüstü düzeni 1280 ve 1440 için tasarlanır, 1024'te bozulmaz; 1024'ten dar bir masaüstü
+penceresi engellenmez, tek sütuna iner ve "Pencereni büyüt" şeridi görür. Eski 6.15'in "telefonda
+tamamen yapılabilir", "alt sabit dolu buton" ve "video dikey çerçeve" maddeleri geçersiz. Dokunma
+hedefi ≥ 44px ve yazı ≥ 16px kuralları kalır (dokunmatik dizüstü ve erişilebilirlik için). Klavyeli
+tablet de engellenir (K11).
 
 ## 7. İşe alımda gözetim
 
@@ -1179,11 +1182,13 @@ varsayılan hafiftir ve her seviye adaya *tam olarak* ne yaptığını söyler.
 
 | Seviye | Ne açık | Cihaz | Ne zaman önerilir |
 |---|---|---|---|
-| **Kapalı** / Off | Yalnızca teknik kayıt (bağlantı, yükleme boşlukları, sayfa yenileme). Bunlar bütünlük değil, adalet içindir: kopma yaşayan adaya tekrar hakkı verebilmek için | Telefon dahil her yer | Video ağırlıklı tanışma değerlendirmeleri |
-| **Temel** / Basic (**işe alım varsayılanı**) | + sekme/pencere değişimi, uzun metin yapıştırma (engellenmez, kaydedilir), ikinci sekme | Telefon dahil | Yazılı cevap içeren her değerlendirme |
-| **Standart** / Standard | + yazılı/seçmeli sorularda kamera kareleri (30 sn), yüz yok / birden fazla kişi / telefon sinyali, tam ekran, AI ikinci bakış | Bilgisayar önerilir | Bilgi testi ya da çözüm üretme aşaması olan değerlendirmeler |
-| **Sıkı** / Strict | + tüm ekran paylaşımı, ikinci ekran kontrolü, yalnızca Chrome/Edge, yapıştırma engeli | Yalnızca bilgisayar | Teknik test, sertifika benzeri yüksek riskli aşama |
+| **Kapalı** / Off | Yalnızca teknik kayıt (bağlantı, yükleme boşlukları, sayfa yenileme). Bunlar bütünlük değil, adalet içindir: kopma yaşayan adaya tekrar hakkı verebilmek için | Yalnızca bilgisayar (K2) | Video ağırlıklı tanışma değerlendirmeleri |
+| **Temel** / Basic (**işe alım varsayılanı**) | + sekme/pencere değişimi, uzun metin yapıştırma (engellenmez, kaydedilir), ikinci sekme | Yalnızca bilgisayar (K2) | Yazılı cevap içeren her değerlendirme |
+| **Standart** / Standard | + yazılı/seçmeli sorularda kamera kareleri (30 sn), yüz yok / birden fazla kişi / telefon sinyali, tam ekran, AI ikinci bakış | Yalnızca bilgisayar (K2) | Bilgi testi ya da çözüm üretme aşaması olan değerlendirmeler |
+| **Sıkı** / Strict | + tüm ekran paylaşımı, ikinci ekran kontrolü, yalnızca Chrome/Edge, yapıştırma engeli | Yalnızca bilgisayar (K2) | Teknik test, sertifika benzeri yüksek riskli aşama |
 
+- **Cihaz sütunu (K2, 2026-10-05):** işe alım aday akışı her seviyede yalnızca bilgisayardan yapılır
+  (6.15, HIRING-VISUAL-FLOW 3.0); seviye cihazı değiştirmez.
 - **Temel yeni bir preset'tir** (`policy.ts`'de yok, eklenmeli): kamera, tam ekran, ekran paylaşımı
   kapalı; `clipboardBlock: false`; olay kaydı açık.
 - **İşe alımda otomatik sonlandırma yoktur, hiçbir seviyede.** Sınav tarafındaki "okul açarsa"

@@ -68,6 +68,28 @@ describe("classifyDevice (HIRING-VISUAL-FLOW 3.0, K2, K11)", () => {
     expect(client(UA.linuxDesktopSite, { ...touch, hasDisplayMedia: true })).toBe("desktop");
   });
 
+  it("fails open on a missing client signal and holds the Task 1 review's regression cases", () => {
+    // Only all three client signals together make a desktop UA a tablet; one left out never blocks.
+    expect(classifyDevice({ ua: UA.linuxDesktopSite, coarse: true })).toBe("desktop");
+    expect(classifyDevice({ ua: UA.linuxDesktopSite, coarse: true, anyFine: false })).toBe("desktop");
+    expect(classifyDevice({ ua: UA.linuxDesktopSite, coarse: true, hasDisplayMedia: false })).toBe("desktop");
+    expect(classifyDevice({ ua: UA.linuxDesktopSite, coarse: true, anyFine: false, hasDisplayMedia: false })).toBe("tablet");
+    // Samsung Internet: a phone by its UA, a tablet UA left to the browser.
+    const samsungPhone = "Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/25.0 Chrome/121.0.0.0 Mobile Safari/537.36";
+    const samsungTablet = "Mozilla/5.0 (Linux; Android 14; SM-X710) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/25.0 Chrome/121.0.0.0 Safari/537.36";
+    expect(classifyDevice({ ua: samsungPhone })).toBe("phone");
+    expect(classifyDevice({ ua: samsungTablet, chMobile: false })).toBe("unknown");
+    expect(client(samsungTablet, touch)).toBe("tablet");
+    // A Surface-style device folded into tablet mode: coarse, no fine pointer, but it shares its screen.
+    expect(client(UA.windowsChrome, { coarse: true, anyFine: false, hasDisplayMedia: true, maxTouchPoints: 10 })).toBe("desktop");
+    // A phone UA is a phone even when the browser says chMobile false.
+    expect(classifyDevice({ ua: UA.iphone, chMobile: false })).toBe("phone");
+    expect(classifyDevice({ ua: UA.androidPhone, chMobile: false, ...desk })).toBe("phone");
+    // A Mac with no touch points is a desktop, on the server and in the browser.
+    expect(client(UA.macSafari, { ...desk, maxTouchPoints: 0 })).toBe("desktop");
+    expect(classifyDevice({ ua: UA.macSafari, chMobile: false })).toBe("desktop");
+  });
+
   it("reads the request headers, and treats no request (a script) as desktop (decision 3)", () => {
     const h = (pairs: Record<string, string>) => ({ get: (name: string) => pairs[name.toLowerCase()] ?? null });
     expect(serverDeviceClass(h({ "user-agent": UA.iphone }))).toBe("phone");

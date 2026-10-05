@@ -7,12 +7,17 @@ class Redirect extends Error {
   }
 }
 
-const h = vi.hoisted(() => ({
-  hctx: null as unknown,
-  state: null as unknown,
-  setAssessmentLocale: vi.fn(async () => undefined),
-  consent: { tr: "Rıza metni", en: "Consent text" } as { tr: string; en: string },
-}));
+const h = vi.hoisted(() => {
+  const DESKTOP_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36";
+  return {
+    DESKTOP_UA,
+    headers: { "user-agent": DESKTOP_UA } as Record<string, string>,
+    hctx: null as unknown,
+    state: null as unknown,
+    setAssessmentLocale: vi.fn(async () => undefined),
+    consent: { tr: "Rıza metni", en: "Consent text" } as { tr: string; en: string },
+  };
+});
 
 vi.mock("@/db", () => ({ db: {} }));
 vi.mock("next/navigation", () => ({
@@ -32,6 +37,9 @@ vi.mock("@/components/hiring/candidate/device-check", () => ({ DeviceCheck: func
 vi.mock("@/components/hiring/candidate/stage-runner", () => ({ StageRunner: function StageRunner() {} }));
 vi.mock("@/components/hiring/candidate/practice", () => ({ Practice: function Practice() {} }));
 vi.mock("@/components/hiring/candidate/done", () => ({ Done: function Done() {} }));
+vi.mock("next/headers", () => ({ headers: async () => new Headers(h.headers) }));
+vi.mock("@/components/hiring/candidate/desktop-gate", () => ({ DesktopGate: function DesktopGate() {} }));
+vi.mock("@/components/hiring/candidate/desktop-only", () => ({ DesktopOnlyScreen: function DesktopOnlyScreen() {} }));
 
 import { Landing } from "@/components/hiring/candidate/landing";
 import { ClosedCard } from "@/components/hiring/candidate/closed";
@@ -46,6 +54,8 @@ import { createElement } from "react";
 import { formatInviteDeadline } from "../rules/invitation";
 import { zoneLabel } from "@/lib/org-timezone";
 import { renderHiringPage } from "./pages";
+import { DesktopGate } from "@/components/hiring/candidate/desktop-gate";
+import { DesktopOnlyScreen } from "@/components/hiring/candidate/desktop-only";
 
 const ctx = {
   link: { id: "l", status: "NOT_STARTED", expiresAt: new Date("2026-10-19T20:59:59Z"), notBefore: null, firstSeenIp: null },
@@ -70,6 +80,7 @@ const render = (slot: "landing" | "check" | "practice" | "stage" | "done", over:
   renderHiringPage(slot, { token: "tok", resolved: { ok: true, ctx } as never, searchParams: {}, params: {}, ...over }) as Promise<ReactNode>;
 
 beforeEach(() => {
+  h.headers = { "user-agent": h.DESKTOP_UA };
   h.hctx = { ...ctx, hiring: { openingId: "op", versionId: "v", extraTimePct: 0, consentTextId: "ct" } };
   // A state as Task 5 builds it can only carry candidate text; the team-only field here proves the
   // renderer still goes through candidateSafe, and the LEAKVISIBLE text is the positive control (C10).
@@ -326,5 +337,67 @@ describe("the finish page", () => {
   it("sends a candidate who has not finished away from /done", async () => {
     h.state = { ...(h.state as object), step: "STAGE", position: 2, path: "/stage/2", finished: null };
     await expect(render("done")).rejects.toMatchObject({ to: "/a/tok/stage/2" });
+  });
+});
+
+describe("the desktop gate (HIRING-VISUAL-FLOW 3.0, VG)", () => {
+  const PHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1";
+  const TABLET = "Mozilla/5.0 (Linux; Android 14; SM-X710) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36";
+  const stageState = () => ({
+    ...(h.state as object),
+    step: "STAGE",
+    position: 2,
+    path: "/stage/2",
+    totalMinutes: 15,
+    current: { position: 2, total: 2, stage: { id: "s2", name: { tr: "Vaka LEAKVISIBLE_STAGE", en: "Case" }, activities: [{ id: "q1", type: "LONG_TEXT", prompt: { tr: "Anlat LEAKVISIBLE_PROMPT", en: "Tell" }, managerNotes: "TEAMSECRET_NOTE" }] }, responses: [] },
+  });
+
+  it("gives a phone only the desktop-only screen: the minutes, the last day, the contact, and nothing of the stages", async () => {
+    h.headers = { "user-agent": PHONE };
+    h.state = { ...(h.state as object), totalMinutes: 15 };
+    const landing = await render("landing");
+    expect(find(landing, Landing)).toHaveLength(0);
+    expect(find(landing, DesktopGate)).toHaveLength(0);
+    const [only] = find(landing, DesktopOnlyScreen);
+    expect(only.props).toEqual({ token: "tok", minutes: 15, deadlineDay: "19 Eki", contactEmail: "deniz@ornek.test" });
+    // Inside the frame: the organisation, the language and Help stay in reach.
+    expect(find(landing, HiringFrame)[0].props).toMatchObject({ orgName: "Örnek A.Ş.", token: "tok" });
+    h.state = stageState();
+    const stage = await render("stage", { params: { n: "2" } });
+    expect(find(stage, StageRunner)).toHaveLength(0);
+    const sent = JSON.stringify(find(stage, DesktopOnlyScreen)[0].props);
+    expect(sent).not.toMatch(/LEAKVISIBLE|TEAMSECRET/);
+    // Positive control: the state the page read does carry the stage's and the question's text.
+    expect(JSON.stringify(h.state)).toMatch(/LEAKVISIBLE_STAGE[\s\S]*LEAKVISIBLE_PROMPT/);
+  });
+
+  it("treats Sec-CH-UA-Mobile ?1 as a phone whatever the UA says", async () => {
+    h.headers = { "user-agent": h.DESKTOP_UA, "sec-ch-ua-mobile": "?1" };
+    expect(find(await render("landing"), DesktopOnlyScreen)).toHaveLength(1);
+  });
+
+  it("hands a desktop the screen inside the client gate, with the same desktop-only screen in reserve", async () => {
+    const node = await render("landing");
+    const [gate] = find(node, DesktopGate);
+    expect(gate.props).toMatchObject({ serverClass: "desktop" });
+    expect(find(gate, Landing)).toHaveLength(1);
+    const reserve = (gate.props as { desktopOnly: ReactElement }).desktopOnly;
+    expect(reserve.type).toBe(DesktopOnlyScreen);
+    expect(Object.keys(reserve.props as object).sort()).toEqual(["contactEmail", "deadlineDay", "minutes", "token"]);
+  });
+
+  it("leaves a tablet UA to the browser", async () => {
+    h.headers = { "user-agent": TABLET, "sec-ch-ua-mobile": "?0" };
+    expect(find(await render("landing"), DesktopGate)[0].props).toMatchObject({ serverClass: "unknown" });
+  });
+
+  it("does not gate the finish page or a link problem: a phone may read them", async () => {
+    h.headers = { "user-agent": PHONE };
+    const expired = await render("landing", { resolved: { ok: false, problem: "EXPIRED", ctx } });
+    expect(find(expired, DesktopOnlyScreen)).toHaveLength(0);
+    h.state = { ...(h.state as object), step: "DONE", position: null, path: "/done", finished: { completedAt: "2026-10-05T09:00:00.000Z", stagesDone: 1, feedbackBy: "2026-10-12", survey: { enabled: false, answered: false } } };
+    const done = await render("done", { resolved: { ok: false, problem: "COMPLETED", ctx } });
+    expect(find(done, Done)).toHaveLength(1);
+    expect(find(done, DesktopOnlyScreen)).toHaveLength(0);
   });
 });

@@ -15,6 +15,7 @@ import type { HiringCandidateState } from "@/solutions/hiring/rules/candidate-st
 import type { CandidateActivity } from "@/solutions/hiring/rules/candidate-view";
 import { ActionBar } from "./action-bar";
 import { ChoiceActivity } from "./choice-activity";
+import { noSubscribe } from "./desktop-gate";
 import { FileActivity } from "./file-activity";
 import { clearDraft, draftKey, lostWords, markLostWords, sessionDrafts, type LostKind } from "./draft-store";
 import { answeredLocally, isLastMinute, minutesLeft, ownsPrimary, primaryKey, resumeOf, tabReply, type LocalAnswer, type TabMessage } from "./runner-model";
@@ -58,7 +59,6 @@ function answerOf(activity: CandidateActivity, a: LocalAnswer | undefined): unkn
 
 /** Reads the page again from the server: a fresh runner from the fresh state (router.refresh() keeps this runner when the stage is the same). */
 const reloadPage = () => window.location.reload();
-const noSubscribe = () => () => undefined;
 
 const subscribeOnline = (notify: () => void) => {
   window.addEventListener("online", notify);

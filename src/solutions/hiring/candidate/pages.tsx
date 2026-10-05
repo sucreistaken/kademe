@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { CandidateIntl } from "@/components/candidate/Intl";
@@ -5,7 +6,10 @@ import { InfoForm } from "@/components/candidate/InfoForm";
 import { LinkProblem } from "@/components/candidate/LinkProblem";
 import { UnknownLink } from "@/components/candidate/UnknownLink";
 import { ClosedCard } from "@/components/hiring/candidate/closed";
+import { DesktopGate } from "@/components/hiring/candidate/desktop-gate";
+import { DesktopOnlyScreen } from "@/components/hiring/candidate/desktop-only";
 import { DeviceCheck } from "@/components/hiring/candidate/device-check";
+import { serverDeviceClass } from "@/components/hiring/candidate/device-class";
 import { Done } from "@/components/hiring/candidate/done";
 import { HiringFrame } from "@/components/hiring/candidate/frame";
 import { Landing } from "@/components/hiring/candidate/landing";
@@ -82,6 +86,15 @@ function problemCard(token: string, locale: Locale, problem: Problem, ctx: Candi
   );
 }
 
+/** The request's headers; null outside a request (a script calling the renderer): treated as a desktop (plan decision 3). */
+async function requestHeaders(): Promise<{ get(name: string): string | null } | null> {
+  try {
+    return await headers();
+  } catch {
+    return null;
+  }
+}
+
 export async function renderHiringPage(slot: CandidatePageSlot, input: CandidatePageInput): Promise<ReactNode> {
   const { token, resolved, searchParams, params } = input;
   const base = `/a/${encodeURIComponent(token)}`;
@@ -112,43 +125,68 @@ export async function renderHiringPage(slot: CandidatePageSlot, input: Candidate
   const safe = candidateSafe(state);
   const frame = (children: ReactNode) => framed(token, locale, safe.orgName, safe.contactEmail, children);
 
+  // HIRING-VISUAL-FLOW 3.0 (K2): a phone gets the desktop-only screen from the server and nothing
+  // of the screen it asked for (the builder below never runs); the browser decides the rest. The
+  // screen gets the minutes and the last day only: no stage name, no question (leak rule).
+  // /done, /rights and the problem cards are not gated (ruling C12): a finished candidate and
+  // the data rights stay reachable on any device.
+  const device = serverDeviceClass(await requestHeaders());
+  const desktopOnly = (
+    <DesktopOnlyScreen
+      token={token}
+      minutes={safe.totalMinutes}
+      deadlineDay={formatInviteDay(orgDay(h.link.expiresAt, ORG_TIMEZONE), locale)}
+      contactEmail={safe.contactEmail}
+    />
+  );
+  const gated = async (screen: () => ReactNode | Promise<ReactNode>) =>
+    device === "phone"
+      ? frame(desktopOnly)
+      : frame(
+          <DesktopGate serverClass={device === "unknown" ? "unknown" : "desktop"} desktopOnly={desktopOnly}>
+            {await screen()}
+          </DesktopGate>,
+        );
+
   switch (slot) {
     case "landing": {
       // A closed opening stops only a candidate who has not started (Task 5); the state says CLOSED then.
       if (safe.step === "CLOSED") return frame(<ClosedCard contactEmail={safe.contactEmail} />);
-      // The text frozen on this invitation, never the organisation's newest one.
-      // Shown in the other language (with its own lang) when this one is empty.
-      const consent = pickTextLang((await loadConsentText(h.assessment.orgId, h.hiring.consentTextId)).body, locale);
-      // The deadline in the invitation e-mail's words: the end of the org's day, the zone named.
-      const deadline = formatInviteDeadline(orgDay(h.link.expiresAt, ORG_TIMEZONE), locale, zoneLabel(locale, ORG_TIMEZONE));
-      return frame(<Landing token={token} state={safe} consentBody={consent.text} consentLang={consent.lang} deadline={deadline} locale={locale} />);
+      return gated(async () => {
+        // The text frozen on this invitation, never the organisation's newest one.
+        // Shown in the other language (with its own lang) when this one is empty.
+        const consent = pickTextLang((await loadConsentText(h.assessment.orgId, h.hiring.consentTextId)).body, locale);
+        // The deadline in the invitation e-mail's words: the end of the org's day, the zone named.
+        const deadline = formatInviteDeadline(orgDay(h.link.expiresAt, ORG_TIMEZONE), locale, zoneLabel(locale, ORG_TIMEZONE));
+        return <Landing token={token} state={safe} consentBody={consent.text} consentLang={consent.lang} deadline={deadline} locale={locale} />;
+      });
     }
     case "info":
-      return frame(
+      return gated(() => (
         <InfoForm
           token={token}
           initial={{ fullName: h.candidate.fullName ?? "", email: h.candidate.email ?? "", phone: h.candidate.phone ?? "", location: h.candidate.location ?? "" }}
-        />,
-      );
+        />
+      ));
     case "check":
       // Two flags and the page's language: no question, stage or team text reaches the device check.
-      return frame(<DeviceCheck token={token} camera={safe.devices.camera} practice={safe.practice} locale={locale} contactEmail={safe.contactEmail} />);
+      return gated(() => <DeviceCheck token={token} camera={safe.devices.camera} practice={safe.practice} locale={locale} contactEmail={safe.contactEmail} />);
     case "stage":
       // Keyed by the stage, so the next stage starts from a fresh runner. The runner gets the
       // stripped candidate state only (no team field, no right answer: C10); the deadline in
       // the same words as the landing and the invitation e-mail.
-      return frame(
+      return gated(() => (
         <StageRunner
           key={safe.position ?? 0}
           token={token}
           initial={safe}
           deadline={formatInviteDeadline(orgDay(h.link.expiresAt, ORG_TIMEZONE), locale, zoneLabel(locale, ORG_TIMEZONE))}
           locale={locale}
-        />,
-      );
+        />
+      ));
     case "practice":
       // HIRING-UX 6.4: the camera flag and the page's language only; the warm-up's question is its own, nothing of the version reaches it.
-      return frame(<Practice token={token} camera={safe.devices.camera} locale={locale} />);
+      return gated(() => <Practice token={token} camera={safe.devices.camera} locale={locale} />);
     case "done": {
       // Only a finished invitation lives on /done (the path check above), and Task 5 builds every
       // DONE state with its finish; a DONE without one is a broken invariant, not a page to guess.

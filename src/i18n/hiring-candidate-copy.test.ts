@@ -117,4 +117,25 @@ describe("hiring candidate copy", () => {
     for (const [name, namespace] of hiringOf(tr)) for (const text of strings(namespace)) expect(text, name).not.toMatch(/aynı gün dönülür|e-posta ile dönecek|dönecek/);
     for (const [name, namespace] of hiringOf(en)) for (const text of strings(namespace)) expect(text, name).not.toMatch(/reply the same day|replies the same day|will reply/i);
   });
+
+  it("says why the flow needs a computer without claiming any monitoring, and offers no e-mail button yet (3.0, K11)", () => {
+    expect(tr.hiringGate.title).toBe("Bu değerlendirme bilgisayardan yapılır");
+    expect(en.hiringGate.title).toBe("This assessment is done on a computer");
+    expect(tr.hiringGate.why).toBe("İşe alım ekibi, değerlendirmenin bilgisayardan yapılmasını istiyor.");
+    expect(en.hiringGate.why).toBe("The hiring team asks for this assessment to be done on a computer.");
+    for (const text of [...strings(tr.hiringGate), ...strings(en.hiringGate)]) {
+      expect(text).not.toMatch(/izlen|tam ekran|sekme|gözetim|monitor|full ?screen|\btabs?\b|proctor/i);
+      expect(text).not.toMatch(/e-postama gönder|e-mail me/i);
+    }
+  });
+
+  it("no longer says the assessment can be done on a phone (K2)", () => {
+    expect(tr.hiringFrame.faqPhoneA).toBe("Hayır, bu değerlendirme bilgisayardan yapılır. Linki bilgisayarında aç.");
+    expect(en.hiringFrame.faqPhoneA).toBe("No, this assessment is done on a computer. Open the link on your computer.");
+    expect(tr.hiringLanding.needDevice).toBe("Bilgisayar");
+    expect(en.hiringLanding.needDevice).toBe("A computer");
+    for (const [, namespace] of [...hiringOf(tr), ...hiringOf(en)]) {
+      for (const text of strings(namespace)) expect(text).not.toMatch(/Telefonu dik tut|Hold the phone upright|Telefon ya da bilgisayar|A phone or a computer|örneğin telefonunla|such as your phone/);
+    }
+  });
 });

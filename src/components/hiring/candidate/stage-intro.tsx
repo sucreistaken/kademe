@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button, DisabledReason } from "@/components/ui/button";
 import { useT } from "@/i18n/candidate-client";
 import type { Locale } from "@/i18n/locale";
 import type { StageRule } from "@/solutions/hiring/rules/candidate-flow";
 import type { CurrentStage } from "@/solutions/hiring/rules/candidate-state";
 import { ActionBar } from "./action-bar";
 import { VersionText } from "./activity-header";
+import { useWindowWidth } from "./desktop-gate";
+import { startWaitsForWidth } from "./device-class";
 import { introMinutes } from "./runner-model";
 
 /**
@@ -37,6 +39,9 @@ export function StageIntro({
   headingRef: React.Ref<HTMLHeadingElement>;
 }) {
   const t = useT("hiringStage");
+  const tg = useT("hiringGate");
+  // 3.0: below 640px a stage that has not started waits with its reason; a started one is never held (the clock runs).
+  const narrow = startWaitsForWidth(useWindowWidth());
   // Minor 9: a status that arrives with the page is not read out; it is filled in just after, so it is.
   const [announce, setAnnounce] = useState(false);
   useEffect(() => {
@@ -99,10 +104,23 @@ export function StageIntro({
       {current.last ? <p className="mt-5 text-[16px] leading-[26px] font-medium text-ink">{t("lastStage")}</p> : null}
       <p className="mt-5 text-[16px] font-medium text-ink">{t("clockStarts")}</p>
       <ActionBar>
-        {/* Disabled only while it works, and then its own label says so ("Başlatılıyor"), like the landing's start. */}
-        <Button id="stage-start" variant="primary" size="lg" className="w-full text-[16px] sm:w-auto" disabled={busy} onClick={onStart}>
+        {/* Disabled while it works (its own label says so) or while the window is too narrow (the reason is next to it). */}
+        <Button
+          id="stage-start"
+          variant="primary"
+          size="lg"
+          className="w-full text-[16px] sm:w-auto"
+          disabled={busy || narrow}
+          disabledReason={narrow ? tg("narrowStart") : undefined}
+          onClick={onStart}
+        >
           {busy ? t("starting") : t("start")}
         </Button>
+        {narrow ? (
+          <DisabledReason id="stage-start-why" className="mt-2 text-[14px]">
+            {tg("narrowStart")}
+          </DisabledReason>
+        ) : null}
         {error}
       </ActionBar>
       <p className="tnum mt-6 text-[14px] text-muted">{t("deadline", { date: deadline })}</p>
