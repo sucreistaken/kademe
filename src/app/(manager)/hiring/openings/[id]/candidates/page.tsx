@@ -12,6 +12,7 @@ import { can } from "@/lib/authorize";
 import { orgDay, zoneLabel } from "@/lib/org-timezone";
 import { invitableOpenings, listOpeningCandidates } from "@/solutions/hiring/server/invitations";
 import { openingFor } from "../access";
+import { inviteWaitReason } from "../invite-wait";
 import { OpeningHeader } from "../opening-header";
 import { candidatesNotice, NOTICE_PARAMS } from "./notices";
 
@@ -47,7 +48,7 @@ export default async function OpeningCandidatesPage({
   const notice = candidatesNotice(sp);
 
   // The page's one filled button: the invite Sheet, or the same button waiting with its reason (RULES 5).
-  const waitReason = target ? null : closed ? t("hiringOverview.closedBody") : !access.edit ? t("hiringInvite.noPermission") : t("hiringCandidates.emptyNotLive");
+  const waitReason = target ? null : inviteWaitReason(closed, access.edit, t);
   const action = target ? (
     <InviteSheet opening={target} today={orgDay(now)} zone={zoneLabel(locale)} />
   ) : (

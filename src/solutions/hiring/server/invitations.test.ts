@@ -5,7 +5,7 @@ vi.mock("@/db", async () => ({ db: (await import("./test-fake-db")).fakeDb() }))
 const consent = vi.hoisted(() => ({ ensure: vi.fn<(orgId: string, x?: unknown) => Promise<string>>(async () => "ct-1") }));
 vi.mock("./consent", () => ({ ensureHiringConsentText: consent.ensure }));
 
-import { formatInviteDeadline } from "../rules/invitation";
+import { formatInviteDeadline, surveySeed } from "../rules/invitation";
 import { zoneLabel } from "@/lib/org-timezone";
 import { HiringNotFound } from "./errors";
 import { createHiringInvitation, extendHiringLink, invitableOpenings, listOpeningCandidates, markRequestHandled, median, newHiringLink, openingFunnel } from "./invitations";
@@ -588,7 +588,14 @@ describe("markRequestHandled", () => {
 
 describe("openingFunnel", () => {
   const minutes = (m: number) => new Date(NOW.getTime() + m * 60_000);
-  function funnelWorld(survey: unknown[]) {
+  const SENTINEL_AT = new Date("2001-02-03T04:05:06.789Z");
+  type Answer = { rating: number; comment: string | null };
+  /**
+   * The database as the funnel reads it. `answers` are oldest first. The survey count is one
+   * aggregate read; the released answers are one raw statement whose LIMIT is the released
+   * count, answered here the way Postgres would (the real statement runs in verify:hiring-flow).
+   */
+  function funnelWorld(answers: Answer[], stages: unknown[] = [{ id: "s1", durationSeconds: 1500, graceSeconds: 0, onTimeout: "AUTO_SUBMIT" }]) {
     return (op: Op): unknown[] => {
       if (op.table === "hiring_assessments") return [{ assessmentId: "a1" }, { assessmentId: "a2" }, { assessmentId: "a3" }];
       if (op.table === "attempts")
@@ -597,12 +604,25 @@ describe("openingFunnel", () => {
           { assessmentId: "a2", startedAt: NOW, completedAt: minutes(40) },
           { assessmentId: "a3", startedAt: NOW, completedAt: null },
         ];
-      if (op.table === "hiring_survey_responses") return survey;
+      if (op.table === "hiring_survey_responses") return [{ n: answers.length }];
+      if (op.table === "(execute)") {
+        const limit = op.params.find((p) => typeof p === "number") as number;
+        const released = answers.slice(0, limit);
+        const comments = released
+          .filter((a) => a.comment && a.comment.trim())
+          .reverse()
+          .slice(0, 20)
+          .map((a) => a.comment);
+        // A database answering more than was asked for: the date must still not come through.
+        return [{ count: released.length, average: String(released.reduce((s, a) => s + a.rating, 0) / released.length), comments, createdAt: SENTINEL_AT }];
+      }
       if (op.table === "hiring_versions") return [{ id: VERSION, number: 1, status: "PUBLISHED", publishedAt: NOW, previewedAt: null, updatedAt: NOW }];
-      if (op.table === "hiring_stages") return [{ total: 1500 }];
+      if (op.table === "hiring_stages") return stages;
       return [];
     };
   }
+  const released = () => fake.ops.find((o) => o.table === "(execute)");
+  const say = (rating: number, comment: string | null = null): Answer => ({ rating, comment });
 
   it("counts only this organisation's opening, each invitation once", async () => {
     fake.respond = funnelWorld([]);
@@ -617,53 +637,109 @@ describe("openingFunnel", () => {
     expect(fake.ops.find((o) => o.table === "hiring_versions")!.params).toEqual(expect.arrayContaining([OPENING, ORG]));
   });
 
-  // Task 16 carry and Task 19 ruling 1: the candidate is told the team never sees who answered, only
-  // the average and unnamed comments. So no per-comment rating, no date, and comments only from five answers.
-  const SENTINEL_AT = new Date("2001-02-03T04:05:06.789Z");
-  const answer = (rating: number, comment: string | null) => ({ rating, comment, at: SENTINEL_AT, createdAt: SENTINEL_AT });
+  // Task 19 fix round 1, I2: the estimate the candidate was promised (C25), grace included.
+  it("compares with the estimate the candidate was given: the live version's stages plus their grace", async () => {
+    fake.respond = funnelWorld(
+      [],
+      [
+        { id: "s1", durationSeconds: 600, graceSeconds: 120, onTimeout: "ALLOW_GRACE" },
+        { id: "s2", durationSeconds: 900, graceSeconds: 300, onTimeout: "AUTO_SUBMIT" },
+      ],
+    );
+    expect((await openingFunnel(ORG, OPENING)).estimateMinutes).toBe(27);
+    expect(fake.ops.find((o) => o.table === "hiring_stages")!.params).toContain(VERSION);
+  });
 
-  it("shows the survey only from five answers, as the average and plain comments without a rating or a date", async () => {
-    fake.respond = funnelWorld([answer(5, "İyi"), answer(4, null), answer(3, " "), answer(4, "Net"), answer(5, "Kısa")]);
+  // Task 19 fix round 1, I1 and M2: the survey is read for the opening through hiring_assessments,
+  // counted and averaged in SQL, and only the oldest whole batches of five are released.
+  it("reads the survey through the opening's invitations, in SQL, never by a list of ids", async () => {
+    fake.respond = funnelWorld([say(5, "İyi"), say(4), say(3), say(4), say(5)]);
+    await openingFunnel(ORG, OPENING);
+    const count = fake.ops.find((o) => o.table === "hiring_survey_responses")!;
+    expect(count.fields).toEqual(["n"]);
+    expect(count.joins.join(" ")).toContain('"hiring_assessments"."assessment_id" = "hiring_survey_responses"."assessment_id"');
+    expect(count.where).toContain('"hiring_assessments"."org_id" = $');
+    expect(count.where).toContain('"hiring_assessments"."opening_id" = $');
+    expect(count.params).toEqual(expect.arrayContaining([ORG, OPENING]));
+    expect(count.params).not.toContain("a1");
+    const batch = released()!;
+    expect(batch.params).toEqual(expect.arrayContaining([ORG, OPENING, 5]));
+    expect(batch.params).not.toContain("a1");
+    expect(batch.where).toMatch(/order by r\.created_at asc, r\.assessment_id asc\s+limit \$\d+/i);
+    expect(batch.where).toMatch(/avg\(rating\)/i);
+    expect(batch.where).toMatch(/order by created_at desc, assessment_id desc\s+limit 20/i);
+  });
+
+  it("shows nothing before five answers, and asks nothing more than the count", async () => {
+    fake.respond = funnelWorld([say(5, "İyi"), say(1, "Kötü"), say(2, "Uzun"), say(4, "Net")]);
+    expect((await openingFunnel(ORG, OPENING)).survey).toEqual({ count: 0, average: null, comments: [] });
+    expect(released()).toBeUndefined();
+  });
+
+  it("with nine answers shows the oldest five: their count, their average and their comments, trimmed", async () => {
+    const oldest = [say(5, "  Akıcıydı  "), say(4), say(3, " "), say(4, "Net"), say(5, "Kısa\n")];
+    fake.respond = funnelWorld([...oldest, say(1, "YENİ_1"), say(1, "YENİ_2"), say(1), say(1, "YENİ_4")]);
     const { survey } = await openingFunnel(ORG, OPENING);
-    expect(Object.keys(survey).sort()).toEqual(["average", "comments", "count"]);
     expect(survey.count).toBe(5);
     expect(survey.average).toBe(4.2);
-    expect([...survey.comments].sort()).toEqual(["Kısa", "Net", "İyi"].sort());
+    expect([...survey.comments].sort()).toEqual(["Akıcıydı", "Kısa", "Net"].sort());
+    expect(JSON.stringify(survey)).not.toContain("YENİ");
+    expect(released()!.params).toContain(5);
+  });
+
+  it("changes nothing while answers six to nine arrive, and the same answers always give the same trio", async () => {
+    const first = [say(5, "a"), say(4, "b"), say(3, "c"), say(4, "d"), say(5, "e")];
+    const views: string[] = [];
+    for (let n = 5; n <= 9; n++) {
+      fake.ops = [];
+      fake.respond = funnelWorld([...first, ...Array.from({ length: n - 5 }, (_, i) => say(1, `late${i}`))]);
+      views.push(JSON.stringify((await openingFunnel(ORG, OPENING)).survey));
+      // A reload with the same answers.
+      views.push(JSON.stringify((await openingFunnel(ORG, OPENING)).survey));
+    }
+    expect(new Set(views).size).toBe(1);
+    expect(JSON.parse(views[0])).toMatchObject({ count: 5, average: 4.2 });
+    expect(JSON.parse(views[0]).comments).toHaveLength(3);
+  });
+
+  it("releases the next batch with the tenth answer", async () => {
+    const answers = Array.from({ length: 10 }, (_, i) => say(i < 5 ? 5 : 1, `c${i}`));
+    fake.respond = funnelWorld(answers.slice(0, 9));
+    const before = (await openingFunnel(ORG, OPENING)).survey;
+    expect(released()!.params).toContain(5);
+    fake.ops = [];
+    fake.respond = funnelWorld(answers);
+    const after = (await openingFunnel(ORG, OPENING)).survey;
+    expect(before).toMatchObject({ count: 5, average: 5 });
+    expect(after).toMatchObject({ count: 10, average: 3 });
+    expect(released()!.params).toContain(10);
+  });
+
+  it("shuffles the comments with a seed from the opening and the released count, never by request", async () => {
+    const pool = Array.from({ length: 12 }, (_, i) => say(4, `c${i}`));
+    const seeds: number[] = [];
+    const prng = (seed: number) => {
+      seeds.push(seed);
+      return () => 0;
+    };
+    fake.respond = funnelWorld(pool.slice(0, 10));
+    await openingFunnel(ORG, OPENING, prng);
+    await openingFunnel(ORG, OPENING, prng);
+    expect(seeds[0]).toBe(seeds[1]);
+    expect(seeds[0]).toBe(surveySeed(OPENING, 10));
+    expect(surveySeed(OPENING, 10)).not.toBe(surveySeed(OPENING, 5));
+    expect(surveySeed(OPENING, 10)).not.toBe(surveySeed(VERSION, 10));
+  });
+
+  it("never hands on a rating or a date per comment", async () => {
+    fake.respond = funnelWorld([say(5, "İyi"), say(4), say(3, " "), say(4, "Net"), say(5, "Kısa")]);
+    const { survey } = await openingFunnel(ORG, OPENING);
+    expect(Object.keys(survey).sort()).toEqual(["average", "comments", "count"]);
     for (const c of survey.comments) expect(typeof c).toBe("string");
     const json = JSON.stringify(survey);
     expect(json).not.toContain("2001-02-03");
     expect(json).not.toContain(String(SENTINEL_AT.getTime()));
     expect(json).not.toContain("rating");
-    // The answers are read without their date; the newest come first only through ORDER BY.
-    const read = fake.ops.find((o) => o.table === "hiring_survey_responses")!;
-    expect(read.fields?.sort()).toEqual(["comment", "rating"]);
-
-    fake.respond = funnelWorld([answer(5, "İyi"), answer(1, "Kötü"), answer(2, "Uzun"), answer(4, "Net")]);
-    expect((await openingFunnel(ORG, OPENING)).survey).toEqual({ count: 4, average: null, comments: [] });
-  });
-
-  it("picks up to three comments at random from the twenty most recent, never newest first by rule", async () => {
-    // Rows arrive newest first (ORDER BY created_at DESC): c1 is the newest, c25 the oldest.
-    const rows = Array.from({ length: 25 }, (_, i) => answer(4, `c${i + 1}`));
-    const recent = new Set(rows.slice(0, 20).map((r) => r.comment));
-    let seed = 7;
-    const random = () => {
-      seed = (seed * 48271) % 2147483647;
-      return seed / 2147483647;
-    };
-    const orders = new Set<string>();
-    for (let run = 0; run < 200; run++) {
-      fake.respond = funnelWorld(rows);
-      const { comments } = (await openingFunnel(ORG, OPENING, random)).survey;
-      expect(comments).toHaveLength(3);
-      expect(new Set(comments).size).toBe(3);
-      for (const c of comments) expect(recent.has(c)).toBe(true);
-      orders.add(comments.join(","));
-    }
-    expect(orders.size).toBeGreaterThan(1);
-    // With every draw at zero the shuffle still moves the newest away from the top.
-    fake.respond = funnelWorld(rows);
-    expect((await openingFunnel(ORG, OPENING, () => 0)).survey.comments).not.toEqual(["c1", "c2", "c3"]);
   });
 
   it("is empty for a bad id or no invitations", async () => {

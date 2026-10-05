@@ -37,6 +37,57 @@ export function cleanInviteName(value: string): string | null {
 export const SURVEY_MIN_ANSWERS = 5;
 
 /**
+ * The finish survey reaches the team in whole batches (Task 19 fix round 1):
+ * the overview counts, averages and quotes only the oldest
+ * floor(n / SURVEY_BATCH) * SURVEY_BATCH answers, so the next answer changes
+ * nothing until the batch fills, and neither the count nor the average moves
+ * by one candidate. Never fewer than five, whatever SURVEY_MIN_ANSWERS says.
+ */
+export const SURVEY_BATCH = Math.max(5, SURVEY_MIN_ANSWERS);
+
+/** How many of `n` survey answers the team may see: the oldest whole batches. */
+export function releasedSurveyCount(n: number): number {
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.floor(n / SURVEY_BATCH) * SURVEY_BATCH;
+}
+
+/**
+ * The seed of the comment sample: the opening and the released count only, so a
+ * reload shows the same comments in the same order, and the order changes only
+ * when the next batch is released (FNV-1a, 32 bits).
+ */
+export function surveySeed(openingId: string, released: number): number {
+  let hash = 0x811c9dc5;
+  for (const ch of `${openingId}:${released}`) {
+    hash ^= ch.codePointAt(0)!;
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return hash >>> 0;
+}
+
+/** A small seeded generator (mulberry32): the same seed gives the same numbers, each in [0, 1). */
+export function seededRandom(seed: number): () => number {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** Up to `take` items of `pool` in a shuffled order (Fisher-Yates on a copy). */
+export function sampleOf<T>(pool: readonly T[], take: number, random: () => number): T[] {
+  const items = [...pool];
+  for (let i = items.length - 1; i > 0; i--) {
+    const j = Math.min(i, Math.floor(random() * (i + 1)));
+    [items[i], items[j]] = [items[j], items[i]];
+  }
+  return items.slice(0, take);
+}
+
+/**
  * Text that came from a person (a candidate's name, an organisation, a
  * position) made safe to drop into the plain text message: one line, no
  * angle brackets (so no markup survives if a mail client ever renders the

@@ -27,7 +27,9 @@ let status: "DRAFT" | "OPEN" | "CLOSED";
 let surveyOn: boolean;
 let state: { draft: unknown; live: unknown };
 let invited: number;
+/** Survey answers, oldest first. */
 let answers: Array<{ rating: number; comment: string | null }>;
+let stageSeconds: number;
 
 const openingFor = vi.fn(async (id: string) => ({
   user: { id: viewer.role === "REVIEWER" ? REVIEWER : OWNER, orgId: ORG, email: "", name: "", role: viewer.role },
@@ -78,12 +80,23 @@ function respond(op: Op): unknown[] {
     case "attempts":
       return invited ? [{ assessmentId: "a0", startedAt: NOW, completedAt: new Date(NOW.getTime() + 20 * 60_000) }] : [];
     case "hiring_survey_responses":
+      return [{ n: answers.length }];
+    case "(execute)": {
+      // The released answers as Postgres answers the funnel's statement (LIMIT = the released count).
+      const limit = op.params.find((p) => typeof p === "number") as number;
+      const released = answers.slice(0, limit);
+      const comments = released
+        .filter((a) => a.comment?.trim())
+        .reverse()
+        .slice(0, 20)
+        .map((a) => a.comment);
       // A database answering more than was asked for: the date must still not reach the page.
-      return answers.map((a) => ({ ...a, at: SENTINEL_AT, createdAt: SENTINEL_AT }));
+      return [{ count: released.length, average: String(released.reduce((sum, a) => sum + a.rating, 0) / released.length), comments, createdAt: SENTINEL_AT, at: SENTINEL_AT }];
+    }
     case "hiring_versions":
       return [{ ...LIVE, openingId: OPENING }];
     case "hiring_stages":
-      return [{ total: 1500 }];
+      return [{ id: "s1", durationSeconds: stageSeconds, graceSeconds: 0, onTimeout: "AUTO_SUBMIT" }];
     case "hiring_openings":
       return status === "OPEN" ? [{ id: OPENING, name: "Tasarımcı · Ekim", deadlineAt: null, minEvaluations: 1 }] : [];
     case "hiring_opening_members":
@@ -134,6 +147,7 @@ beforeEach(() => {
   state = { draft: null, live: LIVE };
   invited = 3;
   answers = [];
+  stageSeconds = 1500;
   fake.ops = [];
   fake.respond = respond;
 });
@@ -172,8 +186,18 @@ describe("the overview's funnel (HIRING-UX 5.4)", () => {
     expect(body).toContain("Davet");
     expect(body).toContain("Başladı");
     expect(body).toContain("Tamamladı");
-    expect(body).toContain("Ortanca süre 20 dk · tahmin 25 dk");
+    // Fix round 1, I2: the time is wall clock, said so, and compared with the promised estimate.
+    expect(body).toContain("Ortanca süre 20 dk (baştan sona, molalar dahil) · tahmin 25 dk");
     expect(body).toContain("Tüm adaylar");
+    expect(body).not.toContain("Ortanca süre tahminden belirgin uzun.");
+  });
+
+  it("says neutrally when the median is clearly over the estimate, without advice about stage timings", async () => {
+    stageSeconds = 600;
+    const body = text(await render());
+    expect(body).toContain("Ortanca süre 20 dk (baştan sona, molalar dahil) · tahmin 10 dk");
+    expect(body).toContain("Ortanca süre tahminden belirgin uzun.");
+    expect(body).not.toContain("aşama sürelerine");
   });
 
   it("says so before the first invitation", async () => {
@@ -183,7 +207,7 @@ describe("the overview's funnel (HIRING-UX 5.4)", () => {
     expect(body).not.toContain("Aday deneyimi");
   });
 
-  it("from five answers shows the average and unnamed comments, never a date or a rating per comment", async () => {
+  it("shows the oldest whole batch of five: its average and unnamed comments, never a date or a rating per comment", async () => {
     answers = [
       { rating: 5, comment: "Akıcıydı" },
       { rating: 4, comment: null },
@@ -194,20 +218,30 @@ describe("the overview's funnel (HIRING-UX 5.4)", () => {
     ];
     const page = await render();
     const body = text(page);
-    expect(body).toContain("4,2/5 · 6 cevap");
-    expect(["Akıcıydı", "Uzundu", "Net", "Kısa"].filter((c) => body.includes(c))).toHaveLength(3);
+    // Fix round 1, I1: six answers release the oldest five; the sixth ("Kısa", rating 4) is nowhere.
+    expect(body).toContain("4,2/5 · 5 cevap");
+    expect(["Akıcıydı", "Uzundu", "Net"].filter((c) => body.includes(c))).toHaveLength(3);
+    expect(dump(page)).not.toContain("Kısa");
     // Only the average carries "/5": no comment has its own rating beside it.
     expect(body.match(/\/5/g)).toHaveLength(1);
     const all = dump(page);
     // Positive controls: the dump carries the shown comments and the dates the page does hand on.
-    expect(["Akıcıydı", "Uzundu", "Net", "Kısa"].filter((c) => all.includes(c))).toHaveLength(3);
+    expect(["Akıcıydı", "Uzundu", "Net"].filter((c) => all.includes(c))).toHaveLength(3);
     expect(all).toContain(NOW.toISOString());
     expect(all).not.toContain("2001-02-03");
     expect(all).not.toContain(String(SENTINEL_AT.getTime()));
     expect(all).not.toContain('"rating"');
   });
 
-  it("below five answers shows no comment, only how many are still needed", async () => {
+  it("shows the same comments in the same order on every reload", async () => {
+    answers = Array.from({ length: 10 }, (_, i) => ({ rating: 4, comment: `Yorum ${i}` }));
+    const order = (body: string) => answers.map((a) => a.comment!).filter((c) => body.includes(c)).sort((x, y) => body.indexOf(x) - body.indexOf(y));
+    const first = order(text(await render()));
+    expect(first).toHaveLength(3);
+    for (let i = 0; i < 5; i++) expect(order(text(await render()))).toEqual(first);
+  });
+
+  it("below five answers shows no comment and no live count, only how many are needed", async () => {
     answers = [
       { rating: 1, comment: "Kötüydü" },
       { rating: 2, comment: "Uzundu" },
@@ -216,7 +250,8 @@ describe("the overview's funnel (HIRING-UX 5.4)", () => {
     ];
     const page = await render();
     const body = text(page);
-    expect(body).toContain("5 cevap gelince görünür; şu an 4.");
+    expect(body).toContain("5 cevap gelince görünür.");
+    expect(body).not.toContain("şu an");
     for (const c of ["Kötüydü", "Uzundu", "İyi", "Net"]) expect(dump(page)).not.toContain(c);
   });
 

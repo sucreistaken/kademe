@@ -120,14 +120,15 @@
     "funnel_invited": "Davet",
     "funnel_started": "Başladı",
     "funnel_completed": "Tamamladı",
-    "funnelMedian": "Ortanca süre {minutes} dk",
+    "funnelMedian": "Ortanca süre {minutes} dk (baştan sona, molalar dahil)",
     "funnelEstimate": "tahmin {minutes} dk",
-    "funnelOver": "Adaylar tahminden belirgin uzun sürüyor; aşama sürelerine bakmak isteyebilirsin.",
+    "funnelOver": "Ortanca süre tahminden belirgin uzun.",
     "experienceTitle": "Aday deneyimi",
     "experienceOff": "Bitiş anketi kapalı.",
-    "experienceWaiting": "{needed} cevap gelince görünür; şu an {count}.",
+    "experienceWaiting": "{needed} cevap gelince görünür.",
     "experienceAverage": "{average}/5 · {count} cevap",
-    "experienceComments": "Rastgele seçilmiş isimsiz yorumlar"
+    "experienceComments": "Rastgele seçilmiş isimsiz yorumlar",
+    "experienceBatch": "Gizlilik için {batch} cevapta bir güncellenir."
   },
   "hiringGate": {
     "stageLabel": "Aşama {n}",

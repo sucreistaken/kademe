@@ -14,6 +14,11 @@ import {
   MAX_INVITE_TEXT,
   MAX_NAME_LENGTH,
   parseInviteRows,
+  releasedSurveyCount,
+  sampleOf,
+  seededRandom,
+  SURVEY_BATCH,
+  surveySeed,
 } from "./invitation";
 import { orgDay, zonedDayStart, zoneLabel } from "@/lib/org-timezone";
 
@@ -423,5 +428,45 @@ describe("the name is the cells before the e-mail (Task 17 fix round 2)", () => 
       [4, "Can", "EMAIL"],
       [5, "Elif K", "DUPLICATE"],
     ]);
+  });
+});
+
+// Task 19 fix round 1, I1: the overview's survey moves in whole batches, so neither a reload
+// nor the next answer tells the team whose comment or rating it is.
+describe("the finish survey's batch release", () => {
+  it("releases only whole batches of five", () => {
+    expect(SURVEY_BATCH).toBe(5);
+    expect([0, 1, 4, 5, 6, 9, 10, 14, 15].map(releasedSurveyCount)).toEqual([0, 0, 0, 5, 5, 5, 10, 10, 15]);
+    expect(releasedSurveyCount(-1)).toBe(0);
+    expect(releasedSurveyCount(Number.NaN)).toBe(0);
+  });
+
+  it("seeds from the opening and the released count only", () => {
+    const a = "22222222-2222-4222-8222-222222222222";
+    expect(surveySeed(a, 5)).toBe(surveySeed(a, 5));
+    expect(surveySeed(a, 5)).not.toBe(surveySeed(a, 10));
+    expect(surveySeed(a, 5)).not.toBe(surveySeed("33333333-3333-4333-8333-333333333333", 5));
+    expect(Number.isInteger(surveySeed(a, 5)) && surveySeed(a, 5) >= 0).toBe(true);
+  });
+
+  it("draws the same numbers for the same seed, all in [0, 1)", () => {
+    const one = seededRandom(42);
+    const two = seededRandom(42);
+    const draws = Array.from({ length: 50 }, () => one());
+    expect(Array.from({ length: 50 }, () => two())).toEqual(draws);
+    expect(draws.every((x) => x >= 0 && x < 1)).toBe(true);
+    expect(new Set(draws).size).toBeGreaterThan(40);
+    expect(Array.from({ length: 5 }, seededRandom(43))).not.toEqual(draws.slice(0, 5));
+  });
+
+  it("samples distinct items from the pool, the same ones for the same seed", () => {
+    const pool = Array.from({ length: 20 }, (_, i) => `c${i}`);
+    const pick = sampleOf(pool, 3, seededRandom(7));
+    expect(sampleOf(pool, 3, seededRandom(7))).toEqual(pick);
+    expect(pick).toHaveLength(3);
+    expect(new Set(pick).size).toBe(3);
+    for (const c of pick) expect(pool).toContain(c);
+    expect(sampleOf(["x"], 3, seededRandom(7))).toEqual(["x"]);
+    expect(pool).toEqual(Array.from({ length: 20 }, (_, i) => `c${i}`));
   });
 });

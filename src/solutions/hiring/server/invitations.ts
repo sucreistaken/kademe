@@ -34,9 +34,14 @@ import {
   inviteMessage,
   isEmail,
   linkExpiryDay,
+  releasedSurveyCount,
+  sampleOf,
+  seededRandom,
   SURVEY_MIN_ANSWERS,
+  surveySeed,
   type CandidateProgress,
 } from "../rules/invitation";
+import { estimatedMinutes } from "../rules/disclosure";
 import { deadlineToDate } from "../rules/opening-rules";
 import { workingVersions } from "../rules/versions";
 import { ensureHiringConsentText } from "./consent";
@@ -683,39 +688,33 @@ export type OpeningFunnel = {
   medianMinutes: number | null;
   estimateMinutes: number | null;
   /**
-   * The finish survey as the team may see it (Task 16 carry, Task 19 ruling 1):
-   * the candidate is told the team never sees their name, only the average and
-   * unnamed comments. So a comment carries no rating and no date, and the
-   * comments are a random few of the recent ones, never "the latest".
+   * The finish survey as the team may see it (Task 16 carry, Task 19 ruling 1
+   * and fix round 1): the candidate is told the team never sees their name,
+   * only the average and unnamed comments. So only the oldest whole batches of
+   * SURVEY_BATCH answers count (`count` is that released number, 0 before the
+   * first batch); a comment carries no rating and no date; the comments are a
+   * few of the released ones in an order seeded by the opening and the released
+   * count, the same on every reload.
    */
   survey: { count: number; average: number | null; comments: string[] };
 };
 
 export { SURVEY_MIN_ANSWERS };
 
-/** Comments show only from this many answers; never fewer than five, whatever the average's threshold. */
-export const SURVEY_COMMENTS_MIN = Math.max(5, SURVEY_MIN_ANSWERS);
-/** How many comments the overview shows, drawn from this many of the most recent non-empty ones. */
+/** How many comments the overview shows, drawn from this many of the newest released non-empty ones. */
 const SURVEY_COMMENTS_SHOWN = 3;
 const SURVEY_COMMENTS_POOL = 20;
 
-/** Up to `take` of `pool` in a random order (Fisher-Yates), so neither position nor order tells who wrote one. */
-function randomFew<T>(pool: T[], take: number, random: () => number): T[] {
-  const items = [...pool];
-  for (let i = items.length - 1; i > 0; i--) {
-    const j = Math.min(i, Math.floor(random() * (i + 1)));
-    [items[i], items[j]] = [items[j], items[i]];
-  }
-  return items.slice(0, take);
-}
-
 /**
  * HIRING-UX 5.4 in plan 2: Davet, Başladı, Tamamladı, each invitation counted
- * once (its primary attempt); the median time against the live version's
- * estimate; the survey from SURVEY_MIN_ANSWERS answers. Only this
- * organisation's invitations to this opening count. `random` is for tests.
+ * once (its primary attempt); the median wall-clock time (start to finish,
+ * breaks included) against the estimate the candidate was given (C25: the live
+ * version's stage minutes plus the grace of ALLOW_GRACE stages, no extra time);
+ * the survey in released batches. Only this organisation's invitations to this
+ * opening count. `prng` makes the comment sample's generator from its seed
+ * (tests pass their own).
  */
-export async function openingFunnel(orgId: string, openingId: string, random: () => number = Math.random): Promise<OpeningFunnel> {
+export async function openingFunnel(orgId: string, openingId: string, prng: (seed: number) => () => number = seededRandom): Promise<OpeningFunnel> {
   const empty: OpeningFunnel = { invited: 0, started: 0, completed: 0, medianMinutes: null, estimateMinutes: null, survey: { count: 0, average: null, comments: [] } };
   if (!isUuid(openingId)) return empty;
   const invited = await db
@@ -726,51 +725,91 @@ export async function openingFunnel(orgId: string, openingId: string, random: ()
     .where(and(eq(hiringAssessments.orgId, orgId), eq(hiringAssessments.openingId, openingId)));
   if (invited.length === 0) return empty;
   const ids = invited.map((r) => r.assessmentId);
-  const [attemptRows, survey, versions] = await Promise.all([
+  const [attemptRows, [answered], versions] = await Promise.all([
     db
       .select({ assessmentId: attempts.assessmentId, startedAt: attempts.startedAt, completedAt: attempts.completedAt })
       .from(attempts)
       .where(and(inArray(attempts.assessmentId, ids), eq(attempts.isPrimary, true), isNotNull(attempts.startedAt))),
+    // The survey is read for the opening through its invitations (M2), never by a list of ids.
     db
-      // Newest first for the comment pool; the date itself is never read.
-      .select({ rating: hiringSurveyResponses.rating, comment: hiringSurveyResponses.comment })
+      .select({ n: sql<number>`count(*)::int` })
       .from(hiringSurveyResponses)
-      .where(inArray(hiringSurveyResponses.assessmentId, ids))
-      .orderBy(desc(hiringSurveyResponses.createdAt)),
+      .innerJoin(hiringAssessments, eq(hiringAssessments.assessmentId, hiringSurveyResponses.assessmentId))
+      .innerJoin(assessments, and(eq(assessments.id, hiringAssessments.assessmentId), eq(assessments.orgId, orgId)))
+      .innerJoin(candidates, and(eq(candidates.id, assessments.candidateId), isNull(candidates.deletedAt)))
+      .where(and(eq(hiringAssessments.orgId, orgId), eq(hiringAssessments.openingId, openingId))),
     versionsOf(orgId, openingId),
   ]);
   const { live } = workingVersions(versions);
-  const [length] = live
-    ? await db.select({ total: sql<number>`coalesce(sum(${hiringStages.durationSeconds}), 0)::int` }).from(hiringStages).where(eq(hiringStages.versionId, live.id))
-    : [];
+  const stages = live
+    ? await db
+        .select({ id: hiringStages.id, durationSeconds: hiringStages.durationSeconds, graceSeconds: hiringStages.graceSeconds, onTimeout: hiringStages.onTimeout })
+        .from(hiringStages)
+        .where(eq(hiringStages.versionId, live.id))
+    : null;
   // One row per invitation, even if a later attempt is ever marked primary too.
   const byInvitation = new Map<string, { startedAt: Date | null; completedAt: Date | null }>();
   for (const a of attemptRows) if (!byInvitation.has(a.assessmentId)) byInvitation.set(a.assessmentId, a);
   const started = [...byInvitation.values()];
   const done = started.filter((a) => a.completedAt && a.startedAt);
-  const enough = survey.length >= SURVEY_MIN_ANSWERS;
   const minutes = median(done.map((a) => (a.completedAt!.getTime() - a.startedAt!.getTime()) / 60_000));
   return {
     invited: invited.length,
     started: started.length,
     completed: done.length,
     medianMinutes: minutes === null ? null : Math.round(minutes),
-    estimateMinutes: length ? Math.ceil(Number(length.total) / 60) : null,
-    survey: {
-      count: survey.length,
-      average: enough ? Math.round((survey.reduce((s, r) => s + r.rating, 0) / survey.length) * 10) / 10 : null,
-      comments:
-        survey.length >= SURVEY_COMMENTS_MIN
-          ? randomFew(
-              survey
-                .map((r) => r.comment?.trim() ?? "")
-                .filter((c) => c !== "")
-                .slice(0, SURVEY_COMMENTS_POOL),
-              SURVEY_COMMENTS_SHOWN,
-              random,
-            )
-          : [],
-    },
+    estimateMinutes: stages
+      ? estimatedMinutes(
+          { stages },
+          0,
+          Object.fromEntries(stages.map((st) => [st.id, st.onTimeout === "ALLOW_GRACE" ? st.graceSeconds : 0])),
+        )
+      : null,
+    survey: await releasedSurvey(orgId, openingId, Number(answered?.n ?? 0), prng),
+  };
+}
+
+/**
+ * The released part of the opening's finish survey (Task 19 fix round 1, I1
+ * and M2): the oldest releasedSurveyCount(total) answers, ordered by when they
+ * came (then by invitation id, so ties are stable), counted and averaged in
+ * SQL; the comment pool is the 20 newest non-empty comments among them. No
+ * date and no rating per comment leaves the database.
+ */
+async function releasedSurvey(orgId: string, openingId: string, total: number, prng: (seed: number) => () => number): Promise<OpeningFunnel["survey"]> {
+  const released = releasedSurveyCount(total);
+  if (released === 0) return { count: 0, average: null, comments: [] };
+  const [row] = (await db.execute(sql`
+    with released as (
+      select r.rating, r.comment, r.created_at, r.assessment_id
+      from hiring_survey_responses r
+      join hiring_assessments h on h.assessment_id = r.assessment_id
+      join assessments a on a.id = h.assessment_id and a.org_id = ${orgId}
+      join candidates c on c.id = a.candidate_id and c.deleted_at is null
+      where h.org_id = ${orgId} and h.opening_id = ${openingId}
+      order by r.created_at asc, r.assessment_id asc
+      limit ${released}
+    )
+    select
+      (select count(*)::int from released) as count,
+      (select avg(rating) from released) as average,
+      (select coalesce(array_agg(comment), '{}') from (
+        select comment from released
+        where btrim(coalesce(comment, '')) <> ''
+        order by created_at desc, assessment_id desc
+        limit 20
+      ) pool) as comments
+  `)) as unknown as Array<{ count: number; average: string | number | null; comments: Array<string | null> | null }>;
+  const count = Number(row?.count ?? 0);
+  if (count === 0 || row?.average === null || row?.average === undefined) return { count: 0, average: null, comments: [] };
+  const pool = (row.comments ?? [])
+    .map((c) => (c ?? "").trim())
+    .filter((c) => c !== "")
+    .slice(0, SURVEY_COMMENTS_POOL);
+  return {
+    count,
+    average: Math.round(Number(row.average) * 10) / 10,
+    comments: sampleOf(pool, SURVEY_COMMENTS_SHOWN, prng(surveySeed(openingId, count))),
   };
 }
 

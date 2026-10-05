@@ -120,14 +120,15 @@
     "funnel_invited": "Invited",
     "funnel_started": "Started",
     "funnel_completed": "Completed",
-    "funnelMedian": "Median time {minutes} min",
+    "funnelMedian": "Median time {minutes} min (start to finish, breaks included)",
     "funnelEstimate": "estimate {minutes} min",
-    "funnelOver": "Candidates take clearly longer than the estimate; you may want to look at the stage timings.",
+    "funnelOver": "The median is clearly longer than the estimate.",
     "experienceTitle": "Candidate experience",
     "experienceOff": "The finish survey is off.",
-    "experienceWaiting": "Shows from {needed} answers; {count} so far.",
+    "experienceWaiting": "Shows from {needed} answers.",
     "experienceAverage": "{average}/5 · {count} answers",
-    "experienceComments": "Unnamed comments, picked at random"
+    "experienceComments": "Unnamed comments, picked at random",
+    "experienceBatch": "Updates every {batch} answers, for privacy."
   },
   "hiringGate": {
     "stageLabel": "Stage {n}",

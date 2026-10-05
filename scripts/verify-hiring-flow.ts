@@ -49,7 +49,7 @@ async function main() {
   const s = await import("@/db/schema");
   const { mintToken } = await import("@/lib/auth");
   const { buildPublishedOpening, freshOrganisation } = await import("./hiring-fixture");
-  const { createHiringInvitation, listOpeningCandidates } = await import("@/solutions/hiring/server/invitations");
+  const { createHiringInvitation, listOpeningCandidates, openingFunnel } = await import("@/solutions/hiring/server/invitations");
   const { expiringLinks } = await import("@/server/links");
   const { hiringModule } = await import("@/solutions/hiring/module");
   const { resolveToken } = await import("@/lib/candidate-context");
@@ -555,6 +555,44 @@ async function main() {
   for (const id of [...new Set([...fixture.competencies, ...textOpening.competencies, ...writtenOpening.competencies])]) check(!all.includes(id), `competency ${id.slice(0, 8)} never reached the candidate`);
   check(!/"correct"|internalQuestion|internalPurpose|expectedBehaviours|redFlags|managerNotes|answerExamples|autoScore|auto_score|scorecard/.test(all), "no team-only field name either", all.match(/"correct"|internalQuestion|internalPurpose|expectedBehaviours|redFlags|managerNotes|answerExamples|autoScore|auto_score|scorecard/g));
   check(sent.length > 40, `the scan covered the whole walk (${sent.length} bodies)`, sent.length);
+
+  console.log("\nThe overview's survey, released in batches of five (Task 19 fix round 1)");
+  // Its own organisation, so the mail count above stays as it is. The real statement on Postgres:
+  // the oldest whole batches only, ordered by created_at then assessment_id, trimmed comments.
+  const quiet = await freshOrganisation();
+  const quietOwner = { id: quiet.ownerId, orgId: quiet.orgId };
+  const surveyOpening = await buildPublishedOpening({ orgId: quiet.orgId, ownerId: quiet.ownerId, memberIds: [quiet.ownerId], kind: "text" });
+  const surveyed: string[] = [];
+  for (let i = 0; i < 11; i++) {
+    const r = await createHiringInvitation(quietOwner, { openingId: surveyOpening.openingId, fullName: `Anket Aday ${i}`, email: `anket${i}-${Date.now()}@example.com`, locale: "tr", deadline: null }, { baseUrl: "https://kademe.test" });
+    if (!r.ok) throw new Error(`survey invite: ${r.code}`);
+    surveyed.push(r.assessmentId);
+  }
+  const surveyBase = Date.parse("2026-01-01T09:00:00Z");
+  const answerAt = async (i: number, rating: number, comment: string | null, minute = i) =>
+    db.insert(s.hiringSurveyResponses).values({ assessmentId: surveyed[i], rating, comment, createdAt: new Date(surveyBase + minute * 60_000) });
+  const surveyNow = async () => (await openingFunnel(quiet.orgId, surveyOpening.openingId)).survey;
+  const firstFive: Array<[number, string | null]> = [[5, "  Bir  "], [4, null], [3, " "], [4, "Dört"], [5, "Beş\n"]];
+  for (let i = 0; i < 4; i++) await answerAt(i, firstFive[i][0], firstFive[i][1]);
+  const four = await surveyNow();
+  check(four.count === 0 && four.average === null && four.comments.length === 0, "four answers: nothing is shown, not even a count", four);
+  await answerAt(4, firstFive[4][0], firstFive[4][1]);
+  const five = await surveyNow();
+  check(five.count === 5 && five.average === 4.2 && [...five.comments].sort().join("|") === ["Beş", "Bir", "Dört"].sort().join("|"), "five answers: count 5, average 4.2, the three non-empty comments trimmed", five);
+  check(JSON.stringify(await surveyNow()) === JSON.stringify(five), "a reload shows the same trio in the same order", five.comments);
+  for (let i = 5; i < 9; i++) await answerAt(i, 1, `Geç ${i}`);
+  const nine = await surveyNow();
+  check(JSON.stringify(nine) === JSON.stringify(five), "answers six to nine change nothing (count, average, trio)", nine);
+  await answerAt(9, 1, "Onuncu");
+  const ten = await surveyNow();
+  check(ten.count === 10 && ten.average === 2.6 && ten.comments.length === 3 && JSON.stringify(ten) !== JSON.stringify(five), "the tenth answer releases the next batch: count 10, average 2.6", ten);
+  await answerAt(10, 5, "On birinci");
+  const eleven = await surveyNow();
+  check(JSON.stringify(eleven) === JSON.stringify(ten) && !eleven.comments.includes("On birinci"), "an eleventh answer changes nothing", eleven);
+  // Two answers in the same instant are ordered by invitation id, so every read releases the same ones.
+  await db.update(s.hiringSurveyResponses).set({ createdAt: new Date(surveyBase + 9 * 60_000) }).where(eq(s.hiringSurveyResponses.assessmentId, surveyed[10]));
+  const tied = JSON.stringify(await surveyNow());
+  check(tied === JSON.stringify(await surveyNow()) && JSON.parse(tied).count === 10, "a tie at the edge of a batch is released the same way on every read", tied);
 
   console.log(failed === 0 ? "\nall checks passed" : `\n${failed} check(s) failed`);
   process.exit(failed === 0 ? 0 : 1);

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { OpeningFunnel } from "@/solutions/hiring/server/invitations";
 import { funnelView } from "./funnel";
 
-const base: OpeningFunnel = { invited: 12, started: 9, completed: 7, medianMinutes: 34, estimateMinutes: 30, survey: { count: 3, average: null, comments: [] } };
+const base: OpeningFunnel = { invited: 12, started: 9, completed: 7, medianMinutes: 34, estimateMinutes: 30, survey: { count: 0, average: null, comments: [] } };
 
 describe("the overview's funnel (HIRING-UX 5.4)", () => {
   it("is nothing before the first invitation", () => {
@@ -24,7 +24,8 @@ describe("the overview's funnel (HIRING-UX 5.4)", () => {
 
   // Task 19 ruling 1: the experience carries only the average, the count and unnamed comments as plain text.
   it("shows the experience only from five answers, and says it is off when the survey is off", () => {
-    expect(funnelView(base, true)!.experience).toEqual({ kind: "waiting", count: 3, needed: 5 });
+    // Fix round 1, I1: no live count while waiting; the next answer must not show up anywhere.
+    expect(funnelView(base, true)!.experience).toEqual({ kind: "waiting", needed: 5 });
     const shown = funnelView({ ...base, survey: { count: 6, average: 4.3, comments: ["Net"] } }, true)!;
     expect(shown.experience).toEqual({ kind: "shown", average: 4.3, count: 6, comments: ["Net"] });
     expect(funnelView(base, false)!.experience).toEqual({ kind: "off" });

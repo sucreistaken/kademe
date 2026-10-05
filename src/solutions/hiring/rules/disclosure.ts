@@ -33,7 +33,11 @@ export function devicesNeeded(version: CandidateVersion): { camera: boolean; mic
  * than the clock allows. The candidate view carries no timeout rule, the caller
  * passes only the stages that grant one.
  */
-export function estimatedMinutes(version: CandidateVersion, pct: ExtraTimePct, graceByStage: Record<string, number> = {}): number {
+export function estimatedMinutes(
+  version: { stages: ReadonlyArray<Pick<CandidateVersion["stages"][number], "id" | "durationSeconds">> },
+  pct: ExtraTimePct,
+  graceByStage: Record<string, number> = {},
+): number {
   const seconds = version.stages.reduce((sum, s) => sum + effectiveSeconds(s.durationSeconds, pct) + Math.max(0, graceByStage[s.id] ?? 0), 0);
   return Math.ceil(seconds / 60);
 }

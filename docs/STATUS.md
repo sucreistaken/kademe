@@ -324,6 +324,8 @@ Sonra A'daki gibi `$OLD`'a dön, kur, build et, başlat. Notlar:
 - Aday talepleri (uyarlama, yeni link) aynı türden açık bir talep varken ikinci kez yazılmaz; aday aynı "iletildi" cevabını alır. Veri hakları talepleri (`deletion_requests`) sekmede görünür ama orada kapatılmaz.
 - Veri hakları talepleri (`deletion_requests`: görme, kopya, silme) uygulamanın hiçbir yerinde henüz işlenmiyor ve kapatılmıyor, iki çözümde de (sınav ve işe alım); plan 3 bunları işleyecek yeri ekler (KVKK cevap süresi görünür olarak).
 - Kapalı alımda "Yeni link üret" yalnızca başlamış aday için açık (Görev 7 hükmü; satır nedenini söyler); başlamamış adaya yeni link ve "7 gün uzat" kapalı alımda yok. Yerine geçen eski link o an kapanır, adayın kartı ileri bir tarih göstermez.
+- Bitiş anketi Genel bakış'ta 5'erli gruplarla açılır (Görev 19 düzeltme turu 1): yalnızca en eski tam grupların ortalaması, sayısı ve en fazla 3 isimsiz yorumu (tarih ve yorum başına puan yok; sıra alım ve açılan sayıdan tohumlu, her yenilemede aynı). Aday yorumuna kendi adını yazabilir; bu yorum kör modda Değerlendiricilere de görünür. Plan 3 karar verir (ör. anket yorumlarını Değerlendiriciden gizlemek).
+- Huni süresi duvar saatidir (baştan sona, molalar dahil) ve adaya söylenen tahminle (aşama süreleri + ek süre payı, C25; adaya özel ek süre hariç) karşılaştırılır; plan 3 aşama içi süreyi ekleyebilir.
 
 ## Bağımsız kod incelemesi (2026-09-30 gece)
 

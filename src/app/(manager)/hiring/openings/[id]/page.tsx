@@ -16,11 +16,13 @@ import type { PublishProblem } from "@/solutions/hiring/rules/gate";
 import { loadPanelUsers } from "@/server/settings";
 import { canDecide } from "@/solutions/hiring/rules/access";
 import { previewIsCurrent } from "@/solutions/hiring/rules/versions";
+import { SURVEY_BATCH } from "@/solutions/hiring/rules/invitation";
 import { invitableOpenings, openingFunnel } from "@/solutions/hiring/server/invitations";
 import { workingState } from "@/solutions/hiring/server/working";
 import { openingFor } from "./access";
 import { publishOpeningAction, type PublishNotice } from "./actions";
 import { funnelView } from "./funnel";
+import { inviteWaitReason } from "./invite-wait";
 import { OpeningHeader } from "./opening-header";
 import { describeProblem } from "./problems";
 import { readinessRows, rowAction, rowHref, type ReadinessKey, type ReadinessState } from "./readiness";
@@ -147,7 +149,7 @@ export default async function OpeningOverviewPage({
         : null;
   const published = /^\d{1,6}$/.test(one(sp.published) ?? "") ? one(sp.published)! : null;
   const notice = noticeOf(sp, "publish", NOTICES);
-  const waitReason = closed ? t("hiringOverview.closedBody") : !access.edit ? t("hiringInvite.noPermission") : t("hiringCandidates.emptyNotLive");
+  const waitReason = inviteWaitReason(closed, access.edit, t);
 
   const action = state.draft ? (
     <form action={publishOpeningAction} className="flex w-full flex-col items-start gap-1 sm:w-auto sm:max-w-[360px] sm:items-end sm:text-right">
@@ -284,14 +286,15 @@ export default async function OpeningOverviewPage({
                   {view.experience.kind === "off" ? (
                     <p className="mt-1 text-[13px] text-muted">{t("hiringOverview.experienceOff")}</p>
                   ) : view.experience.kind === "waiting" ? (
-                    <p className="tnum mt-1 text-[13px] text-muted">{t("hiringOverview.experienceWaiting", { needed: view.experience.needed, count: view.experience.count })}</p>
+                    <p className="tnum mt-1 text-[13px] text-muted">{t("hiringOverview.experienceWaiting", { needed: view.experience.needed })}</p>
                   ) : (
                     <>
                       <p className="tnum mt-1 text-[14px] text-ink">
                         {t("hiringOverview.experienceAverage", { average: number.format(view.experience.average), count: view.experience.count })}
                       </p>
+                      <p className="tnum mt-0.5 text-[12px] text-muted">{t("hiringOverview.experienceBatch", { batch: SURVEY_BATCH })}</p>
                       {view.experience.comments.length ? (
-                        // Task 19 ruling 1: a few recent comments at random, without a rating or a date.
+                        // Task 19 ruling 1 and fix round 1: a few released comments in a fixed shuffled order, no rating or date.
                         <>
                           <p className="mt-2 text-[12px] text-muted">{t("hiringOverview.experienceComments")}</p>
                           <ul className="mt-1 space-y-1">
