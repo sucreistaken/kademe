@@ -456,9 +456,13 @@ export async function currentSection(ctx: CandidateContext) {
 
 type PoolRow = BankItem & { section: Section };
 
-/** Approved items the exam may serve. Listening clips without audio are left out. */
-async function loadPool(orgId: string, section: Section): Promise<PoolRow[]> {
-  const rows = await db
+/**
+ * Approved items the exam may serve. Listening clips without audio are left out.
+ * Inside a transaction pass its `x`: a read on the global db there waits for a
+ * second pool connection and can starve the pool.
+ */
+async function loadPool(orgId: string, section: Section, x: Executor = db): Promise<PoolRow[]> {
+  const rows = await x
     .select({
       id: items.id,
       level: items.level,
@@ -598,8 +602,9 @@ export async function startSection(ctx: CandidateContext, position: number): Pro
 // Items
 // ---------------------------------------------------------------------------
 
-async function buildSnapshot(itemId: string): Promise<ItemSnapshot> {
-  const [row] = await db
+/** The item as served. Inside a transaction pass its `x` (see loadPool). */
+async function buildSnapshot(itemId: string, x: Executor = db): Promise<ItemSnapshot> {
+  const [row] = await x
     .select({ item: items, stimulus: stimuli })
     .from(items)
     .leftJoin(stimuli, eq(stimuli.id, items.stimulusId))
@@ -648,12 +653,14 @@ function applyOverrides(snapshot: ItemSnapshot, s: SectionConfig): ItemSnapshot 
 }
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+/** The global db, or a transaction's own connection (see loadPool). */
+type Executor = typeof db | Tx;
 
 async function serve(tx: Tx, runId: string, itemIds: string[], startSequence: number, s: SectionConfig) {
   const rng = mulberry32(Math.floor(Math.random() * 2 ** 31));
   let sequence = startSequence;
   for (const itemId of itemIds) {
-    const snapshot = applyOverrides(await buildSnapshot(itemId), s);
+    const snapshot = applyOverrides(await buildSnapshot(itemId, tx), s);
     await tx
       .insert(itemResponses)
       .values({
@@ -709,7 +716,7 @@ export async function ensureCurrentItem(ctx: CandidateContext, runId: string): P
           score: r.score,
         })),
       );
-      const pool: PoolItem[] = await loadPool(ctx.assessment.orgId, run.section);
+      const pool: PoolItem[] = await loadPool(ctx.assessment.orgId, run.section, tx);
       const stop = shouldStop(state, cfg, poolLeft(pool, state));
       if (stop) {
         await tx.update(sectionRuns).set({ stopReason: stop }).where(eq(sectionRuns.id, runId));
