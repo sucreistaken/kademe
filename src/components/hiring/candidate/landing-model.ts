@@ -19,4 +19,12 @@ export function bringList(devices: { camera: boolean; microphone: boolean }): Ar
   return ["quiet", ...(devices.camera ? (["cameraMic"] as const) : devices.microphone ? (["mic"] as const) : []), "computer"];
 }
 
-export const agreeWaitReason = (accepted: boolean): "tickFirst" | null => (accepted ? null : "tickFirst");
+/** "Kabul et ve başla" waits for the ticked box, and for an extra-time choice still being saved. */
+export const agreeWaitReason = (accepted: boolean, extraSaving = false): "extraSavingWait" | "tickFirst" | null =>
+  extraSaving ? "extraSavingWait" : accepted ? null : "tickFirst";
+
+/** "Devam et" waits while an extra-time choice is saving, so Consent never opens on a choice not yet kept. */
+export const continueWaitReason = (extra: "idle" | "saving" | "saved"): "extraSavingWait" | null => (extra === "saving" ? "extraSavingWait" : null);
+
+/** On Consent, a failed extra-time save is said again: nobody should start believing it was saved. */
+export const consentNote = (extraFailed: boolean): "extraNotSaved" | null => (extraFailed ? "extraNotSaved" : null);

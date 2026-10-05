@@ -250,6 +250,13 @@ body {
   outline-offset: var(--focus-offset, 2px);
 }
 
+/* A heading that takes the focus by script when a step changes (tabindex="-1",
+   useStepFocus) is a reading position, not a control: no box (HIRING-VISUAL-FLOW
+   2.3). Only such headings; every control keeps the outline above. */
+:is(h1, h2, h3)[tabindex="-1"]:focus-visible {
+  outline: none;
+}
+
 /* The team-only panel is near black: the accent ring would be about 2.7:1 there,
    so focus on it is drawn in the panel's text colour (#F2F1ED on #1A1A17, about
    15:1). Unlayered like the rule above, and more specific, so it wins. */

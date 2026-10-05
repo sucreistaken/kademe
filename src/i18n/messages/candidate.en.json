@@ -606,7 +606,7 @@
     "rowVideo": "Your picture and voice in video questions",
     "rowAudio": "Your voice in audio questions",
     "rowTechnical": "Technical records",
-    "rowTechnicalDetail": "Your IP address and browser, stage times, connection problems",
+    "rowTechnicalDetail": "Your IP address and browser, stage times, whether time ran out, connection problems",
     "rowNotMonitored": "Your screen, tabs and windows",
     "aiTitle": "AI does not score you",
     "aiDetailRecorded": "It doesn't rank or reject you; it only transcribes your video and audio answers.",
@@ -615,7 +615,10 @@
     "agree": "Agree and start",
     "tickFirst": "Tick the box first.",
     "back": "Back",
-    "deadlineFull": "Deadline: {date}"
+    "deadlineFull": "Deadline: {date}",
+    "extraSavingWait": "Saving your extra time.",
+    "extraNotSaved": "Your extra time was not saved. Go back to choose it again.",
+    "factDeadlineZone": "last day, {zone}"
   },
   "hiringJourney": {
     "prep": "Getting ready",

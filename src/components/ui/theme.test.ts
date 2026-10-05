@@ -92,6 +92,11 @@ describe("focus is drawn once, by the global outline", () => {
     expect(css).toMatch(/\[data-slot\$="-item"\][^{]*\{\s*--focus-offset: -2px;/);
   });
 
+  it("draws no box on a heading that takes the focus by script on a step change, and nothing else loses it (Task 5 review fix 5)", () => {
+    expect(css).toMatch(/\n:is\(h1, h2, h3\)\[tabindex="-1"\]:focus-visible \{\s*outline: none;\s*\}/);
+    expect(css.match(/outline: none;/g)?.length).toBe(2);
+  });
+
   it("draws it on an input group's frame instead of the bare inner input", () => {
     expect(css).toMatch(/:is\(\[data-slot="input-group-control"\][^)]*\):focus-visible \{\s*outline: none;/);
     expect(css).toContain('[data-slot="input-group"]:has(> :is([data-slot="input-group-control"]');

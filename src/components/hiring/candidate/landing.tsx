@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { Accessibility, AudioLines, CalendarDays, Clock, EyeOff, Headphones, Laptop, Layers, Mic, Video, Wifi } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,14 +13,14 @@ import { StepFooter } from "@/components/visual/step-footer";
 import { StepScreen } from "@/components/visual/step-screen";
 import { useStepFocus } from "@/hooks/use-step-focus";
 import { apiSend } from "@/lib/client/api";
-import { clearHash, pushHash, subscribeHash } from "@/lib/client/hash-step";
+import { leaveHashStep, pushHash, subscribeHash } from "@/lib/client/hash-step";
 import { nextPath } from "@/lib/candidate-routes";
 import { pickTextLang } from "@/lib/i18n-text";
 import { useT } from "@/i18n/candidate-client";
 import type { Locale } from "@/i18n/locale";
 import type { HiringCandidateState } from "@/solutions/hiring/rules/candidate-state";
 import { mailTo } from "./closed";
-import { agreeWaitReason, bringList, CONSENT_HASH, landingStepOf, welcomePath, type LandingStep } from "./landing-model";
+import { agreeWaitReason, bringList, CONSENT_HASH, consentNote, continueWaitReason, landingStepOf, welcomePath, type LandingStep } from "./landing-model";
 import { serverMessage } from "./server-message";
 import { useJourney } from "./use-journey";
 
@@ -48,7 +48,8 @@ export function Landing({
   consentBody,
   consentLang,
   deadline,
-  deadlineDay,
+  deadlineWhen,
+  deadlineZone,
   locale,
 }: {
   token: string;
@@ -56,9 +57,10 @@ export function Landing({
   consentBody: string;
   /** The language the consent text is shown in (the other one when the candidate's is empty). */
   consentLang: Locale;
-  /** The full deadline in the e-mail's words; `deadlineDay` is the short day for the tile. */
+  /** The full deadline in the e-mail's words (Consent's details); the tile shows the same words in two parts. */
   deadline: string;
-  deadlineDay: string;
+  deadlineWhen: string;
+  deadlineZone: string;
   locale: Locale;
 }) {
   const t = useT("hiringLanding");
@@ -70,10 +72,6 @@ export function Landing({
   const [moved, setMoved] = useState(false);
   useEffect(() => subscribeHash(() => setMoved(true)), []);
   const heading = useStepFocus<HTMLHeadingElement>(moved ? step : "load");
-  // Whether Welcome opened Consent in this page's history: then "Geri" is the browser's back
-  // (and the browser's own back button does the same); on a page opened on #consent there is
-  // no Welcome behind it, so "Geri" swaps the address back to Welcome instead of leaving.
-  const welcomeBehind = useRef(false);
   const [accepted, setAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -122,6 +120,7 @@ export function Landing({
     const extraLocked = state.extraTimeLocked;
     const extraNote = extraLocked ? t("extraLocked") : extra === "saving" ? t("extraSaving") : extra === "saved" ? t("extraSaved") : t("extraShort");
     const path = welcomePath({ device: recorded, warmup: state.practice });
+    const continueWhy = continueWaitReason(extra);
     return (
       <>
         <StepScreen
@@ -139,7 +138,7 @@ export function Landing({
               items={[
                 { icon: Clock, value: t("factMinutesValue", { minutes }), label: t("factMinutesLabel") },
                 { icon: Layers, value: t("factStagesValue", { count: state.stages.length }), label: t("factStagesLabel") },
-                { icon: CalendarDays, value: deadlineDay, label: t("factDeadlineLabel") },
+                { icon: CalendarDays, value: deadlineWhen, label: t("factDeadlineZone", { zone: deadlineZone }) },
               ]}
             />
             <section aria-labelledby="landing-path">
@@ -221,10 +220,10 @@ export function Landing({
             kind: "button",
             id: "landing-continue",
             label: t("continue"),
+            waitReason: continueWhy ? t(continueWhy) : null,
             onClick: () => {
-              // A new history entry on the same page: the browser's back button returns to Welcome.
+              // A new, marked history entry on the same page: the browser's back button returns to Welcome.
               pushHash(CONSENT_HASH);
-              welcomeBehind.current = true;
               window.scrollTo({ top: 0 });
             },
           }}
@@ -233,7 +232,8 @@ export function Landing({
     );
   }
 
-  const why = agreeWaitReason(accepted);
+  const why = agreeWaitReason(accepted, extra === "saving");
+  const extraNote = consentNote(extraError !== null);
   return (
     <>
       <StepScreen
@@ -301,13 +301,19 @@ export function Landing({
       </StepScreen>
       <StepFooter
         journey={journey}
-        back={{ label: t("back"), onClick: () => (welcomeBehind.current ? window.history.back() : clearHash()) }}
+        // Back in history when Welcome pushed this entry (a reload keeps the mark); on a page opened on #consent, swap to Welcome instead of leaving.
+        back={{ label: t("back"), onClick: leaveHashStep }}
         primary={{ kind: "button", id: "landing-agree", label: t("agree"), busy, busyLabel: t("starting"), waitReason: why ? t(why) : null, onClick: () => void agree() }}
         note={
-          error ? (
-            <p role="alert" className="text-[14px] text-ink">
-              {error}
-            </p>
+          error || extraNote ? (
+            <div className="space-y-1">
+              {extraNote ? <p className="text-[14px] text-ink">{t(extraNote)}</p> : null}
+              {error ? (
+                <p role="alert" className="text-[14px] text-ink">
+                  {error}
+                </p>
+              ) : null}
+            </div>
           ) : null
         }
       />

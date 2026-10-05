@@ -345,8 +345,14 @@ export function formatInviteDay(day: string, locale: Locale): string {
  * org-timezone, passed in so these rules stay free of environment reads.
  */
 export function formatInviteDeadline(day: string, locale: Locale, zoneName: string): string {
+  const { when, zone } = inviteDeadlineParts(day, locale, zoneName);
+  return `${when} (${zone})`;
+}
+
+/** The same deadline in two parts (day and time, then the zone), for a space too small for one line. */
+export function inviteDeadlineParts(day: string, locale: Locale, zoneName: string): { when: string; zone: string } {
   const date = formatInviteDay(day, locale);
-  return locale === "en" ? `${date}, 23:59 (${zoneName})` : `${date} 23:59 (${zoneName})`;
+  return { when: locale === "en" ? `${date}, 23:59` : `${date} 23:59`, zone: zoneName };
 }
 
 export type CandidateProgress = "INVITED" | "OPENED" | "IN_PROGRESS" | "COMPLETED" | "EXPIRED";

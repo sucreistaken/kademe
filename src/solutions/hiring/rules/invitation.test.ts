@@ -7,6 +7,7 @@ import {
   firstInviteLines,
   formatInviteDay,
   formatInviteDeadline,
+  inviteDeadlineParts,
   inviteMessage,
   isEmail,
   linkExpiryDay,
@@ -342,6 +343,11 @@ describe("the deadline as the end of the org's day", () => {
     expect(en).toBe("14 Oct, 23:59 (Türkiye Standard Time)");
     const { body } = inviteMessage({ locale: "tr", candidateName: "Ali", orgName: "Acme", positionName: "Dev", url: "https://kademe.test/a/abc", deadline: tr, minutes: 25, contactEmail: null });
     expect(body).toContain("Son tarih: 14 Eki 23:59 (Türkiye Standart Saati).");
+  });
+
+  it("gives the same words in two parts, the day and time apart from the zone, for a small tile (Task 5 review fix 6)", () => {
+    expect(inviteDeadlineParts("2026-10-14", "tr", "Türkiye Standart Saati")).toEqual({ when: "14 Eki 23:59", zone: "Türkiye Standart Saati" });
+    expect(inviteDeadlineParts("2026-10-14", "en", "Türkiye Standard Time")).toEqual({ when: "14 Oct, 23:59", zone: "Türkiye Standard Time" });
   });
 });
 

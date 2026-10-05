@@ -22,7 +22,7 @@ import { pickTextLang } from "@/lib/i18n-text";
 import { ORG_TIMEZONE, orgDay, zoneLabel } from "@/lib/org-timezone";
 import type { CandidatePageInput, CandidatePageSlot } from "@/solutions/types";
 import { hiringRequestContact, loadHiringContext, loadHiringState } from "../server/candidate";
-import { formatInviteDay, formatInviteDeadline } from "../rules/invitation";
+import { formatInviteDay, formatInviteDeadline, inviteDeadlineParts } from "../rules/invitation";
 import { loadConsentText } from "../server/consent";
 
 /**
@@ -164,9 +164,11 @@ export async function renderHiringPage(slot: CandidatePageSlot, input: Candidate
         // Shown in the other language (with its own lang) when this one is empty.
         const consent = pickTextLang((await loadConsentText(h.assessment.orgId, h.hiring.consentTextId)).body, locale);
         // The deadline in the invitation e-mail's words: the end of the org's day, the zone named;
-        // the day alone for the Welcome tile (3.1), the full words in Consent's details.
+        // the same words in two parts for the Welcome tile (3.1), whole in Consent's details.
         const day = orgDay(h.link.expiresAt, ORG_TIMEZONE);
-        const deadline = formatInviteDeadline(day, locale, zoneLabel(locale, ORG_TIMEZONE));
+        const zone = zoneLabel(locale, ORG_TIMEZONE);
+        const deadline = formatInviteDeadline(day, locale, zone);
+        const parts = inviteDeadlineParts(day, locale, zone);
         return (
           <Landing
             token={token}
@@ -174,7 +176,8 @@ export async function renderHiringPage(slot: CandidatePageSlot, input: Candidate
             consentBody={consent.text}
             consentLang={consent.lang}
             deadline={deadline}
-            deadlineDay={formatInviteDay(day, locale)}
+            deadlineWhen={parts.when}
+            deadlineZone={parts.zone}
             locale={locale}
           />
         );

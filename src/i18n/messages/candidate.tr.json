@@ -606,7 +606,7 @@
     "rowVideo": "Video sorularında görüntün ve sesin",
     "rowAudio": "Ses sorularında sesin",
     "rowTechnical": "Teknik kayıtlar",
-    "rowTechnicalDetail": "IP adresin ve tarayıcın, aşama saatleri, bağlantı sorunları",
+    "rowTechnicalDetail": "IP adresin ve tarayıcın, aşama saatleri, sürenin dolup dolmadığı, bağlantı sorunları",
     "rowNotMonitored": "Ekranın, sekmelerin ve pencerelerin",
     "aiTitle": "Yapay zekâ seni puanlamaz",
     "aiDetailRecorded": "Sıralamaz, elemez; yalnızca video ve ses cevaplarını yazıya döker.",
@@ -615,7 +615,10 @@
     "agree": "Kabul et ve başla",
     "tickFirst": "Önce kutuyu işaretle.",
     "back": "Geri",
-    "deadlineFull": "Son tarih: {date}"
+    "deadlineFull": "Son tarih: {date}",
+    "extraSavingWait": "Ek süre kaydediliyor.",
+    "extraNotSaved": "Ek süre kaydedilemedi. Geri dönüp yeniden seçebilirsin.",
+    "factDeadlineZone": "son gün, {zone}"
   },
   "hiringJourney": {
     "prep": "Hazırlık",

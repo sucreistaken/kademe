@@ -114,14 +114,16 @@ beforeEach(() => {
 describe("renderHiringPage", () => {
   it("renders the landing with the state through candidateSafe, the consent text and the deadline in the org's zone", async () => {
     const [landing] = find(await render("landing"), Landing);
-    const props = landing.props as { token: string; state: Record<string, unknown>; consentBody: string; consentLang: string; deadline: string; deadlineDay: string };
+    const props = landing.props as { token: string; state: Record<string, unknown>; consentBody: string; consentLang: string; deadline: string; deadlineWhen: string; deadlineZone: string };
     expect(props.token).toBe("tok");
     expect(props.consentBody).toBe("Rıza metni");
     expect(props.consentLang).toBe("tr");
     // The same words as the invitation e-mail: the end of the org's day, the zone named.
     expect(props.deadline).toBe(formatInviteDeadline("2026-10-19", "tr", zoneLabel("tr")));
     expect(props.deadline).toMatch(/^19 Eki 23:59 \(.+\)$/);
-    expect(props.deadlineDay).toBe("19 Eki");
+    // Welcome's tile: the same day and time, the zone under it (review fix 6).
+    expect(props.deadlineWhen).toBe("19 Eki 23:59");
+    expect(props.deadlineZone).toBe(zoneLabel("tr"));
     const sent = JSON.stringify(props);
     expect(sent.match(/TEAMSECRET/g) ?? []).toHaveLength(0);
     expect((sent.match(/LEAKVISIBLE_[A-Z]+/g) ?? []).length).toBeGreaterThanOrEqual(1);

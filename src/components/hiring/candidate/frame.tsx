@@ -1,7 +1,7 @@
-import Link from "next/link";
 import type { Locale } from "@/i18n/locale";
 import { candidateT } from "@/i18n/candidate";
 import { Help } from "./help";
+import { LanguageLink } from "./language-link";
 
 const NAMES: Record<Locale, string> = { tr: "Türkçe", en: "English" };
 
@@ -10,8 +10,9 @@ const NAMES: Record<Locale, string> = { tr: "Türkçe", en: "English" };
  * top, one column below (1000px frame). The subtree carries `lang`, so a
  * screen reader and `uppercase` follow the candidate's language.
  *
- * The language link is never prefetched: `?lang=` writes the choice to the
- * invitation, which only a click may do.
+ * The language link is a plain link, never prefetched: `?lang=` writes the
+ * choice to the invitation, which only a click may do. It keeps the page
+ * step's hash, so a switch on Consent stays on Consent (LanguageLink).
  */
 export function HiringFrame({
   locale,
@@ -41,15 +42,13 @@ export function HiringFrame({
                     {NAMES[l]}
                   </span>
                 ) : (
-                  <Link
+                  <LanguageLink
                     key={l}
-                    href={`?lang=${l}`}
-                    prefetch={false}
-                    lang={l}
+                    locale={l}
                     className="flex min-h-11 items-center rounded-lg px-2 text-[14px] text-muted underline decoration-underline underline-offset-4 hover:text-ink"
                   >
                     {NAMES[l]}
-                  </Link>
+                  </LanguageLink>
                 ),
               )}
             </nav>

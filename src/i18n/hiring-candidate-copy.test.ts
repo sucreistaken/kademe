@@ -55,11 +55,12 @@ describe("hiring candidate copy", () => {
     expect(t.tr("hiringLanding.whoShort", { count: 3 })).toBe("En az 3 kişi, birbirinden bağımsız.");
     expect(t.en("hiringLanding.whoShort", { count: 1 })).toBe("One person on the team, same criteria.");
     expect(t.en("hiringLanding.whoShort", { count: 2 })).toBe("At least 2 people, independently.");
+    expect(t.en("hiringLanding.whoShort", { count: 0 })).toBe("The hiring team, same criteria.");
   });
 
   it("names the technical records on the consent screen and keeps the closing promise word for word (C24, plan decision 5)", () => {
-    expect(tr.hiringLanding.rowTechnicalDetail).toBe("IP adresin ve tarayıcın, aşama saatleri, bağlantı sorunları");
-    expect(en.hiringLanding.rowTechnicalDetail).toBe("Your IP address and browser, stage times, connection problems");
+    expect(tr.hiringLanding.rowTechnicalDetail).toBe("IP adresin ve tarayıcın, aşama saatleri, sürenin dolup dolmadığı, bağlantı sorunları");
+    expect(en.hiringLanding.rowTechnicalDetail).toBe("Your IP address and browser, stage times, whether time ran out, connection problems");
     expect(tr.hiringLanding.consentLabel).toBe("Kaydı ve cevaplarımın bu başvuru için değerlendirilmesini kabul ediyorum.");
   });
 
