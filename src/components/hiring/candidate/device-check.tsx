@@ -19,7 +19,7 @@ import type { Locale } from "@/i18n/locale";
 import type { HiringCandidateState } from "@/solutions/hiring/rules/candidate-state";
 import { mailTo } from "./closed";
 import { HEARD_AT, deniedKind, deviceRows, fixKeyFor, formatMbps, isQuiet, mediaConstraints, peakLevel, uploadSpeed, type DeniedKind, type Permission, type Trial } from "./device-rows";
-import { checkMemoryKey, contextStalled, deviceStep, NO_REPORTS, quietCopy, readCheckMemory, rememberCheck, shouldAutoOpen, splitFix, unsupportedSteps, waitReasonKey, withReport, type ReportKind, type ReportState } from "./device-steps";
+import { checkMemoryKey, contextStalled, deviceStep, focusLost, NO_REPORTS, quietCopy, readCheckMemory, rememberCheck, shouldAutoOpen, splitFix, unsupportedSteps, waitReasonKey, withReport, type ReportKind, type ReportState } from "./device-steps";
 import { sessionDrafts } from "./draft-store";
 import { serverMessage } from "./server-message";
 import { openTracked, stopAllStreams } from "./streams";
@@ -339,16 +339,25 @@ export function DeviceCheck({
   }
 
   const input = { camera, permission, heard, quiet, trial };
-  const now = deviceStep({ ...input, denied });
+  // Only read where a permission was granted (client side); the open step never depends on it.
+  const recorderMissing = typeof MediaRecorder === "undefined" && permission === "granted";
+  const now = deviceStep({ ...input, denied, recorder: !recorderMissing });
   const rows = deviceRows(input);
   const words = quietCopy(meterless);
   const waitKey = waitReasonKey(now.wait);
   const stepKey = permission === "denied" ? `denied:${denied}` : now.step;
 
-  // Focus follows the step only when it was lost (on <body> or inside the step's own area), as in plan 2.
+  // Focus follows the step only when it was lost: on <body>, inside the step's own area, or on the footer's
+  // button that stays mounted and turns disabled (fix round 1; focusLost is tested).
   useEffect(() => {
     const focused = document.activeElement;
-    const lost = !focused || focused === document.body || !!body.current?.contains(focused);
+    const lost = focusLost({
+      present: !!focused,
+      onBody: focused === document.body,
+      inStepArea: !!focused && !!body.current?.contains(focused),
+      inFooter: !!focused?.closest("[data-step-footer]"),
+      disabled: !!focused?.matches(":disabled"),
+    });
     focus.onStep(stepKey, lost ? title.current : null);
   }, [focus, stepKey]);
 
@@ -442,7 +451,7 @@ export function DeviceCheck({
       {bandwidth.state === "low" ? <p className="tnum text-[14px] leading-[22px] text-ink-2">{t("connLow", { mbps: formatMbps(bandwidth.mbps, locale) })}</p> : null}
 
       {now.step === "open" && denied !== "unsupported" ? (
-        <p id="check-open-why" className="text-[16px] leading-[26px] text-ink-2">
+        <p className="text-[16px] leading-[26px] text-ink-2">
           {camera ? t("cameraAsk") : t("micAsk")}
         </p>
       ) : null}
@@ -478,7 +487,7 @@ export function DeviceCheck({
             {heard ? t("micHeard") : quiet ? t(words.mic) : t("micHint")}
           </p>
           {quiet && !heard ? reportControl("quiet") : null}
-          {typeof MediaRecorder === "undefined" && permission === "granted" ? (
+          {recorderMissing ? (
             <div className="space-y-3">
               <p className="text-[16px] leading-[26px] font-medium text-ink">{t("noRecorder")}</p>
               {reportControl("recorder")}
@@ -497,6 +506,15 @@ export function DeviceCheck({
           {trial === "ready" ? <p className="text-[16px] leading-[26px] text-ink-2">{t("trialListen")}</p> : null}
           {!src && trial === "played" ? <p className="text-[16px] leading-[26px] text-ink-2">{t("playedBefore")}</p> : null}
           {!camera && src ? <audio key={src} src={src} controls aria-label={t("trialPlayback")} onPlay={played} className="h-12 w-full" /> : null}
+          {/* Plan 2 kept the unheard microphone's hint and report open past the trial: it stays reachable here. */}
+          {quiet && !heard ? (
+            <div className="space-y-3">
+              <p role="status" className="text-[16px] leading-[26px] text-ink-2">
+                {t(words.mic)}
+              </p>
+              {reportControl("quiet")}
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>
@@ -557,7 +575,7 @@ export function DeviceCheck({
       <StepFooter
         journey={journey}
         primary={primary}
-        secondary={now.step === "listen" ? { kind: "button", id: "check-again", label: t("trialAgain"), onClick: record } : null}
+        secondary={now.step === "listen" && !busy ? { kind: "button", id: "check-again", label: t("trialAgain"), onClick: record } : null}
         note={
           error ? (
             <p role="alert" className="text-[14px] text-ink">

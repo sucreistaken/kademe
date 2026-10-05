@@ -6,6 +6,7 @@ import {
   checkMemoryKey,
   contextStalled,
   deviceStep,
+  focusLost,
   NO_REPORTS,
   quietCopy,
   readCheckMemory,
@@ -189,6 +190,8 @@ describe("C2: the filled button waits on every blocker, with that blocker's reas
     expect(waitReasonKey(sound.wait)).toBe("blocksound");
     const recording = deviceStep({ ...granted, heard: true, trial: "recording" });
     expect(recording.wait).toBe("trialRecording");
+    const state = footerButtonState({ kind: "button", id: "check-trial", label: "x", busy: true, busyLabel: "Kaydediliyor", waitReason: "reason", onClick: () => undefined });
+    expect(state).toEqual({ mode: "busy", label: "Kaydediliyor", reason: null, describedBy: undefined });
   });
 });
 
@@ -202,5 +205,37 @@ describe("C3: the tab's memory keeps both fields when one is written", () => {
     rememberCheck(storage, key, "trialPlayed");
     expect(readCheckMemory(storage, key)).toEqual({ trialPlayed: true, devicesOpened: true });
     expect(() => rememberCheck(null, key, "trialPlayed")).not.toThrow();
+  });
+});
+
+describe("fix round 1: a browser without a recorder (G2, plan 2)", () => {
+  const granted = { ...base, permission: "granted" as const };
+
+  it("offers no filled trial button where the browser cannot record; every other step is unchanged", () => {
+    expect(deviceStep({ ...granted, recorder: false })).toEqual({ step: "sound", primary: null, wait: "sound" });
+    expect(deviceStep({ ...granted, heard: true, recorder: false })).toEqual({ step: "trial", primary: null, wait: null });
+    expect(deviceStep({ ...granted, quiet: true, recorder: false })).toEqual({ step: "quiet", primary: null, wait: null });
+    expect(deviceStep({ ...base, recorder: false })).toEqual({ step: "open", primary: "open", wait: null });
+    expect(deviceStep({ ...granted, heard: true, recorder: true })).toEqual({ step: "trial", primary: "trial", wait: null });
+    expect(deviceStep({ ...granted, heard: true })).toEqual({ step: "trial", primary: "trial", wait: null });
+  });
+});
+
+describe("fix round 1: when a step change takes the focus to the new title", () => {
+  const none = { present: true, onBody: false, inStepArea: false, inFooter: false, disabled: false };
+
+  it("moves focus when nothing holds it, or it sat on <body> or inside the step's own area", () => {
+    expect(focusLost({ ...none, present: false })).toBe(true);
+    expect(focusLost({ ...none, onBody: true })).toBe(true);
+    expect(focusLost({ ...none, inStepArea: true })).toBe(true);
+  });
+
+  it("moves focus off a footer button that stays mounted and turns disabled (open -> sound, trial -> listen)", () => {
+    expect(focusLost({ ...none, inFooter: true })).toBe(true);
+    expect(focusLost({ ...none, disabled: true })).toBe(true);
+  });
+
+  it("leaves focus alone where the candidate put it elsewhere", () => {
+    expect(focusLost(none)).toBe(false);
   });
 });

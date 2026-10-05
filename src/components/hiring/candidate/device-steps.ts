@@ -8,15 +8,17 @@ import { deviceBlocker, fixKeyFor, type Blocker, type DeniedKind, type Permissio
  * where deviceBlocker says nothing does (tested over every input).
  */
 export type DeviceStep = "open" | "denied" | "sound" | "quiet" | "trial" | "listen";
-export type StepInput = { camera: boolean; permission: Permission; heard: boolean; quiet: boolean; trial: Trial; denied: DeniedKind | null };
+/** `recorder: false` is a browser without MediaRecorder: the test cannot be made, so no filled trial button is offered (plan 2 said so, "Sorun bildir" stands instead). */
+export type StepInput = { camera: boolean; permission: Permission; heard: boolean; quiet: boolean; trial: Trial; denied: DeniedKind | null; recorder?: boolean };
 
 export function deviceStep(input: StepInput): { step: DeviceStep; primary: "open" | "retry" | "trial" | "continue" | null; wait: Blocker | "asking" | null } {
   if (input.permission === "idle" || input.permission === "asking") return { step: "open", primary: "open", wait: input.permission === "asking" ? "asking" : null };
   if (input.permission === "denied") return { step: "denied", primary: input.denied === "unsupported" ? null : "retry", wait: null };
   if (input.trial === "ready" || input.trial === "played") return { step: "listen", primary: "continue", wait: deviceBlocker(input) };
   const recording = input.trial === "recording" ? ("trialRecording" as const) : null;
-  if (!input.heard && !input.quiet) return { step: "sound", primary: "trial", wait: "sound" };
-  return { step: input.heard ? "trial" : "quiet", primary: "trial", wait: recording };
+  const primary = input.recorder === false ? null : ("trial" as const);
+  if (!input.heard && !input.quiet) return { step: "sound", primary, wait: "sound" };
+  return { step: input.heard ? "trial" : "quiet", primary, wait: recording };
 }
 
 /** Task 12 carry: each "Sorun bildir" keeps its own state, so a report from one row is never shown as sent in another. */
@@ -97,6 +99,15 @@ export function splitFix(text: string): { first: string; rest: string | null } {
  * occurs on the open step, where it is the button's busy state.
  */
 export const waitReasonKey = (wait: Blocker | "asking" | null): `block${Blocker}` | null => (wait === null || wait === "asking" ? null : `block${wait}`);
+
+/**
+ * Fix round 1 (focus): the open and trial buttons now live in the footer, so a
+ * step change keeps the same <button> mounted and merely disables it; focus on
+ * it (or on any footer control, or a disabled element) counts as lost, and the
+ * new title takes it, as it did when plan 2's buttons left with their row.
+ */
+export const focusLost = (at: { present: boolean; onBody: boolean; inStepArea: boolean; inFooter: boolean; disabled: boolean }): boolean =>
+  !at.present || at.onBody || at.inStepArea || at.inFooter || at.disabled;
 
 /** C3: write one memory field without losing the other (the record is replaced whole on every write). */
 export function rememberCheck(storage: Pick<Storage, "getItem" | "setItem"> | null, key: string, field: keyof CheckMemory): void {
