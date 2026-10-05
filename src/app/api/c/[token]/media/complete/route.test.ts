@@ -18,9 +18,7 @@ vi.mock("@/lib/candidate-api", () => ({
 vi.mock("@/lib/candidate-media", () => ({
   resolveOwnedMedia: async () => (h.asset ? { asset: h.asset } : null),
   failMedia: h.failMedia,
-  completeMedia: async () => {
-    throw new Error("not reached");
-  },
+  completeMedia: async (asset: Record<string, unknown>, parts: unknown[], durationMs: number | null, status: string) => ({ ...asset, parts, durationMs, status, bytes: 100 }),
 }));
 vi.mock("@/lib/queue", () => ({ enqueueTranscription: async () => true }));
 vi.mock("@/lib/transcription", () => ({ isTranscribableMime: () => true }));
@@ -56,5 +54,35 @@ describe("POST /media/complete with no parts", () => {
     const res = await call();
     expect(res.status).toBe(409);
     expect(onMediaComplete).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /media/complete when the solution's hook throws", () => {
+  it("still answers NO_PARTS (409) when onMediaFailed throws, and logs it", async () => {
+    const onMediaFailed = vi.fn<Hook>(async () => {
+      throw new Error("db down");
+    });
+    h.solution = { attempts: { onMediaComplete: vi.fn<Hook>(), onMediaFailed } } as unknown as SolutionModule;
+    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const res = await call();
+    expect(res.status).toBe(409);
+    expect(await res.json()).toEqual({ error: "NO_PARTS" });
+    expect(log).toHaveBeenCalled();
+    log.mockRestore();
+  });
+
+  it("still answers the finished upload when onMediaComplete throws, and logs it", async () => {
+    h.asset = { id: "m2", attemptId: "att", status: "UPLOADING", parts: [{ partNumber: 1, etag: "e", bytes: 100 }], mime: "video/webm", uploadId: "u" };
+    const onMediaComplete = vi.fn<Hook>(async () => {
+      throw new Error("db down");
+    });
+    h.solution = { attempts: { onMediaComplete } } as unknown as SolutionModule;
+    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const res = await call();
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ status: "READY", bytes: 100, durationMs: null });
+    expect(onMediaComplete).toHaveBeenCalledTimes(1);
+    expect(log).toHaveBeenCalled();
+    log.mockRestore();
   });
 });

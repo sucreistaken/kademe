@@ -33,7 +33,12 @@ export async function POST(
     if (parts.length === 0) {
       await failMedia(owned.asset.id);
       // The solution decides that answer again (hiring: an older finished take becomes it).
-      await solution.attempts.onMediaFailed?.({ ...owned.asset, status: "FAILED" });
+      // Its failure is logged, never answered: the response is the same without the hook.
+      try {
+        await solution.attempts.onMediaFailed?.({ ...owned.asset, status: "FAILED" });
+      } catch (error) {
+        console.error(`[media/complete] ${solution.key} onMediaFailed failed for ${owned.asset.id}`, error);
+      }
       return conflict(ctx, "NO_PARTS");
     }
     const durationMs =
@@ -43,7 +48,12 @@ export async function POST(
     // Never throws: a queue problem cannot fail the student's answer.
     if (isTranscribableMime(asset.mime)) await enqueueTranscription(asset.id);
 
-    await solution.attempts.onMediaComplete(asset);
+    // The recording is stored either way; a failing attach is logged, the answer to the browser is the same.
+    try {
+      await solution.attempts.onMediaComplete(asset);
+    } catch (error) {
+      console.error(`[media/complete] ${solution.key} onMediaComplete failed for ${asset.id}`, error);
+    }
 
     return candidateJson({ status: asset.status, bytes: asset.bytes, durationMs: asset.durationMs });
   }, { allowProblems: ["COMPLETED"] });
