@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { recordedFooterState, refocusAfterTimeUp } from "./recorded-footer";
+import { recordedFooterState, refocusAfterTimeUp, startLineShown } from "./recorded-footer";
 
 const REASON = "Süre doldu; yeni kayıt başlatılamaz.";
 const base = { timeUpReason: REASON };
@@ -28,6 +28,20 @@ describe("recordedFooterState (C4)", () => {
 
   it("an empty strip reason is no reason", () => {
     expect(recordedFooterState({ ...base, timeUp: false, disabled: true, holdReason: null })).toEqual({ waitReason: null, busy: true });
+  });
+});
+
+describe("startLineShown (fix round 1, Important 4)", () => {
+  it("says the camera opens on start only where a start does open it", () => {
+    expect(startLineShown({ phase: "think", startsNewTake: false })).toBe(true);
+    expect(startLineShown({ phase: "failed", startsNewTake: true })).toBe(true);
+  });
+
+  it("is silent while saving, once saved, in a review, and when the failure offers no new take (finish retry or none left)", () => {
+    for (const phase of ["record", "saving", "review", "saved"] as const) {
+      expect(startLineShown({ phase, startsNewTake: true }), phase).toBe(false);
+    }
+    expect(startLineShown({ phase: "failed", startsNewTake: false })).toBe(false);
   });
 });
 

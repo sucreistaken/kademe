@@ -18,6 +18,18 @@ export function recordedFooterState(input: { timeUp: boolean; disabled: boolean;
 }
 
 /**
+ * Fix round 1, Important 4: the picture's place says "Kamera, sen başlatınca
+ * açılır." only where pressing the start button really opens the camera: the
+ * think screen, and a failure whose "Tekrar dene" starts a new take (not one
+ * that only finishes the old take again, and not when no take is left).
+ * Elsewhere (saving, saved, a review whose playback has not arrived or never
+ * will) the place shows its icon alone.
+ */
+export function startLineShown(input: { phase: "think" | "record" | "saving" | "review" | "saved" | "failed"; startsNewTake: boolean }): boolean {
+  return input.phase === "think" || (input.phase === "failed" && input.startsNewTake);
+}
+
+/**
  * Task 4 carry 6: a focused button that time-up turned into a waiting one (or
  * took out of the footer) leaves focus on a disabled control or on nothing;
  * focus then goes to the question's heading, which carries the screen's

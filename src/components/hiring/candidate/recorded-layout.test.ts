@@ -124,6 +124,53 @@ describe("a recorded answer's first paint", () => {
     expect(html).not.toContain("Kaydediliyor");
   });
 
+  it("fix round 1 (Important 1): during the send strip a review has no spinner anywhere, Tekrar çek is not offered, the runner's reason stands", () => {
+    const html = recorded({ existingRef: "take-1", takesUsed: 1, existingStatus: "READY", timeUp: false, disabled: true, holdReason: "Gönderiliyor. Vazgeçersen Geri al'a bas." });
+    expect(html).not.toContain("Kaydediliyor");
+    expect(html).not.toContain('id="record-retake"');
+    expect(html).toContain("Gönderiliyor. Vazgeçersen Geri al&#x27;a bas.");
+    expect(html).toContain('id="record-use"');
+  });
+
+  it("fix round 1 (Minor 1): on a review, time up says what the runner does (saves by itself), not that a recording cannot start", () => {
+    const html = recorded({ existingRef: "take-1", takesUsed: 1, existingStatus: "READY", timeUp: true, disabled: true });
+    expect(html).toContain("Süre doldu; cevabın kendiliğinden kaydediliyor.");
+    expect(html).toContain('id="record-use-why"');
+    expect(html).not.toContain('id="record-retake"');
+    const en = recorded({ existingRef: "take-1", takesUsed: 1, existingStatus: "READY", timeUp: true, disabled: true }, "en");
+    expect(en).toContain("Time is up; your answer is saved automatically.");
+  });
+
+  it("fix round 1 (Minor 1): the written answer's send button says the same at time up, and its way back is gone", () => {
+    const alternative = { node: null, ready: true, using: true, onChoose: () => undefined, send: () => undefined };
+    const html = recorded({ activity: { ...activity, textAlternativeEnabled: true }, alternative, timeUp: true, disabled: true });
+    expect(html).toContain("Süre doldu; cevabın kendiliğinden kaydediliyor.");
+    expect(html).not.toContain("Kayıt ile cevaplamayı dene");
+  });
+
+  it("fix round 1 (Important 2): the way back from the written answer is offered only while the screen is free", () => {
+    const alternative = { node: null, ready: true, using: true, onChoose: () => undefined, send: () => undefined };
+    const withText = { ...activity, textAlternativeEnabled: true };
+    expect(recorded({ activity: withText, alternative })).toContain("Kayıt ile cevaplamayı dene");
+    expect(recorded({ activity: withText, alternative, disabled: true, holdReason: "Gönderiliyor." })).not.toContain("Kayıt ile cevaplamayı dene");
+    expect(recorded({ activity: withText, alternative, disabled: true })).not.toContain("Kayıt ile cevaplamayı dene");
+  });
+
+  it("fix round 1 (Important 4): the camera line shows on the think screen only; a review's place has its icon alone", () => {
+    expect(recorded()).toContain("Kamera, sen başlatınca açılır.");
+    const review = recorded({ existingRef: "take-1", takesUsed: 1, existingStatus: "UPLOADING" });
+    expect(review).not.toContain("Kamera, sen başlatınca açılır.");
+    expect(recorded({ existingRef: "take-1", takesUsed: 1, existingStatus: "READY" })).not.toContain("Kamera, sen başlatınca açılır.");
+  });
+
+  it("fix round 1 (Minor 2): a single take reached on reload prints no 'Tekrar hakkın kalmadı' under the single-take chip", () => {
+    const one = recorded({ activity: { ...activity, maxTakes: 1 }, existingRef: "take-1", takesUsed: 1, existingStatus: "READY" });
+    expect(one).toContain("Tek çekim: tekrar hakkı yok.");
+    expect(one).not.toContain("Tekrar hakkın kalmadı");
+    const two = recorded({ existingRef: "take-1", takesUsed: 2, existingStatus: "READY" });
+    expect(two).toContain("Tekrar hakkın kalmadı");
+  });
+
   it("the written alternative's link says 'Yazarak cevaplamam gerekiyor' (audio too)", () => {
     const withText = { ...activity, textAlternativeEnabled: true };
     const alternative = { node: null, ready: false, using: false, onChoose: () => undefined, send: () => undefined };

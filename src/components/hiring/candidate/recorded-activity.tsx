@@ -18,7 +18,7 @@ import type { Locale } from "@/i18n/locale";
 import type { CandidateActivity } from "@/solutions/hiring/rules/candidate-view";
 import { ActivityHeader } from "./activity-header";
 import { peakLevel } from "./device-rows";
-import { recordedFooterState, refocusAfterTimeUp } from "./recorded-footer";
+import { recordedFooterState, refocusAfterTimeUp, startLineShown } from "./recorded-footer";
 import type { RecordingResult, RecordingSink, TakeProgress } from "./recording-sink";
 import { serverMessage } from "./server-message";
 import { trackStream } from "./streams";
@@ -398,7 +398,7 @@ export function RecordedActivity(props: RecordedProps) {
         setLevel(Math.round(peakLevel(data) * 20) / 20);
       }, 100);
     } catch {
-      // No level in this browser: the "Sesin kaydediliyor" line still says it records.
+      // No level in this browser: the "Sesin kaydediliyor" pill beside the bars still says it records.
     }
     return () => {
       if (id !== null) window.clearInterval(id);
@@ -461,7 +461,9 @@ export function RecordedActivity(props: RecordedProps) {
   }
 
   // C4: what every action here says about waiting and working comes from one rule (recorded-footer.ts).
+  // Starting and retaking say the recording wording; using or sending the answer says what the runner does when time is up (it saves by itself).
   const footerState = recordedFooterState({ timeUp, disabled, timeUpReason: t("timeUpReason"), holdReason: props.holdReason });
+  const answerState = recordedFooterState({ timeUp, disabled, timeUpReason: t("timeUpUse"), holdReason: props.holdReason });
 
   if (writing && alternative) {
     return (
@@ -471,20 +473,25 @@ export function RecordedActivity(props: RecordedProps) {
         <RecordedFooter
           hidden={hidePrimary}
           journey={props.journey}
-          back={{
-            label: t("tryRecording"),
-            onClick: () => {
-              setWriting(false);
-              alternative.onChoose(false);
-            },
-          }}
+          // Important 2: while a send, the strip or the time lock holds the screen, going back would commit an empty written answer.
+          back={
+            disabled
+              ? null
+              : {
+                  label: t("tryRecording"),
+                  onClick: () => {
+                    setWriting(false);
+                    alternative.onChoose(false);
+                  },
+                }
+          }
           primary={{
             kind: "button",
             id: "send-written",
             label: t("sendWritten"),
-            busy: alternative.ready && footerState.busy,
+            busy: alternative.ready && answerState.busy,
             busyLabel: t("saving"),
-            waitReason: footerState.waitReason ?? (!alternative.ready ? t("writtenRequired") : null),
+            waitReason: answerState.waitReason ?? (!alternative.ready ? t("writtenRequired") : null),
             onClick: alternative.send,
           }}
         />
@@ -499,9 +506,9 @@ export function RecordedActivity(props: RecordedProps) {
     kind: "button",
     id: "record-use",
     label: t("use"),
-    busy: footerState.busy,
+    busy: answerState.busy,
     busyLabel: t("saving"),
-    waitReason: footerState.waitReason,
+    waitReason: answerState.waitReason,
     onClick: () => latest.current.onUse?.(),
   };
   // HIRING-UX 8.7: the recording state is spoken when it changes, never the clock or the upload's percent.
@@ -572,7 +579,8 @@ export function RecordedActivity(props: RecordedProps) {
           <h3 className="text-[18px] font-semibold text-ink">{reviewTitle}</h3>
           {exhausted ? <p className="text-[16px] text-ink">{t("useLastTake")}</p> : null}
           {incomplete ? <p className="text-[16px] text-ink">{t("incomplete")}</p> : null}
-          {!retakeOpen && takesLine && !unlimited ? <p className="text-[14px] text-muted">{timeUp ? t("timeUpReason") : t("takesLeft", { count: 0 })}</p> : null}
+          {/* A single take already says so in the chip ("Tek çekim: tekrar hakkı yok."). */}
+          {!retakeOpen && takesLine && !unlimited && activity.maxTakes > 1 ? <p className="text-[14px] text-muted">{timeUp ? t("timeUpReason") : t("takesLeft", { count: 0 })}</p> : null}
         </div>
       ) : null}
       {phase === "saved" ? (
@@ -617,27 +625,36 @@ export function RecordedActivity(props: RecordedProps) {
     </>
   );
 
+  // Important 4: the line "opens when you start" only where a start does open it; elsewhere the icon stands alone.
+  const startsNewTake = canTryAgain({ canRetryFinish, maxTakes: activity.maxTakes, used }) && !canRetryFinish && !exhausted;
   const placeholder = (
     <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center text-[14px] text-muted">
       {audioOnly ? <Mic className="size-8" strokeWidth={1.5} aria-hidden /> : <Camera className="size-8" strokeWidth={1.5} aria-hidden />}
-      {audioOnly ? t("micLater") : t("cameraLater")}
+      {startLineShown({ phase, startsNewTake }) ? (audioOnly ? t("micLater") : t("cameraLater")) : null}
+    </span>
+  );
+  // Important 3: video and audio say it records the same way (a calm dot and the words), whatever the level bars do.
+  const recordingPill = (
+    <span className="absolute top-3 left-3 flex items-center gap-2 rounded-full bg-surface/90 px-3 py-1 text-[13px] text-ink">
+      <span className="size-2.5 rounded-full bg-ink motion-safe:animate-[rec-pulse_1.6s_ease-in-out_infinite]" aria-hidden />
+      {phase === "saving" ? t("saving") : audioOnly ? t("recordingAudio") : t("recording")}
     </span>
   );
   const preview =
     phase === "record" || phase === "saving" ? (
       audioOnly ? (
-        <span className="absolute inset-0 flex items-end justify-center gap-2 pb-[30%]" aria-hidden>
-          {[0.6, 0.85, 1, 0.85, 0.6].map((k, i) => (
-            <span key={i} className="w-3 rounded-full bg-ink-3" style={{ height: `${Math.max(8, Math.round(level * k * 160))}px` }} />
-          ))}
-        </span>
+        <>
+          <span className="absolute inset-0 flex items-end justify-center gap-2 pb-[30%]" aria-hidden>
+            {[0.6, 0.85, 1, 0.85, 0.6].map((k, i) => (
+              <span key={i} className="w-3 rounded-full bg-ink-3" style={{ height: `${Math.max(8, Math.round(level * k * 160))}px` }} />
+            ))}
+          </span>
+          {recordingPill}
+        </>
       ) : (
         <>
           <video ref={self} muted playsInline className="size-full object-cover" />
-          <span className="absolute top-3 left-3 flex items-center gap-2 rounded-full bg-surface/90 px-3 py-1 text-[13px] text-ink">
-            <span className="size-2.5 rounded-full bg-ink motion-safe:animate-[rec-pulse_1.6s_ease-in-out_infinite]" aria-hidden />
-            {phase === "saving" ? t("saving") : t("recording")}
-          </span>
+          {recordingPill}
         </>
       )
     ) : phase === "review" && src ? (
@@ -683,11 +700,12 @@ export function RecordedActivity(props: RecordedProps) {
               : mode === "answer"
                 ? useAction
                 : null;
-  // A retake never offers itself once time is up (the screen says why in the review); while the runner works it is not clickable.
-  const retakeState = recordedFooterState({ timeUp, disabled, timeUpReason: t("timeUpReason") });
+  // A retake never offers itself once time is up (the screen says why in the review). While the runner holds the
+  // screen for a reason of its own (the send strip) it is not offered either, so no spinner and no second copy of the
+  // reason appear; while the runner saves it is not clickable (busy).
   const secondary: FooterAction | null =
-    phase === "review" && retakeOpen
-      ? { kind: "button", id: "record-retake", label: unlimited ? t("retakeFree") : t("retake", { count: left }), busy: retakeState.busy, busyLabel: t("saving"), onClick: retake }
+    phase === "review" && retakeOpen && !props.holdReason
+      ? { kind: "button", id: "record-retake", label: unlimited ? t("retakeFree") : t("retake", { count: left }), busy: footerState.busy, busyLabel: t("saving"), onClick: retake }
       : null;
 
   return (
