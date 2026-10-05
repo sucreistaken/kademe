@@ -16,9 +16,9 @@ const serving = vi.hoisted(() => ({ hiring: false }));
 vi.mock("@/solutions/registry.server", () => ({
   servingSolution: async (ctx: { assessment: { solution: string } }) =>
     ctx.assessment.solution === "LANGUAGE_EXAM"
-      ? { key: "language-exam", dbKind: "LANGUAGE_EXAM", candidateFlowLive: true, accommodationRequests: false }
+      ? { key: "language-exam", dbKind: "LANGUAGE_EXAM", candidateFlowLive: true, accommodationRequests: false, candidate: {} }
       : serving.hiring
-        ? { key: "hiring", dbKind: "HIRING", candidateFlowLive: true, accommodationRequests: true }
+        ? { key: "hiring", dbKind: "HIRING", candidateFlowLive: true, accommodationRequests: true, candidate: { requestContact: async () => "deniz@ornek.test" } }
         : null,
 }));
 
@@ -110,5 +110,13 @@ describe("candidate rights page", () => {
     serving.hiring = true;
     const page = await render({ ok: false, problem: "EXPIRED", ctx: ctx("HIRING", "EXPIRED") });
     expect(find(page, RightsForm)[0].props).toMatchObject({ initialKind: null });
+  });
+
+  it("words the hiring confirmation without a reply promise and with the solution's contact; the exam keeps its wording", async () => {
+    serving.hiring = true;
+    const hiring = await render({ ok: true, ctx: ctx("HIRING", "NOT_STARTED") });
+    expect(find(hiring, RightsForm)[0].props).toMatchObject({ noReply: { email: "deniz@ornek.test" } });
+    const exam = await render({ ok: true, ctx: ctx("LANGUAGE_EXAM", "NOT_STARTED") });
+    expect(find(exam, RightsForm)[0].props).not.toHaveProperty("noReply");
   });
 });

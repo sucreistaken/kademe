@@ -17,7 +17,7 @@ import { candidateSafe } from "@/lib/candidate-safe";
 import { pickTextLang } from "@/lib/i18n-text";
 import { ORG_TIMEZONE, orgDay, zoneLabel } from "@/lib/org-timezone";
 import type { CandidatePageInput, CandidatePageSlot } from "@/solutions/types";
-import { loadHiringContext, loadHiringState } from "../server/candidate";
+import { hiringRequestContact, loadHiringContext, loadHiringState } from "../server/candidate";
 import { formatInviteDay, formatInviteDeadline } from "../rules/invitation";
 import { loadConsentText } from "../server/consent";
 
@@ -66,7 +66,7 @@ function framed(token: string, locale: Locale, orgName: string, contactEmail: st
 }
 
 /** An expired or not-yet link of a served invitation: the core card inside the frame. */
-function problemCard(token: string, locale: Locale, problem: Problem, ctx: CandidateContext): ReactNode {
+function problemCard(token: string, locale: Locale, problem: Problem, ctx: CandidateContext, contact: string | null): ReactNode {
   return (
     <LinkProblem
       token={token}
@@ -76,6 +76,8 @@ function problemCard(token: string, locale: Locale, problem: Problem, ctx: Candi
       notBefore={ctx.link.notBefore?.getTime()}
       contactEmail={ctx.contactEmail ?? "destek@kademe.local"}
       contactName={ctx.contactName ?? null}
+      // No reply is promised to a hiring candidate: the card names whom to write to (final wave ruling).
+      noReply={{ email: contact }}
     />
   );
 }
@@ -97,7 +99,8 @@ export async function renderHiringPage(slot: CandidatePageSlot, input: Candidate
   // cards keep the frame, so the organisation, the language and Help stay in reach.
   if (!resolved.ok && resolved.problem !== "COMPLETED") {
     const locale = isLocale(resolved.ctx.locale) ? resolved.ctx.locale : DEFAULT_LOCALE;
-    return framed(token, locale, resolved.ctx.orgName, resolved.ctx.contactEmail, problemCard(token, locale, resolved.problem, resolved.ctx));
+    const contact = await hiringRequestContact(h);
+    return framed(token, locale, resolved.ctx.orgName, contact, problemCard(token, locale, resolved.problem, resolved.ctx, contact));
   }
 
   const state = await loadHiringState(h);

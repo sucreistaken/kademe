@@ -21,7 +21,7 @@ vi.mock("next/navigation", () => ({
   },
 }));
 vi.mock("@/lib/candidate-context", () => ({ setAssessmentLocale: h.setAssessmentLocale }));
-vi.mock("../server/candidate", () => ({ loadHiringContext: async () => h.hctx, loadHiringState: async () => h.state }));
+vi.mock("../server/candidate", () => ({ loadHiringContext: async () => h.hctx, loadHiringState: async () => h.state, hiringRequestContact: async () => "deniz@ornek.test" }));
 vi.mock("../server/consent", () => ({ loadConsentText: async () => ({ id: "ct", body: h.consent }) }));
 vi.mock("@/components/hiring/candidate/landing", () => ({ Landing: function Landing() {} }));
 vi.mock("@/components/hiring/candidate/closed", () => ({ ClosedCard: function ClosedCard() {} }));
@@ -132,10 +132,12 @@ describe("renderHiringPage", () => {
   it("shows an expired link's card, and the closed opening's card", async () => {
     const expired = await render("landing", { resolved: { ok: false, problem: "EXPIRED", ctx } });
     expect((find(expired, LinkProblem)[0].props as { problem: string }).problem).toBe("EXPIRED");
+    // No reply is promised to a hiring candidate: the card names the opening's contact (final wave ruling).
+    expect(find(expired, LinkProblem)[0].props).toMatchObject({ noReply: { email: "deniz@ornek.test" } });
     // Inside the hiring frame: the organisation, the language switch and Help stay in reach, and the switch works there.
     await expect(render("landing", { resolved: { ok: false, problem: "EXPIRED", ctx }, searchParams: { lang: "en" } })).rejects.toMatchObject({ to: "/a/tok" });
-    // An expired card's Help names the organisation's contact (the opening is not read there).
-    expect(find(expired, HiringFrame)[0].props).toMatchObject({ orgName: "Örnek A.Ş.", locale: "tr", token: "tok", contactEmail: "ik@ornek.test" });
+    // An expired card's Help names the same contact: the opening's, else the organisation's.
+    expect(find(expired, HiringFrame)[0].props).toMatchObject({ orgName: "Örnek A.Ş.", locale: "tr", token: "tok", contactEmail: "deniz@ornek.test" });
     h.state = { ...(h.state as object), step: "CLOSED" };
     const closed = find(await render("landing"), ClosedCard);
     expect(closed).toHaveLength(1);

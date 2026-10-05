@@ -101,4 +101,20 @@ describe("hiring candidate copy", () => {
     );
     for (const [, namespace] of [...hiringOf(tr), ...hiringOf(en)]) for (const text of strings(namespace)) expect(text).not.toMatch(/yeniden hak|another go/i);
   });
+
+  it("words a hiring link or rights request without a reply promise, naming the contact (final wave ruling)", () => {
+    const t = { tr: candidateT("tr"), en: candidateT("en") };
+    expect(tr.hiringRequest.linkSentHint).toBe(
+      "Talebin kaydedildi. Ekip yeni bir link gönderirse o linkle kaldığın yerden devam edersin; acil bir durumda <mail>{email}</mail> adresine yaz.",
+    );
+    expect(en.hiringRequest.linkSentHint).toBe(
+      "Your request was saved. If the team sends a new link, you continue from where you left off with it; if it is urgent, write to <mail>{email}</mail>.",
+    );
+    expect(tr.hiringRequest.rightsSent).toBe("Talebin kaydedildi. Acil bir durumda <mail>{email}</mail> adresine yaz.");
+    expect(en.hiringRequest.rightsSent).toBe("Your request was saved. If it is urgent, write to <mail>{email}</mail>.");
+    expect(t.tr("hiringRequest.rightsSentPlain")).toBe("Talebin kaydedildi.");
+    // Every hiring string, these included: no promise of a reply.
+    for (const [name, namespace] of hiringOf(tr)) for (const text of strings(namespace)) expect(text, name).not.toMatch(/aynı gün dönülür|e-posta ile dönecek|dönecek/);
+    for (const [name, namespace] of hiringOf(en)) for (const text of strings(namespace)) expect(text, name).not.toMatch(/reply the same day|replies the same day|will reply/i);
+  });
 });

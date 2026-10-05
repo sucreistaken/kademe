@@ -42,6 +42,8 @@ export default async function CandidateRightsPage({
   const t = candidateT(locale);
   const kinds: RightsKind[] = served.accommodationRequests ? ["ACCOMMODATION", ...DATA_RIGHTS] : DATA_RIGHTS;
   const sp = searchParams ? await searchParams : {};
+  // A solution that promises no reply names its contact instead (hiring); the exam keeps its wording.
+  const noReply = served.candidate.requestContact ? { email: await served.candidate.requestContact(ctx) } : undefined;
   const initialKind: RightsKind | null = served.accommodationRequests && sp.type === "accommodation" ? "ACCOMMODATION" : null;
 
   return (
@@ -52,7 +54,7 @@ export default async function CandidateRightsPage({
           name: ctx.candidate.fullName ?? t("header.candidate"),
         })}
       >
-        <RightsForm token={token} kinds={kinds} initialKind={initialKind} />
+        <RightsForm token={token} kinds={kinds} initialKind={initialKind} {...(noReply ? { noReply } : {})} />
       </CandidateShell>
     </CandidateIntl>
   );

@@ -7,6 +7,7 @@ import { useT } from "@/i18n/candidate-client";
 import { dateTime, shortDate } from "@/i18n/dates";
 import type { Locale } from "@/i18n/locale";
 import type { LinkProblem as Problem } from "@/lib/candidate-context";
+import { linkRequestHint, type NoReply } from "./request-wording";
 
 /**
  * Artboard A12, the right card, in four variants. None of the four ways a link
@@ -22,6 +23,7 @@ export function LinkProblem({
   progress,
   contactEmail,
   contactName,
+  noReply,
 }: {
   token: string;
   locale: Locale;
@@ -33,8 +35,14 @@ export function LinkProblem({
   /** The recruiter who sent the link. Named on the card, as on artboard A12,
    *  because "goes to the hiring team" reads like it goes nowhere. */
   contactName?: string | null;
+  /**
+   * A solution that promises no reply (hiring): the request's hints say so and
+   * name `email` for an urgent case. Omitted: the core's (the exam's) wording.
+   */
+  noReply?: NoReply;
 }) {
   const t = useT("linkProblem");
+  const th = useT("hiringRequest");
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -117,11 +125,12 @@ export function LinkProblem({
                 : t("requestNewLink")}
           </button>
           <p className="mt-3 text-center text-[12.5px] leading-[1.6] text-muted">
-            {sent
-              ? t("requestSentHint")
-              : contactName
-                ? t("requestHintNamed", { name: contactName })
-                : t("requestHint")}
+            {(() => {
+              const hint = linkRequestHint({ sent, contactName, noReply });
+              if (hint.namespace === "linkProblem") return hint.key === "requestHintNamed" ? t(hint.key, { name: hint.name }) : t(hint.key);
+              if ("email" in hint) return th.rich(hint.key, { email: hint.email, mail: (chunks) => mailLink(hint.email, chunks) });
+              return th(hint.key);
+            })()}
           </p>
         </>
       ) : (
@@ -140,5 +149,13 @@ export function LinkProblem({
         </p>
       )}
     </CandidateColumn>
+  );
+}
+
+function mailLink(email: string, chunks: React.ReactNode) {
+  return (
+    <a href={`mailto:${email}`} className="text-ink-2 underline decoration-line-strong underline-offset-2">
+      {chunks}
+    </a>
   );
 }

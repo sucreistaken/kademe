@@ -130,6 +130,12 @@ export interface SolutionModule extends SolutionManifest {
     heartbeat(ctx: CandidateContext): Promise<{ deadlineAt: Date | null }>;
     /** The consent copy this invitation shows and records (a consent_texts row). */
     consentText(ctx: CandidateContext): Promise<ConsentTextRow>;
+    /**
+     * Whom a candidate is told to write to after a request (a new link, a
+     * rights request), in place of a promise of a reply; null when there is
+     * no address. Omitted: the core's own wording, which promises a reply (the exam's).
+     */
+    requestContact?(ctx: CandidateContext): Promise<string | null>;
     /** Renders a core candidate page for this solution. Omitted: the core's own pages (the exam's) render. */
     renderPage?(slot: CandidatePageSlot, input: CandidatePageInput): Promise<ReactNode>;
   };

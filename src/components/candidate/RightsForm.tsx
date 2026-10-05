@@ -7,6 +7,7 @@ import { CandidateColumn } from "@/components/candidate/Shell";
 import { apiSend } from "@/lib/client/api";
 import { cn } from "@/lib/cn";
 import { useT } from "@/i18n/candidate-client";
+import { rightsSentBody, type NoReply } from "./request-wording";
 import { sendRightsRequest, type RightsSendResult } from "./rights-send";
 
 export type RightsKind = "ACCESS" | "COPY" | "DELETE" | "ACCOMMODATION";
@@ -36,12 +37,20 @@ export function RightsForm({
   token,
   kinds = ["ACCESS", "COPY", "DELETE"],
   initialKind = null,
+  noReply,
 }: {
   token: string;
   kinds?: RightsKind[];
   initialKind?: RightsKind | null;
+  /**
+   * A solution that promises no reply (hiring): the confirmation says the
+   * request was saved and names `email` for an urgent case. Omitted: the
+   * core's (the exam's) wording.
+   */
+  noReply?: NoReply;
 }) {
   const t = useT("rights");
+  const th = useT("hiringRequest");
   const [kind, setKind] = useState<RightsKind | null>(initialKind);
   const [message, setMessage] = useState("");
   const [result, setResult] = useState<RightsSendResult | null>(null);
@@ -63,7 +72,20 @@ export function RightsForm({
           {t("sentTitle")}
         </h1>
         <p className="mt-2.5 text-sm leading-[1.65] text-ink/80">
-          {t("sentBody")}
+          {(() => {
+            const body = rightsSentBody(noReply);
+            if (body.namespace === "rights") return t(body.key);
+            if ("email" in body)
+              return th.rich(body.key, {
+                email: body.email,
+                mail: (chunks) => (
+                  <a href={`mailto:${body.email}`} className="text-ink underline decoration-line-strong underline-offset-2">
+                    {chunks}
+                  </a>
+                ),
+              });
+            return th(body.key);
+          })()}
         </p>
       </CandidateColumn>
     );

@@ -334,6 +334,17 @@ async function settleClock(h: HiringContext, flow: Flow, now: Date): Promise<boo
   });
 }
 
+/** Whom the candidate writes to when something is urgent: the opening's contact, else the organisation's. */
+export async function hiringRequestContact(h: HiringContext): Promise<string | null> {
+  const [row] = await db
+    .select({ openingContact: hiringOpenings.candidateContactEmail, orgContact: organizations.contactEmail })
+    .from(hiringOpenings)
+    .innerJoin(organizations, eq(organizations.id, hiringOpenings.orgId))
+    .where(and(eq(hiringOpenings.id, h.hiring.openingId), eq(hiringOpenings.orgId, h.assessment.orgId)))
+    .limit(1);
+  return row?.openingContact ?? row?.orgContact ?? null;
+}
+
 export async function loadHiringState(h: HiringContext, now: Date = new Date()): Promise<HiringCandidateState> {
   let flow = await loadFlow(h);
   if (await settleClock(h, flow, now)) flow = await loadFlow(h);

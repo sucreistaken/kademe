@@ -4,6 +4,7 @@ import { hiringManifest } from "./manifest";
 import {
   attachMedia,
   closeExpiredStageRuns,
+  hiringRequestContact,
   hiringServes,
   hiringTitle,
   loadHiringContext,
@@ -46,6 +47,10 @@ export const hiringModule: SolutionModule = {
     },
     async heartbeat(ctx) {
       return stageHeartbeat(await requireHiring(ctx));
+    },
+    // No reply is promised to a hiring candidate (final wave ruling): a request names this address instead.
+    async requestContact(ctx) {
+      return hiringRequestContact(await requireHiring(ctx));
     },
     async consentText(ctx) {
       const h = await requireHiring(ctx);

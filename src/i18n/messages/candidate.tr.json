@@ -519,6 +519,14 @@
     "languages": "Dil seçimi",
     "reportFailed": "Gönderilemedi. Bağlantını kontrol edip tekrar dener misin?"
   },
+  "hiringRequest": {
+    "linkHint": "Talebin işe alım ekibine gider. Acil bir durumda <mail>{email}</mail> adresine yaz.",
+    "linkHintPlain": "Talebin işe alım ekibine gider.",
+    "linkSentHint": "Talebin kaydedildi. Ekip yeni bir link gönderirse o linkle kaldığın yerden devam edersin; acil bir durumda <mail>{email}</mail> adresine yaz.",
+    "linkSentHintPlain": "Talebin kaydedildi. Ekip yeni bir link gönderirse o linkle kaldığın yerden devam edersin.",
+    "rightsSent": "Talebin kaydedildi. Acil bir durumda <mail>{email}</mail> adresine yaz.",
+    "rightsSentPlain": "Talebin kaydedildi."
+  },
   "hiringLanding": {
     "hello": "Merhaba {name}",
     "helloNoName": "Merhaba",
