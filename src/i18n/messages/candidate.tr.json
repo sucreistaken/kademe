@@ -248,6 +248,8 @@
     "placeholder": "Eklemek istediğin bir şey varsa yazabilirsin.",
     "send": "Talebi gönder",
     "sending": "Gönderiliyor...",
+    "failed": "Talebin gönderilemedi. Yazdıkların duruyor; bağlantını kontrol edip tekrar dene.",
+    "retry": "Tekrar dene",
     "pickFirst": "Önce bir talep türü seç.",
     "sentTitle": "Talebin iletildi",
     "sentBody": "İşe alım ekibi talebini görecek ve e-posta ile dönecek."

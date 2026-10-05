@@ -28,7 +28,8 @@ vi.mock("@/lib/candidate-api", () => ({
   withCandidate: (req: unknown, _p: unknown, handler: (r: unknown, c: unknown) => unknown) => handler(req, h.ctx),
   badRequest: (_ctx: unknown, code: string) => new Response(JSON.stringify({ error: code }), { status: 400 }),
   message: () => "ok",
-  readJson: async (req: Request) => req.json(),
+  // As the real readJson: an unparsable body reads as null.
+  readJson: async (req: Request) => req.json().catch(() => null),
 }));
 
 import { NextRequest } from "next/server";
@@ -81,11 +82,23 @@ describe("rights route", () => {
     expect(h.inserted).toEqual([]);
   });
 
-  it("refuses a missing or unknown kind", async () => {
-    for (const body of [{}, { kind: "NEW_LINK" }, { kind: "ERASE" }, null]) {
+  it("refuses a missing or unknown kind as KIND_REQUIRED", async () => {
+    for (const body of [{}, { kind: "NEW_LINK" }, { kind: "ERASE" }, { message: "x" }]) {
       const res = await send(body);
       expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({ error: "KIND_REQUIRED" });
     }
+    expect(h.inserted).toEqual([]);
+  });
+
+  it("refuses a malformed body as REQUEST_INVALID, not as a missing kind", async () => {
+    for (const body of [null, [], "ACCESS", 7, { kind: 3 }, { kind: "ACCESS", message: 5 }, { kind: "ACCESS", message: { text: "x" } }]) {
+      const res = await send(body);
+      expect(res.status, JSON.stringify(body)).toBe(400);
+      expect(await res.json()).toEqual({ error: "REQUEST_INVALID" });
+    }
+    const unparsable = await POST(new NextRequest("http://localhost/api/c/x/rights", { method: "POST", body: "{not json" }), { params });
+    expect(await unparsable.json()).toEqual({ error: "REQUEST_INVALID" });
     expect(h.inserted).toEqual([]);
   });
 

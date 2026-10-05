@@ -248,6 +248,8 @@
     "placeholder": "Write anything you want to add.",
     "send": "Send the request",
     "sending": "Sending...",
+    "failed": "Your request did not go through. What you wrote is still here; check your connection and try again.",
+    "retry": "Try again",
     "pickFirst": "Choose a request type first.",
     "sentTitle": "Your request was sent",
     "sentBody": "The hiring team will see your request and reply by email."

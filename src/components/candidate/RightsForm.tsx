@@ -7,6 +7,7 @@ import { CandidateColumn } from "@/components/candidate/Shell";
 import { apiSend } from "@/lib/client/api";
 import { cn } from "@/lib/cn";
 import { useT } from "@/i18n/candidate-client";
+import { sendRightsRequest, type RightsSendResult } from "./rights-send";
 
 export type RightsKind = "ACCESS" | "COPY" | "DELETE" | "ACCOMMODATION";
 
@@ -27,7 +28,9 @@ const OPTIONS: Record<
  * The candidate's own copy of the data rights flow, plus an accommodation
  * request where the solution reads them (`kinds`, listed in this order).
  * Nothing is deleted from here: the request lands in the team's queue and a
- * person answers it.
+ * person answers it. The confirmation shows only when the server took the
+ * request; a failure says so under the button, keeps what was written, and
+ * the button tries again.
  */
 export function RightsForm({
   token,
@@ -41,18 +44,19 @@ export function RightsForm({
   const t = useT("rights");
   const [kind, setKind] = useState<RightsKind | null>(initialKind);
   const [message, setMessage] = useState("");
-  const [sent, setSent] = useState(false);
+  const [result, setResult] = useState<RightsSendResult | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function send() {
     if (!kind) return;
     setBusy(true);
-    await apiSend(token, "/rights", { kind, message }).catch(() => undefined);
-    setSent(true);
+    setResult(await sendRightsRequest(() => apiSend(token, "/rights", { kind, message })));
     setBusy(false);
   }
 
-  if (sent) {
+  const failed = result?.status === "failed" ? result : null;
+
+  if (result?.status === "sent") {
     return (
       <CandidateColumn width={560} padding="px-7 pt-11 pb-[52px]">
         <h1 className="text-2xl font-bold leading-[1.25] tracking-[-0.02em] text-ink">
@@ -122,8 +126,13 @@ export function RightsForm({
         disabledReason={t("pickFirst")}
         onClick={send}
       >
-        {busy ? t("sending") : t("send")}
+        {busy ? t("sending") : failed ? t("retry") : t("send")}
       </Button>
+      {failed && !busy ? (
+        <p role="alert" className="mt-2 text-center text-sm leading-[1.6] text-ink">
+          {failed.reason ?? t("failed")}
+        </p>
+      ) : null}
       {!kind ? (
         <div className="mt-2 text-center">
           <DisabledReason id="rights-send-why">{t("pickFirst")}</DisabledReason>

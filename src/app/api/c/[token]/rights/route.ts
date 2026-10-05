@@ -7,10 +7,9 @@ import { badRequest, message, readJson, withCandidate } from "@/lib/candidate-ap
 import { fileCandidateRequest } from "@/server/candidate-requests";
 import { manifestByKind } from "@/solutions/registry";
 
-const Body = z.object({
-  kind: z.enum(["ACCESS", "COPY", "DELETE", "ACCOMMODATION"]),
-  message: z.string().optional(),
-});
+/** The body's shape: an object whose kind (when present) and message are strings. */
+const Shape = z.object({ kind: z.string().optional(), message: z.string().optional() });
+const Kind = z.enum(["ACCESS", "COPY", "DELETE", "ACCOMMODATION"]);
 
 /**
  * candidate_requests.message carries a 2000-character CHECK; a longer note is
@@ -35,9 +34,14 @@ export async function POST(
     req,
     params,
     async (request, ctx) => {
-      const parsed = Body.safeParse(await readJson<unknown>(request));
-      if (!parsed.success) return badRequest(ctx, "KIND_REQUIRED");
-      const { kind, message: note = "" } = parsed.data;
+      // A body that is not the form's (unparsable, not an object, a field of the
+      // wrong type) is malformed; a missing or unknown kind is the form's own refusal.
+      const shape = Shape.safeParse(await readJson<unknown>(request));
+      if (!shape.success) return badRequest(ctx, "REQUEST_INVALID");
+      const parsedKind = Kind.safeParse(shape.data.kind);
+      if (!parsedKind.success) return badRequest(ctx, "KIND_REQUIRED");
+      const kind = parsedKind.data;
+      const note = shape.data.message ?? "";
 
       if (kind === "ACCOMMODATION") {
         if (manifestByKind(ctx.assessment.solution)?.accommodationRequests !== true) {
