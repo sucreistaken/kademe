@@ -2,7 +2,6 @@ import { headers } from "next/headers";
 import { redirect, unstable_rethrow } from "next/navigation";
 import type { ReactNode } from "react";
 import { CandidateIntl } from "@/components/candidate/Intl";
-import { InfoForm } from "@/components/candidate/InfoForm";
 import { LinkProblem } from "@/components/candidate/LinkProblem";
 import { UnknownLink } from "@/components/candidate/UnknownLink";
 import { ClosedCard } from "@/components/hiring/candidate/closed";
@@ -12,6 +11,7 @@ import { DeviceCheck } from "@/components/hiring/candidate/device-check";
 import { serverDeviceClass } from "@/components/hiring/candidate/device-class";
 import { Done } from "@/components/hiring/candidate/done";
 import { HiringFrame } from "@/components/hiring/candidate/frame";
+import { InfoStep } from "@/components/hiring/candidate/info-step";
 import { Landing } from "@/components/hiring/candidate/landing";
 import { Practice } from "@/components/hiring/candidate/practice";
 import { StageRunner } from "@/components/hiring/candidate/stage-runner";
@@ -185,9 +185,11 @@ export async function renderHiringPage(slot: CandidatePageSlot, input: Candidate
     }
     case "info":
       return gated(() => (
-        <InfoForm
+        <InfoStep
           token={token}
           initial={{ fullName: h.candidate.fullName ?? "", email: h.candidate.email ?? "", phone: h.candidate.phone ?? "", location: h.candidate.location ?? "" }}
+          device={safe.devices.microphone}
+          warmup={safe.practice}
         />
       ));
     case "check":

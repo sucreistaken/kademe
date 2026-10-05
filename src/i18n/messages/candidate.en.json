@@ -897,5 +897,16 @@
     "surveyFailed": "It did not send. Could you try again?",
     "surveyClosed": "This survey is no longer open.",
     "rights": "Your data rights"
+  },
+  "hiringInfo": {
+    "title": "Let's get your details right",
+    "body": "Only so your application reaches you.",
+    "fullName": "Full name",
+    "email": "E-mail",
+    "next": "Continue",
+    "saving": "Saving",
+    "name": "Write your full name.",
+    "emailWait": "Write a valid e-mail address.",
+    "failed": "Could not save. Try again?"
   }
 }

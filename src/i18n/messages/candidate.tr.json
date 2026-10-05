@@ -897,5 +897,16 @@
     "surveyFailed": "Gönderilemedi. Tekrar dener misin?",
     "surveyClosed": "Bu anket artık açık değil.",
     "rights": "Veri hakların"
+  },
+  "hiringInfo": {
+    "title": "Seni doğru kaydedelim",
+    "body": "Sadece başvurunun sana ulaşması için.",
+    "fullName": "Ad ve soyad",
+    "email": "E-posta",
+    "next": "Devam et",
+    "saving": "Kaydediliyor",
+    "name": "Ad ve soyadını yaz.",
+    "emailWait": "Geçerli bir e-posta adresi yaz.",
+    "failed": "Kaydedilemedi. Tekrar dener misin?"
   }
 }

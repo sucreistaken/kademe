@@ -42,7 +42,7 @@ vi.mock("@/components/hiring/candidate/device-check", () => ({ DeviceCheck: func
 vi.mock("@/components/hiring/candidate/stage-runner", () => ({ StageRunner: function StageRunner() {} }));
 vi.mock("@/components/hiring/candidate/practice", () => ({ Practice: function Practice() {} }));
 vi.mock("@/components/hiring/candidate/done", () => ({ Done: function Done() {} }));
-vi.mock("@/components/candidate/InfoForm", () => ({ InfoForm: function InfoForm() {} }));
+vi.mock("@/components/hiring/candidate/info-step", () => ({ InfoStep: function InfoStep() {} }));
 vi.mock("next/headers", () => ({
   headers: async () => {
     if (h.headersError) throw h.headersError;
@@ -61,7 +61,7 @@ import { DeviceCheck } from "@/components/hiring/candidate/device-check";
 import { StageRunner } from "@/components/hiring/candidate/stage-runner";
 import { Practice } from "@/components/hiring/candidate/practice";
 import { Done } from "@/components/hiring/candidate/done";
-import { InfoForm } from "@/components/candidate/InfoForm";
+import { InfoStep } from "@/components/hiring/candidate/info-step";
 import { createElement } from "react";
 import { formatInviteDeadline } from "../rules/invitation";
 import { zoneLabel } from "@/lib/org-timezone";
@@ -201,6 +201,30 @@ describe("renderHiringPage", () => {
     expect(find(node, LinkProblem)).toHaveLength(0);
     h.state = { ...(h.state as object), devices: { camera: false, microphone: true }, practice: false };
     expect(find(await render("check"), DeviceCheck)[0].props).toMatchObject({ camera: false, practice: false });
+  });
+
+  it("renders the hiring details step with the candidate's own fields and the journey flags only (3.12)", async () => {
+    h.state = { ...(h.state as object), step: "INFO", path: "/info", devices: { camera: true, microphone: true }, practice: true };
+    const node = await render("info");
+    const [info] = find(node, InfoStep);
+    expect(info.props).toEqual({
+      token: "tok",
+      initial: { fullName: "Elif Kaya", email: "elif@example.com", phone: "", location: "" },
+      device: true,
+      warmup: true,
+    });
+    expect(JSON.stringify(info.props)).not.toMatch(/LEAKVISIBLE|TEAMSECRET/);
+  });
+
+  it("keeps the details step inside the frame and the desktop gate, and the whole tree free of team text, with a positive control (3.12)", async () => {
+    h.state = { ...(h.state as object), step: "INFO", path: "/info", devices: { camera: true, microphone: true }, practice: true };
+    h.hctx = { ...(h.hctx as object), candidate: { ...ctx.candidate, fullName: "Elif LEAKVISIBLE_OWNNAME", email: null } };
+    const node = await render("info");
+    expect(find(node, HiringFrame)[0].props).toMatchObject({ orgName: "Örnek A.Ş.", token: "tok" });
+    expect(find(find(node, DesktopGate)[0], InfoStep)).toHaveLength(1);
+    // Positive control: the candidate's own text does reach this tree, the team's never does.
+    expect(JSON.stringify(node)).toMatch(/LEAKVISIBLE_OWNNAME/);
+    expect(JSON.stringify(node)).not.toMatch(/TEAMSECRET|LEAKVISIBLE_POSITION|LEAKVISIBLE_STAGE/);
   });
 
   it("sends a candidate who is past the device check away from /check", async () => {
@@ -388,7 +412,7 @@ describe("the desktop gate (HIRING-VISUAL-FLOW 3.0, VG)", () => {
     for (const [slot, state, over] of slots) {
       h.state = state;
       const node = await render(slot, over);
-      for (const screen of [Landing, InfoForm, DeviceCheck, Practice, StageRunner, DesktopGate]) expect(find(node, screen), slot).toHaveLength(0);
+      for (const screen of [Landing, InfoStep, DeviceCheck, Practice, StageRunner, DesktopGate]) expect(find(node, screen), slot).toHaveLength(0);
       const [only] = find(node, DesktopOnlyScreen);
       expect(only.props, slot).toEqual({ token: "tok", minutes: 15, deadlineDay: "19 Eki", contactEmail: "deniz@ornek.test", stageRunning: false });
       // Inside the frame: the organisation, the language and Help stay in reach.
