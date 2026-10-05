@@ -4,11 +4,16 @@
  * token. Runs against a dev server (default http://localhost:3100) on the same
  * database as DATABASE_URL. Adds its invitations, and for the hiring positive
  * control a DRAFT opening (a draft is deletable, a published one is not), and
- * removes all of them at the end.
+ * removes all of them at the end. That control proves only the serving gate
+ * (hiring terms -> the endpoint answers); an invitation to a PUBLISHED version,
+ * walked through every endpoint, is verify:hiring-flow's (throw-away database).
+ * Refuses the shared `kademe` (which .env names) and anything but the local
+ * database on 5434 before it connects.
  *
  *   DATABASE_URL=postgresql://kademe:kademe@localhost:5434/kademe_platform pnpm verify:guard
  */
 import "dotenv/config";
+import { refuseUnlessWorkingDb } from "../src/db/working-db-guard";
 
 const BASE = process.env.VERIFY_BASE_URL ?? "http://localhost:3100";
 let failed = 0;
@@ -29,6 +34,15 @@ async function call(method: "GET" | "POST" | "PUT", path: string, body?: unknown
 }
 
 async function main() {
+  // It writes invitations (and the guard a draft opening): never the shared `kademe`
+  // that .env names, never anything but the local database on 5434. Checked before
+  // the database module is loaded, so a refused url is never connected to.
+  const refusal = refuseUnlessWorkingDb(process.env.DATABASE_URL);
+  if (refusal) {
+    console.error(`Refusing: ${refusal}`);
+    process.exit(2);
+    return;
+  }
   const { and, eq, inArray, sql } = await import("drizzle-orm");
   const { db } = await import("../src/db");
   const s = await import("../src/db/schema");

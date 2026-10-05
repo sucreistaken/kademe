@@ -14,9 +14,11 @@
  *  6. A listening clip cannot be played more often than allowed.
  *  7. A finished link is dead, and there is still exactly one attempt.
  *
- * Run with: pnpm verify:exam
+ * Run with (local working database only; it refuses the shared `kademe`):
+ *   DATABASE_URL=postgresql://kademe:kademe@localhost:5434/kademe_platform pnpm verify:exam
  */
 import "dotenv/config";
+import { refuseUnlessWorkingDb } from "../src/db/working-db-guard";
 
 const RED = "\x1b[31m";
 const GREEN = "\x1b[32m";
@@ -29,6 +31,15 @@ const bad = (m: string) => {
 };
 
 async function main() {
+  // It writes invitations (and the guard a draft opening): never the shared `kademe`
+  // that .env names, never anything but the local database on 5434. Checked before
+  // the database module is loaded, so a refused url is never connected to.
+  const refusal = refuseUnlessWorkingDb(process.env.DATABASE_URL);
+  if (refusal) {
+    console.error(`Refusing: ${refusal}`);
+    process.exit(2);
+    return;
+  }
   const { and, eq } = await import("drizzle-orm");
   const { db } = await import("../src/db");
   const s = await import("../src/db/schema");

@@ -34,6 +34,7 @@ async function main() {
   if (refusal) {
     console.error(`Refusing: ${refusal}`);
     process.exit(2);
+    return;
   }
   // Local disk for this run, whatever the shell has.
   const storageDir = mkdtempSync(path.join(os.tmpdir(), "kademe-flow-"));
@@ -132,7 +133,8 @@ async function main() {
   check(state.status === 200 && state.json.step === "CONSENT" && state.json.path === "", "the landing comes first", state.json.step);
   state = await call("POST /hiring/extra-time", token, { pct: 25 });
   check(state.json.extraTimePct === 25, "+25% chosen before consent, no reason asked", state.json.extraTimePct);
-  check((await call("POST /hiring/extra-time", token, { pct: 30 })).status === 400, "30% is refused");
+  const thirty = await call("POST /hiring/extra-time", token, { pct: 30 });
+  check(thirty.status === 400 && thirty.json.error === "EXTRA_TIME_INVALID", "30% is refused (400 EXTRA_TIME_INVALID)", thirty.json);
   const consentCopy = await call("GET /consent", token);
   // `accepted` is in INTERNAL_FIELDS, so candidateJson strips it from this body (the exam's too).
   check(consentCopy.status === 200 && consentCopy.json.version === consentText?.version && consentCopy.json.body === (consentText?.body as Record<string, string>).tr, "the consent copy shown is the invitation's frozen text", consentCopy.json.version);
@@ -182,9 +184,12 @@ async function main() {
   const play = await call("GET /hiring/media/play", token, undefined, `?ref=${take2.ref}`);
   check(typeof play.json.src === "string" && (play.json.src as string).length > 0, "the candidate can play their own take back");
   check((await call("POST /hiring/response/commit", token, { stagePosition: 1, activityId: video.id })).status === 200, "the video question closes");
+  const reopen = await call("PUT /hiring/response", token, { stagePosition: 1, activityId: video.id, answer: { usedTextAlternative: true, text: "Sonradan yazdım." } });
+  check(reopen.status === 409 && reopen.json.error === "ACTIVITY_CLOSED", "a closed question in a stage without going back takes no more writes (409 ACTIVITY_CLOSED)", reopen.json);
 
   console.log("\nChoice and long text");
-  await call("POST /hiring/response/commit", token, { stagePosition: 1, activityId: single.id, answer: { choiceIds: ["a"] } });
+  const singleCommit = await call("POST /hiring/response/commit", token, { stagePosition: 1, activityId: single.id, answer: { choiceIds: ["a"] } });
+  check(singleCommit.status === 200 && singleCommit.json.step === "STAGE", "the single choice closes (200)", singleCommit.status);
   const [singleResponse] = await db.select().from(s.hiringResponses).where(eq(s.hiringResponses.activityId, single.id));
   check(singleResponse.autoScore === 1, "the right choice scores 1 on the server", singleResponse.autoScore);
   const tooShort = await call("POST /hiring/response/commit", token, { stagePosition: 1, activityId: long.id, answer: { text: "kısa" } });
@@ -196,11 +201,14 @@ async function main() {
   state = await call("POST /hiring/stage/submit", token, { stagePosition: 1 });
   check(state.json.step === "STAGE" && state.json.position === 2, "stage 1 is submitted, stage 2 is next", state.json);
   check((state.json.current as { previous: { closedByClock: boolean } }).previous.closedByClock === false, "and stage 2 says stage 1 ended normally");
+  const backToOne = await call("PUT /hiring/response", token, { stagePosition: 1, activityId: long.id, answer: { text: "Birinci aşamaya geri dönüp değiştirmek istiyorum." } });
+  check(backToOne.status === 409 && backToOne.json.error === "STAGE_MISMATCH", "a write to stage 1 after its submit is refused (409 STAGE_MISMATCH)", backToOne.json);
 
-  console.log("\nStage 2: a file, then the clock ends it");
+  console.log("\nStage 2: a file, a sound answer, an optional question skipped, then the clock ends it");
   position = 2;
   state = await call("POST /hiring/stage/start", token, { stagePosition: 2 });
-  const [file] = (state.json.current as { stage: { activities: Array<{ id: string }> } }).stage.activities;
+  const [file, audio, optional, multi] = (state.json.current as { stage: { activities: Array<{ id: string; type: string }> } }).stage.activities;
+  check([file, audio, optional, multi].map((a) => a?.type).join() === "FILE_UPLOAD,AUDIO,SHORT_TEXT,MULTI_CHOICE", "stage 2 holds the file, audio, optional text and multiple choice questions", [file, audio, optional, multi].map((a) => a?.type));
   const wrong = await call("POST /hiring/media/init", token, { stagePosition: 2, activityId: file.id, kind: "file", mime: "image/png", name: "plan.png", bytes: 100 });
   check(wrong.status === 400 && wrong.json.error === "FILE_TYPE_REJECTED", "a PNG is refused where a PDF is asked", wrong.json);
   const big = await call("POST /hiring/media/init", token, { stagePosition: 2, activityId: file.id, kind: "file", mime: "application/pdf", name: "plan.pdf", bytes: 2 * 1024 * 1024 });
@@ -209,9 +217,25 @@ async function main() {
   check(pdf.done?.json.status === "READY", "the PDF uploads");
   const [fileResponse] = await db.select().from(s.hiringResponses).where(eq(s.hiringResponses.activityId, file.id));
   check(fileResponse.payload.file?.name === "Plan Taslağı.pdf" && fileResponse.fileAssetIds[0] === pdf.ref, "and is attached under its own name, without the path", fileResponse.payload);
-  await call("POST /hiring/response/commit", token, { stagePosition: 2, activityId: file.id });
+  const fileCommit = await call("POST /hiring/response/commit", token, { stagePosition: 2, activityId: file.id });
+  check(fileCommit.status === 200, "the file question closes (200)", fileCommit.json);
+  const videoOnAudio = await call("POST /hiring/media/init", token, { stagePosition: 2, activityId: audio.id, kind: "recording", mime: "video/webm", bytes: 2048 });
+  check(videoOnAudio.status === 400 && videoOnAudio.json.error === "RECORDING_TYPE_REJECTED", "a video take is refused on a sound question (400 RECORDING_TYPE_REJECTED)", videoOnAudio.json);
+  const sound = await record(audio.id, "recording", "audio/webm", new Uint8Array(1024).fill(3));
+  check(sound.done?.json.status === "READY", "the one sound take uploads", sound.done?.json);
+  const secondSound = await call("POST /hiring/media/init", token, { stagePosition: 2, activityId: audio.id, kind: "recording", mime: "audio/webm" });
+  check(secondSound.status === 409 && secondSound.json.error === "TAKES_EXHAUSTED", "a second take is refused where one is allowed (409 TAKES_EXHAUSTED)", secondSound.json);
+  const [audioResponse] = await db.select().from(s.hiringResponses).where(eq(s.hiringResponses.activityId, audio.id));
+  const [audioAsset] = await db.select().from(s.mediaAssets).where(eq(s.mediaAssets.id, sound.ref ?? "00000000-0000-0000-0000-000000000000"));
+  check(audioResponse.mediaAssetId === sound.ref && audioResponse.takesUsed === 1 && !!audioAsset?.mime.startsWith("audio/"), "the sound take is the answer, stored as audio", { media: audioResponse.mediaAssetId, takes: audioResponse.takesUsed, mime: audioAsset?.mime });
+  const audioCommit = await call("POST /hiring/response/commit", token, { stagePosition: 2, activityId: audio.id });
+  check(audioCommit.status === 200, "the sound question closes (200)", audioCommit.json);
+  const skipped = await call("POST /hiring/response/commit", token, { stagePosition: 2, activityId: optional.id });
+  check(skipped.status === 200, "the optional text is skipped: it closes without an answer (200)", skipped.json);
+  const [optionalResponse] = await db.select().from(s.hiringResponses).where(eq(s.hiringResponses.activityId, optional.id));
+  check(!!optionalResponse.answeredAt && !optionalResponse.payload.text, "and is stored closed with no text", optionalResponse.payload);
   await db.execute(sql`update hiring_stage_runs set deadline_at = now() - interval '10 seconds' where attempt_id = (select id from attempts where assessment_id = ${invite.assessmentId}) and order_index = 1`);
-  const late = await call("PUT /hiring/response", token, { stagePosition: 2, activityId: (state.json.current as { stage: { activities: Array<{ id: string }> } }).stage.activities[1].id, answer: {} });
+  const late = await call("PUT /hiring/response", token, { stagePosition: 2, activityId: multi.id, answer: { choiceIds: ["a", "b"] } });
   check(late.status === 409 && late.json.error === "STAGE_EXPIRED", "a write after the deadline is refused", late.json);
   const after = await call("GET /state", token);
   check(after.status === 200 && after.json.step === "DONE" && after.json.path === "/done", "the next read closes the stage and the attempt: DONE", after.json);
@@ -221,11 +245,11 @@ async function main() {
   const runs = await db.select().from(s.hiringStageRuns).where(eq(s.hiringStageRuns.attemptId, attempt.id));
   const first = runs.find((r) => r.orderIndex === 0)!;
   const second = runs.find((r) => r.orderIndex === 1)!;
-  check(!!attempt.completedAt && second.wasLate && second.completion === "PARTIAL", "stage 2 closed late and PARTIAL (the file counts), the attempt is complete", { completion: second.completion, wasLate: second.wasLate });
+  check(!!attempt.completedAt && second.wasLate && second.completion === "PARTIAL", "stage 2 closed late and PARTIAL (file and sound answered, the required multiple choice not), the attempt is complete", { completion: second.completion, wasLate: second.wasLate });
   check(first.closedBy === "CANDIDATE" && !first.wasLate, "stage 1, submitted by hand in time, records closed_by CANDIDATE", { closedBy: first.closedBy, wasLate: first.wasLate });
   check(second.closedBy === "CLOCK", "stage 2, closed by the clock on the next read, records closed_by CLOCK", second.closedBy);
   check(!!attempt.completedAt && !!second.submittedAt && attempt.completedAt.getTime() >= second.submittedAt.getTime(), "the attempt's completedAt is written when its last stage closes", { completedAt: attempt.completedAt, closedAt: second.submittedAt });
-  const multiRow = (await db.select().from(s.hiringResponses).where(eq(s.hiringResponses.stageRunId, second.id))).find((r) => r.autoScore !== null);
+  const [multiRow] = await db.select().from(s.hiringResponses).where(eq(s.hiringResponses.activityId, multi.id));
   check(multiRow?.autoScore === 0, "the unanswered multiple choice scored 0 when the stage closed", multiRow?.autoScore);
 
   console.log("\nThe survey, once");
@@ -237,7 +261,8 @@ async function main() {
   if (!second2.ok) throw new Error(second2.code);
   const token2 = second2.url.split("/a/")[1];
   check((await call("POST /rights", token2, { kind: "ACCOMMODATION", message: "Altyazı" })).status === 200, "an accommodation request is accepted");
-  await call("POST /problem", token2, { area: "LINK", message: "Yeni link" });
+  const problem = await call("POST /problem", token2, { area: "LINK", message: "Yeni link" });
+  check(problem.status === 200, "a new-link request is accepted (200)", problem.json);
   const listed = await listOpeningCandidates(team.orgId, fixture.openingId, { runs: true, blindMode: false });
   const can = listed.find((r) => r.assessmentId === second2.assessmentId);
   check(can?.requests.map((r) => r.kind).sort().join() === "ACCOMMODATION,NEW_LINK", "both requests are on the candidate's row", can?.requests);
@@ -249,9 +274,8 @@ async function main() {
   check((await listOpeningCandidates(other.orgId, fixture.openingId, { runs: true, blindMode: false })).length === 0, "another organisation sees none of them");
 
   console.log("\nThe cron closes an abandoned stage");
-  await call("POST /consent", token2, { accepted: true });
-  await call("POST /device-check", token2);
-  await call("POST /hiring/stage/start", token2, { stagePosition: 1 });
+  const cronSteps = [await call("POST /consent", token2, { accepted: true }), await call("POST /device-check", token2), await call("POST /hiring/stage/start", token2, { stagePosition: 1 })];
+  check(cronSteps.every((r) => r.status === 200), "the second candidate consents, checks devices and starts stage 1 (200 each)", cronSteps.map((r) => r.status));
   await db.execute(sql`update hiring_stage_runs set deadline_at = now() - interval '1 minute' where attempt_id = (select id from attempts where assessment_id = ${second2.assessmentId})`);
   const swept = await hiringModule.attempts.closeExpired!(new Date(), 50);
   check(swept.closed >= 1, "closeExpired closed the run", swept);
@@ -294,6 +318,67 @@ async function main() {
   const doneLink = await call("GET /state", token3);
   check(doneLink.status === 409 && doneLink.json.error === "COMPLETED", "and the link is COMPLETED", doneLink.json);
 
+  console.log("\nThe video question's written alternative");
+  const altInvite = await createHiringInvitation(owner, { openingId: fixture.openingId, fullName: "Deniz Aksoy", email: `deniz-${Date.now()}@example.com`, locale: "tr", deadline: null }, { baseUrl: "https://kademe.test" });
+  if (!altInvite.ok) throw new Error(altInvite.code);
+  const token4 = altInvite.url.split("/a/")[1];
+  const altSteps = [await call("POST /consent", token4, { accepted: true }), await call("POST /device-check", token4)];
+  state = await call("POST /hiring/stage/start", token4, { stagePosition: 1 });
+  check([...altSteps, state].every((r) => r.status === 200), "a fourth candidate reaches stage 1 (200 each)", [...altSteps, state].map((r) => r.status));
+  const [altVideo] = (state.json.current as { stage: { activities: Array<{ id: string; type: string }> } }).stage.activities;
+  const written = await call("POST /hiring/response/commit", token4, { stagePosition: 1, activityId: altVideo.id, answer: { usedTextAlternative: true, text: "Kamera kullanamıyorum; kendimi yazıyla tanıtıyorum." } });
+  check(written.status === 200, "the video question closes with the written alternative and no take (200)", written.json);
+  const [altResponse] = await db.select().from(s.hiringResponses).where(eq(s.hiringResponses.activityId, altVideo.id)).innerJoin(s.hiringStageRuns, eq(s.hiringStageRuns.id, s.hiringResponses.stageRunId)).innerJoin(s.attempts, and(eq(s.attempts.id, s.hiringStageRuns.attemptId), eq(s.attempts.assessmentId, altInvite.assessmentId)));
+  const alt = altResponse?.hiring_responses;
+  check(!!alt && alt.usedTextAlternative && alt.payload.usedTextAlternative === true && typeof alt.payload.text === "string" && alt.takeAssetIds.length === 0 && !!alt.answeredAt, "stored as the written alternative, answered, no take", alt && { used: alt.usedTextAlternative, payload: alt.payload, takes: alt.takeAssetIds.length });
+
+  console.log("\nA stage with a way back (written opening)");
+  const writtenOpening = await buildPublishedOpening({ orgId: team.orgId, ownerId: team.ownerId, memberIds: [team.ownerId], sentinels: true, kind: "written" });
+  const writtenInvite = await createHiringInvitation(owner, { openingId: writtenOpening.openingId, fullName: "Selin Öz", email: `selin-${Date.now()}@example.com`, locale: "tr", deadline: null }, { baseUrl: "https://kademe.test" });
+  if (!writtenInvite.ok) throw new Error(writtenInvite.code);
+  const token5 = writtenInvite.url.split("/a/")[1];
+  const writtenFrom = sent.length;
+  state = await call("POST /consent", token5, { accepted: true });
+  check(state.json.step === "STAGE" && state.json.path === "/stage/1", "no recorded question, so no device check: consent leads to stage 1", state.json);
+  state = await call("POST /hiring/stage/start", token5, { stagePosition: 1 });
+  const [wLong, wSingle, wOptional] = (state.json.current as { stage: { activities: Array<{ id: string; type: string }> } }).stage.activities;
+  check([wLong, wSingle, wOptional].map((a) => a?.type).join() === "LONG_TEXT,SINGLE_CHOICE,SHORT_TEXT", "stage 1 holds long text, single choice, optional short text", [wLong, wSingle, wOptional].map((a) => a?.type));
+  const wSteps = [
+    await call("POST /hiring/response/commit", token5, { stagePosition: 1, activityId: wLong.id, answer: { text: "Önce sorunu tanımladım, sonra ekiple çözdük." } }),
+    await call("POST /hiring/response/commit", token5, { stagePosition: 1, activityId: wSingle.id, answer: { choiceIds: ["b"] } }),
+  ];
+  check(wSteps.every((r) => r.status === 200), "the two required questions close (200 each)", wSteps.map((r) => r.status));
+  const [wrongSingle] = await db.select().from(s.hiringResponses).where(eq(s.hiringResponses.activityId, wSingle.id));
+  check(wrongSingle.autoScore === 0, "a wrong single choice scores 0", wrongSingle.autoScore);
+  state = await call("POST /hiring/stage/submit", token5, { stagePosition: 1 });
+  check(state.status === 200 && state.json.step === "STAGE" && state.json.position === 2, "the stage submits with the optional question never touched (skipped)", state.json);
+  const [wOptionalRow] = await db.select().from(s.hiringResponses).where(eq(s.hiringResponses.activityId, wOptional.id));
+  check(!wOptionalRow?.payload.text, "and the optional question holds no answer", wOptionalRow?.payload);
+  state = await call("POST /hiring/stage/start", token5, { stagePosition: 2 });
+  const [wCase, wMulti] = (state.json.current as { stage: { activities: Array<{ id: string; type: string }> } }).stage.activities;
+  check(state.status === 200 && wCase?.type === "LONG_TEXT" && wMulti?.type === "MULTI_CHOICE", "stage 2 (going back allowed) starts: long text, multiple choice", state.json.error ?? [wCase?.type, wMulti?.type]);
+  const caseCommit = await call("POST /hiring/response/commit", token5, { stagePosition: 2, activityId: wCase.id, answer: { text: "Açık konuşur, nedenini ve sonraki adımı anlatırdım." } });
+  check(caseCommit.status === 200, "the long text closes (200)", caseCommit.json);
+  const partial = await call("POST /hiring/response/commit", token5, { stagePosition: 2, activityId: wMulti.id, answer: { choiceIds: ["a"] } });
+  const [partialRow] = await db.select().from(s.hiringResponses).where(eq(s.hiringResponses.activityId, wMulti.id));
+  check(partial.status === 200 && partialRow.autoScore === 0, "a partial set (a) of the right set (a, b) scores 0", { status: partial.status, autoScore: partialRow.autoScore });
+  const reedit = await call("PUT /hiring/response", token5, { stagePosition: 2, activityId: wCase.id, answer: { text: "Geri dönüp düzelttim: önce dinler, sonra açık konuşurdum." } });
+  const [caseRow] = await db.select().from(s.hiringResponses).where(eq(s.hiringResponses.activityId, wCase.id));
+  check(reedit.status === 200 && reedit.json.saved === true && caseRow.payload.text === "Geri dönüp düzelttim: önce dinler, sonra açık konuşurdum.", "going back, a closed question takes a re-edit", { status: reedit.status, text: caseRow.payload.text });
+  const exact = await call("POST /hiring/response/commit", token5, { stagePosition: 2, activityId: wMulti.id, answer: { choiceIds: ["b", "a"] } });
+  const [exactRow] = await db.select().from(s.hiringResponses).where(eq(s.hiringResponses.activityId, wMulti.id));
+  check(exact.status === 200 && exactRow.autoScore === 1, "the exact set (a, b), in any order, scores 1", { status: exact.status, autoScore: exactRow.autoScore });
+  const over = await call("POST /hiring/response/commit", token5, { stagePosition: 2, activityId: wMulti.id, answer: { choiceIds: ["a", "b", "c"] } });
+  const [overRow] = await db.select().from(s.hiringResponses).where(eq(s.hiringResponses.activityId, wMulti.id));
+  check(over.status === 200 && overRow.autoScore === 0, "a superset (a, b, c) scores 0", { status: over.status, autoScore: overRow.autoScore });
+  await call("POST /hiring/response/commit", token5, { stagePosition: 2, activityId: wMulti.id, answer: { choiceIds: ["a", "b"] } });
+  state = await call("POST /hiring/stage/submit", token5, { stagePosition: 2 });
+  check(state.status === 200 && state.json.step === "DONE", "the last stage submits: DONE", state.json);
+  const [finalMulti] = await db.select().from(s.hiringResponses).where(eq(s.hiringResponses.activityId, wMulti.id));
+  check(finalMulti.autoScore === 1, "the score the stage closed with is the last answer's (1)", finalMulti.autoScore);
+  const writtenBodies = sent.slice(writtenFrom).join("\n");
+  check(writtenBodies.includes("LEAKVISIBLE_PROMPT") && writtenBodies.includes("LEAKVISIBLE_CHOICE") && writtenBodies.includes("LEAKVISIBLE_STAGE"), "positive control: the written opening's sentinels reached this candidate", ["PROMPT", "CHOICE", "STAGE"].filter((x) => !writtenBodies.includes(`LEAKVISIBLE_${x}`)));
+
   console.log("\nWhat a page can reach in process");
   // Every candidate page asks solutionPage first; the module's title is the page header's.
   // Hiring renders no page of its own yet (module.renderPage arrives with the candidate
@@ -305,17 +390,22 @@ async function main() {
     ["finished by hand, done", token3, "done", {}],
   ] as const) {
     const node = await solutionPage(raw, slot, undefined, { ...params });
-    if (node === undefined) ok(`${label}: no hiring page of its own yet, the core page answers`);
-    else {
-      sent.push(pageRead(node));
-      ok(`${label}: the page's elements join the scan`);
-    }
+    // Flips when hiring gets its own pages: then this scan must be extended, not the line deleted.
+    check(node === undefined, `${label}: solutionPage hands no hiring page yet (the core page answers)`, typeof node);
+    if (node !== undefined) sent.push(pageRead(node));
   }
+  check(hiringModule.candidate.renderPage === undefined, "hiring has no renderPage yet: the rendered page and RSC scan is the browser check's (C10)");
   for (const raw of [token, token3]) {
     const resolved = await resolveToken(raw);
     check(!!resolved.ctx, "the finished token still resolves for the page header");
     if (resolved.ctx) sent.push(JSON.stringify(await hiringModule.candidate.title(resolved.ctx)));
   }
+
+  // The invitation e-mails reach the candidate too.
+  const mails = await db.select({ kind: s.messageOutbox.kind, subject: s.messageOutbox.subject, body: s.messageOutbox.body }).from(s.messageOutbox).where(eq(s.messageOutbox.orgId, team.orgId));
+  const invites = mails.filter((m) => m.kind === "INVITE");
+  check(invites.length === 5 && invites.every((m) => m.body.includes("https://kademe.test/a/")), `the five invitation e-mails (with their links) join the scan, with every other outbox mail (${mails.length} in all)`, mails.map((m) => m.kind));
+  for (const m of mails) sent.push(`${m.subject}\n${m.body}`);
 
   console.log("\nLeak scan over every body the candidate received");
   const all = sent.join("\n");
@@ -325,7 +415,7 @@ async function main() {
     check(n >= 1, `positive control: ${visible} reached the candidate (${n} times)`);
   }
   check(!all.includes("TEAMSECRET"), "no team-only text reached the candidate (0 TEAMSECRET_*)", all.match(/TEAMSECRET_[A-Z_]+/g));
-  for (const id of [...new Set([...fixture.competencies, ...textOpening.competencies])]) check(!all.includes(id), `competency ${id.slice(0, 8)} never reached the candidate`);
+  for (const id of [...new Set([...fixture.competencies, ...textOpening.competencies, ...writtenOpening.competencies])]) check(!all.includes(id), `competency ${id.slice(0, 8)} never reached the candidate`);
   check(!/"correct"|internalQuestion|internalPurpose|expectedBehaviours|redFlags|managerNotes|answerExamples|autoScore|auto_score|scorecard/.test(all), "no team-only field name either", all.match(/"correct"|internalQuestion|internalPurpose|expectedBehaviours|redFlags|managerNotes|answerExamples|autoScore|auto_score|scorecard/g));
   check(sent.length > 40, `the scan covered the whole walk (${sent.length} bodies)`, sent.length);
 

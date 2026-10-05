@@ -73,12 +73,12 @@ export async function buildPublishedOpening(input: {
   if (input.kind === "written") {
     // Stage 1: long text, single choice, optional short text. Stage 2 (going back allowed): long text, multiple choice.
     const long = await versions.addActivity(org, id, s1, "LONG_TEXT");
-    await versions.updateActivity(org, id, long, { prompt: { tr: "Son projende bir sorunu nasıl çözdüğünü anlat.", en: "Tell us how you solved a problem in your last project." }, config: { minChars: 20, maxChars: 2000 } });
+    await versions.updateActivity(org, id, long, { prompt: { tr: `Son projende bir sorunu nasıl çözdüğünü anlat.${visible("PROMPT")}`, en: "Tell us how you solved a problem in your last project." }, config: { minChars: 20, maxChars: 2000 }, ...team });
     await versions.setActivityCompetencies(org, id, long, [problem]);
     const single = await versions.addActivity(org, id, s1, "SINGLE_CHOICE");
     await versions.updateActivity(org, id, single, {
       prompt: { tr: "Bir tasarım kararını kim onaylar?", en: "Who approves a design decision?" },
-      config: { choices: [{ id: "a", label: { tr: "Ürün ekibi", en: "The product team" }, correct: true }, { id: "b", label: { tr: "Yalnız ben", en: "Only me" } }, { id: "c", label: { tr: "Satış ekibi", en: "The sales team" } }] },
+      config: { choices: [{ id: "a", label: { tr: `Ürün ekibi${visible("CHOICE")}`, en: "The product team" }, correct: true }, { id: "b", label: { tr: "Yalnız ben", en: "Only me" } }, { id: "c", label: { tr: "Satış ekibi", en: "The sales team" } }] },
     });
     const short = await versions.addActivity(org, id, s1, "SHORT_TEXT");
     await versions.updateActivity(org, id, short, { prompt: { tr: "Eklemek istediğin bir şey var mı?", en: "Anything you want to add?" }, required: false });
@@ -86,7 +86,7 @@ export async function buildPublishedOpening(input: {
     const s2 = await versions.addStage(org, id);
     await versions.updateStage(org, id, s2, { name: { tr: "Vaka", en: "Case" }, durationSeconds: 300, backNavigation: true });
     const caseText = await versions.addActivity(org, id, s2, "LONG_TEXT");
-    await versions.updateActivity(org, id, caseText, { prompt: { tr: "Bir müşteriye kötü bir haberi nasıl verirdin?", en: "How would you give a client bad news?" } });
+    await versions.updateActivity(org, id, caseText, { prompt: { tr: "Bir müşteriye kötü bir haberi nasıl verirdin?", en: "How would you give a client bad news?" }, ...team });
     await versions.setActivityCompetencies(org, id, caseText, [communication]);
     const multi = await versions.addActivity(org, id, s2, "MULTI_CHOICE");
     await versions.updateActivity(org, id, multi, {
