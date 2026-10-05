@@ -107,3 +107,12 @@ export function lostWords(storage: DraftStorage | null, token: string, position:
     return null;
   }
 }
+
+/** The flag was shown (the finish page, Task 16): it is not said twice. */
+export function clearLostWords(storage: DraftStorage | null, token: string, position: number): void {
+  try {
+    storage?.removeItem(lostKey(token, position));
+  } catch {
+    // Nothing to clear.
+  }
+}

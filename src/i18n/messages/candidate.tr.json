@@ -789,5 +789,29 @@
     "cut": "Sayfa kapanırken {name} yükleniyordu ve yarıda kaldı. Dosyayı yeniden seç.",
     "offline": "Bağlantın koptu. Dosyan bu sekmede duruyor, bağlantı gelince yüklemeye devam ediyoruz. Süre işlemeye devam ediyor.",
     "offlineIdle": "Bağlantın koptu. Bağlantı gelince dosyanı yükleyebilirsin. Süre işlemeye devam ediyor."
+  },
+  "hiringDone": {
+    "title": "Tamamlandı, teşekkürler {name}.",
+    "titleNoName": "Tamamlandı, teşekkürler.",
+    "saved": "{count, plural, one {Aşaman kaydedildi ve ekibe iletildi.} other {# aşamanın hepsi kaydedildi ve ekibe iletildi.}}",
+    "lostText": "Süre dolduktan sonra yazdığın son kelimeler kaydedilemedi; o ana kadarki cevapların kaydedildi.",
+    "lostChoice": "Süre dolduktan sonra yaptığın son değişiklik kaydedilemedi; o ana kadarki cevapların kaydedildi.",
+    "next": "{count, plural, =0 {Cevaplarını işe alım ekibi değerlendirecek.} =1 {Cevaplarını ekipten bir kişi değerlendirecek.} other {Cevaplarını ekipten en az # kişi, birbirinden bağımsız değerlendirecek.}}",
+    "byDate": "{date} tarihine kadar sana dönülecek.",
+    "contact": "Sorun olursa: <mail>{email}</mail>",
+    "devicesOff": "Kamera ve mikrofon kapatıldı.",
+    "micOff": "Mikrofon kapatıldı.",
+    "surveyTitle": "Bu deneyim nasıldı?",
+    "surveyLow": "Hiç iyi değildi",
+    "surveyHigh": "Çok iyiydi",
+    "surveyComment": "Eklemek istediğin bir şey var mı? (isteğe bağlı)",
+    "surveyCount": "{used} / {max}",
+    "surveyNote": "Cevabın değerlendirmeni etkilemez; ekip yalnızca toplu sonucu görür.",
+    "surveySend": "Görüşünü gönder",
+    "surveySending": "Gönderiliyor",
+    "surveyPick": "Önce 1 ile 5 arasında bir puan seç.",
+    "surveyThanks": "Teşekkürler, görüşün iletildi.",
+    "surveyFailed": "Gönderilemedi. Tekrar dener misin?",
+    "rights": "Veri hakların"
   }
 }

@@ -789,5 +789,29 @@
     "cut": "{name} was still uploading when the page closed, so it did not arrive. Choose it again.",
     "offline": "Your connection dropped. Your file stays in this tab, and the upload resumes when the connection is back. The clock keeps running.",
     "offlineIdle": "Your connection dropped. You can upload your file once it is back. The clock keeps running."
+  },
+  "hiringDone": {
+    "title": "Done, thank you {name}.",
+    "titleNoName": "Done, thank you.",
+    "saved": "{count, plural, one {Your stage is saved and sent to the team.} other {All # stages are saved and sent to the team.}}",
+    "lostText": "The last words you wrote after the time ran out could not be saved; your answers up to that moment are saved.",
+    "lostChoice": "The last change you made after the time ran out could not be saved; your answers up to that moment are saved.",
+    "next": "{count, plural, =0 {The hiring team will review your answers.} =1 {One person on the team will review your answers.} other {At least # people on the team will review your answers independently.}}",
+    "byDate": "You will hear back by {date}.",
+    "contact": "If something is wrong: <mail>{email}</mail>",
+    "devicesOff": "The camera and microphone are off.",
+    "micOff": "The microphone is off.",
+    "surveyTitle": "How was this experience?",
+    "surveyLow": "Not good at all",
+    "surveyHigh": "Very good",
+    "surveyComment": "Anything to add? (optional)",
+    "surveyCount": "{used} / {max}",
+    "surveyNote": "Your answer does not affect your assessment; the team only sees the overall result.",
+    "surveySend": "Send your feedback",
+    "surveySending": "Sending",
+    "surveyPick": "Choose a rating from 1 to 5 first.",
+    "surveyThanks": "Thank you, your feedback was sent.",
+    "surveyFailed": "It did not send. Could you try again?",
+    "rights": "Your data rights"
   }
 }

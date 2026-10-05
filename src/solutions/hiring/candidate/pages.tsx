@@ -6,10 +6,12 @@ import { LinkProblem } from "@/components/candidate/LinkProblem";
 import { UnknownLink } from "@/components/candidate/UnknownLink";
 import { ClosedCard } from "@/components/hiring/candidate/closed";
 import { DeviceCheck } from "@/components/hiring/candidate/device-check";
+import { Done } from "@/components/hiring/candidate/done";
 import { HiringFrame } from "@/components/hiring/candidate/frame";
 import { Landing } from "@/components/hiring/candidate/landing";
 import { Practice } from "@/components/hiring/candidate/practice";
 import { StageRunner } from "@/components/hiring/candidate/stage-runner";
+import { shortDate } from "@/i18n/dates";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/i18n/locale";
 import { setAssessmentLocale, type CandidateContext, type LinkProblem as Problem } from "@/lib/candidate-context";
 import { candidateSafe } from "@/lib/candidate-safe";
@@ -64,7 +66,7 @@ function framed(token: string, locale: Locale, orgName: string, children: ReactN
   );
 }
 
-/** An expired or not-yet link of a served invitation, or a page not built yet: the core card inside the frame. */
+/** An expired or not-yet link of a served invitation: the core card inside the frame. */
 function problemCard(token: string, locale: Locale, problem: Problem, ctx: CandidateContext): ReactNode {
   return (
     <LinkProblem
@@ -145,8 +147,14 @@ export async function renderHiringPage(slot: CandidatePageSlot, input: Candidate
     case "practice":
       // HIRING-UX 6.4: the camera flag and the page's language only; the warm-up's question is its own, nothing of the version reaches it.
       return frame(<Practice token={token} camera={safe.devices.camera} locale={locale} />);
-    // Replaced by Task 16 (done).
-    case "done":
-      return frame(problemCard(token, locale, "INVALID", h));
+    case "done": {
+      // Only a finished invitation lives on /done (the path check above), and Task 5 builds every
+      // DONE state with its finish; a DONE without one is a broken invariant, not a page to guess.
+      const finished = safe.finished;
+      if (!finished) throw new Error("hiring: a DONE state without its finish");
+      // HIRING-UX 6.13 and A9: the team's reply promise as a day in the organisation's zone.
+      const feedbackBy = shortDate(new Date(finished.feedbackBy), locale, ORG_TIMEZONE);
+      return frame(<Done token={token} state={{ ...safe, finished }} feedbackBy={feedbackBy} />);
+    }
   }
 }

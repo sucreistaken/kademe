@@ -31,6 +31,7 @@ vi.mock("@/components/candidate/UnknownLink", () => ({ UnknownLink: function Unk
 vi.mock("@/components/hiring/candidate/device-check", () => ({ DeviceCheck: function DeviceCheck() {} }));
 vi.mock("@/components/hiring/candidate/stage-runner", () => ({ StageRunner: function StageRunner() {} }));
 vi.mock("@/components/hiring/candidate/practice", () => ({ Practice: function Practice() {} }));
+vi.mock("@/components/hiring/candidate/done", () => ({ Done: function Done() {} }));
 
 import { Landing } from "@/components/hiring/candidate/landing";
 import { ClosedCard } from "@/components/hiring/candidate/closed";
@@ -40,6 +41,7 @@ import { UnknownLink } from "@/components/candidate/UnknownLink";
 import { DeviceCheck } from "@/components/hiring/candidate/device-check";
 import { StageRunner } from "@/components/hiring/candidate/stage-runner";
 import { Practice } from "@/components/hiring/candidate/practice";
+import { Done } from "@/components/hiring/candidate/done";
 import { createElement } from "react";
 import { formatInviteDeadline } from "../rules/invitation";
 import { zoneLabel } from "@/lib/org-timezone";
@@ -261,10 +263,61 @@ describe("renderHiringPage", () => {
     await expect(render("practice")).rejects.toMatchObject({ to: "/a/tok/stage/1" });
   });
 
-  it("renders the finish slot as the invalid-link card until Task 16", async () => {
-    h.state = { ...(h.state as object), step: "DONE", path: "/done" };
-    const node = await render("done");
-    expect((find(node, LinkProblem)[0].props as { problem: string }).problem).toBe("INVALID");
-    expect(find(node, StageRunner)).toHaveLength(0);
+});
+
+describe("the finish page", () => {
+  it("opens on a finished (COMPLETED) link with the promise date in the organisation's zone", async () => {
+    h.state = {
+      step: "DONE",
+      position: null,
+      path: "/done",
+      orgName: "Örnek A.Ş.",
+      finished: { completedAt: "2026-10-05T09:00:00.000Z", stagesDone: 2, feedbackBy: "2026-10-12T22:30:00.000Z", survey: { enabled: true, answered: false } },
+    };
+    const page = (await renderHiringPage("done", { token: "tok", resolved: { ok: false, problem: "COMPLETED", ctx } as never, searchParams: {}, params: {} })) as ReactNode;
+    const [done] = find(page, Done);
+    // 22:30 UTC is already 13 Oct in Istanbul.
+    expect((done.props as { feedbackBy: string }).feedbackBy).toBe("13 Eki");
+  });
+
+  it("renders the finish with the candidate state only, inside the frame, and never the invalid-link card", async () => {
+    h.state = {
+      ...(h.state as object),
+      step: "DONE",
+      position: null,
+      path: "/done",
+      candidateName: "Elif Kaya",
+      reviewers: 2,
+      devices: { camera: true, microphone: true },
+      finished: { completedAt: "2026-10-05T09:00:00.000Z", stagesDone: 2, feedbackBy: "2026-10-12T09:00:00.000Z", survey: { enabled: true, answered: true } },
+    };
+    h.hctx = { ...(h.hctx as object), locale: "en" };
+    const node = await render("done", { resolved: { ok: false, problem: "COMPLETED", ctx } });
+    const [done] = find(node, Done);
+    const props = done.props as { token: string; feedbackBy: string; state: Record<string, unknown> };
+    expect(props.token).toBe("tok");
+    expect(props.feedbackBy).toBe("12 Oct");
+    expect(props.state).toMatchObject({ candidateName: "Elif Kaya", reviewers: 2, contactEmail: "deniz@ornek.test", finished: { stagesDone: 2, survey: { enabled: true, answered: true } } });
+    const sent = JSON.stringify(props);
+    // Positive control: candidate text reaches the finish; no team text, score or right answer does (C10).
+    expect((sent.match(/LEAKVISIBLE_[A-Z]+/g) ?? []).length).toBeGreaterThanOrEqual(1);
+    expect(sent.match(/TEAMSECRET/g) ?? []).toHaveLength(0);
+    expect(sent).not.toMatch(/"correct"|autoScore|score/i);
+    expect(find(node, HiringFrame)[0].props).toMatchObject({ orgName: "Örnek A.Ş.", locale: "en", token: "tok" });
+    expect(find(node, LinkProblem)).toHaveLength(0);
+  });
+
+  it("keeps a finished candidate on /done: the landing, a stage and the warm-up all send them back", async () => {
+    h.state = { ...(h.state as object), step: "DONE", position: null, path: "/done", finished: { completedAt: "2026-10-05T09:00:00.000Z", stagesDone: 1, feedbackBy: "2026-10-12T09:00:00.000Z", survey: { enabled: false, answered: false } } };
+    const completed = { resolved: { ok: false, problem: "COMPLETED", ctx } };
+    await expect(render("landing", completed)).rejects.toMatchObject({ to: "/a/tok/done" });
+    await expect(render("stage", { ...completed, params: { n: "1" } })).rejects.toMatchObject({ to: "/a/tok/done" });
+    await expect(render("practice", completed)).rejects.toMatchObject({ to: "/a/tok/done" });
+    await expect(render("check", completed)).rejects.toMatchObject({ to: "/a/tok/done" });
+  });
+
+  it("sends a candidate who has not finished away from /done", async () => {
+    h.state = { ...(h.state as object), step: "STAGE", position: 2, path: "/stage/2", finished: null };
+    await expect(render("done")).rejects.toMatchObject({ to: "/a/tok/stage/2" });
   });
 });

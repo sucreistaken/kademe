@@ -53,6 +53,8 @@ async function main() {
   const { hiringModule } = await import("@/solutions/hiring/module");
   const { resolveToken } = await import("@/lib/candidate-context");
   const { solutionPage } = await import("@/lib/candidate-pages");
+  const { shortDate } = await import("@/i18n/dates");
+  const { ORG_TIMEZONE } = await import("@/lib/org-timezone");
 
   const routes: Record<string, Handler> = {
     "GET /state": (await import("@/app/api/c/[token]/state/route")).GET as Handler,
@@ -382,9 +384,9 @@ async function main() {
   console.log("\nWhat a page can reach in process");
   // Every candidate page asks solutionPage first; the module's title is the page header's.
   // Hiring renders the landing and the details form (Task 11), the device check (Task 12), the
-  // stage runner (Task 13) and the warm-up (Task 14); the finish slot answers with the
-  // invalid-link card until Task 16 replaces it. Every node rendered here joins the leak scan; the
-  // browser check scans the real document and RSC payload (C10).
+  // stage runner (Task 13), the warm-up (Task 14) and the finish (Task 16): no slot of a served
+  // link answers with the invalid-link placeholder any more. Every node rendered here joins the
+  // leak scan; the browser check scans the real document and RSC payload (C10).
   const pageRead = (node: unknown) => JSON.stringify(node ?? null, (_key, value) => (typeof value === "function" || typeof value === "symbol" ? undefined : value));
   /** A rendered page, or the address Next's redirect() sends it to (its digest is "NEXT_REDIRECT;type;url;status;"). */
   async function page(raw: string, slot: "landing" | "info" | "check" | "practice" | "stage" | "done", params: Record<string, string> = {}, query: Record<string, string> = {}): Promise<{ node?: string; to?: string }> {
@@ -409,7 +411,31 @@ async function main() {
     check(r.to === `/a/${token}/done`, `${label}: sent to its finish page`, r);
   }
   const handDone = await page(token3, "done");
-  check(invalidCard(handDone), "finished by hand, done: the invalid-link card until Task 16", handDone.to ?? handDone.node?.slice(0, 120));
+  const [handOpening] = await db.select({ feedbackDays: s.hiringOpenings.feedbackDays, survey: s.hiringOpenings.finishSurveyEnabled }).from(s.hiringOpenings).where(eq(s.hiringOpenings.id, textOpening.openingId));
+  const promised = shortDate(new Date(doneAttempt.completedAt!.getTime() + handOpening.feedbackDays * 86_400_000), "tr", ORG_TIMEZONE);
+  check(
+    !!handDone.node && !invalidCard(handDone) && handDone.node.includes(`"feedbackBy":"${promised}"`) && handDone.node.includes('"stagesDone":'),
+    `finished by hand, done: the finish page (Task 16) with the reply promise ${promised} in the organisation's zone`,
+    handDone.to ?? handDone.node?.match(/"feedbackBy":"[^"]*"/)?.[0] ?? handDone.node?.slice(0, 160),
+  );
+  check(
+    !!handDone.node && handDone.node.includes(`"survey":{"enabled":${handOpening.survey},"answered":false}`),
+    "and its survey is not answered yet",
+    handDone.node?.match(/"survey":\{[^}]*\}/)?.[0],
+  );
+  const surveyedDone = await page(token, "done");
+  check(
+    !!surveyedDone.node && !invalidCard(surveyedDone) && /"survey":\{"enabled":true,"answered":true\}/.test(surveyedDone.node),
+    "the candidate who sent the survey gets the finish with it answered (a reload shows the thanks)",
+    surveyedDone.to ?? surveyedDone.node?.match(/"survey":\{[^}]*\}/)?.[0],
+  );
+  for (const [label, r] of [["finished by hand", handDone], ["surveyed", surveyedDone]] as const) {
+    check(
+      !!r.node && r.node.includes('"orgName":"Örnek A.Ş."') && !r.node.includes("TEAMSECRET") && !/"correct"|autoScore|"score"/.test(r.node),
+      `${label}, done: the frame's organisation (positive control), no TEAMSECRET text and no score`,
+      r.node?.match(/TEAMSECRET_[A-Z_]+|"correct"|autoScore|"score"/g),
+    );
+  }
 
   const fresh = await createHiringInvitation(owner, { openingId: fixture.openingId, fullName: "Leyla Şahin", email: `leyla-${Date.now()}@example.com`, locale: "tr", deadline: null }, { baseUrl: "https://kademe.test" });
   if (!fresh.ok) throw new Error(fresh.code);
@@ -464,6 +490,10 @@ async function main() {
   } else {
     check(practicePage.to === `/a/${token6}/stage/1`, "the warm-up slot: no warm-up in this version, sent to stage 1", practicePage);
   }
+
+  const served = { handDone, surveyedDone, landing, info, checkPage, stagePage, practicePage };
+  const placeholders = Object.entries(served).filter(([, r]) => invalidCard(r)).map(([name]) => name);
+  check(placeholders.length === 0, `no slot of a served link renders the invalid-link placeholder (${Object.keys(served).length} pages read)`, placeholders);
 
   const expiring = await createHiringInvitation(owner, { openingId: fixture.openingId, fullName: "Mert Aydın", email: `mert-${Date.now()}@example.com`, locale: "tr", deadline: null }, { baseUrl: "https://kademe.test" });
   if (!expiring.ok) throw new Error(expiring.code);
