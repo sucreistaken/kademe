@@ -50,6 +50,7 @@ async function main() {
   const { mintToken } = await import("@/lib/auth");
   const { buildPublishedOpening, freshOrganisation } = await import("./hiring-fixture");
   const { createHiringInvitation, listOpeningCandidates } = await import("@/solutions/hiring/server/invitations");
+  const { expiringLinks } = await import("@/server/links");
   const { hiringModule } = await import("@/solutions/hiring/module");
   const { resolveToken } = await import("@/lib/candidate-context");
   const { solutionPage } = await import("@/lib/candidate-pages");
@@ -515,6 +516,10 @@ async function main() {
   const expired = await page(token7, "landing");
   check(!!expired.node && expired.node.includes('"problem":"EXPIRED"') && expired.node.includes('"orgName":"Örnek A.Ş."'), "an expired link shows the expired-link card inside the hiring frame", expired.to ?? expired.node?.slice(0, 120));
   await db.update(s.assessmentLinks).set({ expiresAt: new Date(Date.now() + 86_400_000) }).where(eq(s.assessmentLinks.assessmentId, expiring.assessmentId));
+  // Ruling C5: Today's "48 saat içinde dolacak linkler" is the exam's list. Both links lapse within a day here.
+  const soon = (await expiringLinks(team.orgId)).map((r) => r.assessmentId);
+  check(soon.includes(examAssessment.id), "Today's expiring links list an exam invitation that lapses within 48 hours (positive control)", soon);
+  check(!soon.includes(expiring.assessmentId), "Today's expiring links leave out a hiring invitation that lapses within 48 hours", soon);
   await db.update(s.hiringOpenings).set({ status: "CLOSED" }).where(eq(s.hiringOpenings.id, fixture.openingId));
   const closed = await page(token7, "landing");
   check(!!closed.node && closed.node.includes('"contactEmail":"deniz@ornek.test"') && !closed.node.includes('"consentBody"'), "a closed opening shows a not-started candidate the closed card, not the landing", closed.to ?? closed.node?.slice(0, 120));

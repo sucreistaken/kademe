@@ -16,6 +16,7 @@ import {
   hiringStageRuns,
   hiringStages,
   hiringSurveyResponses,
+  hiringVersions,
   messageOutbox,
   organizations,
   positions,
@@ -616,4 +617,44 @@ export async function openingFunnel(orgId: string, openingId: string): Promise<O
         : [],
     },
   };
+}
+
+/**
+ * The organisation's OPEN openings with what the invite form needs (HIRING-UX
+ * 5.11): whether a version is live, how many active evaluators the invitation
+ * would copy, the decision minimum (for the small-panel warning) and the
+ * opening's last day in the organisation's zone. Only callers who run
+ * openings use it. Every read carries the organisation: the openings, their
+ * published versions, and the panel's users.
+ */
+export async function invitableOpenings(
+  orgId: string,
+): Promise<Array<{ id: string; name: string; live: boolean; evaluators: number; minEvaluations: number; deadlineDay: string | null }>> {
+  const rows = await db
+    .select({ id: hiringOpenings.id, name: hiringOpenings.name, deadlineAt: hiringOpenings.deadlineAt, minEvaluations: hiringOpenings.minEvaluations })
+    .from(hiringOpenings)
+    .where(and(eq(hiringOpenings.orgId, orgId), eq(hiringOpenings.status, "OPEN")))
+    .orderBy(desc(hiringOpenings.createdAt), desc(hiringOpenings.id));
+  if (rows.length === 0) return [];
+  const ids = rows.map((r) => r.id);
+  const [live, members] = await Promise.all([
+    db
+      .select({ openingId: hiringVersions.openingId })
+      .from(hiringVersions)
+      .where(and(inArray(hiringVersions.openingId, ids), eq(hiringVersions.orgId, orgId), eq(hiringVersions.status, "PUBLISHED"))),
+    db
+      .select({ openingId: hiringOpeningMembers.openingId, count: sql<number>`count(*)::int` })
+      .from(hiringOpeningMembers)
+      .innerJoin(users, and(eq(users.id, hiringOpeningMembers.userId), eq(users.orgId, orgId), isNull(users.disabledAt)))
+      .where(inArray(hiringOpeningMembers.openingId, ids))
+      .groupBy(hiringOpeningMembers.openingId),
+  ]);
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    live: live.some((v) => v.openingId === r.id),
+    evaluators: Number(members.find((m) => m.openingId === r.id)?.count ?? 0),
+    minEvaluations: r.minEvaluations,
+    deadlineDay: r.deadlineAt ? orgDay(r.deadlineAt) : null,
+  }));
 }

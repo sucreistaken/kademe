@@ -8,7 +8,7 @@ vi.mock("./consent", () => ({ ensureHiringConsentText: consent.ensure }));
 import { formatInviteDeadline } from "../rules/invitation";
 import { zoneLabel } from "@/lib/org-timezone";
 import { HiringNotFound } from "./errors";
-import { createHiringInvitation, listOpeningCandidates, markRequestHandled, median, newHiringLink, openingFunnel } from "./invitations";
+import { createHiringInvitation, invitableOpenings, listOpeningCandidates, markRequestHandled, median, newHiringLink, openingFunnel } from "./invitations";
 
 const ORG = "11111111-1111-4111-8111-111111111111";
 const OPENING = "22222222-2222-4222-8222-222222222222";
@@ -494,5 +494,38 @@ describe("median", () => {
     expect(median([])).toBeNull();
     expect(median([30, 10, 20])).toBe(20);
     expect(median([10, 40, 20, 30])).toBe(25);
+  });
+});
+
+describe("invitableOpenings", () => {
+  it("lists the organisation's open openings with whether they are live, how many active evaluators they have and the minimum a decision needs", async () => {
+    fake.respond = (op) => {
+      if (op.table === "hiring_openings")
+        return [
+          { id: "o1", name: "A", deadlineAt: null, minEvaluations: 2 },
+          { id: "o2", name: "B", deadlineAt: new Date("2026-10-20T20:59:59Z"), minEvaluations: 3 },
+        ];
+      if (op.table === "hiring_versions") return [{ openingId: "o1" }];
+      if (op.table === "hiring_opening_members") return [{ openingId: "o1", count: 2 }];
+      return [];
+    };
+    expect(await invitableOpenings(ORG)).toEqual([
+      { id: "o1", name: "A", live: true, evaluators: 2, minEvaluations: 2, deadlineDay: null },
+      { id: "o2", name: "B", live: false, evaluators: 0, minEvaluations: 3, deadlineDay: "2026-10-20" },
+    ]);
+    const read = fake.ops.find((o) => o.table === "hiring_openings")!;
+    expect(read.params).toEqual(expect.arrayContaining([ORG, "OPEN"]));
+    // Versions and panel users are the organisation's own too.
+    const versions = fake.ops.find((o) => o.table === "hiring_versions")!;
+    expect(versions.params).toEqual(expect.arrayContaining([ORG, "PUBLISHED"]));
+    const members = fake.ops.find((o) => o.table === "hiring_opening_members")!;
+    expect(members.joins.join(" ")).toContain('"users"."disabled_at" is null');
+    expect(members.params).toEqual(expect.arrayContaining([ORG]));
+  });
+
+  it("reads nothing more when the organisation has no open opening", async () => {
+    fake.respond = () => [];
+    expect(await invitableOpenings(ORG)).toEqual([]);
+    expect(fake.ops.map((o) => o.table)).toEqual(["hiring_openings"]);
   });
 });
