@@ -159,11 +159,13 @@ export class ChunkedUploader {
   }
 
   private async sendPart(partNumber: number, body: Blob) {
-    const target = await this.targetFor(partNumber);
-    const url = target.proxy ? this.proxyUrl(partNumber) : target.url;
-
     for (let attempt = 1; attempt <= 3; attempt += 1) {
       try {
+        // The lookup of the part's address (part-urls, after the first batch)
+        // is tried with the part: if it threw outside these tries, the queue
+        // would skip every later part and the take would never be completed.
+        const target = await this.targetFor(partNumber);
+        const url = target.proxy ? this.proxyUrl(partNumber) : target.url;
         const res = await fetch(url, { method: "PUT", body });
         if (!res.ok) throw new Error(`part ${partNumber}: ${res.status}`);
 
