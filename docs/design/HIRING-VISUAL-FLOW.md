@@ -1,17 +1,23 @@
 # Kademe İşe Alım: görsel akış planı ("Airbnb gibi")
 
-Sürüm 3, 2026-10-05 (sürüm 1 aynı gün, telefon öncelikliydi; sürüm 2 kullanıcı kararlarıyla
-masaüstüne döndü; sürüm 3 yönetici panelini ekledi, K7). Yazan: Sally (bmad UX designer) + `airbnb-ux` skill'i (Redesign modu).
-Bu bir tasarım planıdır: uygulama kodu değişmedi. Mockup:
+Sürüm 4, 2026-10-06. **Sürüm 4 ne değiştirir:** yönetici paneli sihirbaz önceliklidir (her çok alanlı
+iş bir rehberli akış, adım başına bir karar, sonunda tek dolu butonlu özet) ve her şeyin tek bakışta
+görüldüğü bir kontrol görünümü vardır (K12); 4. bölüm, 5'in panel tablosu, 6'nın yönetici dilimleri
+ve 8 buna göre yeniden yazıldı, aday tarafı (1-3) değişmedi.
+(Sürüm 1, 2026-10-05, telefon öncelikliydi; sürüm 2 kullanıcı kararlarıyla masaüstüne döndü; sürüm 3
+yönetici panelini ekledi, K7.) Yazan: Sally (bmad UX designer) + `airbnb-ux` skill'i (Redesign modu).
+Bu bir tasarım planıdır: uygulama kodu değişmedi. Mockup (sürüm 2-3'ün; sürüm 4'ün paneli için mockup yok):
 `/private/tmp/claude-501/-Users-sucreistaken-Desktop-Projects-recruitement/8546a935-34ac-48f1-8695-daba2a52b158/scratchpad/visual-flow-mockup.html`
 (geçici scratchpad dosyası; kalıcı olsun istenirse `docs/design/` altına kopyalanmalı).
 
 **Kullanıcının isteği:** "Burada çok metin olunca insan ne yapacağını bilmiyor. Airbnb'nin mobil ve
 site akışı gibi olsun: biraz görsellik, en sade insanın bile anlayacağı akış."
 
-## 0. Kullanıcı kararları 2026-10-05
+## 0. Kullanıcı kararları 2026-10-05 ve 2026-10-06
 
-Kullanıcı sürüm 1'in mockup'ını Chrome'da gördü ve şunlara karar verdi (koordinatör üzerinden iletildi):
+Kullanıcı sürüm 1'in mockup'ını Chrome'da gördü ve şunlara karar verdi (koordinatör üzerinden iletildi).
+K9-K11 plan 2b'nin başlığında kayıtlıydı (`docs/superpowers/plans/2026-10-06-hiring-visual-flow.md:15-21`),
+burada bir arada dursun diye tabloya eklendi; K12 sürüm 4'ün nedeni.
 
 | # | Karar | Bu belgedeki karşılığı |
 |---|---|---|
@@ -23,6 +29,40 @@ Kullanıcı sürüm 1'in mockup'ını Chrome'da gördü ve şunlara karar verdi 
 | K6 | Koordinatör hükmü: masaüstü zorunluluğu **yalnızca işe alım aday akışı** için. Dil sınavı (exam) değişmez; onun `MobileBlock`'u ve "siz" dili olduğu gibi kalır. | 3.0. |
 | K7 | **Yönetici paneli de aynı görsel dille** (kullanıcı: "evet yapalım"). Masaüstü öncelikli (1280 / 1440, en küçük 1024). Plan 3'ün yeniden kurduğu Adaylar sekmesi ve inceleme ekranlarının tasarımı bu belgede, uygulaması plan 3'te. Canlı sınavın yönetici ekranları yalnızca tutarlılık için ve düşük öncelikle. | 4. bölüm, 5 (panel bileşenleri), 6 (M dilimleri). |
 | K8 | Sınavın "aynı gün dönülür / e-posta ile dönecek" metni **şimdilik kalır**; e-posta ve talep altyapısı sonra kurulacak. | 4.12. |
+| K9 | Ortak panel ekranları (Bugün, menü, panelin hata sayfası, Ayarlar, Kütüphane) **"sen"** der; yalnızca sınava ait yönetici ekranları bir plan onlara dokunana kadar "siz" kalır. | 4.2 (W9), 4.3, 4.11; 7. bölümdeki eski 3. soru cevaplandı. |
+| K10 | Bugün'ün "Sıradaki iş" önceliği: veri hakkı talebi > uyarlama talebi > karar bekleyen > en eski sınav incelemesi. | 4.3. **Hüküm C6 ve kullanıcı onayı (2026-10-05, "yok plan 3 te gelsin"):** plan 2b'de yalnızca uyarlama talebi "Sıradaki iş" olur; veri hakkı talepleri alımın dikkat satırında sayılır, işlendikleri yer ve en üst sıraları plan 3 ile gelir (sıra `RANK`'te saklı). |
+| K11 | "Linki e-postama gönder" gerçek e-posta gönderimi gelene kadar yok (VG yalnızca "Linki kopyala"); klavyeli tabletler tablet gibi engellenir. | 3.0; 7. bölümdeki eski 1. ve 2. soru cevaplandı. |
+| K12 | **"yönetici paneli adım adım olsa daha iyi, çok fazla alan var, kullanması çok karışık, wizard guide şeklinde no brainer bir yönetici paneli, her şeye hakim olabileceğim"** (2026-10-06, kelimesi kelimesine). Defterdeki okuma: panel sihirbaz önceliklidir (adım başına bir karar, her çok alanlı iş için rehberli akış) ve yöneticinin her şeyi tek bakışta gördüğü bir kontrol görünümü vardır. | 4.2 (W1-W10, KG1-KG5), 4.3-4.11, 5 (panel tablosu), 6 (dilimler), 8. Bu belgenin K12 hükümleri aşağıda (H1-H9). |
+
+**K12 için bu belgede verilen hükümler** (kullanıcı adına alındı; her birinin yanlışsa maliyeti
+`.superpowers/sdd/2026-10-06-hiring-visual-flow/design-v4-delta.md` dosyasında):
+
+- **H1. Kontrol görünümü `/hiring/openings`'tir (menüde yine "Alımlar").** Yeni rota yok, Bugün de
+  değil. Bugün iki çözümün ortak "şimdi ne yapmalıyım?" ekranı ve canlı sınavın günlük sayfası (K10
+  sırası onun işi); işe alımın "her şey nerede?" sorusu alımlar listesinin yerini alır (4.4). Tek
+  bir alımın kontrol görünümü onun Genel bakışıdır (4.5).
+- **H2. Sihirbaz çok alanlı işler içindir.** Tek bir değeri değiştiren iş tek adımdır (adın
+  değişmesi, organizasyon adı); sık ve serbest düzenlenen editörler (değerlendirme kurucusu, puan
+  kartı matrisi) sihirbaz olmaz, onlara kurulum yolu rehberlik eder (4.5, 4.7).
+- **H3. Özet adımı:** kayıtlı bir şeyi değiştiren her akışta ve dört ya da daha fazla adımlı
+  oluşturma akışında ayrı bir özet adımı vardır; daha kısa oluşturma akışında son adım bir özet
+  satırı taşır (W5).
+- **H4. `DirtyBar` kalkar.** Çok alanlı düzenleme özet adımında "Kaydet" ile biter; sayfa altında
+  "n değişiklik kaydedilmedi" çubuğu kurulmaz (W6). Satır içi düzenleme yalnızca editörlerde kalır.
+- **H5. Ekip ve kurallar (M7) plan 2b'ye girer**, çünkü kurulum yolunun "Ekibi ata" adımı onun
+  akışıdır. Değerlendirme çalışma alanı (M6), Kütüphane (M9) ve Ayarlar (M10) sonraki plana kalır;
+  tasarımları bu belgede (4.7, 4.11).
+- **H6. Akıştan çıkış onay sormaz** (RULES kural 4): kaydedilmemiş değer varken çıkış bağlantısı
+  "Kaydetmeden çık" der, yoksa "Çık". Akış durumu sekmede tutulmaz; bu bilerek basit tutuldu.
+- **H7. Taslak alımın tek dolu butonu "Kuruluma devam et"**, kapalı "Yayınla" değil (G2'nin panel
+  karşılığı). "Yayınla" kurulum yolunun son adımında dolu butondur (4.5).
+- **H8. Plan kararı 11 değişir:** Alımlar sayfasının Açık / Taslak / Kapalı rota sekmeleri yerine
+  tek kontrol listesi (Kurulumda, Yayında, kapalılar açılır alanda); `?tab=` bağlantıları çalışmaya
+  devam eder (4.4). Plan kararı 13 (ilan adımı yalnızca yeni pozisyon adında) ve 14 (`⋯` yalnız
+  bağlantı) aynen kalır.
+- **H9. Değerlendirici (REVIEWER) kontrol görünümünde yalnızca sayı görür:** üyesi olduğu alımların
+  hunisi ve dolan link sayısı; talep yok, isim yok, kurulum eylemi yok (STATUS 321 atfı, bugünkü
+  dosyada `docs/STATUS.md:337`; hüküm C6). Satırın tek eylemi "Aç".
 
 **`HIRING-UX.md` 6.15'in yerine geçen metin (V1'de oraya yazılır):**
 > İşe alım aday akışı gözetim seviyesinden bağımsız olarak **yalnızca bilgisayardan** yapılır
@@ -39,7 +79,10 @@ ve `hiringLanding.needDevice` ("Telefon ya da bilgisayar") metinleri (3.1, V3).
 
 **Bu belge neyi değiştirir:** `HIRING-UX.md` 6.x (aday ekranları), 5.x (yönetici ekranları, K7) ve
 4.1'in (panel kabuğu) *görünümünü*, 6.15'i (cihaz politikası) ve 8.6'yı (çizim); sunucu kurallarını, sızıntı kurallarını ve
-dürüstlük sözlerini değiştirmez.
+dürüstlük sözlerini değiştirmez. Sürüm 4 ile (K12) ayrıca `HIRING-UX.md` 5.3'ün "Tek sayfa, iki adım;
+sihirbaz değil" cümlesi, 5.18'in "Tek sayfa, dört blok ... Dolu buton: Kaydet" düzeni, 5.9 ve
+5.10'un form sayfaları ve 5.19'un kullanıcı davet formu *etkileşim biçimi olarak* yerine geçildi
+(4.6, 4.10, 4.11); bu bölümlerin kuralları, alanları ve metinleri geçerli.
 
 **Kaynak notu (dürüstlük):** "Airbnb'nin ev sahibi olma akışı adım adım, illüstrasyonlu, altta
 ilerleme çubuğu ve Geri / İleri çubuğu olan bir akış" bilgisi `airbnb-ux` referanslarında **yok**;
@@ -171,7 +214,8 @@ Her aday ekranı aynı iskelete oturur. Birincil genişlik 1280 ve 1440, en kü�
 - **Biçim:** düz, sakin "spot" çizimler. 1.5px ink çizgi, yuvarlak uçlar, 2-3 dolgu tonu, yüz ve
   insan figürü **yok** (stok fotoğraf da yok). Nesneler: masa ve dizüstü, kalkan, zarf, kum saati,
   kapalı kapı, iki pencere, telefon ve dizüstü. Kaynak: elle çizilmiş satır içi SVG,
-  `src/components/hiring/visual/illustrations.tsx`. Harici dosya yok, `<img>` yok.
+  `src/components/visual/illustrations.tsx` (plan kararı 1 ve hüküm C12 ile bu yola taşındı; Görev 3'te
+  kuruldu). Harici dosya yok, `<img>` yok.
 - **Renk:** çizimler **doygun accent kullanmaz**. `RULES.md` kural 1 (accent yalnızca CTA, aktif,
   sayaç) aynen kalır; çizimler için adı konmuş tonlar: `--color-illus-line: #131311` (ink),
   `--color-illus-fill: #EEF6F3` (= brand-soft), `--color-illus-tint: #CFE3DA`,
@@ -637,7 +681,7 @@ Tek sütun 560px, ortada: çizim 160x120 + başlık (32/40) + bir cümle + foote
 
 ---
 
-## 4. Yönetici paneli (K7: aynı görsel dil, masaüstü öncelikli)
+## 4. Yönetici paneli (K7: aynı görsel dil; K12: sihirbaz öncelikli ve bir kontrol görünümü)
 
 Yöneticiler bilgisayardan çalışır: birincil genişlik 1280 ve 1440, en küçük 1024. 1024'ün altındaki
 mevcut davranış (yan menü üst çubuktaki düğmeyle açılan `Sheet`'e döner, `layout.tsx`) kalır ama
@@ -645,36 +689,45 @@ ayrıca tasarlanmaz; geniş tablolar kendi kartı içinde yatay kayar. Yönetici
 çizim yalnızca boş durumlarda ve iki başarı anında (davet hazır, yayınlandı). Accent, tek dolu buton,
 dot + metin durum, onay diyaloğu yok ve 8 sn geri alma kuralları (`RULES.md`) aynen geçerli.
 
+**Sürüm 4'te panelin iki yüzü var (K12):**
+1. **Kontrol görünümü** ("her şeye hakim olabileceğim"): yönetici tek ekranda her alımın nerede
+   olduğunu, neyin ilgi istediğini ve sıradaki adımı görür. İşe alımın tamamı için `/hiring/openings`
+   (4.4), tek bir alım için onun Genel bakışı (4.5). Bugün (4.3) çözümler arası "şimdi ne?" ekranı
+   olarak kalır ve kontrol görünümüne bağlanır.
+2. **Rehberli akışlar** ("adım adım, wizard guide şeklinde no brainer"): birden fazla alanı olan her
+   iş, ekran başına tek karar soran, geri dönünce değerleri tutan ve tek dolu butonlu bir özetle
+   biten bir akıştır (4.2 W1-W10). Kontrol görünümündeki her satırın tek eylemi, o satırı düzelten
+   akışın doğru adımını açar (KG3).
+
 ### 4.0 Envanter (HEAD'deki her yönetici ekranı)
 
-Kaynak: `src/app/(manager)/**/page.tsx` ve `src/app/(auth)/**/page.tsx` (36 sayfa, `find` ile sayıldı).
-"Plan" sütunu bu belgedeki dilimi, "Görüntü" mevcut ekran görüntüsünü gösterir.
+Kaynak: `src/app/(manager)/**/page.tsx` ve `src/app/(auth)/**/page.tsx` (36 sayfa, sürüm 3'te `find`
+ile sayıldı; sürüm 4'te `src/app/(manager)` altındaki sayfa listesi yeniden okundu, yeni sayfa yok).
+"Biçim" sütunu sürüm 4'teki karşılığı, "Plan" sütunu bu belgedeki dilimi gösterir.
 
-| Ekran | Rota | Çözüm | Görüntü | Öncelik / plan |
+| Ekran | Rota | Çözüm | Biçim (v4) | Öncelik / plan |
 |---|---|---|---|---|
-| Bugün (davet menüsüyle) | `/dashboard` | ortak | `p2t21-24`, `t14-today-tr`, `p2t20-*` | Yüksek · M2 (sınava dokunur) |
-| Alımlar listesi | `/hiring/openings` | işe alım | `t14-openings-tr`, `f1-01`, `13`, `14` | Yüksek · M3 |
-| Alım aç | `/hiring/openings/new` | işe alım | `02`, `03`, `04`, `f1-05`, `f1-10` | Yüksek · M4 |
-| Alım genel bakış (huni, hazırlık, yayın) | `/hiring/openings/[id]` | işe alım | `p2t19-overview-*`, `f1-03`, `t15-03`, `ff-10` | Yüksek · M5 |
-| Değerlendirme özeti | `/hiring/openings/[id]/assessment` | işe alım | `t15-11`, `t15-19` | Orta · M6 (Genel bakışa katılır) |
-| Kurucu | `/hiring/openings/[id]/assessment/edit` | işe alım | `t15-05`, `t15-f1-03`, `t18-*` | Yüksek · M6 |
-| AI taslağı | `/hiring/openings/[id]/assessment/ai` | işe alım | `t17-*` | Orta · M6 |
-| Puan kartı ve ağırlıklar | `/hiring/openings/[id]/assessment/scorecard` | işe alım | `t16-*` | Orta · M6 |
-| Aday önizlemesi | `/hiring/openings/[id]/assessment/preview` | işe alım | `p2t19-preview-*`, `t19-*` | Orta · M6 |
-| Adaylar sekmesi | `/hiring/openings/[id]/candidates` | işe alım | `p2t18-*`, `p2t21-28`, `-33`, `-34` | Yüksek · **plan 3 uygular** (4.8) |
-| Ekip ve kurallar | `/hiring/openings/[id]/settings` | işe alım | `p2t19-settings-survey-off` | Orta · M7 |
-| Aday davet et (sayfa ve `Sheet`) | `/hiring/invite` + Sheet | işe alım | `p2t17-*`, `p2t19-overview-invite-sheet`, `p2t21-25..27`, `-31` | Yüksek · M8 |
-| Pozisyonlar listesi / yeni / detay | `/library/positions`, `/new`, `/[id]` | ortak kütüphane | `screenshot-…-67`, `-73`, `07` | Düşük · M9 |
-| Yetkinlikler listesi / yeni / detay | `/library/competencies`, `/new`, `/[id]` | ortak kütüphane | `t14-competency-en`, `ff-01`, `ff-02` | Orta · M9 |
-| Skalalar | ayrı rota **yok** (`libScales` metinleri var; yetkinlik ekranının içinde olduğunu varsaydım, açmadım) | ortak | - | M9 içinde |
-| Ayarlar (organizasyon, kullanıcılar, roller, denetim özeti) | `/settings` | ortak | `ff-01`, `ff-02` (AI kullanımı) | Düşük · M10 |
-| Denetim kaydı | `/settings/audit` | ortak | yok | Düşük · M10 (yoğun kalır) |
-| Kullanıcı davet et | `/settings/users/new` | ortak | yok | Düşük · M10 |
-| Giriş | `/login` | ortak | yok | Düşük · M10 |
-| Hesap kurulumu (davet linki) | `/setup/[token]` | ortak | yok | Düşük · M10 |
-| Öğrenciler listesi / yeni / sonuç | `/exam/students`, `/new`, `/[id]` | **sınav (canlı)** | koddan (görüntü yok) | Düşük · E1 |
-| Sınavlar listesi / yeni / detay | `/exam/exams`, `/new`, `/[id]` | **sınav (canlı)** | koddan | Düşük · E1 |
-| Soru bankası / soru | `/exam/bank`, `/[id]` | **sınav (canlı)** | koddan | Düşük · E1 |
+| Bugün (davet menüsüyle) | `/dashboard` | ortak | "Şimdi ne?" ekranı, kontrol görünümüne bağlanır | Yüksek · M2 (sınava dokunur), plan 2b |
+| Alımlar | `/hiring/openings` | işe alım | **Kontrol görünümü** (4.4) | Yüksek · M3, plan 2b |
+| Alım aç | `/hiring/openings/new` | işe alım | Rehberli akış (4.6) | Yüksek · M4, plan 2b |
+| Alım genel bakış (huni, kurulum, yayın) | `/hiring/openings/[id]` | işe alım | Alımın kontrol görünümü + kurulum yolu + yayın özeti (4.5) | Yüksek · M5, plan 2b |
+| Değerlendirme özeti | `/hiring/openings/[id]/assessment` | işe alım | Genel bakışa katılır | Orta · M6, sonraki plan |
+| Kurucu | `/hiring/openings/[id]/assessment/edit` | işe alım | **Editör kalır** (H2, 4.7); kurulum yolu şeridi M5'te | Yüksek · M6, sonraki plan |
+| AI taslağı | `/hiring/openings/[id]/assessment/ai` | işe alım | Zaten kart kart ilerleyen akış; görünümü M6 | Orta · M6 |
+| Puan kartı ve ağırlıklar | `/hiring/openings/[id]/assessment/scorecard` | işe alım | Matris editör kalır; ağırlık tek karar adımı, çapalar akışı (4.7) | Orta · M6 |
+| Aday önizlemesi | `/hiring/openings/[id]/assessment/preview` | işe alım | Kurulum yolunun bir adımı (4.5) | Orta · M6 (yol bağlantısı M5) |
+| Adaylar sekmesi | `/hiring/openings/[id]/candidates` | işe alım | Yoğun tablo (P5) | Yüksek · **plan 3 uygular** (4.8) |
+| Ekip ve kurallar | `/hiring/openings/[id]/settings` | işe alım | **Kuralların özeti + dört kısa akış + kapat (geri almalı)** (4.10) | Yüksek · **M7, plan 2b'ye alındı** (H5) |
+| Aday davet et (sayfa ve `Sheet`) | `/hiring/invite` + Sheet | işe alım | Rehberli akış, iki adım + hazır (4.9) | Yüksek · M8, plan 2b |
+| Pozisyonlar listesi / yeni / detay | `/library/positions`, `/new`, `/[id]` | ortak kütüphane | Liste yoğun; yeni = akış; detay = özet + akışlar (4.11) | Düşük · M9, sonraki plan |
+| Yetkinlikler listesi / yeni / detay | `/library/competencies`, `/new`, `/[id]` | ortak kütüphane | Aynı desen; çapalar kendi akışı (4.11) | Orta · M9 |
+| Skalalar | ayrı rota yok: `ScaleForm`, `src/app/(manager)/library/competencies/page.tsx:69` | ortak | Tek adımlı düzenleme (4.11) | M9 içinde |
+| Ayarlar (organizasyon, kullanıcılar, roller, denetim özeti) | `/settings` | ortak | Organizasyon: özet + tek adımlı düzenlemeler; kullanıcılar tablo (4.11) | Düşük · M10, sonraki plan |
+| Denetim kaydı | `/settings/audit` | ortak | Yoğun tablo, değişmez | Düşük · M10 |
+| Kullanıcı davet et | `/settings/users/new` | ortak | Rehberli akış (4.11) | Düşük · M10 |
+| Giriş | `/login` | ortak | Tek kart, değişmez düzen | Düşük · M10 |
+| Hesap kurulumu (davet linki) | `/setup/[token]` | ortak | Tek kart | Düşük · M10 |
+| Öğrenciler, Sınavlar, Soru bankası | `/exam/**` | **sınav (canlı)** | Değişmez (4.12) | Düşük · E1 |
 | Geliştirici UI sayfası | `/dev/ui` | iç | - | Kapsam dışı |
 
 Plan 3'ün ekleyeceği ekranlar (aday detayı, inceleme ve puanlama, karşılaştır, karar) henüz yok;
@@ -683,61 +736,127 @@ görsel tasarımları 4.8'de, uygulaması plan 3'te.
 ### 4.1 Teşhis
 
 Kelime sayıları metin anahtarlarından ve ekran görüntülerinden yaklaşık sayıldı (yan menü ~17 kelime
-her ekranda ortak, sayıya dahil değil).
+her ekranda ortak, sayıya dahil değil). Sürüm 4'te "alan" sütunu eklendi: ekranda aynı anda
+doldurulabilen kontrol sayısı, koddan sayıldı (K12'nin "çok fazla alan var" cümlesinin karşılığı).
 
-| Ekran | Görünen kelime | Rakip eylem | İnsan nerede kayboluyor |
-|---|---|---|---|
-| Bugün (`p2t21-24`, `t14-today-tr`) | Başlık ~9, satır başına ~12; 10 satır ~130 | Davet menüsü + her satırda "İncele" | **İşe alımdan hiçbir şey yok:** başlık "145 sonuç incelemenizi bekliyor" yalnızca sınav kuyruğu; işe alım modülünün `today()` fonksiyonu boş dizi döndürüyor (`src/solutions/hiring/module.ts:33`, testi `module.test.ts:45`). Alım yürüten biri "bugün ne yapmalıyım?" sorusunun cevabını burada bulamıyor. Ayrıca sınav metni "siz" ("incelemenizi", "davet edin"), işe alım metni "sen" ("Rolün alım açamaz"): aynı panelde iki hitap. |
-| Alımlar listesi (`f1-01`, `t14-openings-tr`) | 1 satırla ~41 | 1 (Alım aç) | Tablo, 3-4 alımlık bir liste için soğuk; huni yalnızca "Henüz davet yok" ya da tek metin; hangi alımın ilgi istediği satırdan okunmuyor. Boş durum iyi (tek eylem) ama görselsiz ve küçük. |
-| Alım aç (`04`) | ~74 | 3 başlangıç seçeneği + pozisyon + ilan | İki numaralı kart tek sayfada; ilan metni "isteğe bağlı" ama AI seçeneği ona bağlı; aday tarafındaki "bir ekran bir karar" yok. |
-| Genel bakış, taslak (`f1-03`, `t15-03`) | ~55 | Kapalı "Yayınla" + 4 satır bağlantısı | "Kaç adım kaldı?" özeti yok; kapalı Yayınla en görünür nesne (aday tarafındaki 1 numaralı sorunun aynısı). |
-| Genel bakış, yayında (`p2t19-overview-above/below`) | ~58 + yorumlar | Aday davet et + Tüm adaylar | Huni üç sayı, aralarında akış hissi yok; "dikkat isteyen" (talep, dolan link) burada değil, Adaylar sekmesinin içinde. |
-| Değerlendirme (`t15-11`, `t15-05`, `t17-03`, `t16-f1-08`, `p2t19-preview-bar`) | Kurucuda alan başına TR + EN çifti; puan kartı ~110 | **İki kat sekme:** üstte 4 (Genel bakış, Adaylar, Değerlendirme, Ekip ve kurallar), altta 5 (Özet, Kurucu, AI taslağı, Puan kartı, Önizleme) | 9 sekme etiketi; kullanıcı hangi kattaki sekmede olduğunu kaybediyor. Önizleme çubuğunda "Mobil görünüm" anahtarı var; K2 ile aday telefonda yapamadığı için artık yanlış bir vaat. |
-| Adaylar sekmesi (`p2t21-28`, `p2t18-11`) | Satır ~28, 4 satır + uyarı ~140 | Satır başına 2 outline + talep kartı | 1. bölümde anlatıldı: yardım metni her satırda, talepler ad hücresinde. |
-| Ekip ve kurallar (`p2t19-settings-survey-off`) | ~150 (anahtarların toplamı 314) | Kaydet (sayfa ortasında) + Alımı kapat | "Kaydet" bloklardan birinin altında; hangi blokları kaydettiği belirsiz; sabit kural (bağımsız değerlendirme) ayarla aynı görünüyor. |
-| Davet sayfası (`p2t21-25`) | ~75 | 3 radyo grubu + kapalı buton | Alım seçilmeden "Son gün" satırında yalnızca "Değiştir" görünüyor, değer boş (ekran görüntüsünde); neyi değiştirdiği okunmuyor. |
-| Yetkinlik detayı (`t14-competency-en`, `ff-01`) | 14 alan (ad, tanım, 5 çapa; her biri TR + EN) | Kaydet + Arşivle + AI çapa öner | Yan yana TR/EN kutuları ekranı bir form duvarına çeviriyor; 1-5 skalası görsel bir merdiven değil, düz liste. |
-| Pozisyonlar (`screenshot-…-67`, `-73`) | ~25 | 1 | Boş durum ve arşiv çipi iyi; görsel yok. |
-| Ayarlar (`/settings`) | 4 bölüm tek sayfada (koddan) | Bölüm başına kendi eylemi | Uzun tek sayfa, bölümler arası atlama yok. |
-| Sınav ekranları | Koddan (görüntü yok) | - | Panel kabuğu ve `PageHead` ortak; işe alımda yapılacak kabuk değişikliği bunları da değiştirir. |
+| Ekran | Görünen kelime | Aynı anda alan | Rakip eylem | İnsan nerede kayboluyor |
+|---|---|---|---|---|
+| Bugün (`p2t21-24`, `t14-today-tr`) | Başlık ~9, satır başına ~12; 10 satır ~130 | 0 | Davet menüsü + her satırda "İncele" | **İşe alımdan hiçbir şey yok:** başlık yalnızca sınav kuyruğu; işe alım modülünün `today()` fonksiyonu boş dizi döndürüyor (`src/solutions/hiring/module.ts:33`). Ayrıca sınav metni "siz", işe alım metni "sen" (K9 ile çözüldü). |
+| Alımlar listesi (`f1-01`) | 1 satırla ~41 | 0 | 1 (Alım aç) | Üç rota sekmesi (Açık / Taslak / Kapalı, `src/app/(manager)/hiring/openings/page.tsx:20-22`): bir taslağın kaç adım kaldığı, bir alımın talebi ya da dolan linki, ekibin eksik olduğu hiçbir sekmede görünmüyor. "Her şey nerede?" sorusunun cevabı için her alımı tek tek açmak gerekiyor. |
+| Alım aç (`04`) | ~74 | 4-5 (pozisyon, ilan, başlangıç, kopya kaynağı) | 3 başlangıç seçeneği + pozisyon + ilan | İki kart tek sayfada (`src/components/hiring/new-opening-form.tsx:105-249`, dosyanın kendi yorumu: "one page, two blocks, not a wizard", `:25`). |
+| Genel bakış, taslak (`f1-03`, `t15-03`) | ~55 | 0 | Kapalı "Yayınla" + 4 satır bağlantısı | Kapalı "Yayınla" en görünür nesne (`[id]/page.tsx:154-163`); hazırlık satırları farklı sayfalara dağılmış bağlantılar, bir "yol" değil. |
+| Genel bakış, yayında | ~58 + yorumlar | 0 | Aday davet et + Tüm adaylar | Dikkat isteyen (talep, dolan link) burada değil, Adaylar sekmesinin içinde. |
+| Değerlendirme (`t15-11`, `t15-05`) | Kurucuda alan başına TR + EN çifti | Kurucu: soru başına ~7 | **İki kat sekme:** 4 + 5 = 9 etiket (`opening-header.tsx:65-92`) | Önizlemedeki "Mobil görünüm" K2 ile yanlış vaat. |
+| Ekip ve kurallar (`p2t19-settings-survey-off`) | ~150 | **10** (ad, değerlendiriciler, karar veren, yedek, en az değerlendirme, kimlik gizleme, son gün, geri dönüş günü, iletişim e-postası, anket; `opening-settings-form.tsx:116-301`) | Kaydet (sayfa ortasında) + Alımı kapat | Tek "Kaydet" on alanın hepsini birden gönderiyor (`saveOpeningRulesAction`, `settings/actions.ts:37`); hangi alanın sorunlu olduğu düğmenin yanındaki ilk sorunla söyleniyor (`opening-settings-form.tsx:65`). |
+| Davet sayfası (`p2t21-25`) | ~75 | 4-5 (alım, mod, ad, e-posta, dil, son gün) | 3 radyo grubu + kapalı buton | Alım seçilmeden "Son gün" satırında yalnızca "Değiştir". |
+| Pozisyon detayı | ~40 | **6 + profil satırı başına 2** (ad, ekip, kısa tanım, ilan, beceriler, diller; `position-form.tsx:137-244`) | Kaydet + Arşivle | Tek uzun form. |
+| Yetkinlik detayı (`t14-competency-en`) | ~120 | **14+** (ad ve tanım TR/EN, 5 çapa TR/EN, etiketler TR/EN; `competency-form.tsx:109-177`) | Kaydet + Arşivle + AI çapa öner | Yan yana TR/EN kutuları bir form duvarı. |
+| Ayarlar (`/settings`) | 4 bölüm tek sayfada | 3 + rol seçicileri | Bölüm başına kendi eylemi | Uzun tek sayfa. |
+| Sınav ekranları | Koddan | - | - | Kabuk ve `PageHead` ortak (4.12). |
 
-**Beş büyük panel sorunu:** (1) Bugün işe alım için boş ve iki hitap karışık; (2) alım içinde iki kat
-sekme (9 etiket); (3) taslak alımda kapalı "Yayınla" ekranın en görünür nesnesi, "kaç adım kaldı"
-yok; (4) dikkat isteyen işler (talepler, dolan linkler) kendi sekmesinin derininde; (5) form
-ekranları (alım aç, ekip ve kurallar, yetkinlik) tek sayfada çok blok, kaydet düğmesinin kapsamı
-belirsiz.
+**Beş büyük panel sorunu (sürüm 4 sırası):** (1) **çok alanlı formlar** (ekip ve kurallar 10 alan,
+yetkinlik 14+, pozisyon 6+) tek sayfada ve tek "Kaydet"le: K12'nin asıl şikâyeti; (2) **her şeyi
+gören bir yer yok**: alımın durumu, dikkat isteyen iş ve sıradaki adım her alımın içine dağılmış;
+(3) taslak alımda kapalı "Yayınla" ekranın en görünür nesnesi ve "kaç adım kaldı" yok; (4) Bugün işe
+alım için boş; (5) alım içinde iki kat sekme (9 etiket).
 
 **Korunacaklar:** gruplanmış yan menü (HIRING-UX karar 9, mod değiştirici yok); "Bugün"de stat
 kutusu olmaması; her satırın bir eyleme gitmesi; dot + metin durum; geri alma şeridi; kurucunun
-"Sadece ekip görür" koyu kasası (`vault`) ve soru kontrol çubuğu; puan kartı matrisi (yoğun, doğru);
-davetin "bir daha gösterilmez" uyarısı; kör mod kuralları.
+"Sadece ekip görür" koyu kasası (`vault`), otomatik kaydı ve soru kontrol çubuğu; puan kartı matrisi
+(yoğun, doğru); davetin "bir daha gösterilmez" uyarısı; kör mod kuralları; formların bugünkü
+erken doğrulama kuralları (`openingRulesProblems`, `inviteReason`, `createWait` mantığı): sürüm 4
+onları siler değil, adımlara dağıtır.
 
 ### 4.2 Hedef desen: panelin grameri
 
+**Panel kuralları (P).** Sürüm 3'ün P1-P11'i; sürüm 4'te değişenler işaretli.
+
 | # | Kural | Karşılığı |
 |---|---|---|
-| P1 | **Kabuk: aynı gruplanmış yan menü, ikonlu.** 240px; her öğede 18px lucide ikon (`sun` Bugün, `briefcase` Alımlar, `users` Öğrenciler, `file-text` Sınavlar, `library` Soru bankası, `id-card` Pozisyonlar, `target` Yetkinlikler, `settings` Ayarlar); sağda yalnızca iş bekleyen sayısı (düz sayı, rozet değil, `text-muted`). Aktif öğe `brand-soft` zemin + accent metin (aktif durum). Grup başlıkları kalır. | `ManagerNav` (`src/components/manager/nav`). İkon adları `node_modules/lucide-react` içinde doğrulandı. |
-| P2 | **Sayfa başlığı: kicker, başlık, tek satır meta, tek dolu eylem, "⋯" menü.** Meta dot + metin ("● Yayında · Son gün yok · v1"). İkincil eylemler (Alımı kapat, Kopyala, Arşivle) `⋯` menüsünde. | `PanelHeader` (mevcut `PageHead`'in yerine, `components/panel/bits.tsx`). |
-| P3 | **En fazla bir kat sekme.** Alımda 4 sekme kalır; "Değerlendirme"nin alt sekmeleri kalkar: Kurucu ve Puan kartı aynı sekmede iki parçalı seçici; "AI taslağı" ve "Önizleme" sekme değil **eylem** (tam sayfa akış / tam ekran katman, çıkış yeri belli); "Özet" Genel bakışa katılır. | 9 etiket → 4 sekme + 2 parçalı seçici. |
-| P4 | **Boş durum = çizim + başlık + bir cümle + bir dolu eylem.** İkincil bir metin bağlantısı olabilir. | `EmptyState` (`Illustration` kullanır): `emptyOpenings`, `emptyToday`, `emptyCandidates`, `emptyLibrary`. |
-| P5 | **Kart mı tablo mu:** karar isteyen ve az sayıda olan nesne (alımlar, Bugün'deki "sıradaki iş", talepler) kart; çok sayıda ve karşılaştırılan nesne (adaylar, inceleme kuyruğu, denetim kaydı, soru bankası, öğrenciler) **bilerek yoğun tablo**: 52px satır, satır başına tek görünür eylem, diğerleri `⋯`. | `OpeningCard`; tablolar `Table` + `RowMenu`. |
-| P6 | **Kurulum adım adım.** "Alım aç" aday tarafıyla aynı `StepScreen` + `StepFooter` akışı (3 adım). Oluşturulduktan sonra rehber Genel bakıştaki **Kurulum** listesidir (`PathSteps`: Değerlendirmeyi kur → Puan kartı → Ekip → Önizle → Yayınla); her satırın tek eylemi var, başlıkta "Kurulum 2 / 5". | `NewOpeningFlow`, `SetupSteps`. |
-| P7 | **Gelişmiş kurallar açılır alanda.** Görünen: ekip, son gün, geri dönüş günü. Açılır "Gelişmiş kurallar": en az değerlendirme sayısı, kimlik gizleme, anket, iletişim e-postası. Değişmez kurallar (bağımsız değerlendirme) ayar gibi değil, kilit ikonlu `IconRow` olarak. | `Disclosure`, `IconRow`. |
-| P8 | **Kaydetme kapsamı görünür.** Çok alanlı formlarda sayfa ortasında "Kaydet" yerine, değişiklik olunca altta beliren `DirtyBar`: "2 değişiklik kaydedilmedi · Geri al · [Kaydet]". Otomatik kaydeden ekranlarda (kurucu) yalnızca "Kaydedildi" durumu. | `DirtyBar` (`StepFooter`'ın panel varyantı). |
-| P9 | **Tek durum sözlüğü.** Her yerde aynı dot tonu ve kelime: Taslak (gri), Yayında (accent), Kapalı (muted); aday: Davet edildi, Linki açtı, Devam ediyor (accent), Tamamladı, Link doldu (ink + kalın, `warn`). Rozet yok. | `status-dot.tsx` + tek `statusVocabulary` haritası. |
-| P10 | **İki dil alanı sekmeyle, yan yana değil.** TR ve EN çiftleri `TR | EN` dil seçicisiyle tek alan gösterir; eksik dilde seçicide nokta ("EN ●"). | `LanguageTabs` (kurucu, yetkinlik, pozisyon). |
-| P11 | **Aynı bileşenler:** `StepScreen`, `StepFooter`, `Disclosure`, `IconRow`, `FactTiles`, `PathSteps`, `ChoiceCard`, `Illustration` aday tarafıyla aynı dosyalar; panel yalnızca `PanelHeader`, `EmptyState`, `OpeningCard`, `DirtyBar`, `RowMenu`, `LanguageTabs`, `NextTaskCard` ekler. | 5. bölüm. |
+| P1 | **Kabuk: aynı gruplanmış yan menü, ikonlu.** 240px; her öğede 18px lucide ikon (`sun` Bugün, `briefcase` Alımlar, `users` Öğrenciler, `file-text` Sınavlar, `library` Soru bankası, `id-card` Pozisyonlar, `target` Yetkinlikler, `settings` Ayarlar). Aktif öğe `brand-soft` zemin + accent metin. Menü sayıları plan 3'e ertelendi (plan kararı 6). | `ManagerNav` (`src/components/manager/nav.tsx`). |
+| P2 | **Sayfa başlığı: kicker, başlık, tek satır meta, tek dolu eylem, "⋯" menü.** İkincil eylemler `⋯` menüsünde; menü yalnızca bağlantı taşır (plan kararı 14). | `PanelHeader` (`PageHead`'in yerine, `src/components/panel/bits.tsx:39`). |
+| P3 | **En fazla bir kat sekme.** Alımda 4 sekme kalır; Değerlendirme'nin alt sekmeleri M6'da kalkar. | 9 etiket → 4 sekme + 2 parçalı seçici (M6). |
+| P4 | **Boş durum = çizim + başlık + bir cümle + bir dolu eylem.** | `EmptyState`. |
+| P5 | **Kart mı tablo mu:** karar isteyen ve az sayıda olan nesne kart ya da kontrol satırı; çok sayıda ve karşılaştırılan nesne (adaylar, inceleme kuyruğu, denetim kaydı, soru bankası, öğrenciler, kütüphane listeleri) bilerek yoğun tablo: 52px satır, satır başına tek görünür eylem. | `ControlRow` (v4), tablolar `Table` + `RowMenu`. |
+| P6 | **(v4, değişti) Çok alanlı iş = rehberli akış.** Bir işin birden fazla alanı varsa sayfada form değil, `GuidedFlow` vardır: adım başına bir karar, sonunda özet ve tek dolu "Oluştur / Kaydet". Ayrıntı W1-W10. Sürüm 3'teki "kurulum listesi rehberdir" yerine taslağın **kurulum yolu** (4.5) gelir. | `GuidedFlow`, `SummaryStep`, `SetupPath`. |
+| P7 | **Gelişmiş kurallar açılır alanda değil, kendi kısa akışında.** Değişmez kural (bağımsız değerlendirme) ayar gibi değil, kilit ikonlu `IconRow` olarak özette. | 4.10. |
+| P8 | **(v4, değişti) Kaydetmenin kapsamı özet adımında görünür.** `DirtyBar` yok (H4). Özette değişen her satır "değişti" diye işaretlenir; dolu buton "Kaydet" yalnızca değişiklik varken etkin, yoksa "Değişiklik yok." nedeniyle bekler. Otomatik kaydeden editörlerde (kurucu) yalnızca "Kaydedildi" durumu. | `SummaryStep`. |
+| P9 | **Tek durum sözlüğü.** Taslak (gri), Yayında (accent), Kapalı (muted; plan kararı 12); aday durumları aynı tonlarla. Rozet yok. | `status-vocabulary.ts`. |
+| P10 | **İki dil alanı sekmeyle, yan yana değil** (`TR | EN`, eksik dilde nokta). | `LanguageTabs` (M6, M9). |
+| P11 | **Aynı bileşenler:** `StepScreen`, `StepFooter`, `JourneyProgress`, `Disclosure`, `IconRow`, `FactTiles`, `PathSteps`, `ChoiceCardGroup`, `Illustration` aday tarafıyla aynı dosyalar (`src/components/visual/`); panel `PanelHeader`, `EmptyState`, `RowMenu`, `NextTaskCard`, `GuidedFlow`, `SummaryStep`, `ControlRow`, `SetupPath` ekler. | 5. bölüm. |
+
+**Sihirbaz kuralları (W, K12).** Her rehberli akış bunlara uyar.
+
+| # | Kural | Ayrıntı |
+|---|---|---|
+| W1 | **Adım başına bir karar.** Adımın başlığı yöneticinin o an cevapladığı soru ("Kim değerlendirecek?"). Bir adımda yalnızca o sorunun alanı ve ona doğrudan bağlı, varsayılanı olan bir alt seçim olabilir (örn. "Önceki bir alımdan kopyala" seçilince altında kaynak seçici; karar verenin altında "Yedek karar veren" açılır alanı). | Ad ve e-posta "kişi" kararıdır, aynı adımda durur. |
+| W2 | **Kabuk:** panelin içinde, yan menü görünür kalır (aday akışındaki gibi tam ekran değil). Üstte `FlowHeader`: kicker akışın adı ("Ekip ve kurallar · Ekip"), sağda çıkış bağlantısı (W7). İçerik `StepScreen` single 640px (alan adımları) ya da split 1000px (seçim kartları ve özet). Altta `StepFooter` `placement="sticky"`: solda "‹ Geri", ortada `JourneyProgress` ("Adım 2 / 4"), sağda tek dolu buton. | `StepFooter`'ın `placement: "viewport" \| "sticky"` seçeneği Görev 4'te kuruldu (`src/components/visual/step-footer.tsx:73`). |
+| W3 | **Adım adres çubuğunda (hash).** Tarayıcının geri tuşu bir adım geri gider, yeniden yüklemede aynı adım açılır; bir kontrol görünümü bağlantısı doğrudan bir adıma gider (`#team-decider`). Önceki adım geçersizse (örn. pozisyon seçilmemiş) akış ilk eksik adıma döner. | Görev 19'un `newOpeningStepOf` deseni genelleşir. |
+| W4 | **Geri değerleri korur.** Tüm akış tek bileşen, tek durum; "Geri" ve tarayıcı geri tuşu hiçbir değeri silmez. Bir alt seçimi kaldıran değişiklik (kopya yerine boş başla) alt değeri bellekte tutar ama göndermez. | |
+| W5 | **Özet (H3).** Kayıtlı bir şeyi değiştiren her akış ve dört ya da daha fazla adımlı oluşturma akışı ayrı bir **özet adımıyla** biter: her karar bir satır (etiket, değer, "Değiştir"); "Değiştir" o adımı açar ve oradaki dolu buton "Özete dön" olur. Kısa oluşturma akışının son adımı tek satırlık bir özet taşır ("Destek Uzmanı · ilan metni var · AI taslağı"). | `SummaryStep`, `SummaryLine`. |
+| W6 | **Tek dolu buton sonda.** Ara adımlarda dolu buton "Devam et" (o adımın kararı eksikse mevcut nedenle bekler, G2); yalnızca özette (ya da kısa akışın son adımında) "Alımı oluştur", "Kaydet", "Linki oluştur", "Yayınla". Gönderim sürerken buton accent kalır, etiketi işi söyler (plan kararı 4). | `FooterAction`. |
+| W7 | **Çıkış onaysız (H6, RULES kural 4).** `FlowHeader`'ın sağında metin bağlantısı: değer değişmemişse "Çık", değişmişse "Kaydetmeden çık". Akıştan çıkış nereye: geldiği kontrol görünümü (alımın Genel bakışı, ekip ve kurallar özeti, Alımlar). Sheet içindeki akışta köşe ✕ ve "Kapat" aynı işi yapar; bir link gösterilirken Sheet Escape ile kapanmaz (`sheetLocked`, mevcut). | |
+| W8 | **Erken doğrulama adıma dağılır, sunucu sözleri aynen.** Her adımın "Devam et" nedeni mevcut kural fonksiyonundan gelir (`openingRulesProblems`, `inviteReason`, `createWait`), yalnızca o adımın alanlarına süzülür. Sunucunun reddi (sorun kodu) bir **sorun → adım** haritasıyla o adımı açar, mevcut cümleyi (`hiringSettings.p<KOD>`, `hiringInvite.err<KOD>`, `hiringNew` reddi) adımın dolu butonunun yanında gösterir. Adıma düşmeyen ret (yetki, kapalı alım, bağlantı) özette, mevcut metniyle, tek bir sonraki eylemle durur. | Sunucu eylemleri ve kodları **değişmez**. |
+| W9 | **Dil ve hitap.** Akış metinleri "sen" der (K9); adım başlığı soru, alt satır en fazla 12 kelime; uzun açıklama (`blindModeHint`, `finishSurveyHint`, anket kuralı) adımın içinde `Disclosure`'da değil, adımın tek açıklaması olarak görünür (artık ekranda başka şey yok). | `flow` (yeni ortak metin ad alanı) + mevcut ad alanları. |
+| W10 | **Erişilebilirlik.** Her adım değişiminde odak yeni başlığa (`useStepFocus`, `src/hooks/use-step-focus.ts`); "Adım 2 / 4" polite bölgede; 44px hedef; kapalı butonun nedeni yanında `id` + `-why`; hareket aday tarafıyla aynı (200 ms opaklık, reduced motion'da yalnız opaklık). | |
+
+**Kontrol görünümü kuralları (KG, K12).**
+
+| # | Kural | Ayrıntı |
+|---|---|---|
+| KG1 | **Bir nesne, bir satır, sıradaki tek adım.** Kontrol görünümü stat kutusu ızgarası değildir (airbnb-ux genel dashboard testi): her alım bir `ControlRow`'dur; satırda durum (dot + metin), ilerleme (taslakta "Kurulum n / N", yayında mini huni), dikkat (yalnız varsa), son gün, ekip ve **tek** metin eylemi ("Sıradaki: Ekibi ata ›"). | `ControlRow`. |
+| KG2 | **Sıradaki adım tek bir kuraldan gelir.** Saf fonksiyon `openingNextStep` (4.4) her satır için bir adım seçer; Bugün'ün "Sıradaki iş"i (K10) çözümler arası, bu ise alım içi; ikisi çakışmaz, Bugün kontrol görünümüne bağlanır. | `src/components/hiring/opening-next-step.ts` (yeni). |
+| KG3 | **Her satır onu düzelten akışa açılır.** Satırın eylemi bir sayfaya değil, düzelten akışın doğru adımına gider (`/hiring/openings/[id]/settings#team-members`, kurulum yolunun şu anki adımı, davet akışı). Akış bitince kontrol görünümüne döner ve satır güncellenir. | W3. |
+| KG4 | **Sayılar gerçek ve sakin.** Sayım yoksa satır susar ("Henüz davet yok"), sıfırları dizmez (playbook 1.7). Değerlendirici (REVIEWER) yalnızca sayı görür (H9): huni sayıları ve dolan link sayısı; talep, aday adı, kurulum eylemi yok; satırın tek eylemi "Aç". | STATUS 321 (bugün `docs/STATUS.md:337`), hüküm C6. |
+| KG5 | **Bir ekranda bir dolu buton.** Kontrol görünümünün dolu butonu sayfanın asıl işi (Alımlar'da "Alım aç"; taslak alımın Genel bakışında "Kuruluma devam et"; yayındaki alımda "Aday davet et"); satır eylemleri metin. | P2, RULES kural 2. |
+
+**Rehberli akış kataloğu (özet; ayrıntı ilgili bölümde).** "Eylem" sütunundaki sunucu eylemleri
+değişmeden çağrılır.
+
+| Akış | Nerede | Adımlar (bir karar) | Özet / son | Sunucu eylemi (değişmez) | Dilim |
+|---|---|---|---|---|---|
+| Alım aç | 4.6 | Pozisyon → İlan (yalnız yeni ad) → Nasıl başlayalım | Son adımda özet satırı, "Alımı oluştur" | `createOpeningAction`, `src/app/(manager)/hiring/openings/new/actions.ts:22` | M4 (2b) |
+| Kurulum yolu → Yayınla | 4.5 | Değerlendirmeyi kur → Çapalar → (Ağırlıklar) → Ekibi ata → Önizle → Yayınla | Yayın özeti, "Yayınla" | `publishOpeningAction`, `[id]/actions.ts:25`; `markPreviewedAction`, `assessment/preview/actions.ts:17` | M5 (2b) |
+| Aday davet et | 4.9 | (Alım, sayfada ve birden çoksa) → Kişi ya da liste | Özet (dil, son gün varsayılanlı), "Linki oluştur" → Hazır | `inviteCandidateAction` `:94`, `inviteManyAction` `:114` (`src/app/(manager)/hiring/invite/actions.ts`) | M8 (2b) |
+| Ekip | 4.10 | Değerlendiriciler → Karar veren (+ yedek) → Kaç değerlendirme | Özet, "Kaydet" | `saveOpeningRulesAction`, `[id]/settings/actions.ts:37` | M7 (2b) |
+| Aday iletişimi | 4.10 | Son gün → Geri dönüş sözü → İletişim e-postası | Özet, "Kaydet" | aynı | M7 (2b) |
+| Adil değerlendirme ve anket | 4.10 | Kimlik gizleme → Bitiş anketi | Özet (kilitli kural dahil), "Kaydet" | aynı | M7 (2b) |
+| Alımın adı | 4.10 | Tek adım (H2) | "Kaydet" | aynı | M7 (2b) |
+| Alımı kapat | 4.10 | **Akış değil:** tek eylem + 8 sn geri alma (RULES 4) | - | `closeOpeningAction` `:62`, `reopenOpeningAction` `:75` | M7 (2b) |
+| Pozisyon ekle | 4.11 | Ad → Ekip (isteğe bağlı) → İlan metni (isteğe bağlı) | Son adımda özet satırı, "Pozisyonu oluştur" | `createPositionAction`, `src/app/(manager)/library/actions.ts:126` | M9 |
+| Pozisyonu düzenle | 4.11 | Özetten tek adım: Ad, Ekip, Kısa tanım, İlan, Beceriler, Diller, Yetkinlik profili | Özet, "Kaydet" | `savePositionAction` `:135` | M9 |
+| Yetkinlik ekle | 4.11 | Ad → Ne ölçer | Son adımda özet satırı, "Yetkinliği oluştur" | `createCompetencyAction` `:60` | M9 |
+| Yetkinliği düzenle (çapalar dahil) | 4.11 | Özetten: Ad, Tanım, Çapalar (1 → 3 → 5 → ara seviyeler), Etiketler | Özet, "Kaydet" | `saveCompetencyAction` `:69`, `draftAnchorsAction` `:160` | M9 |
+| Kullanıcı davet et | 4.11 | Ad → E-posta → Rol | Son adımda özet satırı, "Davet linkini oluştur" → Hazır | `inviteUser`, `src/app/(manager)/settings/actions.ts:176` | M10 |
+| Organizasyon ayarları | 4.11 | Özetten tek adım: Ad, medya saklama, aday kaydı saklama | "Kaydet" | `saveOrgSettings` `:31` | M10 |
+| Puan kartı ağırlıkları | 4.7 | Tek karar adımı: Eşit / Kendim ayarlayacağım | "Ağırlıkları kaydet" | `saveDraftWeightsAction`, `assessment/scorecard/actions.ts:49` | M6 |
+| Çapalar (puan kartından) | 4.7 | Yetkinlik çapa akışının aynısı, Sheet içinde | "Çapaları kaydet" | `saveAnchorsAction` `:93` | M6 |
+| **Kurucu** | 4.7 | **Editör kalır** (H2) | Otomatik kayıt | mevcut kurucu eylemleri | M6 |
+
+**Kaynak notu (sürüm 4).** `airbnb-ux` referanslarında doğrulanmış olanlar: tek dolu buton ve
+"azaltarak başla" (SKILL kuralları; `visual-design-system.md` #10); önce kısa sonra tam
+(playbook 1.3); erken doğrulama, hatadan sonra kurtarmadan güçlüdür (playbook 1.6, W8'in dayanağı);
+çıkmaz sokak yok (playbook 1.9, KG3); "genel AI dashboard testi" (stat kutusu ızgarası, eşit
+ağırlıklı kartlar; `audit-checklist.md`, KG1'in dayanağı); playbook 3: çok adımlı "gözden geçir ve
+onayla" ekranı **yüksek riskli ya da çok parametreli** bir kararda anlamlı, tek tıklık basit bir işte
+yalnızca sürtünme (H2 ve H3'ün dayanağı: tek alanlı işe sihirbaz yok, kısa akışta ayrı özet yok).
+"Review and pay" özet ekranının kendisi `booking-checkout.md` #7'de **doğrulanmadı** diye işaretli;
+W5'in özet adımı ondan değil, Kademe'nin "kaydetmenin kapsamı görünür" kuralından (P8) çıkıyor.
+Kontrol görünümünün bir alımı tek satırda özetlemesi ve satırın "sıradaki adım"ı benim çıkarımım,
+referanslarda böyle bir desen yok.
 
 ### 4.3 Bugün (`/dashboard`)
 
-**Soru:** "Bugün neye bakmalıyım?" İki çözüm aynı ekranda, her satırda küçük çözüm etiketi.
+**Soru:** "Şimdi neye bakmalıyım?" İki çözüm aynı ekranda. Sürüm 4'te değişmeyen: sürüm 3'ün
+yerleşimi, `NextTaskCard`, K10 sırası, sınav kuyruğunun birebir aynı kalması. Değişen: dikkat
+satırlarının eylemi düzelten akışa gider ve bölümün altında kontrol görünümüne bağlantı var.
 
 ```
 ┌────────────┬─────────────────────────────────────────────────────────────────────────────────┐
 │ Kademe     │  Bugün                                                    [ Davet et ⌄ ]        │ PanelHeader (outline menü)
-│ ☀ Bugün  6 │  3 iş seni bekliyor. En eskisi 30 Eyl.                                          │
+│ ☀ Bugün    │  3 iş seni bekliyor. En eskisi 30 Eyl.                                          │
 │ İŞE ALIM   │  ┌───────────────────────────────────────────────────────────────────────────┐  │
-│ ▣ Alımlar 2│  │ SIRADAKİ İŞ                                                    İşe alım   │  │ NextTaskCard
+│ ▣ Alımlar  │  │ SIRADAKİ İŞ                                                    İşe alım   │  │ NextTaskCard
 │ SINAV      │  │ Ece Bal bir uyarlama istedi                                                │  │
 │ ◎ Öğrenci  │  │ "Video yerine yazılı cevap verebilir miyim?" · Ürün Tasarımcısı · 2 dk önce│  │
 │ ▤ Sınavlar │  │                                                  [ Talebe bak ]           │  │ tek dolu buton
@@ -745,54 +864,114 @@ davetin "bir daha gösterilmez" uyarısı; kör mod kuralları.
 │ KÜTÜPHANE  │  Dikkat isteyenler                                                              │
 │ ▢ Pozisyon │  ┌───────────────────────────────────────────────────────────────────────────┐  │
 │ ◎ Yetkinlik│  │ [inbox] 2 açık talep            Ürün Tasarımcısı        İşe alım   Aç ›    │  │ IconRow satırları
-│            │  │ [clock] 3 link 48 saatte doluyor 2 alım, 1 sınav        Karışık    Aç ›    │  │
-│            │  │ [file]  Taslak v2 yayın bekliyor Destek Uzmanı          İşe alım   Aç ›    │  │
+│            │  │ [clock] 3 link 48 saatte doluyor Destek Uzmanı          İşe alım   Aç ›    │  │
+│            │  │ [file]  Taslak v2 yayın bekliyor Destek Uzmanı          İşe alım   Kuruluma│  │
+│            │  │                                                         devam et ›         │  │
 │            │  └───────────────────────────────────────────────────────────────────────────┘  │
+│            │  Tüm alımların durumu ›                                                          │ kontrol görünümüne (4.4)
 │            │  İnceleme kuyruğu · Sınav (145)                                    Tümü ›       │ yoğun tablo (değişmez)
-│            │  ┌───────────────────────────────────────────────────────────────────────────┐  │
-│            │  │ Zeynep Arslan  Seviye doğrulama · B1   ● 1 AI önerisi onay bekliyor  İncele│  │
-│            │  │ ...                                                                        │  │
-│ ⚙ Ayarlar  │  └───────────────────────────────────────────────────────────────────────────┘  │
+│ ⚙ Ayarlar  │  ...                                                                             │
 │ EN Kadir KA│  Süren işler (2) ⌄                                                              │ Disclosure
 └────────────┴─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-- **Değişiklik:** başlık sınava özgü "N sonuç incelemenizi bekliyor" yerine ortak "Bugün" + bir cümle
-  özet; en önemli tek iş `NextTaskCard`'da ve ekranın tek dolu butonu onda. "Davet et" outline menü
-  olur (dolu buton sıradaki işin). İş yoksa: `emptyToday` çizimi + "Bugün bekleyen iş yok." +
-  "Davet et" dolu.
-- **Veri (yeni, VG değil M2):** işe alım `today()` şu satırları üretir: açık talepler (uyarlama, yeni
-  link, veri hakkı), 48 saatte dolan linkler, yayın bekleyen taslak, (plan 3) değerlendirme ve karar
-  bekleyenler. "Sıradaki iş" seçimi: veri hakkı talebi > uyarlama talebi > karar bekleyen > en eski
-  inceleme (öneri; açık soru değil, M2'de ekiple bakılır).
-- **Sınav kuyruğu satırları aynen kalır** (içerik, sütunlar, "İncele"); yalnızca başlıkları ve bölüm
-  sırası değişir. **Bayrak:** bu ekran canlı sınavın günlük ekranı; M2 sınav rolündeki kullanıcıda
-  satırların birebir aynı kaldığını gösteren bir ekran görüntüsü karşılaştırmasıyla çıkar.
-- **Kelime:** başlık bölgesi 9 → ~14 (özet cümlesi), kuyruk aynı; kazanç yönlendirmede.
+- **Satırlar ve hedefleri:** açık talepler → Adaylar sekmesi (uyarlama talebinin "Tamam"ı orada,
+  `markRequestAction`, `candidates/actions.ts:80`); dolan linkler → Adaylar sekmesi; yayın bekleyen
+  taslak → alımın Genel bakışı, eylem metni "Kuruluma devam et" (kurulum yolunun şu anki adımı, 4.5).
+- **Veri hakkı talepleri (C6, kullanıcı onayı):** plan 2b'de "Sıradaki iş" olmaz; alımın "açık
+  talep" sayısında sayılır. C6'nın düz notu (işlendikleri yer plan 3 ile gelir) satırın gittiği yerde
+  durur, çıkmaz bir düğme yok; notun tam yeri ve metni plan yeniden yazılırken belirlenir (bugünkü
+  plan metni C6'dan önce yazıldı, `docs/superpowers/plans/2026-10-06-hiring-visual-flow.md:7216`).
+  En üst sıraları plan 3'te.
+- **Kim görür:** işe alım satırları yalnızca alım yürütenlere (Sahip, Yönetici; plan kararı 7);
+  değerlendirici Bugün'de işe alım satırı görmez (STATUS 321). Değerlendiricinin işe alım yüzü
+  kontrol görünümündeki sayılardır (H9).
+- **Okumalar:** `hiringToday` okumaları birbiri ardına çalışır (hüküm C21, havuz 5 bağlantı).
+- **Bayrak:** bu ekran canlı sınavın günlük ekranı; M2 sınav kuyruğunun satırlarını önce/sonra metin
+  karşılaştırmasıyla kanıtlar (plan Görev 17, C17'nin düzeltmesiyle).
+- **Neden kontrol görünümü burada değil (H1):** Bugün iki çözümün kuyruğunu K10 sırasıyla birleştirir
+  ve sınav kullanıcısı da buraya iner. Her alımın satırını buraya koymak sınav kullanıcısına işe alım
+  listesi göstermek ve canlı sınav ekranını büyütmek olurdu; "her şeye hakim" isteği işe alımın kendi
+  ekranında karşılanır, Bugün ona tek bağlantıyla gider.
 
-### 4.4 Alımlar listesi (`/hiring/openings`)
+### 4.4 Kontrol görünümü: Alımlar (`/hiring/openings`)
+
+**Soru:** "İşe alımda her şey nerede, neresi benden bir şey bekliyor?" (K12: "her şeye hakim
+olabileceğim").
 
 ```
-│  Alımlar                                                              [ Alım aç ]        │
-│  Her alım bir pozisyon için, başı ve sonu olan bir süreç.                                │
-│  ( Açık 3 ) ( Taslak 2 ) ( Kapalı 0 )                                                    │ çip filtre
-│  ┌────────────────────────────────────────┐ ┌────────────────────────────────────────┐   │
-│  │ Ürün Tasarımcısı · Ekim       ⋯        │ │ Destek Uzmanı · Ekim          ⋯        │   │ OpeningCard (2 sütun)
-│  │ ● Yayında · v1 · son gün 19 Eki        │ │ ● Yayında · v1 · Taslak v2 bekliyor    │   │
-│  │ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▭▭▭▭             │ │ ▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭             │   │ mini huni
-│  │ 9 davet · 8 başladı · 8 tamamladı      │ │ Henüz davet yok                        │   │
-│  │ [inbox] 2 açık talep                   │ │                                        │   │ yalnızca varsa
-│  │ (KA) Kadir Ay                  Aç ›    │ │ (KA) Kadir Ay                  Aç ›    │   │
-│  └────────────────────────────────────────┘ └────────────────────────────────────────┘   │
+│  Alımlar                                                                 [ Alım aç ]      │ PanelHeader, tek dolu
+│  5 alım sürüyor. 2'si kurulumda, 3'ünde senden bir şey bekleniyor.                        │ tek cümle özet
+│                                                                                          │
+│  KURULUMDA (2)                                                                            │
+│  ┌──────────────────────────────────────────────────────────────────────────────────────┐ │
+│  │ Destek Uzmanı · Ekim         ● Taslak   Kurulum 2 / 5  ▬▬▭▭▭                         │ │ ControlRow (taslak)
+│  │ Ekip: yalnız sen · son gün yok                            Sıradaki: Ekibi ata ›       │ │
+│  ├──────────────────────────────────────────────────────────────────────────────────────┤ │
+│  │ Veri Analisti · Ekim         ● Taslak   Kurulum 5 / 6  ▬▬▬▬▬▭                         │ │
+│  │ Ekip: 3 kişi · son gün 30 Eki                             Sıradaki: Yayınla ›         │ │
+│  └──────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                                                                          │
+│  YAYINDA (3)                                                                              │
+│  ┌──────────────────────────────────────────────────────────────────────────────────────┐ │
+│  │ Alım                     Huni                   Dikkat                     Son gün   │ │ sütun başlıkları
+│  │ Ürün Tasarımcısı · Ekim  9 › 8 › 8              [inbox] 2 açık talep       19 Eki    │ │ ControlRow (yayında)
+│  │ ● Yayında · v1           ▬▬▬▬▬▬▬▬▭              [clock] 1 link yarın doluyor          │ │
+│  │ Ekip: 2 kişi                                                   Taleplere bak ›       │ │ tek metin eylem
+│  ├──────────────────────────────────────────────────────────────────────────────────────┤ │
+│  │ Destek Uzmanı II · Ekim  Henüz davet yok        ● Ekip 1 kişi, kural 2 istiyor  -    │ │
+│  │ ● Yayında · v1                                                 Ekibe ekle ›          │ │
+│  ├──────────────────────────────────────────────────────────────────────────────────────┤ │
+│  │ Saha Satış · Eylül       12 › 10 › 7            [file] Taslak v3 yayın bekliyor 5 Eki│ │
+│  │ ● Yayında · v2           ▬▬▬▬▬▬▭                               Kuruluma devam et ›   │ │
+│  └──────────────────────────────────────────────────────────────────────────────────────┘ │
+│  Kapalı alımlar (4)                                                                   ⌄  │ Disclosure
 ```
 
-- Kart bütünüyle tıklanır (Genel bakışa); kartta tek görünür eylem yok, `⋯` (Kopyala, Kapat).
+- **Gruplar:** "Kurulumda" (DRAFT) ve "Yayında" (OPEN; altında yeni bir taslak sürüm olsa da)
+  aynı sayfada, sırası bu; "Kapalı alımlar (n)" kapalı bir açılır alanda, satırları aynı biçimde ve
+  eylemleri "Aç" (sahip ve yöneticiye ayrıca "Yeniden aç ›" ekip ve kurallar özetine gider). Grup
+  boşsa başlığıyla birlikte görünmez. **H8:** üç rota sekmesi kalkar; `?tab=draft|open` ilgili
+  gruba kaydırır, `?tab=closed` açılır alanı açık getirir (eski bağlantılar ve Görev 18'in rota
+  testleri kırılmaz, testin beklentisi buna göre güncellenir).
+- **Satır (`ControlRow`), taslak:** ad, dot + "Taslak", `Kurulum n / N` ve ince ilerleme parçaları
+  (`readinessRows` + yayın adımı, plan Görev 20'nin `setupProgress`'i), ekip özeti (üye sayısı;
+  yalnızca oluşturan varsa "yalnız sen"), son gün; eylem "Sıradaki: <kurulum yolunun şu anki adımı> ›"
+  (4.5).
+- **Satır, yayında:** ad, dot + "Yayında · v1", mini huni (davet › başladı › bitti; Görev 18'in
+  `openingCardFacts`'ı), dikkat sütunu yalnızca varsa (açık talep, 48 saatte dolan link, yayın
+  bekleyen taslak, ekip kuralın altında), son gün; eylem `openingNextStep`'ten.
+- **`openingNextStep` sırası (KG2, saf fonksiyon, testli):** taslak: kurulum yolunun ilk bitmemiş
+  adımı, hepsi bittiyse "Yayınla". Yayında: (1) açık talep varsa "Taleplere bak ›" (Adaylar sekmesi;
+  veri hakkı talebi burada da yalnız sayılır, C6); (2) aktif ekip `minEvaluations`'ın altındaysa
+  "Ekibe ekle ›" (`#team-members`; `panelShortfall` kuralı, `src/components/hiring/invite/form-rules.ts:50`);
+  (3) 48 saatte dolan link varsa "Linklere bak ›" (Adaylar sekmesi); (4) yayın bekleyen taslak sürüm
+  varsa "Kuruluma devam et ›"; (5) hiç davet yoksa "Aday davet et ›" (davet akışı, Sheet); (6) aksi
+  halde "Adaylara bak ›". Kapalı: "Aç ›".
+- **Değerlendirici (H9, KG4):** yalnızca üyesi olduğu alımlar listelenir (`listOpenings` bugün de
+  böyle süzer, `src/solutions/hiring/server/openings.ts:46-85`); satırda huni sayıları ve dolan link
+  sayısı; talep sayısı, ekip uyarısı ve kurulum ilerlemesi yok; eylem "Aç ›". Dolu "Alım aç" yerine
+  mevcut nedenli kapalı buton (`hiringOpenings.noPermission`).
+- **Özet cümlesi:** sayılardan kurulur ("5 alım sürüyor. 2'si kurulumda, 3'ünde senden bir şey
+  bekleniyor."); değerlendiricide "Üyesi olduğun 2 alım var." Stat kutusu yok (KG1).
 - **Boş:** `emptyOpenings` çizimi + "İlk alımını aç." + "İlan metnini yapıştırman yeterli, gerisini
   birlikte kuralım." (mevcut metin) + "Alım aç".
-- 20'den fazla alımda kart ızgarası aynı sütunlarla tabloya döner (sayıya göre, anahtar yok).
-- **Kelime:** 1 kartla ~35; kazanç, ilgi isteyen alımın (talep, bekleyen taslak) karttan okunması.
+- **Yoğunluk:** satır yüksekliği taslakta 72px, yayında 88px; 1280x800'de katlamanın üstünde ~6 alım.
+  20'den fazla süren alımda gruplar sayfalanmaz, satırlar aynı kalır (tablo değil: sütunlar zaten
+  hizalı). Bu, sürüm 3'ün iki sütunlu kart ızgarasının (Görev 18) yerine geçer: kart ızgarasında
+  ilerleme ve dikkat yan yana karşılaştırılamıyordu.
+- **Okumalar:** `listOpenings` iki kez (DRAFT, OPEN) + kapalılar açılır alan açılınca değil sayfa
+  yüklenirken (sayım için); `openingCardFacts` yayındakiler için; taslakların kurulum ilerlemesi için
+  her taslağa `workingState` (`src/solutions/hiring/server/working.ts`: sürüm listesi, içerik,
+  yetkinlik gerçekleri) ve bir kez `loadPanelUsers`. Hepsi birbiri ardına (C21). **Doğrulanmadı:**
+  10 taslakta kaç milisaniye sürdüğü; Görev 18'de ölçülür, 300 ms'yi aşarsa taslak satırı sayıyı
+  değil "Kuruluma devam et ›"i gösterir.
+- **Kelime:** 5 alımla ~95 (sürüm 3 kart ızgarasında 5 kartla ~175); kazanç, her alımın tek satırda
+  okunması ve sekme değiştirmeden her şeyin görünmesi.
 
-### 4.5 Alım genel bakış (`/hiring/openings/[id]`)
+### 4.5 Alımın kontrol görünümü ve kurulum yolu (`/hiring/openings/[id]`)
+
+Genel bakış tek bir alımın kontrol görünümüdür: "Bu alım nerede, sıradaki adımım ne, kurallar ne?"
 
 ```
  Yayında
@@ -800,105 +979,150 @@ davetin "bir daha gösterilmez" uyarısı; kör mod kuralları.
 │  Ürün Tasarımcısı · Ekim                                     ⋯   [ Aday davet et ]       │ PanelHeader
 │  ● Yayında · Son gün 19 Eki · v1                                                         │
 │  Genel bakış   Adaylar 9   Değerlendirme   Ekip ve kurallar                              │ tek kat sekme
-│  ┌──────────────┐ › ┌──────────────┐ › ┌──────────────┐ › ┌──────────────┐               │ FunnelTiles
-│  │ Davet      9 │   │ Başladı    8 │   │ Tamamladı  8 │   │ Değerlendi- │               │ (4. kutu plan 3)
-│  │              │   │ ▬▬▬▬▬▬▬▬▭    │   │ ▬▬▬▬▬▬▬▬▭    │   │ rildi    -   │               │
-│  └──────────────┘   └──────────────┘   └──────────────┘   └──────────────┘               │
-│  Ortanca 25 dk · tahmin 10 dk. Adaylar tahminden belirgin uzun sürüyor.                   │ tek cümle
-│  ┌ Dikkat isteyenler ─────────────────────┐  ┌ Aday deneyimi ──────────────────────────┐ │
-│  │ [inbox] 2 açık talep          Aç ›     │  │ 3,9 / 5 · 7 cevap                       │ │
-│  │ [clock] 1 link yarın doluyor  Aç ›     │  │ Yorumlar (3)                          ⌄ │ │ Disclosure
-│  └────────────────────────────────────────┘  └─────────────────────────────────────────┘ │
-│  Yayındaki değerlendirme: v1 · 2 aşama · 8 soru · 20 dk          Değerlendirmeye git ›  │ tek satır
+│  ┌──────────────┐ › ┌──────────────┐ › ┌──────────────┐                                  │ FunnelTiles (3 kutu;
+│  │ Davet      9 │   │ Başladı    8 │   │ Tamamladı  8 │                                  │  4. ve 5. plan 3)
+│  └──────────────┘   └──────────────┘   └──────────────┘                                  │
+│  Ortanca 25 dk · tahmin 10 dk. Adaylar tahminden belirgin uzun sürüyor.                   │
+│  ┌ Dikkat isteyenler ─────────────────────┐  ┌ Bu alımın kuralları ─────────────────────┐ │
+│  │ [inbox] 2 açık talep   Taleplere bak › │  │ [users] 2 değerlendirici · karar: Kadir  │ │ SummaryRows (salt
+│  │ [clock] 1 link yarın doluyor  Bak ›    │  │ [calendar-days] Son gün 19 Eki · 7 gün   │ │  okunur özet)
+│  └────────────────────────────────────────┘  │ [eye-off] Kimlik açık · anket açık       │ │
+│                                              │                       Kuralları değiştir ›│ │
+│                                              └──────────────────────────────────────────┘ │
+│  Aday deneyimi: 3,9 / 5 · 7 cevap                                    Yorumlar (3) ⌄      │ Disclosure
+│  Yayındaki değerlendirme: v1 · 2 aşama · 8 soru · 20 dk          Değerlendirmeye git ›  │
 
  Taslak
-│  ● Taslak · Son gün yok                                      ⋯   [ Yayınla ] (kapalı)    │
-│  Kurulum 2 / 5                                                    "3 adım kaldı."        │
-│  ① ✓ Değerlendirmeyi kur                              8 soru · 20 dk                     │ SetupSteps (PathSteps)
+│  ● Taslak · Son gün yok                                     ⋯   [ Kuruluma devam et ]   │ H7: dolu, etkin
+│  Kurulum 2 / 5 · 3 adım kaldı                                                            │
+│  ① ✓ Değerlendirmeyi kur                              8 soru · 20 dk                     │ SetupPath (PathSteps)
 │  ② ✓ Puan kartında çapalar                            3 yetkinlik                        │
-│  ③ ● Ekibi ata                                        Önerilir     [ Ekibe git ] outline│ şu anki adım
+│  ③ ● Ekibi ata                                        Yalnız sen varsın. Ekibe ekle ›    │ şu anki adım
 │  ④ ○ Adayın göreceğini önizle                         Önerilir                           │
 │  ⑤ ○ Yayınla                                                                             │
 ```
 
-- **Taslakta tek dolu eylem "Yayınla"**; kapalıyken nedeni yanında (mevcut kural) **ve** kurulum
-  listesinin şu anki adımında outline bir eylem durur, böylece "şimdi ne yapmalıyım?" sorusunun
-  cevabı kapalı butonda değil listede.
-- Yayınlandığında `inviteReady` benzeri küçük başarı anı değil, mevcut `ff-10` bildirimi kalır
-  (yayın sık olmayan ama önemli an: tek satır + "Aday davet et" dolu).
-- Huninin dördüncü ve beşinci kutusu (Değerlendirildi, Karar) plan 3'ün verisiyle dolar; o zamana
-  kadar gösterilmez (sus, gürültü değil: playbook 1.7).
-- **Kelime:** yayında ~58 → ~50; taslak ~55 → ~45.
+- **Taslakta dolu buton "Kuruluma devam et" (H7):** kurulum yolunun ilk bitmemiş adımını açar. Sürüm
+  3'teki kapalı "Yayınla" bu ekrandan kalkar; yayın yolun son adımıdır. Kapalı alımda dolu buton yok,
+  mevcut "Kapalı" notu ve sahip/yöneticiye "Yeniden aç ›" (ekip ve kurallar özeti).
+- **Kurulum yolu (`SetupPath`, G3'ün panel karşılığı):** adımlar `readinessRows`'tan gelir
+  (`src/app/(manager)/hiring/openings/[id]/readiness.ts:33`: değerlendirme, çapalar, ağırlıklar
+  yalnız açıkken, ekip, önizleme) + "Yayınla". Her adımın gittiği yer ve biçimi:
 
-### 4.6 Alım aç: rehberli kurulum (`/hiring/openings/new`)
+  | Adım | Nereye | Biçim | Bitti sayılır (mevcut kural) |
+  |---|---|---|---|
+  | Değerlendirmeyi kur | `/assessment/edit` (AI yolu ve içerik boşsa `/assessment/ai`) | Editör (4.7) | `STRUCTURE_PROBLEMS` boş |
+  | Puan kartında çapalar | gate'in kendi düzeltme bağlantısı (`rowHref`, `readiness.ts:68`): puan kartı ya da kütüphane yetkinliği | Editör / çapa akışı (M6, M9) | `ANCHOR_PROBLEMS` boş |
+  | Ağırlıklar (yalnız açıkken) | `/assessment/scorecard` | Tek karar adımı (M6) | `WEIGHT_PROBLEMS` boş |
+  | Ekibi ata | `/settings#team-members` | **Ekip akışı** (4.10) | üye > 0 ve aktif karar veren |
+  | Adayın göreceğini önizle | `/assessment/preview` | Tam ekran katman | önizleme işaretli (`markPreviewedAction`) |
+  | Yayınla | `/hiring/openings/[id]#publish` | **Yayın özeti** | - |
 
-Aday tarafındaki `StepScreen` (split) + `StepFooter`; panelin içinde, yan menü görünür kalır.
+  Ekip ve önizleme öneridir, yayını engellemez (mevcut kural, STATUS kararı 7); yolda "Önerilir"
+  der ve "Atla ›" ile bir sonraki adıma geçilebilir.
+- **Yol şeridi (`SetupPath` şerit varyantı):** taslak alımın sayfalarında (kurucu, puan kartı,
+  önizleme, ekip ve kurallar) sekmelerin altında tek satır: "Kurulum 2 / 5 · Sıradaki: Ekibi ata ›".
+  Yalnız metin bağlantısı; editörün kendi dolu butonuyla yarışmaz. `OpeningHeader`'da çizilir (tek
+  dosya, `opening-header.tsx`), editörlerin içine girmez.
+- **Yayın özeti (`#publish`, son adım):** `StepScreen` split. Solda "Yayına hazır mı?", sağda
+  özet satırları: yayımlanacak değerlendirme (v1 · 2 aşama · 8 soru · ~20 dk), ekip (2 değerlendirici,
+  karar veren), son gün, önizleme yapıldı mı; her satırda "Değiştir ›" ilgili adıma. Gate sorunu
+  varsa dolu "Yayınla" mevcut nedenle bekler (`describeProblem`, `[id]/page.tsx:141-149`) ve sorunun
+  adımına "Düzelt ›" durur. Dolu "Yayınla" → `publishOpeningAction` (değişmez; dönüş Genel bakışa,
+  mevcut `?published=` / `?publish=` bildirimleri ve metinleri aynen, `[id]/actions.ts:15`). Yayın
+  sonrası mevcut tek satır bildirim + dolu "Aday davet et".
+- **Yayındayken:** dikkat kartı (Görev 20) ve yeni **"Bu alımın kuralları"** kartı: ekip, son gün ve
+  geri dönüş, kimlik gizleme ve anket tek satırlık özetler; tek eylem "Kuralları değiştir ›" (ekip
+  ve kurallar özeti, 4.10). Değerlendirici kartı salt okur, eylem yok.
+- **`⋯` menüsü** (plan kararı 14, yalnız bağlantı): Önizle, Ekip ve kurallar, Kopyala (yalnız
+  `canWrite`, C9).
+- **Kelime:** yayında ~58 → ~62 (kurallar kartı eklendi, dört sekmeyi açma ihtiyacı kalktı); taslak
+  ~55 → ~45.
+
+### 4.6 Alım aç: rehberli akış (`/hiring/openings/new`)
+
+Sürüm 3'ün üç adımı W kurallarına oturur; plan Görev 19'un modeli (`new-opening-steps.ts`) aynen
+kalır, kabuğu `GuidedFlow` olur.
 
 ```
-│  Alım aç                                                                                 │
+│  Alım aç                                                                     Çık         │ FlowHeader
 │  ┌─────────────────────────────┐   ┌──────────────────────────────────────────────────┐ │
-│  │ Hangi pozisyon için?        │   │ [ Destek Uzmanı                              ⌄ ] │ │ adım 1
-│  │ (34/42)                     │   │  Profil: 3 yetkinlik · ağırlıklar eşit            │ │
-│  │ Kütüphanedeki bir pozisyonu │   │  ya da yeni bir ad yaz: "Destek Uzmanı II" ile   │ │
-│  │ seç ya da yeni bir ad yaz.  │   │  yeni pozisyon                                   │ │
+│  │ Hangi pozisyon için?        │   │ [ Destek Uzmanı                              ⌄ ] │ │ adım 1 (split)
+│  │ Kütüphanedeki bir pozisyonu │   │  Profil: 3 yetkinlik · ağırlıklar eşit            │ │
+│  │ seç ya da yeni bir ad yaz.  │   │                                                  │ │
 │  └─────────────────────────────┘   └──────────────────────────────────────────────────┘ │
-├▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭┤
-│  ‹ Alımlara dön                                         Adım 1 / 3   [ Devam et ]         │
-
- Adım 2 "İlan metnin var mı?": büyük metin alanı; altında "AI taslağı için 120 karakter yeter."
-   İkincil: "İlan metni olmadan devam et".
- Adım 3 "Nasıl başlayalım?": üç ChoiceCard, ikonlu ve tek satırlık açıklamalı:
-   [sparkles] İlan metninden AI taslağı · Önerilen (ilan metni yoksa nedenli kapalı)
-   [copy]     Önceki bir alımdan kopyala (seçilince altında alım seçici açılır)
-   [file]     Boş başla
-   Dolu buton: "Alımı oluştur". Sonra: AI seçildiyse AI taslağı akışına, değilse Genel bakışın
-   Kurulum listesine (4.5) gider.
+├▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭┤
+│  ‹ Alımlara dön                          Adım 1 / 3                    [ Devam et ]       │ StepFooter sticky
 ```
 
-- **Kelime:** tek sayfa ~74 → adım başına 20-30.
-- **Kalan:** pozisyon arama ve "yeni pozisyon" davranışı, `addJobAd` ("İlan metnini pozisyona
-  ekle") seçeneği adım 2'de onay kutusu olarak, tüm hata metinleri aynen.
-- **Neden sihirbaz burada da doğru:** alım açmak seyrek, her seferinde baştan düşünülen bir iş;
-  kurucu ise sık ve serbest düzenlenen bir iş, sihirbaz olmaz (4.7).
+| Adım | Soru | Gösterilen | "Devam et" bekler (mevcut neden) | Sunucu reddi bu adıma |
+|---|---|---|---|---|
+| 1 Pozisyon | "Hangi pozisyon için?" | Mevcut pozisyon seçici (`new-opening-form.tsx:109-171`), seçilince profil özeti (`profileSummary`) | `needPosition` | `POSITION_NAME_REQUIRED` (`needPosition`), `POSITION_NOT_FOUND` (`positionGone`) |
+| 2 İlan (yalnız yeni ad, plan kararı 13) | "İlan metnin var mı?" | Metin alanı, `jobAdHint`; ikincil "İlan metni olmadan devam et" | yok | - |
+| 3 Nasıl başlayalım | "Nasıl başlayalım?" | Üç `ChoiceCard` (AI, Kopyala, Boş); Kopyala seçilince kaynak seçici; ilan yoksa AI kartı nedenli kapalı (`startAiDisabled`) + kütüphane pozisyonunda "İlan metnini pozisyona ekle" bağlantısı. Altında özet satırı: "Destek Uzmanı · ilan metni var · AI taslağı" | `needCopySource` | `JOB_AD_REQUIRED` (`startAiDisabled`), `COPY_SOURCE_NOT_FOUND` (`copySourceGone`), `INVALID` / `FAILED` (`failed`) |
 
-### 4.7 Değerlendirme: kurucu, puan kartı, AI taslağı, önizleme
+- **Dolu buton:** adım 1-2 "Devam et", adım 3 "Alımı oluştur" (`createOpeningAction`, değişmez).
+  Sonra sunucunun `next`'i (`src/solutions/hiring/server/openings.ts:122`): AI ise AI taslağı, değilse
+  kurucu; ikisinde de yol şeridi "Kurulum 1 / 5" der.
+- **Çıkış:** "Çık" / "Kaydetmeden çık" (W7) Alımlar'a; adım 1'de "‹ Alımlara dön" footer'ın Geri
+  yuvasında.
+- **Özet adımı neden yok (H3):** üç adım ve son adım bütün kararları tek satırda zaten gösteriyor;
+  ayrı bir özet bir tık ekler, bir şey yakalamaz (playbook 3).
+- **Kelime:** tek sayfa ~74 → adım başına 20-30.
+
+### 4.7 Değerlendirme: kurucu editör kalır (H2), puan kartı, AI taslağı, önizleme
+
+**Karar: kurucu sihirbaz olmaz.** K12 "adım adım" istiyor; kurucu ise sık, serbest ve sırasız
+düzenlenen bir iş: aşama ekleme, soruyu taşıma, metni düzeltme, geri alma. Onu adımlara bölmek
+yöneticiyi her düzeltmede baştan yürütür, otomatik kayıt kuyruğunu ve 8 sn geri almayı (`builder/save-queue.ts`,
+`edit/actions.ts:119-193`) bir özet adımına bağlamaya zorlar ve "bir alanı değiştirmek için beş ekran"
+üretir: K12'nin "no brainer" sözünün tersi. K12'nin kurucudaki karşılığı üç şey:
+1. **Yol:** kurulumda kurucuya kurulum yolu getirir, yol şeridi "Kurulum 1 / 5 · Sıradaki: Puan
+   kartı ›" der (4.5). Yöneticinin "şimdi ne yapmalıyım?" sorusu kurucunun içinde de cevaplı.
+2. **Rehberli başlangıç zaten var:** "İlan metninden AI taslağı" kart kart ilerleyen bir akış
+   (öneriyi kabul et / atla); boş başlayan yönetici için "Soru ekle" tek karar: soru türü beş
+   `ChoiceCard` (Video, Ses, Yazılı, Seçmeli, Dosya; `addActivityAction(type)`).
+3. **Ekranda bir soru:** sağda yalnızca seçili soru, `LanguageTabs` ile tek dil, süre ve haklar tek
+   satırlık özetin arkasında (sürüm 3'teki gibi).
+
+Tel çerçeve sürüm 3'teki gibi (tek kat sekme, `[ Kurucu | Puan kartı ]`, dolu "Önizle"):
 
 ```
 │  Genel bakış   Adaylar   Değerlendirme   Ekip ve kurallar                                │
+│  Kurulum 1 / 5 · Sıradaki: Puan kartında çapalar ›                                       │ yol şeridi (yalnız taslak)
 │  [ Kurucu | Puan kartı ]                 ✓ Kaydedildi   [AI ile öner]   [ Önizle ]       │ tek dolu: Önizle
 │  ┌──────────────────────┐  ┌──────────────────────────────────────────────────────────┐  │
 │  │ 1 Tanışma     10 dk  │  │ (▭ Video)  Soru 1 / 3 · Tanışma                    ⋯     │  │
 │  │  ▭ Bize kendinden... │  │ [ TR | EN ● ]                                            │  │ LanguageTabs
-│  │  ◉ Hangisi CRM...    │  │ Soru metni                                               │  │
-│  │  🎙 Zor bir müşteri.. │  │ [ Bize kendinden bahset.                             ]   │  │
-│  │  + Soru ekle         │  │ Ölçtüğü yetkinlik: (İletişim ×) (+ ekle)                 │  │
-│  │ 2 Derinlik    10 dk  │  │ Süre ve haklar: 30 sn düşünme · 2 dk cevap · 1 tekrar  ⌄ │  │ Disclosure
-│  │  + Soru ekle         │  │ ┌ SADECE EKİP GÖRÜR (vault) ────────────────────────────┐ │  │ mevcut koyu kasa
-│  │ + Aşama ekle         │  │ │ Amaç · iyi cevap örnekleri · kırmızı bayraklar       │ │  │
-│  │ 2 aşama · 20 dk      │  │ └──────────────────────────────────────────────────────┘ │  │
+│  │  + Soru ekle         │  │ Soru metni                                               │  │
+│  │ + Aşama ekle         │  │ Ölçtüğü yetkinlik: (İletişim ×) (+ ekle)                 │  │
+│  │ 2 aşama · 20 dk      │  │ Süre ve haklar: 30 sn düşünme · 2 dk cevap · 1 tekrar  ⌄ │  │ Disclosure
 │  └──────────────────────┘  └──────────────────────────────────────────────────────────┘  │
-│  Soru kontrolü: 2 öneri  Göster ›                                         (mevcut çubuk) │
 ```
 
-- **Sekme katı:** "Özet" kalkar (içeriği Genel bakıştaki "Yayındaki değerlendirme" satırı ve
-  kurucunun sol rayının altındaki "2 aşama · 20 dk" özeti); "AI taslağı" sağ üstte outline eylem,
-  açınca tam sayfa akış (öneri kartları birer birer, "3 / 7 öneri incelendi", `StepFooter`'da
-  "Kabul et" / "Atla"); "Önizleme" dolu eylem, tam ekran katman, üst çubukta "Önizlemeden çık".
-- **Önizleme (K2 etkisi):** çubuktaki "Mobil görünüm" anahtarı kaldırılır (aday telefonda
-  yapamıyor); yerine "1024 genişlik" anahtarı (aday için en küçük masaüstü). Ayrıca telefon
-  "bilgisayardan aç" ekranı önizlemede bir adım olarak görülebilir.
-- **Kurucu:** TR/EN yan yana alanlar `LanguageTabs` ile tek alana iner (görünen alan sayısı yarıya);
-  süre, düşünme, tekrar hakkı, zorunluluk tek satırlık özetin arkasında açılır alan. Aşama taşıma ve
-  silme eylemleri `⋯` menüsünde (silme 8 sn geri alma ile, mevcut).
-- **Puan kartı:** matris aynen (yoğun, doğru); "Ağırlıklar" kartı tek satır özet + açılır alan
-  ("Eşit: genel puan düz ortalama"); "Karar kuralı" `IconRow` (`lock` ikonu, ayar değil bilgi).
-  Taslak/yayındaki seçici sağ üstte kalır. "Puan kartını kaydet" yerine `DirtyBar`.
-- **Kelime:** sekme etiketleri 9 → 4 + 2; kurucu düzenleyicisinde görünen alan ~7 → ~4.
+- **Puan kartı:** matris aynen (yoğun, doğru; editör). İki çok alanlı iş akışa döner:
+  **Ağırlıklar** tek karar adımı ("Yetkinlikler eşit mi önemli?": `Eşit` / `Kendim ayarlayacağım`;
+  ikincisi aynı adımda yüzde alanlarını ve canlı toplamı açar; kaydet `saveDraftWeightsAction`,
+  `scorecard/actions.ts:49`, ret kodları `scorecard/result.ts:18-33` aynen, `NOT_100` toplamın
+  yanında); **Çapalar** (bir yetkinliğin 1-5 seviyesi) bugünkü `anchor-sheet.tsx` Sheet'inde,
+  kütüphanedeki çapa akışının (4.11) aynısı: seviye 1 → 3 → 5 → ara seviyeler → özet → "Çapaları
+  kaydet" (`saveAnchorsAction`, `:93`; `LIBRARY_FORBIDDEN`, `ARCHIVED`, `ANCHORS_REQUIRED` mevcut
+  cümleleriyle). Yayındaki ağırlık değişikliği (gerekçeli, `addWeightSetAction` `:68`) aynı adımın
+  sonuna "Neden değiştiriyorsun?" alanı ekler.
+- **AI taslağı:** sağ üstte outline eylem; mevcut akış (öneri kartları birer birer) aynen, görünümü
+  M6'da `StepFooter` ile.
+- **Önizleme:** dolu eylem, tam ekran katman; "Mobil görünüm" yerine "1024 genişlik" (K2).
+- **Dilim:** M6, sonraki plan (H5). Plan 2b'de kurucuya yalnızca yol şeridi gelir (M5, `OpeningHeader`
+  üzerinden; kurucunun dosyalarına dokunulmaz).
 
 ### 4.8 Adaylar sekmesi, aday detayı ve inceleme (tasarım burada, **uygulama plan 3**, K5)
 
 Plan 3 bu ekranları yeniden kuruyor (HIRING-UX 5.12-5.17); davranış oradaki gibi, görsel katman
-bu belgeden. Plan 3 başlamadan önce bu bölüm plan 3'ün girdisi olarak verilir.
+bu belgeden. Plan 3 başlamadan önce bu bölüm plan 3'ün girdisi olarak verilir. **K12 notu:** plan
+3'ün çok alanlı işleri W kurallarına uyar: "Tekrar iste" (HIRING-UX 5.16) Sheet içinde iki adım
+(ne tekrar edilecek → neden) + özet; karar rayı zaten tek karar (İlerlet / Beklet / Devam etmiyor) +
+gerekçe ve tek dolu "Kararı kaydet", akış değil. Adaylar tablosu yoğun kalır (P5), kontrol görünümü
+değildir: alımın kontrol görünümü Genel bakıştır (4.5).
 
 **Adaylar sekmesi (`/hiring/openings/[id]/candidates`):**
 
@@ -946,142 +1170,234 @@ solda tek kat sekme `Özet · Cevaplar · Değerlendirmeler · Kayıt`; sağda y
 
 Yeni olan yalnızca görsel dil: puan segmentleri `ChoiceCard` kare varyantı (seçili = aktif durum),
 çapanın tam metni segmentin altında, "Sadece ekip görür" `Disclosure`, ilerleme `QuestionProgress`.
-Klavye kısayolları, bağımsızlık ve bütünlük kuralları HIRING-UX 5.14'teki gibi.
+Klavye kısayolları, bağımsızlık ve bütünlük kuralları HIRING-UX 5.14'teki gibi. İnceleme ekranı
+zaten soru soru ilerleyen bir akıştır; K12 burada ek bir şey istemez.
 
 **Karşılaştır (plan 3):** HIRING-UX 5.15 aynen; tablo yoğun kalır (P5), görünüm seçici
 iki parçalı seçici, boş durum `EmptyState`.
 
-### 4.9 Aday davet et (Sheet ve `/hiring/invite` sayfası)
+### 4.9 Aday davet et: rehberli akış (Sheet ve `/hiring/invite` sayfası)
+
+Davetin işi "adayı 30 saniyede davet edip linki göndermek" (1. bölüm, Deniz). Akış bu yüzden kısa:
+**kişi adımı + özet**; dil ve son gün özette varsayılanlarıyla durur (G8), değiştirmek isteyen
+"Değiştir" ile kendi adımını açar.
 
 ```
- Form                                        Hazır
-┌──────────────────────────────────┐        ┌──────────────────────────────────┐
-│ Aday davet et                  ✕ │        │ [inviteReady çizimi 96px]        │
-│ Ürün Tasarımcısı · Kontrol       │        │ Link hazır                       │
-│ [ Tek aday | Liste yapıştır ]    │        │ Elif Kaya için · son gün 25 Eki  │
-│ Ad soyad                         │        │ ┌──────────────────────────────┐ │
-│ [                              ] │        │ │ https://…/a/Rl7fS-f…         │ │
-│ E-posta                          │        │ └──────────────────────────────┘ │
-│ [                              ] │        │ [        Linki kopyala         ] │
-│ Adayın dili                      │        │ Hazır mesajı gör               ⌄ │
-│ [ Türkçe ✓ ] [ English ]         │        │ Bu link bir daha gösterilmez;    │
-│ ▦ Son gün 19 Eki       Değiştir  │        │ kapatmadan önce kopyala. ...     │
-│ ● Ekipte 1 değerlendirici var,   │        │ Başka aday davet et · Adaylara git│
-│   kural 2 istiyor.   Ekibe ekle  │        └──────────────────────────────────┘
-├──────────────────────────────────┤
-│ [       Linki oluştur          ] │
-│  Adayın adını yaz.               │
-└──────────────────────────────────┘
+ 1 Kişi                                 2 Özet                                Hazır
+┌──────────────────────────────────┐   ┌──────────────────────────────────┐  ┌──────────────────────────────────┐
+│ Aday davet et              Çık ✕ │   │ Aday davet et              Çık ✕ │  │ [inviteReady çizimi 96px]        │
+│ Ürün Tasarımcısı                 │   │ Özet                             │  │ Link hazır                       │
+│ Kimi davet ediyorsun?            │   │ Kişi   Elif Kaya ·  Değiştir     │  │ Elif Kaya için · son gün 25 Eki  │
+│ [ Tek aday | Liste yapıştır ]    │   │        elif@ornek.test           │  │ ┌──────────────────────────────┐ │
+│ Ad soyad                         │   │ Dil    Türkçe         Değiştir   │  │ │ https://…/a/Rl7fS-f…         │ │
+│ [ Elif Kaya                    ] │   │ Son gün 19 Eki (alımın) Değiştir │  │ └──────────────────────────────┘ │
+│ E-posta                          │   │ ● Ekipte 1 değerlendirici var,   │  │ Hazır mesajı gör               ⌄ │
+│ [ elif@ornek.test              ] │   │   kural 2 istiyor.  Ekibe ekle › │  │ Bu link bir daha gösterilmez;    │
+├▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭┤   ├▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬┤  │ kapatmadan önce kopyala. ...     │
+│ Adım 1 / 2         [ Devam et ]  │   │ ‹ Geri          [ Linki oluştur ]│  │ [        Linki kopyala         ] │
+│  Adayın adını yaz.               │   │                                  │  │ Başka aday davet et · Adaylara git│
+└──────────────────────────────────┘   └──────────────────────────────────┘  └──────────────────────────────────┘
 ```
 
-- **Kelime:** form 75 → **38**; hazır ~99 → **35** (mesaj metni açılır alanda, "Mesajı kopyala"
-  orada).
-- **Değişenler:** `lead` kaldırılır (bir kez gösterilme bilgisi hazır ekranında); `panelShort`
-  (32 kelime) tek satır dot + metin + "Ekibe ekle"; mod seçimi iki parçalı seçici; dil iki kart;
-  birincil buton altta yapışkan (`StepFooter` sheet varyantı).
-- **`/hiring/invite` sayfası:** aynı form `StepScreen` single içinde; alım seçilmeden "Son gün"
-  satırı değer yerine "Önce alım seç" der (bugün yalnızca "Değiştir" görünüyor, `p2t21-25`).
-- **Kalan:** "bir daha gösterilmez" uyarısı tam metin; erken doğrulama nedenleri; çoklu yapıştırma
-  ön izlemesi (yalnızca kabuğu değişir).
+| Adım | Soru | Gösterilen | Bekler (mevcut `inviteReason`, `form-rules.ts:18`) | Sunucu reddi bu adıma (`InviteRefusal`, `invitations.ts:88-98`) |
+|---|---|---|---|---|
+| 0 Alım (yalnız sayfada ve birden çok davet edilebilir alım varsa) | "Hangi alım için?" | `ChoiceCard` satırları (alım adı, son gün) | `noOpening` | `NOT_FOUND` |
+| 1 Kişi | "Kimi davet ediyorsun?" | İki parçalı seçici (Tek aday / Liste yapıştır); tek adayda ad ve e-posta; listede yapıştırma alanı ve satır önizlemesi (mevcut) | `name`, `email`; listede `noRows`, `rows` | `NAME`, `EMAIL`, `DUPLICATE` (mevcut "yine de davet et" yolu adımın altında, `allowDuplicate`) |
+| Dil (özetten) | "Aday hangi dilde görsün?" | İki kart: Türkçe / English (varsayılan Türkçe) | yok | - |
+| Son gün (özetten) | "Link ne zamana kadar açık kalsın?" | `deadlineRow` (plan Görev 21): alımın günü varsayılan; tarih alanı | `deadline` | `DEADLINE_INVALID`, `DEADLINE_PAST` |
+| 2 Özet | - | Kişi, dil, son gün satırları ve "Değiştir"; ekip kuralın altındaysa dot + metin + "Ekibe ekle ›" (`panelShortfall`); alımla ilgili engeller | `notPublished`, `noEvaluators`, `openingDeadline` | `CLOSED`, `NOT_PUBLISHED`, `OPENING_DEADLINE_PASSED`, `NO_EVALUATORS`, `FORBIDDEN`, `FAILED`: özette mevcut `err*` metniyle |
 
-### 4.10 Ekip ve kurallar (`/hiring/openings/[id]/settings`)
+- **Dolu buton:** adım 1 "Devam et", özette "Linki oluştur" (`inviteCandidateAction` ya da
+  `inviteManyAction`, değişmez). Hazır ekranında dolu "Linki kopyala"; hazır mesajı `Disclosure`
+  arkasında ("Mesajı kopyala" orada); "Başka aday davet et" (akışı adım 1'e döndürür, alım ve dil
+  korunur) ve "Adaylara git" (C13) metin.
+- **Tık sayısı:** ad ve e-posta yazılır, "Devam et", "Linki oluştur", "Linki kopyala": 3 tık
+  (sürüm 3 hedefi 4 tıktı). Görev 22'nin "30 sn / 4 tık" ölçümü aynen geçerli.
+- **Kabuk:** alımın sayfalarında `Sheet` (480px) içinde `GuidedFlow` (StepFooter Sheet'in altına
+  yapışık); `/hiring/invite` sayfasında tam `GuidedFlow`, ilk satırı alımın adı (C19). Sheet kilidi
+  (`sheetLocked`, `form-rules.ts:60`) aynen: istek sürerken ya da link gösterilirken Escape ve dışarı
+  tık kapatmaz.
+- **Kalan:** "bir daha gösterilmez" uyarısı tam metin; çoklu yapıştırma ön izlemesi ve satır
+  sonuçları (yalnızca kabuğu değişir); `lead`, `panelShort`, `onceNote*`, `err*`, `reason*` metinleri.
+- **Kelime:** adım 1 ~20, özet ~30, hazır ~35 (sürüm 3: form 38, hazır 35).
+
+### 4.10 Ekip ve kurallar: özet + kısa akışlar + kapat (`/hiring/openings/[id]/settings`)
+
+Bugün on alan tek sayfada, tek "Kaydet"le (4.1). Sürüm 4'te sekme bir **kuralların özeti**dir
+(salt okunur kontrol görünümü); her grup kendi kısa akışıyla değişir. Akışlar aynı sayfada, adres
+çubuğundaki hash ile açılır (W3; yeni rota yok, menü ve rota testleri değişmez).
 
 ```
+ Özet (sekmenin varsayılanı)
 │  Genel bakış   Adaylar   Değerlendirme   Ekip ve kurallar                                │
-│  ┌ Ekip ─────────────────────────────────────────────────────────────────────────────┐   │
-│  │ (KA) Kadir Ay · Sahip   (EY) Ece Yıldız · Değerlendirici   [ + Değerlendirici ekle ]│   │ avatar listesi
-│  │ Her adayı 2 kişi değerlendirir.                                          Değiştir  │   │
-│  └───────────────────────────────────────────────────────────────────────────────────┘   │
-│  ┌ Aday iletişimi ───────────────────────────────────────────────────────────────────┐   │
-│  │ Son gün [19.10.2026]   Geri dönüş sözü [7] gün   İletişim [deniz@ornek.test]       │   │
-│  └───────────────────────────────────────────────────────────────────────────────────┘   │
-│  [lock] Değerlendiriciler birbirinin puanını kendi puanlarını gönderince görür.          │ IconRow, ayar değil
-│  Gelişmiş kurallar                                                                    ⌄  │ Disclosure: en az değ.
-│                                                                                          │ sayısı, kimlik gizleme,
-│  Alımı kapat  (metin eylem; 8 sn geri alma)                                              │ anket
-├──────────────────────────────────────────────────────────────────────────────────────────┤
-│  2 değişiklik kaydedilmedi                               Geri al   [ Kaydet ]            │ DirtyBar (yalnız değişince)
+│  Kurulum 3 / 5 · Sıradaki: Ekibi ata ›                                (yalnız taslakta)  │
+│  ┌──────────────────────────────────────────────────────────────────────────────────────┐ │
+│  │ [users]  Ekip            Kadir Ay (karar veren) · Ece Yıldız          Değiştir ›     │ │ SummaryRows
+│  │                          Her adayı 2 kişi değerlendirir.                             │ │
+│  │ [mail]   Aday iletişimi  Son gün 19 Eki · 7 günde dönüş · deniz@ornek  Değiştir ›     │ │
+│  │ [eye-off] Adil değerlendirme  Kimlik açık · bitiş anketi açık          Değiştir ›     │ │
+│  │ [lock]   Değerlendiriciler birbirinin puanını kendi puanlarını gönderince görür.     │ │ IconRow, ayar değil
+│  │ [tag]    Alımın adı      Ürün Tasarımcısı · Ekim                       Değiştir ›     │ │
+│  └──────────────────────────────────────────────────────────────────────────────────────┘ │
+│  Alımı kapat                                                                             │ metin eylem
+│  Kapalı alıma yeni davet yapılamaz; değerlendirme ve kayıtlar okunur kalır.              │ closeBody (mevcut)
+
+ Ekip akışı, adım 1 (#team-members)
+│  Ekip ve kurallar · Ekip                                                    Çık          │ FlowHeader
+│  Kim değerlendirecek?                                                                    │
+│  Her adayı burada seçtiklerin değerlendirir.                                             │
+│  [✓ (KA) Kadir Ay · Sahip ] [✓ (EY) Ece Yıldız · Değerlendirici ] [ (MÖ) Mert Öz · ... ]│ ChoiceCardGroup multi
+├▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭┤
+│  ‹ Özete dön                         Adım 1 / 4                         [ Devam et ]      │
 ```
 
-- **Kelime:** ~150 → ~70 görünen (gelişmiş kurallar kapalıyken).
-- **Kalan:** anket açıklaması (ekibin neyi gördüğü, 5 cevap kuralı) açılır alanda aynen; "Alımı
-  kapat" onay diyaloğu olmadan, geri alma şeridiyle (RULES kural 4).
+**Akışlar** (hepsi `saveOpeningRulesAction(openingId, değerlerin tamamı)`, `settings/actions.ts:37`;
+dokunulmayan alanlar yüklendiği gibi geri gider, eylem ve tam değiştirme davranışı bugünküyle aynı):
 
-### 4.11 Daha hafif notlar
+| Akış (hash) | Adımlar: soru · alan · bekler | Özet |
+|---|---|---|
+| **Ekip** (`#team-members`, `#team-decider`, `#team-min`, `#team-review`) | 1 "Kim değerlendirecek?" · `memberIds`, çoklu kart; pasif kişi listede yalnızca ekipteyse, çıkarılabilir, eklenemez (`opening-settings-form.tsx:126-135`) · `MEMBER_UNKNOWN`. 2 "Kararı kim verecek?" · `decisionMakerId` tekli kart (yalnızca karar verebilenler; artık karar veremeyen kayıtlı kişi işaretli ve seçilemez, `:69-80`), altında "Yedek karar veren" açılır alanı `backupDecisionMakerId` ("Yedek yok" varsayılan) · `DECISION_MAKER_REQUIRED`, `DECISION_MAKER_ROLE`, `BACKUP_SAME`, `BACKUP_ROLE`. 3 "Her adayı kaç kişi değerlendirsin?" · `minEvaluations` 1-5 kare kart; ekip küçükse `minEvaluationsShort`, altında `minEvaluationsOverride` · `MIN_EVALUATIONS` | 4 Özet, "Kaydet" |
+| **Aday iletişimi** (`#contact-deadline`, `#contact-feedback`, `#contact-email`, `#contact-review`) | 1 "Son gün ne zaman?" · `deadline` iki kart: "Son gün yok" / "Bir gün seç" + tarih (geçmiş gün yalnız değişirse reddedilir, `opening-rules.ts:62-66`), `deadlineHint` saat dilimiyle · `DEADLINE_INVALID`, `DEADLINE_PAST`. 2 "Adaya kaç günde dönmeyi söz veriyorsun?" · `feedbackDays` 1-60 sayı alanı + 3 / 7 / 14 hızlı seçim, `feedbackHint` · `FEEDBACK_DAYS`. 3 "Aday sorusunu kime yazsın?" (isteğe bağlı) · `candidateContactEmail` · `EMAIL` | 4 Özet, "Kaydet" |
+| **Adil değerlendirme ve anket** (`#fair-blind`, `#fair-survey`, `#fair-review`) | 1 "Değerlendiriciler adayın kimliğini görsün mü?" · `blindMode` iki kart (Görsün / Gizle), `blindModeHint` adımın açıklaması. 2 "Aday bitince kısa bir anket görsün mü?" · `finishSurveyEnabled` iki kart, `finishSurveyHint` | 3 Özet (+ kilitli kural `IconRow`, `independence` / `independenceLocked`), "Kaydet" |
+| **Alımın adı** (`#name`) | Tek adım (H2) "Alımın adı ne olsun?" · `name` · `NAME_REQUIRED`; kayıt sonrası başka alımda aynı ad varsa mevcut `savedRenamed` | Ayrı özet yok, dolu "Kaydet" adımda |
 
-- **Kütüphane, yetkinlik detayı:** `LanguageTabs` (TR | EN); çapalar 1-5 dikey bir "merdiven"
-  (`AnchorLadder`: 1, 3, 5 zorunlu işaretli, 2 ve 4 açık gri "isteğe bağlı"); "AI ile çapa öner"
-  outline; "Nerede kullanılıyor" sağ kartı aynen; "Arşivle" `⋯` menüsünde.
-- **Kütüphane, pozisyonlar ve yetkinlikler listesi:** tablolar kalır (kütüphane bir başvuru listesi);
-  boş durum `emptyLibrary` çizimiyle; "Arşivdekiler (n)" çipi aynen.
-- **Ayarlar:** tek sayfa kalır ama solda yapışkan bölüm gezintisi (Organizasyon · Kullanıcılar ·
-  Roller · Denetim); her bölümün kendi `DirtyBar`'ı yok, sayfa tek `DirtyBar`. Denetim kaydı ayrı
-  sayfada yoğun tablo (P5), değişmez. Kullanıcı davet sayfası `StepScreen` single.
-- **Giriş ve hesap kurulumu:** ortalanmış tek kart, Kademe adı, tek dolu buton; çizim **yok**
-  (güvenlik ekranı sade kalır). Hata metinleri aynen.
+- **Özet adımı (P8):** satırlar o akışın kararları; değişen satırın yanında "değişti" (ink, kalın
+  değil, dot yok); dolu "Kaydet" değişiklik yokken "Değişiklik yok." nedeniyle bekler. Kayıt sonrası
+  sekmenin özetine döner, üstte mevcut `saved` / `savedRenamed` cümlesi `role="status"`.
+- **Sorun → adım (W8):** `NAME_REQUIRED` → ad; `MEMBER_UNKNOWN` → ekip 1; `DECISION_MAKER_*`,
+  `BACKUP_*` → ekip 2; `MIN_EVALUATIONS` → ekip 3; `DEADLINE_*` → iletişim 1; `FEEDBACK_DAYS` →
+  iletişim 2; `EMAIL` → iletişim 3. Başka bir akışın alanında sorun varsa (bugün kaydedilmiş geçersiz
+  bir değer, örn. pasifleşmiş karar veren) kayıt o akışın ilgili adımını açar ve mevcut cümleyi
+  gösterir. Kodlar `NOT_FOUND`, `FORBIDDEN`, `CLOSED`, `INVALID` (`settings/result.ts:11-14`) ve
+  yakalanmamış hata (`saveFailed`) özette, mevcut `err*` cümlesiyle. Saf fonksiyon `rulesStepOf(problem)`,
+  testli.
+- **Alımı kapat (akış değil):** özetin altında metin eylem "Alımı kapat" ve altında mevcut tek cümle
+  (`hiringSettings.closeBody`). Tıklanınca hemen kapanır (`closeOpeningAction`, `:62`), sayfa
+  `?closed=1` ile döner ve 8 sn `UndoStrip` "Alım kapatıldı." + "Geri al" (`reopenOpeningAction`,
+  `:75`). Onay diyaloğu yok (RULES kural 4). Kapalı alımda özet salt okunur, dolu "Yeniden aç".
+- **Değerlendirici:** özeti salt okur (bugünkü kural: yalnızca alımdaki kişileri görür,
+  `settings/page.tsx:39-43`), "Değiştir" ve "Alımı kapat" yok.
+- **Kurulum yolundan gelince:** ekip akışının özetindeki "Kaydet" sonrası yol şeridinin sıradaki
+  adımına ("Adayın göreceğini önizle") bir metin bağlantısı görünür; otomatik yönlendirme yok
+  (kaydın sonucu görülsün).
+- **Kelime:** özet ~70 görünen (sürüm 3 sayfası ~150); akış adımı başına 15-30.
+
+### 4.11 Kütüphane, Ayarlar, kullanıcı davet, giriş (M9, M10; sonraki plan)
+
+Hepsi W kurallarına uyar; tasarım burada, uygulama sonraki planda (H5).
+
+- **Pozisyon ekle (`/library/positions/new`):** 1 "Pozisyonun adı ne?" (`name`, `nameRequired`) →
+  2 "Hangi ekipte?" (isteğe bağlı, "Atla") → 3 "İlan metnin var mı?" (isteğe bağlı, `jobDescriptionHint`)
+  + özet satırı; dolu "Pozisyonu oluştur" (`createPositionAction`, `src/app/(manager)/library/actions.ts:126`,
+  değişmez; başarıda detay sayfasına yönlendirir; ret `NAME_REQUIRED` → adım 1, diğerleri
+  `saveFailed`).
+- **Pozisyon detayı = pozisyonun kontrol görünümü:** satırlar Ad, Ekip, Kısa tanım, İlan metni,
+  Beceriler, Diller, Yetkinlik profili (n yetkinlik · ağırlıklar); her satır "Değiştir ›" ile tek
+  adımlık düzenleme, sonra özet ve dolu "Kaydet" (`savePositionAction` `:135`; `PositionWriteError`
+  `src/server/library-write.ts:288`: `NAME_REQUIRED` → ad, `COMPETENCY` → profil, `ARCHIVED` /
+  `NOT_FOUND` özette). Yetkinlik profili adımı tek karar ("Bu pozisyon hangi yetkinlikleri ister?"):
+  satır ekle / çıkar, ağırlık ve beklenen seviye o adımın içinde (liste editörü; `profileLimit`,
+  `weightInvalid` aynen). Sayfanın dolu eylemi "Bu pozisyonla alım aç" (`/hiring/openings/new?position=`,
+  mevcut ön seçim, `new/page.tsx:26`); "Arşivle" `⋯` menüsünde, mevcut arşiv ve geri alma akışıyla.
+- **Yetkinlik ekle:** 1 "Yetkinliğin adı ne?" (`LanguageTabs`, `nameRequired`) → 2 "Ne ölçer?"
+  (tanım) + özet satırı; dolu "Yetkinliği oluştur" (`createCompetencyAction` `:60`; başarıda detaya
+  yönlendirir). Detayda ilk eksik iş "Çapaları yaz ›".
+- **Yetkinlik detayı = kontrol görünümü + çapa akışı:** satırlar Ad, Tanım, Çapalar (`3 / 3 zorunlu ·
+  2 / 2 isteğe bağlı`), Etiketler, "İncelendi" durumu. **Çapa akışı:** 1 "1. seviye neye benzer?" →
+  2 "3. seviye?" → 3 "5. seviye?" → 4 "Ara seviyeler" (2 ve 4, isteğe bağlı, "Atla") → 5 Özet, dolu
+  "Kaydet" (`saveCompetencyAction` `:69`). Adım 1'de outline "AI ile çapa öner" (`draftAnchorsAction`
+  `:160`): öneri bütün seviyeleri doldurur, yönetici adım adım okur ve düzeltir (öneri yazılmaz,
+  mevcut kural). Ret: `ANCHORS_REQUIRED` → ilk eksik seviyenin adımı (`anchorRequired`), `NAME_REQUIRED`
+  → ad, `TOO_MANY_TAGS` → etiketler, `ARCHIVED` → özette `archivedNoSave`. `AnchorLadder` özetteki
+  merdivendir (1, 3, 5 zorunlu işaretli). Puan kartındaki çapa Sheet'i aynı akışı kullanır (4.7).
+- **Skala etiketleri (`ScaleForm`):** beş kısa etiket tek karardır ("Seviyelerin adları"); tek
+  adımlık düzenleme, `LanguageTabs`, dolu "Kaydet" (`saveScaleAction` `:103`). Akış değil (H2).
+- **Kütüphane listeleri:** yoğun tablo kalır (P5); boş durum `emptyLibrary`; "Arşivdekiler (n)" çipi
+  aynen.
+- **Ayarlar (`/settings`):** organizasyon bölümü özet satırları (Ad, Medya saklama n gün, Aday kaydı
+  saklama n gün); her satır tek adımlık düzenleme + "Kaydet" (`saveOrgSettings`,
+  `src/app/(manager)/settings/actions.ts:31`; FormData ile diğer iki değer gizli alan olarak aynen
+  gider; `?error=name` ad adımını, `?error=retention` ilgili saklama adımını mevcut metniyle açar).
+  Kullanıcılar ve roller yoğun tablo kalır (rol değişikliği mevcut 8 sn geri almalı). Denetim kaydı
+  değişmez. Solda yapışkan bölüm gezintisi (sürüm 3) kalır.
+- **Kullanıcı davet et (`/settings/users/new`):** 1 "Kimi davet ediyorsun?" (ad) → 2 "E-postası ne?"
+  → 3 "Rolü ne olsun?" (üç `ChoiceCard`, açıklamaları mevcut `settings.roleHelp.*`) + özet satırı;
+  dolu "Davet linkini oluştur" (`inviteUser`, `:176`, değişmez). Ret: `NAME_REQUIRED` → 1;
+  `EMAIL_INVALID`, `EMAIL_TAKEN` → 2; `ROLE_INVALID` → 3. Hazır ekranı link bir kez, mevcut
+  `noEmailSent`, `readyHint`, "Başka kişi davet et".
+- **Giriş ve hesap kurulumu:** ortalanmış tek kart, tek dolu buton, çizim yok; metinler aynen.
 
 ### 4.12 Sınavın yönetici ekranları (düşük öncelik, canlı)
 
 Sınav canlıda (MEMORY: 2026-09-30'dan beri main ve prod). Bu ekranlar için yalnızca **tutarlılık**
-önerilir, yeniden tasarım değil:
+önerilir, yeniden tasarım değil; K12 sınavın formlarına **uygulanmaz** (K6'nın ruhu: canlı sınav
+değişmez):
 
 - Ortak kabuk (P1 yan menü ikonları), `PanelHeader` (P2), `EmptyState` (P4) ve durum sözlüğü (P9)
   ortak bileşenlerden gelir; bunlar değişince sınav ekranları **kendiliğinden** değişir. Her biri
   için bayrak: M1 sınav ekranlarına dokunur.
 - Sınava özgü içerik (öğrenci sonucu sekmeleri, AI önerisi onayı, bütünlük, soru bankası düzenleyicisi,
-  sınav oluşturma formu) bu planda **değişmez**. Sınav metinlerinin "siz" hitabı değişmez (açık soru 3).
+  öğrenci ve sınav oluşturma formları) bu planda **değişmez**. Sınav metinlerinin "siz" hitabı
+  değişmez (K9). `GuidedFlow` sınav sayfalarında kullanılmaz.
 - K8: sınavın aday tarafındaki "Genelde aynı gün dönülür" / "e-posta ile dönülecek" metinleri
-  şimdilik kalır; e-posta ve talep işleme altyapısı sonra kurulacak.
+  şimdilik kalır.
 - E1 dilimi (isteğe bağlı, en son): sınav listelerinin boş durumları ve sayfa başlıkları, yalnızca
-  sınav penceresi dışında ve önce/sonra ekran görüntüsü karşılaştırmasıyla.
+  sınav penceresi dışında ve önce/sonra ekran görüntüsü karşılaştırmasıyla. Sınav formlarının
+  akışa dönmesi ayrı bir kullanıcı kararı ister (7. bölüm, soru 8).
 
 ---
 
 ## 5. Yeni paylaşılan bileşenler
 
-Hepsi `src/components/hiring/visual/` altında (işe alıma özel); ikinci bir çözüm isterse `ui/`'ye
-taşınır. Kademe-owned dosyalar `// kademe-owned` başlığı taşır (RULES.md shadcn bölümü).
+**Yer (sürüm 4 düzeltmesi):** paylaşılan görsel parçalar `src/components/visual/` altındadır (plan
+kararı 1, hüküm C12: ESLint'in çekirdek kuralı `eslint.config.mjs:11-35` çekirdek dosyaların
+`@/components/hiring/*` içe aktarmasını yasaklıyor ve Bugün çekirdek). Sürüm 3'teki
+`src/components/hiring/visual/` yolu eskidi. Aday ekranlarına özel parçalar (kapı, ekranlar)
+`src/components/hiring/candidate/`, panel parçaları `src/components/panel/` ve işe alıma özel
+olanlar `src/components/hiring/`. Kademe-owned dosyalar `// kademe-owned` başlığı taşır (RULES.md
+shadcn bölümü).
 
-| Bileşen | Props (öz) | Yerini aldığı / kullanıldığı yer |
-|---|---|---|
-| `classifyDevice` (saf fonksiyon) | `({ ua, chMobile, coarse, anyFine, hasDisplayMedia, maxTouchPoints }) => "desktop" \| "phone" \| "tablet" \| "unknown"` | Yeni. Sunucuda `headers()`'tan (UA, `Sec-CH-UA-Mobile`), istemcide `matchMedia` ve `navigator`'dan çağrılır. Dil sınavının `isMobileDevice`'ına dokunmaz. |
-| `DesktopGate` | `{ serverClass; children }`; `phone` ise sunucuda doğrudan `DesktopOnlyScreen`; `unknown`/`tablet` ise istemci karar verir; `desktop` ise `children` + `NarrowWindowStrip` | Yeni. `src/app/a/[token]/` işe alım dalının layout'unda, sorulardan ve rızadan önce. |
-| `DesktopOnlyScreen` | `{ token; facts: { minutes; deadline }; emailOption?: boolean }` (aşama adı, soru **almaz**) | Yeni (3.0). |
-| `NarrowWindowStrip` | `{}`; `resize` dinler, < 1024'te görünür | Yeni. Engel değil. |
-| `StepFooter` | `{ primary: ReactNode; reason?: string; secondary?: ReactNode; back?: { label; onClick }; progress?: ReactNode }` | `action-bar.tsx` (`ActionBar`). Görünüm alanına yapışık; içerik altına eşit `padding-bottom`. |
-| `JourneyProgress` | `{ steps: number; current: number; label: string }` (yalnızca sayı; aşama adı **almaz**) | Yeni; `StepFooter`'ın `progress` yuvasında. `<ol>` + `aria-current="step"` + görünür "Hazırlık · Adım 1 / 4". |
-| `QuestionProgress` | `{ total: number; current: number }` | `stage-runner.tsx` içindeki sürekli çubuk. |
-| `StepScreen` | `{ layout: "split" \| "single"; illustration?: IllustrationName; kicker?; title; titleRef; lead?; aside?: ReactNode; children }` | `landing.tsx`, `device-check.tsx`, `practice.tsx`, `stage-intro.tsx`, `done.tsx` içindeki elle kurulan başlık blokları. `split` < 1000px'te tek sütuna iner. |
-| `Disclosure` | `{ label; icon?: LucideIcon; defaultOpen?: boolean; variant: "row" \| "inline"; children }` | `Collapsible`'ın landing'deki iki kullanımı, not alanları, "Hâlâ olmuyor mu?", anket yorumu, davet mesajı. |
-| `IconRow` | `{ icon: LucideIcon; title; detail?; tone?: "default" \| "negative" }` | Onay listesi, aşama kuralları, cihaz kontrolü sol listesi. |
-| `FactTiles` | `{ items: { icon: LucideIcon; value: string; label: string }[] }` (2-3 öğe) | Karşılama, aşama girişi, yönetici huni (Görev 19). |
-| `PathSteps` | `{ steps: { title; detail?; state?: "done" \| "current" \| "todo" }[] }` | Karşılama "Nasıl gidecek", Bitti "Sırada ne var", telefon ekranı adımları, yönetici hazırlık listesi. |
-| `ChoiceCard` / `ChoiceCardGroup` | `{ type: "single" \| "multi"; value; onChange; items: { value; label; marker?: string \| LucideIcon; shortcut?: string; description? }[]; size?: "md" \| "square" }` | `choice-activity.tsx`, ek süre, anket 1-5, davet dili ve modu. |
-| `TimerRing` | `{ remaining: number; total: number; label: string; size?: 96 \| 128 }`; `tnum`; `role="img"` | Isınma, video ve ses düşünme ve cevap sayacı (K4). Aşama sayacı sayısal kalır. |
-| `Illustration` | `{ name: IllustrationName; size?: "hero" \| "spot" }`; `aria-hidden` | Yeni; 11 çizim (2.2). |
-| `StatusScreen` | `{ illustration; title; body; action?; footer? }` | `closed.tsx`, link sorunu sayfaları, ikinci sekme ekranı. |
-| `MediaStage` | `{ state: "think" \| "record" \| "review"; preview; aside }` | `recorded-activity.tsx` içindeki yerleşim (mantık aynı dosyada kalır). |
+**Aday tarafı ve ortak görsel parçalar.** "Durum" sütunu: Görev 3-4'te kuruldu mu (HEAD 3c2e2e2'de
+`src/components/visual/` listelendi; bileşen imzaları yalnızca `step-screen.tsx`, `step-footer.tsx`,
+`footer-action.ts`, `path-steps.tsx`, `choice-card.tsx` için okundu, diğerleri doğrulanmadı).
 
-**Panel bileşenleri (K7, 4. bölüm):**
+| Bileşen | Props (öz) | Durum | Kullanıldığı yer |
+|---|---|---|---|
+| `classifyDevice` (saf fonksiyon) | `({ ua, chMobile, coarse, anyFine, hasDisplayMedia, maxTouchPoints }) => "desktop" \| "phone" \| "tablet" \| "unknown"` | Kuruldu (Görev 1, `src/components/hiring/candidate/device-class.ts`) | Sunucu ve istemci kapısı |
+| `DesktopGate`, `DesktopOnlyScreen`, `NarrowWindowStrip` | 3.0 | Kuruldu (Görev 2, `hiring/candidate/desktop-gate.tsx`, `desktop-only.tsx`) | `renderHiringPage` (plan kararı 2) |
+| `StepScreen` | `{ layout: "split" \| "single"; illustration?; illustrationSize?; kicker?; title; titleRef?; lead?; aside?; width?: 640 \| 760 \| 1000; enter?: boolean; children }` | Kuruldu (`visual/step-screen.tsx:15-38`) | Aday ekranları; **panelde `GuidedFlow`'un adımları** |
+| `StepFooter` | `{ primary?: FooterAction; secondary?: FooterAction; back?: { label; onClick?; href? }; journey?: { steps; current; label }; hint?; placement?: "viewport" \| "sticky" }` | Kuruldu (`visual/step-footer.tsx:58-73`) | Aday ekranları (`viewport`); **panel akışları (`sticky`)** |
+| `FooterAction` (tip) | `button` (`busy`, `busyLabel`, `waitReason`) ya da `link` | Kuruldu (`visual/footer-action.ts`) | Tek dolu buton, nedenli bekleme (plan kararı 4) |
+| `JourneyProgress`, `QuestionProgress` | yalnızca sayı | Kuruldu | Footer üst kenarı; panelde "Adım n / N" |
+| `Disclosure`, `IconRow`, `FactTiles` | sürüm 3'teki gibi | Kuruldu | Aday ekranları; panelde kilitli kural, huni |
+| `PathSteps` | `{ steps: { title; detail?; state?: "done" \| "current" \| "todo"; action? }[] }` | Kuruldu (`visual/path-steps.tsx:18-23`) | Aday; **panelde `SetupPath`** |
+| `ChoiceCardGroup` | `{ type: "single" \| "multi"; value: string[]; onChange; items: { value; label; marker?; shortcut?; description?; disabled? }[] }` | Kuruldu (`visual/choice-card.tsx:9-36`) | Aday; **panelde akış adımlarının seçimleri** (ekip çoklu seçimi dahil) |
+| `TimerRing`, `StatusScreen`, `MediaStage`, `Illustration` (15 çizim) | sürüm 3'teki gibi | Kuruldu | Aday ekranları; panelde yalnızca `Illustration` (boş durum, davet hazır) |
 
-| Bileşen | Props (öz) | Yerini aldığı / kullanıldığı yer |
-|---|---|---|
-| `PanelHeader` | `{ kicker?; title; meta?: ReactNode; primary?: ReactNode; menu?: MenuItem[] }` | `components/panel/bits.tsx` içindeki `PageHead`. **Sınav ekranları da kullanır (bayrak).** |
-| `ManagerNav` v2 | mevcut props + öğe başına `icon` ve `count?` | `components/manager/nav`. **Sınav menüsünü de çizer (bayrak).** |
-| `EmptyState` | `{ illustration: IllustrationName; title; body; action; secondary? }` | Alımlar, Bugün, Adaylar, kütüphane boş durumları; `ui/empty.tsx`'in üstüne. |
-| `NextTaskCard` | `{ solution: string; title; detail; action: { label; href } }` | Bugün'ün "Sıradaki iş" kartı. |
-| `OpeningCard` | `{ opening; funnel: { invited; started; completed }; attention?: string; owner }` | Alımlar tablosu (20 alıma kadar). |
-| `FunnelTiles` | `FactTiles` varyantı, kutular arasında `chevron-right` | Genel bakış hunisi. |
-| `SetupSteps` | `PathSteps` + her satırda tek eylem ve "Kurulum n / 5" | Taslak alım hazırlık listesi. |
-| `DirtyBar` | `{ changes: number; onSave; onReset; saving? }` | Ekip ve kurallar, puan kartı, ayarlar, yetkinlik formu. |
-| `LanguageTabs` | `{ value: { tr; en }; onChange; required?: ("tr" \| "en")[] }` | Kurucu, yetkinlik, pozisyon alan çiftleri. |
-| `AnchorLadder` | `{ levels: { n; required; tr; en }[] }` | Yetkinlik çapaları. |
-| `RowMenu` | `{ items: { label; detail?; onSelect; disabledReason? }[] }` (`DropdownMenu`) | Aday satırı eylemleri, alım kartı, kurucu aşama eylemleri. |
-| `RequestsStrip` | `{ requests; canClose }` | Adaylar sekmesi (plan 3), Genel bakış "Dikkat isteyenler". |
-| `CandidateRow` | `{ candidate; blind; canAct }` | Adaylar tablosu (plan 3). |
+**Panel bileşenleri (K7 + K12).**
 
-**Yeni token'lar** (globals.css `@theme`): `--color-illus-fill`, `--color-illus-tint`,
-`--color-illus-sage`, `--color-illus-warm` (değerler 2.2). Başka renk yok.
+| Bileşen | Props (öz) | Yerini aldığı / kullanıldığı yer | Dilim |
+|---|---|---|---|
+| `PanelHeader` | `{ kicker?; title; meta?; primary?; menu?: { label; items: RowMenuItem[] } }` | `PageHead` (`components/panel/bits.tsx:39`) ve `PageTitle`. **Sınav ekranları da kullanır (bayrak).** | M1 |
+| `ManagerNav` v2 | öğe başına `icon` | `components/manager/nav.tsx`. **Sınav menüsünü de çizer (bayrak).** | M1 |
+| `RowMenu` | `{ label; items: { label; detail?; href?; onSelect?; disabledReason? }[] }` | Alım satırı, Genel bakış `⋯`, aday satırı (plan 3) | M1 |
+| `EmptyState` | `{ illustration; title; body; action; secondary? }` | Alımlar, Bugün, Adaylar, kütüphane | M1 |
+| **`GuidedFlow`** (yeni, K12) | `{ flow: string; steps: FlowStep[]; step: string; onStep; exit: { href; dirty: boolean }; summary?: ReactNode; container?: "page" \| "sheet" }`; `FlowStep = { id; title; lead?; layout: "single" \| "split"; body: ReactNode; primary: FooterAction; secondary?: FooterAction; optional?: boolean }` | Her panel akışı; `StepScreen` + `StepFooter placement="sticky"` + `FlowHeader` üstüne kurulur; odak `useStepFocus`, adım hash'te (W3) | M-W (plan 2b) |
+| **`guided-flow.ts`** (saf model, yeni) | `flowStepOf(hash, { steps, firstInvalid })`, `flowJourney(steps, current)`, `exitLabel(dirty)`, `summaryRows(before, after, fields)` (değişti işareti), `stepOfProblem(map, problem)` | `GuidedFlow`'un ve her akışın testli çekirdeği | M-W |
+| **`FlowHeader`** (yeni) | `{ kicker; exit: { href; label } }` | Akışın üst satırı (W2, W7) | M-W |
+| **`SummaryStep` / `SummaryRows`** (yeni) | `{ rows: { label; value; changed?: boolean; editHref?: string; problem?: string }[]; readOnly?: boolean }` | Akışların özeti (W5, P8); ekip ve kurallar özeti, Genel bakışın "Bu alımın kuralları" kartı, yayın özeti | M-W |
+| **`ControlRow`** (yeni) | `{ title; status: ReactNode; progress?: ReactNode; attention?: { icon; text }[]; facts?: ReactNode; next: { label; href } \| null }` | Alımlar kontrol görünümü (4.4); Görev 18'in `OpeningCard`'ının yerine | M3 |
+| **`openingNextStep`** (saf, yeni) | `(input: { status; setup?: { current; key } ; facts?: OpeningCardFacts; shortfall?: boolean; draftWaiting?: boolean; runs: boolean }) => { kind; href } \| null` | KG2, `src/components/hiring/opening-next-step.ts` | M3 |
+| `NextTaskCard` | `{ solution; title; detail; action: { label; href } }` | Bugün'ün "Sıradaki iş"i | M2 |
+| `FunnelTiles` | `FactTiles` varyantı, kutular arasında `chevron-right` | Genel bakış hunisi (Görev 20 yerinde çizer) | M5 |
+| **`SetupPath`** (sürüm 3'teki `SetupSteps`'in yerine) | `PathSteps` + `setupProgress` (plan Görev 20'de yazıldı; v4'te Görev 18'e taşınır, kontrol görünümü önce ister) + şerit varyantı `{ variant: "list" \| "strip" }` | Taslağın kurulum yolu ve sayfalardaki yol şeridi | M5 |
+| `LanguageTabs` | `{ value: { tr; en }; onChange; required? }` | Kurucu, yetkinlik, pozisyon, skala | M6, M9 |
+| `AnchorLadder` | `{ levels: { n; required; tr; en }[] }` | Yetkinlik özetindeki çapa merdiveni | M9 |
+| `RequestsStrip`, `CandidateRow` | sürüm 3'teki gibi | Adaylar sekmesi | plan 3 |
+| ~~`DirtyBar`~~ | - | **Kaldırıldı (H4):** yerine `SummaryStep` | - |
+| ~~`OpeningCard`~~ | - | **Yerine `ControlRow` (H8);** Görev 18'in `funnelShare`'i ve `openingCardFacts`'ı (`invitations.ts`) kalır | - |
+
+**Yeni token yok.** Sürüm 3'ün `--color-illus-*` tokenları Görev 3'te eklendi.
 
 ---
 
@@ -1095,7 +1411,7 @@ gün, M ≈ 1 gün, L ≈ 2 gün (tek geliştirici + inceleme; tahmin, ölçülm
 | # | Dilim | Boyut | Bitti sayılır | Risk |
 |---|---|---|---|---|
 | **VG** | **Masaüstü kapısı (ilk, tek başına):** `classifyDevice`, `DesktopGate`, `DesktopOnlyScreen` (yalnız "Linki kopyala"), `NarrowWindowStrip`, pencere < 640'ta "Aşamayı başlat" nedeni; `faqPhoneA` ve `needDevice` metinleri; `HIRING-UX.md` 6.15 yerine geçen metin | M | `classifyDevice` için UA matrisi testi: iPhone Safari, Android Chrome telefon, Android tablet, iPad (iPadOS masaüstü UA + dokunma), Mac Safari, Windows Chrome dokunmatik dizüstü (`any-pointer: fine` var), Chromebook, dar masaüstü penceresi (engellenmez), DevTools öykünmesi. Sızıntı testi: telefon ekranının props'unda aşama adı ve soru yok. Elle: gerçek telefonda ve gerçek dokunmatik dizüstünde (Claude in Chrome yalnızca masaüstü tarafını görür; telefon testi kullanıcı ya da cihaz gerektirir) | **Yanlış engel** en büyük risk: kural "iki sinyal ya da kesin UA" (3.0). Dil sınavı rotalarına dokunulmamalı (K6) |
-| V1 | Belgeler + token + çizim seti: `HIRING-UX.md` 8.6, 6 "Ortak kurallar", `RULES.md` kural 1 ve 9 güncellenir; `illustrations.tsx` (11 SVG) | S | Birim test: her çizim `aria-hidden`, `<image>`/`href` yok, renkler yalnız `var(--color-illus-*)`; `theme.test.ts` yeni token'ları görür | Düşük |
+| V1 | Belgeler + token + çizim seti: `HIRING-UX.md` 8.6, 6 "Ortak kurallar", `RULES.md` kural 1 ve 9 güncellenir; `illustrations.tsx` (15 SVG) | S | Birim test: her çizim `aria-hidden`, `<image>`/`href` yok, renkler yalnız `var(--color-illus-*)`; `theme.test.ts` yeni token'ları görür | Düşük |
 | V2 | Paylaşılan bileşenler (5. bölüm) + `ActionBar` → `StepFooter` göçü | M | Saf fonksiyon testleri (ilerleme, halka oranı); mevcut ekranlar geçiyor; footer içeriği örtmüyor (1280x720'de son alan görünür) | `shadcn-vendored.test.ts`; odak halkası; 44px |
 | V3 | Karşılama → Karşılama + Onay (istemci adımı, aynı URL; geri tuşu Karşılama'ya döner) + Bilgiler | M | Rıza kaydı yalnızca "Kabul et ve başla"da; TR/EN eşit; `hiring-candidate-copy.test.ts` geçiyor; `whoShort` testi | Sabit metin testleri (`promise`, `whoPeople`): metin aynı, yer değişir. Geri dönüşte ek süre seçimi korunur |
 | V4 | Cihaz kontrolü alt adımları (split, büyük önizleme) + izin reddi çizimi | L | `device-rows.test.ts` değişmeden geçiyor; dolu buton her alt adımda etkin bir eylem; gerçek kamerayla Chrome, Edge ve Safari'de (otomasyon sekmesi kamerayı kanıtlamaz) | 568 satırlık bileşen; tarayıcıya göre izin akışı |
@@ -1103,45 +1419,66 @@ gün, M ≈ 1 gün, L ≈ 2 gün (tek geliştirici + inceleme; tahmin, ölçülm
 | V6 | Aşama girişi + yazılı + seçmeli + dosya (G2: "Dosya seç" dolu) | M | Soru parçaları; klavye 1-4; dosya yokken dolu buton seçiciyi açar | Sızıntı testi (`pages.test.ts`): `QuestionProgress` yalnız sayı alır |
 | V7 | Bitti + anket + `StatusScreen` | S-M | `done-model.test.ts` geçiyor; sabit metinler aynen | Anket kapalıyken dolu buton yok |
 
-**Yönetici dilimleri (K7), aday dilimlerinden sonra.** Sürüm 2'nin V7b'si (davet sheet'i) burada M8.
-"Sınav" sütunu: dilim canlı sınav ekranlarına dokunuyor mu.
+**Yönetici dilimleri (sürüm 4, K12), aday dilimlerinden sonra.** "Sınav" sütunu: dilim canlı sınav
+ekranlarına dokunuyor mu. "Plan" sütunu: hangi planın hangi görevi.
 
-| # | Dilim | Boyut | Bitti sayılır | Sınav | Risk |
+| # | Dilim | Boyut | Bitti sayılır | Sınav | Plan |
 |---|---|---|---|---|---|
-| M1 | Panel kabuğu: `ManagerNav` ikon ve sayılar, `PanelHeader` (`PageHead` yerine), `EmptyState`, tek durum sözlüğü, `RowMenu` | M | Menü testi (registry ile sayfa dosyası eşleşmesi) geçiyor; her sayfa başlığında en fazla bir dolu eylem; sınav sayfalarında önce/sonra ekran görüntüsü | **Evet** (kabuk ve `PageHead` ortak) | Sınav ekranlarının görünümü değişir; içerik değişmez. Sınav penceresi dışında çıkar |
-| M2 | Bugün: işe alım `today()` (talepler, dolan linkler, yayın bekleyen taslak), `NextTaskCard`, "Dikkat isteyenler", çözüm etiketi, davet outline menü | M | `module.test.ts`'in "boş dizi" beklentisi yeni satırlarla güncellenir; sınav kuyruğu satırları birebir aynı (ekran görüntüsü karşılaştırması); rol başına (sahip, değerlendirici, sınav yöneticisi) doğru satırlar | **Evet** (ortak ekran) | Yetki: değerlendirici talepleri görmemeli (kör mod kuralı, STATUS 321) |
-| M3 | Alımlar listesi kartları + boş durum çizimi | S | Açık/Taslak/Kapalı sayıları aynı; boş sekme metinleri aynı | Hayır | Düşük |
-| M4 | Rehberli "Alım aç" (3 adım, `StepScreen` + `StepFooter`) | M | Mevcut oluşturma eylemi ve hata kodları aynen; AI yolunda 120 karakter kuralı; kopyalama yolu | Hayır | Form durumu adımlar arasında korunmalı (geri tuşu) |
-| M5 | Alım genel bakış: `SetupSteps` (taslak), `FunnelTiles` + "Dikkat isteyenler" (yayında), `⋯` menü | S-M | Yayınla kapısı ve nedenleri aynen; anket bloğu 5 cevap kuralı aynen | Hayır | Görev 19'un huni testleri |
-| M6 | Değerlendirme çalışma alanı: tek kat sekme (Kurucu \| Puan kartı), AI taslağı ve Önizleme eylem; kurucuda `LanguageTabs` ve "Süre ve haklar" açılır alanı; önizlemede "Mobil görünüm" yerine "1024" | L | Kurucu kaydetme kuyruğu ve geri alma testleri geçiyor; derin linkler (`/assessment/edit`, `/ai`, `/scorecard`, `/preview`) çalışmaya devam ediyor (yönlendirme ya da aynı sayfa) | Hayır | En büyük panel dilimi; sekme rotaları test ediliyor (registry), derin link kırılmamalı |
-| M7 | Ekip ve kurallar: kartlar, kilitli kural `IconRow`, "Gelişmiş kurallar", `DirtyBar`, "Alımı kapat" geri almalı | S-M | `opening-rules` testleri geçiyor; kaydedilmemiş değişiklikle sayfadan çıkarken uyarı yok, değişiklik `DirtyBar`'da kalır | Hayır | Kaydetmenin kapsamı tek eylemde toplanmalı (bugün iki ayrı form olabilir; doğrulanmadı) |
-| M8 | Davet sheet'i ve `/hiring/invite` sayfası (4.9) | S-M | `form-rules.test.ts` geçiyor; 30 sn / 4 tık elle ölçülür; alım seçilmeden "Son gün" boş görünmüyor | Hayır (davet menüsü Bugün'de ortak, M2'de) | Çoklu yapıştırma (700 satır) görünümü |
-| M9 | Kütüphane: `LanguageTabs`, `AnchorLadder`, boş durumlar | M | Kütüphane testleri geçiyor; "Kademe başlangıç içeriği" notu aynen | Hayır (kütüphane ortak ama sınav kullanmıyor; doğrulanmadı) | Çapa zorunluluk kuralı (1, 3, 5) görünür kalmalı |
-| M10 | Ayarlar (bölüm gezintisi, `DirtyBar`), kullanıcı davet, giriş ve kurulum düzeni | S | Ayarlar ve denetim testleri geçiyor | **Evet** (ayarlar ve giriş ortak) | Giriş ekranı: güvenlik metinleri aynen |
-| P3-a | Adaylar sekmesi (4.8 tasarımı) | M | Plan 3'ün kabulüyle | Hayır | **Plan 3 uygular** (K5) |
-| P3-b | Aday detayı + karar rayı (4.8) | L | Plan 3 | Hayır | **Plan 3 uygular** |
-| P3-c | İnceleme ve puanlama görsel katmanı (4.8) | M | Plan 3 | Hayır | **Plan 3 uygular** |
-| P3-d | Karşılaştır (HIRING-UX 5.15 + P5) | M | Plan 3 | Hayır | **Plan 3 uygular** |
-| E1 | Sınav listelerinde `EmptyState` ve başlık düzeni (isteğe bağlı) | S | Önce/sonra ekran görüntüsü, sınav akışı doğrulama betiği (`verify-exam-flow.ts`) | **Evet** | Canlı ürün; en son ve yalnızca sınav penceresi dışında |
+| M1 | Panel kabuğu: `ManagerNav` ikonları, `PanelHeader` (`PageHead` ve `PageTitle` arkasında), `RowMenu`, hata sayfası "sen" (K9); `EmptyState`, tek durum sözlüğü | M | Menü testi (registry ile sayfa dosyası) geçiyor; her sayfa başlığında en fazla bir dolu eylem; sınav sayfalarında önce/sonra metin ve ekran görüntüsü | **Evet** | 2b Görev 14 (değişmez) + Görev 15'in ilk yarısı |
+| **M-W** | **Rehberli akış kabuğu (yeni):** `GuidedFlow`, `FlowHeader`, `SummaryStep` / `SummaryRows`, saf `guided-flow.ts`; ortak `flow` metinleri ("Devam et", "Geri", "Özete dön", "Çık", "Kaydetmeden çık", "Değiştir", "değişti", "Adım {n} / {total}", "Değişiklik yok.") | S-M | Model testleri: hash → adım (geçersiz önceki adımda ilk eksiğe döner), geri değerleri korur, çıkış etiketi kirliyken "Kaydetmeden çık", özet "değişti" işareti, sorun → adım haritası; render testi: tek dolu buton, odak başlığa, `JourneyProgress` sayıları; `panel-copy.test.ts` "sen" | Hayır | 2b Görev 15'in ikinci yarısı |
+| M2 | Bugün: işe alım `today()` (C6 ile yalnızca uyarlama "Sıradaki iş"; veri hakkı dikkat satırında sayılır), `NextTaskCard`, "Dikkat isteyenler" (taslak satırı "Kuruluma devam et"), "Tüm alımların durumu ›" bağlantısı | M | `module.test.ts` güncellenir; okumalar ardışık (C21); sınav kuyruğu satırları birebir aynı (C17: yalnız satırlar karşılaştırılır); rol başına doğru satırlar, değerlendiriciye işe alım satırı yok | **Evet** | 2b Görev 16-17 |
+| M3 | **Kontrol görünümü** `/hiring/openings`: `ControlRow`, gruplar (Kurulumda, Yayında, Kapalılar açılır alanda), `openingNextStep`, özet cümlesi, değerlendirici yalnız sayı (H9), `?tab=` geri uyumu, boş durum | M | `openingNextStep` testi (her dal); değerlendirici satırında talep sayısı ve kurulum eylemi yok (sızıntı testi: değerlendirici için üretilen satır verisinde `openRequests` yok); `?tab=closed` açılır alanı açar; okumalar ardışık; 10 taslakta süre ölçülür | Hayır | 2b Görev 18 (yeniden yazılır) |
+| M4 | "Alım aç" `GuidedFlow` üstünde (3 adım, son adımda özet satırı) | S-M | `createOpeningAction` ve ret kodları aynen, her ret doğru adımı açar; geri değerleri korur; `?copy=` ve `?position=` ön seçimleri | Hayır | 2b Görev 19 (kabuğu değişir) |
+| M5 | Alımın kontrol görünümü: taslakta `SetupPath` + dolu "Kuruluma devam et" + yol şeridi (`OpeningHeader`) + yayın özeti (`#publish`, "Yayınla"); yayında `FunnelTiles`, dikkat kartı, "Bu alımın kuralları" kartı; `⋯` menü | M | Yayın kapısı ve nedenleri aynen (`publishOpeningAction` ve bildirimleri); "Kuruluma devam et" ilk bitmemiş adıma gider; ekip ve önizleme "Atla" ile geçilir; yol şeridi yalnız taslakta ve yalnız `access.edit`; anket bloğu 5 cevap kuralı aynen | Hayır | 2b Görev 20 (genişler) |
+| M7 | Ekip ve kurallar: özet + Ekip, Aday iletişimi, Adil değerlendirme ve anket, Ad akışları + "Alımı kapat" geri almalı | M | `opening-rules` testleri değişmeden geçiyor; `rulesStepOf` her `RulesProblem`'i bir adıma eşler (test); dokunulmayan alanlar yüklendiği gibi gider (test); kapat → 8 sn geri al, diyalog yok; değerlendirici salt okur | Hayır | **2b Görev 21 (yeni)** |
+| M8 | Davet: kişi adımı + özet (dil, son gün özetten) + hazır; Sheet ve sayfa | S-M | `form-rules.test.ts` (+ `deadlineRow`) geçiyor; her `InviteRefusal` doğru adıma ya da özete; 30 sn / 3-4 tık elle ölçülür; Sheet kilidi aynen | Hayır | 2b Görev 22 (eski 21, kabuğu değişir) |
+| M6 | Değerlendirme çalışma alanı: tek kat sekme, AI taslağı ve Önizleme eylem, `LanguageTabs`, "Soru ekle" tür kartları, ağırlık tek karar adımı, puan kartında çapa akışı, önizlemede "1024" | L | Kurucu kaydetme kuyruğu ve geri alma testleri geçiyor; derin linkler çalışıyor | Hayır | Sonraki plan (plan 3 ile paralel ya da hemen sonra) |
+| M9 | Kütüphane: pozisyon ve yetkinlik akışları, kontrol görünümü detayları, çapa akışı, `AnchorLadder`, skala tek adım, boş durumlar, Kütüphane metni "sen" (K9) | M-L | Kütüphane testleri; çapa zorunluluğu (1, 3, 5) görünür; her `CompetencyWriteError` / `PositionWriteError` doğru adıma | Hayır (doğrulanmadı: sınav kütüphaneyi kullanmıyor) | Sonraki plan |
+| M10 | Ayarlar özet + tek adımlı düzenlemeler, kullanıcı davet akışı, giriş ve kurulum düzeni, Ayarlar metni "sen" (K9) | S-M | Ayarlar ve denetim testleri; `inviteUser` ret kodları doğru adıma | **Evet** (ayarlar ve giriş ortak) | Sonraki plan |
+| P3-a..d | Adaylar sekmesi, aday detayı + karar rayı, inceleme, karşılaştır (4.8; "Tekrar iste" W kurallarıyla) | M-L | Plan 3'ün kabulüyle | Hayır | **Plan 3 uygular** (K5) |
+| E1 | Sınav listelerinde `EmptyState` ve başlık düzeni (isteğe bağlı) | S | Önce/sonra ekran görüntüsü, `verify-exam-flow.ts` | **Evet** | En son, isteğe bağlı |
+
+**Plan 2b'nin yönetici kısmı (9 görev, sınır 10):**
+
+| Görev | Dilim | İçerik |
+|---|---|---|
+| 14 | M1 a | Menü ikonları, `PanelHeader`, `RowMenu`, hata sayfası "sen" (yazıldığı gibi) |
+| 15 | M1 b + M-W | `EmptyState`, durum sözlüğü (yazıldığı gibi) + **`GuidedFlow` kabuğu ve modeli** |
+| 16 | M2 a | Bugün'ün şeritleri ve işe alım satırları (C6, C21 uygulanmış) |
+| 17 | M2 b | Bugün ekranı + kontrol görünümü bağlantısı, taslak satırı "Kuruluma devam et" |
+| 18 | M3 | **Kontrol görünümü** (kart ızgarası yerine `ControlRow`) |
+| 19 | M4 | Alım aç `GuidedFlow` üstünde |
+| 20 | M5 | Alımın kontrol görünümü + kurulum yolu + yayın özeti + kurallar kartı |
+| 21 | M7 | **Ekip ve kurallar özeti ve dört akış + kapat (yeni görev)** |
+| 22 | M8 | Davet akışı (eski Görev 21) |
+| 23 | - | Plan 2b'yi kapat (eski Görev 22) |
 
 **Her dilimde ortak kontrol:** tek dolu buton; kapalı buton nedeni yanında; em-dash yok; TR/EN anahtar
 eşitliği; `hiring-candidate-copy.test.ts`'in yasak kelimeleri ("uyarı", "hile", "başarısız",
-"lütfen", "siz"); odak her adım değişiminde başlığa; 1280, 1440 ve 1024 ekran görüntüsü (Claude in
-Chrome, kullanıcı kuralı); `scripts/verify-hiring-flow.ts` API üzerinden çalışıyor görünüyor (satır
-215 civarı `call(...)`; tamamını okumadım, VG ve V3'te çalıştırılarak doğrulanmalı; sunucu kapısı
-API çağrılarını değil yalnızca sayfaları etkiler).
+"lütfen", "siz") aday ekranlarında, `panel-copy.test.ts`'in "sen" kuralı ortak panel ekranlarında
+(K9); odak her adım değişiminde başlığa; 1280, 1440 ve 1024 ekran görüntüsü (Claude in Chrome,
+kullanıcı kuralı); sunucu eylemlerinin imzası ve ret kodları değişmez (her akış görevinde
+`git diff` ile eylem dosyasının değişmediği gösterilir); `scripts/verify-hiring-flow.ts` API
+üzerinden çalışıyor görünüyor (tamamını okumadım; VG ve V3'te çalıştırılarak doğrulanmalı).
 
-### 6.1 Ne zaman (K5)
+### 6.1 Ne zaman (K5, K12)
 
-**Plan 2'nin Görev 19-21'i bitince, plan 3 başlamadan önce, "plan 2b" olarak: VG, V1-V7 (aday),
-sonra M1-M5 ve M8 (panelin en çok kullanılan yüzleri).** M6, M7, M9, M10 plan 3 ile paralel ya da
-hemen sonra yapılabilir (plan 3'ün ekranlarıyla çakışmaz). P3-a..d plan 3'ün içinde, bu belgenin 4.8
-bölümü girdi olarak. E1 en son ve isteğe bağlı.
+**Plan 2'nin Görev 19-21'i bitince, plan 3 başlamadan önce, "plan 2b" olarak: VG, V1-V7 (aday,
+Görev 1-13), sonra yönetici Görev 14-22 (M1, M-W, M2, M3, M4, M5, M7, M8) ve kapanış Görev 23.**
+Aday görevleri (7-13) K12'den bağımsız ilerleyebilir; yönetici görevleri ancak plan bu sürüme göre
+yeniden yazılınca başlar (defter: "design doc v4 to revise section 4 and slices M1-M10 before the
+manager tasks (14-21) run"). M6, M9, M10 plan 3 ile paralel ya da hemen sonra (plan 3'ün ekranlarıyla
+çakışmaz; M-W'yi hazır bulurlar). P3-a..d plan 3'ün içinde, 4.8 girdi olarak. E1 en son ve isteğe bağlı.
+
+**Sıra gerekçesi:** M1 ve M-W yapı taşı (her sonraki ekran onları kullanır); Bugün (M2) en sık açılan
+ekran ama canlı sınava dokunduğu için kabuktan hemen sonra, sınav penceresi dışında; kontrol
+görünümü (M3) K12'nin "her şeye hakim" yarısı; Alım aç (M4), Genel bakış ve kurulum yolu (M5) ve
+ekip akışı (M7) bir alımı açıp yayına götüren yolun tamamı; davet (M8) yolun sonundaki iş. M7'nin
+2b'ye girmesi (H5) kurulum yolunun "Ekibi ata" adımını eski on alanlı forma göndermemek için.
 
 **M1 neden panelde ilk:** `PanelHeader`, `EmptyState`, `RowMenu` ve durum sözlüğü plan 3'ün
-ekranlarının da yapı taşları; plan 3 onları hazır bulursa ekranlar tek seferde doğru dille kurulur.
-M1 ve M2 canlı sınav ekranlarına dokunduğu için sınav penceresi dışında ve ekran görüntüsü
-karşılaştırmasıyla çıkar.
+ekranlarının da yapı taşları. M1 ve M2 canlı sınav ekranlarına dokunduğu için sınav penceresi dışında
+ve ekran görüntüsü karşılaştırmasıyla çıkar.
 
 **VG neden ilk:** K2 bir güvenlik kararı ve diğer dilimlerden bağımsız; ayrıca diğer dilimlerin
 tasarımını sadeleştiriyor (telefon düzeni artık test edilmek zorunda değil, yalnızca 1024-1440).
@@ -1151,26 +1488,22 @@ Plan 4 (gözetim: tam ekran, sekme odağı) bu kapının üstüne kurulur.
 
 ## 7. Açık sorular (önerilen cevaplarıyla)
 
-Sürüm 1'in beş sorusu K1-K5 ile cevaplandı ve kaldırıldı. Kalanlar:
+Sürüm 1'in beş sorusu K1-K5 ile, sürüm 3'ün 1-4. soruları K9-K11 ile cevaplandı ve kaldırıldı
+(numaralar sürüm 4'te yeniden verildi). Kalanlar ve K12'nin açtıkları:
 
-1. **"Linki e-postama gönder" ne zaman?**
-   *Öneri:* e-posta gönderimi geldiğinde (bugün yalnızca `message_outbox` var). VG yalnızca "Linki
-   kopyala" ile çıkar; düğme bir bayrakla sonradan açılır. Gerekenler: yeni uç, token başına oran
-   sınırı, maskeli adres, gönderimin kaydı.
-2. **Klavyeli tablet (iPad + Magic Keyboard ya da Android tablet + fare) engellensin mi?**
-   *Öneri: Evet, engellensin.* Bu tarayıcılarda ekran paylaşımı yok ve plan 4 bunu isteyebilir;
-   `any-pointer: fine` tek başına yeterli değil, `getDisplayMedia` yokluğu ve tablet UA'sı birlikte
-   karar verir. Metin dürüst kalır ("ekip bilgisayardan yapılmasını istiyor"), yanlış tespit için
-   "Bilgisayardayım ama..." bağlantısı var.
-3. **Panelde tek hitap mı?** Bugün ekranı sınav metniyle "siz" ("incelemenizi", "davet edin"),
-   işe alım metinleri "sen" ("Rolün alım açamaz") diyor; ikisi aynı ekranda.
-   *Öneri:* ortak ekranlar (Bugün, menü, Ayarlar, Kütüphane) **"sen"**; sınava özgü yönetici
-   ekranları sınav canlı olduğu için şimdilik "siz" kalır, dokunuldukları ilk planda "sen"e geçer.
-   Aday tarafı hitapları (işe alım "sen", sınav "siz") değişmez.
-4. **Bugün'de "Sıradaki iş" seçimi kimin önceliği?**
-   *Öneri:* veri hakkı talebi (yasal süre) > uyarlama talebi (aday bekliyor) > karar bekleyen
-   aday (plan 3) > en eski sınav incelemesi. Kullanıcı bunu bir sıralama ayarı olarak istemezse
-   sabit kalır.
+5. **Kontrol görünümü Alımlar sayfasının yerini mi almalı, ayrı bir "Kontrol" sayfası mı olmalı?**
+   *Öneri (H1, uygulandı):* Alımlar sayfası kontrol görünümü olur; menüde yeni öğe yok. Ayrı bir
+   sayfa "Alımlar" ile aynı listeyi ikinci kez gösterirdi (dashboard testinin "aynı bilgi iki kez").
+6. **Akış sırasında yan menü görünsün mü?** *Öneri (W2, uygulandı):* görünsün; panelin içinde
+   kalmak "nerede olduğumu" kaybettirmez ve ayrı bir rota grubu gerektirmez. Kullanıcı Airbnb'nin
+   ev sahibi akışı gibi tam ekran isterse yalnızca `GuidedFlow`'un kabuğu değişir.
+7. **Ekip ve kurallar dört kısa akış mı, tek uzun akış mı?** *Öneri (4.10, uygulandı):* dört kısa akış;
+   on adımlık tek akış bir alanı değiştirmek için on ekran demek. Kullanıcı yeni alım kurarken
+   hepsini sırayla görmek isterse kurulum yolu yalnızca Ekip akışını içerir, diğerleri varsayılanla
+   gelir (kimlik açık, 7 gün, anket açık: `src/db/schema/hiring.ts:120-127`'deki varsayılanlar;
+   son gün ve iletişim e-postasının boş başladığını okumadım, doğrulanmadı).
+8. **Sınavın formları (öğrenci ekle, sınav oluştur) da akışa dönsün mü?** *Öneri:* şimdilik hayır
+   (canlı ürün, K6'nın ruhu); K12'nin sınava uzanıp uzanmadığını kullanıcı söyler.
 
 ---
 
@@ -1190,6 +1523,20 @@ Sürüm 1'in beş sorusu K1-K5 ile cevaplandı ve kaldırıldı. Kalanlar:
 - [ ] Panel: sayfa başlığında en fazla bir dolu eylem, ikincil eylemler `⋯` menüsünde.
 - [ ] Panel: bir alımın içinde en fazla bir kat sekme.
 - [ ] Panel: boş durum çizim + başlık + bir cümle + bir eylem.
-- [ ] Panel: çok alanlı formda kaydetmenin kapsamı `DirtyBar`'da görünüyor.
+- [ ] Panel (K12): birden fazla alanı olan her yönetici işi bir rehberli akış; ekranda aynı anda tek
+      karar; tek alanlı iş tek adım; kurucu ve puan kartı matrisi editör.
+- [ ] Panel (K12): akış geri tuşuyla (footer ve tarayıcı) geri gider ve hiçbir değeri silmez; adım
+      adres çubuğunda, yeniden yüklemede aynı adım açılır.
+- [ ] Panel (K12): kayıtlı bir şeyi değiştiren akış özet adımıyla biter; özette değişen satırlar
+      işaretli, tek dolu buton "Kaydet" ve değişiklik yokken nedeniyle bekliyor.
+- [ ] Panel (K12): akıştan çıkış onay sormuyor; kaydedilmemiş değer varken bağlantı "Kaydetmeden çık".
+- [ ] Panel (K12): sunucunun reddi ilgili adımı açıyor ve mevcut cümleyi gösteriyor; sunucu eylemleri
+      ve ret kodları değişmedi.
+- [ ] Panel (K12): kontrol görünümünde her alım tek satır, satırda tek sıradaki adım; adım düzelten
+      akışın doğru adımını açıyor; stat kutusu ızgarası yok.
+- [ ] Panel (K12): değerlendirici kontrol görünümünde yalnızca sayı görüyor (talep, aday adı, kurulum
+      eylemi yok).
+- [ ] Panel: taslak alımın dolu butonu "Kuruluma devam et"; "Yayınla" yalnızca yayın özetinde dolu.
+- [ ] Panel: alımı kapatmak onay diyaloğu açmıyor; 8 sn geri alma şeridi çıkıyor.
 - [ ] Panel: dilim sınav ekranlarına dokunuyorsa önce/sonra ekran görüntüsü eklendi ve sınav
       penceresi dışında çıktı.
