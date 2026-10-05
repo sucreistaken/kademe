@@ -29,6 +29,7 @@ vi.mock("@/components/candidate/LinkProblem", () => ({ LinkProblem: function Lin
 vi.mock("@/components/hiring/candidate/frame", () => ({ HiringFrame: function HiringFrame() {} }));
 vi.mock("@/components/candidate/UnknownLink", () => ({ UnknownLink: function UnknownLink() {} }));
 vi.mock("@/components/hiring/candidate/device-check", () => ({ DeviceCheck: function DeviceCheck() {} }));
+vi.mock("@/components/hiring/candidate/stage-runner", () => ({ StageRunner: function StageRunner() {} }));
 
 import { Landing } from "@/components/hiring/candidate/landing";
 import { ClosedCard } from "@/components/hiring/candidate/closed";
@@ -36,6 +37,7 @@ import { LinkProblem } from "@/components/candidate/LinkProblem";
 import { HiringFrame } from "@/components/hiring/candidate/frame";
 import { UnknownLink } from "@/components/candidate/UnknownLink";
 import { DeviceCheck } from "@/components/hiring/candidate/device-check";
+import { StageRunner } from "@/components/hiring/candidate/stage-runner";
 import { createElement } from "react";
 import { formatInviteDeadline } from "../rules/invitation";
 import { zoneLabel } from "@/lib/org-timezone";
@@ -60,7 +62,7 @@ function find(node: ReactNode, type: unknown): ReactElement[] {
   return [...(element.type === type ? [element] : []), ...find(element.props?.children, type)];
 }
 
-const render = (slot: "landing" | "check" | "stage", over: Record<string, unknown> = {}) =>
+const render = (slot: "landing" | "check" | "stage" | "done", over: Record<string, unknown> = {}) =>
   renderHiringPage(slot, { token: "tok", resolved: { ok: true, ctx } as never, searchParams: {}, params: {}, ...over }) as Promise<ReactNode>;
 
 beforeEach(() => {
@@ -171,9 +173,58 @@ describe("renderHiringPage", () => {
     await expect(render("check")).rejects.toMatchObject({ to: "/a/tok/stage/1" });
   });
 
-  it("renders the slots of later tasks as the invalid-link card for now", async () => {
-    h.state = { ...(h.state as object), step: "STAGE", position: 1, path: "/stage/1" };
-    const node = await render("stage", { params: { n: "1" } });
+  it("renders the stage runner with the candidate state only, keyed by the stage, inside the frame (Task 13)", async () => {
+    h.state = {
+      ...(h.state as object),
+      step: "STAGE",
+      position: 2,
+      path: "/stage/2",
+      current: {
+        position: 2,
+        total: 2,
+        stage: {
+          id: "s2",
+          name: { tr: "Vaka LEAKVISIBLE_STAGE", en: "Case" },
+          description: { tr: "", en: "" },
+          durationSeconds: 300,
+          internalPurpose: "TEAMSECRET_STAGE_PURPOSE",
+          activities: [
+            {
+              id: "q1",
+              type: "SINGLE_CHOICE",
+              prompt: { tr: "Hangisi? LEAKVISIBLE_PROMPT", en: "Which?" },
+              internalQuestion: "TEAMSECRET_PURPOSE",
+              managerNotes: "TEAMSECRET_NOTE",
+              competencyIds: ["TEAMSECRET_COMPETENCY"],
+              choices: [{ id: "c1", label: { tr: "Bir LEAKVISIBLE_CHOICE", en: "One" }, correct: true }],
+            },
+          ],
+        },
+        responses: [],
+      },
+    };
+    const node = await render("stage", { params: { n: "2" } });
+    const [runner] = find(node, StageRunner);
+    expect(runner.key).toBe("2");
+    const props = runner.props as { token: string; locale: string; deadline: string; initial: { current: { position: number } } };
+    expect(props).toMatchObject({ token: "tok", locale: "tr" });
+    expect(props.initial.current.position).toBe(2);
+    // The same deadline words as the landing and the invitation e-mail.
+    expect(props.deadline).toBe(formatInviteDeadline("2026-10-19", "tr", zoneLabel("tr")));
+    const sent = JSON.stringify(props);
+    // Positive control: the question, its choice and the stage's name reach the runner (C10)...
+    expect((sent.match(/LEAKVISIBLE_[A-Z]+/g) ?? []).length).toBeGreaterThanOrEqual(3);
+    // ...and no team text, competency or right answer does.
+    expect(sent.match(/TEAMSECRET/g) ?? []).toHaveLength(0);
+    expect(sent).not.toMatch(/"correct"/);
+    expect(find(node, HiringFrame)[0].props).toMatchObject({ orgName: "Örnek A.Ş.", locale: "tr" });
+    expect(find(node, LinkProblem)).toHaveLength(0);
+  });
+
+  it("renders the finish slot as the invalid-link card until Task 16", async () => {
+    h.state = { ...(h.state as object), step: "DONE", path: "/done" };
+    const node = await render("done");
     expect((find(node, LinkProblem)[0].props as { problem: string }).problem).toBe("INVALID");
+    expect(find(node, StageRunner)).toHaveLength(0);
   });
 });

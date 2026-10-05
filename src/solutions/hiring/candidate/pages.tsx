@@ -8,6 +8,7 @@ import { ClosedCard } from "@/components/hiring/candidate/closed";
 import { DeviceCheck } from "@/components/hiring/candidate/device-check";
 import { HiringFrame } from "@/components/hiring/candidate/frame";
 import { Landing } from "@/components/hiring/candidate/landing";
+import { StageRunner } from "@/components/hiring/candidate/stage-runner";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/i18n/locale";
 import { setAssessmentLocale, type CandidateContext, type LinkProblem as Problem } from "@/lib/candidate-context";
 import { candidateSafe } from "@/lib/candidate-safe";
@@ -127,8 +128,20 @@ export async function renderHiringPage(slot: CandidatePageSlot, input: Candidate
     case "check":
       // Two flags and the page's language: no question, stage or team text reaches the device check.
       return frame(<DeviceCheck token={token} camera={safe.devices.camera} practice={safe.practice} locale={locale} />);
-    // Replaced by Tasks 13 (stage), 14 (practice) and 16 (done).
     case "stage":
+      // Keyed by the stage, so the next stage starts from a fresh runner. The runner gets the
+      // stripped candidate state only (no team field, no right answer: C10); the deadline in
+      // the same words as the landing and the invitation e-mail.
+      return frame(
+        <StageRunner
+          key={safe.position ?? 0}
+          token={token}
+          initial={safe}
+          deadline={formatInviteDeadline(orgDay(h.link.expiresAt, ORG_TIMEZONE), locale, zoneLabel(locale, ORG_TIMEZONE))}
+          locale={locale}
+        />,
+      );
+    // Replaced by Tasks 14 (practice) and 16 (done).
     case "practice":
     case "done":
       return frame(problemCard(token, locale, "INVALID", h));

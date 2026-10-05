@@ -381,10 +381,10 @@ async function main() {
 
   console.log("\nWhat a page can reach in process");
   // Every candidate page asks solutionPage first; the module's title is the page header's.
-  // Hiring renders the landing and the details form (Task 11) and the device check (Task 12);
-  // the stage, warm-up and finish slots answer with the invalid-link card until their tasks
-  // (13, 14, 16) replace them. Every node rendered here joins the leak scan; the browser check scans the real
-  // document and RSC payload (C10).
+  // Hiring renders the landing and the details form (Task 11), the device check (Task 12) and
+  // the stage runner (Task 13); the warm-up and finish slots answer with the invalid-link card
+  // until their tasks (14, 16) replace them. Every node rendered here joins the leak scan; the
+  // browser check scans the real document and RSC payload (C10).
   const pageRead = (node: unknown) => JSON.stringify(node ?? null, (_key, value) => (typeof value === "function" || typeof value === "symbol" ? undefined : value));
   /** A rendered page, or the address Next's redirect() sends it to (its digest is "NEXT_REDIRECT;type;url;status;"). */
   async function page(raw: string, slot: "landing" | "info" | "check" | "practice" | "stage" | "done", params: Record<string, string> = {}, query: Record<string, string> = {}): Promise<{ node?: string; to?: string }> {
@@ -439,7 +439,16 @@ async function main() {
   state = await call("POST /device-check", token6);
   check(state.status === 200 && state.json.step === "STAGE", "the device check leads to stage 1", state.json.step);
   const stagePage = await page(token6, "stage", { n: "1" });
-  check(invalidCard(stagePage), "the stage slot: the invalid-link card until Task 13", stagePage.to);
+  check(
+    !!stagePage.node && !invalidCard(stagePage) && stagePage.node.includes('"current":{"position":1') && stagePage.node.includes('"startedAt":null'),
+    "the stage slot renders the stage runner (Task 13) on stage 1's intro",
+    stagePage.to ?? stagePage.node?.slice(0, 160),
+  );
+  check(
+    !!stagePage.node && (stagePage.node.match(/LEAKVISIBLE_[A-Z]+/g) ?? []).length >= 1 && !stagePage.node.includes("TEAMSECRET") && !stagePage.node.includes('"correct"'),
+    "the runner's props carry a LEAKVISIBLE text (positive control) and no TEAMSECRET text or right answer",
+    stagePage.node?.match(/(LEAKVISIBLE|TEAMSECRET)_[A-Z_]+|"correct"/g),
+  );
   const practicePage = await page(token6, "practice");
   check(state.json.practice ? invalidCard(practicePage) : practicePage.to === `/a/${token6}/stage/1`, `the warm-up slot: ${state.json.practice ? "the invalid-link card until Task 14" : "no warm-up in this version, sent to stage 1"}`, practicePage);
 
@@ -456,7 +465,11 @@ async function main() {
   const notStarted = await page(token6, "stage", { n: "1" });
   check(notStarted.to === `/a/${token6}`, "a candidate who has not started a stage is stopped by the closed opening too", notStarted);
   const stillIn = await page(token4, "stage", { n: "1" });
-  check(invalidCard(stillIn), "a candidate already inside a stage of the closed opening still reaches their stage slot", stillIn.to);
+  check(
+    !!stillIn.node && !invalidCard(stillIn) && stillIn.node.includes('"current":{"position":1') && /"startedAt":"\d{4}-/.test(stillIn.node),
+    "a candidate already inside a stage of the closed opening still reaches their running stage",
+    stillIn.to ?? stillIn.node?.slice(0, 160),
+  );
 
   for (const raw of [token, token3]) {
     const resolved = await resolveToken(raw);
