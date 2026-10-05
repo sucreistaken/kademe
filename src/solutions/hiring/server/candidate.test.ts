@@ -530,6 +530,17 @@ describe("attachMedia", () => {
     expect(writesOf(fake.ops)[0].values).toMatchObject({ mediaAssetId: "m1" });
   });
 
+  it("still answers the finished upload when attaching fails: the hiring hook logs and never throws (moved from the route test)", async () => {
+    fake.respond = () => {
+      throw new Error("db down");
+    };
+    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    await expect(attachMedia(asset("m1"))).resolves.toBeUndefined();
+    expect(log).toHaveBeenCalled();
+    expect(String(log.mock.calls[0][0])).toContain("m1");
+    log.mockRestore();
+  });
+
   it("never attaches a take that did not finish", async () => {
     fake.respond = (op) => (op.kind === "select" ? [{ response: { id: "r1", takeAssetIds: ["m1"], payload: {} }, activity: { type: "VIDEO", config: {} } }] : []);
     await attachMedia(asset("m1", { status: "FAILED" }));

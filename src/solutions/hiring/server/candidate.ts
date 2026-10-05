@@ -709,8 +709,21 @@ const ownsAsset = (assetId: string) =>
  * clears the pending upload (decision 11). The response is found through the
  * asset's own attempt and held FOR UPDATE while this decides (C14). A
  * completion after the stage closed still attaches: the answer is the candidate's.
+ *
+ * As the module's hook it never throws: a failure is logged and the upload's
+ * request still succeeds. The answer is decided again on the question's next
+ * upload event (another take, a failure, the salvage), and closing the stage
+ * counts any usable take whether attached or not.
  */
 export async function attachMedia(asset: MediaAssetRow): Promise<void> {
+  try {
+    await decideMediaAnswer(asset);
+  } catch (error) {
+    console.error(`[hiring] could not decide the answer for media ${asset.id}`, error);
+  }
+}
+
+async function decideMediaAnswer(asset: MediaAssetRow): Promise<void> {
   await db.transaction(async (tx) => {
     const [row] = await tx
       .select({ response: hiringResponses, activity: { type: hiringActivities.type, config: hiringActivities.config } })

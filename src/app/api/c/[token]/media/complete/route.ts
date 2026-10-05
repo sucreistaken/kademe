@@ -48,12 +48,10 @@ export async function POST(
     // Never throws: a queue problem cannot fail the student's answer.
     if (isTranscribableMime(asset.mime)) await enqueueTranscription(asset.id);
 
-    // The recording is stored either way; a failing attach is logged, the answer to the browser is the same.
-    try {
-      await solution.attempts.onMediaComplete(asset);
-    } catch (error) {
-      console.error(`[media/complete] ${solution.key} onMediaComplete failed for ${asset.id}`, error);
-    }
+    // Not caught here: an attach failure fails the request, so the exam's student
+    // sees the error and records again (a retry would find the asset READY and
+    // skip the hook). A solution that can recover by itself (hiring) catches inside its hook.
+    await solution.attempts.onMediaComplete(asset);
 
     return candidateJson({ status: asset.status, bytes: asset.bytes, durationMs: asset.durationMs });
   }, { allowProblems: ["COMPLETED"] });

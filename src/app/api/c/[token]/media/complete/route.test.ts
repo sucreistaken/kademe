@@ -71,18 +71,14 @@ describe("POST /media/complete when the solution's hook throws", () => {
     log.mockRestore();
   });
 
-  it("still answers the finished upload when onMediaComplete throws, and logs it", async () => {
+  it("lets an attach failure of the solution fail the request as before (the exam's student re-records on the error)", async () => {
     h.asset = { id: "m2", attemptId: "att", status: "UPLOADING", parts: [{ partNumber: 1, etag: "e", bytes: 100 }], mime: "video/webm", uploadId: "u" };
+    // The exam's hook: it does not catch, so a database error reaches the route and Next answers 500.
     const onMediaComplete = vi.fn<Hook>(async () => {
       throw new Error("db down");
     });
-    h.solution = { attempts: { onMediaComplete } } as unknown as SolutionModule;
-    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const res = await call();
-    expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ status: "READY", bytes: 100, durationMs: null });
+    h.solution = { key: "language-exam", attempts: { onMediaComplete } } as unknown as SolutionModule;
+    await expect(call()).rejects.toThrow("db down");
     expect(onMediaComplete).toHaveBeenCalledTimes(1);
-    expect(log).toHaveBeenCalled();
-    log.mockRestore();
   });
 });
