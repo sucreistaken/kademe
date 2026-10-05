@@ -136,13 +136,17 @@ export async function takeCount(itemResponseId: string): Promise<number> {
   return row?.n ?? 0;
 }
 
+/** A media id as the server mints it; anything else never reaches `uuid = $1` (Postgres 22P02 would be a 500). */
+const UPLOAD_REF = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /**
  * An upload reference is an id the server minted and handed to this student.
  * It is still checked against the token's own assessment on every use, so it
- * cannot be pointed at anybody else's recording.
+ * cannot be pointed at anybody else's recording. A reference that is not a
+ * uuid is nobody's: null, and each route answers its documented refusal.
  */
 export async function resolveOwnedMedia(ctx: CandidateContext, uploadRef: unknown) {
-  if (typeof uploadRef !== "string" || uploadRef.length !== 36) return null;
+  if (typeof uploadRef !== "string" || !UPLOAD_REF.test(uploadRef)) return null;
   const [row] = await db
     .select({ asset: mediaAssets })
     .from(mediaAssets)

@@ -639,6 +639,11 @@ describe("playbackUrl", () => {
     world.responses = [responseRow("r1", RUN, "v1", { takeAssetIds: [TAKE] })];
   };
 
+  it("refuses a reference that is not a uuid as UPLOAD_NOT_FOUND without reading media (never a 500)", async () => {
+    expect(await playbackUrl(h(), "z".repeat(36))).toEqual({ ok: false, code: "UPLOAD_NOT_FOUND" });
+    expect(fake.ops.some((o) => o.table === "media_assets")).toBe(false);
+  });
+
   it("hands a short-lived URL for the candidate's own finished take", async () => {
     own("READY");
     expect(await playbackUrl(h(), TAKE)).toEqual({ ok: true, url: `/signed/media/${ORG}/${ASSESSMENT}/${RUN}/${TAKE}.webm?s=600` });

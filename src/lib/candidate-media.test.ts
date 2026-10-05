@@ -8,6 +8,7 @@ import {
   normaliseFileMime,
   normaliseMime,
   OPAQUE_MIME,
+  resolveOwnedMedia,
 } from "./candidate-media";
 
 describe("recording mime", () => {
@@ -53,5 +54,16 @@ describe("file upload mime", () => {
     expect(normaliseFileMime("Application/PDF; charset=binary", ["application/pdf"])).toBe(
       "application/pdf",
     );
+  });
+});
+
+describe("resolveOwnedMedia", () => {
+  const ctx = { assessment: { id: "a", orgId: "o", solution: "HIRING" } } as never;
+
+  it("answers null for a reference that is not a uuid, before any query (a 36-character string is not enough)", async () => {
+    // The mocked db has no select: a query here would throw, as Postgres throws 22P02 on `uuid = 'zzz...'`.
+    for (const ref of ["z".repeat(36), "11111111-1111-4111-8111-11111111111g", "11111111_1111_4111_8111_111111111111", " ".repeat(36), null, 7]) {
+      expect(await resolveOwnedMedia(ctx, ref)).toBeNull();
+    }
   });
 });
