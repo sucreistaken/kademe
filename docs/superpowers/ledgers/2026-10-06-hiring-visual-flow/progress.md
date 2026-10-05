@@ -106,3 +106,13 @@ Task 9: complete (commits c0c9e1a..f6b7900, review clean after 1 fix round)
 - Task 9: minor (deferred): a multi-take review at time up shows two different time-up lines (each accurate for its action).
 - Benchmark (doğrulanmadı, gerçek cihazda kullanıcıyla): real video/audio take, ring timers, audio level bars and the recording pill, the 8 s strip, time-up auto save, forced past-wait close with the language link held until the take settles.
 BASE T10: f6b7900
+Task 10: implementer DONE ec0def9 (static pale-button proof in runner-footer.test; C11; Task 9 wrappers removed, holdReason kept; undo focus chain; useChoiceShortcuts in visual/ with keyIndex/isTypingTarget moved there; dashed disabled cards; 3 dead keys removed). Controller: vitest 2473/2473, 0 removed names, 37 added. Review (opus): Needs fixes, 1 Important: the time-up refocus block in stage-runner duplicates recorded-activity verbatim.
+- Ruling: the stage intro's footer hint keeps the existing hiringStage.clockStarts text (Step 5's code); the brief's Step 10.1 expectation "Süre, bastığında başlar." is a stale line in the plan, not a copy change. Cost if wrong: one copy value.
+- Ruling: fix round 1 covers the Important (one shared useRefocusOnTimeUp hook) and the cheap minors: the closed line shows only when not busy (no "Bu soru kapandı" flash on every no-back finish), setState(next) after a last-question commit only when next.current is the same stage, submit-delay strip offset from --step-footer-space, the optional hint stays inside a live region, docstring reflow. Cost if wrong: a small diff.
+- Task 10: minor (deferred): runner-footer.test's per-state loop asserts the reason only on disabled tags (the positive control covers the rest).
+Task 10: fix round 1/5 (1 Important + 5 minor addressed, 0 open; commit 87594e5: useRescueFocus shared hook; closed line only when not busy; keepsStage guard; strip offset from --step-footer-space; optional line through the footer's live hint). Controller: vitest 2476/2476, 0 removed names, 3 added. Re-review (sonnet): all addressed, no new Critical/Important.
+Task 10: complete (commits eac91db..87594e5, review clean after 1 fix round)
+- Task 10: minor (deferred): help.tsx:15 docstring line still ragged.
+- Task 10: minor (deferred): rescue to a natively disabled #activity-next does not fall back to the heading; pressing "Tekrar dene" on a recorded question unmounts the runner footer and focus drops to body (pre-existing); useRescueFocus effects have no render test.
+- Benchmark (doğrulanmadı, bulut, tarayıcı yok): the live pale-button reproduction (Step 1) and every Step 10 item (stage intro, footer, written and choice screens, keys 1-9, focus moves, strip position).
+BASE T11: 87594e5
