@@ -29,6 +29,7 @@ import {
   type RowId,
   type Trial,
 } from "./device-rows";
+import { mailTo } from "./closed";
 import { serverMessage } from "./server-message";
 import { openTracked, stopAllStreams } from "./streams";
 
@@ -72,7 +73,20 @@ function newSoundContext(): SoundContext {
  * (or inside the rows), focus moves to the new row's heading; the reason
  * under the button is a polite live region.
  */
-export function DeviceCheck({ token, camera, practice, locale }: { token: string; camera: boolean; practice: boolean; locale: Locale }) {
+export function DeviceCheck({
+  token,
+  camera,
+  practice,
+  locale,
+  contactEmail,
+}: {
+  token: string;
+  camera: boolean;
+  practice: boolean;
+  locale: Locale;
+  /** Named in the report's confirmation for an urgent problem (no reply is promised). */
+  contactEmail: string | null;
+}) {
   const t = useT("hiringDevice");
   const router = useRouter();
   const list = useRef<HTMLOListElement>(null);
@@ -345,7 +359,7 @@ export function DeviceCheck({ token, camera, practice, locale }: { token: string
   function reportControl(kind: ReportKind) {
     return report === "sent" ? (
       <p ref={sentNote} tabIndex={-1} role="status" className="text-[14px] leading-[22px] text-ink">
-        {t("reportSent")}
+        {contactEmail ? t.rich("reportSentContact", { email: contactEmail, mail: mailTo(contactEmail) }) : t("reportSent")}
       </p>
     ) : (
       <div>

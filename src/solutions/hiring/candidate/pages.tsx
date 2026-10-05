@@ -55,10 +55,10 @@ function suffixOf(slot: CandidatePageSlot, params: Record<string, string>): stri
  * invitation hiring serves: the organisation's name is never shown to a token
  * it does not (that one gets the core UnknownLink card, the leak rule).
  */
-function framed(token: string, locale: Locale, orgName: string, children: ReactNode): ReactNode {
+function framed(token: string, locale: Locale, orgName: string, contactEmail: string | null, children: ReactNode): ReactNode {
   return (
     <CandidateIntl locale={locale} timeZone={ORG_TIMEZONE}>
-      <HiringFrame locale={locale} orgName={orgName} token={token}>
+      <HiringFrame locale={locale} orgName={orgName} token={token} contactEmail={contactEmail}>
         {children}
       </HiringFrame>
     </CandidateIntl>
@@ -97,7 +97,7 @@ export async function renderHiringPage(slot: CandidatePageSlot, input: Candidate
   // cards keep the frame, so the organisation, the language and Help stay in reach.
   if (!resolved.ok && resolved.problem !== "COMPLETED") {
     const locale = isLocale(resolved.ctx.locale) ? resolved.ctx.locale : DEFAULT_LOCALE;
-    return framed(token, locale, resolved.ctx.orgName, problemCard(token, locale, resolved.problem, resolved.ctx));
+    return framed(token, locale, resolved.ctx.orgName, resolved.ctx.contactEmail, problemCard(token, locale, resolved.problem, resolved.ctx));
   }
 
   const state = await loadHiringState(h);
@@ -107,7 +107,7 @@ export async function renderHiringPage(slot: CandidatePageSlot, input: Candidate
   const locale: Locale = isLocale(h.locale) ? h.locale : DEFAULT_LOCALE;
   // Ruling C10: nothing below reads `state` directly; the client gets the stripped copy.
   const safe = candidateSafe(state);
-  const frame = (children: ReactNode) => framed(token, locale, safe.orgName, children);
+  const frame = (children: ReactNode) => framed(token, locale, safe.orgName, safe.contactEmail, children);
 
   switch (slot) {
     case "landing": {
@@ -129,7 +129,7 @@ export async function renderHiringPage(slot: CandidatePageSlot, input: Candidate
       );
     case "check":
       // Two flags and the page's language: no question, stage or team text reaches the device check.
-      return frame(<DeviceCheck token={token} camera={safe.devices.camera} practice={safe.practice} locale={locale} />);
+      return frame(<DeviceCheck token={token} camera={safe.devices.camera} practice={safe.practice} locale={locale} contactEmail={safe.contactEmail} />);
     case "stage":
       // Keyed by the stage, so the next stage starts from a fresh runner. The runner gets the
       // stripped candidate state only (no team field, no right answer: C10); the deadline in

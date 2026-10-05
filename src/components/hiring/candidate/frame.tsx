@@ -13,7 +13,20 @@ const NAMES: Record<Locale, string> = { tr: "Türkçe", en: "English" };
  * The language link is never prefetched: `?lang=` writes the choice to the
  * invitation, which only a click may do.
  */
-export function HiringFrame({ locale, orgName, token, children }: { locale: Locale; orgName: string; token: string; children: React.ReactNode }) {
+export function HiringFrame({
+  locale,
+  orgName,
+  token,
+  contactEmail,
+  children,
+}: {
+  locale: Locale;
+  orgName: string;
+  token: string;
+  /** Who Help names for an urgent problem: the opening's contact, else the organisation's. */
+  contactEmail: string | null;
+  children: React.ReactNode;
+}) {
   const t = candidateT(locale);
   return (
     <div lang={locale} className="min-h-dvh bg-paper" style={{ "--card-radius": "12px" } as React.CSSProperties}>
@@ -40,7 +53,7 @@ export function HiringFrame({ locale, orgName, token, children }: { locale: Loca
                 ),
               )}
             </nav>
-            <Help token={token} />
+            <Help token={token} contactEmail={contactEmail} />
           </span>
         </div>
       </header>

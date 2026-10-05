@@ -134,7 +134,8 @@ describe("renderHiringPage", () => {
     expect((find(expired, LinkProblem)[0].props as { problem: string }).problem).toBe("EXPIRED");
     // Inside the hiring frame: the organisation, the language switch and Help stay in reach, and the switch works there.
     await expect(render("landing", { resolved: { ok: false, problem: "EXPIRED", ctx }, searchParams: { lang: "en" } })).rejects.toMatchObject({ to: "/a/tok" });
-    expect(find(expired, HiringFrame)[0].props).toMatchObject({ orgName: "Örnek A.Ş.", locale: "tr", token: "tok" });
+    // An expired card's Help names the organisation's contact (the opening is not read there).
+    expect(find(expired, HiringFrame)[0].props).toMatchObject({ orgName: "Örnek A.Ş.", locale: "tr", token: "tok", contactEmail: "ik@ornek.test" });
     h.state = { ...(h.state as object), step: "CLOSED" };
     const closed = find(await render("landing"), ClosedCard);
     expect(closed).toHaveLength(1);
@@ -152,7 +153,7 @@ describe("renderHiringPage", () => {
     expect(find(unknown, HiringFrame)).toHaveLength(0);
   });
 
-  it("renders the device check with the devices and the warm-up flag only, inside the frame", async () => {
+  it("renders the device check with the devices, the warm-up flag and the contact for an urgent report only, inside the frame", async () => {
     h.state = {
       ...(h.state as object),
       step: "CHECK",
@@ -163,10 +164,11 @@ describe("renderHiringPage", () => {
     };
     const node = await render("check");
     const [check] = find(node, DeviceCheck);
-    expect(check.props).toEqual({ token: "tok", camera: true, practice: true, locale: "tr" });
+    expect(check.props).toEqual({ token: "tok", camera: true, practice: true, locale: "tr", contactEmail: "deniz@ornek.test" });
     // No question text and no team text reaches the device page; the frame still names the organisation (positive control).
     expect(JSON.stringify(check.props)).not.toMatch(/LEAKVISIBLE|TEAMSECRET/);
-    expect(find(node, HiringFrame)[0].props).toMatchObject({ orgName: "Örnek A.Ş.", locale: "tr" });
+    // Help names the opening's contact (final review I1).
+    expect(find(node, HiringFrame)[0].props).toMatchObject({ orgName: "Örnek A.Ş.", locale: "tr", contactEmail: "deniz@ornek.test" });
     expect(find(node, LinkProblem)).toHaveLength(0);
     h.state = { ...(h.state as object), devices: { camera: false, microphone: true }, practice: false };
     expect(find(await render("check"), DeviceCheck)[0].props).toMatchObject({ camera: false, practice: false });
@@ -221,7 +223,8 @@ describe("renderHiringPage", () => {
     // ...and no team text, competency or right answer does.
     expect(sent.match(/TEAMSECRET/g) ?? []).toHaveLength(0);
     expect(sent).not.toMatch(/"correct"/);
-    expect(find(node, HiringFrame)[0].props).toMatchObject({ orgName: "Örnek A.Ş.", locale: "tr" });
+    // Help names the opening's contact (final review I1).
+    expect(find(node, HiringFrame)[0].props).toMatchObject({ orgName: "Örnek A.Ş.", locale: "tr", contactEmail: "deniz@ornek.test" });
     expect(find(node, LinkProblem)).toHaveLength(0);
   });
 
@@ -248,7 +251,8 @@ describe("renderHiringPage", () => {
     expect(JSON.stringify(practice.props)).not.toMatch(/LEAKVISIBLE|TEAMSECRET/);
     // Positive control: the same state does carry the sentinels the warm-up is kept from, and the frame names the organisation.
     expect(JSON.stringify(h.state)).toMatch(/LEAKVISIBLE_PROMPT/);
-    expect(find(node, HiringFrame)[0].props).toMatchObject({ orgName: "Örnek A.Ş.", locale: "tr" });
+    // Help names the opening's contact (final review I1).
+    expect(find(node, HiringFrame)[0].props).toMatchObject({ orgName: "Örnek A.Ş.", locale: "tr", contactEmail: "deniz@ornek.test" });
     expect(find(node, LinkProblem)).toHaveLength(0);
     // An audio-only version: the warm-up records sound only.
     h.state = { ...(h.state as object), devices: { camera: false, microphone: true } };

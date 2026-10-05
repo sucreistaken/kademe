@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useStepFocus } from "@/hooks/use-step-focus";
 import { apiSend } from "@/lib/client/api";
 import { useT } from "@/i18n/candidate-client";
+import { mailTo } from "./closed";
 
 type SendState = "idle" | "sending" | "sent" | "failed";
 
@@ -17,8 +18,10 @@ type SendState = "idle" | "sending" | "sent" | "failed";
  * only while it exists. When the report is sent the form gives way to the
  * confirmation, which takes focus so a keyboard user is not left on <body>.
  * A report that did not reach the team says so (it is never shown as sent).
+ * The confirmation promises no reply; it names the person to write to when
+ * something is urgent (the opening's contact, else the organisation's).
  */
-export function Help({ token }: { token: string }) {
+export function Help({ token, contactEmail }: { token: string; contactEmail: string | null }) {
   const t = useT("hiringFrame");
   const panel = useId();
   const root = useRef<HTMLDivElement>(null);
@@ -103,7 +106,7 @@ export function Help({ token }: { token: string }) {
           </dl>
           {state === "sent" ? (
             <p ref={sentNote} tabIndex={-1} role="status" className="border-t border-line pt-4 text-[14px] leading-[22px] text-ink">
-              {t("reportSent")}
+              {contactEmail ? t.rich("reportSentContact", { email: contactEmail, mail: mailTo(contactEmail) }) : t("reportSent")}
             </p>
           ) : (
             <div className="space-y-2 border-t border-line pt-4">

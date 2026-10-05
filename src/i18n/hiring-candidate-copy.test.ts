@@ -80,4 +80,15 @@ describe("hiring candidate copy", () => {
     expect(t.tr("hiringDone.next", { count: 2 })).toBe("Cevaplarını ekipten en az 2 kişi, birbirinden bağımsız değerlendirecek.");
     expect(t.en("hiringDone.title", { name: "Elif Kaya" })).toBe("Done, thank you, Elif Kaya.");
   });
+
+  it("confirms a problem report without promising a reply, and names the person to write to (final review I1)", () => {
+    const t = { tr: candidateT("tr"), en: candidateT("en") };
+    for (const ns of ["hiringFrame", "hiringDevice"] as const) {
+      expect(t.tr(`${ns}.reportSent`)).toBe("Bildirimin kaydedildi.");
+      expect(t.en(`${ns}.reportSent`)).toBe("Your report was saved.");
+      expect(tr[ns].reportSentContact).toBe("Bildirimin kaydedildi. Acil bir durumda <mail>{email}</mail> adresine yaz.");
+      expect(en[ns].reportSentContact).toBe("Your report was saved. If it is urgent, write to <mail>{email}</mail>.");
+    }
+    for (const [, namespace] of [...hiringOf(tr), ...hiringOf(en)]) for (const text of strings(namespace)) expect(text).not.toMatch(/aynı gün dönülür|replies the same day/i);
+  });
 });
