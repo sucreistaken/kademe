@@ -1,37 +1,46 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Mic, Video, Wifi } from "lucide-react";
-import { Button, DisabledReason } from "@/components/ui/button";
+import { Accessibility, AudioLines, CalendarDays, Clock, EyeOff, Headphones, Laptop, Layers, Mic, Video, Wifi } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ChoiceCardGroup } from "@/components/visual/choice-card";
+import { Disclosure } from "@/components/visual/disclosure";
+import { FactTiles } from "@/components/visual/fact-tiles";
+import { IconRow } from "@/components/visual/icon-row";
+import { PathSteps } from "@/components/visual/path-steps";
+import { StepFooter } from "@/components/visual/step-footer";
+import { StepScreen } from "@/components/visual/step-screen";
+import { useStepFocus } from "@/hooks/use-step-focus";
 import { apiSend } from "@/lib/client/api";
+import { clearHash, pushHash, subscribeHash } from "@/lib/client/hash-step";
 import { nextPath } from "@/lib/candidate-routes";
 import { pickTextLang } from "@/lib/i18n-text";
 import { useT } from "@/i18n/candidate-client";
 import type { Locale } from "@/i18n/locale";
 import type { HiringCandidateState } from "@/solutions/hiring/rules/candidate-state";
-import { ActionBar } from "./action-bar";
 import { mailTo } from "./closed";
+import { agreeWaitReason, bringList, CONSENT_HASH, landingStepOf, welcomePath, type LandingStep } from "./landing-model";
 import { serverMessage } from "./server-message";
+import { useJourney } from "./use-journey";
 
-const ICONS = { VIDEO_ANSWER: Video, AUDIO_ANSWER: Mic, TECHNICAL: Wifi } as const;
+const SIGNAL_ROW = { VIDEO_ANSWER: { icon: Video, key: "rowVideo" }, AUDIO_ANSWER: { icon: Mic, key: "rowAudio" }, TECHNICAL: { icon: Wifi, key: "rowTechnical" } } as const;
+const BRING_ICON = { quiet: Headphones, cameraMic: Video, mic: Mic, computer: Laptop } as const;
 const EXTRA = ["0", "25", "50"] as const;
 
+const currentStep = () => landingStepOf(window.location.hash);
+const serverStep = (): LandingStep => "welcome";
 
 /**
- * HIRING-UX 6.1: before the first question, the candidate knows what this is,
- * how long it takes, who reviews it and how, exactly what is recorded (A3:
- * nothing more, nothing less; plan 2 monitors nothing), what they need, and
- * that they can choose extra time without a reason. No question is shown here.
- *
- * The minutes are the state's total, extra time and any ALLOW_GRACE grace
- * included (C25), so the landing never promises less than the clocks allow;
- * stage minutes are not listed, since rounded per stage they could add up to
- * more than the total. Consent posts to the core route, which records the
- * text frozen on this invitation.
+ * HIRING-VISUAL-FLOW 3.1 and 3.2 (K3): Welcome says who, how long, how it goes
+ * and what to have ready, and takes extra time without a reason; Consent says
+ * exactly what is recorded (plan 2 monitors nothing: decision 5 of this plan
+ * and C24), the fixed promise, the AI line, and the full text one click away.
+ * No question is shown before consent. Consent posts to the core route, which
+ * records the text frozen on this invitation, only when the candidate presses
+ * "Kabul et ve başla". The minutes are the state's total with extra time and
+ * any grace (C25). Both steps live in this one component, so going back to
+ * Welcome keeps the extra-time choice and the ticked box.
  */
 export function Landing({
   token,
@@ -39,6 +48,7 @@ export function Landing({
   consentBody,
   consentLang,
   deadline,
+  deadlineDay,
   locale,
 }: {
   token: string;
@@ -46,11 +56,24 @@ export function Landing({
   consentBody: string;
   /** The language the consent text is shown in (the other one when the candidate's is empty). */
   consentLang: Locale;
+  /** The full deadline in the e-mail's words; `deadlineDay` is the short day for the tile. */
   deadline: string;
+  deadlineDay: string;
   locale: Locale;
 }) {
   const t = useT("hiringLanding");
   const router = useRouter();
+  const step = useSyncExternalStore(subscribeHash, currentStep, serverStep);
+  // True once the candidate has moved between the steps on this page (Continue, Back, the
+  // browser's buttons). Only then does the new step fade in and take the focus (2.3); the first
+  // load, a reload on #consent included, does neither.
+  const [moved, setMoved] = useState(false);
+  useEffect(() => subscribeHash(() => setMoved(true)), []);
+  const heading = useStepFocus<HTMLHeadingElement>(moved ? step : "load");
+  // Whether Welcome opened Consent in this page's history: then "Geri" is the browser's back
+  // (and the browser's own back button does the same); on a page opened on #consent there is
+  // no Welcome behind it, so "Geri" swaps the address back to Welcome instead of leaving.
+  const welcomeBehind = useRef(false);
   const [accepted, setAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,8 +83,12 @@ export function Landing({
   const [extraError, setExtraError] = useState<string | null>(null);
   const recorded = state.devices.microphone;
   const intro = state.intro.body ? pickTextLang(state.intro.body, locale) : null;
+  const journey = useJourney("prep", { device: recorded, warmup: state.practice });
 
   async function chooseExtra(value: string) {
+    // One choice at a time. The cards stay enabled while it saves, so a keyboard user keeps the
+    // focus on the card they chose (a disabled radio drops it to the page).
+    if (extra === "saving") return;
     const before = pct;
     // The choice shows at once; the server's answer settles it (or puts the old one back).
     setPct(Number(value) as HiringCandidateState["extraTimePct"]);
@@ -79,7 +106,7 @@ export function Landing({
     }
   }
 
-  async function start() {
+  async function agree() {
     setBusy(true);
     setError(null);
     try {
@@ -91,182 +118,199 @@ export function Landing({
     }
   }
 
-  const steps = [...(recorded ? [t("howCheck")] : []), ...(state.practice ? [t("howPractice")] : []), `${t("howQuestions")}${recorded ? ` ${t("howThink")}` : ""}`];
-  const extraLocked = state.extraTimeLocked;
-  const extraNote = extraLocked ? t("extraLocked") : extra === "saving" ? t("extraSaving") : extra === "saved" ? t("extraSaved") : t("extraBody");
-
-  return (
-    <div className="mx-auto max-w-[640px] pt-10 pb-6 sm:pt-14">
-      <p className="text-[14px] leading-[22px] text-muted">
-        {state.orgName} · {state.positionName}
-      </p>
-      <h1 className="mt-2 text-[28px] leading-9 font-semibold text-ink">{state.candidateName ? t("hello", { name: state.candidateName }) : t("helloNoName")}</h1>
-      <p className="mt-3 text-[16px] leading-[26px] text-ink-2" lang={intro?.text && intro.lang !== locale ? intro.lang : undefined}>
-        {intro?.text || t("purpose")}
-      </p>
-
-      <ul className="tnum mt-6 flex flex-wrap gap-x-6 gap-y-2 text-[16px] leading-[26px] text-ink">
-        <li>{t("factStages", { count: state.stages.length })}</li>
-        <li>{t("factMinutes", { minutes })}</li>
-        <li>{t("factDeadline", { date: deadline })}</li>
-      </ul>
-
-      <section className="mt-10" aria-labelledby="landing-how">
-        <h2 id="landing-how" className="text-[20px] leading-7 font-semibold text-ink">
-          {t("howTitle")}
-        </h2>
-        <ol className="mt-3 space-y-2 text-[16px] leading-[26px] text-ink-2">
-          {steps.map((step, i) => (
-            <li key={i} className="flex gap-3">
-              <span className="tnum font-medium text-ink" aria-hidden>
-                {i + 1}.
-              </span>
-              <span>{step}</span>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <section className="mt-10" aria-labelledby="landing-who">
-        <h2 id="landing-who" className="text-[20px] leading-7 font-semibold text-ink">
-          {t("whoTitle")}
-        </h2>
-        <p className="mt-3 text-[16px] leading-[26px] text-ink-2">{t("whoPeople", { count: state.reviewers })}</p>
-        <p className="mt-2 text-[16px] leading-[26px] text-ink-2">{recorded ? t("whoAiRecorded") : t("whoAi")}</p>
-      </section>
-
-      <section className="mt-10 rounded-2xl border border-line bg-surface p-5 sm:p-card-candidate" aria-labelledby="landing-recorded">
-        <h2 id="landing-recorded" className="text-[20px] leading-7 font-semibold text-ink">
-          {t("recordedTitle")}
-        </h2>
-        <ul className="mt-4 space-y-3 text-[16px] leading-[26px] text-ink">
-          {state.signals.map((signal) => {
-            const Icon = ICONS[signal];
-            return (
-              <li key={signal} className="flex gap-3">
-                <Icon className="mt-[3px] size-5 shrink-0 text-muted" strokeWidth={1.5} aria-hidden />
-                <span>{t(`signal${signal}`)}</span>
-              </li>
-            );
-          })}
-          <li className="pl-8 text-ink-2">{t("notMonitored")}</li>
-        </ul>
-        <p className="mt-4 text-[16px] leading-[26px] font-medium text-ink">{t("promise")}</p>
-        <Collapsible className="mt-3">
-          <CollapsibleTrigger className="group flex min-h-11 items-center gap-1 rounded-lg text-[14px] font-medium text-ink underline decoration-underline underline-offset-4 hover:decoration-ink">
-            {t("details")}
-            <ChevronDown className="size-4 transition-transform duration-[180ms] ease-soft group-data-[state=open]:rotate-180 motion-reduce:transition-none" aria-hidden />
-          </CollapsibleTrigger>
-          <CollapsibleContent className="mt-2 space-y-3 border-t border-line pt-3 text-[14px] leading-[22px] text-ink-2">
-            <p className="whitespace-pre-line" lang={consentLang !== locale ? consentLang : undefined}>
-              {consentBody}
-            </p>
-            <p className="tnum">{t("retentionMedia", { days: state.retention.mediaDays })}</p>
-            <p className="tnum">{t("retentionRecord", { days: state.retention.candidateDays })}</p>
-          </CollapsibleContent>
-        </Collapsible>
-      </section>
-
-      <section className="mt-10" aria-labelledby="landing-need">
-        <h2 id="landing-need" className="text-[20px] leading-7 font-semibold text-ink">
-          {t("needTitle")}
-        </h2>
-        <ul className="mt-3 list-disc space-y-1 pl-5 text-[16px] leading-[26px] text-ink-2">
-          <li>{t("needQuiet")}</li>
-          {state.devices.camera ? <li>{t("needCameraMic")}</li> : state.devices.microphone ? <li>{t("needMic")}</li> : null}
-          <li className="tnum">{t("needTime", { minutes })}</li>
-          <li>{t("needDevice")}</li>
-        </ul>
-      </section>
-
-      <Collapsible className="mt-8 rounded-2xl border border-line bg-surface">
-        <CollapsibleTrigger className="group flex min-h-12 w-full items-center justify-between gap-2 rounded-2xl px-5 text-left text-[16px] font-medium text-ink sm:px-card-candidate">
-          {t("adjustTitle")}
-          <ChevronDown className="size-4 shrink-0 transition-transform duration-[180ms] ease-soft group-data-[state=open]:rotate-180 motion-reduce:transition-none" aria-hidden />
-        </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-5 px-5 pb-5 sm:px-card-candidate sm:pb-card-candidate">
-          <fieldset>
-            <legend id="landing-extra" className="text-[16px] font-medium text-ink">
-              {t("extraTitle")}
-            </legend>
-            <RadioGroup
-              value={String(pct)}
-              onValueChange={chooseExtra}
-              disabled={extraLocked || extra === "saving"}
-              className="mt-3 gap-2"
-              aria-labelledby="landing-extra"
-              aria-describedby="landing-extra-why"
-            >
-              {EXTRA.map((value) => (
-                <label
-                  key={value}
-                  className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-line px-4 text-[16px] text-ink transition-colors duration-[120ms] ease-out hover:bg-canvas has-[[data-state=checked]]:border-accent has-[[data-state=checked]]:bg-brand-soft has-[:disabled]:cursor-not-allowed"
-                >
-                  <RadioGroupItem value={value} />
-                  <span className="tnum">{value === "0" ? t("extraNone") : value === "25" ? t("extra25") : t("extra50")}</span>
-                </label>
-              ))}
-            </RadioGroup>
-            {/* The reason the choice is closed (C15), or what the choice did. */}
-            <p id="landing-extra-why" className="mt-2 text-[14px] leading-[22px] text-muted" role="status">
-              {extraNote}
-            </p>
-            {extraError ? (
-              <p role="alert" className="mt-1 text-[14px] leading-[22px] text-ink">
-                {extraError}
-              </p>
-            ) : null}
-          </fieldset>
-          <div>
-            <a
-              href={`/a/${encodeURIComponent(token)}/rights?type=accommodation`}
-              className="inline-flex min-h-11 items-center rounded-lg text-[16px] font-medium text-ink underline decoration-underline underline-offset-4 hover:decoration-ink"
-            >
-              {t("otherAdjustment")}
-            </a>
-            <p className="text-[14px] leading-[22px] text-muted">{t("otherBody")}</p>
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
-
-      <div className="mt-8 flex items-start gap-3">
-        <Checkbox id="landing-consent" checked={accepted} onCheckedChange={(v) => setAccepted(v === true)} className="mt-[3px] size-5 after:-inset-3" />
-        <label htmlFor="landing-consent" className="min-h-11 cursor-pointer text-[16px] leading-[26px] text-ink">
-          {t("consentLabel")}
-        </label>
-      </div>
-
-      <ActionBar>
-        <Button
-          id="landing-start"
-          variant="primary"
-          size="lg"
-          className="w-full text-[16px]"
-          disabled={!accepted || busy}
-          disabledReason={!accepted ? t("consentRequired") : undefined}
-          onClick={start}
+  if (step === "welcome") {
+    const extraLocked = state.extraTimeLocked;
+    const extraNote = extraLocked ? t("extraLocked") : extra === "saving" ? t("extraSaving") : extra === "saved" ? t("extraSaved") : t("extraShort");
+    const path = welcomePath({ device: recorded, warmup: state.practice });
+    return (
+      <>
+        <StepScreen
+          key="welcome"
+          layout="split"
+          illustration="welcome"
+          kicker={`${state.orgName} · ${state.positionName}`}
+          title={state.candidateName ? t("hello", { name: state.candidateName }) : t("helloNoName")}
+          titleRef={heading}
+          enter={moved}
+          lead={<p lang={intro?.text && intro.lang !== locale ? intro.lang : undefined}>{intro?.text || t("subline")}</p>}
         >
-          {busy ? t("starting") : t("start")}
-        </Button>
-        {!accepted ? (
-          <DisabledReason id="landing-start-why" className="mt-2 text-center text-[14px]">
-            {t("consentRequired")}
-          </DisabledReason>
-        ) : null}
-        {error ? (
-          <p role="alert" className="mt-2 text-center text-[14px] text-ink">
-            {error}
-          </p>
-        ) : null}
-      </ActionBar>
+          <div className="space-y-8">
+            <FactTiles
+              items={[
+                { icon: Clock, value: t("factMinutesValue", { minutes }), label: t("factMinutesLabel") },
+                { icon: Layers, value: t("factStagesValue", { count: state.stages.length }), label: t("factStagesLabel") },
+                { icon: CalendarDays, value: deadlineDay, label: t("factDeadlineLabel") },
+              ]}
+            />
+            <section aria-labelledby="landing-path">
+              <h2 id="landing-path" className="mb-3 text-[18px] leading-7 font-semibold text-ink">
+                {t("pathTitle")}
+              </h2>
+              <PathSteps
+                locale={locale}
+                steps={path.map((p) =>
+                  p === "device"
+                    ? { title: t("pathDevice"), detail: t("pathDeviceDetail") }
+                    : p === "warmup"
+                      ? { title: t("pathWarmup"), detail: t("pathWarmupDetail") }
+                      : p === "questions"
+                        ? { title: t("pathQuestions"), detail: t("pathQuestionsDetail") }
+                        : { title: t("pathTeam"), detail: t("whoShort", { count: state.reviewers }) },
+                )}
+              />
+            </section>
+            <section aria-labelledby="landing-bring">
+              <h2 id="landing-bring" className="mb-3 text-[18px] leading-7 font-semibold text-ink">
+                {t("bringTitle")}
+              </h2>
+              <ul className="flex flex-wrap gap-2">
+                {bringList(state.devices).map((item) => {
+                  const Icon = BRING_ICON[item];
+                  const label = item === "quiet" ? t("bringQuiet") : item === "cameraMic" ? t("bringCameraMic") : item === "mic" ? t("bringMic") : t("needDevice");
+                  return (
+                    <li key={item} className="inline-flex min-h-10 items-center gap-2 rounded-full border border-line bg-surface px-3 text-[14px] text-ink">
+                      <Icon className="size-4 text-muted" strokeWidth={1.75} aria-hidden />
+                      {label}
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+            <Disclosure label={t("adjustRow")} icon={Accessibility}>
+              <fieldset className="space-y-3">
+                <legend id="landing-extra" className="text-[16px] font-medium text-ink">
+                  {t("extraTitle")}
+                </legend>
+                <ChoiceCardGroup
+                  type="single"
+                  name="extra-time"
+                  value={[String(pct)]}
+                  onChange={([v]) => void chooseExtra(v)}
+                  labelledBy="landing-extra"
+                  describedBy="landing-extra-why"
+                  disabled={extraLocked}
+                  columns={3}
+                  items={EXTRA.map((value) => ({ value, label: <span className="tnum">{value === "0" ? t("extraNone") : value === "25" ? t("extra25") : t("extra50")}</span> }))}
+                />
+                {/* The reason the choice is closed (C15), or what the choice did. */}
+                <p id="landing-extra-why" role="status" className="text-[14px] leading-[22px] text-muted">
+                  {extraNote}
+                </p>
+                {extraError ? (
+                  <p role="alert" className="text-[14px] leading-[22px] text-ink">
+                    {extraError}
+                  </p>
+                ) : null}
+                <div>
+                  <a
+                    href={`/a/${encodeURIComponent(token)}/rights?type=accommodation`}
+                    className="inline-flex min-h-11 items-center rounded-lg text-[16px] font-medium text-ink underline decoration-underline underline-offset-4 hover:decoration-ink"
+                  >
+                    {t("otherAdjustment")}
+                  </a>
+                  <p className="text-[14px] leading-[22px] text-muted">{t("otherBody")}</p>
+                </div>
+              </fieldset>
+            </Disclosure>
+            <p className="text-[14px] leading-[22px] text-muted">{t("footnote")}</p>
+          </div>
+        </StepScreen>
+        <StepFooter
+          journey={journey}
+          primary={{
+            kind: "button",
+            id: "landing-continue",
+            label: t("continue"),
+            onClick: () => {
+              // A new history entry on the same page: the browser's back button returns to Welcome.
+              pushHash(CONSENT_HASH);
+              welcomeBehind.current = true;
+              window.scrollTo({ top: 0 });
+            },
+          }}
+        />
+      </>
+    );
+  }
 
-      <p className="mt-6 text-center text-[14px] leading-[22px] text-muted">
-        {t("resume")}{" "}
-        <a href={`/a/${encodeURIComponent(token)}/rights`} className="inline-flex min-h-11 items-center text-ink underline decoration-underline underline-offset-4 hover:decoration-ink">
-          {t("rights")}
-        </a>
-      </p>
-      {state.contactEmail ? <p className="mt-1 text-center text-[14px] leading-[22px] text-muted">{t.rich("contact", { email: state.contactEmail, mail: mailTo(state.contactEmail) })}</p> : null}
-    </div>
+  const why = agreeWaitReason(accepted);
+  return (
+    <>
+      <StepScreen
+        key="consent"
+        layout="split"
+        illustration="consent"
+        illustrationSize="spot"
+        title={t("consentTitle")}
+        titleRef={heading}
+        enter={moved}
+        lead={<p className="text-[18px] leading-7 font-semibold text-ink">{t("promise")}</p>}
+        aside={
+          <div className="space-y-1">
+            <a
+              href={`/a/${encodeURIComponent(token)}/rights`}
+              className="inline-flex min-h-11 items-center text-[14px] text-ink underline decoration-underline underline-offset-4 hover:decoration-ink"
+            >
+              {t("rights")}
+            </a>
+            {state.contactEmail ? <p className="text-[14px] leading-[22px] text-muted">{t.rich("contact", { email: state.contactEmail, mail: mailTo(state.contactEmail) })}</p> : null}
+          </div>
+        }
+      >
+        <div className="space-y-5">
+          <section className="space-y-4 rounded-2xl border border-line bg-surface p-card-candidate" aria-labelledby="consent-recorded">
+            <h2 id="consent-recorded" className="text-[13px] font-semibold tracking-[0.06em] text-muted uppercase">
+              {t("groupRecorded")}
+            </h2>
+            {state.signals.map((signal) => (
+              <IconRow key={signal} icon={SIGNAL_ROW[signal].icon} title={t(SIGNAL_ROW[signal].key)} detail={signal === "TECHNICAL" ? t("rowTechnicalDetail") : undefined} />
+            ))}
+            <div className="border-t border-line pt-4">
+              <h2 className="text-[13px] font-semibold tracking-[0.06em] text-muted uppercase">{t("groupNotRecorded")}</h2>
+              <div className="mt-4">
+                <IconRow icon={EyeOff} tone="negative" title={t("rowNotMonitored")} />
+              </div>
+            </div>
+          </section>
+          <div className="rounded-2xl border border-line bg-surface p-card-candidate">
+            <IconRow icon={AudioLines} title={t("aiTitle")} detail={recorded ? t("aiDetailRecorded") : t("aiDetail")} />
+          </div>
+          <Disclosure label={t("detailsLong")}>
+            <div className="space-y-3 text-[14px] leading-[22px] text-ink-2">
+              <p>{t("whoPeople", { count: state.reviewers })}</p>
+              {state.signals.map((signal) => (
+                <p key={signal}>{t(`signal${signal}`)}</p>
+              ))}
+              <p className="whitespace-pre-line" lang={consentLang !== locale ? consentLang : undefined}>
+                {consentBody}
+              </p>
+              <p className="tnum">{t("retentionMedia", { days: state.retention.mediaDays })}</p>
+              <p className="tnum">{t("retentionRecord", { days: state.retention.candidateDays })}</p>
+              <p className="tnum">{t("deadlineFull", { date: deadline })}</p>
+            </div>
+          </Disclosure>
+          {/* The whole card ticks the box (3.2); the box keeps its own focus ring inside the card's. */}
+          <label
+            htmlFor="landing-consent"
+            className="flex cursor-pointer items-start gap-3 rounded-2xl border border-line bg-surface p-4 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent has-[[data-state=checked]]:border-accent has-[[data-state=checked]]:bg-brand-soft"
+          >
+            <Checkbox id="landing-consent" checked={accepted} onCheckedChange={(v) => setAccepted(v === true)} className="mt-[3px] size-5" />
+            <span className="text-[16px] leading-[26px] text-ink">{t("consentLabel")}</span>
+          </label>
+        </div>
+      </StepScreen>
+      <StepFooter
+        journey={journey}
+        back={{ label: t("back"), onClick: () => (welcomeBehind.current ? window.history.back() : clearHash()) }}
+        primary={{ kind: "button", id: "landing-agree", label: t("agree"), busy, busyLabel: t("starting"), waitReason: why ? t(why) : null, onClick: () => void agree() }}
+        note={
+          error ? (
+            <p role="alert" className="text-[14px] text-ink">
+              {error}
+            </p>
+          ) : null
+        }
+      />
+    </>
   );
 }

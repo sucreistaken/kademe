@@ -48,6 +48,21 @@ describe("hiring candidate copy", () => {
     expect(t.en("hiringLanding.whoPeople", { count: 3 })).toBe("At least 3 people on the team review your answers independently, with the same questions and criteria.");
   });
 
+  it("names the reviewers in a short line on Welcome, honestly (3.1 whoShort)", () => {
+    const t = { tr: candidateT("tr"), en: candidateT("en") };
+    expect(t.tr("hiringLanding.whoShort", { count: 0 })).toBe("İşe alım ekibi, aynı ölçütlerle.");
+    expect(t.tr("hiringLanding.whoShort", { count: 1 })).toBe("Ekipten bir kişi, aynı ölçütlerle.");
+    expect(t.tr("hiringLanding.whoShort", { count: 3 })).toBe("En az 3 kişi, birbirinden bağımsız.");
+    expect(t.en("hiringLanding.whoShort", { count: 1 })).toBe("One person on the team, same criteria.");
+    expect(t.en("hiringLanding.whoShort", { count: 2 })).toBe("At least 2 people, independently.");
+  });
+
+  it("names the technical records on the consent screen and keeps the closing promise word for word (C24, plan decision 5)", () => {
+    expect(tr.hiringLanding.rowTechnicalDetail).toBe("IP adresin ve tarayıcın, aşama saatleri, bağlantı sorunları");
+    expect(en.hiringLanding.rowTechnicalDetail).toBe("Your IP address and browser, stage times, connection problems");
+    expect(tr.hiringLanding.consentLabel).toBe("Kaydı ve cevaplarımın bu başvuru için değerlendirilmesini kabul ediyorum.");
+  });
+
   it("lets an unheard microphone through to the trial, in the ruled words (Task 12 review)", () => {
     expect(tr.hiringDevice.trialQuiet).toBe("Sesini duyamadık. Deneme kaydını dinle; kendi sesini duyuyorsan devam edebilirsin.");
     expect(en.hiringDevice.trialQuiet).toMatch(/^We could not hear you\./);
