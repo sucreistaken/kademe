@@ -80,7 +80,11 @@ export async function salvageAbandonedUploads(now: Date = new Date(), limit = 20
     .from(mediaAssets)
     .leftJoin(sectionRuns, eq(sectionRuns.id, mediaAssets.sectionRunId))
     .where(
+      // Only the exam's own uploads (they carry their section run). Every
+      // other solution salvages its uploads itself (attempts.closeExpired) and
+      // attaches them to its own answers.
       and(
+        isNotNull(mediaAssets.sectionRunId),
         eq(mediaAssets.status, "UPLOADING"),
         lt(mediaAssets.createdAt, oldEnough),
         isNotNull(mediaAssets.uploadId),
