@@ -64,3 +64,13 @@ HANDOFF 2026-10-06 (user: "direkt cloud geç, işler bitmeden"): local work stop
 - Task 6 fix round 1 was IN PROGRESS (red stage) when stopped: the ruling above stands; a partial, untested WIP diff is saved as task-6-fix-wip.patch and task-6-fix-wip-newfiles.txt next to this ledger (reference only; redo the fix round from HEAD).
 - Design v4 (K12, wizard-first manager panel) was IN PROGRESS and NOT written: redo it first in the new session (see the K12 line above), before plan 2b Tasks 14-21; Tasks 7-13 (candidate side) can proceed independently.
 - The mockup lives only on the local machine (scratchpad); design doc v3 is committed.
+SESSION 2026-10-06 (controller resumed in a local git worktree of platform/solutions, branch worktree-agent-a88e2e0b3bc3d89c3, pushed to origin platform/solutions by sha; Docker kademe-db on 5434 is reachable, so DB gates run on *_check copies; no browser automation in this session: every browser step is "doğrulanmadı (bulut, tarayıcı yok)" for a later local session in the user's Chrome).
+Controller: baseline at 3c2e2e2: vitest 2377/2377, 0 failed.
+- Ruling: `pnpm build` in the worktree runs with a dummy DATABASE_URL (postgresql://kademe:kademe@localhost:1/none; src/db/index.ts throws at import without one; nothing is contacted) because the worktree has no .env and .env is never written. Cost if wrong: a build-time DB read would fail loudly, not silently.
+Task 6: fix round 1 redone from HEAD (fresh implementer, the WIP patch as reference only): commit 65a40e0 (InfoField: label wraps only text and input, error after it, danger border keeps over focus; arrivalFocusController + useArrivalFocus for /info and /practice; useStepFocus unchanged). Controller: vitest 2382/2382, 0 removed names, 5 added. Re-review (sonnet): I1, I2 and the focus-border minor ADDRESSED; no new breakage.
+Task 6: fix round 1/5 (2 Important + 1 minor addressed, 0 open; commits 3c2e2e2..65a40e0)
+Task 6: complete (commits 9e1abaa..65a40e0, review clean after 1 fix round)
+- Task 6: minor (deferred): useArrivalFocus retries on every render until a heading exists; a future screen with a late heading would get focus late (no current caller does).
+- Benchmark (doğrulanmadı, bulut, tarayıcı yok): focus lands on the heading after Consent -> /info and /check -> /practice; screen reader names of the two details fields; 1024 and 1440 shots of /info.
+BASE T7: 65a40e0
+- Carry to Task 7/8 (ruling C3 made concrete): check memory {trialPlayed, devicesOpened}; shouldAutoOpen takes openedBefore and is false on a first visit.
