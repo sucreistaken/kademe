@@ -112,6 +112,30 @@ describe("a reload while a save is on its way (fix round 2: the copy also knows 
   });
 });
 
+describe("an older save that lands after a newer one (Task 13 residual, plan decision 15)", () => {
+  it("keeps the two earlier sent texts, so a reload still restores the tab's newest typing over either", () => {
+    let copy = { text: "A", base: "" } as Draft;
+    copy = draftAfterSend(copy, "A");
+    copy = draftAfterSend({ ...copy, text: "AB" }, "AB");
+    copy = { ...copy, text: "ABC" };
+    expect(copy).toMatchObject({ pending: "AB", older: ["A"] });
+    // The server's last write was the older "A" (it landed after "AB").
+    expect(restoreText("A", copy)).toEqual({ text: "ABC", restored: true, drop: false });
+    // Another device's text still wins.
+    expect(restoreText("X", copy)).toEqual({ text: "X", restored: false, drop: true });
+  });
+
+  it("keeps at most two older texts and reads them back from storage", () => {
+    let copy = { text: "", base: "" } as Draft;
+    for (const sent of ["1", "12", "123", "1234"]) copy = draftAfterSend({ ...copy, text: sent }, sent);
+    expect(copy.older).toEqual(["123", "12"]);
+    const store = new Map<string, string>();
+    const storage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v), removeItem: (k: string) => void store.delete(k) };
+    writeDraft(storage, "k", copy);
+    expect(readDraft(storage, "k")).toEqual(copy);
+  });
+});
+
 describe("words the server refused after the deadline (Minor 6)", () => {
   it("remembers, per link and stage, that the last change could not be saved, and whether it was text or a choice", () => {
     const s = memory();

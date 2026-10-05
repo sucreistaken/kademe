@@ -69,6 +69,30 @@ describe("closing a question (review Critical: a closed last question is never c
     await expect(closeQuestion({ last: false, skipCommit: false, commit: async () => Promise.reject(refusal("ACTIVITY_CLOSED")), submit })).rejects.toMatchObject({ code: "ACTIVITY_CLOSED" });
     expect(submit).not.toHaveBeenCalled();
   });
+
+  it("hands the runner the commit's state before the stage submit, so a failed submit leaves the closed question closed (Task 13 residual)", async () => {
+    const order: string[] = [];
+    const committed = { step: "STAGE", current: { responses: [{ activityId: "q3", closed: true }] } } as never;
+    await expect(
+      closeQuestion({
+        last: true,
+        skipCommit: false,
+        commit: async () => {
+          order.push("commit");
+          return committed;
+        },
+        onCommitted: (next) => {
+          order.push("committed");
+          expect(next).toBe(committed);
+        },
+        submit: async () => {
+          order.push("submit");
+          throw Object.assign(new Error("down"), { status: 503 });
+        },
+      }),
+    ).rejects.toThrow("down");
+    expect(order).toEqual(["commit", "committed", "submit"]);
+  });
 });
 
 describe("a tab behind the server (review Important: the refresh must re-seed the runner)", () => {

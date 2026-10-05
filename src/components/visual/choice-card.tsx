@@ -14,8 +14,11 @@ export type ChoiceItem = { value: string; label: ReactNode; marker?: string | Lu
  * Space, Tab and a screen reader work as everywhere: radios move and choose
  * with the arrow keys by themselves, and checkbox cards move the focus with
  * the arrow keys, Home and End here (nextChoiceIndex), never the choice. The
- * keys 1-9 are the caller's shortcut, shown here only as a hint; the group
- * listens to nothing outside itself, so typing in a field is never caught.
+ * keys 1-9 are the caller's shortcut, shown here only as a hint; a caller that
+ * passes `shortcut` listens with useChoiceShortcuts (one shared hook, Task 4
+ * carry 7). The group itself listens to nothing outside itself, so typing in
+ * a field is never caught. A closed card is dashed and offers no key; the
+ * reason it is closed is the caller's, linked through `describedBy`.
  */
 export function ChoiceCardGroup({
   type,
@@ -68,7 +71,8 @@ export function ChoiceCardGroup({
             className={cn(
               "relative flex cursor-pointer items-center gap-3 rounded-xl border border-line bg-surface text-[16px] leading-6 text-ink transition-colors duration-[120ms] ease-out hover:bg-canvas motion-reduce:transition-none",
               "has-[:checked]:border-accent has-[:checked]:bg-brand-soft has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent",
-              "has-[:disabled]:cursor-not-allowed has-[:disabled]:text-muted has-[:disabled]:hover:bg-surface",
+              // Task 4 carry 9: a closed card says so by its dashed edge too, not by its grey alone; a chosen one stays chosen.
+              "has-[:disabled]:cursor-not-allowed has-[:disabled]:border-dashed has-[:disabled]:text-muted has-[:disabled]:hover:bg-surface",
               size === "square" ? "min-h-16 justify-center px-2 font-semibold" : "min-h-14 px-4 py-3",
             )}
           >
@@ -94,7 +98,8 @@ export function ChoiceCardGroup({
               <span className="block">{item.label}</span>
               {item.description ? <span className="mt-0.5 block text-[14px] leading-[22px] text-muted">{item.description}</span> : null}
             </span>
-            {item.shortcut ? (
+            {/* A closed card offers no key: the shortcut does nothing then (useChoiceShortcuts listens only while the group is open). */}
+            {item.shortcut && !off ? (
               <kbd aria-hidden className="tnum ml-auto hidden rounded-md border border-line bg-paper px-1.5 text-[13px] text-muted lg:inline">
                 {item.shortcut}
               </kbd>

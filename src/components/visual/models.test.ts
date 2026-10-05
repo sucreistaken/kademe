@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { choiceLetter, choiceShortcut, nextChoiceIndex } from "./choice-keys";
+import { choiceLetter, choiceShortcut, isTypingTarget, keyIndex, nextChoiceIndex, shortcutChoice } from "./choice-keys";
 import { footerButtonState, footerSpace } from "./footer-action";
 import { journeyPosition, journeySteps } from "./journey";
 import { lastSeconds, ringGeometry, ringMilestone } from "./ring";
@@ -109,5 +109,40 @@ describe("choice cards (G6, 3.7)", () => {
     const enabled = [true, true];
     for (const key of ["a", "1", " ", "Tab", "Enter"]) expect(nextChoiceIndex({ key, from: 0, enabled })).toBeNull();
     expect(nextChoiceIndex({ key: "ArrowDown", from: 0, enabled: [false, false] })).toBeNull();
+  });
+});
+
+describe("the choice shortcuts (Task 4 carry 7: one shared hook, keys 1-9 as in plan 2)", () => {
+  const press = (key: string, over: Partial<Parameters<typeof shortcutChoice>[0]> = {}) => shortcutChoice({ key, target: { tagName: "BODY" }, ...over }, 3);
+
+  it("picks the choice in the place of the digit, and nothing past the last choice", () => {
+    expect(press("1")).toBe(0);
+    expect(press("3")).toBe(2);
+    expect(press("4")).toBeNull();
+    expect(press("0")).toBeNull();
+    expect(press("a")).toBeNull();
+  });
+
+  it("works on the cards themselves (native radios and checkboxes) and on a page with nothing focused", () => {
+    expect(press("2", { target: { tagName: "INPUT", type: "radio" } })).toBe(1);
+    expect(press("2", { target: { tagName: "INPUT", type: "checkbox" } })).toBe(1);
+    expect(press("2", { target: null })).toBe(1);
+  });
+
+  it("never takes a digit typed into a field, a key with a modifier, or one already handled", () => {
+    expect(press("1", { target: { tagName: "TEXTAREA" } })).toBeNull();
+    expect(press("1", { target: { tagName: "INPUT", type: "text" } })).toBeNull();
+    expect(press("1", { target: { tagName: "DIV", isContentEditable: true } })).toBeNull();
+    expect(press("1", { ctrlKey: true })).toBeNull();
+    expect(press("1", { metaKey: true })).toBeNull();
+    expect(press("1", { altKey: true })).toBeNull();
+    expect(press("1", { defaultPrevented: true })).toBeNull();
+  });
+
+  it("keeps the plan 2 helpers (the runner re-exports them)", () => {
+    expect(keyIndex("1", 4)).toBe(0);
+    expect(keyIndex("5", 4)).toBeNull();
+    expect(isTypingTarget({ tagName: "SELECT" })).toBe(true);
+    expect(isTypingTarget({ tagName: "BUTTON" })).toBe(false);
   });
 });

@@ -43,7 +43,8 @@ export function SubmitDelay({ onElapsed, onUndo }: { onElapsed: () => void; onUn
     return () => window.clearInterval(id);
   }, []);
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-6 z-40 flex justify-center px-4">
+    // Above the 84px step footer and its journey edge, never on it.
+    <div className="pointer-events-none fixed inset-x-0 bottom-[124px] z-40 flex justify-center px-4">
       <div className="pointer-events-auto flex items-center gap-4 rounded-2xl border border-line bg-surface px-4 py-3 shadow-overlay">
         <p role="status" className="sr-only">
           {t("sendingAnnounce")}

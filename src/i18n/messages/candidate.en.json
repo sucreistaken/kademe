@@ -505,6 +505,8 @@
     "helpTitle": "Common questions",
     "faqDropQ": "What if my connection drops?",
     "faqDropA": "What you wrote and recorded is kept. The same link brings you back to where you left off; the clock keeps running.",
+    "faqKeepQ": "Will I lose what I write?",
+    "faqKeepA": "No. What you write saves itself and stays even if you close the tab.",
     "faqCameraQ": "My camera or microphone does not open.",
     "faqCameraA": "Allow it from the camera icon in the address bar, then reload. If that does not help, write to us below.",
     "faqPhoneQ": "Can I do this on my phone?",
@@ -742,7 +744,12 @@
   },
   "hiringStage": {
     "stageOf": "Stage {n} / {total}",
-    "meta": "{minutes} minutes · {count, plural, one {# question} other {# questions}}",
+    "factMinutes": "{minutes} min",
+    "factMinutesLabel": "time",
+    "factQuestions": "{count, plural, one {# question} other {# questions}}",
+    "factQuestionsLabel": "in this stage",
+    "factTakes": "{count, plural, one {# retake} other {# retakes}}",
+    "factTakesLabel": "per answer",
     "ruleThink": "Each question gives you {seconds} s to think; recording does not start by itself when it ends.",
     "ruleThinkAny": "Video and audio questions give you thinking time first; recording does not start by itself when it ends.",
     "ruleThinkStrict": "Each question gives you {seconds} s to think; recording starts by itself when it ends.",
@@ -778,6 +785,8 @@
     "finishAll": "Finish the assessment",
     "previous": "Previous question",
     "requiredReason": "This question is required. You can go on once you answer it.",
+    "requiredChoice": "Pick an option.",
+    "requiredText": "Write your answer first.",
     "closedQuestion": "This question is closed; you can finish the stage.",
     "optionalHint": "This question is optional; you can leave it empty.",
     "busy": "Saving",
@@ -806,14 +815,13 @@
     "savedNow": "Saved",
     "saving": "Saving",
     "saveFailed": "Could not save, trying again.",
-    "saveRefused": "Not saved.",
-    "keeps": "What you write stays even if you close the tab."
+    "saveRefused": "Not saved."
   },
   "hiringChoice": {
     "single": "One choice",
     "multiKicker": "Multiple choice",
     "multi": "You can choose more than one.",
-    "keys": "You can also use keys 1-{max}."
+    "marker": "Option {letter}"
   },
   "hiringMedia": {
     "videoKicker": "Video answer",

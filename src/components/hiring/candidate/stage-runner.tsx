@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import { Button, DisabledReason } from "@/components/ui/button";
+import type { FooterAction } from "@/components/visual/footer-action";
+import { QuestionProgress } from "@/components/visual/question-progress";
+import { StatusScreen } from "@/components/visual/status-screen";
+import { StepFooter } from "@/components/visual/step-footer";
 import { useStepFocus } from "@/hooks/use-step-focus";
 import { apiGet, apiSend } from "@/lib/client/api";
 import { FlushRegistry } from "@/lib/client/flush-registry";
@@ -13,13 +16,14 @@ import type { Locale } from "@/i18n/locale";
 import { progressOf } from "@/solutions/hiring/rules/candidate-flow";
 import type { HiringCandidateState } from "@/solutions/hiring/rules/candidate-state";
 import type { CandidateActivity } from "@/solutions/hiring/rules/candidate-view";
-import { ActionBar } from "./action-bar";
 import { ChoiceActivity } from "./choice-activity";
 import { noSubscribe } from "./desktop-gate";
 import { FileActivity } from "./file-activity";
 import { clearDraft, draftKey, lostWords, markLostWords, sessionDrafts, type LostKind } from "./draft-store";
 import { answeredLocally, isLastMinute, minutesLeft, ownsPrimary, primaryKey, resumeOf, tabReply, type LocalAnswer, type TabMessage } from "./runner-model";
 import { RecordedActivity } from "./recorded-activity";
+import { refocusAfterTimeUp } from "./recorded-footer";
+import { requiredKey, runnerPrimary, undoFocus } from "./runner-footer";
 import { closeQuestion, commitNeeded, recoveryFor, settleWithin, withTimeout } from "./runner-steps";
 import { serverMessage } from "./server-message";
 import { StageIntro } from "./stage-intro";
@@ -42,6 +46,8 @@ const FLUSH_MS = 5_000;
  * an uploading take) and the upload goes on in this tab.
  */
 const TAKE_FLUSH_MS = 30_000;
+/** The time-up line above a question: closed inputs point at it as their reason. */
+const TIME_UP_LINE = "stage-time-up";
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const codeOf = (err: unknown) => (err && typeof err === "object" && typeof (err as { code?: unknown }).code === "string" ? (err as { code: string }).code : "");
 
@@ -116,12 +122,13 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
   useEffect(() => {
     answersRef.current = answers;
   });
-  // "Geri al" took the strip away: focus goes back to the button that was pressed, enabled again now.
+  // "Geri al" took the strip away: focus goes back to the button that was pressed, enabled again now
+  // (Task 9 carry: on a recorded question that is its "Bu cevabı kullan", else the heading).
   useEffect(() => {
     if (delayed || !undone.current) return;
     undone.current = false;
-    document.getElementById("activity-next")?.focus();
-  }, [delayed]);
+    undoFocus((id) => document.getElementById(id), heading.current);
+  }, [delayed, heading]);
 
   /** Every pending save, and every take still finishing, each within its own bound; never fails. */
   const settlePending = useCallback(
@@ -183,6 +190,17 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
     autoStarted.current = true;
     void submit(true);
   }, [autoDue, submit]);
+
+  // Task 4 carry 6: time up turns the focused filled button into a waiting one (its reason in the footer);
+  // focus that was on it, or on nothing, goes to the heading (the time-up line above it says why).
+  const locked = timeUp && current.autoSubmit;
+  const wasLocked = useRef(false);
+  useEffect(() => {
+    const active = document.activeElement;
+    const kind = !active || active === document.body ? "body" : active instanceof HTMLButtonElement && active.disabled ? "disabled-control" : "other";
+    if (refocusAfterTimeUp({ timeUp: locked, wasTimeUp: wasLocked.current, active: kind })) heading.current?.focus();
+    wasLocked.current = locked;
+  }, [locked, heading]);
 
   useEffect(() => {
     if (typeof BroadcastChannel === "undefined") return;
@@ -267,6 +285,8 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
             clearDraft(sessionDrafts(), draftKey(token, current.position, runId, target.id));
             return next;
           },
+          // Task 13 residual: a failed stage submit after this commit shows the question closed (closedHere).
+          onCommitted: (next) => setState(next),
           submit: () => submit(false),
         });
         if (result.kind === "advanced") {
@@ -289,21 +309,19 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
 
   if (blocked) {
     return (
-      <div className="mx-auto max-w-[640px] py-16">
-        <p role="alert" className="text-[18px] leading-7 text-ink">
+      <>
+        <p role="alert" className="sr-only">
           {t("otherTab")}
         </p>
         {/* Minor 7: once the other tab is closed, a reload here takes the assessment over. */}
-        <p className="mt-3 text-[16px] leading-[26px] text-ink-2">{t("otherTabClosed")}</p>
-        <Button className="mt-5 min-h-11 text-[16px]" onClick={reloadPage}>
-          {t("reload")}
-        </Button>
-      </div>
+        <StatusScreen illustration="otherTab" title={t("otherTab")} body={t("otherTabClosed")} />
+        <StepFooter primary={{ kind: "button", id: "reload", label: t("reload"), onClick: reloadPage }} />
+      </>
     );
   }
 
   const failureLine = failure ? (
-    <p role="alert" className="mt-4 text-[16px] leading-[26px] text-ink">
+    <p role="alert" className="mx-auto mt-4 max-w-[760px] text-[16px] leading-[26px] text-ink">
       {failure.stale ? t("stale") : failure.message}{" "}
       {failure.stale ? (
         <button type="button" onClick={reloadPage} className="min-h-11 underline decoration-underline underline-offset-4">
@@ -325,32 +343,50 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
 
   if (phase === "resume") {
     return (
-      <div className="mx-auto max-w-[640px] pt-10 pb-6 sm:pt-14">
-        <h1 ref={heading} tabIndex={-1} className="text-[28px] leading-9 font-semibold text-ink outline-none">
-          {t("resumeTitle")}
-        </h1>
-        <p className="tnum mt-3 text-[16px] leading-[26px] text-ink">{t("resumeBody", { time: formatCountdown(clock.remainingMs) })}</p>
-        {activities.some((a) => a.type === "VIDEO" || a.type === "AUDIO") ? <p className="mt-2 text-[16px] leading-[26px] text-ink-2">{t("resumeDevices")}</p> : null}
-        {timeUp ? (
-          <p role="status" className="mt-4 text-[16px] font-medium text-ink">
-            {current.autoSubmit ? t("timeUpSaving") : t("timeUpLate")}
-          </p>
-        ) : null}
-        <ActionBar>
-          <Button id="resume" variant="primary" size="lg" className="w-full text-[16px] sm:w-auto" disabled={busy} onClick={retrying ? retry : () => setPhase("question")}>
-            {busy ? t("busy") : retrying ? t("retry") : t("resumeGo")}
-          </Button>
-          {failureLine}
-        </ActionBar>
-      </div>
+      <>
+        <StatusScreen title={t("resumeTitle")} titleRef={heading} body={<span className="tnum">{t("resumeBody", { time: formatCountdown(clock.remainingMs) })}</span>}>
+          {activities.some((a) => a.type === "VIDEO" || a.type === "AUDIO") ? <p>{t("resumeDevices")}</p> : null}
+          {timeUp ? (
+            <p role="status" className="font-medium text-ink">
+              {current.autoSubmit ? t("timeUpSaving") : t("timeUpLate")}
+            </p>
+          ) : null}
+        </StatusScreen>
+        {failureLine}
+        <StepFooter
+          primary={{ kind: "button", id: "resume", label: retrying ? t("retry") : t("resumeGo"), busy, busyLabel: t("busy"), onClick: retrying ? retry : () => setPhase("question") }}
+        />
+      </>
     );
   }
 
-  const locked = timeUp && current.autoSubmit;
   // Fix round 2: a question the server shows closed (no way back; the recovery after a failed stage
   // submit) cannot take edits, so its inputs say so instead of refusing them silently.
   const closedHere = !!activity && !commitNeeded({ responses: current.responses, activityId: activity.id, backNavigation: current.backNavigation });
   const inputsOff = busy || delayed !== null || locked || closedHere;
+  const answered = activity ? answeredLocally(activity, answers[activity.id] ?? {}) : true;
+  // Task 15: a file still uploading is not the answer yet; the close waits for it (the earlier file stays until then).
+  const uploadingHere = !!activity && !!answers[activity.id]?.uploading;
+  const recorded = activity?.type === "VIDEO" || activity?.type === "AUDIO";
+  // A recorded question draws its own footer (think, record, review), except for a retry or a closed question.
+  const runnerFooter = !(activity && ownsPrimary(activity.type) && !retrying && !closedHere);
+  // C15 and plan decision 4: a waiting button always says why next to it; a working one says so on itself (runner-footer.ts).
+  const primaryLook = runnerPrimary({
+    state: { retrying, busy, delayed: delayed !== null, locked, uploading: uploadingHere, required: !!activity?.required, answered },
+    words: {
+      label: t(primaryKey(index, activities.length, current.last)),
+      retry: t("retry"),
+      busy: t("busy"),
+      sending: t("sendingReason"),
+      timeUp: t("timeUpSaving"),
+      uploading: tf("waitReason"),
+      required: t(requiredKey(activity?.type)),
+    },
+  });
+  const primary: FooterAction = { ...primaryLook, onClick: () => (retrying ? retry() : advance()) };
+  const optional = activity && !activity.required && !answered && !busy && !closedHere && !uploadingHere ? t("optionalHint") : null;
+  // Task 4 carry 9: closed inputs point at the line that says why (never by colour alone); while busy the button says it works.
+  const reasonId = closedHere && activity ? `closed-${activity.id}` : locked ? TIME_UP_LINE : runnerFooter && primaryLook.waitReason ? "activity-next-why" : undefined;
   let body: React.ReactNode = null;
   if (activity) {
     const common = {
@@ -364,6 +400,7 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
       flushes,
       onChange: (answer: LocalAnswer) => setAnswers((all) => ({ ...all, [activity.id]: { ...all[activity.id], ...answer } })),
       disabled: inputsOff,
+      reasonId,
       onRefused: (err: unknown) => onRefused(err, activity.type === "FILE_UPLOAD" ? null : activity.type === "SINGLE_CHOICE" || activity.type === "MULTI_CHOICE" ? "choice" : "text"),
     };
     switch (activity.type) {
@@ -428,36 +465,21 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
   }
 
   const progress = progressOf({ stagePosition: current.position, stageCount: current.total, activityIndex: index, activityCount: activities.length });
-  const answered = activity ? answeredLocally(activity, answers[activity.id] ?? {}) : true;
-  // Task 15: a file still uploading is not the answer yet; the close waits for it (the earlier file stays until then).
-  const uploadingHere = !!activity && !!answers[activity.id]?.uploading;
-  const key = primaryKey(index, activities.length, current.last);
-  // C15: every reason the filled button waits is said next to it (busy says it on the button itself).
-  const why =
-    retrying || busy
-      ? null
-      : delayed
-        ? t("sendingReason")
-        : locked
-          ? t("timeUpSaving")
-          : uploadingHere
-            ? tf("waitReason")
-            : activity?.required && !answered
-              ? t("requiredReason")
-              : null;
   const lastMinute = isLastMinute(clock.remainingMs);
-  const onPrimary = () => (retrying ? retry() : advance());
+  // Task 9 carry: a recorded question's MediaStage takes the full width and its own top space (no second wrapper).
+  const lineBox = recorded ? "mt-6" : "mx-auto mb-4 max-w-[760px]";
 
   return (
     <div className="pb-6">
       <div className="sticky top-0 z-20 -mx-4 border-b border-hairline bg-paper/95 px-4 py-3 backdrop-blur sm:-mx-7 sm:px-7">
-        <div className="mx-auto flex max-w-[960px] items-center justify-between gap-4">
+        <div className="mx-auto flex max-w-[1000px] items-center justify-between gap-4">
           <div className="min-w-0 flex-1">
             <p className="tnum text-[14px] text-muted">
               {t("stageOf", { n: progress.n, total: progress.total })} · {t("questionOf", { n: index + 1, total: activities.length })}
             </p>
-            <div className="mt-2 h-1 rounded-full bg-hairline" aria-hidden>
-              <div className="h-1 rounded-full bg-ink-3 transition-[width] duration-[180ms] ease-soft" style={{ width: `${Math.round(progress.ratio * 100)}%` }} />
+            <div className="mt-2 max-w-[520px]">
+              {/* Numbers only (leak rule): one part per question, no question's words. */}
+              <QuestionProgress total={activities.length} current={index + 1} />
             </div>
           </div>
           {current.deadlineAt ? (
@@ -476,11 +498,11 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
         {t("announce", { stage: current.position, stages: current.total, n: index + 1, total: activities.length })}
       </p>
 
-      <div className={activity?.type === "VIDEO" ? "mx-auto max-w-[960px] pt-8" : "mx-auto max-w-[640px] pt-8"}>
+      <div className={recorded ? undefined : "mx-auto max-w-[760px] pt-8"}>
         {online ? null : (
-          <p role="status" className="mb-4 rounded-xl border border-line bg-surface px-4 py-3 text-[16px] leading-[26px] text-ink">
+          <p role="status" className={`${lineBox} rounded-xl border border-line bg-surface px-4 py-3 text-[16px] leading-[26px] text-ink`}>
             {/* Minor 4: a written answer has no recording to speak of. */}
-            {activity && (activity.type === "VIDEO" || activity.type === "AUDIO")
+            {recorded
               ? t("offline")
               : activity && (activity.type === "SINGLE_CHOICE" || activity.type === "MULTI_CHOICE")
                 ? t("offlineChoice")
@@ -493,45 +515,25 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
           </p>
         )}
         {timeUp ? (
-          <p role="status" className="mb-4 text-[16px] font-medium text-ink">
+          <p id={TIME_UP_LINE} role="status" className={`${lineBox} text-[16px] font-medium text-ink`}>
             {current.autoSubmit ? t("timeUpSaving") : t("timeUpLate")}
           </p>
         ) : null}
         {body}
-        {closedHere ? <p className="mt-4 text-[16px] leading-[26px] text-ink-2">{t("closedQuestion")}</p> : null}
-        {failureLine}
-        {activity && ownsPrimary(activity.type) && !retrying && !closedHere ? null : (
-          <ActionBar>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-              <Button
-                id="activity-next"
-                variant="primary"
-                size="lg"
-                className="w-full text-[16px] sm:w-auto"
-                disabled={busy || why !== null}
-                disabledReason={why ?? undefined}
-                onClick={onPrimary}
-              >
-                {busy ? t("busy") : retrying ? t("retry") : t(key)}
-              </Button>
-              {current.backNavigation && index > 0 && !inputsOff && !uploadingHere ? (
-                <button type="button" onClick={() => setIndex(index - 1)} className="min-h-11 text-[16px] text-ink underline decoration-underline underline-offset-4">
-                  {t("previous")}
-                </button>
-              ) : null}
-            </div>
-            <div role="status">
-              {why ? (
-                <DisabledReason id="activity-next-why" className="mt-2 text-[14px]">
-                  {why}
-                </DisabledReason>
-              ) : activity && !activity.required && !answered && !busy && !closedHere && !uploadingHere ? (
-                <p className="mt-2 text-[14px] text-muted">{t("optionalHint")}</p>
-              ) : null}
-            </div>
-          </ActionBar>
-        )}
+        {closedHere && activity ? (
+          <p id={`closed-${activity.id}`} className="mt-4 text-[16px] leading-[26px] text-ink-2">
+            {t("closedQuestion")}
+          </p>
+        ) : null}
       </div>
+      {failureLine}
+      {runnerFooter ? (
+        <StepFooter
+          back={current.backNavigation && index > 0 && !inputsOff && !uploadingHere ? { label: t("previous"), onClick: () => setIndex(index - 1) } : null}
+          primary={primary}
+          note={optional ? <p className="text-[14px] text-muted">{optional}</p> : null}
+        />
+      ) : null}
       {delayed ? (
         <SubmitDelay
           onElapsed={() => void delayed()}

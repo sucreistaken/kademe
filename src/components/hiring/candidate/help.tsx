@@ -11,7 +11,7 @@ import { mailTo } from "./closed";
 type SendState = "idle" | "sending" | "sent" | "failed";
 
 /**
- * HIRING-UX 6: "Yardım" in the top bar: three answers and a way to reach a
+ * HIRING-UX 6: "Yardım" in the top bar: four answers (3.6: that typing is kept lives here now) and a way to reach a
  * person. Opening it moves focus into the panel. It closes on Escape pressed
  * anywhere (focus goes back to the button when it was inside), on a click
  * outside it, and when focus moves out of it; `aria-controls` names the panel
@@ -97,7 +97,7 @@ export function Help({ token, contactEmail }: { token: string; contactEmail: str
             {t("helpTitle")}
           </h2>
           <dl className="space-y-3 text-[14px] leading-[22px]">
-            {(["Drop", "Camera", "Phone"] as const).map((k) => (
+            {(["Drop", "Keep", "Camera", "Phone"] as const).map((k) => (
               <div key={k}>
                 <dt className="font-medium text-ink">{t(`faq${k}Q`)}</dt>
                 <dd className="mt-0.5 text-ink-2">{t(`faq${k}A`)}</dd>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Check, PenLine } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import type { FlushRegistry } from "@/lib/client/flush-registry";
 import { useT } from "@/i18n/candidate-client";
@@ -25,6 +26,8 @@ export type ActivityProps = {
   disabled: boolean;
   /** The server refused a save (it moved on); the runner says what happened. */
   onRefused?(err: unknown): void;
+  /** While `disabled`, the id of the line where the runner says why (Task 4 carry 9: never by colour alone). */
+  reasonId?: string;
 };
 
 function Saved({ status, savedAt }: { status: SaveStatus; savedAt: number | null }) {
@@ -39,10 +42,16 @@ function Saved({ status, savedAt }: { status: SaveStatus; savedAt: number | null
   if (status === "refused") return <span className="text-ink">{t("saveRefused")}</span>;
   if (status === "saved" && savedAt) {
     const seconds = Math.max(1, Math.round((now - savedAt) / 1000));
-    if (seconds < 5) return <span>{t("savedNow")}</span>;
-    return <span>{seconds < 60 ? t("savedAgo", { seconds }) : t("savedMinutes", { minutes: Math.floor(seconds / 60) })}</span>;
+    const words = seconds < 5 ? t("savedNow") : seconds < 60 ? t("savedAgo", { seconds }) : t("savedMinutes", { minutes: Math.floor(seconds / 60) });
+    return (
+      <span className="inline-flex items-center gap-1.5">
+        <Check className="size-4" strokeWidth={2} aria-hidden />
+        {words}
+      </span>
+    );
   }
-  return <span>{t("keeps")}</span>;
+  // 3.6: before the first save the line says nothing; that typing is kept is in Help ("Yazdıklarım kaybolur mu?").
+  return <span />;
 }
 
 /**
@@ -129,7 +138,7 @@ export function TextActivity({
 
   return (
     <div className="space-y-5">
-      <ActivityHeader activity={activity} locale={locale} kicker={kicker ?? (short ? t("short") : t("written"))} headingRef={headingRef} />
+      <ActivityHeader activity={activity} locale={locale} kicker={kicker ?? (short ? t("short") : t("written"))} icon={PenLine} headingRef={headingRef} />
       <div className="overflow-hidden rounded-xl border border-input bg-surface focus-within:border-ink/40">
         <Textarea
           aria-labelledby={`prompt-${activity.id}`}
@@ -141,7 +150,11 @@ export function TextActivity({
           maxLength={max}
           rows={short ? 3 : 10}
           placeholder={t("placeholder")}
-          className="min-h-24 resize-y rounded-none border-0 bg-surface px-4 py-3 text-[16px] leading-[26px] md:text-[16px]"
+          className={
+            short
+              ? "min-h-24 resize-y rounded-none border-0 bg-surface px-4 py-3 text-[16px] leading-[26px] md:text-[16px]"
+              : "min-h-[280px] resize-y rounded-none border-0 bg-surface px-4 py-3 text-[16px] leading-[26px] md:text-[16px]"
+          }
         />
         <div className="flex items-center justify-between gap-4 border-t border-hairline bg-paper px-4 py-2 text-[14px] text-muted">
           <Saved status={status} savedAt={savedAt} />

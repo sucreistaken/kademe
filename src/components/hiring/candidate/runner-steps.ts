@@ -32,6 +32,8 @@ export async function closeQuestion(input: {
   skipCommit: boolean;
   commit: () => Promise<HiringCandidateState>;
   submit: () => Promise<void>;
+  /** Task 13 residual: the runner takes the committed state before the stage submit, so a failed submit shows the question closed. */
+  onCommitted?: (next: HiringCandidateState) => void;
 }): Promise<CloseResult> {
   // Fix round 2: only the last question's close may lead to the stage submit.
   if (input.skipCommit && !input.last) return { kind: "skipped" };
@@ -39,6 +41,7 @@ export async function closeQuestion(input: {
     try {
       const next = await input.commit();
       if (!input.last) return { kind: "advanced", next };
+      input.onCommitted?.(next);
     } catch (err) {
       if (!(input.last && codeOf(err) === "ACTIVITY_CLOSED")) throw err;
     }

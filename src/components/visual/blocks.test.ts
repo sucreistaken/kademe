@@ -212,6 +212,28 @@ describe("ChoiceCardGroup (G6)", () => {
     expect(out).toContain("min-h-14");
     expect(html(ChoiceCardGroup, { type: "single", name: "s", value: [], onChange: noop, size: "square", items: [{ value: "1", label: "1" }] })).toContain("min-h-16");
   });
+
+  it("shows a closed card as not selectable by more than colour (Task 4 carry 9): a dashed edge, no key hint, the reason linked", () => {
+    const out = html(ChoiceCardGroup, {
+      type: "single",
+      name: "q4",
+      value: ["a"],
+      onChange: noop,
+      describedBy: "q4-why",
+      disabled: true,
+      items: [
+        { value: "a", label: "Bir", marker: "A", shortcut: "1" },
+        { value: "b", label: "İki", marker: "B", shortcut: "2" },
+      ],
+    });
+    expect(out).toContain("has-[:disabled]:border-dashed");
+    expect(out).toContain("has-[:disabled]:cursor-not-allowed");
+    // The keys do nothing while the group is closed, so no key is offered.
+    expect(out).not.toContain("<kbd");
+    expect(out).toMatch(/^<div role="radiogroup" aria-describedby="q4-why"/);
+    // The chosen card stays visibly chosen.
+    expect(out).toMatch(/<input[^>]*value="a"[^>]*checked=""|<input[^>]*checked=""[^>]*value="a"/);
+  });
 });
 
 describe("StatusScreen, IconRow and PathSteps", () => {

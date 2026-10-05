@@ -15,8 +15,11 @@
  */
 
 export type DraftStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
-/** `pending`: a text whose save left but had no answer yet (fix round 2): the server may hold it already. */
-export type Draft = { text: string; base: string; pending?: string };
+/**
+ * `pending`: a text whose save left but had no answer yet (fix round 2): the server may hold it already.
+ * `older`: up to two earlier such texts (Task 13 residual): an older save can land after a newer one.
+ */
+export type Draft = { text: string; base: string; pending?: string; older?: string[] };
 
 /**
  * By link, stage, the stage's run (its start time: a later run of the same
@@ -40,9 +43,12 @@ export function readDraft(storage: DraftStorage | null, key: string): Draft | nu
     if (!raw) return null;
     const value = JSON.parse(raw) as unknown;
     if (!value || typeof value !== "object") return null;
-    const { text, base, pending } = value as { text?: unknown; base?: unknown; pending?: unknown };
+    const { text, base, pending, older } = value as { text?: unknown; base?: unknown; pending?: unknown; older?: unknown };
     if (typeof text !== "string" || typeof base !== "string") return null;
-    return typeof pending === "string" ? { text, base, pending } : { text, base };
+    const draft: Draft = { text, base };
+    if (typeof pending === "string") draft.pending = pending;
+    if (Array.isArray(older) && older.every((o) => typeof o === "string") && older.length) draft.older = older.slice(0, 2);
+    return draft;
   } catch {
     return null;
   }
@@ -70,20 +76,25 @@ export function clearDraft(storage: DraftStorage | null, key: string): void {
  */
 export function restoreText(server: string, draft: Draft | null): { text: string; restored: boolean; drop: boolean } {
   if (!draft || draft.text === server) return { text: server, restored: false, drop: false };
-  if (draft.base === server || draft.pending === server) return { text: draft.text, restored: true, drop: false };
+  if (draft.base === server || draft.pending === server || draft.older?.includes(server)) return { text: draft.text, restored: true, drop: false };
   return { text: server, restored: false, drop: true };
 }
 
-/** A save of `sent` left for the server. */
+/** A save of `sent` left for the server; the text sent before it is kept (two at most). */
 export function draftAfterSend(draft: Draft, sent: string): Draft {
-  return { ...draft, pending: sent };
+  const older = [draft.pending, ...(draft.older ?? [])].filter((o): o is string => typeof o === "string" && o !== sent).slice(0, 2);
+  return older.length ? { ...draft, pending: sent, older } : { ...draft, pending: sent };
 }
 
 /** The server accepted `saved`: it is the new base; the copy is gone when nothing is left unsaved. */
 export function draftAfterSaved(draft: Draft, saved: string): Draft | null {
   const pending = draft.pending === saved ? undefined : draft.pending;
+  const older = draft.older?.filter((o) => o !== saved);
   if (pending === undefined && draft.text === saved) return null;
-  return pending === undefined ? { text: draft.text, base: saved } : { text: draft.text, base: saved, pending };
+  const next: Draft = { text: draft.text, base: saved };
+  if (pending !== undefined) next.pending = pending;
+  if (older?.length) next.older = older;
+  return next;
 }
 
 const lostKey = (token: string, position: number) => `kademe-hiring-lost:${token}:${position}`;

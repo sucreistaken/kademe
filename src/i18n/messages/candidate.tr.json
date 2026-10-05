@@ -505,6 +505,8 @@
     "helpTitle": "Sık sorulanlar",
     "faqDropQ": "Bağlantım koparsa ne olur?",
     "faqDropA": "Yazdıkların ve kayıtların saklanır. Aynı linkten kaldığın yerden devam edersin; süre işlemeye devam eder.",
+    "faqKeepQ": "Yazdıklarım kaybolur mu?",
+    "faqKeepA": "Hayır. Yazdıkların kendiliğinden kaydedilir; sekmeyi kapatsan bile kalır.",
     "faqCameraQ": "Kamera ya da mikrofon açılmıyor.",
     "faqCameraA": "Adres çubuğundaki kamera simgesinden izin ver, sonra sayfayı yenile. Olmazsa aşağıdan bize yaz.",
     "faqPhoneQ": "Telefonla yapabilir miyim?",
@@ -742,7 +744,12 @@
   },
   "hiringStage": {
     "stageOf": "Aşama {n} / {total}",
-    "meta": "{minutes} dakika · {count} soru",
+    "factMinutes": "{minutes} dk",
+    "factMinutesLabel": "süre",
+    "factQuestions": "{count, plural, one {# soru} other {# soru}}",
+    "factQuestionsLabel": "bu aşamada",
+    "factTakes": "{count, plural, one {# tekrar} other {# tekrar}}",
+    "factTakesLabel": "her cevapta",
     "ruleThink": "Her soruda {seconds} sn düşünme süren var; süre dolunca kayıt kendiliğinden başlamaz.",
     "ruleThinkAny": "Video ve ses sorularında önce düşünme süren var; süre dolunca kayıt kendiliğinden başlamaz.",
     "ruleThinkStrict": "Her soruda {seconds} sn düşünme süren var; süre dolunca kayıt kendiliğinden başlar.",
@@ -778,6 +785,8 @@
     "finishAll": "Değerlendirmeyi bitir",
     "previous": "Önceki soru",
     "requiredReason": "Bu soru zorunlu. Cevaplayınca devam edebilirsin.",
+    "requiredChoice": "Bir seçenek seç.",
+    "requiredText": "Önce cevabını yaz.",
     "closedQuestion": "Bu soru kapandı; aşamayı bitirebilirsin.",
     "optionalHint": "Bu soru isteğe bağlı; boş geçebilirsin.",
     "busy": "Kaydediliyor",
@@ -806,14 +815,13 @@
     "savedNow": "Kaydedildi",
     "saving": "Kaydediliyor",
     "saveFailed": "Kaydedilemedi, tekrar deniyoruz.",
-    "saveRefused": "Kaydedilemedi.",
-    "keeps": "Sekmeyi kapatsan bile yazdığın kalır."
+    "saveRefused": "Kaydedilemedi."
   },
   "hiringChoice": {
     "single": "Tek seçim",
     "multiKicker": "Çoklu seçim",
     "multi": "Birden fazla seçebilirsin.",
-    "keys": "Klavyede 1-{max} tuşlarıyla da seçebilirsin."
+    "marker": "Seçenek {letter}"
   },
   "hiringMedia": {
     "videoKicker": "Video cevabı",

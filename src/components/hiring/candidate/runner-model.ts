@@ -72,29 +72,12 @@ export const isLastMinute = (ms: number) => ms > 0 && ms <= 60_000;
 /** HIRING-UX 8.7: a screen reader hears the remaining time in whole minutes, once a minute. */
 export const minutesLeft = (ms: number) => Math.ceil(ms / 60_000);
 
-/** HIRING-UX 6.8: keys 1-9 pick the choice in that place. */
-export function keyIndex(key: string, count: number): number | null {
-  if (!/^[1-9]$/.test(key)) return null;
-  const index = Number(key) - 1;
-  return index < count ? index : null;
-}
-
-/** Inputs that take a click, not typing: a digit pressed on them may still pick a choice. */
-const CLICKED_INPUTS = new Set(["radio", "checkbox", "button", "submit", "reset"]);
-
 /**
- * True when a key press belongs to a field the candidate types into (a text
- * answer, the Help form, an address bar substitute), so the choice keys stay
- * out of it (ruling 5).
+ * HIRING-UX 6.8 keys 1-9 and the typing guard (ruling 5) live with the choice
+ * cards now (Task 4 carry 7: core code may not import from hiring); the runner
+ * keeps its names.
  */
-export function isTypingTarget(target: { tagName?: string; type?: string; isContentEditable?: boolean } | null): boolean {
-  if (!target) return false;
-  if (target.isContentEditable) return true;
-  const tag = (target.tagName ?? "").toUpperCase();
-  if (tag === "TEXTAREA" || tag === "SELECT") return true;
-  if (tag === "INPUT") return !CLICKED_INPUTS.has((target.type ?? "text").toLowerCase());
-  return false;
-}
+export { isTypingTarget, keyIndex } from "@/components/visual/choice-keys";
 
 /**
  * HIRING-UX 6.12, a second tab: each tab says hello on a BroadcastChannel; an
