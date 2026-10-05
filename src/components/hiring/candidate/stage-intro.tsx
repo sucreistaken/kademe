@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/i18n/candidate-client";
 import type { Locale } from "@/i18n/locale";
@@ -21,6 +22,7 @@ export function StageIntro({
   locale,
   busy,
   error,
+  lostPrevious,
   onStart,
   headingRef,
 }: {
@@ -29,10 +31,18 @@ export function StageIntro({
   locale: Locale;
   busy: boolean;
   error: React.ReactNode;
+  /** The server refused the previous stage's last words after its deadline (Minor 6). */
+  lostPrevious: boolean;
   onStart: () => void;
   headingRef: React.Ref<HTMLHeadingElement>;
 }) {
   const t = useT("hiringStage");
+  // Minor 9: a status that arrives with the page is not read out; it is filled in just after, so it is.
+  const [announce, setAnnounce] = useState(false);
+  useEffect(() => {
+    const id = window.setTimeout(() => setAnnounce(true), 250);
+    return () => window.clearTimeout(id);
+  }, []);
   const rule = (r: StageRule) => {
     switch (r.kind) {
       case "think":
@@ -51,12 +61,26 @@ export function StageIntro({
         return t("ruleLate");
     }
   };
+  const previousText = current.previous
+    ? [
+        current.previous.closedByClock ? t("previousTime", { n: current.previous.position }) : t("previousDone", { n: current.previous.position }),
+        // Honest about words the server refused after the deadline: "up to that moment" is saved, they are not.
+        lostPrevious ? t("previousLost") : "",
+      ]
+        .filter(Boolean)
+        .join(" ")
+    : "";
   return (
     <div className="mx-auto max-w-[640px] pt-10 pb-6 sm:pt-14">
       {current.previous ? (
-        <p role="status" className="mb-6 text-[16px] leading-[26px] text-ink">
-          {current.previous.closedByClock ? t("previousTime", { n: current.previous.position }) : t("previousDone", { n: current.previous.position })}
-        </p>
+        <>
+          <p aria-hidden className="mb-6 text-[16px] leading-[26px] text-ink">
+            {previousText}
+          </p>
+          <p role="status" className="sr-only">
+            {announce ? previousText : ""}
+          </p>
+        </>
       ) : null}
       <h1 ref={headingRef} tabIndex={-1} className="tnum text-[28px] leading-9 font-semibold text-ink outline-none">
         {t("stageOf", { n: current.position, total: current.total })} · <VersionText value={current.stage.name} locale={locale} />

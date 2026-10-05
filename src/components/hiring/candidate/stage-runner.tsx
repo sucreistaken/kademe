@@ -15,15 +15,16 @@ import type { HiringCandidateState } from "@/solutions/hiring/rules/candidate-st
 import type { CandidateActivity } from "@/solutions/hiring/rules/candidate-view";
 import { ActionBar } from "./action-bar";
 import { ChoiceActivity } from "./choice-activity";
-import { clearDraft, draftKey, sessionDrafts } from "./draft-store";
+import { clearDraft, draftKey, lostWords, markLostWords, sessionDrafts } from "./draft-store";
 import { answeredLocally, isLastMinute, minutesLeft, ownsPrimary, primaryKey, resumeOf, tabReply, type LocalAnswer, type TabMessage } from "./runner-model";
+import { closeQuestion, commitNeeded, recoveryFor, withTimeout } from "./runner-steps";
 import { serverMessage } from "./server-message";
 import { StageIntro } from "./stage-intro";
 import { SubmitDelay } from "./submit-delay";
 import { TextActivity } from "./text-activity";
 
-/** Refusals that mean this tab is behind the server: the honest answer is to reload. */
-const STALE = new Set(["STAGE_MISMATCH", "ACTIVITY_CLOSED", "ACTIVITY_ORDER", "NO_STAGE", "STAGE_EXPIRED", "STAGE_NOT_STARTED", "ACTIVITY_NOT_FOUND"]);
+/** Minor 10: how long a start, commit or submit may take before the runner stops waiting and offers a retry. */
+const REQUEST_MS = 20_000;
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const codeOf = (err: unknown) => (err && typeof err === "object" && typeof (err as { code?: unknown }).code === "string" ? (err as { code: string }).code : "");
 
@@ -36,6 +37,10 @@ function answerOf(activity: CandidateActivity, a: LocalAnswer | undefined): unkn
   if (activity.type === "SINGLE_CHOICE" || activity.type === "MULTI_CHOICE") return { choiceIds: a?.choiceIds ?? [] };
   return undefined;
 }
+
+/** Reads the page again from the server: a fresh runner from the fresh state (router.refresh() keeps this runner when the stage is the same). */
+const reloadPage = () => window.location.reload();
+const noSubscribe = () => () => undefined;
 
 const subscribeOnline = (notify: () => void) => {
   window.addEventListener("online", notify);
@@ -66,6 +71,8 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
   const [state, setState] = useState(initial);
   const current = state.current!;
   const activities = current.stage.activities;
+  // The stage run's identity (its start): keys the tab's draft copies, so a later run never sees them.
+  const runId = current.startedAt ?? "";
   const [phase, setPhase] = useState<"intro" | "resume" | "question">(current.startedAt ? "resume" : "intro");
   // Ruling 2: a reload opens on the first open question, with the saved answers.
   const [index, setIndex] = useState(() => resumeOf(current.responses).index);
@@ -96,7 +103,7 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
 
   const failureOf = useCallback((err: unknown, retry?: Failure["retry"]): Failure => {
     // A server refusal speaks the candidate's language; a dropped connection's browser text is never shown (C15/ruling 5).
-    return { message: serverMessage(err) ?? t("failed"), stale: STALE.has(codeOf(err)), retry };
+    return { message: serverMessage(err) ?? t("failed"), stale: recoveryFor(codeOf(err)) === "reload", retry };
   }, [t]);
 
   const go = useCallback(
@@ -115,24 +122,24 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
       try {
         let next: HiringCandidateState;
         try {
-          next = await apiSend<HiringCandidateState>(token, "/hiring/stage/submit", { stagePosition: current.position });
+          next = await withTimeout(apiSend<HiringCandidateState>(token, "/hiring/stage/submit", { stagePosition: current.position }), REQUEST_MS);
         } catch (err) {
           // At 0:00 the request can race the server's own clock; past the slack the server closes the stage either way.
           if (!auto) throw err;
           await wait(SUBMIT_SLACK_MS + 1000);
           await flushes.flushAll();
-          next = await apiSend<HiringCandidateState>(token, "/hiring/stage/submit", { stagePosition: current.position });
+          next = await withTimeout(apiSend<HiringCandidateState>(token, "/hiring/stage/submit", { stagePosition: current.position }), REQUEST_MS);
         }
         go(next);
       } catch (err) {
         const f = failureOf(err, auto ? "auto" : "submit");
-        // The server already moved on (a closed stage): show where the candidate really is.
-        if (f.stale) router.refresh();
+        // At 0:00 the server already moved on (a closed stage): show where the candidate really is.
+        if (auto && f.stale) return reloadPage();
         setFailure(f);
         setBusy(false);
       }
     },
-    [flushes, token, current.position, go, router, failureOf],
+    [flushes, token, current.position, go, failureOf],
   );
 
   const clock = useStageClock(token, { serverNow: Date.parse(current.serverNow), deadlineAt: current.deadlineAt ? Date.parse(current.deadlineAt) : null }, () => {
@@ -166,20 +173,29 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
     return () => channel.close();
   }, [token]);
 
-  /** A save the server refused: say so; past 0:00 the time-up flow already speaks for it. */
+  /**
+   * A save the server refused: say so. A save refused after the deadline carried words that are
+   * not kept; the next stage's intro says that honestly (Minor 6). Past 0:00 the time-up flow speaks.
+   */
   const onRefused = useCallback(
     (err: unknown) => {
+      if (codeOf(err) === "STAGE_EXPIRED") markLostWords(sessionDrafts(), token, current.position);
       if (timeUp && codeOf(err) === "STAGE_EXPIRED") return;
       setFailure(failureOf(err));
     },
-    [timeUp, failureOf],
+    [timeUp, failureOf, token, current.position],
+  );
+  const lostPrevious = useSyncExternalStore(
+    noSubscribe,
+    () => (current.previous ? lostWords(sessionDrafts(), token, current.previous.position) : false),
+    () => false,
   );
 
   async function start() {
     setBusy(true);
     setFailure(null);
     try {
-      const next = await apiSend<HiringCandidateState>(token, "/hiring/stage/start", { stagePosition: current.position });
+      const next = await withTimeout(apiSend<HiringCandidateState>(token, "/hiring/stage/start", { stagePosition: current.position }), REQUEST_MS);
       // Another tab may have moved on already: follow the server.
       if (!next.current || next.current.position !== current.position) return go(next);
       const resumed = resumeOf(next.current.responses);
@@ -200,28 +216,39 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
     const target = activity;
     const at = index;
     const last = at === activities.length - 1;
+    // Review Critical: a question the server shows closed (no way back) is not committed again;
+    // the stage's last one then goes straight to the stage submit (runner-steps closeQuestion).
+    const skipCommit = !commitNeeded({ responses: current.responses, activityId: target.id, backNavigation: current.backNavigation });
     const run = async () => {
       setDelayed(null);
       setBusy(true);
       setFailure(null);
       await flushes.flushAll();
       try {
-        const answer = answerOf(target, answersRef.current[target.id]);
-        const next = await apiSend<HiringCandidateState>(token, "/hiring/response/commit", { stagePosition: current.position, activityId: target.id, ...(answer === undefined ? {} : { answer }) });
-        // The server holds the closed answer now; the tab's copy is not needed any more.
-        clearDraft(sessionDrafts(), draftKey(token, current.position, target.id));
-        if (!last) {
-          setState(next);
+        const result = await closeQuestion({
+          last,
+          skipCommit,
+          commit: async () => {
+            const answer = answerOf(target, answersRef.current[target.id]);
+            const next = await withTimeout(
+              apiSend<HiringCandidateState>(token, "/hiring/response/commit", { stagePosition: current.position, activityId: target.id, ...(answer === undefined ? {} : { answer }) }),
+              REQUEST_MS,
+            );
+            // The server holds the closed answer now; the tab's copy is not needed any more.
+            clearDraft(sessionDrafts(), draftKey(token, current.position, runId, target.id));
+            return next;
+          },
+          submit: () => submit(false),
+        });
+        if (result.kind === "advanced") {
+          setState(result.next);
           setIndex(at + 1);
           setBusy(false);
-          return;
         }
       } catch (err) {
         setFailure(failureOf(err));
         setBusy(false);
-        return;
       }
-      await submit(false);
     };
     if (last && current.last) setDelayed(() => run);
     else void run();
@@ -233,6 +260,11 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
         <p role="alert" className="text-[18px] leading-7 text-ink">
           {t("otherTab")}
         </p>
+        {/* Minor 7: once the other tab is closed, a reload here takes the assessment over. */}
+        <p className="mt-3 text-[16px] leading-[26px] text-ink-2">{t("otherTabClosed")}</p>
+        <Button className="mt-5 min-h-11 text-[16px]" onClick={reloadPage}>
+          {t("reload")}
+        </Button>
       </div>
     );
   }
@@ -241,14 +273,22 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
     <p role="alert" className="mt-4 text-[16px] leading-[26px] text-ink">
       {failure.stale ? t("stale") : failure.message}{" "}
       {failure.stale ? (
-        <button type="button" onClick={() => router.refresh()} className="min-h-11 underline decoration-underline underline-offset-4">
+        <button type="button" onClick={reloadPage} className="min-h-11 underline decoration-underline underline-offset-4">
           {t("reload")}
         </button>
       ) : null}
     </p>
   ) : null;
 
-  if (phase === "intro") return <StageIntro current={current} deadline={deadline} locale={locale} busy={busy} error={failureLine} onStart={start} headingRef={heading} />;
+  const retrying = !!failure?.retry && !busy;
+  /** After a failed stage submit, the filled button sends the submit again (Minor 10: on the resume gate too). */
+  const retry = () => {
+    if (failure?.retry === "auto") return void submit(true);
+    if (failure?.retry === "submit") return void submit(false);
+  };
+
+  if (phase === "intro")
+    return <StageIntro current={current} deadline={deadline} locale={locale} busy={busy} error={failureLine} lostPrevious={lostPrevious} onStart={start} headingRef={heading} />;
 
   if (phase === "resume") {
     return (
@@ -264,8 +304,8 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
           </p>
         ) : null}
         <ActionBar>
-          <Button id="resume" variant="primary" size="lg" className="w-full text-[16px] sm:w-auto" disabled={busy} onClick={() => setPhase("question")}>
-            {busy ? t("busy") : t("resumeGo")}
+          <Button id="resume" variant="primary" size="lg" className="w-full text-[16px] sm:w-auto" disabled={busy} onClick={retrying ? retry : () => setPhase("question")}>
+            {busy ? t("busy") : retrying ? t("retry") : t("resumeGo")}
           </Button>
           {failureLine}
         </ActionBar>
@@ -280,6 +320,7 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
     const common = {
       token,
       position: current.position,
+      run: runId,
       activity,
       initial: answers[activity.id] ?? {},
       locale,
@@ -307,15 +348,10 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
   const progress = progressOf({ stagePosition: current.position, stageCount: current.total, activityIndex: index, activityCount: activities.length });
   const answered = activity ? answeredLocally(activity, answers[activity.id] ?? {}) : true;
   const key = primaryKey(index, activities.length, current.last);
-  const retrying = !!failure?.retry && !busy;
   // C15: every reason the filled button waits is said next to it (busy says it on the button itself).
   const why = retrying || busy ? null : delayed ? t("sendingReason") : locked ? t("timeUpSaving") : activity?.required && !answered ? t("requiredReason") : null;
   const lastMinute = isLastMinute(clock.remainingMs);
-  const onPrimary = () => {
-    if (failure?.retry === "auto") return void submit(true);
-    if (failure?.retry === "submit") return void submit(false);
-    advance();
-  };
+  const onPrimary = () => (retrying ? retry() : advance());
 
   return (
     <div className="pb-6">
@@ -348,7 +384,8 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
       <div className={activity?.type === "VIDEO" ? "mx-auto max-w-[960px] pt-8" : "mx-auto max-w-[640px] pt-8"}>
         {online ? null : (
           <p role="status" className="mb-4 rounded-xl border border-line bg-surface px-4 py-3 text-[16px] leading-[26px] text-ink">
-            {t("offline")}
+            {/* Minor 4: a written answer has no recording to speak of. */}
+            {activity && (activity.type === "VIDEO" || activity.type === "AUDIO") ? t("offline") : t("offlineText")}
           </p>
         )}
         {timeUp ? (

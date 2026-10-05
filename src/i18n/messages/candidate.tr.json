@@ -640,7 +640,6 @@
   },
   "hiringStage": {
     "stageOf": "Aşama {n} / {total}",
-    "title": "Aşama {n} / {total} · {name}",
     "meta": "{minutes} dakika · {count} soru",
     "ruleThink": "Her soruda {seconds} sn düşünme süren var; süre dolunca kayıt kendiliğinden başlamaz.",
     "ruleThinkAny": "Video ve ses sorularında önce düşünme süren var; süre dolunca kayıt kendiliğinden başlamaz.",
@@ -655,6 +654,7 @@
     "clockStarts": "Süre, başlata bastığında işlemeye başlar.",
     "previousDone": "Aşama {n} tamamlandı. Cevapların kaydedildi.",
     "previousTime": "Aşama {n} için süre doldu. O ana kadarki cevapların kaydedildi.",
+    "previousLost": "Süre dolduktan sonra yazdığın son kelimeler kaydedilemedi.",
     "lastStage": "Son aşama. Bitirince cevapların ekibe gider ve değiştirilemez.",
     "deadline": "Son tarih {date}. Aşamalar arasında ara verebilirsin.",
     "start": "Aşamayı başlat",
@@ -670,7 +670,6 @@
     "timeUpSaving": "Süre doldu. Cevapların kaydediliyor.",
     "questionOf": "Soru {n} / {total}",
     "announce": "Aşama {stage} / {stages}, soru {n} / {total}",
-    "optional": "İsteğe bağlı",
     "next": "Sonraki soru",
     "finishStage": "Aşamayı bitir",
     "finishAll": "Değerlendirmeyi bitir",
@@ -684,7 +683,9 @@
     "undo": "Geri al",
     "retry": "Tekrar dene",
     "offline": "Bağlantın koptu. Kaydın duruyor, bağlantı gelince yüklemeye devam ediyoruz. Süre işlemeye devam ediyor.",
+    "offlineText": "Bağlantın koptu. Yazdıkların bu sekmede duruyor, bağlantı gelince kaydediyoruz. Süre işlemeye devam ediyor.",
     "otherTab": "Değerlendirmen başka bir sekmede açık. Orada devam et.",
+    "otherTabClosed": "Diğer sekmeyi kapattıysan sayfayı yenile.",
     "stale": "Bu sayfa güncel değil.",
     "reload": "Sayfayı yenile",
     "failed": "Bir sorun oldu. Tekrar dener misin?"

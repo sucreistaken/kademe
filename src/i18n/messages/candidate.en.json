@@ -640,7 +640,6 @@
   },
   "hiringStage": {
     "stageOf": "Stage {n} / {total}",
-    "title": "Stage {n} of {total} · {name}",
     "meta": "{minutes} minutes · {count, plural, one {# question} other {# questions}}",
     "ruleThink": "Each question gives you {seconds} s to think; recording does not start by itself when it ends.",
     "ruleThinkAny": "Video and audio questions give you thinking time first; recording does not start by itself when it ends.",
@@ -655,6 +654,7 @@
     "clockStarts": "The clock starts when you press start.",
     "previousDone": "Stage {n} is done. Your answers are saved.",
     "previousTime": "Time ran out for stage {n}. Your answers up to that moment are saved.",
+    "previousLost": "The last words you wrote after the time was up could not be saved.",
     "lastStage": "This is the last stage. When you finish, your answers go to the team and cannot be changed.",
     "deadline": "Deadline {date}. You can take a break between stages.",
     "start": "Start the stage",
@@ -670,7 +670,6 @@
     "timeUpSaving": "Time is up. Saving your answers.",
     "questionOf": "Question {n} / {total}",
     "announce": "Stage {stage} of {stages}, question {n} of {total}",
-    "optional": "Optional",
     "next": "Next question",
     "finishStage": "Finish the stage",
     "finishAll": "Finish the assessment",
@@ -684,7 +683,9 @@
     "undo": "Undo",
     "retry": "Try again",
     "offline": "Your connection dropped. Your recording continues and uploads resume when the connection is back. The clock keeps running.",
+    "offlineText": "Your connection dropped. What you wrote stays in this tab, and we save it when the connection is back. The clock keeps running.",
     "otherTab": "Your assessment is open in another tab. Continue there.",
+    "otherTabClosed": "If you closed the other tab, reload this page.",
     "stale": "This page is out of date.",
     "reload": "Reload the page",
     "failed": "Something went wrong. Could you try again?"

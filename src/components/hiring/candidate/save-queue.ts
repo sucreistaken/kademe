@@ -3,6 +3,8 @@
  * tested). HIRING-UX 6.7 and ruling 3: no typed text is lost.
  *
  * - Typing is debounced; a choice, a blur and the runner's flush send at once.
+ *   Typing that never pauses is still saved at most 4 s after its first
+ *   unsaved letter (MAX_WAIT_MS, Task 13 review).
  * - Saves are chained, so a slow earlier draft never lands after a later one.
  * - A save that fails on the way (no connection, a server error, a rate
  *   limit) keeps its draft, says so ("error") and is tried again with a
@@ -35,6 +37,9 @@ export function isRetryable(err: unknown): boolean {
   return status === 0 || status === 408 || status === 429 || status >= 500;
 }
 
+/** The longest a typed draft waits for a pause before it is sent anyway. */
+export const MAX_WAIT_MS = 4000;
+
 /** 1 s, 2 s, 4 s, 8 s, then every 15 s. */
 export const retryDelay = (failures: number) => Math.min(15_000, 1000 * 2 ** Math.max(0, failures - 1));
 
@@ -43,12 +48,14 @@ export class SaveQueue {
   private inFlight: unknown = undefined;
   private queued = 0;
   private debounce: number | null = null;
+  private maxWait: number | null = null;
   private retry: number | null = null;
   private failures = 0;
   private chain: Promise<void> = Promise.resolve();
   private closed = false;
   private savedAt: number | null = null;
   private refusedListener: ((err: unknown) => void) | undefined = undefined;
+  private savedListener: ((answer: unknown) => void) | undefined = undefined;
 
   constructor(
     private readonly deps: SaveDeps,
@@ -58,13 +65,21 @@ export class SaveQueue {
   /** A new draft. `immediate` skips the typing pause. */
   save = (answer: unknown, immediate = false): void => {
     this.pending = answer;
-    this.clearDebounce();
-    if (immediate) void this.flush();
-    else
-      this.debounce = this.deps.setTimer(() => {
-        this.debounce = null;
+    this.clearPause();
+    if (immediate) {
+      void this.flush();
+      return;
+    }
+    this.debounce = this.deps.setTimer(() => {
+      this.debounce = null;
+      void this.flush();
+    }, this.delayMs);
+    // Set by the first unsaved letter and never pushed back by the next ones.
+    if (this.maxWait === null)
+      this.maxWait = this.deps.setTimer(() => {
+        this.maxWait = null;
         void this.flush();
-      }, this.delayMs);
+      }, MAX_WAIT_MS);
   };
 
   /** Sends the pending draft now. Resolves when every save so far has settled; never rejects. */
@@ -84,6 +99,7 @@ export class SaveQueue {
         this.inFlight = undefined;
         this.failures = 0;
         this.savedAt = this.deps.now();
+        this.savedListener?.(answer);
         this.state(this.queued === 0 && this.pending === undefined ? "saved" : "saving");
       } catch (err) {
         this.queued -= 1;
@@ -133,6 +149,14 @@ export class SaveQueue {
     };
   };
 
+  /** Who hears of each answer the server accepted (the text field keeps its draft's base with it). Returns the undo. */
+  listenSaved = (listener: ((answer: unknown) => void) | undefined): (() => void) => {
+    this.savedListener = listener;
+    return () => {
+      if (this.savedListener === listener) this.savedListener = undefined;
+    };
+  };
+
   /** Undoes close (React runs an effect's cleanup and setup again in development). */
   open = (): void => {
     this.closed = false;
@@ -142,9 +166,15 @@ export class SaveQueue {
     if (!this.closed) this.deps.onState({ status, savedAt: this.savedAt });
   }
 
-  private clearDebounce() {
+  private clearPause() {
     if (this.debounce !== null) this.deps.clearTimer(this.debounce);
     this.debounce = null;
+  }
+
+  private clearDebounce() {
+    this.clearPause();
+    if (this.maxWait !== null) this.deps.clearTimer(this.maxWait);
+    this.maxWait = null;
   }
 
   private clearRetry() {

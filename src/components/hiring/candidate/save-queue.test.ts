@@ -50,7 +50,8 @@ describe("the autosave queue (HIRING-UX 6.7, ruling 3: no typed text is lost)", 
     h.queue.save({ text: "ab" });
     h.queue.save({ text: "abc" });
     expect(h.sent).toEqual([]);
-    expect([...h.timers.values()].map((t) => t.ms)).toEqual([800]);
+    // The pause (800 ms), and the longest a draft waits while typing goes on (4 s, Minor 4).
+    expect([...h.timers.values()].map((t) => t.ms).sort((x, y) => x - y)).toEqual([800, 4000]);
     h.fireTimers();
     await h.settle();
     expect(h.sent).toEqual([{ text: "abc" }]);
@@ -204,5 +205,45 @@ describe("the runner's ear for refusals", () => {
     h.replies[0].reject(closed);
     await h.settle();
     expect(heard).toEqual(["second"]);
+  });
+});
+
+describe("typing that never pauses (review Minor 4)", () => {
+  it("saves at most 4 s after the first unsaved letter, even while the pauses keep being cut short", async () => {
+    const h = harness();
+    h.queue.save({ text: "a" });
+    const firstMax = [...h.timers.entries()].find(([, t]) => t.ms === 4000)?.[0];
+    for (const text of ["ab", "abc", "abcd", "abcde"]) h.queue.save({ text });
+    // One 4 s timer from the first letter, never pushed back; one 800 ms pause, the latest.
+    expect([...h.timers.entries()].filter(([, t]) => t.ms === 4000).map(([id]) => id)).toEqual([firstMax]);
+    expect([...h.timers.values()].filter((t) => t.ms === 800)).toHaveLength(1);
+    // The 4 s timer fires (the harness drops a timer when it fires, like the browser).
+    const due = h.timers.get(firstMax!)!;
+    h.timers.delete(firstMax!);
+    due.fn();
+    await h.settle();
+    expect(h.sent).toEqual([{ text: "abcde" }]);
+    h.replies[0].resolve();
+    await h.settle();
+    // The next letter starts a new 4 s window.
+    h.queue.save({ text: "abcdef" });
+    expect([...h.timers.values()].filter((t) => t.ms === 4000)).toHaveLength(1);
+  });
+});
+
+describe("what the server holds now (review: the draft's base)", () => {
+  it("tells the saved listener each answer the server accepted, in order, and nothing that failed", async () => {
+    const h = harness();
+    const saved: unknown[] = [];
+    h.queue.listenSaved((answer) => void saved.push(answer));
+    h.queue.save({ text: "one" }, true);
+    await h.settle();
+    h.replies[0].resolve();
+    await h.settle();
+    h.queue.save({ text: "two" }, true);
+    await h.settle();
+    h.replies[1].reject(network);
+    await h.settle();
+    expect(saved).toEqual([{ text: "one" }]);
   });
 });

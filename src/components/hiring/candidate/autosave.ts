@@ -14,10 +14,18 @@ export type { SaveStatus } from "./save-queue";
  * page sends the pending draft with a beacon; a refusal reaches the runner.
  */
 export function useAutosave(
-  input: { token: string; position: number; activityId: string; flushes: FlushRegistry; onRefused?: (err: unknown) => void },
+  input: {
+    token: string;
+    position: number;
+    activityId: string;
+    flushes: FlushRegistry;
+    onRefused?: (err: unknown) => void;
+    /** Each answer the server accepted (the text field keeps its draft's base with it). */
+    onSaved?: (answer: unknown) => void;
+  },
   delayMs = 800,
 ) {
-  const { token, position, activityId, flushes, onRefused } = input;
+  const { token, position, activityId, flushes, onRefused, onSaved } = input;
   const [state, setState] = useState<SaveState>({ status: "idle", savedAt: null });
   const [queue] = useState(
     () =>
@@ -37,6 +45,7 @@ export function useAutosave(
 
   // The runner's handler changes with its state; the queue always calls the latest one.
   useEffect(() => queue.listen(onRefused), [queue, onRefused]);
+  useEffect(() => queue.listenSaved(onSaved), [queue, onSaved]);
 
   // The runner's flush before a question or the stage closes; leaving sends the last draft.
   useEffect(() => {

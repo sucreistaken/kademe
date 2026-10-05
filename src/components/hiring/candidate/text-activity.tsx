@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import type { FlushRegistry } from "@/lib/client/flush-registry";
 import { useT } from "@/i18n/candidate-client";
@@ -8,12 +8,14 @@ import type { Locale } from "@/i18n/locale";
 import type { CandidateActivity } from "@/solutions/hiring/rules/candidate-view";
 import { ActivityHeader } from "./activity-header";
 import { useAutosave, type SaveStatus } from "./autosave";
-import { draftKey, readDraft, restoreText, sessionDrafts, writeDraft } from "./draft-store";
+import { clearDraft, draftKey, readDraft, restoreText, sessionDrafts, writeDraft } from "./draft-store";
 import type { LocalAnswer } from "./runner-model";
 
 export type ActivityProps = {
   token: string;
   position: number;
+  /** The stage run's identity (its start time): keys the tab's draft copies. */
+  run: string;
   activity: CandidateActivity;
   initial: LocalAnswer;
   locale: Locale;
@@ -53,6 +55,7 @@ function Saved({ status, savedAt }: { status: SaveStatus; savedAt: number | null
 export function TextActivity({
   token,
   position,
+  run,
   activity,
   initial,
   locale,
@@ -65,32 +68,52 @@ export function TextActivity({
   kicker,
 }: ActivityProps & { alternative?: boolean; kicker?: string }) {
   const t = useT("hiringText");
-  const key = draftKey(token, position, activity.id);
+  const key = draftKey(token, position, run, activity.id);
+  const server = initial.text ?? "";
   // Mounted only in the browser after a click (the intro or the resume gate comes first), so the tab's copy is readable here.
-  const [start] = useState(() => restoreText(initial.text ?? "", readDraft(sessionDrafts(), key)));
+  const [start] = useState(() => restoreText(server, readDraft(sessionDrafts(), key)));
   const [text, setText] = useState(start.text);
-  const { save, flush, status, savedAt } = useAutosave({ token, position, activityId: activity.id, flushes, onRefused });
+  // The server text this tab last knew: the copy is restored only over it (Task 13 review, base guard).
+  const base = useRef(server);
+  const latest = useRef(start.text);
+  const answerOf = useCallback((value: string): LocalAnswer => (alternative ? { usedTextAlternative: true, text: value } : { text: value }), [alternative]);
+  const onSaved = useCallback(
+    (answer: unknown) => {
+      const saved = (answer as LocalAnswer).text ?? "";
+      base.current = saved;
+      // Nothing left to keep when the server holds what the field shows.
+      if (latest.current === saved) clearDraft(sessionDrafts(), key);
+      else writeDraft(sessionDrafts(), key, { text: latest.current, base: saved });
+    },
+    [key],
+  );
+  const { save, flush, status, savedAt } = useAutosave({ token, position, activityId: activity.id, flushes, onRefused, onSaved });
   const short = activity.type === "SHORT_TEXT";
   const max = activity.maxChars ?? (short ? 300 : 3000);
   const min = activity.minChars ?? 0;
   const format = new Intl.NumberFormat(locale);
 
-  const answerOf = (value: string): LocalAnswer => (alternative ? { usedTextAlternative: true, text: value } : { text: value });
-
-  // The tab held newer typing than the server had read (a reload raced the last save): save it now.
+  // The tab held newer typing over the text the server still has (a reload raced the last save): save it now.
+  // A copy typed over text that changed elsewhere since is dropped; the server's text stands.
   const restored = useRef(start.restored ? answerOf(start.text) : null);
+  const dropped = useRef(start.drop);
   useEffect(() => {
+    if (dropped.current) {
+      dropped.current = false;
+      clearDraft(sessionDrafts(), key);
+    }
     const answer = restored.current;
     if (!answer) return;
     restored.current = null;
     save(answer, true);
     onChange(answer);
-  }, [save, onChange]);
+  }, [save, onChange, key]);
 
   function update(value: string) {
     const next = value.slice(0, max);
     setText(next);
-    writeDraft(sessionDrafts(), key, next);
+    latest.current = next;
+    writeDraft(sessionDrafts(), key, { text: next, base: base.current });
     const answer = answerOf(next);
     save(answer);
     onChange(answer);
