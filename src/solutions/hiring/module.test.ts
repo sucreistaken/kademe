@@ -13,7 +13,7 @@ const c = vi.hoisted(() => ({
   hiringServes: vi.fn<(ctx: CandidateContext) => Promise<boolean>>(async () => true),
   loadHiringState: async () => ({ step: "CONSENT" }),
   hiringTitle: async () => "Ürün Tasarımcısı · Ekim",
-  stageHeartbeat: async () => ({ deadlineAt: null }),
+  stageHeartbeat: vi.fn<(h: unknown) => Promise<{ deadlineAt: Date | null }>>(async () => ({ deadlineAt: null })),
   runningSegment: async () => ({ kind: "stage_run", runId: "r" }),
   attachMedia: vi.fn<(asset: MediaAssetRow) => Promise<void>>(async () => undefined),
   salvageHiringUploads: vi.fn<(now?: Date, limit?: number) => Promise<{ scanned: number; salvaged: number; failed: number; skipped: number }>>(),
@@ -70,6 +70,22 @@ describe("the hiring module (plan 2)", () => {
 
   it("refuses loudly for an invitation without hiring terms instead of guessing", async () => {
     await expect(hiringModule.candidate.loadState(ctx("other"))).rejects.toThrow(/no hiring terms/);
+  });
+
+  it("refuses loudly on every path that needs the hiring terms (requireHiring), writing no heartbeat", async () => {
+    c.stageHeartbeat.mockClear();
+    await expect(hiringModule.candidate.title(ctx("other"))).rejects.toThrow("assessment other has no hiring terms");
+    await expect(hiringModule.candidate.heartbeat(ctx("other"))).rejects.toThrow("assessment other has no hiring terms");
+    await expect(hiringModule.candidate.consentText(ctx("other"))).rejects.toThrow("assessment other has no hiring terms");
+    expect(c.stageHeartbeat).not.toHaveBeenCalled();
+  });
+
+  it("anchors the clock through the running stage of the invitation's own hiring terms (heartbeat)", async () => {
+    const deadlineAt = new Date("2026-10-05T09:10:00Z");
+    c.stageHeartbeat.mockClear().mockResolvedValueOnce({ deadlineAt });
+    expect(await hiringModule.candidate.heartbeat(ctx("a"))).toEqual({ deadlineAt });
+    expect(c.stageHeartbeat).toHaveBeenCalledTimes(1);
+    expect(c.stageHeartbeat.mock.calls[0][0]).toBe(s.hctx);
   });
 
   it("never terminates an attempt (HIRING-UX R13) and salvages before it closes", async () => {
