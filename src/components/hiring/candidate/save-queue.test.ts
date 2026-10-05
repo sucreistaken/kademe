@@ -247,3 +247,15 @@ describe("what the server holds now (review: the draft's base)", () => {
     expect(saved).toEqual([{ text: "one" }]);
   });
 });
+
+describe("what is on its way (fix round 2: the draft records the sent text)", () => {
+  it("tells the sending listener each answer as its save leaves, before the server answers", async () => {
+    const h = harness();
+    const sending: unknown[] = [];
+    h.queue.listenSending((answer) => void sending.push(answer));
+    h.queue.save({ text: "AB" }, true);
+    await h.settle();
+    expect(sending).toEqual([{ text: "AB" }]);
+    expect(h.replies).toHaveLength(1);
+  });
+});

@@ -18,7 +18,8 @@ export function commitNeeded(input: { responses: CandidateResponseView[]; activi
   return !input.responses.find((r) => r.activityId === input.activityId)?.closed;
 }
 
-export type CloseResult = { kind: "advanced"; next: HiringCandidateState } | { kind: "finished" };
+/** "skipped": a closed question that is not the last (no way back): the runner only moves on. */
+export type CloseResult = { kind: "advanced"; next: HiringCandidateState } | { kind: "skipped" } | { kind: "finished" };
 
 /**
  * Closes the open question and, on the last one, the stage. ACTIVITY_CLOSED
@@ -32,6 +33,8 @@ export async function closeQuestion(input: {
   commit: () => Promise<HiringCandidateState>;
   submit: () => Promise<void>;
 }): Promise<CloseResult> {
+  // Fix round 2: only the last question's close may lead to the stage submit.
+  if (input.skipCommit && !input.last) return { kind: "skipped" };
   if (!input.skipCommit) {
     try {
       const next = await input.commit();
@@ -76,6 +79,27 @@ export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
       (err: unknown) => {
         clearTimeout(id);
         reject(err);
+      },
+    );
+  });
+}
+
+/**
+ * Fix round 2: waits for `promise` (the pending autosaves) at most `ms`, and
+ * never fails. A hung save cannot hold up a commit or a submit, which carry
+ * their own answer anyway.
+ */
+export function settleWithin(promise: Promise<unknown>, ms: number): Promise<void> {
+  return new Promise<void>((resolve) => {
+    const id = setTimeout(resolve, ms);
+    promise.then(
+      () => {
+        clearTimeout(id);
+        resolve();
+      },
+      () => {
+        clearTimeout(id);
+        resolve();
       },
     );
   });

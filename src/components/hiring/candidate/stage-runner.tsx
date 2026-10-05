@@ -15,9 +15,9 @@ import type { HiringCandidateState } from "@/solutions/hiring/rules/candidate-st
 import type { CandidateActivity } from "@/solutions/hiring/rules/candidate-view";
 import { ActionBar } from "./action-bar";
 import { ChoiceActivity } from "./choice-activity";
-import { clearDraft, draftKey, lostWords, markLostWords, sessionDrafts } from "./draft-store";
+import { clearDraft, draftKey, lostWords, markLostWords, sessionDrafts, type LostKind } from "./draft-store";
 import { answeredLocally, isLastMinute, minutesLeft, ownsPrimary, primaryKey, resumeOf, tabReply, type LocalAnswer, type TabMessage } from "./runner-model";
-import { closeQuestion, commitNeeded, recoveryFor, withTimeout } from "./runner-steps";
+import { closeQuestion, commitNeeded, recoveryFor, settleWithin, withTimeout } from "./runner-steps";
 import { serverMessage } from "./server-message";
 import { StageIntro } from "./stage-intro";
 import { SubmitDelay } from "./submit-delay";
@@ -25,6 +25,8 @@ import { TextActivity } from "./text-activity";
 
 /** Minor 10: how long a start, commit or submit may take before the runner stops waiting and offers a retry. */
 const REQUEST_MS = 20_000;
+/** Fix round 2: how long a close waits for pending autosaves; the commit carries its own answer, so a hung save never blocks it. */
+const FLUSH_MS = 5_000;
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const codeOf = (err: unknown) => (err && typeof err === "object" && typeof (err as { code?: unknown }).code === "string" ? (err as { code: string }).code : "");
 
@@ -118,7 +120,7 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
     async (auto: boolean) => {
       setBusy(true);
       setFailure(null);
-      await flushes.flushAll();
+      await settleWithin(flushes.flushAll(), FLUSH_MS);
       try {
         let next: HiringCandidateState;
         try {
@@ -127,7 +129,7 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
           // At 0:00 the request can race the server's own clock; past the slack the server closes the stage either way.
           if (!auto) throw err;
           await wait(SUBMIT_SLACK_MS + 1000);
-          await flushes.flushAll();
+          await settleWithin(flushes.flushAll(), FLUSH_MS);
           next = await withTimeout(apiSend<HiringCandidateState>(token, "/hiring/stage/submit", { stagePosition: current.position }), REQUEST_MS);
         }
         go(next);
@@ -178,8 +180,8 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
    * not kept; the next stage's intro says that honestly (Minor 6). Past 0:00 the time-up flow speaks.
    */
   const onRefused = useCallback(
-    (err: unknown) => {
-      if (codeOf(err) === "STAGE_EXPIRED") markLostWords(sessionDrafts(), token, current.position);
+    (err: unknown, kind: LostKind) => {
+      if (codeOf(err) === "STAGE_EXPIRED") markLostWords(sessionDrafts(), token, current.position, kind);
       if (timeUp && codeOf(err) === "STAGE_EXPIRED") return;
       setFailure(failureOf(err));
     },
@@ -187,8 +189,8 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
   );
   const lostPrevious = useSyncExternalStore(
     noSubscribe,
-    () => (current.previous ? lostWords(sessionDrafts(), token, current.previous.position) : false),
-    () => false,
+    () => (current.previous ? lostWords(sessionDrafts(), token, current.previous.position) : null),
+    () => null,
   );
 
   async function start() {
@@ -223,7 +225,7 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
       setDelayed(null);
       setBusy(true);
       setFailure(null);
-      await flushes.flushAll();
+      await settleWithin(flushes.flushAll(), FLUSH_MS);
       try {
         const result = await closeQuestion({
           last,
@@ -242,6 +244,10 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
         });
         if (result.kind === "advanced") {
           setState(result.next);
+          setIndex(at + 1);
+          setBusy(false);
+        } else if (result.kind === "skipped") {
+          // A closed question that is not the last (no way back): move on without a commit.
           setIndex(at + 1);
           setBusy(false);
         }
@@ -314,7 +320,10 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
   }
 
   const locked = timeUp && current.autoSubmit;
-  const inputsOff = busy || delayed !== null || locked;
+  // Fix round 2: a question the server shows closed (no way back; the recovery after a failed stage
+  // submit) cannot take edits, so its inputs say so instead of refusing them silently.
+  const closedHere = !!activity && !commitNeeded({ responses: current.responses, activityId: activity.id, backNavigation: current.backNavigation });
+  const inputsOff = busy || delayed !== null || locked || closedHere;
   let body: React.ReactNode = null;
   if (activity) {
     const common = {
@@ -328,7 +337,7 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
       flushes,
       onChange: (answer: LocalAnswer) => setAnswers((all) => ({ ...all, [activity.id]: { ...all[activity.id], ...answer } })),
       disabled: inputsOff,
-      onRefused,
+      onRefused: (err: unknown) => onRefused(err, activity.type === "SINGLE_CHOICE" || activity.type === "MULTI_CHOICE" ? "choice" : "text"),
     };
     switch (activity.type) {
       case "LONG_TEXT":
@@ -385,7 +394,11 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
         {online ? null : (
           <p role="status" className="mb-4 rounded-xl border border-line bg-surface px-4 py-3 text-[16px] leading-[26px] text-ink">
             {/* Minor 4: a written answer has no recording to speak of. */}
-            {activity && (activity.type === "VIDEO" || activity.type === "AUDIO") ? t("offline") : t("offlineText")}
+            {activity && (activity.type === "VIDEO" || activity.type === "AUDIO")
+              ? t("offline")
+              : activity && (activity.type === "SINGLE_CHOICE" || activity.type === "MULTI_CHOICE")
+                ? t("offlineChoice")
+                : t("offlineText")}
           </p>
         )}
         {timeUp ? (
@@ -394,6 +407,7 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
           </p>
         ) : null}
         {body}
+        {closedHere ? <p className="mt-4 text-[16px] leading-[26px] text-ink-2">{t("closedQuestion")}</p> : null}
         {failureLine}
         {activity && ownsPrimary(activity.type) && !retrying ? null : (
           <ActionBar>
@@ -420,7 +434,7 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
                 <DisabledReason id="activity-next-why" className="mt-2 text-[14px]">
                   {why}
                 </DisabledReason>
-              ) : activity && !activity.required && !answered && !busy ? (
+              ) : activity && !activity.required && !answered && !busy && !closedHere ? (
                 <p className="mt-2 text-[14px] text-muted">{t("optionalHint")}</p>
               ) : null}
             </div>

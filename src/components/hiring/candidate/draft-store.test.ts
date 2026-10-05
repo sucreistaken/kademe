@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clearDraft, draftKey, lostWords, markLostWords, readDraft, restoreText, writeDraft, type DraftStorage } from "./draft-store";
+import { clearDraft, draftAfterSaved, draftAfterSend, draftKey, lostWords, markLostWords, readDraft, restoreText, writeDraft, type Draft, type DraftStorage } from "./draft-store";
 
 function memory(): DraftStorage & { map: Map<string, string> } {
   const map = new Map<string, string>();
@@ -73,15 +73,56 @@ describe("restoring the copy only over the text it was typed on (review: base gu
   });
 });
 
-describe("words the server refused after the deadline (Minor 6)", () => {
-  it("remembers, per link and stage, that the last words could not be saved, so the next intro says so", () => {
+describe("a reload while a save is on its way (fix round 2: the copy also knows what was sent)", () => {
+  /** The text field's steps, as it writes its copy: type, send, type again. */
+  const typed = (d: Draft, text: string): Draft => ({ ...d, text });
+
+  it("restores ABC when the server holds AB that was sent but not confirmed before the reload", () => {
+    // The field opened on "A" (the server's text).
+    let d: Draft = { text: "A", base: "A" };
+    d = typed(d, "AB");
+    d = draftAfterSend(d, "AB"); // PUT "AB" leaves; no answer yet
+    d = typed(d, "ABC"); // "C" typed; reload before the PUT answers
+    expect(d).toEqual({ text: "ABC", base: "A", pending: "AB" });
+    // The PUT landed before the reloaded page read the database.
+    expect(restoreText("AB", d)).toEqual({ text: "ABC", restored: true, drop: false });
+    // It had not landed yet: the old base still matches.
+    expect(restoreText("A", d)).toEqual({ text: "ABC", restored: true, drop: false });
+  });
+
+  it("still lets another device's text win over a copy with a save on its way", () => {
+    const d: Draft = { text: "ABC", base: "A", pending: "AB" };
+    expect(restoreText("Written on the phone", d)).toEqual({ text: "Written on the phone", restored: false, drop: true });
+  });
+
+  it("moves the base on a confirmed save and forgets the copy when nothing is left unsaved", () => {
+    const sent = draftAfterSend({ text: "ABC", base: "A" }, "AB");
+    expect(draftAfterSaved(sent, "AB")).toEqual({ text: "ABC", base: "AB" });
+    expect(draftAfterSaved({ text: "AB", base: "A", pending: "AB" }, "AB")).toBeNull();
+    // An older save confirmed after a newer one left keeps the newer one pending.
+    expect(draftAfterSaved({ text: "ABCD", base: "A", pending: "ABC" }, "AB")).toEqual({ text: "ABCD", base: "AB", pending: "ABC" });
+  });
+
+  it("reads and writes the pending text with the copy", () => {
     const s = memory();
-    expect(lostWords(s, "tok", 1)).toBe(false);
-    markLostWords(s, "tok", 1);
-    expect(lostWords(s, "tok", 1)).toBe(true);
-    expect(lostWords(s, "tok", 2)).toBe(false);
-    expect(lostWords(s, "other", 1)).toBe(false);
-    expect(lostWords(broken, "tok", 1)).toBe(false);
-    expect(() => markLostWords(broken, "tok", 1)).not.toThrow();
+    writeDraft(s, "k", { text: "ABC", base: "A", pending: "AB" });
+    expect(readDraft(s, "k")).toEqual({ text: "ABC", base: "A", pending: "AB" });
+    s.setItem("k", JSON.stringify({ text: "x", base: "", pending: 4 }));
+    expect(readDraft(s, "k")).toEqual({ text: "x", base: "" });
+  });
+});
+
+describe("words the server refused after the deadline (Minor 6)", () => {
+  it("remembers, per link and stage, that the last change could not be saved, and whether it was text or a choice", () => {
+    const s = memory();
+    expect(lostWords(s, "tok", 1)).toBeNull();
+    markLostWords(s, "tok", 1, "text");
+    expect(lostWords(s, "tok", 1)).toBe("text");
+    markLostWords(s, "tok", 3, "choice");
+    expect(lostWords(s, "tok", 3)).toBe("choice");
+    expect(lostWords(s, "tok", 2)).toBeNull();
+    expect(lostWords(s, "other", 1)).toBeNull();
+    expect(lostWords(broken, "tok", 1)).toBeNull();
+    expect(() => markLostWords(broken, "tok", 1, "text")).not.toThrow();
   });
 });

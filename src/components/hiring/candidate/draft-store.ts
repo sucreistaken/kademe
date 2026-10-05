@@ -9,11 +9,14 @@
  * The copy carries its `base`: the server text the tab last knew (the text it
  * opened with, then each text the server accepted). It is restored only over
  * that same text; when the server holds something else (written on another
- * device), the server wins and the copy is dropped (Task 13 review).
+ * device), the server wins and the copy is dropped (Task 13 review). A text
+ * whose save was on its way when the tab reloaded counts as known too: the
+ * server may hold it by the time the page reads it (fix round 2).
  */
 
 export type DraftStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
-export type Draft = { text: string; base: string };
+/** `pending`: a text whose save left but had no answer yet (fix round 2): the server may hold it already. */
+export type Draft = { text: string; base: string; pending?: string };
 
 /**
  * By link, stage, the stage's run (its start time: a later run of the same
@@ -37,8 +40,9 @@ export function readDraft(storage: DraftStorage | null, key: string): Draft | nu
     if (!raw) return null;
     const value = JSON.parse(raw) as unknown;
     if (!value || typeof value !== "object") return null;
-    const { text, base } = value as { text?: unknown; base?: unknown };
-    return typeof text === "string" && typeof base === "string" ? { text, base } : null;
+    const { text, base, pending } = value as { text?: unknown; base?: unknown; pending?: unknown };
+    if (typeof text !== "string" || typeof base !== "string") return null;
+    return typeof pending === "string" ? { text, base, pending } : { text, base };
   } catch {
     return null;
   }
@@ -66,25 +70,40 @@ export function clearDraft(storage: DraftStorage | null, key: string): void {
  */
 export function restoreText(server: string, draft: Draft | null): { text: string; restored: boolean; drop: boolean } {
   if (!draft || draft.text === server) return { text: server, restored: false, drop: false };
-  if (draft.base === server) return { text: draft.text, restored: true, drop: false };
+  if (draft.base === server || draft.pending === server) return { text: draft.text, restored: true, drop: false };
   return { text: server, restored: false, drop: true };
+}
+
+/** A save of `sent` left for the server. */
+export function draftAfterSend(draft: Draft, sent: string): Draft {
+  return { ...draft, pending: sent };
+}
+
+/** The server accepted `saved`: it is the new base; the copy is gone when nothing is left unsaved. */
+export function draftAfterSaved(draft: Draft, saved: string): Draft | null {
+  const pending = draft.pending === saved ? undefined : draft.pending;
+  if (pending === undefined && draft.text === saved) return null;
+  return pending === undefined ? { text: draft.text, base: saved } : { text: draft.text, base: saved, pending };
 }
 
 const lostKey = (token: string, position: number) => `kademe-hiring-lost:${token}:${position}`;
 
-/** Minor 6: the server refused a save after the deadline, so the last words typed were not kept. */
-export function markLostWords(storage: DraftStorage | null, token: string, position: number): void {
+export type LostKind = "text" | "choice";
+
+/** Minor 6: the server refused a save after the deadline, so the last change (typed words or a choice) was not kept. */
+export function markLostWords(storage: DraftStorage | null, token: string, position: number, kind: LostKind): void {
   try {
-    storage?.setItem(lostKey(token, position), "1");
+    storage?.setItem(lostKey(token, position), kind);
   } catch {
     // Without storage the next intro cannot know; it still says only "up to that moment".
   }
 }
 
-export function lostWords(storage: DraftStorage | null, token: string, position: number): boolean {
+export function lostWords(storage: DraftStorage | null, token: string, position: number): LostKind | null {
   try {
-    return storage?.getItem(lostKey(token, position)) === "1";
+    const value = storage?.getItem(lostKey(token, position));
+    return value === "text" || value === "choice" ? value : null;
   } catch {
-    return false;
+    return null;
   }
 }

@@ -8,7 +8,7 @@ import type { Locale } from "@/i18n/locale";
 import type { CandidateActivity } from "@/solutions/hiring/rules/candidate-view";
 import { ActivityHeader } from "./activity-header";
 import { useAutosave, type SaveStatus } from "./autosave";
-import { clearDraft, draftKey, readDraft, restoreText, sessionDrafts, writeDraft } from "./draft-store";
+import { clearDraft, draftAfterSaved, draftAfterSend, draftKey, readDraft, restoreText, sessionDrafts, writeDraft, type Draft } from "./draft-store";
 import type { LocalAnswer } from "./runner-model";
 
 export type ActivityProps = {
@@ -73,21 +73,29 @@ export function TextActivity({
   // Mounted only in the browser after a click (the intro or the resume gate comes first), so the tab's copy is readable here.
   const [start] = useState(() => restoreText(server, readDraft(sessionDrafts(), key)));
   const [text, setText] = useState(start.text);
-  // The server text this tab last knew: the copy is restored only over it (Task 13 review, base guard).
-  const base = useRef(server);
-  const latest = useRef(start.text);
+  // The tab's copy as it stands: the latest typing, the server text this tab last knew (the copy is
+  // restored only over it: Task 13 review) and a text whose save is on its way (fix round 2).
+  const copy = useRef<Draft>({ text: start.text, base: server });
   const answerOf = useCallback((value: string): LocalAnswer => (alternative ? { usedTextAlternative: true, text: value } : { text: value }), [alternative]);
-  const onSaved = useCallback(
+  const onSending = useCallback(
     (answer: unknown) => {
-      const saved = (answer as LocalAnswer).text ?? "";
-      base.current = saved;
-      // Nothing left to keep when the server holds what the field shows.
-      if (latest.current === saved) clearDraft(sessionDrafts(), key);
-      else writeDraft(sessionDrafts(), key, { text: latest.current, base: saved });
+      copy.current = draftAfterSend(copy.current, (answer as LocalAnswer).text ?? "");
+      writeDraft(sessionDrafts(), key, copy.current);
     },
     [key],
   );
-  const { save, flush, status, savedAt } = useAutosave({ token, position, activityId: activity.id, flushes, onRefused, onSaved });
+  const onSaved = useCallback(
+    (answer: unknown) => {
+      const saved = (answer as LocalAnswer).text ?? "";
+      const next = draftAfterSaved(copy.current, saved);
+      // Nothing left to keep when the server holds what the field shows.
+      if (next) writeDraft(sessionDrafts(), key, next);
+      else clearDraft(sessionDrafts(), key);
+      copy.current = next ?? { text: saved, base: saved };
+    },
+    [key],
+  );
+  const { save, flush, status, savedAt } = useAutosave({ token, position, activityId: activity.id, flushes, onRefused, onSaved, onSending });
   const short = activity.type === "SHORT_TEXT";
   const max = activity.maxChars ?? (short ? 300 : 3000);
   const min = activity.minChars ?? 0;
@@ -112,8 +120,8 @@ export function TextActivity({
   function update(value: string) {
     const next = value.slice(0, max);
     setText(next);
-    latest.current = next;
-    writeDraft(sessionDrafts(), key, { text: next, base: base.current });
+    copy.current = { ...copy.current, text: next };
+    writeDraft(sessionDrafts(), key, copy.current);
     const answer = answerOf(next);
     save(answer);
     onChange(answer);

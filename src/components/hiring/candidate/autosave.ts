@@ -22,10 +22,12 @@ export function useAutosave(
     onRefused?: (err: unknown) => void;
     /** Each answer the server accepted (the text field keeps its draft's base with it). */
     onSaved?: (answer: unknown) => void;
+    /** Each answer as its save leaves (the text field records it in its draft copy). */
+    onSending?: (answer: unknown) => void;
   },
   delayMs = 800,
 ) {
-  const { token, position, activityId, flushes, onRefused, onSaved } = input;
+  const { token, position, activityId, flushes, onRefused, onSaved, onSending } = input;
   const [state, setState] = useState<SaveState>({ status: "idle", savedAt: null });
   const [queue] = useState(
     () =>
@@ -46,6 +48,7 @@ export function useAutosave(
   // The runner's handler changes with its state; the queue always calls the latest one.
   useEffect(() => queue.listen(onRefused), [queue, onRefused]);
   useEffect(() => queue.listenSaved(onSaved), [queue, onSaved]);
+  useEffect(() => queue.listenSending(onSending), [queue, onSending]);
 
   // The runner's flush before a question or the stage closes; leaving sends the last draft.
   useEffect(() => {

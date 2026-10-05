@@ -32,7 +32,7 @@ export function StageIntro({
   busy: boolean;
   error: React.ReactNode;
   /** The server refused the previous stage's last words after its deadline (Minor 6). */
-  lostPrevious: boolean;
+  lostPrevious: "text" | "choice" | null;
   onStart: () => void;
   headingRef: React.Ref<HTMLHeadingElement>;
 }) {
@@ -65,7 +65,7 @@ export function StageIntro({
     ? [
         current.previous.closedByClock ? t("previousTime", { n: current.previous.position }) : t("previousDone", { n: current.previous.position }),
         // Honest about words the server refused after the deadline: "up to that moment" is saved, they are not.
-        lostPrevious ? t("previousLost") : "",
+        lostPrevious === "text" ? t("previousLost") : lostPrevious === "choice" ? t("previousLostChoice") : "",
       ]
         .filter(Boolean)
         .join(" ")

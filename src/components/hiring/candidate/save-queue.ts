@@ -56,6 +56,7 @@ export class SaveQueue {
   private savedAt: number | null = null;
   private refusedListener: ((err: unknown) => void) | undefined = undefined;
   private savedListener: ((answer: unknown) => void) | undefined = undefined;
+  private sendingListener: ((answer: unknown) => void) | undefined = undefined;
 
   constructor(
     private readonly deps: SaveDeps,
@@ -93,6 +94,7 @@ export class SaveQueue {
     this.state("saving");
     this.chain = this.chain.then(async () => {
       this.inFlight = answer;
+      this.sendingListener?.(answer);
       try {
         await this.deps.send(answer);
         this.queued -= 1;
@@ -154,6 +156,14 @@ export class SaveQueue {
     this.savedListener = listener;
     return () => {
       if (this.savedListener === listener) this.savedListener = undefined;
+    };
+  };
+
+  /** Who hears of each answer as its save leaves (the text field records it in its draft copy). Returns the undo. */
+  listenSending = (listener: ((answer: unknown) => void) | undefined): (() => void) => {
+    this.sendingListener = listener;
+    return () => {
+      if (this.sendingListener === listener) this.sendingListener = undefined;
     };
   };
 

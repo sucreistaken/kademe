@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { CandidateResponseView } from "@/solutions/hiring/rules/candidate-state";
-import { closeQuestion, commitNeeded, recoveryFor, RequestTimeout, withTimeout } from "./runner-steps";
+import { closeQuestion, commitNeeded, recoveryFor, RequestTimeout, settleWithin, withTimeout } from "./runner-steps";
 import { resumeOf } from "./runner-model";
 
 const refusal = (code: string, status = 409) => Object.assign(new Error(code), { code, status });
@@ -55,6 +55,14 @@ describe("closing a question (review Critical: a closed last question is never c
     expect(submit).not.toHaveBeenCalled();
   });
 
+  it("never submits the stage for a closed question that is not the last (fix round 2): it only moves on", async () => {
+    const commit = vi.fn();
+    const submit = vi.fn();
+    await expect(closeQuestion({ last: false, skipCommit: true, commit, submit })).resolves.toEqual({ kind: "skipped" });
+    expect(commit).not.toHaveBeenCalled();
+    expect(submit).not.toHaveBeenCalled();
+  });
+
   it("passes on every other refusal, and ACTIVITY_CLOSED on a question that is not the last", async () => {
     const submit = vi.fn();
     await expect(closeQuestion({ last: true, skipCommit: false, commit: async () => Promise.reject(refusal("REQUIRED_MISSING", 422)), submit })).rejects.toMatchObject({ code: "REQUIRED_MISSING" });
@@ -98,5 +106,27 @@ describe("a request that never answers (Minor 10)", () => {
   it("passes an answer or a refusal through untouched", async () => {
     await expect(withTimeout(Promise.resolve(7), 1000)).resolves.toBe(7);
     await expect(withTimeout(Promise.reject(refusal("STAGE_MISMATCH")), 1000)).rejects.toMatchObject({ code: "STAGE_MISMATCH" });
+  });
+});
+
+describe("a save that hangs before a close (fix round 2)", () => {
+  it("stops waiting for the pending saves after the limit, so the commit (which carries its own answer) still goes", async () => {
+    vi.useFakeTimers();
+    try {
+      let done = false;
+      const waited = settleWithin(new Promise<void>(() => undefined), 5000).then(() => (done = true));
+      await vi.advanceTimersByTimeAsync(4999);
+      expect(done).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      await waited;
+      expect(done).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("goes on at once when the saves settle, and never rejects", async () => {
+    await expect(settleWithin(Promise.resolve(), 5000)).resolves.toBeUndefined();
+    await expect(settleWithin(Promise.reject(new Error("x")), 5000)).resolves.toBeUndefined();
   });
 });
