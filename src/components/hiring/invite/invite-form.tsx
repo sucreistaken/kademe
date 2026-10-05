@@ -300,8 +300,30 @@ export function InviteForm({
               </ul>
             ) : null}
             {parsed.tooMany ? <p className="text-[13px] text-ink">{t("tooMany", { max: MAX_INVITE_ROWS })}</p> : null}
-            {parsed.rows.length && !parsed.rows.some((r) => r.problem) ? <p className="tnum text-[13px] text-muted">{t("rowsReady", { count: parsed.rows.length })}</p> : null}
+            {parsed.rows.length > 0 && !parsed.rows.some((r) => r.problem) ? <p className="tnum text-[13px] text-muted">{t("rowsReady", { count: parsed.rows.length })}</p> : null}
           </div>
+          {parsed.rows.length > 0 ? (
+            // What will be stored, row by row (fix round 2): outside the live region, so only the count and the problems are announced.
+            <section aria-labelledby="invite-preview-title" className="space-y-2 pt-2">
+              <h3 id="invite-preview-title" className="text-[13px] font-medium text-ink">
+                {t("previewTitle")}
+              </h3>
+              <ul aria-labelledby="invite-preview-title" tabIndex={0} className="max-h-60 divide-y divide-line overflow-y-auto rounded-lg border border-line">
+                {parsed.rows.map((r) => (
+                  <li key={r.line} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 px-3 py-2 text-[13px] leading-5">
+                    <span className="tnum w-14 shrink-0 text-muted">{t("previewLine", { line: r.line })}</span>
+                    <span className={r.problem === "NAME" ? "text-muted italic" : "font-medium text-ink"}>{r.fullName || t("previewNoName")}</span>
+                    <span className={r.problem === "EMAIL" ? "text-muted italic" : "text-muted"}>{r.email || t("previewNoEmail")}</span>
+                    {r.problem ? (
+                      <StatusDot tone="warn" className="text-ink">
+                        {t(`preview${r.problem}`)}
+                      </StatusDot>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
         </div>
       )}
 

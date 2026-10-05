@@ -398,3 +398,30 @@ describe("one name rule for the pasted list, the form and the server (Task 17 fi
     expect(parseInviteRows("😀😀, elif@example.com").rows[0].problem).toBeNull();
   });
 });
+
+describe("the name is the cells before the e-mail (Task 17 fix round 2)", () => {
+  it("drops the columns after the e-mail: a phone never becomes part of the name", () => {
+    const [row] = parseInviteRows("Elif Kaya\telif@example.com\t+90 555 000 00 00").rows;
+    expect(row).toEqual({ line: 1, fullName: "Elif Kaya", email: "elif@example.com", problem: null });
+  });
+
+  it("joins a first and a last name split over two cells", () => {
+    expect(parseInviteRows("Elif\tKaya\telif@example.com\tİstanbul").rows[0].fullName).toBe("Elif Kaya");
+  });
+
+  it("takes the cells after the e-mail when the sheet starts with it", () => {
+    expect(parseInviteRows("elif@example.com\tElif Kaya").rows[0]).toEqual({ line: 1, fullName: "Elif Kaya", email: "elif@example.com", problem: null });
+    expect(parseInviteRows("elif@example.com, Elif, Kaya").rows[0].fullName).toBe("Elif Kaya");
+  });
+
+  it("leaves the angle-bracket form as it was, and keeps line numbers and problem codes", () => {
+    expect(parseInviteRows('"Ece Arslan" <ece@example.com>').rows[0].fullName).toBe("Ece Arslan");
+    const { rows } = parseInviteRows("\nElif Kaya\telif@example.com\t+90 555\nx\tkisa@example.com\t+90\nCan\tcan@\nElif K\tELIF@example.com\tnot");
+    expect(rows.map((r) => [r.line, r.fullName, r.problem])).toEqual([
+      [2, "Elif Kaya", null],
+      [3, "x", "NAME"],
+      [4, "Can", "EMAIL"],
+      [5, "Elif K", "DUPLICATE"],
+    ]);
+  });
+});

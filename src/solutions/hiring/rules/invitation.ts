@@ -151,7 +151,9 @@ const LINE_BREAK_RE = /\r\n|[\r\n\u2028\u2029]/;
 /**
  * "Birden fazla aday": one candidate per line, a name and an e-mail separated
  * by a comma, semicolon or tab in either order, or "Name <mail>" as a mail
- * client copies it. Quoted CSV cells, a byte order mark and Turkish letters
+ * client copies it. The name is the cells before the e-mail (a first and a
+ * last name in two cells join); only when the e-mail comes first is it the
+ * cells after it, so other spreadsheet columns never enter the name. Quoted CSV cells, a byte order mark and Turkish letters
  * are fine. Blank lines are skipped; a row without a name, with a bad e-mail
  * or repeating an earlier e-mail (any letter case) is marked, never dropped,
  * so the manager sees which line to fix. At most MAX_INVITE_ROWS rows are
@@ -175,10 +177,16 @@ export function parseInviteRows(text: string): { rows: InviteRow[]; tooMany: boo
       email = angle[1];
       rest = rest.replace(angle[0], " ");
     }
-    const cells = splitCells(rest);
+    let cells = splitCells(rest);
     if (!email) {
-      email = cells.find((c) => c.includes("@")) ?? "";
-      cells.splice(cells.indexOf(email), email ? 1 : 0);
+      // The name is the cells before the e-mail (a phone, a city or a note
+      // after it is not a name); a sheet that starts with the e-mail has its
+      // name after it. A line without an e-mail keeps every cell.
+      const at = cells.findIndex((c) => c.includes("@"));
+      if (at >= 0) {
+        email = cells[at];
+        cells = at > 0 ? cells.slice(0, at) : cells.slice(1);
+      }
     }
     email = email.replace(/^mailto:/i, "").trim();
     const fullName = cells.join(" ").replace(/\s+/g, " ").trim();

@@ -148,6 +148,9 @@ describe("inviteManyAction", () => {
     expect(results.every((r) => r.result.ok)).toBe(true);
     expect(results.at(-1)!.line).toBe(50);
     expect(create).toHaveBeenCalledTimes(50);
+    // Fix round 2: the name is the cell before the e-mail; city, phone and note never reach the invitation.
+    expect(create.mock.calls.map(([, row]) => row.fullName)).toEqual(Array.from({ length: 50 }, (_, i) => `Aday Numara ${i + 1}`));
+    expect(results.map((r) => r.fullName)).toEqual(Array.from({ length: 50 }, (_, i) => `Aday Numara ${i + 1}`));
   });
 
   it("still refuses a cut list longer than 50 rows can be (FAILED, line 0)", async () => {
