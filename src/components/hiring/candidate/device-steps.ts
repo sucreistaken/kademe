@@ -84,3 +84,21 @@ export function shouldAutoOpen(input: {
   if (input.microphonePermission !== "granted") return false;
   return input.camera ? input.cameraPermission === "granted" : true;
 }
+
+/** 3.3: the browser's own step is shown; the operating system's paragraph (after the first newline) waits behind "Hâlâ olmuyor mu?". */
+export function splitFix(text: string): { first: string; rest: string | null } {
+  const at = text.indexOf("\n");
+  return at < 0 ? { first: text, rest: null } : { first: text.slice(0, at), rest: text.slice(at + 1) };
+}
+
+/**
+ * Controller ruling C2: the filled button waits on EVERY blocker and says its
+ * own reason (the `block*` copy key). "asking" is not a blocker: it only
+ * occurs on the open step, where it is the button's busy state.
+ */
+export const waitReasonKey = (wait: Blocker | "asking" | null): `block${Blocker}` | null => (wait === null || wait === "asking" ? null : `block${wait}`);
+
+/** C3: write one memory field without losing the other (the record is replaced whole on every write). */
+export function rememberCheck(storage: Pick<Storage, "getItem" | "setItem"> | null, key: string, field: keyof CheckMemory): void {
+  writeCheckMemory(storage, key, { ...readCheckMemory(storage, key), [field]: true });
+}

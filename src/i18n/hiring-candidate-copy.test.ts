@@ -69,6 +69,15 @@ describe("hiring candidate copy", () => {
     expect(en.hiringDevice.trialQuiet).toMatch(/^We could not hear you\./);
   });
 
+  it("titles the device check's sub-steps as questions or actions (3.3)", () => {
+    expect(tr.hiringDevice.titleOpen).toBe("Kameranı açalım");
+    expect(tr.hiringDevice.titleTrial).toBe("5 saniyelik bir deneme yap");
+    expect(tr.hiringDevice.titleListen).toBe("Kendini görüp duyabiliyor musun?");
+    expect(tr.hiringDevice.titleDenied).toBe("Kamera izni kapalı");
+    expect(en.hiringDevice.yesContinue).toBe("Yes, continue");
+    expect(tr.hiringDevice.leadTrial).toBe("Kendini izle ve dinle. Bu kayıt kimseye gitmez.");
+  });
+
   it("adds the operating system's privacy settings to every desktop fix (Task 12 review)", () => {
     for (const dict of [tr, en]) {
       for (const key of ["fixchrome", "fixfirefox"] as const) {

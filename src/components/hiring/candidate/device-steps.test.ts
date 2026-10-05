@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { candidateT } from "@/i18n/candidate";
+import { footerButtonState } from "@/components/visual/footer-action";
 import { deviceBlocker, fixKeyFor, type Permission, type Trial } from "./device-rows";
 import {
   checkMemoryKey,
@@ -7,8 +9,11 @@ import {
   NO_REPORTS,
   quietCopy,
   readCheckMemory,
+  rememberCheck,
   shouldAutoOpen,
+  splitFix,
   unsupportedSteps,
+  waitReasonKey,
   withReport,
   writeCheckMemory,
   type StepInput,
@@ -130,5 +135,72 @@ describe("Task 12 polish carries", () => {
     expect(shouldAutoOpen({ ...granted, openedBefore: false })).toBe(false);
     expect(shouldAutoOpen({ ...granted, openedBefore: true })).toBe(true);
     expect(shouldAutoOpen({ openedBefore: false, camera: false, cameraPermission: null, microphonePermission: "granted" })).toBe(false);
+  });
+});
+
+describe("the refusal's two steps (3.3: browser first, the computer's settings behind 'Hâlâ olmuyor mu?')", () => {
+  it("splits a fix at its first newline and keeps one-line fixes whole", () => {
+    expect(splitFix("Adres çubuğu...\nHâlâ açılmıyorsa bilgisayarın...")).toEqual({ first: "Adres çubuğu...", rest: "Hâlâ açılmıyorsa bilgisayarın..." });
+    expect(splitFix("Tek satır.")).toEqual({ first: "Tek satır.", rest: null });
+  });
+});
+
+describe("C2: the filled button waits on every blocker, with that blocker's reason", () => {
+  const granted = { ...base, permission: "granted" as const };
+
+  it("maps a wait to its block* copy key; 'asking' is the open step's busy state, not a reason", () => {
+    expect(waitReasonKey(null)).toBeNull();
+    expect(waitReasonKey("asking")).toBeNull();
+    for (const blocker of ["permission", "permissionMic", "sound", "trialNone", "trialRecording", "trialListen"] as const) {
+      const key = waitReasonKey(blocker);
+      expect(key).toBe(`block${blocker}`);
+      if (!key) continue;
+      for (const locale of ["tr", "en"] as const) expect(candidateT(locale)(`hiringDevice.${key}`), `${locale} ${key}`).not.toBe(`hiringDevice.${key}`);
+    }
+  });
+
+  it("remount case: trial remembered as played, sound not heard yet, 'Evet, devam et' waits with the sound reason", () => {
+    const step = deviceStep({ ...granted, trial: "played" });
+    expect(step).toEqual({ step: "listen", primary: "continue", wait: "sound" });
+    const key = waitReasonKey(step.wait);
+    const reason = key ? candidateT("tr")(`hiringDevice.${key}`) : null;
+    const state = footerButtonState({ kind: "button", id: "check-next", label: "Evet, devam et", onClick: () => undefined, waitReason: reason });
+    expect(state).toEqual({ mode: "waiting", label: "Evet, devam et", reason: "Sesini duymayı bekliyoruz. Birkaç kelime söyle.", describedBy: "check-next-why" });
+  });
+
+  it("holds the continue button for every blocker deviceBlocker can name, and frees it only at null", () => {
+    const permissions: Permission[] = ["idle", "asking", "granted", "denied"];
+    const trials: Trial[] = ["none", "recording", "ready", "played"];
+    for (const permission of permissions)
+      for (const heard of [true, false])
+        for (const quiet of [true, false])
+          for (const trial of trials) {
+            const input = { camera: true, permission, heard, quiet, trial, denied: permission === "denied" ? ("notAllowed" as const) : null };
+            const s = deviceStep(input);
+            if (s.primary !== "continue") continue;
+            const key = waitReasonKey(s.wait);
+            const state = footerButtonState({ kind: "button", id: "check-next", label: "x", onClick: () => undefined, waitReason: key ? "reason" : null });
+            expect(state.mode, JSON.stringify(input)).toBe(deviceBlocker(input) === null ? "ready" : "waiting");
+          }
+  });
+
+  it("the trial button waits for the sound with its reason and is busy while recording", () => {
+    const sound = deviceStep(granted);
+    expect(waitReasonKey(sound.wait)).toBe("blocksound");
+    const recording = deviceStep({ ...granted, heard: true, trial: "recording" });
+    expect(recording.wait).toBe("trialRecording");
+  });
+});
+
+describe("C3: the tab's memory keeps both fields when one is written", () => {
+  it("rememberCheck reads first and writes the other field along", () => {
+    const store = new Map<string, string>();
+    const storage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v) };
+    const key = checkMemoryKey("tok");
+    rememberCheck(storage, key, "devicesOpened");
+    expect(readCheckMemory(storage, key)).toEqual({ trialPlayed: false, devicesOpened: true });
+    rememberCheck(storage, key, "trialPlayed");
+    expect(readCheckMemory(storage, key)).toEqual({ trialPlayed: true, devicesOpened: true });
+    expect(() => rememberCheck(null, key, "trialPlayed")).not.toThrow();
   });
 });

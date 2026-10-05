@@ -2,8 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check } from "lucide-react";
-import { Button, DisabledReason } from "@/components/ui/button";
+import { Camera, Mic } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Disclosure } from "@/components/visual/disclosure";
+import { Illustration } from "@/components/visual/illustrations";
+import { PathSteps } from "@/components/visual/path-steps";
+import { StepFooter } from "@/components/visual/step-footer";
+import { StepScreen } from "@/components/visual/step-screen";
 import { stepFocusController, useStepFocus } from "@/hooks/use-step-focus";
 import { apiSend, candidateApiBase } from "@/lib/client/api";
 import { CHUNK_MS, pickRecorderMime } from "@/lib/client/recorder";
@@ -12,26 +17,13 @@ import { cn } from "@/lib/cn";
 import { useT } from "@/i18n/candidate-client";
 import type { Locale } from "@/i18n/locale";
 import type { HiringCandidateState } from "@/solutions/hiring/rules/candidate-state";
-import { ActionBar } from "./action-bar";
-import {
-  HEARD_AT,
-  deniedKind,
-  deviceBlocker,
-  deviceRows,
-  fixKeyFor,
-  formatMbps,
-  isQuiet,
-  mediaConstraints,
-  peakLevel,
-  uploadSpeed,
-  type DeniedKind,
-  type Permission,
-  type RowId,
-  type Trial,
-} from "./device-rows";
 import { mailTo } from "./closed";
+import { HEARD_AT, deniedKind, deviceRows, fixKeyFor, formatMbps, isQuiet, mediaConstraints, peakLevel, uploadSpeed, type DeniedKind, type Permission, type Trial } from "./device-rows";
+import { checkMemoryKey, contextStalled, deviceStep, NO_REPORTS, quietCopy, readCheckMemory, rememberCheck, shouldAutoOpen, splitFix, unsupportedSteps, waitReasonKey, withReport, type ReportKind, type ReportState } from "./device-steps";
+import { sessionDrafts } from "./draft-store";
 import { serverMessage } from "./server-message";
 import { openTracked, stopAllStreams } from "./streams";
+import { useJourney } from "./use-journey";
 
 const TRIAL_MS = 5000;
 const PROBE_BYTES = 512 * 1024;
@@ -39,39 +31,34 @@ const PROBE_BYTES = 512 * 1024;
 const PROBE_TIMEOUT_MS = 10_000;
 
 type Bandwidth = { state: "measuring" | "unknown" } | { state: "ok" | "low"; mbps: number };
-type ReportState = "idle" | "sending" | "sent" | "failed";
-type ReportKind = "devices" | "quiet" | "recorder";
-type SoundContext = AudioContext;
 
-function newSoundContext(): SoundContext {
+function newSoundContext(): AudioContext {
   const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
   return new Ctx();
 }
 
+async function permissionOf(name: "camera" | "microphone"): Promise<PermissionState | null> {
+  try {
+    return (await navigator.permissions?.query({ name: name as PermissionName }))?.state ?? null;
+  } catch {
+    // Firefox does not know "camera": unknown is never taken as allowed.
+    return null;
+  }
+}
+
 /**
- * HIRING-UX 6.3: camera (if a video question exists), microphone, a 5 second
- * trial the candidate plays back (kept in this tab only, never sent), and the
- * connection as information. One row is open at a time; finished rows fold
- * into "Hazır". Nothing here is a proctoring check (plan 2 has none).
+ * HIRING-VISUAL-FLOW 3.3: three sub-steps (turn the devices on, a 5 second
+ * test, "can you see and hear yourself?"), the candidate's own picture as the
+ * screen's picture on the right, a short checklist on the left. The filled
+ * button is always the next real action (G2); it goes on only where the rows
+ * model says nothing blocks (device-steps tests it). Nothing here is a
+ * proctoring check; the test recording stays in this tab.
  *
- * Two rows stay open past "Hazır" on purpose: the camera keeps its live
- * preview until a trial take exists (the candidate sees their framing while
- * speaking and recording), and the trial keeps its player and "Tekrar kaydet"
- * (the candidate may listen and re-record as often as they like).
- *
- * The microphone gate has an escape (Task 12 review): the sound context is
- * made and resumed inside the click (a context made after the permission
- * prompt may stay suspended); after 8 s without a voice, or a context that
- * stays suspended, the microphone row shows a hint and "Sorun bildir" and the
- * trial opens, whose playback proves the microphone. A refusal, a missing
- * device, a busy device and a browser without camera access (in-app browsers)
- * each get their own next step.
- *
- * Every stream is registered (streams.ts) and stopped when the candidate goes
- * on, the screen goes away or the page is hidden for good (pagehide); a
- * permission answered after that is stopped at once. When the open row changes and focus was on a control that went away
- * (or inside the rows), focus moves to the new row's heading; the reason
- * under the button is a polite live region.
+ * Kept from plan 2 (Task 12 and its review): the sound context is made inside
+ * the click; an unheard microphone lets the trial prove itself after 8 s; a
+ * refusal, a missing device, a busy device and a browser without camera
+ * access each get their own next step; every stream is registered and stopped
+ * when the candidate goes on, the screen goes or the page is hidden.
  */
 export function DeviceCheck({
   token,
@@ -84,14 +71,13 @@ export function DeviceCheck({
   camera: boolean;
   practice: boolean;
   locale: Locale;
-  /** Named in the report's confirmation for an urgent problem (no reply is promised). */
+  /** Named in a report's confirmation for an urgent problem (no reply is promised). */
   contactEmail: string | null;
 }) {
   const t = useT("hiringDevice");
   const router = useRouter();
-  const list = useRef<HTMLOListElement>(null);
-  const headings = useRef<Partial<Record<RowId, HTMLHeadingElement | null>>>({});
-  const deniedTitle = useRef<HTMLParagraphElement>(null);
+  const body = useRef<HTMLDivElement>(null);
+  const title = useRef<HTMLHeadingElement>(null);
   const preview = useRef<HTMLVideoElement | null>(null);
   const stream = useRef<MediaStream | null>(null);
   const audio = useRef<AudioContext | null>(null);
@@ -101,21 +87,24 @@ export function DeviceCheck({
   const trialUrl = useRef<string | null>(null);
   const alive = useRef(false);
   const failure = useRef("");
+  const memoryKey = checkMemoryKey(token);
   const [focus] = useState(stepFocusController);
   const [permission, setPermission] = useState<Permission>("idle");
   const [denied, setDenied] = useState<DeniedKind | null>(null);
   const [quiet, setQuiet] = useState(false);
+  const [meterless, setMeterless] = useState(false);
   const [level, setLevel] = useState(0);
   const [heard, setHeard] = useState(false);
   const [trial, setTrial] = useState<Trial>("none");
   const [trialFailed, setTrialFailed] = useState(false);
   const [src, setSrc] = useState<string | null>(null);
   const [bandwidth, setBandwidth] = useState<Bandwidth>({ state: "measuring" });
-  const [report, setReport] = useState<ReportState>("idle");
+  const [reports, setReports] = useState<Record<ReportKind, ReportState>>(NO_REPORTS);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // The report button goes away when the report is sent: the confirmation takes focus (as in Help).
-  const sentNote = useStepFocus<HTMLParagraphElement>(report === "sent" ? "sent" : "form");
+  const journey = useJourney("device", { device: true, warmup: practice });
+  const anySent = reports.devices === "sent" || reports.quiet === "sent" || reports.recorder === "sent";
+  const sentNote = useStepFocus<HTMLParagraphElement>(anySent ? "sent" : "form");
 
   useEffect(() => {
     alive.current = true;
@@ -127,12 +116,7 @@ export function DeviceCheck({
         const payload = new Uint8Array(PROBE_BYTES);
         for (let offset = 0; offset < payload.length; offset += 65_536) crypto.getRandomValues(payload.subarray(offset, offset + 65_536));
         const started = performance.now();
-        const res = await fetch(`${candidateApiBase(token)}/bandwidth`, {
-          method: "POST",
-          headers: { "content-type": "application/octet-stream" },
-          body: payload,
-          signal: probe.signal,
-        });
+        const res = await fetch(`${candidateApiBase(token)}/bandwidth`, { method: "POST", headers: { "content-type": "application/octet-stream" }, body: payload, signal: probe.signal });
         if (!res.ok) throw new Error(String(res.status));
         const speed = uploadSpeed(PROBE_BYTES, performance.now() - started);
         if (!cancelled) setBandwidth(speed);
@@ -142,9 +126,6 @@ export function DeviceCheck({
         window.clearTimeout(probeTimer);
       }
     })();
-    // Leaving the page (closing the tab, going elsewhere) turns the camera and microphone off even
-    // where React never unmounts. A page brought back from the back-forward cache has dead streams:
-    // it loads again, so the check starts honestly from the top.
     const onHide = () => {
       stopAllStreams();
     };
@@ -167,7 +148,6 @@ export function DeviceCheck({
       if (refs.meter.current !== null) window.clearInterval(refs.meter.current);
       void refs.audio.current?.close().catch(() => undefined);
       refs.audio.current = null;
-      // Leaving the screen turns the camera and microphone off.
       stopAllStreams();
       refs.stream.current = null;
       if (refs.trialUrl.current) URL.revokeObjectURL(refs.trialUrl.current);
@@ -175,7 +155,7 @@ export function DeviceCheck({
     };
   }, [token]);
 
-  // The preview element exists before the permission (the camera row is open); give it the stream once granted.
+  // The preview element is always mounted; it gets the stream once granted.
   useEffect(() => {
     const video = preview.current;
     if (permission !== "granted" || !camera || !video || !stream.current || video.srcObject === stream.current) return;
@@ -183,15 +163,10 @@ export function DeviceCheck({
     void video.play().catch(() => undefined);
   }, [permission, camera]);
 
-  /**
-   * The microphone's level until a voice is heard; then the analyser is closed
-   * (the stream stays open). Unheard for QUIET_AFTER_MS, or with a context the
-   * browser keeps suspended, the check turns `quiet` and the trial opens; the
-   * meter keeps listening, so a voice that comes later still folds the row.
-   */
-  function listen(media: MediaStream, ctx: SoundContext | null) {
+  function listen(media: MediaStream, ctx: AudioContext | null) {
     if (!ctx) {
-      // No sound context in this browser: no level to show, the trial playback is the proof.
+      // No sound context: nothing to listen with, so the copy says so (Task 12 carry) and the trial is the proof.
+      setMeterless(true);
       setQuiet(true);
       return;
     }
@@ -207,19 +182,17 @@ export function DeviceCheck({
       };
       const started = performance.now();
       let suspendedSince: number | null = null;
-      // An interval, not animation frames: those stop in a tab the browser does not paint.
       const measure = () => {
         if (!alive.current || ctx.state === "closed") return stop();
         const now = performance.now();
-        // A context the browser started suspended is asked again until it runs.
-        if (ctx.state === "suspended") {
+        // Safari's "interrupted" is held back like "suspended" (Task 12 carry): asked again until it runs.
+        if (contextStalled(ctx.state)) {
           suspendedSince ??= now;
           void ctx.resume().catch(() => undefined);
         } else suspendedSince = null;
         if (isQuiet({ heard: false, listenedMs: now - started, suspendedMs: suspendedSince === null ? 0 : now - suspendedSince })) setQuiet(true);
         analyser.getByteTimeDomainData(data);
         const peak = peakLevel(data);
-        // Rounded so the screen re-renders only when the bar visibly moves.
         setLevel(Math.round(peak * 20) / 20);
         if (peak > HEARD_AT) {
           stop();
@@ -230,14 +203,13 @@ export function DeviceCheck({
       };
       meter.current = window.setInterval(measure, 50);
     } catch {
-      // No level to show in this browser: the trial playback is the microphone's proof.
+      setMeterless(true);
       setQuiet(true);
     }
   }
 
   async function openDevices() {
     setDenied(null);
-    // No camera access at all (an in-app browser, an insecure address): nothing to ask for.
     if (!navigator.mediaDevices?.getUserMedia) {
       failure.current = "NoMediaDevices";
       setPermission("denied");
@@ -245,10 +217,9 @@ export function DeviceCheck({
       return;
     }
     setPermission("asking");
-    // Made and resumed inside the click: a context made after the permission prompt may stay suspended.
     void audio.current?.close().catch(() => undefined);
     audio.current = null;
-    let ctx: SoundContext | null = null;
+    let ctx: AudioContext | null = null;
     try {
       ctx = newSoundContext();
       void ctx.resume().catch(() => undefined);
@@ -263,6 +234,10 @@ export function DeviceCheck({
       }
       stream.current = media;
       setPermission("granted");
+      // C3: this tab opened the devices; only a remount may reopen them without a click.
+      rememberCheck(sessionDrafts(), memoryKey, "devicesOpened");
+      // A remount (a language switch) keeps the test the candidate already played (Task 12 carry).
+      if (readCheckMemory(sessionDrafts(), memoryKey).trialPlayed) setTrial((now) => (now === "none" ? "played" : now));
       listen(media, ctx);
     } catch (err) {
       void ctx?.close().catch(() => undefined);
@@ -271,6 +246,28 @@ export function DeviceCheck({
       setDenied(deniedKind(err));
     }
   }
+
+  // Devices this browser already allows open again by themselves after a remount; a first visit still waits for the click.
+  const openRef = useRef(openDevices);
+  useEffect(() => {
+    openRef.current = openDevices;
+  });
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const [cameraPermission, microphonePermission] = await Promise.all([camera ? permissionOf("camera") : Promise.resolve(null), permissionOf("microphone")]);
+      if (!cancelled && shouldAutoOpen({ openedBefore: readCheckMemory(sessionDrafts(), memoryKey).devicesOpened, camera, cameraPermission, microphonePermission })) void openRef.current();
+    })();
+    // A sound context made without a click may wait for one: the first click or key lets it run.
+    const wake = () => void audio.current?.resume().catch(() => undefined);
+    document.addEventListener("pointerdown", wake, { once: true });
+    document.addEventListener("keydown", wake, { once: true });
+    return () => {
+      cancelled = true;
+      document.removeEventListener("pointerdown", wake);
+      document.removeEventListener("keydown", wake);
+    };
+  }, [camera, memoryKey]);
 
   function record() {
     const media = stream.current;
@@ -294,12 +291,10 @@ export function DeviceCheck({
           setTrialFailed(true);
           return;
         }
-        // Kept in this tab as an object URL; it is never uploaded.
         trialUrl.current = URL.createObjectURL(new Blob(chunks, { type: rec.mimeType || mime || (camera ? "video/webm" : "audio/webm") }));
         setSrc(trialUrl.current);
         setTrial("ready");
       };
-      // Five second chunks, like a real answer's recorder, so the trial exercises the same path.
       rec.start(CHUNK_MS);
       recorder.current = rec;
       setTrial("recording");
@@ -313,14 +308,19 @@ export function DeviceCheck({
     }
   }
 
+  function played() {
+    setTrial("played");
+    rememberCheck(sessionDrafts(), memoryKey, "trialPlayed");
+  }
+
   async function sendReport(kind: ReportKind) {
-    setReport("sending");
+    setReports((now) => withReport(now, kind, "sending"));
     const message = kind === "quiet" ? t("reportQuietMessage") : kind === "recorder" ? t("reportRecorderMessage") : `${t("reportMessage")} (${failure.current || "-"})`;
     try {
       await apiSend(token, "/problem", { area: "DEVICE_CHECK", message });
-      setReport("sent");
+      setReports((now) => withReport(now, kind, "sent"));
     } catch {
-      setReport("failed");
+      setReports((now) => withReport(now, kind, "failed"));
     }
   }
 
@@ -329,7 +329,6 @@ export function DeviceCheck({
     setError(null);
     try {
       const next = await apiSend<HiringCandidateState>(token, "/device-check", {});
-      // The check is over: the camera and microphone go off before the next screen asks again.
       stopAllStreams();
       stream.current = null;
       router.push(practice ? `/a/${encodeURIComponent(token)}/practice` : nextPath(token, next));
@@ -340,33 +339,34 @@ export function DeviceCheck({
   }
 
   const input = { camera, permission, heard, quiet, trial };
+  const now = deviceStep({ ...input, denied });
   const rows = deviceRows(input);
-  const blocker = deviceBlocker(input);
-  const active = rows.find((row) => row.state === "active")?.id ?? "none";
-  const step = permission === "denied" ? `${active}:denied` : active;
+  const words = quietCopy(meterless);
+  const waitKey = waitReasonKey(now.wait);
+  const stepKey = permission === "denied" ? `denied:${denied}` : now.step;
 
+  // Focus follows the step only when it was lost (on <body> or inside the step's own area), as in plan 2.
   useEffect(() => {
     const focused = document.activeElement;
-    const lost = !focused || focused === document.body || !!list.current?.contains(focused);
-    const target = permission === "denied" ? deniedTitle.current : active === "none" ? null : (headings.current[active] ?? null);
-    focus.onStep(step, lost ? target : null);
-  }, [focus, step, permission, active]);
+    const lost = !focused || focused === document.body || !!body.current?.contains(focused);
+    focus.onStep(stepKey, lost ? title.current : null);
+  }, [focus, stepKey]);
 
-  const askText = camera ? t("cameraAsk") : t("micAsk");
-  const hasTake = trial === "ready" || trial === "played";
-
-  /** "Sorun bildir", its confirmation (which takes focus) or its failure. */
   function reportControl(kind: ReportKind) {
-    return report === "sent" ? (
-      <p ref={sentNote} tabIndex={-1} role="status" className="text-[14px] leading-[22px] text-ink">
-        {contactEmail ? t.rich("reportSentContact", { email: contactEmail, mail: mailTo(contactEmail) }) : t("reportSent")}
-      </p>
-    ) : (
+    const state = reports[kind];
+    if (state === "sent") {
+      return (
+        <p ref={sentNote} tabIndex={-1} role="status" className="text-[14px] leading-[22px] text-ink">
+          {contactEmail ? t.rich("reportSentContact", { email: contactEmail, mail: mailTo(contactEmail) }) : t("reportSent")}
+        </p>
+      );
+    }
+    return (
       <div>
-        <Button className="min-h-11 scroll-mb-32 text-[16px] sm:scroll-mb-0" onClick={() => sendReport(kind)} disabled={report === "sending"} disabledReason={t("reporting")}>
-          {report === "sending" ? t("reporting") : t("report")}
+        <Button className="min-h-11 text-[16px]" onClick={() => void sendReport(kind)} disabled={state === "sending"} disabledReason={t("reporting")}>
+          {state === "sending" ? t("reporting") : t("report")}
         </Button>
-        {report === "failed" ? (
+        {state === "failed" ? (
           <p role="alert" className="mt-2 text-[14px] leading-[22px] text-ink">
             {t("reportFailed")}
           </p>
@@ -375,208 +375,197 @@ export function DeviceCheck({
     );
   }
 
-  /** Why the devices did not open, and the one next step that fits. */
-  function deniedBox() {
-    // Only shown after a refusal, which happens in the browser; the server render never reads navigator.
-    const fix = fixKeyFor(navigator.userAgent, navigator.maxTouchPoints ?? 0);
-    const title =
-      denied === "notAllowed"
-        ? t("deniedTitle")
-        : denied === "notFound"
-          ? t("deniedNotFound")
-          : denied === "busy"
-            ? t("deniedBusy")
-            : denied === "unsupported"
-              ? t("deniedUnsupported")
-              : t("deniedOther");
-    // A refusal (or an unclear error) gets the browser's steps; an in-app browser's steps are "open it elsewhere".
-    const steps = denied === "notAllowed" || denied === "other" ? t(`fix${fix}`) : null;
-    return (
-      <div className="space-y-2 rounded-xl border border-line bg-canvas p-4">
-        <p ref={deniedTitle} tabIndex={-1} className="text-[16px] leading-[26px] font-medium text-ink">
-          {title}
+  const heading =
+    now.step === "open"
+      ? camera
+        ? t("titleOpen")
+        : t("titleOpenMic")
+      : now.step === "denied"
+        ? denied === "notAllowed"
+          ? camera
+            ? t("titleDenied")
+            : t("titleDeniedMic")
+          : camera
+            ? t("titleUnreachable")
+            : t("titleUnreachableMic")
+        : now.step === "quiet"
+          ? meterless
+            ? t("titleNoMeter")
+            : t("titleQuiet")
+          : now.step === "listen"
+            ? camera
+              ? t("titleListen")
+              : t("titleListenMic")
+            : t("titleTrial");
+  const lead =
+    now.step === "open"
+      ? camera
+        ? t("leadOpen")
+        : t("leadOpenMic")
+      : now.step === "denied"
+        ? denied === "notAllowed"
+          ? t("leadDenied")
+          : denied === "notFound"
+            ? t("deniedNotFound")
+            : denied === "busy"
+              ? t("deniedBusy")
+              : denied === "unsupported"
+                ? t("deniedUnsupported")
+                : t("deniedOther")
+        : now.step === "quiet"
+          ? t(words.trial)
+          : now.step === "listen"
+            ? null
+            : camera
+              ? t("leadTrial")
+              : t("leadTrialMic");
+
+  /** The short status word of a checklist row. */
+  function rowWord(id: (typeof rows)[number]["id"], state: (typeof rows)[number]["state"]) {
+    if (id === "connection") return "mbps" in bandwidth ? (bandwidth.state === "ok" ? t("connShortOk") : t("connShortLow")) : bandwidth.state === "measuring" ? t("connMeasuring") : t("connShortUnknown");
+    if (id === "microphone" && state === "done") return t("micHeard");
+    return state === "done" ? t("ready") : state === "quiet" ? t("rowQuiet") : state === "active" ? t("now") : t("waiting");
+  }
+
+  const fix = permission === "denied" && (denied === "notAllowed" || denied === "other") ? splitFix(t(`fix${fixKeyFor(navigator.userAgent, navigator.maxTouchPoints ?? 0)}`)) : null;
+
+  const left = (
+    <div ref={body} className="space-y-6">
+      <ul aria-label={t("rowsLabel")} className="divide-y divide-line rounded-2xl border border-line bg-surface">
+        {rows.map((row) => (
+          <li key={row.id} aria-current={row.state === "active" ? "step" : undefined} className="flex min-h-12 items-center justify-between gap-4 px-4">
+            <span className={cn("text-[16px] text-ink", row.state === "active" && "font-semibold")}>{t(`row${row.id}`)}</span>
+            <span className="tnum text-[14px] text-muted">{rowWord(row.id, row.state)}</span>
+          </li>
+        ))}
+      </ul>
+      {bandwidth.state === "low" ? <p className="tnum text-[14px] leading-[22px] text-ink-2">{t("connLow", { mbps: formatMbps(bandwidth.mbps, locale) })}</p> : null}
+
+      {now.step === "open" && denied !== "unsupported" ? (
+        <p id="check-open-why" className="text-[16px] leading-[26px] text-ink-2">
+          {camera ? t("cameraAsk") : t("micAsk")}
         </p>
-        {denied === "unsupported" ? <p className="text-[16px] leading-[26px] text-ink-2">{t("fixinApp")}</p> : null}
-        {steps ? (
-          <details>
-            <summary className="flex min-h-11 cursor-pointer items-center text-[16px] text-ink underline decoration-underline underline-offset-4">{t("howToFix")}</summary>
-            <p className="text-[16px] leading-[26px] whitespace-pre-line text-ink-2">{steps}</p>
-          </details>
-        ) : null}
-        {reportControl("devices")}
-      </div>
-    );
-  }
+      ) : null}
 
-  function permissionBody() {
-    return (
-      <>
-        {/* "The browser will ask" is untrue where it cannot ask at all. */}
-        {denied === "unsupported" ? null : (
-          <p id="check-open-why" className="text-[16px] leading-[26px] text-ink-2">
-            {askText}
-          </p>
-        )}
-        {permission === "denied" ? deniedBox() : null}
-        {/* Asking again cannot help a browser without camera access; every other refusal may change. */}
-        {denied === "unsupported" ? null : (
-          <Button id="check-open" className="min-h-11 scroll-mb-32 text-[16px] sm:scroll-mb-0" onClick={openDevices} disabled={permission === "asking"} disabledReason={askText}>
-            {permission === "asking" ? t("asking") : permission === "denied" ? t("retry") : camera ? t("openDevices") : t("openMic")}
-          </Button>
-        )}
-      </>
-    );
-  }
-
-  function body(id: RowId) {
-    if (id === "camera") {
-      return (
-        <div className="space-y-3">
-          <div className={cn("relative aspect-video w-full overflow-hidden rounded-xl bg-canvas", permission === "granted" && hasTake && "hidden")}>
-            <video ref={preview} muted playsInline className="size-full object-cover" />
-            <span className="absolute top-3 left-3 rounded-full bg-surface/90 px-3 py-1 text-[13px] leading-5 text-ink">{t("cameraPreview")}</span>
-          </div>
-          {permission !== "granted" ? permissionBody() : null}
+      {now.step === "denied" ? (
+        <div className="space-y-4">
+          {fix ? (
+            <>
+              <PathSteps steps={[{ title: fix.first, state: "current" }, { title: t("stepReload") }]} />
+              <Disclosure label={t("stillNot")}>
+                <div className="space-y-3">
+                  {fix.rest ? <p className="text-[16px] leading-[26px] whitespace-pre-line text-ink-2">{fix.rest}</p> : null}
+                  {reportControl("devices")}
+                </div>
+              </Disclosure>
+            </>
+          ) : (
+            <>
+              {denied === "unsupported" ? <p className="text-[16px] leading-[26px] text-ink-2">{t(unsupportedSteps(navigator.userAgent, navigator.maxTouchPoints ?? 0))}</p> : null}
+              {reportControl("devices")}
+            </>
+          )}
         </div>
-      );
-    }
-    if (id === "microphone") {
-      if (permission !== "granted") return <div className="space-y-3">{permissionBody()}</div>;
-      return (
-        <div className="space-y-2">
-          <p className="text-[16px] leading-[26px] text-ink-2">{heard ? t("micHeard") : quiet ? t("micQuietHint") : t("micHint")}</p>
-          <div
-            role="meter"
-            aria-label={t("micLevel")}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={Math.round(level * 100)}
-            className="h-2 w-full overflow-hidden rounded-full bg-hairline"
-          >
+      ) : null}
+
+      {now.step === "sound" || now.step === "trial" || now.step === "quiet" ? (
+        <div className="space-y-3">
+          <div role="meter" aria-label={t("micLevel")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(level * 100)} className="h-2 w-full overflow-hidden rounded-full bg-hairline">
             <div className="h-2 rounded-full bg-accent transition-[width] duration-100 motion-reduce:transition-none" style={{ width: `${Math.min(100, Math.round(level * 250))}%` }} />
           </div>
-          {quiet && !heard ? <div className="pt-2">{reportControl("quiet")}</div> : null}
-        </div>
-      );
-    }
-    if (id === "trial") {
-      // Read only once the trial row is open, which needs a granted permission: never on the server.
-      if (typeof MediaRecorder === "undefined") {
-        return (
-          <div className="space-y-3">
-            <p className="text-[16px] leading-[26px] font-medium text-ink">{t("noRecorder")}</p>
-            {reportControl("recorder")}
-          </div>
-        );
-      }
-      return (
-        <div className="space-y-3">
-          {quiet && !heard ? <p className="text-[16px] leading-[26px] font-medium text-ink">{t("trialQuiet")}</p> : null}
-          <p className="text-[16px] leading-[26px] text-ink-2">{t("trialBody")}</p>
-          <div>
-            <Button id="check-trial" className="min-h-11 scroll-mb-32 text-[16px] sm:scroll-mb-0" onClick={record} disabled={trial === "recording"} disabledReason={t("blocktrialRecording")}>
-              {trial === "recording" ? t("trialRecording") : trial === "none" ? t("trialRecord") : t("trialAgain")}
-            </Button>
-            {/* The reason next to the button while it is closed, so its aria-describedby points at something (C15). */}
-            {trial === "recording" ? (
-              <DisabledReason id="check-trial-why" className="mt-2 text-[14px]">
-                {t("blocktrialRecording")}
-              </DisabledReason>
-            ) : null}
-          </div>
+          {/* Task 12 carry: the hint is said when it appears (polite), and never claims we listened when we could not. */}
+          <p role="status" className="text-[16px] leading-[26px] text-ink-2">
+            {heard ? t("micHeard") : quiet ? t(words.mic) : t("micHint")}
+          </p>
+          {quiet && !heard ? reportControl("quiet") : null}
+          {typeof MediaRecorder === "undefined" && permission === "granted" ? (
+            <div className="space-y-3">
+              <p className="text-[16px] leading-[26px] font-medium text-ink">{t("noRecorder")}</p>
+              {reportControl("recorder")}
+            </div>
+          ) : null}
           {trialFailed ? (
             <p role="alert" className="text-[14px] leading-[22px] text-ink">
               {t("failed")}
             </p>
           ) : null}
-          {src && hasTake ? (
-            <div className="space-y-2">
-              {trial === "ready" ? <p className="text-[14px] leading-[22px] text-muted">{t("trialListen")}</p> : null}
-              {camera ? (
-                <video key={src} src={src} controls playsInline aria-label={t("trialPlayback")} onPlay={() => setTrial("played")} className="aspect-video w-full rounded-xl bg-canvas" />
-              ) : (
-                <audio key={src} src={src} controls aria-label={t("trialPlayback")} onPlay={() => setTrial("played")} className="h-12 w-full" />
-              )}
-            </div>
-          ) : null}
         </div>
-      );
-    }
-    return (
-      <p className="tnum text-[16px] leading-[26px] text-ink-2">
-        {"mbps" in bandwidth
-          ? t(bandwidth.state === "ok" ? "connOk" : "connLow", { mbps: formatMbps(bandwidth.mbps, locale) })
-          : bandwidth.state === "measuring"
-            ? t("connMeasuring")
-            : t("connUnknown")}
-      </p>
-    );
-  }
+      ) : null}
 
-  /** Which rows show their body: the open one, the connection, and the two that stay open past "Hazır" (see above). */
-  const expanded = (id: RowId, state: string) =>
-    state === "active" || state === "info" || state === "quiet" || (id === "camera" && permission === "granted") || (id === "trial" && state === "done");
+      {now.step === "listen" ? (
+        <div className="space-y-3">
+          {trial === "ready" ? <p className="text-[16px] leading-[26px] text-ink-2">{t("trialListen")}</p> : null}
+          {!src && trial === "played" ? <p className="text-[16px] leading-[26px] text-ink-2">{t("playedBefore")}</p> : null}
+          {!camera && src ? <audio key={src} src={src} controls aria-label={t("trialPlayback")} onPlay={played} className="h-12 w-full" /> : null}
+        </div>
+      ) : null}
+    </div>
+  );
+
+  const pictureVisible = camera && permission !== "denied" && !(now.step === "listen" && src);
+  const right = camera ? (
+    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-canvas">
+      {permission === "denied" ? (
+        <div className="grid size-full place-items-center p-6">
+          <Illustration name="permission" size="hero" />
+        </div>
+      ) : null}
+      {now.step === "listen" && src ? (
+        <video key={src} src={src} controls playsInline aria-label={t("trialPlayback")} onPlay={played} className="size-full bg-canvas object-cover" />
+      ) : null}
+      <video ref={preview} muted playsInline className={cn("size-full object-cover", !pictureVisible && "hidden")} />
+      {pictureVisible ? <span className="absolute top-3 left-3 rounded-full bg-surface/90 px-3 py-1 text-[13px] leading-5 text-ink">{t("cameraPreview")}</span> : null}
+      {pictureVisible && permission !== "granted" ? (
+        <span className="absolute inset-0 grid place-items-center text-center">
+          <span className="flex flex-col items-center gap-2 text-[14px] text-muted">
+            <Camera className="size-8" strokeWidth={1.5} aria-hidden />
+            {t("cameraLater")}
+          </span>
+        </span>
+      ) : null}
+    </div>
+  ) : (
+    <div className="grid aspect-[4/3] w-full place-items-center rounded-2xl bg-canvas">
+      {permission === "denied" ? <Illustration name="permission" size="hero" /> : <Mic className="size-12 text-muted" strokeWidth={1.5} aria-hidden />}
+    </div>
+  );
+
+  const primary =
+    now.primary === "open"
+      ? { kind: "button" as const, id: "check-open", label: camera ? t("openDevices") : t("openMic"), busy: now.wait === "asking", busyLabel: t("asking"), onClick: () => void openDevices() }
+      : now.primary === "retry"
+        ? { kind: "button" as const, id: "check-retry", label: t("retry"), onClick: () => void openDevices() }
+        : now.primary === "trial"
+          ? {
+              kind: "button" as const,
+              id: "check-trial",
+              label: trial === "none" ? t("trialStart") : t("trialAgain"),
+              busy: trial === "recording",
+              busyLabel: t("trialRecording"),
+              waitReason: waitKey ? t(waitKey) : null,
+              onClick: record,
+            }
+          : now.primary === "continue"
+            ? { kind: "button" as const, id: "check-next", label: t("yesContinue"), busy, busyLabel: t("going"), waitReason: waitKey ? t(waitKey) : null, onClick: () => void proceed() }
+            : null;
 
   return (
-    <div className="mx-auto max-w-[720px] pt-10 pb-6 sm:pt-14">
-      <h1 className="text-[28px] leading-9 font-semibold text-ink">{t("title")}</h1>
-      <p className="mt-3 text-[16px] leading-[26px] text-ink-2">{t("body")}</p>
-      <ol ref={list} className="mt-8 divide-y divide-line rounded-2xl border border-line bg-surface">
-        {rows.map((row) => (
-          <li key={row.id} className="p-5 sm:p-card-candidate" aria-current={row.state === "active" ? "step" : undefined}>
-            <div className="flex min-h-7 items-center justify-between gap-4">
-              <h2
-                ref={(node) => {
-                  headings.current[row.id] = node;
-                }}
-                tabIndex={-1}
-                className={cn("text-[18px] leading-7 text-ink", row.state === "active" ? "font-semibold" : "font-medium")}
-              >
-                {t(`row${row.id}`)}
-              </h2>
-              {row.state === "done" ? (
-                <span className="flex items-center gap-1 text-[14px] leading-[22px] text-muted">
-                  <Check className="size-4" strokeWidth={2} aria-hidden />
-                  {t("ready")}
-                </span>
-              ) : row.state === "waiting" ? (
-                <span className="text-[14px] leading-[22px] text-muted">{t("waiting")}</span>
-              ) : row.state === "quiet" ? (
-                <span className="text-[14px] leading-[22px] text-muted">{t("rowQuiet")}</span>
-              ) : null}
-            </div>
-            {expanded(row.id, row.state) ? <div className="mt-3">{body(row.id)}</div> : null}
-          </li>
-        ))}
-      </ol>
-      <ActionBar>
-        <Button
-          id="check-next"
-          variant="primary"
-          size="lg"
-          className="w-full text-[16px]"
-          disabled={blocker !== null || busy}
-          disabledReason={blocker ? t(`block${blocker}`) : undefined}
-          onClick={proceed}
-        >
-          {busy ? t("going") : practice ? t("toPractice") : t("toStage")}
-        </Button>
-        {/* The reason the button waits (C15), announced politely as it changes; "ready" when nothing is left. */}
-        <div role="status">
-          {blocker ? (
-            <DisabledReason id="check-next-why" className="mt-2 text-center text-[14px]">
-              {t(`block${blocker}`)}
-            </DisabledReason>
-          ) : (
-            <p className="sr-only">{t("allReady")}</p>
-          )}
-        </div>
-        {error ? (
-          <p role="alert" className="mt-2 text-center text-[14px] text-ink">
-            {error}
-          </p>
-        ) : null}
-      </ActionBar>
-    </div>
+    <>
+      <StepScreen layout="split" title={heading} titleRef={title} lead={lead ? <p>{lead}</p> : undefined} aside={left}>
+        {right}
+      </StepScreen>
+      <StepFooter
+        journey={journey}
+        primary={primary}
+        secondary={now.step === "listen" ? { kind: "button", id: "check-again", label: t("trialAgain"), onClick: record } : null}
+        note={
+          error ? (
+            <p role="alert" className="text-[14px] text-ink">
+              {error}
+            </p>
+          ) : null
+        }
+      />
+    </>
   );
 }
