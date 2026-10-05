@@ -35,7 +35,7 @@ const LINK = "underline decoration-underline underline-offset-4";
  * list. The button waits with its reason, said next to it. On success the
  * link is shown once with "Linki kopyala" as the filled button and the ready
  * message below; a pasted list gets each row's result, a link and a message
- * per invitation, and "Tümünü kopyala". `onLockChange` tells a Sheet when it
+ * per invitation, and "Tümünü kopyala". Both end with "Adaylara git" (C13). `onLockChange` tells a Sheet when it
  * must not close on Escape or an outside click (sheetLocked).
  */
 export function InviteForm({
@@ -136,6 +136,13 @@ export function InviteForm({
     });
   }
 
+  // C13: the way to the opening's Candidates tab after a link is shown; from a Sheet it also closes the Sheet.
+  const toCandidates = openingId ? (
+    <Link href={`/hiring/openings/${openingId}/candidates`} onClick={onDone} className={`inline-flex min-h-10 items-center text-[14px] font-medium text-ink ${LINK}`}>
+      {t("toCandidates")}
+    </Link>
+  ) : null;
+
   if (done?.kind === "one") {
     return (
       <div className="space-y-5">
@@ -152,6 +159,7 @@ export function InviteForm({
           <button type="button" onClick={reset} className={`min-h-10 text-[14px] font-medium text-ink ${LINK}`}>
             {t("another")}
           </button>
+          {toCandidates}
           {onDone ? (
             <Button variant="ghost" onClick={onDone}>
               {t("close")}
@@ -211,6 +219,7 @@ export function InviteForm({
           <button type="button" onClick={reset} className={`min-h-10 text-[14px] font-medium text-ink ${LINK}`}>
             {t("another")}
           </button>
+          {toCandidates}
           {onDone ? (
             <Button variant="ghost" onClick={onDone}>
               {t("close")}

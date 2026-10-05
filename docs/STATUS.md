@@ -316,6 +316,13 @@ Sonra A'daki gibi `$OLD`'a dön, kur, build et, başlat. Notlar:
 - HIRING-UX'ten bilerek yapılmayanlar: 5.5 Breadcrumb ve boş taslakta "Kopyala" başlangıcı, 5.6 hata metninde neden, 5.9 ilan metninin 500 karakterde kısalması, 5.10 "1 ile 3 arası" etiketi, örnek ipuçları ve "Skala ekle", 5.18 çoklu Combobox ve "bitiş anketi" anahtarı (kolonu yok), 5.7 `Progress`. Spec'teki `publishVersion` kodda `publishDraft`. Spec 2.1'de olmayan kolonlar: `hiring_versions.org_id`, `previewed_at`, `weights_enabled`, `draft_weights`, zaman damgaları, `hiring_weight_sets.created_by` ve `reason`.
 - Spec çelişkileri sonraki planlara bırakıldı: gözetim seviyesinin yayındaki alımda değişmesi (HIRING-UX 5.18) ile sürümün kilitli olması (plan 4); değerlendirici atama modeli, aday başına sayı ve döngü mü, davette panel kopyası mı (plan 2). Plan yazarının yazdığı 24 çapa cümlesi ekip incelemesi bekliyor (`reviewed_at` boş, üründe görünür).
 
+**İşe alım plan 2 (aday akışı, 2026-10-05).** Plan: `docs/superpowers/plans/2026-10-05-hiring-candidate-flow.md`; hükümler `.superpowers/sdd/2026-10-05-hiring-candidate-flow/progress.md`'de.
+
+- Adaylar sekmesinde görünürlük (C12, plan 2 ara kuralı): alımı yürüten (Sahip, Yönetici) adayları adıyla izler; kör mod yalnızca yürütmeyenlerin (Değerlendirici) gördüğü adı ve e-postayı gizler, ek süre ve talepler onlara hiç okunmaz. Plan 3'ün `visibility.ts`'i bunu değiştirir.
+- Alımın son günü geçtikten sonra da "Yeni link üret" ve "7 gün uzat" çalışır, alımın son gününe kısılmaz (Görev 7 hükmü); ekran yeni son günü gösterir ("Son gün ...", `ORG_TIMEZONE`).
+- "Yeni link üret" geri alınamaz (C9, yayınla gibi): eski link hemen durur; uyarı düğmenin altında görünür metin. "7 gün uzat" işe alımda alımın kendi eylemi (C8: alıma bağlı, kapalı alımda yok, en yeni link, denetim kaydı); çekirdek `extendLink` yalnızca sınav linkini uzatır. Yeni link ya da uzatma adayın açık "Yeni link talebi"ni kapatır.
+- Aday talepleri (uyarlama, yeni link) aynı türden açık bir talep varken ikinci kez yazılmaz; aday aynı "iletildi" cevabını alır. Veri hakları talepleri (`deletion_requests`) sekmede görünür ama orada kapatılmaz.
+
 ## Bağımsız kod incelemesi (2026-09-30 gece)
 
 Bir alt ajan kodu düşmanca inceledi (dosya değiştirmeden): doğrudan anahtar/transkript

@@ -1,8 +1,9 @@
 import type { NextRequest } from "next/server";
 import { db } from "@/db";
-import { candidateRequests, messageOutbox } from "@/db/schema";
+import { messageOutbox } from "@/db/schema";
 import { candidateJson } from "@/lib/candidate-safe";
 import { message, readJson, withSolution } from "@/lib/candidate-api";
+import { fileCandidateRequest } from "@/server/candidate-requests";
 
 type Body = { area?: string; message?: string };
 
@@ -54,8 +55,10 @@ export async function POST(
 
       // The outbox row alone reaches nobody until mail exists. `note` is at most
       // 2000 UTF-16 units, so it always fits candidate_requests' 2000 CHECK.
+      // While one NEW_LINK request is open a second is not filed; the answer
+      // is the same (fileCandidateRequest).
       if (area === "LINK" && solution.accommodationRequests) {
-        await db.insert(candidateRequests).values({
+        await fileCandidateRequest({
           orgId: ctx.assessment.orgId,
           assessmentId: ctx.assessment.id,
           kind: "NEW_LINK",

@@ -4,6 +4,8 @@ type Inserted = { table: string; values: Record<string, unknown> };
 
 const h = vi.hoisted(() => ({
   inserted: [] as Inserted[],
+  /** fileCandidateRequest's answer: false when a request of that kind is already open (dedup, Task 3 carry). */
+  filed: true,
   ctx: { assessment: { id: "a1", orgId: "o1", solution: "HIRING" }, candidate: { id: "c1" }, locale: "tr" },
 }));
 
@@ -15,6 +17,13 @@ vi.mock("@/db", async () => {
     },
   };
 });
+vi.mock("@/server/candidate-requests", () => ({
+  // The dedup lives in fileCandidateRequest (its own test); a filed request is recorded like an insert.
+  fileCandidateRequest: async (values: Record<string, unknown>) => {
+    if (h.filed) h.inserted.push({ table: "candidate_requests", values });
+    return { filed: h.filed };
+  },
+}));
 vi.mock("@/lib/candidate-api", () => ({
   withCandidate: (req: unknown, _p: unknown, handler: (r: unknown, c: unknown) => unknown) => handler(req, h.ctx),
   badRequest: (_ctx: unknown, code: string) => new Response(JSON.stringify({ error: code }), { status: 400 }),
@@ -30,6 +39,7 @@ const send = (body: unknown) => POST(new NextRequest("http://localhost/api/c/x/r
 
 beforeEach(() => {
   h.inserted = [];
+  h.filed = true;
   h.ctx.assessment.solution = "HIRING";
 });
 
@@ -40,6 +50,14 @@ describe("rights route", () => {
     expect(h.inserted).toEqual([
       { table: "candidate_requests", values: { orgId: "o1", assessmentId: "a1", kind: "ACCOMMODATION", message: "Video yerine yazılı cevap" } },
     ]);
+  });
+
+  it("answers the same to a second accommodation request while the first is open, filing nothing new", async () => {
+    h.filed = false;
+    const res = await send({ kind: "ACCOMMODATION", message: "Tekrar" });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ received: true });
+    expect(h.inserted).toEqual([]);
   });
 
   it("stores an empty accommodation note as null", async () => {

@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { noticeOf, one, withoutParams } from "./url-notice";
+import { describe, expect, it, vi } from "vitest";
+import { noticeOf, one, scheduleNoticeCleanup, withoutParams, type NoticeWindow } from "./url-notice";
 
 /**
  * A notice that arrives in the URL (after a redirect: "v1 yayınlandı",
@@ -26,5 +26,48 @@ describe("URL notices", () => {
     expect(withoutParams("/hiring/openings/o1/settings?closed=1", ["closed"])).toBe("/hiring/openings/o1/settings");
     // Nothing to take out: no history entry is rewritten.
     expect(withoutParams("/hiring/openings/o1?tab=x", ["publish"])).toBeNull();
+  });
+});
+
+describe("taking the notice out of the address (plan 1 carry)", () => {
+  function fakeWindow(href: string) {
+    const calls: string[] = [];
+    const win: NoticeWindow = {
+      location: { pathname: href.split("?")[0], search: href.includes("?") ? `?${href.split("?")[1].split("#")[0]}` : "", hash: "" },
+      history: { state: { __NA: true }, replaceState: (_s: unknown, _t: string, url?: string | URL | null) => void calls.push(String(url)) },
+      setTimeout: (fn: () => void, ms?: number) => globalThis.setTimeout(fn, ms) as unknown as number,
+      clearTimeout: (id: number) => globalThis.clearTimeout(id as unknown as NodeJS.Timeout),
+    };
+    return { win, calls };
+  }
+
+  it("waits a tick, so Next's own history write on a full page load cannot bring the parameter back", () => {
+    vi.useFakeTimers();
+    const { win, calls } = fakeWindow("/hiring/openings/o1/candidates?handled=1");
+    scheduleNoticeCleanup(win, ["handled"]);
+    expect(calls).toEqual([]);
+    vi.advanceTimersByTime(0);
+    expect(calls).toEqual(["/hiring/openings/o1/candidates"]);
+    vi.useRealTimers();
+  });
+
+  it("hands Next's patched replaceState no state of its own, and does nothing when unmounted first or when there is nothing to take out", () => {
+    vi.useFakeTimers();
+    const a = fakeWindow("/x?handled=1");
+    let given: unknown = "untouched";
+    a.win.history.replaceState = (state: unknown) => void (given = state);
+    scheduleNoticeCleanup(a.win, ["handled"]);
+    vi.advanceTimersByTime(0);
+    // A state with `__NA` reads to Next as its own write: the router would keep the old address (Task 18 browser check).
+    expect(given).toBeNull();
+    const b = fakeWindow("/x?handled=1");
+    scheduleNoticeCleanup(b.win, ["handled"])();
+    vi.advanceTimersByTime(0);
+    expect(b.calls).toEqual([]);
+    const c = fakeWindow("/x?tab=1");
+    scheduleNoticeCleanup(c.win, ["handled"]);
+    vi.advanceTimersByTime(0);
+    expect(c.calls).toEqual([]);
+    vi.useRealTimers();
   });
 });

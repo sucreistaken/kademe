@@ -18,6 +18,8 @@ const EXAM: Served = {
 
 const h = vi.hoisted(() => ({
   inserted: [] as Inserted[],
+  /** fileCandidateRequest's answer: false when a request of that kind is already open (dedup, Task 3 carry). */
+  filed: true,
   solution: null as unknown,
   ctx: {
     assessment: { id: "a1", orgId: "o1", solution: "HIRING" },
@@ -35,6 +37,13 @@ vi.mock("@/db", async () => {
     },
   };
 });
+vi.mock("@/server/candidate-requests", () => ({
+  // The dedup lives in fileCandidateRequest (its own test); a filed request is recorded like an insert.
+  fileCandidateRequest: async (values: Record<string, unknown>) => {
+    if (h.filed) h.inserted.push({ table: "candidate_requests", values });
+    return { filed: h.filed };
+  },
+}));
 vi.mock("@/lib/candidate-api", () => ({
   withSolution: (req: unknown, _p: unknown, handler: (r: unknown, c: unknown, s: unknown) => unknown) => handler(req, h.ctx, h.solution),
   message: () => "Bildirimin işe alım ekibine iletildi.",
@@ -50,6 +59,7 @@ const outbox = () => h.inserted.find((i) => i.table === "message_outbox")?.value
 
 beforeEach(() => {
   h.inserted = [];
+  h.filed = true;
   h.solution = HIRING;
   h.ctx.assessment.solution = "HIRING";
 });
@@ -64,6 +74,14 @@ describe("problem route", () => {
       kind: "NEW_LINK",
       message: "Aday yeni link talep etti.",
     });
+  });
+
+  it("answers the same to a second new-link request while the first is open, filing nothing new", async () => {
+    h.filed = false;
+    const res = await send({ area: "LINK", message: "Tekrar" });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ received: true });
+    expect(h.inserted.map((i) => i.table)).toEqual(["message_outbox"]);
   });
 
   it("bounds the new-link note to the 2000 the table allows", async () => {

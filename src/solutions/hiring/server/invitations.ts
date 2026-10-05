@@ -53,7 +53,7 @@ import { assertActiveUser, versionsOf } from "./versions";
  * organisation's own. The version, the consent text and the panel are derived
  * on the server; no stage, activity or version id comes from a client.
  *
- * Capability: the actions (invite, new link, request handled) check
+ * Capability: the actions (invite, new link, extend, request handled) check
  * `opening:write` for the session user; these functions check that the actor
  * is an active user of the organisation (assertActiveUser), as the other
  * hiring writes do, so a disabled or foreign user id never lands in
@@ -327,7 +327,133 @@ export async function newHiringLink(
       subjectId: row.assessmentId,
       meta: { openingId: opening.id, replaced: old?.id ?? null, expiresAt: expiresAt.toISOString() },
     });
+    await answerLinkRequests(tx, user, opening.id, row.assessmentId, "new-link");
     return { ok: true as const, url, expiresAt, name: row.name ?? "", message };
+  });
+}
+
+/**
+ * A new link or an extension is the answer to the candidate's "Yeni link talep
+ * et" (ledger, Task 7 carry): their open NEW_LINK requests are closed by the
+ * acting user, one audit row each, as "Tamam" would. Locked after the link
+ * (lock order opening -> invitation -> link -> request).
+ */
+async function answerLinkRequests(
+  x: Executor,
+  user: { id: string; orgId: string },
+  openingId: string,
+  assessmentId: string,
+  answeredBy: "new-link" | "extend",
+): Promise<void> {
+  const open = await x
+    .select({ id: candidateRequests.id })
+    .from(candidateRequests)
+    .where(
+      and(
+        eq(candidateRequests.orgId, user.orgId),
+        eq(candidateRequests.assessmentId, assessmentId),
+        eq(candidateRequests.kind, "NEW_LINK"),
+        isNull(candidateRequests.handledAt),
+      ),
+    )
+    .for("update");
+  if (open.length === 0) return;
+  const at = new Date();
+  await x
+    .update(candidateRequests)
+    .set({ handledBy: user.id, handledAt: at })
+    .where(
+      and(
+        inArray(
+          candidateRequests.id,
+          open.map((r) => r.id),
+        ),
+        eq(candidateRequests.orgId, user.orgId),
+        isNull(candidateRequests.handledAt),
+      ),
+    );
+  for (const r of open) {
+    await x.insert(auditLogs).values({
+      orgId: user.orgId,
+      actorId: user.id,
+      action: "hiring.candidate.request",
+      subjectType: "assessment",
+      subjectId: assessmentId,
+      meta: { openingId, requestId: r.id, kind: "NEW_LINK", answeredBy },
+    });
+  }
+}
+
+export type ExtendLinkOutcome = { ok: true; expiresAt: Date } | { ok: false; code: "NOT_FOUND" | "COMPLETED" | "CLOSED" | "STARTED" };
+
+/** "7 gün uzat" gives this many more days. */
+const EXTEND_DAYS = 7;
+
+/**
+ * "7 gün uzat" on the Candidates tab (ruling C8; the core extendLink serves
+ * exam links only). Scoped to the opening: the invitation must be this
+ * opening's, in the caller's organisation, and the opening not CLOSED. It acts
+ * on the invitation's newest link (a link replaced by "Yeni link üret" is
+ * older and stays EXPIRED): seven more days to the end of the organisation's
+ * day, counted from the later of today and the link's own last day, and an
+ * expired link works again (NOT_STARTED; the sweep expires only links never
+ * started). A candidate who started is not stopped by the link's date
+ * (candidate-context), so there is nothing to extend (STARTED); a finished one
+ * keeps their link (COMPLETED). Not clamped to the opening's deadline (Task 7
+ * ruling). Audited.
+ */
+export async function extendHiringLink(
+  user: { id: string; orgId: string },
+  openingId: string,
+  assessmentId: string,
+  options: { now?: Date } = {},
+): Promise<ExtendLinkOutcome> {
+  if (!isUuid(openingId) || !isUuid(assessmentId)) return { ok: false, code: "NOT_FOUND" };
+  const now = options.now ?? new Date();
+  return db.transaction(async (tx) => {
+    const [opening] = await tx
+      .select({ id: hiringOpenings.id, status: hiringOpenings.status })
+      .from(hiringOpenings)
+      .where(and(eq(hiringOpenings.id, openingId), eq(hiringOpenings.orgId, user.orgId)))
+      .for("share");
+    if (!opening) return { ok: false as const, code: "NOT_FOUND" as const };
+    await assertActiveUser(tx, user.orgId, user.id);
+    if (opening.status === "CLOSED") return { ok: false as const, code: "CLOSED" as const };
+    const [row] = await tx
+      .select({ assessmentId: hiringAssessments.assessmentId })
+      .from(hiringAssessments)
+      .innerJoin(assessments, and(eq(assessments.id, hiringAssessments.assessmentId), eq(assessments.orgId, user.orgId)))
+      .innerJoin(candidates, and(eq(candidates.id, assessments.candidateId), isNull(candidates.deletedAt)))
+      .where(and(eq(hiringAssessments.assessmentId, assessmentId), eq(hiringAssessments.orgId, user.orgId), eq(hiringAssessments.openingId, opening.id)))
+      .limit(1)
+      .for("update", { of: hiringAssessments });
+    if (!row) return { ok: false as const, code: "NOT_FOUND" as const };
+    const [link] = await tx
+      .select({ id: assessmentLinks.id, status: assessmentLinks.status, expiresAt: assessmentLinks.expiresAt })
+      .from(assessmentLinks)
+      .where(eq(assessmentLinks.assessmentId, row.assessmentId))
+      .orderBy(desc(assessmentLinks.createdAt), desc(assessmentLinks.id))
+      .limit(1)
+      .for("update");
+    if (!link) return { ok: false as const, code: "NOT_FOUND" as const };
+    if (link.status === "COMPLETED") return { ok: false as const, code: "COMPLETED" as const };
+    if (link.status === "IN_PROGRESS" || link.status === "RETAKE_AVAILABLE") return { ok: false as const, code: "STARTED" as const };
+    const from = link.expiresAt.getTime() > now.getTime() ? link.expiresAt : now;
+    const expiresAt = deadlineToDate(addDays(orgDay(from), EXTEND_DAYS));
+    await tx
+      .update(assessmentLinks)
+      .set({ expiresAt, status: "NOT_STARTED" })
+      .where(and(eq(assessmentLinks.id, link.id), eq(assessmentLinks.assessmentId, row.assessmentId)));
+    await tx.insert(auditLogs).values({
+      orgId: user.orgId,
+      actorId: user.id,
+      action: "hiring.candidate.extend",
+      subjectType: "assessment",
+      subjectId: row.assessmentId,
+      meta: { openingId: opening.id, linkId: link.id, from: link.expiresAt.toISOString(), to: expiresAt.toISOString() },
+    });
+    await answerLinkRequests(tx, user, opening.id, row.assessmentId, "extend");
+    return { ok: true as const, expiresAt };
   });
 }
 

@@ -1,9 +1,10 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
-import { candidateRequests, deletionRequests } from "@/db/schema";
+import { deletionRequests } from "@/db/schema";
 import { candidateJson } from "@/lib/candidate-safe";
 import { badRequest, message, readJson, withCandidate } from "@/lib/candidate-api";
+import { fileCandidateRequest } from "@/server/candidate-requests";
 import { manifestByKind } from "@/solutions/registry";
 
 const Body = z.object({
@@ -44,7 +45,8 @@ export async function POST(
         }
         const bounded = RequestMessage.safeParse(note);
         if (!bounded.success) return badRequest(ctx, "MESSAGE_TOO_LONG");
-        await db.insert(candidateRequests).values({
+        // Filed once while open; a repeat gets the same answer (fileCandidateRequest).
+        await fileCandidateRequest({
           orgId: ctx.assessment.orgId,
           assessmentId: ctx.assessment.id,
           kind,

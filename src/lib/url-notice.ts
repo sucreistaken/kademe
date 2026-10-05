@@ -22,3 +22,34 @@ export function withoutParams(href: string, names: readonly string[]): string | 
   for (const name of names) url.searchParams.delete(name);
   return `${url.pathname}${url.search}${url.hash}`;
 }
+
+export type NoticeWindow = {
+  location: { pathname: string; search: string; hash: string };
+  history: { state: unknown; replaceState(state: unknown, unused: string, url?: string | URL | null): void };
+  setTimeout(fn: () => void, ms?: number): number;
+  clearTimeout(id: number): void;
+};
+
+/**
+ * Takes the notice parameters out of the address one tick later. On a full
+ * page load (a native form POST before hydration, an opened URL) Next writes
+ * its own history entry after the first effects; a replaceState before that is
+ * overwritten and a later router.refresh brings the parameter back (plan 1
+ * review).
+ *
+ * The state passed is null, never Next's own: the app router patches
+ * history.replaceState (next/dist/client/components/app-router.js) and treats
+ * a state carrying `__NA` as its own write, so it would not learn the new
+ * address and the next server action or refresh (the language switch, "Tamam")
+ * would put the parameter back (seen in the Task 18 browser check). Given
+ * null, the patch copies Next's internal state into the entry itself and
+ * moves the router to the clean address without asking the server. Returns
+ * the cancel for unmount.
+ */
+export function scheduleNoticeCleanup(win: NoticeWindow, names: readonly string[]): () => void {
+  const id = win.setTimeout(() => {
+    const next = withoutParams(`${win.location.pathname}${win.location.search}${win.location.hash}`, names);
+    if (next !== null) win.history.replaceState(null, "", next);
+  }, 0);
+  return () => win.clearTimeout(id);
+}

@@ -8,7 +8,7 @@ vi.mock("./consent", () => ({ ensureHiringConsentText: consent.ensure }));
 import { formatInviteDeadline } from "../rules/invitation";
 import { zoneLabel } from "@/lib/org-timezone";
 import { HiringNotFound } from "./errors";
-import { createHiringInvitation, invitableOpenings, listOpeningCandidates, markRequestHandled, median, newHiringLink, openingFunnel } from "./invitations";
+import { createHiringInvitation, extendHiringLink, invitableOpenings, listOpeningCandidates, markRequestHandled, median, newHiringLink, openingFunnel } from "./invitations";
 
 const ORG = "11111111-1111-4111-8111-111111111111";
 const OPENING = "22222222-2222-4222-8222-222222222222";
@@ -222,6 +222,8 @@ describe("newHiringLink", () => {
       ["hiring_openings", "share"],
       ["hiring_assessments", "update"],
       ["assessment_links", "update"],
+      // Task 18: the candidate's open new-link requests, answered by the new link, last.
+      ["candidate_requests", "update"],
     ]);
     const opening = fake.ops.find((o) => o.table === "hiring_openings")!;
     expect(opening.params).toEqual(expect.arrayContaining([OPENING, ORG]));
@@ -283,6 +285,141 @@ describe("newHiringLink", () => {
     fake.ops = [];
     expect(await newHiringLink(user, OPENING, "x", { now: NOW })).toEqual({ ok: false, code: "NOT_FOUND" });
     expect(fake.ops).toEqual([]);
+    expect(writesOf(fake.ops)).toEqual([]);
+  });
+});
+
+describe("a new link or an extension answers the candidate's open new-link request (Task 7 carry)", () => {
+  const invitation = { assessmentId: ASSESSMENT, versionId: VERSION, name: "Elif Kaya", email: "elif@example.com", locale: "tr" };
+  function world(link: unknown[], open: unknown[]) {
+    return (op: Op) => {
+      if (op.kind === "select" && op.table === "hiring_assessments") return [invitation];
+      if (op.kind === "select" && op.table === "assessment_links") return link;
+      if (op.kind === "select" && op.table === "candidate_requests") return open;
+      return respond(op);
+    };
+  }
+
+  it("closes the open NEW_LINK requests of this invitation with the acting user, audited", async () => {
+    fake.respond = world([{ id: "l-old", status: "NOT_STARTED", expiresAt: NOW }], [{ id: REQUEST }]);
+    expect((await newHiringLink(user, OPENING, ASSESSMENT, { now: NOW })).ok).toBe(true);
+    const open = fake.ops.find((o) => o.table === "candidate_requests" && o.kind === "select")!;
+    expect(open.where).toContain('"candidate_requests"."org_id" = $');
+    expect(open.where).toContain('"candidate_requests"."handled_at" is null');
+    expect(open.params).toEqual(expect.arrayContaining([ORG, ASSESSMENT, "NEW_LINK"]));
+    expect(open.lock).toBe("update");
+    const writes = writesOf(fake.ops);
+    const closed = writes.find((w) => w.table === "candidate_requests")!;
+    expect(closed).toMatchObject({ kind: "update", values: { handledBy: USER } });
+    expect(closed.where).toContain('"candidate_requests"."handled_at" is null');
+    expect(closed.params).toEqual(expect.arrayContaining([REQUEST, ORG]));
+    const audit = writes.filter((w) => w.table === "audit_logs").map((w) => w.values as Record<string, unknown>);
+    expect(audit.find((a) => a.action === "hiring.candidate.request")).toMatchObject({
+      orgId: ORG,
+      actorId: USER,
+      subjectId: ASSESSMENT,
+      meta: { openingId: OPENING, requestId: REQUEST, kind: "NEW_LINK", answeredBy: "new-link" },
+    });
+  });
+
+  it("writes nothing for requests when none is open", async () => {
+    fake.respond = world([{ id: "l-old", status: "NOT_STARTED", expiresAt: NOW }], []);
+    await newHiringLink(user, OPENING, ASSESSMENT, { now: NOW });
+    expect(writesOf(fake.ops).some((w) => w.table === "candidate_requests")).toBe(false);
+  });
+
+  it("does the same on an extension", async () => {
+    fake.respond = world([{ id: "l-old", status: "EXPIRED", expiresAt: NOW }], [{ id: REQUEST }]);
+    expect((await extendHiringLink(user, OPENING, ASSESSMENT, { now: NOW })).ok).toBe(true);
+    const audit = writesOf(fake.ops).filter((w) => w.table === "audit_logs").map((w) => w.values as Record<string, unknown>);
+    expect(audit.find((a) => a.action === "hiring.candidate.request")).toMatchObject({ meta: { requestId: REQUEST, answeredBy: "extend" } });
+  });
+});
+
+describe("extendHiringLink (ruling C8)", () => {
+  const invitation = { assessmentId: ASSESSMENT };
+  function linkWorld(link: unknown[]) {
+    return (op: Op) => {
+      if (op.kind === "select" && op.table === "hiring_assessments") return [invitation];
+      if (op.kind === "select" && op.table === "assessment_links") return link;
+      return respond(op);
+    };
+  }
+
+  it("gives the invitation's newest link seven more days to the end of the organisation's day and lets an expired one work again, audited", async () => {
+    fake.respond = linkWorld([{ id: "l1", status: "EXPIRED", expiresAt: new Date("2026-10-04T20:59:59Z") }]);
+    const result = await extendHiringLink(user, OPENING, ASSESSMENT, { now: NOW });
+    // From today (the old day is behind): 12 Oct, end of day in Istanbul.
+    expect(result).toEqual({ ok: true, expiresAt: new Date("2026-10-12T20:59:59.000Z") });
+    const writes = writesOf(fake.ops);
+    expect(writes.map((w) => w.table)).toEqual(["assessment_links", "audit_logs"]);
+    expect(writes[0]).toMatchObject({ kind: "update", values: { status: "NOT_STARTED", expiresAt: new Date("2026-10-12T20:59:59.000Z") } });
+    expect(writes[0].params).toEqual(expect.arrayContaining(["l1", ASSESSMENT]));
+    expect(writes[1].values).toMatchObject({
+      orgId: ORG,
+      actorId: USER,
+      action: "hiring.candidate.extend",
+      subjectType: "assessment",
+      subjectId: ASSESSMENT,
+      meta: { openingId: OPENING, linkId: "l1", from: "2026-10-04T20:59:59.000Z", to: "2026-10-12T20:59:59.000Z" },
+    });
+  });
+
+  it("counts the seven days from a later last day", async () => {
+    fake.respond = linkWorld([{ id: "l1", status: "NOT_STARTED", expiresAt: new Date("2026-12-01T20:59:59Z") }]);
+    expect(await extendHiringLink(user, OPENING, ASSESSMENT, { now: NOW })).toEqual({ ok: true, expiresAt: new Date("2026-12-08T20:59:59.000Z") });
+  });
+
+  it("locks the opening, the invitation of this opening and organisation, then its newest link", async () => {
+    fake.respond = linkWorld([{ id: "l1", status: "NOT_STARTED", expiresAt: NOW }]);
+    await extendHiringLink(user, OPENING, ASSESSMENT, { now: NOW });
+    const order = fake.ops.filter((o) => o.lock).map((o) => [o.table, o.lock]);
+    expect(order.slice(0, 3)).toEqual([
+      ["hiring_openings", "share"],
+      ["hiring_assessments", "update"],
+      ["assessment_links", "update"],
+    ]);
+    const opening = fake.ops.find((o) => o.table === "hiring_openings")!;
+    expect(opening.params).toEqual(expect.arrayContaining([OPENING, ORG]));
+    const row = fake.ops.find((o) => o.table === "hiring_assessments")!;
+    expect(row.where).toContain('"hiring_assessments"."org_id" = $');
+    expect(row.where).toContain('"hiring_assessments"."opening_id" = $');
+    expect(row.params).toEqual(expect.arrayContaining([ASSESSMENT, ORG, OPENING]));
+    const actor = fake.ops.find((o) => o.table === "users")!;
+    expect(actor.params).toEqual(expect.arrayContaining([USER, ORG]));
+  });
+
+  it.each([
+    ["a finished candidate", [{ id: "l", status: "COMPLETED", expiresAt: NOW }], "COMPLETED"],
+    ["a candidate inside the assessment", [{ id: "l", status: "IN_PROGRESS", expiresAt: NOW }], "STARTED"],
+    ["a retake", [{ id: "l", status: "RETAKE_AVAILABLE", expiresAt: NOW }], "STARTED"],
+    ["an invitation without a link", [], "NOT_FOUND"],
+  ] as const)("refuses %s and writes nothing", async (_label, link, code) => {
+    fake.respond = linkWorld([...link]);
+    expect(await extendHiringLink(user, OPENING, ASSESSMENT, { now: NOW })).toEqual({ ok: false, code });
+    expect(writesOf(fake.ops)).toEqual([]);
+  });
+
+  it("refuses a closed opening, another opening's or organisation's invitation, and bad ids", async () => {
+    world.opening = { ...openOpening, status: "CLOSED" };
+    fake.respond = linkWorld([{ id: "l", status: "NOT_STARTED", expiresAt: NOW }]);
+    expect(await extendHiringLink(user, OPENING, ASSESSMENT, { now: NOW })).toEqual({ ok: false, code: "CLOSED" });
+    world.opening = { ...openOpening };
+    fake.respond = (op) => (op.table === "hiring_assessments" ? [] : respond(op));
+    expect(await extendHiringLink(user, OPENING, ASSESSMENT, { now: NOW })).toEqual({ ok: false, code: "NOT_FOUND" });
+    world.opening = null;
+    expect(await extendHiringLink(user, OPENING, ASSESSMENT, { now: NOW })).toEqual({ ok: false, code: "NOT_FOUND" });
+    expect(writesOf(fake.ops)).toEqual([]);
+    fake.ops = [];
+    expect(await extendHiringLink(user, "x", ASSESSMENT, { now: NOW })).toEqual({ ok: false, code: "NOT_FOUND" });
+    expect(await extendHiringLink(user, OPENING, "x", { now: NOW })).toEqual({ ok: false, code: "NOT_FOUND" });
+    expect(fake.ops).toEqual([]);
+  });
+
+  it("acts only for an active user of the organisation", async () => {
+    world.actor = [];
+    fake.respond = linkWorld([{ id: "l", status: "NOT_STARTED", expiresAt: NOW }]);
+    await expect(extendHiringLink(user, OPENING, ASSESSMENT, { now: NOW })).rejects.toBeInstanceOf(HiringNotFound);
     expect(writesOf(fake.ops)).toEqual([]);
   });
 });
