@@ -34,6 +34,9 @@ export const INTERNAL_FIELDS = [
   "isCorrect",
   "is_correct",
   "score",
+  // Hiring: a choice question's automatic score (decision 10), never shown to the candidate.
+  "autoScore",
+  "auto_score",
   "aiProposal",
   "ai_proposal",
   "transcript",

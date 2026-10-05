@@ -55,3 +55,11 @@ describe("candidateSafe and hiring content", () => {
     expect(json).toContain("VISIBLE_CHOICE");
   });
 });
+
+describe("candidateSafe and hiring scoring", () => {
+  it("strips a choice question's automatic score in either spelling (decision 10: never shown to the candidate)", () => {
+    expect(INTERNAL_FIELDS).toEqual(expect.arrayContaining(["autoScore", "auto_score"]));
+    const row = { id: "r1", payload: { choiceIds: ["c1"] }, autoScore: 1, nested: [{ auto_score: 0, answeredAt: "VISIBLE" }] };
+    expect(candidateSafe(row)).toEqual({ id: "r1", payload: { choiceIds: ["c1"] }, nested: [{ answeredAt: "VISIBLE" }] });
+  });
+});
