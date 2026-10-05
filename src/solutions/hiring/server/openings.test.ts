@@ -318,6 +318,19 @@ describe("saveOpeningRules", () => {
     expect(update?.values).toMatchObject({ name: "Tasarımcı · Ekim (2)" });
   });
 
+  it("saves the finish survey switch when the form sends it, and leaves it alone when it does not", async () => {
+    await saveOpeningRules(ORG, OWNER, OPENING, input({ finishSurveyEnabled: false }));
+    expect(writesOf(fake.ops)[0].values).toMatchObject({ finishSurveyEnabled: false });
+    expect((writesOf(fake.ops).at(-1)!.values as { meta: Record<string, unknown> }).meta).toMatchObject({ finishSurveyEnabled: false });
+    fake.ops = [];
+    await saveOpeningRules(ORG, OWNER, OPENING, input({ finishSurveyEnabled: true }));
+    expect(writesOf(fake.ops)[0].values).toMatchObject({ finishSurveyEnabled: true });
+    fake.ops = [];
+    await saveOpeningRules(ORG, OWNER, OPENING, input());
+    expect(writesOf(fake.ops)[0].values).not.toHaveProperty("finishSurveyEnabled");
+    expect((writesOf(fake.ops).at(-1)!.values as { meta: Record<string, unknown> }).meta).not.toHaveProperty("finishSurveyEnabled");
+  });
+
   it("refuses a closed opening (history is read-only) before looking at the rules", async () => {
     status = "CLOSED";
     await expect(saveOpeningRules(ORG, OWNER, OPENING, input({ decisionMakerId: null }))).rejects.toEqual(new HiringConflict("CLOSED"));

@@ -91,6 +91,16 @@ describe("saveOpeningRulesAction", () => {
     expect(revalidatePath).toHaveBeenCalled();
   });
 
+  it("passes the finish survey switch through", async () => {
+    await saveOpeningRulesAction(OPENING, { ...rules, finishSurveyEnabled: false });
+    expect(saveOpeningRules).toHaveBeenCalledWith("o1", "u1", OPENING, { ...rules, finishSurveyEnabled: false });
+  });
+
+  it("refuses a finish survey switch that is not a boolean", async () => {
+    await expect(saveOpeningRulesAction(OPENING, { ...rules, finishSurveyEnabled: "no" })).resolves.toEqual({ ok: false, code: "INVALID" });
+    expect(saveOpeningRules).not.toHaveBeenCalled();
+  });
+
   it("a manager may save too", async () => {
     viewer = { role: "MANAGER", view: true, edit: true, status: "OPEN" };
     await expect(saveOpeningRulesAction(OPENING, rules)).resolves.toEqual({ ok: true, name: rules.name });

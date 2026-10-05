@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CandidateVersion } from "@/solutions/hiring/rules/candidate-view";
-import { announcementOf, primaryOf, progressOf, stepsOf } from "./steps";
+import { announcementOf, barOf, primaryOf, progressOf, stepsOf } from "./steps";
 
 /**
  * The candidate flow as a list of screens (HIRING-UX 6): what the one filled
@@ -38,6 +38,10 @@ describe("candidate flow steps", () => {
 
   it("shows progress as the stage only, and only inside a stage", () => {
     expect(stepsOf(version).map((s) => progressOf(version, s))).toEqual([null, { n: 1, total: 2 }, { n: 1, total: 2 }, { n: 1, total: 2 }, { n: 2, total: 2 }, { n: 2, total: 2 }, null]);
+  });
+
+  it("fills the bar with the same rule the candidate pages use", () => {
+    expect(stepsOf(version).map((s) => barOf(version, s))).toEqual([0, 0, 0, 0.25, 0.5, 0.5, 1]);
   });
 
   it("tells a screen reader where it is now: the stage and, on a question, which question", () => {

@@ -682,19 +682,41 @@ export type OpeningFunnel = {
   completed: number;
   medianMinutes: number | null;
   estimateMinutes: number | null;
-  survey: { count: number; average: number | null; latest: Array<{ rating: number; comment: string; at: Date }> };
+  /**
+   * The finish survey as the team may see it (Task 16 carry, Task 19 ruling 1):
+   * the candidate is told the team never sees their name, only the average and
+   * unnamed comments. So a comment carries no rating and no date, and the
+   * comments are a random few of the recent ones, never "the latest".
+   */
+  survey: { count: number; average: number | null; comments: string[] };
 };
 
 export { SURVEY_MIN_ANSWERS };
+
+/** Comments show only from this many answers; never fewer than five, whatever the average's threshold. */
+export const SURVEY_COMMENTS_MIN = Math.max(5, SURVEY_MIN_ANSWERS);
+/** How many comments the overview shows, drawn from this many of the most recent non-empty ones. */
+const SURVEY_COMMENTS_SHOWN = 3;
+const SURVEY_COMMENTS_POOL = 20;
+
+/** Up to `take` of `pool` in a random order (Fisher-Yates), so neither position nor order tells who wrote one. */
+function randomFew<T>(pool: T[], take: number, random: () => number): T[] {
+  const items = [...pool];
+  for (let i = items.length - 1; i > 0; i--) {
+    const j = Math.min(i, Math.floor(random() * (i + 1)));
+    [items[i], items[j]] = [items[j], items[i]];
+  }
+  return items.slice(0, take);
+}
 
 /**
  * HIRING-UX 5.4 in plan 2: Davet, Başladı, Tamamladı, each invitation counted
  * once (its primary attempt); the median time against the live version's
  * estimate; the survey from SURVEY_MIN_ANSWERS answers. Only this
- * organisation's invitations to this opening count.
+ * organisation's invitations to this opening count. `random` is for tests.
  */
-export async function openingFunnel(orgId: string, openingId: string): Promise<OpeningFunnel> {
-  const empty: OpeningFunnel = { invited: 0, started: 0, completed: 0, medianMinutes: null, estimateMinutes: null, survey: { count: 0, average: null, latest: [] } };
+export async function openingFunnel(orgId: string, openingId: string, random: () => number = Math.random): Promise<OpeningFunnel> {
+  const empty: OpeningFunnel = { invited: 0, started: 0, completed: 0, medianMinutes: null, estimateMinutes: null, survey: { count: 0, average: null, comments: [] } };
   if (!isUuid(openingId)) return empty;
   const invited = await db
     .select({ assessmentId: hiringAssessments.assessmentId })
@@ -710,7 +732,8 @@ export async function openingFunnel(orgId: string, openingId: string): Promise<O
       .from(attempts)
       .where(and(inArray(attempts.assessmentId, ids), eq(attempts.isPrimary, true), isNotNull(attempts.startedAt))),
     db
-      .select({ rating: hiringSurveyResponses.rating, comment: hiringSurveyResponses.comment, at: hiringSurveyResponses.createdAt })
+      // Newest first for the comment pool; the date itself is never read.
+      .select({ rating: hiringSurveyResponses.rating, comment: hiringSurveyResponses.comment })
       .from(hiringSurveyResponses)
       .where(inArray(hiringSurveyResponses.assessmentId, ids))
       .orderBy(desc(hiringSurveyResponses.createdAt)),
@@ -736,12 +759,17 @@ export async function openingFunnel(orgId: string, openingId: string): Promise<O
     survey: {
       count: survey.length,
       average: enough ? Math.round((survey.reduce((s, r) => s + r.rating, 0) / survey.length) * 10) / 10 : null,
-      latest: enough
-        ? survey
-            .filter((r) => r.comment && r.comment.trim())
-            .slice(0, 3)
-            .map((r) => ({ rating: r.rating, comment: r.comment!.trim(), at: r.at }))
-        : [],
+      comments:
+        survey.length >= SURVEY_COMMENTS_MIN
+          ? randomFew(
+              survey
+                .map((r) => r.comment?.trim() ?? "")
+                .filter((c) => c !== "")
+                .slice(0, SURVEY_COMMENTS_POOL),
+              SURVEY_COMMENTS_SHOWN,
+              random,
+            )
+          : [],
     },
   };
 }

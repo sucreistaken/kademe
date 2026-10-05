@@ -12,6 +12,8 @@ export type OpeningRulesInput = {
   deadline: string | null;
   feedbackDays: number;
   candidateContactEmail: string;
+  /** The finish survey (HIRING-UX 6.13); left out by callers that do not show it, which keeps the saved value. */
+  finishSurveyEnabled?: boolean;
 };
 
 export type RulesProblem =

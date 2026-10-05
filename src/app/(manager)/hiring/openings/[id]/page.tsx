@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Check, Circle, CircleDashed } from "lucide-react";
 import { Button, DisabledReason } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { InviteSheet } from "@/components/hiring/invite/invite-sheet";
 import { PendingButton } from "@/components/ui/pending-button";
 import { UrlNotice } from "@/components/ui/url-notice";
 import { StatusDot } from "@/components/ui/status-dot";
@@ -10,13 +11,16 @@ import { managerT } from "@/i18n/manager";
 import { cn } from "@/lib/cn";
 import { noticeOf, one } from "@/lib/url-notice";
 import { shortDate } from "@/lib/format";
+import { orgDay, zoneLabel } from "@/lib/org-timezone";
 import type { PublishProblem } from "@/solutions/hiring/rules/gate";
 import { loadPanelUsers } from "@/server/settings";
 import { canDecide } from "@/solutions/hiring/rules/access";
 import { previewIsCurrent } from "@/solutions/hiring/rules/versions";
+import { invitableOpenings, openingFunnel } from "@/solutions/hiring/server/invitations";
 import { workingState } from "@/solutions/hiring/server/working";
 import { openingFor } from "./access";
 import { publishOpeningAction, type PublishNotice } from "./actions";
+import { funnelView } from "./funnel";
 import { OpeningHeader } from "./opening-header";
 import { describeProblem } from "./problems";
 import { readinessRows, rowAction, rowHref, type ReadinessKey, type ReadinessState } from "./readiness";
@@ -41,6 +45,7 @@ const LABELS: Record<ReadinessKey, "rowAssessment" | "rowAnchors" | "rowWeights"
   team: "rowTeam",
   preview: "rowPreview",
 };
+const LINK = "font-medium text-ink underline decoration-line-strong underline-offset-4 transition-colors duration-[120ms] ease-out hover:decoration-ink";
 const STATE_WORD = { done: "stateDone", missing: "stateMissing", advisory: "stateAdvisory" } as const;
 const STATE_SR = { done: "srDone", missing: "srMissing", advisory: "srAdvisory" } as const;
 const ICON = { done: Check, missing: Circle, advisory: CircleDashed } as const;
@@ -117,7 +122,16 @@ export default async function OpeningOverviewPage({
   const locale = await managerLocale();
   const t = managerT(locale);
   const sp = await searchParams;
-  const [state, people] = await Promise.all([workingState(user.orgId, opening.id), loadPanelUsers(user.orgId)]);
+  const [state, people, funnel, invitable] = await Promise.all([
+    workingState(user.orgId, opening.id),
+    loadPanelUsers(user.orgId),
+    openingFunnel(user.orgId, opening.id),
+    access.edit ? invitableOpenings(user.orgId) : Promise.resolve([]),
+  ]);
+  // The opening as the invite form needs it: OPEN, of this organisation (invitableOpenings).
+  const target = invitable.find((o) => o.id === opening.id) ?? null;
+  const view = funnelView(funnel, opening.finishSurveyEnabled);
+  const number = new Intl.NumberFormat(locale === "tr" ? "tr-TR" : "en-GB", { maximumFractionDigits: 1 });
   // Reviewers alone are not a team: someone active must be able to decide (HIRING-UX 4.6).
   const decider = people.find((u) => u.id === opening.decisionMakerId && u.disabledAt === null);
   const decisionMakerActive = decider !== undefined && canDecide(decider.role);
@@ -133,6 +147,7 @@ export default async function OpeningOverviewPage({
         : null;
   const published = /^\d{1,6}$/.test(one(sp.published) ?? "") ? one(sp.published)! : null;
   const notice = noticeOf(sp, "publish", NOTICES);
+  const waitReason = closed ? t("hiringOverview.closedBody") : !access.edit ? t("hiringInvite.noPermission") : t("hiringCandidates.emptyNotLive");
 
   const action = state.draft ? (
     <form action={publishOpeningAction} className="flex w-full flex-col items-start gap-1 sm:w-auto sm:max-w-[360px] sm:items-end sm:text-right">
@@ -145,12 +160,15 @@ export default async function OpeningOverviewPage({
         <p className="text-[12px] leading-4 text-muted">{t("hiringOverview.publishNote")}</p>
       )}
     </form>
+  ) : target ? (
+    <InviteSheet opening={target} today={orgDay()} zone={zoneLabel(locale)} />
   ) : (
+    // The same button waiting with the Candidates tab's reason (Task 19 ruling 2, RULES 5).
     <div className="flex w-full flex-col items-start gap-1 sm:w-auto sm:max-w-[360px] sm:items-end sm:text-right">
-      <Button id="invite-candidate" variant="primary" disabled disabledReason={closed ? t("hiringOverview.closedBody") : t("hiringOverview.inviteLater")}>
+      <Button id="invite-candidate" variant="primary" disabled disabledReason={waitReason}>
         {t("hiringOverview.invite")}
       </Button>
-      <DisabledReason id="invite-candidate-why">{closed ? t("hiringOverview.closedBody") : t("hiringOverview.inviteLater")}</DisabledReason>
+      <DisabledReason id="invite-candidate-why">{waitReason}</DisabledReason>
     </div>
   );
 
@@ -232,12 +250,68 @@ export default async function OpeningOverviewPage({
               })}
             </ul>
           </Card>
-        ) : (
+        ) : null}
+        {/* HIRING-UX 5.4: the funnel while published, also under a new draft once candidates exist. */}
+        {!state.draft || view ? (
           <Card className="p-card">
-            <h2 className="text-[16px] leading-6 font-semibold text-ink">{t("hiringOverview.funnelTitle")}</h2>
-            <p className="mt-2 text-[13px] text-muted">{closed ? t("hiringOverview.closedBody") : t("hiringOverview.funnelEmpty")}</p>
+            <div className="flex items-baseline justify-between gap-4">
+              <h2 className="text-[16px] leading-6 font-semibold text-ink">{t("hiringOverview.funnelTitle")}</h2>
+              {view ? (
+                <Link href={`/hiring/openings/${opening.id}/candidates`} className={`text-[13px] ${LINK}`}>
+                  {t("hiringOverview.funnelAll")}
+                </Link>
+              ) : null}
+            </div>
+            {view ? (
+              <>
+                <dl className="mt-3 grid grid-cols-3 gap-4">
+                  {view.steps.map((s) => (
+                    <div key={s.key} className="min-w-0">
+                      <dt className="text-[13px] text-muted">{t(`hiringOverview.funnel_${s.key}`)}</dt>
+                      <dd className="tnum text-[24px] leading-8 font-semibold text-ink">{s.count}</dd>
+                    </div>
+                  ))}
+                </dl>
+                {view.time ? (
+                  <p className="tnum mt-3 text-[13px] text-ink">
+                    {t("hiringOverview.funnelMedian", { minutes: view.time.median })}
+                    {view.time.estimate !== null ? ` · ${t("hiringOverview.funnelEstimate", { minutes: view.time.estimate })}` : ""}
+                    {view.time.over ? <span className="mt-1 block text-muted">{t("hiringOverview.funnelOver")}</span> : null}
+                  </p>
+                ) : null}
+                <div className="mt-4 border-t border-line pt-3">
+                  <h3 className="text-[14px] font-semibold text-ink">{t("hiringOverview.experienceTitle")}</h3>
+                  {view.experience.kind === "off" ? (
+                    <p className="mt-1 text-[13px] text-muted">{t("hiringOverview.experienceOff")}</p>
+                  ) : view.experience.kind === "waiting" ? (
+                    <p className="tnum mt-1 text-[13px] text-muted">{t("hiringOverview.experienceWaiting", { needed: view.experience.needed, count: view.experience.count })}</p>
+                  ) : (
+                    <>
+                      <p className="tnum mt-1 text-[14px] text-ink">
+                        {t("hiringOverview.experienceAverage", { average: number.format(view.experience.average), count: view.experience.count })}
+                      </p>
+                      {view.experience.comments.length ? (
+                        // Task 19 ruling 1: a few recent comments at random, without a rating or a date.
+                        <>
+                          <p className="mt-2 text-[12px] text-muted">{t("hiringOverview.experienceComments")}</p>
+                          <ul className="mt-1 space-y-1">
+                            {view.experience.comments.map((comment, i) => (
+                              <li key={i} className="text-[13px] break-words whitespace-pre-line text-ink-2">
+                                {comment}
+                              </li>
+                            ))}
+                          </ul>
+                        </>
+                      ) : null}
+                    </>
+                  )}
+                </div>
+              </>
+            ) : (
+              <p className="mt-2 text-[13px] text-muted">{closed ? t("hiringOverview.closedBody") : t("hiringOverview.funnelEmpty")}</p>
+            )}
           </Card>
-        )}
+        ) : null}
         {state.live ? (
           <Card className="p-card">
             <h2 className="text-[16px] leading-6 font-semibold text-ink">{t("hiringOverview.liveTitle")}</h2>

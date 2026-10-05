@@ -282,6 +282,23 @@ export function OpeningSettingsForm({
             />
           </div>
         </div>
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <Switch
+              id="finish-survey"
+              checked={value.finishSurveyEnabled ?? true}
+              disabled={locked}
+              onCheckedChange={(v) => set("finishSurveyEnabled", v)}
+              aria-describedby="finish-survey-hint"
+            />
+            <Label htmlFor="finish-survey" className="text-[14px] font-normal text-ink">
+              {t("finishSurvey")}
+            </Label>
+          </div>
+          <p id="finish-survey-hint" className="pl-12 text-[13px] text-muted">
+            {t("finishSurveyHint")}
+          </p>
+        </div>
       </Card>
 
       {closed ? null : (

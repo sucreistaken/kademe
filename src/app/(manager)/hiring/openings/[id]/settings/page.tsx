@@ -78,6 +78,7 @@ export default async function OpeningSettingsPage({
             deadline: opening.deadlineAt ? orgDay(opening.deadlineAt) : null,
             feedbackDays: opening.feedbackDays,
             candidateContactEmail: opening.candidateContactEmail ?? "",
+            finishSurveyEnabled: opening.finishSurveyEnabled,
           }}
         />
       </div>

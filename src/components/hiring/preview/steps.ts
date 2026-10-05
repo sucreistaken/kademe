@@ -1,3 +1,4 @@
+import { progressOf as flowProgress } from "@/solutions/hiring/rules/candidate-flow";
 import type { CandidateVersion } from "@/solutions/hiring/rules/candidate-view";
 
 /**
@@ -29,6 +30,19 @@ export function primaryOf(version: CandidateVersion, step: Step): "start" | "sta
 /** HIRING-UX 6: progress is the thin bar plus "Aşama 2 / 3", shown only inside a stage. */
 export function progressOf(version: CandidateVersion, step: Step): { n: number; total: number } | null {
   return step.kind === "stage" || step.kind === "activity" ? { n: step.stage + 1, total: version.stages.length } : null;
+}
+
+/** The thin bar's fill: the candidate pages' rule (stages done plus the share of the current stage), 1 at the end. */
+export function barOf(version: CandidateVersion, step: Step): number {
+  if (step.kind === "intro") return 0;
+  if (step.kind === "done") return 1;
+  const stage = version.stages[step.stage];
+  return flowProgress({
+    stagePosition: step.stage + 1,
+    stageCount: version.stages.length,
+    activityIndex: step.kind === "activity" ? step.activity : 0,
+    activityCount: stage.activities.length,
+  }).ratio;
 }
 
 /**

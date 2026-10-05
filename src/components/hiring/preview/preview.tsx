@@ -18,7 +18,7 @@ import { pickTextLang } from "@/lib/i18n-text";
 import { useStepFocus } from "@/hooks/use-step-focus";
 import type { CandidateActivity, CandidateVersion } from "@/solutions/hiring/rules/candidate-view";
 import { markPreviewedAction } from "@/app/(manager)/hiring/openings/[id]/assessment/preview/actions";
-import { announcementOf, primaryOf, progressOf, stepsOf, type Step } from "./steps";
+import { announcementOf, barOf, primaryOf, progressOf, stepsOf, type Step } from "./steps";
 
 /** A language picker names each language in itself. */
 const LANGUAGE_NAMES: Record<Locale, string> = { tr: "Türkçe", en: "English" };
@@ -140,7 +140,6 @@ export function Preview({ openingId, stampVersionId, mode, number, companyName, 
             version={version}
             step={step}
             index={index}
-            total={all.length}
             companyName={companyName}
             positionName={positionName}
             positionLang={defaultLocale}
@@ -160,7 +159,6 @@ function Frame({
   version,
   step,
   index,
-  total,
   companyName,
   positionName,
   positionLang,
@@ -173,7 +171,6 @@ function Frame({
   version: CandidateVersion;
   step: Step;
   index: number;
-  total: number;
   companyName: string;
   positionName: string;
   /** A position name is stored in one language: the organisation's, taken as the version's default. */
@@ -291,7 +288,7 @@ function Frame({
         </div>
         {/* The bar repeats the text above for the eye; the live region below speaks the position. */}
         <div className="h-1 rounded-full bg-hairline" aria-hidden>
-          <div className="h-1 rounded-full bg-ink-3 transition-[width] duration-[180ms] ease-out" style={{ width: `${Math.round((index / Math.max(1, total - 1)) * 100)}%` }} />
+          <div className="h-1 rounded-full bg-ink-3 transition-[width] duration-[180ms] ease-out" style={{ width: `${Math.round(barOf(version, step) * 100)}%` }} />
         </div>
       </div>
       <p className="sr-only" aria-live="polite" aria-atomic="true">

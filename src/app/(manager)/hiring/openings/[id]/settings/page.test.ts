@@ -40,6 +40,7 @@ const openingFor = vi.fn(async (id: string, need: "view" | "edit") => {
       deadlineAt: DEADLINE,
       feedbackDays: 10,
       candidateContactEmail: null,
+      finishSurveyEnabled: false,
       updatedAt: new Date(),
     },
     access: { view: viewer.view, edit: viewer.edit },
@@ -120,7 +121,7 @@ describe("team and rules page", () => {
       expect(props.users.map((u) => u.id)).toEqual([OWNER, MANAGER, REVIEWER, OUTSIDER, GONE]);
       expect(props.users.find((u) => u.id === GONE)?.disabled).toBe(true);
       expect(JSON.stringify(props.users)).not.toContain("@x.test");
-      expect(props.initial).toMatchObject({ deadline: "2026-10-31", memberIds: [REVIEWER, GONE], decisionMakerId: OWNER, feedbackDays: 10, candidateContactEmail: "" });
+      expect(props.initial).toMatchObject({ deadline: "2026-10-31", memberIds: [REVIEWER, GONE], decisionMakerId: OWNER, feedbackDays: 10, candidateContactEmail: "", finishSurveyEnabled: false });
       const close = forms(page, closeOpeningAction);
       expect(close).toHaveLength(1);
       // Fix round 1, Important 2: the button says it is working and takes no second click.

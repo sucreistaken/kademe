@@ -93,12 +93,11 @@
     "published": "v{number} published.",
     "publishRefused": "Could not publish. What is missing is listed below.",
     "invite": "Invite a candidate",
-    "inviteLater": "Candidates cannot be invited to this opening yet.",
     "liveTitle": "Live assessment",
     "liveBody": "v{number}, published on {date}.",
     "draftPending": "Draft v{number} is not published yet.",
     "funnelTitle": "Candidates",
-    "funnelEmpty": "No candidates yet. The funnel appears here once invitations open.",
+    "funnelEmpty": "No candidates yet. The funnel shows here once you send the first invitation.",
     "closedBody": "This opening is closed. No new invitations.",
     "rowWeights": "Make the weights add up to 100%",
     "goLibrary": "Open the competency",
@@ -116,7 +115,19 @@
     "publishing": "Publishing",
     "closedNotice": "This opening is closed; its assessment and records stay readable.",
     "goReopen": "Reopen it in Team and rules",
-    "teamNoDecisionMaker": "No active decision maker. Choose an owner or a manager in Team and rules."
+    "teamNoDecisionMaker": "No active decision maker. Choose an owner or a manager in Team and rules.",
+    "funnelAll": "All candidates",
+    "funnel_invited": "Invited",
+    "funnel_started": "Started",
+    "funnel_completed": "Completed",
+    "funnelMedian": "Median time {minutes} min",
+    "funnelEstimate": "estimate {minutes} min",
+    "funnelOver": "Candidates take clearly longer than the estimate; you may want to look at the stage timings.",
+    "experienceTitle": "Candidate experience",
+    "experienceOff": "The finish survey is off.",
+    "experienceWaiting": "Shows from {needed} answers; {count} so far.",
+    "experienceAverage": "{average}/5 · {count} answers",
+    "experienceComments": "Unnamed comments, picked at random"
   },
   "hiringGate": {
     "stageLabel": "Stage {n}",
@@ -601,7 +612,9 @@
     "minEvaluationsOverride": "The decision maker can still decide below this number by writing a reason.",
     "savedRenamed": "Saved. Another opening already had this name, so it is now \"{name}\".",
     "closing": "Closing",
-    "reopening": "Reopening"
+    "reopening": "Reopening",
+    "finishSurvey": "Short survey at the finish",
+    "finishSurveyHint": "On the finish screen the candidate can leave a 1-5 rating and an optional comment. It does not affect the assessment; the team never sees who answered and, from 5 answers, sees only the average and unnamed comments."
   },
   "hiringInvite": {
     "title": "Invite a candidate",

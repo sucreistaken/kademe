@@ -290,6 +290,7 @@ export async function saveOpeningRules(
         deadlineAt,
         feedbackDays: input.feedbackDays,
         candidateContactEmail,
+        ...(input.finishSurveyEnabled === undefined ? {} : { finishSurveyEnabled: input.finishSurveyEnabled }),
         updatedAt: new Date(),
       })
       .where(and(eq(hiringOpenings.id, openingId), eq(hiringOpenings.orgId, orgId)));
@@ -312,6 +313,7 @@ export async function saveOpeningRules(
         deadlineAt: deadlineAt?.toISOString() ?? null,
         feedbackDays: input.feedbackDays,
         candidateContactEmail,
+        ...(input.finishSurveyEnabled === undefined ? {} : { finishSurveyEnabled: input.finishSurveyEnabled }),
       },
     });
     return { ok: true as const, name };

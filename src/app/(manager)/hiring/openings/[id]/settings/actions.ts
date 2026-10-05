@@ -23,6 +23,7 @@ const schema = z.object({
     .nullable(),
   feedbackDays: z.number().int(),
   candidateContactEmail: z.string().max(200),
+  finishSurveyEnabled: z.boolean().optional(),
 });
 
 /**

@@ -93,12 +93,11 @@
     "published": "v{number} yayınlandı.",
     "publishRefused": "Yayınlanamadı. Eksikler aşağıda.",
     "invite": "Aday davet et",
-    "inviteLater": "Bu alıma henüz aday davet edilemiyor.",
     "liveTitle": "Yayındaki değerlendirme",
     "liveBody": "v{number}, {date} tarihinde yayınlandı.",
     "draftPending": "Taslak v{number} henüz yayınlanmadı.",
     "funnelTitle": "Adaylar",
-    "funnelEmpty": "Henüz aday yok. Davet açıldığında huni burada görünür.",
+    "funnelEmpty": "Henüz aday yok. İlk daveti açınca huni burada görünür.",
     "closedBody": "Bu alım kapalı. Yeni davet yapılamaz.",
     "rowWeights": "Ağırlıkları %100'e tamamla",
     "goLibrary": "Yetkinliğe git",
@@ -116,7 +115,19 @@
     "publishing": "Yayınlanıyor",
     "closedNotice": "Bu alım kapalı; değerlendirme ve kayıtlar okunur kalır.",
     "goReopen": "Ekip ve kurallarda yeniden aç",
-    "teamNoDecisionMaker": "Aktif bir karar veren yok. Ekip ve kurallarda bir sahip ya da yönetici seç."
+    "teamNoDecisionMaker": "Aktif bir karar veren yok. Ekip ve kurallarda bir sahip ya da yönetici seç.",
+    "funnelAll": "Tüm adaylar",
+    "funnel_invited": "Davet",
+    "funnel_started": "Başladı",
+    "funnel_completed": "Tamamladı",
+    "funnelMedian": "Ortanca süre {minutes} dk",
+    "funnelEstimate": "tahmin {minutes} dk",
+    "funnelOver": "Adaylar tahminden belirgin uzun sürüyor; aşama sürelerine bakmak isteyebilirsin.",
+    "experienceTitle": "Aday deneyimi",
+    "experienceOff": "Bitiş anketi kapalı.",
+    "experienceWaiting": "{needed} cevap gelince görünür; şu an {count}.",
+    "experienceAverage": "{average}/5 · {count} cevap",
+    "experienceComments": "Rastgele seçilmiş isimsiz yorumlar"
   },
   "hiringGate": {
     "stageLabel": "Aşama {n}",
@@ -601,7 +612,9 @@
     "minEvaluationsOverride": "Karar veren, gerekçesini yazarak bu sayıya ulaşmadan da karar verebilir.",
     "savedRenamed": "Kaydedildi. Bu ad başka bir alımda kullanıldığı için ad \"{name}\" oldu.",
     "closing": "Kapatılıyor",
-    "reopening": "Açılıyor"
+    "reopening": "Açılıyor",
+    "finishSurvey": "Bitişte kısa anket",
+    "finishSurveyHint": "Aday bitiş ekranında 1-5 arası puan ve isteğe bağlı yorum bırakabilir. Değerlendirmeyi etkilemez; ekip kimin cevap verdiğini görmez, 5 cevaptan sonra yalnızca ortalamayı ve isimsiz yorumları görür."
   },
   "hiringInvite": {
     "title": "Aday davet et",
