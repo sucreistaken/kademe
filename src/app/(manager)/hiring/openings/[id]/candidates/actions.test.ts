@@ -4,6 +4,8 @@ import { zoneLabel } from "@/lib/org-timezone";
 
 const h = vi.hoisted(() => ({
   gate: { ok: true, user: { id: "u", orgId: "o" }, opening: { id: "op" } } as Record<string, unknown>,
+  /** runningOpening: the rights without the status (Task 18 fix round 1). */
+  run: { ok: true, user: { id: "u", orgId: "o" }, opening: { id: "op" } } as Record<string, unknown>,
   newLink: vi.fn(),
   extend: vi.fn(),
   mark: vi.fn(async () => true),
@@ -19,7 +21,7 @@ vi.mock("next/navigation", () => ({
   },
 }));
 vi.mock("@/i18n/manager-locale", () => ({ managerLocale: async () => h.locale }));
-vi.mock("../access", () => ({ editableOpening: async () => h.gate }));
+vi.mock("../access", () => ({ editableOpening: async () => h.gate, runningOpening: async () => h.run }));
 vi.mock("@/solutions/hiring/server/invitations", () => ({ newHiringLink: h.newLink, extendHiringLink: h.extend, markRequestHandled: h.mark }));
 
 import { extendHiringLinkAction, markRequestAction, newLinkAction } from "./actions";
@@ -34,6 +36,7 @@ function form(fields: Record<string, string>) {
 
 beforeEach(() => {
   h.gate = { ...OK_GATE };
+  h.run = { ...OK_GATE };
   h.newLink.mockReset();
   h.extend.mockReset();
   h.mark.mockReset();
@@ -44,11 +47,11 @@ beforeEach(() => {
 });
 
 describe("newLinkAction", () => {
-  it("asks the opening's edit right first and passes the session's user", async () => {
-    h.gate = { ok: false, code: "CLOSED" };
-    expect(await newLinkAction("op", "a1")).toEqual({ ok: false, code: "CLOSED" });
+  it("asks the right to run the opening first and passes the session's user", async () => {
+    h.run = { ok: false, code: "FORBIDDEN" };
+    expect(await newLinkAction("op", "a1")).toEqual({ ok: false, code: "FORBIDDEN" });
     expect(h.newLink).not.toHaveBeenCalled();
-    h.gate = { ...OK_GATE };
+    h.run = { ...OK_GATE };
     h.newLink.mockResolvedValue({ ok: true, url: "https://k/a/y", expiresAt: new Date("2026-10-19T20:59:59Z"), name: "Elif Kaya", message: { subject: "s", body: "b" } });
     // The last day reads as in the ready message: the end of the day in the organisation's zone (ruling 6, Task 17 ruling 4).
     expect(await newLinkAction("op", "a1")).toEqual({
@@ -70,13 +73,39 @@ describe("newLinkAction", () => {
   });
 
   it("refuses a reviewer and malformed input before anything is written, and never shows a raw error", async () => {
-    h.gate = { ok: false, code: "FORBIDDEN" };
+    h.run = { ok: false, code: "FORBIDDEN" };
     expect(await newLinkAction("op", "a1")).toEqual({ ok: false, code: "FORBIDDEN" });
-    h.gate = { ...OK_GATE };
+    h.run = { ok: false, code: "NOT_FOUND" };
+    expect(await newLinkAction("op", "a1")).toEqual({ ok: false, code: "NOT_FOUND" });
+    h.run = { ...OK_GATE };
     expect(await newLinkAction(42 as unknown as string, "a1")).toEqual({ ok: false, code: "NOT_FOUND" });
     expect(h.newLink).not.toHaveBeenCalled();
     h.newLink.mockRejectedValue(new Error('relation "assessment_links" does not exist'));
     expect(await newLinkAction("op", "a1")).toEqual({ ok: false, code: "FAILED" });
+  });
+});
+
+describe("newLinkAction on a closed opening (Task 7 ruling, Task 18 fix round 1)", () => {
+  it("does not stop at the opening's status: newHiringLink lets a started candidate finish", async () => {
+    // editableOpening would answer CLOSED; the new link goes through runningOpening instead.
+    h.gate = { ok: false, code: "CLOSED" };
+    h.run = { ok: true, user: { id: "u", orgId: "o" }, opening: { id: "op", status: "CLOSED" } };
+    h.newLink.mockResolvedValue({ ok: true, url: "https://k/a/z", expiresAt: new Date("2026-10-12T20:59:59Z"), name: "Elif Kaya", message: { subject: "s", body: "b" } });
+    expect(await newLinkAction("op", "a1")).toMatchObject({ ok: true, url: "https://k/a/z" });
+    expect(h.newLink).toHaveBeenCalledWith({ id: "u", orgId: "o" }, "op", "a1");
+  });
+
+  it("passes newHiringLink's refusal for a candidate who has not started", async () => {
+    h.run = { ok: true, user: { id: "u", orgId: "o" }, opening: { id: "op", status: "CLOSED" } };
+    h.newLink.mockResolvedValue({ ok: false, code: "CLOSED" });
+    expect(await newLinkAction("op", "a1")).toEqual({ ok: false, code: "CLOSED" });
+  });
+
+  it("still refuses an extension on a closed opening", async () => {
+    h.gate = { ok: false, code: "CLOSED" };
+    await expect(extendHiringLinkAction(form({ openingId: "op", assessmentId: "a1" }))).rejects.toThrow("NEXT_REDIRECT");
+    expect(h.extend).not.toHaveBeenCalled();
+    expect(h.redirected).toBe("/hiring/openings/op/candidates?extend=closed");
   });
 });
 

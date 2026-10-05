@@ -295,7 +295,13 @@ export async function newHiringLink(
     // Planner open question 6: a closed opening stops only candidates who have not started.
     const begun = old?.status === "IN_PROGRESS" || old?.status === "RETAKE_AVAILABLE";
     if (opening.status === "CLOSED" && !begun && !(await hasStarted(tx, row.assessmentId))) return { ok: false as const, code: "CLOSED" as const };
-    if (old) await tx.update(assessmentLinks).set({ status: "EXPIRED" }).where(and(eq(assessmentLinks.id, old.id), eq(assessmentLinks.assessmentId, row.assessmentId)));
+    // The replaced link closes now: its card ("Bu linkin süresi dolmuş ...") never names a later day (Task 18 fix round 1).
+    if (old) {
+      await tx
+        .update(assessmentLinks)
+        .set({ status: "EXPIRED", expiresAt: old.expiresAt.getTime() < now.getTime() ? old.expiresAt : now })
+        .where(and(eq(assessmentLinks.id, old.id), eq(assessmentLinks.assessmentId, row.assessmentId)));
+    }
     const week = deadlineToDate(addDays(orgDay(now), NEW_LINK_MIN_DAYS));
     const expiresAt = old && old.expiresAt.getTime() > week.getTime() ? old.expiresAt : week;
     const token = mintToken();

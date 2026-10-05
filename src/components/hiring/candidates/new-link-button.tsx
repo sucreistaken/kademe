@@ -12,9 +12,11 @@ import { CopyField } from "@/components/hiring/invite/copy-field";
  * so what it does is said in visible text right under the button, not in a
  * tooltip, and the button is described by it. While it runs the button waits
  * with its reason (C15). The new link opens in a dialog, shown once, with the
- * ready message; a refusal or a failure is said there in words.
+ * ready message; a refusal or a failure is said there in words. `started`:
+ * the candidate may be inside a stage, so the help also says that their open
+ * page stops while the stage's clock runs on (Task 18 fix round 1).
  */
-export function NewLinkButton({ openingId, assessmentId }: { openingId: string; assessmentId: string }) {
+export function NewLinkButton({ openingId, assessmentId, started = false }: { openingId: string; assessmentId: string; started?: boolean }) {
   const t = useMT("hiringCandidates");
   const ti = useMT("hiringInvite");
   const [pending, start] = useTransition();
@@ -52,6 +54,7 @@ export function NewLinkButton({ openingId, assessmentId }: { openingId: string; 
       {pending ? <DisabledReason id={`${id}-why`}>{t("newLinkCreating")}</DisabledReason> : null}
       <p id={`${id}-help`} className="max-w-[260px] text-[12px] leading-4 text-muted">
         {t("newLinkHelp")}
+        {started ? ` ${t("newLinkHelpStarted")}` : null}
       </p>
       <Dialog open={result !== null} onOpenChange={(open) => (open ? null : setResult(null))}>
         <DialogContent onEscapeKeyDown={hold} onInteractOutside={hold} className="max-h-[90dvh] overflow-y-auto sm:max-w-[520px]">

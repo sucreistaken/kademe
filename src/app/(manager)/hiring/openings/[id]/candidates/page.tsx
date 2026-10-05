@@ -10,31 +10,12 @@ import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
 import { can } from "@/lib/authorize";
 import { orgDay, zoneLabel } from "@/lib/org-timezone";
-import { noticeOf, one } from "@/lib/url-notice";
 import { invitableOpenings, listOpeningCandidates } from "@/solutions/hiring/server/invitations";
 import { openingFor } from "../access";
 import { OpeningHeader } from "../opening-header";
-import type { ExtendNotice, RequestNotice } from "./actions";
+import { candidatesNotice, NOTICE_PARAMS } from "./notices";
 
 export const dynamic = "force-dynamic";
-
-/** Every notice the tab's actions come back with; shown once, then taken out of the address. */
-const NOTICE_PARAMS = ["handled", "extended", "extend", "request"] as const;
-
-const EXTEND_NOTICES: Record<ExtendNotice, "extendClosed" | "extendForbidden" | "extendNotFound" | "extendCompleted" | "extendStarted" | "extendFailed"> = {
-  closed: "extendClosed",
-  forbidden: "extendForbidden",
-  notfound: "extendNotFound",
-  completed: "extendCompleted",
-  started: "extendStarted",
-  failed: "extendFailed",
-};
-const REQUEST_NOTICES: Record<RequestNotice, "requestClosed" | "requestForbidden" | "requestNotFound" | "requestFailed"> = {
-  closed: "requestClosed",
-  forbidden: "requestForbidden",
-  notfound: "requestNotFound",
-  failed: "requestFailed",
-};
 
 const LINK = "font-medium text-ink underline decoration-line-strong underline-offset-4 transition-colors duration-[120ms] ease-out hover:decoration-ink";
 
@@ -63,18 +44,7 @@ export default async function OpeningCandidatesPage({
   const short = panelShortfall(target);
   const closed = opening.status === "CLOSED";
 
-  const extendNotice = noticeOf(sp, "extend", EXTEND_NOTICES);
-  const requestNotice = noticeOf(sp, "request", REQUEST_NOTICES);
-  const notice =
-    one(sp.handled) === "1"
-      ? t("hiringCandidates.requestHandled")
-      : one(sp.extended) === "1"
-        ? t("hiringCandidates.extended")
-        : extendNotice
-          ? t(`hiringCandidates.${extendNotice}`)
-          : requestNotice
-            ? t(`hiringCandidates.${requestNotice}`)
-            : null;
+  const notice = candidatesNotice(sp);
 
   // The page's one filled button: the invite Sheet, or the same button waiting with its reason (RULES 5).
   const waitReason = target ? null : closed ? t("hiringOverview.closedBody") : !access.edit ? t("hiringInvite.noPermission") : t("hiringCandidates.emptyNotLive");
@@ -94,9 +64,18 @@ export default async function OpeningCandidatesPage({
       <OpeningHeader opening={opening} active="candidates" locale={locale} t={t} action={action} />
       {notice ? (
         <UrlNotice params={NOTICE_PARAMS}>
-          <p role="status" className="mt-6 text-[14px] font-medium text-ink">
-            {notice}
-          </p>
+          {notice.warn ? (
+            // A refusal or a failure reads as a warning, never like a success (Task 18 fix round 1).
+            <p role="status" className="mt-6">
+              <StatusDot tone="warn" className="items-start text-ink [&>span:first-child]:mt-[7px]">
+                <span className="text-[14px] leading-5 font-medium">{t(`hiringCandidates.${notice.key}`)}</span>
+              </StatusDot>
+            </p>
+          ) : (
+            <p role="status" className="mt-6 text-[14px] font-medium text-ink">
+              {t(`hiringCandidates.${notice.key}`)}
+            </p>
+          )}
         </UrlNotice>
       ) : null}
       {short ? (
@@ -118,7 +97,7 @@ export default async function OpeningCandidatesPage({
             {access.edit ? <p className="text-[13px] text-muted">{target?.live ? t("hiringCandidates.emptyRuns") : t("hiringCandidates.emptyNotLive")}</p> : null}
           </div>
         ) : (
-          <CandidateTable rows={rows} openingId={opening.id} edit={access.edit} locale={locale} t={t} now={now} />
+          <CandidateTable rows={rows} openingId={opening.id} edit={access.edit} closed={closed} runs={runs} locale={locale} t={t} now={now} />
         )}
       </Card>
     </main>

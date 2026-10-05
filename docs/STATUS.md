@@ -322,6 +322,8 @@ Sonra A'daki gibi `$OLD`'a dön, kur, build et, başlat. Notlar:
 - Alımın son günü geçtikten sonra da "Yeni link üret" ve "7 gün uzat" çalışır, alımın son gününe kısılmaz (Görev 7 hükmü); ekran yeni son günü gösterir ("Son gün ...", `ORG_TIMEZONE`).
 - "Yeni link üret" geri alınamaz (C9, yayınla gibi): eski link hemen durur; uyarı düğmenin altında görünür metin. "7 gün uzat" işe alımda alımın kendi eylemi (C8: alıma bağlı, kapalı alımda yok, en yeni link, denetim kaydı); çekirdek `extendLink` yalnızca sınav linkini uzatır. Yeni link ya da uzatma adayın açık "Yeni link talebi"ni kapatır.
 - Aday talepleri (uyarlama, yeni link) aynı türden açık bir talep varken ikinci kez yazılmaz; aday aynı "iletildi" cevabını alır. Veri hakları talepleri (`deletion_requests`) sekmede görünür ama orada kapatılmaz.
+- Veri hakları talepleri (`deletion_requests`: görme, kopya, silme) uygulamanın hiçbir yerinde henüz işlenmiyor ve kapatılmıyor, iki çözümde de (sınav ve işe alım); plan 3 bunları işleyecek yeri ekler (KVKK cevap süresi görünür olarak).
+- Kapalı alımda "Yeni link üret" yalnızca başlamış aday için açık (Görev 7 hükmü; satır nedenini söyler); başlamamış adaya yeni link ve "7 gün uzat" kapalı alımda yok. Yerine geçen eski link o an kapanır, adayın kartı ileri bir tarih göstermez.
 
 ## Bağımsız kod incelemesi (2026-09-30 gece)
 

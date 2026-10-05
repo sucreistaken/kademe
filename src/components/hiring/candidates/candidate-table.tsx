@@ -46,8 +46,31 @@ function requestItem(request: CandidateRequestRow, { openingId, edit, locale, t,
  * mode, "Aday 3" instead of a name; listOpeningCandidates leaves identity,
  * extra time and requests out of the query). Never the extra-time percentage
  * (A6). Dates are the organisation's (ORG_TIMEZONE, through shortDate).
+ *
+ * A CLOSED opening is read-only (`edit` false), with one exception for someone
+ * who runs it (`runs`): a candidate who already started may get a new link to
+ * finish (Task 7 ruling; newHiringLink decides), and each row says why it has
+ * the button or not (Task 18 fix round 1). No extend and no "Tamam" there.
  */
-export function CandidateTable({ rows, openingId, edit, locale, t, now }: { rows: OpeningCandidateRow[]; openingId: string; edit: boolean; locale: Locale; t: T; now: Date }) {
+export function CandidateTable({
+  rows,
+  openingId,
+  edit,
+  closed = false,
+  runs = edit,
+  locale,
+  t,
+  now,
+}: {
+  rows: OpeningCandidateRow[];
+  openingId: string;
+  edit: boolean;
+  closed?: boolean;
+  runs?: boolean;
+  locale: Locale;
+  t: T;
+  now: Date;
+}) {
   return (
     <Table>
       <TableHeader>
@@ -85,9 +108,19 @@ export function CandidateTable({ rows, openingId, edit, locale, t, now }: { rows
               ) : (
                 <div className="space-y-2">
                   {row.link ? <p className="tnum text-[13px] text-muted">{t("hiringCandidates.linkUntil", { date: shortDate(row.link.expiresAt, locale) })}</p> : null}
+                  {closed && runs ? (
+                    row.progress === "IN_PROGRESS" ? (
+                      <>
+                        <p className="text-[13px] text-ink">{t("hiringCandidates.closedStarted")}</p>
+                        <NewLinkButton openingId={openingId} assessmentId={row.assessmentId} started />
+                      </>
+                    ) : (
+                      <p className="text-[13px] text-muted">{t("hiringCandidates.closedNotStarted")}</p>
+                    )
+                  ) : null}
                   {edit ? (
                     <>
-                      <NewLinkButton openingId={openingId} assessmentId={row.assessmentId} />
+                      <NewLinkButton openingId={openingId} assessmentId={row.assessmentId} started={row.progress === "IN_PROGRESS"} />
                       {row.link && EXTENDABLE.has(row.progress) ? (
                         <form action={extendHiringLinkAction}>
                           <input type="hidden" name="openingId" value={openingId} />

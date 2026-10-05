@@ -237,6 +237,21 @@ describe("newHiringLink", () => {
     expect(result.ok && result.expiresAt.toISOString()).toBe("2026-12-01T20:59:59.000Z");
   });
 
+  it("closes the replaced link now, so its card never shows a later closing day (Task 18 fix round 1)", async () => {
+    fake.respond = linkWorld([{ id: "l-old", status: "NOT_STARTED", expiresAt: new Date("2026-10-19T20:59:59Z") }]);
+    const result = await newHiringLink(user, OPENING, ASSESSMENT, { now: NOW });
+    const writes = writesOf(fake.ops);
+    expect(writes[0]).toMatchObject({ kind: "update", table: "assessment_links", values: { status: "EXPIRED", expiresAt: NOW } });
+    // The new link still keeps the later day of the old one.
+    expect(result.ok && result.expiresAt.toISOString()).toBe("2026-10-19T20:59:59.000Z");
+    // An old day already behind stays as it was.
+    fake.ops = [];
+    const past = new Date("2026-10-01T20:59:59Z");
+    fake.respond = linkWorld([{ id: "l-old", status: "NOT_STARTED", expiresAt: past }]);
+    await newHiringLink(user, OPENING, ASSESSMENT, { now: NOW });
+    expect(writesOf(fake.ops)[0].values).toMatchObject({ status: "EXPIRED", expiresAt: past });
+  });
+
   it("keeps a retake open on the new link", async () => {
     fake.respond = linkWorld([{ id: "l-old", status: "RETAKE_AVAILABLE", expiresAt: NOW }]);
     await newHiringLink(user, OPENING, ASSESSMENT, { now: NOW });

@@ -6,7 +6,7 @@ import { managerLocale } from "@/i18n/manager-locale";
 import { orgDay, zoneLabel } from "@/lib/org-timezone";
 import { formatInviteDeadline } from "@/solutions/hiring/rules/invitation";
 import { extendHiringLink, markRequestHandled, newHiringLink } from "@/solutions/hiring/server/invitations";
-import { editableOpening } from "../access";
+import { editableOpening, runningOpening } from "../access";
 
 export type NewLinkResult =
   | { ok: true; url: string; expires: string; name: string; message: { subject: string; body: string } }
@@ -26,12 +26,15 @@ const GATE_NOTICE = { NOT_FOUND: "notfound", CLOSED: "closed", FORBIDDEN: "forbi
  * (HIRING-UX 5.12). It cannot be undone (ruling C9, like publish): the page
  * says so next to the button. The last day reads as in the ready message, the
  * end of the day in the organisation's zone (Task 17 ruling 4); a new link
- * after the opening's deadline is allowed (Task 7 ruling). A failure answers
- * FAILED, never the raw error.
+ * after the opening's deadline is allowed (Task 7 ruling). The gate is the
+ * right to run the opening, not its status: on a CLOSED opening newHiringLink
+ * still gives a started candidate a link and refuses one who has not started
+ * (CLOSED; Task 18 fix round 1). A failure answers FAILED, never the raw
+ * error.
  */
 export async function newLinkAction(openingId: string, assessmentId: string): Promise<NewLinkResult> {
   if (typeof openingId !== "string" || typeof assessmentId !== "string") return { ok: false, code: "NOT_FOUND" };
-  const gate = await editableOpening(openingId);
+  const gate = await runningOpening(openingId);
   if (!gate.ok) return { ok: false, code: gate.code };
   try {
     const outcome = await newHiringLink({ id: gate.user.id, orgId: gate.user.orgId }, openingId, assessmentId);

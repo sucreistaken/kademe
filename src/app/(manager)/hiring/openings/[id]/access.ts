@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { ForbiddenError } from "@/lib/authorize";
+import { can, ForbiddenError } from "@/lib/authorize";
 import { requireUser } from "@/server/session";
 import { openingAccess } from "@/solutions/hiring/rules/access";
 import { loadOpening } from "@/solutions/hiring/server/openings";
@@ -45,5 +45,21 @@ export async function editableOpening(openingId: string) {
   if (!opening) return { ok: false as const, code: "NOT_FOUND" as const };
   if (opening.status === "CLOSED") return { ok: false as const, code: "CLOSED" as const };
   if (!access.edit) return { ok: false as const, code: "FORBIDDEN" as const };
+  return { ok: true as const, user, opening };
+}
+
+/**
+ * The opening for an action that its status does not decide (Task 18 fix
+ * round 1): the same organisation-scoped load and visibility as
+ * editableOpening, and the right to run openings (opening:write), but a CLOSED
+ * opening is not refused here. "Yeni link üret" uses it: a closed opening
+ * still lets a candidate who already started finish (Task 7 ruling), and
+ * newHiringLink decides that inside its transaction. Every other write keeps
+ * editableOpening.
+ */
+export async function runningOpening(openingId: string) {
+  const { user, opening } = await resolveOpening(openingId);
+  if (!opening) return { ok: false as const, code: "NOT_FOUND" as const };
+  if (!can(user, "opening:write")) return { ok: false as const, code: "FORBIDDEN" as const };
   return { ok: true as const, user, opening };
 }

@@ -55,8 +55,8 @@ const base: OpeningCandidateRow = {
   ],
 };
 
-function render(rows: OpeningCandidateRow[], edit: boolean) {
-  return CandidateTable({ rows, openingId: OPENING, edit, locale: "tr", t: managerT("tr"), now: NOW });
+function render(rows: OpeningCandidateRow[], edit: boolean, closed = { closed: false, runs: edit }) {
+  return CandidateTable({ rows, openingId: OPENING, edit, ...closed, locale: "tr", t: managerT("tr"), now: NOW });
 }
 
 describe("CandidateTable (HIRING-UX 5.12)", () => {
@@ -102,5 +102,27 @@ describe("CandidateTable (HIRING-UX 5.12)", () => {
     const words = text(render([base], true));
     expect(words).toContain("Süre uyarlaması uygulandı");
     expect(words).not.toMatch(/%|\d+ ?yüzde/);
+  });
+
+  it("tells the new link's button when the candidate is inside a stage (Minor 1)", () => {
+    const started = all(render([{ ...base, progress: "IN_PROGRESS", link: { ...base.link!, status: "IN_PROGRESS" } }], true));
+    expect(started.filter((e) => e.type === NewLinkButton).map((e) => e.props.started)).toEqual([true]);
+    expect(all(render([base], true)).filter((e) => e.type === NewLinkButton).map((e) => e.props.started)).toEqual([false]);
+  });
+
+  it("on a closed opening offers a new link only to a candidate who started, and says why (Task 7 ruling)", () => {
+    const rows: OpeningCandidateRow[] = [
+      { ...base, assessmentId: "a-started", progress: "IN_PROGRESS", link: { ...base.link!, status: "IN_PROGRESS" }, requests: [] },
+      { ...base, assessmentId: "a-waiting", seq: 2, requests: [] },
+    ];
+    const tree = render(rows, false, { closed: true, runs: true });
+    const nodes = all(tree);
+    expect(nodes.filter((e) => e.type === NewLinkButton).map((e) => [e.props.assessmentId, e.props.started])).toEqual([["a-started", true]]);
+    expect(nodes.filter((e) => e.type === "form")).toHaveLength(0);
+    const words = text(tree);
+    expect(words).toContain("Alım kapalı; başlamış aday bitirebilsin diye yeni link üretilebilir.");
+    expect(words).toContain("Alım kapalı; başlamamış adaya yeni link üretilmez.");
+    // A reader of a closed opening still gets nothing to press.
+    expect(all(render(rows, false, { closed: true, runs: false })).filter((e) => e.type === NewLinkButton)).toHaveLength(0);
   });
 });
