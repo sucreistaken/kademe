@@ -536,7 +536,7 @@
     "recordedTitle": "Bu değerlendirmede neler kaydediliyor",
     "signalVIDEO_ANSWER": "Video sorularında görüntün ve sesin kaydedilir.",
     "signalAUDIO_ANSWER": "Ses sorularında sesin kaydedilir.",
-    "signalTECHNICAL": "Bağlantı ve yükleme sorunları kaydedilir; kopma yaşarsan ekip sana yeniden hak verebilir.",
+    "signalTECHNICAL": "Teknik kayıtlar tutulur: linki ilk açtığında ve onay verdiğinde IP adresin ve tarayıcı bilgin, aşamaları başlattığın ve bitirdiğin zamanlar, sürenin dolup dolmadığı, bağlantı ve yükleme sorunları.",
     "notMonitored": "Ekranın, sekmelerin ve pencerelerin izlenmez.",
     "promise": "Hiçbir kayıt seni otomatik olarak elemez; kararı cevaplarına bakan insanlar verir.",
     "details": "Ayrıntılar",

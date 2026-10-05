@@ -536,7 +536,7 @@
     "recordedTitle": "What this assessment records",
     "signalVIDEO_ANSWER": "Your video answers are recorded with sound.",
     "signalAUDIO_ANSWER": "Your audio answers are recorded.",
-    "signalTECHNICAL": "Connection and upload problems are logged, so the team can give you another go if something breaks.",
+    "signalTECHNICAL": "Technical records are kept: your IP address and browser information when you first open the link and when you consent, when you start and finish each stage, whether time ran out, and connection and upload problems.",
     "notMonitored": "Your screen, tabs and windows are not monitored.",
     "promise": "Nothing here rejects you automatically; people who look at your answers make the decision.",
     "details": "Details",

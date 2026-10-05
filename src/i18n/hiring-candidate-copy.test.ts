@@ -91,4 +91,14 @@ describe("hiring candidate copy", () => {
     }
     for (const [, namespace] of [...hiringOf(tr), ...hiringOf(en)]) for (const text of strings(namespace)) expect(text).not.toMatch(/aynı gün dönülür|replies the same day/i);
   });
+
+  it("lists the technical records the flow keeps and promises no retake (C24 ruling)", () => {
+    expect(tr.hiringLanding.signalTECHNICAL).toBe(
+      "Teknik kayıtlar tutulur: linki ilk açtığında ve onay verdiğinde IP adresin ve tarayıcı bilgin, aşamaları başlattığın ve bitirdiğin zamanlar, sürenin dolup dolmadığı, bağlantı ve yükleme sorunları.",
+    );
+    expect(en.hiringLanding.signalTECHNICAL).toBe(
+      "Technical records are kept: your IP address and browser information when you first open the link and when you consent, when you start and finish each stage, whether time ran out, and connection and upload problems.",
+    );
+    for (const [, namespace] of [...hiringOf(tr), ...hiringOf(en)]) for (const text of strings(namespace)) expect(text).not.toMatch(/yeniden hak|another go/i);
+  });
 });
