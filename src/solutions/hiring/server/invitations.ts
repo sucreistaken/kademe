@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNotNull, isNull, ne, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull, ne, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import type { Executor } from "@/db/executor";
 import {
@@ -236,6 +236,17 @@ export type NewLinkOutcome =
   | { ok: true; url: string; expiresAt: Date; name: string; message: { subject: string; body: string } }
   | { ok: false; code: "NOT_FOUND" | "COMPLETED" | "CLOSED" };
 
+/** The candidate has begun: an attempt of the invitation started, or one of its stages did. */
+async function hasStarted(x: Executor, assessmentId: string): Promise<boolean> {
+  const [started] = await x
+    .select({ id: attempts.id })
+    .from(attempts)
+    .leftJoin(hiringStageRuns, eq(hiringStageRuns.attemptId, attempts.id))
+    .where(and(eq(attempts.assessmentId, assessmentId), or(isNotNull(attempts.startedAt), isNotNull(hiringStageRuns.startedAt))))
+    .limit(1);
+  return !!started;
+}
+
 /** A new link lives at least this many more days. */
 const NEW_LINK_MIN_DAYS = 7;
 
@@ -244,7 +255,9 @@ const NEW_LINK_MIN_DAYS = 7;
  * new one keeps the progress state (NOT_STARTED, IN_PROGRESS or
  * RETAKE_AVAILABLE) and lives until the later of the old date and the end of
  * the org's day seven days from today. A finished candidate keeps their link
- * (it is their way back to /done).
+ * (it is their way back to /done). On a CLOSED opening only a candidate who
+ * already started gets one (planner open question 6: a close stops only
+ * not-started candidates).
  */
 export async function newHiringLink(
   user: { id: string; orgId: string },
@@ -277,13 +290,15 @@ export async function newHiringLink(
       .limit(1)
       .for("update", { of: hiringAssessments });
     if (!row) return { ok: false as const, code: "NOT_FOUND" as const };
-    if (opening.status === "CLOSED") return { ok: false as const, code: "CLOSED" as const };
     const [old] = await tx
       .select({ id: assessmentLinks.id, status: assessmentLinks.status, expiresAt: assessmentLinks.expiresAt })
       .from(assessmentLinks)
       .where(and(eq(assessmentLinks.assessmentId, row.assessmentId), ne(assessmentLinks.status, "EXPIRED")))
       .for("update");
     if (old?.status === "COMPLETED") return { ok: false as const, code: "COMPLETED" as const };
+    // Planner open question 6: a closed opening stops only candidates who have not started.
+    const begun = old?.status === "IN_PROGRESS" || old?.status === "RETAKE_AVAILABLE";
+    if (opening.status === "CLOSED" && !begun && !(await hasStarted(tx, row.assessmentId))) return { ok: false as const, code: "CLOSED" as const };
     if (old) await tx.update(assessmentLinks).set({ status: "EXPIRED" }).where(and(eq(assessmentLinks.id, old.id), eq(assessmentLinks.assessmentId, row.assessmentId)));
     const week = deadlineToDate(addDays(orgDay(now), NEW_LINK_MIN_DAYS));
     const expiresAt = old && old.expiresAt.getTime() > week.getTime() ? old.expiresAt : week;
@@ -447,8 +462,12 @@ export async function listOpeningCandidates(
         .where(inArray(hiringStageRuns.attemptId, attemptIds))
     : [];
   return rows.map((r, i) => {
-    // Newest link and newest attempt first (ordered above).
-    const link = links.find((l) => l.assessmentId === r.assessmentId) ?? null;
+    // Links and attempts come newest first (ordered above). The link shown is
+    // the live one (at most one is not EXPIRED), else the newest; "opened"
+    // counts any link of the invitation, so a new link never makes a
+    // candidate who already opened one look merely invited.
+    const ownLinks = links.filter((l) => l.assessmentId === r.assessmentId);
+    const link = ownLinks.find((l) => l.status !== "EXPIRED") ?? ownLinks[0] ?? null;
     const attempt = attemptRows.find((a) => a.assessmentId === r.assessmentId) ?? null;
     const own = attempt ? runs.filter((run) => run.attemptId === attempt.id) : [];
     const open: CandidateRequestRow[] = [
@@ -467,7 +486,7 @@ export async function listOpeningCandidates(
       progress: candidateProgress({
         linkStatus: link?.status ?? "EXPIRED",
         linkExpiresAt: link?.expiresAt ?? new Date(0),
-        firstSeen: !!link?.firstSeenIp,
+        firstSeen: ownLinks.some((l) => !!l.firstSeenIp),
         started: !!attempt?.startedAt,
         completed: !!attempt?.completedAt,
         now,

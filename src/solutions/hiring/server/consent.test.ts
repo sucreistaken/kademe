@@ -27,7 +27,8 @@ describe("ensureHiringConsentText", () => {
     fake.respond = (op) => (op.kind === "insert" ? [{ id: "ct-new" }] : op.table === "organizations" ? [{ id: ORG }] : []);
     expect(await ensureHiringConsentText(ORG)).toBe("ct-new");
     const lock = fake.ops.find((o) => o.table === "organizations")!;
-    expect(lock.lock).toBe("update");
+    // NO KEY UPDATE: ensure calls still run one at a time, while the FOR KEY SHARE every foreign key insert takes on the org row is not blocked.
+    expect(lock.lock).toBe("no key update");
     expect(lock.params).toEqual([ORG]);
     const [insert] = writesOf(fake.ops);
     expect(insert.values).toEqual({ orgId: ORG, solution: "HIRING", version: 1, body: { tr: HIRING_CONSENT_TR, en: HIRING_CONSENT_EN } });

@@ -10,8 +10,12 @@ import { HIRING_CONSENT_EN, HIRING_CONSENT_TR } from "../consent-default";
  * organisation (the same-version invariant of schema/hiring.ts that the
  * database does not enforce for hiring_assessments.consent_text_id). The
  * organisation row is locked first, so two invitations at the same moment
- * write one text, not two. Pass the invitation's transaction as `x` so the
- * lock is held until the invitation that freezes the text commits.
+ * write one text, not two. The lock is FOR NO KEY UPDATE: it still makes two
+ * ensure calls run one at a time, but unlike FOR UPDATE it does not conflict
+ * with the FOR KEY SHARE that every foreign key insert takes on the
+ * organisation row, so the organisation's other writes never wait for it.
+ * Pass the invitation's transaction as `x` so the lock is held until the
+ * invitation that freezes the text commits.
  */
 export async function ensureHiringConsentText(orgId: string, x: Executor = db): Promise<string> {
   const newest = () =>
@@ -23,7 +27,7 @@ export async function ensureHiringConsentText(orgId: string, x: Executor = db): 
       .limit(1);
   const [found] = await newest();
   if (found) return found.id;
-  await x.select({ id: organizations.id }).from(organizations).where(eq(organizations.id, orgId)).for("update");
+  await x.select({ id: organizations.id }).from(organizations).where(eq(organizations.id, orgId)).for("no key update");
   const [again] = await newest();
   if (again) return again.id;
   const [created] = await x

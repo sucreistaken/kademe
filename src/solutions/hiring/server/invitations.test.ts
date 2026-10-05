@@ -247,11 +247,35 @@ describe("newHiringLink", () => {
     expect(writesOf(fake.ops)).toEqual([]);
   });
 
-  it("refuses a closed opening, an invitation of another opening or organisation, and a bad id", async () => {
+  it("refuses a new link on a closed opening for a candidate who has not started", async () => {
     world.opening = { ...openOpening, status: "CLOSED" };
-    fake.respond = linkWorld([{ id: "l", status: "NOT_STARTED", expiresAt: NOW }]);
-    expect(await newHiringLink(user, OPENING, ASSESSMENT, { now: NOW })).toEqual({ ok: false, code: "CLOSED" });
-    world.opening = { ...openOpening };
+    for (const link of [[{ id: "l", status: "NOT_STARTED", expiresAt: NOW }], []]) {
+      fake.ops = [];
+      fake.respond = linkWorld(link);
+      expect(await newHiringLink(user, OPENING, ASSESSMENT, { now: NOW })).toEqual({ ok: false, code: "CLOSED" });
+      expect(writesOf(fake.ops)).toEqual([]);
+      const started = fake.ops.find((o) => o.table === "attempts")!;
+      expect(started.params).toContain(ASSESSMENT);
+      expect(started.joins.join(" ")).toContain('"hiring_stage_runs"."attempt_id" = "attempts"."id"');
+    }
+  });
+
+  it.each([
+    ["an in-progress link", [{ id: "l", status: "IN_PROGRESS", expiresAt: NOW }], [], "IN_PROGRESS"],
+    ["a retake", [{ id: "l", status: "RETAKE_AVAILABLE", expiresAt: NOW }], [], "RETAKE_AVAILABLE"],
+    ["a started attempt behind a not-started link", [{ id: "l", status: "NOT_STARTED", expiresAt: NOW }], [{ id: "t1" }], "NOT_STARTED"],
+  ] as const)("lets a candidate who already started finish a closed opening: %s", async (_label, link, started, status) => {
+    world.opening = { ...openOpening, status: "CLOSED" };
+    const base = linkWorld([...link]);
+    fake.respond = (op) => (op.table === "attempts" ? [...started] : base(op));
+    const result = await newHiringLink(user, OPENING, ASSESSMENT, { now: NOW });
+    expect(result.ok).toBe(true);
+    const writes = writesOf(fake.ops);
+    expect(writes[0]).toMatchObject({ kind: "update", table: "assessment_links", values: { status: "EXPIRED" } });
+    expect(writes[1]).toMatchObject({ kind: "insert", table: "assessment_links", values: { status } });
+  });
+
+  it("refuses an invitation of another opening or organisation, and a bad id", async () => {
     fake.respond = (op) => (op.table === "hiring_assessments" ? [] : respond(op));
     expect(await newHiringLink(user, OPENING, ASSESSMENT, { now: NOW })).toEqual({ ok: false, code: "NOT_FOUND" });
     world.opening = null;
@@ -312,6 +336,28 @@ describe("listOpeningCandidates", () => {
         { id: "r1", source: "REQUEST", kind: "NEW_LINK", message: null, createdAt: LATER },
       ],
     });
+  });
+
+  it("counts a candidate who opened an earlier link as opened, and shows the live link", async () => {
+    const EARLIER = new Date("2026-10-01T09:00:00Z");
+    const LIVE_UNTIL = new Date("2026-10-12T20:59:59Z");
+    fake.respond = (op) => {
+      if (op.table === "assessment_links")
+        return [
+          // Newest first, as the query orders them: a superseded link newer than the live one never wins.
+          { id: "l-stale", assessmentId: "a1", status: "EXPIRED", expiresAt: NOW, firstSeenIp: null, createdAt: LATER },
+          { id: "l-new", assessmentId: "a1", status: "NOT_STARTED", expiresAt: LIVE_UNTIL, firstSeenIp: null, createdAt: NOW },
+          { id: "l-old", assessmentId: "a1", status: "EXPIRED", expiresAt: NOW, firstSeenIp: "1.2.3.4", createdAt: EARLIER },
+          { id: "l-gone", assessmentId: "a2", status: "EXPIRED", expiresAt: NOW, firstSeenIp: null, createdAt: LATER },
+          { id: "l-gone-old", assessmentId: "a2", status: "EXPIRED", expiresAt: EARLIER, firstSeenIp: null, createdAt: EARLIER },
+        ];
+      if (op.table === "attempts" || op.table === "hiring_stage_runs") return [];
+      return world2(op);
+    };
+    const list = await listOpeningCandidates(ORG, OPENING, { runs: true, blindMode: false }, NOW);
+    expect(list[0]).toMatchObject({ progress: "OPENED", link: { id: "l-new", status: "NOT_STARTED", expiresAt: LIVE_UNTIL } });
+    // Every link expired: the newest one is shown.
+    expect(list[1]).toMatchObject({ progress: "EXPIRED", link: { id: "l-gone", status: "EXPIRED" } });
   });
 
   it("never tells a reviewer about extra time or requests, and leaves identity out of the query when blind mode is on", async () => {
