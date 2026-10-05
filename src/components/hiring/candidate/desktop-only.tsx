@@ -5,6 +5,7 @@ import { CalendarDays, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useStepFocus } from "@/hooks/use-step-focus";
 import { apiSend } from "@/lib/client/api";
+import { Illustration } from "@/components/visual/illustrations";
 import { useT } from "@/i18n/candidate-client";
 import { mailTo } from "./closed";
 import { candidateLink, copyLink } from "./copy-link";
@@ -70,6 +71,7 @@ export function DesktopOnlyScreen({
 
   return (
     <div className="mx-auto max-w-[560px] pt-8 pb-10">
+      <Illustration name="desktopOnly" size="phone" />
       <h1 className="mt-6 text-[28px] leading-9 font-semibold text-ink">{t("title")}</h1>
       <p className="mt-3 text-[16px] leading-[26px] text-ink-2">{t("why")}</p>
       {stageRunning ? <p className="mt-3 text-[16px] leading-[26px] font-medium text-ink">{t("stageRunning")}</p> : null}

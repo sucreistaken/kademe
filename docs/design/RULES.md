@@ -18,6 +18,7 @@ PY
 1. **One accent colour** (`accent`, `#0E6A57`), used in exactly three places:
    the primary CTA, the active state, and the timer. Card borders, background
    blocks and secondary buttons are never accent-coloured.
+   Illustrations never use the accent: they draw with the five `--color-illus-*` tones only (HIRING-VISUAL-FLOW 2.2).
 2. **One filled button per screen.** Everything else is outline or text.
 3. **Status is a dot plus text, never a badge pill.** Colour only on active.
 4. **No "are you sure?" dialogs.** The action happens immediately and an 8
@@ -39,7 +40,7 @@ PY
    Existing exam screens still use literal px radii and move over screen by
    screen. Spacing base 4px.
 9. Manager layouts are 1360px wide, candidate layouts 1000px. The candidate side
-   is deliberately narrower: one column, one decision per screen.
+   is deliberately narrower: one decision per screen (preparation and finish screens may use two regions, question screens keep one focus; HIRING-VISUAL-FLOW G10).
 
 ## Tokens
 

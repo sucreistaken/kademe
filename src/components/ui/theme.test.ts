@@ -41,6 +41,16 @@ describe("Kademe tokens keep their meaning", () => {
     expect(theme[name]).toBe(value);
   });
 
+  it.each([
+    ["--color-illus-line", "#131311"],
+    ["--color-illus-fill", "#eef6f3"],
+    ["--color-illus-tint", "#cfe3da"],
+    ["--color-illus-sage", "#9dc6b6"],
+    ["--color-illus-warm", "#f1f0ec"],
+  ])("illustration tone %s is %s (HIRING-VISUAL-FLOW 2.2: light tones only, never the accent)", (name, value) => {
+    expect(theme[name]).toBe(value);
+  });
+
   it("names the radius steps by shadcn role, with the HIRING-UX 8.3 pixels", () => {
     // shadcn radix-nova draws fields, menus and buttons with rounded-lg, cards
     // and dialogs with rounded-xl, items inside fields and menus with

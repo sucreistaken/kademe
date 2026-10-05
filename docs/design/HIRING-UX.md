@@ -712,7 +712,9 @@ alanı; "Mevcut puanlar eski ağırlıklarla kalır. Yeniden hesaplamak ayrı bi
 ### 5.8 Aday önizlemesi (`/hiring/openings/[id]/assessment/preview`)
 
 Adayın göreceği akışın aynısı, gerçek bileşenlerle, üstte ince bir şerit: "Önizleme · cevaplar
-kaydedilmez · kamera açılmaz" + "Mobil görünüm" geçişi (390px çerçeve) + "Kurucuya dön".
+kaydedilmez · kamera açılmaz" + "1024 genişlik" geçişi (adayın en küçük masaüstü penceresi; aday akışı
+yalnızca bilgisayardan, K2, HIRING-VISUAL-FLOW 4.7) + "Kurucuya dön". Telefonun "bilgisayardan aç"
+ekranı önizlemede bir adım olarak görülebilir.
 İç alanlar (`internal_*`) burada da yok; önizleme `candidateSafe()` çıktısını kullanır, böylece
 "adayın gördüğü" bir iddia değil kanıt olur. Dolu buton adayın ekranındakidir; şeritte dolu buton yok.
 
@@ -985,8 +987,8 @@ davet eski kuralla devam eder."
 **Ortak kurallar:**
 - Hitap **"sen"** (eski işe alım metinleriyle aynı; sıcak ve yumuşak). Sınav tarafı "siz" kalır.
   *Neden:* işe alımda aday bir yetişkin ve marka sesi samimi; sınav tarafında kurum dili yerleşik.
-- Tek sütun. Okuma metni en fazla 640px, video ekranları 960px, çerçeve 1000px (RULES.md).
-- Her ekranda tek dolu buton. Mobilde dolu buton altta sabit çubukta (güvenli alan payıyla).
+- Tek karar (G1). Hazırlık ve bitiş ekranları iki bölge (başlık solda ~400px, içerik sağda ~520px), soru ekranları tek odaklı (yazılı ve seçmeli 760px, video ve ses iki bölge); çerçeve 1000px; 1024'ten dar pencerede tek sütun (HIRING-VISUAL-FLOW G10).
+- Her ekranda tek dolu buton, hep aynı yerde: görünüm alanının altına yapışık `StepFooter`'ın sağında, kapalıysa nedeni solunda (HIRING-VISUAL-FLOW G9).
 - Üstte: küçük şirket adı (logo yoksa ad), dil seçici, "Yardım" (metin; açılınca SSS + "Sorun bildir").
   İlerleme yalnızca ince bir çubuk + "Aşama 2 / 3" metni; başka süs yok.
 - Sayaçlar sakin: accent renk, `tnum`, yanıp sönmez, kırmızıya dönmez. Son 60 saniyede yalnızca
@@ -1106,7 +1108,8 @@ yalnızca çoklu seçimde. Doğru/yanlış geri bildirimi verilmez.
 ### 6.9 Dosya aktivitesi
 
 Sürükle-bırak alanı + "Dosya seç", kabul edilen türler ve boyut baştan yazılı ("PDF, DOCX ya da
-PNG · en fazla 20 MB"), yükleme çubuğu, "Değiştir". Mobilde doğrudan dosya seçici/kamera.
+PNG · en fazla 20 MB"), yükleme çubuğu, "Değiştir". Aday akışı yalnızca bilgisayardan (K2,
+HIRING-VISUAL-FLOW 3.0); telefon kamerasından yükleme yolu yok.
 Yanlış tür: alanın altında "Bu dosya türü kabul edilmiyor. PDF, DOCX ya da PNG yükle."
 
 ### 6.10 Aşama arası
@@ -1360,8 +1363,7 @@ animasyon yok (hız hissi > süs).
 
 ### 8.6 İkon ve görsel
 
-`lucide-react` (zaten bağımlılık), 16/20px, 1.5 çizgi. İllüstrasyon yok; boş durumlar metin + tek
-eylemdir. Aday tarafında şirket logosu varsa tek görsel odur.
+`lucide-react` (zaten bağımlılık): anlam taşıyan ikon nötr kutuda (40px, `bg-secondary`), 20px, 1.75 çizgi (HIRING-VISUAL-FLOW G5). Çizim (illüstrasyon) yalnızca karşılama, onay, cihaz izni, bitti, sorun, 'bilgisayardan aç' ve panelin boş durum ekranlarında; soru ekranında asla (kullanıcı kararı K1, HIRING-VISUAL-FLOW 2.2). Çizimler satır içi SVG, `aria-hidden`, yalnızca `--color-illus-*` tonları, doygun accent yok. Aday tarafında şirket logosu varsa ilk görsel odur.
 
 ### 8.7 Erişilebilirlik
 

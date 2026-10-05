@@ -84,6 +84,17 @@
   --color-vault-label: #8a8a83; /* field labels on the dark ground */
   --color-vault-text: #f2f1ed; /* body text on the dark ground */
 
+  /*
+   * Illustration tones (HIRING-VISUAL-FLOW 2.2, user decision K1). Drawings
+   * never use the saturated accent: the only saturated green on a screen
+   * stays the filled button. Used only by components/visual/illustrations.tsx.
+   */
+  --color-illus-line: #131311; /* = ink */
+  --color-illus-fill: #eef6f3; /* = brand-soft */
+  --color-illus-tint: #cfe3da;
+  --color-illus-sage: #9dc6b6;
+  --color-illus-warm: #f1f0ec;
+
   --font-sans: var(--font-figtree), system-ui, sans-serif;
 
   /*
