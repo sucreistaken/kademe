@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, DisabledReason } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 /** Today's "Davet et" when the user may invite for more than one solution. */
@@ -23,5 +23,20 @@ export function InviteMenu({ label, items }: { label: string; items: Array<{ key
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+/**
+ * Today's "Davet et" for a user who may invite for no solution: disabled, its
+ * reason on screen and linked to the button (aria-describedby, id + -why).
+ */
+export function InviteUnavailable({ label, reason }: { label: string; reason: string }) {
+  return (
+    <div className="flex flex-col items-end">
+      <Button id="today-invite" variant="primary" disabled disabledReason={reason}>
+        {label}
+      </Button>
+      <DisabledReason id="today-invite-why">{reason}</DisabledReason>
+    </div>
   );
 }

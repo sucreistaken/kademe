@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { InviteMenu } from "@/components/manager/invite-menu";
+import { InviteMenu, InviteUnavailable } from "@/components/manager/invite-menu";
 import { inviteChoice } from "@/components/manager/invite-choice";
-import { Button, DisabledReason } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dot, Level, PageHead, shortDateTime } from "@/components/panel/bits";
 import { extendLink } from "@/app/(manager)/actions";
@@ -60,12 +60,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
               <Link href={invite.href}>{invite.label}</Link>
             </Button>
           ) : (
-            <div className="flex flex-col items-end">
-              <Button variant="primary" disabled disabledReason={t("today.noInvitePermission")}>
-                {t("today.inviteMenu")}
-              </Button>
-              <DisabledReason>{t("today.noInvitePermission")}</DisabledReason>
-            </div>
+            <InviteUnavailable label={t("today.inviteMenu")} reason={t("today.noInvitePermission")} />
           )
         }
       />
