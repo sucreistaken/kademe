@@ -40,6 +40,11 @@ describe("GET /hiring/media/play", () => {
     expect(h.playbackUrl.mock.calls[0]).toEqual([h.hctx, "m-1"]);
   });
 
+  it("tells every cache not to keep the answer: the signed URL is the candidate's alone and short-lived", async () => {
+    h.playbackUrl.mockResolvedValueOnce({ ok: true, url: "/signed/x?s=600" });
+    expect((await get("?ref=m-1")).headers.get("cache-control")).toBe("no-store");
+  });
+
   it("answers a take that is not the candidate's (or no ref at all) with 400 UPLOAD_NOT_FOUND", async () => {
     h.playbackUrl.mockResolvedValue({ ok: false, code: "UPLOAD_NOT_FOUND" });
     const res = await get("?ref=someone-else");
