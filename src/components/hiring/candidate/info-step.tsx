@@ -4,16 +4,15 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { StepFooter } from "@/components/visual/step-footer";
 import { StepScreen } from "@/components/visual/step-screen";
-import { useStepFocus } from "@/hooks/use-step-focus";
+import { useArrivalFocus } from "@/hooks/use-step-focus";
 import { apiSend } from "@/lib/client/api";
 import { nextPath } from "@/lib/candidate-routes";
 import { useT } from "@/i18n/candidate-client";
 import type { HiringCandidateState } from "@/solutions/hiring/rules/candidate-state";
+import { InfoField } from "./info-field";
 import { infoProblems, infoWaitReason } from "./info-model";
 import { serverMessage } from "./server-message";
 import { useJourney } from "./use-journey";
-
-const FIELD = "mt-2 h-12 w-full rounded-[10px] border bg-surface px-3.5 text-[16px] text-ink outline-none focus:border-ink/40";
 
 /**
  * HIRING-VISUAL-FLOW 3.12: only when the invitation lacks the e-mail. Two
@@ -44,7 +43,7 @@ export function InfoStep({
   const why = infoWaitReason(form);
   const problems = infoProblems(form);
   const journey = useJourney("prep", { device, warmup });
-  const heading = useStepFocus<HTMLHeadingElement>("info");
+  const heading = useArrivalFocus<HTMLHeadingElement>();
 
   function edit(next: typeof form) {
     setForm(next);
@@ -69,45 +68,27 @@ export function InfoStep({
     <>
       <StepScreen layout="split" title={t("title")} titleRef={heading} lead={<p>{t("body")}</p>}>
         <div className="space-y-5">
-          <label className="block">
-            <span className="text-[16px] font-medium text-ink">{t("fullName")}</span>
-            <input
-              id="info-name"
-              className={`${FIELD} ${nameShown ? "border-danger" : "border-line-strong"}`}
-              value={form.fullName}
-              autoComplete="name"
-              maxLength={120}
-              aria-invalid={nameShown || undefined}
-              aria-describedby={nameShown ? "info-name-error" : undefined}
-              onChange={(e) => edit({ ...form, fullName: e.target.value })}
-              onBlur={() => setLeft((was) => ({ ...was, fullName: true }))}
-            />
-            {nameShown ? (
-              <p id="info-name-error" className="mt-2 text-[14px] leading-[22px] text-danger">
-                {t("name")}
-              </p>
-            ) : null}
-          </label>
-          <label className="block">
-            <span className="text-[16px] font-medium text-ink">{t("email")}</span>
-            <input
-              id="info-email"
-              className={`${FIELD} ${emailShown ? "border-danger" : "border-line-strong"}`}
-              type="email"
-              value={form.email}
-              autoComplete="email"
-              maxLength={160}
-              aria-invalid={emailShown || undefined}
-              aria-describedby={emailShown ? "info-email-error" : undefined}
-              onChange={(e) => edit({ ...form, email: e.target.value })}
-              onBlur={() => setLeft((was) => ({ ...was, email: true }))}
-            />
-            {emailShown ? (
-              <p id="info-email-error" className="mt-2 text-[14px] leading-[22px] text-danger">
-                {t("emailWait")}
-              </p>
-            ) : null}
-          </label>
+          <InfoField
+            id="info-name"
+            label={t("fullName")}
+            error={nameShown ? t("name") : null}
+            value={form.fullName}
+            autoComplete="name"
+            maxLength={120}
+            onChange={(v) => edit({ ...form, fullName: v })}
+            onBlur={() => setLeft((was) => ({ ...was, fullName: true }))}
+          />
+          <InfoField
+            id="info-email"
+            label={t("email")}
+            error={emailShown ? t("emailWait") : null}
+            type="email"
+            value={form.email}
+            autoComplete="email"
+            maxLength={160}
+            onChange={(v) => edit({ ...form, email: v })}
+            onBlur={() => setLeft((was) => ({ ...was, email: true }))}
+          />
         </div>
       </StepScreen>
       <StepFooter

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { stepFocusController } from "./use-step-focus";
+import { arrivalFocusController, stepFocusController } from "./use-step-focus";
 
 /**
  * A step-by-step flow (the hiring preview now, plan 2's candidate flow later)
@@ -42,5 +42,37 @@ describe("stepFocusController", () => {
     const c = stepFocusController();
     c.onStep(0, null);
     expect(() => c.onStep(1, null)).not.toThrow();
+  });
+});
+
+/**
+ * A screen reached by a navigation (/info, /practice) is one step: a constant
+ * step key never changes, so useStepFocus would never move focus there. The
+ * arrival controller focuses the heading once when the screen mounts.
+ */
+describe("arrivalFocusController", () => {
+  it("focuses the heading once on arrival, and not again when React runs the effect twice", () => {
+    const c = arrivalFocusController();
+    const h = { focus: vi.fn() };
+    expect(c.onArrive(h)).toBe(true);
+    expect(c.onArrive(h)).toBe(false);
+    expect(h.focus).toHaveBeenCalledTimes(1);
+    expect(h.focus).toHaveBeenCalledWith({ preventScroll: true });
+  });
+
+  it("waits for a heading to exist, then focuses it", () => {
+    const c = arrivalFocusController();
+    expect(c.onArrive(null)).toBe(false);
+    const h = { focus: vi.fn() };
+    expect(c.onArrive(h)).toBe(true);
+    expect(h.focus).toHaveBeenCalledTimes(1);
+  });
+
+  it("documents why it exists: a constant step key never focuses through the step controller", () => {
+    const c = stepFocusController();
+    const h = { focus: vi.fn() };
+    c.onStep("info", h);
+    c.onStep("info", h);
+    expect(h.focus).not.toHaveBeenCalled();
   });
 });

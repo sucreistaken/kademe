@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useStepFocus } from "@/hooks/use-step-focus";
+import { useArrivalFocus } from "@/hooks/use-step-focus";
 import { useT } from "@/i18n/candidate-client";
 import type { Locale } from "@/i18n/locale";
 import { localSink } from "./local-sink";
@@ -20,7 +20,7 @@ export function Practice({ token, camera, locale }: { token: string; camera: boo
   const t = useT("hiringPractice");
   const sink = useMemo(() => localSink(), []);
   useEffect(() => () => sink.release(), [sink]);
-  const heading = useStepFocus<HTMLHeadingElement>("practice");
+  const heading = useArrivalFocus<HTMLHeadingElement>();
   const [hasTake, setHasTake] = useState(false);
   const [phase, setPhase] = useState<RecordedPhase>("think");
   const prompt = t("prompt");
