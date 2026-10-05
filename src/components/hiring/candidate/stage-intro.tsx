@@ -30,10 +30,9 @@ const RULE_ICON: Record<StageRule["kind"], typeof Clock> = {
  * name for it), its time (the clock's own minutes, grace included: C25), the
  * questions and retakes as tiles, only the rules that apply as icon rows, and
  * that the clock starts with the press (clockStarts) next to the one filled
- * button. Between stages a
- * calm line says how the last one ended. Below 640px an unstarted stage waits
- * (3.0). No question of the stage is shown here (leak rule: the intro is a
- * preparation screen).
+ * button. Between stages a calm line says how the last one ended. Below 640px
+ * an unstarted stage waits (3.0). No question of the stage is shown here
+ * (leak rule: the intro is a preparation screen).
  */
 export function StageIntro({
   current,

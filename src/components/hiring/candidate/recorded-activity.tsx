@@ -18,7 +18,7 @@ import type { Locale } from "@/i18n/locale";
 import type { CandidateActivity } from "@/solutions/hiring/rules/candidate-view";
 import { ActivityHeader } from "./activity-header";
 import { peakLevel } from "./device-rows";
-import { recordedFooterState, refocusAfterTimeUp, startLineShown } from "./recorded-footer";
+import { recordedFooterState, startLineShown, useRescueFocus } from "./recorded-footer";
 import type { RecordingResult, RecordingSink, TakeProgress } from "./recording-sink";
 import { serverMessage } from "./server-message";
 import { trackStream } from "./streams";
@@ -408,13 +408,7 @@ export function RecordedActivity(props: RecordedProps) {
   }, [phase, audioOnly]);
 
   // Task 4 carry 6: time up turns a focused primary into a waiting one (or takes a retake away); focus goes to the heading, not a disabled button.
-  const wasTimeUp = useRef(timeUp);
-  useEffect(() => {
-    const active = document.activeElement;
-    const kind = !active || active === document.body ? "body" : active instanceof HTMLButtonElement && active.disabled ? "disabled-control" : "other";
-    if (refocusAfterTimeUp({ timeUp, wasTimeUp: wasTimeUp.current, active: kind })) document.getElementById(`prompt-${activity.id}`)?.focus();
-    wasTimeUp.current = timeUp;
-  }, [timeUp, activity.id]);
+  useRescueFocus(timeUp, () => document.getElementById(`prompt-${activity.id}`), timeUp);
 
   // The stage's close (next question, finish, time up) waits for a take that is recording or finishing.
   useEffect(() => {

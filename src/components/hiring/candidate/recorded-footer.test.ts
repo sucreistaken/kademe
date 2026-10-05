@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { recordedFooterState, refocusAfterTimeUp, startLineShown } from "./recorded-footer";
+import { activeKind, recordedFooterState, refocusAfterTimeUp, startLineShown } from "./recorded-footer";
 
 const REASON = "Süre doldu; yeni kayıt başlatılamaz.";
 const base = { timeUpReason: REASON };
@@ -55,5 +55,23 @@ describe("refocusAfterTimeUp (Task 4 carry 6)", () => {
     expect(refocusAfterTimeUp({ timeUp: true, wasTimeUp: false, active: "other" })).toBe(false);
     expect(refocusAfterTimeUp({ timeUp: true, wasTimeUp: true, active: "body" })).toBe(false);
     expect(refocusAfterTimeUp({ timeUp: false, wasTimeUp: false, active: "body" })).toBe(false);
+  });
+});
+
+describe("activeKind (the pure part of useRescueFocus, Task 10 fix round 1)", () => {
+  const body = { tagName: "BODY" };
+
+  it("counts no focus, or focus on the page body, as focus on nothing", () => {
+    expect(activeKind(null, body)).toBe("body");
+    expect(activeKind(body, body)).toBe("body");
+  });
+
+  it("names a disabled button, and leaves everything else as other", () => {
+    expect(activeKind({ tagName: "BUTTON", disabled: true }, body)).toBe("disabled-control");
+    expect(activeKind({ tagName: "BUTTON", disabled: false }, body)).toBe("other");
+    // A working footer button is aria-disabled, not disabled: it keeps its focus.
+    expect(activeKind({ tagName: "BUTTON" }, body)).toBe("other");
+    expect(activeKind({ tagName: "TEXTAREA", disabled: true }, body)).toBe("other");
+    expect(activeKind({ tagName: "H2" }, body)).toBe("other");
   });
 });

@@ -2,7 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { StepFooter } from "@/components/visual/step-footer";
-import { requiredKey, runnerPrimary, undoFocus, type RunnerFooterState } from "./runner-footer";
+import { keepsStage, requiredKey, runnerPrimary, undoFocus, type RunnerFooterState } from "./runner-footer";
 
 /**
  * STATUS item 23 ("soluk, nedensiz"): before Task 10 the runner's own button was
@@ -91,6 +91,14 @@ describe("the runner's footer button (STATUS item 23, plan decision 4)", () => {
     expect(requiredKey("SHORT_TEXT")).toBe("requiredText");
     expect(requiredKey("FILE_UPLOAD")).toBe("requiredReason");
     expect(requiredKey(null)).toBe("requiredReason");
+  });
+});
+
+describe("the state a last commit hands the runner (Task 10 fix round 1, Minor 2)", () => {
+  it("is taken only while it is still this stage; the next stage or no stage at all is left to the submit", () => {
+    expect(keepsStage({ current: { position: 2 } } as never, 2)).toBe(true);
+    expect(keepsStage({ current: { position: 3 } } as never, 2)).toBe(false);
+    expect(keepsStage({ current: null } as never, 2)).toBe(false);
   });
 });
 

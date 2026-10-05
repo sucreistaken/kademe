@@ -22,8 +22,8 @@ import { FileActivity } from "./file-activity";
 import { clearDraft, draftKey, lostWords, markLostWords, sessionDrafts, type LostKind } from "./draft-store";
 import { answeredLocally, isLastMinute, minutesLeft, ownsPrimary, primaryKey, resumeOf, tabReply, type LocalAnswer, type TabMessage } from "./runner-model";
 import { RecordedActivity } from "./recorded-activity";
-import { refocusAfterTimeUp } from "./recorded-footer";
-import { requiredKey, runnerPrimary, undoFocus } from "./runner-footer";
+import { useRescueFocus } from "./recorded-footer";
+import { keepsStage, requiredKey, runnerPrimary, undoFocus } from "./runner-footer";
 import { closeQuestion, commitNeeded, recoveryFor, settleWithin, withTimeout } from "./runner-steps";
 import { serverMessage } from "./server-message";
 import { StageIntro } from "./stage-intro";
@@ -191,16 +191,20 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
     void submit(true);
   }, [autoDue, submit]);
 
+  const locked = timeUp && current.autoSubmit;
+  const retrying = !!failure?.retry && !busy;
+  // Fix round 2: a question the server shows closed (no way back; the recovery after a failed stage
+  // submit) cannot take edits, so its inputs say so instead of refusing them silently.
+  const closedHere = !!activity && !commitNeeded({ responses: current.responses, activityId: activity.id, backNavigation: current.backNavigation });
+  // A recorded question draws its own footer (think, record, review), except for a retry or a closed question.
+  const runnerFooter = !(activity && ownsPrimary(activity.type) && !retrying && !closedHere);
+  const runnerFooterShown = phase === "question" && !blocked && runnerFooter;
   // Task 4 carry 6: time up turns the focused filled button into a waiting one (its reason in the footer);
   // focus that was on it, or on nothing, goes to the heading (the time-up line above it says why).
-  const locked = timeUp && current.autoSubmit;
-  const wasLocked = useRef(false);
-  useEffect(() => {
-    const active = document.activeElement;
-    const kind = !active || active === document.body ? "body" : active instanceof HTMLButtonElement && active.disabled ? "disabled-control" : "other";
-    if (refocusAfterTimeUp({ timeUp: locked, wasTimeUp: wasLocked.current, active: kind })) heading.current?.focus();
-    wasLocked.current = locked;
-  }, [locked, heading]);
+  useRescueFocus(locked, () => heading.current, false);
+  // Fix round 1, Minor 1: the runner's footer takes over from a recorded question's own (a closed question
+  // after the last commit, a retry): focus that was on the button that went away goes to the runner's button.
+  useRescueFocus(runnerFooterShown, () => document.getElementById("activity-next") ?? heading.current, runnerFooterShown);
 
   useEffect(() => {
     if (typeof BroadcastChannel === "undefined") return;
@@ -286,7 +290,10 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
             return next;
           },
           // Task 13 residual: a failed stage submit after this commit shows the question closed (closedHere).
-          onCommitted: (next) => setState(next),
+          // Fix round 1, Minor 2: only a state that still shows this stage (at the deadline's edge it can be the next one or none).
+          onCommitted: (next) => {
+            if (keepsStage(next, current.position)) setState(next);
+          },
           submit: () => submit(false),
         });
         if (result.kind === "advanced") {
@@ -331,7 +338,6 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
     </p>
   ) : null;
 
-  const retrying = !!failure?.retry && !busy;
   /** After a failed stage submit, the filled button sends the submit again (Minor 10: on the resume gate too). */
   const retry = () => {
     if (failure?.retry === "auto") return void submit(true);
@@ -360,16 +366,14 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
     );
   }
 
-  // Fix round 2: a question the server shows closed (no way back; the recovery after a failed stage
-  // submit) cannot take edits, so its inputs say so instead of refusing them silently.
-  const closedHere = !!activity && !commitNeeded({ responses: current.responses, activityId: activity.id, backNavigation: current.backNavigation });
   const inputsOff = busy || delayed !== null || locked || closedHere;
+  // Fix round 1, Minor 1: a normal finish of a no-back stage closes the question before the submit; while that
+  // submit runs the button says it works, and "Bu soru kapandı" waits until there is something left to do.
+  const closedLine = closedHere && !busy;
   const answered = activity ? answeredLocally(activity, answers[activity.id] ?? {}) : true;
   // Task 15: a file still uploading is not the answer yet; the close waits for it (the earlier file stays until then).
   const uploadingHere = !!activity && !!answers[activity.id]?.uploading;
   const recorded = activity?.type === "VIDEO" || activity?.type === "AUDIO";
-  // A recorded question draws its own footer (think, record, review), except for a retry or a closed question.
-  const runnerFooter = !(activity && ownsPrimary(activity.type) && !retrying && !closedHere);
   // C15 and plan decision 4: a waiting button always says why next to it; a working one says so on itself (runner-footer.ts).
   const primaryLook = runnerPrimary({
     state: { retrying, busy, delayed: delayed !== null, locked, uploading: uploadingHere, required: !!activity?.required, answered },
@@ -386,7 +390,7 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
   const primary: FooterAction = { ...primaryLook, onClick: () => (retrying ? retry() : advance()) };
   const optional = activity && !activity.required && !answered && !busy && !closedHere && !uploadingHere ? t("optionalHint") : null;
   // Task 4 carry 9: closed inputs point at the line that says why (never by colour alone); while busy the button says it works.
-  const reasonId = closedHere && activity ? `closed-${activity.id}` : locked ? TIME_UP_LINE : runnerFooter && primaryLook.waitReason ? "activity-next-why" : undefined;
+  const reasonId = closedLine && activity ? `closed-${activity.id}` : locked ? TIME_UP_LINE : runnerFooter && primaryLook.waitReason ? "activity-next-why" : undefined;
   let body: React.ReactNode = null;
   if (activity) {
     const common = {
@@ -520,7 +524,7 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
           </p>
         ) : null}
         {body}
-        {closedHere && activity ? (
+        {closedLine && activity ? (
           <p id={`closed-${activity.id}`} className="mt-4 text-[16px] leading-[26px] text-ink-2">
             {t("closedQuestion")}
           </p>
@@ -531,7 +535,8 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
         <StepFooter
           back={current.backNavigation && index > 0 && !inputsOff && !uploadingHere ? { label: t("previous"), onClick: () => setIndex(index - 1) } : null}
           primary={primary}
-          note={optional ? <p className="text-[14px] text-muted">{optional}</p> : null}
+          // Fix round 1, Minor 4: the optional line sits in the footer's polite region (shown when the button does not wait), so it is announced as before.
+          hint={optional}
         />
       ) : null}
       {delayed ? (

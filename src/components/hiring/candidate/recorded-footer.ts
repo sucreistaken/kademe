@@ -1,3 +1,6 @@
+import { useEffect, useRef } from "react";
+import type { Focusable } from "@/hooks/use-step-focus";
+
 /**
  * C4: what the recorded answer's footer actions say about waiting and working,
  * as one pure rule so the screen cannot show a clickable "Bu cevabı kullan" or
@@ -35,6 +38,39 @@ export function startLineShown(input: { phase: "think" | "record" | "saving" | "
  * focus then goes to the question's heading, which carries the screen's
  * message. Focus anywhere else (a notes field, a working button) is left alone.
  */
-export function refocusAfterTimeUp(input: { timeUp: boolean; wasTimeUp: boolean; active: "disabled-control" | "body" | "other" }): boolean {
+export function refocusAfterTimeUp(input: { timeUp: boolean; wasTimeUp: boolean; active: ActiveKind }): boolean {
   return input.timeUp && !input.wasTimeUp && input.active !== "other";
+}
+
+export type ActiveKind = "disabled-control" | "body" | "other";
+
+/**
+ * Where focus sits: on nothing (no element, or the page body), on a disabled
+ * button (a natively disabled one; a working footer button is aria-disabled
+ * and keeps its focus), or anywhere else.
+ */
+export function activeKind(active: { tagName?: string; disabled?: boolean } | null, body: unknown): ActiveKind {
+  if (!active || active === body) return "body";
+  return (active.tagName ?? "").toUpperCase() === "BUTTON" && active.disabled === true ? "disabled-control" : "other";
+}
+
+/**
+ * Task 10 fix round 1: the one effect behind refocusAfterTimeUp, for the
+ * recorded answer (its time up) and the stage runner (its time up, and its
+ * footer taking over from a recorded question's own). When `on` turns true and
+ * focus was left on a disabled button or on nothing, it moves to `target()`.
+ * `initial` is what `on` counts as before the first render (the recorded
+ * answer passes its time-up state at mount, so a screen opened after time up
+ * does not take focus).
+ */
+export function useRescueFocus(on: boolean, target: () => Focusable | null, initial: boolean): void {
+  const was = useRef(initial);
+  const latest = useRef(target);
+  useEffect(() => {
+    latest.current = target;
+  });
+  useEffect(() => {
+    if (refocusAfterTimeUp({ timeUp: on, wasTimeUp: was.current, active: activeKind(document.activeElement, document.body) })) latest.current()?.focus();
+    was.current = on;
+  }, [on]);
 }

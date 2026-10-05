@@ -1,5 +1,6 @@
 import type { FooterAction } from "@/components/visual/footer-action";
 import type { Focusable } from "@/hooks/use-step-focus";
+import type { HiringCandidateState } from "@/solutions/hiring/rules/candidate-state";
 import type { CandidateActivity } from "@/solutions/hiring/rules/candidate-view";
 
 /**
@@ -54,6 +55,16 @@ export function runnerPrimary(input: { state: RunnerFooterState; words: RunnerFo
     busyLabel: words.busy,
     waitReason: runnerWaitReason(state, words),
   };
+}
+
+/**
+ * Task 10 fix round 1 (Minor 2): the state a last-question commit returns is
+ * taken before the stage submit only while it still shows this stage; at the
+ * deadline's edge it can already be the next stage or none, and the submit
+ * (or a reload) takes the candidate there instead.
+ */
+export function keepsStage(next: Pick<HiringCandidateState, "current">, position: number): boolean {
+  return next.current?.position === position;
 }
 
 /**

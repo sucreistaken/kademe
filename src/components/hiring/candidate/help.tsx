@@ -11,11 +11,11 @@ import { mailTo } from "./closed";
 type SendState = "idle" | "sending" | "sent" | "failed";
 
 /**
- * HIRING-UX 6: "Yardım" in the top bar: four answers (3.6: that typing is kept lives here now) and a way to reach a
- * person. Opening it moves focus into the panel. It closes on Escape pressed
- * anywhere (focus goes back to the button when it was inside), on a click
- * outside it, and when focus moves out of it; `aria-controls` names the panel
- * only while it exists. When the report is sent the form gives way to the
+ * HIRING-UX 6: "Yardım" in the top bar: four answers (3.6: that typing is
+ * kept lives here now) and a way to reach a person. Opening it moves focus
+ * into the panel. It closes on Escape pressed anywhere (focus goes back to
+ * the button when it was inside), on a click outside it, and when focus moves
+ * out of it; `aria-controls` names the panel only while it exists. When the report is sent the form gives way to the
  * confirmation, which takes focus so a keyboard user is not left on <body>.
  * A report that did not reach the team says so (it is never shown as sent).
  * The confirmation promises no reply; it names the person to write to when
