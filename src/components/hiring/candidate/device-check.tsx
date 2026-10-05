@@ -6,7 +6,7 @@ import { Check } from "lucide-react";
 import { Button, DisabledReason } from "@/components/ui/button";
 import { stepFocusController, useStepFocus } from "@/hooks/use-step-focus";
 import { apiSend, candidateApiBase } from "@/lib/client/api";
-import { pickRecorderMime } from "@/lib/client/recorder";
+import { CHUNK_MS, pickRecorderMime } from "@/lib/client/recorder";
 import { nextPath } from "@/lib/candidate-routes";
 import { cn } from "@/lib/cn";
 import { useT } from "@/i18n/candidate-client";
@@ -20,9 +20,11 @@ import {
   deviceRows,
   fixKeyFor,
   formatMbps,
+  isQuiet,
   mediaConstraints,
   peakLevel,
   uploadSpeed,
+  type DeniedKind,
   type Permission,
   type RowId,
   type Trial,
@@ -32,9 +34,18 @@ import { openTracked, stopAllStreams } from "./streams";
 
 const TRIAL_MS = 5000;
 const PROBE_BYTES = 512 * 1024;
+/** A probe that has not answered by then is "Ölçülemedi"; the connection row never waits longer. */
+const PROBE_TIMEOUT_MS = 10_000;
 
 type Bandwidth = { state: "measuring" | "unknown" } | { state: "ok" | "low"; mbps: number };
 type ReportState = "idle" | "sending" | "sent" | "failed";
+type ReportKind = "devices" | "quiet" | "recorder";
+type SoundContext = AudioContext;
+
+function newSoundContext(): SoundContext {
+  const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+  return new Ctx();
+}
 
 /**
  * HIRING-UX 6.3: camera (if a video question exists), microphone, a 5 second
@@ -47,9 +58,17 @@ type ReportState = "idle" | "sending" | "sent" | "failed";
  * speaking and recording), and the trial keeps its player and "Tekrar kaydet"
  * (the candidate may listen and re-record as often as they like).
  *
+ * The microphone gate has an escape (Task 12 review): the sound context is
+ * made and resumed inside the click (a context made after the permission
+ * prompt may stay suspended); after 8 s without a voice, or a context that
+ * stays suspended, the microphone row shows a hint and "Sorun bildir" and the
+ * trial opens, whose playback proves the microphone. A refusal, a missing
+ * device, a busy device and a browser without camera access (in-app browsers)
+ * each get their own next step.
+ *
  * Every stream is registered (streams.ts) and stopped when the candidate goes
- * on or the screen goes away; a permission answered after that is stopped at
- * once. When the open row changes and focus was on a control that went away
+ * on, the screen goes away or the page is hidden for good (pagehide); a
+ * permission answered after that is stopped at once. When the open row changes and focus was on a control that went away
  * (or inside the rows), focus moves to the new row's heading; the reason
  * under the button is a polite live region.
  */
@@ -70,7 +89,8 @@ export function DeviceCheck({ token, camera, practice, locale }: { token: string
   const failure = useRef("");
   const [focus] = useState(stepFocusController);
   const [permission, setPermission] = useState<Permission>("idle");
-  const [denied, setDenied] = useState<"notAllowed" | "other" | null>(null);
+  const [denied, setDenied] = useState<DeniedKind | null>(null);
+  const [quiet, setQuiet] = useState(false);
   const [level, setLevel] = useState(0);
   const [heard, setHeard] = useState(false);
   const [trial, setTrial] = useState<Trial>("none");
@@ -86,23 +106,47 @@ export function DeviceCheck({ token, camera, practice, locale }: { token: string
   useEffect(() => {
     alive.current = true;
     let cancelled = false;
+    const probe = new AbortController();
+    const probeTimer = window.setTimeout(() => probe.abort(), PROBE_TIMEOUT_MS);
     (async () => {
       try {
         const payload = new Uint8Array(PROBE_BYTES);
         for (let offset = 0; offset < payload.length; offset += 65_536) crypto.getRandomValues(payload.subarray(offset, offset + 65_536));
         const started = performance.now();
-        const res = await fetch(`${candidateApiBase(token)}/bandwidth`, { method: "POST", headers: { "content-type": "application/octet-stream" }, body: payload });
+        const res = await fetch(`${candidateApiBase(token)}/bandwidth`, {
+          method: "POST",
+          headers: { "content-type": "application/octet-stream" },
+          body: payload,
+          signal: probe.signal,
+        });
         if (!res.ok) throw new Error(String(res.status));
         const speed = uploadSpeed(PROBE_BYTES, performance.now() - started);
         if (!cancelled) setBandwidth(speed);
       } catch {
         if (!cancelled) setBandwidth({ state: "unknown" });
+      } finally {
+        window.clearTimeout(probeTimer);
       }
     })();
+    // Leaving the page (closing the tab, going elsewhere) turns the camera and microphone off even
+    // where React never unmounts. A page brought back from the back-forward cache has dead streams:
+    // it loads again, so the check starts honestly from the top.
+    const onHide = () => {
+      stopAllStreams();
+    };
+    const onShow = (event: PageTransitionEvent) => {
+      if (event.persisted) window.location.reload();
+    };
+    window.addEventListener("pagehide", onHide);
+    window.addEventListener("pageshow", onShow);
     const refs = { timer, recorder, meter, audio, stream, trialUrl };
     return () => {
       cancelled = true;
       alive.current = false;
+      probe.abort();
+      window.clearTimeout(probeTimer);
+      window.removeEventListener("pagehide", onHide);
+      window.removeEventListener("pageshow", onShow);
       if (refs.timer.current !== null) window.clearTimeout(refs.timer.current);
       const rec = refs.recorder.current;
       if (rec && rec.state !== "inactive") rec.stop();
@@ -125,14 +169,20 @@ export function DeviceCheck({ token, camera, practice, locale }: { token: string
     void video.play().catch(() => undefined);
   }, [permission, camera]);
 
-  /** The microphone's level until a voice is heard; then the analyser is closed (the stream stays open). */
-  function listen(media: MediaStream) {
+  /**
+   * The microphone's level until a voice is heard; then the analyser is closed
+   * (the stream stays open). Unheard for QUIET_AFTER_MS, or with a context the
+   * browser keeps suspended, the check turns `quiet` and the trial opens; the
+   * meter keeps listening, so a voice that comes later still folds the row.
+   */
+  function listen(media: MediaStream, ctx: SoundContext | null) {
+    if (!ctx) {
+      // No sound context in this browser: no level to show, the trial playback is the proof.
+      setQuiet(true);
+      return;
+    }
     try {
-      const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      const ctx = new Ctx();
       audio.current = ctx;
-      // Safari starts a context made after an await suspended.
-      void ctx.resume().catch(() => undefined);
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 512;
       ctx.createMediaStreamSource(media).connect(analyser);
@@ -141,11 +191,18 @@ export function DeviceCheck({ token, camera, practice, locale }: { token: string
         if (meter.current !== null) window.clearInterval(meter.current);
         meter.current = null;
       };
+      const started = performance.now();
+      let suspendedSince: number | null = null;
       // An interval, not animation frames: those stop in a tab the browser does not paint.
       const measure = () => {
         if (!alive.current || ctx.state === "closed") return stop();
+        const now = performance.now();
         // A context the browser started suspended is asked again until it runs.
-        if (ctx.state === "suspended") void ctx.resume().catch(() => undefined);
+        if (ctx.state === "suspended") {
+          suspendedSince ??= now;
+          void ctx.resume().catch(() => undefined);
+        } else suspendedSince = null;
+        if (isQuiet({ heard: false, listenedMs: now - started, suspendedMs: suspendedSince === null ? 0 : now - suspendedSince })) setQuiet(true);
         analyser.getByteTimeDomainData(data);
         const peak = peakLevel(data);
         // Rounded so the screen re-renders only when the bar visibly moves.
@@ -160,20 +217,41 @@ export function DeviceCheck({ token, camera, practice, locale }: { token: string
       meter.current = window.setInterval(measure, 50);
     } catch {
       // No level to show in this browser: the trial playback is the microphone's proof.
-      setHeard(true);
+      setQuiet(true);
     }
   }
 
   async function openDevices() {
-    setPermission("asking");
     setDenied(null);
+    // No camera access at all (an in-app browser, an insecure address): nothing to ask for.
+    if (!navigator.mediaDevices?.getUserMedia) {
+      failure.current = "NoMediaDevices";
+      setPermission("denied");
+      setDenied("unsupported");
+      return;
+    }
+    setPermission("asking");
+    // Made and resumed inside the click: a context made after the permission prompt may stay suspended.
+    void audio.current?.close().catch(() => undefined);
+    audio.current = null;
+    let ctx: SoundContext | null = null;
+    try {
+      ctx = newSoundContext();
+      void ctx.resume().catch(() => undefined);
+    } catch {
+      ctx = null;
+    }
     try {
       const media = await openTracked(() => navigator.mediaDevices.getUserMedia(mediaConstraints(camera)), () => alive.current);
-      if (!media) return;
+      if (!media) {
+        void ctx?.close().catch(() => undefined);
+        return;
+      }
       stream.current = media;
       setPermission("granted");
-      listen(media);
+      listen(media, ctx);
     } catch (err) {
+      void ctx?.close().catch(() => undefined);
       failure.current = err && typeof err === "object" && "name" in err ? String((err as { name: unknown }).name) : "unknown";
       setPermission("denied");
       setDenied(deniedKind(err));
@@ -207,7 +285,8 @@ export function DeviceCheck({ token, camera, practice, locale }: { token: string
         setSrc(trialUrl.current);
         setTrial("ready");
       };
-      rec.start();
+      // Five second chunks, like a real answer's recorder, so the trial exercises the same path.
+      rec.start(CHUNK_MS);
       recorder.current = rec;
       setTrial("recording");
       timer.current = window.setTimeout(() => {
@@ -220,10 +299,11 @@ export function DeviceCheck({ token, camera, practice, locale }: { token: string
     }
   }
 
-  async function sendReport() {
+  async function sendReport(kind: ReportKind) {
     setReport("sending");
+    const message = kind === "quiet" ? t("reportQuietMessage") : kind === "recorder" ? t("reportRecorderMessage") : `${t("reportMessage")} (${failure.current || "-"})`;
     try {
-      await apiSend(token, "/problem", { area: "DEVICE_CHECK", message: `${t("reportMessage")} (${failure.current || "-"})` });
+      await apiSend(token, "/problem", { area: "DEVICE_CHECK", message });
       setReport("sent");
     } catch {
       setReport("failed");
@@ -245,7 +325,7 @@ export function DeviceCheck({ token, camera, practice, locale }: { token: string
     }
   }
 
-  const input = { camera, permission, heard, trial };
+  const input = { camera, permission, heard, quiet, trial };
   const rows = deviceRows(input);
   const blocker = deviceBlocker(input);
   const active = rows.find((row) => row.state === "active")?.id ?? "none";
@@ -261,40 +341,75 @@ export function DeviceCheck({ token, camera, practice, locale }: { token: string
   const askText = camera ? t("cameraAsk") : t("micAsk");
   const hasTake = trial === "ready" || trial === "played";
 
-  function permissionBody() {
+  /** "Sorun bildir", its confirmation (which takes focus) or its failure. */
+  function reportControl(kind: ReportKind) {
+    return report === "sent" ? (
+      <p ref={sentNote} tabIndex={-1} role="status" className="text-[14px] leading-[22px] text-ink">
+        {t("reportSent")}
+      </p>
+    ) : (
+      <div>
+        <Button className="min-h-11 scroll-mb-32 text-[16px] sm:scroll-mb-0" onClick={() => sendReport(kind)} disabled={report === "sending"} disabledReason={t("reporting")}>
+          {report === "sending" ? t("reporting") : t("report")}
+        </Button>
+        {report === "failed" ? (
+          <p role="alert" className="mt-2 text-[14px] leading-[22px] text-ink">
+            {t("reportFailed")}
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+
+  /** Why the devices did not open, and the one next step that fits. */
+  function deniedBox() {
     // Only shown after a refusal, which happens in the browser; the server render never reads navigator.
-    const fix = permission === "denied" ? fixKeyFor(navigator.userAgent) : "other";
+    const fix = fixKeyFor(navigator.userAgent, navigator.maxTouchPoints ?? 0);
+    const title =
+      denied === "notAllowed"
+        ? t("deniedTitle")
+        : denied === "notFound"
+          ? t("deniedNotFound")
+          : denied === "busy"
+            ? t("deniedBusy")
+            : denied === "unsupported"
+              ? t("deniedUnsupported")
+              : t("deniedOther");
+    // A refusal (or an unclear error) gets the browser's steps; an in-app browser's steps are "open it elsewhere".
+    const steps = denied === "notAllowed" || denied === "other" ? t(`fix${fix}`) : null;
+    return (
+      <div className="space-y-2 rounded-xl border border-line bg-canvas p-4">
+        <p ref={deniedTitle} tabIndex={-1} className="text-[16px] leading-[26px] font-medium text-ink">
+          {title}
+        </p>
+        {denied === "unsupported" ? <p className="text-[16px] leading-[26px] text-ink-2">{t("fixinApp")}</p> : null}
+        {steps ? (
+          <details>
+            <summary className="flex min-h-11 cursor-pointer items-center text-[16px] text-ink underline decoration-underline underline-offset-4">{t("howToFix")}</summary>
+            <p className="text-[16px] leading-[26px] whitespace-pre-line text-ink-2">{steps}</p>
+          </details>
+        ) : null}
+        {reportControl("devices")}
+      </div>
+    );
+  }
+
+  function permissionBody() {
     return (
       <>
-        <p id="check-open-why" className="text-[16px] leading-[26px] text-ink-2">
-          {askText}
-        </p>
-        {permission === "denied" ? (
-          <div className="space-y-2 rounded-xl border border-line bg-canvas p-4">
-            <p ref={deniedTitle} tabIndex={-1} className="text-[16px] leading-[26px] font-medium text-ink">
-              {denied === "notAllowed" ? t("deniedTitle") : t("deniedOther")}
-            </p>
-            <details>
-              <summary className="flex min-h-11 cursor-pointer items-center text-[16px] text-ink underline decoration-underline underline-offset-4">{t("howToFix")}</summary>
-              <p className="text-[16px] leading-[26px] text-ink-2">{t(`fix${fix}`)}</p>
-            </details>
-            {report === "sent" ? (
-              <p ref={sentNote} tabIndex={-1} role="status" className="text-[14px] leading-[22px] text-ink">
-                {t("reportSent")}
-              </p>
-            ) : (
-              <div>
-                <Button className="min-h-11 scroll-mb-32 text-[16px] sm:scroll-mb-0" onClick={sendReport} disabled={report === "sending"} disabledReason={t("reporting")}>
-                  {report === "sending" ? t("reporting") : t("report")}
-                </Button>
-                {report === "failed" ? <p role="alert" className="mt-2 text-[14px] leading-[22px] text-ink">{t("reportFailed")}</p> : null}
-              </div>
-            )}
-          </div>
-        ) : null}
-        <Button id="check-open" className="min-h-11 scroll-mb-32 text-[16px] sm:scroll-mb-0" onClick={openDevices} disabled={permission === "asking"} disabledReason={askText}>
-          {permission === "asking" ? t("asking") : permission === "denied" ? t("retry") : camera ? t("openDevices") : t("openMic")}
-        </Button>
+        {/* "The browser will ask" is untrue where it cannot ask at all. */}
+        {denied === "unsupported" ? null : (
+          <p id="check-open-why" className="text-[16px] leading-[26px] text-ink-2">
+            {askText}
+          </p>
+        )}
+        {permission === "denied" ? deniedBox() : null}
+        {/* Asking again cannot help a browser without camera access; every other refusal may change. */}
+        {denied === "unsupported" ? null : (
+          <Button id="check-open" className="min-h-11 scroll-mb-32 text-[16px] sm:scroll-mb-0" onClick={openDevices} disabled={permission === "asking"} disabledReason={askText}>
+            {permission === "asking" ? t("asking") : permission === "denied" ? t("retry") : camera ? t("openDevices") : t("openMic")}
+          </Button>
+        )}
       </>
     );
   }
@@ -315,7 +430,7 @@ export function DeviceCheck({ token, camera, practice, locale }: { token: string
       if (permission !== "granted") return <div className="space-y-3">{permissionBody()}</div>;
       return (
         <div className="space-y-2">
-          <p className="text-[16px] leading-[26px] text-ink-2">{heard ? t("micHeard") : t("micHint")}</p>
+          <p className="text-[16px] leading-[26px] text-ink-2">{heard ? t("micHeard") : quiet ? t("micQuietHint") : t("micHint")}</p>
           <div
             role="meter"
             aria-label={t("micLevel")}
@@ -326,16 +441,35 @@ export function DeviceCheck({ token, camera, practice, locale }: { token: string
           >
             <div className="h-2 rounded-full bg-accent transition-[width] duration-100 motion-reduce:transition-none" style={{ width: `${Math.min(100, Math.round(level * 250))}%` }} />
           </div>
+          {quiet && !heard ? <div className="pt-2">{reportControl("quiet")}</div> : null}
         </div>
       );
     }
     if (id === "trial") {
+      // Read only once the trial row is open, which needs a granted permission: never on the server.
+      if (typeof MediaRecorder === "undefined") {
+        return (
+          <div className="space-y-3">
+            <p className="text-[16px] leading-[26px] font-medium text-ink">{t("noRecorder")}</p>
+            {reportControl("recorder")}
+          </div>
+        );
+      }
       return (
         <div className="space-y-3">
+          {quiet && !heard ? <p className="text-[16px] leading-[26px] font-medium text-ink">{t("trialQuiet")}</p> : null}
           <p className="text-[16px] leading-[26px] text-ink-2">{t("trialBody")}</p>
-          <Button id="check-trial" className="min-h-11 scroll-mb-32 text-[16px] sm:scroll-mb-0" onClick={record} disabled={trial === "recording"} disabledReason={t("trialRecording")}>
-            {trial === "recording" ? t("trialRecording") : trial === "none" ? t("trialRecord") : t("trialAgain")}
-          </Button>
+          <div>
+            <Button id="check-trial" className="min-h-11 scroll-mb-32 text-[16px] sm:scroll-mb-0" onClick={record} disabled={trial === "recording"} disabledReason={t("blocktrialRecording")}>
+              {trial === "recording" ? t("trialRecording") : trial === "none" ? t("trialRecord") : t("trialAgain")}
+            </Button>
+            {/* The reason next to the button while it is closed, so its aria-describedby points at something (C15). */}
+            {trial === "recording" ? (
+              <DisabledReason id="check-trial-why" className="mt-2 text-[14px]">
+                {t("blocktrialRecording")}
+              </DisabledReason>
+            ) : null}
+          </div>
           {trialFailed ? (
             <p role="alert" className="text-[14px] leading-[22px] text-ink">
               {t("failed")}
@@ -367,7 +501,7 @@ export function DeviceCheck({ token, camera, practice, locale }: { token: string
 
   /** Which rows show their body: the open one, the connection, and the two that stay open past "Hazır" (see above). */
   const expanded = (id: RowId, state: string) =>
-    state === "active" || state === "info" || (id === "camera" && permission === "granted") || (id === "trial" && state === "done");
+    state === "active" || state === "info" || state === "quiet" || (id === "camera" && permission === "granted") || (id === "trial" && state === "done");
 
   return (
     <div className="mx-auto max-w-[720px] pt-10 pb-6 sm:pt-14">
@@ -393,6 +527,8 @@ export function DeviceCheck({ token, camera, practice, locale }: { token: string
                 </span>
               ) : row.state === "waiting" ? (
                 <span className="text-[14px] leading-[22px] text-muted">{t("waiting")}</span>
+              ) : row.state === "quiet" ? (
+                <span className="text-[14px] leading-[22px] text-muted">{t("rowQuiet")}</span>
               ) : null}
             </div>
             {expanded(row.id, row.state) ? <div className="mt-3">{body(row.id)}</div> : null}

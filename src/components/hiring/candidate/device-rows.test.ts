@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { HEARD_AT, deniedKind, deviceBlocker, deviceRows, fixKeyFor, formatMbps, mediaConstraints, peakLevel, uploadSpeed } from "./device-rows";
+import { HEARD_AT, QUIET_AFTER_MS, deniedKind, deviceBlocker, deviceRows, fixKeyFor, formatMbps, isQuiet, mediaConstraints, peakLevel, uploadSpeed } from "./device-rows";
 
-const base = { camera: true, permission: "idle" as const, heard: false, trial: "none" as const };
+const base = { camera: true, permission: "idle" as const, heard: false, quiet: false, trial: "none" as const };
 
 describe("the device check rows (HIRING-UX 6.3)", () => {
   it("opens one row at a time: camera, microphone, trial; connection is information only", () => {
@@ -46,6 +46,69 @@ describe("the device check rows (HIRING-UX 6.3)", () => {
     expect(fixKeyFor("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0")).toBe("firefox");
     expect(fixKeyFor("curl/8")).toBe("other");
   });
+
+  it("sends in-app browsers to Safari or Chrome", () => {
+    const iphone = "Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148";
+    expect(fixKeyFor(`${iphone} [FBAN/FBIOS;FBAV/480.0.0]`)).toBe("inApp");
+    expect(fixKeyFor(`${iphone} Instagram 350.0.0`)).toBe("inApp");
+    expect(fixKeyFor(`${iphone} LinkedInApp/9.30`)).toBe("inApp");
+    expect(fixKeyFor(`${iphone} GSA/380.0`)).toBe("inApp");
+    expect(fixKeyFor(`${iphone} Safari Line/14.10.0`)).toBe("inApp");
+    expect(fixKeyFor("Mozilla/5.0 (Linux; Android 15; Pixel 9; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/141.0 Mobile Safari/537.36")).toBe("inApp");
+  });
+
+  it("gives other iPhone browsers the iOS settings of their own app", () => {
+    const ios = "Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko)";
+    expect(fixKeyFor(`${ios} CriOS/141.0 Mobile/15E148 Safari/604.1`)).toBe("iosOther");
+    expect(fixKeyFor(`${ios} FxiOS/140.0 Mobile/15E148 Safari/605.1.15`)).toBe("iosOther");
+    expect(fixKeyFor(`${ios} EdgiOS/141.0 Mobile/15E148 Safari/605.1.15`)).toBe("iosOther");
+  });
+
+  it("tells an iPad that says Macintosh from a Mac by its touch points", () => {
+    const desktopSafari = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/19.0 Safari/605.1.15";
+    expect(fixKeyFor(desktopSafari, 5)).toBe("ios");
+    expect(fixKeyFor(desktopSafari, 0)).toBe("safariMac");
+    expect(fixKeyFor(desktopSafari)).toBe("safariMac");
+  });
+});
+
+describe("a microphone the check cannot hear (Task 12 review ruling: the sound gate has an escape)", () => {
+  const granted = { ...base, permission: "granted" as const };
+
+  it("folds the microphone into Hazır once a voice is heard", () => {
+    expect(isQuiet({ heard: true, listenedMs: 60_000, suspendedMs: 60_000 })).toBe(false);
+    expect(deviceRows({ ...granted, heard: true }).map((r) => r.state)).toEqual(["done", "done", "active", "info"]);
+    expect(deviceBlocker({ ...granted, heard: true })).toBe("trialNone");
+  });
+
+  it("keeps waiting for a voice for 8 seconds: still blocked, trial still closed", () => {
+    expect(QUIET_AFTER_MS).toBe(8000);
+    const quiet = isQuiet({ heard: false, listenedMs: QUIET_AFTER_MS - 1, suspendedMs: 0 });
+    expect(quiet).toBe(false);
+    expect(deviceBlocker({ ...granted, quiet })).toBe("sound");
+    expect(deviceRows({ ...granted, quiet }).map((r) => r.state)).toEqual(["done", "active", "waiting", "info"]);
+  });
+
+  it("after 8 seconds unheard, keeps the microphone open with a hint and unlocks the trial as the proof", () => {
+    const quiet = isQuiet({ heard: false, listenedMs: QUIET_AFTER_MS, suspendedMs: 0 });
+    expect(quiet).toBe(true);
+    expect(deviceRows({ ...granted, quiet }).map((r) => r.state)).toEqual(["done", "quiet", "active", "info"]);
+    expect(deviceBlocker({ ...granted, quiet })).toBe("trialNone");
+    expect(deviceBlocker({ ...granted, quiet, trial: "ready" })).toBe("trialListen");
+    expect(deviceBlocker({ ...granted, quiet, trial: "played" })).toBeNull();
+    // Audio only: the same escape.
+    expect(deviceRows({ ...granted, camera: false, quiet }).map((r) => r.state)).toEqual(["quiet", "active", "info"]);
+  });
+
+  it("does not wait 8 seconds for a sound context the browser keeps suspended", () => {
+    expect(isQuiet({ heard: false, listenedMs: 1000, suspendedMs: 999 })).toBe(false);
+    expect(isQuiet({ heard: false, listenedMs: 1000, suspendedMs: 1000 })).toBe(true);
+  });
+
+  it("never unlocks anything before the permission", () => {
+    expect(deviceBlocker({ ...base, quiet: true })).toBe("permission");
+    expect(deviceRows({ ...base, quiet: true }).map((r) => r.state)).toEqual(["active", "waiting", "waiting", "info"]);
+  });
 });
 
 describe("what the device check asks the browser for", () => {
@@ -59,8 +122,10 @@ describe("what the device check asks the browser for", () => {
   it("tells a refused permission from a device it could not reach", () => {
     expect(deniedKind(Object.assign(new Error("x"), { name: "NotAllowedError" }))).toBe("notAllowed");
     expect(deniedKind({ name: "SecurityError" })).toBe("notAllowed");
-    expect(deniedKind(Object.assign(new Error("busy"), { name: "NotReadableError" }))).toBe("other");
-    expect(deniedKind(Object.assign(new Error("none"), { name: "NotFoundError" }))).toBe("other");
+    expect(deniedKind(Object.assign(new Error("busy"), { name: "NotReadableError" }))).toBe("busy");
+    expect(deniedKind(Object.assign(new Error("busy"), { name: "AbortError" }))).toBe("busy");
+    expect(deniedKind(Object.assign(new Error("none"), { name: "NotFoundError" }))).toBe("notFound");
+    expect(deniedKind(Object.assign(new Error("none"), { name: "OverconstrainedError" }))).toBe("notFound");
     // No mediaDevices at all (an insecure address) throws a TypeError.
     expect(deniedKind(new TypeError("undefined is not an object"))).toBe("other");
     expect(deniedKind("nonsense")).toBe("other");

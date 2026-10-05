@@ -1048,7 +1048,7 @@ amaçlı, düşükse öneri) · 5+. Gözetim satırları (7. bölüm: tam ekran,
 
 İzin reddedildiyse satır içinde tarayıcıya ve işletim sistemine özel "Nasıl düzeltirim?" (adım adım,
 ekran görüntüsüz kısa metin) + "Sorun bildir" (ekibe gider, aday "Bildirimin iletildi. Genelde aynı
-gün dönülür." görür). Video sorusu olmayan, gözetimsiz değerlendirmede bu ekran atlanır.
+gün dönülür." görür). Ses ya da video sorusu olmayan, gözetimsiz değerlendirmede bu ekran atlanır.
 
 **Dolu buton:** "Hazırım, ısınma sorusuna geç". Kapalıyken satır adıyla neden: "Deneme kaydını dinle,
 sonra ilerleyelim."

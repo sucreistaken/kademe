@@ -47,4 +47,21 @@ describe("hiring candidate copy", () => {
     expect(t.en("hiringLanding.whoPeople", { count: 1 })).toBe("One person on the team reviews your answers, with the same questions and criteria.");
     expect(t.en("hiringLanding.whoPeople", { count: 3 })).toBe("At least 3 people on the team review your answers independently, with the same questions and criteria.");
   });
+
+  it("lets an unheard microphone through to the trial, in the ruled words (Task 12 review)", () => {
+    expect(tr.hiringDevice.trialQuiet).toBe("Sesini duyamadık. Deneme kaydını dinle; kendi sesini duyuyorsan devam edebilirsin.");
+    expect(en.hiringDevice.trialQuiet).toMatch(/^We could not hear you\./);
+  });
+
+  it("adds the operating system's privacy settings to every desktop fix (Task 12 review)", () => {
+    for (const dict of [tr, en]) {
+      for (const key of ["fixchrome", "fixfirefox"] as const) {
+        expect(dict.hiringDevice[key]).toMatch(/macOS/);
+        expect(dict.hiringDevice[key]).toMatch(/Windows/);
+      }
+      expect(dict.hiringDevice.fixsafariMac).toMatch(/macOS/);
+    }
+    expect(tr.hiringDevice.fixchrome).toMatch(/Gizlilik ve Güvenlik > Kamera/);
+    expect(en.hiringDevice.fixchrome).toMatch(/Privacy & Security > Camera/);
+  });
 });
