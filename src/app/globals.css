@@ -331,3 +331,28 @@ body {
     opacity: 0.45;
   }
 }
+
+/* HIRING-VISUAL-FLOW 2.3: a step change inside one page fades in and rises 8px; reduced motion keeps only the fade. */
+@keyframes step-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* G9: a focused field scrolled into view is never left under the fixed step footer. */
+html:has([data-step-footer]) {
+  scroll-padding-bottom: 120px;
+}

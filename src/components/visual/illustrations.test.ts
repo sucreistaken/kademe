@@ -17,6 +17,10 @@ describe("illustrations (HIRING-VISUAL-FLOW 2.2, K1)", () => {
     expect(html).toContain('focusable="false"');
     // No file, no link, no text to translate, nothing pulled from elsewhere.
     expect(html).not.toMatch(/<image|<img|href=|<text|<foreignObject|url\(/i);
+    // No styling or behaviour of its own, no reused or gradient paint: tones come only from the attributes below.
+    expect(html).not.toMatch(/<style|<script|<use\b|<linearGradient|<radialGradient|\sstyle=|\son[a-z]+=/i);
+    // It scales by its box, so every drawing states the box it was drawn in.
+    expect(html).toMatch(/^<svg[^>]*\sviewBox="0 0 \d+ \d+"/);
     expect(html).not.toMatch(/#[0-9a-f]{3,8}\b/i);
     expect(html).not.toContain("--color-accent");
     const colours = [...html.matchAll(/\s(?:fill|stroke)="([^"]+)"/g)].map((m) => m[1]);
