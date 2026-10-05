@@ -12,7 +12,7 @@
  *   docker exec kademe-db psql -U kademe -d postgres -c "select pid, application_name, state from pg_stat_activity where datname = 'kademe_platform'"
  *   docker exec kademe-db psql -U kademe -d postgres -c "create database kademe_ui_check template kademe_platform"
  *
- *   DATABASE_URL=postgresql://kademe:kademe@localhost:5434/kademe_ui_check pnpm dev:hiring-link [--kind text|written] [--lang en] [--name "Elif Kaya"] [--sentinels]
+ *   DATABASE_URL=postgresql://kademe:kademe@localhost:5434/kademe_ui_check pnpm dev:hiring-link [--kind text|written|file] [--lang en] [--name "Elif Kaya"] [--sentinels]
  *
  * --sentinels marks visible texts LEAKVISIBLE_* and fills every team-only field
  * with TEAMSECRET_*, for a page-level leak scan (ruling C10). Drop the copy after:
@@ -40,7 +40,7 @@ async function main() {
     .where(and(eq(s.users.orgId, org.id), eq(s.users.role, "OWNER"), isNull(s.users.disabledAt)))
     .limit(1);
   if (!owner) throw new Error("no active owner in this organisation");
-  const kind = arg("kind") === "text" ? "text" : arg("kind") === "written" ? "written" : "full";
+  const kind = arg("kind") === "text" ? "text" : arg("kind") === "written" ? "written" : arg("kind") === "file" ? "file" : "full";
   const sentinels = process.argv.includes("--sentinels");
   const { openingId } = await buildPublishedOpening({ orgId: org.id, ownerId: owner.id, memberIds: [owner.id], kind, sentinels });
   const result = await createHiringInvitation(

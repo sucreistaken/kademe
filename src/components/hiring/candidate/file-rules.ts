@@ -39,16 +39,31 @@ export function sizeLabel(bytes: number, locale: Locale): string {
   return `${megabytes(bytes, locale)} MB`;
 }
 
-/**
- * The file's type: the browser's, or (when the browser leaves it empty, as
- * Windows does for a .docx without Office) the one its extension names.
- */
-export function mimeOf(file: { type: string; name: string }): string {
-  if (file.type) return baseOf(file.type);
-  const dot = file.name.lastIndexOf(".");
+/** The type an extension names ("" for an unknown one). */
+function extensionType(name: string): string {
+  const dot = name.lastIndexOf(".");
   if (dot < 0) return "";
-  const ext = file.name.slice(dot).toLowerCase();
+  const ext = name.slice(dot).toLowerCase();
   return Object.entries(TYPES).find(([, t]) => t.ext.includes(ext))?.[0] ?? "";
+}
+
+/**
+ * The type the upload declares: the browser's, or the one its extension names
+ * when the browser leaves it empty (Windows for a .docx without Office) or
+ * reports a type the question does not take while the extension's type is on
+ * its list (fix round 1, I3: Windows Chrome says application/vnd.ms-excel for
+ * a .csv and application/x-zip-compressed for a .zip). The server checks the
+ * declared type against the list again.
+ */
+export function mimeOf(file: { type: string; name: string }, accepted: string[] | null = null): string {
+  const own = file.type ? baseOf(file.type) : "";
+  const byName = extensionType(file.name);
+  if (!own) return byName;
+  if (accepted && accepted.length > 0) {
+    const list = accepted.map(baseOf);
+    if (!list.includes(own) && byName && list.includes(byName)) return byName;
+  }
+  return own;
 }
 
 /** The file picker's filter: each accepted type and its extensions; nothing when any type is fine. */

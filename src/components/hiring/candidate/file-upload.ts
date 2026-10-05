@@ -1,9 +1,10 @@
 "use client";
 
-import { apiBeacon } from "@/lib/client/api";
+import { apiBeacon, apiSend } from "@/lib/client/api";
 import { ChunkedUploader, PATIENT_RETRY, type UploaderStatus } from "@/lib/client/recorder";
 import type { DraftStorage } from "./draft-store";
 import { isRetryable } from "./save-queue";
+import { serverMessage } from "./server-message";
 import { finishPatiently } from "./upload-sink";
 
 /**
@@ -20,11 +21,13 @@ import { finishPatiently } from "./upload-sink";
  */
 
 /**
- * The slices handed to the uploader. Object storage coalesces them up to its
- * 5 MiB part floor; local disk takes each as a part, so even a 1 MB file shows
- * its progress in steps.
+ * The slices handed to the uploader (fix round 1, I1). Object storage
+ * coalesces them until a part reaches its 5 MiB floor, so its parts are three
+ * slices (6 MiB) and the last one smaller; local disk takes each slice as a
+ * part, so a large file shows progress in steps without one proxied request
+ * per quarter megabyte.
  */
-export const SLICE_BYTES = 256 * 1024;
+export const SLICE_BYTES = 2 * 1024 * 1024;
 /** Pauses between tries of an init the connection dropped: 1, 2, 4 s. A refusal is not tried again. */
 const OPEN_DELAYS_MS = [1000, 2000, 4000];
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -39,11 +42,14 @@ export type FileUploaderLike = {
 };
 
 export type FileProgress = { percent: number; stalled: boolean };
+type CompleteBody = { uploadRef: string; durationMs: number; incomplete: boolean };
 
 export type FileUploadDeps = {
   open(onStatus: (status: UploaderStatus) => void): Promise<FileUploaderLike>;
   /** The page is going away: the core completion as a beacon. */
-  beacon(body: { uploadRef: string; durationMs: number; incomplete: boolean }): void;
+  beacon(body: CompleteBody): void;
+  /** The core completion, sent now (a part was given up: the file cannot be whole). */
+  complete(body: CompleteBody): Promise<unknown>;
   /** Registers `onHide` for the page going away (pagehide); returns its removal. */
   watchPageHide?(onHide: () => void): () => void;
   /** The page went away with parts still waiting: the screen after a reload says so. */
@@ -64,7 +70,21 @@ const notWhole = (completion: string) => Object.assign(new Error("incomplete"), 
 /** Uploads one file; settles once it is the answer or could not be. Never rejects. */
 export async function sendFile(file: Blob, deps: FileUploadDeps, onProgress: (p: FileProgress) => void): Promise<FileOutcome> {
   const pause = deps.wait ?? wait;
+  // Fix round 1 (I1): a given-up part means the file can never be whole. Waiting for the
+  // finish would wait for every later part's own patient cycle (minutes each), so the
+  // first status that shows the uploader interrupted settles the upload at once.
+  let opened: FileUploaderLike | null = null;
+  // Once given up or settled, the uploader's later tries (it drains in the background) are not this upload's progress any more.
+  let quiet = false;
+  let markGivenUp: () => void = () => undefined;
+  const givenUp = new Promise<"givenUp">((resolve) => (markGivenUp = () => resolve("givenUp")));
   const report = (s: UploaderStatus) => {
+    if (quiet) return;
+    if (opened?.interrupted) {
+      quiet = true;
+      markGivenUp();
+      return;
+    }
     const percent = file.size > 0 ? Math.min(100, Math.floor((s.uploadedBytes / file.size) * 100)) : 0;
     onProgress({ percent, stalled: s.stalled });
   };
@@ -73,6 +93,7 @@ export async function sendFile(file: Blob, deps: FileUploadDeps, onProgress: (p:
   for (let attempt = 0; ; attempt += 1) {
     try {
       uploader = await deps.open(report);
+      opened = uploader;
       break;
     } catch (error) {
       if (!isRetryable(error) || attempt >= OPEN_DELAYS_MS.length) return { ok: false, error };
@@ -94,12 +115,27 @@ export async function sendFile(file: Blob, deps: FileUploadDeps, onProgress: (p:
 
   try {
     for (let offset = 0; offset < file.size; offset += SLICE_BYTES) uploader.push(file.slice(offset, offset + SLICE_BYTES));
-    const done = await finishPatiently(() => uploader.finish(0), pause);
+    if (uploader.interrupted) {
+      quiet = true;
+      markGivenUp();
+    }
+    const finishing = finishPatiently(() => uploader.finish(0), pause);
+    const first = await Promise.race([finishing, givenUp]);
+    if (first === "givenUp") {
+      // The later finish still runs (its completion answers with the status already set); nothing waits for it.
+      finishing.catch(() => undefined);
+      // Closed now: the parts still waiting are refused (UPLOAD_CLOSED) and leave the queue
+      // at once, and the server keeps the earlier file as the answer.
+      await finishPatiently(() => deps.complete({ uploadRef: uploader.uploadRef, durationMs: 0, incomplete: true }), pause).catch(() => undefined);
+      return { ok: false, error: notWhole("INCOMPLETE") };
+    }
+    const done = first;
     return done.status === "READY" ? { ok: true } : { ok: false, error: notWhole(done.status) };
   } catch (error) {
     return { ok: false, error };
   } finally {
     settled = true;
+    quiet = true;
     unwatch?.();
   }
 }
@@ -119,6 +155,7 @@ export function fileUploadDeps(input: {
     open: (onStatus) =>
       ChunkedUploader.open(token, "/hiring/media/init", { stagePosition, activityId, kind: "file", name, bytes }, mime || "application/octet-stream", onStatus, PATIENT_RETRY),
     beacon: (body) => void apiBeacon(token, "/media/complete", body),
+    complete: (body) => apiSend(token, "/media/complete", body),
     watchPageHide: (onHide) => {
       window.addEventListener("pagehide", onHide);
       return () => window.removeEventListener("pagehide", onHide);
@@ -139,13 +176,47 @@ export function markCutUpload(storage: DraftStorage | null, key: string, name: s
   }
 }
 
-/** Reads the cut upload's name once and forgets it. */
-export function takeCutUpload(storage: DraftStorage | null, key: string): string | null {
+/** The name of a cut upload, if the tab remembers one. Reading changes nothing (fix round 1, M4). */
+export function readCutUpload(storage: DraftStorage | null, key: string): string | null {
   try {
-    const name = storage?.getItem(key) ?? null;
-    if (name !== null) storage?.removeItem(key);
-    return name;
+    return storage?.getItem(key) ?? null;
   } catch {
     return null;
   }
+}
+
+/** Forgets the cut upload: the question has a whole file again. */
+export function clearCutUpload(storage: DraftStorage | null, key: string): void {
+  try {
+    storage?.removeItem(key);
+  } catch {
+    // Nothing to clear.
+  }
+}
+
+const errCode = (err: unknown) => (err && typeof err === "object" && typeof (err as { code?: unknown }).code === "string" ? (err as { code: string }).code : "");
+
+/** Refusals of the core upload routes (parts, completion, rate limit): the file did not arrive, and another try may work. */
+const UPLOAD_ROUTE_CODES = new Set(["NO_PARTS", "UPLOAD_CLOSED", "UPLOAD_NOT_FOUND", "RATE_LIMITED"]);
+
+/**
+ * What a file question says when an upload ended without the file (fix round
+ * 1, I2): the file's own problem in the question's words; "Dosya
+ * yüklenemedi" with a retry for a dropped connection, a cut file or a refusal
+ * of the core upload routes (whose own words speak of recordings); any other
+ * refusal in the server's words (the candidate's language), with a retry only
+ * when another try can change it. `hasTypes`: the question names its types.
+ */
+export function fileFailure(
+  err: unknown,
+  hasTypes: boolean,
+): { key: "tooBig" | "wrongType" | "empty" | "failed"; retry: boolean } | { server: string; retry: boolean } {
+  const code = errCode(err);
+  if (code === "FILE_TOO_LARGE") return { key: "tooBig", retry: false };
+  if ((code === "FILE_TYPE_REJECTED" || code === "NOT_A_FILE") && hasTypes) return { key: "wrongType", retry: false };
+  if (code === "FILE_EMPTY") return { key: "empty", retry: false };
+  if (UPLOAD_ROUTE_CODES.has(code)) return { key: "failed", retry: true };
+  const said = serverMessage(err);
+  if (said === null) return { key: "failed", retry: true };
+  return { server: said, retry: isRetryable(err) };
 }

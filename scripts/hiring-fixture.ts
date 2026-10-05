@@ -27,7 +27,8 @@ export async function buildPublishedOpening(input: {
   ownerId: string;
   memberIds: string[];
   sentinels?: boolean;
-  kind?: "full" | "text" | "written";
+  /** "file": stage 1 is one file question taking PDF or CSV up to 8 MiB (several parts; Task 15 fix round 1 browser check). */
+  kind?: "full" | "text" | "written" | "file";
 }): Promise<{ openingId: string; competencies: string[] }> {
   requireThrowAwayDb();
   const { and, eq } = await import("drizzle-orm");
@@ -93,6 +94,14 @@ export async function buildPublishedOpening(input: {
       prompt: { tr: "Hangileri bir planın parçasıdır?", en: "Which belong in a plan?" },
       config: { choices: [{ id: "a", label: { tr: "Hedef", en: "Goal" }, correct: true }, { id: "b", label: { tr: "Takvim", en: "Timeline" }, correct: true }, { id: "c", label: { tr: "Hava durumu", en: "Weather" } }] },
     });
+  } else if (input.kind === "file") {
+    const file = await versions.addActivity(org, id, s1, "FILE_UPLOAD");
+    await versions.updateActivity(org, id, file, {
+      prompt: { tr: `Planını PDF ya da verilerini CSV olarak yükle.${visible("PROMPT")}`, en: "Upload your plan as a PDF or your data as a CSV." },
+      config: { acceptedMimeTypes: ["application/pdf", "text/csv"], maxFileBytes: 8 * 1024 * 1024 },
+      ...team,
+    });
+    await versions.setActivityCompetencies(org, id, file, [problem]);
   } else if (input.kind === "text") {
     const only = await versions.addActivity(org, id, s1, "LONG_TEXT");
     await versions.updateActivity(org, id, only, { prompt: { tr: `Son projende bir sorunu nasıl çözdüğünü anlat.${visible("PROMPT")}`, en: "Tell us how you solved a problem in your last project." }, config: { minChars: 20, maxChars: 2000 }, ...team });

@@ -11,10 +11,8 @@ import { DEFAULT_MAX_FILE_BYTES } from "@/solutions/hiring/rules/candidate-flow"
 import { sessionDrafts } from "./draft-store";
 import { ActivityHeader } from "./activity-header";
 import { acceptAttr, fileProblem, megabytes, mimeOf, sizeLabel, typeList } from "./file-rules";
-import { cutUploadKey, fileUploadDeps, markCutUpload, sendFile, takeCutUpload } from "./file-upload";
+import { clearCutUpload, cutUploadKey, fileFailure, fileUploadDeps, markCutUpload, readCutUpload, sendFile } from "./file-upload";
 import { recoveryFor } from "./runner-steps";
-import { isRetryable } from "./save-queue";
-import { serverMessage } from "./server-message";
 import type { ActivityProps } from "./text-activity";
 
 type Uploading = { name: string; percent: number; stalled: boolean };
@@ -57,8 +55,9 @@ export function FileActivity({
   const [current, setCurrent] = useState(existing);
   const [uploading, setUploading] = useState<Uploading | null>(null);
   const [problem, setProblem] = useState<Problem | null>(null);
-  // Mounted only in the browser after a click (the intro or the resume gate comes first), so the tab's note is readable here.
-  const [cut, setCut] = useState(() => takeCutUpload(sessionDrafts(), cutKey));
+  // Mounted only in the browser after a click (the intro or the resume gate comes first), so the tab's note is
+  // readable here. Reading changes nothing (M4); the note is forgotten when a file is whole again.
+  const [cut, setCut] = useState(() => readCutUpload(sessionDrafts(), cutKey));
   const [over, setOver] = useState(false);
   const inFlight = useRef<Promise<unknown> | null>(null);
   const accepted = activity.acceptedMimeTypes;
@@ -70,18 +69,32 @@ export function FileActivity({
   // The stage's close (next question, finish, time up) waits for an upload in flight; leaving the question does not stop it.
   useEffect(() => uploads.register(`${activity.id}:file`, async () => void (await inFlight.current)), [uploads, activity.id]);
 
+  // M3: a file dropped beside the area must not make the browser open it and leave the assessment.
+  useEffect(() => {
+    const keep = (e: DragEvent) => {
+      if (e.dataTransfer?.types.includes("Files")) e.preventDefault();
+    };
+    window.addEventListener("dragover", keep);
+    window.addEventListener("drop", keep);
+    return () => {
+      window.removeEventListener("dragover", keep);
+      window.removeEventListener("drop", keep);
+    };
+  }, []);
+
+  /** I2: the file's own problem, "Dosya yüklenemedi" with a retry, or the server's own words (file-upload fileFailure). */
   function refusalMessage(err: unknown, file: File): Problem {
-    const code = codeOf(err);
-    if (code === "FILE_TOO_LARGE") return { message: t("tooBig", { mb }), retry: null };
-    if ((code === "FILE_TYPE_REJECTED" || code === "NOT_A_FILE") && types) return { message: t("wrongType", { types }), retry: null };
-    if (code === "FILE_EMPTY") return { message: t("empty"), retry: null };
-    // A server refusal in its own words (the candidate's language); a dropped connection never shows its browser text.
-    const said = serverMessage(err);
-    return { message: said ?? t("failed"), retry: said === null || isRetryable(err) ? file : null };
+    const failure = fileFailure(err, types !== null);
+    const retry = failure.retry ? file : null;
+    if ("server" in failure) return { message: failure.server, retry };
+    if (failure.key === "tooBig") return { message: t("tooBig", { mb }), retry };
+    if (failure.key === "wrongType") return { message: t("wrongType", { types: types ?? "" }), retry };
+    if (failure.key === "empty") return { message: t("empty"), retry };
+    return { message: t("failed"), retry };
   }
 
   async function upload(file: File) {
-    const mime = mimeOf(file);
+    const mime = mimeOf(file, accepted);
     const found = fileProblem({ type: mime, size: file.size }, accepted, max);
     if (found) {
       setProblem({ message: found === "type" ? t("wrongType", { types: types ?? "" }) : found === "size" ? t("tooBig", { mb }) : t("empty"), retry: null });
@@ -107,6 +120,7 @@ export function FileActivity({
     setUploading(null);
     if (outcome.ok) {
       const done = { name: file.name, bytes: file.size };
+      clearCutUpload(sessionDrafts(), cutKey);
       setCurrent(done);
       onChange({ uploading: false, hasFile: true, file: done });
       return;
@@ -149,14 +163,19 @@ export function FileActivity({
         <p id={limitsId} className="tnum mt-1 text-[14px] text-muted">
           {types ? t("limits", { types, mb }) : t("limitsAny", { mb })}
         </p>
-        {/* A real file input, reachable with the keyboard; its visible label is the button-shaped text. */}
+        {/* A real file input, reachable with the keyboard; its visible label is the button-shaped text.
+            M1: never `disabled` (that would drop the keyboard focus when an upload starts): while off it is
+            aria-disabled, its picker does not open and a change is ignored. */}
         <input
           id={inputId}
           type="file"
           className="peer sr-only"
           accept={acceptAttr(accepted)}
-          disabled={off}
+          aria-disabled={off || undefined}
           aria-describedby={[limitsId, uploading ? whyId : null].filter(Boolean).join(" ")}
+          onClick={(e) => {
+            if (off) e.preventDefault();
+          }}
           onChange={(e) => {
             pick(e.target.files?.[0]);
             e.target.value = "";

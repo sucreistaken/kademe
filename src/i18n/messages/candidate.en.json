@@ -787,6 +787,7 @@
     "keepsPrevious": "Until the new file has fully uploaded, your earlier file ({name}) stays your answer.",
     "keptPrevious": "Your earlier file ({name}) is still your answer.",
     "cut": "{name} was still uploading when the page closed, so it did not arrive. Choose it again.",
-    "offline": "Your connection dropped. Your file stays in this tab, and the upload resumes when the connection is back. The clock keeps running."
+    "offline": "Your connection dropped. Your file stays in this tab, and the upload resumes when the connection is back. The clock keeps running.",
+    "offlineIdle": "Your connection dropped. You can upload your file once it is back. The clock keeps running."
   }
 }

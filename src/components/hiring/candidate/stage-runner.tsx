@@ -478,7 +478,10 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
               : activity && (activity.type === "SINGLE_CHOICE" || activity.type === "MULTI_CHOICE")
                 ? t("offlineChoice")
                 : activity?.type === "FILE_UPLOAD"
-                  ? tf("offline")
+                  ? // M2: only an upload in flight is "in this tab" and resumes; otherwise the file is chosen once the connection is back.
+                    uploadingHere
+                    ? tf("offline")
+                    : tf("offlineIdle")
                   : t("offlineText")}
           </p>
         )}

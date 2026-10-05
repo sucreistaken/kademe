@@ -787,6 +787,7 @@
     "keepsPrevious": "Yeni dosya tamamen yüklenene kadar önceki dosyan ({name}) cevabın olarak kalır.",
     "keptPrevious": "Önceki dosyan ({name}) cevabın olarak duruyor.",
     "cut": "Sayfa kapanırken {name} yükleniyordu ve yarıda kaldı. Dosyayı yeniden seç.",
-    "offline": "Bağlantın koptu. Dosyan bu sekmede duruyor, bağlantı gelince yüklemeye devam ediyoruz. Süre işlemeye devam ediyor."
+    "offline": "Bağlantın koptu. Dosyan bu sekmede duruyor, bağlantı gelince yüklemeye devam ediyoruz. Süre işlemeye devam ediyor.",
+    "offlineIdle": "Bağlantın koptu. Bağlantı gelince dosyanı yükleyebilirsin. Süre işlemeye devam ediyor."
   }
 }

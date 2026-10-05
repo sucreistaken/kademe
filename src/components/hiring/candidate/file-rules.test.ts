@@ -44,6 +44,20 @@ describe("what a file question takes (HIRING-UX 6.9)", () => {
     expect(mimeOf({ type: "", name: "notes" })).toBe("");
   });
 
+  it("declares the extension's type when the browser's is not accepted but the extension's is (Windows aliases, fix round 1, I3)", () => {
+    expect(mimeOf({ type: "application/vnd.ms-excel", name: "veriler.csv" }, ["text/csv"])).toBe("text/csv");
+    expect(mimeOf({ type: "application/x-zip-compressed", name: "proje.ZIP" }, ["application/zip", "application/pdf"])).toBe("application/zip");
+    // An accepted browser type stays as it is.
+    expect(mimeOf({ type: "application/vnd.ms-excel", name: "tablo.xls" }, ["application/vnd.ms-excel", "text/csv"])).toBe("application/vnd.ms-excel");
+    // A truly wrong type is still refused: neither the type nor the extension is on the list.
+    const png = mimeOf({ type: "image/png", name: "ekran.png" }, ["application/pdf"]);
+    expect(png).toBe("image/png");
+    expect(fileProblem({ type: png, size: 10 }, ["application/pdf"], 1000)).toBe("type");
+    // An alias whose extension is not on the list either stays refused.
+    const xls = mimeOf({ type: "application/vnd.ms-excel", name: "tablo.xls" }, ["text/csv"]);
+    expect(fileProblem({ type: xls, size: 10 }, ["text/csv"], 1000)).toBe("type");
+  });
+
   it("says a file's own size: kilobytes under a megabyte, never 0", () => {
     expect(sizeLabel(13, "tr")).toBe("1 KB");
     expect(sizeLabel(340 * 1024, "en")).toBe("340 KB");
