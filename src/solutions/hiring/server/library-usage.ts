@@ -1,5 +1,6 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
+import type { Executor } from "@/db/executor";
 import { hiringActivities, hiringActivityCompetencies, hiringOpeningMembers, hiringOpenings, hiringStages, hiringVersions } from "@/db/schema";
 import type { LibraryRefs, LibraryUsage, LibraryUsageEntry, LibraryViewer } from "@/solutions/types";
 import { openingAccess } from "../rules/access";
@@ -43,12 +44,12 @@ type OpeningFacts = {
  * pages (openingAccess with its status): a reviewer sees only the openings they
  * work on. No viewer means counts only.
  */
-async function visibleOpenings(orgId: string, viewer: LibraryViewer | null, rows: OpeningFacts[]): Promise<Set<string>> {
+async function visibleOpenings(orgId: string, viewer: LibraryViewer | null, rows: OpeningFacts[], x: Executor = db): Promise<Set<string>> {
   if (!viewer || rows.length === 0) return new Set();
   const ids = [...new Set(rows.map((r) => r.openingId))];
   const memberOf = new Set(
     (
-      await db
+      await x
         .select({ openingId: hiringOpeningMembers.openingId })
         .from(hiringOpeningMembers)
         .innerJoin(hiringOpenings, eq(hiringOpenings.id, hiringOpeningMembers.openingId))
@@ -71,21 +72,21 @@ async function visibleOpenings(orgId: string, viewer: LibraryViewer | null, rows
 /**
  * HIRING-UX 4.2 rule 2 for hiring: which openings use a position or a
  * competency. Totals count every opening of the organisation; only the ones
- * the viewer may see are named and linked.
+ * the viewer may see are named and linked. `x`: the caller's transaction, if any.
  */
-export async function hiringLibraryUsage(orgId: string, refs: LibraryRefs, viewer: LibraryViewer | null): Promise<LibraryUsage> {
+export async function hiringLibraryUsage(orgId: string, refs: LibraryRefs, viewer: LibraryViewer | null, x: Executor = db): Promise<LibraryUsage> {
   const people = {
     decisionMakerId: hiringOpenings.decisionMakerId,
     backupDecisionMakerId: hiringOpenings.backupDecisionMakerId,
   };
   const positionRows = refs.positionIds.length
-    ? await db
+    ? await x
         .select({ ref: hiringOpenings.positionId, openingId: hiringOpenings.id, name: hiringOpenings.name, status: hiringOpenings.status, ...people })
         .from(hiringOpenings)
         .where(and(eq(hiringOpenings.orgId, orgId), inArray(hiringOpenings.positionId, refs.positionIds)))
     : [];
   const competencyRows = refs.competencyIds.length
-    ? await db
+    ? await x
         .selectDistinct({
           ref: hiringActivityCompetencies.competencyId,
           openingId: hiringOpenings.id,
@@ -101,7 +102,7 @@ export async function hiringLibraryUsage(orgId: string, refs: LibraryRefs, viewe
         .innerJoin(hiringOpenings, eq(hiringOpenings.id, hiringVersions.openingId))
         .where(and(eq(hiringOpenings.orgId, orgId), inArray(hiringActivityCompetencies.competencyId, refs.competencyIds)))
     : [];
-  const visible = await visibleOpenings(orgId, viewer, [...positionRows, ...competencyRows.map((r) => ({ ...r, status: r.openingStatus }))]);
+  const visible = await visibleOpenings(orgId, viewer, [...positionRows, ...competencyRows.map((r) => ({ ...r, status: r.openingStatus }))], x);
   return {
     positions: usageFromRows(
       positionRows.map((r) => ({ ref: r.ref, openingId: r.openingId, name: r.name, live: r.status === "OPEN", visible: visible.has(r.openingId) })),

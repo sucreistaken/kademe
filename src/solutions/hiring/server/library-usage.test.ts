@@ -122,3 +122,20 @@ describe("hiring library usage", () => {
     expect(usage.competencies[COMP].items).toEqual([]);
   });
 });
+
+describe("hiringLibraryUsage inside a caller's transaction (fix round 2)", () => {
+  it("reads through the executor it is given, never the global db", async () => {
+    const { db } = await import("@/db");
+    const { fakeDb } = await import("./test-fake-db");
+    const tx = fakeDb();
+    const onTx = vi.spyOn(tx, "selectDistinct");
+    const onTxSelect = vi.spyOn(tx, "select");
+    const global = [vi.spyOn(db, "select"), vi.spyOn(db, "selectDistinct")];
+    fake.respond = world;
+    await hiringLibraryUsage(ORG, { positionIds: [POSITION], competencyIds: [COMP] }, REVIEWER, tx as never);
+    expect(onTx).toHaveBeenCalled();
+    expect(onTxSelect).toHaveBeenCalled();
+    for (const spy of global) expect(spy).not.toHaveBeenCalled();
+    for (const spy of [onTx, onTxSelect, ...global]) spy.mockRestore();
+  });
+});

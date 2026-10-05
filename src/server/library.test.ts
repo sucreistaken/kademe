@@ -50,7 +50,7 @@ function selectChain(fields?: Record<string, unknown>) {
 
 vi.mock("@/db", () => ({ db: { select: (fields?: Record<string, unknown>) => selectChain(fields) } }));
 
-type Hook = (orgId: string, refs: { positionIds: string[]; competencyIds: string[] }, viewer: { id: string; role: "OWNER" | "MANAGER" | "REVIEWER" } | null) => Promise<{
+type Hook = (orgId: string, refs: { positionIds: string[]; competencyIds: string[] }, viewer: { id: string; role: "OWNER" | "MANAGER" | "REVIEWER" } | null, x?: unknown) => Promise<{
   positions: Record<string, { total: number; live: number; items: Array<{ label: string; href: string }> }>;
   competencies: Record<string, { total: number; live: number; items: Array<{ label: string; href: string }> }>;
 }>;
@@ -149,8 +149,19 @@ describe("libraryUsage", () => {
     const viewer = { id: ID, role: "REVIEWER" as const };
     const grouped = await libraryUsage(ORG, refs, "en", viewer);
     expect(usageHook).toHaveBeenCalledTimes(1);
-    expect(usageHook).toHaveBeenCalledWith(ORG, refs, viewer);
+    // Without an executor the hook reads on the global db (fix round 2: the executor is passed through).
+    expect(usageHook).toHaveBeenCalledWith(ORG, refs, viewer, expect.anything());
     expect(grouped.competencies.c1.map((g) => g.label)).toEqual(["Hiring"]);
     expect(grouped.positions.p1).toEqual([]);
+  });
+});
+
+describe("libraryUsage inside a transaction (fix round 2)", () => {
+  it("hands the caller's executor to every solution's hook", async () => {
+    usageHook.mockReset();
+    usageHook.mockResolvedValue({ positions: {}, competencies: {} });
+    const tx = { marker: "tx" };
+    await libraryUsage(ORG, { positionIds: [], competencyIds: ["c1"] }, "tr", null, tx as never);
+    expect(usageHook.mock.calls[0][3]).toBe(tx);
   });
 });

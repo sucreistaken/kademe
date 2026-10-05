@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { StatusTone } from "@/components/ui/status-dot";
+import type { Executor } from "@/db/executor";
 import type { consentTexts, mediaAssets } from "@/db/schema";
 import type { solution } from "@/db/schema/enums";
 import type { Locale } from "@/i18n/locale";
@@ -149,7 +150,11 @@ export interface SolutionModule extends SolutionManifest {
   };
   /** Where this solution uses library rows. Optional: a solution that never reads the library omits it. */
   library?: {
-    /** `viewer` null asks for counts only (no names, no links), e.g. an "is it used" check. */
-    usage(orgId: string, refs: LibraryRefs, viewer: LibraryViewer | null): Promise<LibraryUsage>;
+    /**
+     * `viewer` null asks for counts only (no names, no links), e.g. an "is it used" check.
+     * `x`: the caller's transaction when it holds one; every read goes through it
+     * (a read on the global db inside a transaction can starve the pool). Omitted: the global db.
+     */
+    usage(orgId: string, refs: LibraryRefs, viewer: LibraryViewer | null, x?: Executor): Promise<LibraryUsage>;
   };
 }

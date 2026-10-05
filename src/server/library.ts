@@ -1,5 +1,6 @@
 import { and, asc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
+import type { Executor } from "@/db/executor";
 import {
   competencies,
   competencyAnchors,
@@ -202,11 +203,12 @@ export async function loadPosition(orgId: string, id: string): Promise<PositionD
  * spec 3). Each solution names only what `viewer` may open; null asks for
  * counts only.
  */
-export async function libraryUsage(orgId: string, refs: LibraryRefs, locale: Locale, viewer: LibraryViewer | null) {
+/** `x`: the caller's transaction when it holds one (the archive check does); the hooks read through it. */
+export async function libraryUsage(orgId: string, refs: LibraryRefs, locale: Locale, viewer: LibraryViewer | null, x: Executor = db) {
   const results: SolutionUsage[] = await Promise.all(
     solutionModules()
       .filter((m) => m.library)
-      .map(async (m) => ({ solution: m.key, label: m.label[locale], usage: await m.library!.usage(orgId, refs, viewer) })),
+      .map(async (m) => ({ solution: m.key, label: m.label[locale], usage: await m.library!.usage(orgId, refs, viewer, x) })),
   );
   return groupUsage(results, refs);
 }

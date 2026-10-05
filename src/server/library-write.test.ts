@@ -92,7 +92,7 @@ vi.mock("@/db/library-seed", () => ({
   seedLibrary: (orgId: string) => seedLibrary(orgId),
 }));
 
-type UsageCall = (orgId: string, refs: { positionIds: string[]; competencyIds: string[] }, locale: string) => Promise<{ positions: Record<string, unknown[]>; competencies: Record<string, unknown[]> }>;
+type UsageCall = (orgId: string, refs: { positionIds: string[]; competencyIds: string[] }, locale: string, viewer?: unknown, x?: unknown) => Promise<{ positions: Record<string, unknown[]>; competencies: Record<string, unknown[]> }>;
 const libraryUsage = vi.fn<UsageCall>();
 vi.mock("@/server/library", () => ({
   libraryUsage: (...a: Parameters<UsageCall>) => libraryUsage(...a),
@@ -698,7 +698,8 @@ describe("archiveCompetencyIfUnused (undo of an accepted AI competency, ruling C
     libraryUsage.mockResolvedValue({ positions: {}, competencies: { [ID]: [{ solution: "hiring" }] } });
     expect(await archiveCompetencyIfUnused(ORG, ACTOR, ID, VIA)).toEqual({ ok: false, code: "IN_USE" });
     // Counts only: no viewer, so no opening is named to anyone.
-    expect(libraryUsage).toHaveBeenCalledWith(ORG, { positionIds: [], competencyIds: [ID] }, expect.any(String), null);
+    // On the transaction's own connection (fix round 2): the archive holds the competency FOR UPDATE meanwhile.
+    expect(libraryUsage).toHaveBeenCalledWith(ORG, { positionIds: [], competencyIds: [ID] }, expect.any(String), null, expect.anything());
     expect(writes()).toEqual([]);
   });
 
