@@ -28,12 +28,14 @@ vi.mock("@/components/hiring/candidate/closed", () => ({ ClosedCard: function Cl
 vi.mock("@/components/candidate/LinkProblem", () => ({ LinkProblem: function LinkProblem() {} }));
 vi.mock("@/components/hiring/candidate/frame", () => ({ HiringFrame: function HiringFrame() {} }));
 vi.mock("@/components/candidate/UnknownLink", () => ({ UnknownLink: function UnknownLink() {} }));
+vi.mock("@/components/hiring/candidate/device-check", () => ({ DeviceCheck: function DeviceCheck() {} }));
 
 import { Landing } from "@/components/hiring/candidate/landing";
 import { ClosedCard } from "@/components/hiring/candidate/closed";
 import { LinkProblem } from "@/components/candidate/LinkProblem";
 import { HiringFrame } from "@/components/hiring/candidate/frame";
 import { UnknownLink } from "@/components/candidate/UnknownLink";
+import { DeviceCheck } from "@/components/hiring/candidate/device-check";
 import { createElement } from "react";
 import { formatInviteDeadline } from "../rules/invitation";
 import { zoneLabel } from "@/lib/org-timezone";
@@ -58,7 +60,7 @@ function find(node: ReactNode, type: unknown): ReactElement[] {
   return [...(element.type === type ? [element] : []), ...find(element.props?.children, type)];
 }
 
-const render = (slot: "landing" | "stage", over: Record<string, unknown> = {}) =>
+const render = (slot: "landing" | "check" | "stage", over: Record<string, unknown> = {}) =>
   renderHiringPage(slot, { token: "tok", resolved: { ok: true, ctx } as never, searchParams: {}, params: {}, ...over }) as Promise<ReactNode>;
 
 beforeEach(() => {
@@ -142,6 +144,31 @@ describe("renderHiringPage", () => {
     const unknown = await render("landing");
     expect(unknown).toEqual(createElement(UnknownLink, { token: "tok" }));
     expect(find(unknown, HiringFrame)).toHaveLength(0);
+  });
+
+  it("renders the device check with the devices and the warm-up flag only, inside the frame", async () => {
+    h.state = {
+      ...(h.state as object),
+      step: "CHECK",
+      path: "/check",
+      devices: { camera: true, microphone: true },
+      practice: true,
+      stages: [{ position: 1, name: { tr: "Tanışma LEAKVISIBLE_STAGE", en: "Introduction" }, prompt: "LEAKVISIBLE_PROMPT", managerNotes: "TEAMSECRET_NOTE" }],
+    };
+    const node = await render("check");
+    const [check] = find(node, DeviceCheck);
+    expect(check.props).toEqual({ token: "tok", camera: true, practice: true, locale: "tr" });
+    // No question text and no team text reaches the device page; the frame still names the organisation (positive control).
+    expect(JSON.stringify(check.props)).not.toMatch(/LEAKVISIBLE|TEAMSECRET/);
+    expect(find(node, HiringFrame)[0].props).toMatchObject({ orgName: "Örnek A.Ş.", locale: "tr" });
+    expect(find(node, LinkProblem)).toHaveLength(0);
+    h.state = { ...(h.state as object), devices: { camera: false, microphone: true }, practice: false };
+    expect(find(await render("check"), DeviceCheck)[0].props).toMatchObject({ camera: false, practice: false });
+  });
+
+  it("sends a candidate who is past the device check away from /check", async () => {
+    h.state = { ...(h.state as object), step: "STAGE", position: 1, path: "/stage/1", devices: { camera: true, microphone: true }, practice: false };
+    await expect(render("check")).rejects.toMatchObject({ to: "/a/tok/stage/1" });
   });
 
   it("renders the slots of later tasks as the invalid-link card for now", async () => {

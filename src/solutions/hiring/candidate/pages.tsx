@@ -5,6 +5,7 @@ import { InfoForm } from "@/components/candidate/InfoForm";
 import { LinkProblem } from "@/components/candidate/LinkProblem";
 import { UnknownLink } from "@/components/candidate/UnknownLink";
 import { ClosedCard } from "@/components/hiring/candidate/closed";
+import { DeviceCheck } from "@/components/hiring/candidate/device-check";
 import { HiringFrame } from "@/components/hiring/candidate/frame";
 import { Landing } from "@/components/hiring/candidate/landing";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/i18n/locale";
@@ -123,8 +124,10 @@ export async function renderHiringPage(slot: CandidatePageSlot, input: Candidate
           initial={{ fullName: h.candidate.fullName ?? "", email: h.candidate.email ?? "", phone: h.candidate.phone ?? "", location: h.candidate.location ?? "" }}
         />,
       );
-    // Replaced by Tasks 12 (check), 13 (stage), 14 (practice) and 16 (done).
     case "check":
+      // Two flags and the page's language: no question, stage or team text reaches the device check.
+      return frame(<DeviceCheck token={token} camera={safe.devices.camera} practice={safe.practice} locale={locale} />);
+    // Replaced by Tasks 13 (stage), 14 (practice) and 16 (done).
     case "stage":
     case "practice":
     case "done":

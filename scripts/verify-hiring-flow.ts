@@ -381,9 +381,9 @@ async function main() {
 
   console.log("\nWhat a page can reach in process");
   // Every candidate page asks solutionPage first; the module's title is the page header's.
-  // Hiring renders the landing and the details form (Task 11); the check, stage, warm-up and
-  // finish slots answer with the invalid-link card until their tasks (12, 13, 14, 16) replace
-  // them. Every node rendered here joins the leak scan; the browser check scans the real
+  // Hiring renders the landing and the details form (Task 11) and the device check (Task 12);
+  // the stage, warm-up and finish slots answer with the invalid-link card until their tasks
+  // (13, 14, 16) replace them. Every node rendered here joins the leak scan; the browser check scans the real
   // document and RSC payload (C10).
   const pageRead = (node: unknown) => JSON.stringify(node ?? null, (_key, value) => (typeof value === "function" || typeof value === "symbol" ? undefined : value));
   /** A rendered page, or the address Next's redirect() sends it to (its digest is "NEXT_REDIRECT;type;url;status;"). */
@@ -432,7 +432,8 @@ async function main() {
   check(!!info.node && info.node.includes('"initial"') && info.node.includes("Leyla Şahin"), "without an e-mail address the details form renders, filled from the invitation", info.to ?? info.node?.slice(0, 120));
   await db.update(s.candidates).set({ email: `leyla-${Date.now()}@example.com` }).where(eq(s.candidates.id, leyla.id));
   const checkPage = await page(token6, "check");
-  check(invalidCard(checkPage), "the device check slot: the invalid-link card until Task 12", checkPage.to);
+  check(!!checkPage.node && !invalidCard(checkPage) && /"camera":(true|false),"practice":(true|false),"locale":"(tr|en)"/.test(checkPage.node), "the device check renders (Task 12) with the camera and warm-up flags and the language", checkPage.to ?? checkPage.node?.slice(0, 160));
+  check(!!checkPage.node && checkPage.node.includes('"orgName":"Örnek A.Ş."') && !/LEAKVISIBLE_|TEAMSECRET/.test(checkPage.node), "the device check carries the frame's organisation (positive control) and no question, stage or team text", checkPage.node?.match(/(LEAKVISIBLE|TEAMSECRET)_[A-Z_]+/g));
   const toCheck = await page(token6, "info");
   check(toCheck.to === `/a/${token6}/check`, "with the details given, /info sends on to /check", toCheck);
   state = await call("POST /device-check", token6);
