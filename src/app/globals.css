@@ -352,7 +352,7 @@ body {
   }
 }
 
-/* G9: a focused field scrolled into view is never left under the fixed step footer. */
+/* G9: a focused field scrolled into view is never left under the fixed step footer (the footer measures itself into the variable). */
 html:has([data-step-footer]) {
-  scroll-padding-bottom: 120px;
+  scroll-padding-bottom: calc(var(--step-footer-space, 112px) + 8px);
 }

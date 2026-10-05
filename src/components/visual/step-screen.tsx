@@ -8,7 +8,9 @@ import { Illustration, type IllustrationName } from "./illustrations";
  * sentence and a drawing on the left, the content on the right); a question
  * screen has one focus. Below 1024px both fall to one column. The title takes
  * focus on a step change (the caller passes useStepFocus's ref). A step change
- * fades in and rises 8px; with reduced motion only the fade stays (2.3).
+ * inside one page (`enter`) fades in and rises 8px; with reduced motion only the
+ * fade stays. The first load and a route change never move (2.3), so `enter`
+ * is false unless the caller has just changed the step in place.
  */
 export function StepScreen({
   layout,
@@ -21,6 +23,7 @@ export function StepScreen({
   aside,
   children,
   width = 760,
+  enter = false,
 }: {
   layout: "split" | "single";
   illustration?: IllustrationName;
@@ -32,6 +35,7 @@ export function StepScreen({
   aside?: ReactNode;
   children?: ReactNode;
   width?: 640 | 760 | 1000;
+  enter?: boolean;
 }) {
   // A spot drawing (160px) sits above the title, a hero drawing (400px) under the lead.
   const head = (
@@ -50,7 +54,7 @@ export function StepScreen({
       {aside ? <div className="mt-6">{aside}</div> : null}
     </div>
   );
-  const motion = "motion-safe:animate-[step-in_200ms_ease-out] motion-reduce:animate-[fade-in_200ms_ease-out]";
+  const motion = enter ? "motion-safe:animate-[step-in_200ms_ease-out] motion-reduce:animate-[fade-in_200ms_ease-out]" : null;
   if (layout === "single") {
     return (
       <section className={cn("mx-auto pt-10 pb-6", motion, width === 640 ? "max-w-[640px]" : width === 1000 ? "max-w-[1000px]" : "max-w-[760px]")}>

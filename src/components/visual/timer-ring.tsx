@@ -8,8 +8,27 @@ import { ringGeometry, ringMilestone } from "./ring";
  * screen reader; its label is spoken by the polite region beside it at the
  * milestones only (each whole minute, 30 and 10 seconds; HIRING-UX 8.7), and
  * the region is empty in between, so nothing is read every second.
+ *
+ * Binding for callers: the label carries the time ("Düşünme süren 0:10"), and
+ * no caller announces a ring's clock itself; the ring is the one voice of its
+ * clock. `announce={false}` silences it (no live region at all), e.g. for a
+ * second ring on the same screen.
  */
-export function TimerRing({ remainingMs, totalMs, label, caption, size = 128 }: { remainingMs: number; totalMs: number; label: string; caption: string; size?: 96 | 128 }) {
+export function TimerRing({
+  remainingMs,
+  totalMs,
+  label,
+  caption,
+  size = 128,
+  announce = true,
+}: {
+  remainingMs: number;
+  totalMs: number;
+  label: string;
+  caption: string;
+  size?: 96 | 128;
+  announce?: boolean;
+}) {
   const g = ringGeometry({ remainingMs, totalMs, size });
   const c = size / 2;
   return (
@@ -24,9 +43,11 @@ export function TimerRing({ remainingMs, totalMs, label, caption, size = 128 }: 
           <span className="text-[13px] leading-5 text-muted">{caption}</span>
         </span>
       </div>
-      <p className="sr-only" aria-live="polite" aria-atomic="true">
-        {ringMilestone({ remainingMs, totalMs }) ? label : ""}
-      </p>
+      {announce ? (
+        <p className="sr-only" aria-live="polite" aria-atomic="true">
+          {ringMilestone({ remainingMs, totalMs }) ? label : ""}
+        </p>
+      ) : null}
     </>
   );
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { choiceLetter, choiceShortcut, nextChoiceIndex } from "./choice-keys";
-import { footerButtonState } from "./footer-action";
+import { footerButtonState, footerSpace } from "./footer-action";
 import { journeyPosition, journeySteps } from "./journey";
 import { lastSeconds, ringGeometry, ringMilestone } from "./ring";
 
@@ -77,6 +77,12 @@ describe("the footer's filled button (G2, G9, plan decision 4)", () => {
   it("while it works keeps its filled look and says so on itself (never pale for a second without a word)", () => {
     expect(footerButtonState({ ...base, busy: true, busyLabel: "Kaydediliyor", waitReason: "x" })).toEqual({ mode: "busy", label: "Kaydediliyor", reason: null, describedBy: undefined });
     expect(footerButtonState({ ...base, busy: true }).label).toBe("Sonraki soru");
+  });
+
+  it("keeps the content clear of the bar: the bar's measured height plus a 24px gap, 112px before it is measured", () => {
+    expect(footerSpace(88)).toBe("112px");
+    expect(footerSpace(140.2)).toBe("165px");
+    for (const unmeasured of [null, undefined, 0, -4, Number.NaN, Number.POSITIVE_INFINITY]) expect(footerSpace(unmeasured)).toBe("112px");
   });
 });
 
