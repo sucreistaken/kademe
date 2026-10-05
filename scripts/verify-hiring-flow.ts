@@ -53,7 +53,7 @@ async function main() {
   const { hiringModule } = await import("@/solutions/hiring/module");
   const { resolveToken } = await import("@/lib/candidate-context");
   const { solutionPage } = await import("@/lib/candidate-pages");
-  const { shortDate } = await import("@/i18n/dates");
+  const { feedbackDay, formatInviteDay } = await import("@/solutions/hiring/rules/invitation");
   const { ORG_TIMEZONE } = await import("@/lib/org-timezone");
 
   const routes: Record<string, Handler> = {
@@ -412,7 +412,11 @@ async function main() {
   }
   const handDone = await page(token3, "done");
   const [handOpening] = await db.select({ feedbackDays: s.hiringOpenings.feedbackDays, survey: s.hiringOpenings.finishSurveyEnabled }).from(s.hiringOpenings).where(eq(s.hiringOpenings.id, textOpening.openingId));
-  const promised = shortDate(new Date(doneAttempt.completedAt!.getTime() + handOpening.feedbackDays * 86_400_000), "tr", ORG_TIMEZONE);
+  // Task 16 fix round 1 (I2): the promise is frozen on the invitation in the finish's transaction.
+  const [handRow] = await db.select({ feedbackBy: s.hiringAssessments.feedbackBy }).from(s.hiringAssessments).where(eq(s.hiringAssessments.assessmentId, handInvite.assessmentId));
+  const promisedDay = feedbackDay(doneAttempt.completedAt!, handOpening.feedbackDays, ORG_TIMEZONE);
+  check(handRow.feedbackBy === promisedDay, `the finish froze the reply promise on the invitation: ${promisedDay} (the org day of completion + ${handOpening.feedbackDays} days)`, handRow.feedbackBy);
+  const promised = formatInviteDay(promisedDay, "tr");
   check(
     !!handDone.node && !invalidCard(handDone) && handDone.node.includes(`"feedbackBy":"${promised}"`) && handDone.node.includes('"stagesDone":'),
     `finished by hand, done: the finish page (Task 16) with the reply promise ${promised} in the organisation's zone`,
@@ -423,6 +427,15 @@ async function main() {
     "and its survey is not answered yet",
     handDone.node?.match(/"survey":\{[^}]*\}/)?.[0],
   );
+  // The team edits the opening's feedback days after the candidate finished: the promise shown stays.
+  await db.update(s.hiringOpenings).set({ feedbackDays: handOpening.feedbackDays + 20 }).where(eq(s.hiringOpenings.id, textOpening.openingId));
+  const editedDone = await page(token3, "done");
+  check(
+    !!editedDone.node && editedDone.node.includes(`"feedbackBy":"${promised}"`),
+    `a later edit of the opening's feedback days (${handOpening.feedbackDays} -> ${handOpening.feedbackDays + 20}) does not move the promise shown (${promised})`,
+    editedDone.node?.match(/"feedbackBy":"[^"]*"/)?.[0],
+  );
+  await db.update(s.hiringOpenings).set({ feedbackDays: handOpening.feedbackDays }).where(eq(s.hiringOpenings.id, textOpening.openingId));
   const surveyedDone = await page(token, "done");
   check(
     !!surveyedDone.node && !invalidCard(surveyedDone) && /"survey":\{"enabled":true,"answered":true\}/.test(surveyedDone.node),

@@ -75,6 +75,8 @@ type World = {
   pct: number;
   minEvaluations: number;
   assigned: number;
+  /** hiring_assessments.feedback_by (migration 0013): the frozen reply promise. */
+  feedbackBy: string | null;
 };
 let world: World;
 
@@ -115,7 +117,7 @@ function respond(op: Op): unknown[] {
     switch (op.table) {
       case "hiring_assessments":
         // One row serves both reads: the context (openingId, versionId, extraTimePct, consentTextId) and the start's `pct`.
-        return [{ assessmentId: ASSESSMENT, openingId: "op-1", versionId: VERSION, extraTimePct: world.pct, consentTextId: "ct-1", pct: world.pct }];
+        return [{ assessmentId: ASSESSMENT, openingId: "op-1", versionId: VERSION, extraTimePct: world.pct, consentTextId: "ct-1", pct: world.pct, feedbackBy: world.feedbackBy }];
       case "hiring_versions":
         return [{ id: VERSION, versionNumber: 1, status: "PUBLISHED", defaultLocale: "tr", localeSet: ["tr"], weightsEnabled: false, draftWeights: null, previewedAt: null }];
       case "hiring_stages":
@@ -154,7 +156,16 @@ function respond(op: Op): unknown[] {
   }
   if (op.kind === "update" && op.table === "attempts") {
     const values = op.values as Record<string, unknown>;
-    if (values.completedAt) Object.assign(world.attempt, values);
+    // The completion is written once (where completed_at is null): the update answers the row it wrote.
+    if (values.completedAt && !world.attempt.completedAt) {
+      Object.assign(world.attempt, values);
+      return [{ id: ATTEMPT }];
+    }
+    return [];
+  }
+  if (op.kind === "update" && op.table === "hiring_assessments") {
+    const values = op.values as Record<string, unknown>;
+    if (typeof values.feedbackBy === "string") world.feedbackBy = values.feedbackBy;
   }
   return [];
 }
@@ -176,6 +187,7 @@ beforeEach(() => {
     pct: 25,
     minEvaluations: 2,
     assigned: 2,
+    feedbackBy: null,
   };
 });
 
@@ -364,8 +376,9 @@ describe("submitStage", () => {
     expect(closes[0].values).toEqual({ submittedAt: later(60_000), closedBy: "CANDIDATE" });
     expect(closes[0].where).toContain('"hiring_stage_runs"."submitted_at" is null');
     expect(closes[1].values).toEqual({ completion: "COMPLETE", wasLate: false });
-    // Not the last stage: the invitation is not finished.
+    // Not the last stage: the invitation is not finished, and no promise is made yet.
     expect(writesOf(fake.ops).find((w) => w.table === "attempts")).toBeUndefined();
+    expect(writesOf(fake.ops).find((w) => w.table === "hiring_assessments")).toBeUndefined();
   });
 
   it("writes the invitation's completion when the last stage is submitted (the DONE fallback is never used)", async () => {
@@ -377,6 +390,12 @@ describe("submitStage", () => {
     expect(writes.find((w) => w.table === "attempts")?.values).toEqual({ completedAt: at });
     expect(writes.find((w) => w.table === "assessment_links")?.values).toEqual({ status: "COMPLETED" });
     expect(writes.find((w) => w.table === "candidates")?.values).toEqual({ lastContactAt: at });
+    // I2: the reply promise is frozen in the same transaction: the completion's day in the org zone + 7 days.
+    const promise = writes.find((w) => w.table === "hiring_assessments");
+    expect(promise?.values).toEqual({ feedbackBy: "2026-10-12" });
+    expect(promise?.where).toContain('"hiring_assessments"."assessment_id" = $');
+    // Read from the opening at the finish (its days now), never again afterwards.
+    expect(fake.ops.find((o) => o.table === "hiring_openings" && o.kind === "select" && o.fields?.includes("feedbackDays"))).toBeTruthy();
   });
 
   it("refuses a stage that has not started and a stale number", async () => {
@@ -421,8 +440,22 @@ describe("loadHiringState", () => {
     const now = later(100_000);
     const state = await loadHiringState(h(), now);
     expect(writesOf(fake.ops).find((w) => w.table === "attempts")?.values).toEqual({ completedAt: now });
+    expect(writesOf(fake.ops).find((w) => w.table === "hiring_assessments")?.values).toEqual({ feedbackBy: "2026-10-12" });
     expect(state.step).toBe("DONE");
     expect(state.finished?.completedAt).toBe(now.toISOString());
+    // The state reads the promise the finish stored.
+    expect(state.finished?.feedbackBy).toBe("2026-10-12");
+  });
+
+  it("shows the stored promise even when the opening's feedback days changed afterwards (I2)", async () => {
+    world.runs = [runRow(RUN, "s1", { submittedAt: later(60_000), closedBy: "CANDIDATE" }), runRow(RUN2, "s2", { submittedAt: later(90_000), closedBy: "CANDIDATE" })];
+    world.attempt.completedAt = later(90_000);
+    world.feedbackBy = "2026-10-12";
+    // openingRow says 7 days; the stored day is what was promised.
+    fake.respond = (op) => (op.table === "hiring_openings" && op.kind === "select" ? [{ ...openingRow, feedbackDays: 30 }] : respond(op));
+    const state = await loadHiringState(h(), later(100_000));
+    expect(state.finished?.feedbackBy).toBe("2026-10-12");
+    expect(writesOf(fake.ops).find((w) => w.table === "hiring_assessments")).toBeUndefined();
   });
 
   it("builds the state only from the candidate view: no team-only text reaches the candidate", async () => {
@@ -633,6 +666,7 @@ describe("closeExpiredStageRuns", () => {
     expect(claimsOf(fake.ops)[0].values).toEqual({ submittedAt: now, closedBy: "CLOCK" });
     expect(claimsOf(fake.ops)[1].values).toEqual({ completion: "EXPIRED", wasLate: true });
     expect(writesOf(fake.ops).find((w) => w.table === "attempts")?.values).toEqual({ completedAt: now });
+    expect(writesOf(fake.ops).find((w) => w.table === "hiring_assessments")?.values).toEqual({ feedbackBy: "2026-10-12" });
     // The invitation's own version, read inside its organisation.
     expect(fake.ops.find((o) => o.table === "hiring_versions")?.params).toEqual(expect.arrayContaining([VERSION, ORG]));
   });

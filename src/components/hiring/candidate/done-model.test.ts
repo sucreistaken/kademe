@@ -66,4 +66,12 @@ describe("the finish page's model", () => {
     expect(surveyAfterFailure(new TypeError("Failed to fetch"))).toBe("failed");
     expect(surveyAfterFailure(null)).toBe("failed");
   });
+
+  it("treats a survey that is off, or a finish the server does not see, as closed: no form, no retry (M2)", () => {
+    const refusal = (code: string, status: number) => Object.assign(new Error("x"), { code, status });
+    expect(surveyAfterFailure(refusal("SURVEY_OFF", 409))).toBe("closed");
+    expect(surveyAfterFailure(refusal("NOT_FINISHED", 409))).toBe("closed");
+    // Positive control: a refusal worth retrying stays a failure.
+    expect(surveyAfterFailure(refusal("RATE_LIMITED", 429))).toBe("failed");
+  });
 });

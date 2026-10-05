@@ -64,4 +64,20 @@ describe("hiring candidate copy", () => {
     expect(tr.hiringDevice.fixchrome).toMatch(/Gizlilik ve Güvenlik > Kamera/);
     expect(en.hiringDevice.fixchrome).toMatch(/Privacy & Security > Camera/);
   });
+
+  it("tells the truth about who sees the survey (Task 16 review I1): no name, the average and unnamed comments", () => {
+    expect(tr.hiringDone.surveyNote).toBe("Cevabın değerlendirmeni etkilemez. Ekip adını görmez; yalnızca ortalamayı ve isimsiz yorumları görür.");
+    expect(en.hiringDone.surveyNote).toBe("Your answer does not affect your assessment. The team never sees your name, only the average and unnamed comments.");
+    // The old claim was false (the team sees comments, not only an overall result).
+    for (const text of [...strings(tr.hiringDone), ...strings(en.hiringDone)]) expect(text).not.toMatch(/toplu sonuc|toplu sonuç|overall result/i);
+  });
+
+  it("says a stage is complete, never that every answer was saved, and the finish names at least n reviewers (Task 16 review M1)", () => {
+    const t = { tr: candidateT("tr"), en: candidateT("en") };
+    expect(t.tr("hiringDone.saved", { count: 1 })).toBe("Aşaman tamamlandı ve ekibe iletildi.");
+    expect(t.tr("hiringDone.saved", { count: 3 })).toBe("3 aşamanın hepsi tamamlandı ve ekibe iletildi.");
+    expect(t.en("hiringDone.saved", { count: 3 })).toBe("All 3 stages are complete and sent to the team.");
+    expect(t.tr("hiringDone.next", { count: 2 })).toBe("Cevaplarını ekipten en az 2 kişi, birbirinden bağımsız değerlendirecek.");
+    expect(t.en("hiringDone.title", { name: "Elif Kaya" })).toBe("Done, thank you, Elif Kaya.");
+  });
 });

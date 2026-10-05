@@ -37,6 +37,7 @@ const secretStages = content([
 function input(over: Partial<StateInput> = {}): StateInput {
   return {
     now: T0,
+    timeZone: "Europe/Istanbul",
     orgName: "Örnek A.Ş.",
     contactEmail: "ekip@ornek.com",
     retention: { mediaDays: 180, candidateDays: 730 },
@@ -51,6 +52,7 @@ function input(over: Partial<StateInput> = {}): StateInput {
       deviceChecked: true,
       started: false,
       completedAt: null,
+      feedbackBy: null,
       surveyAnswered: false,
     },
     runs: [],
@@ -117,7 +119,7 @@ describe("where the candidate is", () => {
     const state = buildCandidateState(input({ invitation: { ...input().invitation, started: true, completedAt: T0 } }));
     expect(state.step).toBe("DONE");
     expect(state.path).toBe("/done");
-    expect(state.finished).toEqual({ completedAt: T0.toISOString(), stagesDone: 0, feedbackBy: new Date(T0.getTime() + 7 * 86_400_000).toISOString(), survey: { enabled: true, answered: false } });
+    expect(state.finished).toEqual({ completedAt: T0.toISOString(), stagesDone: 0, feedbackBy: "2026-10-12", survey: { enabled: true, answered: false } });
   });
 });
 
@@ -283,6 +285,24 @@ describe("a DRAFT opening is not open", () => {
   });
 });
 
+describe("the reply promise is frozen at completion (Task 16 fix round 1, I2)", () => {
+  const done = (over: Partial<StateInput["invitation"]>, feedbackDays = 7) =>
+    buildCandidateState(input({ opening: { ...input().opening, feedbackDays }, invitation: { ...input().invitation, started: true, completedAt: T0, ...over } })).finished;
+
+  it("shows the stored day, whatever the opening's feedback days say now", () => {
+    expect(done({ feedbackBy: "2026-10-12" })?.feedbackBy).toBe("2026-10-12");
+    // The team changes the setting after the candidate finished: the promise already made stays.
+    expect(done({ feedbackBy: "2026-10-12" }, 30)?.feedbackBy).toBe("2026-10-12");
+    expect(done({ feedbackBy: "2026-10-12" }, 1)?.feedbackBy).toBe("2026-10-12");
+  });
+
+  it("computes the day in the organisation's zone only when none is stored", () => {
+    expect(done({ feedbackBy: null })?.feedbackBy).toBe("2026-10-12");
+    expect(done({ feedbackBy: null, completedAt: new Date("2026-10-05T22:30:00.000Z") })?.feedbackBy).toBe("2026-10-13");
+    expect(done({ feedbackBy: null }, 14)?.feedbackBy).toBe("2026-10-19");
+  });
+});
+
 describe("DONE always carries the finish (no null screen data)", () => {
   const submitted = (id: string) => ({ stageId: id, startedAt: T0, deadlineAt: T0, submittedAt: new Date(T0.getTime() + (id === "s1" ? 1000 : 5000)), closedByClock: false });
 
@@ -290,14 +310,14 @@ describe("DONE always carries the finish (no null screen data)", () => {
     const state = buildCandidateState(input({ invitation: { ...input().invitation, started: true }, runs: [submitted("s1"), submitted("s2")] }));
     const at = new Date(T0.getTime() + 5000);
     expect(state.step).toBe("DONE");
-    expect(state.finished).toEqual({ completedAt: at.toISOString(), stagesDone: 2, feedbackBy: new Date(at.getTime() + 7 * 86_400_000).toISOString(), survey: { enabled: true, answered: false } });
+    expect(state.finished).toEqual({ completedAt: at.toISOString(), stagesDone: 2, feedbackBy: "2026-10-12", survey: { enabled: true, answered: false } });
   });
 
   it("falls back to now for a version with no stages", () => {
     const state = buildCandidateState(input({ version: { ...input().version, stages: [] } }));
     expect(state.step).toBe("DONE");
     expect(state.current).toBeNull();
-    expect(state.finished).toEqual({ completedAt: T0.toISOString(), stagesDone: 0, feedbackBy: new Date(T0.getTime() + 7 * 86_400_000).toISOString(), survey: { enabled: true, answered: false } });
+    expect(state.finished).toEqual({ completedAt: T0.toISOString(), stagesDone: 0, feedbackBy: "2026-10-12", survey: { enabled: true, answered: false } });
   });
 
   it("is null only while the step is not DONE", () => {

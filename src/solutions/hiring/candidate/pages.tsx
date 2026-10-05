@@ -11,7 +11,6 @@ import { HiringFrame } from "@/components/hiring/candidate/frame";
 import { Landing } from "@/components/hiring/candidate/landing";
 import { Practice } from "@/components/hiring/candidate/practice";
 import { StageRunner } from "@/components/hiring/candidate/stage-runner";
-import { shortDate } from "@/i18n/dates";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/i18n/locale";
 import { setAssessmentLocale, type CandidateContext, type LinkProblem as Problem } from "@/lib/candidate-context";
 import { candidateSafe } from "@/lib/candidate-safe";
@@ -19,7 +18,7 @@ import { pickTextLang } from "@/lib/i18n-text";
 import { ORG_TIMEZONE, orgDay, zoneLabel } from "@/lib/org-timezone";
 import type { CandidatePageInput, CandidatePageSlot } from "@/solutions/types";
 import { loadHiringContext, loadHiringState } from "../server/candidate";
-import { formatInviteDeadline } from "../rules/invitation";
+import { formatInviteDay, formatInviteDeadline } from "../rules/invitation";
 import { loadConsentText } from "../server/consent";
 
 /**
@@ -152,8 +151,9 @@ export async function renderHiringPage(slot: CandidatePageSlot, input: Candidate
       // DONE state with its finish; a DONE without one is a broken invariant, not a page to guess.
       const finished = safe.finished;
       if (!finished) throw new Error("hiring: a DONE state without its finish");
-      // HIRING-UX 6.13 and A9: the team's reply promise as a day in the organisation's zone.
-      const feedbackBy = shortDate(new Date(finished.feedbackBy), locale, ORG_TIMEZONE);
+      // HIRING-UX 6.13 and A9: the team's reply promise, the org's calendar day frozen at the finish
+      // (the zone was applied then), named the way the invitation e-mail names its days.
+      const feedbackBy = formatInviteDay(finished.feedbackBy, locale);
       return frame(<Done token={token} state={{ ...safe, finished }} feedbackBy={feedbackBy} />);
     }
   }

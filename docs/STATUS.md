@@ -107,6 +107,7 @@ Zamanlayıcılar 1-2 dakikada bir çalıştığı için transkripsiyon ve puanla
 15. Son düzeltme dalgası yapıldı (aşağıdaki "Son düzeltme dalgası"). Bilerek sonraki planlara bırakılanlar: registry testinin menü etiketlerini TR/EN tekrar doğrulaması; yayın kapısının ulaşılamaz `NOT_WHOLE` kodu; puan kartında daha kısa ekran okuyucu sütun adları; yeni sürüm anahtarına eski AI oturumunun yazılması (kendini düzeltir); önizleme ilerleme çubuğu ile aşama metninin tanımı (plan 2); her otomatik kayıtta tüm kurucunun yeniden doğrulanması (plan 2 ölçeğinde ölçülecek); ağırlık setlerinin tetikleyiciyle dondurulmaması (plan 3).
 16. next-intl `ENVIRONMENT_FALLBACK` uyarısı giderildi (yönetici ve aday sağlayıcıları `ORG_TIMEZONE`'u sunucudan alıyor; dev günlüğünde uyarı yok). İstemci bileşeninde biçimlenen tarih (`LinkProblem`) varsayılan bölgeyi kullanır; `ORG_TIMEZONE` varsayılandan farklı ayarlanırsa orada sunucu ile tarayıcı farklı gün yazabilir, doğrulanmadı.
 17. Kullanıcıya sorulacak tasarım noktası: kurucudaki koyu "Sadece ekip görür" paneli HIRING-UX 5.5'e göre; daha açık isteniyorsa karar kullanıcıda.
+18. İşe alım bitiş ekranı (plan 2 Görev 16) adaya tarihli bir geri dönüş sözü veriyor: tamamlanma günü (`ORG_TIMEZONE`) + alımın geri dönüş günü, tamamlanırken `hiring_assessments.feedback_by`'a dondurulur (göç 0013; yalnız yerel `kademe_platform`'a ve geçici `*_check` veritabanlarına uygulandı). Ekip tarafı bu tarihi henüz izlemiyor: aday başına "Geri dönüş: <tarih>" ve Bugün'de gecikme durumu plan 3.
 
 ## Canlıya çıkış (yapılmadı, ayrı onay)
 

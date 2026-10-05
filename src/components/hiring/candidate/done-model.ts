@@ -30,7 +30,16 @@ export function takeLastLostWords(storage: DraftStorage | null, token: string, p
   return kind;
 }
 
-/** A send that failed: the server holding an answer already means it was sent (another tab, a lost reply). */
-export function surveyAfterFailure(err: unknown): "sent" | "failed" {
-  return err && typeof err === "object" && (err as { code?: unknown }).code === "ALREADY_ANSWERED" ? "sent" : "failed";
+/** Refusals no retry can change (M2): the survey was switched off, or the server does not see a finish. */
+const CLOSED = new Set(["SURVEY_OFF", "NOT_FINISHED"]);
+
+/**
+ * A send that failed. The server holding an answer already means it was sent
+ * (another tab, a lost reply); a survey that is off or a finish the server
+ * does not see closes the form for good; anything else is worth a retry.
+ */
+export function surveyAfterFailure(err: unknown): "sent" | "closed" | "failed" {
+  const code = err && typeof err === "object" ? (err as { code?: unknown }).code : undefined;
+  if (code === "ALREADY_ANSWERED") return "sent";
+  return typeof code === "string" && CLOSED.has(code) ? "closed" : "failed";
 }

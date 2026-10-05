@@ -491,3 +491,18 @@ describe("0012_hiring_run_closed_by", () => {
     for (const name of [...sql.matchAll(/CONSTRAINT "([^"]+)"/g)].map((m) => m[1])) expect(name.length, name).toBeLessThanOrEqual(63);
   });
 });
+
+describe("0013_hiring_feedback_by", () => {
+  const sql = read("0013_hiring_feedback_by");
+
+  it("adds the frozen reply promise as a nullable calendar day (null until the finish)", () => {
+    expect(sql).toContain(`ALTER TABLE "hiring_assessments" ADD COLUMN "feedback_by" date;`);
+    expect(sql).not.toMatch(/"feedback_by" date (NOT NULL|DEFAULT)/);
+  });
+
+  it("only adds, touches no other table and writes no rows", () => {
+    expect(sql).not.toMatch(/\bDROP\b/);
+    expect(sql).not.toMatch(/^\s*(INSERT|UPDATE|DELETE)\b/im);
+    expect([...sql.matchAll(/ALTER TABLE "([^"]+)"/g)].every((m) => m[1] === "hiring_assessments")).toBe(true);
+  });
+});

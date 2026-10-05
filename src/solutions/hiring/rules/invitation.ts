@@ -1,4 +1,5 @@
 import type { Locale } from "@/i18n/locale";
+import { orgDay } from "@/lib/org-timezone";
 
 /** Inviting a candidate (HIRING-UX 5.11), pure. */
 
@@ -195,6 +196,17 @@ export function addDays(day: string, days: number): string {
   if (!parts || !Number.isInteger(days)) throw new RangeError(`Not a calendar day: ${day}`);
   const [y, m, d] = parts;
   return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
+/**
+ * The reply promise of the finish screen (HIRING-UX 6.13, A9) as the
+ * organisation's calendar day: the day the candidate finished, in `timeZone`,
+ * plus the opening's feedback days. Frozen on the invitation when it is
+ * finished (hiring_assessments.feedback_by), so a later settings edit never
+ * moves a promise already made. The zone is passed in (no environment read).
+ */
+export function feedbackDay(completedAt: Date, feedbackDays: number, timeZone: string): string {
+  return addDays(orgDay(completedAt, timeZone), feedbackDays);
 }
 
 /**

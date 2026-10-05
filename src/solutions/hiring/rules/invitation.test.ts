@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addDays, candidateProgress, formatInviteDay, formatInviteDeadline, inviteMessage, isEmail, linkExpiryDay, MAX_INVITE_ROWS, MAX_NAME_LENGTH, parseInviteRows } from "./invitation";
+import { addDays, candidateProgress, feedbackDay, formatInviteDay, formatInviteDeadline, inviteMessage, isEmail, linkExpiryDay, MAX_INVITE_ROWS, MAX_NAME_LENGTH, parseInviteRows } from "./invitation";
 import { orgDay, zonedDayStart, zoneLabel } from "@/lib/org-timezone";
 
 describe("the ready message (HIRING-UX 5.11)", () => {
@@ -322,5 +322,16 @@ describe("the deadline as the end of the org's day", () => {
     expect(en).toBe("14 Oct, 23:59 (Türkiye Standard Time)");
     const { body } = inviteMessage({ locale: "tr", candidateName: "Ali", orgName: "Acme", positionName: "Dev", url: "https://kademe.test/a/abc", deadline: tr, minutes: 25, contactEmail: null });
     expect(body).toContain("Son tarih: 14 Eki 23:59 (Türkiye Standart Saati).");
+  });
+});
+
+describe("the reply promise's day (Task 16 fix round 1, I2)", () => {
+  it("is the completion's day in the organisation's zone plus the opening's feedback days", () => {
+    expect(feedbackDay(new Date("2026-10-05T09:00:00.000Z"), 7, "Europe/Istanbul")).toBe("2026-10-12");
+    // 22:30 UTC is already the next day in Istanbul: the promise counts from that day.
+    expect(feedbackDay(new Date("2026-10-05T22:30:00.000Z"), 7, "Europe/Istanbul")).toBe("2026-10-13");
+    expect(feedbackDay(new Date("2026-10-05T22:30:00.000Z"), 7, "UTC")).toBe("2026-10-12");
+    // By the calendar across a month end.
+    expect(feedbackDay(new Date("2026-10-28T09:00:00.000Z"), 7, "Europe/Istanbul")).toBe("2026-11-04");
   });
 });

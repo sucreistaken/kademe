@@ -793,9 +793,9 @@
   "hiringDone": {
     "title": "Tamamlandı, teşekkürler {name}.",
     "titleNoName": "Tamamlandı, teşekkürler.",
-    "saved": "{count, plural, one {Aşaman kaydedildi ve ekibe iletildi.} other {# aşamanın hepsi kaydedildi ve ekibe iletildi.}}",
-    "lostText": "Süre dolduktan sonra yazdığın son kelimeler kaydedilemedi; o ana kadarki cevapların kaydedildi.",
-    "lostChoice": "Süre dolduktan sonra yaptığın son değişiklik kaydedilemedi; o ana kadarki cevapların kaydedildi.",
+    "saved": "{count, plural, one {Aşaman tamamlandı ve ekibe iletildi.} other {# aşamanın hepsi tamamlandı ve ekibe iletildi.}}",
+    "lostText": "Süre dolduktan sonra yazdığın son kelimeler kaydedilemedi; daha önce kaydedilen cevapların duruyor.",
+    "lostChoice": "Süre dolduktan sonra yaptığın son değişiklik kaydedilemedi; daha önce kaydedilen cevapların duruyor.",
     "next": "{count, plural, =0 {Cevaplarını işe alım ekibi değerlendirecek.} =1 {Cevaplarını ekipten bir kişi değerlendirecek.} other {Cevaplarını ekipten en az # kişi, birbirinden bağımsız değerlendirecek.}}",
     "byDate": "{date} tarihine kadar sana dönülecek.",
     "contact": "Sorun olursa: <mail>{email}</mail>",
@@ -806,12 +806,13 @@
     "surveyHigh": "Çok iyiydi",
     "surveyComment": "Eklemek istediğin bir şey var mı? (isteğe bağlı)",
     "surveyCount": "{used} / {max}",
-    "surveyNote": "Cevabın değerlendirmeni etkilemez; ekip yalnızca toplu sonucu görür.",
+    "surveyNote": "Cevabın değerlendirmeni etkilemez. Ekip adını görmez; yalnızca ortalamayı ve isimsiz yorumları görür.",
     "surveySend": "Görüşünü gönder",
     "surveySending": "Gönderiliyor",
     "surveyPick": "Önce 1 ile 5 arasında bir puan seç.",
     "surveyThanks": "Teşekkürler, görüşün iletildi.",
     "surveyFailed": "Gönderilemedi. Tekrar dener misin?",
+    "surveyClosed": "Bu anket artık açık değil.",
     "rights": "Veri hakların"
   }
 }

@@ -272,11 +272,12 @@ describe("the finish page", () => {
       position: null,
       path: "/done",
       orgName: "Örnek A.Ş.",
-      finished: { completedAt: "2026-10-05T09:00:00.000Z", stagesDone: 2, feedbackBy: "2026-10-12T22:30:00.000Z", survey: { enabled: true, answered: false } },
+      // Fix round 1 (I2): the state carries the promise frozen at completion as the org's calendar
+      // day (the zone is applied once, at the finish: rules/invitation feedbackDay); the page names it.
+      finished: { completedAt: "2026-10-05T09:00:00.000Z", stagesDone: 2, feedbackBy: "2026-10-13", survey: { enabled: true, answered: false } },
     };
     const page = (await renderHiringPage("done", { token: "tok", resolved: { ok: false, problem: "COMPLETED", ctx } as never, searchParams: {}, params: {} })) as ReactNode;
     const [done] = find(page, Done);
-    // 22:30 UTC is already 13 Oct in Istanbul.
     expect((done.props as { feedbackBy: string }).feedbackBy).toBe("13 Eki");
   });
 
@@ -289,7 +290,7 @@ describe("the finish page", () => {
       candidateName: "Elif Kaya",
       reviewers: 2,
       devices: { camera: true, microphone: true },
-      finished: { completedAt: "2026-10-05T09:00:00.000Z", stagesDone: 2, feedbackBy: "2026-10-12T09:00:00.000Z", survey: { enabled: true, answered: true } },
+      finished: { completedAt: "2026-10-05T09:00:00.000Z", stagesDone: 2, feedbackBy: "2026-10-12", survey: { enabled: true, answered: true } },
     };
     h.hctx = { ...(h.hctx as object), locale: "en" };
     const node = await render("done", { resolved: { ok: false, problem: "COMPLETED", ctx } });
@@ -308,7 +309,7 @@ describe("the finish page", () => {
   });
 
   it("keeps a finished candidate on /done: the landing, a stage and the warm-up all send them back", async () => {
-    h.state = { ...(h.state as object), step: "DONE", position: null, path: "/done", finished: { completedAt: "2026-10-05T09:00:00.000Z", stagesDone: 1, feedbackBy: "2026-10-12T09:00:00.000Z", survey: { enabled: false, answered: false } } };
+    h.state = { ...(h.state as object), step: "DONE", position: null, path: "/done", finished: { completedAt: "2026-10-05T09:00:00.000Z", stagesDone: 1, feedbackBy: "2026-10-12", survey: { enabled: false, answered: false } } };
     const completed = { resolved: { ok: false, problem: "COMPLETED", ctx } };
     await expect(render("landing", completed)).rejects.toMatchObject({ to: "/a/tok/done" });
     await expect(render("stage", { ...completed, params: { n: "1" } })).rejects.toMatchObject({ to: "/a/tok/done" });

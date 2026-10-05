@@ -28,6 +28,7 @@ import { enqueueTranscription } from "@/lib/queue";
 import { decideSalvage, SALVAGE_MIN_AGE_MS } from "@/lib/stage-timeout";
 import { getStorage, mediaKey } from "@/lib/storage";
 import { submitDecision, SUBMIT_SLACK_MS } from "@/lib/timer";
+import { ORG_TIMEZONE } from "@/lib/org-timezone";
 import { isTranscribableMime } from "@/lib/transcription";
 import type { MediaAssetRow } from "@/solutions/types";
 import {
@@ -51,6 +52,7 @@ import { buildCandidateState, type HiringCandidateState } from "../rules/candida
 import { toCandidateVersion } from "../rules/candidate-view";
 import { isChoice, isRecorded, orderedActivities, orderedStages, type ContentActivity, type ContentStage, type VersionContent } from "../rules/content";
 import { devicesNeeded } from "../rules/disclosure";
+import { feedbackDay } from "../rules/invitation";
 import { loadVersionContent } from "./content";
 
 /**
@@ -257,12 +259,29 @@ async function closeRun(
 
 /**
  * The last stage closes the attempt: the attempt's completion (what the finish
- * screen and its feedback date read), the link COMPLETED, the person's last contact now.
+ * screen reads), the link COMPLETED, the person's last contact now. With the
+ * completion, in the same transaction, the reply promise is frozen on the
+ * invitation (I2): the org's day of the finish plus the opening's feedback
+ * days as they are now; a later edit of the setting never moves it.
  */
 async function finishIfDone(x: Executor, attemptId: string, assessmentId: string, candidateId: string, stageIds: string[], now: Date): Promise<boolean> {
   const runs = await x.select({ stageId: hiringStageRuns.stageId, submittedAt: hiringStageRuns.submittedAt }).from(hiringStageRuns).where(eq(hiringStageRuns.attemptId, attemptId));
   if (stageIds.length === 0 || !stageIds.every((id) => runs.some((r) => r.stageId === id && r.submittedAt))) return false;
-  await x.update(attempts).set({ completedAt: now }).where(and(eq(attempts.id, attemptId), isNull(attempts.completedAt)));
+  const completed = await x
+    .update(attempts)
+    .set({ completedAt: now })
+    .where(and(eq(attempts.id, attemptId), isNull(attempts.completedAt)))
+    .returning({ id: attempts.id });
+  // Only the call that wrote the completion makes the promise (a repeat finds it written).
+  if (completed.length > 0) {
+    const [opening] = await x
+      .select({ feedbackDays: hiringOpenings.feedbackDays })
+      .from(hiringOpenings)
+      .innerJoin(hiringAssessments, and(eq(hiringAssessments.openingId, hiringOpenings.id), eq(hiringAssessments.orgId, hiringOpenings.orgId)))
+      .where(eq(hiringAssessments.assessmentId, assessmentId))
+      .limit(1);
+    if (opening) await x.update(hiringAssessments).set({ feedbackBy: feedbackDay(now, opening.feedbackDays, ORG_TIMEZONE) }).where(eq(hiringAssessments.assessmentId, assessmentId));
+  }
   await x
     .update(assessmentLinks)
     .set({ status: "COMPLETED" })
@@ -321,12 +340,18 @@ export async function loadHiringState(h: HiringContext, now: Date = new Date()):
   if (!meta) throw new Error(`hiring opening ${h.hiring.openingId} of invitation ${h.assessment.id} is missing`);
   const [reviewers] = await db.select({ n: sql<number>`count(*)::int` }).from(hiringAssignments).where(eq(hiringAssignments.assessmentId, h.assessment.id));
   const [survey] = await db.select({ id: hiringSurveyResponses.assessmentId }).from(hiringSurveyResponses).where(eq(hiringSurveyResponses.assessmentId, h.assessment.id)).limit(1);
+  const [promise] = await db
+    .select({ feedbackBy: hiringAssessments.feedbackBy })
+    .from(hiringAssessments)
+    .where(and(eq(hiringAssessments.assessmentId, h.assessment.id), eq(hiringAssessments.orgId, h.assessment.orgId)))
+    .limit(1);
   const current = currentOf(flow);
   const rows = current?.run ? await db.select().from(hiringResponses).where(eq(hiringResponses.stageRunId, current.run.id)) : [];
   const takes = await takeInfo(db, rows);
 
   return buildCandidateState({
     now,
+    timeZone: ORG_TIMEZONE,
     orgName: meta.orgName,
     contactEmail: meta.openingContact ?? meta.orgContact,
     retention: { mediaDays: meta.mediaDays, candidateDays: meta.candidateDays },
@@ -341,6 +366,7 @@ export async function loadHiringState(h: HiringContext, now: Date = new Date()):
       deviceChecked: !!flow.attempt.deviceCheckedAt,
       started: flow.runs.some((r) => r.startedAt),
       completedAt: flow.attempt.completedAt,
+      feedbackBy: promise?.feedbackBy ?? null,
       surveyAnswered: !!survey,
     },
     runs: flow.runs.map((r) => ({ stageId: r.stageId, startedAt: r.startedAt, deadlineAt: r.deadlineAt, submittedAt: r.submittedAt, closedByClock: r.closedBy === "CLOCK" })),

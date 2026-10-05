@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button, DisabledReason } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,19 +37,27 @@ export function Done({ token, state, feedbackBy }: { token: string; state: Hirin
   const finished = state.finished;
   const devices = devicesLine(state.devices);
   const [lost, setLost] = useState<LostKind | null>(null);
+  // M3: the "switched off" line appears only once the stop has run.
+  const [stopped, setStopped] = useState(false);
   const [announce, setAnnounce] = useState(false);
   const [rating, setRating] = useState<string>("");
   const [comment, setComment] = useState("");
   // Task 5: the server says whether this invitation's survey is answered, so a reload shows the thanks.
-  const [survey, setSurvey] = useState<"open" | "sending" | "sent" | "failed">(finished.survey.answered ? "sent" : "open");
+  // "closed" (M2): the survey was switched off or the server sees no finish; the form is gone for good.
+  const [survey, setSurvey] = useState<"open" | "sending" | "sent" | "failed" | "closed">(finished.survey.answered ? "sent" : "open");
   const [error, setError] = useState<string | null>(null);
-  const surveyHeading = useStepFocus<HTMLHeadingElement>(survey === "sent" ? "sent" : "form");
+  // M4: one send at a time, also against a second click in the same tick.
+  const sending = useRef(false);
+  // When the form gives way (sent or closed) focus moves to the survey's heading; a retry keeps it on the button.
+  const surveyHeading = useStepFocus<HTMLHeadingElement>(survey === "sent" || survey === "closed" ? survey : "form");
 
   useEffect(() => {
     // Task 12 carry: every stream this tab still holds is stopped here; the device check and each
     // take stop their own already, so the line does not wait on a count. It is said only when the
     // assessment used a device at all (devicesLine).
     stopAllStreams();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setStopped(true);
     // Task 13 carry: a save the server refused after the last stage's deadline is said once, here.
     const kind = takeLastLostWords(
       sessionDrafts(),
@@ -57,7 +65,6 @@ export function Done({ token, state, feedbackBy }: { token: string; state: Hirin
       state.stages.map((s) => s.position),
     );
     // React may run this effect twice in development: the second read finds the flag cleared and keeps the first.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (kind) setLost(kind);
     // Minor 9 (Task 13): a status that arrives with a client navigation is read out only when filled in after it.
     const id = window.setTimeout(() => setAnnounce(true), 250);
@@ -65,6 +72,8 @@ export function Done({ token, state, feedbackBy }: { token: string; state: Hirin
   }, [token, state.stages]);
 
   async function send() {
+    if (sending.current || !rating) return;
+    sending.current = true;
     setSurvey("sending");
     setError(null);
     try {
@@ -75,13 +84,16 @@ export function Done({ token, state, feedbackBy }: { token: string; state: Hirin
       setSurvey(next);
       // Never the browser's raw network text: the server's own words for a refusal, else ours.
       if (next === "failed") setError(serverMessage(err) ?? t("surveyFailed"));
+      if (next === "closed") setError(serverMessage(err) ?? t("surveyClosed"));
+    } finally {
+      sending.current = false;
     }
   }
 
   const title = state.candidateName ? t("title", { name: state.candidateName }) : t("titleNoName");
   const saved = t("saved", { count: finished.stagesDone });
   const lostLine = lost === "text" ? t("lostText") : lost === "choice" ? t("lostChoice") : null;
-  const devicesText = devices === "cameraAndMicrophone" ? t("devicesOff") : devices === "microphone" ? t("micOff") : null;
+  const devicesText = !stopped ? null : devices === "cameraAndMicrophone" ? t("devicesOff") : devices === "microphone" ? t("micOff") : null;
   const why = !rating ? t("surveyPick") : undefined;
 
   return (
@@ -113,6 +125,11 @@ export function Done({ token, state, feedbackBy }: { token: string; state: Hirin
           {survey === "sent" ? (
             <p role="status" className="mt-3 text-[16px] leading-[26px] text-ink">
               {t("surveyThanks")}
+            </p>
+          ) : survey === "closed" ? (
+            // M2: no form and no retry; the server's words say why.
+            <p role="status" className="mt-3 text-[16px] leading-[26px] text-ink">
+              {error ?? t("surveyClosed")}
             </p>
           ) : (
             <>
@@ -164,8 +181,18 @@ export function Done({ token, state, feedbackBy }: { token: string; state: Hirin
               </p>
               <p className="mt-2 text-[14px] leading-[22px] text-muted">{t("surveyNote")}</p>
               <ActionBar>
-                {/* Disabled for want of a rating says why; while it sends, its own label says so. */}
-                <Button id="survey-send" variant="primary" size="lg" className="w-full text-[16px] sm:w-auto" disabled={!rating || survey === "sending"} disabledReason={why} onClick={send}>
+                {/* Disabled for want of a rating says why. While it sends it stays focusable (aria-disabled, M4),
+                    so a keyboard user's focus is still here when a failure offers the retry; its label says so. */}
+                <Button
+                  id="survey-send"
+                  variant="primary"
+                  size="lg"
+                  className="w-full text-[16px] aria-disabled:cursor-wait aria-disabled:opacity-70 sm:w-auto"
+                  disabled={!rating}
+                  disabledReason={why}
+                  aria-disabled={survey === "sending" || undefined}
+                  onClick={send}
+                >
                   {survey === "sending" ? t("surveySending") : t("surveySend")}
                 </Button>
                 {why ? (

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, check, foreignKey, index, integer, jsonb, numeric, pgTable, primaryKey, real, text, timestamp, unique, uniqueIndex, uuid, type AnyPgColumn } from "drizzle-orm/pg-core";
+import { boolean, check, date, foreignKey, index, integer, jsonb, numeric, pgTable, primaryKey, real, text, timestamp, unique, uniqueIndex, uuid, type AnyPgColumn } from "drizzle-orm/pg-core";
 import { organizations, users } from "./org";
 import { consentTexts } from "./compliance";
 import { competencies, positions } from "./library";
@@ -371,6 +371,13 @@ export const hiringAssessments = pgTable(
       .references(() => consentTexts.id, { onDelete: "restrict" }),
     /** Plan 2 freezes OFF; plan 4 copies the version's level onto new invitations. */
     proctorLevel: hiringProctorLevel("proctor_level").notNull().default("OFF"),
+    /**
+     * The reply promise the finish screen shows (HIRING-UX 6.13, A9): the org's
+     * calendar day the candidate finished plus the opening's feedback days,
+     * written once with the completion (migration 0013). Null until then; a
+     * later edit of the opening's feedback days never moves it.
+     */
+    feedbackBy: date("feedback_by", { mode: "string" }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

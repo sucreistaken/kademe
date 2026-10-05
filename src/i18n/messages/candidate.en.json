@@ -791,11 +791,11 @@
     "offlineIdle": "Your connection dropped. You can upload your file once it is back. The clock keeps running."
   },
   "hiringDone": {
-    "title": "Done, thank you {name}.",
+    "title": "Done, thank you, {name}.",
     "titleNoName": "Done, thank you.",
-    "saved": "{count, plural, one {Your stage is saved and sent to the team.} other {All # stages are saved and sent to the team.}}",
-    "lostText": "The last words you wrote after the time ran out could not be saved; your answers up to that moment are saved.",
-    "lostChoice": "The last change you made after the time ran out could not be saved; your answers up to that moment are saved.",
+    "saved": "{count, plural, one {Your stage is complete and sent to the team.} other {All # stages are complete and sent to the team.}}",
+    "lostText": "The last words you wrote after the time ran out could not be saved; your earlier saved answers stay.",
+    "lostChoice": "The last change you made after the time ran out could not be saved; your earlier saved answers stay.",
     "next": "{count, plural, =0 {The hiring team will review your answers.} =1 {One person on the team will review your answers.} other {At least # people on the team will review your answers independently.}}",
     "byDate": "You will hear back by {date}.",
     "contact": "If something is wrong: <mail>{email}</mail>",
@@ -806,12 +806,13 @@
     "surveyHigh": "Very good",
     "surveyComment": "Anything to add? (optional)",
     "surveyCount": "{used} / {max}",
-    "surveyNote": "Your answer does not affect your assessment; the team only sees the overall result.",
+    "surveyNote": "Your answer does not affect your assessment. The team never sees your name, only the average and unnamed comments.",
     "surveySend": "Send your feedback",
     "surveySending": "Sending",
     "surveyPick": "Choose a rating from 1 to 5 first.",
     "surveyThanks": "Thank you, your feedback was sent.",
     "surveyFailed": "It did not send. Could you try again?",
+    "surveyClosed": "This survey is no longer open.",
     "rights": "Your data rights"
   }
 }

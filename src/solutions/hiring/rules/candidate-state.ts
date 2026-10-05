@@ -4,6 +4,7 @@ import { effectiveSeconds, extraTimeRefusal, hiringStepSuffix, responseAnswered,
 import { toCandidateVersion, type CandidateStage } from "./candidate-view";
 import { orderedActivities, orderedStages, type ContentStage } from "./content";
 import { devicesNeeded, estimatedMinutes, recordedSignals, type RecordedSignal } from "./disclosure";
+import { feedbackDay } from "./invitation";
 
 /**
  * Everything a hiring candidate's screens are built from (hiring solution
@@ -82,12 +83,18 @@ export type HiringCandidateState = {
   contactEmail: string | null;
   retention: { mediaDays: number; candidateDays: number };
   current: CurrentStage | null;
-  /** `feedbackBy`: the dated promise on the finish screen (completion + the opening's feedback days). */
+  /**
+   * `feedbackBy`: the dated promise on the finish screen, an org calendar day
+   * (YYYY-MM-DD) frozen when the invitation was finished (completion day +
+   * the opening's feedback days then; Task 16 fix round 1, I2).
+   */
   finished: { completedAt: string; stagesDone: number; feedbackBy: string; survey: { enabled: boolean; answered: boolean } } | null;
 };
 
 export type StateInput = {
   now: Date;
+  /** The organisation's zone (ORG_TIMEZONE), for the promise of an invitation finished before it was stored. */
+  timeZone: string;
   orgName: string;
   contactEmail: string | null;
   retention: { mediaDays: number; candidateDays: number };
@@ -104,6 +111,8 @@ export type StateInput = {
     /** A stage of this attempt has started. */
     started: boolean;
     completedAt: Date | null;
+    /** hiring_assessments.feedback_by: the promise frozen at the finish (null until then). */
+    feedbackBy: string | null;
     surveyAnswered: boolean;
   };
   /** `closedByClock`: the run ended because the clock ran out, not because the candidate submitted. */
@@ -216,7 +225,8 @@ export function buildCandidateState(input: StateInput): HiringCandidateState {
         ? {
             completedAt: finishedAt.toISOString(),
             stagesDone: input.runs.filter((r) => r.submittedAt).length,
-            feedbackBy: new Date(finishedAt.getTime() + input.opening.feedbackDays * 86_400_000).toISOString(),
+            // The stored promise wins; the compute stands in only when none was stored (never for a finish written by this code).
+            feedbackBy: inv.feedbackBy ?? feedbackDay(finishedAt, input.opening.feedbackDays, input.timeZone),
             survey: { enabled: input.opening.finishSurveyEnabled, answered: inv.surveyAnswered },
           }
         : null,
