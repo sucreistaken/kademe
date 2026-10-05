@@ -52,14 +52,15 @@ export type FixKey = "chrome" | "safariMac" | "ios" | "iosOther" | "android" | "
 
 /**
  * Which "Nasıl düzeltirim?" steps to show. Order matters: in-app browsers
- * (Facebook, Instagram, LinkedIn, the Google app, LINE, an Android WebView)
+ * (Facebook, Instagram, LinkedIn, the Google app, LINE, an Android WebView,
+ * TikTok, Snapchat)
  * come first, since they carry the browser's name too; iOS browsers other than
  * Safari have their own switch in Settings; iOS and Android browsers also say
  * "Safari". iPadOS asks for the desktop site and says "Macintosh": a touch
  * screen (`maxTouchPoints` > 1) tells it from a Mac.
  */
 export function fixKeyFor(userAgent: string, maxTouchPoints = 0): FixKey {
-  if (/FBAN|FBAV|Instagram|LinkedInApp|GSA\/|Line\/|; wv\)/.test(userAgent)) return "inApp";
+  if (/FBAN|FBAV|Instagram|LinkedInApp|GSA\/|Line\/|; wv\)|musical_ly|BytedanceWebview|Snapchat/.test(userAgent)) return "inApp";
   if (/CriOS|FxiOS|EdgiOS/.test(userAgent)) return "iosOther";
   if (/iPhone|iPad|iPod/i.test(userAgent) || (/Macintosh/.test(userAgent) && maxTouchPoints > 1)) return "ios";
   if (/Android/i.test(userAgent)) return "android";
