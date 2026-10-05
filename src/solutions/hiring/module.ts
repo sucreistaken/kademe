@@ -1,6 +1,10 @@
 import type { SolutionModule } from "@/solutions/types";
 import { hiringManifest } from "./manifest";
+import { attachMedia, closeExpiredStageRuns, salvageHiringUploads } from "./server/candidate";
 import { hiringLibraryUsage } from "./server/library-usage";
+
+/** Abandoned uploads per cron tick; storage is touched once per asset. */
+const SALVAGE_BATCH = 20;
 
 /** Thrown if a candidate path ever reaches hiring before plan 2; the core never routes one here (candidateFlowLive). */
 function notLive(what: string): never {
@@ -38,8 +42,16 @@ export const hiringModule: SolutionModule = {
     async terminate() {
       return notLive("terminate");
     },
-    async onMediaComplete() {
-      return notLive("onMediaComplete");
+    onMediaComplete: attachMedia,
+    async closeExpired(now, limit) {
+      // Salvage first, so a rescued take is attached before its stage closes.
+      // Best effort: a storage outage must not keep stages open.
+      try {
+        await salvageHiringUploads(now, SALVAGE_BATCH);
+      } catch (error) {
+        console.error("[hiring] upload salvage sweep failed", error);
+      }
+      return closeExpiredStageRuns(now, limit);
     },
   },
   library: { usage: hiringLibraryUsage },
