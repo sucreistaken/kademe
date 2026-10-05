@@ -306,6 +306,7 @@ export async function loadHiringState(h: HiringContext, now: Date = new Date()):
       openingContact: hiringOpenings.candidateContactEmail,
       finishSurveyEnabled: hiringOpenings.finishSurveyEnabled,
       feedbackDays: hiringOpenings.feedbackDays,
+      minEvaluations: hiringOpenings.minEvaluations,
       positionName: positions.name,
       introTitle: hiringVersions.introTitle,
       introBody: hiringVersions.introBody,
@@ -329,7 +330,7 @@ export async function loadHiringState(h: HiringContext, now: Date = new Date()):
     orgName: meta.orgName,
     contactEmail: meta.openingContact ?? meta.orgContact,
     retention: { mediaDays: meta.mediaDays, candidateDays: meta.candidateDays },
-    opening: { status: meta.openingStatus, positionName: meta.positionName, finishSurveyEnabled: meta.finishSurveyEnabled, feedbackDays: meta.feedbackDays },
+    opening: { status: meta.openingStatus, positionName: meta.positionName, finishSurveyEnabled: meta.finishSurveyEnabled, feedbackDays: meta.feedbackDays, minEvaluations: meta.minEvaluations },
     version: { stages: flow.content.stages, introTitle: meta.introTitle, introBody: meta.introBody, practiceEnabled: meta.practiceEnabled },
     invitation: {
       candidateName: h.candidate.fullName,

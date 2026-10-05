@@ -73,6 +73,8 @@ type World = {
   media: Array<Record<string, unknown>>;
   consented: boolean;
   pct: number;
+  minEvaluations: number;
+  assigned: number;
 };
 let world: World;
 
@@ -101,6 +103,7 @@ const openingRow = {
   openingContact: null,
   finishSurveyEnabled: true,
   feedbackDays: 7,
+  minEvaluations: 2,
   positionName: "Ürün Tasarımcısı",
   introTitle: null,
   introBody: null,
@@ -132,9 +135,9 @@ function respond(op: Op): unknown[] {
       case "consents":
         return world.consented ? [{ id: "consent-1" }] : [];
       case "hiring_openings":
-        return [openingRow];
+        return [{ ...openingRow, minEvaluations: world.minEvaluations }];
       case "hiring_assignments":
-        return [{ n: 2 }];
+        return [{ n: world.assigned }];
     }
     return [];
   }
@@ -171,6 +174,8 @@ beforeEach(() => {
     media: [],
     consented: true,
     pct: 25,
+    minEvaluations: 2,
+    assigned: 2,
   };
 });
 
@@ -383,6 +388,15 @@ describe("submitStage", () => {
 });
 
 describe("loadHiringState", () => {
+  it("names the opening's minimum of reviewers, capped by the panel assigned to this invitation", async () => {
+    world.minEvaluations = 3;
+    world.assigned = 2;
+    expect((await loadHiringState(h(), NOW)).reviewers).toBe(2);
+    world.minEvaluations = 1;
+    world.assigned = 4;
+    expect((await loadHiringState(h(), NOW)).reviewers).toBe(1);
+  });
+
   it("closes a run the clock ended as the clock's, and the next stage says so", async () => {
     world.runs = [runRow(RUN, "s1")];
     world.responses = [];

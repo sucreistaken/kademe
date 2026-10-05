@@ -3,17 +3,18 @@ import type { ReactNode } from "react";
 import { CandidateIntl } from "@/components/candidate/Intl";
 import { InfoForm } from "@/components/candidate/InfoForm";
 import { LinkProblem } from "@/components/candidate/LinkProblem";
-import { CandidateShell } from "@/components/candidate/Shell";
+import { UnknownLink } from "@/components/candidate/UnknownLink";
 import { ClosedCard } from "@/components/hiring/candidate/closed";
 import { HiringFrame } from "@/components/hiring/candidate/frame";
 import { Landing } from "@/components/hiring/candidate/landing";
-import { shortDate } from "@/i18n/dates";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/i18n/locale";
 import { setAssessmentLocale, type CandidateContext, type LinkProblem as Problem } from "@/lib/candidate-context";
 import { candidateSafe } from "@/lib/candidate-safe";
-import { ORG_TIMEZONE } from "@/lib/org-timezone";
+import { pickTextLang } from "@/lib/i18n-text";
+import { ORG_TIMEZONE, orgDay, zoneLabel } from "@/lib/org-timezone";
 import type { CandidatePageInput, CandidatePageSlot } from "@/solutions/types";
 import { loadHiringContext, loadHiringState } from "../server/candidate";
+import { formatInviteDeadline } from "../rules/invitation";
 import { loadConsentText } from "../server/consent";
 
 /**
@@ -45,41 +46,54 @@ function suffixOf(slot: CandidatePageSlot, params: Record<string, string>): stri
   }
 }
 
-/** A link problem, or a page not built yet: the core's invalid, expired and not-yet cards. */
-function problemPage(token: string, locale: Locale, problem: Problem, ctx?: CandidateContext): ReactNode {
+/**
+ * The hiring frame (organisation, language, Help) around a screen. Only for an
+ * invitation hiring serves: the organisation's name is never shown to a token
+ * it does not (that one gets the core UnknownLink card, the leak rule).
+ */
+function framed(token: string, locale: Locale, orgName: string, children: ReactNode): ReactNode {
   return (
     <CandidateIntl locale={locale} timeZone={ORG_TIMEZONE}>
-      <CandidateShell locale={locale} header={false}>
-        <LinkProblem
-          token={token}
-          locale={locale}
-          problem={problem}
-          expiresAt={ctx?.link.expiresAt.getTime()}
-          notBefore={ctx?.link.notBefore?.getTime()}
-          contactEmail={ctx?.contactEmail ?? "destek@kademe.local"}
-          contactName={ctx?.contactName ?? null}
-        />
-      </CandidateShell>
+      <HiringFrame locale={locale} orgName={orgName} token={token}>
+        {children}
+      </HiringFrame>
     </CandidateIntl>
+  );
+}
+
+/** An expired or not-yet link of a served invitation, or a page not built yet: the core card inside the frame. */
+function problemCard(token: string, locale: Locale, problem: Problem, ctx: CandidateContext): ReactNode {
+  return (
+    <LinkProblem
+      token={token}
+      locale={locale}
+      problem={problem}
+      expiresAt={ctx.link.expiresAt.getTime()}
+      notBefore={ctx.link.notBefore?.getTime()}
+      contactEmail={ctx.contactEmail ?? "destek@kademe.local"}
+      contactName={ctx.contactName ?? null}
+    />
   );
 }
 
 export async function renderHiringPage(slot: CandidatePageSlot, input: CandidatePageInput): Promise<ReactNode> {
   const { token, resolved, searchParams, params } = input;
   const base = `/a/${encodeURIComponent(token)}`;
-  // A finished link is the candidate's way back to /done (and the survey); every other problem has its card.
-  if (!resolved.ok && resolved.problem !== "COMPLETED") {
-    const locale = isLocale(resolved.ctx.locale) ? resolved.ctx.locale : DEFAULT_LOCALE;
-    return problemPage(token, locale, resolved.problem, resolved.ctx);
-  }
+  // The core asks only for an invitation hiring serves; should the terms be gone by now, it is an unknown token.
   const h = await loadHiringContext(resolved.ctx);
-  if (!h) return problemPage(token, DEFAULT_LOCALE, "INVALID");
-
+  if (!h) return <UnknownLink token={token} />;
   // `?lang=` is applied once, written to the invitation and taken out of the address.
   const wanted = one(searchParams.lang);
   if (isLocale(wanted)) {
     if (wanted !== h.locale) await setAssessmentLocale(h, wanted);
     redirect(`${base}${suffixOf(slot, params)}`);
+  }
+
+  // A finished link is the candidate's way back to /done (and the survey). Expired and not-yet
+  // cards keep the frame, so the organisation, the language and Help stay in reach.
+  if (!resolved.ok && resolved.problem !== "COMPLETED") {
+    const locale = isLocale(resolved.ctx.locale) ? resolved.ctx.locale : DEFAULT_LOCALE;
+    return framed(token, locale, resolved.ctx.orgName, problemCard(token, locale, resolved.problem, resolved.ctx));
   }
 
   const state = await loadHiringState(h);
@@ -89,29 +103,18 @@ export async function renderHiringPage(slot: CandidatePageSlot, input: Candidate
   const locale: Locale = isLocale(h.locale) ? h.locale : DEFAULT_LOCALE;
   // Ruling C10: nothing below reads `state` directly; the client gets the stripped copy.
   const safe = candidateSafe(state);
-  const frame = (children: ReactNode) => (
-    <CandidateIntl locale={locale} timeZone={ORG_TIMEZONE}>
-      <HiringFrame locale={locale} orgName={safe.orgName} token={token}>
-        {children}
-      </HiringFrame>
-    </CandidateIntl>
-  );
+  const frame = (children: ReactNode) => framed(token, locale, safe.orgName, children);
 
   switch (slot) {
     case "landing": {
       // A closed opening stops only a candidate who has not started (Task 5); the state says CLOSED then.
       if (safe.step === "CLOSED") return frame(<ClosedCard contactEmail={safe.contactEmail} />);
       // The text frozen on this invitation, never the organisation's newest one.
-      const consent = await loadConsentText(h.assessment.orgId, h.hiring.consentTextId);
-      return frame(
-        <Landing
-          token={token}
-          state={safe}
-          consentBody={consent.body[locale] || consent.body.tr}
-          deadline={shortDate(h.link.expiresAt, locale, ORG_TIMEZONE)}
-          locale={locale}
-        />,
-      );
+      // Shown in the other language (with its own lang) when this one is empty.
+      const consent = pickTextLang((await loadConsentText(h.assessment.orgId, h.hiring.consentTextId)).body, locale);
+      // The deadline in the invitation e-mail's words: the end of the org's day, the zone named.
+      const deadline = formatInviteDeadline(orgDay(h.link.expiresAt, ORG_TIMEZONE), locale, zoneLabel(locale, ORG_TIMEZONE));
+      return frame(<Landing token={token} state={safe} consentBody={consent.text} consentLang={consent.lang} deadline={deadline} locale={locale} />);
     }
     case "info":
       return frame(
@@ -125,6 +128,6 @@ export async function renderHiringPage(slot: CandidatePageSlot, input: Candidate
     case "stage":
     case "practice":
     case "done":
-      return problemPage(token, locale, "INVALID");
+      return frame(problemCard(token, locale, "INVALID", h));
   }
 }

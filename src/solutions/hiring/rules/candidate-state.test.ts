@@ -40,7 +40,7 @@ function input(over: Partial<StateInput> = {}): StateInput {
     orgName: "Örnek A.Ş.",
     contactEmail: "ekip@ornek.com",
     retention: { mediaDays: 180, candidateDays: 730 },
-    opening: { status: "OPEN", positionName: "Ürün Tasarımcısı", finishSurveyEnabled: true, feedbackDays: 7 },
+    opening: { status: "OPEN", positionName: "Ürün Tasarımcısı", finishSurveyEnabled: true, feedbackDays: 7, minEvaluations: 2 },
     version: { stages: secretStages, introTitle: null, introBody: null, practiceEnabled: true },
     invitation: {
       candidateName: "Elif Kaya",
@@ -193,6 +193,24 @@ describe("the grace is told, not hidden (C25)", () => {
   it("exposes no grace for a stage whose timeout rule is not ALLOW_GRACE", () => {
     const state = buildCandidateState(input({ version: { ...input().version, stages: graceStages }, invitation: { ...input().invitation, started: true, extraTimePct: 25 }, runs: [{ stageId: "s1", startedAt: T0, deadlineAt: T0, submittedAt: T0, closedByClock: false }] }));
     expect(state.current).toMatchObject({ position: 2, graceSeconds: 0 });
+  });
+});
+
+describe("how many people review the answers (Task 11 review ruling)", () => {
+  const reviewersFor = (minEvaluations: number, assigned: number) =>
+    buildCandidateState(input({ opening: { ...input().opening, minEvaluations }, invitation: { ...input().invitation, reviewers: assigned } })).reviewers;
+
+  it("promises one person when the opening needs one, however large the panel", () => {
+    expect(reviewersFor(1, 3)).toBe(1);
+  });
+
+  it("promises the opening's minimum, not the whole panel", () => {
+    expect(reviewersFor(2, 4)).toBe(2);
+  });
+
+  it("never promises more people than the panel has", () => {
+    expect(reviewersFor(3, 2)).toBe(2);
+    expect(reviewersFor(2, 0)).toBe(0);
   });
 });
 

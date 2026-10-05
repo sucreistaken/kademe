@@ -15,6 +15,7 @@ import type { Locale } from "@/i18n/locale";
 import type { HiringCandidateState } from "@/solutions/hiring/rules/candidate-state";
 import { ActionBar } from "./action-bar";
 import { mailTo } from "./closed";
+import { serverMessage } from "./server-message";
 
 const ICONS = { VIDEO_ANSWER: Video, AUDIO_ANSWER: Mic, TECHNICAL: Wifi } as const;
 const EXTRA = ["0", "25", "50"] as const;
@@ -32,7 +33,22 @@ const EXTRA = ["0", "25", "50"] as const;
  * more than the total. Consent posts to the core route, which records the
  * text frozen on this invitation.
  */
-export function Landing({ token, state, consentBody, deadline, locale }: { token: string; state: HiringCandidateState; consentBody: string; deadline: string; locale: Locale }) {
+export function Landing({
+  token,
+  state,
+  consentBody,
+  consentLang,
+  deadline,
+  locale,
+}: {
+  token: string;
+  state: HiringCandidateState;
+  consentBody: string;
+  /** The language the consent text is shown in (the other one when the candidate's is empty). */
+  consentLang: Locale;
+  deadline: string;
+  locale: Locale;
+}) {
   const t = useT("hiringLanding");
   const router = useRouter();
   const [accepted, setAccepted] = useState(false);
@@ -58,7 +74,7 @@ export function Landing({ token, state, consentBody, deadline, locale }: { token
       setExtra("saved");
     } catch (err) {
       setPct(before);
-      setExtraError(err instanceof Error ? err.message : t("failed"));
+      setExtraError(serverMessage(err) ?? t("failed"));
       setExtra("idle");
     }
   }
@@ -70,7 +86,7 @@ export function Landing({ token, state, consentBody, deadline, locale }: { token
       const next = await apiSend<HiringCandidateState>(token, "/consent", { accepted: true });
       router.push(nextPath(token, next));
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("failed"));
+      setError(serverMessage(err) ?? t("failed"));
       setBusy(false);
     }
   }
@@ -142,10 +158,11 @@ export function Landing({ token, state, consentBody, deadline, locale }: { token
             <ChevronDown className="size-4 transition-transform duration-[180ms] ease-soft group-data-[state=open]:rotate-180 motion-reduce:transition-none" aria-hidden />
           </CollapsibleTrigger>
           <CollapsibleContent className="mt-2 space-y-3 border-t border-line pt-3 text-[14px] leading-[22px] text-ink-2">
-            <p className="whitespace-pre-line">{consentBody}</p>
+            <p className="whitespace-pre-line" lang={consentLang !== locale ? consentLang : undefined}>
+              {consentBody}
+            </p>
             <p className="tnum">{t("retentionMedia", { days: state.retention.mediaDays })}</p>
             <p className="tnum">{t("retentionRecord", { days: state.retention.candidateDays })}</p>
-            {recorded ? <p>{t("processor")}</p> : null}
           </CollapsibleContent>
         </Collapsible>
       </section>

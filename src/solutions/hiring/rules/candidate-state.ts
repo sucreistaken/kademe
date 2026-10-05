@@ -68,6 +68,11 @@ export type HiringCandidateState = {
   intro: { title: I18nText | null; body: I18nText | null };
   stages: Array<{ position: number; name: I18nText; minutes: number; graceSeconds: number; questions: number; done: boolean }>;
   totalMinutes: number;
+  /**
+   * How many people the landing promises: the opening's minimum of
+   * evaluations, never more than the panel assigned to this invitation
+   * (Task 11 review ruling; the consent text says the team scores independently).
+   */
   reviewers: number;
   signals: RecordedSignal[];
   devices: { camera: boolean; microphone: boolean };
@@ -86,12 +91,13 @@ export type StateInput = {
   orgName: string;
   contactEmail: string | null;
   retention: { mediaDays: number; candidateDays: number };
-  opening: { status: "DRAFT" | "OPEN" | "CLOSED"; positionName: string; finishSurveyEnabled: boolean; feedbackDays: number };
+  opening: { status: "DRAFT" | "OPEN" | "CLOSED"; positionName: string; finishSurveyEnabled: boolean; feedbackDays: number; minEvaluations: number };
   version: { stages: ContentStage[]; introTitle: I18nText | null; introBody: I18nText | null; practiceEnabled: boolean };
   invitation: {
     candidateName: string | null;
     candidateEmail: string | null;
     extraTimePct: ExtraTimePct;
+    /** The panel assigned to this invitation. */
     reviewers: number;
     consented: boolean;
     deviceChecked: boolean;
@@ -196,7 +202,7 @@ export function buildCandidateState(input: StateInput): HiringCandidateState {
       done: !!runOf(s.id)?.submittedAt,
     })),
     totalMinutes: estimatedMinutes(view, pct, graceByStage),
-    reviewers: inv.reviewers,
+    reviewers: Math.max(0, Math.min(input.opening.minEvaluations, inv.reviewers)),
     signals: recordedSignals(view),
     devices,
     extraTimePct: pct,

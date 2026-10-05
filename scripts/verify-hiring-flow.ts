@@ -423,6 +423,8 @@ async function main() {
   check(!!landing.node && landing.node.includes('"consentBody"') && landing.node.includes(JSON.stringify(consentText.body.en)), "the landing renders, with the invitation's frozen hiring consent text in English", landing.to ?? landing.node?.slice(0, 120));
   check(!!landing.node && landing.node.includes('"orgName":"Örnek A.Ş."') && (landing.node.match(/LEAKVISIBLE_[A-Z]+/g) ?? []).length >= 1, "positive control: the landing's props carry the organisation and a LEAKVISIBLE text", landing.node?.match(/LEAKVISIBLE_[A-Z]+/g));
   check(!!landing.node && !landing.node.includes("TEAMSECRET"), "and no TEAMSECRET text", landing.node?.match(/TEAMSECRET_[A-Z_]+/g));
+  check(!!landing.node && /"deadline":"\d{1,2} [A-Z][a-z]{2}, 23:59 \(/.test(landing.node), "the deadline reads like the invitation e-mail (end of the day, zone named)", landing.node?.match(/"deadline":"[^"]*"/)?.[0]);
+  check(!!landing.node && landing.node.includes('"reviewers":2'), "the landing promises the opening's minimum of 2 reviewers (panel of 2)", landing.node?.match(/"reviewers":\d+/)?.[0]);
   check((await call("POST /consent", token6, { accepted: true })).json.step === "CHECK", "the landing's consent leads to the device check");
   const [leyla] = await db.select({ id: s.assessments.candidateId }).from(s.assessments).where(eq(s.assessments.id, fresh.assessmentId));
   await db.update(s.candidates).set({ email: null }).where(eq(s.candidates.id, leyla.id));
@@ -445,7 +447,7 @@ async function main() {
   const token7 = expiring.url.split("/a/")[1];
   await db.update(s.assessmentLinks).set({ expiresAt: new Date(Date.now() - 60_000) }).where(eq(s.assessmentLinks.assessmentId, expiring.assessmentId));
   const expired = await page(token7, "landing");
-  check(!!expired.node && expired.node.includes('"problem":"EXPIRED"'), "an expired link shows the expired-link card", expired.to ?? expired.node?.slice(0, 120));
+  check(!!expired.node && expired.node.includes('"problem":"EXPIRED"') && expired.node.includes('"orgName":"Örnek A.Ş."'), "an expired link shows the expired-link card inside the hiring frame", expired.to ?? expired.node?.slice(0, 120));
   await db.update(s.assessmentLinks).set({ expiresAt: new Date(Date.now() + 86_400_000) }).where(eq(s.assessmentLinks.assessmentId, expiring.assessmentId));
   await db.update(s.hiringOpenings).set({ status: "CLOSED" }).where(eq(s.hiringOpenings.id, fixture.openingId));
   const closed = await page(token7, "landing");

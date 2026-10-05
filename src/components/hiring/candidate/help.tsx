@@ -11,14 +11,17 @@ type SendState = "idle" | "sending" | "sent" | "failed";
 
 /**
  * HIRING-UX 6: "Yardım" in the top bar: three answers and a way to reach a
- * person. Opening it moves focus into the panel, Escape closes it and gives
- * focus back to the button; when the report is sent the form gives way to the
+ * person. Opening it moves focus into the panel. It closes on Escape pressed
+ * anywhere (focus goes back to the button when it was inside), on a click
+ * outside it, and when focus moves out of it; `aria-controls` names the panel
+ * only while it exists. When the report is sent the form gives way to the
  * confirmation, which takes focus so a keyboard user is not left on <body>.
  * A report that did not reach the team says so (it is never shown as sent).
  */
 export function Help({ token }: { token: string }) {
   const t = useT("hiringFrame");
   const panel = useId();
+  const root = useRef<HTMLDivElement>(null);
   const toggle = useRef<HTMLButtonElement>(null);
   const title = useRef<HTMLHeadingElement>(null);
   const [open, setOpen] = useState(false);
@@ -27,13 +30,25 @@ export function Help({ token }: { token: string }) {
   const sentNote = useStepFocus<HTMLParagraphElement>(state === "sent" ? "sent" : "form");
 
   useEffect(() => {
-    if (open) title.current?.focus();
+    if (!open) return;
+    title.current?.focus();
+    const inside = (node: EventTarget | null) => node instanceof Node && !!root.current?.contains(node);
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      const hadFocus = inside(document.activeElement);
+      setOpen(false);
+      if (hadFocus) toggle.current?.focus();
+    };
+    const onPointer = (event: PointerEvent) => {
+      if (!inside(event.target)) setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPointer);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPointer);
+    };
   }, [open]);
-
-  function close() {
-    setOpen(false);
-    toggle.current?.focus();
-  }
 
   async function send() {
     setState("sending");
@@ -50,20 +65,20 @@ export function Help({ token }: { token: string }) {
 
   return (
     <div
+      ref={root}
       className="relative"
-      onKeyDown={(event) => {
-        if (event.key === "Escape" && open) {
-          event.stopPropagation();
-          close();
-        }
+      onBlur={(event) => {
+        // Focus moving to something outside (Tab past the panel) closes it; a window losing focus does not.
+        const next = event.relatedTarget;
+        if (open && next instanceof Node && !event.currentTarget.contains(next)) setOpen(false);
       }}
     >
       <button
         ref={toggle}
         type="button"
         aria-expanded={open}
-        aria-controls={panel}
-        onClick={() => (open ? close() : setOpen(true))}
+        aria-controls={open ? panel : undefined}
+        onClick={() => setOpen((v) => !v)}
         className="flex min-h-11 items-center rounded-lg px-2 text-[14px] text-ink underline decoration-underline underline-offset-4 hover:decoration-ink"
       >
         {open ? t("closeHelp") : t("help")}
