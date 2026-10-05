@@ -74,3 +74,8 @@ Task 6: complete (commits 9e1abaa..65a40e0, review clean after 1 fix round)
 - Benchmark (doğrulanmadı, bulut, tarayıcı yok): focus lands on the heading after Consent -> /info and /check -> /practice; screen reader names of the two details fields; 1024 and 1440 shots of /info.
 BASE T7: 65a40e0
 - Carry to Task 7/8 (ruling C3 made concrete): check memory {trialPlayed, devicesOpened}; shouldAutoOpen takes openedBefore and is false on a first visit.
+Task 7: implementer DONE 66ff998 (C3 applied: memory {trialPlayed, devicesOpened}, shouldAutoOpen takes openedBefore). Controller: vitest 2395/2395, 0 removed names, 13 added. Review (sonnet): Approved, 0 Critical/Important.
+Task 7: complete (commit 66ff998, review clean)
+- Task 7: minor (deferred): shouldAutoOpen's inline object type could be a named alias.
+- Carry to Task 8 (binding): pass openedBefore: memory.devicesOpened to shouldAutoOpen; write devicesOpened: true when this tab opens the devices, and carry trialPlayed along (writeCheckMemory replaces the whole record); C2 waitReason for every blocker.
+BASE T8: 66ff998
