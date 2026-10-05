@@ -1,21 +1,28 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { Button, DisabledReason } from "@/components/ui/button";
+import { Camera, Check, Mic, NotebookPen, Video } from "lucide-react";
+import { Disclosure } from "@/components/visual/disclosure";
+import type { FooterAction } from "@/components/visual/footer-action";
+import { MediaStage } from "@/components/visual/media-stage";
+import { lastSeconds } from "@/components/visual/ring";
+import { StepFooter } from "@/components/visual/step-footer";
+import { TimerRing } from "@/components/visual/timer-ring";
 import { Textarea } from "@/components/ui/textarea";
-import { useCaptureHold } from "@/lib/client/capture-hold";
+import { holdUntilSettled, useCaptureHold } from "@/lib/client/capture-hold";
 import type { FlushRegistry } from "@/lib/client/flush-registry";
 import { CHUNK_MS, pickChunkedRecorderMime } from "@/lib/client/recorder";
 import { formatCountdown } from "@/lib/timer";
 import { useT } from "@/i18n/candidate-client";
 import type { Locale } from "@/i18n/locale";
 import type { CandidateActivity } from "@/solutions/hiring/rules/candidate-view";
-import { ActionBar } from "./action-bar";
 import { ActivityHeader } from "./activity-header";
+import { peakLevel } from "./device-rows";
+import { recordedFooterState, refocusAfterTimeUp } from "./recorded-footer";
 import type { RecordingResult, RecordingSink, TakeProgress } from "./recording-sink";
 import { serverMessage } from "./server-message";
 import { trackStream } from "./streams";
-import { canTryAgain, finishFailure, retakesLeft, startFailure, Take, takeHoldsCapture, usedAfterStartFailure, type RecorderLike, type TakeOutcome } from "./take";
+import { afterExhausted, canTryAgain, finishFailure, retakesLeft, startFailure, Take, takeHoldsCapture, usedAfterStartFailure, type RecorderLike, type TakeOutcome } from "./take";
 
 export type RecordedPhase = "think" | "record" | "saving" | "review" | "saved" | "failed";
 /** Strict think time: the camera opens this long before recording starts by itself. */
@@ -53,8 +60,15 @@ export type RecordedProps = {
   disabled: boolean;
   /** The runner shows its own filled button (a retry, a closed question): this screen shows none. */
   hidePrimary?: boolean;
-  /** The warm-up's filled button on the review ("Hazırım, değerlendirmeye başla"), in the same bar as the retake. */
-  reviewPrimary?: React.ReactNode;
+  /** C4: the runner holds the screen for a reason of its own (the 8 second send strip): the filled button waits with it instead of showing a spinner. */
+  holdReason?: string | null;
+  /** The warm-up's filled button on the review ("Hazırım, değerlendirmeye başla"), next to "Tekrar çek". */
+  reviewPrimary?: FooterAction;
+  /** The warm-up's way out on the left of the footer ("Isınmayı atla"), and its journey. */
+  footerBack?: { label: string; href: string } | null;
+  journey?: { steps: number; current: number; label: string } | null;
+  /** The chip above the question; the warm-up says "Isınma · kimse görmez", answers name the kind of question. */
+  kicker?: string;
   /** HIRING-UX A7: the written alternative, rendered and sent by the runner. */
   alternative?: { node: React.ReactNode; ready: boolean; using: boolean; onChoose(using: boolean): void; send(): void } | null;
 };
@@ -88,9 +102,15 @@ export function RecordedActivity(props: RecordedProps) {
   const [canRetryFinish, setCanRetryFinish] = useState(false);
   const [notes, setNotes] = useState("");
   const [opening, setOpening] = useState(false);
+  const [exhausted, setExhausted] = useState(false);
+  const [level, setLevel] = useState(0);
+  // The newest take this screen knows: the one the page opened on, or the last one finished here (Task 14 carry).
+  const lastRef = useRef<string | null>(props.existingRef);
   // From the think time until the take is saved the page is held: the frame's language link (a full
   // page load) would cut the take, and the take would still count (Task 5 fix round 2).
-  useCaptureHold(`take:${useId()}`, takeHoldsCapture(phase, writing));
+  const holdId = useId();
+  useCaptureHold(`take:${holdId}`, takeHoldsCapture(phase, writing));
+  const takeSeq = useRef(0);
   const self = useRef<HTMLVideoElement | null>(null);
   const stream = useRef<MediaStream | null>(null);
   const pending = useRef<Promise<MediaStream | null> | null>(null);
@@ -163,6 +183,7 @@ export function RecordedActivity(props: RecordedProps) {
       if (take.current !== finished) return;
       if (outcome.ok) {
         take.current = null;
+        lastRef.current = outcome.result.ref ?? lastRef.current;
         setCanRetryFinish(false);
         latest.current.onTake?.(outcome.result);
         setIncomplete(outcome.result.status === "INCOMPLETE");
@@ -237,6 +258,11 @@ export function RecordedActivity(props: RecordedProps) {
           return () => window.removeEventListener("pagehide", onHide);
         },
       });
+      // Task 5 carry: the page stays held until this take's outcome settles, also after this question
+      // is left (the close waited past its limit): the language link would cut a take still finishing,
+      // like it would a file upload.
+      takeSeq.current += 1;
+      holdUntilSettled(`take-outcome:${holdId}:${takeSeq.current}`, next.outcome);
       if (!mounted.current) {
         if (mode === "practice") next.discard();
         else next.stop();
@@ -255,14 +281,28 @@ export function RecordedActivity(props: RecordedProps) {
       // No takes left on the server: none is offered here either (the "Tekrar dene" would only be refused again).
       usedRef.current = usedAfterStartFailure(err, usedRef.current, activity.maxTakes);
       setUsed(usedRef.current);
-      setNote(why === "noTakes" ? t("noTakes") : why === "server" ? (serverMessage(err) ?? t("failed")) : t("failed"));
       setCanRetryFinish(false);
-      setPhase("failed");
       closeStream();
+      if (why === "noTakes") {
+        // Task 14 carry: "Bu cevabı kullan" shows which take it uses, when this screen knows it.
+        const next = afterExhausted({ lastRef: lastRef.current });
+        setExhausted(true);
+        if (next.phase === "review") {
+          setNote(null);
+          setPhase("review");
+          void loadPlayback({ status: "READY", ref: next.ref });
+          return;
+        }
+        setNote(t("noTakes"));
+        setPhase("failed");
+        return;
+      }
+      setNote(why === "server" ? (serverMessage(err) ?? t("failed")) : t("failed"));
+      setPhase("failed");
     } finally {
       beginning.current = false;
     }
-  }, [disabled, timeUp, openStream, t, audioOnly, sink, mode, closeStream, answerMs, setPhase, settle, activity.maxTakes]);
+  }, [disabled, timeUp, openStream, t, audioOnly, sink, mode, closeStream, answerMs, setPhase, settle, activity.maxTakes, loadPlayback, holdId]);
 
   // The strict think time's own start reads the latest state (time up, disabled), not the first render's.
   const beginRef = useRef(begin);
@@ -340,6 +380,42 @@ export function RecordedActivity(props: RecordedProps) {
     }
   }, [phase, audioOnly]);
 
+  // 3.8: an audio answer shows the real level of the microphone it records (no animation of its own).
+  useEffect(() => {
+    if (phase !== "record" || !audioOnly || !stream.current) return;
+    let ctx: AudioContext | null = null;
+    let id: number | null = null;
+    try {
+      const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      ctx = new Ctx();
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 512;
+      ctx.createMediaStreamSource(stream.current).connect(analyser);
+      const data = new Uint8Array(analyser.fftSize);
+      id = window.setInterval(() => {
+        analyser.getByteTimeDomainData(data);
+        // C16: the same peak the device check reads.
+        setLevel(Math.round(peakLevel(data) * 20) / 20);
+      }, 100);
+    } catch {
+      // No level in this browser: the "Sesin kaydediliyor" line still says it records.
+    }
+    return () => {
+      if (id !== null) window.clearInterval(id);
+      void ctx?.close().catch(() => undefined);
+      setLevel(0);
+    };
+  }, [phase, audioOnly]);
+
+  // Task 4 carry 6: time up turns a focused primary into a waiting one (or takes a retake away); focus goes to the heading, not a disabled button.
+  const wasTimeUp = useRef(timeUp);
+  useEffect(() => {
+    const active = document.activeElement;
+    const kind = !active || active === document.body ? "body" : active instanceof HTMLButtonElement && active.disabled ? "disabled-control" : "other";
+    if (refocusAfterTimeUp({ timeUp, wasTimeUp: wasTimeUp.current, active: kind })) document.getElementById(`prompt-${activity.id}`)?.focus();
+    wasTimeUp.current = timeUp;
+  }, [timeUp, activity.id]);
+
   // The stage's close (next question, finish, time up) waits for a take that is recording or finishing.
   useEffect(() => {
     if (!flushes) return;
@@ -384,68 +460,50 @@ export function RecordedActivity(props: RecordedProps) {
     retake();
   }
 
+  // C4: what every action here says about waiting and working comes from one rule (recorded-footer.ts).
+  const footerState = recordedFooterState({ timeUp, disabled, timeUpReason: t("timeUpReason"), holdReason: props.holdReason });
+
   if (writing && alternative) {
     return (
-      <div className="space-y-4">
+      <div className="mx-auto max-w-[760px] space-y-4 pt-8">
         {alternative.node}
         <p className="text-[14px] leading-[22px] text-muted">{t("writingNote")}</p>
-        <ActionBar>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            {hidePrimary ? null : (
-              <Button
-                id="send-written"
-                variant="primary"
-                size="lg"
-                className="w-full text-[16px] sm:w-auto"
-                disabled={disabled || !alternative.ready}
-                disabledReason={!alternative.ready ? t("writtenRequired") : undefined}
-                onClick={alternative.send}
-              >
-                {disabled && alternative.ready ? t("saving") : t("sendWritten")}
-              </Button>
-            )}
-            <button
-              type="button"
-              disabled={disabled}
-              onClick={() => {
-                setWriting(false);
-                alternative.onChoose(false);
-              }}
-              className="min-h-11 text-[16px] text-ink underline decoration-underline underline-offset-4 disabled:opacity-60"
-            >
-              {t("tryRecording")}
-            </button>
-          </div>
-          {!alternative.ready && !hidePrimary ? (
-            <DisabledReason id="send-written-why" className="mt-2 text-[14px]">
-              {t("writtenRequired")}
-            </DisabledReason>
-          ) : null}
-        </ActionBar>
+        <RecordedFooter
+          hidden={hidePrimary}
+          journey={props.journey}
+          back={{
+            label: t("tryRecording"),
+            onClick: () => {
+              setWriting(false);
+              alternative.onChoose(false);
+            },
+          }}
+          primary={{
+            kind: "button",
+            id: "send-written",
+            label: t("sendWritten"),
+            busy: alternative.ready && footerState.busy,
+            busyLabel: t("saving"),
+            waitReason: footerState.waitReason ?? (!alternative.ready ? t("writtenRequired") : null),
+            onClick: alternative.send,
+          }}
+        />
       </div>
     );
   }
 
   const takesLine = unlimited ? null : activity.maxTakes === 1 ? t("singleTake") : t("takesLeft", { count: left });
-  const writeLink =
-    mode === "answer" && alternative && (phase === "think" || (phase === "failed" && !canRetryFinish)) ? (
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => {
-          setWriting(true);
-          alternative.onChoose(true);
-        }}
-        className="mt-4 block min-h-11 text-left text-[16px] text-ink underline decoration-underline underline-offset-4 disabled:opacity-60"
-      >
-        {audioOnly ? t("useWritingAudio") : t("useWriting")}
-      </button>
-    ) : null;
-  // C15: every reason a button here waits is said next to it.
-  const startWhy = timeUp ? t("timeUpReason") : null;
-  const retakeWhy = timeUp ? t("timeUpReason") : left === 0 ? t("takesLeft", { count: 0 }) : null;
-  const showRetake = unlimited || activity.maxTakes > 1;
+  const retakeOpen = (unlimited || activity.maxTakes > 1) && !timeUp && left > 0 && !exhausted;
   const reviewTitle = audioOnly ? t("reviewTitleAudio") : t("reviewTitle");
+  const useAction: FooterAction = {
+    kind: "button",
+    id: "record-use",
+    label: t("use"),
+    busy: footerState.busy,
+    busyLabel: t("saving"),
+    waitReason: footerState.waitReason,
+    onClick: () => latest.current.onUse?.(),
+  };
   // HIRING-UX 8.7: the recording state is spoken when it changes, never the clock or the upload's percent.
   const announce =
     phase === "record"
@@ -461,175 +519,199 @@ export function RecordedActivity(props: RecordedProps) {
           : phase === "saved"
             ? t("saved")
             : "";
+  const ringLabel = (key: "ringThink" | "ringAnswer", ms: number) => t(key, { time: formatCountdown(ms) });
 
-  return (
-    <div className="space-y-6">
-      <ActivityHeader activity={activity} locale={locale} kicker={`${audioOnly ? t("audioKicker") : t("videoKicker")}${takesLine ? ` · ${takesLine}` : ""}`} headingRef={headingRef} large />
+  const question = (
+    <>
+      <ActivityHeader
+        activity={activity}
+        locale={locale}
+        kicker={`${props.kicker ?? (audioOnly ? t("audioKicker") : t("videoKicker"))}${takesLine ? ` · ${takesLine}` : ""}`}
+        icon={audioOnly ? Mic : Video}
+        headingRef={headingRef}
+      />
       <p className="sr-only" aria-live="polite" aria-atomic="true">
         {announce}
       </p>
-
-      {phase === "think" ? (
-        <div className="space-y-4">
-          {activity.thinkSeconds > 0 ? (
-            <div>
-              <p className="text-[14px] text-muted">{t("thinkLabel")}</p>
-              <p className="tnum text-[32px] leading-9 font-semibold text-accent">{formatCountdown(thinkLeft)}</p>
-              <p className="mt-1 text-[16px] text-ink-2">
-                {thinkLeft === 0 && activity.flexibleThink ? t("thinkOverFlexible") : !activity.flexibleThink ? t("thinkStrictNote") : audioOnly ? t("micOff") : t("cameraOff")}
-              </p>
-            </div>
-          ) : null}
-          <label className="block">
-            <span className="text-[14px] font-medium text-ink">{t("notes")}</span>
-            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className="mt-1 text-[16px] md:text-[16px]" />
-            <span className="mt-1 block text-[14px] text-muted">{t("notesHint")}</span>
-          </label>
-          {hidePrimary ? null : (
-            <ActionBar>
-              <Button
-                id="record-start"
-                variant="primary"
-                size="lg"
-                className="w-full text-[16px] sm:w-auto"
-                disabled={disabled || opening || timeUp}
-                disabledReason={startWhy ?? undefined}
-                onClick={() => void begin()}
-              >
-                {opening ? (audioOnly ? t("startingMic") : t("starting")) : t("start")}
-              </Button>
-              {startWhy ? (
-                <DisabledReason id="record-start-why" className="mt-2 text-[14px]">
-                  {startWhy}
-                </DisabledReason>
-              ) : null}
-            </ActionBar>
-          )}
+      {phase === "think" && activity.thinkSeconds > 0 ? (
+        <div className="flex items-center gap-5">
+          <TimerRing
+            remainingMs={thinkLeft}
+            totalMs={activity.thinkSeconds * 1000}
+            label={ringLabel("ringThink", thinkLeft)}
+            caption={lastSeconds(thinkLeft) ? t("lastSeconds") : t("thinkCaption")}
+          />
+          <p className="text-[16px] leading-[26px] text-ink-2">{thinkLeft === 0 && activity.flexibleThink ? t("thinkOverFlexible") : !activity.flexibleThink ? t("thinkStrictNote") : t("thinkLabel")}</p>
         </div>
       ) : null}
-
       {phase === "record" || phase === "saving" ? (
-        <div className="space-y-4">
-          <div className="flex items-start justify-between gap-4">
-            <p className="flex items-center gap-2 text-[16px] font-medium text-ink">
-              <span className="size-2.5 rounded-full bg-ink motion-safe:animate-[rec-pulse_1.6s_ease-in-out_infinite]" aria-hidden />
-              {phase === "saving" ? t("saving") : audioOnly ? t("recordingAudio") : t("recording")}
-            </p>
-            <p className="text-right">
-              <span className="block text-[13px] text-muted">{t("answerLeft")}</span>
-              <span className="tnum block text-[32px] leading-9 font-semibold text-accent">{formatCountdown(recordLeft)}</span>
-            </p>
+        <div className="space-y-3">
+          <div className="flex items-center gap-5">
+            <TimerRing
+              remainingMs={recordLeft}
+              totalMs={answerMs}
+              label={ringLabel("ringAnswer", recordLeft)}
+              caption={lastSeconds(recordLeft) ? t("lastSeconds") : t("answerCaption")}
+              announce={phase === "record"}
+            />
+            <p className="text-[16px] leading-[26px] text-ink-2">{mode === "answer" ? t("autoStop") : t("autoStopPractice")}</p>
           </div>
-          {!audioOnly ? <video ref={self} muted playsInline className="ml-auto aspect-[3/4] w-32 rounded-xl bg-canvas object-cover sm:aspect-video sm:w-56" /> : null}
           {mode === "answer" ? (
             <div>
               <div className="h-1 rounded-full bg-hairline" aria-hidden>
-                <div className="h-1 rounded-full bg-ink-3 transition-[width] duration-300" style={{ width: `${Math.round(progress.ratio * 100)}%` }} />
+                <div className="h-1 rounded-full bg-ink-3 transition-[width] duration-300 motion-reduce:transition-none" style={{ width: `${Math.round(progress.ratio * 100)}%` }} />
               </div>
-              <p className="tnum mt-1 text-[14px] text-muted">{progress.stalled ? t("uploadStalled") : t("uploading", { percent: Math.round(progress.ratio * 100) })}</p>
+              {/* 3.8: the upload says something only when it is slow. */}
+              {progress.stalled ? <p className="mt-1 text-[14px] text-ink">{t("uploadStalled")}</p> : null}
             </div>
           ) : null}
-          {/* The warm-up keeps nothing, so it never says the answer is saved. */}
-          <p className="text-[14px] text-muted">{mode === "answer" ? t("autoStop") : t("autoStopPractice")}</p>
-          <ActionBar>
-            <Button id="record-finish" variant="primary" size="lg" className="w-full text-[16px] sm:w-auto" disabled={phase === "saving"} onClick={stopTake}>
-              {phase === "saving" ? t("saving") : t("finish")}
-            </Button>
-          </ActionBar>
         </div>
       ) : null}
-
       {phase === "review" ? (
-        <div className="space-y-4">
+        <div className="space-y-2">
           <h3 className="text-[18px] font-semibold text-ink">{reviewTitle}</h3>
-          {src ? (
-            audioOnly ? (
-              <audio controls src={src} className="w-full" />
-            ) : (
-              <video controls playsInline src={src} className="aspect-[3/4] w-full max-w-[640px] rounded-xl bg-canvas sm:aspect-video" />
-            )
-          ) : playbackWaiting ? (
-            <p role="status" className="text-[16px] text-ink-2">
-              {t("savingPlayback")}
-            </p>
-          ) : null}
+          {exhausted ? <p className="text-[16px] text-ink">{t("useLastTake")}</p> : null}
           {incomplete ? <p className="text-[16px] text-ink">{t("incomplete")}</p> : null}
-          <ActionBar>
-            <div className="flex flex-wrap items-center gap-3">
-              {mode === "answer" && !hidePrimary ? (
-                <Button id="record-use" variant="primary" size="lg" className="w-full text-[16px] sm:w-auto" disabled={disabled} onClick={() => latest.current.onUse?.()}>
-                  {disabled && !timeUp ? t("saving") : t("use")}
-                </Button>
-              ) : null}
-              {props.reviewPrimary}
-              {showRetake ? (
-                <Button id="record-retake" size="lg" className="w-full text-[16px] sm:w-auto" disabled={disabled || retakeWhy !== null} disabledReason={retakeWhy ?? undefined} onClick={retake}>
-                  {unlimited || left === 0 ? t("retakeFree") : t("retake", { count: left })}
-                </Button>
-              ) : null}
-            </div>
-            {showRetake && retakeWhy ? (
-              <DisabledReason id="record-retake-why" className="mt-2 text-[14px]">
-                {retakeWhy}
-              </DisabledReason>
-            ) : null}
-          </ActionBar>
+          {!retakeOpen && takesLine && !unlimited ? <p className="text-[14px] text-muted">{timeUp ? t("timeUpReason") : t("takesLeft", { count: 0 })}</p> : null}
         </div>
       ) : null}
-
       {phase === "saved" ? (
-        <div className="space-y-3">
-          <p role="status" className="text-[18px] font-medium text-ink">
+        <div className="space-y-2">
+          <p role="status" className="flex items-center gap-2 text-[18px] font-medium text-ink">
+            <Check className="size-5" strokeWidth={2} aria-hidden />
             {t("saved")}
           </p>
           {incomplete ? <p className="text-[16px] text-ink">{t("incomplete")}</p> : null}
-          {/* The next question opens by itself after a second; should that close fail, the runner says so and this sends it again. */}
-          {mode === "answer" && !hidePrimary ? (
-            <ActionBar>
-              <Button id="record-use" variant="primary" size="lg" className="w-full text-[16px] sm:w-auto" disabled={disabled} onClick={() => latest.current.onUse?.()}>
-                {disabled && !timeUp ? t("saving") : t("use")}
-              </Button>
-            </ActionBar>
-          ) : null}
         </div>
       ) : null}
-
       {phase === "failed" ? (
-        <div className="space-y-3">
+        <div className="space-y-2">
           <p role="alert" className="text-[16px] text-ink">
             {note ?? t("failed")}
           </p>
-          {!hidePrimary && canTryAgain({ canRetryFinish, maxTakes: activity.maxTakes, used }) ? (
-            <ActionBar>
-              <Button
-                id="record-again"
-                variant="primary"
-                size="lg"
-                className="w-full text-[16px] sm:w-auto"
-                disabled={disabled || (!canRetryFinish && timeUp)}
-                disabledReason={!canRetryFinish && timeUp ? t("timeUpReason") : undefined}
-                onClick={tryAgain}
-              >
-                {t("tryAgain")}
-              </Button>
-              {!canRetryFinish && timeUp ? (
-                <DisabledReason id="record-again-why" className="mt-2 text-[14px]">
-                  {t("timeUpReason")}
-                </DisabledReason>
-              ) : null}
-            </ActionBar>
-          ) : !hidePrimary && mode === "answer" ? (
-            // Every take is used (TAKES_EXHAUSTED): the server holds them, so the answer can still be used.
-            <ActionBar>
-              <Button id="record-use" variant="primary" size="lg" className="w-full text-[16px] sm:w-auto" disabled={disabled} onClick={() => latest.current.onUse?.()}>
-                {disabled && !timeUp ? t("saving") : t("use")}
-              </Button>
-            </ActionBar>
-          ) : null}
+          {exhausted ? <p className="text-[16px] text-ink-2">{t("exhaustedUse")}</p> : null}
         </div>
       ) : null}
-
-      {writeLink}
-    </div>
+      {phase === "think" ? (
+        <Disclosure label={t("notesShort")} icon={NotebookPen}>
+          <label className="block">
+            <span className="sr-only">{t("notes")}</span>
+            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} className="text-[16px] md:text-[16px]" />
+            <span className="mt-1 block text-[14px] text-muted">{t("notesHint")}</span>
+          </label>
+        </Disclosure>
+      ) : null}
+      {mode === "answer" && alternative && (phase === "think" || (phase === "failed" && !canRetryFinish)) ? (
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => {
+            setWriting(true);
+            alternative.onChoose(true);
+          }}
+          className="block min-h-11 text-left text-[16px] text-ink underline decoration-underline underline-offset-4 disabled:opacity-60"
+        >
+          {audioOnly ? t("useWritingAudio") : t("useWriting")}
+        </button>
+      ) : null}
+    </>
   );
+
+  const placeholder = (
+    <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center text-[14px] text-muted">
+      {audioOnly ? <Mic className="size-8" strokeWidth={1.5} aria-hidden /> : <Camera className="size-8" strokeWidth={1.5} aria-hidden />}
+      {audioOnly ? t("micLater") : t("cameraLater")}
+    </span>
+  );
+  const preview =
+    phase === "record" || phase === "saving" ? (
+      audioOnly ? (
+        <span className="absolute inset-0 flex items-end justify-center gap-2 pb-[30%]" aria-hidden>
+          {[0.6, 0.85, 1, 0.85, 0.6].map((k, i) => (
+            <span key={i} className="w-3 rounded-full bg-ink-3" style={{ height: `${Math.max(8, Math.round(level * k * 160))}px` }} />
+          ))}
+        </span>
+      ) : (
+        <>
+          <video ref={self} muted playsInline className="size-full object-cover" />
+          <span className="absolute top-3 left-3 flex items-center gap-2 rounded-full bg-surface/90 px-3 py-1 text-[13px] text-ink">
+            <span className="size-2.5 rounded-full bg-ink motion-safe:animate-[rec-pulse_1.6s_ease-in-out_infinite]" aria-hidden />
+            {phase === "saving" ? t("saving") : t("recording")}
+          </span>
+        </>
+      )
+    ) : phase === "review" && src ? (
+      audioOnly ? (
+        <span className="absolute inset-0 flex items-center px-6">
+          <audio controls src={src} className="w-full" />
+        </span>
+      ) : (
+        <video controls playsInline src={src} className="size-full bg-canvas object-cover" />
+      )
+    ) : phase === "review" && playbackWaiting ? (
+      <span role="status" className="absolute inset-0 grid place-items-center px-6 text-center text-[16px] text-ink-2">
+        {t("savingPlayback")}
+      </span>
+    ) : (
+      placeholder
+    );
+
+  const primary: FooterAction | null =
+    phase === "think"
+      ? {
+          kind: "button",
+          id: "record-start",
+          label: t("start"),
+          busy: opening || footerState.busy,
+          busyLabel: opening ? (audioOnly ? t("startingMic") : t("starting")) : t("saving"),
+          waitReason: footerState.waitReason,
+          onClick: () => void begin(),
+        }
+      : phase === "record" || phase === "saving"
+        ? // The take is the thing that works here: time up stops it by itself, so no time-up reason sits on this button.
+          { kind: "button", id: "record-finish", label: t("finish"), busy: phase === "saving", busyLabel: t("saving"), onClick: stopTake }
+        : phase === "review"
+          ? mode === "answer"
+            ? useAction
+            : (props.reviewPrimary ?? null)
+          : phase === "saved"
+            ? mode === "answer"
+              ? useAction
+              : null
+            : canTryAgain({ canRetryFinish, maxTakes: activity.maxTakes, used }) && !exhausted
+              ? { kind: "button", id: "record-again", label: t("tryAgain"), busy: footerState.busy, busyLabel: t("saving"), waitReason: footerState.waitReason, onClick: tryAgain }
+              : mode === "answer"
+                ? useAction
+                : null;
+  // A retake never offers itself once time is up (the screen says why in the review); while the runner works it is not clickable.
+  const retakeState = recordedFooterState({ timeUp, disabled, timeUpReason: t("timeUpReason") });
+  const secondary: FooterAction | null =
+    phase === "review" && retakeOpen
+      ? { kind: "button", id: "record-retake", label: unlimited ? t("retakeFree") : t("retake", { count: left }), busy: retakeState.busy, busyLabel: t("saving"), onClick: retake }
+      : null;
+
+  return (
+    <>
+      <MediaStage question={question} preview={preview} />
+      <RecordedFooter hidden={hidePrimary} journey={props.journey} back={props.footerBack} primary={primary} secondary={secondary} />
+    </>
+  );
+}
+
+/** The bar under the screen; none when the runner shows its own filled button (a retry, a closed question), so two fixed bars never stack. */
+function RecordedFooter({
+  hidden,
+  journey,
+  back,
+  primary,
+  secondary,
+}: {
+  hidden: boolean;
+  journey?: { steps: number; current: number; label: string } | null;
+  back?: { label: string; onClick?: () => void; href?: string } | null;
+  primary: FooterAction | null;
+  secondary?: FooterAction | null;
+}) {
+  if (hidden) return null;
+  return <StepFooter journey={journey ?? null} back={back ?? null} primary={primary} secondary={secondary ?? null} />;
 }

@@ -398,6 +398,8 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
             timeUp={locked}
             disabled={inputsOff}
             hidePrimary={retrying || closedHere}
+            // C4: during the 8 second send strip the runner is the one that waits; the footer says so instead of a spinner.
+            holdReason={delayed ? t("sendingReason") : null}
             alternative={
               activity.textAlternativeEnabled
                 ? {

@@ -1,8 +1,8 @@
 "use client";
 
+import type { LucideIcon } from "lucide-react";
 import { pickTextLang } from "@/lib/i18n-text";
 import type { Locale } from "@/i18n/locale";
-import { cn } from "@/lib/cn";
 import type { CandidateActivity } from "@/solutions/hiring/rules/candidate-view";
 
 /** A version text in the candidate's language; a fallback in the other language carries its own `lang`. */
@@ -12,35 +12,34 @@ export function VersionText({ value, locale }: { value: { tr: string; en: string
 }
 
 /**
- * HIRING-UX 6.6-6.9: the kind of question, then the question as the screen's
- * heading (it takes focus when the question opens), then the team's note.
+ * HIRING-UX 6.6-6.9, HIRING-VISUAL-FLOW 3.6: the kind of question as a small
+ * chip with its icon, then the question as the screen's heading (24/34; it
+ * takes focus when the question opens), then the team's note.
  */
 export function ActivityHeader({
   activity,
   locale,
   kicker,
+  icon: Icon,
   headingRef,
-  large = false,
 }: {
   activity: Pick<CandidateActivity, "id" | "prompt" | "note">;
   locale: Locale;
   kicker: string;
+  icon?: LucideIcon;
   headingRef: React.Ref<HTMLHeadingElement>;
-  large?: boolean;
 }) {
   return (
     <div className="space-y-3">
-      <p className="text-[14px] text-muted">{kicker}</p>
-      <h2
-        ref={headingRef}
-        tabIndex={-1}
-        id={`prompt-${activity.id}`}
-        className={cn("whitespace-pre-line text-ink outline-none", large ? "text-[22px] leading-8 font-medium" : "text-[18px] leading-7 font-medium")}
-      >
+      <p className="inline-flex min-h-8 items-center gap-2 rounded-full border border-line bg-surface px-3 text-[14px] text-ink">
+        {Icon ? <Icon className="size-4 text-muted" strokeWidth={1.75} aria-hidden /> : null}
+        {kicker}
+      </p>
+      <h2 ref={headingRef} tabIndex={-1} id={`prompt-${activity.id}`} className="text-[24px] leading-[34px] font-medium whitespace-pre-line text-ink outline-none">
         <VersionText value={activity.prompt} locale={locale} />
       </h2>
       {pickTextLang(activity.note, locale).text ? (
-        <p className="whitespace-pre-line text-[16px] leading-[26px] text-ink-2">
+        <p className="text-[16px] leading-[26px] whitespace-pre-line text-ink-2">
           <VersionText value={activity.note} locale={locale} />
         </p>
       ) : null}

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { OpenTake, RecordingResult, RecordingSink } from "./recording-sink";
-import { canTryAgain, finishFailure, retakesLeft, startFailure, Take, takeHoldsCapture, usedAfterStartFailure, type RecorderLike } from "./take";
+import { afterExhausted, canTryAgain, finishFailure, retakesLeft, startFailure, Take, takeHoldsCapture, usedAfterStartFailure, type RecorderLike } from "./take";
 
 /** A MediaRecorder stand-in: chunks and stops are driven by the test. */
 class FakeRecorder implements RecorderLike {
@@ -167,6 +167,30 @@ describe("one take", () => {
     expect(unwatch).toHaveBeenCalledTimes(1);
   });
 
+  it("stops listening for the page going away once the server gave the take back (NO_PARTS): nothing is left to keep (Task 14 carry)", async () => {
+    const { sink, opened } = fakeSink(async () => Promise.reject(Object.assign(new Error("no parts"), { code: "NO_PARTS", status: 409 })));
+    let handler: (() => void) | null = null;
+    const unwatch = vi.fn(() => {
+      handler = null;
+    });
+    const rec = new FakeRecorder();
+    const take = await Take.begin({
+      sink,
+      mime: "video/webm",
+      makeRecorder: () => rec,
+      chunkMs: 5000,
+      watchPageHide: (h) => {
+        handler = h;
+        return unwatch;
+      },
+    });
+    take.stop();
+    await expect(take.outcome).resolves.toMatchObject({ ok: false });
+    expect(unwatch).toHaveBeenCalledTimes(1);
+    expect(handler).toBeNull();
+    expect(opened.abandon).not.toHaveBeenCalled();
+  });
+
   it("the warm-up's take is dropped when its page is left: nothing finished, later chunks not kept", async () => {
     const { sink, opened, pushed } = fakeSink();
     const rec = new FakeRecorder();
@@ -229,6 +253,11 @@ describe("takes and failures", () => {
     expect(canTryAgain({ canRetryFinish: false, maxTakes: 2, used: 1 })).toBe(true);
     expect(canTryAgain({ canRetryFinish: true, maxTakes: 2, used: 2 })).toBe(true);
     expect(canTryAgain({ canRetryFinish: false, maxTakes: Number.POSITIVE_INFINITY, used: 9 })).toBe(true);
+  });
+
+  it("after the last take was used up, 'Bu cevabı kullan' shows the take it will use, when this screen knows it (Task 14 carry)", () => {
+    expect(afterExhausted({ lastRef: "take-2" })).toEqual({ phase: "review", ref: "take-2" });
+    expect(afterExhausted({ lastRef: null })).toEqual({ phase: "failed" });
   });
 
   it("tells a finish worth trying again from a take the server gave back", () => {

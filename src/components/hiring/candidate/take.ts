@@ -138,9 +138,25 @@ export class Take {
         this.stopWatching();
         return { ok: true, result };
       },
-      (error: unknown): TakeOutcome => ({ ok: false, error }),
+      (error: unknown): TakeOutcome => {
+        // Task 14 carry: a take the server gave back (NO_PARTS) has nothing left to keep on page hide.
+        if (finishFailure(error) === "givenBack") {
+          this.settled = true;
+          this.stopWatching();
+        }
+        return { ok: false, error };
+      },
     );
   }
+}
+
+/**
+ * Task 14 carry: no take is left (TAKES_EXHAUSTED). When this screen knows the
+ * newest take (it finished here, or the page opened on it), "Bu cevabı kullan"
+ * shows that take; otherwise it says the last saved take is used.
+ */
+export function afterExhausted(input: { lastRef: string | null }): { phase: "review"; ref: string } | { phase: "failed" } {
+  return input.lastRef ? { phase: "review", ref: input.lastRef } : { phase: "failed" };
 }
 
 /** Takes the screen counts after a start failed: TAKES_EXHAUSTED means the server holds them all (fix round 1, Minor 6). */

@@ -42,6 +42,17 @@ export function holdWhile(id: string, held: boolean): () => void {
   return () => releaseCapture(id);
 }
 
+/**
+ * Holds the page under `id` from now until `outcome` settles (resolved or
+ * rejected), however the screen that asked has gone meanwhile: a take whose
+ * question was left finishes in the background just like a file upload.
+ */
+export function holdUntilSettled(id: string, outcome: Promise<unknown>) {
+  holdCapture(id);
+  const release = () => releaseCapture(id);
+  outcome.then(release, release);
+}
+
 /** Holds the page under `id` while `held` is true; released when it turns false and on unmount. */
 export function useCaptureHold(id: string, held: boolean) {
   useEffect(() => holdWhile(id, held), [id, held]);
