@@ -12,6 +12,7 @@ const h = vi.hoisted(() => {
   return {
     DESKTOP_UA,
     headers: { "user-agent": DESKTOP_UA } as Record<string, string>,
+    headersError: null as unknown,
     hctx: null as unknown,
     state: null as unknown,
     setAssessmentLocale: vi.fn(async () => undefined),
@@ -23,6 +24,10 @@ vi.mock("@/db", () => ({ db: {} }));
 vi.mock("next/navigation", () => ({
   redirect: (to: string) => {
     throw new Redirect(to);
+  },
+  // Like Next: a framework error (here the redirect) goes on up; anything else is left to the caller.
+  unstable_rethrow: (err: unknown) => {
+    if (err instanceof Redirect) throw err;
   },
 }));
 vi.mock("@/lib/candidate-context", () => ({ setAssessmentLocale: h.setAssessmentLocale }));
@@ -37,7 +42,13 @@ vi.mock("@/components/hiring/candidate/device-check", () => ({ DeviceCheck: func
 vi.mock("@/components/hiring/candidate/stage-runner", () => ({ StageRunner: function StageRunner() {} }));
 vi.mock("@/components/hiring/candidate/practice", () => ({ Practice: function Practice() {} }));
 vi.mock("@/components/hiring/candidate/done", () => ({ Done: function Done() {} }));
-vi.mock("next/headers", () => ({ headers: async () => new Headers(h.headers) }));
+vi.mock("@/components/candidate/InfoForm", () => ({ InfoForm: function InfoForm() {} }));
+vi.mock("next/headers", () => ({
+  headers: async () => {
+    if (h.headersError) throw h.headersError;
+    return new Headers(h.headers);
+  },
+}));
 vi.mock("@/components/hiring/candidate/desktop-gate", () => ({ DesktopGate: function DesktopGate() {} }));
 vi.mock("@/components/hiring/candidate/desktop-only", () => ({ DesktopOnlyScreen: function DesktopOnlyScreen() {} }));
 
@@ -50,6 +61,7 @@ import { DeviceCheck } from "@/components/hiring/candidate/device-check";
 import { StageRunner } from "@/components/hiring/candidate/stage-runner";
 import { Practice } from "@/components/hiring/candidate/practice";
 import { Done } from "@/components/hiring/candidate/done";
+import { InfoForm } from "@/components/candidate/InfoForm";
 import { createElement } from "react";
 import { formatInviteDeadline } from "../rules/invitation";
 import { zoneLabel } from "@/lib/org-timezone";
@@ -76,11 +88,12 @@ function find(node: ReactNode, type: unknown): ReactElement[] {
   return [...(element.type === type ? [element] : []), ...find(element.props?.children, type)];
 }
 
-const render = (slot: "landing" | "check" | "practice" | "stage" | "done", over: Record<string, unknown> = {}) =>
+const render = (slot: "landing" | "info" | "check" | "practice" | "stage" | "done", over: Record<string, unknown> = {}) =>
   renderHiringPage(slot, { token: "tok", resolved: { ok: true, ctx } as never, searchParams: {}, params: {}, ...over }) as Promise<ReactNode>;
 
 beforeEach(() => {
   h.headers = { "user-agent": h.DESKTOP_UA };
+  h.headersError = null;
   h.hctx = { ...ctx, hiring: { openingId: "op", versionId: "v", extraTimePct: 0, consentTextId: "ct" } };
   // A state as Task 5 builds it can only carry candidate text; the team-only field here proves the
   // renderer still goes through candidateSafe, and the LEAKVISIBLE text is the positive control (C10).
@@ -352,23 +365,57 @@ describe("the desktop gate (HIRING-VISUAL-FLOW 3.0, VG)", () => {
     current: { position: 2, total: 2, stage: { id: "s2", name: { tr: "Vaka LEAKVISIBLE_STAGE", en: "Case" }, activities: [{ id: "q1", type: "LONG_TEXT", prompt: { tr: "Anlat LEAKVISIBLE_PROMPT", en: "Tell" }, managerNotes: "TEAMSECRET_NOTE" }] }, responses: [] },
   });
 
-  it("gives a phone only the desktop-only screen: the minutes, the last day, the contact, and nothing of the stages", async () => {
+  /** Every gated slot, each with a state that carries visible (LEAKVISIBLE) and team (TEAMSECRET) text. */
+  const gatedSlots = (): Array<[slot: "landing" | "info" | "check" | "practice" | "stage", state: object, over: Record<string, unknown>]> => {
+    const base = { ...(h.state as object), totalMinutes: 15 };
+    const devices = { camera: true, microphone: true };
+    const stage1 = { position: 1, total: 2, startedAt: null, stage: { id: "s1", name: { tr: "Tanışma LEAKVISIBLE_STAGE", en: "Intro" }, internalPurpose: "TEAMSECRET_STAGE_PURPOSE", activities: [{ id: "q1", type: "VIDEO", prompt: { tr: "Anlat LEAKVISIBLE_PROMPT", en: "Tell" }, managerNotes: "TEAMSECRET_NOTE" }] }, responses: [] };
+    return [
+      ["landing", base, {}],
+      ["info", { ...base, step: "INFO", path: "/info" }, {}],
+      ["check", { ...base, step: "CHECK", path: "/check", devices, practice: true }, {}],
+      ["practice", { ...base, step: "STAGE", position: 1, path: "/stage/1", devices, practice: true, current: stage1 }, {}],
+      ["stage", stageState(), { params: { n: "2" } }],
+    ];
+  };
+
+  it("gives a phone only the desktop-only screen on all five gated pages: the minutes, the last day, the contact, and nothing of the stages", async () => {
     h.headers = { "user-agent": PHONE };
-    h.state = { ...(h.state as object), totalMinutes: 15 };
-    const landing = await render("landing");
-    expect(find(landing, Landing)).toHaveLength(0);
-    expect(find(landing, DesktopGate)).toHaveLength(0);
-    const [only] = find(landing, DesktopOnlyScreen);
-    expect(only.props).toEqual({ token: "tok", minutes: 15, deadlineDay: "19 Eki", contactEmail: "deniz@ornek.test" });
-    // Inside the frame: the organisation, the language and Help stay in reach.
-    expect(find(landing, HiringFrame)[0].props).toMatchObject({ orgName: "Örnek A.Ş.", token: "tok" });
+    const slots = gatedSlots();
+    for (const [slot, state, over] of slots) {
+      h.state = state;
+      const node = await render(slot, over);
+      for (const screen of [Landing, InfoForm, DeviceCheck, Practice, StageRunner, DesktopGate]) expect(find(node, screen), slot).toHaveLength(0);
+      const [only] = find(node, DesktopOnlyScreen);
+      expect(only.props, slot).toEqual({ token: "tok", minutes: 15, deadlineDay: "19 Eki", contactEmail: "deniz@ornek.test", stageRunning: false });
+      // Inside the frame: the organisation, the language and Help stay in reach.
+      expect(find(node, HiringFrame)[0].props, slot).toMatchObject({ orgName: "Örnek A.Ş.", token: "tok" });
+      // The whole tree the page returns (functions dropped) carries no stage, question or team text...
+      expect(JSON.stringify(node), slot).not.toMatch(/LEAKVISIBLE|TEAMSECRET/);
+      // ...while the state the page read does (positive control).
+      expect(JSON.stringify(h.state), slot).toMatch(/LEAKVISIBLE[\s\S]*TEAMSECRET|TEAMSECRET[\s\S]*LEAKVISIBLE/);
+    }
+    // Positive control for the scan itself: the same states on a desktop put visible text in the tree.
+    h.headers = { "user-agent": h.DESKTOP_UA };
+    for (const [slot, state, over] of slots.filter(([slot]) => slot === "landing" || slot === "stage")) {
+      h.state = state;
+      expect(JSON.stringify(await render(slot, over)), slot).toMatch(/LEAKVISIBLE/);
+    }
+  });
+
+  it("tells a phone that a stage is running when it is, and only then (fix round M7)", async () => {
+    h.headers = { "user-agent": PHONE };
+    h.state = { ...stageState(), current: { ...stageState().current, startedAt: "2026-10-05T10:00:00.000Z" } };
+    expect(find(await render("stage", { params: { n: "2" } }), DesktopOnlyScreen)[0].props).toMatchObject({ stageRunning: true });
     h.state = stageState();
-    const stage = await render("stage", { params: { n: "2" } });
-    expect(find(stage, StageRunner)).toHaveLength(0);
-    const sent = JSON.stringify(find(stage, DesktopOnlyScreen)[0].props);
-    expect(sent).not.toMatch(/LEAKVISIBLE|TEAMSECRET/);
-    // Positive control: the state the page read does carry the stage's and the question's text.
-    expect(JSON.stringify(h.state)).toMatch(/LEAKVISIBLE_STAGE[\s\S]*LEAKVISIBLE_PROMPT/);
+    expect(find(await render("stage", { params: { n: "2" } }), DesktopOnlyScreen)[0].props).toMatchObject({ stageRunning: false });
+  });
+
+  it("lets a framework error from headers() through and reads any other failure as no request (fix round M1)", async () => {
+    h.headersError = new Redirect("/elsewhere");
+    await expect(render("landing")).rejects.toMatchObject({ to: "/elsewhere" });
+    h.headersError = new Error("headers was called outside a request scope");
+    expect(find(await render("landing"), DesktopGate)[0].props).toMatchObject({ serverClass: "desktop" });
   });
 
   it("treats Sec-CH-UA-Mobile ?1 as a phone whatever the UA says", async () => {
@@ -383,7 +430,7 @@ describe("the desktop gate (HIRING-VISUAL-FLOW 3.0, VG)", () => {
     expect(find(gate, Landing)).toHaveLength(1);
     const reserve = (gate.props as { desktopOnly: ReactElement }).desktopOnly;
     expect(reserve.type).toBe(DesktopOnlyScreen);
-    expect(Object.keys(reserve.props as object).sort()).toEqual(["contactEmail", "deadlineDay", "minutes", "token"]);
+    expect(Object.keys(reserve.props as object).sort()).toEqual(["contactEmail", "deadlineDay", "minutes", "stageRunning", "token"]);
   });
 
   it("leaves a tablet UA to the browser", async () => {

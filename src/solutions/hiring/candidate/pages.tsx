@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 import type { ReactNode } from "react";
 import { CandidateIntl } from "@/components/candidate/Intl";
 import { InfoForm } from "@/components/candidate/InfoForm";
@@ -86,11 +86,16 @@ function problemCard(token: string, locale: Locale, problem: Problem, ctx: Candi
   );
 }
 
-/** The request's headers; null outside a request (a script calling the renderer): treated as a desktop (plan decision 3). */
+/**
+ * The request's headers; null outside a request (a script calling the renderer): treated as a
+ * desktop (plan decision 3). A framework error (a dynamic-rendering bailout, a redirect) is
+ * Next's to handle and goes on up.
+ */
 async function requestHeaders(): Promise<{ get(name: string): string | null } | null> {
   try {
     return await headers();
-  } catch {
+  } catch (err) {
+    unstable_rethrow(err);
     return null;
   }
 }
@@ -127,7 +132,8 @@ export async function renderHiringPage(slot: CandidatePageSlot, input: Candidate
 
   // HIRING-VISUAL-FLOW 3.0 (K2): a phone gets the desktop-only screen from the server and nothing
   // of the screen it asked for (the builder below never runs); the browser decides the rest. The
-  // screen gets the minutes and the last day only: no stage name, no question (leak rule).
+  // screen gets the minutes, the last day and whether a stage's clock is running only: no stage
+  // name, no question (leak rule).
   // /done, /rights and the problem cards are not gated (ruling C12): a finished candidate and
   // the data rights stay reachable on any device.
   const device = serverDeviceClass(await requestHeaders());
@@ -137,6 +143,7 @@ export async function renderHiringPage(slot: CandidatePageSlot, input: Candidate
       minutes={safe.totalMinutes}
       deadlineDay={formatInviteDay(orgDay(h.link.expiresAt, ORG_TIMEZONE), locale)}
       contactEmail={safe.contactEmail}
+      stageRunning={Boolean(safe.current?.startedAt)}
     />
   );
   const gated = async (screen: () => ReactNode | Promise<ReactNode>) =>

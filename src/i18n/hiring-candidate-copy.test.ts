@@ -129,6 +129,12 @@ describe("hiring candidate copy", () => {
     }
   });
 
+  it("words the gate's failed report like the frame's, as a statement in English (fix round M5)", () => {
+    expect(en.hiringGate.wrongFailed).toBe(en.hiringFrame.reportFailed);
+    expect(en.hiringGate.wrongFailed).toMatch(/\.$/);
+    expect(tr.hiringGate.wrongFailed).toBe(tr.hiringFrame.reportFailed);
+  });
+
   it("no longer says the assessment can be done on a phone (K2)", () => {
     expect(tr.hiringFrame.faqPhoneA).toBe("Hayır, bu değerlendirme bilgisayardan yapılır. Linki bilgisayarında aç.");
     expect(en.hiringFrame.faqPhoneA).toBe("No, this assessment is done on a computer. Open the link on your computer.");

@@ -586,6 +586,7 @@
   "hiringGate": {
     "title": "Bu değerlendirme bilgisayardan yapılır",
     "why": "İşe alım ekibi, değerlendirmenin bilgisayardan yapılmasını istiyor.",
+    "stageRunning": "Bir aşaman başladı ve süresi işliyor; bilgisayarından aynı linkle devam et.",
     "minutes": "~{minutes} dk",
     "deadline": "Son gün {date}",
     "steps": "Ne yapmalı",
