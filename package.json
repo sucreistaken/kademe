@@ -27,6 +27,8 @@
     "verify:hiring-immutability": "tsx scripts/verify-hiring-immutability.ts",
     "verify:hiring-setup": "tsx scripts/verify-hiring-setup.ts",
     "verify:guard": "tsx scripts/verify-solution-guard.ts",
+    "verify:hiring-flow": "tsx scripts/verify-hiring-flow.ts",
+    "dev:hiring-link": "tsx scripts/dev-hiring-link.ts",
     "verify:migration": "tsx scripts/verify-platform-migration.ts",
     "verify:grading": "tsx scripts/verify-grading.ts",
     "verify:proctor": "tsx scripts/verify-proctor.ts",

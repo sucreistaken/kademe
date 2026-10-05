@@ -2,9 +2,11 @@
  * Spec 6 and 7: a solution's candidate endpoints never answer another
  * solution's invitation, and the answer is indistinguishable from an unknown
  * token. Runs against a dev server (default http://localhost:3100) on the same
- * database as DATABASE_URL. Adds two invitations and removes them at the end.
+ * database as DATABASE_URL. Adds its invitations, and for the hiring positive
+ * control a DRAFT opening (a draft is deletable, a published one is not), and
+ * removes all of them at the end.
  *
- *   DATABASE_URL=... pnpm verify:guard
+ *   DATABASE_URL=postgresql://kademe:kademe@localhost:5434/kademe_platform pnpm verify:guard
  */
 import "dotenv/config";
 
@@ -27,7 +29,7 @@ async function call(method: "GET" | "POST" | "PUT", path: string, body?: unknown
 }
 
 async function main() {
-  const { eq, inArray } = await import("drizzle-orm");
+  const { and, eq, inArray, sql } = await import("drizzle-orm");
   const { db } = await import("../src/db");
   const s = await import("../src/db/schema");
   const { mintToken } = await import("../src/lib/auth");
@@ -43,17 +45,43 @@ async function main() {
   });
   if (!exam.ok) throw new Error(exam.code);
 
-  // A hiring invitation exists only as core rows until sub-project 3.
+  // A HIRING invitation of core rows only: no hiring terms, so no endpoint serves it.
   const personIds: string[] = [];
-  async function hiringInvitation(status: "NOT_STARTED" | "EXPIRED" | "COMPLETED") {
+  type LinkShape = { status: "NOT_STARTED" | "IN_PROGRESS" | "EXPIRED" | "COMPLETED"; expiresAt?: Date; notBefore?: Date };
+  async function hiringInvitation(status: LinkShape["status"], shape: Omit<LinkShape, "status"> = {}, label: string = status) {
     const token = mintToken();
-    const [person] = await db.insert(s.candidates).values({ orgId: org.id, fullName: `Guard hiring ${status}`, email: `guard-h-${status}-${Date.now()}@example.com` }).returning();
+    const [person] = await db.insert(s.candidates).values({ orgId: org.id, fullName: `Guard hiring ${label}`, email: `guard-h-${label.replace(/\W+/g, "-")}-${Date.now()}@example.com` }).returning();
     personIds.push(person.id);
     const [hiring] = await db.insert(s.assessments).values({ orgId: org.id, candidateId: person.id, solution: "HIRING", locale: "tr" }).returning();
-    await db.insert(s.assessmentLinks).values({ assessmentId: hiring.id, tokenHash: token.hash, status, expiresAt: new Date(Date.now() + 86_400_000) });
-    return token;
+    await db.insert(s.assessmentLinks).values({ assessmentId: hiring.id, tokenHash: token.hash, status, expiresAt: shape.expiresAt ?? new Date(Date.now() + 86_400_000), notBefore: shape.notBefore ?? null });
+    return { ...token, assessmentId: hiring.id };
   }
   const token = await hiringInvitation("NOT_STARTED");
+
+  // The positive control: a HIRING invitation WITH hiring terms. Its row needs an
+  // opening and a version; a DRAFT one, which the database lets us delete again
+  // (a published version is frozen for good). Removed in the finally below.
+  const draft: { positionId?: string; openingId?: string; consentTextId?: string; consentCreated?: boolean } = {};
+  async function hiringInvitationWithTerms(status: LinkShape["status"], label: string) {
+    if (!draft.openingId) {
+      const [position] = await db.insert(s.positions).values({ orgId: org.id, name: `Guard position ${Date.now()}` }).returning();
+      draft.positionId = position.id;
+      const [opening] = await db.insert(s.hiringOpenings).values({ orgId: org.id, positionId: position.id, name: "Guard opening (draft)" }).returning();
+      draft.openingId = opening.id;
+      const [existing] = await db.select().from(s.consentTexts).where(and(eq(s.consentTexts.orgId, org.id), eq(s.consentTexts.solution, "HIRING"))).limit(1);
+      if (existing) draft.consentTextId = existing.id;
+      else {
+        const [created] = await db.insert(s.consentTexts).values({ orgId: org.id, version: 1, solution: "HIRING", body: { tr: "Guard", en: "Guard" } }).returning();
+        draft.consentTextId = created.id;
+        draft.consentCreated = true;
+      }
+    }
+    const [version] = await db.select().from(s.hiringVersions).where(eq(s.hiringVersions.openingId, draft.openingId!)).limit(1);
+    const versionId = version?.id ?? (await db.insert(s.hiringVersions).values({ orgId: org.id, openingId: draft.openingId!, versionNumber: 1 }).returning())[0].id;
+    const invitation = await hiringInvitation(status, {}, label);
+    await db.insert(s.hiringAssessments).values({ assessmentId: invitation.assessmentId, orgId: org.id, openingId: draft.openingId!, versionId, consentTextId: draft.consentTextId! });
+    return invitation;
+  }
 
   try {
     console.log("\nExam endpoints refuse a hiring invitation");
@@ -71,7 +99,61 @@ async function main() {
       else bad(`${method} ${path}: ${r.status} ${JSON.stringify(r.json)}`);
     }
 
-    console.log("\nCore endpoints refuse a solution with no live candidate flow");
+    // Every hiring endpoint (Task 9), every link state (ruling C6), with a live positive control.
+    const HIRING_ENDPOINTS = [
+      ["POST", "/hiring/stage/start"],
+      ["POST", "/hiring/stage/submit"],
+      ["PUT", "/hiring/response"],
+      ["POST", "/hiring/response/commit"],
+      ["POST", "/hiring/extra-time"],
+      ["POST", "/hiring/media/init"],
+      ["GET", "/hiring/media/play"],
+      ["POST", "/hiring/survey"],
+    ] as const;
+    const bodyFor = (method: "GET" | "POST" | "PUT") => (method === "GET" ? undefined : {});
+    const day = 86_400_000;
+    const bare = [
+      ["NOT_STARTED", token.raw],
+      ["IN_PROGRESS", (await hiringInvitation("IN_PROGRESS")).raw],
+      ["EXPIRED", (await hiringInvitation("EXPIRED")).raw],
+      ["COMPLETED", (await hiringInvitation("COMPLETED")).raw],
+      ["past its expiry", (await hiringInvitation("NOT_STARTED", { expiresAt: new Date(Date.now() - day) }, "past-expiry")).raw],
+      ["not yet open", (await hiringInvitation("NOT_STARTED", { notBefore: new Date(Date.now() + day) }, "not-yet")).raw],
+    ] as const;
+    const withTerms = [
+      ["NOT_STARTED", (await hiringInvitationWithTerms("NOT_STARTED", "terms NOT_STARTED")).raw],
+      ["EXPIRED", (await hiringInvitationWithTerms("EXPIRED", "terms EXPIRED")).raw],
+    ] as const;
+
+    console.log("\nHiring endpoints refuse an exam invitation and a HIRING invitation without hiring terms, in every link state");
+    for (const [method, path] of HIRING_ENDPOINTS) {
+      const unknownRes = await call(method, `/api/c/${"v".repeat(43)}${path}`, bodyFor(method));
+      for (const [label, raw] of [["exam", exam.rawToken], ...bare.map(([state, raw]) => [`hiring without terms, ${state}`, raw] as const)] as const) {
+        const r = await call(method, `/api/c/${raw}${path}`, bodyFor(method));
+        if (r.status === 404 && JSON.stringify(r.json) === JSON.stringify(unknownRes.json)) ok(`${label} link, ${method} ${path}: 404, same as unknown`);
+        else bad(`${label} link, ${method} ${path}: ${r.status} ${JSON.stringify(r.json)} vs unknown ${unknownRes.status} ${JSON.stringify(unknownRes.json)}`);
+      }
+    }
+
+    console.log("\nPositive control: a HIRING invitation WITH hiring terms reaches every hiring endpoint");
+    for (const [method, path] of HIRING_ENDPOINTS) {
+      for (const [state, raw] of withTerms) {
+        // An empty body: the endpoint answers (bad input, or the link's own problem) and writes nothing.
+        const r = await call(method, `/api/c/${raw}${path}`, bodyFor(method));
+        if (r.status !== 404 && typeof r.json?.error === "string" && r.json.error !== "INVALID") ok(`hiring with terms, ${state}, ${method} ${path}: ${r.status} ${r.json.error}`);
+        else bad(`hiring with terms, ${state}, ${method} ${path}: ${r.status} ${JSON.stringify(r.json)} (expected a non-404 answer)`);
+      }
+    }
+
+    console.log("\nExam endpoints still refuse a HIRING invitation WITH hiring terms");
+    for (const [method, path] of [["PUT", "/exam/answer"], ["POST", "/exam/section/start"], ["POST", "/exam/media/init"]] as const) {
+      const unknownRes = await call(method, `/api/c/${"t".repeat(43)}${path}`, {});
+      const r = await call(method, `/api/c/${withTerms[0][1]}${path}`, {});
+      if (r.status === 404 && JSON.stringify(r.json) === JSON.stringify(unknownRes.json)) ok(`hiring with terms, ${method} ${path}: 404, same as unknown`);
+      else bad(`hiring with terms, ${method} ${path}: ${r.status} ${JSON.stringify(r.json)}`);
+    }
+
+    console.log("\nCore endpoints refuse a HIRING invitation without hiring terms");
     const state = await call("GET", `/api/c/${token.raw}/state`);
     if (state.status === 404) ok("GET /state: 404");
     else bad(`GET /state: ${state.status}`);
@@ -92,8 +174,8 @@ async function main() {
         ok(`${label}: 404, identical body (${JSON.stringify(r.json?.message)})`);
       else bad(`${label}: ${r.status} ${JSON.stringify(r.json)} vs unknown ${unknownRes.status} ${JSON.stringify(unknownRes.json)}`);
     };
-    const expired = await hiringInvitation("EXPIRED");
-    const completed = await hiringInvitation("COMPLETED");
+    const expired = await hiringInvitation("EXPIRED", {}, "EXPIRED 2");
+    const completed = await hiringInvitation("COMPLETED", {}, "COMPLETED 2");
     await sameAsUnknown("EXPIRED hiring link, PUT /exam/answer", expired.raw, {});
     await sameAsUnknown("COMPLETED hiring link, POST /exam/section/start", completed.raw, {}, "POST", "/exam/section/start");
     await sameAsUnknown("EXPIRED hiring link, legacy PUT /answer", expired.raw, {}, "PUT", "/answer");
@@ -164,9 +246,22 @@ async function main() {
     if (legacy.status === 409) ok(`PUT /answer (legacy path, rewritten): 409 ${legacy.json?.error}`);
     else bad(`PUT /answer legacy: ${legacy.status} ${JSON.stringify(legacy.json)}`);
   } finally {
+    // People first (their invitations, hiring terms, links and attempts cascade), then the draft.
     for (const id of personIds) await db.delete(s.candidates).where(eq(s.candidates.id, id));
     await db.delete(s.candidates).where(eq(s.candidates.id, exam.candidateId));
+    if (draft.openingId) await db.delete(s.hiringOpenings).where(eq(s.hiringOpenings.id, draft.openingId));
+    if (draft.consentCreated && draft.consentTextId) await db.delete(s.consentTexts).where(eq(s.consentTexts.id, draft.consentTextId));
+    if (draft.positionId) await db.delete(s.positions).where(eq(s.positions.id, draft.positionId));
   }
+
+  const people = [...personIds, exam.candidateId];
+  const leftovers = await db.execute<{ n: number }>(sql`
+    select (select count(*) from candidates where id in ${people})
+         + (select count(*) from assessments where candidate_id in ${people})
+         + (select count(*) from hiring_openings where id = ${draft.openingId ?? null})
+         + (select count(*) from positions where id = ${draft.positionId ?? null}) as n`);
+  if (Number(leftovers[0]?.n ?? -1) === 0) ok("cleanup: no guard invitation, hiring term or draft opening is left");
+  else bad(`cleanup left ${leftovers[0]?.n} row(s)`);
 
   console.log(failed === 0 ? "\nAll checks passed." : `\n${failed} check(s) failed.`);
   process.exit(failed === 0 ? 0 : 1);

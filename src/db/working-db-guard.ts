@@ -22,3 +22,17 @@ export function refuseUnlessWorkingDb(rawUrl: string | undefined): string | null
   }
   return null;
 }
+
+/**
+ * Stricter, for scripts that write rows nothing may ever delete (publishing a
+ * hiring opening freezes them): the local working database rules above, and a
+ * database name ending in `_check`, the throw-away copies dropped after a run.
+ * kademe_platform is refused too. Returns the reason to refuse, or null.
+ */
+export function refuseUnlessThrowAwayDb(rawUrl: string | undefined): string | null {
+  const refusal = refuseUnlessWorkingDb(rawUrl);
+  if (refusal) return refusal;
+  const name = new URL(rawUrl!).pathname;
+  if (!name.endsWith("_check")) return `${name} is not a throw-away *_check database.`;
+  return null;
+}
