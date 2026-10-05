@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { InviteMenu } from "@/components/manager/invite-menu";
+import { inviteChoice } from "@/components/manager/invite-choice";
 import { Button, DisabledReason } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dot, Level, PageHead, shortDateTime } from "@/components/panel/bits";
@@ -40,9 +42,10 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     .sort((a, b) => (a.sortAt?.getTime() ?? 0) - (b.sortAt?.getTime() ?? 0));
   const running = items.filter((i) => i.lane === "running");
   const expiring = await expiringLinks(user.orgId);
-  const canInvite = can(user, "student:invite");
-  // The first solution that can invite. Hiring is first in the menu but invites only from plan 2 on.
-  const inviteHref = inviteTargets()[0]?.href ?? "/dashboard";
+  // Extending a link needs the same right as inviting a student.
+  const canExtend = can(user, "student:invite");
+  // Every solution that can invite and that this user may invite for (HIRING-UX 4.5).
+  const invite = inviteChoice(inviteTargets(), (capability) => can(user, capability), locale);
 
   return (
     <main className="mx-auto max-w-[1360px] px-6 py-8">
@@ -50,12 +53,20 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
         title={t("today.title", { count: queue.length })}
         sub={queue[0]?.sortAt ? t("today.oldest", { date: shortDateTime(queue[0].sortAt, locale) }) : undefined}
         action={
-          <div className="flex flex-col items-end">
-            <Button asChild={canInvite} variant="primary" disabled={!canInvite} disabledReason={canInvite ? undefined : t("today.noInvitePermission")}>
-              {canInvite ? <Link href={inviteHref}>{t("today.invite")}</Link> : t("today.invite")}
+          invite.kind === "many" ? (
+            <InviteMenu label={t("today.inviteMenu")} items={invite.items} />
+          ) : invite.kind === "one" ? (
+            <Button asChild variant="primary">
+              <Link href={invite.href}>{invite.label}</Link>
             </Button>
-            {!canInvite ? <DisabledReason>{t("today.noInvitePermission")}</DisabledReason> : null}
-          </div>
+          ) : (
+            <div className="flex flex-col items-end">
+              <Button variant="primary" disabled disabledReason={t("today.noInvitePermission")}>
+                {t("today.inviteMenu")}
+              </Button>
+              <DisabledReason>{t("today.noInvitePermission")}</DisabledReason>
+            </div>
+          )
         }
       />
 
@@ -119,7 +130,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
                     <span className="block text-[14px] font-medium text-ink">{e.name}</span>
                     <span className="text-[12.5px] text-muted">{shortDateTime(e.link.expiresAt, locale)}</span>
                   </span>
-                  {canInvite ? (
+                  {canExtend ? (
                     <form action={extendLink}>
                       <input type="hidden" name="linkId" value={e.link.id} />
                       <input type="hidden" name="back" value="/dashboard" />

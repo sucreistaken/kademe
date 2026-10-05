@@ -85,6 +85,7 @@
     "title": "{count, plural, =0 {No results waiting} one {# result waits for your review} other {# results wait for your review}}",
     "oldest": "The oldest finished on {date}.",
     "invite": "Invite a student",
+    "inviteMenu": "Invite",
     "queueTitle": "Review queue",
     "queueEmpty": "Nothing is waiting.",
     "queueEmptyHint": "Invite a student; their result appears here when they finish.",
@@ -97,7 +98,7 @@
     "aiPending": "{n} AI proposals to confirm",
     "aiRunning": "AI is grading",
     "readyToFinalize": "Ready to finalize",
-    "noInvitePermission": "Your role cannot invite students.",
+    "noInvitePermission": "Your role cannot send invitations.",
     "sectionNow": "In {section}"
   },
   "students": {

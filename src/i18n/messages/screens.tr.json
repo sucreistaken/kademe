@@ -85,6 +85,7 @@
     "title": "{count, plural, =0 {Bekleyen sonuç yok} other {# sonuç incelemenizi bekliyor}}",
     "oldest": "En eskisi {date} tarihinde bitti.",
     "invite": "Öğrenci davet et",
+    "inviteMenu": "Davet et",
     "queueTitle": "İnceleme kuyruğu",
     "queueEmpty": "Bekleyen sonuç yok.",
     "queueEmptyHint": "Yeni bir öğrenci davet edin; bitirdiğinde sonucu burada belirir.",
@@ -97,7 +98,7 @@
     "aiPending": "{n} AI önerisi onay bekliyor",
     "aiRunning": "AI değerlendiriyor",
     "readyToFinalize": "Kesinleştirmeye hazır",
-    "noInvitePermission": "Rolünüz öğrenci davet edemez.",
+    "noInvitePermission": "Rolün davet açamaz.",
     "sectionNow": "{section} bölümünde"
   },
   "students": {

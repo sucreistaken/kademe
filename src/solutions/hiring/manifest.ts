@@ -4,7 +4,7 @@ import type { CandidateStepState, SolutionManifest } from "@/solutions/types";
  * Hiring as the panel and the core see it (HIRING-UX 4.1, 4.3). The candidate
  * flow is built in plan 2; candidateFlowLive is on since its Task 10, after
  * verify:hiring-flow proved the endpoints end to end with a leak scan, and
- * inviteHref follows once the invite screen exists and Today offers it (Task 20).
+ * Today offers the invite screen since Task 20.
  */
 export const hiringManifest: SolutionManifest = {
   key: "hiring",
@@ -12,7 +12,7 @@ export const hiringManifest: SolutionManifest = {
   basePath: "/hiring",
   label: { tr: "İşe alım", en: "Hiring" },
   nav: [{ href: "/hiring/openings", label: { tr: "Alımlar", en: "Openings" } }],
-  inviteHref: null,
+  inviteHref: "/hiring/invite",
   inviteLabel: { tr: "Aday davet et", en: "Invite a candidate" },
   inviteCapability: "opening:write",
   candidateFlowLive: true,

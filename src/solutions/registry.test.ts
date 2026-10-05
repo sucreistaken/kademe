@@ -67,8 +67,9 @@ describe("solution registry", () => {
     expect(nav.map((g) => g.label)).toEqual([null, null, null, null]);
   });
 
-  it("invites from Today with the first solution that can invite, not the first in the menu", () => {
+  it("lists every solution that can invite, in menu order, with its label and capability", () => {
     expect(inviteTargets()).toEqual([
+      { key: "hiring", href: "/hiring/invite", label: { tr: "Aday davet et", en: "Invite a candidate" }, capability: "opening:write" },
       { key: "language-exam", href: "/exam/students/new", label: { tr: "Öğrenci davet et", en: "Invite a student" }, capability: "student:invite" },
     ]);
     const noInvite = { ...languageExamManifest, inviteHref: null } as SolutionManifest;
