@@ -15,6 +15,7 @@ import type { HiringCandidateState } from "@/solutions/hiring/rules/candidate-st
 import type { CandidateActivity } from "@/solutions/hiring/rules/candidate-view";
 import { ActionBar } from "./action-bar";
 import { ChoiceActivity } from "./choice-activity";
+import { FileActivity } from "./file-activity";
 import { clearDraft, draftKey, lostWords, markLostWords, sessionDrafts, type LostKind } from "./draft-store";
 import { answeredLocally, isLastMinute, minutesLeft, ownsPrimary, primaryKey, resumeOf, tabReply, type LocalAnswer, type TabMessage } from "./runner-model";
 import { RecordedActivity } from "./recorded-activity";
@@ -80,6 +81,7 @@ const subscribeOnline = (notify: () => void) => {
 export function StageRunner({ token, initial, deadline, locale }: { token: string; initial: HiringCandidateState; deadline: string; locale: Locale }) {
   const t = useT("hiringStage");
   const tm = useT("hiringMedia");
+  const tf = useT("hiringFile");
   const router = useRouter();
   const [state, setState] = useState(initial);
   const current = state.current!;
@@ -96,7 +98,7 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
   const [timeUp, setTimeUp] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const [flushes] = useState(() => new FlushRegistry());
-  // Takes that are recording or finishing (Task 14): a close stops them and waits for their finish.
+  // Takes that are recording or finishing (Task 14) and files uploading (Task 15): a close waits for their finish.
   const [takes] = useState(() => new FlushRegistry());
   const online = useSyncExternalStore(subscribeOnline, () => navigator.onLine, () => true);
   const activity = activities[Math.min(index, activities.length - 1)] as CandidateActivity | undefined;
@@ -199,8 +201,9 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
    * not kept; the next stage's intro says that honestly (Minor 6). Past 0:00 the time-up flow speaks.
    */
   const onRefused = useCallback(
-    (err: unknown, kind: LostKind) => {
-      if (codeOf(err) === "STAGE_EXPIRED") markLostWords(sessionDrafts(), token, current.position, kind);
+    (err: unknown, kind: LostKind | null) => {
+      // A file refused after the deadline is not "words lost": the earlier file (if any) stays the answer.
+      if (kind && codeOf(err) === "STAGE_EXPIRED") markLostWords(sessionDrafts(), token, current.position, kind);
       if (timeUp && codeOf(err) === "STAGE_EXPIRED") return;
       setFailure(failureOf(err));
     },
@@ -356,7 +359,7 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
       flushes,
       onChange: (answer: LocalAnswer) => setAnswers((all) => ({ ...all, [activity.id]: { ...all[activity.id], ...answer } })),
       disabled: inputsOff,
-      onRefused: (err: unknown) => onRefused(err, activity.type === "SINGLE_CHOICE" || activity.type === "MULTI_CHOICE" ? "choice" : "text"),
+      onRefused: (err: unknown) => onRefused(err, activity.type === "FILE_UPLOAD" ? null : activity.type === "SINGLE_CHOICE" || activity.type === "MULTI_CHOICE" ? "choice" : "text"),
     };
     switch (activity.type) {
       case "LONG_TEXT":
@@ -405,7 +408,13 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
         );
         break;
       }
-      // FILE_UPLOAD arrives with Task 15.
+      case "FILE_UPLOAD": {
+        const response = current.responses.find((r) => r.activityId === activity.id);
+        // A file this tab uploaded since the page loaded is newer than the server state it was read with.
+        body = <FileActivity key={activity.id} {...common} existing={answers[activity.id]?.file ?? response?.file ?? null} uploads={takes} />;
+        break;
+      }
+      // An unknown future type shows nothing.
       default:
         body = null;
     }
@@ -413,9 +422,22 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
 
   const progress = progressOf({ stagePosition: current.position, stageCount: current.total, activityIndex: index, activityCount: activities.length });
   const answered = activity ? answeredLocally(activity, answers[activity.id] ?? {}) : true;
+  // Task 15: a file still uploading is not the answer yet; the close waits for it (the earlier file stays until then).
+  const uploadingHere = !!activity && !!answers[activity.id]?.uploading;
   const key = primaryKey(index, activities.length, current.last);
   // C15: every reason the filled button waits is said next to it (busy says it on the button itself).
-  const why = retrying || busy ? null : delayed ? t("sendingReason") : locked ? t("timeUpSaving") : activity?.required && !answered ? t("requiredReason") : null;
+  const why =
+    retrying || busy
+      ? null
+      : delayed
+        ? t("sendingReason")
+        : locked
+          ? t("timeUpSaving")
+          : uploadingHere
+            ? tf("waitReason")
+            : activity?.required && !answered
+              ? t("requiredReason")
+              : null;
   const lastMinute = isLastMinute(clock.remainingMs);
   const onPrimary = () => (retrying ? retry() : advance());
 
@@ -455,7 +477,9 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
               ? t("offline")
               : activity && (activity.type === "SINGLE_CHOICE" || activity.type === "MULTI_CHOICE")
                 ? t("offlineChoice")
-                : t("offlineText")}
+                : activity?.type === "FILE_UPLOAD"
+                  ? tf("offline")
+                  : t("offlineText")}
           </p>
         )}
         {timeUp ? (
@@ -480,7 +504,7 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
               >
                 {busy ? t("busy") : retrying ? t("retry") : t(key)}
               </Button>
-              {current.backNavigation && index > 0 && !inputsOff ? (
+              {current.backNavigation && index > 0 && !inputsOff && !uploadingHere ? (
                 <button type="button" onClick={() => setIndex(index - 1)} className="min-h-11 text-[16px] text-ink underline decoration-underline underline-offset-4">
                   {t("previous")}
                 </button>
@@ -491,7 +515,7 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
                 <DisabledReason id="activity-next-why" className="mt-2 text-[14px]">
                   {why}
                 </DisabledReason>
-              ) : activity && !activity.required && !answered && !busy && !closedHere ? (
+              ) : activity && !activity.required && !answered && !busy && !closedHere && !uploadingHere ? (
                 <p className="mt-2 text-[14px] text-muted">{t("optionalHint")}</p>
               ) : null}
             </div>

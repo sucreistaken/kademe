@@ -766,5 +766,27 @@
     "why": "İstediğin kadar deneyebilirsin. Kaydın yalnızca bu sekmede kalır.",
     "ready": "Hazırım, değerlendirmeye başla",
     "skip": "Isınmayı atla"
+  },
+  "hiringFile": {
+    "kicker": "Dosya yükleme",
+    "drop": "Dosyayı buraya bırak ya da seç.",
+    "choose": "Dosya seç",
+    "change": "Değiştir",
+    "limits": "{types} · en fazla {mb} MB",
+    "limitsAny": "En fazla {mb} MB",
+    "uploading": "Yükleniyor · %{percent}",
+    "uploaded": "{name} · {size} · yüklendi",
+    "wrongType": "Bu dosya türü kabul edilmiyor. {types} yükle.",
+    "tooBig": "Bu dosya {mb} MB'tan büyük. Daha küçük bir dosya yükle.",
+    "empty": "Dosya boş görünüyor. Başka bir dosya seç.",
+    "failed": "Dosya yüklenemedi. Tekrar dener misin?",
+    "stalled": "Bağlantı yavaşladı, yüklemeyi sürdürüyoruz.",
+    "retry": "Tekrar dene",
+    "uploadingReason": "Yükleme bitince dosyayı değiştirebilirsin.",
+    "waitReason": "Dosyan yükleniyor. Bitince devam edebilirsin.",
+    "keepsPrevious": "Yeni dosya tamamen yüklenene kadar önceki dosyan ({name}) cevabın olarak kalır.",
+    "keptPrevious": "Önceki dosyan ({name}) cevabın olarak duruyor.",
+    "cut": "Sayfa kapanırken {name} yükleniyordu ve yarıda kaldı. Dosyayı yeniden seç.",
+    "offline": "Bağlantın koptu. Dosyan bu sekmede duruyor, bağlantı gelince yüklemeye devam ediyoruz. Süre işlemeye devam ediyor."
   }
 }

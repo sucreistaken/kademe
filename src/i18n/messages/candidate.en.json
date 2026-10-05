@@ -766,5 +766,27 @@
     "why": "Try as often as you like. Your recording stays in this tab only.",
     "ready": "I'm ready, start the assessment",
     "skip": "Skip the warm-up"
+  },
+  "hiringFile": {
+    "kicker": "File upload",
+    "drop": "Drop the file here or choose it.",
+    "choose": "Choose a file",
+    "change": "Change",
+    "limits": "{types} · up to {mb} MB",
+    "limitsAny": "Up to {mb} MB",
+    "uploading": "Uploading · {percent}%",
+    "uploaded": "{name} · {size} · uploaded",
+    "wrongType": "This file type is not accepted. Upload {types}.",
+    "tooBig": "This file is larger than {mb} MB. Upload a smaller one.",
+    "empty": "The file looks empty. Choose another one.",
+    "failed": "The file did not upload. Could you try again?",
+    "stalled": "The connection is slow; the upload keeps going.",
+    "retry": "Try again",
+    "uploadingReason": "You can change the file once the upload ends.",
+    "waitReason": "Your file is uploading. You can go on once it is done.",
+    "keepsPrevious": "Until the new file has fully uploaded, your earlier file ({name}) stays your answer.",
+    "keptPrevious": "Your earlier file ({name}) is still your answer.",
+    "cut": "{name} was still uploading when the page closed, so it did not arrive. Choose it again.",
+    "offline": "Your connection dropped. Your file stays in this tab, and the upload resumes when the connection is back. The clock keeps running."
   }
 }

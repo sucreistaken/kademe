@@ -2,8 +2,20 @@ import { firstOpenIndex } from "@/solutions/hiring/rules/candidate-flow";
 import type { CandidateActivity } from "@/solutions/hiring/rules/candidate-view";
 import type { CandidateResponseView, CurrentStage } from "@/solutions/hiring/rules/candidate-state";
 
-/** What the runner knows about one question's answer in this tab. */
-export type LocalAnswer = { text?: string; choiceIds?: string[]; usedTextAlternative?: boolean; hasTake?: boolean; hasFile?: boolean };
+/**
+ * What the runner knows about one question's answer in this tab. `file`: a
+ * file this tab finished uploading (the candidate's own name and size);
+ * `uploading`: a file upload is in flight (the filled button waits for it).
+ */
+export type LocalAnswer = {
+  text?: string;
+  choiceIds?: string[];
+  usedTextAlternative?: boolean;
+  hasTake?: boolean;
+  hasFile?: boolean;
+  file?: { name: string; bytes: number };
+  uploading?: boolean;
+};
 
 export function toLocal(r: CandidateResponseView): LocalAnswer {
   return { text: r.text, choiceIds: r.choiceIds, usedTextAlternative: r.usedTextAlternative, hasTake: r.recording !== null, hasFile: r.file !== null };

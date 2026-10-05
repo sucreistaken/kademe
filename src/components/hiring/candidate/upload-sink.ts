@@ -7,7 +7,23 @@ import { isRetryable } from "./save-queue";
 
 /** Pauses between tries of a completion the connection dropped: 1, 2, 4, 8, 15, 15 s (about 45 s in all). */
 const FINISH_DELAYS_MS = [1000, 2000, 4000, 8000, 15_000, 15_000];
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/**
+ * A completion (core /media/complete) tried again while the connection is to
+ * blame; completing twice changes nothing on the server. A refusal is passed
+ * on at once. Shared by a take and a file answer (Task 15).
+ */
+export async function finishPatiently<T>(finish: () => Promise<T>, pause: (ms: number) => Promise<void> = wait): Promise<T> {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await finish();
+    } catch (err) {
+      if (!isRetryable(err) || attempt >= FINISH_DELAYS_MS.length) throw err;
+      await pause(FINISH_DELAYS_MS[attempt]);
+    }
+  }
+}
 
 /**
  * An answer's take: opened on the server (which counts takes), uploaded in
@@ -34,15 +50,8 @@ export function uploadSink(token: string, stagePosition: number, activityId: str
       return {
         push: (chunk) => uploader.push(chunk),
         async finish(durationMs): Promise<RecordingResult> {
-          for (let attempt = 0; ; attempt += 1) {
-            try {
-              const done = await uploader.finish(durationMs);
-              return { status: done.status === "INCOMPLETE" ? "INCOMPLETE" : "READY", ref: uploader.uploadRef };
-            } catch (err) {
-              if (!isRetryable(err) || attempt >= FINISH_DELAYS_MS.length) throw err;
-              await wait(FINISH_DELAYS_MS[attempt]);
-            }
-          }
+          const done = await finishPatiently(() => uploader.finish(durationMs));
+          return { status: done.status === "INCOMPLETE" ? "INCOMPLETE" : "READY", ref: uploader.uploadRef };
         },
         abandon(durationMs, cut = true) {
           // Fix round 1 (Minor 3): a take whose recording had ended and whose parts all landed is whole.
