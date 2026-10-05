@@ -36,7 +36,7 @@ export default async function OpeningCandidatesPage({
   const runs = can(user, "opening:write");
   const now = new Date();
   const [rows, invitable, sp] = await Promise.all([
-    listOpeningCandidates(user.orgId, opening.id, { runs, blindMode: opening.blindMode }, now),
+    listOpeningCandidates(user.orgId, opening.id, { id: user.id, runs, blindMode: opening.blindMode }, now),
     access.edit ? invitableOpenings(user.orgId) : Promise.resolve([]),
     searchParams,
   ]);

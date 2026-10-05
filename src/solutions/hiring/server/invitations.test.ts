@@ -458,7 +458,7 @@ describe("listOpeningCandidates", () => {
 
   it("reads only the caller's organisation and opening", async () => {
     fake.respond = world2;
-    await listOpeningCandidates(ORG, OPENING, { runs: true, blindMode: false }, NOW);
+    await listOpeningCandidates(ORG, OPENING, { id: USER, runs: true, blindMode: false }, NOW);
     const read = fake.ops.find((o) => o.table === "hiring_assessments")!;
     expect(read.where).toContain('"hiring_assessments"."org_id" = $');
     expect(read.where).toContain('"hiring_assessments"."opening_id" = $');
@@ -475,7 +475,7 @@ describe("listOpeningCandidates", () => {
 
   it("shows progress, both kinds of request and the adaptation flag to someone who runs the opening", async () => {
     fake.respond = world2;
-    const list = await listOpeningCandidates(ORG, OPENING, { runs: true, blindMode: true }, NOW);
+    const list = await listOpeningCandidates(ORG, OPENING, { id: USER, runs: true, blindMode: true }, NOW);
     expect(list[0]).toMatchObject({ seq: 1, name: "Elif Kaya", progress: "IN_PROGRESS", stagesDone: 1, stageCount: 3, adapted: true, requests: [], lastActivityAt: LATER });
     expect(list[1]).toMatchObject({
       seq: 2,
@@ -488,6 +488,19 @@ describe("listOpeningCandidates", () => {
         { id: "r1", source: "REQUEST", kind: "NEW_LINK", message: null, createdAt: LATER },
       ],
     });
+  });
+
+  it("hides the adaptation from a runner who is on that invitation's panel (A6), reading only the viewer's own assignments", async () => {
+    fake.respond = (op) => (op.table === "hiring_assignments" ? [{ assessmentId: "a1" }] : world2(op));
+    const list = await listOpeningCandidates(ORG, OPENING, { id: USER, runs: true, blindMode: false }, NOW);
+    expect(list[0]).toMatchObject({ assessmentId: "a1", adapted: false });
+    const read = fake.ops.find((o) => o.table === "hiring_assignments")!;
+    expect(read.where).toContain('"hiring_assignments"."user_id" = $');
+    expect(read.params).toEqual(expect.arrayContaining([USER, "a1", "a2"]));
+    // Off the panel, the same runner sees it.
+    fake.ops = [];
+    fake.respond = (op) => (op.table === "hiring_assignments" ? [] : world2(op));
+    expect((await listOpeningCandidates(ORG, OPENING, { id: USER, runs: true, blindMode: false }, NOW))[0]).toMatchObject({ assessmentId: "a1", adapted: true });
   });
 
   it("counts a candidate who opened an earlier link as opened, and shows the live link", async () => {
@@ -506,7 +519,7 @@ describe("listOpeningCandidates", () => {
       if (op.table === "attempts" || op.table === "hiring_stage_runs") return [];
       return world2(op);
     };
-    const list = await listOpeningCandidates(ORG, OPENING, { runs: true, blindMode: false }, NOW);
+    const list = await listOpeningCandidates(ORG, OPENING, { id: USER, runs: true, blindMode: false }, NOW);
     expect(list[0]).toMatchObject({ progress: "OPENED", link: { id: "l-new", status: "NOT_STARTED", expiresAt: LIVE_UNTIL } });
     // Every link expired: the newest one is shown.
     expect(list[1]).toMatchObject({ progress: "EXPIRED", link: { id: "l-gone", status: "EXPIRED" } });
@@ -514,7 +527,7 @@ describe("listOpeningCandidates", () => {
 
   it("never tells a reviewer about extra time or requests, and leaves identity out of the query when blind mode is on", async () => {
     fake.respond = world2;
-    const list = await listOpeningCandidates(ORG, OPENING, { runs: false, blindMode: true }, NOW);
+    const list = await listOpeningCandidates(ORG, OPENING, { id: USER, runs: false, blindMode: true }, NOW);
     expect(list.map((r) => [r.name, r.email, r.adapted, r.requests.length])).toEqual([
       [null, null, false, 0],
       [null, null, false, 0],
@@ -524,12 +537,12 @@ describe("listOpeningCandidates", () => {
     expect(read.fields).not.toContain("name");
     expect(read.fields).not.toContain("email");
     expect(read.fields).not.toContain("extraTimePct");
-    expect(fake.ops.some((o) => o.table === "candidate_requests" || o.table === "deletion_requests")).toBe(false);
+    expect(fake.ops.some((o) => o.table === "candidate_requests" || o.table === "deletion_requests" || o.table === "hiring_assignments")).toBe(false);
   });
 
   it("shows names to a reviewer when blind mode is off, still without extra time", async () => {
     fake.respond = world2;
-    const list = await listOpeningCandidates(ORG, OPENING, { runs: false, blindMode: false }, NOW);
+    const list = await listOpeningCandidates(ORG, OPENING, { id: USER, runs: false, blindMode: false }, NOW);
     expect(list.map((r) => [r.name, r.adapted])).toEqual([
       ["Elif Kaya", false],
       ["Can Demir", false],
@@ -538,10 +551,10 @@ describe("listOpeningCandidates", () => {
   });
 
   it("answers an empty list for a bad id or an opening without candidates", async () => {
-    expect(await listOpeningCandidates(ORG, "x", { runs: true, blindMode: false }, NOW)).toEqual([]);
+    expect(await listOpeningCandidates(ORG, "x", { id: USER, runs: true, blindMode: false }, NOW)).toEqual([]);
     expect(fake.ops).toEqual([]);
     fake.respond = () => [];
-    expect(await listOpeningCandidates(ORG, OPENING, { runs: true, blindMode: false }, NOW)).toEqual([]);
+    expect(await listOpeningCandidates(ORG, OPENING, { id: USER, runs: true, blindMode: false }, NOW)).toEqual([]);
   });
 });
 

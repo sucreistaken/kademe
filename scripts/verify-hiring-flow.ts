@@ -12,6 +12,7 @@
  *   docker exec kademe-db psql -U kademe -d postgres -c "drop database kademe_flow_check"
  */
 import "dotenv/config";
+import { randomUUID } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -266,15 +267,19 @@ async function main() {
   check((await call("POST /rights", token2, { kind: "ACCOMMODATION", message: "Altyazı" })).status === 200, "an accommodation request is accepted");
   const problem = await call("POST /problem", token2, { area: "LINK", message: "Yeni link" });
   check(problem.status === 200, "a new-link request is accepted (200)", problem.json);
-  const listed = await listOpeningCandidates(team.orgId, fixture.openingId, { runs: true, blindMode: false });
+  // A runner who is not on these invitations' panels (a fresh id is on none of them).
+  const offPanel = { id: randomUUID(), runs: true, blindMode: false };
+  const listed = await listOpeningCandidates(team.orgId, fixture.openingId, offPanel);
   const can = listed.find((r) => r.assessmentId === second2.assessmentId);
   check(can?.requests.map((r) => r.kind).sort().join() === "ACCOMMODATION,NEW_LINK", "both requests are on the candidate's row", can?.requests);
   const elif = listed.find((r) => r.assessmentId === invite.assessmentId);
-  check(elif?.progress === "COMPLETED" && elif.adapted && elif.stagesDone === 2, "the finished candidate shows complete, adapted, 2/2", elif);
-  const masked = await listOpeningCandidates(team.orgId, fixture.openingId, { runs: false, blindMode: true });
+  check(elif?.progress === "COMPLETED" && elif.adapted && elif.stagesDone === 2, "the finished candidate shows complete, adapted, 2/2 to a runner off the panel", elif);
+  const asPanel = await listOpeningCandidates(team.orgId, fixture.openingId, { id: team.ownerId, runs: true, blindMode: false });
+  check(asPanel.every((r) => !r.adapted), "the owner, on the panel, is not told about the adaptation (A6)");
+  const masked = await listOpeningCandidates(team.orgId, fixture.openingId, { id: team.ownerId, runs: false, blindMode: true });
   check(masked.every((r) => r.name === null && r.email === null && !r.adapted), "a reviewer under blind mode sees no identity and no adaptation");
   const other = await freshOrganisation();
-  check((await listOpeningCandidates(other.orgId, fixture.openingId, { runs: true, blindMode: false })).length === 0, "another organisation sees none of them");
+  check((await listOpeningCandidates(other.orgId, fixture.openingId, offPanel)).length === 0, "another organisation sees none of them");
 
   console.log("\nThe cron closes an abandoned stage");
   const cronSteps = [await call("POST /consent", token2, { accepted: true }), await call("POST /device-check", token2), await call("POST /hiring/stage/start", token2, { stagePosition: 1 })];

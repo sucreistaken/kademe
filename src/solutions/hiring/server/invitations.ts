@@ -492,7 +492,11 @@ export type OpeningCandidateRow = {
   stageCount: number;
   lastActivityAt: Date | null;
   completedAt: Date | null;
-  /** "Süre uyarlaması uygulandı", only for someone who runs the opening; never the percentage (HIRING-UX A6). */
+  /**
+   * "Süre uyarlaması uygulandı", only for someone who runs the opening and is
+   * not on this invitation's panel (an evaluator never learns it); never the
+   * percentage (HIRING-UX A6).
+   */
   adapted: boolean;
   /** The candidate's open requests (accommodation, new link, data rights), oldest first; only for someone who runs the opening. */
   requests: CandidateRequestRow[];
@@ -502,7 +506,8 @@ const latest = (...dates: Array<Date | null>) => dates.reduce<Date | null>((a, b
 
 /**
  * The opening's Candidates tab. `viewer.runs` (owner or manager) sees the
- * adaptation flag and the requests and acts on links and requests; a viewer
+ * adaptation flag (except on invitations whose panel names `viewer.id`, A6)
+ * and the requests and acts on links and requests; a viewer
  * who does not run the opening gets no name and no e-mail while blind mode is
  * on (HIRING-UX 3.8). What a viewer may not see is cut in the query, never
  * after it (spec 4, UX R1): identity, extra time and requests are not read.
@@ -515,7 +520,7 @@ const latest = (...dates: Array<Date | null>) => dates.reduce<Date | null>((a, b
 export async function listOpeningCandidates(
   orgId: string,
   openingId: string,
-  viewer: { runs: boolean; blindMode: boolean },
+  viewer: { id: string; runs: boolean; blindMode: boolean },
   now: Date = new Date(),
 ): Promise<OpeningCandidateRow[]> {
   if (!isUuid(openingId)) return [];
@@ -548,7 +553,7 @@ export async function listOpeningCandidates(
   if (rows.length === 0) return [];
   const ids = rows.map((r) => r.assessmentId);
   const candidateIds = rows.map((r) => r.candidateId);
-  const [links, attemptRows, counts, requests, rights] = await Promise.all([
+  const [links, attemptRows, counts, requests, rights, panel] = await Promise.all([
     db
       .select({
         id: assessmentLinks.id,
@@ -586,7 +591,15 @@ export async function listOpeningCandidates(
           .where(and(inArray(deletionRequests.candidateId, candidateIds), isNull(deletionRequests.handledAt)))
           .orderBy(asc(deletionRequests.createdAt))
       : Promise.resolve([]),
+    // A6: the invitations this runner evaluates; the adaptation stays hidden on those.
+    viewer.runs
+      ? db
+          .select({ assessmentId: hiringAssignments.assessmentId })
+          .from(hiringAssignments)
+          .where(and(eq(hiringAssignments.userId, viewer.id), inArray(hiringAssignments.assessmentId, ids)))
+      : Promise.resolve([]),
   ]);
+  const evaluates = new Set(panel.map((p) => p.assessmentId));
   const attemptIds = attemptRows.map((a) => a.id);
   const runs = attemptIds.length
     ? await db
@@ -628,7 +641,7 @@ export async function listOpeningCandidates(
       stageCount: counts.find((c) => c.versionId === r.versionId)?.count ?? 0,
       lastActivityAt: latest(...own.flatMap((run) => [run.startedAt, run.submittedAt, run.lastHeartbeatAt])),
       completedAt: attempt?.completedAt ?? null,
-      adapted: viewer.runs && (r.extraTimePct ?? 0) > 0,
+      adapted: viewer.runs && !evaluates.has(r.assessmentId) && (r.extraTimePct ?? 0) > 0,
       requests: viewer.runs ? open : [],
     };
   });
