@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { FileCheck, FileUp } from "lucide-react";
 import { Button, DisabledReason } from "@/components/ui/button";
-import { UPLOAD_HOLD_PREFIX, holdCapture, releaseCapture } from "@/lib/client/capture-hold";
+import { holdCapture, releaseCapture } from "@/lib/client/capture-hold";
 import type { FlushRegistry } from "@/lib/client/flush-registry";
 import { cn } from "@/lib/cn";
 import { useT } from "@/i18n/candidate-client";
@@ -128,8 +128,8 @@ export function FileActivity({
     inFlight.current = job;
     // The page is held until the upload settles, also after this question is left (the upload goes on
     // and the stage's close waits for it): the frame's language link would cut it (Task 5 fix round 2).
-    const hold = `${UPLOAD_HOLD_PREFIX}${ids}`;
-    holdCapture(hold);
+    const hold = `upload:${ids}`;
+    holdCapture(hold, "upload");
     let outcome: Awaited<typeof job>;
     try {
       outcome = await job;

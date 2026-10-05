@@ -890,7 +890,6 @@
     "drop": "Dosyanı buraya bırak",
     "choose": "Dosya seç",
     "change": "Değiştir",
-    "limits": "{types} · en fazla {mb} MB",
     "limitsAny": "En fazla {mb} MB",
     "uploading": "Yükleniyor · %{percent}",
     "uploaded": "{name} · {size} · yüklendi",

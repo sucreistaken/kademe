@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { UPLOAD_HOLD_PREFIX, captureHeld, captureHeldOnServer, captureUploadOnly, captureUploadOnlyOnServer, holdCapture, holdUntilSettled, holdWhile, releaseCapture, subscribeCapture } from "./capture-hold";
+import { captureHeld, captureHeldOnServer, captureUploadOnly, captureUploadOnlyOnServer, holdCapture, holdUntilSettled, holdWhile, releaseCapture, subscribeCapture } from "./capture-hold";
 
 /**
  * Task 5 fix round 2: a recording or an upload in progress holds the page, so
  * the frame's language link (a full page load) cannot cut it.
  */
 afterEach(() => {
-  for (const id of ["a", "b", "take", "file", "outcome", `${UPLOAD_HOLD_PREFIX}1`, `${UPLOAD_HOLD_PREFIX}2`]) releaseCapture(id);
+  for (const id of ["a", "b", "take", "file", "outcome", "up1", "up2"]) releaseCapture(id);
 });
 
 describe("the capture-in-progress store", () => {
@@ -80,20 +80,20 @@ describe("the capture-in-progress store", () => {
   });
 });
 
-describe("which kind of capture holds the page (Task 11, the Task 5 carry)", () => {
+describe("which kind of capture holds the page (Task 11, the Task 5 carry; a typed kind, fix round 1 Minor 1)", () => {
   it("is upload-only while every holder is an upload, so the language link can say the upload's own wait", () => {
     expect(captureUploadOnly()).toBe(false);
-    holdCapture(`${UPLOAD_HOLD_PREFIX}1`);
+    holdCapture("up1", "upload");
     expect(captureUploadOnly()).toBe(true);
-    holdCapture(`${UPLOAD_HOLD_PREFIX}2`);
+    holdCapture("up2", "upload");
     expect(captureUploadOnly()).toBe(true);
-    releaseCapture(`${UPLOAD_HOLD_PREFIX}1`);
-    releaseCapture(`${UPLOAD_HOLD_PREFIX}2`);
+    releaseCapture("up1");
+    releaseCapture("up2");
     expect(captureUploadOnly()).toBe(false);
   });
 
   it("falls back to the recording wording as soon as a take also holds the page", () => {
-    holdCapture(`${UPLOAD_HOLD_PREFIX}1`);
+    holdCapture("up1", "upload");
     holdCapture("take");
     expect(captureHeld()).toBe(true);
     expect(captureUploadOnly()).toBe(false);
@@ -101,8 +101,29 @@ describe("which kind of capture holds the page (Task 11, the Task 5 carry)", () 
     expect(captureUploadOnly()).toBe(true);
   });
 
+  it("does not read the kind from the id: an id that looks like an upload's is a take unless it says upload", () => {
+    holdCapture("upload:looks-like-one");
+    expect(captureUploadOnly()).toBe(false);
+    releaseCapture("upload:looks-like-one");
+    holdCapture("take", "upload");
+    expect(captureUploadOnly()).toBe(true);
+  });
+
+  it("passes the kind through holdWhile and holdUntilSettled", async () => {
+    const stop = holdWhile("up1", true, "upload");
+    expect(captureUploadOnly()).toBe(true);
+    stop();
+    let settle: () => void = () => undefined;
+    holdUntilSettled("up2", new Promise<void>((resolve) => (settle = resolve)), "upload");
+    expect(captureUploadOnly()).toBe(true);
+    settle();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(captureHeld()).toBe(false);
+  });
+
   it("is never upload-only on the server", () => {
-    holdCapture(`${UPLOAD_HOLD_PREFIX}1`);
+    holdCapture("up1", "upload");
     expect(captureUploadOnlyOnServer()).toBe(false);
   });
 });

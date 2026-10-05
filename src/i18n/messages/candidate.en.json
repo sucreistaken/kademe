@@ -890,7 +890,6 @@
     "drop": "Drop your file here",
     "choose": "Choose a file",
     "change": "Change",
-    "limits": "{types} · up to {mb} MB",
     "limitsAny": "Up to {mb} MB",
     "uploading": "Uploading · {percent}%",
     "uploaded": "{name} · {size} · uploaded",

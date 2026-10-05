@@ -1,8 +1,9 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { activeKind, refocusAfterTimeUp } from "./recorded-footer";
 import { StepFooter } from "@/components/visual/step-footer";
-import { fileFooterPlan, keepsStage, needsFileChoice, requiredKey, runnerPrimary, undoFocus, type RunnerFooterState } from "./runner-footer";
+import { fileFooterPlan, keepsStage, skipFocus, needsFileChoice, requiredKey, runnerPrimary, undoFocus, type RunnerFooterState } from "./runner-footer";
 
 /**
  * STATUS item 23 ("soluk, nedensiz"): before Task 10 the runner's own button was
@@ -146,5 +147,31 @@ describe("the file question's footer (Task 11, G2)", () => {
     const log: string[] = [];
     undoFocus((id) => (id === "activity-skip" ? { focus: () => void log.push(id) } : null), { focus: () => void log.push("heading") });
     expect(log).toEqual(["activity-skip"]);
+  });
+});
+
+describe("focus around the file question's footer (Task 11 fix round 1, Important 1 and 2)", () => {
+  it("keeps 'Dosya seç' or 'Sonraki soru' (skip) on a failure that leaves the question open: the pressed button is back", () => {
+    expect(skipFocus({ pressedOn: "q1", activityId: "q1", busy: false, active: "body" })).toBe("focus");
+    expect(skipFocus({ pressedOn: "q1", activityId: "q1", busy: false, active: "disabled-control" })).toBe("focus");
+  });
+
+  it("waits while the close is working, and forgets once the question moved on (the new heading took focus)", () => {
+    expect(skipFocus({ pressedOn: "q1", activityId: "q1", busy: true, active: "body" })).toBe("wait");
+    expect(skipFocus({ pressedOn: "q1", activityId: "q2", busy: false, active: "body" })).toBe("drop");
+    expect(skipFocus({ pressedOn: "q1", activityId: null, busy: false, active: "body" })).toBe("drop");
+  });
+
+  it("does nothing when skip was never pressed, or focus went somewhere on purpose", () => {
+    expect(skipFocus({ pressedOn: null, activityId: "q1", busy: false, active: "body" })).toBe("drop");
+    expect(skipFocus({ pressedOn: "q1", activityId: "q1", busy: false, active: "other" })).toBe("drop");
+  });
+
+  it("an upload that starts from the card or from 'Dosya seç' takes focus to the heading only from nothing or a disabled button", () => {
+    // the card with the focused "Değiştir" unmounted (body), or the footer button turned into a waiting one
+    expect(refocusAfterTimeUp({ timeUp: true, wasTimeUp: false, active: activeKind(null, {}) })).toBe(true);
+    expect(refocusAfterTimeUp({ timeUp: true, wasTimeUp: false, active: activeKind({ tagName: "BUTTON", disabled: true }, {}) })).toBe(true);
+    // a focused, working control (an aria-disabled button) or a field keeps its focus
+    expect(refocusAfterTimeUp({ timeUp: true, wasTimeUp: false, active: activeKind({ tagName: "BUTTON", disabled: false }, {}) })).toBe(false);
   });
 });

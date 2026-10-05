@@ -1,5 +1,6 @@
 import type { FooterAction } from "@/components/visual/footer-action";
 import type { Focusable } from "@/hooks/use-step-focus";
+import type { ActiveKind } from "./recorded-footer";
 import type { HiringCandidateState } from "@/solutions/hiring/rules/candidate-state";
 import type { CandidateActivity } from "@/solutions/hiring/rules/candidate-view";
 
@@ -81,6 +82,23 @@ export function undoFocus(byId: (id: string) => Focusable | null, heading: Focus
     if (target) return target.focus();
   }
   heading?.focus();
+}
+
+/**
+ * Task 11 fix round 1, Important 2: the optional "Sonraki soru" beside "Dosya
+ * seç" (id activity-skip) leaves the footer while its close works, so a
+ * keyboard user who pressed it would be left on nothing if the close fails.
+ * `pressedOn` is the question it was pressed on. "wait": the close still
+ * works; "focus": it ended on the same question and focus is on nothing (or a
+ * disabled button), so the pressed button, back or turned into the retry,
+ * takes it (undoFocus); "drop": it moved on (the new heading took focus),
+ * focus is elsewhere on purpose, or it was never pressed.
+ */
+export function skipFocus(input: { pressedOn: string | null; activityId: string | null; busy: boolean; active: ActiveKind }): "wait" | "focus" | "drop" {
+  if (input.pressedOn === null) return "drop";
+  if (input.busy) return input.activityId === input.pressedOn ? "wait" : "drop";
+  if (input.activityId !== input.pressedOn) return "drop";
+  return input.active === "other" ? "drop" : "focus";
 }
 
 /** G2, 3.9: whether the filled button should open the file picker (a file question with no file, open, nothing in flight). */

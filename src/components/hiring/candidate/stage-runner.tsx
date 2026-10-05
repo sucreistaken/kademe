@@ -22,8 +22,8 @@ import { FileActivity, fileInputId } from "./file-activity";
 import { clearDraft, draftKey, lostWords, markLostWords, sessionDrafts, type LostKind } from "./draft-store";
 import { answeredLocally, isLastMinute, minutesLeft, ownsPrimary, primaryKey, resumeOf, tabReply, type LocalAnswer, type TabMessage } from "./runner-model";
 import { RecordedActivity } from "./recorded-activity";
-import { useRescueFocus } from "./recorded-footer";
-import { fileFooterPlan, keepsStage, needsFileChoice, requiredKey, runnerPrimary, undoFocus } from "./runner-footer";
+import { activeKind, useRescueFocus } from "./recorded-footer";
+import { fileFooterPlan, keepsStage, needsFileChoice, requiredKey, runnerPrimary, skipFocus, undoFocus } from "./runner-footer";
 import { closeQuestion, commitNeeded, recoveryFor, settleWithin, withTimeout } from "./runner-steps";
 import { serverMessage } from "./server-message";
 import { StageIntro } from "./stage-intro";
@@ -119,6 +119,8 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
   const answersRef = useRef(answers);
   const autoStarted = useRef(false);
   const undone = useRef(false);
+  /** The question on which the optional "Sonraki soru" beside "Dosya seç" was pressed, until its close ends (skipFocus). */
+  const skipPressed = useRef<string | null>(null);
   useEffect(() => {
     answersRef.current = answers;
   });
@@ -202,6 +204,20 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
   // Task 4 carry 6: time up turns the focused filled button into a waiting one (its reason in the footer);
   // focus that was on it, or on nothing, goes to the heading (the time-up line above it says why).
   useRescueFocus(locked, () => heading.current, false);
+  // Task 15: a file still uploading is not the answer yet; the close waits for it (the earlier file stays until then).
+  const uploadingHere = !!activity && !!answers[activity.id]?.uploading;
+  // Task 11 fix round 1, Important 1: an upload that starts from the card ("Değiştir" unmounts with the card) or from the
+  // footer's "Dosya seç" (it turns into the waiting "Sonraki soru") leaves focus on nothing or on a disabled button;
+  // it goes to the question's heading, and a focused working control or field is left alone.
+  useRescueFocus(uploadingHere, () => heading.current, false);
+  // Important 2: the optional "Sonraki soru" beside "Dosya seç" leaves the footer while its close works; if the close ends
+  // on this question (a failure), focus goes back to the pressed button (back as itself, or as the retry).
+  useEffect(() => {
+    const verdict = skipFocus({ pressedOn: skipPressed.current, activityId: activity?.id ?? null, busy: busy || delayed !== null, active: activeKind(document.activeElement, document.body) });
+    if (verdict === "wait") return;
+    skipPressed.current = null;
+    if (verdict === "focus") undoFocus((id) => document.getElementById(id), heading.current);
+  }, [busy, delayed, failure, activity?.id, heading]);
   // Fix round 1, Minor 1: the runner's footer takes over from a recorded question's own (a closed question
   // after the last commit, a retry): focus that was on the button that went away goes to the runner's button.
   useRescueFocus(runnerFooterShown, () => document.getElementById("activity-next") ?? heading.current, runnerFooterShown);
@@ -371,8 +387,6 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
   // submit runs the button says it works, and "Bu soru kapandı" waits until there is something left to do.
   const closedLine = closedHere && !busy;
   const answered = activity ? answeredLocally(activity, answers[activity.id] ?? {}) : true;
-  // Task 15: a file still uploading is not the answer yet; the close waits for it (the earlier file stays until then).
-  const uploadingHere = !!activity && !!answers[activity.id]?.uploading;
   const recorded = activity?.type === "VIDEO" || activity?.type === "AUDIO";
   // C15 and plan decision 4: a waiting button always says why next to it; a working one says so on itself (runner-footer.ts).
   const primaryLook = runnerPrimary({
@@ -399,7 +413,17 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
   };
   const plan = fileFooterPlan({ choosing, required: !!activity?.required });
   const footerPrimary = plan.primary === "choose" ? chooseFile : primary;
-  const footerSecondary: FooterAction | null = plan.secondary === "skip" ? { ...primary, id: "activity-skip" } : null;
+  const footerSecondary: FooterAction | null =
+    plan.secondary === "skip"
+      ? {
+          ...primary,
+          id: "activity-skip",
+          onClick: () => {
+            skipPressed.current = activity?.id ?? null;
+            primary.onClick();
+          },
+        }
+      : null;
   const optional = activity && !activity.required && !answered && !busy && !closedHere && !uploadingHere ? t("optionalHint") : null;
   // Task 4 carry 9: closed inputs point at the line that says why (never by colour alone); while busy the button says it works.
   const reasonId = closedLine && activity ? `closed-${activity.id}` : locked ? TIME_UP_LINE : runnerFooter && primaryLook.waitReason ? "activity-next-why" : undefined;
