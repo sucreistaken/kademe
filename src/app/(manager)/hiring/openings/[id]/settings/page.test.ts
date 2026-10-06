@@ -49,6 +49,9 @@ const openingFor = vi.fn(async (id: string, need: "view" | "edit") => {
 });
 vi.mock("../access", () => ({ openingFor: (id: string, need: "view" | "edit") => openingFor(id, need) }));
 vi.mock("../opening-header", () => ({ OpeningHeader: function OpeningHeader() {} }));
+// The setup line reads the draft; this page test never reaches a database.
+const strip = vi.hoisted(() => ({ value: null as null | { done: number; total: number; next: { key: string; href: string } } }));
+vi.mock("../setup-strip", () => ({ setupStrip: async () => strip.value }));
 vi.mock("@/i18n/manager-locale", () => ({ managerLocale: async () => "tr" }));
 vi.mock("@/server/settings", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/server/settings")>()),
@@ -138,6 +141,21 @@ describe("team and rules page", () => {
     expect(props.users.map((u) => u.id)).toEqual([OWNER, REVIEWER, GONE]);
     expect(forms(page, closeOpeningAction)).toHaveLength(0);
     expect(forms(page, reopenOpeningAction)).toHaveLength(0);
+  });
+
+  it("a draft's setup line goes under the tabs; 'Alımı kapat' sits under the summary, inside the form, never as the filled button", async () => {
+    strip.value = { done: 2, total: 5, next: { key: "team", href: `/hiring/openings/${OPENING}/settings#team-members` } };
+    try {
+      const page = await render();
+      expect(find(page, ofType(OpeningHeader))[0].props).toMatchObject({ setup: strip.value });
+      const form = find(page, ofType(OpeningSettingsForm))[0];
+      const close = forms(form, closeOpeningAction);
+      expect(close).toHaveLength(1);
+      expect(find(close[0], ofType(PendingButton))[0].props.variant).toBeUndefined();
+      expect(text(form)).toContain("Kapalı alıma yeni davet yapılamaz");
+    } finally {
+      strip.value = null;
+    }
   });
 
   it("a reviewer outside the team gets the 404", async () => {

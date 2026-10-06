@@ -11,16 +11,22 @@ import { loadPanelUsers } from "@/server/settings";
 import { canDecide } from "@/solutions/hiring/rules/access";
 import { openingFor } from "../access";
 import { OpeningHeader } from "../opening-header";
+import { setupStrip } from "../setup-strip";
 import { closeOpeningAction, reopenOpeningAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
 /**
- * HIRING-UX 5.18 "Ekip ve kurallar". Everyone who may see the opening sees
- * this page (a reviewer outside the team gets the 404 of openingFor); only an
- * owner or manager of an opening that is not closed changes it. A closed
- * opening is read-only here as everywhere, and an owner or manager gets
- * "Yeniden aç" as the page's one filled button.
+ * HIRING-UX 5.18 as HIRING-VISUAL-FLOW 4.10 "Ekip ve kurallar": the rules'
+ * summary and its four short flows (OpeningSettingsForm). Everyone who may see
+ * the opening sees this page (a reviewer outside the team gets the 404 of
+ * openingFor); only an owner or manager of an opening that is not closed
+ * changes it. "Alımı kapat" is an action under the summary: it closes at
+ * once and the 8-second strip gives it back (RULES 4, no dialog); the strip
+ * shows only while the opening is closed and the viewer may reopen it, which
+ * is exactly when reopenOpeningAction can undo it. A closed opening is
+ * read-only, and an owner or manager gets "Yeniden aç" as the page's one
+ * filled button.
  */
 export default async function OpeningSettingsPage({
   params,
@@ -34,6 +40,8 @@ export default async function OpeningSettingsPage({
   const locale = await managerLocale();
   const t = managerT(locale);
   const [all, sp] = await Promise.all([loadPanelUsers(user.orgId), searchParams]);
+  // 4.5: a draft's setup path, one line under the tabs (read after the people, ruling C21).
+  const setup = await setupStrip({ orgId: user.orgId, opening, access, t, locale });
   const closed = opening.status === "CLOSED";
   const runs = canDecide(user.role);
   // Someone who only reads the opening sees the people on it, not the organisation's whole user list.
@@ -43,8 +51,8 @@ export default async function OpeningSettingsPage({
     .map((u) => ({ id: u.id, name: u.name, role: u.role, disabled: u.disabledAt !== null }));
 
   return (
-    <main className="mx-auto max-w-[1360px] px-page py-8">
-      <OpeningHeader opening={opening} active="settings" locale={locale} t={t} />
+    <main className="mx-auto max-w-[1080px] px-page py-8">
+      <OpeningHeader opening={opening} active="settings" locale={locale} t={t} setup={setup} />
       {closed ? (
         <Card className="mt-section space-y-3 p-card">
           <h2 className="text-[16px] leading-6 font-semibold text-ink">{t("hiringSettings.closedTitle")}</h2>
@@ -80,18 +88,19 @@ export default async function OpeningSettingsPage({
             candidateContactEmail: opening.candidateContactEmail ?? "",
             finishSurveyEnabled: opening.finishSurveyEnabled,
           }}
-        />
+        >
+          {access.edit ? (
+            // Under the summary only, never inside a flow (the form draws it there).
+            <div className="space-y-1">
+              <form action={closeOpeningAction}>
+                <input type="hidden" name="openingId" value={opening.id} />
+                <PendingButton label={t("hiringSettings.close")} pendingLabel={t("hiringSettings.closing")} />
+              </form>
+              <p className="text-[13px] text-muted">{t("hiringSettings.closeBody")}</p>
+            </div>
+          ) : null}
+        </OpeningSettingsForm>
       </div>
-      {access.edit ? (
-        <Card className="mt-section space-y-3 p-card">
-          <h2 className="text-[16px] leading-6 font-semibold text-ink">{t("hiringSettings.closeTitle")}</h2>
-          <p className="text-[13px] text-muted">{t("hiringSettings.closeBody")}</p>
-          <form action={closeOpeningAction}>
-            <input type="hidden" name="openingId" value={opening.id} />
-            <PendingButton label={t("hiringSettings.close")} pendingLabel={t("hiringSettings.closing")} />
-          </form>
-        </Card>
-      ) : null}
       {one(sp.closed) === "1" && closed && runs ? (
         // Shown once after closing; a reload does not bring the strip back.
         <UrlNotice params={["closed"]}>
