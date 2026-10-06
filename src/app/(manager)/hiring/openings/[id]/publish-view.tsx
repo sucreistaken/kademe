@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useState, useSyncExternalStore, type AnchorHTMLAttributes, type MouseEvent, type ReactNode } from "react";
 import { flowFocusKey } from "@/components/manager/flow-model";
 import { StepFooter } from "@/components/visual/step-footer";
 import { stepFocusController, useKeepFocus } from "@/hooks/use-step-focus";
-import { currentHash, leaveHashStep, noHash, subscribeHash } from "@/lib/client/hash-step";
+import { clearHash, currentHash, leaveHashStep, noHash, pushHash, subscribeHash } from "@/lib/client/hash-step";
 
 const FIX = "inline-flex min-h-11 items-center text-[14px] font-medium text-ink underline decoration-underline underline-offset-4 hover:decoration-ink";
 
@@ -21,6 +21,52 @@ export const SETUP_HEADING_ID = "setup-path-title";
  * clears `#publish` from the address.
  */
 export const publishShown = (hash: string, hasSummary: boolean): boolean => hasSummary && hash === "#publish";
+
+/**
+ * The hash a link opens on this very page (same path), or null when it leads
+ * elsewhere or carries no hash. Such a click is opened with pushHash, so the
+ * entry is marked and the summary's "‹ Genel bakış" goes back to it instead of
+ * leaving a second overview entry in the history.
+ */
+export function hashOnThisPage(href: string, here: { pathname: string }): string | null {
+  const at = href.indexOf("#");
+  if (at < 0) return null;
+  const path = href.slice(0, at).split("?")[0];
+  return path === "" || path === here.pathname ? href.slice(at) : null;
+}
+
+/**
+ * M2: a publish notice arriving (the action's redirect after a refusal) closes
+ * the summary that is still shown. Judged on what is shown, not on the
+ * address: the redirect may already have dropped the hash without telling
+ * the hash store.
+ */
+export const noticeClosesSummary = (notice: string | null, shown: boolean): boolean => notice !== null && shown;
+
+/**
+ * A link to the publish summary (`#publish`): a plain anchor without
+ * JavaScript; with it, a click on this page opens the summary as a marked
+ * history entry (pushHash). Other attributes reach the anchor, so a filled
+ * Button can draw it (asChild).
+ */
+export function PublishLink({ href, onClick, children, ...rest }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) {
+  return (
+    <a
+      {...rest}
+      href={href}
+      onClick={(event: MouseEvent<HTMLAnchorElement>) => {
+        onClick?.(event);
+        if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        const hash = hashOnThisPage(href, window.location);
+        if (hash === null) return;
+        event.preventDefault();
+        pushHash(hash);
+      }}
+    >
+      {children}
+    </a>
+  );
+}
 
 function usePublishShown(hasSummary: boolean): boolean {
   return publishShown(useSyncExternalStore(subscribeHash, currentHash, noHash), hasSummary);
@@ -38,6 +84,12 @@ export function PublishSwitch({ summary, children }: { summary: ReactNode; child
   const shown = usePublishShown(hasSummary);
   const [heard, setHeard] = useState(false);
   useEffect(() => subscribeHash(() => setHeard(true)), []);
+  // M2: after a refused publish the redirect brings `?publish=`; the summary closes, so the
+  // focus moves to the setup card's heading instead of staying on a "Yayınla" that turned grey.
+  const notice = useSearchParams()?.get("publish") ?? null;
+  useEffect(() => {
+    if (noticeClosesSummary(notice, shown)) clearHash();
+  }, [notice, shown]);
   const [focus] = useState(stepFocusController);
   const key = flowFocusKey(heard, shown ? "publish" : "overview");
   useEffect(() => {

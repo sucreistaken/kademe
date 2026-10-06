@@ -36,6 +36,10 @@ let invited: number;
 /** Survey answers, oldest first. */
 let answers: Array<{ rating: number; comment: string | null }>;
 let stageSeconds: number;
+type Person = { id: string; name: string; email: string; role: Role; lastLoginAt: null; disabledAt: Date | null };
+/** The organisation's users (loadPanelUsers): the owner deciding and the reviewer on the team, both active. */
+let people: Person[];
+const person = (id: string, name: string, role: Role, disabledAt: Date | null = null): Person => ({ id, name, email: `${name}@x.test`, role, lastLoginAt: null, disabledAt });
 
 const openingFor = vi.fn(async (id: string) => ({
   user: { id: viewer.role === "REVIEWER" ? REVIEWER : OWNER, orgId: ORG, email: "", name: "", role: viewer.role },
@@ -68,14 +72,15 @@ vi.mock("@/solutions/hiring/server/working", () => ({
 }));
 vi.mock("@/server/settings", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/server/settings")>()),
-  loadPanelUsers: async () => [{ id: OWNER, name: "Sahip", email: "o@x.test", role: "OWNER", lastLoginAt: null, disabledAt: null }],
+  loadPanelUsers: async () => people,
 }));
 
 import OverviewPage from "./page";
 import { Button } from "@/components/ui/button";
 import { InviteSheet } from "@/components/hiring/invite/invite-sheet";
 import { OpeningHeader } from "./opening-header";
-import { PublishFooter, PublishSwitch } from "./publish-view";
+import { PublishFooter, PublishLink, PublishSwitch } from "./publish-view";
+import { managerT } from "@/i18n/manager";
 import Link from "next/link";
 import { PathSteps } from "@/components/visual/path-steps";
 import { StepScreen } from "@/components/visual/step-screen";
@@ -163,6 +168,7 @@ beforeEach(() => {
   answers = [];
   stageSeconds = 1500;
   sp = {};
+  people = [person(OWNER, "Sahip", "OWNER"), person(REVIEWER, "Ece", "REVIEWER")];
   requestRows = 0;
   expiringRows = 0;
   fake.ops = [];
@@ -327,12 +333,15 @@ describe("a draft's control view and its setup path (4.5, H7)", () => {
     ]);
     expect(text(steps[3].action)).toBe("ÖnizleAtla");
     expect(find(steps[3].action, (el) => typeof el.props.href === "string").map((l) => l.props.href)).toEqual([`${BASE}/assessment/preview`, `${BASE}?skip=preview`]);
+    // M6: "Atla" keeps the scroll place.
+    expect(find(steps[3].action, ofType(Link))[0].props.scroll).toBe(false);
   });
 
   it("goes on to the publish summary as a plain anchor once the advice is skipped (?skip=)", async () => {
     sp = { skip: "preview" };
     const action = header(await render()).props.action as ReactElement;
-    const [anchor] = find(action, (el) => el.type === "a");
+    // M3: the summary opens as a marked history entry (PublishLink), a plain anchor without JavaScript.
+    const [anchor] = find(action, ofType(PublishLink));
     expect(anchor.props.href).toBe(`${BASE}#publish`);
     expect(text(anchor)).toBe("Kuruluma devam et");
   });
@@ -370,7 +379,7 @@ describe("a draft's control view and its setup path (4.5, H7)", () => {
     expect(text(page)).toContain("Yayına hazırlık");
     const steps = find(page, ofType(PathSteps))[0].props.steps as Array<{ action?: ReactNode }>;
     expect(steps.every((s) => s.action === undefined)).toBe(true);
-    expect(find(page, (el) => el.type === "a" && el.props.href === `${BASE}#publish`)).toHaveLength(0);
+    expect(find(page, (el) => el.props.href === `${BASE}#publish`)).toHaveLength(0);
   });
 });
 
@@ -440,6 +449,68 @@ describe("a live opening's attention and rules (4.5, H9, ruling C6)", () => {
     const reviewer = text(await render());
     expect(reviewer).toContain("Bu alımın kuralları");
     expect(reviewer).not.toContain("Kuralları değiştir");
+  });
+});
+
+describe("the team line names only who can decide and counts the active members (fix round 1, I1)", () => {
+  const summaryRows = async () => {
+    const summary = publishSwitch(await render()).props.summary as ReactElement;
+    return find(summary, (el) => Array.isArray(el.props.rows))[0].props.rows as Array<{ id: string; value: string }>;
+  };
+  beforeEach(() => {
+    status = "DRAFT";
+    state = { draft: DRAFT, live: null, content: ready(), problems: [] };
+    invited = 0;
+  });
+
+  it("says nobody decides while the decider is disabled, as the setup path does", async () => {
+    people = [person(OWNER, "Sahip", "OWNER", NOW), person(REVIEWER, "Ece", "REVIEWER")];
+    expect((await summaryRows())[1].value).toBe("1 değerlendirici · karar: kimse seçilmedi");
+    const steps = find(await render(), ofType(PathSteps))[0].props.steps as Array<{ title: string; detail?: string }>;
+    expect(steps[2].detail).toBe("Aktif bir karar veren yok. Ekip ve kurallarda bir sahip ya da yönetici seç.");
+  });
+
+  it("says nobody decides while the decider was demoted to reviewer", async () => {
+    people = [person(OWNER, "Sahip", "REVIEWER"), person(REVIEWER, "Ece", "REVIEWER")];
+    expect((await summaryRows())[1].value).toBe("1 değerlendirici · karar: kimse seçilmedi");
+  });
+
+  it("does not count a disabled member, on the summary and on a live opening's rules card", async () => {
+    people = [person(OWNER, "Sahip", "OWNER"), person(REVIEWER, "Ece", "REVIEWER", NOW)];
+    expect((await summaryRows())[1].value).toBe("Değerlendirici yok · karar: Sahip");
+    status = "OPEN";
+    state = { draft: null, live: LIVE };
+    invited = 3;
+    const rules = find(await render(), (el) => el.props.readOnly === true)[0].props.rows as Array<{ value: string }>;
+    expect(rules[0].value).toBe("Değerlendirici yok · karar: Sahip");
+  });
+});
+
+describe("small fixes of round 1", () => {
+  it("M1: says the reply days with a plural in English, the Turkish line unchanged", () => {
+    expect(managerT("en")("hiringCommon.rulesContact", { deadline: "No deadline", days: 1 })).toBe("No deadline · reply within 1 day");
+    expect(managerT("en")("hiringCommon.rulesContact", { deadline: "No deadline", days: 7 })).toBe("No deadline · reply within 7 days");
+    expect(managerT("tr")("hiringCommon.rulesContact", { deadline: "Son tarih yok", days: 7 })).toBe("Son tarih yok · 7 günde dönüş");
+  });
+
+  it("M3: the path's last step opens the summary through PublishLink", async () => {
+    status = "DRAFT";
+    state = { draft: DRAFT, live: null, content: ready(), problems: [] };
+    invited = 0;
+    sp = { skip: "preview" };
+    const steps = find(await render(), ofType(PathSteps))[0].props.steps as Array<{ title: string; action?: ReactNode }>;
+    const [link] = find(steps[4].action, ofType(PublishLink));
+    expect(link.props.href).toBe(`${BASE}#publish`);
+    expect(text(link)).toBe("Yayın özetine bak");
+  });
+
+  it("M6: 'Atla' keeps ?lang= when the address has one", async () => {
+    status = "DRAFT";
+    state = { draft: DRAFT, live: null, content: ready(), problems: [] };
+    invited = 0;
+    sp = { lang: "en" };
+    const steps = find(await render(), ofType(PathSteps))[0].props.steps as Array<{ action?: ReactNode }>;
+    expect(find(steps[3].action, ofType(Link))[0].props.href).toBe(`${BASE}?skip=preview&lang=en`);
   });
 });
 

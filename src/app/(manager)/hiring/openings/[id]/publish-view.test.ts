@@ -11,7 +11,7 @@ const address = vi.hoisted(() => ({ hash: "", search: "" }));
 vi.mock("@/lib/client/hash-step", async (original) => ({ ...(await original<typeof import("@/lib/client/hash-step")>()), noHash: () => address.hash }));
 vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams(address.search) }));
 
-import { OverviewOnly, PublishFooter, PublishSwitch, publishShown } from "./publish-view";
+import { OverviewOnly, PublishFooter, PublishLink, PublishSwitch, hashOnThisPage, noticeClosesSummary, publishShown } from "./publish-view";
 
 const labels = { publish: "Yayınla", publishing: "Yayınlanıyor", back: "Genel bakış" };
 const at = (hash: string, node: Parameters<typeof renderToStaticMarkup>[0]) => {
@@ -74,3 +74,26 @@ describe("PublishFooter (W6: the one filled 'Yayınla' at the end)", () => {
     expect(out).toMatch(/<a[^>]*href="\/hiring\/openings\/x\/assessment\/edit\?activity=a1"[^>]*>Düzelt<\/a>/);
   });
 });
+
+describe("fix round 1: the summary's history entry (M3) and a refusal closing it (M2)", () => {
+  it("opens a #publish link on this page with pushHash, and leaves links elsewhere to the browser", () => {
+    const here = { pathname: "/hiring/openings/x" };
+    expect(hashOnThisPage("/hiring/openings/x#publish", here)).toBe("#publish");
+    expect(hashOnThisPage("#publish", here)).toBe("#publish");
+    expect(hashOnThisPage("/hiring/openings/x?skip=team#publish", here)).toBe("#publish");
+    expect(hashOnThisPage("/hiring/openings/y#publish", here)).toBeNull();
+    expect(hashOnThisPage("/hiring/openings/x", here)).toBeNull();
+  });
+
+  it("draws PublishLink as a plain anchor (no JavaScript still opens the summary)", () => {
+    const out = at("", createElement(PublishLink, { href: "/hiring/openings/x#publish", className: "c" }, "Yayın özetine bak"));
+    expect(out).toBe('<a class="c" href="/hiring/openings/x#publish">Yayın özetine bak</a>');
+  });
+
+  it("closes the shown summary when the action's refusal notice arrives", () => {
+    expect(noticeClosesSummary("refused", true)).toBe(true);
+    expect(noticeClosesSummary(null, true)).toBe(false);
+    expect(noticeClosesSummary("refused", false)).toBe(false);
+  });
+});
+

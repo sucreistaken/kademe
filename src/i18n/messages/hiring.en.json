@@ -29,7 +29,7 @@
     "copyOpening": "Copy",
     "rulesTeam": "{count, plural, =0 {No reviewers} one {One reviewer} other {# reviewers}} · decides: {decider}",
     "rulesNoDecider": "nobody chosen",
-    "rulesContact": "{deadline} · reply within {days} days",
+    "rulesContact": "{deadline} · reply within {days, plural, one {# day} other {# days}}",
     "rulesBlindOn": "Identity hidden",
     "rulesBlindOff": "Identity shown",
     "rulesSurveyOn": "finish survey on",

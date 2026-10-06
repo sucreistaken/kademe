@@ -29,7 +29,7 @@ import { funnelView } from "./funnel";
 import { inviteWaitReason } from "./invite-wait";
 import { OpeningHeader } from "./opening-header";
 import { describeProblem } from "./problems";
-import { OverviewOnly, PublishFooter, PublishSwitch, SETUP_HEADING_ID, SetupFocusArea } from "./publish-view";
+import { OverviewOnly, PublishFooter, PublishLink, PublishSwitch, SETUP_HEADING_ID, SetupFocusArea } from "./publish-view";
 import { rowAction } from "./readiness";
 import { SETUP_LABEL, setupNext, setupProgress, setupRowsOf, setupSkips } from "./setup-steps";
 
@@ -118,12 +118,18 @@ export default async function OpeningOverviewPage({
   const skipped = setupSkips(sp.skip);
   const progress = setupProgress(setupRows, skipped);
   const next = setupNext(setupRows, opening.id, skipped);
+  const lang = one(sp.lang);
+  const skipHref = (keys: readonly string[]) => `${base}?skip=${keys.join(",")}${lang ? `&lang=${encodeURIComponent(lang)}` : ""}`;
 
   // The publish summary (#publish, the path's last step): what goes live, each row with "Değiştir ›".
-  const decider = people.find((u) => u.id === opening.decisionMakerId) ?? null;
+  // The team in one line (the publish summary and the rules card): the active members, the people the
+  // team rule and the control view count (Task 18), and the decider named only while active and able to
+  // decide (the same rule as the setup path's team step, setupRowsOf); otherwise "kimse seçilmedi".
+  const active = new Set(people.filter((u) => u.disabledAt === null).map((u) => u.id));
+  const decider = people.find((u) => u.id === opening.decisionMakerId && u.disabledAt === null && canDecide(u.role)) ?? null;
   const first = state.problems[0] ? describe(state.problems[0]) : null;
   const stages = content ? orderedStages(content) : [];
-  const teamValue = t("hiringCommon.rulesTeam", { count: opening.memberIds.length, decider: decider?.name ?? t("hiringCommon.rulesNoDecider") });
+  const teamValue = t("hiringCommon.rulesTeam", { count: opening.memberIds.filter((m) => active.has(m)).length, decider: decider?.name ?? t("hiringCommon.rulesNoDecider") });
   const deadlineValue = opening.deadlineAt ? t("hiringCommon.deadline", { date: shortDate(opening.deadlineAt, locale) }) : t("hiringCommon.noDeadline");
   const publishRows: SummaryRow[] =
     state.draft && content
@@ -175,7 +181,14 @@ export default async function OpeningOverviewPage({
     opening.status === "DRAFT" ? (
       access.edit ? (
         <Button asChild variant="primary">
-          {next.href.includes("#") ? <a href={next.href}>{t("hiringCommon.continueSetup")}</a> : <Link href={next.href}>{t("hiringCommon.continueSetup")}</Link>}
+          {next.key === "publish" ? (
+            // The summary on this page: opened as a marked history entry, so "‹ Genel bakış" goes back (M3).
+            <PublishLink href={next.href}>{t("hiringCommon.continueSetup")}</PublishLink>
+          ) : next.href.includes("#") ? (
+            <a href={next.href}>{t("hiringCommon.continueSetup")}</a>
+          ) : (
+            <Link href={next.href}>{t("hiringCommon.continueSetup")}</Link>
+          )}
         </Button>
       ) : null
     ) : target ? (
@@ -227,7 +240,8 @@ export default async function OpeningOverviewPage({
               </To>
               {row.state === "advisory" ? (
                 // STATUS decision 7: advice never blocks; "Atla" passes it for this visit (the address remembers, nothing is stored).
-                <Link href={`${base}?skip=${[...skipped, row.key].join(",")}`} className={TEXT_ACTION}>
+                // The page stays where it is (no scroll to the top) and keeps ?lang= when the address has one.
+                <Link href={skipHref([...skipped, row.key])} scroll={false} className={TEXT_ACTION}>
                   {t("flow.skip")}
                   <ChevronRight className="size-4" strokeWidth={1.75} aria-hidden />
                 </Link>
@@ -241,10 +255,10 @@ export default async function OpeningOverviewPage({
       state: progress.current === setupRows.length ? ("current" as const) : ("todo" as const),
       action:
         progress.current === setupRows.length && publishSummary ? (
-          <a href="#publish" className={TEXT_ACTION}>
+          <PublishLink href={`${base}#publish`} className={TEXT_ACTION}>
             {t("hiringOverview.goPublish")}
             <ChevronRight className="size-4" strokeWidth={1.75} aria-hidden />
-          </a>
+          </PublishLink>
         ) : undefined,
     },
   ];
