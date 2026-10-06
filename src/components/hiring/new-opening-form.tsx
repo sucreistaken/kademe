@@ -86,6 +86,8 @@ export function NewOpeningForm({
     POSITION_NOT_FOUND: t("positionGone"),
     JOB_AD_REQUIRED: t("startAiDisabled"),
     COPY_SOURCE_NOT_FOUND: t("copySourceGone"),
+    // The form cannot send a template yet; the template step gives this its own sentence.
+    TEMPLATE_NOT_FOUND: t("failed"),
     INVALID: t("failed"),
     FAILED: t("failed"),
   };

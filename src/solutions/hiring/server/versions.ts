@@ -210,7 +210,8 @@ async function insertActivityRow(x: Executor, stageId: string, orderIndex: numbe
   return row.id;
 }
 
-async function insertStageRows(x: Executor, versionId: string, orderIndex: number, payload: StagePayload): Promise<string> {
+/** A stage and its questions as new rows of a version; the caller has checked the competencies. */
+export async function insertStageRows(x: Executor, versionId: string, orderIndex: number, payload: StagePayload): Promise<string> {
   const { activities, ...fields } = payload;
   const [row] = await x.insert(hiringStages).values({ versionId, orderIndex, ...fields }).returning({ id: hiringStages.id });
   for (const [i, activity] of activities.entries()) await insertActivityRow(x, row.id, i, activity);

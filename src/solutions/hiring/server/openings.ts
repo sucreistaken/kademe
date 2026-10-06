@@ -8,8 +8,11 @@ import { isUuid, loadPanelUsers } from "@/server/settings";
 import { openingAccess, type Viewer } from "../rules/access";
 import { deadlineToDate, openingRulesProblems, type OpeningRulesInput, type RulesProblem } from "../rules/opening-rules";
 import { workingVersions } from "../rules/versions";
+import { templateByKey } from "../templates/index";
+import { materialise, templateCompetencyKeys } from "../templates/materialise";
 import { HiringNotFound } from "./errors";
-import { assertActiveUser, cloneContent, inheritedSettings, lockOpening, versionRow, versionsOf } from "./versions";
+import { ensureTemplateCompetencies } from "./templates";
+import { assertActiveUser, cloneContent, inheritedSettings, insertStageRows, lockOpening, versionRow, versionsOf } from "./versions";
 
 export type OpeningStatus = "DRAFT" | "OPEN" | "CLOSED";
 export type OpeningDetail = typeof hiringOpenings.$inferSelect & { positionName: string; memberIds: string[] };
@@ -111,13 +114,15 @@ export async function copySources(orgId: string): Promise<Array<{ id: string; na
 
 export type CreateOpeningInput = {
   position: { kind: "existing"; id: string } | { kind: "new"; name: string; jobDescription: string };
-  start: "AI" | "COPY" | "BLANK";
+  start: "AI" | "COPY" | "BLANK" | "TEMPLATE";
   copyFrom: string | null;
+  /** A ready template's key (templates/index.ts); read only when start is TEMPLATE. */
+  templateKey?: string | null;
 };
 
 export type CreateOpeningResult =
   | { ok: true; openingId: string; next: string }
-  | { ok: false; code: "POSITION_NAME_REQUIRED" | "POSITION_NOT_FOUND" | "JOB_AD_REQUIRED" | "COPY_SOURCE_NOT_FOUND" };
+  | { ok: false; code: "POSITION_NAME_REQUIRED" | "POSITION_NOT_FOUND" | "JOB_AD_REQUIRED" | "COPY_SOURCE_NOT_FOUND" | "TEMPLATE_NOT_FOUND" };
 
 /**
  * `base` when no opening of the organisation has that name, otherwise
@@ -146,7 +151,10 @@ const monthName = () => new Intl.DateTimeFormat(DEFAULT_LOCALE === "en" ? "en-GB
  * HIRING-UX 5.3. Everything is checked before anything is written, so a refused
  * start leaves no stray position behind. The creator owns the opening and is
  * its first decision maker, so it must be an active user of the organisation
- * (HiringNotFound otherwise); v1 is an empty draft or a copy.
+ * (HiringNotFound otherwise); v1 is an empty draft, a copy or a ready template.
+ * A template (spec 2026-10-06-hiring-ready-templates-design, section 4) also
+ * brings its competencies and weights, and fills the position only where it is
+ * empty: a job ad when it has none, a profile when it has no rows.
  */
 export async function createOpening(user: { id: string; orgId: string }, input: CreateOpeningInput): Promise<CreateOpeningResult> {
   return db.transaction(async (tx) => {
@@ -158,6 +166,8 @@ export async function createOpening(user: { id: string; orgId: string }, input: 
           .limit(1)
       : [];
     if (!creator) throw new HiringNotFound("user");
+    const template = input.start === "TEMPLATE" ? templateByKey(input.templateKey ?? "") : null;
+    if (input.start === "TEMPLATE" && !template) return { ok: false as const, code: "TEMPLATE_NOT_FOUND" as const };
 
     let position: { id: string | null; name: string; jobDescription: string | null };
     if (input.position.kind === "new") {
@@ -191,11 +201,25 @@ export async function createOpening(user: { id: string; orgId: string }, input: 
       if (!sourceVersionId) return { ok: false as const, code: "COPY_SOURCE_NOT_FOUND" as const };
     }
 
+    const templateAd = template ? template.jobAd[DEFAULT_LOCALE] : null;
     let positionId = position.id;
     if (!positionId) {
-      const created = await createPosition(user.orgId, user.id, { name: position.name, jobDescription: position.jobDescription ?? "" }, tx);
+      const jobDescription = position.jobDescription ?? templateAd ?? "";
+      const created = await createPosition(user.orgId, user.id, { name: position.name, jobDescription }, tx);
       if (!created.ok) return { ok: false as const, code: "POSITION_NAME_REQUIRED" as const };
       positionId = created.id;
+    } else if (templateAd && !position.jobDescription?.trim()) {
+      // Only an empty ad is filled; the condition holds it even if someone wrote one meanwhile.
+      await tx
+        .update(positions)
+        .set({ jobDescription: templateAd, updatedAt: new Date() })
+        .where(
+          and(
+            eq(positions.id, positionId),
+            eq(positions.orgId, user.orgId),
+            sql`(${positions.jobDescription} is null or btrim(${positions.jobDescription}) = '')`,
+          ),
+        );
     }
     // Two openings for one position in one month would read the same in the list: number the later ones.
     const base = `${position.name} · ${monthName()}`;
@@ -207,22 +231,40 @@ export async function createOpening(user: { id: string; orgId: string }, input: 
       .insert(hiringOpenings)
       .values({ orgId: user.orgId, positionId, name: uniqueOpeningName(base, taken.map((r) => r.name)), ownerId: user.id, decisionMakerId: user.id })
       .returning({ id: hiringOpenings.id });
+    const ids = template ? await ensureTemplateCompetencies(tx, user.orgId, user.id, templateCompetencyKeys(template)) : null;
+    const built = template ? materialise(template, (key) => ids![key]) : null;
     // A copy takes the source's languages, intro, proctoring and practice; weights start over.
     const settings = sourceVersionId ? inheritedSettings(await versionRow(tx, user.orgId, sourceVersionId)) : {};
     const [version] = await tx
       .insert(hiringVersions)
-      .values({ orgId: user.orgId, openingId: opening.id, versionNumber: 1, ...settings })
+      .values({ orgId: user.orgId, openingId: opening.id, versionNumber: 1, ...settings, ...(built ? { weightsEnabled: true, draftWeights: built.weights } : {}) })
       .returning({ id: hiringVersions.id });
     if (sourceVersionId) await cloneContent(tx, user.orgId, sourceVersionId, version.id);
+    if (built) {
+      for (const [i, stage] of built.stages.entries()) await insertStageRows(tx, version.id, i, stage);
+      // The position was proven the organisation's above. A position just created has no profile; an existing one keeps any profile it has.
+      const [profiled] = position.id
+        ? await tx.select({ positionId: positionCompetencies.positionId }).from(positionCompetencies).where(eq(positionCompetencies.positionId, positionId)).limit(1)
+        : [];
+      if (!profiled) {
+        const byWeight = Object.entries(built.weights).sort((a, b) => b[1] - a[1]);
+        await tx.insert(positionCompetencies).values(byWeight.map(([competencyId, weight], i) => ({ positionId, competencyId, weight, orderIndex: i })));
+      }
+    }
     await tx.insert(auditLogs).values({
       orgId: user.orgId,
       actorId: user.id,
       action: "hiring.opening.create",
       subjectType: "hiring_opening",
       subjectId: opening.id,
-      meta: { positionId, start: input.start, copyFrom: input.start === "COPY" ? input.copyFrom : null },
+      meta: {
+        positionId,
+        start: input.start,
+        copyFrom: input.start === "COPY" ? input.copyFrom : null,
+        templateKey: input.start === "TEMPLATE" && template ? template.key : null,
+      },
     });
-    // A blank or copied start opens the builder; an AI start opens the AI draft screen.
+    // A blank, copied or template start opens the builder; an AI start opens the AI draft screen.
     const next = `/hiring/openings/${opening.id}/assessment/${input.start === "AI" ? "ai" : "edit"}`;
     return { ok: true as const, openingId: opening.id, next };
   });

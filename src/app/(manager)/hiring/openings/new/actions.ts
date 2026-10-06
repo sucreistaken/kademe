@@ -12,8 +12,9 @@ const schema = z.object({
     z.object({ kind: z.literal("existing"), id: z.uuid() }),
     z.object({ kind: z.literal("new"), name: z.string().max(POSITION_NAME_MAX), jobDescription: z.string().max(POSITION_JOB_AD_MAX) }),
   ]),
-  start: z.enum(["AI", "COPY", "BLANK"]),
+  start: z.enum(["AI", "COPY", "BLANK", "TEMPLATE"]),
   copyFrom: z.uuid().nullable(),
+  templateKey: z.string().max(80).nullable().optional(),
 });
 
 export type CreateOpeningActionResult = CreateOpeningResult | { ok: false; code: "INVALID" | "FAILED" };

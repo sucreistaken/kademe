@@ -43,6 +43,8 @@ const REFUSAL_STEP: Record<NewOpeningRefusal, NewOpeningStep> = {
   POSITION_NOT_FOUND: "position",
   JOB_AD_REQUIRED: "start",
   COPY_SOURCE_NOT_FOUND: "start",
+  // Until the template step exists, an unknown template is a start to choose again.
+  TEMPLATE_NOT_FOUND: "start",
   INVALID: "start",
   FAILED: "start",
 };

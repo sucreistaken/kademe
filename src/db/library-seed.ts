@@ -1,5 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
+import type { Executor } from "@/db/executor";
 import { competencies, competencyAnchors, observationTags, ratingScales, scaleLevels } from "@/db/schema";
 import { DEFAULT_SCALE, SEED_COMPETENCIES } from "./library-seed-data";
 
@@ -7,12 +8,13 @@ import { DEFAULT_SCALE, SEED_COMPETENCIES } from "./library-seed-data";
  * Writes the starter library for one organisation. Safe to run any number of
  * times: the default scale is created only when the organisation has none, and
  * a competency only when no row carries its seed key, so a renamed, edited or
- * archived starter competency is never touched again.
+ * archived starter competency is never touched again. `x` lets a caller's
+ * transaction create the scale with its own writes (a savepoint inside it).
  */
-export async function ensureDefaultScale(orgId: string): Promise<{ id: string; created: boolean }> {
+export async function ensureDefaultScale(orgId: string, x: Executor = db): Promise<{ id: string; created: boolean }> {
   const find = async () =>
     (
-      await db
+      await x
         .select({ id: ratingScales.id })
         .from(ratingScales)
         .where(and(eq(ratingScales.orgId, orgId), eq(ratingScales.isDefault, true)))
@@ -20,7 +22,7 @@ export async function ensureDefaultScale(orgId: string): Promise<{ id: string; c
     )[0];
   const existing = await find();
   if (existing) return { id: existing.id, created: false };
-  const created = await db.transaction(async (tx) => {
+  const created = await x.transaction(async (tx) => {
     const [scale] = await tx
       .insert(ratingScales)
       .values({ orgId, name: DEFAULT_SCALE.name, minValue: 1, maxValue: 5, isDefault: true })

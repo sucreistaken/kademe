@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_LOCALE } from "@/i18n/locale";
 import { ORG_TIMEZONE, orgDay } from "@/lib/org-timezone";
 import { deadlineToDate, type OpeningRulesInput } from "../rules/opening-rules";
+import { customerSupport } from "../templates/roles/customer-support";
 import { HiringConflict, HiringNotFound } from "./errors";
 import { fake, writesOf, type Op } from "./test-fake-db";
 
@@ -77,6 +78,124 @@ describe("createOpening", () => {
     fake.respond = respond;
     const result = await createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "existing", id: POS_A }, start: "AI", copyFrom: null });
     expect(result).toEqual({ ok: true, openingId: OPENING, next: `/hiring/openings/${OPENING}/assessment/ai` });
+  });
+});
+
+/**
+ * A ready template (spec 2026-10-06-hiring-ready-templates-design, section 4):
+ * stages, questions, links and weights in v1, an empty position filled, a
+ * filled one never touched, and an unknown key refused before any write.
+ */
+describe("createOpening from a template", () => {
+  const SCALE = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+  const AD = "Mevcut bir iş ilanı.";
+  let jobDescription: string | null;
+  let profileRows: Array<{ positionId: string }>;
+  let next = 0;
+  const id = () => `00000000-0000-4000-8000-${(next += 1).toString(16).padStart(12, "0")}`;
+  const respond = (op: Op) => {
+    if (op.table === "users") return [{ id: ACTOR }];
+    if (op.table === "positions" && op.kind === "select") return [{ id: POS_A, name: "Destek Uzmanı", jobDescription }];
+    if (op.table === "position_competencies" && op.kind === "select") return profileRows;
+    if (op.table === "rating_scales" && op.kind === "select") return [{ id: SCALE }];
+    if (op.kind === "insert" && op.table === "positions") return [{ id: POS_B }];
+    if (op.kind === "insert" && op.table === "hiring_openings") return [{ id: OPENING }];
+    if (op.kind === "insert" && op.table === "hiring_versions") return [{ id: VERSION }];
+    if (op.kind === "insert" && ["competencies", "hiring_stages", "hiring_activities"].includes(op.table)) return [{ id: id() }];
+    return [];
+  };
+  const start = (over: Partial<Parameters<typeof createOpening>[1]> = {}) =>
+    createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "existing", id: POS_A }, start: "TEMPLATE", copyFrom: null, templateKey: "customer-support", ...over });
+  const inserts = (table: string) => fake.ops.filter((o) => o.kind === "insert" && o.table === table);
+  const rowsOf = (op: Op | undefined) => (Array.isArray(op?.values) ? (op.values as unknown[]) : op ? [op.values] : []);
+
+  beforeEach(() => {
+    jobDescription = AD;
+    profileRows = [];
+    next = 0;
+    fake.respond = respond;
+  });
+
+  it("refuses an unknown template before anything is written", async () => {
+    expect(await start({ templateKey: "no-such-role" })).toEqual({ ok: false, code: "TEMPLATE_NOT_FOUND" });
+    expect(await start({ templateKey: null })).toEqual({ ok: false, code: "TEMPLATE_NOT_FOUND" });
+    expect(writesOf(fake.ops)).toEqual([]);
+  });
+
+  it("writes the template's stages, questions, links and weights into v1 and opens the builder", async () => {
+    const result = await start();
+    expect(result).toEqual({ ok: true, openingId: OPENING, next: `/hiring/openings/${OPENING}/assessment/edit` });
+    expect(inserts("hiring_stages")).toHaveLength(2);
+    expect(inserts("hiring_stages").every((o) => (o.values as { versionId: string }).versionId === VERSION)).toBe(true);
+    expect(inserts("hiring_activities")).toHaveLength(5);
+    // Only the four open questions measure competencies; the choice question links none.
+    expect(inserts("hiring_activity_competencies")).toHaveLength(4);
+    const version = inserts("hiring_versions")[0].values as { weightsEnabled: boolean; draftWeights: Record<string, number> };
+    expect(version.weightsEnabled).toBe(true);
+    expect(Object.values(version.draftWeights)).toHaveLength(3);
+    expect(Object.values(version.draftWeights).reduce((s, w) => s + w, 0)).toBe(100);
+    // Every weighted competency is one the organisation now has.
+    const created = inserts("competencies").length;
+    expect(created).toBe(3);
+    const audit = inserts("audit_logs").find((o) => (o.values as { action: string }).action === "hiring.opening.create");
+    expect((audit?.values as { meta: Record<string, unknown> }).meta).toEqual({ positionId: POS_A, start: "TEMPLATE", copyFrom: null, templateKey: "customer-support" });
+  });
+
+  it("leaves a position with a job ad alone, and fills an empty one exactly once", async () => {
+    await start();
+    expect(fake.ops.filter((o) => o.kind === "update" && o.table === "positions")).toEqual([]);
+
+    fake.ops = [];
+    jobDescription = "   ";
+    await start();
+    const updates = fake.ops.filter((o) => o.kind === "update" && o.table === "positions");
+    expect(updates).toHaveLength(1);
+    expect((updates[0].values as { jobDescription: string }).jobDescription).toContain("Müşteri Destek Uzmanı");
+    expect(updates[0].where).toContain('"positions"."org_id" = $');
+    expect(updates[0].where).toContain("btrim");
+    expect(updates[0].params).toEqual(expect.arrayContaining([POS_A, ORG]));
+  });
+
+  it("gives a position without a profile the template weights, highest first, and leaves a profile alone", async () => {
+    await start();
+    const profile = rowsOf(inserts("position_competencies")[0]) as Array<{ positionId: string; weight: number; orderIndex: number }>;
+    expect(profile.map((r) => [r.weight, r.orderIndex])).toEqual([
+      [40, 0],
+      [35, 1],
+      [25, 2],
+    ]);
+    expect(profile.every((r) => r.positionId === POS_A)).toBe(true);
+    const weights = (inserts("hiring_versions")[0].values as { draftWeights: Record<string, number> }).draftWeights;
+    expect(Object.fromEntries(profile.map((r) => [(r as unknown as { competencyId: string }).competencyId, r.weight]))).toEqual(weights);
+
+    fake.ops = [];
+    profileRows = [{ positionId: POS_A }];
+    await start();
+    expect(inserts("position_competencies")).toEqual([]);
+  });
+
+  it("creates a new position with the template's job ad when none was written", async () => {
+    await start({ position: { kind: "new", name: "Destek", jobDescription: "  " } });
+    const position = inserts("positions")[0].values as { jobDescription: string | null };
+    expect(position.jobDescription).toBe(customerSupport.jobAd[DEFAULT_LOCALE]);
+    // A new position has no profile to read: it gets the template weights.
+    const profile = rowsOf(inserts("position_competencies")[0]) as Array<{ positionId: string }>;
+    expect(profile).toHaveLength(3);
+    expect(profile.every((r) => r.positionId === POS_B)).toBe(true);
+    expect(fake.ops.filter((o) => o.table === "positions" && o.kind === "update")).toEqual([]);
+  });
+
+  it("keeps a new position's own job ad", async () => {
+    await start({ position: { kind: "new", name: "Destek", jobDescription: "Kendi ilanımız." } });
+    expect((inserts("positions")[0].values as { jobDescription: string }).jobDescription).toBe("Kendi ilanımız.");
+  });
+
+  it("writes no template content for the old starts", async () => {
+    await createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "existing", id: POS_A }, start: "BLANK", copyFrom: null, templateKey: "customer-support" });
+    expect(inserts("hiring_stages")).toEqual([]);
+    expect(inserts("competencies")).toEqual([]);
+    const audit = inserts("audit_logs")[0].values as { meta: Record<string, unknown> };
+    expect(audit.meta).toEqual({ positionId: POS_A, start: "BLANK", copyFrom: null, templateKey: null });
   });
 });
 
