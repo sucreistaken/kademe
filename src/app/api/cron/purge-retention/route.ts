@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { safeEqual } from "@/lib/auth";
 import { DEFAULT_BATCH, runRetention } from "@/lib/retention";
+import { purgeStaleDrafts } from "@/server/create/drafts";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -47,9 +48,12 @@ export async function POST(req: NextRequest) {
   const batch = batchParam === null ? DEFAULT_BATCH : Number(batchParam);
 
   const report = await runRetention({ batch, apply });
+  // Advanced drafts that never reached APPLIED, 30 days on (spec 5.3); same two switches.
+  const creationDrafts = await purgeStaleDrafts({ now: new Date(), apply });
 
   return Response.json({
     ...report,
+    creationDrafts,
     /**
      * Spelled out in every response so nobody has to guess from the mode alone
      * why a run did or did not delete.

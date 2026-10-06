@@ -7,3 +7,4 @@ export * from "./proctoring";
 export * from "./compliance";
 export * from "./library";
 export * from "./hiring";
+export * from "./create";

@@ -94,6 +94,7 @@ export const aiPurpose = pgEnum("ai_purpose", [
   "ANCHOR_DRAFT", // proposed 1-5 behavioural anchors for a competency; a person accepts or edits them
   "HIRING_DRAFT", // a hiring assessment proposed from a job ad; a person accepts each card
   "QUESTION_CHECK", // flags leading, double, vague or protected-trait questions; suggestions only
+  "CREATE_ROUTER", // routes one sentence from the Advanced box to a creator; it writes only its own draft row
 ]);
 
 export const proctorEventType = pgEnum("proctor_event_type", PROCTOR_EVENT_TYPES);
@@ -125,3 +126,12 @@ export const hiringActivityType = pgEnum("hiring_activity_type", [
 ]);
 export const hiringStageTimeout = pgEnum("hiring_stage_timeout", ["AUTO_SUBMIT", "AUTO_CLOSE", "ALLOW_GRACE", "ALLOW_LATE"]);
 export const hiringMemberRole = pgEnum("hiring_member_role", ["EVALUATOR"]);
+
+/**
+ * Advanced "create" (spec 2026-10-06-advanced-ai-create-design 5.3): what a
+ * draft builds and where it stands. A new creator kind is a migration.
+ */
+export const CREATION_KINDS = ["EXAM", "QUESTION_SET", "POSITION"] as const;
+export const creationKind = pgEnum("creation_kind", CREATION_KINDS);
+export const CREATION_STATUSES = ["ASKING", "DRAFTED", "APPLIED", "DISCARDED", "FAILED"] as const;
+export const creationStatus = pgEnum("creation_status", CREATION_STATUSES);
