@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { OpeningRulesInput, RulesProblem } from "@/solutions/hiring/rules/opening-rules";
 import { flowHashFix, flowStepOf } from "@/components/manager/flow-model";
-import { FLOW_FIELDS, REVIEW_STEP, RULES_ENTRY, RULES_FLOWS, firstInvalidStep, flowOfStep, otherFlowProblem, rulesNavMode, rulesPath, rulesRoute, rulesStepOf, saveInput, stepWait, teamLine } from "./rules-flows";
+import { ALL_FIELDS, FLOW_FIELDS, REVIEW_STEP, afterSave, RULES_ENTRY, RULES_FLOWS, firstInvalidStep, flowOfStep, otherFlowProblem, rulesNavMode, rulesPath, rulesRoute, rulesStepOf, saveInput, stepWait, teamLine } from "./rules-flows";
 
 const users = [
   { id: "owner", role: "OWNER" as const, disabled: false },
@@ -112,6 +112,19 @@ describe("team and rules as four short flows (4.10, D10)", () => {
     expect(otherFlowProblem(["EMAIL", "DECISION_MAKER_ROLE"], "contact")).toBe("DECISION_MAKER_ROLE");
     expect(otherFlowProblem(["DECISION_MAKER_ROLE"], "team")).toBeNull();
     expect(otherFlowProblem([], "fair")).toBeNull();
+  });
+
+  it("after a save with a flow waiting on it, keeps that flow's pending edits and opens its summary step (I1); otherwise the stored values and the summary", () => {
+    // The contact flow waited on a decider who left; its new deadline is still pending when the team saves.
+    const value = { ...saved, decisionMakerId: "owner", deadline: "2026-11-15" };
+    const stored = { ...saved, decisionMakerId: "owner" };
+    expect(afterSave({ flow: "team", origin: "contact", stored, value })).toEqual({ value: { ...stored, deadline: "2026-11-15" }, hash: "#contact-review" });
+    // The stored name (numbered on the server) wins over what was typed for the saved flow.
+    expect(afterSave({ flow: "name", origin: "fair", stored: { ...saved, name: "A (2)" }, value: { ...saved, name: "A", blindMode: true } })).toEqual({ value: { ...saved, name: "A (2)", blindMode: true }, hash: "#fair-review" });
+    // No origin, or the origin saved itself: back to the summary with what was stored.
+    expect(afterSave({ flow: "team", origin: null, stored, value })).toEqual({ value: stored, hash: null });
+    expect(afterSave({ flow: "contact", origin: "contact", stored, value })).toEqual({ value: stored, hash: null });
+    expect(new Set(ALL_FIELDS).size).toBe(10);
   });
 
   it("the team line names a decider only while active and able to decide, and counts active members (Task 20 rule)", () => {

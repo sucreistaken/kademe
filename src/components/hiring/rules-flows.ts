@@ -134,3 +134,19 @@ export function teamLine(saved: Pick<OpeningRulesInput, "memberIds" | "decisionM
     backup: deciding(saved.backupDecisionMakerId)?.name ?? null,
   };
 }
+
+/** Every field of the rules: an edit in any flow that is not saved yet makes leaving lose it. */
+export const ALL_FIELDS: readonly Field[] = FLOWS.flatMap((flow) => FLOW_FIELDS[flow]);
+
+/**
+ * After a flow's save. `origin` is the flow a cross-flow "Değiştir" came from
+ * (the contact flow waited on a decider who left, so the team flow opened).
+ * With it, the origin's pending edits stay (the saved flow's fields as
+ * stored, every other field as the user left it) and its summary step opens
+ * again, so its own "Kaydet" can now go through; without it, the values are
+ * what was stored and the page goes back to the rules' summary (no hash).
+ */
+export function afterSave(input: { flow: RulesFlow; origin: RulesFlow | null; stored: OpeningRulesInput; value: OpeningRulesInput }): { value: OpeningRulesInput; hash: string | null } {
+  if (input.origin === null || input.origin === input.flow) return { value: input.stored, hash: null };
+  return { value: saveInput(input.value, input.stored, input.flow), hash: `#${REVIEW_STEP[input.origin]}` };
+}

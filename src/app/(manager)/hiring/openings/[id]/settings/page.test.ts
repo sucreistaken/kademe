@@ -66,9 +66,11 @@ vi.mock("@/server/settings", async (importOriginal) => ({
 vi.mock("@/components/hiring/opening-settings-form", () => ({ OpeningSettingsForm: function OpeningSettingsForm() {} }));
 vi.mock("@/components/ui/undo-strip", () => ({ UndoStrip: function UndoStrip() {} }));
 vi.mock("@/components/ui/url-notice", () => ({ UrlNotice: function UrlNotice() {} }));
+vi.mock("@/components/hiring/focus-on-arrival", () => ({ FocusOnArrival: function FocusOnArrival() {} }));
 vi.mock("./actions", () => ({ closeOpeningAction: async function closeOpeningAction() {}, reopenOpeningAction: async function reopenOpeningAction() {} }));
 
 import SettingsPage from "./page";
+import { FocusOnArrival } from "@/components/hiring/focus-on-arrival";
 import { OpeningSettingsForm } from "@/components/hiring/opening-settings-form";
 import { UndoStrip } from "@/components/ui/undo-strip";
 import { UrlNotice } from "@/components/ui/url-notice";
@@ -191,6 +193,20 @@ describe("team and rules page", () => {
     expect(notices).toHaveLength(1);
     expect(notices[0].props.params).toEqual(["closed"]);
     expect(find(notices[0], ofType(UndoStrip))).toHaveLength(1);
+  });
+
+  it("right after closing, the focus goes once to the closed card's heading (the close button is gone); a plain load moves nothing", async () => {
+    status = "CLOSED";
+    viewer = { role: "OWNER", view: true, edit: false };
+    const arrived = await render({ closed: "1" });
+    const CLOSED_HEADING_ID = "opening-closed-title";
+    const focus = find(arrived, ofType(FocusOnArrival));
+    expect(focus).toHaveLength(1);
+    expect(focus[0].props.targetId).toBe(CLOSED_HEADING_ID);
+    const heading = find(arrived, (el) => el.type === "h2" && el.props.id === CLOSED_HEADING_ID);
+    expect(heading).toHaveLength(1);
+    expect(heading[0].props.tabIndex).toBe(-1);
+    expect(find(await render(), ofType(FocusOnArrival))).toHaveLength(0);
   });
 
   it("a reviewer on a closed opening reads it and cannot reopen it", async () => {

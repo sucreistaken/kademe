@@ -23,9 +23,11 @@ import { formatInviteDay } from "@/solutions/hiring/rules/invitation";
 import { openingRulesProblems, type OpeningRulesInput, type RulesProblem } from "@/solutions/hiring/rules/opening-rules";
 import { saveOpeningRulesAction } from "@/app/(manager)/hiring/openings/[id]/settings/actions";
 import {
+  ALL_FIELDS,
   FLOW_FIELDS,
   REVIEW_STEP,
   RULES_ENTRY,
+  afterSave,
   RULES_FLOWS,
   firstInvalidStep,
   flowOfStep,
@@ -105,6 +107,8 @@ export function OpeningSettingsForm({
   const [feedbackText, setFeedbackText] = useState(String(initial.feedbackDays));
   const [pickDay, setPickDay] = useState(initial.deadline !== null);
   const [fromSummary, setFromSummary] = useState(false);
+  // I1: the flow a cross-flow "Değiştir" (or a refusal about another flow) came from; its pending edits wait for this save.
+  const [origin, setOrigin] = useState<RulesFlow | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [pending, start] = useTransition();
 
@@ -118,12 +122,15 @@ export function OpeningSettingsForm({
   const step: RulesStep = nav.step === RULES_ENTRY ? steps[0] : nav.step;
   const index = steps.indexOf(step);
   const changed = isDirty(saved, value, FLOW_FIELDS[flow]);
+  // W7: leaving loses any unsaved edit, also one another flow left pending (I1).
+  const unsaved = isDirty(saved, value, ALL_FIELDS);
 
   // H6: leaving a flow (its exit, "Özete dön", the browser's back) puts the saved values back
   // and drops a refusal that belonged to it; "Kaydedildi." stays for the summary to say.
   const staleRefusal = notice !== null && notice.kind !== "saved";
-  if (!route && (value !== saved || fromSummary || staleRefusal)) {
+  if (!route && (value !== saved || fromSummary || staleRefusal || origin !== null)) {
     setValue(saved);
+    setOrigin(null);
     setFeedbackText(String(saved.feedbackDays));
     setPickDay(saved.deadline !== null);
     setFromSummary(false);
@@ -206,10 +213,15 @@ export function OpeningSettingsForm({
         if (res.ok) {
           // A name another opening already has was numbered on the server: show what was stored.
           const stored = { ...sent, name: res.name };
+          // I1: a flow that waited on this one gets its pending edits back on its summary step.
+          const next = afterSave({ flow, origin, stored, value });
           setSaved(stored);
-          setValue(stored);
+          setValue(next.value);
+          setOrigin(null);
+          setFromSummary(false);
           setNotice({ kind: "saved", renamed: res.name !== sent.name.trim() ? res.name : null });
-          clearHash();
+          if (next.hash) pushHash(next.hash);
+          else clearHash();
           // The setup line under the tabs names the next step (4.10); nothing redirects.
           router.refresh();
         } else if ("problems" in res) {
@@ -217,6 +229,7 @@ export function OpeningSettingsForm({
           if (!problem) return setNotice({ kind: "failed" });
           setNotice({ kind: "problem", problem });
           // W8 and D10's cost: the step the refusal is about opens, in this flow or another.
+          if (flowOfStep(rulesStepOf(problem)) !== flow) setOrigin((o) => o ?? flow);
           if (rulesStepOf(problem) !== step) nav.go(rulesStepOf(problem));
         } else setNotice({ kind: "code", code: res.code });
       } catch {
@@ -287,10 +300,14 @@ export function OpeningSettingsForm({
           ? t(`err${notice.code}`)
           : t("saveFailed")
         : null;
+  const savedText = notice?.kind === "saved" ? (notice.renamed ? t("savedRenamed", { name: notice.renamed }) : t("saved")) : "";
   const note = refusal ? (
     <p role="alert" className="text-[14px] font-medium text-ink">
       {refusal}
     </p>
+  ) : savedText && step === REVIEW_STEP[flow] ? (
+    // Seen here; announced by the flow's own status line below.
+    <p className="text-[14px] font-medium text-ink">{savedText}</p>
   ) : null;
 
   const wait = (s: RulesStep): string | null => {
@@ -318,8 +335,14 @@ export function OpeningSettingsForm({
     onClick: save,
   };
   const fix =
-    changed && elsewhere && !refusal ? (
-      <Button className="min-h-11" onClick={() => edit(rulesStepOf(elsewhere))}>
+    changed && elsewhere && !refusal && !savedText ? (
+      <Button
+        className="min-h-11"
+        onClick={() => {
+          setOrigin((o) => o ?? flow);
+          edit(rulesStepOf(elsewhere));
+        }}
+      >
         {flowT("change")}
         <span className="sr-only">: {flowTitle[flowOfStep(rulesStepOf(elsewhere))]}</span>
       </Button>
@@ -592,9 +615,13 @@ export function OpeningSettingsForm({
         step={screens[step]()}
         journey={steps.length > 1 ? flowJourney(steps, step) : null}
         back={index === 0 ? { label: flowT("backToSummary"), onClick: leaveHashStep } : { label: flowT("back"), onClick: back }}
-        exit={{ dirty: changed, onClick: clearHash }}
+        exit={{ dirty: unsaved, onClick: clearHash }}
         enter={nav.moved}
       />
+      {/* Always mounted while a flow shows, so "Kaydedildi." is announced when a save brings back the flow that waited on it. */}
+      <p role="status" className="sr-only">
+        {savedText}
+      </p>
     </div>
   );
 }

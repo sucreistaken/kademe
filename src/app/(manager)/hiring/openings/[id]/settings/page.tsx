@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { UndoStrip } from "@/components/ui/undo-strip";
+import { FocusOnArrival } from "@/components/hiring/focus-on-arrival";
 import { OpeningSettingsForm, type SettingsUser } from "@/components/hiring/opening-settings-form";
 import { PendingButton } from "@/components/ui/pending-button";
 import { UrlNotice } from "@/components/ui/url-notice";
@@ -15,6 +16,9 @@ import { setupStrip } from "../setup-strip";
 import { closeOpeningAction, reopenOpeningAction } from "./actions";
 
 export const dynamic = "force-dynamic";
+
+/** The closed card's heading: where the focus lands after "Alımı kapat" (its button is gone with the redirect). */
+const CLOSED_HEADING_ID = "opening-closed-title";
 
 /**
  * HIRING-UX 5.18 as HIRING-VISUAL-FLOW 4.10 "Ekip ve kurallar": the rules'
@@ -55,7 +59,9 @@ export default async function OpeningSettingsPage({
       <OpeningHeader opening={opening} active="settings" locale={locale} t={t} setup={setup} />
       {closed ? (
         <Card className="mt-section space-y-3 p-card">
-          <h2 className="text-[16px] leading-6 font-semibold text-ink">{t("hiringSettings.closedTitle")}</h2>
+          <h2 id={CLOSED_HEADING_ID} tabIndex={-1} className="text-[16px] leading-6 font-semibold text-ink outline-none">
+            {t("hiringSettings.closedTitle")}
+          </h2>
           <p className="text-[13px] text-muted">{runs ? t("hiringSettings.closedBody") : t("hiringSettings.closedReadOnly")}</p>
           {runs ? (
             <form action={reopenOpeningAction}>
@@ -104,6 +110,8 @@ export default async function OpeningSettingsPage({
       {one(sp.closed) === "1" && closed && runs ? (
         // Shown once after closing; a reload does not bring the strip back.
         <UrlNotice params={["closed"]}>
+          {/* Once, on the arrival from "Alımı kapat": its button went with the redirect. */}
+          <FocusOnArrival targetId={CLOSED_HEADING_ID} />
           <UndoStrip message={t("hiringSettings.closedUndo")} action={reopenOpeningAction} hiddenFields={{ openingId: opening.id }} />
         </UrlNotice>
       ) : null}
