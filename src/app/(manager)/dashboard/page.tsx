@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, Clock, FileText, Inbox } from "lucide-react";
+import { ArrowRight, ChevronRight, Clock, FilePenLine, Inbox } from "lucide-react";
 import { InviteMenu, InviteUnavailable } from "@/components/manager/invite-menu";
 import { inviteChoice } from "@/components/manager/invite-choice";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/manager/empty-state";
 import { NextTaskCard } from "@/components/manager/next-task-card";
 import { PanelHeader } from "@/components/manager/panel-header";
 import { Disclosure } from "@/components/visual/disclosure";
+import { IconTile } from "@/components/visual/icon-tile";
 import { extendLink } from "@/app/(manager)/actions";
 import { can } from "@/lib/authorize";
 import { attentionRows, inviteEmphasis, pickNextTask, reviewQueue, todaySummary } from "@/lib/today";
@@ -22,8 +23,8 @@ import { managerT } from "@/i18n/manager";
 
 export const dynamic = "force-dynamic";
 
-const ATTENTION_ICON = { requests: Inbox, expiring: Clock, draft: FileText } as const;
-const TEXT_LINK = "inline-flex min-h-11 items-center gap-0.5 text-[14px] font-medium text-ink underline decoration-underline underline-offset-4 hover:decoration-ink";
+const ATTENTION_ICON = { requests: Inbox, expiring: Clock, draft: FilePenLine } as const;
+const TEXT_LINK = "inline-flex min-h-11 items-center gap-1.5 text-[14px] font-medium text-ink hover:underline";
 
 function Cell({ cell }: { cell: TodayCell }) {
   if (cell.kind === "text") return <span className="text-[13.5px] text-ink-2">{cell.text}</span>;
@@ -107,25 +108,23 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
 
       {attention.length ? (
         <section className="mt-8" aria-labelledby="today-attention">
-          <h2 id="today-attention" className="mb-3 text-[15px] font-semibold text-ink">
+          <h2 id="today-attention" className="mb-2.5 text-[12px] font-semibold tracking-[0.07em] text-muted uppercase">
             {t("today.attentionTitle")}
           </h2>
-          <Card className="divide-y divide-line">
+          <Card className="divide-y divide-hairline overflow-hidden">
             {attention.map((row) => {
               const Icon = ATTENTION_ICON[row.attention ?? "requests"];
               return (
-                <Link key={row.id} href={row.href} className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-4 px-5 py-3 hover:bg-canvas">
-                  <span className="grid size-9 place-items-center rounded-lg bg-secondary">
-                    <Icon className="size-[18px] text-ink" strokeWidth={1.75} aria-hidden />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-[14px] font-medium text-ink">{row.title}</span>
-                    {row.subtitle ? <span className="block truncate text-[12.5px] text-muted">{row.subtitle}</span> : null}
+                <Link key={row.id} href={row.href} className="flex items-center gap-3.5 px-[18px] py-3.5 hover:bg-canvas">
+                  <IconTile icon={Icon} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[15px] font-semibold text-ink">{row.title}</span>
+                    {row.subtitle ? <span className="block truncate text-[13px] text-muted">{row.subtitle}</span> : null}
                     {/* Ruling C6: data-rights requests are counted here and said plainly; they are handled with plan 3. */}
-                    {row.detail ? <span className="block text-[12.5px] text-muted">{row.detail}</span> : null}
+                    {row.detail ? <span className="block text-[13px] text-muted">{row.detail}</span> : null}
                   </span>
-                  <span className="text-[13px] text-muted">{labelOf(row.solution)}</span>
-                  <span className="inline-flex items-center gap-0.5 text-[13px] font-medium text-ink">
+                  <span className="hidden rounded-full bg-row-line px-2.5 py-[3px] text-[12px] text-ink-2 sm:inline">{labelOf(row.solution)}</span>
+                  <span className="inline-flex items-center gap-0.5 text-[14px] whitespace-nowrap text-ink underline decoration-underline underline-offset-[3px]">
                     {row.actionLabel ?? t("today.open")}
                     <ChevronRight className="size-4" strokeWidth={1.75} aria-hidden />
                   </span>
@@ -141,7 +140,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
           {overviews.map((o) => (
             <Link key={o.key} href={o.href} className={TEXT_LINK}>
               {o.label}
-              <ChevronRight className="size-4" strokeWidth={1.75} aria-hidden />
+              <ArrowRight className="size-4" strokeWidth={1.75} aria-hidden />
             </Link>
           ))}
         </p>

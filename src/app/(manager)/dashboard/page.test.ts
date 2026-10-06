@@ -175,7 +175,7 @@ describe("hiring's rows on Today", () => {
   it("makes the accommodation request the next task, quoted, with 'Talebe bak' to the Candidates tab", async () => {
     const html = await render([...EXAM(), accommodation, requestsRow]);
     const card = between(html, 'aria-labelledby="today-next"', "</section>");
-    expect(text(card)).toContain("Sıradaki iş\nİşe alım\nEce Bal bir uyarlama istedi\n“Video yerine yazılı cevap verebilir miyim?”");
+    expect(text(card)).toContain("Sıradaki iş\n·\nİşe alım\nEce Bal bir uyarlama istedi\n“Video yerine yazılı cevap verebilir miyim?”");
     expect(card).toContain('href="/hiring/openings/op1/candidates"');
     expect(text(card)).toContain("Talebe bak");
   });
@@ -197,10 +197,30 @@ describe("hiring's rows on Today", () => {
   it("reads in English with the same parts", async () => {
     const html = await render([accommodation, requestsRow], "OWNER", "en");
     expect(text(html)).toContain("Today\n1 thing waits for you.");
-    expect(text(html)).toContain("Next up\nHiring");
+    expect(text(html)).toContain("Next up\n·\nHiring");
     expect(text(html)).toContain("Look at the request");
     expect(text(html)).toContain("Needs attention");
     expect(text(html)).toContain("Where every opening stands");
     expect(text(html)).toContain("Review queue · Language exam (0)");
+  });
+
+  it("draws the next task as the mockup's card: the drawing, the eyebrow and the one filled button under the text (mockup 1)", async () => {
+    const html = await render([...EXAM(), accommodation, requestsRow]);
+    const card = between(html, 'aria-labelledby="today-next"', "</section>");
+    // inviteReady's tint circle.
+    expect(card).toContain('cx="26" cy="26" r="9"');
+    expect(card).toMatch(/<h2 id="today-next"[^>]*>Sıradaki iş<\/h2>/);
+    expect(card).toMatch(/<a[^>]*data-variant="primary"[^>]*>Talebe bak<\/a>|<a[^>]*id="today-next-action"[^>]*>Talebe bak<\/a>/);
+    expect(filled(html)).toBe(1);
+  });
+
+  it("gives every attention row a soft icon tile, its solution as a chip and its action as text (mockup 1)", async () => {
+    const html = await render([accommodation, requestsRow, draftRow]);
+    const list = between(html, 'aria-labelledby="today-attention"', "Tüm alımların durumu");
+    expect(list.match(/bg-accent-soft text-accent/g)).toHaveLength(2);
+    expect(list).toContain("lucide-inbox");
+    expect(list).toContain("lucide-file-pen-line");
+    expect(list.match(/rounded-full bg-row-line/g)).toHaveLength(2);
+    expect(list).not.toContain("data-variant");
   });
 });
