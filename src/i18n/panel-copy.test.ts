@@ -2,13 +2,14 @@ import { describe, expect, it } from "vitest";
 import managerTr from "@/i18n/messages/manager.tr.json";
 import screensTr from "@/i18n/messages/screens.tr.json";
 import hiringTr from "@/i18n/messages/hiring.tr.json";
+import advancedTr from "@/i18n/messages/advanced.tr.json";
 
 /** K9: the panel's shared screens speak "sen"; exam-only screens keep "siz" until a plan touches them. */
 const FORMAL = [/(?<!\p{L})siz(?!\p{L})/u, /\p{L}+(?:iniz|ınız|unuz|ünüz)(?!\p{L})/u, /\p{L}+(?:nizi|nızı|nuzu|nüzü)(?!\p{L})/u, /lütfen/iu, /\p{L}+(?:yiniz|yınız|abilirsiniz|ebilirsiniz)(?!\p{L})/u];
 const strings = (value: unknown): string[] => (typeof value === "string" ? [value] : value && typeof value === "object" ? Object.values(value).flatMap(strings) : []);
 
 describe("shared panel copy (K9)", () => {
-  it.each([["errorPage", managerTr.errorPage], ["nav", managerTr.nav], ["flow", managerTr.flow], ["today", screensTr.today], ["hiringOpenings", hiringTr.hiringOpenings], ["hiringNew", hiringTr.hiringNew]] as const)("%s speaks sen", (_name, namespace) => {
+  it.each([["errorPage", managerTr.errorPage], ["nav", managerTr.nav], ["flow", managerTr.flow], ["today", screensTr.today], ["hiringOpenings", hiringTr.hiringOpenings], ["hiringNew", hiringTr.hiringNew], ["advancedCreate", advancedTr.advancedCreate], ["createExam", advancedTr.createExam], ["createQuestions", advancedTr.createQuestions], ["createPosition", advancedTr.createPosition]] as const)("%s speaks sen", (_name, namespace) => {
     for (const text of strings(namespace)) for (const pattern of FORMAL) expect(text).not.toMatch(pattern);
   });
 
