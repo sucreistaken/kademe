@@ -2,16 +2,36 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState, useSyncExternalStore, type AnchorHTMLAttributes, type MouseEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type AnchorHTMLAttributes, type MouseEvent, type ReactNode } from "react";
 import { flowFocusKey } from "@/components/manager/flow-model";
 import { StepFooter } from "@/components/visual/step-footer";
-import { stepFocusController, useKeepFocus } from "@/hooks/use-step-focus";
+import { stepFocusController, useKeepFocus, type Focusable } from "@/hooks/use-step-focus";
 import { clearHash, currentHash, leaveHashStep, noHash, pushHash, subscribeHash } from "@/lib/client/hash-step";
 
 const FIX = "inline-flex min-h-11 items-center text-[14px] font-medium text-ink underline decoration-underline underline-offset-4 hover:decoration-ink";
 
 /** The setup card's heading: where the focus lands when the summary goes back to the overview, or when a path action unmounts. */
 export const SETUP_HEADING_ID = "setup-path-title";
+
+/** The "v2 yayınlandı." notice (tabIndex -1): where the focus lands after a publish, when the setup card is gone (B-M2). */
+export const PUBLISHED_NOTICE_ID = "publish-done";
+
+/**
+ * Where the focus lands when the overview comes back: the setup card's
+ * heading while the draft has one, else the published notice (after a
+ * successful "Yayınla" the opening is live and the setup card is gone, B-M2).
+ */
+export function overviewFocusTarget<T extends Focusable>(byId: (id: string) => T | null): T | null {
+  return byId(SETUP_HEADING_ID) ?? byId(PUBLISHED_NOTICE_ID);
+}
+
+/**
+ * B-M2: the summary went away while shown (the publish redirect, a refusal).
+ * The server never draws the summary, so hydration only ever goes the other
+ * way; this is always a real step back, also on a page opened on `#publish`,
+ * where no hash change was heard.
+ */
+export const summaryClosed = (wasShown: boolean, shown: boolean): boolean => wasShown && !shown;
 
 /**
  * D13: the publish summary shows on `#publish` (the setup path's last step),
@@ -76,8 +96,9 @@ function usePublishShown(hasSummary: boolean): boolean {
  * HIRING-VISUAL-FLOW 4.5, D13: the overview and its publish summary are both
  * drawn on the server; the address's hash picks one. Opening the summary in
  * place moves the focus to its title and going back moves it to the setup
- * card's heading (W10); the first load, also on `#publish`, moves nothing
- * (the store hydrates without a hash, which is not a step change).
+ * card's heading, or to the published notice once the card is gone (W10,
+ * B-M2); the first load, also on `#publish`, moves nothing (the store
+ * hydrates without a hash, which is not a step change).
  */
 export function PublishSwitch({ summary, children }: { summary: ReactNode; children?: ReactNode }) {
   const hasSummary = summary !== null && summary !== undefined;
@@ -92,8 +113,13 @@ export function PublishSwitch({ summary, children }: { summary: ReactNode; child
   }, [notice, shown]);
   const [focus] = useState(stepFocusController);
   const key = flowFocusKey(heard, shown ? "publish" : "overview");
+  const wasShown = useRef(shown);
   useEffect(() => {
-    focus.onStep(key, shown ? document.querySelector<HTMLElement>("#publish-summary h1") : document.getElementById(SETUP_HEADING_ID));
+    const closed = summaryClosed(wasShown.current, shown);
+    wasShown.current = shown;
+    const target = shown ? document.querySelector<HTMLElement>("#publish-summary h1") : overviewFocusTarget((id) => document.getElementById(id));
+    // B-M2: a summary that went away without a heard hash change (the page was opened on #publish) still hands the focus on.
+    if (!focus.onStep(key, target) && closed) target?.focus();
   }, [focus, key, shown]);
   return <>{shown ? summary : children}</>;
 }

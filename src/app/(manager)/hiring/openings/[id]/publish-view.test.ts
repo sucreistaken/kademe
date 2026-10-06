@@ -11,7 +11,19 @@ const address = vi.hoisted(() => ({ hash: "", search: "" }));
 vi.mock("@/lib/client/hash-step", async (original) => ({ ...(await original<typeof import("@/lib/client/hash-step")>()), noHash: () => address.hash }));
 vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams(address.search) }));
 
-import { OverviewOnly, PublishFooter, PublishLink, PublishSwitch, hashOnThisPage, noticeClosesSummary, publishShown } from "./publish-view";
+import {
+  OverviewOnly,
+  PUBLISHED_NOTICE_ID,
+  PublishFooter,
+  PublishLink,
+  PublishSwitch,
+  SETUP_HEADING_ID,
+  hashOnThisPage,
+  noticeClosesSummary,
+  overviewFocusTarget,
+  publishShown,
+  summaryClosed,
+} from "./publish-view";
 
 const labels = { publish: "Yayınla", publishing: "Yayınlanıyor", back: "Genel bakış" };
 const at = (hash: string, node: Parameters<typeof renderToStaticMarkup>[0]) => {
@@ -97,3 +109,19 @@ describe("fix round 1: the summary's history entry (M3) and a refusal closing it
   });
 });
 
+describe("B-M2: the focus after a successful 'Yayınla'", () => {
+  const el = (id: string) => ({ id, focus: () => undefined });
+  it("lands on the setup heading while there is one, else on the published notice (the setup card is gone once live)", () => {
+    const page = (ids: string[]) => (id: string) => (ids.includes(id) ? el(id) : null);
+    expect(overviewFocusTarget(page([SETUP_HEADING_ID, PUBLISHED_NOTICE_ID]))?.id).toBe(SETUP_HEADING_ID);
+    expect(overviewFocusTarget(page([PUBLISHED_NOTICE_ID]))?.id).toBe(PUBLISHED_NOTICE_ID);
+    expect(overviewFocusTarget(page([]))).toBeNull();
+  });
+
+  it("treats the summary going away as a step back, also when no hash change was heard (a page opened on #publish)", () => {
+    expect(summaryClosed(true, false)).toBe(true);
+    expect(summaryClosed(false, true)).toBe(false);
+    expect(summaryClosed(false, false)).toBe(false);
+    expect(summaryClosed(true, true)).toBe(false);
+  });
+});

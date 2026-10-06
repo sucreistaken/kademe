@@ -79,7 +79,7 @@ import OverviewPage from "./page";
 import { Button } from "@/components/ui/button";
 import { InviteSheet } from "@/components/hiring/invite/invite-sheet";
 import { OpeningHeader } from "./opening-header";
-import { PublishFooter, PublishLink, PublishSwitch } from "./publish-view";
+import { PUBLISHED_NOTICE_ID, PublishFooter, PublishLink, PublishSwitch } from "./publish-view";
 import { managerT } from "@/i18n/manager";
 import Link from "next/link";
 import { PathSteps } from "@/components/visual/path-steps";
@@ -486,6 +486,16 @@ describe("the team line names only who can decide and counts the active members 
   });
 });
 
+describe("the published notice takes the focus once the summary is gone (B-M2)", () => {
+  it("draws the notice focusable by script, with the id the summary's switch looks for", async () => {
+    sp = { published: "2" };
+    const page = await render();
+    const [notice] = find(page, (el) => el.props.role === "status" && el.props.id === PUBLISHED_NOTICE_ID);
+    expect(notice.props.tabIndex).toBe(-1);
+    expect(text(notice as ReactElement)).toContain("v2 yayınlandı.");
+  });
+});
+
 describe("a disabled member keeps the team step open (B-M1)", () => {
   it("names the disabled member on the path and leads to the team's members step", async () => {
     status = "DRAFT";
@@ -496,7 +506,7 @@ describe("a disabled member keeps the team step open (B-M1)", () => {
     const steps = find(page, ofType(PathSteps))[0].props.steps as Array<{ title: string; state: string; detail?: string }>;
     expect([steps[2].title, steps[2].state, steps[2].detail]).toEqual(["Ekibi ata", "current", "Ekipte devre dışı bir kullanıcı var. Ekip ve kurallarda onu çıkar ya da yerine birini ekle."]);
     expect(text(header(page).props.action as ReactElement)).toBe("Kuruluma devam et");
-    expect(dump(header(page).props.action)).toContain(`${BASE}/settings#team-members`);
+    expect(dump(header(page).props.action as ReactNode)).toContain(`${BASE}/settings#team-members`);
   });
 });
 

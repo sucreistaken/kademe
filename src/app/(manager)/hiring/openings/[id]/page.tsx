@@ -29,7 +29,7 @@ import { funnelView } from "./funnel";
 import { inviteWaitReason } from "./invite-wait";
 import { OpeningHeader } from "./opening-header";
 import { describeProblem } from "./problems";
-import { OverviewOnly, PublishFooter, PublishLink, PublishSwitch, SETUP_HEADING_ID, SetupFocusArea } from "./publish-view";
+import { OverviewOnly, PUBLISHED_NOTICE_ID, PublishFooter, PublishLink, PublishSwitch, SETUP_HEADING_ID, SetupFocusArea } from "./publish-view";
 import { rowAction } from "./readiness";
 import { SETUP_LABEL, setupNext, setupProgress, setupRowsOf, setupSkips } from "./setup-steps";
 
@@ -283,7 +283,8 @@ export default async function OpeningOverviewPage({
       <OpeningHeader opening={opening} active="overview" locale={locale} t={t} action={action} menu={menu} />
       {published ? (
         <UrlNotice params={NOTICE_PARAMS}>
-          <p role="status" className="mt-6 flex items-center gap-2 text-[14px] text-ink">
+          {/* B-M2: after "Yayınla" the summary and the setup card are gone; the focus lands here (PublishSwitch). */}
+          <p id={PUBLISHED_NOTICE_ID} tabIndex={-1} role="status" className="mt-6 flex items-center gap-2 text-[14px] text-ink outline-none">
             <StatusDot tone="active">
               <span className="tnum text-[14px] text-ink">{t("hiringOverview.published", { number: published })}</span>
             </StatusDot>
