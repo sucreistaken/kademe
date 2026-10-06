@@ -54,8 +54,9 @@ export async function editableOpening(openingId: string) {
  * editableOpening, and the right to run openings (opening:write), but a CLOSED
  * opening is not refused here. "Yeni link üret" uses it: a closed opening
  * still lets a candidate who already started finish (Task 7 ruling), and
- * newHiringLink decides that inside its transaction. Every other write keeps
- * editableOpening.
+ * newHiringLink decides that inside its transaction. "Tamam" on a request
+ * uses it too (U2: a request on a closed opening can still be closed). Every
+ * other write keeps editableOpening.
  */
 export async function runningOpening(openingId: string) {
   const { user, opening } = await resolveOpening(openingId);

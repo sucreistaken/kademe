@@ -145,17 +145,44 @@ describe("markRequestAction", () => {
     expect(h.redirected).toBe("/hiring/openings/op/candidates?handled=1");
   });
 
-  it("refuses without the edit right, and says so when the request is not this opening's or the write fails", async () => {
-    h.gate = { ok: false, code: "FORBIDDEN" };
+  it("refuses without the right to run the opening, and says so when the request is not this opening's or the write fails", async () => {
+    h.run = { ok: false, code: "FORBIDDEN" };
     await expect(markRequestAction(form({ openingId: "op", requestId: "r1" }))).rejects.toThrow("NEXT_REDIRECT");
     expect(h.mark).not.toHaveBeenCalled();
     expect(h.redirected).toBe("/hiring/openings/op/candidates?request=forbidden");
-    h.gate = { ...OK_GATE };
+    h.run = { ...OK_GATE };
     h.mark.mockResolvedValue(false);
     await expect(markRequestAction(form({ openingId: "op", requestId: "r1" }))).rejects.toThrow("NEXT_REDIRECT");
     expect(h.redirected).toBe("/hiring/openings/op/candidates?request=notfound");
     h.mark.mockRejectedValue(new Error("boom"));
     await expect(markRequestAction(form({ openingId: "op", requestId: "r1" }))).rejects.toThrow("NEXT_REDIRECT");
     expect(h.redirected).toBe("/hiring/openings/op/candidates?request=failed");
+  });
+});
+
+/**
+ * U2 (plan 2b final fix wave, B-I1): an open request on a CLOSED opening stays
+ * Today's next task, so whoever runs the opening can still close it there, as
+ * "Yeni link üret" already works on a closed opening. The gate is the right
+ * to run the opening (runningOpening), not the edit right (editableOpening).
+ */
+describe("markRequestAction on a closed opening (U2)", () => {
+  it("closes the request for someone who runs the opening, although editableOpening would answer CLOSED", async () => {
+    h.gate = { ok: false, code: "CLOSED" };
+    h.run = { ok: true, user: { id: "u", orgId: "o" }, opening: { id: "op", status: "CLOSED" } };
+    await expect(markRequestAction(form({ openingId: "op", requestId: "r1" }))).rejects.toThrow("NEXT_REDIRECT");
+    expect(h.mark).toHaveBeenCalledWith({ id: "u", orgId: "o" }, "op", "r1");
+    expect(h.redirected).toBe("/hiring/openings/op/candidates?handled=1");
+  });
+
+  it.each([
+    ["a reviewer", { ok: false, code: "FORBIDDEN" }, "forbidden"],
+    ["another organisation's opening", { ok: false, code: "NOT_FOUND" }, "notfound"],
+  ] as const)("still refuses %s before anything is written", async (_label, run, notice) => {
+    h.gate = { ok: false, code: "CLOSED" };
+    h.run = { ...run };
+    await expect(markRequestAction(form({ openingId: "op", requestId: "r1" }))).rejects.toThrow("NEXT_REDIRECT");
+    expect(h.mark).not.toHaveBeenCalled();
+    expect(h.redirected).toBe(`/hiring/openings/op/candidates?request=${notice}`);
   });
 });

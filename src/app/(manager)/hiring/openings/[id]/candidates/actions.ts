@@ -76,11 +76,19 @@ export async function extendHiringLinkAction(formData: FormData): Promise<void> 
   redirect(`${page(openingId)}?${notice}`);
 }
 
-/** "Tamam" on a candidate's request (candidate_requests only; data rights rows have no "Tamam"). */
+/**
+ * "Tamam" on a candidate's request (candidate_requests only; data rights rows
+ * have no "Tamam"). The gate is the right to run the opening, not its status
+ * (U2, plan 2b final fix wave): a request on a CLOSED opening stays on Today
+ * until someone closes it, so whoever runs the opening can, as with "Yeni
+ * link üret". The load stays scoped to the organisation and a reviewer is
+ * still refused (runningOpening); markRequestHandled checks the request
+ * belongs to this opening of this organisation.
+ */
 export async function markRequestAction(formData: FormData): Promise<void> {
   const openingId = String(formData.get("openingId") ?? "");
   const requestId = String(formData.get("requestId") ?? "");
-  const gate = await editableOpening(openingId);
+  const gate = await runningOpening(openingId);
   if (!gate.ok) redirect(`${page(openingId)}?request=${GATE_NOTICE[gate.code]}`);
   let notice: string;
   try {

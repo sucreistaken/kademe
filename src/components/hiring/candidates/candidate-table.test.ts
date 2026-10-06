@@ -127,6 +127,19 @@ describe("CandidateTable (HIRING-UX 5.12)", () => {
     expect(all(render(rows, false, { closed: true, runs: false })).filter((e) => e.type === NewLinkButton)).toHaveLength(0);
   });
 
+  it("on a closed opening still offers 'Tamam' on a request to someone who runs it, never to a reader (U2)", () => {
+    const rows: OpeningCandidateRow[] = [{ ...base, progress: "IN_PROGRESS", link: { ...base.link!, status: "IN_PROGRESS" } }];
+    const tree = all(render(rows, false, { closed: true, runs: true }));
+    const done = tree.filter((e) => e.type === "form" && e.props.action === markRequestAction);
+    expect(done).toHaveLength(1);
+    expect(all(done[0].props.children).filter((e) => e.type === "input" && e.props.name === "requestId").map((e) => e.props.value)).toEqual(["r1"]);
+    // Still no extend on a closed opening, and a data-rights row keeps its note only.
+    expect(tree.filter((e) => e.type === "form" && e.props.action === extendHiringLinkAction)).toHaveLength(0);
+    expect(text(render(rows, false, { closed: true, runs: true }))).toContain("Veri silme talebi");
+    // A reader of the closed opening gets nothing to press (their rows carry no requests anyway).
+    expect(all(render(rows, false, { closed: true, runs: false })).filter((e) => e.type === "form")).toHaveLength(0);
+  });
+
   it("draws each status from the one dictionary (P9): an expired link in bold ink, a live one with the accent dot", () => {
     const dots = (progress: OpeningCandidateRow["progress"]) =>
       all(render([{ ...base, progress, requests: [] }], true))

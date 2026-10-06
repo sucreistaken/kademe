@@ -18,10 +18,11 @@ type T = ReturnType<typeof managerT>;
 
 /**
  * One open request: what it is, the candidate's words, when. "Tamam" only for
- * the candidate's own requests (Task 6 carry: data rights are not closed here).
+ * the candidate's own requests (Task 6 carry: data rights are not closed here),
+ * for whoever runs the opening, also when it is closed (U2).
  * A plain function, not a component, so the row's markup is one tree.
  */
-function requestItem(request: CandidateRequestRow, { openingId, edit, locale, t, now }: { openingId: string; edit: boolean; locale: Locale; t: T; now: Date }) {
+function requestItem(request: CandidateRequestRow, { openingId, runs, locale, t, now }: { openingId: string; runs: boolean; locale: Locale; t: T; now: Date }) {
   return (
     <li key={`${request.source}-${request.id}`} className="rounded-lg border border-line p-2 text-[13px] leading-5">
       <p className="font-medium text-ink">{KNOWN_REQUESTS.has(request.kind) ? t(`hiringCandidates.request${request.kind as "NEW_LINK"}`) : t("hiringCandidates.requestOther")}</p>
@@ -29,7 +30,7 @@ function requestItem(request: CandidateRequestRow, { openingId, edit, locale, t,
       <p className="tnum mt-0.5 text-muted">{ago(request.createdAt, locale, now)}</p>
       {request.source === "DATA_RIGHTS" ? (
         <p className="mt-0.5 text-muted">{t("hiringCandidates.rightsNote")}</p>
-      ) : edit ? (
+      ) : runs ? (
         <form action={markRequestAction} className="mt-1.5">
           <input type="hidden" name="openingId" value={openingId} />
           <input type="hidden" name="requestId" value={request.id} />
@@ -50,7 +51,9 @@ function requestItem(request: CandidateRequestRow, { openingId, edit, locale, t,
  * A CLOSED opening is read-only (`edit` false), with one exception for someone
  * who runs it (`runs`): a candidate who already started may get a new link to
  * finish (Task 7 ruling; newHiringLink decides), and each row says why it has
- * the button or not (Task 18 fix round 1). No extend and no "Tamam" there.
+ * the button or not (Task 18 fix round 1). No extend there; "Tamam" on a
+ * request stays for whoever runs the opening (U2), so a request on a closed
+ * opening can still be closed.
  */
 export function CandidateTable({
   rows,
@@ -93,7 +96,7 @@ export function CandidateTable({
               {row.adapted ? <p className="mt-1 text-[13px] text-muted">{t("hiringCandidates.adapted")}</p> : null}
               {row.requests.length ? (
                 <ul className="mt-2 max-w-[360px] space-y-2" aria-label={t("hiringCandidates.requestsTitle")}>
-                  {row.requests.map((request) => requestItem(request, { openingId, edit, locale, t, now }))}
+                  {row.requests.map((request) => requestItem(request, { openingId, runs, locale, t, now }))}
                 </ul>
               ) : null}
             </TableCell>
