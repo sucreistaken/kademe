@@ -41,5 +41,20 @@
     "noApprove": "You may not approve; the questions you keep wait for approval.",
     "dropped": "{count} questions failed the check and were left out.",
     "failedBatches": "{count} batches could not be generated."
+  },
+  "createPosition": {
+    "name": "Position",
+    "fromTemplate": "From a ready template; the competencies and weights are the template's.",
+    "fromAi": "AI suggested these from the job ad; check every row.",
+    "jobAd": "Job ad",
+    "profile": "Competency profile",
+    "isNew": "new",
+    "inLibrary": "in the library",
+    "weightFor": "{name} weight (percent)",
+    "remove": "Remove",
+    "anchor1": "Level 1: weak",
+    "anchor3": "Level 3: sufficient",
+    "anchor5": "Level 5: very good",
+    "total": "Total {total}%, must be 100"
   }
 }

@@ -17,6 +17,7 @@ import {
 import { loadConsentText } from "./server/consent";
 import { hiringLibraryUsage } from "./server/library-usage";
 import { hiringToday } from "./server/today";
+import { positionCreator } from "./create/position";
 
 /** The core only routes invitations hiring serves (serves), so a missing row here is a bug, said loudly. */
 async function requireHiring(ctx: CandidateContext): Promise<HiringContext> {
@@ -82,4 +83,6 @@ export const hiringModule: SolutionModule = {
     },
   },
   library: { usage: hiringLibraryUsage },
+  // Positions are library rows, but the templates and the AI generator that fill them live here (spec 5.1).
+  creators: [positionCreator],
 };

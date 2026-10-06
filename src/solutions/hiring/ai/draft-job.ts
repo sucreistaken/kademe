@@ -29,7 +29,9 @@ export type DraftOutcome =
  * over the budget or quotes nothing is shown as it is: every card carries its
  * minutes and can be skipped, and the screen says how many were hidden.
  */
-export async function generateHiringDraft(input: DraftRequest & { orgId: string; userId: string; openingId: string }): Promise<DraftOutcome> {
+export async function generateHiringDraft(
+  input: DraftRequest & { orgId: string; userId: string; openingId?: string; inputRef?: string },
+): Promise<DraftOutcome> {
   if (!getAiProvider().available) return { status: "UNCONFIGURED" };
   const options = { locales: input.locales, libraryIds: new Set(input.library.map((c) => c.id)) };
   let attempt = 0;
@@ -38,7 +40,8 @@ export async function generateHiringDraft(input: DraftRequest & { orgId: string;
       schemaName: "kademe_hiring_draft",
       jsonSchema: HIRING_DRAFT_JSON_SCHEMA,
       messages: buildDraftMessages(input),
-      meta: { orgId: input.orgId, purpose: "HIRING_DRAFT", inputRef: input.openingId, requestedBy: input.userId },
+      // The opening when there is one; Advanced "create" drafts a position before any opening exists.
+      meta: { orgId: input.orgId, purpose: "HIRING_DRAFT", inputRef: input.openingId ?? input.inputRef ?? null, requestedBy: input.userId },
       parse: (text) => {
         attempt += 1;
         const parsed = parseDraftAnswer(text);

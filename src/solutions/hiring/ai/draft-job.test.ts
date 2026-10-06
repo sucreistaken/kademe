@@ -112,6 +112,13 @@ beforeEach(() => {
 });
 
 describe("generateHiringDraft", () => {
+  it("takes an inputRef in place of an opening (Advanced create)", async () => {
+    callJson.mockResolvedValueOnce(reply(answer()));
+    const result = await generateHiringDraft({ ...input, openingId: undefined, inputRef: "creation_draft:d1" });
+    expect(result.status).toBe("OK");
+    expect(callJson.mock.calls[0][3]).toEqual({ orgId: ORG, purpose: "HIRING_DRAFT", inputRef: "creation_draft:d1", requestedBy: USER });
+  });
+
   it("makes no call and writes no ai_runs row when no AI is connected", async () => {
     available = false;
     expect(await generateHiringDraft(input)).toEqual({ status: "UNCONFIGURED" });

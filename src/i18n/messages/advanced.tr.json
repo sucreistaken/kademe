@@ -41,5 +41,20 @@
     "noApprove": "Onaylama yetkin yok; tuttuğun sorular onay bekler.",
     "dropped": "{count} soru kontrolden geçmediği için eklenmedi.",
     "failedBatches": "{count} grup üretilemedi."
+  },
+  "createPosition": {
+    "name": "Pozisyon",
+    "fromTemplate": "Hazır şablondan geldi; yetkinlikler ve ağırlıklar şablonun.",
+    "fromAi": "AI ilan metninden önerdi; her satırı kontrol et.",
+    "jobAd": "İlan metni",
+    "profile": "Yetkinlik profili",
+    "isNew": "yeni",
+    "inLibrary": "kütüphanede var",
+    "weightFor": "{name} ağırlığı (yüzde)",
+    "remove": "Çıkar",
+    "anchor1": "Seviye 1: zayıf",
+    "anchor3": "Seviye 3: yeterli",
+    "anchor5": "Seviye 5: çok iyi",
+    "total": "Toplam %{total}, 100 olmalı"
   }
 }
