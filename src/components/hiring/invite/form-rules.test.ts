@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseInviteRows } from "@/solutions/hiring/rules/invitation";
-import { INVITE_STEPS, deadlineInputValue, deadlineRow, inviteFirstInvalid, inviteReason, inviteStepOf, invitePath, panelShortfall, personWait, sheetLocked, type InviteOpening } from "./form-rules";
+import { INVITE_STEPS, deadlineInputValue, deadlineRow, inviteFirstInvalid, inviteReason, inviteStepOf, invitePath, panelShortfall, personWait, refusalMove, sheetLocked, type InviteOpening } from "./form-rules";
 
 const opening: InviteOpening = { id: "o", name: "Tasarımcı · Ekim", live: true, evaluators: 2, minEvaluations: 2, deadlineDay: null };
 const base = { opening, mode: "single" as const, fullName: "Elif Kaya", email: "elif@example.com", rows: [], deadline: null, today: "2026-10-05" };
@@ -124,5 +124,22 @@ describe("the last-day row (4.9: never an empty value next to 'Değiştir')", ()
   it("shows the day the server will use", () => {
     expect(deadlineRow({ opening: withDay, deadline: null, today: "2026-10-05" })).toEqual({ kind: "day", day: "2026-10-19" });
     expect(deadlineRow({ opening: withDay, deadline: "2026-10-10", today: "2026-10-05" })).toEqual({ kind: "day", day: "2026-10-10" });
+  });
+});
+
+describe("where a refusal or a failure takes the flow (Task 22 fix round 1, W8)", () => {
+  it("a failure after 'Yine de davet et' on the person step opens the summary, where its sentence shows", () => {
+    expect(refusalMove("FAILED", { step: "person", pickOpening: false })).toBe("summary");
+    expect(refusalMove("FORBIDDEN", { step: "person", pickOpening: true })).toBe("summary");
+  });
+
+  it("stays where it already is, and opens the step a refusal is about from the summary", () => {
+    expect(refusalMove("FAILED", { step: "summary", pickOpening: false })).toBeNull();
+    expect(refusalMove("DUPLICATE", { step: "summary", pickOpening: false })).toBe("person");
+    expect(refusalMove("DEADLINE_PAST", { step: "summary", pickOpening: false })).toBe("deadline");
+    expect(refusalMove("NOT_FOUND", { step: "summary", pickOpening: true })).toBe("opening");
+    // No opening step offered (a Sheet, a page with one opening): the summary keeps it.
+    expect(refusalMove("NOT_FOUND", { step: "summary", pickOpening: false })).toBeNull();
+    expect(refusalMove("NOT_FOUND", { step: "person", pickOpening: false })).toBe("summary");
   });
 });

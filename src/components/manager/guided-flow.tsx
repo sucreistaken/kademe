@@ -165,6 +165,8 @@ export function GuidedFlow({
       back={back}
       journey={journey && label ? { steps: journey.steps, current: journey.current, label } : null}
       note={step.note}
+      // A Sheet is 480px: the buttons take its width and the reasons sit under them.
+      compact={container === "sheet"}
     />
   );
   // W10: the position is said once per step, politely; the heading takes the focus.

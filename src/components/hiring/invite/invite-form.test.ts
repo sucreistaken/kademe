@@ -106,6 +106,16 @@ describe("the invite in the Sheet (4.9: steps in memory, the Sheet's own close b
     expect(out.match(/bg-accent text-white/g)).toHaveLength(1);
   });
 
+  it("fits its footer in the 480px Sheet: full-width buttons, the reason under them (Task 22 fix round 1)", () => {
+    const out = render({ container: "sheet" });
+    expect(out).not.toContain("min-w-[200px]");
+    expect(out).toMatch(/<button[^>]*id="invite-next"[^>]*class="[^"]*w-full[^"]*"[^>]*disabled=""[^>]*aria-describedby="invite-next-why"[^>]*>Devam et<\/button>/);
+    expect(out.indexOf('id="invite-next-why"')).toBeGreaterThan(out.indexOf('id="invite-next"'));
+    expect(out).not.toMatch(/id="invite-next-why"[^>]*text-right/);
+    // The page keeps the wide footer.
+    expect(render()).toContain("min-w-[200px]");
+  });
+
   it("draws no page head and no exit link: the Sheet's title and close button are those", () => {
     const out = render({ container: "sheet" });
     expect(out).not.toContain(">Çık<");

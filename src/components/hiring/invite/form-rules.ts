@@ -83,6 +83,19 @@ const REFUSAL_STEP: Partial<Record<InviteCode, InviteStep>> = {
 export const inviteStepOf = (code: InviteCode): InviteStep => stepOfProblem(REFUSAL_STEP, code) ?? "summary";
 
 /**
+ * W8: where the flow goes when a request is refused or fails, or null to stay:
+ * the step the refusal is about (the opening step only where it is offered,
+ * else the summary). A failure after "Yine de davet et" on the person step
+ * opens the summary, where its sentence shows, so the duplicate note never
+ * vanishes as if the invitation had been made.
+ */
+export function refusalMove(code: InviteCode, at: { step: InviteStep; pickOpening: boolean }): InviteStep | null {
+  const to = inviteStepOf(code);
+  const target = to === "opening" && !at.pickOpening ? "summary" : to;
+  return target === at.step ? null : target;
+}
+
+/**
  * HIRING-VISUAL-FLOW 4.9: the "Son gün" row says the day the server will use
  * (linkExpiryDay), or, before an opening is chosen, that one must be chosen
  * first (never an empty value next to "Değiştir").

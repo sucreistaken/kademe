@@ -29,6 +29,7 @@ import {
   inviteReason,
   inviteStepOf,
   invitePath,
+  refusalMove,
   panelShortfall,
   personWait,
   sheetLocked,
@@ -141,8 +142,8 @@ export function InviteForm({
     setText("");
     setFromSummary(false);
     setReturned(true);
-    // "Başka aday davet et" goes back to the person and keeps the opening and the language (4.9).
-    nav.go("person");
+    // "Başka aday davet et" goes back to the person and keeps the opening and the language (4.9); no second entry when it is already there.
+    if (step !== "person") nav.go("person");
   }
 
   /** W8: the step a refusal belongs to; the opening step exists only where it was offered. */
@@ -151,10 +152,11 @@ export function InviteForm({
     return at === "opening" && !pickOpening ? "summary" : at;
   };
 
+  /** Every refusal and failure goes through here, so its sentence shows on the step it belongs to (W8). */
   function refuse(result: Refusal, name: string) {
     setRefusal({ result, name });
-    const at = refusalStep(result.code);
-    if (at !== step) nav.go(at);
+    const to = refusalMove(result.code, { step, pickOpening });
+    if (to !== null) nav.go(to);
   }
 
   function submit(allowDuplicate = false) {
@@ -180,7 +182,7 @@ export function InviteForm({
           return;
         }
         if (results.length === 0) {
-          setRefusal({ result: { ok: false, code: "FAILED" }, name: "" });
+          refuse({ ok: false, code: "FAILED" }, "");
           return;
         }
         setDone({
@@ -189,8 +191,8 @@ export function InviteForm({
           failed: results.flatMap((r) => (r.result.ok ? [] : [{ line: r.line, fullName: r.fullName, result: r.result }])),
         });
       } catch {
-        // A dropped connection or a server error: the calm message, never the raw one.
-        setRefusal({ result: { ok: false, code: "FAILED" }, name: "" });
+        // A dropped connection or a server error: the calm message, never the raw one, on the summary.
+        refuse({ ok: false, code: "FAILED" }, "");
       }
     });
   }
@@ -256,12 +258,14 @@ export function InviteForm({
   if (done?.kind === "many") {
     const all = done.ok.map((r) => `${r.fullName}\t${r.email}\t${r.result.url}`).join("\n");
     const duplicates = done.failed.some((f) => f.result.code === "DUPLICATE");
+    // The same heading level as the single ready view: the page's h1, the Sheet's h2 under its title.
+    const Heading = container === "page" ? "h1" : "h2";
     const view = (
       <div className="space-y-5">
         <div>
-          <h2 ref={doneHeading} tabIndex={-1} className="tnum text-[20px] leading-7 font-semibold text-ink outline-none">
+          <Heading ref={doneHeading} tabIndex={-1} className={`tnum font-semibold text-ink outline-none ${container === "page" ? "text-[28px] leading-9" : "text-[20px] leading-7"}`}>
             {t("manyReady", { count: done.ok.length })}
-          </h2>
+          </Heading>
           {done.failed.length ? <p className="tnum mt-1 text-[14px] text-ink">{t("manyFailed", { count: done.failed.length })}</p> : null}
         </div>
         {done.failed.length ? (

@@ -10,8 +10,9 @@ import { cn } from "@/lib/cn";
 import { FOOTER_SPACE_VAR, footerButtonState, footerSpace, type FooterAction } from "./footer-action";
 import { JourneyProgress } from "./journey-progress";
 
-function Action({ action, variant }: { action: FooterAction; variant: "primary" | "secondary" }) {
-  const size = "h-[52px] min-w-[200px] shrink-0 px-6 text-[16px]";
+function Action({ action, variant, compact = false }: { action: FooterAction; variant: "primary" | "secondary"; compact?: boolean }) {
+  // Compact (a 480px Sheet): the button takes the column's width, no 200px minimum.
+  const size = compact ? "h-12 w-full px-4 text-[16px]" : "h-[52px] min-w-[200px] shrink-0 px-6 text-[16px]";
   if (action.kind === "link") {
     return (
       <Link id={action.id} href={action.href} className={cn(buttonVariants({ variant, size: "lg" }), size)}>
@@ -63,6 +64,7 @@ export function StepFooter({
   hint,
   note,
   placement = "viewport",
+  compact = false,
 }: {
   primary?: FooterAction | null;
   secondary?: FooterAction | null;
@@ -71,6 +73,13 @@ export function StepFooter({
   hint?: string | null;
   note?: ReactNode;
   placement?: "viewport" | "sticky";
+  /**
+   * A narrow column (the panel's Sheet, 480px): the way back and the step
+   * label on one line, the buttons under it at full width (the filled one
+   * last), then the reasons and the work under way at full width. Off by
+   * default: every other footer draws exactly as before.
+   */
+  compact?: boolean;
 }) {
   const bar = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -91,28 +100,65 @@ export function StepFooter({
   const reasons = states.flatMap((s) => (s && s.reason ? [{ id: `${s.id}-why`, text: s.reason }] : []));
   const working = states.find((s) => s?.mode === "busy")?.label ?? null;
   const backClass = "inline-flex min-h-11 items-center gap-1 rounded-lg text-[16px] whitespace-nowrap text-ink underline decoration-underline underline-offset-4 hover:decoration-ink";
+  const backLink = back ? (
+    back.href ? (
+      <Link href={back.href} className={backClass}>
+        <ChevronLeft className="size-4" strokeWidth={1.75} aria-hidden />
+        {back.label}
+      </Link>
+    ) : (
+      <button type="button" onClick={back.onClick} className={backClass}>
+        <ChevronLeft className="size-4" strokeWidth={1.75} aria-hidden />
+        {back.label}
+      </button>
+    )
+  ) : null;
+  const spacer = placement === "viewport" ? <div aria-hidden="true" className="h-[112px]" style={{ height: `var(${FOOTER_SPACE_VAR}, 112px)` }} /> : null;
+  if (compact) {
+    return (
+      <>
+        {spacer}
+        <div ref={bar} data-step-footer className={placement === "viewport" ? "fixed inset-x-0 bottom-0 z-30" : "sticky bottom-0 z-20"}>
+          {journey ? <JourneyProgress steps={journey.steps} current={journey.current} label={journey.label} /> : null}
+          <div className="space-y-3 border-t border-line bg-paper/95 py-3 backdrop-blur">
+            {backLink || journey ? (
+              <div className="flex min-h-11 items-center justify-between gap-4">
+                <div className="shrink-0">{backLink}</div>
+                {journey ? (
+                  <span aria-hidden className="tnum text-[14px] whitespace-nowrap text-muted">
+                    {journey.label}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+            <div className="flex flex-col gap-2">
+              {secondary ? <Action action={secondary} variant="secondary" compact /> : null}
+              {primary ? <Action action={primary} variant="primary" compact /> : null}
+            </div>
+            {/* Reasons and the work under way, politely, at the column's full width. */}
+            <div aria-live="polite" className="space-y-1">
+              {reasons.map((r) => (
+                <p key={r.id} id={r.id} className="text-[14px] leading-[22px] text-ink">
+                  {r.text}
+                </p>
+              ))}
+              {reasons.length === 0 && hint ? <p className="text-[14px] leading-[22px] text-ink">{hint}</p> : null}
+              {working ? <p className="sr-only">{working}</p> : null}
+            </div>
+            {note ? <div>{note}</div> : null}
+          </div>
+        </div>
+      </>
+    );
+  }
   return (
     <>
-      {placement === "viewport" ? <div aria-hidden="true" className="h-[112px]" style={{ height: `var(${FOOTER_SPACE_VAR}, 112px)` }} /> : null}
+      {spacer}
       <div ref={bar} data-step-footer className={placement === "viewport" ? "fixed inset-x-0 bottom-0 z-30" : "sticky bottom-0 z-20"}>
         {journey ? <JourneyProgress steps={journey.steps} current={journey.current} label={journey.label} /> : null}
         <div className="border-t border-line bg-paper/95 backdrop-blur">
           <div className="mx-auto flex min-h-[84px] max-w-[1000px] items-center justify-between gap-x-6 px-4 py-4 sm:px-7">
-            <div className="shrink-0">
-              {back ? (
-                back.href ? (
-                  <Link href={back.href} className={backClass}>
-                    <ChevronLeft className="size-4" strokeWidth={1.75} aria-hidden />
-                    {back.label}
-                  </Link>
-                ) : (
-                  <button type="button" onClick={back.onClick} className={backClass}>
-                    <ChevronLeft className="size-4" strokeWidth={1.75} aria-hidden />
-                    {back.label}
-                  </button>
-                )
-              ) : null}
-            </div>
+            <div className="shrink-0">{backLink}</div>
             <div className="flex min-w-0 items-center justify-end gap-x-4">
               {journey ? (
                 <span aria-hidden className="tnum shrink-0 text-[14px] whitespace-nowrap text-muted">
