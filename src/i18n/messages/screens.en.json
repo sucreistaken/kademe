@@ -134,6 +134,8 @@
     "name": "Full name",
     "email": "Email",
     "exam": "Exam",
+    "groupTemplates": "Ready exams",
+    "groupOwn": "Your exams",
     "claimed": "Claimed level",
     "claimedHint": "The level the student says they hold. The exam checks it.",
     "language": "Student interface language",
@@ -143,8 +145,6 @@
     "presetOFF": "Off",
     "presetSTANDARD": "Standard",
     "presetSTRICT": "Strict",
-    "noExam": "No published exam.",
-    "createExam": "Create an exam",
     "coverageBlocked": "The bank has {available} approved items for {section} {level}; {needed} are needed.",
     "toBank": "Go to the question bank",
     "doneTitle": "Invitation ready",
@@ -160,7 +160,9 @@
     "errNOT_PUBLISHED": "This exam is not published.",
     "errBLUEPRINT_NOT_FOUND": "Exam not found.",
     "errCOVERAGE": "The bank does not have enough items for this exam.",
-    "errGENERIC": "The invitation could not be created."
+    "errTEMPLATE_COVERAGE": "The bank does not have enough items for this ready exam, so no exam was created. Fill the question bank and try again.",
+    "errGENERIC": "The invitation could not be created.",
+    "templateCoverageBlocked": "This ready exam is used for the first time: the bank has {available} approved items for {section} {level}; {needed} are needed."
   },
   "result": {
     "back": "Students",
@@ -473,5 +475,13 @@
     "savePrompt": "Save",
     "rowsOf": "{shown} of {total} items",
     "more": "Show more"
+  },
+  "advanced": {
+    "title": "Advanced",
+    "lead": "For editing exams and questions yourself. Not needed to invite: ready exams are in the invite form.",
+    "exams": "Exams",
+    "examsHint": "Build your own exam, set sections, timing and proctoring, then publish.",
+    "bank": "Question bank",
+    "bankHint": "Review and approve items, generate new ones with AI, see level coverage."
   }
 }

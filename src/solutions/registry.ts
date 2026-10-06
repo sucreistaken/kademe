@@ -18,7 +18,7 @@ export type NavGroupView = {
   key: string;
   /** Null renders the items without a header. */
   label: string | null;
-  items: Array<{ href: string; label: string; icon: NavIcon }>;
+  items: Array<{ href: string; label: string; icon: NavIcon; activeFor?: string[] }>;
 };
 
 export type LibraryLabels = { label: string; positions: string; competencies: string };
@@ -39,7 +39,7 @@ export function buildNav(
     ...manifests.map((m) => ({
       key: m.key,
       label: several ? m.label[locale] : null,
-      items: m.nav.map((n) => ({ href: n.href, label: n.label[locale], icon: n.icon })),
+      items: m.nav.map((n) => ({ href: n.href, label: n.label[locale], icon: n.icon, ...(n.activeFor ? { activeFor: n.activeFor } : {}) })),
     })),
     {
       key: "library",

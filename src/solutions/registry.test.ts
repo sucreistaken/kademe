@@ -24,7 +24,10 @@ describe("solution registry", () => {
   it("keeps every solution's menu and invite link under its own base path", () => {
     for (const m of SOLUTION_MANIFESTS) {
       expect(m.nav.length).toBeGreaterThan(0);
-      for (const item of m.nav) expect(item.href.startsWith(`${m.basePath}/`), item.href).toBe(true);
+      for (const item of m.nav) {
+        expect(item.href.startsWith(`${m.basePath}/`), item.href).toBe(true);
+        for (const p of item.activeFor ?? []) expect(p.startsWith(`${m.basePath}/`), p).toBe(true);
+      }
       if (m.inviteHref) expect(m.inviteHref.startsWith(`${m.basePath}/`)).toBe(true);
     }
     expect(new Set(SOLUTION_MANIFESTS.map((m) => m.dbKind)).size).toBe(SOLUTION_MANIFESTS.length);
@@ -59,13 +62,14 @@ describe("solution registry", () => {
     expect(nav.map((g) => g.key)).toEqual(["today", "hiring", "language-exam", "library", "settings"]);
     expect(nav.map((g) => g.label)).toEqual([null, "İşe alım", "Sınav", "Kütüphane", null]);
     expect(nav[1].items).toEqual([{ href: "/hiring/openings", label: "Alımlar", icon: "briefcase" }]);
-    expect(nav.flatMap((g) => g.items.map((i) => i.icon))).toEqual(["sun", "briefcase", "users", "file-text", "library", "id-card", "target", "settings"]);
-    // The live exam's three items keep their links, words and order; only the icon is new.
+    expect(nav.flatMap((g) => g.items.map((i) => i.icon))).toEqual(["sun", "briefcase", "users", "file-text", "id-card", "target", "settings"]);
+    // The exam keeps Students in the menu; exams and the bank sit behind Advanced, which stays lit on their pages.
     expect(nav[2].items.map(({ href, label }) => [href, label])).toEqual([
       ["/exam/students", "Öğrenciler"],
-      ["/exam/exams", "Sınavlar"],
-      ["/exam/bank", "Soru bankası"],
+      ["/exam/advanced", "Gelişmiş"],
     ]);
+    expect(nav[2].items[1].activeFor).toEqual(["/exam/exams", "/exam/bank"]);
+    expect(buildNav("en", shared)[2].items.map((i) => i.label)).toEqual(["Students", "Advanced"]);
     expect(buildNav("en", shared)[1].items[0].label).toBe("Openings");
   });
 

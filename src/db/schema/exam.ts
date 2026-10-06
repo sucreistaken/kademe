@@ -54,8 +54,17 @@ export const examBlueprints = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     archivedAt: timestamp("archived_at", { withTimezone: true }),
+    /**
+     * The ready template (src/lib/exam/templates) this exam was published from
+     * by the invite form, unchanged. Null for every exam a manager built or
+     * edited. At most one published exam per organisation and template.
+     */
+    templateKey: text("template_key"),
   },
-  (t) => [index("blueprints_org_idx").on(t.orgId)],
+  (t) => [
+    index("blueprints_org_idx").on(t.orgId),
+    uniqueIndex("blueprints_one_published_template").on(t.orgId, t.templateKey).where(sql`status = 'PUBLISHED' AND template_key IS NOT NULL`),
+  ],
 );
 
 /**

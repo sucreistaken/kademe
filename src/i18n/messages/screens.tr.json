@@ -134,6 +134,8 @@
     "name": "Ad soyad",
     "email": "E-posta",
     "exam": "Sınav",
+    "groupTemplates": "Hazır sınavlar",
+    "groupOwn": "Kendi sınavların",
     "claimed": "Beyan edilen seviye",
     "claimedHint": "Öğrencinin sahip olduğunu söylediği seviye. Sınav bunu doğrular.",
     "language": "Öğrencinin arayüz dili",
@@ -143,8 +145,6 @@
     "presetOFF": "Kapalı",
     "presetSTANDARD": "Standart",
     "presetSTRICT": "Sıkı",
-    "noExam": "Yayınlanmış sınav yok.",
-    "createExam": "Sınav oluştur",
     "coverageBlocked": "{section} {level} için bankada {available} onaylı soru var, {needed} gerekiyor.",
     "toBank": "Soru bankasına git",
     "doneTitle": "Davet hazır",
@@ -160,7 +160,9 @@
     "errNOT_PUBLISHED": "Bu sınav yayında değil.",
     "errBLUEPRINT_NOT_FOUND": "Sınav bulunamadı.",
     "errCOVERAGE": "Bankada bu sınav için yeterli soru yok.",
-    "errGENERIC": "Davet oluşturulamadı."
+    "errTEMPLATE_COVERAGE": "Bu hazır sınav için bankada yeterli soru yok, sınav oluşturulmadı. Soru bankasını tamamlayıp tekrar dene.",
+    "errGENERIC": "Davet oluşturulamadı.",
+    "templateCoverageBlocked": "Bu hazır sınav ilk kez kullanılacak: {section} {level} için bankada {available} onaylı soru var, {needed} gerekiyor."
   },
   "result": {
     "back": "Öğrenciler",
@@ -473,5 +475,13 @@
     "savePrompt": "Kaydet",
     "rowsOf": "{shown} / {total} soru",
     "more": "Daha fazla göster"
+  },
+  "advanced": {
+    "title": "Gelişmiş",
+    "lead": "Sınavları ve soruları kendin düzenlemek için. Davet için gerekmez: hazır sınavlar davet formunda.",
+    "exams": "Sınavlar",
+    "examsHint": "Kendi sınavını kur, bölümleri, süreleri ve gözetimi ayarla, yayınla.",
+    "bank": "Soru bankası",
+    "bankHint": "Soruları gözden geçir, onayla, AI ile yeni soru üret, seviye kapsamını gör."
   }
 }

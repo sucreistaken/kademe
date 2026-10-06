@@ -20,7 +20,8 @@ export type SolutionKey = "language-exam" | "hiring";
 export type I18nLabel = { tr: string; en: string };
 /** P1: the menu item's icon, by name (the menu is a client component; it maps the name to a lucide icon). */
 export type NavIcon = "sun" | "briefcase" | "users" | "file-text" | "library" | "id-card" | "target" | "settings";
-export type NavLink = { href: string; label: I18nLabel; icon: NavIcon };
+/** `activeFor`: other path prefixes under which the item counts as the current page. */
+export type NavLink = { href: string; label: I18nLabel; icon: NavIcon; activeFor?: string[] };
 /** The part of a solution's candidate state the core routes on. `position` is the running part's number, when the solution has one. */
 export type CandidateStepState = { step: string; position?: number | null };
 

@@ -84,7 +84,7 @@ export function ManagerNav({
             <SidebarGroupContent>
               <SidebarMenu>
                 {group.items.map((item) => {
-                  const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                  const active = [item.href, ...(item.activeFor ?? [])].some((p) => pathname === p || pathname.startsWith(`${p}/`));
                   const Icon = ICONS[item.icon];
                   return (
                     <SidebarMenuItem key={item.href}>

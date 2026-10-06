@@ -8,7 +8,23 @@ import { CEFR_LEVELS, type Cefr } from "@/lib/exam/types";
 import { useMT } from "@/i18n/manager-client";
 import { cn } from "@/lib/cn";
 
-type Bp = { id: string; name: string; mode: "PLACEMENT" | "LEVEL_VERIFICATION"; config: BlueprintConfig; minutes: number; sections: number };
+/**
+ * One choice in the exam picker. `value` is an exam-choice value
+ * (src/lib/exam/exam-choice). A template that is not `published` yet becomes
+ * an exam on this invite, so it needs the publish coverage (every level or
+ * every claim), not only the chosen claim's.
+ */
+export type ExamOption = {
+  value: string;
+  group: "template" | "own";
+  name: string;
+  summary: string | null;
+  mode: "PLACEMENT" | "LEVEL_VERIFICATION";
+  published: boolean;
+  config: BlueprintConfig;
+  minutes: number;
+  sections: number;
+};
 
 const field = "mt-1.5 h-11 w-full rounded-[10px] border border-line-strong bg-surface px-3 text-[14.5px] text-ink";
 
@@ -17,19 +33,23 @@ const field = "mt-1.5 h-11 w-full rounded-[10px] border border-line-strong bg-su
  * and claim is checked while the teacher fills the form, so the button says
  * why it is off before anything is sent.
  */
-export function InviteForm({ blueprints, counts }: { blueprints: Bp[]; counts: BankCount[] }) {
+export function InviteForm({ options, counts }: { options: ExamOption[]; counts: BankCount[] }) {
   const t = useMT("invite");
   const sec = useMT("sectionName");
   const [state, action, pending] = useActionState<InviteState, FormData>(inviteStudent, null);
-  const [bpId, setBpId] = useState(blueprints[0]?.id ?? "");
+  const [choice, setChoice] = useState(options[0]?.value ?? "");
   const [claimed, setClaimed] = useState<Cefr | "">("");
   const [copied, setCopied] = useState(false);
-  const bp = blueprints.find((b) => b.id === bpId);
+  const bp = options.find((o) => o.value === choice);
   const coverage = useMemo(
-    () => (bp ? bankCoverage(counts, bp.config, bp.mode, bp.mode === "LEVEL_VERIFICATION" ? claimed || null : null) : null),
+    () => (bp ? bankCoverage(counts, bp.config, bp.mode, bp.mode === "LEVEL_VERIFICATION" && bp.published ? claimed || null : null) : null),
     [bp, counts, claimed],
   );
   const missing = coverage?.rows.find((r) => !r.ok);
+  const groups = [
+    { key: "template", label: t("groupTemplates"), items: options.filter((o) => o.group === "template") },
+    { key: "own", label: t("groupOwn"), items: options.filter((o) => o.group === "own") },
+  ].filter((g) => g.items.length > 0);
   const needsClaim = bp?.mode === "LEVEL_VERIFICATION" && !claimed;
 
   if (state?.ok) {
@@ -73,15 +93,20 @@ export function InviteForm({ blueprints, counts }: { blueprints: Bp[]; counts: B
       </label>
       <label className="text-[13.5px] font-medium text-ink">
         {t("exam")}
-        <select name="blueprintId" value={bpId} onChange={(e) => setBpId(e.target.value)} className={field}>
-          {blueprints.map((b) => (
-            <option key={b.id} value={b.id}>
-              {b.name}
-            </option>
+        <select name="exam" value={choice} onChange={(e) => setChoice(e.target.value)} className={field}>
+          {groups.map((g) => (
+            <optgroup key={g.key} label={g.label}>
+              {g.items.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.name}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
+        {bp?.summary ? <span className="mt-1.5 block text-[12.5px] font-normal text-ink-2">{bp.summary}</span> : null}
         {bp ? (
-          <span className="mt-1.5 block text-[12.5px] font-normal text-muted">
+          <span className="mt-1 block text-[12.5px] font-normal text-muted">
             {t("examMeta", { minutes: bp.minutes, sections: bp.sections, preset: t(`preset${bp.config.proctoring.preset}`) })}
           </span>
         ) : null}
@@ -125,7 +150,12 @@ export function InviteForm({ blueprints, counts }: { blueprints: Bp[]; counts: B
         {needsClaim ? <p className="mt-2 text-[13px] text-muted">{t("errCLAIM_REQUIRED")}</p> : null}
         {missing && !needsClaim ? (
           <p className="mt-2 text-[13px] text-muted">
-            {t("coverageBlocked", { section: sec(missing.section), level: missing.level, available: missing.available, needed: missing.needed })}{" "}
+            {t(bp?.published ? "coverageBlocked" : "templateCoverageBlocked", {
+              section: sec(missing.section),
+              level: missing.level,
+              available: missing.available,
+              needed: missing.needed,
+            })}{" "}
             <Link href="/exam/bank" className="text-ink underline underline-offset-2">
               {t("toBank")}
             </Link>

@@ -12,8 +12,8 @@ export const languageExamManifest: SolutionManifest = {
   label: { tr: "Sınav", en: "Language exam" },
   nav: [
     { href: "/exam/students", label: { tr: "Öğrenciler", en: "Students" }, icon: "users" },
-    { href: "/exam/exams", label: { tr: "Sınavlar", en: "Exams" }, icon: "file-text" },
-    { href: "/exam/bank", label: { tr: "Soru bankası", en: "Question bank" }, icon: "library" },
+    // Exams and the bank sit behind one entry; the item stays lit on their pages.
+    { href: "/exam/advanced", label: { tr: "Gelişmiş", en: "Advanced" }, icon: "file-text", activeFor: ["/exam/exams", "/exam/bank"] },
   ],
   inviteHref: "/exam/students/new",
   inviteLabel: { tr: "Öğrenci davet et", en: "Invite a student" },

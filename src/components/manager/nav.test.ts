@@ -5,7 +5,8 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { buildNav } from "@/solutions/registry";
 import { ManagerNav } from "./nav";
 
-vi.mock("next/navigation", () => ({ usePathname: () => "/exam/students/abc" }));
+const route = vi.hoisted(() => ({ pathname: "/exam/students/abc" }));
+vi.mock("next/navigation", () => ({ usePathname: () => route.pathname }));
 
 const shared = { today: "Bugün", settings: "Ayarlar", library: { label: "Kütüphane", positions: "Pozisyonlar", competencies: "Yetkinlikler" } };
 
@@ -23,8 +24,7 @@ describe("ManagerNav (P1)", () => {
       "/dashboard",
       "/hiring/openings",
       "/exam/students",
-      "/exam/exams",
-      "/exam/bank",
+      "/exam/advanced",
       "/library/positions",
       "/library/competencies",
       "/settings",
@@ -39,8 +39,7 @@ describe("ManagerNav (P1)", () => {
       "Bugün",
       "Alımlar",
       "Öğrenciler",
-      "Sınavlar",
-      "Soru bankası",
+      "Gelişmiş",
       "Pozisyonlar",
       "Yetkinlikler",
       "Ayarlar",
@@ -50,7 +49,7 @@ describe("ManagerNav (P1)", () => {
   it("sizes the icons at 18px over the sidebar button's default 16px", () => {
     const out = render();
     const links = out.match(/<a [^>]*data-sidebar="menu-button"[^>]*>/g)!;
-    expect(links).toHaveLength(8);
+    expect(links).toHaveLength(7);
     for (const link of links) {
       expect(link).toContain("[&amp;_svg]:size-[18px]");
       expect(link).not.toContain("[&amp;_svg]:size-4");
@@ -61,5 +60,25 @@ describe("ManagerNav (P1)", () => {
     const out = render();
     expect(out.match(/<a [^>]*aria-current="page"[^>]*>/g)).toHaveLength(1);
     expect(out).toMatch(/<a [^>]*href="\/exam\/students"[^>]*aria-current="page"|<a [^>]*aria-current="page"[^>]*href="\/exam\/students"/);
+  });
+
+  it.each(["/exam/advanced", "/exam/exams", "/exam/exams/b1", "/exam/bank", "/exam/bank/items/i1"])("marks Advanced on %s, the pages it leads to", (pathname) => {
+    route.pathname = pathname;
+    try {
+      const current = render().match(/<a [^>]*aria-current="page"[^>]*>/g);
+      expect(current).toHaveLength(1);
+      expect(current![0]).toContain('href="/exam/advanced"');
+    } finally {
+      route.pathname = "/exam/students/abc";
+    }
+  });
+
+  it("does not mark Advanced on a path that only shares a prefix", () => {
+    route.pathname = "/exam/banking";
+    try {
+      expect(render()).not.toMatch(/aria-current="page"/);
+    } finally {
+      route.pathname = "/exam/students/abc";
+    }
   });
 });
