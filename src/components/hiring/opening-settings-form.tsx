@@ -3,7 +3,7 @@
 import { useEffect, useState, useSyncExternalStore, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
-import { CalendarDays, EyeOff, Lock, Tag, Users } from "lucide-react";
+import { CalendarDays, Check, EyeOff, Lock, Tag, Users } from "lucide-react";
 import { flowFocusKey, flowJourney, isDirty, saveWait, summaryRows } from "@/components/manager/flow-model";
 import { GuidedFlow, useFlowStep, type FlowStep } from "@/components/manager/guided-flow";
 import { SummaryRows, type SummaryRow } from "@/components/manager/summary-rows";
@@ -375,17 +375,32 @@ export function OpeningSettingsForm({
       title: t("stepMembersTitle"),
       lead: <p>{t("membersHint")}</p>,
       layout: "split",
+      illustration: "emptyCandidates",
       primary: forward,
       note,
       body: (
-        <ChoiceCardGroup
-          type="multi"
-          name="rules-members"
-          value={value.memberIds}
-          onChange={(ids) => set("memberIds", ids)}
-          // A disabled person can be taken off the panel but not put back on it.
-          items={panel.map((u) => personCard(u, u.disabled && !value.memberIds.includes(u.id)))}
-        />
+        <div className="space-y-3">
+          <ChoiceCardGroup
+            type="multi"
+            name="rules-members"
+            look="panel"
+            value={value.memberIds}
+            onChange={(ids) => set("memberIds", ids)}
+            // A disabled person can be taken off the panel but not put back on it.
+            items={panel.map((u) => personCard(u, u.disabled && !value.memberIds.includes(u.id)))}
+          />
+          {/* Mockup 6: who is chosen against the rule, said politely as it changes. */}
+          {activeReviewers >= value.minEvaluations ? (
+            <p aria-live="polite" className="flex items-center gap-1.5 text-[14px] text-accent">
+              <Check className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+              {t("membersCount", { count: activeReviewers, min: value.minEvaluations })}
+            </p>
+          ) : (
+            <p aria-live="polite" className="text-[14px] text-ink">
+              {t("membersCount", { count: activeReviewers, min: value.minEvaluations })}
+            </p>
+          )}
+        </div>
       ),
     }),
     "team-decider": () => ({
@@ -397,11 +412,12 @@ export function OpeningSettingsForm({
       note,
       body: (
         <div className="space-y-4">
-          <ChoiceCardGroup type="single" name="rules-decider" value={value.decisionMakerId ? [value.decisionMakerId] : []} onChange={([id]) => set("decisionMakerId", id ?? null)} items={deciderItems(value.decisionMakerId)} />
+          <ChoiceCardGroup type="single" name="rules-decider" look="panel" value={value.decisionMakerId ? [value.decisionMakerId] : []} onChange={([id]) => set("decisionMakerId", id ?? null)} items={deciderItems(value.decisionMakerId)} />
           <Disclosure label={t("backup")} defaultOpen={value.backupDecisionMakerId !== null}>
             <ChoiceCardGroup
               type="single"
               name="rules-backup"
+              look="panel"
               value={[value.backupDecisionMakerId ?? NONE]}
               onChange={([id]) => set("backupDecisionMakerId", !id || id === NONE ? null : id)}
               items={[{ value: NONE, label: t("noBackup") }, ...deciderItems(value.backupDecisionMakerId)]}
@@ -457,6 +473,7 @@ export function OpeningSettingsForm({
           <ChoiceCardGroup
             type="single"
             name="rules-deadline"
+            look="panel"
             value={[pickDay ? "day" : NONE]}
             onChange={([v]) => {
               setPickDay(v === "day");
@@ -562,6 +579,7 @@ export function OpeningSettingsForm({
         <ChoiceCardGroup
           type="single"
           name="rules-blind"
+          look="panel"
           value={[value.blindMode ? "hide" : "show"]}
           onChange={([v]) => set("blindMode", v === "hide")}
           items={[
@@ -582,6 +600,7 @@ export function OpeningSettingsForm({
         <ChoiceCardGroup
           type="single"
           name="rules-survey"
+          look="panel"
           value={[(value.finishSurveyEnabled ?? true) ? "on" : "off"]}
           onChange={([v]) => set("finishSurveyEnabled", v === "on")}
           items={[

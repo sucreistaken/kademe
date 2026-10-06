@@ -606,6 +606,7 @@
     "teamTitle": "Team",
     "name": "Opening name",
     "members": "Reviewers",
+    "membersCount": "{count} selected, the rule asks for {min}.",
     "membersHint": "The opening's default panel; copied to each candidate once invitations open.",
     "inactive": "Disabled",
     "decisionMaker": "Decision maker",

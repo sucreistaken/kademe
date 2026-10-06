@@ -606,6 +606,7 @@
     "teamTitle": "Ekip",
     "name": "Alım adı",
     "members": "Değerlendiriciler",
+    "membersCount": "{count} kişi seçili, kural {min} istiyor.",
     "membersHint": "Alımın varsayılan paneli; davet açıldığında her adaya kopyalanır.",
     "inactive": "Devre dışı",
     "decisionMaker": "Karar veren",

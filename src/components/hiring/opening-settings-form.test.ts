@@ -174,3 +174,26 @@ describe("team and rules: links land on their step (W3, Task 19 carry)", () => {
     expect(out).toContain(">Continue<");
   });
 });
+
+describe("the team flow in the mockup's look (screen 6)", () => {
+  it("#team-members: the drawing above the question, people as big cards with round initials and a checkbox at the right, and the count against the rule", () => {
+    const out = render({ hash: "#team-members" });
+    // emptyCandidates' shadow ellipse.
+    expect(out).toContain('ellipse cx="80" cy="104" rx="42" ry="5"');
+    expect(out).toMatch(/rounded-full bg-accent-soft font-bold text-accent[^"]*">KA</);
+    expect(out).toContain("peer-checked:border-accent peer-checked:bg-accent peer-checked:text-white");
+    expect(out).toMatch(/<p aria-live="polite" class="text-\[14px\] text-ink">1 kişi seçili, kural 2 istiyor\.<\/p>/);
+  });
+
+  it("says the count with a check once the team meets the rule", () => {
+    const out = render({ hash: "#team-members", values: { memberIds: ["owner", "rev"] } });
+    expect(out).toMatch(/<p aria-live="polite" class="flex items-center gap-1\.5 text-\[14px\] text-accent"><svg[^>]*lucide-check[\s\S]*?2 kişi seçili, kural 2 istiyor\.<\/p>/);
+  });
+
+  it("#team-decider: the deciders as big radio cards; the 1-5 cards keep their square look", () => {
+    expect(render({ hash: "#team-decider" })).toContain("rounded-full peer-checked:border-[6px] peer-checked:border-accent");
+    const min = render({ hash: "#team-min" });
+    expect(min).toContain("min-h-16");
+    expect(min).not.toContain("peer-checked:border-[6px]");
+  });
+});
