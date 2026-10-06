@@ -66,8 +66,6 @@
   },
   "hiringNew": {
     "title": "Alım aç",
-    "sub": "Pozisyonu seç ya da yaz, sonra nasıl başlayacağını seç.",
-    "stepPosition": "1. Pozisyon",
     "positionPick": "Pozisyon seç ya da yeni yaz",
     "positionSearch": "Pozisyon ara ya da yeni ad yaz",
     "positionNone": "Bu adla pozisyon yok.",
@@ -78,7 +76,6 @@
     "weightsEqual": "ağırlıklar eşit",
     "weightsSet": "ağırlıklar belirli",
     "profileEmpty": "Yetkinlik profili yok; puan kartını sonra kurarsın.",
-    "stepStart": "2. Nasıl başlayalım?",
     "startAi": "İlan metninden AI taslağı",
     "startAiBody": "Önerilen. İlandan aşama ve soru önerileri çıkar; hiçbiri sen kabul etmeden eklenmez.",
     "startAiDisabled": "İlan metni ekleyince açılır.",
@@ -95,7 +92,17 @@
     "positionGone": "Bu pozisyon artık seçilemiyor. Başka bir pozisyon seç.",
     "copySourceGone": "Bu alımın kopyalanacak değerlendirmesi yok. Başka bir alım seç.",
     "addJobAd": "İlan metnini pozisyona ekle",
-    "copySourceDetail": "{status}, {date} açıldı"
+    "copySourceDetail": "{status}, {date} açıldı",
+    "stepPositionTitle": "Hangi pozisyon için?",
+    "stepPositionLead": "Kütüphanedeki bir pozisyonu seç ya da yeni bir ad yaz.",
+    "stepAdTitle": "İlan metnin var mı?",
+    "stepStartTitle": "Nasıl başlayalım?",
+    "continueWithoutAd": "İlan metni olmadan devam et",
+    "summaryAd": "ilan metni var",
+    "summaryNoAd": "ilan metni yok",
+    "summaryAi": "AI taslağı",
+    "summaryCopy": "{name} kopyası",
+    "summaryBlank": "boş başlangıç"
   },
   "hiringOverview": {
     "readinessTitle": "Yayına hazırlık",

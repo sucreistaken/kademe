@@ -66,8 +66,6 @@
   },
   "hiringNew": {
     "title": "Open a role",
-    "sub": "Pick or type the position, then choose how to start.",
-    "stepPosition": "1. Position",
     "positionPick": "Pick a position or type a new one",
     "positionSearch": "Search positions or type a new name",
     "positionNone": "No position with this name.",
@@ -78,7 +76,6 @@
     "weightsEqual": "equal weights",
     "weightsSet": "weights set",
     "profileEmpty": "No competency profile; you set up the scorecard later.",
-    "stepStart": "2. How do we start?",
     "startAi": "Draft from the job ad with AI",
     "startAiBody": "Recommended. Proposes stages and questions from the ad; nothing is added until you accept it.",
     "startAiDisabled": "Available once there is a job ad.",
@@ -95,7 +92,17 @@
     "positionGone": "This position can no longer be picked. Pick another one.",
     "copySourceGone": "This opening has no assessment to copy. Pick another one.",
     "addJobAd": "Add the job ad to the position",
-    "copySourceDetail": "{status}, opened {date}"
+    "copySourceDetail": "{status}, opened {date}",
+    "stepPositionTitle": "Which position is it for?",
+    "stepPositionLead": "Pick a position from the library or type a new name.",
+    "stepAdTitle": "Do you have a job ad?",
+    "stepStartTitle": "How shall we start?",
+    "continueWithoutAd": "Continue without a job ad",
+    "summaryAd": "job ad added",
+    "summaryNoAd": "no job ad",
+    "summaryAi": "AI draft",
+    "summaryCopy": "copy of {name}",
+    "summaryBlank": "blank start"
   },
   "hiringOverview": {
     "readinessTitle": "Ready to publish",
