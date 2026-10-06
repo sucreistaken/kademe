@@ -133,3 +133,11 @@ Task 12: complete (commit 99ba280, review clean)
 - Carry to Task 13 (cheap): landing.tsx and device-check.tsx call PathSteps without locale (EN page reads TR state words); pass the locale as done.tsx does.
 - Benchmark (doğrulanmadı, bulut, tarayıcı yok): /done at 1440/1280/1024, rating with arrow keys, send, reload, the survey-off page.
 BASE T13: 99ba280
+Task 13: implementer DONE 04cb88d (problem-view + HiringLinkProblem; C16: hasStarted moved to server/started.ts and reused by hiringProblemFacts, one openingContactRow read; decision 9 also for NOT_YET; action-bar.tsx deleted; footer-usage.test; Task 12 carry: device-check passes its locale prop to PathSteps, landing already did). Controller: vitest 2514, 2513 passed, 1 env failure, 0 removed names, 11 added; em-dash 0. Review (opus): Approved, 0 Critical/Important; exam LinkProblem.tsx and request-wording.ts unchanged since 53acc8f.
+Task 13: complete (commit 04cb88d, review clean)
+- Task 13: minor (deferred to the final wave): a problem card reached by client navigation (device-check push to /practice as the link lapses) leaves focus on body; useArrivalFocus on StatusScreen's title would fix it.
+- Task 13: minor (deferred to the final wave): the not-yet card's date has no time zone (landing names it with zoneLabel); plan-mandated.
+- Task 13: gap against design 3.11 (record in STATUS, Task 23): no "takvime ekle" on the not-yet card (the plan dropped it).
+- Task 13: minor (cosmetic): on an EN page the request note to the team is in English (same as the core requestMessage).
+- Not run: verify:hiring-flow and verify:guard (doğrulanmadı, Postgres yok); the reviewer read the script's expected strings (:521-530) and they hold. Browser Step 7: doğrulanmadı (bulut, tarayıcı yok).
+BASE T14: 04cb88d
