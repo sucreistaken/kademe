@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Copy, FilePlus2, Plus, Sparkles } from "lucide-react";
+import { Check, Plus } from "lucide-react";
 import { GuidedFlow, useFlowStep, type FlowStep } from "@/components/manager/guided-flow";
 import { flowJourney } from "@/components/manager/flow-model";
 import { Input } from "@/components/ui/input";
@@ -15,15 +15,13 @@ import { useMT } from "@/i18n/manager-client";
 import { POSITION_JOB_AD_MAX, POSITION_NAME_MAX } from "@/lib/library/positions";
 import { createOpeningAction } from "@/app/(manager)/hiring/openings/new/actions";
 import { positionIcon } from "./position-icon";
+import { startChoices, type StartValue } from "./start-choices";
 import { createWait, matchPosition, newOpeningStepOf, newOpeningStepOfRefusal, newOpeningSteps, newOpeningSummary, POSITION_FILTER_FROM, visiblePositions, type NewOpeningRefusal, type NewOpeningStep } from "./new-opening-steps";
 
 export type PositionOption = { id: string; name: string; hasJobAd: boolean; competencyCount: number; weightsEqual: boolean };
-type Start = "AI" | "COPY" | "BLANK";
 
 /** The card that adds a position that is not in the library yet. */
 const NEW = "__new__";
-
-const ICONS = { AI: Sparkles, COPY: Copy, BLANK: FilePlus2 } as const;
 
 /**
  * HIRING-UX 5.3 as HIRING-VISUAL-FLOW 4.6 (K12) in the look of the manager mockup (screens 3, 4): which position (cards, or a new name), the job ad
@@ -51,21 +49,22 @@ export function NewOpeningForm({
   const initialPicked = positions.find((p) => p.id === initialPositionId) ?? null;
   // Only a source this organisation may copy from (the page's list) is preselected.
   const copySource = initialCopyId && sources.some((s) => s.id === initialCopyId) ? initialCopyId : "";
-  const initialStart: Start = copySource ? "COPY" : "AI";
+  // User decision 2026-10-06 (less AI): the job ad preselects nothing; only a ?copy= link is a chosen start.
+  const initialStart: StartValue | null = copySource ? "COPY" : null;
   const [query, setQuery] = useState("");
   const [picked, setPicked] = useState<PositionOption | null>(initialPicked);
   const [newName, setNewName] = useState<string | null>(null);
   // W4: the typed name stays while a library card is chosen, and comes back with "Yeni bir pozisyon".
   const [nameDraft, setNameDraft] = useState("");
   const [jobAd, setJobAd] = useState("");
-  const [start, setStart] = useState<Start>(initialStart);
+  const [start, setStart] = useState<StartValue | null>(initialStart);
   const [copyFrom, setCopyFrom] = useState(copySource);
   const [pending, startTransition] = useTransition();
   const [refusal, setRefusal] = useState<NewOpeningRefusal | null>(null);
 
   const hasAd = picked ? picked.hasJobAd : jobAd.trim().length > 0;
-  // The recommended path is pre-selected, and falls back to "blank" while there is no ad.
-  const effective: Start = start === "AI" && !hasAd ? "BLANK" : start;
+  // The job-ad start cannot stay chosen without an ad: it falls back to no choice (never to another start).
+  const effective: StartValue | null = start === "AI" && !hasAd ? null : start;
   const positionReady = picked !== null || (newName !== null && newName.trim().length > 0);
   const steps = newOpeningSteps({ newName: picked === null && newName !== null });
   // The flow knows this path's steps, so a hash it does not show (the ad step of a library
@@ -113,13 +112,16 @@ export function NewOpeningForm({
   }
 
   function submit() {
+    // The button waits with "Nasıl başlayacağını seç." meanwhile; the action never gets a missing start.
+    if (effective === null) return;
+    const chosen = effective;
     setRefusal(null);
     startTransition(async () => {
       try {
         const result = await createOpeningAction({
           position: picked ? { kind: "existing", id: picked.id } : { kind: "new", name: newName ?? "", jobDescription: jobAd },
-          start: effective,
-          copyFrom: effective === "COPY" ? copyFrom : null,
+          start: chosen,
+          copyFrom: chosen === "COPY" ? copyFrom : null,
         });
         if (result.ok) router.push(result.next);
         else {
@@ -144,13 +146,8 @@ export function NewOpeningForm({
     if (to) nav.go(to);
   };
 
-  const options: Array<[Start, string, string]> = [
-    ["AI", t("startAi"), t("startAiBody")],
-    // "Önceki bir alımdan kopyala" is hidden while there is nothing to copy (HIRING-UX 5.3).
-    ...(sources.length ? ([["COPY", t("startCopy"), t("startCopyBody")]] as Array<[Start, string, string]>) : []),
-    ["BLANK", t("startBlank"), t("startBlankBody")],
-  ];
-  const summary = newOpeningSummary({ name: picked?.name ?? newName ?? "", hasAd, start: effective, copyName: sources.find((s) => s.id === copyFrom)?.name ?? null })
+  const choices = startChoices({ hasCopySources: sources.length > 0 });
+  const summary = newOpeningSummary({ name: picked?.name ?? (newName ?? "").trim(), hasAd, start: effective, copyName: sources.find((s) => s.id === copyFrom)?.name ?? null })
     .map((part) => ("text" in part ? part.text : part.key === "summaryCopy" ? t(part.key, { name: part.name }) : t(part.key)))
     .join(" · ");
 
@@ -225,6 +222,14 @@ export function NewOpeningForm({
     start: {
       id: "start",
       title: t("stepStartTitle"),
+      lead: <p>{t("stepStartLead")}</p>,
+      // H3, W5: the decisions so far in one line, as the mockup's summary pill.
+      aside: positionReady ? (
+        <p className="inline-flex items-center gap-2 rounded-[10px] bg-accent-soft px-3 py-2 text-[14px] font-medium text-accent">
+          <Check className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+          {summary}
+        </p>
+      ) : null,
       layout: "split",
       primary: { kind: "button", id: "new-opening-create", label: t("create"), busy: pending, busyLabel: t("creating"), waitReason: wait ? t(wait) : null, onClick: submit },
       note,
@@ -237,15 +242,16 @@ export function NewOpeningForm({
             type="single"
             name="new-opening-start"
             labelledBy="new-opening-start-label"
-            value={[effective]}
-            onChange={([v]) => setStart(v as Start)}
-            items={options.map(([value, title, body]) => ({
-              value,
-              marker: ICONS[value],
-              label: title,
-              disabled: value === "AI" && !hasAd,
+            look="panel-lg"
+            value={effective ? [effective] : []}
+            onChange={([v]) => setStart((v as StartValue | undefined) ?? null)}
+            items={choices.map((c) => ({
+              value: c.value,
+              marker: c.icon,
+              label: t(c.title),
+              disabled: c.value === "AI" && !hasAd,
               description:
-                value === "AI" && !hasAd ? (
+                c.value === "AI" && !hasAd ? (
                   <>
                     {t("startAiDisabled")}
                     {/* A library position without an ad: the ad is added on the position, not here. */}
@@ -259,7 +265,7 @@ export function NewOpeningForm({
                     ) : null}
                   </>
                 ) : (
-                  body
+                  t(c.body)
                 ),
             }))}
           />
@@ -281,8 +287,6 @@ export function NewOpeningForm({
               </Select>
             </div>
           ) : null}
-          {/* H3, W5: a short create flow's last step says every decision in one line. */}
-          {positionReady ? <p className="text-[14px] leading-[22px] text-ink-2">{summary}</p> : null}
         </div>
       ),
     },

@@ -112,33 +112,63 @@ describe("Alım aç on GuidedFlow (4.6, W1-W10)", () => {
     expect(out).not.toContain("İlan metnin var mı?");
   });
 
-  it("the last step: three cards, the one-line summary, \"Alımı oluştur\" ready as the one filled button, and \"Geri\" one step back", () => {
+  it("the last step: three big cards in the mockup's order, the summary pill, \"Alımı oluştur\" as the one filled button, and \"Geri\" one step back", () => {
     const out = render({ initialPositionId: support.id, hash: "#start" });
     expect(out).toMatch(/<h1[^>]*>Nasıl başlayalım\?<\/h1>/);
+    expect(out).toContain("Sonra her şeyi değiştirebilirsin.");
     expect(out).toMatch(/role="radiogroup" aria-labelledby="new-opening-start-label"/);
-    expect(radio(out, "AI")).toContain('checked=""');
+    expect(out.indexOf('value="COPY"')).toBeLessThan(out.indexOf('value="AI"'));
+    expect(out.indexOf('value="AI"')).toBeLessThan(out.indexOf('value="BLANK"'));
+    expect(out).toContain("İlan metninden öneri al");
     expect(out).toContain("Önceki bir alımdan kopyala");
     expect(out).toContain("Boş başla");
-    expect(out).toContain("Destek Uzmanı · ilan metni var · AI taslağı");
+    expect(out).toContain("size-[52px] rounded-xl");
+    // Less AI: no sparkles, no badge, no ready-template card yet.
+    expect(out).not.toContain("lucide-sparkles");
+    expect(out).not.toContain("Önerilen");
+    expect(out).not.toContain("Hazır şablon");
+    expect(out).toContain("lucide-file-text");
+    // The decisions in one line, as a pill with a check under the lead (no start is chosen yet, R1).
+    expect(out).toMatch(/bg-accent-soft[^"]*text-accent[^"]*"><svg[^>]*lucide-check[\s\S]*?Destek Uzmanı · ilan metni var<\/p>/);
     expect(out.match(/bg-accent text-white/g)).toHaveLength(1);
     expect(out).toMatch(/<button[^>]*id="new-opening-create"[^>]*>Alımı oluştur<\/button>/);
-    expect(out).not.toContain("new-opening-create-why");
     expect(out).toContain("Adım 2 / 2");
     expect(out).toMatch(/<button type="button"[^>]*>.*Geri<\/button>/);
   });
 
-  it("a library position without an ad: the AI card is closed with its reason and the way to add the ad, and the start is blank", () => {
+  it("the job ad preselects nothing (less AI): no start card is checked and \"Alımı oluştur\" waits with its reason", () => {
+    const out = render({ initialPositionId: support.id, hash: "#start" });
+    for (const value of ["COPY", "AI", "BLANK"]) expect(radio(out, value)).toMatch(/^<input(?![^>]*checked="")/);
+    expect(radio(out, "AI")).not.toContain('disabled=""');
+    const button = out.match(/<button[^>]*id="new-opening-create"[^>]*>/)?.[0] ?? "";
+    expect(button).toContain('disabled=""');
+    expect(button).toContain('aria-describedby="new-opening-create-why"');
+    expect(out).toMatch(/<p[^>]*id="new-opening-create-why"[^>]*>Nasıl başlayacağını seç\.<\/p>/);
+    // Nothing chosen is not a change: leaving loses nothing.
+    expect(out).toContain(">Çık<");
+    expect(out).not.toContain("Kaydetmeden çık");
+  });
+
+  it("says the start's wait reason in English too", () => {
+    const out = render({ initialPositionId: support.id, hash: "#start" }, "en");
+    expect(out).toMatch(/<p[^>]*id="new-opening-create-why"[^>]*>Pick how to start\.<\/p>/);
+    expect(out).toContain("Suggest from the job ad");
+  });
+
+  it("a library position without an ad: the job-ad card is closed with its reason and the way to add the ad, and no start is chosen", () => {
     const out = render({ initialPositionId: noAd.id, hash: "#start" });
     expect(radio(out, "AI")).toContain('disabled=""');
     expect(out).toContain("İlan metni ekleyince açılır.");
     expect(out).toContain(`href="/library/positions/${noAd.id}"`);
-    expect(radio(out, "BLANK")).toContain('checked=""');
-    expect(out).toContain("Satış Uzmanı · ilan metni yok · boş başlangıç");
+    for (const value of ["COPY", "AI", "BLANK"]) expect(radio(out, value)).toMatch(/^<input(?![^>]*checked="")/);
+    expect(out).toContain("Satış Uzmanı · ilan metni yok</p>");
+    expect(out).toContain("Nasıl başlayacağını seç.");
   });
 
   it("?copy= preselects copying from that opening, and the summary names it; nothing counts as changed", () => {
     const out = render({ initialPositionId: support.id, initialCopyId: source, hash: "#start" });
     expect(radio(out, "COPY")).toContain('checked=""');
+    expect(radio(out, "AI")).not.toContain('checked=""');
     expect(out).toContain('id="new-opening-copy"');
     expect(out).toContain("Destek Uzmanı · ilan metni var · Destek 2025 kopyası");
     expect(out).not.toContain("new-opening-create-why");
@@ -147,7 +177,7 @@ describe("Alım aç on GuidedFlow (4.6, W1-W10)", () => {
 
   it("?copy= of an opening not in this organisation's list preselects nothing", () => {
     const out = render({ initialPositionId: support.id, initialCopyId: "44444444-4444-4444-8444-444444444444", hash: "#start" });
-    expect(radio(out, "AI")).toContain('checked=""');
+    for (const value of ["COPY", "AI", "BLANK"]) expect(radio(out, value)).toMatch(/^<input(?![^>]*checked="")/);
     expect(out).not.toContain('id="new-opening-copy"');
   });
 });

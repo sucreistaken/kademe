@@ -1,5 +1,6 @@
 import type { CreateOpeningActionResult } from "@/app/(manager)/hiring/openings/new/actions";
 import { flowStepOf, stepOfProblem } from "@/components/manager/flow-model";
+import type { StartValue } from "./start-choices";
 
 /**
  * HIRING-VISUAL-FLOW 4.6 (P6, W1-W8): opening a hiring is rare and thought
@@ -19,9 +20,14 @@ export function newOpeningStepOf(hash: string, input: { steps: NewOpeningStep[];
   return flowStepOf(hash, { steps: input.steps, firstInvalid: input.positionReady ? null : "position" });
 }
 
-/** The last step's "Alımı oluştur" waits for a position, then for a source when copying (the existing reasons). */
-export function createWait(input: { positionReady: boolean; start: "AI" | "COPY" | "BLANK"; copyFrom: string }): "needPosition" | "needCopySource" | null {
+/**
+ * The last step's "Alımı oluştur" waits for a position, then for a start (none
+ * is preselected from the job ad, user decision 2026-10-06), then for a source
+ * when copying.
+ */
+export function createWait(input: { positionReady: boolean; start: StartValue | null; copyFrom: string }): "needPosition" | "needStart" | "needCopySource" | null {
   if (!input.positionReady) return "needPosition";
+  if (input.start === null) return "needStart";
   return input.start === "COPY" && !input.copyFrom ? "needCopySource" : null;
 }
 
@@ -40,11 +46,11 @@ export const newOpeningStepOfRefusal = (code: NewOpeningRefusal): NewOpeningStep
 export type NewOpeningSummaryPart = { text: string } | { key: "summaryAd" | "summaryNoAd" | "summaryAi" | "summaryBlank" } | { key: "summaryCopy"; name: string };
 
 /**
- * H3, W5: the last step's one line ("Destek Uzmanı · ilan metni var · AI
- * taslağı"). Copying says nothing of the source until one is chosen (the
- * button waits with "Kopyalanacak alımı seç." meanwhile).
+ * H3, W5: the last step's one line ("Destek Uzmanı · ilan metni var · ilan
+ * metninden öneri"). It says nothing of the start until one is chosen, and
+ * nothing of a copy until its source is chosen (the button waits meanwhile).
  */
-export function newOpeningSummary(input: { name: string; hasAd: boolean; start: "AI" | "COPY" | "BLANK"; copyName: string | null }): NewOpeningSummaryPart[] {
+export function newOpeningSummary(input: { name: string; hasAd: boolean; start: StartValue | null; copyName: string | null }): NewOpeningSummaryPart[] {
   const parts: NewOpeningSummaryPart[] = [{ text: input.name }, { key: input.hasAd ? "summaryAd" : "summaryNoAd" }];
   if (input.start === "AI") parts.push({ key: "summaryAi" });
   else if (input.start === "BLANK") parts.push({ key: "summaryBlank" });

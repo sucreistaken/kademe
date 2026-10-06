@@ -16,8 +16,10 @@ describe("Alım aç as three steps (4.6, plan decision 13)", () => {
     expect(newOpeningStepOf("#ad", { steps: newOpeningSteps({ newName: false }), positionReady: true })).toBe("position");
   });
 
-  it("waits for a position, then for a source when copying, with the existing reasons", () => {
+  it("waits for a position, then for a start, then for a source when copying", () => {
     expect(createWait({ positionReady: false, start: "BLANK", copyFrom: "" })).toBe("needPosition");
+    expect(createWait({ positionReady: false, start: null, copyFrom: "" })).toBe("needPosition");
+    expect(createWait({ positionReady: true, start: null, copyFrom: "" })).toBe("needStart");
     expect(createWait({ positionReady: true, start: "COPY", copyFrom: "" })).toBe("needCopySource");
     expect(createWait({ positionReady: true, start: "COPY", copyFrom: "o1" })).toBeNull();
     expect(createWait({ positionReady: true, start: "AI", copyFrom: "" })).toBeNull();
@@ -37,6 +39,7 @@ describe("Alım aç as three steps (4.6, plan decision 13)", () => {
     expect(newOpeningSummary({ name: "Destek Uzmanı", hasAd: false, start: "BLANK", copyName: null })).toEqual([{ text: "Destek Uzmanı" }, { key: "summaryNoAd" }, { key: "summaryBlank" }]);
     expect(newOpeningSummary({ name: "Destek Uzmanı", hasAd: true, start: "COPY", copyName: "Destek 2025" })).toEqual([{ text: "Destek Uzmanı" }, { key: "summaryAd" }, { key: "summaryCopy", name: "Destek 2025" }]);
     expect(newOpeningSummary({ name: "Destek Uzmanı", hasAd: true, start: "COPY", copyName: null })).toEqual([{ text: "Destek Uzmanı" }, { key: "summaryAd" }]);
+    expect(newOpeningSummary({ name: "Destek Uzmanı", hasAd: true, start: null, copyName: null })).toEqual([{ text: "Destek Uzmanı" }, { key: "summaryAd" }]);
   });
 });
 
