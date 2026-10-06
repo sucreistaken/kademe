@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cockpitCounts, cockpitTab, funnelShare, openingNextStep } from "./opening-next-step";
+import { cockpitCounts, cockpitTab, openingNextStep } from "./opening-next-step";
 
 const id = "o1";
 const base = "/hiring/openings/o1";
@@ -67,11 +67,5 @@ describe("the control view's page rules (H8, KG4)", () => {
       { status: "CLOSED" as const, next: { kind: "open" as const } },
     ];
     expect(cockpitCounts(rows)).toEqual({ running: 5, setup: 2, waiting: 2 });
-  });
-
-  it("fills the small funnel with the share of invited people who started, never past full", () => {
-    expect(funnelShare({ invited: 0, started: 0 })).toBe(0);
-    expect(funnelShare({ invited: 8, started: 6 })).toBe(0.75);
-    expect(funnelShare({ invited: 2, started: 3 })).toBe(1);
   });
 });

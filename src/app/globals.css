@@ -29,11 +29,14 @@
  *  - One accent colour, used in exactly three places: primary CTA, active state, timer.
  *  - Card borders, background blocks and secondary buttons are NEVER accent-coloured.
  *  - User decision 2026-10-06 (docs/design/hiring-manager-mockup.html): the
- *    manager panel's icon tiles, chosen choice cards, setup-path markers and
- *    setup progress use the accent on accent-soft. Status stays dot + text.
+ *    manager panel uses the accent for icon tiles, chosen choice cards, setup
+ *    markers and segments, row actions (ControlRow), the setup path action,
+ *    the start-step summary pill and the members-count line. Status stays
+ *    dot + text. The expiring clock tile is neutral (bg-secondary), never amber.
  *  - One filled button per screen. Everything else is outline or text.
  *  - Status is a dot plus text, never a badge pill.
- *  - Shadows only on sticky panels and modals.
+ *  - Shadows only on sticky panels and modals, plus the soft shadow
+ *    (shadow-panel-soft) on the Today next-task card, per the approved mockup.
  */
 
 @theme {

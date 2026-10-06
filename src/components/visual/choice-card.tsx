@@ -19,18 +19,6 @@ export type ChoiceItem = {
 };
 
 /**
- * G6: a choice is a card you click; the chosen card is the active state
- * (accent edge, brand-soft ground). Native radios or checkboxes inside, so
- * Space, Tab and a screen reader work as everywhere: radios move and choose
- * with the arrow keys by themselves, and checkbox cards move the focus with
- * the arrow keys, Home and End here (nextChoiceIndex), never the choice. The
- * keys 1-9 are the caller's shortcut, shown here only as a hint; a caller that
- * passes `shortcut` listens with useChoiceShortcuts (one shared hook, Task 4
- * carry 7). The group itself listens to nothing outside itself, so typing in
- * a field is never caught. A closed card is dashed and offers no key; the
- * reason it is closed is the caller's, linked through `describedBy`.
- */
-/**
  * Manager mockup 3, 4, 6: the panel's choice card. Big and soft: the icon tile
  * (or the person's initials) on the left, the title and one line, and the
  * radio or checkbox mark at the right, drawn from the native input before it
@@ -101,6 +89,18 @@ function PanelChoice({
   );
 }
 
+/**
+ * G6: a choice is a card you click; the chosen card is the active state
+ * (accent edge, brand-soft ground). Native radios or checkboxes inside, so
+ * Space, Tab and a screen reader work as everywhere: radios move and choose
+ * with the arrow keys by themselves, and checkbox cards move the focus with
+ * the arrow keys, Home and End here (nextChoiceIndex), never the choice. The
+ * keys 1-9 are the caller's shortcut, shown here only as a hint; a caller that
+ * passes `shortcut` listens with useChoiceShortcuts (one shared hook, Task 4
+ * carry 7). The group itself listens to nothing outside itself, so typing in
+ * a field is never caught. A closed card is dashed and offers no key; the
+ * reason it is closed is the caller's, linked through `describedBy`.
+ */
 export function ChoiceCardGroup({
   type,
   name,

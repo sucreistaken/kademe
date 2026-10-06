@@ -8,7 +8,7 @@ import { frozenMarkup } from "./frozen-markup";
 const noop = () => undefined;
 const html = (props: Record<string, unknown>) => renderToStaticMarkup(createElement(ChoiceCardGroup as never, props as never));
 
-/** What the candidate screens and the panel drew before the panel looks existed (captured at dd1f34e). */
+/** What the candidate screens and the panel drew before the panel looks existed (captured at 7556a45). */
 const CASES: Array<Record<string, unknown>> = [
   { type: "single", name: "q1", value: ["b"], onChange: noop, items: [{ value: "a", label: "Birinci", marker: "A", shortcut: "1" }, { value: "b", label: "İkinci", marker: "B", shortcut: "2", description: "Açıklama" }] },
   { type: "multi", name: "q2", value: ["x"], onChange: noop, labelledBy: "l", describedBy: "d", items: [{ value: "x", label: "Kadir Ay", marker: "KA", description: "Sahip" }, { value: "y", label: "Ece", disabled: true }] },

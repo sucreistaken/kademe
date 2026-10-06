@@ -58,6 +58,3 @@ export function cockpitCounts(rows: ReadonlyArray<{ status: "DRAFT" | "OPEN" | "
     waiting: live.filter((r) => r.status === "OPEN" && (["requests", "team", "expiring", "draft", "deadline"] as OpeningNextKind[]).includes(r.next.kind)).length,
   };
 }
-
-/** The small funnel under a live row: how many of those invited started (0..1). */
-export const funnelShare = (facts: { invited: number; started: number }): number => (facts.invited > 0 ? Math.min(1, facts.started / facts.invited) : 0);

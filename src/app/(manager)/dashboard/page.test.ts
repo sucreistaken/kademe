@@ -232,4 +232,13 @@ describe("hiring's rows on Today", () => {
     expect(list.match(/rounded-full bg-row-line/g)).toHaveLength(2);
     expect(list).not.toContain("data-variant");
   });
+
+  it("draws the expiring row's clock tile neutral, never accent (the plan's global constraint)", async () => {
+    const expiringRow: TodayItem = { id: "hiring:expiring:op1", solution: "hiring", lane: "attention", attention: "expiring", title: "3 bağlantı doluyor", subtitle: "Ürün Tasarımcısı", href: "/hiring/openings/op1/candidates", sortAt: null, cells: [] };
+    const html = await render([requestsRow, expiringRow, draftRow]);
+    const list = between(html, 'aria-labelledby="today-attention"', "Tüm alımların durumu");
+    expect(list.match(/bg-accent-soft text-accent/g)).toHaveLength(2);
+    expect(list.match(/bg-secondary text-ink/g)).toHaveLength(1);
+    expect(list.slice(list.indexOf("bg-secondary text-ink"), list.indexOf("3 bağlantı doluyor"))).toContain("lucide-clock");
+  });
 });

@@ -224,6 +224,7 @@ export function InviteForm({
         url={done.result.url}
         expires={done.result.expires}
         language={t(locale)}
+        locale={locale}
         message={done.result.message.body}
         onAnother={reset}
         links={

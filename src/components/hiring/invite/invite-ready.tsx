@@ -26,6 +26,7 @@ export function InviteReady({
   url,
   expires,
   language,
+  locale,
   message,
   onAnother,
   links,
@@ -36,6 +37,8 @@ export function InviteReady({
   url: string;
   expires: string;
   language: string;
+  /** The language's code, so a reader says the language's own name in its own voice (lang). */
+  locale: string;
   message: string;
   onAnother(): void;
   links?: ReactNode;
@@ -60,7 +63,7 @@ export function InviteReady({
       <p className="tnum flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-ink-2">
         <span className="inline-flex items-center gap-1.5">
           <Languages className="size-[15px]" strokeWidth={1.75} aria-hidden />
-          {language}
+          <span lang={locale}>{language}</span>
         </span>
         <span className="inline-flex items-center gap-1.5">
           <Calendar className="size-[15px]" strokeWidth={1.75} aria-hidden />

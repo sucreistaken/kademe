@@ -117,7 +117,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
               const Icon = ATTENTION_ICON[row.attention ?? "requests"];
               return (
                 <Link key={row.id} href={row.href} className="flex items-center gap-3.5 px-[18px] py-3.5 hover:bg-canvas">
-                  <IconTile icon={Icon} />
+                  <IconTile icon={Icon} color={row.attention === "expiring" ? "neutral" : "accent"} />
                   <span className="min-w-0 flex-1">
                     <span className="block text-[15px] font-semibold text-ink">{row.title}</span>
                     {row.subtitle ? <span className="block truncate text-[13px] text-muted">{row.subtitle}</span> : null}
