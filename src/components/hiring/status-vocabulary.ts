@@ -4,8 +4,9 @@ import type { CandidateProgress } from "@/solutions/hiring/rules/invitation";
 /**
  * HIRING-VISUAL-FLOW P9: one dictionary for every place an opening or a
  * candidate shows its status (dot plus word, never a badge). Accent only for
- * what is live (OPEN, IN_PROGRESS); a closed opening is the quietest grey; an
- * expired link is the one status said in bold ink, because someone must act.
+ * what is live (OPEN, IN_PROGRESS); a closed opening is a light grey ("warn",
+ * plan decision 12), no longer the darkest ("done") it was; an expired link
+ * is the one status said in bold ink, because someone must act.
  */
 type Entry = { tone: StatusTone; strong: boolean };
 

@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
-import { exitKey, flowJourney, flowStepOf, isDirty, saveWait, sameValue, stepOfProblem, summaryRows } from "./flow-model";
+import { describe, expect, it, vi } from "vitest";
+import { stepFocusController } from "@/hooks/use-step-focus";
+import { exitKey, flowFocusKey, flowJourney, flowStepOf, isDirty, saveWait, sameValue, stepOfProblem, summaryRows } from "./flow-model";
 
 const steps = ["members", "decider", "min", "review"] as const;
 
@@ -64,5 +65,32 @@ describe("a refusal opens its step (W8)", () => {
     const map = { NAME: "person", DEADLINE_PAST: "deadline" } as const;
     expect(stepOfProblem<"NAME" | "DEADLINE_PAST" | "CLOSED", string>(map, "NAME")).toBe("person");
     expect(stepOfProblem<"NAME" | "DEADLINE_PAST" | "CLOSED", string>(map, "CLOSED")).toBeNull();
+  });
+});
+
+describe("the heading takes the focus only on an in-page step change (W10, 2.3)", () => {
+  it("is 'load' until the first move, then the step id", () => {
+    expect(flowFocusKey(false, "review")).toBe("load");
+    expect(flowFocusKey(true, "review")).toBe("review");
+  });
+
+  it("a page opened on a later step's hash takes no focus while it hydrates; the first move does", () => {
+    const c = stepFocusController();
+    const h = { focus: vi.fn() };
+    // Server snapshot (no hash) opens the first step, then the real hash re-renders on #min.
+    const at = (moved: boolean, hash: string) => flowFocusKey(moved, flowStepOf(hash, { steps, firstInvalid: null }));
+    c.onStep(at(false, ""), h);
+    c.onStep(at(false, "#min"), h);
+    expect(h.focus).not.toHaveBeenCalled();
+    c.onStep(at(true, "#review"), h);
+    expect(h.focus).toHaveBeenCalledTimes(1);
+  });
+
+  it("without the key, the hydration re-render would steal the focus (positive control)", () => {
+    const c = stepFocusController();
+    const h = { focus: vi.fn() };
+    c.onStep(flowStepOf("", { steps, firstInvalid: null }), h);
+    c.onStep(flowStepOf("#min", { steps, firstInvalid: null }), h);
+    expect(h.focus).toHaveBeenCalledTimes(1);
   });
 });

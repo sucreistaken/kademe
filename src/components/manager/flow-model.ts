@@ -33,7 +33,12 @@ export function flowJourney<S extends string>(path: readonly S[], current: S, fa
 /** W7, H6: the exit link says what leaving costs; it never asks. */
 export const exitKey = (dirty: boolean): "exit" | "exitUnsaved" => (dirty ? "exitUnsaved" : "exit");
 
-/** One decision compared with its saved value: a list is a set (choosing the same people in another order is no change); anything else strictly. */
+/**
+ * One decision compared with its saved value. A list is compared as a set of
+ * unique primitives (choosing the same people in another order is no change;
+ * duplicates are not counted); anything else strictly with Object.is, so an
+ * object or a Date is equal only to itself (by reference, not by content).
+ */
 export function sameValue(a: unknown, b: unknown): boolean {
   if (Array.isArray(a) && Array.isArray(b)) return a.length === b.length && a.every((v) => b.includes(v)) && b.every((v) => a.includes(v));
   return Object.is(a, b);
@@ -54,3 +59,12 @@ export function stepOfProblem<P extends string, S extends string>(map: Partial<R
 
 /** P8: "Kaydet" waits with "Değişiklik yok." while nothing changed. */
 export const saveWait = (changed: boolean): "noChanges" | null => (changed ? null : "noChanges");
+
+/**
+ * W10, 2.3: the key the heading's focus follows. Before the first in-page
+ * step change it is "load", so the first load never takes the focus, not even
+ * when the page opens on a later step's hash (the store hydrates with no hash
+ * and re-renders with the real one: that is not a step change). After a move
+ * it is the step id, so every later step change focuses the new heading.
+ */
+export const flowFocusKey = (moved: boolean, step: string): string => (moved ? step : "load");

@@ -80,6 +80,20 @@ describe("GuidedFlow (K12, W1-W10)", () => {
   });
 });
 
+describe("GuidedFlow fix round 1 (W2, W10)", () => {
+  it("on a page with no exit the flow's name still heads the step (W2)", () => {
+    const out = flow({ exit: null });
+    expect(out).toContain("Ekip ve kurallar · Ekip");
+    expect(out).not.toContain(">Çık<");
+  });
+
+  it("keeps the polite position region mounted, empty off the path, so a change of its words is heard", () => {
+    expect(flow({ journey: { steps: 2, current: 0 } })).toContain('<p aria-live="polite" class="sr-only"></p>');
+    expect(flow({ journey: null })).toContain('<p aria-live="polite" class="sr-only"></p>');
+    expect(flow({})).toContain('<p aria-live="polite" class="sr-only">Adım 2 / 4</p>');
+  });
+});
+
 describe("SummaryRows (W5, P8)", () => {
   const rows = [
     { id: "team", icon: Users, label: "Ekip", value: "Kadir Ay · Ece Yıldız", changed: true, edit: { onClick: noop } },

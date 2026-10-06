@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { CANDIDATE_STATUS, OPENING_STATUS } from "./status-vocabulary";
 
 describe("one status dictionary (P9): the same dot and word everywhere, accent only for what is live", () => {
-  it("opening: Taslak grey, Yayında accent, Kapalı the quietest grey", () => {
+  it("opening: Taslak grey, Yayında accent, Kapalı a light grey, no longer the darkest", () => {
     expect(OPENING_STATUS).toEqual({ DRAFT: { tone: "neutral", strong: false }, OPEN: { tone: "active", strong: false }, CLOSED: { tone: "warn", strong: false } });
   });
 

@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import type { FooterAction } from "@/components/visual/footer-action";
 import { StepFooter } from "@/components/visual/step-footer";
 import { StepScreen } from "@/components/visual/step-screen";
@@ -10,7 +10,7 @@ import { useKeepFocus, useStepFocus } from "@/hooks/use-step-focus";
 import { useMT } from "@/i18n/manager-client";
 import { cn } from "@/lib/cn";
 import { currentHash, leaveHashStep, noHash, pushHash, subscribeHash } from "@/lib/client/hash-step";
-import { exitKey, flowStepOf, type FlowJourney } from "./flow-model";
+import { exitKey, flowFocusKey, flowStepOf, type FlowJourney } from "./flow-model";
 
 /** One screen of a guided flow (W1): one question as its title, its one decision as the body, the footer's one filled button. */
 export type FlowStep = {
@@ -66,16 +66,17 @@ export function useFlowStep<S extends string>(input: { steps: readonly S[]; firs
 
 /**
  * W2, W7: the flow's name on the left, the way out on the right ("Çık", or
- * "Kaydetmeden çık" while values changed). An exit to an address with a hash
- * is a plain anchor (next/link fires no hashchange, Part 2 placement rule).
+ * "Kaydetmeden çık" while values changed; none when the caller gives no
+ * exit). An exit to an address with a hash is a plain anchor (next/link fires
+ * no hashchange, Part 2 placement rule).
  */
-export function FlowHeader({ kicker, exit }: { kicker: ReactNode; exit: FlowExit }) {
+export function FlowHeader({ kicker, exit }: { kicker: ReactNode; exit?: FlowExit | null }) {
   const t = useMT("flow");
-  const label = t(exitKey(exit.dirty));
+  const label = exit ? t(exitKey(exit.dirty)) : null;
   return (
-    <div className="flex items-center justify-between gap-4 border-b border-line pb-2">
+    <div className="flex min-h-11 items-center justify-between gap-4 border-b border-line pb-2">
       <p className="min-w-0 truncate text-[14px] leading-[22px] text-muted">{kicker}</p>
-      {"href" in exit ? (
+      {!exit ? null : "href" in exit ? (
         exit.href.includes("#") ? (
           <a href={exit.href} className={LINK}>
             {label}
@@ -117,15 +118,22 @@ export function GuidedFlow({
   step: FlowStep;
   journey: FlowJourney | null;
   back: { label: string; onClick?: () => void; href?: string } | null;
-  /** Required on a page; a Sheet closes through its own button. */
+  /** The page's way out (W7); a Sheet closes through its own button. Without it the page still shows the kicker. */
   exit?: FlowExit | null;
   /** True once the step changed in place (useFlowStep's `moved`): only then the step fades in. */
   enter?: boolean;
   container?: "page" | "sheet";
 }) {
   const t = useMT("flow");
-  const heading = useStepFocus<HTMLHeadingElement>(step.id);
-  const area = useRef<HTMLDivElement>(null);
+  // W10, 2.3: the heading takes the focus on an in-page step change only. A
+  // move is the caller's `enter`, any hash change heard here (go, back and the
+  // browser's buttons all fire one), or, in a Sheet, any step change (memory
+  // steps never hydrate from the address). The first load, also on a later
+  // step's hash, keeps the key "load" and takes no focus.
+  const [heard, setHeard] = useState(false);
+  useEffect(() => subscribeHash(() => setHeard(true)), []);
+  const heading = useStepFocus<HTMLHeadingElement>(flowFocusKey(enter || heard || container === "sheet", step.id));
+  const [area, setArea] = useState<HTMLDivElement | null>(null);
   useKeepFocus(area, heading);
   const label = journey && journey.current > 0 ? t("stepLabel", { n: journey.current, total: journey.steps }) : null;
   const footer = (
@@ -139,14 +147,15 @@ export function GuidedFlow({
     />
   );
   // W10: the position is said once per step, politely; the heading takes the focus.
-  const position = label ? (
+  // The region stays mounted (empty off the path), so a change of its words is announced.
+  const position = (
     <p aria-live="polite" className="sr-only">
-      {label}
+      {label ?? ""}
     </p>
-  ) : null;
+  );
   if (container === "sheet") {
     return (
-      <div ref={area} className="flex min-h-full flex-col">
+      <div ref={setArea} className="flex min-h-full flex-col">
         <section key={step.id} className={cn("flex-1 space-y-4 pt-2 pb-6", enter && "motion-safe:animate-[step-in_200ms_ease-out] motion-reduce:animate-[fade-in_200ms_ease-out]")}>
           <h2 ref={heading} tabIndex={-1} className="text-[20px] leading-7 font-semibold text-ink outline-none">
             {step.title}
@@ -160,8 +169,8 @@ export function GuidedFlow({
     );
   }
   return (
-    <div ref={area} className="flex min-h-[calc(100dvh-8rem)] flex-col">
-      {exit ? <FlowHeader kicker={kicker} exit={exit} /> : null}
+    <div ref={setArea} className="flex min-h-[calc(100dvh-8rem)] flex-col">
+      <FlowHeader kicker={kicker} exit={exit} />
       <div className="flex-1">
         <StepScreen key={step.id} layout={step.layout} width={step.layout === "single" ? 640 : 1000} title={step.title} titleRef={heading} lead={step.lead} enter={enter}>
           {step.body}

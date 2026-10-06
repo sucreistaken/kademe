@@ -105,16 +105,17 @@ export function leftOnPurpose(at: { relatedInside: boolean | null; targetConnect
 }
 
 /**
- * K12 (panel flows): while focus is inside `area`, a control that unmounts or
+ * K12 (panel flows): while focus is inside `area` (the node itself, so the
+ * listeners move when the caller swaps its root, e.g. page and Sheet layouts;
+ * pass it through a callback ref kept in state), a control that unmounts or
  * turns disabled without a step change (a footer action swapped, a primary
  * that starts to wait) never leaves the keyboard user on <body>: after the
  * render, focus moves to `target` (the step's heading). A step change itself
  * is useStepFocus's job; both land on the same heading.
  */
-export function useKeepFocus(area: RefObject<HTMLElement | null>, target: RefObject<Focusable | null>) {
+export function useKeepFocus(node: HTMLElement | null, target: RefObject<Focusable | null>) {
   const inside = useRef(false);
   useEffect(() => {
-    const node = area.current;
     if (!node) return;
     const onIn = () => {
       inside.current = true;
@@ -135,7 +136,7 @@ export function useKeepFocus(area: RefObject<HTMLElement | null>, target: RefObj
       node.removeEventListener("focusin", onIn);
       node.removeEventListener("focusout", onOut);
     };
-  }, [area]);
+  }, [node]);
   useEffect(() => {
     if (focusDropped({ inside: inside.current, active: activeKind(document.activeElement, document.body) })) target.current?.focus({ preventScroll: true });
   });
