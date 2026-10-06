@@ -143,6 +143,19 @@ Plan `docs/superpowers/plans/2026-10-06-exam-ready-templates.md`, ledger
   oluşturuldu ve yayınlandı. Doğrulanmadı: öğrencinin C-test'li yerleştirmeyi tarayıcıda çözmesi, C-test
   metinlerini anadili Almanca biri okumadı, canlıya migration ve top-up.
 
+## Canlıya çıkış yapıldı (2026-10-06 akşam, kullanıcı onayıyla, provasız)
+
+- main 739f218 -> 53b4bfb (platform/solutions fast-forward). VM proje `cgerman-lms`, IP 34.40.39.112; canlı
+  veritabanı VM'de Docker `kademe-db` (postgres:17, 127.0.0.1:5434/kademe), Neon değil.
+- Sıra: devam eden sınav 0; servis ve zamanlayıcılar durduruldu; yedek
+  `/root/kademe-backups/kademe-window-20261006-1930.dump` (39 tablo); libatomic1 kuruldu (pnpm 11.9.0 için);
+  parmak izi temel şemayla SAME (536 satır); `db:migrate --adopt-baseline` exit 0; `verify:migration check`
+  12/12 ok; `bank:topup --production` 229 -> 253 soru (6 C-test); `PANEL_PASSWORD_HASH` ortam dosyasına
+  eklendi; build exit 0; servis active, 5 zamanlayıcı active; https://kademe.kadiray.com/login 200, yalnız
+  şifre alanı.
+- Doğrulanmadı: panel şifresiyle gerçek giriş (kullanıcı deneyecek), aday ve öğrenci akışlarının canlıda
+  uçtan uca denenmesi. Geri dönüş: yedekten `pg_restore` + `git checkout 739f218` + build.
+
 ## Hâlâ doğrulanmadı
 
 1. Telefonun kamerada gerçekten algılanması ve bakış işareti (canlı testte oluşmadı).
