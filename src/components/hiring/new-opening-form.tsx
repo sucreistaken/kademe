@@ -16,7 +16,7 @@ import { POSITION_JOB_AD_MAX, POSITION_NAME_MAX } from "@/lib/library/positions"
 import { createOpeningAction } from "@/app/(manager)/hiring/openings/new/actions";
 import { positionIcon } from "./position-icon";
 import { startChoices, type StartValue } from "./start-choices";
-import { createWait, matchPosition, newOpeningStepOf, newOpeningStepOfRefusal, newOpeningSteps, newOpeningSummary, POSITION_FILTER_FROM, visiblePositions, type NewOpeningRefusal, type NewOpeningStep } from "./new-opening-steps";
+import { createWait, matchPosition, startAfterAdChange, newOpeningStepOf, newOpeningStepOfRefusal, newOpeningSteps, newOpeningSummary, POSITION_FILTER_FROM, visiblePositions, type NewOpeningRefusal, type NewOpeningStep } from "./new-opening-steps";
 
 export type PositionOption = { id: string; name: string; hasJobAd: boolean; competencyCount: number; weightsEqual: boolean };
 
@@ -63,8 +63,11 @@ export function NewOpeningForm({
   const [refusal, setRefusal] = useState<NewOpeningRefusal | null>(null);
 
   const hasAd = picked ? picked.hasJobAd : jobAd.trim().length > 0;
-  // The job-ad start cannot stay chosen without an ad: it falls back to no choice (never to another start).
-  const effective: StartValue | null = start === "AI" && !hasAd ? null : start;
+  // The job-ad start cannot stay chosen without an ad: the stored choice is cleared (never moved to
+  // another start), so an ad that comes back does not re-select it. React's "adjust state while
+  // rendering" pattern covers every way the ad goes away (another position, an emptied ad).
+  const effective = startAfterAdChange(start, hasAd);
+  if (effective !== start) setStart(effective);
   const positionReady = picked !== null || (newName !== null && newName.trim().length > 0);
   const steps = newOpeningSteps({ newName: picked === null && newName !== null });
   // The flow knows this path's steps, so a hash it does not show (the ad step of a library

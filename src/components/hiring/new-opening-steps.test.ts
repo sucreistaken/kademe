@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createWait, matchPosition, newOpeningStepOf, newOpeningStepOfRefusal, newOpeningSteps, newOpeningSummary, visiblePositions } from "./new-opening-steps";
+import { createWait, matchPosition, startAfterAdChange, newOpeningStepOf, newOpeningStepOfRefusal, newOpeningSteps, newOpeningSummary, visiblePositions } from "./new-opening-steps";
 
 describe("Alım aç as three steps (4.6, plan decision 13)", () => {
   it("asks for the job ad only for a new position name (a library position's ad lives on the position)", () => {
@@ -23,6 +23,17 @@ describe("Alım aç as three steps (4.6, plan decision 13)", () => {
     expect(createWait({ positionReady: true, start: "COPY", copyFrom: "" })).toBe("needCopySource");
     expect(createWait({ positionReady: true, start: "COPY", copyFrom: "o1" })).toBeNull();
     expect(createWait({ positionReady: true, start: "AI", copyFrom: "" })).toBeNull();
+  });
+
+  it("clears the job-ad start when the ad goes away, so it never comes back on its own; other starts stay", () => {
+    expect(startAfterAdChange("AI", false)).toBeNull();
+    expect(startAfterAdChange("AI", true)).toBe("AI");
+    expect(startAfterAdChange("COPY", false)).toBe("COPY");
+    expect(startAfterAdChange("BLANK", false)).toBe("BLANK");
+    expect(startAfterAdChange(null, false)).toBeNull();
+    expect(startAfterAdChange(null, true)).toBeNull();
+    // The ad goes away, then comes back: the cleared choice stays cleared.
+    expect(startAfterAdChange(startAfterAdChange("AI", false), true)).toBeNull();
   });
 
   it("opens the step a refusal is about (W8): the position for a missing or gone position, the start for everything else", () => {

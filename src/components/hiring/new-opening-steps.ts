@@ -31,6 +31,13 @@ export function createWait(input: { positionReady: boolean; start: StartValue | 
   return input.start === "COPY" && !input.copyFrom ? "needCopySource" : null;
 }
 
+/**
+ * The start once the ad may have changed: the job-ad start without an ad is
+ * no choice at all (user decision 2026-10-06, less AI), so it is cleared and
+ * never comes back on its own when the ad does. Other starts stay.
+ */
+export const startAfterAdChange = (start: StartValue | null, hasAd: boolean): StartValue | null => (start === "AI" && !hasAd ? null : start);
+
 const REFUSAL_STEP: Record<NewOpeningRefusal, NewOpeningStep> = {
   POSITION_NAME_REQUIRED: "position",
   POSITION_NOT_FOUND: "position",
