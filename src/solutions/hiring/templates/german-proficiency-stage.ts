@@ -18,8 +18,8 @@ const collocation = (item: string) =>
   t(`Kelime ve kalıp: boşluğu doğru Almanca kalıpla tamamlayan kelimeyi seç.\n\n${item}`, `Vocabulary: choose the word that completes the fixed German expression.\n\n${item}`);
 const cTest = (item: string) =>
   t(
-    `C-test: metinde yarısı silinmiş kelimenin doğru tamamlanmış hâlini seç.\n\n${item}`,
-    `C-test: choose the correctly completed form of the word whose second half is missing.\n\n${item}`,
+    `C-test tarzı: metinde sonu silinmiş kelimenin doğru tamamlanmış hâlini seç.\n\n${item}`,
+    `C-test style: choose the correctly completed form of the word whose ending is missing.\n\n${item}`,
   );
 /** German options read the same in both locales. */
 const de = (...words: string[]) => words.map((w) => t(w, w));
@@ -66,7 +66,7 @@ export function germanProficiencyStage(secondKey: ProficiencySecondKey): Templat
         options: de("kommen", "stellen", "bringen", "nehmen"),
         correct: 2,
         internal:
-          "Doğru: bringen (etwas zur Sprache bringen = bir konuyu gündeme getirmek). Çeldiriciler: kommen ('etwas kommt zur Sprache' geçişsizdir, nesne alamaz; en sık karışıklık); stellen ('in Frage stellen' ile karıştırmak); nehmen (Nomen-Verb kalıplarında nehmen'i genelleştirmek: 'in Kauf nehmen' gibi). Seviye: C1.",
+          "Doğru: bringen (etwas zur Sprache bringen = bir konuyu gündeme getirmek). Çeldiriciler: kommen ('etwas kommt zur Sprache' geçişsizdir, nesne alamaz; en sık karışıklık); stellen ('zur Diskussion stellen', 'zur Verfügung stellen' kalıplarından aktarma); nehmen (Nomen-Verb kalıplarında nehmen'i genelleştirmek: 'in Kauf nehmen' gibi). Seviye: C1.",
       }),
       single({
         prompt: collocation("„Bitte ___ Sie mehr Rücksicht auf die Teilnehmenden, die gerade erst mit dem Kurs angefangen haben.“"),
@@ -83,7 +83,7 @@ export function germanProficiencyStage(secondKey: ProficiencySecondKey): Templat
           "Doğru: Kenntnis (jemanden über etwas in Kenntnis setzen = resmî bilgilendirmek). Çeldiriciler: Wissen (anlamca yakın ama kalıpta yok); Bescheid ('Bescheid geben/sagen' ile karıştırmak, 'in Bescheid setzen' yok); Information (Türkçe ve İngilizceden düz çeviri). Seviye: C1, resmî yazışma dili.",
       }),
       single({
-        prompt: cTest("„Nicht alle Teilnehmenden lernen im gleichen Tempo. Deshalb sollte die Lehrkraft die Aufgaben an das jeweilige Niveau anpa___.“"),
+        prompt: cTest("„Nicht alle Teilnehmenden lernen im gleichen Tempo. Deshalb sollte die Lehrkraft die Aufgaben an das jeweilige Niveau an___.“"),
         options: de("anpasst", "anzupassen", "anpassen", "angepasst"),
         correct: 2,
         internal:
@@ -141,7 +141,7 @@ export function germanProficiencyStage(secondKey: ProficiencySecondKey): Templat
           5: "„Sehr geehrte Frau Keller, ich möchte Sie auf die Fehlzeiten von Herrn Novak aufmerksam machen: Von den letzten acht Kursterminen hat er fünf versäumt. Über die Gründe möchte ich nicht spekulieren; fest steht jedoch, dass ihm bis zur Prüfung in sechs Wochen zentrale Inhalte fehlen. Ich würde ihm daher einen Nachholplan anbieten: zwei korrigierte Übungstexte pro Woche und eine Probeprüfung in vier Wochen. Passt Ihnen ein kurzes Gespräch am Donnerstag um 16 Uhr? Mit freundlichen Grüßen“ (C2'ye yakın)",
         },
         internal:
-          "german_proficiency örnekleri: 1 = B1 civarı, 3 = C1, 5 = C2'ye yakın. Dört nokta, Sie-Form ve resmî kalıplar zorunlu. Devam bildirimi sözleşmeyle kabul edildiği için şirkete yazmak meşru; ama devamsızlığın nedenlerine dair yorum ya da tahmin gizlilik açısından hata sayılır. 600 karakter kısa bir e-postadır, uzunluk değil dört noktanın işlenişi ve dil kalitesi puanlanır.",
+          "german_proficiency örnekleri: 1 = B1 civarı, 3 = C1, 5 = C2'ye yakın. Dört nokta, Sie-Form ve resmî kalıplar zorunlu. Devam bildirimi sözleşmeyle kabul edildiği için şirkete yazmak meşru; ama devamsızlığın nedenlerine dair yorum ya da tahmin gizlilik açısından hata sayılır. Örnekler 600 karakter sınırı nedeniyle kısaltılmış özetlerdir; adayın cevabı yine en az 600 karakter olmalı. Uzunluk değil dört noktanın işlenişi ve dil kalitesi puanlanır.",
       }),
     ],
   });

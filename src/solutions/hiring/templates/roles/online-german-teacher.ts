@@ -92,6 +92,8 @@ export const onlineGermanTeacher: HiringTemplate = {
             "You are in week five with an online A2 group (8 learners, two evenings a week). Your learner Selin has never switched her camera on and has never spoken on the microphone since the first lesson. She sends her homework regularly and mostly correct; a few times she wrote answers to you in a private message. The school does not require cameras.\n\nWrite your plan for the next two weeks: what do you write to Selin first (include the message itself), in which steps do you involve her in class, what will you definitely not do, and how do you follow her progress?",
           ),
           competencies: ["communication", "didactics"],
+          internal:
+            "Mesajın dili ve hitabı (Türkçe ya da Almanca, du ya da Sie) okulun yetişkin gruplardaki alışkanlığına göre değişir; puanlamada hitap değil mesajın tonu ve planın içeriği belirleyicidir.",
           minChars: 400,
           maxChars: 3000,
           expected: [
@@ -108,7 +110,7 @@ export const onlineGermanTeacher: HiringTemplate = {
           examples: {
             1: "Kuralları hatırlatırım: derste kamera ve mikrofon açık olmalı. Bir sonraki derste ona doğrudan soru sorarım, konuşmazsa derse katılmamış sayarım.",
             3: "Selin'e özel mesaj yazarım: „Merhaba Selin, ödevlerin çok iyi. Derste konuşmak sana zor geliyorsa birlikte bir yol bulabiliriz.“ Derste önce sohbetten cevap vermesini, sonra ikili odada konuşmasını isterim. Kamerayı zorunlu tutmam.",
-            5: "Mesaj: „Liebe Selin, deine Hausaufgaben sind wirklich gut, danke! Im Kurs möchte ich dich gern öfter hören. Was ist für dich leichter: zuerst im Chat schreiben oder zu zweit in einem kleinen Raum sprechen? Die Kamera kannst du gern ausgeschaltet lassen.“ 1. hafta: sohbet cevaplarını adıyla değerlendiririm, ikili odayı sakin bir eşle kurarım. 2. hafta: odada bir rol kartını sesli okur; grupta önceden haber verdiğim kısa bir cevap isterim. Grup önünde kamera istemem, nedenini sormam. Her dersten sonra not alır, iki hafta sonunda ona kısa bir geri bildirim yazarım.",
+            5: "Mesaj: „Liebe Selin, Ihre Hausaufgaben sind wirklich gut, danke! Im Kurs möchte ich Sie gern öfter hören. Was ist für Sie leichter: zuerst im Chat schreiben oder zu zweit in einem kleinen Raum sprechen? Die Kamera können Sie gern ausgeschaltet lassen.“ 1. hafta: sohbet cevaplarını adıyla değerlendiririm, ikili odayı sakin bir eşle kurarım. 2. hafta: odada bir rol kartını sesli okur; grupta önceden haber verdiğim kısa bir cevap isterim. Grup önünde kamera istemem, nedenini sormam. Her dersten sonra not alır, iki hafta sonunda ona kısa bir geri bildirim yazarım.",
           },
         }),
       ],
