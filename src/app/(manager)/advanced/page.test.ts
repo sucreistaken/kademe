@@ -121,6 +121,14 @@ describe("Advanced page", () => {
     expect(texts(tree)).toContain("REVIEW-CARDS");
   });
 
+  it("keys the open draft by its last change, so a revised draft remounts its cards", async () => {
+    const at = new Date("2026-10-07T00:00:00Z");
+    s.row = row({ status: "DRAFTED", kind: "EXAM", summary: "s", draft: { x: 1 }, updatedAt: at });
+    const [wrap] = find(await render({ draft: ID }), (el) => el.key === `${ID}:${at.getTime()}`);
+    expect(wrap).toBeDefined();
+    expect(texts(wrap)).toContain("REVIEW-CARDS");
+  });
+
   it("says what it needs, links the manual pages and keeps the request in the box", async () => {
     s.row = row({ status: "FAILED", failure: "STUCK", kind: "POSITION", rounds: [{ questions: [{ id: "name", text: "Pozisyonun adı ne?", choices: [] }], answers: {} }] });
     const tree = await render({ draft: ID });

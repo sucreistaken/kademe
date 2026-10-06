@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { AppliedResult } from "@/components/advanced/applied-result";
 import { CreateBox } from "@/components/advanced/create-box";
 import { QuestionRound } from "@/components/advanced/question-round";
@@ -122,7 +122,8 @@ export default async function AdvancedPage({ searchParams }: { searchParams: Pro
           <h2 id="create-current" className="sr-only">
             {t("advancedCreate.currentTitle")}
           </h2>
-          {current}
+          {/* Keyed by the last change: a revised draft remounts its cards instead of keeping stale edit state. */}
+          <Fragment key={`${row?.id}:${row?.updatedAt.getTime()}`}>{current}</Fragment>
         </section>
       ) : null}
       <section aria-labelledby="create-have" className="space-y-3">
