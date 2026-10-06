@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { validateItem } from "@/lib/exam/validate";
 import { CEFR_LEVELS } from "@/lib/exam/types";
 import { SEED_BANK, SEED_PARTS } from "./index";
+import { seedItemKey } from "./seed-key";
 
 /**
  * The starter bank has to be big enough for the adaptive engine to have a
@@ -33,11 +34,22 @@ describe("starter bank coverage", () => {
         expect(SEED_BANK.items.filter((i) => i.stimulusKey === c.key).length).toBeGreaterThanOrEqual(3);
       }
     });
-    it(`${level}: writing has at least 2 prompts`, () => {
-      expect(count("WRITING", level)).toBeGreaterThanOrEqual(2);
+    it(`${level}: writing has at least 4 prompts`, () => {
+      expect(count("WRITING", level)).toBeGreaterThanOrEqual(4);
     });
-    it(`${level}: speaking has at least 2 prompts`, () => {
-      expect(count("SPEAKING", level)).toBeGreaterThanOrEqual(2);
+    it(`${level}: speaking has at least 4 prompts`, () => {
+      expect(count("SPEAKING", level)).toBeGreaterThanOrEqual(4);
+    });
+    it(`${level}: grammar has one C-test with 15 to 20 typed gaps`, () => {
+      const ctests = SEED_BANK.items.filter((i) => i.level === level && i.skillTag === "grammar.ctest");
+      expect(ctests).toHaveLength(1);
+      const [c] = ctests;
+      expect(c.section).toBe("GRAMMAR");
+      expect(c.type).toBe("GAP_FILL");
+      if (c.content.kind !== "GAP") throw new Error("not a gap item");
+      expect(c.content.gaps.length).toBeGreaterThanOrEqual(15);
+      expect(c.content.gaps.length).toBeLessThanOrEqual(20);
+      expect(c.content.gaps.every((g) => !g.choices)).toBe(true);
     });
   }
 });
@@ -92,6 +104,11 @@ describe("starter bank items are well formed", () => {
       byPos.set(pos, (byPos.get(pos) ?? 0) + 1);
     }
     for (const n of byPos.values()) expect(n / single.length).toBeLessThanOrEqual(0.4);
+  });
+
+  it("every item has a stable seed key no other item shares", () => {
+    const keys = SEED_BANK.items.map(seedItemKey);
+    expect(new Set(keys).size).toBe(keys.length);
   });
 
   it("contains no em-dash anywhere", () => {

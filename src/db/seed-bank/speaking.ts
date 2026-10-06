@@ -1,7 +1,7 @@
 import type { SeedBankPart, SeedItem } from "./types";
 
 /**
- * Starter speaking tasks, three per CEFR level. The student thinks for
+ * Starter speaking tasks, four per CEFR level. The student thinks for
  * `thinkSeconds`, then records for up to `answerSeconds`. A teacher scores the
  * recording against the rubric. Students are addressed with Sie throughout.
  */
@@ -50,6 +50,9 @@ const items: SeedItem[] = [
   task("A1", "description", "HARD",
     "Was essen und trinken Sie gern? Was essen Sie zum Frühstück? Was essen Sie nicht gern?",
     ["Lieblingsessen oder Lieblingsgetränk", "Frühstück", "etwas, das man nicht gern isst", "einfache Begründung oder Häufigkeit (z. B. oft, jeden Tag)"]),
+  task("A1", "description", "MID",
+    "Beschreiben Sie Ihre Wohnung oder Ihr Zimmer. Wie viele Zimmer gibt es? Was steht in Ihrem Zimmer? Was gefällt Ihnen, was nicht?",
+    ["Art und Größe der Wohnung (Zimmer)", "mindestens zwei Möbelstücke oder Gegenstände", "etwas, das gefällt, und etwas, das nicht gefällt", "einfache Sätze mit es gibt / haben"]),
 
   // ---------------------------------------------------------------- A2
   task("A2", "description", "EASY",
@@ -61,6 +64,9 @@ const items: SeedItem[] = [
   task("A2", "description", "HARD",
     "Eine Freundin aus dem Ausland besucht Sie für ein Wochenende. Erzählen Sie, was man in Ihrer Stadt oder Region machen kann und was Sie ihr zeigen möchten.",
     ["mindestens zwei Sehenswürdigkeiten oder Aktivitäten", "Vorschlag für Essen oder Freizeit", "einfacher Plan (am Samstag ..., am Sonntag ...)", "kurze Begründung der Auswahl"]),
+  task("A2", "discussion", "MID",
+    "Sie möchten mit einem Freund am Samstag etwas zusammen unternehmen. Sprechen Sie ihm eine Nachricht auf die Mailbox: Was möchten Sie machen? Wann und wo treffen Sie sich? Was soll er mitbringen?",
+    ["konkreter Vorschlag für eine Aktivität", "Uhrzeit und Treffpunkt", "Bitte, etwas mitzubringen", "Begrüßung und Verabschiedung, Bitte um Rückruf oder Antwort"]),
 
   // ---------------------------------------------------------------- B1
   task("B1", "opinion", "EASY",
@@ -72,6 +78,9 @@ const items: SeedItem[] = [
   task("B1", "discussion", "HARD",
     "Ihre Lehrerin verlässt Ihre Sprachschule. Sie möchten mit der Klasse ein kleines Abschiedsfest organisieren. Erklären Sie Ihren Plan: Wann und wo soll das Fest stattfinden? Was soll es zu essen und zu trinken geben? Welches Geschenk schlagen Sie vor, und wer übernimmt welche Aufgabe?",
     ["Zeit und Ort mit Begründung", "Essen und Getränke", "Geschenkvorschlag", "Verteilung der Aufgaben"]),
+  task("B1", "presentation", "MID",
+    "Präsentieren Sie das Thema „Sollen Kinder schon in der Grundschule ein eigenes Smartphone haben?“. Berichten Sie von Ihrer Erfahrung, beschreiben Sie die Situation in Ihrem Heimatland, nennen Sie Vor- und Nachteile und sagen Sie Ihre Meinung.",
+    ["eigene Erfahrung oder Beobachtung", "Situation im Heimatland", "mindestens ein Vorteil und ein Nachteil", "eigene Meinung mit Begründung, Einleitung und Abschluss"]),
 
   // ---------------------------------------------------------------- B2
   task("B2", "discussion", "MID",
@@ -85,6 +94,10 @@ const items: SeedItem[] = [
   task("B2", "opinion", "HARD",
     "Einige Städte haben den Eintritt in ihre öffentlichen Museen abgeschafft. Sollte der Museumsbesuch überall kostenlos sein? Nehmen Sie Stellung, gehen Sie auf mögliche Gegenargumente ein und begründen Sie Ihre Position.",
     ["klare eigene Position", "mindestens zwei Argumente mit Beispielen", "Auseinandersetzung mit einem Gegenargument (z. B. Finanzierung)", "zusammenfassender Schluss"],
+    "neutral/sachlich"),
+  task("B2", "description", "EASY",
+    "Erzählen Sie von einer wichtigen Entscheidung in Ihrem Leben, zum Beispiel bei der Wahl der Ausbildung, eines Wohnorts oder einer Arbeitsstelle. Welche Möglichkeiten hatten Sie, wie haben Sie sich entschieden, und würden Sie heute wieder so entscheiden?",
+    ["Ausgangssituation und Alternativen", "Gründe für die Entscheidung", "Folgen der Entscheidung", "rückblickende Bewertung mit Konjunktiv II (würde, hätte)"],
     "neutral/sachlich"),
 
   // ---------------------------------------------------------------- C1
@@ -100,6 +113,10 @@ const items: SeedItem[] = [
     "Halten Sie einen kurzen Vortrag zu der Frage: Wie verändert die Digitalisierung die Art, wie Menschen Sprachen lernen? Gehen Sie auf Chancen und Grenzen ein und geben Sie ein konkretes Beispiel.",
     ["strukturierter Aufbau mit Einleitung, Hauptteil und Schluss", "Chancen digitaler Lernformen", "Grenzen oder Risiken", "konkretes Beispiel, präziser Wortschatz"],
     "neutral/sachlich"),
+  task("C1", "description", "EASY",
+    "Berichten Sie von einem Projekt, an dem Sie in Studium, Beruf oder Ehrenamt beteiligt waren. Erläutern Sie Ziel und Ihre Rolle, schildern Sie eine Schwierigkeit und wie Sie damit umgegangen sind, und sagen Sie, was Sie heute anders machen würden.",
+    ["Ziel des Projekts und eigene Rolle", "konkrete Schwierigkeit und Umgang damit", "reflektierte Bewertung (was man anders machen würde)", "gegliederter, flüssiger Bericht mit präzisem Wortschatz"],
+    "neutral/sachlich"),
 
   // ---------------------------------------------------------------- C2
   task("C2", "opinion", "MID",
@@ -113,6 +130,10 @@ const items: SeedItem[] = [
   task("C2", "discussion", "HARD",
     "Lässt sich gesellschaftlicher Fortschritt messen? Diskutieren Sie, woran man Fortschritt erkennen könnte, welche Maßstäbe dabei problematisch sind und wer darüber entscheiden sollte.",
     ["Vorschlag möglicher Maßstäbe", "kritische Reflexion der Maßstäbe", "Frage nach Deutungshoheit", "schlüssige Argumentation mit abgewogenem Schluss"],
+    "neutral/sachlich"),
+  task("C2", "presentation", "MID",
+    "Erklären Sie einem interessierten, aber fachfremden Publikum einen komplexen Sachverhalt aus Ihrem Fach- oder Interessengebiet. Machen Sie deutlich, warum er wichtig ist, veranschaulichen Sie ihn mit einem Vergleich oder Beispiel und gehen Sie auf ein verbreitetes Missverständnis ein.",
+    ["klare Einführung und Relevanz des Themas", "anschauliche Erklärung mit treffendem Vergleich oder Beispiel", "Klärung eines verbreiteten Missverständnisses", "adressatengerechte Vereinfachung ohne Verfälschung, souveräner Ausdruck"],
     "neutral/sachlich"),
 ];
 

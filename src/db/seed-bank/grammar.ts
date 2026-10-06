@@ -1,7 +1,9 @@
+import { cTest } from "./ctest";
 import type { SeedBankPart, SeedItem } from "./types";
 
 /**
- * Starter grammar items, 13 per CEFR level: 8 single choice and 5 gap fill.
+ * Starter grammar items, 13 per CEFR level: 8 single choice and 5 gap fill,
+ * plus one C-test per level (see ctest.ts).
  * The correct option position is spread evenly (two per letter per level).
  */
 
@@ -274,7 +276,71 @@ const C2: SeedItem[] = [
     "Die amtssprachliche Wendung lautet \"nach Maßgabe\" + Genitiv (entsprechend)."),
 ];
 
+/**
+ * One C-test per level: A1 and A2 everyday narration, B1 and B2 short
+ * informative texts, C1 and C2 academic prose. Variants list only completions
+ * that are equally correct in the context.
+ */
+const CTESTS: SeedItem[] = [
+  cTest("A1", "MID", {
+    first: "Ich heiße Lena und wohne in Köln.",
+    body:
+      "Ich bin 24 Jahre alt und arbeite in einem Café. Jeden Morgen stehe ich um sechs Uhr auf. " +
+      "Dann trinke ich einen Tee und fahre mit dem Bus zur Arbeit. Im Café mache ich Frühstück für die Gäste.",
+    last: "Am Wochenende besuche ich gern meine Eltern.",
+    // "Danach trinke ich einen Tee" fits as well as "Dann".
+    variants: { 9: ["nach"] },
+  }),
+  cTest("A2", "MID", {
+    first: "Letzten Sommer habe ich mit meiner Familie Urlaub an der Ostsee gemacht.",
+    body:
+      "Wir sind mit dem Zug gefahren, weil unser Auto kaputt war. Die Fahrt hat fast sechs Stunden gedauert, " +
+      "aber die Kinder haben die ganze Zeit gespielt. Unser Hotel lag direkt am Strand, und das Wetter war jeden Tag schön.",
+    last: "Nächstes Jahr wollen wir unbedingt wieder hinfahren.",
+    // "fast sechzehn Stunden" and "die ganze Zeit gesprochen" are grammatical and make sense.
+    variants: { 8: ["chzehn"], 13: ["rochen"] },
+  }),
+  cTest("B1", "MID", {
+    first: "Immer mehr Menschen in Deutschland engagieren sich ehrenamtlich.",
+    body:
+      "Sie helfen zum Beispiel in Sportvereinen oder in Altenheimen. " +
+      "Viele von ihnen sagen, dass ihnen diese Arbeit viel Freude macht und dass sie dabei neue Leute kennenlernen. " +
+      "Allerdings fehlt vielen Vereinen der Nachwuchs, denn junge Menschen haben oft wenig Zeit.",
+    last: "Deshalb bieten manche Organisationen inzwischen kurze Projekte an, für die man sich nicht lange verpflichten muss.",
+    // "dass ihnen die Arbeit" and "dass sie dadurch neue Leute kennenlernen" are equally correct.
+    variants: { 8: ["e"], 12: ["durch"] },
+  }),
+  cTest("B2", "MID", {
+    first: "In Deutschland landen jedes Jahr Millionen Tonnen Lebensmittel im Müll.",
+    body:
+      "Ein großer Teil davon stammt aus privaten Haushalten und wäre noch genießbar. " +
+      "Viele halten nämlich das Mindesthaltbarkeitsdatum für ein Verfallsdatum. " +
+      "Der Hersteller garantiert damit aber nur, dass das Produkt bis zu diesem Tag seine Qualität behält.",
+    last: "Wer Lebensmittel nach diesem Datum prüft, statt sie sofort wegzuwerfen, spart Geld und schont die Umwelt.",
+    // "Der Hersteller garantiert dabei aber nur" reads as well as "damit".
+    variants: { 12: ["bei"] },
+  }),
+  cTest("C1", "MID", {
+    first: "Ob wir einen Text auf Papier oder auf dem Bildschirm lesen, scheint auf den ersten Blick keine Rolle zu spielen.",
+    body:
+      "Zahlreiche Untersuchungen legen jedoch nahe, dass das Textverständnis beim digitalen Lesen geringer ausfällt, " +
+      "insbesondere bei längeren und anspruchsvollen Sachtexten. Als Erklärung wird häufig angeführt, dass Leserinnen und Leser " +
+      "am Bildschirm eher überfliegen und ihr eigenes Verständnis überschätzen.",
+    last: "Für Schulen ergibt sich daraus die Aufgabe, gezielte Strategien für das Lesen am Bildschirm zu vermitteln.",
+    // "wird häufig angegeben" is as idiomatic as "angeführt".
+    variants: { 12: ["geben"] },
+  }),
+  cTest("C2", "MID", {
+    first: "Das menschliche Gedächtnis gleicht weniger einem Archiv als einer fortwährenden Rekonstruktion.",
+    body:
+      "Jedes Mal, wenn wir eine Erinnerung abrufen, wird sie im Lichte gegenwärtiger Überzeugungen neu zusammengesetzt " +
+      "und dabei mitunter unbemerkt verändert. Diese Einsicht hat weitreichende Konsequenzen, nicht zuletzt für die Bewertung " +
+      "von Zeugenaussagen vor Gericht.",
+    last: "Selbst aufrichtige Zeugen können mit großer Gewissheit Einzelheiten schildern, die sich nachweislich nie zugetragen haben.",
+  }),
+];
+
 export const grammar: SeedBankPart = {
   stimuli: [],
-  items: [...A1, ...A2, ...B1, ...B2, ...C1, ...C2],
+  items: [...A1, ...A2, ...B1, ...B2, ...C1, ...C2, ...CTESTS],
 };

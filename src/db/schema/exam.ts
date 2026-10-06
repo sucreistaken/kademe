@@ -8,6 +8,7 @@ import {
   real,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 import type { BlueprintConfig } from "@/lib/exam/blueprint";
@@ -146,12 +147,15 @@ export const items = pgTable(
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
     reviewNote: text("review_note"),
     exposureCount: integer("exposure_count").notNull().default(0),
+    /** Seed key (see seed-bank/seed-key.ts), so the bank top-up knows which starter items an org has. */
+    seedKey: text("seed_key"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     index("items_pool_idx").on(t.orgId, t.section, t.level, t.status),
     index("items_stimulus_idx").on(t.stimulusId),
+    uniqueIndex("items_seed_key_per_org").on(t.orgId, t.seedKey),
   ],
 );
 

@@ -1,9 +1,12 @@
-import { eq } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { items, stimuli } from "@/db/schema";
 import { SEED_BANK } from "@/db/seed-bank";
+import { seedItemKey } from "@/db/seed-bank/seed-key";
+import type { SeedItem, SeedStimulus } from "@/db/seed-bank/types";
 import { thetaForLevel } from "@/lib/exam/cefr";
 import { synthesize, ttsAvailable } from "@/lib/tts";
+import { planTopUp, seedOrderInStimulus } from "./bank-topup";
 
 /**
  * Loads the hand-written starter bank into an organisation. Rows are APPROVED
@@ -21,20 +24,7 @@ export async function importSeedBank(orgId: string, options: { audio?: boolean; 
   let audioReused = 0;
   let audioFailed = 0;
   for (const s of SEED_BANK.stimuli) {
-    const [row] = await db
-      .insert(stimuli)
-      .values({
-        orgId,
-        section: s.section,
-        level: s.level,
-        title: s.title,
-        body: s.body,
-        topic: s.topic,
-        speakers: s.speakers ?? null,
-        origin: "SEED",
-        seedKey: s.key,
-      })
-      .returning({ id: stimuli.id });
+    const [row] = await db.insert(stimuli).values(stimulusRow(orgId, s)).returning({ id: stimuli.id });
     byKey.set(s.key, row.id);
     if (s.section === "LISTENING" && options.audio !== false && ttsAvailable()) {
       try {
@@ -52,29 +42,108 @@ export async function importSeedBank(orgId: string, options: { audio?: boolean; 
       }
     }
   }
-  const order = new Map<string, number>();
-  const rows = SEED_BANK.items.map((item) => {
-    const stimulusId = item.stimulusKey ? byKey.get(item.stimulusKey) ?? null : null;
-    const n = item.stimulusKey ? (order.get(item.stimulusKey) ?? 0) + 1 : 0;
-    if (item.stimulusKey) order.set(item.stimulusKey, n);
-    return {
-      orgId,
-      section: item.section,
-      level: item.level,
-      difficulty: thetaForLevel(item.level, item.within ?? "MID"),
-      type: item.type,
-      skillTag: item.skillTag,
-      stimulusId,
-      orderInStimulus: n,
-      prompt: item.prompt,
-      content: item.content,
-      answerKey: item.key,
-      rubric: item.rubric ?? null,
-      explanation: item.explanation ?? null,
-      status: "APPROVED" as const,
-      origin: "SEED" as const,
-    };
-  });
+  const order = seedOrderInStimulus(SEED_BANK);
+  const rows = SEED_BANK.items.map((item) =>
+    itemRow(orgId, item, seedItemKey(item), item.stimulusKey ? byKey.get(item.stimulusKey) ?? null : null, order.get(item) ?? 0),
+  );
   for (let i = 0; i < rows.length; i += 100) await db.insert(items).values(rows.slice(i, i + 100));
   return { stimuli: SEED_BANK.stimuli.length, items: rows.length, audioMade, audioReused, audioFailed };
+}
+
+/**
+ * Adds the starter texts and items an organisation does not have yet, for
+ * orgs seeded before the bank grew. Idempotent: a second run inserts nothing.
+ * Old seed rows without a seed key get theirs backfilled first, so they are
+ * not added twice. New listening clips are stored without audio; `pnpm
+ * bank:tts` makes it. One transaction per organisation.
+ */
+export async function topUpSeedBank(orgId: string) {
+  return db.transaction(async (tx) => {
+    const haveStimuli = await tx
+      .select({ id: stimuli.id, seedKey: stimuli.seedKey })
+      .from(stimuli)
+      .where(eq(stimuli.orgId, orgId));
+    const haveItems = await tx
+      .select({
+        id: items.id,
+        seedKey: items.seedKey,
+        origin: items.origin,
+        section: items.section,
+        level: items.level,
+        type: items.type,
+        prompt: items.prompt,
+        content: items.content,
+        stimulusSeedKey: stimuli.seedKey,
+      })
+      .from(items)
+      .leftJoin(stimuli, eq(stimuli.id, items.stimulusId))
+      .where(eq(items.orgId, orgId));
+    const plan = planTopUp(SEED_BANK, { stimuli: haveStimuli, items: haveItems });
+
+    for (const b of plan.backfill) {
+      await tx.update(items).set({ seedKey: b.seedKey }).where(and(eq(items.id, b.id), eq(items.orgId, orgId)));
+    }
+    const byKey = new Map(haveStimuli.filter((s) => s.seedKey).map((s) => [s.seedKey!, s.id]));
+    for (const s of plan.stimuli) {
+      const [row] = await tx.insert(stimuli).values(stimulusRow(orgId, s)).returning({ id: stimuli.id });
+      byKey.set(s.key, row.id);
+    }
+    const order = seedOrderInStimulus(SEED_BANK);
+    const rows = plan.items.map(({ item, seedKey }) => {
+      const stimulusId = item.stimulusKey ? byKey.get(item.stimulusKey) : null;
+      if (stimulusId === undefined) throw new Error(`stimulus ${item.stimulusKey} is missing for org ${orgId}`);
+      return itemRow(orgId, item, seedKey, stimulusId, order.get(item) ?? 0);
+    });
+    for (let i = 0; i < rows.length; i += 100) await tx.insert(items).values(rows.slice(i, i + 100));
+    return {
+      stimuliAdded: plan.stimuli.length,
+      itemsAdded: rows.length,
+      keysBackfilled: plan.backfill.length,
+      listeningWithoutAudio: plan.stimuli.filter((s) => s.section === "LISTENING").map((s) => s.key),
+    };
+  });
+}
+
+/** Seed item counts of an organisation, for the top-up script's before/after line. */
+export async function seedCounts(orgId: string) {
+  const [[i], [s]] = await Promise.all([
+    db.select({ n: count() }).from(items).where(and(eq(items.orgId, orgId), eq(items.origin, "SEED"))),
+    db.select({ n: count() }).from(stimuli).where(and(eq(stimuli.orgId, orgId), eq(stimuli.origin, "SEED"))),
+  ]);
+  return { items: i.n, stimuli: s.n };
+}
+
+function stimulusRow(orgId: string, s: SeedStimulus) {
+  return {
+    orgId,
+    section: s.section,
+    level: s.level,
+    title: s.title,
+    body: s.body,
+    topic: s.topic,
+    speakers: s.speakers ?? null,
+    origin: "SEED" as const,
+    seedKey: s.key,
+  };
+}
+
+function itemRow(orgId: string, item: SeedItem, seedKey: string, stimulusId: string | null, orderInStimulus: number) {
+  return {
+    orgId,
+    section: item.section,
+    level: item.level,
+    difficulty: thetaForLevel(item.level, item.within ?? "MID"),
+    type: item.type,
+    skillTag: item.skillTag,
+    stimulusId,
+    orderInStimulus,
+    prompt: item.prompt,
+    content: item.content,
+    answerKey: item.key,
+    rubric: item.rubric ?? null,
+    explanation: item.explanation ?? null,
+    status: "APPROVED" as const,
+    origin: "SEED" as const,
+    seedKey,
+  };
 }

@@ -1,7 +1,7 @@
 import type { SeedBankPart, SeedItem } from "./types";
 
 /**
- * Starter writing tasks, two per CEFR level. Scored by a teacher against the
+ * Starter writing tasks, four per CEFR level. Scored by a teacher against the
  * rubric: the content points say what a complete answer covers, the register
  * says how the reader is addressed.
  */
@@ -62,6 +62,30 @@ const items: SeedItem[] = [
       "Tag oder Datum der Rückkehr",
     ],
     INFORMAL),
+  task("A1", "invitation", "MID", [20, 40],
+    "Sie haben am Samstag Geburtstag und machen eine Party. Schreiben Sie Ihrem Kollegen Tom eine kurze E-Mail.\n\n" +
+      "- Laden Sie Tom ein.\n" +
+      "- Wann und wo ist die Party?\n" +
+      "- Was soll Tom mitbringen?",
+    [
+      "Einladung zur Geburtstagsparty",
+      "Tag, Uhrzeit und Ort",
+      "Bitte, etwas mitzubringen (z. B. Getränke, Salat, Musik)",
+      "Anrede und Gruß (Hallo Tom ... / Bis Samstag)",
+    ],
+    INFORMAL),
+  task("A1", "formal", "HARD", [20, 40],
+    "Sie möchten an der Volkshochschule einen Deutschkurs machen. Schreiben Sie eine E-Mail an die Volkshochschule.\n\n" +
+      "- Sagen Sie, welchen Kurs Sie suchen.\n" +
+      "- Wann haben Sie Zeit?\n" +
+      "- Fragen Sie nach dem Preis.",
+    [
+      "Kurswunsch (z. B. Deutsch A1, Anfänger)",
+      "Wochentage oder Tageszeit, an denen man Zeit hat",
+      "Frage nach dem Preis",
+      "formelle Anrede und Gruß (Sehr geehrte Damen und Herren ... / Mit freundlichen Grüßen)",
+    ],
+    FORMAL),
 
   // ---------------------------------------------------------------- A2
   task("A2", "email", "MID", [40, 70],
@@ -87,6 +111,31 @@ const items: SeedItem[] = [
       "Grund für das Fehlen",
       "Frage nach Hausaufgaben oder Material",
       "Angabe, ab wann man wieder teilnimmt",
+    ],
+    FORMAL),
+  task("A2", "reply", "EASY", [40, 70],
+    "Ihr Freund Jonas hat Sie zu seiner Grillparty am Samstag eingeladen. Sie können erst später kommen. Schreiben Sie Jonas eine E-Mail.\n\n" +
+      "- Bedanken Sie sich für die Einladung.\n" +
+      "- Sagen Sie, warum Sie später kommen und wann Sie da sind.\n" +
+      "- Fragen Sie, was Sie mitbringen sollen.",
+    [
+      "Dank für die Einladung",
+      "Grund für das spätere Kommen",
+      "ungefähre Uhrzeit der Ankunft",
+      "Frage, was man mitbringen soll; passende Anrede und Gruß",
+    ],
+    INFORMAL),
+  task("A2", "application", "MID", [40, 70],
+    "Sie haben eine Anzeige gelesen: Das Café Sonnenschein sucht eine Aushilfe für das Wochenende. Schreiben Sie eine E-Mail an das Café.\n\n" +
+      "- Sagen Sie, dass Sie Interesse haben.\n" +
+      "- Schreiben Sie etwas über sich (Alter, Erfahrung, Sprachen).\n" +
+      "- Wann können Sie arbeiten?\n" +
+      "- Fragen Sie nach dem Lohn.",
+    [
+      "Bezug auf die Anzeige und Interesse an der Stelle",
+      "Angaben zur eigenen Person und Erfahrung",
+      "mögliche Arbeitszeiten",
+      "Frage nach dem Lohn; formelle Anrede und Gruß",
     ],
     FORMAL),
 
@@ -117,6 +166,32 @@ const items: SeedItem[] = [
       "Bitte um Antwort, formeller Briefschluss",
     ],
     FORMAL),
+  task("B1", "email", "EASY", [80, 120],
+    "Ihre Freundin Clara möchte nächstes Jahr für sechs Monate in Ihrer Stadt arbeiten und bittet Sie um Tipps. Schreiben Sie Clara eine E-Mail.\n\n" +
+      "- Reagieren Sie auf Claras Plan.\n" +
+      "- Geben Sie Tipps zur Wohnungssuche.\n" +
+      "- Beschreiben Sie, was man in Ihrer Stadt in der Freizeit machen kann.\n" +
+      "- Bieten Sie Ihre Hilfe an.",
+    [
+      "persönliche Reaktion auf den Plan",
+      "mindestens ein konkreter Tipp zur Wohnungssuche",
+      "Freizeitmöglichkeiten in der Stadt",
+      "konkretes Hilfsangebot, passende Anrede und Gruß",
+    ],
+    INFORMAL),
+  task("B1", "application", "MID", [80, 120],
+    "Sie möchten in den Sommerferien vier Wochen in einem Hotel am Bodensee arbeiten. Schreiben Sie eine E-Mail an das Hotel Seeblick.\n\n" +
+      "- Stellen Sie sich kurz vor.\n" +
+      "- Erklären Sie, warum Sie sich für die Stelle interessieren.\n" +
+      "- Beschreiben Sie Ihre Erfahrungen und Sprachkenntnisse.\n" +
+      "- Fragen Sie nach Arbeitszeiten und Unterkunft.",
+    [
+      "kurze Vorstellung (Name, Alter, Ausbildung oder Beruf)",
+      "Motivation für die Stelle",
+      "Erfahrungen und Sprachkenntnisse",
+      "Fragen zu Arbeitszeiten und Unterkunft; formeller Briefschluss",
+    ],
+    FORMAL),
 
   // ---------------------------------------------------------------- B2
   task("B2", "argument", "MID", [150, 200],
@@ -143,6 +218,32 @@ const items: SeedItem[] = [
       "Nutzung der Bibliothek durch sich selbst und andere Gruppen",
       "mögliche Folgen der geplanten Änderungen",
       "realistischer Alternativvorschlag (z. B. Ehrenamt, andere Schließtage, Gebühren)",
+    ],
+    FORMAL),
+  task("B2", "report", "EASY", [150, 200],
+    "Ein Bildungsportal sammelt Erfahrungsberichte über Auslandsaufenthalte. Schreiben Sie einen Beitrag über einen längeren Aufenthalt im Ausland (Studium, Praktikum, Arbeit oder Sprachkurs).\n\n" +
+      "- Beschreiben Sie, wo und wie lange Sie waren und warum.\n" +
+      "- Vergleichen Sie Ihre Erwartungen mit der Wirklichkeit.\n" +
+      "- Berichten Sie von einer Schwierigkeit und wie Sie sie gelöst haben.\n" +
+      "- Geben Sie anderen eine begründete Empfehlung.",
+    [
+      "Ort, Dauer und Anlass des Aufenthalts",
+      "Vergleich von Erwartungen und Wirklichkeit",
+      "konkrete Schwierigkeit mit Lösung",
+      "begründete Empfehlung, zusammenhängender Text mit passenden Konnektoren",
+    ],
+    NEUTRAL),
+  task("B2", "request", "MID", [150, 200],
+    "Sie möchten Ihre Arbeitszeit für ein Jahr auf 30 Stunden pro Woche reduzieren, um eine berufsbegleitende Weiterbildung zu machen. Schreiben Sie eine E-Mail an Ihre Vorgesetzte, Frau Dr. Lehmann.\n\n" +
+      "- Nennen Sie Ihr Anliegen.\n" +
+      "- Begründen Sie es und erklären Sie, welchen Nutzen die Weiterbildung auch für die Firma hat.\n" +
+      "- Machen Sie einen Vorschlag, wie Ihre Aufgaben in dieser Zeit erledigt werden können.\n" +
+      "- Bitten Sie um ein Gespräch.",
+    [
+      "klares Anliegen mit Zeitraum und Stundenzahl",
+      "Begründung mit Nutzen für die Firma",
+      "realistischer Vorschlag zur Verteilung der Aufgaben",
+      "Bitte um ein Gespräch, höflicher und formeller Ton",
     ],
     FORMAL),
 
@@ -173,6 +274,32 @@ const items: SeedItem[] = [
       "differenziertes, begründetes Fazit; Kohärenz und präziser Wortschatz",
     ],
     NEUTRAL),
+  task("C1", "forum", "EASY", [150, 200],
+    "In einem Online-Forum einer Wochenzeitung wird die Frage diskutiert: „Sollte das Wahlalter bei allen Wahlen auf 16 Jahre gesenkt werden?“ Schreiben Sie einen Beitrag.\n\n" +
+      "- Beziehen Sie sich auf die Frage und nehmen Sie eine klare Position ein.\n" +
+      "- Stützen Sie Ihre Position mit mindestens zwei Argumenten.\n" +
+      "- Gehen Sie auf ein mögliches Gegenargument ein.\n" +
+      "- Schließen Sie mit einer Schlussfolgerung oder einem Vorschlag.",
+    [
+      "klare Position mit Bezug auf die Frage",
+      "mindestens zwei tragfähige Argumente",
+      "Auseinandersetzung mit einem Gegenargument",
+      "pointierter Schluss; präziser, variierter Wortschatz",
+    ],
+    NEUTRAL),
+  task("C1", "formal", "MID", [200, 260],
+    "Ihre Hochschule plant, alle großen Vorlesungen der ersten Semester künftig nur noch online anzubieten. Schreiben Sie als Mitglied der Studierendenvertretung eine Stellungnahme an die Hochschulleitung.\n\n" +
+      "- Nehmen Sie Bezug auf die geplante Änderung.\n" +
+      "- Erläutern Sie die möglichen Folgen für Studienanfänger.\n" +
+      "- Erkennen Sie nachvollziehbare Gründe der Hochschulleitung an.\n" +
+      "- Unterbreiten Sie einen begründeten Gegenvorschlag.",
+    [
+      "sachlicher Bezug auf die geplante Änderung",
+      "differenzierte Darstellung der Folgen für Studienanfänger",
+      "Anerkennung nachvollziehbarer Gründe (z. B. Raumnot, Kosten, Flexibilität)",
+      "begründeter Gegenvorschlag, durchgehend formelles Register",
+    ],
+    FORMAL),
 
   // ---------------------------------------------------------------- C2
   task("C2", "commentary", "MID", [250, 320],
@@ -199,6 +326,32 @@ const items: SeedItem[] = [
       "begründete Bewertung mit konkreten Beispielen",
       "stilistisch variierte, adressatengerechte Sprache",
       "abgewogenes Urteil mit Empfehlung für eine Zielgruppe",
+    ],
+    NEUTRAL),
+  task("C2", "letter", "MID", [250, 320],
+    "Eine Wochenzeitung hat einen Gastbeitrag mit der These veröffentlicht: „Die Geisteswissenschaften sind ein Luxus, den sich eine moderne Gesellschaft nicht mehr leisten kann.“ Schreiben Sie einen Leserbrief an die Redaktion.\n\n" +
+      "- Geben Sie die Kernaussage des Beitrags knapp und fair wieder.\n" +
+      "- Prüfen Sie die Voraussetzungen, auf denen die These beruht.\n" +
+      "- Entwickeln Sie eine eigene, begründete Gegenposition oder eine differenzierte Zwischenposition.\n" +
+      "- Wahren Sie bei aller Deutlichkeit einen sachlichen, gehobenen Ton.",
+    [
+      "knappe, faire Wiedergabe der These",
+      "Prüfung der impliziten Voraussetzungen (z. B. Nutzenbegriff, Kostenargument)",
+      "eigene, gut begründete Position mit Beispielen",
+      "souveräner, gehobener Stil, der Schärfe und Sachlichkeit verbindet",
+    ],
+    FORMAL),
+  task("C2", "argument", "HARD", [250, 320],
+    "Schreiben Sie für eine Fachzeitschrift einen argumentativen Text zu der Frage: „Sollen Algorithmen bei der Vergabe von Studienplätzen, Krediten oder Arbeitsstellen mitentscheiden dürfen?“\n\n" +
+      "- Klären Sie, was unter „mitentscheiden“ zu verstehen ist, und grenzen Sie die Frage ein.\n" +
+      "- Wägen Sie Effizienz und Gleichbehandlung gegen Intransparenz und Verzerrungen ab.\n" +
+      "- Beziehen Sie die Frage der Verantwortung bei Fehlentscheidungen ein.\n" +
+      "- Formulieren Sie eine begründete Position mit konkreten Bedingungen.",
+    [
+      "begriffliche Klärung und Eingrenzung der Fragestellung",
+      "ausgewogene Abwägung von Chancen und Risiken mit Beispielen",
+      "Reflexion der Verantwortung bei Fehlentscheidungen",
+      "präzise formulierte Position mit Bedingungen; stringente, stilistisch souveräne Argumentation",
     ],
     NEUTRAL),
 ];
