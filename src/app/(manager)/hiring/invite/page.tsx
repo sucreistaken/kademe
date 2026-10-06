@@ -13,8 +13,9 @@ import { invitableOpenings } from "@/solutions/hiring/server/invitations";
 export const dynamic = "force-dynamic";
 
 /**
- * HIRING-UX 5.11 as a page (`?opening=` preselects); the opening pages open
- * the same form in a Sheet. A reviewer reads why there is no form; the
+ * HIRING-UX 5.11 as a page (`?opening=` preselects), the guided flow of
+ * HIRING-VISUAL-FLOW 4.9; the opening pages open the same flow in a Sheet.
+ * A reviewer reads why there is no form (no opening is read for them); the
  * actions refuse them too.
  */
 export default async function HiringInvitePage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
@@ -36,21 +37,23 @@ export default async function HiringInvitePage({ searchParams }: { searchParams:
     );
   }
   const openings = await invitableOpenings(user.orgId);
+  if (openings.length === 0) {
+    return (
+      <main className="mx-auto max-w-[720px] px-page py-8">
+        <PageTitle title={t("hiringInvite.title")} />
+        <Card className="mt-section space-y-2 p-card">
+          <p className="text-[14px] text-ink">{t("hiringInvite.noOpenings")}</p>
+          <Link href="/hiring/openings" className="text-[14px] font-medium text-ink underline decoration-underline underline-offset-4">
+            {t("hiringInvite.goOpenings")}
+          </Link>
+        </Card>
+      </main>
+    );
+  }
+  // 4.9: the guided flow draws its own head ("Aday davet et · <alım>", "Çık") and its steps.
   return (
-    <main className="mx-auto max-w-[720px] px-page py-8">
-      <PageTitle title={t("hiringInvite.title")} sub={t("hiringInvite.lead")} />
-      <Card className="mt-section p-card">
-        {openings.length === 0 ? (
-          <div className="space-y-2">
-            <p className="text-[14px] text-ink">{t("hiringInvite.noOpenings")}</p>
-            <Link href="/hiring/openings" className="text-[14px] font-medium text-ink underline decoration-underline underline-offset-4">
-              {t("hiringInvite.goOpenings")}
-            </Link>
-          </div>
-        ) : (
-          <InviteForm openings={openings} initialOpeningId={one(sp.opening) ?? null} today={orgDay()} zone={zoneLabel(locale)} />
-        )}
-      </Card>
+    <main className="mx-auto max-w-[1080px] px-page pt-6">
+      <InviteForm container="page" openings={openings} initialOpeningId={one(sp.opening) ?? null} today={orgDay()} zone={zoneLabel(locale)} />
     </main>
   );
 }

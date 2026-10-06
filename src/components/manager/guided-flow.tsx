@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import type { FooterAction } from "@/components/visual/footer-action";
 import { StepFooter } from "@/components/visual/step-footer";
 import { StepScreen } from "@/components/visual/step-screen";
@@ -119,6 +119,7 @@ export function GuidedFlow({
   back,
   exit,
   enter = false,
+  arrive = false,
   container = "page",
 }: {
   kicker: ReactNode;
@@ -129,6 +130,12 @@ export function GuidedFlow({
   exit?: FlowExit | null;
   /** True once the step changed in place (useFlowStep's `moved`): only then the step fades in. */
   enter?: boolean;
+  /**
+   * The flow comes back in place of a view that replaced it (the invite's
+   * ready view and "Başka aday davet et"): the control the keyboard user was
+   * on is gone, so the heading takes the focus once, when the flow mounts.
+   */
+  arrive?: boolean;
   container?: "page" | "sheet";
 }) {
   const t = useMT("flow");
@@ -142,6 +149,13 @@ export function GuidedFlow({
   const heading = useStepFocus<HTMLHeadingElement>(flowFocusKey(enter || heard || container === "sheet", step.id));
   const [area, setArea] = useState<HTMLDivElement | null>(null);
   useKeepFocus(area, heading);
+  // Read once: only the mount after a replaced view takes the focus.
+  const arriving = useRef(arrive);
+  useEffect(() => {
+    if (!arriving.current) return;
+    arriving.current = false;
+    heading.current?.focus({ preventScroll: true });
+  }, [heading]);
   const label = journey && journey.current > 0 ? t("stepLabel", { n: journey.current, total: journey.steps }) : null;
   const footer = (
     <StepFooter

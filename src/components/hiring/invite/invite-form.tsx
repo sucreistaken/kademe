@@ -3,19 +3,38 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useLocale } from "next-intl";
-import { Button, DisabledReason } from "@/components/ui/button";
+import { ClipboardPaste, UserRoundPlus } from "lucide-react";
+import { flowJourney } from "@/components/manager/flow-model";
+import { GuidedFlow, useFlowStep, type FlowStep } from "@/components/manager/guided-flow";
+import { SummaryRows } from "@/components/manager/summary-rows";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusDot } from "@/components/ui/status-dot";
 import { Textarea } from "@/components/ui/textarea";
+import { ChoiceCardGroup } from "@/components/visual/choice-card";
+import { Disclosure } from "@/components/visual/disclosure";
+import { Illustration } from "@/components/visual/illustrations";
+import { StepScreen } from "@/components/visual/step-screen";
 import { useMT } from "@/i18n/manager-client";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/i18n/locale";
-import { firstInviteLines, formatInviteDay, linkExpiryDay, MAX_INVITE_ROWS, parseInviteRows } from "@/solutions/hiring/rules/invitation";
+import { firstInviteLines, formatInviteDay, MAX_INVITE_ROWS, parseInviteRows } from "@/solutions/hiring/rules/invitation";
 import { inviteCandidateAction, inviteManyAction, type InviteOneResult } from "@/app/(manager)/hiring/invite/actions";
 import { CopyField } from "./copy-field";
-import { deadlineInputValue, inviteReason, panelShortfall, sheetLocked, type InviteOpening } from "./form-rules";
+import {
+  INVITE_STEPS,
+  deadlineInputValue,
+  deadlineRow,
+  inviteFirstInvalid,
+  inviteReason,
+  inviteStepOf,
+  invitePath,
+  panelShortfall,
+  personWait,
+  sheetLocked,
+  type InviteOpening,
+  type InviteStep,
+} from "./form-rules";
 
 type Ready = Extract<InviteOneResult, { ok: true }>;
 type Refusal = Extract<InviteOneResult, { ok: false }>;
@@ -30,13 +49,19 @@ type Done =
 const LINK = "underline decoration-underline underline-offset-4";
 
 /**
- * HIRING-UX 5.11: the opening (preselected), the person, their language and
- * the last day (from the opening, "Değiştir" to choose another), or a pasted
- * list. The button waits with its reason, said next to it. On success the
- * link is shown once with "Linki kopyala" as the filled button and the ready
- * message below; a pasted list gets each row's result, a link and a message
- * per invitation, and "Tümünü kopyala". Both end with "Adaylara git" (C13). `onLockChange` tells a Sheet when it
- * must not close on Escape or an outside click (sheetLocked).
+ * HIRING-UX 5.11 as HIRING-VISUAL-FLOW 4.9 (K12, D11): the invite as a guided
+ * flow. The opening (on the page, when more than one is invitable), then the
+ * person (one candidate or a pasted list), then a summary where the language
+ * and the last day already hold their defaults and open their own step with
+ * "Değiştir". The summary's "Davet linkini oluştur" calls the same actions
+ * with the same refusals; a refusal opens the step it is about
+ * (inviteStepOf). On success the link is shown once with "Linki kopyala" as
+ * the filled button and the ready message behind a disclosure; a pasted list
+ * keeps its own ready view. Both end with "Adaylara git" (C13). On the page
+ * the step lives in the address's hash (every hash it reads is a step of this
+ * flow); in a Sheet the steps live in memory and the address is never
+ * written (the Sheet's page owns the hash), and `onLockChange` keeps the
+ * Sheet open while a request runs or links are shown (sheetLocked).
  */
 export function InviteForm({
   openings,
@@ -45,6 +70,7 @@ export function InviteForm({
   zone,
   onDone,
   onLockChange,
+  container = "page",
 }: {
   openings: InviteOpening[];
   initialOpeningId: string | null;
@@ -52,8 +78,11 @@ export function InviteForm({
   zone: string;
   onDone?: () => void;
   onLockChange?: (locked: boolean) => void;
+  container?: "page" | "sheet";
 }) {
   const t = useMT("hiringInvite");
+  const common = useMT("hiringCommon");
+  const flow = useMT("flow");
   const appLocale = useLocale();
   const uiLocale: Locale = isLocale(appLocale) ? appLocale : DEFAULT_LOCALE;
   const [openingId, setOpeningId] = useState<string>(
@@ -64,9 +93,11 @@ export function InviteForm({
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [locale, setLocale] = useState<Locale>("tr");
-  const [changing, setChanging] = useState(false);
   const [deadline, setDeadline] = useState<string | null>(null);
   const [text, setText] = useState("");
+  const [fromSummary, setFromSummary] = useState(false);
+  // True once "Başka aday davet et" brought the flow back in place of the ready view.
+  const [returned, setReturned] = useState(false);
   const [pending, start] = useTransition();
   const [refusal, setRefusal] = useState<{ result: Refusal; name: string } | null>(null);
   const [done, setDone] = useState<Done | null>(null);
@@ -75,8 +106,17 @@ export function InviteForm({
   const short = panelShortfall(opening);
   // The day the server will use (linkExpiryDay): the chosen one held to the opening's deadline, else the deadline, else 14 days.
   const openingDeadline = opening?.deadlineDay && opening.deadlineDay >= today ? opening.deadlineDay : null;
-  const shownDay = opening ? linkExpiryDay({ chosen: deadline, openingDeadlineDay: opening.deadlineDay, today }) : null;
+  const day = deadlineRow({ opening, deadline, today });
   const doneHeading = useRef<HTMLHeadingElement>(null);
+
+  // The opening is a step only on the page and only when there is a choice to make.
+  const pickOpening = container === "page" && openings.length > 1;
+  const path = invitePath({ pickOpening });
+  // Every step this flow can show, so the hash (page) only ever names one of them.
+  const steps = pickOpening ? INVITE_STEPS : INVITE_STEPS.filter((s) => s !== "opening");
+  const nav = useFlowStep({ steps, firstInvalid: inviteFirstInvalid({ opening, pickOpening, mode, fullName, email, rows: parsed.rows }), mode: container === "page" ? "hash" : "memory" });
+  const step = nav.step;
+  const dirty = fullName !== "" || email !== "" || text !== "" || deadline !== null || locale !== "tr";
 
   useEffect(() => {
     if (done) doneHeading.current?.focus();
@@ -99,17 +139,36 @@ export function InviteForm({
     setFullName("");
     setEmail("");
     setText("");
+    setFromSummary(false);
+    setReturned(true);
+    // "Başka aday davet et" goes back to the person and keeps the opening and the language (4.9).
+    nav.go("person");
+  }
+
+  /** W8: the step a refusal belongs to; the opening step exists only where it was offered. */
+  const refusalStep = (code: Refusal["code"]): InviteStep => {
+    const at = inviteStepOf(code);
+    return at === "opening" && !pickOpening ? "summary" : at;
+  };
+
+  function refuse(result: Refusal, name: string) {
+    setRefusal({ result, name });
+    const at = refusalStep(result.code);
+    if (at !== step) nav.go(at);
   }
 
   function submit(allowDuplicate = false) {
-    setRefusal(null);
+    // "Yine de davet et" keeps the duplicate note (and its own busy button) until the answer comes.
+    if (!allowDuplicate) setRefusal(null);
     const name = fullName;
     start(async () => {
       try {
         if (mode === "single") {
           const result = await inviteCandidateAction({ openingId, fullName, email: email.trim(), locale, deadline, allowDuplicate });
-          if (result.ok) setDone({ kind: "one", result });
-          else setRefusal({ result, name });
+          if (result.ok) {
+            setRefusal(null);
+            setDone({ kind: "one", result });
+          } else refuse(result, name);
           return;
         }
         // Only the rows that are read travel (the server cuts the same way).
@@ -117,7 +176,7 @@ export function InviteForm({
         // Line 0 is a refusal of the whole list (role, opening, day) or malformed input.
         const whole = results.find((r) => r.line === 0);
         if (whole && !whole.result.ok) {
-          setRefusal({ result: whole.result, name: "" });
+          refuse(whole.result, "");
           return;
         }
         if (results.length === 0) {
@@ -138,34 +197,58 @@ export function InviteForm({
 
   // C13: the way to the opening's Candidates tab after a link is shown; from a Sheet it also closes the Sheet.
   const toCandidates = openingId ? (
-    <Link href={`/hiring/openings/${openingId}/candidates`} onClick={onDone} className={`inline-flex min-h-10 items-center text-[14px] font-medium text-ink ${LINK}`}>
+    <Link href={`/hiring/openings/${openingId}/candidates`} onClick={onDone} className={`inline-flex min-h-11 items-center text-[14px] font-medium text-ink ${LINK}`}>
       {t("toCandidates")}
     </Link>
   ) : null;
+  const after = (
+    <div className="flex flex-wrap items-center gap-4">
+      <button type="button" onClick={reset} className={`min-h-11 text-[14px] font-medium text-ink ${LINK}`}>
+        {t("another")}
+      </button>
+      {toCandidates}
+      {onDone ? (
+        <Button variant="ghost" onClick={onDone}>
+          {t("close")}
+        </Button>
+      ) : null}
+    </div>
+  );
 
   if (done?.kind === "one") {
-    return (
+    const body = (
       <div className="space-y-5">
+        <CopyField id="invite-link" label={t("linkLabel")} value={done.result.url} primary copyLabel={t("copyLink")} />
+        <Disclosure label={t("showMessage")}>
+          <CopyField id="invite-message" label={t("messageLabel")} value={done.result.message.body} multiline copyLabel={t("copyMessage")} />
+        </Disclosure>
+        <p className="text-[14px] text-ink-2">{t("onceNote")}</p>
+        {after}
+      </div>
+    );
+    // 4.9: the ready screen, one of the panel's two success moments with a small drawing.
+    return container === "page" ? (
+      <StepScreen
+        layout="single"
+        width={640}
+        illustration="inviteReady"
+        illustrationSize="spot"
+        title={t("readyTitle")}
+        titleRef={doneHeading}
+        lead={<p className="tnum">{t("readyBody", { name: done.result.name, date: done.result.expires })}</p>}
+      >
+        {body}
+      </StepScreen>
+    ) : (
+      <div className="space-y-5 pt-2 pb-8">
+        <Illustration name="inviteReady" size="small" />
         <div>
-          <h2 ref={doneHeading} tabIndex={-1} className="text-[16px] leading-6 font-semibold text-ink outline-none">
+          <h2 ref={doneHeading} tabIndex={-1} className="text-[20px] leading-7 font-semibold text-ink outline-none">
             {t("readyTitle")}
           </h2>
           <p className="tnum mt-1 text-[14px] text-muted">{t("readyBody", { name: done.result.name, date: done.result.expires })}</p>
         </div>
-        <CopyField id="invite-link" label={t("linkLabel")} value={done.result.url} primary copyLabel={t("copyLink")} />
-        <CopyField id="invite-message" label={t("messageLabel")} value={done.result.message.body} multiline copyLabel={t("copyMessage")} />
-        <p className="text-[13px] text-muted">{t("onceNote")}</p>
-        <div className="flex flex-wrap items-center gap-4">
-          <button type="button" onClick={reset} className={`min-h-10 text-[14px] font-medium text-ink ${LINK}`}>
-            {t("another")}
-          </button>
-          {toCandidates}
-          {onDone ? (
-            <Button variant="ghost" onClick={onDone}>
-              {t("close")}
-            </Button>
-          ) : null}
-        </div>
+        {body}
       </div>
     );
   }
@@ -173,10 +256,10 @@ export function InviteForm({
   if (done?.kind === "many") {
     const all = done.ok.map((r) => `${r.fullName}\t${r.email}\t${r.result.url}`).join("\n");
     const duplicates = done.failed.some((f) => f.result.code === "DUPLICATE");
-    return (
+    const view = (
       <div className="space-y-5">
         <div>
-          <h2 ref={doneHeading} tabIndex={-1} className="tnum text-[16px] leading-6 font-semibold text-ink outline-none">
+          <h2 ref={doneHeading} tabIndex={-1} className="tnum text-[20px] leading-7 font-semibold text-ink outline-none">
             {t("manyReady", { count: done.ok.length })}
           </h2>
           {done.failed.length ? <p className="tnum mt-1 text-[14px] text-ink">{t("manyFailed", { count: done.failed.length })}</p> : null}
@@ -215,206 +298,282 @@ export function InviteForm({
             <p className="text-[13px] text-muted">{t("onceNoteMany")}</p>
           </>
         ) : null}
-        <div className="flex flex-wrap items-center gap-4">
-          <button type="button" onClick={reset} className={`min-h-10 text-[14px] font-medium text-ink ${LINK}`}>
-            {t("another")}
-          </button>
-          {toCandidates}
-          {onDone ? (
-            <Button variant="ghost" onClick={onDone}>
-              {t("close")}
-            </Button>
-          ) : null}
-        </div>
+        {after}
       </div>
     );
+    return container === "page" ? <section className="mx-auto max-w-[640px] pt-10 pb-8">{view}</section> : <div className="pt-2 pb-8">{view}</div>;
   }
 
-  const why = reason ? t(`reason${reason}`) : pending ? t("creating") : null;
-
-  return (
-    <div className="space-y-field">
-      {openings.length > 1 || !opening ? (
-        <div className="space-y-2">
-          <Label htmlFor="invite-opening">{t("opening")}</Label>
-          <Select value={openingId} onValueChange={(v) => edit(() => setOpeningId(v))}>
-            <SelectTrigger id="invite-opening" className="w-full">
-              <SelectValue placeholder={t("chooseOpening")} />
-            </SelectTrigger>
-            <SelectContent>
-              {openings.map((o) => (
-                <SelectItem key={o.id} value={o.id}>
-                  {o.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      ) : (
-        <p className="text-[14px] text-ink">
-          <span className="text-muted">{t("opening")}:</span> {opening.name}
-        </p>
-      )}
-      {opening && opening.live && opening.evaluators > 0 ? <p className="tnum text-[13px] text-muted">{t("evaluators", { count: opening.evaluators })}</p> : null}
-      {short && opening ? (
-        <div className="space-y-1">
-          <StatusDot tone="warn" className="items-start text-ink [&>span:first-child]:mt-[7px]">
-            <span className="tnum leading-5">{t("panelShort", { evaluators: short.evaluators, min: short.min })}</span>
-          </StatusDot>
-          <Link href={`/hiring/openings/${opening.id}/settings`} className={`ml-3.5 inline-block text-[13px] font-medium text-ink ${LINK}`}>
-            {t("goTeam")}
-          </Link>
-        </div>
-      ) : null}
-
-      <RadioGroup value={mode} onValueChange={(v) => edit(() => setMode(v as "single" | "many"))} className="flex flex-wrap gap-x-6 gap-y-1" aria-label={t("modeLabel")}>
-        {(["single", "many"] as const).map((m) => (
-          <label key={m} className="flex min-h-10 cursor-pointer items-center gap-2 text-[14px] text-ink">
-            <RadioGroupItem value={m} />
-            {t(m)}
-          </label>
-        ))}
-      </RadioGroup>
-
-      {mode === "single" ? (
+  // W8: a refusal in its existing words, on the step it is about. A duplicate's
+  // "Yine de davet et" is the step's outlined second button (the footer's one
+  // filled button stays "Devam et"), so its work is said like the footer's.
+  const refusalHere = refusal && refusalStep(refusal.result.code) === step ? refusal : null;
+  const duplicateHere = refusalHere?.result.code === "DUPLICATE" ? refusalHere : null;
+  const refusalNote = refusalHere ? (
+    <div role="alert" className="space-y-1 text-[14px] text-ink">
+      {duplicateHere ? (
         <>
-          <div className="space-y-2">
-            <Label htmlFor="invite-name">{t("fullName")}</Label>
-            <Input id="invite-name" autoComplete="off" maxLength={120} value={fullName} onChange={(e) => edit(() => setFullName(e.target.value))} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="invite-email">{t("email")}</Label>
-            <Input id="invite-email" type="email" autoComplete="off" maxLength={160} value={email} onChange={(e) => edit(() => setEmail(e.target.value))} />
-          </div>
+          <p className="font-medium">{t("duplicate", { name: duplicateHere.name.replace(/\s+/g, " ").trim(), date: duplicateHere.result.existing?.invitedAt ?? "" })}</p>
+          <p className="text-muted">{t("duplicateHelp")}</p>
         </>
       ) : (
-        <div className="space-y-2">
-          <Label htmlFor="invite-paste">{t("pasteLabel")}</Label>
-          <Textarea id="invite-paste" rows={6} className="max-h-72 overflow-y-auto" value={text} onChange={(e) => edit(() => setText(e.target.value))} aria-describedby="invite-paste-hint invite-paste-rows" />
-          <p id="invite-paste-hint" className="text-[13px] text-muted">
-            {t("pasteHint", { max: MAX_INVITE_ROWS })}
-          </p>
-          <div id="invite-paste-rows" aria-live="polite" className="space-y-1">
-            {parsed.rows.some((r) => r.problem) ? (
-              <ul className="space-y-1 text-[13px] text-ink">
-                {parsed.rows
-                  .filter((r) => r.problem)
-                  .map((r) => (
-                    <li key={r.line} className="tnum">
-                      <StatusDot tone="warn" className="text-ink">
-                        {t(`row${r.problem!}`, { line: r.line })}
-                      </StatusDot>
-                    </li>
-                  ))}
-              </ul>
-            ) : null}
-            {parsed.tooMany ? <p className="text-[13px] text-ink">{t("tooMany", { max: MAX_INVITE_ROWS })}</p> : null}
-            {parsed.rows.length > 0 && !parsed.rows.some((r) => r.problem) ? <p className="tnum text-[13px] text-muted">{t("rowsReady", { count: parsed.rows.length })}</p> : null}
-          </div>
-          {parsed.rows.length > 0 ? (
-            // What will be stored, row by row (fix round 2): outside the live region, so only the count and the problems are announced.
-            <section aria-labelledby="invite-preview-title" className="space-y-2 pt-2">
-              <h3 id="invite-preview-title" className="text-[13px] font-medium text-ink">
-                {t("previewTitle")}
-              </h3>
-              <ul aria-labelledby="invite-preview-title" tabIndex={0} className="max-h-60 divide-y divide-line overflow-y-auto rounded-lg border border-line">
-                {parsed.rows.map((r) => (
-                  <li key={r.line} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 px-3 py-2 text-[13px] leading-5">
-                    <span className="tnum w-14 shrink-0 text-muted">{t("previewLine", { line: r.line })}</span>
-                    <span className={r.problem === "NAME" ? "text-muted italic" : "font-medium text-ink"}>{r.fullName || t("previewNoName")}</span>
-                    <span className={r.problem === "EMAIL" ? "text-muted italic" : "text-muted"}>{r.email || t("previewNoEmail")}</span>
-                    {r.problem ? (
-                      <StatusDot tone="warn" className="text-ink">
-                        {t(`preview${r.problem}`)}
-                      </StatusDot>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
-        </div>
+        <p className="font-medium">{t(`err${refusalHere.result.code}`)}</p>
       )}
+    </div>
+  ) : null;
+  // The opening's own blockers on the summary come with the way to fix them: the
+  // team and the deadline open their step of team and rules (KG3; a plain anchor, so that page hears the hash).
+  const fixLink =
+    reason === "notPublished" && opening ? (
+      <Link href={`/hiring/openings/${opening.id}/assessment`} className={`text-[14px] font-medium text-ink ${LINK}`}>
+        {t("goAssessment")}
+      </Link>
+    ) : (reason === "noEvaluators" || reason === "openingDeadline") && opening ? (
+      <a href={`/hiring/openings/${opening.id}/settings#${reason === "noEvaluators" ? "team-members" : "contact-deadline"}`} className={`text-[14px] font-medium text-ink ${LINK}`}>
+        {t("goTeam")}
+      </a>
+    ) : null;
+  const toSummary = () => {
+    setFromSummary(false);
+    nav.go("summary");
+  };
+  const change = (to: InviteStep) => () => {
+    setFromSummary(true);
+    nav.go(to);
+  };
+  const personReason = personWait({ mode, fullName, email, rows: parsed.rows });
+  const dayText = day.kind === "pickOpening" ? t("pickOpeningFirst") : t("deadlineValue", { date: formatInviteDay(day.day, uiLocale), zone });
 
-      <div className="space-y-2">
-        <Label id="invite-language">{t("language")}</Label>
-        <RadioGroup value={locale} onValueChange={(v) => edit(() => setLocale(v as Locale))} className="flex flex-wrap gap-x-6 gap-y-1" aria-labelledby="invite-language">
-          {(["tr", "en"] as const).map((l) => (
-            <label key={l} lang={l} className="flex min-h-10 cursor-pointer items-center gap-2 text-[14px] text-ink">
-              <RadioGroupItem value={l} />
-              {t(l)}
-            </label>
-          ))}
-        </RadioGroup>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor={changing ? "invite-deadline" : undefined} id="invite-deadline-label">
-          {t("deadline")}
-        </Label>
-        {changing ? (
-          <>
-            <Input
-              id="invite-deadline"
-              type="date"
-              min={today}
-              max={openingDeadline ?? undefined}
-              value={deadlineInputValue({ opening, deadline, today })}
-              onChange={(e) => edit(() => setDeadline(e.target.value || null))}
-              className="w-48"
-              aria-describedby={openingDeadline ? "invite-deadline-max" : undefined}
-            />
-            {openingDeadline ? (
-              <p id="invite-deadline-max" className="text-[13px] text-muted">
-                {t("deadlineMax", { date: formatInviteDay(openingDeadline, uiLocale) })}
-              </p>
-            ) : null}
-          </>
-        ) : (
-          <p className="tnum flex flex-wrap items-center gap-x-3 text-[14px] text-ink">
-            {shownDay ? <span>{t("deadlineValue", { date: formatInviteDay(shownDay, uiLocale), zone })}</span> : null}
-            <button type="button" onClick={() => edit(() => setChanging(true))} className={`min-h-10 text-[13px] font-medium ${LINK}`}>
-              {t("change")}
-            </button>
+  const screens: Record<InviteStep, FlowStep> = {
+    opening: {
+      id: "opening",
+      title: t("stepOpeningTitle"),
+      layout: "split",
+      primary: { kind: "button", id: "invite-next", label: fromSummary ? flow("backToSummary") : flow("continue"), waitReason: opening ? null : t("reasonnoOpening"), onClick: () => (fromSummary ? toSummary() : nav.go("person")) },
+      note: refusalNote,
+      body: (
+        <>
+          <p id="invite-opening-label" className="sr-only">
+            {t("opening")}
           </p>
-        )}
-      </div>
-
-      {refusal ? (
-        <div role="alert" className="space-y-2 rounded-xl border border-line bg-surface p-4 text-[14px] text-ink">
-          {refusal.result.code === "DUPLICATE" ? (
+          <ChoiceCardGroup
+            type="single"
+            name="invite-opening"
+            labelledBy="invite-opening-label"
+            value={openingId ? [openingId] : []}
+            onChange={([v]) => edit(() => setOpeningId(v ?? ""))}
+            items={openings.map((o) => ({ value: o.id, label: o.name, description: o.deadlineDay ? common("deadline", { date: formatInviteDay(o.deadlineDay, uiLocale) }) : common("noDeadline") }))}
+          />
+        </>
+      ),
+    },
+    person: {
+      id: "person",
+      title: t("stepPersonTitle"),
+      lead: <p>{t("lead")}</p>,
+      layout: "single",
+      primary: { kind: "button", id: "invite-next", label: fromSummary ? flow("backToSummary") : flow("continue"), waitReason: personReason ? t(`reason${personReason}`) : null, onClick: toSummary },
+      secondary: duplicateHere ? { kind: "button", id: "invite-anyway", label: t("inviteAnyway"), busy: pending, busyLabel: t("creating"), onClick: () => submit(true) } : null,
+      note: refusalNote,
+      body: (
+        <div className="space-y-field">
+          <p id="invite-mode-label" className="sr-only">
+            {t("modeLabel")}
+          </p>
+          <ChoiceCardGroup
+            type="single"
+            name="invite-mode"
+            labelledBy="invite-mode-label"
+            columns={2}
+            value={[mode]}
+            onChange={([v]) => edit(() => setMode(v as "single" | "many"))}
+            items={[
+              { value: "single", label: t("single"), marker: UserRoundPlus },
+              { value: "many", label: t("modeList"), marker: ClipboardPaste },
+            ]}
+          />
+          {mode === "single" ? (
             <>
-              <p>{t("duplicate", { name: refusal.name.replace(/\s+/g, " ").trim(), date: refusal.result.existing?.invitedAt ?? "" })}</p>
-              <p className="text-muted">{t("duplicateHelp")}</p>
-              <Button size="sm" onClick={() => submit(true)} id="invite-anyway">
-                {t("inviteAnyway")}
-              </Button>
+              <div className="space-y-2">
+                <Label htmlFor="invite-name">{t("fullName")}</Label>
+                <Input id="invite-name" autoComplete="off" maxLength={120} className="text-[16px]" value={fullName} onChange={(e) => edit(() => setFullName(e.target.value))} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="invite-email">{t("email")}</Label>
+                <Input id="invite-email" type="email" autoComplete="off" maxLength={160} className="text-[16px]" value={email} onChange={(e) => edit(() => setEmail(e.target.value))} />
+              </div>
             </>
           ) : (
-            <p>{t(`err${refusal.result.code}`)}</p>
+            // The pasted list, its live problems and its preview: plan 2's code, unchanged.
+            <div className="space-y-2">
+              <Label htmlFor="invite-paste">{t("pasteLabel")}</Label>
+              <Textarea id="invite-paste" rows={6} className="max-h-72 overflow-y-auto" value={text} onChange={(e) => edit(() => setText(e.target.value))} aria-describedby="invite-paste-hint invite-paste-rows" />
+              <p id="invite-paste-hint" className="text-[13px] text-muted">
+                {t("pasteHint", { max: MAX_INVITE_ROWS })}
+              </p>
+              <div id="invite-paste-rows" aria-live="polite" className="space-y-1">
+                {parsed.rows.some((r) => r.problem) ? (
+                  <ul className="space-y-1 text-[13px] text-ink">
+                    {parsed.rows
+                      .filter((r) => r.problem)
+                      .map((r) => (
+                        <li key={r.line} className="tnum">
+                          <StatusDot tone="warn" className="text-ink">
+                            {t(`row${r.problem!}`, { line: r.line })}
+                          </StatusDot>
+                        </li>
+                      ))}
+                  </ul>
+                ) : null}
+                {parsed.tooMany ? <p className="text-[13px] text-ink">{t("tooMany", { max: MAX_INVITE_ROWS })}</p> : null}
+                {parsed.rows.length > 0 && !parsed.rows.some((r) => r.problem) ? <p className="tnum text-[13px] text-muted">{t("rowsReady", { count: parsed.rows.length })}</p> : null}
+              </div>
+              {parsed.rows.length > 0 ? (
+                // What will be stored, row by row (fix round 2): outside the live region, so only the count and the problems are announced.
+                <section aria-labelledby="invite-preview-title" className="space-y-2 pt-2">
+                  <h3 id="invite-preview-title" className="text-[13px] font-medium text-ink">
+                    {t("previewTitle")}
+                  </h3>
+                  <ul aria-labelledby="invite-preview-title" tabIndex={0} className="max-h-60 divide-y divide-line overflow-y-auto rounded-lg border border-line">
+                    {parsed.rows.map((r) => (
+                      <li key={r.line} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 px-3 py-2 text-[13px] leading-5">
+                        <span className="tnum w-14 shrink-0 text-muted">{t("previewLine", { line: r.line })}</span>
+                        <span className={r.problem === "NAME" ? "text-muted italic" : "font-medium text-ink"}>{r.fullName || t("previewNoName")}</span>
+                        <span className={r.problem === "EMAIL" ? "text-muted italic" : "text-muted"}>{r.email || t("previewNoEmail")}</span>
+                        {r.problem ? (
+                          <StatusDot tone="warn" className="text-ink">
+                            {t(`preview${r.problem}`)}
+                          </StatusDot>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
+            </div>
           )}
         </div>
-      ) : null}
-
-      <div className="space-y-1">
-        <Button id="invite-create" variant="primary" disabled={why !== null} disabledReason={why ?? undefined} aria-busy={pending || undefined} onClick={() => submit(false)}>
-          {pending ? t("creating") : mode === "single" ? t("create") : t("createMany", { count: parsed.rows.length })}
-        </Button>
-        {why ? (
-          <DisabledReason id="invite-create-why">
-            {why}{" "}
-            {reason === "notPublished" && opening ? (
-              <Link href={`/hiring/openings/${opening.id}/assessment`} className={`font-medium text-ink ${LINK}`}>
-                {t("goAssessment")}
-              </Link>
-            ) : (reason === "noEvaluators" || reason === "openingDeadline") && opening ? (
-              <Link href={`/hiring/openings/${opening.id}/settings`} className={`font-medium text-ink ${LINK}`}>
+      ),
+    },
+    summary: {
+      id: "summary",
+      title: t("summaryTitle"),
+      layout: "split",
+      primary: {
+        kind: "button",
+        id: "invite-create",
+        label: mode === "single" ? t("create") : t("createMany", { count: parsed.rows.length }),
+        busy: pending,
+        busyLabel: t("creating"),
+        waitReason: reason ? t(`reason${reason}`) : null,
+        onClick: () => submit(false),
+      },
+      note: refusalNote ?? fixLink,
+      body: (
+        <div className="space-y-4">
+          <SummaryRows
+            rows={[
+              ...(pickOpening && opening ? [{ id: "opening", label: t("opening"), value: opening.name, edit: { onClick: change("opening") } }] : []),
+              mode === "single"
+                ? { id: "person", label: t("personRow"), value: [fullName.replace(/\s+/g, " ").trim(), email.trim()].filter(Boolean).join(" · "), edit: { onClick: change("person") } }
+                : { id: "person", label: t("listRow"), value: <span className="tnum">{t("rowsReady", { count: parsed.rows.length })}</span>, edit: { onClick: change("person") } },
+              { id: "language", label: t("language"), value: <span lang={locale}>{t(locale)}</span>, edit: { onClick: change("language") } },
+              { id: "deadline", label: t("deadline"), value: <span className="tnum">{dayText}</span>, edit: opening ? { onClick: change("deadline") } : null },
+            ]}
+            changeLabel={flow("change")}
+            changedLabel={flow("changed")}
+          />
+          {short && opening ? (
+            <div className="space-y-1">
+              <StatusDot tone="warn" className="items-start text-ink [&>span:first-child]:mt-[7px]">
+                <span className="tnum text-[14px] leading-5">{t("panelShort", { evaluators: short.evaluators, min: short.min })}</span>
+              </StatusDot>
+              {/* KG3: straight to the team flow's first step (4.10); a plain anchor, so that page hears the hash. */}
+              <a href={`/hiring/openings/${opening.id}/settings#team-members`} className={`ml-3.5 inline-flex min-h-11 items-center text-[14px] font-medium text-ink ${LINK}`}>
                 {t("goTeam")}
-              </Link>
-            ) : null}
-          </DisabledReason>
-        ) : null}
-      </div>
-    </div>
+              </a>
+            </div>
+          ) : opening && opening.live && opening.evaluators > 0 ? (
+            <p className="tnum text-[14px] text-muted">{t("evaluators", { count: opening.evaluators })}</p>
+          ) : null}
+        </div>
+      ),
+    },
+    language: {
+      id: "language",
+      title: t("stepLanguageTitle"),
+      layout: "split",
+      primary: { kind: "button", id: "invite-next", label: flow("backToSummary"), onClick: toSummary },
+      body: (
+        <>
+          <p id="invite-language-label" className="sr-only">
+            {t("language")}
+          </p>
+          <ChoiceCardGroup
+            type="single"
+            name="invite-language"
+            labelledBy="invite-language-label"
+            columns={2}
+            value={[locale]}
+            onChange={([v]) => edit(() => setLocale(v as Locale))}
+            items={(["tr", "en"] as const).map((l) => ({ value: l, label: <span lang={l}>{t(l)}</span> }))}
+          />
+        </>
+      ),
+    },
+    deadline: {
+      id: "deadline",
+      title: t("stepDeadlineTitle"),
+      lead: <p className="tnum">{dayText}</p>,
+      layout: "single",
+      primary: { kind: "button", id: "invite-next", label: flow("backToSummary"), waitReason: reason === "deadline" ? t("reasondeadline") : null, onClick: toSummary },
+      note: refusalNote,
+      body: opening ? (
+        <div className="space-y-2">
+          <Label htmlFor="invite-deadline">{t("deadline")}</Label>
+          <Input
+            id="invite-deadline"
+            type="date"
+            min={today}
+            max={openingDeadline ?? undefined}
+            value={deadlineInputValue({ opening, deadline, today })}
+            onChange={(e) => edit(() => setDeadline(e.target.value || null))}
+            className="tnum w-56 text-[16px]"
+            aria-describedby={openingDeadline ? "invite-deadline-max" : undefined}
+          />
+          {openingDeadline ? (
+            <p id="invite-deadline-max" className="text-[13px] text-muted">
+              {t("deadlineMax", { date: formatInviteDay(openingDeadline, uiLocale) })}
+            </p>
+          ) : null}
+        </div>
+      ) : (
+        <p className="text-[14px] text-muted">{t("pickOpeningFirst")}</p>
+      ),
+    },
+  };
+
+  const first = path[0];
+  return (
+    <GuidedFlow
+      container={container}
+      // C19: the head names the opening the link is for (the Sheet names it under its title).
+      kicker={opening ? `${t("title")} · ${opening.name}` : t("title")}
+      step={screens[step]}
+      journey={flowJourney(path, step, "summary")}
+      back={
+        step === first
+          ? container === "page"
+            ? { label: common("back"), href: "/hiring/openings" }
+            : null
+          : step === "language" || step === "deadline"
+            ? // Opened from the summary with "Değiştir": back is the summary (the filled button says "Özete dön").
+              { label: flow("back"), onClick: toSummary }
+            : { label: flow("back"), onClick: () => nav.back(path[Math.max(0, path.indexOf(step) - 1)]) }
+      }
+      exit={container === "page" ? { dirty, href: "/hiring/openings" } : null}
+      enter={nav.moved}
+      arrive={returned}
+    />
   );
 }
