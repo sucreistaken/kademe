@@ -2,11 +2,14 @@ import { accountant } from "./roles/accountant";
 import { callCenterAgent } from "./roles/call-center-agent";
 import { customerSupport } from "./roles/customer-support";
 import { executiveAssistant } from "./roles/executive-assistant";
+import { retailSalesAssociate } from "./roles/retail-sales-associate";
 import { salesRepresentative } from "./roles/sales-representative";
+import { softwareDeveloper } from "./roles/software-developer";
+import { warehouseLogistics } from "./roles/warehouse-logistics";
 import type { HiringTemplate } from "./types";
 
 /** Gallery order: generic roles, then language-school roles, then the extra roles. */
-export const TEMPLATES: HiringTemplate[] = [customerSupport, salesRepresentative, callCenterAgent, accountant, executiveAssistant];
+export const TEMPLATES: HiringTemplate[] = [customerSupport, salesRepresentative, callCenterAgent, accountant, executiveAssistant, softwareDeveloper, retailSalesAssociate, warehouseLogistics];
 
 export const templateByKey = (key: string): HiringTemplate | null => TEMPLATES.find((x) => x.key === key) ?? null;
 
