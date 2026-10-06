@@ -1,0 +1,19 @@
+{
+  "advancedCreate": {
+    "reviseLabel": "Değiştirmek istediğin bir şey var mı?",
+    "reviseSend": "Gönder",
+    "apply": "Onayla",
+    "applying": "Kaydediliyor",
+    "discard": "Vazgeç",
+    "working": "Taslak hazırlanıyor, genelde 10-40 sn sürer.",
+    "workingSlow": "Hâlâ çalışıyor. Sayfayı açık tut, birazdan biter.",
+    "error_INVALID": "Bu değerlerle kaydedemedim. Kartları kontrol et.",
+    "error_WEIGHTS": "Ağırlıkların toplamı 100 olmalı.",
+    "error_NOT_FOUND": "Bu taslağı bulamadım.",
+    "error_STATE": "Bu taslak artık açık değil. Sayfayı yenile.",
+    "error_RATE_LIMITED": "Çok sık denedin, birkaç dakika sonra tekrar dene.",
+    "error_AI_UNAVAILABLE": "AI şu an kapalı.",
+    "error_FAILED": "Taslak hazırlanamadı. Tekrar dene ya da elle kur.",
+    "error_FORBIDDEN": "Rolün burada bir şey kurmaya yetmiyor."
+  }
+}

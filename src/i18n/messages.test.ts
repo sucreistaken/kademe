@@ -11,6 +11,8 @@ import libraryTr from "@/i18n/messages/library.tr.json";
 import libraryEn from "@/i18n/messages/library.en.json";
 import hiringTr from "@/i18n/messages/hiring.tr.json";
 import hiringEn from "@/i18n/messages/hiring.en.json";
+import advancedTr from "@/i18n/messages/advanced.tr.json";
+import advancedEn from "@/i18n/messages/advanced.en.json";
 
 /**
  * A key present in one locale and missing in the other renders as the raw key
@@ -31,6 +33,7 @@ const PAIRS: Array<[string, unknown, unknown]> = [
   ["screens", screensTr, screensEn],
   ["library", libraryTr, libraryEn],
   ["hiring", hiringTr, hiringEn],
+  ["advanced", advancedTr, advancedEn],
 ];
 
 describe("dictionaries", () => {
@@ -39,7 +42,7 @@ describe("dictionaries", () => {
   });
 
   it("manager namespaces do not collide across files", () => {
-    const names = [managerTr, settingsTr, screensTr, libraryTr, hiringTr].flatMap((file) =>
+    const names = [managerTr, settingsTr, screensTr, libraryTr, hiringTr, advancedTr].flatMap((file) =>
       Object.keys(file as Record<string, unknown>),
     );
     expect(new Set(names).size).toBe(names.length);

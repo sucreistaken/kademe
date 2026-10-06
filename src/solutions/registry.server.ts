@@ -1,7 +1,9 @@
 import type { CandidateContext } from "@/lib/candidate-context";
+import type { SessionUser } from "@/lib/auth";
+import { can } from "@/lib/authorize";
 import { hiringModule } from "@/solutions/hiring/module";
 import { languageExamModule } from "@/solutions/language-exam/module";
-import type { SolutionKind, SolutionModule } from "@/solutions/types";
+import type { Creator, CreatorKind, SolutionKind, SolutionModule } from "@/solutions/types";
 
 /** Server modules, same order as SOLUTION_MANIFESTS (a test keeps them aligned). */
 const MODULES: readonly SolutionModule[] = [hiringModule, languageExamModule];
@@ -42,4 +44,14 @@ export async function servingSolution(
   if (!found) return null;
   if (found.candidate.serves && !(await found.candidate.serves(ctx))) return null;
   return found;
+}
+
+/** The creators this person may use, in registry order. None: the Advanced page shows no box (spec 4). */
+export function creatorsFor(user: Pick<SessionUser, "role">, modules: readonly SolutionModule[] = MODULES): Creator[] {
+  return modules.flatMap((m) => m.creators ?? []).filter((c) => can(user, c.capability));
+}
+
+/** The creator of a kind, whoever asks; the caller authorises its capability. */
+export function creatorByKind(kind: CreatorKind, modules: readonly SolutionModule[] = MODULES): Creator | null {
+  return modules.flatMap((m) => m.creators ?? []).find((c) => c.kind === kind) ?? null;
 }

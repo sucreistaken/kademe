@@ -1,0 +1,19 @@
+{
+  "advancedCreate": {
+    "reviseLabel": "Anything you want to change?",
+    "reviseSend": "Send",
+    "apply": "Confirm",
+    "applying": "Saving",
+    "discard": "Discard",
+    "working": "Preparing the draft, usually 10-40 s.",
+    "workingSlow": "Still working. Keep the page open, it is nearly done.",
+    "error_INVALID": "I could not save with these values. Check the cards.",
+    "error_WEIGHTS": "The weights must add up to 100.",
+    "error_NOT_FOUND": "I could not find this draft.",
+    "error_STATE": "This draft is no longer open. Refresh the page.",
+    "error_RATE_LIMITED": "You tried too often. Try again in a few minutes.",
+    "error_AI_UNAVAILABLE": "AI is off right now.",
+    "error_FAILED": "The draft could not be prepared. Try again or build it by hand.",
+    "error_FORBIDDEN": "Your role cannot build anything here."
+  }
+}

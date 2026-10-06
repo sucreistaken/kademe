@@ -7,6 +7,9 @@ import type { Locale } from "@/i18n/locale";
 import type { Capability } from "@/lib/authorize";
 import type { CandidateContext, ResolveResult } from "@/lib/candidate-context";
 import type { ProctoringPolicy } from "@/lib/proctor/policy";
+import type { CreationKind, CreationOutcome, CreationQuestion, CreationStatus } from "@/db/schema/create";
+import type { AiPurpose } from "@/lib/ai-runs";
+import type { SessionUser } from "@/lib/auth";
 
 /**
  * The solution contract (spec 3). Core code knows solutions only through
@@ -128,6 +131,61 @@ export type TodayItem = {
 export type SegmentRef = { kind: string; runId: string };
 export type MediaAssetRow = typeof mediaAssets.$inferSelect;
 
+// ---------------------------------------------------------------------------
+// Advanced "create" (spec 2026-10-06-advanced-ai-create-design 5.1)
+// ---------------------------------------------------------------------------
+
+/** The creation_kind enum values. */
+export type CreatorKind = CreationKind;
+export type CreateQuestion = CreationQuestion;
+/** Who builds, in which language, for which draft row. Always from the session, never from the browser. */
+export type CreatorCtx = { orgId: string; userId: string; role: SessionUser["role"]; locale: Locale; draftId: string };
+/** Missing or invalid parameters come back as questions, never as an error. */
+export type CreatorValidation<P> = { ok: true; params: P } | { ok: false; questions: CreateQuestion[] };
+export type DraftResult<D> = { ok: true; draft: D } | { ok: false; code: "AI_UNAVAILABLE" | "FAILED" };
+export type ApplyResult = ({ ok: true } & CreationOutcome) | { ok: false; code: "INVALID" | "WEIGHTS" };
+/** Every refusal an Advanced action answers with; each has its own sentence (advancedCreate.error_*). */
+export type CreateRefusal = "INVALID" | "WEIGHTS" | "NOT_FOUND" | "STATE" | "RATE_LIMITED" | "AI_UNAVAILABLE" | "FAILED" | "FORBIDDEN";
+/** `href` is set only when the screen should go there now. */
+export type CreateActionResult = { ok: true; draftId: string; status: CreationStatus; href?: string } | { ok: false; code: CreateRefusal };
+/** The core's server actions a review component calls; the page binds them. */
+export type ReviewActions = {
+  apply(draftId: string, edits: unknown): Promise<CreateActionResult>;
+  discard(draftId: string): Promise<CreateActionResult>;
+  revise(draftId: string, change: string): Promise<CreateActionResult>;
+};
+export type CreatorReviewInput<D> = { ctx: CreatorCtx; draft: D; summary: string; actions: ReviewActions };
+
+/**
+ * One thing the Advanced box can build. A solution contributes creators through
+ * its server module; the core reaches them only through solutionModules().
+ */
+export interface Creator<P = unknown, D = unknown> {
+  kind: CreatorKind;
+  /** EXAM: blueprint:write, QUESTION_SET: bank:write, POSITION: library:write. */
+  capability: Capability;
+  /** The AI purpose the draft step spends, for the rate limit; null when only the router calls AI. */
+  aiPurpose: AiPurpose | null;
+  label: I18nLabel;
+  /** Router guide: what the parameters mean, which are required, allowed values. Plain English. */
+  routerGuide: string;
+  /** JSON schema (the subset Gemini accepts) of this creator's parameters, placed inside the router schema. */
+  paramsJsonSchema: Record<string, unknown>;
+  /** `useDefaults`: the question rounds are used up; take documented defaults, ask only for what has none. */
+  validate(raw: unknown, locale: Locale, opts: { useDefaults: boolean }): CreatorValidation<P>;
+  /** Builds the draft. May call AI and may write DRAFT-only rows. Never publishes. */
+  draft(ctx: CreatorCtx, params: P): Promise<DraftResult<D>>;
+  /** Applies the accepted draft through existing write functions. */
+  apply(ctx: CreatorCtx, draft: D, edits: unknown): Promise<ApplyResult>;
+  /** Undoes what `draft` wrote, when the draft is discarded or replaced. Omitted: `draft` wrote nothing. */
+  discard?(ctx: CreatorCtx, draft: D): Promise<void>;
+  /** The review cards: loads what they show and returns this kind's client component. */
+  renderReview(input: CreatorReviewInput<D>): Promise<ReactNode>;
+}
+
+/** One "What you have" card on the Advanced page, already in the viewer's language. */
+export type AdvancedCard = { key: string; title: string; lines: string[]; href: string };
+
 /** Server-only: everything a solution answers for the core. */
 export interface SolutionModule extends SolutionManifest {
   /** Rows for the shared Today screen. */
@@ -184,4 +242,8 @@ export interface SolutionModule extends SolutionManifest {
      */
     usage(orgId: string, refs: LibraryRefs, viewer: LibraryViewer | null, x?: Executor): Promise<LibraryUsage>;
   };
+  /** Advanced "create" (spec 5.1): what this solution builds from one sentence. Omitted: nothing. */
+  creators?: Creator[];
+  /** Advanced page, "What you have": this solution's area cards. Omitted: none. */
+  advancedCards?(orgId: string, locale: Locale): Promise<AdvancedCard[]>;
 }
