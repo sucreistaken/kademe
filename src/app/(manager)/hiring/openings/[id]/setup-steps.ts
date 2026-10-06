@@ -51,10 +51,14 @@ export function setupNext(rows: ReadonlyArray<Pick<SetupRow, "key" | "state" | "
   return { key: next.key, href: next.href ?? base };
 }
 
-/** KG3: the team step opens the team flow (4.10) at the decision it lacks: who reviews while nobody is on the team, else who decides. */
-export function teamHref(openingId: string, input: { memberCount: number; decisionMakerActive: boolean }): string {
+/**
+ * KG3: the team step opens the team flow (4.10) at the decision it lacks: who
+ * reviews while nobody active is on the team or a member is disabled (B-M1),
+ * else who decides.
+ */
+export function teamHref(openingId: string, input: { memberCount: number; decisionMakerActive: boolean; disabledMembers?: number }): string {
   const base = `/hiring/openings/${openingId}/settings`;
-  return input.memberCount > 0 && !input.decisionMakerActive ? `${base}#team-decider` : `${base}#team-members`;
+  return input.memberCount > 0 && !input.disabledMembers && !input.decisionMakerActive ? `${base}#team-decider` : `${base}#team-members`;
 }
 
 /** `?skip=team,preview` after "Atla ›": only the advisory steps, each once. */
@@ -66,8 +70,11 @@ export function setupSkips(value: string | string[] | undefined): ReadinessKey[]
 /**
  * The setup rows of an opening's draft, with the page that fixes each one
  * (describeProblem's link for a gate problem). `people` are the
- * organisation's users (one loadPanelUsers per page): the team row asks for an
- * active owner or manager as decision maker. No draft or no content: no rows.
+ * organisation's users (one loadPanelUsers per page): the team row counts the
+ * members who are active users (as the publish summary, the rules card and the
+ * control view do), is not done while a member is disabled (B-M1), and asks
+ * for an active owner or manager as decision maker. No draft or no content:
+ * no rows.
  */
 export function setupRowsOf(input: {
   state: Pick<WorkingState, "draft" | "content" | "facts" | "problems">;
@@ -80,7 +87,13 @@ export function setupRowsOf(input: {
   const content = state.content;
   if (!state.draft || !content) return [];
   const decider = people.find((u) => u.id === opening.decisionMakerId && u.disabledAt === null);
-  const team = { memberCount: opening.memberIds.length, decisionMakerActive: decider !== undefined && canDecide(decider.role) };
+  const active = new Set(people.filter((u) => u.disabledAt === null).map((u) => u.id));
+  const disabled = new Set(people.filter((u) => u.disabledAt !== null).map((u) => u.id));
+  const team = {
+    memberCount: opening.memberIds.filter((id) => active.has(id)).length,
+    disabledMembers: opening.memberIds.filter((id) => disabled.has(id)).length,
+    decisionMakerActive: decider !== undefined && canDecide(decider.role),
+  };
   const rows = readinessRows({ problems: state.problems, content, previewed: previewIsCurrent(state.draft), ...team });
   return rows.map((row) => {
     const fix = row.problem ? describeProblem(row.problem, { content, facts: state.facts, locale, openingId: opening.id }, t) : null;

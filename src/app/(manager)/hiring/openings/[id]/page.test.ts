@@ -486,6 +486,20 @@ describe("the team line names only who can decide and counts the active members 
   });
 });
 
+describe("a disabled member keeps the team step open (B-M1)", () => {
+  it("names the disabled member on the path and leads to the team's members step", async () => {
+    status = "DRAFT";
+    state = { draft: DRAFT, live: null, content: ready(), problems: [] };
+    invited = 0;
+    people = [person(OWNER, "Sahip", "OWNER"), person(REVIEWER, "Ece", "REVIEWER", NOW)];
+    const page = await render();
+    const steps = find(page, ofType(PathSteps))[0].props.steps as Array<{ title: string; state: string; detail?: string }>;
+    expect([steps[2].title, steps[2].state, steps[2].detail]).toEqual(["Ekibi ata", "current", "Ekipte devre dışı bir kullanıcı var. Ekip ve kurallarda onu çıkar ya da yerine birini ekle."]);
+    expect(text(header(page).props.action as ReactElement)).toBe("Kuruluma devam et");
+    expect(dump(header(page).props.action)).toContain(`${BASE}/settings#team-members`);
+  });
+});
+
 describe("small fixes of round 1", () => {
   it("M1: says the reply days with a plural in English, the Turkish line unchanged", () => {
     expect(managerT("en")("hiringCommon.rulesContact", { deadline: "No deadline", days: 1 })).toBe("No deadline · reply within 1 day");

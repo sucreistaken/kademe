@@ -56,6 +56,14 @@ describe("readinessRows", () => {
     expect(rows.find((r) => r.key === "team")).toEqual({ key: "team", state: "advisory", problem: null, reason: "NO_DECISION_MAKER" });
   });
 
+  // B-M1: a disabled member is not on the team; the row waits until they are taken off or replaced.
+  it("keeps the team row advisory while a member is disabled, saying so (B-M1)", () => {
+    const rows = readinessRows({ memberCount: 1, disabledMembers: 1, previewed: false, decisionMakerActive: true, problems: [], content: measured });
+    expect(rows.find((r) => r.key === "team")).toEqual({ key: "team", state: "advisory", problem: null, reason: "DISABLED_MEMBER" });
+    const clean = readinessRows({ memberCount: 1, disabledMembers: 0, previewed: false, decisionMakerActive: true, problems: [], content: measured });
+    expect(clean.find((r) => r.key === "team")?.state).toBe("done");
+  });
+
   it("team and preview are advisory until done", () => {
     const open = readinessRows({ ...base, problems: [], content: measured });
     expect(open.slice(-2).map((r) => [r.key, r.state])).toEqual([

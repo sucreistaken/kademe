@@ -121,9 +121,11 @@ export function otherFlowProblem(problems: readonly RulesProblem[], flow: RulesF
 type Person = { id: string; name: string; role: PanelUser["role"]; disabled: boolean };
 
 /**
- * The team in one line, the same rule as the overview's rules card and the
- * setup path (Task 20, setupRowsOf): the active members counted, the decider
- * named only while active and able to decide (null otherwise: "kimse
+ * The team in one line, counted and named as the overview's publish summary
+ * and rules card count and name it (Task 20): the members who are active
+ * users counted (setupRowsOf counts the same people, and its team step is
+ * also not done while a member is disabled, B-M1; this line only counts), the
+ * decider named only while active and able to decide (null otherwise: "kimse
  * seçilmedi"), the backup the same way.
  */
 export function teamLine(saved: Pick<OpeningRulesInput, "memberIds" | "decisionMakerId" | "backupDecisionMakerId">, users: readonly Person[]) {

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { setupNext, setupProgress, setupSkips, teamHref } from "./setup-steps";
+import { managerT } from "@/i18n/manager";
+import { activity, content, stage } from "@/solutions/hiring/rules/test-fixtures";
+import { setupNext, setupProgress, setupRowsOf, setupSkips, teamHref } from "./setup-steps";
 
 const OP = "33333333-3333-4333-8333-333333333333";
 const base = `/hiring/openings/${OP}`;
@@ -45,5 +47,38 @@ describe("where 'Kuruluma devam et' goes (KG3, H7)", () => {
     expect(setupSkips("team,preview,team,assessment")).toEqual(["team", "preview"]);
     expect(setupSkips(["preview", "x"])).toEqual(["preview"]);
     expect(setupSkips(undefined)).toEqual([]);
+  });
+});
+
+describe("the team step counts active members only (B-M1)", () => {
+  const OWNER = "55555555-5555-4555-8555-555555555555";
+  const ECE = "66666666-6666-4666-8666-666666666666";
+  const CAN = "77777777-7777-4777-8777-777777777777";
+  const state = {
+    draft: { id: "d", number: 1, status: "DRAFT", publishedAt: null, previewedAt: null, updatedAt: new Date(0) },
+    content: content([stage("s1", [activity("a1", { competencyIds: ["c1"] })])], { id: "d" }),
+    facts: new Map(),
+    problems: [],
+  } as unknown as Parameters<typeof setupRowsOf>[0]["state"];
+  const people = (canDisabled: Date | null) => [
+    { id: OWNER, role: "OWNER" as const, disabledAt: null },
+    { id: ECE, role: "REVIEWER" as const, disabledAt: null },
+    { id: CAN, role: "REVIEWER" as const, disabledAt: canDisabled },
+  ];
+  const team = (memberIds: string[], canDisabled: Date | null) =>
+    setupRowsOf({ state, opening: { id: OP, memberIds, decisionMakerId: OWNER }, people: people(canDisabled), t: managerT("tr"), locale: "tr" }).find((r) => r.key === "team")!;
+
+  it("is not done while one member is disabled, and opens the team's members step", () => {
+    const row = team([ECE, CAN], new Date("2026-10-01T00:00:00Z"));
+    expect([row.state, row.row.reason, row.href]).toEqual(["advisory", "DISABLED_MEMBER", `${base}/settings#team-members`]);
+  });
+
+  it("is not done when the only member is disabled (no active member counted)", () => {
+    const row = team([CAN], new Date("2026-10-01T00:00:00Z"));
+    expect([row.state, row.href]).toEqual(["advisory", `${base}/settings#team-members`]);
+  });
+
+  it("is done once every member is active and an active owner decides (positive control)", () => {
+    expect(team([ECE, CAN], null).state).toBe("done");
   });
 });

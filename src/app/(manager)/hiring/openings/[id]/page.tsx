@@ -222,9 +222,11 @@ export default async function OpeningOverviewPage({
             ? t("hiringOverview.anchorsNoCompetency")
             : row.row.reason === "NO_DECISION_MAKER"
               ? t("hiringOverview.teamNoDecisionMaker")
-              : row.state === "advisory"
-                ? t("hiringOverview.advisory")
-                : (row.fixText ?? undefined);
+              : row.row.reason === "DISABLED_MEMBER"
+                ? t("hiringOverview.teamDisabledMember")
+                : row.state === "advisory"
+                  ? t("hiringOverview.advisory")
+                  : (row.fixText ?? undefined);
       // The team step opens team and rules' flow (a hash), so its words are named here, not read from the address.
       const words = row.key === "team" ? "goTeam" : row.href ? rowAction(row.href) : null;
       return {

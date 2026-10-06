@@ -15,8 +15,10 @@ export type ReadinessRow = {
    * draft gets the gate's own NO_MEASURED_COMPETENCY instead, so the row and the gate agree.
    * NO_DECISION_MAKER: the team row while nobody active can decide (no decision maker, or a
    * disabled or demoted one); reviewers alone are not a team.
+   * DISABLED_MEMBER: the team row while someone on the team is a disabled user (B-M1); the
+   * members are fixed first, so it is named before NO_DECISION_MAKER.
    */
-  reason: "NO_COMPETENCIES" | "NO_DECISION_MAKER" | null;
+  reason: "NO_COMPETENCIES" | "NO_DECISION_MAKER" | "DISABLED_MEMBER" | null;
 };
 
 const row = (key: ReadinessKey, problems: PublishProblem[]): ReadinessRow => ({
@@ -33,7 +35,10 @@ const row = (key: ReadinessKey, problems: PublishProblem[]): ReadinessRow => ({
 export function readinessRows(input: {
   problems: PublishProblem[];
   content: VersionContent;
+  /** The team's members who are active users of the organisation. */
   memberCount: number;
+  /** The team's members who are disabled users (B-M1): the team row is not done while there is one. */
+  disabledMembers?: number;
   previewed: boolean;
   /** The decision maker is an active owner or manager of the organisation. */
   decisionMakerActive: boolean;
@@ -51,9 +56,9 @@ export function readinessRows(input: {
   rows.push(
     {
       key: "team",
-      state: input.memberCount > 0 && input.decisionMakerActive ? "done" : "advisory",
+      state: input.memberCount > 0 && input.decisionMakerActive && !input.disabledMembers ? "done" : "advisory",
       problem: null,
-      reason: input.decisionMakerActive ? null : "NO_DECISION_MAKER",
+      reason: input.disabledMembers ? "DISABLED_MEMBER" : input.decisionMakerActive ? null : "NO_DECISION_MAKER",
     },
     { key: "preview", state: input.previewed ? "done" : "advisory", problem: null, reason: null },
   );

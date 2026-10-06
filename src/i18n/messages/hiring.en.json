@@ -145,6 +145,7 @@
     "closedNotice": "This opening is closed; its assessment and records stay readable.",
     "goReopen": "Reopen it in Team and rules",
     "teamNoDecisionMaker": "No active decision maker. Choose an owner or a manager in Team and rules.",
+    "teamDisabledMember": "Someone on the team is a disabled user. Remove or replace them in Team and rules.",
     "funnelAll": "All candidates",
     "funnel_invited": "Invited",
     "funnel_started": "Started",

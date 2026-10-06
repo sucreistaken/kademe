@@ -145,6 +145,7 @@
     "closedNotice": "Bu alım kapalı; değerlendirme ve kayıtlar okunur kalır.",
     "goReopen": "Ekip ve kurallarda yeniden aç",
     "teamNoDecisionMaker": "Aktif bir karar veren yok. Ekip ve kurallarda bir sahip ya da yönetici seç.",
+    "teamDisabledMember": "Ekipte devre dışı bir kullanıcı var. Ekip ve kurallarda onu çıkar ya da yerine birini ekle.",
     "funnelAll": "Tüm adaylar",
     "funnel_invited": "Davet",
     "funnel_started": "Başladı",
