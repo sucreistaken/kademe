@@ -115,6 +115,25 @@ Plan: `docs/superpowers/plans/2026-10-06-hiring-ready-templates.md`, spec aynı 
 - Sıradaki ayrı iş: Sınav tarafında 3 seviye şablonu (hızlı tarama, yerleştirme, 4 beceri) ve banka
   genişletme (spec bölüm 8).
 
+## Hazır sınav şablonları ve banka (2026-10-06, `platform/solutions`, canlıda değil)
+
+Plan `docs/superpowers/plans/2026-10-06-exam-ready-templates.md`, ledger
+`docs/superpowers/ledgers/2026-10-06-exam-ready-templates/progress.md`.
+
+- "Yeni sınav": 3 hazır şablon. Hızlı seviye taraması 15 dk (uyarlanabilir dilbilgisi); yerleştirme sınavı
+  57 dk (açılışta B1 C-test, sonra dilbilgisi, okuma, dinleme uyarlanabilir, 1 yazma, 2 konuşma); dört
+  becerili seviye kontrolü 97 dk (Goethe/telc düzeni, konuşma şart). Boş başlangıç aynı kaldı.
+- Banka 229 -> 253: seviye başına 4 yazma, 4 konuşma, 1 C-test (her ikinci kelimenin yarısı silinmiş,
+  tam kelime de kabul). C-test'ler otomatik seçime girmez, yalnız `cTest` açık bölümde ilk soru olur.
+- `items.seed_key` (migration 0014) ve `pnpm bank:topup`: mevcut kurumlara eksik başlangıç sorularını ekler,
+  ikinci çalıştırmada bir şey eklemez. Yalnız yerel 5434'te çalışır; canlı için ayrı karar gerekir.
+- Yerleştirme sonucunda öğretmen görünümünde alt seviye (A2.1 / A2.2) ve "Sınırda: kısa bir öğretmen
+  görüşmesi önerilir" uyarısı (kesime 0,25 logit yakın, belirsizlik yüksek ya da yazma/konuşma farklı).
+  Öğrenci bunları görmez.
+- Doğrulandı: `pnpm test` 3055/3055, tsc, eslint, build; `verify:exam` 24 ok / 0 FAIL; Chrome'da üç şablon
+  oluşturuldu ve yayınlandı. Doğrulanmadı: öğrencinin C-test'li yerleştirmeyi tarayıcıda çözmesi, C-test
+  metinlerini anadili Almanca biri okumadı, canlıya migration ve top-up.
+
 ## Hâlâ doğrulanmadı
 
 1. Telefonun kamerada gerçekten algılanması ve bakış işareti (canlı testte oluşmadı).
