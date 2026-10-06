@@ -1,3 +1,6 @@
+> DONE 2026-10-06: built by plan `docs/superpowers/plans/2026-10-06-hiring-ready-templates.md`; see the
+> "Hazır işe alım şablonları" section in docs/STATUS.md and the ledger. This file is kept as the original brief.
+
 # Next session: ready hiring templates (read this first)
 
 Written 2026-10-06 by the local session, right before the user cleared the context. Branch

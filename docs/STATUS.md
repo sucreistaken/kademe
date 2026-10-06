@@ -91,6 +91,30 @@ dedi), uyarlanabilir dilbilgisi (10 soruda SE hedefine ulaştı), gerçek konuş
 (video/mp4) → ElevenLabs Scribe (Almanca) → Gemini puanlama önerisi, yazma puanlaması.
 Zamanlayıcılar 1-2 dakikada bir çalıştığı için transkripsiyon ve puanlama bu kadar gecikir.
 
+## Hazır işe alım şablonları (2026-10-06, `platform/solutions`, canlıda değil)
+
+Plan: `docs/superpowers/plans/2026-10-06-hiring-ready-templates.md`, spec aynı tarihli, ledger her kararla
+`docs/superpowers/ledgers/2026-10-06-hiring-ready-templates/progress.md`.
+
+- 20 şablon (`src/solutions/hiring/templates/`): 8 genel, 8 dil okulu (4 Almanca öğretmeni + ortak "Almanca
+  yeterlik" aşaması, kurs danışmanı, öğrenci işleri, eğitim koordinatörü, sınav sorumlusu), 4 ek rol.
+  8 yeni yetkinlik (accuracy, didactics, german_proficiency, resilience, integrity, design_craft,
+  classroom_management, exam_expertise), 1/3/5 çapalı.
+- "Alım aç": "Hazır şablondan başla" ilk kart, "Önerilen"; galeri adımı (`#template`), "Önizle" Sheet.
+  `createOpening` `start: "TEMPLATE"`: yetkinlikleri seed_key ya da adla bulur ya da yazar, aşama ve
+  soruları, ağırlıkları yazar, boş pozisyonun ilanını ve profilini doldurur.
+- Doğrulandı (komut çıktısıyla): tsc 0, eslint 0, `pnpm test` 235 dosya 2971/2971, `pnpm build` 0,
+  `verify:hiring-templates` taze `kademe_templates_check` üzerinde 125 ok / 0 FAIL (20 şablonun hepsi
+  yayın kapısından geçiyor). Claude in Chrome (kendi sunucu :3101, `kademe_ui_check`): galeri 20 şablon,
+  Almanca öğretmeni şablonuyla açılan alımda yayın hazırlığının 3 zorunlu adımı "tamamlandı".
+- Doğrulanmadı: "Önizle" Sheet ve uzun promptların aday ekranında görünümü (gerçek tarayıcıda), aday
+  akışının bir şablonla baştan sona yapılması, 1 denemelik Almanca video sorusunda kamera arızası
+  olursa ne olduğu, gerçek aday süreleri. İçeriği bir İK uzmanı ve bir Almanca öğretmen eğitmeni
+  okumadı; telc puanlama ölçütleri yalnız telc ZD B1 Übungstest PDF'ine dayanıyor.
+- Ertelenen küçükler ledger'da ("minor (deferred)"); hiçbiri yayını engellemiyor.
+- Sıradaki ayrı iş: Sınav tarafında 3 seviye şablonu (hızlı tarama, yerleştirme, 4 beceri) ve banka
+  genişletme (spec bölüm 8).
+
 ## Hâlâ doğrulanmadı
 
 1. Telefonun kamerada gerçekten algılanması ve bakış işareti (canlı testte oluşmadı).
