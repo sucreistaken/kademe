@@ -18,7 +18,9 @@ import type { ProctoringPolicy } from "@/lib/proctor/policy";
 export type SolutionKind = (typeof solution.enumValues)[number];
 export type SolutionKey = "language-exam" | "hiring";
 export type I18nLabel = { tr: string; en: string };
-export type NavLink = { href: string; label: I18nLabel };
+/** P1: the menu item's icon, by name (the menu is a client component; it maps the name to a lucide icon). */
+export type NavIcon = "sun" | "briefcase" | "users" | "file-text" | "library" | "id-card" | "target" | "settings";
+export type NavLink = { href: string; label: I18nLabel; icon: NavIcon };
 /** The part of a solution's candidate state the core routes on. `position` is the running part's number, when the solution has one. */
 export type CandidateStepState = { step: string; position?: number | null };
 

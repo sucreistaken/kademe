@@ -54,11 +54,18 @@ describe("solution registry", () => {
     expect(m.candidateStepPath("tok", { step: "SOMETHING_ELSE" })).toBe("/a/tok");
   });
 
-  it("builds the HIRING-UX 4.1 menu with group headers: Today, Hiring, Exam, Library, Settings", () => {
+  it("builds the HIRING-UX 4.1 menu with group headers and an icon per item: Today, Hiring, Exam, Library, Settings (P1)", () => {
     const nav = buildNav("tr", shared);
     expect(nav.map((g) => g.key)).toEqual(["today", "hiring", "language-exam", "library", "settings"]);
     expect(nav.map((g) => g.label)).toEqual([null, "İşe alım", "Sınav", "Kütüphane", null]);
-    expect(nav[1].items).toEqual([{ href: "/hiring/openings", label: "Alımlar" }]);
+    expect(nav[1].items).toEqual([{ href: "/hiring/openings", label: "Alımlar", icon: "briefcase" }]);
+    expect(nav.flatMap((g) => g.items.map((i) => i.icon))).toEqual(["sun", "briefcase", "users", "file-text", "library", "id-card", "target", "settings"]);
+    // The live exam's three items keep their links, words and order; only the icon is new.
+    expect(nav[2].items.map(({ href, label }) => [href, label])).toEqual([
+      ["/exam/students", "Öğrenciler"],
+      ["/exam/exams", "Sınavlar"],
+      ["/exam/bank", "Soru bankası"],
+    ]);
     expect(buildNav("en", shared)[1].items[0].label).toBe("Openings");
   });
 

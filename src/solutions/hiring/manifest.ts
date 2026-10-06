@@ -11,7 +11,7 @@ export const hiringManifest: SolutionManifest = {
   dbKind: "HIRING",
   basePath: "/hiring",
   label: { tr: "İşe alım", en: "Hiring" },
-  nav: [{ href: "/hiring/openings", label: { tr: "Alımlar", en: "Openings" } }],
+  nav: [{ href: "/hiring/openings", label: { tr: "Alımlar", en: "Openings" }, icon: "briefcase" }],
   inviteHref: "/hiring/invite",
   inviteLabel: { tr: "Aday davet et", en: "Invite a candidate" },
   inviteCapability: "opening:write",

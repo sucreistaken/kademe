@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Briefcase, FileText, IdCard, Library, Settings, Sun, Target, Users, type LucideIcon } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -16,6 +17,23 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/cn";
 import type { NavGroupView } from "@/solutions/registry";
+import type { NavIcon } from "@/solutions/types";
+
+/**
+ * P1: each menu item's 18px icon, by the name the registry gives it. The size
+ * goes on the button as `[&_svg]:size-[18px]` so tailwind-merge replaces
+ * SidebarMenuButton's `[&_svg]:size-4`; a class on the icon alone loses to it.
+ */
+const ICONS: Record<NavIcon, LucideIcon> = {
+  sun: Sun,
+  briefcase: Briefcase,
+  users: Users,
+  "file-text": FileText,
+  library: Library,
+  "id-card": IdCard,
+  target: Target,
+  settings: Settings,
+};
 
 /**
  * HIRING-UX 4.1: one panel, a grouped side menu, no mode switch. The active
@@ -67,10 +85,12 @@ export function ManagerNav({
               <SidebarMenu>
                 {group.items.map((item) => {
                   const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                  const Icon = ICONS[item.icon];
                   return (
                     <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton asChild isActive={active} className={cn("h-9 text-[13.5px] text-ink-2", ACTIVE)}>
+                      <SidebarMenuButton asChild isActive={active} className={cn("h-9 text-[13.5px] text-ink-2 [&_svg]:size-[18px]", ACTIVE)}>
                         <Link href={item.href} aria-current={active ? "page" : undefined}>
+                          <Icon className="size-[18px] shrink-0" strokeWidth={1.75} aria-hidden />
                           {item.label}
                         </Link>
                       </SidebarMenuButton>

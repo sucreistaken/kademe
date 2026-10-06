@@ -39,10 +39,10 @@
     "candidate": "Öğrenci misiniz? Sınav linkiniz e-postayla gönderildi, buradan giriş yapmanıza gerek yok."
   },
   "errorPage": {
-    "forbiddenTitle": "Rolünüz bunu yapamaz",
-    "forbiddenBody": "Bu ekran ya da işlem için yetkiniz yok. Değerlendirici rolü yazma ve konuşma cevaplarını puanlar; sınav, banka ve davet işlemleri öğretmen ve sahip rollerine açıktır.",
+    "forbiddenTitle": "Rolün bunu yapamaz",
+    "forbiddenBody": "Bu ekran ya da işlem için yetkin yok. Değerlendirici rolü yazma ve konuşma cevaplarını puanlar; sınav, banka ve davet işlemleri öğretmen ve sahip rollerine açıktır.",
     "genericTitle": "Bir şeyler ters gitti",
-    "genericBody": "Sayfa yüklenirken beklenmeyen bir hata oluştu. Yeniden deneyebilir ya da panele dönebilirsiniz.",
+    "genericBody": "Sayfa yüklenirken beklenmeyen bir hata oluştu. Yeniden deneyebilir ya da panele dönebilirsin.",
     "retry": "Yeniden dene",
     "toDashboard": "Panele dön",
     "reference": "Hata kodu: {digest}"

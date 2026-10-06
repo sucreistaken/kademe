@@ -11,9 +11,9 @@ export const languageExamManifest: SolutionManifest = {
   basePath: "/exam",
   label: { tr: "Sınav", en: "Language exam" },
   nav: [
-    { href: "/exam/students", label: { tr: "Öğrenciler", en: "Students" } },
-    { href: "/exam/exams", label: { tr: "Sınavlar", en: "Exams" } },
-    { href: "/exam/bank", label: { tr: "Soru bankası", en: "Question bank" } },
+    { href: "/exam/students", label: { tr: "Öğrenciler", en: "Students" }, icon: "users" },
+    { href: "/exam/exams", label: { tr: "Sınavlar", en: "Exams" }, icon: "file-text" },
+    { href: "/exam/bank", label: { tr: "Soru bankası", en: "Question bank" }, icon: "library" },
   ],
   inviteHref: "/exam/students/new",
   inviteLabel: { tr: "Öğrenci davet et", en: "Invite a student" },

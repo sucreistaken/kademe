@@ -1,5 +1,6 @@
 import { StatusDot, type StatusTone } from "@/components/ui/status-dot";
 import type { StudentStatus } from "@/server/panel";
+import { PanelHeader } from "@/components/manager/panel-header";
 
 /**
  * Small shared pieces of the teacher panel. Status is always a dot and a word;
@@ -36,16 +37,9 @@ export function Level({ level, muted }: { level: string | null; muted?: boolean 
   return <span className={`tnum text-[14px] font-bold ${muted ? "text-muted" : "text-ink"}`}>{level ?? "-"}</span>;
 }
 
+/** The exam pages' head: since plan 2b the shared PanelHeader (P2); same title, sub line and action. */
 export function PageHead({ title, sub, action }: { title: React.ReactNode; sub?: React.ReactNode; action?: React.ReactNode }) {
-  return (
-    <div className="flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <h1 className="text-[26px] font-bold tracking-[-0.02em] text-ink">{title}</h1>
-        {sub ? <p className="mt-1 text-[14px] text-muted">{sub}</p> : null}
-      </div>
-      {action}
-    </div>
-  );
+  return <PanelHeader title={title} meta={sub} primary={action} />;
 }
 
 export const shortDateTime = (d: Date | null, locale: string) =>

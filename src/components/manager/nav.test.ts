@@ -1,0 +1,65 @@
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it, vi } from "vitest";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { buildNav } from "@/solutions/registry";
+import { ManagerNav } from "./nav";
+
+vi.mock("next/navigation", () => ({ usePathname: () => "/exam/students/abc" }));
+
+const shared = { today: "Bugün", settings: "Ayarlar", library: { label: "Kütüphane", positions: "Pozisyonlar", competencies: "Yetkinlikler" } };
+
+function render() {
+  const nav = createElement(ManagerNav as never, { groups: buildNav("tr", shared), footer: null, mobileTitle: "Menü", mobileDescription: "Panel menüsü" } as never);
+  return renderToStaticMarkup(createElement(SidebarProvider, null, nav));
+}
+
+describe("ManagerNav (P1)", () => {
+  it("draws a hidden icon before every item's words and keeps the links, words and order", () => {
+    const out = render();
+    const items = [...out.matchAll(/<a [^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/g)].map((m) => ({ href: m[1], inner: m[2] }));
+    expect(items.map((i) => i.href)).toEqual([
+      "/dashboard",
+      "/dashboard",
+      "/hiring/openings",
+      "/exam/students",
+      "/exam/exams",
+      "/exam/bank",
+      "/library/positions",
+      "/library/competencies",
+      "/settings",
+    ]);
+    // The first link is the "Kademe" brand; every menu item is an icon plus its words.
+    expect(items[0].inner).toBe("Kademe");
+    for (const item of items.slice(1)) {
+      expect(item.inner).toMatch(/^<svg [^>]*aria-hidden="true"[^>]*>.*<\/svg>[^<]+$/);
+      expect(item.inner).not.toMatch(/tabindex|focusable="true"/);
+    }
+    expect(items.slice(1).map((i) => i.inner.replace(/<svg.*<\/svg>/, ""))).toEqual([
+      "Bugün",
+      "Alımlar",
+      "Öğrenciler",
+      "Sınavlar",
+      "Soru bankası",
+      "Pozisyonlar",
+      "Yetkinlikler",
+      "Ayarlar",
+    ]);
+  });
+
+  it("sizes the icons at 18px over the sidebar button's default 16px", () => {
+    const out = render();
+    const links = out.match(/<a [^>]*data-sidebar="menu-button"[^>]*>/g)!;
+    expect(links).toHaveLength(8);
+    for (const link of links) {
+      expect(link).toContain("[&amp;_svg]:size-[18px]");
+      expect(link).not.toContain("[&amp;_svg]:size-4");
+    }
+  });
+
+  it("marks the item of the current page, by its path prefix", () => {
+    const out = render();
+    expect(out.match(/<a [^>]*aria-current="page"[^>]*>/g)).toHaveLength(1);
+    expect(out).toMatch(/<a [^>]*href="\/exam\/students"[^>]*aria-current="page"|<a [^>]*aria-current="page"[^>]*href="\/exam\/students"/);
+  });
+});
