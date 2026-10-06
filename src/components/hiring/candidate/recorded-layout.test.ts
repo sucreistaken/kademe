@@ -59,7 +59,7 @@ describe("the warm-up's first paint", () => {
   });
 
   it("puts the journey, the way out on the left and the one filled button in the footer", () => {
-    expect(html).toContain("Isınma · Adım 3 / 4");
+    expect(html).toContain("Isınma · Bölüm 3 / 4");
     expect(html).toContain("Isınmayı atla");
     expect(html).toContain('href="/a/tok/stage/1"');
     expect(html).toContain("Kaydı başlat");

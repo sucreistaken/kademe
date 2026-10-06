@@ -613,7 +613,7 @@
     "device": "Device",
     "warmup": "Warm-up",
     "questions": "Questions",
-    "label": "{part} · Step {n} / {total}"
+    "label": "{part} · Part {n} / {total}"
   },
   "hiringClosed": {
     "title": "This role's assessment has closed",

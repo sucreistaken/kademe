@@ -613,7 +613,7 @@
     "device": "Cihaz",
     "warmup": "Isınma",
     "questions": "Sorular",
-    "label": "{part} · Adım {n} / {total}"
+    "label": "{part} · Bölüm {n} / {total}"
   },
   "hiringClosed": {
     "title": "Bu pozisyon için değerlendirme kapandı",
