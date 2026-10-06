@@ -41,6 +41,11 @@ function factsOf(template: (typeof TEMPLATES)[number]): Map<string, CompetencyFa
 }
 
 describe("ready templates", () => {
+  it("are the 20 roles of the plan, in gallery order", () => {
+    expect(TEMPLATES).toHaveLength(20);
+    expect(TEMPLATES.map((x) => x.group)).toEqual([...Array(8).fill("GENERIC"), ...Array(8).fill("LANGUAGE_SCHOOL"), ...Array(4).fill("EXTRA")]);
+  });
+
   it("have unique keys and are found by key and by name", () => {
     expect(new Set(TEMPLATES.map((x) => x.key)).size).toBe(TEMPLATES.length);
     for (const x of TEMPLATES) {
