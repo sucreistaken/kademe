@@ -27,7 +27,7 @@ export function StepScreen({
 }: {
   layout: "split" | "single";
   illustration?: IllustrationName;
-  illustrationSize?: "hero" | "spot";
+  illustrationSize?: "hero" | "spot" | "flow";
   kicker?: ReactNode;
   title: ReactNode;
   titleRef?: Ref<HTMLHeadingElement>;
@@ -37,10 +37,10 @@ export function StepScreen({
   width?: 640 | 760 | 1000;
   enter?: boolean;
 }) {
-  // A spot drawing (160px) sits above the title, a hero drawing (400px) under the lead.
+  // A spot (160px) or flow (200-260px) drawing sits above the title, a hero drawing (400px) under the lead.
   const head = (
     <div className="min-w-0">
-      {illustration && illustrationSize === "spot" ? <Illustration name={illustration} size="spot" className="mb-6" /> : null}
+      {illustration && illustrationSize !== "hero" ? <Illustration name={illustration} size={illustrationSize} className="mb-6" /> : null}
       {kicker ? <p className="text-[14px] leading-[22px] text-muted">{kicker}</p> : null}
       <h1
         ref={titleRef}

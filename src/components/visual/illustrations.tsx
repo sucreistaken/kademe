@@ -360,6 +360,8 @@ const SIZE = {
   spot: "w-[160px]",
   phone: "w-full max-w-[342px]",
   small: "w-24",
+  // The guided flows' question region in the panel (manager mockup 3, 6).
+  flow: "w-[200px] xl:w-[260px]",
 } as const;
 
 export function Illustration({ name, size = "spot", className }: { name: IllustrationName; size?: keyof typeof SIZE; className?: string }) {

@@ -4,6 +4,7 @@
 import { HashAwareLink } from "./hash-aware-link";
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import type { FooterAction } from "@/components/visual/footer-action";
+import type { IllustrationName } from "@/components/visual/illustrations";
 import { StepFooter } from "@/components/visual/step-footer";
 import { StepScreen } from "@/components/visual/step-screen";
 import { useKeepFocus, useStepFocus } from "@/hooks/use-step-focus";
@@ -17,6 +18,10 @@ export type FlowStep = {
   id: string;
   title: ReactNode;
   lead?: ReactNode;
+  /** Manager mockup 3, 6: a spot drawing above the question, on a page only (a Sheet is too narrow). */
+  illustration?: IllustrationName;
+  /** Manager mockup 4: under the lead, the decisions so far in one line. */
+  aside?: ReactNode;
   layout: "single" | "split";
   body: ReactNode;
   primary: FooterAction;
@@ -178,6 +183,7 @@ export function GuidedFlow({
             {step.title}
           </h2>
           {step.lead ? <div className="text-[14px] leading-[22px] text-ink-2">{step.lead}</div> : null}
+          {step.aside ? <div>{step.aside}</div> : null}
           <div>{step.body}</div>
         </section>
         {position}
@@ -189,7 +195,18 @@ export function GuidedFlow({
     <div ref={setArea} className="flex min-h-[calc(100dvh-8rem)] flex-col">
       <FlowHeader kicker={kicker} exit={exit} />
       <div className="flex-1">
-        <StepScreen key={step.id} layout={step.layout} width={step.layout === "single" ? 640 : 1000} title={step.title} titleRef={heading} lead={step.lead} enter={enter}>
+        <StepScreen
+          key={step.id}
+          layout={step.layout}
+          width={step.layout === "single" ? 640 : 1000}
+          title={step.title}
+          titleRef={heading}
+          lead={step.lead}
+          illustration={step.illustration}
+          illustrationSize="flow"
+          aside={step.aside}
+          enter={enter}
+        >
           {step.body}
         </StepScreen>
       </div>

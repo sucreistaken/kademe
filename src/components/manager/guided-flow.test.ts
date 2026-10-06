@@ -78,6 +78,28 @@ describe("GuidedFlow (K12, W1-W10)", () => {
     const off = flow({ journey: { steps: 2, current: 0 } });
     expect(off).not.toContain("Adım");
   });
+
+  it("draws the step's drawing above the question and its aside under the lead, on a page only (manager mockup 3, 4)", () => {
+    const step = {
+      id: "position",
+      title: "Hangi pozisyon için?",
+      lead: createElement("p", null, "Seç."),
+      layout: "split",
+      illustration: "emptyOpenings",
+      aside: createElement("p", { id: "flow-aside" }, "Özet"),
+      body: createElement("p", null, "kartlar"),
+      primary: { kind: "button", id: "flow-next", label: "Devam et", onClick: noop },
+    };
+    const out = flow({ step });
+    // emptyOpenings' tint circle: the drawing is there, above the question.
+    expect(out).toContain('cx="134" cy="26" r="13"');
+    expect(out.indexOf('cx="134" cy="26" r="13"')).toBeLessThan(out.indexOf("Hangi pozisyon için?"));
+    expect(out).toContain('<p id="flow-aside">Özet</p>');
+    // A Sheet is 480px: no drawing there, the aside stays.
+    const sheet = flow({ step, container: "sheet", exit: null });
+    expect(sheet).not.toContain('cx="134" cy="26" r="13"');
+    expect(sheet).toContain('<p id="flow-aside">Özet</p>');
+  });
 });
 
 describe("GuidedFlow fix round 1 (W2, W10)", () => {
