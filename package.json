@@ -23,6 +23,7 @@
     "verify:queue": "tsx scripts/verify-queue-supervise.ts",
     "db:reset": "tsx scripts/db-reset.ts",
     "bank:tts": "tsx scripts/bank-tts.ts",
+    "verify:hiring-templates": "tsx scripts/verify-hiring-templates.ts",
     "verify:exam": "tsx scripts/verify-exam-flow.ts",
     "verify:hiring-immutability": "tsx scripts/verify-hiring-immutability.ts",
     "verify:hiring-setup": "tsx scripts/verify-hiring-setup.ts",
