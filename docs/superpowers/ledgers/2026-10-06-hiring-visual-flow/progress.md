@@ -141,3 +141,11 @@ Task 13: complete (commit 04cb88d, review clean)
 - Task 13: minor (cosmetic): on an EN page the request note to the team is in English (same as the core requestMessage).
 - Not run: verify:hiring-flow and verify:guard (doğrulanmadı, Postgres yok); the reviewer read the script's expected strings (:521-530) and they hold. Browser Step 7: doğrulanmadı (bulut, tarayıcı yok).
 BASE T14: 04cb88d
+Task 14: implementer DONE 9f110ed (menu icons via NavLink.icon, PanelHeader behind PageHead and PageTitle, RowMenu, errorPage in "sen"; [&_svg]:size-[18px] on SidebarMenuButton so the icon is really 18px; declared rename of the registry menu test). Controller: vitest 2523, 2522 passed, 1 env failure, 1 declared rename, 9 more added. Review (opus): Approved, 0 Critical/Important; every exam PageHead caller keeps words, order, links and actions (look-only change: title 600 weight, -0.01em, leading-8, sub as div).
+- Ruling: the controller fixes the cheap RowMenu minors now (Task 20 consumes RowMenu): a closed item is aria-disabled with select prevented (Radix disabled is skipped by the arrow keys, so its reason was never heard; RULES 5), a hash href is a plain <a>, the trigger is 44px (W10), items keyed by index. Commit 4f704f3. Controller: vitest 2524, 2523 passed, 1 env failure, 0 removed, 1 added (positive control: the new test fails without size-11).
+Task 14: fix round 1/5 (3 minor addressed by the controller, 0 open; commit 4f704f3)
+Task 14: complete (commits e6eada1..4f704f3, review clean after 1 fix round)
+- Carry to Task 20 (binding): nav.more is read by OpeningHeader in the rewritten plan; Task 20 adds it (TR "Diğer işlemler", EN "More actions"). C18's "never used" judged the old plan text.
+- Not run: verify:exam after Task 14 (doğrulanmadı, Postgres yok); before/after screenshots of the exam pages (doğrulanmadı, bulut, tarayıcı yok; the implementer rendered PageHead with every exam caller's real props before and after in a temporary test: same words, order, links).
+- Benchmark (doğrulanmadı, bulut, tarayıcı yok): menu icons at 18px, the exam pages' header after the change, the error page.
+BASE T15: 4f704f3
