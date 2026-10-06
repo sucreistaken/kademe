@@ -122,7 +122,7 @@ export function TemplateGallery({ templates, value, onChange }: { templates: Tem
                     <h3 className="text-[14px] leading-5 font-semibold text-ink">{stage.name}</h3>
                     <ol className="list-decimal space-y-2 pl-5 text-[14px] leading-[22px] text-ink-2">
                       {stage.prompts.map((prompt, j) => (
-                        <li key={j}>{prompt}</li>
+                        <li key={j} className="whitespace-pre-line">{prompt}</li>
                       ))}
                     </ol>
                   </li>

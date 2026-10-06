@@ -165,6 +165,8 @@ describe("createOpening from a template", () => {
       [25, 2],
     ]);
     expect(profile.every((r) => r.positionId === POS_A)).toBe(true);
+    // Two openings started at once on one position: the second profile write is a no-op, not a primary-key error.
+    expect(inserts("position_competencies")[0].onConflict).toEqual({ action: "nothing" });
     const weights = (inserts("hiring_versions")[0].values as { draftWeights: Record<string, number> }).draftWeights;
     expect(Object.fromEntries(profile.map((r) => [(r as unknown as { competencyId: string }).competencyId, r.weight]))).toEqual(weights);
 

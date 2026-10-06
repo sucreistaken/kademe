@@ -20,6 +20,8 @@ export type Op = {
   lock?: string;
   /** The keys a select asked for, so a test can prove a column was never read. */
   fields?: string[];
+  /** An insert's ON CONFLICT clause, with its target column names when one is given. */
+  onConflict?: { action: "nothing" | "update"; target?: string[] };
 };
 
 export const fake: { ops: Op[]; respond: (op: Op) => unknown[] } = { ops: [], respond: () => [] };
@@ -29,6 +31,11 @@ const dialect = new PgDialect();
 function sqlOf(condition: unknown) {
   if (!(condition instanceof SQL)) return { sql: "", params: [] as unknown[] };
   return dialect.sqlToQuery(condition);
+}
+
+function targetOf(target: unknown): { target?: string[] } {
+  if (!target) return {};
+  return { target: (Array.isArray(target) ? target : [target]).map((c) => (c as { name: string }).name) };
 }
 
 function statement(kind: Op["kind"], table?: unknown, distinct = false, fields?: unknown) {
@@ -74,8 +81,14 @@ function statement(kind: Op["kind"], table?: unknown, distinct = false, fields?:
     },
     limit: () => chain,
     groupBy: () => chain,
-    onConflictDoNothing: () => chain,
-    onConflictDoUpdate: () => chain,
+    onConflictDoNothing: (config?: { target?: unknown }) => {
+      op.onConflict = { action: "nothing", ...targetOf(config?.target) };
+      return chain;
+    },
+    onConflictDoUpdate: (config?: { target?: unknown }) => {
+      op.onConflict = { action: "update", ...targetOf(config?.target) };
+      return chain;
+    },
     orderBy: () => chain,
     returning: () => chain,
     then: (resolve: (rows: unknown[]) => unknown, reject?: (e: unknown) => unknown) => {

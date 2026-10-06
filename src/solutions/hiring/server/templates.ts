@@ -70,7 +70,19 @@ export async function ensureTemplateCompetencies(x: Executor, orgId: string, act
     const [row] = await x
       .insert(competencies)
       .values({ orgId, name: seed.name, description: seed.description, scaleId, seedKey: seed.key, reviewedAt: null })
+      .onConflictDoNothing({ target: [competencies.orgId, competencies.seedKey] })
       .returning({ id: competencies.id });
+    if (!row) {
+      // Another transaction created the seed-key row after the read above: use
+      // it; its anchors, tags and audit row are that transaction's to write.
+      const [theirs] = await x
+        .select({ id: competencies.id })
+        .from(competencies)
+        .where(and(eq(competencies.orgId, orgId), eq(competencies.seedKey, seed.key)));
+      if (!theirs) throw new Error(`template competency ${seed.key} conflicted but was not found`);
+      ids[seed.key] = theirs.id;
+      continue;
+    }
     await x.insert(competencyAnchors).values(LEVELS.map((value) => ({ competencyId: row.id, value, body: seed.anchors[value] })));
     const tags = [
       ...seed.positive.map((label) => ({ polarity: "POSITIVE" as const, label })),

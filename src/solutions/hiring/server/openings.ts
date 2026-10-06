@@ -248,7 +248,11 @@ export async function createOpening(user: { id: string; orgId: string }, input: 
         : [];
       if (!profiled) {
         const byWeight = Object.entries(built.weights).sort((a, b) => b[1] - a[1]);
-        await tx.insert(positionCompetencies).values(byWeight.map(([competencyId, weight], i) => ({ positionId, competencyId, weight, orderIndex: i })));
+        // Another opening started on this position at the same time may have written the profile first: keep it.
+        await tx
+          .insert(positionCompetencies)
+          .values(byWeight.map(([competencyId, weight], i) => ({ positionId, competencyId, weight, orderIndex: i })))
+          .onConflictDoNothing();
       }
     }
     await tx.insert(auditLogs).values({

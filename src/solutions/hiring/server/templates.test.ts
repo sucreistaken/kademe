@@ -123,6 +123,31 @@ describe("ensureTemplateCompetencies", () => {
     expect(fake.ops.filter((o) => o.table === "rating_scales")).toHaveLength(1);
   });
 
+  it("inserts a new competency with ON CONFLICT DO NOTHING on the per-organisation seed key", async () => {
+    fake.respond = (op) => {
+      if (op.table === "rating_scales") return [{ id: SCALE }];
+      if (op.kind === "insert" && op.table === "competencies") return [{ id: NEW }];
+      return [];
+    };
+    await ensureTemplateCompetencies(x, ORG, ACTOR, ["customer"]);
+    expect(insertsInto("competencies")[0].onConflict).toEqual({ action: "nothing", target: ["org_id", "seed_key"] });
+  });
+
+  it("uses the row a concurrent transaction created with the seed key, and writes no anchors, tags or audit for it", async () => {
+    let seedReads = 0;
+    fake.respond = (op) => {
+      // The first seed-key read finds nothing; the re-read after the conflict finds the other transaction's row.
+      if (isSeedKeyRead(op)) return (seedReads += 1) === 1 ? [] : [{ id: SEEDED }];
+      if (op.table === "rating_scales") return [{ id: SCALE }];
+      return [];
+    };
+    expect(await ensureTemplateCompetencies(x, ORG, ACTOR, ["customer"])).toEqual({ customer: SEEDED });
+    const reread = fake.ops.filter(isSeedKeyRead)[1];
+    expect(reread.where).toContain('"competencies"."org_id" = $');
+    expect(reread.params).toEqual(expect.arrayContaining([ORG, "customer"]));
+    expect(writesOf(fake.ops).map((o) => o.table)).toEqual(["competencies"]);
+  });
+
   it("answers every key, in order, mixing reuse and creation", async () => {
     let n = 0;
     fake.respond = (op) => {

@@ -128,7 +128,8 @@ async function main() {
   check(afterSecond.ad === afterFirst.ad && afterSecond.profile === afterFirst.profile, "the ad and the profile are unchanged (no second fill)");
   const edited = "Ekibimizin kendi yazdığı ilan.";
   await db.update(s.positions).set({ jobDescription: edited }).where(eq(s.positions.id, sales.id));
-  await openings.createOpening(user, { position: { kind: "existing", id: sales.id }, start: "TEMPLATE", copyFrom: null, templateKey: sr.key });
+  const third = await openings.createOpening(user, { position: { kind: "existing", id: sales.id }, start: "TEMPLATE", copyFrom: null, templateKey: sr.key });
+  check(third.ok, "a third template opening, after the team edited the ad, is created", JSON.stringify(third));
   check((await snapshot()).ad === edited, "an ad the team wrote is never replaced");
 
   console.log("\nAn archived competency comes back");

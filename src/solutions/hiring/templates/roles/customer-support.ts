@@ -14,9 +14,9 @@ export const customerSupport: HiringTemplate = {
   stages: [
     stage({
       name: t("Kısa tanışma", "Short introduction"),
-      description: t("İki kısa video sorusu ve bir senaryo sorusu. Yaklaşık 10 dakika.", "Two short video questions and one scenario question. About 10 minutes."),
+      description: t("İki kısa video sorusu ve bir senaryo sorusu. En fazla 13 dakika.", "Two short video questions and one scenario question. At most 13 minutes."),
       purpose: "Gerçek bir zor müşteri deneyimi ve iade politikası muhakemesi.",
-      minutes: 10,
+      minutes: 13,
       activities: [
         video({
           prompt: t(
@@ -68,7 +68,7 @@ export const customerSupport: HiringTemplate = {
     }),
     stage({
       name: t("İş örneği", "Work sample"),
-      description: t("Gerçek işe benzeyen iki yazılı görev. Yaklaşık 20 dakika.", "Two written tasks like the real job. About 20 minutes."),
+      description: t("Gerçek işe benzeyen iki yazılı görev. En fazla 20 dakika.", "Two written tasks like the real job. At most 20 minutes."),
       purpose: "Yazılı müşteri iletişimi ve birden çok şikayette önceliklendirme.",
       minutes: 20,
       activities: [

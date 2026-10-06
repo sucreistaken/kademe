@@ -14,8 +14,12 @@ export function VersionText({ value, locale }: { value: { tr: string; en: string
 /**
  * HIRING-UX 6.6-6.9, HIRING-VISUAL-FLOW 3.6: the kind of question as a small
  * chip with its icon, then the question as the screen's heading (24/34; it
- * takes focus when the question opens), then the team's note.
+ * takes focus when the question opens), then the team's note. A long
+ * work-sample prompt (over 200 characters) is set at 18px with normal leading
+ * so a scenario with lists stays readable.
  */
+const LONG_PROMPT_CHARS = 200;
+
 export function ActivityHeader({
   activity,
   locale,
@@ -29,13 +33,14 @@ export function ActivityHeader({
   icon?: LucideIcon;
   headingRef: React.Ref<HTMLHeadingElement>;
 }) {
+  const long = pickTextLang(activity.prompt, locale).text.length > LONG_PROMPT_CHARS;
   return (
     <div className="space-y-3">
       <p className="inline-flex min-h-8 items-center gap-2 rounded-full border border-line bg-surface px-3 text-[14px] text-ink">
         {Icon ? <Icon className="size-4 text-muted" strokeWidth={1.75} aria-hidden /> : null}
         {kicker}
       </p>
-      <h2 ref={headingRef} tabIndex={-1} id={`prompt-${activity.id}`} className="text-[24px] leading-[34px] font-medium whitespace-pre-line text-ink outline-none">
+      <h2 ref={headingRef} tabIndex={-1} id={`prompt-${activity.id}`} className={`${long ? "text-[18px] leading-normal" : "text-[24px] leading-[34px]"} font-medium whitespace-pre-line text-ink outline-none`}>
         <VersionText value={activity.prompt} locale={locale} />
       </h2>
       {pickTextLang(activity.note, locale).text ? (

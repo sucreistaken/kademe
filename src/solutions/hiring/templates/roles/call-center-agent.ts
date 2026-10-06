@@ -30,7 +30,7 @@ export const callCenterAgent: HiringTemplate = {
             t("Selamla, kimlik doğrula, sorunu dinle, çöz, özetle, kapat", "Greet, verify identity, listen to the issue, solve, summarise, close"),
           ],
           correct: 3,
-          internal: "Doğru sıra: selamlama, kimlik doğrulama (fatura bilgisi paylaşılmadan önce), sorunu dinleme ve çözme, yapılanı ve sonraki adımı özetleme, kapanış. (a) kimliği doğrulamadan önce sorunu dinleyip hesap konusuna girer, (b) özeti kapanıştan sonraya bırakır, (c) kimlik sorarak başlar ve müşteriyi selamlamayı atlar.",
+          internal: "Doğru sıra: selamlama, kimlik doğrulama (fatura bilgisi paylaşılmadan önce), sorunu dinleme ve çözme, yapılanı ve sonraki adımı özetleme, kapanış. (a) kimliği doğrulamadan önce sorunu dinleyip hesap konusuna girer, (b) özeti kapanıştan sonraya bırakır, (c) selamlama ile kimlik doğrulamanın yerini değiştirir, müşteriyi selamlamadan önce kimlik sorar.",
         }),
         video({
           prompt: t(
@@ -73,9 +73,9 @@ export const callCenterAgent: HiringTemplate = {
     }),
     stage({
       name: t("İş örneği", "Work sample"),
-      description: t("Gerçek çağrılara benzeyen iki sesli görev. En fazla 12 dakika.", "Two spoken tasks like real calls. At most 12 minutes."),
+      description: t("Gerçek çağrılara benzeyen iki sesli görev. En fazla 15 dakika.", "Two spoken tasks like real calls. At most 15 minutes."),
       purpose: "Fatura itirazında açıklama ve beklenti yönetimi, bekletip sıcak aktarma.",
-      minutes: 12,
+      minutes: 15,
       activities: [
         audio({
           prompt: t(

@@ -83,6 +83,15 @@ describe("ready templates", () => {
         const minutes = templateMinutes(template);
         expect(minutes).toBeGreaterThanOrEqual(15);
         expect(minutes).toBeLessThanOrEqual(teacher ? 45 : 35);
+        // Stage minutes are an AUTO_SUBMIT hard cap: they must fit the worst case
+        // (every take of every recording used in full, 60 s per other question).
+        for (const s of template.stages) {
+          const worst = s.activities.reduce(
+            (sum, a) => sum + (a.type === "VIDEO" || a.type === "AUDIO" ? (a.thinkSeconds + (a.answerSeconds ?? 0)) * a.maxTakes : 60),
+            0,
+          );
+          expect(worst, s.name.en).toBeLessThanOrEqual(s.durationSeconds);
+        }
         for (const s of template.stages) {
           expect(s.name.tr && s.name.en && s.description.tr && s.description.en).toBeTruthy();
           for (const a of s.activities) {
