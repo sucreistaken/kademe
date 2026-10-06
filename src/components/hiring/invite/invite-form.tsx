@@ -13,14 +13,12 @@ import { Label } from "@/components/ui/label";
 import { StatusDot } from "@/components/ui/status-dot";
 import { Textarea } from "@/components/ui/textarea";
 import { ChoiceCardGroup } from "@/components/visual/choice-card";
-import { Disclosure } from "@/components/visual/disclosure";
-import { Illustration } from "@/components/visual/illustrations";
-import { StepScreen } from "@/components/visual/step-screen";
 import { useMT } from "@/i18n/manager-client";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/i18n/locale";
 import { firstInviteLines, formatInviteDay, MAX_INVITE_ROWS, parseInviteRows } from "@/solutions/hiring/rules/invitation";
 import { inviteCandidateAction, inviteManyAction, type InviteOneResult } from "@/app/(manager)/hiring/invite/actions";
 import { CopyField } from "./copy-field";
+import { InviteReady } from "./invite-ready";
 import {
   INVITE_STEPS,
   deadlineInputValue,
@@ -218,40 +216,27 @@ export function InviteForm({
   );
 
   if (done?.kind === "one") {
-    const body = (
-      <div className="space-y-5">
-        <CopyField id="invite-link" label={t("linkLabel")} value={done.result.url} primary copyLabel={t("copyLink")} />
-        <Disclosure label={t("showMessage")}>
-          <CopyField id="invite-message" label={t("messageLabel")} value={done.result.message.body} multiline copyLabel={t("copyMessage")} />
-        </Disclosure>
-        <p className="text-[14px] text-ink-2">{t("onceNote")}</p>
-        {after}
-      </div>
-    );
-    // 4.9: the ready screen, one of the panel's two success moments with a small drawing.
-    return container === "page" ? (
-      <StepScreen
-        layout="single"
-        width={640}
-        illustration="inviteReady"
-        illustrationSize="spot"
-        title={t("readyTitle")}
-        titleRef={doneHeading}
-        lead={<p className="tnum">{t("readyBody", { name: done.result.name, date: done.result.expires })}</p>}
-      >
-        {body}
-      </StepScreen>
-    ) : (
-      <div className="space-y-5 pt-2 pb-8">
-        <Illustration name="inviteReady" size="small" />
-        <div>
-          <h2 ref={doneHeading} tabIndex={-1} className="text-[20px] leading-7 font-semibold text-ink outline-none">
-            {t("readyTitle")}
-          </h2>
-          <p className="tnum mt-1 text-[14px] text-muted">{t("readyBody", { name: done.result.name, date: done.result.expires })}</p>
-        </div>
-        {body}
-      </div>
+    return (
+      <InviteReady
+        container={container}
+        headingRef={doneHeading}
+        name={done.result.name}
+        url={done.result.url}
+        expires={done.result.expires}
+        language={t(locale)}
+        message={done.result.message.body}
+        onAnother={reset}
+        links={
+          <>
+            {toCandidates}
+            {onDone ? (
+              <button type="button" onClick={onDone} className={`min-h-11 text-[14px] font-medium text-ink ${LINK}`}>
+                {t("close")}
+              </button>
+            ) : null}
+          </>
+        }
+      />
     );
   }
 

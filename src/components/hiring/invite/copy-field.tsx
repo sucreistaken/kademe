@@ -5,6 +5,31 @@ import { Button } from "@/components/ui/button";
 import { useMT } from "@/i18n/manager-client";
 
 /**
+ * HIRING-UX 5.11: copies `value`; "Kopyalandı" for two seconds. Where the
+ * clipboard is refused, the field `id` is focused and selected so the manager
+ * can copy it by hand.
+ */
+export function useCopyValue(id: string, value: string) {
+  const [copied, setCopied] = useState(false);
+  const timer = useRef<number | null>(null);
+  useEffect(() => () => (timer.current ? window.clearTimeout(timer.current) : undefined), []);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      if (timer.current) window.clearTimeout(timer.current);
+      timer.current = window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      const field = document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement | null;
+      field?.focus();
+      field?.select();
+    }
+  }
+  return { copied, copy };
+}
+
+/**
  * A value to copy (HIRING-UX 5.11): shown read-only and selectable, with one
  * copy button that reads "Kopyalandı" for two seconds. Where the clipboard is
  * refused, the text is selected so the manager can copy it by hand.
@@ -25,22 +50,7 @@ export function CopyField({
   primary?: boolean;
 }) {
   const t = useMT("hiringInvite");
-  const [copied, setCopied] = useState(false);
-  const timer = useRef<number | null>(null);
-  useEffect(() => () => (timer.current ? window.clearTimeout(timer.current) : undefined), []);
-
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopied(true);
-      if (timer.current) window.clearTimeout(timer.current);
-      timer.current = window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      const field = document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement | null;
-      field?.focus();
-      field?.select();
-    }
-  }
+  const { copied, copy } = useCopyValue(id, value);
 
   return (
     <div className="space-y-2">
