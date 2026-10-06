@@ -1,7 +1,8 @@
 import type { PassRules } from "./blueprint";
 import { compareLevels, levelFromTheta, medianLevel, probAtOrAbove, shiftLevel } from "./cefr";
 import type { Posterior } from "./adaptive";
-import type { Cefr, ExamMode, Section } from "./types";
+import { placementOf, type Placement } from "./placement";
+import { PRODUCTIVE_SECTIONS, type Cefr, type ExamMode, type ProductiveSection, type Section } from "./types";
 
 /**
  * Turning section evidence into a result.
@@ -64,6 +65,11 @@ export type ComputedResult = {
     reasons: VerificationReason[];
     holdProbability: number | null;
   } | null;
+  /**
+   * PLACEMENT only: sublevel and borderline flag from the pooled objective
+   * posterior. Null otherwise; absent on results stored before it existed.
+   */
+  placement?: Placement | null;
 };
 
 /**
@@ -162,5 +168,14 @@ export function computeResult(input: {
     };
   }
 
-  return { skills, overall, pooled, status, verification };
+  let placement: Placement | null = null;
+  if (input.mode === "PLACEMENT") {
+    const productive = PRODUCTIVE_SECTIONS.flatMap((section: ProductiveSection) => {
+      const level = skills[section]?.level;
+      return level ? [{ section, level }] : [];
+    });
+    placement = placementOf(pooled, productive);
+  }
+
+  return { skills, overall, pooled, status, verification, placement };
 }

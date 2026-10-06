@@ -100,3 +100,44 @@ describe("verification", () => {
     expect(thin.verification!.reasons).toEqual(["INSUFFICIENT_EVIDENCE"]);
   });
 });
+
+describe("placement sublevel and borderline", () => {
+  it("adds the sublevel from the pooled posterior", () => {
+    const r = computeResult({
+      mode: "PLACEMENT",
+      claimed: null,
+      rules,
+      sections: [obj("GRAMMAR", -0.65, 0.4), obj("READING", -0.55, 0.4), prod("WRITING", "B1", "TEACHER")],
+    });
+    expect(r.placement).toEqual({ sublevel: "B1.1", borderline: false, reasons: [], recommended: null });
+  });
+
+  it("flags a productive skill a band away, using the teacher's level", () => {
+    const r = computeResult({
+      mode: "PLACEMENT",
+      claimed: null,
+      rules,
+      sections: [obj("GRAMMAR", BAND_CENTER.B2), prod("SPEAKING", "B2", "AI")],
+      overrides: { skills: { SPEAKING: "A2" } },
+    });
+    expect(r.placement!.borderline).toBe(true);
+    expect(r.placement!.reasons).toEqual(["PRODUCTIVE_GAP:SPEAKING"]);
+    expect(r.placement!.recommended).toBe("A2");
+  });
+
+  it("is null without objective evidence", () => {
+    const r = computeResult({ mode: "PLACEMENT", claimed: null, rules, sections: [prod("WRITING", "B1", "TEACHER")] });
+    expect(r.placement).toBe(null);
+  });
+
+  it("leaves a verification untouched", () => {
+    const r = computeResult({
+      mode: "LEVEL_VERIFICATION",
+      claimed: "B1",
+      rules,
+      sections: [obj("GRAMMAR", 0.05), prod("WRITING", "A2", "TEACHER")],
+    });
+    expect(r.placement).toBe(null);
+    expect(r.verification!.outcome).toBe("FAIL");
+  });
+});

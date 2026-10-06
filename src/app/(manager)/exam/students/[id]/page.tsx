@@ -49,6 +49,8 @@ export default async function ResultPage({
   const canFinalize = can(user, "result:finalize");
   const overall = final ? result?.finalOverall : (computed?.overall ?? null);
   const outcome = final ? result?.finalOutcome : computed?.verification?.outcome;
+  // Results stored before the placement detail existed have no `placement`.
+  const placement = computed?.placement ?? null;
 
   // What the finalize button waits for, in words.
   let blockedBy: string | null = null;
@@ -87,6 +89,30 @@ export default async function ResultPage({
             <div className="text-[12px] uppercase tracking-[0.04em] text-muted">{t("result.overall")}</div>
             <div className={cn("tnum text-[40px] font-bold leading-none", final ? "text-ink" : "text-ink-3")}>{overall ?? "-"}</div>
           </div>
+          {assessment.mode === "PLACEMENT" && placement ? (
+            <div className="max-w-[300px]">
+              {placement.sublevel ? (
+                <div className="tnum text-[14px] font-semibold text-ink">{t("result.sublevel", { sublevel: placement.sublevel })}</div>
+              ) : null}
+              {placement.borderline ? (
+                <>
+                  <div className="text-[13px] font-medium text-ink">{t("result.borderline")}</div>
+                  {placement.recommended ? (
+                    <div className="tnum text-[12.5px] text-muted">{t("result.recommendedClass", { level: placement.recommended })}</div>
+                  ) : null}
+                  <ul className="mt-0.5 text-[12.5px] text-muted">
+                    {placement.reasons.map((r) => (
+                      <li key={r}>
+                        {r.startsWith("PRODUCTIVE_GAP:")
+                          ? t("result.borderlinePRODUCTIVE_GAP", { section: t(`sectionName.${r.slice("PRODUCTIVE_GAP:".length) as Section}`) })
+                          : t(`result.borderline${r as "NEAR_CUT" | "HIGH_UNCERTAINTY"}`)}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : null}
+            </div>
+          ) : null}
           {assessment.mode === "LEVEL_VERIFICATION" ? (
             <div className="max-w-[260px]">
               <div className={cn("text-[14px] font-semibold", final ? "text-ink" : "text-ink-3")}>
