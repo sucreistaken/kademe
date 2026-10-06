@@ -46,6 +46,12 @@ describe("validateExamParams", () => {
     expect(v).toEqual({ ok: true, params: { mode: "LEVEL_VERIFICATION", claimedLevel: "B1", targetMinutes: 120, skills: [], emphasis: "READING", speakingRequired: true, name: "B1 kontrol" } });
   });
 
+  it("reads a stressed section alone as emphasis, not as the only skill", () => {
+    // Gemini answered "okuma ağırlıklı" with skills [READING] and emphasis READING (live run, 2026-10-07).
+    const v = validateExamParams({ mode: "PLACEMENT", targetMinutes: 40, skills: ["READING"], emphasis: "READING" }, "tr");
+    expect(v).toMatchObject({ ok: true, params: { skills: [], emphasis: "READING" } });
+    expect(validateExamParams({ mode: "PLACEMENT", skills: ["READING", "WRITING"], emphasis: "READING" }, "tr")).toMatchObject({ ok: true, params: { skills: ["READING", "WRITING"] } });
+  });
   it("treats garbage as empty", () => {
     expect(validateExamParams("nonsense", "tr").ok).toBe(false);
     expect(validateExamParams({ mode: "PLACEMENT", skills: "all" }, "tr")).toMatchObject({ ok: true, params: { skills: [] } });

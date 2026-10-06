@@ -61,13 +61,16 @@ export function validateExamParams(raw: unknown, locale: Locale): CreatorValidat
   const r = rawSchema.safeParse(raw).data ?? rawSchema.parse({});
   // The mode has no safe default: placing a student and checking a claim are different exams.
   if (!r.mode) return { ok: false, questions: [{ id: "mode", ...MODE_QUESTION[locale] }] };
+  const skills = [...new Set(r.skills)];
+  // "okuma ağırlıklı" stresses reading in a full exam; the model sometimes also lists it as the only skill.
+  const onlyTheEmphasis = skills.length === 1 && skills[0] === r.emphasis;
   return {
     ok: true,
     params: {
       mode: r.mode,
       claimedLevel: r.mode === "LEVEL_VERIFICATION" && r.claimedLevel ? r.claimedLevel : null,
       targetMinutes: r.targetMinutes > 0 ? Math.min(120, Math.max(10, r.targetMinutes)) : null,
-      skills: [...new Set(r.skills)],
+      skills: onlyTheEmphasis ? [] : skills,
       emphasis: r.emphasis || null,
       speakingRequired: r.speakingRequired === "" ? null : r.speakingRequired === "yes",
       name: r.name.trim().slice(0, 120) || null,
@@ -81,7 +84,7 @@ const ROUTER_GUIDE = `Builds a German exam (a blueprint) from three ready templa
 - mode (required): PLACEMENT places a new student at a level ("yerleştirme", "seviye tespiti"); LEVEL_VERIFICATION checks a level the student claims ("seviye kontrolü", "doğrulama", "gerçekten B1 mi"). "" when the request does not say which.
 - claimedLevel: A1, A2, B1, B2, C1 or C2, only for LEVEL_VERIFICATION when the request names the level to check; "" otherwise. A level in a placement request ("B1 yerleştirme") is not a claim: leave "".
 - targetMinutes: the total duration asked for, 10 to 120; 0 when not given.
-- skills: the sections the request names: GRAMMAR (dilbilgisi), READING (okuma), LISTENING (dinleme), WRITING (yazma), SPEAKING (konuşma); [] when none are named.
+- skills: only when the request limits the exam to named sections ("sadece okuma ve dinleme"): GRAMMAR (dilbilgisi), READING (okuma), LISTENING (dinleme), WRITING (yazma), SPEAKING (konuşma); [] otherwise. A stressed section ("okuma ağırlıklı") is emphasis, not a skills list.
 - emphasis: the one section the request stresses ("okuma ağırlıklı" is READING); "" otherwise.
 - speakingRequired: "yes" or "no" only when the request says whether speaking is in; "" otherwise.
 - name: only when the request gives the exam a name; "" otherwise.
