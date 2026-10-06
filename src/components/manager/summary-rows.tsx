@@ -1,5 +1,5 @@
 // kademe-owned
-import Link from "next/link";
+import { HashAwareLink } from "./hash-aware-link";
 import { ChevronRight, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -60,14 +60,10 @@ export function SummaryRows({ rows, readOnly = false, changeLabel, changedLabel 
               <button type="button" onClick={edit.onClick} className={ACTION}>
                 {words}
               </button>
-            ) : edit.href.includes("#") ? (
-              <a href={edit.href} className={ACTION}>
-                {words}
-              </a>
             ) : (
-              <Link href={edit.href} className={ACTION}>
+              <HashAwareLink href={edit.href} className={ACTION}>
                 {words}
-              </Link>
+              </HashAwareLink>
             )}
           </li>
         );

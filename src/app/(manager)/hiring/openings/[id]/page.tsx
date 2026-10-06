@@ -3,6 +3,7 @@ import { CalendarDays, ChevronRight, Clock, EyeOff, Inbox, Users } from "lucide-
 import { Button, DisabledReason } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { InviteSheet } from "@/components/hiring/invite/invite-sheet";
+import { HashAwareLink } from "@/components/manager/hash-aware-link";
 import { SummaryRows, type SummaryRow } from "@/components/manager/summary-rows";
 import type { RowMenuItem } from "@/components/manager/row-menu";
 import { UrlNotice } from "@/components/ui/url-notice";
@@ -49,19 +50,6 @@ const NOTICE_PARAMS = ["publish", "published"] as const;
 const LINK = "font-medium text-ink underline decoration-line-strong underline-offset-4 transition-colors duration-[120ms] ease-out hover:decoration-ink";
 const TEXT_ACTION = "inline-flex min-h-11 items-center gap-0.5 text-[14px] font-medium text-ink underline decoration-underline underline-offset-4 hover:decoration-ink";
 const ATTENTION_ROW = "flex min-h-11 items-center gap-3 py-3 text-[14px] text-ink transition-colors duration-[120ms] ease-out hover:bg-canvas";
-
-/** A link inside the opening: with a hash (the publish summary, team and rules' flow) a plain anchor, so the page hears the hash (W3). */
-function To({ href, className, children }: { href: string; className: string; children: React.ReactNode }) {
-  return href.includes("#") ? (
-    <a href={href} className={className}>
-      {children}
-    </a>
-  ) : (
-    <Link href={href} className={className}>
-      {children}
-    </Link>
-  );
-}
 
 /**
  * HIRING-VISUAL-FLOW 4.5 (K12): one opening's control view. A draft: its
@@ -189,10 +177,8 @@ export default async function OpeningOverviewPage({
           {next.key === "publish" ? (
             // The summary on this page: opened as a marked history entry, so "‹ Genel bakış" goes back (M3).
             <PublishLink href={next.href}>{t("hiringCommon.continueSetup")}</PublishLink>
-          ) : next.href.includes("#") ? (
-            <a href={next.href}>{t("hiringCommon.continueSetup")}</a>
           ) : (
-            <Link href={next.href}>{t("hiringCommon.continueSetup")}</Link>
+            <HashAwareLink href={next.href}>{t("hiringCommon.continueSetup")}</HashAwareLink>
           )}
         </Button>
       ) : null
@@ -241,10 +227,10 @@ export default async function OpeningOverviewPage({
         action:
           current && access.edit && row.href && words ? (
             <span className="flex flex-wrap items-center gap-x-5">
-              <To href={row.href} className={TEXT_ACTION}>
+              <HashAwareLink href={row.href} className={TEXT_ACTION}>
                 {t(`hiringOverview.${words}`)}
                 <ChevronRight className="size-4" strokeWidth={1.75} aria-hidden />
-              </To>
+              </HashAwareLink>
               {row.state === "advisory" ? (
                 // STATUS decision 7: advice never blocks; "Atla" passes it for this visit (the address remembers, nothing is stored).
                 // The page stays where it is (no scroll to the top) and keeps ?lang= when the address has one.
@@ -444,26 +430,26 @@ export default async function OpeningOverviewPage({
                 {shortfall ? (
                   <li>
                     {/* A step of team and rules' flow (a hash): a plain anchor, so that page hears it (W3). */}
-                    <To href={`${base}/settings#team-members`} className={ATTENTION_ROW}>
+                    <HashAwareLink href={`${base}/settings#team-members`} className={ATTENTION_ROW}>
                       <Users className="size-[18px] shrink-0 text-muted" strokeWidth={1.75} aria-hidden />
                       <span className="flex-1">{t("hiringCommon.teamShort", { evaluators: shortfall.evaluators, min: shortfall.min })}</span>
                       <span className="inline-flex items-center text-[13px] font-medium">
                         {t("hiringOpenings.nextTeam")}
                         <ChevronRight className="size-4" strokeWidth={1.75} aria-hidden />
                       </span>
-                    </To>
+                    </HashAwareLink>
                   </li>
                 ) : null}
                 {deadlinePassed ? (
                   <li>
-                    <To href={`${base}/settings#contact-deadline`} className={ATTENTION_ROW}>
+                    <HashAwareLink href={`${base}/settings#contact-deadline`} className={ATTENTION_ROW}>
                       <CalendarDays className="size-[18px] shrink-0 text-muted" strokeWidth={1.75} aria-hidden />
                       <span className="flex-1">{t("hiringCommon.deadlinePassed")}</span>
                       <span className="inline-flex items-center text-[13px] font-medium">
                         {t("hiringOpenings.nextDeadline")}
                         <ChevronRight className="size-4" strokeWidth={1.75} aria-hidden />
                       </span>
-                    </To>
+                    </HashAwareLink>
                   </li>
                 ) : null}
               </ul>

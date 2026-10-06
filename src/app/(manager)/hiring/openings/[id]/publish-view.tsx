@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { HashAwareLink } from "@/components/manager/hash-aware-link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore, type AnchorHTMLAttributes, type MouseEvent, type ReactNode } from "react";
 import { flowFocusKey } from "@/components/manager/flow-model";
@@ -193,15 +193,9 @@ export function PublishFooter({
       note={
         reason && fix ? (
           // A fix with a hash is a plain anchor, so the page it opens hears the hash (W3).
-          fix.href.includes("#") ? (
-            <a href={fix.href} className={FIX}>
-              {fix.label}
-            </a>
-          ) : (
-            <Link href={fix.href} className={FIX}>
-              {fix.label}
-            </Link>
-          )
+          <HashAwareLink href={fix.href} className={FIX}>
+            {fix.label}
+          </HashAwareLink>
         ) : null
       }
     />

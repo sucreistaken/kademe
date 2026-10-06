@@ -1,7 +1,7 @@
 // kademe-owned
 "use client";
 
-import Link from "next/link";
+import { HashAwareLink } from "./hash-aware-link";
 import { Ellipsis } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -37,7 +37,7 @@ export function RowMenu({ label, items }: { label: string; items: RowMenuItem[] 
             </DropdownMenuItem>
           ) : item.href ? (
             <DropdownMenuItem key={i} asChild>
-              {item.href.includes("#") ? <a href={item.href}>{body(item)}</a> : <Link href={item.href}>{body(item)}</Link>}
+              <HashAwareLink href={item.href}>{body(item)}</HashAwareLink>
             </DropdownMenuItem>
           ) : (
             <DropdownMenuItem key={i} onSelect={item.onSelect}>

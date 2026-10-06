@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ReactElement, ReactNode } from "react";
 import Link from "next/link";
+import { HashAwareLink } from "@/components/manager/hash-aware-link";
 import { PanelHeader } from "@/components/manager/panel-header";
 import { RouteTabs } from "@/components/manager/route-tabs";
 import { managerT } from "@/i18n/manager";
@@ -12,7 +13,9 @@ function find(node: ReactNode, type: unknown): ReactElement<Record<string, unkno
   if (!node || typeof node !== "object") return [];
   if (Array.isArray(node)) return node.flatMap((child) => find(child, type));
   const element = node as ReactElement<Record<string, unknown> & { children?: ReactNode }>;
-  return [...(element.type === type ? [element] : []), ...find(element.props?.children, type)];
+  // B-M6: HashAwareLink is looked through, so the anchor or Next link it draws is found.
+  const inner = element.type === HashAwareLink ? HashAwareLink(element.props as unknown as Parameters<typeof HashAwareLink>[0]) : element.props?.children;
+  return [...(element.type === type ? [element] : []), ...find(inner, type)];
 }
 
 const opening = { id: "33333333-3333-4333-8333-333333333333", name: "Tasarımcı · Ekim", positionName: "Tasarımcı", status: "OPEN", deadlineAt: null } as unknown as OpeningDetail;

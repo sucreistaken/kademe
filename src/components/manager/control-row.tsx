@@ -1,5 +1,5 @@
 // kademe-owned
-import Link from "next/link";
+import { HashAwareLink } from "./hash-aware-link";
 import { ChevronRight, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -7,19 +7,6 @@ export type ControlAttention = { key: string; icon: LucideIcon; text: ReactNode;
 
 const ACTION =
   "inline-flex min-h-11 items-center gap-0.5 text-[14px] font-medium text-ink underline decoration-underline underline-offset-4 transition-colors duration-[120ms] ease-out hover:decoration-ink";
-
-/** A link to another page is a Next link; one with a hash is a plain anchor, so the flow on that page hears the hash (W3). */
-function ToLink({ href, className, children }: { href: string; className: string; children: ReactNode }) {
-  return href.includes("#") ? (
-    <a href={href} className={className}>
-      {children}
-    </a>
-  ) : (
-    <Link href={href} className={className}>
-      {children}
-    </Link>
-  );
-}
 
 /**
  * KG1 (K12): one object, one row, one next step. The name opens the object;
@@ -49,9 +36,9 @@ export function ControlRow({
   return (
     <li className="grid gap-x-6 gap-y-2 px-5 py-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.3fr)_minmax(0,0.9fr)]">
       <div className="min-w-0">
-        <ToLink href={href} className="text-[15px] leading-6 font-semibold text-ink hover:underline">
+        <HashAwareLink href={href} className="text-[15px] leading-6 font-semibold text-ink hover:underline">
           {title}
-        </ToLink>
+        </HashAwareLink>
         <div className="mt-1 text-[13px] leading-5">{status}</div>
       </div>
       <div className="min-w-0 text-[13px] leading-5 text-ink-2">{progress}</div>
@@ -74,10 +61,10 @@ export function ControlRow({
       <div className="tnum min-w-0 text-[13px] leading-5 text-muted lg:text-right">{facts}</div>
       {next ? (
         <div className="flex justify-end lg:col-span-4">
-          <ToLink href={next.href} className={ACTION}>
+          <HashAwareLink href={next.href} className={ACTION}>
             {next.label}
             <ChevronRight className="size-4" strokeWidth={1.75} aria-hidden />
-          </ToLink>
+          </HashAwareLink>
         </div>
       ) : null}
     </li>

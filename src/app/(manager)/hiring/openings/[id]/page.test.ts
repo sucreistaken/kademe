@@ -99,6 +99,7 @@ import { OpeningHeader } from "./opening-header";
 import { PUBLISHED_NOTICE_ID, PublishFooter, PublishLink, PublishSwitch } from "./publish-view";
 import { managerT } from "@/i18n/manager";
 import Link from "next/link";
+import { HashAwareLink } from "@/components/manager/hash-aware-link";
 import { PathSteps } from "@/components/visual/path-steps";
 import { StepScreen } from "@/components/visual/step-screen";
 
@@ -355,7 +356,10 @@ describe("a draft's control view and its setup path (4.5, H7)", () => {
     const page = await render();
     const action = header(page).props.action as ReactElement;
     expect(text(action)).toBe("Kuruluma devam et");
-    expect(find(action, ofType(Link))[0].props.href).toBe(`${BASE}/assessment/preview`);
+    // B-M6: drawn through HashAwareLink, a Next link for a target without a hash.
+    const [next] = find(action, ofType(HashAwareLink));
+    expect(next.props.href).toBe(`${BASE}/assessment/preview`);
+    expect((HashAwareLink(next.props as unknown as Parameters<typeof HashAwareLink>[0]) as ReactElement).type).toBe(Link);
     expect(text(action)).not.toContain("Yayınla");
     // No setup line on the overview itself: its setup card says the same one line lower.
     expect(header(page).props.setup).toBeUndefined();

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { StatusDot, type StatusTone } from "@/components/ui/status-dot";
+import { HashAwareLink } from "@/components/manager/hash-aware-link";
 import { PanelHeader } from "@/components/manager/panel-header";
 import { RouteTabs } from "@/components/manager/route-tabs";
 import type { RowMenuItem } from "@/components/manager/row-menu";
@@ -96,15 +97,9 @@ export function OpeningHeader({
             <span>{t("hiringOverview.setupCount", { done: setup.done, total: setup.total })}</span>
             <span aria-hidden>·</span>
             {/* A step with a hash (team and rules' flow, the publish summary) is a plain anchor, so that page hears it (W3). */}
-            {setup.next.href.includes("#") ? (
-              <a href={setup.next.href} className={linkClass}>
-                {stripLink}
-              </a>
-            ) : (
-              <Link href={setup.next.href} className={linkClass}>
-                {stripLink}
-              </Link>
-            )}
+            <HashAwareLink href={setup.next.href} className={linkClass}>
+              {stripLink}
+            </HashAwareLink>
           </p>
         ) : null}
       </div>

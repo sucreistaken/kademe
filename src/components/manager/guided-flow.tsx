@@ -1,7 +1,7 @@
 // kademe-owned
 "use client";
 
-import Link from "next/link";
+import { HashAwareLink } from "./hash-aware-link";
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import type { FooterAction } from "@/components/visual/footer-action";
 import { StepFooter } from "@/components/visual/step-footer";
@@ -84,15 +84,9 @@ export function FlowHeader({ kicker, exit }: { kicker: ReactNode; exit?: FlowExi
     <div className="flex min-h-11 items-center justify-between gap-4 border-b border-line pb-2">
       <p className="min-w-0 truncate text-[14px] leading-[22px] text-muted">{kicker}</p>
       {!exit ? null : "href" in exit ? (
-        exit.href.includes("#") ? (
-          <a href={exit.href} className={LINK}>
-            {label}
-          </a>
-        ) : (
-          <Link href={exit.href} className={LINK}>
-            {label}
-          </Link>
-        )
+        <HashAwareLink href={exit.href} className={LINK}>
+          {label}
+        </HashAwareLink>
       ) : (
         <button type="button" onClick={exit.onClick} className={LINK}>
           {label}
