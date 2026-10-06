@@ -1,16 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Button, DisabledReason } from "@/components/ui/button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { NotebookPen } from "lucide-react";
+import { useLocale } from "next-intl";
+import { ChoiceCardGroup } from "@/components/visual/choice-card";
+import { Disclosure } from "@/components/visual/disclosure";
+import { PathSteps } from "@/components/visual/path-steps";
+import { StepFooter } from "@/components/visual/step-footer";
+import { StepScreen } from "@/components/visual/step-screen";
 import { Textarea } from "@/components/ui/textarea";
-import { useStepFocus } from "@/hooks/use-step-focus";
+import { useArrivalFocus, useStepFocus } from "@/hooks/use-step-focus";
 import { apiSend } from "@/lib/client/api";
 import { useT } from "@/i18n/candidate-client";
+import { DEFAULT_LOCALE, isLocale } from "@/i18n/locale";
 import type { HiringCandidateState } from "@/solutions/hiring/rules/candidate-state";
-import { ActionBar } from "./action-bar";
 import { mailTo } from "./closed";
-import { devicesLine, surveyAfterFailure, takeLastLostWords } from "./done-model";
+import { devicesLine, doneFooter, surveyAfterFailure, takeLastLostWords } from "./done-model";
 import { sessionDrafts, type LostKind } from "./draft-store";
 import { withTimeout } from "./runner-steps";
 import { serverMessage } from "./server-message";
@@ -34,6 +39,8 @@ type Finished = NonNullable<HiringCandidateState["finished"]>;
  */
 export function Done({ token, state, feedbackBy }: { token: string; state: HiringCandidateState & { finished: Finished }; feedbackBy: string }) {
   const t = useT("hiringDone");
+  const appLocale = useLocale();
+  const locale = isLocale(appLocale) ? appLocale : DEFAULT_LOCALE;
   const finished = state.finished;
   const devices = devicesLine(state.devices);
   const [lost, setLost] = useState<LostKind | null>(null);
@@ -50,6 +57,8 @@ export function Done({ token, state, feedbackBy }: { token: string; state: Hirin
   const sending = useRef(false);
   // When the form gives way (sent or closed) focus moves to the survey's heading; a retry keeps it on the button.
   const surveyHeading = useStepFocus<HTMLHeadingElement>(survey === "sent" || survey === "closed" ? survey : "form");
+  // Task 6 pattern: the page is reached by a navigation (the runner's last send, or the link again), so its title takes focus once on arrival.
+  const titleRef = useArrivalFocus<HTMLHeadingElement>();
 
   useEffect(() => {
     // Task 12 carry: every stream this tab still holds is stopped here; the device check and each
@@ -94,131 +103,144 @@ export function Done({ token, state, feedbackBy }: { token: string; state: Hirin
   const saved = t("saved", { count: finished.stagesDone });
   const lostLine = lost === "text" ? t("lostText") : lost === "choice" ? t("lostChoice") : null;
   const devicesText = !stopped ? null : devices === "cameraAndMicrophone" ? t("devicesOff") : devices === "microphone" ? t("micOff") : null;
-  const why = !rating ? t("surveyPick") : undefined;
+  const footer = doneFooter({ surveyEnabled: finished.survey.enabled, survey });
 
-  return (
-    <div className="mx-auto max-w-[640px] pt-10 pb-6 sm:pt-14">
-      {/* One polite line for a screen reader after the 8 second send navigates here (the button it pressed is gone). */}
-      <p role="status" className="sr-only">
-        {announce ? [title, saved, lostLine, devicesText].filter(Boolean).join(" ") : ""}
-      </p>
-      <h1 className="text-[28px] leading-9 font-semibold text-ink">{title}</h1>
-      <p className="mt-3 text-[16px] leading-[26px] text-ink">{saved}</p>
-      {lostLine ? <p className="mt-2 text-[16px] leading-[26px] text-ink-2">{lostLine}</p> : null}
-      <div className="mt-6 space-y-2 rounded-2xl border border-line bg-surface p-card-candidate text-[16px] leading-[26px] text-ink">
-        <p>{t("next", { count: state.reviewers })}</p>
-        <p className="tnum font-medium">{t("byDate", { date: feedbackBy })}</p>
+  const summary = (
+    <div className="space-y-6">
+      {lostLine ? <p className="text-[16px] leading-[26px] text-ink-2">{lostLine}</p> : null}
+      <section aria-labelledby="done-next" className="rounded-2xl border border-line bg-surface p-card-candidate">
+        <h2 id="done-next" className="mb-4 text-[13px] font-semibold tracking-[0.06em] text-muted uppercase">
+          {t("nextTitle")}
+        </h2>
+        <PathSteps
+          locale={locale}
+          steps={[
+            { title: t("nextToday"), detail: t("sentToday"), state: "done" },
+            { title: t("next", { count: state.reviewers }) },
+            { title: <span className="tnum">{t("byDate", { date: feedbackBy })}</span> },
+          ]}
+        />
+      </section>
+      <div className="space-y-1 text-[14px] leading-[22px] text-muted">
+        {devicesText ? <p>{devicesText}</p> : null}
         {state.contactEmail ? <p>{t.rich("contact", { email: state.contactEmail, mail: mailTo(state.contactEmail) })}</p> : null}
-      </div>
-      {devicesText ? (
-        <p className="mt-4 flex items-center gap-2 text-[14px] leading-[22px] text-muted">
-          <span className="size-1.5 shrink-0 rounded-full bg-ink-3" aria-hidden />
-          {devicesText}
+        {/* C19: a quiet link in the page, not the footer's back slot (whose chevron would say "back"). */}
+        <p>
+          <a
+            href={`/a/${encodeURIComponent(token)}/rights`}
+            className="inline-flex min-h-11 items-center text-muted underline decoration-underline underline-offset-4 hover:text-ink"
+          >
+            {t("rights")}
+          </a>
         </p>
-      ) : null}
+      </div>
+    </div>
+  );
 
-      {finished.survey.enabled ? (
-        <section className="mt-10" aria-labelledby="survey-title">
-          <h2 id="survey-title" ref={surveyHeading} tabIndex={-1} className="text-[20px] leading-7 font-semibold text-ink outline-none">
-            {t("surveyTitle")}
-          </h2>
-          {survey === "sent" ? (
-            <p role="status" className="mt-3 text-[16px] leading-[26px] text-ink">
-              {t("surveyThanks")}
-            </p>
-          ) : survey === "closed" ? (
-            // M2: no form and no retry; the server's words say why.
-            <p role="status" className="mt-3 text-[16px] leading-[26px] text-ink">
-              {error ?? t("surveyClosed")}
-            </p>
-          ) : (
-            <>
-              <RadioGroup
-                value={rating}
-                onValueChange={setRating}
-                disabled={survey === "sending"}
-                aria-labelledby="survey-title"
-                aria-describedby="survey-scale"
-                className="mt-4 grid grid-cols-5 gap-2"
-              >
-                {RATINGS.map((value) => (
-                  <label
-                    key={value}
-                    className="relative flex min-h-12 cursor-pointer items-center justify-center rounded-xl border border-line bg-surface text-[16px] text-ink transition-colors duration-[120ms] ease-out hover:bg-canvas has-[:disabled]:cursor-not-allowed has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent has-[[data-state=checked]]:border-accent has-[[data-state=checked]]:bg-brand-soft has-[[data-state=checked]]:font-semibold"
-                  >
-                    {/* The scale's ends are named on the ends themselves, not only in the hint below. */}
-                    <RadioGroupItem
-                      value={value}
-                      aria-label={value === "1" ? `1, ${t("surveyLow")}` : value === "5" ? `5, ${t("surveyHigh")}` : value}
-                      // The shadcn item is `relative size-4`: these win the merge, so the dot takes no room and the tile shows focus.
-                      className="sr-only absolute size-px"
-                    />
+  const surveyBlock = finished.survey.enabled ? (
+    <section aria-labelledby="survey-title" className="space-y-4">
+      <h2 id="survey-title" ref={surveyHeading} tabIndex={-1} className="text-[20px] leading-7 font-semibold text-ink outline-none">
+        {t("surveyTitle")}
+      </h2>
+      {survey === "sent" ? (
+        <p role="status" className="text-[16px] leading-[26px] text-ink">
+          {t("surveyThanks")}
+        </p>
+      ) : survey === "closed" ? (
+        // M2: no form and no retry; the server's words say why.
+        <p role="status" className="text-[16px] leading-[26px] text-ink">
+          {error ?? t("surveyClosed")}
+        </p>
+      ) : (
+        <>
+          <div className="space-y-1">
+            <ChoiceCardGroup
+              type="single"
+              name="survey-rating"
+              size="square"
+              columns={5}
+              value={rating ? [rating] : []}
+              onChange={(next) => setRating(next[0] ?? "")}
+              labelledBy="survey-title"
+              describedBy="survey-scale"
+              disabled={survey === "sending"}
+              items={RATINGS.map((value) => ({
+                value,
+                label: (
+                  <>
                     <span className="tnum" aria-hidden>
                       {value}
                     </span>
-                  </label>
-                ))}
-              </RadioGroup>
-              <div id="survey-scale" className="mt-1 flex justify-between text-[14px] leading-[22px] text-muted">
-                <span>1: {t("surveyLow")}</span>
-                <span>5: {t("surveyHigh")}</span>
-              </div>
-              <label className="mt-5 block" htmlFor="survey-comment">
-                <span className="text-[16px] font-medium text-ink">{t("surveyComment")}</span>
-              </label>
-              <Textarea
-                id="survey-comment"
-                value={comment}
-                onChange={(e) => setComment(e.target.value.slice(0, COMMENT_MAX))}
-                maxLength={COMMENT_MAX}
-                disabled={survey === "sending"}
-                rows={3}
-                aria-describedby="survey-comment-count"
-                className="mt-2 resize-y bg-surface px-4 py-3 text-[16px] leading-[26px] md:text-[16px]"
-              />
-              <p id="survey-comment-count" className="tnum mt-1 text-right text-[14px] text-muted">
-                {t("surveyCount", { used: comment.length, max: COMMENT_MAX })}
-              </p>
-              <p className="mt-2 text-[14px] leading-[22px] text-muted">{t("surveyNote")}</p>
-              <ActionBar>
-                {/* Disabled for want of a rating says why. While it sends it stays focusable (aria-disabled, M4),
-                    so a keyboard user's focus is still here when a failure offers the retry; its label says so. */}
-                <Button
-                  id="survey-send"
-                  variant="primary"
-                  size="lg"
-                  className="w-full text-[16px] aria-disabled:cursor-wait aria-disabled:opacity-70 sm:w-auto"
-                  disabled={!rating}
-                  disabledReason={why}
-                  aria-disabled={survey === "sending" || undefined}
-                  onClick={send}
-                >
-                  {survey === "sending" ? t("surveySending") : t("surveySend")}
-                </Button>
-                {why ? (
-                  <DisabledReason id="survey-send-why" className="mt-2 text-[14px]">
-                    {why}
-                  </DisabledReason>
-                ) : null}
-                {survey === "failed" && error ? (
-                  <p role="alert" className="mt-2 text-[14px] leading-[22px] text-ink">
-                    {error}
-                  </p>
-                ) : null}
-              </ActionBar>
-            </>
-          )}
-        </section>
-      ) : null}
+                    {/* The scale's ends are named on the ends themselves, not only in the words below. */}
+                    <span className="sr-only">{value === "1" ? `1, ${t("surveyLow")}` : value === "5" ? `5, ${t("surveyHigh")}` : value}</span>
+                  </>
+                ),
+              }))}
+            />
+            <div id="survey-scale" className="flex justify-between text-[14px] leading-[22px] text-muted">
+              <span>{t("surveyLow")}</span>
+              <span>{t("surveyHigh")}</span>
+            </div>
+          </div>
+          <Disclosure label={t("addComment")} icon={NotebookPen}>
+            <label htmlFor="survey-comment" className="sr-only">
+              {t("surveyComment")}
+            </label>
+            <Textarea
+              id="survey-comment"
+              value={comment}
+              onChange={(e) => setComment(e.target.value.slice(0, COMMENT_MAX))}
+              maxLength={COMMENT_MAX}
+              disabled={survey === "sending"}
+              rows={3}
+              aria-describedby="survey-comment-count"
+              className="resize-y bg-surface px-4 py-3 text-[16px] leading-[26px] md:text-[16px]"
+            />
+            <p id="survey-comment-count" className="tnum mt-1 text-right text-[14px] text-muted">
+              {t("surveyCount", { used: comment.length, max: COMMENT_MAX })}
+            </p>
+          </Disclosure>
+          <p className="text-[14px] leading-[22px] text-muted">{t("surveyNote")}</p>
+          {survey === "failed" && error ? (
+            <p role="alert" className="text-[14px] leading-[22px] text-ink">
+              {error}
+            </p>
+          ) : null}
+        </>
+      )}
+    </section>
+  ) : null;
 
-      <p className="mt-10 text-center text-[14px]">
-        <a
-          href={`/a/${encodeURIComponent(token)}/rights`}
-          className="inline-flex min-h-11 items-center text-muted underline decoration-underline underline-offset-4 hover:text-ink"
-        >
-          {t("rights")}
-        </a>
+  return (
+    <>
+      {/* One polite line for a screen reader after the 8 second send navigates here (the button it pressed is gone).
+          The title itself is said when it takes focus on arrival, so the line carries the rest. */}
+      <p role="status" className="sr-only">
+        {announce ? [saved, lostLine, devicesText].filter(Boolean).join(" ") : ""}
       </p>
-    </div>
+      {surveyBlock ? (
+        <StepScreen layout="split" illustration="done" title={title} titleRef={titleRef} lead={<p>{saved}</p>} aside={summary}>
+          {surveyBlock}
+        </StepScreen>
+      ) : (
+        // 3.10: without a survey the page closes: one centred column, the drawing above the title, no filled button.
+        <StepScreen layout="single" width={640} illustration="done" illustrationSize="spot" title={title} titleRef={titleRef} lead={<p>{saved}</p>}>
+          {summary}
+        </StepScreen>
+      )}
+      {footer === "send" ? (
+        <StepFooter
+          primary={{
+            kind: "button",
+            id: "survey-send",
+            label: t("surveySend"),
+            busy: survey === "sending",
+            busyLabel: t("surveySending"),
+            waitReason: !rating ? t("surveyPick") : null,
+            onClick: () => void send(),
+          }}
+        />
+      ) : null}
+    </>
   );
 }

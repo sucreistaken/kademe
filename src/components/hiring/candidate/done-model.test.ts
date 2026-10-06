@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { lostWords, markLostWords, type DraftStorage } from "./draft-store";
-import { devicesLine, surveyAfterFailure, takeLastLostWords } from "./done-model";
+import { devicesLine, doneFooter, surveyAfterFailure, takeLastLostWords } from "./done-model";
 
 function memory(): DraftStorage & { keys: () => string[] } {
   const map = new Map<string, string>();
@@ -73,5 +73,16 @@ describe("the finish page's model", () => {
     expect(surveyAfterFailure(refusal("NOT_FINISHED", 409))).toBe("closed");
     // Positive control: a refusal worth retrying stays a failure.
     expect(surveyAfterFailure(refusal("RATE_LIMITED", 429))).toBe("failed");
+  });
+});
+
+describe("the finish page's one filled button (3.10)", () => {
+  it("is 'Görüşünü gönder' only while the survey can be sent; a closing page has none", () => {
+    expect(doneFooter({ surveyEnabled: true, survey: "open" })).toBe("send");
+    expect(doneFooter({ surveyEnabled: true, survey: "sending" })).toBe("send");
+    expect(doneFooter({ surveyEnabled: true, survey: "failed" })).toBe("send");
+    expect(doneFooter({ surveyEnabled: true, survey: "sent" })).toBeNull();
+    expect(doneFooter({ surveyEnabled: true, survey: "closed" })).toBeNull();
+    expect(doneFooter({ surveyEnabled: false, survey: "open" })).toBeNull();
   });
 });

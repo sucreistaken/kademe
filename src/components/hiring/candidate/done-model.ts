@@ -43,3 +43,8 @@ export function surveyAfterFailure(err: unknown): "sent" | "closed" | "failed" {
   if (code === "ALREADY_ANSWERED") return "sent";
   return typeof code === "string" && CLOSED.has(code) ? "closed" : "failed";
 }
+
+/** 3.10: the survey's send is the page's one filled button; without a survey to send, the finish is a closing page with none. */
+export function doneFooter(input: { surveyEnabled: boolean; survey: "open" | "sending" | "sent" | "failed" | "closed" }): "send" | null {
+  return input.surveyEnabled && (input.survey === "open" || input.survey === "sending" || input.survey === "failed") ? "send" : null;
+}

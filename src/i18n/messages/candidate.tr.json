@@ -932,7 +932,11 @@
     "surveyThanks": "Teşekkürler, görüşün iletildi.",
     "surveyFailed": "Gönderilemedi. Tekrar dener misin?",
     "surveyClosed": "Bu anket artık açık değil.",
-    "rights": "Veri hakların"
+    "rights": "Veri hakların",
+    "nextTitle": "Sırada ne var",
+    "nextToday": "Bugün",
+    "sentToday": "Cevapların ekibe iletildi.",
+    "addComment": "Yorum ekle"
   },
   "hiringInfo": {
     "title": "Seni doğru kaydedelim",

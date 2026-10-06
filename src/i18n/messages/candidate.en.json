@@ -932,7 +932,11 @@
     "surveyThanks": "Thank you, your feedback was sent.",
     "surveyFailed": "It did not send. Could you try again?",
     "surveyClosed": "This survey is no longer open.",
-    "rights": "Your data rights"
+    "rights": "Your data rights",
+    "nextTitle": "What happens next",
+    "nextToday": "Today",
+    "sentToday": "Your answers reached the team.",
+    "addComment": "Add a comment"
   },
   "hiringInfo": {
     "title": "Let's get your details right",
