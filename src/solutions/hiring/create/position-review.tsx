@@ -87,7 +87,7 @@ export function PositionReview({ draftId, summary, draft, locale, actions }: { d
             );
           })}
         </ul>
-        <p className={total === 100 ? "text-[13.5px] text-muted" : "text-[13.5px] font-medium text-danger"}>{t("total", { total })}</p>
+        <p className={total === 100 ? "text-[13.5px] text-muted" : "text-[13.5px] font-medium text-danger"}>{total === 100 ? t("totalOk") : t("total", { total })}</p>
       </Card>
     </ReviewFrame>
   );

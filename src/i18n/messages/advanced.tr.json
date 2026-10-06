@@ -96,6 +96,7 @@
     "anchor1": "Seviye 1: zayıf",
     "anchor3": "Seviye 3: yeterli",
     "anchor5": "Seviye 5: çok iyi",
+    "totalOk": "Toplam %100",
     "total": "Toplam %{total}, 100 olmalı"
   }
 }
