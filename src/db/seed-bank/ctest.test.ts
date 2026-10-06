@@ -32,7 +32,10 @@ describe("cTest", () => {
   it("damages every second word from the second word on, skipping numbers and one-letter words", () => {
     // Ich [bin] 24 Jahre [alt] und [arbeite] in [Köln].
     expect(item.prompt).toContain("Ich b{{g1}} 24 Jahre a{{g2}} und arb{{g3}} in Kö{{g4}}.");
-    expect(item.key).toEqual({ kind: "GAP", answers: { g1: ["in"], g2: ["lt"], g3: ["eite"], g4: ["ln"] } });
+    expect(item.key).toEqual({
+      kind: "GAP",
+      answers: { g1: ["in", "bin"], g2: ["lt", "alt"], g3: ["eite", "arbeite"], g4: ["ln", "Köln"] },
+    });
   });
 
   it("is a typed gap item that validates and scores per gap", () => {
@@ -45,6 +48,22 @@ describe("cTest", () => {
 
   it("adds extra accepted completions by gap number", () => {
     const v = cTest("A1", "MID", { first: "A b.", body: "Wir sehen das.", last: "C d.", variants: { 1: ["hn"] } });
-    expect(v.key).toEqual({ kind: "GAP", answers: { g1: ["hen", "hn"] } });
+    expect(v.key).toEqual({ kind: "GAP", answers: { g1: ["hen", "sehen", "hn", "sehn"] } });
+  });
+
+  it("scores the missing letters and the whole typed word alike, also for variants", () => {
+    const v = cTest("A1", "MID", { first: "A b.", body: "Wir sehen das.", last: "C d.", variants: { 1: ["hn"] } });
+    for (const typed of ["hen", "sehen", "Sehen", "hn", "sehn"]) {
+      expect(scoreItem(v.type, v.content, v.key, { gaps: { g1: typed } })?.score, typed).toBe(1);
+    }
+    expect(scoreItem(v.type, v.content, v.key, { gaps: { g1: "sehe" } })?.score).toBe(0);
+    const both = scoreItem(item.type, item.content, item.key, { gaps: { g1: "in", g2: "alt", g3: "arbeite", g4: "ln" } });
+    expect(both?.score).toBe(1);
+  });
+
+  it("tells the student to type only the missing letters, in its own paragraph", () => {
+    const [instruction, text] = item.prompt.split("\n\n");
+    expect(instruction).toContain("Schreiben Sie nur die fehlenden Buchstaben.");
+    expect(text.startsWith("Ich heiße Lena.")).toBe(true);
   });
 });

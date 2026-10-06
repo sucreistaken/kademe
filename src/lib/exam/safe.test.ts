@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { mulberry32 } from "./adaptive";
 import { makePresentation, toCandidateItem } from "./safe";
-import type { ItemSnapshot } from "./types";
+import { C_TEST_SKILL_TAG, type ItemSnapshot } from "./types";
 
 const listening: ItemSnapshot = {
   id: "item-secret-id",
@@ -66,6 +66,31 @@ describe("what the student receives", () => {
       title: "Am Bahnhof",
       text: "Ein kurzer Text.",
     });
+  });
+});
+
+describe("C-test gaps", () => {
+  const gap = (skillTag: string): ItemSnapshot => ({
+    ...listening,
+    section: "GRAMMAR",
+    type: "GAP_FILL",
+    skillTag,
+    stimulusId: null,
+    stimulus: null,
+    prompt: "Ich b{{g1}} hier.",
+    content: { kind: "GAP", gaps: [{ id: "g1" }] },
+    key: { kind: "GAP", answers: { g1: ["in", "bin"] } },
+  });
+
+  it("marks a C-test's gaps as attached to the word stem, without the skill tag", () => {
+    const c = toCandidateItem(gap(C_TEST_SKILL_TAG), {}, null, 1, { maxPlays: 2 });
+    expect(c.content).toEqual({ kind: "GAP", attached: true, gaps: [{ id: "g1", choices: null }] });
+    expect(JSON.stringify(c)).not.toContain(C_TEST_SKILL_TAG);
+  });
+
+  it("leaves an ordinary gap item as it was", () => {
+    const c = toCandidateItem(gap("grammar.dativ"), {}, null, 1, { maxPlays: 2 });
+    expect(c.content).toEqual({ kind: "GAP", gaps: [{ id: "g1", choices: null }] });
   });
 });
 

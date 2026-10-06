@@ -215,15 +215,44 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
   const parts = item.prompt.split(/(\{\{[A-Za-z0-9_-]+\}\})/g);
   const set = (id: string, value: string) => onChange({ gaps: { ...(answer.gaps ?? {}), [id]: value } });
   const typed = item.content.gaps.some((g) => !g.choices);
+  const attached = !!item.content.attached;
+  const marker = (part: string | undefined) => part?.match(/^\{\{([A-Za-z0-9_-]+)\}\}$/) ?? null;
+  // C-test: the word stem right before a gap is drawn together with its input,
+  // so the two read as one word and never break across lines.
+  const stemOf = (i: number): string => {
+    if (!attached || i === 0 || marker(parts[i - 1])) return "";
+    return parts[i - 1].match(/[\p{L}\p{N}]+$/u)?.[0] ?? "";
+  };
   return (
     <div>
       <p lang="de" className="whitespace-pre-line text-[17px] font-medium leading-[2.1] text-ink">
         {parts.map((part, i) => {
-          const m = part.match(/^\{\{([A-Za-z0-9_-]+)\}\}$/);
-          if (!m) return <span key={i}>{part}</span>;
+          const m = marker(part);
+          if (!m) {
+            const nextStem = marker(parts[i + 1]) ? stemOf(i + 1) : "";
+            return <span key={i}>{nextStem ? part.slice(0, part.length - nextStem.length) : part}</span>;
+          }
           const gap = gaps.get(m[1]);
           if (!gap) return <span key={i}>____</span>;
           const value = answer.gaps?.[gap.id] ?? "";
+          if (attached && !gap.choices) {
+            const stem = stemOf(i);
+            return (
+              <span key={i} className="whitespace-nowrap">
+                {stem}
+                <input
+                  value={value}
+                  disabled={disabled}
+                  onFocus={(e) => (lastFocused.current = { id: gap.id, el: e.currentTarget })}
+                  onChange={(e) => set(gap.id, e.target.value)}
+                  // The missing part is as long as the stem or one letter longer.
+                  size={Math.max(stem.length + 1, value.length + 1, 2)}
+                  className="ml-0 mr-0.5 h-8 rounded-[6px] border border-line-strong bg-surface px-1 text-[15px] text-ink"
+                  {...NO_ASSIST}
+                />
+              </span>
+            );
+          }
           return gap.choices ? (
             <select
               key={i}

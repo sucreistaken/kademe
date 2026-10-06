@@ -1,4 +1,4 @@
-import type { ItemAnswer, ItemSnapshot, Presentation, Section, ItemType } from "./types";
+import { isCTest, type ItemAnswer, type ItemSnapshot, type Presentation, type Section, type ItemType } from "./types";
 
 /**
  * The only way an item reaches the student's browser.
@@ -15,7 +15,12 @@ import type { ItemAnswer, ItemSnapshot, Presentation, Section, ItemType } from "
 export type CandidateContent =
   | { kind: "CHOICE"; multiple: boolean; options: Array<{ id: string; text: string }> }
   | { kind: "TFNG"; statements: Array<{ id: string; text: string }> }
-  | { kind: "GAP"; gaps: Array<{ id: string; choices: string[] | null }> }
+  | {
+      kind: "GAP";
+      gaps: Array<{ id: string; choices: string[] | null }>;
+      /** C-test: each input continues the word stem right before it. */
+      attached?: true;
+    }
   | {
       kind: "MATCHING";
       left: Array<{ id: string; text: string }>;
@@ -85,7 +90,12 @@ export function toCandidateItem(
       content = { kind: "TFNG", statements: c.statements.map((s) => ({ id: s.id, text: s.text })) };
       break;
     case "GAP":
-      content = { kind: "GAP", gaps: c.gaps.map((g) => ({ id: g.id, choices: g.choices ? [...g.choices] : null })) };
+      content = {
+        kind: "GAP",
+        gaps: c.gaps.map((g) => ({ id: g.id, choices: g.choices ? [...g.choices] : null })),
+        // Only the rendering hint leaves the server, never the skill tag itself.
+        ...(isCTest(snapshot) ? { attached: true as const } : {}),
+      };
       break;
     case "MATCHING":
       content = {

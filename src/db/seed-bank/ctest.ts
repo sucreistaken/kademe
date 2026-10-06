@@ -1,4 +1,12 @@
+import { C_TEST_SKILL_TAG } from "@/lib/exam/types";
 import type { SeedItem } from "./types";
+
+/*
+ * A seed item's text is part of its seed key (seed-key.ts). Changing the
+ * wording of an item here makes it a new item: the bank top-up then adds it
+ * next to the old one in every organisation that already has the old one. To
+ * fix wording, add a new item (and retire the old row) rather than editing.
+ */
 
 /**
  * C-test builder. A C-test is a short coherent text whose first and last
@@ -14,7 +22,8 @@ type Level = SeedItem["level"];
 type Within = NonNullable<SeedItem["within"]>;
 
 const INSTRUCTION =
-  "Ergänzen Sie die fehlenden Wortteile. In jedem zweiten Wort fehlt die zweite Hälfte.";
+  "Ergänzen Sie die fehlenden Wortteile. In jedem zweiten Wort fehlt die zweite Hälfte. " +
+  "Schreiben Sie nur die fehlenden Buchstaben.";
 
 export function damageWord(word: string): { kept: string; missing: string } {
   const letters = [...word];
@@ -49,7 +58,10 @@ export function cTest(
       if (counted % 2 === 1) return token;
       const { kept, missing } = damageWord(word);
       const n = gaps.length + 1;
-      gaps.push({ id: `g${n}`, answers: [missing, ...(text.variants?.[n] ?? [])] });
+      const accepted = [missing, ...(text.variants?.[n] ?? [])];
+      // The whole word counts too: typing the stem again is not a language error.
+      const answers = [...new Set(accepted.flatMap((a) => [a, kept + a]))];
+      gaps.push({ id: `g${n}`, answers });
       return `${lead}${kept}{{g${n}}}${trail}`;
     })
     .join(" ");
@@ -57,7 +69,7 @@ export function cTest(
     section: "GRAMMAR",
     level,
     type: "GAP_FILL",
-    skillTag: "grammar.ctest",
+    skillTag: C_TEST_SKILL_TAG,
     within,
     prompt: `${INSTRUCTION}\n\n${text.first} ${damaged} ${text.last}`,
     content: { kind: "GAP", gaps: gaps.map((g) => ({ id: g.id })) },
