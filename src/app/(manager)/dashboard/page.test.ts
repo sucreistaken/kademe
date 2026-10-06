@@ -156,6 +156,14 @@ describe("one filled button on Today (RULES 2, 4.3)", () => {
     expect(text(between(html, "<h1", "<section"))).toContain("Bekleyen iş yok.");
   });
 
+  it("says the empty queue's invite hint only as a second way to the invite (Task 17 review)", async () => {
+    const hint = "Yeni bir öğrenci davet et";
+    expect(text(await render([running]))).not.toContain(hint);
+    expect(text(await render([running], "REVIEWER"))).not.toContain(hint);
+    expect(text(await render([running, draftRow]))).toContain(hint);
+    expect(text(await render([running, draftRow], "REVIEWER"))).not.toContain(hint);
+  });
+
   it("states the reason next to a disabled invite (a reviewer may invite for nothing)", async () => {
     const html = await render([running], "REVIEWER");
     expect(html).toContain('aria-describedby="today-invite-why"');

@@ -152,7 +152,8 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
         {queue.length === 0 ? (
           <Card className="px-6 py-8 text-center">
             <p className="text-[15px] font-medium text-ink">{t("today.queueEmpty")}</p>
-            <p className="mt-1 text-[13.5px] text-muted">{t("today.queueEmptyHint")}</p>
+            {/* The invite hint only where it is a second way to the invite: not under the empty state's own invite, never to someone who may invite for nothing. */}
+            {emphasis !== "empty" && invite.kind !== "none" ? <p className="mt-1 text-[13.5px] text-muted">{t("today.queueEmptyHint")}</p> : null}
           </Card>
         ) : (
           <Card className="divide-y divide-line">
