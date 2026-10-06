@@ -126,3 +126,10 @@ Task 11: complete (commits 90d9711..8a35521, review clean after 1 fix round)
 - Task 11: minor (deferred): the upload rescue also fires on a mouse drop (focus on body), so the heading is announced; after a successful upload focus stays on the heading; the rescue wiring has no render test.
 - Benchmark (doğrulanmadı, bulut, tarayıcı yok): the picker opening from "Dosya seç" (input.click), drag and drop, the focus ring, the upload wording on the language link, an optional file question's skip.
 BASE T12: 9e40763
+SESSION 2026-10-06 (cloud, Claude Code web): no PostgreSQL and no Docker in the container, so every DB gate (verify:exam, verify:hiring-flow, verify:guard, dev:hiring-link) is "doğrulanmadı (Postgres yok)"; no browser, so every browser step is "doğrulanmadı (bulut, tarayıcı yok)". Baseline at 3f0da37: vitest 2502, 2501 passed, 1 failed: invitation.test.ts "names the time and the zone" (this container's Node 22.22 ICU 77 prints "Türkiye Saati" for "Türkiye Standart Saati"; environment, not code; not changed). git push to origin is refused (403, no GitHub App access for this session): commits stay local until access is restored.
+Task 12: implementer DONE 99ba280 (doneFooter; C19: "Veri hakların" is a quiet link at the bottom of the summary block, not in the footer's back slot; StepFooter only while the survey can be sent; useArrivalFocus on the title; PathSteps gets locale). Controller: vitest 2503, 2502 passed, 1 env failure, 0 removed names, 1 added; em-dash 0. Review (sonnet): Approved, 0 Critical/Important; all five deviations accepted.
+Task 12: complete (commit 99ba280, review clean)
+- Task 12: minor (deferred): the "Bugün / Cevapların ekibe iletildi." row reads "Bugün" on a revisit days later (plan-mandated, design 3.10); the "by date" line shows even without a return day (unchanged from before).
+- Carry to Task 13 (cheap): landing.tsx and device-check.tsx call PathSteps without locale (EN page reads TR state words); pass the locale as done.tsx does.
+- Benchmark (doğrulanmadı, bulut, tarayıcı yok): /done at 1440/1280/1024, rating with arrow keys, send, reload, the survey-off page.
+BASE T13: 99ba280
