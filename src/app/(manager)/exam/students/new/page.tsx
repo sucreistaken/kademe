@@ -3,6 +3,7 @@ import { InviteForm, type ExamOption } from "@/components/panel/invite-form";
 import { estimatedMinutes, enabledSections, type BlueprintConfig } from "@/lib/exam/blueprint";
 import { examChoiceValue } from "@/lib/exam/exam-choice";
 import { EXAM_TEMPLATES } from "@/lib/exam/templates";
+import { CEFR_LEVELS, type Cefr } from "@/lib/exam/types";
 import { bankCounts, publishedBlueprints } from "@/server/panel";
 import { requireUser } from "@/server/session";
 import { managerLocale } from "@/i18n/manager-locale";
@@ -19,7 +20,7 @@ const shape = (config: BlueprintConfig) => ({ config, minutes: estimatedMinutes(
  * The organisation's own exams follow; the template-made ones are not listed
  * twice.
  */
-export default async function InvitePage() {
+export default async function InvitePage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const user = await requireUser("student:invite");
   const locale = await managerLocale();
   const t = managerT(locale);
@@ -48,10 +49,15 @@ export default async function InvitePage() {
         ...shape(b.config),
       })),
   ];
+  // Advanced "create" sends a just-published exam here (`?exam=<id>&claimed=<level>`).
+  const sp = await searchParams;
+  const wanted = typeof sp.exam === "string" ? examChoiceValue({ kind: "blueprint", id: sp.exam }) : null;
+  const initialChoice = wanted && options.some((o) => o.value === wanted) ? wanted : undefined;
+  const initialClaimed = typeof sp.claimed === "string" && (CEFR_LEVELS as readonly string[]).includes(sp.claimed) ? (sp.claimed as Cefr) : undefined;
   return (
     <main className="mx-auto max-w-[640px] px-6 py-10">
       <PageHead title={t("invite.title")} sub={t("invite.lead")} />
-      <InviteForm counts={counts} options={options} />
+      <InviteForm counts={counts} options={options} initialChoice={initialChoice} initialClaimed={initialClaimed} />
     </main>
   );
 }

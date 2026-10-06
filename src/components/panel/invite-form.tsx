@@ -33,12 +33,23 @@ const field = "mt-1.5 h-11 w-full rounded-[10px] border border-line-strong bg-su
  * and claim is checked while the teacher fills the form, so the button says
  * why it is off before anything is sent.
  */
-export function InviteForm({ options, counts }: { options: ExamOption[]; counts: BankCount[] }) {
+export function InviteForm({
+  options,
+  counts,
+  initialChoice,
+  initialClaimed,
+}: {
+  options: ExamOption[];
+  counts: BankCount[];
+  /** Advanced "create": the exam it just published (`?exam=`). */
+  initialChoice?: string;
+  initialClaimed?: Cefr;
+}) {
   const t = useMT("invite");
   const sec = useMT("sectionName");
   const [state, action, pending] = useActionState<InviteState, FormData>(inviteStudent, null);
-  const [choice, setChoice] = useState(options[0]?.value ?? "");
-  const [claimed, setClaimed] = useState<Cefr | "">("");
+  const [choice, setChoice] = useState(initialChoice ?? options[0]?.value ?? "");
+  const [claimed, setClaimed] = useState<Cefr | "">(initialClaimed ?? "");
   const [copied, setCopied] = useState(false);
   const bp = options.find((o) => o.value === choice);
   const coverage = useMemo(

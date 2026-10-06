@@ -15,5 +15,18 @@
     "error_AI_UNAVAILABLE": "AI is off right now.",
     "error_FAILED": "The draft could not be prepared. Try again or build it by hand.",
     "error_FORBIDDEN": "Your role cannot build anything here."
+  },
+  "createExam": {
+    "name": "Exam name",
+    "adaptive": "adaptive",
+    "fixed": "fixed form",
+    "minutesFor": "{section} time (minutes)",
+    "min": "min",
+    "total": "{minutes} minutes in total",
+    "coverageOk": "The question bank covers this exam. Confirming publishes it and picks it in the invite form.",
+    "coverageGaps": "The question bank has gaps. Confirming saves the exam as a draft:",
+    "gap": "{level} {section}: {missing} questions missing",
+    "gapCTest": "{level} grammar: no opening C-test",
+    "coverageRecheck": "Coverage is checked again when you confirm."
   }
 }

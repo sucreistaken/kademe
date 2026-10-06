@@ -15,5 +15,18 @@
     "error_AI_UNAVAILABLE": "AI şu an kapalı.",
     "error_FAILED": "Taslak hazırlanamadı. Tekrar dene ya da elle kur.",
     "error_FORBIDDEN": "Rolün burada bir şey kurmaya yetmiyor."
+  },
+  "createExam": {
+    "name": "Sınavın adı",
+    "adaptive": "uyarlanabilir",
+    "fixed": "sabit form",
+    "minutesFor": "{section} süresi (dakika)",
+    "min": "dk",
+    "total": "Toplam {minutes} dakika",
+    "coverageOk": "Soru bankası bu sınava yetiyor. Onaylayınca yayınlanır ve davet formunda seçili gelir.",
+    "coverageGaps": "Soru bankasında eksik var. Onaylayınca sınav taslak olarak kaydedilir:",
+    "gap": "{level} {section}: {missing} soru eksik",
+    "gapCTest": "{level} dilbilgisi: açılış C-testi yok",
+    "coverageRecheck": "Kapsam, onayladığında yeniden kontrol edilir."
   }
 }

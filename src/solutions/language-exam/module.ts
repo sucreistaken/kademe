@@ -14,6 +14,7 @@ import { reopenGradingForMedia } from "@/lib/exam-results";
 import type { SolutionModule } from "@/solutions/types";
 import { languageExamManifest } from "./manifest";
 import { examToday } from "./today";
+import { examCreator } from "./create/exam";
 
 async function requireExam(ctx: CandidateContext): Promise<ExamCandidateContext> {
   const exam = await loadExamContext(ctx);
@@ -28,6 +29,7 @@ async function requireExam(ctx: CandidateContext): Promise<ExamCandidateContext>
 export const languageExamModule: SolutionModule = {
   ...languageExamManifest,
   today: examToday,
+  creators: [examCreator],
 
   async proctorPolicy(assessmentId) {
     const [row] = await db
