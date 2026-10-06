@@ -18,7 +18,7 @@ export const productDesigner: HiringTemplate = {
     stage({
       name: t("Kısa tanışma", "Short introduction"),
       description: t(
-        "Bir kısa bilgi sorusu ve iki video sorusu. En fazla 13 dakika. Sonraki bölümde portfolyo dosyası (PDF, PNG ya da JPG, en fazla 20 MB) yükleyeceksin; şimdiden hazırla.",
+        "Kısa bir bilgi sorusu ve iki video sorusu. En fazla 13 dakika. Sonraki bölümde portfolyo dosyası (PDF, PNG ya da JPG, en fazla 20 MB) yükleyeceksin; şimdiden hazırla.",
         "One short knowledge question and two video questions. At most 13 minutes. In the next part you will upload a portfolio file (PDF, PNG or JPG, at most 20 MB); have it ready now.",
       ),
       purpose: "Temel erişilebilirlik kuralı bilgisi; araştırmanın fikri değiştirdiği gerçek bir durum; tasarım kararını ekibe gerekçesiyle anlatma.",
@@ -90,8 +90,8 @@ export const productDesigner: HiringTemplate = {
       activities: [
         fileUpload({
           prompt: t(
-            "Portfolyonu tek bir dosya olarak yükle (PDF, PNG ya da JPG, en fazla 20 MB). 1-3 proje yeterli. En az bir projede süreci göster: problem neydi, senin rolün neydi, hangi araştırmayı yaptın, hangi alternatifleri denedin, son tasarım ne oldu ve sonucu nasıl ölçtün. Müşteriye ait gizli bilgileri (gerçek kullanıcı verisi, yayınlanmamış ürün adı) çıkar ya da gizle.",
-            "Upload your portfolio as a single file (PDF, PNG or JPG, at most 20 MB). One to three projects are enough. In at least one project, show the process: what the problem was, what your role was, which research you did, which alternatives you tried, what the final design was and how you measured the result. Remove or mask a client's confidential details (real user data, unreleased product names).",
+            "Portfolyonu tek bir dosya olarak yükle (PDF, PNG ya da JPG, en fazla 20 MB). 1-3 proje yeterli. Okul ya da kişisel projeler de olur. En az bir projede süreci göster: problem neydi, senin rolün neydi, hangi araştırmayı yaptın, hangi alternatifleri denedin, son tasarım ne oldu ve sonucu nasıl ölçtün. Müşteriye ait gizli bilgileri (gerçek kullanıcı verisi, yayınlanmamış ürün adı) çıkar ya da gizle.",
+            "Upload your portfolio as a single file (PDF, PNG or JPG, at most 20 MB). One to three projects are enough. School or personal projects are fine. In at least one project, show the process: what the problem was, what your role was, which research you did, which alternatives you tried, what the final design was and how you measured the result. Remove or mask a client's confidential details (real user data, unreleased product names).",
           ),
           mimeTypes: ["application/pdf", "image/png", "image/jpeg"],
           competencies: ["design_craft", "communication"],

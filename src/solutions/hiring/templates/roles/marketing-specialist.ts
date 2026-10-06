@@ -11,14 +11,14 @@ export const marketingSpecialist: HiringTemplate = {
   ),
   jobAd: t(
     "Dijital kampanyalarımızı planlayacak, yürütecek ve sonuçlarını ölçecek bir Pazarlama Uzmanı arıyoruz. Kararını tıklamaya değil kayda ve maliyete bakarak veren, rakamları ekibe sade anlatan ve kısa, doğru, ikna edici metin yazan biri olmalısın.",
-    "We are looking for a Marketing Specialist who plans, runs and measures our digital campaigns. You decide on enrolments and cost rather than clicks, explain numbers plainly to the team and write short, accurate, persuasive copy.",
+    "We are looking for a Marketing Specialist who plans, runs and measures our digital campaigns. You base decisions on enrolments and cost, not clicks, explain numbers plainly to the team and write short, accurate, persuasive copy.",
   ),
   weights: { commercial: 40, problem_solving: 35, communication: 25 },
   stages: [
     stage({
       name: t("Kısa tanışma", "Short introduction"),
       description: t(
-        "Bir kısa hesap sorusu ve iki video sorusu. En fazla 13 dakika.",
+        "Kısa bir hesap sorusu ve iki video sorusu. En fazla 13 dakika.",
         "One short calculation question and two video questions. At most 13 minutes.",
       ),
       purpose: "Temel kampanya metriklerini doğru hesaplama; sonucu ölçülen gerçek bir kampanya; tutmayan bir kampanyada nedeni bulup değiştirme.",
@@ -33,11 +33,11 @@ export const marketingSpecialist: HiringTemplate = {
             t("CTR %2, CPA 150 TL", "CTR 2%, CPA 150 TL"),
             t("CTR %2, CPA 6 TL", "CTR 2%, CPA 6 TL"),
             t("CTR %4, CPA 150 TL", "CTR 4%, CPA 150 TL"),
-            t("CTR %0,08, CPA 150 TL", "CTR 0.08%, CPA 150 TL"),
+            t("CTR %4, CPA 6 TL", "CTR 4%, CPA 6 TL"),
           ],
           correct: 0,
           internal:
-            "Doğru cevap: CTR %2 (800 / 40.000), CPA 150 TL (4.800 / 32). Çeldiriciler: CPA 6 TL (tıklama başı maliyeti, 4.800 / 800, CPA sanmak); CTR %4 (dönüşüm oranını, 32 / 800, CTR sanmak); CTR %0,08 (dönüşümü gösterime bölmek, 32 / 40.000).",
+            "Doğru cevap: CTR %2 (800 / 40.000), CPA 150 TL (4.800 / 32). Çeldiriciler: CPA 6 TL (tıklama başı maliyeti, 4.800 / 800, CPA sanmak); CTR %4 (dönüşüm oranını, 32 / 800, CTR sanmak); CTR %4 ve CPA 6 TL (iki karışıklık birden). Seçenekler 2x2 dengeli: her değer iki kez geçiyor, cevap sayarak bulunamıyor.",
         }),
         video({
           prompt: t(

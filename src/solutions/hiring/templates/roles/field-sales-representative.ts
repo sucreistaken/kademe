@@ -11,14 +11,14 @@ export const fieldSalesRepresentative: HiringTemplate = {
   ),
   jobAd: t(
     "Bölgemizdeki bayi ve yapı marketleri düzenli ziyaret edecek, yeni ürünlerimizi tanıtacak ve aylık satış hedefini tutturacak bir Saha Satış Temsilcisi arıyoruz. Haftanı hedefe göre planlayan, kaybedilen müşterinin peşini bırakmayan ve ürünü bayinin kazancıyla anlatan biri olmalısın.",
-    "We are looking for a Field Sales Representative who visits the dealers and building-supply stores in our region regularly, introduces our new products and hits the monthly sales target. You plan your week against the target, do not give up on a lost customer and sell the product through the dealer's gain.",
+    "We are looking for a Field Sales Representative who visits the dealers and building-supply stores in our region regularly, introduces our new products and hits the monthly sales target. You plan your week against the target, do not give up on a lost customer and sell the product in terms of what the dealer earns.",
   ),
   weights: { commercial: 40, initiative: 35, organisation: 25 },
   stages: [
     stage({
       name: t("Kısa tanışma", "Short introduction"),
       description: t(
-        "Bir kısa rota sorusu ve iki video sorusu. En fazla 13 dakika.",
+        "Kısa bir rota sorusu ve iki video sorusu. En fazla 13 dakika.",
         "One short route question and two video questions. At most 13 minutes.",
       ),
       purpose: "Zaman pencerelerine göre rota önceliği; kaybedilen bir müşteriyi geri kazanma; kimse istemeden bölgede yeni fırsat yaratma.",
@@ -26,8 +26,8 @@ export const fieldSalesRepresentative: HiringTemplate = {
       activities: [
         single({
           prompt: t(
-            "Bugün sahadasın ve ofisten 09:00'da çıkıyorsun. Her ziyaret 1 saat, herhangi iki nokta arası (ofis dahil) 30 dakika sürüyor. Gün 17:00'de bitiyor. Dört ziyaret var:\n- A Bayi: aylık en büyük müşterin, stoğu bugün bitiyor. Sahibi yalnızca 11:00'e kadar dükkanda.\n- B Market: yeni aday. Satın alma müdürü yalnızca bugün 15:30-17:00 arasında görüşebiliyor, sonra iki hafta izinde.\n- C Bayi: yanlış teslimat şikayeti var. Müdürü yalnızca 14:00-16:00 arasında dükkanda.\n- D Bayi: rutin ziyaret, ofise en yakın nokta, gün boyu açık.\n\nDört ziyaretin hepsini bugün, her biri kişinin orada olduğu saat içinde başlayıp bitecek şekilde yapmak istiyorsun. Hangi sıra bunu sağlar?",
-            "You are in the field today and leave the office at 09:00. Each visit takes 1 hour, and travel between any two points (including the office) takes 30 minutes. The day ends at 17:00. There are four visits:\n- Dealer A: your biggest monthly customer, out of stock today. The owner is in the shop only until 11:00.\n- Store B: a new prospect. The purchasing manager can meet only today between 15:30 and 17:00 and is then on leave for two weeks.\n- Dealer C: has a wrong-delivery complaint. The manager is in the shop only between 14:00 and 16:00.\n- Dealer D: routine visit, the closest point to the office, open all day.\n\nYou want to make all four visits today, each starting and ending while the person is there. Which order achieves this?",
+            "Bugün sahadasın ve ofisten 09:00'da çıkıyorsun. Her ziyaret 1 saat, herhangi iki nokta arası (ofis dahil) 30 dakika sürüyor. Gün 17:00'de bitiyor. Erken varırsan bekleyebilirsin. Dört ziyaret var:\n- A Bayi: aylık en büyük müşterin, stoğu bugün bitiyor. Sahibi yalnızca 11:00'e kadar dükkanda.\n- B Market: yeni aday. Satın alma müdürü yalnızca bugün 15:30-17:00 arasında görüşebiliyor, sonra iki hafta izinde.\n- C Bayi: yanlış teslimat şikayeti var. Müdürü yalnızca 14:00-16:00 arasında dükkanda.\n- D Bayi: rutin ziyaret, ofise en yakın nokta, gün boyu açık.\n\nDört ziyaretin hepsini bugün, her biri kişinin orada olduğu saat içinde başlayıp bitecek şekilde yapmak istiyorsun. Hangi sıra bunu sağlar?",
+            "You are in the field today and leave the office at 09:00. Each visit takes 1 hour, and travel between any two points (including the office) takes 30 minutes. The day ends at 17:00. You may wait if you arrive early. There are four visits:\n- Dealer A: your biggest monthly customer, out of stock today. The owner is in the shop only until 11:00.\n- Store B: a new prospect. The purchasing manager can meet only today between 15:30 and 17:00 and is then on leave for two weeks.\n- Dealer C: has a wrong-delivery complaint. The manager is in the shop only between 14:00 and 16:00.\n- Dealer D: routine visit, the closest point to the office, open all day.\n\nYou want to make all four visits today, each starting and ending while the person is there. Which order achieves this?",
           ),
           options: [
             t("D, A, C, B", "D, A, C, B"),
@@ -37,7 +37,7 @@ export const fieldSalesRepresentative: HiringTemplate = {
           ],
           correct: 3,
           internal:
-            "Doğru cevap: A, D, C, B. A 09:30-10:30 (11:00'den önce), D 11:00-12:00, C 14:00-15:00, B 15:30-16:30. Çeldiriciler: D, A, C, B (en yakından başlamak; A'ya 11:00'de varılır, sahibi gitmiş); A, C, B, D (şikayeti öne almak; C'ye 11:00'de varılır, müdür 14:00'te geliyor); A, B, C, D (yeni müşteriyi öne almak; B'ye 11:00'de varılır, müdür 15:30'da görüşebiliyor).",
+            "Doğru cevap: A, D, C, B. A 09:30-10:30 (11:00'den önce), D 11:00-12:00, C'ye 12:30'da varılır ve 14:00'e kadar beklenir, C 14:00-15:00, B 15:30-16:30. Çeldiriciler: D, A, C, B (en yakından başlamak; D 09:30-10:30, A'ya 11:00'de varılır, sahibi gitmiş); A, C, B, D (şikayeti öne almak; C 14:00-15:00, B 15:30-16:30, D'ye 17:00'de varılır, gün bitmiş); A, B, C, D (yeni müşteriyi öne almak; B 15:30-16:30, C'ye 17:00'de varılır, müdür 16:00'da çıkmış).",
         }),
         video({
           prompt: t(
@@ -82,11 +82,11 @@ export const fieldSalesRepresentative: HiringTemplate = {
     stage({
       name: t("İş örneği", "Work sample"),
       description: t(
-        "Bir bayiye 2 dakikalık sesli ürün sunumu ve hedefe göre haftalık ziyaret planı. En fazla 20 dakika.",
-        "A 2-minute spoken product pitch to a dealer and a weekly visit plan against the target. At most 20 minutes.",
+        "Bir bayiye 2 dakikalık sesli ürün sunumu ve hedefe göre haftalık ziyaret planı. En fazla 22 dakika.",
+        "A 2-minute spoken product pitch to a dealer and a weekly visit plan against the target. At most 22 minutes.",
       ),
       purpose: "Yeni ürünü bayinin kazancıyla anlatma ve fiyat itirazını karşılama; açık hedefe göre gerçekçi, bölge ve kural kısıtlarına uyan haftalık plan.",
-      minutes: 20,
+      minutes: 22,
       activities: [
         audio({
           prompt: t(

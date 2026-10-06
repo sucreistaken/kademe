@@ -18,7 +18,7 @@ export const hrSpecialist: HiringTemplate = {
     stage({
       name: t("Kısa tanışma", "Short introduction"),
       description: t(
-        "Bir kısa bilgi sorusu ve iki video sorusu. En fazla 13 dakika.",
+        "Kısa bir bilgi sorusu ve iki video sorusu. En fazla 13 dakika.",
         "One short knowledge question and two video questions. At most 13 minutes.",
       ),
       purpose: "Mülakatta sorulamayacak konuları bilme; gerçek bir gizlilik durumunda sınırı koruma; birden çok süreci aynı anda takvimle yürütme.",
@@ -127,6 +127,8 @@ export const hrSpecialist: HiringTemplate = {
             3: "Merhaba Deniz, sürecimize ayırdığın zaman için teşekkür ederiz. Bu pozisyon için başka bir adayla ilerleme kararı aldık. Vaka çalışman güçlüydü ve iletişimin çok beğenildi; karar, ay sonu kapanışında SAP deneyimine verilen ağırlıktan kaynaklandı. Uygun olursa bilgilerini aday havuzumuzda tutmak isteriz.",
             5: "Merhaba Deniz, iki mülakat ve vaka çalışması boyunca ayırdığın zaman için teşekkür ederiz. Bu pozisyon için başka bir adayla ilerlemeye karar verdik. İstediğin geri bildirim: vaka çalışman güçlüydü, mülakatlarda iletişimin çok beğenildi. Belirleyici olan, ay sonu kapanışını SAP'de yürütme deneyimiydi. Onay verirsen bilgilerini 12 ay boyunca aday havuzumuzda tutar, uygun bir pozisyon açılırsa sana yazarız. Onay için bu e-postaya 'evet' demen yeterli. İyi dileklerle, İK Ekibi",
           },
+          internal:
+            "Belirleyici fark bir pozisyon ölçütü olarak yazılmalı (ay sonu kapanışında SAP deneyimi), seçilen kişi hakkında bir bilgi olarak değil; böyle yazıldığında diğer aday hakkında bilgi sızdırmış olmaz. Seçilen adayın adı, geçmişi ya da \"o kişi şunu yapmıştı\" gibi ifadeler sızıntıdır. Geri bildirim işe dayalı, somut ve kısa olmalı; ikinci pozisyon için söz verilmemeli; aday havuzu için açık onay ve 12 aylık süre söylenmeli.",
         }),
       ],
     }),
