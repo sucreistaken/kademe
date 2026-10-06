@@ -221,8 +221,10 @@ Her aday ekranı aynı iskelete oturur. Birincil genişlik 1280 ve 1440, en kü�
   `--color-illus-fill: #EEF6F3` (= brand-soft), `--color-illus-tint: #CFE3DA`,
   `--color-illus-sage: #9DC6B6`, `--color-illus-warm: #F1F0EC`. Ekrandaki tek doygun yeşil yine
   dolu buton.
-- **Boyut:** masaüstünde başlık bölgesinde en fazla 400x220; 1024-1279 arasında 340x190; sorun
-  ekranlarında 160x120; "bilgisayardan aç" telefon ekranında 342x140. Ekranın üçte birini geçmez.
+- **Boyut (Görev 3'te kurulan dört boy, `illustrations.tsx` `SIZE`):** `hero` en fazla 400 genişlik
+  (masaüstünde başlık bölgesinde 400x220), 1024-1279 arasında 340; `spot` 160 (sorun ekranları ve boş
+  durumlar, 160x120); `phone` 342 ("bilgisayardan aç" telefon ekranı, 342x140); `small` 96 (davetin
+  hazır ekranındaki `inviteReady`, 96x96). Ekranın üçte birini geçmez.
 - **Erişilebilirlik:** her çizim `aria-hidden="true"` ve `focusable="false"`; anlamı başlık taşır.
 - **Set (V1'de 11 çizim):** `welcome` (masa, dizüstü, bitki, fincan), `consent` (kalkan + tik),
   `permission` (adres çubuğu ve vurgulu simge, *anlam taşır*), `warmup` (fincan, buhar),
@@ -1353,8 +1355,11 @@ değişmez):
 kararı 1, hüküm C12: ESLint'in çekirdek kuralı `eslint.config.mjs:11-35` çekirdek dosyaların
 `@/components/hiring/*` içe aktarmasını yasaklıyor ve Bugün çekirdek). Sürüm 3'teki
 `src/components/hiring/visual/` yolu eskidi. Aday ekranlarına özel parçalar (kapı, ekranlar)
-`src/components/hiring/candidate/`, panel parçaları `src/components/panel/` ve işe alıma özel
-olanlar `src/components/hiring/`. Kademe-owned dosyalar `// kademe-owned` başlığı taşır (RULES.md
+`src/components/hiring/candidate/`, panel parçaları `src/components/manager/` ve işe alıma özel
+olanlar `src/components/hiring/`. Panel parçaları `src/components/panel/`'de değil (plan 2b Bölüm 2'nin
+yerleşim kuralı, Görev 23'te düzeltildi): `src/solutions/boundary.test.ts` `src/components/panel/`'i
+sınavın paneli sayar ve onu içe aktaran her işe alım dosyasını reddeder; `src/components/manager/`
+çekirdektir ve işe alım onu zaten kullanıyordu. Kademe-owned dosyalar `// kademe-owned` başlığı taşır (RULES.md
 shadcn bölümü).
 
 **Aday tarafı ve ortak görsel parçalar.** "Durum" sütunu: Görev 3-4'te kuruldu mu (HEAD 3c2e2e2'de
@@ -1374,7 +1379,17 @@ shadcn bölümü).
 | `ChoiceCardGroup` | `{ type: "single" \| "multi"; value: string[]; onChange; items: { value; label; marker?; shortcut?; description?; disabled? }[] }` | Kuruldu (`visual/choice-card.tsx:9-36`) | Aday; **panelde akış adımlarının seçimleri** (ekip çoklu seçimi dahil) |
 | `TimerRing`, `StatusScreen`, `MediaStage`, `Illustration` (15 çizim) | sürüm 3'teki gibi | Kuruldu | Aday ekranları; panelde yalnızca `Illustration` (boş durum, davet hazır) |
 
-**Panel bileşenleri (K7 + K12).**
+**Panel bileşenleri (K7 + K12).** Kurulan dosyalar (Görev 14-22): `src/components/manager/`
+altında `panel-header.tsx`, `row-menu.tsx`, `empty-state.tsx`, `guided-flow.tsx` (`GuidedFlow`,
+`FlowHeader`, `useFlowStep`; `GuidedFlow`'un gerçek props'u `{ kicker; step; journey; back; exit?;
+enter?; arrive?; container? }`, adımın durumunu çağıranın `useFlowStep`'i tutar), saf model `flow-model.ts` (`flowStepOf`, `flowHashFix`, `flowJourney`,
+`exitKey`, `summaryRows`, `isDirty`, `stepOfProblem`, `saveWait`, `flowFocusKey`), `summary-rows.tsx`
+(`SummaryRows`; ayrı bir `SummaryStep` bileşeni yok, özet adımı gövdesi `SummaryRows` olan sıradan bir adım),
+`control-row.tsx`, `next-task-card.tsx`; `openingNextStep` `src/components/hiring/opening-next-step.ts`.
+`SetupPath` ayrı bir bileşen değil: `PathSteps` + `setupProgress` / `setupNext`
+(`src/app/(manager)/hiring/openings/[id]/setup-steps.ts`), şerit varyantı `OpeningHeader`'ın kurulum
+satırı; `FunnelTiles` Genel bakışta yerinde çizildi. Aşağıdaki tablo sürüm 4'ün planıdır; ad farkı
+olan yerde bu paragraf geçerli.
 
 | Bileşen | Props (öz) | Yerini aldığı / kullanıldığı yer | Dilim |
 |---|---|---|---|
@@ -1383,7 +1398,7 @@ shadcn bölümü).
 | `RowMenu` | `{ label; items: { label; detail?; href?; onSelect?; disabledReason? }[] }` | Alım satırı, Genel bakış `⋯`, aday satırı (plan 3) | M1 |
 | `EmptyState` | `{ illustration; title; body; action; secondary? }` | Alımlar, Bugün, Adaylar, kütüphane | M1 |
 | **`GuidedFlow`** (yeni, K12) | `{ flow: string; steps: FlowStep[]; step: string; onStep; exit: { href; dirty: boolean }; summary?: ReactNode; container?: "page" \| "sheet" }`; `FlowStep = { id; title; lead?; layout: "single" \| "split"; body: ReactNode; primary: FooterAction; secondary?: FooterAction; optional?: boolean }` | Her panel akışı; `StepScreen` + `StepFooter placement="sticky"` + `FlowHeader` üstüne kurulur; odak `useStepFocus`, adım hash'te (W3) | M-W (plan 2b) |
-| **`guided-flow.ts`** (saf model, yeni) | `flowStepOf(hash, { steps, firstInvalid })`, `flowJourney(steps, current)`, `exitLabel(dirty)`, `summaryRows(before, after, fields)` (değişti işareti), `stepOfProblem(map, problem)` | `GuidedFlow`'un ve her akışın testli çekirdeği | M-W |
+| **`flow-model.ts`** (saf model, yeni; `src/components/manager/flow-model.ts`, sürüm 4'teki adı `guided-flow.ts`) | `flowStepOf(hash, { steps, firstInvalid })`, `flowJourney(steps, current)`, `exitKey(dirty)`, `summaryRows(before, after, fields)` (değişti işareti), `stepOfProblem(map, problem)` | `GuidedFlow`'un ve her akışın testli çekirdeği | M-W |
 | **`FlowHeader`** (yeni) | `{ kicker; exit: { href; label } }` | Akışın üst satırı (W2, W7) | M-W |
 | **`SummaryStep` / `SummaryRows`** (yeni) | `{ rows: { label; value; changed?: boolean; editHref?: string; problem?: string }[]; readOnly?: boolean }` | Akışların özeti (W5, P8); ekip ve kurallar özeti, Genel bakışın "Bu alımın kuralları" kartı, yayın özeti | M-W |
 | **`ControlRow`** (yeni) | `{ title; status: ReactNode; progress?: ReactNode; attention?: { icon; text }[]; facts?: ReactNode; next: { label; href } \| null }` | Alımlar kontrol görünümü (4.4); Görev 18'in `OpeningCard`'ının yerine | M3 |
@@ -1425,7 +1440,7 @@ ekranlarına dokunuyor mu. "Plan" sütunu: hangi planın hangi görevi.
 | # | Dilim | Boyut | Bitti sayılır | Sınav | Plan |
 |---|---|---|---|---|---|
 | M1 | Panel kabuğu: `ManagerNav` ikonları, `PanelHeader` (`PageHead` ve `PageTitle` arkasında), `RowMenu`, hata sayfası "sen" (K9); `EmptyState`, tek durum sözlüğü | M | Menü testi (registry ile sayfa dosyası) geçiyor; her sayfa başlığında en fazla bir dolu eylem; sınav sayfalarında önce/sonra metin ve ekran görüntüsü | **Evet** | 2b Görev 14 (değişmez) + Görev 15'in ilk yarısı |
-| **M-W** | **Rehberli akış kabuğu (yeni):** `GuidedFlow`, `FlowHeader`, `SummaryStep` / `SummaryRows`, saf `guided-flow.ts`; ortak `flow` metinleri ("Devam et", "Geri", "Özete dön", "Çık", "Kaydetmeden çık", "Değiştir", "değişti", "Adım {n} / {total}", "Değişiklik yok.") | S-M | Model testleri: hash → adım (geçersiz önceki adımda ilk eksiğe döner), geri değerleri korur, çıkış etiketi kirliyken "Kaydetmeden çık", özet "değişti" işareti, sorun → adım haritası; render testi: tek dolu buton, odak başlığa, `JourneyProgress` sayıları; `panel-copy.test.ts` "sen" | Hayır | 2b Görev 15'in ikinci yarısı |
+| **M-W** | **Rehberli akış kabuğu (yeni):** `GuidedFlow`, `FlowHeader`, `SummaryStep` / `SummaryRows`, saf `flow-model.ts` (sürüm 4'te `guided-flow.ts`); ortak `flow` metinleri ("Devam et", "Geri", "Özete dön", "Çık", "Kaydetmeden çık", "Değiştir", "değişti", "Adım {n} / {total}", "Değişiklik yok.") | S-M | Model testleri: hash → adım (geçersiz önceki adımda ilk eksiğe döner), geri değerleri korur, çıkış etiketi kirliyken "Kaydetmeden çık", özet "değişti" işareti, sorun → adım haritası; render testi: tek dolu buton, odak başlığa, `JourneyProgress` sayıları; `panel-copy.test.ts` "sen" | Hayır | 2b Görev 15'in ikinci yarısı |
 | M2 | Bugün: işe alım `today()` (C6 ile yalnızca uyarlama "Sıradaki iş"; veri hakkı dikkat satırında sayılır), `NextTaskCard`, "Dikkat isteyenler" (taslak satırı "Kuruluma devam et"), "Tüm alımların durumu ›" bağlantısı | M | `module.test.ts` güncellenir; okumalar ardışık (C21); sınav kuyruğu satırları birebir aynı (C17: yalnız satırlar karşılaştırılır); rol başına doğru satırlar, değerlendiriciye işe alım satırı yok | **Evet** | 2b Görev 16-17 |
 | M3 | **Kontrol görünümü** `/hiring/openings`: `ControlRow`, gruplar (Kurulumda, Yayında, Kapalılar açılır alanda), `openingNextStep`, özet cümlesi, değerlendirici yalnız sayı (H9), `?tab=` geri uyumu, boş durum | M | `openingNextStep` testi (her dal); değerlendirici satırında talep sayısı ve kurulum eylemi yok (sızıntı testi: değerlendirici için üretilen satır verisinde `openRequests` yok); `?tab=closed` açılır alanı açar; okumalar ardışık; 10 taslakta süre ölçülür | Hayır | 2b Görev 18 (yeniden yazılır) |
 | M4 | "Alım aç" `GuidedFlow` üstünde (3 adım, son adımda özet satırı) | S-M | `createOpeningAction` ve ret kodları aynen, her ret doğru adımı açar; geri değerleri korur; `?copy=` ve `?position=` ön seçimleri | Hayır | 2b Görev 19 (kabuğu değişir) |

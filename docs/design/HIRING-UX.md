@@ -55,9 +55,10 @@ uzmanı değil; "4 puan ne demek?" sorusunun cevabını ekranın kendisinde gör
 görse etkilenir, bunu kendisi de bilmez. *Birincil işi:* her cevabı, çapaya bakarak, kanıtını yazarak,
 bağımsız puanlamak.
 
-**Elif, aday.** Bu ay altı yere başvurdu. Linki akşam telefonundan açabilir. Kameraya tek başına
-konuşmak ona tuhaf gelir; "makine mi eleyecek beni?" diye düşünür. Süre ve kayıt onu gerer. Kötü bir
-deneyim yaşarsa şirket hakkında konuşur [39]. *Birincil işi:* kendini en iyi haliyle, bir kerede,
+**Elif, aday.** Bu ay altı yere başvurdu. Linki akşam telefonunda görse de bilgisayarından açar
+(aday akışı yalnızca bilgisayardan, K2, HIRING-VISUAL-FLOW 3.0). Kameraya tek başına konuşmak ona
+tuhaf gelir; "makine mi eleyecek beni?" diye düşünür. Süre ve kayıt onu gerer. Kötü bir deneyim
+yaşarsa şirket hakkında konuşur [39]. *Birincil işi:* kendini en iyi haliyle, bir kerede,
 sürprizsiz anlatmak; sonra ne olacağını bilmek.
 
 Ana fikir: **iki taraf da aynı şeyi ister: kuralların baştan bilinmesi.** Aday ne kaydedildiğini,
@@ -1368,9 +1369,11 @@ animasyon yok (hız hissi > süs).
 ### 8.7 Erişilebilirlik
 
 WCAG 2.2 AA hedefi. Odak her yerde görünür (accent halka). İnceleme ekranı klavyeyle baştan sona
-kullanılabilir. Video cevaplarına transkriptten altyazı. Adayda tüm kontroller ≥ 44px, ekran okuyucu
-için sayaç `aria-live="polite"` ve yalnızca dakika başı duyurulur (her saniye değil). Renk tek başına
-anlam taşımaz (dot her zaman metinle).
+kullanılabilir. Video cevaplarına transkriptten altyazı. Adayda tüm kontroller ≥ 44px. Ekran okuyucu
+için sayaçlar `aria-live="polite"` ve hiçbiri her saniye duyurulmaz: aşama sayacı dakika başı; düşünme
+ve cevap halkası (K4) kilometre taşlarında, yani kalan her tam dakika, sonra 30 ve 10 saniye, başlangıçta
+değil (`ringMilestone`, `src/components/visual/ring.ts`; halkanın süresini yalnızca halka söyler).
+Renk tek başına anlam taşımaz (dot her zaman metinle).
 
 ## 9. Kapsam dışı (bilerek yapılmayanlar)
 
@@ -1414,6 +1417,40 @@ hepsi yeniden açılabilir.
 - [ ] AI çıktısı varsa etiketli ve puan/karar alanında değil.
 - [ ] TR ve EN metin anahtarları eşit.
 - [ ] Em-dash yok.
+
+Görsel akış ve rehberli panel (plan 2b, HIRING-VISUAL-FLOW 8):
+
+- [ ] Dolu buton o anki gerçek eylem; kapalı dolu buton yalnızca ekranda yapılacak başka şey yokken.
+- [ ] Dolu buton her aday ekranında aynı yerde (`StepFooter` sağı).
+- [ ] Hazırlık ekranlarında `JourneyProgress`, soru ekranlarında `QuestionProgress` görünüyor.
+- [ ] Ekran 1280 ve 1440'ta tasarlandığı gibi, 1024'te bozulmadan; 1024'ten dar masaüstü penceresi
+      engellenmiyor, şerit görüyor.
+- [ ] Telefon ve tablet `DesktopOnlyScreen` görüyor; dokunmatik dizüstü görmüyor.
+- [ ] Ekranın başlığı tek soru/iş; alt satır en fazla 12 kelime.
+- [ ] Uzun ya da hukuki metin `Disclosure` içinde, etiketi ne olduğunu söylüyor.
+- [ ] Çizim yalnızca izinli ekranlarda, `aria-hidden`, doygun accent yok.
+- [ ] Yeni görsel öğe ve kapı sızıntı testinden geçti (aşama adı, soru metni hazırlık ve telefon
+      ekranlarının props'unda yok).
+- [ ] Panel: sayfa başlığında en fazla bir dolu eylem, ikincil eylemler `⋯` menüsünde.
+- [ ] Panel: bir alımın içinde en fazla bir kat sekme.
+- [ ] Panel: boş durum çizim + başlık + bir cümle + bir eylem.
+- [ ] Panel (K12): birden fazla alanı olan her yönetici işi bir rehberli akış; ekranda aynı anda tek
+      karar; tek alanlı iş tek adım; kurucu ve puan kartı matrisi editör.
+- [ ] Panel (K12): akış geri tuşuyla (footer ve tarayıcı) geri gider ve hiçbir değeri silmez; adım
+      adres çubuğunda, yeniden yüklemede aynı adım açılır.
+- [ ] Panel (K12): kayıtlı bir şeyi değiştiren akış özet adımıyla biter; özette değişen satırlar
+      işaretli, tek dolu buton "Kaydet" ve değişiklik yokken nedeniyle bekliyor.
+- [ ] Panel (K12): akıştan çıkış onay sormuyor; kaydedilmemiş değer varken bağlantı "Kaydetmeden çık".
+- [ ] Panel (K12): sunucunun reddi ilgili adımı açıyor ve mevcut cümleyi gösteriyor; sunucu eylemleri
+      ve ret kodları değişmedi.
+- [ ] Panel (K12): kontrol görünümünde her alım tek satır, satırda tek sıradaki adım; adım düzelten
+      akışın doğru adımını açıyor; stat kutusu ızgarası yok.
+- [ ] Panel (K12): değerlendirici kontrol görünümünde yalnızca sayı görüyor (talep, aday adı, kurulum
+      eylemi yok).
+- [ ] Panel: taslak alımın dolu butonu "Kuruluma devam et"; "Yayınla" yalnızca yayın özetinde dolu.
+- [ ] Panel: alımı kapatmak onay diyaloğu açmıyor; 8 sn geri alma şeridi çıkıyor.
+- [ ] Panel: dilim sınav ekranlarına dokunuyorsa önce/sonra ekran görüntüsü eklendi ve sınav
+      penceresi dışında çıktı.
 
 ## Kaynaklar
 

@@ -1,4 +1,4 @@
-# SDD ledger — plan: docs/superpowers/plans/2026-10-05-hiring-candidate-flow.md
+# SDD ledger, plan: docs/superpowers/plans/2026-10-05-hiring-candidate-flow.md
 Spec: docs/superpowers/specs/2026-10-04-hiring-solution-design.md (+ platform spec 2026-10-03, HIRING-UX.md). Plan commit 39c1b50. Plan 1 ledger (carries): .superpowers/sdd/2026-10-04-hiring-library-openings/progress.md.
 Planner open questions (to rule after the pre-flight scan): flip at Task 10; core asks module.renderPage; consent_texts.solution + text frozen per invitation; whole active panel assigned at invite; multi-choice exact-set scoring; closed opening stops only not-started candidates; candidate requests reuse deletion_requests; extendLink checks student:invite; proctor_level frozen OFF; candidate status after decision left to plan 3; grace baked into deadline.
 Pre-flight scan: preflight.md (tables per pair and per task, global checks, C1-C29). Counts: blocking 4, should-rule 12, cosmetic 13.
