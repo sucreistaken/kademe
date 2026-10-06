@@ -100,7 +100,8 @@ export const parseBlueprintConfig = (json: unknown): BlueprintConfig => blueprin
 
 const zeroLevels = (): Record<Cefr, number> => ({ A1: 0, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0 });
 
-function section(
+/** One section with the editor's starting values, overridden by `over`. */
+export function section(
   s: Section,
   minutes: number,
   over: Partial<SectionConfig> = {},

@@ -6,6 +6,9 @@ import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { auditLogs, examBlueprints } from "@/db/schema";
 import { bankCoverage, blueprintConfigSchema, defaultBlueprint, type BlueprintConfig } from "@/lib/exam/blueprint";
+import { examTemplateByKey } from "@/lib/exam/templates";
+import type { ExamMode } from "@/lib/exam/types";
+import { managerLocale } from "@/i18n/manager-locale";
 import { bankCounts } from "@/server/panel";
 import { requireUser } from "@/server/session";
 
@@ -23,15 +26,34 @@ async function audit(orgId: string, actorId: string, action: string, id: string,
   await db.insert(auditLogs).values({ orgId, actorId, action, subjectType: "exam_blueprint", subjectId: id, meta: meta ?? null });
 }
 
+/**
+ * A new exam: blank (the mode's default config) or from a ready template, in
+ * which case the template sets the mode and config and, unless the manager
+ * typed a name, the name in the manager's language.
+ */
 export async function createBlueprint(formData: FormData) {
   const user = await requireUser("blueprint:write");
-  const mode = formData.get("mode") === "LEVEL_VERIFICATION" ? "LEVEL_VERIFICATION" : "PLACEMENT";
-  const name = String(formData.get("name") ?? "").trim() || (mode === "PLACEMENT" ? "Seviye tespit sınavı" : "Seviye doğrulama sınavı");
+  const key = String(formData.get("template") ?? "").trim();
+  const template = key ? examTemplateByKey(key) : null;
+  if (key && !template) redirect("/exam/exams/new?error=template");
+  const typed = String(formData.get("name") ?? "").trim().slice(0, 120);
+  let mode: ExamMode;
+  let name: string;
+  let config: BlueprintConfig;
+  if (template) {
+    mode = template.mode;
+    name = typed || template.name[await managerLocale()];
+    config = template.config;
+  } else {
+    mode = formData.get("mode") === "LEVEL_VERIFICATION" ? "LEVEL_VERIFICATION" : "PLACEMENT";
+    name = typed || (mode === "PLACEMENT" ? "Seviye tespit sınavı" : "Seviye doğrulama sınavı");
+    config = defaultBlueprint(mode);
+  }
   const [b] = await db
     .insert(examBlueprints)
-    .values({ orgId: user.orgId, name, mode, status: "DRAFT", config: defaultBlueprint(mode), createdBy: user.id })
+    .values({ orgId: user.orgId, name, mode, status: "DRAFT", config, createdBy: user.id })
     .returning();
-  await audit(user.orgId, user.id, "blueprint.create", b.id, { mode });
+  await audit(user.orgId, user.id, "blueprint.create", b.id, template ? { mode, template: template.key } : { mode });
   redirect(`/exam/exams/${b.id}`);
 }
 
