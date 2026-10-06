@@ -1,6 +1,9 @@
 import { accountant } from "./roles/accountant";
 import { callCenterAgent } from "./roles/call-center-agent";
+import { courseAdvisor } from "./roles/course-advisor";
 import { customerSupport } from "./roles/customer-support";
+import { educationCoordinator } from "./roles/education-coordinator";
+import { examCentreOfficer } from "./roles/exam-centre-officer";
 import { examPrepTeacher } from "./roles/exam-prep-teacher";
 import { executiveAssistant } from "./roles/executive-assistant";
 import { fieldSalesRepresentative } from "./roles/field-sales-representative";
@@ -13,11 +16,12 @@ import { productDesigner } from "./roles/product-designer";
 import { retailSalesAssociate } from "./roles/retail-sales-associate";
 import { salesRepresentative } from "./roles/sales-representative";
 import { softwareDeveloper } from "./roles/software-developer";
+import { studentServices } from "./roles/student-services";
 import { warehouseLogistics } from "./roles/warehouse-logistics";
 import type { HiringTemplate } from "./types";
 
 /** Gallery order: generic roles, then language-school roles, then the extra roles. */
-export const TEMPLATES: HiringTemplate[] = [customerSupport, salesRepresentative, callCenterAgent, accountant, executiveAssistant, softwareDeveloper, retailSalesAssociate, warehouseLogistics, germanTeacherAdult, examPrepTeacher, germanTeacherYoungLearners, onlineGermanTeacher, hrSpecialist, marketingSpecialist, productDesigner, fieldSalesRepresentative];
+export const TEMPLATES: HiringTemplate[] = [customerSupport, salesRepresentative, callCenterAgent, accountant, executiveAssistant, softwareDeveloper, retailSalesAssociate, warehouseLogistics, germanTeacherAdult, examPrepTeacher, germanTeacherYoungLearners, onlineGermanTeacher, courseAdvisor, studentServices, educationCoordinator, examCentreOfficer, hrSpecialist, marketingSpecialist, productDesigner, fieldSalesRepresentative];
 
 export const templateByKey = (key: string): HiringTemplate | null => TEMPLATES.find((x) => x.key === key) ?? null;
 
