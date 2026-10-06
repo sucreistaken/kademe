@@ -10,8 +10,10 @@ export type RowMenuItem = { label: string; detail?: string; href?: string; onSel
 
 /**
  * P2, P5: the secondary actions of a header, a card or a table row behind
- * "⋯". A closed item shows its reason inside the menu (RULES 5); an item that
- * leads somewhere is a real link.
+ * "⋯". A closed item shows its reason inside the menu (RULES 5) and stays
+ * reachable by the arrow keys (aria-disabled, not Radix `disabled`, which
+ * skips it); an item that leads somewhere is a real link, a plain <a> when
+ * its target carries a hash (next/link fires no hashchange).
  */
 export function RowMenu({ label, items }: { label: string; items: RowMenuItem[] }) {
   const body = (item: RowMenuItem) => (
@@ -23,22 +25,22 @@ export function RowMenu({ label, items }: { label: string; items: RowMenuItem[] 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button size="icon" aria-label={label}>
+        <Button size="icon" className="size-11" aria-label={label}>
           <Ellipsis className="size-4" strokeWidth={1.75} aria-hidden />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-56">
-        {items.map((item) =>
+        {items.map((item, i) =>
           item.disabledReason ? (
-            <DropdownMenuItem key={item.label} disabled>
+            <DropdownMenuItem key={i} aria-disabled="true" className="opacity-60" onSelect={(event) => event.preventDefault()}>
               {body(item)}
             </DropdownMenuItem>
           ) : item.href ? (
-            <DropdownMenuItem key={item.label} asChild>
-              <Link href={item.href}>{body(item)}</Link>
+            <DropdownMenuItem key={i} asChild>
+              {item.href.includes("#") ? <a href={item.href}>{body(item)}</a> : <Link href={item.href}>{body(item)}</Link>}
             </DropdownMenuItem>
           ) : (
-            <DropdownMenuItem key={item.label} onSelect={item.onSelect}>
+            <DropdownMenuItem key={i} onSelect={item.onSelect}>
               {body(item)}
             </DropdownMenuItem>
           ),

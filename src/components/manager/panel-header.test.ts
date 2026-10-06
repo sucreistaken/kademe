@@ -28,6 +28,13 @@ describe("PanelHeader (P2)", () => {
     expect(trigger).toContain('data-variant="secondary"');
   });
 
+  it("gives the ⋯ trigger a 44px target (W10)", () => {
+    const out = html(PanelHeader, { title: "Alım", menu: { label: "Diğer işlemler", items: [{ label: "Önizle", href: "/x" }] } });
+    const trigger = out.match(/<button[^>]*aria-label="Diğer işlemler"[^>]*>/)![0];
+    expect(trigger).toMatch(/class="[^"]*\bsize-11\b/);
+    expect(trigger).not.toMatch(/class="[^"]*\bsize-10\b/);
+  });
+
   it("is what the exam's PageHead and the hiring PageTitle draw, with their words unchanged", () => {
     const head = html(PageHead, { title: "Öğrenciler", sub: "12 öğrenci", action: createElement("a", { href: "/exam/students/new" }, "Öğrenci davet et") });
     expect(head).toBe(html(PanelHeader, { title: "Öğrenciler", meta: "12 öğrenci", primary: createElement("a", { href: "/exam/students/new" }, "Öğrenci davet et") }));
