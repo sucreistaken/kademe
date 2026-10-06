@@ -2,7 +2,7 @@
 
 Son güncelleme: 2026-10-07 (Gelişmiş: tek kutu, AI önce, `platform/solutions` dalında, yerelde gerçek Gemini ile denendi; canlıya çıkmadı). Önceki: 2026-10-06 (işe alım plan 2b, görsel akış ve rehberli panel, `platform/solutions` dalında; bulut oturumunda tip, lint, test ve build ile doğrulandı, veritabanı betikleri ve tarayıcı turu yerel oturumu bekliyor; canlıya çıkmadı).
 Önceki: 2026-10-05 (işe alım plan 2, aday akışı, platform/solutions dalında, yerelde doğrulandı; canlıya çıkmadı); 2026-10-04 (çekirdek ayrımı ve işe alım plan 1, kütüphane ve alımlar, `platform/solutions` dalında, yerelde doğrulandı; canlıya çıkmadı).
-**Canlıda**: https://kademe.kadiray.com, commit `739f218` (`main`, 2026-10-05 sınav sıcak düzeltmesi; ayrıntı "Kararlar ve sapmalar"da).
+**Canlıda**: https://kademe.kadiray.com, commit `0142ff0` (2026-10-07, Gelişmiş; ayrıntı "Canlıya çıkış: Gelişmiş"). Önceki not: commit `739f218` (`main`, 2026-10-05 sınav sıcak düzeltmesi; ayrıntı "Kararlar ve sapmalar"da).
 Canlı veritabanı kullanıcı onayıyla sıfırlandı: eski işe alım verisi yok,
 panel kullanıcıları (parolalarıyla) taşındı, banka ve iki sınav yüklendi.
 
@@ -161,6 +161,19 @@ Spec `docs/superpowers/specs/2026-10-06-advanced-ai-create-design.md`, plan
 - Canlı Gemini turunda bulunup düzeltilen: "okuma ağırlıklı" yalnız okuma sınavı kuruyordu (`43eded2`); değişiklik
   kutusu taslağı sunucuda güncelliyor ama kartlar yenilenmeden eski kalıyordu (`4705582`); toplam 100 iken "100 olmalı"
   yazıyordu (`488f3fe`).
+
+## Canlıya çıkış: Gelişmiş (2026-10-07 gece, kullanıcı onayıyla: "canlıya al")
+
+- main `c4b697d` -> `0142ff0` (platform/solutions fast-forward). VM `kademe-app` (`cgerman-lms`).
+- Sıra: devam eden bölüm 0; servis ve zamanlayıcılar durduruldu (aktif birim yok); yedek
+  `/root/kademe-backups/kademe-advanced-20261006-2232.dump` (378 KB, `pg_restore -l` 62 tablo verisi); `git pull` ve
+  `pnpm install`; `pnpm run db:migrate` 0015 ve 0016'yı uyguladı (göç günlüğü 15 -> 17, `template_key`, `creation_drafts`,
+  `CREATE_ROUTER` var; not: VM'deki pnpm 11 `pnpm -s` kabul etmiyor, `pnpm run` kullan); build "Compiled successfully",
+  `/advanced` rotası var; servis active; 5 zamanlayıcı adlarıyla başlatıldı (`systemctl start 'kademe-*.timer'` glob'u
+  durdurulmuş birimleri başlatmadı); `/login` 200 (127.0.0.1 ve https://kademe.kadiray.com), `/advanced` 307 `/login`,
+  `/exam/advanced` 307 `/advanced`; close-expired işi hatasız bitti.
+- Doğrulanmadı: panel şifresiyle canlıda giriş ve `/advanced` kutusunun canlıda gerçek bir istekle denenmesi.
+- Geri dönüş: servis ve zamanlayıcıları durdur, "Geri dönüş B" ile bu yedeği yükle, `git checkout c4b697d`, build, başlat.
 
 ## Canlıya çıkış yapıldı (2026-10-06 akşam, kullanıcı onayıyla, provasız)
 
