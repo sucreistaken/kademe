@@ -57,28 +57,40 @@ export async function importSeedBank(orgId: string, options: { audio?: boolean; 
  * not added twice. New listening clips are stored without audio; `pnpm
  * bank:tts` makes it. One transaction per organisation.
  */
+type Executor = Pick<typeof db, "select">;
+
+async function loadTopUpState(tx: Executor, orgId: string) {
+  const haveStimuli = await tx
+    .select({ id: stimuli.id, seedKey: stimuli.seedKey })
+    .from(stimuli)
+    .where(eq(stimuli.orgId, orgId));
+  const haveItems = await tx
+    .select({
+      id: items.id,
+      seedKey: items.seedKey,
+      origin: items.origin,
+      section: items.section,
+      level: items.level,
+      type: items.type,
+      prompt: items.prompt,
+      content: items.content,
+      stimulusSeedKey: stimuli.seedKey,
+    })
+    .from(items)
+    .leftJoin(stimuli, eq(stimuli.id, items.stimulusId))
+    .where(eq(items.orgId, orgId));
+  return { haveStimuli, plan: planTopUp(SEED_BANK, { stimuli: haveStimuli, items: haveItems }) };
+}
+
+/** Read-only: what a top-up would do for one organisation, for the production summary. */
+export async function previewTopUp(orgId: string) {
+  const { plan } = await loadTopUpState(db, orgId);
+  return { stimuliToInsert: plan.stimuli.length, itemsToInsert: plan.items.length, keysToBackfill: plan.backfill.length };
+}
+
 export async function topUpSeedBank(orgId: string) {
   return db.transaction(async (tx) => {
-    const haveStimuli = await tx
-      .select({ id: stimuli.id, seedKey: stimuli.seedKey })
-      .from(stimuli)
-      .where(eq(stimuli.orgId, orgId));
-    const haveItems = await tx
-      .select({
-        id: items.id,
-        seedKey: items.seedKey,
-        origin: items.origin,
-        section: items.section,
-        level: items.level,
-        type: items.type,
-        prompt: items.prompt,
-        content: items.content,
-        stimulusSeedKey: stimuli.seedKey,
-      })
-      .from(items)
-      .leftJoin(stimuli, eq(stimuli.id, items.stimulusId))
-      .where(eq(items.orgId, orgId));
-    const plan = planTopUp(SEED_BANK, { stimuli: haveStimuli, items: haveItems });
+    const { haveStimuli, plan } = await loadTopUpState(tx, orgId);
 
     for (const b of plan.backfill) {
       await tx.update(items).set({ seedKey: b.seedKey }).where(and(eq(items.id, b.id), eq(items.orgId, orgId)));

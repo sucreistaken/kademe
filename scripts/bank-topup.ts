@@ -10,13 +10,24 @@
  *   DATABASE_URL=postgresql://kademe:kademe@localhost:5434/kademe_bank_check pnpm bank:topup
  *   pnpm bank:topup --org <uuid>
  *   pnpm bank:topup --allow-working-db
+ *
+ * Production (the only way onto the `kademe` database): both flags, and the
+ * confirmation must equal host:port/database parsed from DATABASE_URL. A
+ * per-org summary is printed, then applied in one transaction per org.
+ *   pnpm bank:topup --production --confirm-db=127.0.0.1:5434/kademe
  */
 import "dotenv/config";
-import { bankTopUpRefusal } from "../src/server/bank-topup";
+import { bankTopUpRefusal, databaseTarget } from "../src/server/bank-topup";
 
 async function main() {
   const args = process.argv.slice(2);
-  const refusal = bankTopUpRefusal(process.env.DATABASE_URL, args.includes("--allow-working-db"));
+  const production = args.includes("--production");
+  const confirmDb = args.find((a) => a.startsWith("--confirm-db="))?.slice("--confirm-db=".length);
+  const refusal = bankTopUpRefusal(process.env.DATABASE_URL, {
+    allowWorkingDb: args.includes("--allow-working-db"),
+    production,
+    confirmDb,
+  });
   if (refusal) {
     console.error(`Refusing: ${refusal}`);
     process.exit(2);
@@ -31,7 +42,7 @@ async function main() {
   const { eq } = await import("drizzle-orm");
   const { db } = await import("../src/db");
   const { organizations } = await import("../src/db/schema");
-  const { seedCounts, topUpSeedBank } = await import("../src/server/bank-import");
+  const { previewTopUp, seedCounts, topUpSeedBank } = await import("../src/server/bank-import");
 
   const orgs = await db
     .select({ id: organizations.id, name: organizations.name })
@@ -40,6 +51,14 @@ async function main() {
   if (onlyOrg && orgs.length === 0) {
     console.error(`No organisation ${onlyOrg}.`);
     process.exit(2);
+  }
+  if (production) {
+    console.log(`Production top-up on ${databaseTarget(process.env.DATABASE_URL)} (${orgs.length} organisation(s)):`);
+    for (const org of orgs) {
+      const p = await previewTopUp(org.id);
+      console.log(`  ${org.name}: insert ${p.itemsToInsert} items and ${p.stimuliToInsert} texts/clips, backfill ${p.keysToBackfill} seed keys`);
+    }
+    console.log("Applying (one transaction per organisation)...");
   }
   for (const org of orgs) {
     const before = await seedCounts(org.id);

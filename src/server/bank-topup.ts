@@ -3,13 +3,39 @@ import { seedItemKey } from "@/db/seed-bank/seed-key";
 import { refuseUnlessThrowAwayDb, refuseUnlessWorkingDb } from "@/db/working-db-guard";
 import type { ItemContent } from "@/lib/exam/types";
 
+/** host:port/database of a database url, without user or password. Null when the url does not parse. */
+export function databaseTarget(url: string | undefined): string | null {
+  try {
+    const u = new URL(url ?? "");
+    const name = decodeURIComponent(u.pathname.replace(/^\//, ""));
+    if (!u.hostname || !name) return null;
+    return `${u.hostname}:${u.port || "5432"}/${name}`;
+  } catch {
+    return null;
+  }
+}
+
+export type TopUpMode = { allowWorkingDb: boolean; production?: boolean; confirmDb?: string };
+
 /**
  * The top-up writes rows, so by default it only runs on a throw-away
  * `*_check` database; `--allow-working-db` widens that to the local working
- * database (never the shared `kademe`). Returns the reason to refuse, or null.
+ * database (never the shared `kademe`). `--production --confirm-db=<host:port/db>`
+ * is the only way onto a production database: the confirmation must equal the
+ * target parsed from DATABASE_URL exactly. Returns the reason to refuse, or null.
  */
-export function bankTopUpRefusal(url: string | undefined, allowWorkingDb: boolean): string | null {
-  return allowWorkingDb ? refuseUnlessWorkingDb(url) : refuseUnlessThrowAwayDb(url);
+export function bankTopUpRefusal(url: string | undefined, mode: boolean | TopUpMode): string | null {
+  const m: TopUpMode = typeof mode === "boolean" ? { allowWorkingDb: mode } : mode;
+  if (m.production) {
+    const target = databaseTarget(url);
+    if (!target) return "DATABASE_URL is missing or not a valid url.";
+    if (m.allowWorkingDb) return "--production cannot be combined with --allow-working-db.";
+    if (!m.confirmDb) return `--production needs --confirm-db=${target} (the database this run would write to).`;
+    if (m.confirmDb !== target) return `--confirm-db=${m.confirmDb} does not match the database in DATABASE_URL (${target}).`;
+    return null;
+  }
+  if (m.confirmDb) return "--confirm-db only works together with --production.";
+  return m.allowWorkingDb ? refuseUnlessWorkingDb(url) : refuseUnlessThrowAwayDb(url);
 }
 
 /**

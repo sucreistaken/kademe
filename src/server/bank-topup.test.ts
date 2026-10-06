@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { seedItemKey } from "@/db/seed-bank/seed-key";
 import type { SeedBankPart, SeedItem } from "@/db/seed-bank/types";
-import { bankTopUpRefusal, planTopUp, seedOrderInStimulus, type ExistingItem } from "./bank-topup";
+import { bankTopUpRefusal, databaseTarget, planTopUp, seedOrderInStimulus, type ExistingItem } from "./bank-topup";
 
 const choiceItem = (prompt: string, stimulusKey?: string): SeedItem => ({
   section: stimulusKey ? "READING" : "GRAMMAR",
@@ -93,6 +93,43 @@ describe("bankTopUpRefusal", () => {
     expect(bankTopUpRefusal(local("kademe_platform"), true)).toBeNull();
     expect(bankTopUpRefusal(local("kademe"), true)).toMatch(/shared/);
     expect(bankTopUpRefusal("postgresql://u:p@db.example.com:5432/kademe_check", true)).toMatch(/not a local/);
+  });
+});
+
+describe("production top-up", () => {
+  const url = "postgresql://kademe:s3cret@127.0.0.1:5434/kademe";
+  const target = "127.0.0.1:5434/kademe";
+  it("parses host:port/database without the password", () => {
+    expect(databaseTarget(url)).toBe(target);
+    expect(databaseTarget(url)).not.toMatch(/s3cret/);
+    expect(databaseTarget("postgresql://u:p@db.example.com/x")).toBe("db.example.com:5432/x");
+    expect(databaseTarget("nope")).toBeNull();
+    expect(databaseTarget(undefined)).toBeNull();
+  });
+  it("refuses without a confirmation and names the expected value, never the password", () => {
+    const r = bankTopUpRefusal(url, { allowWorkingDb: false, production: true });
+    expect(r).toContain(`--confirm-db=${target}`);
+    expect(r).not.toMatch(/s3cret/);
+  });
+  it("refuses a mismatched confirmation, including a partial one", () => {
+    for (const bad of ["127.0.0.1:5434", "localhost:5434/kademe", "127.0.0.1:5434/kademe_check", `${target}/`]) {
+      const r = bankTopUpRefusal(url, { allowWorkingDb: false, production: true, confirmDb: bad });
+      expect(r).toMatch(/does not match/);
+      expect(r).not.toMatch(/s3cret/);
+    }
+  });
+  it("accepts the exact confirmation, even for the kademe database", () => {
+    expect(bankTopUpRefusal(url, { allowWorkingDb: false, production: true, confirmDb: target })).toBeNull();
+  });
+  it("refuses an invalid url and the combination with --allow-working-db", () => {
+    expect(bankTopUpRefusal("nope", { allowWorkingDb: false, production: true, confirmDb: target })).toMatch(/not a valid/);
+    expect(bankTopUpRefusal(url, { allowWorkingDb: true, production: true, confirmDb: target })).toMatch(/cannot be combined/);
+  });
+  it("leaves the defaults unchanged: kademe stays refused without --production", () => {
+    expect(bankTopUpRefusal(url, { allowWorkingDb: false })).toMatch(/shared|_check/);
+    expect(bankTopUpRefusal(url, { allowWorkingDb: true })).toMatch(/shared/);
+    expect(bankTopUpRefusal(url, true)).toMatch(/shared/);
+    expect(bankTopUpRefusal(url, { allowWorkingDb: false, confirmDb: target })).toMatch(/only works together/);
   });
 });
 
