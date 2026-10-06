@@ -73,6 +73,42 @@ describe("hiring's rows on Today (HIRING-VISUAL-FLOW 4.3, M2)", () => {
     expect(fake.ops.find((o) => o.table === "deletion_requests")!.where).toMatch(/"handled_at" is null/);
   });
 
+  it("leaves out deleted candidates and closed openings, as the Candidates tab does (fix round 1)", async () => {
+    await hiringToday(ORG, USER, "tr", NOW);
+    const op = (table: string) => fake.ops.find((o) => o.table === table)!;
+    const deletedFilter = /"candidates"\."deleted_at" is null/;
+    expect(op("candidate_requests").joins.join(" "), "requests").toMatch(deletedFilter);
+    expect(op("deletion_requests").joins.join(" "), "data rights").toMatch(deletedFilter);
+    expect(op("assessment_links").joins.join(" "), "expiring links").toMatch(deletedFilter);
+    expect(op("assessment_links").where).toMatch(/"hiring_openings"\."status" <> \$\d+/);
+    expect(op("assessment_links").params).toContain("CLOSED");
+    expect(op("hiring_versions").where).toMatch(/"hiring_openings"\."status" <> \$\d+/);
+  });
+
+  it("shortens a long request to 140 characters by code points, never splitting an emoji (fix round 1)", async () => {
+    const long = "😀".repeat(200);
+    fake.respond = (op) =>
+      op.table === "candidate_requests"
+        ? [{ id: "cr9", kind: "ACCOMMODATION", message: long, createdAt: new Date("2026-10-05T08:00:00Z"), name: "Ece Bal", openingId: OP1, openingName: "Ürün Tasarımcısı" }]
+        : respond(op);
+    const [task] = (await hiringToday(ORG, USER, "tr", NOW)).filter((i) => i.lane === "task");
+    const points = Array.from(task.detail!);
+    expect(points).toHaveLength(140);
+    expect(points.slice(0, 139).every((p) => p === "😀")).toBe(true);
+    expect(points[139]).toBe("…");
+    expect(task.detail).not.toMatch(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/);
+  });
+
+  it("keeps a request of exactly 140 characters whole", async () => {
+    const exact = "a".repeat(139) + "😀";
+    fake.respond = (op) =>
+      op.table === "candidate_requests"
+        ? [{ id: "cr9", kind: "ACCOMMODATION", message: exact, createdAt: new Date("2026-10-05T08:00:00Z"), name: "Ece Bal", openingId: OP1, openingName: "Ürün Tasarımcısı" }]
+        : respond(op);
+    const [task] = (await hiringToday(ORG, USER, "tr", NOW)).filter((i) => i.lane === "task");
+    expect(task.detail).toBe(exact);
+  });
+
   it("runs its reads one after another, never side by side (ruling C21: five connections shared with the live exam)", async () => {
     // A read that starts before the one before it answered would find more statements recorded than answered.
     const seen: number[] = [];

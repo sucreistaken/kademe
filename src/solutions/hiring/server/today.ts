@@ -45,7 +45,7 @@ export async function hiringToday(orgId: string, userId: string, locale: Locale,
   const rights = await db
     .select({ id: deletionRequests.id, createdAt: deletionRequests.createdAt, openingId: hiringAssessments.openingId, openingName: hiringOpenings.name })
     .from(deletionRequests)
-    .innerJoin(candidates, and(eq(candidates.id, deletionRequests.candidateId), eq(candidates.orgId, orgId)))
+    .innerJoin(candidates, and(eq(candidates.id, deletionRequests.candidateId), eq(candidates.orgId, orgId), isNull(candidates.deletedAt)))
     .innerJoin(assessments, and(eq(assessments.candidateId, candidates.id), eq(assessments.orgId, orgId), eq(assessments.solution, "HIRING")))
     .innerJoin(hiringAssessments, and(eq(hiringAssessments.assessmentId, assessments.id), eq(hiringAssessments.orgId, orgId)))
     .innerJoin(hiringOpenings, and(eq(hiringOpenings.id, hiringAssessments.openingId), eq(hiringOpenings.orgId, orgId)))
@@ -55,7 +55,17 @@ export async function hiringToday(orgId: string, userId: string, locale: Locale,
     .from(assessmentLinks)
     .innerJoin(hiringAssessments, and(eq(hiringAssessments.assessmentId, assessmentLinks.assessmentId), eq(hiringAssessments.orgId, orgId)))
     .innerJoin(hiringOpenings, and(eq(hiringOpenings.id, hiringAssessments.openingId), eq(hiringOpenings.orgId, orgId)))
-    .where(and(inArray(assessmentLinks.status, ["NOT_STARTED", "IN_PROGRESS"]), gt(assessmentLinks.expiresAt, now), lt(assessmentLinks.expiresAt, new Date(now.getTime() + EXPIRING_SOON_MS))));
+    // The Candidates tab lists only candidates not deleted; a closed opening's link can be neither opened nor extended.
+    .innerJoin(assessments, and(eq(assessments.id, assessmentLinks.assessmentId), eq(assessments.orgId, orgId)))
+    .innerJoin(candidates, and(eq(candidates.id, assessments.candidateId), isNull(candidates.deletedAt)))
+    .where(
+      and(
+        inArray(assessmentLinks.status, ["NOT_STARTED", "IN_PROGRESS"]),
+        gt(assessmentLinks.expiresAt, now),
+        lt(assessmentLinks.expiresAt, new Date(now.getTime() + EXPIRING_SOON_MS)),
+        ne(hiringOpenings.status, "CLOSED"),
+      ),
+    );
   const drafts = await db
     .select({ openingId: hiringVersions.openingId, openingName: hiringOpenings.name, number: hiringVersions.versionNumber })
     .from(hiringVersions)
@@ -63,7 +73,12 @@ export async function hiringToday(orgId: string, userId: string, locale: Locale,
     .where(and(eq(hiringVersions.orgId, orgId), eq(hiringVersions.status, "DRAFT"), ne(hiringOpenings.status, "CLOSED")));
 
   const name = (n: string | null) => n ?? t("hiringToday.anonymous");
-  const detail = (m: string | null) => (m ? (m.length > DETAIL_MAX ? `${m.slice(0, DETAIL_MAX - 1)}…` : m) : null);
+  // Cut by code points, so an emoji or another surrogate pair is never split in half.
+  const detail = (m: string | null) => {
+    if (!m) return null;
+    const points = Array.from(m);
+    return points.length > DETAIL_MAX ? `${points.slice(0, DETAIL_MAX - 1).join("")}…` : m;
+  };
   const candidatesTab = (id: string) => `/hiring/openings/${id}/candidates`;
 
   const tasks: TodayItem[] = requests
