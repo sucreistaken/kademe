@@ -15,26 +15,26 @@ export const warehouseLogistics: HiringTemplate = {
     stage({
       name: t("Kısa tanışma", "Short introduction"),
       description: t(
-        "İki kısa bilgi sorusu ve iki video sorusu. Yaklaşık 14 dakika.",
-        "Two short knowledge questions and two video questions. About 14 minutes.",
+        "İki kısa bilgi sorusu ve iki video sorusu. En fazla 14 dakika.",
+        "Two short knowledge questions and two video questions. At most 14 minutes.",
       ),
-      purpose: "FEFO ve sayım farkı bilgisi; gerçek bir sevkiyat krizinde önceliklendirme; stok farkının nedenini bulup kalıcı önlem alma.",
+      purpose: "FEFO ve sayım farkı bilgisi; gerçek bir sevkiyat krizinde önceliklendirme; stok farkında belirtiyi nedenden ayırma ve önlemi süreç olarak kurma.",
       minutes: 14,
       activities: [
         single({
           prompt: t(
-            "Depoda aynı yoğurt ürününden üç parti var:\n- Parti A: 1 Ekim'de geldi, son kullanma tarihi 20 Ekim\n- Parti B: 3 Ekim'de geldi, son kullanma tarihi 15 Ekim\n- Parti C: 5 Ekim'de geldi, son kullanma tarihi 25 Ekim\n\nDepo, son kullanma tarihli ürünlerde FEFO (ilk son kullanma tarihi ilk çıkar) kuralını uyguluyor. Bugün 8 Ekim ve bir mağaza siparişi geldi. Siparişi hangi partiden toplarsın?",
-            "The warehouse holds three batches of the same yoghurt:\n- Batch A: arrived 1 October, best-before 20 October\n- Batch B: arrived 3 October, best-before 15 October\n- Batch C: arrived 5 October, best-before 25 October\n\nFor dated products the warehouse follows FEFO (first expired, first out). Today is 8 October and a store order comes in. Which batch do you pick it from?",
+            "Depoda aynı yoğurt ürününden üç parti var:\n- Parti A: 1 Ekim'de geldi, son kullanma tarihi 20 Ekim\n- Parti B: 3 Ekim'de geldi, son kullanma tarihi 15 Ekim\n- Parti C: 5 Ekim'de geldi, son kullanma tarihi 25 Ekim\n\nDepo, son kullanma tarihli ürünlerde FEFO (ilk son kullanma tarihi ilk çıkar) kuralını uyguluyor. Mağazanın kalan raf ömrü şartı yok. Bugün 8 Ekim ve bir mağaza siparişi geldi. Siparişi hangi partiden toplarsın?",
+            "The warehouse holds three batches of the same yoghurt:\n- Batch A: arrived 1 October, expiry date 20 October\n- Batch B: arrived 3 October, expiry date 15 October\n- Batch C: arrived 5 October, expiry date 25 October\n\nFor dated products the warehouse follows FEFO (first expired, first out). The store has no minimum shelf-life requirement. Today is 8 October and a store order comes in. Which batch do you pick it from?",
           ),
           options: [
             t("Parti A, çünkü depoya ilk giren parti o", "Batch A, because it is the batch that arrived first"),
-            t("Parti B, çünkü son kullanma tarihi en yakın olan o", "Batch B, because its best-before date is the nearest"),
+            t("Parti B, çünkü son kullanma tarihi en yakın olan o", "Batch B, because its expiry date is the nearest"),
             t("Parti C, çünkü mağazada en uzun satılabilecek olan o", "Batch C, because it can stay on sale in the store the longest"),
-            t("Parti A, çünkü son kullanma tarihi en yakın olan o", "Batch A, because its best-before date is the nearest"),
+            t("Parti A, çünkü Parti B'nin tarihi mağazaya göndermek için fazla yakın", "Batch A, because Batch B's date is too close to send to a store"),
           ],
           correct: 1,
           internal:
-            "Doğru cevap: Parti B. FEFO'da geliş tarihine değil son kullanma tarihine bakılır; en yakın tarih 15 Ekim (B). Çeldiriciler: A, ilk giren (FIFO ile karıştırmak, en sık hata); C, en uzun raf ömrü (mağazayı düşünüp kuralı ters uygulamak); A, tarihi en yakın (kuralı bilip tabloyu yanlış okumak).",
+            "Doğru cevap: Parti B. FEFO'da geliş tarihine değil son kullanma tarihine bakılır; en yakın tarih 15 Ekim (B). Çeldiriciler: A, ilk giren (FIFO ile karıştırmak, en sık hata); C, en uzun raf ömrü (mağazayı düşünüp kuralı ters uygulamak); A, B'nin tarihi fazla yakın (yakın tarihli partiyi mağazaya gönderilemez sanmak; prompt mağazanın kalan raf ömrü şartı olmadığını söylüyor, B'nin 7 günü var).",
         }),
         single({
           prompt: t(
@@ -75,18 +75,18 @@ export const warehouseLogistics: HiringTemplate = {
             "Stok kaydının rafla tutmadığı ya da yanlış ürünün sevk edildiği bir durumu anlat: farkı nasıl fark ettin, nedenini nasıl buldun, kaydı ve ürünü nasıl düzelttin ve tekrarlanmaması için sonra neyi değiştirdin?",
             "Tell us about a time the stock record did not match the shelf, or the wrong product was shipped: how did you notice, how did you find the cause, how did you correct the record and the goods, and what did you change afterwards so it would not happen again?",
           ),
-          competencies: ["accuracy"],
+          competencies: ["problem_solving", "organisation"],
           expected: [
-            "Farkı rakamıyla anlatıyor (hangi ürün, sistemde kaç, rafta kaç) ve nasıl fark ettiğini söylüyor (sayım, toplama sırasında, müşteri şikayeti)",
-            "Nedeni hareket kayıtlarını kontrol ederek bulduğunu anlatıyor (girilmemiş iade, yanlış lokasyon, barkod karışıklığı)",
-            "Kaydı gerekçesiyle ve onaylı düzelttiğini söylüyor, farkı nedenini bulmadan sistemde kapatmadığını anlatıyor",
-            "Tekrarı önleyen bir kontrol adımı söylüyor (dönemsel sayım, okutma zorunluluğu, lokasyon etiketi)",
+            "Belirtiyi (sistemde kaç, rafta kaç ya da hangi müşteriye ne gitti) nedenden ayırıyor ve olası nedenleri sayıyor (girilmemiş iade, yanlış lokasyon, barkod karışıklığı)",
+            "Nedeni hangi bilgiyi toplayarak bulduğunu söylüyor (hareket kayıtları, okutma geçmişi, ilgili kişiyle konuşma) ve elediği varsayımı anlatıyor",
+            "Düzeltmeyi adımlara bölüyor: kaydı onayla düzeltme, ürünü yerine alma, etkilenen müşteriye ya da satış ekibine haber verme",
+            "Tekrarı önlemek için kurduğu süreci ve takibi söylüyor (döngüsel sayım takvimi, okutma zorunluluğu, lokasyon etiketi) ve işe yarayıp yaramadığını nasıl kontrol ettiğini anlatıyor",
           ],
-          redFlags: ["Farkı nedenini aramadan sistemde düzeltip kapattığını anlatıyor", "Hatayı ekipten birine yükleyip kendi kontrolünden söz etmiyor"],
+          redFlags: ["Farkı nedenini aramadan sistemde düzeltip kapattığını anlatıyor", "Hatayı ekipten birine yükleyip kendi adımını söylemiyor", "Bir önlem ya da takip adımı söylemiyor"],
           examples: {
             1: "Sayımda fark çıkınca sistemi rafa göre düzeltiyoruz, zaten küçük farklar hep olur.",
-            3: "Bir üründe sistem 120, raf 96 gösteriyordu. Hareketlere bakınca 24 adetin yanlış lokasyona okutulduğunu buldum, ürünleri doğru yere taşıyıp kaydı düzelttim.",
-            5: "Haftalık döngüsel sayımda bir şampuan için sistem 480, raf 432 gösterdi. Fark 48, yani tam 4 koli; bu bana tek tek kayıp değil koli bazlı bir hata olduğunu düşündürdü. Hareketleri inceleyince benzer barkodlu başka bir ürünün 4 koli olarak bu ürüne okutulduğunu buldum. Şefimin onayıyla iki ürünün kaydını da düzelttim, yanlış sevk edilen müşteriyi satışla birlikte aradık. Sonrasında benzer barkodlu ürünleri ayrı koridorlara taşıdık ve mal kabulde ürün adının ekranda onaylanmasını zorunlu yaptık.",
+            3: "Bir üründe sistem 120, raf 96 gösteriyordu. Önce iade ve sevkiyat kayıtlarına baktım, oradan bir şey çıkmadı; okutma geçmişinde 24 adetin yanlış lokasyona okutulduğunu buldum. Ürünleri doğru yere taşıyıp şefimin onayıyla kaydı düzelttim, ekibe lokasyonu okutmayı hatırlattım.",
+            5: "Haftalık döngüsel sayımda bir şampuan için sistem 480, raf 432 gösterdi. Fark 48, yani tam 4 koli; bu bana tek tek kayıp değil koli bazlı bir hata olduğunu düşündürdü. Hareketleri inceleyince benzer barkodlu başka bir ürünün 4 koli olarak bu ürüne okutulduğunu buldum. Şefimin onayıyla iki ürünün kaydını da düzelttim, yanlış sevk edilen müşteriyi satışla birlikte aradık. Sonra benzer barkodlu ürünleri ayrı koridorlara taşıdık, mal kabulde ürün adının ekranda onaylanmasını zorunlu yaptık ve bu ürünleri bir ay haftalık saydık; fark tekrar etmedi.",
           },
         }),
       ],
@@ -94,8 +94,8 @@ export const warehouseLogistics: HiringTemplate = {
     stage({
       name: t("İş örneği", "Work sample"),
       description: t(
-        "Gerçek işe benzeyen iki yazılı görev: geciken bir tedarikçi ile acil siparişleri planlamak ve sahada bir iş güvenliği ihlaline müdahale etmek. Yaklaşık 20 dakika.",
-        "Two written tasks like the real job: planning urgent orders around a late supplier, and acting on a safety violation on the floor. About 20 minutes.",
+        "Gerçek işe benzeyen iki yazılı görev: geciken bir tedarikçi ile acil siparişleri planlamak ve sahada bir iş güvenliği ihlaline müdahale etmek. En fazla 20 dakika.",
+        "Two written tasks like the real job: planning urgent orders around a late supplier, and acting on a safety violation on the floor. At most 20 minutes.",
       ),
       purpose: "Kısıtlı stokla siparişleri önceliklendirme, stok bilgisini doğrulama ve zaman hesabı; iş güvenliği ihlalinde anında müdahale, kök neden ve takip.",
       minutes: 20,

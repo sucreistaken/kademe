@@ -15,8 +15,8 @@ export const retailSalesAssociate: HiringTemplate = {
     stage({
       name: t("Kısa tanışma", "Short introduction"),
       description: t(
-        "Bir kasa sorusu ve iki kısa video sorusu. Yaklaşık 13 dakika.",
-        "One till question and two short video questions. About 13 minutes.",
+        "Bir kasa sorusu ve iki kısa video sorusu. En fazla 13 dakika.",
+        "One till question and two short video questions. At most 13 minutes.",
       ),
       purpose: "Kampanyalı iadede kasa hesabı; kararsız müşteriye ihtiyaç sorarak satış; yoğunlukta ekip arkadaşıyla iş paylaşımı.",
       minutes: 13,
@@ -38,8 +38,8 @@ export const retailSalesAssociate: HiringTemplate = {
         }),
         video({
           prompt: t(
-            "Ne alacağına karar veremeyen bir müşteriyle ilgilendiğin bir durumu anlat: müşteri neden kararsızdı, ona neler sordun, ne önerdin ve neden, sonuç ne oldu?",
-            "Tell us about a time you helped a customer who could not decide what to buy: why were they undecided, what did you ask them, what did you suggest and why, and what was the result?",
+            "Ne alacağına karar veremeyen bir müşteriyle ilgilendiğin bir durumu (mağazada ya da başka bir işte) anlat: müşteri neden kararsızdı, ona neler sordun, ne önerdin ve neden, sonuç ne oldu?",
+            "Tell us about a time (in a store or any other job) you helped a customer who could not decide what to buy: why were they undecided, what did you ask them, what did you suggest and why, and what was the result?",
           ),
           competencies: ["customer", "commercial"],
           expected: [
@@ -78,31 +78,31 @@ export const retailSalesAssociate: HiringTemplate = {
     stage({
       name: t("İş örneği", "Work sample"),
       description: t(
-        "Mağazada geçen iki durum: bir müşteriye tamamlayıcı ürün önerisi ve yoğun bir cumartesi. Videoyla cevap vereceksin. Yaklaşık 13 dakika.",
-        "Two situations from the shop floor: suggesting an add-on to a customer and a busy Saturday. You answer on video. About 13 minutes.",
+        "Mağazada geçen iki durum: bir müşteriye tamamlayıcı ürün önerisi ve yoğun bir cumartesi. Videoyla cevap vereceksin. En fazla 13 dakika.",
+        "Two situations from the shop floor: suggesting an add-on to a customer and a busy Saturday. You answer on video. At most 13 minutes.",
       ),
       purpose: "İhtiyaca bağlı, zorlamayan tamamlayıcı ürün önerisi; kuyruk ve şikayet aynı anda geldiğinde önceliklendirme ve ekibi yönlendirme.",
       minutes: 13,
       activities: [
         video({
           prompt: t(
-            "Bir müşteri 4.500 TL'lik bir koşu ayakkabısını almaya karar verdi ve kasaya doğru yürüyor. Denerken sana şunları söylemişti: yeni başlıyor, haftada üç gün sabah erken parkta koşacak ve iki ay sonra 10 km'lik bir yarışa katılmak istiyor.\n\nRafta şunlar var:\n- Koşu çorabı: 250 TL (3'lü paket 600 TL)\n- Ayakkabı su geçirmezlik spreyi: 300 TL\n- Akıllı koşu saati: 3.200 TL\n- Reflektörlü koşu yeleği: 450 TL\nKampanya: ayakkabıyla alınan ikinci aksesuara %30 indirim.\n\nMüşteriye kasaya varmadan ne söylerdin? Ona söyleyeceğin cümlelerle anlat. Yaklaşık 2 dakikan var.",
-            "A customer has decided on a 4,500 TL running shoe and is walking towards the till. While trying it on they told you: they are just starting, will run three mornings a week early in the park and want to run a 10 km race in two months.\n\nOn the shelf:\n- Running socks: 250 TL (pack of 3: 600 TL)\n- Waterproofing spray for shoes: 300 TL\n- Smart running watch: 3,200 TL\n- Reflective running vest: 450 TL\nOffer: 30% off the second accessory bought with the shoe.\n\nWhat would you say to the customer before they reach the till? Answer with the sentences you would say to them. You have about 2 minutes.",
+            "Bir müşteri 4.500 TL'lik bir koşu ayakkabısını almaya karar verdi ve kasaya doğru yürüyor. Denerken sana şunları söylemişti: yeni başlıyor, haftada üç gün sabah erken parkta koşacak ve iki ay sonra 10 km'lik bir yarışa katılmak istiyor.\n\nRafta şunlar var:\n- Koşu çorabı: 250 TL (3'lü paket 600 TL)\n- Ayakkabı su geçirmezlik spreyi: 300 TL\n- Akıllı koşu saati: 3.200 TL\n- Reflektörlü koşu yeleği: 450 TL\nKampanya: ayakkabıyla birlikte iki aksesuar alınırsa ikinci aksesuara %30 indirim; indirim, ikisinden ucuz olana uygulanır; 3'lü paket tek aksesuar sayılır.\n\nMüşteriye kasaya varmadan ne söylerdin? Ona söyleyeceğin cümlelerle anlat. Yaklaşık 2 dakikan var.",
+            "A customer has decided on a 4,500 TL running shoe and is walking towards the till. While trying it on they told you: they are just starting, will run three mornings a week early in the park and want to run a 10 km race in two months.\n\nOn the shelf:\n- Running socks: 250 TL (pack of 3: 600 TL)\n- Waterproofing spray for shoes: 300 TL\n- Smart running watch: 3,200 TL\n- Reflective running vest: 450 TL\nOffer: buy two accessories with the shoe and get 30% off the second one; the discount applies to the cheaper of the two; a 3-pack counts as one accessory.\n\nWhat would you say to the customer before they reach the till? Answer with the sentences you would say to them. You have about 2 minutes.",
           ),
           competencies: ["commercial", "customer"],
           expected: [
             "Öneriyi müşterinin söylediklerine bağlıyor: haftada üç gün koşu için çorap paketi, sabah erken karanlıkta görünürlük için reflektörlü yelek",
             "En fazla bir iki ürün öneriyor, ihtiyaca uymayanı (sprey, yeni başlayan için pahalı saat) zorlamıyor ya da ancak sorulursa anlatıyor",
-            "Kampanyayı doğru anlatıyor: ikinci aksesuar %30 indirimli, örneğin çorap paketi 600 TL ve yelek 450 x 0,70 = 315 TL",
+            "Kampanyayı doğru anlatıyor: çorap paketi ve yelek birlikte alınırsa indirim ucuz olana, yeleğe uygulanır: 450 x 0,70 = 315 TL, çorap paketi 600 TL, aksesuarlar toplam 915 TL",
             "Kararı müşteriye bırakıyor ve 'hayır' cevabını rahatça kabul ediyor",
           ],
-          redFlags: ["Rafın tamamını ya da en pahalı ürünü ihtiyaçla bağlamadan öneriyor", "Kampanyayı yanlış hesaplıyor ya da baskı aracı olarak kullanıyor ('bugün almazsanız kaçar')"],
+          redFlags: ["Rafın tamamını ya da en pahalı ürünü ihtiyaçla bağlamadan öneriyor", "Kampanyayı yanlış hesaplıyor (indirimi pahalı olana uyguluyor ya da 3'lü paketi üç aksesuar sayıyor) ya da baskı aracı olarak kullanıyor ('bugün almazsanız kaçar')"],
           examples: {
             1: "Saatimiz de var, çok güzel, 3.200 TL. Bir de sprey alın, ayakkabınız uzun gider. Bugün kampanya var, kaçırmayın.",
             3: "Haftada üç gün koşacaksanız çorabınız çok önemli, 3'lü paket 600 TL ve terletmez. İkinci aksesuara %30 indirim de var, isterseniz bir şey daha bakabiliriz.",
             5: "Haftada üç gün koşacaksınız, nasır ve su toplamaması için koşu çorabı önemli; 3'lü paket 600 TL, haftanın her koşusuna bir çift. Sabah erken parkta koşacağınızı söylediniz, o saatte hava karanlık olabiliyor; bu reflektörlü yelek sizi bisikletli ve araçlara görünür kılar. İkinci aksesuar %30 indirimli, yelek 315 TL'ye düşüyor. Saati şimdilik önermem, yarışa yaklaşırken ihtiyaç duyarsanız bakarız. İsterseniz yalnızca ayakkabıyla da devam edebiliriz, siz nasıl isterseniz.",
           },
-          internal: "Referans: ihtiyaçla en uyumlu öneri koşu çorabı (sıklık, yeni başlayan) ve reflektörlü yelek (sabah erken, park). %30 indirim ikinci aksesuara: çorap paketi 600 + yelek 450 x 0,70 = 315 TL (toplam aksesuar 915 TL); ucuz olana indirim uygulanırsa çorap tekli 250 x 0,70 = 175 TL. Saat ihtiyaca göre ileride, sprey bu kullanım için gereksiz.",
+          internal: "Referans: ihtiyaçla en uyumlu öneri koşu çorabı (sıklık, yeni başlayan) ve reflektörlü yelek (sabah erken, park). Kampanya hesabı (tek doğru rakam): 3'lü paket tek aksesuar, indirim ikisinden ucuz olana; çorap paketi 600 TL + yelek 450 x 0,70 = 315 TL, aksesuarlar toplam 915 TL. İndirimi pakete uygulamak (420 + 450 = 870) ya da paketi üç aksesuar saymak yanlış. Saat ihtiyaca göre ileride, sprey bu kullanım için gereksiz.",
         }),
         video({
           prompt: t(

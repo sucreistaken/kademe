@@ -58,8 +58,8 @@ export const softwareDeveloper: HiringTemplate = {
     stage({
       name: t("Kısa tanışma", "Short introduction"),
       description: t(
-        "İki kısa kod okuma sorusu ve iki video sorusu. Yaklaşık 14 dakika.",
-        "Two short code-reading questions and two video questions. About 14 minutes.",
+        "İki kısa kod okuma sorusu ve iki video sorusu. En fazla 14 dakika.",
+        "Two short code-reading questions and two video questions. At most 14 minutes.",
       ),
       purpose: "Olay döngüsü ve zaman karmaşıklığı bilgisi; gerçek bir zor hatada hata ayıklama yöntemi; teknik anlaşmazlıkta ekip içi davranış.",
       minutes: 14,
@@ -80,14 +80,14 @@ export const softwareDeveloper: HiringTemplate = {
             `What is the worst-case time complexity of the function below (no duplicates at all), with n = ids.length?\n\n${DUPLICATE_SNIPPET}`,
           ),
           options: [
-            t("O(1): ilk tekrarda döngüden erken çıkar", "O(1): it leaves the loop early at the first duplicate"),
-            t("O(n log n): indexOf diziyi ikili aramayla tarar", "O(n log n): indexOf scans the array with a binary search"),
-            t("O(n): dizi üzerinde tek bir döngü döner", "O(n): it runs a single loop over the array"),
-            t("O(n²): her adımda indexOf diziyi baştan tarar", "O(n²): indexOf scans the array from the start at every step"),
+            t("O(n): döngü dizi üzerinde yalnızca bir kez döner", "O(n): the loop runs over the array only once"),
+            t("O(n): indexOf aramayı en geç i. elemanda bitirir", "O(n): indexOf stops searching at element i at the latest"),
+            t("O(n log n): indexOf her adımda ikili aramayla arar", "O(n log n): indexOf uses a binary search at every step"),
+            t("O(n²): indexOf her adımda dizinin başından i'ye kadar tarar", "O(n²): indexOf scans from the start up to i at every step"),
           ],
           correct: 3,
           internal:
-            "Doğru cevap: O(n²). Döngü n kez döner, her adımda indexOf diziyi baştan i'ye kadar tarar (sıralanmamış dizide doğrusal arama), toplam yaklaşık n²/2 karşılaştırma. Çeldiriciler: O(n) (indexOf'un maliyetini görmemek, en sık hata), O(n log n) (indexOf'u ikili arama sanmak), O(1) (en iyi durumu en kötü durumla karıştırmak). Daha iyi çözüm: Set ile O(n).",
+            "Doğru cevap: O(n²). Döngü n kez döner, her adımda indexOf diziyi baştan i'ye kadar tarar (sıralanmamış dizide doğrusal arama), toplam yaklaşık n²/2 karşılaştırma. Çeldiriciler: O(n), tek döngü (indexOf'un maliyetini görmemek, en sık hata); O(n), indexOf i'de durur (aramanın i'de bittiğini görüp toplamın 0+1+...+(n-1) = n(n-1)/2 olduğunu kaçırmak); O(n log n) (indexOf'u ikili arama sanmak; dizi sıralı değil). Daha iyi çözüm: Set ile O(n).",
         }),
         video({
           prompt: t(
@@ -131,16 +131,16 @@ export const softwareDeveloper: HiringTemplate = {
     stage({
       name: t("İş örneği", "Work sample"),
       description: t(
-        "Gerçek işe benzeyen iki yazılı görev: bir hatayı bulup düzeltmek ve bir kod değişikliğini incelemek. Yaklaşık 20 dakika.",
-        "Two written tasks like the real job: finding and fixing a bug, and reviewing a code change. About 20 minutes.",
+        "Gerçek işe benzeyen iki yazılı görev: bir hatayı bulup düzeltmek ve bir kod değişikliğini incelemek. En fazla 20 dakika.",
+        "Two written tasks like the real job: finding and fixing a bug, and reviewing a code change. At most 20 minutes.",
       ),
       purpose: "Kodu okuyarak hatayı ve kenar durumu bulma, düzeltmeyi gerekçelendirme; kod incelemesinde güvenlik, doğruluk ve performans sorunlarını kibar ve net bir dille yazma.",
       minutes: 20,
       activities: [
         longText({
           prompt: t(
-            `Aşağıdaki TypeScript fonksiyonu üretimde hata veriyor. Kodu incele: hatalı olan her şeyi bul, her birinin hangi girdide ortaya çıktığını ve neden olduğunu açıkla, sonra düzeltilmiş fonksiyonu yaz.\n\n${BUG_SNIPPET}`,
-            `The TypeScript function below fails in production. Review it: find everything that is wrong, explain for each problem which input triggers it and why, then write the corrected function.\n\n${BUG_SNIPPET}`,
+            `Aşağıdaki TypeScript fonksiyonu testte hata veriyor. Kodu incele: hatalı olan her şeyi bul, her birinin hangi girdide ortaya çıktığını ve neden olduğunu açıkla, sonra düzeltilmiş fonksiyonu yaz.\n\n${BUG_SNIPPET}`,
+            `The TypeScript function below fails in tests. Review it: find everything that is wrong, explain for each problem which input triggers it and why, then write the corrected function.\n\n${BUG_SNIPPET}`,
           ),
           competencies: ["technical", "problem_solving"],
           expected: [
