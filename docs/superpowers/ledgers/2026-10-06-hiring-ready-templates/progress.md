@@ -37,3 +37,9 @@ Task 2: minor (deferred): concurrent insert of the same seed_key throws a raw un
 Task 2: minor (deferred): ensureDefaultScale through a passed executor and the anchor onConflictDoNothing are not covered by the fake DB; Task 9 (fresh org, no library) must exercise them.
 Task 2: carry to Task 8: re-point the stopgap TEMPLATE_NOT_FOUND entries (new-opening-steps.ts:45-46, new-opening-form.tsx:89-90) to the template step and its own sentence.
 Task 2: complete (commits 8683a74..2bf4b4a, review clean)
+BASE T3: 991bfb6
+Task 3: implementer DONE b48b978 (sales, call centre, accountant, executive assistant; templates tests 27/27 re-run by controller). Review dispatched (opus).
+Task 3: review (opus): spec compliant, Approved, 0 Critical/Important; every answer key checked by hand (VAT, journal entry, reconciliation, invoice, sales arithmetic, dates).
+Ruling: call-centre stage-1 behavioural questions stay VIDEO (the task line says video; the content-common AUDIO rule is the default for phone work samples). Cost if wrong: two type changes.
+Task 3: minor (deferred, content polish wave): call-centre invoice roleplay should also tag resilience; call-flow single options give the answer away by wording; EA calendar single lacks the meeting length and has weak distractors; EA flight prompt lacks departure city and flight time; accountant stage 1 too tight for retakes (singles first or 12 min); sales "facts above" back-reference; accuracy anchors coarse with exactly 2 planted errors (plan-mandated).
+Task 3: complete (commits 991bfb6..b48b978, review clean)
