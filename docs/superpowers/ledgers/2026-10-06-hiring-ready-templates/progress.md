@@ -58,3 +58,19 @@ Task 9: implementer DONE 193bf0a in a worktree (based at main by mistake, reset 
 Task 9: review (sonnet): Approved, 0 Critical/Important.
 Task 9: minor (deferred, final fix wave): third createOpening result unchecked before the "ad never replaced" check (line ~174); versionsOf(...)[0] assumed draft/published (lines ~119, ~214).
 Task 9: complete (commit cc93e01, review clean); rerun with all 20 templates in Task 10.
+Task 5: implementer DONE cb62cf7 on the main tree (4 teacher roles + german-proficiency-stage.ts; stage 3 is 20 min, proficiency video 1 take, totals 45). Controller: templates tests 62/62. Review dispatched (opus, German and exam facts).
+Task 8: implementer DONE e4b936b in a worktree (reset from 739f218 to 7b9e7fe), cherry-picked as 80cfee8 without conflict. Controller: vitest components/hiring+i18n+app/hiring+solutions/hiring 120 files 1630/1630, tsc 0 lines.
+Task 8: review (opus): Approved, 0 Critical/Important; no template content in client modules (only import type).
+Task 8: minor (deferred): "Önizle" button inside the card label (long accessible name; shared block has no action slot); three radiogroups share one radio name; pill shows a preselected template before the gallery is opened; a TEMPLATE_NOT_FOUND refusal keeps the stale choice; no form-level test of the TEMPLATE path; fresh checkouts need `next typegen` before tsc.
+Task 8: not verified in a browser (Sheet focus, badge colour, mockup 4b look); Chrome check after Task 10.
+Task 8: complete (commit 80cfee8, review clean)
+Task 7: implementer DONE e1b5817 in a worktree; cherry-picked as e67ed01 with an index.ts conflict (both sides appended to TEMPLATES), resolved by the controller to plan order; after: 0 markers, 16 roles, templates tests 82/82, tsc 0 lines, eslint clean. Review dispatched (opus).
+Task 5: review (opus): Needs fixes, 2 Important: (1) exam-prep telc scoring task used wrong criteria names and a CEFR-level A-D scale, so the key (3 of 4 points = "B or C") was wrong; source of the error: the controller's dispatch facts (from the research agent) said telc A-D = CEFR levels; the official ZD B1 Übungstest says I Leitpunkte (A 4, B 3, C 2, D 0-1), II Kommunikative Gestaltung, III Formale Richtigkeit, 5/3/1/0 points. (2) C-test item 7 stem "anpa___" gives away two distractors. All 8 German keys checked: correct.
+Ruling: keep the proficiency video at 1 take (spontaneous speech, reviewer agrees); check the recorder's technical-retry behaviour in Chrome. Cost if wrong: a candidate with a failed camera loses the oral C1 evidence.
+Ruling: stage 3 of the teacher roles is 20 min (worst-case timing), not the plan's 12; totals 45. Cost if wrong: longer candidate time.
+Task 5: fix round 1 dispatched.
+Task 5: fix round 1/5 (2 Important + 4 minor addressed, 0 open; commit 74d4f60). Re-review (sonnet): all addressed. "D in I or III makes the letter 0" comes from the Task 5 reviewer's reading of the official telc ZD B1 Übungstest PDF (not re-checked by the controller). Controller: templates tests 103/103.
+Task 5: complete (commits 4d9135b..74d4f60, review clean after 1 fix round)
+Task 6: implementer DONE 0984f19 in a worktree; cherry-picked as 6a38d68 with the index.ts conflict resolved to the final plan order (20 templates, order verified by running TEMPLATES against the plan list). Controller added the plan's length-20 + group test (16daa33). Review dispatched (opus).
+Task 7: review (opus): Needs fixes, 1 Important (field-sales route single: two distractor explanations give the wrong reason; key correct). Fix round 1 dispatched in the Task 7 worktree.
+Polish wave (Task 3/4 deferred minors on call-centre, EA, accountant, sales) dispatched on the main tree.
