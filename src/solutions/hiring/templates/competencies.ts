@@ -17,16 +17,16 @@ const NEW: CompetencySeed[] = [
     ),
     anchors: {
       1: t(
-        "Metindeki ya da kayıttaki hataların çoğunu görmüyor, kontrol adımı söylemiyor ve düzeltmeyi gerekçelendirmiyor.",
-        "Misses most errors in the text or record, names no checking step and gives no reason for a correction.",
+        "Metne yerleştirilmiş hataların yarısından azını buluyor ya da ince hataların hiçbirini bulamıyor; bulduklarını da gerekçelendirmiyor.",
+        "Finds fewer than half of the planted errors or none of the subtle ones, and gives no reason for the ones found.",
       ),
       3: t(
-        "Belirgin hataları buluyor, doğru halini yazıyor ve bir kontrol adımı (yeniden hesap, kaynakla karşılaştırma) söylüyor.",
-        "Finds the clear errors, writes the correct version and names a check (recalculation, comparison with the source).",
+        "Yerleştirilmiş hataların çoğunu, en az bir ince hata dahil, buluyor ve her birinin neden hata olduğunu açıklıyor.",
+        "Finds most planted errors, including at least one subtle one, and explains why each is an error.",
       ),
       5: t(
-        "İnce hataları da buluyor, hatanın nedenini ve tekrarını önleyecek bir yöntemi söylüyor, kontrolü bir alışkanlık olarak anlatıyor.",
-        "Also finds subtle errors, says why the error happened and a way to prevent it, and describes checking as a routine.",
+        "Yerleştirilmiş tüm hataları buluyor, her birinin nedenini ve etkisini açıklıyor ve tekrarını önleyecek bir kontrol adımı söylüyor.",
+        "Finds all planted errors, explains the cause and impact of each and names a check that would prevent them.",
       ),
     },
     positive: [
@@ -78,25 +78,25 @@ const NEW: CompetencySeed[] = [
     key: "german_proficiency",
     name: t("Almanca yeterliği", "German proficiency"),
     description: t(
-      "Almancayı doğru, zengin ve duruma uygun bir üslupla kullanma.",
-      "Using German accurately, with range and in a register that fits the situation.",
+      "Almancayı doğru, zengin ve duruma uygun bir üslupla kullanma. 2 = B2: hatalar fark ediliyor ama anlamı nadiren bozuyor, tanıdık mesleki konularda iyi bir çeşit var. 4 = C1 ile C2 arası.",
+      "Using German accurately, with range and in a register that fits the situation. 2 = B2: errors are noticeable but rarely impede, good range on familiar professional topics. 4 = between C1 and C2.",
     ),
     anchors: {
       1: t(
-        "B2'nin altında: sık hatalar anlamı bozuyor, kelime ve yapı çeşidi dar, cümleler kısa ve tekrar ediyor.",
-        "Below B2: frequent errors block meaning, vocabulary and structures are narrow, sentences are short and repetitive.",
+        "B1 ve altı: hatalar sık sık anlamı bozuyor, soyut ya da mesleki konular için kelime ve yapı çeşidi dar.",
+        "B1 or lower: errors often block meaning; the range is too narrow for abstract or professional topics.",
       ),
       3: t(
         "C1 düzeyi: akıcı, geniş kelime ve yapı çeşidi, hatalar seyrek ve anlamı bozmuyor, üslup duruma uygun.",
-        "C1 level: fluent, wide range of words and structures, rare errors that do not hinder meaning, register fits the situation.",
+        "C1 level: fluent, wide range of words and structures, rare errors that do not impede meaning, register fits the situation.",
       ),
       5: t(
-        "C2'ye yakın: ince anlam farklarını kesin ifade ediyor, deyimleri doğal kullanıyor, dil denetimi anadili konuşanınkine yakın.",
-        "Close to C2: expresses fine shades of meaning precisely, uses idiom naturally, control of the language is near native.",
+        "C2 düzeyi: karmaşık dilde bile tam denetim, ince anlam farklarını kısıtsız ve kesin ifade ediyor.",
+        "C2 level: full control even of complex language, conveys fine shades of meaning without restriction.",
       ),
     },
     positive: [
-      t("Akıcı ve doğal konuştu", "Spoke fluently and naturally"),
+      t("Akıcı ve doğal ifade etti", "Expressed themselves fluently and naturally"),
       t("Geniş kelime çeşidi kullandı", "Used a wide vocabulary"),
       t("Üslubu duruma uydurdu", "Matched the register to the situation"),
       t("Karmaşık cümleleri doğru kurdu", "Built complex sentences correctly"),
@@ -116,16 +116,16 @@ const NEW: CompetencySeed[] = [
     ),
     anchors: {
       1: t(
-        "Baskıyı anlatırken savunmaya geçiyor ya da karşı tarafı suçluyor; toparlanma adımı yok.",
-        "Gets defensive or blames the other side when describing pressure; no recovery step.",
+        "Somut bir durum anlatmıyor; ya da sinirini kaybettiğini ya da başkalarını suçladığını anlatıyor ve toparlanma yok.",
+        "Describes no concrete situation, or describes losing their temper or blaming others with no recovery.",
       ),
       3: t(
-        "Baskı altında ne yaptığını somut anlatıyor, tonunu koruduğunu söylüyor ve bir toparlanma adımı veriyor.",
-        "Describes concretely what they did under pressure, says they kept their tone and gives one recovery step.",
+        "Baskı altında gerçekte ne söylediğini ya da yaptığını aktarıyor, toparlanmak için attığı somut adımı ve sonucunu söylüyor.",
+        "Quotes what they actually said or did under pressure and names the concrete step they took to recover and its result.",
       ),
       5: t(
-        "Baskının kaynağını ayırıyor, tepkisini bilinçli seçtiğini gösteriyor, sonrasında kendini ve ekibi toparlayan bir yöntem anlatıyor.",
-        "Separates the source of the pressure, shows a deliberate choice of reaction and describes a way to reset themselves and the team afterwards.",
+        "Ayrıca sonradan neyi değiştirdiğini söylüyor, böylece aynı baskı bir dahaki sefer farklı etki ediyor.",
+        "Also names what they changed afterwards so the same pressure lands differently next time.",
       ),
     },
     positive: [
@@ -153,12 +153,12 @@ const NEW: CompetencySeed[] = [
         "Accepts the improper request or treats sharing personal data as normal; names no limit.",
       ),
       3: t(
-        "Talebi nazikçe reddediyor, nedenini söylüyor ve kimin onayına gerektiğini ya da hangi kanalı kullanacağını belirtiyor.",
+        "Talebi nazikçe reddediyor, nedenini söylüyor ve kimin onayının gerektiğini ya da hangi kanalın kullanılacağını belirtiyor.",
         "Politely refuses, gives the reason and says whose approval or which channel is needed.",
       ),
       5: t(
-        "Reddin yanında alternatif sunuyor, olayı kayda geçiriyor ya da ilgili kişiye bildiriyor ve benzerini önleyecek bir kural öneriyor.",
-        "Offers an alternative alongside the refusal, records or reports the incident and proposes a rule that prevents a repeat.",
+        "Reddin yanında en az iki şey yapıyor: alternatif sunuyor, olayı kayda geçiriyor ya da bildiriyor, benzerini önleyecek bir kural öneriyor.",
+        "Alongside the refusal does at least two of: offers an alternative, records or reports the incident, proposes a rule that prevents a repeat.",
       ),
     },
     positive: [
@@ -190,8 +190,8 @@ const NEW: CompetencySeed[] = [
         "Starts from the user's goal, lays out the flow step by step and names at least one accessibility or usability point with a reason.",
       ),
       5: t(
-        "Kararı kullanıcı verisine ya da testine bağlıyor, alternatifleri karşılaştırıyor, uç durumları ve erişilebilirliği tasarıma katıyor, nasıl ölçeceğini söylüyor.",
-        "Ties the decision to user data or a test, compares alternatives, builds edge cases and accessibility into the design and says how it would be measured.",
+        "Kararı kullanıcı verisine ya da testine bağlıyor ve en az iki şey daha yapıyor: alternatifleri karşılaştırıyor, uç durumları ele alıyor, nasıl ölçeceğini söylüyor.",
+        "Ties the decision to user data or a test and does at least two more of: compares alternatives, covers edge cases, says how it would be measured.",
       ),
     },
     positive: [
@@ -223,7 +223,7 @@ const NEW: CompetencySeed[] = [
         "Handles the disruption without stopping the lesson, names an activity or routine that raises participation and opens a way in for the quiet learner.",
       ),
       5: t(
-        "Aksaklığın nedenini okuyup önlem alıyor, grubu çeşitli düzenlerle (ikili, küçük grup) çalıştırıyor, herkesin konuşma payını gözetiyor ve dersin sonunda yoklama yapıyor.",
+        "Aksaklığın nedenini okuyup önlem alıyor, grubu çeşitli düzenlerle (ikili, küçük grup) çalıştırıyor, herkesin konuşma payını gözetiyor ve dersin sonunda dersin sonunda öğrenilenleri kontrol ediyor.",
         "Reads the cause of the disruption and acts early, varies the grouping (pairs, small groups), watches each learner's talking time and checks the outcome at the end.",
       ),
     },
@@ -256,8 +256,8 @@ const NEW: CompetencySeed[] = [
         "Names the exam parts and assessment criteria correctly and ties the preparation plan to them.",
       ),
       5: t(
-        "Sınavlar arasındaki farkları (biçim, puanlama, geçme koşulu) doğru karşılaştırıyor, öğrenciye göre sınav seçiyor ve sık yapılan puan kaybı hatalarını önceden çalıştırıyor.",
-        "Compares exams correctly (format, scoring, pass rule), picks the exam to suit the learner and rehearses the common point-losing mistakes in advance.",
+        "Sınavlar arasındaki farkları (biçim, puanlama, geçme koşulu) doğru karşılaştırıyor ve öğrenciye göre sınav seçiyor ya da sık yapılan puan kaybı hatalarını önceden çalıştırıyor.",
+        "Compares exams correctly (format, scoring, pass rule) and either picks the exam to suit the learner or rehearses the common point-losing mistakes in advance.",
       ),
     },
     positive: [

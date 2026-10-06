@@ -13,7 +13,8 @@ const idOf = (key: string) => {
 };
 
 const EM_DASH = String.fromCharCode(0x2014);
-const BANNED = ["kaç yaşında", "yaşınız", "evli mi", "çocuğun var", "dinin", "hamile", "engelin var", "sağlık sorunun", "nerelisin", "how old", "married", "religion", "pregnan", "disabilit", "where are you from"];
+const TEACHER_KEYS = new Set(["german-teacher-adult", "exam-prep-teacher", "german-teacher-young-learners", "online-german-teacher"]);
+const BANNED = ["kaç yaşında", "yaşınız", "evli mi", "çocuğun var", "dinin", "hamile", "engelin var", "sağlık sorunun", "nerelisin", "how old", "married", "religion", "pregnan", "disabilit", "where are you from", "siyasi görüş", "hangi partiye", "political view", "which party"];
 
 function contentOf(template: (typeof TEMPLATES)[number]): VersionContent {
   const { stages, weights } = materialise(template, idOf);
@@ -72,7 +73,7 @@ describe("ready templates", () => {
       });
 
       it("meets the content bar", () => {
-        const teacher = template.stages.length === 3;
+        const teacher = TEACHER_KEYS.has(template.key);
         expect(template.stages.length).toBe(teacher ? 3 : 2);
         const minutes = templateMinutes(template);
         expect(minutes).toBeGreaterThanOrEqual(15);
