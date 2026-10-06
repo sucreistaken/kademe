@@ -52,3 +52,9 @@ Task 4: fix round 1 dispatched (I1, I2, M1-M5).
 Task 4: fix round 1/5 (7 addressed, 0 open; commit 8227be6). Re-review (sonnet): all addressed. Controller: templates tests 42/42, retail 450 x 0.7 = 315, 600 + 315 = 915; checked by hand the stock scenarios (260 -> 130 >= 120; 240 -> 110, 10 short = intended trap) and the Wed 04:00 departure.
 Task 3: minor (deferred, polish wave): EA inbox prompt lacks departure city and flight time; only internalQuestion says "Istanbul, about 1h10".
 Task 4: complete (commits 89512ce..8227be6, review clean after 1 fix round)
+BASE T5: 7b9e7fe
+Ruling: user asked for speed (2026-10-06). Tasks 6, 7, 8, 9 run in parallel in separate worktrees (Task 5 on the main tree); each touches its own files, index.ts conflicts are resolved by the controller when cherry-picking (final order from the plan). Content reviews stay per task. Cost if wrong: merge conflicts in index.ts only.
+Task 9: implementer DONE 193bf0a in a worktree (based at main by mistake, reset to 7b9e7fe), cherry-picked as cc93e01 without conflict. Agent run on kademe_templates_check: 64 ok, 0 FAIL, 8 templates (output saved in task-9-report.md). Report could not be written to the shared checkout from the worktree (isolation).
+Task 9: review (sonnet): Approved, 0 Critical/Important.
+Task 9: minor (deferred, final fix wave): third createOpening result unchecked before the "ad never replaced" check (line ~174); versionsOf(...)[0] assumed draft/published (lines ~119, ~214).
+Task 9: complete (commit cc93e01, review clean); rerun with all 20 templates in Task 10.
