@@ -11,7 +11,8 @@ export type OpeningNext<K extends string = string> = { kind: OpeningNextKind; hr
  * - Someone who does not run openings (a reviewer, H9) and every closed opening: "Aç ›" (KG1: one action;
  *   the overview of a closed opening carries "Ekip ve kurallarda yeniden aç").
  * - Draft: the setup path's next step ("Sıradaki: Ekibi ata ›"); "Kuruluma devam et ›" to the overview when
- *   the step was not computed (the time budget, D14).
+ *   the step was not computed (the time budget, D14). A live opening's waiting draft says "Kuruluma devam et ›"
+ *   to its setup path's next step the same way (B-M10).
  * - Live, in this order: open candidate requests (data-rights requests are only counted, ruling C6),
  *   a team below the rule (panelShortfall), links expiring within 48 hours, a draft version waiting,
  *   the opening's last day passed (no invitation can be opened, B-M3: to the contact flow's last day),
@@ -35,7 +36,8 @@ export function openingNextStep<K extends string>(input: {
   if ((facts.requests?.open ?? 0) > 0) return { kind: "requests", href: `${base}/candidates` };
   if (input.shortfall) return { kind: "team", href: `${base}/settings#team-members` };
   if (facts.expiringSoon > 0) return { kind: "expiring", href: `${base}/candidates` };
-  if (input.draftWaiting) return { kind: "draft", href: base };
+  // B-M10 (KG3): a live opening's new version continues at its next setup step when that was computed (D14), else at the overview.
+  if (input.draftWaiting) return { kind: "draft", href: input.setup?.href ?? base };
   if (input.deadlinePassed) return { kind: "deadline", href: `${base}/settings#contact-deadline` };
   if (facts.invited === 0) return { kind: "invite", href: `/hiring/invite?opening=${input.id}` };
   return { kind: "candidates", href: `${base}/candidates` };

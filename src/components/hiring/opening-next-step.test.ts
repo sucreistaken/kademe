@@ -31,6 +31,11 @@ describe("one next step per opening (KG2, 4.4)", () => {
     expect(cockpitCounts([{ status: "OPEN", next: { kind: "deadline" } }]).waiting).toBe(1);
   });
 
+  it("a live opening's waiting draft goes to the draft's next setup step when it was computed (B-M10, KG3)", () => {
+    expect(live({ draftWaiting: true, setup: { key: "preview", href: `${base}/assessment/preview` } })).toEqual({ kind: "draft", href: `${base}/assessment/preview` });
+    expect(live({ draftWaiting: true, setup: null })).toEqual({ kind: "draft", href: base });
+  });
+
   it("counts a data-rights request but never sends anyone to act on it before plan 3 (ruling C6)", () => {
     expect(live({ facts: { invited: 4, expiringSoon: 0, requests: { open: 0, rights: 2 } } }).kind).toBe("candidates");
   });

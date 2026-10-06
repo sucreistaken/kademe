@@ -112,6 +112,20 @@ describe("the openings' control view (4.4, H9, D14)", () => {
     expect((await loadCockpit(reviewer, managerT("tr"), "tr")).open[0]).toMatchObject({ deadlinePassed: false, next: { kind: "open" } });
   });
 
+  it("a live opening with a waiting draft: 'Kuruluma devam et' to the draft's next setup step, inside the same budget (B-M10, KG3)", async () => {
+    lists.byStatus = { DRAFT: [listed(D1, "DRAFT")], OPEN: [listed(O1, "OPEN", { draftNumber: 2 })], CLOSED: [] };
+    fake.respond = (op) => (op.table === "candidate_requests" ? [] : op.table === "hiring_opening_members" ? [{ openingId: O1, count: 3 }] : respond(op));
+    const cockpit = await loadCockpit(owner, managerT("tr"), "tr");
+    expect(cockpit.open[0]).toMatchObject({ setup: null, next: { kind: "draft", href: "/hiring/openings/x/settings#team-members" } });
+    expect(reads.working).toHaveBeenCalledTimes(2);
+    // Past the budget (the setup drafts first), the row keeps "Kuruluma devam et" to the overview.
+    reads.working.mockClear();
+    let now = 0;
+    const late = await loadCockpit(owner, managerT("tr"), "tr", () => (now += SETUP_BUDGET_MS));
+    expect(late.open[0].next).toEqual({ kind: "draft", href: `/hiring/openings/${O1}` });
+    expect(reads.working).toHaveBeenCalledTimes(1);
+  });
+
   it("reads no facts for closed openings and gives their row one action, 'Aç' (4.4, KG1)", async () => {
     lists.byStatus.CLOSED = [listed(C1, "CLOSED")];
     const cockpit = await loadCockpit(owner, managerT("tr"), "tr");

@@ -10,7 +10,12 @@ import { listOpenings, type OpeningListRow } from "@/solutions/hiring/server/ope
 import { workingState } from "@/solutions/hiring/server/working";
 import { setupNext, setupProgress, setupRowsOf, type SetupKey } from "./[id]/setup-steps";
 
-/** D14: the drafts' setup paths are read one draft after another until this much time went by; the rest say "Kuruluma devam et ›" without a count. */
+/**
+ * D14: the drafts' setup paths are read one draft after another until this
+ * much time went by; the rest say "Kuruluma devam et ›" without a count. The
+ * openings in setup come first, then the live openings with a new version
+ * waiting (B-M10), inside the same budget.
+ */
 export const SETUP_BUDGET_MS = 300;
 
 export type CockpitRow = {
@@ -67,9 +72,11 @@ export async function loadCockpit(
   const active = new Set(people.filter((u) => u.disabledAt === null).map((u) => u.id));
   const today = orgDay();
   const setups = new Map<string, { done: number; total: number; next: { key: SetupKey; href: string } }>();
-  if (runs && drafts.length > 0) {
+  // B-M10: a live opening's waiting draft gets its next setup step too (KG3), after the openings in setup and inside the same budget.
+  const toSetUp = runs ? [...drafts, ...open.filter((o) => o.liveNumber !== null && o.draftNumber !== null)] : [];
+  if (toSetUp.length > 0) {
     const started = clock();
-    for (const draft of drafts) {
+    for (const draft of toSetUp) {
       if (clock() - started > SETUP_BUDGET_MS) break;
       const rows = setupRowsOf({ state: await workingState(user.orgId, draft.id), opening: draft, people, t, locale });
       if (rows.length === 0) continue;
@@ -79,7 +86,9 @@ export async function loadCockpit(
   }
   const row = (opening: OpeningListRow): CockpitRow => {
     const f = opening.status === "OPEN" ? (facts[opening.id] ?? null) : null;
-    const setup = setups.get(opening.id) ?? null;
+    const computed = setups.get(opening.id) ?? null;
+    // "Kurulum n / N" is a draft's count only; a live opening uses the computed step for its "Kuruluma devam et" alone.
+    const setup = opening.status === "DRAFT" ? computed : null;
     const panel = runs && opening.status === "OPEN" ? invitable.find((o) => o.id === opening.id) : undefined;
     const shortfall = panel && panel.evaluators < panel.minEvaluations ? { evaluators: panel.evaluators, min: panel.minEvaluations } : null;
     const deadlinePassed = panel?.deadlineDay != null && panel.deadlineDay < today;
@@ -95,7 +104,7 @@ export async function loadCockpit(
         id: opening.id,
         status: opening.status,
         runs,
-        setup: setup?.next ?? null,
+        setup: computed?.next ?? null,
         facts: f,
         shortfall: shortfall !== null,
         draftWaiting: opening.liveNumber !== null && opening.draftNumber !== null,
