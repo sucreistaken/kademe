@@ -95,7 +95,7 @@ export function InviteReady({
   }
   return (
     <div className="space-y-4 pt-2 pb-8">
-      <Illustration name="inviteReady" size="small" className="w-full max-w-[320px]" />
+      <Illustration name="inviteReady" size="small" className="[@media(max-height:700px)]:hidden" />
       <div>
         <h2 ref={headingRef} tabIndex={-1} className="text-[24px] leading-8 font-semibold text-ink outline-none">
           {t("readyFor", { name })}

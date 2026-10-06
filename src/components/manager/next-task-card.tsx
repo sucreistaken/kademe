@@ -16,6 +16,7 @@ export function NextTaskCard({
   detail,
   meta,
   action,
+  withDrawing = false,
 }: {
   heading: string;
   solution: string;
@@ -23,10 +24,12 @@ export function NextTaskCard({
   detail?: string | null;
   meta?: string | null;
   action: { label: string; href: string };
+  /** The drawing is hiring's; an exam task gets the card without it. */
+  withDrawing?: boolean;
 }) {
   return (
     <section aria-labelledby="today-next" className="flex items-center gap-7 rounded-2xl border border-line bg-surface px-[26px] py-[22px] shadow-panel-soft">
-      <Illustration name="inviteReady" size="small" className="hidden w-[220px] md:block" />
+      {withDrawing ? <Illustration name="inviteReady" size="small" className="hidden w-[220px] md:block" /> : null}
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-semibold tracking-[0.08em] text-muted uppercase">
           <h2 id="today-next">{heading}</h2>

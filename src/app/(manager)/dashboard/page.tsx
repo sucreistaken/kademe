@@ -98,6 +98,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
           <NextTaskCard
             heading={t("today.nextTitle")}
             solution={labelOf(next.solution)}
+            withDrawing={next.solution === "hiring"}
             title={next.title}
             detail={next.lane === "task" ? (next.detail ?? null) : null}
             meta={[next.subtitle, next.sortAt ? shortDateTime(next.sortAt, locale) : null].filter(Boolean).join(" · ") || null}

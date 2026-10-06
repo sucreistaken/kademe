@@ -34,6 +34,11 @@ describe("the invite's ready view (mockup 7)", () => {
     const out = render();
     // inviteReady's tint circle.
     expect(out).toContain('cx="26" cy="26" r="9"');
+    // Small drawing (w-24, no 320px override) so the filled button stays above the fold; hidden on short viewports.
+    const svg = out.match(/<svg[^>]*>/)?.[0] ?? "";
+    expect(svg).toContain("w-24");
+    expect(svg).not.toContain("max-w-[320px]");
+    expect(svg).toContain("max-height:700px");
     expect(out).toMatch(/<h2[^>]*tabindex="-1"[^>]*>Elif Kaya için link hazır<\/h2>/);
     expect(out).toContain("Bu link bir daha gösterilmez; kapatmadan önce kopyala.");
     const input = out.match(/<input id="invite-link"[^>]*>/)?.[0] ?? "";

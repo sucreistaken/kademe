@@ -214,6 +214,15 @@ describe("hiring's rows on Today", () => {
     expect(filled(html)).toBe(1);
   });
 
+  it("draws the drawing only for a hiring next task; an exam next task keeps the card without it", async () => {
+    const hiring = between(await render([accommodation]), 'aria-labelledby="today-next"', "</section>");
+    expect(hiring).toContain('cx="26" cy="26" r="9"');
+    const examCard = between(await render(EXAM()), 'aria-labelledby="today-next"', "</section>");
+    expect(examCard).toContain("İncele");
+    expect(examCard).not.toContain("<svg");
+    expect(examCard).not.toContain('cx="26" cy="26" r="9"');
+  });
+
   it("gives every attention row a soft icon tile, its solution as a chip and its action as text (mockup 1)", async () => {
     const html = await render([accommodation, requestsRow, draftRow]);
     const list = between(html, 'aria-labelledby="today-attention"', "Tüm alımların durumu");
