@@ -20,7 +20,7 @@ import { useT } from "@/i18n/candidate-client";
 import type { Locale } from "@/i18n/locale";
 import type { HiringCandidateState } from "@/solutions/hiring/rules/candidate-state";
 import { mailTo } from "./closed";
-import { agreeWaitReason, bringList, CONSENT_HASH, consentNote, continueWaitReason, landingStepOf, welcomePath, type LandingStep } from "./landing-model";
+import { agreeWaitReason, bringList, CONSENT_HASH, consentNote, continueWaitReason, landingStepOf, welcomePath, type LandingState, type LandingStep } from "./landing-model";
 import { serverMessage } from "./server-message";
 import { useJourney } from "./use-journey";
 
@@ -53,7 +53,8 @@ export function Landing({
   locale,
 }: {
   token: string;
-  state: HiringCandidateState;
+  /** The landing's projection (landingStateOf): counts and the candidate's own facts, no stage name. */
+  state: LandingState;
   consentBody: string;
   /** The language the consent text is shown in (the other one when the candidate's is empty). */
   consentLang: Locale;
@@ -80,7 +81,7 @@ export function Landing({
   const [extra, setExtra] = useState<"idle" | "saving" | "saved">("idle");
   const [extraError, setExtraError] = useState<string | null>(null);
   const recorded = state.devices.microphone;
-  const intro = state.intro.body ? pickTextLang(state.intro.body, locale) : null;
+  const intro = state.introBody ? pickTextLang(state.introBody, locale) : null;
   const journey = useJourney("prep", { device: recorded, warmup: state.practice });
 
   async function chooseExtra(value: string) {
@@ -137,7 +138,7 @@ export function Landing({
             <FactTiles
               items={[
                 { icon: Clock, value: t("factMinutesValue", { minutes }), label: t("factMinutesLabel") },
-                { icon: Layers, value: t("factStagesValue", { count: state.stages.length }), label: t("factStagesLabel") },
+                { icon: Layers, value: t("factStagesValue", { count: state.stageCount }), label: t("factStagesLabel") },
                 { icon: CalendarDays, value: deadlineWhen, label: t("factDeadlineZone", { zone: deadlineZone }) },
               ]}
             />

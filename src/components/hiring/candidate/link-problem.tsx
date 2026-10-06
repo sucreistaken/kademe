@@ -5,7 +5,7 @@ import { linkRequestHint } from "@/components/candidate/request-wording";
 import { sendRightsRequest } from "@/components/candidate/rights-send";
 import { StatusScreen } from "@/components/visual/status-screen";
 import { StepFooter } from "@/components/visual/step-footer";
-import { useStepFocus } from "@/hooks/use-step-focus";
+import { useArrivalFocus, useStepFocus } from "@/hooks/use-step-focus";
 import { apiSend } from "@/lib/client/api";
 import { useT } from "@/i18n/candidate-client";
 import { mailTo } from "./closed";
@@ -24,6 +24,8 @@ export function HiringLinkProblem({ token, problem, date, contactEmail }: { toke
   const [reason, setReason] = useState<string | null>(null);
   // The footer's button leaves with the request sent: focus goes to the line that says so.
   const note = useStepFocus<HTMLParagraphElement>(state === "sent" ? "sent" : "form");
+  // Task 13 minor (final wave): a card reached by a client navigation (a push as the link lapses) lands on its title once.
+  const title = useArrivalFocus<HTMLHeadingElement>();
 
   async function ask() {
     setState("sending");
@@ -37,7 +39,7 @@ export function HiringLinkProblem({ token, problem, date, contactEmail }: { toke
 
   if (problem === "NOT_YET") {
     return (
-      <StatusScreen illustration="expired" title={t("notYetTitle")} body={date ? t("notYetBodyDated", { date }) : t("notYetBody")}>
+      <StatusScreen illustration="expired" title={t("notYetTitle")} titleRef={title} body={date ? t("notYetBodyDated", { date }) : t("notYetBody")}>
         {contactEmail ? <p className="text-[14px] leading-[22px] text-muted">{t.rich("contact", { email: contactEmail, mail: mailTo(contactEmail) })}</p> : null}
       </StatusScreen>
     );
@@ -47,7 +49,7 @@ export function HiringLinkProblem({ token, problem, date, contactEmail }: { toke
   const hintText = hint.namespace === "hiringRequest" ? ("email" in hint ? th.rich(hint.key, { email: hint.email, mail: mailTo(hint.email) }) : th(hint.key)) : null;
   return (
     <>
-      <StatusScreen illustration="expired" title={t("expiredTitle")} body={date ? t("expiredBodyDated", { date }) : t("expiredBody")}>
+      <StatusScreen illustration="expired" title={t("expiredTitle")} titleRef={title} body={date ? t("expiredBodyDated", { date }) : t("expiredBody")}>
         {state === "sent" ? (
           <p ref={note} tabIndex={-1} role="status" className="text-ink">
             {hintText}

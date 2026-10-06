@@ -9,7 +9,7 @@ import { Illustration } from "@/components/visual/illustrations";
 import { PathSteps } from "@/components/visual/path-steps";
 import { StepFooter } from "@/components/visual/step-footer";
 import { StepScreen } from "@/components/visual/step-screen";
-import { stepFocusController, useStepFocus } from "@/hooks/use-step-focus";
+import { stepFocusController, useArrivalFocusOn, useStepFocus } from "@/hooks/use-step-focus";
 import { apiSend, candidateApiBase } from "@/lib/client/api";
 import { CHUNK_MS, pickRecorderMime } from "@/lib/client/recorder";
 import { nextPath } from "@/lib/candidate-routes";
@@ -78,6 +78,9 @@ export function DeviceCheck({
   const router = useRouter();
   const body = useRef<HTMLDivElement>(null);
   const title = useRef<HTMLHeadingElement>(null);
+  // Final wave A-I3: reached from Consent or /info by a client navigation, the page lands on its title once
+  // (as /info and /practice); the steps after that move focus only when it was lost (below).
+  useArrivalFocusOn(title);
   const preview = useRef<HTMLVideoElement | null>(null);
   const stream = useRef<MediaStream | null>(null);
   const audio = useRef<AudioContext | null>(null);

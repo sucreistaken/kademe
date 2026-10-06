@@ -107,3 +107,31 @@ export function settleWithin(promise: Promise<unknown>, ms: number): Promise<voi
     );
   });
 }
+
+/**
+ * Final wave A-M3: before the runner reloads the page (a stale stage at 0:00,
+ * or the candidate's "Sayfayı yenile"), it waits while a take or an upload
+ * still holds it (capture-hold), so a finishing upload is not cut; never
+ * longer than `maxMs`, then it goes anyway. "free" when nothing held it (any
+ * more), "timeout" when the bound ran out.
+ */
+export function afterCaptureFree(held: () => boolean, subscribe: (listener: () => void) => () => void, maxMs: number): Promise<"free" | "timeout"> {
+  if (!held()) return Promise.resolve("free");
+  return new Promise((resolve) => {
+    let finished = false;
+    let unsubscribe: () => void = () => undefined;
+    const finish = (result: "free" | "timeout") => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      unsubscribe();
+      resolve(result);
+    };
+    const timer = setTimeout(() => finish("timeout"), maxMs);
+    unsubscribe = subscribe(() => {
+      if (!held()) finish("free");
+    });
+    // A release between the first look and the subscription is not missed.
+    if (!held()) finish("free");
+  });
+}

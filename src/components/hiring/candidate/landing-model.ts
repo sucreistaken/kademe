@@ -1,3 +1,5 @@
+import type { HiringCandidateState } from "@/solutions/hiring/rules/candidate-state";
+
 /**
  * HIRING-VISUAL-FLOW 3.1 and 3.2 (K3): Welcome and Consent are two steps of
  * one page. The step lives in the address's hash, so the browser's back
@@ -28,3 +30,32 @@ export const continueWaitReason = (extra: "idle" | "saving" | "saved"): "extraSa
 
 /** On Consent, a failed extra-time save is said again: nobody should start believing it was saved. */
 export const consentNote = (extraFailed: boolean): "extraNotSaved" | null => (extraFailed ? "extraNotSaved" : null);
+
+/**
+ * What the landing draws (final wave A-M2): counts and the candidate's own
+ * facts. The stages' names stay on the server; Welcome shows only how many
+ * stages there are, and no question or stage reaches the page before consent.
+ */
+export type LandingState = Pick<
+  HiringCandidateState,
+  "orgName" | "positionName" | "candidateName" | "totalMinutes" | "reviewers" | "signals" | "devices" | "extraTimePct" | "extraTimeLocked" | "practice" | "contactEmail" | "retention"
+> & { introBody: HiringCandidateState["intro"]["body"]; stageCount: number };
+
+export function landingStateOf(state: HiringCandidateState): LandingState {
+  return {
+    orgName: state.orgName,
+    positionName: state.positionName,
+    candidateName: state.candidateName,
+    introBody: state.intro?.body ?? null,
+    stageCount: state.stages.length,
+    totalMinutes: state.totalMinutes,
+    reviewers: state.reviewers,
+    signals: state.signals,
+    devices: state.devices,
+    extraTimePct: state.extraTimePct,
+    extraTimeLocked: state.extraTimeLocked,
+    practice: state.practice,
+    contactEmail: state.contactEmail,
+    retention: state.retention,
+  };
+}

@@ -194,10 +194,14 @@ export function finishFailure(err: unknown): "retry" | "givenBack" {
 }
 
 /**
- * Whether a take on screen holds the page (Task 5 fix round 2): from the think
- * time until the take is saved, in the answer and the warm-up alike; never
- * while the candidate writes the text alternative instead.
+ * Whether a take on screen holds the page (Task 5 fix round 2; final wave
+ * A-I2): from the moment a take starts (`starting`: begin() until the take is
+ * open, so a retake's counted round trip is not cut; holdUntilSettled takes
+ * over from there) through recording to the save, in the answer and the
+ * warm-up alike. The think time holds nothing: nothing records yet, so the
+ * language link stays live. Never while the candidate writes the text
+ * alternative instead.
  */
-export function takeHoldsCapture(phase: "think" | "record" | "saving" | "review" | "saved" | "failed", writing: boolean): boolean {
-  return !writing && (phase === "think" || phase === "record" || phase === "saving");
+export function takeHoldsCapture(phase: "think" | "record" | "saving" | "review" | "saved" | "failed", writing: boolean, starting = false): boolean {
+  return starting || (!writing && (phase === "record" || phase === "saving"));
 }

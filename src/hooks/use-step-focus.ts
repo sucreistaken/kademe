@@ -77,6 +77,19 @@ export function useArrivalFocus<T extends HTMLElement>() {
   return ref;
 }
 
+/**
+ * useArrivalFocus for a heading whose ref another hook already owns (a screen
+ * that also moves focus between its own steps with useStepFocus, or keeps it
+ * with stepFocusController): the same once-on-arrival contract, as long as
+ * `active` says the arrival screen is the one shown.
+ */
+export function useArrivalFocusOn(ref: RefObject<Focusable | null>, active = true) {
+  const [controller] = useState(arrivalFocusController);
+  useEffect(() => {
+    if (active) controller.onArrive(ref.current);
+  });
+}
+
 export type ActiveKind = "disabled-control" | "body" | "other";
 
 /**

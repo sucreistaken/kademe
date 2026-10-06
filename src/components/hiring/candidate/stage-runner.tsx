@@ -6,15 +6,16 @@ import type { FooterAction } from "@/components/visual/footer-action";
 import { QuestionProgress } from "@/components/visual/question-progress";
 import { StatusScreen } from "@/components/visual/status-screen";
 import { StepFooter } from "@/components/visual/step-footer";
-import { useStepFocus } from "@/hooks/use-step-focus";
+import { useArrivalFocusOn, useStepFocus } from "@/hooks/use-step-focus";
 import { apiGet, apiSend } from "@/lib/client/api";
+import { captureHeld, subscribeCapture } from "@/lib/client/capture-hold";
 import { FlushRegistry } from "@/lib/client/flush-registry";
 import { useStageClock } from "@/lib/client/use-stage-clock";
 import { formatCountdown, SUBMIT_SLACK_MS } from "@/lib/timer";
 import { useT } from "@/i18n/candidate-client";
 import type { Locale } from "@/i18n/locale";
 import { progressOf } from "@/solutions/hiring/rules/candidate-flow";
-import type { HiringCandidateState } from "@/solutions/hiring/rules/candidate-state";
+import { stageQuestions, type HiringCandidateState } from "@/solutions/hiring/rules/candidate-state";
 import type { CandidateActivity } from "@/solutions/hiring/rules/candidate-view";
 import { ChoiceActivity } from "./choice-activity";
 import { noSubscribe } from "./desktop-gate";
@@ -24,7 +25,7 @@ import { answeredLocally, isLastMinute, minutesLeft, ownsPrimary, primaryKey, re
 import { RecordedActivity } from "./recorded-activity";
 import { activeKind, useRescueFocus } from "./recorded-footer";
 import { fileFooterPlan, keepsStage, needsFileChoice, requiredKey, runnerPrimary, skipFocus, undoFocus } from "./runner-footer";
-import { closeQuestion, commitNeeded, recoveryFor, settleWithin, withTimeout } from "./runner-steps";
+import { afterCaptureFree, closeQuestion, commitNeeded, recoveryFor, settleWithin, withTimeout } from "./runner-steps";
 import { serverMessage } from "./server-message";
 import { StageIntro } from "./stage-intro";
 import { SubmitDelay } from "./submit-delay";
@@ -65,6 +66,10 @@ function answerOf(activity: CandidateActivity, a: LocalAnswer | undefined): unkn
 
 /** Reads the page again from the server: a fresh runner from the fresh state (router.refresh() keeps this runner when the stage is the same). */
 const reloadPage = () => window.location.reload();
+/** Final wave A-M3: the longest a reload waits for a take or an upload still holding the page. */
+const RELOAD_WAIT_MS = 30_000;
+/** Reloads once no take or upload holds the page (or the wait's bound ran out): a finishing upload is not cut. */
+const reloadWhenFree = () => void afterCaptureFree(captureHeld, subscribeCapture, RELOAD_WAIT_MS).then(reloadPage);
 
 const subscribeOnline = (notify: () => void) => {
   window.addEventListener("online", notify);
@@ -96,7 +101,8 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
   const router = useRouter();
   const [state, setState] = useState(initial);
   const current = state.current!;
-  const activities = current.stage.activities;
+  // Final wave A-I1: before the start the state carries each question's outline only; the start's state brings them in full.
+  const activities = stageQuestions(current);
   // The stage run's identity (its start): keys the tab's draft copies, so a later run never sees them.
   const runId = current.startedAt ?? "";
   const [phase, setPhase] = useState<"intro" | "resume" | "question">(current.startedAt ? "resume" : "intro");
@@ -114,6 +120,9 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
   const online = useSyncExternalStore(subscribeOnline, () => navigator.onLine, () => true);
   const activity = activities[Math.min(index, activities.length - 1)] as CandidateActivity | undefined;
   const heading = useStepFocus<HTMLHeadingElement>(`${phase}-${index}`);
+  // Final wave A-I3: a stage reached by a client navigation (the warm-up, the previous stage's submit) lands
+  // on its intro or resume heading once, as /info and /practice do; later moves are useStepFocus's.
+  useArrivalFocusOn(heading, phase !== "question");
   const base = `/a/${encodeURIComponent(token)}`;
   // Read inside async steps that outlive the render they started in.
   const answersRef = useRef(answers);
@@ -171,7 +180,7 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
       } catch (err) {
         const f = failureOf(err, auto ? "auto" : "submit");
         // At 0:00 the server already moved on (a closed stage): show where the candidate really is.
-        if (auto && f.stale) return reloadPage();
+        if (auto && f.stale) return reloadWhenFree();
         setFailure(f);
         setBusy(false);
       }
@@ -338,7 +347,7 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
         </p>
         {/* Minor 7: once the other tab is closed, a reload here takes the assessment over. */}
         <StatusScreen illustration="otherTab" title={t("otherTab")} body={t("otherTabClosed")} />
-        <StepFooter primary={{ kind: "button", id: "reload", label: t("reload"), onClick: reloadPage }} />
+        <StepFooter primary={{ kind: "button", id: "reload", label: t("reload"), onClick: reloadWhenFree }} />
       </>
     );
   }
@@ -347,7 +356,14 @@ export function StageRunner({ token, initial, deadline, locale }: { token: strin
     <p role="alert" className="mx-auto mt-4 max-w-[760px] text-[16px] leading-[26px] text-ink">
       {failure.stale ? t("stale") : failure.message}{" "}
       {failure.stale ? (
-        <button type="button" onClick={reloadPage} className="min-h-11 underline decoration-underline underline-offset-4">
+        <button
+          type="button"
+          onClick={() => {
+            // The footer says it works while a take or an upload finishes first (A-M3).
+            setBusy(true);
+            reloadWhenFree();
+          }}
+          className="min-h-11 underline decoration-underline underline-offset-4">
           {t("reload")}
         </button>
       ) : null}

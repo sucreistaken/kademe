@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { candidateSafe } from "@/lib/candidate-safe";
-import { buildCandidateState, type StateInput } from "./candidate-state";
+import { buildCandidateState, stageQuestions, type StateInput } from "./candidate-state";
 import { activity, content, stage } from "./test-fixtures";
 
 const SECRET = "TEAMSECRET";
@@ -325,3 +325,46 @@ describe("DONE always carries the finish (no null screen data)", () => {
   });
 });
 
+
+describe("no question reaches the browser before the stage clock starts (final wave A-I1)", () => {
+  it("sends only each question's id and type while the stage has no start, with the counts and rules the intro draws", () => {
+    const state = buildCandidateState(input());
+    expect(state.current?.startedAt).toBeNull();
+    expect(state.current?.stage.activities).toEqual([
+      { id: "a1", type: "VIDEO" },
+      { id: "a2", type: "SINGLE_CHOICE" },
+    ]);
+    // The intro's stage name, question count and rules stay (computed on the server).
+    expect(state.current?.stage.name).toEqual({ tr: `${VISIBLE}_STAGE`, en: "" });
+    expect(state.current?.rules.length).toBeGreaterThan(0);
+    for (const sent of [JSON.stringify(state), JSON.stringify(candidateSafe(state))]) {
+      expect(sent).toContain(`${VISIBLE}_STAGE`);
+      expect(sent).not.toContain(`${VISIBLE}_PROMPT`);
+      expect(sent).not.toContain(`${VISIBLE}_CHOICE`);
+      expect(sent).not.toContain(SECRET);
+    }
+  });
+
+  it("sends the questions once the stage has started (positive control), also on the next read after a reload", () => {
+    const state = buildCandidateState(started());
+    expect(state.current?.stage.activities.map((a) => a.id)).toEqual(["a1", "a2"]);
+    expect(state.current?.stage.activities[0]).toMatchObject({ prompt: { tr: `${VISIBLE}_PROMPT`, en: "" } });
+    expect(JSON.stringify(state)).toContain(`${VISIBLE}_CHOICE`);
+  });
+
+  it("keeps the next stage's questions back after a submit, until that stage starts too", () => {
+    const submitted = started({ runs: [{ stageId: "s1", startedAt: T0, deadlineAt: new Date(T0.getTime() + 600_000), submittedAt: new Date(T0.getTime() + 60_000), closedByClock: false }], responses: [] });
+    const state = buildCandidateState(submitted);
+    expect(state.current).toMatchObject({ position: 2, startedAt: null });
+    expect(state.current?.stage.activities).toEqual([{ id: "b1", type: "LONG_TEXT" }]);
+  });
+
+  it("gives the runner no question before the start and every question after it", () => {
+    expect(stageQuestions(buildCandidateState(input()).current!)).toEqual([]);
+    expect(stageQuestions(buildCandidateState(started()).current!).map((a) => a.prompt.tr)).toEqual([`${VISIBLE}_PROMPT`, "Bir örnek anlat."]);
+  });
+
+  it("keeps `position` the first key of the running stage (the flow script reads the page payload by it)", () => {
+    expect(JSON.stringify(buildCandidateState(input()))).toContain('"current":{"position":1');
+  });
+});

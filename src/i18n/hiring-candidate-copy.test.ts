@@ -19,6 +19,16 @@ describe("hiring candidate copy", () => {
     expect(hiringOf(tr).length).toBeGreaterThan(0);
   });
 
+  it("keeps none of the 16 landing keys no screen reads any more, in either language (final wave A-M1)", () => {
+    const retired = ["factStages", "factDeadline", "factDeadlineLabel", "howTitle", "howCheck", "howPractice", "howQuestions", "howThink", "whoTitle", "whoAi", "whoAiRecorded", "recordedTitle", "notMonitored", "needCameraMic", "needMic", "extraBody"];
+    for (const dict of [tr, en]) {
+      // Positive control: the namespace is there and still holds the keys the landing reads.
+      expect(dict.hiringLanding.promise.length).toBeGreaterThan(0);
+      for (const key of retired) expect(Object.keys(dict.hiringLanding), key).not.toContain(key);
+    }
+    expect(Object.keys(tr.hiringLanding).sort()).toEqual(Object.keys(en.hiringLanding).sort());
+  });
+
   it.each([
     ["tr", tr, [/uyarı/i, /ihlal/i, /şüpheli/i, /hile/i, /başarısız/i]],
     ["en", en, [/warning/i, /violation/i, /suspicious/i, /cheat/i, /\bfail/i]],

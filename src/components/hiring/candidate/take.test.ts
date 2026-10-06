@@ -269,12 +269,21 @@ describe("takes and failures", () => {
 });
 
 describe("a take holds the page while it runs (Task 5 fix round 2)", () => {
-  it("holds in think, record and saving, in the answer and in the warm-up, so a language switch cannot cut it", () => {
-    for (const phase of ["think", "record", "saving"] as const) expect(takeHoldsCapture(phase, false), phase).toBe(true);
+  it("holds in record and saving, in the answer and in the warm-up, so a language switch cannot cut it", () => {
+    for (const phase of ["record", "saving"] as const) expect(takeHoldsCapture(phase, false), phase).toBe(true);
   });
 
   it("lets go once the take is settled, and never while the candidate writes the text alternative", () => {
     for (const phase of ["review", "saved", "failed"] as const) expect(takeHoldsCapture(phase, false), phase).toBe(false);
-    expect(takeHoldsCapture("think", true)).toBe(false);
+    expect(takeHoldsCapture("record", true)).toBe(false);
+  });
+
+  it("does not hold in the think time: nothing records yet, so the language link stays live (final wave A-I2)", () => {
+    expect(takeHoldsCapture("think", false)).toBe(false);
+    expect(takeHoldsCapture("think", false, false)).toBe(false);
+  });
+
+  it("holds while a take starts, until the take is open (a retake's counted round trip), from any phase (final wave A-I2)", () => {
+    for (const phase of ["think", "review", "failed", "saved"] as const) expect(takeHoldsCapture(phase, false, true), phase).toBe(true);
   });
 });

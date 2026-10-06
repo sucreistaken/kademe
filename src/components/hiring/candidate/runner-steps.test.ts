@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { CandidateResponseView } from "@/solutions/hiring/rules/candidate-state";
-import { closeQuestion, commitNeeded, recoveryFor, RequestTimeout, settleWithin, withTimeout } from "./runner-steps";
+import { afterCaptureFree, closeQuestion, commitNeeded, recoveryFor, RequestTimeout, settleWithin, withTimeout } from "./runner-steps";
 import { resumeOf } from "./runner-model";
 
 const refusal = (code: string, status = 409) => Object.assign(new Error(code), { code, status });
@@ -152,5 +152,77 @@ describe("a save that hangs before a close (fix round 2)", () => {
   it("goes on at once when the saves settle, and never rejects", async () => {
     await expect(settleWithin(Promise.resolve(), 5000)).resolves.toBeUndefined();
     await expect(settleWithin(Promise.reject(new Error("x")), 5000)).resolves.toBeUndefined();
+  });
+});
+
+describe("a reload waits for a take or an upload still holding the page (final wave A-M3)", () => {
+  /** A stand-in for capture-hold: `held` and the listeners it notifies. */
+  const store = (held: boolean) => {
+    const listeners = new Set<() => void>();
+    const s = {
+      held,
+      isHeld: () => s.held,
+      subscribe: (l: () => void) => {
+        listeners.add(l);
+        return () => void listeners.delete(l);
+      },
+      set(next: boolean) {
+        s.held = next;
+        for (const l of [...listeners]) l();
+      },
+      listeners,
+    };
+    return s;
+  };
+
+  it("goes at once when nothing holds the page", async () => {
+    const s = store(false);
+    await expect(afterCaptureFree(s.isHeld, s.subscribe, 30_000)).resolves.toBe("free");
+    expect(s.listeners.size).toBe(0);
+  });
+
+  it("waits while something holds the page and goes as soon as it lets go", async () => {
+    vi.useFakeTimers();
+    try {
+      const s = store(true);
+      let done: string | null = null;
+      void afterCaptureFree(s.isHeld, s.subscribe, 30_000).then((r) => (done = r));
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(done).toBeNull();
+      s.set(false);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(done).toBe("free");
+      expect(s.listeners.size).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("goes anyway after its bound, so a stuck upload never keeps the candidate from the fresh page", async () => {
+    vi.useFakeTimers();
+    try {
+      const s = store(true);
+      let done: string | null = null;
+      void afterCaptureFree(s.isHeld, s.subscribe, 30_000).then((r) => (done = r));
+      await vi.advanceTimersByTimeAsync(29_999);
+      expect(done).toBeNull();
+      await vi.advanceTimersByTimeAsync(1);
+      expect(done).toBe("timeout");
+      expect(s.listeners.size).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe("the runner reloads only through that wait (final wave A-M3)", () => {
+  it("the stale auto-submit and every 'Sayfayı yenile' go through reloadWhenFree; only it calls the bare reload", async () => {
+    const { readFileSync } = await import("node:fs");
+    const path = await import("node:path");
+    const text = readFileSync(path.join(process.cwd(), "src/components/hiring/candidate/stage-runner.tsx"), "utf8");
+    expect(text).toMatch(/if \(auto && f\.stale\) return reloadWhenFree\(\);/);
+    expect(text).toMatch(/afterCaptureFree\(captureHeld, subscribeCapture, RELOAD_WAIT_MS\)\.then\(reloadPage\)/);
+    // reloadPage appears at its definition and inside reloadWhenFree only.
+    expect(text.match(/reloadPage/g)).toHaveLength(2);
   });
 });

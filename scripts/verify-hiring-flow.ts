@@ -466,7 +466,8 @@ async function main() {
   check(switched.to === `/a/${token6}` && inEnglish.locale === "en", "?lang=en is written to the invitation and dropped from the address", { to: switched.to, locale: inEnglish.locale });
   const landing = await page(token6, "landing");
   check(!!landing.node && landing.node.includes('"consentBody"') && landing.node.includes(JSON.stringify(consentText.body.en)), "the landing renders, with the invitation's frozen hiring consent text in English", landing.to ?? landing.node?.slice(0, 120));
-  check(!!landing.node && landing.node.includes('"orgName":"Örnek A.Ş."') && (landing.node.match(/LEAKVISIBLE_[A-Z]+/g) ?? []).length >= 1, "positive control: the landing's props carry the organisation and a LEAKVISIBLE text", landing.node?.match(/LEAKVISIBLE_[A-Z]+/g));
+  // Final wave A-M2: the landing gets counts only, so no stage name (LEAKVISIBLE_STAGE) reaches it any more.
+  check(!!landing.node && landing.node.includes('"orgName":"Örnek A.Ş."') && landing.node.includes('"stageCount":') && !/LEAKVISIBLE_/.test(landing.node), "positive control: the landing's props carry the organisation and the stage count, and no stage name or question", landing.node?.match(/LEAKVISIBLE_[A-Z]+/g));
   check(!!landing.node && !landing.node.includes("TEAMSECRET"), "and no TEAMSECRET text", landing.node?.match(/TEAMSECRET_[A-Z_]+/g));
   check(!!landing.node && /"deadline":"\d{1,2} [A-Z][a-z]{2}, 23:59 \(/.test(landing.node), "the deadline reads like the invitation e-mail (end of the day, zone named)", landing.node?.match(/"deadline":"[^"]*"/)?.[0]);
   check(!!landing.node && landing.node.includes('"reviewers":2'), "the landing promises the opening's minimum of 2 reviewers (panel of 2)", landing.node?.match(/"reviewers":\d+/)?.[0]);
@@ -493,6 +494,12 @@ async function main() {
     !!stagePage.node && (stagePage.node.match(/LEAKVISIBLE_[A-Z]+/g) ?? []).length >= 1 && !stagePage.node.includes("TEAMSECRET") && !stagePage.node.includes('"correct"'),
     "the runner's props carry a LEAKVISIBLE text (positive control) and no TEAMSECRET text or right answer",
     stagePage.node?.match(/(LEAKVISIBLE|TEAMSECRET)_[A-Z_]+|"correct"/g),
+  );
+  // Final wave A-I1 (user decision U1): before the start the intro has the stage's name, never a question.
+  check(
+    !!stagePage.node && stagePage.node.includes("LEAKVISIBLE_STAGE") && !/LEAKVISIBLE_(PROMPT|CHOICE)/.test(stagePage.node),
+    "before the stage clock starts the page carries the stage's name (positive control) and no question or choice text",
+    stagePage.node?.match(/LEAKVISIBLE_[A-Z]+/g),
   );
   const practicePage = await page(token6, "practice");
   if (state.json.practice) {

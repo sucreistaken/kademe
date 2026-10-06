@@ -69,6 +69,8 @@ import { createElement } from "react";
 import { formatInviteDeadline } from "../rules/invitation";
 import { zoneLabel } from "@/lib/org-timezone";
 import { renderHiringPage } from "./pages";
+import { buildCandidateState } from "../rules/candidate-state";
+import { activity, content, stage } from "../rules/test-fixtures";
 import { DesktopGate } from "@/components/hiring/candidate/desktop-gate";
 import { DesktopOnlyScreen } from "@/components/hiring/candidate/desktop-only";
 
@@ -134,6 +136,18 @@ describe("renderHiringPage", () => {
     expect(props.state).toMatchObject({ orgName: "Örnek A.Ş.", positionName: "Ürün Tasarımcısı LEAKVISIBLE_POSITION" });
   });
 
+  it("hands the landing its own projection: the stage count, never the stages' names (final wave A-M2)", async () => {
+    const [landing] = find(await render("landing"), Landing);
+    const props = landing.props as { state: Record<string, unknown> };
+    expect(props.state).toMatchObject({ stageCount: 1, orgName: "Örnek A.Ş." });
+    expect(props.state).not.toHaveProperty("stages");
+    expect(props.state).not.toHaveProperty("current");
+    const sent = JSON.stringify(props);
+    expect(sent).not.toMatch(/LEAKVISIBLE_STAGE/);
+    // Positive control: the state the page read does carry the stage's name.
+    expect(JSON.stringify(h.state)).toMatch(/LEAKVISIBLE_STAGE/);
+  });
+
   it("frames the landing with the organisation's name in the candidate's language", async () => {
     const [frame] = find(await render("landing"), HiringFrame);
     expect(frame.props).toMatchObject({ locale: "tr", orgName: "Örnek A.Ş.", token: "tok" });
@@ -192,7 +206,8 @@ describe("renderHiringPage", () => {
     h.facts = { contact: "deniz@ornek.test", openingClosed: false, started: false, internal: "TEAMSECRET_FACT" };
     const node = await render("landing", { resolved: { ok: false, problem: "NOT_YET", ctx: notYet } });
     const [card] = find(node, HiringLinkProblem);
-    expect(card.props).toEqual({ token: "tok", problem: "NOT_YET", date: "8 Eki 10:00", contactEmail: "deniz@ornek.test" });
+    // The opening time names the zone, as the landing's deadline does (Task 13 minor, final wave).
+    expect(card.props).toEqual({ token: "tok", problem: "NOT_YET", date: `8 Eki 10:00 (${zoneLabel("tr")})`, contactEmail: "deniz@ornek.test" });
     // Positive control: the frame carries the organisation's name; no team text is anywhere in the tree.
     expect(JSON.stringify(node)).toMatch(/LEAKVISIBLE_ORG/);
     expect(JSON.stringify(node)).not.toMatch(/TEAMSECRET/);
@@ -501,5 +516,60 @@ describe("the desktop gate (HIRING-VISUAL-FLOW 3.0, VG)", () => {
     const done = await render("done", { resolved: { ok: false, problem: "COMPLETED", ctx } });
     expect(find(done, Done)).toHaveLength(1);
     expect(find(done, DesktopOnlyScreen)).toHaveLength(0);
+  });
+});
+
+describe("a stage's questions stay on the server until its clock starts (final wave A-I1, user decision U1)", () => {
+  const TABLET = "Mozilla/5.0 (Linux; Android 14; SM-X710) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36";
+  const T0 = new Date("2026-10-05T09:00:00.000Z");
+  const stages = content([
+    stage(
+      "s1",
+      [
+        activity("a1", { orderIndex: 0, type: "LONG_TEXT", prompt: { tr: "Anlat LEAKVISIBLE_PROMPT", en: "Tell" }, managerNotes: "TEAMSECRET_NOTE", config: {} }),
+        activity("a2", { orderIndex: 1, type: "SINGLE_CHOICE", config: { choices: [{ id: "x", label: { tr: "Bir LEAKVISIBLE_CHOICE", en: "One" }, correct: true }] } }),
+      ],
+      { name: { tr: "Tanışma LEAKVISIBLE_STAGE", en: "Intro" }, internalPurpose: "TEAMSECRET_STAGE_PURPOSE" },
+    ),
+  ]).stages;
+  const built = (run: boolean) =>
+    buildCandidateState({
+      now: T0,
+      timeZone: "Europe/Istanbul",
+      orgName: "Örnek A.Ş.",
+      contactEmail: "deniz@ornek.test",
+      retention: { mediaDays: 180, candidateDays: 730 },
+      opening: { status: "OPEN", positionName: "Ürün Tasarımcısı", finishSurveyEnabled: false, feedbackDays: 7, minEvaluations: 1 },
+      version: { stages, introTitle: null, introBody: null, practiceEnabled: false },
+      invitation: { candidateName: "Elif Kaya", candidateEmail: "elif@example.com", extraTimePct: 0, reviewers: 1, consented: true, deviceChecked: true, started: run, completedAt: null, feedbackBy: null, surveyAnswered: false },
+      runs: run ? [{ stageId: "s1", startedAt: T0, deadlineAt: new Date(T0.getTime() + 600_000), submittedAt: null, closedByClock: false }] : [],
+      responses: [],
+    });
+  const runnerProps = async () => JSON.stringify(find(await render("stage", { params: { n: "1" } }), StageRunner)[0].props);
+
+  it("hands the intro the stage's name and its question outlines only, no question text", async () => {
+    h.state = built(false);
+    const sent = await runnerProps();
+    expect(sent).toContain("LEAKVISIBLE_STAGE");
+    expect(sent).toContain('"activities":[{"id":"a1","type":"LONG_TEXT"},{"id":"a2","type":"SINGLE_CHOICE"}]');
+    expect(sent).not.toMatch(/LEAKVISIBLE_PROMPT|LEAKVISIBLE_CHOICE|TEAMSECRET/);
+  });
+
+  it("ships no question on the gated path either (a tablet the browser decides on)", async () => {
+    h.headers = { "user-agent": TABLET, "sec-ch-ua-mobile": "?0" };
+    h.state = built(false);
+    const node = await render("stage", { params: { n: "1" } });
+    expect(find(node, DesktopGate)[0].props).toMatchObject({ serverClass: "unknown" });
+    const whole = JSON.stringify(node);
+    expect(whole).toContain("LEAKVISIBLE_STAGE");
+    expect(whole).not.toMatch(/LEAKVISIBLE_PROMPT|LEAKVISIBLE_CHOICE/);
+  });
+
+  it("hands the runner every question once the stage has started, as a reload of a running stage reads it (positive control)", async () => {
+    h.state = built(true);
+    const sent = await runnerProps();
+    expect(sent).toContain("LEAKVISIBLE_PROMPT");
+    expect(sent).toContain("LEAKVISIBLE_CHOICE");
+    expect(sent).not.toMatch(/TEAMSECRET|"correct"/);
   });
 });

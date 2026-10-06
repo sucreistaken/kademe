@@ -106,10 +106,12 @@ export function RecordedActivity(props: RecordedProps) {
   const [level, setLevel] = useState(0);
   // The newest take this screen knows: the one the page opened on, or the last one finished here (Task 14 carry).
   const lastRef = useRef<string | null>(props.existingRef);
-  // From the think time until the take is saved the page is held: the frame's language link (a full
-  // page load) would cut the take, and the take would still count (Task 5 fix round 2).
+  // From a take's start until it is saved the page is held: the frame's language link (a full page
+  // load) would cut the take, and the take would still count (Task 5 fix round 2). `starting` covers
+  // begin() until the take is open, the server's count included (final wave A-I2); the think time holds nothing.
   const holdId = useId();
-  useCaptureHold(`take:${holdId}`, takeHoldsCapture(phase, writing));
+  const [starting, setStarting] = useState(false);
+  useCaptureHold(`take:${holdId}`, takeHoldsCapture(phase, writing, starting));
   const takeSeq = useRef(0);
   const self = useRef<HTMLVideoElement | null>(null);
   const stream = useRef<MediaStream | null>(null);
@@ -223,6 +225,7 @@ export function RecordedActivity(props: RecordedProps) {
   const begin = useCallback(async () => {
     if (beginning.current || disabled || timeUp) return;
     beginning.current = true;
+    setStarting(true);
     setNote(null);
     setIncomplete(false);
     setSrc(null);
@@ -235,6 +238,7 @@ export function RecordedActivity(props: RecordedProps) {
       setCanRetryFinish(false);
       setPhase("failed");
       beginning.current = false;
+      setStarting(false);
       return;
     }
     try {
@@ -301,6 +305,8 @@ export function RecordedActivity(props: RecordedProps) {
       setPhase("failed");
     } finally {
       beginning.current = false;
+      // The take is open (its outcome holds the page now) or never started.
+      setStarting(false);
     }
   }, [disabled, timeUp, openStream, t, audioOnly, sink, mode, closeStream, answerMs, setPhase, settle, activity.maxTakes, loadPlayback, holdId]);
 

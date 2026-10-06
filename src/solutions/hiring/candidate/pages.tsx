@@ -14,6 +14,7 @@ import { HiringFrame } from "@/components/hiring/candidate/frame";
 import { InfoStep } from "@/components/hiring/candidate/info-step";
 import { HiringLinkProblem } from "@/components/hiring/candidate/link-problem";
 import { Landing } from "@/components/hiring/candidate/landing";
+import { landingStateOf } from "@/components/hiring/candidate/landing-model";
 import { Practice } from "@/components/hiring/candidate/practice";
 import { hiringProblemView } from "@/components/hiring/candidate/problem-view";
 import { StageRunner } from "@/components/hiring/candidate/stage-runner";
@@ -137,7 +138,8 @@ export async function renderHiringPage(slot: CandidatePageSlot, input: Candidate
             view === "expired"
               ? formatInviteDay(orgDay(resolved.ctx.link.expiresAt, ORG_TIMEZONE), locale)
               : resolved.ctx.link.notBefore
-                ? dateTime(resolved.ctx.link.notBefore, locale)
+                ? // The opening time names the zone, as the landing's deadline does (Task 13 minor).
+                  `${dateTime(resolved.ctx.link.notBefore, locale)} (${zoneLabel(locale, ORG_TIMEZONE)})`
                 : null
           }
           contactEmail={facts.contact}
@@ -197,7 +199,8 @@ export async function renderHiringPage(slot: CandidatePageSlot, input: Candidate
         return (
           <Landing
             token={token}
-            state={safe}
+            // Final wave A-M2: the landing draws counts only; the stages' names stay here.
+            state={landingStateOf(safe)}
             consentBody={consent.text}
             consentLang={consent.lang}
             deadline={deadline}

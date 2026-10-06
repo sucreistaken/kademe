@@ -1,7 +1,7 @@
 import type { HiringResponsePayload } from "@/db/schema";
 import type { I18nText } from "@/db/schema/types";
 import { effectiveSeconds, extraTimeRefusal, hiringStepSuffix, responseAnswered, stageRules, type ExtraTimePct, type HiringStep, type StageRule } from "./candidate-flow";
-import { toCandidateVersion, type CandidateStage } from "./candidate-view";
+import { toCandidateVersion, type CandidateActivity, type CandidateStage } from "./candidate-view";
 import { orderedActivities, orderedStages, type ContentStage } from "./content";
 import { devicesNeeded, estimatedMinutes, recordedSignals, type RecordedSignal } from "./disclosure";
 import { feedbackDay } from "./invitation";
@@ -32,10 +32,33 @@ export type CandidateResponseView = {
   closed: boolean;
 };
 
+/** A question before its stage's clock starts: what kind it is, never what it asks (final wave A-I1). */
+export type ActivityOutline = Pick<CandidateActivity, "id" | "type">;
+/** A stage before its clock starts: its name and description for the intro, its questions as outlines only. */
+export type StageOutline = Omit<CandidateStage, "activities"> & { activities: ActivityOutline[] };
+
+/** The outline of a stage: nothing a question says (prompt, note, choices) leaves the server before the start. */
+export function stageOutline(stage: CandidateStage): StageOutline {
+  return { id: stage.id, name: stage.name, description: stage.description, durationSeconds: stage.durationSeconds, activities: stage.activities.map((a) => ({ id: a.id, type: a.type })) };
+}
+
+const isQuestion = (a: ActivityOutline | CandidateActivity): a is CandidateActivity => "prompt" in a;
+
+/** The running stage's questions in full; none before its clock starts (the state then carries outlines only). */
+export function stageQuestions(current: CurrentStage): CandidateActivity[] {
+  const listed: Array<ActivityOutline | CandidateActivity> = current.stage.activities;
+  return current.startedAt === null ? [] : listed.filter(isQuestion);
+}
+
 export type CurrentStage = {
   position: number;
   total: number;
-  stage: CandidateStage;
+  /**
+   * Final wave A-I1 (user decision U1): a stage's questions do not reach the
+   * browser before its clock starts. Until then this is the stage's outline
+   * (each question's id and type); from the start on, the full candidate view.
+   */
+  stage: CandidateStage | StageOutline;
   /** Seconds on this candidate's clock (extra time included, grace not). */
   seconds: number;
   startedAt: string | null;
@@ -163,7 +186,7 @@ export function buildCandidateState(input: StateInput): HiringCandidateState {
     current = {
       position: openIndex + 1,
       total: view.stages.length,
-      stage: stageView,
+      stage: run?.startedAt ? stageView : stageOutline(stageView),
       seconds: effectiveSeconds(stageView.durationSeconds, pct),
       startedAt: run?.startedAt?.toISOString() ?? null,
       deadlineAt: deadline?.toISOString() ?? null,
