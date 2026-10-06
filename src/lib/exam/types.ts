@@ -130,3 +130,12 @@ export type Presentation = {
    */
   alias?: Record<string, string>;
 };
+
+/**
+ * Skill tag of a C-test item. C-tests never enter automatic item selection;
+ * a GRAMMAR section serves one only when its `cTest` flag is on, as the first
+ * item (see blueprint.ts).
+ */
+export const C_TEST_SKILL_TAG = "grammar.ctest";
+
+export const isCTest = (item: { skillTag: string }): boolean => item.skillTag === C_TEST_SKILL_TAG;

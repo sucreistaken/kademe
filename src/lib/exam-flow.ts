@@ -11,22 +11,16 @@ import {
   sectionRuns,
   stimuli,
 } from "@/db/schema";
-import {
-  eap,
-  mulberry32,
-  poolLeft,
-  replay,
-  selectNext,
-  shouldStop,
-  type PoolItem,
-} from "@/lib/exam/adaptive";
+import { eap, mulberry32, poolLeft, replay, shouldStop } from "@/lib/exam/adaptive";
 import {
   adaptiveConfigFor,
+  cTestLevel,
   enabledSections,
   estimatedMinutes,
+  nextAdaptiveItems,
+  planFixedSection,
   productiveTaskLevels,
   resolveDistribution,
-  sampleFixedForm,
   type BankItem,
   type BlueprintConfig,
   type SectionConfig,
@@ -190,7 +184,8 @@ function itemsLabel(s: SectionConfig, mode: ExamMode, claimed: Cefr | null, offs
   if (!isObjectiveSection(s.section)) return String(s.tasks);
   if (s.adaptive) return `${s.minItems}-${s.maxItems}`;
   const dist = resolveDistribution(s, mode, claimed, offset);
-  return String(Object.values(dist).reduce((a, b) => a + b, 0));
+  const opening = cTestLevel(s, mode, claimed) ? 1 : 0;
+  return String(Object.values(dist).reduce((a, b) => a + b, 0) + opening);
 }
 
 async function runsOf(attemptId: string) {
@@ -456,8 +451,7 @@ export async function startSection(ctx: ExamCandidateContext, position: number):
     taskLevels = productiveTaskLevels(ctx.assessment.mode, ctx.assessment.claimedLevel, provisional, s.tasks);
     itemPlan = pickProductive(pool, taskLevels as Cefr[], rng);
   } else if (!s.adaptive) {
-    const dist = resolveDistribution(s, ctx.assessment.mode, ctx.assessment.claimedLevel, ctx.assessment.config.difficultyOffset);
-    itemPlan = sampleFixedForm(pool, dist, rng);
+    itemPlan = planFixedSection(s, pool, ctx.assessment.mode, ctx.assessment.claimedLevel, ctx.assessment.config.difficultyOffset, rng);
   }
   if ((itemPlan && itemPlan.length === 0) || pool.length === 0) {
     // The bank lost these items after the invitation (retired, rejected).
@@ -619,13 +613,14 @@ export async function ensureCurrentItem(ctx: ExamCandidateContext, runId: string
           score: r.score,
         })),
       );
-      const pool: PoolItem[] = await loadPool(ctx.assessment.orgId, run.section, tx);
+      const pool = await loadPool(ctx.assessment.orgId, run.section, tx);
       const stop = shouldStop(state, cfg, poolLeft(pool, state));
       if (stop) {
         await tx.update(sectionRuns).set({ stopReason: stop }).where(eq(sectionRuns.id, runId));
         return null;
       }
-      const next = selectNext(state, pool, cfg, mulberry32(Math.floor(Math.random() * 2 ** 31)));
+      // The opening C-test (GRAMMAR with cTest on) comes first; the engine never picks one.
+      const next = nextAdaptiveItems(s, ctx.assessment.mode, ctx.assessment.claimedLevel, state, pool, cfg, mulberry32(Math.floor(Math.random() * 2 ** 31)));
       if (!next) return null;
       await serve(tx, runId, next.itemIds, nextSequence, s);
     }

@@ -39,7 +39,7 @@ const TEMPLATES: readonly ExamTemplate[] = [
     config: {
       version: 1,
       sections: [
-        section("GRAMMAR", 15, { adaptive: true, minItems: 15, maxItems: 30, targetSe: 0.5 }),
+        section("GRAMMAR", 15, { adaptive: true, minItems: 15, maxItems: 30, targetSe: 0.5, cTest: false }),
         section("READING", 12, { enabled: false, adaptive: true, minItems: 5, maxItems: 8, targetSe: 0.55 }),
         section("LISTENING", 12, { enabled: false, adaptive: true, minItems: 5, maxItems: 8, targetSe: 0.55 }),
         section("WRITING", 10, { enabled: false, tasks: 1 }),
@@ -58,13 +58,14 @@ const TEMPLATES: readonly ExamTemplate[] = [
     mode: "PLACEMENT",
     name: text("Yerleştirme sınavı", "Placement test"),
     summary: text(
-      "Dört beceri, yaklaşık 52 dakika. Öğrenciyi doğru sınıfa yerleştirir; sonucu öğretmen onaylar.",
-      "Four skills, about 52 minutes. Places the student in the right class; a teacher confirms the result.",
+      "Dört beceri, yaklaşık 57 dakika. Öğrenciyi doğru sınıfa yerleştirir; sonucu öğretmen onaylar.",
+      "Four skills, about 57 minutes. Places the student in the right class; a teacher confirms the result.",
     ),
     config: {
       version: 1,
       sections: [
-        section("GRAMMAR", 12, { adaptive: true, minItems: 10, maxItems: 16, targetSe: 0.45 }),
+        // Opens with one B1 C-test; the five extra minutes are for it.
+        section("GRAMMAR", 17, { adaptive: true, minItems: 10, maxItems: 16, targetSe: 0.45, cTest: true }),
         section("READING", 12, { adaptive: true, minItems: 5, maxItems: 8, targetSe: 0.55 }),
         section("LISTENING", 12, { adaptive: true, minItems: 5, maxItems: 8, targetSe: 0.55 }),
         section("WRITING", 10, { tasks: 1 }),
@@ -91,7 +92,7 @@ const TEMPLATES: readonly ExamTemplate[] = [
       sections: [
         section("READING", 25, { distribution: { kind: "RELATIVE", below: 2, at: 6, above: 2 } }),
         section("LISTENING", 20, { distribution: { kind: "RELATIVE", below: 2, at: 5, above: 2 } }),
-        section("GRAMMAR", 15, { distribution: { kind: "RELATIVE", below: 3, at: 6, above: 3 } }),
+        section("GRAMMAR", 15, { distribution: { kind: "RELATIVE", below: 3, at: 6, above: 3 }, cTest: false }),
         section("WRITING", 25, { tasks: 2 }),
         section("SPEAKING", 12, { tasks: 2 }),
       ],

@@ -3,6 +3,7 @@ import {
   eap,
   initialState,
   mulberry32,
+  poolLeft,
   replay,
   selectNext,
   shouldStop,
@@ -11,7 +12,7 @@ import {
   type PoolItem,
 } from "./adaptive";
 import { BAND_CENTER, levelFromTheta, thetaForLevel } from "./cefr";
-import { CEFR_LEVELS } from "./types";
+import { C_TEST_SKILL_TAG, CEFR_LEVELS } from "./types";
 
 const config: AdaptiveConfig = {
   minItems: 10,
@@ -104,6 +105,30 @@ describe("selection", () => {
     ]);
     const second = selectNext(state, pool, config, mulberry32(1))!;
     expect(second.itemIds).toEqual(["t2-1"]);
+  });
+});
+
+describe("C-tests", () => {
+  it("are never picked by automatic selection, even when their tag is the freshest", () => {
+    const pool: PoolItem[] = [
+      ...grammarPool(),
+      ...CEFR_LEVELS.map((l) => ({ id: `ctest-${l}`, b: thetaForLevel(l), skillTag: C_TEST_SKILL_TAG, stimulusId: null, orderInStimulus: 0 })),
+    ];
+    const big = { ...config, maxItems: 200 };
+    const rng = mulberry32(11);
+    const responses: Parameters<typeof replay>[1] = [];
+    for (;;) {
+      const next = selectNext(replay(big, responses), pool, big, rng);
+      if (!next) break;
+      for (const id of next.itemIds) {
+        expect(id.startsWith("ctest")).toBe(false);
+        const item = pool.find((p) => p.id === id)!;
+        responses.push({ itemId: id, b: item.b, skillTag: item.skillTag, stimulusId: null, score: rng() < 0.5 ? 1 : 0 });
+      }
+    }
+    // The whole non-C-test pool was served, and nothing else.
+    expect(responses.length).toBe(grammarPool().length);
+    expect(poolLeft(pool, replay(big, responses))).toBe(0);
   });
 });
 

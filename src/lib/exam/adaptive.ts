@@ -14,6 +14,8 @@
  * tampered client cannot move the estimate.
  */
 
+import { isCTest } from "./types";
+
 export type Posterior = { mean: number; sd: number };
 export type Observation = { b: number; score: number };
 
@@ -129,6 +131,8 @@ function units(pool: PoolItem[], state: AdaptiveState): Unit[] {
   const groups = new Map<string, PoolItem[]>();
   for (const item of pool) {
     if (used.has(item.id)) continue;
+    // A C-test is served only on purpose, as a section's opening (blueprint.ts).
+    if (isCTest(item)) continue;
     if (item.stimulusId) {
       if (usedStimuli.has(item.stimulusId)) continue;
       const g = groups.get(item.stimulusId) ?? [];
@@ -155,7 +159,9 @@ export const poolLeft = (pool: PoolItem[], state: AdaptiveState): number => unit
 /**
  * The next item, or the next testlet. Closest difficulty to the current
  * estimate wins, with a small penalty for a skill tag already seen often so a
- * grammar section does not become twelve dative questions.
+ * grammar section does not become twelve dative questions. C-tests are never
+ * picked here: one takes a large share of a short section, and its unique tag
+ * would always win the tag penalty.
  */
 export function selectNext(
   state: AdaptiveState,
