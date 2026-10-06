@@ -117,7 +117,7 @@ A school that wants a full four-skill level for a teacher can additionally send 
 
 - Pure tests over `TEMPLATES`: each one, materialised against fake ids, gives `publishProblems(...) = []`; weights
   are whole and add up to 100; every key exists; every activity validates with `activityPayloadSchema`; choice
-  questions have exactly one correct option; no text contains "—"; TR and EN are both filled.
+  questions have exactly one correct option; no text contains the em-dash (U+2014); TR and EN are both filled.
 - `createOpening` tests (fake DB, as `openings.test.ts`): TEMPLATE creates stages, links, weights; unknown key is
   refused with nothing written; reuse by seed key, by name, and the archived case; position filled only when empty;
   old start values unchanged.
