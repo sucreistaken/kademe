@@ -1,6 +1,13 @@
 import { cTest } from "./ctest";
 import type { SeedBankPart, SeedItem } from "./types";
 
+/*
+ * A seed item's text is part of its seed key (seed-key.ts). Changing the
+ * wording of an item here makes it a new item: the bank top-up then adds it
+ * next to the old one in every organisation that already has the old one. To
+ * fix wording, add a new item (and retire the old row) rather than editing.
+ */
+
 /**
  * Starter grammar items, 13 per CEFR level: 8 single choice and 5 gap fill,
  * plus one C-test per level (see ctest.ts).
@@ -327,8 +334,8 @@ const CTESTS: SeedItem[] = [
       "insbesondere bei längeren und anspruchsvollen Sachtexten. Als Erklärung wird häufig angeführt, dass Leserinnen und Leser " +
       "am Bildschirm eher überfliegen und ihr eigenes Verständnis überschätzen.",
     last: "Für Schulen ergibt sich daraus die Aufgabe, gezielte Strategien für das Lesen am Bildschirm zu vermitteln.",
-    // "wird häufig angegeben" is as idiomatic as "angeführt".
-    variants: { 12: ["geben"] },
+    // "wird häufig angegeben" and "angenommen" are as idiomatic as "angeführt".
+    variants: { 12: ["geben", "nommen"] },
   }),
   cTest("C2", "MID", {
     first: "Das menschliche Gedächtnis gleicht weniger einem Archiv als einer fortwährenden Rekonstruktion.",
@@ -337,6 +344,8 @@ const CTESTS: SeedItem[] = [
       "und dabei mitunter unbemerkt verändert. Diese Einsicht hat weitreichende Konsequenzen, nicht zuletzt für die Bewertung " +
       "von Zeugenaussagen vor Gericht.",
     last: "Selbst aufrichtige Zeugen können mit großer Gewissheit Einzelheiten schildern, die sich nachweislich nie zugetragen haben.",
+    // "Diese Einschätzung hat weitreichende Konsequenzen" fits as well as "Einsicht".
+    variants: { 11: ["chätzung"] },
   }),
 ];
 

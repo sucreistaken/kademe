@@ -1,5 +1,12 @@
 import type { SeedBankPart, SeedItem } from "./types";
 
+/*
+ * A seed item's text is part of its seed key (seed-key.ts). Changing the
+ * wording of an item here makes it a new item: the bank top-up then adds it
+ * next to the old one in every organisation that already has the old one. To
+ * fix wording, add a new item (and retire the old row) rather than editing.
+ */
+
 /**
  * Starter speaking tasks, four per CEFR level. The student thinks for
  * `thinkSeconds`, then records for up to `answerSeconds`. A teacher scores the
@@ -64,7 +71,7 @@ const items: SeedItem[] = [
   task("A2", "description", "HARD",
     "Eine Freundin aus dem Ausland besucht Sie für ein Wochenende. Erzählen Sie, was man in Ihrer Stadt oder Region machen kann und was Sie ihr zeigen möchten.",
     ["mindestens zwei Sehenswürdigkeiten oder Aktivitäten", "Vorschlag für Essen oder Freizeit", "einfacher Plan (am Samstag ..., am Sonntag ...)", "kurze Begründung der Auswahl"]),
-  task("A2", "discussion", "MID",
+  task("A2", "presentation", "MID",
     "Sie möchten mit einem Freund am Samstag etwas zusammen unternehmen. Sprechen Sie ihm eine Nachricht auf die Mailbox: Was möchten Sie machen? Wann und wo treffen Sie sich? Was soll er mitbringen?",
     ["konkreter Vorschlag für eine Aktivität", "Uhrzeit und Treffpunkt", "Bitte, etwas mitzubringen", "Begrüßung und Verabschiedung, Bitte um Rückruf oder Antwort"]),
 
@@ -114,7 +121,7 @@ const items: SeedItem[] = [
     ["strukturierter Aufbau mit Einleitung, Hauptteil und Schluss", "Chancen digitaler Lernformen", "Grenzen oder Risiken", "konkretes Beispiel, präziser Wortschatz"],
     "neutral/sachlich"),
   task("C1", "description", "EASY",
-    "Berichten Sie von einem Projekt, an dem Sie in Studium, Beruf oder Ehrenamt beteiligt waren. Erläutern Sie Ziel und Ihre Rolle, schildern Sie eine Schwierigkeit und wie Sie damit umgegangen sind, und sagen Sie, was Sie heute anders machen würden.",
+    "Berichten Sie von einem Projekt, an dem Sie in Studium, Beruf oder Ehrenamt beteiligt waren. Erläutern Sie das Ziel und Ihre Rolle, schildern Sie eine Schwierigkeit und wie Sie damit umgegangen sind, und sagen Sie, was Sie heute anders machen würden.",
     ["Ziel des Projekts und eigene Rolle", "konkrete Schwierigkeit und Umgang damit", "reflektierte Bewertung (was man anders machen würde)", "gegliederter, flüssiger Bericht mit präzisem Wortschatz"],
     "neutral/sachlich"),
 

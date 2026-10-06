@@ -1,6 +1,13 @@
 import type { TfngValue } from "@/lib/exam/types";
 import type { SeedBankPart, SeedItem, SeedStimulus } from "./types";
 
+/*
+ * A seed item's text is part of its seed key (seed-key.ts). Changing the
+ * wording of an item here makes it a new item: the bank top-up then adds it
+ * next to the old one in every organisation that already has the old one. To
+ * fix wording, add a new item (and retire the old row) rather than editing.
+ */
+
 /**
  * Starter listening clips, three per CEFR level with three items each.
  *

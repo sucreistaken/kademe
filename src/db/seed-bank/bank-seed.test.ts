@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { scoreItem } from "@/lib/exam/item-scoring";
 import { validateItem } from "@/lib/exam/validate";
 import { CEFR_LEVELS } from "@/lib/exam/types";
 import { SEED_BANK, SEED_PARTS } from "./index";
@@ -52,6 +53,26 @@ describe("starter bank coverage", () => {
       expect(c.content.gaps.every((g) => !g.choices)).toBe(true);
     });
   }
+});
+
+describe("starter C-tests accept the equally correct completions", () => {
+  const ctest = (level: string) => SEED_BANK.items.find((i) => i.level === level && i.skillTag === "grammar.ctest")!;
+  const accepts = (level: string, gap: string, typed: string) => {
+    const c = ctest(level);
+    return scoreItem(c.type, c.content, c.key, { gaps: { [gap]: typed } })?.score === 1 / Object.keys((c.key as { answers: object }).answers).length;
+  };
+
+  it("C1: wird häufig angenommen", () => {
+    expect(accepts("C1", "g12", "führt")).toBe(true);
+    expect(accepts("C1", "g12", "nommen")).toBe(true);
+    expect(accepts("C1", "g12", "angenommen")).toBe(true);
+  });
+
+  it("C2: diese Einschätzung", () => {
+    expect(accepts("C2", "g11", "icht")).toBe(true);
+    expect(accepts("C2", "g11", "chätzung")).toBe(true);
+    expect(accepts("C2", "g11", "Einschätzung")).toBe(true);
+  });
 });
 
 describe("starter bank items are well formed", () => {
