@@ -28,7 +28,7 @@
     "teamShort": "{evaluators, plural, =0 {The team has no evaluator} one {The team has one evaluator} other {The team has # evaluators}}; the rule asks for {min}.",
     "deadlinePassed": "The last day has passed; no new invitation can be opened.",
     "copyOpening": "Copy",
-    "rulesTeam": "{count, plural, =0 {No reviewers} one {One reviewer} other {# reviewers}} · decides: {decider}",
+    "rulesTeam": "{count, plural, =0 {No evaluators} one {One evaluator} other {# evaluators}} · decides: {decider}",
     "rulesNoDecider": "nobody chosen",
     "rulesContact": "{deadline} · reply within {days, plural, one {# day} other {# days}}",
     "rulesBlindOn": "Identity hidden",

@@ -592,6 +592,13 @@ describe("small fixes of round 1", () => {
     expect(managerT("tr")("hiringCommon.rulesContact", { deadline: "Son tarih yok", days: 7 })).toBe("Son tarih yok · 7 günde dönüş");
   });
 
+  it("B-M7: says 'evaluators' in English, the word the team flow and the invite form use", () => {
+    const en = managerT("en");
+    expect(en("hiringCommon.rulesTeam", { count: 0, decider: "Kadir" })).toBe("No evaluators · decides: Kadir");
+    expect(en("hiringCommon.rulesTeam", { count: 1, decider: "Kadir" })).toBe("One evaluator · decides: Kadir");
+    expect(en("hiringCommon.rulesTeam", { count: 3, decider: "Kadir" })).toBe("3 evaluators · decides: Kadir");
+  });
+
   it("M3: the path's last step opens the summary through PublishLink", async () => {
     status = "DRAFT";
     state = { draft: DRAFT, live: null, content: ready(), problems: [] };
