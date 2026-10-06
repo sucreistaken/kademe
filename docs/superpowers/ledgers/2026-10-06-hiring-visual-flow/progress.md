@@ -164,3 +164,11 @@ Task 16: complete (commits 182bb29..eb09264, review clean after 1 fix round)
 - Carry to Task 17 (binding): todaySummary counts an accommodation request twice (its task item and its opening's requests row); the "N iş seni bekliyor" headline counts it once.
 - Task 16: minor (deferred): until Task 17 the dashboard runs hiring's five reads and drops them (the page shows review and running only).
 BASE T17: eb09264
+Task 17: implementer DONE 39fc33d (Today: PanelHeader "Bugün", next-task card, attention rows, "Tüm alımların durumu" link from the manifest's overview, exam queue unchanged; Task 16 carry: todaySummary counts review and attention lanes only, so an accommodation request counts once; EmptyState body hidden for a user who may invite for nothing; new dashboard/page.test pins the exam's queue rows, expiring card and running rows captured from the page before the task). Controller: vitest 2587, 2586 passed, 1 env failure, 1 declared rename (today.test summary), 17 more added. Review (opus): Approved, 0 Critical/Important; the reviewer rendered the old page with the new test's rows and the pins held 3/3; the overview link is not a leak (the hiring menu is shown to every org and role; listOpenings is org-scoped and filtered per viewer).
+- Ruling: the controller fixes Minors 1-2 now: the empty queue's invite hint shows only when the header holds the invite and the user may invite (no third "nothing waiting" line under the empty state, no invite advice to a reviewer). Commit 8547738. Controller: vitest 2588, 2587 passed, 1 env failure, 0 removed, 1 added.
+Task 17: fix round 1/5 (2 minor addressed by the controller, 0 open; commit 8547738)
+Task 17: complete (commits 39fc33d..8547738, review clean after 1 fix round)
+- Task 17: minor (deferred): core dashboard falls back to the "language-exam" key for the empty queue's heading (plan text); a manifest flag would be the cleaner seam.
+- Task 17: minor (accepted, design): running rows sit behind a disclosure, so they are in the DOM only when opened.
+- Not run: verify:exam after Task 17 (doğrulanmadı, Postgres yok); browser before/after of the exam's Today and the three role checks (doğrulanmadı, bulut, tarayıcı yok; covered by render tests).
+BASE T18: 8547738
