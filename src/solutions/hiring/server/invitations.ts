@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNotNull, isNull, ne, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, lt, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import type { Executor } from "@/db/executor";
 import {
@@ -30,6 +30,7 @@ import {
   addDays,
   candidateProgress,
   cleanInviteName,
+  EXPIRING_SOON_MS,
   formatInviteDeadline,
   inviteMessage,
   isEmail,
@@ -685,6 +686,13 @@ export async function markRequestHandled(user: { id: string; orgId: string }, op
   });
 }
 
+/** One row per invitation, even if a later attempt is ever marked primary too: the funnel's "started" (openingFunnel and openingCardFacts). */
+function firstAttempts<T extends { assessmentId: string }>(rows: readonly T[]): Map<string, T> {
+  const first = new Map<string, T>();
+  for (const a of rows) if (!first.has(a.assessmentId)) first.set(a.assessmentId, a);
+  return first;
+}
+
 export function median(values: number[]): number | null {
   if (values.length === 0) return null;
   const sorted = [...values].sort((a, b) => a - b);
@@ -759,10 +767,7 @@ export async function openingFunnel(orgId: string, openingId: string, prng: (see
         .from(hiringStages)
         .where(eq(hiringStages.versionId, live.id))
     : null;
-  // One row per invitation, even if a later attempt is ever marked primary too.
-  const byInvitation = new Map<string, { startedAt: Date | null; completedAt: Date | null }>();
-  for (const a of attemptRows) if (!byInvitation.has(a.assessmentId)) byInvitation.set(a.assessmentId, a);
-  const started = [...byInvitation.values()];
+  const started = [...firstAttempts(attemptRows).values()];
   const done = started.filter((a) => a.completedAt && a.startedAt);
   const minutes = median(done.map((a) => (a.completedAt!.getTime() - a.startedAt!.getTime()) / 60_000));
   return {
@@ -831,6 +836,106 @@ async function releasedSurvey(orgId: string, openingId: string, total: number, p
     average: Math.round(Number(row.average) * 10) / 10,
     comments: sampleOf(pool, SURVEY_COMMENTS_SHOWN, prng(surveySeed(openingId, count))),
   };
+}
+
+/**
+ * HIRING-VISUAL-FLOW 4.4 (KG1, KG4, H9): what an opening's row in the control
+ * view says. `requests` is there only for someone who runs openings, and only
+ * then are requests read at all (STATUS 321): open candidate requests
+ * (accommodation, new link) and data-rights requests (counted, handled with
+ * plan 3, ruling C6). A reviewer's facts have no `requests` key.
+ */
+export type OpeningCardFacts = {
+  invited: number;
+  started: number;
+  completed: number;
+  /** Links not finished that expire within EXPIRING_SOON_MS, on openings not closed (a count, so a reviewer sees it too, H9). */
+  expiringSoon: number;
+  requests?: { open: number; rights: number };
+};
+
+/**
+ * The facts of many openings at once. Invited, started and completed count
+ * what the overview's funnel counts (openingFunnel): this organisation's
+ * invitations of people not deleted, each counted once by its first primary
+ * attempt that started. A closed opening's link can be neither opened nor
+ * extended, so it is not counted as expiring (as on Today). Every read is
+ * scoped to the organisation (attempts, links and requests through the
+ * invitations read first) and runs after the one before (ruling C21: the pool
+ * of five connections is shared with the live exam's writes).
+ */
+export async function openingCardFacts(orgId: string, openingIds: string[], viewer: { runs: boolean }, now: Date = new Date()): Promise<Record<string, OpeningCardFacts>> {
+  const ids = openingIds.filter(isUuid);
+  if (ids.length === 0) return {};
+  const blank = (): OpeningCardFacts => ({ invited: 0, started: 0, completed: 0, expiringSoon: 0, ...(viewer.runs ? { requests: { open: 0, rights: 0 } } : {}) });
+  const facts: Record<string, OpeningCardFacts> = Object.fromEntries(ids.map((id) => [id, blank()]));
+  const invitations = await db
+    .select({ assessmentId: hiringAssessments.assessmentId, openingId: hiringAssessments.openingId, candidateId: candidates.id })
+    .from(hiringAssessments)
+    .innerJoin(assessments, and(eq(assessments.id, hiringAssessments.assessmentId), eq(assessments.orgId, orgId)))
+    .innerJoin(candidates, and(eq(candidates.id, assessments.candidateId), isNull(candidates.deletedAt)))
+    .where(and(eq(hiringAssessments.orgId, orgId), inArray(hiringAssessments.openingId, ids)));
+  if (invitations.length === 0) return facts;
+  const assessmentIds = invitations.map((i) => i.assessmentId);
+  const tries = await db
+    .select({ assessmentId: attempts.assessmentId, completedAt: attempts.completedAt })
+    .from(attempts)
+    .where(and(inArray(attempts.assessmentId, assessmentIds), eq(attempts.isPrimary, true), isNotNull(attempts.startedAt)));
+  const expiring = await db
+    .select({ assessmentId: assessmentLinks.assessmentId })
+    .from(assessmentLinks)
+    .innerJoin(hiringAssessments, and(eq(hiringAssessments.assessmentId, assessmentLinks.assessmentId), eq(hiringAssessments.orgId, orgId)))
+    .innerJoin(hiringOpenings, and(eq(hiringOpenings.id, hiringAssessments.openingId), eq(hiringOpenings.orgId, orgId)))
+    .where(
+      and(
+        inArray(assessmentLinks.assessmentId, assessmentIds),
+        inArray(assessmentLinks.status, ["NOT_STARTED", "IN_PROGRESS"]),
+        gt(assessmentLinks.expiresAt, now),
+        lt(assessmentLinks.expiresAt, new Date(now.getTime() + EXPIRING_SOON_MS)),
+        ne(hiringOpenings.status, "CLOSED"),
+      ),
+    );
+  const requests = viewer.runs
+    ? await db
+        .select({ assessmentId: candidateRequests.assessmentId })
+        .from(candidateRequests)
+        .where(and(eq(candidateRequests.orgId, orgId), inArray(candidateRequests.assessmentId, assessmentIds), isNull(candidateRequests.handledAt)))
+    : [];
+  const rights = viewer.runs
+    ? await db
+        .select({ id: deletionRequests.id, candidateId: deletionRequests.candidateId })
+        .from(deletionRequests)
+        .innerJoin(candidates, and(eq(candidates.id, deletionRequests.candidateId), eq(candidates.orgId, orgId)))
+        .where(and(inArray(deletionRequests.candidateId, [...new Set(invitations.map((i) => i.candidateId))]), isNull(deletionRequests.handledAt)))
+    : [];
+  // Counted by invitation through maps, so a page of many openings stays linear.
+  const tally = (rows: ReadonlyArray<{ assessmentId: string }>) => {
+    const n = new Map<string, number>();
+    for (const r of rows) n.set(r.assessmentId, (n.get(r.assessmentId) ?? 0) + 1);
+    return n;
+  };
+  const first = firstAttempts(tries);
+  const expiringBy = tally(expiring);
+  const requestsBy = tally(requests);
+  const peopleBy = new Map<string, Set<string>>();
+  for (const inv of invitations) {
+    const f = facts[inv.openingId];
+    if (!f) continue;
+    const attempt = first.get(inv.assessmentId);
+    f.invited += 1;
+    if (attempt) f.started += 1;
+    if (attempt?.completedAt) f.completed += 1;
+    f.expiringSoon += expiringBy.get(inv.assessmentId) ?? 0;
+    if (f.requests) f.requests.open += requestsBy.get(inv.assessmentId) ?? 0;
+    peopleBy.set(inv.openingId, (peopleBy.get(inv.openingId) ?? new Set()).add(inv.candidateId));
+  }
+  // A data-rights request belongs to the person: counted once in each opening the person was invited to.
+  for (const [openingId, f] of Object.entries(facts)) {
+    if (!f.requests) continue;
+    const people = peopleBy.get(openingId) ?? new Set<string>();
+    f.requests.rights = new Set(rights.filter((r) => people.has(r.candidateId)).map((r) => r.id)).size;
+  }
+  return facts;
 }
 
 /**

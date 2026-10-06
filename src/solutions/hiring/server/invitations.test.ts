@@ -8,7 +8,7 @@ vi.mock("./consent", () => ({ ensureHiringConsentText: consent.ensure }));
 import { formatInviteDeadline, surveySeed } from "../rules/invitation";
 import { zoneLabel } from "@/lib/org-timezone";
 import { HiringNotFound } from "./errors";
-import { createHiringInvitation, extendHiringLink, invitableOpenings, listOpeningCandidates, markRequestHandled, median, newHiringLink, openingFunnel } from "./invitations";
+import { createHiringInvitation, extendHiringLink, invitableOpenings, listOpeningCandidates, markRequestHandled, median, newHiringLink, openingCardFacts, openingFunnel } from "./invitations";
 
 const ORG = "11111111-1111-4111-8111-111111111111";
 const OPENING = "22222222-2222-4222-8222-222222222222";
@@ -850,5 +850,68 @@ describe("invitableOpenings", () => {
     fake.respond = () => [];
     expect(await invitableOpenings(ORG)).toEqual([]);
     expect(fake.ops.map((o) => o.table)).toEqual(["hiring_openings"]);
+  });
+});
+
+describe("openingCardFacts (4.4, H9, rulings C6 and C21)", () => {
+  const OP2 = "99999999-9999-4999-8999-999999999999";
+  const facts = (op: Op): unknown[] => {
+    if (op.table === "hiring_assessments")
+      return [
+        { assessmentId: "a1", openingId: OPENING, candidateId: "c1" },
+        { assessmentId: "a2", openingId: OPENING, candidateId: "c2" },
+        { assessmentId: "a3", openingId: OP2, candidateId: "c3" },
+      ];
+    if (op.table === "attempts") return [{ assessmentId: "a1", completedAt: NOW }, { assessmentId: "a2", completedAt: null }];
+    if (op.table === "assessment_links") return [{ assessmentId: "a3" }];
+    if (op.table === "candidate_requests") return [{ assessmentId: "a2" }, { assessmentId: "a2" }];
+    // The same data-rights request reached through two rows: counted once.
+    if (op.table === "deletion_requests") return [{ id: "d1", candidateId: "c1" }, { id: "d1", candidateId: "c1" }];
+    return [];
+  };
+  beforeEach(() => {
+    fake.respond = facts;
+  });
+
+  it("counts invited, started and completed as the funnel does, links expiring within 48 hours, and the requests of someone who runs openings", async () => {
+    expect(await openingCardFacts(ORG, [OPENING, OP2], { runs: true }, NOW)).toEqual({
+      [OPENING]: { invited: 2, started: 2, completed: 1, expiringSoon: 0, requests: { open: 2, rights: 1 } },
+      [OP2]: { invited: 1, started: 0, completed: 0, expiringSoon: 1, requests: { open: 0, rights: 0 } },
+    });
+    const invitations = fake.ops.find((o) => o.table === "hiring_assessments")!;
+    expect(invitations.params).toContain(ORG);
+    expect(invitations.joins.join(" ")).toContain('"candidates"."deleted_at" is null');
+    expect(fake.ops.find((o) => o.table === "attempts")!.where).toContain('"attempts"."is_primary" = $');
+    expect(fake.ops.find((o) => o.table === "candidate_requests")!.params).toContain(ORG);
+    expect(fake.ops.find((o) => o.table === "deletion_requests")!.params).toContain(ORG);
+    const links = fake.ops.find((o) => o.table === "assessment_links")!;
+    // Dates reach the driver as ISO strings (as in candidate.test.ts:685).
+    expect(links.params).toEqual(expect.arrayContaining([NOW.toISOString(), new Date(NOW.getTime() + 48 * 3600 * 1000).toISOString()]));
+    // A closed opening's link can be neither opened nor extended: not counted as expiring (as on Today), and the join is the organisation's.
+    expect(links.where).toContain('"hiring_openings"."status" <> $');
+    expect(links.joins.join(" ")).toContain('"hiring_openings"."org_id" = $');
+    expect(links.params).toContain(ORG);
+  });
+
+  it("gives a reviewer counts only: no requests key, and no request is read (H9, STATUS 321)", async () => {
+    const result = await openingCardFacts(ORG, [OPENING], { runs: false }, NOW);
+    expect(result[OPENING]).toEqual({ invited: 2, started: 2, completed: 1, expiringSoon: 0 });
+    expect(result[OPENING]).not.toHaveProperty("requests");
+    expect(fake.ops.some((o) => o.table === "candidate_requests" || o.table === "deletion_requests")).toBe(false);
+  });
+
+  it("runs its reads one after another (ruling C21), and reads nothing for no openings", async () => {
+    const seen: number[] = [];
+    fake.respond = (op) => {
+      seen.push(fake.ops.length);
+      return facts(op);
+    };
+    await openingCardFacts(ORG, [OPENING, OP2], { runs: true }, NOW);
+    expect(fake.ops.map((o) => o.table)).toEqual(["hiring_assessments", "attempts", "assessment_links", "candidate_requests", "deletion_requests"]);
+    expect(seen).toEqual([1, 2, 3, 4, 5]);
+    fake.ops = [];
+    expect(await openingCardFacts(ORG, [], { runs: true })).toEqual({});
+    expect(await openingCardFacts(ORG, ["not-a-uuid"], { runs: true })).toEqual({});
+    expect(fake.ops).toEqual([]);
   });
 });

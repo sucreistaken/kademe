@@ -308,6 +308,20 @@ describe("loaders", () => {
     expect(rows).toHaveLength(1);
     expect(access.calls).toEqual([expect.objectContaining({ status: "CLOSED" })]);
   });
+
+  it("gives each listed opening its decision maker and members, read one after another (control view 4.4, ruling C21)", async () => {
+    const seen: number[] = [];
+    fake.respond = (op) => {
+      seen.push(ops.length);
+      if (op.table === "hiring_openings") return [{ id: OPENING, name: "A", status: "OPEN", deadlineAt: null, decisionMakerId: ACTOR, backupDecisionMakerId: null, positionName: "P", ownerName: null }];
+      if (op.table === "hiring_opening_members") return [{ openingId: OPENING, userId: ACTOR }, { openingId: "other", userId: COMP }];
+      return [];
+    };
+    const [row] = await listOpenings(ORG, { id: ACTOR, role: "MANAGER" }, "OPEN");
+    expect(row).toMatchObject({ id: OPENING, decisionMakerId: ACTOR, memberIds: [ACTOR] });
+    expect(ops.map((o) => o.table)).toEqual(["hiring_openings", "hiring_opening_members", "hiring_versions"]);
+    expect(seen).toEqual([1, 2, 3]);
+  });
 });
 
 describe("createOpening", () => {

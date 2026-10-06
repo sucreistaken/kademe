@@ -37,6 +37,9 @@ export type OpeningListRow = {
   ownerName: string | null;
   liveNumber: number | null;
   draftNumber: number | null;
+  /** The control view's setup path and team line (4.4) read these; listOpenings has them already. */
+  decisionMakerId: string | null;
+  memberIds: string[];
 };
 
 /**
@@ -62,21 +65,21 @@ export async function listOpenings(orgId: string, viewer: Viewer, status: Openin
     .orderBy(desc(hiringOpenings.createdAt), desc(hiringOpenings.id));
   if (rows.length === 0) return [];
   const ids = rows.map((r) => r.id);
-  const [members, versions] = await Promise.all([
-    db.select().from(hiringOpeningMembers).where(inArray(hiringOpeningMembers.openingId, ids)),
-    db
-      .select({ openingId: hiringVersions.openingId, number: hiringVersions.versionNumber, status: hiringVersions.status })
-      .from(hiringVersions)
-      .where(and(inArray(hiringVersions.openingId, ids), eq(hiringVersions.orgId, orgId)))
-      .orderBy(desc(hiringVersions.versionNumber)),
-  ]);
+  // One after another (ruling C21): the control view calls this three times, and the pool of five is shared with the live exam's writes.
+  const members = await db.select().from(hiringOpeningMembers).where(inArray(hiringOpeningMembers.openingId, ids));
+  const versions = await db
+    .select({ openingId: hiringVersions.openingId, number: hiringVersions.versionNumber, status: hiringVersions.status })
+    .from(hiringVersions)
+    .where(and(inArray(hiringVersions.openingId, ids), eq(hiringVersions.orgId, orgId)))
+    .orderBy(desc(hiringVersions.versionNumber));
+  const memberIdsOf = (id: string) => members.filter((m) => m.openingId === id).map((m) => m.userId);
   return rows
     .filter(
       (r) =>
         openingAccess(viewer, {
           decisionMakerId: r.decisionMakerId,
           backupDecisionMakerId: r.backupDecisionMakerId,
-          memberIds: members.filter((m) => m.openingId === r.id).map((m) => m.userId),
+          memberIds: memberIdsOf(r.id),
           status: r.status,
         }).view,
     )
@@ -91,6 +94,8 @@ export async function listOpenings(orgId: string, viewer: Viewer, status: Openin
         ownerName: r.ownerName,
         liveNumber: own.find((v) => v.status === "PUBLISHED")?.number ?? null,
         draftNumber: own.find((v) => v.status === "DRAFT")?.number ?? null,
+        decisionMakerId: r.decisionMakerId,
+        memberIds: memberIdsOf(r.id),
       };
     });
 }
