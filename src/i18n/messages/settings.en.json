@@ -138,6 +138,7 @@
     "actions": {
       "attempt_set_primary": "Primary attempt selected",
       "audit_export": "Audit log exported",
+      "auth_panel_login": "Signed in with the panel password",
       "candidate_invite": "Candidate invited",
       "competency_archive": "Competency archived",
       "competency_create": "Competency added",

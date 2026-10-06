@@ -2,16 +2,17 @@
 
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { and, asc, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { users } from "@/db/schema";
+import { auditLogs, users } from "@/db/schema";
 import {
   verifyPassword,
   createSession,
   SESSION_COOKIE,
   hashPassword,
 } from "@/lib/auth";
+import { clientKey, panelLoginLimiter, panelPasswordHash } from "@/lib/panel-login";
 
 const schema = z.object({
   email: z.string().email(),
@@ -29,10 +30,21 @@ const DUMMY_HASH_INPUT = "kademe-timing-equaliser";
  */
 export type LoginState = { code?: "INVALID" };
 
+/**
+ * One entry point for both forms. With `PANEL_PASSWORD_HASH` set the panel is
+ * opened by the shared panel password alone and the e-mail form is off; without
+ * it the e-mail login runs exactly as before.
+ */
 export async function login(
   _prev: LoginState,
   formData: FormData,
 ): Promise<LoginState> {
+  const panelHash = panelPasswordHash();
+  if (panelHash) return loginWithPanelPassword(panelHash, formData);
+  return loginWithEmail(formData);
+}
+
+async function loginWithEmail(formData: FormData): Promise<LoginState> {
   const parsed = schema.safeParse({
     email: String(formData.get("email") ?? "").trim().toLowerCase(),
     password: String(formData.get("password") ?? ""),
@@ -57,8 +69,67 @@ export async function login(
     return { code: "INVALID" };
   }
 
+  await startSession(user.id);
+  redirect("/dashboard");
+}
+
+async function loginWithPanelPassword(
+  panelHash: string,
+  formData: FormData,
+): Promise<LoginState> {
   const head = await headers();
-  const session = await createSession(user.id, {
+  const key = clientKey(head.get("x-forwarded-for"), head.get("x-real-ip"));
+
+  // A locked client is not even checked, so guessing during a lockout is wasted.
+  if (panelLoginLimiter.isLocked(key)) return { code: "INVALID" };
+
+  // Never trimmed: a leading space is part of a password somebody chose.
+  const password = String(formData.get("password") ?? "");
+  let ok = false;
+  if (password) {
+    try {
+      ok = await verifyPassword(panelHash, password);
+    } catch {
+      ok = false;
+    }
+  }
+  if (!ok) {
+    panelLoginLimiter.recordFailure(key);
+    if (panelLoginLimiter.isLocked(key)) {
+      console.warn(`panel login: too many failed attempts, locked client ${key}`);
+    }
+    return { code: "INVALID" };
+  }
+
+  // Single organisation: the panel password stands for its first active owner.
+  const [owner] = await db
+    .select({ id: users.id, orgId: users.orgId })
+    .from(users)
+    .where(and(eq(users.role, "OWNER"), isNull(users.disabledAt)))
+    .orderBy(asc(users.createdAt))
+    .limit(1);
+  if (!owner) return { code: "INVALID" };
+
+  panelLoginLimiter.reset(key);
+  await startSession(owner.id);
+
+  // A shared credential leaves a trace of every use. Never the password.
+  await db.insert(auditLogs).values({
+    orgId: owner.orgId,
+    actorId: owner.id,
+    action: "auth.panel_login",
+    subjectType: "user",
+    subjectId: owner.id,
+    meta: { method: "panel_password" },
+    ip: key,
+  });
+
+  redirect("/dashboard");
+}
+
+async function startSession(userId: string) {
+  const head = await headers();
+  const session = await createSession(userId, {
     ip: head.get("x-forwarded-for") ?? undefined,
     userAgent: head.get("user-agent") ?? undefined,
   });
@@ -75,7 +146,5 @@ export async function login(
   await db
     .update(users)
     .set({ lastLoginAt: new Date() })
-    .where(eq(users.id, user.id));
-
-  redirect("/dashboard");
+    .where(eq(users.id, userId));
 }

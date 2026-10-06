@@ -37,6 +37,9 @@
     "submit": "Sign in",
     "checking": "Checking…",
     "invalid": "Wrong email or password.",
+    "panelLead": "Enter the panel password to open the panel.",
+    "panelPassword": "Panel password",
+    "panelInvalid": "Could not sign in. Check the password; after too many wrong attempts you need to wait 15 minutes.",
     "candidate": "Are you a student? Your exam link was emailed to you; you do not need to sign in here."
   },
   "errorPage": {

@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
  * is true of the setup screen an invited user lands on first.
  */
 export type LoginCopy = {
-  email: string;
+  /** Absent in panel-password mode: the form then asks for the password only. */
+  email?: string;
   password: string;
   submit: string;
   checking: string;
@@ -23,20 +24,23 @@ const field =
 
 export function LoginForm({ copy }: { copy: LoginCopy }) {
   const [state, action, pending] = useActionState<LoginState, FormData>(login, {});
+  const withEmail = copy.email !== undefined;
 
   return (
     <form action={action} className="mt-6 space-y-4">
-      <label className="block">
-        <span className="mb-1.5 block text-[13px] font-medium">{copy.email}</span>
-        <input
-          name="email"
-          type="email"
-          required
-          autoComplete="username"
-          autoFocus
-          className={field}
-        />
-      </label>
+      {withEmail ? (
+        <label className="block">
+          <span className="mb-1.5 block text-[13px] font-medium">{copy.email}</span>
+          <input
+            name="email"
+            type="email"
+            required
+            autoComplete="username"
+            autoFocus
+            className={field}
+          />
+        </label>
+      ) : null}
 
       <label className="block">
         <span className="mb-1.5 block text-[13px] font-medium">{copy.password}</span>
@@ -45,6 +49,7 @@ export function LoginForm({ copy }: { copy: LoginCopy }) {
           type="password"
           required
           autoComplete="current-password"
+          autoFocus={!withEmail}
           className={field}
         />
       </label>

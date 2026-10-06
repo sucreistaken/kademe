@@ -37,6 +37,9 @@
     "submit": "Giriş yap",
     "checking": "Kontrol ediliyor…",
     "invalid": "E-posta veya parola hatalı.",
+    "panelLead": "Panele girmek için panel şifresini yaz.",
+    "panelPassword": "Panel şifresi",
+    "panelInvalid": "Giriş yapılamadı. Şifreyi kontrol et; çok fazla hatalı denemeden sonra 15 dakika beklemen gerekir.",
     "candidate": "Öğrenci misiniz? Sınav linkiniz e-postayla gönderildi, buradan giriş yapmanıza gerek yok."
   },
   "errorPage": {

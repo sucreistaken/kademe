@@ -137,6 +137,7 @@
     },
     "actions": {
       "attempt_set_primary": "Birincil deneme seçildi",
+      "auth_panel_login": "Panel şifresiyle giriş yapıldı",
       "audit_export": "Denetim kaydı dışa aktarıldı",
       "candidate_invite": "Aday davet edildi",
       "competency_archive": "Yetkinlik arşivlendi",

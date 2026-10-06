@@ -54,6 +54,15 @@ pnpm dev --port 3100
   `/proctor-review`, `/purge-retention`
 - Dinleme sesi eksikse: `pnpm bank:tts`
 
+## Panel girişi (2026-10-06)
+
+- `PANEL_PASSWORD_HASH` sunucu ortamında tanımlıysa giriş ekranı yalnızca "Panel şifresi" sorar; doğru şifre, kuruluşun oluşturulma tarihine göre ilk etkin OWNER hesabıyla oturum açar. Her giriş denetim kaydına `auth.panel_login` olarak yazılır (şifre asla yazılmaz).
+- Tanımlı değilse eski e-posta + parola girişi aynen çalışır (yerel geliştirme ve testler bunu kullanır).
+- Değeri üretmek: `pnpm panel:hash` (şifreyi iki kez gizli sorar) ya da `printf '%s' "$SIFRE" | pnpm -s panel:hash`. Çıktı tek satırdır: argon2id özetinin base64url hâli; bunu `PANEL_PASSWORD_HASH=<satır>` olarak ortam dosyasına (canlıda `/etc/kademe/kademe.env`) yazıp uygulamayı yeniden başlat. Ham `$argon2id$...` biçimi de kabul edilir, ama Next'in `.env` okuyucusu `$` işaretlerini tek tırnak içinde bile bozar; base64url biçimi bu yüzden var. Bozuk bir değer görülürse uygulama günlüğe hata yazar ve e-posta girişine düşer.
+- Şifrenin kendisi depoya, testlere, günlüklere yazılmaz; yalnızca özet sunucu ortamında durur.
+- Kaba kuvvet sınırı: aynı IP'den 15 dakikada 5 hatalı denemeden sonra 15 dakika kilit (IP, `X-Forwarded-For`'un son girdisi). Sayaç sunucu sürecinin belleğinde: yeniden başlatmada sıfırlanır, birden fazla süreç olursa her biri ayrı sayar.
+- Bu kipte e-posta ile giriş kapalıdır: davetle eklenen MANAGER/REVIEWER kullanıcıları kurulum linkinden sonra tekrar giriş yapamaz, herkes OWNER olarak girer.
+
 ## Doğrulananlar (komut çıktısıyla)
 
 | Ne | Kanıt |
