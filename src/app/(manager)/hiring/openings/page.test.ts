@@ -31,15 +31,16 @@ const opening = (id: string, status: OpeningListRow["status"], over: Partial<Ope
   memberIds: ["u1"],
   ...over,
 });
-const draft: CockpitRow = { opening: opening("d1", "DRAFT"), facts: null, setup: { done: 2, total: 5 }, shortfall: null, next: { kind: "setup", href: "/hiring/openings/d1/settings#team-members", setupKey: "team" } };
+const draft: CockpitRow = { opening: opening("d1", "DRAFT"), facts: null, setup: { done: 2, total: 5 }, shortfall: null, team: { count: 1, onlyYou: true }, next: { kind: "setup", href: "/hiring/openings/d1/settings#team-members", setupKey: "team" } };
 const live: CockpitRow = {
   opening: opening("o1", "OPEN", { memberIds: ["u1", "u2"] }),
   facts: { invited: 9, started: 8, completed: 8, expiringSoon: 1, requests: { open: 2, rights: 1 } },
   setup: null,
   shortfall: null,
+  team: { count: 2, onlyYou: false },
   next: { kind: "requests", href: "/hiring/openings/o1/candidates" },
 };
-const closed: CockpitRow = { opening: opening("c1", "CLOSED"), facts: { invited: 3, started: 3, completed: 2, expiringSoon: 0, requests: { open: 0, rights: 0 } }, setup: null, shortfall: null, next: { kind: "open", href: "/hiring/openings/c1" } };
+const closed: CockpitRow = { opening: opening("c1", "CLOSED"), facts: null, setup: null, shortfall: null, team: { count: 1, onlyYou: true }, next: { kind: "open", href: "/hiring/openings/c1" } };
 
 async function render(tab?: string) {
   return renderToStaticMarkup((await OpeningsPage({ searchParams: Promise.resolve(tab ? { tab } : {}) })) as never);
@@ -79,9 +80,26 @@ describe("the openings' control view page (4.4)", () => {
     const html = await render("closed");
     const closedPart = html.slice(html.indexOf("Kapalı alımlar (1)"));
     expect(text(closedPart)).toContain("Alım c1");
-    expect(text(closedPart)).toContain("3 davet · 3 başladı · 2 tamamladı");
     expect(closedPart.match(/<a [^>]*>/g)?.map((a) => a.match(/href="([^"]*)"/)?.[1])).toEqual(["/hiring/openings/c1", "/hiring/openings/c1"]);
     expect(text(closedPart).split("\n")).toContain("Aç");
+  });
+
+  it("a closed row says no count and no request even when facts reach it; its one action stays 'Aç' (KG1)", async () => {
+    cockpit.value = { runs: true, drafts: [], open: [], closed: [{ ...closed, facts: { invited: 3, started: 3, completed: 2, expiringSoon: 1, requests: { open: 2, rights: 1 } } }] };
+    const words = text(await render("closed"));
+    expect(words).toContain("Alım c1");
+    expect(words).not.toMatch(/davet|talep|48 saatte|Henüz/);
+  });
+
+  it("a live opening with no active evaluator says so and leads to the team (4.4 (2))", async () => {
+    cockpit.value = { runs: true, drafts: [], open: [{ ...live, facts: { invited: 0, started: 0, completed: 0, expiringSoon: 0, requests: { open: 0, rights: 0 } }, shortfall: { evaluators: 0, min: 2 }, team: { count: 0, onlyYou: false }, next: { kind: "team", href: "/hiring/openings/o1/settings#team-members" } }], closed: [] };
+    const html = await render();
+    const words = text(html);
+    expect(words).toContain("Ekipte değerlendirici yok, kural 2 istiyor.");
+    expect(words).toContain("Ekipte kimse yok");
+    expect(words).toContain("Ekibe ekle");
+    expect(words).toContain("1 tanesinde senden bir şey bekleniyor.");
+    expect(html).toContain('href="/hiring/openings/o1/settings#team-members"');
   });
 
   it("a reviewer: counts only, no request or team line, every action 'Aç', the grey 'Alım aç' with its linked reason (H9, RULES 5)", async () => {

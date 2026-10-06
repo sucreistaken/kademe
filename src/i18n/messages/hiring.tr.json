@@ -25,7 +25,7 @@
     "expiringLinks": "{count, plural, one {# link 48 saatte doluyor} other {# link 48 saatte doluyor}}",
     "draftWaitingPublish": "Taslak v{number} yayın bekliyor",
     "continueSetup": "Kuruluma devam et",
-    "teamShort": "Ekipte {evaluators} değerlendirici var, kural {min} istiyor."
+    "teamShort": "{evaluators, plural, =0 {Ekipte değerlendirici yok} other {Ekipte # değerlendirici var}}, kural {min} istiyor."
   },
   "hiringToday": {
     "accommodation": "{name} bir uyarlama istedi",

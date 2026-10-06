@@ -35,7 +35,7 @@ const NEXT_LABEL = {
 } as const;
 
 /** One opening as a control row (KG1): status, progress, what needs attention, team and last day, and its one next step. */
-function Row({ row, userId, runs, locale, t }: { row: CockpitRow; userId: string; runs: boolean; locale: Locale; t: T }) {
+function Row({ row, runs, locale, t }: { row: CockpitRow; runs: boolean; locale: Locale; t: T }) {
   const o = row.opening;
   const f = row.facts;
   const status = (
@@ -43,8 +43,9 @@ function Row({ row, userId, runs, locale, t }: { row: CockpitRow; userId: string
       <span className="tnum">{[t(`hiringCommon.status${o.status}`), o.liveNumber ? `v${o.liveNumber}` : null].filter(Boolean).join(" · ")}</span>
     </StatusDot>
   );
+  // KG1: a closed opening's row is its name, status, team and last day, and "Aç"; no count and no attention line.
   const progress =
-    o.status === "DRAFT" ? (
+    o.status === "CLOSED" ? null : o.status === "DRAFT" ? (
       row.setup ? (
         <>
           <p className="tnum">{t("hiringOverview.setupCount", { done: row.setup.done, total: row.setup.total })}</p>
@@ -66,7 +67,7 @@ function Row({ row, userId, runs, locale, t }: { row: CockpitRow; userId: string
       <p className="text-muted">{t("hiringOpenings.funnelEmpty")}</p>
     );
   const requests = f?.requests ? f.requests.open + f.requests.rights : 0;
-  const attention: ControlAttention[] = [
+  const attention: ControlAttention[] = o.status === "CLOSED" ? [] : [
     // H9: requests, the team rule and a waiting draft only for someone who runs openings (their facts alone carry them).
     ...(f?.requests && requests > 0
       ? [{ key: "requests", icon: Inbox, text: t("hiringCommon.openRequests", { count: requests }), note: f.requests.rights > 0 ? t("hiringCommon.rightsNote", { count: f.requests.rights }) : undefined }]
@@ -76,8 +77,7 @@ function Row({ row, userId, runs, locale, t }: { row: CockpitRow; userId: string
     // A closed opening's draft waits for nothing (as on Today): only a live one says so.
     ...(runs && o.status === "OPEN" && o.liveNumber && o.draftNumber ? [{ key: "draft", icon: FileText, text: t("hiringCommon.draftWaitingPublish", { number: o.draftNumber }) }] : []),
   ];
-  const team =
-    o.memberIds.length === 0 ? t("hiringOpenings.teamNone") : o.memberIds.length === 1 && o.memberIds[0] === userId ? t("hiringOpenings.teamOnlyYou") : t("hiringOpenings.teamCount", { count: o.memberIds.length });
+  const team = row.team.count === 0 ? t("hiringOpenings.teamNone") : row.team.onlyYou ? t("hiringOpenings.teamOnlyYou") : t("hiringOpenings.teamCount", { count: row.team.count });
   const facts = (
     <>
       <span className="block">{o.deadlineAt ? t("hiringCommon.deadline", { date: shortDate(o.deadlineAt, locale) }) : t("hiringCommon.noDeadline")}</span>
@@ -176,7 +176,7 @@ export default async function OpeningsPage({ searchParams }: { searchParams: Pro
         .filter(Boolean)
         .join(" ")
     : t("hiringOpenings.summaryViewer", { count: total });
-  const rows = (list: CockpitRow[]) => list.map((row) => <Row key={row.opening.id} row={row} userId={user.id} runs={runs} locale={locale} t={t} />);
+  const rows = (list: CockpitRow[]) => list.map((row) => <Row key={row.opening.id} row={row} runs={runs} locale={locale} t={t} />);
 
   return (
     <main className="mx-auto max-w-[1360px] px-page py-8">

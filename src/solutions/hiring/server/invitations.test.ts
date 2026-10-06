@@ -851,6 +851,17 @@ describe("invitableOpenings", () => {
     expect(await invitableOpenings(ORG)).toEqual([]);
     expect(fake.ops.map((o) => o.table)).toEqual(["hiring_openings"]);
   });
+
+  it("runs its reads one after another (ruling C21: the control view and the invite pages share the pool with the live exam)", async () => {
+    const seen: number[] = [];
+    fake.respond = (op) => {
+      seen.push(fake.ops.length);
+      return op.table === "hiring_openings" ? [{ id: "o1", name: "A", deadlineAt: null, minEvaluations: 2 }] : [];
+    };
+    await invitableOpenings(ORG);
+    expect(fake.ops.map((o) => o.table)).toEqual(["hiring_openings", "hiring_versions", "hiring_opening_members"]);
+    expect(seen).toEqual([1, 2, 3]);
+  });
 });
 
 describe("openingCardFacts (4.4, H9, rulings C6 and C21)", () => {

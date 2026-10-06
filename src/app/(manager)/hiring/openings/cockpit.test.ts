@@ -8,6 +8,7 @@ const ORG = "11111111-1111-4111-8111-111111111111";
 const D1 = "21111111-1111-4111-8111-111111111111";
 const D2 = "22222222-2222-4222-8222-222222222222";
 const O1 = "33333333-3333-4333-8333-333333333333";
+const C1 = "44444444-4444-4444-8444-444444444444";
 
 const listed = (id: string, status: OpeningListRow["status"], over: Partial<OpeningListRow> = {}): OpeningListRow => ({
   id,
@@ -24,7 +25,7 @@ const listed = (id: string, status: OpeningListRow["status"], over: Partial<Open
 });
 const lists = vi.hoisted(() => ({ byStatus: {} as Record<string, unknown[]> }));
 vi.mock("@/solutions/hiring/server/openings", () => ({ listOpenings: async (_org: string, _viewer: unknown, status: string) => lists.byStatus[status] ?? [] }));
-const reads = vi.hoisted(() => ({ working: vi.fn(async () => ({})), people: vi.fn(async () => []) }));
+const reads = vi.hoisted(() => ({ working: vi.fn(async () => ({})), people: vi.fn(async (): Promise<unknown[]> => []) }));
 vi.mock("@/solutions/hiring/server/working", () => ({ workingState: reads.working }));
 vi.mock("@/server/settings", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/server/settings")>()), loadPanelUsers: reads.people }));
 vi.mock("./[id]/setup-steps", async (importOriginal) => ({
@@ -55,6 +56,7 @@ beforeEach(() => {
   lists.byStatus = { DRAFT: [listed(D1, "DRAFT"), listed(D2, "DRAFT")], OPEN: [listed(O1, "OPEN")], CLOSED: [] };
   reads.working.mockClear();
   reads.people.mockClear();
+  reads.people.mockResolvedValue([]);
   fake.ops = [];
   fake.respond = respond;
 });
@@ -92,5 +94,30 @@ describe("the openings' control view (4.4, H9, D14)", () => {
       [null, "continueSetup"],
     ]);
     expect(reads.working).toHaveBeenCalledTimes(1);
+  });
+
+  it("a live opening with no active evaluator: the team line and the team step, counted as waiting (4.4 (2), KG3)", async () => {
+    fake.respond = (op) => (op.table === "candidate_requests" || op.table === "hiring_opening_members" ? [] : respond(op));
+    const cockpit = await loadCockpit(owner, managerT("tr"), "tr");
+    expect(cockpit.open[0]).toMatchObject({ shortfall: { evaluators: 0, min: 3 }, next: { kind: "team", href: `/hiring/openings/${O1}/settings#team-members` } });
+  });
+
+  it("reads no facts for closed openings and gives their row one action, 'Aç' (4.4, KG1)", async () => {
+    lists.byStatus.CLOSED = [listed(C1, "CLOSED")];
+    const cockpit = await loadCockpit(owner, managerT("tr"), "tr");
+    expect(cockpit.closed[0]).toMatchObject({ facts: null, shortfall: null, setup: null, next: { kind: "open", href: `/hiring/openings/${C1}` } });
+    const invitations = fake.ops.find((o) => o.table === "hiring_assessments")!;
+    expect(invitations.params).toContain(O1);
+    expect(invitations.params).not.toContain(C1);
+  });
+
+  it("counts the team as its active members, the people the team rule counts; a reviewer's count is the listed members (H9)", async () => {
+    reads.people.mockResolvedValue([
+      { id: "u1", role: "OWNER", disabledAt: null },
+      { id: "u3", role: "REVIEWER", disabledAt: new Date("2026-10-01T00:00:00Z") },
+    ]);
+    lists.byStatus = { DRAFT: [], OPEN: [listed(O1, "OPEN", { memberIds: ["u1", "u3"] })], CLOSED: [] };
+    expect((await loadCockpit(owner, managerT("tr"), "tr")).open[0].team).toEqual({ count: 1, onlyYou: true });
+    expect((await loadCockpit(reviewer, managerT("tr"), "tr")).open[0].team).toEqual({ count: 2, onlyYou: false });
   });
 });

@@ -956,18 +956,17 @@ export async function invitableOpenings(
     .orderBy(desc(hiringOpenings.createdAt), desc(hiringOpenings.id));
   if (rows.length === 0) return [];
   const ids = rows.map((r) => r.id);
-  const [live, members] = await Promise.all([
-    db
-      .select({ openingId: hiringVersions.openingId })
-      .from(hiringVersions)
-      .where(and(inArray(hiringVersions.openingId, ids), eq(hiringVersions.orgId, orgId), eq(hiringVersions.status, "PUBLISHED"))),
-    db
-      .select({ openingId: hiringOpeningMembers.openingId, count: sql<number>`count(*)::int` })
-      .from(hiringOpeningMembers)
-      .innerJoin(users, and(eq(users.id, hiringOpeningMembers.userId), eq(users.orgId, orgId), isNull(users.disabledAt)))
-      .where(inArray(hiringOpeningMembers.openingId, ids))
-      .groupBy(hiringOpeningMembers.openingId),
-  ]);
+  // One after another (ruling C21): the pool of five connections is shared with the live exam's writes.
+  const live = await db
+    .select({ openingId: hiringVersions.openingId })
+    .from(hiringVersions)
+    .where(and(inArray(hiringVersions.openingId, ids), eq(hiringVersions.orgId, orgId), eq(hiringVersions.status, "PUBLISHED")));
+  const members = await db
+    .select({ openingId: hiringOpeningMembers.openingId, count: sql<number>`count(*)::int` })
+    .from(hiringOpeningMembers)
+    .innerJoin(users, and(eq(users.id, hiringOpeningMembers.userId), eq(users.orgId, orgId), isNull(users.disabledAt)))
+    .where(inArray(hiringOpeningMembers.openingId, ids))
+    .groupBy(hiringOpeningMembers.openingId);
   return rows.map((r) => ({
     id: r.id,
     name: r.name,

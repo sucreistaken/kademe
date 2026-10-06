@@ -25,7 +25,7 @@
     "expiringLinks": "{count, plural, one {# link expires within 48 hours} other {# links expire within 48 hours}}",
     "draftWaitingPublish": "Draft v{number} waits to be published",
     "continueSetup": "Continue the setup",
-    "teamShort": "{evaluators, plural, one {The team has one evaluator} other {The team has # evaluators}}; the rule asks for {min}."
+    "teamShort": "{evaluators, plural, =0 {The team has no evaluator} one {The team has one evaluator} other {The team has # evaluators}}; the rule asks for {min}."
   },
   "hiringToday": {
     "accommodation": "{name} asked for an adjustment",
