@@ -636,6 +636,20 @@
     "body": "İlgin için teşekkürler.",
     "contact": "Bir yanlışlık olduğunu düşünüyorsan <mail>{email}</mail> adresine yazabilirsin."
   },
+  "hiringProblem": {
+    "expiredTitle": "Bu linkin süresi dolmuş",
+    "expiredBodyDated": "Link {date} tarihinde kapandı. Yeni bir link isteyebilirsin.",
+    "expiredBody": "Link kapandı. Yeni bir link isteyebilirsin.",
+    "notYetTitle": "Bu link henüz açılmadı",
+    "notYetBodyDated": "Değerlendirme {date} tarihinde açılıyor. O saatten sonra aynı linkten girebilirsin.",
+    "notYetBody": "Değerlendirme henüz açılmadı. Aynı linkten daha sonra girebilirsin.",
+    "ask": "Yeni link iste",
+    "asking": "Gönderiliyor",
+    "askFailed": "Talebin gönderilemedi. Bağlantını kontrol edip tekrar dener misin?",
+    "retry": "Tekrar dene",
+    "message": "Aday yeni link talep etti.",
+    "contact": "Bir sorun olduğunu düşünüyorsan <mail>{email}</mail> adresine yazabilirsin."
+  },
   "hiringGate": {
     "title": "Bu değerlendirme bilgisayardan yapılır",
     "why": "İşe alım ekibi, değerlendirmenin bilgisayardan yapılmasını istiyor.",

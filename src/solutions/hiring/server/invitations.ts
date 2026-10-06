@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNotNull, isNull, ne, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import type { Executor } from "@/db/executor";
 import {
@@ -45,6 +45,7 @@ import { estimatedMinutes } from "../rules/disclosure";
 import { deadlineToDate } from "../rules/opening-rules";
 import { workingVersions } from "../rules/versions";
 import { ensureHiringConsentText } from "./consent";
+import { hasStarted } from "./started";
 import { assertActiveUser, versionsOf } from "./versions";
 
 /**
@@ -244,17 +245,6 @@ export async function createHiringInvitation(
 export type NewLinkOutcome =
   | { ok: true; url: string; expiresAt: Date; name: string; message: { subject: string; body: string } }
   | { ok: false; code: "NOT_FOUND" | "COMPLETED" | "CLOSED" };
-
-/** The candidate has begun: an attempt of the invitation started, or one of its stages did. */
-async function hasStarted(x: Executor, assessmentId: string): Promise<boolean> {
-  const [started] = await x
-    .select({ id: attempts.id })
-    .from(attempts)
-    .leftJoin(hiringStageRuns, eq(hiringStageRuns.attemptId, attempts.id))
-    .where(and(eq(attempts.assessmentId, assessmentId), or(isNotNull(attempts.startedAt), isNotNull(hiringStageRuns.startedAt))))
-    .limit(1);
-  return !!started;
-}
 
 /** A new link lives at least this many more days. */
 const NEW_LINK_MIN_DAYS = 7;

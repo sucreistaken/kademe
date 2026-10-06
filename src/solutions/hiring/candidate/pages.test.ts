@@ -15,6 +15,7 @@ const h = vi.hoisted(() => {
     headersError: null as unknown,
     hctx: null as unknown,
     state: null as unknown,
+    facts: { contact: "deniz@ornek.test", openingClosed: false, started: false } as Record<string, unknown>,
     setAssessmentLocale: vi.fn(async () => undefined),
     consent: { tr: "Rıza metni", en: "Consent text" } as { tr: string; en: string },
   };
@@ -31,11 +32,12 @@ vi.mock("next/navigation", () => ({
   },
 }));
 vi.mock("@/lib/candidate-context", () => ({ setAssessmentLocale: h.setAssessmentLocale }));
-vi.mock("../server/candidate", () => ({ loadHiringContext: async () => h.hctx, loadHiringState: async () => h.state, hiringRequestContact: async () => "deniz@ornek.test" }));
+vi.mock("../server/candidate", () => ({ loadHiringContext: async () => h.hctx, loadHiringState: async () => h.state, hiringProblemFacts: async () => h.facts }));
 vi.mock("../server/consent", () => ({ loadConsentText: async () => ({ id: "ct", body: h.consent }) }));
 vi.mock("@/components/hiring/candidate/landing", () => ({ Landing: function Landing() {} }));
 vi.mock("@/components/hiring/candidate/closed", () => ({ ClosedCard: function ClosedCard() {} }));
 vi.mock("@/components/candidate/LinkProblem", () => ({ LinkProblem: function LinkProblem() {} }));
+vi.mock("@/components/hiring/candidate/link-problem", () => ({ HiringLinkProblem: function HiringLinkProblem() {} }));
 vi.mock("@/components/hiring/candidate/frame", () => ({ HiringFrame: function HiringFrame() {} }));
 vi.mock("@/components/candidate/UnknownLink", () => ({ UnknownLink: function UnknownLink() {} }));
 vi.mock("@/components/hiring/candidate/device-check", () => ({ DeviceCheck: function DeviceCheck() {} }));
@@ -55,6 +57,7 @@ vi.mock("@/components/hiring/candidate/desktop-only", () => ({ DesktopOnlyScreen
 import { Landing } from "@/components/hiring/candidate/landing";
 import { ClosedCard } from "@/components/hiring/candidate/closed";
 import { LinkProblem } from "@/components/candidate/LinkProblem";
+import { HiringLinkProblem } from "@/components/hiring/candidate/link-problem";
 import { HiringFrame } from "@/components/hiring/candidate/frame";
 import { UnknownLink } from "@/components/candidate/UnknownLink";
 import { DeviceCheck } from "@/components/hiring/candidate/device-check";
@@ -94,6 +97,7 @@ const render = (slot: "landing" | "info" | "check" | "practice" | "stage" | "don
 beforeEach(() => {
   h.headers = { "user-agent": h.DESKTOP_UA };
   h.headersError = null;
+  h.facts = { contact: "deniz@ornek.test", openingClosed: false, started: false };
   h.hctx = { ...ctx, hiring: { openingId: "op", versionId: "v", extraTimePct: 0, consentTextId: "ct" } };
   // A state as Task 5 builds it can only carry candidate text; the team-only field here proves the
   // renderer still goes through candidateSafe, and the LEAKVISIBLE text is the positive control (C10).
@@ -158,9 +162,9 @@ describe("renderHiringPage", () => {
 
   it("shows an expired link's card, and the closed opening's card", async () => {
     const expired = await render("landing", { resolved: { ok: false, problem: "EXPIRED", ctx } });
-    expect((find(expired, LinkProblem)[0].props as { problem: string }).problem).toBe("EXPIRED");
-    // No reply is promised to a hiring candidate: the card names the opening's contact (final wave ruling).
-    expect(find(expired, LinkProblem)[0].props).toMatchObject({ noReply: { email: "deniz@ornek.test" } });
+    // Hiring's own honest card (plan 2b decision 8), naming the opening's contact; the core card is gone here.
+    expect(find(expired, HiringLinkProblem)[0].props).toEqual({ token: "tok", problem: "EXPIRED", date: "19 Eki", contactEmail: "deniz@ornek.test" });
+    expect(find(expired, LinkProblem)).toHaveLength(0);
     // Inside the hiring frame: the organisation, the language switch and Help stay in reach, and the switch works there.
     await expect(render("landing", { resolved: { ok: false, problem: "EXPIRED", ctx }, searchParams: { lang: "en" } })).rejects.toMatchObject({ to: "/a/tok" });
     // An expired card's Help names the same contact: the opening's, else the organisation's.
@@ -170,6 +174,29 @@ describe("renderHiringPage", () => {
     expect(closed).toHaveLength(1);
     expect(closed[0].props).toEqual({ contactEmail: "deniz@ornek.test" });
     expect(find(await render("landing"), Landing)).toHaveLength(0);
+  });
+
+  it("shows the closed card, not 'ask for a new link', on a closed opening to a candidate who never started (plan decision 9)", async () => {
+    h.facts = { contact: "deniz@ornek.test", openingClosed: true, started: false };
+    const node = await render("landing", { resolved: { ok: false, problem: "EXPIRED", ctx } });
+    expect(find(node, ClosedCard)[0].props).toEqual({ contactEmail: "deniz@ornek.test" });
+    expect(find(node, HiringLinkProblem)).toHaveLength(0);
+    expect(find(await render("landing", { resolved: { ok: false, problem: "NOT_YET", ctx } }), ClosedCard)).toHaveLength(1);
+    h.facts = { contact: "deniz@ornek.test", openingClosed: true, started: true };
+    expect(find(await render("landing", { resolved: { ok: false, problem: "EXPIRED", ctx } }), HiringLinkProblem)).toHaveLength(1);
+  });
+
+  it("shows a not-yet link its opening time and no request, and gives the cards only candidate facts (leak rule)", async () => {
+    const notYet = { ...ctx, link: { ...ctx.link, notBefore: new Date("2026-10-08T07:00:00Z") }, orgName: "Örnek LEAKVISIBLE_ORG" };
+    // A facts read that grew a team field must not reach the card: the page picks what it hands on.
+    h.facts = { contact: "deniz@ornek.test", openingClosed: false, started: false, internal: "TEAMSECRET_FACT" };
+    const node = await render("landing", { resolved: { ok: false, problem: "NOT_YET", ctx: notYet } });
+    const [card] = find(node, HiringLinkProblem);
+    expect(card.props).toEqual({ token: "tok", problem: "NOT_YET", date: "8 Eki 10:00", contactEmail: "deniz@ornek.test" });
+    // Positive control: the frame carries the organisation's name; no team text is anywhere in the tree.
+    expect(JSON.stringify(node)).toMatch(/LEAKVISIBLE_ORG/);
+    expect(JSON.stringify(node)).not.toMatch(/TEAMSECRET/);
+    expect(find(await render("landing", { resolved: { ok: false, problem: "NOT_YET", ctx } }), HiringLinkProblem)[0].props).toMatchObject({ date: null });
   });
 
   it("keeps a finished link on its way to /done, and asks nothing of a link it cannot serve", async () => {
@@ -469,6 +496,7 @@ describe("the desktop gate (HIRING-VISUAL-FLOW 3.0, VG)", () => {
     h.headers = { "user-agent": PHONE };
     const expired = await render("landing", { resolved: { ok: false, problem: "EXPIRED", ctx } });
     expect(find(expired, DesktopOnlyScreen)).toHaveLength(0);
+    expect(find(expired, HiringLinkProblem)).toHaveLength(1);
     h.state = { ...(h.state as object), step: "DONE", position: null, path: "/done", finished: { completedAt: "2026-10-05T09:00:00.000Z", stagesDone: 1, feedbackBy: "2026-10-12", survey: { enabled: false, answered: false } } };
     const done = await render("done", { resolved: { ok: false, problem: "COMPLETED", ctx } });
     expect(find(done, Done)).toHaveLength(1);

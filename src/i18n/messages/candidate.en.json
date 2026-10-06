@@ -636,6 +636,20 @@
     "body": "Thank you for your interest.",
     "contact": "If you think this is a mistake, write to <mail>{email}</mail>."
   },
+  "hiringProblem": {
+    "expiredTitle": "This link has expired",
+    "expiredBodyDated": "The link closed on {date}. You can ask for a new one.",
+    "expiredBody": "The link closed. You can ask for a new one.",
+    "notYetTitle": "This link is not open yet",
+    "notYetBodyDated": "The assessment opens on {date}. You can come in through the same link after that.",
+    "notYetBody": "The assessment is not open yet. You can come in through the same link later.",
+    "ask": "Ask for a new link",
+    "asking": "Sending",
+    "askFailed": "Your request could not be sent. Check your connection and try again?",
+    "retry": "Try again",
+    "message": "The candidate asked for a new link.",
+    "contact": "If you think something is wrong, you can write to <mail>{email}</mail>."
+  },
   "hiringGate": {
     "title": "This assessment is done on a computer",
     "why": "The hiring team asks for this assessment to be done on a computer.",

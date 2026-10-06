@@ -188,4 +188,13 @@ describe("hiring candidate copy", () => {
       for (const text of strings(namespace)) expect(text).not.toMatch(/Telefonu dik tut|Hold the phone upright|Telefon ya da bilgisayar|A phone or a computer|örneğin telefonunla|such as your phone/);
     }
   });
+
+  it("words a hiring link problem without a promise: no 'one click', no 'still open', no new link before it opens (Task 18 and final wave carries)", () => {
+    for (const text of [...strings(tr.hiringProblem), ...strings(en.hiringProblem)]) expect(text).not.toMatch(/tek tıkla|one click|hâlâ açık|still open|dönülür|reply/i);
+    for (const key of ["notYetBody", "notYetBodyDated"] as const) {
+      expect(tr.hiringProblem[key]).not.toMatch(/yeni link/i);
+      expect(en.hiringProblem[key]).not.toMatch(/new link/i);
+    }
+    expect(tr.hiringProblem.askFailed).toBe("Talebin gönderilemedi. Bağlantını kontrol edip tekrar dener misin?");
+  });
 });

@@ -460,7 +460,7 @@ export function DeviceCheck({
         <div className="space-y-4">
           {fix ? (
             <>
-              <PathSteps steps={[{ title: fix.first, state: "current" }, { title: t("stepReload") }]} />
+              <PathSteps locale={locale} steps={[{ title: fix.first, state: "current" }, { title: t("stepReload") }]} />
               <Disclosure label={t("stillNot")}>
                 <div className="space-y-3">
                   {fix.rest ? <p className="text-[16px] leading-[26px] whitespace-pre-line text-ink-2">{fix.rest}</p> : null}

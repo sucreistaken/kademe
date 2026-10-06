@@ -25,6 +25,7 @@ import {
   attachMedia,
   closeExpiredStageRuns,
   commitResponse,
+  hiringProblemFacts,
   hiringServes,
   loadHiringContext,
   loadHiringState,
@@ -933,5 +934,24 @@ describe("fix round 1 (Task 8 review)", () => {
       const asset = writesOf(fake.ops).find((w) => w.kind === "insert" && w.table === "media_assets")!;
       expect((asset.values as { mime: string }).mime).toBe("audio/webm");
     });
+  });
+});
+
+describe("hiringProblemFacts", () => {
+  it("reads the opening's status and contact in the invitation's organisation, and whether a stage was ever started", async () => {
+    fake.respond = (op) =>
+      op.table === "hiring_openings" ? [{ status: "CLOSED", openingContact: null, orgContact: "ik@ornek.test" }] : op.table === "attempts" ? [{ id: ATTEMPT }] : [];
+    expect(await hiringProblemFacts(h())).toEqual({ contact: "ik@ornek.test", openingClosed: true, started: true });
+    const opening = fake.ops.find((o) => o.table === "hiring_openings")!;
+    expect(opening.params).toEqual(expect.arrayContaining(["op-1", ORG]));
+    const started = fake.ops.find((o) => o.table === "attempts")!;
+    expect(started.params).toEqual(expect.arrayContaining([ASSESSMENT]));
+    // The same "started" as a new link on a closed opening (invitations.ts): an attempt or one of its stages began.
+    expect(started.joins.join(" ")).toContain('"hiring_stage_runs"."attempt_id" = "attempts"."id"');
+  });
+
+  it("says not started and not closed when there is no attempt and the opening is open", async () => {
+    fake.respond = (op) => (op.table === "hiring_openings" ? [{ status: "OPEN", openingContact: "deniz@ornek.test", orgContact: "ik@ornek.test" }] : []);
+    expect(await hiringProblemFacts(h())).toEqual({ contact: "deniz@ornek.test", openingClosed: false, started: false });
   });
 });

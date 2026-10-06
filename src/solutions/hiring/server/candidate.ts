@@ -54,6 +54,7 @@ import { isChoice, isRecorded, orderedActivities, orderedStages, type ContentAct
 import { devicesNeeded } from "../rules/disclosure";
 import { feedbackDay } from "../rules/invitation";
 import { loadVersionContent } from "./content";
+import { hasStarted } from "./started";
 
 /**
  * The hiring candidate flow on the server (hiring solution design 2.4, 7).
@@ -334,15 +335,33 @@ async function settleClock(h: HiringContext, flow: Flow, now: Date): Promise<boo
   });
 }
 
-/** Whom the candidate writes to when something is urgent: the opening's contact, else the organisation's. */
-export async function hiringRequestContact(h: HiringContext): Promise<string | null> {
+/** The invitation's opening in its own organisation: its status and both contacts. */
+async function openingContactRow(h: HiringContext) {
   const [row] = await db
-    .select({ openingContact: hiringOpenings.candidateContactEmail, orgContact: organizations.contactEmail })
+    .select({ status: hiringOpenings.status, openingContact: hiringOpenings.candidateContactEmail, orgContact: organizations.contactEmail })
     .from(hiringOpenings)
     .innerJoin(organizations, eq(organizations.id, hiringOpenings.orgId))
     .where(and(eq(hiringOpenings.id, h.hiring.openingId), eq(hiringOpenings.orgId, h.assessment.orgId)))
     .limit(1);
+  return row;
+}
+
+/** Whom the candidate writes to when something is urgent: the opening's contact, else the organisation's. */
+export async function hiringRequestContact(h: HiringContext): Promise<string | null> {
+  const row = await openingContactRow(h);
   return row?.openingContact ?? row?.orgContact ?? null;
+}
+
+/**
+ * What a link-problem page needs (plan 2b decision 9): whom to name, whether
+ * the opening closed, and whether the candidate ever began (the same test a
+ * new link on a closed opening uses, so the card never offers what the team
+ * cannot give).
+ */
+export async function hiringProblemFacts(h: HiringContext): Promise<{ contact: string | null; openingClosed: boolean; started: boolean }> {
+  const row = await openingContactRow(h);
+  const started = await hasStarted(db, h.assessment.id);
+  return { contact: row?.openingContact ?? row?.orgContact ?? null, openingClosed: row?.status === "CLOSED", started };
 }
 
 export async function loadHiringState(h: HiringContext, now: Date = new Date()): Promise<HiringCandidateState> {

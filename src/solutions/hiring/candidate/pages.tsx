@@ -12,16 +12,19 @@ import { serverDeviceClass } from "@/components/hiring/candidate/device-class";
 import { Done } from "@/components/hiring/candidate/done";
 import { HiringFrame } from "@/components/hiring/candidate/frame";
 import { InfoStep } from "@/components/hiring/candidate/info-step";
+import { HiringLinkProblem } from "@/components/hiring/candidate/link-problem";
 import { Landing } from "@/components/hiring/candidate/landing";
 import { Practice } from "@/components/hiring/candidate/practice";
+import { hiringProblemView } from "@/components/hiring/candidate/problem-view";
 import { StageRunner } from "@/components/hiring/candidate/stage-runner";
+import { dateTime } from "@/i18n/dates";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/i18n/locale";
 import { setAssessmentLocale, type CandidateContext, type LinkProblem as Problem } from "@/lib/candidate-context";
 import { candidateSafe } from "@/lib/candidate-safe";
 import { pickTextLang } from "@/lib/i18n-text";
 import { ORG_TIMEZONE, orgDay, zoneLabel } from "@/lib/org-timezone";
 import type { CandidatePageInput, CandidatePageSlot } from "@/solutions/types";
-import { hiringRequestContact, loadHiringContext, loadHiringState } from "../server/candidate";
+import { hiringProblemFacts, loadHiringContext, loadHiringState } from "../server/candidate";
 import { formatInviteDay, formatInviteDeadline, inviteDeadlineParts } from "../rules/invitation";
 import { loadConsentText } from "../server/consent";
 
@@ -69,7 +72,7 @@ function framed(token: string, locale: Locale, orgName: string, contactEmail: st
   );
 }
 
-/** An expired or not-yet link of a served invitation: the core card inside the frame. */
+/** An invalid link of a served invitation: the core card inside the frame. */
 function problemCard(token: string, locale: Locale, problem: Problem, ctx: CandidateContext, contact: string | null): ReactNode {
   return (
     <LinkProblem
@@ -114,11 +117,33 @@ export async function renderHiringPage(slot: CandidatePageSlot, input: Candidate
   }
 
   // A finished link is the candidate's way back to /done (and the survey). Expired and not-yet
-  // cards keep the frame, so the organisation, the language and Help stay in reach.
+  // cards keep the frame, so the organisation, the language and Help stay in reach. They are
+  // hiring's own honest cards (plan 2b decision 8); on a closed opening a candidate who never
+  // started gets the closed card instead, since no new link can come (plan 2b decision 9).
   if (!resolved.ok && resolved.problem !== "COMPLETED") {
     const locale = isLocale(resolved.ctx.locale) ? resolved.ctx.locale : DEFAULT_LOCALE;
-    const contact = await hiringRequestContact(h);
-    return framed(token, locale, resolved.ctx.orgName, contact, problemCard(token, locale, resolved.problem, resolved.ctx, contact));
+    const facts = await hiringProblemFacts(h);
+    const view = hiringProblemView({ problem: resolved.problem, openingClosed: facts.openingClosed, started: facts.started });
+    const card =
+      view === "closed" ? (
+        <ClosedCard contactEmail={facts.contact} />
+      ) : view === "invalid" ? (
+        problemCard(token, locale, resolved.problem, resolved.ctx, facts.contact)
+      ) : (
+        <HiringLinkProblem
+          token={token}
+          problem={view === "expired" ? "EXPIRED" : "NOT_YET"}
+          date={
+            view === "expired"
+              ? formatInviteDay(orgDay(resolved.ctx.link.expiresAt, ORG_TIMEZONE), locale)
+              : resolved.ctx.link.notBefore
+                ? dateTime(resolved.ctx.link.notBefore, locale)
+                : null
+          }
+          contactEmail={facts.contact}
+        />
+      );
+    return framed(token, locale, resolved.ctx.orgName, facts.contact, card);
   }
 
   const state = await loadHiringState(h);
