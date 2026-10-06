@@ -2267,3 +2267,8 @@ Write in the hand-off: the `pnpm test` summary line, the build result, each tabl
 - Drawings now appear on the Today card, the position and team steps and the setup card; v4 section 4 allowed them only on empty states and the two success moments. The mockup wins on look.
 - The accent now colours icon tiles, chosen cards, setup markers, setup segments and row actions; `globals.css` limited it to three places. Recorded as the user's decision in the token comment (Task 1).
 - The flow header stays the existing thin bar (not the mockup's full-bleed paper band); the panel's page header and route tabs are not restyled, because `PanelHeader` is shared with the exam's pages.
+
+## Controller rulings (2026-10-06)
+
+- R1 (user: "daha az AI"): on the start step nothing is preselected, also when the position has a job ad. "Devam et" waits with the step's existing reason until the manager picks. This replaces the plan's "AI stays preselected" note in Task 4.
+- R2: the other mockup deviations listed above are accepted as written (no amber, "Bugün" title, step counts without the template step, no "Ekibe yeni biri" card, funnel as one line, sheet drawing capped at 320px, PanelHeader untouched).
