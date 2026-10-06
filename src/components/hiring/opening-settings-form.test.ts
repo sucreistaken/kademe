@@ -86,7 +86,7 @@ describe("team and rules: the summary (4.10, P7, H9)", () => {
 
   it("speaks English on an English page", () => {
     const out = render({ locale: "en" });
-    expect(out).toContain("One reviewer · decides: Kadir Ay");
+    expect(out).toContain("One evaluator · decides: Kadir Ay");
     expect(out).toContain("Candidate contact");
     expect(out).toContain("Fair review");
     expect(out).toContain("Each candidate is reviewed by at least 2 people.");
