@@ -9,6 +9,7 @@ import { toCandidateVersion } from "@/solutions/hiring/rules/candidate-view";
 import { workingState } from "@/solutions/hiring/server/working";
 import { openingFor } from "../../access";
 import { AssessmentTabs, OpeningHeader } from "../../opening-header";
+import { setupStrip } from "../../setup-strip";
 
 export const dynamic = "force-dynamic";
 
@@ -28,13 +29,15 @@ export default async function PreviewPage({ params }: { params: Promise<{ id: st
   const [state, org] = await Promise.all([workingState(user.orgId, opening.id), loadOrg(user.orgId)]);
   const content = state.content;
   if (!content) notFound();
+  // 4.5: where a draft's setup path stands, for someone who may edit it (only the people are read; null otherwise).
+  const setup = await setupStrip({ orgId: user.orgId, opening, access, t, locale, state });
   const version = candidateSafe(toCandidateVersion(content));
   const locales = LOCALES.filter((l) => content.localeSet.includes(l));
   // Only an editor's visit to a draft with something in it counts as "previewed".
   const stampVersionId = state.draft && access.edit && version.stages.length > 0 ? content.id : null;
   return (
     <main className="mx-auto max-w-[1360px] px-page py-8">
-      <OpeningHeader opening={opening} active="assessment" locale={locale} t={t} />
+      <OpeningHeader opening={opening} active="assessment" locale={locale} t={t} setup={setup} />
       <div className="mt-4">
         <AssessmentTabs openingId={opening.id} active="preview" t={t} />
       </div>

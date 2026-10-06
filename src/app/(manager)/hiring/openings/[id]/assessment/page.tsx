@@ -11,6 +11,7 @@ import { orderedActivities, orderedStages, totalSeconds, usedCompetencyIds } fro
 import { workingState } from "@/solutions/hiring/server/working";
 import { openingFor } from "../access";
 import { AssessmentTabs, OpeningHeader } from "../opening-header";
+import { setupStrip } from "../setup-strip";
 import { versionHistory, type HistoryRow } from "./history";
 
 export const dynamic = "force-dynamic";
@@ -31,6 +32,8 @@ export default async function AssessmentSummaryPage({ params }: { params: Promis
   const state = await workingState(user.orgId, opening.id);
   const content = state.content;
   if (!content) notFound();
+  // 4.5: where a draft's setup path stands, for someone who may edit it (only the people are read; null otherwise).
+  const setup = await setupStrip({ orgId: user.orgId, opening, access, t, locale, state });
   const stages = orderedStages(content);
   const questions = stages.reduce((sum, s) => sum + s.activities.length, 0);
   const minutes = Math.round(totalSeconds(content) / 60);
@@ -41,7 +44,7 @@ export default async function AssessmentSummaryPage({ params }: { params: Promis
   return (
     // The same page width as the builder, so switching the assessment tabs never moves the header.
     <main className="mx-auto max-w-[1360px] px-page py-8">
-      <OpeningHeader opening={opening} active="assessment" locale={locale} t={t} />
+      <OpeningHeader opening={opening} active="assessment" locale={locale} t={t} setup={setup} />
       <div className="mt-4">
         <AssessmentTabs openingId={opening.id} active="summary" t={t} />
       </div>

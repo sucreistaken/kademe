@@ -47,3 +47,8 @@ export function candidatesNotice(sp: SearchParams): { key: CandidatesNoticeKey; 
   if (request) return { key: request, warn: true };
   return null;
 }
+
+/** Task 18 carry: a refusal is said in words ("Yapılmadı:") and as an alert, not only by its grey dot. */
+export function noticeVoice(notice: { warn: boolean }): { role: "alert" | "status"; lead: boolean } {
+  return notice.warn ? { role: "alert", lead: true } : { role: "status", lead: false };
+}

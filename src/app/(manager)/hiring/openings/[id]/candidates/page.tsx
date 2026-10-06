@@ -14,7 +14,7 @@ import { invitableOpenings, listOpeningCandidates } from "@/solutions/hiring/ser
 import { openingFor } from "../access";
 import { inviteWaitReason } from "../invite-wait";
 import { OpeningHeader } from "../opening-header";
-import { candidatesNotice, NOTICE_PARAMS } from "./notices";
+import { candidatesNotice, NOTICE_PARAMS, noticeVoice } from "./notices";
 
 export const dynamic = "force-dynamic";
 
@@ -65,15 +65,17 @@ export default async function OpeningCandidatesPage({
       <OpeningHeader opening={opening} active="candidates" locale={locale} t={t} action={action} />
       {notice ? (
         <UrlNotice params={NOTICE_PARAMS}>
-          {notice.warn ? (
-            // A refusal or a failure reads as a warning, never like a success (Task 18 fix round 1).
-            <p role="status" className="mt-6">
+          {noticeVoice(notice).lead ? (
+            // A refusal or a failure: an alert, a lead word and the warn dot, never like a success (Task 18 fix round 1 and the plan 2b carry).
+            <p role={noticeVoice(notice).role} className="mt-6">
               <StatusDot tone="warn" className="items-start text-ink [&>span:first-child]:mt-[7px]">
-                <span className="text-[14px] leading-5 font-medium">{t(`hiringCandidates.${notice.key}`)}</span>
+                <span className="text-[14px] leading-5">
+                  <strong className="font-semibold">{t("hiringCandidates.noticeNotDone")}</strong> {t(`hiringCandidates.${notice.key}`)}
+                </span>
               </StatusDot>
             </p>
           ) : (
-            <p role="status" className="mt-6 text-[14px] font-medium text-ink">
+            <p role={noticeVoice(notice).role} className="mt-6 text-[14px] font-medium text-ink">
               {t(`hiringCandidates.${notice.key}`)}
             </p>
           )}

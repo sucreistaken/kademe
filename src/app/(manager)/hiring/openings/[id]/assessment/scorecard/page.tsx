@@ -18,6 +18,7 @@ import { liveWeights } from "@/solutions/hiring/server/weight-sets";
 import { workingState } from "@/solutions/hiring/server/working";
 import { openingFor } from "../../access";
 import { AssessmentTabs, OpeningHeader } from "../../opening-header";
+import { setupStrip } from "../../setup-strip";
 import { matrixOf, pickVersion, viewContent } from "./data";
 
 export const dynamic = "force-dynamic";
@@ -48,6 +49,8 @@ export default async function ScorecardPage({
   const state = await workingState(user.orgId, opening.id);
   const pick = pickVersion(state, one(sp.version));
   if (!pick || !state.content) notFound();
+  // 4.5: where a draft's setup path stands, for someone who may edit it (only the people are read; null otherwise).
+  const setup = await setupStrip({ orgId: user.orgId, opening, access, t, locale, state });
   const content = await viewContent(pick, state.content, (versionId) => loadVersionContent(user.orgId, versionId));
   if (!content) notFound();
   const matrix = matrixOf(content, locale, t);
@@ -118,7 +121,7 @@ export default async function ScorecardPage({
 
   return (
     <main className="mx-auto max-w-[1360px] px-page py-8">
-      <OpeningHeader opening={opening} active="assessment" locale={locale} t={t} />
+      <OpeningHeader opening={opening} active="assessment" locale={locale} t={t} setup={setup} />
       <div className="mt-4">
         <AssessmentTabs openingId={opening.id} active="scorecard" t={t} />
       </div>

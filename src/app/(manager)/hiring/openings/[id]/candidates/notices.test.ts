@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { candidatesNotice } from "./notices";
+import { candidatesNotice, noticeVoice } from "./notices";
 
 /** Task 18 fix round 1 (Minor 4): a refusal or a failure does not look like a success. */
 describe("candidatesNotice", () => {
@@ -21,5 +21,12 @@ describe("candidatesNotice", () => {
     expect(candidatesNotice({ extend: "toString" })).toBeNull();
     expect(candidatesNotice({ handled: ["1", "1"] })).toBeNull();
     expect(candidatesNotice({ handled: "2" })).toBeNull();
+  });
+});
+
+describe("noticeVoice (Task 18 carry: a refusal is not told by its dot alone)", () => {
+  it("says a refusal or failure as an alert with a lead word; a success as a status line", () => {
+    expect(noticeVoice({ warn: true })).toEqual({ role: "alert", lead: true });
+    expect(noticeVoice({ warn: false })).toEqual({ role: "status", lead: false });
   });
 });

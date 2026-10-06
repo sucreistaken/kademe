@@ -9,6 +9,7 @@ import { activeCompetencyOptions, loadPosition } from "@/server/library";
 import { workingState } from "@/solutions/hiring/server/working";
 import { openingFor } from "../../access";
 import { AssessmentTabs, OpeningHeader } from "../../opening-header";
+import { setupStrip } from "../../setup-strip";
 
 export const dynamic = "force-dynamic";
 
@@ -40,12 +41,14 @@ export default async function AiDraftPage({
   ]);
   const content = state.content;
   if (!content) notFound();
+  // 4.5: where a draft's setup path stands, for someone who may edit it (only the people are read; null otherwise).
+  const setup = await setupStrip({ orgId: user.orgId, opening, access, t, locale, state });
   const draftKey = noticeOf(sp, "draft", DRAFT_NOTICES);
   const draftNotice = draftKey ? t(draftKey) : null;
 
   return (
     <main className="mx-auto max-w-[1360px] px-page py-8">
-      <OpeningHeader opening={opening} active="assessment" locale={locale} t={t} />
+      <OpeningHeader opening={opening} active="assessment" locale={locale} t={t} setup={setup} />
       <div className="mt-4">
         <AssessmentTabs openingId={opening.id} active="ai" t={t} />
       </div>

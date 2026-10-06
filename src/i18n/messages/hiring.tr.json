@@ -25,7 +25,15 @@
     "expiringLinks": "{count, plural, one {# link 48 saatte doluyor} other {# link 48 saatte doluyor}}",
     "draftWaitingPublish": "Taslak v{number} yayın bekliyor",
     "continueSetup": "Kuruluma devam et",
-    "teamShort": "{evaluators, plural, =0 {Ekipte değerlendirici yok} other {Ekipte # değerlendirici var}}, kural {min} istiyor."
+    "teamShort": "{evaluators, plural, =0 {Ekipte değerlendirici yok} other {Ekipte # değerlendirici var}}, kural {min} istiyor.",
+    "copyOpening": "Kopyala",
+    "rulesTeam": "{count, plural, =0 {Değerlendirici yok} other {# değerlendirici}} · karar: {decider}",
+    "rulesNoDecider": "kimse seçilmedi",
+    "rulesContact": "{deadline} · {days} günde dönüş",
+    "rulesBlindOn": "Kimlik gizli",
+    "rulesBlindOff": "Kimlik açık",
+    "rulesSurveyOn": "bitiş anketi açık",
+    "rulesSurveyOff": "bitiş anketi kapalı"
   },
   "hiringToday": {
     "accommodation": "{name} bir uyarlama istedi",
@@ -132,12 +140,6 @@
     "publishClosed": "Bu alım kapalı; yayınlanamaz.",
     "publishInvalid": "Taslakta geçersiz bir değer var. Sayfayı yenileyip tekrar dene.",
     "publishFailed": "Yayınlanamadı. Sayfayı yenileyip tekrar dene.",
-    "stateDone": "Tamam",
-    "stateMissing": "Eksik",
-    "stateAdvisory": "Önerilir",
-    "srDone": "Tamamlandı:",
-    "srMissing": "Eksik, yayını engeller:",
-    "srAdvisory": "Önerilir, yayını engellemez:",
     "anchorsNoCompetency": "Önce soru ekleyip yetkinlik seç.",
     "publishing": "Yayınlanıyor",
     "closedNotice": "Bu alım kapalı; değerlendirme ve kayıtlar okunur kalır.",
@@ -158,7 +160,24 @@
     "experienceBatch": "Gizlilik için her {batch} cevapta ve bir gün gecikmeyle güncellenir.",
     "rowPublish": "Yayınla",
     "setupCount": "Kurulum {done} / {total}",
-    "setupNext": "Sıradaki: {step}"
+    "setupNext": "Sıradaki: {step}",
+    "setupLeft": "{count, plural, one {# adım kaldı.} other {# adım kaldı.}}",
+    "attentionTitle": "Dikkat isteyenler",
+    "rulesTitle": "Bu alımın kuralları",
+    "changeRules": "Kuralları değiştir",
+    "menuPreview": "Adayın göreceğini önizle",
+    "menuSettings": "Ekip ve kurallar",
+    "menuSettingsDetail": "Alımı kapatmak da burada.",
+    "goPublish": "Yayın özetine bak",
+    "publishSummaryTitle": "Yayına hazır mı?",
+    "publishVersion": "Yayınlanacak değerlendirme",
+    "publishVersionValue": "v{number} · {stages} aşama · {questions} soru · ~{minutes} dk",
+    "publishDeadline": "Son gün",
+    "publishPreview": "Adayın göreceği",
+    "publishPreviewDone": "Önizlendi",
+    "publishPreviewNot": "Önizlenmedi; önerilir, yayını engellemez.",
+    "fixProblem": "Düzelt",
+    "backToOverview": "Genel bakış"
   },
   "hiringGate": {
     "stageLabel": "Aşama {n}",
@@ -791,6 +810,7 @@
     "errCLOSED": "Bu alım kapalı; başlamamış adaya yeni link üretilemez.",
     "errFORBIDDEN": "Rolün bu alımda link üretemez.",
     "errFAILED": "Link oluşturulamadı. Bir daha dene.",
-    "close": "Kapat"
+    "close": "Kapat",
+    "noticeNotDone": "Yapılmadı:"
   }
 }

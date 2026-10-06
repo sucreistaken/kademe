@@ -25,7 +25,15 @@
     "expiringLinks": "{count, plural, one {# link expires within 48 hours} other {# links expire within 48 hours}}",
     "draftWaitingPublish": "Draft v{number} waits to be published",
     "continueSetup": "Continue the setup",
-    "teamShort": "{evaluators, plural, =0 {The team has no evaluator} one {The team has one evaluator} other {The team has # evaluators}}; the rule asks for {min}."
+    "teamShort": "{evaluators, plural, =0 {The team has no evaluator} one {The team has one evaluator} other {The team has # evaluators}}; the rule asks for {min}.",
+    "copyOpening": "Copy",
+    "rulesTeam": "{count, plural, =0 {No reviewers} one {One reviewer} other {# reviewers}} · decides: {decider}",
+    "rulesNoDecider": "nobody chosen",
+    "rulesContact": "{deadline} · reply within {days} days",
+    "rulesBlindOn": "Identity hidden",
+    "rulesBlindOff": "Identity shown",
+    "rulesSurveyOn": "finish survey on",
+    "rulesSurveyOff": "finish survey off"
   },
   "hiringToday": {
     "accommodation": "{name} asked for an adjustment",
@@ -132,12 +140,6 @@
     "publishClosed": "This opening is closed; it cannot be published.",
     "publishInvalid": "The draft has a value that is not valid. Reload the page and try again.",
     "publishFailed": "Could not publish. Reload the page and try again.",
-    "stateDone": "Done",
-    "stateMissing": "Missing",
-    "stateAdvisory": "Recommended",
-    "srDone": "Done:",
-    "srMissing": "Missing, blocks publishing:",
-    "srAdvisory": "Recommended, does not block publishing:",
     "anchorsNoCompetency": "Add a question and pick its competencies first.",
     "publishing": "Publishing",
     "closedNotice": "This opening is closed; its assessment and records stay readable.",
@@ -158,7 +160,24 @@
     "experienceBatch": "Updates every {batch} answers and a day late, for privacy.",
     "rowPublish": "Publish",
     "setupCount": "Setup {done} / {total}",
-    "setupNext": "Next: {step}"
+    "setupNext": "Next: {step}",
+    "setupLeft": "{count, plural, one {# step left.} other {# steps left.}}",
+    "attentionTitle": "Needs attention",
+    "rulesTitle": "This opening's rules",
+    "changeRules": "Change the rules",
+    "menuPreview": "Preview what candidates see",
+    "menuSettings": "Team and rules",
+    "menuSettingsDetail": "Closing the opening is there too.",
+    "goPublish": "See the publish summary",
+    "publishSummaryTitle": "Ready to publish?",
+    "publishVersion": "Assessment to publish",
+    "publishVersionValue": "v{number} · {stages, plural, one {# stage} other {# stages}} · {questions, plural, one {# question} other {# questions}} · ~{minutes} min",
+    "publishDeadline": "Last day",
+    "publishPreview": "What candidates see",
+    "publishPreviewDone": "Previewed",
+    "publishPreviewNot": "Not previewed; recommended, does not block publishing.",
+    "fixProblem": "Fix it",
+    "backToOverview": "Overview"
   },
   "hiringGate": {
     "stageLabel": "Stage {n}",
@@ -791,6 +810,7 @@
     "errCLOSED": "This opening is closed; no new link can be created for a candidate who has not started.",
     "errFORBIDDEN": "Your role cannot create links in this opening.",
     "errFAILED": "The link could not be created. Try again.",
-    "close": "Close"
+    "close": "Close",
+    "noticeNotDone": "Not done:"
   }
 }

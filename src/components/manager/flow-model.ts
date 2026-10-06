@@ -27,6 +27,13 @@ export function flowStepOf<S extends string>(hash: string, input: { steps: reado
  * so the address never runs ahead: once the missing decision is made the flow
  * does not jump on by itself, and "Devam et" never pushes a second entry for
  * the same step.
+ *
+ * So in hash mode a hash that is not a step of the path is cleared once the
+ * flow mounts. A link that opens a page with a hash must therefore name a
+ * step of the flow that reads it (team and rules: `#team-members`,
+ * `#team-decider`, `#contact-deadline`, the steps of Task 21's flows), or
+ * point at a page that reads its hash without useFlowStep (the overview's
+ * `#publish`, read by PublishSwitch, which never rewrites the address).
  */
 export function flowHashFix(hash: string, shown: string, first: string): string | null {
   if (hash === `#${shown}`) return null;

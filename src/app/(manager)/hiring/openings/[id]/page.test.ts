@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactElement, ReactNode } from "react";
 import { fake, type Op } from "@/solutions/hiring/server/test-fake-db";
+import { activity, content, stage } from "@/solutions/hiring/rules/test-fixtures";
+import type { VersionContent } from "@/solutions/hiring/rules/content";
 
 /**
  * The opening overview (HIRING-UX 5.4, Task 19): the invite Sheet where it can
@@ -25,7 +27,11 @@ type Role = "OWNER" | "MANAGER" | "REVIEWER";
 let viewer: { role: Role; edit: boolean };
 let status: "DRAFT" | "OPEN" | "CLOSED";
 let surveyOn: boolean;
-let state: { draft: unknown; live: unknown };
+let state: { draft: unknown; live: unknown; content?: VersionContent | null; problems?: unknown[] };
+let sp: Record<string, string>;
+/** Rows the opening's attention card counts (openingCardFacts): open requests and links about to expire, by invitation. */
+let requestRows: number;
+let expiringRows: number;
 let invited: number;
 /** Survey answers, oldest first. */
 let answers: Array<{ rating: number; comment: string | null }>;
@@ -58,7 +64,7 @@ vi.mock("@/i18n/manager-locale", () => ({ managerLocale: async () => "tr" }));
 vi.mock("@/components/ui/url-notice", () => ({ UrlNotice: function UrlNotice() {} }));
 vi.mock("@/components/hiring/invite/invite-sheet", () => ({ InviteSheet: function InviteSheet() {} }));
 vi.mock("@/solutions/hiring/server/working", () => ({
-  workingState: async () => ({ list: [], draft: state.draft, live: state.live, content: null, facts: [], problems: [] }),
+  workingState: async () => ({ list: [], draft: state.draft, live: state.live, content: state.content ?? null, facts: new Map(), problems: state.problems ?? [] }),
 }));
 vi.mock("@/server/settings", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/server/settings")>()),
@@ -69,6 +75,10 @@ import OverviewPage from "./page";
 import { Button } from "@/components/ui/button";
 import { InviteSheet } from "@/components/hiring/invite/invite-sheet";
 import { OpeningHeader } from "./opening-header";
+import { PublishFooter, PublishSwitch } from "./publish-view";
+import Link from "next/link";
+import { PathSteps } from "@/components/visual/path-steps";
+import { StepScreen } from "@/components/visual/step-screen";
 
 const LIVE = { id: VERSION, number: 1, status: "PUBLISHED", publishedAt: NOW, previewedAt: NOW, updatedAt: NOW };
 
@@ -76,7 +86,11 @@ function respond(op: Op): unknown[] {
   if (op.kind !== "select") return [];
   switch (op.table) {
     case "hiring_assessments":
-      return Array.from({ length: invited }, (_, i) => ({ assessmentId: `a${i}` }));
+      return Array.from({ length: invited }, (_, i) => ({ assessmentId: `a${i}`, openingId: OPENING, candidateId: `c${i}` }));
+    case "candidate_requests":
+      return Array.from({ length: requestRows }, () => ({ assessmentId: "a0" }));
+    case "assessment_links":
+      return Array.from({ length: expiringRows }, () => ({ assessmentId: "a1" }));
     case "attempts":
       return invited ? [{ assessmentId: "a0", startedAt: NOW, completedAt: new Date(NOW.getTime() + 20 * 60_000) }] : [];
     case "hiring_survey_responses":
@@ -136,7 +150,7 @@ const dump = (node: ReactNode) => {
 };
 
 async function render() {
-  return (await OverviewPage({ params: Promise.resolve({ id: OPENING }), searchParams: Promise.resolve({}) })) as ReactElement;
+  return (await OverviewPage({ params: Promise.resolve({ id: OPENING }), searchParams: Promise.resolve(sp) })) as ReactElement;
 }
 const header = (page: ReactElement) => find(page, ofType(OpeningHeader))[0];
 
@@ -148,6 +162,9 @@ beforeEach(() => {
   invited = 3;
   answers = [];
   stageSeconds = 1500;
+  sp = {};
+  requestRows = 0;
+  expiringRows = 0;
   fake.ops = [];
   fake.respond = respond;
 });
@@ -272,3 +289,157 @@ describe("the overview's funnel (HIRING-UX 5.4)", () => {
     expect(empty).not.toContain("Henüz aday yok");
   });
 });
+
+const BASE = `/hiring/openings/${OPENING}`;
+const DRAFT = { ...LIVE, id: "d", number: 1, status: "DRAFT", publishedAt: null, previewedAt: null };
+/** A draft whose one question measures a competency: the assessment and the anchors are done, the team too (a reviewer and an active owner deciding). */
+const ready = () => content([stage("s1", [activity("a1", { competencyIds: ["c1"] })])], { id: "d" });
+const publishSwitch = (page: ReactElement) => find(page, ofType(PublishSwitch))[0];
+type MenuItem = { label: string; href: string; detail?: string };
+
+describe("a draft's control view and its setup path (4.5, H7)", () => {
+  beforeEach(() => {
+    status = "DRAFT";
+    state = { draft: DRAFT, live: null, content: ready(), problems: [] };
+    invited = 0;
+  });
+
+  it("has one filled button, 'Kuruluma devam et', to the path's next step, and no 'Yayınla' in the header", async () => {
+    const page = await render();
+    const action = header(page).props.action as ReactElement;
+    expect(text(action)).toBe("Kuruluma devam et");
+    expect(find(action, ofType(Link))[0].props.href).toBe(`${BASE}/assessment/preview`);
+    expect(text(action)).not.toContain("Yayınla");
+    // No setup line on the overview itself: its setup card says the same one line lower.
+    expect(header(page).props.setup).toBeUndefined();
+    const body = text(page);
+    expect(body).toContain("Yayına hazırlık");
+    expect(body).toContain("Kurulum 3 / 5");
+    expect(body).toContain("2 adım kaldı.");
+    // The current step (the advised preview) offers its page and "Atla ›"; the last step is "Yayınla".
+    const steps = find(page, ofType(PathSteps))[0].props.steps as Array<{ title: string; state: string; action?: ReactNode }>;
+    expect(steps.map((s) => [s.title, s.state])).toEqual([
+      ["Değerlendirmeyi kur", "done"],
+      ["Puan kartındaki her yetkinliğe çapa ver", "done"],
+      ["Ekibi ata", "done"],
+      ["Adayın göreceğini önizle", "current"],
+      ["Yayınla", "todo"],
+    ]);
+    expect(text(steps[3].action)).toBe("ÖnizleAtla");
+    expect(find(steps[3].action, (el) => typeof el.props.href === "string").map((l) => l.props.href)).toEqual([`${BASE}/assessment/preview`, `${BASE}?skip=preview`]);
+  });
+
+  it("goes on to the publish summary as a plain anchor once the advice is skipped (?skip=)", async () => {
+    sp = { skip: "preview" };
+    const action = header(await render()).props.action as ReactElement;
+    const [anchor] = find(action, (el) => el.type === "a");
+    expect(anchor.props.href).toBe(`${BASE}#publish`);
+    expect(text(anchor)).toBe("Kuruluma devam et");
+  });
+
+  it("draws the publish summary for an editor: what goes live, each row with its change link, and the one filled 'Yayınla'", async () => {
+    const summary = publishSwitch(await render()).props.summary as ReactElement;
+    expect(summary).toBeTruthy();
+    expect(find(summary, ofType(StepScreen))[0].props.title).toBe("Yayına hazır mı?");
+    const [footer] = find(summary, ofType(PublishFooter));
+    expect(footer.props).toMatchObject({ formId: "publish-form", reason: null, fix: null, labels: { publish: "Yayınla", publishing: "Yayınlanıyor", back: "Genel bakış" } });
+    const [form] = find(summary, (el) => el.type === "form");
+    expect(form.props.id).toBe("publish-form");
+    const rows = find(summary, (el) => Array.isArray(el.props.rows))[0].props.rows as Array<{ id: string; value: string; edit?: { href: string } }>;
+    expect(rows.map((r) => r.id)).toEqual(["version", "team", "deadline", "preview"]);
+    expect(rows[0].value).toBe("v1 · 1 aşama · 1 soru · ~10 dk");
+    expect(rows[1].value).toBe("1 değerlendirici · karar: Sahip");
+    expect(rows[3].value).toBe("Önizlenmedi; önerilir, yayını engellemez.");
+    // A hash target on team and rules is a step of its flow (Task 21: #team-members, #contact-deadline).
+    expect(rows.map((r) => r.edit?.href)).toEqual([`${BASE}/assessment/edit`, `${BASE}/settings#team-members`, `${BASE}/settings#contact-deadline`, `${BASE}/assessment/preview`]);
+  });
+
+  it("makes 'Yayınla' wait with the gate's first problem and a 'Düzelt' link to its place", async () => {
+    state = { ...state, content: content([stage("s1", [activity("a1", { competencyIds: ["c1"], prompt: { tr: "", en: "" } })])], { id: "d" }), problems: [{ code: "EMPTY_PROMPT", activityId: "a1" }] };
+    const summary = publishSwitch(await render()).props.summary as ReactElement;
+    const [footer] = find(summary, ofType(PublishFooter));
+    expect(footer.props.reason).toBe("Aşama 1, soru 1: soru metni boş.");
+    expect(footer.props.fix).toEqual({ label: "Düzelt", href: `${BASE}/assessment/edit?activity=a1` });
+  });
+
+  it("gives a reviewer the path's state but no step action, no summary and no filled button", async () => {
+    viewer = { role: "REVIEWER", edit: false };
+    const page = await render();
+    expect(header(page).props.action).toBeNull();
+    expect(publishSwitch(page).props.summary).toBeNull();
+    expect(text(page)).toContain("Yayına hazırlık");
+    const steps = find(page, ofType(PathSteps))[0].props.steps as Array<{ action?: ReactNode }>;
+    expect(steps.every((s) => s.action === undefined)).toBe(true);
+    expect(find(page, (el) => el.type === "a" && el.props.href === `${BASE}#publish`)).toHaveLength(0);
+  });
+});
+
+describe("the opening's ⋯ menu (plan decision 14, ruling C9)", () => {
+  it("holds links only: preview, team and rules (where closing lives) and 'Kopyala' for someone who may open an opening", async () => {
+    const menu = header(await render()).props.menu as MenuItem[];
+    expect(menu).toEqual([
+      { label: "Adayın göreceğini önizle", href: `${BASE}/assessment/preview` },
+      { label: "Ekip ve kurallar", detail: "Alımı kapatmak da burada.", href: `${BASE}/settings` },
+      { label: "Kopyala", href: `/hiring/openings/new?copy=${OPENING}` },
+    ]);
+  });
+
+  it("gives a reviewer no 'Kopyala' (its page would refuse them) and no word about closing", async () => {
+    viewer = { role: "REVIEWER", edit: false };
+    const menu = header(await render()).props.menu as MenuItem[];
+    expect(menu.map((i) => i.label)).toEqual(["Adayın göreceğini önizle", "Ekip ve kurallar"]);
+    expect(menu.some((i) => i.detail)).toBe(false);
+  });
+});
+
+describe("a live opening's attention and rules (4.5, H9, ruling C6)", () => {
+  it("says the open requests and the links about to expire, each leading to the Candidates tab", async () => {
+    requestRows = 2;
+    expiringRows = 1;
+    const page = await render();
+    const body = text(page);
+    expect(body).toContain("Dikkat isteyenler");
+    expect(body).toContain("2 açık talep");
+    expect(body).toContain("1 link 48 saatte doluyor");
+    expect(body).toContain("Taleplere bak");
+    expect(body).toContain("Linklere bak");
+  });
+
+  it("shows a reviewer the expiring count only (H9: counts, no requests) and never reads the requests", async () => {
+    viewer = { role: "REVIEWER", edit: false };
+    requestRows = 2;
+    expiringRows = 1;
+    const body = text(await render());
+    expect(body).toContain("1 link 48 saatte doluyor");
+    expect(body).not.toContain("açık talep");
+    expect(fake.ops.some((o) => o.table === "candidate_requests" || o.table === "deletion_requests")).toBe(false);
+  });
+
+  it("stays silent without anything to attend to", async () => {
+    expect(text(await render())).not.toContain("Dikkat isteyenler");
+  });
+
+  it("reads no counts for a closed opening (facts only for live openings)", async () => {
+    status = "CLOSED";
+    viewer = { role: "OWNER", edit: false };
+    expiringRows = 1;
+    const body = text(await render());
+    expect(body).not.toContain("Dikkat isteyenler");
+    expect(body).not.toContain("Bu alımın kuralları");
+    expect(fake.ops.some((o) => o.table === "assessment_links")).toBe(false);
+  });
+
+  it("shows the opening's rules in one card, with 'Kuralları değiştir' only for an editor", async () => {
+    const page = await render();
+    const body = text(page);
+    expect(body).toContain("Bu alımın kuralları");
+    expect(body).toContain("Kuralları değiştir");
+    const rules = find(page, (el) => el.props.readOnly === true)[0].props.rows as Array<{ value: string }>;
+    expect(rules.map((r) => r.value)).toEqual(["1 değerlendirici · karar: Sahip", "Son tarih yok · 7 günde dönüş", "Kimlik açık · bitiş anketi açık"]);
+    viewer = { role: "REVIEWER", edit: false };
+    const reviewer = text(await render());
+    expect(reviewer).toContain("Bu alımın kuralları");
+    expect(reviewer).not.toContain("Kuralları değiştir");
+  });
+});
+

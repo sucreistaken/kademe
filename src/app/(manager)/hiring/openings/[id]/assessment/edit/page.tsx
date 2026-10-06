@@ -13,6 +13,7 @@ import { workingState } from "@/solutions/hiring/server/working";
 import { openingFor } from "../../access";
 import type { PublishNotice } from "../../actions";
 import { AssessmentTabs, OpeningHeader } from "../../opening-header";
+import { setupStrip } from "../../setup-strip";
 import { describeProblem } from "../../problems";
 
 export const dynamic = "force-dynamic";
@@ -46,6 +47,8 @@ export default async function BuilderPage({
   const [state, options] = await Promise.all([workingState(user.orgId, opening.id), activeCompetencyOptions(user.orgId)]);
   const content = state.content;
   if (!content) notFound();
+  // 4.5: where a draft's setup path stands, for someone who may edit it (only the people are read; null otherwise).
+  const setup = await setupStrip({ orgId: user.orgId, opening, access, t, locale, state });
   // Active competencies to pick from, plus archived ones still linked here (shown, never offered).
   const archived = [...state.facts.values()].filter((f) => f.archived);
   const competencies = [
@@ -61,7 +64,7 @@ export default async function BuilderPage({
 
   return (
     <main className="mx-auto max-w-[1360px] px-page py-8 pb-40">
-      <OpeningHeader opening={opening} active="assessment" locale={locale} t={t} />
+      <OpeningHeader opening={opening} active="assessment" locale={locale} t={t} setup={setup} />
       <div className="mt-4">
         <AssessmentTabs openingId={opening.id} active="edit" t={t} />
       </div>

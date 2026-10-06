@@ -28,6 +28,8 @@ vi.mock("../../access", () => ({
   }),
 }));
 vi.mock("../../opening-header", () => ({ OpeningHeader: () => null, AssessmentTabs: () => null }));
+// The setup line reads the people; this test's database throws on any read, and the line is not what it tests.
+vi.mock("../../setup-strip", () => ({ setupStrip: async () => null }));
 vi.mock("@/i18n/manager-locale", () => ({ managerLocale: async () => "tr" }));
 vi.mock("@/server/settings", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/server/settings")>()), loadOrg: async () => ({ id: "o1", name: "Örnek A.Ş." }) }));
 vi.mock("@/components/hiring/preview/preview", () => ({ Preview: function Preview() {} }));
