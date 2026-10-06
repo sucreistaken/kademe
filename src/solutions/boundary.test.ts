@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest";
  * modules that predate it (they live in src/lib and src/server).
  *
  * Exam modules: @/lib/exam-flow, @/lib/exam-results, @/lib/exam-candidate-api,
- * @/lib/exam/*, @/server/{panel,invite,simulate,bank-import,item-generation-job}.
+ * @/lib/exam/*, @/server/{panel,invite,simulate,bank-import,bank-topup,item-generation-job}.
  * The codebase imports them only through the @/ alias.
  */
 const KNOWN_COUPLINGS = [
@@ -35,7 +35,7 @@ const EXEMPT = [
   /^src\/components\/candidate\/exam\//,
   /^src\/lib\/exam\//,
   /^src\/lib\/(exam-flow|exam-results|exam-candidate-api)\.ts$/,
-  /^src\/server\/(panel|invite|simulate|bank-import|item-generation-job)\.ts$/,
+  /^src\/server\/(panel|invite|simulate|bank-import|bank-topup|item-generation-job)\.ts$/,
   /^src\/db\//,
   /\.test\.tsx?$/,
 ];
