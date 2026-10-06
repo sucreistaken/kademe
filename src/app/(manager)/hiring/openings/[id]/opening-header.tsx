@@ -3,6 +3,7 @@ import { ChevronLeft } from "lucide-react";
 import { StatusDot, type StatusTone } from "@/components/ui/status-dot";
 import { PageTitle } from "@/components/manager/page-title";
 import { RouteTabs } from "@/components/manager/route-tabs";
+import { OPENING_STATUS } from "@/components/hiring/status-vocabulary";
 import type { managerT } from "@/i18n/manager";
 import type { Locale } from "@/i18n/locale";
 import { shortDate } from "@/lib/format";
@@ -10,8 +11,8 @@ import type { OpeningStatus, OpeningDetail } from "@/solutions/hiring/server/ope
 
 type T = ReturnType<typeof managerT>;
 
-/** An opening's status dot, shared by the list and the opening pages (ruling C13). */
-export const TONE: Record<OpeningStatus, StatusTone> = { DRAFT: "neutral", OPEN: "active", CLOSED: "done" };
+/** An opening's status dot, shared by the list and the opening pages (ruling C13), from the one dictionary (P9). */
+export const TONE: Record<OpeningStatus, StatusTone> = { DRAFT: OPENING_STATUS.DRAFT.tone, OPEN: OPENING_STATUS.OPEN.tone, CLOSED: OPENING_STATUS.CLOSED.tone };
 
 /** The way back to the openings list, above every opening page. */
 export function BackToOpenings({ t }: { t: T }) {

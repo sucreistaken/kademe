@@ -3,12 +3,9 @@
 import { useSyncExternalStore, type ReactNode } from "react";
 import type { Locale } from "@/i18n/locale";
 import { captureHeld, captureHeldOnServer, captureUploadOnly, captureUploadOnlyOnServer, subscribeCapture } from "@/lib/client/capture-hold";
-import { subscribeHash } from "@/lib/client/hash-step";
+import { currentHash, noHash, subscribeHash } from "@/lib/client/hash-step";
 import { cn } from "@/lib/cn";
 import { langHref } from "./lang-href";
-
-const currentHash = () => window.location.hash;
-const noHash = () => "";
 
 export const LANGUAGE_WAIT_ID = "language-wait";
 

@@ -8,6 +8,7 @@ vi.mock("@/app/(manager)/hiring/openings/[id]/candidates/actions", () => ({
 }));
 
 import { extendHiringLinkAction, markRequestAction } from "@/app/(manager)/hiring/openings/[id]/candidates/actions";
+import { StatusDot } from "@/components/ui/status-dot";
 import { managerT } from "@/i18n/manager";
 import type { OpeningCandidateRow } from "@/solutions/hiring/server/invitations";
 import { CandidateTable } from "./candidate-table";
@@ -124,5 +125,15 @@ describe("CandidateTable (HIRING-UX 5.12)", () => {
     expect(words).toContain("Alım kapalı; başlamamış adaya yeni link üretilmez.");
     // A reader of a closed opening still gets nothing to press.
     expect(all(render(rows, false, { closed: true, runs: false })).filter((e) => e.type === NewLinkButton)).toHaveLength(0);
+  });
+
+  it("draws each status from the one dictionary (P9): an expired link in bold ink, a live one with the accent dot", () => {
+    const dots = (progress: OpeningCandidateRow["progress"]) =>
+      all(render([{ ...base, progress, requests: [] }], true))
+        .filter((e) => e.type === StatusDot)
+        .map((e) => [e.props.tone, e.props.className ?? null]);
+    expect(dots("EXPIRED")).toEqual([["warn", "font-semibold text-ink"]]);
+    expect(dots("IN_PROGRESS")).toEqual([["active", null]]);
+    expect(dots("COMPLETED")).toEqual([["done", null]]);
   });
 });

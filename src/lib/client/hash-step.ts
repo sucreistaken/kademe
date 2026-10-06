@@ -12,6 +12,10 @@ export const subscribeHash = (notify: () => void) => {
   };
 };
 
+/** The hash for useSyncExternalStore: the address's on the client, none on the server. */
+export const currentHash = () => window.location.hash;
+export const noHash = () => "";
+
 /** The mark on a history entry pushHash made; the browser keeps it across a reload. */
 const MARK = "hashStep";
 

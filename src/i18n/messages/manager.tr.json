@@ -46,5 +46,17 @@
     "retry": "Yeniden dene",
     "toDashboard": "Panele dön",
     "reference": "Hata kodu: {digest}"
+  },
+  "flow": {
+    "continue": "Devam et",
+    "back": "Geri",
+    "backToSummary": "Özete dön",
+    "exit": "Çık",
+    "exitUnsaved": "Kaydetmeden çık",
+    "change": "Değiştir",
+    "changed": "değişti",
+    "stepLabel": "Adım {n} / {total}",
+    "noChanges": "Değişiklik yok.",
+    "skip": "Atla"
   }
 }

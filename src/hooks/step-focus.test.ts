@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { arrivalFocusController, stepFocusController } from "./use-step-focus";
+import { arrivalFocusController, focusDropped, leftOnPurpose, stepFocusController } from "./use-step-focus";
 
 /**
  * A step-by-step flow (the hiring preview now, plan 2's candidate flow later)
@@ -74,5 +74,31 @@ describe("arrivalFocusController", () => {
     c.onStep("info", h);
     c.onStep("info", h);
     expect(h.focus).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * A guided flow of the panel (K12): when the control a keyboard user is on
+ * unmounts or turns disabled without a step change (a footer action swapped,
+ * a primary that starts to wait), focus goes to the step's heading, never to
+ * <body>. A user who clicked away on purpose is left alone.
+ */
+describe("keeping the focus inside a flow", () => {
+  it("rescues only while the flow held the focus and it fell to nothing or to a disabled button", () => {
+    expect(focusDropped({ inside: true, active: "body" })).toBe(true);
+    expect(focusDropped({ inside: true, active: "disabled-control" })).toBe(true);
+    expect(focusDropped({ inside: true, active: "other" })).toBe(false);
+    expect(focusDropped({ inside: false, active: "body" })).toBe(false);
+  });
+
+  it("counts a move to another element as leaving on purpose only when that element is outside the flow", () => {
+    expect(leftOnPurpose({ relatedInside: false, targetConnected: true, targetDisabled: false })).toBe(true);
+    expect(leftOnPurpose({ relatedInside: true, targetConnected: true, targetDisabled: false })).toBe(false);
+  });
+
+  it("with nowhere to go: a click on the page background leaves; a control that unmounted or turned disabled does not", () => {
+    expect(leftOnPurpose({ relatedInside: null, targetConnected: true, targetDisabled: false })).toBe(true);
+    expect(leftOnPurpose({ relatedInside: null, targetConnected: false, targetDisabled: false })).toBe(false);
+    expect(leftOnPurpose({ relatedInside: null, targetConnected: true, targetDisabled: true })).toBe(false);
   });
 });

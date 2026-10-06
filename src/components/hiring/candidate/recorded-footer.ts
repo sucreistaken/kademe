@@ -1,5 +1,8 @@
 import { useEffect, useRef } from "react";
-import type { Focusable } from "@/hooks/use-step-focus";
+import { activeKind, type ActiveKind, type Focusable } from "@/hooks/use-step-focus";
+
+/** One copy of the focus check lives with the focus hooks (core); re-exported for the candidate runner. */
+export { activeKind, type ActiveKind };
 
 /**
  * C4: what the recorded answer's footer actions say about waiting and working,
@@ -40,18 +43,6 @@ export function startLineShown(input: { phase: "think" | "record" | "saving" | "
  */
 export function refocusAfterTimeUp(input: { timeUp: boolean; wasTimeUp: boolean; active: ActiveKind }): boolean {
   return input.timeUp && !input.wasTimeUp && input.active !== "other";
-}
-
-export type ActiveKind = "disabled-control" | "body" | "other";
-
-/**
- * Where focus sits: on nothing (no element, or the page body), on a disabled
- * button (a natively disabled one; a working footer button is aria-disabled
- * and keeps its focus), or anywhere else.
- */
-export function activeKind(active: { tagName?: string; disabled?: boolean } | null, body: unknown): ActiveKind {
-  if (!active || active === body) return "body";
-  return (active.tagName ?? "").toUpperCase() === "BUTTON" && active.disabled === true ? "disabled-control" : "other";
 }
 
 /**

@@ -46,5 +46,17 @@
     "retry": "Try again",
     "toDashboard": "Back to the dashboard",
     "reference": "Error code: {digest}"
+  },
+  "flow": {
+    "continue": "Continue",
+    "back": "Back",
+    "backToSummary": "Back to the summary",
+    "exit": "Leave",
+    "exitUnsaved": "Leave without saving",
+    "change": "Change",
+    "changed": "changed",
+    "stepLabel": "Step {n} / {total}",
+    "noChanges": "Nothing has changed.",
+    "skip": "Skip"
   }
 }

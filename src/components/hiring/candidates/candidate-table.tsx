@@ -7,9 +7,9 @@ import type { Locale } from "@/i18n/locale";
 import { ago, shortDate } from "@/lib/format";
 import type { CandidateProgress } from "@/solutions/hiring/rules/invitation";
 import type { CandidateRequestRow, OpeningCandidateRow } from "@/solutions/hiring/server/invitations";
+import { CANDIDATE_STATUS } from "@/components/hiring/status-vocabulary";
 import { NewLinkButton } from "./new-link-button";
 
-const TONE = { INVITED: "neutral", OPENED: "neutral", IN_PROGRESS: "active", COMPLETED: "done", EXPIRED: "warn" } as const;
 const KNOWN_REQUESTS = new Set(["ACCOMMODATION", "NEW_LINK", "ACCESS", "COPY", "DELETE"]);
 /** A link that was never used can get seven more days; a started candidate is not stopped by the link's date. */
 const EXTENDABLE = new Set<CandidateProgress>(["INVITED", "OPENED", "EXPIRED"]);
@@ -98,7 +98,9 @@ export function CandidateTable({
               ) : null}
             </TableCell>
             <TableCell className="py-3 align-top">
-              <StatusDot tone={TONE[row.progress]}>{t(`hiringCandidates.progress${row.progress}`)}</StatusDot>
+              <StatusDot tone={CANDIDATE_STATUS[row.progress].tone} className={CANDIDATE_STATUS[row.progress].strong ? "font-semibold text-ink" : undefined}>
+                {t(`hiringCandidates.progress${row.progress}`)}
+              </StatusDot>
             </TableCell>
             <TableCell className="tnum py-3 align-top text-[13px] text-ink">{t("hiringCandidates.stages", { done: row.stagesDone, total: row.stageCount })}</TableCell>
             <TableCell className="tnum py-3 align-top text-[13px] text-muted">{row.lastActivityAt ? ago(row.lastActivityAt, locale, now) : "-"}</TableCell>

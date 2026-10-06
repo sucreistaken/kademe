@@ -6,7 +6,7 @@ const FORMAL = [/(?<!\p{L})siz(?!\p{L})/u, /\p{L}+(?:iniz|ınız|unuz|ünüz)(?!
 const strings = (value: unknown): string[] => (typeof value === "string" ? [value] : value && typeof value === "object" ? Object.values(value).flatMap(strings) : []);
 
 describe("shared panel copy (K9)", () => {
-  it.each([["errorPage", managerTr.errorPage], ["nav", managerTr.nav]] as const)("%s speaks sen", (_name, namespace) => {
+  it.each([["errorPage", managerTr.errorPage], ["nav", managerTr.nav], ["flow", managerTr.flow]] as const)("%s speaks sen", (_name, namespace) => {
     for (const text of strings(namespace)) for (const pattern of FORMAL) expect(text).not.toMatch(pattern);
   });
 
