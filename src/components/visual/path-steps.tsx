@@ -19,12 +19,50 @@ export function PathSteps({
   steps,
   label,
   locale = DEFAULT_LOCALE,
+  look = "list",
 }: {
   steps: Array<{ title: ReactNode; detail?: ReactNode; state?: "done" | "current" | "todo"; action?: ReactNode }>;
   label?: string;
   locale?: Locale;
+  look?: "list" | "setup";
 }) {
   const words = STATE_WORDS[locale];
+  if (look === "setup") {
+    return (
+      <ol aria-label={label} className="border-t border-hairline">
+        {steps.map((step, i) => {
+          const done = step.state === "done";
+          const current = step.state === "current";
+          return (
+            <li key={i} aria-current={current ? "step" : undefined} className={cn("flex items-center gap-4 border-b border-hairline px-6 py-3.5 last:border-b-0", current && "bg-accent-soft")}>
+              <span
+                aria-hidden
+                className={cn(
+                  "tnum grid size-[30px] shrink-0 place-items-center rounded-full border-[1.5px] text-[13px] font-semibold",
+                  done ? "border-accent bg-accent text-white" : current ? "border-accent bg-surface text-accent shadow-[0_0_0_4px_rgb(14_106_87/0.1)]" : "border-line-strong text-muted",
+                )}
+              >
+                {done ? <Check className="size-4" strokeWidth={2} /> : i + 1}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className={cn("text-[15px] leading-[22px] font-semibold", done ? "text-ink-2" : "text-ink")}>
+                  {step.title}
+                  {step.state === "done" || step.state === "todo" ? (
+                    <>
+                      {" "}
+                      <span className="sr-only">{words[step.state]}</span>
+                    </>
+                  ) : null}
+                </p>
+                {step.detail ? <p className="text-[13px] leading-5 text-muted">{step.detail}</p> : null}
+              </div>
+              {step.action ? <div className="shrink-0">{step.action}</div> : null}
+            </li>
+          );
+        })}
+      </ol>
+    );
+  }
   return (
     <ol aria-label={label} className="space-y-1">
       {steps.map((step, i) => (

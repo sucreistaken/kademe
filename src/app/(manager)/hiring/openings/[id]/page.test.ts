@@ -96,7 +96,8 @@ import OverviewPage from "./page";
 import { Button } from "@/components/ui/button";
 import { InviteSheet } from "@/components/hiring/invite/invite-sheet";
 import { OpeningHeader } from "./opening-header";
-import { PUBLISHED_NOTICE_ID, PublishFooter, PublishLink, PublishSwitch } from "./publish-view";
+import { PUBLISHED_NOTICE_ID, PublishFooter, PublishLink, PublishSwitch, SETUP_HEADING_ID } from "./publish-view";
+import { Illustration } from "@/components/visual/illustrations";
 import { managerT } from "@/i18n/manager";
 import Link from "next/link";
 import { HashAwareLink } from "@/components/manager/hash-aware-link";
@@ -425,6 +426,16 @@ describe("a draft's control view and its setup path (4.5, H7)", () => {
     const steps = find(page, ofType(PathSteps))[0].props.steps as Array<{ action?: ReactNode }>;
     expect(steps.every((s) => s.action === undefined)).toBe(true);
     expect(find(page, (el) => el.props.href === `${BASE}#publish`)).toHaveLength(0);
+  });
+
+  it("draws the setup card as the mockup's: the count as the heading, the lead, the stage drawing and the path in the setup look (mockup 5)", async () => {
+    const page = await render();
+    const [path] = find(page, ofType(PathSteps));
+    expect(path.props.look).toBe("setup");
+    expect(find(page, (el) => el.type === Illustration && el.props.name === "stage")).toHaveLength(1);
+    const [heading] = find(page, (el) => el.props.id === SETUP_HEADING_ID);
+    expect(text(heading)).toBe("Kurulum 3 / 5 · 2 adım kaldı.");
+    expect(text(page)).toContain("Yayınlayınca adaylarını davet edebilirsin.");
   });
 });
 

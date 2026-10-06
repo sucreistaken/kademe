@@ -156,6 +156,7 @@
     "experienceComments": "Unnamed comments, picked at random",
     "experienceBatch": "Updates every {batch} answers and a day late, for privacy.",
     "rowPublish": "Publish",
+    "setupLead": "Once it is live you can invite your candidates.",
     "setupCount": "Setup {done} / {total}",
     "setupNext": "Next: {step}",
     "setupLeft": "{count, plural, one {# step left.} other {# steps left.}}",

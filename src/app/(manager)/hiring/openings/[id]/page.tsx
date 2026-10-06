@@ -8,6 +8,7 @@ import { SummaryRows, type SummaryRow } from "@/components/manager/summary-rows"
 import type { RowMenuItem } from "@/components/manager/row-menu";
 import { UrlNotice } from "@/components/ui/url-notice";
 import { StatusDot } from "@/components/ui/status-dot";
+import { Illustration } from "@/components/visual/illustrations";
 import { PathSteps } from "@/components/visual/path-steps";
 import { StepScreen } from "@/components/visual/step-screen";
 import { managerLocale } from "@/i18n/manager-locale";
@@ -49,6 +50,9 @@ const NOTICE_PARAMS = ["publish", "published"] as const;
 
 const LINK = "font-medium text-ink underline decoration-line-strong underline-offset-4 transition-colors duration-[120ms] ease-out hover:decoration-ink";
 const TEXT_ACTION = "inline-flex min-h-11 items-center gap-0.5 text-[14px] font-medium text-ink underline decoration-underline underline-offset-4 hover:decoration-ink";
+
+/** Manager mockup 5: the current setup step's way on, in the accent. */
+const PATH_ACTION = "inline-flex min-h-11 items-center gap-0.5 whitespace-nowrap text-[14px] font-semibold text-accent hover:underline";
 const ATTENTION_ROW = "flex min-h-11 items-center gap-3 py-3 text-[14px] text-ink transition-colors duration-[120ms] ease-out hover:bg-canvas";
 
 /**
@@ -227,7 +231,7 @@ export default async function OpeningOverviewPage({
         action:
           current && access.edit && row.href && words ? (
             <span className="flex flex-wrap items-center gap-x-5">
-              <HashAwareLink href={row.href} className={TEXT_ACTION}>
+              <HashAwareLink href={row.href} className={PATH_ACTION}>
                 {t(`hiringOverview.${words}`)}
                 <ChevronRight className="size-4" strokeWidth={1.75} aria-hidden />
               </HashAwareLink>
@@ -248,7 +252,7 @@ export default async function OpeningOverviewPage({
       state: progress.current === setupRows.length ? ("current" as const) : ("todo" as const),
       action:
         progress.current === setupRows.length && publishSummary ? (
-          <PublishLink href={`${base}#publish`} className={TEXT_ACTION}>
+          <PublishLink href={`${base}#publish`} className={PATH_ACTION}>
             {t("hiringOverview.goPublish")}
             <ChevronRight className="size-4" strokeWidth={1.75} aria-hidden />
           </PublishLink>
@@ -304,21 +308,23 @@ export default async function OpeningOverviewPage({
       <PublishSwitch summary={publishSummary}>
         <div className="mt-section space-y-section">
           {state.draft ? (
-            <Card className="p-card">
+            <Card className="overflow-hidden">
               <SetupFocusArea>
-                {/* Where the focus lands back from the publish summary or after a path action goes away (W10). */}
-                <h2 id={SETUP_HEADING_ID} tabIndex={-1} className="text-[16px] leading-6 font-semibold text-ink outline-none">
-                  {t("hiringOverview.readinessTitle")}
-                </h2>
-                <p className="tnum mt-0.5 text-[13px] text-muted">
-                  {t("hiringOverview.draftPending", { number: state.draft.number })}
-                  {setupRows.length ? ` · ${t("hiringOverview.setupCount", { done: progress.done, total: progress.total })} · ${t("hiringOverview.setupLeft", { count: progress.left })}` : ""}
-                </p>
-                {setupRows.length ? (
-                  <div className="mt-4">
-                    <PathSteps steps={pathSteps} label={t("hiringOverview.readinessTitle")} locale={locale} />
+                <div className="flex items-center justify-between gap-6 px-6 pt-5 pb-4">
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-semibold tracking-[0.08em] text-muted uppercase">{t("hiringOverview.readinessTitle")}</p>
+                    {/* Where the focus lands back from the publish summary or after a path action goes away (W10). */}
+                    <h2 id={SETUP_HEADING_ID} tabIndex={-1} className="tnum mt-1 text-[22px] leading-8 font-semibold text-ink outline-none">
+                      {setupRows.length
+                        ? `${t("hiringOverview.setupCount", { done: progress.done, total: progress.total })} · ${t("hiringOverview.setupLeft", { count: progress.left })}`
+                        : t("hiringOverview.draftPending", { number: state.draft.number })}
+                    </h2>
+                    <p className="mt-1 text-[14.5px] leading-[22px] text-ink-2">{t("hiringOverview.setupLead")}</p>
+                    {setupRows.length ? <p className="tnum mt-0.5 text-[13px] text-muted">{t("hiringOverview.draftPending", { number: state.draft.number })}</p> : null}
                   </div>
-                ) : null}
+                  <Illustration name="stage" size="spot" className="hidden w-[200px] md:block" />
+                </div>
+                {setupRows.length ? <PathSteps look="setup" steps={pathSteps} label={t("hiringOverview.readinessTitle")} locale={locale} /> : null}
               </SetupFocusArea>
             </Card>
           ) : null}

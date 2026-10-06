@@ -156,6 +156,7 @@
     "experienceComments": "Rastgele seçilmiş isimsiz yorumlar",
     "experienceBatch": "Gizlilik için her {batch} cevapta ve bir gün gecikmeyle güncellenir.",
     "rowPublish": "Yayınla",
+    "setupLead": "Yayınlayınca adaylarını davet edebilirsin.",
     "setupCount": "Kurulum {done} / {total}",
     "setupNext": "Sıradaki: {step}",
     "setupLeft": "{count, plural, one {# adım kaldı.} other {# adım kaldı.}}",
