@@ -58,7 +58,7 @@ const NEW: CompetencySeed[] = [
         "States the lesson goal, gives ordered steps and at least one example, and adds a question or exercise to check understanding.",
       ),
       5: t(
-        "Anlatımı öğrencinin düzeyine ve olası yanlışlarına göre kuruyor, adımlar arasında yoklama yapıyor, anlamayan öğrenci için ikinci bir yol söylüyor.",
+        "Anlatımı öğrencinin düzeyine ve olası yanlışlarına göre kuruyor, adımlar arasında anlaşıldığını yokluyor, anlamayan öğrenci için ikinci bir yol söylüyor.",
         "Builds the explanation around the learner's level and likely mistakes, checks between steps and offers a second route for a learner who does not follow.",
       ),
     },
@@ -223,7 +223,7 @@ const NEW: CompetencySeed[] = [
         "Handles the disruption without stopping the lesson, names an activity or routine that raises participation and opens a way in for the quiet learner.",
       ),
       5: t(
-        "Aksaklığın nedenini okuyup önlem alıyor, grubu çeşitli düzenlerle (ikili, küçük grup) çalıştırıyor, herkesin konuşma payını gözetiyor ve dersin sonunda dersin sonunda öğrenilenleri kontrol ediyor.",
+        "Aksaklığın nedenini okuyup önlem alıyor, grubu çeşitli düzenlerle (ikili, küçük grup) çalıştırıyor, herkesin konuşma payını gözetiyor ve dersin sonunda öğrenilenleri kontrol ediyor.",
         "Reads the cause of the disruption and acts early, varies the grouping (pairs, small groups), watches each learner's talking time and checks the outcome at the end.",
       ),
     },
