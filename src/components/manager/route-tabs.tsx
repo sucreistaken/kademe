@@ -1,9 +1,10 @@
-import Link from "next/link";
 import { cn } from "@/lib/cn";
+import { RouteTabLink } from "./route-tab-link";
 
 /**
  * Tabs that are routes (HIRING-UX 5.4 "route sekmeleri"). The active tab is one
- * of the three places accent may appear.
+ * of the three places accent may appear. Each tab is a RouteTabLink: on its
+ * own page with a hash step open, it brings the page's view back (B-M8).
  */
 export function RouteTabs({
   label,
@@ -17,7 +18,7 @@ export function RouteTabs({
   return (
     <nav aria-label={label} className="flex gap-6 overflow-x-auto border-b border-line">
       {items.map((item) => (
-        <Link
+        <RouteTabLink
           key={item.href}
           href={item.href}
           aria-current={item.active ? "page" : undefined}
@@ -28,7 +29,7 @@ export function RouteTabs({
           )}
         >
           {item.label}
-        </Link>
+        </RouteTabLink>
       ))}
     </nav>
   );
