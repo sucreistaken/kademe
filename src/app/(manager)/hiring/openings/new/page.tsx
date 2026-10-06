@@ -5,6 +5,8 @@ import { shortDate } from "@/lib/format";
 import { isUuid } from "@/server/settings";
 import { requireUser } from "@/server/session";
 import { copySources, positionOptions } from "@/solutions/hiring/server/openings";
+import { templateCards } from "@/solutions/hiring/server/templates";
+import { templateByKey } from "@/solutions/hiring/templates/index";
 
 export const dynamic = "force-dynamic";
 
@@ -26,10 +28,16 @@ export default async function NewOpeningPage({ searchParams }: { searchParams: P
   }));
   const initial = typeof sp.position === "string" && isUuid(sp.position) ? sp.position : null;
   const copy = typeof sp.copy === "string" && isUuid(sp.copy) ? sp.copy : null;
+  // Mockup 4b's gallery in the panel's language; each card also carries its TR and EN names, so a
+  // position named like a template preselects it (matchTemplate's rule) without the templates' content.
+  const templates = templateCards(locale).map((card) => {
+    const name = templateByKey(card.key)?.name;
+    return { ...card, names: name ? [name.tr, name.en] : [card.name] };
+  });
   // The flow draws its own head (the flow's name and "Çık") and its steps' titles (W2).
   return (
     <main className="mx-auto max-w-[1080px] px-page pt-6">
-      <NewOpeningForm positions={positions} sources={sources} initialPositionId={initial} initialCopyId={copy} />
+      <NewOpeningForm positions={positions} sources={sources} templates={templates} initialPositionId={initial} initialCopyId={copy} />
     </main>
   );
 }

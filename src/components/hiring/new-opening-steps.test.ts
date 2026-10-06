@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { createWait, matchPosition, startAfterAdChange, newOpeningStepOf, newOpeningStepOfRefusal, newOpeningSteps, newOpeningSummary, visiblePositions } from "./new-opening-steps";
+import { TEMPLATES, matchTemplate } from "@/solutions/hiring/templates/index";
+import { createWait, matchPosition, startAfterAdChange, newOpeningStepOf, newOpeningStepOfRefusal, newOpeningSteps, newOpeningSummary, templateForPosition, visiblePositions } from "./new-opening-steps";
 
 describe("Alım aç as three steps (4.6, plan decision 13)", () => {
   it("asks for the job ad only for a new position name (a library position's ad lives on the position)", () => {
@@ -51,6 +52,57 @@ describe("Alım aç as three steps (4.6, plan decision 13)", () => {
     expect(newOpeningSummary({ name: "Destek Uzmanı", hasAd: true, start: "COPY", copyName: "Destek 2025" })).toEqual([{ text: "Destek Uzmanı" }, { key: "summaryAd" }, { key: "summaryCopy", name: "Destek 2025" }]);
     expect(newOpeningSummary({ name: "Destek Uzmanı", hasAd: true, start: "COPY", copyName: null })).toEqual([{ text: "Destek Uzmanı" }, { key: "summaryAd" }]);
     expect(newOpeningSummary({ name: "Destek Uzmanı", hasAd: true, start: null, copyName: null })).toEqual([{ text: "Destek Uzmanı" }, { key: "summaryAd" }]);
+  });
+});
+
+describe("the ready-template start (manager mockup 4, 4b)", () => {
+  it("adds the template step after the start only when the ready template is the start", () => {
+    expect(newOpeningSteps({ newName: true, template: true })).toEqual(["position", "ad", "start", "template"]);
+    expect(newOpeningSteps({ newName: false, template: true })).toEqual(["position", "start", "template"]);
+    expect(newOpeningSteps({ newName: false, template: false })).toEqual(["position", "start"]);
+    expect(newOpeningStepOf("#template", { steps: newOpeningSteps({ newName: false, template: true }), positionReady: true })).toBe("template");
+    expect(newOpeningStepOf("#template", { steps: newOpeningSteps({ newName: false, template: false }), positionReady: true })).toBe("position");
+  });
+
+  it("waits for a template once the ready template is the start", () => {
+    expect(createWait({ positionReady: true, start: "TEMPLATE", copyFrom: "", templateKey: null })).toBe("needTemplate");
+    expect(createWait({ positionReady: true, start: "TEMPLATE", copyFrom: "", templateKey: "customer-support" })).toBeNull();
+    expect(createWait({ positionReady: false, start: "TEMPLATE", copyFrom: "", templateKey: "customer-support" })).toBe("needPosition");
+    expect(createWait({ positionReady: true, start: "BLANK", copyFrom: "", templateKey: null })).toBeNull();
+  });
+
+  it("keeps the ready template when the ad goes away", () => {
+    expect(startAfterAdChange("TEMPLATE", false)).toBe("TEMPLATE");
+  });
+
+  it("opens the template step for a template that is gone", () => {
+    expect(newOpeningStepOfRefusal("TEMPLATE_NOT_FOUND")).toBe("template");
+  });
+
+  it("names the chosen template in the summary, and nothing of it before one is chosen", () => {
+    expect(newOpeningSummary({ name: "Destek Uzmanı", hasAd: true, start: "TEMPLATE", copyName: null, templateName: "Müşteri Destek Uzmanı" })).toEqual([
+      { text: "Destek Uzmanı" },
+      { key: "summaryAd" },
+      { key: "summaryTemplate", name: "Müşteri Destek Uzmanı" },
+    ]);
+    expect(newOpeningSummary({ name: "Destek Uzmanı", hasAd: true, start: "TEMPLATE", copyName: null, templateName: null })).toEqual([{ text: "Destek Uzmanı" }, { key: "summaryAd" }]);
+    expect(newOpeningSummary({ name: "Destek Uzmanı", hasAd: true, start: "BLANK", copyName: null, templateName: "Müşteri Destek Uzmanı" })).toEqual([
+      { text: "Destek Uzmanı" },
+      { key: "summaryAd" },
+      { key: "summaryBlank" },
+    ]);
+  });
+
+  it("finds the template for a position name by matchTemplate's rule (TR or EN name, any case, outer spaces ignored)", () => {
+    const options = TEMPLATES.map((x) => ({ key: x.key, names: [x.name.tr, x.name.en] }));
+    for (const x of TEMPLATES) {
+      for (const name of [x.name.tr, x.name.en, `  ${x.name.tr.toLocaleUpperCase("tr")} `]) {
+        expect(templateForPosition(options, name)?.key).toBe(matchTemplate(name)?.key);
+        expect(templateForPosition(options, name)?.key).toBe(x.key);
+      }
+    }
+    expect(templateForPosition(options, "Destek")).toBeNull();
+    expect(templateForPosition(options, "   ")).toBeNull();
   });
 });
 

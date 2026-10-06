@@ -106,7 +106,20 @@
     "summaryNoAd": "no job ad",
     "summaryAi": "suggested from the job ad",
     "summaryCopy": "copy of {name}",
-    "summaryBlank": "blank start"
+    "summaryBlank": "blank start",
+    "startTemplate": "Start from a ready template",
+    "startTemplateBody": "Ready stages, questions and scorecard for this role. You can change all of it later.",
+    "recommended": "Recommended",
+    "stepTemplateTitle": "Which template?",
+    "stepTemplateLead": "Pick the one closest to your position. You can change every question after creating it.",
+    "groupGeneric": "General roles",
+    "groupLanguageSchool": "Language school",
+    "groupExtra": "Other roles",
+    "templateMeta": "{stages, plural, one {# stage} other {# stages}} · {questions, plural, one {# question} other {# questions}} · {minutes} min",
+    "preview": "Preview",
+    "summaryTemplate": "{name} template",
+    "needTemplate": "Pick a template.",
+    "templateGone": "This template is no longer available, pick another one."
   },
   "hiringOverview": {
     "readinessTitle": "Ready to publish",

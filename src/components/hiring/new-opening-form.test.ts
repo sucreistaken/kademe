@@ -30,6 +30,7 @@ const render = (props: { initialPositionId?: string | null; initialCopyId?: stri
         sources: [{ id: source, name: "Destek 2025", detail: "Kapalı, 1 Mar 2025 açıldı" }],
         initialPositionId: props.initialPositionId ?? null,
         initialCopyId: props.initialCopyId ?? null,
+        templates: [],
       }),
     ),
   );
@@ -112,21 +113,26 @@ describe("Alım aç on GuidedFlow (4.6, W1-W10)", () => {
     expect(out).not.toContain("İlan metnin var mı?");
   });
 
-  it("the last step: three big cards in the mockup's order, the summary pill, \"Alımı oluştur\" as the one filled button, and \"Geri\" one step back", () => {
+  it("the last step: four big cards in the mockup's order, the summary pill, \"Alımı oluştur\" as the one filled button, and \"Geri\" one step back", () => {
     const out = render({ initialPositionId: support.id, hash: "#start" });
     expect(out).toMatch(/<h1[^>]*>Nasıl başlayalım\?<\/h1>/);
     expect(out).toContain("Sonra her şeyi değiştirebilirsin.");
     expect(out).toMatch(/role="radiogroup" aria-labelledby="new-opening-start-label"/);
+    expect(out.indexOf('value="TEMPLATE"')).toBeLessThan(out.indexOf('value="COPY"'));
     expect(out.indexOf('value="COPY"')).toBeLessThan(out.indexOf('value="AI"'));
     expect(out.indexOf('value="AI"')).toBeLessThan(out.indexOf('value="BLANK"'));
+    expect(out).toContain("Hazır şablondan başla");
+    expect(out).toContain("Bu rol için hazır aşamalar, sorular ve puan kartı. Hepsini sonra değiştirebilirsin.");
     expect(out).toContain("İlan metninden öneri al");
     expect(out).toContain("Önceki bir alımdan kopyala");
     expect(out).toContain("Boş başla");
     expect(out).toContain("size-[52px] rounded-xl");
-    // Less AI: no sparkles, no badge, no ready-template card yet.
+    expect(out).toContain("lucide-layout-template");
+    // Less AI: no sparkles; the one badge is the ready template's, and it sits on that card.
     expect(out).not.toContain("lucide-sparkles");
-    expect(out).not.toContain("Önerilen");
-    expect(out).not.toContain("Hazır şablon");
+    expect(out.match(/Önerilen/g)).toHaveLength(1);
+    expect(out).toMatch(/Hazır şablondan başla <span[^>]*rounded-full[^>]*>Önerilen<\/span>/);
+    expect(out.indexOf("Önerilen")).toBeLessThan(out.indexOf('value="COPY"'));
     expect(out).toContain("lucide-file-text");
     // The decisions in one line, as a pill with a check under the lead (no start is chosen yet, R1).
     expect(out).toMatch(/bg-accent-soft[^"]*text-accent[^"]*"><svg[^>]*lucide-check[\s\S]*?Destek Uzmanı · ilan metni var<\/p>/);

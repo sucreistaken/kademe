@@ -106,7 +106,20 @@
     "summaryNoAd": "ilan metni yok",
     "summaryAi": "ilan metninden öneri",
     "summaryCopy": "{name} kopyası",
-    "summaryBlank": "boş başlangıç"
+    "summaryBlank": "boş başlangıç",
+    "startTemplate": "Hazır şablondan başla",
+    "startTemplateBody": "Bu rol için hazır aşamalar, sorular ve puan kartı. Hepsini sonra değiştirebilirsin.",
+    "recommended": "Önerilen",
+    "stepTemplateTitle": "Hangi şablon?",
+    "stepTemplateLead": "Pozisyonuna en yakın olanı seç. Oluşturduktan sonra her soruyu değiştirebilirsin.",
+    "groupGeneric": "Genel roller",
+    "groupLanguageSchool": "Dil okulu",
+    "groupExtra": "Diğer roller",
+    "templateMeta": "{stages} aşama · {questions} soru · {minutes} dk",
+    "preview": "Önizle",
+    "summaryTemplate": "{name} şablonu",
+    "needTemplate": "Bir şablon seç.",
+    "templateGone": "Bu şablon artık yok, başka bir şablon seç."
   },
   "hiringOverview": {
     "readinessTitle": "Yayına hazırlık",

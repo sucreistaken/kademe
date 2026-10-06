@@ -16,7 +16,21 @@ import { POSITION_JOB_AD_MAX, POSITION_NAME_MAX } from "@/lib/library/positions"
 import { createOpeningAction } from "@/app/(manager)/hiring/openings/new/actions";
 import { positionIcon } from "./position-icon";
 import { startChoices, type StartValue } from "./start-choices";
-import { createWait, matchPosition, startAfterAdChange, newOpeningStepOf, newOpeningStepOfRefusal, newOpeningSteps, newOpeningSummary, POSITION_FILTER_FROM, visiblePositions, type NewOpeningRefusal, type NewOpeningStep } from "./new-opening-steps";
+import { TemplateGallery, type TemplateOption } from "./template-gallery";
+import {
+  createWait,
+  matchPosition,
+  startAfterAdChange,
+  newOpeningStepOf,
+  newOpeningStepOfRefusal,
+  newOpeningSteps,
+  newOpeningSummary,
+  POSITION_FILTER_FROM,
+  templateForPosition,
+  visiblePositions,
+  type NewOpeningRefusal,
+  type NewOpeningStep,
+} from "./new-opening-steps";
 
 export type PositionOption = { id: string; name: string; hasJobAd: boolean; competencyCount: number; weightsEqual: boolean };
 
@@ -25,20 +39,23 @@ const NEW = "__new__";
 
 /**
  * HIRING-UX 5.3 as HIRING-VISUAL-FLOW 4.6 (K12) in the look of the manager mockup (screens 3, 4): which position (cards, or a new name), the job ad
- * (a new position only, plan decision 13), how to start; one question per step
+ * (a new position only, plan decision 13), how to start, and which ready
+ * template after a ready-template start (mockup 4b); one question per step
  * on GuidedFlow, every value kept across the steps and the browser's buttons.
  * The last step carries the one-line summary (H3: no separate summary step)
- * and "Alımı oluştur". createOpeningAction, its refusals and the 120-character
- * AI rule are unchanged; a refusal opens its step with its existing sentence.
+ * and "Alımı oluştur". A refusal of createOpeningAction opens its step with
+ * its sentence.
  */
 export function NewOpeningForm({
   positions,
   sources,
+  templates,
   initialPositionId,
   initialCopyId,
 }: {
   positions: PositionOption[];
   sources: Array<{ id: string; name: string; detail: string }>;
+  templates: TemplateOption[];
   initialPositionId: string | null;
   initialCopyId: string | null;
 }) {
@@ -59,6 +76,8 @@ export function NewOpeningForm({
   const [jobAd, setJobAd] = useState("");
   const [start, setStart] = useState<StartValue | null>(initialStart);
   const [copyFrom, setCopyFrom] = useState(copySource);
+  // The template the manager chose; until then the one named like the position is preselected (matchTemplate's rule).
+  const [chosenTemplate, setChosenTemplate] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [refusal, setRefusal] = useState<NewOpeningRefusal | null>(null);
 
@@ -69,25 +88,27 @@ export function NewOpeningForm({
   const effective = startAfterAdChange(start, hasAd);
   if (effective !== start) setStart(effective);
   const positionReady = picked !== null || (newName !== null && newName.trim().length > 0);
-  const steps = newOpeningSteps({ newName: picked === null && newName !== null });
+  const positionName = picked?.name ?? (newName ?? "").trim();
+  const template = templates.find((x) => x.key === chosenTemplate) ?? templateForPosition(templates, positionName);
+  const steps = newOpeningSteps({ newName: picked === null && newName !== null, template: effective === "TEMPLATE" });
   // The flow knows this path's steps, so a hash it does not show (the ad step of a library
   // position, a later step before a position is set) is rewritten to the step shown (W3).
   const nav = useFlowStep({ steps, firstInvalid: positionReady ? null : "position", mode: "hash" });
   // The same rule as the model's (tested there): the flow shows exactly this step.
   const step = newOpeningStepOf(`#${nav.step}`, { steps, positionReady });
   const index = steps.indexOf(step);
-  const wait = createWait({ positionReady, start: effective, copyFrom });
+  const wait = createWait({ positionReady, start: effective, copyFrom, templateKey: template?.key ?? null });
   const shown = visiblePositions(positions, query, picked?.id ?? null);
   const positionValue = picked ? [picked.id] : newName !== null ? [NEW] : [];
-  const dirty = picked?.id !== initialPicked?.id || newName !== null || jobAd !== "" || start !== initialStart || copyFrom !== copySource;
+  // A preselected template is not a change; one the manager picked is.
+  const dirty = picked?.id !== initialPicked?.id || newName !== null || jobAd !== "" || start !== initialStart || copyFrom !== copySource || chosenTemplate !== null;
 
   const refusalText: Record<NewOpeningRefusal, string> = {
     POSITION_NAME_REQUIRED: t("needPosition"),
     POSITION_NOT_FOUND: t("positionGone"),
     JOB_AD_REQUIRED: t("startAiDisabled"),
     COPY_SOURCE_NOT_FOUND: t("copySourceGone"),
-    // The form cannot send a template yet; the template step gives this its own sentence.
-    TEMPLATE_NOT_FOUND: t("failed"),
+    TEMPLATE_NOT_FOUND: t("templateGone"),
     INVALID: t("failed"),
     FAILED: t("failed"),
   };
@@ -127,6 +148,7 @@ export function NewOpeningForm({
           position: picked ? { kind: "existing", id: picked.id } : { kind: "new", name: newName ?? "", jobDescription: jobAd },
           start: chosen,
           copyFrom: chosen === "COPY" ? copyFrom : null,
+          ...(chosen === "TEMPLATE" ? { templateKey: template?.key ?? null } : {}),
         });
         if (result.ok) router.push(result.next);
         else {
@@ -152,9 +174,23 @@ export function NewOpeningForm({
   };
 
   const choices = startChoices({ hasCopySources: sources.length > 0 });
-  const summary = newOpeningSummary({ name: picked?.name ?? (newName ?? "").trim(), hasAd, start: effective, copyName: sources.find((s) => s.id === copyFrom)?.name ?? null })
-    .map((part) => ("text" in part ? part.text : part.key === "summaryCopy" ? t(part.key, { name: part.name }) : t(part.key)))
+  const summary = newOpeningSummary({
+    name: positionName,
+    hasAd,
+    start: effective,
+    copyName: sources.find((s) => s.id === copyFrom)?.name ?? null,
+    templateName: template?.name ?? null,
+  })
+    .map((part) => ("text" in part ? part.text : "name" in part ? t(part.key, { name: part.name }) : t(part.key)))
     .join(" · ");
+  // H3, W5: the decisions so far in one line, as the mockup's summary pill.
+  const summaryPill = positionReady ? (
+    <p className="inline-flex items-center gap-2 rounded-[10px] bg-accent-soft px-3 py-2 text-[14px] font-medium text-accent">
+      <Check className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+      {summary}
+    </p>
+  ) : null;
+  const create = { kind: "button" as const, id: "new-opening-create", label: t("create"), busy: pending, busyLabel: t("creating"), waitReason: wait ? t(wait) : null, onClick: submit };
 
   const screens: Record<NewOpeningStep, FlowStep> = {
     position: {
@@ -228,15 +264,13 @@ export function NewOpeningForm({
       id: "start",
       title: t("stepStartTitle"),
       lead: <p>{t("stepStartLead")}</p>,
-      // H3, W5: the decisions so far in one line, as the mockup's summary pill.
-      aside: positionReady ? (
-        <p className="inline-flex items-center gap-2 rounded-[10px] bg-accent-soft px-3 py-2 text-[14px] font-medium text-accent">
-          <Check className="size-4 shrink-0" strokeWidth={2} aria-hidden />
-          {summary}
-        </p>
-      ) : null,
+      aside: summaryPill,
       layout: "split",
-      primary: { kind: "button", id: "new-opening-create", label: t("create"), busy: pending, busyLabel: t("creating"), waitReason: wait ? t(wait) : null, onClick: submit },
+      // Mockup 4: the ready template goes on to its gallery, which carries "Alımı oluştur"; every other start creates here.
+      primary:
+        effective === "TEMPLATE"
+          ? { kind: "button", id: "new-opening-next", label: flow("continue"), waitReason: positionReady ? null : t("needPosition"), onClick: next("template") }
+          : create,
       note,
       body: (
         <div className="space-y-4">
@@ -253,7 +287,17 @@ export function NewOpeningForm({
             items={choices.map((c) => ({
               value: c.value,
               marker: c.icon,
-              label: t(c.title),
+              // No badge slot on the shared card: the pill rides in the label (white on the chosen card, as the mockup).
+              label: c.badge ? (
+                <>
+                  {t(c.title)}{" "}
+                  <span className="ml-1 inline-block rounded-full bg-accent-soft px-2 align-[2px] text-[12px] leading-5 font-semibold text-accent group-has-[:checked]/choice:bg-surface">
+                    {t(c.badge)}
+                  </span>
+                </>
+              ) : (
+                t(c.title)
+              ),
               disabled: c.value === "AI" && !hasAd,
               description:
                 c.value === "AI" && !hasAd ? (
@@ -293,6 +337,26 @@ export function NewOpeningForm({
             </div>
           ) : null}
         </div>
+      ),
+    },
+    template: {
+      id: "template",
+      title: t("stepTemplateTitle"),
+      lead: <p>{t("stepTemplateLead")}</p>,
+      aside: summaryPill,
+      // Mockup 4b: the question on top, the gallery under it.
+      layout: "single",
+      primary: create,
+      note,
+      body: (
+        <TemplateGallery
+          templates={templates}
+          value={template?.key ?? null}
+          onChange={(key) => {
+            setChosenTemplate(key);
+            setRefusal(null);
+          }}
+        />
       ),
     },
   };
