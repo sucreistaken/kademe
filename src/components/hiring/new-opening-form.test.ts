@@ -19,14 +19,14 @@ const support: PositionOption = { id: "11111111-1111-4111-8111-111111111111", na
 const noAd: PositionOption = { id: "33333333-3333-4333-8333-333333333333", name: "Satış Uzmanı", hasJobAd: false, competencyCount: 0, weightsEqual: true };
 const source = "22222222-2222-4222-8222-222222222222";
 
-const render = (props: { initialPositionId?: string | null; initialCopyId?: string | null; hash?: string } = {}, locale: "tr" | "en" = "tr") => {
+const render = (props: { initialPositionId?: string | null; initialCopyId?: string | null; hash?: string; positions?: PositionOption[] } = {}, locale: "tr" | "en" = "tr") => {
   address.hash = props.hash ?? "";
   return renderToStaticMarkup(
     createElement(
       Provider,
       { locale, messages: managerMessagesFor(locale), timeZone: "Europe/Istanbul" },
       createElement(NewOpeningForm, {
-        positions: [support, noAd],
+        positions: props.positions ?? [support, noAd],
         sources: [{ id: source, name: "Destek 2025", detail: "Kapalı, 1 Mar 2025 açıldı" }],
         initialPositionId: props.initialPositionId ?? null,
         initialCopyId: props.initialCopyId ?? null,
@@ -53,19 +53,41 @@ describe("Alım aç on GuidedFlow (4.6, W1-W10)", () => {
     expect(out).not.toContain("Alımı oluştur");
   });
 
-  it("a position from the library is ready: continue works, its profile shows, and the picker's name says the question and the choice", () => {
+  it("a position from the library is ready: its card is chosen, continue works, two steps", () => {
     const out = render({ initialPositionId: support.id });
     expect(out).toMatch(/<button[^>]*id="new-opening-next"[^>]*>Devam et<\/button>/);
     expect(out).not.toContain("new-opening-next-why");
-    expect(out).toContain("3 yetkinlik · ağırlıklar eşit");
-    expect(out).toMatch(/role="combobox"[^>]*aria-labelledby="new-opening-position-label new-opening-position-value"/);
-    expect(out).toMatch(/id="new-opening-position-label"[^>]*>Hangi pozisyon için\?</);
-    expect(out).toMatch(/id="new-opening-position-value"[^>]*>Destek Uzmanı</);
+    expect(radio(out, support.id)).toContain('checked=""');
     // A library position has no ad step (plan decision 13): two steps.
     expect(out).toContain("Adım 1 / 2");
     // The preselection from the address is not a change: leaving loses nothing.
     expect(out).toContain(">Çık<");
     expect(out).not.toContain("Kaydetmeden çık");
+  });
+
+  it("shows the library positions as big cards with their role's tile and facts, and a dashed card for a new one (mockup 3)", () => {
+    const out = render();
+    expect(out).toMatch(/role="radiogroup" aria-labelledby="new-opening-position-label"/);
+    expect(out).toMatch(/id="new-opening-position-label"[^>]*>Hangi pozisyon için\?</);
+    expect(out).toContain("3 yetkinlik · ilan metni var");
+    expect(out).toContain("Yetkinlik yok · ilan metni yok");
+    expect(out).toContain("lucide-headset");
+    expect(out).toContain("lucide-handshake");
+    expect(out).toContain("Yeni bir pozisyon");
+    expect(out).toContain("Adını yaz, gerisini birlikte kuralım.");
+    expect(radio(out, "__new__")).not.toContain('checked=""');
+    // The name field opens only once "Yeni bir pozisyon" is chosen; the old combobox is gone.
+    expect(out).not.toContain('id="new-opening-name"');
+    expect(out).not.toContain('role="combobox"');
+    // The step's drawing (emptyOpenings) above the question.
+    expect(out).toContain('cx="134" cy="26" r="13"');
+    // Two positions need no search.
+    expect(out).not.toContain('placeholder="Pozisyon ara"');
+  });
+
+  it("offers a search above the cards once the library has more than six positions", () => {
+    const many = Array.from({ length: 7 }, (_, i) => ({ ...support, id: `0000000${i}-1111-4111-8111-111111111111`, name: `Pozisyon ${i}` }));
+    expect(render({ positions: many })).toContain('placeholder="Pozisyon ara"');
   });
 
   it("speaks English on an English page", () => {

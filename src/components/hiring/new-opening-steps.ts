@@ -51,3 +51,25 @@ export function newOpeningSummary(input: { name: string; hasAd: boolean; start: 
   else if (input.copyName) parts.push({ key: "summaryCopy", name: input.copyName });
   return parts;
 }
+
+/** Manager mockup 3: above this many library positions the cards get a search field. */
+export const POSITION_FILTER_FROM = 6;
+
+const fold = (text: string) => text.trim().toLocaleLowerCase("tr");
+
+/**
+ * The old picker's rule, kept: a new name that is a library position's name
+ * (any case, outer spaces ignored) is that position, so "Devam et" picks it
+ * instead of opening a second position of the same name.
+ */
+export function matchPosition<P extends { id: string; name: string }>(list: readonly P[], name: string): P | null {
+  const wanted = fold(name);
+  if (!wanted) return null;
+  return list.find((p) => fold(p.name) === wanted) ?? null;
+}
+
+/** The cards the search shows, in the library's order; the chosen card always stays in view. */
+export function visiblePositions<P extends { id: string; name: string }>(list: readonly P[], query: string, pickedId: string | null): P[] {
+  const q = fold(query);
+  return q ? list.filter((p) => p.id === pickedId || fold(p.name).includes(q)) : [...list];
+}

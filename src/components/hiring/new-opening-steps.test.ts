@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createWait, newOpeningStepOf, newOpeningStepOfRefusal, newOpeningSteps, newOpeningSummary } from "./new-opening-steps";
+import { createWait, matchPosition, newOpeningStepOf, newOpeningStepOfRefusal, newOpeningSteps, newOpeningSummary, visiblePositions } from "./new-opening-steps";
 
 describe("Alım aç as three steps (4.6, plan decision 13)", () => {
   it("asks for the job ad only for a new position name (a library position's ad lives on the position)", () => {
@@ -37,5 +37,26 @@ describe("Alım aç as three steps (4.6, plan decision 13)", () => {
     expect(newOpeningSummary({ name: "Destek Uzmanı", hasAd: false, start: "BLANK", copyName: null })).toEqual([{ text: "Destek Uzmanı" }, { key: "summaryNoAd" }, { key: "summaryBlank" }]);
     expect(newOpeningSummary({ name: "Destek Uzmanı", hasAd: true, start: "COPY", copyName: "Destek 2025" })).toEqual([{ text: "Destek Uzmanı" }, { key: "summaryAd" }, { key: "summaryCopy", name: "Destek 2025" }]);
     expect(newOpeningSummary({ name: "Destek Uzmanı", hasAd: true, start: "COPY", copyName: null })).toEqual([{ text: "Destek Uzmanı" }, { key: "summaryAd" }]);
+  });
+});
+
+describe("the position cards (manager mockup 3)", () => {
+  const list = [
+    { id: "1", name: "Destek Uzmanı" },
+    { id: "2", name: "Satış Uzmanı" },
+    { id: "3", name: "İnsan Kaynakları" },
+  ];
+
+  it("a typed name that is a library position's name is that position, whatever its case and spaces (the old picker's rule)", () => {
+    expect(matchPosition(list, "  destek uzmanı ")?.id).toBe("1");
+    expect(matchPosition(list, "İNSAN KAYNAKLARI")?.id).toBe("3");
+    expect(matchPosition(list, "Destek")).toBeNull();
+    expect(matchPosition(list, "   ")).toBeNull();
+  });
+
+  it("filters the cards by the search and keeps the chosen card in view", () => {
+    expect(visiblePositions(list, "", null).map((p) => p.id)).toEqual(["1", "2", "3"]);
+    expect(visiblePositions(list, "uzman", null).map((p) => p.id)).toEqual(["1", "2"]);
+    expect(visiblePositions(list, "satış", "1").map((p) => p.id)).toEqual(["1", "2"]);
   });
 });

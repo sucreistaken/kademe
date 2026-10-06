@@ -3,28 +3,30 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronsUpDown, Copy, FilePlus2, Plus, Sparkles } from "lucide-react";
+import { Copy, FilePlus2, Plus, Sparkles } from "lucide-react";
 import { GuidedFlow, useFlowStep, type FlowStep } from "@/components/manager/guided-flow";
 import { flowJourney } from "@/components/manager/flow-model";
-import { Button } from "@/components/ui/button";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ChoiceCardGroup } from "@/components/visual/choice-card";
 import { useMT } from "@/i18n/manager-client";
 import { POSITION_JOB_AD_MAX, POSITION_NAME_MAX } from "@/lib/library/positions";
 import { createOpeningAction } from "@/app/(manager)/hiring/openings/new/actions";
-import { createWait, newOpeningStepOf, newOpeningStepOfRefusal, newOpeningSteps, newOpeningSummary, type NewOpeningRefusal, type NewOpeningStep } from "./new-opening-steps";
+import { positionIcon } from "./position-icon";
+import { createWait, matchPosition, newOpeningStepOf, newOpeningStepOfRefusal, newOpeningSteps, newOpeningSummary, POSITION_FILTER_FROM, visiblePositions, type NewOpeningRefusal, type NewOpeningStep } from "./new-opening-steps";
 
 export type PositionOption = { id: string; name: string; hasJobAd: boolean; competencyCount: number; weightsEqual: boolean };
 type Start = "AI" | "COPY" | "BLANK";
 
+/** The card that adds a position that is not in the library yet. */
+const NEW = "__new__";
+
 const ICONS = { AI: Sparkles, COPY: Copy, BLANK: FilePlus2 } as const;
 
 /**
- * HIRING-UX 5.3 as HIRING-VISUAL-FLOW 4.6 (K12): which position, the job ad
+ * HIRING-UX 5.3 as HIRING-VISUAL-FLOW 4.6 (K12) in the look of the manager mockup (screens 3, 4): which position (cards, or a new name), the job ad
  * (a new position only, plan decision 13), how to start; one question per step
  * on GuidedFlow, every value kept across the steps and the browser's buttons.
  * The last step carries the one-line summary (H3: no separate summary step)
@@ -50,10 +52,11 @@ export function NewOpeningForm({
   // Only a source this organisation may copy from (the page's list) is preselected.
   const copySource = initialCopyId && sources.some((s) => s.id === initialCopyId) ? initialCopyId : "";
   const initialStart: Start = copySource ? "COPY" : "AI";
-  const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [picked, setPicked] = useState<PositionOption | null>(initialPicked);
   const [newName, setNewName] = useState<string | null>(null);
+  // W4: the typed name stays while a library card is chosen, and comes back with "Yeni bir pozisyon".
+  const [nameDraft, setNameDraft] = useState("");
   const [jobAd, setJobAd] = useState("");
   const [start, setStart] = useState<Start>(initialStart);
   const [copyFrom, setCopyFrom] = useState(copySource);
@@ -72,8 +75,8 @@ export function NewOpeningForm({
   const step = newOpeningStepOf(`#${nav.step}`, { steps, positionReady });
   const index = steps.indexOf(step);
   const wait = createWait({ positionReady, start: effective, copyFrom });
-  const typed = query.trim();
-  const exists = positions.some((p) => p.name.toLocaleLowerCase("tr") === typed.toLocaleLowerCase("tr"));
+  const shown = visiblePositions(positions, query, picked?.id ?? null);
+  const positionValue = picked ? [picked.id] : newName !== null ? [NEW] : [];
   const dirty = picked?.id !== initialPicked?.id || newName !== null || jobAd !== "" || start !== initialStart || copyFrom !== copySource;
 
   const refusalText: Record<NewOpeningRefusal, string> = {
@@ -85,19 +88,28 @@ export function NewOpeningForm({
     FAILED: t("failed"),
   };
 
-  // Closing the picker keeps what was typed: an exact match is picked, any other name
-  // becomes the new position unless a position is already picked.
-  function onOpenChange(next: boolean) {
-    setOpen(next);
-    if (next || !typed) return;
-    const match = positions.find((p) => p.name.toLocaleLowerCase("tr") === typed.toLocaleLowerCase("tr"));
+  function choosePosition(id: string) {
+    setRefusal(null);
+    if (id === NEW) {
+      setPicked(null);
+      setNewName(nameDraft);
+      return;
+    }
+    setPicked(positions.find((p) => p.id === id) ?? null);
+    setNewName(null);
+  }
+
+  // "Devam et" on the position: a typed library name is that position (no ad step then).
+  function continueFromPosition() {
+    const match = picked ? null : matchPosition(positions, newName ?? "");
     if (match) {
       setPicked(match);
       setNewName(null);
-    } else if (!picked) {
-      setPicked(null);
-      setNewName(typed);
+      nav.go("start");
+      return;
     }
+    const to = steps[index + 1];
+    if (to) nav.go(to);
   }
 
   function submit() {
@@ -148,81 +160,49 @@ export function NewOpeningForm({
       title: t("stepPositionTitle"),
       lead: <p>{t("stepPositionLead")}</p>,
       layout: "split",
-      primary: { kind: "button", id: "new-opening-next", label: flow("continue"), waitReason: positionReady ? null : t("needPosition"), onClick: next(steps[index + 1]) },
+      illustration: "emptyOpenings",
+      primary: { kind: "button", id: "new-opening-next", label: flow("continue"), waitReason: positionReady ? null : t("needPosition"), onClick: continueFromPosition },
       note,
       body: (
         <div className="space-y-3">
-          {/* The picker's name is the question and the choice, as the old form's heading and value were. */}
           <span id="new-opening-position-label" className="sr-only">
             {t("stepPositionTitle")}
           </span>
-          <Popover open={open} onOpenChange={onOpenChange}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={open}
-                aria-labelledby="new-opening-position-label new-opening-position-value"
-                className="h-12 w-full justify-between font-normal"
-              >
-                <span id="new-opening-position-value" className={picked || newName ? "truncate text-ink" : "truncate text-muted"}>
-                  {picked?.name ?? newName ?? t("positionPick")}
-                </span>
-                <ChevronsUpDown className="size-4 shrink-0 text-muted" strokeWidth={1.5} aria-hidden />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
-              <Command>
-                <CommandInput placeholder={t("positionSearch")} value={query} onValueChange={setQuery} maxLength={POSITION_NAME_MAX} />
-                <CommandList>
-                  {/* "No position with this name" only once something is typed. */}
-                  {typed ? <CommandEmpty>{t("positionNone")}</CommandEmpty> : null}
-                  {positions.length ? (
-                    <CommandGroup>
-                      {positions.map((p) => (
-                        <CommandItem
-                          key={p.id}
-                          value={p.id}
-                          keywords={[p.name]}
-                          data-checked={picked?.id === p.id}
-                          onSelect={() => {
-                            setPicked(p);
-                            setNewName(null);
-                            setRefusal(null);
-                            setOpen(false);
-                          }}
-                        >
-                          {p.name}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  ) : null}
-                  {typed && !exists ? (
-                    <CommandGroup forceMount>
-                      <CommandItem
-                        value={`__new__${typed}`}
-                        keywords={[typed]}
-                        forceMount
-                        onSelect={() => {
-                          setPicked(null);
-                          setNewName(typed);
-                          setRefusal(null);
-                          setOpen(false);
-                        }}
-                      >
-                        <Plus className="size-4 text-muted" strokeWidth={1.5} aria-hidden />
-                        {t("positionCreate", { name: typed })}
-                      </CommandItem>
-                    </CommandGroup>
-                  ) : null}
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-          {picked ? (
-            <p className="tnum text-[14px] text-muted">
-              {picked.competencyCount ? t("profileSummary", { count: picked.competencyCount, weights: picked.weightsEqual ? t("weightsEqual") : t("weightsSet") }) : t("profileEmpty")}
-            </p>
+          {positions.length > POSITION_FILTER_FROM ? (
+            <Input aria-label={t("positionFilter")} placeholder={t("positionFilter")} value={query} onChange={(e) => setQuery(e.target.value)} className="h-11 text-[16px]" />
+          ) : null}
+          <ChoiceCardGroup
+            type="single"
+            name="new-opening-position"
+            labelledBy="new-opening-position-label"
+            look="panel"
+            value={positionValue}
+            onChange={([v]) => (v ? choosePosition(v) : undefined)}
+            items={[
+              ...shown.map((p) => ({
+                value: p.id,
+                label: p.name,
+                marker: positionIcon(p.name),
+                description: t("positionCardDetail", { count: p.competencyCount, ad: p.hasJobAd ? t("summaryAd") : t("summaryNoAd") }),
+              })),
+              { value: NEW, label: t("positionNew"), description: t("positionNewBody"), marker: Plus, tone: "new" as const },
+            ]}
+          />
+          {newName !== null && !picked ? (
+            <div className="space-y-2">
+              <Label htmlFor="new-opening-name">{t("positionNewName")}</Label>
+              <Input
+                id="new-opening-name"
+                maxLength={POSITION_NAME_MAX}
+                value={nameDraft}
+                onChange={(e) => {
+                  setNameDraft(e.target.value);
+                  setNewName(e.target.value);
+                  setRefusal(null);
+                }}
+                className="h-11 text-[16px]"
+              />
+            </div>
           ) : null}
         </div>
       ),
