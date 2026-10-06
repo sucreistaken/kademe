@@ -43,3 +43,12 @@ Task 3: review (opus): spec compliant, Approved, 0 Critical/Important; every ans
 Ruling: call-centre stage-1 behavioural questions stay VIDEO (the task line says video; the content-common AUDIO rule is the default for phone work samples). Cost if wrong: two type changes.
 Task 3: minor (deferred, content polish wave): call-centre invoice roleplay should also tag resilience; call-flow single options give the answer away by wording; EA calendar single lacks the meeting length and has weak distractors; EA flight prompt lacks departure city and flight time; accountant stage 1 too tight for retakes (singles first or 12 min); sales "facts above" back-reference; accuracy anchors coarse with exactly 2 planted errors (plan-mandated).
 Task 3: complete (commits 991bfb6..b48b978, review clean)
+BASE T4: 89512ce
+Task 4: implementer DONE f88c047 (software dev, retail, warehouse; stage 1 sized 13-14 min for worst-case retakes, totals 34/26/34; templates tests 42/42 re-run by controller). Review dispatched (opus).
+Task 4: review (opus): Needs fixes, 2 Important (warehouse accuracy-only story video cannot be scored against planted-error anchors; retail add-on campaign rule ambiguous), 5 minor. All answer keys and planted bugs verified by the reviewer in node.
+Ruling: accuracy is measured only by planted-error work samples; story questions use another competency. Same defect exists in accountant.ts:26 (Task 3): added to the content polish wave. Cost if wrong: anchor/question retagging.
+Ruling: the spec's "about 20-30 minutes" means typical completion; stage minutes are an AUTO_SUBMIT hard cap sized for worst-case retakes (up to the test's 35, 45 for teachers); stage descriptions say "En fazla N dakika". Cost if wrong: candidates see longer caps in the gallery.
+Task 4: fix round 1 dispatched (I1, I2, M1-M5).
+Task 4: fix round 1/5 (7 addressed, 0 open; commit 8227be6). Re-review (sonnet): all addressed. Controller: templates tests 42/42, retail 450 x 0.7 = 315, 600 + 315 = 915; checked by hand the stock scenarios (260 -> 130 >= 120; 240 -> 110, 10 short = intended trap) and the Wed 04:00 departure.
+Task 3: minor (deferred, polish wave): EA inbox prompt lacks departure city and flight time; only internalQuestion says "Istanbul, about 1h10".
+Task 4: complete (commits 89512ce..8227be6, review clean after 1 fix round)
