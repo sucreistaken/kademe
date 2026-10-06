@@ -82,7 +82,15 @@ describe("hiring's rows on Today (HIRING-VISUAL-FLOW 4.3, M2)", () => {
     expect(op("assessment_links").joins.join(" "), "expiring links").toMatch(deletedFilter);
     expect(op("assessment_links").where).toMatch(/"hiring_openings"\."status" <> \$\d+/);
     expect(op("assessment_links").params).toContain("CLOSED");
-    expect(op("hiring_versions").where).toMatch(/"hiring_openings"\."status" <> \$\d+/);
+  });
+
+  it("lists a waiting draft only for a live opening, as the control view counts it (B-M4): never a closed one, never one still in setup", async () => {
+    await hiringToday(ORG, USER, "tr", NOW);
+    const versions = fake.ops.find((o) => o.table === "hiring_versions")!;
+    expect(versions.where).toMatch(/"hiring_openings"\."status" = \$\d+/);
+    expect(versions.where).not.toMatch(/"hiring_openings"\."status" <>/);
+    expect(versions.params).toContain("OPEN");
+    expect(versions.params).not.toContain("CLOSED");
   });
 
   it("shortens a long request to 140 characters by code points, never splitting an emoji (fix round 1)", async () => {

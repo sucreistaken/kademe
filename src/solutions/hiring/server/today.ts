@@ -15,7 +15,8 @@ const DETAIL_MAX = 140;
  * people who run the opening, STATUS 321). One "task" row per open
  * accommodation request (K10 may pick it as "Sıradaki iş"); per opening, one
  * "attention" row each for its open requests, its links expiring within 48
- * hours and a draft waiting to be published. Data-rights requests are not
+ * hours and, for a live opening, a new version waiting to be published (the
+ * control view counts the same openings as waiting, B-M4). Data-rights requests are not
  * tasks in plan 2b (ruling C6, the user's "plan 3 te gelsin"): they are
  * counted in the opening's requests row, which says so in a plain note; their
  * handling place and their top rank come with plan 3 (RANK keeps the order).
@@ -70,7 +71,8 @@ export async function hiringToday(orgId: string, userId: string, locale: Locale,
     .select({ openingId: hiringVersions.openingId, openingName: hiringOpenings.name, number: hiringVersions.versionNumber })
     .from(hiringVersions)
     .innerJoin(hiringOpenings, and(eq(hiringOpenings.id, hiringVersions.openingId), eq(hiringOpenings.orgId, orgId)))
-    .where(and(eq(hiringVersions.orgId, orgId), eq(hiringVersions.status, "DRAFT"), ne(hiringOpenings.status, "CLOSED")));
+    // B-M4: only a live opening's new version waits (the control view's "waiting" count and its draft line); an opening still in setup is the control view's "kurulumda", not a task here.
+    .where(and(eq(hiringVersions.orgId, orgId), eq(hiringVersions.status, "DRAFT"), eq(hiringOpenings.status, "OPEN")));
 
   const name = (n: string | null) => n ?? t("hiringToday.anonymous");
   // Cut by code points, so an emoji or another surrogate pair is never split in half.
