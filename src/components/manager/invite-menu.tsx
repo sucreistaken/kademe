@@ -5,12 +5,20 @@ import { ChevronDown } from "lucide-react";
 import { Button, DisabledReason } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
-/** Today's "Davet et" when the user may invite for more than one solution. */
-export function InviteMenu({ label, items }: { label: string; items: Array<{ key: string; href: string; label: string }> }) {
+/** Today's "Davet et" when the user may invite for more than one solution; outline while another button on the screen is the filled one. */
+export function InviteMenu({
+  label,
+  items,
+  variant = "primary",
+}: {
+  label: string;
+  items: Array<{ key: string; href: string; label: string }>;
+  variant?: "primary" | "secondary";
+}) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button id="today-invite" variant="primary">
+        <Button id="today-invite" variant={variant}>
           {label}
           <ChevronDown className="size-4" strokeWidth={1.5} aria-hidden />
         </Button>
@@ -30,10 +38,10 @@ export function InviteMenu({ label, items }: { label: string; items: Array<{ key
  * Today's "Davet et" for a user who may invite for no solution: disabled, its
  * reason on screen and linked to the button (aria-describedby, id + -why).
  */
-export function InviteUnavailable({ label, reason }: { label: string; reason: string }) {
+export function InviteUnavailable({ label, reason, variant = "primary" }: { label: string; reason: string; variant?: "primary" | "secondary" }) {
   return (
     <div className="flex flex-col items-end">
-      <Button id="today-invite" variant="primary" disabled disabledReason={reason}>
+      <Button id="today-invite" variant={variant} disabled disabledReason={reason}>
         {label}
       </Button>
       <DisabledReason id="today-invite-why">{reason}</DisabledReason>

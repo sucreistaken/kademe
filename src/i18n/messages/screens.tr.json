@@ -82,13 +82,14 @@
     "overridden": "{name} değiştirdi"
   },
   "today": {
-    "title": "{count, plural, =0 {Bekleyen sonuç yok} other {# sonuç incelemenizi bekliyor}}",
-    "oldest": "En eskisi {date} tarihinde bitti.",
+    "title": "Bugün",
+    "oldest": "En eskisi {date}.",
+    "summary": "{count, plural, =0 {Bekleyen iş yok.} other {# iş seni bekliyor.}}",
     "invite": "Öğrenci davet et",
     "inviteMenu": "Davet et",
-    "queueTitle": "İnceleme kuyruğu",
+    "queueTitle": "İnceleme kuyruğu · {solution} ({count})",
     "queueEmpty": "Bekleyen sonuç yok.",
-    "queueEmptyHint": "Yeni bir öğrenci davet edin; bitirdiğinde sonucu burada belirir.",
+    "queueEmptyHint": "Yeni bir öğrenci davet et; bitirdiğinde sonucu burada belirir.",
     "runningTitle": "Süren sınavlar",
     "runningEmpty": "Şu anda sınavda olan öğrenci yok.",
     "expiringTitle": "48 saat içinde dolacak linkler",
@@ -99,7 +100,14 @@
     "aiRunning": "AI değerlendiriyor",
     "readyToFinalize": "Kesinleştirmeye hazır",
     "noInvitePermission": "Rolün davet açamaz.",
-    "sectionNow": "{section} bölümünde"
+    "sectionNow": "{section} bölümünde",
+    "nextTitle": "Sıradaki iş",
+    "nextRequest": "Talebe bak",
+    "attentionTitle": "Dikkat isteyenler",
+    "open": "Aç",
+    "runningCount": "{title} ({count})",
+    "emptyTitle": "Bugün bekleyen iş yok.",
+    "emptyBody": "Yeni bir aday ya da öğrenci davet edebilirsin."
   },
   "students": {
     "title": "Öğrenciler",

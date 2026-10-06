@@ -69,6 +69,11 @@ describe("solution registry", () => {
     expect(buildNav("en", shared)[1].items[0].label).toBe("Openings");
   });
 
+  it("links Today to hiring's control view only, under its own base path (H1)", () => {
+    expect(SOLUTION_MANIFESTS.map((m) => m.overview?.href ?? null)).toEqual(["/hiring/openings", null]);
+    for (const m of SOLUTION_MANIFESTS) if (m.overview) expect(m.overview.href.startsWith(`${m.basePath}/`)).toBe(true);
+  });
+
   it("drops group headers when only one solution is registered", () => {
     const nav = buildNav("tr", shared, [languageExamManifest]);
     expect(nav.map((g) => g.label)).toEqual([null, null, null, null]);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TodayItem } from "@/solutions/types";
-import { attentionRows, pickNextTask, reviewQueue, todaySummary } from "./today";
+import { attentionRows, inviteEmphasis, pickNextTask, reviewQueue, todaySummary } from "./today";
 
 const at = (iso: string) => new Date(iso);
 const item = (over: Partial<TodayItem>): TodayItem => ({ id: Math.random().toString(36), solution: "hiring", lane: "attention", title: "t", subtitle: null, href: "/x", sortAt: null, cells: [], ...over });
@@ -41,10 +41,18 @@ describe("the attention list and the summary", () => {
     expect(attentionRows(rows).map((r) => r.id)).toEqual(["a1"]);
   });
 
-  it("counts what waits for a person (tasks, attention rows, reviews) and names the oldest", () => {
-    const rows = [item({ sortAt: at("2026-10-02T00:00:00Z") }), item({ lane: "task", task: "ACCOMMODATION", sortAt: at("2026-09-30T00:00:00Z") }), review("r", "2026-10-01T00:00:00Z"), item({ lane: "running" })];
-    expect(todaySummary(rows)).toEqual({ count: 3, oldest: at("2026-09-30T00:00:00Z") });
+  it("counts what waits for a person (attention rows and reviews; a task is counted by its opening's attention row) and names the oldest", () => {
+    // The requests row carries its oldest request's date, the task's included (hiringToday).
+    const rows = [item({ sortAt: at("2026-09-30T00:00:00Z") }), item({ lane: "task", task: "ACCOMMODATION", sortAt: at("2026-09-30T00:00:00Z") }), review("r", "2026-10-01T00:00:00Z"), item({ lane: "running" })];
+    expect(todaySummary(rows)).toEqual({ count: 2, oldest: at("2026-09-30T00:00:00Z") });
     expect(todaySummary([])).toEqual({ count: 0, oldest: null });
+  });
+
+  it("counts an accommodation request once: its task item and its opening's requests row are the same thing (Task 16 carry)", () => {
+    const task = item({ id: "hiring:request:1", lane: "task", task: "ACCOMMODATION", sortAt: at("2026-10-02T00:00:00Z") });
+    const requestsRow = item({ id: "hiring:requests:op1", attention: "requests", title: "1 açık talep", sortAt: at("2026-10-02T00:00:00Z") });
+    expect(todaySummary([task, requestsRow])).toEqual({ count: 1, oldest: at("2026-10-02T00:00:00Z") });
+    expect(todaySummary([task, requestsRow, review("r", "2026-10-03T00:00:00Z")]).count).toBe(2);
   });
 });
 
@@ -62,5 +70,13 @@ describe("with the exam's rows only, Today reads as it did before M2 (the live e
     reviewQueue(items);
     pickNextTask(items);
     expect(items.map((i) => i.id)).toEqual(["b", "a"]);
+  });
+});
+
+describe("the invite button's weight on Today (4.3: one filled button)", () => {
+  it("is outline when a next task holds the filled button, filled when only attention rows wait, and moves into the empty state otherwise", () => {
+    expect(inviteEmphasis({ next: true, attention: 3 })).toBe("outline");
+    expect(inviteEmphasis({ next: false, attention: 2 })).toBe("filled");
+    expect(inviteEmphasis({ next: false, attention: 0 })).toBe("empty");
   });
 });

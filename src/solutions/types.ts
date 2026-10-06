@@ -62,6 +62,8 @@ export interface SolutionManifest {
   label: I18nLabel;
   /** Menu entries, in menu order. Only routes that exist (RULES.md rule 7). */
   nav: NavLink[];
+  /** HIRING-VISUAL-FLOW H1: the solution's control view, linked from Today under "Dikkat isteyenler". */
+  overview?: { href: string; label: I18nLabel };
   /** Where "invite" on Today leads for this solution; null while it cannot invite yet. */
   inviteHref: string | null;
   /** The words of this solution's invite on Today ("Aday davet et"), and who may use it. */

@@ -82,11 +82,12 @@
     "overridden": "Changed by {name}"
   },
   "today": {
-    "title": "{count, plural, =0 {No results waiting} one {# result waits for your review} other {# results wait for your review}}",
-    "oldest": "The oldest finished on {date}.",
+    "title": "Today",
+    "oldest": "The oldest is from {date}.",
+    "summary": "{count, plural, =0 {Nothing is waiting.} one {# thing waits for you.} other {# things wait for you.}}",
     "invite": "Invite a student",
     "inviteMenu": "Invite",
-    "queueTitle": "Review queue",
+    "queueTitle": "Review queue · {solution} ({count})",
     "queueEmpty": "Nothing is waiting.",
     "queueEmptyHint": "Invite a student; their result appears here when they finish.",
     "runningTitle": "Exams in progress",
@@ -99,7 +100,14 @@
     "aiRunning": "AI is grading",
     "readyToFinalize": "Ready to finalize",
     "noInvitePermission": "Your role cannot send invitations.",
-    "sectionNow": "In {section}"
+    "sectionNow": "In {section}",
+    "nextTitle": "Next up",
+    "nextRequest": "Look at the request",
+    "attentionTitle": "Needs attention",
+    "open": "Open",
+    "runningCount": "{title} ({count})",
+    "emptyTitle": "Nothing waits for you today.",
+    "emptyBody": "You can invite a new candidate or student."
   },
   "students": {
     "title": "Students",

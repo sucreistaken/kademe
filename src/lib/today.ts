@@ -22,8 +22,20 @@ export function pickNextTask(items: TodayItem[]): TodayItem | null {
 
 export const attentionRows = (items: TodayItem[]) => items.filter((i) => i.lane === "attention");
 
+/**
+ * "N iş seni bekliyor": what waits for a person, each thing once. A task is
+ * not counted on its own: its opening's attention row already counts it
+ * (TodayItem.lane; hiringToday emits an accommodation request as a task and
+ * in its opening's requests row, whose date is its oldest request's).
+ */
 export function todaySummary(items: TodayItem[]): { count: number; oldest: Date | null } {
-  const waiting = items.filter((i) => i.lane !== "running");
+  const waiting = items.filter((i) => i.lane === "review" || i.lane === "attention");
   const dated = waiting.map((i) => i.sortAt).filter((d): d is Date => d !== null);
   return { count: waiting.length, oldest: dated.length ? new Date(Math.min(...dated.map((d) => d.getTime()))) : null };
+}
+
+/** 4.3: Today has one filled button: the next task's; without one, the invite (in the header, or in the empty state when nothing waits). */
+export function inviteEmphasis(input: { next: boolean; attention: number }): "outline" | "filled" | "empty" {
+  if (input.next) return "outline";
+  return input.attention > 0 ? "filled" : "empty";
 }

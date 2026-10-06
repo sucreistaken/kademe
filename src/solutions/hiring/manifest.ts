@@ -12,6 +12,7 @@ export const hiringManifest: SolutionManifest = {
   basePath: "/hiring",
   label: { tr: "İşe alım", en: "Hiring" },
   nav: [{ href: "/hiring/openings", label: { tr: "Alımlar", en: "Openings" }, icon: "briefcase" }],
+  overview: { href: "/hiring/openings", label: { tr: "Tüm alımların durumu", en: "Where every opening stands" } },
   inviteHref: "/hiring/invite",
   inviteLabel: { tr: "Aday davet et", en: "Invite a candidate" },
   inviteCapability: "opening:write",
