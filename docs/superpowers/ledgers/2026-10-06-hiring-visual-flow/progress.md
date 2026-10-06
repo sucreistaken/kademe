@@ -157,3 +157,10 @@ Task 15: complete (commits f033e69..c445dff, review clean after 1 fix round)
 - Task 15: minor (deferred): useKeepFocus's DOM wiring and the `heard` listener have no render test (pure parts tested).
 - Benchmark (doğrulanmadı, bulut, tarayıcı yok): a reload on #step takes no focus; the position announcement; the closed opening's grey dot; "Link doldu" in bold.
 BASE T16: c445dff
+Task 16: implementer DONE 5b31b60 (lanes attention/task, pickNextTask with RANK DATA_RIGHTS > ACCOMMODATION > DECISION then the oldest exam review, hiringToday with five reads one after another, one EXPIRING_SOON_MS; declared rename of the module Today test). Controller: vitest 2567, 2566 passed, 1 env failure, 1 declared rename, 12 more added. Review (opus): Approved, 0 Critical/Important; org scoping on every read, reviewers get nothing, C6 and C21 met (the fake-db test would read [1,5,5,5,5] under Promise.all; the implementer's positive control failed it).
+- Ruling: fix the cheap plan-mandated minors now: the data-rights read and the expiring-links read skip soft-deleted candidates (the Candidates tab hides them), the expiring-links read skips CLOSED openings (such a link can be neither opened nor extended), the detail cut is by code points. Cost if wrong: two more equality joins on one read.
+Task 16: fix round 1/5 (3 minor addressed, 0 open; commit eb09264). Controller: vitest 2570, 2569 passed, 1 env failure, 0 removed, 3 added; diff read by the controller (scoped re-review): filters as ruled, joins org-scoped through assessments.
+Task 16: complete (commits 182bb29..eb09264, review clean after 1 fix round)
+- Carry to Task 17 (binding): todaySummary counts an accommodation request twice (its task item and its opening's requests row); the "N iş seni bekliyor" headline counts it once.
+- Task 16: minor (deferred): until Task 17 the dashboard runs hiring's five reads and drops them (the page shows review and running only).
+BASE T17: eb09264
