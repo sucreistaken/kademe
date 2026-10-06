@@ -21,6 +21,8 @@ const c = vi.hoisted(() => ({
 }));
 vi.mock("./server/candidate", () => c);
 vi.mock("./server/consent", () => ({ loadConsentText: async (orgId: string, id: string) => ({ id, orgId }) }));
+const t = vi.hoisted(() => ({ hiringToday: vi.fn(async () => [{ id: "row" }]) }));
+vi.mock("./server/today", () => t);
 
 import { hiringModule } from "./module";
 
@@ -41,8 +43,9 @@ beforeEach(() => {
 });
 
 describe("the hiring module (plan 2)", () => {
-  it("adds nothing to Today yet and has no proctoring (plan 3 and plan 4)", async () => {
-    expect(await hiringModule.today("o", "u", "tr")).toEqual([]);
+  it("gives Today hiring's own rows and has no proctoring (plan 4)", async () => {
+    expect(await hiringModule.today("o", "u", "tr")).toEqual([{ id: "row" }]);
+    expect(t.hiringToday).toHaveBeenCalledWith("o", "u", "tr");
     expect(await hiringModule.proctorPolicy("a")).toBeNull();
   });
 

@@ -19,7 +19,16 @@
     "versionLive": "Yayında: v{number}",
     "versionDraft": "Taslak: v{number}",
     "noPermission": "Rolün bu alımı değiştiremez.",
-    "tabSummary": "Özet"
+    "tabSummary": "Özet",
+    "openRequests": "{count, plural, one {# açık talep} other {# açık talep}}",
+    "rightsNote": "{count, plural, one {Biri veri hakkı talebi; panelden henüz kapatılmaz.} other {# tanesi veri hakkı talebi; panelden henüz kapatılmaz.}}",
+    "expiringLinks": "{count, plural, one {# link 48 saatte doluyor} other {# link 48 saatte doluyor}}",
+    "draftWaitingPublish": "Taslak v{number} yayın bekliyor",
+    "continueSetup": "Kuruluma devam et"
+  },
+  "hiringToday": {
+    "accommodation": "{name} bir uyarlama istedi",
+    "anonymous": "Bir aday"
   },
   "hiringOpenings": {
     "title": "Alımlar",

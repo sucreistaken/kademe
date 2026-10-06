@@ -92,18 +92,33 @@ export type TodayCell =
   | { kind: "level"; text: string | null; final: boolean }
   | { kind: "dot"; tone: StatusTone; text: string };
 
+/** K10: the kinds of request that may become Today's next task, in priority order. DATA_RIGHTS and DECISION are reserved for plan 3 (ruling C6). */
+export type TodayTaskKind = "DATA_RIGHTS" | "ACCOMMODATION" | "DECISION";
+
 /** One row on the shared Today screen. */
 export type TodayItem = {
   id: string;
   solution: SolutionKey;
-  /** "review": waiting for a person, oldest first. "running": in progress now. */
-  lane: "review" | "running";
+  /**
+   * "review": waiting for a person, oldest first (the exam's queue). "running": in progress now.
+   * "attention": something to look at, listed under "Dikkat isteyenler". "task": one request that may
+   * become "Sıradaki iş" (K10); tasks are not listed one by one (their opening's attention row counts them).
+   */
+  lane: "review" | "running" | "attention" | "task";
   title: string;
   subtitle: string | null;
   href: string;
   sortAt: Date | null;
-  /** review: exactly four cells (detail, level, status, integrity). running: one dot. */
+  /** review: exactly four cells (detail, level, status, integrity). running: one dot. attention and task: none. */
   cells: TodayCell[];
+  /** lane "task": its kind (K10). */
+  task?: TodayTaskKind;
+  /** lane "task": the candidate's own words, shown quoted. lane "attention": a plain note under the title. */
+  detail?: string | null;
+  /** lane "attention": which icon the row carries (inbox, clock, file). */
+  attention?: "requests" | "expiring" | "draft";
+  /** lane "attention": the row's own action words (default "Aç"). */
+  actionLabel?: string;
 };
 
 /** A running part of an attempt, as the solution names it (proctor_events.segment_*). */

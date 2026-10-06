@@ -45,6 +45,9 @@ export const SURVEY_MIN_ANSWERS = 5;
  */
 export const SURVEY_BATCH = Math.max(5, SURVEY_MIN_ANSWERS);
 
+/** A link that is not finished and expires within this window "needs attention" (Today and the openings' control view, ruling C16: one window). */
+export const EXPIRING_SOON_MS = 48 * 60 * 60 * 1000;
+
 /** How many of `n` survey answers the team may see: the oldest whole batches. */
 export function releasedSurveyCount(n: number): number {
   if (!Number.isFinite(n) || n <= 0) return 0;

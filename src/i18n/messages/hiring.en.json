@@ -19,7 +19,16 @@
     "versionLive": "Live: v{number}",
     "versionDraft": "Draft: v{number}",
     "noPermission": "Your role cannot change this opening.",
-    "tabSummary": "Summary"
+    "tabSummary": "Summary",
+    "openRequests": "{count, plural, one {# open request} other {# open requests}}",
+    "rightsNote": "{count, plural, one {One is a data rights request; it cannot be closed in the panel yet.} other {# are data rights requests; they cannot be closed in the panel yet.}}",
+    "expiringLinks": "{count, plural, one {# link expires within 48 hours} other {# links expire within 48 hours}}",
+    "draftWaitingPublish": "Draft v{number} waits to be published",
+    "continueSetup": "Continue the setup"
+  },
+  "hiringToday": {
+    "accommodation": "{name} asked for an adjustment",
+    "anonymous": "A candidate"
   },
   "hiringOpenings": {
     "title": "Openings",

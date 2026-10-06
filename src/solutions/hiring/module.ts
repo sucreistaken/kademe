@@ -16,6 +16,7 @@ import {
 } from "./server/candidate";
 import { loadConsentText } from "./server/consent";
 import { hiringLibraryUsage } from "./server/library-usage";
+import { hiringToday } from "./server/today";
 
 /** The core only routes invitations hiring serves (serves), so a missing row here is a bug, said loudly. */
 async function requireHiring(ctx: CandidateContext): Promise<HiringContext> {
@@ -29,10 +30,8 @@ const SALVAGE_BATCH = 20;
 
 export const hiringModule: SolutionModule = {
   ...hiringManifest,
-  // Hiring's Today rows (waiting reviews, decisions) arrive with plan 3.
-  async today() {
-    return [];
-  },
+  // Hiring's Today rows (M2): accommodation tasks and per-opening attention rows; decisions arrive with plan 3.
+  today: hiringToday,
   // No proctoring in plan 2: every invitation freezes proctor_level OFF (plan 4 adds levels).
   async proctorPolicy() {
     return null;
