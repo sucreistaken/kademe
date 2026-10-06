@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createWait, newOpeningStepOf, newOpeningStepOfRefusal, newOpeningSteps } from "./new-opening-steps";
+import { createWait, newOpeningStepOf, newOpeningStepOfRefusal, newOpeningSteps, newOpeningSummary } from "./new-opening-steps";
 
 describe("Alım aç as three steps (4.6, plan decision 13)", () => {
   it("asks for the job ad only for a new position name (a library position's ad lives on the position)", () => {
@@ -30,5 +30,12 @@ describe("Alım aç as three steps (4.6, plan decision 13)", () => {
     expect(newOpeningStepOfRefusal("COPY_SOURCE_NOT_FOUND")).toBe("start");
     expect(newOpeningStepOfRefusal("INVALID")).toBe("start");
     expect(newOpeningStepOfRefusal("FAILED")).toBe("start");
+  });
+
+  it("says every decision in one line on the last step, and names a copy only once its source is chosen (H3)", () => {
+    expect(newOpeningSummary({ name: "Destek Uzmanı", hasAd: true, start: "AI", copyName: null })).toEqual([{ text: "Destek Uzmanı" }, { key: "summaryAd" }, { key: "summaryAi" }]);
+    expect(newOpeningSummary({ name: "Destek Uzmanı", hasAd: false, start: "BLANK", copyName: null })).toEqual([{ text: "Destek Uzmanı" }, { key: "summaryNoAd" }, { key: "summaryBlank" }]);
+    expect(newOpeningSummary({ name: "Destek Uzmanı", hasAd: true, start: "COPY", copyName: "Destek 2025" })).toEqual([{ text: "Destek Uzmanı" }, { key: "summaryAd" }, { key: "summaryCopy", name: "Destek 2025" }]);
+    expect(newOpeningSummary({ name: "Destek Uzmanı", hasAd: true, start: "COPY", copyName: null })).toEqual([{ text: "Destek Uzmanı" }, { key: "summaryAd" }]);
   });
 });

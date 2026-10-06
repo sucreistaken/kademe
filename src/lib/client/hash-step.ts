@@ -53,3 +53,13 @@ export function clearHash() {
   window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
   window.dispatchEvent(new Event("hashchange"));
 }
+
+/**
+ * Puts `hash` ("" for none) in the address in place of the current one, with
+ * no new history entry and no event: the step shown does not change (the
+ * address only catches up with it, useFlowStep), so nothing is told and no
+ * focus moves. The entry keeps its state, so a pushed step's mark stays.
+ */
+export function replaceHash(hash: string) {
+  window.history.replaceState(window.history.state, "", `${window.location.pathname}${window.location.search}${hash}`);
+}

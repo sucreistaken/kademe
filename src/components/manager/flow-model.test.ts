@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { stepFocusController } from "@/hooks/use-step-focus";
-import { exitKey, flowFocusKey, flowJourney, flowStepOf, isDirty, saveWait, sameValue, stepOfProblem, summaryRows } from "./flow-model";
+import { exitKey, flowFocusKey, flowHashFix, flowJourney, flowStepOf, isDirty, saveWait, sameValue, stepOfProblem, summaryRows } from "./flow-model";
 
 const steps = ["members", "decider", "min", "review"] as const;
 
@@ -92,5 +92,23 @@ describe("the heading takes the focus only on an in-page step change (W10, 2.3)"
     c.onStep(flowStepOf("", { steps, firstInvalid: null }), h);
     c.onStep(flowStepOf("#min", { steps, firstInvalid: null }), h);
     expect(h.focus).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("the address never runs ahead of the step shown (W3)", () => {
+  it("leaves an address that already names the shown step, or no hash on the first step", () => {
+    expect(flowHashFix("#min", "min", "members")).toBeNull();
+    expect(flowHashFix("", "members", "members")).toBeNull();
+    expect(flowHashFix("#members", "members", "members")).toBeNull();
+  });
+
+  it("a later step's hash over a step that is not ready yet (a reload, a copied link) is taken back to the step shown", () => {
+    // Shown "members" while the hash asks "#review": the address loses the hash, so a ready step later shows the first step, not a jump.
+    expect(flowHashFix("#review", flowStepOf("#review", { steps, firstInvalid: "members" }), "members")).toBe("");
+    expect(flowHashFix("#review", flowStepOf("#review", { steps, firstInvalid: "decider" }), "members")).toBe("#decider");
+  });
+
+  it("an unknown hash on the first step is cleared", () => {
+    expect(flowHashFix("#nothing", flowStepOf("#nothing", { steps, firstInvalid: null }), "members")).toBe("");
   });
 });

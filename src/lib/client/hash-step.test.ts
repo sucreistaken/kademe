@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { clearHash, isHashStepEntry, leaveHashStep, pushHash, subscribeHash } from "./hash-step";
+import { clearHash, isHashStepEntry, leaveHashStep, pushHash, replaceHash, subscribeHash } from "./hash-step";
 
 /** A window with only what the helpers use: listeners by type and a history that records its pushes. */
 function fakeWindow() {
@@ -74,5 +74,23 @@ describe("a page step in the hash (K3, ruling 2)", () => {
     leaveHashStep();
     expect(win.backs).toHaveLength(1);
     expect(win.replaces).toEqual([[null, "", "/a/tok?lang=en"]]);
+  });
+});
+
+describe("the address catching up with the step shown (W3, Task 19 fix)", () => {
+  it("rewrites the hash in place: no new entry, no event, the entry's state and the path and language kept", () => {
+    const win = fakeWindow();
+    win.history.state = { hashStep: true, __NA: true };
+    vi.stubGlobal("window", win);
+    const notify = vi.fn();
+    subscribeHash(notify);
+    replaceHash("#decider");
+    replaceHash("");
+    expect(win.replaces).toEqual([
+      [{ hashStep: true, __NA: true }, "", "/a/tok?lang=en#decider"],
+      [{ hashStep: true, __NA: true }, "", "/a/tok?lang=en"],
+    ]);
+    expect(win.pushes).toEqual([]);
+    expect(notify).not.toHaveBeenCalled();
   });
 });

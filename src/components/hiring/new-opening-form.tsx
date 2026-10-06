@@ -16,13 +16,12 @@ import { ChoiceCardGroup } from "@/components/visual/choice-card";
 import { useMT } from "@/i18n/manager-client";
 import { POSITION_JOB_AD_MAX, POSITION_NAME_MAX } from "@/lib/library/positions";
 import { createOpeningAction } from "@/app/(manager)/hiring/openings/new/actions";
-import { createWait, newOpeningStepOf, newOpeningStepOfRefusal, newOpeningSteps, type NewOpeningRefusal, type NewOpeningStep } from "./new-opening-steps";
+import { createWait, newOpeningStepOf, newOpeningStepOfRefusal, newOpeningSteps, newOpeningSummary, type NewOpeningRefusal, type NewOpeningStep } from "./new-opening-steps";
 
 export type PositionOption = { id: string; name: string; hasJobAd: boolean; competencyCount: number; weightsEqual: boolean };
 type Start = "AI" | "COPY" | "BLANK";
 
 const ICONS = { AI: Sparkles, COPY: Copy, BLANK: FilePlus2 } as const;
-const ALL_STEPS: NewOpeningStep[] = ["position", "ad", "start"];
 
 /**
  * HIRING-UX 5.3 as HIRING-VISUAL-FLOW 4.6 (K12): which position, the job ad
@@ -66,8 +65,10 @@ export function NewOpeningForm({
   const effective: Start = start === "AI" && !hasAd ? "BLANK" : start;
   const positionReady = picked !== null || (newName !== null && newName.trim().length > 0);
   const steps = newOpeningSteps({ newName: picked === null && newName !== null });
-  const nav = useFlowStep({ steps: ALL_STEPS, firstInvalid: positionReady ? null : "position", mode: "hash" });
-  // The hash may name the ad step of a library position: the model sends it to the position step.
+  // The flow knows this path's steps, so a hash it does not show (the ad step of a library
+  // position, a later step before a position is set) is rewritten to the step shown (W3).
+  const nav = useFlowStep({ steps, firstInvalid: positionReady ? null : "position", mode: "hash" });
+  // The same rule as the model's (tested there): the flow shows exactly this step.
   const step = newOpeningStepOf(`#${nav.step}`, { steps, positionReady });
   const index = steps.indexOf(step);
   const wait = createWait({ positionReady, start: effective, copyFrom });
@@ -137,12 +138,9 @@ export function NewOpeningForm({
     ...(sources.length ? ([["COPY", t("startCopy"), t("startCopyBody")]] as Array<[Start, string, string]>) : []),
     ["BLANK", t("startBlank"), t("startBlankBody")],
   ];
-  const positionName = picked?.name ?? newName ?? "";
-  const summary = [
-    positionName,
-    hasAd ? t("summaryAd") : t("summaryNoAd"),
-    effective === "AI" ? t("summaryAi") : effective === "COPY" ? t("summaryCopy", { name: sources.find((s) => s.id === copyFrom)?.name ?? "-" }) : t("summaryBlank"),
-  ].join(" · ");
+  const summary = newOpeningSummary({ name: picked?.name ?? newName ?? "", hasAd, start: effective, copyName: sources.find((s) => s.id === copyFrom)?.name ?? null })
+    .map((part) => ("text" in part ? part.text : part.key === "summaryCopy" ? t(part.key, { name: part.name }) : t(part.key)))
+    .join(" · ");
 
   const screens: Record<NewOpeningStep, FlowStep> = {
     position: {

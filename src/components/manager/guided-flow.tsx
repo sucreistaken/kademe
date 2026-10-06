@@ -9,8 +9,8 @@ import { StepScreen } from "@/components/visual/step-screen";
 import { useKeepFocus, useStepFocus } from "@/hooks/use-step-focus";
 import { useMT } from "@/i18n/manager-client";
 import { cn } from "@/lib/cn";
-import { currentHash, leaveHashStep, noHash, pushHash, subscribeHash } from "@/lib/client/hash-step";
-import { exitKey, flowFocusKey, flowStepOf, type FlowJourney } from "./flow-model";
+import { currentHash, leaveHashStep, noHash, pushHash, replaceHash, subscribeHash } from "@/lib/client/hash-step";
+import { exitKey, flowFocusKey, flowHashFix, flowStepOf, type FlowJourney } from "./flow-model";
 
 /** One screen of a guided flow (W1): one question as its title, its one decision as the body, the footer's one filled button. */
 export type FlowStep = {
@@ -47,6 +47,13 @@ export function useFlowStep<S extends string>(input: { steps: readonly S[]; firs
   // The browser's own back and forward buttons are a step change too.
   useEffect(() => (mode === "hash" ? subscribeHash(() => setMoved(true)) : undefined), [mode]);
   const step = flowStepOf(mode === "hash" ? hash : `#${memory}`, input);
+  // W3: the address never runs ahead of the step shown (a reload or a copied
+  // link on a step that is not ready yet): it is rewritten in place, without a
+  // new entry and without an event, so nothing moves and no focus is taken.
+  const fix = mode === "hash" ? flowHashFix(hash, step, input.steps[0]) : null;
+  useEffect(() => {
+    if (fix !== null) replaceHash(fix);
+  }, [fix]);
   return {
     step,
     moved,

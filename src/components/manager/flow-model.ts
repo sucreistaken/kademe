@@ -20,6 +20,21 @@ export function flowStepOf<S extends string>(hash: string, input: { steps: reado
 }
 
 /**
+ * W3: the hash the address should carry for the step shown, or null when it
+ * already does. A hash that asks for a step the flow does not show (a later
+ * step that is not ready after a reload or from a copied link, an unknown or
+ * a skipped step) is rewritten to the shown step (no hash on the first step),
+ * so the address never runs ahead: once the missing decision is made the flow
+ * does not jump on by itself, and "Devam et" never pushes a second entry for
+ * the same step.
+ */
+export function flowHashFix(hash: string, shown: string, first: string): string | null {
+  if (hash === `#${shown}`) return null;
+  if (shown === first) return hash === "" ? null : "";
+  return `#${shown}`;
+}
+
+/**
  * W2, W10: "Adım n / N" for the footer. `path` is the main path the journey
  * counts; a step outside it (opened with "Değiştir" from a summary) shows the
  * place of `fallback`, so the bar never jumps back.

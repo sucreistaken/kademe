@@ -36,3 +36,18 @@ const REFUSAL_STEP: Record<NewOpeningRefusal, NewOpeningStep> = {
 
 /** W8: a refusal of createOpeningAction opens the step it is about; the sentence stays the existing one. */
 export const newOpeningStepOfRefusal = (code: NewOpeningRefusal): NewOpeningStep => stepOfProblem(REFUSAL_STEP, code) ?? "start";
+
+export type NewOpeningSummaryPart = { text: string } | { key: "summaryAd" | "summaryNoAd" | "summaryAi" | "summaryBlank" } | { key: "summaryCopy"; name: string };
+
+/**
+ * H3, W5: the last step's one line ("Destek Uzmanı · ilan metni var · AI
+ * taslağı"). Copying says nothing of the source until one is chosen (the
+ * button waits with "Kopyalanacak alımı seç." meanwhile).
+ */
+export function newOpeningSummary(input: { name: string; hasAd: boolean; start: "AI" | "COPY" | "BLANK"; copyName: string | null }): NewOpeningSummaryPart[] {
+  const parts: NewOpeningSummaryPart[] = [{ text: input.name }, { key: input.hasAd ? "summaryAd" : "summaryNoAd" }];
+  if (input.start === "AI") parts.push({ key: "summaryAi" });
+  else if (input.start === "BLANK") parts.push({ key: "summaryBlank" });
+  else if (input.copyName) parts.push({ key: "summaryCopy", name: input.copyName });
+  return parts;
+}
