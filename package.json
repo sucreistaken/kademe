@@ -37,7 +37,8 @@
     "prebuild": "tsx scripts/fetch-proctor-assets.ts",
     "proctor:assets": "tsx scripts/fetch-proctor-assets.ts",
     "ui:normalize": "tsx scripts/shadcn-normalize.ts",
-    "panel:hash": "tsx scripts/panel-password-hash.ts"
+    "panel:hash": "tsx scripts/panel-password-hash.ts",
+    "library:production": "tsx scripts/seed-production-library.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1127.0",
