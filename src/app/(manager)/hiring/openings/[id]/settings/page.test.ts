@@ -50,8 +50,13 @@ const openingFor = vi.fn(async (id: string, need: "view" | "edit") => {
 vi.mock("../access", () => ({ openingFor: (id: string, need: "view" | "edit") => openingFor(id, need) }));
 vi.mock("../opening-header", () => ({ OpeningHeader: function OpeningHeader() {} }));
 // The setup line reads the draft; this page test never reaches a database.
-const strip = vi.hoisted(() => ({ value: null as null | { done: number; total: number; next: { key: string; href: string } } }));
-vi.mock("../setup-strip", () => ({ setupStrip: async () => strip.value }));
+const strip = vi.hoisted(() => ({ value: null as null | { done: number; total: number; next: { key: string; href: string } }, input: null as null | { people?: unknown[] } }));
+vi.mock("../setup-strip", () => ({
+  setupStrip: async (input: { people?: unknown[] }) => {
+    strip.input = input;
+    return strip.value;
+  },
+}));
 vi.mock("@/i18n/manager-locale", () => ({ managerLocale: async () => "tr" }));
 vi.mock("@/server/settings", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/server/settings")>()),
@@ -158,6 +163,11 @@ describe("team and rules page", () => {
     } finally {
       strip.value = null;
     }
+  });
+
+  it("hands the setup line the people it already read, so they are read once (B-M5)", async () => {
+    await render();
+    expect((strip.input?.people ?? []).map((u) => (u as { id: string }).id)).toEqual([OWNER, MANAGER, REVIEWER, OUTSIDER, GONE]);
   });
 
   it("a reviewer outside the team gets the 404", async () => {

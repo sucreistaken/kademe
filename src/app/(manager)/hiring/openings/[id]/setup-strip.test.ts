@@ -65,6 +65,13 @@ describe("setupStrip (4.5: the setup line on a draft's other pages)", () => {
     expect(reads).toEqual({ working: 0, people: 1 });
   });
 
+  it("uses the people a page already read and reads nothing itself (B-M5)", async () => {
+    const people = [{ id: OWNER, name: "Sahip", email: "o@x.test", role: "OWNER" as const, lastLoginAt: null, disabledAt: null }];
+    const strip = await setupStrip({ orgId: ORG, opening: opening(), access: { edit: true }, t, locale: "tr", state, people });
+    expect(strip!.next.key).toBe("assessment");
+    expect(reads).toEqual({ working: 0, people: 0 });
+  });
+
   it("reads the working state itself when the page did not", async () => {
     await setupStrip({ orgId: ORG, opening: opening(), access: { edit: true }, t, locale: "tr" });
     expect(reads).toEqual({ working: 1, people: 1 });

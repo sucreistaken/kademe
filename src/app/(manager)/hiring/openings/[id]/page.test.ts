@@ -71,12 +71,25 @@ vi.mock("./actions", () => ({ publishOpeningAction: async function publishOpenin
 vi.mock("@/i18n/manager-locale", () => ({ managerLocale: async () => "tr" }));
 vi.mock("@/components/ui/url-notice", () => ({ UrlNotice: function UrlNotice() {} }));
 vi.mock("@/components/hiring/invite/invite-sheet", () => ({ InviteSheet: function InviteSheet() {} }));
+/** When each read began and ended (B-M5: one after another, ruling C21). */
+const order: string[] = [];
+const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
 vi.mock("@/solutions/hiring/server/working", () => ({
-  workingState: async () => ({ list: [], draft: state.draft, live: state.live, content: state.content ?? null, facts: new Map(), problems: state.problems ?? [] }),
+  workingState: async () => {
+    order.push("working:start");
+    await tick();
+    order.push("working:end");
+    return { list: [], draft: state.draft, live: state.live, content: state.content ?? null, facts: new Map(), problems: state.problems ?? [] };
+  },
 }));
 vi.mock("@/server/settings", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/server/settings")>()),
-  loadPanelUsers: async () => people,
+  loadPanelUsers: async () => {
+    order.push("people:start");
+    await tick();
+    order.push("people:end");
+    return people;
+  },
 }));
 
 import OverviewPage from "./page";
@@ -179,7 +192,11 @@ beforeEach(() => {
   requestRows = 0;
   expiringRows = 0;
   fake.ops = [];
-  fake.respond = respond;
+  fake.respond = (op) => {
+    order.push(`db:${op.table}`);
+    return respond(op);
+  };
+  order.length = 0;
 });
 
 describe("the overview's invite button (Task 19 ruling 2)", () => {
@@ -526,6 +543,17 @@ describe("the team line names only who can decide and counts the active members 
     invited = 3;
     const rules = find(await render(), (el) => el.props.readOnly === true)[0].props.rows as Array<{ value: string }>;
     expect(rules[0].value).toBe("Değerlendirici yok · karar: Sahip");
+  });
+});
+
+describe("the overview's reads (B-M5, ruling C21)", () => {
+  it("reads the working state, the people, the funnel and the invite form one after another, never side by side", async () => {
+    await render();
+    const first = (prefix: string) => order.findIndex((e) => e.startsWith(prefix));
+    expect(order.slice(0, 4)).toEqual(["working:start", "working:end", "people:start", "people:end"]);
+    // The funnel (hiring_assessments) after the people, the invite form (hiring_openings) after the funnel.
+    expect(first("db:hiring_assessments")).toBeGreaterThan(order.indexOf("people:end"));
+    expect(first("db:hiring_openings")).toBeGreaterThan(first("db:hiring_assessments"));
   });
 });
 

@@ -84,15 +84,14 @@ export default async function OpeningOverviewPage({
   const locale = await managerLocale();
   const t = managerT(locale);
   const sp = await searchParams;
-  const [state, people, funnel, invitable] = await Promise.all([
-    workingState(user.orgId, opening.id),
-    loadPanelUsers(user.orgId),
-    openingFunnel(user.orgId, opening.id),
-    access.edit ? invitableOpenings(user.orgId) : Promise.resolve([]),
-  ]);
+  // One read after another, never side by side (ruling C21: the pool of five connections is shared with the live exam's writes).
+  const state = await workingState(user.orgId, opening.id);
+  const people = await loadPanelUsers(user.orgId);
+  const funnel = await openingFunnel(user.orgId, opening.id);
+  const invitable = access.edit ? await invitableOpenings(user.orgId) : [];
   const closed = opening.status === "CLOSED";
   const live = opening.status === "OPEN";
-  // Counts only for a live opening (a closed one draws none), after the reads above, never beside them (ruling C21).
+  // Counts only for a live opening (a closed one draws none), after the reads above (ruling C21).
   // Requests are read only for someone who runs openings (H9); a reviewer's facts carry the expiring count alone.
   const facts = live ? ((await openingCardFacts(user.orgId, [opening.id], { runs: can(user, "opening:write") }))[opening.id] ?? null) : null;
   // The opening as the invite form needs it: OPEN, of this organisation (invitableOpenings).

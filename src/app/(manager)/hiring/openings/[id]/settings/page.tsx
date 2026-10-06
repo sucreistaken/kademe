@@ -44,8 +44,8 @@ export default async function OpeningSettingsPage({
   const locale = await managerLocale();
   const t = managerT(locale);
   const [all, sp] = await Promise.all([loadPanelUsers(user.orgId), searchParams]);
-  // 4.5: a draft's setup path, one line under the tabs (read after the people, ruling C21).
-  const setup = await setupStrip({ orgId: user.orgId, opening, access, t, locale });
+  // 4.5: a draft's setup path, one line under the tabs (after the people, ruling C21), judged on the people read above (B-M5).
+  const setup = await setupStrip({ orgId: user.orgId, opening, access, t, locale, people: all });
   const closed = opening.status === "CLOSED";
   const runs = canDecide(user.role);
   // Someone who only reads the opening sees the people on it, not the organisation's whole user list.
