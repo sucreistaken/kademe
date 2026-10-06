@@ -14,10 +14,24 @@ export const salesRepresentative: HiringTemplate = {
   stages: [
     stage({
       name: t("Kısa tanışma", "Short introduction"),
-      description: t("İki kısa video sorusu ve bir senaryo sorusu. En fazla 10 dakika.", "Two short video questions and one scenario question. At most 10 minutes."),
+      description: t("Kısa bir senaryo sorusu ve iki video sorusu. En fazla 13 dakika.", "One short scenario question and two video questions. At most 13 minutes."),
       purpose: "Gerçek bir hedef aşma deneyimi, kendiliğinden fırsat yaratma ve itiraz türünü tanıma.",
-      minutes: 10,
+      minutes: 13,
       activities: [
+        single({
+          prompt: t(
+            "Bir potansiyel müşteri şöyle diyor: \"Ürününüz ilgimi çekti ama mevcut tedarikçimizle sözleşmemiz Mart'ta bitiyor, o zamana kadar bir şey değiştiremeyiz.\" Bu hangi tür itiraz ve en doğru karşılık hangisi?",
+            "A prospect says: \"Your product interests me, but our contract with the current supplier ends in March and we cannot change anything until then.\" What type of objection is this, and what is the best response?",
+          ),
+          options: [
+            t("Fiyat itirazı: Mart'ı beklememesi için hemen bir indirim teklif etmek", "A price objection: offer a discount at once so they do not wait for March"),
+            t("Rakip tercihi: mevcut tedarikçinin zayıf yönlerini anlatmak", "A competitor preference: point out the current supplier's weaknesses"),
+            t("Zamanlama itirazı: karar sürecini ve kimlerin katılacağını sorup Mart öncesine bir değerlendirme görüşmesi koymak", "A timing objection: ask about the decision process and who is involved, and book an evaluation meeting before March"),
+            t("İhtiyaç yok itirazı: ürünün özelliklerini daha ayrıntılı yeniden anlatmak", "A no-need objection: explain the product's features again in more detail"),
+          ],
+          correct: 2,
+          internal: "Doğru cevap: zamanlama itirazı. Müşteri ilgisini söylüyor, engel yalnızca sözleşme bitiş tarihi. Doğru hamle fırsatı takvime bağlamak: karar sürecini, katılanları ve Mart öncesi değerlendirme tarihini netleştirmek. İndirim (a) ve rakibi kötülemek (b) zayıf adayların sık seçtiği şıklar.",
+        }),
         video({
           prompt: t(
             "Bir satış hedefini aştığın bir dönemi anlat: hedef neydi, ne kadar aştın, bunu sağlayan kendi adımların nelerdi ve sonuç ne oldu?",
@@ -54,20 +68,6 @@ export const salesRepresentative: HiringTemplate = {
             3: "Bir müşterim yeni şube açtığını söyledi; kimse istemeden diğer şubelere de teklif hazırladım, iki şube sözleşme imzaladı.",
             5: "Ticaret odası duyurularında bölgemizde yeni açılan üç lojistik deposu gördüm. Elimizde bu sektörden bir referans vardı; onun sonuçlarını iki sayfalık bir örnek olaya çevirip depo müdürlerine yazdım. Altı görüşme, iki sözleşme çıktı; bu kaynağı ekibe aylık bir tarama olarak önerdim, şimdi herkes kullanıyor.",
           },
-        }),
-        single({
-          prompt: t(
-            "Bir potansiyel müşteri şöyle diyor: \"Ürününüz ilgimi çekti ama mevcut tedarikçimizle sözleşmemiz Mart'ta bitiyor, o zamana kadar bir şey değiştiremeyiz.\" Bu hangi tür itiraz ve en doğru karşılık hangisi?",
-            "A prospect says: \"Your product interests me, but our contract with the current supplier ends in March and we cannot change anything until then.\" What type of objection is this, and what is the best response?",
-          ),
-          options: [
-            t("Fiyat itirazı: Mart'ı beklememesi için hemen bir indirim teklif etmek", "A price objection: offer a discount at once so they do not wait for March"),
-            t("Rakip tercihi: mevcut tedarikçinin zayıf yönlerini anlatmak", "A competitor preference: point out the current supplier's weaknesses"),
-            t("Zamanlama itirazı: karar sürecini ve kimlerin katılacağını sorup Mart öncesine bir değerlendirme görüşmesi koymak", "A timing objection: ask about the decision process and who is involved, and book an evaluation meeting before March"),
-            t("İhtiyaç yok itirazı: ürünün özelliklerini daha ayrıntılı yeniden anlatmak", "A no-need objection: explain the product's features again in more detail"),
-          ],
-          correct: 2,
-          internal: "Doğru cevap: zamanlama itirazı. Müşteri ilgisini söylüyor, engel yalnızca sözleşme bitiş tarihi. Doğru hamle fırsatı takvime bağlamak: karar sürecini, katılanları ve Mart öncesi değerlendirme tarihini netleştirmek. İndirim (a) ve rakibi kötülemek (b) zayıf adayların sık seçtiği şıklar.",
         }),
       ],
     }),

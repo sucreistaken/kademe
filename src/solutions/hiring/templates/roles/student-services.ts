@@ -18,7 +18,7 @@ export const studentServices: HiringTemplate = {
     stage({
       name: t("Kısa tanışma", "Short introduction"),
       description: t(
-        "Bir kısa senaryo sorusu ve iki video sorusu. En fazla 13 dakika.",
+        "Kısa bir senaryo sorusu ve iki video sorusu. En fazla 13 dakika.",
         "One short scenario question and two video questions. At most 13 minutes.",
       ),
       purpose: "Kayıt dosyasında eksik belgeyi kurala göre bulma; bir kayıt hatasını düzeltme ve kişiye haber verme; yoğun günde işleri sıraya koyma.",
@@ -102,7 +102,7 @@ export const studentServices: HiringTemplate = {
           redFlags: ["Kontrol etmeden bir listeyi doğru sayıp diğerini ona göre değiştiriyor", "Tutarsızlıklardan birini ya da hiçbirini bulamıyor", "Ödemesi görünmeyen öğrenciyi doğrulamadan dersten çıkarmayı öneriyor"],
           examples: {
             1: "İki listede de 10 kişi var, sayılar tutuyor. Sorun görmüyorum.",
-            3: "İrem Koç ödeme listesinde yok, ödeme yapıp yapmadığını muhasebeye sorarım. Leyla Tunç sınıf listesinde yok, onu da sınıf listesine eklerim.",
+            3: "İki tutarsızlık buldum. 1) Kerem Şahin 6.000 TL ödemiş ama \"tam ödeme\" yazıyor, ücret 9.000 TL. Makbuzuna bakarım; iki taksit ödendiyse kaydı 2/3 olarak düzelttiririm, değilse Kerem'i arayıp eksik 3.000 TL'yi konuşurum. 2) İrem Koç sınıf listesinde ama ödeme listesinde yok. Kayıt formuna ve makbuza bakıp muhasebeye sorarım; ödeme yoksa İrem'i arayıp ilk taksiti kurdan önce alırım.",
             5: "Üç tutarsızlık var. 1) İrem Koç sınıf listesinde ama ödeme listesinde yok: kayıt formunu ve makbuzu kontrol ederim, ödeme yoksa İrem'i bugün arayıp ilk taksiti kurdan önce alırım. 2) Leyla Tunç 9.000 TL ödemiş ama sınıf listesinde yok: kayıt formuna bakarım, başka gruba mı yazıldı yoksa listeye mi eklenmeli, ona göre muhasebeyle ya da öğretmenle düzeltirim. 3) Kerem Şahin 6.000 TL ödemiş ama tam ödeme yazıyor: tam ücret 9.000 TL. Makbuza bakarım; iki taksit ödendiyse kaydı 2/3 olarak düzelttiririm. Listelerin sırası farklı ama bu hata değil. 19 Ekim'de iki listeyi yeniden karşılaştırırım.",
           },
           internal:

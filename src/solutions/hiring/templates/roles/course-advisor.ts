@@ -10,7 +10,7 @@ export const courseAdvisor: HiringTemplate = {
     "Honest selling to a hesitant applicant, placing a level-test result, a \"another school is cheaper\" phone call and a follow-up to a trial-lesson no-show.",
   ),
   jobAd: t(
-    "Dil okulumuza gelen adayları dinleyip doğru kursa yönlendirecek, telefonda ve yüz yüze kayıt görüşmelerini yürütecek bir Kurs Danışmanı arıyoruz. Satışı adayın hedefine bağlayan, fiyat itirazında rakamla konuşan ve vermediğin bir sözü asla vermeyen biri olmalısın.",
+    "Dil okulumuza gelen adayları dinleyip doğru kursa yönlendirecek, telefonda ve yüz yüze kayıt görüşmelerini yürütecek bir Kurs Danışmanı arıyoruz. Satışı adayın hedefine bağlayan, fiyat itirazında rakamla konuşan ve okulun tutamayacağı bir sözü asla vermeyen biri olmalısın.",
     "We are looking for a Course Advisor who listens to applicants, guides them to the right course and runs enrolment conversations on the phone and in person. You tie the sale to the applicant's goal, answer a price objection with numbers and never promise what the school cannot deliver.",
   ),
   weights: { commercial: 40, customer: 35, communication: 25 },
@@ -18,7 +18,7 @@ export const courseAdvisor: HiringTemplate = {
     stage({
       name: t("Kısa tanışma", "Short introduction"),
       description: t(
-        "Bir kısa senaryo sorusu ve iki video sorusu. En fazla 13 dakika.",
+        "Kısa bir senaryo sorusu ve iki video sorusu. En fazla 13 dakika.",
         "One short scenario question and two video questions. At most 13 minutes.",
       ),
       purpose: "Seviye testi sonucunu okulun yerleştirme kuralına göre kura bağlama; kararsız bir adayı dürüstçe ikna etme; satış sonrası memnuniyetsizliği yönetme.",
@@ -30,14 +30,14 @@ export const courseAdvisor: HiringTemplate = {
             "The school's placement table (written level test, out of 100 points):\n- 46-60: A2.1\n- 61-75: A2.2\n- 76-90: B1.1\n\nThe school's rule: if the written score is within 5 points of the band limit and the oral interview points to the level below, the applicant's course is the one the interview points to. In every other case the band of the written score applies.\n\nAn applicant scored 62 on the written test. The note from the teacher who did the oral interview says: \"Speaking at A2.1 level.\" The applicant wants to join the B1.1 evening group because a friend is in it and they want to sit a B1 exam in June. Which course do you recommend?",
           ),
           options: [
-            t("B1.1, çünkü adayın hedefi haziranda B1 ve akşam grubu programına uyuyor", "B1.1, because the applicant's goal is B1 in June and the evening group fits their schedule"),
+            t("B1.1, çünkü adayın hedefi haziranda B1 sınavı ve arkadaşı bu grupta", "B1.1, because the applicant aims for a B1 exam in June and a friend is in the group"),
             t("A2.2, çünkü 62 puan yazılı testte A2.2 bandının içinde kalıyor", "A2.2, because a score of 62 falls inside the A2.2 band of the written test"),
-            t("A2.1, çünkü puan bant sınırına 5 puandan yakın ve sözlü görüşme alt kuru gösteriyor", "A2.1, because the score is within 5 points of the band limit and the interview points lower"),
+            t("A2.1, çünkü puan bant sınırına yakın ve sözlü görüşme bir alt kuru gösteriyor", "A2.1, because the score is near the band limit and the interview points one level lower"),
             t("A2.2, çünkü sözlü görüşme tek başına yazılı puanın bandını düşüremiyor", "A2.2, because the interview alone cannot lower the band of the written score"),
           ],
           correct: 2,
           internal:
-            "Doğru cevap: A2.1. 62, A2.2 bandının alt sınırına (61) 1 puan uzaklıkta, yani 5 puan içinde; sözlü görüşme bir alt kuru (A2.1) gösteriyor; kural gereği sözlü görüşmenin kuru geçerli. Çeldiriciler: B1.1 (adayın isteğine göre satış, en tehlikeli hata: aday kurda zorlanıp bırakır); A2.2 bant (kuralın ikinci koşulunu atlamak); A2.2 sözlü düşüremez (kuralı ters okumak). İyi bir danışman ayrıca adaya B1 hedefine giden yolu (A2.1, A2.2, B1.1) ve süresini dürüstçe anlatır.",
+            "Doğru cevap: A2.1. 62, A2.2 bandının alt sınırına (61) 1 puan uzaklıkta, yani 5 puan içinde; sözlü görüşme bir alt kuru (A2.1) gösteriyor; kural gereği sözlü görüşmenin kuru geçerli. Çeldiriciler: B1.1 (adayın hedefine ve arkadaşına göre satış, en tehlikeli hata: aday kurda zorlanıp bırakır); A2.2 bant (kuralın ikinci koşulunu atlamak); A2.2 sözlü düşüremez (kuralı ters okumak). İyi bir danışman ayrıca adaya B1 hedefine giden yolu (A2.1, A2.2, B1.1) ve süresini dürüstçe anlatır.",
         }),
         video({
           prompt: t(
@@ -55,7 +55,7 @@ export const courseAdvisor: HiringTemplate = {
           examples: {
             1: "Kararsız müşteriye kampanyanın bugün bittiğini söylerim, genelde hemen karar verirler. Satış böyle bir şey, biraz baskı gerekir.",
             3: "Bir aday fiyat yüzünden kararsızdı. Ne için Almanca öğrenmek istediğini sordum, iş başvurusu için B1 gerekiyormuş. Kursun kaç saat olduğunu ve taksit seçeneğini anlattım, bir deneme dersine çağırdım, deneme dersinden sonra kaydoldu.",
-            5: "Bir aday iki ay içinde B1 almak istiyordu ama seviye testi A2.1 çıktı. Ona açıkça iki ayda B1'in gerçekçi olmadığını, A2.1'den B1 sınavına yaklaşık altı ay gerektiğini söyledim. Asıl derdi iş başvurusunun tarihiydi; işverene A2 belgesi ve kayıt belgesiyle başvurabileceğini birlikte kontrol ettik. Yoğun akşam programını önerdim, deneme dersine çağırdım ve cuma günü arayacağımı söyledim. Kaydoldu ve haziranda B1'i geçti; aynı yolu sonra başka adaylara da anlattım.",
+            5: "Bir aday iki ay içinde B1 almak istiyordu ama seviye testi A2.1 çıktı. Ona açıkça iki ayda B1'in gerçekçi olmadığını, kurs planımıza göre A2.1'den B1 sınavına yaklaşık altı ay gerektiğini söyledim. Asıl derdi iş başvurusunun tarihiydi; işverene A2 belgesi ve kayıt belgesiyle başvurabileceğini birlikte kontrol ettik. Yoğun akşam programını önerdim, deneme dersine çağırdım ve cuma günü arayacağımı söyledim. Kaydoldu ve haziranda B1'i geçti; aynı yolu sonra başka adaylara da anlattım.",
           },
         }),
         video({
@@ -111,8 +111,8 @@ export const courseAdvisor: HiringTemplate = {
         }),
         longText({
           prompt: t(
-            "Deniz Kaya iki hafta önce telefonla aradı. İşyeri ondan Almanca B1 belgesi istiyor ve önümüzdeki yıl başvurusu var. Seviye testi onu B1.1 kuruna yerleştirdi. Dün (salı) 19:00'daki ücretsiz B1.1 deneme dersine kayıtlıydı ama gelmedi ve haber vermedi. Deniz, okulun kendisine WhatsApp'tan yazmasına izin vermişti.\n\nBildiklerin:\n- Yeni deneme dersi seçenekleri: perşembe 19:00 ya da cumartesi 10:00.\n- Yeni B1.1 akşam kuru 3 Kasım'da başlıyor; erken kayıtta %5 indirim 24 Ekim'de bitiyor.\n- Seviye testinin sonucu üç ay geçerli.\n\nDeniz'e gönderilecek WhatsApp mesajını yaz.",
-            "Deniz Kaya phoned two weeks ago. Their employer requires a German B1 certificate and they have an application next year. The level test placed them in the B1.1 course. Yesterday (Tuesday) they were booked for the free B1.1 trial lesson at 19:00 but did not come and did not let us know. Deniz agreed that the school may message them on WhatsApp.\n\nWhat you know:\n- New trial-lesson options: Thursday 19:00 or Saturday 10:00.\n- The new B1.1 evening course starts on 3 November; the 5% early-registration discount ends on 24 October.\n- The level-test result is valid for three months.\n\nWrite the WhatsApp message to Deniz.",
+            "Bugün 14 Ekim, çarşamba. Deniz Kaya iki hafta önce telefonla aradı. İşyeri ondan Almanca B1 belgesi istiyor ve önümüzdeki yıl başvurusu var. Seviye testi onu B1.1 kuruna yerleştirdi. Dün (salı) 19:00'daki ücretsiz B1.1 deneme dersine kayıtlıydı ama gelmedi ve haber vermedi. Deniz, okulun kendisine WhatsApp'tan yazmasına izin vermişti.\n\nBildiklerin:\n- Yeni deneme dersi seçenekleri: perşembe 19:00 ya da cumartesi 10:00.\n- Yeni B1.1 akşam kuru 3 Kasım'da başlıyor; erken kayıtta %5 indirim 24 Ekim'de bitiyor.\n- Seviye testinin sonucu üç ay geçerli.\n\nDeniz'e gönderilecek WhatsApp mesajını yaz.",
+            "Today is Wednesday 14 October. Deniz Kaya phoned two weeks ago. Their employer requires a German B1 certificate and they have an application next year. The level test placed them in the B1.1 course. Yesterday (Tuesday) they were booked for the free B1.1 trial lesson at 19:00 but did not come and did not let us know. Deniz agreed that the school may message them on WhatsApp.\n\nWhat you know:\n- New trial-lesson options: Thursday 19:00 or Saturday 10:00.\n- The new B1.1 evening course starts on 3 November; the 5% early-registration discount ends on 24 October.\n- The level-test result is valid for three months.\n\nWrite the WhatsApp message to Deniz.",
           ),
           competencies: ["commercial", "communication"],
           expected: [

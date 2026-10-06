@@ -18,7 +18,7 @@ export const educationCoordinator: HiringTemplate = {
     stage({
       name: t("Kısa tanışma", "Short introduction"),
       description: t(
-        "Bir kısa senaryo sorusu ve iki video sorusu. En fazla 13 dakika.",
+        "Kısa bir senaryo sorusu ve iki video sorusu. En fazla 13 dakika.",
         "One short scenario question and two video questions. At most 13 minutes.",
       ),
       purpose: "Ders programı çakışmasında kurallara uyan seçeneği bulma; iki öğretmen arasındaki anlaşmazlığı çözme; bir dersi gözlemleyip öğretimle ilgili somut geri bildirim verme.",
@@ -32,12 +32,12 @@ export const educationCoordinator: HiringTemplate = {
           options: [
             t("B2 grubu salı 18:00-21:00, Oda 3, öğretmen Ayşe", "B2 group Tuesday 18:00-21:00, Room 3, teacher Ayşe"),
             t("B2 grubu salı 19:00-22:00, Oda 3, öğretmen Ayşe", "B2 group Tuesday 19:00-22:00, Room 3, teacher Ayşe"),
-            t("B2 grubu salı 18:00-21:00, Oda 2, öğretmen Jonas; B1 grubu çarşambaya", "B2 group Tuesday 18:00-21:00, Room 2, teacher Jonas; B1 group moves to Wednesday"),
+            t("B2 grubu salı 19:00-22:00, Oda 2, öğretmen Ayşe", "B2 group Tuesday 19:00-22:00, Room 2, teacher Ayşe"),
             t("B2 grubu salı 19:00-22:00, Oda 3, öğretmen Elif", "B2 group Tuesday 19:00-22:00, Room 3, teacher Elif"),
           ],
           correct: 1,
           internal:
-            "Doğru cevap: salı 19:00-22:00, Oda 3, Ayşe. Çeldiriciler: 18:00-21:00 Oda 3 (oda 19:00'a kadar kiralı); Jonas ve B1'i çarşambaya taşımak (devam eden grubun saati değiştirilemez); Elif 19:00-22:00 (Elif 21:00'e kadar A2 grubunda).",
+            "Doğru cevap: salı 19:00-22:00, Oda 3, Ayşe. Çeldiriciler: 18:00-21:00 Oda 3 (oda 19:00'a kadar kiralı); 19:00-22:00 Oda 2 (Oda 2'de B1 grubu 21:00'e kadar ders yapıyor ve devam eden grubun saati değiştirilemez); Elif 19:00-22:00 (Elif 21:00'e kadar A2 grubunda).",
         }),
         video({
           prompt: t(
@@ -103,7 +103,7 @@ export const educationCoordinator: HiringTemplate = {
           redFlags: ["Bir kısıtı bozan bir program veriyor (çarşamba akşamı iki grup, G4'ü başka öğretmene verme, art arda günler)", "Gerekçe vermeden yalnızca tablo yazıyor ya da tablo hiç vermiyor"],
           examples: {
             1: "Her öğretmen eşit sayıda grup alsın: Ayşe G3 ve G5, Jonas G1 ve G4, Elif G2. Günleri öğretmenler kendi aralarında seçsin.",
-            3: "Ayşe: G3 pazartesi ve çarşamba sabah, G5 salı ve perşembe sabah. Jonas: G2 salı ve perşembe akşam, G4 pazartesi ve çarşamba akşam. Elif: G1 pazartesi ve çarşamba akşam. Odaları öğretmenlerle konuşup dağıtırım.",
+            3: "Ayşe: G3 pazartesi ve çarşamba sabah, G5 salı ve perşembe sabah. Jonas: G2 salı ve perşembe akşam, G4 pazartesi ve çarşamba akşam. Elif: G1 pazartesi ve cuma akşam. Böylece herkes müsait olduğu günlerde ders veriyor. Odaları öğretmenlerle konuşup dağıtırım.",
             5: "Pzt 09:00 Oda 1 G3 Ayşe; Sal 09:00 Oda 1 G5 Ayşe; Çar 09:00 Oda 1 G3 Ayşe; Per 09:00 Oda 1 G5 Ayşe. Pzt 18:00 Oda 1 G4 Jonas, Oda 2 G1 Elif; Sal 18:00 Oda 1 G2 Jonas; Çar 18:00 Oda 1 G4 Jonas; Per 18:00 Oda 1 G2 Jonas; Cum 18:00 Oda 1 G1 Elif. Gerekçe: G2 salı/perşembe, o akşamlar yalnızca Jonas; G4 Jonas'ın, kalan tek ikili pazartesi/çarşamba; çarşamba Oda 2 kapalı, G1 pazartesi/cuma. Jonas ve Ayşe 4 derste. Yayından önce Oda 2 rezervasyonunu, üç öğretmenin onayını ve G2'nin günlerini teyit ederim.",
           },
           internal:
