@@ -82,8 +82,8 @@ export async function generateItems(orgId: string, userId: string, spec: Generat
       aiRunId: runId,
       createdBy: userId,
     }));
-    if (rows.length) await db.insert(items).values(rows);
-    return { ok: true as const, created: rows.length, rejected: parsed.itemErrors.length, stimulusId };
+    const written = rows.length ? await db.insert(items).values(rows).returning({ id: items.id }) : [];
+    return { ok: true as const, created: written.length, rejected: parsed.itemErrors.length, stimulusId, itemIds: written.map((r) => r.id) };
   }
   return { ok: false as const, error: lastError || "no valid items" };
 }

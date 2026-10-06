@@ -28,5 +28,18 @@
     "gap": "{level} {section}: {missing} questions missing",
     "gapCTest": "{level} grammar: no opening C-test",
     "coverageRecheck": "Coverage is checked again when you confirm."
+  },
+  "createQuestions": {
+    "itemCount": "{count} new questions",
+    "approveAll": "Approve all",
+    "approve": "Approve",
+    "reject": "Reject",
+    "decide": "Decision for this question",
+    "correct": "correct answer",
+    "save": "Save my choices",
+    "audioAfterApproval": "The audio is made when you approve.",
+    "noApprove": "You may not approve; the questions you keep wait for approval.",
+    "dropped": "{count} questions failed the check and were left out.",
+    "failedBatches": "{count} batches could not be generated."
   }
 }

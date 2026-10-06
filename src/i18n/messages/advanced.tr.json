@@ -28,5 +28,18 @@
     "gap": "{level} {section}: {missing} soru eksik",
     "gapCTest": "{level} dilbilgisi: açılış C-testi yok",
     "coverageRecheck": "Kapsam, onayladığında yeniden kontrol edilir."
+  },
+  "createQuestions": {
+    "itemCount": "{count} yeni soru",
+    "approveAll": "Hepsini onayla",
+    "approve": "Onayla",
+    "reject": "Reddet",
+    "decide": "Bu soru için karar",
+    "correct": "doğru cevap",
+    "save": "Seçimleri kaydet",
+    "audioAfterApproval": "Ses dosyası onaydan sonra üretilir.",
+    "noApprove": "Onaylama yetkin yok; tuttuğun sorular onay bekler.",
+    "dropped": "{count} soru kontrolden geçmediği için eklenmedi.",
+    "failedBatches": "{count} grup üretilemedi."
   }
 }

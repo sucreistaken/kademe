@@ -15,6 +15,7 @@ import type { SolutionModule } from "@/solutions/types";
 import { languageExamManifest } from "./manifest";
 import { examToday } from "./today";
 import { examCreator } from "./create/exam";
+import { questionSetCreator } from "./create/question-set";
 
 async function requireExam(ctx: CandidateContext): Promise<ExamCandidateContext> {
   const exam = await loadExamContext(ctx);
@@ -29,7 +30,7 @@ async function requireExam(ctx: CandidateContext): Promise<ExamCandidateContext>
 export const languageExamModule: SolutionModule = {
   ...languageExamManifest,
   today: examToday,
-  creators: [examCreator],
+  creators: [examCreator, questionSetCreator],
 
   async proctorPolicy(assessmentId) {
     const [row] = await db
