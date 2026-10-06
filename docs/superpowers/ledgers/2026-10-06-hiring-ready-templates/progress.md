@@ -29,4 +29,11 @@ Task 1: minor (deferred to content tasks): exam_expertise and accuracy questions
 Task 1: fix round 1/5 (6 addressed, 2 open: duplicated 'dersin sonunda' at :226, 'yoklama yapıyor' at :61; commits d2dcdb5..45c214c). Re-review (sonnet).
 Task 1: fix round 2/5 (2 addressed, 0 open; commit 10a7ddb). Controller-checked instead of a re-review: the diff is the two named strings only (2+/2-), grep for both bad phrasings = 0, vitest templates 7/7, tsc 0 lines.
 Task 1: complete (commits b7eacb8..10a7ddb, review clean after 2 fix rounds)
-BASE T2: 10a7ddb
+BASE T2: 8683a74 (ledger commit on top of 10a7ddb)
+Task 2: implementer DONE_WITH_CONCERNS 2bf4b4a (stopgap TEMPLATE_NOT_FOUND entries in new-opening-steps/form; onConflictDoNothing untested in fake DB; audit meta templateKey null on old starts; name-collision and concurrent seed-key race unguarded). Gate vitest 1221/1221 (implementer). Review dispatched (opus).
+Task 2: review (opus): spec compliant, Approved, 0 Critical/Important. Controller re-ran: vitest hiring+db+app/hiring+components/hiring 122 files 1693/1693, tsc 0 lines.
+Task 2: minor (deferred): two template keys matching one team competency by name collapse into one id (weights < 100); guard = skip a named row already used.
+Task 2: minor (deferred): concurrent insert of the same seed_key throws a raw unique violation through createOpeningAction; fix = onConflictDoNothing + re-read by seed key.
+Task 2: minor (deferred): ensureDefaultScale through a passed executor and the anchor onConflictDoNothing are not covered by the fake DB; Task 9 (fresh org, no library) must exercise them.
+Task 2: carry to Task 8: re-point the stopgap TEMPLATE_NOT_FOUND entries (new-opening-steps.ts:45-46, new-opening-form.tsx:89-90) to the template step and its own sentence.
+Task 2: complete (commits 8683a74..2bf4b4a, review clean)
