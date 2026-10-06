@@ -26,4 +26,6 @@ export const LEGACY_PANEL_REDIRECTS = [
   { source: "/students/:path*", destination: "/exam/students/:path*", permanent: false },
   { source: "/exams/:path*", destination: "/exam/exams/:path*", permanent: false },
   { source: "/bank/:path*", destination: "/exam/bank/:path*", permanent: false },
+  // The exam-side Advanced page became the core /advanced (spec 2026-10-06-advanced-ai-create-design 3).
+  { source: "/exam/advanced", destination: "/advanced", permanent: false },
 ];

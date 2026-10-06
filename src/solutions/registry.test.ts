@@ -7,7 +7,7 @@ import { candidateSolution, servingSolution, solutionModule, solutionModules } f
 import { languageExamManifest } from "./language-exam/manifest";
 import type { SolutionManifest, SolutionModule } from "./types";
 
-const shared = { today: "Bugün", settings: "Ayarlar", library: { label: "Kütüphane", positions: "Pozisyonlar", competencies: "Yetkinlikler" } };
+const shared = { today: "Bugün", settings: "Ayarlar", advanced: "Gelişmiş" };
 
 describe("solution registry", () => {
   it("knows both solutions by their database kind, hiring first (HIRING-UX 4.1)", () => {
@@ -57,19 +57,15 @@ describe("solution registry", () => {
     expect(m.candidateStepPath("tok", { step: "SOMETHING_ELSE" })).toBe("/a/tok");
   });
 
-  it("builds the HIRING-UX 4.1 menu with group headers and an icon per item: Today, Hiring, Exam, Library, Settings (P1)", () => {
+  it("builds the menu: Today, Hiring, Exam, one core Advanced item, Settings (spec 2026-10-06-advanced-ai-create-design 3)", () => {
     const nav = buildNav("tr", shared);
-    expect(nav.map((g) => g.key)).toEqual(["today", "hiring", "language-exam", "library", "settings"]);
-    expect(nav.map((g) => g.label)).toEqual([null, "İşe alım", "Sınav", "Kütüphane", null]);
+    expect(nav.map((g) => g.key)).toEqual(["today", "hiring", "language-exam", "advanced", "settings"]);
+    expect(nav.map((g) => g.label)).toEqual([null, "İşe alım", "Sınav", null, null]);
     expect(nav[1].items).toEqual([{ href: "/hiring/openings", label: "Alımlar", icon: "briefcase" }]);
-    expect(nav.flatMap((g) => g.items.map((i) => i.icon))).toEqual(["sun", "briefcase", "users", "file-text", "id-card", "target", "settings"]);
-    // The exam keeps Students in the menu; exams and the bank sit behind Advanced, which stays lit on their pages.
-    expect(nav[2].items.map(({ href, label }) => [href, label])).toEqual([
-      ["/exam/students", "Öğrenciler"],
-      ["/exam/advanced", "Gelişmiş"],
-    ]);
-    expect(nav[2].items[1].activeFor).toEqual(["/exam/exams", "/exam/bank"]);
-    expect(buildNav("en", shared)[2].items.map((i) => i.label)).toEqual(["Students", "Advanced"]);
+    expect(nav[2].items).toEqual([{ href: "/exam/students", label: "Öğrenciler", icon: "users" }]);
+    expect(nav[3].items).toEqual([{ href: "/advanced", label: "Gelişmiş", icon: "library", activeFor: ["/library", "/exam/exams", "/exam/bank"] }]);
+    expect(nav.flatMap((g) => g.items.map((i) => i.icon))).toEqual(["sun", "briefcase", "users", "library", "settings"]);
+    expect(buildNav("en", { today: "Today", settings: "Settings", advanced: "Advanced" })[2].items.map((i) => i.label)).toEqual(["Students"]);
     expect(buildNav("en", shared)[1].items[0].label).toBe("Openings");
   });
 

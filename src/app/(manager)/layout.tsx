@@ -11,7 +11,7 @@ import { buildNav } from "@/solutions/registry";
 
 /**
  * Panel shell (HIRING-UX 4.1): a 240px grouped side menu (Today, one group per
- * solution, the shared Library, Settings) and the page. Below 1024px the menu
+ * solution, Advanced, Settings) and the page. Below 1024px the menu
  * becomes a sheet opened from a top bar. The menu comes from the solution registry and lists
  * only routes that exist; a test checks every entry against its page file.
  */
@@ -26,11 +26,7 @@ export default async function ManagerLayout({ children }: { children: React.Reac
     .slice(0, 2)
     .join("")
     .toLocaleUpperCase(locale === "tr" ? "tr" : "en");
-  const groups = buildNav(locale, {
-    today: t("nav.dashboard"),
-    settings: t("nav.settings"),
-    library: { label: t("nav.library"), positions: t("nav.positions"), competencies: t("nav.competencies") },
-  });
+  const groups = buildNav(locale, { today: t("nav.dashboard"), settings: t("nav.settings"), advanced: t("nav.advanced") });
 
   return (
     <SidebarProvider lang={locale} style={{ "--sidebar-width": "240px" } as React.CSSProperties}>

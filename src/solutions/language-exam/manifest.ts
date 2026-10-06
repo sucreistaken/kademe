@@ -10,11 +10,7 @@ export const languageExamManifest: SolutionManifest = {
   dbKind: "LANGUAGE_EXAM",
   basePath: "/exam",
   label: { tr: "Sınav", en: "Language exam" },
-  nav: [
-    { href: "/exam/students", label: { tr: "Öğrenciler", en: "Students" }, icon: "users" },
-    // Exams and the bank sit behind one entry; the item stays lit on their pages.
-    { href: "/exam/advanced", label: { tr: "Gelişmiş", en: "Advanced" }, icon: "file-text", activeFor: ["/exam/exams", "/exam/bank"] },
-  ],
+  nav: [{ href: "/exam/students", label: { tr: "Öğrenciler", en: "Students" }, icon: "users" }],
   inviteHref: "/exam/students/new",
   inviteLabel: { tr: "Öğrenci davet et", en: "Invite a student" },
   inviteCapability: "student:invite",

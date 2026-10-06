@@ -4,9 +4,6 @@
     "students": "Öğrenciler",
     "exams": "Sınavlar",
     "bank": "Soru bankası",
-    "library": "Kütüphane",
-    "positions": "Pozisyonlar",
-    "competencies": "Yetkinlikler",
     "settings": "Ayarlar",
     "openMenu": "Menüyü aç",
     "menuTitle": "Menü",
@@ -15,7 +12,8 @@
     "language": "Dil",
     "languageTr": "TR",
     "languageEn": "EN",
-    "more": "Diğer işlemler"
+    "more": "Diğer işlemler",
+    "advanced": "Gelişmiş"
   },
   "common": {
     "save": "Kaydet",

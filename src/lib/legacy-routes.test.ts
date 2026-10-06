@@ -28,7 +28,7 @@ describe("legacy panel redirects", () => {
 
 describe("menu", () => {
   it("links only to pages that exist (RULES.md rule 7)", () => {
-    const groups = buildNav("tr", { today: "", settings: "", library: { label: "", positions: "", competencies: "" } });
+    const groups = buildNav("tr", { today: "", settings: "", advanced: "" });
     for (const href of groups.flatMap((g) => g.items.map((i) => i.href))) {
       expect(existsSync(path.join(manager, href, "page.tsx")), href).toBe(true);
     }

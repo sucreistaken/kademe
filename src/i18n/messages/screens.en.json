@@ -475,13 +475,5 @@
     "savePrompt": "Save",
     "rowsOf": "{shown} of {total} items",
     "more": "Show more"
-  },
-  "advanced": {
-    "title": "Advanced",
-    "lead": "For editing exams and questions yourself. Not needed to invite: ready exams are in the invite form.",
-    "exams": "Exams",
-    "examsHint": "Build your own exam, set sections, timing and proctoring, then publish.",
-    "bank": "Question bank",
-    "bankHint": "Review and approve items, generate new ones with AI, see level coverage."
   }
 }

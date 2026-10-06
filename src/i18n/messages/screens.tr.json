@@ -475,13 +475,5 @@
     "savePrompt": "Kaydet",
     "rowsOf": "{shown} / {total} soru",
     "more": "Daha fazla göster"
-  },
-  "advanced": {
-    "title": "Gelişmiş",
-    "lead": "Sınavları ve soruları kendin düzenlemek için. Davet için gerekmez: hazır sınavlar davet formunda.",
-    "exams": "Sınavlar",
-    "examsHint": "Kendi sınavını kur, bölümleri, süreleri ve gözetimi ayarla, yayınla.",
-    "bank": "Soru bankası",
-    "bankHint": "Soruları gözden geçir, onayla, AI ile yeni soru üret, seviye kapsamını gör."
   }
 }

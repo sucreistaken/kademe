@@ -4,9 +4,6 @@
     "students": "Students",
     "exams": "Exams",
     "bank": "Question bank",
-    "library": "Library",
-    "positions": "Positions",
-    "competencies": "Competencies",
     "settings": "Settings",
     "openMenu": "Open menu",
     "menuTitle": "Menu",
@@ -15,7 +12,8 @@
     "language": "Language",
     "languageTr": "TR",
     "languageEn": "EN",
-    "more": "More actions"
+    "more": "More actions",
+    "advanced": "Advanced"
   },
   "common": {
     "save": "Save",

@@ -21,18 +21,18 @@ export type NavGroupView = {
   items: Array<{ href: string; label: string; icon: NavIcon; activeFor?: string[] }>;
 };
 
-export type LibraryLabels = { label: string; positions: string; competencies: string };
+export type SharedNavLabels = { today: string; settings: string; advanced: string };
+
+/** Advanced stays lit on the pages it leads to: the library and the exam's own editors. */
+export const ADVANCED_ACTIVE_FOR = ["/library", "/exam/exams", "/exam/bank"];
 
 /**
- * The panel menu (HIRING-UX 4.1): Today, one group per solution, the shared
- * Library, Settings. Group headers appear only when more than one solution is
- * registered ("nobody sees the menu of something they do not use").
+ * The panel menu (spec 2026-10-06-advanced-ai-create-design 3): Today, one
+ * group per solution, one core "Advanced" item, Settings. Group headers appear
+ * only when more than one solution is registered ("nobody sees the menu of
+ * something they do not use").
  */
-export function buildNav(
-  locale: Locale,
-  shared: { today: string; settings: string; library: LibraryLabels },
-  manifests: readonly SolutionManifest[] = SOLUTION_MANIFESTS,
-): NavGroupView[] {
+export function buildNav(locale: Locale, shared: SharedNavLabels, manifests: readonly SolutionManifest[] = SOLUTION_MANIFESTS): NavGroupView[] {
   const several = manifests.length > 1;
   return [
     { key: "today", label: null, items: [{ href: "/dashboard", label: shared.today, icon: "sun" }] },
@@ -41,14 +41,7 @@ export function buildNav(
       label: several ? m.label[locale] : null,
       items: m.nav.map((n) => ({ href: n.href, label: n.label[locale], icon: n.icon, ...(n.activeFor ? { activeFor: n.activeFor } : {}) })),
     })),
-    {
-      key: "library",
-      label: several ? shared.library.label : null,
-      items: [
-        { href: "/library/positions", label: shared.library.positions, icon: "id-card" },
-        { href: "/library/competencies", label: shared.library.competencies, icon: "target" },
-      ],
-    },
+    { key: "advanced", label: null, items: [{ href: "/advanced", label: shared.advanced, icon: "library", activeFor: ADVANCED_ACTIVE_FOR }] },
     { key: "settings", label: null, items: [{ href: "/settings", label: shared.settings, icon: "settings" }] },
   ];
 }
