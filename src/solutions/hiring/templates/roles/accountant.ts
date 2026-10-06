@@ -14,47 +14,10 @@ export const accountant: HiringTemplate = {
   stages: [
     stage({
       name: t("Kısa tanışma", "Short introduction"),
-      description: t("İki kısa video sorusu ve iki bilgi sorusu. Yaklaşık 10 dakika.", "Two short video questions and two knowledge questions. About 10 minutes."),
+      description: t("İki bilgi sorusu ve iki kısa video sorusu. En fazla 14 dakika.", "Two knowledge questions and two short video questions. At most 14 minutes."),
       purpose: "Kapanışta bulunan bir hatayı sahiplenme, mevzuat değişikliğini uygulama, KDV ve yevmiye kaydı bilgisi.",
-      minutes: 10,
+      minutes: 14,
       activities: [
-        video({
-          prompt: t(
-            "Ay ya da yıl sonu kapanışında bir hata fark ettiğin bir durumu anlat: hata neydi, nasıl fark ettin, kime ne söyledin, nasıl düzelttin ve tekrarlanmaması için sonra neyi değiştirdin?",
-            "Tell us about a time you found an error during a month-end or year-end close: what was the error, how did you notice it, whom did you tell what, how did you fix it, and what did you change afterwards so it would not happen again?",
-          ),
-          competencies: ["accuracy", "integrity"],
-          expected: [
-            "Hatayı somut söylüyor (hangi hesap, ne tutar, hangi dönem) ve nasıl fark ettiğini anlatıyor (mutabakat, bakiye kontrolü, karşılaştırma)",
-            "Hatayı kendisi yapmış olsa bile gizlemeden ilgili kişiye bildirdiğini anlatıyor",
-            "Düzeltmeyi kayıtla ve gerekçesiyle yaptığını söylüyor",
-            "Sonradan eklediği bir kontrol adımını söylüyor",
-          ],
-          redFlags: ["Hatayı kimseye söylemeden sessizce düzelttiğini anlatıyor", "Somut bir hata yerine 'ben hata yapmam' diyor", "Hatayı başkasına yükleyip kendi payını söylemiyor"],
-          examples: {
-            1: "Kapanışta bazen küçük farklar çıkar, ben de bir sonraki aya düzeltirim, kimseyi uğraştırmam.",
-            3: "Eylül kapanışında 320 Satıcılar hesabında bir faturanın iki kez kaydedildiğini mutabakatta gördüm. Müdürüme söyledim, mükerrer kaydı ters kayıtla iptal ettim.",
-            5: "Eylül kapanışında satıcı mutabakatı yaparken bir tedarikçinin 46.800 TL'lik faturasının iki kez kaydedildiğini gördüm; ikinci kaydı ben girmiştim. Finans müdürüne hemen yazdım, ters kayıtla düzelttim ve indirilecek KDV'yi de kontrol ettim, beyanname verilmeden yakalanmıştı. Sonrasında fatura girişinde belge numarasıyla mükerrer kontrolü yapan bir rapor ekledim, kapanış listesine de satıcı mutabakatını ayın 3'üne çektim.",
-          },
-        }),
-        video({
-          prompt: t(
-            "Bir mevzuat ya da muhasebe uygulaması değişikliğini kendi işine uyguladığın bir durumu anlat: değişiklik neydi, nasıl öğrendin, kayıtlarında neyi değiştirdin ve sonucu nasıl kontrol ettin?",
-            "Tell us about a time you applied a change in regulation or accounting practice to your own work: what was the change, how did you learn about it, what did you change in your bookkeeping, and how did you check the result?",
-          ),
-          competencies: ["technical", "accuracy"],
-          expected: [
-            "Değişikliği doğru kavramlarla ve somut anlatıyor (oran, tarih, hesap, belge türü)",
-            "Değişikliği hangi kaynaktan öğrendiğini ve nasıl doğruladığını söylüyor (resmi duyuru, mali müşavir, mevzuat metni)",
-            "Kayıtlarda ya da sistemde yaptığı değişikliği ve ilk dönemde yaptığı kontrolü anlatıyor",
-          ],
-          redFlags: ["Değişikliği yanlış ya da belirsiz anlatıyor", "Doğrulamadan duyduğu bilgiyle uyguladığını anlatıyor"],
-          examples: {
-            1: "Mevzuat sık değişiyor, mali müşavirimiz ne derse onu yapıyoruz.",
-            3: "KDV genel oranı %18'den %20'ye çıktığında ERP'deki vergi kodlarını güncelledim, ilk hafta kesilen faturaları kontrol ettim.",
-            5: "Temmuz 2023'te KDV genel oranı %18'den %20'ye çıktığında değişikliği Resmi Gazete'den okuyup mali müşavirle teyit ettim. ERP'de vergi kodlarını yürürlük tarihine göre ayırdım, çünkü önceki tarihli teslimlere eski oran uygulanmaya devam edecekti. İlk ay KDV beyannamesinden önce oran bazında bir dökümle 391 hesabını faturalarla karşılaştırdım ve %18'le kesilmiş iki faturayı yakaladım.",
-          },
-        }),
         single({
           prompt: t(
             "KDV dahil toplamı 14.400 TL olan bir satış faturası var. KDV oranı %20. Faturadaki KDV tutarı kaç TL'dir?",
@@ -83,11 +46,48 @@ export const accountant: HiringTemplate = {
           correct: 1,
           internal: "Doğru cevap: 153 B 10.000, 191 B 2.000 / 320 A 12.000. Alışta ödenen KDV 191 İndirilecek KDV'ye gider. Çeldiriciler: KDV'yi maliyete katmak (a), alışta 391 Hesaplanan KDV kullanmak (c, satış hesabı), kaydı ters kurmak (d).",
         }),
+        video({
+          prompt: t(
+            "Ay ya da yıl sonu kapanışında bir hata fark ettiğin bir durumu anlat: hata neydi, nasıl fark ettin, kime ne söyledin, nasıl düzelttin ve tekrarlanmaması için sonra neyi değiştirdin?",
+            "Tell us about a time you found an error during a month-end or year-end close: what was the error, how did you notice it, whom did you tell what, how did you fix it, and what did you change afterwards so it would not happen again?",
+          ),
+          competencies: ["integrity", "technical"],
+          expected: [
+            "Hatayı somut söylüyor (hangi hesap, ne tutar, hangi dönem) ve nasıl fark ettiğini anlatıyor (mutabakat, bakiye kontrolü, karşılaştırma)",
+            "Hatayı kendisi yapmış olsa bile gizlemeden ilgili kişiye bildirdiğini anlatıyor",
+            "Düzeltmeyi kayıtla ve gerekçesiyle yaptığını söylüyor",
+            "Sonradan eklediği bir kontrol adımını söylüyor",
+          ],
+          redFlags: ["Hatayı kimseye söylemeden sessizce düzelttiğini anlatıyor", "Somut bir hata yerine 'ben hata yapmam' diyor", "Hatayı başkasına yükleyip kendi payını söylemiyor"],
+          examples: {
+            1: "Kapanışta bazen küçük farklar çıkar, ben de bir sonraki aya düzeltirim, kimseyi uğraştırmam.",
+            3: "Eylül kapanışında 320 Satıcılar hesabında bir faturanın iki kez kaydedildiğini mutabakatta gördüm. Müdürüme söyledim, mükerrer kaydı ters kayıtla iptal ettim.",
+            5: "Eylül kapanışında satıcı mutabakatı yaparken bir tedarikçinin 46.800 TL'lik faturasının iki kez kaydedildiğini gördüm; ikinci kaydı ben girmiştim. Finans müdürüne hemen yazdım, ters kayıtla düzelttim ve indirilecek KDV'yi de kontrol ettim, beyanname verilmeden yakalanmıştı. Sonrasında fatura girişinde belge numarasıyla mükerrer kontrolü yapan bir rapor ekledim, kapanış listesine de satıcı mutabakatını ayın 3'üne çektim.",
+          },
+        }),
+        video({
+          prompt: t(
+            "Bir mevzuat ya da muhasebe uygulaması değişikliğini kendi işine uyguladığın bir durumu anlat: değişiklik neydi, nasıl öğrendin, kayıtlarında neyi değiştirdin ve sonucu nasıl kontrol ettin?",
+            "Tell us about a time you applied a change in regulation or accounting practice to your own work: what was the change, how did you learn about it, what did you change in your bookkeeping, and how did you check the result?",
+          ),
+          competencies: ["technical"],
+          expected: [
+            "Değişikliği doğru kavramlarla ve somut anlatıyor (oran, tarih, hesap, belge türü)",
+            "Değişikliği hangi kaynaktan öğrendiğini ve nasıl doğruladığını söylüyor (resmi duyuru, mali müşavir, mevzuat metni)",
+            "Kayıtlarda ya da sistemde yaptığı değişikliği ve ilk dönemde yaptığı kontrolü anlatıyor",
+          ],
+          redFlags: ["Değişikliği yanlış ya da belirsiz anlatıyor", "Doğrulamadan duyduğu bilgiyle uyguladığını anlatıyor"],
+          examples: {
+            1: "Mevzuat sık değişiyor, mali müşavirimiz ne derse onu yapıyoruz.",
+            3: "KDV genel oranı %18'den %20'ye çıktığında ERP'deki vergi kodlarını güncelledim, ilk hafta kesilen faturaları kontrol ettim.",
+            5: "Temmuz 2023'te KDV genel oranı %18'den %20'ye çıktığında değişikliği Resmi Gazete'den okuyup mali müşavirle teyit ettim. ERP'de vergi kodlarını yürürlük tarihine göre ayırdım, çünkü önceki tarihli teslimlere eski oran uygulanmaya devam edecekti. İlk ay KDV beyannamesinden önce oran bazında bir dökümle 391 hesabını faturalarla karşılaştırdım ve %18'le kesilmiş iki faturayı yakaladım.",
+          },
+        }),
       ],
     }),
     stage({
       name: t("İş örneği", "Work sample"),
-      description: t("Gerçek işe benzeyen iki yazılı görev: bir banka mutabakatı ve bir yöneticiye cevap. Yaklaşık 20 dakika.", "Two written tasks like the real job: a bank reconciliation and a reply to a manager. About 20 minutes."),
+      description: t("Gerçek işe benzeyen iki yazılı görev: bir banka mutabakatı ve bir yöneticiye cevap. En fazla 20 dakika.", "Two written tasks like the real job: a bank reconciliation and a reply to a manager. At most 20 minutes."),
       purpose: "Mutabakatta farkları bulma ve açıklama; dönemsellik ilkesine aykırı talebe gerekçeli cevap.",
       minutes: 20,
       activities: [

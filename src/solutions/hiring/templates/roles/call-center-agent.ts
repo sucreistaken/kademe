@@ -14,10 +14,24 @@ export const callCenterAgent: HiringTemplate = {
   stages: [
     stage({
       name: t("Kısa tanışma", "Short introduction"),
-      description: t("İki kısa video sorusu ve bir çağrı akışı sorusu. Yaklaşık 10 dakika.", "Two short video questions and one call-flow question. About 10 minutes."),
+      description: t("İki kısa video sorusu ve bir çağrı akışı sorusu. En fazla 13 dakika.", "Two short video questions and one call-flow question. At most 13 minutes."),
       purpose: "Art arda zor çağrılar sonrası toparlanma, çağrıda çözülemeyen talebin takibi ve çağrı akışı bilgisi.",
-      minutes: 10,
+      minutes: 13,
       activities: [
+        single({
+          prompt: t(
+            "Bir müşteri faturasıyla ilgili arıyor. Çağrıyı yönetmek için en doğru sıra hangisi?",
+            "A customer calls about their invoice. What is the right order for handling the call?",
+          ),
+          options: [
+            t("Selamla, sorunu dinle, kimlik doğrula, çöz, özetle, kapat", "Greet, listen to the issue, verify identity, solve, summarise, close"),
+            t("Selamla, kimlik doğrula, sorunu dinle, çöz, kapat, özetle", "Greet, verify identity, listen to the issue, solve, close, summarise"),
+            t("Kimlik doğrula, selamla, sorunu dinle, çöz, özetle, kapat", "Verify identity, greet, listen to the issue, solve, summarise, close"),
+            t("Selamla, kimlik doğrula, sorunu dinle, çöz, özetle, kapat", "Greet, verify identity, listen to the issue, solve, summarise, close"),
+          ],
+          correct: 3,
+          internal: "Doğru sıra: selamlama, kimlik doğrulama (fatura bilgisi paylaşılmadan önce), sorunu dinleme ve çözme, yapılanı ve sonraki adımı özetleme, kapanış. (a) kimliği doğrulamadan önce sorunu dinleyip hesap konusuna girer, (b) özeti kapanıştan sonraya bırakır, (c) kimlik sorarak başlar ve müşteriyi selamlamayı atlar.",
+        }),
         video({
           prompt: t(
             "Art arda birçok zor çağrı aldığın bir günü anlat: en zor çağrıda müşteri ne dedi, sen tam olarak ne cevap verdin, bir sonraki çağrıya geçmeden toparlanmak için ne yaptın ve sonrasında çalışma biçiminde neyi değiştirdin?",
@@ -55,25 +69,11 @@ export const callCenterAgent: HiringTemplate = {
             5: "Bunu çağrıda çözemeyeceğimi, kaydı açıp muhasebeye bugün ileteceğimi ve iki iş günü içinde sonucu SMS ile alacağını söyledim, kayıt numarasını verdim. İkinci gün kaydı kontrol ettim, hâlâ açıktı; muhasebeye yazıp müşteriyi aradım, durumu anlattım. Üçüncü gün kapandı.",
           },
         }),
-        single({
-          prompt: t(
-            "Bir müşteri faturasıyla ilgili arıyor. Çağrıyı yönetmek için en doğru sıra hangisi?",
-            "A customer calls about their invoice. What is the right order for handling the call?",
-          ),
-          options: [
-            t("Kimlik doğrula, selamla, sorunu çöz, kapat, özetle", "Verify identity, greet, solve the issue, close, summarise"),
-            t("Selamla, sorunu çöz, kimlik doğrula, özetle, kapat", "Greet, solve the issue, verify identity, summarise, close"),
-            t("Selamla, kimlik doğrula, sorunu çöz, kapat, özetle", "Greet, verify identity, solve the issue, close, summarise"),
-            t("Selamla, kimlik doğrula, sorunu dinleyip çöz, yapılanı özetle, kapat", "Greet, verify identity, listen to and solve the issue, summarise what was done, close"),
-          ],
-          correct: 3,
-          internal: "Doğru sıra: selamlama, kimlik doğrulama (fatura bilgisi paylaşılmadan önce), sorunu dinleme ve çözme, yapılanı ve sonraki adımı özetleme, kapanış. (b) kimliği doğrulamadan hesap bilgisi konuşur, (a) ve (c) özeti kapanıştan sonraya bırakır.",
-        }),
       ],
     }),
     stage({
       name: t("İş örneği", "Work sample"),
-      description: t("Gerçek çağrılara benzeyen iki sesli görev. Yaklaşık 12 dakika.", "Two spoken tasks like real calls. About 12 minutes."),
+      description: t("Gerçek çağrılara benzeyen iki sesli görev. En fazla 12 dakika.", "Two spoken tasks like real calls. At most 12 minutes."),
       purpose: "Fatura itirazında açıklama ve beklenti yönetimi, bekletip sıcak aktarma.",
       minutes: 12,
       activities: [
@@ -83,20 +83,20 @@ export const callCenterAgent: HiringTemplate = {
             "A verified customer calls and says:\n\n\"My bill this month is 689 TL! I am on the 399 TL plan. I did not buy anything extra and I do not accept this. If you do not fix it I will cancel my subscription!\"\n\nWhat you see on your screen:\n- Plan fee: 399 TL\n- 10 GB extra data pack: 190 TL (12 September 21:14, bought from the customer's line with SMS approval)\n- Modem instalment (5th of 12): 100 TL\n- Total: 689 TL\n\nYour authority: explain the invoice lines and open a dispute (the result is sent by SMS within 3 working days). You cannot give refunds; cancellation requests go to the customer relations team.\n\nRecord your reply to the customer as you would say it on the phone.",
           ),
           answer: 180,
-          competencies: ["customer", "communication"],
+          competencies: ["customer", "resilience"],
           expected: [
             "Önce müşterinin tepkisini karşılıyor, savunmaya geçmeden kalemleri tek tek açıklıyor (399 + 190 + 100 = 689)",
             "Ek paketi müşteriyi suçlamadan anlatıyor (tarih, saat, SMS onayı) ve müşteri almadığını söylüyorsa itiraz kaydı açmayı öneriyor",
-            "Modem taksitini hatırlatıyor ve yetkisi dışında iade sözü vermiyor",
-            "İptal tehdidine baskı yapmadan cevap veriyor, yapılanı ve 3 iş günü süresini özetleyip kapatıyor",
+            "Modem taksitini hatırlatıyor ve yetkisi dışında iade sözü vermiyor; müşteri sertleşse bile yetki sınırını sakin söylüyor",
+            "İptal tehdidinden sonra da tonunu koruyor, savunmaya geçmiyor; yapılanı ve 3 iş günü süresini özetleyip kapatıyor",
           ],
           redFlags: ["'Siz almışsınız, sistem yanlış yapmaz' gibi suçlayıcı bir dil kullanıyor", "Yetkisi olmadığı halde 190 TL'yi iade edeceğini söylüyor", "Kalemleri açıklamadan çağrıyı iptal ekibine aktarıyor"],
           examples: {
-            1: "Efendim, sistemde 689 TL görünüyor, ek paket almışsınız. Yapacak bir şey yok, isterseniz iptal ekibine aktarayım.",
-            3: "Faturanın beklediğinizden yüksek gelmesi can sıkıcı, hemen bakalım. 399 TL paketiniz, 100 TL modem taksitiniz ve 12 Eylül'de alınmış 190 TL'lik 10 GB ek paket var. Bu paketi siz almadıysanız itiraz kaydı açabilirim, 3 iş günü içinde SMS ile sonuç gelir.",
-            5: "Beklemediğiniz bir tutar görmek insanı kızdırır, birlikte kalem kalem bakalım. 399 TL paket ücretiniz. 100 TL, 12 taksitli modeminizin 5. taksiti. Kalan 190 TL, 12 Eylül 21:14'te hattınızdan SMS onayıyla alınmış 10 GB ek paket. Siz onaylamadıysanız şimdi itiraz kaydı açıyorum; iadeye o ekip karar veriyor, ben söz veremem. İptali yine de isterseniz sizi müşteri ilişkilerine aktarırım ama önce itirazın sonucunu görmenizi öneririm. Özetle: itiraz kaydınız açıldı, sonuç 3 iş günü içinde SMS ile gelecek. Başka bir konuda yardımcı olabilir miyim?",
+            1: "Efendim, sistemde 689 TL görünüyor, ek paket almışsınız. Tehdit etmenizin faydası yok, yapacak bir şey yok, isterseniz iptal ekibine aktarayım.",
+            3: "Faturanın beklediğinizden yüksek gelmesi can sıkıcı, hemen bakalım. 399 TL paketiniz, 100 TL modem taksitiniz ve 12 Eylül'de alınmış 190 TL'lik 10 GB ek paket var. Bu paketi siz almadıysanız itiraz kaydı açabilirim, 3 iş günü içinde SMS ile sonuç gelir. İptal etmek isterseniz sizi ilgili ekibe aktarırım.",
+            5: "Beklemediğiniz bir tutar görmek insanı kızdırır, kalem kalem bakalım. 399 TL paket ücretiniz, 100 TL 12 taksitli modeminizin 5. taksiti, kalan 190 TL 12 Eylül 21:14'te hattınızdan SMS onayıyla alınmış 10 GB ek paket. Siz onaylamadıysanız şimdi itiraz kaydı açıyorum; iadeye o ekip karar veriyor, ben söz veremem. İptal düşüncenizi anlıyorum; isterseniz sizi müşteri ilişkilerine aktarırım ama önce itirazın sonucunu görmenizi öneririm. Özetle: itiraz kaydınız açıldı, sonuç 3 iş günü içinde SMS ile gelecek. Başka bir konuda yardımcı olabilir miyim?",
           },
-          internal: "Referans: toplam 399 + 190 + 100 = 689 TL, fatura matematiği doğru. Güçlü cevapta üç kalem açıklanır, ek paket suçlamadan (tarih, saat, SMS onayı) anlatılır, itiraz kaydı önerilir, iade sözü verilmez, iptal baskısız ele alınır, sonunda özet ve 3 iş günü süresi söylenir.",
+          internal: "Referans: toplam 399 + 190 + 100 = 689 TL, fatura matematiği doğru. Güçlü cevapta üç kalem açıklanır, ek paket suçlamadan (tarih, saat, SMS onayı) anlatılır, itiraz kaydı önerilir, iade sözü verilmez, iptal tehdidinden sonra ton korunur ve savunmaya geçilmez, sonunda özet ve 3 iş günü süresi söylenir.",
         }),
         audio({
           prompt: t(

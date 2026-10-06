@@ -14,7 +14,7 @@ export const salesRepresentative: HiringTemplate = {
   stages: [
     stage({
       name: t("Kısa tanışma", "Short introduction"),
-      description: t("İki kısa video sorusu ve bir senaryo sorusu. Yaklaşık 10 dakika.", "Two short video questions and one scenario question. About 10 minutes."),
+      description: t("İki kısa video sorusu ve bir senaryo sorusu. En fazla 10 dakika.", "Two short video questions and one scenario question. At most 10 minutes."),
       purpose: "Gerçek bir hedef aşma deneyimi, kendiliğinden fırsat yaratma ve itiraz türünü tanıma.",
       minutes: 10,
       activities: [
@@ -73,7 +73,7 @@ export const salesRepresentative: HiringTemplate = {
     }),
     stage({
       name: t("İş örneği", "Work sample"),
-      description: t("Gerçek işe benzeyen iki görev: bir soğuk e-posta ve sesli bir itiraz cevabı. Yaklaşık 15 dakika.", "Two tasks like the real job: a cold e-mail and a spoken reply to an objection. About 15 minutes."),
+      description: t("Gerçek işe benzeyen iki görev: bir soğuk e-posta ve sesli bir itiraz cevabı. En fazla 15 dakika.", "Two tasks like the real job: a cold e-mail and a spoken reply to an objection. At most 15 minutes."),
       purpose: "Kişiye özel ilk temas ve fiyat itirazını değerle karşılama.",
       minutes: 15,
       activities: [
@@ -99,8 +99,8 @@ export const salesRepresentative: HiringTemplate = {
         }),
         audio({
           prompt: t(
-            "Selin Hanım'la ikinci görüşmedesin. Sana şunu söylüyor: \"Fiyatınız çok pahalı. Şu an kullandığımız basit takip sistemi araç başı 300 TL, siz 450 TL istiyorsunuz.\"\n\nYukarıdaki bilgileri kullanabilirsin (120 araç, araç başı aylık yakıt 9.000 TL, referans müşteride %12 yakıt tasarrufu). Ona telefonda vereceğin cevabı sesli kaydet. Yaklaşık 2 dakikan var.",
-            "You are on the second call with Ms Arslan. She tells you: \"Your price is too high. The basic tracking system we use now costs 300 TL per vehicle, you are asking 450 TL.\"\n\nYou may use the facts above (120 vehicles, 9,000 TL monthly fuel per vehicle, 12% fuel saving at the reference customer). Record the reply you would give her on the phone. You have about 2 minutes.",
+            "Selin Hanım'la ikinci görüşmedesin. Sana şunu söylüyor: \"Fiyatınız çok pahalı. Şu an kullandığımız basit takip sistemi araç başı 300 TL, siz 450 TL istiyorsunuz.\"\n\nŞu bilgileri kullanabilirsin (120 araç, araç başı aylık yakıt 9.000 TL, referans müşteride %12 yakıt tasarrufu). Ona telefonda vereceğin cevabı sesli kaydet. Yaklaşık 2 dakikan var.",
+            "You are on the second call with Ms Arslan. She tells you: \"Your price is too high. The basic tracking system we use now costs 300 TL per vehicle, you are asking 450 TL.\"\n\nYou may use these facts (120 vehicles, 9,000 TL monthly fuel per vehicle, 12% fuel saving at the reference customer). Record the reply you would give her on the phone. You have about 2 minutes.",
           ),
           competencies: ["commercial", "communication"],
           expected: [

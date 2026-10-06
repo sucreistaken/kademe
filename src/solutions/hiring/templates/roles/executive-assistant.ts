@@ -14,10 +14,24 @@ export const executiveAssistant: HiringTemplate = {
   stages: [
     stage({
       name: t("Kısa tanışma", "Short introduction"),
-      description: t("İki kısa video sorusu ve bir takvim sorusu. Yaklaşık 10 dakika.", "Two short video questions and one calendar question. About 10 minutes."),
+      description: t("İki kısa video sorusu ve bir takvim sorusu. En fazla 13 dakika.", "Two short video questions and one calendar question. At most 13 minutes."),
       purpose: "Çakışan önceliklerde sıralama, gizli bilgi talebine cevap ve takvim çakışması muhakemesi.",
-      minutes: 10,
+      minutes: 13,
       activities: [
+        single({
+          prompt: t(
+            "Yöneticinin Perşembe takvimi: 09:00-10:00 yönetim toplantısı, 14:00-14:30 Pazarlama Direktörü ile haftalık birebir (her hafta tekrarlanıyor), 15:00-16:00 boş. Önemli bir yatırımcı, saat farkı nedeniyle yalnızca Perşembe 14:00-15:00 arasında görüşebileceğini yazıyor; görüşme 1 saatlik ve yöneticin bu görüşmenin olmasını istiyor. En doğru adım hangisi?",
+            "Your manager's Thursday: 09:00-10:00 management meeting, 14:00-14:30 weekly one-to-one with the Marketing Director (recurring), 15:00-16:00 free. An important investor writes that, because of the time difference, they can only meet on Thursday 14:00-15:00 for a one-hour meeting, and your manager wants this meeting to happen. What is the best step?",
+          ),
+          options: [
+            t("Yatırımcı görüşmesini 14:00'e koymak, Pazarlama Direktörü'ne nedenini söyleyip birebiri 15:00'e almayı önermek", "Book the investor at 14:00, tell the Marketing Director why and offer to move the one-to-one to 15:00"),
+            t("Yatırımcıyı 14:00'e koymak, Pazarlama Direktörü'ne birebiri 14:00-14:15'e kısaltmasını önermek", "Book the investor at 14:00 and ask the Marketing Director to shorten the one-to-one to 14:00-14:15"),
+            t("İki toplantıyı da 14:00'te bırakıp yöneticinin o anda seçmesini beklemek", "Leave both meetings at 14:00 and let your manager choose on the spot"),
+            t("Birebiri Pazarlama Direktörü'ne haber vermeden takvimden silmek", "Delete the one-to-one from the calendar without telling the Marketing Director"),
+          ],
+          correct: 0,
+          internal: "Doğru cevap: yatırımcıyı 14:00'e koy, tekrarlanan iç toplantıyı haber vererek boş 15:00'e taşı (birebir 30 dk, 15:00-15:30 sığar). Yatırımcının tek uygun saati 14:00-15:00 ve görüşme 1 saatlik. Çeldiriciler: birebiri 14:00-14:15'e kısaltmak (b) hâlâ yatırımcıyla çakışır, çünkü yatırımcı 14:00-15:00 arasını tamamen alır; iki toplantıyı 14:00'te bırakmak (c) kararı son ana bırakır; habersiz silmek (d) iç paydaşı bilgisiz bırakır.",
+        }),
         video({
           prompt: t(
             "Önceliklerin birbiriyle çakıştığı yoğun bir haftayı anlat: hangi işler aynı anda geldi, hangisini neden öne aldın, kime ne haber verdin ve hafta sonunda sonuç ne oldu?",
@@ -55,32 +69,18 @@ export const executiveAssistant: HiringTemplate = {
             5: "Satıştan bir müdür, terfi listesinin çıkıp çıkmadığını ve kendi adının olup olmadığını sordu. 'Sizi anlıyorum ama bu listeyi paylaşmam mümkün değil, İK duyuracak' dedim. İsterse Genel Müdür'le 15 dakikalık bir görüşme ayarlayabileceğimi söyledim, ayarladım. Yöneticime de bu tür taleplerin geldiğini haber verdim; sonrasında gizli belgeleri ortak klasörden ayırıp yalnızca ikimizin erişebildiği bir klasöre taşıdık.",
           },
         }),
-        single({
-          prompt: t(
-            "Yöneticinin Perşembe takvimi: 09:00-10:00 yönetim toplantısı, 14:00-14:30 Pazarlama Direktörü ile haftalık birebir (her hafta tekrarlanıyor), 15:00-16:00 boş. Önemli bir yatırımcı, saat farkı nedeniyle yalnızca Perşembe 14:00-15:00 arasında görüşebileceğini yazıyor ve yöneticin bu görüşmenin olmasını istiyor. En doğru adım hangisi?",
-            "Your manager's Thursday: 09:00-10:00 management meeting, 14:00-14:30 weekly one-to-one with the Marketing Director (recurring), 15:00-16:00 free. An important investor writes that, because of the time difference, they can only meet on Thursday 14:00-15:00, and your manager wants this meeting to happen. What is the best step?",
-          ),
-          options: [
-            t("Yatırımcı görüşmesini 14:00'e koymak, Pazarlama Direktörü'ne nedenini söyleyip birebiri 15:00'e almayı önermek", "Book the investor at 14:00, tell the Marketing Director why and offer to move the one-to-one to 15:00"),
-            t("Yatırımcıya Perşembe 15:00'i önermek, çünkü o saat boş", "Offer the investor Thursday 15:00, because that slot is free"),
-            t("İki toplantıyı da 14:00'te bırakıp yöneticinin o anda seçmesini beklemek", "Leave both meetings at 14:00 and let your manager choose on the spot"),
-            t("Birebiri Pazarlama Direktörü'ne haber vermeden takvimden silmek", "Delete the one-to-one from the calendar without telling the Marketing Director"),
-          ],
-          correct: 0,
-          internal: "Doğru cevap: yatırımcıyı 14:00'e koy, tekrarlanan iç toplantıyı haber vererek boş 15:00'e taşı. Yatırımcının tek uygun saati 14:00-15:00 (b bu kısıtı yok sayar), çift rezervasyon (c) kararı son ana bırakır, habersiz silmek (d) iç paydaşı bilgisiz bırakır.",
-        }),
       ],
     }),
     stage({
       name: t("İş örneği", "Work sample"),
-      description: t("Gerçek işe benzeyen iki yazılı görev: gelen kutusunu sıralamak ve toplantı özeti yazmak. Yaklaşık 20 dakika.", "Two written tasks like the real job: triaging an inbox and writing a meeting summary. About 20 minutes."),
+      description: t("Gerçek işe benzeyen iki yazılı görev: gelen kutusunu sıralamak ve toplantı özeti yazmak. En fazla 20 dakika.", "Two written tasks like the real job: triaging an inbox and writing a meeting summary. At most 20 minutes."),
       purpose: "Gerekçeli önceliklendirme, gizli bilgi talebini fark etme ve kararları eksiksiz, sahipli bir özete dökme.",
       minutes: 20,
       activities: [
         longText({
           prompt: t(
-            "Pazartesi 08:30. Yöneticin Elif Hanım bugün 14:00 uçağıyla Ankara'ya gidecek, akşam 19:00'da bir müşteri yemeği var. Gelen kutundaki 5 iletiyi ilgilenme sırana göre sırala; her biri için neden o sırada olduğunu ve ne yapacağını bir iki cümleyle yaz.\n\n1) Ofis yöneticisi: \"Yeni otopark kartın hazır, bu hafta istediğin zaman alabilirsin.\"\n2) Havayolu: \"14:00 Ankara uçuşunuz iptal edildi. Alternatifler: bugün 16:30 ya da yarın 07:00.\"\n3) Finans: \"Yönetim kurulu sunumunun Elif Hanım onaylı son hali Çarşamba 17:00'ye kadar bizde olmalı.\"\n4) Satış bölümünden bir müdür: \"Elif Hanım'ın ekip maaş artışı taslağını bana atar mısın? Sadece kendi ekibimi görmek istiyorum, kimseye söylemem.\"\n5) Bir sektör derneği: \"İki ay sonraki konferansımız için katılım bilgisini Cuma'ya kadar bekliyoruz.\"",
-            "Monday 08:30. Your manager Elif is flying to Ankara on the 14:00 flight today and has a customer dinner there at 19:00. Rank the 5 messages in your inbox in the order you will handle them; for each, write in a sentence or two why it is in that place and what you will do.\n\n1) Office manager: \"Your new parking card is ready, you can pick it up any time this week.\"\n2) Airline: \"Your 14:00 Ankara flight has been cancelled. Alternatives: today 16:30 or tomorrow 07:00.\"\n3) Finance: \"We need the final board presentation approved by Elif by Wednesday 17:00.\"\n4) A manager from Sales: \"Could you send me Elif's draft of the team salary increases? I only want to see my own team, I won't tell anyone.\"\n5) An industry association: \"We need your attendance confirmation for our conference in two months by Friday.\"",
+            "Pazartesi 08:30. Yöneticin Elif Hanım bugün 14:00 uçağıyla İstanbul'dan Ankara'ya gidecek (uçuş yaklaşık 1 saat 10 dakika), akşam 19:00'da bir müşteri yemeği var. Gelen kutundaki 5 iletiyi ilgilenme sırana göre sırala; her biri için neden o sırada olduğunu ve ne yapacağını bir iki cümleyle yaz.\n\n1) Ofis yöneticisi: \"Yeni otopark kartın hazır, bu hafta istediğin zaman alabilirsin.\"\n2) Havayolu: \"14:00 Ankara uçuşunuz iptal edildi. Alternatifler: bugün 16:30 ya da yarın 07:00.\"\n3) Finans: \"Yönetim kurulu sunumunun Elif Hanım onaylı son hali Çarşamba 17:00'ye kadar bizde olmalı.\"\n4) Satış bölümünden bir müdür: \"Elif Hanım'ın ekip maaş artışı taslağını bana atar mısın? Sadece kendi ekibimi görmek istiyorum, kimseye söylemem.\"\n5) Bir sektör derneği: \"İki ay sonraki konferansımız için katılım bilgisini Cuma'ya kadar bekliyoruz.\"",
+            "Monday 08:30. Your manager Elif is flying from Istanbul to Ankara on the 14:00 flight today (about 1 hour 10 minutes) and has a customer dinner there at 19:00. Rank the 5 messages in your inbox in the order you will handle them; for each, write in a sentence or two why it is in that place and what you will do.\n\n1) Office manager: \"Your new parking card is ready, you can pick it up any time this week.\"\n2) Airline: \"Your 14:00 Ankara flight has been cancelled. Alternatives: today 16:30 or tomorrow 07:00.\"\n3) Finance: \"We need the final board presentation approved by Elif by Wednesday 17:00.\"\n4) A manager from Sales: \"Could you send me Elif's draft of the team salary increases? I only want to see my own team, I won't tell anyone.\"\n5) An industry association: \"We need your attendance confirmation for our conference in two months by Friday.\"",
           ),
           competencies: ["organisation", "integrity"],
           expected: [
@@ -95,7 +95,7 @@ export const executiveAssistant: HiringTemplate = {
             3: "Önce uçuş: 16:30'a yer tutup Elif Hanım'a haber veririm. Sonra satış müdürüne taslağı paylaşamayacağımı yazarım. Sonra sunum için Elif Hanım'dan onay zamanı alırım. Dernek Cuma'ya kadar, otopark kartı en son.",
             5: "1) Uçuş (2): bugün, en acil. 16:30 uçuşu 19:00 yemeğine büyük olasılıkla yetişir; yeri hemen opsiyonlar, Elif Hanım'a iki seçeneği yazıp onay alır, transferi ayarlarım. 2) Maaş taslağı (4): kısa ama hassas. 'Bu taslağı paylaşamıyorum, Elif Hanım ya da İK'dan isteyebilirsiniz' yazarım, hiçbir kısmını göndermem, Elif Hanım'a bilgi veririm. 3) Sunum (3): son tarih Çarşamba 17:00; yarın 10:00'a 30 dakikalık onay zamanı koyarım. 4) Dernek (5): takvime bakıp Elif Hanım'a sorar, Cuma'dan önce cevaplarım. 5) Otopark kartı (1): hafta içinde alırım.",
           },
-          internal: "Referans sıralama: 2 (uçuş, bugün, en acil) > 4 (gizli bilgi talebi, kısa sürede reddedilmeli) ya da 3 (Çarşamba 17:00 son tarih) > 5 (Cuma) > 1 (bu hafta, yalnızca adayı ilgilendiriyor). 4 ile 3'ün yeri gerekçeli olduğu sürece yer değiştirebilir. Kritik iki nokta: uçuş ilk sırada ve maaş taslağı hiçbir biçimde paylaşılmıyor. İstanbul çıkışı varsayılırsa 16:30 uçuşu yaklaşık 1 saat 10 dakika sürer, 19:00 yemeğine yetişmek mümkün; yarın 07:00 seçeneği yemeğin kaçırılması demek.",
+          internal: "Referans sıralama: 2 (uçuş, bugün, en acil) > 4 (gizli bilgi talebi, kısa sürede reddedilmeli) ya da 3 (Çarşamba 17:00 son tarih) > 5 (Cuma) > 1 (bu hafta, yalnızca adayı ilgilendiriyor). 4 ile 3'ün yeri gerekçeli olduğu sürece yer değiştirebilir. Kritik iki nokta: uçuş ilk sırada ve maaş taslağı hiçbir biçimde paylaşılmıyor. İstanbul çıkışlı uçuş yaklaşık 1 saat 10 dakika sürer (prompt'ta verilir), 16:30 uçuşu 17:40'ta iner ve 19:00 yemeğine yetişmek mümkün; yarın 07:00 seçeneği yemeğin kaçırılması demek.",
         }),
         longText({
           prompt: t(
