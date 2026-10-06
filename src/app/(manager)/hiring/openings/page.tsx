@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Clock, FileText, Inbox, Users } from "lucide-react";
+import { CalendarDays, Clock, FileText, Inbox, Users } from "lucide-react";
 import { funnelShare, cockpitCounts, cockpitTab } from "@/components/hiring/opening-next-step";
 import { PageTitle } from "@/components/manager/page-title";
 import { ControlRow, type ControlAttention } from "@/components/manager/control-row";
@@ -32,6 +32,7 @@ const NEXT_LABEL = {
   open: "hiringOpenings.nextOpen",
   continueSetup: "hiringCommon.continueSetup",
   draft: "hiringCommon.continueSetup",
+  deadline: "hiringOpenings.nextDeadline",
 } as const;
 
 /** One opening as a control row (KG1): status, progress, what needs attention, team and last day, and its one next step. */
@@ -74,6 +75,8 @@ function Row({ row, runs, locale, t }: { row: CockpitRow; runs: boolean; locale:
       : []),
     ...(row.shortfall ? [{ key: "team", icon: Users, text: t("hiringCommon.teamShort", { evaluators: row.shortfall.evaluators, min: row.shortfall.min }) }] : []),
     ...(f && f.expiringSoon > 0 ? [{ key: "expiring", icon: Clock, text: t("hiringCommon.expiringLinks", { count: f.expiringSoon }) }] : []),
+    // B-M3: a live opening past its last day takes no invitation; said once, as on the opening's overview.
+    ...(row.deadlinePassed ? [{ key: "deadline", icon: CalendarDays, text: t("hiringCommon.deadlinePassed") }] : []),
     // A closed opening's draft waits for nothing (as on Today): only a live one says so.
     ...(runs && o.status === "OPEN" && o.liveNumber && o.draftNumber ? [{ key: "draft", icon: FileText, text: t("hiringCommon.draftWaitingPublish", { number: o.draftNumber }) }] : []),
   ];

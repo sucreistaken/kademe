@@ -36,6 +36,10 @@ let invited: number;
 /** Survey answers, oldest first. */
 let answers: Array<{ rating: number; comment: string | null }>;
 let stageSeconds: number;
+/** The invite form's view of the opening (invitableOpenings): its active evaluators and its last day. */
+let teamCount: number;
+let openingDeadlineAt: Date | null;
+let minEvaluations: number;
 type Person = { id: string; name: string; email: string; role: Role; lastLoginAt: null; disabledAt: Date | null };
 /** The organisation's users (loadPanelUsers): the owner deciding and the reviewer on the team, both active. */
 let people: Person[];
@@ -117,9 +121,9 @@ function respond(op: Op): unknown[] {
     case "hiring_stages":
       return [{ id: "s1", durationSeconds: stageSeconds, graceSeconds: 0, onTimeout: "AUTO_SUBMIT" }];
     case "hiring_openings":
-      return status === "OPEN" ? [{ id: OPENING, name: "Tasarımcı · Ekim", deadlineAt: null, minEvaluations: 1 }] : [];
+      return status === "OPEN" ? [{ id: OPENING, name: "Tasarımcı · Ekim", deadlineAt: openingDeadlineAt, minEvaluations }] : [];
     case "hiring_opening_members":
-      return [{ openingId: OPENING, count: 1 }];
+      return [{ openingId: OPENING, count: teamCount }];
     default:
       return [];
   }
@@ -167,6 +171,9 @@ beforeEach(() => {
   invited = 3;
   answers = [];
   stageSeconds = 1500;
+  teamCount = 1;
+  openingDeadlineAt = null;
+  minEvaluations = 1;
   sp = {};
   people = [person(OWNER, "Sahip", "OWNER"), person(REVIEWER, "Ece", "REVIEWER")];
   requestRows = 0;
@@ -193,13 +200,30 @@ describe("the overview's invite button (Task 19 ruling 2)", () => {
     expect(fake.ops.some((o) => o.table === "hiring_openings")).toBe(false);
   });
 
-  it("waits with the closed reason on a closed opening", async () => {
+  it("draws no 'Aday davet et' on a closed opening, only the closed note and 'Yeniden aç' (4.5, B-M9)", async () => {
     status = "CLOSED";
     viewer = { role: "OWNER", edit: false };
+    const page = await render();
+    expect(header(page).props.action).toBeNull();
+    expect(find(page, ofType(Button))).toHaveLength(0);
+    const body = text(page);
+    expect(body).toContain("Bu alım kapalı; değerlendirme ve kayıtlar okunur kalır.");
+    expect(body).toContain("Ekip ve kurallarda yeniden aç");
+  });
+
+  it("waits with the form's own reason while no active evaluator is on the team (B-M3)", async () => {
+    teamCount = 0;
     const action = header(await render()).props.action as ReactElement;
     expect(find(action, ofType(InviteSheet))).toHaveLength(0);
-    expect(find(action, ofType(Button))[0].props).toMatchObject({ disabled: true, disabledReason: "Bu alım kapalı. Yeni davet yapılamaz." });
-    expect(text(action)).toContain("Bu alım kapalı. Yeni davet yapılamaz.");
+    expect(find(action, ofType(Button))[0].props).toMatchObject({ disabled: true, disabledReason: "Önce ekibe en az bir değerlendirici ekle." });
+    expect(text(action)).toContain("Önce ekibe en az bir değerlendirici ekle.");
+  });
+
+  it("waits with the form's own reason once the opening's last day passed (B-M3)", async () => {
+    openingDeadlineAt = new Date("2020-01-10T20:59:59Z");
+    const action = header(await render()).props.action as ReactElement;
+    expect(find(action, ofType(InviteSheet))).toHaveLength(0);
+    expect(find(action, ofType(Button))[0].props).toMatchObject({ disabled: true, disabledReason: "Bu alımın son günü geçti. Ekip ve kurallardan yeni bir son tarih seç." });
   });
 });
 
@@ -422,6 +446,25 @@ describe("a live opening's attention and rules (4.5, H9, ruling C6)", () => {
     expect(body).toContain("1 link 48 saatte doluyor");
     expect(body).not.toContain("açık talep");
     expect(fake.ops.some((o) => o.table === "candidate_requests" || o.table === "deletion_requests")).toBe(false);
+  });
+
+  it("says a team below the rule and a passed last day, each leading to its step of team and rules (B-M3)", async () => {
+    teamCount = 1;
+    minEvaluations = 2;
+    openingDeadlineAt = new Date("2020-01-10T20:59:59Z");
+    const page = await render();
+    const body = text(page);
+    expect(body).toContain("Dikkat isteyenler");
+    expect(body).toContain("Ekipte 1 değerlendirici var, kural 2 istiyor.");
+    expect(body).toContain("Son gün geçti; yeni davet açılamaz.");
+    const hrefs = find(page, (el) => typeof el.props.href === "string").map((el) => el.props.href);
+    expect(hrefs).toContain(`${BASE}/settings#team-members`);
+    expect(hrefs).toContain(`${BASE}/settings#contact-deadline`);
+    // A reviewer is told neither (H9: they cannot act on it, and no invite form is read for them).
+    viewer = { role: "REVIEWER", edit: false };
+    const reviewer = text(await render());
+    expect(reviewer).not.toContain("kural 2 istiyor");
+    expect(reviewer).not.toContain("Son gün geçti");
   });
 
   it("stays silent without anything to attend to", async () => {

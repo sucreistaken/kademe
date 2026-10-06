@@ -22,6 +22,15 @@ describe("one next step per opening (KG2, 4.4)", () => {
     expect(live()).toEqual({ kind: "candidates", href: `${base}/candidates` });
   });
 
+  it("a live opening whose last day passed: the deadline step before the invite and the candidates, after what waits already (B-M3)", () => {
+    expect(live({ deadlinePassed: true })).toEqual({ kind: "deadline", href: `${base}/settings#contact-deadline` });
+    expect(live({ deadlinePassed: true, facts: { invited: 0, expiringSoon: 0, requests: { open: 0, rights: 0 } } }).kind).toBe("deadline");
+    expect(live({ deadlinePassed: true, draftWaiting: true }).kind).toBe("draft");
+    expect(live({ deadlinePassed: true, shortfall: true }).kind).toBe("team");
+    expect(openingNextStep({ id, status: "OPEN", runs: false, deadlinePassed: true }).kind).toBe("open");
+    expect(cockpitCounts([{ status: "OPEN", next: { kind: "deadline" } }]).waiting).toBe(1);
+  });
+
   it("counts a data-rights request but never sends anyone to act on it before plan 3 (ruling C6)", () => {
     expect(live({ facts: { invited: 4, expiringSoon: 0, requests: { open: 0, rights: 2 } } }).kind).toBe("candidates");
   });

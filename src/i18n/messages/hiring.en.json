@@ -26,6 +26,7 @@
     "draftWaitingPublish": "Draft v{number} waits to be published",
     "continueSetup": "Continue the setup",
     "teamShort": "{evaluators, plural, =0 {The team has no evaluator} one {The team has one evaluator} other {The team has # evaluators}}; the rule asks for {min}.",
+    "deadlinePassed": "The last day has passed; no new invitation can be opened.",
     "copyOpening": "Copy",
     "rulesTeam": "{count, plural, =0 {No reviewers} one {One reviewer} other {# reviewers}} · decides: {decider}",
     "rulesNoDecider": "nobody chosen",
@@ -68,6 +69,7 @@
     "nextRequests": "See the requests",
     "nextTeam": "Add to the team",
     "nextExpiring": "See the links",
+    "nextDeadline": "Change the last day",
     "nextInvite": "Invite a candidate",
     "nextCandidates": "See the candidates",
     "nextOpen": "Open"

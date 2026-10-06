@@ -26,7 +26,7 @@ import { workingState } from "@/solutions/hiring/server/working";
 import { openingFor } from "./access";
 import { publishOpeningAction, type PublishNotice } from "./actions";
 import { funnelView } from "./funnel";
-import { inviteWaitReason } from "./invite-wait";
+import { inviteBlock, inviteWaitReason } from "./invite-wait";
 import { OpeningHeader } from "./opening-header";
 import { describeProblem } from "./problems";
 import { OverviewOnly, PUBLISHED_NOTICE_ID, PublishFooter, PublishLink, PublishSwitch, SETUP_HEADING_ID, SetupFocusArea } from "./publish-view";
@@ -97,6 +97,11 @@ export default async function OpeningOverviewPage({
   const facts = live ? ((await openingCardFacts(user.orgId, [opening.id], { runs: can(user, "opening:write") }))[opening.id] ?? null) : null;
   // The opening as the invite form needs it: OPEN, of this organisation (invitableOpenings).
   const target = invitable.find((o) => o.id === opening.id) ?? null;
+  const today = orgDay();
+  // B-M3: what the invite form would refuse on this opening anyway, and a team short of the rule (only read for an editor of a live opening).
+  const block = inviteBlock(target, today);
+  const shortfall = target && target.evaluators < target.minEvaluations ? { evaluators: target.evaluators, min: target.minEvaluations } : null;
+  const deadlinePassed = target?.deadlineDay != null && target.deadlineDay < today;
   const view = funnelView(funnel, opening.finishSurveyEnabled);
   const number = new Intl.NumberFormat(locale === "tr" ? "tr-TR" : "en-GB", { maximumFractionDigits: 1 });
   const content = state.content;
@@ -111,7 +116,7 @@ export default async function OpeningOverviewPage({
         : null;
   const published = /^\d{1,6}$/.test(one(sp.published) ?? "") ? one(sp.published)! : null;
   const notice = noticeOf(sp, "publish", NOTICES);
-  const waitReason = inviteWaitReason(closed, access.edit, t);
+  const waitReason = block ? t(`hiringInvite.reason${block}`) : inviteWaitReason(closed, access.edit, t);
 
   // The setup path (4.5): the readiness rows, the advice steps passed with "Atla" (?skip=), then "Yayınla".
   const setupRows = setupRowsOf({ state, opening, people, t, locale });
@@ -177,6 +182,7 @@ export default async function OpeningOverviewPage({
     ) : null;
 
   // H7: a draft's one filled button continues the setup; "Yayınla" is filled only on the publish summary.
+  // 4.5 (B-M9): a closed opening has no filled button; the "Kapalı" note below points an owner or manager to "Yeniden aç".
   const pageAction =
     opening.status === "DRAFT" ? (
       access.edit ? (
@@ -191,10 +197,10 @@ export default async function OpeningOverviewPage({
           )}
         </Button>
       ) : null
-    ) : target ? (
-      <InviteSheet opening={target} today={orgDay()} zone={zoneLabel(locale)} />
+    ) : closed ? null : target && !block ? (
+      <InviteSheet opening={target} today={today} zone={zoneLabel(locale)} />
     ) : (
-      // The same button waiting with the Candidates tab's reason (Task 19 ruling 2, RULES 5).
+      // The same button waiting with the Candidates tab's reason, or the invite form's own (no evaluator, last day passed; B-M3, RULES 5).
       <div className="flex w-full flex-col items-start gap-1 sm:w-auto sm:max-w-[360px] sm:items-end sm:text-right">
         <Button id="invite-candidate" variant="primary" disabled disabledReason={waitReason}>
           {t("hiringOverview.invite")}
@@ -403,11 +409,12 @@ export default async function OpeningOverviewPage({
             </Card>
           ) : null}
           {/* H9 and ruling C18's open point: requests only for someone who runs openings (their facts alone carry them); the expiring count, a number, for everyone on the opening. */}
-          {facts && (requests > 0 || facts.expiringSoon > 0) ? (
+          {(facts && (requests > 0 || facts.expiringSoon > 0)) || shortfall || deadlinePassed ? (
+            // B-M3: the team below the rule and a passed last day only for an editor (target is read for them alone).
             <Card className="p-card">
               <h2 className="text-[16px] leading-6 font-semibold text-ink">{t("hiringOverview.attentionTitle")}</h2>
               <ul className="mt-2 divide-y divide-line">
-                {requests > 0 ? (
+                {facts && requests > 0 ? (
                   <li>
                     <Link href={`${base}/candidates`} className={ATTENTION_ROW}>
                       <Inbox className="size-[18px] shrink-0 text-muted" strokeWidth={1.75} aria-hidden />
@@ -423,7 +430,7 @@ export default async function OpeningOverviewPage({
                     </Link>
                   </li>
                 ) : null}
-                {facts.expiringSoon > 0 ? (
+                {facts && facts.expiringSoon > 0 ? (
                   <li>
                     <Link href={`${base}/candidates`} className={ATTENTION_ROW}>
                       <Clock className="size-[18px] shrink-0 text-muted" strokeWidth={1.75} aria-hidden />
@@ -433,6 +440,31 @@ export default async function OpeningOverviewPage({
                         <ChevronRight className="size-4" strokeWidth={1.75} aria-hidden />
                       </span>
                     </Link>
+                  </li>
+                ) : null}
+                {shortfall ? (
+                  <li>
+                    {/* A step of team and rules' flow (a hash): a plain anchor, so that page hears it (W3). */}
+                    <To href={`${base}/settings#team-members`} className={ATTENTION_ROW}>
+                      <Users className="size-[18px] shrink-0 text-muted" strokeWidth={1.75} aria-hidden />
+                      <span className="flex-1">{t("hiringCommon.teamShort", { evaluators: shortfall.evaluators, min: shortfall.min })}</span>
+                      <span className="inline-flex items-center text-[13px] font-medium">
+                        {t("hiringOpenings.nextTeam")}
+                        <ChevronRight className="size-4" strokeWidth={1.75} aria-hidden />
+                      </span>
+                    </To>
+                  </li>
+                ) : null}
+                {deadlinePassed ? (
+                  <li>
+                    <To href={`${base}/settings#contact-deadline`} className={ATTENTION_ROW}>
+                      <CalendarDays className="size-[18px] shrink-0 text-muted" strokeWidth={1.75} aria-hidden />
+                      <span className="flex-1">{t("hiringCommon.deadlinePassed")}</span>
+                      <span className="inline-flex items-center text-[13px] font-medium">
+                        {t("hiringOpenings.nextDeadline")}
+                        <ChevronRight className="size-4" strokeWidth={1.75} aria-hidden />
+                      </span>
+                    </To>
                   </li>
                 ) : null}
               </ul>

@@ -2,6 +2,7 @@ import { openingNextStep, type OpeningNext } from "@/components/hiring/opening-n
 import type { managerT } from "@/i18n/manager";
 import type { Locale } from "@/i18n/locale";
 import { can } from "@/lib/authorize";
+import { orgDay } from "@/lib/org-timezone";
 import { loadPanelUsers } from "@/server/settings";
 import type { Viewer } from "@/solutions/hiring/rules/access";
 import { invitableOpenings, openingCardFacts, type OpeningCardFacts } from "@/solutions/hiring/server/invitations";
@@ -24,6 +25,12 @@ export type CockpitRow = {
    * leads to the team, not to an invitation), for someone who runs openings.
    */
   shortfall: { evaluators: number; min: number } | null;
+  /**
+   * A live opening whose last day is before today in the organisation's zone
+   * (the invite form's openingDeadline, B-M3), for someone who runs openings;
+   * false otherwise (a reviewer reads no invite form, H9).
+   */
+  deadlinePassed: boolean;
   /**
    * The team line: for someone who runs openings, the members who are active
    * users (the people the team rule counts, so the two lines agree); for a
@@ -58,6 +65,7 @@ export async function loadCockpit(
   const invitable = runs && open.length > 0 ? await invitableOpenings(user.orgId) : [];
   const people = runs && drafts.length + open.length + closed.length > 0 ? await loadPanelUsers(user.orgId) : [];
   const active = new Set(people.filter((u) => u.disabledAt === null).map((u) => u.id));
+  const today = orgDay();
   const setups = new Map<string, { done: number; total: number; next: { key: SetupKey; href: string } }>();
   if (runs && drafts.length > 0) {
     const started = clock();
@@ -74,12 +82,14 @@ export async function loadCockpit(
     const setup = setups.get(opening.id) ?? null;
     const panel = runs && opening.status === "OPEN" ? invitable.find((o) => o.id === opening.id) : undefined;
     const shortfall = panel && panel.evaluators < panel.minEvaluations ? { evaluators: panel.evaluators, min: panel.minEvaluations } : null;
+    const deadlinePassed = panel?.deadlineDay != null && panel.deadlineDay < today;
     const members = runs ? opening.memberIds.filter((id) => active.has(id)) : opening.memberIds;
     return {
       opening,
       facts: f,
       setup: setup ? { done: setup.done, total: setup.total } : null,
       shortfall,
+      deadlinePassed,
       team: { count: members.length, onlyYou: members.length === 1 && members[0] === user.id },
       next: openingNextStep({
         id: opening.id,
@@ -89,6 +99,7 @@ export async function loadCockpit(
         facts: f,
         shortfall: shortfall !== null,
         draftWaiting: opening.liveNumber !== null && opening.draftNumber !== null,
+        deadlinePassed,
       }),
     };
   };

@@ -31,16 +31,17 @@ const opening = (id: string, status: OpeningListRow["status"], over: Partial<Ope
   memberIds: ["u1"],
   ...over,
 });
-const draft: CockpitRow = { opening: opening("d1", "DRAFT"), facts: null, setup: { done: 2, total: 5 }, shortfall: null, team: { count: 1, onlyYou: true }, next: { kind: "setup", href: "/hiring/openings/d1/settings#team-members", setupKey: "team" } };
+const draft: CockpitRow = { opening: opening("d1", "DRAFT"), facts: null, setup: { done: 2, total: 5 }, shortfall: null, deadlinePassed: false, team: { count: 1, onlyYou: true }, next: { kind: "setup", href: "/hiring/openings/d1/settings#team-members", setupKey: "team" } };
 const live: CockpitRow = {
   opening: opening("o1", "OPEN", { memberIds: ["u1", "u2"] }),
   facts: { invited: 9, started: 8, completed: 8, expiringSoon: 1, requests: { open: 2, rights: 1 } },
   setup: null,
   shortfall: null,
+  deadlinePassed: false,
   team: { count: 2, onlyYou: false },
   next: { kind: "requests", href: "/hiring/openings/o1/candidates" },
 };
-const closed: CockpitRow = { opening: opening("c1", "CLOSED"), facts: null, setup: null, shortfall: null, team: { count: 1, onlyYou: true }, next: { kind: "open", href: "/hiring/openings/c1" } };
+const closed: CockpitRow = { opening: opening("c1", "CLOSED"), facts: null, setup: null, shortfall: null, deadlinePassed: false, team: { count: 1, onlyYou: true }, next: { kind: "open", href: "/hiring/openings/c1" } };
 
 async function render(tab?: string) {
   return renderToStaticMarkup((await OpeningsPage({ searchParams: Promise.resolve(tab ? { tab } : {}) })) as never);
@@ -100,6 +101,22 @@ describe("the openings' control view page (4.4)", () => {
     expect(words).toContain("Ekibe ekle");
     expect(words).toContain("1 tanesinde senden bir şey bekleniyor.");
     expect(html).toContain('href="/hiring/openings/o1/settings#team-members"');
+  });
+
+  it("a live opening whose last day passed says so and leads to the contact flow's last day (B-M3)", async () => {
+    const passed: CockpitRow = {
+      ...live,
+      facts: { invited: 9, started: 8, completed: 8, expiringSoon: 0, requests: { open: 0, rights: 0 } },
+      deadlinePassed: true,
+      next: { kind: "deadline", href: "/hiring/openings/o1/settings#contact-deadline" },
+    };
+    cockpit.value = { runs: true, drafts: [], open: [passed], closed: [] };
+    const html = await render();
+    const words = text(html);
+    expect(words).toContain("Son gün geçti; yeni davet açılamaz.");
+    expect(words).toContain("Son günü değiştir");
+    expect(html).toContain('href="/hiring/openings/o1/settings#contact-deadline"');
+    expect(words).toContain("1 tanesinde senden bir şey bekleniyor.");
   });
 
   it("a reviewer: counts only, no request or team line, every action 'Aç', the grey 'Alım aç' with its linked reason (H9, RULES 5)", async () => {

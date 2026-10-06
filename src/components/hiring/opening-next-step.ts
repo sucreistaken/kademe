@@ -3,7 +3,7 @@
  * pure rules. Each opening is one row with one next step, chosen here by one
  * rule (KG2); each step opens the flow or page that fixes it (KG3).
  */
-export type OpeningNextKind = "setup" | "continueSetup" | "requests" | "team" | "expiring" | "draft" | "invite" | "candidates" | "open";
+export type OpeningNextKind = "setup" | "continueSetup" | "requests" | "team" | "expiring" | "draft" | "deadline" | "invite" | "candidates" | "open";
 export type OpeningNext<K extends string = string> = { kind: OpeningNextKind; href: string; setupKey?: K };
 
 /**
@@ -14,6 +14,7 @@ export type OpeningNext<K extends string = string> = { kind: OpeningNextKind; hr
  *   the step was not computed (the time budget, D14).
  * - Live, in this order: open candidate requests (data-rights requests are only counted, ruling C6),
  *   a team below the rule (panelShortfall), links expiring within 48 hours, a draft version waiting,
+ *   the opening's last day passed (no invitation can be opened, B-M3: to the contact flow's last day),
  *   no invitation yet, else the candidates.
  */
 export function openingNextStep<K extends string>(input: {
@@ -24,6 +25,8 @@ export function openingNextStep<K extends string>(input: {
   facts?: { invited: number; expiringSoon: number; requests?: { open: number; rights: number } } | null;
   shortfall?: boolean;
   draftWaiting?: boolean;
+  /** The opening's last day is before today in the organisation's zone (the invite form's openingDeadline). */
+  deadlinePassed?: boolean;
 }): OpeningNext<K> {
   const base = `/hiring/openings/${input.id}`;
   if (!input.runs || input.status === "CLOSED") return { kind: "open", href: base };
@@ -33,6 +36,7 @@ export function openingNextStep<K extends string>(input: {
   if (input.shortfall) return { kind: "team", href: `${base}/settings#team-members` };
   if (facts.expiringSoon > 0) return { kind: "expiring", href: `${base}/candidates` };
   if (input.draftWaiting) return { kind: "draft", href: base };
+  if (input.deadlinePassed) return { kind: "deadline", href: `${base}/settings#contact-deadline` };
   if (facts.invited === 0) return { kind: "invite", href: `/hiring/invite?opening=${input.id}` };
   return { kind: "candidates", href: `${base}/candidates` };
 }
@@ -49,7 +53,7 @@ export function cockpitCounts(rows: ReadonlyArray<{ status: "DRAFT" | "OPEN" | "
   return {
     running: live.length,
     setup: live.filter((r) => r.status === "DRAFT").length,
-    waiting: live.filter((r) => r.status === "OPEN" && (["requests", "team", "expiring", "draft"] as OpeningNextKind[]).includes(r.next.kind)).length,
+    waiting: live.filter((r) => r.status === "OPEN" && (["requests", "team", "expiring", "draft", "deadline"] as OpeningNextKind[]).includes(r.next.kind)).length,
   };
 }
 

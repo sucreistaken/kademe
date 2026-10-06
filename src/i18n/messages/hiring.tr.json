@@ -26,6 +26,7 @@
     "draftWaitingPublish": "Taslak v{number} yayın bekliyor",
     "continueSetup": "Kuruluma devam et",
     "teamShort": "{evaluators, plural, =0 {Ekipte değerlendirici yok} other {Ekipte # değerlendirici var}}, kural {min} istiyor.",
+    "deadlinePassed": "Son gün geçti; yeni davet açılamaz.",
     "copyOpening": "Kopyala",
     "rulesTeam": "{count, plural, =0 {Değerlendirici yok} other {# değerlendirici}} · karar: {decider}",
     "rulesNoDecider": "kimse seçilmedi",
@@ -68,6 +69,7 @@
     "nextRequests": "Taleplere bak",
     "nextTeam": "Ekibe ekle",
     "nextExpiring": "Linklere bak",
+    "nextDeadline": "Son günü değiştir",
     "nextInvite": "Aday davet et",
     "nextCandidates": "Adaylara bak",
     "nextOpen": "Aç"
