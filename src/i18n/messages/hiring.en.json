@@ -658,6 +658,7 @@
     "minEvaluationsShort": "{count, plural, one {# reviewer is} other {# reviewers are}} chosen now; a candidate cannot get {min} reviews.",
     "minEvaluationsOverride": "The decision maker can still decide below this number by writing a reason.",
     "savedRenamed": "Saved. Another opening already had this name, so it is now \"{name}\".",
+    "savedOther": "{flow} saved. Save the change on this step too.",
     "closing": "Closing",
     "reopening": "Reopening",
     "finishSurvey": "Short survey at the finish",

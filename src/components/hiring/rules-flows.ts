@@ -150,3 +150,19 @@ export function afterSave(input: { flow: RulesFlow; origin: RulesFlow | null; st
   if (input.origin === null || input.origin === input.flow) return { value: input.stored, hash: null };
   return { value: saveInput(input.value, input.stored, input.flow), hash: `#${REVIEW_STEP[input.origin]}` };
 }
+
+export type SavedNotePart = { key: "saved" } | { key: "savedRenamed"; name: string } | { key: "savedOther"; flow: RulesFlow };
+
+/**
+ * What the review step says after a save. A save that brought the user back
+ * to the flow waiting on it (I1) names the flow it saved, so "Kaydedildi."
+ * is never read as this flow's change being saved; a numbered name is said
+ * either way.
+ */
+export function savedNote(notice: { of: RulesFlow; renamed: string | null }, shown: RulesFlow): SavedNotePart[] {
+  const parts: SavedNotePart[] = [];
+  if (notice.renamed) parts.push({ key: "savedRenamed", name: notice.renamed });
+  if (notice.of !== shown) parts.push({ key: "savedOther", flow: notice.of });
+  else if (!notice.renamed) parts.push({ key: "saved" });
+  return parts;
+}

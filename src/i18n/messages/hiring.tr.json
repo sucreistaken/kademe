@@ -658,6 +658,7 @@
     "minEvaluationsShort": "Şu an {count} değerlendirici seçili; her aday {min} değerlendirme alamaz.",
     "minEvaluationsOverride": "Karar veren, gerekçesini yazarak bu sayıya ulaşmadan da karar verebilir.",
     "savedRenamed": "Kaydedildi. Bu ad başka bir alımda kullanıldığı için ad \"{name}\" oldu.",
+    "savedOther": "{flow} kaydedildi. Bu adımdaki değişikliği de kaydet.",
     "closing": "Kapatılıyor",
     "reopening": "Açılıyor",
     "finishSurvey": "Bitişte kısa anket",

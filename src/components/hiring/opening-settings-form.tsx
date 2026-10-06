@@ -40,12 +40,13 @@ import {
   stepWait,
   teamLine,
   type RulesFlow,
+  savedNote,
   type RulesStep,
 } from "./rules-flows";
 
 export type SettingsUser = { id: string; name: string; role: "OWNER" | "MANAGER" | "REVIEWER"; disabled: boolean };
 
-type Notice = { kind: "saved"; renamed: string | null } | { kind: "problem"; problem: RulesProblem } | { kind: "code"; code: "NOT_FOUND" | "FORBIDDEN" | "CLOSED" | "INVALID" } | { kind: "failed" };
+type Notice = { kind: "saved"; renamed: string | null; of: RulesFlow } | { kind: "problem"; problem: RulesProblem } | { kind: "code"; code: "NOT_FOUND" | "FORBIDDEN" | "CLOSED" | "INVALID" } | { kind: "failed" };
 
 const NONE = "none";
 /** The summary's heading: where the focus lands when a flow goes back to the summary (W10). */
@@ -219,7 +220,7 @@ export function OpeningSettingsForm({
           setValue(next.value);
           setOrigin(null);
           setFromSummary(false);
-          setNotice({ kind: "saved", renamed: res.name !== sent.name.trim() ? res.name : null });
+          setNotice({ kind: "saved", renamed: res.name !== sent.name.trim() ? res.name : null, of: flow });
           if (next.hash) pushHash(next.hash);
           else clearHash();
           // The setup line under the tabs names the next step (4.10); nothing redirects.
@@ -300,7 +301,13 @@ export function OpeningSettingsForm({
           ? t(`err${notice.code}`)
           : t("saveFailed")
         : null;
-  const savedText = notice?.kind === "saved" ? (notice.renamed ? t("savedRenamed", { name: notice.renamed }) : t("saved")) : "";
+  // A save that brought the user back to the flow waiting on it names what it saved: this flow's change is still to save.
+  const savedText =
+    notice?.kind === "saved"
+      ? savedNote(notice, flow)
+          .map((part) => (part.key === "savedRenamed" ? t("savedRenamed", { name: part.name }) : part.key === "savedOther" ? t("savedOther", { flow: flowTitle[part.flow] }) : t("saved")))
+          .join(" ")
+      : "";
   const note = refusal ? (
     <p role="alert" className="text-[14px] font-medium text-ink">
       {refusal}

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { OpeningRulesInput, RulesProblem } from "@/solutions/hiring/rules/opening-rules";
 import { flowHashFix, flowStepOf } from "@/components/manager/flow-model";
-import { ALL_FIELDS, FLOW_FIELDS, REVIEW_STEP, afterSave, RULES_ENTRY, RULES_FLOWS, firstInvalidStep, flowOfStep, otherFlowProblem, rulesNavMode, rulesPath, rulesRoute, rulesStepOf, saveInput, stepWait, teamLine } from "./rules-flows";
+import { ALL_FIELDS, FLOW_FIELDS, REVIEW_STEP, afterSave, RULES_ENTRY, RULES_FLOWS, firstInvalidStep, flowOfStep, otherFlowProblem, rulesNavMode, rulesPath, rulesRoute, rulesStepOf, saveInput, savedNote, stepWait, teamLine } from "./rules-flows";
 
 const users = [
   { id: "owner", role: "OWNER" as const, disabled: false },
@@ -137,5 +137,17 @@ describe("team and rules as four short flows (4.10, D10)", () => {
     expect(teamLine({ memberIds: ["rev"], decisionMakerId: "gone", backupDecisionMakerId: null }, people)).toEqual({ count: 1, decider: null, backup: null });
     // A reviewer can be on the team but never decides.
     expect(teamLine({ memberIds: [], decisionMakerId: "rev", backupDecisionMakerId: null }, people)).toEqual({ count: 0, decider: null, backup: null });
+  });
+});
+
+describe("the note after a save (Task 21 re-review N1)", () => {
+  it("names the saved flow when the user lands on another flow's summary step, so its own change is not read as saved", () => {
+    expect(savedNote({ of: "team", renamed: null }, "team")).toEqual([{ key: "saved" }]);
+    expect(savedNote({ of: "team", renamed: null }, "contact")).toEqual([{ key: "savedOther", flow: "team" }]);
+    expect(savedNote({ of: "name", renamed: "Destek 2" }, "name")).toEqual([{ key: "savedRenamed", name: "Destek 2" }]);
+    expect(savedNote({ of: "name", renamed: "Destek 2" }, "contact")).toEqual([
+      { key: "savedRenamed", name: "Destek 2" },
+      { key: "savedOther", flow: "name" },
+    ]);
   });
 });
