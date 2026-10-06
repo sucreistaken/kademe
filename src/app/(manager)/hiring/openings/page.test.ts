@@ -60,10 +60,10 @@ describe("the openings' control view page (4.4)", () => {
     const words = text(html);
     expect(filled(html)).toBe(1);
     expect(words).toContain("2 alım sürüyor. 1 tanesi kurulumda. 1 tanesinde senden bir şey bekleniyor.");
-    expect(words).toContain("Kurulumda (1)");
+    expect(words).toContain("Kurulumda\n1");
     expect(words).toContain("Kurulum 2 / 5");
     expect(words).toContain("Sıradaki: Ekibi ata");
-    expect(words).toContain("Yayında (1)");
+    expect(words).toContain("Yayında\n1");
     expect(words).toContain("9 davet · 8 başladı · 8 tamamladı");
     expect(words).toContain("3 açık talep");
     expect(words).toContain("Biri veri hakkı talebi; panelden henüz kapatılmaz.");
@@ -154,5 +154,20 @@ describe("the openings' control view page (4.4)", () => {
     html = await render();
     expect(text(html)).toContain("Sana atanmış alım yok.");
     expect(filled(html)).toBe(0);
+  });
+  it("draws each row with a role tile and the setup segments in the accent, without a column header row (mockup 2)", async () => {
+    const html = await render();
+    expect(html.match(/bg-accent-soft text-accent/g)?.length).toBeGreaterThanOrEqual(2);
+    expect(html.match(/h-\[5px\] w-\[26px\] rounded-\[3px\] bg-accent/g)).toHaveLength(2);
+    expect(html).not.toContain("Son tarih</span>");
+    expect(text(html)).toContain("Ekip: yalnız sen · Son tarih yok");
+  });
+
+  it("the empty list is the open page empty state with 'Alım aç' and its plus (mockup 8)", async () => {
+    cockpit.value = { runs: true, drafts: [], open: [], closed: [] };
+    const html = await render();
+    expect(html).toContain("w-[380px] max-w-full");
+    expect(html).not.toContain("border border-line bg-surface py-14");
+    expect(html).toMatch(/<a[^>]*data-variant="primary"[^>]*><svg[^>]*lucide-plus/);
   });
 });

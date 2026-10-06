@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { CalendarDays, Clock, FileText, Inbox, Users } from "lucide-react";
-import { funnelShare, cockpitCounts, cockpitTab } from "@/components/hiring/opening-next-step";
+import { CalendarDays, Clock, FileText, Inbox, Plus, Users } from "lucide-react";
+import { cockpitCounts, cockpitTab } from "@/components/hiring/opening-next-step";
+import { positionIcon } from "@/components/hiring/position-icon";
 import { PageTitle } from "@/components/manager/page-title";
 import { ControlRow, type ControlAttention } from "@/components/manager/control-row";
 import { EmptyState } from "@/components/manager/empty-state";
@@ -52,18 +53,13 @@ function Row({ row, runs, locale, t }: { row: CockpitRow; runs: boolean; locale:
           <p className="tnum">{t("hiringOverview.setupCount", { done: row.setup.done, total: row.setup.total })}</p>
           <span aria-hidden className="mt-1.5 flex gap-1">
             {Array.from({ length: row.setup.total }, (_, i) => (
-              <span key={i} className={cn("h-1.5 w-6 rounded-full", row.setup && i < row.setup.done ? "bg-ink-3" : "bg-hairline")} />
+              <span key={i} className={cn("h-[5px] w-[26px] rounded-[3px]", row.setup && i < row.setup.done ? "bg-accent" : "bg-line")} />
             ))}
           </span>
         </>
       ) : null
     ) : f && f.invited > 0 ? (
-      <>
-        <p className="tnum">{t("hiringOpenings.funnelLine", { invited: f.invited, started: f.started, completed: f.completed })}</p>
-        <div aria-hidden className="mt-1.5 h-1.5 max-w-40 overflow-hidden rounded-full bg-hairline">
-          <div className="h-1.5 rounded-full bg-ink-3" style={{ width: `${Math.round(funnelShare(f) * 100)}%` }} />
-        </div>
-      </>
+      <p className="tnum">{t("hiringOpenings.funnelLine", { invited: f.invited, started: f.started, completed: f.completed })}</p>
     ) : (
       <p className="text-muted">{t("hiringOpenings.funnelEmpty")}</p>
     );
@@ -81,47 +77,32 @@ function Row({ row, runs, locale, t }: { row: CockpitRow; runs: boolean; locale:
     ...(runs && o.status === "OPEN" && o.liveNumber && o.draftNumber ? [{ key: "draft", icon: FileText, text: t("hiringCommon.draftWaitingPublish", { number: o.draftNumber }) }] : []),
   ];
   const team = row.team.count === 0 ? t("hiringOpenings.teamNone") : row.team.onlyYou ? t("hiringOpenings.teamOnlyYou") : t("hiringOpenings.teamCount", { count: row.team.count });
-  const facts = (
-    <>
-      <span className="block">{o.deadlineAt ? t("hiringCommon.deadline", { date: shortDate(o.deadlineAt, locale) }) : t("hiringCommon.noDeadline")}</span>
-      <span className="block">{team}</span>
-    </>
-  );
+  const meta = [team, o.deadlineAt ? t("hiringCommon.deadline", { date: shortDate(o.deadlineAt, locale) }) : t("hiringCommon.noDeadline")].join(" · ");
   const next = row.next;
   const label = next.kind === "setup" && next.setupKey ? t("hiringOverview.setupNext", { step: t(`hiringOverview.${SETUP_LABEL[next.setupKey]}`) }) : t(NEXT_LABEL[next.kind === "setup" ? "continueSetup" : next.kind]);
   return (
     <ControlRow
-      title={
-        <>
-          {o.name}
-          <span className="block text-[13px] font-normal text-muted">{o.positionName}</span>
-        </>
-      }
+      icon={positionIcon(o.positionName)}
+      title={o.name}
       href={`/hiring/openings/${o.id}`}
       status={status}
+      meta={meta}
       progress={progress}
       attention={attention}
-      facts={facts}
       next={{ label, href: next.href }}
     />
   );
 }
 
-function Group({ id, title, columns, children }: { id: string; title: string; columns: [string, string, string, string]; children: React.ReactNode }) {
+function Group({ id, name, count, children }: { id: string; name: string; count: number; children: React.ReactNode }) {
   return (
     <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-6">
-      <h2 id={`${id}-title`} className="mb-3 text-[13px] font-semibold tracking-[0.06em] text-muted uppercase">
-        {title}
+      <h2 id={`${id}-title`} className="mb-2.5 flex items-center gap-1.5 text-[12px] font-semibold tracking-[0.07em] text-muted uppercase">
+        {name}
+        <span className="tnum rounded-[10px] bg-secondary px-[7px] py-px tracking-normal text-ink-2">{count}</span>
       </h2>
       <Card className="overflow-hidden">
-        <div aria-hidden className="hidden gap-x-6 border-b border-line px-5 py-2 text-[12px] text-muted lg:grid lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.3fr)_minmax(0,0.9fr)]">
-          {columns.map((c, i) => (
-            <span key={c} className={i === 3 ? "text-right" : undefined}>
-              {c}
-            </span>
-          ))}
-        </div>
-        <ul className="divide-y divide-line">{children}</ul>
+        <ul className="divide-y divide-hairline">{children}</ul>
       </Card>
     </section>
   );
@@ -144,7 +125,10 @@ export default async function OpeningsPage({ searchParams }: { searchParams: Pro
   const total = drafts.length + open.length + closed.length;
   const addButton = runs ? (
     <Button asChild variant="primary">
-      <Link href="/hiring/openings/new">{t("hiringOpenings.add")}</Link>
+      <Link href="/hiring/openings/new">
+        <Plus className="size-4" strokeWidth={2} aria-hidden />
+        {t("hiringOpenings.add")}
+      </Link>
     </Button>
   ) : (
     <>
@@ -160,10 +144,10 @@ export default async function OpeningsPage({ searchParams }: { searchParams: Pro
       <main className="mx-auto max-w-[1360px] px-page py-8">
         <PageTitle title={t("hiringOpenings.title")} sub={t("hiringOpenings.sub")} />
         {runs ? (
-          <EmptyState className="mt-section" illustration="emptyOpenings" title={t("hiringOpenings.emptyTitle")} body={t("hiringOpenings.emptyBody")} action={addButton} />
+          <EmptyState variant="page" illustration="emptyOpenings" title={t("hiringOpenings.emptyTitle")} body={t("hiringOpenings.emptyBody")} action={addButton} />
         ) : (
           // A reviewer sees only the openings they work on and cannot open one: no button to stare at.
-          <EmptyState className="mt-section" illustration="emptyOpenings" title={t("hiringOpenings.emptyViewerTitle")} body={t("hiringOpenings.emptyViewerBody")} />
+          <EmptyState variant="page" illustration="emptyOpenings" title={t("hiringOpenings.emptyViewerTitle")} body={t("hiringOpenings.emptyViewerBody")} />
         )}
       </main>
     );
@@ -187,20 +171,12 @@ export default async function OpeningsPage({ searchParams }: { searchParams: Pro
       {tab ? <ScrollTo id={`group-${tab}`} /> : null}
       <div className="mt-section space-y-section">
         {drafts.length ? (
-          <Group
-            id="group-draft"
-            title={t("hiringOpenings.groupSetup", { count: drafts.length })}
-            columns={[t("hiringOpenings.colName"), t("hiringOpenings.colSetup"), t("hiringOpenings.colAttention"), t("hiringOpenings.colDeadline")]}
-          >
+          <Group id="group-draft" name={t("hiringOpenings.groupSetupName")} count={drafts.length}>
             {rows(drafts)}
           </Group>
         ) : null}
         {open.length ? (
-          <Group
-            id="group-open"
-            title={t("hiringOpenings.groupLive", { count: open.length })}
-            columns={[t("hiringOpenings.colName"), t("hiringOpenings.colFunnel"), t("hiringOpenings.colAttention"), t("hiringOpenings.colDeadline")]}
-          >
+          <Group id="group-open" name={t("hiringOpenings.groupLiveName")} count={open.length}>
             {rows(open)}
           </Group>
         ) : null}
@@ -208,7 +184,7 @@ export default async function OpeningsPage({ searchParams }: { searchParams: Pro
           <section id="group-closed" className="scroll-mt-6">
             <Disclosure label={t("hiringOpenings.groupClosed", { count: closed.length })} defaultOpen={tab === "closed"}>
               <Card className="overflow-hidden">
-                <ul className="divide-y divide-line">{rows(closed)}</ul>
+                <ul className="divide-y divide-hairline">{rows(closed)}</ul>
               </Card>
             </Disclosure>
           </section>

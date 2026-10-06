@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import Link from "next/link";
-import { Inbox } from "lucide-react";
+import { Headset, Inbox } from "lucide-react";
 import type { ReactElement, ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { ControlRow } from "./control-row";
@@ -29,5 +29,28 @@ describe("ControlRow (KG1)", () => {
     const busy = renderToStaticMarkup(ControlRow({ title: "Alım", href: "/x", status: "Yayında", attention: [{ key: "r", icon: Inbox, text: "2 açık talep", note: "Not" }], next: { label: "Taleplere bak", href: "/x/candidates" } }));
     expect(busy).toContain("2 açık talep");
     expect(busy.match(/<ul/g)).toHaveLength(1);
+  });
+});
+
+describe("ControlRow in the mockup's look (screen 2)", () => {
+  it("draws the role's tile, the meta line under the status, the attention as a quiet pill and the next step as an accent text action", () => {
+    const out = renderToStaticMarkup(
+      ControlRow({
+        icon: Headset,
+        title: "Destek Uzmanı · Ekim",
+        href: "/hiring/openings/o1",
+        status: "Taslak",
+        meta: "Ekip: yalnız sen · Son tarih yok",
+        attention: [{ key: "r", icon: Inbox, text: "2 açık talep" }],
+        next: { label: "Sıradaki: Ekibi ata", href: "/hiring/openings/o1/settings#team-members" },
+      }),
+    );
+    expect(out).toContain("lucide-headset");
+    expect(out).toContain("bg-accent-soft text-accent");
+    expect(out).toContain("Ekip: yalnız sen · Son tarih yok");
+    expect(out).toMatch(/rounded-lg bg-secondary[^"]*">[\s\S]*?2 açık talep/);
+    expect(out).toMatch(/<a[^>]*class="[^"]*font-semibold text-accent[^"]*"[^>]*>Sıradaki: Ekibi ata/);
+    // No amber anywhere (globals.css).
+    expect(out).not.toMatch(/amber|warn/);
   });
 });
