@@ -175,9 +175,9 @@ const grammarItems: SeedItem[] = [
     ],
     "Trennbares Verb im Präsens: Der Verbteil \"macht\" steht auf Position 2, die Vorsilbe \"auf\" am Satzende."),
   sc("possessiv.akkusativ", "HARD",
-    "Ich suche ___ Schlüssel für die Wohnung.",
+    "Ich suche ___ Pass. Ich brauche ihn morgen.",
     "meinen", ["mein", "meine"], 0,
-    "\"suchen\" verlangt den Akkusativ; \"Schlüssel\" ist maskulin: meinen Schlüssel. \"mein\" wäre Nominativ."),
+    "\"suchen\" verlangt den Akkusativ; \"Pass\" ist maskulin (\"ihn\"): meinen Pass. \"mein\" wäre Nominativ. (Nicht \"Schlüssel\": im Plural wäre \"meine Schlüssel\" auch richtig.)"),
   sc("uhrzeit", "HARD",
     "Es ist 8:30 Uhr. Was sagt man?",
     "Es ist halb neun.", ["Es ist halb acht.", "Es ist acht halb."], 1,
@@ -346,7 +346,7 @@ const readingItems: SeedItem[] = [
   arbeitstag.tfng("detail", "MID",
     [
       ["Herr Okafor beginnt am Montag um acht Uhr.", "F"],
-      ["Frau Berger holt Herrn Okafor am Eingang ab.", "R"],
+      ["Herr Okafor trifft Frau Berger am Montag unten am Eingang.", "R"],
     ],
     "Er soll um neun Uhr kommen, \"nicht um acht\". Frau Berger wartet unten am Eingang auf ihn."),
   arbeitstag.choice("detail", "EASY",
@@ -417,7 +417,7 @@ const readingItems: SeedItem[] = [
     "Sami fragt: \"Kannst du mich bitte mit dem Auto abholen?\" Das Taxi nimmt er nur, wenn Jana nicht kann; er bittet um eine kurze Nachricht, nicht um einen Anruf."),
   sms.tfng("inference", "HARD",
     [
-      ["Sami hat schweres Gepäck.", "R"],
+      ["Samis Koffer ist nicht leicht.", "R"],
       ["Für Sami ist ein Taxi ein großes Problem.", "F"],
     ],
     "Sein Koffer ist sehr schwer. Zum Taxi schreibt er: \"das ist kein Problem\"."),
@@ -762,11 +762,11 @@ const speakingItems: SeedItem[] = [
     "Thema: Arbeit. Auf Ihrer Karte steht: \"Mittagspause?\"\n\n" +
       "Stellen Sie einer Kollegin eine Frage mit diesem Wort. Dann antworten Sie selbst auf Ihre Frage.",
     [
-      "eine verständliche Frage zum Wort \"Mittagspause\" (z. B. Wann machst du Mittagspause?)",
+      "eine verständliche Frage zum Wort \"Mittagspause\" (z. B. Wann machst du / machen Sie Mittagspause?)",
       "korrekte Frageform (W-Frage oder Verb an Position 1)",
       "eine passende kurze Antwort",
-    ],
-    INFORMAL),
+      "du oder Sie: unter Kollegen ist beides richtig",
+    ]),
   speakingTask("question", "MID", SHORT,
     "Thema: Einkaufen. Auf Ihrer Karte steht: \"Supermarkt?\"\n\n" +
       "Stellen Sie einem Freund eine Frage mit diesem Wort. Dann antworten Sie selbst auf Ihre Frage.",

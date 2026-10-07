@@ -840,7 +840,7 @@ const writingItems: SeedItem[] = [
       "konkreter Vorschlag für einen neuen Termin",
       "formelle Anrede (Sehr geehrte Frau Becker / Liebe Frau Becker) und Gruß",
     ],
-    FORMAL,
+    SEMIFORMAL,
     `Halbformelle E-Mail an eine Vorgesetzte (Goethe B1 Aufgabe 3): sich entschuldigen und um etwas bitten. ${RUBRIC_NOTE}`),
   writing("application", "MID", LONG,
     "Sie haben im Internet gelesen: Ein Supermarkt in Ihrer Stadt sucht Aushilfen für das Wochenende. Schreiben Sie eine E-Mail an Herrn Kraus von der Personalabteilung (circa 80 Wörter).\n\n" +
@@ -914,7 +914,7 @@ const speakingItems: SeedItem[] = [
   speaking("introduction", "EASY", { thinkSeconds: 30, answerSeconds: 90, maxTakes: 2 },
     "Stellen Sie sich vor, Sie sind in einem Vorstellungsgespräch. Erzählen Sie etwas über sich: Wer sind Sie? Was haben Sie gelernt oder studiert? Wo haben Sie schon gearbeitet? Was können Sie besonders gut?",
     [
-      "Angaben zur Person",
+      "Name und kurz die aktuelle Situation (Alter, Herkunft o. Ä. werden nicht erwartet)",
       "Ausbildung oder Studium",
       "bisherige Arbeitserfahrung",
       "mindestens eine Stärke mit Beispiel",
@@ -922,7 +922,7 @@ const speakingItems: SeedItem[] = [
     `Monologische Selbstvorstellung im Handlungsfeld Arbeit, ca. 90 Sekunden. ${SPEAK_NOTE}`,
     FORMAL),
   speaking("request", "EASY", { thinkSeconds: 30, answerSeconds: 60, maxTakes: 2 },
-    "Sie möchten nächste Woche zwei Tage frei nehmen, weil Sie einen wichtigen privaten Termin haben. Sprechen Sie mit Ihrer Teamleiterin: Bitten Sie höflich um die freien Tage, nennen Sie den Grund und machen Sie einen Vorschlag, wer Ihre Aufgaben übernehmen kann.",
+    "Sie möchten nächste Woche zwei Tage freinehmen, weil Sie einen wichtigen privaten Termin haben. Sprechen Sie mit Ihrer Teamleiterin: Bitten Sie höflich um die freien Tage, nennen Sie den Grund und machen Sie einen Vorschlag, wer Ihre Aufgaben übernehmen kann.",
     [
       "höfliche Bitte (z. B. Könnte ich ..., Wäre es möglich ...)",
       "nachvollziehbarer Grund",
@@ -956,13 +956,13 @@ const speakingItems: SeedItem[] = [
     "Halten Sie eine kurze Präsentation zum Thema „Weiterbildung im Beruf: Sollte man regelmäßig Kurse besuchen?“ Sprechen Sie über diese fünf Punkte:\n\n" +
       "1. Stellen Sie das Thema vor.\n" +
       "2. Erzählen Sie von Ihren eigenen Erfahrungen mit Kursen oder Weiterbildungen.\n" +
-      "3. Wie ist das in Ihrem Heimatland? Zahlen Firmen solche Kurse?\n" +
+      "3. Wie ist das an Ihrem Arbeitsplatz oder in Ihrem Umfeld? Bezahlen Firmen solche Kurse?\n" +
       "4. Nennen Sie Vor- und Nachteile und Ihre Meinung.\n" +
       "5. Schließen Sie die Präsentation ab und bedanken Sie sich.",
     [
       "Einleitung mit Thema und Aufbau",
       "eigene Erfahrung",
-      "Situation im Heimatland",
+      "Situation am Arbeitsplatz oder im eigenen Umfeld",
       "Vor- und Nachteile mit eigener Meinung",
       "Abschluss und Dank",
     ],

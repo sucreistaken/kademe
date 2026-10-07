@@ -410,9 +410,9 @@ const readingItems: SeedItem[] = [
     ],
     "1 R: \"Höchstens acht Personen.\" 2 F: Kurs 4 ist online. 3 F: \"Alle Kurse finden in der Arbeitszeit statt.\""),
   rKurs.choice("inference", "HARD",
-    "Frau Okafor arbeitet donnerstags nur bis 14 Uhr und ist dann nicht mehr in der Firma. Welchen Kurs kann sie nicht besuchen?",
-    ["Kurs 3", "Kurs 1", "Kurs 4"], 0,
-    "Kurs 3 ist donnerstags von 16 bis 17.30 Uhr. Kurs 1 ist montags, Kurs 4 freitags und online."),
+    "Frau Okafor arbeitet nur am Donnerstag und am Freitag, immer von 8 bis 14 Uhr. Sie möchte einen Kurs in ihrer Arbeitszeit machen. Welcher Kurs passt?",
+    ["Kurs 4", "Kurs 3", "Kurs 1"], 0,
+    "Kurs 4 ist am Freitag von 13 bis 14 Uhr. Kurs 3 ist zwar donnerstags, aber erst von 16 bis 17.30 Uhr; Kurs 1 ist montags."),
 
   // ---------------------------------------------------------------- Anzeigen
   rAnz.match("gist", "MID",
@@ -622,10 +622,10 @@ const listeningItems: SeedItem[] = [
   lTfng(L_INTERVIEW, "detail", "MID",
     [
       ["Herr Nowak hat früher in einem Geschäft gearbeitet.", "R"],
-      ["Er ist jetzt fast am Ende seiner Ausbildung.", "F"],
+      ["Seine Ausbildung dauert insgesamt zwei Jahre.", "F"],
       ["Er geht einmal pro Woche in die Schule.", "R"],
     ],
-    "1 R: zehn Jahre im Supermarkt. 2 F: Er ist im zweiten von drei Jahren. 3 R: an einem Tag Berufsschule, vier Tage Gärtnerei."),
+    "1 R: zehn Jahre im Supermarkt. 2 F: Die Ausbildung dauert drei Jahre (er ist im zweiten Jahr). 3 R: an einem Tag Berufsschule, vier Tage Gärtnerei."),
   lTfng(L_INTERVIEW, "detail", "MID",
     [
       ["Die anderen in seiner Klasse sind älter als er.", "F"],
@@ -748,7 +748,7 @@ const writingItems: SeedItem[] = [
     SEMIFORMAL,
     "Handlungsregulierung im Bereich Wohnen. Für die volle Erfüllung braucht es eine klare Bitte und die formelle Anrede."),
   writingTask("email", "HARD", SEMIFORMAL_WORDS,
-    "Sie möchten am nächsten Freitag einen Tag frei nehmen. Schreiben Sie eine E-Mail an Ihre Chefin, Frau Yıldız.\n\n" +
+    "Sie möchten am nächsten Freitag einen Tag freinehmen. Schreiben Sie eine E-Mail an Ihre Chefin, Frau Yıldız.\n\n" +
       "- Bitten Sie um einen freien Tag.\n" +
       "- Nennen Sie einen Grund.\n" +
       "- Machen Sie einen Vorschlag: Wann können Sie die Arbeit nachholen?\n\n" +
