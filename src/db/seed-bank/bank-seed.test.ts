@@ -62,16 +62,20 @@ describe("starter C-tests accept the equally correct completions", () => {
     return scoreItem(c.type, c.content, c.key, { gaps: { [gap]: typed } })?.score === 1 / Object.keys((c.key as { answers: object }).answers).length;
   };
 
-  it("C1: wird häufig angenommen", () => {
-    expect(accepts("C1", "g12", "führt")).toBe(true);
-    expect(accepts("C1", "g12", "nommen")).toBe(true);
-    expect(accepts("C1", "g12", "angenommen")).toBe(true);
+  it("A1: etwas Brot", () => {
+    expect(accepts("A1", "g8", "twas")).toBe(true);
+    expect(accepts("A1", "g8", "in")).toBe(true);
   });
 
-  it("C2: diese Einschätzung", () => {
-    expect(accepts("C2", "g11", "icht")).toBe(true);
-    expect(accepts("C2", "g11", "chätzung")).toBe(true);
-    expect(accepts("C2", "g11", "Einschätzung")).toBe(true);
+  it("B1: Teilnehmerinnen and Teilnehmenden", () => {
+    expect(accepts("B1", "g15", "ehmerinnen")).toBe(true);
+    expect(accepts("B1", "g15", "Teilnehmenden")).toBe(true);
+  });
+
+  it("B2: dies, Freizeit, selber", () => {
+    expect(accepts("B2", "g2", "ies")).toBe(true);
+    expect(accepts("B2", "g3", "zeit")).toBe(true);
+    expect(accepts("B2", "g6", "selber")).toBe(true);
   });
 });
 
@@ -109,7 +113,7 @@ describe("starter bank items are well formed", () => {
     }
   });
 
-  it("items sit in the section file they belong to", () => {
+  it("items sit in the section part they belong to", () => {
     const sectionOf = { grammar: "GRAMMAR", reading: "READING", listening: "LISTENING", writing: "WRITING", speaking: "SPEAKING" };
     for (const [name, part] of Object.entries(SEED_PARTS)) {
       for (const item of part.items) expect(item.section).toBe(sectionOf[name as keyof typeof sectionOf]);
