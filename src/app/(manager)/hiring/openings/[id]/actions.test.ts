@@ -77,6 +77,15 @@ describe("publishOpeningAction", () => {
     expect(publishDraft).not.toHaveBeenCalled();
   });
 
+  it("from the wizard: opens the overview with the invite Sheet, and answers a refusal on the wizard's publish step (HIRING-UX 5.20)", async () => {
+    publishDraft.mockResolvedValue({ ok: true, versionId: "v", number: 1 });
+    await expect(publishOpeningAction(form("setup"))).rejects.toThrow(`redirect:${base}?published=1&invite=1`);
+    publishDraft.mockResolvedValue({ ok: false, problems: [{ code: "NO_STAGE" }] });
+    await expect(publishOpeningAction(form("setup"))).rejects.toThrow(`redirect:${base}/setup?publish=refused#publish`);
+    publishDraft.mockRejectedValue(new HiringConflict("NO_DRAFT"));
+    await expect(publishOpeningAction(form("setup"))).rejects.toThrow(`redirect:${base}/setup?publish=nodraft#publish`);
+  });
+
   it("lets an unexpected error reach the error boundary", async () => {
     publishDraft.mockRejectedValue(new Error("connection lost"));
     await expect(publishOpeningAction(form())).rejects.toThrow("connection lost");

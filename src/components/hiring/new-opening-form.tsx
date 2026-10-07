@@ -1,50 +1,62 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import Link from "next/link";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Plus } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
 import { GuidedFlow, useFlowStep, type FlowStep } from "@/components/manager/guided-flow";
-import { flowJourney } from "@/components/manager/flow-model";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ChoiceCardGroup } from "@/components/visual/choice-card";
 import { useMT } from "@/i18n/manager-client";
+import { cn } from "@/lib/cn";
 import { POSITION_JOB_AD_MAX, POSITION_NAME_MAX } from "@/lib/library/positions";
-import { createOpeningAction } from "@/app/(manager)/hiring/openings/new/actions";
-import { positionIcon } from "./position-icon";
-import { startChoices, type StartValue } from "./start-choices";
+import { clarifyRoleAction, createOpeningAction } from "@/app/(manager)/hiring/openings/new/actions";
+import { alternativeStarts, type AlternativeStart } from "./start-choices";
 import { TemplateGallery, type TemplateOption } from "./template-gallery";
 import {
-  createWait,
+  afterCreate,
+  answersOf,
+  CLARIFY_COPY,
+  jobDescriptionOf,
   matchPosition,
-  startAfterAdChange,
   newOpeningStepOf,
   newOpeningStepOfRefusal,
   newOpeningSteps,
-  newOpeningSummary,
-  POSITION_FILTER_FROM,
+  roundsToFinish,
+  suggestedPositions,
   templateForPosition,
-  visiblePositions,
+  wizardJourney,
+  type ClarifyCode,
   type NewOpeningRefusal,
-  type NewOpeningStep,
+  type RoleQuestion,
+  type RoleRound,
+  type WizardStart,
 } from "./new-opening-steps";
 
 export type PositionOption = { id: string; name: string; hasJobAd: boolean; competencyCount: number; weightsEqual: boolean };
 
-/** The card that adds a position that is not in the library yet. */
-const NEW = "__new__";
+/** The role text the AI reads; the server takes up to 2000 characters. */
+const ROLE_TEXT_MAX = 2000;
+const ANSWER_MAX = 500;
+
+const LINK =
+  "inline-flex min-h-11 items-center gap-0.5 text-left text-[14px] font-medium text-ink underline decoration-underline underline-offset-4 transition-colors duration-[120ms] ease-out hover:decoration-ink disabled:text-muted disabled:no-underline";
+const CHIP =
+  "inline-flex min-h-9 items-center gap-1 rounded-full border px-3 text-[14px] transition-colors duration-[120ms] ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
+
+type Phase = "describe" | "asking" | "brief";
+type Brief = { summary: string[]; jobAd: string };
 
 /**
- * HIRING-UX 5.3 as HIRING-VISUAL-FLOW 4.6 (K12) in the look of the manager mockup (screens 3, 4): which position (cards, or a new name), the job ad
- * (a new position only, plan decision 13), how to start, and which ready
- * template after a ready-template start (mockup 4b); one question per step
- * on GuidedFlow, every value kept across the steps and the browser's buttons.
- * The last step carries the one-line summary (H3: no separate summary step)
- * and "Alımı oluştur". A refusal of createOpeningAction opens its step with
- * its sentence.
+ * HIRING-UX 5.20 step 1 "Rolü anlat": the position's name and a few words,
+ * then "Devam". The AI either asks a few short questions (cards with answer
+ * chips and "Başka" for own words, on the same screen; "Bu kadar yeter, devam
+ * et" stops it) or writes a 3-5 bullet summary, which "Düzelt" edits in place.
+ * "Soruları hazırla" opens the opening with the AI's job ad and goes on to
+ * step 2. The other starts sit under it as plain links, each doing what it
+ * says: a ready template (its gallery), copying an earlier opening (only when
+ * there is one) and writing the questions yourself.
  */
 export function NewOpeningForm({
   positions,
@@ -59,100 +71,117 @@ export function NewOpeningForm({
   initialPositionId: string | null;
   initialCopyId: string | null;
 }) {
-  const t = useMT("hiringNew");
+  const t = useMT("hiringWizard");
+  const old = useMT("hiringNew");
   const common = useMT("hiringCommon");
   const flow = useMT("flow");
   const router = useRouter();
   const initialPicked = positions.find((p) => p.id === initialPositionId) ?? null;
   // Only a source this organisation may copy from (the page's list) is preselected.
   const copySource = initialCopyId && sources.some((s) => s.id === initialCopyId) ? initialCopyId : "";
-  // User decision 2026-10-06 (less AI): the job ad preselects nothing; only a ?copy= link is a chosen start.
-  const initialStart: StartValue | null = copySource ? "COPY" : null;
-  const [query, setQuery] = useState("");
-  const [picked, setPicked] = useState<PositionOption | null>(initialPicked);
-  const [newName, setNewName] = useState<string | null>(null);
-  // W4: the typed name stays while a library card is chosen, and comes back with "Yeni bir pozisyon".
-  const [nameDraft, setNameDraft] = useState("");
-  const [jobAd, setJobAd] = useState("");
-  const [start, setStart] = useState<StartValue | null>(initialStart);
-  const [copyFrom, setCopyFrom] = useState(copySource);
-  // The template the manager chose; until then the one named like the position is preselected (matchTemplate's rule).
-  const [chosenTemplate, setChosenTemplate] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+
+  const [name, setName] = useState(initialPicked?.name ?? "");
+  const [text, setText] = useState("");
+  const [phase, setPhase] = useState<Phase>("describe");
+  const [rounds, setRounds] = useState<RoleRound[]>([]);
+  const [questions, setQuestions] = useState<RoleQuestion[]>([]);
+  const [chips, setChips] = useState<Record<string, string>>({});
+  const [typed, setTyped] = useState<Record<string, string>>({});
+  const [brief, setBrief] = useState<Brief | null>(null);
+  const [summary, setSummary] = useState<string[]>([]);
+  const [editing, setEditing] = useState<number | null>(null);
+  const [aiError, setAiError] = useState<ClarifyCode | "NETWORK" | null>(null);
   const [refusal, setRefusal] = useState<NewOpeningRefusal | null>(null);
+  const [chosenTemplate, setChosenTemplate] = useState<string | null>(null);
+  const [copyFrom, setCopyFrom] = useState(copySource);
+  const [asking, startAsking] = useTransition();
+  const [creating, startCreating] = useTransition();
+  const [creatingStart, setCreatingStart] = useState<WizardStart | null>(null);
 
-  const hasAd = picked ? picked.hasJobAd : jobAd.trim().length > 0;
-  // The job-ad start cannot stay chosen without an ad: the stored choice is cleared (never moved to
-  // another start), so an ad that comes back does not re-select it. React's "adjust state while
-  // rendering" pattern covers every way the ad goes away (another position, an emptied ad).
-  const effective = startAfterAdChange(start, hasAd);
-  if (effective !== start) setStart(effective);
-  const positionReady = picked !== null || (newName !== null && newName.trim().length > 0);
-  const positionName = picked?.name ?? (newName ?? "").trim();
-  const template = templates.find((x) => x.key === chosenTemplate) ?? templateForPosition(templates, positionName);
-  const steps = newOpeningSteps({ newName: picked === null && newName !== null, template: effective === "TEMPLATE" });
-  // The flow knows this path's steps, so a hash it does not show (the ad step of a library
-  // position, a later step before a position is set) is rewritten to the step shown (W3).
-  const nav = useFlowStep({ steps, firstInvalid: positionReady ? null : "position", mode: "hash" });
-  // The same rule as the model's (tested there): the flow shows exactly this step.
-  const step = newOpeningStepOf(`#${nav.step}`, { steps, positionReady });
-  const index = steps.indexOf(step);
-  const wait = createWait({ positionReady, start: effective, copyFrom, templateKey: template?.key ?? null });
-  const shown = visiblePositions(positions, query, picked?.id ?? null);
-  const positionValue = picked ? [picked.id] : newName !== null ? [NEW] : [];
-  // A preselected template is not a change; one the manager picked is.
-  const dirty = picked?.id !== initialPicked?.id || newName !== null || jobAd !== "" || start !== initialStart || copyFrom !== copySource || chosenTemplate !== null;
+  const steps = newOpeningSteps({ hasCopySources: sources.length > 0 });
+  const nav = useFlowStep({ steps, firstInvalid: null, mode: "hash" });
+  const step = newOpeningStepOf(`#${nav.step}`, steps);
+  // "Önceki bir alımın sorularını kopyala" on an opening's menu (?copy=) opens the copy screen once.
+  useEffect(() => {
+    if (copySource) nav.go("copy");
+    // Only on arrival; the manager moves on from there.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const refusalText: Record<NewOpeningRefusal, string> = {
-    POSITION_NAME_REQUIRED: t("needPosition"),
-    POSITION_NOT_FOUND: t("positionGone"),
-    JOB_AD_REQUIRED: t("startAiDisabled"),
-    COPY_SOURCE_NOT_FOUND: t("copySourceGone"),
-    TEMPLATE_NOT_FOUND: t("templateGone"),
-    INVALID: t("failed"),
-    FAILED: t("failed"),
-  };
+  const trimmed = name.trim();
+  const library = matchPosition(positions, trimmed);
+  const suggestions = suggestedPositions(positions, trimmed);
+  const template = templates.find((x) => x.key === chosenTemplate) ?? templateForPosition(templates, trimmed);
+  const source = sources.find((s) => s.id === copyFrom) ?? null;
+  const dirty = trimmed !== (initialPicked?.name ?? "") || text.trim() !== "" || rounds.length > 0;
+  const busy = asking || creating;
 
-  function choosePosition(id: string) {
-    setRefusal(null);
-    if (id === NEW) {
-      setPicked(null);
-      setNewName(nameDraft);
-      return;
-    }
-    setPicked(positions.find((p) => p.id === id) ?? null);
-    setNewName(null);
+  function resetConversation() {
+    setPhase("describe");
+    setRounds([]);
+    setQuestions([]);
+    setChips({});
+    setTyped({});
+    setBrief(null);
+    setSummary([]);
+    setEditing(null);
+    setAiError(null);
   }
 
-  // "Devam et" on the position: a typed library name is that position (no ad step then).
-  function continueFromPosition() {
-    const match = picked ? null : matchPosition(positions, newName ?? "");
-    if (match) {
-      setPicked(match);
-      setNewName(null);
-      nav.go("start");
-      return;
-    }
-    const to = steps[index + 1];
-    if (to) nav.go(to);
+  function ask(nextRounds: RoleRound[]) {
+    setAiError(null);
+    setRefusal(null);
+    startAsking(async () => {
+      try {
+        const res = await clarifyRoleAction({ positionName: trimmed, text: text.trim(), rounds: nextRounds });
+        if (!res.ok) {
+          setAiError(res.code);
+          return;
+        }
+        setRounds(nextRounds);
+        setChips({});
+        setTyped({});
+        if (res.result.kind === "questions") {
+          setQuestions(res.result.questions);
+          setPhase("asking");
+        } else {
+          setQuestions([]);
+          setBrief({ summary: res.result.summary, jobAd: res.result.jobAd });
+          setSummary(res.result.summary);
+          setPhase("brief");
+        }
+      } catch {
+        setAiError("NETWORK");
+      }
+    });
   }
 
-  function submit() {
-    // The button waits with "Nasıl başlayacağını seç." meanwhile; the action never gets a missing start.
-    if (effective === null) return;
-    const chosen = effective;
+  const answeredRound = (): RoleRound => ({ questions, answers: answersOf(questions, chips, typed) });
+
+  /** The position createOpeningAction gets: the library's when the name is one of its positions, otherwise a new one. */
+  function positionFor(positionName: string) {
+    const match = matchPosition(positions, positionName);
+    return match ? ({ kind: "existing", id: match.id } as const) : ({ kind: "new", name: positionName, jobDescription: "" } as const);
+  }
+
+  function create(start: WizardStart) {
     setRefusal(null);
-    startTransition(async () => {
+    setCreatingStart(start);
+    const positionName = start === "TEMPLATE" ? trimmed || template?.name || "" : start === "COPY" ? trimmed || (source?.name.split(" · ")[0] ?? "") : trimmed;
+    // The AI start's ad fills the position only where it has none (createOpening).
+    const jobAd = start === "AI" && brief ? jobDescriptionOf(brief, summary, POSITION_JOB_AD_MAX) : null;
+    startCreating(async () => {
       try {
         const result = await createOpeningAction({
-          position: picked ? { kind: "existing", id: picked.id } : { kind: "new", name: newName ?? "", jobDescription: jobAd },
-          start: chosen,
-          copyFrom: chosen === "COPY" ? copyFrom : null,
-          ...(chosen === "TEMPLATE" ? { templateKey: template?.key ?? null } : {}),
+          position: positionFor(positionName),
+          start,
+          ...(jobAd ? { jobAd } : {}),
+          copyFrom: start === "COPY" ? copyFrom : null,
+          ...(start === "TEMPLATE" ? { templateKey: template?.key ?? null } : {}),
         });
-        if (result.ok) router.push(result.next);
+        if (result.ok) router.push(afterCreate(result.next, start));
         else {
-          // W8, D10: the refusal opens the step it is about, with its existing sentence there.
+          // W8: the refusal opens the screen it is about, with its sentence there.
           setRefusal(result.code);
           const at = newOpeningStepOfRefusal(result.code);
           if (at !== step) nav.go(at);
@@ -163,210 +192,336 @@ export function NewOpeningForm({
     });
   }
 
+  const refusalText: Record<NewOpeningRefusal, string> = {
+    POSITION_NAME_REQUIRED: t("needName"),
+    POSITION_NOT_FOUND: old("positionGone"),
+    JOB_AD_REQUIRED: t("needJobAd"),
+    COPY_SOURCE_NOT_FOUND: old("copySourceGone"),
+    TEMPLATE_NOT_FOUND: old("templateGone"),
+    INVALID: old("failed"),
+    FAILED: old("failed"),
+  };
   const note =
     refusal && newOpeningStepOfRefusal(refusal) === step ? (
       <p role="alert" className="text-[14px] font-medium text-ink">
         {refusalText[refusal]}
       </p>
     ) : null;
-  const next = (to: NewOpeningStep | undefined) => () => {
-    if (to) nav.go(to);
-  };
 
-  const choices = startChoices({ hasCopySources: sources.length > 0 });
-  const summary = newOpeningSummary({
-    name: positionName,
-    hasAd,
-    start: effective,
-    copyName: sources.find((s) => s.id === copyFrom)?.name ?? null,
-    templateName: template?.name ?? null,
-  })
-    .map((part) => ("text" in part ? part.text : "name" in part ? t(part.key, { name: part.name }) : t(part.key)))
-    .join(" · ");
-  // H3, W5: the decisions so far in one line, as the mockup's summary pill.
-  const summaryPill = positionReady ? (
-    <p className="inline-flex items-center gap-2 rounded-[10px] bg-accent-soft px-3 py-2 text-[14px] font-medium text-accent">
-      <Check className="size-4 shrink-0" strokeWidth={2} aria-hidden />
-      {summary}
+  function alternative(a: AlternativeStart) {
+    if (a.value === "TEMPLATE") nav.go("template");
+    else if (a.value === "COPY") nav.go("copy");
+    else create("BLANK");
+  }
+
+  const alternatives = (
+    <nav aria-labelledby="wizard-alt-title" className="space-y-1 border-t border-line pt-4">
+      <p id="wizard-alt-title" className="text-[13px] text-muted">
+        {t("altTitle")}
+      </p>
+      <ul className="flex flex-col items-start">
+        {alternativeStarts({ hasCopySources: sources.length > 0 }).map((a) => (
+          <li key={a.value}>
+            <button
+              type="button"
+              id={`wizard-alt-${a.value.toLowerCase()}`}
+              className={LINK}
+              disabled={busy || (a.value === "BLANK" && !trimmed)}
+              aria-describedby={a.value === "BLANK" && !trimmed ? "wizard-alt-blank-why" : undefined}
+              onClick={() => alternative(a)}
+            >
+              {creating && creatingStart === a.value ? t("creating") : t(a.label)}
+              <ChevronRight className="size-4" strokeWidth={1.75} aria-hidden />
+            </button>
+            {a.value === "BLANK" && !trimmed ? (
+              <span id="wizard-alt-blank-why" className="sr-only">
+                {t("needName")}
+              </span>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+
+  const aiNote = aiError ? (
+    <p role="alert" className="text-[14px] leading-[22px] font-medium text-ink">
+      {t(CLARIFY_COPY[aiError])}
     </p>
   ) : null;
-  const create = { kind: "button" as const, id: "new-opening-create", label: t("create"), busy: pending, busyLabel: t("creating"), waitReason: wait ? t(wait) : null, onClick: submit };
 
-  const screens: Record<NewOpeningStep, FlowStep> = {
-    position: {
-      id: "position",
-      title: t("stepPositionTitle"),
-      lead: <p>{t("stepPositionLead")}</p>,
-      layout: "split",
-      illustration: "emptyOpenings",
-      primary: { kind: "button", id: "new-opening-next", label: flow("continue"), waitReason: positionReady ? null : t("needPosition"), onClick: continueFromPosition },
-      note,
-      body: (
-        <div className="space-y-3">
-          <span id="new-opening-position-label" className="sr-only">
-            {t("stepPositionTitle")}
-          </span>
-          {positions.length > POSITION_FILTER_FROM ? (
-            <Input aria-label={t("positionFilter")} placeholder={t("positionFilter")} value={query} onChange={(e) => setQuery(e.target.value)} className="h-11 text-[16px]" />
-          ) : null}
-          <ChoiceCardGroup
-            type="single"
-            name="new-opening-position"
-            labelledBy="new-opening-position-label"
-            look="panel"
-            value={positionValue}
-            onChange={([v]) => (v ? choosePosition(v) : undefined)}
-            items={[
-              ...shown.map((p) => ({
-                value: p.id,
-                label: p.name,
-                marker: positionIcon(p.name),
-                description: t("positionCardDetail", { count: p.competencyCount, ad: p.hasJobAd ? t("summaryAd") : t("summaryNoAd") }),
-              })),
-              { value: NEW, label: t("positionNew"), description: t("positionNewBody"), marker: Plus, tone: "new" as const },
-            ]}
-          />
-          {newName !== null && !picked ? (
-            <div className="space-y-2">
-              <Label htmlFor="new-opening-name">{t("positionNewName")}</Label>
-              <Input
-                id="new-opening-name"
-                maxLength={POSITION_NAME_MAX}
-                value={nameDraft}
-                onChange={(e) => {
-                  setNameDraft(e.target.value);
-                  setNewName(e.target.value);
-                  setRefusal(null);
-                }}
-                className="h-11 text-[16px]"
-              />
-            </div>
-          ) : null}
-        </div>
-      ),
-    },
-    ad: {
-      id: "ad",
-      title: t("stepAdTitle"),
-      lead: <p>{t("jobAdHint")}</p>,
-      // W2: a field step is the single 640px column.
-      layout: "single",
-      primary: { kind: "button", id: "new-opening-next", label: jobAd.trim() ? flow("continue") : t("continueWithoutAd"), onClick: next(steps[index + 1]) },
-      note,
-      body: (
-        <div className="space-y-2">
-          <Label htmlFor="new-opening-ad">{t("jobAd")}</Label>
-          <Textarea id="new-opening-ad" rows={14} maxLength={POSITION_JOB_AD_MAX} value={jobAd} onChange={(e) => setJobAd(e.target.value)} className="text-[16px]" />
-        </div>
-      ),
-    },
-    start: {
-      id: "start",
-      title: t("stepStartTitle"),
-      lead: <p>{t("stepStartLead")}</p>,
-      aside: summaryPill,
-      layout: "split",
-      // Mockup 4: the ready template goes on to its gallery, which carries "Alımı oluştur"; every other start creates here.
-      primary:
-        effective === "TEMPLATE"
-          ? { kind: "button", id: "new-opening-next", label: flow("continue"), waitReason: positionReady ? null : t("needPosition"), onClick: next("template") }
-          : create,
-      note,
-      body: (
-        <div className="space-y-4">
-          <span id="new-opening-start-label" className="sr-only">
-            {t("stepStartTitle")}
-          </span>
-          <ChoiceCardGroup
-            type="single"
-            name="new-opening-start"
-            labelledBy="new-opening-start-label"
-            look="panel-lg"
-            value={effective ? [effective] : []}
-            onChange={([v]) => setStart((v as StartValue | undefined) ?? null)}
-            items={choices.map((c) => ({
-              value: c.value,
-              marker: c.icon,
-              // No badge slot on the shared card: the pill rides in the label (white on the chosen card, as the mockup).
-              label: c.badge ? (
-                <>
-                  {t(c.title)}{" "}
-                  <span className="ml-1 inline-block rounded-full bg-accent-soft px-2 align-[2px] text-[12px] leading-5 font-semibold text-accent group-has-[:checked]/choice:bg-surface">
-                    {t(c.badge)}
-                  </span>
-                </>
-              ) : (
-                t(c.title)
-              ),
-              disabled: c.value === "AI" && !hasAd,
-              description:
-                c.value === "AI" && !hasAd ? (
-                  <>
-                    {t("startAiDisabled")}
-                    {/* A library position without an ad: the ad is added on the position, not here. */}
-                    {picked ? (
-                      <>
-                        {" "}
-                        <Link href={`/library/positions/${picked.id}`} className="relative z-10 font-medium text-ink underline decoration-line-strong underline-offset-4 hover:decoration-ink">
-                          {t("addJobAd")}
-                        </Link>
-                      </>
-                    ) : null}
-                  </>
-                ) : (
-                  t(c.body)
-                ),
-            }))}
-          />
-          {effective === "COPY" ? (
-            <div className="space-y-2">
-              <Label htmlFor="new-opening-copy">{t("copyFrom")}</Label>
-              <Select value={copyFrom} onValueChange={setCopyFrom}>
-                <SelectTrigger id="new-opening-copy" className="w-full">
-                  <SelectValue placeholder={t("copyFrom")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {sources.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      <span className="truncate">{s.name}</span>
-                      <span className="tnum truncate text-muted">{s.detail}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          ) : null}
-        </div>
-      ),
-    },
-    template: {
-      id: "template",
-      title: t("stepTemplateTitle"),
-      lead: <p>{t("stepTemplateLead")}</p>,
-      aside: summaryPill,
-      // Mockup 4b: the question on top, the gallery under it.
-      layout: "single",
-      primary: create,
-      note,
-      body: (
-        <TemplateGallery
-          templates={templates}
-          value={template?.key ?? null}
-          onChange={(key) => {
-            setChosenTemplate(key);
+  // The name and the words, once sent: one line with "Değiştir" back to them (the conversation starts over).
+  const recap =
+    phase === "describe" ? null : (
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 rounded-[10px] bg-canvas px-4 py-3">
+        <p className="min-w-0 text-[14px] leading-[22px] text-ink-2">
+          <span className="font-semibold text-ink">{trimmed}</span>
+          {text.trim() ? <span className="break-words">{` · ${text.trim()}`}</span> : null}
+        </p>
+        <button type="button" className={LINK} disabled={busy} onClick={resetConversation}>
+          {flow("change")}
+        </button>
+      </div>
+    );
+
+  const describeBody = (
+    <div className="space-y-5">
+      <div className="space-y-2">
+        <Label htmlFor="wizard-position">{t("positionName")}</Label>
+        <Input
+          id="wizard-position"
+          maxLength={POSITION_NAME_MAX}
+          placeholder={t("positionPlaceholder")}
+          value={name}
+          onChange={(e) => {
+            setName(e.target.value);
             setRefusal(null);
           }}
+          className="h-11 text-[16px]"
         />
-      ),
-    },
+        {suggestions.length ? (
+          <div className="space-y-1">
+            <p id="wizard-library-label" className="text-[13px] text-muted">
+              {t("fromLibrary")}
+            </p>
+            <div role="group" aria-labelledby="wizard-library-label" className="flex flex-wrap gap-2">
+              {suggestions.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  aria-pressed={library?.id === p.id}
+                  onClick={() => setName(p.name)}
+                  className={cn(CHIP, library?.id === p.id ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface text-ink-2 hover:bg-canvas")}
+                >
+                  {p.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        {library ? <p className="text-[13px] text-muted">{t("libraryPicked")}</p> : null}
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="wizard-role-text">{t("roleText")}</Label>
+        <Textarea
+          id="wizard-role-text"
+          rows={3}
+          maxLength={ROLE_TEXT_MAX}
+          placeholder={t("rolePlaceholder")}
+          aria-describedby="wizard-role-text-hint"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          className="text-[16px]"
+        />
+        <p id="wizard-role-text-hint" className="text-[13px] text-muted">
+          {t("roleTextHint")}
+        </p>
+      </div>
+    </div>
+  );
+
+  const askingBody = (
+    <div className="space-y-4">
+      <p className="text-[14px] leading-[22px] text-ink-2">{t("askLead")}</p>
+      <ol className="space-y-3">
+        {questions.map((q, i) => {
+          const labelId = `wizard-q-${i}`;
+          return (
+            <li key={q.key} className="space-y-3 rounded-xl border border-line bg-surface p-4">
+              <p id={labelId} className="text-[15px] leading-[22px] font-semibold text-ink">
+                {q.text}
+              </p>
+              {q.options.length ? (
+                <div role="group" aria-labelledby={labelId} className="flex flex-wrap gap-2">
+                  {q.options.map((option) => {
+                    const on = chips[q.key] === option && !(typed[q.key] ?? "").trim();
+                    return (
+                      <button
+                        key={option}
+                        type="button"
+                        aria-pressed={on}
+                        disabled={busy}
+                        onClick={() => {
+                          setChips((c) => ({ ...c, [q.key]: c[q.key] === option ? "" : option }));
+                          setTyped((x) => ({ ...x, [q.key]: "" }));
+                        }}
+                        className={cn(CHIP, on ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface text-ink-2 hover:bg-canvas")}
+                      >
+                        {on ? <Check className="size-4" strokeWidth={2} aria-hidden /> : null}
+                        {option}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+              {q.allowFree ? (
+                <div className="space-y-1">
+                  <Label htmlFor={`${labelId}-own`} className="text-[13px] text-muted">
+                    {q.options.length ? t("other") : t("yourAnswer")}
+                  </Label>
+                  <Input
+                    id={`${labelId}-own`}
+                    maxLength={ANSWER_MAX}
+                    placeholder={t("otherPlaceholder")}
+                    value={typed[q.key] ?? ""}
+                    disabled={busy}
+                    onChange={(e) => setTyped((x) => ({ ...x, [q.key]: e.target.value }))}
+                    className="h-10 text-[15px]"
+                  />
+                </div>
+              ) : null}
+            </li>
+          );
+        })}
+      </ol>
+      <button type="button" id="wizard-enough" className={LINK} disabled={busy} onClick={() => ask(roundsToFinish([...rounds, answeredRound()]))}>
+        {t("enough")}
+        <ChevronRight className="size-4" strokeWidth={1.75} aria-hidden />
+      </button>
+    </div>
+  );
+
+  const briefBody = (
+    <section aria-labelledby="wizard-brief-title" className="space-y-3 rounded-xl border border-line bg-surface p-4">
+      <h2 id="wizard-brief-title" className="text-[15px] leading-[22px] font-semibold text-ink">
+        {t("briefTitle")}
+      </h2>
+      <ul className="divide-y divide-line">
+        {summary.map((line, i) => (
+          <li key={i} className="flex min-h-11 items-center gap-3 py-1.5">
+            <Check className="size-4 shrink-0 text-accent" strokeWidth={2} aria-hidden />
+            {editing === i ? (
+              <form
+                className="flex flex-1 items-center gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setEditing(null);
+                }}
+              >
+                <Input
+                  autoFocus
+                  aria-label={t("briefLine", { n: i + 1 })}
+                  maxLength={200}
+                  value={line}
+                  onChange={(e) => setSummary((s) => s.map((x, j) => (j === i ? e.target.value : x)))}
+                  className="h-10 flex-1 text-[15px]"
+                />
+                <button type="submit" className={LINK}>
+                  {t("done")}
+                </button>
+              </form>
+            ) : (
+              <>
+                <span className="min-w-0 flex-1 text-[15px] leading-[22px] text-ink">{line}</span>
+                <button type="button" className={LINK} aria-label={`${t("fix")}: ${line}`} disabled={busy} onClick={() => setEditing(i)}>
+                  {t("fix")}
+                </button>
+              </>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+
+  const roleScreen: FlowStep = {
+    id: "role",
+    title: t("roleTitle"),
+    lead: phase === "describe" ? <p>{t("roleLead")}</p> : undefined,
+    layout: "single",
+    primary:
+      phase === "brief"
+        ? { kind: "button", id: "wizard-next", label: t("prepare"), busy: creating && creatingStart === "AI", busyLabel: t("creating"), onClick: () => create("AI") }
+        : {
+            kind: "button",
+            id: "wizard-next",
+            label: flow("continue"),
+            busy: asking,
+            busyLabel: t("thinking"),
+            waitReason: trimmed ? (creating ? t("creating") : null) : t("needName"),
+            onClick: () => ask(phase === "asking" ? [...rounds, answeredRound()] : []),
+          },
+    note,
+    body: (
+      <div className="space-y-6">
+        {recap}
+        {phase === "describe" ? describeBody : phase === "asking" ? askingBody : briefBody}
+        {aiNote}
+        {alternatives}
+      </div>
+    ),
   };
+
+  const templateScreen: FlowStep = {
+    id: "template",
+    title: old("stepTemplateTitle"),
+    lead: <p>{old("stepTemplateLead")}</p>,
+    layout: "single",
+    primary: {
+      kind: "button",
+      id: "wizard-next",
+      label: t("useTemplate"),
+      busy: creating,
+      busyLabel: t("creating"),
+      waitReason: template ? null : old("needTemplate"),
+      onClick: () => create("TEMPLATE"),
+    },
+    note,
+    body: (
+      <TemplateGallery
+        templates={templates}
+        value={template?.key ?? null}
+        onChange={(key) => {
+          setChosenTemplate(key);
+          setRefusal(null);
+        }}
+      />
+    ),
+  };
+
+  const copyScreen: FlowStep = {
+    id: "copy",
+    title: t("copyTitle"),
+    lead: <p>{t("copyLead")}</p>,
+    layout: "single",
+    primary: {
+      kind: "button",
+      id: "wizard-next",
+      label: t("useCopy"),
+      busy: creating,
+      busyLabel: t("creating"),
+      waitReason: copyFrom ? null : old("needCopySource"),
+      onClick: () => create("COPY"),
+    },
+    note,
+    body: (
+      <div className="space-y-2">
+        <Label htmlFor="wizard-copy">{old("copyFrom")}</Label>
+        <Select value={copyFrom} onValueChange={setCopyFrom}>
+          <SelectTrigger id="wizard-copy" className="w-full">
+            <SelectValue placeholder={old("copyFrom")} />
+          </SelectTrigger>
+          <SelectContent>
+            {sources.map((s) => (
+              <SelectItem key={s.id} value={s.id}>
+                <span className="truncate">{s.name}</span>
+                <span className="tnum truncate text-muted">{s.detail}</span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    ),
+  };
+
+  const screens: Record<typeof step, FlowStep> = { role: roleScreen, template: templateScreen, copy: copyScreen };
 
   return (
     <GuidedFlow
-      kicker={t("title")}
+      kicker={old("title")}
       step={screens[step]}
-      journey={flowJourney(steps, step)}
-      back={index === 0 ? { label: common("back"), href: "/hiring/openings" } : { label: flow("back"), onClick: () => nav.back() }}
+      journey={wizardJourney(step)}
+      back={step === "role" ? { label: common("back"), href: "/hiring/openings" } : { label: flow("back"), onClick: () => nav.back() }}
       exit={{ dirty, href: "/hiring/openings" }}
       enter={nav.moved}
     />

@@ -17,11 +17,13 @@ import { InviteForm } from "./invite-form";
  * what was typed and any link shown, so while a request runs or links are
  * shown, Escape and a click outside do nothing (sheetLocked); the close
  * buttons ("Kapat" and the corner one) still close it, next to the note that
- * the links are not shown again.
+ * the links are not shown again. `initialOpen` opens it on arrival, after the
+ * wizard's "Yayınla".
  */
-export function InviteSheet({ opening, today, zone }: { opening: InviteOpening; today: string; zone: string }) {
+export function InviteSheet({ opening, today, zone, initialOpen = false }: { opening: InviteOpening; today: string; zone: string; initialOpen?: boolean }) {
   const t = useMT("hiringInvite");
-  const [open, setOpen] = useState(false);
+  // Open on arrival right after the wizard's "Yayınla" (HIRING-UX 5.20).
+  const [open, setOpen] = useState(initialOpen);
   const [locked, setLocked] = useState(false);
   const change = (next: boolean) => {
     setOpen(next);

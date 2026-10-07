@@ -27,7 +27,7 @@ vi.mock("../../access", () => ({
     access,
   }),
 }));
-vi.mock("../../opening-header", () => ({ OpeningHeader: () => null, AssessmentTabs: () => null }));
+vi.mock("../../opening-header", () => ({ OpeningHeader: () => null, AssessmentTabs: () => null, AssessmentNav: () => null }));
 // The setup line reads the people; this test's database throws on any read, and the line is not what it tests.
 vi.mock("../../setup-strip", () => ({ setupStrip: async () => null }));
 vi.mock("@/i18n/manager-locale", () => ({ managerLocale: async () => "tr" }));

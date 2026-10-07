@@ -25,22 +25,22 @@ describe("the draft's setup path (4.5, P6): Kurulum n / N and the one step to do
   });
 });
 
-describe("where 'Kuruluma devam et' goes (KG3, H7)", () => {
-  it("to the first step not done, by the row's own link", () => {
-    expect(setupNext([row("assessment", "done"), row("anchors", "missing", `${base}/assessment/scorecard?anchors=c1`)], OP)).toEqual({ key: "anchors", href: `${base}/assessment/scorecard?anchors=c1` });
-    expect(setupNext([row("assessment", "missing", null)], OP)).toEqual({ key: "assessment", href: base });
+describe("where 'Kuruluma devam et' goes (KG3, H7, HIRING-UX 5.20: the wizard)", () => {
+  it("names the first step not done and opens the wizard's questions while the questions' rows are open", () => {
+    expect(setupNext([row("assessment", "done"), row("anchors", "missing", `${base}/assessment/scorecard?anchors=c1`)], OP)).toEqual({ key: "anchors", href: `${base}/setup#questions` });
+    expect(setupNext([row("assessment", "missing", null)], OP)).toEqual({ key: "assessment", href: `${base}/setup#questions` });
   });
 
-  it("to the team flow, at members while nobody is on the team, at the decision maker otherwise", () => {
+  it("opens the wizard's publish step for the team, the preview and publishing", () => {
+    expect(setupNext([row("assessment", "done"), row("team", "advisory", teamHref(OP, { memberCount: 0, decisionMakerActive: true }))], OP)).toEqual({ key: "team", href: `${base}/setup#publish` });
+    expect(setupNext([row("assessment", "done"), row("anchors", "done")], OP)).toEqual({ key: "publish", href: `${base}/setup#publish` });
+    expect(setupNext([row("assessment", "done"), row("team", "advisory"), row("preview", "advisory")], OP, ["team", "preview"])).toEqual({ key: "publish", href: `${base}/setup#publish` });
+  });
+
+  it("still knows the team flow's steps for team and rules: members while nobody is on the team, the decision maker otherwise", () => {
     expect(teamHref(OP, { memberCount: 0, decisionMakerActive: false })).toBe(`${base}/settings#team-members`);
     expect(teamHref(OP, { memberCount: 2, decisionMakerActive: false })).toBe(`${base}/settings#team-decider`);
     expect(teamHref(OP, { memberCount: 0, decisionMakerActive: true })).toBe(`${base}/settings#team-members`);
-    expect(setupNext([row("assessment", "done"), row("team", "advisory", teamHref(OP, { memberCount: 0, decisionMakerActive: true }))], OP)).toEqual({ key: "team", href: `${base}/settings#team-members` });
-  });
-
-  it("to the publish summary when every step is done or skipped", () => {
-    expect(setupNext([row("assessment", "done"), row("anchors", "done")], OP)).toEqual({ key: "publish", href: `${base}#publish` });
-    expect(setupNext([row("assessment", "done"), row("team", "advisory"), row("preview", "advisory")], OP, ["team", "preview"])).toEqual({ key: "publish", href: `${base}#publish` });
   });
 
   it("reads ?skip= as advice steps only, each once", () => {

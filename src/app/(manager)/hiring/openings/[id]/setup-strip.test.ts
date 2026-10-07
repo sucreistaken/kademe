@@ -60,7 +60,7 @@ describe("setupStrip (4.5: the setup line on a draft's other pages)", () => {
     expect(strip!.total).toBe(5);
     expect(strip!.done).toBe(1);
     expect(strip!.next.key).toBe("assessment");
-    expect(strip!.next.href).toBe(`/hiring/openings/${OPENING}/assessment/edit?activity=a1`);
+    expect(strip!.next.href).toBe(`/hiring/openings/${OPENING}/setup#questions`);
     // The page's own working state is used; only the people are read.
     expect(reads).toEqual({ working: 0, people: 1 });
   });

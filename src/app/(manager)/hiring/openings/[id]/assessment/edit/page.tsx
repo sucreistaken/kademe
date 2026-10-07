@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Builder } from "@/components/hiring/builder/builder";
 import { QuestionCheck } from "@/components/hiring/builder/question-check";
 import { StatusDot } from "@/components/ui/status-dot";
@@ -41,6 +41,11 @@ export default async function BuilderPage({
 }) {
   const { id } = await params;
   const { user, opening, access } = await openingFor(id, "view");
+  // HIRING-UX 5.20: a draft opening is edited in the wizard; a link to one question opens it there.
+  if (opening.status === "DRAFT" && access.edit) {
+    const wanted = one((await searchParams).activity);
+    redirect(`/hiring/openings/${opening.id}/setup${wanted && isUuid(wanted) ? `?activity=${wanted}` : ""}#questions`);
+  }
   const locale = await managerLocale();
   const t = managerT(locale);
   const sp = await searchParams;

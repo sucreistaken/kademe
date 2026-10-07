@@ -1,99 +1,120 @@
 import type { CreateOpeningActionResult } from "@/app/(manager)/hiring/openings/new/actions";
-import { flowStepOf, stepOfProblem } from "@/components/manager/flow-model";
+import { flowJourney, flowStepOf, stepOfProblem, type FlowJourney } from "@/components/manager/flow-model";
 import type { StartValue } from "./start-choices";
 
 /**
- * HIRING-VISUAL-FLOW 4.6 (P6, W1-W8): opening a hiring is rare and thought
- * through each time, so it is three steps with one question each (a fourth,
- * the template gallery of mockup 4b, after a ready-template start). The step
- * lives in the hash (useFlowStep): the browser's back button steps back and
- * every typed value stays (one component, one state).
+ * HIRING-UX 5.20: "Alım aç" to publish is one wizard of three steps (Rolü
+ * anlat, Sorular, Önizle ve yayınla). Step 1 lives on /hiring/openings/new;
+ * steps 2 and 3 on the opening's /setup page. Every screen counts against this
+ * one path, so the footer always says "Adım n / 3".
  */
-export type NewOpeningStep = "position" | "ad" | "start" | "template";
+export const WIZARD_PATH = ["role", "questions", "publish"] as const;
+export type WizardStep = (typeof WIZARD_PATH)[number];
+
+/** "Adım n / 3" for a wizard screen; a side screen of step 1 (template gallery, copy picker) counts as step 1. */
+export function wizardJourney(step: WizardStep | "template" | "copy"): FlowJourney {
+  return flowJourney<string>(WIZARD_PATH, step, "role");
+}
+
+/**
+ * Step 1's screens, in the address's hash: the role screen, and the two
+ * alternative starts that need a choice first (the template gallery, the
+ * opening to copy from; the latter only when there is one). "Soruları kendim
+ * yazacağım" needs no choice, so it has no screen of its own.
+ */
+export type NewOpeningStep = "role" | "template" | "copy";
 /** Every refusal createOpeningAction can answer (the server's and the action's INVALID, FAILED). */
 export type NewOpeningRefusal = Extract<CreateOpeningActionResult, { ok: false }>["code"];
 
-/**
- * Plan decision 13: the ad step only for a new position name (a library
- * position's ad lives on the position). Mockup 4b: the template gallery only
- * once the ready template is the start; it is the last step then.
- */
-export function newOpeningSteps(input: { newName: boolean; template?: boolean }): NewOpeningStep[] {
-  const steps: NewOpeningStep[] = input.newName ? ["position", "ad", "start"] : ["position", "start"];
-  return input.template ? [...steps, "template"] : steps;
+export function newOpeningSteps(input: { hasCopySources: boolean }): NewOpeningStep[] {
+  return input.hasCopySources ? ["role", "template", "copy"] : ["role", "template"];
 }
 
-/** W3: the hash's step; without a position every step opens the position step. */
-export function newOpeningStepOf(hash: string, input: { steps: NewOpeningStep[]; positionReady: boolean }): NewOpeningStep {
-  return flowStepOf(hash, { steps: input.steps, firstInvalid: input.positionReady ? null : "position" });
+/** W3: the hash's screen; an unknown hash opens the role screen. The side screens never wait on the role. */
+export function newOpeningStepOf(hash: string, steps: readonly NewOpeningStep[]): NewOpeningStep {
+  return flowStepOf(hash, { steps, firstInvalid: null });
 }
-
-/**
- * The last step's "Alımı oluştur" waits for a position, then for a start (none
- * is preselected from the job ad, user decision 2026-10-06), then for a source
- * when copying, or for a template on the template step.
- */
-export function createWait(input: {
-  positionReady: boolean;
-  start: StartValue | null;
-  copyFrom: string;
-  templateKey?: string | null;
-}): "needPosition" | "needStart" | "needCopySource" | "needTemplate" | null {
-  if (!input.positionReady) return "needPosition";
-  if (input.start === null) return "needStart";
-  if (input.start === "TEMPLATE") return input.templateKey ? null : "needTemplate";
-  return input.start === "COPY" && !input.copyFrom ? "needCopySource" : null;
-}
-
-/**
- * The start once the ad may have changed: the job-ad start without an ad is
- * no choice at all (user decision 2026-10-06, less AI), so it is cleared and
- * never comes back on its own when the ad does. Other starts stay.
- */
-export const startAfterAdChange = (start: StartValue | null, hasAd: boolean): StartValue | null => (start === "AI" && !hasAd ? null : start);
 
 const REFUSAL_STEP: Record<NewOpeningRefusal, NewOpeningStep> = {
-  POSITION_NAME_REQUIRED: "position",
-  POSITION_NOT_FOUND: "position",
-  JOB_AD_REQUIRED: "start",
-  COPY_SOURCE_NOT_FOUND: "start",
+  POSITION_NAME_REQUIRED: "role",
+  POSITION_NOT_FOUND: "role",
+  JOB_AD_REQUIRED: "role",
+  COPY_SOURCE_NOT_FOUND: "copy",
   TEMPLATE_NOT_FOUND: "template",
-  INVALID: "start",
-  FAILED: "start",
+  INVALID: "role",
+  FAILED: "role",
 };
 
-/** W8: a refusal of createOpeningAction opens the step it is about, with its sentence there. */
-export const newOpeningStepOfRefusal = (code: NewOpeningRefusal): NewOpeningStep => stepOfProblem(REFUSAL_STEP, code) ?? "start";
+/** W8: a refusal of createOpeningAction opens the screen it is about, with its sentence there. */
+export const newOpeningStepOfRefusal = (code: NewOpeningRefusal): NewOpeningStep => stepOfProblem(REFUSAL_STEP, code) ?? "role";
 
-export type NewOpeningSummaryPart =
-  | { text: string }
-  | { key: "summaryAd" | "summaryNoAd" | "summaryAi" | "summaryBlank" }
-  | { key: "summaryCopy"; name: string }
-  | { key: "summaryTemplate"; name: string };
+/** One question the AI asked about the role (clarifyRoleAction's shape). */
+export type RoleQuestion = { key: string; text: string; options: string[]; allowFree: boolean };
+/** One answered round, as clarifyRoleAction takes it back. */
+export type RoleRound = { questions: RoleQuestion[]; answers: Record<string, string> };
+
+/** The server's cap (role-brief.ts ROLE_BRIEF_MAX_ROUNDS): with this many rounds the AI must write the brief. */
+export const ROLE_MAX_ROUNDS = 6;
 
 /**
- * H3, W5: the last step's one line ("Destek Uzmanı · ilan metni var · ilan
- * metninden öneri"). It says nothing of the start until one is chosen, and
- * nothing of a copy or a template until it is chosen (the button waits meanwhile).
+ * What the manager answered on one card: a chip, or their own words under
+ * "Başka" (own words win when both are given). Empty answers are left out, so
+ * the AI reads "(cevapsız)" for them.
  */
-export function newOpeningSummary(input: { name: string; hasAd: boolean; start: StartValue | null; copyName: string | null; templateName?: string | null }): NewOpeningSummaryPart[] {
-  const parts: NewOpeningSummaryPart[] = [{ text: input.name }, { key: input.hasAd ? "summaryAd" : "summaryNoAd" }];
-  if (input.start === "AI") parts.push({ key: "summaryAi" });
-  else if (input.start === "BLANK") parts.push({ key: "summaryBlank" });
-  else if (input.start === "COPY" && input.copyName) parts.push({ key: "summaryCopy", name: input.copyName });
-  else if (input.start === "TEMPLATE" && input.templateName) parts.push({ key: "summaryTemplate", name: input.templateName });
-  return parts;
+export function answersOf(questions: readonly RoleQuestion[], picked: Record<string, string>, typed: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const q of questions) {
+    const own = (typed[q.key] ?? "").trim();
+    const chip = (picked[q.key] ?? "").trim();
+    const value = own || chip;
+    if (value) out[q.key] = value;
+  }
+  return out;
 }
 
-/** Manager mockup 3: above this many library positions the cards get a search field. */
-export const POSITION_FILTER_FROM = 6;
+/**
+ * "Bu kadar yeter, devam et": the AI is told to stop asking by the server's
+ * own rule (a brief is due once ROLE_MAX_ROUNDS rounds are in), so the rounds
+ * are filled up with empty ones. Nothing the manager answered is dropped.
+ */
+export function roundsToFinish(rounds: readonly RoleRound[]): RoleRound[] {
+  const out = [...rounds];
+  while (out.length < ROLE_MAX_ROUNDS) out.push({ questions: [], answers: {} });
+  return out;
+}
+
+/**
+ * The job ad the new position gets on the AI start: the brief's ad, and when
+ * the manager corrected the summary, the corrected bullets under it, so the
+ * questions are drafted from what they confirmed.
+ */
+export function jobDescriptionOf(brief: { summary: readonly string[]; jobAd: string }, summary: readonly string[], max: number): string {
+  const kept = summary.map((s) => s.trim()).filter(Boolean);
+  const changed = kept.length !== brief.summary.length || kept.some((s, i) => s !== brief.summary[i]);
+  const text = changed && kept.length ? `${brief.jobAd.trim()}\n\n${kept.map((s) => `- ${s}`).join("\n")}` : brief.jobAd.trim();
+  return text.slice(0, max);
+}
+
+/** The refusal codes of clarifyRoleAction, each with its sentence (hiringWizard.*). */
+export type ClarifyCode = "INVALID" | "RATE_LIMITED" | "UNCONFIGURED" | "FAILED" | "FORBIDDEN";
+export const CLARIFY_COPY: Record<ClarifyCode | "NETWORK", "aiInvalid" | "aiRateLimited" | "aiUnconfigured" | "aiFailed" | "aiForbidden"> = {
+  INVALID: "aiInvalid",
+  RATE_LIMITED: "aiRateLimited",
+  UNCONFIGURED: "aiUnconfigured",
+  FAILED: "aiFailed",
+  FORBIDDEN: "aiForbidden",
+  NETWORK: "aiFailed",
+};
+
+/** Manager mockup 3: above this many library positions only the ones matching the typed name are offered. */
+export const POSITION_SUGGESTIONS = 6;
 
 const fold = (text: string) => text.trim().toLocaleLowerCase("tr");
 
 /**
- * The old picker's rule, kept: a new name that is a library position's name
- * (any case, outer spaces ignored) is that position, so "Devam et" picks it
- * instead of opening a second position of the same name.
+ * The old picker's rule, kept: a typed name that is a library position's name
+ * (any case, outer spaces ignored) is that position, so no second position of
+ * the same name is opened.
  */
 export function matchPosition<P extends { id: string; name: string }>(list: readonly P[], name: string): P | null {
   const wanted = fold(name);
@@ -104,8 +125,7 @@ export function matchPosition<P extends { id: string; name: string }>(list: read
 /**
  * matchTemplate's rule (solutions/hiring/templates) on the gallery's cards: a
  * position whose name is a template's TR or EN name, any case, outer spaces
- * ignored, preselects that template. The cards carry both names, so the client
- * never loads the templates' content just to match a name.
+ * ignored, preselects that template.
  */
 export function templateForPosition<T extends { key: string; names: readonly string[] }>(list: readonly T[], positionName: string): T | null {
   const wanted = fold(positionName);
@@ -113,8 +133,25 @@ export function templateForPosition<T extends { key: string; names: readonly str
   return list.find((x) => x.names.some((n) => fold(n) === wanted)) ?? null;
 }
 
-/** The cards the search shows, in the library's order; the chosen card always stays in view. */
-export function visiblePositions<P extends { id: string; name: string }>(list: readonly P[], query: string, pickedId: string | null): P[] {
-  const q = fold(query);
-  return q ? list.filter((p) => p.id === pickedId || fold(p.name).includes(q)) : [...list];
+/** The library positions offered under the name field: those containing the typed text, at most POSITION_SUGGESTIONS. */
+export function suggestedPositions<P extends { id: string; name: string }>(list: readonly P[], typed: string): P[] {
+  const q = fold(typed);
+  const hits = q ? list.filter((p) => fold(p.name).includes(q) && fold(p.name) !== q) : [...list];
+  return hits.slice(0, POSITION_SUGGESTIONS);
+}
+
+/** The start a wizard path sends to createOpeningAction. */
+export type WizardStart = Extract<StartValue, "AI" | "TEMPLATE" | "COPY" | "BLANK">;
+
+/**
+ * Where step 2 opens after createOpeningAction: its `next`, and on the AI
+ * start `?draft=ai`, which tells step 2 to write the questions at once. Other
+ * starts never get a draft written over what they chose.
+ */
+export function afterCreate(next: string, start: WizardStart): string {
+  if (start !== "AI") return next;
+  const at = next.indexOf("#");
+  const path = at < 0 ? next : next.slice(0, at);
+  const hash = at < 0 ? "" : next.slice(at);
+  return `${path}${path.includes("?") ? "&" : "?"}draft=ai${hash}`;
 }

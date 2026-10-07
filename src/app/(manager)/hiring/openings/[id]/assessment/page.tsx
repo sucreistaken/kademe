@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { StatusDot, type StatusTone } from "@/components/ui/status-dot";
@@ -27,6 +27,8 @@ const HISTORY_WORD = { draft: "historyDraft", live: "historyLive", earlier: "his
 export default async function AssessmentSummaryPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { user, opening, access } = await openingFor(id, "view");
+  // HIRING-UX 5.20: a draft opening is set up in the wizard.
+  if (opening.status === "DRAFT" && access.edit) redirect(`/hiring/openings/${opening.id}/setup#questions`);
   const locale = await managerLocale();
   const t = managerT(locale);
   const state = await workingState(user.orgId, opening.id);

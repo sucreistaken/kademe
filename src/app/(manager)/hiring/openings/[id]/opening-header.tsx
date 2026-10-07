@@ -36,9 +36,11 @@ export function BackToOpenings({ t }: { t: T }) {
  * the page's one filled action, the "⋯" menu of links (plan decision 14), and
  * the opening's route tabs. Only tabs whose route exists are listed (ruling
  * C7). On a draft's other pages (for someone who may edit it) one line under
- * the tabs says where the setup path stands and opens its next step; it is a
- * text link and never competes with the page's own filled button. The
- * overview passes no line: its setup card says the same one line lower.
+ * the tabs says where the setup path stands and opens its next step (the
+ * wizard, HIRING-UX 5.20); it is a text link and never competes with the
+ * page's own filled button. The overview passes no line: its setup card says
+ * the same one line lower. A draft opening shows no tabs: it is set up in the
+ * wizard, and its pages are reached from there.
  */
 export function OpeningHeader({
   opening,
@@ -83,15 +85,18 @@ export function OpeningHeader({
         menu={menu?.length ? { label: t("nav.more"), items: menu } : undefined}
       />
       <div className="space-y-2">
-        <RouteTabs
-          label={t("hiringCommon.tabsLabel")}
-          items={[
-            { href: base, label: t("hiringCommon.tabOverview"), active: active === "overview" },
-            { href: `${base}/candidates`, label: t("hiringCommon.tabCandidates"), active: active === "candidates" },
-            { href: `${base}/assessment`, label: t("hiringCommon.tabAssessment"), active: active === "assessment" },
-            { href: `${base}/settings`, label: t("hiringCommon.tabSettings"), active: active === "settings" },
-          ]}
-        />
+        {/* HIRING-UX 5.20: a draft opening is set up in the wizard, so it has no tabs; a live one keeps them. */}
+        {opening.status === "DRAFT" ? null : (
+          <RouteTabs
+            label={t("hiringCommon.tabsLabel")}
+            items={[
+              { href: base, label: t("hiringCommon.tabOverview"), active: active === "overview" },
+              { href: `${base}/candidates`, label: t("hiringCommon.tabCandidates"), active: active === "candidates" },
+              { href: `${base}/assessment`, label: t("hiringCommon.tabAssessment"), active: active === "assessment" },
+              { href: `${base}/settings`, label: t("hiringCommon.tabSettings"), active: active === "settings" },
+            ]}
+          />
+        )}
         {setup ? (
           <p className="tnum flex flex-wrap items-center gap-x-2 text-[14px] text-ink-2">
             <span>{t("hiringOverview.setupCount", { done: setup.done, total: setup.total })}</span>
@@ -125,5 +130,33 @@ export function AssessmentTabs({ openingId, active, t }: { openingId: string; ac
         { href: `${base}/preview`, label: t("hiringCommon.tabPreview"), active: active === "preview" },
       ]}
     />
+  );
+}
+
+/**
+ * HIRING-UX 5.20: on a draft opening the scorecard and the candidate preview
+ * are side pages of the wizard, so they carry its way back instead of the
+ * assessment's tabs; a live opening keeps the tabs.
+ */
+export function AssessmentNav({
+  opening,
+  active,
+  t,
+  wizardStep,
+}: {
+  opening: { id: string; status: OpeningStatus };
+  active: "summary" | "edit" | "ai" | "scorecard" | "preview";
+  t: T;
+  wizardStep: "questions" | "publish";
+}) {
+  if (opening.status !== "DRAFT") return <AssessmentTabs openingId={opening.id} active={active} t={t} />;
+  return (
+    <a
+      href={`/hiring/openings/${opening.id}/setup#${wizardStep}`}
+      className="-ml-1 inline-flex min-h-11 items-center gap-1 rounded-md px-1 text-[14px] font-medium text-ink underline decoration-underline underline-offset-4 hover:decoration-ink"
+    >
+      <ChevronLeft className="size-4" strokeWidth={1.5} aria-hidden />
+      {t("hiringWizard.backToSetup")}
+    </a>
   );
 }

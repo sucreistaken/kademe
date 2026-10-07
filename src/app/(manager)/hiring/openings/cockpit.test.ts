@@ -116,7 +116,7 @@ describe("the openings' control view (4.4, H9, D14)", () => {
     lists.byStatus = { DRAFT: [listed(D1, "DRAFT")], OPEN: [listed(O1, "OPEN", { draftNumber: 2 })], CLOSED: [] };
     fake.respond = (op) => (op.table === "candidate_requests" ? [] : op.table === "hiring_opening_members" ? [{ openingId: O1, count: 3 }] : respond(op));
     const cockpit = await loadCockpit(owner, managerT("tr"), "tr");
-    expect(cockpit.open[0]).toMatchObject({ setup: null, next: { kind: "draft", href: "/hiring/openings/x/settings#team-members" } });
+    expect(cockpit.open[0]).toMatchObject({ setup: null, next: { kind: "draft", href: `/hiring/openings/${O1}/setup#publish` } });
     expect(reads.working).toHaveBeenCalledTimes(2);
     // Past the budget (the setup drafts first), the row keeps "Kuruluma devam et" to the overview.
     reads.working.mockClear();

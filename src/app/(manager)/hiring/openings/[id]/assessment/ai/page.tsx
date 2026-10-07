@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { AiDraft } from "@/components/hiring/ai/ai-draft";
 import { UrlNotice } from "@/components/ui/url-notice";
 import { managerLocale } from "@/i18n/manager-locale";
@@ -31,6 +31,8 @@ export default async function AiDraftPage({
 }) {
   const { id } = await params;
   const { user, opening, access } = await openingFor(id, "view");
+  // HIRING-UX 5.20: a draft opening is set up in the wizard.
+  if (opening.status === "DRAFT" && access.edit) redirect(`/hiring/openings/${opening.id}/setup#questions`);
   const locale = await managerLocale();
   const t = managerT(locale);
   const sp = await searchParams;

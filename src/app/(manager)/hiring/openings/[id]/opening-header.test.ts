@@ -6,7 +6,7 @@ import { PanelHeader } from "@/components/manager/panel-header";
 import { RouteTabs } from "@/components/manager/route-tabs";
 import { managerT } from "@/i18n/manager";
 import type { OpeningDetail } from "@/solutions/hiring/server/openings";
-import { OpeningHeader } from "./opening-header";
+import { AssessmentNav, AssessmentTabs, OpeningHeader } from "./opening-header";
 
 /** Ruling C7: a tab joins the opening's tabs with its route (team and rules in plan 1 Task 20, candidates in plan 2 Task 18). */
 function find(node: ReactNode, type: unknown): ReactElement<Record<string, unknown>>[] {
@@ -65,6 +65,25 @@ describe("OpeningHeader", () => {
     const builder = OpeningHeader({ opening, active: "assessment", locale: "tr", t: managerT("tr"), setup: { done: 0, total: 5, next: { key: "assessment", href: `${base}/assessment/edit` } } });
     expect(find(builder, Link).map((l) => l.props.href)).toContain(`${base}/assessment/edit`);
     expect(text(builder)).toContain("Sıradaki: Değerlendirmeyi kur");
+    // HIRING-UX 5.20: the wizard's steps carry a hash on another page, so they are plain anchors.
+    const wizard = OpeningHeader({ opening, active: "settings", locale: "tr", t: managerT("tr"), setup: { done: 0, total: 5, next: { key: "assessment", href: `${base}/setup#questions` } } });
+    expect(find(wizard, "a").map((a) => a.props.href)).toContain(`${base}/setup#questions`);
+  });
+
+  it("draws no tabs on a draft opening: it is set up in the wizard (HIRING-UX 5.20)", () => {
+    const draft = { ...opening, status: "DRAFT" } as OpeningDetail;
+    expect(find(OpeningHeader({ opening: draft, active: "settings", locale: "tr", t: managerT("tr") }), RouteTabs)).toHaveLength(0);
+    expect(find(OpeningHeader({ opening, active: "settings", locale: "tr", t: managerT("tr") }), RouteTabs)).toHaveLength(1);
+  });
+
+  it("gives a draft's scorecard and preview the wizard's way back instead of the assessment's tabs; a live opening keeps the tabs", () => {
+    const draft = { id: opening.id, status: "DRAFT" as const };
+    const back = AssessmentNav({ opening: draft, active: "scorecard", t: managerT("tr"), wizardStep: "questions" }) as ReactElement<{ href: string }>;
+    expect(back.type).toBe("a");
+    expect(back.props.href).toBe(`/hiring/openings/${opening.id}/setup#questions`);
+    expect(text(back)).toBe("Kuruluma dön");
+    const live = AssessmentNav({ opening: { id: opening.id, status: "OPEN" }, active: "preview", t: managerT("tr"), wizardStep: "publish" }) as ReactElement;
+    expect(live.type).toBe(AssessmentTabs);
   });
 });
 

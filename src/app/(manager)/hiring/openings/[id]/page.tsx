@@ -31,9 +31,10 @@ import { funnelView } from "./funnel";
 import { inviteBlock, inviteWaitReason } from "./invite-wait";
 import { OpeningHeader } from "./opening-header";
 import { describeProblem } from "./problems";
-import { OverviewOnly, PUBLISHED_NOTICE_ID, PublishFooter, PublishLink, PublishSwitch, SETUP_HEADING_ID, SetupFocusArea } from "./publish-view";
-import { rowAction } from "./readiness";
+import { OverviewOnly, PUBLISHED_NOTICE_ID, PublishFooter, PublishSwitch, SETUP_HEADING_ID, SetupFocusArea } from "./publish-view";
 import { SETUP_LABEL, setupNext, setupProgress, setupRowsOf, setupSkips } from "./setup-steps";
+import { setupHref } from "@/components/hiring/wizard/setup-model";
+import { startDraftAction } from "./assessment/edit/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +47,7 @@ const NOTICES: Record<PublishNotice, "publishRefused" | "publishNoDraft" | "publ
 };
 
 /** The redirect after "Yayınla" brings one of these; shown once, then taken out of the address. */
-const NOTICE_PARAMS = ["publish", "published"] as const;
+const NOTICE_PARAMS = ["publish", "published", "invite"] as const;
 
 const LINK = "font-medium text-ink underline decoration-line-strong underline-offset-4 transition-colors duration-[120ms] ease-out hover:decoration-ink";
 const TEXT_ACTION = "inline-flex min-h-11 items-center gap-0.5 text-[14px] font-medium text-ink underline decoration-underline underline-offset-4 hover:decoration-ink";
@@ -114,8 +115,6 @@ export default async function OpeningOverviewPage({
   const skipped = setupSkips(sp.skip);
   const progress = setupProgress(setupRows, skipped);
   const next = setupNext(setupRows, opening.id, skipped);
-  const lang = one(sp.lang);
-  const skipHref = (keys: readonly string[]) => `${base}?skip=${keys.join(",")}${lang ? `&lang=${encodeURIComponent(lang)}` : ""}`;
 
   // The publish summary (#publish, the path's last step): what goes live, each row with "Değiştir ›".
   // The team in one line (the publish summary and the rules card): the active members, the people the
@@ -140,7 +139,7 @@ export default async function OpeningOverviewPage({
               minutes: Math.round(totalSeconds(content) / 60),
             }),
             problem: first?.text,
-            edit: { href: `${base}/assessment/edit` },
+            edit: { href: setupHref(opening.id, "questions") },
           },
           // Task 19 carry: these hashes are steps of team and rules' flows (Task 21), never cleared there.
           { id: "team", icon: Users, label: t("hiringSettings.teamTitle"), value: teamValue, edit: { href: `${base}/settings#team-members` } },
@@ -177,17 +176,14 @@ export default async function OpeningOverviewPage({
   const pageAction =
     opening.status === "DRAFT" ? (
       access.edit ? (
+        // HIRING-UX 5.20: the setup continues in the wizard, at its questions or its publish step.
         <Button asChild variant="primary">
-          {next.key === "publish" ? (
-            // The summary on this page: opened as a marked history entry, so "‹ Genel bakış" goes back (M3).
-            <PublishLink href={next.href}>{t("hiringCommon.continueSetup")}</PublishLink>
-          ) : (
-            <HashAwareLink href={next.href}>{t("hiringCommon.continueSetup")}</HashAwareLink>
-          )}
+          <HashAwareLink href={next.href}>{t("hiringCommon.continueSetup")}</HashAwareLink>
         </Button>
       ) : null
     ) : closed ? null : target && !block ? (
-      <InviteSheet opening={target} today={today} zone={zoneLabel(locale)} />
+      // Right after the wizard's "Yayınla" (?invite=1) the Sheet opens by itself (HIRING-UX 5.20).
+      <InviteSheet opening={target} today={today} zone={zoneLabel(locale)} initialOpen={one(sp.invite) === "1" && published !== null} />
     ) : (
       // The same button waiting with the Candidates tab's reason, or the invite form's own (no evaluator, last day passed; B-M3, RULES 5).
       <div className="flex w-full flex-col items-start gap-1 sm:w-auto sm:max-w-[360px] sm:items-end sm:text-right">
@@ -222,28 +218,19 @@ export default async function OpeningOverviewPage({
                 : row.state === "advisory"
                   ? t("hiringOverview.advisory")
                   : (row.fixText ?? undefined);
-      // The team step opens team and rules' flow (a hash), so its words are named here, not read from the address.
-      const words = row.key === "team" ? "goTeam" : row.href ? rowAction(row.href) : null;
+      // HIRING-UX 5.20: every step is done in the wizard; the questions' rows open its questions, the rest its publish step.
+      const inQuestions = row.key === "assessment" || row.key === "anchors" || row.key === "weights";
+      const wizard = setupHref(opening.id, inQuestions ? "questions" : "publish");
       return {
         title: t(`hiringOverview.${SETUP_LABEL[row.key]}`),
         detail,
         state: row.state === "done" ? ("done" as const) : current ? ("current" as const) : ("todo" as const),
         action:
-          current && access.edit && row.href && words ? (
-            <span className="flex flex-wrap items-center gap-x-5">
-              <HashAwareLink href={row.href} className={PATH_ACTION}>
-                {t(`hiringOverview.${words}`)}
-                <ChevronRight className="size-4" strokeWidth={1.75} aria-hidden />
-              </HashAwareLink>
-              {row.state === "advisory" ? (
-                // STATUS decision 7: advice never blocks; "Atla" passes it for this visit (the address remembers, nothing is stored).
-                // The page stays where it is (no scroll to the top) and keeps ?lang= when the address has one.
-                <Link href={skipHref([...skipped, row.key])} scroll={false} className={TEXT_ACTION}>
-                  {t("flow.skip")}
-                  <ChevronRight className="size-4" strokeWidth={1.75} aria-hidden />
-                </Link>
-              ) : null}
-            </span>
+          current && access.edit ? (
+            <HashAwareLink href={wizard} className={PATH_ACTION}>
+              {t(inQuestions ? "hiringWizard.goQuestions" : "hiringOverview.goPublish")}
+              <ChevronRight className="size-4" strokeWidth={1.75} aria-hidden />
+            </HashAwareLink>
           ) : undefined,
       };
     }),
@@ -251,11 +238,11 @@ export default async function OpeningOverviewPage({
       title: t("hiringOverview.rowPublish"),
       state: progress.current === setupRows.length ? ("current" as const) : ("todo" as const),
       action:
-        progress.current === setupRows.length && publishSummary ? (
-          <PublishLink href={`${base}#publish`} className={PATH_ACTION}>
+        progress.current === setupRows.length && access.edit && !closed ? (
+          <HashAwareLink href={setupHref(opening.id, "publish")} className={PATH_ACTION}>
             {t("hiringOverview.goPublish")}
             <ChevronRight className="size-4" strokeWidth={1.75} aria-hidden />
-          </PublishLink>
+          </HashAwareLink>
         ) : undefined,
     },
   ];
@@ -482,6 +469,17 @@ export default async function OpeningOverviewPage({
               <p className="tnum mt-2 text-[13px] text-muted">
                 {t("hiringOverview.liveBody", { number: state.live.number, date: state.live.publishedAt ? shortDate(state.live.publishedAt, locale) : "-" })}
               </p>
+              {/* HIRING-UX 5.20: changing a live opening's questions is the same wizard, on a new version. */}
+              {access.edit && !closed && !state.draft ? (
+                <form action={startDraftAction} className="mt-2">
+                  <input type="hidden" name="openingId" value={opening.id} />
+                  <input type="hidden" name="back" value="setup" />
+                  <button type="submit" id="edit-questions" className={TEXT_ACTION}>
+                    {t("hiringWizard.editQuestions")}
+                    <ChevronRight className="size-4" strokeWidth={1.75} aria-hidden />
+                  </button>
+                </form>
+              ) : null}
             </Card>
           ) : null}
         </div>

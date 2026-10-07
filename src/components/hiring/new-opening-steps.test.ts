@@ -1,112 +1,90 @@
 import { describe, expect, it } from "vitest";
 import { TEMPLATES, matchTemplate } from "@/solutions/hiring/templates/index";
-import { createWait, matchPosition, startAfterAdChange, newOpeningStepOf, newOpeningStepOfRefusal, newOpeningSteps, newOpeningSummary, templateForPosition, visiblePositions } from "./new-opening-steps";
+import {
+  afterCreate,
+  answersOf,
+  jobDescriptionOf,
+  matchPosition,
+  newOpeningStepOf,
+  newOpeningStepOfRefusal,
+  newOpeningSteps,
+  ROLE_MAX_ROUNDS,
+  roundsToFinish,
+  suggestedPositions,
+  templateForPosition,
+  wizardJourney,
+} from "./new-opening-steps";
 
-describe("Alım aç as three steps (4.6, plan decision 13)", () => {
-  it("asks for the job ad only for a new position name (a library position's ad lives on the position)", () => {
-    expect(newOpeningSteps({ newName: true })).toEqual(["position", "ad", "start"]);
-    expect(newOpeningSteps({ newName: false })).toEqual(["position", "start"]);
+describe("the hiring wizard's path (HIRING-UX 5.20)", () => {
+  it("counts three steps everywhere: Rolü anlat, Sorular, Önizle ve yayınla", () => {
+    expect(wizardJourney("role")).toEqual({ steps: 3, current: 1 });
+    expect(wizardJourney("questions")).toEqual({ steps: 3, current: 2 });
+    expect(wizardJourney("publish")).toEqual({ steps: 3, current: 3 });
   });
 
-  it("follows the address's hash so the browser's back button steps back, and never skips the position", () => {
-    const steps = newOpeningSteps({ newName: true });
-    expect(newOpeningStepOf("", { steps, positionReady: true })).toBe("position");
-    expect(newOpeningStepOf("#ad", { steps, positionReady: true })).toBe("ad");
-    expect(newOpeningStepOf("#start", { steps, positionReady: true })).toBe("start");
-    expect(newOpeningStepOf("#start", { steps, positionReady: false })).toBe("position");
-    expect(newOpeningStepOf("#ad", { steps: newOpeningSteps({ newName: false }), positionReady: true })).toBe("position");
+  it("counts the template gallery and the copy picker as step 1, so the bar never jumps", () => {
+    expect(wizardJourney("template")).toEqual({ steps: 3, current: 1 });
+    expect(wizardJourney("copy")).toEqual({ steps: 3, current: 1 });
   });
 
-  it("waits for a position, then for a start, then for a source when copying", () => {
-    expect(createWait({ positionReady: false, start: "BLANK", copyFrom: "" })).toBe("needPosition");
-    expect(createWait({ positionReady: false, start: null, copyFrom: "" })).toBe("needPosition");
-    expect(createWait({ positionReady: true, start: null, copyFrom: "" })).toBe("needStart");
-    expect(createWait({ positionReady: true, start: "COPY", copyFrom: "" })).toBe("needCopySource");
-    expect(createWait({ positionReady: true, start: "COPY", copyFrom: "o1" })).toBeNull();
-    expect(createWait({ positionReady: true, start: "AI", copyFrom: "" })).toBeNull();
+  it("offers the copy screen only when there is an opening to copy", () => {
+    expect(newOpeningSteps({ hasCopySources: true })).toEqual(["role", "template", "copy"]);
+    expect(newOpeningSteps({ hasCopySources: false })).toEqual(["role", "template"]);
   });
 
-  it("clears the job-ad start when the ad goes away, so it never comes back on its own; other starts stay", () => {
-    expect(startAfterAdChange("AI", false)).toBeNull();
-    expect(startAfterAdChange("AI", true)).toBe("AI");
-    expect(startAfterAdChange("COPY", false)).toBe("COPY");
-    expect(startAfterAdChange("BLANK", false)).toBe("BLANK");
-    expect(startAfterAdChange(null, false)).toBeNull();
-    expect(startAfterAdChange(null, true)).toBeNull();
-    // The ad goes away, then comes back: the cleared choice stays cleared.
-    expect(startAfterAdChange(startAfterAdChange("AI", false), true)).toBeNull();
+  it("follows the hash; an unknown or unoffered screen opens the role screen", () => {
+    const steps = newOpeningSteps({ hasCopySources: false });
+    expect(newOpeningStepOf("", steps)).toBe("role");
+    expect(newOpeningStepOf("#template", steps)).toBe("template");
+    expect(newOpeningStepOf("#copy", steps)).toBe("role");
+    expect(newOpeningStepOf("#start", steps)).toBe("role");
   });
 
-  it("opens the step a refusal is about (W8): the position for a missing or gone position, the start for everything else", () => {
-    expect(newOpeningStepOfRefusal("POSITION_NAME_REQUIRED")).toBe("position");
-    expect(newOpeningStepOfRefusal("POSITION_NOT_FOUND")).toBe("position");
-    expect(newOpeningStepOfRefusal("JOB_AD_REQUIRED")).toBe("start");
-    expect(newOpeningStepOfRefusal("COPY_SOURCE_NOT_FOUND")).toBe("start");
-    expect(newOpeningStepOfRefusal("INVALID")).toBe("start");
-    expect(newOpeningStepOfRefusal("FAILED")).toBe("start");
-  });
-
-  it("says every decision in one line on the last step, and names a copy only once its source is chosen (H3)", () => {
-    expect(newOpeningSummary({ name: "Destek Uzmanı", hasAd: true, start: "AI", copyName: null })).toEqual([{ text: "Destek Uzmanı" }, { key: "summaryAd" }, { key: "summaryAi" }]);
-    expect(newOpeningSummary({ name: "Destek Uzmanı", hasAd: false, start: "BLANK", copyName: null })).toEqual([{ text: "Destek Uzmanı" }, { key: "summaryNoAd" }, { key: "summaryBlank" }]);
-    expect(newOpeningSummary({ name: "Destek Uzmanı", hasAd: true, start: "COPY", copyName: "Destek 2025" })).toEqual([{ text: "Destek Uzmanı" }, { key: "summaryAd" }, { key: "summaryCopy", name: "Destek 2025" }]);
-    expect(newOpeningSummary({ name: "Destek Uzmanı", hasAd: true, start: "COPY", copyName: null })).toEqual([{ text: "Destek Uzmanı" }, { key: "summaryAd" }]);
-    expect(newOpeningSummary({ name: "Destek Uzmanı", hasAd: true, start: null, copyName: null })).toEqual([{ text: "Destek Uzmanı" }, { key: "summaryAd" }]);
-  });
-});
-
-describe("the ready-template start (manager mockup 4, 4b)", () => {
-  it("adds the template step after the start only when the ready template is the start", () => {
-    expect(newOpeningSteps({ newName: true, template: true })).toEqual(["position", "ad", "start", "template"]);
-    expect(newOpeningSteps({ newName: false, template: true })).toEqual(["position", "start", "template"]);
-    expect(newOpeningSteps({ newName: false, template: false })).toEqual(["position", "start"]);
-    expect(newOpeningStepOf("#template", { steps: newOpeningSteps({ newName: false, template: true }), positionReady: true })).toBe("template");
-    expect(newOpeningStepOf("#template", { steps: newOpeningSteps({ newName: false, template: false }), positionReady: true })).toBe("position");
-  });
-
-  it("waits for a template once the ready template is the start", () => {
-    expect(createWait({ positionReady: true, start: "TEMPLATE", copyFrom: "", templateKey: null })).toBe("needTemplate");
-    expect(createWait({ positionReady: true, start: "TEMPLATE", copyFrom: "", templateKey: "customer-support" })).toBeNull();
-    expect(createWait({ positionReady: false, start: "TEMPLATE", copyFrom: "", templateKey: "customer-support" })).toBe("needPosition");
-    expect(createWait({ positionReady: true, start: "BLANK", copyFrom: "", templateKey: null })).toBeNull();
-  });
-
-  it("keeps the ready template when the ad goes away", () => {
-    expect(startAfterAdChange("TEMPLATE", false)).toBe("TEMPLATE");
-  });
-
-  it("opens the template step for a template that is gone", () => {
+  it("opens the screen a refusal is about (W8)", () => {
+    expect(newOpeningStepOfRefusal("POSITION_NAME_REQUIRED")).toBe("role");
+    expect(newOpeningStepOfRefusal("JOB_AD_REQUIRED")).toBe("role");
     expect(newOpeningStepOfRefusal("TEMPLATE_NOT_FOUND")).toBe("template");
+    expect(newOpeningStepOfRefusal("COPY_SOURCE_NOT_FOUND")).toBe("copy");
+    expect(newOpeningStepOfRefusal("FAILED")).toBe("role");
   });
 
-  it("names the chosen template in the summary, and nothing of it before one is chosen", () => {
-    expect(newOpeningSummary({ name: "Destek Uzmanı", hasAd: true, start: "TEMPLATE", copyName: null, templateName: "Müşteri Destek Uzmanı" })).toEqual([
-      { text: "Destek Uzmanı" },
-      { key: "summaryAd" },
-      { key: "summaryTemplate", name: "Müşteri Destek Uzmanı" },
-    ]);
-    expect(newOpeningSummary({ name: "Destek Uzmanı", hasAd: true, start: "TEMPLATE", copyName: null, templateName: null })).toEqual([{ text: "Destek Uzmanı" }, { key: "summaryAd" }]);
-    expect(newOpeningSummary({ name: "Destek Uzmanı", hasAd: true, start: "BLANK", copyName: null, templateName: "Müşteri Destek Uzmanı" })).toEqual([
-      { text: "Destek Uzmanı" },
-      { key: "summaryAd" },
-      { key: "summaryBlank" },
-    ]);
-  });
-
-  it("finds the template for a position name by matchTemplate's rule (TR or EN name, any case, outer spaces ignored)", () => {
-    const options = TEMPLATES.map((x) => ({ key: x.key, names: [x.name.tr, x.name.en] }));
-    for (const x of TEMPLATES) {
-      for (const name of [x.name.tr, x.name.en, `  ${x.name.tr.toLocaleUpperCase("tr")} `]) {
-        expect(templateForPosition(options, name)?.key).toBe(matchTemplate(name)?.key);
-        expect(templateForPosition(options, name)?.key).toBe(x.key);
-      }
-    }
-    expect(templateForPosition(options, "Destek")).toBeNull();
-    expect(templateForPosition(options, "   ")).toBeNull();
+  it("asks step 2 to write the questions only after the AI start", () => {
+    expect(afterCreate("/hiring/openings/o1/setup#questions", "AI")).toBe("/hiring/openings/o1/setup?draft=ai#questions");
+    expect(afterCreate("/hiring/openings/o1/setup?x=1#questions", "AI")).toBe("/hiring/openings/o1/setup?x=1&draft=ai#questions");
+    for (const start of ["BLANK", "TEMPLATE", "COPY"] as const) expect(afterCreate("/hiring/openings/o1/setup#questions", start)).toBe("/hiring/openings/o1/setup#questions");
   });
 });
 
-describe("the position cards (manager mockup 3)", () => {
+describe("the role conversation (step 1)", () => {
+  const questions = [
+    { key: "ehliyet", text: "Hangi ehliyet?", options: ["B", "C"], allowFree: true },
+    { key: "deneyim", text: "Kaç yıl deneyim?", options: [], allowFree: true },
+    { key: "gun", text: "Hangi günler?", options: ["Hafta içi"], allowFree: true },
+  ];
+
+  it("answers with the chip, or the own words when both are given; empty answers are left out", () => {
+    expect(answersOf(questions, { ehliyet: "B", gun: "Hafta içi" }, { gun: "  Cumartesi dahil ", deneyim: "  " })).toEqual({ ehliyet: "B", gun: "Cumartesi dahil" });
+    expect(answersOf(questions, {}, {})).toEqual({});
+  });
+
+  it("'Bu kadar yeter' fills the rounds up to the server's cap, so the next answer is the brief; nothing answered is lost", () => {
+    const answered = { questions, answers: { ehliyet: "B" } };
+    const out = roundsToFinish([answered]);
+    expect(out).toHaveLength(ROLE_MAX_ROUNDS);
+    expect(out[0]).toBe(answered);
+    expect(out.slice(1).every((r) => r.questions.length === 0 && Object.keys(r.answers).length === 0)).toBe(true);
+    expect(roundsToFinish(Array.from({ length: ROLE_MAX_ROUNDS }, () => answered))).toHaveLength(ROLE_MAX_ROUNDS);
+  });
+
+  it("keeps the AI's ad as it is, and adds the corrected bullets under it once the summary was changed", () => {
+    const brief = { summary: ["B sınıfı ehliyet", "Hafta içi"], jobAd: "İlan metni." };
+    expect(jobDescriptionOf(brief, brief.summary, 4000)).toBe("İlan metni.");
+    expect(jobDescriptionOf(brief, ["B sınıfı ehliyet", "Hafta sonu dahil"], 4000)).toBe("İlan metni.\n\n- B sınıfı ehliyet\n- Hafta sonu dahil");
+    expect(jobDescriptionOf(brief, ["B sınıfı ehliyet", "Hafta sonu dahil"], 5)).toHaveLength(5);
+  });
+});
+
+describe("the position name and the library", () => {
   const list = [
     { id: "1", name: "Destek Uzmanı" },
     { id: "2", name: "Satış Uzmanı" },
@@ -120,9 +98,23 @@ describe("the position cards (manager mockup 3)", () => {
     expect(matchPosition(list, "   ")).toBeNull();
   });
 
-  it("filters the cards by the search and keeps the chosen card in view", () => {
-    expect(visiblePositions(list, "", null).map((p) => p.id)).toEqual(["1", "2", "3"]);
-    expect(visiblePositions(list, "uzman", null).map((p) => p.id)).toEqual(["1", "2"]);
-    expect(visiblePositions(list, "satış", "1").map((p) => p.id)).toEqual(["1", "2"]);
+  it("suggests the library positions containing the typed text, not the one already typed in full", () => {
+    expect(suggestedPositions(list, "").map((p) => p.id)).toEqual(["1", "2", "3"]);
+    expect(suggestedPositions(list, "uzman").map((p) => p.id)).toEqual(["1", "2"]);
+    expect(suggestedPositions(list, "destek uzmanı").map((p) => p.id)).toEqual([]);
+    const many = Array.from({ length: 9 }, (_, i) => ({ id: String(i), name: `Rol ${i}` }));
+    expect(suggestedPositions(many, "")).toHaveLength(6);
+  });
+
+  it("finds the template for a position name by matchTemplate's rule (TR or EN name, any case, outer spaces ignored)", () => {
+    const options = TEMPLATES.map((x) => ({ key: x.key, names: [x.name.tr, x.name.en] }));
+    for (const x of TEMPLATES) {
+      for (const name of [x.name.tr, x.name.en, `  ${x.name.tr.toLocaleUpperCase("tr")} `]) {
+        expect(templateForPosition(options, name)?.key).toBe(matchTemplate(name)?.key);
+        expect(templateForPosition(options, name)?.key).toBe(x.key);
+      }
+    }
+    expect(templateForPosition(options, "Destek")).toBeNull();
+    expect(templateForPosition(options, "   ")).toBeNull();
   });
 });

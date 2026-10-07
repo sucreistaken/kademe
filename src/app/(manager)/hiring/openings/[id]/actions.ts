@@ -24,21 +24,25 @@ function noticeFor(error: unknown): PublishNotice | null {
 /** "Yayınla" on the overview (and later the builder bar). The gate runs again on the server. */
 export async function publishOpeningAction(formData: FormData) {
   const openingId = String(formData.get("openingId") ?? "");
-  // Only the builder (Task 15) sends "builder"; until it exists every publish returns to the overview.
-  const back = formData.get("back") === "builder" ? "builder" : "overview";
+  // The builder sends "builder", the wizard's step 3 (HIRING-UX 5.20) "setup"; anything else returns to the overview.
+  const sent = formData.get("back");
+  const back = sent === "builder" ? "builder" : sent === "setup" ? "setup" : "overview";
   const { user, opening, access } = await openingFor(openingId, "view");
-  const target = back === "builder" ? `/hiring/openings/${opening.id}/assessment/edit` : `/hiring/openings/${opening.id}`;
+  const base = `/hiring/openings/${opening.id}`;
+  const target = back === "builder" ? `${base}/assessment/edit` : base;
+  // The wizard hears a refusal on its publish step; a success opens the overview with the invite Sheet.
+  const refused = (notice: PublishNotice) => (back === "setup" ? `${base}/setup?publish=${notice}#publish` : `${target}?publish=${notice}`);
   // A closed opening is history: say so before the role check, which would answer "your role cannot".
-  if (opening.status === "CLOSED") redirect(`${target}?publish=closed`);
+  if (opening.status === "CLOSED") redirect(refused("closed"));
   if (!access.edit) throw new ForbiddenError("opening:write");
   let destination: string;
   try {
     const result = await publishDraft(user.orgId, opening.id, user.id);
-    destination = result.ok ? `${target}?published=${result.number}` : `${target}?publish=refused`;
+    destination = result.ok ? `${target}?published=${result.number}${back === "setup" ? "&invite=1" : ""}` : refused("refused");
   } catch (error) {
     const notice = noticeFor(error);
     if (!notice) throw error;
-    destination = `${target}?publish=${notice}`;
+    destination = refused(notice);
   }
   revalidatePath("/hiring/openings", "layout");
   // redirect() throws, so it stays outside the try.

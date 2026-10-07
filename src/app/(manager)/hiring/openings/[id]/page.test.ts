@@ -95,13 +95,13 @@ import OverviewPage from "./page";
 import { Button } from "@/components/ui/button";
 import { InviteSheet } from "@/components/hiring/invite/invite-sheet";
 import { OpeningHeader } from "./opening-header";
-import { PUBLISHED_NOTICE_ID, PublishFooter, PublishLink, PublishSwitch, SETUP_HEADING_ID } from "./publish-view";
+import { PUBLISHED_NOTICE_ID, PublishFooter, PublishSwitch, SETUP_HEADING_ID } from "./publish-view";
 import { Illustration } from "@/components/visual/illustrations";
 import { managerT } from "@/i18n/manager";
-import Link from "next/link";
 import { HashAwareLink } from "@/components/manager/hash-aware-link";
 import { PathSteps } from "@/components/visual/path-steps";
 import { StepScreen } from "@/components/visual/step-screen";
+import { startDraftAction } from "./assessment/edit/actions";
 
 const LIVE = { id: VERSION, number: 1, status: "PUBLISHED", publishedAt: NOW, previewedAt: NOW, updatedAt: NOW };
 
@@ -205,6 +205,32 @@ describe("the overview's invite button (Task 19 ruling 2)", () => {
     const sheets = find(action, ofType(InviteSheet));
     expect(sheets).toHaveLength(1);
     expect(sheets[0].props.opening).toMatchObject({ id: OPENING, live: true, evaluators: 1 });
+  });
+
+  it("opens the Sheet by itself right after the wizard's 'Yayınla' (?published=&invite=1), and only then (HIRING-UX 5.20)", async () => {
+    sp = { published: "1", invite: "1" };
+    expect(find(header(await render()).props.action as ReactElement, ofType(InviteSheet))[0].props.initialOpen).toBe(true);
+    sp = { invite: "1" };
+    expect(find(header(await render()).props.action as ReactElement, ofType(InviteSheet))[0].props.initialOpen).toBe(false);
+    sp = {};
+    expect(find(header(await render()).props.action as ReactElement, ofType(InviteSheet))[0].props.initialOpen).toBe(false);
+  });
+
+  it("offers 'Soruları düzenle' on a live opening: a new version, opened in the wizard (HIRING-UX 5.20)", async () => {
+    const page = await render();
+    const [form] = find(page, (el) => el.type === "form" && el.props.action === startDraftAction);
+    expect(form).toBeTruthy();
+    expect(find(form, (el) => el.type === "input").map((i) => [i.props.name, i.props.value])).toEqual([
+      ["openingId", OPENING],
+      ["back", "setup"],
+    ]);
+    expect(text(form)).toBe("Soruları düzenle");
+    // Not for a reviewer, and not while a draft already waits (its setup card leads to the wizard).
+    viewer = { role: "REVIEWER", edit: false };
+    expect(find(await render(), (el) => el.type === "form" && el.props.action === startDraftAction)).toHaveLength(0);
+    viewer = { role: "OWNER", edit: true };
+    state = { draft: DRAFT, live: LIVE, content: ready(), problems: [] };
+    expect(find(await render(), (el) => el.type === "form" && el.props.action === startDraftAction)).toHaveLength(0);
   });
 
   it("waits with the Candidates tab's reason for a reviewer, and asks nothing about invitable openings", async () => {
@@ -351,14 +377,13 @@ describe("a draft's control view and its setup path (4.5, H7)", () => {
     invited = 0;
   });
 
-  it("has one filled button, 'Kuruluma devam et', to the path's next step, and no 'Yayınla' in the header", async () => {
+  it("has one filled button, 'Kuruluma devam et', to the wizard's step for the path's next step, and no 'Yayınla' in the header (HIRING-UX 5.20)", async () => {
     const page = await render();
     const action = header(page).props.action as ReactElement;
     expect(text(action)).toBe("Kuruluma devam et");
-    // B-M6: drawn through HashAwareLink, a Next link for a target without a hash.
+    // A hash on another page: HashAwareLink draws a plain anchor, so the wizard hears the hash (W3).
     const [next] = find(action, ofType(HashAwareLink));
-    expect(next.props.href).toBe(`${BASE}/assessment/preview`);
-    expect((HashAwareLink(next.props as unknown as Parameters<typeof HashAwareLink>[0]) as ReactElement).type).toBe(Link);
+    expect(next.props.href).toBe(`${BASE}/setup#publish`);
     expect(text(action)).not.toContain("Yayınla");
     // No setup line on the overview itself: its setup card says the same one line lower.
     expect(header(page).props.setup).toBeUndefined();
@@ -366,7 +391,7 @@ describe("a draft's control view and its setup path (4.5, H7)", () => {
     expect(body).toContain("Yayına hazırlık");
     expect(body).toContain("Kurulum 3 / 5");
     expect(body).toContain("2 adım kaldı.");
-    // The current step (the advised preview) offers its page and "Atla ›"; the last step is "Yayınla".
+    // The current step (the advised preview) is done in the wizard's publish step; no "Atla" any more.
     const steps = find(page, ofType(PathSteps))[0].props.steps as Array<{ title: string; state: string; action?: ReactNode }>;
     expect(steps.map((s) => [s.title, s.state])).toEqual([
       ["Değerlendirmeyi kur", "done"],
@@ -375,19 +400,17 @@ describe("a draft's control view and its setup path (4.5, H7)", () => {
       ["Adayın göreceğini önizle", "current"],
       ["Yayınla", "todo"],
     ]);
-    expect(text(steps[3].action)).toBe("ÖnizleAtla");
-    expect(find(steps[3].action, (el) => typeof el.props.href === "string").map((l) => l.props.href)).toEqual([`${BASE}/assessment/preview`, `${BASE}?skip=preview`]);
-    // M6: "Atla" keeps the scroll place.
-    expect(find(steps[3].action, ofType(Link))[0].props.scroll).toBe(false);
+    expect(text(steps[3].action)).toBe("Yayın özetine bak");
+    expect(find(steps[3].action, (el) => typeof el.props.href === "string").map((l) => l.props.href)).toEqual([`${BASE}/setup#publish`]);
   });
 
-  it("goes on to the publish summary as a plain anchor once the advice is skipped (?skip=)", async () => {
-    sp = { skip: "preview" };
-    const action = header(await render()).props.action as ReactElement;
-    // M3: the summary opens as a marked history entry (PublishLink), a plain anchor without JavaScript.
-    const [anchor] = find(action, ofType(PublishLink));
-    expect(anchor.props.href).toBe(`${BASE}#publish`);
-    expect(text(anchor)).toBe("Kuruluma devam et");
+  it("sends a draft whose questions are not ready to the wizard's questions", async () => {
+    state = { ...state, content: content([stage("s1", [activity("a1", { competencyIds: ["c1"], prompt: { tr: "", en: "" } })])], { id: "d" }), problems: [{ code: "EMPTY_PROMPT", activityId: "a1" }] };
+    const page = await render();
+    const [next] = find(header(page).props.action as ReactElement, ofType(HashAwareLink));
+    expect(next.props.href).toBe(`${BASE}/setup#questions`);
+    const steps = find(page, ofType(PathSteps))[0].props.steps as Array<{ action?: ReactNode }>;
+    expect(find(steps[0].action, (el) => typeof el.props.href === "string").map((l) => l.props.href)).toEqual([`${BASE}/setup#questions`]);
   });
 
   it("draws the publish summary for an editor: what goes live, each row with its change link, and the one filled 'Yayınla'", async () => {
@@ -404,7 +427,7 @@ describe("a draft's control view and its setup path (4.5, H7)", () => {
     expect(rows[1].value).toBe("1 değerlendirici · karar: Sahip");
     expect(rows[3].value).toBe("Önizlenmedi; önerilir, yayını engellemez.");
     // A hash target on team and rules is a step of its flow (Task 21: #team-members, #contact-deadline).
-    expect(rows.map((r) => r.edit?.href)).toEqual([`${BASE}/assessment/edit`, `${BASE}/settings#team-members`, `${BASE}/settings#contact-deadline`, `${BASE}/assessment/preview`]);
+    expect(rows.map((r) => r.edit?.href)).toEqual([`${BASE}/setup#questions`, `${BASE}/settings#team-members`, `${BASE}/settings#contact-deadline`, `${BASE}/assessment/preview`]);
   });
 
   it("makes 'Yayınla' wait with the gate's first problem and a 'Düzelt' link to its place", async () => {
@@ -587,7 +610,7 @@ describe("the published notice takes the focus once the summary is gone (B-M2)",
 });
 
 describe("a disabled member keeps the team step open (B-M1)", () => {
-  it("names the disabled member on the path and leads to the team's members step", async () => {
+  it("names the disabled member on the path and leads to the wizard's publish step, where the team is chosen", async () => {
     status = "DRAFT";
     state = { draft: DRAFT, live: null, content: ready(), problems: [] };
     invited = 0;
@@ -596,7 +619,7 @@ describe("a disabled member keeps the team step open (B-M1)", () => {
     const steps = find(page, ofType(PathSteps))[0].props.steps as Array<{ title: string; state: string; detail?: string }>;
     expect([steps[2].title, steps[2].state, steps[2].detail]).toEqual(["Ekibi ata", "current", "Ekipte devre dışı bir kullanıcı var. Ekip ve kurallarda onu çıkar ya da yerine birini ekle."]);
     expect(text(header(page).props.action as ReactElement)).toBe("Kuruluma devam et");
-    expect(dump(header(page).props.action as ReactNode)).toContain(`${BASE}/settings#team-members`);
+    expect(dump(header(page).props.action as ReactNode)).toContain(`${BASE}/setup#publish`);
   });
 });
 
@@ -614,24 +637,15 @@ describe("small fixes of round 1", () => {
     expect(en("hiringCommon.rulesTeam", { count: 3, decider: "Kadir" })).toBe("3 evaluators · decides: Kadir");
   });
 
-  it("M3: the path's last step opens the summary through PublishLink", async () => {
+  it("M3, HIRING-UX 5.20: the path's last step opens the wizard's publish step", async () => {
     status = "DRAFT";
     state = { draft: DRAFT, live: null, content: ready(), problems: [] };
     invited = 0;
     sp = { skip: "preview" };
     const steps = find(await render(), ofType(PathSteps))[0].props.steps as Array<{ title: string; action?: ReactNode }>;
-    const [link] = find(steps[4].action, ofType(PublishLink));
-    expect(link.props.href).toBe(`${BASE}#publish`);
+    const [link] = find(steps[4].action, ofType(HashAwareLink));
+    expect(link.props.href).toBe(`${BASE}/setup#publish`);
     expect(text(link)).toBe("Yayın özetine bak");
-  });
-
-  it("M6: 'Atla' keeps ?lang= when the address has one", async () => {
-    status = "DRAFT";
-    state = { draft: DRAFT, live: null, content: ready(), problems: [] };
-    invited = 0;
-    sp = { lang: "en" };
-    const steps = find(await render(), ofType(PathSteps))[0].props.steps as Array<{ action?: ReactNode }>;
-    expect(find(steps[3].action, ofType(Link))[0].props.href).toBe(`${BASE}?skip=preview&lang=en`);
   });
 });
 

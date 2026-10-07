@@ -3,6 +3,7 @@ import type { Locale } from "@/i18n/locale";
 import { canDecide, type Viewer } from "@/solutions/hiring/rules/access";
 import { previewIsCurrent } from "@/solutions/hiring/rules/versions";
 import type { WorkingState } from "@/solutions/hiring/server/working";
+import { wizardNext } from "@/components/hiring/wizard/setup-model";
 import { describeProblem } from "./problems";
 import { readinessRows, rowHref, type ReadinessKey, type ReadinessRow, type ReadinessState } from "./readiness";
 
@@ -40,15 +41,14 @@ export function setupProgress(rows: ReadonlyArray<{ key: ReadinessKey; state: Re
 }
 
 /**
- * KG3, H7: where "Kuruluma devam et" and a cockpit row's "Sıradaki: … ›" go:
- * the first step neither done nor skipped, to the place that fixes it (the
- * row's href), and the publish summary when nothing is left before it.
+ * KG3, H7, HIRING-UX 5.20: where "Kuruluma devam et" and a cockpit row's
+ * "Sıradaki: … ›" go. The key names the first step neither done nor skipped;
+ * the place is the wizard: its questions while the assessment, its anchors or
+ * its weights are open, its publish step (team, deadline, preview) otherwise.
  */
 export function setupNext(rows: ReadonlyArray<Pick<SetupRow, "key" | "state" | "href">>, openingId: string, skipped: readonly ReadinessKey[] = []): SetupNext {
-  const base = `/hiring/openings/${openingId}`;
   const next = rows.find((r) => !passed(r, skipped));
-  if (!next) return { key: "publish", href: `${base}#publish` };
-  return { key: next.key, href: next.href ?? base };
+  return { key: next?.key ?? "publish", href: wizardNext(openingId, rows) };
 }
 
 /**

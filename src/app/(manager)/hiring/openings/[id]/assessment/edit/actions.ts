@@ -61,7 +61,8 @@ async function run<T>(openingId: string, work: (orgId: string) => Promise<T>): P
 /**
  * "Düzenlemeye başla": opens v(n+1) as a copy of the live version (carry 6:
  * editing a live version is explicit). The builder and the AI screen (ruling
- * C5) both offer it; `back=ai` returns to the AI screen, anything else to the builder.
+ * C5) both offer it; `back=ai` returns to the AI screen, `back=setup` opens the wizard's
+ * questions (HIRING-UX 5.20), anything else the builder.
  */
 export async function startDraftAction(formData: FormData) {
   const openingId = String(formData.get("openingId") ?? "");
@@ -70,7 +71,8 @@ export async function startDraftAction(formData: FormData) {
   // A closed opening is history: say so before the role check, which would answer "your role cannot".
   if (opening.status === "CLOSED") redirect(`${screen}?draft=closed`);
   if (!access.edit) throw new ForbiddenError("opening:write");
-  let destination = screen;
+  // "Soruları düzenle" on a live opening (HIRING-UX 5.20) opens the new version in the wizard; a refusal is said on the builder.
+  let destination = formData.get("back") === "setup" ? `/hiring/openings/${opening.id}/setup#questions` : screen;
   try {
     await ensureDraftVersion(user.orgId, opening.id);
   } catch (error) {

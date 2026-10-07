@@ -264,6 +264,13 @@ describe("startDraftAction", () => {
     expect(v.ensureDraftVersion).toHaveBeenCalledWith("o1", OPENING);
   });
 
+  it("opens the next version in the wizard's questions for 'Soruları düzenle' (back=setup, HIRING-UX 5.20)", async () => {
+    v.ensureDraftVersion.mockResolvedValue({ versionId: "v2", created: true });
+    const f = form();
+    f.set("back", "setup");
+    await expect(startDraftAction(f)).rejects.toThrow(`redirect:/hiring/openings/${OPENING}/setup#questions`);
+  });
+
   it("says a closed opening stays as it is, before the role check", async () => {
     viewer = { status: "CLOSED", edit: false };
     await expect(startDraftAction(form())).rejects.toThrow(`redirect:${builder}?draft=closed`);

@@ -1,35 +1,26 @@
-import { Copy, FilePlus, FileText, LayoutTemplate } from "lucide-react";
 import { describe, expect, it } from "vitest";
 import { managerMessagesFor } from "@/i18n/manager";
-import { startChoices } from "./start-choices";
+import { alternativeStarts } from "./start-choices";
 
-describe("the start choices (manager mockup 4, less AI)", () => {
-  it("lists the ready template first, then copy, the job ad and blank; copy only when there is something to copy", () => {
-    expect(startChoices({ hasCopySources: true }).map((c) => c.value)).toEqual(["TEMPLATE", "COPY", "AI", "BLANK"]);
-    expect(startChoices({ hasCopySources: false }).map((c) => c.value)).toEqual(["TEMPLATE", "AI", "BLANK"]);
+describe("the other ways in (HIRING-UX 5.20)", () => {
+  it("lists the ready template, copying and writing your own; copying only when there is something to copy", () => {
+    expect(alternativeStarts({ hasCopySources: true }).map((c) => c.value)).toEqual(["TEMPLATE", "COPY", "BLANK"]);
+    expect(alternativeStarts({ hasCopySources: false }).map((c) => c.value)).toEqual(["TEMPLATE", "BLANK"]);
   });
 
-  it("draws plain icons, never sparkles", () => {
-    expect(startChoices({ hasCopySources: true }).map((c) => c.icon)).toEqual([LayoutTemplate, Copy, FileText, FilePlus]);
-  });
-
-  it("gives the 'recommended' badge to the ready template only", () => {
-    expect(startChoices({ hasCopySources: true }).map((c) => c.badge ?? null)).toEqual(["recommended", null, null, null]);
-  });
-
-  it("names the job-ad start without 'AI' and without 'recommended', in both languages", () => {
-    for (const locale of ["tr", "en"] as const) {
-      const m = managerMessagesFor(locale).hiringNew;
-      expect(m.startAi).not.toMatch(/\bAI\b|Önerilen|Recommended/);
-      expect(m.startAiBody).not.toMatch(/\bAI\b|Önerilen|Recommended/);
-      expect(m.summaryAi).not.toMatch(/\bAI\b/);
-    }
-  });
-
-  it("says the ready-template start in both languages", () => {
-    const tr = managerMessagesFor("tr").hiringNew;
-    const en = managerMessagesFor("en").hiringNew;
-    expect([tr.startTemplate, tr.recommended]).toEqual(["Hazır şablondan başla", "Önerilen"]);
-    expect([en.startTemplate, en.recommended]).toEqual(["Start from a ready template", "Recommended"]);
+  it("names each link by what it does, in both languages, and none is 'recommended'", () => {
+    const tr = managerMessagesFor("tr").hiringWizard;
+    const en = managerMessagesFor("en").hiringWizard;
+    expect(alternativeStarts({ hasCopySources: true }).map((c) => tr[c.label])).toEqual([
+      "Hazır bir rol şablonundan başla",
+      "Önceki bir alımın sorularını kopyala",
+      "Soruları kendim yazacağım",
+    ]);
+    expect(alternativeStarts({ hasCopySources: true }).map((c) => en[c.label])).toEqual([
+      "Start from a ready role template",
+      "Copy the questions of an earlier hiring",
+      "I'll write the questions myself",
+    ]);
+    for (const m of [tr, en]) expect(Object.values(m).join(" ")).not.toMatch(/Önerilen|Recommended|Bu rol için hazır/);
   });
 });
