@@ -81,30 +81,30 @@ function gap(
 const grammarItems: SeedItem[] = [
   // ---------------------------------------------------------------- EASY
   choice("modalverb_subjektiv", "EASY",
-    "Herr Brandt ___ von den Plänen nichts gewusst haben. So jedenfalls stellt er es selbst dar.",
+    "Formen Sie den Satz mit einem Modalverb um, ohne die Bedeutung zu verändern: „Herr Brandt behauptet, er habe von den Plänen nichts gewusst.“\n→ Herr Brandt ___ von den Plänen nichts gewusst haben.",
     ["soll", "muss", "will", "dürfte"], "c",
-    "Subjektives \"wollen\": Der Satzgegenstand behauptet etwas über sich selbst (\"so stellt er es selbst dar\"). \"soll\" gibt dagegen die Behauptung anderer wieder, \"muss\" und \"dürfte\" eine Vermutung des Sprechers."),
+    "Subjektives \"wollen\" + Infinitiv Perfekt: Der Satzgegenstand behauptet etwas über sich selbst, wie in der Vorlage (\"Herr Brandt behauptet\"). \"soll\" gäbe die Behauptung anderer wieder, \"muss\" und \"dürfte\" eine Vermutung des Sprechers."),
   choice("konnektor", "EASY",
-    "Er hat den Bericht nicht einmal gelesen, ___ ihn kommentiert.",
-    ["geschweige denn", "zumal", "wohingegen", "vielmehr"], "a",
-    "\"geschweige denn\" steigert eine verneinte Aussage (nicht einmal A, also erst recht nicht B) und steht ohne Verbendstellung. \"zumal\" und \"wohingegen\" verlangen einen Nebensatz mit Verbendstellung und passen inhaltlich nicht."),
+    "Der Vorschlag fand im Vorstand breite Zustimmung, ___ einige Mitglieder Bedenken wegen der Kosten äußerten.",
+    ["wenngleich", "zumal", "sofern", "indem"], "a",
+    "\"wenngleich\" ist konzessiv (= obwohl): Die Zustimmung kam trotz der Bedenken zustande. \"zumal\" begründet zusätzlich, \"sofern\" ist konditional, \"indem\" modal; keiner dieser Zusammenhänge ergibt hier einen Sinn."),
   gap("praeposition_genitiv", "EASY",
-    "{{g1}} aller Bemühungen konnte die Frist nicht eingehalten werden.",
-    ["Ungeachtet"],
-    "\"ungeachtet\" (+ Genitiv) ist konzessiv wie \"trotz\". \"angesichts\" ist kausal, \"mangels\" bedeutet \"weil etwas fehlt\", \"zufolge\" leitet eine Quelle ein; alle passen inhaltlich nicht.",
-    ["Angesichts", "Ungeachtet", "Mangels", "Zufolge"]),
+    "{{g1}} eines Stromausfalls stand die Produktion mehrere Stunden lang still.",
+    ["Infolge"],
+    "\"infolge\" (+ Genitiv) nennt eine Ursache, aus der etwas folgt. \"ungeachtet\" ist konzessiv (= trotz), \"anstelle\" bedeutet Ersatz, \"zwecks\" nennt einen Zweck; alle passen inhaltlich nicht.",
+    ["Ungeachtet", "Infolge", "Anstelle", "Zwecks"]),
   choice("konditional_inversion", "EASY",
     "___ sich der Termin verschieben, informieren wir Sie umgehend.",
     ["Wenn", "Falls", "Würde", "Sollte"], "d",
     "Uneingeleiteter Konditionalsatz mit \"sollte\" + Infinitiv (Verb an erster Stelle). \"Wenn\"/\"Falls\" bräuchten \"verschiebt\"; \"Würde\" passt nicht zum Indikativ im Hauptsatz."),
   gap("konjunktiv_i", "EASY",
-    "Die Pressesprecherin erklärte, das Unternehmen {{g1}} die Vorwürfe bereits intern geprüft. (haben, Konjunktiv I)",
-    ["habe"],
-    "Indirekte Rede, 3. Person Singular: Konjunktiv I von \"haben\" ist \"habe\" und unterscheidet sich vom Indikativ, daher kein Ersatz durch \"hätte\" nötig."),
+    "Der Sprecher versicherte, man {{g1}} sich der Tragweite der Entscheidung durchaus bewusst. (sein, Konjunktiv I)",
+    ["sei"],
+    "Indirekte Rede, 3. Person Singular (\"man\"): Konjunktiv I von \"sein\" ist \"sei\" und unterscheidet sich vom Indikativ \"ist\", daher kein Ersatz durch \"wäre\" nötig."),
   choice("funktionsverbgefuege", "EASY",
-    "Der neue Tarifvertrag tritt am ersten Januar in ___.",
-    ["Betrieb", "Kraft", "Wirkung", "Gültigkeit"], "b",
-    "Feste Verbindung: \"in Kraft treten\". Die anderen Nomen sind bedeutungsnah, bilden aber mit \"treten\" keine feste Wendung."),
+    "Die Geschäftsleitung hat den Beschäftigten für das kommende Jahr eine Prämie in ___ gestellt.",
+    ["Rechnung", "Aussicht", "Abrede", "Kraft"], "b",
+    "Funktionsverbgefüge: \"etwas in Aussicht stellen\" (= ankündigen, versprechen). \"in Rechnung stellen\" (berechnen) und \"in Abrede stellen\" (bestreiten) ergeben hier keinen Sinn, \"in Kraft\" verbindet sich mit \"treten\" oder \"setzen\", nicht mit \"stellen\"."),
   choice("lexik_nuance", "EASY",
     "Die Aufgabe war nur ___ einfach; in Wahrheit steckten zahlreiche Fallstricke darin.",
     ["anscheinend", "offenbar", "scheinbar", "vermutlich"], "c",
@@ -152,10 +152,10 @@ const grammarItems: SeedItem[] = [
     ["umgefahren", "überfahren", "umfahren", "durchgefahren"], "c",
     "Untrennbares \"umfahren\" (Betonung auf -fahren) = um etwas herumfahren, Partizip ohne ge-: \"umfahren\". Trennbares \"umfahren\" (umgefahren) und \"überfahren\" bedeuten, dass das Hindernis getroffen wird, was dem Kontext widerspricht."),
   gap("konnektor", "MID",
-    "Die Zentrale arbeitet bereits papierlos, {{g1}} die Filialen ihre Akten noch in Papierform führen.",
-    ["wohingegen"],
-    "\"wohingegen\" drückt einen Gegensatz zwischen zwei Sachverhalten aus. \"zumal\" ist begründend, \"sofern\" konditional, \"indem\" modal (Art und Weise).",
-    ["zumal", "sofern", "indem", "wohingegen"]),
+    "Die Kundendaten wurden an Dritte weitergegeben, {{g1}} die Betroffenen vorher gefragt worden wären.",
+    ["ohne dass"],
+    "\"ohne dass\" verneint einen erwarteten Begleitumstand; der Konjunktiv II (\"gefragt worden wären\") ist nach \"ohne dass\" üblich, weil der Sachverhalt nicht eingetreten ist. \"zumal\" ist begründend, \"sofern\" konditional, \"damit\" final; keines passt zu Sinn und Modus.",
+    ["zumal", "sofern", "damit", "ohne dass"]),
   choice("idiomatik", "MID",
     "Ob das Projekt im nächsten Jahr weiter finanziert wird, steht noch in den ___.",
     ["Wolken", "Sternen", "Karten", "Himmeln"], "b",
@@ -172,9 +172,9 @@ const grammarItems: SeedItem[] = [
     ], "b",
     "\"so sehr ... auch\" ist konzessiv, entspricht also \"trotz\". Die anderen Sätze machen daraus einen kausalen, finalen oder proportionalen Zusammenhang."),
   choice("konjunktiv_i", "HARD",
-    "Welche Form verlangt die indirekte Rede in einem formellen Protokoll? Im Protokoll heißt es, die Beschäftigten ___ von der Änderung erst aus der Presse erfahren.",
-    ["haben", "habe", "hatten", "hätten"], "d",
-    "Konjunktiv I \"(sie) haben\" ist mit dem Indikativ identisch, deshalb wird er durch den Konjunktiv II \"hätten\" ersetzt. \"habe\" ist Singular, \"hatten\" Indikativ Präteritum."),
+    "Welche Form verlangt die indirekte Rede in einem formellen Protokoll? Im Protokoll heißt es, die Beschäftigten ___ von der Änderung erst aus der Presse unterrichtet worden.",
+    ["sind", "wären", "waren", "seien"], "d",
+    "Konjunktiv I \"(sie) seien\" unterscheidet sich vom Indikativ \"sind\" und ist deshalb im formellen Bericht die Standardform. Der Konjunktiv II \"wären\" ist nur als Ersatzform vorgesehen, wenn Konjunktiv I und Indikativ gleich lauten; \"sind\" und \"waren\" sind Indikativ."),
   gap("konjunktiv_i", "HARD",
     "Formen Sie die Anweisung in den Stil einer Gebrauchsanleitung um (Konjunktiv I mit „man“): „Beachten Sie, dass alle Angaben ohne Gewähr sind.“\n→ Man {{g1}}, dass alle Angaben ohne Gewähr sind.",
     ["beachte"],
@@ -195,7 +195,7 @@ const grammarItems: SeedItem[] = [
     ["die", "der", "zur", "in"]),
   choice("konzessiv", "HARD",
     "___ der Vorschlag auch noch so durchdacht sein, er ist schlicht zu teuer.",
-    ["Soll", "Will", "Mag", "Muss"], "c",
+    ["Darf", "Will", "Mag", "Muss"], "c",
     "Konzessiv mit \"mögen\": \"Mag ... auch noch so ..., (Hauptsatz)\" = auch wenn er noch so durchdacht ist. Die anderen Modalverben haben keine konzessive Lesart."),
   choice("wortstellung", "HARD",
     "Sie wusste, dass er an der Sitzung nicht ___.",
@@ -211,6 +211,8 @@ const grammarItems: SeedItem[] = [
       "Unternehmen reagieren darauf zunehmend mit betriebsinternen Kursen, deren Wirksamkeit allerdings umstritten ist. " +
       "Kritiker bemängeln, dass solche Programme häufig eher der Außendarstellung dienen als der tatsächlichen Qualifizierung.",
     last: "Entscheidend dürfte daher sein, ob Lernen als fester Bestandteil der Arbeitszeit anerkannt wird.",
+    // g2 rasche/rasante are equally correct here.
+    variants: { 2: ["ante"] },
   }),
 ];
 
@@ -297,6 +299,8 @@ Genau hier liegt das Problem. Eine Kennzahl ist ein Stellvertreter: Sie steht f�
 
 Man könnte nun einwenden, das seien Kinderkrankheiten, die sich mit klügeren Kennzahlen beheben ließen. Dieser Einwand ist nicht falsch, aber er unterschätzt die Fantasie der Gemessenen. Jede neue Zahl erzeugt neue Ausweichbewegungen, und so entsteht ein Wettlauf, bei dem das Controlling stets einen Schritt zu spät kommt. Am Ende wird nicht mehr die Arbeit optimiert, sondern ihre Darstellung.
 
+Neu ist diese Beobachtung übrigens nicht. Ein britischer Ökonom hat schon vor Jahrzehnten festgehalten, dass eine Kennzahl ihre Aussagekraft verliert, sobald man sie zum Ziel erklärt. Dass dieser Befund in Managementseminaren gern zitiert und im Alltag ebenso gern vergessen wird, gehört zu den kleineren Paradoxien des Berufslebens. Man nickt, wenn er an die Wand geworfen wird, und kehrt anschließend zu seinem Dashboard zurück, als hätte man nichts gehört.
+
 Hinzu kommt ein subtilerer Effekt. Was sich zählen lässt, gewinnt an Gewicht, was sich nicht zählen lässt, verliert es, und zwar unabhängig davon, wie wichtig es tatsächlich ist. Die Kollegin, die neue Mitarbeiter einarbeitet, Konflikte entschärft, bevor sie eskalieren, oder ein Projekt rettet, indem sie im richtigen Moment die richtige Frage stellt, taucht in keiner Auswertung auf. Ihre Leistung ist nicht unsichtbar, weil sie gering wäre, sondern weil sie in den Zwischenräumen stattfindet, die keine Software erfasst. Es hätte schon eine gewisse Ironie, wenn ausgerechnet diejenigen, die eine Organisation zusammenhalten, bei der nächsten Sparrunde als Erste auffielen, weil ihre Kurven so blass aussehen.
 
 Schließlich verändert die lückenlose Erfassung auch das Verhältnis zwischen denen, die messen, und denen, die gemessen werden. Wer weiß, dass jede Minute protokolliert wird, schließt daraus, dass Vertrauen offenbar nicht vorgesehen ist, und verhält sich entsprechend: vorsichtig, regelkonform, ohne Neigung zu jenen kleinen Abweichungen vom Plan, aus denen gelegentlich die besten Ideen entstehen. Viele Unternehmen beschwören in ihren Leitbildern genau das, was ihre Dashboards systematisch entmutigen: Eigeninitiative, Mut zum Risiko, unternehmerisches Denken. Man kann jedoch nicht gleichzeitig Selbstständigkeit verlangen und jeden Handgriff kontrollieren, ohne dass die Beschäftigten merken, welche der beiden Botschaften die Organisation tatsächlich ernst meint.
@@ -312,7 +316,7 @@ Vielleicht wäre schon viel gewonnen, wenn Führungskräfte sich angewöhnten, b
     title: "Lob des Unfertigen",
     topic: "Arbeitskultur",
     body: `A
-Wer in einer Besprechung einen Gedanken äußert, der noch nicht zu Ende gedacht ist, tut dies in vielen Organisationen mit einer entschuldigenden Vorbemerkung: „Das ist jetzt nur so eine Idee“ oder „Ich habe das noch nicht durchgerechnet“. Solche Floskeln verraten mehr über die Kultur eines Hauses als jedes Leitbild an der Wand. Sie zeigen, dass Unfertiges als Makel gilt, als etwas, das man eigentlich nicht vorzeigen sollte, bevor es poliert, abgesichert und von allen Seiten gegen Einwände verteidigt ist. Man kennt diese Formeln so gut, dass man sie kaum noch hört; dabei sind sie kleine Rituale der Selbstabsicherung, mit denen sich der Sprecher vorsorglich von seinem eigenen Gedanken distanziert.
+Wer in einer Besprechung einen Gedanken äußert, der noch nicht zu Ende gedacht ist, tut dies in vielen Organisationen mit einer entschuldigenden Vorbemerkung: „Das ist jetzt nur so eine Idee“ oder „Ich habe das noch nicht durchgerechnet“. Solche Floskeln verraten mehr über die Kultur eines Hauses als jedes Leitbild an der Wand. Sie zeigen, dass Unfertiges als Makel gilt, als etwas, das man eigentlich nicht vorzeigen sollte, bevor es poliert, abgesichert und von allen Seiten gegen Einwände verteidigt ist. Man kennt diese Formeln so gut, dass man sie kaum noch hört; dabei sind sie kleine Rituale der Selbstabsicherung, mit denen sich der Sprecher vorsorglich von seinem eigenen Gedanken distanziert. Bemerkenswert ist, dass auch erfahrene Kräfte zu solchen Formeln greifen, also Menschen, deren Kompetenz eigentlich niemand in Zweifel zieht.
 
 B
 Diese Haltung hat eine nachvollziehbare Herkunft. In Schule, Ausbildung und Studium werden fast ausschließlich Ergebnisse bewertet; der Weg dorthin, mit seinen Umwegen und Sackgassen, bleibt unsichtbar und bringt keine Punkte. Auch in Zeugnissen und Beurteilungen taucht der mühsame, tastende Teil der Arbeit selten auf; gelobt wird, wer liefert, nicht, wer klug gesucht hat. Wer jahrelang gelernt hat, dass nur das fertige Produkt zählt, überträgt dieses Muster später auf den Beruf. Hinzu kommt die Sorge um den eigenen Ruf: Ein halbgarer Vorschlag könnte, so die Befürchtung, das Bild der eigenen Kompetenz beschädigen, das man sich mühsam aufgebaut hat. Lieber schweigt man, bis man sicher ist.
@@ -321,7 +325,7 @@ C
 Die Kosten dieser Vorsicht sind beträchtlich, auch wenn sie in keiner Bilanz auftauchen. Ideen, die zu lange im Verborgenen reifen, werden oft erst dann vorgestellt, wenn bereits viel Zeit und Mühe in sie geflossen sind. Stellt sich dann heraus, dass eine grundlegende Annahme nicht trägt, ist die Enttäuschung groß und die Bereitschaft, den Irrtum einzugestehen, entsprechend gering. Nicht selten wird ein Vorhaben dann weiterverfolgt, obwohl alle Beteiligten ahnen, dass es auf schwachen Füßen steht. Psychologisch ist das gut nachvollziehbar: Je mehr man investiert hat, desto schwerer fällt es, sich von einer Sache zu trennen, und desto eher sucht man nach Gründen, sie fortzusetzen. Das Verborgene schützt also nicht nur vor fremder Kritik, es macht auch unempfindlich gegen die eigene. Hätte man den Entwurf früher gezeigt, wäre der Denkfehler womöglich in einer Viertelstunde aufgefallen.
 
 D
-Es wäre allerdings naiv, nun das Gegenteil zu fordern und jede spontane Eingebung sofort in die Runde zu werfen. Nicht jeder Gedanke verdient die Aufmerksamkeit von zehn Menschen, und wer seine Kolleginnen und Kollegen mit ungeordneten Einfällen überschüttet, verschiebt lediglich die Arbeit des Sortierens auf andere. Wer jede halbe Idee laut denkt, verliert zudem an Glaubwürdigkeit: Irgendwann hört man ihm nicht mehr genau zu, weil man gelernt hat, dass das meiste ohnehin wieder verworfen wird. Offenheit ist also keine Tugend an sich, sondern ein Werkzeug, und wie jedes Werkzeug kann man es falsch einsetzen. Das Unfertige zu zeigen, ist nur dann ein Gewinn, wenn klar ist, wozu man es zeigt: um eine Richtung zu prüfen, eine Lücke zu entdecken, einen Einwand frühzeitig zu hören.
+Es wäre allerdings naiv, nun das Gegenteil zu fordern und jede spontane Eingebung sofort in die Runde zu werfen. Nicht jeder Gedanke verdient die Aufmerksamkeit von zehn Menschen, und wer seine Kolleginnen und Kollegen mit ungeordneten Einfällen überschüttet, verschiebt lediglich die Arbeit des Sortierens auf andere. Wer jede halbe Idee laut denkt, verliert zudem an Glaubwürdigkeit: Irgendwann hört man ihm nicht mehr genau zu, weil man gelernt hat, dass das meiste ohnehin wieder verworfen wird. Hinzu kommt, dass nicht jede Runde der richtige Ort dafür ist: In einer Sitzung, in der eine Entscheidung fallen muss, stiftet ein halber Gedanke eher Verwirrung als Klarheit. Offenheit ist also keine Tugend an sich, sondern ein Werkzeug, und wie jedes Werkzeug kann man es falsch einsetzen. Das Unfertige zu zeigen, ist nur dann ein Gewinn, wenn klar ist, wozu man es zeigt: um eine Richtung zu prüfen, eine Lücke zu entdecken, einen Einwand frühzeitig zu hören.
 
 E
 Damit dies gelingt, braucht es mehr als den gut gemeinten Appell, offener zu sein. Entscheidend ist, wie auf Unfertiges reagiert wird. Wenn ein erster Entwurf mit derselben Strenge beurteilt wird wie ein abgeschlossener Bericht, wird niemand ein zweites Mal etwas Unfertiges vorlegen. Einige Teams haben deshalb feste Formate eingeführt, in denen ausdrücklich nur Rohfassungen besprochen werden und in denen Kritik als Frage formuliert werden muss, nicht als Urteil. Das klingt nach einer Kleinigkeit, verändert aber spürbar den Ton. Auch Vorgesetzte haben hier eine Vorbildrolle: Wenn sie selbst gelegentlich einen unfertigen Gedanken zur Diskussion stellen und sich dabei korrigieren lassen, bewirkt das mehr als jedes Rundschreiben über Fehlerkultur.
@@ -359,7 +363,7 @@ Die Geschäftsführung hat inzwischen entschieden, das Modell fortzuführen, all
 Die Stadtwerke Lindenau suchen zum nächstmöglichen Zeitpunkt eine Referentin oder einen Referenten für Nachhaltigkeitsberichterstattung, unbefristet, in Voll- oder Teilzeit ab 28 Wochenstunden. Sie erstellen unseren jährlichen Nachhaltigkeitsbericht nach den geltenden gesetzlichen Vorgaben, koordinieren die Datenerhebung in allen Unternehmensbereichen und beraten die Geschäftsführung bei der Festlegung von Zielwerten. Wir erwarten ein abgeschlossenes Hochschulstudium der Wirtschafts-, Umwelt- oder Ingenieurwissenschaften, mehrjährige Erfahrung mit Berichtspflichten sowie ein ausgeprägtes Gespür für Zahlen und für deren verständliche Darstellung. Wir bieten flexible Arbeitszeiten, bis zu zwei Tage mobiles Arbeiten pro Woche und eine betriebliche Altersvorsorge.
 
 Anzeige B
-Die Kranbau Severin AG sucht für ein auf zwei Jahre befristetes Digitalisierungsprojekt eine Technische Redakteurin oder einen Technischen Redakteur. Sie verfassen Betriebsanleitungen und Wartungshandbücher für unsere Hebetechnik, überführen die bestehende Dokumentation in ein neues Redaktionssystem und stimmen sich eng mit der Konstruktion ab. Voraussetzung sind ein technisches Studium oder eine vergleichbare Qualifikation, Erfahrung in der Dokumentation sowie verhandlungssichere Englischkenntnisse, da ein Teil der Handbücher für internationale Kunden entsteht. Die Stelle kann vollständig im Homeoffice besetzt werden; lediglich während der zweiwöchigen Einarbeitung erwarten wir Sie an unserem Standort.
+Die Kranbau Elmshagen AG sucht für ein auf zwei Jahre befristetes Digitalisierungsprojekt eine Technische Redakteurin oder einen Technischen Redakteur. Sie verfassen Betriebsanleitungen und Wartungshandbücher für unsere Hebetechnik, überführen die bestehende Dokumentation in ein neues Redaktionssystem und stimmen sich eng mit der Konstruktion ab. Voraussetzung sind ein technisches Studium oder eine vergleichbare Qualifikation, Erfahrung in der Dokumentation sowie verhandlungssichere Englischkenntnisse, da ein Teil der Handbücher für internationale Kunden entsteht. Die Stelle kann vollständig im Homeoffice besetzt werden; lediglich während der zweiwöchigen Einarbeitung erwarten wir Sie an unserem Standort.
 
 Anzeige C
 Die Velora Versicherungsgruppe sucht für ihr Servicecenter eine Teamleitung Kundenservice, unbefristet und in Vollzeit. Sie führen ein Team von zwölf Mitarbeitenden, planen die Schichten im Rahmen unserer Servicezeiten von sieben bis zwanzig Uhr und sind erste Ansprechperson, wenn Kundenanliegen eskalieren. Erfahrung in der Personalführung setzen wir voraus, die Branche ist für uns dagegen zweitrangig: Wer bereits Teams im Handel, in der Gastronomie oder in der Logistik geführt hat, ist herzlich willkommen. Da die Aufgabe ständige Ansprechbarkeit vor Ort erfordert, ist mobiles Arbeiten in dieser Position nicht möglich. Die fachliche Schulung übernehmen wir.
@@ -519,7 +523,7 @@ const readingItems: SeedItem[] = [
   rA.tfng("detail", "MID",
     [
       ["Bei den Stadtwerken Lindenau ist die Stelle auch mit reduzierter Stundenzahl möglich.", "R"],
-      ["Die Stelle bei der Kranbau Severin AG ist unbefristet.", "F"],
+      ["Die Stelle bei der Kranbau Elmshagen AG ist unbefristet.", "F"],
       ["Das Übersetzungsbüro zahlt ein festes monatliches Honorar.", "F"],
       ["Die Velora Versicherungsgruppe zahlt Zuschläge für Abendschichten.", "NG"],
     ],
@@ -647,6 +651,8 @@ const listeningStimuli: SeedStimulus[] = [
       "Brandstätter: Im Kern darin, dass wir aus der Innenperspektive planen. Wir schauen auf unser Vorhaben, zerlegen es in Schritte, schätzen jeden Schritt und zählen zusammen. Was dabei fehlt, sind all die Dinge, die wir nicht vorhersehen können, gerade weil wir sie nicht kennen: die Lieferung, die ausbleibt, die Genehmigung, die sich verzögert, die Kollegin, die mitten im Projekt das Unternehmen verlässt. Einzeln ist jedes dieser Ereignisse unwahrscheinlich. Dass gar keines eintritt, ist aber noch unwahrscheinlicher.",
       "Moderator: Was wäre die Alternative?",
       "Brandstätter: Man nimmt bewusst die Außenperspektive ein. Man fragt also nicht zuerst: Wie lange brauchen wir für dieses Projekt? Sondern: Wie lange haben vergleichbare Projekte tatsächlich gedauert, und zwar nicht laut Plan, sondern bis zum tatsächlichen Abschluss? Diese Zahl ist meist ernüchternd, aber sie ist ein viel besserer Ausgangspunkt. Erst danach passt man an, was am eigenen Vorhaben wirklich anders ist.",
+      "Moderator: Können Sie ein Beispiel geben?",
+      "Brandstätter: Nehmen Sie eine Behörde, die ihre Software erneuern will. Intern schätzt man achtzehn Monate. Schaut man sich aber zwanzig ähnliche Vorhaben an, dann haben die im Schnitt fast drei Jahre gedauert. Die richtige Frage ist dann nicht, ob wir schneller sind als alle anderen, sondern: Was genau berechtigt uns zu dieser Annahme? Und meistens lautet die ehrliche Antwort: nicht viel.",
       "Moderator: Das klingt einleuchtend. Warum machen es dann so wenige?",
       "Brandstätter: Weil sich ein realistischer Plan schlecht verkauft. Wer in einer Sitzung sagt, das Projekt werde vermutlich doppelt so lange dauern wie erhofft, gilt schnell als Bedenkenträger. Wer dagegen einen ehrgeizigen Zeitplan präsentiert, bekommt den Zuschlag. Optimismus wird also belohnt, und zwar genau in dem Moment, in dem entschieden wird. Die Rechnung kommt später, und dann fühlt sich oft niemand mehr zuständig.",
       "Moderator: Heißt das, die Beteiligten täuschen bewusst?",
@@ -756,15 +762,6 @@ const listeningItems: SeedItem[] = [
       "Man schätzt jeden einzelnen Arbeitsschritt besonders vorsichtig.",
     ], "b",
     "\"Wie lange haben vergleichbare Projekte tatsächlich gedauert ... bis zum tatsächlichen Abschluss?\". (d) beschreibt gerade die Innenperspektive."),
-  lI.choice("inference", "HARD",
-    "Was will Brandstätter mit dem Vergleich mit dem Navigationsgerät verdeutlichen?",
-    [
-      "Planende rechnen ehrlich, gehen aber von unrealistischen Bedingungen aus.",
-      "Planende verschweigen bewusst Risiken, die ihnen bekannt sind.",
-      "Technische Hilfsmittel führen bei der Planung häufig in die Irre.",
-      "Verzögerungen entstehen vor allem durch äußere Umstände wie den Verkehr.",
-    ], "a",
-    "\"Es lügt nicht, es rechnet nur mit einer Welt, die es so nicht gibt\" = keine Täuschung, aber eine verzerrte Annahme. (b) verneint sie ausdrücklich, (c) und (d) nehmen das Bild wörtlich."),
   lI.choice("detail", "HARD",
     "Warum setzen sich realistische Zeitpläne laut Brandstätter selten durch?",
     [
@@ -774,6 +771,15 @@ const listeningItems: SeedItem[] = [
       "Weil bei der Entscheidung zuversichtliche Prognosen honoriert werden.",
     ], "d",
     "\"Optimismus wird also belohnt, und zwar genau in dem Moment, in dem entschieden wird\"; wer realistisch plant, gilt als Bedenkenträger."),
+  lI.choice("inference", "HARD",
+    "Was will Brandstätter mit dem Vergleich mit dem Navigationsgerät verdeutlichen?",
+    [
+      "Planende rechnen ehrlich, gehen aber von unrealistischen Bedingungen aus.",
+      "Planende verschweigen bewusst Risiken, die ihnen bekannt sind.",
+      "Technische Hilfsmittel führen bei der Planung häufig in die Irre.",
+      "Verzögerungen entstehen vor allem durch äußere Umstände wie den Verkehr.",
+    ], "a",
+    "\"Es lügt nicht, es rechnet nur mit einer Welt, die es so nicht gibt\" = keine Täuschung, aber eine verzerrte Annahme. (b) verneint sie ausdrücklich, (c) und (d) nehmen das Bild wörtlich."),
 ];
 
 // ------------------------------------------------------------------ writing
@@ -806,7 +812,7 @@ function writingTask(
 
 const writingItems: SeedItem[] = [
   writingTask("summary", "EASY", [180, 260],
-    "Lesen Sie den folgenden Auszug aus einer Fachzeitschrift. Fassen Sie die Kernaussagen mit eigenen Worten zusammen und nehmen Sie anschließend begründet Stellung.\n\n" +
+    "Lesen Sie den folgenden Auszug aus einer Fachzeitschrift. Fassen Sie die Kernaussagen mit eigenen Worten zusammen und nehmen Sie anschließend begründet Stellung (insgesamt etwa 220 Wörter).\n\n" +
       "„Die Verlagerung von Besprechungen in Videokonferenzen hat die Zahl der Termine nicht verringert, sondern erhöht. Weil Wege entfallen, lassen sich mehr Sitzungen in einen Tag pressen, und die Hemmschwelle, jemanden einzuladen, ist gesunken. Gleichzeitig fehlen die informellen Minuten vor und nach einem Treffen, in denen früher vieles nebenbei geklärt wurde. Manche Unternehmen reagieren mit besprechungsfreien Tagen, andere mit der Regel, dass jede Einladung ein schriftliches Ziel enthalten muss. Ob solche Maßnahmen dauerhaft wirken, ist bislang kaum untersucht.“",
     [
       "Zusammenfassung der Kernaussagen ohne wörtliche Übernahme (mehr Termine, Gründe dafür, Verlust informeller Gespräche, Gegenmaßnahmen, fehlende Forschung)",
@@ -818,7 +824,7 @@ const writingItems: SeedItem[] = [
     "C2: Zusammenfassen und Bewerten eines Fachtextes. Entscheidend ist die Paraphrase mit eigenen Mitteln und die saubere Trennung von Referat und Kommentar."),
   writingTask("formal", "EASY", [250, 350],
     "Die Geschäftsleitung Ihres Unternehmens plant, eine Software einzuführen, die Tastatureingaben und Bildschirmaktivität aller Beschäftigten aufzeichnet, um „die Produktivität sichtbar zu machen“. Sie wurden als Mitglied einer Arbeitsgruppe um eine schriftliche Stellungnahme gebeten.\n\n" +
-      "Schreiben Sie an die Geschäftsleitung. Gehen Sie darauf ein,\n" +
+      "Schreiben Sie an die Geschäftsleitung (etwa 300 Wörter). Gehen Sie darauf ein,\n" +
       "- welche Ziele Sie hinter dem Vorhaben nachvollziehen können,\n" +
       "- welche Bedenken Sie haben (fachlich, rechtlich oder im Hinblick auf das Betriebsklima),\n" +
       "- welche Alternative Sie vorschlagen.",
@@ -847,7 +853,7 @@ const writingItems: SeedItem[] = [
     NEUTRAL,
     "Umformungsaufgabe wie Goethe C2 Schreiben Teil 1. Die Lösungen in den Inhaltspunkten sind Musterlösungen; jede bedeutungsgleiche, korrekte Lösung mit dem vorgegebenen Wort ist richtig."),
   writingTask("review", "MID", [300, 420],
-    "Eine Fachzeitschrift für Ihre Branche veröffentlicht Rezensionen ihrer Leserinnen und Leser. Besprechen Sie ein Sachbuch, einen längeren Fachartikel oder einen Vortrag zu einem Thema aus der Arbeitswelt, das oder den Sie kennen.\n\n" +
+    "Eine Fachzeitschrift für Ihre Branche veröffentlicht Rezensionen ihrer Leserinnen und Leser. Besprechen Sie ein Sachbuch, einen längeren Fachartikel oder einen Vortrag zu einem Thema aus der Arbeitswelt, das oder den Sie kennen (etwa 350 Wörter).\n\n" +
       "Gehen Sie auf die folgenden drei Aspekte ein:\n" +
       "- Worum geht es, und welche zentrale These wird vertreten?\n" +
       "- Wie überzeugend sind Argumentation und Darstellung?\n" +
@@ -865,7 +871,7 @@ const writingItems: SeedItem[] = [
       "1. „Niemand wird gezwungen, nach Feierabend das Diensthandy einzuschalten.“\n" +
       "2. „Feste Abschaltzeiten für Server sind eine bevormundende Lösung für ein individuelles Problem.“\n" +
       "3. „Wer flexibel arbeiten will, muss auch flexibel erreichbar sein.“\n\n" +
-      "Schreiben Sie einen Leserbrief an die Zeitung. Nehmen Sie zu allen drei Aussagen Stellung und entwickeln Sie dabei eine eigene, begründete Position.",
+      "Schreiben Sie einen Leserbrief an die Zeitung (etwa 350 Wörter). Nehmen Sie zu allen drei Aussagen Stellung und entwickeln Sie dabei eine eigene, begründete Position.",
     [
       "bezieht sich erkennbar auf alle drei Aussagen",
       "entwickelt eine eigene Position mit stichhaltigen Argumenten und Beispielen",
@@ -875,7 +881,7 @@ const writingItems: SeedItem[] = [
     "formell/sachlich (Leserbrief)",
     "Leserbrief mit drei Bezugsaussagen wie Goethe C2 Schreiben Teil 2. Für die Stufe C2 zählt neben dem Inhalt die souveräne Verknüpfung (Konzessivsätze, Nominal- und Verbalstil gezielt eingesetzt)."),
   writingTask("essay", "HARD", [320, 450],
-    "Schreiben Sie eine Erörterung zu folgender Frage:\n\n" +
+    "Schreiben Sie eine Erörterung (etwa 350 Wörter) zu folgender Frage:\n\n" +
       "„Wird in der Arbeitswelt der Zukunft tiefes Spezialwissen oder breites Überblickswissen wertvoller sein?“\n\n" +
       "Wägen Sie beide Positionen ab, stützen Sie Ihre Argumente mit Beispielen und kommen Sie zu einem begründeten Urteil.",
     [

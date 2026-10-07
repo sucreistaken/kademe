@@ -139,7 +139,7 @@ const grammarItems: SeedItem[] = [
     ["vorzuzeigen"], ["vorzeigen", "vorzuzeigen", "zu vorzeigen"],
     "Passiversatz sein + zu + Infinitiv (= muss vorgezeigt werden). Bei trennbaren Verben steht \"zu\" zwischen Präfix und Stamm: vorzuzeigen."),
   gGap("konjunktiv2_modal", "MID",
-    "Ihr {{g1}} uns vorher Bescheid geben müssen. Jetzt ist es zu spät.",
+    "Ergänzen Sie die passende Form von „haben“. Ihr {{g1}} uns vorher Bescheid geben müssen. Jetzt ist es zu spät.",
     ["hättet"], undefined,
     "Konjunktiv II der Vergangenheit mit Modalverb: hätte + Infinitiv + Modalverb im Infinitiv (Ersatzinfinitiv). Zu \"ihr\" gehört \"hättet\"."),
   gChoice("partizipattribut", "MID",
@@ -169,11 +169,11 @@ const grammarItems: SeedItem[] = [
   gChoice("modalpartikeln", "MID",
     "„Du weißt doch, dass das Büro freitags früher schließt.“ Was drückt „doch“ in diesem Satz aus?",
     [
-      "Der Sprecher widerspricht einer verneinten Frage.",
+      "Der Sprecher fragt, ob der andere das weiß.",
       "Der Sprecher ist sich nicht sicher, ob das stimmt.",
       "Der Sprecher erinnert an etwas, das der andere eigentlich kennt.",
     ], 2,
-    "Unbetontes \"doch\" im Aussagesatz verweist auf bekanntes Wissen (Erinnerung, leichter Vorwurf). Das Antwort-\"doch\" auf eine verneinte Frage ist eine andere Funktion."),
+    "Unbetontes \"doch\" im Aussagesatz verweist auf bekanntes Wissen (Erinnerung, leichter Vorwurf). Es macht den Satz nicht zur Frage und drückt keinen Zweifel aus."),
 
   // ------------------------------------------------------------ HARD
   gChoice("passiv", "HARD",
@@ -189,7 +189,7 @@ const grammarItems: SeedItem[] = [
     ["wäre"], ["hätte", "wäre", "würde"],
     "\"kommen\" bildet das Perfekt mit \"sein\", im irrealen Bedingungssatz der Vergangenheit also \"gekommen wäre\". \"würde\" bildet keine Vergangenheit."),
   gChoice("konjunktiv1", "HARD",
-    "In der indirekten Rede steht Konjunktiv II, wenn Konjunktiv I und Indikativ gleich lauten. Welche Form passt? Die Bewerber sagten, sie ___ keine Erfahrung mit dem Programm.",
+    "Ein Zeitungsbericht gibt eine Aussage wieder. Welche Form kennzeichnet sie eindeutig als indirekte Rede? Die Bewerber sagten, sie ___ keine Erfahrung mit dem Programm.",
     ["haben", "hätten", "hatten"], 1,
     "Konjunktiv I \"sie haben\" ist mit dem Indikativ identisch, daher Ersatzform Konjunktiv II \"hätten\". \"hatten\" ist Indikativ Präteritum."),
   gChoice("partizipattribut", "HARD",
@@ -222,7 +222,8 @@ const grammarCTest = cTest(LEVEL, "MID", {
     "Wer nach Feierabend noch Nachrichten beantwortet, findet schwerer zur Ruhe.",
   last: "Fachleute empfehlen deshalb feste Arbeitszeiten und einen eigenen Arbeitsplatz in der Wohnung.",
   // g2 das/dies, g3 Freiheit/Freizeit, g6 selbst/selber are equally correct here.
-  variants: { 2: ["ies"], 3: ["zeit"], 6: ["ber"] },
+  // g19 schwerer/schwer: "findet schwer zur Ruhe" is equally idiomatic.
+  variants: { 2: ["ies"], 3: ["zeit"], 6: ["ber"], 19: ["er"] },
 });
 
 const grammar: SeedBankPart = { stimuli: [], items: [grammarCTest, ...grammarItems] };
@@ -568,13 +569,15 @@ const lPausen = clip(
     { label: "Dr. Brandt", voice: "A" },
   ],
   [
-    "Moderatorin: Herzlich willkommen zu unserer Sendung über die Arbeitswelt. Mein Gast ist heute der Arbeitspsychologe Dr. Jonas Brandt, und wir sprechen über ein Thema, das viele unterschätzen.",
+    "Moderatorin: Herzlich willkommen zu unserer Sendung über die Arbeitswelt. Mein Gast ist heute der Arbeitspsychologe Doktor Jonas Brandt, und wir sprechen über ein Thema, das viele unterschätzen.",
     "Moderatorin: Herr Brandt, viele Menschen arbeiten durch und essen mittags am Schreibtisch. Ist das wirklich so schlimm?",
     "Dr. Brandt: Na ja, schlimm ist vielleicht das falsche Wort. Aber klug ist es nicht. Unser Gehirn kann sich nur eine begrenzte Zeit voll konzentrieren. Nach etwa neunzig Minuten lässt die Aufmerksamkeit deutlich nach, auch wenn wir das selbst oft gar nicht merken. Wer dann keine Pause macht, arbeitet zwar weiter, aber langsamer und mit mehr Fehlern.",
     "Moderatorin: Viele sagen aber: Ich habe einfach keine Zeit für Pausen.",
     "Dr. Brandt: Das höre ich ständig, und ich verstehe es auch. Aber man muss es umgekehrt sehen. Gerade wer viel zu tun hat, kann sich den Verzicht auf Pausen eigentlich nicht leisten. In einer Studie, an der wir beteiligt waren, hatten Beschäftigte mit regelmäßigen kurzen Pausen am Ende des Tages nicht etwa weniger geschafft als die Vergleichsgruppe, sondern ungefähr gleich viel. Und sie waren deutlich weniger erschöpft.",
     "Moderatorin: Was heißt denn kurz? Reden wir von fünf Minuten oder von einer halben Stunde?",
     "Dr. Brandt: Beides hat seinen Platz. Die Mittagspause sollte schon mindestens eine halbe Stunde dauern. Dazwischen reichen oft kleine Unterbrechungen von drei bis fünf Minuten. Wichtig ist allerdings, was man in dieser Zeit macht. Wer in der Pause aufs Handy schaut und Nachrichten liest, gönnt dem Kopf keine echte Erholung. Besser ist es, aufzustehen, ein paar Schritte zu gehen oder einfach aus dem Fenster zu schauen.",
+    "Moderatorin: Manche trinken in der Pause schnell einen Kaffee am Schreibtisch. Zählt das auch?",
+    "Dr. Brandt: Hm, nur bedingt. Der Kaffee ist nicht das Problem, sondern der Ort. Wer am Schreibtisch sitzen bleibt, hat die Arbeit ja direkt vor Augen, und nach zwei Minuten liest man doch wieder die nächste E-Mail. Schon ein kurzer Ortswechsel hilft, zum Beispiel in die Küche oder auf den Flur. Und wenn man dort mit jemandem über etwas ganz anderes spricht, umso besser.",
     "Moderatorin: Und im Homeoffice? Da ist man ja oft allein, und niemand erinnert einen an die Pause.",
     "Dr. Brandt: Genau das ist das Problem. Im Büro geht man mit den Kollegen zusammen in die Kantine, im Homeoffice fehlt dieser natürliche Rhythmus. Ich empfehle deshalb, Pausen wie Termine in den Kalender einzutragen. Das klingt vielleicht übertrieben, aber es funktioniert erstaunlich gut.",
     "Moderatorin: Und was können Führungskräfte tun?",
@@ -631,7 +634,7 @@ const lAufschieben = clip(
     "Referentin: Gemeint ist das Aufschieben von Aufgaben. Ich möchte Ihnen zunächst erklären, was dahintersteckt, dann zwei verbreitete Irrtümer besprechen und Ihnen zum Schluss einige praktische Strategien vorstellen.",
     "Referentin: Lange Zeit galt Aufschieben als Zeichen von Faulheit oder schlechtem Zeitmanagement. Die neuere Forschung sieht das anders. Menschen schieben Aufgaben vor allem dann auf, wenn diese mit unangenehmen Gefühlen verbunden sind, zum Beispiel mit Unsicherheit, Langeweile oder der Angst, Fehler zu machen. Das Aufschieben ist also in erster Linie ein Versuch, diesen Gefühlen auszuweichen. Kurzfristig funktioniert das auch, langfristig wird der Druck allerdings immer größer.",
     "Referentin: Damit komme ich zum ersten Irrtum. Viele glauben, sie arbeiteten unter Zeitdruck besonders gut. Untersuchungen zeigen jedoch, dass die Ergebnisse unter Zeitdruck im Durchschnitt schlechter sind. Man fühlt sich zwar produktiv, weil man plötzlich sehr konzentriert ist, aber für Überarbeitungen und Korrekturen bleibt keine Zeit mehr.",
-    "Referentin: Der zweite Irrtum betrifft die Motivation. Häufig hört man den Satz: Ich fange an, sobald ich motiviert bin. In Wirklichkeit ist es oft umgekehrt. Die Motivation kommt erst, wenn man bereits angefangen hat und erste Fortschritte sieht.",
+    "Referentin: Der zweite Irrtum betrifft die Motivation. Häufig hört man den Satz: Ich fange an, sobald ich motiviert bin. In Wirklichkeit ist es oft umgekehrt. Die Motivation kommt erst, wenn man bereits angefangen hat und erste Fortschritte sieht. Stellen Sie sich eine Studentin vor, die eine Hausarbeit schreiben muss. Wochenlang öffnet sie die Datei nicht, weil ihr das Thema riesig vorkommt. Als sie sich schließlich vornimmt, nur zehn Minuten lang Stichpunkte zu sammeln, schreibt sie am Ende zwei Stunden. Nicht die Motivation hat sie zum Anfangen gebracht, sondern das Anfangen hat ihr die Motivation gebracht.",
     "Referentin: Was kann man also tun? Eine bewährte Methode besteht darin, große Aufgaben in sehr kleine Schritte zu zerlegen. Statt sich vorzunehmen, den ganzen Bericht zu schreiben, nimmt man sich nur vor, die Gliederung zu erstellen. Eine zweite Strategie ist die sogenannte Zwei-Minuten-Regel: Wenn eine Aufgabe weniger als zwei Minuten dauert, erledigt man sie sofort. Und drittens hilft es, Ablenkungen bewusst zu verringern, also zum Beispiel das Handy in einen anderen Raum zu legen.",
     "Referentin: Ein Punkt ist mir zum Schluss noch wichtig. Wer sich für das Aufschieben selbst heftig kritisiert, schiebt danach meist noch mehr auf. Ein freundlicherer Umgang mit sich selbst ist also nicht nur angenehmer, sondern auch wirksamer. Vielen Dank für Ihre Aufmerksamkeit.",
   ],
