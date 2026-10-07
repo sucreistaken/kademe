@@ -14,6 +14,8 @@ export function NextTaskCard({
   solution,
   title,
   detail,
+  note,
+  reason,
   meta,
   action,
   withDrawing = false,
@@ -22,6 +24,10 @@ export function NextTaskCard({
   solution: string;
   title: string;
   detail?: string | null;
+  /** What it needs, in plain words (not a quote), e.g. "1 AI önerisi onay bekliyor". */
+  note?: string | null;
+  /** Why this one is first. */
+  reason?: string | null;
   meta?: string | null;
   action: { label: string; href: string };
   /** The drawing is hiring's; an exam task gets the card without it. */
@@ -38,7 +44,8 @@ export function NextTaskCard({
         </div>
         <p className="mt-1.5 text-[22px] leading-7 font-semibold text-ink">{title}</p>
         {detail ? <p className="mt-1.5 text-[14.5px] leading-[22px] text-ink-2">“{detail}”</p> : null}
-        {meta ? <p className="tnum mt-0.5 text-[13px] text-muted">{meta}</p> : null}
+        {note ? <p className="mt-1.5 text-[14.5px] leading-[22px] font-medium text-ink-2">{note}</p> : null}
+        {meta || reason ? <p className="tnum mt-0.5 text-[13px] text-muted">{[meta, reason].filter(Boolean).join(" · ")}</p> : null}
         <Button asChild variant="primary" className="mt-4">
           <Link id="today-next-action" href={action.href}>
             {action.label}

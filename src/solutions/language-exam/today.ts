@@ -14,6 +14,7 @@ export async function examToday(orgId: string, _userId: string, locale: Locale):
       id: r.assessmentId,
       solution: "language-exam",
       lane: "review",
+      waitingOn: r.status === "AWAITING_GRADING" ? "ai" : "you",
       title: r.name,
       subtitle: shortDateTime(r.completedAt, locale),
       href: `/exam/students/${r.assessmentId}`,

@@ -117,6 +117,8 @@ export type TodayItem = {
   sortAt: Date | null;
   /** review: exactly four cells (detail, level, status, integrity). running: one dot. attention and task: none. */
   cells: TodayCell[];
+  /** lane "review": who the row waits for. "ai" means nothing is asked of the manager yet; omitted means "you". */
+  waitingOn?: "you" | "ai";
   /** lane "task": its kind (K10). */
   task?: TodayTaskKind;
   /** lane "task": the candidate's own words, shown quoted. lane "attention": a plain note under the title. */

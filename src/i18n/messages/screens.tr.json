@@ -84,7 +84,7 @@
   "today": {
     "title": "Bugün",
     "oldest": "En eskisi {date}.",
-    "summary": "{count, plural, =0 {Bekleyen iş yok.} other {# iş seni bekliyor.}}",
+    "summary": "{count, plural, =0 {Bekleyen iş yok.} other {# iş senin kararını bekliyor.}}",
     "invite": "Öğrenci davet et",
     "inviteMenu": "Davet et",
     "queueTitle": "İnceleme kuyruğu · {solution} ({count})",
@@ -107,7 +107,23 @@
     "open": "Aç",
     "runningCount": "{title} ({count})",
     "emptyTitle": "Bugün bekleyen iş yok.",
-    "emptyBody": "Yeni bir aday ya da öğrenci davet edebilirsin."
+    "emptyBody": "Yeni bir aday ya da öğrenci davet edebilirsin.",
+    "aiNote": "{count, plural, =0 {} other {# sonuç AI'dan çıkınca hazır olacak.}}",
+    "glanceYou": "Senin kararın",
+    "glanceYouSub": "şimdi bakılacaklar",
+    "glanceAi": "AI hazırlıyor",
+    "glanceAiSub": "senden bir şey beklemiyor",
+    "glanceRunning": "Sınavda",
+    "glanceRunningSub": "şu an çözen öğrenci",
+    "glanceExpiring": "Dolacak link",
+    "glanceExpiringSub": "48 saat içinde",
+    "youTitle": "Senin kararını bekleyenler ({count})",
+    "youEmpty": "Senden karar bekleyen sonuç yok.",
+    "showAll": "Tümünü gör ({count})",
+    "aiTitle": "AI hazırlıyor ({count})",
+    "aiHint": "Bitince \"Senin kararın\" listesine düşer. Şimdi yapacağın bir şey yok.",
+    "waited": "{days, plural, =0 {Bugün geldi} one {# gündür bekliyor} other {# gündür bekliyor}}",
+    "nextReason": "Önce bu: en uzun bekleyen"
   },
   "students": {
     "title": "Öğrenciler",

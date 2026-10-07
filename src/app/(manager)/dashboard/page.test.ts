@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactElement, ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { TodayItem } from "@/solutions/types";
@@ -63,27 +63,31 @@ async function render(given: TodayItem[], as: typeof role = "OWNER", lang: typeo
   return renderToStaticMarkup((await TodayPage({ searchParams: Promise.resolve({}) })) as never);
 }
 const text = (html: string) => html.replace(/<[^>]+>/g, "\n").replace(/&quot;/g, '"').replace(/\n+/g, "\n").trim();
-/** The review queue's rows, as the before/after capture read them: the anchors of the section headed "İnceleme kuyruğu". */
+/** The manager's review rows: the anchors of the section headed "Senin kararını bekleyenler". */
 function queueRows(html: string) {
-  const section = html.match(/<h2[^>]*>(?:İnceleme kuyruğu|Review queue)[\s\S]*?<\/section>/)?.[0] ?? "";
+  const section = html.match(/<h2[^>]*>(?:Senin kararını bekleyenler|Waiting for your decision)[\s\S]*?<\/section>/)?.[0] ?? "";
   return (section.match(/<a [\s\S]*?<\/a>/g) ?? []).map((a) => ({ href: a.match(/href="([^"]*)"/)?.[1], text: text(a) }));
 }
 const filled = (html: string) => html.match(/data-variant="primary"/g)?.length ?? 0;
 const between = (html: string, from: string, to: string) => html.slice(html.indexOf(from), to ? html.indexOf(to) : undefined);
 
 beforeEach(() => {
+  // Waiting times are read against "now"; the fixtures' dates are early October 2026.
+  vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-10-07T12:00:00Z") });
   items = [];
   role = "OWNER";
   locale = "tr";
 });
 
+afterEach(() => vi.useRealTimers());
+
 describe("what the live exam sees on Today", () => {
-  // Captured from the page before Task 17 (scratch render of HEAD eb09264, same fake rows): count, words, cells and order.
+  // Words, cells and order of the exam's rows; the date line under the name became "N gündür bekliyor" (an undated row keeps its subtitle).
   const BEFORE = [
     { href: "/exam/students/s3/results", text: "Öğrenci 3\nSınav 3 · B2\nDetay 3\nB1\nAI değerlendiriyor\nTemiz\nİncele" },
-    { href: "/exam/students/s1/results", text: "Öğrenci 1\nSınav 1 · B2\nDetay 1\nB1\nAI değerlendiriyor\nTemiz\nİncele" },
-    { href: "/exam/students/s4/results", text: "Öğrenci 4\nSınav 4 · B2\nDetay 4\n-\nAI değerlendiriyor\nTemiz\nİncele" },
-    { href: "/exam/students/s2/results", text: "Öğrenci 2\nSınav 2 · B2\nDetay 2\n-\nAI değerlendiriyor\nTemiz\nİncele" },
+    { href: "/exam/students/s1/results", text: "Öğrenci 1\n6 gündür bekliyor\nDetay 1\nB1\nAI değerlendiriyor\nTemiz\nİncele" },
+    { href: "/exam/students/s4/results", text: "Öğrenci 4\n5 gündür bekliyor\nDetay 4\n-\nAI değerlendiriyor\nTemiz\nİncele" },
+    { href: "/exam/students/s2/results", text: "Öğrenci 2\n4 gündür bekliyor\nDetay 2\n-\nAI değerlendiriyor\nTemiz\nİncele" },
   ];
 
   it("keeps the review queue's rows exactly: words, cells, 'İncele', links and order (C17)", async () => {
@@ -102,7 +106,7 @@ describe("what the live exam sees on Today", () => {
 
   it("says the head in sen, counts the queue and names the oldest row, and points at that row as the next task", async () => {
     const html = await render(EXAM());
-    expect(text(between(html, "<h1", "<section"))).toContain("Bugün\n4 iş seni bekliyor. En eskisi");
+    expect(text(between(html, "<h1", "<section"))).toContain("Bugün\n4 iş senin kararını bekliyor. En eskisi");
     const card = between(html, 'aria-labelledby="today-next"', "</section>");
     expect(card).toContain("Öğrenci 3");
     expect(card).toContain('href="/exam/students/s3/results"');
@@ -119,15 +123,16 @@ describe("what the live exam sees on Today", () => {
     }
   });
 
-  it("keeps the running list's rows, now behind a disclosure with its count", async () => {
+  it("keeps the running list's rows behind a disclosure with its count", async () => {
     const html = await render(EXAM());
     expect(text(html)).toContain("Süren sınavlar (1)");
     const tree = await TodayPage({ searchParams: Promise.resolve({}) });
-    const [disclosure] = find(tree, (el) => el.type === Disclosure);
+    // The first disclosure is the AI's list; the running list is the second.
+    const [, disclosure] = find(tree, (el) => el.type === Disclosure);
     const rows = renderToStaticMarkup(disclosure.props.children as ReactElement);
     // The row's markup as the dashboard drew it before (same capture as BEFORE).
     expect(rows).toContain(
-      '<a class="flex items-center justify-between px-5 py-3 hover:bg-canvas" href="/exam/students/run"><span class="text-[14px] font-medium text-ink">Koşan</span>',
+      '<a class="flex items-center justify-between gap-3 px-4 py-3 hover:bg-canvas" href="/exam/students/run"><span class="text-[14px] font-medium text-ink">Koşan</span>',
     );
     expect(text(rows)).toBe("Koşan\nOkuma bölümünde");
   });
@@ -182,12 +187,12 @@ describe("hiring's rows on Today", () => {
 
   it("counts the accommodation request once in the head (its task and its opening's requests row)", async () => {
     const html = await render([accommodation, requestsRow]);
-    expect(text(between(html, "<h1", "<section"))).toContain("1 iş seni bekliyor.");
+    expect(text(between(html, "<h1", "<section"))).toContain("1 iş senin kararını bekliyor.");
   });
 
   it("lists attention rows with their own action and the data-rights note as plain text, no button (C6)", async () => {
     const html = await render([accommodation, requestsRow, draftRow]);
-    const list = between(html, 'aria-labelledby="today-attention"', "Tüm alımların durumu");
+    const list = between(html, 'aria-labelledby="today-attention"', 'id="today-you"');
     expect(text(list)).toContain("2 açık talep\nÜrün Tasarımcısı\nBiri veri hakkı talebi; panelden henüz kapatılmaz.\nİşe alım\nAç");
     expect(text(list)).toContain("Taslak v1 yayın bekliyor\nDestek Uzmanı\nİşe alım\nKuruluma devam et");
     expect(list).not.toContain("<button");
@@ -201,7 +206,7 @@ describe("hiring's rows on Today", () => {
     expect(text(html)).toContain("Look at the request");
     expect(text(html)).toContain("Needs attention");
     expect(text(html)).toContain("Where every opening stands");
-    expect(text(html)).toContain("Review queue · Language exam (0)");
+    expect(text(html)).toContain("Waiting for your decision (0)");
   });
 
   it("draws the next task as the mockup's card: the drawing, the eyebrow and the one filled button under the text (mockup 1)", async () => {
@@ -225,7 +230,7 @@ describe("hiring's rows on Today", () => {
 
   it("gives every attention row a soft icon tile, its solution as a chip and its action as text (mockup 1)", async () => {
     const html = await render([accommodation, requestsRow, draftRow]);
-    const list = between(html, 'aria-labelledby="today-attention"', "Tüm alımların durumu");
+    const list = between(html, 'aria-labelledby="today-attention"', 'id="today-you"');
     expect(list.match(/bg-accent-soft text-accent/g)).toHaveLength(2);
     expect(list).toContain("lucide-inbox");
     expect(list).toContain("lucide-file-pen-line");
@@ -236,9 +241,46 @@ describe("hiring's rows on Today", () => {
   it("draws the expiring row's clock tile neutral, never accent (the plan's global constraint)", async () => {
     const expiringRow: TodayItem = { id: "hiring:expiring:op1", solution: "hiring", lane: "attention", attention: "expiring", title: "3 bağlantı doluyor", subtitle: "Ürün Tasarımcısı", href: "/hiring/openings/op1/candidates", sortAt: null, cells: [] };
     const html = await render([requestsRow, expiringRow, draftRow]);
-    const list = between(html, 'aria-labelledby="today-attention"', "Tüm alımların durumu");
+    const list = between(html, 'aria-labelledby="today-attention"', 'id="today-you"');
     expect(list.match(/bg-accent-soft text-accent/g)).toHaveLength(2);
     expect(list.match(/bg-secondary text-ink/g)).toHaveLength(1);
     expect(list.slice(list.indexOf("bg-secondary text-ink"), list.indexOf("3 bağlantı doluyor"))).toContain("lucide-clock");
+  });
+});
+
+describe("Today at one look", () => {
+  const aiExam = (n: number): TodayItem => ({ ...exam(`ai${n}`, `2026-10-0${n}T10:00:00Z`, 10 + n), waitingOn: "ai" });
+
+  it("keeps the AI's unfinished results out of the manager's list and counts them apart", async () => {
+    const html = await render([...EXAM(), aiExam(1), aiExam(2)]);
+    expect(queueRows(html)).toHaveLength(4);
+    expect(text(html)).toContain("Senin kararını bekleyenler (4)");
+    expect(text(html)).toContain("AI hazırlıyor (2)");
+    expect(html).toContain("2 sonuç AI&#x27;dan çıkınca hazır olacak.");
+    expect(html).not.toContain("Öğrenci 11");
+  });
+
+  it("opens with four tiles, each a link to its part of the page, and a fifth for hiring's control view", async () => {
+    const html = await render([...EXAM(), aiExam(1), requestsRow]);
+    const nav = between(html, "<nav", "</nav>");
+    expect(text(nav)).toContain("Senin kararın\n5\nşimdi bakılacaklar");
+    expect(text(nav)).toContain("AI hazırlıyor\n1\nsenden bir şey beklemiyor");
+    expect(text(nav)).toContain("Sınavda\n1");
+    expect(text(nav)).toContain("Dolacak link\n1");
+    for (const target of ["#today-you", "#today-ai", "#today-running", "#today-expiring", "/hiring/openings"]) expect(nav).toContain(`href="${target}"`);
+    expect(text(nav)).toContain("İşe alım\n1\nTüm alımların durumu");
+  });
+
+  it("says why the next task is first and what it needs", async () => {
+    const card = between(await render(EXAM()), 'aria-labelledby="today-next"', "</section>");
+    expect(text(card)).toContain("Önce bu: en uzun bekleyen");
+  });
+
+  it("shows only the first eight decisions and links to the rest", async () => {
+    const many = Array.from({ length: 11 }, (_, i) => exam(`m${i}`, `2026-10-01T0${i % 10}:00:00Z`, 20 + i));
+    const html = await render(many);
+    expect(queueRows(html)).toHaveLength(8 + 1);
+    expect(text(html)).toContain("Tümünü gör (11)");
+    expect(html).toContain('href="/exam/students?tab=review"');
   });
 });
