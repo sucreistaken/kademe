@@ -2,7 +2,7 @@
 
 Son güncelleme: 2026-10-07 (Gelişmiş: tek kutu, AI önce, `platform/solutions` dalında, yerelde gerçek Gemini ile denendi; canlıya çıkmadı). Önceki: 2026-10-06 (işe alım plan 2b, görsel akış ve rehberli panel, `platform/solutions` dalında; bulut oturumunda tip, lint, test ve build ile doğrulandı, veritabanı betikleri ve tarayıcı turu yerel oturumu bekliyor; canlıya çıkmadı).
 Önceki: 2026-10-05 (işe alım plan 2, aday akışı, platform/solutions dalında, yerelde doğrulandı; canlıya çıkmadı); 2026-10-04 (çekirdek ayrımı ve işe alım plan 1, kütüphane ve alımlar, `platform/solutions` dalında, yerelde doğrulandı; canlıya çıkmadı).
-**Canlıda**: https://kademe.kadiray.com, commit `0142ff0` (2026-10-07, Gelişmiş; ayrıntı "Canlıya çıkış: Gelişmiş"). Önceki not: commit `739f218` (`main`, 2026-10-05 sınav sıcak düzeltmesi; ayrıntı "Kararlar ve sapmalar"da).
+**Canlıda**: https://kademe.kadiray.com, commit `02760e3` (2026-10-07 akşam: Bugün yeni tasarım, 3 adımlı alım sihirbazı, "en az 2 değerlendirici" kuralı kaldırıldı, soru bankası v2; ayrıntı "Canlıya çıkış: sihirbaz ve banka v2"). Önceki: `0142ff0` (Gelişmiş). Önceki not: commit `739f218` (`main`, 2026-10-05 sınav sıcak düzeltmesi; ayrıntı "Kararlar ve sapmalar"da).
 Canlı veritabanı kullanıcı onayıyla sıfırlandı: eski işe alım verisi yok,
 panel kullanıcıları (parolalarıyla) taşındı, banka ve iki sınav yüklendi.
 
@@ -161,6 +161,12 @@ Spec `docs/superpowers/specs/2026-10-06-advanced-ai-create-design.md`, plan
 - Canlı Gemini turunda bulunup düzeltilen: "okuma ağırlıklı" yalnız okuma sınavı kuruyordu (`43eded2`); değişiklik
   kutusu taslağı sunucuda güncelliyor ama kartlar yenilenmeden eski kalıyordu (`4705582`); toplam 100 iken "100 olmalı"
   yazıyordu (`488f3fe`).
+
+## Canlıya çıkış: sihirbaz ve banka v2 (2026-10-07)
+
+- Yedek: `/root/kademe-backups/kademe-bankv2-20261007-1958.dump`. Kod `02760e3`, build, göçler 0017 (min_evaluations 1) ve 0018 (ai_purpose HIRING_ROLE_BRIEF, HIRING_REVISE) uygulandı; `kademe` active, `/login` 200.
+- Banka: top-up 253 -> 643 (+390 soru, +42 metin/klip), `bank:tts` 18/18 klip (0 hata), sonra `--retire-stale` 253 eski başlangıç sorusu RETIRED (okulun düzenlediği 0). Onaylı başlangıç sorusu 390.
+- Doğrulanmadı: canlıda gerçek bir öğrenci sınavı ve alım sihirbazı tarayıcıda denenmedi (yerelde denendi).
 
 ## Banka v2'ye geçiş: eski başlangıç sorularını emekliye ayırma (2026-10-07, `platform/solutions`, canlıda değil)
 
