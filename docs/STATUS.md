@@ -162,6 +162,40 @@ Spec `docs/superpowers/specs/2026-10-06-advanced-ai-create-design.md`, plan
   kutusu taslağı sunucuda güncelliyor ama kartlar yenilenmeden eski kalıyordu (`4705582`); toplam 100 iken "100 olmalı"
   yazıyordu (`488f3fe`).
 
+## Banka v2'ye geçiş: eski başlangıç sorularını emekliye ayırma (2026-10-07, `platform/solutions`, canlıda değil)
+
+Banka sıfırdan yeniden yazıldı (`a1ecab2`, `src/db/seed-bank/levels/`, yeni metin anahtarları `v2-` ile başlar).
+`pnpm bank:topup` yalnız ekler; eski başlangıç soruları (origin SEED, seed key'i artık bankada yok) APPROVED kalır
+ve sınavda sunulmaya devam eder. Bunun için açıkça istenen bir adım var: `--retire-stale`.
+
+- `--retire-stale`: ekleme ile aynı kurum işleminde, origin SEED ve şu an APPROVED olup seed key'i (yoksa satırdan
+  hesaplanan anahtarı) güncel bankada olmayan soruları RETIRED yapar. Satır silinmez (`item_responses.item_id`
+  `restrict`, görüntüler yerinde kalır). Okulun kendi soruları (TEACHER, AI) ve zaten APPROVED olmayanlar
+  dokunulmaz. Metin ve kliplerin (stimuli) durum sütunu yok, olduğu gibi kalırlar. Kurum başına bir
+  `audit_logs` satırı `bank.retire_stale`. Yazmadan önce kurum başına özet basılır: eklenecek, emekliye
+  ayrılacak sayı ve bölüm/seviye kırılımı. Varsayılan korumalar aynı (yalnız `*_check`, `--allow-working-db`,
+  canlı için `--production --confirm-db=`).
+- Sınav yalnız APPROVED soruları sunar (`exam-flow.ts` `loadPool`, kapsama `panel.ts` `bankCounts`). Soru
+  bankası ekranında yeni "Rotasyon dışı" sekmesi (EN "Retired"); soru sayfası durumu gösterir ve yeniden onaylanabilir.
+- Dikkat: emekliye ayırma ile yeni dinleme kliplerinin sesi arasında dinleme havuzu boş kalır (sesi olmayan klip
+  sunulmaz). `kademe_bankv2_check` provasında `--retire-stale` sonrası dinleme 72 onaylı, sunulabilir 0. Bu yüzden
+  canlı sıra üç adım:
+  1. Yedek (önceki pencerelerdeki `pg_dump` gibi), sonra ekle, emekliye ayırma yok:
+     `pnpm run bank:topup --production --confirm-db=127.0.0.1:5434/kademe`
+  2. Yeni kliplerin sesi: `pnpm run bank:tts` (Gemini anahtarı gerekir; içerik adresli, tekrar çalıştırmak ücretsiz).
+     Çıktıda başarısız klip kalmamalı.
+  3. Eski soruları emekliye ayır (eklenecek 0 görünmeli):
+     `pnpm run bank:topup --production --confirm-db=127.0.0.1:5434/kademe --retire-stale`
+  Devam eden sınav varsa bitmesini bekle: havuz her adımda yeniden okunur, yarım kalan bir sınav kalan
+  sorulardan devam eder ama karışık eski/yeni banka görür.
+- Prova (`kademe_bankv2_check`, eski banka `6974014`'ten içe aktarıldı, artı 1 seed key'siz eski soru, 1 zaten
+  RETIRED, 1 TEACHER, 1 AI taslak): eklendi 390 soru ve 42 metin/klip, emekliye ayrıldı 253 (seviye başına
+  dilbilgisi 14, okuma 11 (C2 12), dinleme 9, yazma 4, konuşma 4); TEACHER ve AI satırları aynı; ikinci çalıştırma
+  0/0. Veritabanı silindi. Doğrulanmadı: canlıda hiçbir adım çalıştırılmadı; `bank:tts` provada çalıştırılmadı;
+  "Rotasyon dışı" sekmesi tarayıcıda açılmadı.
+- Açık karar: bir okul eski bir başlangıç sorusunu düzenleyip yeniden onayladıysa soru hâlâ origin SEED'dir ve
+  `--retire-stale` onu da emekliye ayırır.
+
 ## Canlıya çıkış: Gelişmiş (2026-10-07 gece, kullanıcı onayıyla: "canlıya al")
 
 - main `c4b697d` -> `0142ff0` (platform/solutions fast-forward). VM `kademe-app` (`cgerman-lms`).

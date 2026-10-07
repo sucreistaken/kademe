@@ -15,7 +15,8 @@ import { cn } from "@/lib/cn";
 
 export const dynamic = "force-dynamic";
 
-const TABS = { pending: "DRAFT", approved: "APPROVED", rejected: "REJECTED" } as const;
+const TABS = { pending: "DRAFT", approved: "APPROVED", rejected: "REJECTED", retired: "RETIRED" } as const;
+const TAB_LABEL = { pending: "bank.tabPending", approved: "bank.tabApproved", rejected: "bank.tabRejected", retired: "bank.tabRetired" } as const;
 const PAGE = 60;
 
 /**
@@ -107,7 +108,7 @@ export default async function BankPage({ searchParams }: { searchParams: Promise
               href={q({ tab: k })}
               className={cn("rounded-[8px] px-3 py-1.5 text-[13.5px]", k === tab ? "bg-accent-soft font-medium text-accent" : "text-muted hover:bg-canvas hover:text-ink")}
             >
-              {t(k === "pending" ? "bank.tabPending" : k === "approved" ? "bank.tabApproved" : "bank.tabRejected")}{" "}
+              {t(TAB_LABEL[k])}{" "}
               <span className="tnum">{tabCounts.find((c) => c.status === TABS[k])?.n ?? 0}</span>
             </Link>
           ))}

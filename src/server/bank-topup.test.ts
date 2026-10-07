@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { seedItemKey } from "@/db/seed-bank/seed-key";
 import type { SeedBankPart, SeedItem } from "@/db/seed-bank/types";
-import { bankTopUpRefusal, databaseTarget, planTopUp, seedOrderInStimulus, type ExistingItem } from "./bank-topup";
+import {
+  bankTopUpRefusal,
+  databaseTarget,
+  formatRetireCounts,
+  planTopUp,
+  retireCounts,
+  seedOrderInStimulus,
+  type ExistingItem,
+} from "./bank-topup";
 
 const choiceItem = (prompt: string, stimulusKey?: string): SeedItem => ({
   section: stimulusKey ? "READING" : "GRAMMAR",
@@ -23,6 +31,7 @@ const row = (item: SeedItem, over: Partial<ExistingItem> = {}): ExistingItem => 
   id: `id-${item.prompt}`,
   seedKey: null,
   origin: "SEED",
+  status: "APPROVED",
   section: item.section,
   level: item.level,
   type: item.type,
@@ -64,7 +73,7 @@ describe("planTopUp", () => {
   it("does nothing on a second run", () => {
     const keyed = bank.items.map((item) => row(item, { seedKey: seedItemKey(item) }));
     const plan = planTopUp(bank, { stimuli: [{ id: "s1", seedKey: "r-b1-a" }], items: keyed });
-    expect(plan).toEqual({ stimuli: [], items: [], backfill: [] });
+    expect(plan).toEqual({ stimuli: [], items: [], backfill: [], retire: [] });
   });
 
   it("never claims teacher items, edited seed rows or a duplicate twice", () => {
@@ -80,6 +89,71 @@ describe("planTopUp", () => {
     const plan = planTopUp(bank, existing);
     expect(plan.backfill.map((b) => b.id)).toEqual(["id-Lies"]);
     expect(plan.items.map((i) => i.item.prompt)).toEqual(["Eins", "Zwei", "Lies noch"]);
+  });
+});
+
+describe("planTopUp with retireStale", () => {
+  // Starter items of an older bank: keyed rows whose key is gone, and an
+  // unkeyed row that hashes to nothing in the current bank.
+  const oldKeyed = (prompt: string, level: SeedItem["level"], section: SeedItem["section"] = "GRAMMAR") =>
+    row({ ...choiceItem(prompt), section, level }, { id: `old-${prompt}`, seedKey: `old-key-${prompt}`, section, level });
+  const current = bank.items.map((item) => row(item, { seedKey: seedItemKey(item) }));
+  const stimuliNow = [{ id: "s1", seedKey: "r-b1-a" }];
+
+  it("retires stale starter items and leaves the current ones", () => {
+    const unkeyedStale = row(choiceItem("Alt"), { id: "old-unkeyed" });
+    const plan = planTopUp(bank, { stimuli: stimuliNow, items: [...current, oldKeyed("Vorher", "A1"), unkeyedStale] }, { retireStale: true });
+    expect(plan.retire.map((r) => r.id)).toEqual(["old-Vorher", "old-unkeyed"]);
+    expect(plan.items).toEqual([]);
+  });
+
+  it("keeps an unkeyed starter row that still hashes to a bank item, and backfills it", () => {
+    const unkeyedCurrent = row(bank.items[0]);
+    const plan = planTopUp(bank, { stimuli: stimuliNow, items: [unkeyedCurrent, ...current.slice(1)] }, { retireStale: true });
+    expect(plan.retire).toEqual([]);
+    expect(plan.backfill.map((b) => b.id)).toEqual(["id-Eins"]);
+  });
+
+  it("never touches a school's own items, even with an unknown key", () => {
+    const teacher = row(choiceItem("Unsere Frage"), { id: "teacher", origin: "TEACHER" });
+    const ai = row(choiceItem("KI Frage"), { id: "ai", origin: "AI", seedKey: "old-key-ai" });
+    const plan = planTopUp(bank, { stimuli: stimuliNow, items: [...current, teacher, ai] }, { retireStale: true });
+    expect(plan.retire).toEqual([]);
+  });
+
+  it("leaves stale starter items that are not APPROVED alone (already retired, draft, rejected)", () => {
+    const items = [
+      ...current,
+      { ...oldKeyed("A", "A1"), status: "RETIRED" },
+      { ...oldKeyed("B", "A2"), status: "DRAFT" },
+      { ...oldKeyed("C", "B1"), status: "REJECTED" },
+    ];
+    expect(planTopUp(bank, { stimuli: stimuliNow, items }, { retireStale: true }).retire).toEqual([]);
+  });
+
+  it("retires nothing without the option", () => {
+    const plan = planTopUp(bank, { stimuli: stimuliNow, items: [...current, oldKeyed("Vorher", "A1")] });
+    expect(plan.retire).toEqual([]);
+  });
+
+  it("counts the retirements per section and level for the summary, in bank order", () => {
+    const stale = [
+      oldKeyed("r1", "B2", "READING"),
+      oldKeyed("g1", "A2"),
+      oldKeyed("g2", "A1"),
+      oldKeyed("g3", "A2"),
+      oldKeyed("l1", "C1", "LISTENING"),
+    ];
+    const plan = planTopUp(bank, { stimuli: stimuliNow, items: [...current, ...stale] }, { retireStale: true });
+    expect(plan.retire).toHaveLength(5);
+    expect(retireCounts(plan.retire)).toEqual([
+      { section: "GRAMMAR", level: "A1", n: 1 },
+      { section: "GRAMMAR", level: "A2", n: 2 },
+      { section: "READING", level: "B2", n: 1 },
+      { section: "LISTENING", level: "C1", n: 1 },
+    ]);
+    expect(formatRetireCounts(plan.retire)).toEqual(["GRAMMAR: A1 1, A2 2", "READING: B2 1", "LISTENING: C1 1"]);
+    expect(formatRetireCounts([])).toEqual([]);
   });
 });
 

@@ -435,6 +435,7 @@
     "tabPending": "Waiting for approval",
     "tabApproved": "Approved",
     "tabRejected": "Rejected",
+    "tabRetired": "Retired",
     "allSections": "All sections",
     "allLevels": "All levels",
     "allTypes": "All types",

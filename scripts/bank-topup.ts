@@ -7,9 +7,16 @@
  * --allow-working-db is given; the shared `kademe` database is always refused.
  * New listening clips have no audio yet: run `pnpm bank:tts` afterwards.
  *
+ * --retire-stale also sets RETIRED on the starter items (origin SEED, now
+ * APPROVED) that the current seed bank no longer has, in the same transaction
+ * as the adding. Rows are never deleted and a school's own items are never
+ * touched. The per-org summary, with the retire counts per section and level,
+ * is printed before anything is written.
+ *
  *   DATABASE_URL=postgresql://kademe:kademe@localhost:5434/kademe_bank_check pnpm bank:topup
  *   pnpm bank:topup --org <uuid>
  *   pnpm bank:topup --allow-working-db
+ *   pnpm bank:topup --retire-stale
  *
  * Production (the only way onto the `kademe` database): both flags, and the
  * confirmation must equal host:port/database parsed from DATABASE_URL. A
@@ -17,11 +24,12 @@
  *   pnpm bank:topup --production --confirm-db=127.0.0.1:5434/kademe
  */
 import "dotenv/config";
-import { bankTopUpRefusal, databaseTarget } from "../src/server/bank-topup";
+import { bankTopUpRefusal, databaseTarget, formatRetireCounts } from "../src/server/bank-topup";
 
 async function main() {
   const args = process.argv.slice(2);
   const production = args.includes("--production");
+  const retireStale = args.includes("--retire-stale");
   const confirmDb = args.find((a) => a.startsWith("--confirm-db="))?.slice("--confirm-db=".length);
   const refusal = bankTopUpRefusal(process.env.DATABASE_URL, {
     allowWorkingDb: args.includes("--allow-working-db"),
@@ -52,20 +60,23 @@ async function main() {
     console.error(`No organisation ${onlyOrg}.`);
     process.exit(2);
   }
-  if (production) {
-    console.log(`Production top-up on ${databaseTarget(process.env.DATABASE_URL)} (${orgs.length} organisation(s)):`);
+  if (production || retireStale) {
+    const where = production ? `Production top-up on ${databaseTarget(process.env.DATABASE_URL)}` : "Top-up";
+    console.log(`${where}${retireStale ? " with --retire-stale" : ""} (${orgs.length} organisation(s)):`);
     for (const org of orgs) {
-      const p = await previewTopUp(org.id);
-      console.log(`  ${org.name}: insert ${p.itemsToInsert} items and ${p.stimuliToInsert} texts/clips, backfill ${p.keysToBackfill} seed keys`);
+      const p = await previewTopUp(org.id, { retireStale });
+      const retire = retireStale ? `, retire ${p.retire.length} stale starter items` : "";
+      console.log(`  ${org.name}: insert ${p.itemsToInsert} items and ${p.stimuliToInsert} texts/clips, backfill ${p.keysToBackfill} seed keys${retire}`);
+      for (const line of formatRetireCounts(p.retire)) console.log(`    retire ${line}`);
     }
     console.log("Applying (one transaction per organisation)...");
   }
   for (const org of orgs) {
     const before = await seedCounts(org.id);
-    const r = await topUpSeedBank(org.id);
+    const r = await topUpSeedBank(org.id, { retireStale });
     const after = await seedCounts(org.id);
     console.log(
-      `${org.name}: items ${before.items} -> ${after.items} (+${r.itemsAdded}), texts/clips ${before.stimuli} -> ${after.stimuli} (+${r.stimuliAdded}), seed keys backfilled ${r.keysBackfilled}`,
+      `${org.name}: items ${before.items} -> ${after.items} (+${r.itemsAdded}), approved starter items ${before.approved} -> ${after.approved}, texts/clips ${before.stimuli} -> ${after.stimuli} (+${r.stimuliAdded}), seed keys backfilled ${r.keysBackfilled}${retireStale ? `, retired ${r.itemsRetired}` : ""}`,
     );
     if (r.listeningWithoutAudio.length)
       console.log(`  new clips without audio (run pnpm bank:tts): ${r.listeningWithoutAudio.join(", ")}`);

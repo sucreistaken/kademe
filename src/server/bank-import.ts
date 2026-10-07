@@ -1,12 +1,12 @@
-import { and, count, eq } from "drizzle-orm";
+import { and, count, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { items, stimuli } from "@/db/schema";
+import { auditLogs, items, stimuli } from "@/db/schema";
 import { SEED_BANK } from "@/db/seed-bank";
 import { seedItemKey } from "@/db/seed-bank/seed-key";
 import type { SeedItem, SeedStimulus } from "@/db/seed-bank/types";
 import { thetaForLevel } from "@/lib/exam/cefr";
 import { synthesize, ttsAvailable } from "@/lib/tts";
-import { planTopUp, seedOrderInStimulus } from "./bank-topup";
+import { planTopUp, retireCounts, seedOrderInStimulus } from "./bank-topup";
 
 /**
  * Loads the hand-written starter bank into an organisation. Rows are APPROVED
@@ -56,10 +56,18 @@ export async function importSeedBank(orgId: string, options: { audio?: boolean; 
  * Old seed rows without a seed key get theirs backfilled first, so they are
  * not added twice. New listening clips are stored without audio; `pnpm
  * bank:tts` makes it. One transaction per organisation.
+ *
+ * With `retireStale`, starter items the current bank no longer has are set
+ * RETIRED in the same transaction, after the adding (see planTopUp). Rows are
+ * never deleted. Stimuli have no status column, so the texts and clips of
+ * retired items stay as they are; nothing serves a stimulus without an
+ * APPROVED item.
  */
 type Executor = Pick<typeof db, "select">;
 
-async function loadTopUpState(tx: Executor, orgId: string) {
+type TopUpOptions = { retireStale?: boolean };
+
+async function loadTopUpState(tx: Executor, orgId: string, options: TopUpOptions) {
   const haveStimuli = await tx
     .select({ id: stimuli.id, seedKey: stimuli.seedKey })
     .from(stimuli)
@@ -69,6 +77,7 @@ async function loadTopUpState(tx: Executor, orgId: string) {
       id: items.id,
       seedKey: items.seedKey,
       origin: items.origin,
+      status: items.status,
       section: items.section,
       level: items.level,
       type: items.type,
@@ -79,18 +88,23 @@ async function loadTopUpState(tx: Executor, orgId: string) {
     .from(items)
     .leftJoin(stimuli, eq(stimuli.id, items.stimulusId))
     .where(eq(items.orgId, orgId));
-  return { haveStimuli, plan: planTopUp(SEED_BANK, { stimuli: haveStimuli, items: haveItems }) };
+  return { haveStimuli, plan: planTopUp(SEED_BANK, { stimuli: haveStimuli, items: haveItems }, options) };
 }
 
 /** Read-only: what a top-up would do for one organisation, for the production summary. */
-export async function previewTopUp(orgId: string) {
-  const { plan } = await loadTopUpState(db, orgId);
-  return { stimuliToInsert: plan.stimuli.length, itemsToInsert: plan.items.length, keysToBackfill: plan.backfill.length };
+export async function previewTopUp(orgId: string, options: TopUpOptions = {}) {
+  const { plan } = await loadTopUpState(db, orgId, options);
+  return {
+    stimuliToInsert: plan.stimuli.length,
+    itemsToInsert: plan.items.length,
+    keysToBackfill: plan.backfill.length,
+    retire: plan.retire,
+  };
 }
 
-export async function topUpSeedBank(orgId: string) {
+export async function topUpSeedBank(orgId: string, options: TopUpOptions = {}) {
   return db.transaction(async (tx) => {
-    const { haveStimuli, plan } = await loadTopUpState(tx, orgId);
+    const { haveStimuli, plan } = await loadTopUpState(tx, orgId, options);
 
     for (const b of plan.backfill) {
       await tx.update(items).set({ seedKey: b.seedKey }).where(and(eq(items.id, b.id), eq(items.orgId, orgId)));
@@ -107,10 +121,40 @@ export async function topUpSeedBank(orgId: string) {
       return itemRow(orgId, item, seedKey, stimulusId, order.get(item) ?? 0);
     });
     for (let i = 0; i < rows.length; i += 100) await tx.insert(items).values(rows.slice(i, i + 100));
+
+    // The status and origin conditions repeat the plan's, so a row a school
+    // changed between the read and this write is left alone.
+    let retired = 0;
+    const retireIds = plan.retire.map((r) => r.id);
+    for (let i = 0; i < retireIds.length; i += 500) {
+      const done = await tx
+        .update(items)
+        .set({ status: "RETIRED", updatedAt: new Date() })
+        .where(
+          and(
+            eq(items.orgId, orgId),
+            eq(items.origin, "SEED"),
+            eq(items.status, "APPROVED"),
+            inArray(items.id, retireIds.slice(i, i + 500)),
+          ),
+        )
+        .returning({ id: items.id });
+      retired += done.length;
+    }
+    if (retired > 0) {
+      await tx.insert(auditLogs).values({
+        orgId,
+        actorId: null,
+        action: "bank.retire_stale",
+        subjectType: "item",
+        meta: { retired, bySectionLevel: retireCounts(plan.retire) },
+      });
+    }
     return {
       stimuliAdded: plan.stimuli.length,
       itemsAdded: rows.length,
       keysBackfilled: plan.backfill.length,
+      itemsRetired: retired,
       listeningWithoutAudio: plan.stimuli.filter((s) => s.section === "LISTENING").map((s) => s.key),
     };
   });
@@ -118,11 +162,12 @@ export async function topUpSeedBank(orgId: string) {
 
 /** Seed item counts of an organisation, for the top-up script's before/after line. */
 export async function seedCounts(orgId: string) {
-  const [[i], [s]] = await Promise.all([
+  const [[i], [a], [s]] = await Promise.all([
     db.select({ n: count() }).from(items).where(and(eq(items.orgId, orgId), eq(items.origin, "SEED"))),
+    db.select({ n: count() }).from(items).where(and(eq(items.orgId, orgId), eq(items.origin, "SEED"), eq(items.status, "APPROVED"))),
     db.select({ n: count() }).from(stimuli).where(and(eq(stimuli.orgId, orgId), eq(stimuli.origin, "SEED"))),
   ]);
-  return { items: i.n, stimuli: s.n };
+  return { items: i.n, approved: a.n, stimuli: s.n };
 }
 
 function stimulusRow(orgId: string, s: SeedStimulus) {
