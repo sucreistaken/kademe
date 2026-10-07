@@ -4,7 +4,7 @@ import { cockpitCounts, cockpitTab, openingNextStep } from "./opening-next-step"
 const id = "o1";
 const base = "/hiring/openings/o1";
 const live = (over: Partial<Parameters<typeof openingNextStep>[0]> = {}) =>
-  openingNextStep({ id, status: "OPEN", runs: true, facts: { invited: 4, expiringSoon: 0, requests: { open: 0, rights: 0 } }, shortfall: false, draftWaiting: false, ...over });
+  openingNextStep({ id, status: "OPEN", runs: true, facts: { invited: 4, expiringSoon: 0, requests: { open: 0, rights: 0 } }, noTeam: false, draftWaiting: false, ...over });
 
 describe("one next step per opening (KG2, 4.4)", () => {
   it("a draft: the setup path's next step, or 'Kuruluma devam et' when it was not computed", () => {
@@ -12,10 +12,10 @@ describe("one next step per opening (KG2, 4.4)", () => {
     expect(openingNextStep({ id, status: "DRAFT", runs: true, setup: null })).toEqual({ kind: "continueSetup", href: base });
   });
 
-  it("a live opening, in order: requests, team below the rule, expiring links, a waiting draft, no invitation, the candidates", () => {
+  it("a live opening, in order: requests, an empty team, expiring links, a waiting draft, no invitation, the candidates", () => {
     const facts = { invited: 4, expiringSoon: 2, requests: { open: 1, rights: 0 } };
-    expect(live({ facts, shortfall: true, draftWaiting: true })).toEqual({ kind: "requests", href: `${base}/candidates` });
-    expect(live({ facts: { ...facts, requests: { open: 0, rights: 0 } }, shortfall: true, draftWaiting: true })).toEqual({ kind: "team", href: `${base}/settings#team-members` });
+    expect(live({ facts, noTeam: true, draftWaiting: true })).toEqual({ kind: "requests", href: `${base}/candidates` });
+    expect(live({ facts: { ...facts, requests: { open: 0, rights: 0 } }, noTeam: true, draftWaiting: true })).toEqual({ kind: "team", href: `${base}/settings#team-members` });
     expect(live({ facts: { ...facts, requests: { open: 0, rights: 0 } }, draftWaiting: true })).toEqual({ kind: "expiring", href: `${base}/candidates` });
     expect(live({ draftWaiting: true })).toEqual({ kind: "draft", href: base });
     expect(live({ facts: { invited: 0, expiringSoon: 0, requests: { open: 0, rights: 0 } } })).toEqual({ kind: "invite", href: "/hiring/invite?opening=o1" });
@@ -26,7 +26,7 @@ describe("one next step per opening (KG2, 4.4)", () => {
     expect(live({ deadlinePassed: true })).toEqual({ kind: "deadline", href: `${base}/settings#contact-deadline` });
     expect(live({ deadlinePassed: true, facts: { invited: 0, expiringSoon: 0, requests: { open: 0, rights: 0 } } }).kind).toBe("deadline");
     expect(live({ deadlinePassed: true, draftWaiting: true }).kind).toBe("draft");
-    expect(live({ deadlinePassed: true, shortfall: true }).kind).toBe("team");
+    expect(live({ deadlinePassed: true, noTeam: true }).kind).toBe("team");
     expect(openingNextStep({ id, status: "OPEN", runs: false, deadlinePassed: true }).kind).toBe("open");
     expect(cockpitCounts([{ status: "OPEN", next: { kind: "deadline" } }]).waiting).toBe(1);
   });
@@ -42,7 +42,7 @@ describe("one next step per opening (KG2, 4.4)", () => {
 
   it("a reviewer gets 'Aç' on every row, whatever waits (H9); a closed opening too (KG1)", () => {
     const facts = { invited: 4, expiringSoon: 2, requests: { open: 3, rights: 1 } };
-    expect(openingNextStep({ id, status: "OPEN", runs: false, facts, shortfall: true })).toEqual({ kind: "open", href: base });
+    expect(openingNextStep({ id, status: "OPEN", runs: false, facts, noTeam: true })).toEqual({ kind: "open", href: base });
     expect(openingNextStep({ id, status: "DRAFT", runs: false, setup: { key: "team", href: "/x" } })).toEqual({ kind: "open", href: base });
     expect(openingNextStep({ id, status: "CLOSED", runs: true, facts })).toEqual({ kind: "open", href: base });
   });

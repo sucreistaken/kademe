@@ -15,7 +15,6 @@ const schema = z.object({
   memberIds: z.array(z.uuid()).max(50),
   decisionMakerId: z.uuid().nullable(),
   backupDecisionMakerId: z.uuid().nullable(),
-  minEvaluations: z.number().int(),
   blindMode: z.boolean(),
   deadline: z
     .string()

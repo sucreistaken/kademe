@@ -39,7 +39,6 @@ let stageSeconds: number;
 /** The invite form's view of the opening (invitableOpenings): its active evaluators and its last day. */
 let teamCount: number;
 let openingDeadlineAt: Date | null;
-let minEvaluations: number;
 type Person = { id: string; name: string; email: string; role: Role; lastLoginAt: null; disabledAt: Date | null };
 /** The organisation's users (loadPanelUsers): the owner deciding and the reviewer on the team, both active. */
 let people: Person[];
@@ -136,7 +135,7 @@ function respond(op: Op): unknown[] {
     case "hiring_stages":
       return [{ id: "s1", durationSeconds: stageSeconds, graceSeconds: 0, onTimeout: "AUTO_SUBMIT" }];
     case "hiring_openings":
-      return status === "OPEN" ? [{ id: OPENING, name: "Tasarımcı · Ekim", deadlineAt: openingDeadlineAt, minEvaluations }] : [];
+      return status === "OPEN" ? [{ id: OPENING, name: "Tasarımcı · Ekim", deadlineAt: openingDeadlineAt }] : [];
     case "hiring_opening_members":
       return [{ openingId: OPENING, count: teamCount }];
     default:
@@ -188,7 +187,6 @@ beforeEach(() => {
   stageSeconds = 1500;
   teamCount = 1;
   openingDeadlineAt = null;
-  minEvaluations = 1;
   sp = {};
   people = [person(OWNER, "Sahip", "OWNER"), person(REVIEWER, "Ece", "REVIEWER")];
   requestRows = 0;
@@ -480,14 +478,13 @@ describe("a live opening's attention and rules (4.5, H9, ruling C6)", () => {
     expect(fake.ops.some((o) => o.table === "candidate_requests" || o.table === "deletion_requests")).toBe(false);
   });
 
-  it("says a team below the rule and a passed last day, each leading to its step of team and rules (B-M3)", async () => {
-    teamCount = 1;
-    minEvaluations = 2;
+  it("says an empty team and a passed last day, each leading to its step of team and rules (B-M3)", async () => {
+    teamCount = 0;
     openingDeadlineAt = new Date("2020-01-10T20:59:59Z");
     const page = await render();
     const body = text(page);
     expect(body).toContain("Dikkat isteyenler");
-    expect(body).toContain("Ekipte 1 değerlendirici var, kural 2 istiyor.");
+    expect(body).toContain("Önce ekibe en az bir değerlendirici ekle.");
     expect(body).toContain("Son gün geçti; yeni davet açılamaz.");
     const hrefs = find(page, (el) => typeof el.props.href === "string").map((el) => el.props.href);
     expect(hrefs).toContain(`${BASE}/settings#team-members`);
@@ -495,8 +492,15 @@ describe("a live opening's attention and rules (4.5, H9, ruling C6)", () => {
     // A reviewer is told neither (H9: they cannot act on it, and no invite form is read for them).
     viewer = { role: "REVIEWER", edit: false };
     const reviewer = text(await render());
-    expect(reviewer).not.toContain("kural 2 istiyor");
+    expect(reviewer).not.toContain("Önce ekibe en az bir değerlendirici ekle.");
     expect(reviewer).not.toContain("Son gün geçti");
+  });
+
+  it("has no minimum team rule: one evaluator is enough, nothing waits on the team", async () => {
+    teamCount = 1;
+    const body = text(await render());
+    expect(body).not.toContain("Dikkat isteyenler");
+    expect(body).not.toMatch(/istiyor|değerlendirici var/);
   });
 
   it("stays silent without anything to attend to", async () => {

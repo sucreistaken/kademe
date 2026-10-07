@@ -13,7 +13,6 @@ const saved: OpeningRulesInput = {
   memberIds: ["rev"],
   decisionMakerId: "owner",
   backupDecisionMakerId: null,
-  minEvaluations: 1,
   blindMode: false,
   deadline: "2026-10-31",
   feedbackDays: 7,
@@ -60,7 +59,7 @@ describe("team and rules as four short flows (4.10, D10)", () => {
   });
 
   it("puts every rules problem on the step that fixes it (W8)", () => {
-    const all: RulesProblem[] = ["NAME_REQUIRED", "MEMBER_UNKNOWN", "DECISION_MAKER_REQUIRED", "DECISION_MAKER_ROLE", "BACKUP_SAME", "BACKUP_ROLE", "MIN_EVALUATIONS", "DEADLINE_INVALID", "DEADLINE_PAST", "FEEDBACK_DAYS", "EMAIL"];
+    const all: RulesProblem[] = ["NAME_REQUIRED", "MEMBER_UNKNOWN", "DECISION_MAKER_REQUIRED", "DECISION_MAKER_ROLE", "BACKUP_SAME", "BACKUP_ROLE", "DEADLINE_INVALID", "DEADLINE_PAST", "FEEDBACK_DAYS", "EMAIL"];
     expect(Object.fromEntries(all.map((p) => [p, rulesStepOf(p)]))).toEqual({
       NAME_REQUIRED: "name",
       MEMBER_UNKNOWN: "team-members",
@@ -68,15 +67,14 @@ describe("team and rules as four short flows (4.10, D10)", () => {
       DECISION_MAKER_ROLE: "team-decider",
       BACKUP_SAME: "team-decider",
       BACKUP_ROLE: "team-decider",
-      MIN_EVALUATIONS: "team-min",
       DEADLINE_INVALID: "contact-deadline",
       DEADLINE_PAST: "contact-deadline",
       FEEDBACK_DAYS: "contact-feedback",
       EMAIL: "contact-email",
     });
-    // No field belongs to two flows; twelve steps in all (three summaries among them).
+    // No field belongs to two flows; eleven steps in all (three summaries among them).
     expect(Object.values(FLOW_FIELDS).flat()).toHaveLength(new Set(Object.values(FLOW_FIELDS).flat()).size);
-    expect(Object.values(RULES_FLOWS).flat()).toHaveLength(12);
+    expect(Object.values(RULES_FLOWS).flat()).toHaveLength(11);
     // Each flow ends on its own save step.
     for (const flow of Object.keys(RULES_FLOWS) as Array<keyof typeof RULES_FLOWS>) expect(RULES_FLOWS[flow].at(-1)).toBe(REVIEW_STEP[flow]);
   });
@@ -124,7 +122,7 @@ describe("team and rules as four short flows (4.10, D10)", () => {
     // No origin, or the origin saved itself: back to the summary with what was stored.
     expect(afterSave({ flow: "team", origin: null, stored, value })).toEqual({ value: stored, hash: null });
     expect(afterSave({ flow: "contact", origin: "contact", stored, value })).toEqual({ value: stored, hash: null });
-    expect(new Set(ALL_FIELDS).size).toBe(10);
+    expect(new Set(ALL_FIELDS).size).toBe(9);
   });
 
   it("the team line names a decider only while active and able to decide, and counts active members (Task 20 rule)", () => {

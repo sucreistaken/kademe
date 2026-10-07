@@ -31,17 +31,17 @@ const opening = (id: string, status: OpeningListRow["status"], over: Partial<Ope
   memberIds: ["u1"],
   ...over,
 });
-const draft: CockpitRow = { opening: opening("d1", "DRAFT"), facts: null, setup: { done: 2, total: 5 }, shortfall: null, deadlinePassed: false, team: { count: 1, onlyYou: true }, next: { kind: "setup", href: "/hiring/openings/d1/settings#team-members", setupKey: "team" } };
+const draft: CockpitRow = { opening: opening("d1", "DRAFT"), facts: null, setup: { done: 2, total: 5 }, noTeam: false, deadlinePassed: false, team: { count: 1, onlyYou: true }, next: { kind: "setup", href: "/hiring/openings/d1/settings#team-members", setupKey: "team" } };
 const live: CockpitRow = {
   opening: opening("o1", "OPEN", { memberIds: ["u1", "u2"] }),
   facts: { invited: 9, started: 8, completed: 8, expiringSoon: 1, requests: { open: 2, rights: 1 } },
   setup: null,
-  shortfall: null,
+  noTeam: false,
   deadlinePassed: false,
   team: { count: 2, onlyYou: false },
   next: { kind: "requests", href: "/hiring/openings/o1/candidates" },
 };
-const closed: CockpitRow = { opening: opening("c1", "CLOSED"), facts: null, setup: null, shortfall: null, deadlinePassed: false, team: { count: 1, onlyYou: true }, next: { kind: "open", href: "/hiring/openings/c1" } };
+const closed: CockpitRow = { opening: opening("c1", "CLOSED"), facts: null, setup: null, noTeam: false, deadlinePassed: false, team: { count: 1, onlyYou: true }, next: { kind: "open", href: "/hiring/openings/c1" } };
 
 async function render(tab?: string) {
   return renderToStaticMarkup((await OpeningsPage({ searchParams: Promise.resolve(tab ? { tab } : {}) })) as never);
@@ -93,10 +93,10 @@ describe("the openings' control view page (4.4)", () => {
   });
 
   it("a live opening with no active evaluator says so and leads to the team (4.4 (2))", async () => {
-    cockpit.value = { runs: true, drafts: [], open: [{ ...live, facts: { invited: 0, started: 0, completed: 0, expiringSoon: 0, requests: { open: 0, rights: 0 } }, shortfall: { evaluators: 0, min: 2 }, team: { count: 0, onlyYou: false }, next: { kind: "team", href: "/hiring/openings/o1/settings#team-members" } }], closed: [] };
+    cockpit.value = { runs: true, drafts: [], open: [{ ...live, facts: { invited: 0, started: 0, completed: 0, expiringSoon: 0, requests: { open: 0, rights: 0 } }, noTeam: true, team: { count: 0, onlyYou: false }, next: { kind: "team", href: "/hiring/openings/o1/settings#team-members" } }], closed: [] };
     const html = await render();
     const words = text(html);
-    expect(words).toContain("Ekipte değerlendirici yok, kural 2 istiyor.");
+    expect(words).toContain("Önce ekibe en az bir değerlendirici ekle.");
     expect(words).toContain("Ekipte kimse yok");
     expect(words).toContain("Ekibe ekle");
     expect(words).toContain("1 tanesinde senden bir şey bekleniyor.");

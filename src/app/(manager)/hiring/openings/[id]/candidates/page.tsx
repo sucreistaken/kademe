@@ -1,10 +1,8 @@
-import Link from "next/link";
 import { Button, DisabledReason } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { StatusDot } from "@/components/ui/status-dot";
 import { UrlNotice } from "@/components/ui/url-notice";
 import { CandidateTable } from "@/components/hiring/candidates/candidate-table";
-import { panelShortfall } from "@/components/hiring/invite/form-rules";
 import { InviteSheet } from "@/components/hiring/invite/invite-sheet";
 import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
@@ -17,8 +15,6 @@ import { OpeningHeader } from "../opening-header";
 import { candidatesNotice, NOTICE_PARAMS, noticeVoice } from "./notices";
 
 export const dynamic = "force-dynamic";
-
-const LINK = "font-medium text-ink underline decoration-line-strong underline-offset-4 transition-colors duration-[120ms] ease-out hover:decoration-ink";
 
 /** HIRING-UX 5.12 "Adaylar": who was invited, where they are, their links and their open requests. */
 export default async function OpeningCandidatesPage({
@@ -42,7 +38,6 @@ export default async function OpeningCandidatesPage({
   ]);
   // The opening as the invite form needs it: OPEN, of this organisation (invitableOpenings).
   const target = invitable.find((o) => o.id === opening.id) ?? null;
-  const short = panelShortfall(target);
   // B-M3: an opening the invite form would refuse anyway (no evaluator, last day passed) waits here as on the overview.
   const block = inviteBlock(target, orgDay(now));
   const closed = opening.status === "CLOSED";
@@ -82,17 +77,6 @@ export default async function OpeningCandidatesPage({
             </p>
           )}
         </UrlNotice>
-      ) : null}
-      {short ? (
-        // Task 11 carry: the same calm warning as the invite form; not a block.
-        <div className="mt-6 space-y-1">
-          <StatusDot tone="warn" className="items-start text-ink [&>span:first-child]:mt-[7px]">
-            <span className="tnum text-[14px] leading-5">{t("hiringInvite.panelShort", { evaluators: short.evaluators, min: short.min })}</span>
-          </StatusDot>
-          <Link href={`/hiring/openings/${opening.id}/settings`} className={`ml-3.5 inline-block text-[13px] ${LINK}`}>
-            {t("hiringInvite.goTeam")}
-          </Link>
-        </div>
       ) : null}
       <Card className="mt-section p-card">
         <h2 className="sr-only">{t("hiringCandidates.title")}</h2>

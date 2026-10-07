@@ -363,7 +363,6 @@ async function main() {
     memberIds: [reviewer.id, manager.id],
     decisionMakerId: owner.id,
     backupDecisionMakerId: manager.id,
-    minEvaluations: 3,
     blindMode: true,
     deadline: "2099-12-31",
     feedbackDays: 14,
@@ -375,8 +374,8 @@ async function main() {
   check(saved.ok, "the rules save", JSON.stringify(saved));
   const afterSave = await teamRow();
   check(
-    afterSave.name === rules.name && afterSave.decisionMakerId === owner.id && afterSave.backupDecisionMakerId === manager.id && afterSave.minEvaluations === 3 && afterSave.blindMode && afterSave.feedbackDays === 14 && afterSave.candidateContactEmail === "ik@check.local",
-    "name, decision maker, backup, minimum, blind mode, reply promise and address are stored",
+    afterSave.name === rules.name && afterSave.decisionMakerId === owner.id && afterSave.backupDecisionMakerId === manager.id && afterSave.minEvaluations === 1 && afterSave.blindMode && afterSave.feedbackDays === 14 && afterSave.candidateContactEmail === "ik@check.local",
+    "name, decision maker, backup, the one-evaluation minimum, blind mode, reply promise and address are stored",
   );
   check(afterSave.deadlineAt?.getTime() === deadlineToDate("2099-12-31").getTime(), "the deadline is stored as the end of that day", afterSave.deadlineAt?.toISOString());
   const [wall] = await db.execute<{ local: string }>(sql`select to_char(deadline_at at time zone ${ORG_TIMEZONE}, 'YYYY-MM-DD HH24:MI:SS') as local from hiring_openings where id = ${team.openingId}`);

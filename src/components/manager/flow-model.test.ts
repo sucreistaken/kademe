@@ -34,17 +34,17 @@ describe("the journey and the exit (W2, W7)", () => {
 });
 
 describe("the summary (W5, P8)", () => {
-  const saved = { memberIds: ["a", "b"], decisionMakerId: "d", minEvaluations: 2, deadline: null as string | null };
+  const saved = { memberIds: ["a", "b"], decisionMakerId: "d", feedbackDays: 7, deadline: null as string | null };
 
   it("marks only the rows whose value changed; the same people in another order is no change", () => {
-    const now = { ...saved, memberIds: ["b", "a"], minEvaluations: 3 };
-    expect(summaryRows(saved, now, ["memberIds", "decisionMakerId", "minEvaluations"])).toEqual([
+    const now = { ...saved, memberIds: ["b", "a"], feedbackDays: 14 };
+    expect(summaryRows(saved, now, ["memberIds", "decisionMakerId", "feedbackDays"])).toEqual([
       { field: "memberIds", changed: false },
       { field: "decisionMakerId", changed: false },
-      { field: "minEvaluations", changed: true },
+      { field: "feedbackDays", changed: true },
     ]);
     expect(isDirty(saved, now, ["memberIds"])).toBe(false);
-    expect(isDirty(saved, now, ["memberIds", "minEvaluations"])).toBe(true);
+    expect(isDirty(saved, now, ["memberIds", "feedbackDays"])).toBe(true);
   });
 
   it("compares lists as sets and everything else strictly", () => {

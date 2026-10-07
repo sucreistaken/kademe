@@ -35,7 +35,7 @@ const openingFor = vi.fn(async (id: string, need: "view" | "edit") => {
       memberIds: [REVIEWER, GONE],
       decisionMakerId: OWNER,
       backupDecisionMakerId: null,
-      minEvaluations: 2,
+      minEvaluations: 1,
       blindMode: true,
       deadlineAt: DEADLINE,
       feedbackDays: 10,
@@ -132,6 +132,8 @@ describe("team and rules page", () => {
       expect(props.users.find((u) => u.id === GONE)?.disabled).toBe(true);
       expect(JSON.stringify(props.users)).not.toContain("@x.test");
       expect(props.initial).toMatchObject({ deadline: "2026-10-31", memberIds: [REVIEWER, GONE], decisionMakerId: OWNER, feedbackDays: 10, candidateContactEmail: "", finishSurveyEnabled: false });
+      // No minimum count is offered or sent any more.
+      expect(props.initial).not.toHaveProperty("minEvaluations");
       const close = forms(page, closeOpeningAction);
       expect(close).toHaveLength(1);
       // Fix round 1, Important 2: the button says it is working and takes no second click.

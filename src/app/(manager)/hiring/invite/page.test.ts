@@ -9,7 +9,7 @@ import { isValidElement, type ReactElement, type ReactNode } from "react";
  */
 type Role = "OWNER" | "MANAGER" | "REVIEWER";
 let role: Role;
-let openings: Array<{ id: string; name: string; live: boolean; evaluators: number; minEvaluations: number; deadlineDay: string | null }>;
+let openings: Array<{ id: string; name: string; live: boolean; evaluators: number; deadlineDay: string | null }>;
 const ORG = "11111111-1111-4111-8111-111111111111";
 const invitable = vi.fn(async (orgId: string) => {
   void orgId;
@@ -45,7 +45,7 @@ const page = async (sp: Record<string, string> = {}) => (await HiringInvitePage(
 
 beforeEach(() => {
   role = "OWNER";
-  openings = [{ id: "o1", name: "Tasarımcı · Ekim", live: true, evaluators: 2, minEvaluations: 2, deadlineDay: null }];
+  openings = [{ id: "o1", name: "Tasarımcı · Ekim", live: true, evaluators: 2, deadlineDay: null }];
   invitable.mockClear();
 });
 

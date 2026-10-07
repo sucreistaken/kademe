@@ -13,7 +13,6 @@ const ok: OpeningRulesInput = {
   memberIds: ["reviewer", "manager"],
   decisionMakerId: "owner",
   backupDecisionMakerId: "manager",
-  minEvaluations: 2,
   blindMode: false,
   deadline: "2026-10-31",
   feedbackDays: 7,
@@ -40,11 +39,11 @@ describe("opening rules (HIRING-UX 5.18, 4.6)", () => {
 
   it("keeps the numbers, the date and the address in range", () => {
     const problems = openingRulesProblems(
-      { ...ok, name: " ", minEvaluations: 6, feedbackDays: 0, deadline: "2026-10-03", candidateContactEmail: "not-an-address" },
+      { ...ok, name: " ", feedbackDays: 0, deadline: "2026-10-03", candidateContactEmail: "not-an-address" },
       users,
       "2026-10-04",
     );
-    expect(problems).toEqual(["NAME_REQUIRED", "MIN_EVALUATIONS", "FEEDBACK_DAYS", "DEADLINE_PAST", "EMAIL"]);
+    expect(problems).toEqual(["NAME_REQUIRED", "FEEDBACK_DAYS", "DEADLINE_PAST", "EMAIL"]);
     expect(openingRulesProblems({ ...ok, deadline: null, candidateContactEmail: "" }, users, "2026-10-04")).toEqual([]);
   });
 

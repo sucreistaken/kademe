@@ -506,3 +506,18 @@ describe("0013_hiring_feedback_by", () => {
     expect([...sql.matchAll(/ALTER TABLE "([^"]+)"/g)].every((m) => m[1] === "hiring_assessments")).toBe(true);
   });
 });
+
+describe("0017_hiring_min_evaluations_one", () => {
+  const sql = read("0017_hiring_min_evaluations_one");
+
+  it("makes one evaluation the default and moves every existing opening to it", () => {
+    expect(sql).toContain(`ALTER TABLE "hiring_openings" ALTER COLUMN "min_evaluations" SET DEFAULT 1;`);
+    expect(sql).toMatch(/UPDATE "hiring_openings" SET "min_evaluations" = 1\b/);
+  });
+
+  it("keeps the 1-5 CHECK and touches no other table", () => {
+    expect(sql).not.toMatch(/\bDROP\b/);
+    expect(sql).not.toMatch(/^\s*(INSERT|DELETE)\b/im);
+    expect([...sql.matchAll(/(?:ALTER TABLE|UPDATE) "([^"]+)"/g)].every((m) => m[1] === "hiring_openings")).toBe(true);
+  });
+});

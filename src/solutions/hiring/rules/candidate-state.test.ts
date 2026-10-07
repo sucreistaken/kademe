@@ -41,7 +41,7 @@ function input(over: Partial<StateInput> = {}): StateInput {
     orgName: "Örnek A.Ş.",
     contactEmail: "ekip@ornek.com",
     retention: { mediaDays: 180, candidateDays: 730 },
-    opening: { status: "OPEN", positionName: "Ürün Tasarımcısı", finishSurveyEnabled: true, feedbackDays: 7, minEvaluations: 2 },
+    opening: { status: "OPEN", positionName: "Ürün Tasarımcısı", finishSurveyEnabled: true, feedbackDays: 7, minEvaluations: 1 },
     version: { stages: secretStages, introTitle: null, introBody: null, practiceEnabled: true },
     invitation: {
       candidateName: "Elif Kaya",

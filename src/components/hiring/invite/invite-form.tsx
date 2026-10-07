@@ -28,7 +28,6 @@ import {
   inviteStepOf,
   invitePath,
   refusalMove,
-  panelShortfall,
   personWait,
   sheetLocked,
   type InviteOpening,
@@ -102,7 +101,6 @@ export function InviteForm({
   const [done, setDone] = useState<Done | null>(null);
   const parsed = useMemo(() => parseInviteRows(text), [text]);
   const reason = inviteReason({ opening, mode, fullName, email, rows: parsed.rows, deadline, today });
-  const short = panelShortfall(opening);
   // The day the server will use (linkExpiryDay): the chosen one held to the opening's deadline, else the deadline, else 14 days.
   const openingDeadline = opening?.deadlineDay && opening.deadlineDay >= today ? opening.deadlineDay : null;
   const day = deadlineRow({ opening, deadline, today });
@@ -473,17 +471,7 @@ export function InviteForm({
             changeLabel={flow("change")}
             changedLabel={flow("changed")}
           />
-          {short && opening ? (
-            <div className="space-y-1">
-              <StatusDot tone="warn" className="items-start text-ink [&>span:first-child]:mt-[7px]">
-                <span className="tnum text-[14px] leading-5">{t("panelShort", { evaluators: short.evaluators, min: short.min })}</span>
-              </StatusDot>
-              {/* KG3: straight to the team flow's first step (4.10); a plain anchor, so that page hears the hash. */}
-              <a href={`/hiring/openings/${opening.id}/settings#team-members`} className={`ml-3.5 inline-flex min-h-11 items-center text-[14px] font-medium text-ink ${LINK}`}>
-                {t("goTeam")}
-              </a>
-            </div>
-          ) : opening && opening.live && opening.evaluators > 0 ? (
+          {opening && opening.live && opening.evaluators > 0 ? (
             <p className="tnum text-[14px] text-muted">{t("evaluators", { count: opening.evaluators })}</p>
           ) : null}
         </div>

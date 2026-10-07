@@ -14,7 +14,7 @@ export type OpeningNext<K extends string = string> = { kind: OpeningNextKind; hr
  *   the step was not computed (the time budget, D14). A live opening's waiting draft says "Kuruluma devam et ›"
  *   to its setup path's next step the same way (B-M10).
  * - Live, in this order: open candidate requests (data-rights requests are only counted, ruling C6),
- *   a team below the rule (panelShortfall), links expiring within 48 hours, a draft version waiting,
+ *   a team with no active evaluator (the invite form's noEvaluators), links expiring within 48 hours, a draft version waiting,
  *   the opening's last day passed (no invitation can be opened, B-M3: to the contact flow's last day),
  *   no invitation yet, else the candidates.
  */
@@ -24,7 +24,8 @@ export function openingNextStep<K extends string>(input: {
   runs: boolean;
   setup?: { key: K; href: string } | null;
   facts?: { invited: number; expiringSoon: number; requests?: { open: number; rights: number } } | null;
-  shortfall?: boolean;
+  /** No active evaluator on the live opening: no invitation can be opened (NO_EVALUATORS). */
+  noTeam?: boolean;
   draftWaiting?: boolean;
   /** The opening's last day is before today in the organisation's zone (the invite form's openingDeadline). */
   deadlinePassed?: boolean;
@@ -34,7 +35,7 @@ export function openingNextStep<K extends string>(input: {
   if (input.status === "DRAFT") return input.setup ? { kind: "setup", href: input.setup.href, setupKey: input.setup.key } : { kind: "continueSetup", href: base };
   const facts = input.facts ?? { invited: 0, expiringSoon: 0 };
   if ((facts.requests?.open ?? 0) > 0) return { kind: "requests", href: `${base}/candidates` };
-  if (input.shortfall) return { kind: "team", href: `${base}/settings#team-members` };
+  if (input.noTeam) return { kind: "team", href: `${base}/settings#team-members` };
   if (facts.expiringSoon > 0) return { kind: "expiring", href: `${base}/candidates` };
   // B-M10 (KG3): a live opening's new version continues at its next setup step when that was computed (D14), else at the overview.
   if (input.draftWaiting) return { kind: "draft", href: input.setup?.href ?? base };

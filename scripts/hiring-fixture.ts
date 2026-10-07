@@ -161,7 +161,6 @@ export async function buildPublishedOpening(input: {
     memberIds: input.memberIds,
     decisionMakerId: input.ownerId,
     backupDecisionMakerId: null,
-    minEvaluations: 2,
     blindMode: false,
     deadline: null,
     feedbackDays: 7,

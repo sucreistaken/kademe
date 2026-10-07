@@ -25,7 +25,6 @@ const initial: OpeningRulesInput = {
   memberIds: ["rev"],
   decisionMakerId: "owner",
   backupDecisionMakerId: null,
-  minEvaluations: 2,
   blindMode: false,
   deadline: "2026-10-31",
   feedbackDays: 7,
@@ -53,7 +52,7 @@ const filled = (out: string) => out.match(/bg-accent text-white/g)?.length ?? 0;
 describe("team and rules: the summary (4.10, P7, H9)", () => {
   it("shows the four groups with 'Değiştir' each, the locked rule, and the page's close action under them", () => {
     const out = render();
-    for (const words of ["Ekip", "Aday iletişimi", "Adil değerlendirme", "Alım adı", "1 değerlendirici · karar: Kadir Ay", "Ece Yıldız · Her adayı en az 2 kişi değerlendirir.", "7 günde dönüş", "Kimlik açık · bitiş anketi açık"]) {
+    for (const words of ["Ekip", "Aday iletişimi", "Adil değerlendirme", "Alım adı", "1 değerlendirici · karar: Kadir Ay", "Ece Yıldız", "7 günde dönüş", "Kimlik açık · bitiş anketi açık"]) {
       expect(out).toContain(words);
     }
     expect(out.match(/Değiştir<span class="sr-only">/g)).toHaveLength(4);
@@ -89,7 +88,7 @@ describe("team and rules: the summary (4.10, P7, H9)", () => {
     expect(out).toContain("One evaluator · decides: Kadir Ay");
     expect(out).toContain("Candidate contact");
     expect(out).toContain("Fair review");
-    expect(out).toContain("Each candidate is reviewed by at least 2 people.");
+    expect(out).not.toContain("at least");
     expect(out.match(/Change<span class="sr-only">/g)).toHaveLength(4);
   });
 });
@@ -99,7 +98,7 @@ describe("team and rules: links land on their step (W3, Task 19 carry)", () => {
     const out = render({ hash: "#team-members" });
     expect(heading(out)).toBe("Kim değerlendirecek?");
     expect(out).toContain("Ekip ve kurallar · Ekip");
-    expect(out).toContain("Adım 1 / 4");
+    expect(out).toContain("Adım 1 / 3");
     expect(out).toContain("Özete dön");
     expect(out).toContain(">Çık<");
     expect(out).toMatch(/<button[^>]*id="rules-next"[^>]*>Devam et<\/button>/);
@@ -112,7 +111,7 @@ describe("team and rules: links land on their step (W3, Task 19 carry)", () => {
   it("#team-decider opens 'Kararı kim verecek?' with only active people who can decide, a stale decider marked and closed", () => {
     const out = render({ hash: "#team-decider", people: [...users, { ...gone, disabled: false, role: "REVIEWER" }] });
     expect(heading(out)).toBe("Kararı kim verecek?");
-    expect(out).toContain("Adım 2 / 4");
+    expect(out).toContain("Adım 2 / 3");
     expect(out).toMatch(/<input[^>]*name="rules-decider"[^>]*value="owner"/);
     expect(out).not.toMatch(/<input[^>]*name="rules-decider"[^>]*value="rev"/);
     expect(out).not.toMatch(/<input[^>]*name="rules-decider"[^>]*value="gone"/);
@@ -148,11 +147,11 @@ describe("team and rules: links land on their step (W3, Task 19 carry)", () => {
   it("the summary step marks nothing and its 'Kaydet' waits with 'Değişiklik yok.' while nothing changed (W5, P8)", () => {
     const out = render({ hash: "#team-review" });
     expect(heading(out)).toBe("Değişikliklere son bir bak");
-    expect(out).toContain("Adım 4 / 4");
+    expect(out).toContain("Adım 3 / 3");
     expect(out).not.toContain("· değişti");
     expect(out).toMatch(/<button[^>]*id="rules-save"[^>]*disabled=""[^>]*aria-describedby="rules-save-why"[^>]*>Kaydet<\/button>/);
     expect(out).toMatch(/id="rules-save-why"[^>]*>Değişiklik yok\.</);
-    expect(out.match(/Değiştir<span class="sr-only">/g)).toHaveLength(3);
+    expect(out.match(/Değiştir<span class="sr-only">/g)).toHaveLength(2);
     expect(filled(out)).toBe(1);
   });
 
@@ -170,30 +169,31 @@ describe("team and rules: links land on their step (W3, Task 19 carry)", () => {
   it("each step speaks English on an English page", () => {
     const out = render({ hash: "#team-members", locale: "en" });
     expect(heading(out)).toBe("Who will review?");
-    expect(out).toContain("Step 1 / 4");
+    expect(out).toContain("Step 1 / 3");
     expect(out).toContain(">Continue<");
   });
 });
 
 describe("the team flow in the mockup's look (screen 6)", () => {
-  it("#team-members: the drawing above the question, people as big cards with round initials and a checkbox at the right, and the count against the rule", () => {
+  it("#team-members: the drawing above the question, people as big cards with round initials and a checkbox at the right, and the count", () => {
     const out = render({ hash: "#team-members" });
     // emptyCandidates' shadow ellipse.
     expect(out).toContain('ellipse cx="80" cy="104" rx="42" ry="5"');
     expect(out).toMatch(/rounded-full bg-accent-soft font-bold text-accent[^"]*">KA</);
     expect(out).toContain("peer-checked:border-accent peer-checked:bg-accent peer-checked:text-white");
-    expect(out).toMatch(/<p aria-live="polite" class="text-\[14px\] text-ink">1 kişi seçili, kural 2 istiyor\.<\/p>/);
+    expect(out).toMatch(/<p aria-live="polite" class="flex items-center gap-1\.5 text-\[14px\] text-accent"><svg[^>]*lucide-check[\s\S]*?1 kişi seçili\.<\/p>/);
+    expect(out).not.toContain("istiyor");
   });
 
-  it("says the count with a check once the team meets the rule", () => {
-    const out = render({ hash: "#team-members", values: { memberIds: ["owner", "rev"] } });
-    expect(out).toMatch(/<p aria-live="polite" class="flex items-center gap-1\.5 text-\[14px\] text-accent"><svg[^>]*lucide-check[\s\S]*?2 kişi seçili, kural 2 istiyor\.<\/p>/);
+  it("says the count plainly, without a check, while nobody is chosen", () => {
+    const out = render({ hash: "#team-members", values: { memberIds: [] } });
+    expect(out).toMatch(/<p aria-live="polite" class="text-\[14px\] text-ink">0 kişi seçili\.<\/p>/);
   });
 
-  it("#team-decider: the deciders as big radio cards; the 1-5 cards keep their square look", () => {
+  it("#team-decider: the deciders as big radio cards; there is no step for a minimum count", () => {
     expect(render({ hash: "#team-decider" })).toContain("rounded-full peer-checked:border-[6px] peer-checked:border-accent");
-    const min = render({ hash: "#team-min" });
-    expect(min).toContain("min-h-16");
-    expect(min).not.toContain("peer-checked:border-[6px]");
+    // The old step's address is not a step any more: it shows the summary.
+    expect(heading(render({ hash: "#team-min" }))).toBeNull();
+    expect(render({ hash: "#team-review" })).not.toMatch(/en az|Kaç değerlendirme/);
   });
 });

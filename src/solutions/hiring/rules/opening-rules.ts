@@ -6,7 +6,6 @@ export type OpeningRulesInput = {
   memberIds: string[];
   decisionMakerId: string | null;
   backupDecisionMakerId: string | null;
-  minEvaluations: number;
   blindMode: boolean;
   /** YYYY-MM-DD in the organisation's time zone, or null for no deadline. */
   deadline: string | null;
@@ -23,7 +22,6 @@ export type RulesProblem =
   | "BACKUP_SAME"
   | "BACKUP_ROLE"
   | "MEMBER_UNKNOWN"
-  | "MIN_EVALUATIONS"
   | "FEEDBACK_DAYS"
   | "DEADLINE_INVALID"
   | "DEADLINE_PAST"
@@ -56,8 +54,7 @@ export function openingRulesProblems(input: OpeningRulesInput, users: PanelUser[
     }
   }
   if (input.memberIds.some((id) => !active(id))) problems.push("MEMBER_UNKNOWN");
-  // The same ranges as the database CHECKs (hiring_min_evaluations, hiring_feedback_days).
-  if (!Number.isInteger(input.minEvaluations) || input.minEvaluations < 1 || input.minEvaluations > 5) problems.push("MIN_EVALUATIONS");
+  // The same range as the database CHECK hiring_feedback_days.
   if (!Number.isInteger(input.feedbackDays) || input.feedbackDays < 1 || input.feedbackDays > 60) problems.push("FEEDBACK_DAYS");
   if (input.deadline) {
     // zonedDayStart answers null for anything that is not a real YYYY-MM-DD.

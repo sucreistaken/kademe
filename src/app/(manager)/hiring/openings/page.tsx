@@ -65,11 +65,11 @@ function Row({ row, runs, locale, t }: { row: CockpitRow; runs: boolean; locale:
     );
   const requests = f?.requests ? f.requests.open + f.requests.rights : 0;
   const attention: ControlAttention[] = o.status === "CLOSED" ? [] : [
-    // H9: requests, the team rule and a waiting draft only for someone who runs openings (their facts alone carry them).
+    // H9: requests, an empty team and a waiting draft only for someone who runs openings (their facts alone carry them).
     ...(f?.requests && requests > 0
       ? [{ key: "requests", icon: Inbox, text: t("hiringCommon.openRequests", { count: requests }), note: f.requests.rights > 0 ? t("hiringCommon.rightsNote", { count: f.requests.rights }) : undefined }]
       : []),
-    ...(row.shortfall ? [{ key: "team", icon: Users, text: t("hiringCommon.teamShort", { evaluators: row.shortfall.evaluators, min: row.shortfall.min }) }] : []),
+    ...(row.noTeam ? [{ key: "team", icon: Users, text: t("hiringInvite.reasonnoEvaluators") }] : []),
     ...(f && f.expiringSoon > 0 ? [{ key: "expiring", icon: Clock, text: t("hiringCommon.expiringLinks", { count: f.expiringSoon }) }] : []),
     // B-M3: a live opening past its last day takes no invitation; said once, as on the opening's overview.
     ...(row.deadlinePassed ? [{ key: "deadline", icon: CalendarDays, text: t("hiringCommon.deadlinePassed") }] : []),

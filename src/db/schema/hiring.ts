@@ -118,8 +118,8 @@ export const hiringOpenings = pgTable(
     decisionMakerId: uuid("decision_maker_id").references(() => users.id, { onDelete: "set null" }),
     backupDecisionMakerId: uuid("backup_decision_maker_id").references(() => users.id, { onDelete: "set null" }),
     blindMode: boolean("blind_mode").notNull().default(false),
-    /** Submitted evaluations a decision needs without an override (HIRING-UX 3.10). */
-    minEvaluations: integer("min_evaluations").notNull().default(2),
+    /** Always 1 since the "at least N evaluators" rule was removed; read only for the candidate's "at least n" promise. */
+    minEvaluations: integer("min_evaluations").notNull().default(1),
     /** The dated promise on the candidate's finish screen. */
     feedbackDays: integer("feedback_days").notNull().default(7),
     candidateContactEmail: text("candidate_contact_email"),

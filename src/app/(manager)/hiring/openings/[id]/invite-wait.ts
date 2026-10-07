@@ -18,8 +18,7 @@ export function inviteWaitReason(closed: boolean, canEdit: boolean, t: ReturnTyp
  * opening checks, in its order): no active evaluator on the team, or the
  * opening's last day before `today` (the organisation's day). The opening's
  * header then shows "Aday davet et" waiting with the form's own reason
- * (hiringInvite.reason*) instead of opening the Sheet. A team that is only
- * short of the rule still invites (the calm panelShort warning).
+ * (hiringInvite.reason*) instead of opening the Sheet.
  */
 export function inviteBlock(opening: InviteOpening | null, today: string): "noEvaluators" | "openingDeadline" | null {
   if (!opening) return null;

@@ -106,7 +106,7 @@ const openingRow = {
   openingContact: null,
   finishSurveyEnabled: true,
   feedbackDays: 7,
-  minEvaluations: 2,
+  minEvaluations: 1,
   positionName: "Ürün Tasarımcısı",
   introTitle: null,
   introBody: null,
@@ -186,7 +186,7 @@ beforeEach(() => {
     media: [],
     consented: true,
     pct: 25,
-    minEvaluations: 2,
+    minEvaluations: 1,
     assigned: 2,
     feedbackBy: null,
   };

@@ -14,8 +14,8 @@ import { InviteForm } from "./invite-form";
 import type { InviteOpening } from "./form-rules";
 
 const Provider = NextIntlClientProvider as unknown as (props: { locale: string; messages: unknown; timeZone: string; children?: ReactNode }) => ReactNode;
-const designer: InviteOpening = { id: "11111111-1111-4111-8111-111111111111", name: "Tasarımcı · Ekim", live: true, evaluators: 2, minEvaluations: 2, deadlineDay: "2026-10-19" };
-const support: InviteOpening = { id: "22222222-2222-4222-8222-222222222222", name: "Destek Uzmanı · Ekim", live: true, evaluators: 1, minEvaluations: 1, deadlineDay: null };
+const designer: InviteOpening = { id: "11111111-1111-4111-8111-111111111111", name: "Tasarımcı · Ekim", live: true, evaluators: 2, deadlineDay: "2026-10-19" };
+const support: InviteOpening = { id: "22222222-2222-4222-8222-222222222222", name: "Destek Uzmanı · Ekim", live: true, evaluators: 1, deadlineDay: null };
 
 const render = (
   props: { openings?: InviteOpening[]; initialOpeningId?: string | null; container?: "page" | "sheet"; hash?: string } = {},

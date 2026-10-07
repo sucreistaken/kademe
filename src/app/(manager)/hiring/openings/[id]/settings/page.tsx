@@ -87,7 +87,6 @@ export default async function OpeningSettingsPage({
             memberIds: opening.memberIds,
             decisionMakerId: opening.decisionMakerId,
             backupDecisionMakerId: opening.backupDecisionMakerId,
-            minEvaluations: opening.minEvaluations,
             blindMode: opening.blindMode,
             deadline: opening.deadlineAt ? orgDay(opening.deadlineAt) : null,
             feedbackDays: opening.feedbackDays,

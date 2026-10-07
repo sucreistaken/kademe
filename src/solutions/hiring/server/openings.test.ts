@@ -286,7 +286,6 @@ describe("saveOpeningRules", () => {
     memberIds: [REVIEWER, MANAGER, REVIEWER],
     decisionMakerId: OWNER,
     backupDecisionMakerId: MANAGER,
-    minEvaluations: 2,
     blindMode: true,
     deadline: null,
     feedbackDays: 7,
@@ -347,12 +346,13 @@ describe("saveOpeningRules", () => {
       name: "Tasarımcı · Ekim",
       decisionMakerId: OWNER,
       backupDecisionMakerId: MANAGER,
-      minEvaluations: 2,
       blindMode: true,
       deadlineAt: deadlineToDate("2099-10-31"),
       feedbackDays: 7,
       candidateContactEmail: "ik@example.com",
     });
+    // The "at least N evaluators" rule is gone: a save never touches the stored minimum.
+    expect(update.values).not.toHaveProperty("minEvaluations");
     expect(remove.params).toEqual([OPENING]);
     expect(insert.values).toEqual([
       { openingId: OPENING, userId: REVIEWER },
@@ -369,11 +369,11 @@ describe("saveOpeningRules", () => {
         members: [REVIEWER, MANAGER],
         decisionMakerId: OWNER,
         backupDecisionMakerId: MANAGER,
-        minEvaluations: 2,
         blindMode: true,
         candidateContactEmail: "ik@example.com",
       },
     });
+    expect((audit.values as { meta: object }).meta).not.toHaveProperty("minEvaluations");
   });
 
   it("stores no deadline and no address when they are empty, and clears the panel when nobody is ticked", async () => {
@@ -384,8 +384,8 @@ describe("saveOpeningRules", () => {
   });
 
   it("refuses with the problems and writes nothing", async () => {
-    const result = await saveOpeningRules(ORG, OWNER, OPENING, input({ decisionMakerId: REVIEWER, backupDecisionMakerId: REVIEWER, minEvaluations: 9, candidateContactEmail: "ik@" }));
-    expect(result).toEqual({ ok: false, problems: ["DECISION_MAKER_ROLE", "BACKUP_SAME", "MIN_EVALUATIONS", "EMAIL"] });
+    const result = await saveOpeningRules(ORG, OWNER, OPENING, input({ decisionMakerId: REVIEWER, backupDecisionMakerId: REVIEWER, candidateContactEmail: "ik@" }));
+    expect(result).toEqual({ ok: false, problems: ["DECISION_MAKER_ROLE", "BACKUP_SAME", "EMAIL"] });
     expect(writesOf(fake.ops)).toEqual([]);
   });
 

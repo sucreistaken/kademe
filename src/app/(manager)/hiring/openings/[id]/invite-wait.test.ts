@@ -25,7 +25,7 @@ describe("why 'Aday davet et' waits", () => {
 
 /** B-M3: an invitable opening the invite form would refuse anyway: the header's button waits with the form's own reason. */
 describe("an opening's own invite blockers", () => {
-  const opening = { id: "o1", name: "O", live: true, evaluators: 1, minEvaluations: 2, deadlineDay: "2026-10-10" as string | null };
+  const opening = { id: "o1", name: "O", live: true, evaluators: 1, deadlineDay: "2026-10-10" as string | null };
   it("waits while no active evaluator is on the team, or once the opening's last day passed; a short team still invites", () => {
     expect(inviteBlock(opening, "2026-10-06")).toBeNull();
     expect(inviteBlock({ ...opening, evaluators: 0 }, "2026-10-06")).toBe("noEvaluators");

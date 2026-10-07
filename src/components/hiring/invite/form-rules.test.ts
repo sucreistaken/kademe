@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { parseInviteRows } from "@/solutions/hiring/rules/invitation";
-import { INVITE_STEPS, deadlineInputValue, deadlineRow, inviteFirstInvalid, inviteReason, inviteStepOf, invitePath, panelShortfall, personWait, refusalMove, sheetLocked, type InviteOpening } from "./form-rules";
+import { INVITE_STEPS, deadlineInputValue, deadlineRow, inviteFirstInvalid, inviteReason, inviteStepOf, invitePath, personWait, refusalMove, sheetLocked, type InviteOpening } from "./form-rules";
 
-const opening: InviteOpening = { id: "o", name: "Tasarımcı · Ekim", live: true, evaluators: 2, minEvaluations: 2, deadlineDay: null };
+const opening: InviteOpening = { id: "o", name: "Tasarımcı · Ekim", live: true, evaluators: 2, deadlineDay: null };
 const base = { opening, mode: "single" as const, fullName: "Elif Kaya", email: "elif@example.com", rows: [], deadline: null, today: "2026-10-05" };
 
 describe("why the invite button waits (HIRING-UX 5.11 early validation)", () => {
@@ -30,21 +30,6 @@ describe("why the invite button waits (HIRING-UX 5.11 early validation)", () => 
     expect(inviteReason({ ...base, mode: "many" })).toBe("noRows");
     expect(inviteReason({ ...base, mode: "many", rows: parseInviteRows("Elif Kaya, elif@example.com\nAli, ali@").rows })).toBe("rows");
     expect(inviteReason({ ...base, mode: "many", rows: parseInviteRows("Elif Kaya, elif@example.com").rows })).toBeNull();
-  });
-});
-
-describe("a panel smaller than the decision minimum (ledger Task 11 carry)", () => {
-  it("gives the numbers when the active panel is smaller than the minimum evaluations", () => {
-    expect(panelShortfall({ ...opening, evaluators: 1, minEvaluations: 2 })).toEqual({ evaluators: 1, min: 2 });
-    expect(panelShortfall({ ...opening, evaluators: 2, minEvaluations: 3 })).toEqual({ evaluators: 2, min: 3 });
-  });
-
-  it("says nothing when the panel is large enough, empty (the button already waits for that) or the opening is not live", () => {
-    expect(panelShortfall({ ...opening, evaluators: 2, minEvaluations: 2 })).toBeNull();
-    expect(panelShortfall({ ...opening, evaluators: 3, minEvaluations: 2 })).toBeNull();
-    expect(panelShortfall({ ...opening, evaluators: 0, minEvaluations: 2 })).toBeNull();
-    expect(panelShortfall({ ...opening, live: false, evaluators: 1, minEvaluations: 2 })).toBeNull();
-    expect(panelShortfall(null)).toBeNull();
   });
 });
 

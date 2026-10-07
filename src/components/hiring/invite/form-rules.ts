@@ -5,10 +5,9 @@ import { cleanInviteName, isEmail, linkExpiryDay, type InviteRow } from "@/solut
 /**
  * An opening the invite form offers: OPEN, of the session's organisation
  * (invitableOpenings). `evaluators` counts the active panel the invitation
- * copies; `minEvaluations` is the decision minimum; `deadlineDay` is the
- * opening's last day in the organisation's zone.
+ * copies; `deadlineDay` is the opening's last day in the organisation's zone.
  */
-export type InviteOpening = { id: string; name: string; live: boolean; evaluators: number; minEvaluations: number; deadlineDay: string | null };
+export type InviteOpening = { id: string; name: string; live: boolean; evaluators: number; deadlineDay: string | null };
 export type FormReason = "noOpening" | "notPublished" | "noEvaluators" | "openingDeadline" | "deadline" | "name" | "email" | "noRows" | "rows";
 
 /**
@@ -103,18 +102,6 @@ export function refusalMove(code: InviteCode, at: { step: InviteStep; pickOpenin
 export function deadlineRow(input: { opening: InviteOpening | null; deadline: string | null; today: string }): { kind: "pickOpening" } | { kind: "day"; day: string } {
   if (!input.opening) return { kind: "pickOpening" };
   return { kind: "day", day: linkExpiryDay({ chosen: input.deadline, openingDeadlineDay: input.opening.deadlineDay, today: input.today }) };
-}
-
-/**
- * A live opening whose active panel is smaller than its decision minimum
- * (ledger, Task 11 carry): the invitation still opens (the candidate is told
- * "at least n" with n = min(minimum, assigned)), but the manager sees the
- * numbers so the team can be filled before decisions. An empty panel is not
- * a shortfall here: the button already waits for it.
- */
-export function panelShortfall(opening: InviteOpening | null): { evaluators: number; min: number } | null {
-  if (!opening || !opening.live || opening.evaluators === 0) return null;
-  return opening.evaluators < opening.minEvaluations ? { evaluators: opening.evaluators, min: opening.minEvaluations } : null;
 }
 
 /**

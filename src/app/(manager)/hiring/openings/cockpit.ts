@@ -25,11 +25,11 @@ export type CockpitRow = {
   /** A draft's "Kurulum n / N" for someone who runs openings; null otherwise or past the budget. */
   setup: { done: number; total: number } | null;
   /**
-   * A live opening whose active team is smaller than its decision minimum, an
-   * empty team included (4.4 (2): the invite form refuses then, so the row
-   * leads to the team, not to an invitation), for someone who runs openings.
+   * A live opening with no active evaluator (4.4 (2): the invite form refuses
+   * then, NO_EVALUATORS, so the row leads to the team, not to an invitation),
+   * for someone who runs openings.
    */
-  shortfall: { evaluators: number; min: number } | null;
+  noTeam: boolean;
   /**
    * A live opening whose last day is before today in the organisation's zone
    * (the invite form's openingDeadline, B-M3), for someone who runs openings;
@@ -90,14 +90,14 @@ export async function loadCockpit(
     // "Kurulum n / N" is a draft's count only; a live opening uses the computed step for its "Kuruluma devam et" alone.
     const setup = opening.status === "DRAFT" ? computed : null;
     const panel = runs && opening.status === "OPEN" ? invitable.find((o) => o.id === opening.id) : undefined;
-    const shortfall = panel && panel.evaluators < panel.minEvaluations ? { evaluators: panel.evaluators, min: panel.minEvaluations } : null;
+    const noTeam = panel !== undefined && panel.evaluators === 0;
     const deadlinePassed = panel?.deadlineDay != null && panel.deadlineDay < today;
     const members = runs ? opening.memberIds.filter((id) => active.has(id)) : opening.memberIds;
     return {
       opening,
       facts: f,
       setup: setup ? { done: setup.done, total: setup.total } : null,
-      shortfall,
+      noTeam,
       deadlinePassed,
       team: { count: members.length, onlyYou: members.length === 1 && members[0] === user.id },
       next: openingNextStep({
@@ -106,7 +106,7 @@ export async function loadCockpit(
         runs,
         setup: computed?.next ?? null,
         facts: f,
-        shortfall: shortfall !== null,
+        noTeam,
         draftWaiting: opening.liveNumber !== null && opening.draftNumber !== null,
         deadlinePassed,
       }),

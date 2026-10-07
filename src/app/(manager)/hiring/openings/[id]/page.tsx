@@ -89,9 +89,9 @@ export default async function OpeningOverviewPage({
   // The opening as the invite form needs it: OPEN, of this organisation (invitableOpenings).
   const target = invitable.find((o) => o.id === opening.id) ?? null;
   const today = orgDay();
-  // B-M3: what the invite form would refuse on this opening anyway, and a team short of the rule (only read for an editor of a live opening).
+  // B-M3: what the invite form would refuse on this opening anyway, and an empty team (only read for an editor of a live opening).
   const block = inviteBlock(target, today);
-  const shortfall = target && target.evaluators < target.minEvaluations ? { evaluators: target.evaluators, min: target.minEvaluations } : null;
+  const noTeam = target !== null && target.evaluators === 0;
   const deadlinePassed = target?.deadlineDay != null && target.deadlineDay < today;
   const view = funnelView(funnel, opening.finishSurveyEnabled);
   const number = new Intl.NumberFormat(locale === "tr" ? "tr-TR" : "en-GB", { maximumFractionDigits: 1 });
@@ -400,8 +400,8 @@ export default async function OpeningOverviewPage({
             </Card>
           ) : null}
           {/* H9 and ruling C18's open point: requests only for someone who runs openings (their facts alone carry them); the expiring count, a number, for everyone on the opening. */}
-          {(facts && (requests > 0 || facts.expiringSoon > 0)) || shortfall || deadlinePassed ? (
-            // B-M3: the team below the rule and a passed last day only for an editor (target is read for them alone).
+          {(facts && (requests > 0 || facts.expiringSoon > 0)) || noTeam || deadlinePassed ? (
+            // B-M3: an empty team and a passed last day only for an editor (target is read for them alone).
             <Card className="p-card">
               <h2 className="text-[16px] leading-6 font-semibold text-ink">{t("hiringOverview.attentionTitle")}</h2>
               <ul className="mt-2 divide-y divide-line">
@@ -433,12 +433,12 @@ export default async function OpeningOverviewPage({
                     </Link>
                   </li>
                 ) : null}
-                {shortfall ? (
+                {noTeam ? (
                   <li>
                     {/* A step of team and rules' flow (a hash): a plain anchor, so that page hears it (W3). */}
                     <HashAwareLink href={`${base}/settings#team-members`} className={ATTENTION_ROW}>
                       <Users className="size-[18px] shrink-0 text-muted" strokeWidth={1.75} aria-hidden />
-                      <span className="flex-1">{t("hiringCommon.teamShort", { evaluators: shortfall.evaluators, min: shortfall.min })}</span>
+                      <span className="flex-1">{t("hiringInvite.reasonnoEvaluators")}</span>
                       <span className="inline-flex items-center text-[13px] font-medium">
                         {t("hiringOpenings.nextTeam")}
                         <ChevronRight className="size-4" strokeWidth={1.75} aria-hidden />

@@ -43,7 +43,7 @@ import { loadCockpit, SETUP_BUDGET_MS } from "./cockpit";
 function respond(op: Op): unknown[] {
   if (op.table === "hiring_assessments") return [{ assessmentId: "a1", openingId: O1, candidateId: "c1" }];
   if (op.table === "candidate_requests") return [{ assessmentId: "a1" }];
-  if (op.table === "hiring_openings") return [{ id: O1, name: "O1", deadlineAt: null, minEvaluations: 3 }];
+  if (op.table === "hiring_openings") return [{ id: O1, name: "O1", deadlineAt: null }];
   if (op.table === "hiring_versions") return [{ openingId: O1 }];
   if (op.table === "hiring_opening_members") return [{ openingId: O1, count: 1 }];
   return [];
@@ -69,16 +69,16 @@ describe("the openings' control view (4.4, H9, D14)", () => {
       [{ done: 1, total: 3 }, "setup", "team"],
       [{ done: 1, total: 3 }, "setup", "team"],
     ]);
-    expect(cockpit.open[0]).toMatchObject({ facts: { invited: 1, requests: { open: 1, rights: 0 } }, shortfall: { evaluators: 1, min: 3 }, next: { kind: "requests" } });
+    expect(cockpit.open[0]).toMatchObject({ facts: { invited: 1, requests: { open: 1, rights: 0 } }, noTeam: false, next: { kind: "requests" } });
     expect(reads.people).toHaveBeenCalledTimes(1);
   });
 
-  it("a reviewer: counts only, no request field, no setup, no team rule, every row 'Aç' (H9, STATUS 321)", async () => {
+  it("a reviewer: counts only, no request field, no setup, no team check, every row 'Aç' (H9, STATUS 321)", async () => {
     const cockpit = await loadCockpit(reviewer, managerT("tr"), "tr");
     const rows = [...cockpit.drafts, ...cockpit.open];
     expect(rows.map((r) => r.next.kind)).toEqual(["open", "open", "open"]);
     expect(cockpit.open[0].facts).not.toHaveProperty("requests");
-    expect(rows.every((r) => r.setup === null && r.shortfall === null)).toBe(true);
+    expect(rows.every((r) => r.setup === null && r.noTeam === false)).toBe(true);
     expect(JSON.stringify(rows)).not.toContain("requests");
     expect(fake.ops.some((o) => o.table === "candidate_requests" || o.table === "deletion_requests" || o.table === "hiring_openings")).toBe(false);
     expect(reads.working).not.toHaveBeenCalled();
@@ -99,15 +99,15 @@ describe("the openings' control view (4.4, H9, D14)", () => {
   it("a live opening with no active evaluator: the team line and the team step, counted as waiting (4.4 (2), KG3)", async () => {
     fake.respond = (op) => (op.table === "candidate_requests" || op.table === "hiring_opening_members" ? [] : respond(op));
     const cockpit = await loadCockpit(owner, managerT("tr"), "tr");
-    expect(cockpit.open[0]).toMatchObject({ shortfall: { evaluators: 0, min: 3 }, next: { kind: "team", href: `/hiring/openings/${O1}/settings#team-members` } });
+    expect(cockpit.open[0]).toMatchObject({ noTeam: true, next: { kind: "team", href: `/hiring/openings/${O1}/settings#team-members` } });
   });
 
   it("a live opening whose last day passed: the deadline step to the contact flow, after what waits already (B-M3)", async () => {
     const past = new Date("2020-01-10T20:59:59Z");
     fake.respond = (op) =>
-      op.table === "candidate_requests" ? [] : op.table === "hiring_opening_members" ? [{ openingId: O1, count: 3 }] : op.table === "hiring_openings" ? [{ id: O1, name: "O1", deadlineAt: past, minEvaluations: 3 }] : respond(op);
+      op.table === "candidate_requests" ? [] : op.table === "hiring_opening_members" ? [{ openingId: O1, count: 3 }] : op.table === "hiring_openings" ? [{ id: O1, name: "O1", deadlineAt: past }] : respond(op);
     const cockpit = await loadCockpit(owner, managerT("tr"), "tr");
-    expect(cockpit.open[0]).toMatchObject({ shortfall: null, deadlinePassed: true, next: { kind: "deadline", href: `/hiring/openings/${O1}/settings#contact-deadline` } });
+    expect(cockpit.open[0]).toMatchObject({ noTeam: false, deadlinePassed: true, next: { kind: "deadline", href: `/hiring/openings/${O1}/settings#contact-deadline` } });
     // A reviewer reads no invite form, so nothing about it (H9).
     expect((await loadCockpit(reviewer, managerT("tr"), "tr")).open[0]).toMatchObject({ deadlinePassed: false, next: { kind: "open" } });
   });
@@ -129,7 +129,7 @@ describe("the openings' control view (4.4, H9, D14)", () => {
   it("reads no facts for closed openings and gives their row one action, 'Aç' (4.4, KG1)", async () => {
     lists.byStatus.CLOSED = [listed(C1, "CLOSED")];
     const cockpit = await loadCockpit(owner, managerT("tr"), "tr");
-    expect(cockpit.closed[0]).toMatchObject({ facts: null, shortfall: null, setup: null, next: { kind: "open", href: `/hiring/openings/${C1}` } });
+    expect(cockpit.closed[0]).toMatchObject({ facts: null, noTeam: false, setup: null, next: { kind: "open", href: `/hiring/openings/${C1}` } });
     const invitations = fake.ops.find((o) => o.table === "hiring_assessments")!;
     expect(invitations.params).toContain(O1);
     expect(invitations.params).not.toContain(C1);

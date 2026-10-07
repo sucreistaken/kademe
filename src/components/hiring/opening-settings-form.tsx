@@ -253,7 +253,7 @@ export function OpeningSettingsForm({
         icon: Users,
         label: t("teamTitle"),
         value: common("rulesTeam", { count: team.count, decider: team.decider ?? common("rulesNoDecider") }),
-        detail: [saved.memberIds.map(nameOf).filter(Boolean).join(", "), t("summaryMin", { count: saved.minEvaluations }), team.backup ? t("backupLine", { name: team.backup }) : null]
+        detail: [saved.memberIds.map(nameOf).filter(Boolean).join(", "), team.backup ? t("backupLine", { name: team.backup }) : null]
           .filter(Boolean)
           .join(" · "),
         problem: rowProblem("team"),
@@ -389,15 +389,15 @@ export function OpeningSettingsForm({
             // A disabled person can be taken off the panel but not put back on it.
             items={panel.map((u) => personCard(u, u.disabled && !value.memberIds.includes(u.id)))}
           />
-          {/* Mockup 6: who is chosen against the rule, said politely as it changes. */}
-          {activeReviewers >= value.minEvaluations ? (
+          {/* Mockup 6: how many are chosen, said politely as it changes. */}
+          {activeReviewers > 0 ? (
             <p aria-live="polite" className="flex items-center gap-1.5 text-[14px] text-accent">
               <Check className="size-4 shrink-0" strokeWidth={2} aria-hidden />
-              {t("membersCount", { count: activeReviewers, min: value.minEvaluations })}
+              {t("membersCount", { count: activeReviewers })}
             </p>
           ) : (
             <p aria-live="polite" className="text-[14px] text-ink">
-              {t("membersCount", { count: activeReviewers, min: value.minEvaluations })}
+              {t("membersCount", { count: activeReviewers })}
             </p>
           )}
         </div>
@@ -426,28 +426,6 @@ export function OpeningSettingsForm({
         </div>
       ),
     }),
-    "team-min": () => ({
-      id: "team-min",
-      title: t("stepMinTitle"),
-      lead: <p>{t("minEvaluationsOverride")}</p>,
-      layout: "split",
-      primary: forward,
-      note,
-      body: (
-        <div className="space-y-3">
-          <ChoiceCardGroup
-            type="single"
-            name="rules-min"
-            size="square"
-            columns={5}
-            value={[String(value.minEvaluations)]}
-            onChange={([n]) => set("minEvaluations", Number(n))}
-            items={[1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: <span className="tnum">{n}</span> }))}
-          />
-          {value.minEvaluations > activeReviewers ? <p className="tnum text-[14px] text-ink">{t("minEvaluationsShort", { count: activeReviewers, min: value.minEvaluations })}</p> : null}
-        </div>
-      ),
-    }),
     "team-review": () =>
       review([
         { id: "members", label: t("members"), value: value.memberIds.map(nameOf).filter(Boolean).join(", ") || "-", changed: marks.memberIds, edit: { onClick: () => edit("team-members") } },
@@ -459,7 +437,6 @@ export function OpeningSettingsForm({
           changed: marks.decisionMakerId || marks.backupDecisionMakerId,
           edit: { onClick: () => edit("team-decider") },
         },
-        { id: "min", label: t("minEvaluations"), value: <span className="tnum">{value.minEvaluations}</span>, changed: marks.minEvaluations, edit: { onClick: () => edit("team-min") } },
       ]),
     "contact-deadline": () => ({
       id: "contact-deadline",

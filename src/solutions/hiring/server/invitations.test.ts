@@ -825,16 +825,16 @@ describe("invitableOpenings", () => {
     fake.respond = (op) => {
       if (op.table === "hiring_openings")
         return [
-          { id: "o1", name: "A", deadlineAt: null, minEvaluations: 2 },
-          { id: "o2", name: "B", deadlineAt: new Date("2026-10-20T20:59:59Z"), minEvaluations: 3 },
+          { id: "o1", name: "A", deadlineAt: null },
+          { id: "o2", name: "B", deadlineAt: new Date("2026-10-20T20:59:59Z") },
         ];
       if (op.table === "hiring_versions") return [{ openingId: "o1" }];
       if (op.table === "hiring_opening_members") return [{ openingId: "o1", count: 2 }];
       return [];
     };
     expect(await invitableOpenings(ORG)).toEqual([
-      { id: "o1", name: "A", live: true, evaluators: 2, minEvaluations: 2, deadlineDay: null },
-      { id: "o2", name: "B", live: false, evaluators: 0, minEvaluations: 3, deadlineDay: "2026-10-20" },
+      { id: "o1", name: "A", live: true, evaluators: 2, deadlineDay: null },
+      { id: "o2", name: "B", live: false, evaluators: 0, deadlineDay: "2026-10-20" },
     ]);
     const read = fake.ops.find((o) => o.table === "hiring_openings")!;
     expect(read.params).toEqual(expect.arrayContaining([ORG, "OPEN"]));
@@ -856,7 +856,7 @@ describe("invitableOpenings", () => {
     const seen: number[] = [];
     fake.respond = (op) => {
       seen.push(fake.ops.length);
-      return op.table === "hiring_openings" ? [{ id: "o1", name: "A", deadlineAt: null, minEvaluations: 2 }] : [];
+      return op.table === "hiring_openings" ? [{ id: "o1", name: "A", deadlineAt: null }] : [];
     };
     await invitableOpenings(ORG);
     expect(fake.ops.map((o) => o.table)).toEqual(["hiring_openings", "hiring_versions", "hiring_opening_members"]);

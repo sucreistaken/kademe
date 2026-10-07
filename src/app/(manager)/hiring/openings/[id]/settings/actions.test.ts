@@ -60,7 +60,6 @@ const rules = {
   memberIds: [MEMBER],
   decisionMakerId: OWNER,
   backupDecisionMakerId: null,
-  minEvaluations: 2,
   blindMode: false,
   deadline: "2099-10-31",
   feedbackDays: 7,
@@ -94,6 +93,11 @@ describe("saveOpeningRulesAction", () => {
   it("passes the finish survey switch through", async () => {
     await saveOpeningRulesAction(OPENING, { ...rules, finishSurveyEnabled: false });
     expect(saveOpeningRules).toHaveBeenCalledWith("o1", "u1", OPENING, { ...rules, finishSurveyEnabled: false });
+  });
+
+  it("tolerates an older form that still sends minEvaluations: the field is dropped, never stored", async () => {
+    await expect(saveOpeningRulesAction(OPENING, { ...rules, minEvaluations: 3 })).resolves.toEqual({ ok: true, name: rules.name });
+    expect(saveOpeningRules).toHaveBeenCalledWith("o1", "u1", OPENING, rules);
   });
 
   it("refuses a finish survey switch that is not a boolean", async () => {

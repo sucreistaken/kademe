@@ -941,16 +941,15 @@ export async function openingCardFacts(orgId: string, openingIds: string[], view
 /**
  * The organisation's OPEN openings with what the invite form needs (HIRING-UX
  * 5.11): whether a version is live, how many active evaluators the invitation
- * would copy, the decision minimum (for the small-panel warning) and the
- * opening's last day in the organisation's zone. Only callers who run
+ * would copy and the opening's last day in the organisation's zone. Only callers who run
  * openings use it. Every read carries the organisation: the openings, their
  * published versions, and the panel's users.
  */
 export async function invitableOpenings(
   orgId: string,
-): Promise<Array<{ id: string; name: string; live: boolean; evaluators: number; minEvaluations: number; deadlineDay: string | null }>> {
+): Promise<Array<{ id: string; name: string; live: boolean; evaluators: number; deadlineDay: string | null }>> {
   const rows = await db
-    .select({ id: hiringOpenings.id, name: hiringOpenings.name, deadlineAt: hiringOpenings.deadlineAt, minEvaluations: hiringOpenings.minEvaluations })
+    .select({ id: hiringOpenings.id, name: hiringOpenings.name, deadlineAt: hiringOpenings.deadlineAt })
     .from(hiringOpenings)
     .where(and(eq(hiringOpenings.orgId, orgId), eq(hiringOpenings.status, "OPEN")))
     .orderBy(desc(hiringOpenings.createdAt), desc(hiringOpenings.id));
@@ -972,7 +971,6 @@ export async function invitableOpenings(
     name: r.name,
     live: live.some((v) => v.openingId === r.id),
     evaluators: Number(members.find((m) => m.openingId === r.id)?.count ?? 0),
-    minEvaluations: r.minEvaluations,
     deadlineDay: r.deadlineAt ? orgDay(r.deadlineAt) : null,
   }));
 }

@@ -12,7 +12,6 @@ export type RulesFlow = "team" | "contact" | "fair" | "name";
 export type RulesStep =
   | "team-members"
   | "team-decider"
-  | "team-min"
   | "team-review"
   | "contact-deadline"
   | "contact-feedback"
@@ -25,7 +24,7 @@ export type RulesStep =
 type Field = keyof OpeningRulesInput;
 
 export const RULES_FLOWS: Record<RulesFlow, readonly RulesStep[]> = {
-  team: ["team-members", "team-decider", "team-min", "team-review"],
+  team: ["team-members", "team-decider", "team-review"],
   contact: ["contact-deadline", "contact-feedback", "contact-email", "contact-review"],
   fair: ["fair-blind", "fair-survey", "fair-review"],
   name: ["name"],
@@ -36,7 +35,7 @@ export const REVIEW_STEP: Record<RulesFlow, RulesStep> = { team: "team-review", 
 
 /** The fields each flow decides (its summary's rows and what it may change). */
 export const FLOW_FIELDS: Record<RulesFlow, readonly Field[]> = {
-  team: ["memberIds", "decisionMakerId", "backupDecisionMakerId", "minEvaluations"],
+  team: ["memberIds", "decisionMakerId", "backupDecisionMakerId"],
   contact: ["deadline", "feedbackDays", "candidateContactEmail"],
   fair: ["blindMode", "finishSurveyEnabled"],
   name: ["name"],
@@ -50,7 +49,6 @@ const PROBLEM_STEP: Record<RulesProblem, RulesStep> = {
   DECISION_MAKER_ROLE: "team-decider",
   BACKUP_SAME: "team-decider",
   BACKUP_ROLE: "team-decider",
-  MIN_EVALUATIONS: "team-min",
   DEADLINE_INVALID: "contact-deadline",
   DEADLINE_PAST: "contact-deadline",
   FEEDBACK_DAYS: "contact-feedback",
