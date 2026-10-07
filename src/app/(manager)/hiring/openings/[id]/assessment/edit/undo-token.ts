@@ -14,8 +14,9 @@ export type UndoSubject = {
   openingId: string;
   /** The draft the item was deleted from: a ticket never restores into a later draft. */
   versionId: string;
-  kind: "stage" | "activity";
-  /** The stage a question goes back into; empty for a stage. */
+  /** "revise-all" / "revise-activity": the wizard's "AI'a söyle" undo (setup/revise-undo.ts). */
+  kind: "stage" | "activity" | "revise-all" | "revise-activity";
+  /** The stage a question goes back into; the revised question for "revise-activity"; empty otherwise. */
   stageId: string;
   index: number;
   payload: string;

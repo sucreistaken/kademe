@@ -83,7 +83,8 @@ async function main() {
   const id = created.openingId;
   const opening = await openings.loadOpening(org.id, id);
   check(opening?.status === "DRAFT" && opening.ownerId === owner.id && opening.decisionMakerId === owner.id, "DRAFT, owned and decided by its creator");
-  check(created.next === `/hiring/openings/${id}/assessment/edit`, "a blank start opens the builder (C7)", created.next);
+  check(created.next === `/hiring/openings/${id}/setup#questions`, "a blank start continues in the wizard's questions step (5.20)", created.next);
+  check(opening?.memberIds.join() === owner.id, "its creator is its one evaluator ('Sadece sen', 5.20)", opening?.memberIds.join());
   const [v1] = await versions.versionsOf(org.id, id);
   check(v1?.number === 1 && v1.status === "DRAFT", "v1 is a draft");
   const refused = await openings.createOpening(user, { position: { kind: "new", name: "İlansız", jobDescription: " " }, start: "AI", copyFrom: null });
@@ -180,7 +181,7 @@ async function main() {
     .where(eq(s.hiringVersions.id, v1.id));
   const copy = await openings.createOpening(user, { position: { kind: "existing", id: position.id }, start: "COPY", copyFrom: id });
   if (!copy.ok) throw new Error(copy.code);
-  check(copy.next === `/hiring/openings/${copy.openingId}/assessment/edit`, "a copied start opens the builder (C7)", copy.next);
+  check(copy.next === `/hiring/openings/${copy.openingId}/setup#questions`, "a copied start continues in the wizard (5.20)", copy.next);
   const [copyVersion] = await versions.versionsOf(org.id, copy.openingId);
   const copied = await loadVersionContent(org.id, copyVersion.id);
   const source = await loadVersionContent(org.id, v1.id);
@@ -668,7 +669,7 @@ async function main() {
   check((await versions.versionsOf(org.id, id)).length === liveVersions, "and no draft was opened by it (C5)");
   const aiStart = await openings.createOpening(user, { position: { kind: "existing", id: position.id }, start: "AI", copyFrom: null });
   if (!aiStart.ok) throw new Error(aiStart.code);
-  check(aiStart.next === `/hiring/openings/${aiStart.openingId}/assessment/ai`, "an AI start opens the AI screen (C7)", aiStart.next);
+  check(aiStart.next === `/hiring/openings/${aiStart.openingId}/setup#questions`, "an AI start continues in the wizard (5.20)", aiStart.next);
   const via = `hiring-ai:${aiStart.openingId}`;
   const reusedComp = await findOrCreateCompetency(org.id, owner.id, { name: { tr: " iletişim ", en: "" }, description: { tr: "", en: "" }, anchors: aiAnchors }, via);
   check(reusedComp.ok && !reusedComp.created && reusedComp.id === communication, "a proposal named like an active competency reuses it (any case)", JSON.stringify(reusedComp));

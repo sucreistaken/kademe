@@ -72,7 +72,7 @@ async function main() {
       bad(`${label}: createOpening refused ${created.code}`);
       continue;
     }
-    check(created.next === `/hiring/openings/${created.openingId}/assessment/edit`, `${label}: opens the builder`, created.next);
+    check(created.next === `/hiring/openings/${created.openingId}/setup#questions`, `${label}: continues in the wizard`, created.next);
     const [version] = await versions.versionsOf(orgId, created.openingId);
     const content = await loadVersionContent(orgId, version.id);
     if (!content) {

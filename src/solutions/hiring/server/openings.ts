@@ -118,6 +118,12 @@ export type CreateOpeningInput = {
   copyFrom: string | null;
   /** A ready template's key (templates/index.ts); read only when start is TEMPLATE. */
   templateKey?: string | null;
+  /**
+   * The job ad the wizard's step 1 AI wrote (HIRING-UX 5.20); read only when
+   * start is AI. It fills the position only where the ad is empty: a new
+   * position without its own text, or a library position without an ad.
+   */
+  jobAd?: string | null;
 };
 
 export type CreateOpeningResult =
@@ -154,7 +160,9 @@ const monthName = () => new Intl.DateTimeFormat(DEFAULT_LOCALE === "en" ? "en-GB
  * (HiringNotFound otherwise); v1 is an empty draft, a copy or a ready template.
  * A template (spec 2026-10-06-hiring-ready-templates-design, section 4) also
  * brings its competencies and weights, and fills the position only where it is
- * empty: a job ad when it has none, a profile when it has no rows.
+ * empty: a job ad when it has none, a profile when it has no rows. An AI start
+ * fills an empty ad the same way with the ad step 1 wrote. The creator is also
+ * the first evaluator (the team "Sadece sen", HIRING-UX 5.20).
  */
 export async function createOpening(user: { id: string; orgId: string }, input: CreateOpeningInput): Promise<CreateOpeningResult> {
   return db.transaction(async (tx) => {
@@ -184,7 +192,8 @@ export async function createOpening(user: { id: string; orgId: string }, input: 
       if (!row) return { ok: false as const, code: "POSITION_NOT_FOUND" as const };
       position = row;
     }
-    if (input.start === "AI" && !position.jobDescription?.trim()) return { ok: false as const, code: "JOB_AD_REQUIRED" as const };
+    const aiAd = input.start === "AI" ? input.jobAd?.trim() || null : null;
+    if (input.start === "AI" && !position.jobDescription?.trim() && !aiAd) return { ok: false as const, code: "JOB_AD_REQUIRED" as const };
     let sourceVersionId: string | null = null;
     if (input.start === "COPY") {
       const [source] =
@@ -201,7 +210,8 @@ export async function createOpening(user: { id: string; orgId: string }, input: 
       if (!sourceVersionId) return { ok: false as const, code: "COPY_SOURCE_NOT_FOUND" as const };
     }
 
-    const templateAd = template ? template.jobAd[DEFAULT_LOCALE] : null;
+    // The ad that fills an empty position: the template's, or the one step 1's AI wrote.
+    const templateAd = template ? template.jobAd[DEFAULT_LOCALE] : aiAd;
     let positionId = position.id;
     if (!positionId) {
       const jobDescription = position.jobDescription ?? templateAd ?? "";
@@ -231,6 +241,8 @@ export async function createOpening(user: { id: string; orgId: string }, input: 
       .insert(hiringOpenings)
       .values({ orgId: user.orgId, positionId, name: uniqueOpeningName(base, taken.map((r) => r.name)), ownerId: user.id, decisionMakerId: user.id })
       .returning({ id: hiringOpenings.id });
+    // "Sadece sen" (HIRING-UX 5.20): the creator decides and evaluates until the team is changed.
+    await tx.insert(hiringOpeningMembers).values({ openingId: opening.id, userId: user.id }).onConflictDoNothing();
     const ids = template ? await ensureTemplateCompetencies(tx, user.orgId, user.id, templateCompetencyKeys(template)) : null;
     const built = template ? materialise(template, (key) => ids![key]) : null;
     // A copy takes the source's languages, intro, proctoring and practice; weights start over.
@@ -268,8 +280,8 @@ export async function createOpening(user: { id: string; orgId: string }, input: 
         templateKey: input.start === "TEMPLATE" && template ? template.key : null,
       },
     });
-    // A blank, copied or template start opens the builder; an AI start opens the AI draft screen.
-    const next = `/hiring/openings/${opening.id}/assessment/${input.start === "AI" ? "ai" : "edit"}`;
+    // Every start continues in the wizard's step 2 (HIRING-UX 5.20); an AI start's draft is filled there.
+    const next = `/hiring/openings/${opening.id}/setup#questions`;
     return { ok: true as const, openingId: opening.id, next };
   });
 }

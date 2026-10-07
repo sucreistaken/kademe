@@ -55,8 +55,7 @@ describe("positionOptions", () => {
 });
 
 describe("createOpening", () => {
-  // Ruling C7: no link to a page that does not exist yet. A blank or copied
-  // start opens the builder (Task 15); an AI start opens the AI screen (Task 17).
+  // HIRING-UX 5.20: every start continues in the wizard's step 2 (questions).
   const respond = (op: { table: string }) =>
     op.table === "users"
       ? [{ id: ACTOR }]
@@ -68,16 +67,76 @@ describe("createOpening", () => {
             ? [{ id: VERSION }]
             : [];
 
-  it("a BLANK start opens the builder", async () => {
+  const STEP_2 = `/hiring/openings/${OPENING}/setup#questions`;
+
+  it("a BLANK start continues in the wizard's questions step", async () => {
     fake.respond = respond;
     const result = await createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "existing", id: POS_A }, start: "BLANK", copyFrom: null });
-    expect(result).toEqual({ ok: true, openingId: OPENING, next: `/hiring/openings/${OPENING}/assessment/edit` });
+    expect(result).toEqual({ ok: true, openingId: OPENING, next: STEP_2 });
   });
 
-  it("an AI start opens the AI draft screen", async () => {
+  it("an AI start continues in the wizard's questions step too", async () => {
     fake.respond = respond;
     const result = await createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "existing", id: POS_A }, start: "AI", copyFrom: null });
-    expect(result).toEqual({ ok: true, openingId: OPENING, next: `/hiring/openings/${OPENING}/assessment/ai` });
+    expect(result).toEqual({ ok: true, openingId: OPENING, next: STEP_2 });
+  });
+
+  it("makes the creator the decision maker and the one evaluator ('Sadece sen')", async () => {
+    fake.respond = respond;
+    await createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "existing", id: POS_A }, start: "BLANK", copyFrom: null });
+    const opening = fake.ops.find((o) => o.kind === "insert" && o.table === "hiring_openings");
+    expect(opening?.values).toMatchObject({ ownerId: ACTOR, decisionMakerId: ACTOR });
+    const members = fake.ops.filter((o) => o.kind === "insert" && o.table === "hiring_opening_members");
+    expect(members).toHaveLength(1);
+    expect(members[0].values).toEqual({ openingId: OPENING, userId: ACTOR });
+    expect(members[0].onConflict).toEqual({ action: "nothing" });
+  });
+
+  describe("the ad step 1's AI wrote", () => {
+    const AI_AD = "Sürücü kursumuza B sınıfı direksiyon eğitimi verecek bir eğitmen arıyoruz.";
+    let jobDescription: string | null = null;
+    const withAd = (op: Op) => (op.table === "positions" && op.kind === "select" ? [{ id: POS_A, name: "Sürüş Eğitmeni", jobDescription }] : respond(op));
+    const updates = () => fake.ops.filter((o) => o.kind === "update" && o.table === "positions");
+
+    beforeEach(() => {
+      jobDescription = null;
+      fake.respond = withAd;
+    });
+
+    it("refuses an AI start with no ad anywhere, before anything is written", async () => {
+      expect(await createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "existing", id: POS_A }, start: "AI", copyFrom: null, jobAd: "  " })).toEqual({
+        ok: false,
+        code: "JOB_AD_REQUIRED",
+      });
+      expect(writesOf(fake.ops)).toEqual([]);
+    });
+
+    it("fills a library position that has no ad, only while it is still empty", async () => {
+      const result = await createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "existing", id: POS_A }, start: "AI", copyFrom: null, jobAd: ` ${AI_AD} ` });
+      expect(result).toMatchObject({ ok: true });
+      expect(updates()).toHaveLength(1);
+      expect((updates()[0].values as { jobDescription: string }).jobDescription).toBe(AI_AD);
+      expect(updates()[0].where).toContain("btrim");
+      expect(updates()[0].params).toEqual(expect.arrayContaining([POS_A, ORG]));
+    });
+
+    it("never overwrites a library position's own ad", async () => {
+      jobDescription = "Kendi ilanımız, uzun ve dolu.";
+      await createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "existing", id: POS_A }, start: "AI", copyFrom: null, jobAd: AI_AD });
+      expect(updates()).toEqual([]);
+    });
+
+    it("gives a new position the AI ad when it brings none of its own", async () => {
+      fake.respond = (op) => (op.kind === "insert" && op.table === "positions" ? [{ id: POS_B }] : respond(op));
+      await createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "new", name: "Sürüş Eğitmeni", jobDescription: "" }, start: "AI", copyFrom: null, jobAd: AI_AD });
+      const created = fake.ops.find((o) => o.kind === "insert" && o.table === "positions");
+      expect((created?.values as { jobDescription: string }).jobDescription).toBe(AI_AD);
+    });
+
+    it("ignores the AI ad on any other start", async () => {
+      await createOpening({ id: ACTOR, orgId: ORG }, { position: { kind: "existing", id: POS_A }, start: "BLANK", copyFrom: null, jobAd: AI_AD });
+      expect(updates()).toEqual([]);
+    });
   });
 });
 
@@ -122,9 +181,9 @@ describe("createOpening from a template", () => {
     expect(writesOf(fake.ops)).toEqual([]);
   });
 
-  it("writes the template's stages, questions, links and weights into v1 and opens the builder", async () => {
+  it("writes the template's stages, questions, links and weights into v1 and continues in the wizard", async () => {
     const result = await start();
-    expect(result).toEqual({ ok: true, openingId: OPENING, next: `/hiring/openings/${OPENING}/assessment/edit` });
+    expect(result).toEqual({ ok: true, openingId: OPENING, next: `/hiring/openings/${OPENING}/setup#questions` });
     expect(inserts("hiring_stages")).toHaveLength(2);
     expect(inserts("hiring_stages").every((o) => (o.values as { versionId: string }).versionId === VERSION)).toBe(true);
     expect(inserts("hiring_activities")).toHaveLength(5);

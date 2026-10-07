@@ -418,6 +418,43 @@ export async function insertStage(orgId: string, openingId: string, payload: Sta
   });
 }
 
+/**
+ * The wizard's whole-list writes (HIRING-UX 5.20): the auto-applied first
+ * draft, an "AI'a söyle" revision of the whole list, and its undo. In one
+ * transaction under the opening lock, the draft's stages are replaced by
+ * `payloads` (in that order) and the stages it had are answered as payloads,
+ * so the caller can hand them back as an undo.
+ *
+ * `onlyIfEmpty`: writes only when the draft has no stage yet (two tabs opening
+ * step 2 at once apply one draft, not two); `applied` is false otherwise.
+ * Competencies: new links must be the organisation's own and active; a link
+ * the draft already had may stay even if archived since, and `restore: true`
+ * (the undo) keeps every link of the payload, like the undo of a delete.
+ */
+export async function replaceDraftStages(
+  orgId: string,
+  openingId: string,
+  payloads: StagePayload[],
+  options: InsertOptions & { onlyIfEmpty?: boolean } = {},
+): Promise<{ applied: boolean; previous: StagePayload[]; stageIds: string[]; versionId: string }> {
+  const parsed = payloads.map((p) => parseOrInvalid(stagePayloadSchema, p));
+  return draftWrite(async (tx) => {
+    const versionId = await draftOf(tx, orgId, openingId, { touch: false });
+    const content = await loadVersionContent(orgId, versionId, tx);
+    if (!content) throw new HiringNotFound("version");
+    const previous = content.stages.map(stagePayloadOf);
+    if (options.onlyIfEmpty && previous.length > 0) return { applied: false, previous, stageIds: [], versionId };
+    touchedDraft.set(tx, { versionId, orgId });
+    const linked = payloadCompetencies(parsed.flatMap((p) => p.activities));
+    const had = payloadCompetencies(previous.flatMap((p) => p.activities));
+    await assertCompetencies(tx, orgId, linked, options.restore ? linked : had);
+    await tx.delete(hiringStages).where(eq(hiringStages.versionId, versionId));
+    const stageIds: string[] = [];
+    for (const [i, payload] of parsed.entries()) stageIds.push(await insertStageRows(tx, versionId, i, payload));
+    return { applied: true, previous, stageIds, versionId };
+  });
+}
+
 export async function addActivity(orgId: string, openingId: string, stageId: string, type: ActivityType): Promise<string> {
   const parsedType = parseOrInvalid(activityPayloadSchema.shape.type, type);
   return draftWrite(async (tx) => {

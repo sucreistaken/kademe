@@ -127,6 +127,13 @@
       "when": 1791366231770,
       "tag": "0017_hiring_min_evaluations_one",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791366899262,
+      "tag": "0018_hiring_wizard_ai_purposes",
+      "breakpoints": true
     }
   ]
 }

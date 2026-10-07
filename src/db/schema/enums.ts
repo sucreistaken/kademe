@@ -95,6 +95,8 @@ export const aiPurpose = pgEnum("ai_purpose", [
   "HIRING_DRAFT", // a hiring assessment proposed from a job ad; a person accepts each card
   "QUESTION_CHECK", // flags leading, double, vague or protected-trait questions; suggestions only
   "CREATE_ROUTER", // routes one sentence from the Advanced box to a creator; it writes only its own draft row
+  "HIRING_ROLE_BRIEF", // asks the manager about a role, then writes a summary and a job ad they can correct
+  "HIRING_REVISE", // rewrites a draft assessment (or one question) on the manager's instruction; undoable
 ]);
 
 export const proctorEventType = pgEnum("proctor_event_type", PROCTOR_EVENT_TYPES);
