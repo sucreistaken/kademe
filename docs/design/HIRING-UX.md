@@ -983,6 +983,45 @@ davet eski kuralla devam eder."
 - **Denetim kaydı:** mevcut ekran; video izleme, dışa aktarma, karar, karar değişikliği, puan
   değişikliği (gönderim sonrası), "bütünlüğü puanlamadan önce açtı" olayları.
 
+### 5.20 Alım sihirbazı (2026-10-07, 5.3-5.8 ve 5.18'in taslak hâlinin yerine)
+
+Kullanıcı kararı (2026-10-07, gerçek kullanım sonrası): "Alım aç"tan yayına tek akış, **3 adım**,
+no-brainer. Sekmeler (Özet, Kurucu, AI taslağı, Puan kartı, Önizleme, Ekip ve kurallar) taslak
+alımda görünmez; yayındaki alımı düzenlemek aynı sihirbazı 2. adımdan, yeni sürümle açar. Her
+ekranın tek sorusu, tek dolu butonu, "Adım n / 3" çubuğu vardır (`GuidedFlow`).
+
+**Adım 1 · Rolü anlat** (`/hiring/openings/new`)
+- Soru: "Kimi arıyorsun?" Pozisyon adı + tek kutu: "Birkaç kelime yeter." Örnek yer tutucu:
+  "Sürüş eğitmeni arıyorum, hafta içi çalışacak."
+- Dolu buton "Devam". AI ya soru sorar ya da biter. Sorular aynı ekranda kart kart: kısa soru,
+  2-5 şık (çip), her kartta "Başka" serbest kutu. Soru sayısı sabit değil; AI rolü anlayınca durur
+  (en çok 6 tur). Her turda "Bu kadar yeter, devam et" ikincil linki.
+- Bittiğinde **özet kartı**: 3-5 madde ("B sınıfı ehliyet", "En az 3 yıl deneyim"). "Düzelt"
+  maddeyi satır içinde açar. Dolu buton "Soruları hazırla".
+- Alternatif başlangıçlar özet kartının altında küçük, işlevli linkler:
+  "Hazır bir rol şablonundan başla" (şablon listesi, en yakını seç), "Önceki bir alımın sorularını
+  kopyala" (yalnızca kaynak varsa), "Soruları kendim yazacağım".
+- Durumlar: AI bağlı değil → "AI şu an kullanılamıyor. Şablondan ya da kendin başlayabilirsin."
+  Limit → refusal-copy cümlesi. Bekleme → buton "Düşünüyor".
+
+**Adım 2 · Sorular** (`/hiring/openings/[id]/setup#questions`)
+- Soru: "Adaya ne soralım?" İlk girişte AI taslağı üretilir ve **hepsi eklenmiş gelir**.
+- Üstte tek kutu "AI'a söyle": "Daha kısa yap", "Trafik kuralları sorusu ekle", "Empatiyi çıkar".
+  Tüm listeyi ve puan kartını değiştirir; değişiklik "Geri al" şeridiyle gelir.
+- Liste: aşama başlıkları, altında sorular. Her soruda: düzenle (satır içi), "AI ile düzelt"
+  (o soruya talimat), sil (geri al şeridi). Listenin sonunda "+ Kendi sorunu ekle".
+- Altta tek satır puan kartı özeti: "5 yetkinlik ölçülüyor · ağırlıklar eşit" + "Değiştir".
+  Çapaları AI yazar.
+- Dolu buton "Devam: önizle ve yayınla". Değerlendirme yayına uygun değilse nedenli kapalı.
+
+**Adım 3 · Önizle ve yayınla** (`#publish`)
+- Soru: "Hazır mı?" Adayın göreceği kısa önizleme (aşama adları, süre, soru sayısı) +
+  "Adayın ekranını aç".
+- Ekip: "Sadece sen" + "Kişi ekle". Değerlendirici sayısı serbest (en az 1; 2026-10-07 kararı ile
+  "en az 2" kuralı kalktı).
+- Son tarih (isteğe bağlı), "Kurallar" katlanır bölüm (varsayılanlarla).
+- Dolu buton "Yayınla"; yayınlanınca davet Sheet'i açılır.
+
 ## 6. Aday ekranları
 
 **Ortak kurallar:**
