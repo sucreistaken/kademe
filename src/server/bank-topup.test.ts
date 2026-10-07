@@ -73,7 +73,7 @@ describe("planTopUp", () => {
   it("does nothing on a second run", () => {
     const keyed = bank.items.map((item) => row(item, { seedKey: seedItemKey(item) }));
     const plan = planTopUp(bank, { stimuli: [{ id: "s1", seedKey: "r-b1-a" }], items: keyed });
-    expect(plan).toEqual({ stimuli: [], items: [], backfill: [], retire: [] });
+    expect(plan).toEqual({ stimuli: [], items: [], backfill: [], retire: [], keptEdited: 0 });
   });
 
   it("never claims teacher items, edited seed rows or a duplicate twice", () => {
@@ -105,6 +105,13 @@ describe("planTopUp with retireStale", () => {
     const plan = planTopUp(bank, { stimuli: stimuliNow, items: [...current, oldKeyed("Vorher", "A1"), unkeyedStale] }, { retireStale: true });
     expect(plan.retire.map((r) => r.id)).toEqual(["old-Vorher", "old-unkeyed"]);
     expect(plan.items).toEqual([]);
+  });
+
+  it("keeps a stale starter item the school edited and counts it (user decision 2026-10-07)", () => {
+    const edited = { ...oldKeyed("Bearbeitet", "B1"), edited: true };
+    const plan = planTopUp(bank, { stimuli: stimuliNow, items: [...current, oldKeyed("Vorher", "A1"), edited] }, { retireStale: true });
+    expect(plan.retire.map((r) => r.id)).toEqual(["old-Vorher"]);
+    expect(plan.keptEdited).toBe(1);
   });
 
   it("keeps an unkeyed starter row that still hashes to a bank item, and backfills it", () => {

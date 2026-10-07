@@ -65,7 +65,7 @@ async function main() {
     console.log(`${where}${retireStale ? " with --retire-stale" : ""} (${orgs.length} organisation(s)):`);
     for (const org of orgs) {
       const p = await previewTopUp(org.id, { retireStale });
-      const retire = retireStale ? `, retire ${p.retire.length} stale starter items` : "";
+      const retire = retireStale ? `, retire ${p.retire.length} stale starter items (kept ${p.keptEdited} the school edited)` : "";
       console.log(`  ${org.name}: insert ${p.itemsToInsert} items and ${p.stimuliToInsert} texts/clips, backfill ${p.keysToBackfill} seed keys${retire}`);
       for (const line of formatRetireCounts(p.retire)) console.log(`    retire ${line}`);
     }

@@ -53,7 +53,9 @@ export function bankTopUpRefusal(url: string | undefined, mode: boolean | TopUpM
  * no longer has: APPROVED rows with origin SEED whose seed key (or, without
  * one, the key computed from the row) is not in the bank. They are set to
  * RETIRED, never deleted, so old reports and item_responses keep pointing at
- * them. Items a school wrote (TEACHER, AI) are never touched.
+ * them. Items a school wrote (TEACHER, AI) are never touched, and neither is a
+ * starter item the school edited in the bank (user decision 2026-10-07): it is
+ * the school's version now, listed under `keptEdited` instead.
  */
 
 export type ExistingStimulus = { id: string; seedKey: string | null };
@@ -70,6 +72,8 @@ export type ExistingItem = {
   content: ItemContent;
   /** Seed key of the item's stimulus, when it has one. */
   stimulusSeedKey: string | null;
+  /** The school edited this item in the bank (an audit row `bank.edit`). */
+  edited?: boolean;
 };
 
 export type TopUpPlan = {
@@ -78,6 +82,8 @@ export type TopUpPlan = {
   backfill: Array<{ id: string; seedKey: string }>;
   /** Stale starter items to set RETIRED; empty unless `retireStale` was asked for. */
   retire: Array<{ id: string; section: SeedItem["section"]; level: SeedItem["level"] }>;
+  /** Stale starter items kept because the school edited them. */
+  keptEdited: number;
 };
 
 export function planTopUp(
@@ -100,15 +106,20 @@ export function planTopUp(
   }
   const items = [...wanted].filter(([key]) => !have.has(key)).map(([seedKey, item]) => ({ item, seedKey }));
   const retire: TopUpPlan["retire"] = [];
+  let keptEdited = 0;
   if (options.retireStale) {
     for (const row of existing.items) {
       if (row.origin !== "SEED" || row.status !== "APPROVED") continue;
       const key = row.seedKey ?? seedItemKey({ ...row, stimulusKey: row.stimulusSeedKey });
       if (wanted.has(key)) continue;
+      if (row.edited) {
+        keptEdited += 1;
+        continue;
+      }
       retire.push({ id: row.id, section: row.section, level: row.level });
     }
   }
-  return { stimuli, items, backfill, retire };
+  return { stimuli, items, backfill, retire, keptEdited };
 }
 
 /** Retire counts per section and level, in bank order (section, then CEFR level), for the printed summary. */

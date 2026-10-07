@@ -88,7 +88,14 @@ async function loadTopUpState(tx: Executor, orgId: string, options: TopUpOptions
     .from(items)
     .leftJoin(stimuli, eq(stimuli.id, items.stimulusId))
     .where(eq(items.orgId, orgId));
-  return { haveStimuli, plan: planTopUp(SEED_BANK, { stimuli: haveStimuli, items: haveItems }, options) };
+  // A starter item the school edited in the bank is the school's now: --retire-stale keeps it.
+  const editedRows = await tx
+    .select({ id: auditLogs.subjectId })
+    .from(auditLogs)
+    .where(and(eq(auditLogs.orgId, orgId), eq(auditLogs.action, "bank.edit"), eq(auditLogs.subjectType, "item")));
+  const edited = new Set(editedRows.map((r: { id: string | null }) => r.id));
+  const withEdits = haveItems.map((i) => ({ ...i, edited: edited.has(i.id) }));
+  return { haveStimuli, plan: planTopUp(SEED_BANK, { stimuli: haveStimuli, items: withEdits }, options) };
 }
 
 /** Read-only: what a top-up would do for one organisation, for the production summary. */
@@ -99,6 +106,7 @@ export async function previewTopUp(orgId: string, options: TopUpOptions = {}) {
     itemsToInsert: plan.items.length,
     keysToBackfill: plan.backfill.length,
     retire: plan.retire,
+    keptEdited: plan.keptEdited,
   };
 }
 
