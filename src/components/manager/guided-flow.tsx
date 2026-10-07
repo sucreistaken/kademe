@@ -191,8 +191,11 @@ export function GuidedFlow({
       </div>
     );
   }
+  // The page's flows sit under the shell's pt-6 (and, below 1024px, its 56px
+  // top bar): the column fills the rest of the window, so on a short step the
+  // sticky footer rests on the window's bottom edge, not in the middle.
   return (
-    <div ref={setArea} className="flex min-h-[calc(100dvh-8rem)] flex-col">
+    <div ref={setArea} className="flex min-h-[calc(100dvh-1.5rem)] flex-col max-lg:min-h-[calc(100dvh-5rem)]">
       <FlowHeader kicker={kicker} exit={exit} />
       <div className="flex-1">
         <StepScreen

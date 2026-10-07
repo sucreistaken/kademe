@@ -52,6 +52,7 @@ const render = (props: { hash?: string; stages?: ContentStage[]; blocking?: { te
         openingId: "o1",
         kicker: "Alım aç · Sürüş eğitmeni · Ekim",
         locale,
+        contentLocale: "tr",
         stages,
         competencies: [],
         autoDraft: props.autoDraft ?? false,

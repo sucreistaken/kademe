@@ -346,12 +346,18 @@ const directionOf = (direction: number): -1 | 1 => {
 const insertAt = (index: number | null | undefined, length: number) =>
   index === null || index === undefined || !Number.isFinite(index) ? length : Math.max(0, Math.min(Math.trunc(index), length));
 
-export async function addStage(orgId: string, openingId: string): Promise<string> {
+/**
+ * A new, empty stage at the end of the draft. The builder leaves its name empty
+ * (the manager names it there); the wizard passes a default name (HIRING-UX
+ * 5.20: "Sorular"), so adding a question never asks for a stage name.
+ */
+export async function addStage(orgId: string, openingId: string, name: { tr: string; en: string } = { tr: "", en: "" }): Promise<string> {
+  const parsedName = parseOrInvalid(stagePayloadSchema.shape.name, name);
   return draftWrite(async (tx) => {
     const versionId = await draftOf(tx, orgId, openingId);
     const ids = await stageIds(tx, versionId);
     return insertStageRows(tx, versionId, ids.length, {
-      name: { tr: "", en: "" },
+      name: parsedName,
       description: { tr: "", en: "" },
       internalPurpose: null,
       durationSeconds: 600,

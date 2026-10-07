@@ -85,9 +85,10 @@ export async function startDraftAction(formData: FormData) {
   redirect(destination);
 }
 
-export async function addStageAction(openingId: string) {
+/** `name` is the wizard's default stage name ("Sorular"); the builder sends none and names the stage itself. */
+export async function addStageAction(openingId: string, name?: { tr: string; en: string }) {
   if (!allStrings(openingId)) return invalidId;
-  return run(openingId, (orgId) => addStage(orgId, openingId));
+  return run(openingId, (orgId) => (name === undefined ? addStage(orgId, openingId) : addStage(orgId, openingId, name)));
 }
 export async function saveStageAction(openingId: string, stageId: string, patch: StagePatch) {
   if (!allStrings(openingId, stageId)) return invalidId;

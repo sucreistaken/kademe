@@ -81,6 +81,7 @@ export default async function OpeningSetupPage({
         openingId={opening.id}
         kicker={state.live ? t("hiringWizard.kickerEdit", { name: opening.name, number: content.number }) : t("hiringWizard.kicker", { name: opening.name })}
         locale={locale}
+        contentLocale={content.defaultLocale}
         stages={content.stages}
         competencies={competencies}
         autoDraft={one(sp.draft) === "ai" && !hasStages}

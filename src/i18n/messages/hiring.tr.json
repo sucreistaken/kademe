@@ -316,7 +316,8 @@
     "unsavedFirst": "Önce yazdıkların kaydedilsin; kaydedilince yayınlayabilirsin.",
     "opFailed": "Bu değişiklik sunucuya ulaşmadı. Sayfayı yenileyip tekrar dene.",
     "preview": "Önizle",
-    "previewUnsaved": "Yazdıkların kaydedilince önizleyebilirsin."
+    "previewUnsaved": "Yazdıkların kaydedilince önizleyebilirsin.",
+    "moreOptions": "Daha fazla"
   },
   "hiringScorecard": {
     "matrixTitle": "Neyi, hangi soruyla ölçüyoruz?",
@@ -853,11 +854,10 @@
     "aiNoAd": "Pozisyonun ilan metni soru yazmaya yetmiyor. Soruları kendin ekleyebilirsin.",
     "questionsTitle": "Adaya ne soralım?",
     "questionsLead": "Sorular hazır. İstemediğini sil, değiştir ya da kendi sorunu ekle.",
-    "questionsLeadEmpty": "Soruları ekle. AI'a da yazdırabilirsin.",
+    "questionsLeadEmpty": "Soruları ekle ya da AI'a ne sorulsun, söyle.",
     "generating": "Sorular hazırlanıyor",
     "generatingBody": "AI rolüne göre aşamaları ve soruları yazıyor. Bu yaklaşık 30-40 saniye sürer.",
     "retry": "Tekrar dene",
-    "emptyWithAd": "Henüz soru yok. AI ilan metnine göre yazabilir.",
     "writeDraft": "AI soruları yazsın",
     "empty": "Henüz soru yok.",
     "tellAi": "AI'a söyle",
@@ -866,7 +866,6 @@
     "apply": "Uygula",
     "applying": "Uyguluyor",
     "needInstruction": "Ne değişsin, yaz.",
-    "revised": "AI değişikliği uyguladı.",
     "undoFailed": "Bu değişiklik artık geri alınamıyor.",
     "stageMeta": "{count, plural, =0 {Soru yok} other {# soru}} · {minutes} dk",
     "stageN": "Aşama {n}",
@@ -909,6 +908,10 @@
     "aiAdTooLong": "Pozisyonun ilan metni çok uzun. Kütüphanede kısaltıp tekrar dene ya da soruları kendin ekle.",
     "aiChoice": "AI seçmeli soruları düzeltmez. \"Düzenle\" ile kendin değiştirebilirsin.",
     "aiNoDraft": "Bu alımın düzenlenen bir sürümü yok. Genel bakıştan \"Soruları düzenle\" ile başla.",
-    "applyingLong": "AI değişikliği yazıyor, yaklaşık 30-40 saniye sürer."
+    "applyingLong": "AI değişikliği yazıyor, yaklaşık 30-40 saniye sürer.",
+    "questionsLeadEmptyNoAi": "Soruları ekle.",
+    "tellPlaceholderEmpty": "Örn. 4 soru yaz, biri trafik kuralları üzerine olsun",
+    "tellHintEmpty": "AI ilan metnine ve yazdığına göre soruları yazar. Beğenmezsen geri alırsın.",
+    "aiApplied": "AI değişikliği uygulandı."
   }
 }

@@ -10,7 +10,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { UndoStrip } from "@/components/ui/undo-strip";
 import { Disclosure } from "@/components/visual/disclosure";
 import { useMT } from "@/i18n/manager-client";
 import type { Locale } from "@/i18n/locale";
@@ -23,8 +22,8 @@ import { generateAndApplyDraftAction, reviseAssessmentAction, undoReviseAction }
 import { useSaver } from "@/components/hiring/builder/use-saver";
 import type { SettingsUser } from "@/components/hiring/opening-settings-form";
 import { wizardJourney } from "@/components/hiring/new-opening-steps";
-import { QuestionList } from "./question-list";
-import { aiCodeKey, publishRules, rulesChanged, SETUP_STEPS, teamChoiceOf, type SetupStep, type TeamChoice } from "./setup-model";
+import { AiUndoLine, QuestionList } from "./question-list";
+import { AI_UNDO_MS, aiCodeKey, publishRules, questionsIntro, rulesChanged, SETUP_STEPS, teamChoiceOf, type SetupStep, type TeamChoice } from "./setup-model";
 
 const LINK =
   "inline-flex min-h-11 items-center gap-0.5 text-[14px] font-medium text-ink underline decoration-underline underline-offset-4 transition-colors duration-[120ms] ease-out hover:decoration-ink";
@@ -39,9 +38,10 @@ export type SetupPreview = { stages: Array<{ id: string; name: string; minutes: 
  *
  * Step 2 "Adaya ne soralım?": arriving from step 1's AI start (?draft=ai) on
  * an empty draft writes the AI's questions at once ("Sorular hazırlanıyor"),
- * all added; "AI'a söyle" changes the whole list with an undo strip; the list
- * edits, fixes with AI and deletes each question; one scorecard line with
- * "Değiştir". "Devam: önizle ve yayınla" waits with the gate's first problem.
+ * all added; "AI'a söyle" changes the whole list (on an empty list with a job
+ * ad it writes the first questions), and its "Geri al" stays by the box until
+ * the next change or the token's ten minutes; the list edits, fixes with AI and
+ * deletes each question; one scorecard line with "Değiştir". "Devam: önizle ve yayınla" waits with the gate's first problem.
  *
  * Step 3 "Hazır mı?": the candidate's short preview, the team ("Sadece sen" or
  * "Kişi ekle"), an optional last day and the rules folded with their defaults.
@@ -52,6 +52,7 @@ export function SetupWizard({
   openingId,
   kicker,
   locale,
+  contentLocale,
   stages,
   competencies,
   autoDraft,
@@ -70,6 +71,8 @@ export function SetupWizard({
   openingId: string;
   kicker: string;
   locale: Locale;
+  /** The content's default language: the short question editor writes in it. */
+  contentLocale: Locale;
   stages: ContentStage[];
   competencies: Array<{ id: string; name: string; archived: boolean }>;
   /** Step 1's AI start on an empty draft: write the questions now. */
@@ -136,7 +139,14 @@ export function SetupWizard({
   const [instruction, setInstruction] = useState("");
   const [tellError, setTellError] = useState<string | null>(null);
   const [telling, startTelling] = useTransition();
-  const [revised, setRevised] = useState<string | null>(null);
+  // The last AI change's undo: by the box ("all") or under one question. It
+  // lasts as long as the server's token (ten minutes) or until the next change.
+  const [aiUndo, setAiUndo] = useState<{ token: string; target: "all" | { activityId: string } } | null>(null);
+  useEffect(() => {
+    if (!aiUndo) return;
+    const timer = setTimeout(() => setAiUndo(null), AI_UNDO_MS);
+    return () => clearTimeout(timer);
+  }, [aiUndo]);
   // "AI ile düzelt" on one question runs in the list; the footer waits for it too.
   const [fixing, setFixing] = useState(false);
   function tell() {
@@ -152,7 +162,7 @@ export function SetupWizard({
           return;
         }
         setInstruction("");
-        setRevised(res.undoToken);
+        setAiUndo({ token: res.undoToken, target: "all" });
         setEpoch((e) => e + 1);
         router.refresh();
       } catch {
@@ -161,7 +171,9 @@ export function SetupWizard({
     });
   }
   async function undoRevision(token: string) {
+    await saver.queue.flush();
     const res = await undoReviseAction(openingId, token);
+    setAiUndo(null);
     if (!res.ok) setTellError(t("undoFailed"));
     setEpoch((e) => e + 1);
     router.refresh();
@@ -207,6 +219,8 @@ export function SetupWizard({
     });
   }
 
+  const intro = questionsIntro({ questions: stages.reduce((sum, s) => sum + s.activities.length, 0), canDraft });
+  const empty = stages.length === 0;
   const tellBox = (
     <form
       className="space-y-2 rounded-xl border border-line bg-canvas p-4"
@@ -219,7 +233,7 @@ export function SetupWizard({
       <div className="flex flex-wrap items-center gap-2">
         <Input
           id="wizard-tell"
-          placeholder={t("tellPlaceholder")}
+          placeholder={empty ? t("tellPlaceholderEmpty") : t("tellPlaceholder")}
           maxLength={500}
           value={instruction}
           disabled={telling}
@@ -243,9 +257,16 @@ export function SetupWizard({
         </p>
       ) : (
         <p role="status" className="text-[13px] text-muted">
-          {telling ? t("applyingLong") : t("tellHint")}
+          {telling ? t("applyingLong") : empty ? t("tellHintEmpty") : t("tellHint")}
         </p>
       )}
+      {aiUndo && aiUndo.target === "all" && !telling ? <AiUndoLine onUndo={() => undoRevision(aiUndo.token)} /> : null}
+      {empty && canDraft && !telling ? (
+        <button type="button" id="wizard-write-draft" className={LINK} onClick={writeDraft}>
+          {t("writeDraft")}
+          <ChevronRight className="size-4" strokeWidth={1.75} aria-hidden />
+        </button>
+      ) : null}
     </form>
   );
 
@@ -272,21 +293,12 @@ export function SetupWizard({
       </div>
     ) : (
       <div className="space-y-6">
-        {stages.length > 0 ? tellBox : null}
+        {intro.tellBox ? tellBox : null}
         {drafting === "failed" && draftError ? (
           <div role="alert" className="space-y-1 rounded-xl border border-line bg-surface p-4">
             <p className="text-[14px] font-medium text-ink">{draftError}</p>
             <button type="button" className={LINK} onClick={writeDraft}>
               {t("retry")}
-            </button>
-          </div>
-        ) : null}
-        {stages.length === 0 && canDraft && drafting !== "failed" ? (
-          <div className="space-y-1 rounded-xl border border-line bg-surface p-4">
-            <p className="text-[14px] text-ink-2">{t("emptyWithAd")}</p>
-            <button type="button" id="wizard-write-draft" className={LINK} onClick={writeDraft}>
-              {t("writeDraft")}
-              <ChevronRight className="size-4" strokeWidth={1.75} aria-hidden />
             </button>
           </div>
         ) : null}
@@ -298,7 +310,10 @@ export function SetupWizard({
           saver={saver}
           epoch={epoch}
           initialOpen={initialActivity}
-          onRevised={(token) => setRevised(token)}
+          contentLocale={contentLocale}
+          aiUndo={aiUndo && aiUndo.target !== "all" ? { activityId: aiUndo.target.activityId, undo: () => undoRevision(aiUndo.token) } : null}
+          onRevised={(token, activityId) => setAiUndo({ token, target: { activityId } })}
+          onChanged={() => setAiUndo(null)}
           onBusy={setFixing}
         />
         {stages.length > 0 ? scorecardRow : null}
@@ -308,7 +323,7 @@ export function SetupWizard({
   const questionsStep: FlowStep = {
     id: "questions",
     title: t("questionsTitle"),
-    lead: <p>{stages.length ? t("questionsLead") : t("questionsLeadEmpty")}</p>,
+    lead: <p>{t(intro.lead)}</p>,
     layout: "single",
     primary: {
       kind: "button",
@@ -473,11 +488,6 @@ export function SetupWizard({
         exit={{ dirty: false, href: `/hiring/openings/${openingId}` }}
         enter={nav.moved}
       />
-      {revised ? (
-        <div className="pointer-events-none fixed inset-x-0 z-50 h-0 transform-gpu" style={{ bottom: "var(--step-footer-space, 112px)" }}>
-          <UndoStrip key={revised} message={t("revised")} action={() => undoRevision(revised)} onSubmitted={() => setRevised(null)} hiddenFields={{}} />
-        </div>
-      ) : null}
     </>
   );
 }

@@ -1,6 +1,6 @@
 import type { Locale } from "@/i18n/locale";
 import { pickText } from "@/lib/i18n-text";
-import { orderedActivities, orderedStages, totalSeconds, type ContentStage } from "@/solutions/hiring/rules/content";
+import { isChoice, orderedActivities, orderedStages, totalSeconds, type ActivityType, type ContentStage } from "@/solutions/hiring/rules/content";
 import type { OpeningRulesInput } from "@/solutions/hiring/rules/opening-rules";
 
 /**
@@ -116,4 +116,38 @@ export function aiCodeKey(code: string): "aiUnconfigured" | "aiRateLimited" | "a
     default:
       return "aiFailed";
   }
+}
+
+/**
+ * The name a stage gets when "+ Kendi sorunu ekle" needs a new one (HIRING-UX
+ * 5.20 item 4): "Sorular" / "Questions", then "Sorular 2", "Sorular 3", the
+ * first number no stage uses yet, so nobody has to name a stage to go on.
+ */
+export function defaultStageName(existing: ReadonlyArray<{ tr: string; en: string }>): { tr: string; en: string } {
+  const used = new Set(existing.flatMap((n) => [n.tr.trim(), n.en.trim()]));
+  for (let n = 1; ; n += 1) {
+    const name = n === 1 ? { tr: "Sorular", en: "Questions" } : { tr: `Sorular ${n}`, en: `Questions ${n}` };
+    if (!used.has(name.tr) && !used.has(name.en)) return name;
+  }
+}
+
+/** Whether "AI ile düzelt" is offered on a question: never on a choice question, which the server refuses (CHOICE_QUESTION). */
+export const canFixWithAi = (type: ActivityType) => !isChoice(type);
+
+/**
+ * How long the undo of an AI change is offered: the server signs the token for
+ * ten minutes (revise-undo.ts), so the line stays that long, or until the next
+ * change replaces it. A plain delete keeps the 8 second strip.
+ */
+export const AI_UNDO_MS = 10 * 60 * 1000;
+
+/**
+ * Step 2's lead and whether "AI'a söyle" is shown. With questions it always
+ * is. On an empty list it is only when the position has a job ad, and then it
+ * writes the first questions with the instruction (a revision of the empty
+ * list); without an ad the lead promises no AI.
+ */
+export function questionsIntro(input: { questions: number; canDraft: boolean }): { lead: "questionsLead" | "questionsLeadEmpty" | "questionsLeadEmptyNoAi"; tellBox: boolean } {
+  if (input.questions > 0) return { lead: "questionsLead", tellBox: true };
+  return input.canDraft ? { lead: "questionsLeadEmpty", tellBox: true } : { lead: "questionsLeadEmptyNoAi", tellBox: false };
 }

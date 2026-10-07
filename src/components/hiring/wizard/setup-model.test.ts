@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { activity, content, stage } from "@/solutions/hiring/rules/test-fixtures";
-import { aiCodeKey, candidatePreview, membersOf, publishRules, rulesChanged, scorecardLine, setupHref, teamChoiceOf, wizardNext } from "./setup-model";
+import { AI_UNDO_MS, aiCodeKey, canFixWithAi, candidatePreview, defaultStageName, questionsIntro, membersOf, publishRules, rulesChanged, scorecardLine, setupHref, teamChoiceOf, wizardNext } from "./setup-model";
 
 const ME = "me";
 const saved = {
@@ -92,5 +92,31 @@ describe("the AI refusals' sentences", () => {
     expect(aiCodeKey("CHOICE_QUESTION")).toBe("aiChoice");
     expect(aiCodeKey("UNDO_EXPIRED")).toBe("undoFailed");
     expect(aiCodeKey("NO_DRAFT")).toBe("aiNoDraft");
+  });
+});
+
+describe("step 2's own question and AI fixes", () => {
+  it("names a new stage 'Sorular', then the first free number, so nobody has to name one", () => {
+    expect(defaultStageName([])).toEqual({ tr: "Sorular", en: "Questions" });
+    expect(defaultStageName([{ tr: "Sorular", en: "Questions" }])).toEqual({ tr: "Sorular 2", en: "Questions 2" });
+    expect(defaultStageName([{ tr: "Tanışma", en: "" }, { tr: "Sorular 2", en: "" }])).toEqual({ tr: "Sorular", en: "Questions" });
+    expect(defaultStageName([{ tr: "Sorular", en: "" }, { tr: "Sorular 2", en: "" }])).toEqual({ tr: "Sorular 3", en: "Questions 3" });
+  });
+
+  it("offers 'AI ile düzelt' on every open question and never on a choice question", () => {
+    expect(canFixWithAi("VIDEO")).toBe(true);
+    expect(canFixWithAi("LONG_TEXT")).toBe(true);
+    expect(canFixWithAi("SINGLE_CHOICE")).toBe(false);
+    expect(canFixWithAi("MULTI_CHOICE")).toBe(false);
+  });
+
+  it("keeps an AI change's undo as long as the server's token: ten minutes", () => {
+    expect(AI_UNDO_MS).toBe(600_000);
+  });
+
+  it("promises the AI on an empty list only when the position has a job ad", () => {
+    expect(questionsIntro({ questions: 3, canDraft: false })).toEqual({ lead: "questionsLead", tellBox: true });
+    expect(questionsIntro({ questions: 0, canDraft: true })).toEqual({ lead: "questionsLeadEmpty", tellBox: true });
+    expect(questionsIntro({ questions: 0, canDraft: false })).toEqual({ lead: "questionsLeadEmptyNoAi", tellBox: false });
   });
 });

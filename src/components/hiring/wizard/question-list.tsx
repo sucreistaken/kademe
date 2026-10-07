@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Pencil, Plus, MessageSquare, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,7 +30,7 @@ import type { EditorBinding } from "@/components/hiring/builder/fields";
 import { withUnsaved } from "@/components/hiring/builder/overlay";
 import { refusalKey } from "@/components/hiring/builder/refusal-copy";
 import type { useSaver } from "@/components/hiring/builder/use-saver";
-import { aiCodeKey } from "./setup-model";
+import { aiCodeKey, canFixWithAi, defaultStageName } from "./setup-model";
 
 const LINK =
   "inline-flex min-h-9 items-center gap-1 rounded-md px-1 text-[13px] font-medium text-ink-2 underline decoration-transparent underline-offset-4 transition-colors duration-[120ms] ease-out hover:text-ink hover:decoration-line-strong disabled:text-muted";
@@ -40,8 +41,11 @@ type Saver = ReturnType<typeof useSaver>;
  * HIRING-UX 5.20 step 2's list: the stages as headings, their questions under
  * them. Each question opens its editor in place ("Düzenle", the builder's own
  * ActivityEditor and save queue), takes an instruction for the AI ("AI ile
- * düzelt", that question only) and is deleted with the builder's 8 second
- * undo. "+ Kendi sorunu ekle" ends the list.
+ * düzelt", that question only; never on a choice question, which the server
+ * refuses) and is deleted with the builder's 8 second undo. "+ Kendi sorunu
+ * ekle" ends the list; a new stage gets a default name ("Sorular"), so nobody
+ * has to name one to go on. An AI fix keeps its "Geri al" under the question
+ * (AiUndoLine) until the next change or the token's ten minutes.
  */
 export function QuestionList({
   openingId,
@@ -51,8 +55,11 @@ export function QuestionList({
   saver,
   epoch,
   initialOpen,
+  contentLocale,
+  aiUndo,
   onRevised,
   onBusy,
+  onChanged,
 }: {
   openingId: string;
   stages: ContentStage[];
@@ -61,8 +68,14 @@ export function QuestionList({
   saver: Saver;
   epoch: number;
   initialOpen: string | null;
-  /** An "AI ile düzelt" was applied: the wizard shows its undo strip. */
-  onRevised: (undoToken: string) => void;
+  /** The content's own language: the short editor shows the question in it. */
+  contentLocale: Locale;
+  /** The last AI fix of one question, with its "Geri al" (the wizard owns it). */
+  aiUndo: { activityId: string; undo: () => Promise<void> } | null;
+  /** An "AI ile düzelt" was applied: the wizard keeps its undo line under the question. */
+  onRevised: (undoToken: string, activityId: string) => void;
+  /** Anything else changed the list: an AI undo offered before would now undo it too, so the wizard drops it. */
+  onChanged?: () => void;
   /** An "AI ile düzelt" is running (30-40 s): the wizard's footer waits for it. */
   onBusy?: (busy: boolean) => void;
 }) {
@@ -83,7 +96,10 @@ export function QuestionList({
 
   const binding = (targetId: string): EditorBinding => ({
     editable: true,
-    onEdit: (field, value) => queue.edit({ kind: "activity", id: targetId }, field, value),
+    onEdit: (field, value) => {
+      onChanged?.();
+      queue.edit({ kind: "activity", id: targetId }, field, value);
+    },
     onFlush: () => void queue.flush(),
     errorFor: (field) => {
       if (state.kind !== "refused" || state.targetId !== targetId) return null;
@@ -102,10 +118,12 @@ export function QuestionList({
   };
 
   async function add(type: ActivityType) {
+    onChanged?.();
     const last = stages[stages.length - 1];
     let stageId = last && last.activities.length < MAX_ACTIVITIES_PER_STAGE ? last.id : null;
     if (!stageId) {
-      const made = await queue.run(() => addStageAction(openingId));
+      const name = defaultStageName(stages.map((s) => s.name));
+      const made = await queue.run(() => addStageAction(openingId, name));
       if (!said(made) || !made.ok) return;
       stageId = made.value;
     }
@@ -119,6 +137,7 @@ export function QuestionList({
   }
 
   async function remove(activityId: string) {
+    onChanged?.();
     const res = await queue.run(() => deleteActivityAction(openingId, activityId));
     if (!said(res) || !res.ok) return;
     if (open === activityId) setOpen(null);
@@ -136,6 +155,7 @@ export function QuestionList({
   }
 
   async function move(activityId: string, direction: -1 | 1) {
+    onChanged?.();
     const res = await queue.run(() => moveActivityAction(openingId, activityId, direction));
     if (said(res)) router.refresh();
   }
@@ -156,7 +176,7 @@ export function QuestionList({
         setFixing(null);
         setInstruction("");
         setOpen(null);
-        onRevised(res.undoToken);
+        onRevised(res.undoToken, activityId);
         router.refresh();
       } catch {
         setFixError(t("aiFailed"));
@@ -207,6 +227,7 @@ export function QuestionList({
                       <Pencil className="size-3.5" strokeWidth={1.75} aria-hidden />
                       {editing ? t("doneEditing") : t("edit")}
                     </button>
+                    {canFixWithAi(activity.type) ? (
                     <button
                       type="button"
                       className={LINK}
@@ -221,12 +242,14 @@ export function QuestionList({
                       <MessageSquare className="size-3.5" strokeWidth={1.75} aria-hidden />
                       {t("fixWithAi")}
                     </button>
+                    ) : null}
                     <button type="button" className={LINK} aria-label={`${t("delete")}: ${prompt}`} onClick={() => void remove(activity.id)}>
                       <Trash2 className="size-3.5" strokeWidth={1.75} aria-hidden />
                       {t("delete")}
                     </button>
                   </div>
-                  {fixing === activity.id ? (
+                  {aiUndo && aiUndo.activityId === activity.id ? <AiUndoLine className="pl-[30px]" onUndo={aiUndo.undo} /> : null}
+                  {fixing === activity.id && canFixWithAi(activity.type) ? (
                     <form
                       className="space-y-1 pl-[30px]"
                       onSubmit={(e) => {
@@ -261,8 +284,8 @@ export function QuestionList({
                     </form>
                   ) : null}
                   {editing ? (
-                    <div className="@container">
-                      <div className="grid content-start items-start gap-4 @min-[740px]:grid-cols-2" data-editor={`${activity.id}:${activity.type}`}>
+                    <div data-editor={`${activity.id}:${activity.type}`}>
+                      <div>
                         <ActivityEditor
                           key={`${activity.id}:${activity.type}:${epoch}`}
                           activity={activity}
@@ -271,13 +294,16 @@ export function QuestionList({
                           competencies={competencies}
                           binding={binding(activity.id)}
                           autoFocus={justAdded === activity.id}
+                          compact={{ locale: contentLocale }}
                           onChangeType={async (type) => {
+                            onChanged?.();
                             setJustAdded(null);
                             const res = await queue.run(() => saveActivityAction(openingId, activity.id, { type }));
                             if (res.ok) router.refresh();
                             return res.ok;
                           }}
                           onSetCompetencies={(ids) => {
+                            onChanged?.();
                             queue.edit({ kind: "competencies", id: activity.id }, "ids", ids);
                             void queue.flush();
                           }}
@@ -336,5 +362,31 @@ export function QuestionList({
         </div>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * "AI değişikliği uygulandı. Geri al" after an AI change (HIRING-UX 5.20): an
+ * AI change takes 30-40 seconds, so its undo is not the 8 second strip but a
+ * line that stays where the change is (by "AI'a söyle", or under the question
+ * an "AI ile düzelt" changed) until the next change or the token's ten minutes.
+ */
+export function AiUndoLine({ onUndo, className }: { onUndo: () => Promise<void>; className?: string }) {
+  const t = useMT("hiringWizard");
+  const common = useMT("common");
+  const [pending, startUndo] = useTransition();
+  return (
+    <p role="status" data-ai-undo className={cn("flex flex-wrap items-center gap-x-2 text-[14px] text-ink", className)}>
+      <span>{t("aiApplied")}</span>
+      <button
+        type="button"
+        className="inline-flex min-h-9 items-center gap-1 font-medium text-ink underline decoration-underline underline-offset-4 hover:decoration-ink disabled:text-muted"
+        disabled={pending}
+        onClick={() => startUndo(() => onUndo())}
+      >
+        {pending ? <Loader2 className="size-3.5 animate-spin motion-reduce:animate-none" aria-hidden /> : null}
+        {pending ? common("undoing") : common("undo")}
+      </button>
+    </p>
   );
 }

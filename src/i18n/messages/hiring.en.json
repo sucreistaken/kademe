@@ -316,7 +316,8 @@
     "unsavedFirst": "What you typed is saved first; you can publish once it is.",
     "opFailed": "This change did not reach the server. Reload the page and try again.",
     "preview": "Preview",
-    "previewUnsaved": "You can preview once what you typed is saved."
+    "previewUnsaved": "You can preview once what you typed is saved.",
+    "moreOptions": "More"
   },
   "hiringScorecard": {
     "matrixTitle": "What do we measure, with which question?",
@@ -853,11 +854,10 @@
     "aiNoAd": "The position's job ad is not enough to write questions from. You can add questions yourself.",
     "questionsTitle": "What should we ask the candidate?",
     "questionsLead": "The questions are ready. Delete what you don't want, change any, or add your own.",
-    "questionsLeadEmpty": "Add the questions. The AI can write them too.",
+    "questionsLeadEmpty": "Add the questions, or tell the AI what to ask.",
     "generating": "Preparing the questions",
     "generatingBody": "The AI is writing the stages and questions for the role. This takes about 30-40 seconds.",
     "retry": "Try again",
-    "emptyWithAd": "No questions yet. The AI can write them from the job ad.",
     "writeDraft": "Let the AI write the questions",
     "empty": "No questions yet.",
     "tellAi": "Tell the AI",
@@ -866,7 +866,6 @@
     "apply": "Apply",
     "applying": "Applying",
     "needInstruction": "Write what should change.",
-    "revised": "The AI applied the change.",
     "undoFailed": "This change can no longer be undone.",
     "stageMeta": "{count, plural, =0 {No questions} one {# question} other {# questions}} · {minutes} min",
     "stageN": "Stage {n}",
@@ -909,6 +908,10 @@
     "aiAdTooLong": "The position's job ad is too long. Shorten it in the library and try again, or add the questions yourself.",
     "aiChoice": "The AI does not fix choice questions. Use \"Edit\" to change it yourself.",
     "aiNoDraft": "This hiring has no version being edited. Start with \"Edit the questions\" on the overview.",
-    "applyingLong": "The AI is writing the change; this takes about 30-40 seconds."
+    "applyingLong": "The AI is writing the change; this takes about 30-40 seconds.",
+    "questionsLeadEmptyNoAi": "Add the questions.",
+    "tellPlaceholderEmpty": "E.g. write 4 questions, one about traffic rules",
+    "tellHintEmpty": "The AI writes the questions from the job ad and what you type. If you don't like them, undo it.",
+    "aiApplied": "The AI change was applied."
   }
 }
