@@ -946,5 +946,22 @@
     "name": "Write your full name.",
     "emailWait": "Write a valid e-mail address.",
     "failed": "Could not save. Try again?"
+  },
+  "examItems": {
+    "tfNgListening": "Not in the recording",
+    "matchTargets": "Options",
+    "matchHint": "Pick a letter for each row.",
+    "matchUsed": "Chosen",
+    "matchUsedElsewhere": "chosen in another row",
+    "matchClear": "Clear choice",
+    "gapLabel": "Gap {n}",
+    "listenLoading": "Loading",
+    "listenRetry": "Try again",
+    "listenResume": "Resume where it stopped",
+    "listenLoadFailed": "The recording could not be loaded. Check your internet connection and try again.",
+    "listenStalled": "The recording stopped. Check your internet connection and try again.",
+    "listenBlocked": "The browser did not start the audio. Try again.",
+    "listenFreeRetry": "The recording never started, so this attempt did not use up a play.",
+    "listenFreeResume": "Resuming where it stopped does not use up another play."
   }
 }
