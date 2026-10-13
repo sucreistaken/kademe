@@ -81,13 +81,13 @@ describe("recordingKey", () => {
 });
 
 describe("storeRecordingSegment", () => {
-  it("writes the object, then the row with the retention date of the organisation", async () => {
+  it("writes the object, then the row with the recording retention date (the organisation's, capped at 30 days)", async () => {
     h.answers = [[], []]; // no existing segment, no session match
     const out = await storeRecordingSegment(ctx, ATTEMPT, { ...meta, mime: "video/webm", body: new Uint8Array(10), sessionId: null });
     expect(out).toEqual({ id: "new-row", duplicate: false });
     expect(h.puts).toEqual([`proctor/${ORG}/asm-1/rec/${ATTEMPT}/camera-run-abcdef01-00007.webm`]);
     expect(h.inserts[0]).toMatchObject({ orgId: ORG, attemptId: ATTEMPT, kind: "CAMERA", sequence: 7, bytes: 10, durationMs: 15_000 });
-    expect((h.inserts[0].purgeAfter as Date).getTime() - meta.startedAt).toBe(90 * 86_400_000);
+    expect((h.inserts[0].purgeAfter as Date).getTime() - meta.startedAt).toBe(30 * 86_400_000);
   });
 
   it("does not write anything again for a segment it already has (a retry whose answer was lost)", async () => {

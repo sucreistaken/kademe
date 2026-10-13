@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { policyFromPreset } from "@/lib/proctor/policy";
 import {
+  recordingRetentionDays,
   MAX_SEGMENT_MS,
   UPLOAD_GRACE_MS,
   kindAllowed,
@@ -100,7 +101,14 @@ describe("uploadWindow", () => {
 
 describe("megabytesPerHour", () => {
   it("is what the target bitrates add up to (the figures in docs/PROCTORING.md)", () => {
-    expect(megabytesPerHour("CAMERA")).toBeCloseTo(126.9, 1);
-    expect(megabytesPerHour("SCREEN")).toBeCloseTo(180, 1);
+    expect(megabytesPerHour("CAMERA")).toBeCloseTo(74.7, 1);
+    expect(megabytesPerHour("SCREEN")).toBeCloseTo(67.5, 1);
+  });
+});
+
+describe("recordingRetentionDays", () => {
+  it("keeps a recording no longer than 30 days, and no longer than the evidence", () => {
+    expect(recordingRetentionDays(90)).toBe(30);
+    expect(recordingRetentionDays(14)).toBe(14);
   });
 });

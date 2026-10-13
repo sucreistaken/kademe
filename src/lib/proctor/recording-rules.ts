@@ -39,11 +39,27 @@ export const UPLOAD_GRACE_MS = 15 * 60_000;
  * Target bitrates. MediaRecorder treats them as targets, not caps: real files
  * come out somewhat under (a still screen) or over (a lot of motion). The
  * storage estimate in docs/PROCTORING.md is computed from these.
+ *
+ * Sized for a person watching it back, not for detection (the in-browser
+ * models read the live stream): 10 fps is enough to follow a face and hands,
+ * speech stays clear at 16 kbps Opus, and an exam screen changes so rarely
+ * that 2 fps keeps the text readable at full size.
  */
 export const RECORDING_PROFILE = {
-  CAMERA: { width: 640, height: 360, frameRate: 15, videoBitsPerSecond: 250_000, audioBitsPerSecond: 32_000 },
-  SCREEN: { width: 1280, height: 800, frameRate: 5, videoBitsPerSecond: 400_000, audioBitsPerSecond: 0 },
+  CAMERA: { width: 640, height: 360, frameRate: 10, videoBitsPerSecond: 150_000, audioBitsPerSecond: 16_000 },
+  SCREEN: { width: 1280, height: 800, frameRate: 2, videoBitsPerSecond: 150_000, audioBitsPerSecond: 0 },
 } as const satisfies Record<RecordingKind, { width: number; height: number; frameRate: number; videoBitsPerSecond: number; audioBitsPerSecond: number }>;
+
+/**
+ * How long a recording is kept: the organisation's evidence period, but never
+ * more than this. A full recording weighs far more than the frames and says
+ * more about the student, so it goes first.
+ */
+export const MAX_RECORDING_RETENTION_DAYS = 30;
+
+export function recordingRetentionDays(evidenceRetentionDays: number): number {
+  return Math.min(evidenceRetentionDays, MAX_RECORDING_RETENTION_DAYS);
+}
 
 /** Megabytes one hour of one kind takes at its target bitrate. */
 export function megabytesPerHour(kind: RecordingKind): number {

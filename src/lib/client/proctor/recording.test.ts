@@ -119,7 +119,7 @@ describe("TrackRecorder", () => {
     const { rec, segments } = trackRecorder(stream);
     rec.start();
     expect(FakeRecorder.all).toHaveLength(1);
-    expect(FakeRecorder.all[0].options).toMatchObject({ mimeType: "video/webm;codecs=vp8,opus", videoBitsPerSecond: 250_000, audioBitsPerSecond: 32_000 });
+    expect(FakeRecorder.all[0].options).toMatchObject({ mimeType: "video/webm;codecs=vp8,opus", videoBitsPerSecond: 150_000, audioBitsPerSecond: 16_000 });
 
     await vi.advanceTimersByTimeAsync(15_000);
     // The second recorder exists while the first is only now stopping.
@@ -196,7 +196,7 @@ describe("TrackRecorder", () => {
   it("asks for no audio bitrate on a stream without audio (the screen)", () => {
     const { rec } = trackRecorder(new FakeStream([new FakeTrack("video")]), { kind: "SCREEN", mime: "video/webm;codecs=vp8" });
     rec.start();
-    expect(FakeRecorder.all[0].options).toEqual({ mimeType: "video/webm;codecs=vp8", videoBitsPerSecond: 400_000 });
+    expect(FakeRecorder.all[0].options).toEqual({ mimeType: "video/webm;codecs=vp8", videoBitsPerSecond: 150_000 });
   });
 });
 

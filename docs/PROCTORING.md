@@ -38,7 +38,7 @@ STANDARD yalnız kamera+ses, STRICT kamera+ses+ekran kaydeder. Yeni izin istenme
 motorun zaten tuttuğu akışlar kullanılır.
 
 **Tarayıcı** (`src/lib/client/proctor/recording.ts`). Her tür için motorun izinin bir
-klonu küçültülür (kamera 640x360, 15 fps; ekran en çok 1280x800, 5 fps; modeller ve
+klonu küçültülür (kamera 640x360, 10 fps; ekran en çok 1280x800, 2 fps; modeller ve
 kareler tam çözünürlükte kalır) ve kendi `MediaRecorder`'ı ile kaydedilir. Her 15 sn'de
 yeni bir kaydedici açılır, sonra eskisi kapatılır: her parça (segment) **kendi başına
 oynayan tam bir dosyadır** (WebM VP8+Opus; Safari'de MP4), geçişte birkaç ms örtüşme
@@ -77,8 +77,9 @@ kipinde boşlukları kapatır ve ilk kayıp parçadan sonra kamera, ekran ve iş
 birbirinden kayardı. Saat sınavın duvar saatidir; bir bölmenin o an kaydı yoksa
 "kayıt yok" yazar, iki bölmede de yoksa oynatma sıradaki kayıtlı ana atlar.
 
-**Saklama.** Her parça `purge_after = başlangıç + organizations.evidence_retention_days`
-(varsayılan 90) ile yazılır. `purge-retention` işi süresi geçen parçaları önce depodan,
+**Saklama.** Her parça `purge_after = başlangıç + min(organizations.evidence_retention_days, 30)`
+ile yazılır: kayıt, kanıt süresini (varsayılan 90) hiç aşmaz ve en çok 30 gün kalır
+(`MAX_RECORDING_RETENTION_DAYS`). `purge-retention` işi süresi geçen parçaları önce depodan,
 sonra satırdan siler, deneme başına bir `retention.recording.purge` denetim satırı
 yazar. Diğer silmeler gibi iki anahtar ister (`RETENTION_PURGE_ENABLED=true` ve
 `?apply=1`); yoksa yalnız rapor verir. `?batch=` verilmezse 2000'lik turlarla biter
@@ -95,15 +96,18 @@ Hedef bit hızlarından (`RECORDING_PROFILE`):
 
 | | Bit hızı | Saat başına |
 |---|---|---|
-| Kamera + ses | 250 + 32 kbit/sn | ~127 MB |
-| Ekran | 400 kbit/sn | ~180 MB |
-| STANDARD (yalnız kamera) | | **~127 MB** |
-| STRICT (kamera + ekran) | | **~307 MB** |
+| Kamera + ses (10 fps) | 150 + 16 kbit/sn | ~75 MB |
+| Ekran (2 fps) | 150 kbit/sn | ~68 MB |
+| STANDARD (yalnız kamera) | | **~75 MB** |
+| STRICT (kamera + ekran) | | **~143 MB** |
 
-Örnek: 107 dakikalık seviye tespiti, STRICT, 30 öğrenci ≈ 30 x 1,8 sa x 307 MB ≈
-**16-17 GB** tek bir grup için; 90 gün saklama ve haftada bir grup ≈ 13 grup ≈
-**210-220 GB**. Bağlantı: öğrenci başına sürekli ~0,3 (STANDARD) ile ~0,7 (STRICT)
-Mbit/sn yükleme; 30 kişilik bir laboratuvarda okulun çıkışı ~10-20 Mbit/sn.
+Örnek: 64 dakikalık yerleştirme şablonu, STRICT, 30 öğrenci ≈ 30 x 1,07 sa x 143 MB ≈
+**4,6 GB** tek bir grup için; 30 gün saklama ve haftada bir grup ≈ 4-5 grup ≈
+**20-23 GB**. Bağlantı: öğrenci başına sürekli ~0,17 (STANDARD) ile ~0,32 (STRICT)
+Mbit/sn yükleme; 30 kişilik bir laboratuvarda okulun çıkışı ~5-10 Mbit/sn.
+
+2026-10-14 maliyet düşürmesi: önceki profil (kamera 15 fps 250+32 kbit/sn, ekran 5 fps
+400 kbit/sn, 90 gün) aynı örnekte grup başına ~10 GB ve toplam ~130 GB tutardı.
 
 Chrome'da ölçülen (2026-10-14, sentetik kaynak, gerçek kamera değil): düzgün bir
 640x360 sahne VP8'de ~110-120 kbit/sn (hedefin altında); metin dolu 1280x800 ekran

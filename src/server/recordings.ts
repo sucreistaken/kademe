@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { assessments, attempts, auditLogs, proctorRecordings, proctorSessions } from "@/db/schema";
 import type { CandidateContext } from "@/lib/candidate-context";
 import type { RecordingKind, RecordingMime, SegmentMeta } from "@/lib/proctor/recording-rules";
+import { recordingRetentionDays } from "@/lib/proctor/recording-rules";
 import { getStorage } from "@/lib/storage";
 
 /**
@@ -87,7 +88,7 @@ export async function storeRecordingSegment(
       bytes: input.body.byteLength,
       mime: input.mime,
       storageKey: key,
-      purgeAfter: new Date(startedAt.getTime() + ctx.evidenceRetentionDays * 86_400_000),
+      purgeAfter: new Date(startedAt.getTime() + recordingRetentionDays(ctx.evidenceRetentionDays) * 86_400_000),
     })
     .onConflictDoNothing()
     .returning({ id: proctorRecordings.id });
