@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { aiRuns } from "@/db/schema";
 import type { aiPurpose } from "@/db/schema";
-import { getAiProvider, hashPrompt, type AiJsonResponse, type AiMessage } from "@/lib/ai";
+import { getAiProvider, hashPrompt, type AiJsonResponse, type AiMessage, type AiProvider } from "@/lib/ai";
 
 /**
  * Every model call goes through here so that every call, successful or not,
@@ -70,9 +70,9 @@ export async function callJson(
   jsonSchema: Record<string, unknown>,
   messages: AiMessage[],
   meta: CallMeta,
-  options: { maxTokens?: number; images?: Array<{ mime: string; base64: string }> } = {},
+  options: { maxTokens?: number; images?: Array<{ mime: string; base64: string }>; provider?: AiProvider } = {},
 ): Promise<{ response: AiJsonResponse; runId: string }> {
-  const provider = getAiProvider();
+  const provider = options.provider ?? getAiProvider();
   const promptHash = hashPrompt(messages);
   if (!provider.available) {
     await recordAiRun({ ...meta, model: provider.model || "none", promptHash, error: "no AI provider configured" });

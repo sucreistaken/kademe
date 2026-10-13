@@ -2,7 +2,7 @@ import { and, asc, between, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { attempts, assessments, proctorAiReviews, proctorEvents, proctorEvidence } from "@/db/schema";
 import { callJson } from "@/lib/ai-runs";
-import { getAiProvider } from "@/lib/ai";
+import { getReviewProvider } from "@/lib/ai-anthropic";
 import {
   buildProctorReviewMessages,
   parseProctorReview,
@@ -24,6 +24,7 @@ import { recomputeIntegrity } from "@/server/proctoring";
  */
 
 const MAX_FRAMES = 4;
+const VISION_PROVIDERS = ["anthropic", "gemini"];
 const WAIT_FOR_FRAMES_MS = 2 * 60_000;
 
 export type ReviewOutcome = { status: "DONE" | "SKIPPED" | "WAITING"; detail: string };
@@ -51,11 +52,13 @@ export async function runProctorReview(eventId: string): Promise<ReviewOutcome> 
   if (!row) return { status: "SKIPPED", detail: "event or review row is gone" };
   if (row.review.status !== "QUEUED") return { status: "SKIPPED", detail: `review is ${row.review.status}` };
 
-  const provider = getAiProvider();
-  if (!provider.available || provider.name !== "gemini") {
+  // Claude when ANTHROPIC_API_KEY is set, Gemini otherwise. NVIDIA and
+  // OpenRouter's default text model cannot read the frames.
+  const provider = getReviewProvider();
+  if (!provider.available || !VISION_PROVIDERS.includes(provider.name)) {
     await db
       .update(proctorAiReviews)
-      .set({ status: "SKIPPED", error: "no vision model configured (Gemini)", reviewedAt: new Date() })
+      .set({ status: "SKIPPED", error: "no vision model configured (Claude or Gemini)", reviewedAt: new Date() })
       .where(eq(proctorAiReviews.id, row.review.id));
     return { status: "SKIPPED", detail: "no vision provider" };
   }
@@ -102,7 +105,7 @@ export async function runProctorReview(eventId: string): Promise<ReviewOutcome> 
       PROCTOR_REVIEW_JSON_SCHEMA,
       messages,
       { orgId, purpose: "PROCTOR_REVIEW", inputRef: `proctor_event:${eventId}` },
-      { images, maxTokens: 2000 },
+      { images, maxTokens: 2000, provider },
     );
     const parsed = parseProctorReview(response.text, frames.length);
     if (!parsed.ok) {
