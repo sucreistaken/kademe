@@ -58,6 +58,23 @@ describe("buildExamConfig", () => {
     }
   });
 
+  it("scales a per-level fixed form with the minutes, keeping every level it uses", () => {
+    const perLevel = (target: number, section: Section) => {
+      const all: Section[] = ["GRAMMAR", "READING", "LISTENING", "WRITING", "SPEAKING"];
+      const d = buildExamConfig(shape({ skills: all, targetMinutes: target })).config.sections.find((s) => s.section === section)!.distribution;
+      if (d.kind !== "ABSOLUTE") throw new Error("expected a per-level form");
+      return d.perLevel;
+    };
+    const short = perLevel(32, "READING");
+    const long = perLevel(120, "READING");
+    expect([short.A1, short.C2, long.A1, long.C2]).toEqual([0, 0, 0, 0]);
+    for (const l of ["A2", "B1", "B2", "C1"] as const) {
+      expect(short[l]).toBeGreaterThanOrEqual(1);
+      expect(short[l]).toBeLessThan(4);
+      expect(long[l]).toBeGreaterThan(4);
+    }
+  });
+
   it("switches on an emphasis section the template had off", () => {
     const { config } = buildExamConfig(shape({ skills: ["GRAMMAR"], targetMinutes: 30, emphasis: "READING" }));
     expect(enabledSections(config).map((s) => s.section).sort()).toEqual(["GRAMMAR", "READING"]);
