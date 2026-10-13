@@ -4,14 +4,20 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CandidateColumn } from "@/components/candidate/Shell";
 import { environmentFacts, useProctor } from "@/components/candidate/proctor/ProctorProvider";
-import { ItemView, hasAnyAnswer } from "@/components/candidate/exam/ItemView";
+import { ItemView } from "@/components/candidate/exam/ItemView";
 import { ListeningPlayer, SpeakingItem } from "@/components/candidate/exam/MediaItems";
+import { answerProgress, progressState } from "@/components/candidate/exam/answer-progress";
+import { ConfirmDialog, NavStrip, ReviewScreen, reviewCounts } from "@/components/candidate/exam/ExamNav";
+import { clearPending, readPending, sessionStore, writePending, type PendingAnswer } from "@/components/candidate/exam/pending-answer";
+import { StepFooter } from "@/components/visual/step-footer";
+import { useStepFocus } from "@/hooks/use-step-focus";
 import { apiSend } from "@/lib/client/api";
 import { useStageClock } from "@/lib/client/use-stage-clock";
 import { stepPath } from "@/lib/candidate-routes";
 import type { CandidateState } from "@/lib/exam-flow";
+import { neighbour, type MoveTo, type NavEntry } from "@/lib/exam/navigation";
 import type { ItemAnswer } from "@/lib/exam/types";
-import { formatCountdown } from "@/lib/timer";
+import { formatCountdown, SUBMIT_SLACK_MS } from "@/lib/timer";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
 
@@ -20,19 +26,43 @@ import { cn } from "@/lib/cn";
  * never reloads the document (a reload would drop the screen share and
  * fullscreen). The server decides every step; this screen renders the state
  * it is given and sends back one answer at a time.
+ *
+ * Every answer is a draft saved as the student works (debounced), and the
+ * draft the server has not confirmed is also kept in this tab's
+ * sessionStorage, so a dropped connection or a reload does not lose it.
+ * In a navigable (fixed-form) section the bottom bar moves between items and
+ * flags them, and the section ends from its review step; a one-way section
+ * (adaptive, speaking) keeps "save and continue".
  */
+
+/** Refusals that mean this screen is behind the server: read the state again. */
+const STALE = new Set(["SECTION_EXPIRED", "ITEM_MISMATCH", "SECTION_MISMATCH", "NO_SECTION", "SECTION_NOT_STARTED", "NOT_READY"]);
+const codeOf = (err: unknown) => (err as { code?: string } | null)?.code ?? "";
+
+type SaveState = "idle" | "pending" | "saving" | "saved" | "failed";
+type Confirm = null | "skip" | "partial" | "finish";
+
 export function ExamRunner({ token, initial }: { token: string; initial: CandidateState }) {
   const router = useRouter();
   const t = useT("exam");
+  const n = useT("examNav");
   const sec = useT("section");
   const { engine, snap } = useProctor();
   const [state, setState] = useState(initial);
   const [answer, setAnswer] = useState<ItemAnswer>(initial.current?.item?.answer ?? {});
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [failure, setFailure] = useState<{ text: string; retry: () => void } | null>(null);
+  const [save, setSave] = useState<SaveState>("idle");
   const [finishing, setFinishing] = useState<number | null>(null);
+  const [confirm, setConfirm] = useState<Confirm>(null);
+  const busyRef = useRef(false);
+  const answerRef = useRef<ItemAnswer>(answer);
+  /** The answer the server has not confirmed yet (also in sessionStorage). */
+  const pendingRef = useRef<PendingAnswer | null>(null);
+  const inflightRef = useRef<Promise<unknown> | null>(null);
   const saveTimer = useRef<number | null>(null);
+  const retryTimer = useRef<number | null>(null);
+  const flushRef = useRef<() => Promise<boolean>>(async () => true);
   const policy = state.proctoring;
   const proctored = policy.preset !== "OFF";
 
@@ -44,8 +74,14 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
         return;
       }
       setState(next);
-      setAnswer(next.current?.item?.answer ?? {});
-      setSavedAt(null);
+      // A draft still on its way to the server outranks the copy the server sent back.
+      const nextItem = next.current?.item ?? null;
+      const p = pendingRef.current;
+      const keep = !!p && !!nextItem && p.sectionPosition === next.current?.position && p.sequence === nextItem.sequence;
+      const shown = keep ? p.answer : (nextItem?.answer ?? {});
+      answerRef.current = shown;
+      setAnswer(shown);
+      setSave(keep ? "pending" : "idle");
     },
     [engine, router, token],
   );
@@ -58,6 +94,73 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
       /* the next action retries */
     }
   }, [apply, token]);
+
+  /** Sends the unconfirmed draft, if any. True when nothing is left unsaved. */
+  const flush = useCallback(async (): Promise<boolean> => {
+    if (saveTimer.current) window.clearTimeout(saveTimer.current);
+    saveTimer.current = null;
+    if (retryTimer.current) window.clearTimeout(retryTimer.current);
+    retryTimer.current = null;
+    if (inflightRef.current) await inflightRef.current.catch(() => undefined);
+    const p = pendingRef.current;
+    if (!p) return true;
+    setSave("saving");
+    const request = apiSend(token, "/exam/answer", p, "PUT");
+    inflightRef.current = request;
+    try {
+      await request;
+      if (pendingRef.current === p) {
+        pendingRef.current = null;
+        clearPending(sessionStore(), token, p);
+        setSave("saved");
+      } else setSave("pending");
+      return true;
+    } catch (err) {
+      if (STALE.has(codeOf(err))) {
+        // The server will not take this draft any more (its item or section closed).
+        if (pendingRef.current === p) {
+          pendingRef.current = null;
+          clearPending(sessionStore(), token, p);
+        }
+        setSave("idle");
+        void refresh();
+        return false;
+      }
+      setSave("failed");
+      retryTimer.current = window.setTimeout(() => void flushRef.current(), 4000);
+      return false;
+    } finally {
+      if (inflightRef.current === request) inflightRef.current = null;
+    }
+  }, [refresh, token]);
+
+  useEffect(() => {
+    flushRef.current = flush;
+  }, [flush]);
+
+  // A draft this tab could not deliver before a reload goes out again.
+  useEffect(() => {
+    const stored = readPending(sessionStore(), token);
+    if (!stored) return;
+    pendingRef.current = stored;
+    const c = initial.current;
+    if (c?.item && stored.sectionPosition === c.position && stored.sequence === c.item.sequence) {
+      answerRef.current = stored.answer;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setAnswer(stored.answer);
+    }
+    void flushRef.current();
+    // Once, on arrival: later drafts go through change().
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (saveTimer.current) window.clearTimeout(saveTimer.current);
+      if (retryTimer.current) window.clearTimeout(retryTimer.current);
+    },
+    [],
+  );
 
   // Proctoring: start a session after a reload and arm the guards.
   useEffect(() => {
@@ -73,54 +176,136 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
   }, [snap?.terminated, refresh]);
 
   const cur = state.current;
+  const item = cur?.item ?? null;
+  const nav = cur?.nav ?? null;
   const clock = useStageClock(
     token,
     {
       serverNow: cur ? Date.parse(cur.serverNow) : 0,
       deadlineAt: cur?.deadlineAt ? Date.parse(cur.deadlineAt) : null,
     },
-    () => void refresh(),
+    () => {
+      // Hand in the last draft while the server still takes it (deadline plus
+      // slack), then read the state once the section has closed.
+      void flushRef.current().finally(() => window.setTimeout(() => void refresh(), SUBMIT_SLACK_MS + 500));
+    },
   );
+  const timeUp = state.step === "ITEM" && !!cur?.deadlineAt && clock.remainingMs === 0;
 
-  // Autosave of typed answers; choices save on "continue".
-  const item = cur?.item ?? null;
-  const typedItem = item && (item.content.kind === "WRITING" || item.content.kind === "SHORT_TEXT" || item.content.kind === "GAP");
+  // A new screen starts at the top, with focus on its heading.
+  const view = state.step === "ITEM" ? `${cur?.position}:${nav?.review ? "review" : item?.sequence}` : `intro:${cur?.position}`;
+  const headingRef = useStepFocus<HTMLHeadingElement>(view);
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [view]);
+
   function change(next: ItemAnswer) {
+    answerRef.current = next;
     setAnswer(next);
-    if (!typedItem || !cur || !item) return;
+    if (!cur || !item) return;
+    const p: PendingAnswer = { sectionPosition: cur.position, sequence: item.sequence, answer: next };
+    pendingRef.current = p;
+    writePending(sessionStore(), token, p);
+    setSave("pending");
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
-    saveTimer.current = window.setTimeout(async () => {
-      try {
-        await apiSend(token, "/exam/answer", { sectionPosition: cur.position, sequence: item.sequence, answer: next }, "PUT");
-        setSavedAt(Date.now());
-      } catch {
-        /* commit sends it again */
-      }
-    }, 800);
+    // Typing waits for a pause; a click is saved almost at once.
+    const typed = item.content.kind === "WRITING" || item.content.kind === "SHORT_TEXT" || item.content.kind === "GAP" || item.content.kind === "SPEAKING";
+    saveTimer.current = window.setTimeout(() => void flushRef.current(), typed ? 800 : 300);
   }
 
-  async function act(path: string, body: unknown) {
+  /**
+   * One step that changes the screen. The body is built when it is sent, from
+   * the answer on screen at that moment, so "try again" sends the newest one.
+   */
+  async function act(path: string, body: () => Record<string, unknown>, again: () => void) {
+    if (busyRef.current) return;
+    busyRef.current = true;
     setBusy(true);
-    setError(null);
+    setFailure(null);
+    if (saveTimer.current) window.clearTimeout(saveTimer.current);
+    saveTimer.current = null;
     try {
-      if (saveTimer.current) window.clearTimeout(saveTimer.current);
-      apply(await apiSend<CandidateState>(token, path, body));
+      if (inflightRef.current) await inflightRef.current.catch(() => undefined);
+      const sent = body();
+      // A step that does not carry the answer on screen (start, finish) hands in the unsaved draft first.
+      if (!("answer" in sent) && pendingRef.current) await flushRef.current();
+      const next = await apiSend<CandidateState>(token, path, sent);
+      // The step carried the draft of the item it left: that draft is saved now.
+      const p = pendingRef.current;
+      if (p && p.sectionPosition === sent.sectionPosition && p.sequence === sent.sequence && "answer" in sent) {
+        pendingRef.current = null;
+        clearPending(sessionStore(), token, p);
+      }
+      apply(next);
     } catch (err) {
-      const code = (err as { code?: string }).code;
-      if (code === "SECTION_EXPIRED" || code === "ITEM_MISMATCH" || code === "SECTION_MISMATCH") await refresh();
-      else setError(t("connectionProblem"));
+      if (STALE.has(codeOf(err))) await refresh();
+      else setFailure({ text: n("actionFailed"), retry: again });
     } finally {
+      busyRef.current = false;
       setBusy(false);
     }
   }
 
-  // "Finish section now" waits eight seconds, so a slip can be undone.
+  function start() {
+    if (!cur) return;
+    void act("/exam/section/start", () => ({ sectionPosition: cur.position }), start);
+  }
+
+  function goTo(to: MoveTo) {
+    if (!cur) return;
+    const leaving = item;
+    void act(
+      "/exam/answer/move",
+      () => (leaving ? { sectionPosition: cur.position, sequence: leaving.sequence, answer: answerRef.current, to } : { sectionPosition: cur.position, to }),
+      () => goTo(to),
+    );
+  }
+
+  function commit(blank = false) {
+    if (!cur || !item) return;
+    const at = item.sequence;
+    void act(
+      "/exam/answer/commit",
+      () => ({ sectionPosition: cur.position, sequence: at, answer: blank ? {} : answerRef.current }),
+      () => commit(blank),
+    );
+  }
+
+  function finishSection() {
+    if (!cur) return;
+    void act("/exam/section/submit", () => ({ sectionPosition: cur.position }), finishSection);
+  }
+
+  function setFlagHere(sequence: number, flagged: boolean) {
+    setState((s) =>
+      s.current?.nav
+        ? { ...s, current: { ...s.current, nav: { ...s.current.nav, entries: s.current.nav.entries.map((e) => (e.sequence === sequence ? { ...e, flagged } : e)) } } }
+        : s,
+    );
+  }
+
+  async function toggleFlag() {
+    if (!cur || !item || !nav || busyRef.current) return;
+    const sequence = item.sequence;
+    const was = nav.entries.find((e) => e.sequence === sequence)?.flagged ?? false;
+    setFlagHere(sequence, !was);
+    setFailure(null);
+    try {
+      await apiSend(token, "/exam/answer/flag", { sectionPosition: cur.position, sequence, flagged: !was });
+    } catch (err) {
+      setFlagHere(sequence, was);
+      if (STALE.has(codeOf(err))) await refresh();
+      else setFailure({ text: n("actionFailed"), retry: () => void toggleFlag() });
+    }
+  }
+
+  // "Finish section now" (one-way sections) waits eight seconds, so a slip can be undone.
   useEffect(() => {
     if (finishing === null || !cur) return;
     const id = window.setTimeout(() => {
       if (finishing <= 1) {
         setFinishing(null);
-        void act("/exam/section/submit", { sectionPosition: cur.position });
+        finishSection();
       } else setFinishing(finishing - 1);
     }, 1000);
     return () => window.clearTimeout(id);
@@ -133,6 +318,100 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
 
   if (!cur) return null;
 
+  const progress = item ? answerProgress(item.content, answer) : null;
+  const filling = progress ? progressState(progress) : null;
+  // The strip shows the item on screen as it is now, not as last saved.
+  const entries: NavEntry[] = nav ? nav.entries.map((e) => (item && progress && e.sequence === item.sequence ? { ...e, ...progress } : e)) : [];
+  const sequences = entries.map((e) => e.sequence);
+  const flaggedHere = !!item && entries.some((e) => e.sequence === item.sequence && e.flagged);
+  const counts = reviewCounts(entries);
+  const inputsOff = busy || timeUp;
+
+  const failureLine =
+    failure ? (
+      <ErrorLine text={failure.text} onRetry={failure.retry} />
+    ) : save === "failed" ? (
+      <ErrorLine text={n("saveFailed")} onRetry={() => void flush()} />
+    ) : null;
+  const hint = timeUp
+    ? n("timeUpSaving")
+    : filling === "PARTIAL" && progress && progress.total > 1
+      ? n("partialHint", { filled: progress.filled, total: progress.total })
+      : save === "saved"
+        ? t("autosaved")
+        : null;
+
+  let footer: React.ReactNode = null;
+  if (state.step === "ITEM" && nav?.review) {
+    footer = (
+      <StepFooter
+        back={{ label: n("backToQuestions"), onClick: () => (busyRef.current ? undefined : goTo(sequences[sequences.length - 1])) }}
+        primary={{ kind: "button", id: "finish-section", label: n("finishSection"), busy, busyLabel: t("saving"), onClick: () => setConfirm("finish") }}
+        hint={timeUp ? n("timeUpSaving") : null}
+        note={failureLine}
+      />
+    );
+  } else if (state.step === "ITEM" && nav && item) {
+    const prev = neighbour(sequences, item.sequence, -1);
+    const next = neighbour(sequences, item.sequence, 1);
+    footer = (
+      <StepFooter
+        back={prev !== null ? { label: n("previous"), onClick: () => (busyRef.current ? undefined : goTo(prev)) } : null}
+        secondary={{ kind: "button", id: "flag-item", label: flaggedHere ? n("unflag") : n("flag"), onClick: () => void toggleFlag() }}
+        primary={{
+          kind: "button",
+          id: "next-item",
+          label: next !== null ? n("next") : n("reviewAndFinish"),
+          busy,
+          busyLabel: t("saving"),
+          onClick: () => goTo(next ?? "REVIEW"),
+        }}
+        hint={hint}
+        note={
+          <div className="flex flex-col gap-3">
+            {failureLine}
+            <NavStrip
+              entries={entries}
+              current={item.sequence}
+              disabled={busy}
+              onJump={(s) => goTo(s)}
+              onReview={next !== null ? () => goTo("REVIEW") : null}
+            />
+          </div>
+        }
+      />
+    );
+  } else if (state.step === "ITEM" && item && progress) {
+    footer = (
+      <StepFooter
+        secondary={{ kind: "button", id: "skip-item", label: t("skip"), onClick: () => (busyRef.current ? undefined : setConfirm("skip")) }}
+        primary={{
+          kind: "button",
+          id: "save-next",
+          label: t("saveNext"),
+          busy,
+          busyLabel: t("saving"),
+          waitReason: progress.filled === 0 ? t("answerFirst") : null,
+          onClick: () => (filling === "PARTIAL" ? setConfirm("partial") : commit()),
+        }}
+        hint={hint}
+        note={
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            {failureLine ?? <span />}
+            <button
+              type="button"
+              disabled={busy || finishing !== null}
+              onClick={() => setFinishing(8)}
+              className="text-[13.5px] text-muted underline decoration-underline underline-offset-2 hover:text-ink disabled:cursor-not-allowed"
+            >
+              {t("finishEarly")}
+            </button>
+          </div>
+        }
+      />
+    );
+  }
+
   return (
     <div className="relative">
       {state.step === "ITEM" ? (
@@ -141,7 +420,13 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
             <div className="flex items-center gap-3 text-[13.5px]">
               <span className="font-semibold text-ink">{sec(cur.section)}</span>
               <span className="tnum text-muted">
-                {cur.itemTotal ? t("questionOf", { n: cur.answered + 1, total: cur.itemTotal }) : t("question", { n: cur.answered + 1 })}
+                {nav?.review
+                  ? n("reviewTitle")
+                  : nav && item
+                    ? t("questionOf", { n: item.sequence, total: entries.length })
+                    : cur.itemTotal
+                      ? t("questionOf", { n: cur.answered + 1, total: cur.itemTotal })
+                      : t("question", { n: cur.answered + 1 })}
               </span>
             </div>
             <div className="flex items-center gap-5">
@@ -172,45 +457,70 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
             <div className="tnum text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted">
               {t("sectionOf", { n: cur.position, total: cur.total })}
             </div>
-            <h1 className="mt-2.5 text-[32px] font-bold leading-[1.2] tracking-[-0.03em] text-ink">{sec(cur.section)}</h1>
-            <p className="tnum mt-2 text-[15px] text-ink-2">
-              {(() => {
-                const s = state.sections.find((x) => x.position === cur.position)!;
-                const count = s.itemsLabel.includes("-")
-                  ? t("itemsAdaptive", { range: s.itemsLabel })
-                  : cur.section === "WRITING" || cur.section === "SPEAKING"
-                    ? t("tasks", { n: s.itemsLabel })
-                    : t("items", { n: s.itemsLabel });
-                return `${t("minutes", { n: s.minutes })} · ${count}`;
-              })()}
-            </p>
-            <ul className="mt-6 flex list-disc flex-col gap-2 pl-5 text-[14.5px] leading-[1.6] text-ink-2">
-              <li>{sec(`rule${cur.section}` as "ruleGRAMMAR", { plays: state.maxPlays })}</li>
-              <li>{t("ruleNoBack")}</li>
-              <li>{t("ruleClock")}</li>
-            </ul>
+            <h1 ref={headingRef} tabIndex={-1} className="mt-2.5 text-[32px] font-bold leading-[1.2] tracking-[-0.03em] text-ink outline-none">
+              {sec(cur.section)}
+            </h1>
+            {(() => {
+              const s = state.sections.find((x) => x.position === cur.position)!;
+              const count = s.itemsLabel.includes("-")
+                ? t("itemsAdaptive", { range: s.itemsLabel })
+                : cur.section === "WRITING" || cur.section === "SPEAKING"
+                  ? t("tasks", { n: s.itemsLabel })
+                  : t("items", { n: s.itemsLabel });
+              return (
+                <>
+                  <p className="tnum mt-2 text-[15px] text-ink-2">{`${t("minutes", { n: s.minutes })} · ${count}`}</p>
+                  <ul className="mt-6 flex list-disc flex-col gap-2 pl-5 text-[14.5px] leading-[1.6] text-ink-2">
+                    <li>
+                      {s.navigable && cur.section === "GRAMMAR"
+                        ? n("ruleGRAMMARFixed")
+                        : sec(`rule${cur.section}` as "ruleGRAMMAR", { plays: state.maxPlays })}
+                    </li>
+                    {s.navigable ? (
+                      <>
+                        <li>{n("ruleBack")}</li>
+                        <li>{n("ruleReview")}</li>
+                      </>
+                    ) : (
+                      <li>{t("ruleNoBack")}</li>
+                    )}
+                    <li>{t("ruleClock")}</li>
+                  </ul>
+                </>
+              );
+            })()}
             <button
               type="button"
               disabled={busy}
-              onClick={() => act("/exam/section/start", { sectionPosition: cur.position })}
+              onClick={start}
               className="mt-8 h-12 w-full rounded-[10px] bg-accent text-[15px] font-semibold text-white hover:bg-accent-hover disabled:bg-line disabled:text-muted"
             >
               {busy ? t("saving") : t("startSection")}
             </button>
-            {error ? <ErrorLine text={error} onRetry={() => void refresh()} /> : null}
+            {failure ? <ErrorLine text={failure.text} onRetry={failure.retry} /> : null}
           </CandidateColumn>
+        ) : nav?.review ? (
+          <ReviewScreen entries={entries} disabled={busy} onJump={(s) => goTo(s)} headingRef={headingRef} />
         ) : item ? (
-          <div className={cn("mx-auto px-7 pb-16 pt-8", item.stimulus?.kind === "READING" ? "max-w-[1200px]" : "max-w-[760px]")}>
+          <div className={cn("mx-auto px-7 pb-10 pt-8", item.stimulus?.kind === "READING" ? "max-w-[1200px]" : "max-w-[760px]")}>
             <div className={cn(item.stimulus?.kind === "READING" && "grid gap-8 lg:grid-cols-2")}>
               {item.stimulus?.kind === "READING" ? (
-                <article className="rounded-[14px] border border-line bg-surface p-6 lg:sticky lg:top-24 lg:max-h-[calc(100dvh-8rem)] lg:overflow-y-auto">
-                  <div className="text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted">{item.stimulus.title}</div>
+                <article className="rounded-[14px] border border-line bg-surface p-6 lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem-var(--step-footer-space,112px))] lg:overflow-y-auto">
+                  <div lang="de" className="text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted">{item.stimulus.title}</div>
                   <div lang="de" className="mt-3 whitespace-pre-line text-[16px] leading-[1.75] text-ink">
                     {item.stimulus.text}
                   </div>
                 </article>
               ) : null}
               <div>
+                <h2
+                  ref={headingRef}
+                  tabIndex={-1}
+                  className="tnum mb-4 flex items-center gap-2.5 text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted outline-none"
+                >
+                  {nav ? t("questionOf", { n: item.sequence, total: entries.length }) : t("question", { n: cur.answered + 1 })}
+                  {flaggedHere ? <span className="rounded-full border border-line-strong px-2 py-0.5 text-[11.5px] normal-case tracking-normal text-ink">{n("flaggedTag")}</span> : null}
+                </h2>
                 {item.stimulus?.kind === "LISTENING" ? (
                   <div className="mb-6">
                     <ListeningPlayer
@@ -229,61 +539,70 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
                     sectionPosition={cur.position}
                     item={item}
                     answer={answer}
-                    onChange={setAnswer}
+                    onChange={change}
                     engine={engine}
                   />
                 ) : (
-                  <ItemView item={item} answer={answer} onChange={change} disabled={busy} />
+                  <ItemView item={item} answer={answer} onChange={change} disabled={inputsOff} />
                 )}
-
-                <div className="mt-8">
-                  <button
-                    type="button"
-                    disabled={busy || !hasAnyAnswer(item, answer)}
-                    aria-describedby={!hasAnyAnswer(item, answer) ? "save-why" : undefined}
-                    onClick={() => act("/exam/answer/commit", { sectionPosition: cur.position, sequence: item.sequence, answer })}
-                    className="h-12 w-full rounded-[10px] bg-accent text-[15px] font-semibold text-white hover:bg-accent-hover disabled:cursor-not-allowed disabled:bg-line disabled:text-muted"
-                  >
-                    {busy ? t("saving") : t("saveNext")}
-                  </button>
-                  <div className="mt-2.5 flex flex-wrap items-center justify-between gap-3 text-[12.5px]">
-                    <span id="save-why" className="text-muted">
-                      {!hasAnyAnswer(item, answer) ? t("answerFirst") : savedAt ? t("autosaved") : ""}
-                    </span>
-                    <span className="flex gap-4">
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => act("/exam/answer/commit", { sectionPosition: cur.position, sequence: item.sequence, answer: {} })}
-                        className="text-muted underline decoration-underline underline-offset-2 hover:text-ink"
-                      >
-                        {t("skip")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFinishing(8)}
-                        className="text-muted underline decoration-underline underline-offset-2 hover:text-ink"
-                      >
-                        {t("finishEarly")}
-                      </button>
-                    </span>
-                  </div>
-                  {error ? <ErrorLine text={error} onRetry={() => void refresh()} /> : null}
-                </div>
               </div>
             </div>
           </div>
         ) : null}
       </div>
 
+      {/* Outside the blurred wrapper: a CSS filter would pin the fixed bar to the wrapper instead of the window. */}
+      {footer ? <div inert={blocked}>{footer}</div> : null}
+
       {finishing !== null ? (
-        <div role="status" className="fixed inset-x-0 bottom-6 z-30 mx-auto flex w-fit items-center gap-4 rounded-[10px] bg-ink px-5 py-3 text-[13.5px] text-white shadow-panel">
+        <div
+          role="status"
+          style={{ bottom: "var(--step-footer-space, 112px)" }}
+          className="fixed inset-x-0 z-30 mx-auto flex w-fit items-center gap-4 rounded-[10px] bg-ink px-5 py-3 text-[13.5px] text-white shadow-panel"
+        >
           <span className="tnum">{t("finishingIn", { s: finishing })}</span>
           <button type="button" onClick={() => setFinishing(null)} className="font-semibold underline underline-offset-2">
             {t("undo")}
           </button>
         </div>
       ) : null}
+
+      <ConfirmDialog
+        open={confirm === "finish"}
+        title={n("confirmFinishTitle")}
+        body={n("confirmFinishBody", { empty: counts.empty, partial: counts.partial, flagged: counts.flagged })}
+        confirmLabel={n("confirmFinishYes")}
+        busy={busy}
+        onCancel={() => setConfirm(null)}
+        onConfirm={() => {
+          setConfirm(null);
+          finishSection();
+        }}
+      />
+      <ConfirmDialog
+        open={confirm === "skip"}
+        title={n("confirmSkipTitle")}
+        body={n("confirmSkipBody")}
+        confirmLabel={n("confirmSkipYes")}
+        busy={busy}
+        onCancel={() => setConfirm(null)}
+        onConfirm={() => {
+          setConfirm(null);
+          commit(true);
+        }}
+      />
+      <ConfirmDialog
+        open={confirm === "partial"}
+        title={n("confirmPartialTitle")}
+        body={n("confirmPartialBody", { filled: progress?.filled ?? 0, total: progress?.total ?? 0 })}
+        confirmLabel={n("confirmPartialYes")}
+        busy={busy}
+        onCancel={() => setConfirm(null)}
+        onConfirm={() => {
+          setConfirm(null);
+          commit();
+        }}
+      />
 
       {proctored && engine?.cameraStream && item?.content.kind !== "SPEAKING" ? <SelfView stream={engine.cameraStream} /> : null}
     </div>
@@ -293,7 +612,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
 function ErrorLine({ text, onRetry }: { text: string; onRetry: () => void }) {
   const t = useT("exam");
   return (
-    <p className="mt-3 text-center text-[13px] text-danger">
+    <p role="alert" className="text-[13.5px] leading-[1.5] text-danger">
       {text}{" "}
       <button type="button" onClick={onRetry} className="font-semibold underline underline-offset-2">
         {t("retry")}
@@ -369,6 +688,7 @@ function RecoverPanel({ reasons, resume }: { reasons: Array<"FULLSCREEN" | "SCRE
   );
 }
 
+/** The camera self-view sits above the bottom bar (its measured height), never on it. */
 function SelfView({ stream }: { stream: MediaStream }) {
   const ref = useRef<HTMLVideoElement | null>(null);
   const p = useT("proctor");
@@ -384,7 +704,8 @@ function SelfView({ stream }: { stream: MediaStream }) {
       muted
       playsInline
       aria-label={p("pipLabel")}
-      className="fixed bottom-4 right-4 z-30 h-[90px] w-[120px] rounded-[8px] border border-line bg-ink object-cover shadow-panel"
+      style={{ bottom: "var(--step-footer-space, 112px)" }}
+      className="fixed right-4 z-30 h-[90px] w-[120px] rounded-[8px] border border-line bg-ink object-cover shadow-panel"
     />
   );
 }

@@ -11,7 +11,7 @@ import {
   sectionRuns,
   stimuli,
 } from "@/db/schema";
-import { eap, mulberry32, poolLeft, replay, shouldStop } from "@/lib/exam/adaptive";
+import { eap, mulberry32, poolLeft, replay, shouldStop, type Observation, type Posterior } from "@/lib/exam/adaptive";
 import {
   adaptiveConfigFor,
   cTestLevel,
@@ -27,6 +27,18 @@ import {
 } from "@/lib/exam/blueprint";
 import { levelFromTheta } from "@/lib/exam/cefr";
 import { hasAnswer, scoreItem } from "@/lib/exam/item-scoring";
+import {
+  canFlag,
+  canWrite,
+  currentSequence,
+  decideMove,
+  isNavigableConfig,
+  isNavigableRun,
+  navEntries,
+  neighbour,
+  type NavEntry,
+  type NavTarget,
+} from "@/lib/exam/navigation";
 import { poolPosteriors } from "@/lib/exam/result";
 import { makePresentation, toCandidateItem, unalias, type CandidateItem } from "@/lib/exam/safe";
 import {
@@ -50,6 +62,8 @@ import { SUBMIT_SLACK_MS } from "@/lib/timer";
  *    starts, and nothing the browser says moves it.
  *  - The server owns the item sequence. Which item comes next is decided here,
  *    under a row lock, and a reload returns the same item in the same order.
+ *    In a navigable section (a fixed form) the whole plan is served at the
+ *    start and the student moves around it; the rules are in exam/navigation.ts.
  *  - Nothing the student receives carries a key, a rubric, a difficulty or a
  *    listening transcript. Items go out only through `toCandidateItem`.
  *  - One attempt per invitation. A second try is a new invitation.
@@ -140,8 +154,13 @@ export type SectionSummary = {
   minutes: number;
   /** "12" for fixed forms, "8-15" for adaptive, tasks for writing/speaking. */
   itemsLabel: string;
+  /** The student can go back, flag items and review before finishing this section. */
+  navigable: boolean;
   done: boolean;
 };
+
+/** Navigable sections: the progress strip, and whether the review step is open. */
+export type SectionNav = { entries: NavEntry[]; review: boolean };
 
 export type StudentResult = {
   visibility: "NONE" | "OVERALL" | "FULL";
@@ -175,7 +194,10 @@ export type CandidateState = {
     answered: number;
     /** Null for adaptive sections, where the count depends on the answers. */
     itemTotal: number | null;
+    /** Null on the review step of a navigable section. */
     item: CandidateItem | null;
+    /** Null in one-way sections (adaptive, speaking) and before a section starts. */
+    nav: SectionNav | null;
   };
   finished?: { terminated: boolean; terminationReason: string | null; result: StudentResult };
 };
@@ -216,6 +238,7 @@ export async function loadState(ctx: ExamCandidateContext): Promise<CandidateSta
       position: i + 1,
       minutes: s.durationMinutes,
       itemsLabel: itemsLabel(s, ctx.assessment.mode, ctx.assessment.claimedLevel, cfg.difficultyOffset),
+      navigable: isNavigableConfig(s),
       done: false,
     })),
     proctoring: cfg.proctoring,
@@ -260,6 +283,32 @@ export async function loadState(ctx: ExamCandidateContext): Promise<CandidateSta
           answered: 0,
           itemTotal: null,
           item: null,
+          nav: null,
+        },
+      };
+    }
+    if (run.navigable) {
+      const view = await navigableView(ctx, run.id);
+      if (!view) {
+        // A navigable run with nothing served (should not happen: an empty plan is skipped at the start).
+        await closeSectionRun(run.id, "DONE");
+        base.sections[i].done = true;
+        continue;
+      }
+      return {
+        ...base,
+        step: "ITEM",
+        current: {
+          section: s.section,
+          position: i + 1,
+          total: sections.length,
+          serverNow: new Date().toISOString(),
+          deadlineAt: run.deadlineAt?.toISOString() ?? null,
+          remainingMs: run.deadlineAt ? Math.max(0, run.deadlineAt.getTime() - Date.now()) : null,
+          answered: view.entries.filter((e) => e.filled > 0).length,
+          itemTotal: view.entries.length,
+          item: view.item,
+          nav: { entries: view.entries, review: view.review },
         },
       };
     }
@@ -285,6 +334,7 @@ export async function loadState(ctx: ExamCandidateContext): Promise<CandidateSta
         answered,
         itemTotal: run.itemPlan ? run.itemPlan.length : null,
         item,
+        nav: null,
       },
     };
   }
@@ -480,6 +530,7 @@ export async function startSection(ctx: ExamCandidateContext, position: number):
       deadlineAt,
       itemPlan,
       taskLevels,
+      navigable: isNavigableRun(s.section, itemPlan !== null),
     })
     .onConflictDoUpdate({
       target: [sectionRuns.attemptId, sectionRuns.section],
@@ -634,6 +685,44 @@ export async function ensureCurrentItem(ctx: ExamCandidateContext, runId: string
   return candidateItemFor(ctx, servedId);
 }
 
+/**
+ * A navigable run serves its whole plan at once, in plan order (sequence n is
+ * the plan's n-th item), so the student can move to any of them. Idempotent
+ * under the run's row lock; a reload serves nothing new.
+ */
+async function serveWholePlan(ctx: ExamCandidateContext, runId: string) {
+  await db.transaction(async (tx) => {
+    const [run] = await tx.select().from(sectionRuns).where(eq(sectionRuns.id, runId)).for("update");
+    if (!run || run.submittedAt || !run.itemPlan) return;
+    const served = await tx.select({ itemId: itemResponses.itemId }).from(itemResponses).where(eq(itemResponses.sectionRunId, runId));
+    if (served.length >= run.itemPlan.length) return;
+    const have = new Set(served.map((r) => r.itemId));
+    await serve(tx, runId, run.itemPlan.filter((id) => !have.has(id)), served.length + 1, sectionConfigFor(ctx, run.section));
+  });
+}
+
+/**
+ * What a navigable section shows: the item under the stored cursor (or the
+ * review step), and one progress cell per item. Null when nothing was served.
+ */
+async function navigableView(
+  ctx: ExamCandidateContext,
+  runId: string,
+): Promise<{ entries: NavEntry[]; item: CandidateItem | null; review: boolean } | null> {
+  await serveWholePlan(ctx, runId);
+  const [run] = await db.select().from(sectionRuns).where(eq(sectionRuns.id, runId));
+  const rows = await db
+    .select({ id: itemResponses.id, sequence: itemResponses.sequence, snapshot: itemResponses.itemSnapshot, answer: itemResponses.answer, flagged: itemResponses.flagged })
+    .from(itemResponses)
+    .where(eq(itemResponses.sectionRunId, runId))
+    .orderBy(asc(itemResponses.sequence));
+  const sequence = currentSequence(run.navCursor, rows.map((r) => r.sequence));
+  if (sequence === null) return null;
+  const entries = navEntries(rows.map((r) => ({ sequence: r.sequence, content: r.snapshot.content, answer: r.answer ?? null, flagged: r.flagged })));
+  const item = run.navReview ? null : await candidateItemFor(ctx, rows.find((r) => r.sequence === sequence)!.id);
+  return { entries, item, review: run.navReview };
+}
+
 export async function candidateItemFor(ctx: ExamCandidateContext, responseId: string): Promise<CandidateItem> {
   const [row] = await db
     .select({ response: itemResponses, run: sectionRuns })
@@ -653,16 +742,17 @@ export async function candidateItemFor(ctx: ExamCandidateContext, responseId: st
   });
 }
 
-export type WriteCheck =
-  | { ok: true; run: typeof sectionRuns.$inferSelect; response: typeof itemResponses.$inferSelect }
-  | { ok: false; code: "NO_SECTION" | "NOT_READY" | "SECTION_MISMATCH" | "SECTION_NOT_STARTED" | "SECTION_EXPIRED" | "ITEM_MISMATCH" };
+type SectionRun = typeof sectionRuns.$inferSelect;
+type ItemResponse = typeof itemResponses.$inferSelect;
 
-/**
- * Every write names the section position and item sequence it believes it is
- * on. If the server disagrees (a second tab, a stale screen) the write is
- * refused rather than landing on the wrong item.
- */
-export async function checkWrite(ctx: ExamCandidateContext, position: unknown, sequence: unknown): Promise<WriteCheck> {
+type SectionRefusal = "NO_SECTION" | "NOT_READY" | "SECTION_MISMATCH" | "SECTION_NOT_STARTED" | "SECTION_EXPIRED";
+
+export type SectionCheck = { ok: true; run: SectionRun } | { ok: false; code: SectionRefusal };
+
+export type WriteCheck = { ok: true; run: SectionRun; response: ItemResponse } | { ok: false; code: SectionRefusal | "ITEM_MISMATCH" };
+
+/** The section the request names is the open one, started, and inside its clock. */
+export async function checkSection(ctx: ExamCandidateContext, position: unknown): Promise<SectionCheck> {
   const current = await currentSection(ctx);
   if (!current) return { ok: false, code: "NO_SECTION" };
   if (!(await readyForExam(ctx, current.attempt))) return { ok: false, code: "NOT_READY" };
@@ -670,20 +760,75 @@ export async function checkWrite(ctx: ExamCandidateContext, position: unknown, s
   const run = current.run;
   if (!run?.startedAt || !run.deadlineAt) return { ok: false, code: "SECTION_NOT_STARTED" };
   if (Date.now() > run.deadlineAt.getTime() + SUBMIT_SLACK_MS) return { ok: false, code: "SECTION_EXPIRED" };
-  if (typeof sequence !== "number") return { ok: false, code: "ITEM_MISMATCH" };
+  return { ok: true, run };
+}
+
+const navTarget = (r: ItemResponse | undefined): NavTarget | null =>
+  r ? { sequence: r.sequence, answered: !!r.answeredAt, notReached: r.notReached } : null;
+
+async function responseAt(runId: string, sequence: number): Promise<ItemResponse | undefined> {
   const [response] = await db
     .select()
     .from(itemResponses)
-    .where(and(eq(itemResponses.sectionRunId, run.id), eq(itemResponses.sequence, sequence)));
-  if (!response || response.answeredAt || response.notReached) return { ok: false, code: "ITEM_MISMATCH" };
-  const [firstOpen] = await db
-    .select({ sequence: itemResponses.sequence })
-    .from(itemResponses)
-    .where(and(eq(itemResponses.sectionRunId, run.id), isNull(itemResponses.answeredAt), eq(itemResponses.notReached, false)))
-    .orderBy(asc(itemResponses.sequence))
-    .limit(1);
-  if (firstOpen && firstOpen.sequence !== sequence) return { ok: false, code: "ITEM_MISMATCH" };
+    .where(and(eq(itemResponses.sectionRunId, runId), eq(itemResponses.sequence, sequence)));
+  return response;
+}
+
+/**
+ * Every write names the section position and item sequence it believes it is
+ * on. If the server disagrees (a second tab, a stale screen) the write is
+ * refused rather than landing on the wrong item. A one-way section takes
+ * writes on its first open item only; a navigable one on any open item.
+ */
+export async function checkWrite(ctx: ExamCandidateContext, position: unknown, sequence: unknown): Promise<WriteCheck> {
+  const section = await checkSection(ctx, position);
+  if (!section.ok) return section;
+  return checkItem(section.run, sequence);
+}
+
+/** The item half of checkWrite, for a run that already passed checkSection. */
+export async function checkItem(run: SectionRun, sequence: unknown): Promise<WriteCheck> {
+  if (typeof sequence !== "number") return { ok: false, code: "ITEM_MISMATCH" };
+  const response = await responseAt(run.id, sequence);
+  let firstOpen: number | null = null;
+  if (!run.navigable) {
+    const [row] = await db
+      .select({ sequence: itemResponses.sequence })
+      .from(itemResponses)
+      .where(and(eq(itemResponses.sectionRunId, run.id), isNull(itemResponses.answeredAt), eq(itemResponses.notReached, false)))
+      .orderBy(asc(itemResponses.sequence))
+      .limit(1);
+    firstOpen = row?.sequence ?? null;
+  }
+  if (!response || !canWrite({ navigable: run.navigable, target: navTarget(response), firstOpen })) return { ok: false, code: "ITEM_MISMATCH" };
   return { ok: true, run, response };
+}
+
+/**
+ * Moves a navigable section's screen to one of its items, or to the review
+ * step. Refused (false) in a one-way section and for an item the run does not
+ * have. Moving never scores anything.
+ */
+export async function moveTo(run: SectionRun, to: unknown): Promise<boolean> {
+  const rows = await db.select({ sequence: itemResponses.sequence }).from(itemResponses).where(eq(itemResponses.sectionRunId, run.id));
+  const move = decideMove({ navigable: run.navigable, to, sequences: rows.map((r) => r.sequence) });
+  if (!move.ok) return false;
+  await db
+    .update(sectionRuns)
+    .set(move.review ? { navReview: true } : { navCursor: move.cursor, navReview: false })
+    .where(and(eq(sectionRuns.id, run.id), isNull(sectionRuns.submittedAt)));
+  return true;
+}
+
+/** Marks or unmarks an item to come back to. Navigable sections only; the score never sees it. */
+export async function setFlag(run: SectionRun, sequence: unknown, flagged: boolean): Promise<boolean> {
+  const response = typeof sequence === "number" ? await responseAt(run.id, sequence) : undefined;
+  if (!response || !canFlag({ navigable: run.navigable, target: navTarget(response) })) return false;
+  await db
+    .update(itemResponses)
+    .set({ flagged })
+    .where(and(eq(itemResponses.id, response.id), isNull(itemResponses.answeredAt)));
+  return true;
 }
 
 const MAX_TEXT = 20_000;
@@ -752,13 +897,24 @@ export async function saveDraft(ctx: ExamCandidateContext, response: typeof item
   return answer;
 }
 
-/** Scores and closes one item. Never tells the student whether it was right. */
+/**
+ * Scores and closes one item. Never tells the student whether it was right.
+ * In a navigable section nothing closes before the section does: "save and
+ * continue" keeps the answer as a draft and moves to the next item, or to the
+ * review step after the last one.
+ */
 export async function commitAnswer(
   ctx: ExamCandidateContext,
   run: typeof sectionRuns.$inferSelect,
   response: typeof itemResponses.$inferSelect,
   raw: unknown,
 ) {
+  if (run.navigable) {
+    if (raw !== undefined) await saveDraft(ctx, response, raw);
+    const rows = await db.select({ sequence: itemResponses.sequence }).from(itemResponses).where(eq(itemResponses.sectionRunId, run.id));
+    await moveTo(run, neighbour(rows.map((r) => r.sequence), response.sequence, 1) ?? "REVIEW");
+    return;
+  }
   const snap = response.itemSnapshot;
   const answer = raw === undefined ? (response.answer ?? {}) : sanitizeAnswer(snap, raw, response.answer ?? null, response.presentation);
   await scoreAndClose(ctx, run, response.id, snap, answer);
@@ -891,6 +1047,9 @@ export async function closeSectionRun(runId: string, reason: "DONE" | "SUBMIT" |
     );
     thetaMean = state.posterior.mean;
     thetaSd = state.posterior.sd;
+    // A navigable section scores everything at once, so the teacher's
+    // trajectory chart is drawn here, in the order the items were served.
+    if (run.navigable) await writeTrajectory(all, { mean: acfg.priorMean, sd: acfg.priorSd });
     const answered = all.filter((r) => r.answeredAt).length;
     if (s.adaptive && answered < s.minItems) {
       stopReason = "INSUFFICIENT";
@@ -932,6 +1091,17 @@ export async function closeSectionRun(runId: string, reason: "DONE" | "SUBMIT" |
   else {
     const { recomputeResult } = await import("@/lib/exam-results");
     await recomputeResult(run.attemptId);
+  }
+}
+
+/** The running estimate after each scored item, in sequence order; blanks count as wrong, as in the final estimate. */
+async function writeTrajectory(rows: ItemResponse[], prior: Posterior) {
+  const observations: Observation[] = [];
+  for (const r of [...rows].sort((a, b) => a.sequence - b.sequence)) {
+    if (r.score === null) continue;
+    observations.push({ b: r.itemSnapshot.difficulty, score: r.score });
+    const post = eap(observations, prior);
+    await db.update(itemResponses).set({ thetaAfter: post.mean, seAfter: post.sd }).where(eq(itemResponses.id, r.id));
   }
 }
 

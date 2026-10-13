@@ -5,7 +5,9 @@ import { pCorrect } from "@/lib/exam/adaptive";
 import type { ItemAnswer, ItemSnapshot } from "@/lib/exam/types";
 import {
   checkWrite,
+  closeSectionRun,
   commitAnswer,
+  currentSection,
   getConsentText,
   hasConsented,
   loadState,
@@ -94,6 +96,13 @@ export async function simulateStudent(rawToken: string, student: SimulatedStuden
       const started = await startSection(ctx, state.current!.position);
       if (!started.ok) throw new Error(`section start refused: ${started.code}`);
       lastSection = state.current!.section;
+      continue;
+    }
+    if (state.step === "ITEM" && state.current?.nav?.review) {
+      // A navigable section ends from its review step, as the finish button does.
+      const current = await currentSection(ctx);
+      if (!current?.run) throw new Error("review step without an open section");
+      await closeSectionRun(current.run.id, "SUBMIT");
       continue;
     }
     if (state.step !== "ITEM" || !state.current?.item) throw new Error(`unexpected step ${state.step}`);

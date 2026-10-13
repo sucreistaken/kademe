@@ -82,6 +82,11 @@ function rescaleSection(s: SectionConfig, minutes: number, baseMinutes: number) 
       at: clamp(Math.round(d.at * f), 1, 60),
       above: clamp(Math.round(d.above * f), 0, 60),
     };
+  } else {
+    // A placement form spread over the levels: each level it uses keeps at least one item.
+    const per = { ...s.distribution.perLevel };
+    for (const l of Object.keys(per) as Cefr[]) per[l] = per[l] > 0 ? clamp(Math.round(per[l] * f), 1, 60) : 0;
+    s.distribution = { kind: "ABSOLUTE", perLevel: per };
   }
 }
 

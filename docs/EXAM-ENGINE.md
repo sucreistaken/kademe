@@ -53,6 +53,21 @@ Uyarlanabilir kapalıysa `sampleFixedForm` seviye başına istenen sayıda soru 
 göredir (bir alt / beyan / bir üst). Ulaşılmayan planlı sorular 0 puan alır: erken
 bitirmek cevaplamaktan kârlı olamaz.
 
+**Gezinme (2026-10-14).** Sabit formlu bir bölüm (planı olan objektif bölüm ve yazma;
+konuşma hariç) başlarken `navigable` işaretlenir ve bütün planı tek seferde sunar.
+Öğrenci her soruya gidebilir, cevabını değiştirebilir (taslak olarak saklanır) ve soruyu
+işaretleyebilir; imleç ve işaretler sunucuda durur. Bölüm yalnızca gözden geçirme
+adımından ya da süre dolunca kapanır; o an kaydedilmiş bütün taslaklar puanlanır ve
+öğretmenin gidişat grafiği sıra düzeninde yeniden çizilir. Uyarlanabilir bölümler ve
+konuşma tek yönlü kalır. Kurallar `src/lib/exam/navigation.ts` içinde, veritabanısız
+test edilir.
+
+Hazır şablonlar (2026-10-14) sabit formdur: yerleştirme A1-C2'ye yayılmış dilbilgisi
+(C-test + seviye başına 3), A2-C1 okuma ve A2-B2 dinleme (seviye başına bir metin ya
+da kayıt), yaklaşık 64 dakika. Simülasyonda birleşik objektif seviye A1-C1'de %68-80
+tam, %99-100 bir seviye içinde (eski uyarlanabilir form %66-78 ve %99-100); C2'de
+tam isabet ikisinde de düşük (%40, %47). Yalnızca Rasch modeli, testlet bağımlılığı yok sayıldı.
+
 ## Sonuç
 
 `result.ts: computeResult`

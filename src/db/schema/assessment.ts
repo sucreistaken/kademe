@@ -200,6 +200,15 @@ export const sectionRuns = pgTable(
     taskLevels: jsonb("task_levels").$type<string[]>(),
     /** Listening: how often each clip was started, keyed by stimulus id. */
     stimulusPlays: jsonb("stimulus_plays").$type<Record<string, number>>().notNull().default({}),
+    /**
+     * Fixed forms (and writing): the student moves between items, flags them and
+     * finishes from a review step. Decided once at the start; one-way when false.
+     */
+    navigable: boolean("navigable").notNull().default(false),
+    /** Navigable runs: the item sequence on screen. Null means the first item. */
+    navCursor: integer("nav_cursor"),
+    /** Navigable runs: the review step is open. The section closes only from it (or on the clock). */
+    navReview: boolean("nav_review").notNull().default(false),
     /** Adaptive: why the section stopped serving. */
     stopReason: text("stop_reason"),
     /** Final posterior for objective sections, cached for lists. */
@@ -242,6 +251,8 @@ export const itemResponses = pgTable(
     seAfter: real("se_after"),
     /** Planned but never reached before the section closed. Scored 0. */
     notReached: boolean("not_reached").notNull().default(false),
+    /** Navigable runs: the student marked this item to come back to. Never affects the score. */
+    flagged: boolean("flagged").notNull().default(false),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
