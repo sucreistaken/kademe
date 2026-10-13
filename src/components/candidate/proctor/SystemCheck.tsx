@@ -158,7 +158,7 @@ export function SystemCheck({ token, policy }: { token: string; policy: Proctori
     }
   }
 
-  if (mobile && (policy.screenShare || policy.camera)) return <MobileBlock token={token} />;
+  if (mobile && (policy.screenShare || policy.camera)) return <MobileBlock token={token} need={{ camera: policy.camera, screenShare: policy.screenShare }} />;
 
   const label: Record<RowId, string> = {
     BROWSER: t("browser"),

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandMark } from "@/components/visual/brand-mark";
 import { candidateT } from "@/i18n/candidate";
 import type { Locale } from "@/i18n/locale";
 
@@ -35,12 +36,15 @@ export function CandidateShell({
   return (
     <div lang={locale} className="min-h-dvh bg-paper">
       {header ? (
-      <header className="flex h-14 items-center justify-between gap-4 border-b border-hairline bg-surface px-7">
-        <span className="text-sm font-bold tracking-[-0.02em] text-ink">
+      <header className="flex h-16 items-center justify-between gap-4 border-b border-hairline bg-surface px-5 sm:px-7">
+        <span className="flex items-center gap-2.5 text-[17px] font-extrabold tracking-[-0.01em] text-ink">
+          <BrandMark />
           {t("common.brand")}
         </span>
-        <span className="flex items-center gap-4">
-          {meta ? <span className="text-[12.5px] text-muted">{meta}</span> : null}
+        <span className="flex min-w-0 items-center gap-3">
+          {meta ? (
+            <span className="hidden min-w-0 truncate rounded-full bg-subtle px-3 py-1 text-[12.5px] font-semibold text-ink-2 md:inline">{meta}</span>
+          ) : null}
           {language}
         </span>
       </header>
@@ -65,18 +69,20 @@ export function LanguageSwitch({
   current: Locale;
 }) {
   if (locales.length < 2) return null;
+  // A small segmented control: the current language is the raised pill.
   return (
-    <span className="flex items-center gap-2 text-[12.5px]">
+    <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-subtle p-0.5 text-[12.5px]">
       {locales.map((locale) =>
         locale === current ? (
-          <span key={locale} className="font-medium text-ink">
+          <span key={locale} className="rounded-full bg-surface px-3 py-1 font-bold text-ink shadow-lip-soft">
             {LABEL[locale]}
           </span>
         ) : (
           <Link
             key={locale}
             href={`?lang=${locale}`}
-            className="text-muted underline decoration-underline underline-offset-2 hover:text-ink"
+            lang={locale}
+            className="rounded-full px-3 py-1 font-semibold text-muted transition-colors hover:text-ink"
           >
             {LABEL[locale]}
           </Link>

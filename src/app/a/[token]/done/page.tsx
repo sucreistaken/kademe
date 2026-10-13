@@ -67,6 +67,7 @@ export default async function DonePage({
           terminated={finished?.terminated ?? false}
           terminationReason={finished?.terminationReason ?? null}
           contactEmail={ctx.contactEmail}
+          sections={state.sections.map((s) => s.section)}
         />
       </CandidateShell>
     </CandidateIntl>
