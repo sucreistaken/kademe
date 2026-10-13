@@ -227,6 +227,8 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
     try {
       if (inflightRef.current) await inflightRef.current.catch(() => undefined);
       const sent = body();
+      // A step that does not carry the answer on screen (start, finish) hands in the unsaved draft first.
+      if (!("answer" in sent) && pendingRef.current) await flushRef.current();
       const next = await apiSend<CandidateState>(token, path, sent);
       // The step carried the draft of the item it left: that draft is saved now.
       const p = pendingRef.current;
