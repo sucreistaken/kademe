@@ -80,4 +80,10 @@ describe("answered", () => {
     expect(hasAnswer("SPEAKING_PROMPT", { mediaAssetId: "m" })).toBe(true);
     expect(wordCount("  Ich  bin hier. ")).toBe(3);
   });
+
+  it("a matching row cleared to nothing is not an answer", () => {
+    expect(hasAnswer("MATCHING", { matches: { l1: "" } })).toBe(false);
+    expect(hasAnswer("MATCHING", { matches: {} })).toBe(false);
+    expect(hasAnswer("MATCHING", { matches: { l1: "", l2: "r1" } })).toBe(true);
+  });
 });

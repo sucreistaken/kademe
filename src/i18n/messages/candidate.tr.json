@@ -946,5 +946,22 @@
     "name": "Ad ve soyadını yaz.",
     "emailWait": "Geçerli bir e-posta adresi yaz.",
     "failed": "Kaydedilemedi. Tekrar dener misin?"
+  },
+  "examItems": {
+    "tfNgListening": "Kayıtta geçmiyor",
+    "matchTargets": "Seçenekler",
+    "matchHint": "Her satır için bir harf seçin.",
+    "matchUsed": "Seçildi",
+    "matchUsedElsewhere": "başka bir satırda seçili",
+    "matchClear": "Seçimi kaldır",
+    "gapLabel": "Boşluk {n}",
+    "listenLoading": "Yükleniyor",
+    "listenRetry": "Tekrar dene",
+    "listenResume": "Kaldığı yerden devam et",
+    "listenLoadFailed": "Kayıt yüklenemedi. İnternet bağlantınızı kontrol edip tekrar deneyin.",
+    "listenStalled": "Kayıt durdu. İnternet bağlantınızı kontrol edip tekrar deneyin.",
+    "listenBlocked": "Tarayıcı sesi başlatmadı. Tekrar deneyin.",
+    "listenFreeRetry": "Kayıt hiç başlamadı. Tekrar denemek yeni bir dinleme hakkı harcamaz.",
+    "listenFreeResume": "Kaldığı yerden devam etmek yeni bir dinleme hakkı harcamaz."
   }
 }

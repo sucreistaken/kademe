@@ -111,7 +111,8 @@ export function hasAnswer(type: ItemType, answer: ItemAnswer | null | undefined)
     case "GAP_FILL":
       return Object.values(answer.gaps ?? {}).some((v) => v.trim().length > 0);
     case "MATCHING":
-      return Object.keys(answer.matches ?? {}).length > 0;
+      // A row cleared back to "no choice" is not an answer.
+      return Object.values(answer.matches ?? {}).some(Boolean);
     case "SHORT_TEXT":
     case "WRITING_PROMPT":
       return (answer.text?.trim().length ?? 0) > 0 || !!answer.mediaAssetId;
