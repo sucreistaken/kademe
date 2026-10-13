@@ -5,6 +5,7 @@ import { calibrateFloor, createVad, type Vad } from "@/lib/proctor/vad-logic";
 import { createSignalTracker, type SignalTracker } from "@/lib/proctor/signals";
 import { yawPitchFromMatrix } from "@/lib/proctor/head-pose";
 import { verifyDisplaySurface } from "@/lib/proctor/environment";
+import { ProctorRecording } from "@/lib/client/proctor/recording";
 import type { ProctoringPolicy } from "@/lib/proctor/policy";
 import type { ProctorEventType } from "@/lib/proctor/taxonomy";
 
@@ -96,6 +97,8 @@ export class ProctorEngine {
   private lastKeyAt: number | null = null;
   private visionLoop: number | null = null;
   private bannerTimer: number | null = null;
+  /** The continuous recording (recording.ts); created when the exam is armed. */
+  private recording: ProctorRecording | null = null;
   /** Development fake-media mode only: the face count the model's result is replaced with. */
   devFaces = 1;
 
@@ -286,6 +289,7 @@ export class ProctorEngine {
       this.camVideo = hiddenVideo(stream, "kademe-proctor-cam");
       this.setupAudio(stream);
       this.set({ camera: video ? "ok" : "denied", mic: audio ? "ok" : "denied" });
+      this.syncRecording();
       return true;
     } catch (error) {
       this.set({ camera: "denied", mic: "denied", error: error instanceof Error ? error.name : String(error) });
@@ -419,6 +423,7 @@ export class ProctorEngine {
       this.end("SCREEN_SHARE_STOPPED");
       this.clearBanner("SCREEN");
       this.set({ screen: "ok", surface: verdict.surface });
+      this.syncRecording();
       return true;
     } catch (error) {
       this.set({ screen: "denied", error: error instanceof Error ? error.name : String(error) });
@@ -744,6 +749,14 @@ export class ProctorEngine {
     // Periodic evidence.
     this.every(() => void this.captureWebcam("PERIODIC"), policy.snapshots.webcamSeconds * 1000);
     if (policy.screenShare) this.every(() => void this.captureScreen("PERIODIC"), policy.snapshots.screenSeconds * 1000);
+    this.syncRecording();
+  }
+
+  /** Starts (or, after a reload or a lost device, restarts) the continuous recording of what is live. */
+  private syncRecording() {
+    if (!this.snap.guarding || !this.snap.policy) return;
+    this.recording ??= new ProctorRecording({ url: (path) => this.api(path), now: () => this.now(), sessionId: () => this.sessionId });
+    this.recording.sync({ policy: this.snap.policy, guarding: true, camera: this.cameraStream, screen: this.screenStream });
   }
 
   /** Ends proctoring for good: every track, fullscreen, timers, listeners. */
@@ -755,6 +768,8 @@ export class ProctorEngine {
     this.timers.forEach((t) => window.clearInterval(t));
     this.timers = [];
     if (this.visionLoop) window.clearInterval(this.visionLoop);
+    // Cut the last segments while the tracks still run; they upload in the background.
+    await this.recording?.stop();
     this.cameraStream?.getTracks().forEach((t) => t.stop());
     this.screenStream?.getTracks().forEach((t) => t.stop());
     this.camVideo?.remove();
