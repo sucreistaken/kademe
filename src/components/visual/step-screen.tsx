@@ -45,7 +45,7 @@ export function StepScreen({
       <h1
         ref={titleRef}
         tabIndex={-1}
-        className="mt-2 text-[28px] leading-9 font-semibold text-ink outline-none lg:text-[34px] lg:leading-[42px] xl:text-[40px] xl:leading-[48px]"
+        className="mt-2 text-[28px] leading-9 font-extrabold tracking-[-0.01em] text-ink outline-none lg:text-[34px] lg:leading-[42px] xl:text-[40px] xl:leading-[48px]"
       >
         {title}
       </h1>

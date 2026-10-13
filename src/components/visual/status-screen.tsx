@@ -21,7 +21,7 @@ export function StatusScreen({
   return (
     <section className="mx-auto max-w-[560px] pt-14 pb-6 text-center">
       {illustration ? <Illustration name={illustration} size="spot" className="mx-auto" /> : null}
-      <h1 ref={titleRef} tabIndex={-1} className="mt-6 text-[28px] leading-9 font-semibold text-ink outline-none lg:text-[32px] lg:leading-10">
+      <h1 ref={titleRef} tabIndex={-1} className="mt-6 text-[28px] leading-9 font-extrabold tracking-[-0.01em] text-ink outline-none lg:text-[32px] lg:leading-10">
         {title}
       </h1>
       {body ? <p className="mt-3 text-[16px] leading-[26px] text-ink-2">{body}</p> : null}

@@ -39,7 +39,7 @@ export function PathSteps({
                 aria-hidden
                 className={cn(
                   "tnum grid size-[30px] shrink-0 place-items-center rounded-full border-[1.5px] text-[13px] font-semibold",
-                  done ? "border-accent bg-accent text-white" : current ? "border-accent bg-surface text-accent shadow-[0_0_0_4px_rgb(14_106_87/0.1)]" : "border-line-strong text-muted",
+                  done ? "border-accent bg-accent text-white" : current ? "border-accent bg-surface text-accent shadow-[0_0_0_4px_color-mix(in_srgb,var(--color-accent)_15%,transparent)]" : "border-line-strong text-muted",
                 )}
               >
                 {done ? <Check className="size-4" strokeWidth={2} /> : i + 1}
@@ -69,8 +69,8 @@ export function PathSteps({
         <li key={i} aria-current={step.state === "current" ? "step" : undefined} className="relative flex gap-3 pb-3 last:pb-0">
           <span
             className={cn(
-              "tnum grid size-7 shrink-0 place-items-center rounded-full text-[13px] font-medium",
-              step.state === "done" ? "bg-ink text-white" : step.state === "current" ? "border-2 border-ink bg-surface text-ink" : "border border-line bg-surface text-muted",
+              "tnum grid size-7 shrink-0 place-items-center rounded-full text-[13px] font-bold",
+              step.state === "done" ? "bg-accent text-white" : step.state === "current" ? "border-2 border-accent bg-surface text-accent shadow-[0_0_0_3px_var(--color-accent-soft)]" : "border-2 border-line bg-surface text-muted",
             )}
             aria-hidden
           >

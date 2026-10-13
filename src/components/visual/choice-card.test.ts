@@ -40,7 +40,7 @@ describe("ChoiceCardGroup's panel looks (manager mockup 3, 4, 6)", () => {
     expect(out).toContain("bg-accent-soft text-accent");
     expect(out).toContain("lucide-headset");
     expect(out).toContain("has-[:checked]:border-accent has-[:checked]:bg-accent-soft");
-    expect(out).toContain("has-[:checked]:shadow-[0_0_0_3px_rgb(14_106_87/0.08)]");
+    expect(out).toContain("has-[:checked]:shadow-[0_0_0_3px_var(--color-accent-soft)]");
     expect(out.match(/rounded-full peer-checked:border-\[6px\] peer-checked:border-accent/g)).toHaveLength(2);
     // React writes an input's attributes in its own order, so the checks do not depend on it.
     const input = out.match(/<input[^>]*value="a"[^>]*>/)?.[0] ?? "";

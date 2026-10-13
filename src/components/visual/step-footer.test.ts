@@ -1,9 +1,8 @@
 import { createElement, type ComponentProps } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { frozenMarkup } from "./frozen-markup";
 import { StepFooter } from "./step-footer";
-// The markup these footers drew before the compact layout existed (captured from 5d0c290).
-import before from "./step-footer.default-markup.json";
 
 const noop = () => undefined;
 const html = (props: ComponentProps<typeof StepFooter>) => renderToStaticMarkup(createElement(StepFooter, props));
@@ -25,7 +24,11 @@ const CASES: Array<ComponentProps<typeof StepFooter>> = [
 
 describe("StepFooter's compact layout is opt-in (Task 22 fix round 1)", () => {
   it("draws every default footer exactly as before, byte for byte", () => {
-    expect(CASES.map(html)).toEqual(before);
+    // The wide layout as drawn before the compact one existed (5d0c290), recaptured
+    // once for the soft look (2026-10-14: button classes only, the layout is the same).
+    const now = CASES.map(html);
+    const before = frozenMarkup("src/components/visual/step-footer.default-markup.json", now);
+    expect(now).toEqual(before);
     // The fixture really holds the wide layout.
     expect(before.every((m: string) => m.includes("min-w-[200px]"))).toBe(true);
   });
