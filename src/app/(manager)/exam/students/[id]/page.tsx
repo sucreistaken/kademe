@@ -6,10 +6,13 @@ import { Dot, INTEGRITY_TONE, STATUS_TONE, shortDateTime } from "@/components/pa
 import { GradingCard } from "@/components/panel/result/grading-card";
 import { Highlighted, Trajectory, answerText, keyText } from "@/components/panel/result/format";
 import { IntegrityPanel } from "@/components/panel/result/integrity-panel";
+import { ExamRecordingPlayer } from "@/components/panel/result/recording-player";
 import { SpeakingEvidence } from "@/components/panel/result/speaking-evidence";
 import { can } from "@/lib/authorize";
 import { isObjectiveSection, CEFR_LEVELS, type Section } from "@/lib/exam/types";
 import { listStudents, loadIntegrityView, loadResultView } from "@/server/panel";
+import { loadRecordingSegments } from "@/server/recordings";
+import { ORG_TIMEZONE } from "@/lib/org-timezone";
 import { requireUser } from "@/server/session";
 import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
@@ -68,6 +71,12 @@ export default async function ResultPage({
   };
 
   const integrity = tab === "integrity" && attempt ? await loadIntegrityView(attempt.id) : null;
+  // The continuous recording, only for a role that may watch recordings.
+  const canWatch = can(user, "media:view");
+  const recording = integrity && attempt && canWatch ? await loadRecordingSegments(user.orgId, attempt.id) : null;
+  const sectionSpans = view.runs
+    .filter((r) => r.startedAt)
+    .map((r) => ({ section: r.section, start: r.startedAt!.getTime(), end: (r.submittedAt ?? new Date()).getTime() }));
 
   return (
     <main className="mx-auto max-w-[1360px] px-6 py-8">
@@ -248,9 +257,33 @@ export default async function ResultPage({
               showAll={sp.show === "all"}
               startedAt={(attempt.startedAt ?? attempt.createdAt).getTime()}
               endedAt={(attempt.completedAt ?? new Date()).getTime()}
-              sections={view.runs
-                .filter((r) => r.startedAt)
-                .map((r) => ({ section: r.section, start: r.startedAt!.getTime(), end: (r.submittedAt ?? new Date()).getTime() }))}
+              sections={sectionSpans}
+              hasRecording={!!recording?.segments.length}
+              recording={
+                recording?.segments.length ? (
+                  <ExamRecordingPlayer
+                    attemptId={attempt.id}
+                    segments={recording.segments}
+                    window={{ start: (attempt.startedAt ?? attempt.createdAt).getTime(), end: (attempt.completedAt ?? attempt.terminatedAt ?? new Date()).getTime() }}
+                    sections={sectionSpans.map((s) => ({ key: s.section, label: t(`sectionName.${s.section as Section}`), start: s.start, end: s.end }))}
+                    markers={integrity.events
+                      .filter(({ event }) => event.severity !== "INFO")
+                      .map(({ event }) => ({
+                        id: event.id,
+                        label: t(`eventType.${event.type}` as "eventType.TAB_HIDDEN"),
+                        at: event.startedAt.getTime(),
+                        severity: event.severity as "HIGH" | "MEDIUM" | "LOW",
+                      }))}
+                    purgeOn={
+                      recording.purgeAfter
+                        ? recording.purgeAfter.toLocaleDateString(locale === "en" ? "en-GB" : "tr-TR", { day: "numeric", month: "long", year: "numeric", timeZone: ORG_TIMEZONE })
+                        : null
+                    }
+                  />
+                ) : (
+                  <p className="text-[12.5px] text-muted">{canWatch ? t("examRecording.empty") : t("examRecording.noPermission")}</p>
+                )
+              }
             />
           ) : null}
         </div>

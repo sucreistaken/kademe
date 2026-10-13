@@ -880,5 +880,29 @@
     "savePrompt": "Kaydet",
     "rowsOf": "{shown} / {total} soru",
     "more": "Daha fazla göster"
+  },
+  "examRecording": {
+    "title": "Sınavın kaydı",
+    "camera": "Kamera ve ses",
+    "screen": "Ekran",
+    "play": "Oynat",
+    "pause": "Duraklat",
+    "back10": "10 sn geri",
+    "forward10": "10 sn ileri",
+    "speed": "Oynatma hızı",
+    "mute": "Sesi kapat",
+    "unmute": "Sesi aç",
+    "loading": "Yükleniyor",
+    "gapCamera": "Bu an için kamera kaydı yok",
+    "gapScreen": "Bu an için ekran kaydı yok",
+    "timeline": "Zaman çizelgesi: tıklayın ya da ok tuşlarıyla atlayın",
+    "legend": "Üstteki çizgiler gözetim işaretleri; tıklayınca o ana gider. Alttaki iki şerit kaydın olduğu yerler: üstteki kamera, alttaki ekran.",
+    "legendOne": "Üstteki çizgiler gözetim işaretleri; tıklayınca o ana gider. Alttaki şerit kaydın olduğu yerler.",
+    "coverageCamera": "Kamera {duration}",
+    "coverageScreen": "Ekran {duration}",
+    "purgeOn": "{date} tarihinde silinir",
+    "empty": "Bu sınav için sürekli kayıt yok. Kayıt, gözetimli sınavlarda bu özellik açıldıktan sonra başlar.",
+    "noPermission": "Kayıtları izleme yetkiniz yok.",
+    "watch": "Kayıtta izle"
   }
 }

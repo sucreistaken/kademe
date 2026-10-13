@@ -880,5 +880,29 @@
     "savePrompt": "Save",
     "rowsOf": "{shown} of {total} items",
     "more": "Show more"
+  },
+  "examRecording": {
+    "title": "Exam recording",
+    "camera": "Camera and sound",
+    "screen": "Screen",
+    "play": "Play",
+    "pause": "Pause",
+    "back10": "Back 10 s",
+    "forward10": "Forward 10 s",
+    "speed": "Playback speed",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "loading": "Loading",
+    "gapCamera": "No camera recording for this moment",
+    "gapScreen": "No screen recording for this moment",
+    "timeline": "Timeline: click, or use the arrow keys, to jump",
+    "legend": "The ticks at the top are proctoring flags; click one to go to that moment. The two strips at the bottom show where there is a recording: the upper one the camera, the lower one the screen.",
+    "legendOne": "The ticks at the top are proctoring flags; click one to go to that moment. The strip at the bottom shows where there is a recording.",
+    "coverageCamera": "Camera {duration}",
+    "coverageScreen": "Screen {duration}",
+    "purgeOn": "deleted on {date}",
+    "empty": "There is no continuous recording for this exam. Recording starts with proctored exams taken after this feature was switched on.",
+    "noPermission": "Your role cannot watch recordings.",
+    "watch": "Watch in the recording"
   }
 }

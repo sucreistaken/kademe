@@ -15,6 +15,10 @@ type View = Awaited<ReturnType<typeof loadIntegrityView>>;
  * that deserve a look, each with the frames around it and the AI's factual
  * note. Confirm and dismiss are equal outline buttons; nothing here is final
  * until the teacher says so.
+ *
+ * When the attempt has a continuous recording, its player (passed in as
+ * `recording`) takes the place of the static timeline: it draws the same
+ * sections and flags, and every flag below gets a link to its moment.
  */
 export function IntegrityPanel({
   t,
@@ -28,6 +32,8 @@ export function IntegrityPanel({
   startedAt,
   endedAt,
   sections,
+  recording,
+  hasRecording,
 }: {
   t: T;
   view: View;
@@ -40,6 +46,9 @@ export function IntegrityPanel({
   startedAt: number;
   endedAt: number;
   sections: Array<{ section: string; start: number; end: number }>;
+  /** The recording player, or a line saying why there is none to watch. */
+  recording?: React.ReactNode;
+  hasRecording?: boolean;
 }) {
   if (!proctored) return <p className="text-[14px] text-muted">{t("integrity.off")}</p>;
   const level = summary?.level ?? "CLEAR";
@@ -73,34 +82,39 @@ export function IntegrityPanel({
         </p>
       </div>
 
-      <div>
-        <div className="mb-2 text-[13px] font-semibold text-ink">{t("integrity.timeline")}</div>
-        <div className="relative h-14 rounded-[10px] border border-line bg-surface">
-          {sections.map((s) => (
-            <div
-              key={s.section}
-              className="absolute top-0 h-full border-r border-line bg-canvas/60"
-              style={{ left: xPct(s.start), width: `calc(${xPct(s.end)} - ${xPct(s.start)})` }}
-            >
-              <span className="absolute left-1 top-1 text-[10.5px] text-muted">{t(`sectionName.${s.section}` as "sectionName.GRAMMAR")}</span>
-            </div>
-          ))}
-          {view.events
-            .filter(({ event }) => event.severity !== "INFO")
-            .map(({ event }) => (
-              <a
-                key={event.id}
-                href={`#flag-${event.id}`}
-                title={t(`eventType.${event.type}` as "eventType.TAB_HIDDEN")}
-                className={cn(
-                  "absolute bottom-1 w-[3px] rounded-full",
-                  event.severity === "HIGH" ? "h-8 bg-ink" : event.severity === "MEDIUM" ? "h-5 bg-ink-3" : "h-3 bg-line-strong",
-                )}
-                style={{ left: xPct(event.startedAt.getTime()) }}
-              />
+      {hasRecording ? (
+        recording
+      ) : (
+        <div>
+          <div className="mb-2 text-[13px] font-semibold text-ink">{t("integrity.timeline")}</div>
+          <div className="relative h-14 rounded-[10px] border border-line bg-surface">
+            {sections.map((s) => (
+              <div
+                key={s.section}
+                className="absolute top-0 h-full border-r border-line bg-canvas/60"
+                style={{ left: xPct(s.start), width: `calc(${xPct(s.end)} - ${xPct(s.start)})` }}
+              >
+                <span className="absolute left-1 top-1 text-[10.5px] text-muted">{t(`sectionName.${s.section}` as "sectionName.GRAMMAR")}</span>
+              </div>
             ))}
+            {view.events
+              .filter(({ event }) => event.severity !== "INFO")
+              .map(({ event }) => (
+                <a
+                  key={event.id}
+                  href={`#flag-${event.id}`}
+                  title={t(`eventType.${event.type}` as "eventType.TAB_HIDDEN")}
+                  className={cn(
+                    "absolute bottom-1 w-[3px] rounded-full",
+                    event.severity === "HIGH" ? "h-8 bg-ink" : event.severity === "MEDIUM" ? "h-5 bg-ink-3" : "h-3 bg-line-strong",
+                  )}
+                  style={{ left: xPct(event.startedAt.getTime()) }}
+                />
+              ))}
+          </div>
+          {recording ? <div className="mt-2">{recording}</div> : null}
         </div>
-      </div>
+      )}
 
       {reference ? (
         <div className="flex items-center gap-4">
@@ -130,6 +144,14 @@ export function IntegrityPanel({
                   {event.durationMs ? ` · ${t("integrity.duration", { s: Math.round(event.durationMs / 1000) })}` : ""}
                   {" · "}
                   {t(`integrity.severity${event.severity}` as "integrity.severityHIGH")}
+                  {hasRecording ? (
+                    <>
+                      {" · "}
+                      <a href="#exam-recording" data-rec-at={event.startedAt.getTime()} className="text-ink underline underline-offset-2">
+                        {t("examRecording.watch")}
+                      </a>
+                    </>
+                  ) : null}
                 </span>
               </div>
               {frames.length ? (

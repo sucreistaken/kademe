@@ -141,6 +141,20 @@
       "when": 1791931906718,
       "tag": "0019_exam_navigation",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1791934369247,
+      "tag": "0020_proctor_recordings",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1791934370669,
+      "tag": "0021_exam_consent_recording",
+      "breakpoints": true
     }
   ]
 }
