@@ -961,7 +961,7 @@
     "listenLoadFailed": "Kayıt yüklenemedi. İnternet bağlantınızı kontrol edip tekrar deneyin.",
     "listenStalled": "Kayıt durdu. İnternet bağlantınızı kontrol edip tekrar deneyin.",
     "listenBlocked": "Tarayıcı sesi başlatmadı. Tekrar deneyin.",
-    "listenFreeRetry": "Kayıt hiç başlamadığı için bu deneme dinleme hakkınızdan düşmedi.",
+    "listenFreeRetry": "Kayıt hiç başlamadı. Tekrar denemek yeni bir dinleme hakkı harcamaz.",
     "listenFreeResume": "Kaldığı yerden devam etmek yeni bir dinleme hakkı harcamaz."
   }
 }

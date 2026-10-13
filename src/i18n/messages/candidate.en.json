@@ -961,7 +961,7 @@
     "listenLoadFailed": "The recording could not be loaded. Check your internet connection and try again.",
     "listenStalled": "The recording stopped. Check your internet connection and try again.",
     "listenBlocked": "The browser did not start the audio. Try again.",
-    "listenFreeRetry": "The recording never started, so this attempt did not use up a play.",
+    "listenFreeRetry": "The recording never started. Trying again does not use up another play.",
     "listenFreeResume": "Resuming where it stopped does not use up another play."
   }
 }

@@ -160,7 +160,8 @@ export function ListeningPlayer({
     engine?.suppressVoice("listening", true);
     arm();
     // A fresh load after an error; otherwise the element continues where it is.
-    if (audio.error || audio.src !== src) audio.src = src;
+    // `audio.src` reads back absolute, and local storage hands out a relative URL.
+    if (audio.error || audio.src !== new URL(src, window.location.href).href) audio.src = src;
     try {
       await audio.play();
     } catch (err) {
@@ -185,7 +186,10 @@ export function ListeningPlayer({
 
   return (
     <div className="rounded-[14px] border border-line bg-surface p-5">
-      <div className="text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted">{stimulus.title}</div>
+      {/* German upper case: under the Turkish page language "i" would become "İ". */}
+      <div lang="de" className="text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted">
+        {stimulus.title}
+      </div>
       <div className="mt-3 flex items-center gap-4">
         <button
           type="button"
