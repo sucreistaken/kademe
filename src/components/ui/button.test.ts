@@ -3,26 +3,47 @@ import { describe, expect, it } from "vitest";
 import { Button, buttonVariants } from "./button";
 import { cn } from "@/lib/cn";
 
-/** The exact strings the pre-shadcn Button produced (commit a99b878). */
-const BEFORE = {
-  base: "inline-flex items-center justify-center gap-2 rounded-[10px] font-medium transition-colors disabled:cursor-not-allowed select-none",
-  primary: "bg-accent text-white hover:bg-accent-hover disabled:bg-line disabled:text-muted",
-  secondary: "bg-surface text-ink border border-line hover:bg-canvas disabled:text-muted disabled:hover:bg-surface",
-  ghost: "bg-transparent text-muted hover:text-ink hover:bg-line/50 disabled:text-line",
-  danger: "bg-surface text-danger border border-line hover:bg-danger/5 disabled:text-muted",
-  sm: "h-8 px-3 text-[13px]",
-  md: "h-10 px-4 text-sm",
-  lg: "h-12 px-6 text-[15px]",
-} as const;
+const classes = (variant: "primary" | "secondary" | "ghost" | "danger", size: "sm" | "md" | "lg" = "md") =>
+  cn(buttonVariants({ variant, size })).split(" ");
 
-describe("Button keeps its classes", () => {
-  for (const variant of ["primary", "secondary", "ghost", "danger"] as const) {
-    for (const size of ["sm", "md", "lg"] as const) {
-      it(`${variant} ${size}`, () => {
-        expect(cn(buttonVariants({ variant, size }))).toBe(cn(BEFORE.base, BEFORE[variant], BEFORE[size]));
-      });
+describe("Button's soft look (2026-10-14)", () => {
+  it.each(["primary", "secondary", "ghost", "danger"] as const)("%s is round and bold, and keeps the sizes' heights", (variant) => {
+    for (const [size, height] of [["sm", "h-8"], ["md", "h-10"], ["lg", "h-12"]] as const) {
+      const c = classes(variant, size);
+      expect(c).toContain("rounded-lg");
+      expect(c).toContain("font-bold");
+      expect(c).toContain(height);
+      expect(c).toContain("disabled:cursor-not-allowed");
     }
-  }
+  });
+
+  it("primary: the accent with a solid lip that it presses into, flat and grey when disabled", () => {
+    const c = classes("primary");
+    expect(c.slice(c.indexOf("bg-accent"), c.indexOf("bg-accent") + 2)).toEqual(["bg-accent", "text-white"]);
+    expect(c).toEqual(expect.arrayContaining(["shadow-lip", "hover:bg-accent-hover"]));
+    expect(c).toEqual(expect.arrayContaining(["active:not-disabled:not-aria-disabled:translate-y-px", "active:not-disabled:not-aria-disabled:shadow-lip-pressed"]));
+    expect(c).toEqual(expect.arrayContaining(["disabled:bg-disabled", "disabled:text-muted", "disabled:shadow-none"]));
+  });
+
+  it("secondary and danger: a white button with a 2px edge and a soft lip; danger keeps its red word", () => {
+    for (const variant of ["secondary", "danger"] as const) {
+      const c = classes(variant);
+      expect(c).toEqual(expect.arrayContaining(["bg-surface", "border-2", "border-line", "shadow-lip-soft", "disabled:shadow-none"]));
+      expect(c).toContain("active:not-disabled:not-aria-disabled:translate-y-px");
+    }
+    expect(classes("danger")).toContain("text-danger");
+    expect(classes("secondary")).toContain("text-ink");
+  });
+
+  it("ghost: a text button with no lip", () => {
+    const c = classes("ghost");
+    expect(c).toEqual(expect.arrayContaining(["bg-transparent", "text-muted", "hover:text-ink"]));
+    expect(c.some((x) => /(^|:)shadow-/.test(x))).toBe(false);
+  });
+
+  it("a caller's shadow-none really removes the lip (named shadows are known to the class merger)", () => {
+    expect(cn(buttonVariants({ variant: "primary" }), "shadow-none").split(" ")).not.toContain("shadow-lip");
+  });
 
   it("outline is the secondary look", () => {
     expect(cn(buttonVariants({ variant: "outline", size: "md" }))).toBe(

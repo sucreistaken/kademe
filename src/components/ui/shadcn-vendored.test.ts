@@ -24,7 +24,9 @@ describe("copied shadcn components", () => {
     expect(existsSync(path.join(UI, `${name}.tsx`))).toBe(true);
   });
 
-  it.each(["badge", "alert-dialog", "chart", "toast", "sonner"])("%s is banned and absent", (name) => {
+  // A badge was banned while a status had to be a dot; since the soft look
+  // (2026-10-14) pills are allowed, and ui/badge.tsx is Kademe's own.
+  it.each(["alert-dialog", "chart", "toast", "sonner"])("%s is banned and absent", (name) => {
     expect(existsSync(path.join(UI, `${name}.tsx`))).toBe(false);
   });
 
