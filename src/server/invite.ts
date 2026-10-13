@@ -2,7 +2,7 @@ import { createHmac, randomUUID } from "node:crypto";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { assessmentLinks, assessments, auditLogs, candidates, examAssessments, examBlueprints, messageOutbox } from "@/db/schema";
-import { safeEqual, sha256 } from "@/lib/auth";
+import { mintToken, safeEqual, sha256 } from "@/lib/auth";
 import type { Cefr } from "@/lib/exam/types";
 import { resolveSigningSecret } from "@/lib/signing-secret";
 
@@ -47,7 +47,19 @@ export function examLinkToken(linkId: string, secret: string): string {
   return createHmac("sha256", secret).update(`kademe:exam-link:v1:${linkId}`).digest("base64url");
 }
 
-const secret = () => resolveSigningSecret(process.env);
+/**
+ * The secret links are derived with, or null where the server has none (a
+ * production without AUTH_SECRET). Inviting never depends on it: without it
+ * the token is random, as before, and the panel says the link cannot be
+ * shown again.
+ */
+function linkSecret(): string | null {
+  try {
+    return resolveSigningSecret(process.env);
+  } catch {
+    return null;
+  }
+}
 const origin = (baseUrl?: string) => baseUrl ?? process.env.APP_ORIGIN ?? "http://localhost:3100";
 export const examLinkUrl = (raw: string, baseUrl?: string) => `${origin(baseUrl)}/a/${raw}`;
 
@@ -61,7 +73,8 @@ export async function createInvitation(input: InviteInput): Promise<InviteResult
   if (blueprint.mode === "LEVEL_VERIFICATION" && !input.claimedLevel) return { ok: false, code: "CLAIM_REQUIRED" };
 
   const linkId = randomUUID();
-  const raw = examLinkToken(linkId, secret());
+  const s = linkSecret();
+  const raw = s ? examLinkToken(linkId, s) : mintToken().raw;
   const expiresAt = new Date(Date.now() + (input.ttlDays ?? LINK_TTL_DAYS) * 86_400_000);
   const url = examLinkUrl(raw, input.baseUrl);
 
@@ -153,7 +166,9 @@ export async function inviteLink(input: { orgId: string; assessmentId: string; a
   // At most one link is not EXPIRED (one_active_link_per_assessment); replaced ones stay as EXPIRED rows.
   const link = rows.find((r) => r.status !== "EXPIRED") ?? rows[0] ?? null;
   if (!link) return { ok: false, code: "NOT_FOUND" };
-  const verdict = linkVerdict(link, input.now ?? new Date(), secret());
+  const s = linkSecret();
+  if (!s) return { ok: false, code: "NOT_RECOVERABLE" };
+  const verdict = linkVerdict(link, input.now ?? new Date(), s);
   if (!verdict.ok) return verdict;
   await db.insert(auditLogs).values({
     orgId: input.orgId,

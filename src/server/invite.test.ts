@@ -101,6 +101,23 @@ describe("createInvitation", () => {
   });
 });
 
+describe("without a secret (production without AUTH_SECRET)", () => {
+  it("still invites, with a random token, and says the link cannot be shown again", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    state.selects = [[blueprint]];
+    const r = await createInvitation({ orgId: "o1", blueprintId: "bp1", fullName: "Ayşe Yılmaz", email: "ayse@ornek.com", claimedLevel: null, locale: "tr", invitedBy: "u1" });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const link = linkRow();
+    expect(link.tokenHash).toBe(sha256(r.rawToken));
+    expect(r.rawToken).not.toBe(examLinkToken(link.id, SECRET));
+    state.inserts = [];
+    state.selects = [[{ id: link.id, tokenHash: link.tokenHash, status: "NOT_STARTED", expiresAt: link.expiresAt }]];
+    expect(await inviteLink({ orgId: "o1", assessmentId: "a1", actorId: "u1" })).toEqual({ ok: false, code: "NOT_RECOVERABLE" });
+    expect(state.inserts).toEqual([]);
+  });
+});
+
 describe("linkVerdict", () => {
   const now = new Date("2026-10-14T12:00:00Z");
   const later = new Date("2026-10-28T12:00:00Z");
