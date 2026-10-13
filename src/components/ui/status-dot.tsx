@@ -43,7 +43,7 @@ export function StatusDot({
     <span
       className={cn(
         "inline-flex items-center gap-2 text-[13px] text-muted",
-        pill && cn("gap-1.5 rounded-full px-2.5 py-0.5 font-semibold", pills[tone]),
+        pill && cn("w-fit gap-1.5 rounded-full px-2.5 py-0.5 font-semibold", pills[tone]),
         className,
       )}
     >
