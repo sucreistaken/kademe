@@ -29,6 +29,16 @@ const browserClock: Clock = {
   clearTimeout: (id) => window.clearTimeout(id as number),
 };
 
+/**
+ * A file this small is a container header with no frame in it (seen in Chrome
+ * when the source delivered no frame for the whole segment). It plays as
+ * nothing, so it is not uploaded; the panel shows the stretch as not recorded.
+ */
+export const MIN_SEGMENT_BYTES = 1024;
+
+/** The recorder hands over what it has every second; the segment is cut on that beat too (see open()). */
+const TIMESLICE_MS = 1000;
+
 const rid = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`);
 
 /**
@@ -115,12 +125,16 @@ export class TrackRecorder {
     seg.done = new Promise<void>((resolve) => {
       recorder.ondataavailable = (e: BlobEvent) => {
         if (e.data && e.data.size > 0) seg.chunks.push(e.data);
+        // The timer below is the usual trigger, but a hidden tab's timers can be
+        // throttled to once a minute; the recorder's own beat is not, so it can
+        // cut the segment too. Whichever comes first wins.
+        if (this.current === seg && !this.stopping && this.o.now() - seg.startedAt >= (this.o.segmentMs ?? SEGMENT_MS)) this.rotate();
       };
       recorder.onstop = () => {
         const endAt = seg.stopAt ?? this.o.now();
         const type = (recorder.mimeType || this.o.mime || "video/webm").split(";")[0];
         const blob = new Blob(seg.chunks, { type });
-        if (blob.size > 0) {
+        if (blob.size >= MIN_SEGMENT_BYTES) {
           this.o.onSegment({
             kind: this.o.kind,
             runId: this.o.runId,
@@ -136,12 +150,16 @@ export class TrackRecorder {
         if (this.current === seg && !this.stopping) this.finish();
       };
     });
-    recorder.start();
+    recorder.start(TIMESLICE_MS);
     return seg;
   }
 
   private schedule() {
-    this.timer = this.clock.setTimeout(() => this.rotate(), this.o.segmentMs ?? SEGMENT_MS);
+    if (this.timer !== null) this.clock.clearTimeout(this.timer);
+    this.timer = this.clock.setTimeout(() => {
+      this.timer = null;
+      this.rotate();
+    }, this.o.segmentMs ?? SEGMENT_MS);
   }
 
   private rotate() {

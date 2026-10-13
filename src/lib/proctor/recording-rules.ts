@@ -18,8 +18,14 @@ export type RecordingKind = (typeof RECORDING_KINDS)[number];
 export const SEGMENT_MS = 15_000;
 /** The upload route refuses anything longer; a recorder never makes one. */
 export const MAX_SEGMENT_MS = 60_000;
-/** About 20 times what a 15 second segment at the bitrates below weighs. */
-export const MAX_SEGMENT_BYTES = 8 * 1024 * 1024;
+/**
+ * Far above what a 15 second segment at the bitrates below weighs (about
+ * 0.5 MB), on purpose: the bitrate is a target, not a cap. Measured in Chrome
+ * on a pure noise picture (the worst a camera can send), VP8 at a 250 kbps
+ * target produced 4.9 Mbit/s, about 9 MB per segment. A segment refused for its
+ * size is a hole in the evidence, so the limit only stops absurd bodies.
+ */
+export const MAX_SEGMENT_BYTES = 16 * 1024 * 1024;
 export const RECORDING_MIME = ["video/webm", "video/mp4"] as const;
 export type RecordingMime = (typeof RECORDING_MIME)[number];
 

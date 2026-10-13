@@ -41,9 +41,18 @@ class FakeStream {
   }
 }
 
+const fileBytes = (n = 2048) => {
+  const b = new Uint8Array(n);
+  b.set([0x1a, 0x45, 0xdf, 0xa3]);
+  return b;
+};
+
 class FakeRecorder {
   static all: FakeRecorder[] = [];
+  /** What the next stop hands over; a header-only file is about 110 bytes. */
+  static finalBytes = 2048;
   state: "inactive" | "recording" = "inactive";
+  timeslice: number | undefined;
   mimeType: string;
   ondataavailable: ((e: { data: Blob }) => void) | null = null;
   onstop: (() => void) | null = null;
@@ -54,15 +63,20 @@ class FakeRecorder {
     this.mimeType = options?.mimeType ?? "video/webm";
     FakeRecorder.all.push(this);
   }
-  start() {
+  start(timeslice?: number) {
+    this.timeslice = timeslice;
     this.state = "recording";
+  }
+  /** One timeslice beat. */
+  beat() {
+    this.ondataavailable?.({ data: new Blob([fileBytes(64)]) });
   }
   /** Like the browser: the data and the stop event come a moment later. */
   stop() {
     if (this.state === "inactive") return;
     this.state = "inactive";
     setTimeout(() => {
-      this.ondataavailable?.({ data: new Blob([new Uint8Array([0x1a, 0x45, 0xdf, 0xa3, 1, 2, 3])]) });
+      this.ondataavailable?.({ data: new Blob([fileBytes(FakeRecorder.finalBytes)]) });
       this.onstop?.();
     }, 5);
   }
@@ -74,6 +88,7 @@ const clock = { setTimeout: (fn: () => void, ms: number) => setTimeout(fn, ms), 
 beforeEach(() => {
   vi.useFakeTimers({ now: 1_000_000 });
   FakeRecorder.all = [];
+  FakeRecorder.finalBytes = 2048;
   clones = [];
 });
 afterEach(() => {
@@ -146,6 +161,36 @@ describe("TrackRecorder", () => {
     expect(rec.ended).toBe(true);
     await vi.advanceTimersByTimeAsync(30_000);
     expect(FakeRecorder.all).toHaveLength(1);
+  });
+
+  it("still cuts on the recorder's own one second beat when the page's timers are throttled", async () => {
+    const frozen = { setTimeout: () => 0, clearTimeout: () => undefined };
+    const { rec, segments } = trackRecorder(new FakeStream([new FakeTrack("video")]), { clock: frozen });
+    rec.start();
+    expect(FakeRecorder.all[0].timeslice).toBe(1000);
+    for (let s = 1; s <= 14; s++) {
+      await vi.advanceTimersByTimeAsync(1000);
+      FakeRecorder.all[0].beat();
+    }
+    expect(FakeRecorder.all).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(1000);
+    FakeRecorder.all[0].beat();
+    expect(FakeRecorder.all).toHaveLength(2);
+    await vi.advanceTimersByTimeAsync(10);
+    expect(segments).toHaveLength(1);
+    // The beats and the final data are one file.
+    expect(segments[0].blob.size).toBe(15 * 64 + 2048);
+  });
+
+  it("does not hand over a file with no frame in it (a header only)", async () => {
+    const { rec, segments } = trackRecorder(new FakeStream([new FakeTrack("video")]));
+    rec.start();
+    FakeRecorder.finalBytes = 110;
+    await vi.advanceTimersByTimeAsync(15_010);
+    expect(segments).toHaveLength(0);
+    FakeRecorder.finalBytes = 2048;
+    await vi.advanceTimersByTimeAsync(15_010);
+    expect(segments.map((s) => s.sequence)).toEqual([1]);
   });
 
   it("asks for no audio bitrate on a stream without audio (the screen)", () => {
