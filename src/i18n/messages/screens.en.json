@@ -228,7 +228,7 @@
     "rowSections": "Sections",
     "rowProctoring": "Proctoring",
     "rowDevice": "Device",
-    "checks": "Before starting, the student turns on: {list}.",
+    "checks": "Checked before the start: {list}.",
     "checksNone": "Camera, microphone and screen are not watched.",
     "checkBROWSER": "browser",
     "checkSINGLE_SCREEN": "a single screen",

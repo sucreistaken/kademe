@@ -219,7 +219,9 @@ export function StudentInviteWizard({
       const href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
       const a = document.createElement("a");
       a.href = href;
-      a.download = csvFileName(done.examName, new Date().toISOString().slice(0, 10));
+      // The manager's own day: toISOString is UTC and names the file after yesterday late in a Turkish evening.
+      const now = new Date();
+      a.download = csvFileName(done.examName, `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`);
       document.body.appendChild(a);
       a.click();
       a.remove();

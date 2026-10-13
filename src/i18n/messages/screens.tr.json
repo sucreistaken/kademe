@@ -228,7 +228,7 @@
     "rowSections": "Bölümler",
     "rowProctoring": "Gözetim",
     "rowDevice": "Cihaz",
-    "checks": "Öğrenci başlamadan şunları açar: {list}.",
+    "checks": "Başlamadan kontrol edilenler: {list}.",
     "checksNone": "Kamera, mikrofon ve ekran izlenmez.",
     "checkBROWSER": "tarayıcı",
     "checkSINGLE_SCREEN": "tek ekran",
