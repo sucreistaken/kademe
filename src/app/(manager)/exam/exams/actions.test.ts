@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { defaultBlueprint } from "@/lib/exam/blueprint";
 import { examTemplateByKey } from "@/lib/exam/templates";
+import { PRESETS } from "@/lib/proctor/policy";
+import type { CreateExamInput } from "./actions";
 
-/** createBlueprint with a fake database that records what it inserts. */
+/** createExamAction (the exam wizard's last step) with a fake database that records what it inserts. */
 const inserted: Array<Record<string, unknown>> = [];
-const store = { locale: "tr" as "tr" | "en" };
+const store = vi.hoisted(() => ({ locale: "tr" as "tr" | "en", coverageOk: true, coverageCalls: 0 }));
 
 function insertChain() {
   let values: Record<string, unknown> = {};
@@ -33,53 +35,107 @@ vi.mock("@/server/session", () => ({
 }));
 vi.mock("@/server/panel", () => ({ bankCounts: async () => [] }));
 vi.mock("@/i18n/manager-locale", () => ({ managerLocale: async () => store.locale }));
+vi.mock("@/lib/exam/blueprint", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/exam/blueprint")>()),
+  bankCoverage: () => {
+    store.coverageCalls += 1;
+    return { ok: store.coverageOk, rows: [] };
+  },
+}));
 
-import { createBlueprint } from "./actions";
+import { createExamAction } from "./actions";
 
-const form = (fields: Record<string, string>) => {
-  const data = new FormData();
-  for (const [k, v] of Object.entries(fields)) data.set(k, v);
-  return data;
-};
+const blueprintRow = () => inserted.find((v) => v.config) as Record<string, unknown> & { config: ReturnType<typeof defaultBlueprint> };
+const audits = () => inserted.filter((v) => v.action).map((v) => v.action);
+const choicesOf = (config: ReturnType<typeof defaultBlueprint>) => config.sections.map((s) => ({ section: s.section, enabled: s.enabled, minutes: s.durationMinutes }));
 
-const blueprintRow = () => inserted.find((v) => v.config);
+const placement = examTemplateByKey("placement")!;
+const base = (over: Partial<CreateExamInput> = {}): CreateExamInput => ({
+  start: { kind: "template", key: "placement" },
+  name: "",
+  sections: choicesOf(placement.config),
+  preset: placement.config.proctoring.preset,
+  publish: true,
+  ...over,
+});
 
 beforeEach(() => {
   inserted.length = 0;
   store.locale = "tr";
+  store.coverageOk = true;
+  store.coverageCalls = 0;
 });
 
-describe("createBlueprint", () => {
-  it("blank start: the mode's default config and default name, as before", async () => {
-    await expect(createBlueprint(form({ name: "", mode: "LEVEL_VERIFICATION" }))).rejects.toThrow("REDIRECT /exam/exams/b1");
-    expect(blueprintRow()).toMatchObject({ name: "Seviye doğrulama sınavı", mode: "LEVEL_VERIFICATION", status: "DRAFT", config: defaultBlueprint("LEVEL_VERIFICATION") });
+describe("createExamAction", () => {
+  it("publishes the template unchanged under its name in the manager's language", async () => {
+    const r = await createExamAction(base());
+    expect(r).toEqual({ ok: true, id: "b1", name: placement.name.tr, status: "PUBLISHED" });
+    expect(blueprintRow()).toMatchObject({ orgId: "o1", name: placement.name.tr, mode: "PLACEMENT", status: "PUBLISHED", config: placement.config, createdBy: "u1" });
+    expect(blueprintRow().publishedAt).toBeInstanceOf(Date);
+    expect(audits()).toEqual(["blueprint.create", "blueprint.publish"]);
+    expect(store.coverageCalls).toBe(1);
   });
 
-  it("blank start with an empty template field stays a blank start", async () => {
-    await expect(createBlueprint(form({ name: "Mein Test", mode: "PLACEMENT", template: "" }))).rejects.toThrow("REDIRECT /exam/exams/b1");
-    expect(blueprintRow()).toMatchObject({ name: "Mein Test", mode: "PLACEMENT", config: defaultBlueprint("PLACEMENT") });
-  });
-
-  it("a template gives its mode, config and name, whatever the mode radio says", async () => {
-    const t = examTemplateByKey("level-check")!;
-    await expect(createBlueprint(form({ name: "", mode: "PLACEMENT", template: "level-check" }))).rejects.toThrow("REDIRECT /exam/exams/b1");
-    expect(blueprintRow()).toMatchObject({ name: t.name.tr, mode: "LEVEL_VERIFICATION", config: t.config });
-  });
-
-  it("names the exam in the manager's language", async () => {
+  it("names the template in English for an English panel, and a typed name wins", async () => {
     store.locale = "en";
-    const t = examTemplateByKey("quick-screen")!;
-    await expect(createBlueprint(form({ template: "quick-screen" }))).rejects.toThrow("REDIRECT /exam/exams/b1");
-    expect(blueprintRow()).toMatchObject({ name: t.name.en, mode: "PLACEMENT", config: t.config });
+    await createExamAction(base());
+    expect(blueprintRow().name).toBe(placement.name.en);
+    inserted.length = 0;
+    expect(await createExamAction(base({ name: "  B1 Kurs Mai " }))).toMatchObject({ ok: true, name: "B1 Kurs Mai" });
+    expect(blueprintRow().name).toBe("B1 Kurs Mai");
   });
 
-  it("a typed name beats the template's name", async () => {
-    await expect(createBlueprint(form({ name: "  B1 Kurs Mai ", template: "placement" }))).rejects.toThrow("REDIRECT /exam/exams/b1");
-    expect(blueprintRow()).toMatchObject({ name: "B1 Kurs Mai", config: examTemplateByKey("placement")!.config });
+  it("applies the sections, the minutes (held to 1..180) and the watching level", async () => {
+    const sections = choicesOf(placement.config).map((c) =>
+      c.section === "LISTENING" ? { ...c, enabled: false } : c.section === "GRAMMAR" ? { ...c, minutes: 999 } : c.section === "READING" ? { ...c, minutes: 20 } : c,
+    );
+    await createExamAction(base({ sections, preset: "OFF" }));
+    const config = blueprintRow().config;
+    expect(config.sections.find((s) => s.section === "LISTENING")?.enabled).toBe(false);
+    expect(config.sections.find((s) => s.section === "GRAMMAR")?.durationMinutes).toBe(180);
+    expect(config.sections.find((s) => s.section === "READING")?.durationMinutes).toBe(20);
+    // Everything else of a section stays as the template had it.
+    expect(config.sections.find((s) => s.section === "GRAMMAR")).toMatchObject({ adaptive: true, cTest: true, minItems: 10, maxItems: 16 });
+    expect(config.proctoring).toEqual(PRESETS.OFF);
+    expect(config.sections.map((s) => s.section)).toEqual(placement.config.sections.map((s) => s.section));
   });
 
-  it("an unknown template creates nothing and goes back with an error", async () => {
-    await expect(createBlueprint(form({ template: "toefl" }))).rejects.toThrow("REDIRECT /exam/exams/new?error=template");
+  it("blank start: the mode's default config and the default name in the manager's language", async () => {
+    const config = defaultBlueprint("LEVEL_VERIFICATION");
+    const r = await createExamAction(base({ start: { kind: "blank", mode: "LEVEL_VERIFICATION" }, sections: choicesOf(config), preset: "STRICT" }));
+    expect(r).toMatchObject({ ok: true, name: "Seviye doğrulama sınavı" });
+    expect(blueprintRow()).toMatchObject({ mode: "LEVEL_VERIFICATION", config });
+    store.locale = "en";
+    inserted.length = 0;
+    await createExamAction(base({ start: { kind: "blank", mode: "PLACEMENT" }, sections: choicesOf(defaultBlueprint("PLACEMENT")), preset: "STRICT" }));
+    expect(blueprintRow()).toMatchObject({ name: "Placement test", mode: "PLACEMENT" });
+  });
+
+  it("a draft skips the bank check and opens as DRAFT", async () => {
+    store.coverageOk = false;
+    const r = await createExamAction(base({ publish: false }));
+    expect(r).toMatchObject({ ok: true, status: "DRAFT" });
+    expect(blueprintRow()).toMatchObject({ status: "DRAFT" });
+    expect(blueprintRow().publishedAt).toBeUndefined();
+    expect(audits()).toEqual(["blueprint.create"]);
+    expect(store.coverageCalls).toBe(0);
+  });
+
+  it("does not publish what the bank cannot fill, and writes nothing", async () => {
+    store.coverageOk = false;
+    expect(await createExamAction(base())).toEqual({ ok: false, code: "COVERAGE" });
     expect(inserted).toEqual([]);
+  });
+
+  it("refuses an unknown template and an exam with no section on", async () => {
+    expect(await createExamAction(base({ start: { kind: "template", key: "toefl" } }))).toEqual({ ok: false, code: "TEMPLATE" });
+    expect(await createExamAction(base({ sections: choicesOf(placement.config).map((c) => ({ ...c, enabled: false })) }))).toEqual({ ok: false, code: "NO_SECTION" });
+    expect(await createExamAction(base({ sections: [{ section: "BOGUS" as never, enabled: true, minutes: 10 }] }))).toEqual({ ok: false, code: "NO_SECTION" });
+    expect(inserted).toEqual([]);
+  });
+
+  it("an unknown watching level falls back to STANDARD", async () => {
+    await createExamAction(base({ preset: "PARANOID" as never }));
+    expect(blueprintRow().config.proctoring).toEqual(PRESETS.STANDARD);
   });
 });
