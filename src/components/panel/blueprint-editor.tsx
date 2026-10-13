@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { archiveBlueprint, copyBlueprint, publishBlueprint, saveBlueprint } from "@/app/(manager)/exam/exams/actions";
 import { bankCoverage, estimatedMinutes, type BankCount, type BlueprintConfig, type SectionConfig } from "@/lib/exam/blueprint";
 import { isObjectiveSection, type ExamMode } from "@/lib/exam/types";
+import { levelShiftScope } from "@/app/(manager)/exam/exams/new/wizard-model";
 import { PRESETS, type PolicyPreset, type ProctoringPolicy } from "@/lib/proctor/policy";
 import { useMT } from "@/i18n/manager-client";
 import { cn } from "@/lib/cn";
@@ -35,6 +36,7 @@ export function BlueprintEditor({
   const t = useMT("exams");
   const sec = useMT("sectionName");
   const inv = useMT("invite");
+  const w = useMT("examWizard");
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState(initialDescription);
   const [cfg, setCfg] = useState<BlueprintConfig>(initialConfig);
@@ -62,6 +64,7 @@ export function BlueprintEditor({
 
   const coverage = useMemo(() => bankCoverage(counts, cfg, mode, null), [counts, cfg, mode]);
   const missing = coverage.rows.filter((r) => !r.ok);
+  const shift = levelShiftScope(cfg);
 
   const setSection = (section: string, patch: Partial<SectionConfig>) =>
     setCfg((c) => ({ ...c, sections: c.sections.map((s) => (s.section === section ? { ...s, ...patch } : s)) }));
@@ -209,14 +212,37 @@ export function BlueprintEditor({
             <div className="rounded-[10px] border border-vault-line p-3">
               <div className="text-[13px] font-semibold">{t("general")}</div>
               <div className="mt-2 grid grid-cols-2 gap-2">
-                <label className={vlabel}>
-                  {t("difficultyOffset")}
-                  <select value={cfg.difficultyOffset} disabled={readOnly} onChange={(e) => setCfg({ ...cfg, difficultyOffset: Number(e.target.value) as -1 | 0 | 1 })} className={vfield}>
-                    <option value={-1}>-1</option>
-                    <option value={0}>0</option>
-                    <option value={1}>+1</option>
+                {/* One CEFR level up or down for the fixed-form sections only (resolveDistribution); adaptive ones ignore it. Not the items' own Kolay / Orta / Zor. */}
+                <div className="col-span-2">
+                  <label htmlFor="level-shift" className={vlabel}>
+                    {t("difficultyOffset")}
+                  </label>
+                  <select
+                    id="level-shift"
+                    value={cfg.difficultyOffset}
+                    disabled={readOnly || !shift.applies}
+                    aria-describedby="level-shift-scope level-shift-not-item"
+                    onChange={(e) => setCfg({ ...cfg, difficultyOffset: Number(e.target.value) as -1 | 0 | 1 })}
+                    className={vfield}
+                  >
+                    <option value={-1}>{w("shiftEasier")}</option>
+                    <option value={0}>{w("shiftNormal")}</option>
+                    <option value={1}>{w("shiftHarder")}</option>
                   </select>
-                </label>
+                  <p id="level-shift-scope" className="mt-1 text-[11.5px] leading-4 text-vault-label">
+                    {shift.applies
+                      ? [
+                          w("shiftApplies", { list: shift.fixed.map((s) => sec(s)).join(", ") }),
+                          shift.adaptive.length ? w("shiftAdaptiveToo", { list: shift.adaptive.map((s) => sec(s)).join(", ") }) : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")
+                      : w("shiftOff")}
+                  </p>
+                  <p id="level-shift-not-item" className="mt-1 text-[11.5px] leading-4 text-vault-label">
+                    {w("shiftNotItem")}
+                  </p>
+                </div>
                 <label className={vlabel}>
                   {t("listeningPlays")}
                   <input type="number" value={cfg.listening.maxPlays} disabled={readOnly} onChange={(e) => setCfg({ ...cfg, listening: { maxPlays: num(e.target.value, 1, 3) } })} className={vfield} />

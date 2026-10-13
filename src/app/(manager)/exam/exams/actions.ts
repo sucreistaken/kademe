@@ -5,12 +5,14 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { auditLogs, examBlueprints } from "@/db/schema";
-import { bankCoverage, blueprintConfigSchema, defaultBlueprint, type BlueprintConfig } from "@/lib/exam/blueprint";
+import { bankCoverage, blueprintConfigSchema, type BlueprintConfig } from "@/lib/exam/blueprint";
 import { examTemplateByKey } from "@/lib/exam/templates";
-import type { ExamMode } from "@/lib/exam/types";
+import type { PolicyPreset } from "@/lib/proctor/policy";
 import { managerLocale } from "@/i18n/manager-locale";
+import { managerT } from "@/i18n/manager";
 import { bankCounts } from "@/server/panel";
 import { requireUser } from "@/server/session";
+import { sectionsWait, startDraft, wizardConfig, type ExamStart, type SectionChoice } from "./new/wizard-model";
 
 /**
  * Exams (blueprints). A published exam never changes: invitations already
@@ -26,35 +28,71 @@ async function audit(orgId: string, actorId: string, action: string, id: string,
   await db.insert(auditLogs).values({ orgId, actorId, action, subjectType: "exam_blueprint", subjectId: id, meta: meta ?? null });
 }
 
+export type CreateExamInput = {
+  start: ExamStart;
+  /** Empty keeps the template's name (in the manager's language) or the mode's default name. */
+  name: string;
+  sections: SectionChoice[];
+  preset: PolicyPreset;
+  /** True: publish now (after the bank check). False: keep it a draft and open the editor. */
+  publish: boolean;
+};
+
+export type CreateExamResult =
+  | { ok: true; id: string; name: string; status: "DRAFT" | "PUBLISHED" }
+  | { ok: false; code: "TEMPLATE" | "NO_SECTION" | "INVALID" | "COVERAGE" | "FAILED" };
+
 /**
- * A new exam: blank (the mode's default config) or from a ready template, in
- * which case the template sets the mode and config and, unless the manager
- * typed a name, the name in the manager's language.
+ * The exam wizard's last step: the start's config with the manager's
+ * sections, minutes and watching level, saved as a draft or published at
+ * once. Publishing runs the editor's bank check first and writes nothing
+ * when the bank cannot fill the exam.
  */
-export async function createBlueprint(formData: FormData) {
+export async function createExamAction(input: CreateExamInput): Promise<CreateExamResult> {
   const user = await requireUser("blueprint:write");
-  const key = String(formData.get("template") ?? "").trim();
-  const template = key ? examTemplateByKey(key) : null;
-  if (key && !template) redirect("/exam/exams/new?error=template");
-  const typed = String(formData.get("name") ?? "").trim().slice(0, 120);
-  let mode: ExamMode;
-  let name: string;
-  let config: BlueprintConfig;
-  if (template) {
-    mode = template.mode;
-    name = typed || template.name[await managerLocale()];
-    config = template.config;
-  } else {
-    mode = formData.get("mode") === "LEVEL_VERIFICATION" ? "LEVEL_VERIFICATION" : "PLACEMENT";
-    name = typed || (mode === "PLACEMENT" ? "Seviye tespit sınavı" : "Seviye doğrulama sınavı");
-    config = defaultBlueprint(mode);
+  const locale = await managerLocale();
+  const start: ExamStart | null =
+    input?.start?.kind === "template" && typeof input.start.key === "string"
+      ? { kind: "template", key: input.start.key }
+      : input?.start?.kind === "blank"
+        ? { kind: "blank", mode: input.start.mode === "LEVEL_VERIFICATION" ? "LEVEL_VERIFICATION" : "PLACEMENT" }
+        : null;
+  const template = start?.kind === "template" ? examTemplateByKey(start.key) : null;
+  if (!start || (start.kind === "template" && !template)) return { ok: false, code: "TEMPLATE" };
+  const draft = startDraft(start, template ? [{ key: template.key, mode: template.mode, name: template.name[locale], config: template.config }] : []);
+  if (!draft) return { ok: false, code: "TEMPLATE" };
+  const choices = Array.isArray(input.sections) ? input.sections.filter((c) => c && typeof c.section === "string").map((c) => ({ section: c.section, enabled: c.enabled === true, minutes: Number(c.minutes) })) : [];
+  if (sectionsWait(choices) || !draft.config.sections.some((s) => choices.find((c) => c.section === s.section)?.enabled)) return { ok: false, code: "NO_SECTION" };
+  const preset: PolicyPreset = input.preset === "OFF" || input.preset === "STRICT" ? input.preset : "STANDARD";
+  const parsed = blueprintConfigSchema.safeParse(wizardConfig(draft.config, choices, preset));
+  if (!parsed.success) return { ok: false, code: "INVALID" };
+  const config = parsed.data;
+  const typed = typeof input.name === "string" ? input.name.trim().slice(0, 120) : "";
+  const t = managerT(locale);
+  const name = typed || (template ? template.name[locale] : t(draft.mode === "PLACEMENT" ? "examWizard.defaultNamePlacement" : "examWizard.defaultNameVerification"));
+  if (input.publish && !bankCoverage(await bankCounts(user.orgId), config, draft.mode, null).ok) return { ok: false, code: "COVERAGE" };
+  try {
+    const now = new Date();
+    const [b] = await db
+      .insert(examBlueprints)
+      .values({
+        orgId: user.orgId,
+        name,
+        description: template ? template.summary[locale] : "",
+        mode: draft.mode,
+        status: input.publish ? "PUBLISHED" : "DRAFT",
+        config,
+        createdBy: user.id,
+        ...(input.publish ? { publishedAt: now } : {}),
+      })
+      .returning();
+    await audit(user.orgId, user.id, "blueprint.create", b.id, { mode: draft.mode, ...(template ? { template: template.key } : {}), via: "wizard" });
+    if (input.publish) await audit(user.orgId, user.id, "blueprint.publish", b.id, { via: "wizard" });
+    revalidatePath("/exam/exams");
+    return { ok: true, id: b.id, name, status: input.publish ? "PUBLISHED" : "DRAFT" };
+  } catch {
+    return { ok: false, code: "FAILED" };
   }
-  const [b] = await db
-    .insert(examBlueprints)
-    .values({ orgId: user.orgId, name, mode, status: "DRAFT", config, createdBy: user.id })
-    .returning();
-  await audit(user.orgId, user.id, "blueprint.create", b.id, template ? { mode, template: template.key } : { mode });
-  redirect(`/exam/exams/${b.id}`);
 }
 
 export type SaveResult = { ok: true; at: string } | { ok: false; error: string };

@@ -220,7 +220,12 @@
     "goToSettings": "Back to settings",
     "noAccessTitle": "You cannot invite users.",
     "noAccessHint": "Only the organization owner can open this screen.",
-    "noAccessBack": "Back to settings"
+    "noAccessBack": "Back to settings",
+    "stepPersonTitle": "Who are you adding to the team?",
+    "stepRoleTitle": "What should {name} be able to do?",
+    "waitName": "Write their name first.",
+    "waitEmail": "Write a valid e-mail address.",
+    "waitRole": "Pick a role."
   },
   "userInviteErrors": {
     "NAME_REQUIRED": "The full name cannot be empty.",

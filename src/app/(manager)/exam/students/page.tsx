@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dot, INTEGRITY_TONE, Level, PageHead, STATUS_TONE, shortDateTime } from "@/components/panel/bits";
+import { StudentLinkButton } from "@/components/panel/student-link-button";
 import { can } from "@/lib/authorize";
 import { listStudents, type StudentRow } from "@/server/panel";
 import { requireUser } from "@/server/session";
@@ -31,6 +32,8 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
   const tab = (TABS as readonly string[]).includes(sp.tab ?? "") ? (sp.tab as Tab) : "all";
   const q = (sp.q ?? "").trim().toLocaleLowerCase(locale);
   const all = await listStudents(user.orgId);
+  const canInvite = can(user, "student:invite");
+  const now = new Date();
   const rows = all.filter((r) => inTab(r, tab) && (!q || `${r.name} ${r.email}`.toLocaleLowerCase(locale).includes(q)));
   const tabLabel: Record<Tab, string> = {
     all: t("students.tabAll"),
@@ -125,6 +128,10 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
                   </td>
                   <td className="px-3 py-3">
                     <Dot tone={STATUS_TONE[r.status]}>{t(`status.${r.status}`)}</Dot>
+                    {/* The link is never in this page's markup: the button asks for it on the click. */}
+                    {canInvite && (r.status === "NOT_STARTED" || r.status === "IN_EXAM") && r.expiresAt && r.expiresAt > now ? (
+                      <StudentLinkButton assessmentId={r.assessmentId} name={r.name} />
+                    ) : null}
                   </td>
                   <td className="px-3 py-3">
                     <Dot tone={INTEGRITY_TONE[r.integrity]}>{t(`integrityLevel.${r.integrity}`)}</Dot>

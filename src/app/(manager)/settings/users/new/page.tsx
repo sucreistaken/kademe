@@ -49,20 +49,10 @@ export default async function InviteUserPage() {
     help: roleHelp(t, role),
   }));
 
+  // The flow draws its own head (the flow's name and "Çık") and its steps' titles, as the hiring wizard.
   return (
-    <main className="mx-auto max-w-[1360px] px-6 py-8">
-      <InlineLink href="/settings" className="text-[13px]">
-        {t("userInvite.back")}
-      </InlineLink>
-
-      <h1 className="mt-3 text-[26px] font-semibold tracking-tight">
-        {t("userInvite.title")}
-      </h1>
-      <p className="mt-1 text-sm text-muted">{t("userInvite.subtitle")}</p>
-
-      <Card className="mt-6 max-w-[560px] px-5 py-5">
-        <InviteUserForm roleOptions={roleOptions} />
-      </Card>
+    <main className="mx-auto max-w-[1080px] px-page pt-6">
+      <InviteUserForm roleOptions={roleOptions} />
     </main>
   );
 }

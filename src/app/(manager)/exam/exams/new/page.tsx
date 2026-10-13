@@ -1,21 +1,29 @@
-import { PageHead } from "@/components/panel/bits";
-import { NewExamForm, type TemplateCard } from "@/components/panel/new-exam-form";
+import { NewExamWizard, type ExamTemplateCard } from "@/components/panel/new-exam-wizard";
 import { requireUser } from "@/server/session";
 import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
 import { enabledSections, estimatedMinutes } from "@/lib/exam/blueprint";
 import { EXAM_TEMPLATES } from "@/lib/exam/templates";
+import { bankCounts } from "@/server/panel";
 
-/** Ready templates first, then the blank start. Everything else is set in the editor. */
-export default async function NewExamPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
-  await requireUser("blueprint:write");
-  const sp = await searchParams;
+export const dynamic = "force-dynamic";
+
+/**
+ * "Yeni sınav" as a guided flow (NewExamWizard): a ready template or blank,
+ * the sections and minutes, the watching level, a last look and "Yayınla".
+ * The bank's counts come along so the last step says before publishing
+ * whether the bank can fill the exam.
+ */
+export default async function NewExamPage() {
+  const user = await requireUser("blueprint:write");
   const locale = await managerLocale();
   const t = managerT(locale);
-  const templates: TemplateCard[] = EXAM_TEMPLATES.map((x) => ({
+  const templates: ExamTemplateCard[] = EXAM_TEMPLATES.map((x) => ({
     key: x.key,
+    mode: x.mode,
     name: x.name[locale],
     summary: x.summary[locale],
+    config: x.config,
     meta: t("exams.templateMeta", {
       mode: t(`mode.${x.mode}`),
       minutes: estimatedMinutes(x.config),
@@ -24,11 +32,10 @@ export default async function NewExamPage({ searchParams }: { searchParams: Prom
         .join(", "),
     }),
   }));
+  // The flow draws its own head (the flow's name and "Çık") and its steps' titles, as the hiring wizard.
   return (
-    <main className="mx-auto max-w-[720px] px-6 py-10">
-      <PageHead title={t("exams.newTitle")} />
-      {sp.error === "template" ? <p className="mt-4 text-[13.5px] text-danger">{t("exams.templateError")}</p> : null}
-      <NewExamForm templates={templates} />
+    <main className="mx-auto max-w-[1080px] px-page pt-6">
+      <NewExamWizard templates={templates} counts={await bankCounts(user.orgId)} />
     </main>
   );
 }
