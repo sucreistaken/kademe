@@ -13,6 +13,9 @@
  *  5. A write after the deadline is refused (SECTION_EXPIRED).
  *  6. A listening clip cannot be played more often than allowed.
  *  7. A finished link is dead, and there is still exactly one attempt.
+ *  8. A fixed form is navigable: any item takes a draft, moves go back and
+ *     forward, flags stick, the section closes only from the review step and
+ *     every saved draft is scored then. An adaptive section refuses all of it.
  *
  * Run with (local working database only; it refuses the shared `kademe`):
  *   DATABASE_URL=postgresql://kademe:kademe@localhost:5434/kademe_platform pnpm verify:exam
@@ -243,6 +246,117 @@ async function main() {
   if (CEFR_LEVELS.indexOf(quitLevel) <= CEFR_LEVELS.indexOf("A2") && closedRun.stopReason === "INSUFFICIENT")
     ok(`quitting at once lands low (${quitLevel}, theta ${closedRun.thetaMean?.toFixed(2)}) and is flagged INSUFFICIENT`);
   else bad(`quitting at once gave ${quitLevel} (${closedRun.stopReason})`);
+
+  console.log("\nNavigable fixed form (verification exam)");
+  const { canFinish } = await import("../src/lib/exam/navigation");
+  const navInvite = await createInvitation({
+    orgId: org.id, blueprintId: verification.id, fullName: "Verify navigation", email: `nav-${Date.now()}@example.com`, claimedLevel: "B1", locale: "tr", invitedBy: null,
+  });
+  if (!navInvite.ok) throw new Error(navInvite.code);
+  const nr = await flow.resolveExamToken(navInvite.rawToken);
+  if (!nr.ok) throw new Error("navigation link");
+  const nctx = nr.ctx;
+  await flow.recordConsent(nctx, (await flow.getConsentText(nctx)).id, null, null);
+  const na = await flow.workingAttempt(nctx.assessment.id);
+  await flow.recordDeviceCheck(na.attempt.id);
+  await flow.startSection(nctx, 1);
+  const first = await flow.loadState(nctx);
+  record(first);
+  const nav = first.current?.nav;
+  const [nrun] = await db.select().from(s.sectionRuns).where(eq(s.sectionRuns.attemptId, na.attempt.id));
+  if (nav && nrun.navigable && nav.entries.length === nrun.itemPlan?.length && first.current?.item?.sequence === 1)
+    ok(`${first.current!.section} serves its whole plan (${nav.entries.length} items) and opens on item 1`);
+  else bad(`fixed form did not open navigable: navigable ${nrun.navigable}, entries ${nav?.entries.length}, plan ${nrun.itemPlan?.length}`);
+  const anyAnswer = async (sequence: number) => {
+    const [row] = await db.select().from(s.itemResponses).where(and(eq(s.itemResponses.sectionRunId, nrun.id), eq(s.itemResponses.sequence, sequence)));
+    const c = row.itemSnapshot.content;
+    const al = (id: string) => row.presentation.alias?.[id] ?? id;
+    if (c.kind === "CHOICE") return { choiceIds: [al(c.options[0].id)] };
+    if (c.kind === "GAP") return { gaps: { [c.gaps[0].id]: "x" } };
+    if (c.kind === "TFNG") return { tfng: { [c.statements[0].id]: "R" as const } };
+    if (c.kind === "MATCHING") return { matches: { [c.left[0].id]: al(c.right[0].id) } };
+    return { text: "x" };
+  };
+  const pos = first.current!.position;
+  const jump = await flow.checkWrite(nctx, pos, 3);
+  if (jump.ok) {
+    await flow.saveDraft(nctx, jump.response, await anyAnswer(3));
+    ok("a draft lands on item 3 while item 1 is on screen");
+  } else bad(`draft on item 3 refused: ${jump.code}`);
+  const sectionNow = await flow.checkSection(nctx, pos);
+  if (!sectionNow.ok) throw new Error(sectionNow.code);
+  if ((await flow.moveTo(sectionNow.run, 3)) && (await flow.loadState(nctx)).current?.item?.sequence === 3) ok("moving forward to item 3 shows item 3");
+  else bad("move to item 3 failed");
+  const back = await flow.loadState(nctx);
+  if ((await flow.moveTo(sectionNow.run, 1)) && (await flow.loadState(nctx)).current?.item?.sequence === 1) ok("moving back to item 1 works");
+  else bad("move back to item 1 failed");
+  const reload3 = await flow.moveTo(sectionNow.run, 3).then(() => flow.loadState(nctx));
+  if (reload3.current?.item?.answer && Object.keys(reload3.current.item.answer).length > 0) ok("item 3 still shows its draft after moving away and back");
+  else bad("item 3 lost its draft");
+  record(back);
+  const backWrite = await flow.checkWrite(nctx, pos, 1);
+  if (backWrite.ok) {
+    await flow.saveDraft(nctx, backWrite.response, await anyAnswer(1));
+    ok("a back-write to item 1 is accepted as a draft");
+  } else bad(`back-write refused: ${backWrite.code}`);
+  if (await flow.setFlag(sectionNow.run, 2, true)) {
+    const flagged = await flow.loadState(nctx);
+    if (flagged.current?.nav?.entries.find((e) => e.sequence === 2)?.flagged) ok("a flag on item 2 sticks across a reload");
+    else bad("flag did not show in the state");
+  } else bad("flag refused");
+  const [beforeReview] = await db.select().from(s.sectionRuns).where(eq(s.sectionRuns.id, nrun.id));
+  if (!canFinish({ navigable: beforeReview.navigable, review: beforeReview.navReview })) ok("finishing is refused before the review step");
+  else bad("finish allowed without the review step");
+  await flow.moveTo(sectionNow.run, "REVIEW");
+  const review = await flow.loadState(nctx);
+  record(review);
+  const [inReview] = await db.select().from(s.sectionRuns).where(eq(s.sectionRuns.id, nrun.id));
+  if (review.current?.nav?.review && review.current.item === null && canFinish({ navigable: true, review: inReview.navReview })) ok("the review step opens and allows finishing");
+  else bad("review step did not open");
+  await flow.closeSectionRun(nrun.id, "SUBMIT");
+  const closed = await db.select().from(s.itemResponses).where(eq(s.itemResponses.sectionRunId, nrun.id));
+  const scoredDrafts = closed.filter((r) => r.answeredAt && r.score !== null).map((r) => r.sequence).sort((x, y) => x - y);
+  if (scoredDrafts.join(",") === "1,3") ok("the two saved drafts (items 1 and 3) are scored at the close");
+  else bad(`scored at close: ${scoredDrafts.join(",")}`);
+  if (closed.filter((r) => !r.answeredAt).every((r) => r.notReached && r.score === 0)) ok("blank items count as not reached, score 0");
+  else bad("blank items not scored 0");
+  if (closed.every((r) => r.thetaAfter !== null)) ok("the trajectory is written for every scored item");
+  else bad("trajectory missing on some items");
+  const navBodies = [first, back, reload3, review].map((x) => JSON.stringify(candidateSafe(x))).join("\n");
+  const navHits = forbiddenNames.filter((n) => navBodies.includes(n));
+  if (navHits.length === 0) ok("no internal field names in the navigation states");
+  else bad(`internal names in navigation states: ${navHits.join(", ")}`);
+  const afterClose = await flow.loadState(nctx);
+  if (afterClose.step === "SECTION_INTRO" && afterClose.current?.position === pos + 1) ok("the next section's introduction follows");
+  else bad(`after closing: ${afterClose.step} ${afterClose.current?.position}`);
+
+  console.log("\nAdaptive sections stay one way");
+  const oneWay = await createInvitation({
+    orgId: org.id, blueprintId: placement.id, fullName: "Verify one way", email: `oneway-${Date.now()}@example.com`, claimedLevel: null, locale: "tr", invitedBy: null,
+  });
+  if (!oneWay.ok) throw new Error(oneWay.code);
+  const or = await flow.resolveExamToken(oneWay.rawToken);
+  if (!or.ok) throw new Error("one-way link");
+  const octx = or.ctx;
+  await flow.recordConsent(octx, (await flow.getConsentText(octx)).id, null, null);
+  const oa = await flow.workingAttempt(octx.assessment.id);
+  await flow.recordDeviceCheck(oa.attempt.id);
+  await flow.startSection(octx, 1);
+  const o1 = await flow.loadState(octx);
+  if (o1.current?.nav === null) ok("an adaptive section has no navigation in its state");
+  else bad("adaptive state carries navigation");
+  const oc = await flow.checkWrite(octx, 1, o1.current?.item?.sequence);
+  if (!oc.ok) throw new Error(oc.code);
+  await flow.commitAnswer(octx, oc.run, oc.response, {});
+  const o2 = await flow.loadState(octx);
+  const backAdaptive = await flow.checkWrite(octx, 1, o1.current?.item?.sequence);
+  if (!backAdaptive.ok && backAdaptive.code === "ITEM_MISMATCH" && o2.current?.item?.sequence !== o1.current?.item?.sequence) ok("a write back to the answered item is refused (ITEM_MISMATCH)");
+  else bad("adaptive back-write accepted");
+  const oSection = await flow.checkSection(octx, 1);
+  if (!oSection.ok) throw new Error(oSection.code);
+  if (!(await flow.moveTo(oSection.run, o1.current!.item!.sequence)) && !(await flow.moveTo(oSection.run, "REVIEW")) && !(await flow.setFlag(oSection.run, o2.current?.item?.sequence, true)))
+    ok("moves, the review step and flags are refused");
+  else bad("adaptive section accepted a move or a flag");
 
   console.log(failed === 0 ? `\n${GREEN}All checks passed.${OFF}` : `\n${RED}${failed} check(s) failed.${OFF}`);
   process.exit(failed === 0 ? 0 : 1);

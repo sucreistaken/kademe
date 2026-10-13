@@ -134,6 +134,13 @@
       "when": 1791366899262,
       "tag": "0018_hiring_wizard_ai_purposes",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1791931906718,
+      "tag": "0019_exam_navigation",
+      "breakpoints": true
     }
   ]
 }
