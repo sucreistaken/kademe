@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { safeEqual } from "@/lib/auth";
 import { DEFAULT_BATCH, runRetention } from "@/lib/retention";
 import { purgeStaleDrafts } from "@/server/create/drafts";
+import { purgeRecordings } from "@/server/recording-retention";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -50,10 +51,14 @@ export async function POST(req: NextRequest) {
   const report = await runRetention({ batch, apply });
   // Advanced drafts that never reached APPLIED, 30 days on (spec 5.3); same two switches.
   const creationDrafts = await purgeStaleDrafts({ now: new Date(), apply });
+  // Proctoring recording segments past their evidence retention; same two switches.
+  // No ?batch= means rounds until done (an exam hour is ~480 segments); with it, one round.
+  const proctorRecordings = await purgeRecordings({ now: new Date(), batch: batchParam === null ? undefined : batch, apply });
 
   return Response.json({
     ...report,
     creationDrafts,
+    proctorRecordings,
     /**
      * Spelled out in every response so nobody has to guess from the mode alone
      * why a run did or did not delete.
