@@ -220,7 +220,12 @@
     "goToSettings": "Ayarlara dön",
     "noAccessTitle": "Kullanıcı davet etme yetkin yok.",
     "noAccessHint": "Bu ekranı yalnızca organizasyon sahibi açabilir.",
-    "noAccessBack": "Ayarlara dön"
+    "noAccessBack": "Ayarlara dön",
+    "stepPersonTitle": "Kimi ekibe ekliyorsun?",
+    "stepRoleTitle": "{name} neler yapabilsin?",
+    "waitName": "Önce adını yaz.",
+    "waitEmail": "Geçerli bir e-posta yaz.",
+    "waitRole": "Bir rol seç."
   },
   "userInviteErrors": {
     "NAME_REQUIRED": "Ad soyad boş bırakılamaz.",
