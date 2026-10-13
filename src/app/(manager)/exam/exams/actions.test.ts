@@ -95,7 +95,8 @@ describe("createExamAction", () => {
     expect(config.sections.find((s) => s.section === "GRAMMAR")?.durationMinutes).toBe(180);
     expect(config.sections.find((s) => s.section === "READING")?.durationMinutes).toBe(20);
     // Everything else of a section stays as the template had it.
-    expect(config.sections.find((s) => s.section === "GRAMMAR")).toMatchObject({ adaptive: true, cTest: true, minItems: 10, maxItems: 16 });
+    const { adaptive, cTest, minItems, maxItems } = placement.config.sections.find((s) => s.section === "GRAMMAR")!;
+    expect(config.sections.find((s) => s.section === "GRAMMAR")).toMatchObject({ adaptive, cTest, minItems, maxItems });
     expect(config.proctoring).toEqual(PRESETS.OFF);
     expect(config.sections.map((s) => s.section)).toEqual(placement.config.sections.map((s) => s.section));
   });
