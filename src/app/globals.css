@@ -21,115 +21,152 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Kademe design tokens.
- * Source of truth: Claude Design canvas "Kademe Canvas.dc.html" (artboard t0),
- * and for the "soft" values docs/design/HIRING-UX.md section 8.
+ * Kademe design tokens: the "soft" look (user decision 2026-10-14).
  *
- * Hard rules from the canvas, do not break them:
- *  - One accent colour, used in exactly three places: primary CTA, active state, timer.
- *  - Card borders, background blocks and secondary buttons are NEVER accent-coloured.
- *  - User decision 2026-10-06 (docs/design/hiring-manager-mockup.html): the
- *    manager panel uses the accent for icon tiles, chosen choice cards, setup
- *    markers and segments, row actions (ControlRow), the setup path action,
- *    the start-step summary pill and the members-count line. Status stays
- *    dot + text. The expiring clock tile is neutral (bg-secondary), never amber.
- *  - One filled button per screen. Everything else is outline or text.
- *  - Status is a dot plus text, never a badge pill.
- *  - Shadows only on sticky panels and modals, plus the soft shadow
- *    (shadow-panel-soft) on the Today next-task card, per the approved mockup.
+ * The product is a German placement exam and its school panel. The brief was
+ * "softer colours, a little gamified, rounded fonts, nothing sharp", like a
+ * modern learning app, but calm enough that a student can sit an exam in it.
+ * This block replaces the earlier canvas contract (one accent in three places,
+ * no amber, no pills, shadows only on modals); docs/design/HIRING-UX.md section
+ * 8 still describes that older look and is history for the values below.
+ *
+ * The rules now:
+ *  - One brand green (accent) for the primary action, the current place
+ *    (active nav, chosen card, focus ring) and progress. It is a friendlier,
+ *    lighter green than before, still 5.3:1 under white text.
+ *  - Five pastel families (mint, sky, grape, sun, coral), each a soft ground
+ *    plus a text tone that reads at 4.5:1 or more on it. They mark categories
+ *    (the five exam sections, kinds of work) and progress, never a verdict on
+ *    an answer: no screen a student sees while answering may colour anything
+ *    as right or wrong.
+ *  - Semantic tones: success (mint), warn (sun: amber is allowed now) and
+ *    danger. A status may be a soft pill (Badge, StatusDot) with a word in it;
+ *    colour is never the only signal.
+ *  - Corners are round everywhere: 10 items, 14 buttons and fields, 20 cards,
+ *    26 the large candidate cards. Pills are fully round.
+ *  - Depth is a solid "lip" under pressable things (shadow-lip, shadow-lip-soft)
+ *    and under cards (shadow-card), which press down 1px when clicked. Blurred
+ *    shadows stay for things that float: sticky bars, menus, dialogs.
+ *  - Text contrast is WCAG AA (4.5:1) on paper, canvas and surface for every
+ *    text tone, ink-3 included; ink-3 is the quietest text, not a decoration.
+ *  - One filled button per screen is still the habit: everything else is the
+ *    outline (secondary) or a text button.
+ *  - The app has no dark theme; `dark:` stays inert (below).
  */
 
 @theme {
-  /* Neutral axis */
+  /* Neutral axis: a cool, faintly green grey, so the pastels sit on it calmly. */
   --color-surface: #ffffff;
-  --color-canvas: #f6f5f2;
-  --color-line: #e7e7e4;
-  --color-muted: #6e6e69;
-  --color-ink: #131311;
+  --color-canvas: #f2f6f4; /* panel ground */
+  --color-line: #dde7e2;
+  --color-muted: #5a6963; /* secondary text, 5.3:1 on canvas */
+  --color-ink: #1c2b26; /* a deep green slate, softer than black */
 
-  /* The single accent. Deep green: calm, trustworthy, far from Airbnb coral. */
-  --color-accent: #0e6a57;
-  --color-accent-hover: #0a5245;
-  --color-accent-soft: #f1f7f5; /* selection tint, read off the canvas */
+  /* The brand green. Friendly, still 5.3:1 under white and 4.7:1 on its soft ground. */
+  --color-accent: #157a5a;
+  --color-accent-hover: #0f6449;
+  --color-accent-soft: #e4f4ec; /* selection and current-place tint */
+  --color-accent-deep: #0b513b; /* the lip under the filled button */
+
+  /* Semantic tones. Text tones read at 4.5:1 or more on their soft ground and on white. */
+  --color-danger: #b23a30;
+  --color-danger-soft: #fdeceb;
+  --color-success: #1d7a50;
+  --color-success-soft: #e3f4ea;
+  --color-warn: #8a5300; /* amber text */
+  --color-warn-soft: #fff3d9;
 
   /*
-   * Inline validation only. There is NO amber in this product: the canvas shows
-   * "half scored", "expiring" and "expired" as plain grey dots, because a table
-   * full of traffic lights reads as a verdict the system has not earned. Anything
-   * that wants to warn uses `--color-ink-3` through StatusDot's "warn" tone.
+   * Pastel families for categories and progress. `-soft` is the ground, the
+   * bare name the icon and text tone on it, `-fill` a brighter shape colour
+   * for bars, dots and drawings (never text: it does not reach 4.5:1).
    */
-  --color-danger: #8c2f2a;
+  --color-mint: #157a5a;
+  --color-mint-soft: #e4f4ec;
+  --color-mint-fill: #5ec29a;
+  --color-sky: #2364a3;
+  --color-sky-soft: #e6f1fc;
+  --color-sky-fill: #75b2ee;
+  --color-grape: #5b44b0;
+  --color-grape-soft: #efebfd;
+  --color-grape-fill: #a793ec;
+  --color-sun: #8a5300;
+  --color-sun-soft: #fff3d9;
+  --color-sun-fill: #f5b941;
+  --color-coral: #a3401f;
+  --color-coral-soft: #ffece4;
+  --color-coral-fill: #f39a7f;
 
   /*
-   * The rest of the neutral ramp, read straight off the canvas artboards. The
-   * five above cover most of the UI, but the candidate screens use a finer set
-   * of tints (a softer page ground, a second and third text weight, a lighter
-   * hairline) and those had no names. Naming them here keeps the screens off
-   * arbitrary hex values.
+   * The rest of the neutral ramp. The candidate screens use a finer set of
+   * tints (a softer page ground, a second and third text weight, a lighter
+   * hairline); naming them keeps the screens off arbitrary hex values.
    */
-  --color-paper: #fbfbf9; /* candidate page ground, softer than canvas */
-  --color-ink-2: #4a4a45; /* body copy under a heading */
-  --color-ink-3: #a8a8a3; /* the quietest text on a screen */
-  --color-hairline: #efefec; /* lighter than line, used under bars */
-  --color-line-strong: #d8d8d3; /* an input border that must be findable */
-  --color-line-mute: #c0c0ba; /* an unchecked control outline */
-  --color-underline: #c8c8c3; /* underline colour for inline links */
-  --color-disabled: #f2f2ef; /* a disabled filled button */
-  --color-row-line: #f4f4f1; /* divider inside a summary card */
-  --color-panel: #1a1a17; /* the bar under a video panel */
-  --color-panel-top: #26261f; /* video placeholder gradient, start */
-  --color-panel-bottom: #131311; /* video placeholder gradient, end */
+  --color-paper: #f7faf8; /* candidate page ground, softer than canvas */
+  --color-ink-2: #3f504a; /* body copy under a heading */
+  --color-ink-3: #627069; /* the quietest text; still 4.8:1 on canvas */
+  --color-hairline: #e6eeea; /* lighter than line, used under bars */
+  --color-line-strong: #c9d5cf; /* an input border that must be findable */
+  --color-line-mute: #8a9891; /* an unchecked control outline, 3:1 on white */
+  --color-underline: #b4c3bc; /* underline colour for inline links */
+  --color-disabled: #edf2ef; /* a disabled filled button */
+  --color-row-line: #eef3f0; /* divider inside a summary card */
+  --color-panel: #1c2b26; /* the bar under a video panel */
+  --color-panel-top: #2a3a33; /* video placeholder gradient, start */
+  --color-panel-bottom: #16211d; /* video placeholder gradient, end */
 
   /* The dark "manager only" column in the template builder (canvas Y2). */
-  --color-vault: #1a1a17; /* panel ground */
-  --color-vault-box: #242420; /* a field inside the panel */
-  --color-vault-line: #33332e; /* its border */
-  --color-vault-chip: #44443e; /* competency chip border */
-  --color-vault-flag: #3a2f2c; /* red flag row border */
-  --color-vault-mark: #c08a7e; /* the em dash before a red flag */
-  --color-vault-label: #8a8a83; /* field labels on the dark ground */
-  --color-vault-text: #f2f1ed; /* body text on the dark ground */
+  --color-vault: #1c2b26; /* panel ground */
+  --color-vault-box: #24352f; /* a field inside the panel */
+  --color-vault-line: #34473f; /* its border */
+  --color-vault-chip: #4a5f56; /* competency chip border */
+  --color-vault-flag: #4a332f; /* red flag row border */
+  --color-vault-mark: #e3a698; /* the mark before a red flag */
+  --color-vault-label: #9cb0a7; /* field labels on the dark ground */
+  --color-vault-text: #eef4f1; /* body text on the dark ground */
 
   /*
-   * Illustration tones (HIRING-VISUAL-FLOW 2.2, user decision K1). Drawings
-   * never use the saturated accent: the only saturated green on a screen
-   * stays the filled button. Used only by components/visual/illustrations.tsx.
+   * Illustration tones (HIRING-VISUAL-FLOW 2.2). Drawings never use the
+   * saturated accent; they take the soft mint ground, a butter-warm body and
+   * a softened ink line. Used only by components/visual/illustrations.tsx.
    */
-  --color-illus-line: #131311; /* = ink */
-  --color-illus-fill: #eef6f3; /* = brand-soft */
-  --color-illus-tint: #cfe3da;
-  --color-illus-sage: #9dc6b6;
-  --color-illus-warm: #f1f0ec;
+  --color-illus-line: #24352f; /* a softened ink */
+  --color-illus-fill: #e9f6f0; /* = brand-soft */
+  --color-illus-tint: #cbe8da;
+  --color-illus-sage: #8fcdb2;
+  --color-illus-warm: #fff6e3;
 
-  --font-sans: var(--font-figtree), system-ui, sans-serif;
-
-  /*
-   * Radius, HIRING-UX 8.3 pixels under shadcn's role names. radix-nova draws
-   * items inside fields and menus with rounded-md, buttons, fields and menus
-   * with rounded-lg, cards and dialogs with rounded-xl; the names follow those
-   * roles so the copied parts get the right pixels without edits:
-   *   md 8 (items), lg 10 (buttons, fields, menus), xl 12 (cards, dialog),
-   *   2xl 16 (sheet edge, candidate main card).
-   * sm keeps the 6px the exam screens already draw (Countdown's 3px bars).
-   * Existing screens otherwise use literal px radii and do not read this scale.
-   */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 10px;
-  --radius-xl: 12px;
-  --radius-2xl: 16px;
+  /* Nunito: rounded terminals, latin-ext for Turkish and German. ui-rounded is SF Rounded on Apple. */
+  --font-sans: var(--font-nunito), ui-rounded, system-ui, sans-serif;
 
   /*
-   * Shadows are reserved for sticky panels and modals. `panel` and `modal`
-   * are the values the exam screens use today and keep until they migrate;
-   * `panel-soft` and `overlay` are HIRING-UX 8.3 and are what new screens and
-   * shadcn overlays use. When the exam screens move over, `--shadow-panel`
-   * takes the soft value and the `-soft` name goes away.
+   * Radius under shadcn's role names. radix-nova draws items inside fields
+   * and menus with rounded-md, buttons, fields and menus with rounded-lg,
+   * cards and dialogs with rounded-xl; the names follow those roles so the
+   * copied parts get the soft pixels without edits:
+   *   sm 8 (small chips), md 10 (items), lg 14 (buttons, fields, menus),
+   *   xl 20 (cards, dialog), 2xl 26 (sheet edge, large candidate card).
    */
-  --shadow-panel: 0 1px 3px rgba(0, 0, 0, 0.07);
-  --shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.16);
-  --shadow-panel-soft: 0 1px 2px rgb(19 19 17 / 0.04), 0 4px 16px rgb(19 19 17 / 0.05);
-  --shadow-overlay: 0 12px 40px rgb(19 19 17 / 0.12);
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 26px;
+
+  /*
+   * Depth. The lips are solid offsets under things you press or that hold a
+   * group (a card); the blurred ones are for things that float above the page.
+   * `panel` (exam screens, sticky bars), `panel-soft` (the Today next-task
+   * card), `modal` and `overlay` (dialogs, menus, sheets).
+   */
+  --shadow-lip: 0 3px 0 0 var(--color-accent-deep);
+  --shadow-lip-pressed: 0 1px 0 0 var(--color-accent-deep);
+  --shadow-lip-soft: 0 2px 0 0 var(--color-line);
+  --shadow-card: 0 2px 0 0 var(--color-hairline);
+  --shadow-panel: 0 1px 2px rgb(28 43 38 / 0.05), 0 8px 20px -8px rgb(28 43 38 / 0.12);
+  --shadow-modal: 0 24px 56px -16px rgb(28 43 38 / 0.28);
+  --shadow-panel-soft: 0 2px 0 0 var(--color-hairline), 0 12px 28px -14px rgb(28 43 38 / 0.16);
+  --shadow-overlay: 0 18px 44px -10px rgb(28 43 38 / 0.22);
 
   /* Spacing, HIRING-UX 8.3. Base unit 4px stays Tailwind's. */
   --spacing-page: 2rem; /* panel page edge */
@@ -148,44 +185,47 @@
 }
 
 /*
- * shadcn variables, values from HIRING-UX 8.2. Two renames keep Kademe names
- * intact: shadcn's `accent` (a hover ground) is `subtle` here, because
- * `accent` is the brand colour; and shadcn's background `muted` is exposed as
- * the utility `muted-surface`, because Kademe's `muted` is a text colour.
- * The copied components are rewritten accordingly by scripts/shadcn-normalize.ts.
+ * shadcn variables, the same soft values as @theme above. Two renames keep
+ * Kademe names intact: shadcn's `accent` (a hover ground) is `subtle` here,
+ * because `accent` is the brand colour; and shadcn's background `muted` is
+ * exposed as the utility `muted-surface`, because Kademe's `muted` is a text
+ * colour. The copied components are rewritten accordingly by
+ * scripts/shadcn-normalize.ts.
  */
 :root {
   color-scheme: light;
-  --radius: 0.625rem; /* 10px: buttons and fields; input-group derives its inner radii from it */
-  --background: #f6f5f2;
-  --foreground: #131311;
+  --radius: 0.875rem; /* 14px: buttons and fields; input-group derives its inner radii from it */
+  /* Cards read this (components/ui/card.tsx). */
+  --card-radius: 20px;
+  --background: #f2f6f4;
+  --foreground: #1c2b26;
   --card: #ffffff;
-  --card-foreground: #131311;
+  --card-foreground: #1c2b26;
   --popover: #ffffff;
-  --popover-foreground: #131311;
-  --primary: #0e6a57;
+  --popover-foreground: #1c2b26;
+  --primary: #157a5a;
   --primary-foreground: #ffffff;
-  --secondary: #f1f0ec;
-  --secondary-foreground: #131311;
-  --muted: #f1f0ec;
-  --muted-foreground: #6e6e69;
-  --subtle: #f1f0ec;
-  --subtle-foreground: #131311;
-  --brand-soft: #eef6f3;
-  --destructive: #8c2f2a;
-  --border: #e7e7e4;
-  --input: #d8d8d3;
-  --ring: #0e6a57;
-  --sidebar: #fbfbf9;
-  --sidebar-foreground: #131311;
-  --sidebar-primary: #0e6a57;
+  --secondary: #eaf0ed;
+  --secondary-foreground: #1c2b26;
+  --muted: #eaf0ed;
+  --muted-foreground: #5a6963;
+  --subtle: #eaf0ed;
+  --subtle-foreground: #1c2b26;
+  --brand-soft: #e9f6f0;
+  --destructive: #b23a30;
+  --border: #dde7e2;
+  --input: #c9d5cf;
+  --ring: #157a5a;
+  --sidebar: #f7faf8;
+  --sidebar-foreground: #1c2b26;
+  --sidebar-primary: #157a5a;
   --sidebar-primary-foreground: #ffffff;
   /* Hover ground in the menu. The active item is styled by the nav itself
-     (brand-soft ground, accent text, 2px accent line), HIRING-UX 4.1. */
-  --sidebar-accent: #f1f0ec;
-  --sidebar-accent-foreground: #131311;
-  --sidebar-border: #e7e7e4;
-  --sidebar-ring: #0e6a57;
+     (brand-soft ground, accent text). */
+  --sidebar-accent: #eaf0ed;
+  --sidebar-accent-foreground: #1c2b26;
+  --sidebar-border: #dde7e2;
+  --sidebar-ring: #157a5a;
 }
 
 @theme inline {
@@ -368,4 +408,60 @@ body {
 /* G9: a focused field scrolled into view is never left under the fixed step footer (the footer measures itself into the variable). */
 html:has([data-step-footer]) {
   scroll-padding-bottom: calc(var(--step-footer-space, 112px) + 8px);
+}
+
+/* The finish screen's one celebratory moment: the medal pops in once, and a
+   few soft dots rise and fade behind it. Used with motion-safe only. */
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes float-up {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.6);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-36px) scale(1);
+  }
+}
+
+/*
+ * Literal radii, bridged to the soft scale. Screens written before the soft
+ * look draw corners as literal pixels (rounded-[10px] on most buttons and
+ * fields, rounded-[8px] on items, rounded-[12px] and rounded-[14px] on cards,
+ * rounded-[6px] on small chips). Such a utility cannot read a token, so it is
+ * mapped onto the scale here and every one of those screens turns soft
+ * without an edit. Unlayered, so it beats the utility layer; no element
+ * combines one of these with another radius utility (checked 2026-10-14).
+ * New code uses rounded-sm/md/lg/xl instead. When no file draws these any
+ * more (codemod: [6px] sm, [8px] md, [10px] lg, [12px] and [14px] xl), this
+ * block goes.
+ */
+.rounded-\[6px\] {
+  border-radius: var(--radius-sm);
+}
+.rounded-\[8px\] {
+  border-radius: var(--radius-md);
+}
+.rounded-\[10px\] {
+  border-radius: var(--radius-lg);
+}
+.rounded-\[12px\],
+.rounded-\[14px\] {
+  border-radius: var(--radius-xl);
 }

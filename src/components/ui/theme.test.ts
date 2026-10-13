@@ -3,11 +3,12 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
- * The tokens are the one place the look of the product is decided, and three
- * parties read them: the Kademe screens (via @theme), the shadcn components
- * (via :root variables and @theme inline) and docs/design/HIRING-UX.md section
- * 8.2, which fixed the values. This test keeps the three in agreement and stops
- * a shadcn name from silently taking over a Kademe one.
+ * The tokens are the one place the look of the product is decided, and two
+ * parties read them: the Kademe screens (via @theme) and the shadcn components
+ * (via :root variables and @theme inline). The values are the soft look of
+ * 2026-10-14 (the contract comment in globals.css). This test keeps the two
+ * in agreement, keeps text readable (WCAG AA) and stops a shadcn name from
+ * silently taking over a Kademe one.
  */
 const css = readFileSync(path.resolve(process.cwd(), "src/app/globals.css"), "utf8");
 
@@ -26,42 +27,113 @@ const theme = block("@theme");
 const root = block(":root");
 const inline = block("@theme inline");
 
+/** WCAG 2 contrast ratio of two #rrggbb colours. */
+function contrast(a: string, b: string): number {
+  const lum = (hex: string) => {
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+}
+
 describe("Kademe tokens keep their meaning", () => {
   it.each([
-    ["--color-accent", "#0e6a57"],
-    ["--color-accent-soft", "#f1f7f5"],
-    ["--color-muted", "#6e6e69"],
-    ["--color-canvas", "#f6f5f2"],
+    ["--color-accent", "#157a5a"],
+    ["--color-accent-soft", "#e4f4ec"],
+    ["--color-muted", "#5a6963"],
+    ["--color-canvas", "#f2f6f4"],
     ["--color-surface", "#ffffff"],
-    ["--color-line", "#e7e7e4"],
-    ["--color-ink", "#131311"],
-    ["--shadow-panel", "0 1px 3px rgba(0, 0, 0, 0.07)"],
-    ["--shadow-modal", "0 8px 32px rgba(0, 0, 0, 0.16)"],
-  ])("%s stays %s", (name, value) => {
+    ["--color-line", "#dde7e2"],
+    ["--color-ink", "#1c2b26"],
+    ["--color-ink-3", "#627069"],
+  ])("%s is %s", (name, value) => {
     expect(theme[name]).toBe(value);
   });
 
   it.each([
-    ["--color-illus-line", "#131311"],
-    ["--color-illus-fill", "#eef6f3"],
-    ["--color-illus-tint", "#cfe3da"],
-    ["--color-illus-sage", "#9dc6b6"],
-    ["--color-illus-warm", "#f1f0ec"],
-  ])("illustration tone %s is %s (HIRING-VISUAL-FLOW 2.2: light tones only, never the accent)", (name, value) => {
+    ["--color-illus-line", "#24352f"],
+    ["--color-illus-fill", "#e9f6f0"],
+    ["--color-illus-tint", "#cbe8da"],
+    ["--color-illus-sage", "#8fcdb2"],
+    ["--color-illus-warm", "#fff6e3"],
+  ])("illustration tone %s is %s (light tones only, never the accent)", (name, value) => {
     expect(theme[name]).toBe(value);
   });
 
-  it("names the radius steps by shadcn role, with the HIRING-UX 8.3 pixels", () => {
+  it("names the radius steps by shadcn role, with the soft pixels", () => {
     // shadcn radix-nova draws fields, menus and buttons with rounded-lg, cards
     // and dialogs with rounded-xl, items inside fields and menus with
-    // rounded-md. The names follow those roles; the pixels per role are the
-    // ones HIRING-UX 8.3 fixed (8 item, 10 button and field, 12 card, 16 sheet).
-    expect(root["--radius"]).toBe("0.625rem");
-    expect(theme["--radius-sm"]).toBe("6px");
-    expect(theme["--radius-md"]).toBe("8px");
-    expect(theme["--radius-lg"]).toBe("10px");
-    expect(theme["--radius-xl"]).toBe("12px");
-    expect(theme["--radius-2xl"]).toBe("16px");
+    // rounded-md. The names follow those roles; the soft look rounds each a
+    // step further (10 item, 14 button and field, 20 card, 26 sheet).
+    expect(root["--radius"]).toBe("0.875rem");
+    expect(root["--card-radius"]).toBe("20px");
+    expect(theme["--radius-sm"]).toBe("8px");
+    expect(theme["--radius-md"]).toBe("10px");
+    expect(theme["--radius-lg"]).toBe("14px");
+    expect(theme["--radius-xl"]).toBe("20px");
+    expect(theme["--radius-2xl"]).toBe("26px");
+  });
+
+  it("maps the literal radii older screens draw onto the scale", () => {
+    expect(css).toMatch(/\n\.rounded-\\\[10px\\\] \{\s*border-radius: var\(--radius-lg\);/);
+    expect(css).toMatch(/\n\.rounded-\\\[8px\\\] \{\s*border-radius: var\(--radius-md\);/);
+    expect(css).toMatch(/\n\.rounded-\\\[12px\\\],\n\.rounded-\\\[14px\\\] \{\s*border-radius: var\(--radius-xl\);/);
+  });
+
+  it("gives the pressable lip the deep accent and keeps the lips solid (no blur)", () => {
+    expect(theme["--shadow-lip"]).toBe("0 3px 0 0 var(--color-accent-deep)");
+    expect(theme["--shadow-lip-pressed"]).toBe("0 1px 0 0 var(--color-accent-deep)");
+    expect(theme["--shadow-lip-soft"]).toBe("0 2px 0 0 var(--color-line)");
+    expect(theme["--shadow-card"]).toBe("0 2px 0 0 var(--color-hairline)");
+  });
+});
+
+describe("text stays readable (WCAG AA, 4.5:1)", () => {
+  const grounds = ["--color-paper", "--color-canvas", "--color-surface"];
+
+  it.each(["--color-ink", "--color-ink-2", "--color-muted", "--color-ink-3", "--color-danger", "--color-warn", "--color-success"])(
+    "%s reads on paper, canvas and white",
+    (text) => {
+      for (const ground of grounds) expect(contrast(theme[text], theme[ground]), `${text} on ${ground}`).toBeGreaterThanOrEqual(4.5);
+    },
+  );
+
+  it.each(["mint", "sky", "grape", "sun", "coral"])("the %s text tone reads on its own soft ground and on white", (family) => {
+    expect(contrast(theme[`--color-${family}`], theme[`--color-${family}-soft`])).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(theme[`--color-${family}`], theme["--color-surface"])).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("puts white on the filled button at 4.5:1 or more, and the accent on its soft ground too", () => {
+    expect(contrast("#ffffff", theme["--color-accent"])).toBeGreaterThanOrEqual(4.5);
+    expect(contrast("#ffffff", theme["--color-accent-hover"])).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(theme["--color-accent"], theme["--color-accent-soft"])).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(root["--primary"], root["--brand-soft"])).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("draws an unchecked control's outline at 3:1 on white (WCAG 1.4.11)", () => {
+    expect(contrast(theme["--color-line-mute"], theme["--color-surface"])).toBeGreaterThanOrEqual(3);
+  });
+
+  it("keeps the dark panel's labels readable", () => {
+    expect(contrast(theme["--color-vault-label"], theme["--color-vault"])).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(theme["--color-vault-text"], theme["--color-vault"])).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+describe("the shadcn variables follow the Kademe tokens", () => {
+  it.each([
+    ["--background", "--color-canvas"],
+    ["--foreground", "--color-ink"],
+    ["--primary", "--color-accent"],
+    ["--muted-foreground", "--color-muted"],
+    ["--destructive", "--color-danger"],
+    ["--border", "--color-line"],
+    ["--input", "--color-line-strong"],
+    ["--ring", "--color-accent"],
+    ["--sidebar", "--color-paper"],
+  ])("%s equals %s", (shadcn, kademe) => {
+    expect(root[shadcn]).toBe(theme[kademe]);
   });
 
   it("never lets a shadcn mapping redefine a Kademe colour", () => {
@@ -103,28 +175,28 @@ describe("focus is drawn once, by the global outline", () => {
   });
 });
 
-describe("shadcn variables carry the HIRING-UX 8.2 values", () => {
+describe("shadcn variables carry the soft values", () => {
   it.each([
-    ["--background", "#f6f5f2"],
-    ["--foreground", "#131311"],
+    ["--background", "#f2f6f4"],
+    ["--foreground", "#1c2b26"],
     ["--card", "#ffffff"],
-    ["--card-foreground", "#131311"],
+    ["--card-foreground", "#1c2b26"],
     ["--popover", "#ffffff"],
-    ["--popover-foreground", "#131311"],
-    ["--primary", "#0e6a57"],
+    ["--popover-foreground", "#1c2b26"],
+    ["--primary", "#157a5a"],
     ["--primary-foreground", "#ffffff"],
-    ["--secondary", "#f1f0ec"],
-    ["--secondary-foreground", "#131311"],
-    ["--muted", "#f1f0ec"],
-    ["--muted-foreground", "#6e6e69"],
-    ["--subtle", "#f1f0ec"],
-    ["--subtle-foreground", "#131311"],
-    ["--brand-soft", "#eef6f3"],
-    ["--destructive", "#8c2f2a"],
-    ["--border", "#e7e7e4"],
-    ["--input", "#d8d8d3"],
-    ["--ring", "#0e6a57"],
-    ["--sidebar", "#fbfbf9"],
+    ["--secondary", "#eaf0ed"],
+    ["--secondary-foreground", "#1c2b26"],
+    ["--muted", "#eaf0ed"],
+    ["--muted-foreground", "#5a6963"],
+    ["--subtle", "#eaf0ed"],
+    ["--subtle-foreground", "#1c2b26"],
+    ["--brand-soft", "#e9f6f0"],
+    ["--destructive", "#b23a30"],
+    ["--border", "#dde7e2"],
+    ["--input", "#c9d5cf"],
+    ["--ring", "#157a5a"],
+    ["--sidebar", "#f7faf8"],
   ])("%s is %s", (name, value) => {
     expect(root[name]).toBe(value);
   });
