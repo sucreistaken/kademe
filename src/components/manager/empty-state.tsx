@@ -29,10 +29,10 @@ export function EmptyState({
 }) {
   const page = variant === "page";
   return (
-    <Empty className={cn(page ? "mx-auto mt-[60px] max-w-[460px] border-0 bg-transparent p-0" : "border border-line bg-surface py-14", className)}>
+    <Empty className={cn(page ? "mx-auto mt-[60px] max-w-[460px] border-0 bg-transparent p-0" : "rounded-2xl border-2 border-dashed border-line bg-surface py-14", className)}>
       <Illustration name={illustration} size="spot" className={page ? "w-[380px] max-w-full" : undefined} />
       <EmptyHeader>
-        <EmptyTitle role="heading" aria-level={2} className={page ? "mt-2 text-[24px] leading-8 font-semibold text-ink" : "text-[18px] leading-7 font-semibold text-ink"}>
+        <EmptyTitle role="heading" aria-level={2} className={page ? "mt-2 text-[24px] leading-8 font-extrabold text-ink" : "text-[18px] leading-7 font-extrabold text-ink"}>
           {title}
         </EmptyTitle>
         {body ? <EmptyDescription className={page ? "text-[14.5px] leading-[22px] text-ink-2" : "text-[14px] leading-[22px] text-muted"}>{body}</EmptyDescription> : null}
