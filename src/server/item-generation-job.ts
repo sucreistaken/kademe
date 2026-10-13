@@ -67,7 +67,8 @@ export async function generateItems(orgId: string, userId: string, spec: Generat
       orgId,
       section: spec.section,
       level: spec.level,
-      difficulty: thetaForLevel(spec.level, it.within),
+      // The teacher's Kolay / Orta / Zor wins over the model's own placement.
+      difficulty: thetaForLevel(spec.level, spec.within ?? it.within),
       type: spec.itemType,
       skillTag: it.skillTag,
       stimulusId,

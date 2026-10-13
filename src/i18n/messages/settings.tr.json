@@ -195,7 +195,9 @@
       "bank_rejected": "Soru reddedildi",
       "bank_retired": "Soru rotasyondan çıkarıldı",
       "bank_draft": "Soru taslağa alındı",
-      "bank_edit": "Soru düzenlendi"
+      "bank_edit": "Soru düzenlendi",
+      "bank_import": "Dosyadan soru yüklendi",
+      "bank_create": "Soru eklendi"
     }
   },
   "userInvite": {
