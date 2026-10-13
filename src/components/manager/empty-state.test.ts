@@ -38,7 +38,7 @@ describe("EmptyState's card look stays, the page look is the mockup's (screen 8)
     const out = html({ variant: "page", illustration: "emptyOpenings", title: "İlk alımını aç.", body: "Bir cümle.", action: createElement("a", { href: "/x" }, "Alım aç") });
     expect(out).not.toContain("border border-line bg-surface py-14");
     expect(out).toContain("w-[380px] max-w-full");
-    expect(out).toContain("mt-2 text-[24px] leading-8 font-semibold text-ink");
+    expect(out).toContain("mt-2 text-[24px] leading-8 font-extrabold text-ink");
     expect(out).toContain("text-ink-2");
   });
 });

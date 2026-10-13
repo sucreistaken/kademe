@@ -25,12 +25,13 @@ export function TodayGlance({ tiles, label }: { tiles: GlanceTile[]; label: stri
           key={tile.key}
           href={tile.href}
           className={cn(
-            "rounded-2xl border bg-surface px-[18px] py-4 hover:bg-canvas",
-            "border-line", tile.emphasis && tile.count > 0 && "shadow-panel-soft",
+            "rounded-2xl border bg-surface px-[18px] py-4 shadow-card transition-colors hover:bg-canvas motion-reduce:transition-none",
+            // The tile that asks something of the manager stands out on the soft green ground (soft look).
+            "border-line", tile.emphasis && tile.count > 0 && "border-accent/30 bg-accent-soft shadow-panel-soft hover:bg-accent-soft/70",
           )}
         >
-          <span className="block text-[13px] font-medium text-ink-2">{tile.label}</span>
-          <span className={cn("tnum mt-1 block text-[32px] leading-9 font-semibold", tile.count > 0 ? "text-ink" : "text-muted")}>{tile.count}</span>
+          <span className="block text-[13px] font-bold text-ink-2">{tile.label}</span>
+          <span className={cn("tnum mt-1 block text-[32px] leading-9 font-extrabold", tile.count > 0 ? "text-ink" : "text-muted")}>{tile.count}</span>
           <span className="mt-0.5 block text-[12.5px] text-muted">{tile.sub}</span>
         </Link>
       ))}

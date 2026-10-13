@@ -15,6 +15,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { BrandMark } from "@/components/visual/brand-mark";
 import { cn } from "@/lib/cn";
 import type { NavGroupView } from "@/solutions/registry";
 import type { NavIcon } from "@/solutions/types";
@@ -37,9 +38,9 @@ const ICONS: Record<NavIcon, LucideIcon> = {
 
 /**
  * HIRING-UX 4.1: one panel, a grouped side menu, no mode switch. The active
- * item is one of the three places the accent colour may appear: accent text on
- * the brand-soft ground with a 2px accent line on the left. Hover is the
- * neutral sidebar ground, never green.
+ * item is the current place, so it takes the accent (soft look, 2026-10-14):
+ * a rounded brand-soft pill with bold accent text and a 2px accent lip under
+ * it. Hover is the neutral sidebar ground, never green.
  *
  * The classes use the same `data-active:` variant as SidebarMenuButton's base
  * classes, so tailwind-merge replaces them instead of leaving two rules to
@@ -48,10 +49,9 @@ const ICONS: Record<NavIcon, LucideIcon> = {
  * `data-active:hover:` pair keeps the active look under the pointer.
  */
 const ACTIVE =
-  "relative data-active:bg-brand-soft data-active:font-medium data-active:text-accent " +
+  "relative rounded-lg data-active:bg-brand-soft data-active:font-bold data-active:text-accent " +
   "data-active:hover:bg-brand-soft data-active:hover:text-accent " +
-  "data-active:before:absolute data-active:before:inset-y-1.5 data-active:before:left-0 " +
-  "data-active:before:w-0.5 data-active:before:rounded-full data-active:before:bg-accent";
+  "data-active:shadow-[0_2px_0_0_color-mix(in_srgb,var(--color-accent)_25%,transparent)]";
 
 export function ManagerNav({
   groups,
@@ -68,8 +68,9 @@ export function ManagerNav({
   const pathname = usePathname();
   return (
     <Sidebar mobileTitle={mobileTitle} mobileDescription={mobileDescription}>
-      <SidebarHeader className="px-4 py-4">
-        <Link href="/dashboard" className="text-[15px] font-semibold tracking-tight text-ink">
+      <SidebarHeader className="flex-row items-center gap-2.5 px-4 py-4">
+        <BrandMark />
+        <Link href="/dashboard" className="text-[17px] font-extrabold tracking-[-0.01em] text-ink">
           Kademe
         </Link>
       </SidebarHeader>
@@ -77,7 +78,7 @@ export function ManagerNav({
         {groups.map((group) => (
           <SidebarGroup key={group.key} className={group.key === "settings" ? "mt-auto border-t border-line" : undefined}>
             {group.label ? (
-              <SidebarGroupLabel className="text-[11.5px] font-medium uppercase tracking-[0.06em] text-muted">
+              <SidebarGroupLabel className="text-[12px] font-bold text-muted">
                 {group.label}
               </SidebarGroupLabel>
             ) : null}

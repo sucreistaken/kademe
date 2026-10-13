@@ -1,43 +1,53 @@
 import { cn } from "@/lib/cn";
 
 /**
- * Canvas rule: status is a dot plus text, never a badge pill.
+ * A status: a coloured dot plus a word, or (`pill`) the same inside a soft
+ * pill. The word always carries the meaning; the colour only helps a glance.
  *
- * Tone hierarchy is read off the canvas and it is the opposite of the obvious
- * one: a finished, scored row gets the DARKEST dot, because that is the row the
- * manager has dealt with and wants to recognise at a glance. Pending work is
- * quieter, not louder. There is no amber anywhere; a table full of traffic
- * lights reads as a verdict the system has not earned.
+ * Tones (globals.css, soft look):
+ *  - active: something is happening right now (in the exam, recording). Sky.
+ *  - done: finished and settled (scored, completed, published). Mint.
+ *  - neutral: waiting, not yet acted on. Grey.
+ *  - warn: needs a person's attention (expiring, half scored). Sun (amber).
+ * A status is never a verdict on a candidate: there is no red tone here.
  */
-export type StatusTone =
-  /** Something is happening right now: recording, live timer. The only accent. */
-  | "active"
-  /** Finished and settled: scored, completed, published. Darkest neutral. */
-  | "done"
-  /** Waiting, not yet acted on. */
-  | "neutral"
-  /** Needs attention (expiring, half scored). Still grey, just lighter. */
-  | "warn";
+export type StatusTone = "active" | "done" | "neutral" | "warn";
 
-const tones: Record<StatusTone, string> = {
-  active: "bg-accent",
-  done: "bg-ink",
-  neutral: "bg-muted/50",
-  warn: "bg-ink-3",
+const dots: Record<StatusTone, string> = {
+  active: "bg-sky-fill",
+  done: "bg-mint-fill",
+  neutral: "bg-line-mute",
+  warn: "bg-sun-fill",
+};
+
+const pills: Record<StatusTone, string> = {
+  active: "bg-sky-soft text-sky",
+  done: "bg-mint-soft text-mint",
+  neutral: "bg-subtle text-muted",
+  warn: "bg-sun-soft text-sun",
 };
 
 export function StatusDot({
   tone = "neutral",
+  pill = false,
   children,
   className,
 }: {
   tone?: StatusTone;
+  /** Draw the status as a soft pill (tables and lists where it should stand out). */
+  pill?: boolean;
   children: React.ReactNode;
   className?: string;
 }) {
   return (
-    <span className={cn("inline-flex items-center gap-2 text-[13px] text-muted", className)}>
-      <span className={cn("size-1.5 shrink-0 rounded-full", tones[tone])} aria-hidden />
+    <span
+      className={cn(
+        "inline-flex items-center gap-2 text-[13px] text-muted",
+        pill && cn("w-fit gap-1.5 rounded-full px-2.5 py-0.5 font-semibold", pills[tone]),
+        className,
+      )}
+    >
+      <span className={cn("size-2 shrink-0 rounded-full", dots[tone])} aria-hidden />
       {children}
     </span>
   );

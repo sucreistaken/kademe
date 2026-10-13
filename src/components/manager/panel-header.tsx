@@ -24,7 +24,7 @@ export function PanelHeader({
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
         {kicker ? <div className="mb-1 text-[13px] text-muted">{kicker}</div> : null}
-        <h1 className="text-[26px] leading-8 font-semibold tracking-[-0.01em] text-ink">{title}</h1>
+        <h1 className="text-[28px] leading-9 font-extrabold tracking-[-0.015em] text-ink">{title}</h1>
         {meta ? <div className="mt-1 text-[14px] leading-[22px] text-muted">{meta}</div> : null}
       </div>
       {primary || menu ? (

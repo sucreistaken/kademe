@@ -37,12 +37,15 @@ export function NextTaskCard({
     <section aria-labelledby="today-next" className="flex items-center gap-7 rounded-2xl border border-line bg-surface px-[26px] py-[22px] shadow-panel-soft">
       {withDrawing ? <Illustration name="inviteReady" size="small" className="hidden w-[220px] md:block" /> : null}
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-semibold tracking-[0.08em] text-muted uppercase">
-          <h2 id="today-next">{heading}</h2>
+        {/* Soft look: the eyebrow in sentence case, the task's own part in the accent. */}
+        <div className="flex flex-wrap items-center gap-1.5 text-[13px] font-bold text-muted">
+          <h2 id="today-next" className="text-accent">
+            {heading}
+          </h2>
           <span aria-hidden>·</span>
           <span>{solution}</span>
         </div>
-        <p className="mt-1.5 text-[22px] leading-7 font-semibold text-ink">{title}</p>
+        <p className="mt-2 text-[22px] leading-7 font-extrabold text-ink">{title}</p>
         {detail ? <p className="mt-1.5 text-[14.5px] leading-[22px] text-ink-2">“{detail}”</p> : null}
         {note ? <p className="mt-1.5 text-[14.5px] leading-[22px] font-medium text-ink-2">{note}</p> : null}
         {meta || reason ? <p className="tnum mt-0.5 text-[13px] text-muted">{[meta, reason].filter(Boolean).join(" · ")}</p> : null}

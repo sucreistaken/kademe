@@ -3,9 +3,12 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/cn";
 
 /**
- * Canvas rule: exactly ONE filled button per screen. Everything else is outline
- * or text. The accent colour appears here, on active state, and on the timer.
- * Nowhere else.
+ * One filled button per screen is the habit; everything else is the outline
+ * (secondary) or a text button (ghost).
+ *
+ * The soft look (globals.css): round corners, bold label, and a solid "lip"
+ * under the filled and outline buttons that the button presses into when
+ * clicked (1px down, the lip shrinks). A disabled button lies flat.
  *
  * A disabled button must always say why it is disabled, so `disabledReason` is
  * required whenever `disabled` is set. Making the reason a separate prop stops
@@ -13,26 +16,35 @@ import { cn } from "@/lib/cn";
  *
  * This is also the shadcn Button (HIRING-UX 8.1): the copied shadcn parts
  * import it, so it carries the extra variant and sizes they use (`outline`,
- * `xs`, `icon`, `icon-sm`, `icon-xs`) and the data-slot attributes. The Kademe
- * variants and sizes keep their exact class strings, so existing screens draw
- * the same pixels.
+ * `xs`, `icon`, `icon-sm`, `icon-xs`) and the data-slot attributes.
  */
+// Pressing: only an enabled, not-busy control moves (a busy footer button is
+// aria-disabled). Written out in full, never assembled: Tailwind finds classes
+// by reading the source text.
 const SECONDARY =
-  "bg-surface text-ink border border-line hover:bg-canvas " +
-  "disabled:text-muted disabled:hover:bg-surface";
+  "bg-surface text-ink border-2 border-line shadow-lip-soft hover:bg-canvas hover:border-line-strong " +
+  "active:not-disabled:not-aria-disabled:translate-y-px active:not-disabled:not-aria-disabled:shadow-none " +
+  "disabled:text-muted disabled:hover:bg-surface disabled:shadow-none";
 
 export const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-[10px] font-medium " +
-    "transition-colors disabled:cursor-not-allowed select-none",
+  "inline-flex items-center justify-center gap-2 rounded-lg font-bold " +
+    "transition-[color,background-color,border-color,box-shadow,translate] duration-150 ease-soft " +
+    "motion-reduce:transition-none disabled:cursor-not-allowed select-none",
   {
     variants: {
       variant: {
-        primary: "bg-accent text-white hover:bg-accent-hover disabled:bg-line disabled:text-muted",
+        primary:
+          "bg-accent text-white shadow-lip hover:bg-accent-hover " +
+          "active:not-disabled:not-aria-disabled:translate-y-px active:not-disabled:not-aria-disabled:shadow-lip-pressed " +
+          "disabled:bg-disabled disabled:text-muted disabled:shadow-none",
         secondary: SECONDARY,
         /** shadcn's name for the same thing; used by the copied dialog footer. */
         outline: SECONDARY,
-        ghost: "bg-transparent text-muted hover:text-ink hover:bg-line/50 disabled:text-line",
-        danger: "bg-surface text-danger border border-line hover:bg-danger/5 disabled:text-muted",
+        ghost: "bg-transparent text-muted hover:text-ink hover:bg-subtle disabled:text-ink-3 disabled:hover:bg-transparent",
+        danger:
+          "bg-surface text-danger border-2 border-line shadow-lip-soft hover:bg-danger-soft hover:border-danger/30 " +
+          "active:not-disabled:not-aria-disabled:translate-y-px active:not-disabled:not-aria-disabled:shadow-none " +
+          "disabled:text-muted disabled:shadow-none",
       },
       size: {
         sm: "h-8 px-3 text-[13px]",

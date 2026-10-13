@@ -2,12 +2,14 @@ import * as React from "react";
 import { cn } from "@/lib/cn";
 
 /**
- * Canvas rule: card borders are never accent-coloured, and shadow is reserved
- * for sticky panels and modals. A plain card gets a hairline border only.
+ * The soft card (globals.css): round corners from `--card-radius` (20px, set
+ * on :root; a screen may set its own), a light border and a solid lip under
+ * it (shadow-card) instead of a blurred shadow. `elevated` is for a card that
+ * floats over the page (sticky panels).
  *
  * The sub-parts below are shadcn's (HIRING-UX 8.1), for new screens. They read
  * `--card-spacing`, set on the root to 20px (HIRING-UX 8.3: panel card padding);
- * existing cards do not use the sub-parts and draw exactly as before.
+ * existing cards do not use the sub-parts.
  */
 export function Card({
   className,
@@ -18,8 +20,8 @@ export function Card({
     <div
       data-slot="card"
       className={cn(
-        "rounded-[var(--card-radius,14px)] border border-line bg-surface [--card-spacing:--spacing(5)]",
-        elevated && "shadow-[0_1px_3px_rgba(0,0,0,0.07)]",
+        "rounded-[var(--card-radius,20px)] border border-line bg-surface shadow-card [--card-spacing:--spacing(5)]",
+        elevated && "shadow-panel",
         className,
       )}
       {...props}

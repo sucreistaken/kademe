@@ -50,7 +50,7 @@ function PanelChoice({
         "group/choice relative flex cursor-pointer gap-4 border-[1.5px] text-ink transition-colors duration-[120ms] ease-out motion-reduce:transition-none",
         large ? "items-start rounded-2xl px-[22px] py-5" : "min-h-14 items-center rounded-[14px] px-[18px] py-4",
         item.tone === "new" ? "border-dashed border-line bg-transparent" : "border-line bg-surface hover:bg-canvas",
-        "has-[:checked]:border-solid has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:checked]:shadow-[0_0_0_3px_rgb(14_106_87/0.08)]",
+        "has-[:checked]:border-solid has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:checked]:shadow-[0_0_0_3px_var(--color-accent-soft)]",
         "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent",
         "has-[:disabled]:cursor-not-allowed has-[:disabled]:border-dashed has-[:disabled]:text-muted has-[:disabled]:hover:bg-surface",
       )}
@@ -167,8 +167,8 @@ export function ChoiceCardGroup({
           <label
             key={item.value}
             className={cn(
-              "relative flex cursor-pointer items-center gap-3 rounded-xl border border-line bg-surface text-[16px] leading-6 text-ink transition-colors duration-[120ms] ease-out hover:bg-canvas motion-reduce:transition-none",
-              "has-[:checked]:border-accent has-[:checked]:bg-brand-soft has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent",
+              "relative flex cursor-pointer items-center gap-3 rounded-lg border-2 border-line bg-surface text-[16px] leading-6 text-ink shadow-lip-soft transition-[color,background-color,border-color,box-shadow] duration-[120ms] ease-out hover:bg-canvas motion-reduce:transition-none",
+              "has-[:checked]:border-accent has-[:checked]:bg-brand-soft has-[:checked]:shadow-[0_2px_0_0_var(--color-accent)] has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent",
               // Task 4 carry 9: a closed card says so by its dashed edge too, not by its grey alone; a chosen one stays chosen.
               "has-[:disabled]:cursor-not-allowed has-[:disabled]:border-dashed has-[:disabled]:text-muted has-[:disabled]:hover:bg-surface",
               size === "square" ? "min-h-16 justify-center px-2 font-semibold" : "min-h-14 px-4 py-3",
@@ -184,7 +184,7 @@ export function ChoiceCardGroup({
               className="peer sr-only"
             />
             {typeof item.marker === "string" ? (
-              <span aria-hidden className="tnum grid size-8 shrink-0 place-items-center rounded-lg border border-line bg-surface text-[14px] font-medium text-ink peer-checked:border-accent">
+              <span aria-hidden className="tnum grid size-8 shrink-0 place-items-center rounded-md border-2 border-line bg-surface text-[14px] font-bold text-ink-2 peer-checked:border-accent peer-checked:bg-accent peer-checked:text-white">
                 {item.marker}
               </span>
             ) : Marker ? (

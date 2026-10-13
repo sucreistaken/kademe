@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { BrandMark } from "@/components/visual/brand-mark";
 import { managerT } from "@/i18n/manager";
 import { managerLocale } from "@/i18n/manager-locale";
 import { panelPasswordHash } from "@/lib/panel-login";
@@ -23,10 +24,13 @@ export default async function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center px-6" lang={locale}>
       <div className="w-full max-w-[380px]">
-        <p className="mb-8 text-[15px] font-semibold tracking-tight">Kademe</p>
+        <p className="mb-8 flex items-center gap-2.5 text-[18px] font-extrabold tracking-[-0.01em]">
+          <BrandMark className="size-8" />
+          Kademe
+        </p>
 
         <Card className="p-7" elevated>
-          <h1 className="text-[19px] font-semibold tracking-tight">
+          <h1 className="text-[22px] font-extrabold tracking-[-0.01em]">
             {t("login.title")}
           </h1>
           <p className="mt-1.5 text-[13px] text-muted">
