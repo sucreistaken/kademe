@@ -172,6 +172,7 @@ function TfngItem({ item, answer, onChange, disabled }: ItemProps) {
                       type="button"
                       role="radio"
                       aria-checked={on}
+                      aria-label={`${v}: ${label}`}
                       tabIndex={on || (!picked && i === 0) ? 0 : -1}
                       disabled={disabled}
                       onKeyDown={radioKeys}
@@ -402,58 +403,70 @@ function MatchingItem({ item, answer, onChange, disabled }: ItemProps) {
           const chosen = targets.find((r) => r.id === matches[l.id]);
           const rowId = `${uid}-row${n}`;
           return (
-            <div key={l.id} className={cn("rounded-[10px] border bg-surface px-4 py-3", chosen ? "border-line-strong" : "border-line")}>
+            <div
+              key={l.id}
+              data-match-row
+              className={cn("rounded-[10px] border bg-surface px-4 py-3", chosen ? "border-line-strong" : "border-line")}
+            >
               <p id={rowId} lang="de" className="text-[15px] leading-[1.55] text-ink">
                 {l.text}
               </p>
-              <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-2">
-                <div role="radiogroup" aria-labelledby={rowId} className="flex flex-wrap gap-1.5">
-                  {targets.map((r, i) => {
-                    const on = chosen?.id === r.id;
-                    const elsewhere = !on && used.has(r.id);
-                    return (
-                      <button
-                        key={r.id}
-                        type="button"
-                        role="radio"
-                        aria-checked={on}
-                        aria-label={`${r.badge}: ${r.label}${elsewhere ? `, ${ti("matchUsedElsewhere")}` : ""}`}
-                        title={r.label}
-                        tabIndex={on || (!chosen && i === 0) ? 0 : -1}
-                        disabled={disabled}
-                        onKeyDown={radioKeys}
-                        onClick={() => setRow(l.id, r.id)}
-                        className={cn(
-                          "flex h-10 min-w-10 items-center justify-center rounded-[8px] border px-2 text-[14px] font-semibold",
-                          on
-                            ? "border-accent bg-accent text-white"
-                            : elsewhere
-                              ? "border-dashed border-line-strong text-muted opacity-60 hover:opacity-100"
-                              : "border-line-strong text-ink-2 hover:border-accent hover:text-ink",
-                        )}
-                      >
-                        {r.badge}
-                      </button>
-                    );
-                  })}
-                </div>
+              <div role="radiogroup" aria-labelledby={rowId} className="mt-2.5 flex flex-wrap gap-1.5">
+                {targets.map((r, i) => {
+                  const on = chosen?.id === r.id;
+                  const elsewhere = !on && used.has(r.id);
+                  return (
+                    <button
+                      key={r.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={on}
+                      aria-label={`${r.badge}: ${r.label}${elsewhere ? `, ${ti("matchUsedElsewhere")}` : ""}`}
+                      title={r.label}
+                      tabIndex={on || (!chosen && i === 0) ? 0 : -1}
+                      disabled={disabled}
+                      onKeyDown={radioKeys}
+                      onClick={() => setRow(l.id, r.id)}
+                      className={cn(
+                        "flex h-10 min-w-10 items-center justify-center rounded-[8px] border px-2 text-[14px] font-semibold",
+                        on
+                          ? "border-accent bg-accent text-white"
+                          : elsewhere
+                            ? "border-dashed border-line-strong text-muted hover:border-accent hover:text-ink"
+                            : "border-line-strong text-ink-2 hover:border-accent hover:text-ink",
+                      )}
+                    >
+                      {r.badge}
+                    </button>
+                  );
+                })}
+              </div>
+              {/* One line, reserved even when empty, so a pick never moves the rows below. */}
+              <div className="mt-2 flex h-6 items-center justify-between gap-3">
+                <p lang="de" title={chosen?.label} className="min-w-0 truncate text-[14px] text-ink-2">
+                  {chosen ? (
+                    <>
+                      <span aria-hidden>→ </span>
+                      {chosen.label}
+                    </>
+                  ) : null}
+                </p>
                 {chosen ? (
                   <button
                     type="button"
                     disabled={disabled}
-                    onClick={() => setRow(l.id, null)}
-                    className="text-[13px] text-muted underline decoration-underline underline-offset-2 hover:text-ink"
+                    onClick={(e) => {
+                      // The button goes away with the pick; keep keyboard focus in the row.
+                      const first = e.currentTarget.closest("[data-match-row]")?.querySelector<HTMLButtonElement>('[role="radio"]');
+                      setRow(l.id, null);
+                      window.setTimeout(() => first?.focus(), 0);
+                    }}
+                    className="shrink-0 text-[13px] text-muted underline decoration-underline underline-offset-2 hover:text-ink"
                   >
                     {ti("matchClear")}
                   </button>
                 ) : null}
               </div>
-              {chosen ? (
-                <p lang="de" className="mt-2 text-[14px] leading-[1.5] text-ink-2">
-                  <span aria-hidden>→ </span>
-                  {chosen.label}
-                </p>
-              ) : null}
             </div>
           );
         })}

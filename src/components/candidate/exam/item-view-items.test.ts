@@ -136,6 +136,8 @@ describe("true / false / not given", () => {
       ["NG", "tfNG"],
     ]) {
       expect(html).toMatch(new RegExp(`<span class="[^"]*">${letter}</span>${label}</button>`));
+      // The accessible name keeps the letter and the word apart.
+      expect(html).toContain(`aria-label="${letter}: ${label}"`);
     }
     expect(html).not.toContain("tfNgListening");
   });
@@ -155,7 +157,7 @@ describe("true / false / not given", () => {
       expect(html).toContain(`id="${id}" lang="de" class="text-[15px] leading-[1.55] text-ink">${text}</p>`);
       expect(gs[i].match(/tabindex="0"/g)).toHaveLength(1);
     }
-    expect(gs[1]).toMatch(/aria-checked="true" tabindex="0"[^>]*>.*?>F<\/span>tfF/);
+    expect(gs[1]).toMatch(/aria-checked="true" aria-label="F: tfF" tabindex="0"[^>]*>.*?>F<\/span>tfF/);
   });
 });
 
