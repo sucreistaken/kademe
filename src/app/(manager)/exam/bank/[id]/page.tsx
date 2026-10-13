@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
-import { makeAudio, savePrompt, setItemStatus } from "@/app/(manager)/exam/bank/actions";
+import { makeAudio, setItemStatus } from "@/app/(manager)/exam/bank/actions";
 import { Card } from "@/components/ui/card";
 import { Dot } from "@/components/panel/bits";
+import { problemSentence, type BankT } from "@/components/panel/bank-copy";
 import { keyText } from "@/components/panel/result/format";
 import { db } from "@/db";
 import { items, stimuli } from "@/db/schema";
 import { can } from "@/lib/authorize";
-import { validateItem } from "@/lib/exam/validate";
+import { withinOf } from "@/lib/exam/difficulty";
+import { itemProblems } from "@/lib/exam/validate";
 import type { ItemSnapshot } from "@/lib/exam/types";
 import { getStorage } from "@/lib/storage";
 import { requireUser } from "@/server/session";
@@ -34,14 +36,28 @@ export default async function BankItemPage({ params, searchParams }: { params: P
     .where(and(eq(items.id, id), eq(items.orgId, user.orgId)));
   if (!row) notFound();
   const { item, stimulus } = row;
-  const problems = validateItem({ type: item.type, prompt: item.prompt, content: item.content, key: item.answerKey, rubric: item.rubric });
+  const bt: BankT = (key, values) => t(`bankTools.${key}` as never, values as never);
+  const problems = itemProblems({ type: item.type, prompt: item.prompt, content: item.content, key: item.answerKey, rubric: item.rubric }).map((p) => problemSentence(bt, p));
+  const within = withinOf(item.level, item.difficulty);
   const needsAudio = item.section === "LISTENING" && !stimulus?.audioKey;
   const audioUrl = stimulus?.audioKey ? await getStorage().getSignedUrl(stimulus.audioKey, 3600) : null;
   const snap = { ...item, key: item.answerKey, stimulus: null } as unknown as ItemSnapshot;
   const c = item.content;
   const canApprove = can(user, "bank:approve");
   const canWrite = can(user, "bank:write");
-  const blocked = problems.length > 0 ? t("bank.invalid", { errors: problems.join("; ") }) : needsAudio ? t("bank.needsAudio") : null;
+  const blocked = problems.length > 0 ? `${t("bankTools.invalidLead")} ${problems.join(" ")}` : needsAudio ? t("bank.needsAudio") : null;
+  const notice =
+    sp.error === "tts"
+      ? t("bank.audioFailed", { reason: sp.reason ?? "" })
+      : sp.error === "invalid"
+        ? t("bankTools.errorInvalid")
+        : sp.error === "audio"
+          ? t("bankTools.errorAudio")
+          : sp.saved === "1"
+            ? item.status === "APPROVED"
+              ? t("bankTools.savedApproved")
+              : t("bankTools.saved")
+            : null;
 
   return (
     <main className="mx-auto max-w-[1360px] px-6 py-8">
@@ -50,19 +66,30 @@ export default async function BankItemPage({ params, searchParams }: { params: P
       </Link>
       <div className="mt-2 flex flex-wrap items-center gap-4">
         <h1 className="text-[22px] font-bold text-ink">
-          {t(`sectionName.${item.section}`)} · {item.level} · {t(`bank.type${item.type}`)}
+          {t(`sectionName.${item.section}`)} · {item.level} · {t(`bankTools.within${within}`)} · {t(`bank.type${item.type}`)}
         </h1>
         <Dot tone={item.status === "APPROVED" ? "done" : "neutral"}>{t(`bank.status${item.status}`)}</Dot>
         <span className="text-[12.5px] text-muted">{item.origin === "SEED" ? t("bank.seedLabel") : t(`bank.origin${item.origin}`)}</span>
+        {canWrite ? (
+          <Link href={`/exam/bank/${item.id}/edit`} className="ml-auto inline-flex h-10 items-center rounded-[10px] border border-line bg-surface px-4 text-[14px] font-medium text-ink hover:bg-canvas">
+            {t("bankTools.edit")}
+          </Link>
+        ) : null}
       </div>
-      {sp.error === "tts" ? <p className="mt-2 text-[13px] text-danger">{t("bank.audioFailed", { reason: sp.reason ?? "" })}</p> : null}
+      {notice ? (
+        <p role="status" className={sp.error ? "mt-2 text-[13px] text-danger" : "mt-2 text-[13px] text-ink"}>
+          {notice}
+        </p>
+      ) : null}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_420px]">
         <section className="flex min-w-0 flex-col gap-4">
           <div className="text-[12px] font-medium uppercase tracking-[0.04em] text-muted">{t("bank.preview")}</div>
           {stimulus ? (
             <Card className="p-5">
-              <div className="text-[12px] uppercase tracking-[0.04em] text-muted">{stimulus.title}</div>
+              <div lang="de" className="text-[12px] uppercase tracking-[0.04em] text-muted">
+                {stimulus.title}
+              </div>
               {item.section === "READING" ? (
                 <p lang="de" className="mt-2 whitespace-pre-line text-[15px] leading-[1.7] text-ink">
                   {stimulus.body}
@@ -124,18 +151,6 @@ export default async function BankItemPage({ params, searchParams }: { params: P
               </p>
             ) : null}
           </Card>
-          {canWrite ? (
-            <details>
-              <summary className="cursor-pointer text-[13px] text-ink underline underline-offset-2">{t("bank.editPrompt")}</summary>
-              <form action={savePrompt} className="mt-2 flex flex-col gap-2">
-                <input type="hidden" name="id" value={item.id} />
-                <textarea name="prompt" defaultValue={item.prompt} rows={4} lang="de" className="rounded-[8px] border border-line bg-surface px-3 py-2 text-[14px]" />
-                <button type="submit" className="h-9 w-fit rounded-[8px] border border-line-strong px-4 text-[13px] font-medium text-ink hover:bg-canvas">
-                  {t("bank.savePrompt")}
-                </button>
-              </form>
-            </details>
-          ) : null}
         </section>
 
         <aside className="flex flex-col gap-4 rounded-[14px] bg-vault p-5 text-vault-text">
@@ -164,8 +179,11 @@ export default async function BankItemPage({ params, searchParams }: { params: P
           ) : null}
           <div className="tnum grid grid-cols-2 gap-2 text-[12.5px]">
             <div>
-              <div className="text-vault-label">{t("bank.difficulty")}</div>
-              {item.difficulty.toFixed(2)}
+              <div className="text-vault-label">{t("bankTools.difficulty")}</div>
+              <span className="text-[14px] font-semibold">
+                {item.level} · {t(`bankTools.within${within}`)}
+              </span>
+              <div className="text-[11.5px] text-vault-label">{t("bankTools.logit", { value: item.difficulty.toFixed(2) })}</div>
             </div>
             <div>
               <div className="text-vault-label">{t("bank.skill")}</div>
