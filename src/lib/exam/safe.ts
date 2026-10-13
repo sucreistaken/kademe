@@ -47,6 +47,66 @@ export type CandidateItem = {
   takesUsed?: number;
 };
 
+/** The letter a matching target names itself by: "Anzeige A", "Abschnitt C", "B: Tobias Hahn". */
+function ownLetter(text: string): { letter: string; label: string } | null {
+  const t = text.trim();
+  const prefixed = t.match(/^([A-Z])\s*[:)]\s+(\S[\s\S]*)$/u);
+  if (prefixed) return { letter: prefixed[1], label: prefixed[2] };
+  const suffixed = t.match(/^(?:\p{L}+\s+)?([A-Z])$/u);
+  if (suffixed) return { letter: suffixed[1], label: t };
+  return null;
+}
+
+export type LetteredTarget<T> = T & { badge: string; label: string };
+
+/**
+ * A matching column whose targets carry their own letters (Anzeige A to H,
+ * "B: Tobias Hahn"), in letter order, or null for any other column.
+ *
+ * The reading text refers to such targets by their letter, so they are shown
+ * in that order instead of shuffled: the letter is visible anyway, so the
+ * order gives nothing away. At most one target without a letter is allowed
+ * ("Keine Anzeige passt"); it goes last with the badge 0, as in the Goethe
+ * format.
+ */
+export function letteredTargets<T extends { text: string }>(xs: T[]): Array<LetteredTarget<T>> | null {
+  const own = xs.map((x) => ownLetter(x.text));
+  const letters = own.flatMap((o) => (o ? [o.letter] : []));
+  if (letters.length < 2 || xs.length - letters.length > 1 || new Set(letters).size !== letters.length) return null;
+  const withLetter = xs
+    .flatMap((x, i) => {
+      const o = own[i];
+      return o ? [{ ...x, badge: o.letter, label: o.label }] : [];
+    })
+    .sort((a, b) => a.badge.localeCompare(b.badge));
+  const rest = xs.filter((_, i) => !own[i]).map((x) => ({ ...x, badge: "0", label: x.text.trim() }));
+  return [...withLetter, ...rest];
+}
+
+/** The right column as the student sees it: its own letters, or A, B, C by position. */
+export function matchingTargets<T extends { text: string }>(xs: T[]): Array<LetteredTarget<T>> {
+  return (
+    letteredTargets(xs) ??
+    xs.map((x, i) => ({ ...x, badge: i < 26 ? String.fromCharCode(65 + i) : String(i + 1), label: x.text }))
+  );
+}
+
+/** Drop-down choices in their presented order; indexes the order does not name are appended. */
+function orderedChoices(choices: string[], order: number[] | undefined): string[] {
+  if (!order) return [...choices];
+  const seen = new Set<number>();
+  const out: string[] = [];
+  for (const i of order) {
+    if (!Number.isInteger(i) || i < 0 || i >= choices.length || seen.has(i)) continue;
+    seen.add(i);
+    out.push(choices[i]);
+  }
+  choices.forEach((c, i) => {
+    if (!seen.has(i)) out.push(c);
+  });
+  return out;
+}
+
 function ordered<T extends { id: string }>(xs: T[], order: string[] | undefined): T[] {
   if (!order) return xs;
   const byId = new Map(xs.map((x) => [x.id, x]));
@@ -92,7 +152,10 @@ export function toCandidateItem(
     case "GAP":
       content = {
         kind: "GAP",
-        gaps: c.gaps.map((g) => ({ id: g.id, choices: g.choices ? [...g.choices] : null })),
+        gaps: c.gaps.map((g) => ({
+          id: g.id,
+          choices: g.choices ? orderedChoices(g.choices, presentation.choiceOrder?.[g.id]) : null,
+        })),
         // Only the rendering hint leaves the server, never the skill tag itself.
         ...(isCTest(snapshot) ? { attached: true as const } : {}),
       };
@@ -101,7 +164,12 @@ export function toCandidateItem(
       content = {
         kind: "MATCHING",
         left: c.left.map((l) => ({ id: l.id, text: l.text })),
-        right: ordered(c.right, presentation.order).map((r) => ({ id: al(r.id), text: r.text })),
+        // Lettered targets are shown in letter order even where an older
+        // presentation stored a shuffle for them.
+        right: ordered(c.right, letteredTargets(c.right)?.map((r) => r.id) ?? presentation.order).map((r) => ({
+          id: al(r.id),
+          text: r.text,
+        })),
       };
       break;
     case "SHORT_TEXT":
@@ -146,13 +214,15 @@ export function toCandidateItem(
 }
 
 /**
- * Fixed once, when the item is first served. Options and matching targets are
- * shuffled so the key's position says nothing; statements and gaps keep their
- * order because they follow the text.
+ * Fixed once, when the item is first served. Options, matching targets and
+ * the choices of a drop-down gap are shuffled so the key's position says
+ * nothing; statements and gaps keep their order because they follow the text,
+ * and matching targets that carry their own letter keep letter order (see
+ * `letteredTargets`).
  */
 export function makePresentation(snapshot: ItemSnapshot, rng: () => number): Presentation {
-  const shuffle = (ids: string[]) => {
-    const a = [...ids];
+  const shuffle = <T>(xs: T[]): T[] => {
+    const a = [...xs];
     for (let i = a.length - 1; i > 0; i--) {
       const j = Math.floor(rng() * (i + 1));
       [a[i], a[j]] = [a[j], a[i]];
@@ -178,7 +248,14 @@ export function makePresentation(snapshot: ItemSnapshot, rng: () => number): Pre
   }
   if (c.kind === "MATCHING") {
     const ids = c.right.map((r) => r.id);
-    return { order: shuffle(ids), alias: aliasFor(ids) };
+    return { order: letteredTargets(c.right)?.map((r) => r.id) ?? shuffle(ids), alias: aliasFor(ids) };
+  }
+  if (c.kind === "GAP") {
+    const choiceOrder: Record<string, number[]> = {};
+    for (const g of c.gaps) {
+      if (g.choices && g.choices.length > 1) choiceOrder[g.id] = shuffle(g.choices.map((_, i) => i));
+    }
+    return Object.keys(choiceOrder).length ? { choiceOrder } : {};
   }
   return {};
 }

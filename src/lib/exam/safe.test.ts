@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { mulberry32 } from "./adaptive";
-import { makePresentation, toCandidateItem } from "./safe";
+import { letteredTargets, makePresentation, matchingTargets, toCandidateItem } from "./safe";
 import { C_TEST_SKILL_TAG, type ItemSnapshot } from "./types";
 
 const listening: ItemSnapshot = {
@@ -98,6 +98,42 @@ describe("presentation", () => {
   it("shuffles every option exactly once", () => {
     const p = makePresentation(listening, mulberry32(9));
     expect([...p.order!].sort()).toEqual(["a", "b", "c"]);
+  });
+});
+
+describe("matching target letters", () => {
+  const list = (...texts: string[]) => texts.map((text, i) => ({ id: `r${i + 1}`, text }));
+
+  it("uses a target's own letter, in letter order, with one leftover as 0", () => {
+    const out = letteredTargets(list("Anzeige C", "Anzeige A", "Keine Anzeige passt", "Anzeige B"));
+    expect(out?.map((t) => [t.id, t.badge, t.label])).toEqual([
+      ["r2", "A", "Anzeige A"],
+      ["r4", "B", "Anzeige B"],
+      ["r1", "C", "Anzeige C"],
+      ["r3", "0", "Keine Anzeige passt"],
+    ]);
+  });
+
+  it("reads a letter prefix and shows the rest", () => {
+    const out = letteredTargets(list("A: Miriam Kessler", "B: Tobias Hahn", "keine der Personen"));
+    expect(out?.map((t) => [t.badge, t.label])).toEqual([
+      ["A", "Miriam Kessler"],
+      ["B", "Tobias Hahn"],
+      ["0", "keine der Personen"],
+    ]);
+  });
+
+  it("does not letter a list of sentences, names or categories", () => {
+    expect(letteredTargets(list("Deshalb fahren viele mit dem Rad.", "Das spart Zeit."))).toBe(null);
+    expect(letteredTargets(list("Selin K.", "Jonas M.", "Amira H."))).toBe(null);
+    expect(letteredTargets(list("Frau Demir", "Herr Lorenz", "beide", "keiner von beiden"))).toBe(null);
+    // Two leftovers or a repeated letter is not a lettered list either.
+    expect(letteredTargets(list("Text A", "Text B", "keiner", "beide"))).toBe(null);
+    expect(letteredTargets(list("Text A", "Abschnitt A"))).toBe(null);
+  });
+
+  it("letters any other list A, B, C in the order shown", () => {
+    expect(matchingTargets(list("beide", "Frau Demir", "keiner von beiden")).map((t) => t.badge)).toEqual(["A", "B", "C"]);
   });
 });
 

@@ -129,6 +129,11 @@ export type Presentation = {
    * id like "a" cannot hint at the option's original position.
    */
   alias?: Record<string, string>;
+  /**
+   * Drop-down gaps: per gap id, the order of its choices as indexes into the
+   * snapshot's `choices`. The answer is the choice text, so it needs no alias.
+   */
+  choiceOrder?: Record<string, number[]>;
 };
 
 /**
