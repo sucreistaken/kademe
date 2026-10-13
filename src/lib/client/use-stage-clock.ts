@@ -31,9 +31,13 @@ export function useStageClock(
   const firedRef = useRef(false);
   const expireRef = useRef(onExpire);
 
-  const [remaining, setRemaining] = useState(() =>
-    input.deadlineAt ? Math.max(0, input.deadlineAt - input.serverNow) : 0,
-  );
+  // The last tick, with the deadline it was counted for. Until the first tick
+  // for a new deadline arrives, the value is computed from the payload, so a
+  // stage that just started never reads as zero for a moment.
+  const [tickState, setTickState] = useState<{ anchor: number | null; left: number }>(() => ({
+    anchor: input.deadlineAt,
+    left: input.deadlineAt ? Math.max(0, input.deadlineAt - input.serverNow) : 0,
+  }));
 
   useEffect(() => {
     expireRef.current = onExpire;
@@ -44,14 +48,15 @@ export function useStageClock(
     offsetRef.current = input.serverNow - Date.now();
     deadlineRef.current = input.deadlineAt;
     firedRef.current = false;
-    if (!input.deadlineAt) return;
+    const anchor = input.deadlineAt;
+    if (!anchor) return;
 
     const tick = () => {
       const deadline = deadlineRef.current;
       if (!deadline) return;
       const serverNow = Date.now() + offsetRef.current;
       const left = Math.max(0, deadline - serverNow);
-      setRemaining(left);
+      setTickState({ anchor, left });
       if (left === 0 && !firedRef.current) {
         firedRef.current = true;
         expireRef.current?.();
@@ -81,6 +86,12 @@ export function useStageClock(
     };
   }, [token, input.serverNow, input.deadlineAt]);
 
+  const remaining =
+    tickState.anchor === input.deadlineAt
+      ? tickState.left
+      : input.deadlineAt
+        ? Math.max(0, input.deadlineAt - input.serverNow)
+        : 0;
   return {
     remainingMs: remaining,
     expired: remaining === 0 && !!input.deadlineAt,
