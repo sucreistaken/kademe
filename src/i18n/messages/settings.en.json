@@ -195,7 +195,9 @@
       "bank_rejected": "Item rejected",
       "bank_retired": "Item retired",
       "bank_draft": "Item back to draft",
-      "bank_edit": "Item edited"
+      "bank_edit": "Item edited",
+      "bank_import": "Questions uploaded from a file",
+      "bank_create": "Question added"
     }
   },
   "userInvite": {

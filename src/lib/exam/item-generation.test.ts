@@ -368,6 +368,16 @@ describe("buildGenerationMessages", () => {
     expect(repair[3].content).not.toContain(EM_DASH);
   });
 
+  it("passes the teacher's Kolay / Orta / Zor into the request, and only when chosen", () => {
+    const base = { section: "GRAMMAR" as const, level: "A2" as const, itemType: "SINGLE_CHOICE" as const, count: 3, withStimulus: false };
+    expect(generationSpecSchema.safeParse({ ...base, within: "HARD" }).success).toBe(true);
+    expect(generationSpecSchema.safeParse({ ...base, within: "VERY" }).success).toBe(false);
+    const hard = buildGenerationMessages({ ...base, within: "HARD" }, [], []);
+    expect(hard[1].content).toContain("Set within to HARD on every item.");
+    expect(hard[1].content).toContain("hard end of the target level");
+    expect(buildGenerationMessages(base, [], [])[1].content).not.toContain("Set within to");
+  });
+
   it("the schema survives the Gemini conversion", () => {
     const text = JSON.stringify(toGeminiSchema(ITEM_GENERATION_JSON_SCHEMA));
     expect(text).not.toMatch(/oneOf|anyOf|additionalProperties/);

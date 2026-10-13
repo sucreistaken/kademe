@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { AiMessage } from "@/lib/ai";
+import { WITHINS } from "./difficulty";
 import { parseModelJson, zodProblem } from "./grading";
 import { validateItem } from "./validate";
 import {
@@ -88,6 +89,8 @@ export const generationSpecSchema = z
     count: z.number().int().min(1).max(10),
     topic: z.string().trim().max(200).optional(),
     withStimulus: z.boolean(),
+    /** Kolay / Orta / Zor for the whole batch; without it the model places each item. */
+    within: z.enum(WITHINS).optional(),
   })
   .superRefine((spec, ctx) => {
     if (!ALLOWED_TYPES[spec.section].includes(spec.itemType)) {
@@ -550,6 +553,12 @@ const TYPE_GUIDE: Record<ItemType, string> = {
   SPEAKING_PROMPT: "Fill prompt, thinkSeconds, answerSeconds, contentPoints and register.",
 };
 
+const WITHIN_GUIDE: Record<(typeof WITHINS)[number], string> = {
+  EASY: "every item sits at the easy end of the target level: frequent words, short sentences, the most common forms of the level.",
+  MID: "every item sits in the middle of the target level.",
+  HARD: "every item sits at the hard end of the target level: less frequent words and forms of the level, still clearly the target level and not the next one.",
+};
+
 export type FewShotItem = { prompt: string; content: ItemContent; key: ItemKey; rubric?: ItemRubric | null };
 
 export function buildGenerationMessages(
@@ -563,6 +572,7 @@ export function buildGenerationMessages(
     `Item type: ${spec.itemType}`,
     `Number of items: ${spec.count}`,
     spec.topic ? `Topic: ${spec.topic}` : "Topic: choose a suitable neutral topic yourself.",
+    ...(spec.within ? [`Difficulty inside the level: ${WITHIN_GUIDE[spec.within]} Set within to ${spec.within} on every item.`] : []),
     "",
   ];
 

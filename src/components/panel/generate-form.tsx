@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { generate, type GenerateState } from "@/app/(manager)/exam/bank/actions";
+import { WITHINS } from "@/lib/exam/difficulty";
 import { ALLOWED_TYPES } from "@/lib/exam/item-generation";
 import { CEFR_LEVELS, SECTIONS, type Section } from "@/lib/exam/types";
 import { useMT } from "@/i18n/manager-client";
@@ -10,13 +11,14 @@ import { useMT } from "@/i18n/manager-client";
 export function GenerateForm() {
   const t = useMT("bank");
   const sec = useMT("sectionName");
+  const bt = useMT("bankTools");
   const [state, action, pending] = useActionState<GenerateState, FormData>(generate, null);
   const [section, setSection] = useState<Section>("GRAMMAR");
   const field = "mt-1 h-9 w-full rounded-[8px] border border-line bg-surface px-2 text-[13.5px] text-ink";
   return (
     <form action={action} className="rounded-[14px] border border-line bg-surface p-5">
       <div className="text-[14px] font-semibold text-ink">{t("generate")}</div>
-      <div className="mt-3 grid gap-3 md:grid-cols-5">
+      <div className="mt-3 grid gap-3 md:grid-cols-6">
         <label className="text-[12.5px] text-muted">
           {t("section")}
           <select name="section" value={section} onChange={(e) => setSection(e.target.value as Section)} className={field}>
@@ -32,6 +34,17 @@ export function GenerateForm() {
           <select name="level" defaultValue="B1" className={field}>
             {CEFR_LEVELS.map((l) => (
               <option key={l}>{l}</option>
+            ))}
+          </select>
+        </label>
+        <label className="text-[12.5px] text-muted">
+          {bt("difficulty")}
+          <select name="within" defaultValue="" className={field}>
+            <option value="">{bt("difficultyAny")}</option>
+            {WITHINS.map((w) => (
+              <option key={w} value={w}>
+                {bt(`within${w}`)}
+              </option>
             ))}
           </select>
         </label>
@@ -58,7 +71,12 @@ export function GenerateForm() {
         <button type="submit" disabled={pending} className="h-10 rounded-[10px] bg-accent px-5 text-[14px] font-semibold text-white hover:bg-accent-hover disabled:bg-line disabled:text-muted">
           {pending ? t("generating") : t("generate")}
         </button>
-        {state?.ok ? <span className="text-[13px] text-ink">{t("generateDone", { n: state.created })}</span> : null}
+        {state?.ok ? (
+          <span role="status" className="text-[13px] text-ink">
+            {t("generateDone", { n: state.created })}
+            {state.rejected > 0 ? ` ${bt("generateRejected", { n: state.rejected })}` : ""}
+          </span>
+        ) : null}
         {state && !state.ok ? <span className="text-[13px] text-danger">{t("generateFailed", { reason: state.error })}</span> : null}
       </div>
     </form>
