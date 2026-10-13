@@ -77,13 +77,13 @@ describe("AnthropicProvider", () => {
 const env = (vars: Record<string, string>) => vars as unknown as NodeJS.ProcessEnv;
 
 describe("buildReviewProvider", () => {
-  it("is off without a key and defaults to Sonnet with one", () => {
+  it("is off without a key and defaults to Haiku with one", () => {
     expect(buildReviewProvider(env({}))).toBeNull();
     expect(buildReviewProvider(env({ ANTHROPIC_API_KEY: "  " }))).toBeNull();
     const provider = buildReviewProvider(env({ ANTHROPIC_API_KEY: "test-key" }));
     expect(provider?.name).toBe("anthropic");
-    expect(provider?.model).toBe("claude-sonnet-5-5");
-    expect(buildReviewProvider(env({ ANTHROPIC_API_KEY: "test-key", ANTHROPIC_REVIEW_MODEL: "claude-haiku-4-5" }))?.model).toBe("claude-haiku-4-5");
+    expect(provider?.model).toBe("claude-haiku-4-5");
+    expect(buildReviewProvider(env({ ANTHROPIC_API_KEY: "test-key", ANTHROPIC_REVIEW_MODEL: "claude-sonnet-5-5" }))?.model).toBe("claude-sonnet-5-5");
   });
 
   it("prices only the models it knows", () => {

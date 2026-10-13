@@ -8,12 +8,13 @@ import { AiUnavailable, getAiProvider, type AiJsonRequest, type AiJsonResponse, 
  * the review provider gets Claude when `ANTHROPIC_API_KEY` is set, and the
  * main provider otherwise, so a missing key changes nothing.
  *
- * `ANTHROPIC_REVIEW_MODEL` picks the model (Sonnet by default, Haiku is the
- * cheaper choice). A key that is not tied to a workspace also needs
+ * `ANTHROPIC_REVIEW_MODEL` picks the model. Haiku is the default: the review
+ * only reports what is visible in a few frames and a teacher decides every
+ * flag, so it does not need Sonnet at twice the price. Sonnet stays available. A key that is not tied to a workspace also needs
  * `ANTHROPIC_WORKSPACE_ID`, or every request is refused.
  */
 
-export const DEFAULT_REVIEW_MODEL = "claude-sonnet-5-5";
+export const DEFAULT_REVIEW_MODEL = "claude-haiku-4-5";
 
 /** USD per million tokens, input then output. Keyed by model id prefix. */
 const PRICES: Array<[prefix: string, input: number, output: number]> = [
