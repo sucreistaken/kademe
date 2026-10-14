@@ -168,12 +168,12 @@ const grammarItems: SeedItem[] = [
     "Heute muss ich lange arbeiten.", ["Heute ich muss lange arbeiten.", "Ich muss arbeiten heute lange."], 2,
     "Das Modalverb steht auf Position 2, der Infinitiv am Satzende (Satzklammer). Nach \"Heute\" folgt direkt das Verb."),
   gap("verb.trennbar", "HARD",
-    "Ergänzen Sie das Verb \"aufmachen\" in der richtigen Form.\n\nDer Supermarkt {{g1}} um acht Uhr {{g2}}.",
+    "Ergänzen Sie das Verb \"aufmachen\" im Präsens.\n\nDer Supermarkt {{g1}} um acht Uhr {{g2}}.",
     [
       { id: "g1", answers: ["macht"] },
       { id: "g2", answers: ["auf"] },
     ],
-    "Trennbares Verb im Präsens: Der Verbteil \"macht\" steht auf Position 2, die Vorsilbe \"auf\" am Satzende."),
+    "Trennbares Verb im Präsens: Der Verbteil \"macht\" steht auf Position 2, die Vorsilbe \"auf\" am Satzende. (\"im Präsens\" steht in der Aufgabe, weil sonst auch \"machte ... auf\" und \"hat ... aufgemacht\" richtig wären.)"),
   sc("possessiv.akkusativ", "HARD",
     "Ich suche ___ Pass. Ich brauche ihn morgen.",
     "meinen", ["mein", "meine"], 0,
@@ -295,7 +295,7 @@ Anzeige A
 Café am Markt sucht Kellnerin oder Kellner. Nur am Samstag und Sonntag, 10 bis 16 Uhr. Bitte rufen Sie an: 0341 22 80 17.
 
 Anzeige B
-Hotel Lindenhof sucht Mitarbeiter für die Rezeption. Montag bis Freitag, 7 bis 13 Uhr. Schreiben Sie uns eine E-Mail: job@hotel-lindenhof.de
+Hotel Lindenhof sucht Mitarbeiterin oder Mitarbeiter für die Rezeption. Montag bis Freitag, 7 bis 13 Uhr. Schreiben Sie uns eine E-Mail: job@hotel-lindenhof.de
 
 Anzeige C
 Supermarkt Frischkauf sucht Hilfe an der Kasse. Montag bis Freitag, 18 bis 22 Uhr. Kommen Sie einfach vorbei: Bahnhofstraße 4.
@@ -367,9 +367,9 @@ const readingItems: SeedItem[] = [
     0,
     "Nur das Café sucht jemanden für Samstag und Sonntag. Hotel und Supermarkt suchen von Montag bis Freitag."),
   jobs.ad("detail", "MID",
-    "Sie können nur von Montag bis Freitag und nur am Vormittag arbeiten. Welche Anzeige passt?",
+    "Sie können nur von Montag bis Freitag und nur bis 14 Uhr arbeiten. Welche Anzeige passt?",
     1,
-    "Das Hotel sucht Mitarbeiter von Montag bis Freitag, 7 bis 13 Uhr. Das Café sucht nur am Wochenende, der Supermarkt am Abend."),
+    "Die Arbeit im Hotel ist von Montag bis Freitag, 7 bis 13 Uhr. Das Café sucht nur am Wochenende (und bis 16 Uhr), der Supermarkt am Abend (18 bis 22 Uhr)."),
   jobs.ad("inference", "HARD",
     "Sie haben kein Telefon und keinen Computer. Welche Anzeige passt?",
     2,
@@ -585,7 +585,7 @@ const listeningItems: SeedItem[] = [
   kurs.tfng("detail", "MID",
     [["Herr Ramos muss das Kursbuch selbst kaufen.", "F"]],
     "Er muss das Buch nicht kaufen, er bekommt es in der ersten Stunde von der Schule."),
-  kurs.choice("detail", "HARD",
+  kurs.choice("detail", "MID",
     "Was soll Herr Ramos bis Freitag machen?",
     "den Kurs bezahlen",
     ["das Buch kaufen", "Frau Novak anrufen"], 0,
@@ -666,7 +666,8 @@ const writingItems: SeedItem[] = [
     "Ihr Freund Leon lädt Sie am Freitag um 19 Uhr zum Essen ein. Sie kommen gern, aber erst um 20 Uhr. Schreiben Sie Leon eine kurze Nachricht (circa 30 Wörter).\n\n" +
       "- Danken Sie für die Einladung.\n" +
       "- Sie kommen später. Warum?\n" +
-      "- Fragen Sie: Was sollen Sie mitbringen?",
+      "- Fragen Sie: Was sollen Sie mitbringen?\n\n" +
+      "Schreiben Sie auch eine Anrede und einen Gruß.",
     [
       "Dank für die Einladung",
       "Information: kommt erst später (um 20 Uhr), mit einem einfachen Grund",
@@ -679,7 +680,8 @@ const writingItems: SeedItem[] = [
     "Sie sind krank und können morgen nicht in den Deutschkurs kommen. Schreiben Sie eine E-Mail an Ihre Kursleiterin, Frau Wagner (circa 30 Wörter).\n\n" +
       "- Sagen Sie: Sie kommen morgen nicht.\n" +
       "- Warum nicht?\n" +
-      "- Fragen Sie nach den Hausaufgaben.",
+      "- Fragen Sie nach den Hausaufgaben.\n\n" +
+      "Schreiben Sie auch eine Anrede und einen Gruß.",
     [
       "Information: kommt morgen nicht in den Kurs",
       "Grund (krank)",
@@ -692,7 +694,8 @@ const writingItems: SeedItem[] = [
     "Sie haben eine neue Arbeit. Schreiben Sie Ihrer Freundin Nina eine Nachricht (circa 30 Wörter).\n\n" +
       "- Wo arbeiten Sie jetzt?\n" +
       "- Was machen Sie bei der Arbeit?\n" +
-      "- Wann arbeiten Sie?",
+      "- Wann arbeiten Sie?\n\n" +
+      "Schreiben Sie auch eine Anrede und einen Gruß.",
     [
       "Arbeitsort (Firma, Geschäft, Stadt o. Ä.)",
       "Tätigkeit oder Beruf, in einfachen Worten",
@@ -702,10 +705,11 @@ const writingItems: SeedItem[] = [
     INFORMAL,
     MESSAGE_NOTE),
   writingTask("email", "HARD", MESSAGE_WORDS,
-    "Sie lesen eine Anzeige: \"Café am Markt sucht Kellnerin oder Kellner.\" Sie möchten dort arbeiten. Schreiben Sie eine E-Mail an das Café (circa 30 Wörter).\n\n" +
+    "Sie lesen eine Anzeige: \"Café Sonne sucht Kellnerin oder Kellner.\" Sie möchten dort arbeiten. Schreiben Sie eine E-Mail an das Café (circa 30 Wörter).\n\n" +
       "- Wer sind Sie? Was machen Sie jetzt?\n" +
       "- Wann können Sie arbeiten?\n" +
-      "- Fragen Sie: Wie viel Geld bekommen Sie pro Stunde?",
+      "- Fragen Sie: Wie viel Geld bekommen Sie pro Stunde?\n\n" +
+      "Schreiben Sie auch eine Anrede und einen Gruß.",
     [
       "kurze Vorstellung (Name, jetzige Arbeit oder Situation)",
       "Tage oder Uhrzeiten, an denen man arbeiten kann",
@@ -750,12 +754,12 @@ function speakingTask(
 const speakingItems: SeedItem[] = [
   speakingTask("introduction", "EASY", INTRO,
     "Stellen Sie sich bitte vor. Sprechen Sie über diese Punkte:\n\n" +
-      "- Name\n- Wohnort\n- Sprachen\n- Beruf oder Arbeit\n- Hobbys",
+      "- Name\n- Wohnort\n- Sprachen\n- Beruf, Arbeit oder Schule\n- Hobbys",
     [
       "Name",
       "Wohnort",
       "Sprachen, die man spricht",
-      "Beruf, Arbeit oder Ausbildung",
+      "Beruf, Arbeit, Schule oder Ausbildung (z. B. Ich bin Schülerin.)",
       "mindestens ein Hobby",
     ]),
   speakingTask("question", "EASY", SHORT,
