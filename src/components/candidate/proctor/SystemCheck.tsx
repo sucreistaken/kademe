@@ -6,6 +6,7 @@ import { CandidateColumn } from "@/components/candidate/Shell";
 import { MobileBlock, isMobileDevice } from "@/components/candidate/MobileBlock";
 import { environmentFacts, useProctor } from "@/components/candidate/proctor/ProctorProvider";
 import { apiSend, candidateApiBase } from "@/lib/client/api";
+import { MEDIA_ERROR_KEY, mediaErrorKind } from "@/lib/client/media-error";
 import { stepPath } from "@/lib/candidate-routes";
 import { evaluateEnvironment } from "@/lib/proctor/environment";
 import { requiredChecks, type CheckId, type ProctoringPolicy } from "@/lib/proctor/policy";
@@ -27,6 +28,7 @@ type RowId = CheckId | "QUIET";
 export function SystemCheck({ token, policy }: { token: string; policy: ProctoringPolicy }) {
   const router = useRouter();
   const t = useT("check");
+  const f = useT("examFlow");
   const { engine, snap } = useProctor();
   const [mobile, setMobile] = useState(false);
   const [bandwidth, setBandwidth] = useState<{ state: "measuring" | "ok" | "low" | "unknown"; mbps?: string }>({ state: "measuring" });
@@ -144,7 +146,11 @@ export function SystemCheck({ token, policy }: { token: string; policy: Proctori
       engine.arm();
       router.push(stepPath(token, next));
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("startFailed"));
+      // Camera and fullscreen refusals are the browser's English text: say them in the student's language.
+      // A server refusal (it carries a code) already comes in the student's language.
+      const kind = mediaErrorKind(err);
+      const fromApi = err instanceof Error && typeof (err as { code?: unknown }).code === "string";
+      setError(kind !== "generic" ? f(MEDIA_ERROR_KEY[kind]) : fromApi ? (err as Error).message : t("startFailed"));
       setBusy(false);
     }
   }

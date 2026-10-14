@@ -3,10 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CandidateColumn } from "@/components/candidate/Shell";
+import { BrandMark } from "@/components/visual/brand-mark";
 import { environmentFacts, useProctor } from "@/components/candidate/proctor/ProctorProvider";
 import { ItemView } from "@/components/candidate/exam/ItemView";
 import { ListeningPlayer, SpeakingItem } from "@/components/candidate/exam/MediaItems";
 import { answerProgress, progressState } from "@/components/candidate/exam/answer-progress";
+import { WarmupOffer, WarmupPractice } from "@/components/candidate/exam/warmup/Warmup";
+import { INITIAL_WARMUP, warmupReduce, type WarmupAction, type WarmupState } from "@/components/candidate/exam/warmup/warmup-state";
+import { PRACTICE } from "@/components/candidate/exam/warmup/practice-data";
 import { ConfirmDialog, NavStrip, ReviewScreen, reviewCounts } from "@/components/candidate/exam/ExamNav";
 import { clearPending, readPending, sessionStore, writePending, type PendingAnswer } from "@/components/candidate/exam/pending-answer";
 import { StepFooter } from "@/components/visual/step-footer";
@@ -50,13 +54,17 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
   const n = useT("examNav");
   const sec = useT("section");
   const rec = useT("recordingSafety");
+  const f = useT("examFlow");
+  const common = useT("common");
   const { engine, snap } = useProctor();
   const [state, setState] = useState(initial);
   const [answer, setAnswer] = useState<ItemAnswer>(initial.current?.item?.answer ?? {});
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<{ text: string; retry: () => void } | null>(null);
   const [save, setSave] = useState<SaveState>("idle");
-  const [finishing, setFinishing] = useState<number | null>(null);
+  // The "finish section" countdown belongs to the section it was started in.
+  const [finishState, setFinishing] = useState<{ position: number; left: number } | null>(null);
+  const [warm, setWarm] = useState<Record<number, WarmupState>>({});
   const [confirm, setConfirm] = useState<Confirm>(null);
   const busyRef = useRef(false);
   const answerRef = useRef<ItemAnswer>(answer);
@@ -181,6 +189,9 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
   }, [snap?.terminated, refresh]);
 
   const cur = state.current;
+  const finishing = finishState && finishState.position === cur?.position ? finishState.left : null;
+  const warmHere: WarmupState = (cur && warm[cur.position]) || INITIAL_WARMUP;
+  const warmDo = (action: WarmupAction) => cur && setWarm((w) => ({ ...w, [cur.position]: warmupReduce(w[cur.position] ?? INITIAL_WARMUP, action) }));
   const item = cur?.item ?? null;
   const nav = cur?.nav ?? null;
   const clock = useStageClock(
@@ -198,7 +209,10 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
   const timeUp = state.step === "ITEM" && !!cur?.deadlineAt && clock.remainingMs === 0;
 
   // A new screen starts at the top, with focus on its heading.
-  const view = state.step === "ITEM" ? `${cur?.position}:${nav?.review ? "review" : item?.sequence}` : `intro:${cur?.position}`;
+  const view =
+    state.step === "ITEM"
+      ? `${cur?.position}:${nav?.review ? "review" : item?.sequence}`
+      : `intro:${cur?.position}:${warmHere.phase}${warmHere.phase === "practice" ? warmHere.step : ""}`;
   const headingRef = useStepFocus<HTMLHeadingElement>(view);
   useEffect(() => {
     window.scrollTo({ top: 0 });
@@ -307,15 +321,16 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
   // "Finish section now" (one-way sections) waits eight seconds, so a slip can be undone.
   useEffect(() => {
     if (finishing === null || !cur) return;
+    const position = cur.position;
     const id = window.setTimeout(() => {
       if (finishing <= 1) {
         setFinishing(null);
         finishSection();
-      } else setFinishing(finishing - 1);
+      } else setFinishing({ position, left: finishing - 1 });
     }, 1000);
     return () => window.clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [finishing]);
+  }, [finishing, cur?.position]);
 
   const recover = snap?.banner?.kind === "recover" ? snap.banner.reason : null;
   const resumeNeeded = proctored && engine && snap?.ready && snap.guarding ? engine.needsResume() : [];
@@ -331,6 +346,8 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
   const flaggedHere = !!item && entries.some((e) => e.sequence === item.sequence && e.flagged);
   const counts = reviewCounts(entries);
   const inputsOff = busy || timeUp;
+  // Only the two-column reading view outgrows the 1000px column of every other screen.
+  const wideReading = state.step === "ITEM" && !nav?.review && item?.stimulus?.kind === "READING";
 
   const failureLine =
     failure ? (
@@ -406,7 +423,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
             <button
               type="button"
               disabled={busy || finishing !== null}
-              onClick={() => setFinishing(8)}
+              onClick={() => setFinishing({ position: cur.position, left: 8 })}
               className="text-[13.5px] text-muted underline decoration-underline underline-offset-2 hover:text-ink disabled:cursor-not-allowed"
             >
               {t("finishEarly")}
@@ -419,47 +436,70 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
 
   return (
     <div className="relative">
-      {state.step === "ITEM" ? (
-        <header className="sticky top-0 z-20 border-b border-hairline bg-surface/95 backdrop-blur">
-          <div className="mx-auto flex h-14 max-w-[1000px] items-center justify-between gap-4 px-7">
-            <div className="flex items-center gap-3 text-[13.5px]">
-              <span className="font-semibold text-ink">{sec(cur.section)}</span>
-              <span className="tnum text-muted">
-                {nav?.review
-                  ? n("reviewTitle")
-                  : nav && item
-                    ? t("questionOf", { n: item.sequence, total: entries.length })
-                    : cur.itemTotal
-                      ? t("questionOf", { n: cur.answered + 1, total: cur.itemTotal })
-                      : t("question", { n: cur.answered + 1 })}
-              </span>
-            </div>
-            <div className="flex items-center gap-5">
-              {proctored ? (
-                <span className="hidden items-center gap-2 text-[12.5px] text-muted md:flex">
-                  <span className="size-1.5 rounded-full bg-accent" aria-hidden />
-                  {recLabel ? rec(recLabel) : policy.screenShare ? t("recordingOn") : t("cameraOn")}
+      <header className="sticky top-0 z-20 border-b border-hairline bg-surface/95 backdrop-blur">
+        <div className={cn("mx-auto flex h-14 items-center justify-between gap-4 px-7", wideReading ? "max-w-[1200px]" : "max-w-[1000px]")}>
+          <div className="flex items-center gap-3 text-[13.5px]">
+            <span className="flex items-center gap-2 text-[16px] font-extrabold tracking-[-0.01em] text-ink">
+              <BrandMark />
+              {common("brand")}
+            </span>
+            {state.step === "ITEM" ? (
+              <>
+                <span className="h-4 w-px bg-hairline" aria-hidden />
+                <span className="font-semibold text-ink">{sec(cur.section)}</span>
+                <span className="tnum text-muted">
+                  {nav?.review
+                    ? n("reviewTitle")
+                    : nav && item
+                      ? t("questionOf", { n: item.sequence, total: entries.length })
+                      : cur.itemTotal
+                        ? t("questionOf", { n: cur.answered + 1, total: cur.itemTotal })
+                        : t("question", { n: cur.answered + 1 })}
                 </span>
-              ) : null}
+              </>
+            ) : null}
+          </div>
+          <div className="flex items-center gap-5">
+            {proctored ? (
+              <span className="hidden items-center gap-2 text-[12.5px] text-muted md:flex">
+                <span className="size-1.5 rounded-full bg-accent" aria-hidden />
+                {recLabel ? rec(recLabel) : policy.screenShare ? t("recordingOn") : t("cameraOn")}
+              </span>
+            ) : null}
+            {state.step === "ITEM" ? (
               <span className="flex items-baseline gap-2">
                 <span className="sr-only">{t("timeLeft")}</span>
                 {clock.remainingMs < 120_000 ? <span className="text-[12px] text-muted">{t("lastMinutes")}</span> : null}
                 <span className="tnum text-[18px] font-bold text-accent">{formatCountdown(clock.remainingMs)}</span>
               </span>
-            </div>
+            ) : null}
           </div>
-          <Banner />
-        </header>
-      ) : null}
+        </div>
+        <Banner />
+      </header>
 
       {blocked ? (
         <RecoverPanel reasons={recover ? [recover] : resumeNeeded} resume={!recover && engine?.startedFrom === "exam"} />
       ) : null}
 
       <div inert={blocked} className={cn(blocked && "pointer-events-none select-none blur-[3px]")}>
-        {state.step === "SECTION_INTRO" ? (
+        {state.step === "SECTION_INTRO" && warmHere.phase === "practice" ? (
+          <WarmupPractice
+            section={cur.section}
+            step={warmHere.step}
+            maxPlays={state.maxPlays}
+            position={cur.position}
+            onNext={() => warmDo({ type: "next", total: PRACTICE[cur.section].length })}
+            onLeave={() => warmDo({ type: "leave" })}
+          />
+        ) : state.step === "SECTION_INTRO" ? (
           <CandidateColumn width={620}>
             <SectionCheer sections={state.sections} />
+            {state.sections.some((x) => x.position === cur.position - 1 && x.skipped) ? (
+              <p role="status" className="mb-5 rounded-[10px] bg-subtle px-4 py-3 text-[14px] leading-[1.6] text-ink-2">
+                {f("skippedNote")}
+              </p>
+            ) : null}
             <div className="tnum text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted">
               {t("sectionOf", { n: cur.position, total: cur.total })}
             </div>
@@ -480,7 +520,9 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
                     <li>
                       {s.navigable && cur.section === "GRAMMAR"
                         ? n("ruleGRAMMARFixed")
-                        : sec(`rule${cur.section}` as "ruleGRAMMAR", { plays: state.maxPlays })}
+                        : cur.section === "WRITING"
+                          ? f(policy.clipboardBlock ? "ruleWritingPaste" : "ruleWritingPlain")
+                          : sec(`rule${cur.section}` as "ruleGRAMMAR", { plays: state.maxPlays })}
                     </li>
                     {s.navigable ? (
                       <>
@@ -495,6 +537,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
                 </>
               );
             })()}
+            <WarmupOffer state={warmHere} onTry={() => warmDo({ type: "try" })} onSkip={() => warmDo({ type: "skip" })} />
             <button
               type="button"
               disabled={busy}
