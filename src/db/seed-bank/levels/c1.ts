@@ -154,10 +154,15 @@ const grammarItems: SeedItem[] = [
     "Ersetzen Sie den Relativsatz durch ein Partizipialattribut mit Partizip I.\n\ndie Beschäftigten, die in Teilzeit arbeiten\n→ die in Teilzeit {{g1}} Beschäftigten",
     ["arbeitenden"], undefined,
     "Aktiver, gleichzeitiger Vorgang: Partizip I „arbeitend“, nach „die“ im Plural mit der Endung -en: „die in Teilzeit arbeitenden Beschäftigten“."),
-  gChoice("konjunktiv_i", "MID",
-    `${INDIRECT}\n\nDie Befragten gaben an, sie ___ meistens mit dem Fahrrad zur Arbeit.`,
-    "kämen", ["kommen", "komme", "kamen"], 1,
-    "Der Konjunktiv I „sie kommen“ ist mit dem Indikativ identisch, deshalb tritt der Konjunktiv II „kämen“ als Ersatzform ein. „Komme“ passt nicht zum Plural, „kamen“ ist Indikativ Präteritum."),
+  gChoice("nominalisierung", "MID",
+    "Welcher Satz gibt die Bedeutung richtig wieder? „Bei Nichteinhaltung der Frist verfällt der Anspruch auf Erstattung.“",
+    "Wer die Frist nicht einhält, verliert den Anspruch auf Erstattung.",
+    [
+      "Wer die Frist einhält, verliert den Anspruch auf Erstattung.",
+      "Auch wer die Frist nicht einhält, behält den Anspruch auf Erstattung.",
+      "Solange die Frist läuft, besteht noch kein Anspruch auf Erstattung.",
+    ], 3,
+    "Auflösung des Nominalstils: „bei Nichteinhaltung“ = konditional „wenn/wer ... nicht einhält“; „verfallen“ = ungültig werden, verloren gehen."),
   gChoice("konnektoren", "MID",
     "Wir sollten die Einführung der neuen Software verschieben, ___ zwei Kollegen aus dem Projektteam ohnehin im Urlaub sind.",
     "zumal", ["wohingegen", "trotzdem", "damit"], 3,
@@ -181,15 +186,10 @@ const grammarItems: SeedItem[] = [
       "Der Bewerber hätte das Programm gern in zwei Wochen gelernt.",
     ], 0,
     "Subjektives „wollen“ + Infinitiv Perfekt: Das Subjekt behauptet etwas über sich selbst, der Sprecher distanziert sich. Absicht (objektives „wollen“) hätte Infinitiv Präsens, Hörensagen wäre „soll“."),
-  gChoice("nominalisierung", "HARD",
-    "Welcher Satz gibt die Bedeutung richtig wieder? „Bei Nichteinhaltung der Frist verfällt der Anspruch auf Erstattung.“",
-    "Wer die Frist nicht einhält, verliert den Anspruch auf Erstattung.",
-    [
-      "Wer die Frist einhält, verliert den Anspruch auf Erstattung.",
-      "Auch wer die Frist nicht einhält, behält den Anspruch auf Erstattung.",
-      "Solange die Frist läuft, besteht noch kein Anspruch auf Erstattung.",
-    ], 3,
-    "Auflösung des Nominalstils: „bei Nichteinhaltung“ = konditional „wenn/wer ... nicht einhält“; „verfallen“ = ungültig werden, verloren gehen."),
+  gChoice("konjunktiv_i", "HARD",
+    `${INDIRECT}\n\nDie Befragten gaben an, sie ___ meistens mit dem Fahrrad zur Arbeit.`,
+    "kämen", ["kommen", "komme", "kamen"], 1,
+    "Der Konjunktiv I „sie kommen“ ist mit dem Indikativ identisch, deshalb tritt der Konjunktiv II „kämen“ als Ersatzform ein. „Komme“ passt nicht zum Plural, „kamen“ ist Indikativ Präteritum."),
   gChoice("partizipialattribut", "HARD",
     "Was bedeutet „der noch zu prüfende Antrag“?",
     "der Antrag, der noch geprüft werden muss",
@@ -366,14 +366,14 @@ const readingItems: SeedItem[] = [
       "Auch die Gruppe mit Pausen machte am Nachmittag erheblich mehr Fehler.",
       "Pausen wirkten nur, wenn sie länger als zehn Minuten dauerten.",
     ], 3,
-    "Absatz 2: Die Durcharbeitenden „merkten kaum etwas“ und schätzten ihre Leistung „bis zuletzt als gut ein“. Am Vormittag war die Fehlerquote gleich; zur Pausengruppe am Nachmittag und zu längeren Pausen sagt der Text nichts."),
+    "Absatz 2: Die Durcharbeitenden „merkten kaum etwas“ und schätzten ihre Leistung „bis zuletzt als gut ein“. Am Vormittag war die Fehlerquote nahezu gleich, der Anstieg am Nachmittag wird nur für die Durcharbeitenden berichtet, und laut Absatz 3 wirken schon Pausen von wenigen Minuten."),
   rPausen.tfng("inference", "HARD",
     [
-      ["Wer in der Pause Nachrichten auf dem Handy liest, erholt sich laut Text schlechter.", "R"],
+      ["Wer mit der Pause wartet, bis er deutlich erschöpft ist, braucht laut Text länger, um wieder voll leistungsfähig zu werden.", "R"],
       ["Feste Pausenzeiten haben sich in Unternehmen langfristig als wirksam erwiesen.", "F"],
       ["Die Teilnehmenden durften selbst wählen, zu welcher Gruppe sie gehören wollten.", "NG"],
     ],
-    "1 R: Absatz 3 (dieselben geistigen Funktionen, weniger Erholung). 2 F: Absatz 4, die Wirkung lässt sich „nur schwer sagen“, Langzeitstudien fehlen. 3 NG: Wie die Gruppen gebildet wurden, steht nicht im Text."),
+    "1 R: Absatz 3, Ende („braucht erheblich länger, um wieder zur vollen Leistungsfähigkeit zurückzufinden“). 2 F: Absatz 4, die Wirkung lässt sich „nur schwer sagen“, Langzeitstudien fehlen. 3 NG: Wie die Gruppen gebildet wurden, steht nicht im Text."),
 
   // Reparatur
   rReparatur.choice("gist", "MID", "Welche Aussage fasst den Text am besten zusammen?",
@@ -429,7 +429,7 @@ const readingItems: SeedItem[] = [
       "Weiterbildung ist allein Sache der einzelnen Beschäftigten.",
       "Der Begriff des lebenslangen Lernens sollte nicht mehr verwendet werden.",
     ], 3,
-    "Absätze 4 und 5: Lernzeit als Arbeitszeit, Investition für beide Seiten; wer Lernen fordert, muss Bedingungen schaffen. Zwang wird ausdrücklich abgelehnt („niemand gezwungen“); den Begriff kritisiert der Text nur, er will ihn nicht abschaffen."),
+    "Absatz 6 und Schluss: Lernzeit als Arbeitszeit, Investition für beide Seiten; wer Lernen fordert, muss Bedingungen schaffen. Zwang wird ausdrücklich abgelehnt („niemand gezwungen“); den Begriff kritisiert der Text nur, er will ihn nicht abschaffen."),
   rWeiterbildung.choice("vocabulary", "EASY", "Was bedeutet „auf der Strecke bleiben“ im dritten Absatz?",
     "nicht mithalten können und den Anschluss verlieren",
     [
@@ -478,9 +478,9 @@ const readingItems: SeedItem[] = [
     [
       ["Das Unternehmen von Tobias Hahn wertet Videointerviews inzwischen nicht mehr automatisch aus.", "R"],
       ["Laut Leyla Aksoy können Entwickler immer nachvollziehen, wie ihr System zu einer Bewertung kommt.", "F"],
-      ["Jonas Weber arbeitet selbst für einen Hersteller von Bewerbungssoftware.", "NG"],
+      ["Jonas Weber hat früher selbst in einer Personalabteilung gearbeitet.", "NG"],
     ],
-    "1 R: Text B, das Verfahren wurde „wieder eingestellt“. 2 F: Text C, selbst Entwickler können es „oft nicht genau erklären“. 3 NG: Text D nennt nur seine Beratungstätigkeit."),
+    "1 R: Text B, das Verfahren wurde „wieder eingestellt“. 2 F: Text C, selbst Entwickler können es „oft nicht genau erklären“. 3 NG: Text D spricht nur über seine heutige Beratungstätigkeit, nicht über frühere Stellen."),
 ];
 
 // ---------------------------------------------------------------- LISTENING
@@ -655,9 +655,9 @@ const listeningItems: SeedItem[] = [
     [
       "zu beweisen, dass Einzelpersonen grundsätzlich klüger entscheiden",
       "zu erklären, wie man Besprechungen zeitlich kürzer gestaltet",
-      "verschiedene Länder in ihrer Art zu entscheiden zu vergleichen",
+      "zu erklären, warum Gruppen in Online-Besprechungen schlechter entscheiden",
     ], 2,
-    "Die Vorteile von Gruppen stellen sich „nur unter bestimmten Bedingungen“ ein; am Ende: „Ich möchte nicht sagen, dass Einzelentscheidungen grundsätzlich besser sind.“"),
+    "Die Vorteile von Gruppen stellen sich „nur unter bestimmten Bedingungen“ ein; am Ende: „Ich möchte nicht sagen, dass Einzelentscheidungen grundsätzlich besser sind.“ Online-Besprechungen werden nur als Thema der nächsten Sitzung angekündigt."),
   lGruppen.choice("detail", "MID", "Was geschah in den Experimenten, in denen die Mitglieder unterschiedliche Informationen hatten?",
     "Die Gruppen sprachen vor allem über Wissen, das ohnehin alle hatten.",
     [
@@ -687,13 +687,13 @@ const listeningItems: SeedItem[] = [
     "Wer vertritt welche Ansicht?",
     [
       "Eine Offenlegung führt am Anfang zu Unzufriedenheit.",
-      "Gehaltsunterschiede sollten an klar benannte Kriterien gebunden sein.",
+      "Wenn Gründe für Gehaltsunterschiede nicht offen genannt werden, entstehen leicht falsche Vermutungen.",
       "In kleinen Betrieben lassen sich Gehaltsangaben leicht einzelnen Personen zuordnen.",
       "Über Gehälter sollte im Betrieb grundsätzlich nicht gesprochen werden.",
     ],
     ["Frau Demir", "Herr Lorenz", "beide", "keiner von beiden"],
     [3, 2, 1, 4],
-    "1 beide: Frau Demir erwartet Unruhe und Frust, Herr Lorenz bestätigt: „Kurzfristig, ja.“ 2 Herr Lorenz: Kriterien benennen. 3 Frau Demir: „mit zwölf Leuten weiß man sofort, wer gemeint ist“. 4 vertritt niemand."),
+    "1 beide: Frau Demir erwartet Unruhe und Frust, Herr Lorenz bestätigt: „Kurzfristig, ja.“ 2 Herr Lorenz: Das Problem entsteht, „wenn solche Gründe unausgesprochen bleiben“, dann vermuten die Leute „ganz andere Gründe“. 3 Frau Demir: „mit zwölf Leuten weiß man sofort, wer gemeint ist“. 4 vertritt niemand."),
   lGehalt.choice("detail", "EASY", "Was schlägt Herr Lorenz konkret vor?",
     "Für jede Stelle soll ein nachvollziehbarer Gehaltsrahmen festgelegt werden.",
     [
@@ -754,7 +754,7 @@ const EMAIL_WORDS: [number, number] = [100, 160];
 const FORUM_NOTE =
   "Goethe C1 Schreiben Teil 1: Forumsbeitrag von etwa 230 Wörtern. Bewertet werden Aufgabenerfüllung (alle vier Punkte, Textsorte), Kohärenz, Wortschatz und Strukturen; unter 50 % der Wortzahl oder Themaverfehlung führt zu 0 Punkten.";
 const EMAIL_NOTE =
-  "Goethe C1 Schreiben Teil 2: halbformelle E-Mail von etwa 120 Wörtern. Wichtig sind alle Leitpunkte, ein angemessenes Register (Anrede, Gruß, höfliche Distanz) und ein klares Anliegen.";
+  "Goethe C1 Schreiben Teil 2: E-Mail von etwa 120 Wörtern, formell oder halbformell je nach Empfänger (siehe Register). Wichtig sind alle Leitpunkte, ein angemessenes Register (Anrede, Gruß, höfliche Distanz) und ein klares Anliegen.";
 
 const writingItems: SeedItem[] = [
   write("opinion", "MID", FORUM_WORDS,
@@ -800,8 +800,8 @@ const writingItems: SeedItem[] = [
     ],
     FORUM, FORUM_NOTE),
   write("formal", "EASY", EMAIL_WORDS,
-    "Sie haben bei einem Weiterbildungsanbieter einen Präsenzkurs „Projektmanagement“ gebucht. Eine Woche vor Beginn erfahren Sie zufällig auf der Website, dass der Kurs nur noch online stattfindet. Eine Information haben Sie nicht erhalten.\n\n" +
-      "Schreiben Sie eine E-Mail an die Kursleitung (etwa 120 Wörter):\n" +
+    "Sie haben bei einem Weiterbildungsanbieter einen Präsenzkurs „Projektmanagement“ gebucht. Eine Woche vor Beginn erfahren Sie zufällig auf der Website, dass der Kurs nur noch online stattfindet. Man hat Sie darüber nicht informiert.\n\n" +
+      "Schreiben Sie eine E-Mail an den Anbieter (etwa 120 Wörter):\n" +
       "- Schildern Sie das Problem.\n" +
       "- Zeigen Sie Verständnis für mögliche Gründe der Änderung.\n" +
       "- Erklären Sie, warum ein Onlinekurs für Sie schwierig ist.\n" +
@@ -878,12 +878,12 @@ const speakingItems: SeedItem[] = [
   speak("presentation", "MID",
     "Halten Sie einen Vortrag von etwa vier bis fünf Minuten zum Thema „Lebenslanges Lernen im Beruf“.\n\n" +
       "- Erklären Sie, was man unter lebenslangem Lernen versteht und warum es heute wichtig ist.\n" +
-      "- Beschreiben Sie, wie Weiterbildung in Ihrem beruflichen Umfeld organisiert ist.\n" +
+      "- Beschreiben Sie, wie Weiterbildung in Ihrem beruflichen Umfeld oder in einem Beruf, den Sie gut kennen, organisiert ist.\n" +
       "- Nennen Sie Vor- und Nachteile verschiedener Lernformen (z. B. Kurse, Onlinelernen, Lernen am Arbeitsplatz).\n" +
       "- Sagen Sie Ihre eigene Meinung und schließen Sie den Vortrag mit einem Fazit ab.",
     [
       "Begriffsklärung und Begründung der Aktualität",
-      "Beschreibung der Weiterbildung im eigenen Umfeld",
+      "Beschreibung der Weiterbildung im eigenen oder einem gut bekannten beruflichen Umfeld",
       "Vor- und Nachteile mehrerer Lernformen",
       "eigene Meinung, Fazit; erkennbare Gliederung mit Einleitung, Überleitungen und Schluss",
     ],
