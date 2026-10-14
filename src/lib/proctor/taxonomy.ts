@@ -19,6 +19,7 @@ export const PROCTOR_EVENT_TYPES = [
   "SCREEN_SHARE_STOPPED",
   "SCREEN_SHARE_WRONG_SURFACE",
   "SECOND_SCREEN_DETECTED",
+  "SECOND_SCREEN_UNVERIFIABLE",
   "CAMERA_LOST",
   "MIC_LOST",
   "COPY_ATTEMPT",
@@ -87,6 +88,8 @@ export const TAXONOMY: Record<ProctorEventType, TaxonomyEntry> = {
   SCREEN_SHARE_STOPPED: entry("HIGH", "BROWSER", { interval: true }),
   SCREEN_SHARE_WRONG_SURFACE: entry("MEDIUM", "BROWSER"),
   SECOND_SCREEN_DETECTED: entry("HIGH", "BROWSER", { aiReview: true }),
+  // The browser cannot tell whether there is a second screen (no permission, no API): a hole in coverage, not behaviour.
+  SECOND_SCREEN_UNVERIFIABLE: entry("INFO", "BROWSER", { coverage: true }),
   CAMERA_LOST: entry("HIGH", "BROWSER", { interval: true }),
   MIC_LOST: entry("HIGH", "BROWSER", { interval: true }),
   COPY_ATTEMPT: entry("LOW", "BROWSER"),

@@ -60,7 +60,9 @@ describe("evaluateEnvironment", () => {
     const strict = evaluateEnvironment(twoScreens, PRESETS.STRICT);
     expect(strict.ok).toBe(false);
     expect(strict.blockers).toEqual(["SECOND_SCREEN"]);
-    const standard = evaluateEnvironment(twoScreens, PRESETS.STANDARD);
+    // STANDARD blocks like STRICT now; a policy that sets WARN only warns.
+    expect(evaluateEnvironment(twoScreens, PRESETS.STANDARD).blockers).toEqual(["SECOND_SCREEN"]);
+    const standard = evaluateEnvironment(twoScreens, { ...PRESETS.STANDARD, secondScreen: "WARN" });
     expect(standard.ok).toBe(true);
     expect(standard.warnings).toEqual(["SECOND_SCREEN"]);
     expect(evaluateEnvironment(twoScreens, PRESETS.OFF).warnings).toEqual([]);

@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { CandidateColumn } from "@/components/candidate/Shell";
 import { BrandMark } from "@/components/visual/brand-mark";
 import { environmentFacts, useProctor } from "@/components/candidate/proctor/ProctorProvider";
+import { CheatWarning } from "@/components/candidate/proctor/CheatWarning";
+import { Flag } from "lucide-react";
 import { ItemView } from "@/components/candidate/exam/ItemView";
 import { ListeningPlayer, SpeakingItem } from "@/components/candidate/exam/MediaItems";
 import { answerProgress, progressState } from "@/components/candidate/exam/answer-progress";
@@ -52,6 +54,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
   const router = useRouter();
   const t = useT("exam");
   const n = useT("examNav");
+  const cw = useT("cheatWarning");
   const sec = useT("section");
   const rec = useT("recordingSafety");
   const f = useT("examFlow");
@@ -192,6 +195,12 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
   const finishing = finishState && finishState.position === cur?.position ? finishState.left : null;
   const warmHere: WarmupState = (cur && warm[cur.position]) || INITIAL_WARMUP;
   const warmDo = (action: WarmupAction) => cur && setWarm((w) => ({ ...w, [cur.position]: warmupReduce(w[cur.position] ?? INITIAL_WARMUP, action) }));
+  // The warm-up practice is not the exam: no big warnings there.
+  const inPractice = state.step === "SECTION_INTRO" && warmHere.phase === "practice";
+  useEffect(() => {
+    engine?.suppressWarnings("warmup", inPractice);
+    return () => engine?.suppressWarnings("warmup", false);
+  }, [engine, inPractice]);
   const item = cur?.item ?? null;
   const nav = cur?.nav ?? null;
   const clock = useStageClock(
@@ -335,6 +344,9 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
   const recover = snap?.banner?.kind === "recover" ? snap.banner.reason : null;
   const resumeNeeded = proctored && engine && snap?.ready && snap.guarding ? engine.needsResume() : [];
   const blocked = !!recover || resumeNeeded.length > 0;
+  // The big warning waits behind a recover panel (one thing at a time); it is never shown in the practice.
+  const warning = proctored && !blocked && !inPractice ? (snap?.warning ?? null) : null;
+  const covered = blocked || !!warning;
 
   if (!cur) return null;
 
@@ -379,7 +391,15 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
     footer = (
       <StepFooter
         back={prev !== null ? { label: n("previous"), onClick: () => (busyRef.current ? undefined : goTo(prev)) } : null}
-        secondary={{ kind: "button", id: "flag-item", label: flaggedHere ? n("unflag") : n("flag"), onClick: () => void toggleFlag() }}
+        secondary={{
+          kind: "button",
+          id: "flag-item",
+          label: flaggedHere ? cw("flagSet") : n("flag"),
+          icon: <Flag aria-hidden className={cn("size-4", flaggedHere && "fill-ink")} strokeWidth={2} />,
+          tone: flaggedHere ? "flagged" : undefined,
+          ariaLabel: flaggedHere ? cw("flagSetHelp") : undefined,
+          onClick: () => void toggleFlag(),
+        }}
         primary={{
           kind: "button",
           id: "next-item",
@@ -482,7 +502,15 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
         <RecoverPanel reasons={recover ? [recover] : resumeNeeded} resume={!recover && engine?.startedFrom === "exam"} />
       ) : null}
 
-      <div inert={blocked} className={cn(blocked && "pointer-events-none select-none blur-[3px]")}>
+      {warning ? (
+        <CheatWarning
+          warning={warning}
+          timeLeft={state.step === "ITEM" ? formatCountdown(clock.remainingMs) : null}
+          onAcknowledge={() => engine?.acknowledgeWarning()}
+        />
+      ) : null}
+
+      <div inert={covered} className={cn(covered && "pointer-events-none select-none blur-[3px]")}>
         {state.step === "SECTION_INTRO" && warmHere.phase === "practice" ? (
           <WarmupPractice
             section={cur.section}
@@ -568,7 +596,12 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
                   className="tnum mb-4 flex items-center gap-2.5 text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted outline-none"
                 >
                   {nav ? t("questionOf", { n: item.sequence, total: entries.length }) : t("question", { n: cur.answered + 1 })}
-                  {flaggedHere ? <span className="rounded-full border border-line-strong px-2 py-0.5 text-[11.5px] normal-case tracking-normal text-ink">{n("flaggedTag")}</span> : null}
+                  {flaggedHere ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-sun-soft px-2 py-0.5 text-[11.5px] font-semibold normal-case tracking-normal text-sun">
+                      <Flag aria-hidden className="size-3 fill-sun-fill" strokeWidth={2} />
+                      {n("flaggedTag")}
+                    </span>
+                  ) : null}
                 </h2>
                 {item.stimulus?.kind === "LISTENING" ? (
                   <div className="mb-6">
@@ -601,7 +634,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
       </div>
 
       {/* Outside the blurred wrapper: a CSS filter would pin the fixed bar to the wrapper instead of the window. */}
-      {footer ? <div inert={blocked}>{footer}</div> : null}
+      {footer ? <div inert={covered}>{footer}</div> : null}
 
       {finishing !== null ? (
         <div

@@ -7,6 +7,23 @@ import { yawPitchFromMatrix } from "@/lib/proctor/head-pose";
 import { verifyDisplaySurface } from "@/lib/proctor/environment";
 import { ProctorRecording } from "@/lib/client/proctor/recording";
 import type { RecordingActivity } from "@/lib/proctor/recording-status";
+import {
+  EXTENDED_POLL_MS,
+  GAZE_WARNING_AFTER_MS,
+  INITIAL_WARNING_STATE,
+  NO_FACE_WARNING_AFTER_MS,
+  delayUntilLasted,
+  dismissWarning,
+  extendedDecision,
+  parseWarnings,
+  raiseWarning,
+  resolveWarning,
+  secondScreenPresent,
+  serializeWarnings,
+  warningKindFor,
+  type ActiveWarning,
+  type WarningState,
+} from "@/lib/proctor/cheat-warning";
 import type { ProctoringPolicy } from "@/lib/proctor/policy";
 import type { ProctorEventType } from "@/lib/proctor/taxonomy";
 
@@ -54,11 +71,23 @@ export type EngineSnapshot = {
   recording: RecordingActivity | null;
   /** The recording's upload line; null when this tab never recorded. */
   upload: { pending: number; stalled: boolean } | null;
+  /** The big warning on screen right now (cheat-warning.ts); null when none. */
+  warning: ActiveWarning | null;
+  /** Warnings counted in this attempt so far. */
+  warningCount: number;
+  /** The Window Management permission (several screens): "unsupported" when the browser has no such API. */
+  windowManagement: "unsupported" | "idle" | "asking" | "granted" | "denied";
 };
 
 type QueuedEvent = { clientEventId: string; type: ProctorEventType; at: number; endedAt?: number; meta?: Record<string, unknown> };
 
 const STORE = (token: string) => `kademe-proctor-outbox-${token.slice(0, 16)}`;
+/** The warning count lives in sessionStorage, so a reload of this tab keeps the number. */
+const WARN_STORE = (token: string) => `kademe-proctor-warnings-${token.slice(0, 16)}`;
+
+/** The slice of the Window Management API this file uses (Chromium). */
+type ScreenDetailsLike = EventTarget & { screens: ArrayLike<unknown> };
+type WindowWithScreens = Window & { getScreenDetails?: () => Promise<ScreenDetailsLike> };
 const rid = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
 
 export class ProctorEngine {
@@ -85,6 +114,9 @@ export class ProctorEngine {
     error: null,
     recording: null,
     upload: null,
+    warning: null,
+    warningCount: 0,
+    windowManagement: "idle",
   };
   private sessionId: string | null = null;
   private clientOffsetMs = 0;
@@ -110,9 +142,24 @@ export class ProctorEngine {
   private recordingConsented = false;
   /** Development fake-media mode only: the face count the model's result is replaced with. */
   devFaces = 1;
+  private warn: WarningState = INITIAL_WARNING_STATE;
+  /** Reasons the warnings are paused for (the warm-up practice), like voiceSuppressors. */
+  private warnSuppressors = new Set<string>();
+  /** Long signals (gaze, missing face) waiting to have lasted long enough to become a warning. */
+  private longTimers = new Map<string, number>();
+  /** Where each event began, so a warning count can be added to an event that was already sent. */
+  private eventStart = new Map<string, number>();
+  private screenDetails: ScreenDetailsLike | null = null;
+  private secondScreenRaised = false;
 
   constructor(token: string) {
     this.token = token;
+    try {
+      this.warn = parseWarnings(sessionStorage.getItem(WARN_STORE(token)));
+      this.snap = { ...this.snap, warningCount: this.warn.count, windowManagement: "getScreenDetails" in window ? "idle" : "unsupported" };
+    } catch {
+      this.warn = INITIAL_WARNING_STATE;
+    }
     try {
       const saved = localStorage.getItem(STORE(token));
       if (saved) this.outbox = JSON.parse(saved) as QueuedEvent[];
@@ -173,6 +220,7 @@ export class ProctorEngine {
     this.set({ ready: true, policy: body.policy, devFake: body.devFakeMedia, isExtended: this.readExtended() });
     this.every(() => void this.flush(), 10_000);
     this.every(() => void this.heartbeat(), 15_000);
+    this.watchSecondScreen(body.policy);
     void this.flush();
   }
 
@@ -224,6 +272,7 @@ export class ProctorEngine {
   /** An event with no duration. */
   instant(type: ProctorEventType, meta?: Record<string, unknown>) {
     const id = rid();
+    this.eventStart.set(id, this.now());
     this.outbox.push({ clientEventId: id, type, at: this.now(), meta });
     this.persist();
     return id;
@@ -234,6 +283,7 @@ export class ProctorEngine {
     if (this.open.has(type)) return this.open.get(type)!;
     const id = rid();
     this.open.set(type, id);
+    this.eventStart.set(id, this.now());
     this.outbox.push({ clientEventId: id, type, at: this.now(), meta });
     this.persist();
     return id;
@@ -278,6 +328,206 @@ export class ProctorEngine {
 
   private clearBanner(reason: string) {
     if (this.snap.banner && "reason" in this.snap.banner && this.snap.banner.reason === reason) this.set({ banner: null });
+  }
+
+  // --------------------------------------------------------------- warnings
+
+  /** Pauses the big warnings (the warm-up practice is not the exam). */
+  suppressWarnings(reason: string, on: boolean) {
+    const was = this.warnSuppressors.size > 0;
+    if (on) this.warnSuppressors.add(reason);
+    else this.warnSuppressors.delete(reason);
+    // A second screen still connected when the practice ends must not go unmentioned.
+    if (was && this.warnSuppressors.size === 0 && this.secondScreenRaised) this.warnFor("SECOND_SCREEN_DETECTED");
+  }
+
+  private publishWarnings() {
+    try {
+      sessionStorage.setItem(WARN_STORE(this.token), serializeWarnings(this.warn));
+    } catch {
+      /* the count then lives in memory only */
+    }
+    this.set({ warning: this.warn.open, warningCount: this.warn.count });
+  }
+
+  /** The student pressed "back to the exam". */
+  acknowledgeWarning() {
+    this.warn = dismissWarning(this.warn);
+    this.publishWarnings();
+  }
+
+  /**
+   * Adds facts to an event's meta, also when the event has already been sent
+   * (the server merges meta of the same clientEventId). The panel reads the
+   * warning count from here.
+   */
+  private annotate(eventId: string, type: ProctorEventType, meta: Record<string, unknown>) {
+    const queued = this.outbox.find((e) => e.clientEventId === eventId);
+    if (queued) queued.meta = { ...(queued.meta ?? {}), ...meta };
+    else this.outbox.push({ clientEventId: eventId, type, at: this.eventStart.get(eventId) ?? this.now(), meta });
+    this.persist();
+  }
+
+  /**
+   * Raises the big warning for a recorded event when it is a serious one and
+   * the rules allow (guarding, not the warm-up, not held back by the rate
+   * limit). The event itself is recorded either way.
+   */
+  private warnFor(type: ProctorEventType, eventId?: string, detail?: { shortcutKey?: string }) {
+    const kind = warningKindFor(type, detail);
+    if (!kind || !this.snap.guarding || this.warnSuppressors.size > 0) return;
+    const r = raiseWarning(this.warn, kind, Date.now());
+    this.warn = r.state;
+    if (eventId) this.annotate(eventId, type, { warningCount: r.count, warned: r.accepted });
+    if (r.accepted) this.publishWarnings();
+  }
+
+  /** Gaze and a missing face become a warning only once they have lasted long enough. */
+  private armLong(type: "GAZE_AWAY" | "NO_FACE", eventId: string, onsetAt: number, afterMs: number) {
+    this.cancelLong(type);
+    const wait = delayUntilLasted(onsetAt, Date.now(), afterMs);
+    this.longTimers.set(
+      type,
+      window.setTimeout(() => {
+        this.longTimers.delete(type);
+        this.warnFor(type, eventId);
+      }, wait),
+    );
+  }
+
+  private cancelLong(type: string) {
+    const t = this.longTimers.get(type);
+    if (t) window.clearTimeout(t);
+    this.longTimers.delete(type);
+  }
+
+  // ----------------------------------------------------------- second screen
+
+  /** screen.isExtended is read on a 5 second poll as well as on its change event (some setups never fire it). */
+  private watchSecondScreen(policy: ProctoringPolicy) {
+    if (policy.secondScreen === "OFF") return;
+    this.every(() => this.checkSecondScreen(), EXTENDED_POLL_MS);
+    const scr = window.screen as unknown as EventTarget;
+    if (scr.addEventListener) {
+      const onChange = () => this.checkSecondScreen();
+      scr.addEventListener("change", onChange);
+      this.cleanups.push(() => scr.removeEventListener("change", onChange));
+    }
+    void this.resumeWindowManagement();
+    if (!("getScreenDetails" in window) && this.readExtended() === null) this.markUnverifiable("no screen API in this browser");
+  }
+
+  /** Every reading (event, poll, screens change) ends here: the screens now against what was raised. */
+  private checkSecondScreen() {
+    const policy = this.snap.policy;
+    if (!policy || policy.secondScreen === "OFF") return;
+    const count = this.screenDetails ? this.screenDetails.screens.length : null;
+    const present = secondScreenPresent(this.readExtended(), count);
+    if (present !== this.snap.isExtended) this.set({ isExtended: present });
+    if (!this.snap.guarding) return;
+    const decision = extendedDecision(present, this.secondScreenRaised);
+    if (decision === "RAISE") {
+      this.secondScreenRaised = true;
+      const id = this.instant("SECOND_SCREEN_DETECTED");
+      this.warnFor("SECOND_SCREEN_DETECTED", id);
+      void this.flush().then(() => this.captureScreen("VIOLATION", id));
+    } else if (decision === "CLEAR") {
+      this.secondScreenRaised = false;
+      this.warn = resolveWarning(this.warn, "SECOND_SCREEN");
+      this.publishWarnings();
+    }
+  }
+
+  private unverifiableSent = false;
+  private markUnverifiable(reason: string) {
+    if (this.unverifiableSent) return;
+    this.unverifiableSent = true;
+    this.instant("SECOND_SCREEN_UNVERIFIABLE", { reason });
+  }
+
+  /** Development fake-media mode only: what the pretend Window Management permission answers, and the screens it reports. */
+  devWindowManagement: "granted" | "denied" = "granted";
+  devScreenCount = 1;
+  private devScreens: (EventTarget & { screens: unknown[] }) | null = null;
+  /** Development fake-media mode only: sets how many screens the pretend API reports and fires its change event. */
+  setDevScreens(n: number) {
+    this.devScreenCount = n;
+    if (!this.devScreens) return;
+    this.devScreens.screens.length = 0;
+    for (let i = 0; i < n; i++) this.devScreens.screens.push({});
+    this.devScreens.dispatchEvent(new Event("screenschange"));
+  }
+
+  /** Development fake-media mode only: records an event and raises its warning exactly as a real detection would. */
+  devSimulate(type: ProctorEventType) {
+    if (!this.snap.devFake) return;
+    const id = this.instant(type);
+    this.warnFor(type, id);
+  }
+
+  private attachScreenDetails(details: ScreenDetailsLike) {
+    this.screenDetails = details;
+    const onChange = () => this.checkSecondScreen();
+    details.addEventListener("screenschange", onChange);
+    this.cleanups.push(() => details.removeEventListener("screenschange", onChange));
+    this.set({ windowManagement: "granted" });
+    this.checkSecondScreen();
+  }
+
+  /** After a reload the permission may already be granted: use it quietly, never prompt. */
+  private async resumeWindowManagement() {
+    const w = window as WindowWithScreens;
+    if (!w.getScreenDetails || this.snap.devFake || this.screenDetails) return;
+    for (const name of ["window-management", "window-placement"]) {
+      try {
+        const status = await navigator.permissions.query({ name: name as PermissionName });
+        if (status.state === "granted") {
+          this.attachScreenDetails(await w.getScreenDetails());
+        } else if (status.state === "denied") {
+          this.set({ windowManagement: "denied" });
+          this.markUnverifiable("window-management permission denied");
+        }
+        return;
+      } catch {
+        /* this name is not known to the browser: try the other one */
+      }
+    }
+  }
+
+  /**
+   * Asks for the Window Management permission (the system check calls this on
+   * a click): with it the number of screens is read directly, which a browser's
+   * isExtended flag can miss. A refusal is recorded as SECOND_SCREEN_UNVERIFIABLE.
+   */
+  async requestWindowManagement() {
+    const policy = this.snap.policy;
+    if (!policy || policy.secondScreen === "OFF") return;
+    const status = this.snap.windowManagement;
+    if (status === "asking" || status === "granted" || status === "denied") return;
+    if (this.snap.devFake) {
+      if (this.devWindowManagement === "granted") {
+        const fake = Object.assign(new EventTarget(), { screens: Array.from({ length: this.devScreenCount }, () => ({})) });
+        this.devScreens = fake;
+        this.attachScreenDetails(fake);
+      } else {
+        this.set({ windowManagement: "denied" });
+        this.markUnverifiable("window-management permission denied (dev)");
+      }
+      return;
+    }
+    const w = window as WindowWithScreens;
+    if (!w.getScreenDetails) {
+      this.set({ windowManagement: "unsupported" });
+      if (this.readExtended() === null) this.markUnverifiable("no screen API in this browser");
+      return;
+    }
+    this.set({ windowManagement: "asking" });
+    try {
+      this.attachScreenDetails(await w.getScreenDetails());
+    } catch {
+      this.set({ windowManagement: "denied" });
+      this.markUnverifiable("window-management permission denied");
+    }
   }
 
   // ------------------------------------------------------------- camera/mic
@@ -419,11 +669,15 @@ export class ProctorEngine {
           });
       if (verdict.surface === "WRONG_SURFACE") {
         stream.getTracks().forEach((t) => t.stop());
-        this.instant("SCREEN_SHARE_WRONG_SURFACE", { surface: settings.displaySurface ?? null });
+        const id = this.instant("SCREEN_SHARE_WRONG_SURFACE", { surface: settings.displaySurface ?? null });
+        this.warnFor("SCREEN_SHARE_WRONG_SURFACE", id);
         this.set({ screen: "denied", surface: "WRONG_SURFACE" });
         return false;
       }
-      if (verdict.wrongMonitor) this.instant("SCREEN_SHARE_WRONG_SURFACE", { reason: "resolution differs from this screen" });
+      if (verdict.wrongMonitor) {
+        const id = this.instant("SCREEN_SHARE_WRONG_SURFACE", { reason: "resolution differs from this screen" });
+        this.warnFor("SCREEN_SHARE_WRONG_SURFACE", id);
+      }
       this.screenStream = stream;
       this.screenVideo = hiddenVideo(stream, "kademe-proctor-screen");
       track.addEventListener("ended", () => {
@@ -533,7 +787,7 @@ export class ProctorEngine {
         if (faces !== this.snap.faces) this.set({ faces });
         if (this.snap.guarding && this.tracker) {
           const events = this.tracker.push({ t: Date.now(), faces, yawDeg: yaw, pitchDeg: pitch, eyesAway, phoneScore, lastKeyAt: this.lastKeyAt });
-          for (const e of events) this.onSignal(e.kind, e.type);
+          for (const e of events) this.onSignal(e.kind, e.type, e.t);
         }
         // Slow machine: halve the rate rather than freeze the exam.
         if (performance.now() - t0 > 120) slow++;
@@ -552,7 +806,8 @@ export class ProctorEngine {
     }
   }
 
-  private onSignal(kind: "START" | "END", type: "NO_FACE" | "MULTIPLE_FACES" | "GAZE_AWAY" | "PHONE_DETECTED") {
+  /** `onset` is when the condition began to hold (the tracker reports a start only after it has held for a while). */
+  private onSignal(kind: "START" | "END", type: "NO_FACE" | "MULTIPLE_FACES" | "GAZE_AWAY" | "PHONE_DETECTED", onset: number) {
     const p = this.snap.policy?.aiSignals;
     if (!p) return;
     const enabled =
@@ -561,12 +816,18 @@ export class ProctorEngine {
     if (kind === "END") {
       this.end(type);
       if (type === "NO_FACE") this.clearBanner("NO_FACE");
+      this.cancelLong(type);
       return;
     }
     const id = type === "PHONE_DETECTED" ? this.instant(type) : this.begin(type);
     if (type === "NO_FACE") this.showBanner({ kind: "act", reason: "NO_FACE" });
     else if (type !== "GAZE_AWAY") this.showBanner({ kind: "info", reason: "RECORDED" }, 6000);
     if (type !== "GAZE_AWAY") void this.captureViolation(id);
+    // A phone or another person is a warning at once; gaze away (6 s) and a missing face (10 s)
+    // only once they have lasted that long, so a short glance or a lean out of frame is not one.
+    if (type === "GAZE_AWAY") this.armLong(type, id, onset, GAZE_WARNING_AFTER_MS);
+    else if (type === "NO_FACE") this.armLong(type, id, onset, NO_FACE_WARNING_AFTER_MS);
+    else this.warnFor(type, id);
   }
 
   // --------------------------------------------------------------- evidence
@@ -626,14 +887,16 @@ export class ProctorEngine {
       target.addEventListener(type, fn, capture);
       this.cleanups.push(() => target.removeEventListener(type, fn, capture));
     };
-    const block = (type: ProctorEventType) => (e: Event) => {
+    // `warn`: copying, cutting and pasting are a big warning; dragging and the context menu are only recorded.
+    const block = (type: ProctorEventType, warn = false) => (e: Event) => {
       if (!policy.clipboardBlock) return;
       e.preventDefault();
-      this.instant(type);
+      const id = this.instant(type);
+      if (warn) this.warnFor(type, id);
     };
-    on(document, "copy", block("COPY_ATTEMPT"));
-    on(document, "cut", block("COPY_ATTEMPT"));
-    on(document, "paste", block("PASTE_ATTEMPT"));
+    on(document, "copy", block("COPY_ATTEMPT", true));
+    on(document, "cut", block("COPY_ATTEMPT", true));
+    on(document, "paste", block("PASTE_ATTEMPT", true));
     on(document, "contextmenu", block("CONTEXT_MENU"));
     on(document, "dragstart", block("COPY_ATTEMPT"));
     on(document, "drop", block("PASTE_ATTEMPT"));
@@ -647,7 +910,8 @@ export class ProctorEngine {
       const blocked = mod && ["c", "v", "x", "p", "s", "f", "u"].includes(key);
       if (policy.clipboardBlock && (devtools || blocked)) {
         k.preventDefault();
-        this.instant("BLOCKED_SHORTCUT", { key: `${mod ? "mod+" : ""}${k.shiftKey ? "shift+" : ""}${key}` });
+        const id = this.instant("BLOCKED_SHORTCUT", { key: `${mod ? "mod+" : ""}${k.shiftKey ? "shift+" : ""}${key}` });
+        this.warnFor("BLOCKED_SHORTCUT", id, { shortcutKey: mod && !k.shiftKey ? key : undefined });
       }
     });
     on(document, "beforeinput", (e) => {
@@ -655,18 +919,24 @@ export class ProctorEngine {
       if (ie.inputType === "insertFromPaste" || ie.inputType === "insertFromDrop") {
         if (policy.clipboardBlock) {
           ie.preventDefault();
-          this.instant("PASTE_ATTEMPT");
+          const id = this.instant("PASTE_ATTEMPT");
+          if (ie.inputType === "insertFromPaste") this.warnFor("PASTE_ATTEMPT", id);
         }
       } else if (ie.inputType === "insertText" && (ie.data?.length ?? 0) > 30) {
         this.instant("LARGE_TEXT_INSERT", { length: ie.data!.length });
       }
     });
+    // The big warning is raised when the student comes back: that is when they can read it.
     on(document, "visibilitychange", () => {
       if (document.hidden) {
         const id = this.begin("TAB_HIDDEN");
         // Send the event first so the frame can be tied to it on the server.
         void this.flush().then(() => window.setTimeout(() => void this.captureScreen("VIOLATION", id), 1000));
-      } else this.end("TAB_HIDDEN");
+      } else {
+        const id = this.open.get("TAB_HIDDEN");
+        this.end("TAB_HIDDEN");
+        if (id) this.warnFor("TAB_HIDDEN", id);
+      }
     });
     let blurTimer: number | null = null;
     on(window, "blur", () => {
@@ -679,7 +949,9 @@ export class ProctorEngine {
     });
     on(window, "focus", () => {
       if (blurTimer) window.clearTimeout(blurTimer);
+      const id = this.open.get("FOCUS_LOST");
       this.end("FOCUS_LOST");
+      if (id) this.warnFor("FOCUS_LOST", id);
     });
     on(document, "fullscreenchange", () => {
       const fs = !!document.fullscreenElement || (this.snap.devFake && this.snap.fullscreen);
@@ -709,20 +981,9 @@ export class ProctorEngine {
       this.instant("PAGE_UNLOAD");
       void this.flush(true);
     });
-    const scr = window.screen as unknown as EventTarget & { addEventListener?: EventTarget["addEventListener"] };
-    if (policy.secondScreen !== "OFF" && scr.addEventListener) {
-      const onChange = () => {
-        const ext = this.readExtended();
-        this.set({ isExtended: ext });
-        if (ext) {
-          const id = this.instant("SECOND_SCREEN_DETECTED");
-          this.showBanner({ kind: "info", reason: "SECOND_SCREEN" }, 8000);
-          void this.flush().then(() => this.captureScreen("VIOLATION", id));
-        }
-      };
-      scr.addEventListener("change", onChange);
-      this.cleanups.push(() => scr.removeEventListener("change", onChange));
-    }
+    // The screen change event and the 5 second poll are set up at session start (watchSecondScreen);
+    // read once now, so a screen already connected when the exam begins is not waited out.
+    this.checkSecondScreen();
     if (navigator.webdriver) this.instant("AUTOMATION");
     // A second tab with the same exam.
     try {
@@ -730,7 +991,8 @@ export class ProctorEngine {
       const me = rid();
       channel.onmessage = (m) => {
         if (m.data?.hello && m.data.hello !== me) {
-          this.instant("DUPLICATE_TAB");
+          const id = this.instant("DUPLICATE_TAB");
+          this.warnFor("DUPLICATE_TAB", id);
           channel.postMessage({ seen: me });
         }
       };
@@ -801,6 +1063,8 @@ export class ProctorEngine {
     this.cleanups = [];
     this.timers.forEach((t) => window.clearInterval(t));
     this.timers = [];
+    for (const t of this.longTimers.values()) window.clearTimeout(t);
+    this.longTimers.clear();
     if (this.visionLoop) window.clearInterval(this.visionLoop);
     // Cut the last segments while the tracks still run; they upload in the
     // background, and the last screen waits for them (drainRecording).
@@ -814,7 +1078,7 @@ export class ProctorEngine {
     const kb = (navigator as Navigator & { keyboard?: { unlock?: () => void } }).keyboard;
     kb?.unlock?.();
     if (document.fullscreenElement) await document.exitFullscreen().catch(() => undefined);
-    this.set({ guarding: false, camera: "idle", mic: "idle", screen: "idle", fullscreen: false, banner: null, model: "off" });
+    this.set({ guarding: false, camera: "idle", mic: "idle", screen: "idle", fullscreen: false, banner: null, model: "off", warning: null });
   }
 
   /** True when every live resource this policy needs is still running (after a reload they are not). */

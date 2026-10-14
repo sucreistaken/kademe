@@ -78,7 +78,7 @@ export const PRESETS: Record<PolicyPreset, ProctoringPolicy> = {
     microphone: true,
     screenShare: false,
     fullscreen: true,
-    secondScreen: "WARN",
+    secondScreen: "BLOCK_AT_CHECK",
     clipboardBlock: true,
     browserPolicy: "ANY_DESKTOP",
     aiSignals: { face: true, gaze: false, phone: true, voice: false },

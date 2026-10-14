@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 /**
  * G2, G9 and plan decision 4: the one filled button of a step screen, as data,
  * so the footer draws it and no screen can disable it without a reason. A
@@ -6,7 +8,21 @@
  * and its reason stands next to it, linked by `id` + `-why`.
  */
 export type FooterAction =
-  | { kind: "button"; id: string; label: string; onClick: () => void; busy?: boolean; busyLabel?: string; waitReason?: string | null }
+  | {
+      kind: "button";
+      id: string;
+      label: string;
+      onClick: () => void;
+      busy?: boolean;
+      busyLabel?: string;
+      waitReason?: string | null;
+      /** A small picture before the label. */
+      icon?: ReactNode;
+      /** "flagged": a toggle that is on (filled amber); the button is then aria-pressed. */
+      tone?: "flagged";
+      /** What assistive technology and the tooltip say when the visible label alone is not the action. */
+      ariaLabel?: string;
+    }
   | { kind: "link"; id: string; label: string; href: string };
 
 export function footerButtonState(action: Extract<FooterAction, { kind: "button" }>) {

@@ -31,13 +31,22 @@ function Action({ action, variant, compact = false }: { action: FooterAction; va
       type="button"
       id={action.id}
       data-slot="button"
-      className={cn(buttonVariants({ variant, size: "lg" }), size, "aria-disabled:cursor-wait")}
+      className={cn(
+        buttonVariants({ variant, size: "lg" }),
+        size,
+        "aria-disabled:cursor-wait",
+        // A switched-on toggle (the question flag): filled amber, still a quiet button.
+        action.tone === "flagged" && "border-sun-fill bg-sun-fill text-ink hover:border-sun-fill hover:bg-sun-fill",
+      )}
       disabled={state.mode === "waiting"}
       aria-disabled={state.mode === "busy" || undefined}
       aria-describedby={state.describedBy}
+      aria-pressed={action.tone === "flagged" ? true : undefined}
+      aria-label={action.ariaLabel}
+      title={action.ariaLabel}
       onClick={state.mode === "ready" ? action.onClick : undefined}
     >
-      {state.mode === "busy" ? <Spinner aria-hidden="true" className="size-4" role={undefined} aria-label={undefined} /> : null}
+      {state.mode === "busy" ? <Spinner aria-hidden="true" className="size-4" role={undefined} aria-label={undefined} /> : action.icon}
       {state.label}
     </button>
   );
