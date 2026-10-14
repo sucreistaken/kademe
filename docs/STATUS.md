@@ -162,6 +162,28 @@ Spec `docs/superpowers/specs/2026-10-06-advanced-ai-create-design.md`, plan
   kutusu taslağı sunucuda güncelliyor ama kartlar yenilenmeden eski kalıyordu (`4705582`); toplam 100 iken "100 olmalı"
   yazıyordu (`488f3fe`).
 
+## Canlıya çıkış: kurs grubu sürümü (2026-10-14, kullanıcı onayıyla: "canlıya al direkt")
+
+- main `ff5e882` -> `6faeb7d` (platform/solutions fast-forward). VM `kademe-app` (`cgerman-lms`, europe-west3-a).
+- Disk: 12 GB pd-balanced, başlangıçta %92 dolu (872 MB boş). Kullanıcı büyütme yerine temizlik seçti: günlükler 50 MB'a,
+  apt önbelleği, snap eski sürümleri (`refresh.retain=2`) ve önbelleği, `.next/cache`, `pnpm store prune`. Boş alan 2,4 GB;
+  build sonrası 2,1 GB. Kayıt yüklemesi artık `RECORDING_MIN_FREE_MB` (varsayılan 2048) altında 507 `STORAGE_LOW` ile
+  reddediliyor; tarayıcı parçayı bırakır, sınav sürer. Not: bu diskte sıkı gözetimli 30 kişilik bir grubun kaydı
+  (yaklaşık 4,6 GB) sığmaz, koruma devreye girer ve kaydın sonu eksik kalır. Kalıcı çözüm disk büyütme ya da R2.
+- Sıra: devam eden bölüm 0; servis ve 5 zamanlayıcı durduruldu; yedek `/root/kademe-backups/kademe-cohort-20261014-1021.dump`
+  (559 KB, 63 tablo verisi); `git pull`, `pnpm install` (`@anthropic-ai/sdk` eklendi); `pnpm run db:migrate` 0019-0022
+  (göç günlüğü 19 -> 23; onay metinlerinden kaydı anlatan 1 tanesi `covers_recording`); build (Compiled successfully);
+  `RETENTION_PURGE_ENABLED=true` eklendi ve `kademe-purge-retention.service` artık `?apply=1` ile çağırıyor (yedek:
+  `.service.bak-20261014`); servis ve zamanlayıcılar başlatıldı; `/login` 200 (127.0.0.1 ve https); dört zamanlayıcının
+  ilk çalışması success; silme işi rapor modunda hatasız (şu an silinecek bir şey yok).
+- Banka: `bank:topup --production --confirm-db=127.0.0.1:5434/kademe --retire-stale --sync-seed`: soru 643 -> 683
+  (+40 yeni sürüm), 40 eski başlangıç sorusu RETIRED (okulun düzenlediği 0), 24 soru ve 3 okuma metni senkronlandı,
+  onaylı başlangıç sorusu 390. Yeni dinleme klibi yok, `bank:tts` gerekmedi.
+- AI ikinci bakış canlıda Gemini ile (ANTHROPIC_API_KEY yok; verilen Claude anahtarı workspace hatası verdi).
+- Doğrulanmadı: canlıda gerçek bir öğrenci sınavı, gerçek kamera ile sürekli kayıt, onay metni v2'nin hukuki incelemesi.
+- Geri dönüş: servis ve zamanlayıcıları durdur, bu yedeği yükle, `git checkout ff5e882`, build, purge birimini `.bak`'tan
+  geri al, `RETENTION_PURGE_ENABLED` satırını sil, başlat. Not: 0019-0022 geri alınmaz; eski kod yeni sütunları yok sayar.
+
 ## Canlıya çıkış: sihirbaz ve banka v2 (2026-10-07)
 
 - Yedek: `/root/kademe-backups/kademe-bankv2-20261007-1958.dump`. Kod `02760e3`, build, göçler 0017 (min_evaluations 1) ve 0018 (ai_purpose HIRING_ROLE_BRIEF, HIRING_REVISE) uygulandı; `kademe` active, `/login` 200.
