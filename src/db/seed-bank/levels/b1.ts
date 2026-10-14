@@ -12,7 +12,7 @@ import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 /**
  * B1 starter bank, written against docs/EXAM-BANK-RESEARCH.md (section B1).
  *
- * Grammar: 24 items (8 EASY, 8 MID, 8 HARD) plus one C-test. Reading: 4 texts
+ * Grammar: 24 items (8 EASY, 10 MID, 6 HARD) plus one C-test. Reading: 4 texts
  * with 4 items each. Listening: 3 clips with 4 items each. Writing and
  * speaking: 6 prompts each. Single-choice items have 3 options (Goethe B1
  * format); the correct option is given first and placed at `pos`, so the key
@@ -171,11 +171,16 @@ const grammarItems: SeedItem[] = [
     ["Kollegen"],
     "„mit“ + Dativ; „Kollege“ gehört zur n-Deklination und bekommt außer im Nominativ Singular die Endung -n: „dem Kollegen“."),
 
-  // ---------------------------------------------------------------- HARD
-  choice("konnektor.konzessiv", "HARD",
+  choice("konnektor.konzessiv", "MID",
     "Er war sehr müde. ___ ging er nach der Arbeit noch ins Fitnessstudio.",
     "Trotzdem", ["Obwohl", "Weil"], 2,
     "Das Verb steht direkt nach der Lücke (Position 2), also braucht man ein Adverb: „trotzdem“. „obwohl“ und „weil“ verlangen das Verb am Satzende."),
+  choice("konjunktiv2", "MID",
+    "Wenn ich du ___, würde ich das Angebot annehmen.",
+    "wäre", ["bin", "war"], 2,
+    "Ratschlag mit irrealer Bedingung: „Wenn ich du wäre, ...“ mit Konjunktiv II von „sein“, passend zu „würde“ im Hauptsatz."),
+
+  // ---------------------------------------------------------------- HARD
   choice("infinitiv.ohnezu", "HARD",
     "Er hat den Vertrag unterschrieben, ___ ihn vorher genau zu lesen.",
     "ohne", ["ohne dass", "damit"], 0,
@@ -184,10 +189,6 @@ const grammarItems: SeedItem[] = [
     "Das alte Rathaus ist im Jahr 1890 gebaut ___.",
     "worden", ["geworden", "gewesen"], 1,
     "Passiv Perfekt: sein + Partizip II + „worden“. Im Passiv verliert das Partizip von „werden“ das ge-."),
-  choice("konjunktiv2", "HARD",
-    "Wenn ich du ___, würde ich das Angebot annehmen.",
-    "wäre", ["bin", "war"], 2,
-    "Ratschlag als irrealer Vergleich: „Wenn ich du wäre, ...“ mit Konjunktiv II von „sein“."),
   choice("relativsatz.was", "HARD",
     "Er hat die Prüfung beim ersten Mal bestanden, ___ alle überrascht hat.",
     "was", ["das", "dass"], 0,
@@ -533,7 +534,7 @@ const readingItems: SeedItem[] = [
     "Punkt 1: „Die Anmeldung ist erst gültig, wenn Sie die Kursgebühr bezahlt haben.“"),
   regeln.choice("inference", "HARD",
     "Sie haben sich angemeldet und bezahlt. Fünf Tage vor Kursbeginn merken Sie, dass Sie nicht teilnehmen können, und Sie finden niemanden, der Ihren Platz übernimmt. Was passiert?",
-    "Sie bekommen die Kursgebühr ohne 50 Euro zurück.",
+    "Sie bekommen alles außer 50 Euro zurück.",
     ["Sie bekommen die ganze Kursgebühr zurück.", "Sie bekommen kein Geld zurück."],
     1,
     "Punkt 3: Kostenlos ist die Abmeldung nur bis zehn Tage vorher; danach (aber vor Kursbeginn) behält die Schule 50 Euro. Kein Geld gibt es erst nach Kursbeginn."),
@@ -838,10 +839,10 @@ const writingItems: SeedItem[] = [
       "höfliche Entschuldigung bzw. Absage",
       "nachvollziehbarer Grund",
       "konkreter Vorschlag für einen neuen Termin",
-      "formelle Anrede (Sehr geehrte Frau Becker / Liebe Frau Becker) und Gruß",
+      "passende Anrede (Sehr geehrte Frau Becker / Liebe Frau Becker) und Gruß",
     ],
     SEMIFORMAL,
-    `Halbformelle E-Mail an eine Vorgesetzte (Goethe B1 Aufgabe 3): sich entschuldigen und um etwas bitten. ${RUBRIC_NOTE}`),
+    `Halbformelle E-Mail an eine Vorgesetzte (Goethe B1 Aufgabe 3): sich entschuldigen, einen Grund nennen und einen neuen Termin vorschlagen. ${RUBRIC_NOTE}`),
   writing("application", "MID", LONG,
     "Sie haben im Internet gelesen: Ein Supermarkt in Ihrer Stadt sucht Aushilfen für das Wochenende. Schreiben Sie eine E-Mail an Herrn Kraus von der Personalabteilung (circa 80 Wörter).\n\n" +
       "- Stellen Sie sich kurz vor.\n" +
@@ -869,7 +870,7 @@ const writingItems: SeedItem[] = [
     NEUTRAL,
     `Meinungsäußerung im Forum (Goethe B1 Aufgabe 2). ${RUBRIC_NOTE}`),
   writing("complaint", "HARD", LONG,
-    "Sie haben bei einer Sprachschule einen Computerkurs gebucht. In der Anzeige stand: „kleine Gruppen, moderne Computer“. Im Kurs waren aber zwanzig Personen und viele Computer funktionierten nicht. Schreiben Sie eine Beschwerde an die Kursleitung (circa 80 Wörter).\n\n" +
+    "Sie haben bei einem Bildungszentrum einen Computerkurs gebucht. In der Anzeige stand: „kleine Gruppen, moderne Computer“. Im Kurs waren aber zwanzig Personen und viele Computer funktionierten nicht. Schreiben Sie eine Beschwerde an die Kursleitung (circa 80 Wörter).\n\n" +
       "- Beschreiben Sie, welchen Kurs Sie wann gebucht haben.\n" +
       "- Erklären Sie die Probleme.\n" +
       "- Schreiben Sie, was Sie jetzt erwarten.",
@@ -912,11 +913,11 @@ const SPEAK_NOTE = "Bewertung nach Goethe B1 Sprechen: Erfüllung, Interaktion b
 
 const speakingItems: SeedItem[] = [
   speaking("introduction", "EASY", { thinkSeconds: 30, answerSeconds: 90, maxTakes: 2 },
-    "Stellen Sie sich vor, Sie sind in einem Vorstellungsgespräch. Erzählen Sie etwas über sich: Wer sind Sie? Was haben Sie gelernt oder studiert? Wo haben Sie schon gearbeitet? Was können Sie besonders gut?",
+    "Stellen Sie sich vor, Sie sind in einem Vorstellungsgespräch. Erzählen Sie etwas über sich: Wer sind Sie? Was haben Sie gelernt oder studiert? Wo haben Sie schon gearbeitet oder ein Praktikum gemacht? Was können Sie besonders gut?",
     [
       "Name und kurz die aktuelle Situation (Alter, Herkunft o. Ä. werden nicht erwartet)",
-      "Ausbildung oder Studium",
-      "bisherige Arbeitserfahrung",
+      "Schule, Ausbildung oder Studium",
+      "bisherige Arbeits- oder Praktikumserfahrung (wer noch keine hat, sagt das und nennt z. B. einen Wunsch)",
       "mindestens eine Stärke mit Beispiel",
     ],
     `Monologische Selbstvorstellung im Handlungsfeld Arbeit, ca. 90 Sekunden. ${SPEAK_NOTE}`,
