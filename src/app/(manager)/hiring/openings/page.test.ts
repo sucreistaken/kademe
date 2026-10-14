@@ -166,7 +166,8 @@ describe("the openings' control view page (4.4)", () => {
   it("the empty list is the open page empty state with 'Alım aç' and its plus (mockup 8)", async () => {
     cockpit.value = { runs: true, drafts: [], open: [], closed: [] };
     const html = await render();
-    expect(html).toContain("w-[380px] max-w-full");
+    // The open page empty state draws the mascot thinking (docs/design/RULES.md rule 9).
+    expect(html).toContain('data-pose="think"');
     expect(html).not.toContain("border border-line bg-surface py-14");
     expect(html).toMatch(/<a[^>]*data-variant="primary"[^>]*><svg[^>]*lucide-plus/);
   });
