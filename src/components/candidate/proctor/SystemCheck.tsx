@@ -1,42 +1,51 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CandidateColumn } from "@/components/candidate/Shell";
 import { MobileBlock, isMobileDevice } from "@/components/candidate/MobileBlock";
 import { environmentFacts, useProctor } from "@/components/candidate/proctor/ProctorProvider";
+import { checkStep, planSteps, primaryEnabled, type CheckStep, type StepState, type Wait } from "@/components/candidate/proctor/check-steps";
+import { buttonVariants } from "@/components/ui/button";
+import { Mascot, type MascotPose } from "@/components/visual/mascot";
 import { apiSend, candidateApiBase } from "@/lib/client/api";
 import { MEDIA_ERROR_KEY, mediaErrorKind } from "@/lib/client/media-error";
 import { stepPath } from "@/lib/candidate-routes";
 import { evaluateEnvironment } from "@/lib/proctor/environment";
-import { requiredChecks, type CheckId, type ProctoringPolicy } from "@/lib/proctor/policy";
+import type { ProctoringPolicy } from "@/lib/proctor/policy";
 import type { CandidateState } from "@/lib/exam-flow";
 import { useT, type TypedT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
 
 /**
- * The system check. Early validation instead of late rescue: every device and
- * permission the exam needs is proved here, one row at a time, before the
- * clock of the first section can start. Each row has its own small action;
- * the screen has one filled button, and it stays off until every required row
- * is green, saying which row it waits for.
+ * The system check, as a guided flow: one screen, one sentence, one big
+ * button that is the next real action. Which screen is shown, and when the
+ * button may be pressed, is decided by check-steps.ts (tested); what blocks
+ * the start is exactly what the old checklist's rows blocked. Browser, single
+ * screen and connection checks run in the background and speak only when they
+ * fail.
  */
 
-type RowStatus = "waiting" | "active" | "ok" | "warn" | "fail";
-type RowId = CheckId | "QUIET";
+type T = TypedT<"examCheck">;
+
+const POSE: Record<CheckStep, MascotPose> = { devices: "wave", look: "think", screen: "think", ready: "wave", blocked: "think" };
 
 export function SystemCheck({ token, policy }: { token: string; policy: ProctoringPolicy }) {
   const router = useRouter();
-  const t = useT("check");
+  const t = useT("examCheck");
   const f = useT("examFlow");
   const { engine, snap } = useProctor();
   const [mobile, setMobile] = useState(false);
   const [bandwidth, setBandwidth] = useState<{ state: "measuring" | "ok" | "low" | "unknown"; mbps?: string }>({ state: "measuring" });
   const [quiet, setQuiet] = useState<"idle" | "working" | "done">("idle");
+  const [lookConfirmed, setLookConfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [problemSent, setProblemSent] = useState(false);
-  const previewRef = useRef<HTMLVideoElement | null>(null);
+  const [fixOpen, setFixOpen] = useState(false);
+  const quietStarted = useRef(false);
+  const titleRef = useRef<HTMLHeadingElement | null>(null);
+  const shownStep = useRef<string | null>(null);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -67,13 +76,17 @@ export function SystemCheck({ token, policy }: { token: string; policy: Proctori
     };
   }, [token]);
 
-  // The preview shows the same stream the engine records.
-  useEffect(() => {
-    if (previewRef.current && engine?.cameraStream && previewRef.current.srcObject !== engine.cameraStream) {
-      previewRef.current.srcObject = engine.cameraStream;
-      void previewRef.current.play().catch(() => undefined);
-    }
-  }, [engine, snap?.camera]);
+  // The preview shows the same stream the engine records. A callback ref, because the video only exists on one step.
+  const cameraStream = engine?.cameraStream ?? null;
+  const previewRef = useCallback(
+    (el: HTMLVideoElement | null) => {
+      if (el && cameraStream && el.srcObject !== cameraStream) {
+        el.srcObject = cameraStream;
+        void el.play().catch(() => undefined);
+      }
+    },
+    [cameraStream],
+  );
 
   // Face detection starts by itself once the camera is on.
   useEffect(() => {
@@ -98,41 +111,41 @@ export function SystemCheck({ token, policy }: { token: string; policy: Proctori
     );
   }, [policy, snap?.isExtended]);
 
-  const checks = requiredChecks(policy);
-  const rows: Array<{ id: RowId; required: boolean }> = [];
-  for (const c of checks) {
-    rows.push(c);
-    if (c.id === "MICROPHONE" && policy.aiSignals.voice) rows.push({ id: "QUIET", required: true });
-  }
+  const plan = useMemo(() => planSteps(policy), [policy]);
+  const result = checkStep(plan, {
+    // The old BROWSER row: any blocker except the second screen (its own rule below). Until the browser is read, the start waits.
+    ready: !!snap?.ready && env !== null,
+    browserBlocked: env ? env.blockers.some((b) => b !== "SECOND_SCREEN") : false,
+    secondScreenBlocks: policy.secondScreen === "BLOCK_AT_CHECK",
+    isExtended: snap?.isExtended ?? null,
+    camera: snap?.camera ?? "idle",
+    mic: snap?.mic ?? "idle",
+    model: snap?.model ?? "off",
+    faces: snap?.faces ?? null,
+    quiet,
+    screen: snap?.screen ?? "idle",
+    surface: snap?.surface ?? null,
+    lookConfirmed,
+  } satisfies StepState);
 
-  function statusOf(id: RowId): RowStatus {
-    if (!snap) return "waiting";
-    switch (id) {
-      case "BROWSER":
-        return env && env.blockers.filter((b) => b !== "SECOND_SCREEN").length === 0 ? "ok" : "fail";
-      case "SINGLE_SCREEN":
-        if (snap.isExtended === true) return policy.secondScreen === "BLOCK_AT_CHECK" ? "fail" : "warn";
-        return snap.isExtended === false ? "ok" : "warn";
-      case "CAMERA":
-        return snap.camera === "ok" ? "ok" : snap.camera === "denied" || snap.camera === "lost" ? "fail" : "active";
-      case "MICROPHONE":
-        return snap.mic === "ok" ? "ok" : snap.mic === "denied" ? "fail" : "active";
-      case "QUIET":
-        return quiet === "done" ? "ok" : "active";
-      case "FACE":
-        if (snap.model === "unavailable") return "warn";
-        if (snap.model !== "ready") return "active";
-        return snap.faces === 1 ? "ok" : snap.faces === null ? "active" : "fail";
-      case "SCREEN_SHARE":
-        return snap.screen === "ok" ? "ok" : snap.screen === "denied" || snap.screen === "lost" ? "fail" : "active";
-      case "CONNECTION":
-        return bandwidth.state === "measuring" ? "active" : bandwidth.state === "ok" ? "ok" : "warn";
-    }
-  }
+  // The room is measured by itself when the look step opens (3 seconds); the student only sees a sentence.
+  const measuring = result.step === "look" && plan.quiet && snap?.mic === "ok";
+  useEffect(() => {
+    if (!engine || !measuring || quietStarted.current) return;
+    quietStarted.current = true;
+    setQuiet("working");
+    void engine
+      .calibrateQuiet()
+      .catch(() => null)
+      .then(() => setQuiet("done"));
+  }, [engine, measuring]);
 
-  // Rows open in order: a row waits while a required row above it is not done.
-  const firstOpen = rows.findIndex((r) => r.required && !["ok", "warn"].includes(statusOf(r.id)));
-  const blocking = rows.find((r) => r.required && statusOf(r.id) !== "ok" && !(r.id === "FACE" && statusOf(r.id) === "warn") && !(r.id === "SINGLE_SCREEN" && statusOf(r.id) === "warn"));
+  // A new screen (or a new problem on it) takes focus, so the one sentence is read.
+  const screenKey = `${result.step}:${result.issue ?? ""}`;
+  useEffect(() => {
+    if (shownStep.current !== null && shownStep.current !== screenKey) titleRef.current?.focus();
+    shownStep.current = screenKey;
+  }, [screenKey]);
 
   async function begin() {
     if (!engine) return;
@@ -164,249 +177,239 @@ export function SystemCheck({ token, policy }: { token: string; policy: Proctori
     }
   }
 
+  function press() {
+    switch (result.primary) {
+      case "open":
+      case "retry":
+        if (result.step === "screen") void engine?.startScreen();
+        else void engine?.startCamera();
+        break;
+      case "share":
+        void engine?.startScreen();
+        break;
+      case "continue":
+        setLookConfirmed(true);
+        break;
+      case "start":
+        void begin();
+        break;
+    }
+  }
+
   if (mobile && (policy.screenShare || policy.camera)) return <MobileBlock token={token} need={{ camera: policy.camera, screenShare: policy.screenShare }} />;
 
-  const label: Record<RowId, string> = {
-    BROWSER: t("browser"),
-    SINGLE_SCREEN: t("singleScreen"),
-    CAMERA: t("camera"),
-    MICROPHONE: t("camera"),
-    QUIET: t("quiet"),
-    FACE: t("face"),
-    SCREEN_SHARE: t("screen"),
-    CONNECTION: t("connection"),
+  const isIssue = result.issue !== null || result.step === "blocked";
+  const enabled = primaryEnabled(result) && !busy;
+  const extendedNote = snap?.isExtended === true && policy.secondScreen === "WARN";
+  const sentence = sentenceFor(result.step, result.wait, result.issue, t);
+  const notes: string[] = [];
+  if (result.step === "look" && snap?.model === "unavailable") notes.push(t("faceModelDown"));
+  if (result.step === "ready") {
+    if (bandwidth.state === "low") notes.push(t("connLow", { mbps: bandwidth.mbps ?? "" }));
+    if (extendedNote) notes.push(t("singleExtended"));
+  }
+
+  const title: Record<CheckStep, string> = {
+    devices: t("devicesTitle"),
+    look: t("lookTitle"),
+    screen: t("screenTitle"),
+    ready: t("readyTitle"),
+    blocked: result.wait === "secondScreen" ? t("blockedSecondScreenTitle") : t("blockedBrowserTitle"),
   };
+  const label =
+    result.primary === "retry"
+      ? t("retry")
+      : result.primary === "continue"
+        ? t("lookAction")
+        : result.primary === "share"
+          ? t("screenAction")
+          : result.primary === "start"
+            ? busy
+              ? t("starting")
+              : t("cta")
+            : t("devicesAction");
 
   return (
-    <CandidateColumn width={720}>
-      <h1 className="text-[26px] font-bold leading-[1.25] tracking-[-0.02em] text-ink">{t("title")}</h1>
-      <p className="mt-2 text-sm leading-[1.6] text-muted">{t("body")}</p>
+    <CandidateColumn width={640}>
+      <div className="flex flex-col items-center text-center">
+        {result.index !== null && result.total > 1 ? <Progress plan={plan.steps} current={result.index} t={t} /> : null}
 
-      <ol className="mt-7 flex flex-col gap-2.5">
-        {rows
-          // Camera and microphone are one permission, so one row.
-          .filter((r) => r.id !== "MICROPHONE" || !rows.some((x) => x.id === "CAMERA"))
-          .map((row, index) => {
-            const status = statusOf(row.id);
-            const locked = firstOpen >= 0 && index > firstOpen && row.required && status !== "ok";
-            return (
-              <li
-                key={row.id}
-                className={cn(
-                  "rounded-[10px] border bg-surface px-[18px] py-3.5",
-                  status === "fail" ? "border-line-strong" : "border-line",
-                  locked && "opacity-60",
-                )}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
-                    <Dot status={locked ? "waiting" : status} />
-                    <span className="text-sm font-semibold text-ink">{label[row.id]}</span>
-                  </div>
-                  {!locked ? (
-                    <RowAction id={row.id} status={status} engineReady={!!snap?.ready} quiet={quiet} t={t} onQuiet={async () => {
-                      if (!engine) return;
-                      setQuiet("working");
-                      await engine.calibrateQuiet();
-                      setQuiet("done");
-                    }} onCamera={() => void engine?.startCamera()} onScreen={() => void engine?.startScreen()} />
-                  ) : (
-                    <span className="text-[12.5px] text-muted">{t("waiting")}</span>
-                  )}
-                </div>
-                {!locked ? (
-                  <RowDetail
-                    id={row.id}
-                    status={status}
-                    t={t}
-                    snap={snap}
-                    bandwidth={bandwidth}
-                    previewRef={previewRef}
-                  />
-                ) : null}
-              </li>
-            );
-          })}
-      </ol>
+        <Mascot pose={POSE[result.step]} size="small" className="mt-5" />
+        <h1 ref={titleRef} tabIndex={-1} className="mt-4 text-[30px] leading-[38px] font-extrabold tracking-[-0.01em] text-ink outline-none">
+          {title[result.step]}
+        </h1>
+        {result.step === "devices" && !isIssue ? <p className="mt-2 text-[17px] leading-[26px] text-ink-2">{t("devicesLead")}</p> : null}
+        {result.step === "look" && !sentence ? <p className="mt-2 text-[17px] leading-[26px] text-ink-2">{t("lookLead")}</p> : null}
+        {result.step === "screen" && !isIssue ? <p className="mt-2 text-[17px] leading-[26px] text-ink-2">{t("screenLead")}</p> : null}
+        {result.step === "ready" ? <p className="mt-2 text-[17px] leading-[26px] text-ink-2">{t("readyLead")}</p> : null}
 
-      <button
-        type="button"
-        onClick={begin}
-        disabled={!!blocking || busy || !snap?.ready}
-        aria-describedby="begin-why"
-        className="mt-7 h-12 w-full rounded-[10px] bg-accent text-[15px] font-semibold text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:bg-line disabled:text-muted"
-      >
-        {busy ? t("starting") : t("cta")}
-      </button>
-      {blocking ? (
-        <p id="begin-why" className="mt-[9px] text-center text-[12.5px] text-muted">
-          {t("ctaWaiting", { row: label[blocking.id] })}
-        </p>
-      ) : null}
-      {error ? <p className="mt-2 text-center text-[13px] text-danger">{error}</p> : null}
-      <p className="mt-5 text-center text-[12.5px] text-ink-3">
-        {problemSent ? (
-          t("problemSent")
-        ) : (
-          <button type="button" onClick={reportProblem} className="underline decoration-line-strong underline-offset-2">
-            {t("reportProblem")}
+        {result.step === "look" && plan.look && policy.camera ? (
+          <div className="mt-4 flex items-center gap-5">
+            <video ref={previewRef} muted playsInline aria-label={t("previewLabel")} className="h-[135px] w-[180px] -scale-x-100 rounded-[14px] bg-ink object-cover" />
+            {policy.microphone ? <MicMeter level={snap?.micLevel ?? 0} label={t("micLevel")} /> : null}
+          </div>
+        ) : null}
+        {result.step === "screen" && !isIssue ? <PickerHint t={t} /> : null}
+        {result.step === "ready" ? <Rules policy={policy} t={t} /> : null}
+
+        {sentence ? (
+          <p
+            role={isIssue ? "alert" : "status"}
+            className={cn(
+              "mt-6 max-w-[520px] text-[16px] leading-[25px]",
+              isIssue ? "rounded-[14px] bg-danger-soft px-5 py-3 font-semibold text-danger" : "font-semibold text-ink",
+            )}
+          >
+            {sentence}
+          </p>
+        ) : result.step === "look" ? (
+          <p role="status" className="mt-6 text-[16px] font-semibold text-ink">
+            {t("lookOk")}
+          </p>
+        ) : null}
+        {notes.map((n) => (
+          <p key={n} className="mt-3 max-w-[520px] text-[14px] leading-[22px] text-muted">
+            {n}
+          </p>
+        ))}
+
+        {result.primary ? (
+          <button
+            type="button"
+            onClick={press}
+            disabled={!enabled}
+            className={cn(buttonVariants({ variant: "primary", size: "lg" }), "mt-6 h-14 w-full max-w-[420px] px-6 text-[17px]")}
+          >
+            {result.wait === "preparing" ? t("preparing") : label}
           </button>
-        )}
-      </p>
+        ) : null}
+        {result.step === "screen" && result.issue === "screenDenied" ? (
+          <div className="mt-3 max-w-[520px]">
+            <button type="button" onClick={() => setFixOpen((v) => !v)} className="text-[14px] font-semibold text-ink underline decoration-underline underline-offset-2">
+              {t("howToFix")}
+            </button>
+            {fixOpen ? <p className="mt-2 text-[14px] leading-[22px] text-muted">{t("macosScreen")}</p> : null}
+          </div>
+        ) : null}
+        {error ? (
+          <p role="alert" className="mt-3 max-w-[520px] text-[14px] text-danger">
+            {error}
+          </p>
+        ) : null}
+
+        <p className="mt-5 text-[14px] text-ink-3">
+          {problemSent ? (
+            t("problemSent")
+          ) : (
+            <button type="button" onClick={reportProblem} className={isIssue || error ? cn(buttonVariants({ variant: "secondary", size: "md" }), "text-ink") : "underline decoration-line-strong underline-offset-2"}>
+              {t("reportProblem")}
+            </button>
+          )}
+        </p>
+      </div>
     </CandidateColumn>
   );
 }
 
-function Dot({ status }: { status: RowStatus }) {
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        "inline-block size-2 rounded-full",
-        status === "ok" && "bg-accent",
-        status === "active" && "bg-ink-3",
-        status === "warn" && "bg-ink-3",
-        status === "fail" && "bg-danger",
-        status === "waiting" && "bg-line-strong",
-      )}
-    />
-  );
-}
-
-type T = TypedT<"check">;
-
-function RowAction({
-  id,
-  status,
-  engineReady,
-  quiet,
-  t,
-  onCamera,
-  onScreen,
-  onQuiet,
-}: {
-  id: RowId;
-  status: RowStatus;
-  engineReady: boolean;
-  quiet: "idle" | "working" | "done";
-  t: T;
-  onCamera: () => void;
-  onScreen: () => void;
-  onQuiet: () => void;
-}) {
-  const cls =
-    "h-8 rounded-[8px] border border-line bg-surface px-3 text-[13px] font-medium text-ink hover:bg-canvas disabled:cursor-not-allowed disabled:text-muted";
-  if (id === "CAMERA" && status !== "ok")
-    return (
-      <button type="button" className={cls} onClick={onCamera} disabled={!engineReady}>
-        {t("cameraAction")}
-      </button>
-    );
-  if (id === "SCREEN_SHARE" && status !== "ok")
-    return (
-      <button type="button" className={cls} onClick={onScreen} disabled={!engineReady}>
-        {t("screenAction")}
-      </button>
-    );
-  if (id === "QUIET" && quiet !== "done")
-    return (
-      <button type="button" className={cls} onClick={onQuiet} disabled={quiet === "working"}>
-        {quiet === "working" ? t("quietWorking") : t("quietAction")}
-      </button>
-    );
-  return null;
-}
-
-function RowDetail({
-  id,
-  status,
-  t,
-  snap,
-  bandwidth,
-  previewRef,
-}: {
-  id: RowId;
-  status: RowStatus;
-  t: T;
-  snap: ReturnType<typeof useProctor>["snap"];
-  bandwidth: { state: string; mbps?: string };
-  previewRef: React.RefObject<HTMLVideoElement | null>;
-}) {
-  const [fix, setFix] = useState(false);
-  const line = (text: string) => <p className="mt-1.5 pl-[18px] text-[13px] leading-[1.55] text-muted">{text}</p>;
-  switch (id) {
-    case "BROWSER":
-      return line(status === "ok" ? t("browserOk") : t("browserBad"));
-    case "SINGLE_SCREEN":
-      return line(snap?.isExtended === true ? t("singleExtended") : snap?.isExtended === false ? t("singleOk") : t("singleUnknown"));
-    case "CAMERA":
-      return (
-        <div className="pl-[18px]">
-          {status === "fail" ? (
-            <p className="mt-1.5 text-[13px] leading-[1.55] text-muted">{t("cameraDenied")}</p>
-          ) : status === "ok" ? (
-            <p className="mt-1.5 text-[13px] leading-[1.55] text-muted">{t("cameraOk")}</p>
-          ) : snap?.camera === "asking" ? (
-            <p className="mt-1.5 text-[13px] font-medium leading-[1.55] text-ink">{t("permissionWaiting")}</p>
-          ) : null}
-          <div className={cn("mt-2.5 flex items-center gap-4", status !== "ok" && "hidden")}>
-            <video ref={previewRef} muted playsInline className="h-[120px] w-[160px] rounded-[8px] bg-ink object-cover" />
-            <MicMeter level={snap?.micLevel ?? 0} />
-          </div>
-        </div>
-      );
-    case "QUIET":
-      return status === "ok" ? line(t("quietOk")) : null;
-    case "FACE":
-      if (snap?.model === "unavailable") return line(t("faceModelDown"));
-      if (snap?.model !== "ready") return line(t("faceLoading"));
-      return line(snap.faces === 1 ? t("faceOk") : (snap.faces ?? 0) > 1 ? t("faceMany") : t("faceNone"));
-    case "SCREEN_SHARE":
-      return (
-        <div>
-          {line(
-            status === "ok"
-              ? t("screenOk")
-              : snap?.surface === "WRONG_SURFACE"
-                ? t("screenWrong")
-                : snap?.screen === "asking"
-                  ? t("screenPicking")
-                : status === "fail"
-                  ? t("screenDenied")
-                  : t("screenHint"),
-          )}
-          {status === "fail" ? (
-            <div className="pl-[18px]">
-              <button type="button" onClick={() => setFix((v) => !v)} className="mt-1.5 text-[12.5px] font-semibold text-ink underline decoration-underline underline-offset-2">
-                {t("howToFix")}
-              </button>
-              {fix ? <p className="mt-1.5 text-[13px] leading-[1.55] text-muted">{t("macosScreen")}</p> : null}
-            </div>
-          ) : null}
-        </div>
-      );
-    case "CONNECTION":
-      return line(
-        bandwidth.state === "measuring"
-          ? t("connMeasuring")
-          : bandwidth.state === "ok"
-            ? t("connOk", { mbps: bandwidth.mbps ?? "" })
-            : bandwidth.state === "low"
-              ? t("connLow", { mbps: bandwidth.mbps ?? "" })
-              : t("connUnknown"),
-      );
+/** The one sentence the student needs now: what is being waited for, or what went wrong and how to fix it. */
+function sentenceFor(step: CheckStep, wait: Wait | null, issue: string | null, t: T): string | null {
+  if (issue === "denied") return t("denied");
+  if (issue === "lost") return t("lost");
+  if (issue === "unsupported") return t("unsupported");
+  if (issue === "wrongSurface") return t("screenWrong");
+  if (issue === "screenDenied") return t("screenDenied");
+  switch (wait) {
+    case "asking":
+      return t("devicesAsking");
+    case "pickScreen":
+      return t("screenPicking");
+    case "faceLoading":
+      return t("faceLoading");
+    case "faceNone":
+      return t("faceNone");
+    case "faceMany":
+      return t("faceMany");
+    case "quietWorking":
+      return t("quietWorking");
+    case "browser":
+      return t("blockedBrowser");
+    case "secondScreen":
+      return t("blockedSecondScreen");
     default:
-      return null;
+      return step === "devices" ? t("devicesHint") : null;
   }
 }
 
-function MicMeter({ level }: { level: number }) {
+function Progress({ plan, current, t }: { plan: Array<Exclude<CheckStep, "blocked">>; current: number; t: T }) {
+  const names = { devices: t("stepDevices"), look: t("stepLook"), screen: t("stepScreen"), ready: t("stepReady") } as const;
+  return (
+    <nav aria-label={t("stepsLabel")} className="w-full">
+      <p className="text-[14px] font-bold text-accent">{t("stepOf", { n: current, total: plan.length })}</p>
+      <ol className="mt-3 flex items-start justify-center gap-2">
+        {plan.map((id, i) => {
+          const state = i + 1 < current ? "done" : i + 1 === current ? "now" : "next";
+          return (
+            <li key={id} aria-current={state === "now" ? "step" : undefined} className="flex w-[130px] flex-col items-center gap-1.5">
+              <span className={cn("h-1.5 w-full rounded-full", state === "next" ? "bg-line" : "bg-accent")} />
+              <span className={cn("text-[12.5px] leading-[17px]", state === "now" ? "font-bold text-ink" : "text-muted")}>{names[id]}</span>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+}
+
+/** A tiny picture of the browser's share window with "Tüm ekran" lit, so the student knows what to click. */
+function PickerHint({ t }: { t: T }) {
+  const tiles = [
+    { key: "pickEntire", on: true },
+    { key: "pickWindow", on: false },
+    { key: "pickTab", on: false },
+  ] as const;
+  return (
+    <div className="mt-6 flex flex-col items-center gap-2" aria-hidden>
+      <div className="flex gap-3 rounded-[16px] border-2 border-line bg-surface p-3">
+        {tiles.map((x) => (
+          <div
+            key={x.key}
+            className={cn("flex w-[110px] flex-col items-center gap-2 rounded-[10px] border-2 px-2 py-3", x.on ? "border-accent bg-accent-soft" : "border-line opacity-60")}
+          >
+            <span className={cn("block h-9 w-14 rounded-[5px] border-2", x.on ? "border-accent bg-accent/20" : "border-line-strong")} />
+            <span className={cn("text-[12.5px]", x.on ? "font-bold text-ink" : "text-muted")}>{t(x.key)}</span>
+          </div>
+        ))}
+      </div>
+      <p className="text-[14px] font-bold text-accent">{t("screenHint")}</p>
+    </div>
+  );
+}
+
+function Rules({ policy, t }: { policy: ProctoringPolicy; t: T }) {
+  const rules = [
+    policy.fullscreen ? t("ruleFullscreen") : null,
+    policy.secondScreen !== "OFF" ? t("ruleOneScreen") : null,
+    t("ruleTab"),
+  ].filter((r): r is string => r !== null);
+  return (
+    <ul className="mt-6 flex w-full max-w-[460px] flex-col gap-2.5 text-left">
+      {rules.map((r) => (
+        <li key={r} className="flex items-start gap-3 rounded-[14px] bg-mint-soft px-4 py-3 text-[16px] leading-[24px] text-ink">
+          <span aria-hidden className="mt-[9px] size-2 shrink-0 rounded-full bg-accent" />
+          {r}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function MicMeter({ level, label }: { level: number; label: string }) {
   const bars = 12;
   const lit = Math.round(Math.min(1, level * 4) * bars);
   return (
-    <div className="flex h-6 items-end gap-[3px]" aria-hidden>
+    <div className="flex h-8 items-end gap-[3px]" role="img" aria-label={label}>
       {Array.from({ length: bars }, (_, i) => (
-        <span key={i} className={cn("w-[5px] rounded-[2px]", i < lit ? "bg-accent" : "bg-line")} style={{ height: `${6 + i * 1.5}px` }} />
+        <span key={i} className={cn("w-[5px] rounded-[2px]", i < lit ? "bg-accent" : "bg-line")} style={{ height: `${8 + i * 2}px` }} />
       ))}
     </div>
   );
