@@ -100,9 +100,9 @@ const grammarItems: SeedItem[] = [
     ["sie morgen später kommt", "sie kommt morgen später", "kommt sie morgen später"], 0,
     "Im dass-Satz steht das konjugierte Verb am Ende. Die anderen Optionen haben das Verb an zweiter bzw. erster Stelle."),
   gChoice("konnektor", "EASY",
-    "Mein Auto ist kaputt, deshalb ___ heute mit dem Bus.",
-    ["fahre ich", "ich fahre", "fahren ich"], 0,
-    "Nach \"deshalb\" (Position 1) folgt das Verb, dann das Subjekt: deshalb fahre ich. \"fahren ich\" ist falsch konjugiert."),
+    "Mein Auto ist kaputt, deshalb ___ mit dem Bus.",
+    ["fahre ich heute", "ich fahre heute", "ich heute fahre"], 0,
+    "Nach \"deshalb\" (Position 1) folgt das Verb, dann das Subjekt: deshalb fahre ich heute. \"deshalb\" leitet keinen Nebensatz ein, das Verb steht also nicht am Ende."),
   gChoice("komparativ", "EASY",
     "Im Sommer fahre ich ___ mit dem Fahrrad als mit dem Bus.",
     ["gerner", "am liebsten", "lieber"], 2,
@@ -114,9 +114,9 @@ const grammarItems: SeedItem[] = [
 
   // ---------------------------------------------------------------- MID
   gGap("perfekt", "MID",
-    "Hast du die E-Mail von Frau Weber schon {{g1}}? (lesen)",
-    ["gelesen"], undefined,
-    "Partizip II von \"lesen\": gelesen (ge- + Stamm + -en, unregelmäßiges Verb). Typische Fehler: gelest, gelesst."),
+    "Hast du die E-Mail von Frau Weber schon {{g1}}? (beantworten)",
+    ["beantwortet"], undefined,
+    "Verben mit untrennbarer Vorsilbe (be-, ver-, er- ...) bilden das Partizip II ohne ge-: beantwortet. Typische Fehler: gebeantwortet, beantwortest."),
   gChoice("praeteritum", "MID",
     "Letzte Woche ___ Samir nicht zum Kurs kommen, er war krank.",
     ["kann", "konnte", "könnte"], 1,
@@ -150,7 +150,7 @@ const grammarItems: SeedItem[] = [
   gGap("praeteritum", "HARD",
     "Wo {{g1}} ihr letztes Wochenende? Ich habe euch oft angerufen. (sein)",
     ["wart"], undefined,
-    "Präteritum von \"sein\", 2. Person Plural: ihr wart. \"seid\" ist Präsens und passt nicht zu \"letztes Wochenende\"; \"ward\" ist veraltet."),
+    "Präteritum von \"sein\", 2. Person Plural: ihr wart. \"seid\" ist Präsens und passt nicht zu \"letztes Wochenende\". \"ward\" ist ein häufiger Schreibfehler (eine veraltete Form von \"werden\", nicht von \"sein\")."),
   gGap("dativ", "HARD",
     "Ich schenke {{g1}} Vater ein Buch.",
     ["meinem"], ["meinen", "meinem", "meiner"],
@@ -159,14 +159,14 @@ const grammarItems: SeedItem[] = [
     "Ich ___ die Jacke auf das Bett.",
     ["liege", "lege", "lag"], 1,
     "\"auf das Bett\" (Akkusativ) zeigt eine Richtung, also das Handlungsverb \"legen\". \"liegen\" (liege, lag) steht mit Dativ (wo?)."),
-  gChoice("nebensatz", "HARD",
+  gChoice("nebensatz", "MID",
     "Ich rufe dich an, wenn ___.",
     ["ich bin zu Hause", "ich zu Hause bin", "bin ich zu Hause"], 1,
     "Im wenn-Satz steht das konjugierte Verb am Ende: wenn ich zu Hause bin."),
-  gChoice("konnektor", "HARD",
-    "Das Wetter war schlecht. ___ sind wir spazieren gegangen.",
-    ["Deshalb", "Trotzdem", "Weil"], 1,
-    "Gegensatz (schlechtes Wetter, aber Spaziergang): \"trotzdem\". \"Deshalb\" drückt eine Folge aus und ergibt hier keinen Sinn; nach \"Weil\" müsste das Verb am Ende stehen."),
+  gChoice("nebensatz", "HARD",
+    "Wenn es morgen regnet, ___.",
+    ["wir bleiben zu Hause", "bleiben wir zu Hause", "wir zu Hause bleiben"], 1,
+    "Steht der wenn-Satz am Anfang, ist er Position 1. Im Hauptsatz folgt sofort das Verb, dann das Subjekt: ..., bleiben wir zu Hause (Verb, Komma, Verb). Das Verb am Ende gehört nur in den Nebensatz."),
   gChoice("reflexiv", "HARD",
     "Vor dem Essen wasche ich ___ die Hände.",
     ["mir", "mich", "sich"], 0,
@@ -188,6 +188,8 @@ const grammarCTest = cTest(LEVEL, "MID", {
     "Zuerst backen wir das Brot, dann die Kuchen. Um sieben kommen die ersten Kunden. " +
     "Nachmittags bin ich oft müde, aber ich habe früh Feierabend.",
   last: "Die Arbeit macht mir viel Spaß, und meine Kolleginnen und Kollegen helfen mir immer.",
+  // g10 "da...": danach is as correct as dann; g14 "Kun...": Kundinnen is as correct as Kunden.
+  variants: { 10: ["nach"], 14: ["dinnen"] },
 });
 
 // ================================================================ READING
@@ -280,7 +282,7 @@ Berger Logistik: Weiterbildung im Herbst
 
 Kurs 1: Excel für Anfänger
 Montag, 6. und 13. Oktober, 9 bis 12 Uhr, Raum 104
-Sie lernen Tabellen und einfache Rechnungen am Computer. Bitte bringen Sie Ihren Laptop mit.
+Tabellen und einfache Rechnungen am Computer. Bitte bringen Sie Ihren Laptop mit.
 
 Kurs 2: Erste Hilfe im Betrieb
 Mittwoch, 15. Oktober, 8 bis 16 Uhr, Kantine (Erdgeschoss)
@@ -288,7 +290,7 @@ Für alle neuen Mitarbeiterinnen und Mitarbeiter im Lager ist dieser Kurs Pflich
 
 Kurs 3: Deutsch am Telefon
 Jeden Donnerstag im Oktober, 16 bis 17.30 Uhr, Raum 210
-Für Mitarbeiterinnen und Mitarbeiter mit Deutsch als Fremdsprache. Höchstens acht Personen.
+Für Mitarbeiterinnen und Mitarbeiter mit Deutsch als Fremdsprache. Nur acht Plätze.
 
 Kurs 4: Gesund am Schreibtisch
 Freitag, 24. Oktober, 13 bis 14 Uhr, online
@@ -347,7 +349,7 @@ const readingItems: SeedItem[] = [
       ["Die Firma bezahlt Lenas Fahrkarte für die S-Bahn.", "NG"],
     ],
     "1 R: \"fast eine Stunde mit der S-Bahn\". 2 F: beide Wohnungen waren zu teuer, sie sucht noch. 3 NG: über die Fahrkarte steht nichts im Text."),
-  rEmail.choice("inference", "HARD",
+  rEmail.choice("detail", "MID",
     "Warum möchte Lena mit Aylin essen gehen?",
     [
       "Aylin hat bald Geburtstag.",
@@ -372,7 +374,7 @@ const readingItems: SeedItem[] = [
       ["Studierende müssen für den Ausweis nichts bezahlen.", "R"],
     ],
     "1 F: Am Freitag schließt die Bibliothek um 18 Uhr. 2 R: \"Dafür braucht man nur einen Bibliotheksausweis.\" 3 R: Für Studierende ist der Ausweis kostenlos."),
-  rBib.choice("vocabulary", "MID",
+  rBib.choice("vocabulary", "HARD",
     "Im Text steht: \"Eine Anmeldung ist nicht nötig.\" Was bedeutet das?",
     [
       "Man muss sich vorher telefonisch anmelden.",
@@ -380,7 +382,7 @@ const readingItems: SeedItem[] = [
       "Man kann sich leider nicht mehr anmelden.",
     ], 1,
     "\"nicht nötig\" heißt: man muss es nicht tun. Man kann also ohne Anmeldung zum Sprachcafé kommen."),
-  rBib.choice("detail", "HARD",
+  rBib.choice("detail", "MID",
     "Was gibt es jeden Dienstagabend in der Bibliothek?",
     [
       "Einen Kurs für Computer und Internet.",
@@ -404,11 +406,11 @@ const readingItems: SeedItem[] = [
     "\"Für alle neuen Mitarbeiterinnen und Mitarbeiter im Lager ist dieser Kurs Pflicht.\" Die Kantine ist nur der Kursort."),
   rKurs.tfng("detail", "MID",
     [
-      ["Im Telefonkurs gibt es Platz für maximal acht Personen.", "R"],
+      ["Im Telefonkurs können nicht mehr als acht Personen mitmachen.", "R"],
       ["Für den Kurs am 24. Oktober muss man in die Firma kommen.", "F"],
       ["Die Kurse sind nach dem Ende der Arbeitszeit.", "F"],
     ],
-    "1 R: \"Höchstens acht Personen.\" 2 F: Kurs 4 ist online. 3 F: \"Alle Kurse finden in der Arbeitszeit statt.\""),
+    "1 R: Der Kurs \"Deutsch am Telefon\" hat nur acht Plätze. 2 F: Kurs 4 ist online. 3 F: \"Alle Kurse finden in der Arbeitszeit statt.\""),
   rKurs.choice("inference", "HARD",
     "Frau Okafor arbeitet nur am Donnerstag und am Freitag, immer von 8 bis 14 Uhr. Sie möchte einen Kurs in ihrer Arbeitszeit machen. Welcher Kurs passt?",
     ["Kurs 4", "Kurs 3", "Kurs 1"], 0,
@@ -436,18 +438,18 @@ const readingItems: SeedItem[] = [
   rAnz.tfng("detail", "MID",
     [
       ["Die Wohnung in Anzeige E ist ab Dezember frei.", "R"],
-      ["In dieser Wohnung darf man eine Katze haben.", "F"],
-      ["Die Nachhilfe aus Anzeige C kann man auch am Computer machen.", "R"],
+      ["In der Wohnung aus Anzeige E darf man eine Katze haben.", "F"],
+      ["Die Nachhilfe aus Anzeige C kann man auch über das Internet machen.", "R"],
     ],
     "1 R: \"Frei ab 1. Dezember.\" 2 F: \"Keine Haustiere.\" 3 R: \"Auch online möglich.\""),
   rAnz.choice("vocabulary", "HARD",
     "In Anzeige A steht: \"Erfahrung nicht nötig\". Was bedeutet das?",
     [
       "Man muss nicht jeden Tag arbeiten.",
-      "Man muss diese Arbeit vorher nicht gemacht haben.",
-      "Man muss viele Jahre in einem Café gearbeitet haben.",
+      "Man muss die Arbeit noch nicht kennen.",
+      "Man braucht schon Erfahrung in einem Café.",
     ], 1,
-    "\"Erfahrung\" = was man schon gemacht und gelernt hat. \"nicht nötig\": Man muss die Arbeit noch nicht kennen."),
+    "\"Erfahrung\" = was man schon gemacht und gelernt hat. \"nicht nötig\": Man muss die Arbeit noch nicht kennen. Die dritte Option sagt das Gegenteil."),
 ];
 
 // ================================================================ LISTENING
@@ -568,7 +570,7 @@ const listeningItems: SeedItem[] = [
       "Sie möchte einen Termin für ein Gespräch machen.",
     ], 2,
     "Frau Kraus möchte Herrn Rahimi kennenlernen und schlägt einen Termin vor. Eine Absage oder ein Angebot gibt es nicht."),
-  lChoice(L_MAILBOX, "detail", "MID",
+  lChoice(L_MAILBOX, "detail", "HARD",
     "Wann soll Herr Rahimi in die Firma kommen?",
     ["Am Dienstag um halb zehn.", "Am Mittwoch um halb zehn.", "Am Mittwoch um zehn Uhr."], 1,
     "Dienstag geht nicht, weil der Chef nicht da ist; der neue Vorschlag ist Mittwoch, halb zehn (9.30 Uhr)."),
@@ -580,7 +582,7 @@ const listeningItems: SeedItem[] = [
       "Nur seinen Lebenslauf.",
     ], 0,
     "Ausweis und Zeugnisse; den Lebenslauf hat die Firma schon."),
-  lChoice(L_MAILBOX, "detail", "HARD",
+  lChoice(L_MAILBOX, "detail", "MID",
     "Was soll Herr Rahimi machen, wenn er in der Firma ankommt?",
     [
       "Direkt ins Büro von Frau Kraus gehen.",
@@ -606,7 +608,7 @@ const listeningItems: SeedItem[] = [
     [
       ["Die Feier ist am letzten Freitag im Oktober.", "F"],
       ["Daniel kümmert sich um ein Geschenk.", "R"],
-      ["Paula soll vorher nichts von der Feier erfahren.", "R"],
+      ["Paula soll vorher nichts von der Feier wissen.", "R"],
     ],
     "1 F: Am Freitag hat Paula frei, die Feier ist am Donnerstag davor. 2 R: Daniel soll das Geschenk besorgen. 3 R: \"Paula darf natürlich nichts davon wissen.\""),
   lChoice(L_ABSCHIED, "inference", "HARD",
@@ -629,7 +631,7 @@ const listeningItems: SeedItem[] = [
   lTfng(L_INTERVIEW, "detail", "MID",
     [
       ["Die anderen in seiner Klasse sind älter als er.", "F"],
-      ["Herr Nowak und die jungen Leute helfen sich gegenseitig.", "R"],
+      ["Herr Nowak hilft den jungen Leuten, und sie helfen ihm auch.", "R"],
     ],
     "1 F: Die anderen sind viel jünger (achtzehn oder neunzehn). 2 R: Er hilft in Mathe, sie erklären ihm die Computerprogramme."),
   lChoice(L_INTERVIEW, "detail", "MID",
@@ -641,10 +643,10 @@ const listeningItems: SeedItem[] = [
     ], 0,
     "\"Das ist ehrlich gesagt das größte Problem\": Er verdient viel weniger als im Supermarkt. Bei den Computerprogrammen helfen ihm die anderen."),
   lChoice(L_INTERVIEW, "attitude", "HARD",
-    "Wie denkt Herr Nowak heute über seine Entscheidung?",
+    "Wie denkt Herr Nowak heute über die Ausbildung?",
     [
-      "Er weiß nicht, ob sie richtig war.",
-      "Er ist froh, dass er die Ausbildung macht.",
+      "Er weiß nicht, ob sie das Richtige für ihn ist.",
+      "Er ist froh, dass er sie macht.",
       "Er möchte wieder im Supermarkt arbeiten.",
     ], 1,
     "Er würde es \"auf jeden Fall\" wieder machen und ist zufrieden, auch wenn er abends müde ist."),
@@ -750,8 +752,8 @@ const writingItems: SeedItem[] = [
   writingTask("email", "HARD", SEMIFORMAL_WORDS,
     "Sie möchten am nächsten Freitag einen Tag freinehmen. Schreiben Sie eine E-Mail an Ihre Chefin, Frau Yıldız.\n\n" +
       "- Bitten Sie um einen freien Tag.\n" +
-      "- Nennen Sie einen Grund.\n" +
-      "- Machen Sie einen Vorschlag: Wann können Sie die Arbeit nachholen?\n\n" +
+      "- Warum brauchen Sie den Tag?\n" +
+      "- Machen Sie einen Vorschlag: An welchem anderen Tag können Sie die Arbeit machen?\n\n" +
       "Schreiben Sie 30 bis 40 Wörter.",
     [
       "höfliche Bitte um einen freien Tag am Freitag",
@@ -794,27 +796,27 @@ const speakingItems: SeedItem[] = [
   speakingTask("introduction", "EASY", SHORT,
     "Stellen Sie sich vor. Sprechen Sie über diese Punkte:\n\n" +
       "- Name und Wohnort\n" +
-      "- Arbeit oder Ausbildung\n" +
+      "- Arbeit, Schule oder Ausbildung\n" +
       "- Sprachen\n" +
       "- Freizeit und Hobbys",
     [
       "Name und Wohnort",
-      "Arbeit, Beruf oder Ausbildung",
+      "Arbeit, Schule oder Ausbildung",
       "Sprachen (welche, wie gut, seit wann Deutsch)",
       "Freizeit/Hobbys mit mindestens einem Detail",
     ],
     undefined,
     "Wie Goethe A2, Sprechen Teil 1, als Monolog. A2 zeigt sich an zusammenhängenden Sätzen und Details (seit wann, wie oft), nicht nur an Stichworten."),
   speakingTask("monologue", "MID", LONG,
-    "Erzählen Sie über Ihren Alltag. Wie sieht ein normaler Arbeitstag oder Lerntag bei Ihnen aus?\n\n" +
+    "Erzählen Sie über Ihren Alltag. Wie sieht ein normaler Tag bei Ihnen aus?\n\n" +
       "- Wann stehen Sie auf?\n" +
-      "- Wie kommen Sie zur Arbeit oder zum Kurs?\n" +
+      "- Wie kommen Sie zur Arbeit, zur Schule oder zum Kurs?\n" +
       "- Was machen Sie dort?\n" +
       "- Was machen Sie am Abend?",
     [
       "Tagesablauf in zeitlicher Reihenfolge (zuerst, dann, danach)",
-      "Weg zur Arbeit oder zum Kurs",
-      "Tätigkeiten bei der Arbeit oder im Kurs",
+      "Weg zur Arbeit, zur Schule oder zum Kurs",
+      "Tätigkeiten dort (Arbeit, Schule oder Kurs)",
       "Abend oder Freizeit",
     ],
     undefined,
