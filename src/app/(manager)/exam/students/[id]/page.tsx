@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { finalize, overrideOverall, release } from "@/app/(manager)/exam/students/[id]/actions";
+import { finalize, overrideOverall, release, undoAcceptAsCorrect } from "@/app/(manager)/exam/students/[id]/actions";
 import { Card } from "@/components/ui/card";
 import { Dot, INTEGRITY_TONE, STATUS_TONE, shortDateTime } from "@/components/panel/bits";
 import { GradingCard } from "@/components/panel/result/grading-card";
-import { Highlighted, Trajectory, answerText, keyText } from "@/components/panel/result/format";
+import { Highlighted } from "@/components/panel/result/format";
+import { ObjectiveSection, isBankEmptySkip } from "@/components/panel/result/objective-section";
+import { objectiveBasis } from "@/components/panel/result/review-rows";
 import { IntegrityPanel } from "@/components/panel/result/integrity-panel";
 import { ExamRecordingPlayer } from "@/components/panel/result/recording-player";
 import { SpeakingEvidence } from "@/components/panel/result/speaking-evidence";
@@ -12,6 +14,8 @@ import { can } from "@/lib/authorize";
 import { isObjectiveSection, CEFR_LEVELS, type Section } from "@/lib/exam/types";
 import { listStudents, loadIntegrityView, loadResultView } from "@/server/panel";
 import { loadRecordingSegments, recordingConsent } from "@/server/recordings";
+import { loadAcceptances } from "@/server/result-review";
+import { UndoStrip } from "@/components/ui/undo-strip";
 import { ORG_TIMEZONE } from "@/lib/org-timezone";
 import { requireUser } from "@/server/session";
 import { managerLocale } from "@/i18n/manager-locale";
@@ -69,6 +73,8 @@ export default async function ResultPage({
     const run = runFor(s);
     return run ? view.responses.filter((r) => r.sectionRunId === run.id) : [];
   };
+
+  const acceptances = await loadAcceptances(user.orgId, tab !== "summary" && isObjectiveSection(tab as Section) ? responsesFor(tab).map((r) => r.id) : []);
 
   const integrity = tab === "integrity" && attempt ? await loadIntegrityView(attempt.id) : null;
   // The continuous recording, only for a role that may watch recordings.
@@ -177,8 +183,7 @@ export default async function ResultPage({
                 const skill = computed?.skills[s as Section];
                 const run = runFor(s);
                 const rs = responsesFor(s);
-                const answered = rs.filter((r) => r.answeredAt).length;
-                const correct = rs.filter((r) => r.isCorrect).length;
+                const basis = objectiveBasis(rs);
                 const sd = run?.thetaSd ?? null;
                 const precision = sd === null ? "" : sd < 0.45 ? t("result.precisionGood") : sd < 0.7 ? t("result.precisionFair") : t("result.precisionLow");
                 const decider = skill?.decider;
@@ -191,10 +196,12 @@ export default async function ResultPage({
                     <span className="text-[13px] text-muted">
                       {!run?.submittedAt
                         ? t("result.inProgress")
-                        : isObjectiveSection(s as Section)
+                        : isBankEmptySkip(run)
+                          ? t("resultReview.skippedBankEmpty")
+                          : isObjectiveSection(s as Section)
                           ? skill?.insufficient
                             ? t("result.insufficient")
-                            : t("result.basis", { n: answered, pct: answered ? Math.round((correct / answered) * 100) : 0, precision })
+                            : `${t("result.basis", { n: basis.answered, pct: basis.pct, precision })}${basis.partial > 0 ? ` · ${t("resultReview.partialCount", { n: basis.partial })}` : ""}`
                           : decider
                             ? t(`source.${decider}`)
                             : t("result.pending")}
@@ -206,7 +213,24 @@ export default async function ResultPage({
           ) : null}
 
           {tab !== "summary" && tab !== "integrity" && isObjectiveSection(tab as Section) ? (
-            <ObjectiveSection t={t} responses={responsesFor(tab)} run={runFor(tab)} />
+            isBankEmptySkip(runFor(tab)) ? (
+              <Card className="p-5 text-[14px] text-ink-2">{t("resultReview.skippedBankEmpty")}</Card>
+            ) : (
+              <ObjectiveSection
+                t={t}
+                section={tab as Section}
+                tab={tab}
+                responses={responsesFor(tab)}
+                run={runFor(tab)}
+                acceptances={acceptances}
+                canGrade={canGrade && !final}
+                open={sp.undo === "accept"}
+              />
+            )
+          ) : null}
+
+          {sp.undo === "accept" && sp.response && canGrade && !final && acceptances[sp.response] ? (
+            <UndoStrip message={t("resultReview.acceptedUndo")} action={undoAcceptAsCorrect} hiddenFields={{ responseId: sp.response, tab, ...(sp.gap ? { gapId: sp.gap } : {}) }} />
           ) : null}
 
           {tab === "WRITING" || tab === "SPEAKING" ? (
@@ -409,72 +433,5 @@ export default async function ResultPage({
         </aside>
       </div>
     </main>
-  );
-}
-
-function ObjectiveSection({
-  t,
-  responses,
-  run,
-}: {
-  t: ReturnType<typeof managerT>;
-  responses: Awaited<ReturnType<typeof loadResultView>> extends infer V ? (V extends { responses: infer R } ? R : never) : never;
-  run: { thetaMean: number | null; thetaSd: number | null; stimulusPlays: Record<string, number> } | undefined;
-}) {
-  const answered = responses.filter((r) => r.answeredAt);
-  const points = responses.filter((r) => r.thetaAfter !== null).map((r) => ({ theta: r.thetaAfter!, se: r.seAfter ?? 0 }));
-  return (
-    <div className="flex flex-col gap-5">
-      <Card className="flex flex-wrap items-center justify-between gap-6 p-5">
-        <div>
-          <div className="tnum text-[14px] text-ink">
-            {t("result.basis", {
-              n: answered.length,
-              pct: answered.length ? Math.round((responses.filter((r) => r.isCorrect).length / answered.length) * 100) : 0,
-              precision: run?.thetaSd == null ? "-" : run.thetaSd < 0.45 ? t("result.precisionGood") : run.thetaSd < 0.7 ? t("result.precisionFair") : t("result.precisionLow"),
-            })}
-          </div>
-          <div className="mt-1 text-[12.5px] text-muted">{t("result.trajectory")}</div>
-        </div>
-        <Trajectory points={points} />
-      </Card>
-      <details>
-        <summary className="cursor-pointer text-[13.5px] font-medium text-ink underline underline-offset-2">{t("result.showAll", { n: responses.length })}</summary>
-        <Card className="mt-3 overflow-x-auto">
-          <table className="w-full min-w-[760px] text-left text-[13px]">
-            <thead className="border-b border-line text-[11.5px] uppercase tracking-[0.04em] text-muted">
-              <tr>
-                <th className="px-4 py-2.5 font-medium">#</th>
-                <th className="px-3 py-2.5 font-medium">{t("result.colItem")}</th>
-                <th className="px-3 py-2.5 font-medium">{t("result.colAnswer")}</th>
-                <th className="px-3 py-2.5 font-medium">{t("result.colKey")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("result.colScore")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line">
-              {responses.map((r) => (
-                <tr key={r.id} className="align-top">
-                  <td className="tnum px-4 py-2.5 text-muted">
-                    {r.sequence}
-                    <span className="block text-[11px]">{r.itemSnapshot.level}</span>
-                  </td>
-                  <td lang="de" className="max-w-[360px] px-3 py-2.5 text-ink-2">
-                    {r.itemSnapshot.stimulus ? <span className="block text-[11.5px] text-muted">{r.itemSnapshot.stimulus.title}</span> : null}
-                    {r.itemSnapshot.prompt.replace(/\{\{[^}]+\}\}/g, "___").slice(0, 160)}
-                  </td>
-                  <td lang="de" className="px-3 py-2.5 text-ink">
-                    {r.notReached ? <span className="text-muted">{t("result.notReached")}</span> : answerText(r.itemSnapshot, r.answer ?? null) || <span className="text-muted">{t("result.blank")}</span>}
-                  </td>
-                  <td lang="de" className="px-3 py-2.5 text-ink-2">
-                    {keyText(r.itemSnapshot)}
-                  </td>
-                  <td className="tnum px-4 py-2.5 font-semibold text-ink">{r.score === null ? "-" : `${Math.round(r.score * 100)}%`}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
-      </details>
-    </div>
   );
 }
