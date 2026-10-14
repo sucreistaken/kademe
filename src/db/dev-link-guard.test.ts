@@ -45,7 +45,8 @@ afterEach(() => {
 async function run(url: string) {
   vi.stubEnv("DATABASE_URL", url);
   await import("../../scripts/dev-link");
-  await vi.waitFor(() => expect(exit).toHaveBeenCalled());
+  // The script imports a module tree first; on a busy machine that takes more than waitFor's 1 s default.
+  await vi.waitFor(() => expect(exit).toHaveBeenCalled(), { timeout: 15_000 });
 }
 
 describe("dev:link working-database guard", () => {
