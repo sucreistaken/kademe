@@ -35,7 +35,11 @@ Gözetimli bir sınav silahlandığı andan (sistem kontrolünden sonra) bitene 
 kaydedilir: politika kamerayı izliyorsa kamera ve mikrofon (`policy.camera`, ses
 `policy.microphone` ile), ekranı paylaştırıyorsa ekran (`policy.screenShare`).
 STANDARD yalnız kamera+ses, STRICT kamera+ses+ekran kaydeder. Yeni izin istenmez:
-motorun zaten tuttuğu akışlar kullanılır.
+motorun zaten tuttuğu akışlar kullanılır. **Yalnız öğrencinin kabul ettiği onay metni
+kaydı söylüyorsa** (aşağıda "Onay metni"); oturum cevabındaki `recording` alanı
+tarayıcıya bunu söyler, yükleme ucu da ayrıca kontrol eder. Kayıt sürerken sınavın
+üst çubuğu ne kaydedildiğini yazar ("Kamera ve ses kaydediliyor", STRICT'te "Kamera,
+ses ve ekran kaydediliyor").
 
 **Tarayıcı** (`src/lib/client/proctor/recording.ts`). Her tür için motorun izinin bir
 klonu küçültülür (kamera 640x360, 10 fps; ekran en çok 1280x800, 2 fps; modeller ve
@@ -48,12 +52,25 @@ içermeyen dosyalar (yalnız başlık, ~110 bayt) yüklenmez. Parçalar sırayla
 yüklenir (`recording-queue.ts`): bağlantı yoksa artan aralıkla yeniden denenir
 (1, 2, 4, 8, sonra 15 sn; parça başına en çok 60 deneme), kuyruk 48 MB'ı aşarsa en eski
 bekleyen parça düşer. Sunucu kalıcı reddederse (4xx) parça bırakılır. Sınav bitince
-(`engine.stop()`) son parçalar kesilir, izler kapanır, kuyruk sekme açık kaldıkça
-boşalmaya devam eder. Sayfa yenilenirse ya da kamera kopup geri gelirse yeni bir
-"run" başlar; aradaki süre kayıtta boşluk olarak görünür.
+(`engine.stop()`) son parçalar kesilir, izler kapanır; son ekran kuyruğun boşalmasını
+en çok 60 sn bekler (`engine.drainRecording`) ve o sürece "Kayıt gönderiliyor, lütfen
+bu sekmeyi kapatmayın (n parça)" der. Süre dolarsa kalan parçaların bağlantı gelince
+gönderileceğini söyler; kuyruk sekme açık kaldıkça boşalmaya devam eder, bitince
+"Sınav kaydı gönderildi" yazar. Sayfa yenilenirse ya da kamera kopup geri gelirse yeni
+bir "run" başlar; aradaki süre kayıtta boşluk olarak görünür.
+
+**Kuyruk yalnız sekmenin belleğindedir.** Kopan bağlantı yalnız kuyruğu uzatır; ama
+yenilenen, kapatılan ya da çöken sekme o an kaydedilen parçayı ve kuyrukta bekleyen her
+şeyi kaybeder (kötü bağlantıda 48 MB'a kadar, yaklaşık 10 dakika). Bunu sessiz olmaktan
+çıkarmak için bekleyen parça varken sayfadan çıkmak ya da yenilemek tarayıcının kendi
+"sayfadan ayrılınsın mı?" sorusunu açar (`guardUnload`). Parçalar IndexedDB'de
+saklanıp yeniden yüklenmiyor: öğrencinin görüntüsü ve sesi, okulun saklama ve silme
+kurallarının dışında, çoğu zaman paylaşılan bir laboratuvar bilgisayarının tarayıcısında
+kalırdı. Bu bir ürün ve hukuk kararı; verilmeden eklenmedi.
 
 **Sunucu.** `PUT /api/c/[token]/proctor/recording`: kanıt ucuyla aynı token, politika
-ve deneme kontrolleri; kapsayıcı ilk baytlardan doğrulanır (WebM EBML, MP4 `ftyp`),
+ve deneme kontrolleri; kabul edilen onay metni kaydı söylemiyorsa gövde okunmadan 403
+`CONSENT_REQUIRED` (tarayıcı yeniden denemez); kapsayıcı ilk baytlardan doğrulanır (WebM EBML, MP4 `ftyp`),
 depolama anahtarı sunucuda türetilir
 (`proctor/<org>/<assessment>/rec/<attempt>/<tür>-<run>-<sıra>.webm`), aynı parçanın
 tekrarı aynı satıra düşer. Deneme bittikten sonra 15 dk daha parça kabul edilir (son
@@ -83,12 +100,22 @@ ile yazılır: kayıt, kanıt süresini (varsayılan 90) hiç aşmaz ve en çok 
 sonra satırdan siler, deneme başına bir `retention.recording.purge` denetim satırı
 yazar. Diğer silmeler gibi iki anahtar ister (`RETENTION_PURGE_ENABLED=true` ve
 `?apply=1`); yoksa yalnız rapor verir. `?batch=` verilmezse 2000'lik turlarla biter
-(bir sınav saati ~480 parça).
+(bir sınav saati ~480 parça). Aday kalıcı silinirken (`src/lib/retention.ts`) kayıt
+parçaları ve kareler de depodan silinir, satırlar cascade ile gider.
 
 **Onay metni.** Sürüm 1 yalnız "aralıklarla kareler" diyordu. Sürüm 2 sınavın tamamının
 kaydedildiğini söyler (`src/db/consent-text.ts`); `*_exam_consent_recording.sql`
 göçü, en yeni sınav metni değiştirilmemiş sürüm 1 olan kurumlara sürüm 2'yi ekler.
 Giriş ekranındaki maddeler de kaydı söylüyor.
+
+Davet, kabul edildiği metinde kalır. Bu yüzden kayıt **kabul edilen metne** bağlı:
+`consent_texts.covers_recording` (`*_consent_covers_recording.sql` göçü, metni harfi
+harfine güncel metin olan her satırı işaretler; seed ve üretim kurulumu yazarken
+işaretler). Sürüm numarasına bakılmaz: numara kurum başına sayılır ve yeni bir kurum
+güncel metinle sürüm 1'den başlar. Eski metni kabul etmiş bir öğrenci kaydedilmez
+(tarayıcı başlatmaz, sunucu parça kabul etmez); panelde Bütünlük sekmesi "Bu öğrenci
+kayıt içermeyen eski onay metnini kabul etti" der. Böyle bir öğrenciye yeniden onay
+sordurmak yok; gerekirse ayrı karar.
 
 ### Depolama tahmini (öğrenci-saat başına)
 
@@ -136,6 +163,15 @@ sınav dışı içerik var mı. **Duygu, niyet, kimlik, yaş, cinsiyet çıkarı
 yasaktır** (AB Yapay Zeka Yasası, eğitimde duygu tanıma yasağı). Modelin kararı kendi
 bildirdiği olgularla çelişirse UNCLEAR'a düşürülür. Deneme başına bütçe var.
 
+Bir işaret yalnız iddiasını gösterecek kare alınıyorsa kuyruğa girer
+(`src/lib/proctor/review-gate.ts`): ekran iddiaları (TAB_HIDDEN, FOCUS_LOST,
+SECOND_SCREEN_DETECTED) yalnız ekran paylaşılıyorsa, kişi iddiaları (NO_FACE,
+MULTIPLE_FACES, PHONE_DETECTED) yalnız kamera açıksa. Bütçeden yalnız model çağrısı
+yapmış ya da yapacak incelemeler (QUEUED, DONE, FAILED) düşer; SKIPPED biten (o an için
+kare yok, vision modeli yok) bütçeyi sonraki işaretlere bırakır. Kalan risk: STRICT'te
+çok sayıda gerçek ekran işareti (ör. sık FOCUS_LOST) bütçeyi yine bitirebilir; kişi
+iddialarına ayrılmış pay yok.
+
 ## Bütünlük özeti
 
 `src/lib/proctor/integrity.ts`: ciddiyete göre ağırlık, aynı türün tekrarında azalan
@@ -156,9 +192,11 @@ kapalı, ya da tam ekrandan M kereden fazla çıkış. AI işaretleri asla sonla
   `ai_runs`'ta, öğrenciye önceden açık bildirim yapılır.
 - Yüz sayma biyometrik tanımlama değildir; kimlik eşleştirme bilerek yapılmıyor.
 - Reşit olmayan öğrenciler için veli onayı akışı yok; eklenmeli.
-- Kareler `organizations.evidence_retention_days` (varsayılan 90) sonra silinmek üzere
-  işaretlenir; karelerin saklama işine bağlanması henüz yapılmadı. Sürekli kaydın
-  parçaları aynı süreyle `purge-retention` işi tarafından silinir (yukarıda).
+- Kareler ve klipler `organizations.evidence_retention_days` (varsayılan 90) sonrası
+  için `purge_after` ile yazılır ve `purge-retention` işi süresi geçenleri önce depodan,
+  sonra satırdan siler (`purgeEvidence`, deneme başına bir `retention.evidence.purge`
+  denetim satırı; aynı iki anahtar). Sürekli kaydın parçaları en çok 30 günle aynı iş
+  tarafından silinir (yukarıda).
 
 ## Test
 
