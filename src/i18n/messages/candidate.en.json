@@ -1049,5 +1049,17 @@
   "examDevice": {
     "leadBetween": "This exam is taken on a computer only. The sections you finished are saved; the next section's time does not run until you start it on a computer.",
     "leadRunning": "This exam is taken on a computer only. This section's time is running: open the link on your computer now and continue where you left off, with your saved answers."
+  },
+  "recordingSafety": {
+    "cameraAudioScreen": "Camera, sound and screen are being recorded",
+    "cameraScreen": "Camera and screen are being recorded",
+    "cameraAudio": "Camera and sound are being recorded",
+    "camera": "Camera is being recorded",
+    "screen": "Screen is being recorded",
+    "bodyWhileSending": "Your answers are saved. Thank you for your effort.",
+    "sending": "Sending the recording, please do not close this tab.",
+    "sendingCount": "Sending the recording, please do not close this tab ({count, plural, one {# part} other {# parts}} left).",
+    "slow": "{count, plural, one {# part} other {# parts}} of the recording could not be sent yet. They go out by themselves once your connection is back; please keep this tab open.",
+    "sent": "The exam recording has been sent."
   }
 }

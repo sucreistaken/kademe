@@ -151,7 +151,7 @@ async function main() {
     role: "MANAGER",
     passwordHash: await argon2Hash(DEV_PASSWORD),
   });
-  await db.insert(s.consentTexts).values({ orgId: org.id, version: 1, body: { tr: CONSENT_TR, en: CONSENT_EN } });
+  await db.insert(s.consentTexts).values({ orgId: org.id, version: 1, body: { tr: CONSENT_TR, en: CONSENT_EN }, coversRecording: true });
 
   log("Writing the starter library...");
   await seedLibrary(org.id);

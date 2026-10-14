@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, gt } from "drizzle-orm";
 import { db } from "@/db";
-import { assessments, attempts, auditLogs, proctorRecordings, proctorSessions } from "@/db/schema";
+import { assessments, attempts, auditLogs, consentTexts, consents, proctorRecordings, proctorSessions } from "@/db/schema";
 import type { CandidateContext } from "@/lib/candidate-context";
 import type { RecordingKind, RecordingMime, SegmentMeta } from "@/lib/proctor/recording-rules";
 import { recordingRetentionDays } from "@/lib/proctor/recording-rules";
@@ -37,6 +37,24 @@ export function recordingKey(input: {
 
 /** Keys this module writes; the purge refuses to delete anything else. */
 export const isRecordingKey = (key: string) => key.startsWith("proctor/") && key.includes("/rec/");
+
+/**
+ * What the candidate agreed to about the recording: true when the consent text
+ * they accepted announces it (consent_texts.covers_recording), false when they
+ * accepted a text that does not (the version 1 an invitation accepted before
+ * the recording keeps), null when no consent is on record. The latest
+ * acceptance counts. Read by the session route, the upload route and the panel.
+ */
+export async function recordingConsent(assessmentId: string): Promise<boolean | null> {
+  const [row] = await db
+    .select({ covers: consentTexts.coversRecording })
+    .from(consents)
+    .innerJoin(consentTexts, eq(consentTexts.id, consents.consentTextId))
+    .where(eq(consents.assessmentId, assessmentId))
+    .orderBy(desc(consents.acceptedAt))
+    .limit(1);
+  return row ? row.covers : null;
+}
 
 /** A session id from the browser counts only when it is one of this attempt's sessions. */
 async function ownedSessionId(attemptId: string, sessionId: string | null): Promise<string | null> {

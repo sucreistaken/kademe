@@ -3,6 +3,7 @@
 import { SegmentQueue, type QueuedSegment, type QueueStatus, type SendOutcome } from "@/lib/client/proctor/recording-queue";
 import type { ProctoringPolicy } from "@/lib/proctor/policy";
 import { RECORDING_PROFILE, SEGMENT_MS, type RecordingKind } from "@/lib/proctor/recording-rules";
+import type { RecordingActivity } from "@/lib/proctor/recording-status";
 
 /**
  * Continuous recording of a proctored attempt, in the browser.
@@ -18,6 +19,14 @@ import { RECORDING_PROFILE, SEGMENT_MS, type RecordingKind } from "@/lib/proctor
  * started before the previous one is stopped, so the hand-over overlaps by a
  * few milliseconds instead of dropping them. Segments go into SegmentQueue,
  * which uploads them in order and holds them while the connection is down.
+ *
+ * Nothing is recorded unless the session said so: the policy records something
+ * and the consent the candidate accepted announces the recording.
+ *
+ * The queue lives in this tab's memory only. While a segment waits, leaving
+ * or reloading the page asks the browser's "leave this page?" question, and
+ * the last screen waits for the queue to empty (drain) before it lets the
+ * candidate go. A tab that is closed anyway loses what was still waiting.
  */
 
 type RecorderCtor = new (stream: MediaStream, options?: MediaRecorderOptions) => MediaRecorder;
@@ -211,7 +220,24 @@ export class TrackRecorder {
   }
 }
 
-type Running = { recorder: TrackRecorder; source: MediaStreamTrack; clones: MediaStreamTrack[] };
+type Running = { recorder: TrackRecorder; source: MediaStreamTrack; clones: MediaStreamTrack[]; audio: boolean };
+
+type UnloadTarget = Pick<EventTarget, "addEventListener" | "removeEventListener">;
+
+/**
+ * While anything waits in the upload queue, leaving or reloading the page asks
+ * the browser's own "leave this page?" question: the segments live in this
+ * tab's memory and would be lost. Returns the function that removes it.
+ */
+export function guardUnload(target: UnloadTarget): () => void {
+  const onBeforeUnload = (e: Event) => {
+    e.preventDefault();
+    // Older Chromium asks only when returnValue is set.
+    (e as BeforeUnloadEvent).returnValue = "";
+  };
+  target.addEventListener("beforeunload", onBeforeUnload);
+  return () => target.removeEventListener("beforeunload", onBeforeUnload);
+}
 
 export type RecordingDeps = {
   /** Absolute candidate API path, e.g. `/api/c/<token>/proctor/recording`. */
@@ -223,6 +249,10 @@ export type RecordingDeps = {
   isTypeSupported?: (mime: string) => boolean;
   segmentMs?: number;
   onStatus?: (status: QueueStatus) => void;
+  /** Called whenever a kind starts or stops recording. */
+  onActivity?: (activity: RecordingActivity) => void;
+  /** Where the "leave this page?" guard goes while segments wait; the window by default. */
+  unloadTarget?: UnloadTarget | null;
 };
 
 /** Both kinds and the upload line, for one exam tab. Owned by the proctoring engine. */
@@ -230,10 +260,51 @@ export class ProctorRecording {
   private running: Partial<Record<RecordingKind, Running>> = {};
   private starting = new Set<RecordingKind>();
   private closed = false;
+  private unguard: (() => void) | null = null;
   readonly queue: SegmentQueue;
 
   constructor(private readonly deps: RecordingDeps) {
-    this.queue = new SegmentQueue({ send: (s) => this.send(s), onStatus: deps.onStatus });
+    this.queue = new SegmentQueue({
+      send: (s) => this.send(s),
+      onStatus: (status) => {
+        this.guard(status.pending > 0);
+        deps.onStatus?.(status);
+      },
+    });
+  }
+
+  private guard(on: boolean) {
+    if (on && !this.unguard) {
+      const target = this.deps.unloadTarget !== undefined ? this.deps.unloadTarget : typeof window === "undefined" ? null : window;
+      if (typeof target?.addEventListener === "function") this.unguard = guardUnload(target);
+    } else if (!on && this.unguard) {
+      this.unguard();
+      this.unguard = null;
+    }
+  }
+
+  /** The kinds whose recorder is running now. */
+  get activity(): RecordingActivity {
+    const live = (kind: RecordingKind) => {
+      const run = this.running[kind];
+      return run && !run.recorder.ended ? run : null;
+    };
+    const camera = live("CAMERA");
+    return { camera: !!camera, audio: !!camera?.audio, screen: !!live("SCREEN") };
+  }
+
+  private reportActivity() {
+    this.deps.onActivity?.(this.activity);
+  }
+
+  /**
+   * Resolves true once every queued segment is uploaded, false when
+   * `timeoutMs` passes first. The queue keeps going after a timeout for as
+   * long as the tab is open; the last screen uses this to say when the
+   * candidate may close it.
+   */
+  drain(timeoutMs: number): Promise<boolean> {
+    return this.queue.drain(timeoutMs);
   }
 
   /**
@@ -243,12 +314,14 @@ export class ProctorRecording {
    */
   sync(input: {
     policy: ProctoringPolicy | null;
+    /** The session's answer: the consent the candidate accepted announces the recording. */
+    consented: boolean;
     guarding: boolean;
     camera: MediaStream | null;
     screen: MediaStream | null;
   }) {
     const p = input.policy;
-    if (this.closed || !input.guarding || !p || p.preset === "OFF") return;
+    if (this.closed || !input.consented || !input.guarding || !p || p.preset === "OFF") return;
     if (p.camera) void this.ensure("CAMERA", input.camera, p.microphone);
     if (p.screenShare) void this.ensure("SCREEN", input.screen, false);
   }
@@ -288,7 +361,10 @@ export class ProctorRecording {
         runId: rid(),
         now: this.deps.now,
         onSegment: (s) => this.queue.push(s),
-        onEnded: () => clones.forEach((t) => t.stop()),
+        onEnded: () => {
+          clones.forEach((t) => t.stop());
+          this.reportActivity();
+        },
         segmentMs: this.deps.segmentMs,
         Recorder: this.deps.Recorder,
       });
@@ -299,7 +375,8 @@ export class ProctorRecording {
         clones.forEach((t) => t.stop());
         return;
       }
-      this.running[kind] = { recorder, source, clones };
+      this.running[kind] = { recorder, source, clones, audio: !!audio };
+      this.reportActivity();
     } finally {
       this.starting.delete(kind);
     }
@@ -313,7 +390,8 @@ export class ProctorRecording {
   /**
    * Ends the recording: the segments in progress are cut and queued (waiting at
    * most `timeoutMs` for the browser to hand them over), the clones stop. The
-   * queue keeps uploading in the background for as long as the tab is open.
+   * queue keeps uploading in the background for as long as the tab is open;
+   * drain() says when it is done.
    */
   stop(timeoutMs = 3000): Promise<void> {
     // The exam's last screen and the runner both stop the engine; both wait for the same cut.
@@ -326,6 +404,7 @@ export class ProctorRecording {
         new Promise<void>((resolve) => setTimeout(resolve, timeoutMs)),
       ]);
       runs.forEach((r) => r.clones.forEach((t) => t.stop()));
+      this.reportActivity();
     })();
     return this.stopped;
   }

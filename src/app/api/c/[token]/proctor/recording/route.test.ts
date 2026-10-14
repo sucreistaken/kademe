@@ -15,6 +15,8 @@ const h = vi.hoisted(() => ({
   attempt: {} as Record<string, unknown>,
   options: null as unknown,
   store: vi.fn<(...args: unknown[]) => Promise<{ id: string; duplicate: boolean }>>(),
+  consent: true as boolean | null,
+  consentAsked: [] as string[],
 }));
 
 vi.mock("@/lib/candidate-api", () => {
@@ -30,7 +32,13 @@ vi.mock("@/lib/candidate-api", () => {
   };
 });
 vi.mock("@/lib/candidate-context", () => ({ currentAttempt: async () => ({ attempt: h.attempt, finished: false }) }));
-vi.mock("@/server/recordings", () => ({ storeRecordingSegment: h.store }));
+vi.mock("@/server/recordings", () => ({
+  storeRecordingSegment: h.store,
+  recordingConsent: async (assessmentId: string) => {
+    h.consentAsked.push(assessmentId);
+    return h.consent;
+  },
+}));
 
 import { NextRequest } from "next/server";
 import { PUT } from "./route";
@@ -52,6 +60,8 @@ function put(opts: { query?: Record<string, string>; body?: Uint8Array; type?: s
 beforeEach(() => {
   h.policy = policyFromPreset("STANDARD");
   h.attempt = { id: "att-1", deviceCheckedAt: new Date(NOW - 3600_000), startedAt: new Date(NOW - 3500_000), completedAt: null, terminatedAt: null };
+  h.consent = true;
+  h.consentAsked = [];
   h.store.mockReset();
   h.store.mockResolvedValue({ id: "rec-1", duplicate: false });
 });
@@ -76,6 +86,21 @@ describe("PUT /proctor/recording", () => {
     expect((await put()).status).toBe(400);
     h.policy = null;
     expect((await put()).status).toBe(400);
+    expect(h.store).not.toHaveBeenCalled();
+  });
+
+  it("refuses every segment when the accepted consent text does not announce the recording, before reading the body", async () => {
+    // An invitation accepted under the old version 1 text.
+    h.consent = false;
+    const res = await put();
+    expect(res.status).toBe(403);
+    expect(await res.json()).toMatchObject({ error: "CONSENT_REQUIRED" });
+    expect(h.consentAsked).toEqual(["asm-1"]);
+    // No consent on record at all.
+    h.consent = null;
+    expect((await put()).status).toBe(403);
+    // The refusal comes before the size check: nothing is read or stored.
+    expect((await put({ length: String(MAX_SEGMENT_BYTES + 1) })).status).toBe(403);
     expect(h.store).not.toHaveBeenCalled();
   });
 

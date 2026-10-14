@@ -6,6 +6,7 @@ import { createSignalTracker, type SignalTracker } from "@/lib/proctor/signals";
 import { yawPitchFromMatrix } from "@/lib/proctor/head-pose";
 import { verifyDisplaySurface } from "@/lib/proctor/environment";
 import { ProctorRecording } from "@/lib/client/proctor/recording";
+import type { RecordingActivity } from "@/lib/proctor/recording-status";
 import type { ProctoringPolicy } from "@/lib/proctor/policy";
 import type { ProctorEventType } from "@/lib/proctor/taxonomy";
 
@@ -49,6 +50,10 @@ export type EngineSnapshot = {
   banner: Banner | null;
   terminated: boolean;
   error: string | null;
+  /** What the continuous recording records right now; null when this tab does not record. */
+  recording: RecordingActivity | null;
+  /** The recording's upload line; null when this tab never recorded. */
+  upload: { pending: number; stalled: boolean } | null;
 };
 
 type QueuedEvent = { clientEventId: string; type: ProctorEventType; at: number; endedAt?: number; meta?: Record<string, unknown> };
@@ -78,6 +83,8 @@ export class ProctorEngine {
     banner: null,
     terminated: false,
     error: null,
+    recording: null,
+    upload: null,
   };
   private sessionId: string | null = null;
   private clientOffsetMs = 0;
@@ -99,6 +106,8 @@ export class ProctorEngine {
   private bannerTimer: number | null = null;
   /** The continuous recording (recording.ts); created when the exam is armed. */
   private recording: ProctorRecording | null = null;
+  /** The session's answer: the policy records and the accepted consent text announces it. */
+  private recordingConsented = false;
   /** Development fake-media mode only: the face count the model's result is replaced with. */
   devFaces = 1;
 
@@ -156,8 +165,10 @@ export class ProctorEngine {
       body: JSON.stringify({ clientSessionId, env }),
     });
     if (!res.ok) throw new Error(`session ${res.status}`);
-    const body = (await res.json()) as { sessionId: string; policy: ProctoringPolicy; serverNow: number; devFakeMedia: boolean };
+    const body = (await res.json()) as { sessionId: string; policy: ProctoringPolicy; recording?: boolean; serverNow: number; devFakeMedia: boolean };
     this.sessionId = body.sessionId;
+    // Absent (an older server) means no: nothing is recorded without the consent saying so.
+    this.recordingConsented = body.recording === true;
     this.clientOffsetMs = body.serverNow - Date.now();
     this.set({ ready: true, policy: body.policy, devFake: body.devFakeMedia, isExtended: this.readExtended() });
     this.every(() => void this.flush(), 10_000);
@@ -754,9 +765,32 @@ export class ProctorEngine {
 
   /** Starts (or, after a reload or a lost device, restarts) the continuous recording of what is live. */
   private syncRecording() {
-    if (!this.snap.guarding || !this.snap.policy) return;
-    this.recording ??= new ProctorRecording({ url: (path) => this.api(path), now: () => this.now(), sessionId: () => this.sessionId });
-    this.recording.sync({ policy: this.snap.policy, guarding: true, camera: this.cameraStream, screen: this.screenStream });
+    if (!this.snap.guarding || !this.snap.policy || !this.recordingConsented) return;
+    if (!this.recording) {
+      this.recording = new ProctorRecording({
+        url: (path) => this.api(path),
+        now: () => this.now(),
+        sessionId: () => this.sessionId,
+        onStatus: (s) => this.set({ upload: { pending: s.pending, stalled: s.stalled } }),
+        onActivity: (a) => this.set({ recording: a.camera || a.screen ? a : null }),
+      });
+      this.set({ upload: { pending: 0, stalled: false } });
+    }
+    this.recording.sync({
+      policy: this.snap.policy,
+      consented: this.recordingConsented,
+      guarding: true,
+      camera: this.cameraStream,
+      screen: this.screenStream,
+    });
+  }
+
+  /**
+   * After stop(): waits until the recording's last segments are uploaded
+   * (true) or `timeoutMs` passes (false). True at once when nothing was recorded.
+   */
+  drainRecording(timeoutMs = 60_000): Promise<boolean> {
+    return this.recording ? this.recording.drain(timeoutMs) : Promise.resolve(true);
   }
 
   /** Ends proctoring for good: every track, fullscreen, timers, listeners. */
@@ -768,7 +802,8 @@ export class ProctorEngine {
     this.timers.forEach((t) => window.clearInterval(t));
     this.timers = [];
     if (this.visionLoop) window.clearInterval(this.visionLoop);
-    // Cut the last segments while the tracks still run; they upload in the background.
+    // Cut the last segments while the tracks still run; they upload in the
+    // background, and the last screen waits for them (drainRecording).
     await this.recording?.stop();
     this.cameraStream?.getTracks().forEach((t) => t.stop());
     this.screenStream?.getTracks().forEach((t) => t.stop());

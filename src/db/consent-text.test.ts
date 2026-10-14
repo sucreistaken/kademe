@@ -35,3 +35,32 @@ describe("exam consent text", () => {
     expect(migration).not.toMatch(/\b(DELETE|UPDATE|DROP)\b/);
   });
 });
+
+/**
+ * Recording runs only for an invitation whose accepted text announces it
+ * (consent_texts.covers_recording). The migration that adds the flag has to
+ * mark exactly the current text, wherever its version number stands, and
+ * leave every other text (the old version 1 included) unmarked.
+ */
+const coversFile = readdirSync(MIGRATIONS_FOLDER).find((f) => f.endsWith("_consent_covers_recording.sql"));
+const covers = coversFile ? readFileSync(path.join(MIGRATIONS_FOLDER, coversFile), "utf8") : "";
+
+describe("consent covers_recording migration", () => {
+  it("adds the flag as false for every existing text", () => {
+    expect(coversFile).toBeTruthy();
+    expect(covers).toContain('ALTER TABLE "consent_texts" ADD COLUMN "covers_recording" boolean DEFAULT false NOT NULL;');
+  });
+
+  it("marks only the exact current text, by its words and not by its version", () => {
+    expect(covers).toContain(`"body"->>'tr' = ${sqlLiteral(CONSENT_TR)}`);
+    expect(covers).toContain(`"body"->>'en' = ${sqlLiteral(CONSENT_EN)}`);
+    expect(covers).toContain(`"solution" = 'LANGUAGE_EXAM'`);
+    expect(covers).not.toContain(sqlLiteral(CONSENT_V1_TR));
+    expect(covers).not.toMatch(/"version"/);
+    expect(covers).not.toMatch(/\b(DELETE|DROP|INSERT)\b/);
+  });
+
+  it("runs after the migration that writes the current text as the next version", () => {
+    expect(file && coversFile && coversFile > file).toBe(true);
+  });
+});

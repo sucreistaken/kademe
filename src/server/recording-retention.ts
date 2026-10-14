@@ -1,26 +1,30 @@
 import { and, asc, count, inArray, isNotNull, lte, notInArray, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
-import { auditLogs, proctorRecordings } from "@/db/schema";
+import { auditLogs, proctorEvidence, proctorRecordings } from "@/db/schema";
 import { clampBatch } from "@/lib/retention";
 import { getStorage } from "@/lib/storage";
 import { isRecordingKey } from "@/server/recordings";
 
 /**
- * Retention for the continuous proctoring recording, run by the same
- * purge-retention cron and behind the same two switches as everything else
- * there (RETENTION_PURGE_ENABLED=true AND ?apply=1): without both it only
- * reports and writes nothing.
+ * Retention for proctoring media: the continuous recording's segments and the
+ * evidence files (frames and short clips). Run by the same purge-retention
+ * cron and behind the same two switches as everything else there
+ * (RETENTION_PURGE_ENABLED=true AND ?apply=1): without both it only reports
+ * and writes nothing.
  *
- * The clock is the organisation's evidence retention, the one the proctoring
- * frames use: each segment is stored with purge_after = its start plus
- * `evidence_retention_days`, so the date a recording dies is fixed when it is
- * made and visible on the row. A segment is due once purge_after has passed.
+ * Both clocks are fixed on the row when it is written, so the date a file dies
+ * is visible on it: a recording segment gets its start plus the organisation's
+ * evidence retention, capped at MAX_RECORDING_RETENTION_DAYS; an evidence file
+ * gets its capture time plus the evidence retention (src/server/proctoring.ts,
+ * storeEvidence). A row is due once purge_after has passed.
  *
- * Storage first, row second, as in src/lib/retention.ts: a segment whose
- * object cannot be removed keeps its row and is tried again on the next run.
+ * Storage first, row second, as in src/lib/retention.ts: a file whose object
+ * cannot be removed keeps its row and is tried again on the next run.
  */
 
-type DueRow = { id: string; orgId: string; attemptId: string; storageKey: string; bytes: number; purgeAfter: Date };
+type DueRow = { id: string; orgId: string; attemptId: string; storageKey: string; bytes: number | null; purgeAfter: Date };
+
+type Failure = { key: string; reason: string };
 
 export type RecordingPurgeReport = {
   mode: "REPORT" | "APPLY";
@@ -29,7 +33,11 @@ export type RecordingPurgeReport = {
   inBatch: number;
   remaining: number;
   oldest: string | null;
-  applied: { segmentsDeleted: number; bytesDeleted: number; keysSkipped: number; storageFailures: Array<{ key: string; reason: string }> } | null;
+  applied: { segmentsDeleted: number; bytesDeleted: number; keysSkipped: number; storageFailures: Failure[] } | null;
+};
+
+export type EvidencePurgeReport = Omit<RecordingPurgeReport, "applied"> & {
+  applied: { filesDeleted: number; bytesDeleted: number; keysSkipped: number; storageFailures: Failure[] } | null;
 };
 
 /** The selection rule, in SQL: a purge date that is set and has passed. */
@@ -37,7 +45,12 @@ export function recordingPurgeWhere(now: Date): SQL {
   return and(isNotNull(proctorRecordings.purgeAfter), lte(proctorRecordings.purgeAfter, now))!;
 }
 
-/** The same rule as `recordingPurgeWhere`, for rows already in memory (and for the tests). */
+/** The same rule for evidence files. */
+export function evidencePurgeWhere(now: Date): SQL {
+  return and(isNotNull(proctorEvidence.purgeAfter), lte(proctorEvidence.purgeAfter, now))!;
+}
+
+/** The same rule as the two above, for rows already in memory (and for the tests). */
 export function isRecordingDue(row: { purgeAfter: Date | null }, now: Date): boolean {
   return row.purgeAfter !== null && row.purgeAfter.getTime() <= now.getTime();
 }
@@ -51,7 +64,14 @@ export function selectDue<T extends { purgeAfter: Date | null }>(rows: readonly 
 }
 
 /**
- * Segments one round touches when the caller names no batch. An hour of exam is
+ * Keys storeEvidence writes: `proctor/<org>/<assessment>/<evidence id>.<ext>`
+ * (src/lib/storage.ts, proctorEvidenceKey). Recording keys have a `rec/`
+ * level more and do not match.
+ */
+export const isEvidenceKey = (key: string) => /^proctor\/[^/]+\/[^/]+\/[^/]+\.[a-z0-9]+$/.test(key);
+
+/**
+ * Rows one round touches when the caller names no batch. An hour of exam is
  * about 480 segments (camera and screen), so the media batch of 200 would never
  * keep up; a run goes round after round until nothing is due or the time budget
  * is spent.
@@ -59,42 +79,90 @@ export function selectDue<T extends { purgeAfter: Date | null }>(rows: readonly 
 export const RECORDING_ROUND = 2000;
 const RUN_BUDGET_MS = 180_000;
 
-type Applied = NonNullable<RecordingPurgeReport["applied"]>;
+/** One table the purge works through: how to find what is due and how to remove it. */
+type PurgeSource = {
+  /** Keys this table's feature writes; nothing else is handed to storage. */
+  ownsKey: (key: string) => boolean;
+  /** One audit row per attempt and round. */
+  auditAction: string;
+  /** What the audit row calls the rows it counts. */
+  unit: "segments" | "files";
+  where: (now: Date) => SQL;
+  totals: (where: SQL) => Promise<{ n: number; bytes: string } | undefined>;
+  select: (where: SQL, limit: number) => Promise<DueRow[]>;
+  excluding: (where: SQL, ids: string[]) => SQL;
+  remove: (ids: string[]) => Promise<unknown>;
+};
 
-function selectRows(where: SQL, limit: number) {
-  return db
-    .select({
-      id: proctorRecordings.id,
-      orgId: proctorRecordings.orgId,
-      attemptId: proctorRecordings.attemptId,
-      storageKey: proctorRecordings.storageKey,
-      bytes: proctorRecordings.bytes,
-      purgeAfter: proctorRecordings.purgeAfter,
-    })
-    .from(proctorRecordings)
-    .where(where)
-    .orderBy(asc(proctorRecordings.purgeAfter))
-    .limit(limit) as Promise<DueRow[]>;
-}
+const RECORDINGS: PurgeSource = {
+  ownsKey: isRecordingKey,
+  auditAction: "retention.recording.purge",
+  unit: "segments",
+  where: recordingPurgeWhere,
+  totals: async (where) =>
+    (await db.select({ n: count(), bytes: sql<string>`coalesce(sum(${proctorRecordings.bytes}), 0)` }).from(proctorRecordings).where(where))[0],
+  select: (where, limit) =>
+    db
+      .select({
+        id: proctorRecordings.id,
+        orgId: proctorRecordings.orgId,
+        attemptId: proctorRecordings.attemptId,
+        storageKey: proctorRecordings.storageKey,
+        bytes: proctorRecordings.bytes,
+        purgeAfter: proctorRecordings.purgeAfter,
+      })
+      .from(proctorRecordings)
+      .where(where)
+      .orderBy(asc(proctorRecordings.purgeAfter))
+      .limit(limit) as Promise<DueRow[]>,
+  excluding: (where, ids) => and(where, notInArray(proctorRecordings.id, ids))!,
+  remove: (ids) => db.delete(proctorRecordings).where(inArray(proctorRecordings.id, ids)),
+};
+
+const EVIDENCE: PurgeSource = {
+  ownsKey: isEvidenceKey,
+  auditAction: "retention.evidence.purge",
+  unit: "files",
+  where: evidencePurgeWhere,
+  totals: async (where) =>
+    (await db.select({ n: count(), bytes: sql<string>`coalesce(sum(${proctorEvidence.bytes}), 0)` }).from(proctorEvidence).where(where))[0],
+  select: (where, limit) =>
+    db
+      .select({
+        id: proctorEvidence.id,
+        orgId: proctorEvidence.orgId,
+        attemptId: proctorEvidence.attemptId,
+        storageKey: proctorEvidence.storageKey,
+        bytes: proctorEvidence.bytes,
+        purgeAfter: proctorEvidence.purgeAfter,
+      })
+      .from(proctorEvidence)
+      .where(where)
+      .orderBy(asc(proctorEvidence.purgeAfter))
+      .limit(limit) as Promise<DueRow[]>,
+  excluding: (where, ids) => and(where, notInArray(proctorEvidence.id, ids))!,
+  remove: (ids) => db.delete(proctorEvidence).where(inArray(proctorEvidence.id, ids)),
+};
+
+type Options = { now?: Date; batch?: number; apply?: boolean };
+type Applied = { deleted: number; bytesDeleted: number; keysSkipped: number; storageFailures: Failure[] };
+type Report = Omit<RecordingPurgeReport, "applied"> & { applied: Applied | null };
 
 /**
  * Report mode (the default) counts and samples, writing nothing. Apply mode
  * deletes. An explicit `batch` means exactly one round of that size, which is
- * how an operator tries the switch on a single segment first (docs/RETENTION.md).
+ * how an operator tries the switch on a single row first (docs/RETENTION.md).
  */
-export async function purgeRecordings(options: { now?: Date; batch?: number; apply?: boolean } = {}): Promise<RecordingPurgeReport> {
+async function purgeDue(source: PurgeSource, options: Options): Promise<Report> {
   const now = options.now ?? new Date();
   const single = options.batch !== undefined;
   const batch = single ? clampBatch(options.batch) : RECORDING_ROUND;
-  const where = recordingPurgeWhere(now);
+  const where = source.where(now);
 
-  const [totals] = await db
-    .select({ n: count(), bytes: sql<string>`coalesce(sum(${proctorRecordings.bytes}), 0)` })
-    .from(proctorRecordings)
-    .where(where);
+  const totals = await source.totals(where);
   const due = totals?.n ?? 0;
-  const first = await selectRows(where, batch);
-  const report: RecordingPurgeReport = {
+  const first = await source.select(where, batch);
+  const report: Report = {
     mode: options.apply === true ? "APPLY" : "REPORT",
     due,
     bytesDue: Number(totals?.bytes ?? 0),
@@ -105,28 +173,28 @@ export async function purgeRecordings(options: { now?: Date; batch?: number; app
   };
   if (options.apply !== true) return report;
 
-  const applied: Applied = { segmentsDeleted: 0, bytesDeleted: 0, keysSkipped: 0, storageFailures: [] };
+  const applied: Applied = { deleted: 0, bytesDeleted: 0, keysSkipped: 0, storageFailures: [] };
   // Rows this run could not remove are not selected again, or they would block every round.
   const stuck: string[] = [];
   const startedAt = Date.now();
   let rows = first;
   for (;;) {
-    const removed = await applyRound(rows, now, applied, stuck);
+    const removed = await applyRound(source, rows, now, applied, stuck);
     if (single || rows.length < batch || removed === 0 || Date.now() - startedAt > RUN_BUDGET_MS) break;
-    rows = await selectRows(stuck.length ? and(where, notInArray(proctorRecordings.id, stuck))! : where, batch);
+    rows = await source.select(stuck.length ? source.excluding(where, stuck) : where, batch);
     if (rows.length === 0) break;
   }
   report.applied = applied;
-  report.remaining = Math.max(0, due - applied.segmentsDeleted);
+  report.remaining = Math.max(0, due - applied.deleted);
   return report;
 }
 
-async function applyRound(rows: DueRow[], now: Date, applied: Applied, stuck: string[]): Promise<number> {
+async function applyRound(source: PurgeSource, rows: DueRow[], now: Date, applied: Applied, stuck: string[]): Promise<number> {
   const storage = getStorage();
   const removed: DueRow[] = [];
   for (const row of rows) {
     // Only keys this feature writes; anything else is left for a human to look at.
-    if (!isRecordingKey(row.storageKey)) {
+    if (!source.ownsKey(row.storageKey)) {
       applied.keysSkipped++;
       stuck.push(row.id);
       continue;
@@ -140,26 +208,47 @@ async function applyRound(rows: DueRow[], now: Date, applied: Applied, stuck: st
     }
   }
   if (removed.length === 0) return 0;
-  await db.delete(proctorRecordings).where(inArray(proctorRecordings.id, removed.map((r) => r.id)));
-  applied.segmentsDeleted += removed.length;
-  applied.bytesDeleted += removed.reduce((sum, r) => sum + r.bytes, 0);
-  // One audit row per attempt and round, not per segment.
-  const byAttempt = new Map<string, { orgId: string; segments: number; bytes: number }>();
+  await source.remove(removed.map((r) => r.id));
+  applied.deleted += removed.length;
+  applied.bytesDeleted += removed.reduce((sum, r) => sum + (r.bytes ?? 0), 0);
+  // One audit row per attempt and round, not per file.
+  const byAttempt = new Map<string, { orgId: string; rows: number; bytes: number }>();
   for (const r of removed) {
-    const entry = byAttempt.get(r.attemptId) ?? { orgId: r.orgId, segments: 0, bytes: 0 };
-    entry.segments++;
-    entry.bytes += r.bytes;
+    const entry = byAttempt.get(r.attemptId) ?? { orgId: r.orgId, rows: 0, bytes: 0 };
+    entry.rows++;
+    entry.bytes += r.bytes ?? 0;
     byAttempt.set(r.attemptId, entry);
   }
   await db.insert(auditLogs).values(
     [...byAttempt].map(([attemptId, e]) => ({
       orgId: e.orgId,
       actorId: null,
-      action: "retention.recording.purge",
+      action: source.auditAction,
       subjectType: "attempt",
       subjectId: attemptId,
-      meta: { segments: e.segments, bytes: e.bytes, at: now.toISOString() },
+      meta: { [source.unit]: e.rows, bytes: e.bytes, at: now.toISOString() },
     })),
   );
   return removed.length;
+}
+
+/** Recording segments past their purge date. */
+export async function purgeRecordings(options: Options = {}): Promise<RecordingPurgeReport> {
+  const { applied, ...report } = await purgeDue(RECORDINGS, options);
+  return {
+    ...report,
+    applied: applied && { segmentsDeleted: applied.deleted, bytesDeleted: applied.bytesDeleted, keysSkipped: applied.keysSkipped, storageFailures: applied.storageFailures },
+  };
+}
+
+/**
+ * Evidence files (frames, short clips) past their purge date. They were
+ * stamped with one since the start and nothing deleted them; this is that job.
+ */
+export async function purgeEvidence(options: Options = {}): Promise<EvidencePurgeReport> {
+  const { applied, ...report } = await purgeDue(EVIDENCE, options);
+  return {
+    ...report,
+    applied: applied && { filesDeleted: applied.deleted, bytesDeleted: applied.bytesDeleted, keysSkipped: applied.keysSkipped, storageFailures: applied.storageFailures },
+  };
 }

@@ -11,7 +11,7 @@ import { SpeakingEvidence } from "@/components/panel/result/speaking-evidence";
 import { can } from "@/lib/authorize";
 import { isObjectiveSection, CEFR_LEVELS, type Section } from "@/lib/exam/types";
 import { listStudents, loadIntegrityView, loadResultView } from "@/server/panel";
-import { loadRecordingSegments } from "@/server/recordings";
+import { loadRecordingSegments, recordingConsent } from "@/server/recordings";
 import { ORG_TIMEZONE } from "@/lib/org-timezone";
 import { requireUser } from "@/server/session";
 import { managerLocale } from "@/i18n/manager-locale";
@@ -74,6 +74,8 @@ export default async function ResultPage({
   // The continuous recording, only for a role that may watch recordings.
   const canWatch = can(user, "media:view");
   const recording = integrity && attempt && canWatch ? await loadRecordingSegments(user.orgId, attempt.id) : null;
+  // False when the student accepted a consent text that does not announce the recording: nothing was recorded.
+  const consentCoversRecording = integrity ? await recordingConsent(assessment.id) : null;
   const sectionSpans = view.runs
     .filter((r) => r.startedAt)
     .map((r) => ({ section: r.section, start: r.startedAt!.getTime(), end: (r.submittedAt ?? new Date()).getTime() }));
@@ -281,7 +283,13 @@ export default async function ResultPage({
                     }
                   />
                 ) : (
-                  <p className="text-[12.5px] text-muted">{canWatch ? t("examRecording.empty") : t("examRecording.noPermission")}</p>
+                  <p className="text-[12.5px] text-muted">
+                    {consentCoversRecording === false
+                      ? t("recordingSafety.oldConsent")
+                      : canWatch
+                        ? t("examRecording.empty")
+                        : t("examRecording.noPermission")}
+                  </p>
                 )
               }
             />

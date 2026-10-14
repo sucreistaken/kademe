@@ -9,6 +9,13 @@
  * organisation whose newest exam text is still the unedited version 1; a text a
  * school wrote itself is left alone. Invitations keep the text they were
  * accepted under.
+ *
+ * Whether a text announces the recording is stored on the row
+ * (consent_texts.covers_recording), not read from its version: a new
+ * organisation gets this text as its version 1. `*_consent_covers_recording.sql`
+ * sets it for every row carrying exactly this text; the seed and the production
+ * setup set it when they write it. An invitation accepted under any other text
+ * is not recorded.
  */
 
 export const CONSENT_TR = `Bu sınav Almanca seviyenizi ölçmek içindir. Sınav boyunca kameranız ve mikrofonunuz açık kalır, ekranınızın tamamı paylaşılır ve sınav tam ekranda yapılır. Sınavın tamamı kaydedilir: kameranızın görüntüsü ve sesi, ekranınız paylaşılıyorsa ekranınız da. Bu kaydı yalnızca okulunuzun yetkili kullanıcıları izleyebilir. Pencere veya sekme değiştirme, kopyala-yapıştır denemeleri ve benzeri olaylar kaydedilir. Belirli aralıklarla ve şüpheli anlarda kameranızdan ve ekranınızdan kareler alınır; bu kareler yapay zekâ ile ikinci kez kontrol edilebilir. Yapay zekâ yalnızca görülen olguları not eder (kaç kişi var, bir cihaz görünüyor mu gibi), duygu veya kişilik çıkarımı yapmaz. Hiçbir işaret sizi otomatik olarak başarısız saymaz: hepsini öğretmeniniz inceler. Yazma ve konuşma cevaplarınız için yapay zekâ bir seviye önerir, nihai kararı öğretmeniniz verir. Kayıtlar okulun belirlediği süre boyunca saklanır ve sonra silinir. Verilerinizle ilgili taleplerinizi bu sayfadaki bağlantıdan iletebilirsiniz.`;

@@ -1049,5 +1049,17 @@
   "examDevice": {
     "leadBetween": "Bu sınav yalnızca bilgisayarda yapılıyor. Bitirdiğiniz bölümler kayıtlı; sıradaki bölümün süresi, siz onu bilgisayarda başlatana kadar işlemez.",
     "leadRunning": "Bu sınav yalnızca bilgisayarda yapılıyor. Bu bölümün süresi işliyor: linki hemen bilgisayarınızda açın, kaydedilen cevaplarınızla kaldığınız yerden devam edin."
+  },
+  "recordingSafety": {
+    "cameraAudioScreen": "Kamera, ses ve ekran kaydediliyor",
+    "cameraScreen": "Kamera ve ekran kaydediliyor",
+    "cameraAudio": "Kamera ve ses kaydediliyor",
+    "camera": "Kamera kaydediliyor",
+    "screen": "Ekran kaydediliyor",
+    "bodyWhileSending": "Cevaplarınız kaydedildi. Emeğiniz için teşekkürler.",
+    "sending": "Kayıt gönderiliyor, lütfen bu sekmeyi kapatmayın.",
+    "sendingCount": "Kayıt gönderiliyor, lütfen bu sekmeyi kapatmayın ({count} parça).",
+    "slow": "Kaydın {count} parçası henüz gönderilemedi. Bağlantınız düzelince kendiliğinden gönderilir; lütfen bu sekmeyi açık tutun.",
+    "sent": "Sınav kaydı gönderildi."
   }
 }

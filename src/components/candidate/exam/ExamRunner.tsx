@@ -17,6 +17,7 @@ import { stepPath } from "@/lib/candidate-routes";
 import type { CandidateState } from "@/lib/exam-flow";
 import { neighbour, type MoveTo, type NavEntry } from "@/lib/exam/navigation";
 import type { ItemAnswer } from "@/lib/exam/types";
+import { recordingLabel } from "@/lib/proctor/recording-status";
 import { formatCountdown, SUBMIT_SLACK_MS } from "@/lib/timer";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
@@ -47,6 +48,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
   const t = useT("exam");
   const n = useT("examNav");
   const sec = useT("section");
+  const rec = useT("recordingSafety");
   const { engine, snap } = useProctor();
   const [state, setState] = useState(initial);
   const [answer, setAnswer] = useState<ItemAnswer>(initial.current?.item?.answer ?? {});
@@ -65,6 +67,8 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
   const flushRef = useRef<() => Promise<boolean>>(async () => true);
   const policy = state.proctoring;
   const proctored = policy.preset !== "OFF";
+  // While the continuous recording runs, the header says all it records, the sound included.
+  const recLabel = recordingLabel(snap?.recording ?? null);
 
   const apply = useCallback(
     (next: CandidateState) => {
@@ -433,7 +437,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
               {proctored ? (
                 <span className="hidden items-center gap-2 text-[12.5px] text-muted md:flex">
                   <span className="size-1.5 rounded-full bg-accent" aria-hidden />
-                  {policy.screenShare ? t("recordingOn") : t("cameraOn")}
+                  {recLabel ? rec(recLabel) : policy.screenShare ? t("recordingOn") : t("cameraOn")}
                 </span>
               ) : null}
               <span className="flex items-baseline gap-2">

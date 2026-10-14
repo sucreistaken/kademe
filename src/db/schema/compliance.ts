@@ -7,6 +7,7 @@ import {
   integer,
   jsonb,
   numeric,
+  boolean,
   index,
   check,
   foreignKey,
@@ -29,6 +30,14 @@ export const consentTexts = pgTable("consent_texts", {
   solution: solution("solution").notNull().default("LANGUAGE_EXAM"),
   version: integer("version").notNull(),
   body: jsonb("body").$type<I18nText>().notNull(),
+  /**
+   * The text tells the candidate that the whole exam is recorded (camera with
+   * sound, the screen when shared). The version number cannot say this: it
+   * counts per organisation, and a new organisation starts at 1 with the
+   * recording text. Only an invitation whose accepted text says so is
+   * recorded (src/server/recordings.ts, recordingConsent).
+   */
+  coversRecording: boolean("covers_recording").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

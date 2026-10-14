@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, asc, eq, gt, ne, sql } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   attempts,
@@ -11,7 +11,8 @@ import {
 import type { CandidateContext } from "@/lib/candidate-context";
 import { normalizeBatch, type NormalizedEvent } from "@/lib/proctor/events";
 import { computeIntegrity, type IntegrityEvent } from "@/lib/proctor/integrity";
-import { TAXONOMY, effectiveSeverity, type ProctorEventType } from "@/lib/proctor/taxonomy";
+import { BUDGETED_REVIEW_STATUSES, shouldQueueReview } from "@/lib/proctor/review-gate";
+import { effectiveSeverity, type ProctorEventType } from "@/lib/proctor/taxonomy";
 import { shouldTerminate } from "@/lib/proctor/termination";
 import { enqueueProctorReview } from "@/lib/queue";
 import { getStorage, proctorEvidenceKey } from "@/lib/storage";
@@ -144,7 +145,8 @@ export async function ingestEvents(
   const policy = await solution.proctorPolicy(ctx.assessment.id);
   for (const e of accepted) {
     const stored = await upsertEvent(attempt.id, session?.id ?? null, segment, e);
-    if (stored.fresh && policy?.aiSecondLook && TAXONOMY[e.type].aiReview) {
+    // Only when the frames the claim needs are captured at all (review-gate.ts).
+    if (stored.fresh && policy && shouldQueueReview(e.type, policy)) {
       await maybeQueueReview(attempt.id, stored.id, policy.maxAiReviewsPerAttempt);
     }
   }
@@ -202,13 +204,18 @@ async function upsertEvent(
   return row ? { id: row.id, fresh: true } : { id: "", fresh: false };
 }
 
-async function maybeQueueReview(attemptId: string, eventId: string, budget: number) {
+/**
+ * Queues the AI second look within the attempt's budget. Only reviews that
+ * made (or may still make) a model call count; one that ended SKIPPED without
+ * frames does not take a later flag's place.
+ */
+export async function maybeQueueReview(attemptId: string, eventId: string, budget: number) {
   if (!eventId) return;
   const [used] = await db
     .select({ n: sql<number>`count(*)::int` })
     .from(proctorAiReviews)
     .innerJoin(proctorEvents, eq(proctorEvents.id, proctorAiReviews.eventId))
-    .where(eq(proctorEvents.attemptId, attemptId));
+    .where(and(eq(proctorEvents.attemptId, attemptId), inArray(proctorAiReviews.status, [...BUDGETED_REVIEW_STATUSES])));
   if ((used?.n ?? 0) >= budget) return;
   const [review] = await db
     .insert(proctorAiReviews)
