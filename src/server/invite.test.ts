@@ -105,7 +105,7 @@ describe("createInvitation", () => {
     expect(mail.body).toContain(`Başlamak için: ${outboxLinkPlaceholder(r.assessmentId)}`);
     expect(mail.body).toContain("Merhaba Ayşe Yılmaz,");
     expect(mail.body).toContain("bilgisayarda");
-    expect(mail.body).not.toContain("—");
+    expect(mail.body).not.toContain("\u2014");
     expect(mail.body).not.toContain("https://");
   });
 
