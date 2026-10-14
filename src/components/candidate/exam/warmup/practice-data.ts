@@ -31,13 +31,13 @@ export const PRACTICE: Record<Section, PracticeDef[]> = {
   GRAMMAR: [
     {
       type: "SINGLE_CHOICE",
-      prompt: "Wählen Sie die richtige Form.\n\nIch ___ Ayşe.",
+      prompt: "Wählen Sie das passende Wort.\n\neins, zwei, ___, vier",
       content: {
         kind: "CHOICE",
         options: [
-          { id: "a", text: "ist" },
-          { id: "b", text: "bin" },
-          { id: "c", text: "bist" },
+          { id: "a", text: "fünf" },
+          { id: "b", text: "drei" },
+          { id: "c", text: "zehn" },
         ],
       },
       key: { kind: "CHOICE", correct: ["b"] },
@@ -87,12 +87,12 @@ export const PRACTICE: Record<Section, PracticeDef[]> = {
     {
       type: "TRUE_FALSE_NG",
       prompt: "Richtig oder falsch?",
-      sample: { text: "Der Zug nach München fährt um neun Uhr ab. Er kommt um zwölf Uhr an." },
+      sample: { text: "Das Museum ist am Montag geschlossen. Von Dienstag bis Sonntag ist es von 10 bis 18 Uhr offen." },
       content: {
         kind: "TFNG",
         statements: [
-          { id: "s1", text: "Der Zug fährt um neun Uhr ab." },
-          { id: "s2", text: "Der Zug kommt um elf Uhr an." },
+          { id: "s1", text: "Am Montag ist das Museum geschlossen." },
+          { id: "s2", text: "Am Dienstag schließt das Museum um 17 Uhr." },
         ],
       },
       key: { kind: "TFNG", answers: { s1: "R", s2: "F" } },
@@ -101,19 +101,19 @@ export const PRACTICE: Record<Section, PracticeDef[]> = {
   WRITING: [
     {
       type: "WRITING_PROMPT",
-      prompt: "Schreiben Sie ein paar Sätze über Ihr Wochenende. Schreiben Sie mindestens 10 Wörter.",
-      content: { kind: "WRITING", minWords: 10, maxWords: 60 },
+      prompt: "Schreiben Sie zehn deutsche Wörter, die Sie schon kennen.",
+      content: { kind: "WRITING", minWords: 10, maxWords: 40 },
       key: { kind: "NONE" },
-      rubric: { contentPoints: ["Wochenende"] },
+      rubric: { contentPoints: ["zehn Wörter"] },
     },
   ],
   SPEAKING: [
     {
       type: "SPEAKING_PROMPT",
-      prompt: "Stellen Sie sich kurz vor: Name, Wohnort, Hobby.",
+      prompt: "Zählen Sie auf Deutsch von eins bis zehn.",
       content: { kind: "SPEAKING", thinkSeconds: 30, answerSeconds: 60, maxTakes: 1 },
       key: { kind: "NONE" },
-      rubric: { contentPoints: ["Name", "Wohnort", "Hobby"] },
+      rubric: { contentPoints: ["eins bis zehn"] },
     },
   ],
 };
