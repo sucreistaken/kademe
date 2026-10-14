@@ -19,6 +19,7 @@ import { neighbour, type MoveTo, type NavEntry } from "@/lib/exam/navigation";
 import type { ItemAnswer } from "@/lib/exam/types";
 import { recordingLabel } from "@/lib/proctor/recording-status";
 import { formatCountdown, SUBMIT_SLACK_MS } from "@/lib/timer";
+import { SectionCheer } from "@/components/candidate/exam/SectionCheer";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
 
@@ -458,6 +459,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
       <div inert={blocked} className={cn(blocked && "pointer-events-none select-none blur-[3px]")}>
         {state.step === "SECTION_INTRO" ? (
           <CandidateColumn width={620}>
+            <SectionCheer sections={state.sections} />
             <div className="tnum text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted">
               {t("sectionOf", { n: cur.position, total: cur.total })}
             </div>

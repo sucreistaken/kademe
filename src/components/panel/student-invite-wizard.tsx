@@ -343,6 +343,7 @@ export function StudentInviteWizard({
       title: t("inviteListTitle"),
       lead: <p>{inv("lead")}</p>,
       layout: "single",
+      mascot: "wave",
       primary: { kind: "button", id: "invite-next", label: primaryLabel, waitReason: listReason ? t(`inviteWait${listReason}`, { max: MAX_STUDENT_ROWS }) : null, onClick: () => next("list") },
       note: refusal === "LIST" ? refusalNote : null,
       body: (
@@ -428,6 +429,7 @@ export function StudentInviteWizard({
       title: t("inviteExamTitle"),
       lead: <p>{t("inviteExamLead")}</p>,
       layout: "single",
+      mascot: "think",
       primary: { kind: "button", id: "invite-next", label: primaryLabel, waitReason: examReason ? t(`inviteWait${examReason}`) : null, onClick: () => next("exam") },
       note: refusal === "EXAM" || refusal === "CLAIM_REQUIRED" ? refusalNote : null,
       body: (
@@ -534,6 +536,7 @@ export function StudentInviteWizard({
       title: t("inviteLanguageTitle"),
       lead: <p>{t("inviteLanguageLead")}</p>,
       layout: "single",
+      mascot: "think",
       primary: { kind: "button", id: "invite-next", label: flow("backToSummary"), onClick: () => next("language") },
       body: (
         <>

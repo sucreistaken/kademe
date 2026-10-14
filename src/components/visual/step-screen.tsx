@@ -2,6 +2,7 @@
 import type { ReactNode, Ref } from "react";
 import { cn } from "@/lib/cn";
 import { Illustration, type IllustrationName } from "./illustrations";
+import { Mascot, type MascotPose } from "./mascot";
 
 /**
  * G4, G10: a preparation or finish screen has two regions (title, one
@@ -16,6 +17,7 @@ export function StepScreen({
   layout,
   illustration,
   illustrationSize = "hero",
+  mascot,
   kicker,
   title,
   titleRef,
@@ -28,6 +30,8 @@ export function StepScreen({
   layout: "split" | "single";
   illustration?: IllustrationName;
   illustrationSize?: "hero" | "spot" | "flow";
+  /** A small mascot pose above the title (a wizard step); ignored when a drawing is given. */
+  mascot?: MascotPose;
   kicker?: ReactNode;
   title: ReactNode;
   titleRef?: Ref<HTMLHeadingElement>;
@@ -41,6 +45,7 @@ export function StepScreen({
   const head = (
     <div className="min-w-0">
       {illustration && illustrationSize !== "hero" ? <Illustration name={illustration} size={illustrationSize} className="mb-6" /> : null}
+      {mascot && !illustration ? <Mascot pose={mascot} size="small" className="mb-3" /> : null}
       {kicker ? <p className="text-[14px] leading-[22px] text-muted">{kicker}</p> : null}
       <h1
         ref={titleRef}
