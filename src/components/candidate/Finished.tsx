@@ -61,7 +61,8 @@ export function Finished({
     (async () => {
       if (engine) await engine.stop();
       if (cancelled) return;
-      setStreamsOff(true);
+      // Only a proctored exam had streams to turn off; an unproctored one says nothing.
+      setStreamsOff(!!engine);
       // The last segments are still on their way. The wait is bounded; the
       // upload is not, and the page asks before it is left while any wait.
       if (engine && !(await engine.drainRecording(FINISH_DRAIN_MS)) && !cancelled) setDrainTimedOut(true);
