@@ -6,7 +6,7 @@ import { seedItemKey } from "@/db/seed-bank/seed-key";
 import type { SeedItem, SeedStimulus } from "@/db/seed-bank/types";
 import { thetaForLevel } from "@/lib/exam/cefr";
 import { synthesize, ttsAvailable } from "@/lib/tts";
-import { planTopUp, retireCounts, seedOrderInStimulus } from "./bank-topup";
+import { planTopUp, retireCounts, seedOrderInStimulus, syncCounts } from "./bank-topup";
 
 /**
  * Loads the hand-written starter bank into an organisation. Rows are APPROVED
@@ -65,11 +65,20 @@ export async function importSeedBank(orgId: string, options: { audio?: boolean; 
  */
 type Executor = Pick<typeof db, "select">;
 
-type TopUpOptions = { retireStale?: boolean };
+type TopUpOptions = { retireStale?: boolean; syncSeed?: boolean };
 
 async function loadTopUpState(tx: Executor, orgId: string, options: TopUpOptions) {
   const haveStimuli = await tx
-    .select({ id: stimuli.id, seedKey: stimuli.seedKey })
+    .select({
+      id: stimuli.id,
+      seedKey: stimuli.seedKey,
+      origin: stimuli.origin,
+      section: stimuli.section,
+      level: stimuli.level,
+      title: stimuli.title,
+      body: stimuli.body,
+      speakers: stimuli.speakers,
+    })
     .from(stimuli)
     .where(eq(stimuli.orgId, orgId));
   const haveItems = await tx
@@ -83,7 +92,12 @@ async function loadTopUpState(tx: Executor, orgId: string, options: TopUpOptions
       type: items.type,
       prompt: items.prompt,
       content: items.content,
+      stimulusId: items.stimulusId,
       stimulusSeedKey: stimuli.seedKey,
+      answerKey: items.answerKey,
+      difficulty: items.difficulty,
+      explanation: items.explanation,
+      rubric: items.rubric,
     })
     .from(items)
     .leftJoin(stimuli, eq(stimuli.id, items.stimulusId))
@@ -95,7 +109,10 @@ async function loadTopUpState(tx: Executor, orgId: string, options: TopUpOptions
     .where(and(eq(auditLogs.orgId, orgId), eq(auditLogs.action, "bank.edit"), eq(auditLogs.subjectType, "item")));
   const edited = new Set(editedRows.map((r: { id: string | null }) => r.id));
   const withEdits = haveItems.map((i) => ({ ...i, edited: edited.has(i.id) }));
-  return { haveStimuli, plan: planTopUp(SEED_BANK, { stimuli: haveStimuli, items: withEdits }, options) };
+  // --sync-seed leaves a reading text alone when an item that reads it was edited.
+  const editedStimuli = new Set(withEdits.filter((i) => i.edited && i.stimulusId).map((i) => i.stimulusId));
+  const stimuliWithEdits = haveStimuli.map((s) => ({ ...s, itemEdited: editedStimuli.has(s.id) }));
+  return { haveStimuli, plan: planTopUp(SEED_BANK, { stimuli: stimuliWithEdits, items: withEdits }, options) };
 }
 
 /** Read-only: what a top-up would do for one organisation, for the production summary. */
@@ -107,6 +124,7 @@ export async function previewTopUp(orgId: string, options: TopUpOptions = {}) {
     keysToBackfill: plan.backfill.length,
     retire: plan.retire,
     keptEdited: plan.keptEdited,
+    sync: plan.sync,
   };
 }
 
@@ -158,7 +176,45 @@ export async function topUpSeedBank(orgId: string, options: TopUpOptions = {}) {
         meta: { retired, bySectionLevel: retireCounts(plan.retire) },
       });
     }
+
+    // Same guards as the retire step: starter rows only, scoped to the org. Status stays as it is.
+    let itemsSynced = 0;
+    for (const c of plan.sync.items) {
+      const done = await tx
+        .update(items)
+        .set({ ...c.set, updatedAt: new Date() })
+        .where(and(eq(items.id, c.id), eq(items.orgId, orgId), eq(items.origin, "SEED")))
+        .returning({ id: items.id });
+      itemsSynced += done.length;
+    }
+    let stimuliSynced = 0;
+    for (const c of plan.sync.stimuli) {
+      const done = await tx
+        .update(stimuli)
+        .set({ body: c.body })
+        .where(and(eq(stimuli.id, c.id), eq(stimuli.orgId, orgId), eq(stimuli.origin, "SEED"), eq(stimuli.section, "READING")))
+        .returning({ id: stimuli.id });
+      stimuliSynced += done.length;
+    }
+    if (itemsSynced > 0 || stimuliSynced > 0) {
+      await tx.insert(auditLogs).values({
+        orgId,
+        actorId: null,
+        action: "bank.sync_seed",
+        subjectType: "item",
+        meta: {
+          items: itemsSynced,
+          stimuli: stimuliSynced,
+          bySectionLevel: syncCounts(plan.sync),
+          itemsKeptEdited: plan.sync.itemsKeptEdited,
+          stimuliKeptEdited: plan.sync.stimuliKeptEdited,
+          listeningDiffs: plan.sync.listeningDiffs.map((d) => d.key),
+        },
+      });
+    }
     return {
+      itemsSynced,
+      stimuliSynced,
       stimuliAdded: plan.stimuli.length,
       itemsAdded: rows.length,
       keysBackfilled: plan.backfill.length,

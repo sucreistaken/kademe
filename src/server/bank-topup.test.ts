@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
+import { thetaForLevel } from "@/lib/exam/cefr";
 import { seedItemKey } from "@/db/seed-bank/seed-key";
 import type { SeedBankPart, SeedItem } from "@/db/seed-bank/types";
 import {
   bankTopUpRefusal,
   databaseTarget,
   formatRetireCounts,
+  formatSyncSummary,
   planTopUp,
   retireCounts,
   seedOrderInStimulus,
@@ -73,7 +75,14 @@ describe("planTopUp", () => {
   it("does nothing on a second run", () => {
     const keyed = bank.items.map((item) => row(item, { seedKey: seedItemKey(item) }));
     const plan = planTopUp(bank, { stimuli: [{ id: "s1", seedKey: "r-b1-a" }], items: keyed });
-    expect(plan).toEqual({ stimuli: [], items: [], backfill: [], retire: [], keptEdited: 0 });
+    expect(plan).toEqual({
+      stimuli: [],
+      items: [],
+      backfill: [],
+      retire: [],
+      keptEdited: 0,
+      sync: { items: [], stimuli: [], itemsKeptEdited: 0, stimuliKeptEdited: 0, listeningDiffs: [] },
+    });
   });
 
   it("never claims teacher items, edited seed rows or a duplicate twice", () => {
@@ -218,5 +227,145 @@ describe("seedOrderInStimulus", () => {
   it("numbers stimulus items from 1 in bank order and gives 0 to the rest", () => {
     const order = seedOrderInStimulus(bank);
     expect(bank.items.map((i) => order.get(i))).toEqual([0, 0, 1, 2]);
+  });
+});
+
+describe("planTopUp with syncSeed", () => {
+  const withFields = (item: SeedItem, over: Partial<ExistingItem> = {}) =>
+    row(item, {
+      seedKey: seedItemKey(item),
+      answerKey: item.key,
+      difficulty: thetaForLevel(item.level, item.within ?? "MID"),
+      explanation: item.explanation ?? null,
+      rubric: item.rubric ?? null,
+      ...over,
+    });
+  const readingStimulus = (over = {}) => ({
+    id: "s1",
+    seedKey: "r-b1-a",
+    origin: "SEED",
+    section: "READING" as const,
+    level: "B1" as const,
+    title: "A",
+    body: "Text",
+    speakers: null,
+    ...over,
+  });
+  const current = () => bank.items.map((i) => withFields(i));
+  const sync = (existing: Parameters<typeof planTopUp>[1]) => planTopUp(bank, existing, { syncSeed: true }).sync;
+
+  it("changes nothing when the org is already current (and the float4 difficulty round trip)", () => {
+    const items = bank.items.map((i) => withFields(i, { difficulty: Math.fround(thetaForLevel(i.level, "MID")) }));
+    expect(sync({ stimuli: [readingStimulus()], items })).toEqual({
+      items: [],
+      stimuli: [],
+      itemsKeptEdited: 0,
+      stimuliKeptEdited: 0,
+      listeningDiffs: [],
+    });
+  });
+
+  it("does nothing unless syncSeed is asked for", () => {
+    const items = [withFields(bank.items[0], { answerKey: { kind: "CHOICE", correct: ["b"] } })];
+    expect(planTopUp(bank, { stimuli: [], items }).sync.items).toEqual([]);
+  });
+
+  it("updates key, difficulty, explanation and rubric that differ, only those fields", () => {
+    const seeded: SeedBankPart = {
+      stimuli: [],
+      items: [{ ...choiceItem("Eins"), within: "HARD", explanation: "Neu", key: { kind: "CHOICE", correct: ["a", "b"] } }],
+    };
+    const old = withFields({ ...seeded.items[0], within: undefined, explanation: "Alt", key: { kind: "CHOICE", correct: ["a"] } });
+    const plan = planTopUp(seeded, { stimuli: [], items: [{ ...old, seedKey: seedItemKey(seeded.items[0]) }] }, { syncSeed: true }).sync;
+    expect(plan.items).toHaveLength(1);
+    expect(plan.items[0].fields).toEqual(["key", "difficulty", "explanation"]);
+    expect(plan.items[0].set).toEqual({
+      answerKey: { kind: "CHOICE", correct: ["a", "b"] },
+      difficulty: thetaForLevel("B1", "HARD"),
+      explanation: "Neu",
+    });
+  });
+
+  it("compares keys regardless of jsonb key order", () => {
+    const items = bank.items.map((i) => withFields(i, { answerKey: { correct: ["a"], kind: "CHOICE" } as SeedItem["key"] }));
+    expect(sync({ stimuli: [readingStimulus()], items }).items).toEqual([]);
+  });
+
+  it("skips a starter item the school edited and counts it", () => {
+    const items = [withFields(bank.items[0], { answerKey: { kind: "CHOICE", correct: ["c"] }, edited: true }), ...current().slice(1)];
+    const plan = sync({ stimuli: [readingStimulus()], items });
+    expect(plan.items).toEqual([]);
+    expect(plan.itemsKeptEdited).toBe(1);
+  });
+
+  it("never touches TEACHER or AI items, even with a seed key that matches", () => {
+    const changed = { answerKey: { kind: "CHOICE", correct: ["c"] } as SeedItem["key"] };
+    const items = [withFields(bank.items[0], { ...changed, origin: "TEACHER" }), withFields(bank.items[1], { ...changed, origin: "AI" })];
+    expect(sync({ stimuli: [], items }).items).toEqual([]);
+  });
+
+  it("does not look at status: a RETIRED item is synced but its status is not part of the change", () => {
+    const items = [withFields(bank.items[0], { status: "RETIRED", explanation: "alt" })];
+    const [change] = sync({ stimuli: [], items }).items;
+    expect(change.fields).toEqual(["explanation"]);
+    expect(Object.keys(change.set)).not.toContain("status");
+  });
+
+  it("syncs an unkeyed starter row through its computed key", () => {
+    const items = [withFields(bank.items[0], { seedKey: null, explanation: "alt" })];
+    expect(sync({ stimuli: [], items }).items.map((i) => i.id)).toEqual(["id-Eins"]);
+  });
+
+  it("ignores starter items the bank no longer has", () => {
+    const items = [withFields(choiceItem("Weg"), { seedKey: "old-key", explanation: "alt" })];
+    expect(sync({ stimuli: [], items }).items).toEqual([]);
+  });
+
+  it("updates a changed reading text unless an item that reads it was edited", () => {
+    const plan = sync({ stimuli: [readingStimulus({ body: "Alter Text" })], items: current() });
+    expect(plan.stimuli).toEqual([{ id: "s1", key: "r-b1-a", section: "READING", level: "B1", title: "A", body: "Text" }]);
+    const kept = sync({ stimuli: [readingStimulus({ body: "Alter Text", itemEdited: true })], items: current() });
+    expect(kept.stimuli).toEqual([]);
+    expect(kept.stimuliKeptEdited).toBe(1);
+  });
+
+  it("never changes a teacher's reading text", () => {
+    expect(sync({ stimuli: [readingStimulus({ body: "Anders", origin: "TEACHER" })], items: current() }).stimuli).toEqual([]);
+  });
+
+  it("leaves a listening script alone and reports the difference", () => {
+    const listening: SeedBankPart = {
+      stimuli: [{ key: "l-b1-a", section: "LISTENING", level: "B1", title: "L", body: "A: Neu", topic: "t", speakers: [{ label: "A", voice: "A" }] }],
+      items: [],
+    };
+    const row0 = { id: "l1", seedKey: "l-b1-a", origin: "SEED", section: "LISTENING" as const, level: "B1" as const, title: "L", body: "A: Alt", speakers: [{ label: "A", voice: "A" as const }] };
+    const plan = planTopUp(listening, { stimuli: [row0], items: [] }, { syncSeed: true }).sync;
+    expect(plan.stimuli).toEqual([]);
+    expect(plan.listeningDiffs).toEqual([{ id: "l1", key: "l-b1-a", level: "B1" }]);
+    const same = planTopUp(listening, { stimuli: [{ ...row0, body: "A: Neu" }], items: [] }, { syncSeed: true }).sync;
+    expect(same.listeningDiffs).toEqual([]);
+  });
+
+  it("is idempotent: applying the plan leaves nothing for a second run", () => {
+    const old = [
+      withFields(bank.items[0], { explanation: "alt", difficulty: 9 }),
+      withFields(bank.items[1], { answerKey: { kind: "CHOICE", correct: ["c"] } }),
+      ...current().slice(2),
+    ];
+    const first = sync({ stimuli: [readingStimulus({ body: "Alt" })], items: old });
+    expect(first.items).toHaveLength(2);
+    const applied = old.map((o) => ({ ...o, ...(first.items.find((c) => c.id === o.id)?.set ?? {}) }));
+    const second = sync({ stimuli: [readingStimulus({ body: first.stimuli[0].body })], items: applied });
+    expect(second.items).toEqual([]);
+    expect(second.stimuli).toEqual([]);
+  });
+
+  it("prints counts per section and level, examples and the kept lines", () => {
+    const items = [withFields(bank.items[0], { explanation: "alt" }), withFields(bank.items[2], { explanation: "alt", edited: true }), ...current().slice(1, 2)];
+    const lines = formatSyncSummary(sync({ stimuli: [readingStimulus({ body: "Alt" })], items }));
+    expect(lines).toContain("sync items GRAMMAR: B1 1");
+    expect(lines).toContain("sync texts READING: B1 1");
+    expect(lines.some((l) => l.startsWith("e.g. GRAMMAR B1 [explanation] Eins"))).toBe(true);
+    expect(lines).toContain("kept 1 starter items the school edited");
   });
 });

@@ -202,6 +202,31 @@ ve sınavda sunulmaya devam eder. Bunun için açıkça istenen bir adım var: `
 - Açık karar: bir okul eski bir başlangıç sorusunu düzenleyip yeniden onayladıysa soru hâlâ origin SEED'dir ve
   `--retire-stale` onu da emekliye ayırır.
 
+## Banka düzeltmelerini mevcut kurumlara taşıma: `--sync-seed` (2026-10-14, `platform/solutions`, canlıda değil)
+
+Seed anahtarı soru metnini, içeriği ve metin anahtarını kapsar; cevap anahtarı, `within`, açıklama, rubrik ve
+okuma metni gövdesi anahtarın dışındadır. Bu yüzden yalnız bunları değiştiren bir düzeltme (ör. C-testte yeni kabul
+edilen cevaplar) top-up ile mevcut kuruma hiç ulaşmıyordu. `--sync-seed` bu açığı kapatır, isteğe bağlıdır.
+
+- Eşleşen (seed key) başlangıç soruları (origin SEED) için güncellenir: cevap anahtarı, zorluk (`thetaForLevel(seviye, within)`),
+  açıklama, rubrik. Durum olduğu gibi kalır (RETIRED/REJECTED yeniden onaylanmaz). Eşleşen başlangıç okuma metinleri için
+  yalnız gövde güncellenir.
+- Dokunulmaz: TEACHER/AI soruları, okulun düzenlediği başlangıç soruları (`audit_logs` `bank.edit`, `--retire-stale` ile
+  aynı tespit), okulun düzenlediği bir soruyu okutan okuma metni (sayılır, özette "kept"), dinleme metinleri (ses
+  onlardan üretildi): farklı olanlar yalnız raporlanır, değiştirilmez. Bir dinleme metni gerçekten değişecekse
+  ayrı bir karar ve ses üretimi gerekir.
+- Yazmadan önce kurum başına özet: kaç soru/metin değişir (bölüm ve seviye kırılımı), ilk örnekler, tutulanlar.
+  Kurum başına tek işlem; bir şey değiştiyse kurum başına bir `audit_logs` satırı `bank.sync_seed`. İkinci çalıştırma 0.
+- Canlı sıra (yedek `pg_dump` sonra; devam eden sınav varsa bitmesini bekle, cevap anahtarı sınav sırasında değişmesin):
+  `pnpm run bank:topup --production --confirm-db=127.0.0.1:5434/kademe --retire-stale --sync-seed`
+  Önce özeti oku (eklenecek, emekliye ayrılacak, güncellenecek), sonra yazar. Yeni dinleme klibi eklendiyse ardından
+  `pnpm run bank:tts`. Bayraklar tek komutta birlikte çalışır; yalnız senkron için `--retire-stale` atlanabilir.
+- Prova (`kademe_sync`, `kademe_platform` kopyası): ilk çalıştırma 28 ekleme, 16 soru + 2 okuma metni güncellemesi
+  (dilbilgisi B1 2, B2 3, C1 2, C2 3; okuma C1 2; dinleme A1 1; yazma B1 1, C1 2; metin A1 1, B2 1); ikinci çalıştırma 0/0.
+  Elle bozulmuş durumda (okul düzenlemesi, TEACHER, RETIRED, eski dinleme metni) 4 soru + 1 metin güncellendi,
+  düzenlenen ve TEACHER satırı ile dinleme metni değişmedi, RETIRED durumu kaldı. Doğrulanmadı: canlıda çalıştırılmadı;
+  okulun bir metni düzenleyebildiği bir arayüz yok, metin düzenleme tespiti yalnız soru düzenlemesine dayanır.
+
 ## Canlıya çıkış: Gelişmiş (2026-10-07 gece, kullanıcı onayıyla: "canlıya al")
 
 - main `c4b697d` -> `0142ff0` (platform/solutions fast-forward). VM `kademe-app` (`cgerman-lms`).

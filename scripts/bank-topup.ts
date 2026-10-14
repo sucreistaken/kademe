@@ -13,23 +13,35 @@
  * touched. The per-org summary, with the retire counts per section and level,
  * is printed before anything is written.
  *
+ * --sync-seed also brings the starter items an org already has up to the
+ * current seed: answer key (accepted variants), difficulty (level + within),
+ * explanation and rubric; and the body of READING texts. Matched by seed key,
+ * origin SEED only. Never touched: TEACHER/AI items, starter items the school
+ * edited (an audit row bank.edit), reading texts read by such an item, and the
+ * status (RETIRED/REJECTED stay). Listening scripts are never changed (the
+ * audio was made from them); a differing script is only reported. Printed per
+ * org before writing (counts per section and level, first examples); one audit
+ * row bank.sync_seed per org when something changed. A second run changes nothing.
+ *
  *   DATABASE_URL=postgresql://kademe:kademe@localhost:5434/kademe_bank_check pnpm bank:topup
  *   pnpm bank:topup --org <uuid>
  *   pnpm bank:topup --allow-working-db
  *   pnpm bank:topup --retire-stale
+ *   pnpm bank:topup --retire-stale --sync-seed
  *
  * Production (the only way onto the `kademe` database): both flags, and the
  * confirmation must equal host:port/database parsed from DATABASE_URL. A
  * per-org summary is printed, then applied in one transaction per org.
- *   pnpm bank:topup --production --confirm-db=127.0.0.1:5434/kademe
+ *   pnpm bank:topup --production --confirm-db=127.0.0.1:5434/kademe --retire-stale --sync-seed
  */
 import "dotenv/config";
-import { bankTopUpRefusal, databaseTarget, formatRetireCounts } from "../src/server/bank-topup";
+import { bankTopUpRefusal, databaseTarget, formatRetireCounts, formatSyncSummary } from "../src/server/bank-topup";
 
 async function main() {
   const args = process.argv.slice(2);
   const production = args.includes("--production");
   const retireStale = args.includes("--retire-stale");
+  const syncSeed = args.includes("--sync-seed");
   const confirmDb = args.find((a) => a.startsWith("--confirm-db="))?.slice("--confirm-db=".length);
   const refusal = bankTopUpRefusal(process.env.DATABASE_URL, {
     allowWorkingDb: args.includes("--allow-working-db"),
@@ -60,23 +72,27 @@ async function main() {
     console.error(`No organisation ${onlyOrg}.`);
     process.exit(2);
   }
-  if (production || retireStale) {
+  if (production || retireStale || syncSeed) {
     const where = production ? `Production top-up on ${databaseTarget(process.env.DATABASE_URL)}` : "Top-up";
-    console.log(`${where}${retireStale ? " with --retire-stale" : ""} (${orgs.length} organisation(s)):`);
+    console.log(`${where}${retireStale ? " with --retire-stale" : ""}${syncSeed ? " with --sync-seed" : ""} (${orgs.length} organisation(s)):`);
     for (const org of orgs) {
-      const p = await previewTopUp(org.id, { retireStale });
+      const p = await previewTopUp(org.id, { retireStale, syncSeed });
       const retire = retireStale ? `, retire ${p.retire.length} stale starter items (kept ${p.keptEdited} the school edited)` : "";
       console.log(`  ${org.name}: insert ${p.itemsToInsert} items and ${p.stimuliToInsert} texts/clips, backfill ${p.keysToBackfill} seed keys${retire}`);
       for (const line of formatRetireCounts(p.retire)) console.log(`    retire ${line}`);
+      if (syncSeed) {
+        console.log(`    sync-seed: update ${p.sync.items.length} starter items and ${p.sync.stimuli.length} reading texts`);
+        for (const line of formatSyncSummary(p.sync)) console.log(`      ${line}`);
+      }
     }
     console.log("Applying (one transaction per organisation)...");
   }
   for (const org of orgs) {
     const before = await seedCounts(org.id);
-    const r = await topUpSeedBank(org.id, { retireStale });
+    const r = await topUpSeedBank(org.id, { retireStale, syncSeed });
     const after = await seedCounts(org.id);
     console.log(
-      `${org.name}: items ${before.items} -> ${after.items} (+${r.itemsAdded}), approved starter items ${before.approved} -> ${after.approved}, texts/clips ${before.stimuli} -> ${after.stimuli} (+${r.stimuliAdded}), seed keys backfilled ${r.keysBackfilled}${retireStale ? `, retired ${r.itemsRetired}` : ""}`,
+      `${org.name}: items ${before.items} -> ${after.items} (+${r.itemsAdded}), approved starter items ${before.approved} -> ${after.approved}, texts/clips ${before.stimuli} -> ${after.stimuli} (+${r.stimuliAdded}), seed keys backfilled ${r.keysBackfilled}${retireStale ? `, retired ${r.itemsRetired}` : ""}${syncSeed ? `, synced ${r.itemsSynced} items and ${r.stimuliSynced} reading texts` : ""}`,
     );
     if (r.listeningWithoutAudio.length)
       console.log(`  new clips without audio (run pnpm bank:tts): ${r.listeningWithoutAudio.join(", ")}`);
