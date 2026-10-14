@@ -1,7 +1,7 @@
 import { createHash, createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { resolveSigningSecret } from "./signing-secret";
 import { createReadStream } from "node:fs";
-import { mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, rm, stat, statfs, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { Readable } from "node:stream";
 import type { S3Client } from "@aws-sdk/client-s3";
@@ -245,6 +245,13 @@ export class LocalStorageProvider implements StorageProvider {
   /** `root` is for tests and scripts. Production reads the environment. */
   constructor(root?: string) {
     this.root = root ? path.resolve(root) : localRoot();
+  }
+
+  /** Free bytes on the disk the objects are written to. */
+  async freeBytes(): Promise<number> {
+    await mkdir(this.root, { recursive: true });
+    const fs = await statfs(this.root);
+    return fs.bavail * fs.bsize;
   }
 
   private objectPath(key: string) {
@@ -840,6 +847,15 @@ export function getStorage(): StorageProvider {
   if (mode.warning) console.warn(mode.warning);
   cached = new LocalStorageProvider();
   return cached;
+}
+
+/**
+ * Free space where objects are stored, or null when they do not go to this
+ * machine's disk (R2). Callers that write a lot use it to keep a reserve.
+ */
+export async function storageFreeBytes(): Promise<number | null> {
+  const store = getStorage();
+  return store instanceof LocalStorageProvider ? store.freeBytes() : null;
 }
 
 /** Storage keys are derived, never chosen by the client. */

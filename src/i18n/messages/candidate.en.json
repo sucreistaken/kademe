@@ -287,6 +287,7 @@
     "MEDIA_NOT_READY": "The recording is still uploading. Try again in a moment.",
     "RECORDING_TYPE_REJECTED": "This kind of recording is not accepted for this question.",
     "RECORDING_TOO_LARGE": "The recording is larger than allowed.",
+    "STORAGE_LOW": "The server has no room left for the recording. Your exam continues and your answers are saved.",
     "REQUEST_INVALID": "This request is incomplete or malformed. Reload the page."
   },
   "invite": {

@@ -12,6 +12,7 @@ import {
   uploadWindow,
 } from "@/lib/proctor/recording-rules";
 import { recordingConsent, storeRecordingSegment } from "@/server/recordings";
+import { storageFreeBytes } from "@/lib/storage";
 
 /**
  * One segment of the continuous proctoring recording: raw body, metadata in
@@ -42,6 +43,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ toke
       // Only under a consent text that says the exam is recorded. A refusal
       // the browser does not retry: it should not have recorded at all.
       if (!recordingPermitted(policy, await recordingConsent(ctx.assessment.id))) return fail(ctx, "CONSENT_REQUIRED", 403);
+      // A full disk would also stop the database and the speaking answers that
+      // share it, so recordings stop while less than the reserve is left. The
+      // browser drops a refused segment instead of retrying it.
+      const free = await storageFreeBytes();
+      if (free !== null && free < recordingMinFreeBytes()) {
+        console.warn(`[recording] refusing a segment: ${Math.round(free / 1_048_576)} MB free on the storage disk`);
+        return fail(ctx, "STORAGE_LOW", 507);
+      }
       // Refuse an oversized body before reading it into memory.
       if (Number(request.headers.get("content-length") ?? 0) > MAX_SEGMENT_BYTES) return fail(ctx, "RECORDING_TOO_LARGE", 413);
       const body = new Uint8Array(await request.arrayBuffer());
@@ -63,4 +72,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ toke
     },
     { limit: 120, allowProblems: ["COMPLETED"] },
   );
+}
+
+/** The disk space kept free for the database and answers (RECORDING_MIN_FREE_MB, default 2 GB). */
+function recordingMinFreeBytes(): number {
+  const mb = Number(process.env.RECORDING_MIN_FREE_MB);
+  return (Number.isFinite(mb) && mb > 0 ? mb : 2048) * 1_048_576;
 }

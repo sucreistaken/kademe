@@ -287,6 +287,7 @@
     "MEDIA_NOT_READY": "Kayıt hâlâ yükleniyor. Birazdan tekrar dene.",
     "RECORDING_TYPE_REJECTED": "Bu soru için bu kayıt türü kabul edilmiyor.",
     "RECORDING_TOO_LARGE": "Kayıt izin verilen boyuttan büyük.",
+    "STORAGE_LOW": "Sunucuda kayıt için yer kalmadı. Sınavınız devam ediyor, cevaplarınız kaydediliyor.",
     "REQUEST_INVALID": "Bu istek eksik ya da hatalı. Sayfayı yenile."
   },
   "invite": {

@@ -17,6 +17,7 @@ const h = vi.hoisted(() => ({
   store: vi.fn<(...args: unknown[]) => Promise<{ id: string; duplicate: boolean }>>(),
   consent: true as boolean | null,
   consentAsked: [] as string[],
+  free: null as number | null,
 }));
 
 vi.mock("@/lib/candidate-api", () => {
@@ -40,6 +41,8 @@ vi.mock("@/server/recordings", () => ({
   },
 }));
 
+vi.mock("@/lib/storage", () => ({ storageFreeBytes: async () => h.free }));
+
 import { NextRequest } from "next/server";
 import { PUT } from "./route";
 
@@ -58,6 +61,7 @@ function put(opts: { query?: Record<string, string>; body?: Uint8Array; type?: s
 }
 
 beforeEach(() => {
+  h.free = null;
   h.policy = policyFromPreset("STANDARD");
   h.attempt = { id: "att-1", deviceCheckedAt: new Date(NOW - 3600_000), startedAt: new Date(NOW - 3500_000), completedAt: null, terminatedAt: null };
   h.consent = true;
@@ -118,6 +122,16 @@ describe("PUT /proctor/recording", () => {
   ])("refuses %s", async (_label, opts) => {
     expect((await put(opts as Parameters<typeof put>[0])).status).toBe(400);
     expect(h.store).not.toHaveBeenCalled();
+  });
+
+  it("stops taking segments while less than the disk reserve is free, and takes them again above it", async () => {
+    h.free = 500 * 1_048_576;
+    const res = await put({});
+    expect(res.status).toBe(507);
+    expect(await res.json()).toMatchObject({ error: "STORAGE_LOW" });
+    expect(h.store).not.toHaveBeenCalled();
+    h.free = 5 * 1024 * 1_048_576;
+    expect((await put({})).status).toBe(200);
   });
 
   it("refuses an oversized body by its declared length and by its real length", async () => {

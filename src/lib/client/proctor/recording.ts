@@ -430,7 +430,8 @@ export class ProctorRecording {
       });
       if (res.ok) return "ok";
       // Busy, timed out or broken: worth another try. Anything else will not change.
-      return res.status === 408 || res.status === 429 || res.status >= 500 ? "retry" : "drop";
+      // 507: the server's disk reserve is reached; retrying would only queue more.
+      return res.status === 408 || res.status === 429 || (res.status >= 500 && res.status !== 507) ? "retry" : "drop";
     } catch {
       return "retry";
     }
