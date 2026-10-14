@@ -211,16 +211,15 @@ Her aday ekranı aynı iskelete oturur. Birincil genişlik 1280 ve 1440, en kü�
 
 ### 2.2 Çizim (illüstrasyon) dili (K1: kabul edildi)
 
-- **Biçim:** düz, sakin "spot" çizimler. 1.5px ink çizgi, yuvarlak uçlar, 2-3 dolgu tonu, yüz ve
-  insan figürü **yok** (stok fotoğraf da yok). Nesneler: masa ve dizüstü, kalkan, zarf, kum saati,
+- **Biçim:** düz, sakin "spot" çizimler. 1.5px ink çizgi, yuvarlak uçlar, 2-3 dolgu tonu, insan
+  figürü **yok** (stok fotoğraf da yok). Tek istisna basamak maskotu (2026-10-14, `RULES.md` kural 9):
+  yüzü olan tek çizim odur ve soru ekranında görünmez. Nesneler: masa ve dizüstü, kalkan, zarf, kum saati,
   kapalı kapı, iki pencere, telefon ve dizüstü. Kaynak: elle çizilmiş satır içi SVG,
   `src/components/visual/illustrations.tsx` (plan kararı 1 ve hüküm C12 ile bu yola taşındı; Görev 3'te
   kuruldu). Harici dosya yok, `<img>` yok.
-- **Renk:** çizimler **doygun accent kullanmaz**. `RULES.md` kural 1 (accent yalnızca CTA, aktif,
-  sayaç) aynen kalır; çizimler için adı konmuş tonlar: `--color-illus-line: #131311` (ink),
-  `--color-illus-fill: #EEF6F3` (= brand-soft), `--color-illus-tint: #CFE3DA`,
-  `--color-illus-sage: #9DC6B6`, `--color-illus-warm: #F1F0EC`. Ekrandaki tek doygun yeşil yine
-  dolu buton.
+- **Renk:** çizimler adı konmuş `--color-illus-*` tonlarıyla çizilir (güncel değerler
+  `src/app/globals.css`); 2026-10-14'ten beri pastel ailelerden (mint, sky, grape, sun, coral) dolgu
+  da alabilir. Maskot marka yeşilini kullanır, çünkü logodaki basamağın kendisidir.
 - **Boyut (Görev 3'te kurulan dört boy, `illustrations.tsx` `SIZE`):** `hero` en fazla 400 genişlik
   (masaüstünde başlık bölgesinde 400x220), 1024-1279 arasında 340; `spot` 160 (sorun ekranları ve boş
   durumlar, 160x120); `phone` 342 ("bilgisayardan aç" telefon ekranı, 342x140); `small` 96 (davetin

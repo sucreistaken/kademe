@@ -1308,10 +1308,15 @@ ilk pilotta aday anketinde gözetim yorumları izlenir, gerekirse açılır.
 > (3) Sınav ekranları yeni köşe ve gölgelere kendiliğinden geçmez; ekran ekran taşınır.
 > Ayrıntı: `docs/superpowers/plans/2026-10-04-ui-foundation-shadcn.md`.
 
+> **2026-10-14 güncellemesi:** Görünüm kullanıcı kararıyla değişti: Nunito fontu, yeni marka yeşili
+> `#157a5a`, beş pastel aile, uyarı için amber, daha büyük köşeler, yumuşak "dudak" gölgesi ve basamak
+> maskotu. Güncel değerler ve kurallar `src/app/globals.css` başındaki sözleşmede ve `RULES.md`'de;
+> bu bölümdeki renk, font, köşe ve gölge değerleri tarihsel kayıttır. Bileşen kararları (8.1) ve
+> hareket ilkeleri (8.5) hâlâ geçerli.
+
 "Yumuşak" bu üründe dört şey demek: bol boşluk, yuvarlak ama gevşek olmayan köşeler, sıcak
-nötrler ve alarm renginin yokluğu. Marka aynı: accent `#0E6A57`, font Figtree. RULES.md'nin
-kuralları (tek dolu buton, nedenli kapalı buton, dot+metin durum, onay diyaloğu yok, gölge yalnızca
-yapışkan panel ve katmanda) aynen geçerli.
+nötrler ve sakin renkler. Marka ve kurallar için `RULES.md` esas alınır (tek dolu buton, nedenli
+kapalı buton, yazılı durum hapı, panelde onay yerine geri alma).
 
 ### 8.1 shadcn/ui kurulum kararları
 

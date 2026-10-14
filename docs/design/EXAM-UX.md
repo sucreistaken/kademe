@@ -218,7 +218,7 @@ Gizlilik > Ekran Kaydı > Chrome, sonra Chrome'u yeniden başlat; ilerlemeniz ka
   (accent, .tnum; son 2 dk "Son 2 dakika" metni) · "Kamera ve ekran kaydı açık" (dot+metin).
 - Sağ altta 120×90 kendi görüntüsü (girdileri örtmez).
 - İçerik:
-  - Seçmeli: kök + seçenekler (büyük tıklanabilir satırlar, klavye 1-4).
+  - Seçmeli: kök + seçenekler (büyük tıklanabilir satırlar; klavyede ok tuşları, Home ve End).
   - Boşluk doldurma: metin içinde satır içi alanlar; altında ä ö ü ß Ä Ö Ü şeridi.
   - Doğru/Yanlış/Metinde yok: ifade başına üç segment.
   - Eşleştirme: sol öğe başına seçim listesi.
