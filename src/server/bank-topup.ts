@@ -1,7 +1,8 @@
 import type { SeedBankPart, SeedItem, SeedStimulus } from "@/db/seed-bank/types";
-import { seedItemKey } from "@/db/seed-bank/seed-key";
+import { canonicalJson, seedItemKey } from "@/db/seed-bank/seed-key";
+import { thetaForLevel } from "@/lib/exam/cefr";
 import { refuseUnlessThrowAwayDb, refuseUnlessWorkingDb } from "@/db/working-db-guard";
-import { CEFR_LEVELS, SECTIONS, type ItemContent } from "@/lib/exam/types";
+import { CEFR_LEVELS, SECTIONS, type ItemContent, type ItemKey, type ItemRubric } from "@/lib/exam/types";
 
 /** host:port/database of a database url, without user or password. Null when the url does not parse. */
 export function databaseTarget(url: string | undefined): string | null {
@@ -58,7 +59,19 @@ export function bankTopUpRefusal(url: string | undefined, mode: boolean | TopUpM
  * the school's version now, listed under `keptEdited` instead.
  */
 
-export type ExistingStimulus = { id: string; seedKey: string | null };
+export type ExistingStimulus = {
+  id: string;
+  seedKey: string | null;
+  /** Only needed for --sync-seed. */
+  origin?: string;
+  section?: SeedItem["section"];
+  level?: SeedStimulus["level"];
+  title?: string;
+  body?: string;
+  speakers?: SeedStimulus["speakers"] | null;
+  /** An item that reads this text was edited by the school (an audit row `bank.edit`). */
+  itemEdited?: boolean;
+};
 
 export type ExistingItem = {
   id: string;
@@ -74,6 +87,11 @@ export type ExistingItem = {
   stimulusSeedKey: string | null;
   /** The school edited this item in the bank (an audit row `bank.edit`). */
   edited?: boolean;
+  /** The fields --sync-seed compares. Only needed when syncing. */
+  answerKey?: ItemKey;
+  difficulty?: number;
+  explanation?: string | null;
+  rubric?: ItemRubric | null;
 };
 
 export type TopUpPlan = {
@@ -84,12 +102,147 @@ export type TopUpPlan = {
   retire: Array<{ id: string; section: SeedItem["section"]; level: SeedItem["level"] }>;
   /** Stale starter items kept because the school edited them. */
   keptEdited: number;
+  /** What --sync-seed would update; empty unless `syncSeed` was asked for. */
+  sync: SyncPlan;
 };
+
+export type SyncField = "key" | "difficulty" | "explanation" | "rubric";
+
+export type SyncItemChange = {
+  id: string;
+  section: SeedItem["section"];
+  level: SeedItem["level"];
+  prompt: string;
+  fields: SyncField[];
+  set: { answerKey?: ItemKey; difficulty?: number; explanation?: string | null; rubric?: ItemRubric | null };
+};
+
+export type SyncStimulusChange = {
+  id: string;
+  key: string;
+  section: SeedStimulus["section"];
+  level: SeedStimulus["level"];
+  title: string;
+  body: string;
+};
+
+export type SyncPlan = {
+  items: SyncItemChange[];
+  stimuli: SyncStimulusChange[];
+  /** Starter items that differ from the seed but were edited by the school, so they are left alone. */
+  itemsKeptEdited: number;
+  /** Reading texts that differ but are read by an item the school edited, so they are left alone. */
+  stimuliKeptEdited: number;
+  /** Listening scripts (or voices) that differ from the seed. Never changed: the audio was made from them. */
+  listeningDiffs: Array<{ id: string; key: string; level: SeedStimulus["level"] }>;
+};
+
+/** Difficulty is stored as a 4-byte float: 0.3 comes back as 0.30000001. */
+const DIFFICULTY_EPSILON = 1e-4;
+
+/**
+ * --sync-seed: the starter items and texts an organisation has, compared with
+ * the current bank. Only origin SEED rows matched by seed key are looked at;
+ * teacher and AI rows, and starter items the school edited, never change.
+ * Status is never part of it. Reading texts are updated; listening scripts
+ * only reported.
+ */
+export function planSyncSeed(
+  bank: SeedBankPart,
+  existing: { stimuli: ExistingStimulus[]; items: ExistingItem[] },
+): SyncPlan {
+  const wanted = new Map(bank.items.map((item) => [seedItemKey(item), item]));
+  const sync: SyncPlan = { items: [], stimuli: [], itemsKeptEdited: 0, stimuliKeptEdited: 0, listeningDiffs: [] };
+  for (const row of existing.items) {
+    if (row.origin !== "SEED") continue;
+    const seed = wanted.get(row.seedKey ?? seedItemKey({ ...row, stimulusKey: row.stimulusSeedKey }));
+    if (!seed) continue;
+    const set: SyncItemChange["set"] = {};
+    const fields: SyncField[] = [];
+    if (row.answerKey !== undefined && canonicalJson(row.answerKey) !== canonicalJson(seed.key)) {
+      set.answerKey = seed.key;
+      fields.push("key");
+    }
+    const difficulty = thetaForLevel(seed.level, seed.within ?? "MID");
+    if (row.difficulty !== undefined && Math.abs(row.difficulty - difficulty) > DIFFICULTY_EPSILON) {
+      set.difficulty = difficulty;
+      fields.push("difficulty");
+    }
+    if (row.explanation !== undefined && (row.explanation ?? null) !== (seed.explanation ?? null)) {
+      set.explanation = seed.explanation ?? null;
+      fields.push("explanation");
+    }
+    if (row.rubric !== undefined && canonicalJson(row.rubric ?? null) !== canonicalJson(seed.rubric ?? null)) {
+      set.rubric = seed.rubric ?? null;
+      fields.push("rubric");
+    }
+    if (fields.length === 0) continue;
+    if (row.edited) {
+      sync.itemsKeptEdited += 1;
+      continue;
+    }
+    sync.items.push({ id: row.id, section: row.section, level: row.level, prompt: seed.prompt, fields, set });
+  }
+  const seedStimuli = new Map(bank.stimuli.map((s) => [s.key, s]));
+  for (const row of existing.stimuli) {
+    if (row.origin !== "SEED" || !row.seedKey || row.body === undefined) continue;
+    const seed = seedStimuli.get(row.seedKey);
+    if (!seed) continue;
+    const sameVoices = canonicalJson(row.speakers ?? null) === canonicalJson(seed.speakers ?? null);
+    if (seed.section === "LISTENING" || row.section === "LISTENING") {
+      if (row.body !== seed.body || !sameVoices) sync.listeningDiffs.push({ id: row.id, key: seed.key, level: seed.level });
+      continue;
+    }
+    if (row.body === seed.body) continue;
+    if (row.itemEdited) {
+      sync.stimuliKeptEdited += 1;
+      continue;
+    }
+    sync.stimuli.push({ id: row.id, key: seed.key, section: seed.section, level: seed.level, title: seed.title, body: seed.body });
+  }
+  return sync;
+}
+
+/** Counts per section and level of the items and texts a sync would change, in bank order. */
+export function syncCounts(sync: SyncPlan): Array<{ kind: "item" | "text"; section: string; level: SeedItem["level"]; n: number }> {
+  const counts = new Map<string, { kind: "item" | "text"; section: string; level: SeedItem["level"]; n: number }>();
+  const add = (kind: "item" | "text", section: string, level: SeedItem["level"]) => {
+    const k = `${kind} ${section} ${level}`;
+    const c = counts.get(k) ?? { kind, section, level, n: 0 };
+    c.n += 1;
+    counts.set(k, c);
+  };
+  for (const i of sync.items) add("item", i.section, i.level);
+  for (const s of sync.stimuli) add("text", s.section, s.level);
+  const sec = (x: string) => SECTIONS.indexOf(x as (typeof SECTIONS)[number]);
+  return [...counts.values()].sort(
+    (a, b) =>
+      (a.kind === b.kind ? 0 : a.kind === "item" ? -1 : 1) || sec(a.section) - sec(b.section) || CEFR_LEVELS.indexOf(a.level) - CEFR_LEVELS.indexOf(b.level),
+  );
+}
+
+/** Printed summary lines of a sync: counts per section and level, then the first few examples. */
+export function formatSyncSummary(sync: SyncPlan, examples = 3): string[] {
+  const lines: string[] = [];
+  const bySection = new Map<string, string[]>();
+  for (const c of syncCounts(sync)) {
+    const k = `${c.kind === "item" ? "items" : "texts"} ${c.section}`;
+    bySection.set(k, [...(bySection.get(k) ?? []), `${c.level} ${c.n}`]);
+  }
+  for (const [k, parts] of bySection) lines.push(`sync ${k}: ${parts.join(", ")}`);
+  for (const i of sync.items.slice(0, examples)) lines.push(`e.g. ${i.section} ${i.level} [${i.fields.join(", ")}] ${i.prompt.replace(/\s+/g, " ").slice(0, 70)}`);
+  for (const s of sync.stimuli.slice(0, examples)) lines.push(`e.g. text ${s.key}: ${s.title}`);
+  if (sync.itemsKeptEdited) lines.push(`kept ${sync.itemsKeptEdited} starter items the school edited`);
+  if (sync.stimuliKeptEdited) lines.push(`kept ${sync.stimuliKeptEdited} reading texts read by an item the school edited`);
+  if (sync.listeningDiffs.length)
+    lines.push(`listening scripts differing from the seed (NOT changed, audio was made from them): ${sync.listeningDiffs.map((d) => d.key).join(", ")}`);
+  return lines;
+}
 
 export function planTopUp(
   bank: SeedBankPart,
   existing: { stimuli: ExistingStimulus[]; items: ExistingItem[] },
-  options: { retireStale?: boolean } = {},
+  options: { retireStale?: boolean; syncSeed?: boolean } = {},
 ): TopUpPlan {
   const haveStimuli = new Set(existing.stimuli.map((s) => s.seedKey).filter((k): k is string => !!k));
   const stimuli = bank.stimuli.filter((s) => !haveStimuli.has(s.key));
@@ -119,7 +272,8 @@ export function planTopUp(
       retire.push({ id: row.id, section: row.section, level: row.level });
     }
   }
-  return { stimuli, items, backfill, retire, keptEdited };
+  const sync = options.syncSeed ? planSyncSeed(bank, existing) : { items: [], stimuli: [], itemsKeptEdited: 0, stimuliKeptEdited: 0, listeningDiffs: [] };
+  return { stimuli, items, backfill, retire, keptEdited, sync };
 }
 
 /** Retire counts per section and level, in bank order (section, then CEFR level), for the printed summary. */
