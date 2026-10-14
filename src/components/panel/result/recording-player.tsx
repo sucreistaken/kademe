@@ -43,7 +43,8 @@ export type RecordingPlayerProps = {
   segments: Array<{ id: string; kind: RecordingKind; start: number; durationMs: number }>;
   window: { start: number; end: number };
   sections: Array<{ key: string; label: string; start: number; end: number }>;
-  markers: Array<{ id: string; label: string; at: number; severity: "HIGH" | "MEDIUM" | "LOW" }>;
+  /** Already grouped (same type within 30 s is one marker); `count` above 1 is drawn as a small number. */
+  markers: Array<{ id: string; label: string; at: number; severity: "HIGH" | "MEDIUM" | "LOW"; count?: number }>;
   /** Already formatted for the viewer, or null when no purge date is set. */
   purgeOn: string | null;
 };
@@ -366,8 +367,9 @@ export function ExamRecordingPlayer({ attemptId, segments, window: span, section
           <button
             key={m.id}
             type="button"
-            title={`${m.label} · ${formatClock(m.at - bounds.start)}`}
-            aria-label={`${m.label} · ${formatClock(m.at - bounds.start)}`}
+            title={`${m.label}${m.count && m.count > 1 ? ` ×${m.count}` : ""} · ${formatClock(m.at - bounds.start)}`}
+            aria-label={`${m.label}${m.count && m.count > 1 ? ` ×${m.count}` : ""} · ${formatClock(m.at - bounds.start)}`}
+            data-marker-severity={m.severity}
             onClick={(e) => {
               e.stopPropagation();
               seek(m.at - 3000);
@@ -375,10 +377,20 @@ export function ExamRecordingPlayer({ attemptId, segments, window: span, section
             className="group absolute top-4 -ml-[5px] flex h-[34px] w-[11px] justify-center"
             style={{ left: pct(m.at) }}
           >
+            {m.count && m.count > 1 ? (
+              <span
+                className={cn(
+                  "tnum pointer-events-none absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full px-1 text-[9.5px] font-bold leading-[13px]",
+                  m.severity === "HIGH" ? "bg-danger-soft text-danger" : m.severity === "MEDIUM" ? "bg-warn-soft text-warn" : "bg-subtle text-muted",
+                )}
+              >
+                {m.count}
+              </span>
+            ) : null}
             <span
               className={cn(
                 "block w-[3px] rounded-full group-hover:bg-accent",
-                m.severity === "HIGH" ? "h-full bg-ink" : m.severity === "MEDIUM" ? "h-6 bg-ink-3" : "h-4 bg-line-strong",
+                m.severity === "HIGH" ? "h-full bg-danger" : m.severity === "MEDIUM" ? "h-6 bg-warn" : "h-4 bg-line-strong",
               )}
             />
           </button>

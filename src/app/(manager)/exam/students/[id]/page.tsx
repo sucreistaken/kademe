@@ -7,6 +7,8 @@ import { GradingCard } from "@/components/panel/result/grading-card";
 import { Highlighted } from "@/components/panel/result/format";
 import { ObjectiveSection, isBankEmptySkip } from "@/components/panel/result/objective-section";
 import { objectiveBasis } from "@/components/panel/result/review-rows";
+import { groupMarkers } from "@/components/panel/integrity/markers";
+import { isNoiseType } from "@/components/panel/integrity/groups";
 import { IntegrityPanel } from "@/components/panel/result/integrity-panel";
 import { ExamRecordingPlayer } from "@/components/panel/result/recording-player";
 import { SpeakingEvidence } from "@/components/panel/result/speaking-evidence";
@@ -290,7 +292,6 @@ export default async function ResultPage({
               assessmentId={id}
               outcome={attempt.integrityOutcome}
               canDecide={can(user, "integrity:decide")}
-              showAll={sp.show === "all"}
               startedAt={(attempt.startedAt ?? attempt.createdAt).getTime()}
               endedAt={(attempt.completedAt ?? new Date()).getTime()}
               sections={sectionSpans}
@@ -302,14 +303,17 @@ export default async function ResultPage({
                     segments={recording.segments}
                     window={{ start: (attempt.startedAt ?? attempt.createdAt).getTime(), end: (attempt.completedAt ?? attempt.terminatedAt ?? new Date()).getTime() }}
                     sections={sectionSpans.map((s) => ({ key: s.section, label: t(`sectionName.${s.section as Section}`), start: s.start, end: s.end }))}
-                    markers={integrity.events
-                      .filter(({ event }) => event.severity !== "INFO")
-                      .map(({ event }) => ({
-                        id: event.id,
-                        label: t(`eventType.${event.type}` as "eventType.TAB_HIDDEN"),
-                        at: event.startedAt.getTime(),
-                        severity: event.severity as "HIGH" | "MEDIUM" | "LOW",
-                      }))}
+                    markers={groupMarkers(
+                      integrity.events
+                        .filter(({ event }) => event.severity !== "INFO" && !isNoiseType(event.type))
+                        .map(({ event }) => ({ id: event.id, type: event.type, at: event.startedAt.getTime(), severity: event.severity as "HIGH" | "MEDIUM" | "LOW" })),
+                    ).map((m) => ({
+                      id: m.id,
+                      label: t(`eventType.${m.type}` as "eventType.TAB_HIDDEN"),
+                      at: m.at,
+                      severity: m.severity,
+                      count: m.count,
+                    }))}
                     purgeOn={
                       recording.purgeAfter
                         ? recording.purgeAfter.toLocaleDateString(locale === "en" ? "en-GB" : "tr-TR", { day: "numeric", month: "long", year: "numeric", timeZone: ORG_TIMEZONE })

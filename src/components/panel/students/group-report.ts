@@ -1,7 +1,7 @@
 import { CEFR_LEVELS, type Cefr } from "@/lib/exam/types";
 
 /** The part of a student row the group numbers need. */
-export type GroupRow = { status: string; level: Cefr | null };
+export type GroupRow = { status: string; level: Cefr | null; /** Serious flag groups the teacher has not dismissed. */ seriousFlags?: number };
 
 export type GroupCounts = {
   invited: number;
@@ -11,6 +11,8 @@ export type GroupCounts = {
   finished: number;
   /** Not opened: waiting, or the link expired unused. */
   notStarted: number;
+  /** Finished students with at least one serious flag group. */
+  seriousFinished: number;
 };
 
 const FINISHED = new Set(["AWAITING_GRADING", "AWAITING_REVIEW", "FINAL", "RELEASED"]);
@@ -23,6 +25,7 @@ export function groupCounts(rows: readonly GroupRow[]): GroupCounts {
     started,
     finished: rows.filter((r) => FINISHED.has(r.status)).length,
     notStarted: rows.length - started,
+    seriousFinished: rows.filter((r) => FINISHED.has(r.status) && (r.seriousFlags ?? 0) > 0).length,
   };
 }
 

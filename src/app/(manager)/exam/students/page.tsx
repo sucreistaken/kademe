@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dot, INTEGRITY_TONE, Level, PageHead, STATUS_TONE, shortDateTime } from "@/components/panel/bits";
 import { StudentLinkButton } from "@/components/panel/student-link-button";
+import { loadIntegrityBriefs } from "@/components/panel/integrity/serious";
 import { GroupReport } from "@/components/panel/students/group-report-panel";
 import { formatDeadline, isFreshInvite } from "@/components/panel/students/message";
 import { StudentMessageButton } from "@/components/panel/students/student-message-button";
@@ -24,7 +25,7 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
   const t = managerT(locale);
   const sp = await searchParams;
   const tab = parseTab(sp.tab);
-  const all = await listStudents(user.orgId);
+  const [all, briefs] = await Promise.all([listStudents(user.orgId), loadIntegrityBriefs(user.orgId)]);
   const canExport = can(user, "data:export");
   const canInvite = can(user, "student:invite");
   // Only the not-started rows' message needs the school and the exam length.
@@ -104,8 +105,9 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
       ) : (
         <>
         <GroupReport
-          rows={rows}
+          rows={rows.map((r) => ({ ...r, seriousFlags: briefs.get(r.assessmentId)?.serious ?? 0 }))}
           labels={{
+            serious: t("integrityFlags.groupSerious"),
             title: t("studentsExport.groupTitle"),
             sub: t("studentsExport.groupSub", { n: rows.length }),
             invited: t("studentsExport.invited"),
@@ -169,6 +171,20 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
                   </td>
                   <td className="px-3 py-3">
                     <Dot tone={INTEGRITY_TONE[r.integrity]}>{t(`integrityLevel.${r.integrity}`)}</Dot>
+                    {(briefs.get(r.assessmentId)?.serious ?? 0) > 0 ? (
+                      <Link
+                        href={`/exam/students/${r.assessmentId}?tab=integrity`}
+                        title={t("integrityFlags.badgeTitle", { n: briefs.get(r.assessmentId)!.serious })}
+                        aria-label={t("integrityFlags.badgeTitle", { n: briefs.get(r.assessmentId)!.serious })}
+                        data-testid="serious-badge"
+                        className="tnum ml-2 inline-flex items-center gap-1 rounded-full bg-danger-soft px-2 py-0.5 text-[12px] font-bold text-danger hover:underline"
+                      >
+                        <svg viewBox="0 0 16 16" width="11" height="11" aria-hidden fill="currentColor">
+                          <path d="M3 1.5h1.5v13H3zM5.5 2h7l-1.8 3 1.8 3h-7z" />
+                        </svg>
+                        {briefs.get(r.assessmentId)!.serious}
+                      </Link>
+                    ) : null}
                   </td>
                   <td className="tnum px-5 py-3 text-[13px] text-muted">{shortDateTime(r.completedAt ?? r.invitedAt, locale)}</td>
                 </tr>
