@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ProctorEngine } from "@/lib/client/proctor/engine";
 import { apiSend } from "@/lib/client/api";
+import { MEDIA_ERROR_KEY, mediaErrorKind } from "@/lib/client/media-error";
 import { ChunkedUploader, pickRecorderMime } from "@/lib/client/recorder";
 import type { CandidateItem, CandidateStimulus } from "@/lib/exam/safe";
 import type { ItemAnswer } from "@/lib/exam/types";
@@ -279,6 +280,7 @@ export function SpeakingItem({
   engine: ProctorEngine | null;
 }) {
   const t = useT("exam");
+  const f = useT("examFlow");
   const content = item.content.kind === "SPEAKING" ? item.content : null;
   const [phase, setPhase] = useState<Phase>(item.takesUsed && item.takesUsed > 0 ? "DONE" : "THINKING");
   const [left, setLeft] = useState((content?.thinkSeconds ?? 30) * 1000);
@@ -304,8 +306,8 @@ export function SpeakingItem({
       if (!stream || stream.getTracks().every((tr) => tr.readyState === "ended")) {
         try {
           stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        } catch {
-          if (!cancelled) setError(t("speakingTextAlt"));
+        } catch (err) {
+          if (!cancelled) setError(f(MEDIA_ERROR_KEY[mediaErrorKind(err)]));
           return;
         }
       }
@@ -319,7 +321,7 @@ export function SpeakingItem({
     return () => {
       cancelled = true;
     };
-  }, [engine, t]);
+  }, [engine, f]);
 
   // Think time, then recording starts by itself.
   useEffect(() => {
@@ -360,7 +362,7 @@ export function SpeakingItem({
           onChange({ ...answer, mediaAssetId: uploader.uploadRef });
           setPhase("DONE");
         } catch (err) {
-          setError(err instanceof Error ? err.message : String(err));
+          setError(f(MEDIA_ERROR_KEY[mediaErrorKind(err)]));
           setPhase("FAILED");
         }
       };
@@ -369,7 +371,7 @@ export function SpeakingItem({
       setLeft(content.answerSeconds * 1000);
       setPhase("RECORDING");
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(f(MEDIA_ERROR_KEY[mediaErrorKind(err)]));
       setPhase("FAILED");
     }
   }
@@ -433,6 +435,7 @@ export function SpeakingItem({
               {typing ? (
                 <textarea
                   lang="de"
+                  aria-label={f("speakingTextLabel")}
                   rows={6}
                   value={answer.text ?? ""}
                   onChange={(e) => onChange({ ...answer, text: e.target.value, usedTextAlternative: true })}

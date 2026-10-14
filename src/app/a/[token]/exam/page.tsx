@@ -14,7 +14,10 @@ export const dynamic = "force-dynamic";
  * Section introductions and questions. The language switch is gone from here
  * on purpose: changing language in the middle of a question moves the ground
  * under the student. A phone or tablet gets the desktop-only screen instead of
- * the exam, whatever the proctoring (DesktopOnlyGate).
+ * the exam, whatever the proctoring (DesktopOnlyGate). The runner draws its
+ * own header for the introduction and the questions alike, so the frame has
+ * none: a brand bar here would double the exam bar, and be missing after a
+ * reload.
  */
 export default async function ExamPage({
   params,
@@ -30,7 +33,7 @@ export default async function ExamPage({
   const proctored = p.preset !== "OFF";
   return (
     <CandidateIntl locale={entry.locale} timeZone={ORG_TIMEZONE}>
-      <CandidateShell locale={entry.locale} header={entry.state.step === "SECTION_INTRO"}>
+      <CandidateShell locale={entry.locale} header={false} wide>
         <DesktopOnlyGate
           token={token}
           serverHint={serverDeviceHint(await headers())}

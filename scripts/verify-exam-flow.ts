@@ -57,7 +57,20 @@ async function main() {
   const [org] = await db.select().from(s.organizations).limit(1);
   if (!org) throw new Error("no organisation: run pnpm db:seed first");
   const blueprints = await db.select().from(s.examBlueprints).where(eq(s.examBlueprints.status, "PUBLISHED"));
-  const placement = blueprints.find((b) => b.mode === "PLACEMENT")!;
+  // The default placement blueprint is a fixed form now, so the adaptive path
+  // gets its own explicit adaptive blueprint (src/lib/exam/blueprint.ts).
+  const { adaptivePlacementBlueprint } = await import("../src/lib/exam/blueprint");
+  const [placement] = await db
+    .insert(s.examBlueprints)
+    .values({
+      orgId: org.id,
+      name: "Verify adaptive placement",
+      mode: "PLACEMENT",
+      status: "PUBLISHED",
+      publishedAt: new Date(),
+      config: adaptivePlacementBlueprint(),
+    })
+    .returning();
   const verification = blueprints.find((b) => b.mode === "LEVEL_VERIFICATION")!;
 
   const sent: string[] = [];
@@ -315,11 +328,13 @@ async function main() {
   else bad("review step did not open");
   await flow.closeSectionRun(nrun.id, "SUBMIT");
   const closed = await db.select().from(s.itemResponses).where(eq(s.itemResponses.sectionRunId, nrun.id));
-  const scoredDrafts = closed.filter((r) => r.answeredAt && r.score !== null).map((r) => r.sequence).sort((x, y) => x - y);
+  const hasDraft = (r: (typeof closed)[number]) => Object.keys(r.answer ?? {}).length > 0;
+  const scoredDrafts = closed.filter((r) => r.answeredAt && hasDraft(r) && r.score !== null).map((r) => r.sequence).sort((x, y) => x - y);
   if (scoredDrafts.join(",") === "1,3") ok("the two saved drafts (items 1 and 3) are scored at the close");
   else bad(`scored at close: ${scoredDrafts.join(",")}`);
-  if (closed.filter((r) => !r.answeredAt).every((r) => r.notReached && r.score === 0)) ok("blank items count as not reached, score 0");
-  else bad("blank items not scored 0");
+  const blanks = closed.filter((r) => !hasDraft(r));
+  if (blanks.length > 0 && blanks.every((r) => !r.notReached && r.answeredAt && r.score === 0)) ok("blank items of a navigable section close as answered blank, score 0 (not 'not reached')");
+  else bad(`blank items: ${blanks.map((r) => `${r.sequence}:${r.notReached}/${r.score}`).join(" ")}`);
   if (closed.every((r) => r.thetaAfter !== null)) ok("the trajectory is written for every scored item");
   else bad("trajectory missing on some items");
   const navBodies = [first, back, reload3, review].map((x) => JSON.stringify(candidateSafe(x))).join("\n");

@@ -18,6 +18,7 @@ export function CandidateShell({
   meta,
   language,
   header = true,
+  wide = false,
   children,
 }: {
   locale: Locale;
@@ -30,6 +31,12 @@ export function CandidateShell({
    * question to read.
    */
   header?: boolean;
+  /**
+   * No 1000px cap on the main area. The exam page uses it so the two-column
+   * reading view can use the width it asks for; every other screen of the exam
+   * centres its own column.
+   */
+  wide?: boolean;
   children: React.ReactNode;
 }) {
   const t = candidateT(locale);
@@ -49,7 +56,7 @@ export function CandidateShell({
         </span>
       </header>
       ) : null}
-      <main className="mx-auto w-full max-w-[1000px]">{children}</main>
+      <main className={wide ? "mx-auto w-full" : "mx-auto w-full max-w-[1000px]"}>{children}</main>
     </div>
   );
 }

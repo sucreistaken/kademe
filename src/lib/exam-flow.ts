@@ -157,6 +157,8 @@ export type SectionSummary = {
   /** The student can go back, flag items and review before finishing this section. */
   navigable: boolean;
   done: boolean;
+  /** Closed without a question because the bank had none left (BANK_EMPTY); the student is told. */
+  skipped?: boolean;
 };
 
 /** Navigable sections: the progress strip, and whether the review step is open. */
@@ -262,6 +264,7 @@ export async function loadState(ctx: ExamCandidateContext): Promise<CandidateSta
       .limit(1);
     if (run?.submittedAt) {
       base.sections[i].done = true;
+      if (run.completion === "SKIPPED") base.sections[i].skipped = true;
       continue;
     }
     if (run?.deadlineAt && Date.now() > run.deadlineAt.getTime() + SUBMIT_SLACK_MS) {
@@ -997,11 +1000,16 @@ export async function closeSectionRun(runId: string, reason: "DONE" | "SUBMIT" |
     const snap = r.itemSnapshot;
     const answer = r.answer ?? {};
     const scored = scoreItem(snap.type, snap.content, snap.key, answer);
+    // A navigable section presents every item, so a blank one was seen and left
+    // empty: it closes as an answered blank, not as "not reached". An adaptive
+    // section only serves what it needs, so an unanswered open item there stays
+    // not reached.
+    const blankSeen = run.navigable && !hasAnswer(snap.type, answer);
     await db
       .update(itemResponses)
       .set({
-        answeredAt: hasAnswer(snap.type, answer) ? new Date() : null,
-        notReached: !hasAnswer(snap.type, answer),
+        answeredAt: hasAnswer(snap.type, answer) || blankSeen ? new Date() : null,
+        notReached: !hasAnswer(snap.type, answer) && !run.navigable,
         score: scored ? (hasAnswer(snap.type, answer) ? scored.score : 0) : null,
         isCorrect: scored ? scored.correct && hasAnswer(snap.type, answer) : null,
       })
@@ -1066,7 +1074,8 @@ export async function closeSectionRun(runId: string, reason: "DONE" | "SUBMIT" |
       thetaSd = post.sd;
     }
   }
-  const unanswered = all.filter((r) => !r.answeredAt).length;
+  // A blank closed in a navigable section has answeredAt set but no answer: still PARTIAL.
+  const unanswered = all.filter((r) => !r.answeredAt || !hasAnswer(r.itemSnapshot.type, r.answer ?? {})).length;
   await db
     .update(sectionRuns)
     .set({
