@@ -3,25 +3,19 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dot, INTEGRITY_TONE, Level, PageHead, STATUS_TONE, shortDateTime } from "@/components/panel/bits";
 import { StudentLinkButton } from "@/components/panel/student-link-button";
+import { GroupReport } from "@/components/panel/students/group-report-panel";
+import { formatDeadline, isFreshInvite } from "@/components/panel/students/message";
+import { StudentMessageButton } from "@/components/panel/students/student-message-button";
 import { can } from "@/lib/authorize";
 import { listStudents, type StudentRow } from "@/server/panel";
 import { requireUser } from "@/server/session";
 import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
 import { cn } from "@/lib/cn";
+import { loadStudentExtras, schoolName } from "./export/extras";
+import { filterStudents, inTab, parseTab, TABS, type Tab } from "./export/filter";
 
 export const dynamic = "force-dynamic";
-
-const TABS = ["all", "review", "running", "final"] as const;
-type Tab = (typeof TABS)[number];
-const inTab = (r: StudentRow, tab: Tab) =>
-  tab === "all"
-    ? true
-    : tab === "review"
-      ? r.status === "AWAITING_REVIEW" || r.status === "AWAITING_GRADING"
-      : tab === "running"
-        ? r.status === "IN_EXAM" || r.status === "NOT_STARTED"
-        : r.status === "FINAL" || r.status === "RELEASED";
 
 /** Every student, one row each. A zero-result filter offers the way back. */
 export default async function StudentsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
@@ -29,12 +23,16 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
   const locale = await managerLocale();
   const t = managerT(locale);
   const sp = await searchParams;
-  const tab = (TABS as readonly string[]).includes(sp.tab ?? "") ? (sp.tab as Tab) : "all";
-  const q = (sp.q ?? "").trim().toLocaleLowerCase(locale);
+  const tab = parseTab(sp.tab);
   const all = await listStudents(user.orgId);
+  const canExport = can(user, "data:export");
   const canInvite = can(user, "student:invite");
+  // Only the not-started rows' message needs the school and the exam length.
+  const [extras, school] = canInvite && all.some((r) => r.status === "NOT_STARTED") ? await Promise.all([loadStudentExtras(user.orgId), schoolName(user.orgId)]) : [null, ""];
   const now = new Date();
-  const rows = all.filter((r) => inTab(r, tab) && (!q || `${r.name} ${r.email}`.toLocaleLowerCase(locale).includes(q)));
+  const q = (sp.q ?? "").trim();
+  const rows = filterStudents(all, tab, q, locale);
+  const exportHref = `/exam/students/export?tab=${tab}${q ? `&q=${encodeURIComponent(sp.q ?? "")}` : ""}`;
   const tabLabel: Record<Tab, string> = {
     all: t("students.tabAll"),
     review: t("students.tabReview"),
@@ -47,10 +45,21 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
       <PageHead
         title={t("students.title")}
         action={
-          can(user, "student:invite") ? (
-            <Button asChild variant="primary">
-              <Link href="/exam/students/new">{t("today.invite")}</Link>
-            </Button>
+          canInvite || canExport ? (
+            <div className="flex items-center gap-2">
+              {canExport && rows.length > 0 ? (
+                <Button asChild variant="secondary">
+                  <a href={exportHref} download title={t("studentsExport.downloadHint")}>
+                    {t("studentsExport.download")}
+                  </a>
+                </Button>
+              ) : null}
+              {canInvite ? (
+                <Button asChild variant="primary">
+                  <Link href="/exam/students/new">{t("today.invite")}</Link>
+                </Button>
+              ) : null}
+            </div>
           ) : undefined
         }
       />
@@ -93,7 +102,22 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
           </Link>
         </Card>
       ) : (
-        <Card className="mt-6 overflow-x-auto">
+        <>
+        <GroupReport
+          rows={rows}
+          labels={{
+            title: t("studentsExport.groupTitle"),
+            sub: t("studentsExport.groupSub", { n: rows.length }),
+            invited: t("studentsExport.invited"),
+            started: t("studentsExport.started"),
+            finished: t("studentsExport.finished"),
+            notStarted: t("studentsExport.notStarted"),
+            levels: t("studentsExport.levels"),
+            levelsNone: t("studentsExport.levelsNone"),
+            levelCount: (level, n) => t("studentsExport.levelCount", { level, n }),
+          }}
+        />
+        <Card className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[900px] text-left">
             <thead className="border-b border-line text-[12px] uppercase tracking-[0.04em] text-muted">
               <tr>
@@ -132,6 +156,16 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
                     {canInvite && (r.status === "NOT_STARTED" || r.status === "IN_EXAM") && r.expiresAt && r.expiresAt > now ? (
                       <StudentLinkButton assessmentId={r.assessmentId} name={r.name} />
                     ) : null}
+                    {canInvite && r.status === "NOT_STARTED" && r.expiresAt && r.expiresAt > now ? (
+                      <StudentMessageButton
+                        assessmentId={r.assessmentId}
+                        name={r.name}
+                        school={school}
+                        deadline={formatDeadline(r.expiresAt)}
+                        minutes={extras?.get(r.assessmentId)?.minutes ?? 0}
+                        fresh={isFreshInvite(r.invitedAt, now)}
+                      />
+                    ) : null}
                   </td>
                   <td className="px-3 py-3">
                     <Dot tone={INTEGRITY_TONE[r.integrity]}>{t(`integrityLevel.${r.integrity}`)}</Dot>
@@ -142,6 +176,7 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
             </tbody>
           </table>
         </Card>
+        </>
       )}
     </main>
   );
