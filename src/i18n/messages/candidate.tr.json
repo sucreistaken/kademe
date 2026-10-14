@@ -1045,5 +1045,9 @@
     "loading": "Hazırlanıyor",
     "loadingHint": "Birkaç saniye sürebilir.",
     "networkError": "Sunucuya ulaşılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin."
+  },
+  "examDevice": {
+    "leadBetween": "Bu sınav yalnızca bilgisayarda yapılıyor. Bitirdiğiniz bölümler kayıtlı; sıradaki bölümün süresi, siz onu bilgisayarda başlatana kadar işlemez.",
+    "leadRunning": "Bu sınav yalnızca bilgisayarda yapılıyor. Bu bölümün süresi işliyor: linki hemen bilgisayarınızda açın, kaydedilen cevaplarınızla kaldığınız yerden devam edin."
   }
 }
