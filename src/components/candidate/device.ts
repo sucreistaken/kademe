@@ -1,5 +1,3 @@
-import type { CandidateState } from "@/lib/exam-flow";
-
 /**
  * The language exam is desktop only (user decision 2026-10-14). These are the
  * pure halves of that rule, shared by the browser check (isMobileDevice in
@@ -49,7 +47,7 @@ export function examPageView(device: "mobile" | "desktop" | "unknown"): "block" 
  */
 export type MobileMoment = "start" | "between" | "running";
 
-export function mobileMoment(state: Pick<CandidateState, "step" | "sections">): MobileMoment {
+export function mobileMoment(state: { step: string; sections: ReadonlyArray<{ done: boolean }> }): MobileMoment {
   if (state.step === "ITEM") return "running";
   return state.sections.some((s) => s.done) ? "between" : "start";
 }
