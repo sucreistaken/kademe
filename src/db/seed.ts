@@ -23,7 +23,7 @@ import { hash as argon2Hash } from "@node-rs/argon2";
 import { eq, inArray, sql } from "drizzle-orm";
 import { db } from "./index";
 import * as s from "./schema";
-import { defaultBlueprint } from "../lib/exam/blueprint";
+import { adaptivePlacementBlueprint, defaultBlueprint } from "../lib/exam/blueprint";
 import { BAND_CENTER } from "../lib/exam/cefr";
 import { mulberry32 } from "../lib/exam/adaptive";
 import type { GradingProposal } from "../lib/exam/grading";
@@ -160,7 +160,7 @@ async function main() {
   const bank = await importSeedBank(org.id, { log });
   log(`  ${bank.items} items, ${bank.stimuli} texts and clips; audio made ${bank.audioMade}, reused ${bank.audioReused}, failed ${bank.audioFailed}`);
 
-  const placementCfg = defaultBlueprint("PLACEMENT");
+  const placementCfg = adaptivePlacementBlueprint();
   const verificationCfg = defaultBlueprint("LEVEL_VERIFICATION");
   const [placement] = await db
     .insert(s.examBlueprints)

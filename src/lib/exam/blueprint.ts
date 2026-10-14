@@ -130,17 +130,51 @@ export function section(
   };
 }
 
-/** Sensible starting points for the two modes. Schools change them in the editor. */
+const spread = (counts: Partial<Record<Cefr, number>>): Distribution => ({
+  kind: "ABSOLUTE",
+  perLevel: { A1: 0, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0, ...counts },
+});
+
+/**
+ * The adaptive placement form: grammar, reading and listening choose the next
+ * item from the answers so far. No back, no flag. Kept for schools that want
+ * it and for the adaptive path of the seed and scripts/verify-exam-flow.ts.
+ */
+export function adaptivePlacementBlueprint(): BlueprintConfig {
+  return {
+    version: 1,
+    sections: [
+      section("GRAMMAR", 20, { adaptive: true, minItems: 10, maxItems: 18, targetSe: 0.45 }),
+      section("READING", 25, { adaptive: true, minItems: 6, maxItems: 12, targetSe: 0.5 }),
+      section("LISTENING", 25, { adaptive: true, minItems: 6, maxItems: 12, targetSe: 0.5 }),
+      section("WRITING", 25, { tasks: 1 }),
+      section("SPEAKING", 12, { tasks: 2 }),
+    ],
+    difficultyOffset: 0,
+    resultVisibility: "OVERALL",
+    autoRelease: false,
+    passRules: { overallAtLeastClaimed: true, minSkillOffset: -1, requiredSkills: [], minHoldProbability: 0.5 },
+    proctoring: PRESETS.STRICT,
+    listening: { maxPlays: 2 },
+  };
+}
+
+/**
+ * Sensible starting points for the two modes. Both are fixed forms (the
+ * student can go back, flag and review), the placement one shaped like the
+ * "placement" template in templates.ts (which imports this file, so the
+ * numbers are repeated here).
+ */
 export function defaultBlueprint(mode: ExamMode): BlueprintConfig {
   if (mode === "PLACEMENT") {
     return {
       version: 1,
       sections: [
-        section("GRAMMAR", 20, { adaptive: true, minItems: 10, maxItems: 18, targetSe: 0.45 }),
-        section("READING", 25, { adaptive: true, minItems: 6, maxItems: 12, targetSe: 0.5 }),
-        section("LISTENING", 25, { adaptive: true, minItems: 6, maxItems: 12, targetSe: 0.5 }),
-        section("WRITING", 25, { tasks: 1 }),
-        section("SPEAKING", 12, { tasks: 2 }),
+        section("GRAMMAR", 17, { distribution: spread({ A1: 3, A2: 3, B1: 3, B2: 3, C1: 3, C2: 3 }), minItems: 10, maxItems: 16, targetSe: 0.45 }),
+        section("READING", 18, { distribution: spread({ A2: 4, B1: 4, B2: 4, C1: 4 }), minItems: 5, maxItems: 8, targetSe: 0.55 }),
+        section("LISTENING", 13, { distribution: spread({ A2: 4, B1: 4, B2: 4 }), minItems: 5, maxItems: 8, targetSe: 0.55 }),
+        section("WRITING", 10, { tasks: 1 }),
+        section("SPEAKING", 6, { tasks: 2 }),
       ],
       difficultyOffset: 0,
       resultVisibility: "OVERALL",

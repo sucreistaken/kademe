@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { initialState, mulberry32, replay, type ReplayResponse } from "./adaptive";
 import {
   adaptiveConfigFor,
+  adaptivePlacementBlueprint,
   bankCoverage,
   blueprintConfigSchema,
   defaultBlueprint,
@@ -16,9 +17,25 @@ import {
   type BankItem,
 } from "./blueprint";
 import { thetaForLevel } from "./cefr";
+import { isNavigableConfig } from "./navigation";
 import { C_TEST_SKILL_TAG, CEFR_LEVELS, SECTIONS, type Cefr } from "./types";
 
 describe("default blueprints", () => {
+  it("the default placement blueprint is a fixed form (back, flag, review)", () => {
+    const cfg = defaultBlueprint("PLACEMENT");
+    for (const s of cfg.sections.filter((x) => ["GRAMMAR", "READING", "LISTENING"].includes(x.section))) {
+      expect(s.adaptive, s.section).toBe(false);
+      expect(s.distribution.kind, s.section).toBe("ABSOLUTE");
+      expect(isNavigableConfig(s), s.section).toBe(true);
+    }
+  });
+
+  it("the adaptive placement blueprint keeps the three objective sections adaptive", () => {
+    const cfg = adaptivePlacementBlueprint();
+    expect(blueprintConfigSchema.safeParse(cfg).success).toBe(true);
+    expect(cfg.sections.filter((s) => s.adaptive).map((s) => s.section)).toEqual(["GRAMMAR", "READING", "LISTENING"]);
+  });
+
   it("both modes validate", () => {
     expect(blueprintConfigSchema.safeParse(defaultBlueprint("PLACEMENT")).success).toBe(true);
     expect(blueprintConfigSchema.safeParse(defaultBlueprint("LEVEL_VERIFICATION")).success).toBe(true);
@@ -27,7 +44,7 @@ describe("default blueprints", () => {
   it("adds up the minutes of enabled sections", () => {
     const cfg = defaultBlueprint("PLACEMENT");
     cfg.sections[4].enabled = false;
-    expect(estimatedMinutes(cfg)).toBe(20 + 25 + 25 + 25);
+    expect(estimatedMinutes(cfg)).toBe(17 + 18 + 13 + 10);
   });
 
   it("rejects a repeated section and an empty exam", () => {
@@ -99,10 +116,10 @@ describe("bank coverage", () => {
   });
 
   it("names the missing cell", () => {
-    const thin = full.map((c) => (c.section === "LISTENING" && c.level === "C1" ? { ...c, items: 3, stimuli: 1 } : c));
+    const thin = full.map((c) => (c.section === "LISTENING" && c.level === "B2" ? { ...c, items: 3, stimuli: 1 } : c));
     const res = bankCoverage(thin, defaultBlueprint("PLACEMENT"), "PLACEMENT", null);
     expect(res.ok).toBe(false);
-    expect(res.rows.filter((r) => !r.ok).map((r) => `${r.section}:${r.level}`)).toEqual(["LISTENING:C1"]);
+    expect(res.rows.filter((r) => !r.ok).map((r) => `${r.section}:${r.level}`)).toEqual(["LISTENING:B2"]);
   });
 
   it("checks only the claim's neighbourhood for one verification student", () => {
