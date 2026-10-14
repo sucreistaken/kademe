@@ -183,6 +183,7 @@ export function NewExamWizard({ templates, counts }: { templates: ExamTemplateCa
       title: t("startTitle"),
       lead: <p>{t("startLead")}</p>,
       layout: "single",
+      mascot: "wave",
       primary: { kind: "button", id: "exam-next", label: primaryLabel, onClick: () => next("start") },
       note: refusal === "TEMPLATE" ? refusalNote : null,
       body: (
@@ -252,6 +253,7 @@ export function NewExamWizard({ templates, counts }: { templates: ExamTemplateCa
       title: t("sectionsTitle"),
       lead: <p>{t("sectionsLead")}</p>,
       layout: "single",
+      mascot: "think",
       primary: { kind: "button", id: "exam-next", label: primaryLabel, waitReason: sectionsReason ? t("needSection") : null, onClick: () => next("sections") },
       note: refusal === "NO_SECTION" ? refusalNote : null,
       body: (
@@ -307,6 +309,7 @@ export function NewExamWizard({ templates, counts }: { templates: ExamTemplateCa
       title: t("proctoringTitle"),
       lead: <p>{t("proctoringLead")}</p>,
       layout: "single",
+      mascot: "think",
       primary: { kind: "button", id: "exam-next", label: primaryLabel, onClick: () => next("proctoring") },
       body: (
         <div className="space-y-5">

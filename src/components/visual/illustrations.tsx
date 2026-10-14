@@ -5,15 +5,18 @@ import { cn } from "@/lib/cn";
 /**
  * HIRING-VISUAL-FLOW 2.2 (K1): flat, calm spot drawings, hand-written inline
  * SVG. No people, no faces, no photo, no text inside the drawing; only the
- * illustration tones; hidden from assistive technology (the screen's title
- * carries the meaning). They appear only on welcome, consent, permission,
+ * illustration tones and the soft pastel fills of the new look (mint, sky,
+ * sun, grape); hidden from assistive technology (the screen's title carries
+ * the meaning). The one drawing with a face is the mascot
+ * (components/visual/mascot.tsx, docs/design/RULES.md rule 9), not these. They appear only on welcome, consent, permission,
  * finish, problem and empty screens, never on a question screen (G11).
  * Static: no animation (2.3).
  *
  * One grammar for all fifteen, taken from the approved mockup: a soft panel
- * (fill), one quiet circle behind (tint), objects with a warm body and a
- * 1.5 ink line, and only small sage or tint details (text bars, a dashed
- * trail, a highlighted part).
+ * (fill), one quiet circle behind (a pastel), objects with a warm body and a
+ * 1.5 ink line, and only small sage or pastel details (text bars, a dashed
+ * trail, a highlighted part). The pastels are the --color-*-soft tokens, one
+ * family per drawing so a screen reads in its own colour.
  */
 export type IllustrationName =
   | "welcome"
@@ -37,6 +40,11 @@ const FILL = "var(--color-illus-fill)";
 const TINT = "var(--color-illus-tint)";
 const SAGE = "var(--color-illus-sage)";
 const WARM = "var(--color-illus-warm)";
+/** The soft pastel families of the new look (globals.css), for the circle behind and small parts. */
+const MINT = "var(--color-mint-soft)";
+const SKY = "var(--color-sky-soft)";
+const SUN = "var(--color-sun-soft)";
+const GRAPE = "var(--color-grape-soft)";
 const ink = { stroke: LINE, strokeWidth: 1.5, strokeLinecap: "round", strokeLinejoin: "round" } as const;
 /** A line of "text" inside a drawing: a soft bar, never letters. */
 const bar = { fill: "none", stroke: TINT, strokeWidth: 3, strokeLinecap: "round" } as const;
@@ -59,7 +67,7 @@ const DRAWINGS: Record<IllustrationName, Drawing> = {
     body: (
       <>
         <Panel width={400} height={220} radius={20} />
-        <circle cx="306" cy="66" r="40" fill={TINT} />
+        <circle cx="306" cy="66" r="40" fill={SUN} />
         <path d="M0 178 C90 164 170 184 260 172 S370 162 400 170 V200 a20 20 0 0 1 -20 20 H20 a20 20 0 0 1 -20 -20 Z" fill={WARM} />
         <path d="M62 168 H338 M92 168 V206 M308 168 V206" fill="none" {...ink} />
         <rect x="140" y="82" width="120" height="80" rx="7" fill={WARM} {...ink} />
@@ -69,7 +77,7 @@ const DRAWINGS: Record<IllustrationName, Drawing> = {
         <path d="M154 152 H196 M204 152 H228" {...bar} />
         <path d="M88 168 L83 142 H109 L104 168 Z" fill={WARM} {...ink} />
         <path d="M96 142 C91 124 79 119 69 121 C74 134 84 139 96 142 Z" fill={SAGE} {...ink} />
-        <path d="M96 142 C99 120 111 110 124 110 C122 128 112 138 96 142 Z" fill={TINT} {...ink} />
+        <path d="M96 142 C99 120 111 110 124 110 C122 128 112 138 96 142 Z" fill={SKY} {...ink} />
         <path d="M96 142 C94 126 96 114 101 104" fill="none" {...ink} />
         <path d="M286 142 H312 V162 a5 5 0 0 1 -5 5 H291 a5 5 0 0 1 -5 -5 Z" fill={WARM} {...ink} />
         <path d="M312 147 h5 a5 5 0 0 1 0 10 h-5" fill="none" {...ink} />
@@ -84,9 +92,9 @@ const DRAWINGS: Record<IllustrationName, Drawing> = {
     body: (
       <>
         <Panel width={160} height={120} radius={18} />
-        <circle cx="126" cy="28" r="12" fill={TINT} />
+        <circle cx="126" cy="28" r="12" fill={SKY} />
         <path d="M80 20 L109 31 V55 C109 74 96 89 80 97 C64 89 51 74 51 55 V31 Z" fill={WARM} {...ink} />
-        <path d="M80 28 L101 36 V55 C101 69 92 81 80 88 Z" fill={TINT} />
+        <path d="M80 28 L101 36 V55 C101 69 92 81 80 88 Z" fill={MINT} />
         <path d="M67 57 L76 66 L94 47" fill="none" {...ink} strokeWidth={2} />
         <path d="M30 86 h5 M32.5 83.5 v5 M130 80 h5 M132.5 77.5 v5" {...soft} />
       </>
@@ -100,7 +108,7 @@ const DRAWINGS: Record<IllustrationName, Drawing> = {
     body: (
       <>
         <Panel width={400} height={220} radius={20} />
-        <circle cx="336" cy="44" r="30" fill={TINT} />
+        <circle cx="336" cy="44" r="30" fill={SKY} />
         <rect x="56" y="34" width="288" height="162" rx="10" fill={WARM} {...ink} />
         <path d="M56 72 H344" fill="none" {...ink} />
         <circle cx="76" cy="53" r="4" fill={TINT} />
@@ -119,8 +127,8 @@ const DRAWINGS: Record<IllustrationName, Drawing> = {
         <rect x="236" y="160" width="6" height="10" rx="3" fill={SAGE} />
         <rect x="246" y="153" width="6" height="17" rx="3" fill={SAGE} />
         <rect x="256" y="157" width="6" height="13" rx="3" fill={SAGE} />
-        <rect x="266" y="162" width="6" height="8" rx="3" fill={TINT} />
-        <rect x="276" y="164" width="6" height="6" rx="3" fill={TINT} />
+        <rect x="266" y="162" width="6" height="8" rx="3" fill={GRAPE} />
+        <rect x="276" y="164" width="6" height="6" rx="3" fill={GRAPE} />
       </>
     ),
   },
@@ -131,7 +139,7 @@ const DRAWINGS: Record<IllustrationName, Drawing> = {
     body: (
       <>
         <Panel width={160} height={120} radius={18} />
-        <circle cx="122" cy="32" r="16" fill={TINT} />
+        <circle cx="122" cy="32" r="16" fill={SUN} />
         <ellipse cx="78" cy="98" rx="34" ry="5" fill={WARM} {...ink} />
         <path d="M58 54 H96 V84 a10 10 0 0 1 -10 10 H68 a10 10 0 0 1 -10 -10 Z" fill={WARM} {...ink} />
         <path d="M96 62 h6 a9 9 0 0 1 0 18 h-6" fill="none" {...ink} />
@@ -147,13 +155,13 @@ const DRAWINGS: Record<IllustrationName, Drawing> = {
     body: (
       <>
         <Panel width={160} height={120} radius={18} />
-        <circle cx="38" cy="32" r="14" fill={TINT} />
+        <circle cx="38" cy="32" r="14" fill={GRAPE} />
         <path d="M0 90 C40 78 72 96 106 84 S148 72 160 76 V102 a18 18 0 0 1 -18 18 H18 a18 18 0 0 1 -18 -18 Z" fill={WARM} />
         <path d="M30 104 C56 100 62 88 84 84 S122 66 128 54" {...trail} />
         <path d="M30 104 V78" fill="none" {...ink} />
         <path d="M30 78 H48 L43 84 L48 90 H30 Z" fill={SAGE} {...ink} />
         <path d="M128 54 V26" fill="none" {...ink} />
-        <path d="M128 26 H146 L141 32 L146 38 H128 Z" fill={TINT} {...ink} />
+        <path d="M128 26 H146 L141 32 L146 38 H128 Z" fill={SKY} {...ink} />
       </>
     ),
   },
@@ -164,7 +172,7 @@ const DRAWINGS: Record<IllustrationName, Drawing> = {
     body: (
       <>
         <Panel width={400} height={150} radius={20} />
-        <circle cx="108" cy="44" r="24" fill={TINT} />
+        <circle cx="108" cy="44" r="24" fill={SUN} />
         <path d="M36 112 C80 90 124 82 170 86" {...trail} />
         <path d="M22 118 L58 101 L46 126 Z" fill={WARM} {...ink} />
         <path d="M58 101 L41 118" fill="none" {...ink} />
@@ -185,18 +193,18 @@ const DRAWINGS: Record<IllustrationName, Drawing> = {
     body: (
       <>
         <Panel width={160} height={120} radius={18} />
-        <circle cx="128" cy="28" r="14" fill={TINT} />
+        <circle cx="128" cy="28" r="14" fill={GRAPE} />
         <path d="M50 28 C50 46 62 52 64 60 C62 68 50 74 50 92 H78 C78 74 66 68 64 60 C66 52 78 46 78 28 Z" fill={WARM} {...ink} />
         <path d="M53 90 C55 79 73 79 75 90 Z" fill={SAGE} />
-        <rect x="42" y="22" width="44" height="6" rx="3" fill={TINT} {...ink} />
-        <rect x="42" y="92" width="44" height="6" rx="3" fill={TINT} {...ink} />
+        <rect x="42" y="22" width="44" height="6" rx="3" fill={SUN} {...ink} />
+        <rect x="42" y="92" width="44" height="6" rx="3" fill={SUN} {...ink} />
         <rect x="94" y="48" width="44" height="44" rx="6" fill={WARM} {...ink} />
-        <path d="M94 60 V54 a6 6 0 0 1 6 -6 H132 a6 6 0 0 1 6 6 V60 Z" fill={TINT} {...ink} />
+        <path d="M94 60 V54 a6 6 0 0 1 6 -6 H132 a6 6 0 0 1 6 6 V60 Z" fill={SUN} {...ink} />
         <path d="M106 44 V52 M126 44 V52" fill="none" {...ink} />
-        <rect x="102" y="67" width="7" height="7" rx="2" fill={TINT} />
-        <rect x="113" y="67" width="7" height="7" rx="2" fill={TINT} />
-        <rect x="124" y="67" width="7" height="7" rx="2" fill={TINT} />
-        <rect x="102" y="78" width="7" height="7" rx="2" fill={TINT} />
+        <rect x="102" y="67" width="7" height="7" rx="2" fill={SUN} />
+        <rect x="113" y="67" width="7" height="7" rx="2" fill={SUN} />
+        <rect x="124" y="67" width="7" height="7" rx="2" fill={SUN} />
+        <rect x="102" y="78" width="7" height="7" rx="2" fill={SUN} />
         <rect x="113" y="78" width="7" height="7" rx="2" fill={SAGE} />
       </>
     ),
@@ -208,9 +216,9 @@ const DRAWINGS: Record<IllustrationName, Drawing> = {
     body: (
       <>
         <Panel width={160} height={120} radius={18} />
-        <circle cx="128" cy="30" r="14" fill={TINT} />
+        <circle cx="128" cy="30" r="14" fill={SKY} />
         <path d="M0 98 C50 92 110 104 160 96 V102 a18 18 0 0 1 -18 18 H18 a18 18 0 0 1 -18 -18 Z" fill={WARM} />
-        <path d="M50 100 V22 a4 4 0 0 1 4 -4 H106 a4 4 0 0 1 4 4 V100 Z" fill={TINT} {...ink} />
+        <path d="M50 100 V22 a4 4 0 0 1 4 -4 H106 a4 4 0 0 1 4 4 V100 Z" fill={GRAPE} {...ink} />
         <rect x="58" y="26" width="44" height="74" rx="2" fill={WARM} {...ink} />
         <rect x="66" y="66" width="28" height="24" rx="2" fill={FILL} />
         <path d="M72 44 L80 36 L88 44" fill="none" {...ink} />
@@ -227,14 +235,14 @@ const DRAWINGS: Record<IllustrationName, Drawing> = {
     body: (
       <>
         <Panel width={160} height={120} radius={18} />
-        <circle cx="130" cy="26" r="12" fill={TINT} />
+        <circle cx="130" cy="26" r="12" fill={GRAPE} />
         <rect x="22" y="22" width="84" height="60" rx="6" fill={WARM} {...ink} />
         <path d="M22 34 H106" fill="none" {...ink} />
         <circle cx="30" cy="28" r="2" fill={TINT} />
         <circle cx="37" cy="28" r="2" fill={TINT} />
         <path d="M32 48 H70" {...bar} />
         <rect x="54" y="42" width="84" height="60" rx="6" fill={WARM} {...ink} />
-        <path d="M54 54 V48 a6 6 0 0 1 6 -6 H132 a6 6 0 0 1 6 6 V54 Z" fill={TINT} {...ink} />
+        <path d="M54 54 V48 a6 6 0 0 1 6 -6 H132 a6 6 0 0 1 6 6 V54 Z" fill={SKY} {...ink} />
         <path d="M66 68 H118 M66 80 H104" {...bar} />
         <circle cx="124" cy="88" r="5" fill={SAGE} />
       </>
@@ -247,11 +255,11 @@ const DRAWINGS: Record<IllustrationName, Drawing> = {
     body: (
       <>
         <Panel width={342} height={140} radius={18} />
-        <circle cx="278" cy="38" r="22" fill={TINT} />
+        <circle cx="278" cy="38" r="22" fill={SKY} />
         <path d="M0 112 C86 102 162 116 242 108 S326 102 342 106 V122 a18 18 0 0 1 -18 18 H18 a18 18 0 0 1 -18 -18 Z" fill={WARM} />
         <rect x="54" y="40" width="44" height="78" rx="8" fill={WARM} {...ink} />
         <path d="M70 47 h12" fill="none" {...ink} />
-        <rect x="61" y="56" width="30" height="40" rx="3" fill={TINT} />
+        <rect x="61" y="56" width="30" height="40" rx="3" fill={GRAPE} />
         <path d="M114 78 C142 60 168 60 190 72" {...trail} strokeWidth={1.75} strokeDasharray="4 6" />
         <path d="M184 64 L192 73 L181 77" fill="none" {...ink} />
         <rect x="206" y="44" width="96" height="62" rx="6" fill={WARM} {...ink} />
@@ -268,7 +276,7 @@ const DRAWINGS: Record<IllustrationName, Drawing> = {
     body: (
       <>
         <Panel width={96} height={96} radius={16} />
-        <circle cx="26" cy="26" r="9" fill={TINT} />
+        <circle cx="26" cy="26" r="9" fill={SUN} />
         <rect x="16" y="54" width="32" height="14" rx="7" fill="none" {...ink} transform="rotate(-45 32 61)" />
         <rect x="34" y="36" width="32" height="14" rx="7" fill="none" {...ink} transform="rotate(-45 50 43)" />
         <path d="M58 24 L82 13 L75 35 L69 28 Z" fill={WARM} {...ink} />
@@ -283,9 +291,9 @@ const DRAWINGS: Record<IllustrationName, Drawing> = {
     body: (
       <>
         <Panel width={160} height={120} radius={18} />
-        <circle cx="32" cy="32" r="14" fill={TINT} />
+        <circle cx="32" cy="32" r="14" fill={SUN} />
         <rect x="74" y="20" width="58" height="80" rx="6" fill={WARM} {...ink} />
-        <rect x="91" y="15" width="24" height="10" rx="3" fill={TINT} {...ink} />
+        <rect x="91" y="15" width="24" height="10" rx="3" fill={SKY} {...ink} />
         <circle cx="88" cy="42" r="5" fill={SAGE} />
         <circle cx="88" cy="60" r="5" fill={SAGE} />
         <circle cx="88" cy="78" r="5" fill={SAGE} />
@@ -305,7 +313,7 @@ const DRAWINGS: Record<IllustrationName, Drawing> = {
     body: (
       <>
         <Panel width={160} height={120} radius={18} />
-        <circle cx="134" cy="26" r="13" fill={TINT} />
+        <circle cx="134" cy="26" r="13" fill={GRAPE} />
         <path d="M48 92 L42 106 M112 92 L118 106" fill="none" {...ink} />
         <rect x="30" y="20" width="100" height="72" rx="6" fill={WARM} {...ink} />
         <rect x="60" y="38" width="40" height="36" rx="2" fill={FILL} {...ink} transform="rotate(-5 80 56)" />
@@ -321,13 +329,13 @@ const DRAWINGS: Record<IllustrationName, Drawing> = {
     body: (
       <>
         <Panel width={160} height={120} radius={18} />
-        <circle cx="34" cy="30" r="14" fill={TINT} />
+        <circle cx="34" cy="30" r="14" fill={SKY} />
         <ellipse cx="80" cy="104" rx="42" ry="5" fill={TINT} />
         <path d="M44 58 L30 44 L66 32 L80 46 Z" fill={WARM} {...ink} />
         <path d="M116 58 L130 44 L94 32 L80 46 Z" fill={WARM} {...ink} />
         <path d="M44 58 L80 46 L116 58 L80 70 Z" fill={SAGE} {...ink} />
         <path d="M44 58 L80 70 V102 L44 90 Z" fill={WARM} {...ink} />
-        <path d="M80 70 L116 58 V90 L80 102 Z" fill={TINT} {...ink} />
+        <path d="M80 70 L116 58 V90 L80 102 Z" fill={SUN} {...ink} />
       </>
     ),
   },
@@ -338,7 +346,7 @@ const DRAWINGS: Record<IllustrationName, Drawing> = {
     body: (
       <>
         <Panel width={160} height={120} radius={18} />
-        <circle cx="128" cy="30" r="14" fill={TINT} />
+        <circle cx="128" cy="30" r="14" fill={SUN} />
         <path d="M40 92 V102 M120 92 V102" fill="none" {...ink} />
         <rect x="38" y="48" width="12" height="38" rx="2" fill={SAGE} {...ink} />
         <rect x="54" y="52" width="11" height="34" rx="2" fill={WARM} {...ink} transform="rotate(14 65 86)" />
@@ -346,7 +354,7 @@ const DRAWINGS: Record<IllustrationName, Drawing> = {
         <rect x="91" y="52" width="11" height="34" rx="2" {...soft} strokeDasharray="3 4" />
         <path d="M118 86 L116 73 H132 L130 86 Z" fill={WARM} {...ink} />
         <path d="M124 73 C121 65 114 62 109 64 C111 70 116 72 124 73 Z" fill={SAGE} {...ink} />
-        <path d="M124 73 C126 63 131 58 137 58 C136 66 131 71 124 73 Z" fill={TINT} {...ink} />
+        <path d="M124 73 C126 63 131 58 137 58 C136 66 131 71 124 73 Z" fill={GRAPE} {...ink} />
         <rect x="24" y="86" width="112" height="6" rx="2" fill={WARM} {...ink} />
       </>
     ),

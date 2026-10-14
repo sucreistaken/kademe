@@ -199,6 +199,7 @@ export function BankUploadWizard({ locale }: { locale: Locale }) {
     title: t("fileTitle"),
     lead: <p>{t("fileLead")}</p>,
     layout: "single",
+    mascot: "wave",
     primary: { kind: "button", id: "upload-to-check", label: flow("continue"), waitReason: text.trim() ? null : t("needFile"), onClick: readSource },
     note: sheetError ? (
       <p role="alert" className="text-[14px] font-medium text-ink">
@@ -275,6 +276,7 @@ export function BankUploadWizard({ locale }: { locale: Locale }) {
     title: t("checkTitle"),
     lead: <p>{bad ? t("checkLead", { ok: valid, bad }) : t("checkLeadAllOk", { ok: valid })}</p>,
     layout: "single",
+    mascot: "think",
     primary: { kind: "button", id: "upload-to-settings", label: flow("continue"), waitReason: valid === 0 ? t("noValid") : null, onClick: () => nav.go("settings") },
     note: bad > 0 && valid > 0 ? <p className="text-[13.5px] text-muted">{t("skipNote")}</p> : null,
     body: (
@@ -364,6 +366,7 @@ export function BankUploadWizard({ locale }: { locale: Locale }) {
       </p>
     ),
     layout: "single",
+    mascot: "think",
     primary: {
       kind: "button",
       id: "upload-import",
@@ -486,6 +489,7 @@ export function BankUploadWizard({ locale }: { locale: Locale }) {
     title: t("doneTitle", { created: result?.created ?? 0, failed: result?.failedLines.length ?? 0 }),
     lead: <p>{t("doneLead")}</p>,
     layout: "single",
+    mascot: "celebrate",
     primary: { kind: "link", id: "upload-open-pending", label: t("openPending"), href: "/exam/bank?tab=pending" },
     body: (
       <div className="space-y-4">

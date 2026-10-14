@@ -1061,5 +1061,11 @@
     "sendingCount": "Sending the recording, please do not close this tab ({count, plural, one {# part} other {# parts}} left).",
     "slow": "{count, plural, one {# part} other {# parts}} of the recording could not be sent yet. They go out by themselves once your connection is back; please keep this tab open.",
     "sent": "The exam recording has been sent."
+  },
+  "mascot": {
+    "cheerFirst": "You finished the first section. Continue whenever you are ready.",
+    "cheerMore": "Another section done. Continue whenever you are ready.",
+    "cheerProgress": "{done} of {total} sections done",
+    "finishedBadge": "You completed the exam"
   }
 }

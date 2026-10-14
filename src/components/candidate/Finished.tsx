@@ -5,6 +5,7 @@ import { Check, Loader2, Mail, PowerOff, WifiOff } from "lucide-react";
 import { CandidateColumn } from "@/components/candidate/Shell";
 import { useProctor } from "@/components/candidate/proctor/ProctorProvider";
 import { Badge } from "@/components/ui/badge";
+import { Mascot } from "@/components/visual/mascot";
 import { SectionTile } from "@/components/visual/section-look";
 import type { StudentResult } from "@/lib/exam-flow";
 import { FINISH_DRAIN_MS, finishUploadPhase } from "@/lib/proctor/recording-status";
@@ -19,8 +20,8 @@ import { useT } from "@/i18n/candidate-client";
  * and only once a teacher has finalized it; there is no course recommendation
  * here or anywhere else. The next step is always concrete: who to write to.
  *
- * Soft look: finishing is worth a small celebration (a medal that pops in once
- * and a few soft dots, motion-safe only) and the sections the student got
+ * Soft look: finishing is worth a small celebration (the mascot pops in once
+ * with a badge, motion-safe only) and the sections the student got
  * through, each in its own colour. It celebrates finishing, never a score:
  * nothing here says how any answer went. A terminated exam gets none of it.
  */
@@ -49,6 +50,7 @@ export function Finished({
   const t = useT("result");
   const sec = useT("section");
   const v = useT("visual");
+  const m = useT("mascot");
   const rec = useT("recordingSafety");
   const { engine, snap } = useProctor();
   const [streamsOff, setStreamsOff] = useState(false);
@@ -81,7 +83,13 @@ export function Finished({
             <PowerOff className="size-7" strokeWidth={2} />
           </span>
         ) : (
-          <Celebration />
+          <div className="flex flex-col items-center gap-3">
+            <Mascot pose="celebrate" size="spot" />
+            <Badge tone="mint" size="md">
+              <Check aria-hidden strokeWidth={3} />
+              {m("finishedBadge")}
+            </Badge>
+          </div>
         )}
 
         <h1 className="mt-5 text-center text-[28px] font-extrabold leading-[1.2] tracking-[-0.01em] text-ink">
@@ -206,37 +214,5 @@ export function Finished({
         </div>
       </div>
     </CandidateColumn>
-  );
-}
-
-/** Soft dots that rise once behind the medal: [left %, top px, colour, delay ms]. */
-const DOTS: Array<[number, number, string, number]> = [
-  [22, 70, "bg-grape-fill", 80],
-  [30, 30, "bg-sun-fill", 220],
-  [40, 82, "bg-sky-fill", 0],
-  [60, 84, "bg-coral-fill", 140],
-  [69, 32, "bg-mint-fill", 300],
-  [77, 66, "bg-sun-fill", 60],
-];
-
-/** The finish medal: it pops in once; under reduced motion it simply stands there and the dots are not drawn. */
-function Celebration() {
-  return (
-    <div aria-hidden className="relative mx-auto h-[104px] w-full max-w-[320px]">
-      {DOTS.map(([left, top, tone, delay]) => (
-        <span
-          key={`${left}-${top}`}
-          className={`absolute size-2.5 rounded-full opacity-0 motion-safe:animate-[float-up_1600ms_ease-out_both] motion-reduce:hidden ${tone}`}
-          style={{ left: `${left}%`, top, animationDelay: `${delay}ms` }}
-        />
-      ))}
-      <svg viewBox="0 0 96 104" className="absolute left-1/2 top-0 h-[104px] w-24 -translate-x-1/2 motion-safe:animate-[pop-in_520ms_cubic-bezier(0.2,0.8,0.2,1)_both]">
-        <path d="M30 4 L44 38 L34 44 L18 10 Z" className="fill-sky-fill" />
-        <path d="M66 4 L52 38 L62 44 L78 10 Z" className="fill-grape-fill" />
-        <circle cx="48" cy="64" r="34" className="fill-sun-fill" />
-        <circle cx="48" cy="64" r="25" className="fill-sun-soft" />
-        <path d="M36 64 L45 73 L61 55" fill="none" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" className="stroke-accent" />
-      </svg>
-    </div>
   );
 }

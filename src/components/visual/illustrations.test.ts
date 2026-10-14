@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { Illustration, ILLUSTRATION_NAMES } from "./illustrations";
 
-const ALLOWED = /^(none|var\(--color-illus-(line|fill|tint|sage|warm)\))$/;
+const ALLOWED = /^(none|var\(--color-illus-(line|fill|tint|sage|warm)\)|var\(--color-(mint|sky|sun|grape)-soft\))$/;
 
 describe("illustrations (HIRING-VISUAL-FLOW 2.2, K1)", () => {
   it("has the eleven candidate and four panel drawings", () => {

@@ -144,10 +144,10 @@ export default async function OpeningsPage({ searchParams }: { searchParams: Pro
       <main className="mx-auto max-w-[1360px] px-page py-8">
         <PageTitle title={t("hiringOpenings.title")} sub={t("hiringOpenings.sub")} />
         {runs ? (
-          <EmptyState variant="page" illustration="emptyOpenings" title={t("hiringOpenings.emptyTitle")} body={t("hiringOpenings.emptyBody")} action={addButton} />
+          <EmptyState variant="page" illustration="emptyOpenings" mascot="think" title={t("hiringOpenings.emptyTitle")} body={t("hiringOpenings.emptyBody")} action={addButton} />
         ) : (
           // A reviewer sees only the openings they work on and cannot open one: no button to stare at.
-          <EmptyState variant="page" illustration="emptyOpenings" title={t("hiringOpenings.emptyViewerTitle")} body={t("hiringOpenings.emptyViewerBody")} />
+          <EmptyState variant="page" illustration="emptyOpenings" mascot="rest" title={t("hiringOpenings.emptyViewerTitle")} body={t("hiringOpenings.emptyViewerBody")} />
         )}
       </main>
     );

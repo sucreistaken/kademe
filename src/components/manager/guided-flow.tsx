@@ -5,6 +5,7 @@ import { HashAwareLink } from "./hash-aware-link";
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import type { FooterAction } from "@/components/visual/footer-action";
 import type { IllustrationName } from "@/components/visual/illustrations";
+import type { MascotPose } from "@/components/visual/mascot";
 import { StepFooter } from "@/components/visual/step-footer";
 import { StepScreen } from "@/components/visual/step-screen";
 import { useKeepFocus, useStepFocus } from "@/hooks/use-step-focus";
@@ -20,6 +21,8 @@ export type FlowStep = {
   lead?: ReactNode;
   /** Manager mockup 3, 6: a spot drawing above the question, on a page only (a Sheet is too narrow). */
   illustration?: IllustrationName;
+  /** A small mascot pose above the question (rule 9); on a page only, and not when a drawing is given. */
+  mascot?: MascotPose;
   /** Manager mockup 4: under the lead, the decisions so far in one line. */
   aside?: ReactNode;
   layout: "single" | "split";
@@ -207,6 +210,7 @@ export function GuidedFlow({
           lead={step.lead}
           illustration={step.illustration}
           illustrationSize="flow"
+          mascot={step.mascot}
           aside={step.aside}
           enter={enter}
         >

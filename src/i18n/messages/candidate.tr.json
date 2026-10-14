@@ -1061,5 +1061,11 @@
     "sendingCount": "Kayıt gönderiliyor, lütfen bu sekmeyi kapatmayın ({count} parça).",
     "slow": "Kaydın {count} parçası henüz gönderilemedi. Bağlantınız düzelince kendiliğinden gönderilir; lütfen bu sekmeyi açık tutun.",
     "sent": "Sınav kaydı gönderildi."
+  },
+  "mascot": {
+    "cheerFirst": "İlk bölümü bitirdiniz. Hazır olduğunuzda devam edin.",
+    "cheerMore": "Bir bölümü daha bitirdiniz. Hazır olduğunuzda devam edin.",
+    "cheerProgress": "{done} / {total} bölüm tamamlandı",
+    "finishedBadge": "Sınavı tamamladınız"
   }
 }

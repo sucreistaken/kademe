@@ -108,6 +108,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
         <EmptyState
           className="mt-8"
           illustration="emptyToday"
+          mascot="rest"
           title={t("today.emptyTitle")}
           body={invite.kind === "none" ? undefined : t("today.emptyBody")}
           action={inviteButton("primary")}

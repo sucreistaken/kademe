@@ -7,6 +7,7 @@ import { CandidateColumn } from "@/components/candidate/Shell";
 import { MobileBlock, isMobileDevice } from "@/components/candidate/MobileBlock";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Mascot } from "@/components/visual/mascot";
 import { SectionTile } from "@/components/visual/section-look";
 import { apiSend } from "@/lib/client/api";
 import { stepPath } from "@/lib/candidate-routes";
@@ -102,8 +103,13 @@ export function IntroConsent({
 
   return (
     <CandidateColumn width={640}>
-      <Badge tone="mint" size="md">{v("orgPill", { org: state.orgName })}</Badge>
-      <h1 className="mt-4 text-[34px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink">{title}</h1>
+      <div className="flex items-end justify-between gap-4">
+        <Badge tone="mint" size="md">{v("orgPill", { org: state.orgName })}</Badge>
+        <Mascot pose="wave" size="spot" className="-mb-2" />
+      </div>
+      {/* The exam's own name is the heading; the generic kind of exam sits under it. */}
+      <h1 className="mt-4 text-[34px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink">{state.examName || title}</h1>
+      {state.examName ? <p className="mt-1.5 text-[15px] font-bold text-muted">{title}</p> : null}
       <p className="mt-3.5 text-[16px] leading-[1.65] text-ink-2">{t("lead", { org: state.orgName })}</p>
 
       <div className="mb-3 mt-9 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
