@@ -1,27 +1,32 @@
+import { hasAnswer } from "@/lib/exam/item-scoring";
 import type { ItemAnswer, ItemSnapshot } from "@/lib/exam/types";
 
 /**
- * Plain-text renderings of an answer and of a key, for the teacher's item
- * table. The student never sees any of this.
+ * Plain-text renderings of an answer and of a key. The teacher's item table
+ * draws matching, true/false and gap items row by row (review-rows.ts); these
+ * flat forms remain for choice and text items and for copying. The student
+ * never sees any of this.
  */
 
-const TF: Record<string, string> = { R: "R", F: "F", NG: "NG" };
+type TfLabel = (code: string) => string;
+const rawCode: TfLabel = (code) => code;
 
-export function answerText(s: ItemSnapshot, a: ItemAnswer | null): string {
-  if (!a) return "";
+/** "" when the student gave nothing, whatever the type, so the caller shows the blank label. */
+export function answerText(s: ItemSnapshot, a: ItemAnswer | null, tf: TfLabel = rawCode): string {
+  if (!a || !hasAnswer(s.type, a)) return "";
   const c = s.content;
   if (c.kind === "CHOICE") return (a.choiceIds ?? []).map((id) => c.options.find((o) => o.id === id)?.text ?? id).join(", ");
-  if (c.kind === "TFNG") return c.statements.map((st, i) => `${i + 1}: ${a.tfng?.[st.id] ? TF[a.tfng[st.id]] : "-"}`).join("  ");
-  if (c.kind === "GAP") return c.gaps.map((g) => a.gaps?.[g.id] || "-").join(" | ");
+  if (c.kind === "TFNG") return c.statements.map((st, i) => `${i + 1}: ${a.tfng?.[st.id] ? tf(a.tfng[st.id]) : "-"}`).join("  ");
+  if (c.kind === "GAP") return c.gaps.map((g) => a.gaps?.[g.id]?.trim() || "-").join(" | ");
   if (c.kind === "MATCHING") return c.left.map((l, i) => `${i + 1}→${c.right.find((r) => r.id === a.matches?.[l.id])?.text ?? "-"}`).join("  ");
   return a.text ?? "";
 }
 
-export function keyText(s: ItemSnapshot): string {
+export function keyText(s: ItemSnapshot, tf: TfLabel = rawCode): string {
   const c = s.content;
   const k = s.key;
   if (c.kind === "CHOICE" && k.kind === "CHOICE") return k.correct.map((id) => c.options.find((o) => o.id === id)?.text ?? id).join(", ");
-  if (c.kind === "TFNG" && k.kind === "TFNG") return c.statements.map((st, i) => `${i + 1}: ${TF[k.answers[st.id]]}`).join("  ");
+  if (c.kind === "TFNG" && k.kind === "TFNG") return c.statements.map((st, i) => `${i + 1}: ${k.answers[st.id] ? tf(k.answers[st.id]) : "-"}`).join("  ");
   if (c.kind === "GAP" && k.kind === "GAP") return c.gaps.map((g) => (k.answers[g.id] ?? []).join(" / ")).join(" | ");
   if (c.kind === "MATCHING" && k.kind === "MATCHING") return c.left.map((l, i) => `${i + 1}→${c.right.find((r) => r.id === k.pairs[l.id])?.text ?? "-"}`).join("  ");
   if (k.kind === "SHORT_TEXT") return k.accepted.join(" / ");

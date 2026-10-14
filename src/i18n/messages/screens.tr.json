@@ -907,5 +907,28 @@
   },
   "recordingSafety": {
     "oldConsent": "Bu öğrenci kayıt içermeyen eski onay metnini kabul etti, bu yüzden sınavı sürekli kaydedilmedi."
+  },
+  "resultReview": {
+    "tfR": "Doğru",
+    "tfF": "Yanlış",
+    "tfNG": "Metinde yok",
+    "tfNGListening": "Kayıtta geçmiyor",
+    "gapN": "Boşluk {n}",
+    "colStudent": "Öğrenci",
+    "colKey": "Anahtar",
+    "rowEmpty": "Boş",
+    "mark_correct": "doğru",
+    "mark_wrong": "yanlış",
+    "mark_blank": "boş",
+    "blank": "Boş bıraktı",
+    "notReached": "Ulaşılmadı",
+    "partial": "kısmi",
+    "partialCount": "{n} kısmi",
+    "skippedBankEmpty": "Bölüm atlandı: soru bankasında bu seviye için soru yoktu",
+    "accept": "Doğru kabul et",
+    "acceptHint": "Anahtarda olmayan ama doğru bir yazım ise kabul edin. Puan 1 olur, özgün puan kayıtta kalır ve seviye tahmini yeniden hesaplanır.",
+    "acceptedBadge": "Öğretmen doğru kabul etti (özgün puan %{pct})",
+    "acceptedUndo": "Cevap doğru kabul edildi.",
+    "undo": "Geri al"
   }
 }

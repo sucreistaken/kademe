@@ -907,5 +907,28 @@
   },
   "recordingSafety": {
     "oldConsent": "This student accepted the older consent text, which does not mention recording, so the exam was not recorded continuously."
+  },
+  "resultReview": {
+    "tfR": "True",
+    "tfF": "False",
+    "tfNG": "Not given",
+    "tfNGListening": "Not in the recording",
+    "gapN": "Gap {n}",
+    "colStudent": "Student",
+    "colKey": "Key",
+    "rowEmpty": "Empty",
+    "mark_correct": "correct",
+    "mark_wrong": "wrong",
+    "mark_blank": "empty",
+    "blank": "Left blank",
+    "notReached": "Not reached",
+    "partial": "partial",
+    "partialCount": "{n} partial",
+    "skippedBankEmpty": "Section skipped: the question bank had no items for this level",
+    "accept": "Accept as correct",
+    "acceptHint": "Use this when the answer is a correct variant the key does not list. The score becomes 1, the original score stays on record and the level estimate is recalculated.",
+    "acceptedBadge": "Accepted as correct by the teacher (original score {pct}%)",
+    "acceptedUndo": "Answer accepted as correct.",
+    "undo": "Undo"
   }
 }
