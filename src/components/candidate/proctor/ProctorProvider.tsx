@@ -49,6 +49,13 @@ export function useProctor(): { engine: ProctorEngine | null; snap: EngineSnapsh
       setFaces: (n: number) => {
         engine.devFaces = n;
       },
+      // Records the event and raises its big warning, as a real detection would.
+      simulate: (type: ProctorEventType) => engine.devSimulate(type),
+      // The pretend Window Management API: how many screens it reports, and whether the permission is given.
+      setScreens: (n: number) => engine.setDevScreens(n),
+      windowManagement: (answer: "granted" | "denied") => {
+        engine.devWindowManagement = answer;
+      },
     };
   }, [engine, snap?.devFake]);
   return { engine, snap };

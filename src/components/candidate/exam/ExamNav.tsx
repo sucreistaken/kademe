@@ -18,8 +18,8 @@ import { cn } from "@/lib/cn";
 
 function FlagMark({ className }: { className?: string }) {
   return (
-    <span aria-hidden className={cn("grid size-4 place-items-center rounded-full border border-paper bg-ink", className)}>
-      <Flag className="size-2.5 fill-white text-white" strokeWidth={2} />
+    <span aria-hidden className={cn("grid size-4 place-items-center rounded-full border border-sun-fill bg-sun-soft", className)}>
+      <Flag className="size-2.5 fill-sun-fill text-sun" strokeWidth={2} />
     </span>
   );
 }
@@ -120,11 +120,25 @@ export function reviewCounts(entries: NavEntry[]) {
   };
 }
 
-function JumpList({ title, items, disabled, onJump }: { title: string; items: Array<{ sequence: number; label: string; flagged: boolean }>; disabled: boolean; onJump: (s: number) => void }) {
+function JumpList({
+  title,
+  items,
+  disabled,
+  onJump,
+  flagHeading = false,
+}: {
+  title: string;
+  items: Array<{ sequence: number; label: string; flagged: boolean }>;
+  disabled: boolean;
+  onJump: (s: number) => void;
+  /** The flagged list carries the flag in its heading too. */
+  flagHeading?: boolean;
+}) {
   if (items.length === 0) return null;
   return (
     <section className="mt-6">
-      <h2 className="text-[14px] font-semibold text-ink">
+      <h2 className="flex items-center gap-2 text-[14px] font-semibold text-ink">
+        {flagHeading ? <FlagMark /> : null}
         {title} <span className="tnum font-normal text-muted">({items.length})</span>
       </h2>
       <ul className="mt-2.5 flex flex-wrap gap-2">
@@ -171,9 +185,9 @@ export function ReviewScreen({
         {n("reviewTitle")}
       </h1>
       <p className="tnum mt-2.5 text-[15px] leading-[1.6] text-ink-2">{n("reviewLead", { answered: counts.answered, total: counts.total })}</p>
+      <JumpList title={n("reviewFlagged")} items={flagged} disabled={disabled} onJump={onJump} flagHeading />
       <JumpList title={n("reviewEmpty")} items={empty} disabled={disabled} onJump={onJump} />
       <JumpList title={n("reviewPartial")} items={partial} disabled={disabled} onJump={onJump} />
-      <JumpList title={n("reviewFlagged")} items={flagged} disabled={disabled} onJump={onJump} />
       {empty.length + partial.length + flagged.length === 0 ? <p className="mt-6 text-[14.5px] text-ink-2">{n("reviewAllDone")}</p> : null}
       <p className="mt-8 rounded-[10px] border border-line bg-surface px-4 py-3 text-[14px] leading-[1.6] text-ink-2">{n("reviewNote")}</p>
     </div>

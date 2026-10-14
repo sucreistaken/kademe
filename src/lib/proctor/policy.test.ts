@@ -38,7 +38,7 @@ describe("presets", () => {
     const p = PRESETS.STANDARD;
     expect(p.camera && p.microphone && p.fullscreen).toBe(true);
     expect(p.screenShare).toBe(false);
-    expect(p.secondScreen).toBe("WARN");
+    expect(p.secondScreen).toBe("BLOCK_AT_CHECK");
     expect(p.aiSignals).toEqual({ face: true, gaze: false, phone: true, voice: false });
     expect(p.snapshots).toEqual({ webcamSeconds: 30, screenSeconds: 45 });
     expect(p.maxAiReviewsPerAttempt).toBe(30);
@@ -111,8 +111,9 @@ describe("requiredChecks", () => {
     ]);
   });
 
-  it("shows SINGLE_SCREEN as informational under WARN", () => {
-    const checks = requiredChecks(PRESETS.STANDARD);
+  it("requires SINGLE_SCREEN in STANDARD, informational only when a policy sets WARN", () => {
+    expect(requiredChecks(PRESETS.STANDARD).find((c) => c.id === "SINGLE_SCREEN")).toEqual({ id: "SINGLE_SCREEN", required: true });
+    const checks = requiredChecks({ ...PRESETS.STANDARD, secondScreen: "WARN" });
     expect(checks.find((c) => c.id === "SINGLE_SCREEN")).toEqual({
       id: "SINGLE_SCREEN",
       required: false,

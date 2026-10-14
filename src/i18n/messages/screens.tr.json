@@ -460,6 +460,7 @@
     "SCREEN_SHARE_STOPPED": "Ekran paylaşımı durdu",
     "SCREEN_SHARE_WRONG_SURFACE": "Tüm ekran paylaşılmadı",
     "SECOND_SCREEN_DETECTED": "İkinci ekran algılandı",
+    "SECOND_SCREEN_UNVERIFIABLE": "İkinci ekran kontrol edilemedi",
     "CAMERA_LOST": "Kamera kapandı",
     "MIC_LOST": "Mikrofon kapandı",
     "COPY_ATTEMPT": "Kopyalama denemesi",

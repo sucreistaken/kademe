@@ -34,6 +34,7 @@ export function SystemCheck({ token, policy }: { token: string; policy: Proctori
   const router = useRouter();
   const t = useT("examCheck");
   const f = useT("examFlow");
+  const cw = useT("cheatWarning");
   const { engine, snap } = useProctor();
   const [mobile, setMobile] = useState(false);
   const [bandwidth, setBandwidth] = useState<{ state: "measuring" | "ok" | "low" | "unknown"; mbps?: string }>({ state: "measuring" });
@@ -177,7 +178,16 @@ export function SystemCheck({ token, policy }: { token: string; policy: Proctori
     }
   }
 
-  function press() {
+  async function press() {
+    // The second-screen permission is asked on the first click (the browser needs a click for its prompt).
+    if (engine && policy.secondScreen !== "OFF" && engine.snapshot.windowManagement === "idle") {
+      setBusy(true);
+      try {
+        await engine.requestWindowManagement();
+      } finally {
+        setBusy(false);
+      }
+    }
     switch (result.primary) {
       case "open":
       case "retry":
@@ -204,6 +214,11 @@ export function SystemCheck({ token, policy }: { token: string; policy: Proctori
   const sentence = sentenceFor(result.step, result.wait, result.issue, t);
   const notes: string[] = [];
   if (result.step === "look" && snap?.model === "unavailable") notes.push(t("faceModelDown"));
+  const askWindow = policy.secondScreen !== "OFF" && snap?.windowManagement === "idle" && result.step === plan.steps[0];
+  if (policy.secondScreen !== "OFF" && result.step === "ready") {
+    if (snap?.windowManagement === "denied") notes.push(cw("windowDenied"));
+    else if (snap?.windowManagement === "unsupported" && snap.isExtended === null) notes.push(cw("windowUnsupported"));
+  }
   if (result.step === "ready") {
     if (bandwidth.state === "low") notes.push(t("connLow", { mbps: bandwidth.mbps ?? "" }));
     if (extendedNote) notes.push(t("singleExtended"));
@@ -273,10 +288,12 @@ export function SystemCheck({ token, policy }: { token: string; policy: Proctori
           </p>
         ))}
 
+        {askWindow ? <p className="mt-4 max-w-[520px] text-[14px] leading-[22px] text-muted">{cw("windowWhy")}</p> : null}
+
         {result.primary ? (
           <button
             type="button"
-            onClick={press}
+            onClick={() => void press()}
             disabled={!enabled}
             className={cn(buttonVariants({ variant: "primary", size: "lg" }), "mt-6 h-14 w-full max-w-[420px] px-6 text-[17px]")}
           >

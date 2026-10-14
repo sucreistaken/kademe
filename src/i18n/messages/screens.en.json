@@ -460,6 +460,7 @@
     "SCREEN_SHARE_STOPPED": "Screen share stopped",
     "SCREEN_SHARE_WRONG_SURFACE": "Not the entire screen shared",
     "SECOND_SCREEN_DETECTED": "Second screen detected",
+    "SECOND_SCREEN_UNVERIFIABLE": "Second screen could not be checked",
     "CAMERA_LOST": "Camera turned off",
     "MIC_LOST": "Microphone turned off",
     "COPY_ATTEMPT": "Copy attempt",

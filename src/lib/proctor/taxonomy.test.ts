@@ -15,7 +15,7 @@ describe("taxonomy table", () => {
   it("assigns sources by group", () => {
     const bySource = (s: string) =>
       PROCTOR_EVENT_TYPES.filter((t) => TAXONOMY[t].source === s).length;
-    expect(bySource("BROWSER")).toBe(22);
+    expect(bySource("BROWSER")).toBe(23);
     expect(bySource("MODEL")).toBe(6);
     expect(bySource("SERVER")).toBe(5);
   });
@@ -57,7 +57,7 @@ describe("taxonomy table", () => {
 
   it("treats model unavailability as a coverage gap, not misconduct", () => {
     const coverage = PROCTOR_EVENT_TYPES.filter((t) => TAXONOMY[t].coverage);
-    expect(coverage).toEqual(["PROCTOR_MODEL_UNAVAILABLE"]);
+    expect(coverage.sort()).toEqual(["PROCTOR_MODEL_UNAVAILABLE", "SECOND_SCREEN_UNVERIFIABLE"]);
     expect(TAXONOMY.PROCTOR_MODEL_UNAVAILABLE.severity).toBe("INFO");
   });
 
