@@ -35,10 +35,13 @@ export type InviteInput = {
   invitedBy: string | null;
   baseUrl?: string;
   ttlDays?: number;
+  /** The exam's window (src/lib/exam-window): not before this instant (default: open now), last entry at `expiresAt` (default: ttlDays from now). */
+  notBefore?: Date | null;
+  expiresAt?: Date;
 };
 
 export type InviteResult =
-  | { ok: true; assessmentId: string; candidateId: string; rawToken: string; url: string; expiresAt: Date }
+  | { ok: true; assessmentId: string; candidateId: string; rawToken: string; url: string; expiresAt: Date; notBefore: Date | null }
   | { ok: false; code: "BLUEPRINT_NOT_FOUND" | "NOT_PUBLISHED" | "CLAIM_REQUIRED" };
 
 /**
@@ -87,7 +90,8 @@ export async function createInvitation(input: InviteInput): Promise<InviteResult
   const linkId = randomUUID();
   const s = linkSecret();
   const raw = s ? examLinkToken(linkId, s) : mintToken().raw;
-  const expiresAt = new Date(Date.now() + (input.ttlDays ?? LINK_TTL_DAYS) * 86_400_000);
+  const expiresAt = input.expiresAt ?? new Date(Date.now() + (input.ttlDays ?? LINK_TTL_DAYS) * 86_400_000);
+  const notBefore = input.notBefore ?? null;
   const url = examLinkUrl(raw, input.baseUrl);
 
   const result = await db.transaction(async (tx) => {
@@ -119,6 +123,7 @@ export async function createInvitation(input: InviteInput): Promise<InviteResult
       tokenHash: sha256(raw),
       status: "NOT_STARTED",
       expiresAt,
+      notBefore,
       attemptsAllowed: 1,
     });
     await tx.insert(messageOutbox).values({
@@ -138,7 +143,7 @@ export async function createInvitation(input: InviteInput): Promise<InviteResult
     });
     return { assessmentId: assessment.id, candidateId: candidate.id };
   });
-  return { ok: true, ...result, rawToken: raw, url, expiresAt };
+  return { ok: true, ...result, rawToken: raw, url, expiresAt, notBefore };
 }
 
 export type InviteLinkResult =

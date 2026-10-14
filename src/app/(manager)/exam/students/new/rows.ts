@@ -216,9 +216,10 @@ export function studentsTsv(students: readonly InvitedStudent[], headers: readon
 
 /**
  * The invite wizard: the list, the exam, a last look; the student's screen
- * language is a side step opened from the last look's "Değiştir".
+ * language and the exam window (opening time, last entry) are side steps
+ * opened from the last look's "Değiştir".
  */
-export const INVITE_STEPS = ["list", "exam", "review", "language"] as const;
+export const INVITE_STEPS = ["list", "exam", "review", "language", "window"] as const;
 export type InviteStep = (typeof INVITE_STEPS)[number];
 export const INVITE_PATH = ["list", "exam", "review"] as const;
 

@@ -10,6 +10,7 @@ import {
   organizations,
 } from "@/db/schema";
 import { sha256 } from "@/lib/auth";
+import { windowProblem } from "@/lib/exam-window";
 import type { Locale } from "@/i18n/locale";
 
 /**
@@ -96,14 +97,10 @@ export async function resolveToken(rawToken: string): Promise<ResolveResult> {
     evidenceRetentionDays: row.org.evidenceRetentionDays,
   };
 
-  const now = Date.now();
-  if (row.link.status === "COMPLETED") return { ok: false, problem: "COMPLETED", ctx };
-  if (row.link.status === "EXPIRED") return { ok: false, problem: "EXPIRED", ctx };
-  if (row.link.notBefore && row.link.notBefore.getTime() > now) return { ok: false, problem: "NOT_YET", ctx };
   // A candidate already inside keeps going past the link's expiry; the
   // solution's own clocks, not the link, decide when writing stops.
-  if (row.link.expiresAt.getTime() < now && row.link.status === "NOT_STARTED")
-    return { ok: false, problem: "EXPIRED", ctx };
+  const problem = windowProblem(row.link, new Date());
+  if (problem) return { ok: false, problem, ctx };
   return { ok: true, ctx };
 }
 

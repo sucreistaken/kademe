@@ -1127,5 +1127,11 @@
     "blockedSecondScreen": "İkinci bir ekran bağlı. Çıkarın ya da kapatın; bu sayfa kendiliğinden yenilenir.",
     "reportProblem": "Sorun bildir",
     "problemSent": "Bildiriminiz okulunuza iletildi."
+  },
+  "examWindow": {
+    "notYetTitle": "Sınavınız {when} açılacak",
+    "notYetBody": "Bu linki saklayın. Saati geldiğinde aynı linkten girip sınava başlayabilirsiniz. O zamana kadar sınav başlatılamaz.",
+    "notYetZone": "Saatler {zone} esas alınarak gösterilir.",
+    "notYetContact": "Bir sorunuz olursa okulunuza ulaşabilirsiniz."
   }
 }

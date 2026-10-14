@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { examTemplateByKey, type ExamTemplate } from "@/lib/exam/templates";
+import { orgTime } from "@/lib/exam-window";
 import type { InviteStudentsInput } from "./actions";
 
 /**
@@ -78,9 +79,9 @@ describe("inviteStudentsAction: the list", () => {
       ok: true,
       examName: "Placement test",
       created: [
-        { line: 1, fullName: "Ayşe Yılmaz", email: "ayse@ornek.com", url: "http://localhost:3100/a/tok-1", expiresAt: "2026-10-28T10:00:00.000Z" },
-        { line: 2, fullName: "Can Demir", email: "can@ornek.com", url: "http://localhost:3100/a/tok-2", expiresAt: "2026-10-28T10:00:00.000Z" },
-        { line: 3, fullName: "Deniz Kaya", email: "deniz@ornek.com", url: "http://localhost:3100/a/tok-3", expiresAt: "2026-10-28T10:00:00.000Z" },
+        { line: 1, fullName: "Ayşe Yılmaz", email: "ayse@ornek.com", url: "http://localhost:3100/a/tok-1", expiresAt: "2026-10-28T10:00:00.000Z", notBefore: null },
+        { line: 2, fullName: "Can Demir", email: "can@ornek.com", url: "http://localhost:3100/a/tok-2", expiresAt: "2026-10-28T10:00:00.000Z", notBefore: null },
+        { line: 3, fullName: "Deniz Kaya", email: "deniz@ornek.com", url: "http://localhost:3100/a/tok-3", expiresAt: "2026-10-28T10:00:00.000Z", notBefore: null },
       ],
       failed: [],
     });
@@ -179,5 +180,41 @@ describe("inviteStudentsAction: the exam", () => {
     state.ensureResult = { ok: true, blueprint: published("placement"), created: false };
     await inviteStudentsAction(input({ locale: "de" as never, text: "Ayşe Yılmaz, ayse@ornek.com" }));
     expect(state.invited[0]).toMatchObject({ locale: "tr" });
+  });
+});
+
+describe("inviteStudentsAction: the exam window", () => {
+  const ONE = "Ayşe Yılmaz, ayse@ornek.com";
+  const day = (offset: number) => new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
+
+  it("without a window: open now, last entry 14 days from now", async () => {
+    state.ensureResult = { ok: true, blueprint: published("placement"), created: false };
+    await inviteStudentsAction(input({ text: ONE }));
+    const sent = state.invited[0] as { notBefore: Date | null; expiresAt: Date };
+    expect(sent.notBefore).toBeNull();
+    expect(Math.abs(sent.expiresAt.getTime() - (Date.now() + 14 * 86_400_000))).toBeLessThan(5_000);
+  });
+
+  it("stores the chosen opening and last entry on every invitation", async () => {
+    state.ensureResult = { ok: true, blueprint: published("placement"), created: false };
+    const r = await inviteStudentsAction(input({ window: { start: { date: day(3), time: "09:00" }, end: { date: day(6), time: "18:30" } } }));
+    expect(r.ok).toBe(true);
+    expect(state.invited).toHaveLength(3);
+    for (const sent of state.invited as Array<{ notBefore: Date; expiresAt: Date }>) {
+      expect(orgTime(sent.notBefore)).toBe("09:00");
+      expect(orgTime(sent.expiresAt)).toBe("18:30");
+    }
+  });
+
+  it.each([
+    ["an opening in the past", { start: { date: "2020-01-01", time: "09:00" }, end: null }, "START_PAST"],
+    ["a last entry before the opening", { start: { date: day(3), time: "09:00" }, end: { date: day(3), time: "09:30" } }, "END_TOO_EARLY"],
+    ["a start that is not a date", { start: { date: "soon", time: "09:00" }, end: null }, "START_INVALID"],
+    ["a malformed start", { start: { date: 5, time: null } as never, end: null }, "START_INVALID"],
+  ])("refuses %s before anything is published or written", async (_name, window, fault) => {
+    state.ensureResult = { ok: true, blueprint: published("placement"), created: false };
+    expect(await inviteStudentsAction(input({ window }))).toEqual({ ok: false, code: "WINDOW", fault });
+    expect(state.ensured).toEqual([]);
+    expect(state.invited).toEqual([]);
   });
 });

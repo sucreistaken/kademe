@@ -1,9 +1,12 @@
+import { eq } from "drizzle-orm";
+import { db } from "@/db";
+import { organizations } from "@/db/schema";
+import { ORG_TIMEZONE } from "@/lib/org-timezone";
 import { StudentInviteWizard, type ExamOption } from "@/components/panel/student-invite-wizard";
 import { estimatedMinutes, enabledSections, type BlueprintConfig } from "@/lib/exam/blueprint";
 import { examChoiceValue } from "@/lib/exam/exam-choice";
 import { EXAM_TEMPLATES } from "@/lib/exam/templates";
 import { CEFR_LEVELS, type Cefr } from "@/lib/exam/types";
-import { LINK_TTL_DAYS } from "@/server/invite";
 import { bankCounts, listStudents, publishedBlueprints } from "@/server/panel";
 import { requireUser } from "@/server/session";
 import { isCurrentTemplate } from "@/server/template-blueprint";
@@ -66,11 +69,12 @@ export default async function InvitePage({ searchParams }: { searchParams: Promi
   // A student who still has a link to use: a new invitation would be a second exam, so the last step names them.
   const openEmails = students.filter((s) => (s.status === "NOT_STARTED" || s.status === "IN_EXAM") && s.email).map((s) => s.email.toLowerCase());
   const now = new Date();
-  const lastDay = new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "tr-TR", { day: "numeric", month: "long", year: "numeric" }).format(new Date(now.getTime() + LINK_TTL_DAYS * 86_400_000));
+  // The ready messages name the school; the window's times are the school's (ORG_TIMEZONE).
+  const [org] = await db.select({ name: organizations.name }).from(organizations).where(eq(organizations.id, user.orgId));
   // The flow draws its own head (the flow's name and "Çık") and its steps' titles, as the hiring invite.
   return (
     <main className="mx-auto max-w-[1080px] px-page pt-6">
-      <StudentInviteWizard options={options} counts={counts} openEmails={openEmails} linkDays={LINK_TTL_DAYS} lastDay={lastDay} initialChoice={initialChoice} initialClaimed={initialClaimed} />
+      <StudentInviteWizard options={options} counts={counts} openEmails={openEmails} timeZone={ORG_TIMEZONE} nowIso={now.toISOString()} school={org?.name ?? ""} initialChoice={initialChoice} initialClaimed={initialClaimed} />
     </main>
   );
 }

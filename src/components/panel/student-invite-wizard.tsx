@@ -27,6 +27,7 @@ import { flowJourney } from "@/components/manager/flow-model";
 import { GuidedFlow, useFlowStep, type FlowStep } from "@/components/manager/guided-flow";
 import { SummaryRows } from "@/components/manager/summary-rows";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatusDot } from "@/components/ui/status-dot";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,6 +37,9 @@ import { useMT } from "@/i18n/manager-client";
 import { bankCoverage, type BankCount, type BlueprintConfig } from "@/lib/exam/blueprint";
 import { CEFR_LEVELS, type Cefr } from "@/lib/exam/types";
 import { cn } from "@/lib/cn";
+import { DEFAULT_WINDOW_DAYS, orgTime, resolveWindow, zonedMoment, type WindowInput } from "@/lib/exam-window";
+import { inviteMessage, inviteMessages, messageDateTime, type InviteMessageInput } from "@/lib/invite-message";
+import { orgDay, zoneLabel } from "@/lib/org-timezone";
 
 /**
  * One exam the students can be invited to. `value` is an exam-choice value
@@ -66,6 +70,11 @@ const FOR_WHOM = { placement: "forWhomPlacement", "quick-screen": "forWhomQuick"
 const PILL = "ml-1 inline-block rounded-full bg-accent-soft px-2 align-[2px] text-[12px] leading-5 font-semibold text-accent group-has-[:checked]/choice:bg-surface";
 
 const LINK = "inline-flex min-h-11 items-center gap-1.5 text-[14px] font-medium text-ink underline decoration-underline underline-offset-4 hover:decoration-ink";
+
+/** A set opening starts as the hour after the next full hour: never in the past, easy to read. */
+function laterDefault(nowIso: string): Date {
+  return new Date(Math.ceil((new Date(nowIso).getTime() + 3_600_000) / 3_600_000) * 3_600_000);
+}
 
 /** "Kopyalandı" for two seconds after a copy, per key. */
 function useCopied() {
@@ -101,16 +110,18 @@ export function StudentInviteWizard({
   options,
   counts,
   openEmails,
-  linkDays,
-  lastDay,
+  timeZone,
+  nowIso,
+  school,
   initialChoice,
   initialClaimed,
 }: {
   options: ExamOption[];
   counts: BankCount[];
-  /** How many days a new link stays open (the server's LINK_TTL_DAYS), and that day, written out. */
-  linkDays: number;
-  lastDay: string;
+  /** The school's zone (ORG_TIMEZONE; the browser has no env), the page's "now" so the defaults match the server render, and the school's name for the ready messages. */
+  timeZone: string;
+  nowIso: string;
+  school: string;
   /** E-mails that already have an open invitation, lower case. */
   openEmails: string[];
   /** The exam the manager came from (`?exam=`): just published, or "Davet et" on it. */
@@ -122,12 +133,20 @@ export function StudentInviteWizard({
   const m = useMT("mode");
   const inv = useMT("invite");
   const flow = useMT("flow");
+  const w = useMT("examWindow");
   const uiLocale = useLocale() === "en" ? "en" : "tr";
   const own = options.filter((o) => o.group === "own");
   const [text, setText] = useState("");
   const [choice, setChoice] = useState(initialChoice ?? (own.length === 1 ? own[0].value : ""));
   const [batch, setBatch] = useState<Cefr | null>(initialClaimed ?? null);
   const [locale, setLocale] = useState<"tr" | "en">("tr");
+  // The exam window: "Hemen" or a set opening, and the last entry (default 14 days after the opening until the manager sets it).
+  const [startMode, setStartMode] = useState<"now" | "later">("now");
+  const [startDate, setStartDate] = useState(() => orgDay(laterDefault(nowIso), timeZone));
+  const [startTime, setStartTime] = useState(() => orgTime(laterDefault(nowIso), timeZone));
+  const [endTouched, setEndTouched] = useState(false);
+  const [endDate, setEndDate] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [fromSummary, setFromSummary] = useState(false);
   const [fileError, setFileError] = useState<"SIZE" | "READ" | null>(null);
   const [refusal, setRefusal] = useState<Refusal | null>(null);
@@ -150,6 +169,12 @@ export function StudentInviteWizard({
     ? claims.flatMap((c) => bankCoverage(counts, exam.config, exam.mode, exam.published ? c : null).rows.filter((r) => !r.ok)).slice(0, 1)[0] ?? null
     : null;
   const repeated = alreadyInvited(parsed.rows, openEmails);
+  const startAt = startMode === "later" ? zonedMoment({ date: startDate, time: startTime }, timeZone) : null;
+  const defaultEnd = new Date((startAt ?? new Date(nowIso)).getTime() + DEFAULT_WINDOW_DAYS * 86_400_000);
+  const end = endTouched ? { date: endDate, time: endTime } : { date: orgDay(defaultEnd, timeZone), time: orgTime(defaultEnd, timeZone) };
+  const windowInput: WindowInput = { start: startMode === "later" ? { date: startDate, time: startTime } : null, end };
+  const windowCheck = resolveWindow(windowInput, { now: new Date(), timeZone });
+  const windowReason = windowCheck.ok ? null : w(`fault${windowCheck.fault}`);
 
   useEffect(() => {
     if (done) doneHeading.current?.focus();
@@ -176,7 +201,7 @@ export function StudentInviteWizard({
   }
 
   function next(from: InviteStep) {
-    if (fromSummary || from === "language") {
+    if (fromSummary || from === "language" || from === "window") {
       setFromSummary(false);
       nav.go("review");
       return;
@@ -193,11 +218,12 @@ export function StudentInviteWizard({
     setRefusal(null);
     start(async () => {
       try {
-        const r = await inviteStudentsAction({ text, exam: exam.value, claimed: batch, locale });
+        const r = await inviteStudentsAction({ text, exam: exam.value, claimed: batch, locale, window: windowInput });
         if (r.ok) setDone(r);
         else {
           setRefusal(r.code);
           if (r.code === "LIST") nav.go("list");
+          else if (r.code === "WINDOW") nav.go("window");
           else if (r.code === "EXAM" || r.code === "CLAIM_REQUIRED") nav.go("exam");
         }
       } catch {
@@ -219,8 +245,19 @@ export function StudentInviteWizard({
       fullName: c.fullName,
       email: c.email,
       url: c.url,
-      expires: new Date(c.expiresAt).toLocaleDateString(uiLocale === "en" ? "en-GB" : "tr-TR", { day: "numeric", month: "long", year: "numeric" }),
+      expires: messageDateTime(new Date(c.expiresAt), uiLocale, timeZone),
     }));
+    const messageInputs: InviteMessageInput[] = done.created.map((c) => ({
+      fullName: c.fullName,
+      school,
+      url: c.url,
+      expiresAt: new Date(c.expiresAt),
+      notBefore: c.notBefore ? new Date(c.notBefore) : null,
+      minutes: exam?.minutes ?? 0,
+      locale,
+      timeZone,
+    }));
+    const opensAt = done.created[0]?.notBefore ? new Date(done.created[0].notBefore) : null;
     const download = () => {
       const csv = studentsCsv(students, [t("csvName"), t("csvEmail"), t("csvExam"), t("csvLink"), t("csvExpires")], done.examName, uiLocale === "en" ? "," : ";");
       const href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
@@ -256,12 +293,21 @@ export function StudentInviteWizard({
                   <Copy className="size-4" strokeWidth={1.75} aria-hidden />
                   {copied === "all" ? t("copied") : t("copyAll")}
                 </Button>
+                <Button variant="secondary" onClick={() => copy("messages", inviteMessages(messageInputs))}>
+                  <Copy className="size-4" strokeWidth={1.75} aria-hidden />
+                  {copied === "messages" ? w("messageCopied") : w("copyAllMessages")}
+                </Button>
                 <Button variant="secondary" onClick={download}>
                   <Download className="size-4" strokeWidth={1.75} aria-hidden />
                   {t("downloadCsv")}
                 </Button>
-                <span className="tnum text-[13px] text-muted">{t("inviteDoneExam", { exam: done.examName, date: students[0].expires })}</span>
               </div>
+              <p className="tnum text-[13px] text-muted">
+                {t("inviteDoneExam", { exam: done.examName, date: students[0].expires })}
+                {opensAt ? ` · ${w("opensOn", { date: messageDateTime(opensAt, uiLocale, timeZone) })}` : ""}
+                {" · "}
+                {w("messagesHint")}
+              </p>
               <ul aria-label={t("inviteDoneListLabel")} className="divide-y divide-line rounded-[14px] border border-line bg-surface">
                 {students.map((s, i) => {
                   const id = `invite-link-${i}`;
@@ -283,6 +329,9 @@ export function StudentInviteWizard({
                       />
                       <Button size="sm" variant="secondary" aria-label={`${t("copyLink")}: ${s.fullName}`} onClick={() => copy(id, s.url, id)}>
                         {copied === id ? t("copied") : t("copyLink")}
+                      </Button>
+                      <Button size="sm" variant="secondary" aria-label={w("copyMessageFor", { name: s.fullName })} onClick={() => copy(`${id}-message`, inviteMessage(messageInputs[i]))}>
+                        {copied === `${id}-message` ? w("messageCopied") : w("copyMessage")}
                       </Button>
                     </li>
                   );
@@ -323,7 +372,7 @@ export function StudentInviteWizard({
 
   const refusalNote = refusal ? (
     <p role="alert" className="text-[14px] font-medium text-ink">
-      {refusal === "LIST" ? t("inviteErrLIST") : refusal === "CLAIM_REQUIRED" ? inv("errCLAIM_REQUIRED") : inv(`err${refusal}`)}
+      {refusal === "LIST" ? t("inviteErrLIST") : refusal === "WINDOW" ? w("errWINDOW") : refusal === "CLAIM_REQUIRED" ? inv("errCLAIM_REQUIRED") : inv(`err${refusal}`)}
     </p>
   ) : null;
   const primaryLabel = fromSummary ? flow("backToSummary") : flow("continue");
@@ -514,10 +563,10 @@ export function StudentInviteWizard({
         label: t("inviteCreate", { count: parsed.rows.length }),
         busy: pending,
         busyLabel: t("inviteCreating"),
-        waitReason: listReason ? t(`inviteWait${listReason}`, { max: MAX_STUDENT_ROWS }) : examReason ? t(`inviteWait${examReason}`) : missing ? t("inviteWaitCOVERAGE") : null,
+        waitReason: listReason ? t(`inviteWait${listReason}`, { max: MAX_STUDENT_ROWS }) : examReason ? t(`inviteWait${examReason}`) : missing ? t("inviteWaitCOVERAGE") : windowReason,
         onClick: submit,
       },
-      note: refusal && refusal !== "LIST" && refusal !== "EXAM" && refusal !== "CLAIM_REQUIRED" ? refusalNote : null,
+      note: refusal && refusal !== "LIST" && refusal !== "EXAM" && refusal !== "CLAIM_REQUIRED" && refusal !== "WINDOW" ? refusalNote : null,
       body: (
         <div className="space-y-5">
           <SummaryRows
@@ -538,7 +587,19 @@ export function StudentInviteWizard({
                 ? [{ id: "claim", label: t("inviteClaim"), value: batch ?? t("inviteClaimPerRow"), edit: { onClick: change("exam") } }]
                 : []),
               { id: "language", label: inv("language"), value: <span lang={locale}>{locale === "en" ? "English" : "Türkçe"}</span>, edit: { onClick: change("language") } },
-              { id: "expires", label: t("inviteRowExpires"), value: <span className="tnum">{t("inviteExpires", { days: linkDays, date: lastDay })}</span> },
+              {
+                id: "opens",
+                label: w("rowOpens"),
+                value: <span className="tnum">{windowCheck.ok ? (windowCheck.notBefore ? messageDateTime(windowCheck.notBefore, uiLocale, timeZone) : w("opensNow")) : startMode === "later" ? "" : w("opensNow")}</span>,
+                edit: { onClick: change("window") },
+              },
+              {
+                id: "expires",
+                label: w("rowEnds"),
+                value: <span className="tnum">{windowCheck.ok ? messageDateTime(windowCheck.expiresAt, uiLocale, timeZone) : ""}</span>,
+                detail: windowReason,
+                edit: { onClick: change("window") },
+              },
             ]}
             changeLabel={flow("change")}
             changedLabel={flow("changed")}
@@ -548,6 +609,93 @@ export function StudentInviteWizard({
             <p className="text-[14px] leading-[22px] text-ink-2">{t("inviteNoMail")}</p>
           </div>
           {repeated.length ? <p className="text-[14px] leading-[22px] text-ink">{t("inviteRepeated", { count: repeated.length, list: repeated.slice(0, 3).join(", ") + (repeated.length > 3 ? ` +${repeated.length - 3}` : "") })}</p> : null}
+        </div>
+      ),
+    },
+    window: {
+      id: "window",
+      title: w("windowTitle"),
+      lead: <p>{w("windowLead", { zone: zoneLabel(uiLocale, timeZone) })}</p>,
+      layout: "single",
+      mascot: "think",
+      primary: { kind: "button", id: "invite-next", label: flow("backToSummary"), waitReason: windowReason, onClick: () => next("window") },
+      note: refusal === "WINDOW" ? refusalNote : null,
+      body: (
+        <div className="space-y-7">
+          <div className="space-y-3">
+            <p id="invite-start-label" className="sr-only">
+              {w("windowTitle")}
+            </p>
+            <ChoiceCardGroup
+              type="single"
+              name="invite-start"
+              labelledBy="invite-start-label"
+              look="panel"
+              columns={2}
+              value={[startMode]}
+              onChange={([v]) => edit(() => setStartMode(v === "later" ? "later" : "now"))}
+              items={[
+                { value: "now", label: w("startNow"), description: w("startNowHint") },
+                { value: "later", label: w("startLater"), description: w("startLaterHint") },
+              ]}
+            />
+            {startMode === "later" ? (
+              <div className="flex flex-wrap gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="invite-start-date">{w("startDate")}</Label>
+                  <Input id="invite-start-date" type="date" value={startDate} min={orgDay(new Date(nowIso), timeZone)} onChange={(e) => edit(() => setStartDate(e.target.value))} className="tnum w-48 text-[16px]" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="invite-start-time">{w("startTime")}</Label>
+                  <Input id="invite-start-time" type="time" value={startTime} onChange={(e) => edit(() => setStartTime(e.target.value))} className="tnum w-36 text-[16px]" />
+                </div>
+              </div>
+            ) : null}
+          </div>
+          <div className="space-y-3">
+            <h3 className="text-[15px] font-semibold text-ink">{w("endTitle")}</h3>
+            <p className="text-[13.5px] leading-5 text-muted">{w("endLead")}</p>
+            <div className="flex flex-wrap gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="invite-end-date">{w("endDate")}</Label>
+                <Input
+                  id="invite-end-date"
+                  type="date"
+                  value={end.date}
+                  onChange={(e) =>
+                    edit(() => {
+                      setEndTouched(true);
+                      setEndTime(end.time);
+                      setEndDate(e.target.value);
+                    })
+                  }
+                  className="tnum w-48 text-[16px]"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="invite-end-time">{w("endTime")}</Label>
+                <Input
+                  id="invite-end-time"
+                  type="time"
+                  value={end.time}
+                  onChange={(e) =>
+                    edit(() => {
+                      setEndTouched(true);
+                      setEndDate(end.date);
+                      setEndTime(e.target.value);
+                    })
+                  }
+                  className="tnum w-36 text-[16px]"
+                />
+              </div>
+            </div>
+            {!endTouched ? <p className="text-[13px] text-muted">{w("endDefault", { days: DEFAULT_WINDOW_DAYS })}</p> : null}
+            {windowReason ? (
+              <p role="alert" className="text-[14px] font-medium text-ink">
+                {windowReason}
+              </p>
+            ) : null}
+          </div>
         </div>
       ),
     },
@@ -585,11 +733,11 @@ export function StudentInviteWizard({
     <GuidedFlow
       kicker={inv("title")}
       step={screens[step]}
-      journey={flowJourney(INVITE_PATH, step === "language" ? "review" : step, "review")}
+      journey={flowJourney(INVITE_PATH, step === "language" || step === "window" ? "review" : step, "review")}
       back={
         step === "list"
           ? { label: flow("back"), href: "/exam/students" }
-          : step === "language" || fromSummary
+          : step === "language" || step === "window" || fromSummary
             ? {
                 label: flow("back"),
                 onClick: () => {
