@@ -10,6 +10,7 @@ import { objectiveBasis } from "@/components/panel/result/review-rows";
 import { IntegrityPanel } from "@/components/panel/result/integrity-panel";
 import { ExamRecordingPlayer } from "@/components/panel/result/recording-player";
 import { SpeakingEvidence } from "@/components/panel/result/speaking-evidence";
+import { reportAllowed } from "@/components/panel/report/model";
 import { can } from "@/lib/authorize";
 import { isObjectiveSection, CEFR_LEVELS, type Section } from "@/lib/exam/types";
 import { listStudents, loadIntegrityView, loadResultView } from "@/server/panel";
@@ -143,6 +144,15 @@ export default async function ResultPage({
             </div>
           ) : null}
           {row ? <Dot tone={STATUS_TONE[row.status]}>{t(`status.${row.status}`)}</Dot> : null}
+          {reportAllowed(result?.status) ? (
+            <Link href={`/exam/students/${id}/report`} className="inline-flex h-9 items-center rounded-[8px] border border-line-strong px-3 text-[13px] font-medium text-ink hover:bg-canvas">
+              {t("resultReport.button")}
+            </Link>
+          ) : (
+            <span title={t("resultReport.buttonBlocked")} aria-disabled="true" className="inline-flex h-9 cursor-not-allowed items-center rounded-[8px] border border-line px-3 text-[13px] font-medium text-muted">
+              {t("resultReport.button")}
+            </span>
+          )}
         </div>
       </div>
 

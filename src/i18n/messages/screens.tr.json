@@ -923,5 +923,34 @@
     "acceptedBadge": "Öğretmen doğru kabul etti (özgün puan %{pct})",
     "acceptedUndo": "Cevap doğru kabul edildi.",
     "undo": "Geri al"
+  },
+  "resultReport": {
+    "button": "PDF rapor",
+    "buttonBlocked": "Rapor, sonuç kesinleşince hazırlanır.",
+    "back": "Sonuca dön",
+    "print": "PDF olarak indir",
+    "printHint": "Açılan pencerede hedef olarak \"PDF olarak kaydet\" seçin.",
+    "title": "Seviye raporu",
+    "student": "Öğrenci",
+    "exam": "Sınav",
+    "examDate": "Sınav tarihi",
+    "overall": "Genel seviye",
+    "skills": "Beceri seviyeleri",
+    "recommendedClass": "Önerilen sınıf",
+    "meaningTitle": "Bu seviye ne anlama gelir?",
+    "finalizedBy": "Onaylayan öğretmen",
+    "finalizedOn": "Onay tarihi",
+    "verification": "Doğrulama kodu",
+    "verificationHint": "Bu kod, raporun okulumuzun kayıtlarıyla eşleştiğini doğrulamak için kullanılır.",
+    "scaleNote": "Seviyeler Avrupa Dil Ortak Çerçevesi (CEFR) ölçeğindedir.",
+    "notFinal": "Rapor, sonuç kesinleşmeden hazırlanamaz.",
+    "level": {
+      "A1": "Tanıdık günlük ifadeleri ve çok basit cümleleri anlar; kendini ve çevresini kısaca tanıtabilir.",
+      "A2": "Sık kullanılan ifadeleri anlar; tanıdık konularda basit ve kısa konuşmaları yürütebilir.",
+      "B1": "Gündelik konularda ana fikri anlar, seyahat ve iş gibi sık durumlarla başa çıkar, bağlantılı kısa metinler yazar.",
+      "B2": "Karmaşık metinlerin ana noktalarını anlar, anadili konuşanlarla rahat ve doğal biçimde konuşur, ayrıntılı metinler yazar.",
+      "C1": "Uzun ve zor metinleri ve ima edilen anlamları anlar, kendini akıcı ve esnek biçimde ifade eder, düzenli ve ayrıntılı metinler üretir.",
+      "C2": "Duyduğu ya da okuduğu hemen her şeyi zahmetsiz anlar, ince anlam farklarını doğru biçimde anlatır."
+    }
   }
 }
