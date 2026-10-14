@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { acceptAsCorrect, undoAcceptAsCorrect } from "@/app/(manager)/exam/students/[id]/actions";
 import { Trajectory, answerText, keyText } from "@/components/panel/result/format";
-import { canAcceptAsCorrect, objectiveBasis, responseState, reviewRows, type ReviewMark } from "@/components/panel/result/review-rows";
+import { canAcceptAsCorrect, canAcceptGap, objectiveBasis, responseState, reviewRows, type ReviewMark } from "@/components/panel/result/review-rows";
 import type { managerT } from "@/i18n/manager";
 import { cn } from "@/lib/cn";
 import type { Section } from "@/lib/exam/types";
@@ -19,6 +19,7 @@ const MARK_STYLE: Record<ReviewMark, string> = {
   correct: "bg-success-soft text-success",
   wrong: "bg-danger-soft text-danger",
   blank: "bg-canvas text-muted",
+  accepted: "bg-accent-soft text-accent",
 };
 
 /**
@@ -82,7 +83,7 @@ export function ObjectiveSection({
             <tbody className="divide-y divide-line">
               {responses.map((r) => {
                 const state = responseState(r, run);
-                const rows = state === "ANSWERED" ? reviewRows(r.itemSnapshot, r.answer ?? null) : null;
+                const rows = state === "ANSWERED" ? reviewRows(r.itemSnapshot, r.answer ?? null, acceptances[r.id]?.gapIds ?? []) : null;
                 const accepted = acceptances[r.id];
                 const partial = r.score !== null && r.score > 0 && r.score < 1;
                 return (
@@ -111,6 +112,7 @@ export function ObjectiveSection({
                               <th className="pb-1 pr-3 font-medium">{t("resultReview.colStudent")}</th>
                               <th className="pb-1 pr-3 font-medium">{t("resultReview.colKey")}</th>
                               <th className="pb-1" />
+                              <th className="pb-1" />
                             </tr>
                           </thead>
                           <tbody>
@@ -127,6 +129,28 @@ export function ObjectiveSection({
                                 </td>
                                 <td className="py-0.5">
                                   <span className={cn("rounded-full px-2 py-0.5 text-[11.5px] font-medium", MARK_STYLE[row.mark])}>{t(`resultReview.mark_${row.mark}`)}</span>
+                                </td>
+                                <td className="py-0.5 pl-1">
+                                  {canGrade && rows.variant === "GAP" && row.mark === "accepted" ? (
+                                    <form action={undoAcceptAsCorrect}>
+                                      <input type="hidden" name="responseId" value={r.id} />
+                                      <input type="hidden" name="gapId" value={row.id} />
+                                      <input type="hidden" name="tab" value={tab} />
+                                      <button type="submit" className="text-[12px] font-medium text-ink underline underline-offset-2">
+                                        {t("resultReview.undo")}
+                                      </button>
+                                    </form>
+                                  ) : null}
+                                  {canGrade && rows.variant === "GAP" && canAcceptGap(r.itemSnapshot, r.answer ?? null, row.id, acceptances[r.id]?.gapIds) ? (
+                                    <form action={acceptAsCorrect}>
+                                      <input type="hidden" name="responseId" value={r.id} />
+                                      <input type="hidden" name="gapId" value={row.id} />
+                                      <input type="hidden" name="tab" value={tab} />
+                                      <button type="submit" title={t("resultReview.acceptHint")} className="whitespace-nowrap rounded-[8px] border border-line-strong px-2 py-0.5 text-[12px] font-medium text-ink hover:bg-canvas">
+                                        {t("resultReview.accept")}
+                                      </button>
+                                    </form>
+                                  ) : null}
                                 </td>
                               </tr>
                             ))}
@@ -151,7 +175,7 @@ export function ObjectiveSection({
                           {t("resultReview.acceptedBadge", { pct: Math.round((accepted.originalScore ?? 0) * 100) })}
                         </span>
                       ) : null}
-                      {canGrade && accepted ? (
+                      {canGrade && accepted && accepted.gapIds.length === 0 ? (
                         <form action={undoAcceptAsCorrect} className="mt-1">
                           <input type="hidden" name="responseId" value={r.id} />
                           <input type="hidden" name="tab" value={tab} />

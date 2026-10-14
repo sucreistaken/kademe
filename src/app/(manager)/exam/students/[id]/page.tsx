@@ -230,7 +230,7 @@ export default async function ResultPage({
           ) : null}
 
           {sp.undo === "accept" && sp.response && canGrade && !final && acceptances[sp.response] ? (
-            <UndoStrip message={t("resultReview.acceptedUndo")} action={undoAcceptAsCorrect} hiddenFields={{ responseId: sp.response, tab }} />
+            <UndoStrip message={t("resultReview.acceptedUndo")} action={undoAcceptAsCorrect} hiddenFields={{ responseId: sp.response, tab, ...(sp.gap ? { gapId: sp.gap } : {}) }} />
           ) : null}
 
           {tab === "WRITING" || tab === "SPEAKING" ? (

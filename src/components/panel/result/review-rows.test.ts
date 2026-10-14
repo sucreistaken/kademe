@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ItemSnapshot } from "@/lib/exam/types";
 import { answerText, keyText } from "./format";
-import { canAcceptAsCorrect, objectiveBasis, responseState, reviewRows } from "./review-rows";
+import { canAcceptAsCorrect, canAcceptGap, gapScore, objectiveBasis, responseState, reviewRows } from "./review-rows";
 
 const base = { id: "i", section: "READING", level: "B1", difficulty: 0, skillTag: "x", stimulusId: null, orderInStimulus: 0, prompt: "p", rubric: null, points: 1, stimulus: null } as const;
 
@@ -124,9 +124,40 @@ describe("objectiveBasis", () => {
   });
 });
 
+describe("per-gap acceptance", () => {
+  it("a single-gap item: a typed gap the key does not take can be accepted and scores 1", () => {
+    const one = { ...gap, content: { kind: "GAP", gaps: [{ id: "g1" }] }, key: { kind: "GAP", answers: { g1: ["dem"] } } } as ItemSnapshot;
+    expect(canAcceptGap(one, { gaps: { g1: "diesem Haus" } }, "g1")).toBe(true);
+    expect(gapScore(one, { gaps: { g1: "diesem Haus" } }, ["g1"])).toBe(1);
+    expect(gapScore(one, { gaps: { g1: "diesem Haus" } })).toBe(0);
+  });
+  it("a multi-gap item scores (key-correct + accepted) / all gaps, not 1", () => {
+    const a = { gaps: { g1: "dem", g2: "im" } };
+    expect(gapScore(gap, a)).toBe(0.5);
+    expect(canAcceptGap(gap, a, "g2")).toBe(true);
+    expect(gapScore(gap, a, ["g2"])).toBe(1);
+    // only g1 filled: accepting it can never credit the empty gap
+    expect(gapScore(gap, { gaps: { g1: "irgendwas" } }, ["g1"])).toBe(0.5);
+  });
+  it("an empty or blank gap can never be accepted, nor one the key already takes, nor one already accepted", () => {
+    const a = { gaps: { g1: "dem", g2: "  " } };
+    expect(canAcceptGap(gap, a, "g2")).toBe(false);
+    expect(canAcceptGap(gap, {}, "g2")).toBe(false);
+    expect(canAcceptGap(gap, a, "g1")).toBe(false);
+    expect(canAcceptGap(gap, { gaps: { g1: "x" } }, "g1", ["g1"])).toBe(false);
+    expect(canAcceptGap(gap, { gaps: { g1: "x" } }, "nope")).toBe(false);
+    expect(canAcceptGap(short, { text: "x" }, "g1")).toBe(false);
+    expect(gapScore(gap, { gaps: { g1: " " } }, ["g1"])).toBe(0);
+  });
+  it("the row view marks accepted gaps", () => {
+    const v = reviewRows(gap, { gaps: { g1: "x", g2: "" } }, ["g1", "g2"])!;
+    expect(v.rows.map((r) => r.mark)).toEqual(["accepted", "blank"]);
+  });
+});
+
 describe("canAcceptAsCorrect", () => {
-  it("only typed objective answers under full marks", () => {
-    expect(canAcceptAsCorrect({ itemSnapshot: gap, answer: { gaps: { g1: "x" } }, score: 0.5 })).toBe(true);
+  it("only short typed answers are accepted as a whole; gap items go gap by gap", () => {
+    expect(canAcceptAsCorrect({ itemSnapshot: gap, answer: { gaps: { g1: "x" } }, score: 0.5 })).toBe(false);
     expect(canAcceptAsCorrect({ itemSnapshot: short, answer: { text: "x" }, score: 0 })).toBe(true);
     expect(canAcceptAsCorrect({ itemSnapshot: short, answer: { text: "Berlin" }, score: 1 })).toBe(false);
     expect(canAcceptAsCorrect({ itemSnapshot: short, answer: {}, score: 0 })).toBe(false);

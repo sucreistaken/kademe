@@ -8,7 +8,7 @@ import type { ItemAnswer, ItemSnapshot } from "@/lib/exam/types";
  * the blank-versus-not-reached label, and the share of points in a section.
  */
 
-export type ReviewMark = "correct" | "wrong" | "blank";
+export type ReviewMark = "correct" | "wrong" | "blank" | "accepted";
 
 export type ReviewRow = {
   id: string;
@@ -26,7 +26,7 @@ export type ReviewRows = { variant: "MATCHING" | "TFNG" | "GAP"; rows: ReviewRow
 const markOf = (given: string, ok: boolean): ReviewMark => (!given ? "blank" : ok ? "correct" : "wrong");
 
 /** A per-row breakdown for the item types that have several parts; null for the rest. */
-export function reviewRows(s: ItemSnapshot, a: ItemAnswer | null): ReviewRows | null {
+export function reviewRows(s: ItemSnapshot, a: ItemAnswer | null, acceptedGaps: readonly string[] = []): ReviewRows | null {
   const c = s.content;
   const k = s.key;
   const answer = a ?? {};
@@ -55,7 +55,7 @@ export function reviewRows(s: ItemSnapshot, a: ItemAnswer | null): ReviewRows | 
       rows: c.gaps.map((g, i) => {
         const given = answer.gaps?.[g.id] ?? "";
         const accepted = k.answers[g.id] ?? [];
-        return { id: g.id, label: String(i + 1), given, key: accepted.join(" / "), mark: markOf(given.trim(), typedMatches(given, accepted)) };
+        return { id: g.id, label: String(i + 1), given, key: accepted.join(" / "), mark: acceptedGaps.includes(g.id) && given.trim() ? "accepted" : markOf(given.trim(), typedMatches(given, accepted)) };
       }),
     };
   }
@@ -92,8 +92,30 @@ export function objectiveBasis(
   };
 }
 
-/** A typed objective answer the teacher may accept as correct: it earned less than full marks. */
+/** A short typed answer the teacher may accept as a whole: it earned less than full marks. Gap items are accepted gap by gap. */
 export function canAcceptAsCorrect(r: { itemSnapshot: ItemSnapshot; answer: ItemAnswer | null; score: number | null }): boolean {
-  const t = r.itemSnapshot.type;
-  return (t === "GAP_FILL" || t === "SHORT_TEXT") && hasAnswer(t, r.answer) && (r.score ?? 0) < 1;
+  return r.itemSnapshot.type === "SHORT_TEXT" && hasAnswer("SHORT_TEXT", r.answer) && (r.score ?? 0) < 1;
+}
+
+/**
+ * One gap the teacher may accept: it is typed (an empty gap can never be
+ * accepted), the key does not already take it, and it was not accepted before.
+ */
+export function canAcceptGap(s: ItemSnapshot, a: ItemAnswer | null, gapId: string, acceptedGaps: readonly string[] = []): boolean {
+  if (s.type !== "GAP_FILL" || s.key.kind !== "GAP" || !(gapId in s.key.answers)) return false;
+  const given = a?.gaps?.[gapId] ?? "";
+  return given.trim().length > 0 && !typedMatches(given, s.key.answers[gapId]) && !acceptedGaps.includes(gapId);
+}
+
+/** The score of a gap item: gaps the key takes plus gaps the teacher accepted, over all gaps. */
+export function gapScore(s: ItemSnapshot, a: ItemAnswer | null, acceptedGaps: readonly string[] = []): number {
+  if (s.key.kind !== "GAP") return 0;
+  const key = s.key;
+  const ids = Object.keys(key.answers);
+  if (ids.length === 0) return 0;
+  const right = ids.filter((id) => {
+    const given = a?.gaps?.[id] ?? "";
+    return given.trim().length > 0 && (typedMatches(given, key.answers[id]) || acceptedGaps.includes(id));
+  }).length;
+  return right / ids.length;
 }

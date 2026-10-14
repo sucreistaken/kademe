@@ -13,7 +13,8 @@ export const ACCEPT_ACTION = "response.accept_correct";
 export const UNDO_ACCEPT_ACTION = "response.accept_undo";
 export const RESPONSE_SUBJECT = "item_response";
 
-export type Acceptance = { originalScore: number | null; originalCorrect: boolean | null; at: Date; by: string | null };
+/** `gapIds` lists the accepted gaps of a gap item; it is empty when a whole short answer was accepted. */
+export type Acceptance = { originalScore: number | null; originalCorrect: boolean | null; gapIds: string[]; at: Date; by: string | null };
 
 export async function loadAcceptances(orgId: string, responseIds: string[]): Promise<Record<string, Acceptance>> {
   if (responseIds.length === 0) return {};
@@ -32,14 +33,23 @@ export async function loadAcceptances(orgId: string, responseIds: string[]): Pro
   const out: Record<string, Acceptance> = {};
   for (const r of rows) {
     if (!r.subjectId) continue;
+    const meta = r.meta ?? {};
+    const gapId = typeof meta.gapId === "string" ? meta.gapId : null;
+    const current = out[r.subjectId];
     if (r.action === UNDO_ACCEPT_ACTION) {
-      delete out[r.subjectId];
+      // An undo with a gap id takes back that gap only; without one it takes back the whole acceptance.
+      if (!current || !gapId) delete out[r.subjectId];
+      else {
+        current.gapIds = current.gapIds.filter((g) => g !== gapId);
+        if (current.gapIds.length === 0) delete out[r.subjectId];
+      }
       continue;
     }
-    const meta = r.meta ?? {};
+    // The original score is the one before the first acceptance still standing.
     out[r.subjectId] = {
-      originalScore: typeof meta.originalScore === "number" ? meta.originalScore : null,
-      originalCorrect: typeof meta.originalCorrect === "boolean" ? meta.originalCorrect : null,
+      originalScore: current ? current.originalScore : typeof meta.originalScore === "number" ? meta.originalScore : null,
+      originalCorrect: current ? current.originalCorrect : typeof meta.originalCorrect === "boolean" ? meta.originalCorrect : null,
+      gapIds: gapId ? [...new Set([...(current?.gapIds ?? []), gapId])] : (current?.gapIds ?? []),
       at: r.at,
       by: r.actorId,
     };

@@ -16,7 +16,7 @@ import {
   responseGradings,
   sectionRuns,
 } from "@/db/schema";
-import { canAcceptAsCorrect } from "@/components/panel/result/review-rows";
+import { canAcceptAsCorrect, canAcceptGap, gapScore } from "@/components/panel/result/review-rows";
 import { isCefr } from "@/lib/exam/cefr";
 import { reestimateRun } from "@/lib/exam/reestimate-run";
 import { isObjectiveSection } from "@/lib/exam/types";
@@ -290,21 +290,38 @@ export async function acceptAsCorrect(formData: FormData) {
   const tab = String(formData.get("tab") ?? "");
   if (!row) redirect("/exam/students");
   if (row.final || !row.ended) redirect(back(row.assessmentId, tab));
-  if (!isObjectiveSection(row.run.section) || !canAcceptAsCorrect(row.response)) redirect(back(row.assessmentId, tab));
-  if ((await loadAcceptances(user.orgId, [row.response.id]))[row.response.id]) redirect(back(row.assessmentId, tab));
-  await db.update(itemResponses).set({ score: 1, isCorrect: true, updatedAt: new Date() }).where(eq(itemResponses.id, row.response.id));
+  if (!isObjectiveSection(row.run.section)) redirect(back(row.assessmentId, tab));
+  const snapshot = row.response.itemSnapshot;
+  const existing = (await loadAcceptances(user.orgId, [row.response.id]))[row.response.id];
+  let score = 1;
+  let gapId: string | null = null;
+  if (snapshot.type === "GAP_FILL") {
+    // A gap item is accepted one gap at a time; an empty gap can never be accepted.
+    gapId = String(formData.get("gapId") ?? "");
+    if (!canAcceptGap(snapshot, row.response.answer, gapId, existing?.gapIds)) redirect(back(row.assessmentId, tab));
+    score = gapScore(snapshot, row.response.answer, [...(existing?.gapIds ?? []), gapId]);
+  } else if (!canAcceptAsCorrect(row.response) || existing) {
+    redirect(back(row.assessmentId, tab));
+  }
+  await db.update(itemResponses).set({ score, isCorrect: score === 1, updatedAt: new Date() }).where(eq(itemResponses.id, row.response.id));
   await db.insert(auditLogs).values({
     orgId: user.orgId,
     actorId: user.id,
     action: ACCEPT_ACTION,
     subjectType: RESPONSE_SUBJECT,
     subjectId: row.response.id,
-    meta: { originalScore: row.response.score, originalCorrect: row.response.isCorrect, section: row.run.section, sequence: row.response.sequence },
+    meta: {
+      originalScore: row.response.score,
+      originalCorrect: row.response.isCorrect,
+      ...(gapId ? { gapId } : {}),
+      section: row.run.section,
+      sequence: row.response.sequence,
+    },
   });
   await reestimateRun(row.run.id);
   await recomputeResult(row.run.attemptId);
   revalidatePath(back(row.assessmentId));
-  redirect(withQuery(back(row.assessmentId, tab), { undo: "accept", response: row.response.id }));
+  redirect(withQuery(back(row.assessmentId, tab), { undo: "accept", response: row.response.id, ...(gapId ? { gap: gapId } : {}) }));
 }
 
 /** Gives the original score back to an answer the teacher accepted. */
@@ -316,17 +333,20 @@ export async function undoAcceptAsCorrect(formData: FormData) {
   if (row.final || !row.ended) redirect(back(row.assessmentId, tab));
   const accepted = (await loadAcceptances(user.orgId, [row.response.id]))[row.response.id];
   if (!accepted) redirect(back(row.assessmentId, tab));
-  await db
-    .update(itemResponses)
-    .set({ score: accepted.originalScore ?? 0, isCorrect: accepted.originalCorrect ?? false, updatedAt: new Date() })
-    .where(eq(itemResponses.id, row.response.id));
+  // One gap among several accepted: only that gap goes back, the score follows the rest.
+  const gapId = String(formData.get("gapId") ?? "") || null;
+  if (gapId && !accepted.gapIds.includes(gapId)) redirect(back(row.assessmentId, tab));
+  const remaining = gapId ? accepted.gapIds.filter((g) => g !== gapId) : [];
+  const restored = gapId && remaining.length > 0 ? gapScore(row.response.itemSnapshot, row.response.answer, remaining) : (accepted.originalScore ?? 0);
+  const restoredCorrect = gapId && remaining.length > 0 ? restored === 1 : (accepted.originalCorrect ?? false);
+  await db.update(itemResponses).set({ score: restored, isCorrect: restoredCorrect, updatedAt: new Date() }).where(eq(itemResponses.id, row.response.id));
   await db.insert(auditLogs).values({
     orgId: user.orgId,
     actorId: user.id,
     action: UNDO_ACCEPT_ACTION,
     subjectType: RESPONSE_SUBJECT,
     subjectId: row.response.id,
-    meta: { restoredScore: accepted.originalScore, section: row.run.section, sequence: row.response.sequence },
+    meta: { restoredScore: restored, ...(gapId ? { gapId } : {}), section: row.run.section, sequence: row.response.sequence },
   });
   await reestimateRun(row.run.id);
   await recomputeResult(row.run.attemptId);
