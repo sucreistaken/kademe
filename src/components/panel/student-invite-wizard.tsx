@@ -50,6 +50,8 @@ export type ExamOption = {
   summary: string | null;
   mode: "PLACEMENT" | "LEVEL_VERIFICATION";
   published: boolean;
+  /** Set on a ready exam: which template it is. */
+  templateKey?: string;
   config: BlueprintConfig;
   minutes: number;
   sections: number;
@@ -57,6 +59,11 @@ export type ExamOption = {
 
 type Done = Extract<InviteStudentsResult, { ok: true }>;
 type Refusal = Extract<InviteStudentsResult, { ok: false }>["code"];
+
+/** The ready exam a school runs for new students; it carries the "Önerilen" pill. */
+const RECOMMENDED_TEMPLATE = "placement";
+const FOR_WHOM = { placement: "forWhomPlacement", "quick-screen": "forWhomQuick", "level-check": "forWhomLevelCheck" } as const;
+const PILL = "ml-1 inline-block rounded-full bg-accent-soft px-2 align-[2px] text-[12px] leading-5 font-semibold text-accent group-has-[:checked]/choice:bg-surface";
 
 const LINK = "inline-flex min-h-11 items-center gap-1.5 text-[14px] font-medium text-ink underline decoration-underline underline-offset-4 hover:decoration-ink";
 
@@ -324,18 +331,31 @@ export function StudentInviteWizard({
   const examItems = (group: "own" | "template") =>
     options
       .filter((o) => o.group === group)
-      .map((o) => ({
-        value: o.value,
-        label: o.name,
-        description: (
-          <>
-            {o.summary ? <span className="block">{o.summary}</span> : null}
-            <span className="mt-0.5 block text-[13px] text-muted">
-              {m(o.mode)} · {examMeta(o)}
-            </span>
-          </>
-        ),
-      }));
+      // The recommended ready exam comes first.
+      .sort((a, b) => Number(b.templateKey === RECOMMENDED_TEMPLATE) - Number(a.templateKey === RECOMMENDED_TEMPLATE))
+      .map((o) => {
+        // A ready exam says in one line who it is for; the long summary is for the exam wizard.
+        const forWhom = o.templateKey && o.templateKey in FOR_WHOM ? inv(FOR_WHOM[o.templateKey as keyof typeof FOR_WHOM]) : o.summary;
+        return {
+          value: o.value,
+          label:
+            o.templateKey === RECOMMENDED_TEMPLATE ? (
+              <>
+                {o.name} <span className={PILL}>{inv("recommendedForNew")}</span>
+              </>
+            ) : (
+              o.name
+            ),
+          description: (
+            <>
+              {forWhom ? <span className="block">{forWhom}</span> : null}
+              <span className="mt-0.5 block text-[13px] text-muted">
+                {m(o.mode)} · {examMeta(o)}
+              </span>
+            </>
+          ),
+        };
+      });
 
   const screens: Record<InviteStep, FlowStep> = {
     list: {
@@ -434,7 +454,7 @@ export function StudentInviteWizard({
       note: refusal === "EXAM" || refusal === "CLAIM_REQUIRED" ? refusalNote : null,
       body: (
         <div className="space-y-6">
-          {(["own", "template"] as const)
+          {(["template", "own"] as const)
             .filter((g) => options.some((o) => o.group === g))
             .map((g) => (
               <div key={g} className="space-y-2">

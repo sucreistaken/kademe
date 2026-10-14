@@ -147,7 +147,7 @@
     "email": "E-posta",
     "exam": "Sınav",
     "groupTemplates": "Hazır sınavlar",
-    "groupOwn": "Kendi sınavların",
+    "groupOwn": "Daha önce oluşturduğun sınavlar",
     "claimed": "Beyan edilen seviye",
     "claimedHint": "Öğrencinin sahip olduğunu söylediği seviye. Sınav bunu doğrular.",
     "language": "Öğrencinin arayüz dili",
@@ -174,7 +174,11 @@
     "errCOVERAGE": "Bankada bu sınav için yeterli soru yok.",
     "errTEMPLATE_COVERAGE": "Bu hazır sınav için bankada yeterli soru yok, sınav oluşturulmadı. Soru bankasını tamamlayıp tekrar dene.",
     "errGENERIC": "Davet oluşturulamadı.",
-    "templateCoverageBlocked": "Bu hazır sınav ilk kez kullanılacak: {section} {level} için bankada {available} onaylı soru var, {needed} gerekiyor."
+    "templateCoverageBlocked": "Bu hazır sınav ilk kez kullanılacak: {section} {level} için bankada {available} onaylı soru var, {needed} gerekiyor.",
+    "recommendedForNew": "Önerilen",
+    "forWhomPlacement": "Yeni gelen öğrenciler için: hangi sınıfa gireceğini belirler.",
+    "forWhomQuick": "İlk görüşmede hızlı bir ön fikir için: sadece dilbilgisi, kaba bir seviye verir.",
+    "forWhomLevelCheck": "Seviyesini bildiğini söyleyen öğrenci için: o seviyeyi dört beceride doğrular."
   },
   "examWizard": {
     "kicker": "Yeni sınav",
@@ -286,7 +290,7 @@
     "inviteWaitCOVERAGE": "Bankada bu sınav için yeterli soru yok.",
     "inviteErrLIST": "Listede düzeltilmesi gereken satır var.",
     "inviteExamTitle": "Hangi sınava?",
-    "inviteExamLead": "Listedeki herkes aynı sınava davet edilir.",
+    "inviteExamLead": "Listedeki herkes aynı sınava davet edilir. Yeni gelen öğrenciler için Yerleştirme sınavını seç.",
     "inviteClaim": "Beyan edilen seviye",
     "inviteClaimHint": "Listede seviyesi yazmayan herkes için. Bir satıra seviye yazdıysan (Ayşe Yılmaz, ayse@ornek.com, B1) o geçerli olur.",
     "inviteClaimPerRow": "Her satırın kendi seviyesi",

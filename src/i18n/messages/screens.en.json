@@ -147,7 +147,7 @@
     "email": "Email",
     "exam": "Exam",
     "groupTemplates": "Ready exams",
-    "groupOwn": "Your exams",
+    "groupOwn": "Exams you made earlier",
     "claimed": "Claimed level",
     "claimedHint": "The level the student says they hold. The exam checks it.",
     "language": "Student interface language",
@@ -174,7 +174,11 @@
     "errCOVERAGE": "The bank does not have enough items for this exam.",
     "errTEMPLATE_COVERAGE": "The bank does not have enough items for this ready exam, so no exam was created. Fill the question bank and try again.",
     "errGENERIC": "The invitation could not be created.",
-    "templateCoverageBlocked": "This ready exam is used for the first time: the bank has {available} approved items for {section} {level}; {needed} are needed."
+    "templateCoverageBlocked": "This ready exam is used for the first time: the bank has {available} approved items for {section} {level}; {needed} are needed.",
+    "recommendedForNew": "Recommended",
+    "forWhomPlacement": "For new students: decides which class they join.",
+    "forWhomQuick": "For a quick first impression: grammar only, a rough level.",
+    "forWhomLevelCheck": "For a student who states their level: checks it in four skills."
   },
   "examWizard": {
     "kicker": "New exam",
@@ -286,7 +290,7 @@
     "inviteWaitCOVERAGE": "The bank does not have enough questions for this exam.",
     "inviteErrLIST": "The list has lines to fix.",
     "inviteExamTitle": "Which exam?",
-    "inviteExamLead": "Everyone on the list is invited to the same exam.",
+    "inviteExamLead": "Everyone on the list is invited to the same exam. For new students, pick the Placement test.",
     "inviteClaim": "Claimed level",
     "inviteClaimHint": "For everyone whose line names no level. A level written on a line (Ayşe Yılmaz, ayse@example.com, B1) wins.",
     "inviteClaimPerRow": "Each line's own level",

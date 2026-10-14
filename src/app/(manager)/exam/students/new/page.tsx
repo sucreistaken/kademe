@@ -50,6 +50,7 @@ export default async function InvitePage({ searchParams }: { searchParams: Promi
     ...EXAM_TEMPLATES.map((tpl) => ({
       value: examChoiceValue({ kind: "template", key: tpl.key }),
       group: "template" as const,
+      templateKey: tpl.key,
       name: tpl.name[locale],
       summary: tpl.summary[locale],
       mode: tpl.mode,
