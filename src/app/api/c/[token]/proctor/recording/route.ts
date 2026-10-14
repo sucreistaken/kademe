@@ -7,14 +7,16 @@ import {
   kindAllowed,
   parseSegmentMeta,
   recordingMime,
+  recordingPermitted,
   sniffMedia,
   uploadWindow,
 } from "@/lib/proctor/recording-rules";
-import { storeRecordingSegment } from "@/server/recordings";
+import { recordingConsent, storeRecordingSegment } from "@/server/recordings";
 
 /**
  * One segment of the continuous proctoring recording: raw body, metadata in
- * the query string, the same token and attempt checks as /proctor/evidence.
+ * the query string, the same token and attempt checks as /proctor/evidence,
+ * and only when the consent the candidate accepted announces the recording.
  * The storage key is derived here from the token's own attempt; the client
  * names nothing.
  *
@@ -37,6 +39,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ toke
       if (!meta || !mime) return badRequest(ctx, "EVIDENCE_INVALID");
       const policy = await solution.proctorPolicy(ctx.assessment.id);
       if (!policy || !kindAllowed(meta.kind, policy)) return badRequest(ctx, "EVIDENCE_INVALID");
+      // Only under a consent text that says the exam is recorded. A refusal
+      // the browser does not retry: it should not have recorded at all.
+      if (!recordingPermitted(policy, await recordingConsent(ctx.assessment.id))) return fail(ctx, "CONSENT_REQUIRED", 403);
       // Refuse an oversized body before reading it into memory.
       if (Number(request.headers.get("content-length") ?? 0) > MAX_SEGMENT_BYTES) return fail(ctx, "RECORDING_TOO_LARGE", 413);
       const body = new Uint8Array(await request.arrayBuffer());

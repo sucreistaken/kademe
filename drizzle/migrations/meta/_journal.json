@@ -155,6 +155,13 @@
       "when": 1791934370669,
       "tag": "0021_exam_consent_recording",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1791937302220,
+      "tag": "0022_consent_covers_recording",
+      "breakpoints": true
     }
   ]
 }

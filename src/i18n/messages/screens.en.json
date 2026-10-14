@@ -904,5 +904,8 @@
     "empty": "There is no continuous recording for this exam. Recording starts with proctored exams taken after this feature was switched on.",
     "noPermission": "Your role cannot watch recordings.",
     "watch": "Watch in the recording"
+  },
+  "recordingSafety": {
+    "oldConsent": "This student accepted the older consent text, which does not mention recording, so the exam was not recorded continuously."
   }
 }

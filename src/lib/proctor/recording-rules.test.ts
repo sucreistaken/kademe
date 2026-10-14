@@ -8,6 +8,7 @@ import {
   megabytesPerHour,
   parseSegmentMeta,
   recordingMime,
+  recordingPermitted,
   sniffMedia,
   uploadWindow,
 } from "./recording-rules";
@@ -54,6 +55,24 @@ describe("kindAllowed", () => {
 
   it("records nothing when proctoring is off, whatever the switches say", () => {
     expect(kindAllowed("CAMERA", { ...policyFromPreset("STRICT"), preset: "OFF" })).toBe(false);
+  });
+});
+
+describe("recordingPermitted (the consent gate)", () => {
+  it("records only when the accepted consent text announces the recording", () => {
+    expect(recordingPermitted(policyFromPreset("STANDARD"), true)).toBe(true);
+    expect(recordingPermitted(policyFromPreset("STRICT"), true)).toBe(true);
+    // The old version 1 text only promised frames at intervals.
+    expect(recordingPermitted(policyFromPreset("STANDARD"), false)).toBe(false);
+    expect(recordingPermitted(policyFromPreset("STRICT"), false)).toBe(false);
+    // No consent on record at all.
+    expect(recordingPermitted(policyFromPreset("STRICT"), null)).toBe(false);
+  });
+
+  it("records nothing when the policy records nothing, whatever the consent says", () => {
+    expect(recordingPermitted(policyFromPreset("OFF"), true)).toBe(false);
+    expect(recordingPermitted(null, true)).toBe(false);
+    expect(recordingPermitted({ ...policyFromPreset("STANDARD"), camera: false, screenShare: false }, true)).toBe(false);
   });
 });
 

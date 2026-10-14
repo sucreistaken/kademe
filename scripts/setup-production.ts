@@ -82,7 +82,7 @@ async function main() {
         disabledAt: u.disabled_at,
       });
     }
-    await db.insert(s.consentTexts).values({ orgId: org.id, version: 1, body: { tr: CONSENT_TR, en: CONSENT_EN } });
+    await db.insert(s.consentTexts).values({ orgId: org.id, version: 1, body: { tr: CONSENT_TR, en: CONSENT_EN }, coversRecording: true });
     const bank = await importSeedBank(org.id, { log: (m) => console.log(m) });
     console.log(`${org.name}: ${bank.items} items, ${bank.stimuli} texts/clips, audio made ${bank.audioMade}, reused ${bank.audioReused}, failed ${bank.audioFailed}`);
     const owner = users.find((u) => u.org_id === o.id && u.role === "OWNER");

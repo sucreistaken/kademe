@@ -4,9 +4,18 @@
  * and the tests read the same values.
  *
  * Why short independent files rather than one long upload: every segment is a
- * complete, playable file. A reload, a dropped connection or a crashed tab
- * costs the segment in flight, never the recording before it, and the panel can
- * start playing at any segment without the rest. See docs/PROCTORING.md.
+ * complete, playable file, so the panel can start playing at any segment
+ * without the rest, and a segment that never arrives costs its own fifteen
+ * seconds and nothing around it. What the server has is safe.
+ *
+ * What it does not have yet lives in the tab's memory only (the upload queue,
+ * src/lib/client/proctor/recording-queue.ts). A dropped connection just makes
+ * that queue longer. A reload, a closed or a crashed tab loses the segment
+ * being recorded and everything still queued: on a bad connection up to the
+ * queue's byte limit, about ten minutes. The page asks the browser's "leave
+ * this page?" question while segments wait, and the last screen waits for
+ * them, so a reload is not silent; nothing is kept across a reload.
+ * See docs/PROCTORING.md.
  */
 
 import type { ProctoringPolicy } from "@/lib/proctor/policy";
@@ -71,6 +80,22 @@ export function megabytesPerHour(kind: RecordingKind): number {
 export function kindAllowed(kind: RecordingKind, policy: Pick<ProctoringPolicy, "preset" | "camera" | "screenShare">): boolean {
   if (policy.preset === "OFF") return false;
   return kind === "CAMERA" ? policy.camera : policy.screenShare;
+}
+
+/**
+ * Whether this invitation is recorded at all: the policy has to record
+ * something, and the consent text the candidate accepted has to say that the
+ * whole exam is recorded (consent_texts.covers_recording). `consentCovers` is
+ * null when no consent is on record. A candidate who accepted the older text,
+ * which only promised frames at intervals, is not recorded. The browser learns
+ * this from the session answer; the upload route checks it again.
+ */
+export function recordingPermitted(
+  policy: Pick<ProctoringPolicy, "preset" | "camera" | "screenShare"> | null,
+  consentCovers: boolean | null,
+): boolean {
+  if (!policy || consentCovers !== true) return false;
+  return RECORDING_KINDS.some((kind) => kindAllowed(kind, policy));
 }
 
 export type SegmentMeta = {

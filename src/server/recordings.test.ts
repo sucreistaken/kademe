@@ -53,7 +53,7 @@ vi.mock("@/db", () => {
 });
 vi.mock("@/lib/storage", () => ({ getStorage: () => ({ putObject: async (key: string) => void h.puts.push(key) }) }));
 
-import { auditRecordingView, findSegmentForViewer, isRecordingKey, loadRecordingSegments, recordingKey, storeRecordingSegment } from "./recordings";
+import { auditRecordingView, findSegmentForViewer, isRecordingKey, loadRecordingSegments, recordingConsent, recordingKey, storeRecordingSegment } from "./recordings";
 
 const ORG = "11111111-1111-4111-8111-111111111111";
 const ATTEMPT = "22222222-2222-4222-8222-222222222222";
@@ -108,6 +108,22 @@ describe("storeRecordingSegment", () => {
     const sessionQuery = h.queries.at(-1)!;
     expect(sessionQuery.sql).toContain('"proctor_sessions"."attempt_id" = $');
     expect(sessionQuery.params).toContain(ATTEMPT);
+  });
+});
+
+describe("recordingConsent", () => {
+  it("reads the covers_recording flag of the text this invitation accepted", async () => {
+    h.answers = [[{ covers: true }]];
+    expect(await recordingConsent("asm-1")).toBe(true);
+    const q = h.queries[0];
+    expect(q.sql).toBe('"consents"."assessment_id" = $1');
+    expect(q.params).toEqual(["asm-1"]);
+  });
+
+  it("is false for an invitation accepted under the old text and null without any consent", async () => {
+    h.answers = [[{ covers: false }], []];
+    expect(await recordingConsent("asm-1")).toBe(false);
+    expect(await recordingConsent("asm-1")).toBeNull();
   });
 });
 

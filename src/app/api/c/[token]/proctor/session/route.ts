@@ -2,7 +2,9 @@ import type { NextRequest } from "next/server";
 import { candidateJson } from "@/lib/candidate-safe";
 import { currentAttempt } from "@/lib/candidate-context";
 import { policyFromPreset } from "@/lib/proctor/policy";
+import { recordingPermitted } from "@/lib/proctor/recording-rules";
 import { registerSession } from "@/server/proctoring";
+import { recordingConsent } from "@/server/recordings";
 import { clientIp, conflict, readJson, withSolution } from "@/lib/candidate-api";
 
 type Body = { clientSessionId?: string; env?: Record<string, unknown> };
@@ -22,10 +24,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     const env = body.env && typeof body.env === "object" ? body.env : {};
     if (JSON.stringify(env).length > 4000) return conflict(ctx, "SESSION_INVALID");
     const session = await registerSession(ctx, attempt.id, body.clientSessionId, env, clientIp(request));
+    // A solution without proctoring hands the tab the OFF preset, which starts nothing.
+    const policy = (await solution.proctorPolicy(ctx.assessment.id)) ?? policyFromPreset("OFF");
     return candidateJson({
       sessionId: session.id,
-      // A solution without proctoring hands the tab the OFF preset, which starts nothing.
-      policy: (await solution.proctorPolicy(ctx.assessment.id)) ?? policyFromPreset("OFF"),
+      policy,
+      // Whether the tab records the exam: the policy and the accepted consent text both have to say so.
+      recording: policy.preset !== "OFF" && recordingPermitted(policy, await recordingConsent(ctx.assessment.id)),
       serverNow: Date.now(),
       devFakeMedia: process.env.NODE_ENV !== "production" && process.env.PROCTOR_DEV_FAKE === "1",
       maxFrameBytes: 512 * 1024,
