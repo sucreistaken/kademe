@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 import { CandidateShell } from "@/components/candidate/Shell";
 import { CandidateIntl } from "@/components/candidate/Intl";
-import { ORG_TIMEZONE } from "@/lib/org-timezone";
+import { ORG_TIMEZONE, zoneLabel } from "@/lib/org-timezone";
 import { LinkProblem } from "@/components/candidate/LinkProblem";
+import { ExamNotYetOpen } from "@/components/candidate/ExamNotYetOpen";
+import { openingMoment } from "@/lib/invite-message";
 import {
   loadState,
   progressSummary,
@@ -69,6 +71,23 @@ export async function enter(
     const ctx = resolved.ctx;
     const locale = (ctx?.locale as Locale | undefined) ?? DEFAULT_LOCALE;
     const summary = ctx ? await progressSummary(ctx) : undefined;
+    // Before the exam opens: a waiting screen with the opening time, nothing to start.
+    if (resolved.problem === "NOT_YET" && ctx?.link.notBefore) {
+      return {
+        kind: "problem",
+        node: (
+          <CandidateIntl locale={locale} timeZone={ORG_TIMEZONE}>
+            <CandidateShell locale={locale} header={false}>
+              <ExamNotYetOpen
+                when={openingMoment(ctx.link.notBefore, locale, ORG_TIMEZONE)}
+                zone={zoneLabel(locale, ORG_TIMEZONE)}
+                contactEmail={ctx.contactEmail ?? null}
+              />
+            </CandidateShell>
+          </CandidateIntl>
+        ),
+      };
+    }
     const progress = summary ? { completed: summary.done, total: summary.total } : undefined;
     return {
       kind: "problem",

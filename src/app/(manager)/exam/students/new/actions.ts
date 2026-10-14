@@ -9,6 +9,7 @@ import { isCefr } from "@/lib/exam/cefr";
 import { parseExamChoice } from "@/lib/exam/exam-choice";
 import { examTemplateByKey } from "@/lib/exam/templates";
 import type { Cefr } from "@/lib/exam/types";
+import { resolveWindow, type WindowFault, type WindowInput } from "@/lib/exam-window";
 import { managerLocale } from "@/i18n/manager-locale";
 import { bankCounts } from "@/server/panel";
 import { createInvitation } from "@/server/invite";
@@ -24,6 +25,8 @@ export type InviteStudentsInput = {
   /** Verification exams: the claim for every row that does not name its own. */
   claimed: string | null;
   locale: "tr" | "en";
+  /** The exam window as typed (school time); omitted: open now, last entry in 14 days. The server resolves it again. */
+  window?: WindowInput;
 };
 
 export type InviteFailure = "BLUEPRINT_NOT_FOUND" | "NOT_PUBLISHED" | "CLAIM_REQUIRED" | "GENERIC";
@@ -32,10 +35,23 @@ export type InviteStudentsResult =
   | {
       ok: true;
       examName: string;
-      created: Array<{ line: number; fullName: string; email: string; url: string; expiresAt: string }>;
+      created: Array<{ line: number; fullName: string; email: string; url: string; expiresAt: string; notBefore: string | null }>;
       failed: Array<{ line: number; fullName: string; email: string; code: InviteFailure }>;
     }
-  | { ok: false; code: "LIST" | "EXAM" | "CLAIM_REQUIRED" | "COVERAGE" | "TEMPLATE_COVERAGE" | "GENERIC" };
+  | { ok: false; code: "LIST" | "EXAM" | "CLAIM_REQUIRED" | "COVERAGE" | "TEMPLATE_COVERAGE" | "GENERIC" }
+  | { ok: false; code: "WINDOW"; fault: WindowFault };
+
+/** The posted window with only strings in it (a server action's input is not typed at runtime). */
+function cleanWindow(w: unknown): WindowInput {
+  const moment = (m: unknown) => {
+    const v = m as { date?: unknown; time?: unknown } | null | undefined;
+    if (v == null) return null;
+    // Anything that is not a pair of strings fails the window's own check rather than reading as "now".
+    return { date: typeof v.date === "string" ? v.date : "", time: typeof v.time === "string" ? v.time : "" };
+  };
+  const raw = (w ?? {}) as { start?: unknown; end?: unknown };
+  return { start: moment(raw.start), end: moment(raw.end) };
+}
 
 /**
  * Invites every student of the list to one exam and hands every link back.
@@ -57,6 +73,9 @@ export async function inviteStudentsAction(input: InviteStudentsInput): Promise<
   if (!choice) return { ok: false, code: "EXAM" };
   const batch: Cefr | null = isCefr(input.claimed) ? input.claimed : null;
   const locale = input.locale === "en" ? "en" : "tr";
+  // The window is checked before anything is published or written.
+  const window = resolveWindow(cleanWindow(input.window), { now: new Date() });
+  if (!window.ok) return { ok: false, code: "WINDOW", fault: window.fault };
 
   let bp: typeof examBlueprints.$inferSelect | undefined;
   if (choice.kind === "template") {
@@ -84,8 +103,8 @@ export async function inviteStudentsAction(input: InviteStudentsInput): Promise<
   for (const [i, row] of parsed.rows.entries()) {
     const fullName = row.fullName.replace(/\s+/g, " ").trim();
     try {
-      const r = await createInvitation({ orgId: user.orgId, blueprintId: exam.id, fullName, email: row.email, claimedLevel: claims[i], locale, invitedBy: user.id });
-      if (r.ok) created.push({ line: row.line, fullName, email: row.email, url: r.url, expiresAt: r.expiresAt.toISOString() });
+      const r = await createInvitation({ orgId: user.orgId, blueprintId: exam.id, fullName, email: row.email, claimedLevel: claims[i], locale, invitedBy: user.id, notBefore: window.notBefore, expiresAt: window.expiresAt });
+      if (r.ok) created.push({ line: row.line, fullName, email: row.email, url: r.url, expiresAt: r.expiresAt.toISOString(), notBefore: r.notBefore?.toISOString() ?? null });
       else failed.push({ line: row.line, fullName, email: row.email, code: r.code });
     } catch {
       failed.push({ line: row.line, fullName, email: row.email, code: "GENERIC" });

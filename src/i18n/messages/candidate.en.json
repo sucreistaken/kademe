@@ -1127,5 +1127,11 @@
     "blockedSecondScreen": "A second screen is connected. Unplug or turn it off; this page updates by itself.",
     "reportProblem": "Report a problem",
     "problemSent": "Your report was sent to your school."
+  },
+  "examWindow": {
+    "notYetTitle": "Your exam opens on {when}",
+    "notYetBody": "Keep this link. When the time comes you can enter through the same link and start the exam. Until then the exam cannot be started.",
+    "notYetZone": "Times are shown in {zone}.",
+    "notYetContact": "If you have a question, you can contact your school."
   }
 }
