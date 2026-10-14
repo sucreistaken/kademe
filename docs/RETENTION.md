@@ -73,9 +73,11 @@ bir sonraki koşu tekrar dener. Tersi sırada, silemediğimiz bir nesneye işare
 kaydı da kaybederdik ve kovada kimsenin bilmediği bir dosya kalırdı.
 
 **Aday silmenin cascade tuzağı.** `candidates` satırını silmek `assessments` ->
-`attempts` -> `stage_runs` -> `media_assets` zincirini cascade ile götürür. Satırlar
-gider, kovadaki nesneler kalır. Bu yüzden aday sert silmesi önce o adaya ait tüm
-`storage_key`'leri toplayıp nesneleri siler, sonra satıra dokunur. Nesnelerden biri bile
+`attempts` -> `stage_runs` -> `media_assets` zincirini cascade ile götürür; aynı
+`attempts` altında `proctor_evidence` (gözetim kareleri ve klipleri) ile
+`proctor_recordings` (sınavın sürekli kaydı) da gider. Satırlar gider, kovadaki nesneler
+kalır. Bu yüzden aday sert silmesi önce o adaya ait bu üç tablodaki tüm
+`storage_key`'leri toplayıp (`candidateMediaKeys`) nesneleri siler, sonra satıra dokunur. Nesnelerden biri bile
 silinemezse o aday bu koşuda atlanır, yumuşak silinmiş halde kalır ve sonraki koşuda
 tekrar denenir.
 
@@ -90,6 +92,13 @@ yok, kim olduğunu `action` öneki söylüyor.
 | `retention.media.purge` | `media_asset` | medya id |
 | `retention.candidate.soft_delete` | `candidate` | aday id |
 | `retention.candidate.purge` | `candidate` | aday id |
+| `retention.recording.purge` | `attempt` | deneme id (tur başına bir satır, `meta.segments`) |
+| `retention.evidence.purge` | `attempt` | deneme id (tur başına bir satır, `meta.files`) |
+
+Son iki satır gözetim medyası içindir (`src/server/recording-retention.ts`): sınavın
+sürekli kaydı ve gözetim kareleri/klipleri. Yumuşak aşama yok; tarih satır yazılırken
+`purge_after` olarak konur (kare: yakalanma + `evidence_retention_days`; kayıt: başlangıç +
+en çok 30 gün) ve o geçince aynı iki anahtarla önce nesne, sonra satır silinir.
 
 `meta` içinde çapa tarihi, kullanılan saklama süresi, `storage_key` ve boyut duruyor.
 Audit satırı `org_id`'ye bağlı, adaya değil; yani bir adayı silmek onun silindiğinin

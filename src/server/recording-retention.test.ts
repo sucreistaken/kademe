@@ -3,14 +3,15 @@ import { PgDialect } from "drizzle-orm/pg-core";
 import type { SQL } from "drizzle-orm";
 
 /**
- * Which recording segments the purge takes, and what it does with them. The
+ * Which recording segments and evidence files the purge takes, and what it
+ * does with them. The
  * fake database below answers the purge's selects with the same rule the SQL
  * states (purge_after set and passed), so the order of operations, the two
  * switches and the round logic are checked without Postgres; the SQL itself
  * is checked by rendering it.
  */
 
-type Row = { id: string; orgId: string; attemptId: string; storageKey: string; bytes: number; purgeAfter: Date | null };
+type Row = { id: string; orgId: string; attemptId: string; storageKey: string; bytes: number | null; purgeAfter: Date | null };
 
 const h = vi.hoisted(() => ({
   rows: [] as Row[],
@@ -45,7 +46,7 @@ vi.mock("@/db", async () => {
         return chain;
       },
       then: (resolve: (rows: unknown[]) => unknown, reject?: (e: unknown) => unknown) => {
-        const rows = "n" in fields ? [{ n: due().length, bytes: String(due().reduce((s, r) => s + r.bytes, 0)) }] : due().slice(0, limit);
+        const rows = "n" in fields ? [{ n: due().length, bytes: String(due().reduce((s, r) => s + (r.bytes ?? 0), 0)) }] : due().slice(0, limit);
         if (!("n" in fields)) h.log.push(`select ${rows.length}`);
         return Promise.resolve(rows).then(resolve, reject);
       },
@@ -86,7 +87,16 @@ vi.mock("@/lib/storage", () => ({
   }),
 }));
 
-import { RECORDING_ROUND, isRecordingDue, purgeRecordings, recordingPurgeWhere, selectDue } from "./recording-retention";
+import {
+  RECORDING_ROUND,
+  evidencePurgeWhere,
+  isEvidenceKey,
+  isRecordingDue,
+  purgeEvidence,
+  purgeRecordings,
+  recordingPurgeWhere,
+  selectDue,
+} from "./recording-retention";
 
 const day = 86_400_000;
 const row = (id: string, purgeOffsetMs: number | null, attemptId = "att-1"): Row => ({
@@ -182,5 +192,59 @@ describe("purgeRecordings", () => {
     expect(report.applied?.segmentsDeleted).toBe(1);
     expect(h.rows.map((r) => r.id)).toEqual(["b", "c"]);
     expect(report.remaining).toBe(2);
+  });
+});
+
+describe("evidence files (frames and clips)", () => {
+  const frame = (id: string, purgeOffsetMs: number | null, attemptId = "att-1", bytes: number | null = 40): Row => ({
+    id,
+    orgId: "org-1",
+    attemptId,
+    storageKey: `proctor/org-1/asm-1/${id}.jpg`,
+    bytes,
+    purgeAfter: purgeOffsetMs === null ? null : new Date(NOW.getTime() + purgeOffsetMs),
+  });
+
+  it("selects by the same rule, on the evidence table", () => {
+    const { sql, params } = dialect.sqlToQuery(evidencePurgeWhere(NOW));
+    expect(sql).toBe('("proctor_evidence"."purge_after" is not null and "proctor_evidence"."purge_after" <= $1)');
+    expect(params).toEqual([NOW.toISOString()]);
+  });
+
+  it("owns only the keys storeEvidence writes", () => {
+    expect(isEvidenceKey("proctor/org-1/asm-1/0b6f2a4e-9c1d-4f7a-8e2b-1a2b3c4d5e6f.jpg")).toBe(true);
+    expect(isEvidenceKey("proctor/org-1/asm-1/clip-1.webm")).toBe(true);
+    expect(isEvidenceKey("proctor/org-1/asm-1/rec/att-1/camera-run-a-00001.webm")).toBe(false);
+    expect(isEvidenceKey("media/org-1/answer.webm")).toBe(false);
+    expect(isEvidenceKey("proctor/org-1/frame.jpg")).toBe(false);
+  });
+
+  it("reports and writes nothing by default", async () => {
+    h.rows = [frame("a", -day), frame("b", -2 * day, "att-1", null), frame("keep", day), frame("never", null)];
+    const report = await purgeEvidence({ now: NOW });
+    expect(report).toMatchObject({ mode: "REPORT", due: 2, bytesDue: 40, inBatch: 2, remaining: 0, applied: null });
+    expect(h.rows).toHaveLength(4);
+    expect(h.audit).toEqual([]);
+  });
+
+  it("with apply, removes each due file's object then its row, and audits per attempt", async () => {
+    h.rows = [frame("a", -2 * day), frame("b", -day, "att-2"), frame("c", -day, "att-1", null), frame("keep", day)];
+    const report = await purgeEvidence({ now: NOW, apply: true });
+    expect(report.applied).toMatchObject({ filesDeleted: 3, bytesDeleted: 80, keysSkipped: 0, storageFailures: [] });
+    expect(h.log).toEqual(["select 3", "object a.jpg", "object b.jpg", "object c.jpg", "delete rows 3", "audit 2"]);
+    expect(h.rows.map((r) => r.id)).toEqual(["keep"]);
+    expect(h.audit.every((a) => a.action === "retention.evidence.purge" && a.actorId === null)).toBe(true);
+    expect(h.audit.map((a) => [a.subjectId, (a.meta as { files: number }).files])).toEqual([
+      ["att-1", 2],
+      ["att-2", 1],
+    ]);
+  });
+
+  it("never hands storage a recording key or anything else it did not write", async () => {
+    h.rows = [{ ...frame("x", -day), storageKey: "proctor/org-1/asm-1/rec/att-1/camera-run-x-00000.webm" }];
+    const report = await purgeEvidence({ now: NOW, apply: true });
+    expect(report.applied).toMatchObject({ keysSkipped: 1, filesDeleted: 0 });
+    expect(h.rows).toHaveLength(1);
+    expect(h.log.some((l) => l.startsWith("object"))).toBe(false);
   });
 });

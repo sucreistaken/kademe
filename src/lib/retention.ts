@@ -8,6 +8,8 @@ import {
   examResults,
   mediaAssets,
   organizations,
+  proctorEvidence,
+  proctorRecordings,
 } from "@/db/schema";
 import { getStorage } from "@/lib/storage";
 
@@ -514,38 +516,55 @@ async function planHardCandidates(
 }
 
 /**
+ * Every table whose rows point at a storage object under an attempt: answers
+ * and interview media, the proctoring frames and clips, and the continuous
+ * exam recording. All three hang off `attempts` and cascade with it.
+ */
+const ATTEMPT_OBJECT_TABLES = [mediaAssets, proctorEvidence, proctorRecordings] as const;
+
+/**
  * Storage objects reachable from a set of candidates.
  *
- * Deleting a candidate row cascades all the way down to media_assets, so the
- * rows vanish and the objects in the bucket do not. Anything that deletes a
- * candidate has to remove these first or it leaks storage that nothing points
- * at any more, which is both a bill and a GDPR problem.
+ * Deleting a candidate row cascades all the way down to every table above, so
+ * the rows vanish and the objects in the bucket do not. Anything that deletes
+ * a candidate has to remove these first or it leaks storage that nothing
+ * points at any more, which is both a bill and a GDPR problem. A recording of
+ * the whole exam is the most personal of them.
  */
-async function candidateMediaKeys(
+export async function candidateMediaKeys(
   candidateIds: string[],
 ): Promise<Array<{ id: string; candidateId: string; storageKey: string }>> {
   if (candidateIds.length === 0) return [];
-  return db
-    .select({
-      id: mediaAssets.id,
-      candidateId: assessments.candidateId,
-      storageKey: mediaAssets.storageKey,
-    })
-    .from(mediaAssets)
-    .innerJoin(attempts, eq(attempts.id, mediaAssets.attemptId))
-    .innerJoin(assessments, eq(assessments.id, attempts.assessmentId))
-    .where(inArray(assessments.candidateId, candidateIds));
+  const found: Array<{ id: string; candidateId: string; storageKey: string }> = [];
+  for (const table of ATTEMPT_OBJECT_TABLES) {
+    const rows = await db
+      .select({
+        id: table.id,
+        candidateId: assessments.candidateId,
+        storageKey: table.storageKey,
+      })
+      .from(table)
+      .innerJoin(attempts, eq(attempts.id, table.attemptId))
+      .innerJoin(assessments, eq(assessments.id, attempts.assessmentId))
+      .where(inArray(assessments.candidateId, candidateIds));
+    found.push(...rows);
+  }
+  return found;
 }
 
-async function countCandidateObjects(candidateIds: string[]): Promise<number> {
+export async function countCandidateObjects(candidateIds: string[]): Promise<number> {
   if (candidateIds.length === 0) return 0;
-  const [row] = await db
-    .select({ n: count() })
-    .from(mediaAssets)
-    .innerJoin(attempts, eq(attempts.id, mediaAssets.attemptId))
-    .innerJoin(assessments, eq(assessments.id, attempts.assessmentId))
-    .where(inArray(assessments.candidateId, candidateIds));
-  return row?.n ?? 0;
+  let total = 0;
+  for (const table of ATTEMPT_OBJECT_TABLES) {
+    const [row] = await db
+      .select({ n: count() })
+      .from(table)
+      .innerJoin(attempts, eq(attempts.id, table.attemptId))
+      .innerJoin(assessments, eq(assessments.id, attempts.assessmentId))
+      .where(inArray(assessments.candidateId, candidateIds));
+    total += row?.n ?? 0;
+  }
+  return total;
 }
 
 async function planOrg(
