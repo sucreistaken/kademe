@@ -49,6 +49,7 @@ async function main() {
   const { db } = await import("@/db");
   const s = await import("@/db/schema");
   const { mintToken } = await import("@/lib/auth");
+  const { outboxLinkPlaceholder } = await import("@/lib/outbox");
   const { buildPublishedOpening, freshOrganisation } = await import("./hiring-fixture");
   const { createHiringInvitation, listOpeningCandidates, openingFunnel } = await import("@/solutions/hiring/server/invitations");
   const { expiringLinks } = await import("@/server/links");
@@ -109,7 +110,10 @@ async function main() {
   check(assignments.length === 2, "the active panel (owner and reviewer) is assigned", assignments.length);
   check(consentText?.solution === "HIRING", "with the organisation's hiring consent text, not the exam's", consentText?.solution);
   const [outbox] = await db.select().from(s.messageOutbox).where(and(eq(s.messageOutbox.orgId, team.orgId), eq(s.messageOutbox.kind, "INVITE")));
-  check(!!outbox && outbox.body.includes(invite.url) && outbox.body.includes("Merhaba Elif Kaya"), "the ready message is in the outbox with the link");
+  check(
+    !!outbox && !outbox.body.includes(token) && outbox.body.includes(outboxLinkPlaceholder(invite.assessmentId)) && outbox.body.includes("Merhaba Elif Kaya"),
+    "the ready message is in the outbox with the invitation's placeholder, never the link",
+  );
 
   console.log("\nOther tokens are answered like unknown ones");
   const unknownStart = await call("POST /hiring/stage/start", unknownToken, { stagePosition: 1 });
@@ -553,7 +557,11 @@ async function main() {
   // The invitation e-mails reach the candidate too.
   const mails = await db.select({ kind: s.messageOutbox.kind, subject: s.messageOutbox.subject, body: s.messageOutbox.body }).from(s.messageOutbox).where(eq(s.messageOutbox.orgId, team.orgId));
   const invites = mails.filter((m) => m.kind === "INVITE");
-  check(invites.length === 7 && invites.every((m) => m.body.includes("https://kademe.test/a/")), `the seven invitation e-mails (with their links) join the scan, with every other outbox mail (${mails.length} in all)`, mails.map((m) => m.kind));
+  check(
+    invites.length === 7 && invites.every((m) => /\{\{link:[0-9a-f-]{36}\}\}/.test(m.body) && !m.body.includes("/a/")),
+    `the seven invitation e-mails (a placeholder where the link goes, never the link) join the scan, with every other outbox mail (${mails.length} in all)`,
+    mails.map((m) => m.kind),
+  );
   for (const m of mails) sent.push(`${m.subject}\n${m.body}`);
 
   console.log("\nLeak scan over every body the candidate received");

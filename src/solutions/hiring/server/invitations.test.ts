@@ -6,6 +6,7 @@ const consent = vi.hoisted(() => ({ ensure: vi.fn<(orgId: string, x?: unknown) =
 vi.mock("./consent", () => ({ ensureHiringConsentText: consent.ensure }));
 
 import { formatInviteDeadline, surveySeed } from "../rules/invitation";
+import { outboxLinkPlaceholder } from "@/lib/outbox";
 import { zoneLabel } from "@/lib/org-timezone";
 import { HiringNotFound } from "./errors";
 import { createHiringInvitation, extendHiringLink, invitableOpenings, listOpeningCandidates, markRequestHandled, median, newHiringLink, openingCardFacts, openingFunnel } from "./invitations";
@@ -173,8 +174,12 @@ describe("createHiringInvitation", () => {
     expect(outbox.body).not.toContain("\u2014");
     if (result.ok) {
       expect(result.url.startsWith("https://kademe.test/a/")).toBe(true);
-      expect(outbox.body).toContain(result.url);
-      expect(result.message.body).toBe(outbox.body);
+      // The outbox keeps the same message with the invitation's placeholder, never the link.
+      expect(outbox.body).not.toContain(result.url);
+      expect(outbox.body).not.toContain("/a/");
+      expect(outbox.body).toContain(`Başlamak için: ${outboxLinkPlaceholder(ASSESSMENT)}`);
+      expect(result.message.body).toContain(`Başlamak için: ${result.url}`);
+      expect(result.message.body).toBe(outbox.body.replace(outboxLinkPlaceholder(ASSESSMENT), result.url));
       expect(result.expiresAt.toISOString()).toBe("2026-10-19T20:59:59.000Z");
       expect(result).toMatchObject({ assessmentId: ASSESSMENT, candidateId: "c-1" });
     }
@@ -223,6 +228,10 @@ describe("newHiringLink", () => {
       expect(result.expiresAt.toISOString()).toBe("2026-10-12T20:59:59.000Z");
       expect(result.message.body).toContain(`Deadline: ${formatInviteDeadline("2026-10-12", "en", zoneLabel("en"))}.`);
       expect(result.url.startsWith("https://kademe.test/a/")).toBe(true);
+      const outbox = writes[2].values as { body: string };
+      expect(outbox.body).not.toContain("/a/");
+      expect(outbox.body).toContain(`To start: ${outboxLinkPlaceholder(ASSESSMENT)}`);
+      expect(result.message.body).toBe(outbox.body.replace(outboxLinkPlaceholder(ASSESSMENT), result.url));
     }
   });
 

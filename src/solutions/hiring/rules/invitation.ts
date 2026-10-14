@@ -120,7 +120,8 @@ function plainText(value: string, max: number): string {
 const plainUrl = (value: string): string => value.replace(/[\s<>]+/g, "");
 
 /**
- * The ready message the manager copies (and the outbox keeps): in the
+ * The ready message the manager copies (the outbox keeps it with a
+ * placeholder in place of the link, lib/outbox.ts): in the
  * candidate's language, "sen", with the name, the link, the deadline, the
  * expected time and a person to write to. The body is plain text; every
  * inserted value is cleaned by `plainText`.
