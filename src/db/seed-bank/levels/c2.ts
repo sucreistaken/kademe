@@ -120,10 +120,11 @@ const grammarItems: SeedItem[] = [
     "___ man es auch dreht und wendet, die Zahlen bleiben enttäuschend.",
     ["Wie", "So", "Was", "Wo"], "a",
     "Verallgemeinernd-konzessiver Satz \"wie ... auch\" (= egal wie). \"so ... auch\" braucht ein Adjektiv (\"so sehr\"), \"was\" kollidiert mit dem Objekt \"es\"."),
-  gap("partizipialattribut", "MID",
-    "Formen Sie den Relativsatz in ein Attribut um: „Die Unterlagen, die bis Freitag eingereicht werden müssen, liegen noch nicht vor.“\n→ Die bis Freitag {{g1}} Unterlagen liegen noch nicht vor.",
-    ["einzureichenden"],
-    "Gerundiv (zu + Partizip I) drückt Notwendigkeit im Passiv aus: \"die einzureichenden Unterlagen\" = die Unterlagen, die eingereicht werden müssen. Bei trennbaren Verben steht \"zu\" zwischen Präfix und Stamm."),
+  // Was HARD: the stem names the rule, and the same point is EASY as a typed gap above.
+  choice("konjunktiv_i", "MID",
+    "Welche Form verlangt die indirekte Rede in einem formellen Protokoll? Im Protokoll heißt es, die Beschäftigten ___ von der Änderung erst aus der Presse unterrichtet worden.",
+    ["sind", "wären", "waren", "seien"], "d",
+    "Konjunktiv I \"(sie) seien\" unterscheidet sich vom Indikativ \"sind\" und ist deshalb im formellen Bericht die Standardform. Der Konjunktiv II \"wären\" ist nur als Ersatzform vorgesehen, wenn Konjunktiv I und Indikativ gleich lauten; \"sind\" und \"waren\" sind Indikativ."),
   choice("nominalstil", "MID",
     "Formen Sie den Nebensatz in eine Nominalgruppe um: „Nachdem die Firma die Preise erhöht hatte, sank der Absatz.“\n→ ___ sank der Absatz.",
     [
@@ -171,10 +172,11 @@ const grammarItems: SeedItem[] = [
       "Je mehr sie sich bemühte, desto weniger fand sie eine Lösung.",
     ], "b",
     "\"so sehr ... auch\" ist konzessiv, entspricht also \"trotz\". Die anderen Sätze machen daraus einen kausalen, finalen oder proportionalen Zusammenhang."),
-  choice("konjunktiv_i", "HARD",
-    "Welche Form verlangt die indirekte Rede in einem formellen Protokoll? Im Protokoll heißt es, die Beschäftigten ___ von der Änderung erst aus der Presse unterrichtet worden.",
-    ["sind", "wären", "waren", "seien"], "d",
-    "Konjunktiv I \"(sie) seien\" unterscheidet sich vom Indikativ \"sind\" und ist deshalb im formellen Bericht die Standardform. Der Konjunktiv II \"wären\" ist nur als Ersatzform vorgesehen, wenn Konjunktiv I und Indikativ gleich lauten; \"sind\" und \"waren\" sind Indikativ."),
+  // Was MID: a typed gerundive (zu inside a separable verb plus the adjective ending) is among the hardest C2 forms here.
+  gap("partizipialattribut", "HARD",
+    "Formen Sie den Relativsatz in ein Attribut um: „Die Unterlagen, die bis Freitag eingereicht werden müssen, liegen noch nicht vor.“\n→ Die bis Freitag {{g1}} Unterlagen liegen noch nicht vor.",
+    ["einzureichenden"],
+    "Gerundiv (zu + Partizip I) drückt Notwendigkeit im Passiv aus: \"die einzureichenden Unterlagen\" = die Unterlagen, die eingereicht werden müssen. Bei trennbaren Verben steht \"zu\" zwischen Präfix und Stamm."),
   gap("konjunktiv_i", "HARD",
     "Formen Sie die Anweisung in den Stil einer Gebrauchsanleitung um (Konjunktiv I mit „man“): „Beachten Sie, dass alle Angaben ohne Gewähr sind.“\n→ Man {{g1}}, dass alle Angaben ohne Gewähr sind.",
     ["beachte"],
@@ -197,8 +199,9 @@ const grammarItems: SeedItem[] = [
     "___ der Vorschlag auch noch so durchdacht sein, er ist schlicht zu teuer.",
     ["Darf", "Will", "Mag", "Muss"], "c",
     "Konzessiv mit \"mögen\": \"Mag ... auch noch so ..., (Hauptsatz)\" = auch wenn er noch so durchdacht ist. Die anderen Modalverben haben keine konzessive Lesart."),
+  // Present main clause: after "wusste" the written norm prefers "hatte teilnehmen können".
   choice("wortstellung", "HARD",
-    "Sie wusste, dass er an der Sitzung nicht ___.",
+    "Sie weiß, dass er an der Sitzung nicht ___.",
     ["hat teilnehmen können", "teilnehmen können hat", "teilnehmen gekonnt hat", "hat teilgenommen gekonnt"], "a",
     "Perfekt mit Modalverb im Nebensatz: Ersatzinfinitiv (\"können\" statt \"gekonnt\"), und das finite \"hat\" steht vor dem doppelten Infinitiv, nicht am Ende."),
 
@@ -211,8 +214,9 @@ const grammarItems: SeedItem[] = [
       "Unternehmen reagieren darauf zunehmend mit betriebsinternen Kursen, deren Wirksamkeit allerdings umstritten ist. " +
       "Kritiker bemängeln, dass solche Programme häufig eher der Außendarstellung dienen als der tatsächlichen Qualifizierung.",
     last: "Entscheidend dürfte daher sein, ob Lernen als fester Bestandteil der Arbeitszeit anerkannt wird.",
-    // g2 rasche/rasante are equally correct here.
-    variants: { 2: ["ante"] },
+    // Equally correct completions: g2 rasante/rasende, g3 neuester/neuerer/neuartiger,
+    // g7 Unternehmer, g13 Kritikerinnen.
+    variants: { 2: ["ante", "ende"], 3: ["uester", "uerer", "uartiger"], 7: ["nehmer"], 13: ["ikerinnen"] },
   }),
 ];
 
@@ -490,9 +494,9 @@ const readingItems: SeedItem[] = [
     [
       ["Vor Beginn des Versuchs stand die Belegschaft geschlossen hinter der Idee.", "F"],
       ["In der Fertigung verlief die Umstellung anfangs keineswegs reibungslos.", "R"],
-      ["Die Hochschule empfiehlt allen Unternehmen der Branche, die Viertagewoche einzuführen.", "NG"],
+      ["Die Forschenden sollen auch die Fortsetzung des Modells wissenschaftlich begleiten.", "NG"],
     ],
-    "1 F: Die Reaktionen waren \"gemischt\", manche befürchteten mehr Druck. 2 R: \"erhebliche Reibungen\" in den ersten Wochen. 3 NG: Die Forschenden warnen nur vor unbesehener Übertragung; eine Empfehlung für die Branche steht nicht im Text."),
+    "1 F: Die Reaktionen waren \"gemischt\", manche befürchteten mehr Druck. 2 R: \"erhebliche Reibungen\" in den ersten Wochen. 3 NG: Der Text nennt die Fortsetzung, sagt aber nichts darüber, ob sie wissenschaftlich begleitet wird."),
 
   // Stellenanzeigen: selective reading (Goethe C2 Lesen Teil 4).
   rA.match("detail", "MID",
@@ -672,9 +676,9 @@ const listeningItems: SeedItem[] = [
     [
       ["Laut der Umfrage empfindet die Mehrheit der Befragten unangekündigte Anrufe als lästig.", "R"],
       ["Wendland sieht im Rückgang des Telefonierens allein ein Zeichen von Bequemlichkeit.", "F"],
-      ["Die Werbeagentur hat ihre Regel inzwischen wieder abgeschafft.", "NG"],
+      ["Die Werbeagentur will ihre Regel demnächst lockern.", "NG"],
     ],
-    "1 R: \"Mehr als die Hälfte\" empfindet sie als störend. 2 F: \"auch ein Ausdruck von Rücksicht, nicht nur von Bequemlichkeit\". 3 NG: Erfahrungen sind gemischt, über eine Abschaffung wird nichts gesagt."),
+    "1 R: \"Mehr als die Hälfte\" empfindet sie als störend. 2 F: \"auch ein Ausdruck von Rücksicht, nicht nur von Bequemlichkeit\". 3 NG: Die Erfahrungen seien gemischt; über Pläne, die Regel zu ändern, wird nichts gesagt."),
   lF.choice("attitude", "MID",
     "Wie beurteilt Wendland die Behauptung, Schreiben sei effizienter als Telefonieren?",
     [
@@ -853,7 +857,7 @@ const writingItems: SeedItem[] = [
     NEUTRAL,
     "Umformungsaufgabe wie Goethe C2 Schreiben Teil 1. Die Lösungen in den Inhaltspunkten sind Musterlösungen; jede bedeutungsgleiche, korrekte Lösung mit dem vorgegebenen Wort ist richtig."),
   writingTask("review", "MID", [300, 420],
-    "Eine Fachzeitschrift für Ihre Branche veröffentlicht Rezensionen ihrer Leserinnen und Leser. Besprechen Sie ein Sachbuch, einen längeren Fachartikel oder einen Vortrag zu einem Thema aus der Arbeitswelt, das oder den Sie kennen (etwa 350 Wörter).\n\n" +
+    "Ein Magazin veröffentlicht Rezensionen seiner Leserinnen und Leser. Besprechen Sie ein Sachbuch, einen längeren Artikel oder einen Vortrag zu einem gesellschaftlichen Thema (zum Beispiel Arbeit, Bildung, Technik oder Umwelt), das oder den Sie kennen (etwa 350 Wörter).\n\n" +
       "Gehen Sie auf die folgenden drei Aspekte ein:\n" +
       "- Worum geht es, und welche zentrale These wird vertreten?\n" +
       "- Wie überzeugend sind Argumentation und Darstellung?\n" +
@@ -921,7 +925,7 @@ function speakingTask(
 
 const speakingItems: SeedItem[] = [
   speakingTask("mediation", "EASY", { thinkSeconds: 60, answerSeconds: 150, maxTakes: 1 },
-    "Eine neue Kollegin ohne Fachkenntnisse in Ihrem Bereich soll morgen an einer Besprechung teilnehmen. Erklären Sie ihr in etwa zwei Minuten einen komplexen Arbeitsablauf oder Fachbegriff aus Ihrem Beruf so, dass sie ihn versteht. Vermeiden Sie Fachjargon oder erklären Sie ihn.",
+    "Eine neue Kollegin ohne Fachkenntnisse in Ihrem Bereich soll morgen an einer Besprechung teilnehmen. Wählen Sie einen komplexen Ablauf oder Fachbegriff aus Ihrem Beruf, Ihrem Studium oder einem Fachgebiet, in dem Sie sich gut auskennen, und erklären Sie ihn der Kollegin in etwa zwei Minuten so, dass sie ihn versteht. Vermeiden Sie Fachjargon oder erklären Sie ihn.",
     [
       "wählt einen tatsächlich komplexen Sachverhalt und erklärt ihn sachlich richtig",
       "passt Wortwahl und Erklärtiefe an eine fachfremde Zuhörerin an (Beispiele, Vergleiche, Umschreibungen)",
@@ -968,7 +972,7 @@ const speakingItems: SeedItem[] = [
     "Halten Sie einen Vortrag von etwa fünf Minuten zum Thema „Was ist gute Arbeit?“. Gehen Sie von den folgenden drei Aussagen aus, wägen Sie sie gegeneinander ab und kommen Sie zu einem eigenen Urteil.\n\n" +
       "1. „Gute Arbeit erkennt man daran, dass man sie messen kann.“\n" +
       "2. „Gute Arbeit ist die, die man auch dann sorgfältig erledigt, wenn niemand hinsieht.“\n" +
-      "3. „Ob Arbeit gut ist, entscheidet nicht, wer sie tut, sondern wer von ihr lebt.“",
+      "3. „Ob Arbeit gut ist, entscheidet nicht, wer sie tut, sondern wer auf sie angewiesen ist.“",
     [
       "erfasst die unterschiedlichen Perspektiven der drei Aussagen (Messbarkeit, Ethos, Nutzen für andere)",
       "wägt die Aussagen kritisch ab und zeigt Grenzen jeder Position auf",
