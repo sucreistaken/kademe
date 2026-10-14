@@ -47,6 +47,7 @@ vi.mock("@/db", async () => {
   };
 });
 
+import { outboxLinkPlaceholder } from "@/lib/outbox";
 import { createInvitation, examLinkToken, inviteLink, linkVerdict } from "./invite";
 
 const SECRET = "dev-only-storage-secret";
@@ -85,11 +86,27 @@ describe("createInvitation", () => {
     expect(link.id).toMatch(/^[0-9a-f-]{36}$/);
     expect(r.rawToken).toBe(examLinkToken(link.id, SECRET));
     expect(link.tokenHash).toBe(sha256(r.rawToken));
-    expect(JSON.stringify(state.inserts.filter((i) => i.table !== "messageOutbox"))).not.toContain(r.rawToken);
+    // No row, the outbox included, holds the token or the link.
+    expect(JSON.stringify(state.inserts)).not.toContain(r.rawToken);
+    expect(JSON.stringify(state.inserts)).not.toContain("/a/");
     expect(r.url).toBe(`https://kademe.example/a/${r.rawToken}`);
     expect(r.expiresAt).toBeInstanceOf(Date);
     expect(link.expiresAt).toEqual(r.expiresAt);
     expect(state.inserts.map((i) => i.table)).toEqual(["candidates", "assessments", "examAssessments", "assessmentLinks", "messageOutbox", "auditLogs"]);
+  });
+
+  it("writes the outbox message with the invitation's placeholder where the link goes", async () => {
+    state.selects = [[blueprint]];
+    const r = await createInvitation({ orgId: "o1", blueprintId: "bp1", fullName: "Ayşe Yılmaz", email: "ayse@ornek.com", claimedLevel: null, locale: "tr", invitedBy: "u1" });
+    if (!r.ok) throw new Error("invite failed");
+    const mail = state.inserts.find((i) => i.table === "messageOutbox")!.values as { toEmail: string; subject: string; body: string };
+    expect(mail.toEmail).toBe("ayse@ornek.com");
+    expect(mail.subject).toBe("Almanca sınavınız: Yerleştirme");
+    expect(mail.body).toContain(`Başlamak için: ${outboxLinkPlaceholder(r.assessmentId)}`);
+    expect(mail.body).toContain("Merhaba Ayşe Yılmaz,");
+    expect(mail.body).toContain("bilgisayarda");
+    expect(mail.body).not.toContain("\u2014");
+    expect(mail.body).not.toContain("https://");
   });
 
   it("refuses a draft and a verification exam without a claim, writing nothing", async () => {

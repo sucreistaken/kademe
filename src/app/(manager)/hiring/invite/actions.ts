@@ -89,7 +89,8 @@ async function inviteOne(user: { id: string; orgId: string }, input: z.infer<typ
 /**
  * HIRING-UX 5.11 "Davet linkini oluştur": one candidate. The panel shows the
  * link once; the database keeps only its hash on the link row, and the ready
- * message with the link in it in message_outbox.body (the mail path).
+ * message in message_outbox.body (the mail path) with a placeholder where the
+ * link goes (lib/outbox.ts), never the link.
  */
 export async function inviteCandidateAction(input: unknown): Promise<InviteOneResult> {
   const parsed = oneSchema.safeParse(input);

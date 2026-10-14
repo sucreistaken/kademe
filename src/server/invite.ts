@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { assessmentLinks, assessments, auditLogs, candidates, examAssessments, examBlueprints, messageOutbox } from "@/db/schema";
 import { mintToken, safeEqual, sha256 } from "@/lib/auth";
 import type { Cefr } from "@/lib/exam/types";
+import { outboxLinkPlaceholder } from "@/lib/outbox";
 import { resolveSigningSecret } from "@/lib/signing-secret";
 
 /**
@@ -14,10 +15,12 @@ import { resolveSigningSecret } from "@/lib/signing-secret";
  * exam this student takes, whatever happens to the blueprint afterwards.
  *
  * Nothing is e-mailed: the row in message_outbox is the future mail path and
- * nothing reads it yet. The school shares each link itself, so the link must
- * stay retrievable for the panel (inviteLink), while the database still only
- * holds the token's hash: the raw token is an HMAC of the link row's id under
- * the server's secret, so a database read alone never yields it.
+ * nothing reads it yet; its body names the invitation where the link goes
+ * (outboxLinkPlaceholder), never the link. The school shares each link
+ * itself, so the link must stay retrievable for the panel (inviteLink), while
+ * the database still only holds the token's hash: the raw token is an HMAC of
+ * the link row's id under the server's secret, so a database read alone never
+ * yields it.
  */
 
 export const LINK_TTL_DAYS = 14;
@@ -62,6 +65,15 @@ function linkSecret(): string | null {
 }
 const origin = (baseUrl?: string) => baseUrl ?? process.env.APP_ORIGIN ?? "http://localhost:3100";
 export const examLinkUrl = (raw: string, baseUrl?: string) => `${origin(baseUrl)}/a/${raw}`;
+
+/** The outbox message, with `link` where the student's link goes. The exam needs a computer (desktop only, 2026-10-14). */
+function inviteBody(input: Pick<InviteInput, "fullName" | "locale">, examName: string, link: string): string {
+  const name = input.fullName.trim();
+  if (input.locale === "en") {
+    return [name ? `Hello ${name},` : "Hello,", `Your German exam "${examName}" is ready. To start: ${link}`, "Please open the link on a computer; the exam does not run on a phone or tablet."].join("\n\n");
+  }
+  return [name ? `Merhaba ${name},` : "Merhaba,", `"${examName}" Almanca sınavınız hazır. Başlamak için: ${link}`, "Linki bir bilgisayarda açın; sınav telefon veya tablette çalışmaz."].join("\n\n");
+}
 
 export async function createInvitation(input: InviteInput): Promise<InviteResult> {
   const [blueprint] = await db
@@ -114,7 +126,7 @@ export async function createInvitation(input: InviteInput): Promise<InviteResult
       kind: "INVITE",
       toEmail: input.email,
       subject: input.locale === "en" ? `Your German exam: ${blueprint.name}` : `Almanca sınavınız: ${blueprint.name}`,
-      body: `${url}`,
+      body: inviteBody(input, blueprint.name, outboxLinkPlaceholder(assessment.id)),
     });
     await tx.insert(auditLogs).values({
       orgId: input.orgId,

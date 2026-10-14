@@ -7,6 +7,7 @@ import { Illustration } from "@/components/visual/illustrations";
 import { buttonVariants } from "@/components/ui/button";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
+import { isMobileSignals, type MobileMoment } from "./device";
 
 /**
  * A phone or a tablet. Phones cannot share a screen from a browser at all
@@ -15,10 +16,12 @@ import { cn } from "@/lib/cn";
 export function isMobileDevice(): boolean {
   if (typeof navigator === "undefined") return false;
   const uaData = (navigator as Navigator & { userAgentData?: { mobile?: boolean } }).userAgentData;
-  if (uaData?.mobile) return true;
-  const noDisplayMedia = !navigator.mediaDevices || !("getDisplayMedia" in navigator.mediaDevices);
-  const coarse = window.matchMedia?.("(pointer: coarse)").matches ?? false;
-  return noDisplayMedia && (coarse || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
+  return isMobileSignals({
+    uaMobile: uaData?.mobile,
+    hasDisplayMedia: !!navigator.mediaDevices && "getDisplayMedia" in navigator.mediaDevices,
+    coarsePointer: window.matchMedia?.("(pointer: coarse)").matches ?? false,
+    userAgent: navigator.userAgent,
+  });
 }
 
 /** What this exam asks of the device; each true flag adds its own reason or step, nothing else is claimed. */
@@ -27,12 +30,15 @@ export type MobileNeeds = { camera?: boolean; screenShare?: boolean; writing?: b
 /**
  * The exam is desktop only (user decision 2026-10-14). Not a dead end: the
  * student learns the real reasons for this exam (its screens are made for a
- * computer, plus typing and screen sharing when the exam has them), that
- * nothing has started, and what to do next, with the link on the clipboard.
+ * computer, plus typing and screen sharing when the exam has them), where
+ * they stand (`moment`: nothing has started, finished sections are kept, or
+ * a section's clock is running), and what to do next, with the link on the
+ * clipboard.
  */
-export function MobileBlock({ token, need = {} }: { token: string; need?: MobileNeeds }) {
+export function MobileBlock({ token, need = {}, moment = "start" }: { token: string; need?: MobileNeeds; moment?: MobileMoment }) {
   const t = useT("check");
   const v = useT("visual");
+  const d = useT("examDevice");
   const [copied, setCopied] = useState(false);
   async function copy() {
     const url = `${window.location.origin}/a/${encodeURIComponent(token)}`;
@@ -44,12 +50,14 @@ export function MobileBlock({ token, need = {} }: { token: string; need?: Mobile
     }
   }
   const reasons = [v("mobileWhyScreens"), ...(need.writing ? [v("mobileWhyWriting")] : []), ...(need.screenShare ? [v("mobileWhyShare")] : [])];
-  const steps = [v("mobileStepOpen"), v("mobileStepBrowser"), ...(need.camera ? [v("mobileStepCamera")] : []), v("mobileStepQuiet")];
+  // A running clock is no time to say "without hurrying".
+  const steps = [v("mobileStepOpen"), v("mobileStepBrowser"), ...(need.camera ? [v("mobileStepCamera")] : []), ...(moment === "running" ? [] : [v("mobileStepQuiet")])];
+  const lead = moment === "running" ? d("leadRunning") : moment === "between" ? d("leadBetween") : v("mobileLead");
   return (
     <CandidateColumn width={520} padding="px-5 pt-8 pb-12">
       <Illustration name="desktopOnly" size="phone" className="mx-auto" />
       <h1 className="mt-6 text-[26px] font-extrabold leading-[1.2] tracking-[-0.01em] text-ink">{v("mobileTitle")}</h1>
-      <p className="mt-3 text-[15px] leading-[1.65] text-ink-2">{v("mobileLead")}</p>
+      <p className="mt-3 text-[15px] leading-[1.65] text-ink-2">{lead}</p>
 
       <div className="mt-6 rounded-xl border border-line bg-surface p-5 shadow-card">
         <h2 className="text-[15px] font-bold text-ink">{v("mobileWhyTitle")}</h2>

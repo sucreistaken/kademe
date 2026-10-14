@@ -6,6 +6,7 @@ import { CEFR_LEVELS, type Cefr } from "@/lib/exam/types";
 import { LINK_TTL_DAYS } from "@/server/invite";
 import { bankCounts, listStudents, publishedBlueprints } from "@/server/panel";
 import { requireUser } from "@/server/session";
+import { isCurrentTemplate } from "@/server/template-blueprint";
 import { managerLocale } from "@/i18n/manager-locale";
 
 export const dynamic = "force-dynamic";
@@ -18,13 +19,20 @@ const shape = (config: BlueprintConfig) => ({ config, minutes: estimatedMinutes(
  * wants), then the ready templates, which are always there, so there is no
  * "create an exam first" state. A template the organisation already invited
  * with is `published`; the others are published on the first invite. The
- * template-made exams are not listed twice.
+ * template-made exams are not listed twice. An exam published from an older
+ * version of a template does not count: the next invite replaces it with the
+ * template as shown here (ensureTemplateBlueprint).
  */
 export default async function InvitePage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const user = await requireUser("student:invite");
   const locale = await managerLocale();
   const [blueprints, counts, students] = await Promise.all([publishedBlueprints(user.orgId), bankCounts(user.orgId), listStudents(user.orgId)]);
-  const publishedTemplates = new Set(blueprints.flatMap((b) => (b.templateKey ? [b.templateKey] : [])));
+  const publishedTemplates = new Set(
+    blueprints.flatMap((b) => {
+      const tpl = b.templateKey ? EXAM_TEMPLATES.find((x) => x.key === b.templateKey) : undefined;
+      return tpl && isCurrentTemplate(b, tpl) ? [tpl.key] : [];
+    }),
+  );
   const options: ExamOption[] = [
     ...blueprints
       .filter((b) => !b.templateKey)

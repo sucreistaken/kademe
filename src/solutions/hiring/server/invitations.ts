@@ -24,6 +24,7 @@ import {
 } from "@/db/schema";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/i18n/locale";
 import { mintToken } from "@/lib/auth";
+import { outboxLinkPlaceholder } from "@/lib/outbox";
 import { orgDay, zonedDayStart, zoneLabel } from "@/lib/org-timezone";
 import { isUuid } from "@/server/settings";
 import {
@@ -219,18 +220,19 @@ export async function createHiringInvitation(
     });
     await tx.insert(hiringAssignments).values(panel.map((p) => ({ assessmentId: assessment.id, userId: p.userId })));
     await tx.insert(assessmentLinks).values({ assessmentId: assessment.id, tokenHash: token.hash, status: "NOT_STARTED", expiresAt, attemptsAllowed: 1 });
-    const message = inviteMessage({
+    const words = {
       locale,
       candidateName: fullName,
       orgName: parts.orgName,
       positionName: parts.positionName,
-      url,
       deadline: deadlineText(expiresAt, locale),
       minutes: parts.minutes,
       contactEmail: opening.candidateContactEmail ?? parts.orgContact,
-    });
-    // The outbox is the mail path: nothing is sent from here (schema/compliance.ts).
-    await tx.insert(messageOutbox).values({ orgId: user.orgId, kind: "INVITE", toEmail: email, subject: message.subject, body: message.body });
+    };
+    const message = inviteMessage({ ...words, url });
+    // The outbox is the mail path: nothing is sent from here (schema/compliance.ts). It keeps the message without the link (lib/outbox.ts).
+    const stored = inviteMessage({ ...words, url: outboxLinkPlaceholder(assessment.id) });
+    await tx.insert(messageOutbox).values({ orgId: user.orgId, kind: "INVITE", toEmail: email, subject: stored.subject, body: stored.body });
     await tx.insert(auditLogs).values({
       orgId: user.orgId,
       actorId: user.id,
@@ -318,17 +320,21 @@ export async function newHiringLink(
       attemptsAllowed: 1,
     });
     const parts = await messageParts(tx, user.orgId, opening.positionId, row.versionId);
-    const message = inviteMessage({
+    const words = {
       locale: row.locale,
       candidateName: row.name ?? "",
       orgName: parts.orgName,
       positionName: parts.positionName,
-      url,
       deadline: deadlineText(expiresAt, row.locale),
       minutes: parts.minutes,
       contactEmail: opening.candidateContactEmail ?? parts.orgContact,
-    });
-    if (row.email) await tx.insert(messageOutbox).values({ orgId: user.orgId, kind: "INVITE", toEmail: row.email, subject: message.subject, body: message.body });
+    };
+    const message = inviteMessage({ ...words, url });
+    if (row.email) {
+      // As at the invitation: the outbox keeps the message without the link.
+      const stored = inviteMessage({ ...words, url: outboxLinkPlaceholder(row.assessmentId) });
+      await tx.insert(messageOutbox).values({ orgId: user.orgId, kind: "INVITE", toEmail: row.email, subject: stored.subject, body: stored.body });
+    }
     await tx.insert(auditLogs).values({
       orgId: user.orgId,
       actorId: user.id,
