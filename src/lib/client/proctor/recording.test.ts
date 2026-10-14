@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { policyFromPreset } from "@/lib/proctor/policy";
-import { ProctorRecording, TrackRecorder, pickSegmentMime } from "./recording";
+import { ProctorRecording, TrackRecorder, guardUnload, pickSegmentMime, type RecordingDeps } from "./recording";
 import type { QueuedSegment } from "./recording-queue";
 
 /**
@@ -227,7 +227,7 @@ describe("ProctorRecording", () => {
 
   const camera = () => new FakeStream([new FakeTrack("video"), new FakeTrack("audio")]);
   const screen = () => new FakeStream([new FakeTrack("video")]);
-  const make = () =>
+  const make = (extra: Partial<RecordingDeps> = {}) =>
     new ProctorRecording({
       url: (path) => `/api/c/tok${path}`,
       now: () => Date.now() + 250,
@@ -235,11 +235,12 @@ describe("ProctorRecording", () => {
       Recorder,
       isTypeSupported: () => true,
       segmentMs: 15_000,
+      ...extra,
     });
 
   it("records the camera (with the microphone) under STANDARD and uploads each segment in order", async () => {
     const rec = make();
-    rec.sync({ policy: policyFromPreset("STANDARD"), guarding: true, camera: camera() as unknown as MediaStream, screen: null });
+    rec.sync({ policy: policyFromPreset("STANDARD"), consented: true, guarding: true, camera: camera() as unknown as MediaStream, screen: null });
     await vi.advanceTimersByTimeAsync(0);
     expect(FakeRecorder.all).toHaveLength(1);
     // Recorded from clones, scaled down; the engine's own tracks are left alone.
@@ -258,10 +259,10 @@ describe("ProctorRecording", () => {
 
   it("records the screen too under STRICT, and does nothing before the exam is armed", async () => {
     const rec = make();
-    rec.sync({ policy: policyFromPreset("STRICT"), guarding: false, camera: camera() as unknown as MediaStream, screen: screen() as unknown as MediaStream });
+    rec.sync({ policy: policyFromPreset("STRICT"), consented: true, guarding: false, camera: camera() as unknown as MediaStream, screen: screen() as unknown as MediaStream });
     await vi.advanceTimersByTimeAsync(0);
     expect(FakeRecorder.all).toHaveLength(0);
-    rec.sync({ policy: policyFromPreset("STRICT"), guarding: true, camera: camera() as unknown as MediaStream, screen: screen() as unknown as MediaStream });
+    rec.sync({ policy: policyFromPreset("STRICT"), consented: true, guarding: true, camera: camera() as unknown as MediaStream, screen: screen() as unknown as MediaStream });
     await vi.advanceTimersByTimeAsync(0);
     expect(FakeRecorder.all).toHaveLength(2);
     const kinds = FakeRecorder.all.map((r) => (r.stream.getAudioTracks().length ? "camera" : "screen"));
@@ -271,7 +272,7 @@ describe("ProctorRecording", () => {
   it("does not start a second recorder for a stream it already records, but starts a new run for a new stream", async () => {
     const rec = make();
     const cam = camera();
-    const input = { policy: policyFromPreset("STANDARD"), guarding: true, camera: cam as unknown as MediaStream, screen: null };
+    const input = { policy: policyFromPreset("STANDARD"), consented: true, guarding: true, camera: cam as unknown as MediaStream, screen: null };
     rec.sync(input);
     await vi.advanceTimersByTimeAsync(0);
     rec.sync(input);
@@ -288,7 +289,7 @@ describe("ProctorRecording", () => {
 
   it("stop cuts the last segment, stops its clones and keeps uploading what is queued", async () => {
     const rec = make();
-    rec.sync({ policy: policyFromPreset("STANDARD"), guarding: true, camera: camera() as unknown as MediaStream, screen: null });
+    rec.sync({ policy: policyFromPreset("STANDARD"), consented: true, guarding: true, camera: camera() as unknown as MediaStream, screen: null });
     await vi.advanceTimersByTimeAsync(7_000);
     const stopping = rec.stop();
     // The runner and the last screen both stop the engine: one cut, not two.
@@ -299,7 +300,7 @@ describe("ProctorRecording", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(new URL(fetchMock.mock.calls[0][0], "http://x").searchParams.get("dur")).toBe("7000");
     // After stop nothing new starts.
-    rec.sync({ policy: policyFromPreset("STANDARD"), guarding: true, camera: camera() as unknown as MediaStream, screen: null });
+    rec.sync({ policy: policyFromPreset("STANDARD"), consented: true, guarding: true, camera: camera() as unknown as MediaStream, screen: null });
     await vi.advanceTimersByTimeAsync(30_000);
     expect(FakeRecorder.all).toHaveLength(1);
   });
@@ -311,12 +312,119 @@ describe("ProctorRecording", () => {
       .mockResolvedValueOnce(new Response("{}", { status: 200 }))
       .mockResolvedValueOnce(new Response("{}", { status: 409 }));
     const rec = make();
-    rec.sync({ policy: policyFromPreset("STANDARD"), guarding: true, camera: camera() as unknown as MediaStream, screen: null });
+    rec.sync({ policy: policyFromPreset("STANDARD"), consented: true, guarding: true, camera: camera() as unknown as MediaStream, screen: null });
     await vi.advanceTimersByTimeAsync(15_020);
     await vi.advanceTimersByTimeAsync(5_000);
     expect(rec.queue.status).toMatchObject({ uploaded: 1 });
     await vi.advanceTimersByTimeAsync(10_020);
     expect(rec.queue.status).toMatchObject({ uploaded: 1, dropped: 1, pending: 0 });
     expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it("records nothing when the accepted consent text does not announce the recording", async () => {
+    const onActivity = vi.fn();
+    const rec = make({ onActivity, unloadTarget: null });
+    const input = { policy: policyFromPreset("STRICT"), guarding: true, camera: camera() as unknown as MediaStream, screen: screen() as unknown as MediaStream };
+    rec.sync({ ...input, consented: false });
+    await vi.advanceTimersByTimeAsync(30_020);
+    expect(FakeRecorder.all).toHaveLength(0);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(rec.activity).toEqual({ camera: false, audio: false, screen: false });
+    expect(onActivity).not.toHaveBeenCalled();
+    // The same tab with a consent that covers it records both kinds and says so.
+    rec.sync({ ...input, consented: true });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(FakeRecorder.all).toHaveLength(2);
+    expect(rec.activity).toEqual({ camera: true, audio: true, screen: true });
+    expect(onActivity).toHaveBeenLastCalledWith({ camera: true, audio: true, screen: true });
+  });
+
+  it("reports what it records: the camera with its sound under STANDARD, nothing once stopped", async () => {
+    const onActivity = vi.fn();
+    const rec = make({ onActivity, unloadTarget: null });
+    rec.sync({ policy: policyFromPreset("STANDARD"), consented: true, guarding: true, camera: camera() as unknown as MediaStream, screen: null });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(onActivity).toHaveBeenLastCalledWith({ camera: true, audio: true, screen: false });
+    const stopping = rec.stop();
+    await vi.advanceTimersByTimeAsync(20);
+    await stopping;
+    expect(onActivity).toHaveBeenLastCalledWith({ camera: false, audio: false, screen: false });
+  });
+
+  it("at the finish, drain waits for the last segment and says when it has been uploaded", async () => {
+    const rec = make({ unloadTarget: null });
+    rec.sync({ policy: policyFromPreset("STANDARD"), consented: true, guarding: true, camera: camera() as unknown as MediaStream, screen: null });
+    await vi.advanceTimersByTimeAsync(7_000);
+    // The upload of the last segment is slow: it answers only when the test says so.
+    let answer: (r: Response) => void = () => undefined;
+    fetchMock.mockImplementationOnce(() => new Promise<Response>((resolve) => (answer = resolve)));
+    const stopping = rec.stop();
+    await vi.advanceTimersByTimeAsync(20);
+    await stopping;
+    // stop() alone leaves the cut segment in the queue: this is what used to be lost.
+    expect(rec.queue.status.pending).toBe(1);
+    let drained: boolean | null = null;
+    void rec.drain(60_000).then((v) => (drained = v));
+    await vi.advanceTimersByTimeAsync(5_000);
+    expect(drained).toBeNull();
+    answer(new Response("{}", { status: 200 }));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(drained).toBe(true);
+    expect(rec.queue.status).toMatchObject({ pending: 0, uploaded: 1 });
+  });
+
+  it("drain gives up after its bound while the connection is down; the queue keeps trying and empties later", async () => {
+    fetchMock.mockRejectedValue(new TypeError("Failed to fetch"));
+    const rec = make({ unloadTarget: null });
+    rec.sync({ policy: policyFromPreset("STANDARD"), consented: true, guarding: true, camera: camera() as unknown as MediaStream, screen: null });
+    await vi.advanceTimersByTimeAsync(7_000);
+    const stopping = rec.stop();
+    await vi.advanceTimersByTimeAsync(20);
+    await stopping;
+    let drained: boolean | null = null;
+    void rec.drain(60_000).then((v) => (drained = v));
+    await vi.advanceTimersByTimeAsync(59_000);
+    expect(drained).toBeNull();
+    await vi.advanceTimersByTimeAsync(1_100);
+    expect(drained).toBe(false);
+    expect(rec.queue.status).toMatchObject({ pending: 1, stalled: true });
+    // The connection comes back: the next try goes through.
+    fetchMock.mockResolvedValue(new Response("{}", { status: 200 }));
+    await vi.advanceTimersByTimeAsync(15_000);
+    expect(rec.queue.status).toMatchObject({ pending: 0, uploaded: 1 });
+  });
+
+  it("asks before the page is left while a segment waits, and stops asking once the queue is empty", async () => {
+    const target = new EventTarget();
+    const leave = () => {
+      const e = new Event("beforeunload", { cancelable: true });
+      target.dispatchEvent(e);
+      return e.defaultPrevented;
+    };
+    fetchMock.mockRejectedValue(new TypeError("Failed to fetch"));
+    const rec = make({ unloadTarget: target });
+    expect(leave()).toBe(false);
+    rec.sync({ policy: policyFromPreset("STANDARD"), consented: true, guarding: true, camera: camera() as unknown as MediaStream, screen: null });
+    await vi.advanceTimersByTimeAsync(15_020);
+    expect(rec.queue.status.pending).toBe(1);
+    expect(leave()).toBe(true);
+    fetchMock.mockResolvedValue(new Response("{}", { status: 200 }));
+    await vi.advanceTimersByTimeAsync(8_000);
+    expect(rec.queue.status.pending).toBe(0);
+    expect(leave()).toBe(false);
+  });
+});
+
+describe("guardUnload", () => {
+  it("cancels the unload (the browser then asks) until it is removed", () => {
+    const target = new EventTarget();
+    const remove = guardUnload(target);
+    const first = new Event("beforeunload", { cancelable: true });
+    target.dispatchEvent(first);
+    expect(first.defaultPrevented).toBe(true);
+    remove();
+    const second = new Event("beforeunload", { cancelable: true });
+    target.dispatchEvent(second);
+    expect(second.defaultPrevented).toBe(false);
   });
 });

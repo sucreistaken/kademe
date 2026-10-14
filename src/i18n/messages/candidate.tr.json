@@ -1045,5 +1045,17 @@
     "loading": "Hazırlanıyor",
     "loadingHint": "Birkaç saniye sürebilir.",
     "networkError": "Sunucuya ulaşılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin."
+  },
+  "recordingSafety": {
+    "cameraAudioScreen": "Kamera, ses ve ekran kaydediliyor",
+    "cameraScreen": "Kamera ve ekran kaydediliyor",
+    "cameraAudio": "Kamera ve ses kaydediliyor",
+    "camera": "Kamera kaydediliyor",
+    "screen": "Ekran kaydediliyor",
+    "bodyWhileSending": "Cevaplarınız kaydedildi. Emeğiniz için teşekkürler.",
+    "sending": "Kayıt gönderiliyor, lütfen bu sekmeyi kapatmayın.",
+    "sendingCount": "Kayıt gönderiliyor, lütfen bu sekmeyi kapatmayın ({count} parça).",
+    "slow": "Kaydın {count} parçası henüz gönderilemedi. Bağlantınız düzelince kendiliğinden gönderilir; lütfen bu sekmeyi açık tutun.",
+    "sent": "Sınav kaydı gönderildi."
   }
 }

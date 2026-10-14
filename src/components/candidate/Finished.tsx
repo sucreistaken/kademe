@@ -1,20 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Mail, PowerOff } from "lucide-react";
+import { Check, Loader2, Mail, PowerOff, WifiOff } from "lucide-react";
 import { CandidateColumn } from "@/components/candidate/Shell";
 import { useProctor } from "@/components/candidate/proctor/ProctorProvider";
 import { Badge } from "@/components/ui/badge";
 import { SectionTile } from "@/components/visual/section-look";
 import type { StudentResult } from "@/lib/exam-flow";
+import { FINISH_DRAIN_MS, finishUploadPhase } from "@/lib/proctor/recording-status";
 import type { Section } from "@/lib/exam/types";
 import { useT } from "@/i18n/candidate-client";
 
 /**
- * The end. Every device is switched off first and the student is told so. The
- * result appears only as far as the school allows and only once a teacher has
- * finalized it; there is no course recommendation here or anywhere else.
- * The next step is always concrete: who to write to.
+ * The end. Every device is switched off first and the student is told so.
+ * When the exam was recorded, its last segments are still uploading: until
+ * they are, the screen asks the student to keep the tab open instead of
+ * telling them to rest. The result appears only as far as the school allows
+ * and only once a teacher has finalized it; there is no course recommendation
+ * here or anywhere else. The next step is always concrete: who to write to.
  *
  * Soft look: finishing is worth a small celebration (a medal that pops in once
  * and a few soft dots, motion-safe only) and the sections the student got
@@ -46,20 +49,29 @@ export function Finished({
   const t = useT("result");
   const sec = useT("section");
   const v = useT("visual");
-  const { engine } = useProctor();
+  const rec = useT("recordingSafety");
+  const { engine, snap } = useProctor();
   const [streamsOff, setStreamsOff] = useState(false);
+  const [drainTimedOut, setDrainTimedOut] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       if (engine) await engine.stop();
-      if (!cancelled) setStreamsOff(true);
+      if (cancelled) return;
+      setStreamsOff(true);
+      // The last segments are still on their way. The wait is bounded; the
+      // upload is not, and the page asks before it is left while any wait.
+      if (engine && !(await engine.drainRecording(FINISH_DRAIN_MS)) && !cancelled) setDrainTimedOut(true);
     })();
     return () => {
       cancelled = true;
     };
   }, [engine]);
 
+  const pending = snap?.upload?.pending ?? 0;
+  const upload = finishUploadPhase({ recorded: !!snap?.upload, stopped: streamsOff, pending, timedOut: drainTimedOut });
+  const uploading = upload === "sending" || upload === "slow";
   const released = result.released && result.visibility !== "NONE";
   return (
     <CandidateColumn width={560}>
@@ -79,8 +91,31 @@ export function Finished({
         <p className="mx-auto mt-4 max-w-[44ch] text-center text-[15.5px] leading-[1.65] text-ink-2">
           {terminated
             ? `${terminationReason === "SCREEN_SHARE_GONE" || terminationReason === "FULLSCREEN_EXITS" ? t(`reason${terminationReason}`) : ""} ${t("terminatedNext")}`
-            : v("finishedBody")}
+            : uploading
+              ? rec("bodyWhileSending")
+              : v("finishedBody")}
         </p>
+
+        {uploading ? (
+          <p
+            role="status"
+            aria-live="polite"
+            className="mx-auto mt-4 flex max-w-[44ch] items-start justify-center gap-2.5 rounded-xl bg-sun-soft px-4 py-3 text-left text-[14px] font-semibold leading-[1.5] text-ink"
+          >
+            {upload === "sending" ? (
+              <Loader2 aria-hidden className="mt-0.5 size-4 shrink-0 text-sun motion-safe:animate-spin" strokeWidth={2.5} />
+            ) : (
+              <WifiOff aria-hidden className="mt-0.5 size-4 shrink-0 text-sun" strokeWidth={2.5} />
+            )}
+            <span>
+              {upload === "slow"
+                ? rec("slow", { count: pending })
+                : pending > 0
+                  ? rec("sendingCount", { count: pending })
+                  : rec("sending")}
+            </span>
+          </p>
+        ) : null}
 
         {!terminated && sections.length ? (
           <div className="mt-6 rounded-xl bg-paper px-4 py-4">
@@ -107,6 +142,14 @@ export function Finished({
               <Check className="size-2.5" strokeWidth={3.5} />
             </span>
             {t("streamsOff")}
+          </p>
+        ) : null}
+        {upload === "done" ? (
+          <p className="mt-1.5 flex items-center justify-center gap-2 text-[13.5px] text-muted">
+            <span aria-hidden className="grid size-4 place-items-center rounded-full bg-mint-soft text-mint">
+              <Check className="size-2.5" strokeWidth={3.5} />
+            </span>
+            {rec("sent")}
           </p>
         ) : null}
 

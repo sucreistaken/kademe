@@ -1045,5 +1045,17 @@
     "loading": "Getting ready",
     "loadingHint": "This can take a few seconds.",
     "networkError": "Could not reach the server. Check your internet connection and try again."
+  },
+  "recordingSafety": {
+    "cameraAudioScreen": "Camera, sound and screen are being recorded",
+    "cameraScreen": "Camera and screen are being recorded",
+    "cameraAudio": "Camera and sound are being recorded",
+    "camera": "Camera is being recorded",
+    "screen": "Screen is being recorded",
+    "bodyWhileSending": "Your answers are saved. Thank you for your effort.",
+    "sending": "Sending the recording, please do not close this tab.",
+    "sendingCount": "Sending the recording, please do not close this tab ({count, plural, one {# part} other {# parts}} left).",
+    "slow": "{count, plural, one {# part} other {# parts}} of the recording could not be sent yet. They go out by themselves once your connection is back; please keep this tab open.",
+    "sent": "The exam recording has been sent."
   }
 }
