@@ -11,7 +11,7 @@ import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 
 /**
  * B2 starter bank, written against docs/EXAM-BANK-RESEARCH.md (B2 section):
- * - Grammar: 24 items (8 EASY, 8 MID, 8 HARD) over the B2 inventory, plus one C-test.
+ * - Grammar: 24 items (9 EASY, 9 MID, 6 HARD) over the B2 inventory, plus one C-test.
  * - Reading: 4 texts with 4 items each (opinion set, article, sentence-gap text, rules).
  * - Listening: 3 clips with 4 items each (expert interview, short lecture, everyday conversation).
  * - Writing: 6 prompts (forum opinion about 150 words, semi-formal/formal message about 100 words).
@@ -184,7 +184,7 @@ const grammarItems: SeedItem[] = [
     "Ergänzen Sie ein Adjektiv auf -bar. Man kann dieses Problem nicht in einer Woche lösen. = Dieses Problem ist in einer Woche nicht {{g1}}.",
     ["lösbar"], undefined,
     "Passiversatz mit Adjektiv auf -bar: lösbar = kann gelöst werden."),
-  gGap("konjunktiv2_vergangenheit", "HARD",
+  gGap("konjunktiv2_vergangenheit", "MID",
     "Wenn der Bus pünktlich gekommen {{g1}}, hätte ich den Termin nicht verpasst.",
     ["wäre"], ["hätte", "wäre", "würde"],
     "\"kommen\" bildet das Perfekt mit \"sein\", im irrealen Bedingungssatz der Vergangenheit also \"gekommen wäre\". \"würde\" bildet keine Vergangenheit."),
@@ -200,7 +200,7 @@ const grammarItems: SeedItem[] = [
       "die Regeln, die die Abteilung im letzten Quartal eingeführt hat",
     ], 2,
     "Erweitertes Partizipialattribut mit Partizip II: passivische, abgeschlossene Handlung; \"von der Abteilung\" nennt den Handelnden. Auflösung als Relativsatz im Aktiv."),
-  gGap("nominalisierung", "HARD",
+  gGap("nominalisierung", "EASY",
     "Ergänzen Sie das passende Nomen zu „ankommen“. Bei Ihrer {{g1}} im Hotel erhalten Sie sofort den Zimmerschlüssel.",
     ["Ankunft"], undefined,
     "Nominalisierung von \"ankommen\": die Ankunft (Femininum, passt zu \"Ihrer\" im Dativ)."),
@@ -221,9 +221,10 @@ const grammarCTest = cTest(LEVEL, "MID", {
     "Gleichzeitig entstehen aber auch neue Probleme, denn die Grenze zwischen Beruf und Privatleben wird oft unscharf. " +
     "Wer nach Feierabend noch Nachrichten beantwortet, findet schwerer zur Ruhe.",
   last: "Fachleute empfehlen deshalb feste Arbeitszeiten und einen eigenen Arbeitsplatz in der Wohnung.",
-  // g2 das/dies, g3 Freiheit/Freizeit, g6 selbst/selber are equally correct here.
+  // g2 das/dies, g3 Freiheit/Freiheiten/Freizeit/Freiraum, g6 selbst/selber are equally correct here.
+  // g14 wird/wirkt: "die Grenze ... wirkt oft unscharf" is grammatical and fits the context.
   // g19 schwerer/schwer: "findet schwer zur Ruhe" is equally idiomatic.
-  variants: { 2: ["ies"], 3: ["zeit"], 6: ["ber"], 19: ["er"] },
+  variants: { 2: ["ies"], 3: ["zeit", "raum", "heiten"], 6: ["ber"], 14: ["rkt"], 19: ["er"] },
 });
 
 const grammar: SeedBankPart = { stimuli: [], items: [grammarCTest, ...grammarItems] };
@@ -305,7 +306,7 @@ const rViertageItems: SeedItem[] = [
   r1.match("gist", "HARD",
     "Wer äußert diese Meinung? Ordnen Sie jeder Aussage eine Person zu. Eine Person passt zu keiner Aussage.",
     [
-      "Diese Person möchte, dass Beschäftigte ihr Arbeitszeitmodell selbst wählen können.",
+      "Diese Person wünscht sich, dass die Beschäftigten individuell über ihr Arbeitszeitmodell entscheiden dürfen.",
       "Diese Person befürchtet, dass der freie Tag nicht wirklich frei bleibt.",
       "Für diese Person hängt der Erfolg davon ab, wie man Leistung bewertet.",
       "Diese Person sieht im eigenen Betrieb vor allem ein Personalproblem.",
@@ -322,7 +323,7 @@ const rViertageItems: SeedItem[] = [
     ], 1,
     "Lena wäre schon nach acht Stunden müde; das Gehalt bliebe laut Text gleich. Verlässliche Dienstpläne sind ihr wichtiger als ein freier Tag, sie macht sie nicht zur Bedingung für die Vier-Tage-Woche."),
   r1.choice("vocabulary", "EASY",
-    "Selin schreibt, man musste jede Besprechung „auf den Prüfstand stellen“. Was bedeutet das hier?",
+    "Selin schreibt: „Allerdings mussten wir vorher jede regelmäßige Besprechung auf den Prüfstand stellen.“ Was bedeutet „auf den Prüfstand stellen“ hier?",
     ["kritisch überprüfen", "endgültig abschaffen", "schriftlich festhalten"], 0,
     "\"auf den Prüfstand stellen\" = genau prüfen, ob etwas noch sinnvoll ist. Das Streichen ist erst die Folge der Prüfung (\"viele davon streichen\")."),
   r1.tfng("detail", "MID",
@@ -398,7 +399,7 @@ const rPendeln = readingText(
   "Gemeinsam zur Arbeit",
   "Mobilität: Pendeln und Fahrgemeinschaften",
   `
-Jeden Morgen dasselbe Bild: Auf den Straßen in die Städte sitzen Tausende Menschen allein in ihren Autos. Dabei wären Fahrgemeinschaften eine naheliegende Alternative. [Lücke 1] Trotzdem fahren nur wenige Beschäftigte regelmäßig gemeinsam zur Arbeit.
+Jeden Morgen dasselbe Bild: Im Berufsverkehr sitzen Tausende Menschen allein in ihren Autos. Dabei wären Fahrgemeinschaften eine naheliegende Alternative. [Lücke 1] Trotzdem fahren nur wenige Beschäftigte regelmäßig gemeinsam zur Arbeit.
 
 Woran liegt das? Eine Umfrage unter Pendlerinnen und Pendlern liefert einige Antworten. Am häufigsten nannten die Befragten unterschiedliche Arbeitszeiten. [Lücke 2] Wer dagegen feste Dienstzeiten hat, findet leichter jemanden mit demselben Weg.
 
@@ -671,9 +672,9 @@ const lAufschiebenItems: SeedItem[] = [
       ["Die Referentin rät, große Aufgaben in kleine Teilschritte aufzuteilen.", "R"],
       ["Nach der Zwei-Minuten-Regel sammelt man kurze Aufgaben und erledigt sie später gemeinsam.", "F"],
       ["Strenge Selbstkritik hilft laut Referentin, weniger aufzuschieben.", "F"],
-      ["Die Referentin hat die vorgestellten Strategien selbst entwickelt.", "NG"],
+      ["Die Referentin empfiehlt, schwierige Aufgaben möglichst am frühen Morgen zu erledigen.", "NG"],
     ],
-    "1: \"in sehr kleine Schritte zerlegen\". 2: Kurze Aufgaben erledigt man sofort. 3: Wer sich heftig kritisiert, schiebt noch mehr auf. 4: Wer die Strategien entwickelt hat, sagt sie nicht."),
+    "1: \"in sehr kleine Schritte zerlegen\". 2: Kurze Aufgaben erledigt man sofort. 3: Wer sich heftig kritisiert, schiebt noch mehr auf. 4: Zur Tageszeit sagt sie nichts."),
 ];
 
 // ---------------------------------------------------------------- Clip 3: everyday conversation
@@ -805,7 +806,7 @@ const writingItems: SeedItem[] = [
     ],
     FORUM, FORUM_EXPLANATION),
   writingTask("opinion", "MID", FORUM_WORDS,
-    "Ein Unternehmen überlegt, nach Feierabend keine dienstlichen E-Mails mehr an die Beschäftigten weiterzuleiten. In einem Forum wird gefragt: „Ist das eine gute Idee?“\n\n" +
+    "Ein Unternehmen überlegt, nach Feierabend keine dienstlichen E-Mails mehr auf die Diensthandys der Beschäftigten weiterzuleiten. In einem Forum wird gefragt: „Ist das eine gute Idee?“\n\n" +
       "Schreiben Sie einen Forumsbeitrag (ca. 150 Wörter). Gehen Sie auf die folgenden Punkte ein:\n" +
       "- Warum sind viele Beschäftigte auch nach Feierabend erreichbar?\n" +
       "- Welche Folgen kann das für das Privatleben haben?\n" +
@@ -900,7 +901,7 @@ const speakingItems: SeedItem[] = [
   speakingTask("presentation", "MID", TALK,
     "Halten Sie einen kurzen Vortrag (3 bis 4 Minuten) zum Thema „Lebenslanges Lernen: Muss man im Beruf ständig dazulernen?“\n\n" +
       "- Stellen Sie das Thema vor und erklären Sie, worum es geht.\n" +
-      "- Berichten Sie von Ihren eigenen Erfahrungen mit Weiterbildung.\n" +
+      "- Berichten Sie von Ihren eigenen Erfahrungen mit Lernen oder Weiterbildung.\n" +
       "- Nennen Sie Vor- und Nachteile und geben Sie Beispiele.\n" +
       "- Sagen Sie Ihre Meinung und kommen Sie zu einem Schluss.",
     [
@@ -944,7 +945,7 @@ const speakingItems: SeedItem[] = [
     ],
     undefined, DISCUSSION_EXPLANATION),
   speakingTask("description", "EASY", SHORT,
-    "Erzählen Sie von einer schwierigen Situation in Ihrem Berufs- oder Studienalltag. Was ist passiert? Wie haben Sie reagiert? Was war das Ergebnis, und was haben Sie daraus gelernt?",
+    "Erzählen Sie von einer schwierigen Situation in Ihrem Berufs-, Studien- oder Schulalltag. Was ist passiert? Wie haben Sie reagiert? Was war das Ergebnis, und was haben Sie daraus gelernt?",
     [
       "Situation verständlich beschrieben",
       "eigene Reaktion und Vorgehen",
