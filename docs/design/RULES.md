@@ -1,6 +1,7 @@
 # Kademe design rules
 
-Source of truth: `docs/design/kademe-canvas.html` (exported from Claude Design).
+Layout source: `docs/design/kademe-canvas.html` (exported from Claude Design). Its
+colours, font and corners are the earlier look; for those, `src/app/globals.css` wins.
 Artboards are `<div class="dv-opt" id="Y1">` … `Y7` (manager) and `A8` … `A12`
 (candidate). To read one:
 
@@ -15,31 +16,42 @@ PY
 
 ## Non-negotiable rules
 
-1. **One accent colour** (`accent`, `#0E6A57`), used in exactly three places:
-   the primary CTA, the active state, and the timer. Card borders, background
-   blocks and secondary buttons are never accent-coloured.
-   Illustrations never use the accent: they draw with the five `--color-illus-*` tones only (HIRING-VISUAL-FLOW 2.2).
+Since 2026-10-14 the app uses the "soft" look (user decision): softer colours,
+a light gamified feel and a rounded font. The full token contract is the
+comment at the top of `src/app/globals.css`; the rules below follow it.
+
+1. **One brand green** (`accent`, `#157a5a`) for the primary action, the
+   current place (active nav, chosen card, focus ring) and progress. Five
+   pastel families (mint, sky, grape, sun, coral) mark categories such as the
+   exam sections, never a verdict: no screen a student sees while answering
+   colours anything as right or wrong. Warn (sun, amber allowed) and success
+   (mint) exist as semantic tones.
 2. **One filled button per screen.** Everything else is outline or text.
-3. **Status is a dot plus text, never a badge pill.** Colour only on active.
-4. **No "are you sure?" dialogs.** The action happens immediately and an 8
-   second undo strip appears. Also: browser `alert`/`confirm` are banned, they
-   block automation and read as amateur.
+3. **Status may be a soft pill** (`Badge`, `StatusDot` with `pill`) with a word
+   in it. Colour is never the only signal.
+4. **Undo over "are you sure?"** in the panel: the action happens and an 8
+   second undo strip appears. The exam is the exception: skipping a question
+   and finishing a section cannot be undone, so they ask once, in-app. Browser
+   `alert`/`confirm` stay banned: they block automation and read as amateur.
 5. **A disabled button always states its reason** next to it, not in a tooltip.
    Use `<DisabledReason>` from `@/components/ui/button`.
-6. **Shadows only** on sticky panels and modals.
+6. **Depth is a solid lip** under pressable things and cards (`shadow-lip`,
+   `shadow-lip-soft`, `shadow-card`); blurred shadows only on things that float
+   (sticky bars, menus, dialogs).
 7. **No dead ends.** Empty lists, zero-result filters and finished flows all
    point at a concrete next action.
-8. Font: Figtree, weights 400/500/600/700 (700 only for large numbers on new
-   screens, HIRING-UX 8.4). Radius 8 / 10 / 12 / 16 plus full; the pixels per
-   role are unchanged from HIRING-UX 8.3, only the Tailwind names follow
-   shadcn's roles so the copied parts need no edits: `rounded-md` 8 (small
-   items inside fields and menus), `rounded-lg` 10 (buttons, fields, menus,
-   popovers), `rounded-xl` 12 (cards, dialog), `rounded-2xl` 16 (the main
-   candidate card and sheet edges), `rounded-full` (chips, status dots,
-   avatars). `--radius` is 10px. `rounded-sm` stays 6px for the exam screens.
-   Existing exam screens still use literal px radii and move over screen by
-   screen. Spacing base 4px.
-9. Manager layouts are 1360px wide, candidate layouts 1000px. The candidate side
+8. Font: Nunito (rounded, latin + latin-ext), via `next/font` in
+   `src/app/layout.tsx`. Corners are round everywhere: 10 small items, 14
+   buttons and fields, 20 cards, 26 the large candidate cards, full for pills.
+   Some exam screens still use literal px radii; a bridge block at the end of
+   `globals.css` maps them onto the scale until they move over. Spacing base 4px.
+9. **The mascot** is the tallest logo step come alive ("canlı basamak"): it is
+   the only drawing with a face. It appears on empty screens, the candidate
+   welcome and finish screens, between sections and at the top of wizard
+   steps, never on a question screen. It speaks only in short encouraging
+   lines between sections and at the end, never about right or wrong. Badges
+   are for students only and never show a score or level.
+10. Manager layouts are 1360px wide, candidate layouts 1000px. The candidate side
    is deliberately narrower: one decision per screen (preparation and finish screens may use two regions, question screens keep one focus; HIRING-VISUAL-FLOW G10).
 
 ## Tokens
@@ -48,8 +60,9 @@ Defined in `src/app/globals.css` and nowhere else.
 
 - Kademe tokens under `@theme`, real Tailwind utilities: `bg-surface`,
   `bg-canvas`, `border-line`, `text-muted`, `text-ink`, `bg-accent`,
-  `text-accent`, `bg-accent-soft`, `text-danger`. There is no warn colour:
-  a warning is `StatusDot` tone "warn" (ink plus bold text).
+  `text-accent`, `bg-accent-soft`, `text-danger`, plus `success`, `warn` and
+  the pastel families (`mint`, `sky`, `grape`, `sun`, `coral`, each with
+  `-soft` and `-fill`).
 - shadcn variables under `:root` with the HIRING-UX 8.2 values, exposed by
   `@theme inline`: `bg-background`, `bg-card`, `bg-popover`, `bg-primary`,
   `bg-secondary`, `bg-muted-surface` (shadcn's background "muted"),
