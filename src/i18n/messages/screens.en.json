@@ -923,5 +923,34 @@
     "acceptedBadge": "Accepted as correct by the teacher (original score {pct}%)",
     "acceptedUndo": "Answer accepted as correct.",
     "undo": "Undo"
+  },
+  "resultReport": {
+    "button": "PDF report",
+    "buttonBlocked": "The report is available once the result is finalised.",
+    "back": "Back to the result",
+    "print": "Download as PDF",
+    "printHint": "In the window that opens, choose \"Save as PDF\" as the destination.",
+    "title": "Level report",
+    "student": "Student",
+    "exam": "Exam",
+    "examDate": "Exam date",
+    "overall": "Overall level",
+    "skills": "Skill levels",
+    "recommendedClass": "Recommended class",
+    "meaningTitle": "What does this level mean?",
+    "finalizedBy": "Confirmed by teacher",
+    "finalizedOn": "Confirmed on",
+    "verification": "Verification code",
+    "verificationHint": "This code is used to check that the report matches the school's records.",
+    "scaleNote": "Levels follow the Common European Framework of Reference (CEFR).",
+    "notFinal": "The report cannot be prepared until the result is finalised.",
+    "level": {
+      "A1": "Understands familiar everyday expressions and very simple sentences, and can say a little about themselves and their surroundings.",
+      "A2": "Understands frequently used expressions and can hold simple, short exchanges on familiar topics.",
+      "B1": "Follows the main point of everyday topics, copes with common situations such as travel and work, and writes short connected texts.",
+      "B2": "Understands the main points of complex texts, talks with native speakers comfortably and naturally, and writes detailed texts.",
+      "C1": "Understands long, demanding texts and implied meaning, expresses ideas fluently and flexibly, and produces well-organised, detailed writing.",
+      "C2": "Understands virtually everything heard or read with ease and conveys fine shades of meaning precisely."
+    }
   }
 }
