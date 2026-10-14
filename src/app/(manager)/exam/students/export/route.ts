@@ -7,7 +7,9 @@ import { can } from "@/lib/authorize";
 import { listStudents } from "@/server/panel";
 import { currentUser } from "@/server/session";
 import { resultsCsv, resultsFileName } from "./csv";
+import { loadIntegrityBriefs } from "@/components/panel/integrity/serious";
 import { loadStudentExtras } from "./extras";
+import { integrityCells } from "./integrity-columns";
 import { filterStudents, parseTab } from "./filter";
 
 export const dynamic = "force-dynamic";
@@ -34,7 +36,7 @@ export async function GET(req: NextRequest) {
   const locale = await managerLocale();
   const t = managerT(locale);
 
-  const [all, extras] = await Promise.all([listStudents(user.orgId), loadStudentExtras(user.orgId)]);
+  const [all, extras, briefs] = await Promise.all([listStudents(user.orgId), loadStudentExtras(user.orgId), loadIntegrityBriefs(user.orgId)]);
   const rows = filterStudents(all, tab, q, locale);
 
   const headers = [
@@ -52,7 +54,9 @@ export async function GET(req: NextRequest) {
     "colSpeaking",
     "colRecommended",
     "colResultState",
-  ].map((k) => t(`studentsExport.${k}` as "studentsExport.colName"));
+  ]
+    .map((k) => t(`studentsExport.${k}` as "studentsExport.colName"))
+    .concat([t("integrityFlags.colSerious"), t("integrityFlags.colOutcome")]);
 
   const body = rows.map((r) => {
     const x = extras.get(r.assessmentId);
@@ -71,6 +75,7 @@ export async function GET(req: NextRequest) {
       x?.skills.SPEAKING,
       x?.recommended,
       r.level ? t(r.levelFinal ? "studentsExport.resultFinal" : "studentsExport.resultDraft") : "",
+      ...integrityCells({ integrity: r.integrity, brief: briefs.get(r.assessmentId) }, (o) => t(`integrity.outcome${o}`), t("integrityFlags.outcomeNone")),
     ];
   });
 

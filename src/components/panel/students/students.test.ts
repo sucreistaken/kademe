@@ -14,8 +14,18 @@ describe("group counts", () => {
   ] as const;
 
   it("counts invited, started, finished and not started", () => {
-    expect(groupCounts(rows)).toEqual({ invited: 7, started: 5, finished: 4, notStarted: 2 });
-    expect(groupCounts([])).toEqual({ invited: 0, started: 0, finished: 0, notStarted: 0 });
+    expect(groupCounts(rows)).toEqual({ invited: 7, started: 5, finished: 4, notStarted: 2, seriousFinished: 0 });
+    expect(groupCounts([])).toEqual({ invited: 0, started: 0, finished: 0, notStarted: 0, seriousFinished: 0 });
+  });
+
+  it("counts finished students with serious flags, not running ones", () => {
+    const withFlags = [
+      { status: "IN_EXAM", level: null, seriousFlags: 2 },
+      { status: "AWAITING_REVIEW", level: null, seriousFlags: 1 },
+      { status: "FINAL", level: "B1", seriousFlags: 0 },
+      { status: "RELEASED", level: "B2", seriousFlags: 4 },
+    ] as const;
+    expect(groupCounts(withFlags).seriousFinished).toBe(2);
   });
 
   it("spreads finished students over A1..C2, every level present", () => {

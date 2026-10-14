@@ -9,6 +9,8 @@ export type GroupReportLabels = {
   started: string;
   finished: string;
   notStarted: string;
+  /** "Finished with serious flags". */
+  serious: string;
   levels: string;
   levelsNone: string;
   /** "{level} seviyesinde {n} öğrenci", already filled per level. */
@@ -26,6 +28,7 @@ export function GroupReport({ rows, labels }: { rows: readonly GroupRow[]; label
     [labels.started, c.started],
     [labels.finished, c.finished],
     [labels.notStarted, c.notStarted],
+    [labels.serious, c.seriousFinished],
   ];
   return (
     <Card className="mt-6 px-5 py-4" data-testid="group-report">
