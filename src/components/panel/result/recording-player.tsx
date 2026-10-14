@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Maximize, Maximize2, Minimize, Minimize2 } from "lucide-react";
 import { useMT } from "@/i18n/manager-client";
 import { cn } from "@/lib/cn";
 import type { RecordingKind } from "@/lib/proctor/recording-rules";
@@ -229,6 +230,21 @@ export function ExamRecordingPlayer({ attemptId, segments, window: span, section
     return () => document.removeEventListener("click", onClick);
   }, [seek]);
 
+  // Which pane is shown large (the other stays small beside it), and whether the
+  // player fills the screen. Watching a face or a screen needs more than a thumbnail.
+  const [focus, setFocus] = useState<RecordingKind | null>(null);
+  const [full, setFull] = useState(false);
+  useEffect(() => {
+    const onChange = () => setFull(document.fullscreenElement === root.current);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+  const toggleFull = () => {
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else void root.current?.requestFullscreen?.();
+  };
+  const focused = kinds.length === 2 ? focus : null;
+
   const width = Math.max(1, bounds.end - bounds.start);
   const pct = (ms: number) => `${Math.max(0, Math.min(100, ((ms - bounds.start) / width) * 100))}%`;
   const scrub = (clientX: number, el: HTMLElement) => {
@@ -237,7 +253,12 @@ export function ExamRecordingPlayer({ attemptId, segments, window: span, section
   };
 
   return (
-    <section ref={root} id="exam-recording" aria-label={t("title")} className="scroll-mt-24 rounded-[14px] border border-line bg-surface p-4">
+    <section
+      ref={root}
+      id="exam-recording"
+      aria-label={t("title")}
+      className="scroll-mt-24 rounded-[14px] border border-line bg-surface p-4 [&:fullscreen]:overflow-auto [&:fullscreen]:rounded-none [&:fullscreen]:p-6"
+    >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-[14px] font-semibold text-ink">{t("title")}</h2>
         <p className="tnum text-[12.5px] text-muted">
@@ -246,12 +267,23 @@ export function ExamRecordingPlayer({ attemptId, segments, window: span, section
         </p>
       </div>
 
-      <div className={cn("mt-3 grid gap-3", kinds.length === 2 ? "md:grid-cols-[2fr_3fr]" : "max-w-[720px]")}>
+      <div
+        className={cn(
+          "mt-3 grid gap-3",
+          kinds.length !== 2 ? (full ? "" : "max-w-[720px]") : focused ? "md:grid-cols-[1fr_220px]" : "md:grid-cols-[2fr_3fr]",
+        )}
+      >
         {kinds.map((kind) => {
           const pane = panes[kind];
+          const large = focused === kind;
+          const small = focused !== null && !large;
           return (
-            <figure key={kind} className="m-0">
-              <div className="relative aspect-video overflow-hidden rounded-[10px] bg-panel">
+            <figure key={kind} className={cn("m-0", large && "md:order-first", small && "md:order-last")}>
+              <div
+                className="group/pane relative aspect-video cursor-zoom-in overflow-hidden rounded-[10px] bg-panel data-[large=true]:cursor-zoom-out"
+                data-large={large}
+                onClick={() => setFocus(large ? null : kind)}
+              >
                 {[0, 1].map((slot) => (
                   <video
                     key={slot}
@@ -271,6 +303,20 @@ export function ExamRecordingPlayer({ attemptId, segments, window: span, section
                   </div>
                 ) : pane.visible === null || pane.state === "wait" ? (
                   <div className="absolute bottom-2 right-2 rounded-[6px] bg-black/50 px-2 py-0.5 text-[11.5px] text-white/85">{t("loading")}</div>
+                ) : null}
+                {kinds.length === 2 ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setFocus(large ? null : kind);
+                    }}
+                    aria-label={large ? t("shrink") : t("enlarge")}
+                    title={large ? t("shrink") : t("enlarge")}
+                    className="absolute right-2 top-2 grid size-8 place-items-center rounded-[8px] bg-black/55 text-white opacity-80 transition-opacity hover:opacity-100 focus-visible:opacity-100 group-hover/pane:opacity-100"
+                  >
+                    {large ? <Minimize2 className="size-4" aria-hidden /> : <Maximize2 className="size-4" aria-hidden />}
+                  </button>
                 ) : null}
               </div>
               <figcaption className="mt-1 text-[12px] text-muted">{t(kind === "CAMERA" ? "camera" : "screen")}</figcaption>
@@ -312,6 +358,15 @@ export function ExamRecordingPlayer({ attemptId, segments, window: span, section
               {s}×
             </button>
           ))}
+          <button
+            type="button"
+            onClick={toggleFull}
+            aria-pressed={full}
+            className="flex h-8 items-center gap-1.5 rounded-[8px] border border-line px-2.5 text-[12.5px] font-medium text-ink-2 hover:bg-canvas"
+          >
+            {full ? <Minimize className="size-3.5" aria-hidden /> : <Maximize className="size-3.5" aria-hidden />}
+            {full ? t("exitFullscreen") : t("fullscreen")}
+          </button>
           {kinds.includes("CAMERA") ? (
             <button
               type="button"
