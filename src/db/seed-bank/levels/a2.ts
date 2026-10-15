@@ -192,6 +192,28 @@ const grammarCTest = cTest(LEVEL, "MID", {
   variants: { 10: ["nach"], 14: ["dinnen"] },
 });
 
+// Moving into a new flat with a friend.
+const grammarCTest2 = cTest(LEVEL, "MID", {
+  first: "Letzten Monat bin ich mit meiner Freundin Sofia in eine neue Wohnung gezogen.",
+  body:
+    "Die Wohnung hat drei Zimmer, eine kleine Küche und einen Balkon. " +
+    "Beim Umzug hat uns mein Bruder geholfen, weil die Möbel sehr schwer waren. " +
+    "Am Abend waren wir ziemlich müde, aber wir haben noch zusammen auf dem Balkon gegessen.",
+  last: "Jetzt fühlen wir uns schon wie zu Hause, und bald wollen wir unsere Freunde zu einem kleinen Fest einladen.",
+});
+
+// A day trip by train that went wrong.
+const grammarCTest3 = cTest(LEVEL, "MID", {
+  first: "Am Sonntag wollten Hao und seine Schwester Mei mit dem Zug ans Meer fahren, denn das Wetter sollte schön werden.",
+  body:
+    "Sie sind früh aufgestanden und pünktlich zum Bahnhof gegangen. Leider hatte ihr Zug eine Stunde Verspätung. " +
+    "Unterwegs musste er zweimal lange halten, und die Fahrt hat vier Stunden gedauert. " +
+    "Als sie endlich am Meer waren, hat es plötzlich angefangen zu regnen.",
+  last: "Trotzdem haben sie in einem kleinen Café Kuchen gegessen und viel gelacht.",
+  // g4 "Bah...": "zum Bahnsteig gegangen" is as correct as "zum Bahnhof gegangen".
+  variants: { 4: ["nsteig"] },
+});
+
 // ================================================================ READING
 
 type RSkill = "gist" | "detail" | "inference" | "vocabulary" | "structure";
@@ -885,7 +907,7 @@ export const A2_PARTS: {
   writing: SeedBankPart;
   speaking: SeedBankPart;
 } = {
-  grammar: { stimuli: [], items: [...grammarItems, grammarCTest] },
+  grammar: { stimuli: [], items: [...grammarItems, grammarCTest, grammarCTest2, grammarCTest3] },
   reading: { stimuli: readingStimuli, items: readingItems },
   listening: { stimuli: listeningStimuli, items: listeningItems },
   writing: { stimuli: [], items: writingItems },

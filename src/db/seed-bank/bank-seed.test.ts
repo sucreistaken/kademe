@@ -41,16 +41,18 @@ describe("starter bank coverage", () => {
     it(`${level}: speaking has at least 4 prompts`, () => {
       expect(count("SPEAKING", level)).toBeGreaterThanOrEqual(4);
     });
-    it(`${level}: grammar has one C-test with 15 to 20 typed gaps`, () => {
+    it(`${level}: grammar has three C-tests with 15 to 20 typed gaps and distinct texts`, () => {
       const ctests = SEED_BANK.items.filter((i) => i.level === level && i.skillTag === "grammar.ctest");
-      expect(ctests).toHaveLength(1);
-      const [c] = ctests;
-      expect(c.section).toBe("GRAMMAR");
-      expect(c.type).toBe("GAP_FILL");
-      if (c.content.kind !== "GAP") throw new Error("not a gap item");
-      expect(c.content.gaps.length).toBeGreaterThanOrEqual(15);
-      expect(c.content.gaps.length).toBeLessThanOrEqual(20);
-      expect(c.content.gaps.every((g) => !g.choices)).toBe(true);
+      expect(ctests).toHaveLength(3);
+      expect(new Set(ctests.map((c) => c.prompt)).size).toBe(3);
+      for (const c of ctests) {
+        expect(c.section).toBe("GRAMMAR");
+        expect(c.type).toBe("GAP_FILL");
+        if (c.content.kind !== "GAP") throw new Error("not a gap item");
+        expect(c.content.gaps.length).toBeGreaterThanOrEqual(15);
+        expect(c.content.gaps.length).toBeLessThanOrEqual(20);
+        expect(c.content.gaps.every((g) => !g.choices)).toBe(true);
+      }
     });
   }
 });

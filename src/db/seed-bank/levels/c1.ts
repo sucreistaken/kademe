@@ -12,7 +12,7 @@ import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 /**
  * C1 starter bank (v2), written against docs/EXAM-BANK-RESEARCH.md, section C1.
  *
- * - Grammar: 24 items (8 EASY, 8 MID, 8 HARD) over the C1 inventory plus one C-test.
+ * - Grammar: 24 items (8 EASY, 8 MID, 8 HARD) over the C1 inventory plus three C-tests.
  * - Reading: 4 texts with 4 items each (word-level cloze, dense magazine article,
  *   commentary with sentence insertion, four positions to match).
  * - Listening: 3 clips with 4 items each (expert interview, lecture, discussion
@@ -232,6 +232,28 @@ const grammarItems: SeedItem[] = [
       "Führungskräfte müssen deshalb lernen, Ergebnisse statt bloßer Anwesenheit zu bewerten, und genau daran scheitern bislang viele Versuche.",
     // g11 selbst/selber are equally correct here.
     variants: { 11: ["ber"] },
+  }),
+  // Why teenagers sleep too little.
+  cTest(LEVEL, "MID", {
+    first: "Dass Jugendliche morgens kaum aus dem Bett kommen, wird häufig als Bequemlichkeit missverstanden.",
+    body:
+      "Tatsächlich verschiebt sich während der Pubertät die innere Uhr, sodass das Schlafhormon erst deutlich später am Abend ausgeschüttet wird. " +
+      "Hinzu kommt, dass viele Jugendliche bis spät in die Nacht auf leuchtende Bildschirme blicken, was das Einschlafen zusätzlich erschwert.",
+    last:
+      "Einige Schulen haben daraus bereits Konsequenzen gezogen und den Unterrichtsbeginn um eine Stunde nach hinten verlegt, mit spürbar positiven Folgen für Konzentration und Stimmung.",
+  }),
+  // Urban gardens.
+  cTest(LEVEL, "MID", {
+    first:
+      "Auf brachliegenden Flächen, Dächern und in Hinterhöfen entstehen in vielen Großstädten gemeinschaftlich bewirtschaftete Gärten.",
+    body:
+      "Was zunächst als Freizeitbeschäftigung einiger Idealisten belächelt wurde, hat sich mittlerweile zu einer ernst zu nehmenden Bewegung entwickelt. " +
+      "Die Gärten verbessern nicht nur das Mikroklima, sondern bieten auch Bienen und anderen Insekten einen Lebensraum. " +
+      "Zudem fördern sie den Austausch unter Nachbarn.",
+    last:
+      "Ob die Projekte langfristig bestehen können, hängt allerdings oft davon ab, ob die Städte die Flächen dauerhaft zur Verfügung stellen.",
+    // g3 "Ideal...": Idealistinnen is as correct as Idealisten.
+    variants: { 3: ["istinnen"] },
   }),
 ];
 

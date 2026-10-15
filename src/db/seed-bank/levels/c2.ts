@@ -13,7 +13,7 @@ import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
  * C2 starter bank (Goethe-Zertifikat C2: Großes Deutsches Sprachdiplom as the
  * reference, see docs/EXAM-BANK-RESEARCH.md).
  *
- * - Grammar: 24 items (8 EASY, 8 MID, 8 HARD) plus one C-test. Single choice
+ * - Grammar: 24 items (8 EASY, 8 MID, 8 HARD) plus three C-tests. Single choice
  *   and gap choices have four options, as at C1 and C2 in Goethe.
  * - Reading: four texts (commentary, essay with sections, report with removed
  *   paragraphs, four job ads), four items each.
@@ -217,6 +217,27 @@ const grammarItems: SeedItem[] = [
     // Equally correct completions: g2 rasante/rasende, g3 neuester/neuerer/neuartiger,
     // g7 Unternehmer, g13 Kritikerinnen.
     variants: { 2: ["ante", "ende"], 3: ["uester", "uerer", "uartiger"], 7: ["nehmer"], 13: ["ikerinnen"] },
+  }),
+  // How memory distorts what we remember.
+  cTest(LEVEL, "MID", {
+    first: "Gemeinhin behandeln wir unsere Erinnerungen so, als wären sie getreue Abbilder des tatsächlich Erlebten.",
+    body:
+      "Die Forschung legt jedoch nahe, dass jedes Abrufen einer Erinnerung zugleich deren Umgestaltung bedeutet. " +
+      "Spätere Erfahrungen, Erwartungen und Stimmungen fließen unbemerkt ein, sodass sich das Gedächtnis fortwährend neu schreibt. " +
+      "Besonders anfällig erweist es sich gegenüber suggestiven Nachfragen.",
+    last: "Die Gewissheit, mit der jemand von einem Ereignis berichtet, verbürgt demnach keineswegs, dass es sich auch so zugetragen hat.",
+  }),
+  // Dialects and identity.
+  cTest(LEVEL, "MID", {
+    first: "Lange galten Dialekte als Ausdruck mangelnder Bildung, den es in der Schule möglichst früh abzulegen gelte.",
+    body:
+      "Inzwischen hat sich dieses Urteil grundlegend gewandelt, nicht zuletzt weil die Sprachwissenschaft nachgewiesen hat, " +
+      "dass Mundarten eigenständige Systeme mit einer eigenen Grammatik darstellen. " +
+      "Für viele Sprecher verkörpert der Dialekt überdies ein Stück Heimat, auf das sie ungern verzichten würden.",
+    last: "Gleichwohl wechseln die meisten mühelos zwischen Mundart und Standardsprache, je nachdem, was die Situation erfordert.",
+    // g3 "grund...": grundsätzlich is as correct as grundlegend.
+    // g13 "Spre...": Sprecherinnen and Sprechende are as correct as Sprecher.
+    variants: { 3: ["sätzlich"], 13: ["cherinnen", "chende"] },
   }),
 ];
 

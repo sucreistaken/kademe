@@ -13,8 +13,8 @@ import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
  * A1 starter bank (v2), written against docs/EXAM-BANK-RESEARCH.md, section A1
  * (Goethe-Zertifikat A1: Start Deutsch 1).
  *
- * - Grammar: 24 items over the A1 inventory (8 EASY, 8 MID, 8 HARD) plus one
- *   C-test.
+ * - Grammar: 24 items over the A1 inventory (8 EASY, 8 MID, 8 HARD) plus three
+ *   C-tests.
  * - Reading: 4 short texts (note/email, job ads, door sign, SMS), 4 items each.
  * - Listening: 3 clips (station announcement, dialogue at work, answerphone
  *   message), 4 items each.
@@ -201,6 +201,24 @@ const grammarItems: SeedItem[] = [
     last: "Am Abend kocht sie gern und liest ein Buch.",
     // "isst etwas Brot" is just as correct as "isst ein Brot".
     variants: { 8: ["twas"] },
+  }),
+  // A family weekend at the lake.
+  cTest(LEVEL, "MID", {
+    first: "Am Samstag fährt Familie Okafor mit dem Auto an einen See.",
+    body:
+      "Das Wetter ist sehr schön, und die Sonne scheint. " +
+      "Die Kinder schwimmen im Wasser, und der Vater spielt mit dem Hund. Die Mutter liest ein Buch. " +
+      "Am Mittag essen alle zusammen Käse, Brot und Obst. Später machen sie einen Spaziergang.",
+    last: "Am Abend fahren alle müde, aber glücklich nach Hause.",
+  }),
+  // Shopping at the market for a birthday.
+  cTest(LEVEL, "MID", {
+    first: "Morgen hat Amira Geburtstag, und ihr Bruder Tarek kauft heute auf dem Markt ein.",
+    body:
+      "Er möchte für seine Schwester einen Obstsalat machen. Zuerst kauft er Äpfel, Bananen und Erdbeeren. " +
+      "Alles ist heute sehr frisch und nicht teuer. Für den Tisch sucht er noch Blumen. " +
+      "Am Ende findet er sehr schöne gelbe Tulpen.",
+    last: "Jetzt hat Tarek alles und geht schnell nach Hause.",
   }),
 ];
 

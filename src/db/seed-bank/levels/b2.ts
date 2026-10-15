@@ -11,7 +11,7 @@ import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 
 /**
  * B2 starter bank, written against docs/EXAM-BANK-RESEARCH.md (B2 section):
- * - Grammar: 24 items (9 EASY, 9 MID, 6 HARD) over the B2 inventory, plus one C-test.
+ * - Grammar: 24 items (9 EASY, 9 MID, 6 HARD) over the B2 inventory, plus three C-tests.
  * - Reading: 4 texts with 4 items each (opinion set, article, sentence-gap text, rules).
  * - Listening: 3 clips with 4 items each (expert interview, short lecture, everyday conversation).
  * - Writing: 6 prompts (forum opinion about 150 words, semi-formal/formal message about 100 words).
@@ -227,7 +227,29 @@ const grammarCTest = cTest(LEVEL, "MID", {
   variants: { 2: ["ies"], 3: ["zeit", "raum", "heiten"], 6: ["ber"], 14: ["rkt"], 19: ["er"] },
 });
 
-const grammar: SeedBankPart = { stimuli: [], items: [grammarCTest, ...grammarItems] };
+// Friendship and social media.
+const grammarCTest2 = cTest(LEVEL, "MID", {
+  first:
+    "Für viele Jugendliche gehören soziale Medien heute ganz selbstverständlich zum Alltag, vom ersten Blick aufs Handy am Morgen bis spät in die Nacht.",
+  body:
+    "Sie ermöglichen es, mit Freunden in Kontakt zu bleiben, auch wenn man sich selten sieht. " +
+    "Allerdings kann eine kurze Nachricht kein echtes Gespräch ersetzen. " +
+    "Wer ständig das eigene Leben mit den scheinbar perfekten Bildern anderer vergleicht, fühlt sich zudem oft unzufrieden.",
+  last: "Für echte Freundschaften bleiben gemeinsame Erlebnisse deshalb auch im digitalen Zeitalter unverzichtbar.",
+});
+
+// Volunteering in the neighbourhood.
+const grammarCTest3 = cTest(LEVEL, "MID", {
+  first: "In vielen Stadtvierteln engagieren sich Menschen ehrenamtlich für ihre Nachbarschaft.",
+  body:
+    "Sie helfen älteren Menschen beim Einkaufen oder kümmern sich um den Spielplatz. " +
+    "Obwohl sie dafür kein Geld bekommen, empfinden die meisten ihren Einsatz als Bereicherung. " +
+    "Wer sich für andere einsetzt, gewinnt nämlich nicht nur neue Kontakte, sondern auch mehr Selbstvertrauen.",
+  last:
+    "Gerade für Jugendliche ist ein Ehrenamt daher eine gute Gelegenheit, Verantwortung zu übernehmen und herauszufinden, was ihnen wirklich wichtig ist.",
+});
+
+const grammar: SeedBankPart = { stimuli: [], items: [grammarCTest, grammarCTest2, grammarCTest3, ...grammarItems] };
 
 // ================================================================ READING
 

@@ -12,7 +12,7 @@ import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 /**
  * B1 starter bank, written against docs/EXAM-BANK-RESEARCH.md (section B1).
  *
- * Grammar: 24 items (8 EASY, 10 MID, 6 HARD) plus one C-test. Reading: 4 texts
+ * Grammar: 24 items (8 EASY, 10 MID, 6 HARD) plus three C-tests. Reading: 4 texts
  * with 4 items each. Listening: 3 clips with 4 items each. Writing and
  * speaking: 6 prompts each. Single-choice items have 3 options (Goethe B1
  * format); the correct option is given first and placed at `pos`, so the key
@@ -216,6 +216,26 @@ const grammarItems: SeedItem[] = [
     last: "Eine App ist dagegen oft billiger, und man kann sie jederzeit benutzen, zum Beispiel morgens im Bus auf dem Weg zur Arbeit.",
     // g8: "an dem Handy" is also possible; g15: gender-inclusive forms are equally correct.
     variants: { 8: ["n"], 15: ["ehmerinnen", "ehmenden"] },
+  }),
+  // Joining a sports club.
+  cTest(LEVEL, "MID", {
+    first: "Seit einem halben Jahr bin ich Mitglied in einem Volleyballverein in meiner Stadt.",
+    body:
+      "Früher war ich eher unsportlich und habe meine Freizeit am liebsten zu Hause verbracht. " +
+      "Dann hat mich eines Tages eine Freundin zu einem Probetraining eingeladen. " +
+      "Am Anfang war ich ziemlich nervös, weil alle anderen viel besser spielten als ich.",
+    last: "Doch die Gruppe hat mich sofort freundlich aufgenommen, und inzwischen freue ich mich jede Woche auf das Training.",
+  }),
+  // Cycling in the city.
+  cTest(LEVEL, "MID", {
+    first: "In vielen Städten fahren immer mehr Menschen mit dem Fahrrad zur Schule, zur Arbeit oder zum Einkaufen.",
+    body:
+      "Das Radfahren ist günstig, gesund und gut für die Umwelt. " +
+      "Außerdem muss man keinen Parkplatz suchen und kommt oft schneller ans Ziel. " +
+      "Trotzdem fühlen sich viele Menschen im Verkehr nicht sicher, denn in manchen Vierteln gibt es keine Radwege.",
+    last: "Deshalb wünschen sich viele Bürgerinnen und Bürger, dass ihre Stadt mehr Geld für breite und sichere Radwege ausgibt.",
+    // g10 "schn...": "kommt oft schnell ans Ziel" is as correct as "schneller".
+    variants: { 10: ["ell"] },
   }),
 ];
 
