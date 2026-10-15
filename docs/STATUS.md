@@ -162,7 +162,21 @@ Spec `docs/superpowers/specs/2026-10-06-advanced-ai-create-design.md`, plan
   kutusu taslağı sunucuda güncelliyor ama kartlar yenilenmeden eski kalıyordu (`4705582`); toplam 100 iken "100 olmalı"
   yazıyordu (`488f3fe`).
 
-## onSET düzeninde yerleştirme (2026-10-15, `feat/onset-placement`, canlıda değil)
+## Canlıya çıkış: onSET yerleştirme ve davet iyileştirmeleri (2026-10-16 gece, kullanıcı onayıyla: "canlıya alabilir misin")
+
+- main `5a4f97e` -> `1d8d4c6` (17 commit, fast-forward): onSET düzeninde yerleştirme (aşağıdaki bölüm), tek ekrana sığan
+  hoş geldin ekranı, davet listesi (normal yazı tipi, küçük harfle yazılan adlara büyük harf, sade metinler), seviye
+  doğrulama davetinde "Zorluk: Daha kolay / Normal / Daha zor" (seçim yalnız o davetteki öğrencilerin sınav kopyasına
+  yazılır), Campus German markası (başka oturum, `a29e59b`). Göç ve paket değişikliği yok.
+- Sıra: devam eden bölüm 0; yedek `/root/kademe-backups/kademe-onset-20261015-2103.dump` (VM saati UTC, 519 KB);
+  servis ve 5 zamanlayıcı durduruldu; `git pull`, `pnpm install`, `pnpm run db:migrate` (yeni göç yok); build "Compiled
+  successfully"; `.next/cache` silindi; servis active, 5 zamanlayıcı adlarıyla başlatıldı; `bank:topup --production`
+  683 -> 695 soru (+12 C-test, onaylı başlangıç 390 -> 402, metin/kayıt değişmedi); `/login` 200 (127.0.0.1 ve https).
+- Doğrulanmadı: canlıda tarayıcıyla giriş, yerleştirme sınavının ve zorluk seçeneğinin canlıda denenmesi.
+- Geri dönüş: servis ve zamanlayıcıları durdur, bu yedeği yükle, `git checkout 5a4f97e`, build, başlat. Eklenen 12 C-test
+  yalnız yeni satır; yedeğe dönmek onları da kaldırır.
+
+## onSET düzeninde yerleştirme (2026-10-15, `feat/onset-placement`, canlıda 2026-10-16)
 
 Spec `docs/superpowers/specs/2026-10-15-onset-placement-design.md`. Ayrıntı ve model notları `docs/EXAM-ENGINE.md`.
 
