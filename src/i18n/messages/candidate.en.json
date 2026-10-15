@@ -399,6 +399,8 @@
     "legendFlagged": "Flagged",
     "ruleBack": "Until the section ends you can move back and forth between questions, change your answers and flag questions you are unsure about.",
     "ruleReview": "You finish the section from the review screen at the end. If time runs out, every saved answer counts.",
+    "ruleGRAMMARCTest": "{n} short texts, from easier to harder. In each text the second half of some words is missing; type only the missing letters. About {minutes} minutes per text.",
+    "texts": "{n} texts",
     "ruleGRAMMARFixed": "Choose an option or fill the gaps in each question. Questions go from easier to harder.",
     "partialHint": "{filled} of {total} parts of this question are filled in.",
     "saveFailed": "Your latest change is not saved yet. It is kept in this tab and being sent again.",

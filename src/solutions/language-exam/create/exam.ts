@@ -96,7 +96,7 @@ const COVERAGE_NOTE = text(
   "Soru bankasında yeterli onaylı soru yok, sınav taslak olarak kaydedildi. Eksik soruları üretip onayladıktan sonra sınav sayfasından yayınla.",
   "The question bank lacks approved questions, so the exam was saved as a draft. Generate and approve the missing questions, then publish it from the exam page.",
 );
-const C_TEST_NOTE = text("Açılış C-testini AI üretmez; soru bankasından ekle.", "AI does not write the opening C-test; add one in the question bank.");
+const C_TEST_NOTE = text("C-testleri AI üretmez; soru bankasından ekle.", "AI does not write C-tests; add them in the question bank.");
 const gapLabel = (g: CoverageGap) =>
   text(`Eksik soruları üret: ${g.level} ${SECTION_LABEL[g.section].tr}`, `Generate the missing questions: ${g.level} ${SECTION_LABEL[g.section].en}`);
 

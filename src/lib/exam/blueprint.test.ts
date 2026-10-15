@@ -5,7 +5,9 @@ import {
   adaptivePlacementBlueprint,
   bankCoverage,
   blueprintConfigSchema,
+  cTestLevelsOf,
   defaultBlueprint,
+  isCTestOnly,
   nextAdaptiveItems,
   planFixedSection,
   section,
@@ -15,6 +17,7 @@ import {
   sampleFixedForm,
   type BankCount,
   type BankItem,
+  type SectionConfig,
 } from "./blueprint";
 import { thetaForLevel } from "./cefr";
 import { isNavigableConfig } from "./navigation";
@@ -240,6 +243,77 @@ describe("C-test opening", () => {
     const ids = planFixedSection(reading, pool, "PLACEMENT", null, 0, mulberry32(2));
     expect(ids.filter(isC)).toEqual([]);
   });
+
+  const listed = (levels: Cefr[], over: Partial<SectionConfig> = {}) =>
+    section("GRAMMAR", 30, { distribution: { kind: "ABSOLUTE", perLevel: { A1: 0, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0 } }, cTestLevels: levels, ...over });
+
+  it("cTestLevels: schema accepts a GRAMMAR list, rejects repeats and other sections", () => {
+    const cfg = defaultBlueprint("PLACEMENT");
+    const withLevels = (s: Partial<SectionConfig>, target = "GRAMMAR") =>
+      ({ ...cfg, sections: cfg.sections.map((x) => (x.section === target ? { ...x, ...s } : x)) });
+    expect(blueprintConfigSchema.safeParse(withLevels({ cTestLevels: ["A1", "B1"] })).success).toBe(true);
+    expect(blueprintConfigSchema.safeParse(withLevels({ cTestLevels: ["B1", "B1"] })).success).toBe(false);
+    expect(blueprintConfigSchema.safeParse(withLevels({ cTestLevels: [] })).success).toBe(false);
+    expect(blueprintConfigSchema.safeParse(withLevels({ cTestLevels: ["B1"] }, "READING")).success).toBe(false);
+  });
+
+  it("cTestLevelsOf: the list in CEFR order; else the anchor when cTest is on; else none", () => {
+    expect(cTestLevelsOf(listed(["C2", "A1", "B1"]), "PLACEMENT", null)).toEqual(["A1", "B1", "C2"]);
+    expect(cTestLevelsOf(listed(["A2"], { cTest: true }), "LEVEL_VERIFICATION", "C1")).toEqual(["A2"]);
+    expect(cTestLevelsOf(fixed(true), "LEVEL_VERIFICATION", "C1")).toEqual(["C1"]);
+    expect(cTestLevelsOf(fixed(false), "PLACEMENT", null)).toEqual([]);
+    const reading = section("READING", 12, { cTestLevels: ["B1"] });
+    expect(cTestLevelsOf(reading, "PLACEMENT", null)).toEqual([]);
+  });
+
+  it("fixed form with cTestLevels: one C-test per level, easy to hard, then the form", () => {
+    const all = ["A1", "A2", "B1", "B2", "C1", "C2"] as Cefr[];
+    const ids = planFixedSection(listed(all), pool, "PLACEMENT", null, 0, mulberry32(7));
+    expect(ids).toEqual(all.map((l) => `ctest-${l}`));
+    const mixed = planFixedSection(listed(["B1", "A2"], { distribution: { kind: "RELATIVE", below: 3, at: 6, above: 3 } }), pool, "PLACEMENT", null, 0, mulberry32(7));
+    expect(mixed.slice(0, 2)).toEqual(["ctest-A2", "ctest-B1"]);
+    expect(mixed.slice(2).filter(isC)).toEqual([]);
+    expect(mixed.length).toBe(14);
+  });
+
+  it("fixed form skips a level with no C-test in the bank", () => {
+    const noB2 = pool.filter((p) => p.id !== "ctest-B2");
+    expect(planFixedSection(listed(["B1", "B2", "C1"]), noB2, "PLACEMENT", null, 0, mulberry32(3))).toEqual(["ctest-B1", "ctest-C1"]);
+  });
+
+  it("adaptive with cTestLevels: the listed C-tests first, in order, then never another", () => {
+    const s = listed(["A2", "B1", "B2"], { adaptive: true, minItems: 10, maxItems: 16, targetSe: 0.45 });
+    for (let seed = 1; seed <= 10; seed++) {
+      const ids = runAdaptive(s, "PLACEMENT", null, seed);
+      expect(ids.slice(0, 3)).toEqual(["ctest-A2", "ctest-B1", "ctest-B2"]);
+      expect(ids.slice(3).filter(isC)).toEqual([]);
+    }
+  });
+
+  it("adaptive skips a level with no C-test in the bank", () => {
+    const noB1 = pool.filter((p) => p.id !== "ctest-B1");
+    const s = listed(["A2", "B1", "B2"], { adaptive: true, minItems: 10, maxItems: 16, targetSe: 0.45 });
+    const cfg = adaptiveConfigFor(s, "PLACEMENT", null);
+    const rng = mulberry32(1);
+    const responses: ReplayResponse[] = [];
+    const served: string[] = [];
+    for (let k = 0; k < 3; k++) {
+      const next = nextAdaptiveItems(s, "PLACEMENT", null, replay(cfg, responses), noB1, cfg, rng)!;
+      const id = next.itemIds[0];
+      served.push(id);
+      const item = noB1.find((p) => p.id === id)!;
+      responses.push({ itemId: id, b: item.b, skillTag: item.skillTag, stimulusId: null, score: 0.5 });
+    }
+    expect(served.slice(0, 2)).toEqual(["ctest-A2", "ctest-B2"]);
+    expect(isC(served[2])).toBe(false);
+  });
+
+  it("isCTestOnly: a fixed GRAMMAR section with C-tests and no ordinary items", () => {
+    expect(isCTestOnly(listed(["B1"]), "PLACEMENT", null, 0)).toBe(true);
+    expect(isCTestOnly(listed(["B1"], { distribution: { kind: "RELATIVE", below: 0, at: 1, above: 0 } }), "PLACEMENT", null, 0)).toBe(false);
+    expect(isCTestOnly(listed(["B1"], { adaptive: true }), "PLACEMENT", null, 0)).toBe(false);
+    expect(isCTestOnly(fixed(false), "PLACEMENT", null, 0)).toBe(false);
+  });
 });
 
 describe("C-test coverage", () => {
@@ -279,6 +353,16 @@ describe("C-test coverage", () => {
     // Verification B1 needs 6 at B1; 9 items of which 1 C-test leaves 8.
     const res = bankCoverage(thin, defaultBlueprint("LEVEL_VERIFICATION"), "LEVEL_VERIFICATION", "B1");
     expect(res.rows.find((r) => r.section === "GRAMMAR" && r.level === "B1" && !r.cTest)?.available).toBe(8);
+  });
+
+  it("cTestLevels: one coverage row per listed level", () => {
+    const cfg = defaultBlueprint("PLACEMENT");
+    cfg.sections = cfg.sections.map((s) => (s.section === "GRAMMAR" ? { ...s, cTestLevels: ["A2", "B1", "B2"] as Cefr[] } : s));
+    expect(cRows(bankCoverage(full, cfg, "PLACEMENT", null).rows).map((r) => r.level)).toEqual(["A2", "B1", "B2"]);
+    const noB1 = full.map((c) => (c.section === "GRAMMAR" && c.level === "B1" ? { ...c, cTests: 0 } : c));
+    const res = bankCoverage(noB1, cfg, "PLACEMENT", null);
+    expect(res.ok).toBe(false);
+    expect(cRows(res.rows).filter((r) => !r.ok).map((r) => r.level)).toEqual(["B1"]);
   });
 });
 

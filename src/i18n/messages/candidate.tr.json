@@ -399,6 +399,8 @@
     "legendFlagged": "İşaretli",
     "ruleBack": "Bölüm bitene kadar sorular arasında ileri geri gidebilir, cevaplarınızı değiştirebilir ve emin olmadığınız soruları işaretleyebilirsiniz.",
     "ruleReview": "Bölümü son adımdaki gözden geçirme ekranından bitirirsiniz. Süre dolarsa kaydedilmiş bütün cevaplarınız sayılır.",
+    "ruleGRAMMARCTest": "{n} kısa metin, kolaydan zora. Her metinde bazı kelimelerin ikinci yarısı eksik; yalnız eksik harfleri yazın. Metin başına yaklaşık {minutes} dakika.",
+    "texts": "{n} metin",
     "ruleGRAMMARFixed": "Her soruda bir seçenek işaretleyin ya da boşlukları doldurun. Sorular kolaydan zora doğru sıralıdır.",
     "partialHint": "Bu soruda {total} yerden {filled} tanesi dolu.",
     "saveFailed": "Son değişikliğiniz henüz kaydedilmedi. Bu sekmede tutuluyor ve yeniden gönderiliyor.",

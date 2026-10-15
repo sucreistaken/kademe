@@ -14,9 +14,10 @@ import {
 import { eap, mulberry32, observationOf, poolLeft, replay, replayResponseOf, shouldStop, type Observation, type Posterior } from "@/lib/exam/adaptive";
 import {
   adaptiveConfigFor,
-  cTestLevel,
+  cTestLevelsOf,
   enabledSections,
   estimatedMinutes,
+  isCTestOnly,
   nextAdaptiveItems,
   planFixedSection,
   productiveTaskLevels,
@@ -156,6 +157,8 @@ export type SectionSummary = {
   itemsLabel: string;
   /** The student can go back, flag items and review before finishing this section. */
   navigable: boolean;
+  /** GRAMMAR made only of C-tests: the intro counts texts, not questions. */
+  cTestOnly: boolean;
   done: boolean;
   /** Closed without a question because the bank had none left (BANK_EMPTY); the student is told. */
   skipped?: boolean;
@@ -208,8 +211,8 @@ function itemsLabel(s: SectionConfig, mode: ExamMode, claimed: Cefr | null, offs
   if (!isObjectiveSection(s.section)) return String(s.tasks);
   if (s.adaptive) return `${s.minItems}-${s.maxItems}`;
   const dist = resolveDistribution(s, mode, claimed, offset);
-  const opening = cTestLevel(s, mode, claimed) ? 1 : 0;
-  return String(Object.values(dist).reduce((a, b) => a + b, 0) + opening);
+  const openings = cTestLevelsOf(s, mode, claimed).length;
+  return String(Object.values(dist).reduce((a, b) => a + b, 0) + openings);
 }
 
 async function runsOf(attemptId: string) {
@@ -241,6 +244,7 @@ export async function loadState(ctx: ExamCandidateContext): Promise<CandidateSta
       minutes: s.durationMinutes,
       itemsLabel: itemsLabel(s, ctx.assessment.mode, ctx.assessment.claimedLevel, cfg.difficultyOffset),
       navigable: isNavigableConfig(s),
+      cTestOnly: isCTestOnly(s, ctx.assessment.mode, ctx.assessment.claimedLevel, cfg.difficultyOffset),
       done: false,
     })),
     proctoring: cfg.proctoring,

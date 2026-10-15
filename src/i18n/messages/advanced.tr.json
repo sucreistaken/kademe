@@ -62,7 +62,7 @@
     "coverageOk": "Soru bankası bu sınava yetiyor. Onaylayınca yayınlanır ve davet formunda seçili gelir.",
     "coverageGaps": "Soru bankasında eksik var. Onaylayınca sınav taslak olarak kaydedilir:",
     "gap": "{level} {section}: {missing} soru eksik",
-    "gapCTest": "{level} dilbilgisi: açılış C-testi yok",
+    "gapCTest": "{level} dilbilgisi: C-test yok",
     "coverageRecheck": "Kapsam, onayladığında yeniden kontrol edilir.",
     "cardTitle": "Sınavlar",
     "cardCount": "{count} sınav"

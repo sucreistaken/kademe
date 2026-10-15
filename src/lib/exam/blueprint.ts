@@ -3,6 +3,7 @@ import { PRESETS, proctoringPolicySchema } from "@/lib/proctor/policy";
 import { selectNext, type AdaptiveConfig, type AdaptiveState, type PoolItem } from "./adaptive";
 import { BAND_CENTER, levelIndex, shiftLevel } from "./cefr";
 import {
+  C_TEST_SKILL_TAG,
   CEFR_LEVELS,
   isCTest,
   isObjectiveSection,
@@ -60,6 +61,12 @@ export const sectionConfigSchema = z.object({
    * valid; missing means off. Without it no C-test is ever served.
    */
   cTest: z.boolean().optional(),
+  /**
+   * GRAMMAR only: one C-test per listed level, easy to hard, before the
+   * section's ordinary items (the onSET shape, spec 2026-10-15). Replaces
+   * `cTest` when present. Optional so stored configs stay valid.
+   */
+  cTestLevels: z.array(z.enum(CEFR_LEVELS)).min(1).max(CEFR_LEVELS.length).optional(),
 });
 
 export const passRulesSchema = z.object({
@@ -93,6 +100,11 @@ export const blueprintConfigSchema = z
       seen.add(s.section);
       if (s.minItems > s.maxItems)
         ctx.addIssue({ code: "custom", message: `${s.section}: minItems above maxItems` });
+      if (s.cTestLevels) {
+        if (s.section !== "GRAMMAR") ctx.addIssue({ code: "custom", message: `${s.section}: cTestLevels is for GRAMMAR only` });
+        if (new Set(s.cTestLevels).size !== s.cTestLevels.length)
+          ctx.addIssue({ code: "custom", message: `${s.section}: cTestLevels repeats a level` });
+      }
     }
     if (!cfg.sections.some((s) => s.enabled))
       ctx.addIssue({ code: "custom", message: "at least one section must be enabled" });
@@ -263,7 +275,7 @@ export function sampleFixedForm(
   for (const level of CEFR_LEVELS) {
     const want = perLevel[level];
     if (want <= 0) continue;
-    // C-tests are never drawn into a form; see cTestOpening.
+    // C-tests are never drawn into a form; see cTestOpenings.
     const atLevel = pool.filter((i) => i.level === level && !isCTest(i));
     const singles = atLevel.filter((i) => !i.stimulusId);
     const groups = new Map<string, BankItem[]>();
@@ -284,31 +296,40 @@ export function sampleFixedForm(
   return units.sort((a, b) => a.b - b.b).flatMap((u) => u.ids);
 }
 
-/** The level of the section's opening C-test, or null when it has none. */
-export function cTestLevel(s: SectionConfig, mode: ExamMode, claimed: Cefr | null): Cefr | null {
-  return s.section === "GRAMMAR" && s.cTest ? anchorLevel(mode, claimed) : null;
+/** The levels of the section's C-tests, easy to hard; empty when it has none. */
+export function cTestLevelsOf(s: SectionConfig, mode: ExamMode, claimed: Cefr | null): Cefr[] {
+  if (s.section !== "GRAMMAR") return [];
+  if (s.cTestLevels) return CEFR_LEVELS.filter((l) => s.cTestLevels!.includes(l));
+  return s.cTest ? [anchorLevel(mode, claimed)] : [];
 }
 
 /**
- * The C-test that opens a GRAMMAR section with `cTest` on: one at the anchor
- * level, picked at random when the bank has several. Null when the flag is off
- * or the bank has none at that level (the section then runs without it).
+ * The C-tests that open the section: one per level of `cTestLevelsOf`, picked
+ * at random when the bank has several, easy to hard. A level the bank has no
+ * C-test for is skipped (the section then runs without it).
  */
-export function cTestOpening(
+export function cTestOpenings(
   s: SectionConfig,
   pool: BankItem[],
   mode: ExamMode,
   claimed: Cefr | null,
   rng: () => number,
-): string | null {
-  const level = cTestLevel(s, mode, claimed);
-  if (!level) return null;
-  const candidates = pool.filter((i) => isCTest(i) && i.level === level);
-  if (candidates.length === 0) return null;
-  return candidates[Math.floor(rng() * candidates.length)].id;
+): string[] {
+  const ids: string[] = [];
+  for (const level of cTestLevelsOf(s, mode, claimed)) {
+    const candidates = pool.filter((i) => isCTest(i) && i.level === level);
+    if (candidates.length > 0) ids.push(candidates[Math.floor(rng() * candidates.length)].id);
+  }
+  return ids;
 }
 
-/** The item plan of a fixed objective section: the opening C-test, if any, then the form. */
+/** A fixed GRAMMAR section made only of C-tests: the intro speaks of texts. */
+export function isCTestOnly(s: SectionConfig, mode: ExamMode, claimed: Cefr | null, difficultyOffset: number): boolean {
+  if (s.adaptive || cTestLevelsOf(s, mode, claimed).length === 0) return false;
+  return Object.values(resolveDistribution(s, mode, claimed, difficultyOffset)).every((n) => n === 0);
+}
+
+/** The item plan of a fixed objective section: its C-tests, if any, then the form. */
 export function planFixedSection(
   s: SectionConfig,
   pool: BankItem[],
@@ -317,16 +338,15 @@ export function planFixedSection(
   difficultyOffset: number,
   rng: () => number,
 ): string[] {
-  const opening = cTestOpening(s, pool, mode, claimed, rng);
+  const openings = cTestOpenings(s, pool, mode, claimed, rng);
   const form = sampleFixedForm(pool, resolveDistribution(s, mode, claimed, difficultyOffset), rng);
-  return opening ? [opening, ...form] : form;
+  return [...openings, ...form];
 }
 
 /**
- * The next unit of an adaptive section. The first one is the opening C-test
- * when the section has one; its partial credit is then the first observation
- * of the estimate. Everything after comes from the engine, which never picks
- * a C-test.
+ * The next unit of an adaptive section. The first units are the section's
+ * C-tests (cTestLevelsOf), one at a time; their partial credit is then the
+ * first observations of the estimate.
  */
 export function nextAdaptiveItems(
   s: SectionConfig,
@@ -337,9 +357,13 @@ export function nextAdaptiveItems(
   config: AdaptiveConfig,
   rng: () => number,
 ): { itemIds: string[] } | null {
-  if (state.usedItemIds.length === 0) {
-    const opening = cTestOpening(s, pool, mode, claimed, rng);
-    if (opening) return { itemIds: [opening] };
+  // The engine never picks a C-test. Served C-tests are counted by skill tag,
+  // so a reload continues where the student was.
+  const levels = cTestLevelsOf(s, mode, claimed).filter((l) => pool.some((i) => isCTest(i) && i.level === l));
+  const served = state.tagCounts[C_TEST_SKILL_TAG] ?? 0;
+  if (served < levels.length) {
+    const candidates = pool.filter((i) => isCTest(i) && i.level === levels[served] && !state.usedItemIds.includes(i.id));
+    if (candidates.length > 0) return { itemIds: [candidates[Math.floor(rng() * candidates.length)].id] };
   }
   return selectNext(state, pool, config, rng);
 }
@@ -375,7 +399,7 @@ export type CoverageRow = {
   available: number;
   /** Reading / listening: texts available. Adaptive needs at least two per level. */
   units?: number;
-  /** This row is the opening C-test of a GRAMMAR section, not its ordinary items. */
+  /** This row is one of the section's C-tests, not its ordinary items. */
   cTest?: true;
   ok: boolean;
 };
@@ -453,7 +477,7 @@ export function bankCoverage(
         ok,
       });
     }
-    const cTestLevels = new Set(claims.map((claim) => cTestLevel(s, mode, claim)).filter((l): l is Cefr => !!l));
+    const cTestLevels = new Set(claims.flatMap((claim) => cTestLevelsOf(s, mode, claim)));
     for (const l of CEFR_LEVELS) {
       if (!cTestLevels.has(l)) continue;
       const available = get(s.section, l).cTests;

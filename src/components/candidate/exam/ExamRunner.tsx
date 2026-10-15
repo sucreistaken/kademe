@@ -540,17 +540,21 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
                 ? t("itemsAdaptive", { range: s.itemsLabel })
                 : cur.section === "WRITING" || cur.section === "SPEAKING"
                   ? t("tasks", { n: s.itemsLabel })
-                  : t("items", { n: s.itemsLabel });
+                  : s.cTestOnly
+                    ? n("texts", { n: s.itemsLabel })
+                    : t("items", { n: s.itemsLabel });
               return (
                 <>
                   <p className="tnum mt-2 text-[15px] text-ink-2">{`${t("minutes", { n: s.minutes })} · ${count}`}</p>
                   <ul className="mt-6 flex list-disc flex-col gap-2 pl-5 text-[14.5px] leading-[1.6] text-ink-2">
                     <li>
-                      {s.navigable && cur.section === "GRAMMAR"
-                        ? n("ruleGRAMMARFixed")
-                        : cur.section === "WRITING"
-                          ? f(policy.clipboardBlock ? "ruleWritingPaste" : "ruleWritingPlain")
-                          : sec(`rule${cur.section}` as "ruleGRAMMAR", { plays: state.maxPlays })}
+                      {s.cTestOnly
+                        ? n("ruleGRAMMARCTest", { n: s.itemsLabel, minutes: Math.max(1, Math.round(s.minutes / Number(s.itemsLabel))) })
+                        : s.navigable && cur.section === "GRAMMAR"
+                          ? n("ruleGRAMMARFixed")
+                          : cur.section === "WRITING"
+                            ? f(policy.clipboardBlock ? "ruleWritingPaste" : "ruleWritingPlain")
+                            : sec(`rule${cur.section}` as "ruleGRAMMAR", { plays: state.maxPlays })}
                     </li>
                     {s.navigable ? (
                       <>
