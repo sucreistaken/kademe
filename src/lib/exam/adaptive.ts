@@ -14,10 +14,11 @@
  * tampered client cannot move the estimate.
  */
 
-import { isCTest } from "./types";
+import { isCTest, type ItemContent, type ItemSnapshot } from "./types";
 
 export type Posterior = { mean: number; sd: number };
-export type Observation = { b: number; score: number };
+/** One scored item. `weight` is how many independent items it counts as (default 1). */
+export type Observation = { b: number; score: number; weight?: number };
 
 export type AdaptiveConfig = {
   minItems: number;
@@ -74,7 +75,7 @@ export function eap(observations: Observation[], prior: Posterior): Posterior {
     for (const o of observations) {
       const p = Math.min(1 - 1e-9, Math.max(1e-9, pCorrect(theta, o.b)));
       const s = Math.min(1, Math.max(0, o.score));
-      lp += s * Math.log(p) + (1 - s) * Math.log(1 - p);
+      lp += (o.weight ?? 1) * (s * Math.log(p) + (1 - s) * Math.log(1 - p));
     }
     return lp;
   });
@@ -84,6 +85,38 @@ export function eap(observations: Observation[], prior: Posterior): Posterior {
   const mean = GRID.reduce((acc, theta, i) => acc + theta * w[i], 0) / total;
   const variance = GRID.reduce((acc, theta, i) => acc + (theta - mean) ** 2 * w[i], 0) / total;
   return { mean, sd: Math.sqrt(variance) };
+}
+
+/**
+ * Gaps of one C-test text per unit of weight. Professionally a C-test text is
+ * one "super-item" scored by its number of correct gaps (polytomous Rasch);
+ * its gaps are not independent, so a 20-gap text is worth more than one item
+ * and less than twenty. Five is an uncalibrated choice (spec 2026-10-15,
+ * docs/EXAM-ENGINE.md) until a partial credit model is fitted to real data.
+ */
+export const C_TEST_GAPS_PER_WEIGHT = 4;
+
+/** How many items one scored item counts as in the estimate. */
+export function itemWeight(item: { skillTag: string; content: ItemContent }): number {
+  if (!isCTest(item) || item.content.kind !== "GAP") return 1;
+  return Math.max(1, item.content.gaps.length / C_TEST_GAPS_PER_WEIGHT);
+}
+
+/** The observation a stored, scored response adds to the estimate. */
+export function observationOf(snapshot: Pick<ItemSnapshot, "difficulty" | "skillTag" | "content">, score: number): Observation {
+  return { b: snapshot.difficulty, score, weight: itemWeight(snapshot) };
+}
+
+/** A stored response as `replay` reads it. */
+export function replayResponseOf(r: { itemId: string; itemSnapshot: ItemSnapshot; score: number | null }): ReplayResponse {
+  return {
+    itemId: r.itemId,
+    b: r.itemSnapshot.difficulty,
+    skillTag: r.itemSnapshot.skillTag,
+    stimulusId: r.itemSnapshot.stimulusId,
+    score: r.score,
+    weight: itemWeight(r.itemSnapshot),
+  };
 }
 
 export function initialState(config: AdaptiveConfig): AdaptiveState {
@@ -103,6 +136,8 @@ export type ReplayResponse = {
   stimulusId: string | null;
   /** Null while served but not yet answered. */
   score: number | null;
+  /** See Observation.weight. */
+  weight?: number;
 };
 
 /** Rebuild the state from what is stored. Unanswered items still count as used. */
@@ -112,7 +147,7 @@ export function replay(config: AdaptiveConfig, responses: ReplayResponse[]): Ada
   for (const r of responses) tagCounts[r.skillTag] = (tagCounts[r.skillTag] ?? 0) + 1;
   return {
     posterior: eap(
-      answered.map((r) => ({ b: r.b, score: r.score as number })),
+      answered.map((r) => ({ b: r.b, score: r.score as number, weight: r.weight })),
       { mean: config.priorMean, sd: config.priorSd },
     ),
     answered: answered.length,

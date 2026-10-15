@@ -11,7 +11,7 @@ import {
   sectionRuns,
   stimuli,
 } from "@/db/schema";
-import { eap, mulberry32, poolLeft, replay, shouldStop, type Observation, type Posterior } from "@/lib/exam/adaptive";
+import { eap, mulberry32, observationOf, poolLeft, replay, replayResponseOf, shouldStop, type Observation, type Posterior } from "@/lib/exam/adaptive";
 import {
   adaptiveConfigFor,
   cTestLevel,
@@ -659,13 +659,7 @@ export async function ensureCurrentItem(ctx: ExamCandidateContext, runId: string
       const cfg = adaptiveConfigFor(s, ctx.assessment.mode, ctx.assessment.claimedLevel);
       const state = replay(
         cfg,
-        responses.map((r) => ({
-          itemId: r.itemId,
-          b: r.itemSnapshot.difficulty,
-          skillTag: r.itemSnapshot.skillTag,
-          stimulusId: r.itemSnapshot.stimulusId,
-          score: r.score,
-        })),
+        responses.map(replayResponseOf),
       );
       const pool = await loadPool(ctx.assessment.orgId, run.section, tx);
       const stop = shouldStop(state, cfg, poolLeft(pool, state));
@@ -953,13 +947,7 @@ async function updateTheta(ctx: ExamCandidateContext, run: typeof sectionRuns.$i
   const rows = await db.select().from(itemResponses).where(eq(itemResponses.sectionRunId, run.id));
   const state = replay(
     cfg,
-    rows.map((r) => ({
-      itemId: r.itemId,
-      b: r.itemSnapshot.difficulty,
-      skillTag: r.itemSnapshot.skillTag,
-      stimulusId: r.itemSnapshot.stimulusId,
-      score: r.score,
-    })),
+    rows.map(replayResponseOf),
   );
   await db
     .update(itemResponses)
@@ -1045,13 +1033,7 @@ export async function closeSectionRun(runId: string, reason: "DONE" | "SUBMIT" |
     const acfg = adaptiveConfigFor(s, mode, claimedLevel);
     const state = replay(
       acfg,
-      all.map((r) => ({
-        itemId: r.itemId,
-        b: r.itemSnapshot.difficulty,
-        skillTag: r.itemSnapshot.skillTag,
-        stimulusId: r.itemSnapshot.stimulusId,
-        score: r.score,
-      })),
+      all.map(replayResponseOf),
     );
     thetaMean = state.posterior.mean;
     thetaSd = state.posterior.sd;
@@ -1066,7 +1048,7 @@ export async function closeSectionRun(runId: string, reason: "DONE" | "SUBMIT" |
       // estimate at the starting prior (B1, or the claim) and beat answering.
       const observations = all
         .filter((r) => r.score !== null)
-        .map((r) => ({ b: r.itemSnapshot.difficulty, score: r.score as number }));
+        .map((r) => observationOf(r.itemSnapshot, r.score as number));
       const missing = s.minItems - answered;
       for (let i = 0; i < missing; i++) observations.push({ b: state.posterior.mean, score: 0 });
       const post = eap(observations, { mean: acfg.priorMean, sd: acfg.priorSd });
@@ -1108,7 +1090,7 @@ async function writeTrajectory(rows: ItemResponse[], prior: Posterior) {
   const observations: Observation[] = [];
   for (const r of [...rows].sort((a, b) => a.sequence - b.sequence)) {
     if (r.score === null) continue;
-    observations.push({ b: r.itemSnapshot.difficulty, score: r.score });
+    observations.push(observationOf(r.itemSnapshot, r.score));
     const post = eap(observations, prior);
     await db.update(itemResponses).set({ thetaAfter: post.mean, seAfter: post.sd }).where(eq(itemResponses.id, r.id));
   }

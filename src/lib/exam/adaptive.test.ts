@@ -1,10 +1,14 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   eap,
   initialState,
+  itemWeight,
   mulberry32,
+  observationOf,
   poolLeft,
   replay,
+  replayResponseOf,
   selectNext,
   shouldStop,
   simulate,
@@ -12,7 +16,7 @@ import {
   type PoolItem,
 } from "./adaptive";
 import { BAND_CENTER, levelFromTheta, thetaForLevel } from "./cefr";
-import { C_TEST_SKILL_TAG, CEFR_LEVELS } from "./types";
+import { C_TEST_SKILL_TAG, CEFR_LEVELS, type ItemSnapshot } from "./types";
 
 const config: AdaptiveConfig = {
   minItems: 10,
@@ -165,6 +169,53 @@ describe("simulated students", () => {
       }
       expect(withinOne / runs, `${level} within one`).toBeGreaterThanOrEqual(0.9);
       expect(exact / runs, `${level} exact`).toBeGreaterThanOrEqual(0.5);
+    }
+  });
+});
+
+describe("weighted observations", () => {
+  const prior = { mean: 0, sd: 1.5 };
+  const gapContent = (n: number) => ({ kind: "GAP" as const, gaps: Array.from({ length: n }, (_, i) => ({ id: `g${i + 1}` })) });
+
+  it("weight 1 is the same as no weight", () => {
+    expect(eap([{ b: 0.5, score: 0.6, weight: 1 }], prior)).toEqual(eap([{ b: 0.5, score: 0.6 }], prior));
+  });
+
+  it("weight 5 is the same as five copies of the observation", () => {
+    const one = eap([{ b: 0.5, score: 0.6, weight: 5 }], prior);
+    const five = eap(Array.from({ length: 5 }, () => ({ b: 0.5, score: 0.6 })), prior);
+    expect(one.mean).toBeCloseTo(five.mean, 10);
+    expect(one.sd).toBeCloseTo(five.sd, 10);
+  });
+
+  it("a C-test weighs its gaps / 4, at least 1; every other item weighs 1", () => {
+    expect(itemWeight({ skillTag: C_TEST_SKILL_TAG, content: gapContent(20) })).toBe(5);
+    expect(itemWeight({ skillTag: C_TEST_SKILL_TAG, content: gapContent(18) })).toBe(4.5);
+    expect(itemWeight({ skillTag: C_TEST_SKILL_TAG, content: gapContent(2) })).toBe(1);
+    expect(itemWeight({ skillTag: "grammar.dativ", content: gapContent(20) })).toBe(1);
+    expect(itemWeight({ skillTag: "grammar.dativ", content: { kind: "CHOICE", options: [] } })).toBe(1);
+  });
+
+  it("observationOf and replayResponseOf carry the snapshot's difficulty and weight", () => {
+    const snapshot = { difficulty: -0.5, skillTag: C_TEST_SKILL_TAG, content: gapContent(20), stimulusId: null } as unknown as ItemSnapshot;
+    expect(observationOf(snapshot, 0.7)).toEqual({ b: -0.5, score: 0.7, weight: 5 });
+    expect(replayResponseOf({ itemId: "x", itemSnapshot: snapshot, score: 0.7 })).toEqual({
+      itemId: "x", b: -0.5, skillTag: C_TEST_SKILL_TAG, stimulusId: null, score: 0.7, weight: 5,
+    });
+  });
+
+  it("replay uses the weight", () => {
+    const cfg = { minItems: 1, maxItems: 10, targetSe: 0.3, priorMean: 0, priorSd: 1.5, randomesque: 1 };
+    const base = { itemId: "c", b: 0, skillTag: C_TEST_SKILL_TAG, stimulusId: null, score: 0.9 };
+    const heavy = replay(cfg, [{ ...base, weight: 5 }]).posterior;
+    const light = replay(cfg, [base]).posterior;
+    expect(heavy.sd).toBeLessThan(light.sd);
+    expect(heavy.mean).toBeGreaterThan(light.mean);
+  });
+
+  it("every estimate built from stored responses goes through observationOf or replayResponseOf", () => {
+    for (const url of [new URL("../exam-flow.ts", import.meta.url), new URL("./reestimate-run.ts", import.meta.url)]) {
+      expect(readFileSync(url, "utf8"), url.pathname).not.toMatch(/itemSnapshot\.difficulty/);
     }
   });
 });
