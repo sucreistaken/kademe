@@ -169,7 +169,7 @@ Spec `docs/superpowers/specs/2026-10-15-onset-placement-design.md`. Ayrıntı ve
 - Yerleştirme sınavının dilbilgisi bölümü artık A1'den C2'ye altı C-test (onSET düzeni), 30 dk, toplam 77 dk (eski: 64 dk, açılışta tek C-test + seviye başına 3 çoktan seçmeli). Hızlı seviye taraması üç C-test (A2, B1, B2), 15 dk.
 - `cTestLevels` (DILBILGISI bölümü): listelenen her seviyeden bir C-test, kolaydan zora; eksik seviye atlanır; eski `cTest: true` çapada tek C-test olarak kalır.
 - Tahminde C-test ağırlığı `max(1, boşluk / 4)`: 20 boşluklu metin 5 ağırlığında. Kalibre değil; gerçek veri gelince kısmi puan modeline geçilmeli.
-- AI oluşturucu şablonu süre oranıyla seçer (`30 * |log2(şablon dk / hedef)|`); beceri söylenmediğinde hızlı tarama / yerleştirme sınırı yaklaşık 34 dk. Yeniden ölçekleme `floor(dk / 5)` metin tutar (en az bir), orta seviyeler.
+- AI oluşturucu şablonu süre oranıyla seçer (`30 * |log2(şablon dk / hedef)|`); beceri söylenmediğinde hızlı tarama / yerleştirme sınırı yaklaşık 34 dk. Yeniden ölçekleme `floor(dk / 5)` metin tutar (en az bir, en çok altı): listeden azsa orta seviyeleri tutar (kırpma), fazlaysa aralığı önce yukarı sonra aşağı genişletir (hızlı tarama 20 dk A2-C1, 25 dk A1-C1, 30 dk ve üstü altısı).
 - Banka: seviye başına 3 C-test (toplam 18), 12 yeni metin, iş dışı konular. Kör çözümde 229 boşlukta 2 eksik kabul bulundu (`andern`, `Einkauf`), düzeltildi; `hatte`, `keinerlei`, `Freizeitbetätigung` de kabul.
 - Simülasyon (`scripts/simulate-placement.ts`, seviye başına 4000 koşu, metin başına rastgele etki sd 0.5, tam / ±1 seviye):
 

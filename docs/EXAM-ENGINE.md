@@ -80,8 +80,9 @@ düzeni), 30 dk; A2-C1 okuma ve A2-B2 dinleme (seviye başına bir metin ya da k
 77 dk. Hızlı seviye taraması: A2, B1, B2 üç C-test, 15 dk. AI oluşturucu şablonu süre
 oranıyla seçer (`templates.ts: examTemplateFor`): süre uyumu puanı
 `30 * |log2(şablon dakikası / hedef)|`; beceri söylenmediğinde hızlı tarama ile yerleştirme
-arasındaki sınır yaklaşık 34 dakikadır. Yeniden ölçekleme `floor(dakika / 5)` metin tutar
-(en az bir), orta seviyeleri seçer. Önceki şablon: 64 dk, açılışta tek C-test ve seviye
+arasındaki sınır yaklaşık 34 dakikadır. Yeniden ölçekleme `floor(dakika / 5)` metin tutar (en az bir, en çok altı).
+Listeden azsa orta seviyeleri tutar (kırpma); fazlaysa listelenen aralığı önce yukarı, sonra
+aşağı birer seviye genişletir (hızlı tarama 20 dk: A2-C1, 25 dk: A1-C1, 30 dk ve üstü: altısı). Önceki şablon: 64 dk, açılışta tek C-test ve seviye
 başına 3 çoktan seçmeli.
 
 Simülasyon (`scripts/simulate-placement.ts`, seviye başına 4000 koşu, metin başına rastgele

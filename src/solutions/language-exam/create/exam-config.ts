@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { Locale } from "@/i18n/locale";
 import { blueprintConfigSchema, enabledSections, estimatedMinutes, type BlueprintConfig, type CoverageRow, type SectionConfig } from "@/lib/exam/blueprint";
 import { EXAM_TEMPLATES, type ExamTemplate } from "@/lib/exam/templates";
-import { isObjectiveSection, SECTIONS, type Cefr, type ExamMode, type Section } from "@/lib/exam/types";
+import { CEFR_LEVELS, isObjectiveSection, SECTIONS, type Cefr, type ExamMode, type Section } from "@/lib/exam/types";
 
 /**
  * EXAM creator, pure part (spec 5.4): the nearest ready template, sections on
@@ -72,17 +72,36 @@ export function allocateMinutes(target: number, weights: number[], min: number):
 /** Minutes one C-test text needs (onSET gives five). */
 const MINUTES_PER_C_TEST = 5;
 
+/**
+ * Fewer minutes keep the middle of the listed levels; more minutes than the
+ * listed levels cover widen the span one level at a time, upward first, then
+ * downward, within A1..C2. Always in CEFR order, no duplicates.
+ */
+function cTestLevelsFor(listed: Cefr[], minutes: number): Cefr[] {
+  const keep = clamp(Math.floor(minutes / MINUTES_PER_C_TEST), 1, CEFR_LEVELS.length);
+  if (keep <= listed.length) {
+    const start = Math.floor((listed.length - keep) / 2);
+    return listed.slice(start, start + keep);
+  }
+  const idx = listed.map((l) => CEFR_LEVELS.indexOf(l));
+  let lo = Math.min(...idx);
+  let hi = Math.max(...idx);
+  let up = true;
+  while (hi - lo + 1 < keep) {
+    if (up && hi < CEFR_LEVELS.length - 1) hi += 1;
+    else if (lo > 0) lo -= 1;
+    else hi += 1;
+    up = !up;
+  }
+  return CEFR_LEVELS.slice(lo, hi + 1);
+}
+
 /** Item counts follow the time: an adaptive section's limits and a fixed form's per-level counts scale with it. */
 function rescaleSection(s: SectionConfig, minutes: number, baseMinutes: number) {
   const f = minutes / baseMinutes;
   s.durationMinutes = minutes;
   if (!isObjectiveSection(s.section)) return;
-  if (s.cTestLevels) {
-    // Fewer minutes, fewer texts: keep the middle levels, never more than listed.
-    const keep = clamp(Math.floor(minutes / MINUTES_PER_C_TEST), 1, s.cTestLevels.length);
-    const start = Math.floor((s.cTestLevels.length - keep) / 2);
-    s.cTestLevels = s.cTestLevels.slice(start, start + keep);
-  }
+  if (s.cTestLevels) s.cTestLevels = cTestLevelsFor(s.cTestLevels, minutes);
   if (s.adaptive) {
     s.minItems = clamp(Math.round(s.minItems * f), 1, 60);
     s.maxItems = clamp(Math.max(Math.round(s.maxItems * f), s.minItems), 1, 80);

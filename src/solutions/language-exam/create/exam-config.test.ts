@@ -170,4 +170,17 @@ describe("C-test sections follow the minutes", () => {
       expect(buildExamConfig(s).config.sections.find((x) => x.section === "GRAMMAR")!.cTestLevels).toEqual(levels);
     }
   });
+
+  it("a stretched quick screen gets more texts, upward first, then downward (R11)", () => {
+    for (const [target, levels] of [
+      [20, ["A2", "B1", "B2", "C1"]],
+      [25, ["A1", "A2", "B1", "B2", "C1"]],
+      [30, ["A1", "A2", "B1", "B2", "C1", "C2"]],
+      [60, ["A1", "A2", "B1", "B2", "C1", "C2"]],
+    ] as const) {
+      const s = shape({ skills: ["GRAMMAR"], targetMinutes: target });
+      const g = buildExamConfig(s).config.sections.find((x) => x.section === "GRAMMAR")!;
+      expect(g.cTestLevels, `${target} min`).toEqual(levels);
+    }
+  });
 });
