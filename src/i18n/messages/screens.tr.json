@@ -197,6 +197,7 @@
     "aboutSPEAKING": "Öğrenci soruları sesli cevaplar, cevabı kaydedilir.",
     "kindAdaptive": "Sorular öğrencinin cevaplarına göre kolaylaşır ya da zorlaşır.",
     "kindFixed": "Herkes seviye başına belirli sayıda soru alır.",
+    "kindCTests": "{n} kısa metin (C-test), metin başına yaklaşık 5 dakika; öğrenci eksik harfleri yazar.",
     "kindTasks": "{n} görev; cevabı öğretmen değerlendirir.",
     "minus": "{section}: 1 dakika azalt",
     "plus": "{section}: 1 dakika artır",

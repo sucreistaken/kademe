@@ -45,6 +45,7 @@ export function IntroConsent({
 }) {
   const router = useRouter();
   const t = useT("exam");
+  const nav = useT("examNav");
   const sec = useT("section");
   const common = useT("common");
   const res = useT("result");
@@ -133,7 +134,9 @@ export function IntroConsent({
                   ? t("itemsAdaptive", { range: s.itemsLabel })
                   : s.section === "WRITING" || s.section === "SPEAKING"
                     ? t("tasks", { n: s.itemsLabel })
-                    : t("items", { n: s.itemsLabel })}
+                    : s.cTestOnly
+                      ? nav("texts", { n: s.itemsLabel })
+                      : t("items", { n: s.itemsLabel })}
               </Badge>
               <Badge className="tnum">{t("minutes", { n: s.minutes })}</Badge>
             </div>

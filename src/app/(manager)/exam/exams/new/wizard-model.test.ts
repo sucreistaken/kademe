@@ -66,6 +66,7 @@ describe("the sections step", () => {
     expect(sectionKind({ section: "GRAMMAR", adaptive: true })).toBe("adaptive");
     expect(sectionKind({ section: "READING", adaptive: false })).toBe("fixed");
     expect(sectionKind({ section: "SPEAKING", adaptive: false })).toBe("tasks");
+    expect(sectionKind({ section: "GRAMMAR", adaptive: false, cTestLevels: ["A2", "B1"] })).toBe("ctests");
   });
 });
 
@@ -107,5 +108,14 @@ describe("levelShiftScope (the editor's level shift)", () => {
 
   it("ignores writing and speaking, which have no levels to shift", () => {
     expect(levelShiftScope(cfg([section("WRITING", 10), section("SPEAKING", 10)])).applies).toBe(false);
+  });
+
+  it("leaves a C-test-only section out of the shift, which cTestLevels ignores", () => {
+    const cTests = section("GRAMMAR", 15, {
+      cTestLevels: ["A2", "B1", "B2"],
+      distribution: { kind: "ABSOLUTE", perLevel: { A1: 0, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0 } },
+    });
+    expect(levelShiftScope(cfg([cTests, section("READING", 10)]))).toEqual({ applies: true, fixed: ["READING"], adaptive: [] });
+    expect(levelShiftScope(cfg([cTests])).applies).toBe(false);
   });
 });

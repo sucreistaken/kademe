@@ -197,6 +197,7 @@
     "aboutSPEAKING": "The student answers out loud; the answer is recorded.",
     "kindAdaptive": "Questions get easier or harder with the student's answers.",
     "kindFixed": "Everyone gets a set number of questions per level.",
+    "kindCTests": "{n} short texts (C-tests), about 5 minutes per text; the student types the missing letters.",
     "kindTasks": "{n, plural, one {# task} other {# tasks}}; a teacher grades the answer.",
     "minus": "{section}: 1 minute less",
     "plus": "{section}: 1 minute more",
