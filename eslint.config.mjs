@@ -44,6 +44,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored MediaPipe build (git-ignored, copied in by setup), not our code.
+    "public/proctor/**",
   ]),
 ]);
 

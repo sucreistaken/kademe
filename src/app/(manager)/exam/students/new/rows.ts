@@ -83,6 +83,18 @@ const isHeader = (line: string): boolean => {
 };
 
 /**
+ * A name typed all in lower case ("kadir ay") is written the usual way
+ * ("Kadir Ay"), each word and each part after a hyphen starting with a
+ * capital. A name with any capital letter is kept exactly as typed: the
+ * teacher chose it (van der Berg, McDonald, KADİR AY). `locale` decides the
+ * dotted i: "ilker" is "İlker" in Turkish and "Ilker" in English.
+ */
+export function tidyStudentName(name: string, locale: "tr" | "en"): string {
+  if (name !== name.toLocaleLowerCase(locale)) return name;
+  return name.replace(/(^|[\s-])(\p{Ll})/gu, (_, before: string, letter: string) => before + letter.toLocaleUpperCase(locale));
+}
+
+/**
  * One student per line: a name and an e-mail separated by a comma, semicolon
  * or tab, in either order, or "Ad Soyad <mail>" as a mail program copies it.
  * A CEFR level anywhere on the line (A1 to C2) is that student's claimed
@@ -90,9 +102,11 @@ const isHeader = (line: string): boolean => {
  * columns after the e-mail (a phone, a class) never enter the name. Blank
  * lines are skipped. A row without a usable name, with a bad e-mail or
  * repeating an earlier e-mail (any letter case) is marked, never dropped,
- * so the manager sees which line to fix.
+ * so the manager sees which line to fix. A name typed all in lower case gets
+ * its capitals (tidyStudentName) by the rules of `locale`, the manager's
+ * language, so the preview and the invitation show the same name.
  */
-export function parseStudentRows(text: string): ParsedStudents {
+export function parseStudentRows(text: string, locale: "tr" | "en" = "tr"): ParsedStudents {
   const rows: StudentRow[] = [];
   const seen = new Set<string>();
   let tooMany = false;
@@ -132,7 +146,7 @@ export function parseStudentRows(text: string): ParsedStudents {
       }
     }
     email = email.replace(/^mailto:/i, "").trim();
-    const fullName = cells.join(" ").replace(/\s+/g, " ").trim();
+    const fullName = tidyStudentName(cells.join(" ").replace(/\s+/g, " ").trim(), locale);
     const key = email.toLowerCase();
     const emailOk = isEmail(email);
     const problem: StudentRowProblem | null = !emailOk ? "EMAIL" : cleanStudentName(fullName) === null ? "NAME" : seen.has(key) ? "DUPLICATE" : null;

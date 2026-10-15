@@ -157,7 +157,7 @@ export function StudentInviteWizard({
   const fileInput = useRef<HTMLInputElement>(null);
   const { copied, copy } = useCopied();
 
-  const parsed = useMemo(() => parseStudentRows(text), [text]);
+  const parsed = useMemo(() => parseStudentRows(text, uiLocale), [text, uiLocale]);
   const listReason = listWait(parsed);
   const exam = options.find((o) => o.value === choice) ?? null;
   const examReason = examWait({ mode: exam?.mode ?? null, rows: parsed.rows, batch });
@@ -426,7 +426,7 @@ export function StudentInviteWizard({
             value={text}
             onChange={(e) => edit(() => setText(e.target.value))}
             aria-describedby="invite-list-hint invite-list-rows"
-            className="max-h-80 overflow-y-auto font-mono text-[14px]"
+            className="max-h-80 overflow-y-auto text-[15px] leading-7"
           />
           <p id="invite-list-hint" className="text-[13px] leading-5 text-muted">
             {t("inviteListHint", { max: MAX_STUDENT_ROWS })}

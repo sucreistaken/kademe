@@ -13,9 +13,32 @@ import {
   readyStudents,
   studentsCsv,
   studentsTsv,
+  tidyStudentName,
 } from "./rows";
 
 const one = (text: string) => parseStudentRows(text).rows;
+
+describe("tidyStudentName: a name typed all in lower case gets its capitals", () => {
+  it("capitalises every word, Turkish letters by Turkish rules", () => {
+    expect(tidyStudentName("kadir ay", "tr")).toBe("Kadir Ay");
+    expect(tidyStudentName("ilker şahin", "tr")).toBe("İlker Şahin");
+    expect(tidyStudentName("ayşe-nur yılmaz", "tr")).toBe("Ayşe-Nur Yılmaz");
+  });
+
+  it("uses the manager's language for the dotted i", () => {
+    expect(tidyStudentName("ingrid weber", "en")).toBe("Ingrid Weber");
+  });
+
+  it("keeps a name with any capital letter exactly as typed", () => {
+    expect(tidyStudentName("van der Berg", "tr")).toBe("van der Berg");
+    expect(tidyStudentName("KADİR AY", "tr")).toBe("KADİR AY");
+    expect(tidyStudentName("Mary-Ann McDonald", "en")).toBe("Mary-Ann McDonald");
+  });
+
+  it("is what the preview and the invitation both get", () => {
+    expect(parseStudentRows("kadir ay , selamlar@gmail.com", "tr").rows[0]).toMatchObject({ fullName: "Kadir Ay", email: "selamlar@gmail.com", problem: null });
+  });
+});
 
 describe("parseStudentRows: names and e-mails", () => {
   it("reads 'Ad Soyad, e-posta' lines, with Turkish letters", () => {

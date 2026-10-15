@@ -67,7 +67,8 @@ function cleanWindow(w: unknown): WindowInput {
 export async function inviteStudentsAction(input: InviteStudentsInput): Promise<InviteStudentsResult> {
   const user = await requireUser("student:invite");
   const text = typeof input?.text === "string" ? input.text.slice(0, MAX_LIST_TEXT) : "";
-  const parsed = parseStudentRows(text);
+  // The manager's language decides the capitals of a lower-case name, as in the wizard's preview.
+  const parsed = parseStudentRows(text, (await managerLocale()) === "en" ? "en" : "tr");
   if (listWait(parsed)) return { ok: false, code: "LIST" };
   const choice = parseExamChoice(typeof input.exam === "string" ? input.exam : "");
   if (!choice) return { ok: false, code: "EXAM" };
