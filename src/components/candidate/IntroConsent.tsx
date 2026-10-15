@@ -21,9 +21,10 @@ import type { Locale } from "@/i18n/locale";
  * watched and why, before a single question is shown. Honest disclosure first;
  * the one button comes after the student has read it.
  *
- * Soft look: the five sections as a short path of coloured tiles (each section
- * keeps its colour through the exam), what is needed as a small checklist, and
- * the consent as one large tick box. Nothing here says anything about a result.
+ * Soft look: the sections as one row of coloured tiles (each section keeps its
+ * colour through the exam), what is needed as a small checklist, and the
+ * consent as one large tick box, all on one laptop screen without scrolling
+ * (user request 2026-10-15). Nothing here says anything about a result.
  *
  * The exam is desktop only (user decision 2026-10-14): a phone or tablet gets
  * the MobileBlock instead, whatever the proctoring, with the real reasons for
@@ -102,135 +103,153 @@ export function IntroConsent({
     { icon: Clock, text: t("needTime", { n: state.estimatedMinutes }) },
   ];
 
-  return (
-    <CandidateColumn width={640}>
-      <div className="flex items-end justify-between gap-4">
-        <Badge tone="mint" size="md">{v("orgPill", { org: state.orgName })}</Badge>
-        <Mascot pose="wave" size="spot" className="-mb-2" />
-      </div>
-      {/* The exam's own name is the heading; the generic kind of exam sits under it. */}
-      <h1 className="mt-4 text-[34px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink">{state.examName || title}</h1>
-      {state.examName ? <p className="mt-1.5 text-[15px] font-bold text-muted">{title}</p> : null}
-      <p className="mt-3.5 text-[16px] leading-[1.65] text-ink-2">{t("lead", { org: state.orgName })}</p>
+  // The amount line on a section tile: "10 soru", "6 metin", "2 görev".
+  const amount = (s: CandidateState["sections"][number]) =>
+    s.itemsLabel.includes("-")
+      ? t("itemsAdaptive", { range: s.itemsLabel })
+      : s.section === "WRITING" || s.section === "SPEAKING"
+        ? t("tasks", { n: s.itemsLabel })
+        : s.cTestOnly
+          ? nav("texts", { n: s.itemsLabel })
+          : t("items", { n: s.itemsLabel });
 
-      <div className="mb-3 mt-9 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h2 className="text-[17px] font-extrabold text-ink">{v("sectionsTitle")}</h2>
-        <Badge tone="outline" className="tnum">
-          <Clock aria-hidden strokeWidth={2.25} />
-          {t("total", { n: state.estimatedMinutes })}
-        </Badge>
+  return (
+    <CandidateColumn width={1000} padding="px-7 pt-5 pb-5">
+      {/* One screen, no scrolling at 1366x768: the header, the sections as one
+          row of tiles, then the disclosure on the left and preparation, consent
+          and the one button on the right. */}
+      <div className="flex items-end justify-between gap-6">
+        <div className="min-w-0">
+          <Badge tone="mint" size="md">{v("orgPill", { org: state.orgName })}</Badge>
+          {/* The exam's own name is the heading; the generic kind of exam sits under it. */}
+          <h1 className="mt-2 text-[30px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink">{state.examName || title}</h1>
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+            {state.examName ? <p className="text-[15px] font-bold text-muted">{title}</p> : null}
+            <Badge tone="outline" className="tnum">
+              <Clock aria-hidden strokeWidth={2.25} />
+              {t("total", { n: state.estimatedMinutes })}
+            </Badge>
+          </div>
+          <p className="mt-2 text-[15px] leading-[1.6] text-ink-2">{t("lead", { org: state.orgName })}</p>
+        </div>
+        <Mascot pose="wave" size="small" className="-mb-1 hidden sm:block" />
       </div>
-      <ol className="overflow-hidden rounded-xl border border-line bg-surface shadow-card">
+
+      <h2 className="sr-only">{v("sectionsTitle")}</h2>
+      <ol
+        className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5"
+      >
+        {/* The order reads left to right; the section number stays for screen readers. */}
         {state.sections.map((s) => (
-          <li key={s.section} className="flex items-center gap-4 border-b border-row-line px-4 py-3.5 last:border-b-0 sm:px-5">
+          <li key={s.section} className="flex items-center gap-3 rounded-xl border border-line bg-surface px-3 py-2.5 shadow-card">
             <SectionTile section={s.section} />
-            <div className="min-w-0 flex-1">
-              <div className="tnum text-[12.5px] font-semibold text-muted">{v("sectionNumber", { n: s.position })}</div>
-              <div className="text-[16px] font-bold leading-6 text-ink">{sec(s.section)}</div>
-            </div>
-            <div className="flex flex-wrap justify-end gap-1.5">
-              <Badge className="tnum">
-                {s.itemsLabel.includes("-")
-                  ? t("itemsAdaptive", { range: s.itemsLabel })
-                  : s.section === "WRITING" || s.section === "SPEAKING"
-                    ? t("tasks", { n: s.itemsLabel })
-                    : s.cTestOnly
-                      ? nav("texts", { n: s.itemsLabel })
-                      : t("items", { n: s.itemsLabel })}
-              </Badge>
-              <Badge className="tnum">{t("minutes", { n: s.minutes })}</Badge>
+            <div className="min-w-0">
+              <div className="truncate text-[15px] font-bold leading-5 text-ink">
+                <span className="sr-only">{v("sectionNumber", { n: s.position })}: </span>
+                {sec(s.section)}
+              </div>
+              <div className="tnum truncate text-[12.5px] font-semibold text-ink-2">
+                {amount(s)} · {t("minutes", { n: s.minutes })}
+              </div>
             </div>
           </li>
         ))}
       </ol>
-      <p className="mt-2.5 text-[13.5px] leading-[1.6] text-muted">{v("sectionsHint")}</p>
 
-      <div className="mt-8 rounded-xl border border-line bg-surface px-5 py-4 shadow-card">
-        <div className="flex items-center gap-3">
-          <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-lg bg-sky-soft text-sky">
-            <ShieldCheck className="size-[18px]" strokeWidth={2} />
-          </span>
-          <div className="text-[15px] font-bold text-ink">{proctored ? t("proctoredTitle") : t("notProctored")}</div>
+      <div className="mt-4 grid items-start gap-5 lg:grid-cols-2">
+        <div className="rounded-xl border border-line bg-surface px-5 py-4 shadow-card">
+          <div className="flex items-center gap-3">
+            <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-lg bg-sky-soft text-sky">
+              <ShieldCheck className="size-[17px]" strokeWidth={2} />
+            </span>
+            <h2 className="text-[15px] font-bold text-ink">{proctored ? t("proctoredTitle") : t("notProctored")}</h2>
+          </div>
+          {proctored ? (
+            <ul className="mt-2.5 flex flex-col gap-1.5 text-[13.5px] leading-[1.5] text-ink-2">
+              {[
+                ...(p.camera ? [t("proctoredCamera")] : []),
+                ...(p.screenShare ? [t("proctoredScreen")] : []),
+                ...(p.fullscreen ? [t("proctoredFullscreen")] : []),
+                t("proctoredAi"),
+                t("proctoredRetention", { days: mediaRetentionDays }),
+              ].map((line) => (
+                <li key={line} className="flex gap-2.5">
+                  <span aria-hidden className="mt-[8px] size-1.5 shrink-0 rounded-full bg-sky-fill" />
+                  {line}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setShowDetails((open) => !open)}
+            aria-expanded={showDetails}
+            className="mt-2.5 inline-flex items-center gap-1 rounded-md text-[13px] font-bold text-ink underline decoration-underline underline-offset-2 hover:decoration-ink"
+          >
+            {t("details")}
+            <ChevronDown aria-hidden className={cn("size-4 transition-transform motion-reduce:transition-none", showDetails && "rotate-180")} strokeWidth={2.25} />
+          </button>
+          {/* The full text scrolls inside the card, so opening it never pushes the button off the screen. */}
+          {showDetails ? (
+            <p className="mt-2.5 max-h-[28vh] overflow-y-auto whitespace-pre-line border-t border-row-line pr-1 pt-2.5 text-[13px] leading-[1.6] text-ink-2">
+              {consent.body}
+            </p>
+          ) : null}
         </div>
-        {proctored ? (
-          <ul className="mt-3 flex flex-col gap-2 text-[14px] leading-[1.6] text-ink-2">
-            {[
-              ...(p.camera ? [t("proctoredCamera")] : []),
-              ...(p.screenShare ? [t("proctoredScreen")] : []),
-              ...(p.fullscreen ? [t("proctoredFullscreen")] : []),
-              t("proctoredAi"),
-              t("proctoredRetention", { days: mediaRetentionDays }),
-            ].map((line) => (
-              <li key={line} className="flex gap-2.5">
-                <span aria-hidden className="mt-[9px] size-1.5 shrink-0 rounded-full bg-sky-fill" />
-                {line}
+
+        <div>
+          <h2 className="text-[15px] font-extrabold text-ink">{v("needTitle")}</h2>
+          <ul className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2">
+            {needs.map(({ icon: Icon, text }) => (
+              <li key={text} className="flex items-center gap-2.5 text-[13px] leading-[1.35] text-ink-2">
+                <span aria-hidden className="grid size-7 shrink-0 place-items-center rounded-md bg-accent-soft text-accent">
+                  <Icon className="size-[15px]" strokeWidth={2} />
+                </span>
+                <span className={Icon === Clock ? "tnum" : undefined}>{text}</span>
               </li>
             ))}
           </ul>
-        ) : null}
-        <button
-          type="button"
-          onClick={() => setShowDetails((open) => !open)}
-          aria-expanded={showDetails}
-          className="mt-3 inline-flex items-center gap-1 rounded-md text-[13px] font-bold text-ink underline decoration-underline underline-offset-2 hover:decoration-ink"
-        >
-          {t("details")}
-          <ChevronDown aria-hidden className={cn("size-4 transition-transform motion-reduce:transition-none", showDetails && "rotate-180")} strokeWidth={2.25} />
-        </button>
-        {showDetails ? (
-          <p className="mt-3 whitespace-pre-line border-t border-row-line pt-3 text-[13.5px] leading-[1.65] text-ink-2">{consent.body}</p>
-        ) : null}
+
+          <label
+            className={cn(
+              "mt-3 flex cursor-pointer items-start gap-3 rounded-xl border-2 px-4 py-3 transition-colors motion-reduce:transition-none",
+              accepted ? "border-accent bg-accent-soft" : "border-line bg-surface hover:border-line-strong",
+            )}
+          >
+            <input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} className="peer sr-only" />
+            <span
+              aria-hidden
+              className="mt-px grid size-6 shrink-0 place-items-center rounded-sm border-2 border-line-mute bg-surface text-transparent transition-colors peer-checked:border-accent peer-checked:bg-accent peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent motion-reduce:transition-none"
+            >
+              <Check className="size-4" strokeWidth={3} />
+            </span>
+            <span className="text-[15px] font-semibold leading-[1.5] text-ink">{t("consentLabel")}</span>
+          </label>
+
+          <button
+            type="button"
+            onClick={start}
+            disabled={!accepted || busy}
+            aria-describedby={!accepted ? "start-why" : undefined}
+            className={cn(buttonVariants({ variant: "primary", size: "lg" }), "mt-3 h-12 w-full text-[16px]")}
+          >
+            {busy ? t("starting") : t("start")}
+          </button>
+          {!accepted ? (
+            <p id="start-why" className="mt-2 text-center text-[13px] text-muted">
+              {v("consentHint")}
+            </p>
+          ) : null}
+          {error ? (
+            <p role="alert" className="mt-2.5 rounded-lg bg-danger-soft px-4 py-2.5 text-center text-[13.5px] font-semibold text-danger">
+              {error}
+            </p>
+          ) : null}
+        </div>
       </div>
 
-      <h2 className="mb-3 mt-8 text-[17px] font-extrabold text-ink">{v("needTitle")}</h2>
-      <ul className="grid gap-2 sm:grid-cols-2">
-        {needs.map(({ icon: Icon, text }) => (
-          <li key={text} className="flex items-center gap-3 rounded-lg border border-line bg-surface px-3.5 py-3 text-[14px] leading-[1.45] text-ink-2">
-            <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-md bg-accent-soft text-accent">
-              <Icon className="size-4" strokeWidth={2} />
-            </span>
-            <span className={Icon === Clock ? "tnum" : undefined}>{text}</span>
-          </li>
-        ))}
-      </ul>
-
-      <label
-        className={cn(
-          "mt-8 flex cursor-pointer items-start gap-3 rounded-xl border-2 px-4 py-4 transition-colors motion-reduce:transition-none",
-          accepted ? "border-accent bg-accent-soft" : "border-line bg-surface hover:border-line-strong",
-        )}
-      >
-        <input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} className="peer sr-only" />
-        <span
-          aria-hidden
-          className="mt-px grid size-6 shrink-0 place-items-center rounded-sm border-2 border-line-mute bg-surface text-transparent transition-colors peer-checked:border-accent peer-checked:bg-accent peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent motion-reduce:transition-none"
-        >
-          <Check className="size-4" strokeWidth={3} />
-        </span>
-        <span className="text-[15px] font-semibold leading-[1.55] text-ink">{t("consentLabel")}</span>
-      </label>
-
-      <button
-        type="button"
-        onClick={start}
-        disabled={!accepted || busy}
-        aria-describedby={!accepted ? "start-why" : undefined}
-        className={cn(buttonVariants({ variant: "primary", size: "lg" }), "mt-5 h-14 w-full text-[17px]")}
-      >
-        {busy ? t("starting") : t("start")}
-      </button>
-      {!accepted ? (
-        <p id="start-why" className="mt-2.5 text-center text-[13px] text-muted">
-          {v("consentHint")}
-        </p>
-      ) : null}
-      {error ? (
-        <p role="alert" className="mt-3 rounded-lg bg-danger-soft px-4 py-2.5 text-center text-[13.5px] font-semibold text-danger">
-          {error}
-        </p>
-      ) : null}
       {supportEmail ? (
-        <p className="mt-7 text-center text-[13px] text-muted">
+        <p className="mt-4 text-center text-[13px] text-muted">
           <a className="underline decoration-underline underline-offset-2 hover:text-ink" href={`mailto:${supportEmail}`}>
             {supportEmail}
           </a>

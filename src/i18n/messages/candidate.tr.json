@@ -990,7 +990,6 @@
   "visual": {
     "orgPill": "{org} sizi davet etti",
     "sectionsTitle": "Sınavın bölümleri",
-    "sectionsHint": "Her bölümün başında ne yapacağınızı anlatan kısa bir açıklama var.",
     "sectionNumber": "{n}. bölüm",
     "needTitle": "Başlamadan önce",
     "consentHint": "Kutuyu işaretleyince başlama düğmesi açılır.",

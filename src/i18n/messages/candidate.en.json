@@ -990,7 +990,6 @@
   "visual": {
     "orgPill": "{org} has invited you",
     "sectionsTitle": "Sections of the exam",
-    "sectionsHint": "Each section starts with a short note on what you will do.",
     "sectionNumber": "Section {n}",
     "needTitle": "Before you start",
     "consentHint": "Tick the box and the start button opens.",
