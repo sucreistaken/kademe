@@ -247,6 +247,9 @@ const grammarCTest3 = cTest(LEVEL, "MID", {
     "Wer sich für andere einsetzt, gewinnt nämlich nicht nur neue Kontakte, sondern auch mehr Selbstvertrauen.",
   last:
     "Gerade für Jugendliche ist ein Ehrenamt daher eine gute Gelegenheit, Verantwortung zu übernehmen und herauszufinden, was ihnen wirklich wichtig ist.",
+  // g3 "Eink...": "beim Einkauf" is as correct as "beim Einkaufen".
+  // g8 "ke...": "keinerlei Geld" is as correct as "kein Geld".
+  variants: { 3: ["auf"], 8: ["inerlei"] },
 });
 
 const grammar: SeedBankPart = { stimuli: [], items: [grammarCTest, grammarCTest2, grammarCTest3, ...grammarItems] };

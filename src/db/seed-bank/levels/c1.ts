@@ -252,8 +252,9 @@ const grammarItems: SeedItem[] = [
       "Zudem fördern sie den Austausch unter Nachbarn.",
     last:
       "Ob die Projekte langfristig bestehen können, hängt allerdings oft davon ab, ob die Städte die Flächen dauerhaft zur Verfügung stellen.",
+    // g2 "Freizeitbe...": Freizeitbetätigung is as correct as Freizeitbeschäftigung.
     // g3 "Ideal...": Idealistinnen is as correct as Idealisten.
-    variants: { 3: ["istinnen"] },
+    variants: { 2: ["tätigung"], 3: ["istinnen"] },
   }),
 ];
 

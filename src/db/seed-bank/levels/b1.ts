@@ -225,6 +225,8 @@ const grammarItems: SeedItem[] = [
       "Dann hat mich eines Tages eine Freundin zu einem Probetraining eingeladen. " +
       "Am Anfang war ich ziemlich nervös, weil alle anderen viel besser spielten als ich.",
     last: "Doch die Gruppe hat mich sofort freundlich aufgenommen, und inzwischen freue ich mich jede Woche auf das Training.",
+    // g17 "and...": "andern" is a standard variant of "anderen".
+    variants: { 17: ["ern"] },
   }),
   // Cycling in the city.
   cTest(LEVEL, "MID", {

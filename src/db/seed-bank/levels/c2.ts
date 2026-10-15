@@ -229,7 +229,7 @@ const grammarItems: SeedItem[] = [
   }),
   // Dialects and identity.
   cTest(LEVEL, "MID", {
-    first: "Lange galten Dialekte als Ausdruck mangelnder Bildung, den es in der Schule möglichst früh abzulegen gelte.",
+    first: "Lange galten Dialekte als Ausdruck mangelnder Bildung, und es hieß, die Schule müsse sie den Kindern möglichst früh abgewöhnen.",
     body:
       "Inzwischen hat sich dieses Urteil grundlegend gewandelt, nicht zuletzt weil die Sprachwissenschaft nachgewiesen hat, " +
       "dass Mundarten eigenständige Systeme mit einer eigenen Grammatik darstellen. " +

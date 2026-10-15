@@ -79,6 +79,42 @@ describe("starter C-tests accept the equally correct completions", () => {
     expect(accepts("B2", "g3", "zeit")).toBe(true);
     expect(accepts("B2", "g6", "selber")).toBe(true);
   });
+
+  // The later C-tests of a level, picked by a word from their first sentence.
+  const acceptsIn = (level: string, firstWord: string, gap: string, typed: string) => {
+    const c = SEED_BANK.items.find(
+      (i) => i.level === level && i.skillTag === "grammar.ctest" && i.prompt.includes(firstWord),
+    );
+    if (!c) throw new Error(`no ${level} C-test with "${firstWord}"`);
+    return scoreItem(c.type, c.content, c.key, { gaps: { [gap]: typed } })?.score === 1 / Object.keys((c.key as { answers: object }).answers).length;
+  };
+
+  it("A2 train: hatte", () => {
+    expect(acceptsIn("A2", "Schwester Mei", "g18", "at")).toBe(true);
+    expect(acceptsIn("A2", "Schwester Mei", "g18", "atte")).toBe(true);
+    expect(acceptsIn("A2", "Schwester Mei", "g18", "hatte")).toBe(true);
+  });
+
+  it("B1 club: andern", () => {
+    expect(acceptsIn("B1", "Volleyballverein", "g17", "eren")).toBe(true);
+    expect(acceptsIn("B1", "Volleyballverein", "g17", "ern")).toBe(true);
+    expect(acceptsIn("B1", "Volleyballverein", "g17", "andern")).toBe(true);
+  });
+
+  it("B2 volunteering: Einkauf, keinerlei", () => {
+    expect(acceptsIn("B2", "Stadtvierteln", "g3", "aufen")).toBe(true);
+    expect(acceptsIn("B2", "Stadtvierteln", "g3", "auf")).toBe(true);
+    expect(acceptsIn("B2", "Stadtvierteln", "g3", "Einkauf")).toBe(true);
+    expect(acceptsIn("B2", "Stadtvierteln", "g8", "in")).toBe(true);
+    expect(acceptsIn("B2", "Stadtvierteln", "g8", "inerlei")).toBe(true);
+    expect(acceptsIn("B2", "Stadtvierteln", "g8", "keinerlei")).toBe(true);
+  });
+
+  it("C1 gardens: Freizeitbetätigung", () => {
+    expect(acceptsIn("C1", "Hinterhöfen", "g2", "schäftigung")).toBe(true);
+    expect(acceptsIn("C1", "Hinterhöfen", "g2", "tätigung")).toBe(true);
+    expect(acceptsIn("C1", "Hinterhöfen", "g2", "Freizeitbetätigung")).toBe(true);
+  });
 });
 
 describe("starter bank items are well formed", () => {

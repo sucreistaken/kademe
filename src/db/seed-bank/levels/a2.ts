@@ -211,7 +211,8 @@ const grammarCTest3 = cTest(LEVEL, "MID", {
     "Als sie endlich am Meer waren, hat es plötzlich angefangen zu regnen.",
   last: "Trotzdem haben sie in einem kleinen Café Kuchen gegessen und viel gelacht.",
   // g4 "Bah...": "zum Bahnsteig gegangen" is as correct as "zum Bahnhof gegangen".
-  variants: { 4: ["nsteig"] },
+  // g18 "h...": "Als sie endlich am Meer waren, hatte es ... angefangen" (als + Plusquamperfekt) is idiomatic too.
+  variants: { 4: ["nsteig"], 18: ["atte"] },
 });
 
 // ================================================================ READING
