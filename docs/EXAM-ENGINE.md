@@ -24,6 +24,10 @@ Kod: `src/lib/exam/` (saf, veritabanısız, vitest ile test edilir).
   saymak tahmini olduğundan kesin gösterirdi, tek madde saymak ise 20 boşluklu metni 1
   soruluk ağırlığa indirirdi. `4` bir kalibrasyon değil, gerçek veriyle hiç ayarlanmadı.
   Gerçek veri birikince yerini bir kısmi puan modeli (boşluk başına kategori) almalı.
+  Ağırlık yalnız `cTestLevels` olan bölümde uygulanır (`blueprint.ts: weighsCTests`); eski
+  `cTest: true` bölümü ağırlık 1 kalır. Neden: 2026-10-15 öncesi sınavların kayıtlı tahminleri
+  ağırlık 1 ile hesaplandı; bir öğretmen tek boşluğu kabul edip `reestimateRun` çalışınca sonuç
+  başka bir sebeple kaymamalı.
 - **Testlet bağımlılığı** (aynı metne bağlı sorular) yok sayılır; bu, okuma/dinleme
   hassasiyetini olduğundan biraz iyi gösterir.
 

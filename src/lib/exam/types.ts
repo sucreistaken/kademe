@@ -138,8 +138,8 @@ export type Presentation = {
 
 /**
  * Skill tag of a C-test item. C-tests never enter automatic item selection;
- * a GRAMMAR section serves one only when its `cTest` flag is on, as the first
- * item (see blueprint.ts).
+ * a GRAMMAR section serves them only when its `cTest` flag (one, as the first
+ * item) or its `cTestLevels` (one per level) is set (see blueprint.ts).
  */
 export const C_TEST_SKILL_TAG = "grammar.ctest";
 

@@ -15,6 +15,7 @@ import {
   productiveTaskLevels,
   resolveDistribution,
   sampleFixedForm,
+  weighsCTests,
   type BankCount,
   type BankItem,
   type SectionConfig,
@@ -373,5 +374,14 @@ describe("productive task levels", () => {
   it("reaches one level up in placement", () => {
     expect(productiveTaskLevels("PLACEMENT", null, "B1", 2)).toEqual(["B1", "B2"]);
     expect(productiveTaskLevels("PLACEMENT", null, "C2", 2)).toEqual(["C2", "C2"]);
+  });
+});
+
+describe("weighsCTests", () => {
+  it("is on only for a GRAMMAR section with cTestLevels (exams taken before 2026-10-15 keep weight 1)", () => {
+    expect(weighsCTests(section("GRAMMAR", 30, { cTestLevels: ["A1", "B1"] }))).toBe(true);
+    expect(weighsCTests(section("GRAMMAR", 17, { adaptive: true, minItems: 10, maxItems: 16, targetSe: 0.45, cTest: true }))).toBe(false);
+    expect(weighsCTests(section("GRAMMAR", 17))).toBe(false);
+    expect(weighsCTests(section("READING", 20))).toBe(false);
   });
 });

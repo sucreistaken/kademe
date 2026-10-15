@@ -22,6 +22,7 @@ import {
   planFixedSection,
   productiveTaskLevels,
   resolveDistribution,
+  weighsCTests,
   type BankItem,
   type BlueprintConfig,
   type SectionConfig,
@@ -663,7 +664,7 @@ export async function ensureCurrentItem(ctx: ExamCandidateContext, runId: string
       const cfg = adaptiveConfigFor(s, ctx.assessment.mode, ctx.assessment.claimedLevel);
       const state = replay(
         cfg,
-        responses.map(replayResponseOf),
+        responses.map((r) => replayResponseOf(r, weighsCTests(s))),
       );
       const pool = await loadPool(ctx.assessment.orgId, run.section, tx);
       const stop = shouldStop(state, cfg, poolLeft(pool, state));
@@ -671,7 +672,7 @@ export async function ensureCurrentItem(ctx: ExamCandidateContext, runId: string
         await tx.update(sectionRuns).set({ stopReason: stop }).where(eq(sectionRuns.id, runId));
         return null;
       }
-      // The opening C-test (GRAMMAR with cTest on) comes first; the engine never picks one.
+      // The opening C-tests (GRAMMAR with cTest or cTestLevels) come first; the engine never picks one.
       const next = nextAdaptiveItems(s, ctx.assessment.mode, ctx.assessment.claimedLevel, state, pool, cfg, mulberry32(Math.floor(Math.random() * 2 ** 31)));
       if (!next) return null;
       await serve(tx, runId, next.itemIds, nextSequence, s);
@@ -951,7 +952,7 @@ async function updateTheta(ctx: ExamCandidateContext, run: typeof sectionRuns.$i
   const rows = await db.select().from(itemResponses).where(eq(itemResponses.sectionRunId, run.id));
   const state = replay(
     cfg,
-    rows.map(replayResponseOf),
+    rows.map((r) => replayResponseOf(r, weighsCTests(s))),
   );
   await db
     .update(itemResponses)
@@ -1037,13 +1038,13 @@ export async function closeSectionRun(runId: string, reason: "DONE" | "SUBMIT" |
     const acfg = adaptiveConfigFor(s, mode, claimedLevel);
     const state = replay(
       acfg,
-      all.map(replayResponseOf),
+      all.map((r) => replayResponseOf(r, weighsCTests(s))),
     );
     thetaMean = state.posterior.mean;
     thetaSd = state.posterior.sd;
     // A navigable section scores everything at once, so the teacher's
     // trajectory chart is drawn here, in the order the items were served.
-    if (run.navigable) await writeTrajectory(all, { mean: acfg.priorMean, sd: acfg.priorSd });
+    if (run.navigable) await writeTrajectory(all, { mean: acfg.priorMean, sd: acfg.priorSd }, weighsCTests(s));
     const answered = all.filter((r) => r.answeredAt).length;
     if (s.adaptive && answered < s.minItems) {
       stopReason = "INSUFFICIENT";
@@ -1052,7 +1053,7 @@ export async function closeSectionRun(runId: string, reason: "DONE" | "SUBMIT" |
       // estimate at the starting prior (B1, or the claim) and beat answering.
       const observations = all
         .filter((r) => r.score !== null)
-        .map((r) => observationOf(r.itemSnapshot, r.score as number));
+        .map((r) => observationOf(r.itemSnapshot, r.score as number, weighsCTests(s)));
       const missing = s.minItems - answered;
       for (let i = 0; i < missing; i++) observations.push({ b: state.posterior.mean, score: 0 });
       const post = eap(observations, { mean: acfg.priorMean, sd: acfg.priorSd });
@@ -1090,11 +1091,11 @@ export async function closeSectionRun(runId: string, reason: "DONE" | "SUBMIT" |
 }
 
 /** The running estimate after each scored item, in sequence order; blanks count as wrong, as in the final estimate. */
-async function writeTrajectory(rows: ItemResponse[], prior: Posterior) {
+async function writeTrajectory(rows: ItemResponse[], prior: Posterior, weighCTests: boolean) {
   const observations: Observation[] = [];
   for (const r of [...rows].sort((a, b) => a.sequence - b.sequence)) {
     if (r.score === null) continue;
-    observations.push(observationOf(r.itemSnapshot, r.score));
+    observations.push(observationOf(r.itemSnapshot, r.score, weighCTests));
     const post = eap(observations, prior);
     await db.update(itemResponses).set({ thetaAfter: post.mean, seAfter: post.sd }).where(eq(itemResponses.id, r.id));
   }

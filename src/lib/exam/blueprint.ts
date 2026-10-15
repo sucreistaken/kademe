@@ -58,7 +58,7 @@ export const sectionConfigSchema = z.object({
   /**
    * GRAMMAR only: open the section with one C-test at the anchor level (B1 for
    * placement, the claim for verification). Optional so stored configs stay
-   * valid; missing means off. Without it no C-test is ever served.
+   * valid; missing means off. Without it (and without `cTestLevels`) no C-test is ever served.
    */
   cTest: z.boolean().optional(),
   /**
@@ -297,6 +297,16 @@ export function sampleFixedForm(
 }
 
 /** The levels of the section's C-tests, easy to hard; empty when it has none. */
+/**
+ * Whether a section's C-tests count as weighted super-items in the estimate.
+ * Only sections with `cTestLevels`: exams created before 2026-10-15 have
+ * `cTest: true` and their stored estimates used weight 1, so re-estimating
+ * them (a teacher accepting a gap) must not move the result.
+ */
+export function weighsCTests(s: SectionConfig): boolean {
+  return s.section === "GRAMMAR" && !!s.cTestLevels;
+}
+
 export function cTestLevelsOf(s: SectionConfig, mode: ExamMode, claimed: Cefr | null): Cefr[] {
   if (s.section !== "GRAMMAR") return [];
   if (s.cTestLevels) return CEFR_LEVELS.filter((l) => s.cTestLevels!.includes(l));

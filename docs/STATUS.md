@@ -168,7 +168,7 @@ Spec `docs/superpowers/specs/2026-10-15-onset-placement-design.md`. Ayrıntı ve
 
 - Yerleştirme sınavının dilbilgisi bölümü artık A1'den C2'ye altı C-test (onSET düzeni), 30 dk, toplam 77 dk (eski: 64 dk, açılışta tek C-test + seviye başına 3 çoktan seçmeli). Hızlı seviye taraması üç C-test (A2, B1, B2), 15 dk.
 - `cTestLevels` (DILBILGISI bölümü): listelenen her seviyeden bir C-test, kolaydan zora; eksik seviye atlanır; eski `cTest: true` çapada tek C-test olarak kalır.
-- Tahminde C-test ağırlığı `max(1, boşluk / 4)`: 20 boşluklu metin 5 ağırlığında. Kalibre değil; gerçek veri gelince kısmi puan modeline geçilmeli.
+- Tahminde C-test ağırlığı `max(1, boşluk / 4)`: 20 boşluklu metin 5 ağırlığında; yalnız `cTestLevels` olan bölümde uygulanır (`weighsCTests`), eski `cTest: true` sınavları ağırlık 1 kalır ki 2026-10-15 öncesi sınavların sonucu bir boşluk kabulünde kaymasın. Kalibre değil; gerçek veri gelince kısmi puan modeline geçilmeli.
 - AI oluşturucu şablonu süre oranıyla seçer (`30 * |log2(şablon dk / hedef)|`); beceri söylenmediğinde hızlı tarama / yerleştirme sınırı yaklaşık 34 dk. Yeniden ölçekleme `floor(dk / 5)` metin tutar (en az bir, en çok altı): listeden azsa orta seviyeleri tutar (kırpma), fazlaysa aralığı önce yukarı sonra aşağı genişletir (hızlı tarama 20 dk A2-C1, 25 dk A1-C1, 30 dk ve üstü altısı).
 - Banka: seviye başına 3 C-test (toplam 18), 12 yeni metin, iş dışı konular. Kör çözümde 229 boşlukta 2 eksik kabul bulundu (`andern`, `Einkauf`), düzeltildi; `hatte`, `keinerlei`, `Freizeitbetätigung` de kabul.
 - Simülasyon (`scripts/simulate-placement.ts`, seviye başına 4000 koşu, metin başına rastgele etki sd 0.5, tam / ±1 seviye):
@@ -182,7 +182,8 @@ Spec `docs/superpowers/specs/2026-10-15-onset-placement-design.md`. Ayrıntı ve
 
   İki kapı da geçti (tolerans: tam -0.02, ±1 -0.01, A1-C1). Hızlı taramada C2 tam isabeti %62'den %28'e düştü (en zor metni B2); kabul edildi.
 - Mevcut sınavlar kayıtlı yapılandırmasını korur; yeni şekil için okul şablondan yeni sınav oluşturur.
-- Doğrulanmadı: gerçek tarayıcıda çözüm (denetleyici sonra yapacak), canlıya çıkış ve banka top-up, gerçek öğrenci verisi (ağırlık 4 ve simülasyondaki metin etkisi sd 0.5 varsayım), yeni metinleri anadili Almanca bir öğretmenin okuması (yalnız bağımsız bir kör çözüm yapıldı).
+- Gerçek tarayıcıda çözüldü (yerel kopya, 2026-10-15, Claude in Chrome): sihirbaz yerleştirmeyi 77 dk gösterdi, DILBILGISI 30 dk ve banka içeriği yeterliydi; hızlı tarama kartı "üç C-test" diyor; öğrenci girişi "30 dk · 6 metin" ve metin başına yaklaşık 5 dakika diyor; altı metin kolaydan zora geldi (A1 market ... C2 hafıza); ileri geri gidince cevaplar korundu; bölüm gözden geçirme ve bitirme çalıştı; kayıtlı puanlar doğruydu (4/19 ve 2/19, iki yanlış tamamlama yanlış sayıldı); öğretmenin boşluk tablosu cevabı ve anahtarı gösterdi. Hâlâ doğrulanmadı: öğretmenin boşluk başına kabulü (deneme bitmeden gösterilmiyor) ve bu turda okuma ile konuşma arası bölümler.
+- Doğrulanmadı: canlıya çıkış ve banka top-up, gerçek öğrenci verisi (ağırlık 4 ve simülasyondaki metin etkisi sd 0.5 varsayım), yeni metinleri anadili Almanca bir öğretmenin okuması (yalnız bağımsız bir kör çözüm yapıldı).
 
 ## Canlıya çıkış: kurs grubu sürümü (2026-10-14, kullanıcı onayıyla: "canlıya al direkt")
 

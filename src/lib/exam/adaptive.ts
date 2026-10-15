@@ -91,31 +91,35 @@ export function eap(observations: Observation[], prior: Posterior): Posterior {
  * Gaps of one C-test text per unit of weight. Professionally a C-test text is
  * one "super-item" scored by its number of correct gaps (polytomous Rasch);
  * its gaps are not independent, so a 20-gap text is worth more than one item
- * and less than twenty. Five is an uncalibrated choice (spec 2026-10-15,
- * docs/EXAM-ENGINE.md) until a partial credit model is fitted to real data.
+ * and less than twenty. The divisor 4 (a 20-gap text weighs 5) is an
+ * uncalibrated choice (spec 2026-10-15, docs/EXAM-ENGINE.md) until a partial credit model is fitted to real data.
  */
 export const C_TEST_GAPS_PER_WEIGHT = 4;
 
-/** How many items one scored item counts as in the estimate. */
-export function itemWeight(item: { skillTag: string; content: ItemContent }): number {
-  if (!isCTest(item) || item.content.kind !== "GAP") return 1;
+/**
+ * How many items one scored item counts as in the estimate. `weighCTests` is
+ * off for sections that do not use `cTestLevels` (see blueprint.ts weighsCTests):
+ * then every item weighs 1.
+ */
+export function itemWeight(item: { skillTag: string; content: ItemContent }, weighCTests: boolean): number {
+  if (!weighCTests || !isCTest(item) || item.content.kind !== "GAP") return 1;
   return Math.max(1, item.content.gaps.length / C_TEST_GAPS_PER_WEIGHT);
 }
 
 /** The observation a stored, scored response adds to the estimate. */
-export function observationOf(snapshot: Pick<ItemSnapshot, "difficulty" | "skillTag" | "content">, score: number): Observation {
-  return { b: snapshot.difficulty, score, weight: itemWeight(snapshot) };
+export function observationOf(snapshot: Pick<ItemSnapshot, "difficulty" | "skillTag" | "content">, score: number, weighCTests: boolean): Observation {
+  return { b: snapshot.difficulty, score, weight: itemWeight(snapshot, weighCTests) };
 }
 
 /** A stored response as `replay` reads it. */
-export function replayResponseOf(r: { itemId: string; itemSnapshot: ItemSnapshot; score: number | null }): ReplayResponse {
+export function replayResponseOf(r: { itemId: string; itemSnapshot: ItemSnapshot; score: number | null }, weighCTests: boolean): ReplayResponse {
   return {
     itemId: r.itemId,
     b: r.itemSnapshot.difficulty,
     skillTag: r.itemSnapshot.skillTag,
     stimulusId: r.itemSnapshot.stimulusId,
     score: r.score,
-    weight: itemWeight(r.itemSnapshot),
+    weight: itemWeight(r.itemSnapshot, weighCTests),
   };
 }
 

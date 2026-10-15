@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { attempts, examAssessments, itemResponses, sectionRuns } from "@/db/schema";
 import { eap, observationOf, replay, replayResponseOf, type Observation } from "@/lib/exam/adaptive";
-import { adaptiveConfigFor } from "@/lib/exam/blueprint";
+import { adaptiveConfigFor, weighsCTests } from "@/lib/exam/blueprint";
 import { isObjectiveSection } from "@/lib/exam/types";
 
 /**
@@ -26,11 +26,12 @@ export async function reestimateRun(runId: string): Promise<void> {
   if (!ctx || !s) return;
 
   const all = await db.select().from(itemResponses).where(eq(itemResponses.sectionRunId, runId));
+  const w = weighsCTests(s);
   const acfg = adaptiveConfigFor(s, ctx.exam.mode, ctx.exam.claimedLevel);
   const prior = { mean: acfg.priorMean, sd: acfg.priorSd };
   const state = replay(
     acfg,
-    all.map(replayResponseOf),
+    all.map((r) => replayResponseOf(r, w)),
   );
   let thetaMean = state.posterior.mean;
   let thetaSd = state.posterior.sd;
@@ -38,7 +39,7 @@ export async function reestimateRun(runId: string): Promise<void> {
   const answered = all.filter((r) => r.answeredAt).length;
   if (s.adaptive && answered < s.minItems) {
     // Items never reached count as wrong, as at the end of the section.
-    const observations = all.filter((r) => r.score !== null).map((r) => observationOf(r.itemSnapshot, r.score as number));
+    const observations = all.filter((r) => r.score !== null).map((r) => observationOf(r.itemSnapshot, r.score as number, w));
     for (let i = 0; i < s.minItems - answered; i++) observations.push({ b: state.posterior.mean, score: 0 });
     const post = eap(observations, prior);
     thetaMean = post.mean;
@@ -50,7 +51,7 @@ export async function reestimateRun(runId: string): Promise<void> {
     const observations: Observation[] = [];
     for (const r of [...all].sort((a, b) => a.sequence - b.sequence)) {
       if (r.score === null) continue;
-      observations.push(observationOf(r.itemSnapshot, r.score));
+      observations.push(observationOf(r.itemSnapshot, r.score, w));
       const post = eap(observations, prior);
       await db.update(itemResponses).set({ thetaAfter: post.mean, seAfter: post.sd }).where(eq(itemResponses.id, r.id));
     }

@@ -189,19 +189,25 @@ describe("weighted observations", () => {
   });
 
   it("a C-test weighs its gaps / 4, at least 1; every other item weighs 1", () => {
-    expect(itemWeight({ skillTag: C_TEST_SKILL_TAG, content: gapContent(20) })).toBe(5);
-    expect(itemWeight({ skillTag: C_TEST_SKILL_TAG, content: gapContent(18) })).toBe(4.5);
-    expect(itemWeight({ skillTag: C_TEST_SKILL_TAG, content: gapContent(2) })).toBe(1);
-    expect(itemWeight({ skillTag: "grammar.dativ", content: gapContent(20) })).toBe(1);
-    expect(itemWeight({ skillTag: "grammar.dativ", content: { kind: "CHOICE", options: [] } })).toBe(1);
+    expect(itemWeight({ skillTag: C_TEST_SKILL_TAG, content: gapContent(20) }, true)).toBe(5);
+    expect(itemWeight({ skillTag: C_TEST_SKILL_TAG, content: gapContent(18) }, true)).toBe(4.5);
+    expect(itemWeight({ skillTag: C_TEST_SKILL_TAG, content: gapContent(2) }, true)).toBe(1);
+    expect(itemWeight({ skillTag: "grammar.dativ", content: gapContent(20) }, true)).toBe(1);
+    expect(itemWeight({ skillTag: "grammar.dativ", content: { kind: "CHOICE", options: [] } }, true)).toBe(1);
+  });
+
+  it("without weighCTests every item weighs 1, even a 20-gap C-test (exams taken before 2026-10-15)", () => {
+    expect(itemWeight({ skillTag: C_TEST_SKILL_TAG, content: gapContent(20) }, false)).toBe(1);
   });
 
   it("observationOf and replayResponseOf carry the snapshot's difficulty and weight", () => {
     const snapshot = { difficulty: -0.5, skillTag: C_TEST_SKILL_TAG, content: gapContent(20), stimulusId: null } as unknown as ItemSnapshot;
-    expect(observationOf(snapshot, 0.7)).toEqual({ b: -0.5, score: 0.7, weight: 5 });
-    expect(replayResponseOf({ itemId: "x", itemSnapshot: snapshot, score: 0.7 })).toEqual({
+    expect(observationOf(snapshot, 0.7, true)).toEqual({ b: -0.5, score: 0.7, weight: 5 });
+    expect(replayResponseOf({ itemId: "x", itemSnapshot: snapshot, score: 0.7 }, true)).toEqual({
       itemId: "x", b: -0.5, skillTag: C_TEST_SKILL_TAG, stimulusId: null, score: 0.7, weight: 5,
     });
+    expect(observationOf(snapshot, 0.7, false)).toEqual({ b: -0.5, score: 0.7, weight: 1 });
+    expect(replayResponseOf({ itemId: "x", itemSnapshot: snapshot, score: 0.7 }, false).weight).toBe(1);
   });
 
   it("replay uses the weight", () => {
