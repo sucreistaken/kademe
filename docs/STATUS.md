@@ -162,6 +162,28 @@ Spec `docs/superpowers/specs/2026-10-06-advanced-ai-create-design.md`, plan
   kutusu taslağı sunucuda güncelliyor ama kartlar yenilenmeden eski kalıyordu (`4705582`); toplam 100 iken "100 olmalı"
   yazıyordu (`488f3fe`).
 
+## onSET düzeninde yerleştirme (2026-10-15, `feat/onset-placement`, canlıda değil)
+
+Spec `docs/superpowers/specs/2026-10-15-onset-placement-design.md`. Ayrıntı ve model notları `docs/EXAM-ENGINE.md`.
+
+- Yerleştirme sınavının dilbilgisi bölümü artık A1'den C2'ye altı C-test (onSET düzeni), 30 dk, toplam 77 dk (eski: 64 dk, açılışta tek C-test + seviye başına 3 çoktan seçmeli). Hızlı seviye taraması üç C-test (A2, B1, B2), 15 dk.
+- `cTestLevels` (DILBILGISI bölümü): listelenen her seviyeden bir C-test, kolaydan zora; eksik seviye atlanır; eski `cTest: true` çapada tek C-test olarak kalır.
+- Tahminde C-test ağırlığı `max(1, boşluk / 4)`: 20 boşluklu metin 5 ağırlığında. Kalibre değil; gerçek veri gelince kısmi puan modeline geçilmeli.
+- AI oluşturucu şablonu süre oranıyla seçer (`30 * |log2(şablon dk / hedef)|`); beceri söylenmediğinde hızlı tarama / yerleştirme sınırı yaklaşık 34 dk. Yeniden ölçekleme `floor(dk / 5)` metin tutar (en az bir), orta seviyeler.
+- Banka: seviye başına 3 C-test (toplam 18), 12 yeni metin, iş dışı konular. Kör çözümde 229 boşlukta 2 eksik kabul bulundu (`andern`, `Einkauf`), düzeltildi; `hatte`, `keinerlei`, `Freizeitbetätigung` de kabul.
+- Simülasyon (`scripts/simulate-placement.ts`, seviye başına 4000 koşu, metin başına rastgele etki sd 0.5, tam / ±1 seviye):
+
+| Form | A1 | A2 | B1 | B2 | C1 | C2 |
+|---|---|---|---|---|---|---|
+| Yerleştirme, önce | 66/100 | 76/100 | 79/100 | 77/100 | 68/100 | 39/99 |
+| Yerleştirme, sonra | 70/100 | 81/100 | 83/100 | 81/100 | 73/100 | 47/100 |
+| Hızlı tarama, önce | 65/99 | 66/100 | 64/99 | 62/99 | 55/99 | 62/98 |
+| Hızlı tarama, sonra | 65/100 | 75/100 | 70/100 | 76/100 | 60/100 | 28/98 |
+
+  İki kapı da geçti (tolerans: tam -0.02, ±1 -0.01, A1-C1). Hızlı taramada C2 tam isabeti %62'den %28'e düştü (en zor metni B2); kabul edildi.
+- Mevcut sınavlar kayıtlı yapılandırmasını korur; yeni şekil için okul şablondan yeni sınav oluşturur.
+- Doğrulanmadı: gerçek tarayıcıda çözüm (denetleyici sonra yapacak), canlıya çıkış ve banka top-up, gerçek öğrenci verisi (ağırlık 4 ve simülasyondaki metin etkisi sd 0.5 varsayım), yeni metinleri anadili Almanca bir öğretmenin okuması (yalnız bağımsız bir kör çözüm yapıldı).
+
 ## Canlıya çıkış: kurs grubu sürümü (2026-10-14, kullanıcı onayıyla: "canlıya al direkt")
 
 - main `ff5e882` -> `6faeb7d` (platform/solutions fast-forward). VM `kademe-app` (`cgerman-lms`, europe-west3-a).
