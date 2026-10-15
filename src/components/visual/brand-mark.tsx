@@ -16,3 +16,21 @@ export function BrandMark({ className }: { className?: string }) {
     </svg>
   );
 }
+
+/**
+ * The mark, the name and its maker underneath. Kademe is presented as a Campus
+ * German product (user decision 2026-10-15) on the front doors and frames: the
+ * login, the invite page, the panel menu and the candidate bar. Not on the
+ * running exam's bar, where a question is the only thing to read.
+ */
+export function BrandLockup({ byline, markClassName }: { byline: string; markClassName?: string }) {
+  return (
+    <span className="flex items-center gap-2.5">
+      <BrandMark className={markClassName} />
+      <span className="flex flex-col">
+        <span className="text-[17px] font-extrabold leading-[1.1] tracking-[-0.01em] text-ink">Kademe</span>
+        <span className="text-[11px] font-semibold leading-[1.3] text-muted">{byline}</span>
+      </span>
+    </span>
+  );
+}

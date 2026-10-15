@@ -34,6 +34,7 @@ export default async function ManagerLayout({ children }: { children: React.Reac
         groups={groups}
         mobileTitle={t("nav.menuTitle")}
         mobileDescription={t("nav.menuDescription")}
+        byline={t("brand.byline")}
         footer={
           <div className="flex items-center gap-2.5">
             <LangSwitch locale={locale} />

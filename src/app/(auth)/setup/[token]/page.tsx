@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { InlineLink } from "@/components/ui/inline-link";
+import { BrandLockup } from "@/components/visual/brand-mark";
 import { managerT } from "@/i18n/manager";
 import { managerLocale } from "@/i18n/manager-locale";
 import { PASSWORD_MIN_LENGTH, resolveSetupToken } from "@/server/settings";
@@ -34,7 +35,9 @@ export default async function SetupPage({
         className="flex min-h-screen items-center justify-center px-6"
       >
         <div className="w-full max-w-[380px]">
-          <p className="mb-8 text-[15px] font-semibold tracking-tight">Kademe</p>
+          <p className="mb-8">
+            <BrandLockup byline={t("brand.byline")} markClassName="size-8" />
+          </p>
           <Card className="p-7" elevated>
             <h1 className="text-[19px] font-semibold tracking-tight">
               {t("setup.invalidTitle")}
@@ -55,7 +58,9 @@ export default async function SetupPage({
       className="flex min-h-screen items-center justify-center px-6"
     >
       <div className="w-full max-w-[380px]">
-        <p className="mb-8 text-[15px] font-semibold tracking-tight">Kademe</p>
+        <p className="mb-8">
+          <BrandLockup byline={t("brand.byline")} markClassName="size-8" />
+        </p>
 
         <Card className="p-7" elevated>
           <h1 className="text-[19px] font-semibold tracking-tight">

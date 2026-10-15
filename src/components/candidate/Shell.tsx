@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BrandMark } from "@/components/visual/brand-mark";
+import { BrandLockup } from "@/components/visual/brand-mark";
 import { candidateT } from "@/i18n/candidate";
 import type { Locale } from "@/i18n/locale";
 
@@ -44,10 +44,7 @@ export function CandidateShell({
     <div lang={locale} className="min-h-dvh bg-paper">
       {header ? (
       <header className="flex h-16 items-center justify-between gap-4 border-b border-hairline bg-surface px-5 sm:px-7">
-        <span className="flex items-center gap-2.5 text-[17px] font-extrabold tracking-[-0.01em] text-ink">
-          <BrandMark />
-          {t("common.brand")}
-        </span>
+        <BrandLockup byline={t("common.byline")} />
         <span className="flex min-w-0 items-center gap-3">
           {meta ? (
             <span className="hidden min-w-0 truncate rounded-full bg-subtle px-3 py-1 text-[12.5px] font-semibold text-ink-2 md:inline">{meta}</span>

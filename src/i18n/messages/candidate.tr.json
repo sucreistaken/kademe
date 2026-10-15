@@ -1,6 +1,7 @@
 {
   "common": {
     "brand": "Kademe",
+    "byline": "bir Campus German ürünü",
     "saving": "Kaydediliyor...",
     "saved": "Kaydedildi",
     "savedAgo": "Kaydedildi · {age}",

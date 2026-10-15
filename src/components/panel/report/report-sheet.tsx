@@ -138,6 +138,7 @@ export function ReportSheet({ model, t, locale }: { model: ReportModel; t: T; lo
           </div>
         </div>
         <p className="mt-3 text-[11px] text-muted">{t("resultReport.verificationHint")}</p>
+        <p className="mt-1 text-[11px] text-muted">{t("brand.madeWith")}</p>
       </article>
     </>
   );

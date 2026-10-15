@@ -15,7 +15,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { BrandMark } from "@/components/visual/brand-mark";
+import { BrandLockup } from "@/components/visual/brand-mark";
 import { cn } from "@/lib/cn";
 import type { NavGroupView } from "@/solutions/registry";
 import type { NavIcon } from "@/solutions/types";
@@ -58,9 +58,12 @@ export function ManagerNav({
   footer,
   mobileTitle,
   mobileDescription,
+  byline,
 }: {
   groups: NavGroupView[];
   footer: React.ReactNode;
+  /** "a Campus German product", already in the panel's language. */
+  byline: string;
   /** Screen-reader title and description of the sheet the menu becomes below 1024px. */
   mobileTitle: string;
   mobileDescription: string;
@@ -68,10 +71,9 @@ export function ManagerNav({
   const pathname = usePathname();
   return (
     <Sidebar mobileTitle={mobileTitle} mobileDescription={mobileDescription}>
-      <SidebarHeader className="flex-row items-center gap-2.5 px-4 py-4">
-        <BrandMark />
-        <Link href="/dashboard" className="text-[17px] font-extrabold tracking-[-0.01em] text-ink">
-          Kademe
+      <SidebarHeader className="flex-row items-center px-4 py-4">
+        <Link href="/dashboard">
+          <BrandLockup byline={byline} />
         </Link>
       </SidebarHeader>
       <SidebarContent>

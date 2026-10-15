@@ -60,5 +60,9 @@
     "stepLabel": "Adım {n} / {total}",
     "noChanges": "Değişiklik yok.",
     "skip": "Atla"
+  },
+  "brand": {
+    "byline": "bir Campus German ürünü",
+    "madeWith": "Bu rapor, Campus German'ın Kademe platformuyla hazırlandı."
   }
 }

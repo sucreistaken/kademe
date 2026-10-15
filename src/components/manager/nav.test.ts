@@ -11,7 +11,7 @@ vi.mock("next/navigation", () => ({ usePathname: () => route.pathname }));
 const shared = { today: "Bugün", settings: "Ayarlar", advanced: "Gelişmiş" };
 
 function render() {
-  const nav = createElement(ManagerNav as never, { groups: buildNav("tr", shared), footer: null, mobileTitle: "Menü", mobileDescription: "Panel menüsü" } as never);
+  const nav = createElement(ManagerNav as never, { groups: buildNav("tr", shared), footer: null, mobileTitle: "Menü", mobileDescription: "Panel menüsü", byline: "bir Campus German ürünü" } as never);
   return renderToStaticMarkup(createElement(SidebarProvider, null, nav));
 }
 
@@ -27,8 +27,9 @@ describe("ManagerNav (P1)", () => {
       "/advanced",
       "/settings",
     ]);
-    // The first link is the "Kademe" brand; every menu item is an icon plus its words.
-    expect(items[0].inner).toBe("Kademe");
+    // The first link is the brand: a hidden mark, "Kademe" and its maker. Every menu item is an icon plus its words.
+    expect(items[0].inner.replace(/<[^>]+>/g, "")).toBe("Kademebir Campus German ürünü");
+    expect(items[0].inner).toMatch(/<svg [^>]*aria-hidden="true"/);
     for (const item of items.slice(1)) {
       expect(item.inner).toMatch(/^<svg [^>]*aria-hidden="true"[^>]*>.*<\/svg>[^<]+$/);
       expect(item.inner).not.toMatch(/tabindex|focusable="true"/);

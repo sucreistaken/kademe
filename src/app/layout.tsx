@@ -10,8 +10,11 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "Kademe",
-  description: "Yapılandırılmış aday değerlendirme platformu",
+  title: "Kademe | Campus German",
+  description: "Campus German'ın dil okulları için seviye sınavı ve aday değerlendirme platformu",
+  applicationName: "Kademe",
+  creator: "Campus German",
+  publisher: "Campus German",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

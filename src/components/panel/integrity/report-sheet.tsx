@@ -187,6 +187,7 @@ export function IntegrityReportSheet({ model, t, locale }: { model: IntegrityRep
             <div className="tnum mt-0.5 font-mono text-[20px] font-bold tracking-[0.12em]">{m.verificationCode}</div>
           </div>
         </div>
+        <p className="mt-3 text-[11px] text-muted">{t("brand.madeWith")}</p>
       </article>
     </>
   );

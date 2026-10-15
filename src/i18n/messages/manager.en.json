@@ -60,5 +60,9 @@
     "stepLabel": "Step {n} / {total}",
     "noChanges": "Nothing has changed.",
     "skip": "Skip"
+  },
+  "brand": {
+    "byline": "a Campus German product",
+    "madeWith": "Prepared with Kademe, a Campus German product."
   }
 }
