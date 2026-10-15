@@ -136,6 +136,26 @@ describe("inviteStudentsAction: the exam", () => {
     expect(state.coverageClaims.sort()).toEqual(["A2", "B1"]);
   });
 
+  it("verification: the chosen difficulty goes to every invitation and to the bank check; a stray value is ignored", async () => {
+    state.ensureResult = { ok: true, blueprint: published("level-check"), created: false };
+    const shifts: unknown[] = [];
+    state.invite = (i) => {
+      shifts.push(i.difficultyOffset);
+      return { ok: true, url: "http://localhost:3100/a/x", expiresAt: new Date("2026-10-28T10:00:00Z") };
+    };
+    expect(await inviteStudentsAction(input({ exam: "template:level-check", claimed: "B1", shift: -1 }))).toMatchObject({ ok: true });
+    expect(shifts).toEqual([-1, -1, -1]);
+    shifts.length = 0;
+    expect(await inviteStudentsAction(input({ exam: "template:level-check", claimed: "B1", shift: 7 as never }))).toMatchObject({ ok: true });
+    expect(shifts).toEqual([undefined, undefined, undefined]);
+  });
+
+  it("placement: a difficulty is not applied", async () => {
+    state.ensureResult = { ok: true, blueprint: published("placement"), created: false };
+    expect(await inviteStudentsAction(input({ shift: 1 }))).toMatchObject({ ok: true });
+    expect(state.invited.map((i) => i.difficultyOffset)).toEqual([undefined, undefined, undefined]);
+  });
+
   it("asks for the claim before publishing anything", async () => {
     expect(await inviteStudentsAction(input({ exam: "template:level-check" }))).toEqual({ ok: false, code: "CLAIM_REQUIRED" });
     expect(await inviteStudentsAction(input({ exam: "template:level-check", claimed: "Z9" }))).toEqual({ ok: false, code: "CLAIM_REQUIRED" });

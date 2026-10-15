@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useLocale } from "next-intl";
 import { Copy, Download, FileUp, Info, Monitor, UserPlus } from "lucide-react";
+import { levelShiftScope } from "@/app/(manager)/exam/exams/new/wizard-model";
 import { inviteStudentsAction, type InviteStudentsResult } from "@/app/(manager)/exam/students/new/actions";
 import {
   alreadyInvited,
@@ -139,6 +140,8 @@ export function StudentInviteWizard({
   const [text, setText] = useState("");
   const [choice, setChoice] = useState(initialChoice ?? (own.length === 1 ? own[0].value : ""));
   const [batch, setBatch] = useState<Cefr | null>(initialClaimed ?? null);
+  /** Verification only: easier (-1) or harder (1) for this list; null keeps the exam's own setting. */
+  const [shift, setShift] = useState<-1 | 0 | 1 | null>(null);
   const [locale, setLocale] = useState<"tr" | "en">("tr");
   // The exam window: "Hemen" or a set opening, and the last entry (default 14 days after the opening until the manager sets it).
   const [startMode, setStartMode] = useState<"now" | "later">("now");
@@ -165,9 +168,15 @@ export function StudentInviteWizard({
   const step = nav.step;
   // A verification exam is checked for each claim on the list; a template's first use for every claim (it is published here).
   const claims = exam?.mode === "LEVEL_VERIFICATION" ? [...new Set(parsed.rows.map((r) => claimFor(r, "LEVEL_VERIFICATION", batch)))] : [null];
-  const missing = exam
-    ? claims.flatMap((c) => bankCoverage(counts, exam.config, exam.mode, exam.published ? c : null).rows.filter((r) => !r.ok)).slice(0, 1)[0] ?? null
+  // The difficulty choice: verification exams whose fixed sections a level shift can move.
+  const shiftScope = exam?.mode === "LEVEL_VERIFICATION" ? levelShiftScope(exam.config) : null;
+  const shiftChosen = shiftScope?.applies && shift !== null ? shift : null;
+  const effectiveShift = shiftChosen ?? exam?.config.difficultyOffset ?? 0;
+  const examConfig = exam && shiftChosen !== null ? { ...exam.config, difficultyOffset: shiftChosen } : exam?.config;
+  const missing = exam && examConfig
+    ? claims.flatMap((c) => bankCoverage(counts, examConfig, exam.mode, exam.published ? c : null).rows.filter((r) => !r.ok)).slice(0, 1)[0] ?? null
     : null;
+  const shiftLabel = (v: number) => t(v < 0 ? "shiftEasier" : v > 0 ? "shiftHarder" : "shiftNormal");
   const repeated = alreadyInvited(parsed.rows, openEmails);
   const startAt = startMode === "later" ? zonedMoment({ date: startDate, time: startTime }, timeZone) : null;
   const defaultEnd = new Date((startAt ?? new Date(nowIso)).getTime() + DEFAULT_WINDOW_DAYS * 86_400_000);
@@ -218,7 +227,7 @@ export function StudentInviteWizard({
     setRefusal(null);
     start(async () => {
       try {
-        const r = await inviteStudentsAction({ text, exam: exam.value, claimed: batch, locale, window: windowInput });
+        const r = await inviteStudentsAction({ text, exam: exam.value, claimed: batch, locale, window: windowInput, shift: shiftChosen });
         if (r.ok) setDone(r);
         else {
           setRefusal(r.code);
@@ -516,7 +525,12 @@ export function StudentInviteWizard({
                   labelledBy={`invite-exam-${g}`}
                   look="panel"
                   value={[choice]}
-                  onChange={([v]) => edit(() => setChoice(v ?? ""))}
+                  onChange={([v]) =>
+                    edit(() => {
+                      setChoice(v ?? "");
+                      setShift(null);
+                    })
+                  }
                   items={examItems(g)}
                 />
               </div>
@@ -539,6 +553,26 @@ export function StudentInviteWizard({
                 ))}
               </div>
               <p className="text-[13px] text-muted">{t("inviteClaimHint")}</p>
+            </fieldset>
+          ) : null}
+          {shiftScope?.applies ? (
+            <fieldset className="space-y-2">
+              <legend className="text-[14px] font-medium text-ink">{t("inviteShift")}</legend>
+              <div className="flex flex-wrap gap-1.5">
+                {([-1, 0, 1] as const).map((v) => (
+                  <label
+                    key={v}
+                    className={cn(
+                      "flex h-11 cursor-pointer items-center justify-center rounded-[10px] border px-4 text-[14px] font-semibold has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent",
+                      effectiveShift === v ? "border-accent bg-accent-soft text-ink" : "border-line bg-surface text-ink-2 hover:bg-canvas",
+                    )}
+                  >
+                    <input type="radio" name="invite-shift" value={v} className="sr-only" checked={effectiveShift === v} onChange={() => edit(() => setShift(v))} />
+                    {shiftLabel(v)}
+                  </label>
+                ))}
+              </div>
+              <p className="text-[13px] text-muted">{t("inviteShiftHint", { list: shiftScope.fixed.map((s) => sec(s)).join(", ") })}</p>
             </fieldset>
           ) : null}
           {missing ? (
@@ -586,6 +620,7 @@ export function StudentInviteWizard({
               ...(exam?.mode === "LEVEL_VERIFICATION"
                 ? [{ id: "claim", label: t("inviteClaim"), value: batch ?? t("inviteClaimPerRow"), edit: { onClick: change("exam") } }]
                 : []),
+              ...(shiftScope?.applies ? [{ id: "shift", label: t("inviteShift"), value: shiftLabel(effectiveShift), edit: { onClick: change("exam") } }] : []),
               { id: "language", label: inv("language"), value: <span lang={locale}>{locale === "en" ? "English" : "Türkçe"}</span>, edit: { onClick: change("language") } },
               {
                 id: "opens",

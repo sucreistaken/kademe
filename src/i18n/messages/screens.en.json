@@ -295,6 +295,8 @@
     "inviteClaim": "Claimed level",
     "inviteClaimHint": "For everyone whose line names no level. A level written on a line (Ayşe Yılmaz, ayse@example.com, B1) wins.",
     "inviteClaimPerRow": "Each line's own level",
+    "inviteShift": "Difficulty",
+    "inviteShiftHint": "Easier takes the questions one level below the claimed level; harder, one level above. Only for the students on this list; sections affected: {list}.",
     "inviteReviewTitle": "A last look",
     "inviteReviewLead": "Each student gets a link of their own.",
     "inviteRowStudents": "Students",

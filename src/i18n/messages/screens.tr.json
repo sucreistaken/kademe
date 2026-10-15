@@ -295,6 +295,8 @@
     "inviteClaim": "Beyan edilen seviye",
     "inviteClaimHint": "Listede seviyesi yazmayan herkes için. Bir satıra seviye yazdıysan (Ayşe Yılmaz, ayse@ornek.com, B1) o geçerli olur.",
     "inviteClaimPerRow": "Her satırın kendi seviyesi",
+    "inviteShift": "Zorluk",
+    "inviteShiftHint": "Daha kolay, soruları beyan edilen seviyenin bir altından; daha zor, bir üstünden getirir. Yalnız bu davetteki öğrenciler için geçerli; etkilenen bölümler: {list}.",
     "inviteReviewTitle": "Son bir bakış",
     "inviteReviewLead": "Her öğrenci için ayrı bir link hazırlanır.",
     "inviteRowStudents": "Öğrenciler",

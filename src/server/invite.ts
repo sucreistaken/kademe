@@ -38,6 +38,8 @@ export type InviteInput = {
   /** The exam's window (src/lib/exam-window): not before this instant (default: open now), last entry at `expiresAt` (default: ttlDays from now). */
   notBefore?: Date | null;
   expiresAt?: Date;
+  /** This student's level shift (-1 easier, 1 harder), written into their copy of the exam; omitted keeps the exam's own. */
+  difficultyOffset?: -1 | 0 | 1;
 };
 
 export type InviteResult =
@@ -113,7 +115,7 @@ export async function createInvitation(input: InviteInput): Promise<InviteResult
       assessmentId: assessment.id,
       blueprintId: blueprint.id,
       blueprintName: blueprint.name,
-      blueprintSnapshot: blueprint.config,
+      blueprintSnapshot: input.difficultyOffset === undefined ? blueprint.config : { ...blueprint.config, difficultyOffset: input.difficultyOffset },
       mode: blueprint.mode,
       claimedLevel: blueprint.mode === "LEVEL_VERIFICATION" ? input.claimedLevel : null,
     });

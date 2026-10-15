@@ -27,6 +27,8 @@ export type InviteStudentsInput = {
   locale: "tr" | "en";
   /** The exam window as typed (school time); omitted: open now, last entry in 14 days. The server resolves it again. */
   window?: WindowInput;
+  /** Verification exams: one CEFR level easier (-1) or harder (1) for these students; omitted keeps the exam's own. */
+  shift?: -1 | 0 | 1 | null;
 };
 
 export type InviteFailure = "BLUEPRINT_NOT_FOUND" | "NOT_PUBLISHED" | "CLAIM_REQUIRED" | "GENERIC";
@@ -94,9 +96,12 @@ export async function inviteStudentsAction(input: InviteStudentsInput): Promise<
   const exam = bp;
   const claims = parsed.rows.map((r) => claimFor(r, exam.mode, batch));
   if (exam.mode === "LEVEL_VERIFICATION" && claims.some((c) => !c)) return { ok: false, code: "CLAIM_REQUIRED" };
+  // The difficulty the manager chose for this list; only verification exams take one.
+  const shift = exam.mode === "LEVEL_VERIFICATION" && (input.shift === -1 || input.shift === 0 || input.shift === 1) ? input.shift : undefined;
+  const config = shift === undefined ? exam.config : { ...exam.config, difficultyOffset: shift };
   const counts = await bankCounts(user.orgId);
   for (const claim of new Set(claims)) {
-    if (!bankCoverage(counts, exam.config, exam.mode, claim).ok) return { ok: false, code: "COVERAGE" };
+    if (!bankCoverage(counts, config, exam.mode, claim).ok) return { ok: false, code: "COVERAGE" };
   }
 
   const created: Extract<InviteStudentsResult, { ok: true }>["created"] = [];
@@ -104,7 +109,7 @@ export async function inviteStudentsAction(input: InviteStudentsInput): Promise<
   for (const [i, row] of parsed.rows.entries()) {
     const fullName = row.fullName.replace(/\s+/g, " ").trim();
     try {
-      const r = await createInvitation({ orgId: user.orgId, blueprintId: exam.id, fullName, email: row.email, claimedLevel: claims[i], locale, invitedBy: user.id, notBefore: window.notBefore, expiresAt: window.expiresAt });
+      const r = await createInvitation({ orgId: user.orgId, blueprintId: exam.id, fullName, email: row.email, claimedLevel: claims[i], locale, invitedBy: user.id, notBefore: window.notBefore, expiresAt: window.expiresAt, difficultyOffset: shift });
       if (r.ok) created.push({ line: row.line, fullName, email: row.email, url: r.url, expiresAt: r.expiresAt.toISOString(), notBefore: r.notBefore?.toISOString() ?? null });
       else failed.push({ line: row.line, fullName, email: row.email, code: r.code });
     } catch {
