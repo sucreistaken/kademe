@@ -15,7 +15,7 @@ const ctx: CreatorCtx = { orgId: "o1", userId: "u1", role: "MANAGER", locale: "t
 const params = (over: Partial<ExamParams> = {}): ExamParams => ({
   mode: "PLACEMENT",
   claimedLevel: null,
-  targetMinutes: 60,
+  targetMinutes: 40,
   skills: [],
   emphasis: null,
   speakingRequired: null,
@@ -63,7 +63,7 @@ describe("examCreator.draft", () => {
     const r = await examCreator.draft(ctx, params());
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.draft).toMatchObject({ name: "Yerleştirme sınavı, 60 dk", mode: "PLACEMENT", templateKey: "placement", coverageOk: true, gaps: [] });
+    expect(r.draft).toMatchObject({ name: "Yerleştirme sınavı, 40 dk", mode: "PLACEMENT", templateKey: "placement", coverageOk: true, gaps: [] });
   });
 
   it("reports the gaps against a thin bank", async () => {

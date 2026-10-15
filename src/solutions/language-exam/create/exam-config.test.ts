@@ -28,9 +28,16 @@ describe("allocateMinutes", () => {
 describe("examTemplateFor", () => {
   it("picks the nearest template by mode, sections and minutes", () => {
     expect(examTemplateFor(shape({ skills: ["GRAMMAR"], targetMinutes: 15 })).key).toBe("quick-screen");
-    expect(examTemplateFor(shape({ targetMinutes: 60 })).key).toBe("placement");
+    expect(examTemplateFor(shape({ targetMinutes: 40 })).key).toBe("placement");
     expect(examTemplateFor(shape({ skills: ["GRAMMAR", "READING", "LISTENING", "WRITING", "SPEAKING"], targetMinutes: 20 })).key).toBe("placement");
     expect(examTemplateFor(shape({ mode: "LEVEL_VERIFICATION", targetMinutes: 30 })).key).toBe("level-check");
+  });
+
+  it("pins the quick-screen/placement boundary by time ratio (about 34 minutes with no skills)", () => {
+    expect(examTemplateFor(shape({ targetMinutes: 40 })).key).toBe("placement");
+    expect(examTemplateFor(shape({ targetMinutes: 30 })).key).toBe("quick-screen");
+    expect(examTemplateFor(shape({ targetMinutes: 60 })).key).toBe("placement");
+    expect(examTemplateFor(shape({ skills: ["GRAMMAR"], targetMinutes: 40 })).key).toBe("quick-screen");
   });
 });
 

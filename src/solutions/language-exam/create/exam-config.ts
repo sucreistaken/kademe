@@ -31,6 +31,8 @@ const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n
  * Named skills must match the template's sections (the emphasis counts as
  * named). With no skills named, only a template that lacks the emphasis
  * section is pushed back: "okuma ağırlıklı" means more reading, not reading only.
+ * The time fit is a ratio, so stretching a short template costs as much as
+ * shrinking a long one.
  */
 export function examTemplateFor(p: ExamShape): ExamTemplate {
   const want = new Set<Section>(p.skills);
@@ -41,7 +43,8 @@ export function examTemplateFor(p: ExamShape): ExamTemplate {
       : p.emphasis && !on.has(p.emphasis)
         ? 1
         : 0;
-    const minutes = p.targetMinutes ? Math.abs(estimatedMinutes(t.config) - p.targetMinutes) : 0;
+    // Stretching or shrinking a template by half costs as much as one section that does not match.
+    const minutes = p.targetMinutes ? 30 * Math.abs(Math.log2(estimatedMinutes(t.config) / p.targetMinutes)) : 0;
     return differ * 30 + minutes;
   };
   const candidates = EXAM_TEMPLATES.filter((t) => t.mode === p.mode);
