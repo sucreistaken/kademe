@@ -177,7 +177,7 @@
     "templateCoverageBlocked": "This ready exam is used for the first time: the bank has {available} approved items for {section} {level}; {needed} are needed.",
     "recommendedForNew": "Recommended",
     "forWhomPlacement": "For new students: decides which class they join.",
-    "forWhomQuick": "For a quick first impression: grammar only, a rough level.",
+    "forWhomQuick": "For a quick first impression: three C-tests, a rough level.",
     "forWhomLevelCheck": "For a student who states their level: checks it in four skills."
   },
   "examWizard": {

@@ -13,23 +13,34 @@ import type { Cefr, ExamMode } from "./types";
  *
  * All three are fixed forms (2026-10-14 decision): the student can go back,
  * flag items and review a section before finishing it, which an adaptive
- * section cannot allow. The placement forms spread their items over the levels
- * (ABSOLUTE), because a placement student can be anywhere; a RELATIVE form
- * would only reach A2-B2 around the B1 anchor. Grammar spreads three items
- * over every level. Reading and listening draw whole texts and clips of four
- * questions, one per level: reading A2 to C1, listening A2 to B2 (a clip is
- * slower than a text). An A1 student is placed by failing the A2 text, a C1
+ * section cannot allow. Reading and listening draw whole texts and clips of
+ * four questions, one per level: reading A2 to C1, listening A2 to B2 (a clip
+ * is slower than a text). An A1 student is placed by failing the A2 text, a C1
  * or C2 one by passing the top text and the grammar above it; six texts would
  * not fit the time. The adaptive settings stay in each section (minItems,
  * maxItems, targetSe), so switching a section to adaptive in the editor starts
  * from the earlier, simulated values.
  *
- * Measured on simulated students, uniform inside each band, 1000 per level
- * (2026-10-14, Rasch model only, testlet dependence ignored): the fixed
- * placement form puts the pooled objective level exactly right 68-80% of the
- * time at A1-C1 and within one level 99-100%, as the earlier adaptive form did
- * (66-78%, 99-100%, 400 per level). C2 is exact less often on both (40%, 47%).
- * templates.test.ts keeps a smaller version of that simulation.
+ * Grammar is C-tests (spec 2026-10-15, the onSET shape): the placement form
+ * has six, one per level A1 to C2, about five minutes each (30 minutes, about
+ * 77 for the whole test); the quick screen has three, A2 to B2, in 15 minutes.
+ * A C-test is one weighted observation per text, not a list of items.
+ *
+ * Measured on simulated students, uniform inside each band, 4000 per level
+ * (scripts/simulate-placement.ts, Rasch model only), exact / within one level,
+ * pooled objective skills:
+ *   placement, before (multiple-choice grammar, one B1 C-test):
+ *     A1 66/100  A2 76/100  B1 79/100  B2 77/100  C1 68/100  C2 39/99
+ *   placement, after (six C-tests):
+ *     A1 70/100  A2 81/100  B1 83/100  B2 81/100  C1 73/100  C2 47/100
+ *   quick screen, before (24 multiple-choice items):
+ *     A1 65/99  A2 66/100  B1 64/99  B2 62/99  C1 55/99  C2 62/98
+ *   quick screen, after (three C-tests):
+ *     A1 65/100  A2 75/100  B1 70/100  B2 76/100  C1 60/100  C2 28/98
+ * Both gates passed. The quick screen's C2 exact rate drops (62% to 28%)
+ * because its hardest text is B2, so a C2 student is mostly placed at B2 or
+ * C1; the other levels hold or improve. templates.test.ts keeps a smaller
+ * version of the placement simulation.
  */
 
 const perLevel = (counts: Partial<Record<Cefr, number>>): Distribution => ({
@@ -37,8 +48,10 @@ const perLevel = (counts: Partial<Record<Cefr, number>>): Distribution => ({
   perLevel: { A1: 0, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0, ...counts },
 });
 
-/** Three grammar items per level: with the opening C-test as good as the earlier adaptive 10-16 (simulated). */
-const GRAMMAR_SPREAD = perLevel({ A1: 3, A2: 3, B1: 3, B2: 3, C1: 3, C2: 3 });
+/** No ordinary items: the section is its C-tests. */
+const NO_ITEMS = perLevel({});
+/** One C-test per level, easy to hard: the onSET shape (spec 2026-10-15). */
+const C_TESTS_A1_C2: Cefr[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
 /** One text of four questions per level, A2 to C1. */
 const READING_A2_C1 = perLevel({ A2: 4, B1: 4, B2: 4, C1: 4 });
 /** One clip of four questions per level, A2 to B2. */
@@ -65,14 +78,14 @@ const TEMPLATES: readonly ExamTemplate[] = [
     mode: "PLACEMENT",
     name: text("Hızlı seviye taraması", "Quick level screen"),
     summary: text(
-      "15 dakikalık dilbilgisi testi, A1'den C2'ye 24 soru. Kurs danışmanıyla ilk görüşmeden önce kaba bir seviye verir.",
-      "A 15-minute grammar test, 24 questions from A1 to C2. Gives a rough level before the first talk with a course advisor.",
+      "15 dakikalık üç C-test (A2, B1, B2): öğrenci eksik harfleri kendisi yazar. Kurs danışmanıyla ilk görüşmeden önce kaba bir seviye verir.",
+      "Three C-tests in 15 minutes (A2, B1, B2): the student types the missing letters. Gives a rough level before the first talk with a course advisor.",
     ),
     config: {
       version: 1,
       sections: [
-        // Four per level: as close to the earlier adaptive 15-30 as a fixed form gets in 15 minutes (simulated).
-        section("GRAMMAR", 15, { distribution: perLevel({ A1: 4, A2: 4, B1: 4, B2: 4, C1: 4, C2: 4 }), minItems: 15, maxItems: 30, targetSe: 0.5, cTest: false }),
+        // Three C-tests, A2 to B2, about five minutes each.
+        section("GRAMMAR", 15, { distribution: NO_ITEMS, cTestLevels: ["A2", "B1", "B2"], minItems: 15, maxItems: 30, targetSe: 0.5 }),
         section("READING", 18, { enabled: false, distribution: READING_A2_C1, minItems: 5, maxItems: 8, targetSe: 0.55 }),
         section("LISTENING", 13, { enabled: false, distribution: LISTENING_A2_B2, minItems: 5, maxItems: 8, targetSe: 0.55 }),
         section("WRITING", 10, { enabled: false, tasks: 1 }),
@@ -91,14 +104,14 @@ const TEMPLATES: readonly ExamTemplate[] = [
     mode: "PLACEMENT",
     name: text("Yerleştirme sınavı", "Placement test"),
     summary: text(
-      "Dört beceri, yaklaşık 64 dakika. Öğrenci bölüm içinde sorular arasında geri dönebilir ve soruları işaretleyebilir. Öğrenciyi doğru sınıfa yerleştirir; sonucu öğretmen onaylar.",
-      "Four skills, about 64 minutes. Within a section the student can go back and flag questions. Places the student in the right class; a teacher confirms the result.",
+      "Dört beceri, yaklaşık 77 dakika. Dilbilgisi onSET düzeninde altı C-testle ölçülür: öğrenci eksik harfleri kendisi yazar. Bölüm içinde geri dönülebilir, soru işaretlenebilir. Öğrenciyi doğru sınıfa yerleştirir; sonucu öğretmen onaylar.",
+      "Four skills, about 77 minutes. Grammar is measured with six C-tests in the onSET shape: the student types the missing letters. Within a section the student can go back and flag questions. Places the student in the right class; a teacher confirms the result.",
     ),
     config: {
       version: 1,
       sections: [
-        // Opens with one B1 C-test (about five minutes), then 18 questions from A1 to C2.
-        section("GRAMMAR", 17, { distribution: GRAMMAR_SPREAD, minItems: 10, maxItems: 16, targetSe: 0.45, cTest: true }),
+        // Six C-tests, A1 to C2, about five minutes each (onSET: eight texts, five minutes each).
+        section("GRAMMAR", 30, { distribution: NO_ITEMS, cTestLevels: [...C_TESTS_A1_C2], minItems: 10, maxItems: 16, targetSe: 0.45 }),
         // Four texts of about 130 (A2) to 470 (C1) words, 16 questions.
         section("READING", 18, { distribution: READING_A2_C1, minItems: 5, maxItems: 8, targetSe: 0.55 }),
         // Three clips of 0.5-2.5 minutes, each played up to twice, 12 questions.

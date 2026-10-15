@@ -1,10 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { SEED_BANK } from "@/db/seed-bank";
-import { eap, mulberry32, pCorrect } from "./adaptive";
-import { adaptiveConfigFor, bankCoverage, blueprintConfigSchema, enabledSections, estimatedMinutes, resolveDistribution, type BankCount } from "./blueprint";
-import { BAND_CENTER, levelFromTheta, thetaForLevel } from "./cefr";
+import { bankCoverage, blueprintConfigSchema, enabledSections, estimatedMinutes, type BankCount } from "./blueprint";
+import { simulateFixedForm } from "./form-simulation";
 import { isNavigableConfig } from "./navigation";
-import { poolPosteriors } from "./result";
 import { EXAM_TEMPLATES, examTemplateByKey } from "./templates";
 import { C_TEST_SKILL_TAG, CEFR_LEVELS, isObjectiveSection, SECTIONS } from "./types";
 
@@ -62,18 +60,18 @@ describe("exam templates", () => {
     }
   });
 
-  it("quick screen: fixed grammar only, four per level, 15 minutes, released at once", () => {
+  it("quick screen: three C-tests A2 to B2, 15 minutes, released at once", () => {
     const t = byKey("quick-screen");
     expect(enabledSections(t.config).map((s) => s.section)).toEqual(["GRAMMAR"]);
     expect(sectionOf("quick-screen", "GRAMMAR")).toMatchObject({
       adaptive: false,
       durationMinutes: 15,
-      distribution: { kind: "ABSOLUTE", perLevel: { A1: 4, A2: 4, B1: 4, B2: 4, C1: 4, C2: 4 } },
+      distribution: { kind: "ABSOLUTE", perLevel: { A1: 0, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0 } },
+      cTestLevels: ["A2", "B1", "B2"],
       // The adaptive settings stay for a school that switches the section back.
       minItems: 15,
       maxItems: 30,
       targetSe: 0.5,
-      cTest: false,
     });
     expect(estimatedMinutes(t.config)).toBe(15);
     expect(t.config.resultVisibility).toBe("OVERALL");
@@ -81,20 +79,20 @@ describe("exam templates", () => {
     expect(t.config.proctoring.preset).toBe("STANDARD");
   });
 
-  it("placement: five sections, about 64 minutes, fixed forms spread over the levels, grammar opens with a C-test", () => {
+  it("placement: five sections, about 77 minutes, grammar is six C-tests", () => {
     const t = byKey("placement");
-    expect(estimatedMinutes(t.config)).toBe(64);
+    expect(estimatedMinutes(t.config)).toBe(77);
     expect(sectionOf("placement", "GRAMMAR")).toMatchObject({
       adaptive: false,
-      durationMinutes: 17,
-      distribution: { kind: "ABSOLUTE", perLevel: { A1: 3, A2: 3, B1: 3, B2: 3, C1: 3, C2: 3 } },
+      durationMinutes: 30,
+      distribution: { kind: "ABSOLUTE", perLevel: { A1: 0, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0 } },
+      cTestLevels: ["A1", "A2", "B1", "B2", "C1", "C2"],
       minItems: 10,
       maxItems: 16,
       targetSe: 0.45,
-      cTest: true,
     });
-    expect(t.summary.tr).toContain("64 dakika");
-    expect(t.summary.en).toContain("64 minutes");
+    expect(t.summary.tr).toContain("77 dakika");
+    expect(t.summary.en).toContain("77 minutes");
     expect(sectionOf("placement", "READING")).toMatchObject({
       adaptive: false,
       durationMinutes: 18,
@@ -130,14 +128,11 @@ describe("exam templates", () => {
     expect(t.config.autoRelease).toBe(false);
   });
 
-  it("placement's coverage asks for the B1 C-test and nothing else for C-tests", () => {
+  it("placement's coverage asks for one C-test at every level, and the seed bank has them", () => {
     const t = byKey("placement");
     const rows = bankCoverage(seedCounts(), t.config, t.mode, null).rows.filter((r) => r.cTest);
-    expect(rows.map((r) => [r.section, r.level, r.needed, r.ok])).toEqual([["GRAMMAR", "B1", 1, true]]);
-    for (const key of ["quick-screen", "level-check"]) {
-      const o = byKey(key);
-      expect(bankCoverage(seedCounts(), o.config, o.mode, null).rows.filter((r) => r.cTest)).toEqual([]);
-    }
+    expect(rows.map((r) => r.level)).toEqual(["A1", "A2", "B1", "B2", "C1", "C2"]);
+    expect(rows.every((r) => r.ok)).toBe(true);
   });
 
   it("returns null for an unknown key", () => {
@@ -148,48 +143,15 @@ describe("exam templates", () => {
   it("hands out a copy, so a caller cannot change the template", () => {
     const a = byKey("placement");
     a.config.sections[0].durationMinutes = 99;
-    expect(byKey("placement").config.sections[0].durationMinutes).toBe(17);
+    expect(byKey("placement").config.sections[0].durationMinutes).toBe(30);
   });
 
   it("placement's fixed form places simulated students within one level (pooled objective skills)", () => {
-    // The Rasch model the engine scores with, the form as resolveDistribution
-    // plans it, the opening C-test as one partial-credit observation. Students
-    // are spread across each band, not only its centre.
-    const t = byKey("placement");
-    const rng = mulberry32(2026);
-    const objective = enabledSections(t.config).filter((s) => isObjectiveSection(s.section));
-    const within = ["EASY", "MID", "HARD"] as const;
+    const acc = simulateFixedForm(byKey("placement").config, "PLACEMENT", { runs: 300, seed: 2026, cTestGaps: 20, cTestWeight: 5, textEffectSd: 0.5 });
     for (const level of CEFR_LEVELS) {
-      let exact = 0;
-      let withinOne = 0;
-      const runs = 150;
-      for (let r = 0; r < runs; r++) {
-        const theta = BAND_CENTER[level] - 0.5 + rng();
-        const posteriors = objective.map((s) => {
-          const cfg = adaptiveConfigFor(s, t.mode, null);
-          const dist = resolveDistribution(s, t.mode, null, t.config.difficultyOffset);
-          const observations = CEFR_LEVELS.flatMap((l) =>
-            Array.from({ length: dist[l] }, () => {
-              const b = thetaForLevel(l, within[Math.floor(rng() * 3)]);
-              return { b, score: rng() < pCorrect(theta, b) ? 1 : 0 };
-            }),
-          );
-          if (s.cTest) {
-            const b = thetaForLevel("B1");
-            let right = 0;
-            for (let g = 0; g < 18; g++) right += rng() < pCorrect(theta, b) ? 1 : 0;
-            observations.push({ b, score: right / 18 });
-          }
-          return eap(observations, { mean: cfg.priorMean, sd: cfg.priorSd });
-        });
-        const got = levelFromTheta(poolPosteriors(posteriors)!.mean).level;
-        const diff = Math.abs(CEFR_LEVELS.indexOf(got) - CEFR_LEVELS.indexOf(level));
-        if (diff === 0) exact++;
-        if (diff <= 1) withinOne++;
-      }
-      expect(withinOne / runs, `${level} within one`).toBeGreaterThanOrEqual(0.95);
-      // C2 sits above the top text of the form; it is exact less often (about 40% in the long run).
-      expect(exact / runs, `${level} exact`).toBeGreaterThanOrEqual(level === "C2" ? 0.25 : 0.5);
+      expect(acc[level].withinOne, `${level} within one`).toBeGreaterThanOrEqual(0.95);
+      // C2 sits above the top text of the reading form; it is exact less often.
+      expect(acc[level].exact, `${level} exact`).toBeGreaterThanOrEqual(level === "C2" ? 0.25 : 0.5);
     }
   });
 });

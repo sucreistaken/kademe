@@ -177,7 +177,7 @@
     "templateCoverageBlocked": "Bu hazır sınav ilk kez kullanılacak: {section} {level} için bankada {available} onaylı soru var, {needed} gerekiyor.",
     "recommendedForNew": "Önerilen",
     "forWhomPlacement": "Yeni gelen öğrenciler için: hangi sınıfa gireceğini belirler.",
-    "forWhomQuick": "İlk görüşmede hızlı bir ön fikir için: sadece dilbilgisi, kaba bir seviye verir.",
+    "forWhomQuick": "İlk görüşmede hızlı bir ön fikir için: üç C-test, kaba bir seviye verir.",
     "forWhomLevelCheck": "Seviyesini bildiğini söyleyen öğrenci için: o seviyeyi dört beceride doğrular."
   },
   "examWizard": {

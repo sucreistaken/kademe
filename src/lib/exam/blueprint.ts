@@ -173,9 +173,9 @@ export function adaptivePlacementBlueprint(): BlueprintConfig {
 
 /**
  * Sensible starting points for the two modes. Both are fixed forms (the
- * student can go back, flag and review), the placement one shaped like the
- * "placement" template in templates.ts (which imports this file, so the
- * numbers are repeated here).
+ * student can go back, flag and review). The placement one keeps the
+ * multiple-choice grammar form the placement template had before 2026-10-15,
+ * for schools that start blank and want it.
  */
 export function defaultBlueprint(mode: ExamMode): BlueprintConfig {
   if (mode === "PLACEMENT") {

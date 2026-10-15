@@ -66,11 +66,20 @@ export function allocateMinutes(target: number, weights: number[], min: number):
   return out;
 }
 
+/** Minutes one C-test text needs (onSET gives five). */
+const MINUTES_PER_C_TEST = 5;
+
 /** Item counts follow the time: an adaptive section's limits and a fixed form's per-level counts scale with it. */
 function rescaleSection(s: SectionConfig, minutes: number, baseMinutes: number) {
   const f = minutes / baseMinutes;
   s.durationMinutes = minutes;
   if (!isObjectiveSection(s.section)) return;
+  if (s.cTestLevels) {
+    // Fewer minutes, fewer texts: keep the middle levels, never more than listed.
+    const keep = clamp(Math.floor(minutes / MINUTES_PER_C_TEST), 1, s.cTestLevels.length);
+    const start = Math.floor((s.cTestLevels.length - keep) / 2);
+    s.cTestLevels = s.cTestLevels.slice(start, start + keep);
+  }
   if (s.adaptive) {
     s.minItems = clamp(Math.round(s.minItems * f), 1, 60);
     s.maxItems = clamp(Math.max(Math.round(s.maxItems * f), s.minItems), 1, 80);

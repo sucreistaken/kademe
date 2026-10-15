@@ -28,7 +28,7 @@ describe("allocateMinutes", () => {
 describe("examTemplateFor", () => {
   it("picks the nearest template by mode, sections and minutes", () => {
     expect(examTemplateFor(shape({ skills: ["GRAMMAR"], targetMinutes: 15 })).key).toBe("quick-screen");
-    expect(examTemplateFor(shape({ targetMinutes: 40 })).key).toBe("placement");
+    expect(examTemplateFor(shape({ targetMinutes: 60 })).key).toBe("placement");
     expect(examTemplateFor(shape({ skills: ["GRAMMAR", "READING", "LISTENING", "WRITING", "SPEAKING"], targetMinutes: 20 })).key).toBe("placement");
     expect(examTemplateFor(shape({ mode: "LEVEL_VERIFICATION", targetMinutes: 30 })).key).toBe("level-check");
   });
@@ -133,5 +133,34 @@ describe("edits", () => {
     expect(next.sections.find((s) => s.section === "READING")!.durationMinutes).toBe(20);
     expect(editedTotal(edits)).toBe(estimatedMinutes(next));
     expect(applyExamEdits(config, { name: "X", sections: edits.map((e) => ({ ...e, enabled: false })) })).toBeNull();
+  });
+});
+
+describe("C-test sections follow the minutes", () => {
+  const ALL = ["GRAMMAR", "READING", "LISTENING", "WRITING", "SPEAKING"] as const;
+
+  it("keeps the middle levels, five minutes a text, at least one", () => {
+    for (const target of [20, 40, 60, 77, 100, 120]) {
+      const s = shape({ skills: [...ALL], targetMinutes: target });
+      const template = examTemplateFor(s);
+      expect(template.key, `${target} min template`).toBe("placement");
+      const listed = template.config.sections.find((x) => x.section === "GRAMMAR")!.cTestLevels;
+      expect(listed, `${target} min listed`).toBeDefined();
+      const g = buildExamConfig(s).config.sections.find((x) => x.section === "GRAMMAR")!;
+      const keep = Math.min(listed!.length, Math.max(1, Math.floor(g.durationMinutes / 5)));
+      const start = Math.floor((listed!.length - keep) / 2);
+      expect(g.cTestLevels, `${target} min`).toEqual(listed!.slice(start, start + keep));
+    }
+  });
+
+  it("quick screen keeps A2 and B1 in ten minutes, all three in fifteen", () => {
+    for (const [target, levels] of [
+      [10, ["A2", "B1"]],
+      [15, ["A2", "B1", "B2"]],
+    ] as const) {
+      const s = shape({ skills: ["GRAMMAR"], targetMinutes: target });
+      expect(examTemplateFor(s).key).toBe("quick-screen");
+      expect(buildExamConfig(s).config.sections.find((x) => x.section === "GRAMMAR")!.cTestLevels).toEqual(levels);
+    }
   });
 });
