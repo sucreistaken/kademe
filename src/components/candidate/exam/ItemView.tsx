@@ -5,6 +5,7 @@ import { matchingTargets, type CandidateItem } from "@/lib/exam/safe";
 import type { ItemAnswer, TfngValue } from "@/lib/exam/types";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
+import { TaskPromptCard } from "./TaskPromptCard";
 
 /**
  * One question, drawn from what the server sent and nothing else. Every
@@ -663,7 +664,7 @@ export function WritingItem({ item, answer, onChange, disabled }: ItemProps) {
   const { minWords, maxWords } = item.content;
   return (
     <div>
-      <Prompt text={item.prompt} id={promptId} />
+      <TaskPromptCard text={item.prompt} id={promptId} />
       <textarea
         ref={ref}
         lang="de"
