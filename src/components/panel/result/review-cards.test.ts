@@ -98,9 +98,11 @@ describe("helpers", () => {
   it("plainPrompt shows a gap marker as a blank", () => {
     expect(plainPrompt("Ich {{g1}} hier")).toBe("Ich ___ hier");
   });
-  it("sectionScoreSummary counts full marks, items served and blanks", () => {
-    const r = (score: number | null, answer: object | null) => ({ itemSnapshot: grammarGap, answer, score });
+  it("sectionScoreSummary counts answers (gaps), not whole items, and the blanks", () => {
+    const r = (score: number | null, answer: object | null) => ({ itemSnapshot: grammarGap, answer, score, notReached: false });
     expect(sectionScoreSummary([r(1, { gaps: { g1: "das" } }), r(0, { gaps: { g1: "x" } }), r(0.5, { gaps: { g1: "x" } }), r(0, null)])).toEqual({ right: 1, total: 4, blank: 1 });
+    const c = { itemSnapshot: ctest, answer: { gaps: { g1: "chte", g2: "x" } }, score: 0.5, notReached: false };
+    expect(sectionScoreSummary([c])).toEqual({ right: 1, total: 2, blank: 0 });
   });
 });
 

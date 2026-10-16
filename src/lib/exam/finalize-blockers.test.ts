@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { blockerErrorCode, finalizeBlockers, finalizeChecklist } from "./finalize-blockers";
+import { blockerErrorCode, finalizeBlockers, finalizeChecklist, waitingSections } from "./finalize-blockers";
 import type { ComputedResult, SkillResult } from "./result";
 
 const skill = (over: Partial<SkillResult>): SkillResult => ({ level: "B1", decider: "ENGINE", pending: false, insufficient: false, ...over });
@@ -55,10 +55,30 @@ describe("finalizeChecklist", () => {
     expect(r.rows[1]).toMatchObject({ open: 1, total: 2, firstOpenResponseId: "w2" });
     expect([r.done, r.total]).toEqual([2, 3]);
   });
-  it("says the AI is still working when every open task is pending", () => {
+  it("lets the teacher act while every open task is still PENDING, and counts the pending ones", () => {
     const c = computed({ WRITING: skill({ level: null, decider: null, pending: true }) }, { status: "AWAITING_GRADING", overall: null });
-    const r = finalizeChecklist({ sections: ["WRITING"], computed: c, submitted: new Set(["WRITING"]), tasks: { WRITING: [{ id: "w1", status: "PENDING", decided: false }] } });
+    const r = finalizeChecklist({ sections: ["WRITING"], computed: c, submitted: new Set(["WRITING"]), tasks: { WRITING: [{ id: "w1", status: "PENDING", decided: false }, { id: "w2", status: "AI_PROPOSED", decided: false }] } });
+    expect(r.rows[0]).toMatchObject({ state: "todo", open: 2, aiPending: 1, firstOpenResponseId: "w2" });
+    const only = finalizeChecklist({ sections: ["WRITING"], computed: c, submitted: new Set(["WRITING"]), tasks: { WRITING: [{ id: "w1", status: "PENDING", decided: false }] } });
+    expect(only.rows[0]).toMatchObject({ state: "todo", open: 1, aiPending: 1, firstOpenResponseId: "w1" });
+  });
+  it("keeps aiPending only when there is no task to grade yet", () => {
+    const c = computed({ WRITING: skill({ level: null, decider: null, pending: true }) }, { status: "AWAITING_GRADING", overall: null });
+    const r = finalizeChecklist({ sections: ["WRITING"], computed: c, submitted: new Set(["WRITING"]), tasks: { WRITING: [] } });
     expect(r.rows[0].state).toBe("aiPending");
+  });
+  it("lists every section waiting for the teacher, and not a running one", () => {
+    const c = computed({ WRITING: skill({ level: null, decider: null, pending: true }), SPEAKING: skill({ decider: "AI" }) }, { status: "AWAITING_GRADING", overall: null });
+    const r = finalizeChecklist({
+      sections: ["WRITING", "SPEAKING", "READING"],
+      computed: c,
+      submitted: new Set(["WRITING", "SPEAKING"]),
+      tasks: { WRITING: [{ id: "w1", status: "PENDING", decided: false }], SPEAKING: [{ id: "s1", status: "AI_PROPOSED", decided: false }, { id: "s2", status: "AI_PROPOSED", decided: false }] },
+    });
+    expect(waitingSections(r.rows)).toEqual([{ section: "WRITING", open: 1 }, { section: "SPEAKING", open: 2 }]);
+    const running = finalizeChecklist({ sections: ["SPEAKING"], computed: c, submitted: new Set(), tasks: { SPEAKING: [{ id: "s1", status: "PENDING", decided: false }] } });
+    expect(running.rows[0].state).toBe("running");
+    expect(waitingSections(running.rows)).toEqual([]);
   });
   it("counts a section that was not handed in as running", () => {
     const r = finalizeChecklist({ sections: ["READING", "SPEAKING"], computed: null, submitted: new Set(), tasks: {} });

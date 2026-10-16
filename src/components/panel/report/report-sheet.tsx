@@ -160,7 +160,7 @@ export function ReportSheet({ model, t, locale }: { model: ReportModel; t: T; lo
           <dl className="grid grid-cols-2 gap-x-6 text-[13px]">
             <div>
               <dt className="text-[11.5px] uppercase tracking-[0.06em] text-muted">{t("resultReport.finalizedBy")}</dt>
-              <dd className="mt-0.5 font-medium">{m.teacherName ?? "-"}</dd>
+              <dd className="mt-0.5 font-medium">{m.teacherName ?? t("resultReport.finalizedAuto")}</dd>
             </div>
             <div>
               <dt className="text-[11.5px] uppercase tracking-[0.06em] text-muted">{t("resultReport.finalizedOn")}</dt>

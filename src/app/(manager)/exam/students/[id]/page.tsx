@@ -8,8 +8,8 @@ import { GradingCard } from "@/components/panel/result/grading-card";
 import { Highlighted } from "@/components/panel/result/format";
 import { ObjectiveSection, isBankEmptySkip } from "@/components/panel/result/objective-section";
 import { TaskPrompt } from "@/components/panel/result/task-prompt";
-import { finalizeBlockers, finalizeChecklist } from "@/lib/exam/finalize-blockers";
-import { objectiveBasis } from "@/components/panel/result/review-rows";
+import { finalizeBlockers, finalizeChecklist, waitingSections } from "@/lib/exam/finalize-blockers";
+import { answerTally } from "@/components/panel/result/answer-tally";
 import { groupMarkers } from "@/components/panel/integrity/markers";
 import { isNoiseType } from "@/components/panel/integrity/groups";
 import { IntegrityPanel } from "@/components/panel/result/integrity-panel";
@@ -75,15 +75,6 @@ export default async function ResultPage({
   // (src/lib/exam/finalize-blockers.ts), so the page and the action cannot disagree.
   const blockers = finalizeBlockers(computed, ended);
   const sectionList = (list: Section[]) => list.map((s) => t(`sectionName.${s}`)).join(", ");
-  const blockerLines = blockers.map((b) =>
-    b.code === "RUNNING"
-      ? t("result.finalizeRunning")
-      : b.code === "GRADING"
-        ? t("result.finalizeGrading")
-        : b.code === "UNDECIDED"
-          ? t("result.finalizeNeeds", { sections: sectionList(b.sections) })
-          : t("result.errNotReady"),
-  );
   const checklist = finalizeChecklist({
     sections: view.sections,
     computed,
@@ -100,6 +91,21 @@ export default async function ResultPage({
         ]),
     ),
   });
+  // One line per section that waits for the teacher (a teacher may grade while the AI proposal is still PENDING).
+  const waiting = waitingSections(checklist.rows);
+  const waitingLines = waiting.map((w) => t(w.open === 1 ? "result.finalizeWaitingOne" : "result.finalizeWaiting", { section: t(`sectionName.${w.section}`), n: w.open }));
+  const blockerLines = blockers.flatMap((b) =>
+    b.code === "RUNNING"
+      ? [t("result.finalizeRunning")]
+      : b.code === "GRADING" || b.code === "UNDECIDED"
+        ? // The waiting-sections lines cover both; the older wording is only the fallback when no section has a task to grade yet.
+          waiting.length
+          ? []
+          : [b.code === "GRADING" ? t("result.finalizeGrading") : t("result.finalizeNeeds", { sections: sectionList(b.sections) })]
+        : [t("result.errNotReady")],
+  );
+  // Waiting sections are listed once, right after any "exam still running" line.
+  if (waitingLines.length && blockers.some((b) => b.code === "GRADING" || b.code === "UNDECIDED")) blockerLines.push(...waitingLines);
   const errorText = sp.error
     ? sp.error === "reason"
       ? t("result.reasonRequired")
@@ -120,7 +126,9 @@ export default async function ResultPage({
                     : t("result.errNotReady")
     : null;
 
-  const acceptances = await loadAcceptances(user.orgId, tab !== "summary" && isObjectiveSection(tab as Section) ? responsesFor(tab).map((r) => r.id) : []);
+  // The Summary tab tallies every objective section, a skill tab only its own.
+  const acceptanceSections = tab === "summary" ? view.sections.filter((s) => isObjectiveSection(s as Section)) : isObjectiveSection(tab as Section) ? [tab] : [];
+  const acceptances = await loadAcceptances(user.orgId, acceptanceSections.flatMap((s) => responsesFor(s).map((r) => r.id)));
 
   const integrity = tab === "integrity" && attempt ? await loadIntegrityView(attempt.id) : null;
   // The continuous recording, only for a role that may watch recordings.
@@ -231,7 +239,7 @@ export default async function ResultPage({
                 const skill = computed?.skills[s as Section];
                 const run = runFor(s);
                 const rs = responsesFor(s);
-                const basis = objectiveBasis(rs);
+                const tally = answerTally(rs, acceptances, run);
                 const sd = run?.thetaSd ?? null;
                 const precision = sd === null ? "" : sd < 0.45 ? t("result.precisionGood") : sd < 0.7 ? t("result.precisionFair") : t("result.precisionLow");
                 const decider = skill?.decider;
@@ -249,7 +257,9 @@ export default async function ResultPage({
                           : isObjectiveSection(s as Section)
                           ? skill?.insufficient
                             ? t("result.insufficient")
-                            : `${t("result.basis", { n: basis.answered, pct: basis.pct, precision })}${basis.partial > 0 ? ` · ${t("resultReview.partialCount", { n: basis.partial })}` : ""}`
+                            : precision
+                              ? t("result.basis", { correct: tally.correct, total: tally.total, precision })
+                              : t("resultReview.scoreSummary", { right: tally.correct, total: tally.total })
                           : decider
                             ? t(`source.${decider}`)
                             : t("result.pending")}
@@ -462,6 +472,7 @@ export default async function ResultPage({
                                       : row.state === "aiPending"
                                         ? t("result.checklistAi")
                                         : t("result.checklistRunning")}
+                                  {row.state === "todo" && row.aiPending > 0 ? <span className="ml-1 text-[11.5px] font-normal text-muted">{t("result.checklistAiComing")}</span> : null}
                                 </span>
                               </div>
                               {actionable ? (
