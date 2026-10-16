@@ -7,6 +7,7 @@ import type { ItemAnswer, TfngValue } from "@/lib/exam/types";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
 import { TaskPromptCard } from "./TaskPromptCard";
+import { useChipDrag } from "./use-chip-drag";
 
 /**
  * One question, drawn from what the server sent and nothing else. Every
@@ -276,11 +277,11 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
   const ti = useT("examItems");
   const lastFocused = useRef<{ id: string; el: HTMLInputElement } | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
-  // Pointer drag rather than HTML5 drag and drop: it also works with touch,
-  // trackpads and pen, and a press without movement stays a click.
-  const press = useRef<{ idx: number; x: number; y: number; moved: boolean } | null>(null);
-  const swallowClick = useRef(false);
-  const [drag, setDrag] = useState<{ idx: number; x: number; y: number; over: string | null } | null>(null);
+  const { drag, onPointerDown, isDragClick } = useChipDrag<number>({
+    dropAt: (x, y) => (document.elementFromPoint(x, y)?.closest("[data-gap-slot]") as HTMLElement | null)?.dataset.gapSlot ?? null,
+    onDrop: (idx, gapId) => place(idx, gapId),
+    disabled: !!disabled,
+  });
   if (item.content.kind !== "GAP") return null;
   const pool = item.content.attached ? (item.content.pool ?? null) : null;
   const placement = pool ? poolPlacement(pool, item.content.gaps.map((g) => g.id), answer.gaps) : null;
@@ -288,8 +289,6 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
   // The stored instruction asks to type letters; with the pool the student drags parts instead.
   const prompt = pool ? withPoolInstruction(item.prompt) : item.prompt;
   const parts = prompt.split(/(\{\{[A-Za-z0-9_-]+\}\})/g);
-  const slotAt = (x: number, y: number) =>
-    (document.elementFromPoint(x, y)?.closest("[data-gap-slot]") as HTMLElement | null)?.dataset.gapSlot ?? null;
   const set = (id: string, value: string) => onChange({ gaps: { ...(answer.gaps ?? {}), [id]: value } });
   // Going back to "Seçin" removes the gap's answer instead of storing "".
   const pick = (id: string, value: string) => {
@@ -421,11 +420,12 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
       </p>
       {pool && placement ? (
         // Stays just above the fixed bottom bar, so the parts are in reach while the text scrolls.
+        // Capped at about a third of the window (scrolls inside), so the text keeps most of the screen.
         <div
           style={{ bottom: "var(--step-footer-space, 112px)" }}
-          className="sticky z-10 mt-4 border-t border-hairline bg-canvas pb-3 pt-3"
+          className="sticky z-10 mt-4 max-h-[32dvh] overflow-y-auto overscroll-contain border-t border-hairline bg-canvas pb-2 pt-2"
         >
-          <div role="group" aria-label={ti("ctestPool")} className="flex flex-wrap gap-2">
+          <div role="group" aria-label={ti("ctestPool")} className="flex flex-wrap gap-1.5">
             {pool.map((chip, idx) =>
               placement.used.has(idx) ? null : (
                 <button
@@ -433,41 +433,13 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
                   type="button"
                   lang="de"
                   disabled={disabled}
-                  onPointerDown={(e) => {
-                    if (disabled || e.button !== 0) return;
-                    e.currentTarget.setPointerCapture(e.pointerId);
-                    press.current = { idx, x: e.clientX, y: e.clientY, moved: false };
-                  }}
-                  onPointerMove={(e) => {
-                    const p = press.current;
-                    if (!p || p.idx !== idx) return;
-                    if (!p.moved && Math.hypot(e.clientX - p.x, e.clientY - p.y) < 5) return;
-                    p.moved = true;
-                    setDrag({ idx, x: e.clientX, y: e.clientY, over: slotAt(e.clientX, e.clientY) });
-                  }}
-                  onPointerUp={(e) => {
-                    const p = press.current;
-                    press.current = null;
-                    setDrag(null);
-                    if (!p?.moved) return;
-                    swallowClick.current = true;
-                    const target = slotAt(e.clientX, e.clientY);
-                    if (target) place(idx, target);
-                  }}
-                  onPointerCancel={() => {
-                    press.current = null;
-                    setDrag(null);
-                  }}
+                  onPointerDown={(e) => onPointerDown(e, idx)}
                   onClick={() => {
-                    if (swallowClick.current) {
-                      swallowClick.current = false;
-                      return;
-                    }
-                    clickChip(idx);
+                    if (!isDragClick()) clickChip(idx);
                   }}
                   className={cn(
-                    "h-9 min-w-9 cursor-grab touch-none select-none rounded-[8px] border border-line-strong bg-surface px-3 text-[16px] text-ink hover:bg-canvas",
-                    drag?.idx === idx && "opacity-40",
+                    "h-8 min-w-8 cursor-grab touch-none select-none rounded-[8px] border border-line-strong bg-surface px-2.5 text-[15px] text-ink hover:bg-canvas",
+                    drag?.key === idx && "opacity-40",
                   )}
                 >
                   {chip}
@@ -482,7 +454,7 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
               style={{ left: drag.x, top: drag.y }}
               className="pointer-events-none fixed z-50 flex h-9 -translate-x-1/2 -translate-y-1/2 items-center rounded-[8px] border border-accent bg-surface px-3 text-[16px] text-ink shadow-lg"
             >
-              {pool[drag.idx]}
+              {pool[drag.key]}
             </div>
           ) : null}
         </div>
@@ -522,9 +494,11 @@ function MatchingItem({ item, answer, onChange, disabled, hidePrompt }: ItemProp
   const ti = useT("examItems");
   const uid = useId();
   // Same pointer drag as GapItem. The letter buttons in each row stay the click and keyboard path.
-  const press = useRef<{ id: string; x: number; y: number; moved: boolean } | null>(null);
-  const swallowClick = useRef(false);
-  const [drag, setDrag] = useState<{ id: string; x: number; y: number; over: string | null } | null>(null);
+  const { drag, onPointerDown, isDragClick } = useChipDrag<string>({
+    dropAt: (x, y) => (document.elementFromPoint(x, y)?.closest("[data-match-drop]") as HTMLElement | null)?.dataset.matchDrop ?? null,
+    onDrop: (targetId, rowId) => setRow(rowId, targetId),
+    disabled: !!disabled,
+  });
   // Row picked by clicking its card; the next tray click lands there, like GapItem's selected slot.
   const [selectedRow, setSelectedRow] = useState<string | null>(null);
   if (item.content.kind !== "MATCHING") return null;
@@ -544,9 +518,7 @@ function MatchingItem({ item, answer, onChange, disabled, hidePrompt }: ItemProp
   // passage, so the list is left out and only a "0" target is explained.
   const bare = targets.every((r) => r.badge === "0" || /^(?:\p{L}+\s+)?[A-Z]$/u.test(r.label.trim()));
   const zero = targets.find((r) => r.badge === "0");
-  const rowAt = (x: number, y: number) =>
-    (document.elementFromPoint(x, y)?.closest("[data-match-drop]") as HTMLElement | null)?.dataset.matchDrop ?? null;
-  const dragged = drag ? targets.find((r) => r.id === drag.id) : undefined;
+  const dragged = drag ? targets.find((r) => r.id === drag.key) : undefined;
   return (
     <div>
       {hidePrompt ? null : <Prompt text={item.prompt} />}
@@ -567,42 +539,14 @@ function MatchingItem({ item, answer, onChange, disabled, hidePrompt }: ItemProp
               tabIndex={-1}
               disabled={disabled}
               title={r.label}
-              onPointerDown={(e) => {
-                if (disabled || e.button !== 0) return;
-                e.currentTarget.setPointerCapture(e.pointerId);
-                press.current = { id: r.id, x: e.clientX, y: e.clientY, moved: false };
-              }}
-              onPointerMove={(e) => {
-                const p = press.current;
-                if (!p || p.id !== r.id) return;
-                if (!p.moved && Math.hypot(e.clientX - p.x, e.clientY - p.y) < 5) return;
-                p.moved = true;
-                setDrag({ id: r.id, x: e.clientX, y: e.clientY, over: rowAt(e.clientX, e.clientY) });
-              }}
-              onPointerUp={(e) => {
-                const p = press.current;
-                press.current = null;
-                setDrag(null);
-                if (!p?.moved) return;
-                swallowClick.current = true;
-                const rowId = rowAt(e.clientX, e.clientY);
-                if (rowId) setRow(rowId, r.id);
-              }}
-              onPointerCancel={() => {
-                press.current = null;
-                setDrag(null);
-              }}
+              onPointerDown={(e) => onPointerDown(e, r.id)}
               onClick={() => {
-                if (swallowClick.current) {
-                  swallowClick.current = false;
-                  return;
-                }
-                clickTarget(r.id);
+                if (!isDragClick()) clickTarget(r.id);
               }}
               className={cn(
                 "flex min-h-9 max-w-full cursor-grab touch-none select-none items-start gap-2 rounded-[8px] border bg-surface px-2.5 py-1.5 text-left text-[14px] leading-[1.45] text-ink hover:border-accent",
                 elsewhere ? "border-dashed border-line-strong opacity-60" : "border-line-strong",
-                drag?.id === r.id && "opacity-40",
+                drag?.key === r.id && "opacity-40",
               )}
             >
               <span className="font-semibold">{r.badge}</span>

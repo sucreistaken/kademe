@@ -553,14 +553,16 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
           onClick: () => goToGuarded(next ?? "REVIEW"),
         }}
         hint={hint}
+        dense
         note={
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
             {failureLine}
             {leaveLine}
             <NavStrip
               entries={entries}
               current={members}
               disabled={busy}
+              compact
               onJump={(s) => goToGuarded(s)}
               onReview={next !== null ? () => goToGuarded("REVIEW") : null}
             />

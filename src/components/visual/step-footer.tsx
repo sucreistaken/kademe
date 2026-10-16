@@ -10,9 +10,14 @@ import { cn } from "@/lib/cn";
 import { FOOTER_SPACE_VAR, footerButtonState, footerSpace, type FooterAction } from "./footer-action";
 import { JourneyProgress } from "./journey-progress";
 
-function Action({ action, variant, compact = false }: { action: FooterAction; variant: "primary" | "secondary"; compact?: boolean }) {
+function Action({ action, variant, compact = false, dense = false }: { action: FooterAction; variant: "primary" | "secondary"; compact?: boolean; dense?: boolean }) {
   // Compact (a 480px Sheet): the button takes the column's width, no 200px minimum.
-  const size = compact ? "h-12 w-full px-4 text-[16px]" : "h-[52px] min-w-[200px] shrink-0 px-6 text-[16px]";
+  // Dense (the exam's question bar): one short row, so the question keeps the screen.
+  const size = compact
+    ? "h-12 w-full px-4 text-[16px]"
+    : dense
+      ? "h-11 min-w-[148px] shrink-0 px-5 text-[15px]"
+      : "h-[52px] min-w-[200px] shrink-0 px-6 text-[16px]";
   if (action.kind === "link") {
     return (
       <Link id={action.id} href={action.href} className={cn(buttonVariants({ variant, size: "lg" }), size)}>
@@ -74,6 +79,7 @@ export function StepFooter({
   note,
   placement = "viewport",
   compact = false,
+  dense = false,
 }: {
   primary?: FooterAction | null;
   secondary?: FooterAction | null;
@@ -89,6 +95,12 @@ export function StepFooter({
    * default: every other footer draws exactly as before.
    */
   compact?: boolean;
+  /**
+   * The exam's question bar: the way back, the note (the question strip) and
+   * the buttons on one short row; the note wraps under them only when the
+   * window is too narrow. Off by default.
+   */
+  dense?: boolean;
 }) {
   const bar = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -155,6 +167,34 @@ export function StepFooter({
               {working ? <p className="sr-only">{working}</p> : null}
             </div>
             {note ? <div>{note}</div> : null}
+          </div>
+        </div>
+      </>
+    );
+  }
+  if (dense) {
+    return (
+      <>
+        {spacer}
+        <div ref={bar} data-step-footer className={placement === "viewport" ? "fixed inset-x-0 bottom-0 z-30" : "sticky bottom-0 z-20"}>
+          <div className="border-t border-line bg-paper/95 backdrop-blur">
+            <div className="mx-auto flex max-w-[1000px] flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2.5 sm:px-7">
+              {backLink ? <div className="shrink-0">{backLink}</div> : null}
+              <div className="min-w-0 flex-1">{note}</div>
+              <div className="ml-auto flex items-center justify-end gap-x-3">
+                <div aria-live="polite" className="min-w-0 space-y-1">
+                  {reasons.map((r) => (
+                    <p key={r.id} id={r.id} className="max-w-[260px] text-right text-[13.5px] leading-[20px] text-ink">
+                      {r.text}
+                    </p>
+                  ))}
+                  {reasons.length === 0 && hint ? <p className="max-w-[260px] text-right text-[13.5px] leading-[20px] text-ink">{hint}</p> : null}
+                  {working ? <p className="sr-only">{working}</p> : null}
+                </div>
+                {secondary ? <Action action={secondary} variant="secondary" dense /> : null}
+                {primary ? <Action action={primary} variant="primary" dense /> : null}
+              </div>
+            </div>
           </div>
         </div>
       </>

@@ -350,7 +350,7 @@
     "words": "{n} words",
     "wordsRange": "{min} to {max} words",
     "listenPlay": "Play the recording",
-    "listenGroupNote": "You can read the questions while you listen. Your answers are saved automatically.",
+    "listenGroupNote": "Read the questions before you start the recording, then mark your answers while you listen. Your answers are saved automatically.",
     "listenPlaying": "Playing",
     "playsLeft": "{n} plays left",
     "noPlaysLeft": "No plays left",

@@ -36,6 +36,7 @@ export function NavStrip({
   disabled,
   onJump,
   onReview,
+  compact = false,
 }: {
   entries: NavEntry[];
   /** The item on screen (every question of a recording's page); null on the review step. */
@@ -44,12 +45,14 @@ export function NavStrip({
   onJump: (sequence: number) => void;
   /** Shown as a link next to the strip; the bar's own button says it on the last item. */
   onReview: (() => void) | null;
+  /** In the one-row question bar: smaller cells, the legend only on wide windows (every cell says its state on hover). */
+  compact?: boolean;
 }) {
   const n = useT("examNav");
   const status = { COMPLETE: n("statusComplete"), PARTIAL: n("statusPartial"), EMPTY: n("statusEmpty") };
   return (
-    <nav aria-label={n("stripLabel")} className="flex flex-wrap items-center gap-x-5 gap-y-2.5">
-      <ol className="flex flex-wrap gap-1.5">
+    <nav aria-label={n("stripLabel")} className={cn("flex flex-wrap items-center gap-y-2", compact ? "gap-x-4" : "gap-x-5")}>
+      <ol className={cn("flex flex-wrap", compact ? "gap-1" : "gap-1.5")}>
         {entries.map((e) => {
           const state = progressState(e);
           const here = Array.isArray(current) ? current.includes(e.sequence) : e.sequence === current;
@@ -64,7 +67,8 @@ export function NavStrip({
                 disabled={disabled}
                 onClick={() => (here && !Array.isArray(current) ? undefined : onJump(e.sequence))}
                 className={cn(
-                  "tnum relative grid size-8 place-items-center rounded-[8px] border text-[13px] font-semibold transition-colors disabled:cursor-not-allowed",
+                  "tnum relative grid place-items-center rounded-[8px] border text-[13px] font-semibold transition-colors disabled:cursor-not-allowed",
+                  compact ? "size-7" : "size-8",
                   CELL[state],
                   here && "ring-2 ring-ink ring-offset-2 ring-offset-paper",
                 )}
@@ -76,7 +80,7 @@ export function NavStrip({
           );
         })}
       </ol>
-      <ul aria-hidden className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] text-muted">
+      <ul aria-hidden className={cn("flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] text-muted", compact ? "hidden xl:flex" : "flex")}>
         <li className="flex items-center gap-1.5">
           <span className={cn("size-3 rounded-[3px] border", CELL.COMPLETE)} />
           {n("legendComplete")}
@@ -99,7 +103,7 @@ export function NavStrip({
           type="button"
           disabled={disabled}
           onClick={onReview}
-          className="ml-auto min-h-11 text-[15px] font-medium text-ink underline decoration-underline underline-offset-4 hover:decoration-ink disabled:cursor-not-allowed disabled:text-muted"
+          className="min-h-11 whitespace-nowrap text-[15px] font-medium text-ink underline decoration-underline underline-offset-4 hover:decoration-ink disabled:cursor-not-allowed disabled:text-muted"
         >
           {n("reviewAndFinish")}
         </button>
