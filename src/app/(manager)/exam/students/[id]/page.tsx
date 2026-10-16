@@ -262,7 +262,10 @@ export default async function ResultPage({
                               : t("resultReview.scoreSummary", { right: tally.correct, total: tally.total })
                           : decider
                             ? t(`source.${decider}`)
-                            : t("result.pending")}
+                            : // Same word as the checklist: the teacher can grade now, the AI proposal is only a help.
+                              checklist.rows.find((r) => r.section === s)?.state === "todo"
+                              ? `${t("result.checklistTodo")} · ${t("result.checklistGo")}`
+                              : t("result.pending")}
                     </span>
                   </Link>
                 );

@@ -550,9 +550,12 @@ function MatchingItem({ item, answer, onChange, disabled, hidePrompt }: ItemProp
   return (
     <div>
       {hidePrompt ? null : <Prompt text={item.prompt} />}
-      <p lang="de" className={cn("text-[14px] text-ink-2", hidePrompt ? "mt-1" : "mt-3")}>
-        {MATCH_INSTRUCTION}
-      </p>
+      {/* On a page of several items with the same prompt, the drag note is said once too. */}
+      {hidePrompt ? null : (
+        <p lang="de" className="mt-3 text-[14px] text-ink-2">
+          {MATCH_INSTRUCTION}
+        </p>
+      )}
       {/* Stays under the page header while the rows scroll, so every row can take a drop. */}
       <div aria-hidden data-match-tray className="sticky top-14 z-10 -mx-1 mt-3 flex flex-wrap gap-2 bg-canvas px-1 py-2">
         {targets.map((r) => {

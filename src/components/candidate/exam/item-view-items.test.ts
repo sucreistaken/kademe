@@ -156,6 +156,9 @@ describe("hidePrompt", () => {
     expect(withHidden(tf)).toContain("Der Kurs beginnt am Montag.");
     expect(render(sentences)).toContain("Welche Anzeige passt?");
     expect(withHidden(sentences)).not.toContain("Welche Anzeige passt?");
+    // The German drag note goes with the prompt.
+    expect(render(sentences)).toContain("Ziehen Sie den passenden Buchstaben");
+    expect(withHidden(sentences)).not.toContain("Ziehen Sie den passenden Buchstaben");
   });
 
   it("keeps a choice group labelled for screen readers when the prompt is hidden", () => {
