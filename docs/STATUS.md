@@ -3,7 +3,7 @@
 Campus German redesign, Plan 1 (2026-10-16, `platform/solutions`, canlıya çıkmadı): bkz. "Campus German redesign, Plan 1" bölümü.
 Son güncelleme: 2026-10-07 (Gelişmiş: tek kutu, AI önce, `platform/solutions` dalında, yerelde gerçek Gemini ile denendi; canlıya çıkmadı). Önceki: 2026-10-06 (işe alım plan 2b, görsel akış ve rehberli panel, `platform/solutions` dalında; bulut oturumunda tip, lint, test ve build ile doğrulandı, veritabanı betikleri ve tarayıcı turu yerel oturumu bekliyor; canlıya çıkmadı).
 Önceki: 2026-10-05 (işe alım plan 2, aday akışı, platform/solutions dalında, yerelde doğrulandı; canlıya çıkmadı); 2026-10-04 (çekirdek ayrımı ve işe alım plan 1, kütüphane ve alımlar, `platform/solutions` dalında, yerelde doğrulandı; canlıya çıkmadı).
-**Canlıda**: https://kademe.kadiray.com, `main` commit `ab951b1` (2026-10-16 12:16 UTC: okul yöneticisi geri bildirimi; ayrıntı "Canlıya çıkış: okul yöneticisi geri bildirimi"). Önceki sürümler (aşağıdaki "Canlıya çıkış" bölümleri): `1d8d4c6` (onSET yerleştirme), `5a4f97e` (kurs grubu sürümü, 2026-10-14), `02760e3` (2026-10-07 akşam: Bugün yeni tasarım, 3 adımlı alım sihirbazı, "en az 2 değerlendirici" kuralı kaldırıldı, soru bankası v2; ayrıntı "Canlıya çıkış: sihirbaz ve banka v2"), `0142ff0` (Gelişmiş). Önceki not: commit `739f218` (`main`, 2026-10-05 sınav sıcak düzeltmesi; ayrıntı "Kararlar ve sapmalar"da).
+**Canlıda**: https://kademe.kadiray.com, `main` commit `8e945da` (2026-10-16 18:23 UTC: Campus German görünümü, Plan 1; ayrıntı "Canlıya çıkış: Campus German görünümü, Plan 1"). Önceki sürümler (aşağıdaki "Canlıya çıkış" bölümleri): `ab951b1` (okul yöneticisi geri bildirimi), `1d8d4c6` (onSET yerleştirme), `5a4f97e` (kurs grubu sürümü, 2026-10-14), `02760e3` (2026-10-07 akşam: Bugün yeni tasarım, 3 adımlı alım sihirbazı, "en az 2 değerlendirici" kuralı kaldırıldı, soru bankası v2; ayrıntı "Canlıya çıkış: sihirbaz ve banka v2"), `0142ff0` (Gelişmiş). Önceki not: commit `739f218` (`main`, 2026-10-05 sınav sıcak düzeltmesi; ayrıntı "Kararlar ve sapmalar"da).
 Canlı veritabanı kullanıcı onayıyla sıfırlandı: eski işe alım verisi yok,
 panel kullanıcıları (parolalarıyla) taşındı, banka ve iki sınav yüklendi.
 
@@ -199,6 +199,18 @@ Differences from the mockups, as input for Plans 2 and 3:
 - Not a redesign item: `/exam/students` renders all 305 local rows with no paging (document about 29,000px tall).
 
 Not checked: the system check beyond its first screen (this Chrome has a second display, so the app held at "İkinci ekranı çıkarın"; without `PROCTOR_DEV_FAKE` camera and screen permission are out of reach, and the flag was deliberately not set); the exam section intro, a C-test question, the exam top bar, progress strip and bottom bar, review, finish screen, proctor warning card and recording dot; the printed level report (the only student awaiting review answers "Rapor, sonuç kesinleşmeden hazırlanamaz", and no result was finalized for this); sign-in in password-only mode; the English UI; narrow and mobile widths; hover, focus and keyboard states. Side effects in the local `kademe_platform` DB: one `dev:link` invite ("Dev Öğrenci") got its consent accepted; the invite wizard was filled but not submitted.
+
+## Canlıya çıkış: Campus German görünümü, Plan 1 (2026-10-16 akşam, kullanıcı onayıyla: "canlıya al")
+
+- main `3316b78` -> `8e945da` (26 commit, fast-forward): Campus German temeli (renkler, buton, logo, maskot, sarı uyarılar,
+  nötr bölümler, Zorluk etiketi bileşeni) ve sınav düzeltmeleri (`05716aa`: sürüklenen çip asılı kalmıyor, tek satır alt bar,
+  C-test havuzu en fazla ekranın üçte biri, dinleme notu "önce soruları okuyun"). Göç ve paket değişikliği yok.
+- Sıra: devam eden bölüm 0; yedek `/root/kademe-backups/kademe-redesign-20261016-1823.dump` (VM saati UTC, 712 KB); servis ve
+  5 zamanlayıcı durduruldu; pull, install, `db:migrate` (yeni göç yok); build tamam; `.next/cache` silindi; servis ve 5 zamanlayıcı
+  active; `/login` 200 (127.0.0.1 ve https). Canlı giriş sayfası Chrome'da görüldü: camgöbeği buton koyu yazıyla, üç renkli logo,
+  yapraklı "bir Campus German ürünü".
+- Doğrulanmadı: canlıda sınav ekranları ve öğretmen paneli (panel şifresi yalnız hash olarak var).
+- Geri dönüş: servis + zamanlayıcıları durdur, `git checkout 3316b78`, build, başlat (veri değişmedi; yedek yalnız ihtiyat).
 
 ## Canlıya çıkış: okul yöneticisi geri bildirimi (2026-10-16 öğlen, kullanıcı onayıyla: "canlıya al")
 
