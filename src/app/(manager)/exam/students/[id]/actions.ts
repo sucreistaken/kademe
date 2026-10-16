@@ -16,12 +16,28 @@ import {
   responseGradings,
   sectionRuns,
 } from "@/db/schema";
+import { buildDetail } from "@/components/panel/report/detail-model";
 import { canAcceptAsCorrect, canAcceptGap, gapScore } from "@/components/panel/result/review-rows";
+import { managerLocale } from "@/i18n/manager-locale";
+import { aiLimitReached } from "@/lib/ai-limit";
+import { callJson, markAiRunError } from "@/lib/ai-runs";
 import { isCefr } from "@/lib/exam/cefr";
 import { reestimateRun } from "@/lib/exam/reestimate-run";
+import {
+  FEEDBACK_JSON_SCHEMA,
+  approveFeedback,
+  buildFeedbackInput,
+  buildFeedbackMessages,
+  buildFeedbackRepairMessages,
+  feedbackFromForm,
+  parseFeedbackAnswer,
+  type FeedbackContent,
+  type StudentFeedbackStore,
+} from "@/lib/exam/student-feedback";
 import { isObjectiveSection } from "@/lib/exam/types";
 import { finalizeResult, recomputeResult } from "@/lib/exam-results";
 import { withQuery } from "@/lib/redirect";
+import { loadResultView } from "@/server/panel";
 import { recomputeIntegrity } from "@/server/proctoring";
 import { ACCEPT_ACTION, RESPONSE_SUBJECT, UNDO_ACCEPT_ACTION, loadAcceptances } from "@/server/result-review";
 import { requireUser } from "@/server/session";
@@ -357,4 +373,125 @@ export async function undoAcceptAsCorrect(formData: FormData) {
   await recomputeResult(row.run.attemptId);
   revalidatePath(back(row.assessmentId));
   redirect(back(row.assessmentId, tab));
+}
+
+// ---------------------------------------------------------------------------
+// Feedback for the student: the AI drafts, a teacher edits and approves.
+// ---------------------------------------------------------------------------
+
+/**
+ * The feedback is not part of the level, so it may be written and changed
+ * after the result is final too. Only the approved text ever reaches the
+ * report (src/components/panel/report/model.ts); a draft is for the teacher.
+ */
+
+async function saveFeedbackRow(resultId: string, studentFeedback: StudentFeedbackStore | null) {
+  await db.update(examResults).set({ studentFeedback, updatedAt: new Date() }).where(eq(examResults.id, resultId));
+}
+
+async function auditFeedback(orgId: string, userId: string, action: string, resultId: string, meta: Record<string, unknown>) {
+  await db.insert(auditLogs).values({ orgId, actorId: userId, action, subjectType: "exam_result", subjectId: resultId, meta });
+}
+
+export async function draftFeedback(formData: FormData) {
+  const user = await requireUser("result:grade");
+  const assessmentId = String(formData.get("assessmentId"));
+  const row = await resultInOrg(assessmentId, user.orgId);
+  if (!row?.result) redirect("/exam/students");
+  const fail = (code: string): never => redirect(`${withQuery(back(assessmentId), { error: code })}#feedback`);
+  // A running exam has nothing to give feedback on.
+  if (!row.attempt.completedAt && !row.attempt.terminatedAt) fail("running");
+  if (await aiLimitReached(user.orgId, user.id, "STUDENT_FEEDBACK")) fail("feedbackLimit");
+
+  const view = await loadResultView(user.orgId, assessmentId);
+  if (!view) redirect("/exam/students");
+  const skillLevels: Record<string, string> = {};
+  const computed = view.result?.computed;
+  for (const [section, s] of Object.entries(view.result?.finalSkills ?? {})) skillLevels[section] = s.level;
+  // An AI-proposed level no teacher has decided is not a level yet: the note must not rest on it.
+  for (const [section, s] of Object.entries(computed?.skills ?? {})) if (!skillLevels[section] && s?.level && s.decider !== "AI") skillLevels[section] = s.level;
+  const detail = buildDetail({
+    sections: view.sections,
+    skillLevels,
+    runs: view.runs,
+    responses: view.responses,
+    gradings: view.gradings,
+    acceptances: await loadAcceptances(user.orgId, view.responses.map((r) => r.id)),
+    transcripts: {},
+    nameOf: {},
+  });
+  const aiDecided = Object.values(computed?.skills ?? {}).some((s) => s?.decider === "AI");
+  const input = buildFeedbackInput(view.result?.finalOverall ?? (aiDecided ? null : (computed?.overall ?? null)), detail);
+  const locale = await managerLocale();
+  const messages = buildFeedbackMessages(input, locale);
+  const meta = { orgId: user.orgId, purpose: "STUDENT_FEEDBACK", inputRef: `exam_result:${row.result.id}`, requestedBy: user.id } as const;
+
+  let content: FeedbackContent | null = null;
+  let runId: string | null = null;
+  let attemptMessages = messages;
+  for (let round = 0; round < 2 && !content; round++) {
+    let called;
+    try {
+      called = await callJson("student_feedback", FEEDBACK_JSON_SCHEMA, attemptMessages, meta, { maxTokens: 2000 });
+    } catch (error) {
+      fail(error instanceof Error && error.message === "AI_UNAVAILABLE" ? "feedbackUnavailable" : "feedbackFailed");
+      return;
+    }
+    runId = called.runId;
+    const parsed = parseFeedbackAnswer(called.response.text);
+    if (parsed.ok) content = parsed.content;
+    else {
+      await markAiRunError(called.runId, `unusable answer: ${parsed.error}`);
+      attemptMessages = buildFeedbackRepairMessages(messages, called.response.text, parsed.error);
+    }
+  }
+  if (!content) return fail("feedbackFailed");
+
+  const prev = row.result.studentFeedback;
+  const now = new Date();
+  await saveFeedbackRow(row.result.id, {
+    draft: content,
+    draftedAt: now.toISOString(),
+    draftRunId: runId,
+    // An earlier approved text stays live until the teacher approves the new one.
+    approved: prev?.approved ?? null,
+    approvedBy: prev?.approvedBy ?? null,
+    approvedAt: prev?.approvedAt ?? null,
+    edited: prev?.edited ?? false,
+    locale,
+  });
+  await auditFeedback(user.orgId, user.id, "feedback.draft", row.result.id, { runId });
+  revalidatePath(back(assessmentId));
+  redirect(`${back(assessmentId)}#feedback`);
+}
+
+export async function saveFeedback(formData: FormData) {
+  const user = await requireUser("result:grade");
+  const assessmentId = String(formData.get("assessmentId"));
+  const row = await resultInOrg(assessmentId, user.orgId);
+  if (!row?.result) redirect("/exam/students");
+  const parsed = feedbackFromForm((name) => String(formData.get(name) ?? ""));
+  if (!parsed.ok) redirect(`${withQuery(back(assessmentId), { error: "feedbackEmpty" })}#feedback`);
+  const now = new Date();
+  const store = approveFeedback(row.result.studentFeedback, parsed.content, user.id, now, await managerLocale());
+  await saveFeedbackRow(row.result.id, store);
+  await auditFeedback(user.orgId, user.id, "feedback.approve", row.result.id, { edited: store.edited, runId: store.draftRunId });
+  revalidatePath(back(assessmentId));
+  redirect(`${back(assessmentId)}#feedback`);
+}
+
+/** `scope=draft` drops the draft only ("Vazgeç"); `scope=all` also removes the approved text from the report. */
+export async function clearFeedback(formData: FormData) {
+  const user = await requireUser("result:grade");
+  const assessmentId = String(formData.get("assessmentId"));
+  const all = String(formData.get("scope")) === "all";
+  const row = await resultInOrg(assessmentId, user.orgId);
+  if (!row?.result) redirect("/exam/students");
+  const prev = row.result.studentFeedback;
+  if (prev) {
+    await saveFeedbackRow(row.result.id, all || !prev.approved ? null : { ...prev, draft: null, draftedAt: null, draftRunId: null });
+    await auditFeedback(user.orgId, user.id, "feedback.clear", row.result.id, { scope: all ? "all" : "draft" });
+  }
+  revalidatePath(back(assessmentId));
+  redirect(`${back(assessmentId)}#feedback`);
 }

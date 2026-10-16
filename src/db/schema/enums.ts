@@ -97,6 +97,7 @@ export const aiPurpose = pgEnum("ai_purpose", [
   "CREATE_ROUTER", // routes one sentence from the Advanced box to a creator; it writes only its own draft row
   "HIRING_ROLE_BRIEF", // asks the manager about a role, then writes a summary and a job ad they can correct
   "HIRING_REVISE", // rewrites a draft assessment (or one question) on the manager's instruction; undoable
+  "STUDENT_FEEDBACK", // a short note for the student on a finished exam; a teacher edits and approves it before the report shows it
 ]);
 
 export const proctorEventType = pgEnum("proctor_event_type", PROCTOR_EVENT_TYPES);

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { finalize, overrideOverall, release, undoAcceptAsCorrect } from "@/app/(manager)/exam/students/[id]/actions";
 import { Card } from "@/components/ui/card";
 import { Dot, INTEGRITY_TONE, STATUS_TONE, shortDateTime } from "@/components/panel/bits";
+import { FeedbackCard } from "@/components/panel/result/feedback-card";
 import { GradingCard } from "@/components/panel/result/grading-card";
 import { Highlighted } from "@/components/panel/result/format";
 import { ObjectiveSection, isBankEmptySkip } from "@/components/panel/result/objective-section";
@@ -108,7 +109,15 @@ export default async function ResultPage({
           ? t("result.errInvalid")
           : sp.error === "UNDECIDED"
             ? t("result.errUndecided")
-            : t("result.errNotReady")
+            : sp.error === "feedbackLimit"
+              ? t("result.errFeedbackLimit")
+              : sp.error === "feedbackFailed"
+                ? t("result.errFeedbackFailed")
+                : sp.error === "feedbackUnavailable"
+                  ? t("result.errFeedbackUnavailable")
+                  : sp.error === "feedbackEmpty"
+                    ? t("result.errFeedbackEmpty")
+                    : t("result.errNotReady")
     : null;
 
   const acceptances = await loadAcceptances(user.orgId, tab !== "summary" && isObjectiveSection(tab as Section) ? responsesFor(tab).map((r) => r.id) : []);
@@ -216,6 +225,7 @@ export default async function ResultPage({
           ) : null}
 
           {tab === "summary" ? (
+            <>
             <Card className="divide-y divide-line">
               {view.sections.map((s) => {
                 const skill = computed?.skills[s as Section];
@@ -248,6 +258,18 @@ export default async function ResultPage({
                 );
               })}
             </Card>
+            {result ? (
+              <FeedbackCard
+                assessmentId={id}
+                feedback={result.studentFeedback ?? null}
+                ended={ended}
+                canGrade={canGrade}
+                nameOf={view.nameOf}
+                locale={locale}
+                t={t}
+              />
+            ) : null}
+            </>
           ) : null}
 
           {tab !== "summary" && tab !== "integrity" && isObjectiveSection(tab as Section) ? (

@@ -57,6 +57,7 @@ export default async function ResultReportPage({
       teacherName: result?.finalizedBy ? (view.nameOf[result.finalizedBy] ?? null) : null,
       finalizedAt: result?.finalizedAt ?? null,
       attemptId: attempt.id,
+      feedback: result?.studentFeedback ?? null,
     },
     resolveSigningSecret(process.env),
   );
