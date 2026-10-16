@@ -335,6 +335,10 @@
     "linkFAILED": "The link could not be fetched. Try again."
   },
   "result": {
+    "feedbackExampleYou": "You",
+    "feedbackExampleRight": "Correct",
+    "feedbackExampleStudent": "Your answer",
+    "feedbackExampleCorrect": "Correct",
     "back": "Students",
     "overall": "Overall level",
     "outcomePASS": "Claimed level confirmed",
@@ -984,6 +988,8 @@
     "tfLegend": "R = {r}, F = {f}, NG = {ng}"
   },
   "resultReport": {
+    "feedbackExampleYou": "You",
+    "feedbackExampleRight": "Correct",
     "button": "PDF report",
     "buttonBlocked": "The report is available once the result is finalised.",
     "back": "Back to the result",

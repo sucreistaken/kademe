@@ -335,6 +335,10 @@
     "linkFAILED": "Link alınamadı. Tekrar dene."
   },
   "result": {
+    "feedbackExampleYou": "Sen",
+    "feedbackExampleRight": "Doğrusu",
+    "feedbackExampleStudent": "Senin cevabın",
+    "feedbackExampleCorrect": "Doğrusu",
     "back": "Öğrenciler",
     "overall": "Genel seviye",
     "outcomePASS": "Beyan edilen seviye doğrulandı",
@@ -984,6 +988,8 @@
     "tfLegend": "R = {r}, F = {f}, NG = {ng}"
   },
   "resultReport": {
+    "feedbackExampleYou": "Sen",
+    "feedbackExampleRight": "Doğrusu",
     "button": "PDF rapor",
     "buttonBlocked": "Rapor, sonuç kesinleşince hazırlanır.",
     "back": "Sonuca dön",
