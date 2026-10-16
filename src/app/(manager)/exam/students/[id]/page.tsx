@@ -414,35 +414,44 @@ export default async function ResultPage({
                       <div className="h-full rounded-full bg-accent" style={{ width: `${checklist.total ? Math.round((checklist.done / checklist.total) * 100) : 0}%` }} />
                     </div>
                     <ul className="mt-3 flex flex-col gap-2">
-                      {checklist.rows.map((row) => (
-                        <li key={row.section} className={cn("rounded-[10px] px-3 py-2 text-[13px]", row.state === "done" ? "bg-success-soft" : "bg-canvas")}>
-                          <div className="flex items-baseline justify-between gap-2">
-                            <span className="font-semibold text-ink">{t(`sectionName.${row.section}`)}</span>
-                            <span className={cn("text-right text-[12.5px]", row.state === "done" ? "font-medium text-success" : "text-ink-2")}>
-                              {row.state === "done"
-                                ? row.kind === "AUTO"
-                                  ? t("result.checklistAuto")
-                                  : t("result.checklistDone")
-                                : row.state === "todo"
-                                  ? t("result.checklistTodo")
-                                  : row.state === "aiPending"
-                                    ? t("result.checklistAi")
-                                    : t("result.checklistRunning")}
-                            </span>
-                          </div>
-                          {row.state === "todo" ? (
-                            <div className="mt-1 flex items-baseline justify-between gap-2">
-                              <span className="tnum text-[12px] text-muted">{row.total > 1 ? t("result.checklistTasks", { open: row.open, total: row.total }) : ""}</span>
-                              <Link
-                                href={`/exam/students/${id}?tab=${row.section}${row.firstOpenResponseId ? `#t-${row.firstOpenResponseId}` : ""}`}
-                                className="text-[12.5px] font-semibold text-accent underline underline-offset-2"
-                              >
-                                {t("result.checklistGo")}
-                              </Link>
-                            </div>
-                          ) : null}
-                        </li>
-                      ))}
+                      {checklist.rows.map((row) => {
+                        // Every row opens its section; a teacher task jumps to the first open one.
+                        const href = `/exam/students/${id}?tab=${row.section}${row.firstOpenResponseId ? `#t-${row.firstOpenResponseId}` : ""}`;
+                        const actionable = row.state === "todo" || row.state === "aiPending";
+                        return (
+                          <li key={row.section}>
+                            <Link
+                              href={href}
+                              className={cn(
+                                "block rounded-[10px] px-3 py-2 text-[13px] transition-colors",
+                                row.state === "done" ? "bg-success-soft hover:brightness-[0.98]" : "bg-canvas hover:bg-line",
+                                row.section === tab && "ring-2 ring-accent",
+                              )}
+                            >
+                              <div className="flex items-baseline justify-between gap-2">
+                                <span className="font-semibold text-ink">{t(`sectionName.${row.section}`)}</span>
+                                <span className={cn("text-right text-[12.5px]", row.state === "done" ? "font-medium text-success" : "text-ink-2")}>
+                                  {row.state === "done"
+                                    ? row.kind === "AUTO"
+                                      ? t("result.checklistAuto")
+                                      : t("result.checklistDone")
+                                    : row.state === "todo"
+                                      ? t("result.checklistTodo")
+                                      : row.state === "aiPending"
+                                        ? t("result.checklistAi")
+                                        : t("result.checklistRunning")}
+                                </span>
+                              </div>
+                              {actionable ? (
+                                <div className="mt-1 flex items-baseline justify-between gap-2">
+                                  <span className="tnum text-[12px] text-muted">{row.total > 1 ? t("result.checklistTasks", { open: row.open, total: row.total }) : ""}</span>
+                                  <span className="text-[12.5px] font-semibold text-accent underline underline-offset-2">{t("result.checklistGo")}</span>
+                                </div>
+                              ) : null}
+                            </Link>
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                   {canFinalize ? (

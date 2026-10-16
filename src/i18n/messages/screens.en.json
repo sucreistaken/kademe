@@ -355,6 +355,7 @@
     "precisionLow": "low",
     "insufficient": "Insufficient evidence: the section ended early.",
     "pending": "AI proposal on its way (usually a minute).",
+    "gradeWithoutAi": "You can set the level yourself without waiting for the AI proposal. A proposal that arrives later does not change your decision.",
     "refresh": "Refresh",
     "aiFailed": "No AI proposal ({reason}). Set the level yourself.",
     "confirm": "Confirm proposal",

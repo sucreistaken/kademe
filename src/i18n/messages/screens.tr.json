@@ -355,6 +355,7 @@
     "precisionLow": "düşük",
     "insufficient": "Yetersiz kanıt: öğrenci bölümü erken bitirdi.",
     "pending": "AI önerisi hazırlanıyor (genelde 1 dakika).",
+    "gradeWithoutAi": "AI önerisini beklemeden seviyeyi kendiniz verebilirsiniz. Öneri sonradan gelirse kararınız değişmez.",
     "refresh": "Yenile",
     "aiFailed": "AI önerisi üretilemedi ({reason}). Seviyeyi siz verin.",
     "confirm": "Öneriyi onayla",

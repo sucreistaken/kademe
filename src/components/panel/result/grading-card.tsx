@@ -84,8 +84,10 @@ export function GradingCard({
         </>
       ) : null}
 
-      {canGrade && grading.status !== "PENDING" ? (
+      {canGrade ? (
         <div className="mt-4 flex flex-col gap-3 border-t border-line pt-4">
+          {/* The teacher decides; the AI proposal is a help, never a wait. */}
+          {grading.status === "PENDING" ? <p className="text-[12.5px] text-muted">{t("result.gradeWithoutAi")}</p> : null}
           {grading.status === "AI_PROPOSED" ? (
             <form action={confirmGrading}>
               <input type="hidden" name="gradingId" value={grading.id} />
@@ -95,7 +97,7 @@ export function GradingCard({
               </button>
             </form>
           ) : null}
-          <details>
+          <details open={grading.status === "PENDING" || grading.status === "AI_FAILED"}>
             <summary className="cursor-pointer text-[13px] font-medium text-ink underline underline-offset-2">{t("result.change")}</summary>
             <form action={overrideGrading} className="mt-2 flex flex-col gap-2">
               <input type="hidden" name="gradingId" value={grading.id} />
