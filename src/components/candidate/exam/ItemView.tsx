@@ -359,7 +359,7 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
                   // Same width for every slot of the item (longest chip), so the size says nothing about the part.
                   style={{ minWidth: slotWidth }}
                   className={cn(
-                    "ml-0 mr-0.5 inline-block h-8 rounded-[6px] border px-1 align-baseline text-[16px] leading-[1.9] text-ink",
+                    "ml-0 mr-0.5 inline-flex h-8 items-center justify-start rounded-[6px] border px-0.5 align-middle text-[16px] leading-none text-ink",
                     value ? "border-line-strong bg-surface" : "border-dashed border-line-strong bg-canvas",
                     (isSelected || drag?.over === gap.id) && "border-solid border-accent bg-accent-soft ring-2 ring-accent",
                   )}
