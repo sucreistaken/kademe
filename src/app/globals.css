@@ -30,143 +30,142 @@
  * no amber, no pills, shadows only on modals); docs/design/HIRING-UX.md section
  * 8 still describes that older look and is history for the values below.
  *
- * The rules now:
- *  - One brand green (accent) for the primary action, the current place
- *    (active nav, chosen card, focus ring) and progress. It is a friendlier,
- *    lighter green than before, still 5.3:1 under white text.
- *  - Five pastel families (mint, sky, grape, sun, coral), each a soft ground
- *    plus a text tone that reads at 4.5:1 or more on it. They mark categories
- *    (the five exam sections, kinds of work) and progress, never a verdict on
- *    an answer: no screen a student sees while answering may colour anything
- *    as right or wrong.
- *  - Semantic tones: success (mint), warn (sun: amber is allowed now) and
- *    danger. A status may be a soft pill (Badge, StatusDot) with a word in it;
- *    colour is never the only signal.
- *  - Corners are round everywhere: 10 items, 14 buttons and fields, 20 cards,
- *    26 the large candidate cards. Pills are fully round.
- *  - Depth is a solid "lip" under pressable things (shadow-lip, shadow-lip-soft)
- *    and under cards (shadow-card), which press down 1px when clicked. Blurred
- *    shadows stay for things that float: sticky bars, menus, dialogs.
- *  - Text contrast is WCAG AA (4.5:1) on paper, canvas and surface for every
- *    text tone, ink-3 included; ink-3 is the quietest text, not a decoration.
- *  - One filled button per screen is still the habit: everything else is the
- *    outline (secondary) or a text button.
- *  - The app has no dark theme; `dark:` stays inert (below).
+ * The rules now (Campus German redesign, docs/design/ux-designs/ux-kademe-2026-10-16/DESIGN.md):
+ *  - A warm neutral page (paper/canvas #FAF7F2, cream #F3EEE5) with ink text. Brand colours are
+ *    small accents only ("çok da renk renk kokmasın").
+ *  - `brand` (logo cyan) is the primary action's fill, always with ink text (`on-brand`); white on
+ *    it is 2.2:1 and forbidden. `accent` is the dark brand cyan for text, links, focus and progress.
+ *  - Yellow is the flag, the warning glyph and the notice ground (yellow-soft, ink text).
+ *  - Red is brand only (mark, mascot, celebration), the recording dot and a small error frame
+ *    (`error`). Never a button, text, result, level, timer or warning.
+ *  - Difficulty tints (`diff-*`) are for the teacher panel only.
+ *  - The pastel families keep their names for old call sites but now resolve to the brand-aligned
+ *    neutral set: sections are icon + word, never five colours.
+ *  - Corners: 9 small, 13 items, 18 buttons and fields, 30 cards, 36 the big candidate card.
+ *  - Depth: a solid lip under pressables (4px) and cards (6px); blur only on floating things.
+ *  - Text contrast is WCAG AA (4.5:1) on paper, canvas, cream and surface; boundaries 3:1.
+ *  - No dark theme; `dark:` stays inert (below).
  */
 
 @theme {
-  /* Neutral axis: a cool, faintly green grey, so the pastels sit on it calmly. */
+  /* Neutral axis: warm, so the brand accents sit on it calmly. */
   --color-surface: #ffffff;
-  --color-canvas: #f2f6f4; /* panel ground */
-  --color-line: #dde7e2;
-  --color-muted: #5a6963; /* secondary text, 5.3:1 on canvas */
-  --color-ink: #1c2b26; /* a deep green slate, softer than black */
+  --color-canvas: #faf7f2; /* page ground (panel and candidate) */
+  --color-cream: #f3eee5; /* secondary ground: chips, subtle rows, the section tile */
+  --color-track: #e9e3d8; /* progress and meter tracks */
+  --color-line: #e7e0d3; /* rim: card and divider borders */
+  --color-lip: #ddd5c6; /* the solid lip under cards and secondary buttons */
+  --color-edge: #8a8377; /* control boundaries, 3.75:1 on white */
+  --color-muted: #5e656e; /* secondary text, 5.1:1 on cream */
+  --color-ink: #1d2127;
 
-  /* The brand green. Friendly, still 5.3:1 under white and 4.7:1 on its soft ground. */
-  --color-accent: #157a5a;
-  --color-accent-hover: #0f6449;
-  --color-accent-soft: #e4f4ec; /* selection and current-place tint */
-  --color-accent-deep: #0b513b; /* the lip under the filled button */
+  /* Dark brand cyan: text, links, focus, progress. White on it 5.8:1. */
+  --color-accent: #0b6f84;
+  --color-accent-hover: #095c6e;
+  --color-accent-soft: #dff5fa; /* selection and current-place tint */
+  --color-accent-deep: #0891ab;
 
-  /* Semantic tones. Text tones read at 4.5:1 or more on their soft ground and on white. */
-  --color-danger: #b23a30;
-  --color-danger-soft: #fdeceb;
-  --color-success: #1d7a50;
-  --color-success-soft: #e3f4ea;
-  --color-warn: #8a5300; /* amber text */
-  --color-warn-soft: #fff3d9;
+  /* Brand (Campus German logo). */
+  --color-brand: #0bbfdf; /* the primary action's fill, ink text only */
+  --color-brand-lip: #0891ab;
+  --color-on-brand: #1d2127;
+  --color-yellow: #fdd31d;
+  --color-yellow-lip: #d9ae00;
+  --color-yellow-soft: #fff2b8;
+  --color-yellow-soft-lip: #f0dc7a;
+  --color-red: #ff3b3b;
+  --color-red-lip: #d92b2b;
+  --color-error: #d92b2b; /* a field frame or "!" glyph; messages stay ink */
+  --color-mascot-yellow-lip: #e3b400;
+  --color-mascot-sleep: #8a6f00;
 
-  /*
-   * Pastel families for categories and progress. `-soft` is the ground, the
-   * bare name the icon and text tone on it, `-fill` a brighter shape colour
-   * for bars, dots and drawings (never text: it does not reach 4.5:1).
-   */
-  --color-mint: #157a5a;
-  --color-mint-soft: #e4f4ec;
-  --color-mint-fill: #5ec29a;
-  --color-sky: #2364a3;
-  --color-sky-soft: #e6f1fc;
-  --color-sky-fill: #75b2ee;
-  --color-grape: #5b44b0;
-  --color-grape-soft: #efebfd;
-  --color-grape-fill: #a793ec;
-  --color-sun: #8a5300;
-  --color-sun-soft: #fff3d9;
-  --color-sun-fill: #f5b941;
-  --color-coral: #a3401f;
-  --color-coral-soft: #ffece4;
-  --color-coral-fill: #f39a7f;
+  /* Difficulty, teacher panel only (DESIGN.md "Color psychology"). Ink text on all three. */
+  --color-diff-easy: #a9e7f3;
+  --color-diff-easy-lip: #79ccdf;
+  --color-diff-medium: #ffe680;
+  --color-diff-medium-lip: #ebc63c;
+  --color-diff-hard: #ffcaca;
+  --color-diff-hard-lip: #f2a0a0;
 
-  /*
-   * The rest of the neutral ramp. The candidate screens use a finer set of
-   * tints (a softer page ground, a second and third text weight, a lighter
-   * hairline); naming them keeps the screens off arbitrary hex values.
-   */
-  --color-paper: #f7faf8; /* candidate page ground, softer than canvas */
-  --color-ink-2: #3f504a; /* body copy under a heading */
-  --color-ink-3: #627069; /* the quietest text; still 4.8:1 on canvas */
-  --color-hairline: #e6eeea; /* lighter than line, used under bars */
-  --color-line-strong: #c9d5cf; /* an input border that must be findable */
-  --color-line-mute: #8a9891; /* an unchecked control outline, 3:1 on white */
-  --color-underline: #b4c3bc; /* underline colour for inline links */
-  --color-disabled: #edf2ef; /* a disabled filled button */
-  --color-row-line: #eef3f0; /* divider inside a summary card */
-  --color-panel: #1c2b26; /* the bar under a video panel */
-  --color-panel-top: #2a3a33; /* video placeholder gradient, start */
-  --color-panel-bottom: #16211d; /* video placeholder gradient, end */
-
-  /* The dark "manager only" column in the template builder (canvas Y2). */
-  --color-vault: #1c2b26; /* panel ground */
-  --color-vault-box: #24352f; /* a field inside the panel */
-  --color-vault-line: #34473f; /* its border */
-  --color-vault-chip: #4a5f56; /* competency chip border */
-  --color-vault-flag: #4a332f; /* red flag row border */
-  --color-vault-mark: #e3a698; /* the mark before a red flag */
-  --color-vault-label: #9cb0a7; /* field labels on the dark ground */
-  --color-vault-text: #eef4f1; /* body text on the dark ground */
+  /* Semantic tones. Warnings and notices are yellow-soft with ink text. */
+  --color-danger: #c42424;
+  --color-danger-soft: #fbe9e7;
+  --color-success: #0b6f84;
+  --color-success-soft: #dff5fa;
+  --color-warn: #1d2127;
+  --color-warn-soft: #fff2b8;
 
   /*
-   * Illustration tones (HIRING-VISUAL-FLOW 2.2). Drawings never use the
-   * saturated accent; they take the soft mint ground, a butter-warm body and
-   * a softened ink line. Used only by components/visual/illustrations.tsx.
+   * The old pastel families, kept as names so existing call sites compile,
+   * resolved to the brand-aligned set: mint = the cyan "done", sun = yellow,
+   * the rest neutral. `-fill` is a shape colour (never text).
    */
-  --color-illus-line: #24352f; /* a softened ink */
-  --color-illus-fill: #e9f6f0; /* = brand-soft */
-  --color-illus-tint: #cbe8da;
-  --color-illus-sage: #8fcdb2;
-  --color-illus-warm: #fff6e3;
+  --color-mint: #0b6f84;
+  --color-mint-soft: #dff5fa;
+  --color-mint-fill: #0bbfdf;
+  --color-sky: #3f454d;
+  --color-sky-soft: #f3eee5;
+  --color-sky-fill: #8a8377;
+  --color-grape: #3f454d;
+  --color-grape-soft: #f3eee5;
+  --color-grape-fill: #8a8377;
+  --color-sun: #1d2127;
+  --color-sun-soft: #fff2b8;
+  --color-sun-fill: #fdd31d;
+  --color-coral: #3f454d;
+  --color-coral-soft: #f3eee5;
+  --color-coral-fill: #ff3b3b;
+
+  /* The rest of the neutral ramp. */
+  --color-paper: #faf7f2;
+  --color-ink-2: #3f454d;
+  --color-ink-3: #5e656e;
+  --color-hairline: #ece6db;
+  --color-line-strong: #8a8377; /* = edge: an input border that must be findable */
+  --color-line-mute: #8a8377;
+  --color-underline: #c9c1b3;
+  --color-disabled: #f3eee5;
+  --color-row-line: #f1ece3;
+  --color-panel: #1d2127;
+  --color-panel-top: #2a2f36;
+  --color-panel-bottom: #15181c;
+
+  /* The dark "manager only" column in the template builder. */
+  --color-vault: #1d2127;
+  --color-vault-box: #2a2f36;
+  --color-vault-line: #3a4049;
+  --color-vault-chip: #4b525c;
+  --color-vault-flag: #4a3532;
+  --color-vault-mark: #f2a0a0;
+  --color-vault-label: #a9afb7;
+  --color-vault-text: #f3eee5;
+
+  /* Illustration tones: light only, used by components/visual/illustrations.tsx. */
+  --color-illus-line: #2a2f36;
+  --color-illus-fill: #dff5fa;
+  --color-illus-tint: #e9e3d8;
+  --color-illus-sage: #79ccdf;
+  --color-illus-warm: #fff2b8;
 
   /* Nunito: rounded terminals, latin-ext for Turkish and German. ui-rounded is SF Rounded on Apple. */
   --font-sans: var(--font-nunito), ui-rounded, system-ui, sans-serif;
 
-  /*
-   * Radius under shadcn's role names. radix-nova draws items inside fields
-   * and menus with rounded-md, buttons, fields and menus with rounded-lg,
-   * cards and dialogs with rounded-xl; the names follow those roles so the
-   * copied parts get the soft pixels without edits:
-   *   sm 8 (small chips), md 10 (items), lg 14 (buttons, fields, menus),
-   *   xl 20 (cards, dialog), 2xl 26 (sheet edge, large candidate card).
-   */
-  --radius-sm: 8px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
-  --radius-2xl: 26px;
+  /* Radius under shadcn's role names: sm 9, md 13 (items), lg 18 (buttons, fields, menus), xl 30 (cards, dialog), 2xl 36. */
+  --radius-sm: 9px;
+  --radius-md: 13px;
+  --radius-lg: 18px;
+  --radius-xl: 30px;
+  --radius-2xl: 36px;
 
-  /*
-   * Depth. The lips are solid offsets under things you press or that hold a
-   * group (a card); the blurred ones are for things that float above the page.
-   * `panel` (exam screens, sticky bars), `panel-soft` (the Today next-task
-   * card), `modal` and `overlay` (dialogs, menus, sheets).
-   */
-  --shadow-lip: 0 3px 0 0 var(--color-accent-deep);
-  --shadow-lip-pressed: 0 1px 0 0 var(--color-accent-deep);
-  --shadow-lip-soft: 0 2px 0 0 var(--color-line);
-  --shadow-card: 0 2px 0 0 var(--color-hairline);
-  --shadow-panel: 0 1px 2px rgb(28 43 38 / 0.05), 0 8px 20px -8px rgb(28 43 38 / 0.12);
-  --shadow-modal: 0 24px 56px -16px rgb(28 43 38 / 0.28);
-  --shadow-panel-soft: 0 2px 0 0 var(--color-hairline), 0 12px 28px -14px rgb(28 43 38 / 0.16);
-  --shadow-overlay: 0 18px 44px -10px rgb(28 43 38 / 0.22);
+  /* Depth: solid lips under pressables and cards; blur only for floating things. */
+  --shadow-lip: 0 4px 0 0 var(--color-brand-lip);
+  --shadow-lip-pressed: 0 1px 0 0 var(--color-brand-lip);
+  --shadow-lip-soft: 0 4px 0 0 var(--color-lip);
+  --shadow-card: 0 6px 0 0 var(--color-lip);
+  --shadow-panel: 0 1px 2px rgb(29 33 39 / 0.05), 0 8px 20px -8px rgb(29 33 39 / 0.12);
+  --shadow-modal: 0 24px 56px -16px rgb(29 33 39 / 0.28);
+  --shadow-panel-soft: 0 6px 0 0 var(--color-lip), 0 12px 28px -14px rgb(29 33 39 / 0.16);
+  --shadow-overlay: 0 18px 44px -10px rgb(29 33 39 / 0.22);
 
   /* Spacing, HIRING-UX 8.3. Base unit 4px stays Tailwind's. */
   --spacing-page: 2rem; /* panel page edge */
@@ -194,38 +193,38 @@
  */
 :root {
   color-scheme: light;
-  --radius: 0.875rem; /* 14px: buttons and fields; input-group derives its inner radii from it */
+  --radius: 1.125rem; /* 18px: buttons and fields; input-group derives its inner radii from it */
   /* Cards read this (components/ui/card.tsx). */
-  --card-radius: 20px;
-  --background: #f2f6f4;
-  --foreground: #1c2b26;
+  --card-radius: 30px;
+  --background: #faf7f2;
+  --foreground: #1d2127;
   --card: #ffffff;
-  --card-foreground: #1c2b26;
+  --card-foreground: #1d2127;
   --popover: #ffffff;
-  --popover-foreground: #1c2b26;
-  --primary: #157a5a;
+  --popover-foreground: #1d2127;
+  --primary: #0b6f84;
   --primary-foreground: #ffffff;
-  --secondary: #eaf0ed;
-  --secondary-foreground: #1c2b26;
-  --muted: #eaf0ed;
-  --muted-foreground: #5a6963;
-  --subtle: #eaf0ed;
-  --subtle-foreground: #1c2b26;
-  --brand-soft: #e9f6f0;
-  --destructive: #b23a30;
-  --border: #dde7e2;
-  --input: #c9d5cf;
-  --ring: #157a5a;
-  --sidebar: #f7faf8;
-  --sidebar-foreground: #1c2b26;
-  --sidebar-primary: #157a5a;
+  --secondary: #f3eee5;
+  --secondary-foreground: #1d2127;
+  --muted: #f3eee5;
+  --muted-foreground: #5e656e;
+  --subtle: #f3eee5;
+  --subtle-foreground: #1d2127;
+  --brand-soft: #dff5fa;
+  --destructive: #c42424;
+  --border: #e7e0d3;
+  --input: #8a8377;
+  --ring: #0b6f84;
+  --sidebar: #faf7f2;
+  --sidebar-foreground: #1d2127;
+  --sidebar-primary: #0b6f84;
   --sidebar-primary-foreground: #ffffff;
   /* Hover ground in the menu. The active item is styled by the nav itself
      (brand-soft ground, accent text). */
-  --sidebar-accent: #eaf0ed;
-  --sidebar-accent-foreground: #1c2b26;
-  --sidebar-border: #dde7e2;
-  --sidebar-ring: #157a5a;
+  --sidebar-accent: #f3eee5;
+  --sidebar-accent-foreground: #1d2127;
+  --sidebar-border: #e7e0d3;
+  --sidebar-ring: #0b6f84;
 }
 
 @theme inline {
@@ -304,8 +303,8 @@ body {
 }
 
 /* The team-only panel is near black: the accent ring would be about 2.7:1 there,
-   so focus on it is drawn in the panel's text colour (#F2F1ED on #1A1A17, about
-   15:1). Unlayered like the rule above, and more specific, so it wins. */
+   so focus on it is drawn in the panel's text colour (#F3EEE5 on #1D2127, about
+   14:1). Unlayered like the rule above, and more specific, so it wins. */
 .vault :focus-visible {
   outline-color: var(--color-vault-text);
 }
@@ -441,27 +440,26 @@ html:has([data-step-footer]) {
 }
 
 /*
- * Literal radii, bridged to the soft scale. Screens written before the soft
+ * Literal radii, bridged to the radius scale. Screens written before the soft
  * look draw corners as literal pixels (rounded-[10px] on most buttons and
  * fields, rounded-[8px] on items, rounded-[12px] and rounded-[14px] on cards,
  * rounded-[6px] on small chips). Such a utility cannot read a token, so it is
- * mapped onto the scale here and every one of those screens turns soft
- * without an edit. Unlayered, so it beats the utility layer; no element
- * combines one of these with another radius utility (checked 2026-10-14).
- * New code uses rounded-sm/md/lg/xl instead. When no file draws these any
- * more (codemod: [6px] sm, [8px] md, [10px] lg, [12px] and [14px] xl), this
- * block goes.
+ * mapped onto the scale here and every one of those screens takes the new
+ * corners without an edit. Buttons drawn with 12/14px stay button-sized (lg,
+ * 18px), items 8/10px become md (13px). Unlayered, so it beats the utility
+ * layer; no element combines one of these with another radius utility
+ * (checked 2026-10-14). New code uses rounded-sm/md/lg/xl instead. When no
+ * file draws these any more (codemod: [6px] sm, [8px] and [10px] md, [12px]
+ * and [14px] lg), this block goes.
  */
 .rounded-\[6px\] {
   border-radius: var(--radius-sm);
 }
-.rounded-\[8px\] {
-  border-radius: var(--radius-md);
-}
+.rounded-\[8px\],
 .rounded-\[10px\] {
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
 }
 .rounded-\[12px\],
 .rounded-\[14px\] {
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
 }

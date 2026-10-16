@@ -5,8 +5,8 @@ import { describe, expect, it } from "vitest";
 /**
  * The tokens are the one place the look of the product is decided, and two
  * parties read them: the Kademe screens (via @theme) and the shadcn components
- * (via :root variables and @theme inline). The values are the soft look of
- * 2026-10-14 (the contract comment in globals.css). This test keeps the two
+ * (via :root variables and @theme inline). The values are the Campus German look of
+ * 2026-10-16 (the contract comment in globals.css). This test keeps the two
  * in agreement, keeps text readable (WCAG AA) and stops a shadcn name from
  * silently taking over a Kademe one.
  */
@@ -39,58 +39,71 @@ function contrast(a: string, b: string): number {
 
 describe("Kademe tokens keep their meaning", () => {
   it.each([
-    ["--color-accent", "#157a5a"],
-    ["--color-accent-soft", "#e4f4ec"],
-    ["--color-muted", "#5a6963"],
-    ["--color-canvas", "#f2f6f4"],
+    ["--color-accent", "#0b6f84"],
+    ["--color-accent-soft", "#dff5fa"],
+    ["--color-muted", "#5e656e"],
+    ["--color-canvas", "#faf7f2"],
     ["--color-surface", "#ffffff"],
-    ["--color-line", "#dde7e2"],
-    ["--color-ink", "#1c2b26"],
-    ["--color-ink-3", "#627069"],
+    ["--color-line", "#e7e0d3"],
+    ["--color-ink", "#1d2127"],
+    ["--color-ink-3", "#5e656e"],
+    ["--color-brand", "#0bbfdf"],
+    ["--color-brand-lip", "#0891ab"],
+    ["--color-on-brand", "#1d2127"],
+    ["--color-yellow", "#fdd31d"],
+    ["--color-yellow-soft", "#fff2b8"],
+    ["--color-red", "#ff3b3b"],
+    ["--color-error", "#d92b2b"],
+    ["--color-diff-easy", "#a9e7f3"],
+    ["--color-diff-medium", "#ffe680"],
+    ["--color-diff-hard", "#ffcaca"],
+    ["--color-cream", "#f3eee5"],
+    ["--color-lip", "#ddd5c6"],
+    ["--color-edge", "#8a8377"],
   ])("%s is %s", (name, value) => {
     expect(theme[name]).toBe(value);
   });
 
   it.each([
-    ["--color-illus-line", "#24352f"],
-    ["--color-illus-fill", "#e9f6f0"],
-    ["--color-illus-tint", "#cbe8da"],
-    ["--color-illus-sage", "#8fcdb2"],
-    ["--color-illus-warm", "#fff6e3"],
-  ])("illustration tone %s is %s (light tones only, never the accent)", (name, value) => {
+    ["--color-illus-line", "#2a2f36"],
+    ["--color-illus-fill", "#dff5fa"],
+    ["--color-illus-tint", "#e9e3d8"],
+    ["--color-illus-sage", "#79ccdf"],
+    ["--color-illus-warm", "#fff2b8"],
+  ])("illustration tone %s is %s (light tones only)", (name, value) => {
     expect(theme[name]).toBe(value);
   });
 
   it("names the radius steps by shadcn role, with the soft pixels", () => {
     // shadcn radix-nova draws fields, menus and buttons with rounded-lg, cards
     // and dialogs with rounded-xl, items inside fields and menus with
-    // rounded-md. The names follow those roles; the soft look rounds each a
-    // step further (10 item, 14 button and field, 20 card, 26 sheet).
-    expect(root["--radius"]).toBe("0.875rem");
-    expect(root["--card-radius"]).toBe("20px");
-    expect(theme["--radius-sm"]).toBe("8px");
-    expect(theme["--radius-md"]).toBe("10px");
-    expect(theme["--radius-lg"]).toBe("14px");
-    expect(theme["--radius-xl"]).toBe("20px");
-    expect(theme["--radius-2xl"]).toBe("26px");
+    // rounded-md. The names follow those roles; the Campus German look rounds
+    // each a step further (9 small, 13 item, 18 button and field, 30 card, 36 sheet).
+    expect(root["--radius"]).toBe("1.125rem");
+    expect(root["--card-radius"]).toBe("30px");
+    expect(theme["--radius-sm"]).toBe("9px");
+    expect(theme["--radius-md"]).toBe("13px");
+    expect(theme["--radius-lg"]).toBe("18px");
+    expect(theme["--radius-xl"]).toBe("30px");
+    expect(theme["--radius-2xl"]).toBe("36px");
   });
 
   it("maps the literal radii older screens draw onto the scale", () => {
-    expect(css).toMatch(/\n\.rounded-\\\[10px\\\] \{\s*border-radius: var\(--radius-lg\);/);
-    expect(css).toMatch(/\n\.rounded-\\\[8px\\\] \{\s*border-radius: var\(--radius-md\);/);
-    expect(css).toMatch(/\n\.rounded-\\\[12px\\\],\n\.rounded-\\\[14px\\\] \{\s*border-radius: var\(--radius-xl\);/);
+    expect(css).toMatch(/\n\.rounded-\\\[6px\\\] \{\s*border-radius: var\(--radius-sm\);/);
+    expect(css).toMatch(/\n\.rounded-\\\[8px\\\],\n\.rounded-\\\[10px\\\] \{\s*border-radius: var\(--radius-md\);/);
+    expect(css).toMatch(/\n\.rounded-\\\[12px\\\],\n\.rounded-\\\[14px\\\] \{\s*border-radius: var\(--radius-lg\);/);
   });
 
-  it("gives the pressable lip the deep accent and keeps the lips solid (no blur)", () => {
-    expect(theme["--shadow-lip"]).toBe("0 3px 0 0 var(--color-accent-deep)");
-    expect(theme["--shadow-lip-pressed"]).toBe("0 1px 0 0 var(--color-accent-deep)");
-    expect(theme["--shadow-lip-soft"]).toBe("0 2px 0 0 var(--color-line)");
-    expect(theme["--shadow-card"]).toBe("0 2px 0 0 var(--color-hairline)");
+  it("gives the pressable lip the brand lip and keeps the lips solid (no blur)", () => {
+    expect(theme["--shadow-lip"]).toBe("0 4px 0 0 var(--color-brand-lip)");
+    expect(theme["--shadow-lip-pressed"]).toBe("0 1px 0 0 var(--color-brand-lip)");
+    expect(theme["--shadow-lip-soft"]).toBe("0 4px 0 0 var(--color-lip)");
+    expect(theme["--shadow-card"]).toBe("0 6px 0 0 var(--color-lip)");
   });
 });
 
 describe("text stays readable (WCAG AA, 4.5:1)", () => {
-  const grounds = ["--color-paper", "--color-canvas", "--color-surface"];
+  const grounds = ["--color-paper", "--color-canvas", "--color-cream", "--color-surface"];
 
   it.each(["--color-ink", "--color-ink-2", "--color-muted", "--color-ink-3", "--color-danger", "--color-warn", "--color-success"])(
     "%s reads on paper, canvas and white",
@@ -104,11 +117,27 @@ describe("text stays readable (WCAG AA, 4.5:1)", () => {
     expect(contrast(theme[`--color-${family}`], theme["--color-surface"])).toBeGreaterThanOrEqual(4.5);
   });
 
-  it("puts white on the filled button at 4.5:1 or more, and the accent on its soft ground too", () => {
+  it("puts ink on the brand fill and white on the dark accent, both at 4.5:1 or more", () => {
+    expect(contrast(theme["--color-on-brand"], theme["--color-brand"])).toBeGreaterThanOrEqual(4.5);
+    expect(contrast("#ffffff", theme["--color-brand"])).toBeLessThan(4.5); // the reason white is forbidden on cyan
     expect(contrast("#ffffff", theme["--color-accent"])).toBeGreaterThanOrEqual(4.5);
     expect(contrast("#ffffff", theme["--color-accent-hover"])).toBeGreaterThanOrEqual(4.5);
     expect(contrast(theme["--color-accent"], theme["--color-accent-soft"])).toBeGreaterThanOrEqual(4.5);
     expect(contrast(root["--primary"], root["--brand-soft"])).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it.each(["--color-yellow-soft", "--color-yellow", "--color-diff-easy", "--color-diff-medium", "--color-diff-hard"])(
+    "ink reads on %s",
+    (ground) => {
+      expect(contrast(theme["--color-ink"], theme[ground])).toBeGreaterThanOrEqual(4.5);
+    },
+  );
+
+  it("draws control boundaries (edge) and the error frame at 3:1 on white and paper", () => {
+    for (const ground of ["--color-surface", "--color-paper"]) {
+      expect(contrast(theme["--color-edge"], theme[ground])).toBeGreaterThanOrEqual(3);
+      expect(contrast(theme["--color-error"], theme[ground])).toBeGreaterThanOrEqual(3);
+    }
   });
 
   it("draws an unchecked control's outline at 3:1 on white (WCAG 1.4.11)", () => {
@@ -138,6 +167,7 @@ describe("the shadcn variables follow the Kademe tokens", () => {
 
   it("never lets a shadcn mapping redefine a Kademe colour", () => {
     expect(inline["--color-accent"]).toBeUndefined();
+    expect(inline["--color-brand"]).toBeUndefined();
     expect(inline["--color-muted"]).toBeUndefined();
     expect(inline["--color-accent-foreground"]).toBeUndefined();
   });
@@ -177,26 +207,26 @@ describe("focus is drawn once, by the global outline", () => {
 
 describe("shadcn variables carry the soft values", () => {
   it.each([
-    ["--background", "#f2f6f4"],
-    ["--foreground", "#1c2b26"],
+    ["--background", "#faf7f2"],
+    ["--foreground", "#1d2127"],
     ["--card", "#ffffff"],
-    ["--card-foreground", "#1c2b26"],
+    ["--card-foreground", "#1d2127"],
     ["--popover", "#ffffff"],
-    ["--popover-foreground", "#1c2b26"],
-    ["--primary", "#157a5a"],
+    ["--popover-foreground", "#1d2127"],
+    ["--primary", "#0b6f84"],
     ["--primary-foreground", "#ffffff"],
-    ["--secondary", "#eaf0ed"],
-    ["--secondary-foreground", "#1c2b26"],
-    ["--muted", "#eaf0ed"],
-    ["--muted-foreground", "#5a6963"],
-    ["--subtle", "#eaf0ed"],
-    ["--subtle-foreground", "#1c2b26"],
-    ["--brand-soft", "#e9f6f0"],
-    ["--destructive", "#b23a30"],
-    ["--border", "#dde7e2"],
-    ["--input", "#c9d5cf"],
-    ["--ring", "#157a5a"],
-    ["--sidebar", "#f7faf8"],
+    ["--secondary", "#f3eee5"],
+    ["--secondary-foreground", "#1d2127"],
+    ["--muted", "#f3eee5"],
+    ["--muted-foreground", "#5e656e"],
+    ["--subtle", "#f3eee5"],
+    ["--subtle-foreground", "#1d2127"],
+    ["--brand-soft", "#dff5fa"],
+    ["--destructive", "#c42424"],
+    ["--border", "#e7e0d3"],
+    ["--input", "#8a8377"],
+    ["--ring", "#0b6f84"],
+    ["--sidebar", "#faf7f2"],
   ])("%s is %s", (name, value) => {
     expect(root[name]).toBe(value);
   });
