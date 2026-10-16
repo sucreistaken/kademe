@@ -18,6 +18,21 @@ describe("BrandMark", () => {
     expect(h).toContain("fill-ink");
     for (const c of ["fill-brand", "fill-red", "fill-yellow"]) expect(h).not.toContain(c);
   });
+
+  it("draws the print mark as the spec's brand-mark-ink: white tile, 1.6px ink outline, no lip, ink steps", () => {
+    const h = html(BrandMark, { tone: "ink" });
+    expect(h).toContain("fill-surface");
+    expect(h).toContain("stroke-ink");
+    expect(h).toContain('stroke-width="1.6"');
+    expect(h).not.toContain("fill-line");
+    expect(h).not.toContain("stroke-line");
+    expect(h).not.toContain("fill-lip");
+    expect(h).not.toContain("stroke-lip");
+    for (const c of ["brand", "red", "yellow", "mascot"]) expect(h).not.toContain(c);
+    // Tile outline + three steps; no separate lip rect under the tile or the steps.
+    expect(h.match(/<rect /g)).toHaveLength(4);
+    expect(h.match(/fill-ink/g)).toHaveLength(3);
+  });
 });
 
 describe("PetalGlyph", () => {

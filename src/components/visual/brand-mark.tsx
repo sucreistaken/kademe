@@ -4,15 +4,17 @@ import { cn } from "@/lib/cn";
 /**
  * Kademe means "step": three rounded steps rising in the Campus German colours
  * (cyan, red, yellow: the tallest), each on a solid lip, on a white tile with a
- * cream lip (DESIGN.md, Brand & Style). `tone="ink"` is the one-colour version
- * for print and the level report. Decorative; the word next to it is the name.
+ * cream lip (DESIGN.md, Brand & Style). `tone="ink"` is the spec's
+ * `brand-mark-ink`, the one-colour version for print and the level report: a
+ * white tile with a 1.6px ink outline, three ink steps, no lips. Decorative;
+ * the word next to it is the name.
  */
 export function BrandMark({ className, tone = "color" }: { className?: string; tone?: "color" | "ink" }) {
   const ink = tone === "ink";
   return (
     <svg viewBox="0 0 28 28" aria-hidden="true" focusable="false" className={cn("size-7 shrink-0", className)}>
-      <rect x="0.8" y="2.4" width="26.4" height="25" rx="9" className={ink ? "fill-line" : "fill-lip"} />
-      <rect x="0.8" y="0.8" width="26.4" height="25" rx="9" strokeWidth="1.6" className={cn("fill-surface", ink ? "stroke-line" : "stroke-lip")} />
+      {ink ? null : <rect x="0.8" y="2.4" width="26.4" height="25" rx="9" className="fill-lip" />}
+      <rect x="0.8" y="0.8" width="26.4" height="25" rx="9" strokeWidth="1.6" className={cn("fill-surface", ink ? "stroke-ink" : "stroke-lip")} />
       {ink ? null : <rect x="4.4" y="16.2" width="5.6" height="8" rx="2.8" className="fill-brand-lip" />}
       <rect x="4.4" y="15" width="5.6" height="7.6" rx="2.8" className={ink ? "fill-ink" : "fill-brand"} />
       {ink ? null : <rect x="11.2" y="12.2" width="5.6" height="12" rx="2.8" className="fill-red-lip" />}
