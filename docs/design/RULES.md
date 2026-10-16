@@ -13,6 +13,36 @@
 > the five exam sections are neutral (icon + word); difficulty tints exist in the
 > teacher panel only.
 
+**Spec name to code utility.** The spec (`DESIGN.md`) names tokens by role; the code keeps
+shadcn's utility names, so the two do not match one to one. Use this table when you read the
+spec and write code. Ruling: code names keep the shadcn roles, and the 16 and 22 radius steps
+are written literally.
+
+| Spec radius | Code utility |
+| --- | --- |
+| sm 9 | `rounded-sm` |
+| md 13 | `rounded-md` |
+| lg 16 | `rounded-[16px]` (literal) |
+| xl 18 | `rounded-lg` |
+| 2xl 22 | `rounded-[22px]` (literal) |
+| 3xl 30 | `rounded-xl` |
+| 4xl 36 | `rounded-2xl` |
+| full | `rounded-full` |
+
+| Spec colour | Code utility |
+| --- | --- |
+| `primary` (#0BBFDF) | `brand` (fill only, ink text `on-brand`) |
+| `primary-lip` | `brand-lip` |
+| `primary-deep` (#0B6F84) | `accent` |
+| `primary-soft` | `accent-soft` |
+| `ground` | `canvas` / `paper` |
+| `rim` | `line` |
+| `edge` | `edge` = `line-strong` |
+| `cream`, `track`, `lip`, `yellow*`, `red*`, `diff-*`, `error` | same names |
+
+Warning: the shadcn `bg-primary` utility is the DARK accent (`#0B6F84`) with white text, used by
+the shadcn checkbox, radio and switch. It is not the spec's `primary` and not the brand fill.
+
 Layout source: `docs/design/kademe-canvas.html` (exported from Claude Design). Its
 colours, font and corners are the earlier look; for those, `src/app/globals.css` wins.
 Artboards are `<div class="dv-opt" id="Y1">` … `Y7` (manager) and `A8` … `A12`
@@ -43,8 +73,8 @@ the rules below follow it.
    glyph; red is the brand (mark, mascot, celebration), the recording dot and a
    small error frame only, never a button, text, result, level or timer. The
    exam sections are icon + word on a neutral tile: no five colours. The old
-   pastel names (mint, sky, grape, sun, coral) still compile but resolve to the
-   brand-aligned neutral set; do not use them to tell categories apart. No
+   pastel names (mint, sky, grape, sun, coral) still compile but resolve to cyan,
+   yellow and neutrals; do not use them to tell categories apart. No
    screen a student sees while answering colours anything as right or wrong.
    Warnings and error notices are yellow-soft with ink text (`Notice`,
    `src/components/ui/notice.tsx`). Difficulty (Kolay, Orta, Zor) is a tinted chip
@@ -106,7 +136,7 @@ Defined in `src/app/globals.css` and nowhere else.
   `bg-diff-hard` (teacher panel only), plus `success`, `warn`, `danger`
   (legacy red: about 40 call sites in 24 files still use it, see rule 1;
   no new use) and the legacy pastel names (`mint`, `sky`, `grape`, `sun`, `coral`, each
-  with `-soft` and `-fill`), now the brand-aligned neutral set.
+  with `-soft` and `-fill`), now resolved to cyan, yellow and neutrals.
 - shadcn variables under `:root` with the HIRING-UX 8.2 values, exposed by
   `@theme inline`: `bg-background`, `bg-card`, `bg-popover`, `bg-primary`,
   `bg-secondary`, `bg-muted-surface` (shadcn's background "muted"),

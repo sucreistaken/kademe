@@ -16,9 +16,10 @@ const SOFT: Record<TileColor, string> = {
 /**
  * The icon tile, a soft rounded square with the icon in its tone: 40px in
  * rows and cards, 52px on the big start cards. "dashed" marks a card that
- * adds something new. `color` picks the pastel family (globals.css); a
- * category keeps its family everywhere it appears. Decorative: the row's own
- * words carry the meaning, so the tile is hidden from assistive technology.
+ * adds something new. `color` picks a family (globals.css): the legacy family
+ * names (sky, grape, sun, coral) now resolve to neutrals and yellow, so use the
+ * icon and the word, not the colour, to tell categories apart. Decorative: the
+ * row's own words carry the meaning, so the tile is hidden from assistive technology.
  */
 export function IconTile({ icon: Icon, size = "md", tone = "soft", color = "accent", className }: { icon: LucideIcon; size?: "md" | "lg"; tone?: "soft" | "dashed"; color?: TileColor; className?: string }) {
   return (
