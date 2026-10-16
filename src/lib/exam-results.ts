@@ -29,6 +29,7 @@ import {
   verifyEvidence,
   type GradingProposal,
 } from "@/lib/exam/grading";
+import { blockerErrorCode, finalizeBlockers } from "@/lib/exam/finalize-blockers";
 import { hasAnswer } from "@/lib/exam/item-scoring";
 import { computeResult, type Decider, type SectionEvidence } from "@/lib/exam/result";
 import { isObjectiveSection, type Cefr, type ProductiveSection, type Section } from "@/lib/exam/types";
@@ -381,9 +382,12 @@ export async function finalizeResult(attemptId: string, userId: string | null, r
     .innerJoin(examAssessments, eq(examAssessments.assessmentId, attempts.assessmentId))
     .where(eq(attempts.id, attemptId));
   const c = result.computed;
-  if (c.status === "AWAITING_GRADING" || !c.overall) return { ok: false as const, code: "NOT_READY" };
-  if (Object.values(c.skills).some((s) => s?.decider === "AI" || s?.pending))
-    return { ok: false as const, code: "UNDECIDED" };
+  if (result.finalizedAt) return { ok: false as const, code: "ALREADY_FINAL" };
+  // The same rules the teacher's result screen shows as its checklist.
+  const [blocker] = finalizeBlockers(c);
+  if (blocker) return { ok: false as const, code: blockerErrorCode(blocker) };
+  const overall = c.overall;
+  if (!overall) return { ok: false as const, code: "NOT_READY" };
 
   const at = new Date().toISOString();
   const finalSkills: Record<string, FinalSkill> = {};
@@ -406,11 +410,11 @@ export async function finalizeResult(attemptId: string, userId: string | null, r
     att?.integrityOutcome !== "INVALID" &&
     att?.integritySummary?.level !== "ATTENTION" &&
     !att?.terminatedAt;
-  await db
+  const frozen = await db
     .update(examResults)
     .set({
       status: "FINAL",
-      finalOverall: c.overall,
+      finalOverall: overall,
       finalSkills,
       finalOutcome: c.verification?.outcome ?? null,
       finalizedBy: userId,
@@ -418,8 +422,11 @@ export async function finalizeResult(attemptId: string, userId: string | null, r
       ...(release ? { releasedAt: now, releasedBy: userId } : {}),
       updatedAt: now,
     })
-    .where(and(eq(examResults.attemptId, attemptId), isNull(examResults.finalizedAt)));
+    .where(and(eq(examResults.attemptId, attemptId), isNull(examResults.finalizedAt)))
+    .returning({ id: examResults.id });
   void reason;
+  // Nothing updated: someone finalized it between the read above and this write.
+  if (frozen.length === 0) return { ok: false as const, code: "ALREADY_FINAL" };
   return { ok: true as const };
 }
 

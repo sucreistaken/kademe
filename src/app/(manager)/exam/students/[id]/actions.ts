@@ -171,10 +171,15 @@ export async function finalize(formData: FormData) {
   const assessmentId = String(formData.get("assessmentId"));
   const row = await resultInOrg(assessmentId, user.orgId);
   if (!row?.result) redirect("/exam/students");
-  if (!row.attempt.completedAt && !row.attempt.terminatedAt) redirect(withQuery(back(assessmentId), { error: "running" }));
+  // An error comes back as ?error=CODE#finalize: the page shows it right under
+  // the button, which sits in the sidebar far from the top of the page.
+  const fail = (code: string): never => redirect(`${withQuery(back(assessmentId), { error: code })}#finalize`);
+  if (!row.attempt.completedAt && !row.attempt.terminatedAt) fail("running");
   await recomputeResult(row.attempt.id);
   const done = await finalizeResult(row.attempt.id, user.id, null);
-  if (!done.ok) redirect(withQuery(back(assessmentId), { error: done.code }));
+  // Already final (a double click, or another teacher got there first): the page shows the final state, no second revision.
+  if (!done.ok && done.code === "ALREADY_FINAL") redirect(back(assessmentId));
+  if (!done.ok) fail(done.code);
   await db.insert(examResultRevisions).values({ resultId: row.result.id, field: "finalize", after: true, changedBy: user.id });
   await db.insert(auditLogs).values({
     orgId: user.orgId,

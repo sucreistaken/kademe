@@ -413,7 +413,18 @@
     "errRunning": "Öğrenci sınavı bitirmeden sonuç kesinleştirilemez.",
     "errInvalid": "Bütünlük kararı 'Geçersiz' olan sonuç öğrenciye gösterilmez.",
     "errUndecided": "Önce bütün AI önerilerini onaylayın ya da değiştirin.",
-    "errNotReady": "Sonuç henüz hazır değil."
+    "errNotReady": "Sonuç henüz hazır değil.",
+    "checklistTitle": "Kesinleştirmeden önce",
+    "checklistProgress": "{done} / {total} tamam",
+    "checklistAuto": "Otomatik puanlandı ✓",
+    "checklistDone": "✓ Siz değerlendirdiniz",
+    "checklistTodo": "Değerlendirmeniz bekleniyor",
+    "checklistTasks": "{open} / {total} görev açık",
+    "checklistGo": "Değerlendir →",
+    "checklistAi": "AI önerisi hazırlanıyor",
+    "checklistRunning": "Sınav sürüyor",
+    "finalizeNeeds": "Önce şunları değerlendirin: {sections}.",
+    "finalizeReady": "Her şey tamam. Sonucu kesinleştirebilirsiniz."
   },
   "integrity": {
     "title": "Bütünlük",
@@ -930,7 +941,14 @@
     "acceptHint": "Anahtarda olmayan ama doğru bir yazım ise kabul edin. Yalnız bu boşluk (kısa cevapta cevabın tamamı) doğru sayılır, özgün puan kayıtta kalır ve seviye tahmini yeniden hesaplanır.",
     "acceptedBadge": "Öğretmen doğru kabul etti (özgün puan %{pct})",
     "acceptedUndo": "Cevap doğru kabul edildi.",
-    "undo": "Geri al"
+    "undo": "Geri al",
+    "scoreSummary": "{right} / {total} doğru",
+    "sectionLevel": "Seviye {level}",
+    "blankWord": "(boş)",
+    "gapsRight": "{right} / {total} boşluk doğru",
+    "studentPicked": "Öğrenci seçti",
+    "keyPicked": "Doğru cevap",
+    "tfLegend": "R = {r}, F = {f}, NG = {ng}"
   },
   "resultReport": {
     "button": "PDF rapor",

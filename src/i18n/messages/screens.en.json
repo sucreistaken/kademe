@@ -413,7 +413,18 @@
     "errRunning": "A result cannot be finalized before the student finishes.",
     "errInvalid": "A result judged invalid is not shown to the student.",
     "errUndecided": "Confirm or change every AI proposal first.",
-    "errNotReady": "The result is not ready yet."
+    "errNotReady": "The result is not ready yet.",
+    "checklistTitle": "Before you finalize",
+    "checklistProgress": "{done} / {total} done",
+    "checklistAuto": "Scored automatically ✓",
+    "checklistDone": "✓ You graded it",
+    "checklistTodo": "Waiting for your grading",
+    "checklistTasks": "{open} of {total} tasks open",
+    "checklistGo": "Grade →",
+    "checklistAi": "AI proposal in progress",
+    "checklistRunning": "Exam in progress",
+    "finalizeNeeds": "Grade these first: {sections}.",
+    "finalizeReady": "Everything is done. You can finalize the result."
   },
   "integrity": {
     "title": "Integrity",
@@ -930,7 +941,14 @@
     "acceptHint": "Use this when the answer is a correct variant the key does not list. Only this gap (the whole answer for a short text) counts as correct, the original score stays on record and the level estimate is recalculated.",
     "acceptedBadge": "Accepted as correct by the teacher (original score {pct}%)",
     "acceptedUndo": "Answer accepted as correct.",
-    "undo": "Undo"
+    "undo": "Undo",
+    "scoreSummary": "{right} / {total} correct",
+    "sectionLevel": "Level {level}",
+    "blankWord": "(blank)",
+    "gapsRight": "{right} / {total} gaps correct",
+    "studentPicked": "Student chose",
+    "keyPicked": "Correct answer",
+    "tfLegend": "R = {r}, F = {f}, NG = {ng}"
   },
   "resultReport": {
     "button": "PDF report",
