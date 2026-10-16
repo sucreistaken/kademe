@@ -536,7 +536,8 @@ function MatchingItem({ item, answer, onChange, disabled }: ItemProps) {
       <p lang="de" className="mt-3 text-[14px] text-ink-2">
         {MATCH_INSTRUCTION}
       </p>
-      <div aria-hidden data-match-tray className="mt-3 flex flex-wrap gap-2">
+      {/* Stays under the page header while the rows scroll, so every row can take a drop. */}
+      <div aria-hidden data-match-tray className="sticky top-14 z-10 -mx-1 mt-3 flex flex-wrap gap-2 bg-canvas px-1 py-2">
         {targets.map((r) => {
           const elsewhere = used.has(r.id);
           return (
@@ -576,14 +577,14 @@ function MatchingItem({ item, answer, onChange, disabled }: ItemProps) {
                 swallowClick.current = false;
               }}
               className={cn(
-                "flex h-9 max-w-full cursor-grab touch-none select-none items-center gap-2 rounded-[8px] border bg-surface px-2.5 text-[14px] text-ink hover:border-accent",
+                "flex min-h-9 max-w-full cursor-grab touch-none select-none items-start gap-2 rounded-[8px] border bg-surface px-2.5 py-1.5 text-left text-[14px] leading-[1.45] text-ink hover:border-accent",
                 elsewhere ? "border-dashed border-line-strong opacity-60" : "border-line-strong",
                 drag?.id === r.id && "opacity-40",
               )}
             >
               <span className="font-semibold">{r.badge}</span>
               {bare ? null : (
-                <span lang="de" className="max-w-[16rem] truncate text-ink-2">
+                <span lang="de" className="text-ink-2">
                   {r.label}
                 </span>
               )}
@@ -591,35 +592,12 @@ function MatchingItem({ item, answer, onChange, disabled }: ItemProps) {
           );
         })}
       </div>
-      {bare ? (
-        zero ? (
-          <p lang="de" className="mt-3 text-[14px] text-ink-2">
-            0 = {zero.label}
-          </p>
-        ) : null
-      ) : (
-        <section aria-labelledby={`${uid}-targets`} className="mt-4 rounded-[12px] border border-line bg-canvas px-4 py-3">
-          <h3 id={`${uid}-targets`} className="text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted">
-            {ti("matchTargets")}
-          </h3>
-          <ul className="mt-2 flex flex-col gap-1.5">
-            {targets.map((r) => {
-              const isUsed = used.has(r.id);
-              return (
-                <li key={r.id} className={cn("flex items-start gap-3", isUsed && "opacity-60")}>
-                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-line-strong bg-surface text-[13px] font-semibold text-ink">
-                    {r.badge}
-                  </span>
-                  <span lang="de" className="pt-0.5 text-[15px] leading-[1.5] text-ink">
-                    {r.label}
-                  </span>
-                  {isUsed ? <span className="ml-auto shrink-0 pt-1 text-[12px] text-muted">✓ {ti("matchUsed")}</span> : null}
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      )}
+      {/* The tray above already lists every target in full, so no second list. */}
+      {bare && zero ? (
+        <p lang="de" className="mt-3 text-[14px] text-ink-2">
+          0 = {zero.label}
+        </p>
+      ) : null}
       <div className="mt-4 flex flex-col gap-2.5">
         {item.content.left.map((l, n) => {
           const chosen = targets.find((r) => r.id === matches[l.id]);

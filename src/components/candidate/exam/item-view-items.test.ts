@@ -53,13 +53,14 @@ describe("matching items", () => {
   it("shows every target in view with its letter, and no drop-down", () => {
     const html = render(sentences);
     expect(html).not.toContain("<select");
-    expect(html).toContain("matchTargets");
+    expect(html).not.toContain("matchTargets");
     for (const [badge, text] of [
       ["A", "Das spart Zeit und Geld."],
       ["B", "Niemand hatte damit gerechnet."],
       ["C", "Am Ende waren alle zufrieden."],
     ]) {
-      expect(html).toMatch(new RegExp(`<li[^>]*><span[^>]*>${badge}</span><span lang="de"[^>]*>${text}</span>`));
+      // One list only: the drag tray, each chip with its letter and full text.
+      expect(html).toMatch(new RegExp(`<span class="font-semibold">${badge}</span><span lang="de"[^>]*>${text}</span>`));
     }
   });
 
@@ -95,8 +96,8 @@ describe("matching items", () => {
     expect(row2).toContain('aria-label="B: Niemand hatte damit gerechnet., matchUsedElsewhere"');
     expect(row2).toContain("border-dashed");
     expect(row3).toContain("matchUsedElsewhere");
-    // The target list fades B and says it is chosen.
-    expect(html).toMatch(/<li class="flex items-start gap-3 opacity-60">[^]*?Niemand hatte damit gerechnet\.[^]*?matchUsed</);
+    // The tray fades B, which is chosen.
+    expect(html).toMatch(/border-dashed border-line-strong opacity-60[^>]*><span class="font-semibold">B<\/span>/);
     expect(html.match(/matchClear/g)).toHaveLength(1);
     expect(html).toContain("→ </span>Niemand hatte damit gerechnet.");
   });
