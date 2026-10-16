@@ -5,8 +5,9 @@ import { cn } from "@/lib/cn";
  * pill. The word always carries the meaning; the colour only helps a glance.
  *
  * Tones (globals.css, Campus German look):
- *  - active: a cyan dot (something is happening now).
- *  - done: the cyan check tone.
+ *  - active: a bright cyan dot (something is happening now).
+ *  - done: a deep-cyan dot, or a cream pill with ink text (finished; unlike
+ *    active it does not look live).
  *  - neutral: grey.
  *  - warn: yellow (needs a person's attention).
  * No red tone: a status is never a verdict.
@@ -15,14 +16,14 @@ export type StatusTone = "active" | "done" | "neutral" | "warn";
 
 const dots: Record<StatusTone, string> = {
   active: "bg-brand",
-  done: "bg-mint-fill",
+  done: "bg-accent",
   neutral: "bg-line-mute",
   warn: "bg-sun-fill",
 };
 
 const pills: Record<StatusTone, string> = {
   active: "bg-accent-soft text-accent",
-  done: "bg-mint-soft text-mint",
+  done: "bg-cream text-ink",
   neutral: "bg-subtle text-muted",
   warn: "bg-sun-soft text-sun",
 };
