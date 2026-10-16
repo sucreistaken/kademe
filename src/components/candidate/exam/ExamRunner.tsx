@@ -480,7 +480,12 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
   const hint = timeUp
     ? n("timeUpSaving")
     : filling === "PARTIAL" && progress && progress.total > 1
-      ? n("partialHint", { filled: progress.filled, total: progress.total })
+      ? group && progressOf.size > 1
+        ? n("groupPartialHint", {
+            done: [...progressOf.values()].filter((p) => p.total > 0 && p.filled === p.total).length,
+            total: progressOf.size,
+          })
+        : n("partialHint", { filled: progress.filled, total: progress.total })
       : save === "saved"
         ? t("autosaved")
         : null;

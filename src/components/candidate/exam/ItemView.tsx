@@ -137,20 +137,17 @@ function ChoiceItem({ item, answer, onChange, disabled }: ItemProps) {
 }
 
 /**
- * True / false / not given. The buttons show only the letters the German
- * instruction uses (R, F, NG); the full word is in the label and tooltip.
- * NG is offered in listening too, because the bank's listening items use it;
- * it is worded for a recording there.
+ * True / false / not given. The buttons carry the German words of the
+ * instruction ("Richtig", "Falsch", "Nicht im Text"), the exam's language;
+ * bare letters confused students (school feedback 2026-10-16).
  */
 function TfngItem({ item, answer, onChange, disabled }: ItemProps) {
-  const t = useT("exam");
-  const ti = useT("examItems");
   const uid = useId();
   if (item.content.kind !== "TFNG") return null;
   const values: Array<[TfngValue, string]> = [
-    ["R", t("tfR")],
-    ["F", t("tfF")],
-    ["NG", item.section === "LISTENING" ? ti("tfNgListening") : t("tfNG")],
+    ["R", "Richtig"],
+    ["F", "Falsch"],
+    ["NG", "Nicht im Text"],
   ];
   return (
     <div>
@@ -173,18 +170,17 @@ function TfngItem({ item, answer, onChange, disabled }: ItemProps) {
                       type="button"
                       role="radio"
                       aria-checked={on}
-                      aria-label={`${v}: ${label}`}
+                      lang="de"
                       tabIndex={on || (!picked && i === 0) ? 0 : -1}
                       disabled={disabled}
                       onKeyDown={radioKeys}
                       onClick={() => onChange({ tfng: { ...(answer.tfng ?? {}), [s.id]: v } })}
-                      title={label}
                       className={cn(
                         "flex h-10 min-w-12 items-center justify-center rounded-[8px] border px-3 text-[14px] font-semibold",
                         on ? "border-accent bg-accent text-white" : "border-line-strong text-ink-2 hover:border-accent hover:text-ink",
                       )}
                     >
-                      {v}
+                      {label}
                     </button>
                   );
                 })}

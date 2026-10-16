@@ -409,6 +409,7 @@
     "texts": "{n} metin",
     "ruleGRAMMARFixed": "Her soruda bir seçenek işaretleyin ya da boşlukları doldurun. Sorular kolaydan zora doğru sıralıdır.",
     "partialHint": "Bu soruda {total} yerden {filled} tanesi dolu.",
+    "groupPartialHint": "Bu sayfada {total} sorudan {done} tanesi tam.",
     "saveFailed": "Son değişikliğiniz henüz kaydedilmedi. Bu sekmede tutuluyor ve yeniden gönderiliyor.",
     "actionFailed": "Bağlantı sorunu, işlem tamamlanmadı. Son cevabınız bu sekmede tutuluyor; tekrar deneyin.",
     "timeUpSaving": "Süre doldu. Kaydedilmiş cevaplarınız sayılıyor.",

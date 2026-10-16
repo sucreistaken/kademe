@@ -409,6 +409,7 @@
     "texts": "{n} texts",
     "ruleGRAMMARFixed": "Choose an option or fill the gaps in each question. Questions go from easier to harder.",
     "partialHint": "{filled} of {total} parts of this question are filled in.",
+    "groupPartialHint": "{done} of {total} questions on this page are complete.",
     "saveFailed": "Your latest change is not saved yet. It is kept in this tab and being sent again.",
     "actionFailed": "Connection problem, the step did not go through. Your latest answer is kept in this tab; try again.",
     "timeUpSaving": "Time is up. Your saved answers are being counted.",

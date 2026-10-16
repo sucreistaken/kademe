@@ -129,24 +129,13 @@ function tfngItem(section: "READING" | "LISTENING"): CandidateItem {
 }
 
 describe("true / false / not given", () => {
-  it("shows only the German letters on the buttons, reading wording for NG", () => {
-    const html = render(tfngItem("READING"));
-    for (const [letter, label] of [
-      ["R", "tfR"],
-      ["F", "tfF"],
-      ["NG", "tfNG"],
-    ]) {
-      expect(html).toMatch(new RegExp(`title="${label}" class="[^"]*">${letter}</button>`));
-      // The accessible name keeps the letter and the word apart.
-      expect(html).toContain(`aria-label="${letter}: ${label}"`);
+  it("puts the German words on the buttons, in reading and listening alike", () => {
+    for (const section of ["READING", "LISTENING"] as const) {
+      const html = render(tfngItem(section));
+      for (const word of ["Richtig", "Falsch", "Nicht im Text"]) {
+        expect(html).toMatch(new RegExp(`lang="de"[^>]*>${word}</button>`));
+      }
     }
-    expect(html).not.toContain("tfNgListening");
-  });
-
-  it("words NG for a recording in listening", () => {
-    const html = render(tfngItem("LISTENING"));
-    expect(html).toContain('aria-label="NG: tfNgListening"');
-    expect(html).not.toContain("tfNG\"");
   });
 
   it("labels each statement's group by the statement and keeps one tab stop", () => {
@@ -158,7 +147,7 @@ describe("true / false / not given", () => {
       expect(html).toContain(`id="${id}" lang="de" class="text-[15px] leading-[1.55] text-ink">${text}</p>`);
       expect(gs[i].match(/tabindex="0"/g)).toHaveLength(1);
     }
-    expect(gs[1]).toMatch(/aria-checked="true" aria-label="F: tfF" tabindex="0"[^>]*>F<\/button>/);
+    expect(gs[1]).toMatch(/aria-checked="true" lang="de" tabindex="0"[^>]*>Falsch<\/button>/);
   });
 });
 
