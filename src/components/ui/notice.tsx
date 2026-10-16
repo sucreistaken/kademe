@@ -7,8 +7,8 @@ import { cn } from "@/lib/cn";
  * reserved for the brand, the recording dot and a field's error frame.
  */
 export const NOTICE_CLASS = {
-  warn: "flex items-start gap-3 rounded-lg border-2 border-yellow-soft-lip bg-yellow-soft px-4 py-3 text-[14.5px] font-semibold leading-[1.5] text-ink",
-  neutral: "flex items-start gap-3 rounded-lg border-2 border-line bg-cream px-4 py-3 text-[14.5px] font-semibold leading-[1.5] text-ink",
+  warn: "flex items-start gap-3 rounded-lg border-2 border-yellow-soft-lip bg-yellow-soft px-4 py-3 text-left text-[14.5px] font-semibold leading-[1.5] text-ink",
+  neutral: "flex items-start gap-3 rounded-lg border-2 border-line bg-cream px-4 py-3 text-left text-[14.5px] font-semibold leading-[1.5] text-ink",
 } as const;
 
 export function Notice({

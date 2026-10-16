@@ -89,6 +89,17 @@ describe("Kademe tokens keep their meaning", () => {
     expect(theme["--radius-2xl"]).toBe("36px");
   });
 
+  it("keeps red out of the legacy pastel families (red is the brand only)", () => {
+    for (const family of ["mint", "sky", "grape", "sun", "coral"]) {
+      for (const suffix of ["", "-soft", "-fill"]) {
+        const name = `--color-${family}${suffix}`;
+        for (const red of ["--color-red", "--color-red-lip", "--color-error", "--color-danger"]) {
+          expect(theme[name], `${name} must not equal ${red}`).not.toBe(theme[red]);
+        }
+      }
+    }
+  });
+
   it("maps the literal radii older screens draw onto the scale", () => {
     expect(css).toMatch(/\n\.rounded-\\\[6px\\\] \{\s*border-radius: var\(--radius-sm\);/);
     expect(css).toMatch(/\n\.rounded-\\\[8px\\\],\n\.rounded-\\\[10px\\\] \{\s*border-radius: var\(--radius-md\);/);

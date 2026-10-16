@@ -21,14 +21,15 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Kademe design tokens: the "soft" look (user decision 2026-10-14).
+ * Kademe design tokens: the Campus German look (redesign of 2026-10-16).
  *
- * The product is a German placement exam and its school panel. The brief was
- * "softer colours, a little gamified, rounded fonts, nothing sharp", like a
- * modern learning app, but calm enough that a student can sit an exam in it.
- * This block replaces the earlier canvas contract (one accent in three places,
- * no amber, no pills, shadows only on modals); docs/design/HIRING-UX.md section
- * 8 still describes that older look and is history for the values below.
+ * The product is a German placement exam and its school panel. It started
+ * (2026-10-14) as a "soft" look: softer colours, a little gamified, rounded
+ * fonts, nothing sharp, calm enough that a student can sit an exam in it. On
+ * 2026-10-16 the colours, the mark and the notices moved to the Campus German
+ * brand; the soft shapes stayed. The earlier canvas contract (one accent in
+ * three places, no amber, no pills) and docs/design/HIRING-UX.md section 8 are
+ * history for the values below.
  *
  * The rules now (Campus German redesign, docs/design/ux-designs/ux-kademe-2026-10-16/DESIGN.md):
  *  - A warm neutral page (paper/canvas #FAF7F2, cream #F3EEE5) with ink text. Brand colours are
@@ -39,12 +40,22 @@
  *  - Red is brand only (mark, mascot, celebration), the recording dot and a small error frame
  *    (`error`). Never a button, text, result, level, timer or warning.
  *  - Difficulty tints (`diff-*`) are for the teacher panel only.
- *  - The pastel families keep their names for old call sites but now resolve to the brand-aligned
- *    neutral set: sections are icon + word, never five colours.
+ *  - The pastel families keep their names for old call sites but now resolve to cyan, yellow and
+ *    neutrals: sections are icon + word, never five colours.
  *  - Corners: 9 small, 13 items, 18 buttons and fields, 30 cards, 36 the big candidate card.
  *  - Depth: a solid lip under pressables (4px) and cards (6px); blur only on floating things.
  *  - Text contrast is WCAG AA (4.5:1) on paper, canvas, cream and surface; boundaries 3:1.
  *  - No dark theme; `dark:` stays inert (below).
+ *
+ * Spec name to code utility (the full table is in docs/design/RULES.md). The code keeps shadcn's
+ * role names, so DESIGN.md and the utilities differ:
+ *  - Radius: spec sm 9 = rounded-sm; md 13 = rounded-md; lg 16 = rounded-[16px]; xl 18 = rounded-lg;
+ *    2xl 22 = rounded-[22px]; 3xl 30 = rounded-xl; 4xl 36 = rounded-2xl; full = rounded-full.
+ *  - Colour: spec primary = brand (fill only, ink text on-brand); primary-lip = brand-lip;
+ *    primary-deep = accent; primary-soft = accent-soft; ground = canvas / paper; rim = line;
+ *    edge = edge = line-strong; cream, track, lip, yellow*, red*, diff-*, error keep their names.
+ *  - Warning: the shadcn bg-primary utility is the DARK accent with white text (checkbox, radio,
+ *    switch), not the brand fill.
  */
 
 @theme {
@@ -114,7 +125,7 @@
   --color-sun-fill: #fdd31d;
   --color-coral: #3f454d;
   --color-coral-soft: #f3eee5;
-  --color-coral-fill: #ff3b3b;
+  --color-coral-fill: #8a8377;
 
   /* The rest of the neutral ramp. */
   --color-paper: #faf7f2;

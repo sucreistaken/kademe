@@ -9,8 +9,19 @@ describe("Notice", () => {
     expect(NOTICE_CLASS.warn).toContain("text-ink");
     const h = renderToStaticMarkup(createElement(Notice, { role: "alert" } as ComponentProps<typeof Notice>, "Kamera açılamadı."));
     expect(h).toContain('role="alert"');
-    expect(h).toContain("bg-yellow");
+    // The "!" glyph itself is the yellow tile (bg-yellow-soft on the notice would not satisfy this).
+    const glyph = h.match(/<span[^>]*class="([^"]*)"[^>]*>!<\/span>/);
+    expect(glyph).not.toBeNull();
+    expect(glyph![0]).toMatch(/\bbg-yellow\b(?!-)/);
+    expect(glyph![0]).toContain('aria-hidden="true"');
     expect(h).not.toMatch(/danger|text-red|bg-red/);
+  });
+
+  it("is left-aligned by default and lets a caller's text-center win", () => {
+    for (const tone of ["warn", "neutral"] as const) expect(NOTICE_CLASS[tone]).toContain("text-left");
+    const h = renderToStaticMarkup(createElement(Notice, { className: "text-center" } as ComponentProps<typeof Notice>, "Hi"));
+    expect(h).toContain("text-center");
+    expect(h).not.toContain("text-left");
   });
 
   it("neutral is cream with ink text", () => {
