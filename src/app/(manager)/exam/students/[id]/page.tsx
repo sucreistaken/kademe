@@ -6,6 +6,8 @@ import { Dot, INTEGRITY_TONE, STATUS_TONE, shortDateTime } from "@/components/pa
 import { GradingCard } from "@/components/panel/result/grading-card";
 import { Highlighted } from "@/components/panel/result/format";
 import { ObjectiveSection, isBankEmptySkip } from "@/components/panel/result/objective-section";
+import { TaskPrompt } from "@/components/panel/result/task-prompt";
+import { finalizeBlockers, finalizeChecklist } from "@/lib/exam/finalize-blockers";
 import { objectiveBasis } from "@/components/panel/result/review-rows";
 import { groupMarkers } from "@/components/panel/integrity/markers";
 import { isNoiseType } from "@/components/panel/integrity/groups";
@@ -62,20 +64,52 @@ export default async function ResultPage({
   // Results stored before the placement detail existed have no `placement`.
   const placement = computed?.placement ?? null;
 
-  // What the finalize button waits for, in words.
-  let blockedBy: string | null = null;
-  if (!attempt?.completedAt && !attempt?.terminatedAt) blockedBy = t("result.finalizeRunning");
-  else if (computed?.status === "AWAITING_GRADING") blockedBy = t("result.finalizeGrading");
-  else {
-    const undecided = Object.entries(computed?.skills ?? {}).find(([, s]) => s?.decider === "AI" || s?.pending);
-    if (undecided) blockedBy = t("result.finalizeBlocked", { section: t(`sectionName.${undecided[0] as Section}`) });
-  }
-
   const runFor = (s: string) => view.runs.find((r) => r.section === s);
   const responsesFor = (s: string) => {
     const run = runFor(s);
     return run ? view.responses.filter((r) => r.sectionRunId === run.id) : [];
   };
+
+  // What the finalize button waits for: the same rules finalizeResult applies
+  // (src/lib/exam/finalize-blockers.ts), so the page and the action cannot disagree.
+  const blockers = finalizeBlockers(computed, ended);
+  const sectionList = (list: Section[]) => list.map((s) => t(`sectionName.${s}`)).join(", ");
+  const blockerLines = blockers.map((b) =>
+    b.code === "RUNNING"
+      ? t("result.finalizeRunning")
+      : b.code === "GRADING"
+        ? t("result.finalizeGrading")
+        : b.code === "UNDECIDED"
+          ? t("result.finalizeNeeds", { sections: sectionList(b.sections) })
+          : t("result.errNotReady"),
+  );
+  const checklist = finalizeChecklist({
+    sections: view.sections,
+    computed,
+    submitted: new Set(view.runs.filter((r) => r.submittedAt).map((r) => r.section)),
+    tasks: Object.fromEntries(
+      view.sections
+        .filter((s) => !isObjectiveSection(s as Section))
+        .map((s) => [
+          s,
+          responsesFor(s).flatMap((r) => {
+            const g = view.gradings.find((x) => x.itemResponseId === r.id);
+            return g ? [{ id: r.id, status: g.status, decided: !!g.finalLevel }] : [];
+          }),
+        ]),
+    ),
+  });
+  const errorText = sp.error
+    ? sp.error === "reason"
+      ? t("result.reasonRequired")
+      : sp.error === "running"
+        ? t("result.errRunning")
+        : sp.error === "invalid"
+          ? t("result.errInvalid")
+          : sp.error === "UNDECIDED"
+            ? t("result.errUndecided")
+            : t("result.errNotReady")
+    : null;
 
   const acceptances = await loadAcceptances(user.orgId, tab !== "summary" && isObjectiveSection(tab as Section) ? responsesFor(tab).map((r) => r.id) : []);
 
@@ -175,17 +209,9 @@ export default async function ResultPage({
             ))}
           </nav>
 
-          {sp.error ? (
-            <p className="mb-4 text-[13px] text-danger">
-              {sp.error === "reason"
-                ? t("result.reasonRequired")
-                : sp.error === "running"
-                  ? t("result.errRunning")
-                  : sp.error === "invalid"
-                    ? t("result.errInvalid")
-                    : sp.error === "UNDECIDED"
-                      ? t("result.errUndecided")
-                      : t("result.errNotReady")}
+          {errorText ? (
+            <p role="alert" className="mb-4 rounded-[10px] bg-danger-soft px-3 py-2 text-[13.5px] font-medium text-danger">
+              {errorText}
             </p>
           ) : null}
 
@@ -236,7 +262,7 @@ export default async function ResultPage({
                 run={runFor(tab)}
                 acceptances={acceptances}
                 canGrade={canGrade && !final}
-                open={sp.undo === "accept"}
+                level={computed?.skills[tab as Section]?.level ?? null}
               />
             )
           ) : null}
@@ -254,12 +280,9 @@ export default async function ResultPage({
                 const media = view.media.find((m) => m.id === r.answer?.mediaAssetId);
                 const tr = view.transcripts.find((x) => x.mediaAssetId === media?.id);
                 return (
-                  <section key={r.id} className="grid gap-5 xl:grid-cols-[1fr_340px]">
+                  <section key={r.id} id={`t-${r.id}`} className="grid scroll-mt-6 gap-5 xl:grid-cols-[1fr_340px]">
                     <div className="min-w-0">
-                      <div className="text-[12.5px] uppercase tracking-[0.04em] text-muted">{t("result.taskLevel", { level: r.itemSnapshot.level })}</div>
-                      <p lang="de" className="mt-1 whitespace-pre-line text-[14px] leading-[1.6] text-ink-2">
-                        {r.itemSnapshot.prompt}
-                      </p>
+                      <TaskPrompt prompt={r.itemSnapshot.prompt} label={t("result.taskLevel", { level: r.itemSnapshot.level })} />
                       <div className="mt-4 rounded-[14px] border border-line bg-surface p-5">
                         {tab === "WRITING" || r.answer?.usedTextAlternative ? (
                           <>
@@ -335,7 +358,7 @@ export default async function ResultPage({
         </div>
 
         {/* Rail: the skills with their source, and the one action. */}
-        <aside className="lg:sticky lg:top-6 lg:self-start">
+        <aside id="finalize" className="scroll-mt-6 lg:sticky lg:top-6 lg:self-start">
           <Card className="p-5 shadow-panel">
             <ul className="divide-y divide-line">
               {view.sections.map((s) => {
@@ -379,22 +402,83 @@ export default async function ResultPage({
                     </form>
                   ) : null}
                 </>
-              ) : canFinalize ? (
+              ) : (
                 <>
+                  {/* Where the teacher is: one row per section, then the one next step. */}
+                  <div className="mb-4">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <h2 className="text-[13.5px] font-semibold text-ink">{t("result.checklistTitle")}</h2>
+                      <span className="tnum text-[12.5px] font-medium text-ink-2">{t("result.checklistProgress", { done: checklist.done, total: checklist.total })}</span>
+                    </div>
+                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-canvas" aria-hidden="true">
+                      <div className="h-full rounded-full bg-accent" style={{ width: `${checklist.total ? Math.round((checklist.done / checklist.total) * 100) : 0}%` }} />
+                    </div>
+                    <ul className="mt-3 flex flex-col gap-2">
+                      {checklist.rows.map((row) => (
+                        <li key={row.section} className={cn("rounded-[10px] px-3 py-2 text-[13px]", row.state === "done" ? "bg-success-soft" : "bg-canvas")}>
+                          <div className="flex items-baseline justify-between gap-2">
+                            <span className="font-semibold text-ink">{t(`sectionName.${row.section}`)}</span>
+                            <span className={cn("text-right text-[12.5px]", row.state === "done" ? "font-medium text-success" : "text-ink-2")}>
+                              {row.state === "done"
+                                ? row.kind === "AUTO"
+                                  ? t("result.checklistAuto")
+                                  : t("result.checklistDone")
+                                : row.state === "todo"
+                                  ? t("result.checklistTodo")
+                                  : row.state === "aiPending"
+                                    ? t("result.checklistAi")
+                                    : t("result.checklistRunning")}
+                            </span>
+                          </div>
+                          {row.state === "todo" ? (
+                            <div className="mt-1 flex items-baseline justify-between gap-2">
+                              <span className="tnum text-[12px] text-muted">{row.total > 1 ? t("result.checklistTasks", { open: row.open, total: row.total }) : ""}</span>
+                              <Link
+                                href={`/exam/students/${id}?tab=${row.section}${row.firstOpenResponseId ? `#t-${row.firstOpenResponseId}` : ""}`}
+                                className="text-[12.5px] font-semibold text-accent underline underline-offset-2"
+                              >
+                                {t("result.checklistGo")}
+                              </Link>
+                            </div>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  {canFinalize ? (
+                    <>
                   <form action={finalize}>
                     <input type="hidden" name="assessmentId" value={id} />
                     <button
                       type="submit"
-                      disabled={!!blockedBy}
+                      disabled={blockers.length > 0}
+                      aria-describedby="finalize-why"
                       className="h-11 w-full rounded-[10px] bg-accent text-[14.5px] font-semibold text-white hover:bg-accent-hover disabled:cursor-not-allowed disabled:bg-line disabled:text-muted"
                     >
                       {t("result.finalize")}
                     </button>
                   </form>
-                  {blockedBy ? <p className="mt-2 text-[12.5px] text-muted">{blockedBy}</p> : null}
+                  {/* The reason sits right under the button, and a failed press lands here too (?error=...#finalize). */}
+                  <div id="finalize-why" className="mt-2 flex flex-col gap-1">
+                    {errorText && sp.error !== "reason" ? (
+                      <p role="alert" className="rounded-[10px] bg-danger-soft px-3 py-2 text-[13px] font-medium text-danger">
+                        {errorText}
+                      </p>
+                    ) : null}
+                    {blockerLines.length ? (
+                      blockerLines.map((line) => (
+                        <p key={line} className="text-[12.5px] text-ink-2">
+                          {line}
+                        </p>
+                      ))
+                    ) : (
+                      <p className="text-[12.5px] text-muted">{t("result.finalizeReady")}</p>
+                    )}
+                  </div>
                   {attempt?.completedAt ? (
-                    <details className="mt-4">
+                    <details className="mt-4" open={sp.error === "reason"}>
                       <summary className="cursor-pointer text-[12.5px] text-ink underline underline-offset-2">{t("result.overallChange")}</summary>
+                      {sp.error === "reason" ? <p className="mt-2 text-[12.5px] font-medium text-danger">{t("result.reasonRequired")}</p> : null}
                       <form action={overrideOverall} className="mt-2 flex flex-col gap-2">
                         <input type="hidden" name="assessmentId" value={id} />
                         <select name="level" required defaultValue="" className="h-9 rounded-[8px] border border-line bg-surface px-2 text-[13.5px]">
@@ -414,8 +498,10 @@ export default async function ResultPage({
                       </form>
                     </details>
                   ) : null}
+                    </>
+                  ) : null}
                 </>
-              ) : null}
+              )}
             </div>
 
             {row ? (
