@@ -1,7 +1,7 @@
 ---
 title: Kademe DESIGN
 name: Kademe
-description: Visual identity of Kademe, a German placement and level-verification exam plus hiring tool, presented as a Campus German product. Warm cream ground, ink text, big soft corners, a flat "lip" under everything pressable, brand cyan, yellow and red only as small accents, Nunito, one mascot built from the logo mark. Desktop only, light only.
+description: Visual identity of Kademe, a German placement and level-verification exam plus hiring tool, presented as a Campus German product. White ground with Campus German cool greys, ink text, big soft corners, a flat "lip" under everything pressable, brand cyan, yellow and red only as small accents, Nunito, one mascot built from the logo mark. Desktop only, light only.
 status: final
 created: 2026-10-16
 updated: 2026-10-16
@@ -20,14 +20,14 @@ colors:
   # Neutral axis: this is nearly all of every screen.
   ink: '#1D2127'
   ink-2: '#3F454D'
-  muted: '#5E656E'
-  ground: '#FAF7F2'
+  muted: '#5B6370'
+  ground: '#FFFFFF'
   surface: '#FFFFFF'
-  cream: '#F3EEE5'
-  track: '#E9E3D8'
-  rim: '#E7E0D3'
-  lip: '#DDD5C6'
-  edge: '#8A8377'
+  cream: '#F1F4F7'
+  track: '#E6EAEF'
+  rim: '#E1E5EA'
+  lip: '#D3D9E0'
+  edge: '#7D8590'
   # Brand cyan (Campus German #0BBFDF): the primary action and the "answered" state.
   primary: '#0BBFDF'
   on-primary: '#1D2127'
@@ -602,7 +602,7 @@ components:
 
 ## Brand & Style
 
-Kademe is a German placement and level-verification exam, and a hiring tool. A school hands it to its students and candidates as "bir Campus German ürünü" (a Campus German product). The tone is a calm, slightly playful learning app that never forgets it is an exam: a cream ground, white cards with big soft corners, ink text, and a flat solid "lip" under everything you can press.
+Kademe is a German placement and level-verification exam, and a hiring tool. A school hands it to its students and candidates as "bir Campus German ürünü" (a Campus German product). The tone is a calm, slightly playful learning app that never forgets it is an exam: a white ground with Campus German cool greys, white cards with big soft corners, ink text, and a flat solid "lip" under everything you can press.
 
 **Mockups.** The look was picked from three rendered directions. The picked one is [mockups/direction-sicak-yumusak.html](mockups/direction-sicak-yumusak.html) ("Sıcak Yumuşak"): the most spacious of the three and the one where the mascot is most present. The two not chosen were **Yaprak** (a leaf-corner shape language with an ink primary button) and **Sakin Kampüs** (dense, hairline, dark-cyan button with white text, a tiny mascot). Seven more mockups draw the surfaces the picked one did not (listed in EXPERIENCE.md, Key screens). Where a mockup disagrees with this file or with EXPERIENCE.md, **these two files (the spines) win.**
 
@@ -654,9 +654,9 @@ The palette is two layers: a warm neutral axis that carries 90% of every screen,
 **Neutral axis**
 
 - **Ink (`#1D2127`)** is all text, headings and button labels, and the strong mark of the current or selected thing (the current-cell ring, the active wizard step, a selected difficulty tile). It is also the Campus German logo's ink.
-- **Ink 2 (`#3F454D`)** is body copy under a heading. **Muted (`#5E656E`)** is secondary text and hints: the quietest text allowed, still 5.5:1 on the ground.
-- **Ground (`#FAF7F2`)** is the page: a warm cream that is deliberately neutral, not yellow. **Surface (`#FFFFFF`)** is cards and bars. **Cream (`#F3EEE5`)** is pills, neutral badges and the faint background leaves. **Track (`#E9E3D8`)** is the empty part of a progress bar.
-- **Rim (`#E7E0D3`)** is card and chip borders; **Lip (`#DDD5C6`)** is the flat edge under cards and neutral buttons. Both are decoration, not boundaries. **Edge (`#8A8377`)** is the one boundary color for controls: the empty gap box, the empty question cell, the secondary button, fields. It is 3.75:1 on white and 3.51:1 on the ground, so it clears the 3:1 UI-component floor. Anything a person must find in order to press it uses Edge, never Rim.
+- **Ink 2 (`#3F454D`)** is body copy under a heading. **Muted (`#5B6370`)** is secondary text and hints: the quietest text allowed, still 5.5:1 on the ground.
+- **Ground (`#FFFFFF`)** is the page: white, as on Campus German (owner, 2026-10-16: the earlier warm cream looked bad); the panel ground is a near-white `#F7F9FB`. **Surface (`#FFFFFF`)** is cards and bars. **Cream (`#F1F4F7`, a cool light grey; the name is kept)** is pills, neutral badges and the faint background leaves. **Track (`#E6EAEF`)** is the empty part of a progress bar.
+- **Rim (`#E1E5EA`)** is card and chip borders; **Lip (`#D3D9E0`)** is the flat edge under cards and neutral buttons. Both are decoration, not boundaries. **Edge (`#7D8590`)** is the one boundary color for controls: the empty gap box, the empty question cell, the secondary button, fields. It is 3.75:1 on white and 3.51:1 on the ground, so it clears the 3:1 UI-component floor. Anything a person must find in order to press it uses Edge, never Rim.
 
 **Cyan: the action color.** `{colors.primary}` (`#0BBFDF`, the logo cyan) fills the primary button, the answered cell and the check box, always with `{colors.on-primary}` ink text (7.34:1). White text on this cyan is forbidden (2.20:1). The cyan fill alone is only 2.20:1 against white, so the **2px `{colors.primary-lip}` border and lip are load-bearing**: they give the control its 3:1 boundary (3.72:1 on white). Never drop them. `{colors.primary-deep}` (`#0B6F84`) is the cyan that works as text or a line: links, the "Geri" text button, progress fill, selected-state borders, the focus ring and icons on soft grounds (5.80:1 on white). `{colors.primary-soft}` is the quiet selected ground (selected gap, selected option, active menu item, a verified level on screen). It is never a difficulty ground.
 
@@ -674,15 +674,15 @@ The palette is two layers: a warm neutral axis that carries 90% of every screen,
 
 | Foreground / background | Ratio | Used for | Verdict |
 |---|---|---|---|
-| `#1D2127` on `#FAF7F2` | 15.13 | Body text on the ground | pass |
+| `#1D2127` on `#FFFFFF` | 15.13 | Body text on the ground | pass |
 | `#3F454D` on `#FFFFFF` | 9.68 | Body text on cards | pass |
-| `#5E656E` on `#FAF7F2` | 5.52 | Secondary text on the ground | pass |
-| `#5E656E` on `#FFFFFF` | 5.89 | Secondary text on cards | pass |
-| `#5E656E` on `#F3EEE5` | 5.10 | Hints inside cream pills | pass |
+| `#5B6370` on `#FFFFFF` | 5.52 | Secondary text on the ground | pass |
+| `#5B6370` on `#FFFFFF` | 5.89 | Secondary text on cards | pass |
+| `#5B6370` on `#F1F4F7` | 5.10 | Hints inside cream pills | pass |
 | `#1D2127` on `#0BBFDF` | 7.34 | Primary button, answered cell | pass |
 | `#1D2127` on `#FFFFFF` | 16.17 | Secondary button, timer | pass |
-| `#1D2127` on `#F3EEE5` | 13.99 | Section pill, neutral badge | pass |
-| `#3F454D` on `#F3EEE5` | 8.38 | Description inside a pill | pass |
+| `#1D2127` on `#F1F4F7` | 13.99 | Section pill, neutral badge | pass |
+| `#3F454D` on `#F1F4F7` | 8.38 | Description inside a pill | pass |
 | `#1D2127` on `#DFF5FA` | 14.30 | Partial cell, selected option, active menu | pass |
 | `#1D2127` on `#FFF2B8` | 14.35 | Warning counter, notices, "Gözden geçir" | pass |
 | `#1D2127` on `#A9E7F3` | 11.86 | Kolay chip and tile | pass |
@@ -691,19 +691,19 @@ The palette is two layers: a warm neutral axis that carries 90% of every screen,
 | `#1D2127` on `#FDD31D` | 11.17 | Warning glyph, flagged cell | pass |
 | `#0B6F84` on `#FFFFFF` | 5.80 | "Geri" link, icons | pass |
 | `#0B6F84` on `#DFF5FA` | 5.13 | Icon on a soft ground | pass |
-| `#0B6F84` on `#FAF7F2` | 5.43 | Focus ring, current marks | pass |
-| `#0B6F84` on `#E9E3D8` | 4.54 | Progress fill against its track | pass (UI 3:1) |
-| `#8A8377` on `#FFFFFF` | 3.75 | Empty gap, empty cell, secondary button border | pass (UI 3:1) |
-| `#8A8377` on `#FAF7F2` | 3.51 | Same, on the ground | pass (UI 3:1) |
+| `#0B6F84` on `#FFFFFF` | 5.43 | Focus ring, current marks | pass |
+| `#0B6F84` on `#E6EAEF` | 4.54 | Progress fill against its track | pass (UI 3:1) |
+| `#7D8590` on `#FFFFFF` | 3.75 | Empty gap, empty cell, secondary button border | pass (UI 3:1) |
+| `#7D8590` on `#FFFFFF` | 3.51 | Same, on the ground | pass (UI 3:1) |
 | `#0891AB` on `#FFFFFF` | 3.72 | Primary button border and lip | pass (UI 3:1) |
 | `#FF3B3B` on `#FFFFFF` | 3.53 | Recording dot (shape only) | pass (UI 3:1), never text |
 | `#D92B2B` on `#FFFFFF` | 4.85 | Field error border and `!` glyph | pass (text and UI) |
-| `#D92B2B` on `#FAF7F2` | 4.54 | Same, on the ground | pass (text and UI) |
+| `#D92B2B` on `#FFFFFF` | 4.54 | Same, on the ground | pass (text and UI) |
 | `#FFFFFF` on `#0BBFDF` | 2.20 | White label on cyan | **forbidden**, use ink: 7.34 |
 | `#FFFFFF` on `#FF3B3B` | 3.53 | White label on red | **forbidden**: red is never a button |
 | `#FFFFFF` on `#FDD31D` | 1.45 | White label on yellow | **forbidden**, ink on yellow |
 | `#0BBFDF` on `#FFFFFF` | 2.20 | Cyan as text or thin line | **forbidden**, use `#0B6F84` |
-| `#0891AB` on `#E9E3D8` | 2.91 | First-try progress fill | **rejected**, `#0B6F84` passes at 4.54 |
+| `#0891AB` on `#E6EAEF` | 2.91 | First-try progress fill | **rejected**, `#0B6F84` passes at 4.54 |
 
 The difficulty off-bars (ink at 30% over the tint) are about 1.7:1 and carry no information on their own: the word and the lit bars do.
 

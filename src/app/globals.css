@@ -32,7 +32,7 @@
  * history for the values below.
  *
  * The rules now (Campus German redesign, docs/design/ux-designs/ux-kademe-2026-10-16/DESIGN.md):
- *  - A warm neutral page (paper/canvas #FAF7F2, cream #F3EEE5) with ink text. Brand colours are
+ *  - A white page (paper #FFFFFF, canvas #F7F9FB) with the Campus German cool greys (line #E1E5EA, cream #F1F4F7) and ink text. Brand colours are
  *    small accents only ("çok da renk renk kokmasın").
  *  - `brand` (logo cyan) is the primary action's fill, always with ink text (`on-brand`); white on
  *    it is 2.2:1 and forbidden. `accent` is the dark brand cyan for text, links, focus and progress.
@@ -59,15 +59,15 @@
  */
 
 @theme {
-  /* Neutral axis: warm, so the brand accents sit on it calmly. */
+  /* Neutral axis: Campus German white and cool greys (owner, 2026-10-16: the cream looked bad). */
   --color-surface: #ffffff;
-  --color-canvas: #faf7f2; /* page ground (panel and candidate) */
-  --color-cream: #f3eee5; /* secondary ground: chips, subtle rows, the section tile */
-  --color-track: #e9e3d8; /* progress and meter tracks */
-  --color-line: #e7e0d3; /* rim: card and divider borders */
-  --color-lip: #ddd5c6; /* the solid lip under cards and secondary buttons */
-  --color-edge: #8a8377; /* control boundaries, 3.75:1 on white */
-  --color-muted: #5e656e; /* secondary text, 5.1:1 on cream */
+  --color-canvas: #f7f9fb; /* panel ground and hover: Campus German near-white */
+  --color-cream: #f1f4f7; /* secondary ground (cool light grey despite the name): chips, subtle rows, the section tile */
+  --color-track: #e6eaef; /* progress and meter tracks */
+  --color-line: #e1e5ea; /* rim: card and divider borders (Campus German line) */
+  --color-lip: #d3d9e0; /* the solid lip under cards and secondary buttons */
+  --color-edge: #7d8590; /* control boundaries, 3.73:1 on white */
+  --color-muted: #5b6370; /* secondary text, 5.49:1 on cream */
   --color-ink: #1d2127;
 
   /* Dark brand cyan: text, links, focus, progress. White on it 5.8:1. */
@@ -115,28 +115,28 @@
   --color-mint-soft: #dff5fa;
   --color-mint-fill: #0bbfdf;
   --color-sky: #3f454d;
-  --color-sky-soft: #f3eee5;
-  --color-sky-fill: #8a8377;
+  --color-sky-soft: #f1f4f7;
+  --color-sky-fill: #7d8590;
   --color-grape: #3f454d;
-  --color-grape-soft: #f3eee5;
-  --color-grape-fill: #8a8377;
+  --color-grape-soft: #f1f4f7;
+  --color-grape-fill: #7d8590;
   --color-sun: #1d2127;
   --color-sun-soft: #fff2b8;
   --color-sun-fill: #fdd31d;
   --color-coral: #3f454d;
-  --color-coral-soft: #f3eee5;
-  --color-coral-fill: #8a8377;
+  --color-coral-soft: #f1f4f7;
+  --color-coral-fill: #7d8590;
 
   /* The rest of the neutral ramp. */
-  --color-paper: #faf7f2;
+  --color-paper: #ffffff;
   --color-ink-2: #3f454d;
-  --color-ink-3: #5e656e;
-  --color-hairline: #ece6db;
-  --color-line-strong: #8a8377; /* = edge: an input border that must be findable */
-  --color-line-mute: #8a8377;
-  --color-underline: #c9c1b3;
-  --color-disabled: #f3eee5;
-  --color-row-line: #f1ece3;
+  --color-ink-3: #5b6370;
+  --color-hairline: #ebeef2;
+  --color-line-strong: #7d8590; /* = edge: an input border that must be findable */
+  --color-line-mute: #7d8590;
+  --color-underline: #c3cad3;
+  --color-disabled: #f1f4f7;
+  --color-row-line: #edf0f3;
   --color-panel: #1d2127;
   --color-panel-top: #2a2f36;
   --color-panel-bottom: #15181c;
@@ -154,7 +154,7 @@
   /* Illustration tones: light only, used by components/visual/illustrations.tsx. */
   --color-illus-line: #2a2f36;
   --color-illus-fill: #dff5fa;
-  --color-illus-tint: #e9e3d8;
+  --color-illus-tint: #e6eaef;
   --color-illus-sage: #79ccdf;
   --color-illus-warm: #fff2b8;
 
@@ -207,7 +207,7 @@
   --radius: 1.125rem; /* 18px: buttons and fields; input-group derives its inner radii from it */
   /* Cards read this (components/ui/card.tsx). */
   --card-radius: 30px;
-  --background: #faf7f2;
+  --background: #f7f9fb;
   --foreground: #1d2127;
   --card: #ffffff;
   --card-foreground: #1d2127;
@@ -215,26 +215,26 @@
   --popover-foreground: #1d2127;
   --primary: #0b6f84;
   --primary-foreground: #ffffff;
-  --secondary: #f3eee5;
+  --secondary: #f1f4f7;
   --secondary-foreground: #1d2127;
-  --muted: #f3eee5;
-  --muted-foreground: #5e656e;
-  --subtle: #f3eee5;
+  --muted: #f1f4f7;
+  --muted-foreground: #5b6370;
+  --subtle: #f1f4f7;
   --subtle-foreground: #1d2127;
   --brand-soft: #dff5fa;
   --destructive: #c42424;
-  --border: #e7e0d3;
-  --input: #8a8377;
+  --border: #e1e5ea;
+  --input: #7d8590;
   --ring: #0b6f84;
-  --sidebar: #faf7f2;
+  --sidebar: #ffffff;
   --sidebar-foreground: #1d2127;
   --sidebar-primary: #0b6f84;
   --sidebar-primary-foreground: #ffffff;
   /* Hover ground in the menu. The active item is styled by the nav itself
      (brand-soft ground, accent text). */
-  --sidebar-accent: #f3eee5;
+  --sidebar-accent: #f1f4f7;
   --sidebar-accent-foreground: #1d2127;
-  --sidebar-border: #e7e0d3;
+  --sidebar-border: #e1e5ea;
   --sidebar-ring: #0b6f84;
 }
 

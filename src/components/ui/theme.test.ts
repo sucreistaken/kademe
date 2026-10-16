@@ -42,12 +42,12 @@ describe("Kademe tokens keep their meaning", () => {
     ["--color-accent", "#0b6f84"],
     ["--color-accent-soft", "#dff5fa"],
     ["--color-accent-deep", "#0a5868"],
-    ["--color-muted", "#5e656e"],
-    ["--color-canvas", "#faf7f2"],
+    ["--color-muted", "#5b6370"],
+    ["--color-canvas", "#f7f9fb"],
     ["--color-surface", "#ffffff"],
-    ["--color-line", "#e7e0d3"],
+    ["--color-line", "#e1e5ea"],
     ["--color-ink", "#1d2127"],
-    ["--color-ink-3", "#5e656e"],
+    ["--color-ink-3", "#5b6370"],
     ["--color-brand", "#0bbfdf"],
     ["--color-brand-lip", "#0891ab"],
     ["--color-on-brand", "#1d2127"],
@@ -58,9 +58,9 @@ describe("Kademe tokens keep their meaning", () => {
     ["--color-diff-easy", "#a9e7f3"],
     ["--color-diff-medium", "#ffe680"],
     ["--color-diff-hard", "#ffcaca"],
-    ["--color-cream", "#f3eee5"],
-    ["--color-lip", "#ddd5c6"],
-    ["--color-edge", "#8a8377"],
+    ["--color-cream", "#f1f4f7"],
+    ["--color-lip", "#d3d9e0"],
+    ["--color-edge", "#7d8590"],
   ])("%s is %s", (name, value) => {
     expect(theme[name]).toBe(value);
   });
@@ -68,7 +68,7 @@ describe("Kademe tokens keep their meaning", () => {
   it.each([
     ["--color-illus-line", "#2a2f36"],
     ["--color-illus-fill", "#dff5fa"],
-    ["--color-illus-tint", "#e9e3d8"],
+    ["--color-illus-tint", "#e6eaef"],
     ["--color-illus-sage", "#79ccdf"],
     ["--color-illus-warm", "#fff2b8"],
   ])("illustration tone %s is %s (light tones only)", (name, value) => {
@@ -225,7 +225,7 @@ describe("focus is drawn once, by the global outline", () => {
 
 describe("shadcn variables carry the soft values", () => {
   it.each([
-    ["--background", "#faf7f2"],
+    ["--background", "#f7f9fb"],
     ["--foreground", "#1d2127"],
     ["--card", "#ffffff"],
     ["--card-foreground", "#1d2127"],
@@ -233,18 +233,18 @@ describe("shadcn variables carry the soft values", () => {
     ["--popover-foreground", "#1d2127"],
     ["--primary", "#0b6f84"],
     ["--primary-foreground", "#ffffff"],
-    ["--secondary", "#f3eee5"],
+    ["--secondary", "#f1f4f7"],
     ["--secondary-foreground", "#1d2127"],
-    ["--muted", "#f3eee5"],
-    ["--muted-foreground", "#5e656e"],
-    ["--subtle", "#f3eee5"],
+    ["--muted", "#f1f4f7"],
+    ["--muted-foreground", "#5b6370"],
+    ["--subtle", "#f1f4f7"],
     ["--subtle-foreground", "#1d2127"],
     ["--brand-soft", "#dff5fa"],
     ["--destructive", "#c42424"],
-    ["--border", "#e7e0d3"],
-    ["--input", "#8a8377"],
+    ["--border", "#e1e5ea"],
+    ["--input", "#7d8590"],
     ["--ring", "#0b6f84"],
-    ["--sidebar", "#faf7f2"],
+    ["--sidebar", "#ffffff"],
   ])("%s is %s", (name, value) => {
     expect(root[name]).toBe(value);
   });
