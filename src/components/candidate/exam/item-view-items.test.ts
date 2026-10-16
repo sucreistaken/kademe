@@ -63,10 +63,11 @@ describe("matching items", () => {
     }
   });
 
-  it("uses the targets' own letters and 0 for 'none fits'", () => {
+  it("uses the targets' own letters, leaves out a bare list and explains only 0", () => {
     const html = render(ads);
-    expect(html).toMatch(/>A<\/span><span lang="de"[^>]*>Anzeige A</);
-    expect(html).toMatch(/>0<\/span><span lang="de"[^>]*>Keine Anzeige passt</);
+    expect(html).not.toContain("matchTargets");
+    expect(html).toContain(">0 = Keine Anzeige passt</p>");
+    expect(html).toContain('aria-label="A: Anzeige A"');
     expect(html).toContain('aria-label="0: Keine Anzeige passt"');
   });
 
@@ -128,14 +129,14 @@ function tfngItem(section: "READING" | "LISTENING"): CandidateItem {
 }
 
 describe("true / false / not given", () => {
-  it("puts the German letters on the buttons, reading wording for NG", () => {
+  it("shows only the German letters on the buttons, reading wording for NG", () => {
     const html = render(tfngItem("READING"));
     for (const [letter, label] of [
       ["R", "tfR"],
       ["F", "tfF"],
       ["NG", "tfNG"],
     ]) {
-      expect(html).toMatch(new RegExp(`<span class="[^"]*">${letter}</span>${label}</button>`));
+      expect(html).toMatch(new RegExp(`title="${label}" class="[^"]*">${letter}</button>`));
       // The accessible name keeps the letter and the word apart.
       expect(html).toContain(`aria-label="${letter}: ${label}"`);
     }
@@ -144,8 +145,8 @@ describe("true / false / not given", () => {
 
   it("words NG for a recording in listening", () => {
     const html = render(tfngItem("LISTENING"));
-    expect(html).toMatch(/>NG<\/span>tfNgListening<\/button>/);
-    expect(html).not.toMatch(/>tfNG</);
+    expect(html).toContain('aria-label="NG: tfNgListening"');
+    expect(html).not.toContain("tfNG\"");
   });
 
   it("labels each statement's group by the statement and keeps one tab stop", () => {
@@ -157,7 +158,7 @@ describe("true / false / not given", () => {
       expect(html).toContain(`id="${id}" lang="de" class="text-[15px] leading-[1.55] text-ink">${text}</p>`);
       expect(gs[i].match(/tabindex="0"/g)).toHaveLength(1);
     }
-    expect(gs[1]).toMatch(/aria-checked="true" aria-label="F: tfF" tabindex="0"[^>]*>.*?>F<\/span>tfF/);
+    expect(gs[1]).toMatch(/aria-checked="true" aria-label="F: tfF" tabindex="0"[^>]*>F<\/button>/);
   });
 });
 
