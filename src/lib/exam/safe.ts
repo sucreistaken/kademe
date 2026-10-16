@@ -167,6 +167,7 @@ export function toCandidateItem(
                 c.gaps.map((g) => g.id),
                 snapshot.key.answers,
                 presentation.poolSeed ?? seedFromText(snapshot.prompt),
+                snapshot.key.distractors,
               ),
             }
           : {}),

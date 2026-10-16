@@ -216,6 +216,13 @@ const grammarItems: SeedItem[] = [
     last: "Eine App ist dagegen oft billiger, und man kann sie jederzeit benutzen, zum Beispiel morgens im Bus auf dem Weg zur Arbeit.",
     // g8: "an dem Handy" is also possible; g15: gender-inclusive forms are equally correct.
     variants: { 8: ["n"], 15: ["ehmerinnen", "ehmenden"] },
+    // Wrong parts by the gap whose stem they target.
+    distractors: {
+      1: ["cht"], 2: ["ends"], 3: ["rse"], 4: ["nen"],
+      5: ["eren"], 6: ["be"], 7: ["nem"], 9: ["ndys"],
+      10: ["gen"], 11: ["eil"], 14: ["ir"], 15: ["ehmer"],
+      17: ["ern"], 18: ["worten"], 19: ["inen"],
+    },
   }),
   // Joining a sports club.
   cTest(LEVEL, "MID", {
@@ -227,6 +234,13 @@ const grammarItems: SeedItem[] = [
     last: "Doch die Gruppe hat mich sofort freundlich aufgenommen, und inzwischen freue ich mich jede Woche auf das Training.",
     // g17 "and...": "andern" is a standard variant of "anderen".
     variants: { 17: ["ern"] },
+    // Wrong parts by the gap whose stem they target.
+    distractors: {
+      1: ["aren"], 3: ["nter"], 4: ["inen"], 5: ["n"],
+      7: ["rachte"], 8: ["abe"], 9: ["nem"], 10: ["nen"],
+      12: ["rainings"], 14: ["ird"], 15: ["liche"], 16: ["gen"],
+      17: ["ere"], 18: ["te"], 19: ["ber"],
+    },
   }),
   // Cycling in the city.
   cTest(LEVEL, "MID", {
@@ -238,6 +252,13 @@ const grammarItems: SeedItem[] = [
     last: "Deshalb wünschen sich viele Bürgerinnen und Bürger, dass ihre Stadt mehr Geld für breite und sichere Radwege ausgibt.",
     // g10 "schn...": "kommt oft schnell ans Ziel" is as correct as "schneller".
     variants: { 10: ["ell"] },
+    // Wrong parts by the gap whose stem they target.
+    distractors: {
+      1: ["ahrer"], 2: ["stige"], 3: ["nter"], 5: ["elten"],
+      6: ["sst"], 7: ["nem"], 9: ["mmen"], 10: ["elle"],
+      12: ["lt"], 13: ["elen"], 14: ["n"], 15: ["chts"],
+      16: ["r"], 17: ["che"], 19: ["inen"],
+    },
   }),
 ];
 

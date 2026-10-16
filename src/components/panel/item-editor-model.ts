@@ -253,7 +253,11 @@ export const contentSchema = z.discriminatedUnion("kind", [
 export const keySchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("CHOICE"), correct: z.array(id).max(8) }),
   z.object({ kind: z.literal("TFNG"), answers: z.record(id, z.enum(["R", "F", "NG"])) }),
-  z.object({ kind: z.literal("GAP"), answers: z.record(id, z.array(z.string().max(200)).max(10)) }),
+  z.object({
+    kind: z.literal("GAP"),
+    answers: z.record(id, z.array(z.string().max(200)).max(10)),
+    distractors: z.array(z.string().max(50)).max(40).optional(),
+  }),
   z.object({ kind: z.literal("MATCHING"), pairs: z.record(id, id) }),
   z.object({ kind: z.literal("SHORT_TEXT"), accepted: z.array(z.string().max(200)).max(20) }),
   z.object({ kind: z.literal("NONE") }),

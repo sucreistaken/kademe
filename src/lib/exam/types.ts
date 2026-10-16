@@ -61,8 +61,12 @@ export type ItemContent =
 export type ItemKey =
   | { kind: "CHOICE"; correct: string[] }
   | { kind: "TFNG"; answers: Record<string, TfngValue> }
-  /** Every accepted spelling per gap. Compared after `normalizeAnswer`. */
-  | { kind: "GAP"; answers: Record<string, string[]> }
+  /**
+   * Every accepted spelling per gap. Compared after `normalizeAnswer`.
+   * `distractors`: hand-written wrong word parts for a C-test pool. They live in
+   * the key, not the content, so a seed sync can ship them without new items.
+   */
+  | { kind: "GAP"; answers: Record<string, string[]>; distractors?: string[] }
   | { kind: "MATCHING"; pairs: Record<string, string> }
   | { kind: "SHORT_TEXT"; accepted: string[] }
   | { kind: "NONE" };

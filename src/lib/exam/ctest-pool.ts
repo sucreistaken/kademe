@@ -64,10 +64,18 @@ function shuffled<T>(xs: T[], rng: () => number): T[] {
 
 /**
  * `gapIds` in text order, `answers` as in the key (the first entry of a gap is
- * its missing part). Same input and seed always give the same pool. May hold
- * fewer distractors than asked for when a text offers too few valid variants.
+ * its missing part). `handWritten` are the key's own distractors: when given
+ * they are used first (a seeded pick if there are more than needed) and only a
+ * shortfall is topped up with the mechanical variants. Same input and seed
+ * always give the same pool. May hold fewer distractors than asked for when a
+ * text offers too few valid variants.
  */
-export function buildCTestPool(gapIds: string[], answers: Record<string, string[]>, seed: number): string[] {
+export function buildCTestPool(
+  gapIds: string[],
+  answers: Record<string, string[]>,
+  seed: number,
+  handWritten?: string[],
+): string[] {
   const rng = mulberry32(seed);
   const correct = gapIds.map((g) => answers[g]?.[0] ?? "").filter((p) => p.trim());
   // Everything any gap accepts, whole words included: a distractor equal to one
@@ -81,6 +89,14 @@ export function buildCTestPool(gapIds: string[], answers: Record<string, string[
     picked.push(c);
     taken.add(normalizeAnswer(c));
   };
+
+  // Hand-written distractors go first, through the same safety filter.
+  if (handWritten?.length) {
+    for (const c of shuffled(handWritten, rng)) {
+      if (picked.length >= wanted) break;
+      if (valid(c)) take(c);
+    }
+  }
 
   // Spread distractors over different parts first, then top up from any part.
   // Parts of three letters or more come first: "ie" (die) or "u" (zu) give no

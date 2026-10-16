@@ -217,6 +217,13 @@ const grammarItems: SeedItem[] = [
     // Equally correct completions: g2 rasante/rasende, g3 neuester/neuerer/neuartiger,
     // g7 Unternehmer, g13 Kritikerinnen.
     variants: { 2: ["ante", "ende"], 3: ["uester", "uerer", "uartiger"], 7: ["nehmer"], 13: ["ikerinnen"] },
+    // Wrong parts by the gap whose stem they target.
+    distractors: {
+      1: ["angen"], 2: ["chen"], 4: ["nn"], 5: ["ren"],
+      6: ["ährende"], 7: ["nehmens"], 8: ["an"], 9: ["ir"],
+      10: ["se"], 11: ["ame"], 12: ["itt"], 13: ["ik"],
+      14: ["rum"], 15: ["ramm"], 19: ["hliche"],
+    },
   }),
   // How memory distorts what we remember.
   cTest(LEVEL, "MID", {
@@ -226,6 +233,13 @@ const grammarItems: SeedItem[] = [
       "Spätere Erfahrungen, Erwartungen und Stimmungen fließen unbemerkt ein, sodass sich das Gedächtnis fortwährend neu schreibt. " +
       "Besonders anfällig erweist es sich gegenüber suggestiven Nachfragen.",
     last: "Die Gewissheit, mit der jemand von einem Ereignis berichtet, verbürgt demnach keineswegs, dass es sich auch so zugetragen hat.",
+    // Wrong parts by the gap whose stem they target.
+    distractors: {
+      1: ["cher"], 3: ["nn"], 4: ["ufe"], 5: ["erungen"],
+      6: ["m"], 7: ["uten"], 8: ["rung"], 10: ["egen"],
+      11: ["ine"], 13: ["htnisse"], 14: ["eue"], 15: ["ndere"],
+      16: ["eisen"], 18: ["stive"],
+    },
   }),
   // Dialects and identity.
   cTest(LEVEL, "MID", {
@@ -238,6 +252,13 @@ const grammarItems: SeedItem[] = [
     // g3 "grund...": grundsätzlich is as correct as grundlegend.
     // g13 "Spre...": Sprecherinnen and Sprechende are as correct as Sprecher.
     variants: { 3: ["sätzlich"], 13: ["cherinnen", "chende"] },
+    // Wrong parts by the gap whose stem they target.
+    distractors: {
+      1: ["aben"], 2: ["ser"], 3: ["legende"], 4: ["chts"],
+      5: ["gen"], 6: ["sen"], 8: ["art"], 9: ["tem"],
+      10: ["nem"], 11: ["matiken"], 13: ["chern"], 14: ["as"],
+      16: ["ücke"], 18: ["ind"], 19: ["chtet"],
+    },
   }),
 ];
 
