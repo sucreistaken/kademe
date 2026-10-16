@@ -200,6 +200,17 @@ Differences from the mockups, as input for Plans 2 and 3:
 
 Not checked: the system check beyond its first screen (this Chrome has a second display, so the app held at "İkinci ekranı çıkarın"; without `PROCTOR_DEV_FAKE` camera and screen permission are out of reach, and the flag was deliberately not set); the exam section intro, a C-test question, the exam top bar, progress strip and bottom bar, review, finish screen, proctor warning card and recording dot; the printed level report (the only student awaiting review answers "Rapor, sonuç kesinleşmeden hazırlanamaz", and no result was finalized for this); sign-in in password-only mode; the English UI; narrow and mobile widths; hover, focus and keyboard states. Side effects in the local `kademe_platform` DB: one `dev:link` invite ("Dev Öğrenci") got its consent accepted; the invite wizard was filled but not submitted.
 
+## Canlı veri: sınav öğrencileri silindi (2026-10-16 19:32 UTC, kullanıcı onayıyla: "canlıdaki öğrencileri silebilirsin", "sen yap")
+
+- Silinen: `LANGUAGE_EXAM` daveti olan 7 aday (6'sı kullanıcının test hesapları, biri 2026-10-12 tarihli başka bir test
+  daveti), bağlı tüm satırlar cascade ile; 588 depolama dosyası (70 MB: 3 medya, 289 gözetim karesi, 296 kayıt parçası)
+  satırlardan önce `/var/lib/kademe/storage`'dan silindi. Devam eden bölüm 0 iken yapıldı.
+- Kalan: 1 işe alım adayı, banka sesleri (`bank/audio`, 54 dosya). Silme öncesi `media/<org>/...` altında 2026-09-10..13
+  tarihli 19 dosya (52 MB) hiçbir satıra bağlı değildi (eski sıfırlamadan kalma); kullanıcı onayıyla ("eski dosyaları sil")
+  aynı akşam silindi. Depoda yalnız `bank/audio` kaldı (95 MB, disk boş 4,3 GB).
+- Yedek: `/root/kademe-backups/before-delete-students-20261016T193242Z.dump` (712 KB). Satırlar bundan geri gelir, dosyalar gelmez.
+- Sonrası: `LANGUAGE_EXAM` daveti 0, `attempts` 0, medya/kare/kayıt satırı 0, `/login` 200.
+
 ## Canlıya çıkış: Campus German görünümü, Plan 1 (2026-10-16 akşam, kullanıcı onayıyla: "canlıya al")
 
 - main `3316b78` -> `8e945da` (26 commit, fast-forward): Campus German temeli (renkler, buton, logo, maskot, sarı uyarılar,
