@@ -202,6 +202,12 @@ export type CandidateState = {
     itemTotal: number | null;
     /** Null on the review step of a navigable section. */
     item: CandidateItem | null;
+    /**
+     * A listening recording is shown with all its questions at once: every item
+     * of that recording in this section, in order, `item` among them. Null for
+     * any other item. One-way sections list only the testlet's open items.
+     */
+    group: CandidateItem[] | null;
     /** Null in one-way sections (adaptive, speaking) and before a section starts. */
     nav: SectionNav | null;
   };
@@ -291,6 +297,7 @@ export async function loadState(ctx: ExamCandidateContext): Promise<CandidateSta
           answered: 0,
           itemTotal: null,
           item: null,
+          group: null,
           nav: null,
         },
       };
@@ -316,6 +323,7 @@ export async function loadState(ctx: ExamCandidateContext): Promise<CandidateSta
           answered: view.entries.filter((e) => e.filled > 0).length,
           itemTotal: view.entries.length,
           item: view.item,
+          group: view.group,
           nav: { entries: view.entries, review: view.review },
         },
       };
@@ -342,6 +350,7 @@ export async function loadState(ctx: ExamCandidateContext): Promise<CandidateSta
         answered,
         itemTotal: run.itemPlan ? run.itemPlan.length : null,
         item,
+        group: await listeningGroup(ctx, run.id, item.sequence, true),
         nav: null,
       },
     };
@@ -710,7 +719,7 @@ async function serveWholePlan(ctx: ExamCandidateContext, runId: string) {
 async function navigableView(
   ctx: ExamCandidateContext,
   runId: string,
-): Promise<{ entries: NavEntry[]; item: CandidateItem | null; review: boolean } | null> {
+): Promise<{ entries: NavEntry[]; item: CandidateItem | null; group: CandidateItem[] | null; review: boolean } | null> {
   await serveWholePlan(ctx, runId);
   const [run] = await db.select().from(sectionRuns).where(eq(sectionRuns.id, runId));
   const rows = await db
@@ -722,7 +731,27 @@ async function navigableView(
   if (sequence === null) return null;
   const entries = navEntries(rows.map((r) => ({ sequence: r.sequence, content: r.snapshot.content, answer: r.answer ?? null, flagged: r.flagged })));
   const item = run.navReview ? null : await candidateItemFor(ctx, rows.find((r) => r.sequence === sequence)!.id);
-  return { entries, item, review: run.navReview };
+  const group = item ? await listeningGroup(ctx, runId, item.sequence, false) : null;
+  return { entries, item, group, review: run.navReview };
+}
+
+/**
+ * The questions that share the listening recording of the item at `sequence`
+ * (itself included), in order, for the one-page-per-recording screen. Null when
+ * that item has no listening stimulus. `openOnly` (one-way sections) leaves out
+ * items already closed. Every item goes through `candidateItemFor`.
+ */
+async function listeningGroup(ctx: ExamCandidateContext, runId: string, sequence: number, openOnly: boolean): Promise<CandidateItem[] | null> {
+  const rows = await db
+    .select({ id: itemResponses.id, sequence: itemResponses.sequence, snapshot: itemResponses.itemSnapshot, answeredAt: itemResponses.answeredAt, notReached: itemResponses.notReached })
+    .from(itemResponses)
+    .where(eq(itemResponses.sectionRunId, runId))
+    .orderBy(asc(itemResponses.sequence));
+  const anchor = rows.find((r) => r.sequence === sequence);
+  const stimulusId = anchor?.snapshot.stimulusId;
+  if (!anchor || !stimulusId || anchor.snapshot.stimulus?.section !== "LISTENING") return null;
+  const members = rows.filter((r) => r.snapshot.stimulusId === stimulusId && (!openOnly || (!r.answeredAt && !r.notReached)));
+  return Promise.all(members.map((r) => candidateItemFor(ctx, r.id)));
 }
 
 export async function candidateItemFor(ctx: ExamCandidateContext, responseId: string): Promise<CandidateItem> {
@@ -793,16 +822,20 @@ export async function checkItem(run: SectionRun, sequence: unknown): Promise<Wri
   if (typeof sequence !== "number") return { ok: false, code: "ITEM_MISMATCH" };
   const response = await responseAt(run.id, sequence);
   let firstOpen: number | null = null;
+  let sharesTestlet = false;
   if (!run.navigable) {
     const [row] = await db
-      .select({ sequence: itemResponses.sequence })
+      .select({ sequence: itemResponses.sequence, snapshot: itemResponses.itemSnapshot })
       .from(itemResponses)
       .where(and(eq(itemResponses.sectionRunId, run.id), isNull(itemResponses.answeredAt), eq(itemResponses.notReached, false)))
       .orderBy(asc(itemResponses.sequence))
       .limit(1);
     firstOpen = row?.sequence ?? null;
+    // A listening testlet is answered together: its other open items share the first one's turn.
+    const recording = row?.snapshot.stimulusId;
+    sharesTestlet = !!recording && row.snapshot.stimulus?.section === "LISTENING" && response?.itemSnapshot.stimulusId === recording;
   }
-  if (!response || !canWrite({ navigable: run.navigable, target: navTarget(response), firstOpen })) return { ok: false, code: "ITEM_MISMATCH" };
+  if (!response || !canWrite({ navigable: run.navigable, target: navTarget(response), firstOpen, sharesTestlet })) return { ok: false, code: "ITEM_MISMATCH" };
   return { ok: true, run, response };
 }
 

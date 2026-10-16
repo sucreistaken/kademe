@@ -38,8 +38,8 @@ export function NavStrip({
   onReview,
 }: {
   entries: NavEntry[];
-  /** The item on screen; null on the review step. */
-  current: number | null;
+  /** The item on screen (every question of a recording's page); null on the review step. */
+  current: number | readonly number[] | null;
   disabled: boolean;
   onJump: (sequence: number) => void;
   /** Shown as a link next to the strip; the bar's own button says it on the last item. */
@@ -52,7 +52,7 @@ export function NavStrip({
       <ol className="flex flex-wrap gap-1.5">
         {entries.map((e) => {
           const state = progressState(e);
-          const here = e.sequence === current;
+          const here = Array.isArray(current) ? current.includes(e.sequence) : e.sequence === current;
           const label = [n("cell", { n: e.sequence }), status[state], e.flagged ? n("statusFlagged") : null].filter(Boolean).join(", ");
           return (
             <li key={e.sequence}>
@@ -62,7 +62,7 @@ export function NavStrip({
                 title={label}
                 aria-current={here ? "step" : undefined}
                 disabled={disabled}
-                onClick={() => (here ? undefined : onJump(e.sequence))}
+                onClick={() => (here && !Array.isArray(current) ? undefined : onJump(e.sequence))}
                 className={cn(
                   "tnum relative grid size-8 place-items-center rounded-[8px] border text-[13px] font-semibold transition-colors disabled:cursor-not-allowed",
                   CELL[state],

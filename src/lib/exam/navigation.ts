@@ -37,12 +37,19 @@ const isOpen = (t: NavTarget | null): t is NavTarget => !!t && !t.answered && !t
 /**
  * Whether a write (a draft, a commit, a listening play, a recording) may land
  * on `target`. One way: only on the first open item. Navigable: on any open
- * item of the section.
+ * item of the section. A listening testlet is shown whole, so in a one-way
+ * section its other open items (`sharesTestlet`: the same recording as the
+ * first open item) take drafts and answers too.
  */
-export function canWrite(input: { navigable: boolean; target: NavTarget | null; firstOpen: number | null }): boolean {
+export function canWrite(input: {
+  navigable: boolean;
+  target: NavTarget | null;
+  firstOpen: number | null;
+  sharesTestlet?: boolean;
+}): boolean {
   if (!isOpen(input.target)) return false;
   if (input.navigable) return true;
-  return input.firstOpen === null || input.firstOpen === input.target.sequence;
+  return input.firstOpen === null || input.firstOpen === input.target.sequence || input.sharesTestlet === true;
 }
 
 /** Flags exist only where the student can come back to an item. */
