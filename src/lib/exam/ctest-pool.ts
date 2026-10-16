@@ -13,33 +13,43 @@ import { normalizeAnswer, typedMatches } from "./item-scoring";
 
 /** Final inflection endings a distractor may swap in or out. */
 const ENDINGS = ["e", "en", "er", "es", "em", "n", "s", "t", "st", "te", "ten"];
-/** Single letters tried in place of the final letter. */
-const LETTERS = ["e", "n", "r", "s", "t", "m"];
 
 /** How many distractors a C-test with this many gaps gets. */
 export const distractorCount = (gaps: number): number => Math.ceil(gaps * 0.6);
 
-/** Candidate wrong parts for one missing part, in a fixed order. */
+/**
+ * Looks like a German word ending: no three vowels in a row, no new "ee", and
+ * at most two letters longer than the real part. Mechanical variants that fail
+ * this ("ue", "essanes", "ieen") are spotted at a glance and help nobody.
+ */
+function plausible(c: string, part: string): boolean {
+  if (!c || c.length > part.length + 2) return false;
+  if (/[aeiouäöü]{3}/i.test(c)) return false;
+  if (c.includes("ee") && !part.includes("ee")) return false;
+  return true;
+}
+
+/** Candidate wrong parts for one missing part, most convincing first. */
 export function variantsOf(part: string): string[] {
   const out: string[] = [];
   const add = (s: string) => {
-    if (s && s !== part && !out.includes(s)) out.push(s);
+    if (s !== part && !out.includes(s) && plausible(s, part)) out.push(s);
   };
-  // Swap a final ending for another, or drop it ("hte" -> "ht", "htem").
+  // Swap a final ending for another ("hte" -> "hten", "ine" -> "iner").
   for (const e of ENDINGS) {
     if (!part.endsWith(e) || part.length === e.length) continue;
     const stem = part.slice(0, part.length - e.length);
-    add(stem);
     for (const e2 of ENDINGS) add(stem + e2);
+    if (stem.length >= 2) add(stem);
   }
-  // Add an ending ("ht" -> "hte", "hten").
-  for (const e of ENDINGS) add(part + e);
-  // Change the last letter ("en" -> "em", "er").
-  const chars = [...part];
-  chars.pop();
-  for (const l of LETTERS) add(chars.join("") + l);
-  // Drop the last letter.
-  if (chars.length) add(chars.join(""));
+  // Swap a case ending's last consonant ("en" -> "em", "er"; "r" -> "m", "s").
+  if (/e[nrsmt]$|^[nrsmt]$/.test(part)) {
+    const head = part.slice(0, -1);
+    for (const l of ["n", "r", "s", "m", "t"]) add(head + l);
+  }
+  // Add an ending that fits what the part ends with ("ht" -> "hte", "ine" -> "inen").
+  const more = /e$/.test(part) ? ["n", "r", "s", "m"] : /[^aeiouäöü]$/i.test(part) ? ["e", "en", "er", "es"] : [];
+  for (const e of more) add(part + e);
   return out;
 }
 
@@ -73,8 +83,13 @@ export function buildCTestPool(gapIds: string[], answers: Record<string, string[
   };
 
   // Spread distractors over different parts first, then top up from any part.
-  const lists = shuffled(correct, rng).map((p) => shuffled(variantsOf(p), rng));
-  for (let round = 0; picked.length < wanted && round < 2; round++) {
+  // Parts of three letters or more come first: "ie" (die) or "u" (zu) give no
+  // convincing variant.
+  const parts = shuffled(correct, rng);
+  const lists = [...parts.filter((p) => p.length >= 3), ...parts.filter((p) => p.length < 3)].map((p) =>
+    shuffled(variantsOf(p), rng),
+  );
+  for (let round = 0; picked.length < wanted && round < 3; round++) {
     for (const list of lists) {
       if (picked.length >= wanted) break;
       const c = list.find(valid);

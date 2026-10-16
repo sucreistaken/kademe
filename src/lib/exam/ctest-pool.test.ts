@@ -23,9 +23,18 @@ describe("variantsOf", () => {
       expect(new Set(v).size).toBe(v.length);
     }
   });
-  it("still offers variants for one-letter parts", () => {
-    expect(variantsOf("r").length).toBeGreaterThan(3);
-    expect(variantsOf("u").length).toBeGreaterThan(3);
+  it("swaps case consonants of one-letter parts but invents nothing for a lone vowel", () => {
+    expect(variantsOf("r")).toEqual(expect.arrayContaining(["n", "s", "m"]));
+    expect(variantsOf("u")).toEqual([]);
+  });
+
+  it("drops variants that do not look like German endings", () => {
+    for (const p of ["ie", "essant", "racht", "eit"]) {
+      for (const v of variantsOf(p)) {
+        expect(v).not.toMatch(/[aeiouäöü]{3}|ee/);
+        expect(v.length).toBeLessThanOrEqual(p.length + 2);
+      }
+    }
   });
 });
 
