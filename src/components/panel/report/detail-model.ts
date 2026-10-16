@@ -1,3 +1,4 @@
+import { itemTally } from "@/components/panel/result/answer-tally";
 import { responseState, reviewRows, type ReviewMark } from "@/components/panel/result/review-rows";
 import { withPoolInstruction } from "@/lib/exam/ctest-instruction";
 import { CEFR_LEVELS, isCTest, isObjectiveSection, type Cefr, type ItemAnswer, type ItemSnapshot, type Section } from "@/lib/exam/types";
@@ -170,14 +171,14 @@ function objectiveQuestion(r: DetailResponse, n: number, acceptedGaps: readonly 
   const s = r.itemSnapshot;
   const a = r.answer;
   const rows = reviewRows(s, a, acceptedGaps);
+  // The one answer tally (answer-tally.ts) so the report agrees with the result screen.
+  const tally = itemTally(r, wholeAccepted ? { gapIds: [] } : acceptedGaps.length ? { gapIds: [...acceptedGaps] } : undefined) ?? { correct: 0, total: 0 };
   if (rows && rows.variant === "GAP") {
     const parts = gapParts(s, a, acceptedGaps);
     if (!parts) return null;
-    const gaps = rows.rows;
     return {
       question: { kind: "GAP", n, level: s.level, skillTag: s.skillTag, cTest: s.skillTag === "grammar.ctest", parts },
-      correct: gaps.filter((g) => g.mark === "correct" || g.mark === "accepted").length,
-      total: gaps.length,
+      ...tally,
     };
   }
   if (rows) {
@@ -191,8 +192,7 @@ function objectiveQuestion(r: DetailResponse, n: number, acceptedGaps: readonly 
         stem: stemOf(s.prompt),
         rows: rows.rows.map((x) => ({ label: squash(x.label), given: x.given, key: x.key, mark: x.mark })),
       },
-      correct: rows.rows.filter((x) => x.mark === "correct" || x.mark === "accepted").length,
-      total: rows.rows.length,
+      ...tally,
     };
   }
   const c = s.content;
@@ -210,8 +210,7 @@ function objectiveQuestion(r: DetailResponse, n: number, acceptedGaps: readonly 
   const mark: DetailMark = !given ? "blank" : wholeAccepted ? "accepted" : full ? "correct" : "wrong";
   return {
     question: { kind: "CHOICE", n, level: s.level, skillTag: s.skillTag, stem: stemOf(s.prompt), given, key, mark },
-    correct: mark === "correct" || mark === "accepted" ? 1 : 0,
-    total: 1,
+    ...tally,
   };
 }
 

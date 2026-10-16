@@ -1,4 +1,5 @@
 import { hasAnswer, typedMatches } from "@/lib/exam/item-scoring";
+import { answerTally, type TallyAcceptances } from "./answer-tally";
 import { withPoolInstruction } from "@/lib/exam/ctest-instruction";
 import { matchingTargets } from "@/lib/exam/safe";
 import { isCTest, type ItemAnswer, type ItemSnapshot } from "@/lib/exam/types";
@@ -144,13 +145,18 @@ export function reviewCard(s: ItemSnapshot, a: ItemAnswer | null, acceptedGaps: 
   return { kind: "OTHER" };
 }
 
-/** "18 / 24 correct": items answered fully right over items served (partial credit does not count as right). */
-export function sectionScoreSummary(responses: Array<{ itemSnapshot: ItemSnapshot; answer: ItemAnswer | null; score: number | null }>): { right: number; total: number; blank: number } {
-  return {
-    right: responses.filter((r) => (r.score ?? 0) >= 1).length,
-    total: responses.length,
-    blank: responses.filter((r) => !hasAnswer(r.itemSnapshot.type, r.answer)).length,
-  };
+/**
+ * "18 of 24 answers correct": the answer tally (see answer-tally.ts; every gap,
+ * statement, row and single item is one answer, teacher-accepted ones count as
+ * correct, not-reached items are left out) plus how many served items were left blank.
+ */
+export function sectionScoreSummary(
+  responses: Array<{ id?: string; itemSnapshot: ItemSnapshot; answer: ItemAnswer | null; score: number | null; notReached: boolean }>,
+  acceptances: TallyAcceptances = {},
+  run?: { navigable: boolean },
+): { right: number; total: number; blank: number } {
+  const tally = answerTally(responses, acceptances, run);
+  return { right: tally.correct, total: tally.total, blank: responses.filter((r) => !hasAnswer(r.itemSnapshot.type, r.answer)).length };
 }
 
 export { splitTaskPrompt } from "@/lib/exam/task-prompt";

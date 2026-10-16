@@ -1,3 +1,4 @@
+import { answerTally } from "@/components/panel/result/answer-tally";
 import { describe, expect, it } from "vitest";
 import { CTEST_POOL_INSTRUCTION } from "@/lib/exam/ctest-instruction";
 import { buildDetail, gapParts, type DetailGrading, type DetailResponse, type DetailSource } from "./detail-model";
@@ -100,6 +101,9 @@ describe("buildDetail objective", () => {
     if (sec.kind !== "OBJECTIVE") throw new Error("objective");
     expect(sec.level).toBe("B1");
     expect([sec.correct, sec.total, sec.hasTfng]).toEqual([1, 3, true]);
+    // The same two numbers the result screen shows (one tally rule).
+    const t = answerTally(src.responses, src.acceptances, { navigable: false });
+    expect([t.correct, t.total]).toEqual([sec.correct, sec.total]);
     expect(sec.blocks).toHaveLength(1);
     expect(sec.blocks[0].heading).toBe("Der Brief");
     const [q1, q2] = sec.blocks[0].questions;

@@ -51,6 +51,8 @@ export type ChecklistRow = {
   total: number;
   /** The first task still to decide, for the "Evaluate" link. */
   firstOpenResponseId: string | null;
+  /** Of the open tasks, how many still wait for their AI proposal (the teacher may grade them anyway). */
+  aiPending: number;
 };
 
 export type ChecklistTask = { id: string; status: "PENDING" | "AI_PROPOSED" | "AI_FAILED" | "CONFIRMED" | "OVERRIDDEN"; decided: boolean };
@@ -59,7 +61,8 @@ export type ChecklistTask = { id: string; status: "PENDING" | "AI_PROPOSED" | "A
  * One row per section of the exam, from the same computed result the blockers
  * use. A writing or speaking section is done when the computed skill was
  * decided by the teacher (every task confirmed or changed, or a skill
- * override); otherwise it points at the first task that is still open.
+ * override); otherwise it points at the first task that is still open. Only a
+ * section whose run is still going is "running".
  */
 export function finalizeChecklist(input: {
   sections: readonly string[];
@@ -74,7 +77,7 @@ export function finalizeChecklist(input: {
     const skill = input.computed?.skills[section];
     if (isObjectiveSection(section)) {
       const state: ChecklistState = input.submitted.has(section) && skill?.level ? "done" : "running";
-      return { section, kind: "AUTO", state, open: 0, total: 0, firstOpenResponseId: null };
+      return { section, kind: "AUTO", state, open: 0, total: 0, firstOpenResponseId: null, aiPending: 0 };
     }
     const tasks = input.tasks[section] ?? [];
     const open = tasks.filter((t) => !t.decided);
@@ -82,10 +85,21 @@ export function finalizeChecklist(input: {
     let state: ChecklistState;
     if (decidedByTeacher) state = "done";
     else if (!input.submitted.has(section)) state = "running";
-    else if (open.length === 0 || open.every((t) => t.status === "PENDING")) state = "aiPending";
+    // The teacher can grade while a proposal is still PENDING, so any open task makes the row "todo".
+    // "aiPending" is only the edge where no task exists to grade yet.
+    else if (open.length === 0) state = "aiPending";
     else state = "todo";
     const next = open.find((t) => t.status !== "PENDING") ?? open[0] ?? null;
-    return { section, kind: "TEACHER", state, open: decidedByTeacher ? 0 : open.length, total: tasks.length, firstOpenResponseId: decidedByTeacher ? null : (next?.id ?? null) };
+    return { section, kind: "TEACHER", state, open: decidedByTeacher ? 0 : open.length, total: tasks.length, firstOpenResponseId: decidedByTeacher ? null : (next?.id ?? null), aiPending: decidedByTeacher ? 0 : open.filter((t) => t.status === "PENDING").length };
   });
   return { rows, done: rows.filter((r) => r.state === "done").length, total: rows.length };
+}
+
+/**
+ * The sections the teacher has to act on, one entry each, for the line under
+ * the finalize button ("Speaking: 2 tasks are waiting for you"). Sections
+ * whose run is still going are not listed: they are not the teacher's move yet.
+ */
+export function waitingSections(rows: readonly ChecklistRow[]): Array<{ section: Section; open: number }> {
+  return rows.filter((r) => r.kind === "TEACHER" && r.state === "todo").map((r) => ({ section: r.section, open: r.open }));
 }

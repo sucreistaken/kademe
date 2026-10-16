@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { acceptAsCorrect, undoAcceptAsCorrect } from "@/app/(manager)/exam/students/[id]/actions";
 import { Trajectory } from "@/components/panel/result/format";
 import { reviewCard, plainPrompt, sectionScoreSummary, type GapSegment, type ReviewCard } from "@/components/panel/result/review-cards";
-import { canAcceptAsCorrect, canAcceptGap, objectiveBasis, responseState, type ReviewMark } from "@/components/panel/result/review-rows";
+import { canAcceptAsCorrect, canAcceptGap, responseState, type ReviewMark } from "@/components/panel/result/review-rows";
 import type { managerT } from "@/i18n/manager";
 import { cn } from "@/lib/cn";
 import type { Section } from "@/lib/exam/types";
@@ -216,8 +216,8 @@ export function ObjectiveSection({
   acceptances: Record<string, Acceptance>;
   canGrade: boolean;
 }) {
-  const basis = objectiveBasis(responses);
-  const summary = sectionScoreSummary(responses);
+  // The same answer tally as the Summary tab and the report (answer-tally.ts).
+  const summary = sectionScoreSummary(responses, acceptances, run);
   const points = responses.filter((r) => r.thetaAfter !== null).map((r) => ({ theta: r.thetaAfter!, se: r.seAfter ?? 0 }));
   const tf = (code: string) => (code === "NG" && section === "LISTENING" ? t("resultReview.tfNGListening") : t(`resultReview.tf${code as "R" | "F" | "NG"}`));
   return (
@@ -228,14 +228,11 @@ export function ObjectiveSection({
             {t("resultReview.scoreSummary", { right: summary.right, total: summary.total })}
             {level ? <span className="ml-3 text-[15px] font-semibold text-accent">{t("resultReview.sectionLevel", { level })}</span> : null}
           </div>
-          <div className="tnum mt-1 text-[13px] text-ink-2">
-            {t("result.basis", {
-              n: basis.answered,
-              pct: basis.pct,
-              precision: run?.thetaSd == null ? "-" : run.thetaSd < 0.45 ? t("result.precisionGood") : run.thetaSd < 0.7 ? t("result.precisionFair") : t("result.precisionLow"),
-            })}
-            {basis.partial > 0 ? ` · ${t("resultReview.partialCount", { n: basis.partial })}` : ""}
-          </div>
+          {run?.thetaSd == null ? null : (
+            <div className="tnum mt-1 text-[13px] text-ink-2">
+              {t("result.precisionOnly", { precision: run.thetaSd < 0.45 ? t("result.precisionGood") : run.thetaSd < 0.7 ? t("result.precisionFair") : t("result.precisionLow") })}
+            </div>
+          )}
           <div className="mt-1 text-[12.5px] text-muted">{t("result.trajectory")}</div>
         </div>
         <Trajectory points={points} />
