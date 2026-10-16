@@ -15,3 +15,11 @@ describe("no red notice box on a candidate screen (red rule)", () => {
     expect(hits).toEqual([]);
   });
 });
+
+describe("a candidate problem sentence carries the warning glyph", () => {
+  it("the system check renders its issue through Notice, not a bare notice class", () => {
+    const src = readFileSync(path.resolve(process.cwd(), "src/components/candidate/proctor/SystemCheck.tsx"), "utf8");
+    expect(src).toContain("<Notice");
+    expect(src).not.toContain("NOTICE_CLASS");
+  });
+});

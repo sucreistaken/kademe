@@ -7,7 +7,7 @@ import { MobileBlock, isMobileDevice } from "@/components/candidate/MobileBlock"
 import { environmentFacts, useProctor } from "@/components/candidate/proctor/ProctorProvider";
 import { checkStep, planSteps, primaryEnabled, type CheckStep, type StepState, type Wait } from "@/components/candidate/proctor/check-steps";
 import { buttonVariants } from "@/components/ui/button";
-import { NOTICE_CLASS } from "@/components/ui/notice";
+import { Notice } from "@/components/ui/notice";
 import { Mascot, type MascotPose } from "@/components/visual/mascot";
 import { apiSend, candidateApiBase } from "@/lib/client/api";
 import { MEDIA_ERROR_KEY, mediaErrorKind } from "@/lib/client/media-error";
@@ -269,12 +269,15 @@ export function SystemCheck({ token, policy }: { token: string; policy: Proctori
         {result.step === "ready" ? <Rules policy={policy} t={t} /> : null}
 
         {sentence ? (
-          <p
-            role={isIssue ? "alert" : "status"}
-            className={cn(isIssue ? NOTICE_CLASS.warn : "font-semibold text-ink", "mt-6 max-w-[520px] text-[16px] leading-[25px]")}
-          >
-            {sentence}
-          </p>
+          isIssue ? (
+            <Notice role="alert" className="mt-6 max-w-[520px] text-[16px] leading-[25px]">
+              {sentence}
+            </Notice>
+          ) : (
+            <p role="status" className="mt-6 max-w-[520px] text-[16px] font-semibold leading-[25px] text-ink">
+              {sentence}
+            </p>
+          )
         ) : result.step === "look" ? (
           <p role="status" className="mt-6 text-[16px] font-semibold text-ink">
             {t("lookOk")}
