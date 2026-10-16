@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { finalize, overrideOverall, release, undoAcceptAsCorrect } from "@/app/(manager)/exam/students/[id]/actions";
 import { Card } from "@/components/ui/card";
+import { Notice } from "@/components/ui/notice";
 import { Dot, INTEGRITY_TONE, STATUS_TONE, shortDateTime } from "@/components/panel/bits";
 import { FeedbackCard } from "@/components/panel/result/feedback-card";
 import { GradingCard } from "@/components/panel/result/grading-card";
@@ -227,9 +228,9 @@ export default async function ResultPage({
           </nav>
 
           {errorText ? (
-            <p role="alert" className="mb-4 rounded-[10px] bg-danger-soft px-3 py-2 text-[13.5px] font-medium text-danger">
+            <Notice role="alert" className="mb-4">
               {errorText}
-            </p>
+            </Notice>
           ) : null}
 
           {tab === "summary" ? (
@@ -506,9 +507,7 @@ export default async function ResultPage({
                   {/* The reason sits right under the button, and a failed press lands here too (?error=...#finalize). */}
                   <div id="finalize-why" className="mt-2 flex flex-col gap-1">
                     {errorText && sp.error !== "reason" ? (
-                      <p role="alert" className="rounded-[10px] bg-danger-soft px-3 py-2 text-[13px] font-medium text-danger">
-                        {errorText}
-                      </p>
+                      <Notice role="alert">{errorText}</Notice>
                     ) : null}
                     {blockerLines.length ? (
                       blockerLines.map((line) => (

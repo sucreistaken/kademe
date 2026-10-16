@@ -7,6 +7,7 @@ import { MobileBlock, isMobileDevice } from "@/components/candidate/MobileBlock"
 import { environmentFacts, useProctor } from "@/components/candidate/proctor/ProctorProvider";
 import { checkStep, planSteps, primaryEnabled, type CheckStep, type StepState, type Wait } from "@/components/candidate/proctor/check-steps";
 import { buttonVariants } from "@/components/ui/button";
+import { NOTICE_CLASS } from "@/components/ui/notice";
 import { Mascot, type MascotPose } from "@/components/visual/mascot";
 import { apiSend, candidateApiBase } from "@/lib/client/api";
 import { MEDIA_ERROR_KEY, mediaErrorKind } from "@/lib/client/media-error";
@@ -270,10 +271,7 @@ export function SystemCheck({ token, policy }: { token: string; policy: Proctori
         {sentence ? (
           <p
             role={isIssue ? "alert" : "status"}
-            className={cn(
-              "mt-6 max-w-[520px] text-[16px] leading-[25px]",
-              isIssue ? "rounded-[14px] bg-danger-soft px-5 py-3 font-semibold text-danger" : "font-semibold text-ink",
-            )}
+            className={cn(isIssue ? NOTICE_CLASS.warn : "font-semibold text-ink", "mt-6 max-w-[520px] text-[16px] leading-[25px]")}
           >
             {sentence}
           </p>

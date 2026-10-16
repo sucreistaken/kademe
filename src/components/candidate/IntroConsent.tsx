@@ -7,6 +7,7 @@ import { CandidateColumn } from "@/components/candidate/Shell";
 import { MobileBlock, isMobileDevice } from "@/components/candidate/MobileBlock";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Notice } from "@/components/ui/notice";
 import { Mascot } from "@/components/visual/mascot";
 import { SectionTile } from "@/components/visual/section-look";
 import { apiSend } from "@/lib/client/api";
@@ -241,9 +242,9 @@ export function IntroConsent({
             </p>
           ) : null}
           {error ? (
-            <p role="alert" className="mt-2.5 rounded-lg bg-danger-soft px-4 py-2.5 text-center text-[13.5px] font-semibold text-danger">
+            <Notice role="alert" className="mt-2.5 justify-center text-center">
               {error}
-            </p>
+            </Notice>
           ) : null}
         </div>
       </div>
