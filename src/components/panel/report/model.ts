@@ -3,8 +3,15 @@ import { CEFR_LEVELS, type Cefr, type Section } from "@/lib/exam/types";
 
 /**
  * The printable result report, as data. Pure: the page loads the rows, this
- * turns them into exactly what the sheet may show. Nothing here carries an
- * item, an answer, a key or an AI score, so the sheet cannot print one.
+ * turns them into exactly what the sheet may show. This summary (page 1)
+ * carries levels only: no item, answer, key or AI score.
+ *
+ * Deliberate decision (2026-10-16): the report is given to the student, so the
+ * school must be able to show exactly what was answered wrongly. The detailed
+ * part (detail-model.ts) therefore does carry the student's answers and the
+ * keys. It still leaves out the reading passages and the listening
+ * transcripts (titles only), to limit exposure of the item bank, and any AI
+ * score the teacher did not adopt.
  */
 
 export type ReportSource = {
