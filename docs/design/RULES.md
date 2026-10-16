@@ -50,6 +50,21 @@ the rules below follow it.
    `src/components/ui/notice.tsx`). Difficulty (Kolay, Orta, Zor) is a tinted chip
    with a 1/2/3 step glyph and the word, teacher panel only
    (`src/components/panel/difficulty-chip.tsx`).
+
+   **Not yet true everywhere.** Plan 1 changed the shared tokens and
+   primitives but did not sweep the old red call sites: about 40
+   `text-danger`, `bg-danger` and `border-danger` uses in 24 `.tsx` files
+   still draw red (grep, 2026-10-16), so several screens break this rule today.
+   On candidate screens: error text in `InfoForm.tsx`, `ExamRunner.tsx`,
+   `MediaItems.tsx` and `SystemCheck.tsx`, and the proctor banner in
+   `ProctorProvider.tsx` (`bg-danger` with white text). On panel screens:
+   wrong answers in `objective-section.tsx` and `detail-sheet.tsx`,
+   `recording-player.tsx`, `integrity-panel.tsx`, `settings/page.tsx`, the
+   students list and the report sheets. Login, setup, the Gelişmiş boxes and
+   the hiring candidate fields also use red error text. Plan 2 sweeps the
+   candidate screens and Plan 3 the panel; until then do not copy those
+   patterns into new code (the recording dot, `MediaItems.tsx` "recordingNow",
+   is the one allowed red use among them).
 2. **One filled button per screen.** Everything else is outline or text.
 3. **Status may be a soft pill** (`Badge`, `StatusDot` with `pill`) with a word
    in it. Colour is never the only signal.
@@ -89,8 +104,8 @@ Defined in `src/app/globals.css` and nowhere else.
   `text-accent`, `bg-accent-soft`, `bg-yellow`, `bg-yellow-soft`, `fill-red`
   (brand drawings only), `border-error`, `bg-diff-easy`, `bg-diff-medium`,
   `bg-diff-hard` (teacher panel only), plus `success`, `warn`, `danger`
-  (legacy red: the integrity severities still use it until Plan 3, no new
-  use) and the legacy pastel names (`mint`, `sky`, `grape`, `sun`, `coral`, each
+  (legacy red: about 40 call sites in 24 files still use it, see rule 1;
+  no new use) and the legacy pastel names (`mint`, `sky`, `grape`, `sun`, `coral`, each
   with `-soft` and `-fill`), now the brand-aligned neutral set.
 - shadcn variables under `:root` with the HIRING-UX 8.2 values, exposed by
   `@theme inline`: `bg-background`, `bg-card`, `bg-popover`, `bg-primary`,
@@ -124,10 +139,12 @@ Defined in `src/app/globals.css` and nowhere else.
 - Never add: `badge` (status is a dot plus text), `alert-dialog` (no "are you
   sure"), `chart`, `toast`, `sonner` (undo is `UndoStrip`). A disabled
   button's reason never goes in a `Tooltip`.
-- `Card` draws `rounded-[var(--card-radius,14px)]`: exam screens keep their
-  14px cards, and a solution whose screens use the 12px card of HIRING-UX 8.3
+- `Card` draws `rounded-[var(--card-radius,20px)]`; `:root` in `globals.css`
+  sets `--card-radius: 30px`, so every card is 30px unless a layout root
+  overrides it. A solution whose screens use the 12px card of HIRING-UX 8.3
   sets `--card-radius: 12px` once on its layout root instead of overriding
-  every card.
+  every card (the hiring and library layouts and the hiring candidate frame
+  do).
 - Fields (`Input`, `SelectTrigger`, `InputGroup`) are 40px tall (`h-10`),
   like the Kademe md `Button`. Table cells are `h-row` (52px) and a selected
   row uses `bg-brand-soft`. `shadcn-vendored.test.ts` guards these and the
