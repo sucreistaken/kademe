@@ -169,6 +169,20 @@ describe("starter bank items are well formed", () => {
     for (const n of byPos.values()) expect(n / single.length).toBeLessThanOrEqual(0.4);
   });
 
+  it("every single-choice item has exactly four unique options and its key is one of them", () => {
+    const norm = (t: string) => t.normalize("NFKC").toLowerCase().replace(/\s+/g, " ").trim();
+    const single = SEED_BANK.items.filter((i) => i.content.kind === "CHOICE");
+    expect(single.length).toBeGreaterThan(0);
+    for (const item of single) {
+      if (item.content.kind !== "CHOICE" || item.key.kind !== "CHOICE") continue;
+      const where = `${item.level} ${item.section} "${item.prompt.slice(0, 40)}"`;
+      expect(item.content.options.map((o) => o.id), where).toEqual(["a", "b", "c", "d"]);
+      expect(new Set(item.content.options.map((o) => norm(o.text))).size, where).toBe(4);
+      expect(item.key.correct, where).toHaveLength(1);
+      expect(item.content.options.map((o) => o.id), where).toContain(item.key.correct[0]);
+    }
+  });
+
   it("every item has a stable seed key no other item shares", () => {
     const keys = SEED_BANK.items.map(seedItemKey);
     expect(new Set(keys).size).toBe(keys.length);

@@ -22,19 +22,19 @@ import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
  * - Speaking: introduction, two key-word questions, two requests, one short
  *   description.
  *
- * Single-choice items have 3 options. `choice` builders take the correct
+ * Single-choice items have 4 options. `choice` builders take the correct
  * option first and place it at `pos`, so the key positions are set explicitly
- * and spread over a, b and c. Personal details that touch protected
+ * and spread over a, b and c (d is always a wrong distractor). Personal details that touch protected
  * characteristics (age, origin) are left out of forms and prompts on purpose,
  * because the bank is also used in hiring.
  */
 
 const LEVEL = "A1" as const;
 type Within = NonNullable<SeedItem["within"]>;
-type Pos = 0 | 1 | 2;
-const IDS = ["a", "b", "c"] as const;
+type Pos = 0 | 1 | 2 | 3;
+const IDS = ["a", "b", "c", "d"] as const;
 
-function placeOptions(correct: string, distractors: [string, string], pos: Pos) {
+function placeOptions(correct: string, distractors: [string, string, string], pos: Pos) {
   const texts: string[] = [...distractors];
   texts.splice(pos, 0, correct);
   return {
@@ -50,7 +50,7 @@ function sc(
   within: Within,
   prompt: string,
   correct: string,
-  distractors: [string, string],
+  distractors: [string, string, string],
   pos: Pos,
   explanation: string,
 ): SeedItem {
@@ -89,15 +89,15 @@ const grammarItems: SeedItem[] = [
   // ---------------------------------------------------------------- EASY
   sc("praesens.sein", "EASY",
     "Ich ___ Lehrerin von Beruf.",
-    "bin", ["ist", "bist"], 0,
+    "bin", ["ist", "bist", "sind"], 0,
     "Zu \"ich\" gehört die Form \"bin\" von sein. \"ist\" ist er/sie/es, \"bist\" ist du."),
   sc("wfrage", "EASY",
     "___ heißt du? - Ich heiße Daniel.",
-    "Wie", ["Was", "Wo"], 1,
+    "Wie", ["Was", "Wo", "Wer"], 1,
     "Nach dem Namen fragt man mit \"Wie heißt du?\". \"Was heißt du?\" ist ein typischer Fehler (vgl. Türkisch \"adın ne\")."),
   sc("praesens.regelmaessig", "EASY",
     "Wo ___ ihr? - Wir wohnen in Hamburg.",
-    "wohnt", ["wohnen", "wohnst"], 2,
+    "wohnt", ["wohnen", "wohnst", "wohne"], 2,
     "Zu \"ihr\" gehört die Endung -t: ihr wohnt. \"wohnen\" ist wir/sie, \"wohnst\" ist du."),
   gap("praesens.haben", "EASY",
     "Wir {{g1}} heute leider keine Zeit.",
@@ -105,15 +105,15 @@ const grammarItems: SeedItem[] = [
     "Zu \"wir\" gehört \"haben\". \"hat\" ist er/sie/es, \"habt\" ist ihr."),
   sc("artikel.nominativ", "EASY",
     "___ Kaffee ist sehr heiß.",
-    "Der", ["Die", "Das"], 0,
+    "Der", ["Die", "Das", "Den"], 0,
     "\"Kaffee\" ist maskulin; Subjekt im Nominativ, also \"der Kaffee\"."),
   sc("praeposition.ort", "EASY",
     "Woher kommen Sie? - Ich komme ___ Brasilien.",
-    "aus", ["in", "nach"], 2,
+    "aus", ["in", "nach", "von"], 2,
     "Herkunft: kommen aus + Land. \"nach\" steht für die Richtung (Ich fahre nach ...), \"in\" für den Ort (Ich wohne in ...)."),
   sc("negation.kein", "EASY",
     "Ich fahre immer mit dem Bus. Ich habe ___ Auto.",
-    "kein", ["nicht", "keine"], 1,
+    "kein", ["nicht", "keine", "keinen"], 1,
     "Ein Nomen mit unbestimmtem Artikel verneint man mit \"kein\". \"Auto\" ist neutral, Akkusativ: kein Auto. \"keine\" wäre feminin oder Plural."),
   gap("imperativ.sie", "EASY",
     "Bitte {{g1}} Sie hier Ihren Namen.",
@@ -123,7 +123,7 @@ const grammarItems: SeedItem[] = [
   // ---------------------------------------------------------------- MID
   sc("praesens.vokalwechsel", "MID",
     "Mein Bruder ___ gern Pizza.",
-    "isst", ["esst", "essen"], 2,
+    "isst", ["esst", "essen", "esse"], 2,
     "\"essen\" hat bei du und er/sie/es den Vokalwechsel e > i: er isst. \"esst\" ist die ihr-Form."),
   gap("artikel.akkusativ", "MID",
     "Wir suchen {{g1}} Tisch für die Küche.",
@@ -131,15 +131,15 @@ const grammarItems: SeedItem[] = [
     "\"suchen\" hat ein Akkusativobjekt; \"Tisch\" ist maskulin, also \"einen Tisch\". \"ein\" wäre Nominativ, \"einem\" Dativ."),
   sc("modalverb.konjugation", "MID",
     "___ du morgen um zehn Uhr kommen?",
-    "Kannst", ["Kann", "Können"], 0,
+    "Kannst", ["Kann", "Können", "Könnt"], 0,
     "Modalverb \"können\" zu \"du\": kannst. \"kann\" ist ich/er, \"können\" ist wir/sie/Sie."),
   sc("verb.trennbar", "MID",
     "Ich kaufe am Samstag im Supermarkt ___.",
-    "ein", ["an", "auf"], 1,
+    "ein", ["an", "auf", "zu"], 1,
     "Das trennbare Verb heißt \"einkaufen\"; die Vorsilbe steht am Satzende: Ich kaufe ... ein."),
   sc("possessiv.nominativ", "MID",
     "Das ist Herr Weber. Und das ist ___ Frau, Lena Weber.",
-    "seine", ["ihre", "sein"], 2,
+    "seine", ["ihre", "sein", "seiner"], 2,
     "Besitzer ist Herr Weber (maskulin): sein-. \"Frau\" ist feminin: seine. \"ihre\" passt zu einer Besitzerin, \"sein\" zu einem maskulinen oder neutralen Nomen."),
   gap("praeposition.zeit", "MID",
     "Der Deutschkurs beginnt {{g1}} Montag.",
@@ -147,7 +147,7 @@ const grammarItems: SeedItem[] = [
     "Wochentage: am Montag. \"um\" steht bei der Uhrzeit, \"im\" bei Monaten und Jahreszeiten."),
   sc("wortstellung.inversion", "MID",
     "Welcher Satz ist richtig?",
-    "Am Samstag gehe ich ins Kino.", ["Am Samstag ich gehe ins Kino.", "Am Samstag ins Kino gehe ich."], 0,
+    "Am Samstag gehe ich ins Kino.", ["Am Samstag ich gehe ins Kino.", "Am Samstag ins Kino gehe ich.", "Am Samstag ich ins Kino gehe."], 0,
     "Im Aussagesatz steht das Verb auf Position 2. Steht eine Zeitangabe vorne, folgt direkt das Verb und dann das Subjekt."),
   gap("plural", "MID",
     "Ergänzen Sie den Plural von \"das Kind\".\n\nFrau Schulz hat zwei {{g1}}. Sie sind sieben und neun Jahre alt.",
@@ -157,7 +157,7 @@ const grammarItems: SeedItem[] = [
   // ---------------------------------------------------------------- HARD
   sc("perfekt.hilfsverb", "HARD",
     "Wir ___ am Sonntag spät aufgestanden.",
-    "sind", ["haben", "seid"], 1,
+    "sind", ["haben", "seid", "bin"], 1,
     "\"aufstehen\" bildet das Perfekt mit sein (Bewegung/Zustandswechsel). Zu \"wir\" gehört \"sind\"; \"seid\" ist die ihr-Form."),
   gap("perfekt.partizip", "HARD",
     "Was hast du am Wochenende gemacht? - Ich habe ein Buch {{g1}}.",
@@ -165,7 +165,7 @@ const grammarItems: SeedItem[] = [
     "\"lesen\" ist unregelmäßig: Partizip II \"gelesen\" (ge- ... -en). \"gelest\" ist eine falsche regelmäßige Bildung."),
   sc("modalverb.satzklammer", "HARD",
     "Welcher Satz ist richtig?",
-    "Heute muss ich lange arbeiten.", ["Heute ich muss lange arbeiten.", "Ich muss arbeiten heute lange."], 2,
+    "Heute muss ich lange arbeiten.", ["Heute ich muss lange arbeiten.", "Ich muss arbeiten heute lange.", "Ich heute muss lange arbeiten."], 2,
     "Das Modalverb steht auf Position 2, der Infinitiv am Satzende (Satzklammer). Nach \"Heute\" folgt direkt das Verb."),
   gap("verb.trennbar", "HARD",
     "Ergänzen Sie das Verb \"aufmachen\" im Präsens.\n\nDer Supermarkt {{g1}} um acht Uhr {{g2}}.",
@@ -176,15 +176,15 @@ const grammarItems: SeedItem[] = [
     "Trennbares Verb im Präsens: Der Verbteil \"macht\" steht auf Position 2, die Vorsilbe \"auf\" am Satzende. (\"im Präsens\" steht in der Aufgabe, weil sonst auch \"machte ... auf\" und \"hat ... aufgemacht\" richtig wären.)"),
   sc("possessiv.akkusativ", "HARD",
     "Ich suche ___ Pass. Ich brauche ihn morgen.",
-    "meinen", ["mein", "meine"], 0,
+    "meinen", ["mein", "meine", "meinem"], 0,
     "\"suchen\" verlangt den Akkusativ; \"Pass\" ist maskulin (\"ihn\"): meinen Pass. \"mein\" wäre Nominativ. (Nicht \"Schlüssel\": im Plural wäre \"meine Schlüssel\" auch richtig.)"),
   sc("uhrzeit", "HARD",
     "Es ist 8:30 Uhr. Was sagt man?",
-    "Es ist halb neun.", ["Es ist halb acht.", "Es ist acht halb."], 1,
+    "Es ist halb neun.", ["Es ist halb acht.", "Es ist acht halb.", "Es ist halb zehn."], 1,
     "Im Deutschen zählt \"halb\" zur nächsten vollen Stunde: 8:30 = halb neun. \"acht halb\" ist eine Übertragung aus anderen Sprachen (z. B. Türkisch \"sekiz buçuk\")."),
   sc("imperativ.du", "HARD",
     "Paul, ___ bitte langsam! Ich verstehe dich nicht.",
-    "sprich", ["sprichst", "sprecht"], 2,
+    "sprich", ["sprichst", "sprecht", "sprech"], 2,
     "du-Imperativ von \"sprechen\": sprich (mit e > i, ohne -st). \"sprecht\" ist der Imperativ für ihr, passt aber nicht zu einer Person."),
   gap("negation.akkusativ", "HARD",
     "Danke, ich habe {{g1}} Hunger. Ich esse später.",
@@ -252,7 +252,7 @@ function forText(stimulusKey: string) {
       within: Within,
       prompt: string,
       correct: string,
-      distractors: [string, string],
+      distractors: [string, string, string],
       pos: Pos,
       explanation: string,
     ): SeedItem {
@@ -262,7 +262,7 @@ function forText(stimulusKey: string) {
         ...placeOptions(correct, distractors, pos),
       };
     },
-    /** Options are the three ads in fixed order; `pos` is the matching ad. */
+    /** Options are the three ads in fixed order plus "Keine Anzeige"; `pos` is the matching ad. */
     ad(skill: ReadingSkill, within: Within, prompt: string, pos: Pos, explanation: string): SeedItem {
       return {
         ...base(skill, within, prompt, explanation),
@@ -273,6 +273,7 @@ function forText(stimulusKey: string) {
             { id: "a", text: "Anzeige A" },
             { id: "b", text: "Anzeige B" },
             { id: "c", text: "Anzeige C" },
+            { id: "d", text: "Keine Anzeige" },
           ],
         },
         key: { kind: "CHOICE", correct: [IDS[pos]] },
@@ -359,7 +360,7 @@ const readingItems: SeedItem[] = [
   arbeitstag.choice("gist", "EASY",
     "Warum schreibt Frau Berger diese E-Mail?",
     "Herr Okafor beginnt bald eine neue Arbeit.",
-    ["Frau Berger sucht einen neuen Kollegen.", "Herr Okafor soll am Montag nicht kommen."], 1,
+    ["Frau Berger sucht einen neuen Kollegen.", "Herr Okafor soll am Montag nicht kommen.", "Herr Okafor soll am Montag um acht Uhr kommen."], 1,
     "Die E-Mail begrüßt Herrn Okafor im Team und informiert über seinen ersten Arbeitstag am Montag."),
   arbeitstag.tfng("detail", "MID",
     [
@@ -370,7 +371,7 @@ const readingItems: SeedItem[] = [
   arbeitstag.choice("detail", "EASY",
     "Was soll Herr Okafor mitbringen?",
     "seinen Pass und ein Foto",
-    ["Geld für das Mittagessen", "seinen Pass und einen Kuli"], 2,
+    ["Geld für das Mittagessen", "seinen Pass und einen Kuli", "sein Mittagessen und ein Foto"], 2,
     "Im Text: \"Bringen Sie bitte Ihren Pass und ein Foto mit.\" Das Essen bezahlt die Firma."),
   arbeitstag.tfng("detail", "MID",
     [
@@ -406,12 +407,12 @@ const readingItems: SeedItem[] = [
   praxis.choice("inference", "HARD",
     "Sie arbeiten jeden Tag bis 14 Uhr. An welchem Tag können Sie am Nachmittag in die Praxis gehen?",
     "am Dienstag",
-    ["am Mittwoch", "am Freitag"], 0,
+    ["am Mittwoch", "am Freitag", "am Samstag"], 0,
     "Am Nachmittag (15 bis 18 Uhr) ist die Praxis nur am Montag, Dienstag und Donnerstag offen. Von den Optionen passt nur Dienstag."),
   praxis.choice("detail", "MID",
     "Was sollen die Patienten vor dem Besuch machen?",
     "in der Praxis anrufen",
-    ["eine E-Mail schreiben", "zu Dr. Peters gehen"], 1,
+    ["eine E-Mail schreiben", "zu Dr. Peters gehen", "einen Brief an die Praxis schreiben"], 1,
     "Im Text: \"Bitte rufen Sie vor Ihrem Besuch an und machen Sie einen Termin.\" Zu Dr. Peters geht man nur im Urlaub der Praxis."),
   praxis.tfng("detail", "MID",
     [["Im Urlaub von Dr. Yilmaz können die Patienten zu einem anderen Arzt gehen.", "R"]],
@@ -421,17 +422,17 @@ const readingItems: SeedItem[] = [
   sms.choice("detail", "EASY",
     "Wo ist Sami jetzt?",
     "im Zug",
-    ["am Bahnhof", "im Taxi"], 2,
+    ["am Bahnhof", "im Taxi", "im Bus"], 2,
     "Sami schreibt: \"ich sitze noch im Zug\". Am Bahnhof ist er erst später, ein Taxi ist nur eine Möglichkeit."),
   sms.choice("detail", "MID",
     "Wann ist Sami am Bahnhof?",
     "um 7:15 Uhr",
-    ["um 7:00 Uhr", "um 7:45 Uhr"], 0,
+    ["um 7:00 Uhr", "um 7:45 Uhr", "um 7:30 Uhr"], 0,
     "\"Viertel nach sieben\" ist 7:15 Uhr. 7:00 Uhr war die alte Zeit (\"nicht um sieben\"); 7:45 Uhr wäre \"Viertel vor acht\"."),
   sms.choice("gist", "MID",
     "Was möchte Sami von Jana?",
     "Sie soll ihn abholen.",
-    ["Sie soll ein Taxi bestellen.", "Sie soll ihn anrufen."], 1,
+    ["Sie soll ein Taxi bestellen.", "Sie soll ihn anrufen.", "Sie soll ihm seinen Koffer schicken."], 1,
     "Sami fragt: \"Kannst du mich bitte mit dem Auto abholen?\" Das Taxi nimmt er nur, wenn Jana nicht kann; er bittet um eine kurze Nachricht, nicht um einen Anruf."),
   sms.tfng("inference", "HARD",
     [
@@ -472,7 +473,7 @@ function forClip(stimulusKey: string) {
       within: Within,
       prompt: string,
       correct: string,
-      distractors: [string, string],
+      distractors: [string, string, string],
       pos: Pos,
       explanation: string,
     ): SeedItem {
@@ -555,12 +556,12 @@ const listeningItems: SeedItem[] = [
   bahnhof.choice("gist", "EASY",
     "Warum gibt es diese Durchsage?",
     "Der Zug kommt heute zu spät.",
-    ["Heute fährt kein Zug nach Erfurt.", "Der Zug fährt heute früher ab."], 2,
+    ["Heute fährt kein Zug nach Erfurt.", "Der Zug fährt heute früher ab.", "Der Zug hat heute weniger Wagen."], 2,
     "Der Zug hat fünfzehn Minuten Verspätung; er fährt, aber später."),
   bahnhof.choice("detail", "MID",
     "Wann fährt der Zug heute ab?",
     "um 9:35 Uhr",
-    ["um 9:20 Uhr", "um 9:15 Uhr"], 0,
+    ["um 9:20 Uhr", "um 9:15 Uhr", "um 9:50 Uhr"], 0,
     "9:20 Uhr ist die normale Abfahrt; mit fünfzehn Minuten Verspätung fährt der Zug um 9:35 Uhr."),
   bahnhof.tfng("detail", "MID",
     [["Der Zug fährt heute von Gleis vier ab.", "F"]],
@@ -568,7 +569,7 @@ const listeningItems: SeedItem[] = [
   bahnhof.choice("detail", "HARD",
     "Wo ist heute die erste Klasse?",
     "hinten",
-    ["vorne", "in der Mitte"], 1,
+    ["vorne", "in der Mitte", "links"], 1,
     "\"am Ende des Zuges\" bedeutet hinten."),
 
   // Der erste Tag im Büro
@@ -578,7 +579,7 @@ const listeningItems: SeedItem[] = [
   kollege.choice("detail", "EASY",
     "Wo ist das Büro von Herrn Haddad?",
     "im zweiten Stock",
-    ["im Erdgeschoss", "im ersten Stock"], 2,
+    ["im Erdgeschoss", "im ersten Stock", "im dritten Stock"], 2,
     "Frau Schmidt sagt: \"Ihr Büro ist im zweiten Stock.\" Die Küche ist unten."),
   kollege.tfng("detail", "MID",
     [["Herr Haddad muss für den Kaffee bezahlen.", "F"]],
@@ -586,19 +587,19 @@ const listeningItems: SeedItem[] = [
   kollege.choice("detail", "HARD",
     "Wann ist meistens Mittagspause?",
     "um 12:30 Uhr",
-    ["um 13:30 Uhr", "um 11:30 Uhr"], 0,
+    ["um 13:30 Uhr", "um 11:30 Uhr", "um 12:00 Uhr"], 0,
     "\"halb eins\" ist 12:30 Uhr. 13:30 Uhr ist ein typischer Fehler (englisch \"half one\" bzw. \"eins halb\")."),
 
   // Nachricht von der Sprachschule
   kurs.choice("detail", "EASY",
     "An welchen Tagen ist der Kurs?",
     "am Dienstag und Donnerstag",
-    ["am Montag und Donnerstag", "am Dienstag und Freitag"], 1,
+    ["am Montag und Donnerstag", "am Dienstag und Freitag", "am Mittwoch und Freitag"], 1,
     "Der Kurs ist jeden Dienstag und Donnerstag. Freitag ist nur der Termin für die Bezahlung."),
   kurs.choice("detail", "MID",
     "Wo ist der Kurs jetzt?",
     "im dritten Stock",
-    ["im ersten Stock", "im zweiten Stock"], 2,
+    ["im ersten Stock", "im zweiten Stock", "im Erdgeschoss"], 2,
     "Der Kurs ist jetzt im dritten Stock, nicht mehr im ersten Stock."),
   kurs.tfng("detail", "MID",
     [["Herr Ramos muss das Kursbuch selbst kaufen.", "F"]],
@@ -606,7 +607,7 @@ const listeningItems: SeedItem[] = [
   kurs.choice("detail", "MID",
     "Was soll Herr Ramos bis Freitag machen?",
     "den Kurs bezahlen",
-    ["das Buch kaufen", "Frau Novak anrufen"], 0,
+    ["das Buch kaufen", "Frau Novak anrufen", "ein Buch bestellen"], 0,
     "\"Bitte bezahlen Sie den Kurs bis Freitag.\" Anrufen soll er nur, wenn er Fragen hat."),
 ];
 

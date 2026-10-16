@@ -46,11 +46,21 @@ const choice = (correct = "b") => ({
     { id: "a", text: "an" },
     { id: "b", text: "in" },
     { id: "c", text: "auf" },
+    { id: "d", text: "zu" },
   ],
   correctOptionIds: [correct],
 });
 
 describe("wireToItem", () => {
+  it("SINGLE_CHOICE needs exactly four options a, b, c, d", () => {
+    const three = { ...choice(), options: choice().options.slice(0, 3) };
+    const r = wireToItem(wire(three), "SINGLE_CHOICE");
+    expect(r).toEqual({ ok: false, errors: ["SINGLE_CHOICE needs exactly 4 options with ids a, b, c, d"] });
+    const wrongIds = { ...choice(), options: choice().options.map((o, i) => ({ ...o, id: ["a", "b", "c", "e"][i] })) };
+    expect(wireToItem(wire(wrongIds), "SINGLE_CHOICE").ok).toBe(false);
+    expect(wireToItem(wire(three), "MULTI_CHOICE").ok).toBe(true);
+  });
+
   it("SINGLE_CHOICE", () => {
     const r = wireToItem(wire(choice()), "SINGLE_CHOICE");
     expect(r.ok).toBe(true);
