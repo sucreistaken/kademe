@@ -63,7 +63,7 @@
   --color-accent: #0b6f84;
   --color-accent-hover: #095c6e;
   --color-accent-soft: #dff5fa; /* selection and current-place tint */
-  --color-accent-deep: #0891ab;
+  --color-accent-deep: #0a5868; /* text on white, paper and accent-soft at 7:1 or more (report sheets) */
 
   /* Brand (Campus German logo). */
   --color-brand: #0bbfdf; /* the primary action's fill, ink text only */

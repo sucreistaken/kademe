@@ -41,6 +41,7 @@ describe("Kademe tokens keep their meaning", () => {
   it.each([
     ["--color-accent", "#0b6f84"],
     ["--color-accent-soft", "#dff5fa"],
+    ["--color-accent-deep", "#0a5868"],
     ["--color-muted", "#5e656e"],
     ["--color-canvas", "#faf7f2"],
     ["--color-surface", "#ffffff"],
@@ -124,6 +125,12 @@ describe("text stays readable (WCAG AA, 4.5:1)", () => {
     expect(contrast("#ffffff", theme["--color-accent-hover"])).toBeGreaterThanOrEqual(4.5);
     expect(contrast(theme["--color-accent"], theme["--color-accent-soft"])).toBeGreaterThanOrEqual(4.5);
     expect(contrast(root["--primary"], root["--brand-soft"])).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("reads the deep accent as text at 4.5:1 on white, paper and the accent tint (the report sheets set it as text)", () => {
+    for (const ground of ["--color-surface", "--color-paper", "--color-accent-soft"]) {
+      expect(contrast(theme["--color-accent-deep"], theme[ground]), `accent-deep on ${ground}`).toBeGreaterThanOrEqual(4.5);
+    }
   });
 
   it.each(["--color-yellow-soft", "--color-yellow", "--color-diff-easy", "--color-diff-medium", "--color-diff-hard"])(
