@@ -121,6 +121,41 @@ export function ReportSheet({ model, t, locale }: { model: ReportModel; t: T; lo
           <p className="mt-3 text-[11.5px] text-muted">{t("resultReport.scaleNote")}</p>
         </div>
 
+        {m.feedback ? (
+          <section className="mt-6 rounded-[14px] bg-canvas px-5 py-4" aria-labelledby="report-feedback">
+            <h2 id="report-feedback" className="text-[13px] font-semibold uppercase tracking-[0.06em] text-muted">
+              {t("resultReport.feedbackTitle")}
+            </h2>
+            {m.feedback.strengths.length ? (
+              <ul className="mt-2 list-disc pl-5 text-[12.5px] leading-[1.5] text-ink-2">
+                {m.feedback.strengths.map((x) => (
+                  <li key={x}>{x}</li>
+                ))}
+              </ul>
+            ) : null}
+            {m.feedback.improve.length ? (
+              <>
+                <div className="mt-2 text-[12px] font-semibold text-ink">{t("resultReport.feedbackImprove")}</div>
+                <ul className="mt-1 flex flex-col gap-1.5 text-[12.5px] leading-[1.5] text-ink-2">
+                  {m.feedback.improve.map((i) => (
+                    <li key={i.topic}>
+                      <span className="font-semibold text-ink">{i.topic}.</span> {i.why}
+                      {i.example ? (
+                        <span lang="de" className="ml-1 italic text-ink">
+                          ({i.example})
+                        </span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : null}
+            <p className="mt-2 text-[12.5px] leading-[1.5] text-ink-2">
+              <span className="font-semibold text-ink">{t("resultReport.feedbackNext")}:</span> {m.feedback.nextStep}
+            </p>
+          </section>
+        ) : null}
+
         <div className="mt-auto grid grid-cols-[1fr_auto] items-end gap-8 border-t border-line pt-5">
           <dl className="grid grid-cols-2 gap-x-6 text-[13px]">
             <div>

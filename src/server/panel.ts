@@ -221,6 +221,7 @@ export async function loadResultView(orgId: string, assessmentId: string) {
         ...gradingRevs.map((r) => r.changedBy),
         ...resultRevs.map((r) => r.changedBy),
         head.result?.finalizedBy,
+        head.result?.studentFeedback?.approvedBy,
         attempt?.integrityDecidedBy,
       ].filter((x): x is string => !!x),
     ),

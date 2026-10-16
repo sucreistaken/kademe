@@ -14,6 +14,7 @@ import {
 import type { BlueprintConfig } from "@/lib/exam/blueprint";
 import type { GradingProposal } from "@/lib/exam/grading";
 import type { ComputedResult } from "@/lib/exam/result";
+import type { StudentFeedbackStore } from "@/lib/exam/student-feedback";
 import type { ItemContent, ItemKey, ItemRubric } from "@/lib/exam/types";
 import { assessments, attempts, itemResponses } from "./assessment";
 import { aiRuns } from "./compliance";
@@ -247,6 +248,8 @@ export const examResults = pgTable("exam_results", {
   finalizedAt: timestamp("finalized_at", { withTimezone: true }),
   releasedAt: timestamp("released_at", { withTimezone: true }),
   releasedBy: uuid("released_by").references(() => users.id, { onDelete: "set null" }),
+  /** AI-drafted note for the student; only `approved` (a teacher's decision) ever reaches the report. */
+  studentFeedback: jsonb("student_feedback").$type<StudentFeedbackStore>(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

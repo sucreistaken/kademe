@@ -33,9 +33,9 @@ export type GapPart =
 export type DetailRow = { label: string; given: string; key: string; mark: DetailMark };
 
 export type DetailQuestion =
-  | { kind: "GAP"; n: number; level: Cefr; cTest: boolean; parts: GapPart[] }
-  | { kind: "CHOICE"; n: number; level: Cefr; stem: string; given: string; key: string; mark: DetailMark }
-  | { kind: "ROWS"; n: number; level: Cefr; variant: "TFNG" | "MATCHING"; stem: string; rows: DetailRow[] };
+  | { kind: "GAP"; n: number; level: Cefr; skillTag: string; cTest: boolean; parts: GapPart[] }
+  | { kind: "CHOICE"; n: number; level: Cefr; skillTag: string; stem: string; given: string; key: string; mark: DetailMark }
+  | { kind: "ROWS"; n: number; level: Cefr; skillTag: string; variant: "TFNG" | "MATCHING"; stem: string; rows: DetailRow[] };
 
 export type DetailBlock = {
   /** Title of the reading text or the recording the questions belong to; null for stand-alone items. */
@@ -173,7 +173,7 @@ function objectiveQuestion(r: DetailResponse, n: number, acceptedGaps: readonly 
     if (!parts) return null;
     const gaps = rows.rows;
     return {
-      question: { kind: "GAP", n, level: s.level, cTest: s.skillTag === "grammar.ctest", parts },
+      question: { kind: "GAP", n, level: s.level, skillTag: s.skillTag, cTest: s.skillTag === "grammar.ctest", parts },
       correct: gaps.filter((g) => g.mark === "correct" || g.mark === "accepted").length,
       total: gaps.length,
     };
@@ -184,6 +184,7 @@ function objectiveQuestion(r: DetailResponse, n: number, acceptedGaps: readonly 
         kind: "ROWS",
         n,
         level: s.level,
+        skillTag: s.skillTag,
         variant: rows.variant === "TFNG" ? "TFNG" : "MATCHING",
         stem: stemOf(s.prompt),
         rows: rows.rows.map((x) => ({ label: squash(x.label), given: x.given, key: x.key, mark: x.mark })),
@@ -206,7 +207,7 @@ function objectiveQuestion(r: DetailResponse, n: number, acceptedGaps: readonly 
   const full = (r.score ?? 0) >= 1;
   const mark: DetailMark = !given ? "blank" : wholeAccepted ? "accepted" : full ? "correct" : "wrong";
   return {
-    question: { kind: "CHOICE", n, level: s.level, stem: stemOf(s.prompt), given, key, mark },
+    question: { kind: "CHOICE", n, level: s.level, skillTag: s.skillTag, stem: stemOf(s.prompt), given, key, mark },
     correct: mark === "correct" || mark === "accepted" ? 1 : 0,
     total: 1,
   };

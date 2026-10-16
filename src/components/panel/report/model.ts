@@ -1,10 +1,12 @@
 import { createHmac } from "node:crypto";
+import { approvedFeedback, type FeedbackContent, type StudentFeedbackStore } from "@/lib/exam/student-feedback";
 import { CEFR_LEVELS, type Cefr, type Section } from "@/lib/exam/types";
 
 /**
  * The printable result report, as data. Pure: the page loads the rows, this
  * turns them into exactly what the sheet may show. This summary (page 1)
- * carries levels only: no item, answer, key or AI score.
+ * carries levels only: no item, answer, key or AI score. The one piece of
+ * free text is the teacher-approved feedback; a draft is never passed on.
  *
  * Deliberate decision (2026-10-16): the report is given to the student, so the
  * school must be able to show exactly what was answered wrongly. The detailed
@@ -30,6 +32,8 @@ export type ReportSource = {
   teacherName: string | null;
   finalizedAt: Date | null;
   attemptId: string;
+  /** The stored feedback row; only its teacher-approved text can reach the model. */
+  feedback?: StudentFeedbackStore | null;
 };
 
 export type ReportSkill = { section: Section; level: Cefr | null };
@@ -46,6 +50,8 @@ export type ReportModel = {
   teacherName: string | null;
   finalizedAt: Date | null;
   verificationCode: string;
+  /** The teacher-approved feedback for the student, or null. A draft is never here. */
+  feedback: FeedbackContent | null;
 };
 
 /** A report is only for a decided result: the teacher finalised it. */
@@ -79,6 +85,7 @@ export function buildReport(src: ReportSource, secret: string): { ok: true; mode
       teacherName: src.teacherName,
       finalizedAt: src.finalizedAt,
       verificationCode: verificationCode(src.attemptId, secret),
+      feedback: approvedFeedback(src.feedback),
     },
   };
 }
