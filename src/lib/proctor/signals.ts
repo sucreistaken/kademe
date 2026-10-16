@@ -58,9 +58,11 @@ export const DEFAULT_SIGNAL_CONFIG: SignalConfig = {
   gazeYawDeg: 30,
   gazeDownPitchDeg: -20,
   typingGraceMs: 2_000,
-  phoneThreshold: 0.4,
-  phoneHits: 2,
-  phoneWindow: 3,
+  // 0.4 with 2 of 3 warned students who had no phone (2026-10-16): a hand or
+  // a dark object near the face scores that high on efficientdet_lite0.
+  phoneThreshold: 0.55,
+  phoneHits: 3,
+  phoneWindow: 4,
   phoneCooldownMs: 20_000,
 };
 

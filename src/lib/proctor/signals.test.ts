@@ -134,15 +134,20 @@ describe("PHONE_DETECTED", () => {
     return { phoneScore: i % 5 === 0 ? (scores[i / 5] ?? 0) : null };
   };
 
-  it("needs 2 hits among the last 3 scored frames", () => {
-    const ev = play([[10_000, scored([0.9, 0.1, 0.1, 0.9, 0.1, 0.1, 0.1])]]);
+  it("needs 3 hits among the last 4 scored frames", () => {
+    const ev = play([[10_000, scored([0.9, 0.9, 0.1, 0.1, 0.9, 0.1, 0.9, 0.1])]]);
     expect(only(ev, "PHONE_DETECTED")).toEqual([]);
   });
 
-  it("fires instantly on the second hit, skipping unscored frames", () => {
-    const ev = play([[10_000, scored([0.1, 0.5, 0.2, 0.6])]]);
+  it("ignores weak scores", () => {
+    const ev = play([[10_000, scored(Array(10).fill(0.45))]]);
+    expect(only(ev, "PHONE_DETECTED")).toEqual([]);
+  });
+
+  it("fires instantly on the third hit, skipping unscored frames", () => {
+    const ev = play([[10_000, scored([0.1, 0.6, 0.2, 0.7, 0.8])]]);
     expect(only(ev, "PHONE_DETECTED")).toEqual([
-      { kind: "START", type: "PHONE_DETECTED", t: 3000 },
+      { kind: "START", type: "PHONE_DETECTED", t: 4000 },
     ]);
   });
 
@@ -153,7 +158,7 @@ describe("PHONE_DETECTED", () => {
 
   it("waits 20 seconds before firing again", () => {
     const ev = play([[45_000, scored(Array(45).fill(0.9))]]);
-    expect(only(ev, "PHONE_DETECTED").map((e) => e.t)).toEqual([1000, 21_000, 41_000]);
+    expect(only(ev, "PHONE_DETECTED").map((e) => e.t)).toEqual([2000, 22_000, 42_000]);
   });
 
   it("respects a config override", () => {

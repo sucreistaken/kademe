@@ -137,9 +137,10 @@ function ChoiceItem({ item, answer, onChange, disabled }: ItemProps) {
 }
 
 /**
- * True / false / not given. The buttons carry the letters the German
- * instruction uses (R, F, NG). NG is offered in listening too, because the
- * bank's listening items use it; it is worded for a recording there.
+ * True / false / not given. The buttons show only the letters the German
+ * instruction uses (R, F, NG); the full word is in the label and tooltip.
+ * NG is offered in listening too, because the bank's listening items use it;
+ * it is worded for a recording there.
  */
 function TfngItem({ item, answer, onChange, disabled }: ItemProps) {
   const t = useT("exam");
@@ -177,20 +178,13 @@ function TfngItem({ item, answer, onChange, disabled }: ItemProps) {
                       disabled={disabled}
                       onKeyDown={radioKeys}
                       onClick={() => onChange({ tfng: { ...(answer.tfng ?? {}), [s.id]: v } })}
+                      title={label}
                       className={cn(
-                        "flex h-10 items-center gap-2 rounded-[8px] border px-3 text-[14px] font-medium",
-                        on ? "border-accent bg-accent-soft text-ink" : "border-line text-ink-2 hover:border-line-strong",
+                        "flex h-10 min-w-12 items-center justify-center rounded-[8px] border px-3 text-[14px] font-semibold",
+                        on ? "border-accent bg-accent text-white" : "border-line-strong text-ink-2 hover:border-accent hover:text-ink",
                       )}
                     >
-                      <span
-                        className={cn(
-                          "flex h-6 min-w-6 items-center justify-center rounded-[5px] px-1 text-[12px] font-semibold",
-                          on ? "bg-accent text-white" : "border border-line-strong text-muted",
-                        )}
-                      >
-                        {v}
-                      </span>
-                      {label}
+                      {v}
                     </button>
                   );
                 })}
@@ -373,30 +367,42 @@ function MatchingItem({ item, answer, onChange, disabled }: ItemProps) {
   const matches = answer.matches ?? {};
   const used = new Set(Object.values(matches).filter(Boolean));
   const setRow = (rowId: string, targetId: string | null) => onChange({ matches: withMatch(matches, rowId, targetId) });
+  // "Anzeige A" says nothing the letter does not: the texts are in the reading
+  // passage, so the list is left out and only a "0" target is explained.
+  const bare = targets.every((r) => r.badge === "0" || /^(?:\p{L}+\s+)?[A-Z]$/u.test(r.label.trim()));
+  const zero = targets.find((r) => r.badge === "0");
   return (
     <div>
       <Prompt text={item.prompt} />
-      <section aria-labelledby={`${uid}-targets`} className="mt-4 rounded-[12px] border border-line bg-canvas px-4 py-3">
-        <h3 id={`${uid}-targets`} className="text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted">
-          {ti("matchTargets")}
-        </h3>
-        <ul className="mt-2 flex flex-col gap-1.5">
-          {targets.map((r) => {
-            const isUsed = used.has(r.id);
-            return (
-              <li key={r.id} className={cn("flex items-start gap-3", isUsed && "opacity-60")}>
-                <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-line-strong bg-surface text-[13px] font-semibold text-ink">
-                  {r.badge}
-                </span>
-                <span lang="de" className="pt-0.5 text-[15px] leading-[1.5] text-ink">
-                  {r.label}
-                </span>
-                {isUsed ? <span className="ml-auto shrink-0 pt-1 text-[12px] text-muted">✓ {ti("matchUsed")}</span> : null}
-              </li>
-            );
-          })}
-        </ul>
-      </section>
+      {bare ? (
+        zero ? (
+          <p lang="de" className="mt-3 text-[14px] text-ink-2">
+            0 = {zero.label}
+          </p>
+        ) : null
+      ) : (
+        <section aria-labelledby={`${uid}-targets`} className="mt-4 rounded-[12px] border border-line bg-canvas px-4 py-3">
+          <h3 id={`${uid}-targets`} className="text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted">
+            {ti("matchTargets")}
+          </h3>
+          <ul className="mt-2 flex flex-col gap-1.5">
+            {targets.map((r) => {
+              const isUsed = used.has(r.id);
+              return (
+                <li key={r.id} className={cn("flex items-start gap-3", isUsed && "opacity-60")}>
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-line-strong bg-surface text-[13px] font-semibold text-ink">
+                    {r.badge}
+                  </span>
+                  <span lang="de" className="pt-0.5 text-[15px] leading-[1.5] text-ink">
+                    {r.label}
+                  </span>
+                  {isUsed ? <span className="ml-auto shrink-0 pt-1 text-[12px] text-muted">✓ {ti("matchUsed")}</span> : null}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
       <p className="mt-4 text-[12.5px] text-muted">{ti("matchHint")}</p>
       <div className="mt-2 flex flex-col gap-2.5">
         {item.content.left.map((l, n) => {
@@ -444,7 +450,7 @@ function MatchingItem({ item, answer, onChange, disabled }: ItemProps) {
               {/* One line, reserved even when empty, so a pick never moves the rows below. */}
               <div className="mt-2 flex h-6 items-center justify-between gap-3">
                 <p lang="de" title={chosen?.label} className="min-w-0 truncate text-[14px] text-ink-2">
-                  {chosen ? (
+                  {chosen && !bare ? (
                     <>
                       <span aria-hidden>→ </span>
                       {chosen.label}
