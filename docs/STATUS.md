@@ -3,7 +3,7 @@
 Campus German redesign, Plan 1 (2026-10-16, `platform/solutions`, canlıya çıkmadı): bkz. "Campus German redesign, Plan 1" bölümü.
 Son güncelleme: 2026-10-07 (Gelişmiş: tek kutu, AI önce, `platform/solutions` dalında, yerelde gerçek Gemini ile denendi; canlıya çıkmadı). Önceki: 2026-10-06 (işe alım plan 2b, görsel akış ve rehberli panel, `platform/solutions` dalında; bulut oturumunda tip, lint, test ve build ile doğrulandı, veritabanı betikleri ve tarayıcı turu yerel oturumu bekliyor; canlıya çıkmadı).
 Önceki: 2026-10-05 (işe alım plan 2, aday akışı, platform/solutions dalında, yerelde doğrulandı; canlıya çıkmadı); 2026-10-04 (çekirdek ayrımı ve işe alım plan 1, kütüphane ve alımlar, `platform/solutions` dalında, yerelde doğrulandı; canlıya çıkmadı).
-**Canlıda**: https://kademe.kadiray.com, `main` commit `8e945da` (2026-10-16 18:23 UTC: Campus German görünümü, Plan 1; ayrıntı "Canlıya çıkış: Campus German görünümü, Plan 1"). Önceki sürümler (aşağıdaki "Canlıya çıkış" bölümleri): `ab951b1` (okul yöneticisi geri bildirimi), `1d8d4c6` (onSET yerleştirme), `5a4f97e` (kurs grubu sürümü, 2026-10-14), `02760e3` (2026-10-07 akşam: Bugün yeni tasarım, 3 adımlı alım sihirbazı, "en az 2 değerlendirici" kuralı kaldırıldı, soru bankası v2; ayrıntı "Canlıya çıkış: sihirbaz ve banka v2"), `0142ff0` (Gelişmiş). Önceki not: commit `739f218` (`main`, 2026-10-05 sınav sıcak düzeltmesi; ayrıntı "Kararlar ve sapmalar"da).
+**Canlıda**: https://kademe.kadiray.com, `main` commit `2cf125c` (2026-10-16 18:45 UTC: krem zemin yerine Campus German beyazı ve soğuk griler; ondan önce `8e945da`, Campus German görünümü, Plan 1; ayrıntı "Canlıya çıkış: Campus German görünümü, Plan 1"). Önceki sürümler (aşağıdaki "Canlıya çıkış" bölümleri): `ab951b1` (okul yöneticisi geri bildirimi), `1d8d4c6` (onSET yerleştirme), `5a4f97e` (kurs grubu sürümü, 2026-10-14), `02760e3` (2026-10-07 akşam: Bugün yeni tasarım, 3 adımlı alım sihirbazı, "en az 2 değerlendirici" kuralı kaldırıldı, soru bankası v2; ayrıntı "Canlıya çıkış: sihirbaz ve banka v2"), `0142ff0` (Gelişmiş). Önceki not: commit `739f218` (`main`, 2026-10-05 sınav sıcak düzeltmesi; ayrıntı "Kararlar ve sapmalar"da).
 Canlı veritabanı kullanıcı onayıyla sıfırlandı: eski işe alım verisi yok,
 panel kullanıcıları (parolalarıyla) taşındı, banka ve iki sınav yüklendi.
 
@@ -209,6 +209,8 @@ Not checked: the system check beyond its first screen (this Chrome has a second 
   5 zamanlayıcı durduruldu; pull, install, `db:migrate` (yeni göç yok); build tamam; `.next/cache` silindi; servis ve 5 zamanlayıcı
   active; `/login` 200 (127.0.0.1 ve https). Canlı giriş sayfası Chrome'da görüldü: camgöbeği buton koyu yazıyla, üç renkli logo,
   yapraklı "bir Campus German ürünü".
+- 18:45 UTC ek sürüm `8e945da` -> `2cf125c` (kullanıcı: "krem rengi kötü olmuş"): nötrler Campus German beyazı ve soğuk grileri; yedek
+  `kademe-redesign-20261016-1845.dump`; build tamam, servis ve 5 zamanlayıcı active, `/login` 200 (127.0.0.1 ve https).
 - Doğrulanmadı: canlıda sınav ekranları ve öğretmen paneli (panel şifresi yalnız hash olarak var).
 - Geri dönüş: servis + zamanlayıcıları durdur, `git checkout 3316b78`, build, başlat (veri değişmedi; yedek yalnız ihtiyat).
 
