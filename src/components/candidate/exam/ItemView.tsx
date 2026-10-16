@@ -415,7 +415,11 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
         })}
       </p>
       {pool && placement ? (
-        <div className="mt-4">
+        // Stays just above the fixed bottom bar, so the parts are in reach while the text scrolls.
+        <div
+          style={{ bottom: "var(--step-footer-space, 112px)" }}
+          className="sticky z-10 mt-4 border-t border-hairline bg-canvas pb-3 pt-3"
+        >
           <p className="text-[14px] text-ink-2">{ti("ctestHint")}</p>
           <div role="group" aria-label={ti("ctestPool")} className="mt-2 flex flex-wrap gap-2">
             {pool.map((chip, idx) =>
