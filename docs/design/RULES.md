@@ -1,5 +1,18 @@
 # Kademe design rules
 
+> **Current visual contract (2026-10-16): the Campus German redesign.** The look is
+> defined by `docs/design/ux-designs/ux-kademe-2026-10-16/DESIGN.md` (look, tokens,
+> color rules) and `EXPERIENCE.md` (behavior), with the mockups in
+> `docs/design/ux-designs/ux-kademe-2026-10-16/mockups/`. Where this file, the
+> 2026-10-14 "soft" look or `HIRING-UX.md` section 8 disagree on color, shape or the
+> mark, those two documents win. Plan 1 (tokens, button, mark, mascot, notices,
+> difficulty chip) is in code; Plans 2 and 3 move the screens over (see
+> `docs/STATUS.md`). The short form: primary action is brand cyan with ink text
+> (never white on cyan); red is only the mark, the mascot, celebration, the recording
+> dot and a small error frame; warnings and errors are yellow-soft with ink text;
+> the five exam sections are neutral (icon + word); difficulty tints exist in the
+> teacher panel only.
+
 Layout source: `docs/design/kademe-canvas.html` (exported from Claude Design). Its
 colours, font and corners are the earlier look; for those, `src/app/globals.css` wins.
 Artboards are `<div class="dv-opt" id="Y1">` … `Y7` (manager) and `A8` … `A12`
@@ -17,15 +30,26 @@ PY
 ## Non-negotiable rules
 
 Since 2026-10-14 the app uses the "soft" look (user decision): softer colours,
-a light gamified feel and a rounded font. The full token contract is the
-comment at the top of `src/app/globals.css`; the rules below follow it.
+a light gamified feel and a rounded font. Since 2026-10-16 the colours, the
+mark and the notices follow the Campus German redesign (see the note at the top).
+The full token contract is the comment at the top of `src/app/globals.css`;
+the rules below follow it.
 
-1. **One brand green** (`accent`, `#157a5a`) for the primary action, the
-   current place (active nav, chosen card, focus ring) and progress. Five
-   pastel families (mint, sky, grape, sun, coral) mark categories such as the
-   exam sections, never a verdict: no screen a student sees while answering
-   colours anything as right or wrong. Warn (sun, amber allowed) and success
-   (mint) exist as semantic tones.
+1. **Brand cyan for the action, dark cyan for the place.** The primary action
+   is `brand` (`#0BBFDF`) with ink text (`on-brand`, 7.3:1); white text on it is
+   2.2:1 and forbidden (`no-white-on-brand.test.ts`). The current place (active
+   nav, chosen card, focus ring, links) and progress use `accent` (`#0B6F84`,
+   the dark brand cyan, readable as text). Yellow is the flag and the warning
+   glyph; red is the brand (mark, mascot, celebration), the recording dot and a
+   small error frame only, never a button, text, result, level or timer. The
+   exam sections are icon + word on a neutral tile: no five colours. The old
+   pastel names (mint, sky, grape, sun, coral) still compile but resolve to the
+   brand-aligned neutral set; do not use them to tell categories apart. No
+   screen a student sees while answering colours anything as right or wrong.
+   Warnings and error notices are yellow-soft with ink text (`Notice`,
+   `src/components/ui/notice.tsx`). Difficulty (Kolay, Orta, Zor) is a tinted chip
+   with a 1/2/3 step glyph and the word, teacher panel only
+   (`src/components/panel/difficulty-chip.tsx`).
 2. **One filled button per screen.** Everything else is outline or text.
 3. **Status may be a soft pill** (`Badge`, `StatusDot` with `pill`) with a word
    in it. Colour is never the only signal.
@@ -41,8 +65,9 @@ comment at the top of `src/app/globals.css`; the rules below follow it.
 7. **No dead ends.** Empty lists, zero-result filters and finished flows all
    point at a concrete next action.
 8. Font: Nunito (rounded, latin + latin-ext), via `next/font` in
-   `src/app/layout.tsx`. Corners are round everywhere: 10 small items, 14
-   buttons and fields, 20 cards, 26 the large candidate cards, full for pills.
+   `src/app/layout.tsx`. Corners are round everywhere: 9 small items, 13
+   items, 18 buttons and fields, 30 cards, 36 the large candidate card, full
+   for pills (`--radius-sm` to `--radius-2xl` in `globals.css`).
    Some exam screens still use literal px radii; a bridge block at the end of
    `globals.css` maps them onto the scale until they move over. Spacing base 4px.
 9. **The mascot** is the tallest logo step come alive ("canlı basamak"): it is
@@ -59,17 +84,21 @@ comment at the top of `src/app/globals.css`; the rules below follow it.
 Defined in `src/app/globals.css` and nowhere else.
 
 - Kademe tokens under `@theme`, real Tailwind utilities: `bg-surface`,
-  `bg-canvas`, `border-line`, `text-muted`, `text-ink`, `bg-accent`,
-  `text-accent`, `bg-accent-soft`, `text-danger`, plus `success`, `warn` and
-  the pastel families (`mint`, `sky`, `grape`, `sun`, `coral`, each with
-  `-soft` and `-fill`).
+  `bg-canvas`, `bg-cream`, `border-line`, `text-muted`, `text-ink`,
+  `bg-brand` with `text-on-brand` (the primary fill), `bg-accent`,
+  `text-accent`, `bg-accent-soft`, `bg-yellow`, `bg-yellow-soft`, `fill-red`
+  (brand drawings only), `border-error`, `bg-diff-easy`, `bg-diff-medium`,
+  `bg-diff-hard` (teacher panel only), plus `success`, `warn`, `danger`
+  (legacy red: the integrity severities still use it until Plan 3, no new
+  use) and the legacy pastel names (`mint`, `sky`, `grape`, `sun`, `coral`, each
+  with `-soft` and `-fill`), now the brand-aligned neutral set.
 - shadcn variables under `:root` with the HIRING-UX 8.2 values, exposed by
   `@theme inline`: `bg-background`, `bg-card`, `bg-popover`, `bg-primary`,
   `bg-secondary`, `bg-muted-surface` (shadcn's background "muted"),
   `text-muted-foreground`, `bg-subtle` (shadcn's "accent", a neutral hover
   ground), `bg-brand-soft` (active nav and selected row), `text-destructive`,
   `border-border`, `border-input`, `ring-ring`, `bg-sidebar` and `sidebar-*`.
-- `accent` always means the brand green and `muted` always means grey text.
+- `accent` always means the dark brand cyan (text, links, focus, progress; the primary fill is `brand`) and `muted` always means grey text.
   A shadcn class that says `accent` or `muted` for a background is a bug; the
   normalizer (`pnpm ui:normalize`) and `shadcn-vendored.test.ts` catch it.
 - Shadows: `shadow-panel` and `shadow-modal` (exam screens, unchanged values),

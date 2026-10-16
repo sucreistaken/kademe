@@ -1,5 +1,6 @@
 # Kademe - durum ve devir belgesi
 
+Campus German redesign, Plan 1 (2026-10-16, `platform/solutions`, canlıya çıkmadı): bkz. "Campus German redesign, Plan 1" bölümü.
 Son güncelleme: 2026-10-07 (Gelişmiş: tek kutu, AI önce, `platform/solutions` dalında, yerelde gerçek Gemini ile denendi; canlıya çıkmadı). Önceki: 2026-10-06 (işe alım plan 2b, görsel akış ve rehberli panel, `platform/solutions` dalında; bulut oturumunda tip, lint, test ve build ile doğrulandı, veritabanı betikleri ve tarayıcı turu yerel oturumu bekliyor; canlıya çıkmadı).
 Önceki: 2026-10-05 (işe alım plan 2, aday akışı, platform/solutions dalında, yerelde doğrulandı; canlıya çıkmadı); 2026-10-04 (çekirdek ayrımı ve işe alım plan 1, kütüphane ve alımlar, `platform/solutions` dalında, yerelde doğrulandı; canlıya çıkmadı).
 **Canlıda**: https://kademe.kadiray.com, commit `02760e3` (2026-10-07 akşam: Bugün yeni tasarım, 3 adımlı alım sihirbazı, "en az 2 değerlendirici" kuralı kaldırıldı, soru bankası v2; ayrıntı "Canlıya çıkış: sihirbaz ve banka v2"). Önceki: `0142ff0` (Gelişmiş). Önceki not: commit `739f218` (`main`, 2026-10-05 sınav sıcak düzeltmesi; ayrıntı "Kararlar ve sapmalar"da).
@@ -161,6 +162,42 @@ Spec `docs/superpowers/specs/2026-10-06-advanced-ai-create-design.md`, plan
 - Canlı Gemini turunda bulunup düzeltilen: "okuma ağırlıklı" yalnız okuma sınavı kuruyordu (`43eded2`); değişiklik
   kutusu taslağı sunucuda güncelliyor ama kartlar yenilenmeden eski kalıyordu (`4705582`); toplam 100 iken "100 olmalı"
   yazıyordu (`488f3fe`).
+
+## Campus German redesign, Plan 1 (2026-10-16, `platform/solutions`, NOT deployed)
+
+Plan: `docs/superpowers/plans/2026-10-16-campus-german-redesign-foundation.md`. Spec: `docs/design/ux-designs/ux-kademe-2026-10-16/` (`DESIGN.md`, `EXPERIENCE.md`, `mockups/`); `docs/design/RULES.md` now points at it as the current visual contract. Plan 1 changes the shared tokens and primitives only, so every screen picks up the new look without being rewritten. Nothing was deployed: production stays on the last release listed above (main `1d8d4c6`), and a deploy needs the owner's "canlıya al".
+
+What changed (commits on `platform/solutions`):
+- Tokens (`d66b20f`, `a4cecb5`): brand cyan `#0BBFDF`, yellow, red, ink; warm neutral grounds; the deep accent `#0B6F84` readable as text; corners 9/13/18/30/36; lips under pressables and cards; difficulty tints; the old pastel names resolve to a neutral set.
+- Primary button (`4b2e985`): brand cyan with ink text, never white on cyan (`no-white-on-brand.test.ts`); the frozen StepFooter markup was re-captured. Hand-rolled filled buttons swept to the same primary (`4e4dbd9`).
+- Mark and lockup (`a2adc85`): the Kademe mark in the three Campus German colours with the "bir Campus German ürünü" byline and its petal glyph.
+- Mascot (`a65e1da`): redrawn as the yellow step of the mark.
+- Sections and status (`06986c3`, `70ca7f1`): the five exam sections are icon + word on a neutral tile; the active status is a cyan dot.
+- Notices (`767d0c1`, `787b80d`): errors and warnings are yellow-soft with ink text and a yellow "!" glyph (`src/components/ui/notice.tsx`); a scan test forbids red notice boxes in `src/components/candidate/**`.
+- Difficulty chip (`a6f191a`, `4904f85`): `src/components/panel/difficulty-chip.tsx` (Kolay/Orta/Zor, tint + 1/2/3 step glyph + word). Not used on any screen yet.
+
+Plan 2 (candidate screens to mockup fidelity, written after Plan 1 ships): welcome page fits the 650px visible height; exam top bar, progress strip and bottom bar in the new look at the shipped sizes; C-test chips in the new look at the shipped sizes; section intro; review; finish with the celebrate mascot; proctor warning card (yellow tile, counter pill); system check steps.
+
+Plan 3 (panel, report and hiring): sign-in copy "Sınav linkinizi okulunuz iletir"; panel nav; invite Zorluk tiles and the difficulty chip in result rows (shift -1/0/+1 to EASY/MEDIUM/HARD); "Gözden geçir" yellow-soft row for "doğrulanamadı"; printed level report (ink mark, no hue, the new declared-level outcome row); integrity severities without red; hiring screens.
+
+Owner decisions of 2026-10-16 (for Plans 2 and 3): (1) the exam bottom bar and the C-test keep the shipped sizes (one-row bar about 66px, passage 17px); only the new colors and shapes are applied, not the spec's 92px bar and 23px passage. (2) Teacher-side wrong answers in the result review (`objective-section.tsx`) become an ink cross on cream, no red; right answers keep the cyan tick.
+
+Browser pass (Claude in Chrome, the owner's Chrome session, dev server on 3100 and DB `kademe_platform`, no `PROCTOR_DEV_FAKE`, 2026-10-16). The Chrome window reports a 2400x1161 CSS px viewport and `resize_window` did not change it, so each screen was rendered in a same-origin iframe at 1366x650 (sign-in, candidate) or 1366x768 (panel) to match the mockup frames. Screenshots were looked at but not saved into the repo. Seen and fine:
+- Primary buttons: "Giriş yap" and "Kabul ediyorum, başlayalım" compute to cyan `rgb(11,191,223)` with ink `rgb(29,33,39)` text; "Öğrenci davet et", "Alım aç" and "İncele" look the same in the screenshots (colors not read from the DOM). A computed-style scan of `/dashboard`, `/exam/exams`, `/exam/bank`, `/hiring/openings`, `/advanced`, `/library/competencies`, `/library/positions` found no element with white text on the cyan fill, and no red at all on those seven routes.
+- Red: a computed-style scan found it only inside the mark and mascot SVGs on the welcome page, the system check hold screen and the result summary (the exception is the integrity tab, below). Sign-in, the students list and the invite wizard were judged by eye only (no red seen).
+- The mark shows cyan, red and yellow bars on a cream tile and the byline has the petal glyph, in every lockup seen (sign-in, welcome, system check, panel sidebar).
+- Welcome: five neutral section tiles (cream disc, icon, word), wave-pose mascot, disabled start button in cream with its reason underneath, enabled one cyan with ink text after the checkbox; the system check hold screen shows the worried mascot and the yellow-soft notice with ink text.
+- Invite wizard steps 1 and 2: cyan-soft selected card with a deep-cyan frame, no red; the "Zorluk" and declared-level chips are plain.
+
+Differences from the mockups, as input for Plans 2 and 3:
+- Welcome at 1366x650: the content ends at y=636 but the document is 657px tall, 7px past the 650px line, so it still scrolls slightly; the second line of the first three section tiles is cut with an ellipsis ("10-18 soru, ceva...", "6-12 soru, cevap...").
+- System check "İkinci ekranı çıkarın" notice: the text inherits `text-align: center`, so it sits in the middle while the glyph hugs the left edge; the mockup left-aligns the text next to the glyph. The glyph is a 20px rounded square with a "!" character, the mockup draws a 28px yellow disc with a bang icon.
+- Sign-in: copy still reads "Sınav linkiniz e-postayla gönderildi" (Plan 3 copy); fields are 40px, the mockup draws 52px fields with a 2px edge and a lip; no faint leaf texture on the front door. The local server has no `PANEL_PASSWORD_HASH`, so the e-posta + parola form shows, not the password-only card of the mockup.
+- Result, Bütünlük tab (Zeynep Arslan): the timeline ticks (`bg-danger`), the 5px left border and the "Yüksek" pill on severe flags are red. This is the Plan 3 integrity item. The evidence thumbnails show their alt text ("Kamera", "Ekran") instead of images in this local data; I did not look into why.
+- Invite wizard step 2: "Zorluk" is still the three plain chips "Daha kolay (bir seviye aşağı) / Normal / Daha zor (bir seviye yukarı)", not the Kolay/Orta/Zor tiles. The students list has no difficulty chips and no "Gözden geçir" row. The sidebar lists Bugün, Alımlar, Öğrenciler, Gelişmiş, Ayarlar; the mockup lists Bugün, Öğrenciler, Sınavlar, Soru bankası, Gelişmiş, Ayarlar.
+- Not a redesign item: `/exam/students` renders all 305 local rows with no paging (document about 29,000px tall).
+
+Not checked: the system check beyond its first screen (this Chrome has a second display, so the app held at "İkinci ekranı çıkarın"; without `PROCTOR_DEV_FAKE` camera and screen permission are out of reach, and the flag was deliberately not set); the exam section intro, a C-test question, the exam top bar, progress strip and bottom bar, review, finish screen, proctor warning card and recording dot; the printed level report (the only student awaiting review answers "Rapor, sonuç kesinleşmeden hazırlanamaz", and no result was finalized for this); sign-in in password-only mode; the English UI; narrow and mobile widths; hover, focus and keyboard states. Side effects in the local `kademe_platform` DB: one `dev:link` invite ("Dev Öğrenci") got its consent accepted; the invite wizard was filled but not submitted.
 
 ## Canlıya çıkış: okul yöneticisi geri bildirimi (2026-10-16 öğlen, kullanıcı onayıyla: "canlıya al")
 
