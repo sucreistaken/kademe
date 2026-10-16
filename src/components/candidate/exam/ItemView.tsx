@@ -22,6 +22,8 @@ export type ItemProps = {
   answer: ItemAnswer;
   onChange: (next: ItemAnswer) => void;
   disabled?: boolean;
+  /** Group view: an earlier item already showed this instruction. Honoured by TFNG, CHOICE and MATCHING only. */
+  hidePrompt?: boolean;
 };
 
 export function hasAnyAnswer(item: CandidateItem, a: ItemAnswer): boolean {
@@ -85,7 +87,7 @@ function radioKeys(e: KeyboardEvent<HTMLButtonElement>) {
   next.click();
 }
 
-function ChoiceItem({ item, answer, onChange, disabled }: ItemProps) {
+function ChoiceItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps) {
   const t = useT("exam");
   const promptId = useId();
   if (item.content.kind !== "CHOICE") return null;
@@ -101,8 +103,16 @@ function ChoiceItem({ item, answer, onChange, disabled }: ItemProps) {
   };
   return (
     <div>
-      <Prompt text={item.prompt} id={promptId} />
-      <p className="mt-2 text-[12.5px] text-muted">{multiple ? t("pickMany") : t("pickOne")}</p>
+      {hidePrompt ? (
+        <span id={promptId} lang="de" className="sr-only">
+          {item.prompt}
+        </span>
+      ) : (
+        <>
+          <Prompt text={item.prompt} id={promptId} />
+          <p className="mt-2 text-[12.5px] text-muted">{multiple ? t("pickMany") : t("pickOne")}</p>
+        </>
+      )}
       <div role={multiple ? "group" : "radiogroup"} aria-labelledby={promptId} className="mt-4 flex flex-col gap-2">
         {item.content.options.map((o, i) => {
           const on = picked.has(o.id);
@@ -143,7 +153,7 @@ function ChoiceItem({ item, answer, onChange, disabled }: ItemProps) {
  * instruction ("Richtig", "Falsch", "Nicht im Text"), the exam's language;
  * bare letters confused students (school feedback 2026-10-16).
  */
-function TfngItem({ item, answer, onChange, disabled }: ItemProps) {
+function TfngItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps) {
   const uid = useId();
   if (item.content.kind !== "TFNG") return null;
   const values: Array<[TfngValue, string]> = [
@@ -153,8 +163,8 @@ function TfngItem({ item, answer, onChange, disabled }: ItemProps) {
   ];
   return (
     <div>
-      <Prompt text={item.prompt} />
-      <div className="mt-4 flex flex-col gap-3">
+      {hidePrompt ? null : <Prompt text={item.prompt} />}
+      <div className={cn("flex flex-col gap-3", hidePrompt ? "mt-1" : "mt-4")}>
         {item.content.statements.map((s, n) => {
           const picked = answer.tfng?.[s.id];
           const textId = `${uid}-s${n}`;
@@ -307,6 +317,7 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
       setSelected(null);
     } else setSelected(selected === id ? null : id);
   };
+  const slotWidth = `${Math.max(4, ...(pool ?? []).map((c) => c.length)) + 2}ch`;
   const typed = !pool && item.content.gaps.some((g) => !g.choices);
   const attached = !!item.content.attached;
   const marker = (part: string | undefined) => part?.match(/^\{\{([A-Za-z0-9_-]+)\}\}$/) ?? null;
@@ -345,8 +356,8 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
                   aria-pressed={isSelected}
                   data-gap-slot={gap.id}
                   onClick={() => clickSlot(gap.id)}
-                  // The missing part is as long as the stem or one letter longer.
-                  style={{ minWidth: `${Math.max(stem.length + 1, 2)}ch` }}
+                  // Same width for every slot of the item (longest chip), so the size says nothing about the part.
+                  style={{ minWidth: slotWidth }}
                   className={cn(
                     "ml-0 mr-0.5 inline-block h-8 rounded-[6px] border px-1 align-baseline text-[16px] leading-[1.9] text-ink",
                     value ? "border-line-strong bg-surface" : "border-dashed border-line-strong bg-canvas",
@@ -414,8 +425,7 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
           style={{ bottom: "var(--step-footer-space, 112px)" }}
           className="sticky z-10 mt-4 border-t border-hairline bg-canvas pb-3 pt-3"
         >
-          <p className="text-[14px] text-ink-2">{ti("ctestHint")}</p>
-          <div role="group" aria-label={ti("ctestPool")} className="mt-2 flex flex-wrap gap-2">
+          <div role="group" aria-label={ti("ctestPool")} className="flex flex-wrap gap-2">
             {pool.map((chip, idx) =>
               placement.used.has(idx) ? null : (
                 <button
@@ -508,18 +518,28 @@ const MATCH_INSTRUCTION = "Ziehen Sie den passenden Buchstaben in jede Zeile ode
  * hold the aliased target ids the server sent; a cleared row is removed, never
  * stored as "".
  */
-function MatchingItem({ item, answer, onChange, disabled }: ItemProps) {
+function MatchingItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps) {
   const ti = useT("examItems");
   const uid = useId();
   // Same pointer drag as GapItem. The letter buttons in each row stay the click and keyboard path.
   const press = useRef<{ id: string; x: number; y: number; moved: boolean } | null>(null);
   const swallowClick = useRef(false);
   const [drag, setDrag] = useState<{ id: string; x: number; y: number; over: string | null } | null>(null);
+  // Row picked by clicking its card; the next tray click lands there, like GapItem's selected slot.
+  const [selectedRow, setSelectedRow] = useState<string | null>(null);
   if (item.content.kind !== "MATCHING") return null;
   const targets = matchingTargets(item.content.right);
+  const rows = item.content.left;
   const matches = answer.matches ?? {};
   const used = new Set(Object.values(matches).filter(Boolean));
-  const setRow = (rowId: string, targetId: string | null) => onChange({ matches: withMatch(matches, rowId, targetId) });
+  const setRow = (rowId: string, targetId: string | null) => {
+    onChange({ matches: withMatch(matches, rowId, targetId) });
+    setSelectedRow(null);
+  };
+  const clickTarget = (targetId: string) => {
+    const row = selectedRow ?? rows.find((l) => !matches[l.id])?.id;
+    if (row) setRow(row, targetId);
+  };
   // "Anzeige A" says nothing the letter does not: the texts are in the reading
   // passage, so the list is left out and only a "0" target is explained.
   const bare = targets.every((r) => r.badge === "0" || /^(?:\p{L}+\s+)?[A-Z]$/u.test(r.label.trim()));
@@ -529,8 +549,8 @@ function MatchingItem({ item, answer, onChange, disabled }: ItemProps) {
   const dragged = drag ? targets.find((r) => r.id === drag.id) : undefined;
   return (
     <div>
-      <Prompt text={item.prompt} />
-      <p lang="de" className="mt-3 text-[14px] text-ink-2">
+      {hidePrompt ? null : <Prompt text={item.prompt} />}
+      <p lang="de" className={cn("text-[14px] text-ink-2", hidePrompt ? "mt-1" : "mt-3")}>
         {MATCH_INSTRUCTION}
       </p>
       {/* Stays under the page header while the rows scroll, so every row can take a drop. */}
@@ -570,8 +590,11 @@ function MatchingItem({ item, answer, onChange, disabled }: ItemProps) {
                 setDrag(null);
               }}
               onClick={() => {
-                // Only a drag acts here; clicking is what the letters in each row are for.
-                swallowClick.current = false;
+                if (swallowClick.current) {
+                  swallowClick.current = false;
+                  return;
+                }
+                clickTarget(r.id);
               }}
               className={cn(
                 "flex min-h-9 max-w-full cursor-grab touch-none select-none items-start gap-2 rounded-[8px] border bg-surface px-2.5 py-1.5 text-left text-[14px] leading-[1.45] text-ink hover:border-accent",
@@ -604,10 +627,15 @@ function MatchingItem({ item, answer, onChange, disabled }: ItemProps) {
               key={l.id}
               data-match-row
               data-match-drop={l.id}
+              onClick={(e) => {
+                // Empty space of the card selects the row; its buttons keep their own clicks.
+                if (disabled || (e.target as HTMLElement).closest("button")) return;
+                setSelectedRow(selectedRow === l.id ? null : l.id);
+              }}
               className={cn(
                 "rounded-[10px] border bg-surface px-4 py-3",
                 chosen ? "border-line-strong" : "border-line",
-                drag?.over === l.id && "ring-2 ring-accent",
+                (drag?.over === l.id || selectedRow === l.id) && "ring-2 ring-accent",
               )}
             >
               <p id={rowId} lang="de" className="text-[15px] leading-[1.55] text-ink">

@@ -746,6 +746,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
                   sequence={item.sequence}
                   stimulus={item.stimulus}
                   engine={engine}
+                  note={t("listenGroupNote")}
                   onActiveChange={(active) => {
                     audioActiveRef.current = active;
                     if (!active) setLeave(null);
@@ -780,7 +781,13 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
                           </button>
                         ) : null}
                       </h2>
-                      <ItemView item={g} answer={answers[g.sequence] ?? {}} onChange={(a) => change(a, g.sequence)} disabled={inputsOff} />
+                      <ItemView
+                        item={g}
+                        answer={answers[g.sequence] ?? {}}
+                        onChange={(a) => change(a, g.sequence)}
+                        disabled={inputsOff}
+                        hidePrompt={idx > 0 && group[idx - 1].prompt === g.prompt}
+                      />
                     </section>
                   );
                 })}

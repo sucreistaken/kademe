@@ -39,6 +39,7 @@ export function ListeningPlayer({
   engine,
   onActiveChange,
   className,
+  note,
 }: {
   token: string;
   sectionPosition: number;
@@ -48,6 +49,8 @@ export function ListeningPlayer({
   /** True while a clip is loading or playing, so the screen can ask before leaving it. */
   onActiveChange?: (active: boolean) => void;
   className?: string;
+  /** A calm line under the player, inside the same card. */
+  note?: string;
 }) {
   const t = useT("exam");
   const ti = useT("examItems");
@@ -269,6 +272,7 @@ export function ListeningPlayer({
           window.setTimeout(() => engine?.suppressVoice("listening", false), 1000);
         }}
       />
+      {note ? <p className="mt-3 text-[13px] leading-[1.5] text-muted">{note}</p> : null}
     </div>
   );
 }

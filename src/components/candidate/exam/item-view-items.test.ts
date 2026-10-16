@@ -145,6 +145,46 @@ function tfngItem(section: "READING" | "LISTENING"): CandidateItem {
   };
 }
 
+describe("hidePrompt", () => {
+  const withHidden = (item: CandidateItem) =>
+    renderToStaticMarkup(createElement(ItemView, { item, answer: {}, onChange: () => {}, hidePrompt: true }));
+
+  it("leaves out the prompt in TFNG and MATCHING, and keeps it by default", () => {
+    const tf = tfngItem("LISTENING");
+    expect(render(tf)).toContain("Richtig (R), falsch (F) oder nicht im Text (NG)?");
+    expect(withHidden(tf)).not.toContain("nicht im Text (NG)");
+    expect(withHidden(tf)).toContain("Der Kurs beginnt am Montag.");
+    expect(render(sentences)).toContain("Welche Anzeige passt?");
+    expect(withHidden(sentences)).not.toContain("Welche Anzeige passt?");
+  });
+
+  it("keeps a choice group labelled for screen readers when the prompt is hidden", () => {
+    const choice: CandidateItem = {
+      sequence: 1,
+      section: "LISTENING",
+      type: "SINGLE_CHOICE",
+      prompt: "Was ist richtig?",
+      content: { kind: "CHOICE", multiple: false, options: [{ id: "a", text: "Eins" }, { id: "b", text: "Zwei" }] },
+      stimulus: null,
+      answer: null,
+    };
+    const html = withHidden(choice);
+    const id = html.match(/aria-labelledby="([^"]+)"/)?.[1];
+    expect(html).toContain(`id="${id}"`);
+    expect(html).toContain("sr-only");
+    expect(html).not.toContain("pickOne");
+  });
+});
+
+describe("matching selection", () => {
+  it("has no selected row to begin with, and tray chips stay buttons outside the tab order", () => {
+    const html = render(sentences);
+    expect(html).not.toContain("ring-2");
+    const tray = html.split("data-match-tray")[1].split("</div>")[0];
+    expect(tray.match(/<button[^>]*tabindex="-1"/g)).toHaveLength(3);
+  });
+});
+
 describe("true / false / not given", () => {
   it("puts the German words on the buttons, in reading and listening alike", () => {
     for (const section of ["READING", "LISTENING"] as const) {
@@ -211,9 +251,19 @@ describe("C-test word-part pool", () => {
     const html = render(ctest(pool));
     expect(html).not.toContain("<input");
     expect(html).not.toContain("umlautBar");
-    expect(html).toContain("ctestHint");
+    // The German pool instruction says it; no second Turkish line.
+    expect(html).not.toContain("ctestHint");
+    expect(html).toContain('aria-label="ctestPool"');
     expect(html).toMatch(/arb<button[^>]*aria-label="gapLabel\(1\): ctestEmpty"/);
     expect(chips(html)).toEqual(pool);
+  });
+
+  it("gives every slot the same width, from the longest chip, whatever the stem", () => {
+    const html = render(ctest(pool));
+    const widths = [...html.matchAll(/data-gap-slot="[^"]+"[^>]*style="min-width:([^"]+)"/g)].map((m) => m[1]);
+    expect(widths).toEqual(["7ch", "7ch"]);
+    const short = render(ctest(["a", "b"]));
+    expect([...short.matchAll(/style="min-width:([^"]+)"/g)].map((m) => m[1])).toEqual(["6ch", "6ch"]);
   });
 
   it("shows a placed chip in its slot and takes it out of the pool", () => {
