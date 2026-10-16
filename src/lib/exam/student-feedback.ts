@@ -18,30 +18,74 @@ import type { Cefr, Section } from "./types";
 
 export type FeedbackLocale = "tr" | "en";
 
-export const FEEDBACK_LIMITS = { strengths: 3, improve: 4, topic: 80, why: 300, example: 200, line: 240, nextStep: 300 } as const;
+export const FEEDBACK_LIMITS = { strengths: 3, improve: 4, topic: 80, why: 300, example: 200, exampleSide: 80, line: 240, nextStep: 300 } as const;
 
 const clean = (s: string) => withoutEmDash(s).replace(/\s+/g, " ").trim();
-const text = (max: number) => z.string().transform(clean).pipe(z.string().min(1).max(max));
-// An empty example means "none"; the wire schema asks for the field so every provider accepts it.
-const optionalText = (max: number) =>
+
+const stripPunct = (w: string) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "").toLowerCase();
+
+/**
+ * Collapses a word the model said twice in a row ("die die" -> "die"). When the
+ * second word starts with the first and is longer ("ifade ifadelerinin") the
+ * longer one is kept. A comma or full stop after the first word means the
+ * repeat is deliberate ("was ist, ist"), so it stays. The prefix rule only
+ * applies to words of four letters or more, so "in intensiv" is left alone.
+ */
+export function collapseRepeatedWords(input: string): string {
+  const out: string[] = [];
+  for (const word of input.split(" ")) {
+    const prev = out[out.length - 1];
+    if (prev !== undefined && word) {
+      const a = stripPunct(prev);
+      const b = stripPunct(word);
+      const prevEndsClean = /[\p{L}\p{N}]$/u.test(prev);
+      if (a && b && prevEndsClean) {
+        if (a === b) continue;
+        if (a.length >= 4 && b.length > a.length && b.startsWith(a)) {
+          out[out.length - 1] = word;
+          continue;
+        }
+      }
+    }
+    out.push(word);
+  }
+  return out.join(" ");
+}
+
+const text = (max: number) =>
   z
     .string()
-    .optional()
-    .transform((v) => clean(v ?? ""))
-    .pipe(z.string().max(max))
-    .transform((v) => (v ? v : undefined));
+    .transform((s) => collapseRepeatedWords(clean(s)))
+    .pipe(z.string().min(1).max(max));
+
+/** A German example kept as written: trimmed and without em dashes, but a repeated word may be the student's real mistake. */
+const exampleText = (max: number) => z.string().transform(clean).pipe(z.string().max(max));
+
+const exampleParts = z
+  .object({ student: exampleText(FEEDBACK_LIMITS.exampleSide), correct: exampleText(FEEDBACK_LIMITS.exampleSide) })
+  .transform((e) => (e.student && e.correct ? e : null));
+
+// An example is none (null, missing, or empty parts), a structured pair, or, in notes approved before the
+// pair existed, a plain string that is shown as it is.
+const exampleSchema = z
+  .union([exampleParts, exampleText(FEEDBACK_LIMITS.example), z.null()])
+  .optional()
+  .transform((v) => (v ? v : undefined));
 
 export const feedbackContentSchema = z.object({
   strengths: z.array(text(FEEDBACK_LIMITS.line)).max(FEEDBACK_LIMITS.strengths),
   improve: z
-    .array(z.object({ topic: text(FEEDBACK_LIMITS.topic), why: text(FEEDBACK_LIMITS.why), example: optionalText(FEEDBACK_LIMITS.example) }))
+    .array(z.object({ topic: text(FEEDBACK_LIMITS.topic), why: text(FEEDBACK_LIMITS.why), example: exampleSchema }))
     .max(FEEDBACK_LIMITS.improve),
   nextStep: text(FEEDBACK_LIMITS.nextStep),
 });
 
+/** What the student wrote and the right form. A plain string only comes from a note approved before this shape existed. */
+export type FeedbackExampleOut = { student: string; correct: string } | string;
+
 export type FeedbackContent = {
   strengths: string[];
-  improve: Array<{ topic: string; why: string; example?: string }>;
+  improve: Array<{ topic: string; why: string; example?: FeedbackExampleOut }>;
   nextStep: string;
 };
 
@@ -73,8 +117,17 @@ export const FEEDBACK_JSON_SCHEMA: Record<string, unknown> = {
         required: ["topic", "why", "example"],
         properties: {
           topic: { type: "string", description: "The grammar or skill topic, named concretely" },
-          why: { type: "string", description: "One or two plain sentences on what went wrong" },
-          example: { type: "string", description: "One short example from the summary (student answer and correct form), or an empty string" },
+          why: { type: "string", description: "One plain sentence on what went wrong" },
+          example: {
+            type: "object",
+            description: "One real wrong answer from the summary. Both fields are empty strings when there is no such example",
+            additionalProperties: false,
+            required: ["student", "correct"],
+            properties: {
+              student: { type: "string", description: "What the student wrote, copied from the summary" },
+              correct: { type: "string", description: "The correct form, copied from the summary" },
+            },
+          },
         },
       },
     },
@@ -117,7 +170,8 @@ export function parseFeedbackAnswer(textAnswer: string): { ok: true; content: Fe
 // ---------------------------------------------------------------------------
 
 export type FeedbackExample = { context?: string; student: string; correct: string };
-export type FeedbackWeakTag = { skillTag: string; wrong: number; total: number; examples: FeedbackExample[] };
+/** `wrong` counts unanswered units too; `unanswered` says how many of those were left empty. Examples are answered mistakes only. */
+export type FeedbackWeakTag = { skillTag: string; wrong: number; total: number; unanswered: number; examples: FeedbackExample[] };
 export type FeedbackSectionInput =
   | { section: Section; kind: "OBJECTIVE"; level: Cefr | null; correct: number; total: number; weak: FeedbackWeakTag[] }
   | { section: Section; kind: "PRODUCTIVE"; level: Cefr | null; teacherReasons: string[] };
@@ -133,27 +187,28 @@ const short = (s: string, max: number) => {
   const t = s.replace(/\s+/g, " ").trim();
   return t.length > max ? `${t.slice(0, max - 1).trimEnd()}...` : t;
 };
-const BLANK = "(blank)";
 
 /** One wrong unit (a gap, a row, a choice) of a question, with the little context the example needs. */
-function wrongUnits(q: DetailQuestion): { total: number; wrong: FeedbackExample[] } {
+function wrongUnits(q: DetailQuestion): { total: number; wrong: FeedbackExample[]; blank: number } {
   if (q.kind === "CHOICE") {
-    const bad = q.mark === "wrong" || q.mark === "blank";
-    return { total: 1, wrong: bad ? [{ context: short(q.stem, 80), student: short(q.given || BLANK, EXAMPLE_MAX), correct: short(q.key, EXAMPLE_MAX) }] : [] };
+    if (q.mark === "blank") return { total: 1, wrong: [], blank: 1 };
+    return { total: 1, wrong: q.mark === "wrong" ? [{ context: short(q.stem, 80), student: short(q.given, EXAMPLE_MAX), correct: short(q.key, EXAMPLE_MAX) }] : [], blank: 0 };
   }
   if (q.kind === "ROWS") {
     return {
       total: q.rows.length,
+      blank: q.rows.filter((r) => r.mark === "blank").length,
       wrong: q.rows
-        .filter((r) => r.mark === "wrong" || r.mark === "blank")
-        .map((r) => ({ context: short(r.label, 80), student: short(r.given || BLANK, EXAMPLE_MAX), correct: short(r.key, EXAMPLE_MAX) })),
+        .filter((r) => r.mark === "wrong")
+        .map((r) => ({ context: short(r.label, 80), student: short(r.given, EXAMPLE_MAX), correct: short(r.key, EXAMPLE_MAX) })),
     };
   }
   const gaps = q.parts.flatMap((p, i) => (p.kind === "gap" ? [{ p, i }] : []));
   return {
     total: gaps.length,
+    blank: gaps.filter(({ p }) => p.kind === "gap" && p.mark === "blank").length,
     wrong: gaps
-      .filter(({ p }) => p.kind === "gap" && (p.mark === "wrong" || p.mark === "blank"))
+      .filter(({ p }) => p.kind === "gap" && p.mark === "wrong")
       .map(({ p, i }) => {
         if (p.kind !== "gap") throw new Error("unreachable");
         // The words around the gap say what the gap is about; only a few of them.
@@ -162,7 +217,7 @@ function wrongUnits(q: DetailQuestion): { total: number; wrong: FeedbackExample[
         const left = before?.kind === "text" ? before.text.trim().split(/\s+/).slice(-3).join(" ") : "";
         const right = after?.kind === "text" ? after.text.trim().split(/\s+/).slice(0, 2).join(" ") : "";
         const context = [left, "___", right].filter(Boolean).join(" ");
-        return { context: short(context, 80), student: short(p.shown || BLANK, EXAMPLE_MAX), correct: short(p.correct, EXAMPLE_MAX) };
+        return { context: short(context, 80), student: short(p.shown, EXAMPLE_MAX), correct: short(p.correct, EXAMPLE_MAX) };
       }),
   };
 }
@@ -184,9 +239,10 @@ export function buildFeedbackInput(overall: string | null | undefined, sections:
     for (const block of s.blocks) {
       for (const q of block.questions) {
         const u = wrongUnits(q);
-        const tag = byTag.get(q.skillTag) ?? { skillTag: q.skillTag, wrong: 0, total: 0, examples: [] };
+        const tag = byTag.get(q.skillTag) ?? { skillTag: q.skillTag, wrong: 0, total: 0, unanswered: 0, examples: [] };
         tag.total += u.total;
-        tag.wrong += u.wrong.length;
+        tag.wrong += u.wrong.length + u.blank;
+        tag.unanswered += u.blank;
         for (const e of u.wrong) if (tag.examples.length < MAX_EXAMPLES) tag.examples.push(e);
         byTag.set(q.skillTag, tag);
       }
@@ -217,15 +273,16 @@ export function buildFeedbackMessages(input: FeedbackInput, locale: FeedbackLoca
     "- Use only the summary you are given. Do not invent mistakes, scores or facts that are not in it.",
     "- Name the grammar or skill topic concretely (for example \"Akkusativ-Artikel (den/einen)\" or \"Konnektoren mit obwohl\"), not a tag such as \"grammar.akkusativ\". Tags are hints for you, never to be copied.",
     "- strengths: at most 3, short. Only things the summary supports (a high x/y, a section with a good level, a topic with no mistakes). An empty list is fine when nothing stands out.",
-    "- improve: at most 4 topics, most important first, based on the skill tags with the most wrong answers. For each, say in one or two sentences what went wrong and give one short example from the summary (student answer and the correct form) in the example field, or an empty string when there is none.",
+    "- improve: at most 4 topics, most important first, based on the skill tags with the most wrong answers. For each, say in one sentence what went wrong and fill the example field with one real wrong answer from the summary: student is what the student wrote, correct is the right form, both copied from the summary. When a topic has no example in the summary, leave both example fields as empty strings.",
+    "- Keep each why to one sentence.",
     "- nextStep: one concrete thing to practise next, in one or two sentences.",
-    "- Treat \"(blank)\" as an unanswered question, not as a mistake in the answer.",
-    "- Prefer a real wrong answer as the example. If only an unanswered one exists, write the blank in the note's language: \"(boş)\" in Turkish, \"(blank)\" in English, never the other one.",
+    "- \"unanswered\" counts the questions of a skill tag that the student left empty; they are included in \"wrong\". Never use an unanswered question as an example. If a tag has unanswered questions, you may say the student left some questions blank (in Turkish, for example, \"boş bıraktığın sorular\"), and give no example for a tag that only has blanks.",
     "- For writing and speaking you only get the final level and, sometimes, the teacher's own reason. Do not comment on text or speech you have not seen; you may restate the teacher's reason.",
     "- Never mention scores, probabilities, an AI, or how the exam is scored. Never show a numeric ability estimate. Do not compare the student with others. Do not recommend a course or class.",
     "- Never use the em dash character; use a comma, a colon or a plain hyphen.",
+    "- Proofread every sentence once before answering; no repeated words.",
     "",
-    "Return one JSON object: { \"strengths\": string[], \"improve\": [{ \"topic\": string, \"why\": string, \"example\": string }], \"nextStep\": string }. No explanation, no code fence.",
+    "Return one JSON object: { \"strengths\": string[], \"improve\": [{ \"topic\": string, \"why\": string, \"example\": { \"student\": string, \"correct\": string } }], \"nextStep\": string }. No explanation, no code fence.",
   ].join("\n");
   const user = ["Exam summary (JSON):", JSON.stringify(input, null, 1)].join("\n");
   return [
@@ -249,12 +306,12 @@ export function feedbackFromForm(get: (name: string) => string): { ok: true; con
     const v = clean(get(`strength${i}`));
     if (v) strengths.push(v);
   }
-  const improve: Array<{ topic: string; why: string; example: string }> = [];
+  const improve: Array<{ topic: string; why: string; example: { student: string; correct: string } }> = [];
   for (let i = 0; i < FEEDBACK_FORM.improveRows; i++) {
     const topic = clean(get(`topic${i}`));
     const why = clean(get(`why${i}`));
-    const example = clean(get(`example${i}`));
-    if (topic || why || example) improve.push({ topic, why, example });
+    const example = { student: clean(get(`exampleStudent${i}`)), correct: clean(get(`exampleCorrect${i}`)) };
+    if (topic || why || example.student || example.correct) improve.push({ topic, why, example });
   }
   return validateFeedback({ strengths, improve, nextStep: get("nextStep") });
 }
