@@ -1,3 +1,4 @@
+import { buildCTestPool, seedFromText } from "./ctest-pool";
 import { isCTest, type ItemAnswer, type ItemSnapshot, type Presentation, type Section, type ItemType } from "./types";
 
 /**
@@ -20,6 +21,8 @@ export type CandidateContent =
       gaps: Array<{ id: string; choices: string[] | null }>;
       /** C-test: each input continues the word stem right before it. */
       attached?: true;
+      /** C-test: shuffled word parts to place, the missing parts plus decoys. Never says which fits where. */
+      pool?: string[];
     }
   | {
       kind: "MATCHING";
@@ -158,6 +161,15 @@ export function toCandidateItem(
         })),
         // Only the rendering hint leaves the server, never the skill tag itself.
         ...(isCTest(snapshot) ? { attached: true as const } : {}),
+        ...(isCTest(snapshot) && snapshot.key.kind === "GAP"
+          ? {
+              pool: buildCTestPool(
+                c.gaps.map((g) => g.id),
+                snapshot.key.answers,
+                presentation.poolSeed ?? seedFromText(snapshot.prompt),
+              ),
+            }
+          : {}),
       };
       break;
     case "MATCHING":
@@ -255,7 +267,10 @@ export function makePresentation(snapshot: ItemSnapshot, rng: () => number): Pre
     for (const g of c.gaps) {
       if (g.choices && g.choices.length > 1) choiceOrder[g.id] = shuffle(g.choices.map((_, i) => i));
     }
-    return Object.keys(choiceOrder).length ? { choiceOrder } : {};
+    return {
+      ...(Object.keys(choiceOrder).length ? { choiceOrder } : {}),
+      ...(isCTest(snapshot) ? { poolSeed: Math.floor(rng() * 2 ** 31) } : {}),
+    };
   }
   return {};
 }

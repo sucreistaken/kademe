@@ -134,6 +134,8 @@ export type Presentation = {
    * snapshot's `choices`. The answer is the choice text, so it needs no alias.
    */
   choiceOrder?: Record<string, number[]>;
+  /** C-test: seeds the word-part pool (see ctest-pool.ts), so a reload shows the same pool. */
+  poolSeed?: number;
 };
 
 /**

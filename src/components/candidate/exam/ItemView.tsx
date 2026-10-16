@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, type KeyboardEvent } from "react";
+import { useId, useRef, useState, type KeyboardEvent } from "react";
 import { matchingTargets, type CandidateItem } from "@/lib/exam/safe";
 import type { ItemAnswer, TfngValue } from "@/lib/exam/types";
 import { useT } from "@/i18n/candidate-client";
@@ -242,11 +242,36 @@ const NO_ASSIST = {
   "data-enable-grammarly": "false",
 } as const;
 
+/**
+ * C-test pool: which pool entry sits in which gap. Rebuilt from the saved
+ * strings on every render (the first unused equal entry wins, so duplicates
+ * work); a saved string that is in no pool entry, such as an answer typed
+ * before the pool existed, stays in its gap as plain text.
+ */
+export function poolPlacement(pool: string[], gapIds: string[], gaps: Record<string, string> | undefined) {
+  const used = new Set<number>();
+  const at = new Map<string, number>();
+  for (const id of gapIds) {
+    const v = gaps?.[id];
+    if (!v || !v.trim()) continue;
+    const idx = pool.findIndex((p, i) => p === v && !used.has(i));
+    if (idx >= 0) {
+      used.add(idx);
+      at.set(id, idx);
+    }
+  }
+  return { used, at };
+}
+
 function GapItem({ item, answer, onChange, disabled }: ItemProps) {
   const t = useT("exam");
   const ti = useT("examItems");
   const lastFocused = useRef<{ id: string; el: HTMLInputElement } | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [dragging, setDragging] = useState<number | null>(null);
   if (item.content.kind !== "GAP") return null;
+  const pool = item.content.attached ? (item.content.pool ?? null) : null;
+  const placement = pool ? poolPlacement(pool, item.content.gaps.map((g) => g.id), answer.gaps) : null;
   const gaps = new Map(item.content.gaps.map((g) => [g.id, g]));
   const parts = item.prompt.split(/(\{\{[A-Za-z0-9_-]+\}\})/g);
   const set = (id: string, value: string) => onChange({ gaps: { ...(answer.gaps ?? {}), [id]: value } });
@@ -257,7 +282,26 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
     delete rest[id];
     onChange({ gaps: rest });
   };
-  const typed = item.content.gaps.some((g) => !g.choices);
+  // Pool mode: a chip lands in a gap by drag or click and goes back by clicking the gap.
+  const slotIds = item.content.gaps.filter((g) => !g.choices).map((g) => g.id);
+  const filled = (id: string) => !!answer.gaps?.[id]?.trim();
+  const place = (idx: number, gapId: string) => {
+    if (!pool || disabled) return;
+    set(gapId, pool[idx]);
+    setSelected(null);
+  };
+  const clickChip = (idx: number) => {
+    const target = selected ?? slotIds.find((id) => !filled(id));
+    if (target) place(idx, target);
+  };
+  const clickSlot = (id: string) => {
+    if (disabled) return;
+    if (filled(id)) {
+      pick(id, "");
+      setSelected(null);
+    } else setSelected(selected === id ? null : id);
+  };
+  const typed = !pool && item.content.gaps.some((g) => !g.choices);
   const attached = !!item.content.attached;
   const marker = (part: string | undefined) => part?.match(/^\{\{([A-Za-z0-9_-]+)\}\}$/) ?? null;
   // "Boşluk 1", "Boşluk 2" in the order the gaps appear in the text.
@@ -281,6 +325,40 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
           const gap = gaps.get(m[1]);
           if (!gap) return <span key={i}>____</span>;
           const value = answer.gaps?.[gap.id] ?? "";
+          if (pool && !gap.choices) {
+            const stem = stemOf(i);
+            const isSelected = selected === gap.id && !value;
+            return (
+              <span key={i} className="whitespace-nowrap">
+                {stem}
+                <button
+                  type="button"
+                  lang="de"
+                  disabled={disabled}
+                  aria-label={`${gapLabel(gap.id)}: ${value || ti("ctestEmpty")}`}
+                  aria-pressed={isSelected}
+                  onClick={() => clickSlot(gap.id)}
+                  onDragOver={(e) => {
+                    if (dragging !== null) e.preventDefault();
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (dragging !== null) place(dragging, gap.id);
+                    setDragging(null);
+                  }}
+                  // The missing part is as long as the stem or one letter longer.
+                  style={{ minWidth: `${Math.max(stem.length + 1, 2)}ch` }}
+                  className={cn(
+                    "ml-0 mr-0.5 inline-block h-8 rounded-[6px] border px-1 align-baseline text-[16px] leading-[1.9] text-ink",
+                    value ? "border-line-strong bg-surface" : "border-dashed border-line-strong bg-canvas",
+                    isSelected && "border-solid border-accent bg-accent-soft ring-2 ring-accent",
+                  )}
+                >
+                  {value}
+                </button>
+              </span>
+            );
+          }
           if (attached && !gap.choices) {
             const stem = stemOf(i);
             return (
@@ -331,6 +409,34 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
           );
         })}
       </p>
+      {pool && placement ? (
+        <div className="mt-4">
+          <p className="text-[14px] text-ink-2">{ti("ctestHint")}</p>
+          <div role="group" aria-label={ti("ctestPool")} className="mt-2 flex flex-wrap gap-2">
+            {pool.map((chip, idx) =>
+              placement.used.has(idx) ? null : (
+                <button
+                  key={idx}
+                  type="button"
+                  lang="de"
+                  disabled={disabled}
+                  draggable={!disabled}
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData("text/plain", chip);
+                    e.dataTransfer.effectAllowed = "move";
+                    setDragging(idx);
+                  }}
+                  onDragEnd={() => setDragging(null)}
+                  onClick={() => clickChip(idx)}
+                  className="h-9 min-w-9 cursor-grab rounded-[8px] border border-line-strong bg-surface px-3 text-[16px] text-ink hover:bg-canvas"
+                >
+                  {chip}
+                </button>
+              ),
+            )}
+          </div>
+        </div>
+      ) : null}
       {typed ? (
         <UmlautBar
           onInsert={(ch) => {

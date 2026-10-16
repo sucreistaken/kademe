@@ -84,8 +84,30 @@ describe("C-test gaps", () => {
 
   it("marks a C-test's gaps as attached to the word stem, without the skill tag", () => {
     const c = toCandidateItem(gap(C_TEST_SKILL_TAG), {}, null, 1, { maxPlays: 2 });
-    expect(c.content).toEqual({ kind: "GAP", attached: true, gaps: [{ id: "g1", choices: null }] });
+    expect(c.content).toEqual({
+      kind: "GAP",
+      attached: true,
+      gaps: [{ id: "g1", choices: null }],
+      pool: expect.any(Array),
+    });
     expect(JSON.stringify(c)).not.toContain(C_TEST_SKILL_TAG);
+  });
+
+  it("sends a word-part pool that holds the missing part but not the whole word, same on every reload", () => {
+    const p = makePresentation(gap(C_TEST_SKILL_TAG), mulberry32(3));
+    const a = toCandidateItem(gap(C_TEST_SKILL_TAG), p, null, 1, { maxPlays: 2 });
+    const b = toCandidateItem(gap(C_TEST_SKILL_TAG), p, null, 1, { maxPlays: 2 });
+    expect(a.content).toEqual(b.content);
+    const pool = (a.content as { pool: string[] }).pool;
+    expect(pool).toContain("in");
+    expect(pool).not.toContain("bin");
+    expect(pool).toHaveLength(2);
+    expect(JSON.stringify(a)).not.toContain("answers");
+  });
+
+  it("gives an ordinary gap item no pool", () => {
+    const p = makePresentation(gap("grammar.dativ"), mulberry32(3));
+    expect(p.poolSeed).toBeUndefined();
   });
 
   it("leaves an ordinary gap item as it was", () => {

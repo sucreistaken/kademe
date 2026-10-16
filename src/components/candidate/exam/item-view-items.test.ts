@@ -8,7 +8,7 @@ vi.mock("@/i18n/candidate-client", () => ({
 
 import type { CandidateItem } from "@/lib/exam/safe";
 import type { ItemAnswer } from "@/lib/exam/types";
-import { ItemView, hasAnyAnswer, withMatch } from "./ItemView";
+import { ItemView, hasAnyAnswer, poolPlacement, withMatch } from "./ItemView";
 
 const render = (item: CandidateItem, answer: ItemAnswer = {}) =>
   renderToStaticMarkup(createElement(ItemView, { item, answer, onChange: () => {} }));
@@ -176,5 +176,66 @@ describe("gap labels", () => {
     const html = render(item);
     expect(html).toMatch(/<select aria-label="gapLabel\(1\)"[^>]*text-\[16px\]/);
     expect(html).toMatch(/<input[^>]*aria-label="gapLabel\(2\)"[^>]*text-\[16px\]/);
+  });
+});
+
+describe("C-test word-part pool", () => {
+  const ctest = (pool?: string[]): CandidateItem => ({
+    sequence: 1,
+    section: "GRAMMAR",
+    type: "GAP_FILL",
+    prompt: "Ergänzen Sie.\n\nIch bin 24 Jahre alt und arb{{g1}} in Köln. Das ist sch{{g2}}.",
+    content: {
+      kind: "GAP",
+      attached: true,
+      gaps: [
+        { id: "g1", choices: null },
+        { id: "g2", choices: null },
+      ],
+      ...(pool ? { pool } : {}),
+    },
+    stimulus: null,
+    answer: null,
+  });
+  const pool = ["eite", "ön", "eiten", "ö"];
+  const chips = (html: string) =>
+    [...html.matchAll(/<button type="button" lang="de"[^>]*draggable="true"[^>]*>([^<]*)<\/button>/g)].map((m) => m[1]);
+
+  it("draws empty slots after the stems and every chip in the pool, with no inputs or umlaut bar", () => {
+    const html = render(ctest(pool));
+    expect(html).not.toContain("<input");
+    expect(html).not.toContain("umlautBar");
+    expect(html).toContain("ctestHint");
+    expect(html).toMatch(/arb<button[^>]*aria-label="gapLabel\(1\): ctestEmpty"/);
+    expect(chips(html)).toEqual(pool);
+  });
+
+  it("shows a placed chip in its slot and takes it out of the pool", () => {
+    const html = render(ctest(pool), { gaps: { g2: "ön" } });
+    expect(html).toMatch(/aria-label="gapLabel\(2\): ön"[^>]*>ön<\/button>/);
+    expect(chips(html)).toEqual(["eite", "eiten", "ö"]);
+  });
+
+  it("tracks duplicate chips by index", () => {
+    const html = render(ctest(["en", "en", "er"]), { gaps: { g1: "en" } });
+    expect(chips(html)).toEqual(["en", "er"]);
+  });
+
+  it("shows an old typed answer that is not in the pool, and keeps the whole pool", () => {
+    const html = render(ctest(pool), { gaps: { g1: "eit" } });
+    expect(html).toMatch(/aria-label="gapLabel\(1\): eit"[^>]*>eit<\/button>/);
+    expect(chips(html)).toEqual(pool);
+  });
+
+  it("falls back to typing when no pool was sent", () => {
+    expect(render(ctest())).toContain("<input");
+  });
+
+  it("rebuilds placement from saved strings, first unused equal entry first", () => {
+    const { used, at } = poolPlacement(["en", "er", "en"], ["g1", "g2", "g3"], { g1: "en", g2: "en", g3: "xx" });
+    expect([...used].sort()).toEqual([0, 2]);
+    expect(at.get("g1")).toBe(0);
+    expect(at.get("g2")).toBe(2);
+    expect(at.has("g3")).toBe(false);
   });
 });
