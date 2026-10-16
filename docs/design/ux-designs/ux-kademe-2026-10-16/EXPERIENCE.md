@@ -1,7 +1,7 @@
 ---
 title: Kademe EXPERIENCE
 name: Kademe
-status: draft
+status: final
 created: 2026-10-16
 updated: 2026-10-16
 sources:
@@ -18,7 +18,9 @@ sources:
 
 # Kademe: Experience Spine
 
-> Paired with `DESIGN.md` (the visual identity). This redesign changes how Kademe looks and how brand shows up; it does **not** change the exam's rules, scoring or proctoring behavior. Anything not grounded in the repo docs, the shipped code or the run's memlog is tagged `[ASSUMPTION]`. Names in the flows are illustrative.
+> Paired with `DESIGN.md` (the visual identity). This redesign changes how Kademe looks and how brand shows up; it does **not** change the exam's rules, scoring or proctoring behavior. Anything not grounded in the repo docs, the shipped code or the run's memlog (`.memlog.md`, the decision log) is tagged `[ASSUMPTION]`. Names in the flows are illustrative.
+>
+> Mockups in `mockups/` show the picked direction and seven key screens (see Key screens). Where a mockup disagrees with this file or with `DESIGN.md`, **these two files (the spines) win.**
 
 ## Foundation
 
@@ -42,7 +44,9 @@ Kademe is presented as "bir Campus German ürünü" (English: "a Campus German p
 6. First screens fit 1366 x 768 without scrolling. One decision per screen. Wizard first; put the choice where the action happens (the "Zorluk" choice lives on the invite step, not in a hidden settings tab).
 7. In the panel, undo beats "are you sure": the action happens and an 8-second undo strip appears. In the exam, steps that cannot be undone (skipping a question, finishing a section) ask once, in-app.
 8. No dead ends: every empty list, zero result and finished flow points at a concrete next action.
-9. Brand color is a small accent. The five sections never become five colors. **The red rule:** red is only the brand (mark, mascot, celebration), the recording dot and a small field-error frame; never a button, a result, a level, a timer, a warning or a score. Proctor warnings and platform or device failures are yellow, never red. The one exception is **Zorluk**, in the teacher panel only: Kolay, Orta, Zor on soft cyan, yellow and pink-red tints with ink text, always with the step glyph and the word; never on a candidate screen, in candidate data or on the printed level report.
+9. **Brand color is a small accent.** The five sections never become five colors.
+   - **The red rule:** red is only the brand (mark, mascot, celebration), the recording dot and a small field-error frame; never a button, a result, a level, a timer, a warning or a score. Proctor warnings and platform or device failures are yellow, never red.
+   - **The one exception is Zorluk,** in the teacher panel only: Kolay, Orta, Zor on soft cyan, yellow and pale pink tints with ink text, always with the step glyph and the word; never on a candidate screen, in candidate data or on the printed level report.
 
 ## Information Architecture
 
@@ -77,6 +81,8 @@ Kademe is presented as "bir Campus German ürünü" (English: "a Campus German p
 | 27 | Candidates, candidate detail, independent review and scoring, compare, decision | `/hiring/candidates...` | Menu | Review and decide | spine-only (visual tokens and Component Patterns apply; interaction is specified in HIRING-UX 5.13 to 5.17) |
 | 28 | Library: positions, competencies | `/library/...` | Menu | Shared definitions | spine-only |
 
+"Covered by" names the flow that walks through the surface. "spine-only" means the surface is specified in these two files only, with no flow and no mockup of its own.
+
 **Panel menu** (white side menu, `{spacing.panel-nav}` wide, `{rounded.full}` items): Bugün; group "Sınav" (Öğrenciler, Sınavlar, Soru bankası); group "İşe alım" (Adaylar, Alımlar) with Library items under it; Gelişmiş; Ayarlar. Group labels disappear when an organization uses only one solution. The lockup with its byline sits at the top; language switch and the signed-in person at the bottom. Modals stack one level deep.
 
 **Candidate frame:** a bar with the lockup on non-question screens, the school name and a language switch; the exam question bar replaces it while a question is on screen. No in-product navigation between candidate screens; progress is linear.
@@ -89,11 +95,12 @@ Microcopy only; the look of a message lives in `DESIGN.md`. Calm, plain, unhurri
 
 **Rules.**
 
-- Sentence case. Short sentences. One idea per sentence. No exclamation marks except the single welcome greeting ("Hoş geldiniz, Elif!") [ASSUMPTION: the mockup has one; the rule is mine].
+- Plain, everyday Turkish that a student, teacher or parent understands at once, without explanation (the owner's approval condition, memlog 2026-10-16). Ask questions directly ("Bölümü bitirmek istiyor musunuz?"), not with a stiff passive ("Bölüm bitirilsin mi?"). In anything a student or parent reads, say "bilgi", not "kanıt".
+- Sentence case. Short sentences. One idea per sentence. No exclamation marks except the single welcome greeting ("Hoş geldiniz, Elif!") [ASSUMPTION: the mockup has one exclamation mark; the rule itself is a proposal].
 - Say what was recorded or saved and what happens next. Tell the student the clock state whenever it matters: "Süre işlemeye devam ediyor."
 - Never judge. No "doğru", "yanlış", "harika", "tebrikler" about answers. The mascot's only lines are about finishing a section.
 - To a candidate, never "hile", "ihlal" or "şüpheli". The proctor card is titled "Uyarı" and states the rule as a rule, not as an accusation.
-- A disabled button names its reason in the same place: "Başlamak için şu satır hazır olmalı: Ekran paylaşımı".
+- A disabled button names its reason in the same place: "Başlamak için önce şunu tamamlayın: Ekran paylaşımı".
 - Errors say what happened and the next action: "Kaydedilemedi, tekrar deniyoruz."
 - Levels are always written `A1 A2 B1 B2 C1 C2`, tabular, with their source nearby. Difficulty (teacher panel only) is always `Kolay`, `Orta`, `Zor`, paired with its step glyph; the tint behind them is a redundant third signal.
 - Overline labels set in capitals use the Turkish locale so "i" and "ı" capitalize correctly.
@@ -105,15 +112,15 @@ Microcopy only; the look of a message lives in `DESIGN.md`. Calm, plain, unhurri
 | "İlk bölümü bitirdiniz. Hazır olduğunuzda devam edin." | "Harika! Hepsi doğru!" |
 | "Kaydedildi · 4 sn önce" | "Cevabınız başarıyla kaydedildi ✓" |
 | "Bu bölümde sesli konuşmayın." | "Kural ihlali: ses" |
-| "Karar için yeterli kanıt yok; okulunuz sizinle iletişime geçecek." | "Sınavı geçemediniz." |
+| "Sonuç için yeterli bilgi yok. Okulunuz sizinle iletişime geçecek." | "Sınavı geçemediniz." |
 | Panel: "Sizi bekliyor", "Sonucu kesinleştir" | "Hata: işlem başarısız oldu" |
 | Hiring: "Merhaba Can. Bu değerlendirme, seninle tanışmadan önce nasıl düşündüğünü anlamamız için hazırlandı." | "Sayın aday, aşağıdaki testi tamamlamanız zorunludur." |
 
-**Glossary.** Bölüm (never "modül"), Soru, Davet, Zorluk, Sonuç, Seviye, "bir Campus German ürünü".
+**Glossary.** Bölüm (never "modül"), Soru, Davet, Zorluk, Sonuç, Seviye, "bir Campus German ürünü". One wording for an outcome that could not be verified: "doğrulanamadı" (never "doğrulanmadı").
 
 ## Brand placement
 
-Invented section; it turns the standing decisions (byline on front doors, not on the running exam, no outbound link) into a placement map. Everything outside the "Never" column of the user's earlier decisions is `[ASSUMPTION]`.
+This section is new: it turns the standing decisions (byline on front doors, none on the running exam, no outbound link) into a placement map. The **Never** cells and the byline-on-front-doors rule come from the user's earlier decisions; every other cell is an `[ASSUMPTION]`.
 
 | Surface | Kademe mark and wordmark | Byline "bir Campus German ürünü" | Mascot | Notes |
 |---|---|---|---|---|
@@ -129,11 +136,11 @@ Invented section; it turns the standing decisions (byline on front doors, not on
 | Printed reports | Small mark in the header | One footer line: "Bu rapor, Campus German'ın Kademe platformuyla hazırlandı." | No | The school's name stays the school's |
 | Candidate screens, any | | **No link to campusgerman.com** (it would lead a student out of a proctored exam) | | |
 
-The full Campus German logo image is not placed in product UI; the byline uses only the three-petal glyph [ASSUMPTION].
+The full Campus German logo image is not placed in product UI; the byline uses only the three-petal glyph (DESIGN.md, Brand & Style) [ASSUMPTION].
 
 ## Component Patterns
 
-Behavioral. Visual specs live in `DESIGN.md.Components`.
+Behavioral. Visual specs live in `DESIGN.md`, Components.
 
 | Component | Use | Behavioral rules |
 |---|---|---|
@@ -143,7 +150,7 @@ Behavioral. Visual specs live in `DESIGN.md.Components`.
 | Section chip | Welcome, intro, exam bar | Icon plus word, neutral. Never a button, never a color-coded filter. |
 | Question strip (cells) | Exam bottom bar | One cell per item; click jumps. States: empty, answered, partial ("Yarım"), flagged; the item on screen has the current ring. It reports filling, never correctness. |
 | Flag toggle | Exam bottom bar | "İşaretle" becomes "İşareti kaldır" and sets `aria-pressed`; the cell gains the flag badge. Flags are the student's own reminder and appear on the review screen. |
-| Review screen | After the last item | Lists flagged, empty and partial items as jump buttons; "Bölümü bitir" asks once ("Bölüm bitirilsin mi?" with the counts). Finishing cannot be undone. |
+| Review screen | After the last item | Lists flagged, empty and partial items as jump buttons; "Bölümü bitir" asks once ("Bölümü bitirmek istiyor musunuz?" with the counts). Finishing cannot be undone. |
 | C-test pool and gaps | Dilbilgisi C-tests | One shared pool of word parts, sticky above the bottom bar. All gaps of an item are equal width. A part is placed by drag or by click; a placed part leaves the pool; clicking a filled gap returns it. |
 | Matching tray | Okuma matching | A pinned tray of letters; click a row to select it, then a letter; one list only, with a German note when targets are just "Anzeige A..F". |
 | Single choice | Dilbilgisi, Okuma, Dinleme | Four options A to D, a radio group, arrow keys move, only the picked option (or the first) is a tab stop. |
@@ -154,14 +161,23 @@ Behavioral. Visual specs live in `DESIGN.md.Components`.
 | Timer pill | Exam bar | Server clock, tabular, never blinks, never turns red. In the last two minutes a text "Son 2 dakika" appears beside it. |
 | Record indicator | Exam bar | States what is being captured: "Kamera, ses ve ekran kaydediliyor"; always visible during the exam. |
 | Proctor warning | Over the exam | `role="alertdialog"`, content behind is inert, focus trapped on the one button, Escape does nothing, the counter is per attempt, the clock note is always present. The button dismisses; it does not end anything. |
-| Zorluk selector | Invite step 2 (verification exams only) | Three tiles Kolay, Orta, Zor, each with its step glyph, the word and a short hint; exactly one is selected. Semantics as shipped (the invite's level shift, `shift` -1, 0, +1): **Kolay** takes the questions one CEFR level below the declared level, **Orta** at the declared level, **Zor** one level above. Hints: "Bir seviye aşağıdan", "Beyan edilen seviyeden", "Bir seviye yukarıdan". Under the tiles one sentence names the effect for the batch's declared level ("A2 beyan eden öğrenciler için: Kolay A1, Orta A2, Zor B1 soruları gelir.") and the affected sections, as the shipped hint does ("Yalnız bu davetteki öğrenciler için geçerli; etkilenen bölümler: Dilbilgisi, Okuma, Dinleme."). It does not exist for placement exams and it moves only fixed-set sections, not adaptive ones. It is not the question's own Kolay / Orta / Zor label inside a level (the shipped copy already says so). Tiles use the `diff-*` tints, teacher panel only. |
-| Result row | Students list | A whole-row link [ASSUMPTION: the mockup draws rows as cards; the click target is carried over from the Today queue in EXAM-UX 4.1]. Shows the difficulty chip (teacher panel only; `diff-*` tint, step glyph, word), five section statuses (done, running, waiting; icon plus shape plus word), the state in words and the level badge only when there is one. A verification that did not verify shows the yellow-soft `review-badge` "Gözden geçir" and the sentence "Beyan edilen seviye doğrulanmadı" in place of a level badge; the teacher decides. |
+| Zorluk selector | Invite step 2 (verification exams only) | Three tiles, Kolay, Orta and Zor, each with its step glyph, the word and a short hint; exactly one is selected. Teacher panel only, on the `diff-*` tints. Details below the table. |
+| Result row | Students list | A whole-row link [ASSUMPTION: the mockup draws rows as cards; the click target is carried over from the Today queue in EXAM-UX 4.1]. Shows the difficulty chip (teacher panel only; `diff-*` tint, step glyph, word), five section statuses (done, running, waiting; icon plus shape plus word), the state in words and the level badge only when there is one. A verification that did not verify shows the yellow-soft `review-badge` "Gözden geçir" and the sentence "Beyan edilen seviye doğrulanamadı" in place of a level badge; the teacher decides. |
 | Notice | Problems and information | `notice-warn` for anything that failed (device, connection, save, action, AI): what happened, then the next action, with a retry button when there is one. It never blames the student and is never red. `notice-neutral` for plain information. It is not a toast and stays until the cause clears or the person acts; `role="alert"` for warn, `role="status"` for neutral. |
 | System check step | Candidate, four steps | One device per step; the step chips show where you are; the primary is the step's own action and becomes "Tekrar dene" after a failure; a failed step shows a notice with "Nasıl düzeltirim?" and "Sorun bildir"; the last step's primary is "Tam ekrana geç ve sınavı başlat" and gives its reason when disabled. |
 | Section intro | Candidate, start of each section | Rules, an optional unscored warm-up ("Dene" or "Geç"), then "Bölümü başlat", which starts the clock and says so beside the button. |
 | AI proposal card | Result review | Never filled or accented as a decision; shows the proposal, the evidence, "Öneriyi onayla" and "Seviyeyi değiştir" (with a required reason). The teacher may decide without waiting for AI. |
 | Undo strip | Panel | Appears 8 seconds after a reversible action; "Geri al". |
 | Mascot | See Brand placement | Decorative, `aria-hidden`; the screen title carries the meaning. |
+
+### Zorluk selector
+
+Invite step 2, verification exams only. Three tiles, Kolay, Orta and Zor, each with its step glyph, the word and a short hint; exactly one is selected. The tiles use the `diff-*` tints and exist in the teacher panel only.
+
+- **Meaning, as shipped.** The invite's level shift (`shift` -1, 0, +1) moves the questions' CEFR level. **Kolay** takes the questions one CEFR level below the declared level, **Orta** at the declared level, **Zor** one level above.
+- **Hints.** "Bir seviye aşağıdan", "Beyan edilen seviyeden", "Bir seviye yukarıdan".
+- **Effect sentence.** Under the tiles, one sentence names the effect for the batch's declared level ("A2 beyan eden öğrenciler için: Kolay A1, Orta A2, Zor B1 soruları gelir.") and the affected sections, as the shipped hint does ("Yalnız bu davetteki öğrenciler için geçerli; etkilenen bölümler: Dilbilgisi, Okuma, Dinleme.").
+- **Limits.** It does not exist for placement exams, and it moves only fixed-set sections, not adaptive ones. It is not the question's own Kolay / Orta / Zor label inside a level (the shipped copy already says so).
 
 ## State Patterns
 
@@ -182,26 +198,26 @@ Behavioral. Visual specs live in `DESIGN.md.Components`.
 | Page reload mid-exam | Exam | Reload gate: "Sınavınız kaldığı yerden devam ediyor"; only the permissions that must be re-given are rows (camera, screen, full screen); "Süre bu sırada işlemeye devam etti"; primary "Devam et". |
 | Time up | Exam | The open item is submitted on its own: "Süre doldu. Kaydedilmiş cevaplarınız sayılıyor." and the flow moves to the next section intro. Never a failure tone. |
 | Section break | Between sections | `celebrate` mascot, one sentence, "n / 5 bölüm tamamlandı", the next section's name, primary "Sıradaki bölüm". The next section's clock starts only on "Bölümü başlat". |
-| Finish | End | "Sınavınız tamamlandı." plus "Kamera, mikrofon ve ekran paylaşımı kapatıldı." Then, by the school's release setting: nothing ("Sonucunuzu okulunuz size iletecek."), pending ("Yazma ve konuşma cevaplarınızı öğretmeniniz değerlendiriyor"), or the level as text. The verification outcome is a plain sentence in a `notice-neutral` ("Beyan ettiğiniz seviye bu sınavda doğrulanamadı." or "Karar için yeterli kanıt yok; okulunuz sizinle iletişime geçecek."), never colored by the result. Terminated variant: a neutral reason and "Okulunuzla iletişime geçin". |
+| Finish | End | "Sınavınız tamamlandı." plus "Kamera, mikrofon ve ekran paylaşımı kapatıldı." Then, by the school's release setting: nothing ("Sonucunuzu okulunuz size iletecek."), pending ("Yazma ve konuşma cevaplarınızı öğretmeniniz değerlendiriyor"), or the level as text. The verification outcome is a plain sentence in a `notice-neutral` ("Beyan ettiğiniz seviye bu sınavda doğrulanamadı." or "Sonuç için yeterli bilgi yok. Okulunuz sizinle iletişime geçecek."), never colored by the result. Terminated variant: a neutral reason and "Okulunuzla iletişime geçin". |
 | Desktop only | Candidate on a phone | "Bu sınav bilgisayarda yapılır", the reason (screen sharing is not possible on phones), "Linki kopyala". If a section clock is already running, the screen says so and tells the student to continue on a computer. |
 | Link problems | Candidate | Invalid, not yet open ("Sınavınız ... açılacak" with the date and zone), expired, completed (variant of the finish screen), closed. Each carries its next step. |
 | AI unavailable or failed | Panel | "AI önerisi üretilemedi: neden. Seviyeyi siz verin." plus the level segment. The teacher is never blocked. |
 
 ## Interaction Primitives
 
-- **Chip drag with a click fallback.** A C-test part or a matching letter moves by **pointer drag** (mouse, trackpad, pen) or by **click**: a click places the part into the selected gap, or into the first empty gap if none is selected; clicking an empty gap selects it (`aria-pressed`); clicking a filled gap returns its part to the pool. A press without movement (under about 5px) is a click. The drag is heard on the window, so a proctor warning that makes the page inert mid-drag, a release anywhere, Escape, leaving the window or the chips becoming disabled all end the drag; a chip never hangs in the air.
+- **Chip drag with a click fallback.** A C-test part or a matching letter moves by **pointer drag** (mouse, trackpad, pen) or by **click**: a click places the part into the selected gap, or into the first empty gap if none is selected; clicking an empty gap selects it (`aria-pressed`); clicking a filled gap returns its part to the pool. A press without movement (under about 5px) is a click. The drag listens on the whole window, so each of these ends it: a proctor warning that makes the page inert mid-drag, a release anywhere, Escape, leaving the window, or the chips becoming disabled. A chip never hangs in the air.
 - **Keyboard.** Every chip and every gap is a button in the Tab order. Enter or Space on a chip places it as a click would; Enter or Space on a gap selects, deselects or returns its part. Radio groups use arrow keys, Home and End. Tab order equals reading order. The warning card traps focus on its one button and ignores Escape.
 - **Flag.** A toggle in the bottom bar; instant, reversible, never confirmed.
 - **Review.** Reached from the last item's primary ("Gözden geçir ve bitir") or the strip's link; each listed item jumps back; "Bölümü bitir" asks once because finishing cannot be undone. Within a section, back and forth is free until it is finished.
 - **Autosave.** Answers save as the student works (typing saves as they type; choices on selection). Failures are kept in the tab and re-sent. The student does not press save.
-- **Skip.** Moving on from an empty item or one with empty places asks once ("Bu soru boş geçilsin mi?" or "Bu soruda boş yerler var") with the safe choice first.
+- **Skip.** Moving on from an empty item or one with empty places asks once ("Bu soruyu boş geçmek istiyor musunuz?" or "Bu soruda boş yerler var") with the safe choice first.
 - **Time.** The server clock is the only clock; the pill is for orientation. A section's clock starts when the student presses "Bölümü başlat" and the screen says so.
 - **Panel.** Click a row to open it; destructive or reversible actions give the 8-second undo strip instead of a dialog; a command search is available on the panel [ASSUMPTION: HIRING-UX 4.1 specifies a command palette; its status in the shipped panel is unverified].
 - **Banned:** browser `alert` and `confirm`, toasts, infinite scroll, hover-only affordances, a mascot that reacts to answers, any streak or XP mechanic.
 
 ## Accessibility Floor
 
-Behavioral; visual contrast ratios live in `DESIGN.md`.
+Behavioral; the contrast ratios live in `DESIGN.md`, Colors.
 
 - WCAG 2.2 AA. Every text pair in the contrast table meets 4.5:1 and every boundary a person must find meets 3:1.
 - **No state by color alone:** question cells carry a corner badge shape, difficulty carries a step glyph and a word, section status carries an icon or shape and a word, a selected card carries a check or marker.
@@ -221,19 +237,19 @@ Behavioral; visual contrast ratios live in `DESIGN.md`.
 |---|---|
 | Desktop 1366 x 768 and larger | The designed layouts. Candidate frame `{spacing.candidate-frame}`, exam column `{spacing.exam-column}`, manager frame `{spacing.manager-frame}`. |
 | 1024 to 1365 wide | Same layouts; panel tables keep working; no new breakpoint design [ASSUMPTION]. |
-| Narrower than 1024, desktop browser | Panel menu becomes a sheet; candidate screens go single column with a "Pencereni büyüt" strip (hiring) or the same strip in the exam [ASSUMPTION for the exam]. |
+| Narrower than 1024, desktop browser | Panel menu becomes a sheet; candidate screens go single column with a narrow-window strip: "Pencereni büyüt" in hiring, "Pencerenizi büyütün" in the exam, which addresses the student as "siz" [ASSUMPTION for the exam]. |
 | Phone or tablet | Candidate: the desktop-only screen. Panel: read-and-decide use only; the wizard and the review screens ask for a desktop. |
 | Browsers other than current Chrome or Edge | "Aynı linki güncel Chrome veya Edge ile açın." |
 
 ## Inspiration & Anti-patterns
 
 - **Lifted:** the feel of a modern learning app (rounded, flat lip under pressables) without its mechanics, as the soft look was briefed on 2026-10-14. The professional-test structure of onSET and Goethe placement for the exam's shape (six C-tests, fixed-form sections with review), which is already shipped.
-- **Rejected, streaks, XP, badges for score:** the mascot celebrates finishing a section, never a result. Student badges are for finishing only and never show a score or level.
-- **Rejected, per-section colors:** five sections stay neutral.
-- **Rejected, red buttons and red alarm language:** red is the brand, the recording dot and a small field-error frame only. A failing device or connection is a yellow notice and a proctor warning is the yellow card. Sally's review recommended neutral difficulty chips; the user overrode that for the teacher panel (DESIGN.md, Color psychology).
-- **Rejected, AI marked as the star:** no sparkles, no "Önerilen" label on AI paths; templates are the recommended start.
-- **Rejected, auto-fail by AI or by warning count:** the teacher decides.
-- **Rejected, an outbound brand link in the exam:** a student must not be led away from a proctored session.
+- **Rejected: streaks, XP and badges for score.** The mascot celebrates finishing a section, never a result. Student badges are for finishing only and never show a score or level.
+- **Rejected: per-section colors.** The five sections stay neutral.
+- **Rejected: red buttons and red alarm language.** Red is the brand, the recording dot and a small field-error frame only. A failing device or connection is a yellow notice and a proctor warning is the yellow card. Sally's review recommended neutral difficulty chips; the user overrode that for the teacher panel (DESIGN.md, Color psychology).
+- **Rejected: AI marked as the star.** There are no sparkles and no "Önerilen" label on AI paths; templates are the recommended start.
+- **Rejected: auto-fail by AI or by warning count.** The teacher decides.
+- **Rejected: an outbound brand link in the exam.** A student must not be led away from a proctored session.
 
 ## Key Flows
 
@@ -259,7 +275,7 @@ Branches:
 1. Selin Hoca opens the panel and signs in with the panel password; the sign-in shows the lockup with the byline.
 2. Today shows the next thing to look at; she presses "Öğrenci davet et".
 3. Step 1 "Öğrenciler": she pastes 12 names and e-mails; the list is checked inline (duplicates, wrong rows) and the primary stays disabled with its reason until the list is clean.
-4. Step 2 "Sınav ve zorluk": the `think` mascot peeks over the card corner. She picks "Seviye doğrulama", declares level A2, then chooses **Zorluk** on the same step: three tiles, Kolay (one step), Orta (two) and Zor (three), each on its tint and with its hint ("Bir seviye aşağıdan", "Beyan edilen seviyeden", "Bir seviye yukarıdan"); the sentence under them says what it means for her A2 students; she picks "Orta", so they get A2 questions.
+4. Step 2 "Sınav ve zorluk": the `think` mascot peeks over the card corner. She picks "Seviye doğrulama", declares level A2, then chooses **Zorluk** on the same step. There are three tiles: Kolay (one step), Orta (two) and Zor (three), each on its tint and with its hint ("Bir seviye aşağıdan", "Beyan edilen seviyeden", "Bir seviye yukarıdan"). The sentence under them says what it means for her A2 students. She picks "Orta", so they get A2 questions.
 5. Step 3 "Son bir bakış": the summary (12 students, the exam, Orta, the link expiry) and "12 daveti oluştur". The links are shown once to copy (the platform does not send e-mail).
 6. Days later, the Students list shows a row per student: Elif Yılmaz, Orta, five section statuses, "İnceleme bekliyor", level badge B1.
 7. She opens Elif's result. The AI's proposal for Yazma and Konuşma is shown as a proposal with its evidence. She accepts one and changes the other with a reason. The integrity report lists one warning (left exam); she reviews the event and closes the report with the decision "Geçerli" (the options in EXAM-UX 4.4).
@@ -294,15 +310,15 @@ Branches: the link expired (a "Yeni link iste" request); he opens it on a phone 
 
 ## Key screens
 
-1:1 visual references for the surfaces the picked mockup did not draw (desktop, 1366 wide; first-screen mocks mark the 650px line of a real laptop). Each file's `<style>` comment names the spine sections it follows; where a mock and a spine disagree, the spine wins.
+1:1 visual references, in `mockups/`, for the surfaces the picked mockup ([direction-sicak-yumusak.html](mockups/direction-sicak-yumusak.html)) did not draw (desktop, 1366 wide; first-screen mocks mark the 650px line of a real laptop). Each file's `<style>` comment names the spine sections it follows.
 
-- [Panel sign-in](.working/key-sign-in.html): IA 1; Brand placement; Voice (panel "sen").
-- [System check, screen-share step and its problem state](.working/key-system-check.html): IA 5; Flow 1 step 3; State Patterns (System check problem).
-- [Section intro, Dinleme](.working/key-section-intro.html): IA 8; Flow 1 step 4; Component Patterns (Section intro).
-- [Review before finishing a section](.working/key-review.html): IA 10; Flow 1 step 7; Component Patterns (Review screen, Question strip).
-- [Error, empty, offline and time-up states](.working/key-errors.html): State Patterns; Voice.
-- [Printed level report, verified and not verified](.working/key-level-report.html): IA 19; Brand placement (printed reports).
-- [Invite step with Zorluk tiles, and the results list](.working/key-panel-invite.html): IA 15 and 16; Flow 2 steps 4 and 6; Component Patterns (Zorluk selector, Result row).
+- [Panel sign-in](mockups/key-sign-in.html): IA 1; Brand placement; Voice (panel "sen").
+- [System check, screen-share step and its problem state](mockups/key-system-check.html): IA 5; Flow 1 step 3; State Patterns (System check problem).
+- [Section intro, Dinleme](mockups/key-section-intro.html): IA 8; Flow 1 step 4; Component Patterns (Section intro).
+- [Review before finishing a section](mockups/key-review.html): IA 10; Flow 1 step 7; Component Patterns (Review screen, Question strip).
+- [Error, empty, offline and time-up states](mockups/key-errors.html): State Patterns; Voice.
+- [Printed level report, verified and not verified](mockups/key-level-report.html): IA 19; Brand placement (printed reports).
+- [Invite step with Zorluk tiles, and the results list](mockups/key-panel-invite.html): IA 15 and 16; Flow 2 steps 4 and 6; Component Patterns (Zorluk selector, Result row).
 
 ## Open items
 
@@ -313,7 +329,7 @@ Branches: the link expired (a "Yeni link iste" request); he opens it on a phone 
 - **Mascot and mark colors.** The yellow mascot body and yellow tallest step are a memlog assumption the user has not answered separately.
 - **Difficulty chip placement.** Sally's question 3 (a chip on every student row, or once in the invite's group header) is not decided; the mocks keep the chip on each row, as the picked mockup does. The bank's own Kolay / Orta / Zor label inside a level shares the words; whether it gets the same chip is not decided (the bank is spine-only here).
 - **Warning counter.** Sally suggested a neutral cream counter pill instead of yellow-soft because the tile is already yellow; the memlog did not adopt it, so the counter stays yellow-soft.
-- **In-app confirm dialog.** "Bölüm bitirilsin mi?" and the skip confirmations are specified as behavior only; their visual (a small card over the scrim) is not drawn.
+- **In-app confirm dialog.** "Bölümü bitirmek istiyor musunuz?" and the skip confirmations are specified as behavior only; their visual (a small card over the scrim) is not drawn.
 - **Sign-in copy.** The shipped line "Sınav linkiniz e-postayla gönderildi" contradicts the invite flow (links are not e-mailed); the sign-in mock words it as "Sınav linkinizi okulunuz iletir".
 - **Address in the panel.** Sign-in and some shipped panel copy mix "siz" and "sen".
 - **Hiring candidate review screens** (candidates, scoring, compare, decision) are listed as spine-only here; they were not part of the picked mockup. Print stylesheet beyond the level report is not specified.

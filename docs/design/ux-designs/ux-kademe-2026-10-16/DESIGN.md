@@ -140,17 +140,17 @@ typography:
     lineHeight: '1'
   exam-passage:
     fontFamily: Nunito
-    fontSize: 23px
+    fontSize: 17px
     fontWeight: '600'
-    lineHeight: '2.3'
+    lineHeight: '2.1'
   exam-gap:
     fontFamily: Nunito
-    fontSize: 20px
+    fontSize: 16px
     fontWeight: '800'
     lineHeight: '1.7'
   exam-chip:
     fontFamily: Nunito
-    fontSize: 18px
+    fontSize: 15px
     fontWeight: '800'
     lineHeight: '1'
   wordmark:
@@ -205,7 +205,7 @@ spacing:
   cell-gap: 12px
   top-bar: 68px
   progress-strip: 20px
-  bottom-bar: 92px
+  bottom-bar: 66px
   welcome-bar: 96px
   panel-nav: 248px
   exam-column: 920px
@@ -647,7 +647,7 @@ The mascot is "Canlı basamak" (the living step): the Kademe mark's tallest step
 
 The palette is two layers: a warm neutral axis that carries 90% of every screen, and three brand accents with strict jobs. The roles are settled (memlog 2026-10-16); the reasoning is in [Color psychology](#color-psychology).
 
-**The red rule.** Red appears in exactly three places: the Kademe mark and the mascot (and the celebration confetti), the recording dot, and a small error frame (a field's border and its `!` glyph; the message itself stays ink). Never a button fill, never text, never under white text, never a result, a level, a timer, a proctor warning or a score. The Zorluk tints in the teacher panel are the only other reddish hue, and they are a pale pink ground under ink text, not the brand red.
+**The red rule.** Red appears in exactly three places: the Kademe mark and the mascot (and the celebration confetti), the recording dot, and a small error frame (a field's border and its `!` glyph; the message itself stays ink). Never a button fill, never text, never under white text, never a result, a level, a timer, a proctor warning or a score. The Zorluk tints in the teacher panel are the only other reddish hue, and they are a pale pink ground under ink text, not the brand red. In the teacher's answer review a wrong answer is an ink cross on cream and a right answer a cyan tick (owner decision 2026-10-16), never red.
 
 **Where brand color may appear.** The primary button, answered and partial cells, the check box and selected states, the progress fill, the flag, the warning tile and counter, notices, the recording dot, the live dot in a section status, the Kademe mark, the mascot, the byline glyph, and (teacher panel only) the difficulty chips and tiles. Anywhere else is neutral. If a screen shows more than about three brand-colored things at once, remove some.
 
@@ -658,7 +658,7 @@ The palette is two layers: a warm neutral axis that carries 90% of every screen,
 - **Ground (`#FAF7F2`)** is the page: a warm cream that is deliberately neutral, not yellow. **Surface (`#FFFFFF`)** is cards and bars. **Cream (`#F3EEE5`)** is pills, neutral badges and the faint background leaves. **Track (`#E9E3D8`)** is the empty part of a progress bar.
 - **Rim (`#E7E0D3`)** is card and chip borders; **Lip (`#DDD5C6`)** is the flat edge under cards and neutral buttons. Both are decoration, not boundaries. **Edge (`#8A8377`)** is the one boundary color for controls: the empty gap box, the empty question cell, the secondary button, fields. It is 3.75:1 on white and 3.51:1 on the ground, so it clears the 3:1 UI-component floor. Anything a person must find in order to press it uses Edge, never Rim.
 
-**Cyan: the action color.** `{colors.primary}` (`#0BBFDF`, the logo cyan) fills the primary button, the answered cell and the check box, always with `{colors.on-primary}` ink text (7.34:1). White text on this cyan is forbidden. The cyan fill alone is only 2.20:1 against white, so the **2px `{colors.primary-lip}` border and lip are load-bearing**: they give the control its 3:1 boundary (3.72:1 on white). Never drop them. `{colors.primary-deep}` (`#0B6F84`) is the cyan that works as text or a line: links, the "Geri" text button, progress fill, selected-state borders, the focus ring and icons on soft grounds (5.80:1 on white). `{colors.primary-soft}` is the quiet selected ground (selected gap, selected option, active menu item, a verified level on screen). It is never a difficulty ground.
+**Cyan: the action color.** `{colors.primary}` (`#0BBFDF`, the logo cyan) fills the primary button, the answered cell and the check box, always with `{colors.on-primary}` ink text (7.34:1). White text on this cyan is forbidden (2.20:1). The cyan fill alone is only 2.20:1 against white, so the **2px `{colors.primary-lip}` border and lip are load-bearing**: they give the control its 3:1 boundary (3.72:1 on white). Never drop them. `{colors.primary-deep}` (`#0B6F84`) is the cyan that works as text or a line: links, the "Geri" text button, progress fill, selected-state borders, the focus ring and icons on soft grounds (5.80:1 on white). `{colors.primary-soft}` is the quiet selected ground (selected gap, selected option, active menu item, a verified level on screen). It is never a difficulty ground.
 
 **Yellow: attention without alarm.** `{colors.yellow}` is the flag cell, the warning icon tile and the mascot's body. Text on yellow is always ink (11.17:1); white on yellow is 1.45:1 and never used. `{colors.yellow-soft}` is the ground of every notice: the warning counter, the offline strip, the system-check and action-failure boxes, and the teacher's "Gözden geçir" badge. The proctor warning is yellow on purpose: "sarı kart", you are warned and still in the game.
 
@@ -721,7 +721,7 @@ The voice is heavy and friendly: headings and button labels are 900, labels 800,
 - `body-lg` 18px: the welcome lead and the warning rule (the mockup's 17.5 and 18.5 snap to 18). `body` 15px: help text and descriptions.
 - `label` 15px and `label-sm` 13px: menu items, pills, badges, table cells. `caption` 13px: notes, "Kaydedildi · 4 sn önce". `overline` 13px uppercase: small field labels ("PARÇALAR"); it must be set with the Turkish locale so `i` and `ı` capitalize correctly.
 - `button` 17px and `button-lg` 20px; the timer pill also uses `button`. `numeral` 18px: question-cell numbers.
-- Exam content: `exam-passage` 23px with a 2.3 line height (the tall leading is what gives gap boxes room), `exam-gap` 20px inside a gap box, `exam-chip` 18px on answer chips.
+- Exam content: `exam-passage` 17px with a 2.1 line height (the tall leading is what gives gap boxes room), `exam-gap` 16px inside a gap box, `exam-chip` 15px on answer chips. These are the shipped sizes, kept by the owner on 2026-10-16 so a C-test fits the window (the picked mockup draws 23/20/18px; the spine wins).
 - `wordmark` 24px (front doors, welcome) and `wordmark-sm` 20px (menu and bars; the mockup's 19 and 22 snap to 20). `byline` 13px; `byline-sm` 11.5px in the menu lockup only. Minimum size for any other text: 12px [ASSUMPTION].
 
 Every countdown, score-like number, cell number and count uses tabular numerals so digits do not jump. German text carries `lang="de"` and `translate="no"`.
@@ -732,7 +732,7 @@ Base unit 4px; the scale is 4, 8, 12, 16, 20, 24, 28, 32, 40, 48. The mockup's o
 
 **Reference viewport 1366 x 768.** The first screens of every flow (sign-in, welcome, each system-check step, section intro, each wizard step) must fit this viewport without scrolling. One decision per screen; the candidate frame is `{spacing.candidate-frame}` wide and the manager frame `{spacing.manager-frame}`.
 
-- **Exam screen** is a fixed three-band layout: a `{spacing.top-bar}` top bar, a `{spacing.progress-strip}` progress strip, a question column centered at `{spacing.exam-column}` (920), and a `{spacing.bottom-bar}` one-row bottom bar fixed to the window. At 768px that leaves 588px for the question. Long reading texts and long writing fields scroll inside the column; the bars never move.
+- **Exam screen** is a fixed three-band layout: a `{spacing.top-bar}` top bar, a `{spacing.progress-strip}` progress strip, a question column centered at `{spacing.exam-column}` (920), and a `{spacing.bottom-bar}` one-row bottom bar fixed to the window. At a real 1366x768 laptop (about 650px visible) that leaves about 500px for the question. Long reading texts and long writing fields scroll inside the column; the bars never move.
 - **Welcome** is a `{spacing.welcome-bar}` top bar, a 780px card (`{spacing.welcome-card}`) with the mascot standing on its top edge, and the faint leaves behind.
 - **Panel** is a `{spacing.panel-nav}` white side menu and a fluid main area up to the manager frame; wizard cards sit in the main area.
 - **Question strip.** Cells are 48px with a `{spacing.cell-gap}` gap; chips and tiles keep 8 to 12 between neighbors. Related items sit 8 to 12 apart, separate groups 24 to 32.
@@ -754,7 +754,16 @@ Depth is a flat solid **lip**: a hard offset shadow with zero blur, under everyt
 
 ## Shapes
 
-Big, round, friendly. The scale is `{rounded.sm}` 9 (check boxes, the mark's tray), `{rounded.md}` 13 (gap boxes), `{rounded.lg}` 16 (question cells, answer chips, level buttons), `{rounded.xl}` 18 (buttons, fields, need-tiles), `{rounded.2xl}` 22 (large button, difficulty tiles, option cards, result rows, the warning glyph tile), `{rounded.3xl}` 30 (cards, the reading passage), `{rounded.4xl}` 36 (the welcome card and the warning card) and `{rounded.full}` for every pill and status (section chips, difficulty chips, timer, menu items, step chips).
+Big, round, friendly. The radius scale:
+
+- `{rounded.sm}` 9: check boxes, the mark's tray.
+- `{rounded.md}` 13: gap boxes.
+- `{rounded.lg}` 16: question cells, answer chips, level buttons.
+- `{rounded.xl}` 18: buttons, fields, need-tiles.
+- `{rounded.2xl}` 22: large button, difficulty tiles, option cards, result rows, the warning glyph tile.
+- `{rounded.3xl}` 30: cards, the reading passage.
+- `{rounded.4xl}` 36: the welcome card and the warning card.
+- `{rounded.full}`: every pill and status (section chips, difficulty chips, timer, menu items, step chips).
 
 The mockup's 15 and 20px corners snap to `{rounded.lg}` and `{rounded.2xl}`. Rule of thumb: the bigger and the more a surface is a "stage" for a decision, the rounder it is. No corner is ever sharp. The only squared corner is the one on the decorative leaf blobs. Illustrations and imagery follow the container corner of the thing that holds them.
 
@@ -766,7 +775,7 @@ Visual specs only; behavior lives in EXPERIENCE.md. All sizes are for the 1366 r
 
 - **Primary button.** `{colors.primary}` fill, `{colors.on-primary}` label, 2px `{colors.primary-lip}` border, 4px `{colors.primary-lip}` lip, `{rounded.xl}`, 52px high, `{typography.button}`, an optional 19px stroke icon after the label (an arrow for "continue"). The large variant is 62px, `{rounded.2xl}`, `{typography.button-lg}`, for "Başlayalım" and the warning's dismiss. **One per screen.** Red is never a button color.
 - **Secondary button.** White, ink label, 2px `{colors.edge}` border, 4px `{colors.lip}` lip. **Text button.** No fill, `{colors.primary-deep}` label (the "Geri" back link). Disabled: see Elevation & Depth.
-- **Field** (sign-in, invite, info form) [ASSUMPTION: derived, the mockup draws no field]. 52px, white, 2px `{colors.edge}` border, 3px `{colors.lip}` lip, `{rounded.xl}`; focus swaps the border to `{colors.primary-deep}`; an error swaps it to `{colors.error}` and puts a `!` glyph in `{colors.error}` plus the message in ink under the field (the message says how to fix it).
+- **Field** (sign-in, invite, info form) [ASSUMPTION: derived, the mockup draws no field]. 52px, white, 2px `{colors.edge}` border, 3px `{colors.lip}` lip, `{rounded.xl}`. Focus swaps the border to `{colors.primary-deep}`. An error swaps it to `{colors.error}`, puts a `!` glyph in `{colors.error}` and shows the message in ink under the field (the message says how to fix it).
 - **Card.** White, 2px `{colors.rim}` border, 6px `{colors.lip}` lip, `{rounded.3xl}`. Hero card (welcome) `{rounded.4xl}`, 7px lip. The reading passage is a card.
 - **Icons.** 24 grid, 2.2 stroke, round caps and joins, `currentColor`, shown at 19px (22px in need-tiles, 38px in the warning tile). The product's current lucide icons at stroke 2.2 match this [ASSUMPTION]. Added for notices and states: info (circle with an i), eye, wifi-off, refresh, copy, phone, globe, x, help (circle with a question mark).
 
@@ -785,7 +794,7 @@ Visual specs only; behavior lives in EXPERIENCE.md. All sizes are for the 1366 r
 - **Timer pill.** White, 2px `{colors.rim}` border, 3px lip, `{rounded.full}`, a 19px clock icon and tabular digits ("28:31"). It does not blink and does not turn red.
 - **Progress strip.** One segment per section, 10px tall, 8 apart, `{colors.track}` track and `{colors.primary-deep}` fill; the finished sections are full, the current one partial.
 - **Question cell.** 48px, `{rounded.lg}`, numeral in `{typography.numeral}`. Four states, each with a corner badge (21px disc, top-right) so no state is color-only: empty (white, Edge border, no badge), answered (cyan fill, ink disc with a white check), partial (cyan-soft fill, deep-cyan border, white disc with a half circle), flagged (yellow fill, ink disc with a yellow flag). The current cell gets a 3px ink ring at 3px offset.
-- **Bottom bar.** White, 92px, 2px `{colors.rim}` top border, one row: the cell strip on the left; on the right "İşaretle" (secondary, with a flag icon) and "Sonraki" (primary, with an arrow). The back control is a text button before the strip [ASSUMPTION: the mockup omits it; the shipped exam has "Önceki"]. On the last item the primary reads "Gözden geçir ve bitir".
+- **Bottom bar.** White, about 66px (owner decision 2026-10-16: the shipped one-row bar, buttons 44px high), 2px `{colors.rim}` top border, one row: the cell strip on the left; on the right "İşaretle" (secondary, with a flag icon) and "Sonraki" (primary, with an arrow). The back control is a text button before the strip [ASSUMPTION: the mockup omits it; the shipped exam has "Önceki"]. On the last item the primary reads "Gözden geçir ve bitir".
 - **Answer chip.** White, 2px Rim border with an Edge bottom border, 3px lip, `{rounded.lg}`, 42px, `{typography.exam-chip}`, German `lang="de"`. Lifted while dragged.
 - **Gap box.** Empty: ground fill, dashed Edge border, `{rounded.md}`, 38px, a width equal for every gap of the item. Selected: cyan-soft fill, 2.5px deep-cyan border. Filled: white, solid ink-2 border, 3px lip, the placed part in `{typography.exam-gap}`.
 
