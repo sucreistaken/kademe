@@ -10,17 +10,18 @@ import { IconTile, type TileColor } from "./icon-tile";
 export type SectionKey = "GRAMMAR" | "READING" | "LISTENING" | "WRITING" | "SPEAKING";
 
 /**
- * Each exam section keeps one pastel family and one icon wherever it appears
- * (the intro list, the finish screen, a section's own start screen), so a
- * student learns the five parts by colour as well as by name. A category
- * colour only: it never says how a section went.
+ * Each exam section keeps one icon wherever it appears; the tile is neutral
+ * (Campus German redesign: sections are icon + word, never five colours).
+ * It shows in the intro list, the finish screen and a section's own start
+ * screen, so a student learns the five parts by icon as well as by name. A
+ * category marker only: it never says how a section went.
  */
-export const SECTION_LOOK: Record<SectionKey, { color: Exclude<TileColor, "neutral">; icon: LucideIcon }> = {
-  GRAMMAR: { color: "grape", icon: Puzzle },
-  READING: { color: "sky", icon: BookOpen },
-  LISTENING: { color: "coral", icon: Headphones },
-  WRITING: { color: "sun", icon: PenLine },
-  SPEAKING: { color: "accent", icon: Mic },
+export const SECTION_LOOK: Record<SectionKey, { color: TileColor; icon: LucideIcon }> = {
+  GRAMMAR: { color: "neutral", icon: Puzzle },
+  READING: { color: "neutral", icon: BookOpen },
+  LISTENING: { color: "neutral", icon: Headphones },
+  WRITING: { color: "neutral", icon: PenLine },
+  SPEAKING: { color: "neutral", icon: Mic },
 };
 
 /** The section's icon tile; decorative (the section's name next to it is what a reader hears). */

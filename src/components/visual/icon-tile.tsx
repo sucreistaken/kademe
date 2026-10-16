@@ -6,7 +6,7 @@ export type TileColor = "accent" | "neutral" | "sky" | "grape" | "sun" | "coral"
 
 const SOFT: Record<TileColor, string> = {
   accent: "bg-accent-soft text-accent",
-  neutral: "bg-secondary text-ink",
+  neutral: "bg-cream text-ink",
   sky: "bg-sky-soft text-sky",
   grape: "bg-grape-soft text-grape",
   sun: "bg-sun-soft text-sun",

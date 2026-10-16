@@ -243,8 +243,8 @@ describe("hiring's rows on Today", () => {
     const html = await render([requestsRow, expiringRow, draftRow]);
     const list = between(html, 'aria-labelledby="today-attention"', 'id="today-you"');
     expect(list.match(/bg-accent-soft text-accent/g)).toHaveLength(2);
-    expect(list.match(/bg-secondary text-ink/g)).toHaveLength(1);
-    expect(list.slice(list.indexOf("bg-secondary text-ink"), list.indexOf("3 bağlantı doluyor"))).toContain("lucide-clock");
+    expect(list.match(/bg-cream text-ink/g)).toHaveLength(1);
+    expect(list.slice(list.indexOf("bg-cream text-ink"), list.indexOf("3 bağlantı doluyor"))).toContain("lucide-clock");
   });
 });
 

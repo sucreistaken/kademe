@@ -4,12 +4,12 @@ import { cn } from "@/lib/cn";
  * A status: a coloured dot plus a word, or (`pill`) the same inside a soft
  * pill. The word always carries the meaning; the colour only helps a glance.
  *
- * Tones (globals.css, soft look):
- *  - active: something is happening right now (in the exam, recording). Sky.
- *  - done: finished and settled (scored, completed, published). Mint.
- *  - neutral: waiting, not yet acted on. Grey.
- *  - warn: needs a person's attention (expiring, half scored). Sun (amber).
- * A status is never a verdict on a candidate: there is no red tone here.
+ * Tones (globals.css, Campus German look):
+ *  - active: cyan ring dot (something is happening now).
+ *  - done: the cyan check tone.
+ *  - neutral: grey.
+ *  - warn: yellow (needs a person's attention).
+ * No red tone: a status is never a verdict.
  */
 export type StatusTone = "active" | "done" | "neutral" | "warn";
 
