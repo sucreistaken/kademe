@@ -51,6 +51,13 @@ describe("canWrite", () => {
     expect(canWrite({ navigable: true, target: open(7), firstOpen: null })).toBe(true);
   });
 
+  it("one way: the other open items of the first open item's listening testlet take writes too", () => {
+    expect(canWrite({ navigable: false, target: open(4), firstOpen: 3, sharesTestlet: true })).toBe(true);
+    expect(canWrite({ navigable: false, target: open(4), firstOpen: 3, sharesTestlet: false })).toBe(false);
+    // Closed items stay closed, testlet or not.
+    expect(canWrite({ navigable: false, target: answered(2), firstOpen: 3, sharesTestlet: true })).toBe(false);
+  });
+
   it("never on an item that is closed, not reached or missing", () => {
     for (const navigable of [true, false]) {
       expect(canWrite({ navigable, target: answered(1), firstOpen: 1 })).toBe(false);

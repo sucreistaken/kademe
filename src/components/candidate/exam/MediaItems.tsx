@@ -36,12 +36,17 @@ export function ListeningPlayer({
   sequence,
   stimulus,
   engine,
+  onActiveChange,
+  className,
 }: {
   token: string;
   sectionPosition: number;
   sequence: number;
   stimulus: Extract<CandidateStimulus, { kind: "LISTENING" }>;
   engine: ProctorEngine | null;
+  /** True while a clip is loading or playing, so the screen can ask before leaving it. */
+  onActiveChange?: (active: boolean) => void;
+  className?: string;
 }) {
   const t = useT("exam");
   const ti = useT("examItems");
@@ -63,6 +68,16 @@ export function ListeningPlayer({
   /** The failed play had started, so a free retry resumes rather than restarts. */
   const [midway, setMidway] = useState(false);
   const [progress, setProgress] = useState(0);
+
+  const active = state === "LOADING" || state === "PLAYING";
+  const reportActive = useRef(onActiveChange);
+  useEffect(() => {
+    reportActive.current = onActiveChange;
+  });
+  useEffect(() => {
+    reportActive.current?.(active);
+  }, [active]);
+  useEffect(() => () => reportActive.current?.(false), []);
 
   const setState = (s: PlayState) => {
     stateRef.current = s;
@@ -186,7 +201,7 @@ export function ListeningPlayer({
     failure === "STALLED" ? ti("listenStalled") : failure === "BLOCKED" ? ti("listenBlocked") : ti("listenLoadFailed");
 
   return (
-    <div className="rounded-[14px] border border-line bg-surface p-5">
+    <div className={cn("rounded-[14px] border border-line bg-surface p-5", className)}>
       {/* German upper case: under the Turkish page language "i" would become "İ". */}
       <div lang="de" className="text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted">
         {stimulus.title}
