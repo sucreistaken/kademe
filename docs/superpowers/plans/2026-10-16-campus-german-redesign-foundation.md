@@ -1217,3 +1217,50 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 - **Plan 2, candidate screens to mockup fidelity** (written after Plan 1 ships): welcome page fits 650px visible height; exam top bar, progress strip and bottom bar in the new look at the shipped sizes (owner decision below); C-test chips in the new look at the shipped sizes; section intro; review; finish with the celebrate mascot; proctor warning card (yellow tile, counter pill); system check steps.
 - **Plan 3, panel, report and hiring**: sign-in copy "Sınav linkinizi okulunuz iletir"; panel nav; invite Zorluk tiles and the difficulty chip in result rows (shift -1/0/+1 to EASY/MEDIUM/HARD); "Gözden geçir" yellow-soft row for "doğrulanamadı"; printed level report (ink mark, no hue, the new declared-level outcome row); integrity severities without red; hiring screens.
 - **Owner decisions taken 2026-10-16 (for Plan 2 and 3):** (1) the exam bottom bar and the C-test keep the shipped sizes (one-row bar about 66px, passage 17px); only the new colors and shapes are applied there, not the spec's 92px bar and 23px passage. (2) Teacher-side wrong answers in the result review (`objective-section.tsx`) become an ink cross on cream, no red; right answers keep the cyan tick.
+
+## Execution record (2026-10-16)
+
+Executed with subagent-driven development: 9 tasks, each reviewed, then a whole-branch review and one fix wave (00816d3..0124fed). Rulings taken during execution:
+
+- Ruling: T8 scan stays heuristic (button openings only) and the Step 1 grep list is authoritative - a stricter scan would flag state toggles - cost if wrong: a hand-rolled white-on-dark-cyan button survives (still 5.8:1, only off-brand).
+- Ruling: T9 uses the existing dev server on :3100 (same checkout, hot reload) and does not stop it; exam screens needing PROCTOR_DEV_FAKE are recorded as not checked - the owner's rule is never to stop another server - cost if wrong: Plan 2 starts without a visual check of the exam screen.
+- Ruling: implementers stage only the files their task names (a parallel docs agent edits docs/design/ux-designs/...) - cost if wrong: unrelated doc edits land in a code commit.
+- Task 1: Ruling: accent-deep becomes #0a5868 (text-safe: 8.05 white, 7.12 on accent-soft) instead of the plan's #0891ab, plus a test that it reads at 4.5:1 - its only users are report-sheet text (report-sheet.tsx:83,89, integrity/report-sheet.tsx:96); nothing uses it as a lip any more (shadow-lip uses brand-lip) - cost if wrong: report headers a darker cyan until Plan 3 turns them ink.
+- Task 1: Ruling: text-danger (40 call sites, red text) is not swept in Plan 1; Plans 2/3 replace it with ink text + error frame/glyph per the red rule - Plan 1 only changes shared primitives - cost if wrong: red text stays on some panel screens until Plan 3.
+- Task 5: Ruling: StatusDot active = cyan: dots.active "bg-brand", pills.active "bg-accent-soft text-accent" (spec: in progress is one cyan dot), so live != draft - cost if wrong: one more cyan accent on hiring status rows.
+- Task 6: Ruling: SystemCheck issue sentence renders <Notice role="alert"> with its layout classes; the status branch stays a plain <p role="status"> - the global constraint asks for a yellow glyph on every warning/error notice - cost if wrong: none visible beyond the glyph.
+- Task 7: Ruling: follow DESIGN.md (spec wins over plan): no border/lip on the chip, off bars fill-ink/30, glyph 19x15px - cost if wrong: chip slightly flatter than the plan drew it.
+- Task 8: Ruling: accept the replacement scan (tag-aware walker) instead of the plan's regex - the plan's regex was vacuous on the unfixed tree - cost if wrong: a more complex test to maintain.
+- Ruling: I3 radii: keep code utility names (shadcn roles: lg 18, xl 30, 2xl 36); document a spec-to-utility table in RULES.md and the globals.css header; spec 16px and 22px steps are written as rounded-[16px] / rounded-[22px] (no remap exists for those literals) - cost if wrong: two literal radii in Plan 2 code instead of named tokens.
+- Ruling: I2 fix now at the 3 fill sites (border-l-yellow / bg-yellow) rather than in Plan 3 - silent regression on teacher screens - cost if wrong: Plan 3 restyles them again anyway.
+- Ruling: I4 fix now (spec wins: white tile, 1.6 ink outline, no lip, ink steps) - Plan 3 depends on it - cost if wrong: none.
+
+Deferred minor findings (input for Plans 2 and 3):
+
+- Task 1: minor (deferred): globals.css intro paragraphs (lines ~18-25) still describe the 2026-10-14 soft look.
+- Task 1: minor (deferred): Turkish quote inside an English CSS comment.
+- Task 1: minor (deferred): theme.test titles keep "soft values/soft pixels" wording.
+- Task 1: minor (deferred): no direct warn on warn-soft assertion.
+- Task 2: minor (deferred): no-white-on-brand scan misses template/concatenated strings and has no positive control (plan-mandated).
+- Task 2: minor (deferred): danger/secondary press not asserted; danger only differs on hover (red only on hover border).
+- Task 2: minor (deferred): ExamNav.tsx:226,233 calls buttonVariants without cn, ships font-bold and font-extrabold together.
+- Task 2: minor (deferred): substring "bg-brand" assertions in runner-footer/blocks tests.
+- Task 2: minor (deferred): raw bg-accent text-white buttons (bank/[id], students/[id], generate-form, blueprint-editor, recording-player) -> Task 8.
+- Task 2: minor (deferred): "Pressing:" comment above SECONDARY not updated; trailer labeling.
+- Task 3: minor (deferred): lockup order test does not pin glyph-before-byline; toContain("fill-brand") also matched by fill-brand-lip (plan-mandated).
+- Task 3: minor (deferred): test helper el:unknown drops prop typing.
+- Task 3: minor (deferred): PetalGlyph yellow path exceeds viewBox by 0.3 units; redundant path commands.
+- Task 3: minor (deferred): report sheets use BrandMark default tone; Plan 3 must pass tone="ink" on printed reports.
+- Task 4: minor (deferred): mascot class test is substring-based (fill-red met by cheeks) (plan-mandated).
+- Task 4: minor (deferred): think-pose white hand edge on yellow body: check visually in Task 9.
+- Task 5: minor (deferred): icon-tile doc comment still says pastel family.
+- Task 5: minor (deferred): section-look test does not forbid family classes.
+- Task 5: minor (deferred): SectionCheer opacity-40 cream tile may be too faint (visual pass).
+- Task 6: minor (deferred): notice glyph test matches bg-yellow-soft too (vacuous).
+- Task 6: minor (deferred): red text/banners remain on candidate screens (InfoForm:111, ExamRunner:915, MediaItems:228,449, SystemCheck:310 text-danger; ProctorProvider:89 bg-danger text-white banner) -> Plan 2 red sweep.
+- Task 6: minor (deferred): scan uses process.cwd().
+- Task 7: minor (deferred): test titles print the label where a count is meant; tests do not pin that the FIRST n bars are filled; weak red/white regex.
+- Task 7: minor (deferred): bar geometry array per render; no whitespace-nowrap on the pill.
+- Task 8: minor (deferred): scan tests each literal alone (split cn("bg-accent", x && "text-white") not caught); \bbg-accent\b also matches bg-accent-soft; no inline fixture for the walker; blind to <Button className>, motion.button; import order in bank/[id]/page.tsx.
+- Task 8: minor (deferred): commit body lacks the call-site list (brief self-contradiction); list is in task-8-report.md.
+- Task 9: minor (deferred): "no red at all" should say "apart from the mark"; "deep accent" naming; "cream tile" vs white tile + system check lockup claim; RULES card radius 14px text stale; "neutral set" wording; long line / Turkish header; screenshots not saved.
