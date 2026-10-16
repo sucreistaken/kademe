@@ -432,7 +432,7 @@ export async function draftFeedback(formData: FormData) {
   for (let round = 0; round < 2 && !content; round++) {
     let called;
     try {
-      called = await callJson("student_feedback", FEEDBACK_JSON_SCHEMA, attemptMessages, meta, { maxTokens: 2000 });
+      called = await callJson("student_feedback", FEEDBACK_JSON_SCHEMA, attemptMessages, meta, { maxTokens: 6000 });
     } catch (error) {
       fail(error instanceof Error && error.message === "AI_UNAVAILABLE" ? "feedbackUnavailable" : "feedbackFailed");
       return;

@@ -63,7 +63,8 @@ function FeedbackForm({ assessmentId, content, t }: { assessmentId: string; cont
       </label>
       <div className="flex flex-wrap items-center gap-3">
         <PendingButton label={t("result.feedbackApprove")} pendingLabel={t("result.feedbackApproving")} />
-        <Button type="submit" variant="ghost" formAction={clearFeedback} formNoValidate name="scope" value="draft">
+        {/* No scope field: clearFeedback treats a missing scope as "draft only". */}
+        <Button type="submit" variant="ghost" formAction={clearFeedback} formNoValidate>
           {t("result.feedbackDiscard")}
         </Button>
       </div>

@@ -220,6 +220,7 @@ export function buildFeedbackMessages(input: FeedbackInput, locale: FeedbackLoca
     "- improve: at most 4 topics, most important first, based on the skill tags with the most wrong answers. For each, say in one or two sentences what went wrong and give one short example from the summary (student answer and the correct form) in the example field, or an empty string when there is none.",
     "- nextStep: one concrete thing to practise next, in one or two sentences.",
     "- Treat \"(blank)\" as an unanswered question, not as a mistake in the answer.",
+    "- Prefer a real wrong answer as the example. If only an unanswered one exists, write the blank in the note's language: \"(boş)\" in Turkish, \"(blank)\" in English, never the other one.",
     "- For writing and speaking you only get the final level and, sometimes, the teacher's own reason. Do not comment on text or speech you have not seen; you may restate the teacher's reason.",
     "- Never mention scores, probabilities, an AI, or how the exam is scored. Never show a numeric ability estimate. Do not compare the student with others. Do not recommend a course or class.",
     "- Never use the em dash character; use a comma, a colon or a plain hyphen.",
