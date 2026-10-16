@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1480">
+<title>Kademe | Tasarım yönleri</title>
+<meta name="description" content="Kademe için üç görsel yön">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+
+
+*{box-sizing:border-box}
+html{background:#E7E9ED}
+body{margin:0;font-family:'Nunito',ui-rounded,system-ui,sans-serif;color:#1D2127;background:#E7E9ED;-webkit-font-smoothing:antialiased;line-height:1.5}
+.doc{max-width:1446px;margin:0 auto;padding:30px 40px 120px}
+.doc-top{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:26px}
+.doc-top a{color:#0B6F84;font-weight:800;text-decoration:none}
+.doc-top a:hover{text-decoration:underline}
+.doc-nav{display:flex;gap:6px;flex-wrap:wrap}
+.doc-nav a{display:inline-block;padding:6px 12px;border-radius:999px;background:#fff;color:#1D2127;font-size:13px;font-weight:800;text-decoration:none;border:1px solid #CDD2D8}
+.doc-nav a:hover{background:#1D2127;color:#fff}
+.doc h1{font-size:40px;font-weight:900;letter-spacing:-.02em;margin:0 0 4px;line-height:1.1}
+.doc .tag{font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#4A525C}
+.sec{margin-top:72px;scroll-margin-top:20px}
+.sec-label{font-size:13px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#4A525C;margin:0 0 4px}
+.sec h2{font-size:26px;font-weight:900;margin:0 0 6px;letter-spacing:-.01em}
+.sec p.note{max-width:92ch;color:#2E343C;margin:0 0 20px;font-size:15.5px}
+.rationale{max-width:92ch;font-size:18px;line-height:1.55;color:#1D2127;margin:10px 0 28px}
+.tok-wrap{display:grid;grid-template-columns:minmax(0,1fr);gap:22px}
+table.tok{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border-radius:14px;overflow:hidden;border:1px solid #CDD2D8;font-size:13.5px}
+table.tok th{background:#F4F5F7;text-align:left;font-weight:800;padding:10px 14px;border-bottom:1px solid #CDD2D8;white-space:nowrap}
+table.tok td{padding:8px 14px;border-bottom:1px solid #ECEEF1;vertical-align:middle}
+table.tok tr:last-child td{border-bottom:0}
+table.tok code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;color:#2E343C}
+.sw{display:inline-block;width:26px;height:26px;border-radius:8px;border:1px solid rgba(0,0,0,.18);vertical-align:middle}
+.aa{display:inline-block;padding:3px 10px;border-radius:7px;font-weight:800;font-size:13px;border:1px solid rgba(0,0,0,.12)}
+td.num{white-space:nowrap}
+td.ok{color:#146B3F;font-weight:800}
+td.bad{color:#A32018;font-weight:800}
+tr.rej td{background:#FBF3F2}
+.frames{display:flex;flex-direction:column;gap:18px;align-items:flex-start}
+.scale{zoom:1}
+.frame{width:1366px;border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.1),0 22px 44px -14px rgba(20,25,35,.32);border:1px solid #BFC5CC}
+.frame-bar{height:44px;background:#F1F2F4;border-bottom:1px solid #D4D8DD;display:flex;align-items:center;gap:16px;padding:0 16px}
+.dots i{display:inline-block;width:12px;height:12px;border-radius:50%;background:#C5C9CF;margin-right:7px}
+.url{flex:0 1 560px;height:28px;border-radius:14px;background:#fff;border:1px solid #D4D8DD;display:flex;align-items:center;padding:0 14px;font-size:13px;color:#4A525C}
+.viewport{position:relative;width:1366px;overflow:hidden}
+.legend{margin-top:14px;display:flex;gap:10px 22px;flex-wrap:wrap;font-size:14px;color:#2E343C}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.cap{font-size:13.5px;color:#4A525C;margin-top:10px;max-width:110ch}
+.viewport svg.mark{flex:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (max-width:1480px){.scale{zoom:.94}}
+@media (max-width:1380px){.scale{zoom:.86}}
+@media (max-width:1260px){.scale{zoom:.78}}
+@media (max-width:1140px){.scale{zoom:.68}}
+@media (max-width:1000px){.scale{zoom:.56}}
+
+
+.ix{max-width:1180px;margin:0 auto;padding:44px 32px 90px}
+.ix h1{font-size:40px;font-weight:900;letter-spacing:-.02em;margin:0 0 8px}
+.ix .lead{max-width:80ch;font-size:17px;color:#2E343C;margin:0 0 30px}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.cd{background:#fff;border:1px solid #CDD2D8;border-radius:16px;padding:20px 20px 22px;display:flex;flex-direction:column;gap:14px;text-decoration:none;color:inherit}
+.cd:hover{border-color:#1D2127;box-shadow:0 10px 30px -14px rgba(20,25,35,.35)}
+.cd .no{font-size:12.5px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#4A525C}
+.cd h2{margin:0;font-size:26px;font-weight:900;letter-spacing:-.01em}
+.cd p{margin:0;font-size:15px;line-height:1.5;color:#2E343C;min-height:96px}
+.strip{display:flex;height:58px;border-radius:12px;overflow:hidden;border:1px solid #CDD2D8}
+.strip i{display:block}
+.samples{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-height:50px}
+.go{margin-top:auto;font-weight:900;color:#0B6F84;font-size:15px}
+.btn1{display:inline-block;background:#1D2127;color:#fff;font-weight:800;font-size:14px;padding:10px 20px;border-radius:20px 20px 5px 20px}
+.chip1{display:inline-block;background:#FFF4C2;color:#1D2127;font-weight:800;font-size:13px;padding:6px 12px;border-radius:14px 14px 4px 14px}
+.btn2{display:inline-block;background:#0A6A7E;color:#fff;font-weight:700;font-size:14px;padding:10px 18px;border-radius:9px}
+.chip2{display:inline-block;background:#fff;color:#1D2127;font-weight:700;font-size:13px;padding:5px 11px;border-radius:7px;border:1px solid #838B96}
+.btn3{display:inline-block;background:#0BBFDF;color:#1D2127;font-weight:900;font-size:15px;padding:10px 22px;border-radius:16px;box-shadow:0 4px 0 #0891AB}
+.chip3{display:inline-block;background:#FFF2B8;color:#1D2127;font-weight:900;font-size:13px;padding:6px 14px;border-radius:999px;box-shadow:0 3px 0 #F0DC7A}
+h3.cmp{font-size:22px;font-weight:900;margin:48px 0 12px}
+
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><symbol id="ic-gram" viewBox="0 0 24 24"><text x="12" y="17" text-anchor="middle" font-size="14" font-weight="900" fill="currentColor" stroke="none" font-family="Nunito,system-ui,sans-serif">Aa</text></symbol><symbol id="ic-book" viewBox="0 0 24 24"><path d="M12 6.5C10.5 5 8 4.5 4.5 4.5V18c3.5 0 6 .5 7.5 2 1.5-1.5 4-2 7.5-2V4.5C16 4.5 13.5 5 12 6.5Z"/><path d="M12 6.5V20"/></symbol><symbol id="ic-head" viewBox="0 0 24 24"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><path d="M4 15h3.5v5H6a2 2 0 0 1-2-2z"/><path d="M20 15h-3.5v5H18a2 2 0 0 0 2-2z"/></symbol><symbol id="ic-pen" viewBox="0 0 24 24"><path d="M4 20l1-4L16.5 4.5a2 2 0 0 1 3 3L8 19z"/><path d="M14.5 6.5l3 3"/></symbol><symbol id="ic-mic" viewBox="0 0 24 24"><path d="M9 5a3 3 0 0 1 6 0v6a3 3 0 0 1-6 0z"/><path d="M6 11a6 6 0 0 0 12 0"/><path d="M12 17v3.5M9 20.5h6"/></symbol><symbol id="ic-flag" viewBox="0 0 24 24"><path d="M6.5 21V3.5"/><path d="M6.5 4.5h11.5l-3 4.2 3 4.3H6.5z" fill="currentColor"/></symbol><symbol id="ic-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol><symbol id="ic-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol><symbol id="ic-cam" viewBox="0 0 24 24"><rect x="2.5" y="6.5" width="13" height="11" rx="2.5"/><path d="M15.5 10.5l6-3.5v10l-6-3.5"/></symbol><symbol id="ic-monitor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2.5"/><path d="M8 20h8M12 16v4"/></symbol><symbol id="ic-share" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2.5"/><path d="M8 20h8M12 16v4"/><path d="M12 13V8M9.5 10.5L12 8l2.5 2.5"/></symbol><symbol id="ic-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol><symbol id="ic-back" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></symbol><symbol id="ic-bang" viewBox="0 0 24 24"><path d="M12 4.5v9.5"/><circle cx="12" cy="19" r="1.4" fill="currentColor" stroke="none"/></symbol><symbol id="ic-tab" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 9.5h18M7 7.2h.01M10 7.2h.01"/></symbol><symbol id="ic-users" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.5 20c.6-3.6 3-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 5.5a3.2 3.2 0 0 1 0 6M18 14.8c1.8.7 3 2.4 3.5 5.2"/></symbol><symbol id="ic-doc" viewBox="0 0 24 24"><path d="M6 3.5h8l4 4V20.5H6z"/><path d="M14 3.5v4h4M9 12h6M9 15.5h6"/></symbol><symbol id="ic-bank" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.5" ry="2.8"/><path d="M4.5 6v6c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8V6M4.5 12v6c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8v-6"/></symbol><symbol id="ic-spark" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></symbol><symbol id="ic-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="9.5" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol></defs></svg>
+<div class="ix"><div class="tag" style="font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#4A525C">Kademe tasarım yönleri, 16 Ekim 2026</div>
+<h1>Üç yön, tek marka</h1>
+<p class="lead">Hepsinde zemin nötr ve metin mürekkep (ink); Campus German renkleri (camgöbeği, sarı, kırmızı) yalnızca vurgu: işaret, maskot, Zorluk çipleri, küçük noktalar, ilerleme. Üçü de Nunito. Her dosyada gerekçe ve kontrast tablosu, giriş ekranı, sınav ekranı, panel, maskot ve marka sayfası, gözetim uyarısı var.</p>
+<div class="cards"><a class="cd" href="direction-yaprak.html"><span class="no">Yön 1</span><h2>Yaprak</h2><p>Yaprak şekli arayüzün dili: her kart ve düğme tek kare köşe taşır; zemin nötr, marka rengi sadece küçük vurgularda.</p><div class="strip" aria-hidden="true"><i style="background:#F6F7F8;flex:5"></i><i style="background:#FFFFFF;flex:3"></i><i style="background:#1D2127;flex:2"></i><i style="background:#0B6F84;flex:1"></i><i style="background:#0BBFDF;flex:0.5"></i><i style="background:#FDD31D;flex:0.5"></i><i style="background:#FF3B3B;flex:0.5"></i></div><div class="samples"><span class="btn1">Sonraki</span><span class="chip1">Orta</span></div><span class="go">Dosyayı aç: direction-yaprak.html</span></a><a class="cd" href="direction-sakin-kampus.html"><span class="no">Yön 2</span><h2>Sakin Kampüs</h2><p>En ciddi ve en yoğun: beyaz, mürekkep ve ince çizgi; koyu camgöbeği ana düğme; marka rengi yalnızca işaret, maskot ve küçük noktalarda.</p><div class="strip" aria-hidden="true"><i style="background:#FFFFFF;flex:6"></i><i style="background:#F7F8FA;flex:3"></i><i style="background:#1D2127;flex:1.5"></i><i style="background:#0A6A7E;flex:1.5"></i><i style="background:#0BBFDF;flex:0.3"></i><i style="background:#FDD31D;flex:0.3"></i><i style="background:#FF3B3B;flex:0.3"></i></div><div class="samples"><span class="btn2">Sonraki</span><span class="chip2">Orta</span></div><span class="go">Dosyayı aç: direction-sakin-kampus.html</span></a><a class="cd" href="direction-sicak-yumusak.html"><span class="no">Yön 3</span><h2>Sıcak Yumuşak</h2><p>Yumuşak ve sıcak: büyük yuvarlak köşeler, kalın &quot;dudak&quot; (lip) altlıklı düğmeler, bölümler arasında maskot; zemin krem, marka rengi küçük dozda.</p><div class="strip" aria-hidden="true"><i style="background:#FAF7F2;flex:5"></i><i style="background:#FFFFFF;flex:3"></i><i style="background:#F3EEE5;flex:1.5"></i><i style="background:#0BBFDF;flex:1.5"></i><i style="background:#FDD31D;flex:0.6"></i><i style="background:#FF3B3B;flex:0.5"></i><i style="background:#1D2127;flex:0.8"></i></div><div class="samples"><span class="btn3">Sonraki</span><span class="chip3">Orta</span></div><span class="go">Dosyayı aç: direction-sicak-yumusak.html</span></a></div>
+<h3 class="cmp">Fark nerede?</h3>
+<table class="tok"><thead><tr><th></th><th>1 Yaprak</th><th>2 Sakin Kampüs</th><th>3 Sıcak Yumuşak</th></tr></thead><tbody><tr><th>Şekil dili</th><td>Tek kare köşeli yaprak: kart, düğme, çip, soru hücresi, ikon zemini</td><td>Sade yuvarlak dikdörtgen (8 ile 12 px), düz kenar</td><td>Dolgun yuvarlak köşe (18 ile 36 px), hap çipler</td></tr><tr><th>Yoğunluk</th><td>Orta, ferah</td><td>Yüksek, sıkı satırlar, küçük kontroller</td><td>Ferah, büyük basma hedefleri</td></tr><tr><th>Yaprak motifi</th><td>Yapının kendisi, ayrıca soluk nötr arka plan figürü</td><td>Yalnızca imzadaki üç yaprak simgesi</td><td>Soluk arka plan yaprakları ve maskotun duruşu</td></tr><tr><th>Derinlik</th><td>Düz, ince çerçeve</td><td>Yok, yalnızca hairline</td><td>Düz alt kenar ("dudak") ve basılma hissi</td></tr><tr><th>Ana düğme</th><td>Mürekkep, beyaz yazı (16.2:1)</td><td>Koyu camgöbeği #0A6A7E, beyaz yazı (6.2:1)</td><td>Logo camgöbeği, mürekkep yazı (7.3:1)</td></tr><tr><th>Maskot</th><td>Kırmızı yaprak gövde</td><td>Küçük, düz, camgöbeği gövde</td><td>Sarı gövde, altlı; sihirbazda ve bölüm arasında daha görünür</td></tr><tr><th>Bölüm rozetleri</th><td>Nötr yaprak zemin + ikon</td><td>Nötr ince çerçeve + ikon</td><td>Nötr krem hap + ikon</td></tr></tbody></table>
+</div>
+</body>
+</html>
