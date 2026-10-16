@@ -43,7 +43,7 @@ describe("step 1 'Rolü anlat' (HIRING-UX 5.20)", () => {
     expect(out).toMatch(/<input[^>]*id="wizard-position"/);
     expect(out).toMatch(/<textarea[^>]*id="wizard-role-text"[^>]*placeholder="Sürüş eğitmeni arıyorum, hafta içi çalışacak\."/);
     expect(out).toContain("Birkaç kelime yeter.");
-    expect(out.match(/bg-accent text-white/g)).toHaveLength(1);
+    expect(out.match(/bg-brand text-on-brand/g)).toHaveLength(1);
     expect(out).toMatch(/<button[^>]*id="wizard-next"[^>]*disabled=""[^>]*>Devam et<\/button>/);
     expect(out).toMatch(/id="wizard-next-why"[^>]*>Pozisyon adını yaz\.</);
     expect(out).toMatch(/<a[^>]*href="\/hiring\/openings"[^>]*>.*Alımlara dön<\/a>/);

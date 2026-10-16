@@ -68,7 +68,7 @@ describe("PublishFooter (W6: the one filled 'Yayınla' at the end)", () => {
     expect(out).not.toMatch(/id="publish-opening"[^>]*disabled=""/);
     expect(out).not.toContain("publish-opening-why");
     expect(out).toMatch(/<button[^>]*>.*Genel bakış<\/button>/);
-    expect(out.match(/bg-accent text-white/g)).toHaveLength(1);
+    expect(out.match(/bg-brand text-on-brand/g)).toHaveLength(1);
   });
 
   it("waits with the gate's first problem next to it (aria-describedby) and a 'Düzelt' link under the bar", () => {

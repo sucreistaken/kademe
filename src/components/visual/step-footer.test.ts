@@ -54,6 +54,6 @@ describe("StepFooter's compact layout is opt-in (Task 22 fix round 1)", () => {
     expect(out).toContain('<p class="sr-only">Oluşturuluyor</p>');
     expect(out).toContain("Adım 1 / 2");
     expect(out).toContain(">Geri</button>");
-    expect(out.match(/bg-accent text-white/g)).toHaveLength(1);
+    expect(out.match(/bg-brand text-on-brand/g)).toHaveLength(1);
   });
 });

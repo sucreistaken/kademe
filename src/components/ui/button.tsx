@@ -8,7 +8,9 @@ import { cn } from "@/lib/cn";
  *
  * The soft look (globals.css): round corners, bold label, and a solid "lip"
  * under the filled and outline buttons that the button presses into when
- * clicked (1px down, the lip shrinks). A disabled button lies flat.
+ * clicked (3px down, the 4px lip shrinks). A disabled button lies flat.
+ * `primary` is the brand cyan with ink text (never white: white on cyan is
+ * 2.2:1).
  *
  * A disabled button must always say why it is disabled, so `disabledReason` is
  * required whenever `disabled` is set. Making the reason a separate prop stops
@@ -22,8 +24,8 @@ import { cn } from "@/lib/cn";
 // aria-disabled). Written out in full, never assembled: Tailwind finds classes
 // by reading the source text.
 const SECONDARY =
-  "bg-surface text-ink border-2 border-line shadow-lip-soft hover:bg-canvas hover:border-line-strong " +
-  "active:not-disabled:not-aria-disabled:translate-y-px active:not-disabled:not-aria-disabled:shadow-none " +
+  "bg-surface text-ink border-2 border-line-strong shadow-lip-soft hover:bg-canvas " +
+  "active:not-disabled:not-aria-disabled:translate-y-[3px] active:not-disabled:not-aria-disabled:shadow-none " +
   "disabled:text-muted disabled:hover:bg-surface disabled:shadow-none";
 
 export const buttonVariants = cva(
@@ -34,16 +36,16 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          "bg-accent text-white shadow-lip hover:bg-accent-hover " +
-          "active:not-disabled:not-aria-disabled:translate-y-px active:not-disabled:not-aria-disabled:shadow-lip-pressed " +
-          "disabled:bg-disabled disabled:text-muted disabled:shadow-none",
+          "bg-brand text-on-brand border-2 border-brand-lip shadow-lip font-extrabold hover:bg-brand/90 " +
+          "active:not-disabled:not-aria-disabled:translate-y-[3px] active:not-disabled:not-aria-disabled:shadow-lip-pressed " +
+          "disabled:bg-disabled disabled:text-muted disabled:border-line disabled:shadow-none",
         secondary: SECONDARY,
         /** shadcn's name for the same thing; used by the copied dialog footer. */
         outline: SECONDARY,
         ghost: "bg-transparent text-muted hover:text-ink hover:bg-subtle disabled:text-ink-3 disabled:hover:bg-transparent",
         danger:
-          "bg-surface text-danger border-2 border-line shadow-lip-soft hover:bg-danger-soft hover:border-danger/30 " +
-          "active:not-disabled:not-aria-disabled:translate-y-px active:not-disabled:not-aria-disabled:shadow-none " +
+          "bg-surface text-ink border-2 border-line-strong shadow-lip-soft hover:border-error " +
+          "active:not-disabled:not-aria-disabled:translate-y-[3px] active:not-disabled:not-aria-disabled:shadow-none " +
           "disabled:text-muted disabled:shadow-none",
       },
       size: {

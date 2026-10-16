@@ -36,7 +36,7 @@ const flow = (props: Record<string, unknown>, locale: "tr" | "en" = "tr") =>
 describe("GuidedFlow (K12, W1-W10)", () => {
   it("asks one question with one filled button, the heading ready to take the focus, and says where the step is", () => {
     const out = flow({});
-    expect(out.match(/bg-accent text-white/g)).toHaveLength(1);
+    expect(out.match(/bg-brand text-on-brand/g)).toHaveLength(1);
     expect(out).toMatch(/<h1[^>]*tabindex="-1"[^>]*>Kararı kim verecek\?<\/h1>/);
     expect(out).toContain("Adım 2 / 4");
     expect(out).toContain("Ekip ve kurallar · Ekip");
@@ -54,7 +54,7 @@ describe("GuidedFlow (K12, W1-W10)", () => {
     const out = flow({ container: "sheet", exit: null });
     expect(out).toMatch(/<h2[^>]*tabindex="-1"[^>]*>Kararı kim verecek\?<\/h2>/);
     expect(out).not.toContain(">Çık<");
-    expect(out.match(/bg-accent text-white/g)).toHaveLength(1);
+    expect(out.match(/bg-brand text-on-brand/g)).toHaveLength(1);
   });
 
   it("a waiting button says why next to it, linked by aria-describedby (W10, RULES 5)", () => {

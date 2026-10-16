@@ -45,7 +45,7 @@ describe("the invite as a guided flow on /hiring/invite (4.9, D11, W1-W10)", () 
     expect(out).toContain("Aday davet et · Tasarımcı · Ekim");
     expect(out).toMatch(/<h1[^>]*tabindex="-1"[^>]*>Kimi davet ediyorsun\?<\/h1>/);
     expect(out).toContain("adaya e-postayla ya da mesajla sen gönderirsin");
-    expect(out.match(/bg-accent text-white/g)).toHaveLength(1);
+    expect(out.match(/bg-brand text-on-brand/g)).toHaveLength(1);
     expect(out).toMatch(/<button[^>]*id="invite-next"[^>]*disabled=""[^>]*aria-describedby="invite-next-why"[^>]*>Devam et<\/button>/);
     expect(out).toMatch(/<p[^>]*id="invite-next-why"[^>]*>Adayın adını ve soyadını yaz\.<\/p>/);
     expect(out).toContain("Adım 1 / 2");
@@ -103,7 +103,7 @@ describe("the invite in the Sheet (4.9: steps in memory, the Sheet's own close b
     const out = render({ container: "sheet", hash: "#summary" });
     expect(out).toMatch(/<h2[^>]*tabindex="-1"[^>]*>Kimi davet ediyorsun\?<\/h2>/);
     expect(out).toContain("Adım 1 / 2");
-    expect(out.match(/bg-accent text-white/g)).toHaveLength(1);
+    expect(out.match(/bg-brand text-on-brand/g)).toHaveLength(1);
   });
 
   it("fits its footer in the 480px Sheet: full-width buttons, the reason under them (Task 22 fix round 1)", () => {

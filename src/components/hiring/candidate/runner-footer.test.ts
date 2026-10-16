@@ -59,7 +59,7 @@ describe("the runner's footer button (STATUS item 23, plan decision 4)", () => {
       const tag = button(html);
       expect(tag).toContain('aria-disabled="true"');
       expect(tag).not.toContain('disabled=""');
-      expect(tag).toContain("bg-accent");
+      expect(tag).toContain("bg-brand");
       expect(html).toContain("Kaydediliyor");
       expect(html).not.toContain("activity-next-why");
     }

@@ -59,7 +59,7 @@ describe("StepFooter (G9)", () => {
     expect(out).toMatch(/<div aria-live="polite"[^>]*>(?:(?!<\/div>)[\s\S])*<p class="sr-only">Kaydediliyor<\/p>/);
     expect(html(StepFooter, { primary: { kind: "button", id: "next", label: "Sonraki soru", onClick: noop } })).not.toContain('class="sr-only">Sonraki soru');
     expect(out).not.toMatch(/<button[^>]*disabled=""/);
-    expect(out).toContain("bg-accent");
+    expect(out).toContain("bg-brand");
     expect(out).toContain("Kaydediliyor");
   });
 
@@ -94,7 +94,7 @@ describe("StepFooter (G9)", () => {
     expect(why).toBeGreaterThan(-1);
     expect(why).toBeLessThan(again);
     expect(again).toBeLessThan(go);
-    expect(out.match(/bg-accent /g)).toHaveLength(1);
+    expect(out.match(/bg-brand /g)).toHaveLength(1);
     // The reason's live region is there before any reason is.
     expect(html(StepFooter, { primary: { kind: "button", id: "go", label: "Devam et", onClick: noop } })).toContain('aria-live="polite"');
   });

@@ -106,7 +106,7 @@ describe("step 2 'Sorular' (HIRING-UX 5.20)", () => {
     const out = render({ blocking: { text: "Aşama 1 içinde soru yok.", scorecard: false } });
     expect(out).toMatch(/<button[^>]*id="wizard-to-publish"[^>]*disabled=""[^>]*>Devam: önizle ve yayınla<\/button>/);
     expect(out).toMatch(/id="wizard-to-publish-why"[^>]*>Aşama 1 içinde soru yok\.</);
-    expect(out.match(/bg-accent text-white/g)).toHaveLength(1);
+    expect(out.match(/bg-brand text-on-brand/g)).toHaveLength(1);
   });
 
   it("says 'Sorular hazırlanıyor' while the AI writes the first draft after step 1's AI start", () => {
@@ -148,7 +148,7 @@ describe("step 3 'Önizle ve yayınla' (HIRING-UX 5.20)", () => {
   it("has one filled 'Yayınla', waiting with the gate's problem when the draft cannot go live, and 'Geri' to the questions", () => {
     const out = render({ hash: "#publish" });
     expect(out).toMatch(/<button[^>]*id="wizard-publish"[^>]*>Yayınla<\/button>/);
-    expect(out.match(/bg-accent text-white/g)).toHaveLength(1);
+    expect(out.match(/bg-brand text-on-brand/g)).toHaveLength(1);
     expect(out).toContain("Geri");
   });
 

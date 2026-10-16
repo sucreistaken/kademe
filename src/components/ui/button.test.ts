@@ -11,28 +11,29 @@ describe("Button's soft look (2026-10-14)", () => {
     for (const [size, height] of [["sm", "h-8"], ["md", "h-10"], ["lg", "h-12"]] as const) {
       const c = classes(variant, size);
       expect(c).toContain("rounded-lg");
-      expect(c).toContain("font-bold");
+      expect(c.some((x) => x === "font-bold" || x === "font-extrabold")).toBe(true);
       expect(c).toContain(height);
       expect(c).toContain("disabled:cursor-not-allowed");
     }
   });
 
-  it("primary: the accent with a solid lip that it presses into, flat and grey when disabled", () => {
+  it("primary: the brand cyan with ink text and a solid 4px lip it presses into, flat and grey when disabled", () => {
     const c = classes("primary");
-    expect(c.slice(c.indexOf("bg-accent"), c.indexOf("bg-accent") + 2)).toEqual(["bg-accent", "text-white"]);
-    expect(c).toEqual(expect.arrayContaining(["shadow-lip", "hover:bg-accent-hover"]));
-    expect(c).toEqual(expect.arrayContaining(["active:not-disabled:not-aria-disabled:translate-y-px", "active:not-disabled:not-aria-disabled:shadow-lip-pressed"]));
-    expect(c).toEqual(expect.arrayContaining(["disabled:bg-disabled", "disabled:text-muted", "disabled:shadow-none"]));
+    expect(c).toEqual(expect.arrayContaining(["bg-brand", "text-on-brand", "border-2", "border-brand-lip", "shadow-lip", "font-extrabold"]));
+    expect(c).not.toContain("text-white");
+    expect(c).toEqual(
+      expect.arrayContaining(["active:not-disabled:not-aria-disabled:translate-y-[3px]", "active:not-disabled:not-aria-disabled:shadow-lip-pressed"]),
+    );
+    expect(c).toEqual(expect.arrayContaining(["disabled:bg-disabled", "disabled:text-muted", "disabled:border-line", "disabled:shadow-none"]));
   });
 
-  it("secondary and danger: a white button with a 2px edge and a soft lip; danger keeps its red word", () => {
+  it("secondary and danger: a white button with a 2px edge and a soft lip; neither uses red text", () => {
     for (const variant of ["secondary", "danger"] as const) {
       const c = classes(variant);
-      expect(c).toEqual(expect.arrayContaining(["bg-surface", "border-2", "border-line", "shadow-lip-soft", "disabled:shadow-none"]));
-      expect(c).toContain("active:not-disabled:not-aria-disabled:translate-y-px");
+      expect(c).toEqual(expect.arrayContaining(["bg-surface", "text-ink", "border-2", "border-line-strong", "shadow-lip-soft", "disabled:shadow-none"]));
+      expect(c).not.toContain("text-danger");
     }
-    expect(classes("danger")).toContain("text-danger");
-    expect(classes("secondary")).toContain("text-ink");
+    expect(classes("danger")).toContain("hover:border-error");
   });
 
   it("ghost: a text button with no lip", () => {

@@ -47,7 +47,7 @@ const render = ({ canEdit = true, closed = false, hash = "", locale = "tr", peop
   );
 };
 const heading = (out: string) => out.match(/<h1[^>]*>(.*?)<\/h1>/)?.[1] ?? null;
-const filled = (out: string) => out.match(/bg-accent text-white/g)?.length ?? 0;
+const filled = (out: string) => out.match(/bg-brand text-on-brand/g)?.length ?? 0;
 
 describe("team and rules: the summary (4.10, P7, H9)", () => {
   it("shows the four groups with 'Değiştir' each, the locked rule, and the page's close action under them", () => {
