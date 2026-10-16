@@ -263,17 +263,29 @@ export function poolPlacement(pool: string[], gapIds: string[], gaps: Record<str
   return { used, at };
 }
 
+/** C-test instruction shown with the word-part pool, in the exam's language. */
+const POOL_INSTRUCTION =
+  "Ergänzen Sie die fehlenden Wortteile. Ziehen Sie die passenden Teile in die Lücken oder klicken Sie sie an. Einige Teile bleiben übrig.";
+
 function GapItem({ item, answer, onChange, disabled }: ItemProps) {
   const t = useT("exam");
   const ti = useT("examItems");
   const lastFocused = useRef<{ id: string; el: HTMLInputElement } | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
-  const [dragging, setDragging] = useState<number | null>(null);
+  // Pointer drag rather than HTML5 drag and drop: it also works with touch,
+  // trackpads and pen, and a press without movement stays a click.
+  const press = useRef<{ idx: number; x: number; y: number; moved: boolean } | null>(null);
+  const swallowClick = useRef(false);
+  const [drag, setDrag] = useState<{ idx: number; x: number; y: number; over: string | null } | null>(null);
   if (item.content.kind !== "GAP") return null;
   const pool = item.content.attached ? (item.content.pool ?? null) : null;
   const placement = pool ? poolPlacement(pool, item.content.gaps.map((g) => g.id), answer.gaps) : null;
   const gaps = new Map(item.content.gaps.map((g) => [g.id, g]));
-  const parts = item.prompt.split(/(\{\{[A-Za-z0-9_-]+\}\})/g);
+  // The stored instruction asks to type letters; with the pool the student drags parts instead.
+  const prompt = pool ? `${POOL_INSTRUCTION}\n\n${item.prompt.replace(/^[\s\S]*?\n\n/, "")}` : item.prompt;
+  const parts = prompt.split(/(\{\{[A-Za-z0-9_-]+\}\})/g);
+  const slotAt = (x: number, y: number) =>
+    (document.elementFromPoint(x, y)?.closest("[data-gap-slot]") as HTMLElement | null)?.dataset.gapSlot ?? null;
   const set = (id: string, value: string) => onChange({ gaps: { ...(answer.gaps ?? {}), [id]: value } });
   // Going back to "Seçin" removes the gap's answer instead of storing "".
   const pick = (id: string, value: string) => {
@@ -337,21 +349,14 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
                   disabled={disabled}
                   aria-label={`${gapLabel(gap.id)}: ${value || ti("ctestEmpty")}`}
                   aria-pressed={isSelected}
+                  data-gap-slot={gap.id}
                   onClick={() => clickSlot(gap.id)}
-                  onDragOver={(e) => {
-                    if (dragging !== null) e.preventDefault();
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    if (dragging !== null) place(dragging, gap.id);
-                    setDragging(null);
-                  }}
                   // The missing part is as long as the stem or one letter longer.
                   style={{ minWidth: `${Math.max(stem.length + 1, 2)}ch` }}
                   className={cn(
                     "ml-0 mr-0.5 inline-block h-8 rounded-[6px] border px-1 align-baseline text-[16px] leading-[1.9] text-ink",
                     value ? "border-line-strong bg-surface" : "border-dashed border-line-strong bg-canvas",
-                    isSelected && "border-solid border-accent bg-accent-soft ring-2 ring-accent",
+                    (isSelected || drag?.over === gap.id) && "border-solid border-accent bg-accent-soft ring-2 ring-accent",
                   )}
                 >
                   {value}
@@ -420,21 +425,58 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
                   type="button"
                   lang="de"
                   disabled={disabled}
-                  draggable={!disabled}
-                  onDragStart={(e) => {
-                    e.dataTransfer.setData("text/plain", chip);
-                    e.dataTransfer.effectAllowed = "move";
-                    setDragging(idx);
+                  onPointerDown={(e) => {
+                    if (disabled || e.button !== 0) return;
+                    e.currentTarget.setPointerCapture(e.pointerId);
+                    press.current = { idx, x: e.clientX, y: e.clientY, moved: false };
                   }}
-                  onDragEnd={() => setDragging(null)}
-                  onClick={() => clickChip(idx)}
-                  className="h-9 min-w-9 cursor-grab rounded-[8px] border border-line-strong bg-surface px-3 text-[16px] text-ink hover:bg-canvas"
+                  onPointerMove={(e) => {
+                    const p = press.current;
+                    if (!p || p.idx !== idx) return;
+                    if (!p.moved && Math.hypot(e.clientX - p.x, e.clientY - p.y) < 5) return;
+                    p.moved = true;
+                    setDrag({ idx, x: e.clientX, y: e.clientY, over: slotAt(e.clientX, e.clientY) });
+                  }}
+                  onPointerUp={(e) => {
+                    const p = press.current;
+                    press.current = null;
+                    setDrag(null);
+                    if (!p?.moved) return;
+                    swallowClick.current = true;
+                    const target = slotAt(e.clientX, e.clientY);
+                    if (target) place(idx, target);
+                  }}
+                  onPointerCancel={() => {
+                    press.current = null;
+                    setDrag(null);
+                  }}
+                  onClick={() => {
+                    if (swallowClick.current) {
+                      swallowClick.current = false;
+                      return;
+                    }
+                    clickChip(idx);
+                  }}
+                  className={cn(
+                    "h-9 min-w-9 cursor-grab touch-none select-none rounded-[8px] border border-line-strong bg-surface px-3 text-[16px] text-ink hover:bg-canvas",
+                    drag?.idx === idx && "opacity-40",
+                  )}
                 >
                   {chip}
                 </button>
               ),
             )}
           </div>
+          {drag && pool ? (
+            <div
+              aria-hidden
+              lang="de"
+              style={{ left: drag.x, top: drag.y }}
+              className="pointer-events-none fixed z-50 flex h-9 -translate-x-1/2 -translate-y-1/2 items-center rounded-[8px] border border-accent bg-surface px-3 text-[16px] text-ink shadow-lg"
+            >
+              {pool[drag.idx]}
+            </div>
+          ) : null}
         </div>
       ) : null}
       {typed ? (

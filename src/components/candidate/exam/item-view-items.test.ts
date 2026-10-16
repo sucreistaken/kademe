@@ -199,7 +199,7 @@ describe("C-test word-part pool", () => {
   });
   const pool = ["eite", "ön", "eiten", "ö"];
   const chips = (html: string) =>
-    [...html.matchAll(/<button type="button" lang="de"[^>]*draggable="true"[^>]*>([^<]*)<\/button>/g)].map((m) => m[1]);
+    [...html.matchAll(/<button type="button" lang="de"[^>]*cursor-grab[^>]*>([^<]*)<\/button>/g)].map((m) => m[1]);
 
   it("draws empty slots after the stems and every chip in the pool, with no inputs or umlaut bar", () => {
     const html = render(ctest(pool));
