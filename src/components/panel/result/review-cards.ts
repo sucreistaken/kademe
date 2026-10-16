@@ -152,24 +152,4 @@ export function sectionScoreSummary(responses: Array<{ itemSnapshot: ItemSnapsho
   };
 }
 
-/**
- * A writing or speaking prompt split into lines for the review card:
- * `Thema: Arbeit. Auf Ihrer Karte steht: "Mittagspause?"` becomes the topic
- * line and the card line. Existing line breaks stay; a prompt with neither
- * comes back as it was, one entry per line (a blank entry is a paragraph gap).
- */
-export function splitTaskPrompt(prompt: string): string[] {
-  const lines = prompt
-    .replace(/\r\n?/g, "\n")
-    .replace(/(^|\n)(Thema\s*:[^\n]*?[.!?])[ \t]+(?=\S)/g, "$1$2\n")
-    .replace(/[ \t]+(?=Auf (?:Ihrer|Ihrem|deiner|deinem) \p{L}+ steht\b)/gu, "\n")
-    .split("\n")
-    .map((l) => l.trim());
-  const out: string[] = [];
-  for (const l of lines) {
-    if (l === "" && (out.length === 0 || out[out.length - 1] === "")) continue;
-    out.push(l);
-  }
-  while (out[out.length - 1] === "") out.pop();
-  return out;
-}
+export { splitTaskPrompt } from "@/lib/exam/task-prompt";
