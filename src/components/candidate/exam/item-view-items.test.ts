@@ -101,6 +101,22 @@ describe("matching items", () => {
     expect(html).toContain("→ </span>Niemand hatte damit gerechnet.");
   });
 
+  it("offers a draggable letter tray, drop rows and the German note", () => {
+    const html = render(sentences);
+    const tray = html.split("data-match-tray")[1].split("</div>")[0];
+    expect(tray.match(/<button/g)).toHaveLength(3);
+    expect(tray).toContain("Das spart Zeit und Geld.");
+    expect(html.match(/data-match-drop="/g)).toHaveLength(3);
+    expect(html).toContain('data-match-drop="l1"');
+    expect(html).toContain("Ziehen Sie den passenden Buchstaben in jede Zeile oder klicken Sie ihn an.");
+    expect(html).not.toContain("matchHint");
+    // A bare list shows letters only, and a used target is faded in the tray.
+    const bareTray = render(ads, { matches: { l1: "oaaaaa" } }).split("data-match-tray")[1].split("</div>")[0];
+    expect(bareTray.match(/<button/g)).toHaveLength(4);
+    expect(bareTray).not.toContain('lang="de"');
+    expect(bareTray.match(/opacity-60/g)).toHaveLength(1);
+  });
+
   it("removes a cleared row instead of storing an empty value", () => {
     expect(withMatch({ l1: "ox1111", l2: "ox2222" }, "l1", null)).toEqual({ l2: "ox2222" });
     expect(withMatch(undefined, "l1", "ox1111")).toEqual({ l1: "ox1111" });

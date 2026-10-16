@@ -500,6 +500,9 @@ export function withMatch(matches: Record<string, string> | undefined, rowId: st
   return next;
 }
 
+/** Matching instruction shown above the rows, in the exam's language. */
+const MATCH_INSTRUCTION = "Ziehen Sie den passenden Buchstaben in jede Zeile oder klicken Sie ihn an.";
+
 /**
  * Matching: the targets stay in view as a lettered list and every row picks a
  * letter. A target picked in another row is faded but still allowed, because
@@ -510,6 +513,10 @@ export function withMatch(matches: Record<string, string> | undefined, rowId: st
 function MatchingItem({ item, answer, onChange, disabled }: ItemProps) {
   const ti = useT("examItems");
   const uid = useId();
+  // Same pointer drag as GapItem. The letter buttons in each row stay the click and keyboard path.
+  const press = useRef<{ id: string; x: number; y: number; moved: boolean } | null>(null);
+  const swallowClick = useRef(false);
+  const [drag, setDrag] = useState<{ id: string; x: number; y: number; over: string | null } | null>(null);
   if (item.content.kind !== "MATCHING") return null;
   const targets = matchingTargets(item.content.right);
   const matches = answer.matches ?? {};
@@ -519,9 +526,70 @@ function MatchingItem({ item, answer, onChange, disabled }: ItemProps) {
   // passage, so the list is left out and only a "0" target is explained.
   const bare = targets.every((r) => r.badge === "0" || /^(?:\p{L}+\s+)?[A-Z]$/u.test(r.label.trim()));
   const zero = targets.find((r) => r.badge === "0");
+  const rowAt = (x: number, y: number) =>
+    (document.elementFromPoint(x, y)?.closest("[data-match-drop]") as HTMLElement | null)?.dataset.matchDrop ?? null;
+  const dragged = drag ? targets.find((r) => r.id === drag.id) : undefined;
   return (
     <div>
       <Prompt text={item.prompt} />
+      <p lang="de" className="mt-3 text-[14px] text-ink-2">
+        {MATCH_INSTRUCTION}
+      </p>
+      <div aria-hidden data-match-tray className="mt-3 flex flex-wrap gap-2">
+        {targets.map((r) => {
+          const elsewhere = used.has(r.id);
+          return (
+            <button
+              key={r.id}
+              type="button"
+              tabIndex={-1}
+              disabled={disabled}
+              title={r.label}
+              onPointerDown={(e) => {
+                if (disabled || e.button !== 0) return;
+                e.currentTarget.setPointerCapture(e.pointerId);
+                press.current = { id: r.id, x: e.clientX, y: e.clientY, moved: false };
+              }}
+              onPointerMove={(e) => {
+                const p = press.current;
+                if (!p || p.id !== r.id) return;
+                if (!p.moved && Math.hypot(e.clientX - p.x, e.clientY - p.y) < 5) return;
+                p.moved = true;
+                setDrag({ id: r.id, x: e.clientX, y: e.clientY, over: rowAt(e.clientX, e.clientY) });
+              }}
+              onPointerUp={(e) => {
+                const p = press.current;
+                press.current = null;
+                setDrag(null);
+                if (!p?.moved) return;
+                swallowClick.current = true;
+                const rowId = rowAt(e.clientX, e.clientY);
+                if (rowId) setRow(rowId, r.id);
+              }}
+              onPointerCancel={() => {
+                press.current = null;
+                setDrag(null);
+              }}
+              onClick={() => {
+                // Only a drag acts here; clicking is what the letters in each row are for.
+                swallowClick.current = false;
+              }}
+              className={cn(
+                "flex h-9 max-w-full cursor-grab touch-none select-none items-center gap-2 rounded-[8px] border bg-surface px-2.5 text-[14px] text-ink hover:border-accent",
+                elsewhere ? "border-dashed border-line-strong opacity-60" : "border-line-strong",
+                drag?.id === r.id && "opacity-40",
+              )}
+            >
+              <span className="font-semibold">{r.badge}</span>
+              {bare ? null : (
+                <span lang="de" className="max-w-[16rem] truncate text-ink-2">
+                  {r.label}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
       {bare ? (
         zero ? (
           <p lang="de" className="mt-3 text-[14px] text-ink-2">
@@ -551,8 +619,7 @@ function MatchingItem({ item, answer, onChange, disabled }: ItemProps) {
           </ul>
         </section>
       )}
-      <p className="mt-4 text-[12.5px] text-muted">{ti("matchHint")}</p>
-      <div className="mt-2 flex flex-col gap-2.5">
+      <div className="mt-4 flex flex-col gap-2.5">
         {item.content.left.map((l, n) => {
           const chosen = targets.find((r) => r.id === matches[l.id]);
           const rowId = `${uid}-row${n}`;
@@ -560,7 +627,12 @@ function MatchingItem({ item, answer, onChange, disabled }: ItemProps) {
             <div
               key={l.id}
               data-match-row
-              className={cn("rounded-[10px] border bg-surface px-4 py-3", chosen ? "border-line-strong" : "border-line")}
+              data-match-drop={l.id}
+              className={cn(
+                "rounded-[10px] border bg-surface px-4 py-3",
+                chosen ? "border-line-strong" : "border-line",
+                drag?.over === l.id && "ring-2 ring-accent",
+              )}
             >
               <p id={rowId} lang="de" className="text-[15px] leading-[1.55] text-ink">
                 {l.text}
@@ -625,6 +697,15 @@ function MatchingItem({ item, answer, onChange, disabled }: ItemProps) {
           );
         })}
       </div>
+      {drag && dragged ? (
+        <div
+          aria-hidden
+          style={{ left: drag.x, top: drag.y }}
+          className="pointer-events-none fixed z-50 flex h-9 -translate-x-1/2 -translate-y-1/2 items-center rounded-[8px] border border-accent bg-surface px-3 text-[14px] font-semibold text-ink shadow-lg"
+        >
+          {dragged.badge}
+        </div>
+      ) : null}
     </div>
   );
 }
