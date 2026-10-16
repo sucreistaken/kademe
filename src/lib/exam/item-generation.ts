@@ -353,6 +353,11 @@ export function wireToItem(wire: WireItem, itemType: ItemType): WireResult {
     case "MULTI_CHOICE": {
       need(nonEmpty(wire.options), "options");
       need(nonEmpty(wire.correctOptionIds), "correctOptionIds");
+      // Single choice is always four options a, b, c, d; multi choice keeps a free count.
+      if (itemType === "SINGLE_CHOICE" && nonEmpty(wire.options)) {
+        const ids = wire.options.map((o) => o.id.trim()).join(",");
+        need(ids === "a,b,c,d", "exactly 4 options with ids a, b, c, d");
+      }
       if (nonEmpty(wire.options) && nonEmpty(wire.correctOptionIds)) {
         content = { kind: "CHOICE", options: cleanIdText(wire.options) };
         key = { kind: "CHOICE", correct: wire.correctOptionIds.map((id) => id.trim()) };
@@ -524,7 +529,7 @@ const SYSTEM_PROMPT = [
   `- Reading passages have these lengths in words: ${rangeLine("READING")}.`,
   `- Listening scripts have these lengths in words: ${rangeLine("LISTENING")}.`,
   '- A listening script has one turn per line in the form "Label: text", with at most two speakers. Each speaker is listed in stimulus.speakers with its label and a voice, A or B, one voice per speaker. A monologue has one speaker. No stage directions, no sound effects.',
-  "- Single choice items have 3 or 4 options with ids a, b, c, d and exactly one correct option. Distractors are plausible for a learner at the level, similar in length and form to the key, and clearly wrong for someone who understood. Vary the position of the correct option across items.",
+  "- Single choice items have exactly 4 options with ids a, b, c, d and exactly one correct option. Distractors are plausible for a learner at the level, similar in length and form to the key, and clearly wrong for someone who understood. Vary the position of the correct option across items.",
   "- Items on a text are answerable only from the text, in text order, and do not give each other away.",
   "- Gap fill items mark each gap in the prompt as {{g1}}, {{g2}} and so on, with one entry per gap in gaps. accepted lists every correct spelling. choices, when given, has 3 or 4 entries including the correct one; an empty choices list means the gap is typed.",
   "- True or false items use statements with answer R (richtig), F (falsch) or NG (nicht im Text). Use NG only for reading.",

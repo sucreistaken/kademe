@@ -14,19 +14,19 @@ import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
  *
  * Grammar: 24 items (8 EASY, 10 MID, 6 HARD) plus three C-tests. Reading: 4 texts
  * with 4 items each. Listening: 3 clips with 4 items each. Writing and
- * speaking: 6 prompts each. Single-choice items have 3 options (Goethe B1
- * format); the correct option is given first and placed at `pos`, so the key
+ * speaking: 6 prompts each. Single-choice items have 4 options (Goethe B1
+ * uses three; d is an extra wrong distractor); the correct option is given first and placed at `pos`, so the key
  * positions are set explicitly and spread over a, b and c.
  */
 
 const LEVEL = "B1" as const;
 
 type Within = NonNullable<SeedItem["within"]>;
-type Pos = 0 | 1 | 2;
+type Pos = 0 | 1 | 2 | 3;
 
-const IDS = ["a", "b", "c"] as const;
+const IDS = ["a", "b", "c", "d"] as const;
 
-function options(correct: string, distractors: [string, string], pos: Pos) {
+function options(correct: string, distractors: [string, string, string], pos: Pos) {
   const texts = [...distractors];
   texts.splice(pos, 0, correct);
   return {
@@ -48,7 +48,7 @@ function choice(
   within: Within,
   prompt: string,
   correct: string,
-  distractors: [string, string],
+  distractors: [string, string, string],
   pos: Pos,
   explanation: string,
 ): SeedItem {
@@ -106,27 +106,27 @@ const grammarItems: SeedItem[] = [
   // ---------------------------------------------------------------- EASY
   choice("praeteritum", "EASY",
     "Früher ___ meine Kollegin jeden Tag mit dem Fahrrad zur Arbeit.",
-    "fuhr", ["fahrte", "fährte"], 1,
+    "fuhr", ["fahrte", "fährte", "fuhren"], 1,
     "„fahren“ ist ein starkes Verb, das Präteritum lautet „fuhr“. „fahrte“ und „fährte“ sind falsche Analogieformen."),
   choice("passiv.praesens", "EASY",
     "In unserer Firma ___ die Post jeden Morgen um neun Uhr verteilt.",
-    "wird", ["werden", "hat"], 0,
+    "wird", ["werden", "hat", "wurden"], 0,
     "Vorgangspassiv Präsens: werden + Partizip II. „die Post“ ist Singular, also „wird“; „hat“ bildet kein Passiv."),
   choice("infinitiv.umzu", "EASY",
     "Sie spart seit Monaten Geld, ___ im Sommer eine lange Reise zu machen.",
-    "um", ["damit", "dass"], 2,
+    "um", ["damit", "dass", "weil"], 2,
     "Finalsatz mit Infinitiv: „um ... zu“. „damit“ und „dass“ leiten einen Nebensatz mit konjugiertem Verb ein, nicht einen zu-Infinitiv."),
   choice("konnektor.als-wenn", "EASY",
     "___ ich vor drei Jahren nach Hamburg kam, kannte ich dort niemanden.",
-    "Als", ["Wenn", "Wann"], 1,
+    "Als", ["Wenn", "Wann", "Ob"], 1,
     "Ein einmaliges Ereignis in der Vergangenheit verlangt „als“. „wenn“ steht für Wiederholung oder Gegenwart/Zukunft, „wann“ ist ein Fragewort."),
   choice("konjunktiv2", "EASY",
     "Leider habe ich kein Auto. Wenn ich eins ___, könnte ich dich vom Bahnhof abholen.",
-    "hätte", ["hatte", "hättest"], 0,
+    "hätte", ["hatte", "hättest", "wäre"], 0,
     "Irrealer Bedingungssatz (es gibt kein Auto): Konjunktiv II „hätte“. „hatte“ ist Indikativ Präteritum, „hättest“ passt nicht zu „ich“."),
   choice("relativsatz", "EASY",
     "Das ist die Kollegin, ___ ich gestern in der Kantine getroffen habe.",
-    "die", ["der", "den"], 2,
+    "die", ["der", "den", "dem"], 2,
     "„treffen“ verlangt den Akkusativ; Bezugswort feminin („die Kollegin“), also Relativpronomen „die“. „der“ wäre Dativ, „den“ maskulin."),
   gapTyped("infinitiv.zu", "EASY",
     "Ergänzen Sie das fehlende Wort.\n\nHast du Lust, am Samstag mit uns ins Kino {{g1}} gehen?",
@@ -140,15 +140,15 @@ const grammarItems: SeedItem[] = [
   // ---------------------------------------------------------------- MID
   choice("plusquamperfekt", "MID",
     "Nachdem wir das Formular ausgefüllt ___, gaben wir es am Schalter ab.",
-    "hatten", ["haben", "waren"], 0,
+    "hatten", ["haben", "waren", "hatte"], 0,
     "Hauptsatz im Präteritum, die frühere Handlung im nachdem-Satz steht im Plusquamperfekt. „ausfüllen“ bildet das Perfekt mit „haben“, also „hatten“."),
   choice("passiv.modal", "MID",
     "Die Rechnung muss bis Freitag ___ werden.",
-    "bezahlt", ["bezahlen", "gebezahlt"], 1,
+    "bezahlt", ["bezahlen", "gebezahlt", "bezahlte"], 1,
     "Passiv mit Modalverb: Modalverb + Partizip II + „werden“. Verben auf be- bilden das Partizip ohne ge-: „bezahlt“."),
   choice("relativsatz.praeposition", "MID",
     "Das ist das Projekt, ___ wir seit Monaten arbeiten.",
-    "an dem", ["an das", "dem"], 2,
+    "an dem", ["an das", "dem", "an den"], 2,
     "„arbeiten an + Dativ“: Die Präposition steht vor dem Relativpronomen, „das Projekt“ ist neutral, also „an dem“."),
   gapSelect("konnektor.zweiteilig", "MID",
     "Wählen Sie das passende Wort.\n\nLeider habe ich {{g1}} Zeit noch Geld für einen langen Urlaub.",
@@ -156,15 +156,15 @@ const grammarItems: SeedItem[] = [
     "Der zweiteilige Konnektor lautet „weder ... noch“ (= nicht A und nicht B). „noch“ im Satz verlangt „weder“."),
   choice("adjektivdeklination", "MID",
     "Sie wohnt jetzt in einer ___ Wohnung im Stadtzentrum.",
-    "kleinen", ["kleine", "kleiner"], 0,
+    "kleinen", ["kleine", "kleiner", "kleines"], 0,
     "„in“ + Dativ (wo?), feminin nach unbestimmtem Artikel „einer“: Adjektivendung „-en“."),
   choice("pronominaladverb", "MID",
     "Freust du dich schon auf den Urlaub? Ja, ich freue mich sehr ___.",
-    "darauf", ["worauf", "dafür"], 1,
+    "darauf", ["worauf", "dafür", "daran"], 1,
     "„sich freuen auf“ + Sache wird durch „darauf“ ersetzt. „worauf“ ist ein Fragewort, „dafür“ hat die falsche Präposition."),
   choice("genitiv.praeposition", "MID",
     "___ des Regens haben wir einen langen Spaziergang gemacht.",
-    "Trotz", ["Obwohl", "Trotzdem"], 2,
+    "Trotz", ["Obwohl", "Trotzdem", "Weil"], 2,
     "Vor einer Nominalgruppe im Genitiv steht die Präposition „trotz“. „obwohl“ leitet einen Nebensatz ein, „trotzdem“ ist ein Adverb."),
   gapTyped("n-deklination", "MID",
     "Ergänzen Sie das Wort in Klammern in der richtigen Form.\n\nGestern habe ich lange mit unserem neuen {{g1}} (Kollege) gesprochen.",
@@ -173,29 +173,29 @@ const grammarItems: SeedItem[] = [
 
   choice("konnektor.konzessiv", "MID",
     "Er war sehr müde. ___ ging er nach der Arbeit noch ins Fitnessstudio.",
-    "Trotzdem", ["Obwohl", "Weil"], 2,
+    "Trotzdem", ["Obwohl", "Weil", "Deshalb"], 2,
     "Das Verb steht direkt nach der Lücke (Position 2), also braucht man ein Adverb: „trotzdem“. „obwohl“ und „weil“ verlangen das Verb am Satzende."),
   choice("konjunktiv2", "MID",
     "Wenn ich du ___, würde ich das Angebot annehmen.",
-    "wäre", ["bin", "war"], 2,
+    "wäre", ["bin", "war", "würde"], 2,
     "Ratschlag mit irrealer Bedingung: „Wenn ich du wäre, ...“ mit Konjunktiv II von „sein“, passend zu „würde“ im Hauptsatz."),
 
   // ---------------------------------------------------------------- HARD
   choice("infinitiv.ohnezu", "HARD",
     "Er hat den Vertrag unterschrieben, ___ ihn vorher genau zu lesen.",
-    "ohne", ["ohne dass", "damit"], 0,
+    "ohne", ["ohne dass", "damit", "um"], 0,
     "Infinitivkonstruktion „ohne ... zu“. „ohne dass“ und „damit“ verlangen einen Nebensatz mit Subjekt und konjugiertem Verb."),
   choice("passiv.perfekt", "HARD",
     "Das alte Rathaus ist im Jahr 1890 gebaut ___.",
-    "worden", ["geworden", "gewesen"], 1,
+    "worden", ["geworden", "gewesen", "werden"], 1,
     "Passiv Perfekt: sein + Partizip II + „worden“. Im Passiv verliert das Partizip von „werden“ das ge-."),
   choice("relativsatz.was", "HARD",
     "Er hat die Prüfung beim ersten Mal bestanden, ___ alle überrascht hat.",
-    "was", ["das", "dass"], 0,
+    "was", ["das", "dass", "wie"], 0,
     "Bezieht sich der Relativsatz auf den ganzen Hauptsatz, steht „was“. „dass“ hätte hier kein Subjekt, „das“ hat kein neutrales Bezugswort."),
   choice("konnektor.temporal", "HARD",
     "___ ich in Deutschland lebe, spreche ich jeden Tag Deutsch.",
-    "Seit", ["Als", "Bis"], 1,
+    "Seit", ["Als", "Bis", "Nachdem"], 1,
     "Ein Zustand, der in der Vergangenheit begonnen hat und noch andauert: „seit“ mit Präsens. „als“ verlangt Vergangenheit, „bis“ nennt einen Endpunkt."),
   gapSelect("konnektor.temporal", "HARD",
     "Wählen Sie das passende Wort.\n\nBitte schalten Sie alle Computer aus, {{g1}} Sie am Abend das Büro verlassen.",
@@ -270,7 +270,7 @@ function forText(stimulusKey: string) {
       within: Within,
       prompt: string,
       correct: string,
-      distractors: [string, string],
+      distractors: [string, string, string],
       pos: Pos,
       explanation: string,
     ): SeedItem {
@@ -446,6 +446,7 @@ const readingItems: SeedItem[] = [
     [
       "Sie bittet Jonas um Hilfe bei der Suche nach einer neuen Stelle.",
       "Sie lädt Jonas zu einer Weiterbildung im Herbst ein.",
+      "Sie beschwert sich über die Arbeit in ihrer neuen Firma.",
     ],
     0,
     "Der größte Teil der E-Mail beschreibt die neue Stelle; am Ende fragt Amira nach Jonas und seiner Bewerbung. Die Weiterbildung macht sie selbst."),
@@ -462,6 +463,7 @@ const readingItems: SeedItem[] = [
     [
       "Die Firma verlangt, dass alle Mitarbeiter mit dem Rad kommen.",
       "Es fahren am Stadtrand keine Busse mehr.",
+      "Ihre Firma bezahlt ihr ein E-Bike kostenlos.",
     ],
     2,
     "Mit dem Rad wäre sie „in vierzig Minuten da“ statt fast einer Stunde, und sie „hätte jeden Tag ein bisschen Bewegung“. Der günstige Preis ist ein Angebot, keine Pflicht."),
@@ -471,6 +473,7 @@ const readingItems: SeedItem[] = [
     [
       "Er wohnt in derselben Stadt wie Amira.",
       "Er kennt Frau Petrović schon lange.",
+      "Er hat im Winter eine Stelle in Leipzig bekommen.",
     ],
     1,
     "Amira fragt, ob er „die Stelle in Leipzig bekommen“ hat, von der er im Winter erzählt hat. Sie lädt ihn zu einem Besuch ein und will ihm die Stadt zeigen, also wohnt er nicht dort."),
@@ -482,6 +485,7 @@ const readingItems: SeedItem[] = [
     [
       "Um Probleme von neuen Mitarbeitern bei der Wohnungssuche",
       "Um eine Sprachschule, die abends Kurse für Lagerarbeiter anbietet",
+      "Um ein neues Lager, das die Firma für Pakete baut",
     ],
     1,
     "Der ganze Text beschreibt den firmeneigenen Deutschkurs „in der Arbeitszeit“. Der Brief vom Vermieter ist nur ein Beispiel; abends findet gerade kein Kurs statt."),
@@ -491,6 +495,7 @@ const readingItems: SeedItem[] = [
     [
       "Weil die Lehrerin abends in einer anderen Schule arbeitet.",
       "Weil die Abteilungsleiter das so gewünscht haben.",
+      "Weil die Kursteilnehmer im Lager zu wenig Arbeit haben.",
     ],
     0,
     "Die Personalleiterin sagt, ein Kurs am Abend sei „für viele unmöglich“ (Kinder, zweiter Job). Die Abteilungsleiter waren am Anfang sogar dagegen."),
@@ -500,6 +505,7 @@ const readingItems: SeedItem[] = [
     [
       "darauf, dass im Lager viele Sprachen gesprochen werden",
       "darauf, dass es weniger Fehler bei den Lieferungen gibt",
+      "darauf, dass die Teilnehmer eigene Fragen mitbringen",
     ],
     2,
     "Der Satz davor nennt das Problem der Abteilungsleiter: Wenn acht Leute zwei Stunden fehlen, muss die Arbeit anders verteilt werden. Die weniger Fehler sind der Grund für die neue Sicht, nicht ihr Gegenstand."),
@@ -543,7 +549,7 @@ const readingItems: SeedItem[] = [
   anzeigen.choice("detail", "MID",
     "Was bietet die Bewerbungsberatung (C) außer einem Gespräch im Büro noch an?",
     "eine Beratung per Video",
-    ["Fotos für die Bewerbung", "Übersetzungen der Unterlagen"],
+    ["Fotos für die Bewerbung", "Übersetzungen der Unterlagen", "einen Intensivkurs am Vormittag"],
     2,
     "C: „Persönlich in unserem Büro oder online per Video.“ Fotos bietet B an, Übersetzungen G."),
 
@@ -551,13 +557,13 @@ const readingItems: SeedItem[] = [
   regeln.choice("detail", "EASY",
     "Wann ist Ihre Anmeldung gültig?",
     "wenn Sie die Kursgebühr bezahlt haben",
-    ["wenn Sie den Einstufungstest gemacht haben", "sobald Sie sich im Sekretariat gemeldet haben"],
+    ["wenn Sie den Einstufungstest gemacht haben", "sobald Sie sich im Sekretariat gemeldet haben", "sobald Sie die Materialien im Online-Kursraum haben"],
     0,
     "Punkt 1: „Die Anmeldung ist erst gültig, wenn Sie die Kursgebühr bezahlt haben.“"),
   regeln.choice("inference", "HARD",
     "Sie haben sich angemeldet und bezahlt. Fünf Tage vor Kursbeginn merken Sie, dass Sie nicht teilnehmen können, und Sie finden niemanden, der Ihren Platz übernimmt. Was passiert?",
     "Sie bekommen alles außer 50 Euro zurück.",
-    ["Sie bekommen die ganze Kursgebühr zurück.", "Sie bekommen kein Geld zurück."],
+    ["Sie bekommen die ganze Kursgebühr zurück.", "Sie bekommen kein Geld zurück.", "Sie bekommen die Hälfte der Kursgebühr zurück."],
     1,
     "Punkt 3: Kostenlos ist die Abmeldung nur bis zehn Tage vorher; danach (aber vor Kursbeginn) behält die Schule 50 Euro. Kein Geld gibt es erst nach Kursbeginn."),
   regeln.tfng("detail", "MID",
@@ -570,7 +576,7 @@ const readingItems: SeedItem[] = [
   regeln.choice("vocabulary", "MID",
     "„Verpasste Stunden können nicht nachgeholt werden.“ Was bedeutet „nachholen“ hier?",
     "etwas später machen, was man nicht machen konnte",
-    ["etwas von einer anderen Person abholen lassen", "etwas noch einmal bezahlen"],
+    ["etwas von einer anderen Person abholen lassen", "etwas noch einmal bezahlen", "etwas mit nach Hause nehmen"],
     2,
     "„nachholen“ = etwas Versäumtes zu einem späteren Zeitpunkt machen. Auch Punkt 5 benutzt das Wort so: Die ausgefallene Stunde wird am Ende des Kurses nachgeholt."),
 ];
@@ -605,7 +611,7 @@ function forClip(stimulusKey: string) {
       within: Within,
       prompt: string,
       correct: string,
-      distractors: [string, string],
+      distractors: [string, string, string],
       pos: Pos,
       explanation: string,
     ): SeedItem {
@@ -698,19 +704,20 @@ const listeningItems: SeedItem[] = [
     [
       "Sie lädt Herrn Demir zu einem Vorstellungsgespräch ein.",
       "Sie bittet Herrn Demir, seinen Vertrag zu unterschreiben.",
+      "Sie sagt Herrn Demir, dass seine Stelle bereits vergeben ist.",
     ],
     1,
     "Herr Demir hat die Stelle schon (erster Arbeitstag, Vertrag liegt vor). Sie verschiebt den Beginn auf halb neun und erklärt, was er wissen muss."),
   mailbox.choice("detail", "EASY",
     "Wann soll Herr Demir am Montag da sein?",
     "um halb neun",
-    ["um neun Uhr", "um acht Uhr"],
+    ["um neun Uhr", "um acht Uhr", "um zehn Uhr"],
     0,
     "Neun Uhr war der alte Termin; jetzt soll er „schon um halb neun“ kommen, weil um neun die Schulung beginnt."),
   mailbox.choice("detail", "MID",
     "Wohin soll Herr Demir gehen?",
     "zum Empfang im Gebäude neben dem Parkplatz",
-    ["zum Haupteingang der Firma", "direkt in die Personalabteilung"],
+    ["zum Haupteingang der Firma", "direkt in die Personalabteilung", "in die Kantine neben dem Haupteingang"],
     2,
     "„nicht zum Haupteingang, sondern zum Empfang in Gebäude C ... direkt neben dem Parkplatz“."),
   mailbox.tfng("detail", "MID",
@@ -728,6 +735,7 @@ const listeningItems: SeedItem[] = [
     [
       "Sie bildet jedes Jahr etwa zweihundert junge Leute aus.",
       "Sie gehört seit Kurzem zu einer großen Firma.",
+      "Sie ist ein kleiner Betrieb mit nur einer Filiale.",
     ],
     2,
     "„zwölf Filialen in der Region“. Zweihundert ist die Zahl der Mitarbeiter, Auszubildende beginnen zehn pro Jahr; es ist ein Familienbetrieb."),
@@ -737,6 +745,7 @@ const listeningItems: SeedItem[] = [
     [
       "Man arbeitet meistens bis zum späten Abend.",
       "Man kann den Beginn der Arbeit selbst wählen.",
+      "Man arbeitet nur drei Stunden pro Tag.",
     ],
     1,
     "Beginn um drei Uhr nachts, „dafür“ fertig am späten Vormittag und „den ganzen Nachmittag frei“. Er sieht also Nachteil und Vorteil."),
@@ -750,7 +759,7 @@ const listeningItems: SeedItem[] = [
   fuehrung.choice("inference", "HARD",
     "Was ist der Bäckerei bei Bewerbern am wichtigsten?",
     "dass sie Lust auf die Arbeit haben",
-    ["dass sie sehr gute Noten haben", "dass sie eine Bewerbungsmappe schicken"],
+    ["dass sie sehr gute Noten haben", "dass sie eine Bewerbungsmappe schicken", "dass sie schon Erfahrung als Bäcker haben"],
     0,
     "„Ein gutes Zeugnis ist schön, aber noch wichtiger ist uns, dass Sie motiviert sind.“ Eine Papiermappe braucht man ausdrücklich nicht."),
 
@@ -761,6 +770,7 @@ const listeningItems: SeedItem[] = [
     [
       "über die Urlaubspläne ihrer Kollegin Frau Weber",
       "über einen Kochkurs, den Murat mit seiner Schwester machen möchte",
+      "über eine Umfrage zum Essen in der Kantine",
     ],
     0,
     "Die beiden übernehmen die Organisation des Teamausflugs. Frau Webers Urlaub ist nur der Grund dafür; die Schwester hat früher mit ihrer Firma gekocht."),
@@ -777,13 +787,14 @@ const listeningItems: SeedItem[] = [
     [
       "Weil ein Kochkurs weniger kostet.",
       "Weil Frau Weber einen Kochkurs vorgeschlagen hat.",
+      "Weil Murats Schwester die Kochschule gut kennt.",
     ],
     2,
     "Beim Kanufahren konnten zwei Kollegen nicht mitmachen, und nicht jeder klettert gern; beim Kochkurs „kann wirklich jeder mitmachen“. Den Preis kennt Murat noch nicht."),
   gespraech.choice("detail", "MID",
     "Wann treffen sich Lena und Murat das nächste Mal?",
     "am Mittwoch nach der Teambesprechung",
-    ["am Donnerstag", "am Freitag um vierzehn Uhr"],
+    ["am Donnerstag", "am Freitag um vierzehn Uhr", "am Dienstag nach der Mittagspause"],
     1,
     "Murat schlägt Donnerstag vor, aber Lena ist dann bei einem Kunden; sie einigen sich auf Mittwoch. Freitag um vierzehn Uhr beginnt der Ausflug."),
 ];

@@ -13,19 +13,20 @@ import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
  * A2 starter bank, written against docs/EXAM-BANK-RESEARCH.md (A2 section and
  * the item-writing rules). All texts are original.
  *
- * Closed items have three options (Goethe practice up to B2). The key position
- * is given explicitly and spread over a, b and c in every section.
+ * Single-choice items have four options (Goethe practice uses three; the
+ * fourth, d, is an extra wrong distractor). The key position is given
+ * explicitly and spread over a, b and c in every section.
  */
 
 const LEVEL = "A2" as const;
 
 type Within = NonNullable<SeedItem["within"]>;
-type Pos = 0 | 1 | 2;
-type Option3 = [string, string, string];
+type Pos = 0 | 1 | 2 | 3;
+type Option4 = [string, string, string, string];
 
-const IDS = ["a", "b", "c"] as const;
+const IDS = ["a", "b", "c", "d"] as const;
 
-function choiceContent(options: Option3, correct: Pos) {
+function choiceContent(options: Option4, correct: Pos) {
   return {
     content: { kind: "CHOICE" as const, options: options.map((text, i) => ({ id: IDS[i], text })) },
     key: { kind: "CHOICE" as const, correct: [IDS[correct]] },
@@ -42,7 +43,7 @@ function tfngContent(statements: Array<[string, TfngValue]>) {
 
 // ================================================================ GRAMMAR
 
-function gChoice(skill: string, within: Within, prompt: string, options: Option3, correct: Pos, explanation: string): SeedItem {
+function gChoice(skill: string, within: Within, prompt: string, options: Option4, correct: Pos, explanation: string): SeedItem {
   return {
     section: "GRAMMAR",
     level: LEVEL,
@@ -81,35 +82,35 @@ const grammarItems: SeedItem[] = [
   // ---------------------------------------------------------------- EASY
   gChoice("perfekt", "EASY",
     "Am Samstag ___ wir mit dem Fahrrad an den See gefahren.",
-    ["haben", "sind", "seid"], 1,
+    ["haben", "sind", "seid", "sein"], 1,
     "\"fahren\" ist ein Verb der Bewegung, das Perfekt bildet es mit \"sein\". Zu \"wir\" gehört \"sind\"; \"seid\" ist die ihr-Form."),
   gChoice("praeteritum", "EASY",
     "Gestern ___ ich keine Zeit, ich musste lange arbeiten.",
-    ["habe", "hat", "hatte"], 2,
+    ["habe", "hat", "hatte", "hattet"], 2,
     "\"Gestern\" verlangt Vergangenheit; bei \"haben\" nimmt man meist das Präteritum: ich hatte. \"habe\" ist Präsens, \"hat\" passt nicht zu \"ich\"."),
   gChoice("dativ", "EASY",
     "Kannst du ___ bitte den Zucker geben?",
-    ["mir", "mich", "meiner"], 0,
+    ["mir", "mich", "meiner", "ich"], 0,
     "\"geben\": Person im Dativ, Sache im Akkusativ (den Zucker). Dativ von \"ich\" ist \"mir\"; \"mich\" ist Akkusativ."),
   gChoice("wechselpraeposition", "EASY",
     "Der Schlüssel liegt ___ Tisch.",
-    ["auf den", "auf das", "auf dem"], 2,
+    ["auf den", "auf das", "auf dem", "auf der"], 2,
     "\"liegen\" beschreibt eine Position (wo?), also Dativ: auf dem Tisch. \"auf den\" wäre Akkusativ (wohin?)."),
   gChoice("nebensatz", "EASY",
     "Meine Kollegin sagt, dass ___.",
-    ["sie morgen später kommt", "sie kommt morgen später", "kommt sie morgen später"], 0,
+    ["sie morgen später kommt", "sie kommt morgen später", "kommt sie morgen später", "sie morgen kommt später"], 0,
     "Im dass-Satz steht das konjugierte Verb am Ende. Die anderen Optionen haben das Verb an zweiter bzw. erster Stelle."),
   gChoice("konnektor", "EASY",
     "Mein Auto ist kaputt, deshalb ___ mit dem Bus.",
-    ["fahre ich heute", "ich fahre heute", "ich heute fahre"], 0,
+    ["fahre ich heute", "ich fahre heute", "ich heute fahre", "heute ich fahre"], 0,
     "Nach \"deshalb\" (Position 1) folgt das Verb, dann das Subjekt: deshalb fahre ich heute. \"deshalb\" leitet keinen Nebensatz ein, das Verb steht also nicht am Ende."),
   gChoice("komparativ", "EASY",
     "Im Sommer fahre ich ___ mit dem Fahrrad als mit dem Bus.",
-    ["gerner", "am liebsten", "lieber"], 2,
+    ["gerner", "am liebsten", "lieber", "gern"], 2,
     "Komparativ von \"gern\" ist unregelmäßig: gern, lieber, am liebsten. Mit \"als\" steht der Komparativ. \"gerner\" gibt es nicht."),
   gChoice("konjunktiv2", "EASY",
     "Kellner: Was möchten Sie trinken? Gast: Ich ___ gern ein Wasser.",
-    ["hatte", "habe", "hätte"], 2,
+    ["hatte", "habe", "hätte", "wäre"], 2,
     "Höfliche Bestellung mit Konjunktiv II: Ich hätte gern ... \"hatte\" ist Präteritum, \"habe gern\" bedeutet etwas anderes (etwas mögen)."),
 
   // ---------------------------------------------------------------- MID
@@ -119,7 +120,7 @@ const grammarItems: SeedItem[] = [
     "Verben mit untrennbarer Vorsilbe (be-, ver-, er- ...) bilden das Partizip II ohne ge-: beantwortet. Typische Fehler: gebeantwortet, beantwortest."),
   gChoice("praeteritum", "MID",
     "Letzte Woche ___ Samir nicht zum Kurs kommen, er war krank.",
-    ["kann", "konnte", "könnte"], 1,
+    ["kann", "konnte", "könnte", "können"], 1,
     "Vergangenheit von Modalverben: Präteritum ohne Umlaut, er konnte. \"könnte\" ist Konjunktiv II, \"kann\" ist Präsens."),
   gGap("wechselpraeposition", "MID",
     "Stell die Flaschen bitte in {{g1}} Kühlschrank.",
@@ -127,7 +128,7 @@ const grammarItems: SeedItem[] = [
     "\"stellen\" zeigt eine Richtung (wohin?), also Akkusativ; \"Kühlschrank\" ist maskulin: in den Kühlschrank."),
   gChoice("nebensatz", "MID",
     "Die Kundin hat gefragt, ___ das Paket schon angekommen ist.",
-    ["dass", "wenn", "ob"], 2,
+    ["dass", "wenn", "ob", "was"], 2,
     "Indirekte Ja/Nein-Frage: \"ob\". Nach \"fragen\" steht kein \"dass\"; \"wenn\" ist eine Bedingung oder Zeitangabe, keine Frage."),
   gGap("konnektor", "MID",
     "Ich kann heute nicht kommen, {{g1}} ich arbeiten muss.",
@@ -157,23 +158,23 @@ const grammarItems: SeedItem[] = [
     "\"schenken\": Person im Dativ, Sache im Akkusativ. \"Vater\" ist maskulin, Dativ: meinem. \"meinen\" ist Akkusativ."),
   gChoice("wechselpraeposition", "HARD",
     "Ich ___ die Jacke auf das Bett.",
-    ["liege", "lege", "lag"], 1,
+    ["liege", "lege", "lag", "legt"], 1,
     "\"auf das Bett\" (Akkusativ) zeigt eine Richtung, also das Handlungsverb \"legen\". \"liegen\" (liege, lag) steht mit Dativ (wo?)."),
   gChoice("nebensatz", "MID",
     "Ich rufe dich an, wenn ___.",
-    ["ich bin zu Hause", "ich zu Hause bin", "bin ich zu Hause"], 1,
+    ["ich bin zu Hause", "ich zu Hause bin", "bin ich zu Hause", "zu Hause ich bin"], 1,
     "Im wenn-Satz steht das konjugierte Verb am Ende: wenn ich zu Hause bin."),
   gChoice("nebensatz", "HARD",
     "Wenn es morgen regnet, ___.",
-    ["wir bleiben zu Hause", "bleiben wir zu Hause", "wir zu Hause bleiben"], 1,
+    ["wir bleiben zu Hause", "bleiben wir zu Hause", "wir zu Hause bleiben", "zu Hause wir bleiben"], 1,
     "Steht der wenn-Satz am Anfang, ist er Position 1. Im Hauptsatz folgt sofort das Verb, dann das Subjekt: ..., bleiben wir zu Hause (Verb, Komma, Verb). Das Verb am Ende gehört nur in den Nebensatz."),
   gChoice("reflexiv", "HARD",
     "Vor dem Essen wasche ich ___ die Hände.",
-    ["mir", "mich", "sich"], 0,
+    ["mir", "mich", "sich", "mein"], 0,
     "Gibt es schon ein Akkusativobjekt (die Hände), steht das Reflexivpronomen im Dativ: ich wasche mir die Hände. \"sich\" ist die 3. Person."),
   gChoice("adjektivendung", "HARD",
     "Ich habe einen ___ Laptop gekauft.",
-    ["neuen", "neuer", "neues"], 0,
+    ["neuen", "neuer", "neues", "neue"], 0,
     "Unbestimmter Artikel, maskulin, Akkusativ (einen): Adjektivendung -en, einen neuen Laptop."),
   gGap("konjunktiv2", "HARD",
     "{{g1}} Sie mir bitte helfen? Die Tasche ist so schwer. (können, Konjunktiv II)",
@@ -230,7 +231,7 @@ function forText(stimulusKey: string) {
     explanation,
   });
   return {
-    choice(skill: RSkill, within: Within, prompt: string, options: Option3, correct: Pos, explanation: string): SeedItem {
+    choice(skill: RSkill, within: Within, prompt: string, options: Option4, correct: Pos, explanation: string): SeedItem {
       return { ...base(skill, within, prompt, explanation), type: "SINGLE_CHOICE", ...choiceContent(options, correct) };
     },
     tfng(skill: RSkill, within: Within, statements: Array<[string, TfngValue]>, explanation: string): SeedItem {
@@ -355,6 +356,7 @@ const readingItems: SeedItem[] = [
       "Sie bittet Aylin um Hilfe bei der Wohnungssuche.",
       "Sie sagt ein Treffen am Samstag ab.",
       "Sie erzählt von ihrer Arbeit und lädt Aylin ein.",
+      "Sie sucht für Aylin eine neue Wohnung.",
     ], 2,
     "Lena berichtet von der neuen Stelle und lädt Aylin zum Essen ein. Die Wohnungssuche wird nur erwähnt, um Hilfe bittet sie nicht."),
   rEmail.choice("detail", "MID",
@@ -363,6 +365,7 @@ const readingItems: SeedItem[] = [
       "Sie arbeitet im Büro des Möbelhauses.",
       "Sie verkauft im Geschäft Möbel an Kunden.",
       "Sie bringt Möbel zu den Kunden nach Hause.",
+      "Sie repariert kaputte Möbel in der Werkstatt.",
     ], 0,
     "Im Text: \"Ich bin jetzt im Büro von einem Möbelhaus und schreibe Rechnungen und E-Mails.\" Verkauf und Lieferung kommen nicht vor."),
   rEmail.tfng("detail", "MID",
@@ -378,6 +381,7 @@ const readingItems: SeedItem[] = [
       "Aylin hat bald Geburtstag.",
       "Lena möchte die neue Stelle feiern.",
       "Lena möchte sich für Hilfe bedanken.",
+      "Aylin hat eine neue Stelle gefunden.",
     ], 1,
     "\"denn ich habe meine neue Stelle noch nicht richtig gefeiert\". Geburtstag und Dank werden nicht genannt."),
 
@@ -388,6 +392,7 @@ const readingItems: SeedItem[] = [
       "Die Bibliothek hat neue Öffnungszeiten und neue Angebote.",
       "Die Bibliothek sucht neue Mitarbeiterinnen und Mitarbeiter.",
       "Die Bibliothek ist ab November am Abend geschlossen.",
+      "Die Bibliothek ändert die Preise für den Ausweis.",
     ], 0,
     "Der Text informiert über längere Öffnungszeiten am Abend, den Lernraum, Laptops und das Sprachcafé."),
   rBib.tfng("detail", "MID",
@@ -403,6 +408,7 @@ const readingItems: SeedItem[] = [
       "Man muss sich vorher telefonisch anmelden.",
       "Man kann einfach ohne Anmeldung kommen.",
       "Man kann sich leider nicht mehr anmelden.",
+      "Man muss die Anmeldung am Freitag abgeben.",
     ], 1,
     "\"nicht nötig\" heißt: man muss es nicht tun. Man kann also ohne Anmeldung zum Sprachcafé kommen."),
   rBib.choice("detail", "MID",
@@ -411,13 +417,14 @@ const readingItems: SeedItem[] = [
       "Einen Kurs für Computer und Internet.",
       "Eine Führung durch die neuen Räume.",
       "Ein Treffen, bei dem man Deutsch spricht.",
+      "Ein Fest für alle Kinder der Stadt.",
     ], 2,
     "Sprachcafé am Dienstag um 19 Uhr: Menschen aus vielen Ländern sprechen miteinander Deutsch. Das Wort \"Sprachcafé\" wird in der Option umschrieben."),
 
   // ---------------------------------------------------------------- Weiterbildung
   rKurs.choice("detail", "EASY",
     "Sie möchten lernen, wie man am Computer mit Zahlen und Listen arbeitet. Wohin gehen Sie?",
-    ["In die Kantine.", "In Raum 104.", "In Raum 210."], 1,
+    ["In die Kantine.", "In Raum 104.", "In Raum 210.", "Ins Büro von Frau Demir."], 1,
     "Kurs 1 (Excel, Tabellen und Rechnungen am Computer) findet in Raum 104 statt."),
   rKurs.choice("detail", "MID",
     "Wer muss den Kurs \"Erste Hilfe im Betrieb\" besuchen?",
@@ -425,6 +432,7 @@ const readingItems: SeedItem[] = [
       "Alle Mitarbeiterinnen und Mitarbeiter der Firma.",
       "Nur die Mitarbeiterinnen und Mitarbeiter der Kantine.",
       "Neue Mitarbeiterinnen und Mitarbeiter im Lager.",
+      "Nur die Mitarbeiterinnen und Mitarbeiter im Büro.",
     ], 2,
     "\"Für alle neuen Mitarbeiterinnen und Mitarbeiter im Lager ist dieser Kurs Pflicht.\" Die Kantine ist nur der Kursort."),
   rKurs.tfng("detail", "MID",
@@ -436,7 +444,7 @@ const readingItems: SeedItem[] = [
     "1 R: Der Kurs \"Deutsch am Telefon\" hat nur acht Plätze. 2 F: Kurs 4 ist online. 3 F: \"Alle Kurse finden in der Arbeitszeit statt.\""),
   rKurs.choice("inference", "HARD",
     "Frau Okafor arbeitet nur am Donnerstag und am Freitag, immer von 8 bis 14 Uhr. Sie möchte einen Kurs in ihrer Arbeitszeit machen. Welcher Kurs passt?",
-    ["Kurs 4", "Kurs 3", "Kurs 1"], 0,
+    ["Kurs 4", "Kurs 3", "Kurs 1", "Kurs 2"], 0,
     "Kurs 4 ist am Freitag von 13 bis 14 Uhr. Kurs 3 ist zwar donnerstags, aber erst von 16 bis 17.30 Uhr; Kurs 1 ist montags."),
 
   // ---------------------------------------------------------------- Anzeigen
@@ -456,6 +464,7 @@ const readingItems: SeedItem[] = [
       "Man kann sofort mit der Arbeit anfangen.",
       "Man arbeitet auch am Wochenende.",
       "Man braucht keinen Führerschein.",
+      "Man arbeitet nur vormittags.",
     ], 0,
     "\"Arbeitsbeginn: sofort.\" Gearbeitet wird von Montag bis Freitag, ein Führerschein ist nötig."),
   rAnz.tfng("detail", "MID",
@@ -471,6 +480,7 @@ const readingItems: SeedItem[] = [
       "Man muss nicht jeden Tag arbeiten.",
       "Man muss die Arbeit noch nicht kennen.",
       "Man braucht schon Erfahrung in einem Café.",
+      "Man bekommt in dem Café kein Geld.",
     ], 1,
     "\"Erfahrung\" = was man schon gemacht und gelernt hat. \"nicht nötig\": Man muss die Arbeit noch nicht kennen. Die dritte Option sagt das Gegenteil."),
 ];
@@ -494,7 +504,7 @@ function lChoice(
   skill: LSkill,
   within: Within,
   prompt: string,
-  options: Option3,
+  options: Option4,
   correct: Pos,
   explanation: string,
 ): SeedItem {
@@ -591,11 +601,12 @@ const listeningItems: SeedItem[] = [
       "Sie sagt ein Gespräch mit Herrn Rahimi ab.",
       "Sie bietet Herrn Rahimi sofort eine Stelle an.",
       "Sie möchte einen Termin für ein Gespräch machen.",
+      "Sie fragt nach seinem Lebenslauf.",
     ], 2,
     "Frau Kraus möchte Herrn Rahimi kennenlernen und schlägt einen Termin vor. Eine Absage oder ein Angebot gibt es nicht."),
   lChoice(L_MAILBOX, "detail", "HARD",
     "Wann soll Herr Rahimi in die Firma kommen?",
-    ["Am Dienstag um halb zehn.", "Am Mittwoch um halb zehn.", "Am Mittwoch um zehn Uhr."], 1,
+    ["Am Dienstag um halb zehn.", "Am Mittwoch um halb zehn.", "Am Mittwoch um zehn Uhr.", "Am Donnerstag um halb zehn."], 1,
     "Dienstag geht nicht, weil der Chef nicht da ist; der neue Vorschlag ist Mittwoch, halb zehn (9.30 Uhr)."),
   lChoice(L_MAILBOX, "detail", "MID",
     "Was soll Herr Rahimi mitbringen?",
@@ -603,6 +614,7 @@ const listeningItems: SeedItem[] = [
       "Seinen Ausweis und seine Zeugnisse.",
       "Seinen Lebenslauf und seine Zeugnisse.",
       "Nur seinen Lebenslauf.",
+      "Seinen Ausweis und seinen Lebenslauf.",
     ], 0,
     "Ausweis und Zeugnisse; den Lebenslauf hat die Firma schon."),
   lChoice(L_MAILBOX, "detail", "MID",
@@ -611,6 +623,7 @@ const listeningItems: SeedItem[] = [
       "Direkt ins Büro von Frau Kraus gehen.",
       "Im Lager auf den Chef warten.",
       "Zuerst zur Information gehen.",
+      "Seinen Lebenslauf abgeben.",
     ], 2,
     "\"Bitte melden Sie sich zuerst unten an der Information. Dann holt Sie jemand ab.\""),
 
@@ -621,11 +634,12 @@ const listeningItems: SeedItem[] = [
       "Über eine Feier für eine Kollegin.",
       "Über eine neue Kollegin im Team.",
       "Über einen Ausflug mit dem ganzen Team.",
+      "Über ein Geschenk für den Chef.",
     ], 0,
     "Paula verlässt die Firma, und die beiden planen ein Abschiedsfrühstück für sie."),
   lChoice(L_ABSCHIED, "detail", "MID",
     "Wo soll die Feier stattfinden?",
-    ["In einem Restaurant.", "Im Büro.", "Bei Paula zu Hause."], 1,
+    ["In einem Restaurant.", "Im Büro.", "Bei Paula zu Hause.", "In einem Café in der Stadt."], 1,
     "Das Restaurant ist für zwanzig Leute zu teuer, deshalb machen sie ein Frühstück im Büro."),
   lTfng(L_ABSCHIED, "detail", "MID",
     [
@@ -640,6 +654,7 @@ const listeningItems: SeedItem[] = [
       "Paula hat sich dieses Buch gewünscht.",
       "Das Buch kostet nur fünf Euro.",
       "Das Geschenk passt zu Paulas Hobby.",
+      "Paula hat im Oktober Geburtstag.",
     ], 2,
     "Daniel sagt, dass Paula gern fotografiert. Die fünf Euro sammelt jede Person, das ist nicht der Preis des Buches."),
 
@@ -663,6 +678,7 @@ const listeningItems: SeedItem[] = [
       "Er verdient jetzt weniger Geld als früher.",
       "Er versteht die Programme am Computer nicht.",
       "Seine Familie findet die Ausbildung nicht gut.",
+      "Seine Kollegen in der Klasse sind nicht nett.",
     ], 0,
     "\"Das ist ehrlich gesagt das größte Problem\": Er verdient viel weniger als im Supermarkt. Bei den Computerprogrammen helfen ihm die anderen."),
   lChoice(L_INTERVIEW, "attitude", "HARD",
@@ -671,6 +687,7 @@ const listeningItems: SeedItem[] = [
       "Er weiß nicht, ob sie das Richtige für ihn ist.",
       "Er ist froh, dass er sie macht.",
       "Er möchte wieder im Supermarkt arbeiten.",
+      "Er möchte die Ausbildung bald beenden.",
     ], 1,
     "Er würde es \"auf jeden Fall\" wieder machen und ist zufrieden, auch wenn er abends müde ist."),
 ];
