@@ -162,6 +162,26 @@ Spec `docs/superpowers/specs/2026-10-06-advanced-ai-create-design.md`, plan
   kutusu taslağı sunucuda güncelliyor ama kartlar yenilenmeden eski kalıyordu (`4705582`); toplam 100 iken "100 olmalı"
   yazıyordu (`488f3fe`).
 
+## Okul yöneticisi geri bildirimi (2026-10-16, `platform/solutions` 1bf0bd9, canlıda DEĞİL)
+
+Yapıldı ve yerel Chrome'da denendi (kademe_platform, gözetimsiz "QA geri-isaret testi" ile):
+- C-test: ortak parça havuzu, sürükle (pointer olayları) ya da tıkla-yerleştir; boşluklar eşit genişlikte; her seed C-testte elle yazılmış 14-15 yanıltıcı (`key.distractors`, `src/db/seed-bank/ctest.ts`); mekanik yedek `src/lib/exam/ctest-pool.ts`; yönerge `src/lib/exam/ctest-instruction.ts` (öğretmen ekranı ve rapor da aynısını gösterir).
+- Doğru/yanlış düğmeleri "Richtig / Falsch / Nicht im Text".
+- Tüm tek seçimli sorular 4 şık (142 soruya elle d şıkkı; üretici artık tam 4 şık ister).
+- Dinleme: bir kaydın tüm soruları tek sayfada, sabit çalar, çalarken çıkışta satır içi onay; sunucuda `listeningGroup` + `canWrite` `sharesTestlet`.
+- Eşleştirme: sabit sürükle tepsisi + tıkla-yerleştir, tek liste, Almanca not.
+- Konuşma/yazma görevleri satır satır kart (`src/lib/exam/task-prompt.ts`); A seviyesi "Thema/Karte" kartı yalnız birim testle görüldü.
+- Telefon algılama eşiği 0.55, 4 karede 3 (gerçek kamerayla kanıtlanmadı).
+- Öğretmen: tek puan birimi (`answer-tally.ts`, "57 cevaptan 1 tanesi doğru" her yerde), soru soru kartlar, tıklanabilir "Kesinleştirmeden önce" listesi, AI beklenmeden seviye verilebilir, hata düğmenin yanında.
+- PDF rapor soru soru (cevap + anahtar; okuma metni ve döküm yok) ve öğretmen onaylı AI geri bildirimi (`exam_results.student_feedback`, AI amaç `STUDENT_FEEDBACK`).
+
+Canlıya çıkış adımları (sırayla, yedekten sonra):
+1. Migration `0023_student_feedback` (sütun + enum; ayrıca eksik kalmış `SECOND_SCREEN_UNVERIFIABLE` değerini `IF NOT EXISTS` ile ekler).
+2. `bank:topup --production ... --retire-stale --sync-seed`: 142 eski 3 şıklı başlangıç sorusu emekliye, 4 şıklıları yeni kayıt (kalibrasyon geçmişi yok); 18 C-test anahtarına yanıltıcılar yerinde yazılır. Yerelde aynı komut: insert 154 / retire 142, sonra sync 18.
+3. Dağıtım, canlıda bir C-test + dinleme + öğretmen ekranı + rapor kontrolü.
+
+Yerel artıklar: "QA geri-isaret testi" bölüm ayarları test için değiştirildi (yalnız kademe_platform).
+
 ## Canlıya çıkış: onSET yerleştirme ve davet iyileştirmeleri (2026-10-16 gece, kullanıcı onayıyla: "canlıya alabilir misin")
 
 - main `5a4f97e` -> `1d8d4c6` (17 commit, fast-forward): onSET düzeninde yerleştirme (aşağıdaki bölüm), tek ekrana sığan
