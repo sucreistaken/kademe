@@ -1,5 +1,6 @@
 import { responseState, reviewRows, type ReviewMark } from "@/components/panel/result/review-rows";
-import { CEFR_LEVELS, isObjectiveSection, type Cefr, type ItemAnswer, type ItemSnapshot, type Section } from "@/lib/exam/types";
+import { withPoolInstruction } from "@/lib/exam/ctest-instruction";
+import { CEFR_LEVELS, isCTest, isObjectiveSection, type Cefr, type ItemAnswer, type ItemSnapshot, type Section } from "@/lib/exam/types";
 
 /**
  * The detailed part of the printable report, as data: every question the
@@ -123,15 +124,16 @@ export function gapParts(s: ItemSnapshot, a: ItemAnswer | null, acceptedGaps: re
   const rows = reviewRows(s, a, acceptedGaps);
   if (!rows || rows.variant !== "GAP" || s.key.kind !== "GAP") return null;
   const key = s.key;
+  const prompt = isCTest(s) ? withPoolInstruction(s.prompt) : s.prompt;
   const byId = new Map(rows.rows.map((r) => [r.id, r]));
   const parts: GapPart[] = [];
   const re = /\{\{([^}]+)\}\}/g;
   let pos = 0;
   let n = 0;
   let m: RegExpExecArray | null;
-  while ((m = re.exec(s.prompt))) {
+  while ((m = re.exec(prompt))) {
     const row = byId.get(m[1]);
-    let before = s.prompt.slice(pos, m.index);
+    let before = prompt.slice(pos, m.index);
     pos = m.index + m[0].length;
     if (!row) {
       parts.push({ kind: "text", text: before });
@@ -157,7 +159,7 @@ export function gapParts(s: ItemSnapshot, a: ItemAnswer | null, acceptedGaps: re
     }
     parts.push({ kind: "gap", n, prefix: kept, given, shown, correct, mark: row.mark });
   }
-  const rest = s.prompt.slice(pos);
+  const rest = prompt.slice(pos);
   if (rest) parts.push({ kind: "text", text: rest });
   return parts;
 }

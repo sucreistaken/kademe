@@ -1,4 +1,5 @@
 import { hasAnswer, typedMatches } from "@/lib/exam/item-scoring";
+import { withPoolInstruction } from "@/lib/exam/ctest-instruction";
 import { matchingTargets } from "@/lib/exam/safe";
 import { isCTest, type ItemAnswer, type ItemSnapshot } from "@/lib/exam/types";
 import type { ReviewMark } from "./review-rows";
@@ -67,7 +68,7 @@ export function gapSegments(s: ItemSnapshot, a: ItemAnswer | null, acceptedGaps:
   const k = s.key;
   if (c.kind !== "GAP" || k.kind !== "GAP") return null;
   const ctest = isCTest(s);
-  const parts = s.prompt.split(MARKER);
+  const parts = (ctest ? withPoolInstruction(s.prompt) : s.prompt).split(MARKER);
   const out: GapSegment[] = [];
   let n = 0;
   parts.forEach((part, i) => {

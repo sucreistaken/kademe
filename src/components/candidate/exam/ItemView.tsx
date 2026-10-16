@@ -2,6 +2,7 @@
 
 import { useId, useRef, useState, type KeyboardEvent } from "react";
 import { matchingTargets, type CandidateItem } from "@/lib/exam/safe";
+import { withPoolInstruction } from "@/lib/exam/ctest-instruction";
 import type { ItemAnswer, TfngValue } from "@/lib/exam/types";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
@@ -260,10 +261,6 @@ export function poolPlacement(pool: string[], gapIds: string[], gaps: Record<str
   return { used, at };
 }
 
-/** C-test instruction shown with the word-part pool, in the exam's language. */
-const POOL_INSTRUCTION =
-  "Ergänzen Sie die fehlenden Wortteile. Ziehen Sie die passenden Teile in die Lücken oder klicken Sie sie an. Einige Teile bleiben übrig.";
-
 function GapItem({ item, answer, onChange, disabled }: ItemProps) {
   const t = useT("exam");
   const ti = useT("examItems");
@@ -279,7 +276,7 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
   const placement = pool ? poolPlacement(pool, item.content.gaps.map((g) => g.id), answer.gaps) : null;
   const gaps = new Map(item.content.gaps.map((g) => [g.id, g]));
   // The stored instruction asks to type letters; with the pool the student drags parts instead.
-  const prompt = pool ? `${POOL_INSTRUCTION}\n\n${item.prompt.replace(/^[\s\S]*?\n\n/, "")}` : item.prompt;
+  const prompt = pool ? withPoolInstruction(item.prompt) : item.prompt;
   const parts = prompt.split(/(\{\{[A-Za-z0-9_-]+\}\})/g);
   const slotAt = (x: number, y: number) =>
     (document.elementFromPoint(x, y)?.closest("[data-gap-slot]") as HTMLElement | null)?.dataset.gapSlot ?? null;

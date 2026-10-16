@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { CTEST_POOL_INSTRUCTION } from "@/lib/exam/ctest-instruction";
 import type { ItemSnapshot } from "@/lib/exam/types";
 import { gapSegments, plainPrompt, reviewCard, sectionScoreSummary, splitTaskPrompt } from "./review-cards";
 
@@ -24,7 +25,8 @@ const grammarGap = {
 describe("gapSegments", () => {
   it("C-test: the stem moves into the gap so each gap holds the whole word", () => {
     const segs = gapSegments(ctest, { gaps: { g1: "chte", g2: "xyz" } })!;
-    expect(segs[0]).toEqual({ kind: "text", text: "Anleitung.\n\nIch " });
+    // The stored "type the letters" instruction gives way to the pool instruction the student saw.
+    expect(segs[0]).toEqual({ kind: "text", text: `${CTEST_POOL_INSTRUCTION}\n\nIch ` });
     expect(segs[1]).toMatchObject({ kind: "gap", n: 1, stem: "mö", given: "chte", shown: "möchte", expected: "möchte", mark: "correct" });
     expect(segs[2]).toEqual({ kind: "text", text: " gern und " });
     expect(segs[3]).toMatchObject({ n: 2, stem: "arb", shown: "arbxyz", expected: "arbeite", mark: "wrong" });

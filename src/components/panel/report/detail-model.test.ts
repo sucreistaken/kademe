@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { CTEST_POOL_INSTRUCTION } from "@/lib/exam/ctest-instruction";
 import { buildDetail, gapParts, type DetailGrading, type DetailResponse, type DetailSource } from "./detail-model";
 import type { ItemSnapshot } from "@/lib/exam/types";
 import tr from "@/i18n/messages/screens.tr.json";
@@ -50,7 +51,8 @@ describe("gapParts", () => {
       ["", "Köln", "blank"],
     ]);
     // The kept start of a word is moved into the gap, not left in the text before it.
-    expect(parts![0]).toEqual({ kind: "text", text: "Ich " });
+    // The student saw the pool instruction, so the report shows it too.
+    expect(parts![0]).toEqual({ kind: "text", text: `${CTEST_POOL_INSTRUCTION}\n\nIch ` });
   });
   it("counts a teacher-accepted gap as accepted", () => {
     const parts = gapParts(ctest, { gaps: { g1: "inn" } }, ["g1"]);
