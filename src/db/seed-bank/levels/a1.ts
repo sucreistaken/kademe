@@ -201,6 +201,13 @@ const grammarItems: SeedItem[] = [
     last: "Am Abend kocht sie gern und liest ein Buch.",
     // "isst etwas Brot" is just as correct as "isst ein Brot".
     variants: { 8: ["twas"] },
+    // Wrong parts by the gap whose stem they target.
+    distractors: {
+      1: ["gens"], 2: ["ich"], 3: ["chste"], 4: ["us"],
+      5: ["nken"], 6: ["nem"], 7: ["nter"], 10: ["hren"],
+      11: ["ind"], 12: ["er"], 13: ["u"], 15: ["st"],
+      16: ["tels"], 17: ["eiten"], 19: ["s"],
+    },
   }),
   // A family weekend at the lake.
   cTest(LEVEL, "MID", {
@@ -210,6 +217,13 @@ const grammarItems: SeedItem[] = [
       "Die Kinder schwimmen im Wasser, und der Vater spielt mit dem Hund. Die Mutter liest ein Buch. " +
       "Am Mittag essen alle zusammen Käse, Brot und Obst. Später machen sie einen Spaziergang.",
     last: "Am Abend fahren alle müde, aber glücklich nach Hause.",
+    // Wrong parts by the gap whose stem they target.
+    distractors: {
+      1: ["tern"], 2: ["hen"], 3: ["nter"], 4: ["nnen"],
+      6: ["immt"], 7: ["sers"], 8: ["es"], 9: ["elen"],
+      10: ["en"], 11: ["as"], 12: ["egt"], 13: ["ches"],
+      15: ["lem"], 16: ["sen"], 19: ["ich"],
+    },
   }),
   // Shopping at the market for a birthday.
   cTest(LEVEL, "MID", {
@@ -219,6 +233,13 @@ const grammarItems: SeedItem[] = [
       "Alles ist heute sehr frisch und nicht teuer. Für den Tisch sucht er noch Blumen. " +
       "Am Ende findet er sehr schöne gelbe Tulpen.",
     last: "Jetzt hat Tarek alles und geht schnell nach Hause.",
+    // Wrong parts by the gap whose stem they target.
+    distractors: {
+      1: ["hten"], 2: ["inem"], 3: ["nem"], 4: ["ht"],
+      5: ["ufen"], 6: ["feln"], 8: ["ls"], 10: ["sche"],
+      11: ["chts"], 13: ["schen"], 14: ["s"], 15: ["me"],
+      16: ["den"], 18: ["önen"], 19: ["pe"],
+    },
   }),
 ];
 

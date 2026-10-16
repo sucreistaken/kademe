@@ -191,6 +191,13 @@ const grammarCTest = cTest(LEVEL, "MID", {
   last: "Die Arbeit macht mir viel Spaß, und meine Kolleginnen und Kollegen helfen mir immer.",
   // g10 "da...": danach is as correct as dann; g14 "Kun...": Kundinnen is as correct as Kunden.
   variants: { 10: ["nach"], 14: ["dinnen"] },
+  // Wrong parts by the gap whose stem they target.
+  distractors: {
+    1: ["eht"], 2: ["gens"], 3: ["ühe"], 4: ["r"],
+    5: ["nnt"], 6: ["nd"], 7: ["hren"], 8: ["ke"],
+    9: ["em"], 11: ["hens"], 12: ["bte"], 14: ["de"],
+    15: ["ist"], 16: ["der"], 18: ["st"],
+  },
 });
 
 // Moving into a new flat with a friend.
@@ -201,6 +208,13 @@ const grammarCTest2 = cTest(LEVEL, "MID", {
     "Beim Umzug hat uns mein Bruder geholfen, weil die Möbel sehr schwer waren. " +
     "Am Abend waren wir ziemlich müde, aber wir haben noch zusammen auf dem Balkon gegessen.",
   last: "Jetzt fühlen wir uns schon wie zu Hause, und bald wollen wir unsere Freunde zu einem kleinen Fest einladen.",
+  // Wrong parts by the gap whose stem they target.
+  distractors: {
+    1: ["nungen"], 2: ["itte"], 3: ["nem"], 4: ["chen"],
+    5: ["ner"], 6: ["vor"], 7: ["aben"], 8: ["ine"],
+    9: ["lft"], 12: ["r"], 13: ["ende"], 15: ["den"],
+    16: ["er"], 18: ["us"], 19: ["kone"],
+  },
 });
 
 // A day trip by train that went wrong.
@@ -214,6 +228,13 @@ const grammarCTest3 = cTest(LEVEL, "MID", {
   // g4 "Bah...": "zum Bahnsteig gegangen" is as correct as "zum Bahnhof gegangen".
   // g18 "h...": "Als sie endlich am Meer waren, hatte es ... angefangen" (als + Plusquamperfekt) is idiomatic too.
   variants: { 4: ["nsteig"], 18: ["atte"] },
+  // Wrong parts by the gap whose stem they target.
+  distractors: {
+    1: ["ch"], 2: ["tehen"], 3: ["tliche"], 4: ["nhöfe"],
+    6: ["hm"], 7: ["ner"], 8: ["ätungen"], 9: ["sten"],
+    10: ["ite"], 11: ["te"], 12: ["as"], 13: ["aben"],
+    15: ["ber"], 18: ["atten"], 20: ["um"],
+  },
 });
 
 // ================================================================ READING

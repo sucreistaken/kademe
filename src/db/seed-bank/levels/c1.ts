@@ -232,6 +232,13 @@ const grammarItems: SeedItem[] = [
       "Führungskräfte müssen deshalb lernen, Ergebnisse statt bloßer Anwesenheit zu bewerten, und genau daran scheitern bislang viele Versuche.",
     // g11 selbst/selber are equally correct here.
     variants: { 11: ["ber"] },
+    // Wrong parts by the gap whose stem they target.
+    distractors: {
+      1: ["chste"], 2: ["inem"], 3: ["m"], 4: ["ftigte"],
+      5: ["eisen"], 7: ["chtungen"], 9: ["volle"], 10: ["inen"],
+      12: ["nnst"], 14: ["anke"], 15: ["iben"], 16: ["tgebern"],
+      17: ["eue"], 18: ["tzen"], 20: ["rauens"],
+    },
   }),
   // Why teenagers sleep too little.
   cTest(LEVEL, "MID", {
@@ -241,6 +248,13 @@ const grammarItems: SeedItem[] = [
       "Hinzu kommt, dass viele Jugendliche bis spät in die Nacht auf leuchtende Bildschirme blicken, was das Einschlafen zusätzlich erschwert.",
     last:
       "Einige Schulen haben daraus bereits Konsequenzen gezogen und den Unterrichtsbeginn um eine Stunde nach hinten verlegt, mit spürbar positiven Folgen für Konzentration und Stimmung.",
+    // Wrong parts by the gap whose stem they target.
+    distractors: {
+      1: ["hieben"], 4: ["eren"], 6: ["hormone"], 7: ["liche"],
+      8: ["n"], 9: ["chüttete"], 10: ["nten"], 11: ["nn"],
+      12: ["dlichen"], 13: ["äte"], 14: ["en"], 15: ["us"],
+      16: ["chirm"], 17: ["elche"], 18: ["hlafens"],
+    },
   }),
   // Urban gardens.
   cTest(LEVEL, "MID", {
@@ -255,6 +269,13 @@ const grammarItems: SeedItem[] = [
     // g2 "Freizeitbe...": Freizeitbetätigung is as correct as Freizeitbeschäftigung.
     // g3 "Ideal...": Idealistinnen is as correct as Idealisten.
     variants: { 2: ["tätigung"], 3: ["istinnen"] },
+    // Wrong parts by the gap whose stem they target.
+    distractors: {
+      1: ["chste"], 2: ["schäftigungen"], 3: ["ist"], 4: ["rden"],
+      6: ["um"], 7: ["nste"], 9: ["ckeln"], 10: ["tens"],
+      11: ["chts"], 12: ["er"], 15: ["ns"], 16: ["kt"],
+      17: ["sräume"], 18: ["dert"], 19: ["em"],
+    },
   }),
 ];
 

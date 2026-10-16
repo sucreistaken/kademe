@@ -229,6 +229,13 @@ const grammarCTest = cTest(LEVEL, "MID", {
   // g14 wird/wirkt: "die Grenze ... wirkt oft unscharf" is grammatical and fits the context.
   // g19 schwerer/schwer: "findet schwer zur Ruhe" is equally idiomatic.
   variants: { 2: ["ies"], 3: ["zeit", "raum", "heiten"], 6: ["ber"], 14: ["rkt"], 19: ["er"] },
+  // Wrong parts by the gap whose stem they target.
+  distractors: {
+    1: ["el"], 2: ["ass"], 3: ["tag"], 4: ["ind"],
+    5: ["ren"], 6: ["be"], 7: ["nt"], 8: ["teht"],
+    10: ["lem"], 11: ["en"], 13: ["nter"], 14: ["rken"],
+    15: ["harfe"], 16: ["chts"], 18: ["worten"],
+  },
 });
 
 // Friendship and social media.
@@ -240,6 +247,13 @@ const grammarCTest2 = cTest(LEVEL, "MID", {
     "Allerdings kann eine kurze Nachricht kein echtes Gespräch ersetzen. " +
     "Wer ständig das eigene Leben mit den scheinbar perfekten Bildern anderer vergleicht, fühlt sich zudem oft unzufrieden.",
   last: "Für echte Freundschaften bleiben gemeinsame Erlebnisse deshalb auch im digitalen Zeitalter unverzichtbar.",
+  // Wrong parts by the gap whose stem they target.
+  distractors: {
+    1: ["licht"], 2: ["ir"], 3: ["m"], 4: ["um"],
+    6: ["ich"], 7: ["tene"], 9: ["nen"], 10: ["richten"],
+    11: ["te"], 12: ["tzt"], 13: ["ndige"], 14: ["enes"],
+    15: ["ehr"], 17: ["der"], 19: ["nd"],
+  },
 });
 
 // Volunteering in the neighbourhood.
@@ -254,6 +268,13 @@ const grammarCTest3 = cTest(LEVEL, "MID", {
   // g3 "Eink...": "beim Einkauf" is as correct as "beim Einkaufen".
   // g8 "ke...": "keinerlei Geld" is as correct as "kein Geld".
   variants: { 3: ["auf"], 8: ["inerlei"] },
+  // Wrong parts by the gap whose stem they target.
+  distractors: {
+    1: ["fe"], 2: ["che"], 3: ["äufe"], 4: ["mert"],
+    5: ["nd"], 6: ["plätze"], 7: ["ich"], 8: ["inen"],
+    9: ["mmt"], 10: ["as"], 11: ["rem"], 12: ["n"],
+    13: ["enn"], 15: ["etzen"], 17: ["ach"],
+  },
 });
 
 const grammar: SeedBankPart = { stimuli: [], items: [grammarCTest, grammarCTest2, grammarCTest3, ...grammarItems] };

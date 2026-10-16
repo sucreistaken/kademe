@@ -1,3 +1,4 @@
+import { normalizeAnswer } from "@/lib/exam/item-scoring";
 import { C_TEST_SKILL_TAG } from "@/lib/exam/types";
 import type { SeedItem } from "./types";
 
@@ -42,10 +43,17 @@ export function cTest(
     last: string;
     /** Further completions accepted for gap number n (1-based), only where equally correct. */
     variants?: Record<number, string[]>;
+    /**
+     * Hand-written wrong word parts, by the number of the gap whose stem each
+     * one targets (stem + part is a real-looking but wrong form there). They go
+     * into the answer key, not the content, so a seed sync can ship them
+     * without replacing the item.
+     */
+    distractors?: Record<number, string[]>;
   },
 ): SeedItem {
   let counted = 0;
-  const gaps: Array<{ id: string; answers: string[] }> = [];
+  const gaps: Array<{ id: string; kept: string; answers: string[] }> = [];
   const damaged = text.body
     .split(/\s+/)
     .filter(Boolean)
@@ -61,10 +69,26 @@ export function cTest(
       const accepted = [missing, ...(text.variants?.[n] ?? [])];
       // The whole word counts too: typing the stem again is not a language error.
       const answers = [...new Set(accepted.flatMap((a) => [a, kept + a]))];
-      gaps.push({ id: `g${n}`, answers });
+      gaps.push({ id: `g${n}`, kept, answers });
       return `${lead}${kept}{{g${n}}}${trail}`;
     })
     .join(" ");
+  const norm = normalizeAnswer;
+  const distractors = Object.entries(text.distractors ?? {})
+    .sort(([a], [b]) => Number(a) - Number(b))
+    .flatMap(([n, parts]) => {
+      const gap = gaps[Number(n) - 1];
+      if (!gap) throw new Error(`C-test distractor targets gap ${n}, which does not exist`);
+      for (const part of parts) {
+        // A part any gap accepts would score; the stem it targets must not accept stem + part either.
+        const accepted = gaps.flatMap((g) => g.answers).map(norm);
+        if (accepted.includes(norm(part)) || gap.answers.some((a) => norm(a) === norm(gap.kept + part))) {
+          throw new Error(`C-test distractor "${part}" for gap ${n} would be accepted`);
+        }
+      }
+      return parts;
+    });
+  if (new Set(distractors.map(norm)).size !== distractors.length) throw new Error("C-test distractors repeat");
   return {
     section: "GRAMMAR",
     level,
@@ -73,7 +97,11 @@ export function cTest(
     within,
     prompt: `${INSTRUCTION}\n\n${text.first} ${damaged} ${text.last}`,
     content: { kind: "GAP", gaps: gaps.map((g) => ({ id: g.id })) },
-    key: { kind: "GAP", answers: Object.fromEntries(gaps.map((g) => [g.id, g.answers])) },
+    key: {
+      kind: "GAP",
+      answers: Object.fromEntries(gaps.map((g) => [g.id, g.answers])),
+      ...(distractors.length ? { distractors } : {}),
+    },
     explanation:
       "C-Test: Erster und letzter Satz sind vollständig; ab dem zweiten Wort des zweiten Satzes fehlt bei jedem zweiten Wort die zweite Hälfte (bei ungerader Länge der größere Teil). Jede Lücke zählt einzeln.",
   };
