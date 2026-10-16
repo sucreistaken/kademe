@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { makeAudio, setItemStatus } from "@/app/(manager)/exam/bank/actions";
+import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dot } from "@/components/panel/bits";
 import { problemSentence, type BankT } from "@/components/panel/bank-copy";
@@ -16,6 +17,7 @@ import { getStorage } from "@/lib/storage";
 import { requireUser } from "@/server/session";
 import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
+import { cn } from "@/lib/cn";
 
 export const dynamic = "force-dynamic";
 
@@ -213,7 +215,7 @@ export default async function BankItemPage({ params, searchParams }: { params: P
               <form action={setItemStatus}>
                 <input type="hidden" name="id" value={item.id} />
                 <input type="hidden" name="status" value="APPROVED" />
-                <button type="submit" disabled={!!blocked} className="h-10 w-full rounded-[10px] bg-accent text-[14px] font-semibold text-white hover:bg-accent-hover disabled:cursor-not-allowed disabled:bg-vault-box disabled:text-vault-label">
+                <button type="submit" disabled={!!blocked} className={cn(buttonVariants({ variant: "primary", size: "lg" }), "h-10 w-full disabled:border-vault-line disabled:bg-vault-box disabled:text-vault-label")}>
                   {t("bank.approve")}
                 </button>
                 {blocked ? <p className="mt-1.5 text-[12px] text-vault-label">{blocked}</p> : null}

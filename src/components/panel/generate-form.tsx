@@ -2,10 +2,12 @@
 
 import { useActionState, useState } from "react";
 import { generate, type GenerateState } from "@/app/(manager)/exam/bank/actions";
+import { buttonVariants } from "@/components/ui/button";
 import { WITHINS } from "@/lib/exam/difficulty";
 import { ALLOWED_TYPES } from "@/lib/exam/item-generation";
 import { CEFR_LEVELS, SECTIONS, type Section } from "@/lib/exam/types";
 import { useMT } from "@/i18n/manager-client";
+import { cn } from "@/lib/cn";
 
 /** AI drafts for the bank. They land as drafts; approval stays with a person. */
 export function GenerateForm() {
@@ -68,7 +70,7 @@ export function GenerateForm() {
         </label>
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-4">
-        <button type="submit" disabled={pending} className="h-10 rounded-[10px] bg-accent px-5 text-[14px] font-semibold text-white hover:bg-accent-hover disabled:bg-line disabled:text-muted">
+        <button type="submit" disabled={pending} className={cn(buttonVariants({ variant: "primary", size: "lg" }), "h-10 px-5")}>
           {pending ? t("generating") : t("generate")}
         </button>
         {state?.ok ? (

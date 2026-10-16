@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Maximize, Maximize2, Minimize, Minimize2 } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
 import { useMT } from "@/i18n/manager-client";
 import { cn } from "@/lib/cn";
 import type { RecordingKind } from "@/lib/proctor/recording-rules";
@@ -330,7 +331,7 @@ export function ExamRecordingPlayer({ attemptId, segments, window: span, section
           type="button"
           onClick={togglePlay}
           aria-label={playing ? t("pause") : t("play")}
-          className="h-9 min-w-[84px] rounded-[10px] bg-accent px-4 text-[13.5px] font-semibold text-white hover:bg-accent-hover"
+          className={cn(buttonVariants({ variant: "primary", size: "lg" }), "h-9 min-w-[84px] px-4 text-[13.5px]")}
         >
           {playing ? t("pause") : t("play")}
         </button>

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CandidateColumn } from "@/components/candidate/Shell";
+import { buttonVariants } from "@/components/ui/button";
 import { BrandMark } from "@/components/visual/brand-mark";
 import { environmentFacts, useProctor } from "@/components/candidate/proctor/ProctorProvider";
 import { CheatWarning } from "@/components/candidate/proctor/CheatWarning";
@@ -728,7 +729,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
               type="button"
               disabled={busy}
               onClick={start}
-              className="mt-8 h-12 w-full rounded-[10px] bg-accent text-[15px] font-semibold text-white hover:bg-accent-hover disabled:bg-line disabled:text-muted"
+              className={cn(buttonVariants({ variant: "primary", size: "lg" }), "mt-8 h-12 w-full")}
             >
               {busy ? t("saving") : t("startSection")}
             </button>
@@ -979,7 +980,7 @@ function RecoverPanel({ reasons, resume }: { reasons: Array<"FULLSCREEN" | "SCRE
           type="button"
           disabled={busy}
           onClick={fix}
-          className="mt-5 h-12 w-full rounded-[10px] bg-accent text-[15px] font-semibold text-white hover:bg-accent-hover disabled:bg-line disabled:text-muted"
+          className={cn(buttonVariants({ variant: "primary", size: "lg" }), "mt-5 h-12 w-full")}
         >
           {action}
         </button>

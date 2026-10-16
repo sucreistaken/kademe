@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { CandidateColumn } from "@/components/candidate/Shell";
+import { buttonVariants } from "@/components/ui/button";
 import { apiSend } from "@/lib/client/api";
 import { useT } from "@/i18n/candidate-client";
+import { cn } from "@/lib/cn";
 import { dateTime, shortDate } from "@/i18n/dates";
 import type { Locale } from "@/i18n/locale";
 import type { LinkProblem as Problem } from "@/lib/candidate-context";
@@ -112,11 +114,7 @@ export function LinkProblem({
             type="button"
             disabled={sent || busy}
             onClick={askForNewLink}
-            className={
-              sent || busy
-                ? "mt-[18px] w-full cursor-not-allowed rounded-[9px] bg-disabled px-4 py-3.5 text-sm font-semibold text-ink-3"
-                : "mt-[18px] w-full rounded-[9px] bg-accent px-4 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-accent-hover"
-            }
+            className={cn(buttonVariants({ variant: "primary", size: "lg" }), "mt-[18px] w-full")}
           >
             {sent
               ? t("requestSent")

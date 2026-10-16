@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { finalize, overrideOverall, release, undoAcceptAsCorrect } from "@/app/(manager)/exam/students/[id]/actions";
+import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Notice } from "@/components/ui/notice";
 import { Dot, INTEGRITY_TONE, STATUS_TONE, shortDateTime } from "@/components/panel/bits";
@@ -432,7 +433,7 @@ export default async function ResultPage({
                   ) : canFinalize ? (
                     <form action={release} className="mt-3">
                       <input type="hidden" name="assessmentId" value={id} />
-                      <button type="submit" className="h-11 w-full rounded-[10px] bg-accent text-[14.5px] font-semibold text-white hover:bg-accent-hover">
+                      <button type="submit" className={cn(buttonVariants({ variant: "primary", size: "lg" }), "h-11 w-full")}>
                         {t("result.release")}
                       </button>
                     </form>
@@ -499,7 +500,7 @@ export default async function ResultPage({
                       type="submit"
                       disabled={blockers.length > 0}
                       aria-describedby="finalize-why"
-                      className="h-11 w-full rounded-[10px] bg-accent text-[14.5px] font-semibold text-white hover:bg-accent-hover disabled:cursor-not-allowed disabled:bg-line disabled:text-muted"
+                      className={cn(buttonVariants({ variant: "primary", size: "lg" }), "h-11 w-full")}
                     >
                       {t("result.finalize")}
                     </button>

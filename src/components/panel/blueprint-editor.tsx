@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { archiveBlueprint, copyBlueprint, publishBlueprint, saveBlueprint } from "@/app/(manager)/exam/exams/actions";
+import { buttonVariants } from "@/components/ui/button";
 import { bankCoverage, estimatedMinutes, type BankCount, type BlueprintConfig, type SectionConfig } from "@/lib/exam/blueprint";
 import { isObjectiveSection, type ExamMode } from "@/lib/exam/types";
 import { levelShiftScope } from "@/app/(manager)/exam/exams/new/wizard-model";
@@ -397,7 +398,7 @@ export function BlueprintEditor({
             {status === "DRAFT" ? (
               <form action={publishBlueprint}>
                 <input type="hidden" name="id" value={id} />
-                <button type="submit" disabled={missing.length > 0} className="h-10 rounded-[10px] bg-accent px-5 text-[14px] font-semibold text-white hover:bg-accent-hover disabled:cursor-not-allowed disabled:bg-line disabled:text-muted">
+                <button type="submit" disabled={missing.length > 0} className={cn(buttonVariants({ variant: "primary", size: "lg" }), "h-10 px-5")}>
                   {t("publish")}
                 </button>
               </form>

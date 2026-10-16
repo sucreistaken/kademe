@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CandidateColumn } from "@/components/candidate/Shell";
+import { buttonVariants } from "@/components/ui/button";
 import { apiSend } from "@/lib/client/api";
+import { cn } from "@/lib/cn";
 import { nextPath } from "@/lib/candidate-routes";
 import type { CandidateState } from "@/lib/exam-flow";
 
@@ -94,11 +96,7 @@ export function InfoForm({
         disabled={!ready || busy}
         onClick={submit}
         aria-describedby={!ready ? "info-next-why" : undefined}
-        className={
-          ready && !busy
-            ? "mt-7 w-full rounded-[10px] border border-accent bg-accent px-4 py-[15px] text-[14.5px] font-semibold text-white transition-colors hover:bg-accent-hover"
-            : "mt-7 w-full cursor-not-allowed rounded-[10px] border border-line bg-disabled px-4 py-[15px] text-[14.5px] font-semibold text-ink-3"
-        }
+        className={cn(buttonVariants({ variant: "primary", size: "lg" }), "mt-7 w-full")}
       >
         {busy ? t("saving") : t("next")}
       </button>

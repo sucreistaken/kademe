@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { bulkApproveAction, type BulkApproveState } from "@/app/(manager)/exam/bank/actions";
+import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { StatusDot } from "@/components/ui/status-dot";
 import { useMT } from "@/i18n/manager-client";
@@ -88,10 +89,7 @@ export function BankItemList({ rows, selectable, more }: { rows: BankListRow[]; 
             onClick={approve}
             disabled={pending || picked.length === 0}
             aria-describedby={picked.length === 0 ? "bulk-why" : undefined}
-            className={cn(
-              "ml-auto inline-flex h-10 items-center gap-2 rounded-[10px] px-5 text-[14px] font-semibold transition-colors",
-              picked.length ? "bg-accent text-white hover:bg-accent-hover" : "cursor-not-allowed border border-line bg-surface text-muted",
-            )}
+            className={cn(buttonVariants({ variant: "primary", size: "lg" }), "ml-auto h-10 px-5")}
           >
             {pending ? <Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden /> : null}
             {pending ? t("approving") : t("approveSelected")}

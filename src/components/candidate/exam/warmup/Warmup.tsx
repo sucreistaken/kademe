@@ -2,12 +2,14 @@
 
 import { useMemo, useState } from "react";
 import { CandidateColumn } from "@/components/candidate/Shell";
+import { buttonVariants } from "@/components/ui/button";
 import { ItemView } from "@/components/candidate/exam/ItemView";
 import { hintOf, PRACTICE, practiceItem } from "@/components/candidate/exam/warmup/practice-data";
 import type { WarmupState } from "@/components/candidate/exam/warmup/warmup-state";
 import { useStepFocus } from "@/hooks/use-step-focus";
 import type { ItemAnswer, Section } from "@/lib/exam/types";
 import { useT } from "@/i18n/candidate-client";
+import { cn } from "@/lib/cn";
 
 /**
  * The optional practice on a section introduction (see warmup-state.ts).
@@ -26,7 +28,7 @@ const HINT_KEY = {
 } as const;
 
 const quiet = "h-11 rounded-[10px] border border-line-strong bg-surface px-5 text-[14.5px] font-semibold text-ink hover:bg-canvas";
-const solid = "h-11 rounded-[10px] bg-accent px-5 text-[14.5px] font-semibold text-white hover:bg-accent-hover";
+const solid = cn(buttonVariants({ variant: "primary", size: "lg" }), "h-11 px-5");
 
 /** On the introduction: the offer, or the line that says the practice is over. */
 export function WarmupOffer({ state, onTry, onSkip }: { state: WarmupState; onTry: () => void; onSkip: () => void }) {
