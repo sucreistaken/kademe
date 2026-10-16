@@ -15,8 +15,16 @@ describe("DifficultyChip", () => {
     expect(h).toContain(label);
     expect(h).toContain(tint);
     expect(h).toContain("text-ink");
+    expect(h).not.toContain("border-2");
+    expect(h).not.toContain("-lip");
     expect(h.match(/data-step="on"/g)?.length).toBe(filled);
     expect(h.match(/data-step="off"/g)?.length ?? 0).toBe(3 - filled);
+  });
+
+  it("off bars use fill-ink/30 for subtle visibility", () => {
+    const h = r("EASY", "Kolay");
+    expect(h).toContain("fill-ink/30");
+    expect(h).not.toContain("fill-ink/20");
   });
 
   it("never fills red with white text", () => {
