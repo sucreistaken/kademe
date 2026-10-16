@@ -141,8 +141,15 @@ export function ReportSheet({ model, t, locale }: { model: ReportModel; t: T; lo
                     <li key={i.topic}>
                       <span className="font-semibold text-ink">{i.topic}.</span> {i.why}
                       {i.example ? (
-                        <span lang="de" className="ml-1 italic text-ink">
-                          ({i.example})
+                        <span className="ml-1 italic text-ink">
+                          {typeof i.example === "string" ? (
+                            <span lang="de">({i.example})</span>
+                          ) : (
+                            <>
+                              {t("resultReport.feedbackExampleYou")}: <span lang="de">{i.example.student}</span> · {t("resultReport.feedbackExampleRight")}:{" "}
+                              <span lang="de">{i.example.correct}</span>
+                            </>
+                          )}
                         </span>
                       ) : null}
                     </li>

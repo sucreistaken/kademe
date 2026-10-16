@@ -7,6 +7,7 @@ import {
   approvedFeedback,
   buildFeedbackInput,
   buildFeedbackMessages,
+  collapseRepeatedWords,
   feedbackFromForm,
   parseFeedbackAnswer,
   type FeedbackContent,
@@ -116,12 +117,22 @@ describe("buildFeedbackInput", () => {
     expect(akk.examples[0]).toEqual({ context: "Ich sehe ___ Mann.", student: "der", correct: "den" });
   });
 
-  it("shows C-test gaps as whole words, with a little context, and an empty gap as (blank)", () => {
+  it("shows C-test gaps as whole words with a little context, counts an empty gap but never gives it as an example", () => {
     const c = grammar.weak.find((w) => w.skillTag === "grammar.ctest")!;
-    expect(c.examples).toEqual([
-      { context: "und ___ in", student: "arbx", correct: "arbeite" },
-      { context: "in ___ .", student: "(blank)", correct: "Köln" },
-    ]);
+    expect([c.wrong, c.total, c.unanswered]).toEqual([2, 4, 1]);
+    expect(c.examples).toEqual([{ context: "und ___ in", student: "arbx", correct: "arbeite" }]);
+    expect(JSON.stringify(input)).not.toContain("(blank)");
+  });
+
+  it("gives a tag that only has blanks no examples, just the unanswered count", () => {
+    const blanks: DetailSource = {
+      ...source,
+      responses: [resp("a1", "g", 1, choice("grammar.akkusativ", "Ich sehe ___ Mann.", ["den", "der"], "a"), { choiceIds: [] }, 0)],
+      gradings: [],
+    };
+    const g = buildFeedbackInput("A2", buildDetail(blanks)).sections[0];
+    if (g.kind !== "OBJECTIVE") throw new Error("objective");
+    expect(g.weak[0]).toEqual({ skillTag: "grammar.akkusativ", wrong: 1, total: 1, unanswered: 1, examples: [] });
   });
 
   it("leaves out a tag with no mistakes", () => {
@@ -160,7 +171,7 @@ describe("buildFeedbackMessages", () => {
 describe("parseFeedbackAnswer", () => {
   const good = {
     strengths: ["Konnektoren gut.", "Okuma iyi."],
-    improve: [{ topic: "Akkusativ-Artikel (den/einen)", why: "Eril isimlerde artikel karışıyor.", example: "Ich sehe der Mann, doğrusu: den Mann" }],
+    improve: [{ topic: "Akkusativ-Artikel (den/einen)", why: "Eril isimlerde artikel karışıyor.", example: { student: "der", correct: "den" } }],
     nextStep: "Her gün beş cümle yaz.",
   };
   it("accepts a good answer, even in a code fence", () => {
@@ -173,6 +184,25 @@ describe("parseFeedbackAnswer", () => {
     expect(r.content.strengths).toEqual(["İyi, devam"]);
     expect(r.content.improve[0]).toEqual({ topic: "T", why: "W" });
     expect(JSON.stringify(r.content)).not.toContain("—");
+  });
+  it("treats a null, missing or half-empty example as none", () => {
+    for (const example of [null, undefined, { student: "", correct: "" }, { student: "der", correct: "" }]) {
+      const r = parseFeedbackAnswer(JSON.stringify({ ...good, improve: [{ topic: "T", why: "W", example }] }));
+      if (!r.ok) throw new Error(r.error);
+      expect(r.content.improve[0]).toEqual({ topic: "T", why: "W" });
+    }
+  });
+  it("keeps an already stored string example as it is", () => {
+    const r = parseFeedbackAnswer(JSON.stringify({ ...good, improve: [{ topic: "T", why: "W", example: "der -> den" }] }));
+    if (!r.ok) throw new Error(r.error);
+    expect(r.content.improve[0].example).toBe("der -> den");
+    expect(approvedFeedback({ draft: null, draftedAt: null, draftRunId: null, approved: r.content, approvedBy: "u", approvedAt: "x", edited: false, locale: "tr" })?.improve[0].example).toBe("der -> den");
+  });
+  it("collapses repeated words in the text fields but leaves the example parts as written", () => {
+    const r = parseFeedbackAnswer(JSON.stringify({ ...good, strengths: ["Die die Struktur"], improve: [{ topic: "T", why: "Bu ifade ifadelerinin yanlış", example: { student: "die die", correct: "die" } }] }));
+    if (!r.ok) throw new Error(r.error);
+    expect(r.content.strengths).toEqual(["Die Struktur"]);
+    expect(r.content.improve[0]).toEqual({ topic: "T", why: "Bu ifadelerinin yanlış", example: { student: "die die", correct: "die" } });
   });
   it("cuts a list that is too long instead of rejecting it", () => {
     const r = parseFeedbackAnswer(JSON.stringify({ ...good, strengths: ["a", "b", "c", "d"], improve: Array(6).fill(good.improve[0]) }));
@@ -188,14 +218,33 @@ describe("parseFeedbackAnswer", () => {
   });
 });
 
+describe("collapseRepeatedWords", () => {
+  it("drops an immediate repeat, ignoring case", () => {
+    expect(collapseRepeatedWords("die die Kasus")).toBe("die Kasus");
+    expect(collapseRepeatedWords("Der der Mann")).toBe("Der Mann");
+  });
+  it("keeps the longer word when the second extends the first", () => {
+    expect(collapseRepeatedWords("bu ifade ifadelerinin hatası")).toBe("bu ifadelerinin hatası");
+  });
+  it("leaves deliberate and short-word repeats alone", () => {
+    expect(collapseRepeatedWords("was ist, ist gut")).toBe("was ist, ist gut");
+    expect(collapseRepeatedWords("in intensiv geübt")).toBe("in intensiv geübt");
+    expect(collapseRepeatedWords("")).toBe("");
+  });
+});
+
 describe("feedbackFromForm and approval", () => {
   const draft: FeedbackContent = { strengths: ["A"], improve: [{ topic: "T", why: "W" }], nextStep: "N" };
   const store: StudentFeedbackStore = { draft, draftedAt: "2026-10-16T10:00:00.000Z", draftRunId: "run1", approved: null, approvedBy: null, approvedAt: null, edited: false, locale: "tr" };
   const form = (o: Record<string, string>) => (name: string) => o[name] ?? "";
 
   it("drops empty rows and keeps the teacher's wording", () => {
-    const r = feedbackFromForm(form({ strength0: " A ", strength1: "", topic0: "T", why0: "W2", example0: "", nextStep: "N" }));
+    const r = feedbackFromForm(form({ strength0: " A ", strength1: "", topic0: "T", why0: "W2", exampleStudent0: "", exampleCorrect0: "", nextStep: "N" }));
     expect(r).toEqual({ ok: true, content: { strengths: ["A"], improve: [{ topic: "T", why: "W2" }], nextStep: "N" } });
+  });
+  it("reads the two example inputs as a pair", () => {
+    const r = feedbackFromForm(form({ topic0: "T", why0: "W", exampleStudent0: " der ", exampleCorrect0: "den", nextStep: "N" }));
+    expect(r).toEqual({ ok: true, content: { strengths: [], improve: [{ topic: "T", why: "W", example: { student: "der", correct: "den" } }], nextStep: "N" } });
   });
   it("refuses an empty next step or a half-filled topic", () => {
     expect(feedbackFromForm(form({ strength0: "A", nextStep: "" })).ok).toBe(false);

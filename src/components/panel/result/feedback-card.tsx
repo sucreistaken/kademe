@@ -11,6 +11,24 @@ type T = ReturnType<typeof managerT>;
 
 const FIELD = "mt-1 w-full rounded-[10px] border border-line bg-surface px-3 py-2 text-[13.5px] leading-[1.5] text-ink";
 
+/** The structured example; an older approved note kept it as one string, which has no two sides to edit and is dropped from the form. */
+const exampleOf = (e: FeedbackContent["improve"][number]["example"]) => (e && typeof e === "object" ? e : null);
+
+/** One example as "You: der · Correct: den"; an older plain-string example is shown as it is. */
+function ExampleLine({ example, t }: { example: NonNullable<FeedbackContent["improve"][number]["example"]>; t: T }) {
+  return (
+    <span className="ml-1 italic text-ink">
+      {typeof example === "string" ? (
+        <span lang="de">({example})</span>
+      ) : (
+        <>
+          {t("result.feedbackExampleYou")}: <span lang="de">{example.student}</span> · {t("result.feedbackExampleRight")}: <span lang="de">{example.correct}</span>
+        </>
+      )}
+    </span>
+  );
+}
+
 /** The AI draft and the teacher's approved text as editable fields; empty rows stay empty. */
 function FeedbackForm({ assessmentId, content, t }: { assessmentId: string; content: FeedbackContent; t: T }) {
   const rows = (n: number) => Array.from({ length: n }, (_, i) => i);
@@ -49,10 +67,19 @@ function FeedbackForm({ assessmentId, content, t }: { assessmentId: string; cont
                 {t("result.feedbackWhy")}
                 <textarea name={`why${i}`} rows={2} maxLength={FEEDBACK_LIMITS.why} defaultValue={it?.why ?? ""} className={FIELD} />
               </label>
-              <label className="mt-2 block text-[12.5px] text-muted">
-                {t("result.feedbackExample")}
-                <input name={`example${i}`} lang="de" maxLength={FEEDBACK_LIMITS.example} defaultValue={it?.example ?? ""} className={`${FIELD} h-10`} />
-              </label>
+              <fieldset className="mt-2">
+                <legend className="text-[12.5px] text-muted">{t("result.feedbackExample")}</legend>
+                <div className="mt-1 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <label className="block text-[12px] text-muted">
+                    {t("result.feedbackExampleStudent")}
+                    <input name={`exampleStudent${i}`} lang="de" maxLength={FEEDBACK_LIMITS.exampleSide} defaultValue={exampleOf(it?.example)?.student ?? ""} className={`${FIELD} mt-0.5 h-10`} />
+                  </label>
+                  <label className="block text-[12px] text-muted">
+                    {t("result.feedbackExampleCorrect")}
+                    <input name={`exampleCorrect${i}`} lang="de" maxLength={FEEDBACK_LIMITS.exampleSide} defaultValue={exampleOf(it?.example)?.correct ?? ""} className={`${FIELD} mt-0.5 h-10`} />
+                  </label>
+                </div>
+              </fieldset>
             </div>
           );
         })}
@@ -73,7 +100,7 @@ function FeedbackForm({ assessmentId, content, t }: { assessmentId: string; cont
   );
 }
 
-function ReadOnly({ content }: { content: FeedbackContent }) {
+function ReadOnly({ content, t }: { content: FeedbackContent; t: T }) {
   return (
     <div className="mt-4 flex flex-col gap-3 text-[13.5px] leading-[1.55] text-ink-2">
       {content.strengths.length ? (
@@ -88,11 +115,7 @@ function ReadOnly({ content }: { content: FeedbackContent }) {
           {content.improve.map((i) => (
             <li key={i.topic}>
               <span className="font-semibold text-ink">{i.topic}.</span> {i.why}
-              {i.example ? (
-                <span lang="de" className="ml-1 italic text-ink">
-                  ({i.example})
-                </span>
-              ) : null}
+              {i.example ? <ExampleLine example={i.example} t={t} /> : null}
             </li>
           ))}
         </ul>
@@ -154,7 +177,7 @@ export function FeedbackCard({
           <Badge tone="sun" size="md" className="mt-4">
             {t("result.feedbackBadgeDraft")}
           </Badge>
-          {canGrade ? <FeedbackForm assessmentId={assessmentId} content={draft} t={t} /> : <ReadOnly content={draft} />}
+          {canGrade ? <FeedbackForm assessmentId={assessmentId} content={draft} t={t} /> : <ReadOnly content={draft} t={t} />}
         </>
       ) : approved && feedback ? (
         <>
@@ -167,7 +190,7 @@ export function FeedbackCard({
               {feedback.edited ? ` · ${t("result.feedbackEdited")}` : ""}
             </span>
           </div>
-          <ReadOnly content={approved} />
+          <ReadOnly content={approved} t={t} />
           {canGrade ? (
             <div className="mt-4 flex flex-wrap items-start gap-4">
               <details className="min-w-[280px] flex-1">
