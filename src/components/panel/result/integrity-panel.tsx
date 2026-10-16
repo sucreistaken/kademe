@@ -16,7 +16,7 @@ type Row = View["events"][number];
 
 export const SEVERITY_STYLE = {
   HIGH: { chip: "bg-danger-soft text-danger", edge: "border-l-danger" },
-  MEDIUM: { chip: "bg-warn-soft text-warn", edge: "border-l-warn" },
+  MEDIUM: { chip: "bg-warn-soft text-warn", edge: "border-l-yellow" },
   LOW: { chip: "bg-subtle text-muted", edge: "border-l-line-strong" },
   INFO: { chip: "bg-subtle text-muted", edge: "border-l-line" },
 } as const;
@@ -161,7 +161,7 @@ export function IntegrityPanel({
                 title={`${t(`eventType.${m.type}` as "eventType.TAB_HIDDEN")}${m.count > 1 ? ` ×${m.count}` : ""}`}
                 className={cn(
                   "absolute bottom-1 w-[3px] rounded-full",
-                  m.severity === "HIGH" ? "h-8 bg-danger" : m.severity === "MEDIUM" ? "h-5 bg-warn" : "h-3 bg-line-strong",
+                  m.severity === "HIGH" ? "h-8 bg-danger" : m.severity === "MEDIUM" ? "h-5 bg-yellow" : "h-3 bg-line-strong",
                 )}
                 style={{ left: xPct(m.at) }}
               />

@@ -446,7 +446,7 @@ export function ExamRecordingPlayer({ attemptId, segments, window: span, section
             <span
               className={cn(
                 "block w-[3px] rounded-full group-hover:bg-accent",
-                m.severity === "HIGH" ? "h-full bg-danger" : m.severity === "MEDIUM" ? "h-6 bg-warn" : "h-4 bg-line-strong",
+                m.severity === "HIGH" ? "h-full bg-danger" : m.severity === "MEDIUM" ? "h-6 bg-yellow" : "h-4 bg-line-strong",
               )}
             />
           </button>
