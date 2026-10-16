@@ -55,10 +55,8 @@ function GapText({ parts, t }: { parts: GapPart[]; t: T }) {
             {p.shown ? (
               <s className="text-danger">{p.shown}</s>
             ) : (
-              <span className="text-danger">
-                {p.prefix}
-                <s>{t("resultReport.empty")}</s>
-              </span>
+              // The correct whole word follows, so the stem is not repeated here.
+              <s className="text-danger">{t("resultReport.empty")}</s>
             )}{" "}
             <span className="rounded-[3px] bg-success-soft px-1 font-semibold text-success" title={t("resultReport.gapCorrect")}>
               {p.correct}
