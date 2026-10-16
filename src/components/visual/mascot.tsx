@@ -10,10 +10,10 @@ import { cn } from "@/lib/cn";
  * the chin, eyes up: a wizard step that asks a decision), `rest` (eyes closed,
  * a small z: empty screens). Never on a question screen.
  *
- * Hand-written inline SVG in the design tokens only (accent, mint, coral, sun,
- * grape, sky, ink and the illustration tint); hidden from assistive technology
- * (the screen's title carries the meaning). The one motion is a gentle pop on
- * `celebrate`, switched off under prefers-reduced-motion.
+ * Inline SVG in brand tokens only: a yellow body (the mark's tallest step) on a
+ * cyan and a red step, ink face, red cheeks at 40%. Hidden from assistive
+ * technology (the screen's title carries the meaning). The one motion is a
+ * gentle pop on `celebrate`, switched off under prefers-reduced-motion.
  */
 export type MascotPose = "wave" | "celebrate" | "think" | "rest";
 
@@ -25,27 +25,40 @@ const SIZE = {
   small: "w-24",
 } as const;
 
-/** The ground shadow and the two small steps every pose stands on. */
+/** A step with a flat lip under it: the lip is the same shape moved 5px down. */
+function Step({ d, fill, lip }: { d: string; fill: string; lip: string }) {
+  return (
+    <>
+      <path d={d} className={lip} transform="translate(0,5)" />
+      <path d={d} className={fill} />
+    </>
+  );
+}
+
+const SMALL = "M42,140 H44 A16,16 0 0 1 60,156 V171 A9,9 0 0 1 51,180 H35 A9,9 0 0 1 26,171 V156 A16,16 0 0 1 42,140 Z";
+const MIDDLE = "M79,116 H79 A17,17 0 0 1 96,133 V171 A9,9 0 0 1 87,180 H71 A9,9 0 0 1 62,171 V133 A17,17 0 0 1 79,116 Z";
+const TALL = "M128,56 H130 A30,30 0 0 1 160,86 V166 A14,14 0 0 1 146,180 H112 A14,14 0 0 1 98,166 V86 A30,30 0 0 1 128,56 Z";
+
+/** The two small steps every pose stands on; `stepUp` hides the arm that rests on them. */
 function Steps({ stepUp = false }: { stepUp?: boolean }) {
   return (
     <>
-      <ellipse cx="104" cy="182" rx="74" ry="8" className="fill-[var(--color-illus-tint)]" />
-      <rect x="26" y="140" width="34" height="40" rx="12" className="fill-mint-fill" />
-      <rect x="62" y="116" width="34" height="64" rx="12" className="fill-accent/70" />
-      {stepUp ? null : <path d="M101 124 L88 140" strokeWidth="9" strokeLinecap="round" className="stroke-accent" />}
+      <Step d={SMALL} fill="fill-brand" lip="fill-brand-lip" />
+      <Step d={MIDDLE} fill="fill-red" lip="fill-red-lip" />
+      {stepUp ? null : <path d="M101 124 L88 140" strokeWidth="9" strokeLinecap="round" fill="none" className="stroke-yellow" />}
     </>
   );
 }
 
 /** The big step: the body every pose shares. */
 function Body() {
-  return <rect x="98" y="56" width="62" height="124" rx="26" className="fill-accent" />;
+  return <Step d={TALL} fill="fill-yellow" lip="fill-mascot-yellow-lip" />;
 }
 
 const cheeks = (y: number): ReactNode => (
   <>
-    <circle cx="109" cy={y} r="5" className="fill-coral-fill opacity-70" />
-    <circle cx="149" cy={y} r="5" className="fill-coral-fill opacity-70" />
+    <circle cx="109" cy={y} r="5" className="fill-red opacity-40" />
+    <circle cx="149" cy={y} r="5" className="fill-red opacity-40" />
   </>
 );
 
@@ -64,36 +77,37 @@ function Eyes({ up = false }: { up?: boolean }) {
   );
 }
 
+const LINE = { strokeWidth: 3.5, strokeLinecap: "round", strokeLinejoin: "round", fill: "none", className: "stroke-ink" } as const;
+const ARM = { strokeWidth: 9, strokeLinecap: "round", fill: "none", className: "stroke-yellow" } as const;
+
 const POSES: Record<MascotPose, ReactNode> = {
   wave: (
     <>
       <Steps />
       <Body />
-      <path d="M156 112 Q174 98 171 78" strokeWidth="9" strokeLinecap="round" fill="none" className="stroke-accent" />
-      <circle cx="171" cy="74" r="7" className="fill-accent" />
+      <path d="M156 112 Q174 98 171 78" {...ARM} />
+      <circle cx="171" cy="74" r="7" className="fill-yellow" />
       <Eyes />
       {cheeks(110)}
-      <path d="M121 110 Q129 118 137 110" strokeWidth="3.5" strokeLinecap="round" fill="none" className="stroke-white" />
+      <path d="M121 110 Q129 118 137 110" {...LINE} />
     </>
   ),
   celebrate: (
     <>
       <Steps stepUp />
-      <path d="M102 112 Q86 96 88 76" strokeWidth="9" strokeLinecap="round" fill="none" className="stroke-accent" />
-      <circle cx="88" cy="72" r="7" className="fill-accent" />
       <Body />
-      <path d="M156 112 Q174 96 171 76" strokeWidth="9" strokeLinecap="round" fill="none" className="stroke-accent" />
-      <circle cx="171" cy="72" r="7" className="fill-accent" />
-      <path d="M110 93 Q117 85 124 93" strokeWidth="3.5" strokeLinecap="round" fill="none" className="stroke-white" />
-      <path d="M134 93 Q141 85 148 93" strokeWidth="3.5" strokeLinecap="round" fill="none" className="stroke-white" />
+      <path d="M102 112 Q86 96 88 76" {...ARM} />
+      <circle cx="88" cy="72" r="7" className="fill-yellow" />
+      <path d="M156 112 Q174 96 171 76" {...ARM} />
+      <circle cx="171" cy="72" r="7" className="fill-yellow" />
+      <path d="M110 93 Q117 85 124 93" {...LINE} />
+      <path d="M134 93 Q141 85 148 93" {...LINE} />
       {cheeks(108)}
-      <path d="M119 106 Q129 122 139 106 Z" className="fill-white" />
-      <rect x="40" y="40" width="8" height="8" rx="2" className="fill-sun-fill" transform="rotate(20 44 44)" />
-      <circle cx="64" cy="30" r="4" className="fill-grape-fill" />
-      <circle cx="182" cy="40" r="4" className="fill-sky-fill" />
-      <rect x="150" y="22" width="8" height="8" rx="2" className="fill-coral-fill" transform="rotate(-15 154 26)" />
-      <circle cx="30" cy="80" r="3.5" className="fill-sky-fill" />
-      <circle cx="190" cy="100" r="3.5" className="fill-sun-fill" />
+      <path d="M119 106 Q129 122 139 106 Z" className="fill-ink" />
+      <ellipse cx="129" cy="113" rx="4.5" ry="2.6" className="fill-red opacity-70" />
+      <circle cx="46" cy="44" r="4" className="fill-yellow" />
+      <circle cx="170" cy="34" r="4" className="fill-red" />
+      <circle cx="186" cy="84" r="3.5" className="fill-brand" />
     </>
   ),
   // One hand on the chin: the white edge keeps the hand readable against the body.
@@ -101,25 +115,25 @@ const POSES: Record<MascotPose, ReactNode> = {
     <>
       <Steps />
       <Body />
-      <path d="M158 150 Q178 142 168 126 Q158 116 143 120" strokeWidth="9" strokeLinecap="round" fill="none" className="stroke-accent" />
-      <circle cx="140" cy="121" r="8" strokeWidth="2.5" className="fill-accent stroke-white" />
+      <path d="M158 150 Q178 142 168 126 Q158 116 143 120" {...ARM} />
       <Eyes up />
       {cheeks(108)}
-      <path d="M118 112 Q124 109 130 112" strokeWidth="3.5" strokeLinecap="round" fill="none" className="stroke-white" />
-      <circle cx="176" cy="48" r="5" className="fill-sky-fill" />
-      <circle cx="166" cy="30" r="3" className="fill-sky-fill" />
+      <circle cx="140" cy="121" r="8" strokeWidth="2.5" className="fill-yellow stroke-white" />
+      <path d="M118 112 Q124 109 130 112" {...LINE} />
+      <circle cx="176" cy="48" r="5" className="fill-brand" />
+      <circle cx="166" cy="30" r="3.4" className="fill-red" />
     </>
   ),
   rest: (
     <>
       <Steps />
       <Body />
-      <path d="M110 92 Q117 99 124 92" strokeWidth="3.5" strokeLinecap="round" fill="none" className="stroke-white" />
-      <path d="M134 92 Q141 99 148 92" strokeWidth="3.5" strokeLinecap="round" fill="none" className="stroke-white" />
+      <path d="M110 92 Q117 99 124 92" {...LINE} />
+      <path d="M134 92 Q141 99 148 92" {...LINE} />
       {cheeks(110)}
-      <path d="M124 113 Q129 117 134 113" strokeWidth="3.5" strokeLinecap="round" fill="none" className="stroke-white" />
-      <path d="M172 50 H184 L172 64 H184" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" className="stroke-grape-fill" />
-      <path d="M160 28 H168 L160 38 H168" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" className="stroke-grape-fill" />
+      <path d="M124 113 Q129 117 134 113" {...LINE} />
+      <path d="M172 50 H184 L172 64 H184" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" className="stroke-mascot-sleep" />
+      <path d="M160 28 H168 L160 38 H168" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" className="stroke-mascot-sleep" />
     </>
   ),
 };

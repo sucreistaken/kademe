@@ -14,6 +14,12 @@ describe("Mascot (RULES rule 9)", () => {
     expect(html).not.toMatch(/#[0-9a-f]{3,8}\b/i);
   });
 
+  it.each(MASCOT_POSES)("%s is the yellow tallest step on a cyan and a red step, each with its lip", (pose) => {
+    const html = render({ pose });
+    for (const c of ["fill-yellow", "fill-mascot-yellow-lip", "fill-brand", "fill-brand-lip", "fill-red", "fill-red-lip"]) expect(html).toContain(c);
+    expect(html).not.toContain("fill-accent");
+  });
+
   it("has four distinct poses", () => {
     expect(new Set(MASCOT_POSES.map((pose) => render({ pose }))).size).toBe(4);
   });
