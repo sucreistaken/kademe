@@ -162,7 +162,17 @@ Spec `docs/superpowers/specs/2026-10-06-advanced-ai-create-design.md`, plan
   kutusu taslağı sunucuda güncelliyor ama kartlar yenilenmeden eski kalıyordu (`4705582`); toplam 100 iken "100 olmalı"
   yazıyordu (`488f3fe`).
 
-## Okul yöneticisi geri bildirimi (2026-10-16, `platform/solutions` 1bf0bd9, canlıda DEĞİL)
+## Canlıya çıkış: okul yöneticisi geri bildirimi (2026-10-16 öğlen, kullanıcı onayıyla: "canlıya al")
+
+- main `1d8d4c6` -> `ab951b1` (fast-forward). Devam eden bölüm 0; yedek `/root/kademe-backups/kademe-feedback-20261016-1216.dump`
+  (VM saati UTC, 640 KB); servis ve 5 zamanlayıcı durduruldu; pull, install, `db:migrate` (0023 uygulandı: `exam_results.student_feedback`
+  var, `ai_purpose` içinde `STUDENT_FEEDBACK` var); build "Compiled successfully"; `bank:topup --production --retire-stale --sync-seed`:
+  695 -> 837 soru (+142 dört şıklı, 142 eski emekliye, okulun düzenlediği 0), 18 C-test anahtarı yerinde güncellendi; servis ve
+  5 zamanlayıcı active; `/login` 200 (127.0.0.1 ve https).
+- Doğrulanmadı: canlıda tarayıcıyla sınav ve öğretmen ekranı turu (panel şifresi yalnız hash olarak var).
+- Geri dönüş: servis + zamanlayıcıları durdur, bu yedeği `pg_restore --clean` ile yükle, `git checkout 1d8d4c6`, build, başlat.
+
+## Okul yöneticisi geri bildirimi (2026-10-16, `platform/solutions` 1bf0bd9, canlıda 2026-10-16)
 
 Yapıldı ve yerel Chrome'da denendi (kademe_platform, gözetimsiz "QA geri-isaret testi" ile):
 - C-test: ortak parça havuzu, sürükle (pointer olayları) ya da tıkla-yerleştir; boşluklar eşit genişlikte; her seed C-testte elle yazılmış 14-15 yanıltıcı (`key.distractors`, `src/db/seed-bank/ctest.ts`); mekanik yedek `src/lib/exam/ctest-pool.ts`; yönerge `src/lib/exam/ctest-instruction.ts` (öğretmen ekranı ve rapor da aynısını gösterir).
