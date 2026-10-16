@@ -6,10 +6,13 @@ import { organizations } from "@/db/schema";
 import { PrintButton } from "@/components/panel/report/print-button";
 import { ReportSheet } from "@/components/panel/report/report-sheet";
 import { buildReport } from "@/components/panel/report/model";
+import { buildDetail } from "@/components/panel/report/detail-model";
+import { DetailSheet } from "@/components/panel/report/detail-sheet";
 import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
 import { resolveSigningSecret } from "@/lib/signing-secret";
 import { loadResultView } from "@/server/panel";
+import { loadAcceptances } from "@/server/result-review";
 import { requireUser } from "@/server/session";
 
 export const dynamic = "force-dynamic";
@@ -19,11 +22,19 @@ export const dynamic = "force-dynamic";
  * result page (`loadResultView` filters by the user's org), and it exists only
  * for a FINAL result: anything else gets the reason instead of a sheet.
  */
-export default async function ResultReportPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ResultReportPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | undefined>>;
+}) {
   const user = await requireUser();
   const locale = await managerLocale();
   const t = managerT(locale);
   const { id } = await params;
+  // The detailed part is on unless the manager turned it off (?detail=0).
+  const withDetail = (await searchParams).detail !== "0";
   const view = await loadResultView(user.orgId, id);
   if (!view || !view.attempt) notFound();
   const { assessment, candidate, attempt, result } = view;
@@ -65,6 +76,20 @@ export default async function ResultReportPage({ params }: { params: Promise<{ i
     );
   }
 
+  // Everything below comes from the org-scoped result view and org-scoped acceptances.
+  const detail = withDetail
+    ? buildDetail({
+        sections: view.sections,
+        skillLevels,
+        runs: view.runs,
+        responses: view.responses,
+        gradings: view.gradings,
+        acceptances: await loadAcceptances(user.orgId, view.responses.map((r) => r.id)),
+        transcripts: Object.fromEntries(view.transcripts.map((x) => [x.mediaAssetId, x.text])),
+        nameOf: view.nameOf,
+      })
+    : [];
+
   return (
     <main className="report-wrap bg-canvas px-6 py-8">
       <div className="report-toolbar mx-auto mb-6 flex w-[210mm] max-w-full items-center justify-between gap-4">
@@ -72,9 +97,22 @@ export default async function ResultReportPage({ params }: { params: Promise<{ i
           {back}
           <p className="mt-1 text-[12.5px] text-muted">{t("resultReport.printHint")}</p>
         </div>
-        <PrintButton label={t("resultReport.print")} />
+        <div className="flex flex-col items-end gap-1">
+          <PrintButton label={t("resultReport.print")} />
+          <Link
+            href={withDetail ? `/exam/students/${id}/report?detail=0` : `/exam/students/${id}/report`}
+            className="inline-flex items-center gap-2 text-[13px] text-ink"
+            title={t("resultReport.detailHint")}
+          >
+            <span aria-hidden className="inline-flex size-4 items-center justify-center rounded-[4px] border border-line-strong bg-surface text-[12px] leading-none">
+              {withDetail ? "\u2713" : ""}
+            </span>
+            {t("resultReport.detailToggle")}
+          </Link>
+        </div>
       </div>
       <ReportSheet model={built.model} t={t} locale={locale} />
+      <DetailSheet sections={detail} studentName={built.model.studentName} t={t} locale={locale} />
     </main>
   );
 }
