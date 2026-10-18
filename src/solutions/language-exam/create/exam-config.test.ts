@@ -6,11 +6,13 @@ import {
   applyExamEdits,
   buildExamConfig,
   coverageGaps,
+  cTestLevelsFor,
   defaultExamName,
   editedTotal,
   examTemplateFor,
   initialSectionEdits,
   MIN_SECTION_MINUTES,
+  textsFor,
   type ExamShape,
 } from "./exam-config";
 
@@ -28,14 +30,14 @@ describe("allocateMinutes", () => {
 describe("examTemplateFor", () => {
   it("picks the nearest template by mode, sections and minutes", () => {
     expect(examTemplateFor(shape({ skills: ["GRAMMAR"], targetMinutes: 15 })).key).toBe("quick-screen");
-    expect(examTemplateFor(shape({ targetMinutes: 40 })).key).toBe("placement");
+    expect(examTemplateFor(shape({ targetMinutes: 50 })).key).toBe("placement");
     expect(examTemplateFor(shape({ skills: ["GRAMMAR", "READING", "LISTENING", "WRITING", "SPEAKING"], targetMinutes: 20 })).key).toBe("placement");
     expect(examTemplateFor(shape({ mode: "LEVEL_VERIFICATION", targetMinutes: 30 })).key).toBe("level-check");
   });
 
-  it("pins the quick-screen/placement boundary by time ratio (about 34 minutes with no skills)", () => {
-    expect(examTemplateFor(shape({ targetMinutes: 40 })).key).toBe("placement");
-    expect(examTemplateFor(shape({ targetMinutes: 30 })).key).toBe("quick-screen");
+  it("pins the quick-screen/placement boundary by time ratio (about 44 minutes with no skills: 25 and 77)", () => {
+    expect(examTemplateFor(shape({ targetMinutes: 45 })).key).toBe("placement");
+    expect(examTemplateFor(shape({ targetMinutes: 43 })).key).toBe("quick-screen");
     expect(examTemplateFor(shape({ targetMinutes: 60 })).key).toBe("placement");
     expect(examTemplateFor(shape({ skills: ["GRAMMAR"], targetMinutes: 40 })).key).toBe("quick-screen");
   });
@@ -156,44 +158,62 @@ describe("edits", () => {
   });
 });
 
-describe("C-test sections follow the minutes", () => {
+describe("text sections follow the minutes", () => {
   const ALL = ["GRAMMAR", "READING", "LISTENING", "WRITING", "SPEAKING"] as const;
+  const kinds = (texts: Array<{ level: string; kind: string }> | undefined) => (texts ?? []).map((t) => `${t.kind} ${t.level}`);
+  const grammarOf = (s: ExamShape) => buildExamConfig(s).config.sections.find((x) => x.section === "GRAMMAR")!;
 
-  it("keeps the middle levels, five minutes a text, at least one", () => {
-    for (const target of [20, 40, 60, 77, 100, 120]) {
+  it("placement: each kind scales with the minutes and keeps its middle levels", () => {
+    for (const [target, cloze, wordBanks] of [
+      // All five sections at 77 minutes give grammar 27 of its 30: one cloze text fewer.
+      [77, ["A1", "A2", "B1", "B2", "C1"], ["A2", "B1", "B2"]],
+      [60, ["A2", "B1", "B2", "C1"], ["A2", "B1"]],
+      [45, ["A2", "B1", "B2"], ["A2", "B1"]],
+      [120, ["A1", "A2", "B1", "B2", "C1", "C2"], ["A2", "B1", "B2", "C1"]],
+    ] as const) {
       const s = shape({ skills: [...ALL], targetMinutes: target });
-      const template = examTemplateFor(s);
-      expect(template.key, `${target} min template`).toBe("placement");
-      const listed = template.config.sections.find((x) => x.section === "GRAMMAR")!.cTestLevels;
-      expect(listed, `${target} min listed`).toBeDefined();
-      const g = buildExamConfig(s).config.sections.find((x) => x.section === "GRAMMAR")!;
-      const keep = Math.min(listed!.length, Math.max(1, Math.floor(g.durationMinutes / 5)));
-      const start = Math.floor((listed!.length - keep) / 2);
-      expect(g.cTestLevels, `${target} min`).toEqual(listed!.slice(start, start + keep));
+      expect(examTemplateFor(s).key, `${target} min template`).toBe("placement");
+      const g = grammarOf(s);
+      expect(g.cTestLevels, `${target} min`).toBeUndefined();
+      expect(kinds(g.texts), `${target} min (${g.durationMinutes} grammar)`).toEqual([...cloze.map((l) => `CLOZE ${l}`), ...wordBanks.map((l) => `WORDBANK ${l}`)]);
     }
   });
 
-  it("quick screen keeps A2 and B1 in ten minutes, all three in fifteen", () => {
-    for (const [target, levels] of [
-      [10, ["A2", "B1"]],
-      [15, ["A2", "B1", "B2"]],
+  it("quick screen: fewer minutes keep the middle levels, more widen upward first", () => {
+    for (const [target, cloze, wordBanks] of [
+      [10, ["A2", "B1"], ["A2"]],
+      [15, ["A2", "B1"], ["A1", "A2"]],
+      [25, ["A1", "A2", "B1", "B2"], ["A1", "A2", "B1"]],
+      [35, ["A1", "A2", "B1", "B2", "C1", "C2"], ["A1", "A2", "B1", "B2"]],
     ] as const) {
       const s = shape({ skills: ["GRAMMAR"], targetMinutes: target });
       expect(examTemplateFor(s).key).toBe("quick-screen");
-      expect(buildExamConfig(s).config.sections.find((x) => x.section === "GRAMMAR")!.cTestLevels).toEqual(levels);
+      expect(kinds(grammarOf(s).texts), `${target} min`).toEqual([...cloze.map((l) => `CLOZE ${l}`), ...wordBanks.map((l) => `WORDBANK ${l}`)]);
     }
   });
 
-  it("a stretched quick screen gets more texts, upward first, then downward (R11)", () => {
-    for (const [target, levels] of [
+  it("textsFor: at least one cloze text; word banks may drop out beside one, never when they stand alone", () => {
+    const t = (cloze: string[], wordBanks: string[]) => [
+      ...cloze.map((level) => ({ level, kind: "CLOZE" as const })),
+      ...wordBanks.map((level) => ({ level, kind: "WORDBANK" as const })),
+    ] as Parameters<typeof textsFor>[0];
+    expect(kinds(textsFor(t(["A2", "B1", "B2"], ["B1"]), 0.1))).toEqual(["CLOZE B1"]);
+    expect(kinds(textsFor(t([], ["A2", "B1", "B2"]), 0.1))).toEqual(["WORDBANK B1"]);
+    expect(kinds(textsFor(t(["B1"], ["B1"]), 1))).toEqual(["CLOZE B1", "WORDBANK B1"]);
+  });
+
+  it("an older C-test section keeps one text per five minutes, middle levels first, then wider upward (R11)", () => {
+    for (const [minutes, levels] of [
+      [3, ["B1"]],
+      [10, ["A2", "B1"]],
+      [15, ["A2", "B1", "B2"]],
       [20, ["A2", "B1", "B2", "C1"]],
       [25, ["A1", "A2", "B1", "B2", "C1"]],
-      [30, ["A1", "A2", "B1", "B2", "C1", "C2"]],
       [60, ["A1", "A2", "B1", "B2", "C1", "C2"]],
     ] as const) {
-      const s = shape({ skills: ["GRAMMAR"], targetMinutes: target });
-      const g = buildExamConfig(s).config.sections.find((x) => x.section === "GRAMMAR")!;
-      expect(g.cTestLevels, `${target} min`).toEqual(levels);
+      expect(cTestLevelsFor(["A2", "B1", "B2"], minutes), `${minutes} min`).toEqual(levels);
     }
   });
+
 });
+

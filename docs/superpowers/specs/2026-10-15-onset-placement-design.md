@@ -1,5 +1,9 @@
 # onSET-style placement: design
 
+> Superseded for GRAMMAR by `2026-10-18-grammar-cloze-wordbank-design.md`: new templates measure grammar
+> with multiple-choice cloze texts and word banks instead of word-part C-tests. C-tests keep working for
+> exams made before the switch.
+
 Date: 2026-10-15. Branch `platform/solutions`. Status: approved in chat by the user ("Onaylıyorum"), spec for review.
 
 ## 1. Goal

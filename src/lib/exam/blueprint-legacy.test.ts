@@ -115,14 +115,15 @@ const fixedShapes: SectionConfig[] = [
   section("GRAMMAR", 20, { distribution: { kind: "RELATIVE", below: 2, at: 4, above: 2 }, cTestLevels: ["C2", "A1"], cTest: true }),
   section("READING", 18, { distribution: { kind: "ABSOLUTE", perLevel: { A1: 0, A2: 4, B1: 4, B2: 4, C1: 4, C2: 0 } } }),
   section("READING", 12, { distribution: { kind: "RELATIVE", below: 0, at: 3, above: 0 }, cTest: true }),
-  ...EXAM_TEMPLATES.flatMap((t) => t.config.sections.filter((s) => !s.adaptive && ["GRAMMAR", "READING", "LISTENING"].includes(s.section))),
+  // Template sections without `texts` (the C-test templates before 2026-10-18 are the two cTestLevels shapes above).
+  ...EXAM_TEMPLATES.flatMap((t) => t.config.sections.filter((s) => !s.adaptive && !s.texts && ["GRAMMAR", "READING", "LISTENING"].includes(s.section))),
 ];
 const adaptiveShapes: SectionConfig[] = [
   section("GRAMMAR", 20, { adaptive: true, minItems: 10, maxItems: 18, targetSe: 0.45 }),
   section("GRAMMAR", 17, { adaptive: true, minItems: 10, maxItems: 16, targetSe: 0.45, cTest: true }),
   section("GRAMMAR", 30, { adaptive: true, minItems: 10, maxItems: 16, targetSe: 0.45, cTestLevels: ["A2", "B1", "B2"] }),
   section("GRAMMAR", 30, { adaptive: true, minItems: 6, maxItems: 12, targetSe: 0.45, cTestLevels: ALL }),
-  ...EXAM_TEMPLATES.flatMap((t) => t.config.sections.filter((s) => s.adaptive)),
+  ...EXAM_TEMPLATES.flatMap((t) => t.config.sections.filter((s) => s.adaptive && !s.texts)),
 ];
 const contexts: Array<[ExamMode, Cefr | null]> = [
   ["PLACEMENT", null],
@@ -205,7 +206,7 @@ describe("legacy configs plan exactly as before 2026-10-18", () => {
     const rolledOut = counts.map((c) => (c.section === "GRAMMAR" ? { ...c, items: c.items + 5, clozeTexts: 3, wordBanks: 2 } : c));
     const strip = (rows: CoverageRow[]) => rows.map(({ text, ...r }) => (r.cTest ? (expect(text).toBe("CTEST"), r) : (expect(text).toBeUndefined(), r)));
     const configs: BlueprintConfig[] = [
-      ...EXAM_TEMPLATES.map((t) => t.config),
+      ...EXAM_TEMPLATES.filter((t) => !t.config.sections.some((s) => s.texts)).map((t) => t.config),
       ...fixedShapes.map((s) => ({ ...EXAM_TEMPLATES[0].config, sections: [s] })),
       ...adaptiveShapes.map((s) => ({ ...EXAM_TEMPLATES[0].config, sections: [s] })),
     ];

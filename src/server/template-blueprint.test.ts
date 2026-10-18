@@ -65,7 +65,7 @@ import { canonicalJson, ensureTemplateBlueprint, isCurrentTemplate } from "./tem
 /** A bank with plenty at every section and level. */
 const fullBank = (): BankCount[] =>
   (["GRAMMAR", "READING", "LISTENING", "WRITING", "SPEAKING"] as const).flatMap((section) =>
-    (["A1", "A2", "B1", "B2", "C1", "C2"] as const).map((level) => ({ section, level, items: 200, stimuli: 50, cTests: 5 })),
+    (["A1", "A2", "B1", "B2", "C1", "C2"] as const).map((level) => ({ section, level, items: 200, stimuli: 50, cTests: 5, clozeTexts: 5, wordBanks: 5 })),
   ) as BankCount[];
 
 /** The placement template as production published it before 2026-10-14 (main 02760e3): adaptive sections, 12-minute texts. */

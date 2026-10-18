@@ -199,7 +199,7 @@
     "aboutSPEAKING": "The student answers out loud; the answer is recorded.",
     "kindAdaptive": "Questions get easier or harder with the student's answers.",
     "kindFixed": "Everyone gets a set number of questions per level.",
-    "kindTexts": "{n} short texts, about 5 minutes per text; the student fills the gaps in each text.",
+    "kindTexts": "{n} short texts, about 3 to 5 minutes per text; the student fills the gaps in each text.",
     "kindTasks": "{n, plural, one {# task} other {# tasks}}; a teacher grades the answer.",
     "minus": "{section}: 1 minute less",
     "plus": "{section}: 1 minute more",

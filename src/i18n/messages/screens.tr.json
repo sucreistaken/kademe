@@ -199,7 +199,7 @@
     "aboutSPEAKING": "Öğrenci soruları sesli cevaplar, cevabı kaydedilir.",
     "kindAdaptive": "Sorular öğrencinin cevaplarına göre kolaylaşır ya da zorlaşır.",
     "kindFixed": "Herkes seviye başına belirli sayıda soru alır.",
-    "kindTexts": "{n} kısa metin, metin başına yaklaşık 5 dakika; öğrenci metinlerdeki boşlukları doldurur.",
+    "kindTexts": "{n} kısa metin, metin başına yaklaşık 3-5 dakika; öğrenci metinlerdeki boşlukları doldurur.",
     "kindTasks": "{n} görev; cevabı öğretmen değerlendirir.",
     "minus": "{section}: 1 dakika azalt",
     "plus": "{section}: 1 dakika artır",

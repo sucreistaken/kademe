@@ -1,6 +1,7 @@
 # Kademe - durum ve devir belgesi
 
 Campus German redesign, Plan 1 (2026-10-16, `platform/solutions`, canlıya çıkmadı): bkz. "Campus German redesign, Plan 1" bölümü.
+Dilbilgisi boşluklu metin ve kelime havuzu (2026-10-18, `platform/solutions`, canlıya çıkmadı): bkz. "Dilbilgisi: boşluklu metin ve kelime havuzu" bölümü.
 Son güncelleme: 2026-10-07 (Gelişmiş: tek kutu, AI önce, `platform/solutions` dalında, yerelde gerçek Gemini ile denendi; canlıya çıkmadı). Önceki: 2026-10-06 (işe alım plan 2b, görsel akış ve rehberli panel, `platform/solutions` dalında; bulut oturumunda tip, lint, test ve build ile doğrulandı, veritabanı betikleri ve tarayıcı turu yerel oturumu bekliyor; canlıya çıkmadı).
 Önceki: 2026-10-05 (işe alım plan 2, aday akışı, platform/solutions dalında, yerelde doğrulandı; canlıya çıkmadı); 2026-10-04 (çekirdek ayrımı ve işe alım plan 1, kütüphane ve alımlar, `platform/solutions` dalında, yerelde doğrulandı; canlıya çıkmadı).
 **Canlıda**: https://kademe.kadiray.com, `main` commit `2cf125c` (2026-10-16 18:45 UTC: krem zemin yerine Campus German beyazı ve soğuk griler; ondan önce `8e945da`, Campus German görünümü, Plan 1; ayrıntı "Canlıya çıkış: Campus German görünümü, Plan 1"). Önceki sürümler (aşağıdaki "Canlıya çıkış" bölümleri): `ab951b1` (okul yöneticisi geri bildirimi), `1d8d4c6` (onSET yerleştirme), `5a4f97e` (kurs grubu sürümü, 2026-10-14), `02760e3` (2026-10-07 akşam: Bugün yeni tasarım, 3 adımlı alım sihirbazı, "en az 2 değerlendirici" kuralı kaldırıldı, soru bankası v2; ayrıntı "Canlıya çıkış: sihirbaz ve banka v2"), `0142ff0` (Gelişmiş). Önceki not: commit `739f218` (`main`, 2026-10-05 sınav sıcak düzeltmesi; ayrıntı "Kararlar ve sapmalar"da).
@@ -162,6 +163,41 @@ Spec `docs/superpowers/specs/2026-10-06-advanced-ai-create-design.md`, plan
 - Canlı Gemini turunda bulunup düzeltilen: "okuma ağırlıklı" yalnız okuma sınavı kuruyordu (`43eded2`); değişiklik
   kutusu taslağı sunucuda güncelliyor ama kartlar yenilenmeden eski kalıyordu (`4705582`); toplam 100 iken "100 olmalı"
   yazıyordu (`488f3fe`).
+
+## Dilbilgisi: boşluklu metin ve kelime havuzu (2026-10-18, `platform/solutions`, canlıda değil)
+
+Spec `docs/superpowers/specs/2026-10-18-grammar-cloze-wordbank-design.md` (onSET spec'inin DILBILGISI
+kısmının yerine geçer). Ölçme ayrıntısı ve bütün simülasyon satırları `docs/EXAM-ENGINE.md`.
+
+- Neden: okul test görüşmesinde kelime parçalı C-test kafa karıştırdı. Yerine çoktan seçmeli boşluklu
+  metin (`grammar.cloze`, boşluk başına 4 seçenek) ve kelime havuzu (`grammar.wordbank`, bütün kelimeler,
+  4-5 fazla kelime). İkisi de `GAP_FILL`; göç yok.
+- Motor: tahmin tabanı `p = c + (1 - c) * sigma(theta - b)`, boşluklu metinde `c = 1/4`, kelime havuzunda
+  `1 / havuz`, diğer her şeyde 0 (eski denemeler aynı kalır). Metin ağırlığı `max(1, boşluk / 4)` her metin
+  türüne.
+- Şablonlar (`texts`): yerleştirme DILBILGISI 30 dk, A1-C2 altı boşluklu metin + A2, B1, B2 kelime havuzu
+  (toplam yine 77 dk); hızlı seviye taraması 25 dk (önce 15), A1-B2 dört boşluklu metin + A1-B1 üç kelime
+  havuzu. AI oluşturucuda beceri söylenmediğinde hızlı tarama / yerleştirme sınırı yaklaşık 44 dk (önce 34);
+  yeniden ölçekleme her türü süre oranıyla tutar.
+- Kapı (`scripts/simulate-placement.ts`, tahminli cevaplar, seviye başına 4000, tohum 2026 ve 7): yerleştirme
+  spec'in başlangıç bileşimiyle geçti. Hızlı taramanın 15 dakikalık başlangıcı geçmedi (A1 öğrencisinin
+  %66'sı üste, C-test formunda %35); 20 dakikalık hiçbir bileşim iki tohumda geçmedi; 25 dakikalık bileşim
+  seçildi. Dikkat: sıradan maddeler tahminsiz varsayılınca (`ITEM_GUESS=0`) yerleştirme kapıyı 1 puanın
+  altında farkla geçemiyor, hızlı tarama tohum 7'de C1'de 1 puan kalıyor. Hızlı taramada C2 tam isabeti
+  %0 (en zor metin B2), yerleştirmede C2 %59'dan %44'e düştü; kapı C2'yi ölçmez.
+- Banka: seviye başına 3 boşluklu metin (11 boşluk) ve 3 kelime havuzu (8 boşluk). Kör çözüm ve anadili
+  Almanca öğretmen okuması bekliyor; kör çözüm bazı metinleri değiştirebilir (sayılar aynı kalır).
+- Mevcut sınavlar ve davet edilmiş öğrenciler kayıtlı yapılandırmayı korur; C-testler bankada kalır.
+  Şablonun yeni hali ilk davette eski yayımlı şablon sınavını arşivleyip yenisini yayımlar
+  (`ensureTemplateBlueprint`), ama yalnız banka kapsıyorsa.
+- Canlıya çıkış sırası (ayrı onayla): önce canlıda salt okuma kontrolü,
+  `select skill_tag, count(*) from items where skill_tag in ('grammar.cloze','grammar.wordbank') group by 1;`
+  ve aynısı `item_responses.item_snapshot->>'skillTag'` için (beklenen 0). Sonra deploy, hemen ardından
+  `bank:topup --production --sync-seed` (`--retire-stale` YOK: C-testler emekliye ayrılmaz). Sıra önemli:
+  eski kod yeni metinleri sıradan dilbilgisi sorusu gibi çekerdi. Deploy ile top-up arasında şablondan davet
+  `TEMPLATE_COVERAGE` döner (hiçbir şey arşivlenmez).
+- Doğrulanmadı: tarayıcıda uçtan uca (Claude in Chrome), gerçek öğrenci verisi (taban, ağırlık 4 ve metin
+  etkisi sd 0.5 varsayım), yeniden ölçeklenmiş formların simülasyonu.
 
 ## Campus German redesign, Plan 1 (2026-10-16, `platform/solutions`, NOT deployed)
 

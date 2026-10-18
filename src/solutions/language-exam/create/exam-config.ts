@@ -73,12 +73,11 @@ export function allocateMinutes(target: number, weights: number[], min: number):
 const MINUTES_PER_C_TEST = 5;
 
 /**
- * Fewer minutes keep the middle of the listed levels; more minutes than the
- * listed levels cover widen the span one level at a time, upward first, then
- * downward, within A1..C2. Always in CEFR order, no duplicates.
+ * `keep` levels from `listed`: fewer keep the middle of the listed levels;
+ * more widen the span one level at a time, upward first, then downward,
+ * within A1..C2. Always in CEFR order, no duplicates.
  */
-function cTestLevelsFor(listed: Cefr[], minutes: number): Cefr[] {
-  const keep = clamp(Math.floor(minutes / MINUTES_PER_C_TEST), 1, CEFR_LEVELS.length);
+function spanLevels(listed: Cefr[], keep: number): Cefr[] {
   if (keep <= listed.length) {
     const start = Math.floor((listed.length - keep) / 2);
     return listed.slice(start, start + keep);
@@ -96,12 +95,38 @@ function cTestLevelsFor(listed: Cefr[], minutes: number): Cefr[] {
   return CEFR_LEVELS.slice(lo, hi + 1);
 }
 
+/** One C-test per five minutes, at least one, at most one per level (sections made before 2026-10-18). */
+export function cTestLevelsFor(listed: Cefr[], minutes: number): Cefr[] {
+  return spanLevels(listed, clamp(Math.floor(minutes / MINUTES_PER_C_TEST), 1, CEFR_LEVELS.length));
+}
+
+type SectionTexts = NonNullable<SectionConfig["texts"]>;
+
+/**
+ * Cloze texts and word banks scale with the section's minutes (`f` = new over
+ * the template's), each kind on its own levels as `spanLevels` picks them. A
+ * listed kind keeps at least one text, except that word banks may drop out of
+ * a short section that still has a cloze text.
+ */
+export function textsFor(texts: SectionTexts, f: number): SectionTexts {
+  const levelsOf = (kind: "CLOZE" | "WORDBANK") => CEFR_LEVELS.filter((l) => texts.some((t) => t.kind === kind && t.level === l));
+  const cloze = levelsOf("CLOZE");
+  const wordBanks = levelsOf("WORDBANK");
+  const keepCloze = cloze.length ? clamp(Math.round(cloze.length * f), 1, CEFR_LEVELS.length) : 0;
+  const keepWordBanks = wordBanks.length ? clamp(Math.round(wordBanks.length * f), keepCloze ? 0 : 1, CEFR_LEVELS.length) : 0;
+  return [
+    ...(keepCloze ? spanLevels(cloze, keepCloze) : []).map((level) => ({ level, kind: "CLOZE" as const })),
+    ...(keepWordBanks ? spanLevels(wordBanks, keepWordBanks) : []).map((level) => ({ level, kind: "WORDBANK" as const })),
+  ];
+}
+
 /** Item counts follow the time: an adaptive section's limits and a fixed form's per-level counts scale with it. */
 function rescaleSection(s: SectionConfig, minutes: number, baseMinutes: number) {
   const f = minutes / baseMinutes;
   s.durationMinutes = minutes;
   if (!isObjectiveSection(s.section)) return;
-  if (s.cTestLevels) s.cTestLevels = cTestLevelsFor(s.cTestLevels, minutes);
+  if (s.texts) s.texts = textsFor(s.texts, f);
+  else if (s.cTestLevels) s.cTestLevels = cTestLevelsFor(s.cTestLevels, minutes);
   if (s.adaptive) {
     s.minItems = clamp(Math.round(s.minItems * f), 1, 60);
     s.maxItems = clamp(Math.max(Math.round(s.maxItems * f), s.minItems), 1, 80);

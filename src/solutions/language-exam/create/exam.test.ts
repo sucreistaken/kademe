@@ -10,12 +10,12 @@ vi.mock("@/server/panel", () => ({ bankCounts: async () => counts.value }));
 
 import { examCreator, MAX_FOLLOW_UPS, validateExamParams, type ExamParams } from "./exam";
 
-const FULL: BankCount[] = SECTIONS.flatMap((section) => CEFR_LEVELS.map((level) => ({ section, level, items: 200, stimuli: 50, cTests: 5 })));
+const FULL: BankCount[] = SECTIONS.flatMap((section) => CEFR_LEVELS.map((level) => ({ section, level, items: 200, stimuli: 50, cTests: 5, clozeTexts: 5, wordBanks: 5 })));
 const ctx: CreatorCtx = { orgId: "o1", userId: "u1", role: "MANAGER", locale: "tr", draftId: "d1" };
 const params = (over: Partial<ExamParams> = {}): ExamParams => ({
   mode: "PLACEMENT",
   claimedLevel: null,
-  targetMinutes: 40,
+  targetMinutes: 50,
   skills: [],
   emphasis: null,
   speakingRequired: null,
@@ -63,7 +63,7 @@ describe("examCreator.draft", () => {
     const r = await examCreator.draft(ctx, params());
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.draft).toMatchObject({ name: "Yerleştirme sınavı, 40 dk", mode: "PLACEMENT", templateKey: "placement", coverageOk: true, gaps: [] });
+    expect(r.draft).toMatchObject({ name: "Yerleştirme sınavı, 50 dk", mode: "PLACEMENT", templateKey: "placement", coverageOk: true, gaps: [] });
   });
 
   it("reports the gaps against a thin bank", async () => {
