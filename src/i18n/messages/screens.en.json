@@ -119,7 +119,9 @@
     "aiTitle": "AI is preparing ({count})",
     "aiHint": "When done they move to \"Your call\". Nothing for you to do now.",
     "waited": "{days, plural, =0 {Arrived today} one {Waiting # day} other {Waiting # days}}",
-    "nextReason": "First because: waiting the longest"
+    "nextReason": "First because: waiting the longest",
+    "problemsTitle": "{count, plural, one {# problem report in the last 7 days} other {# problem reports in the last 7 days}}",
+    "problemsOpen": "See the reports"
   },
   "students": {
     "title": "Students",
@@ -461,7 +463,12 @@
     "checklistAi": "AI proposal in progress",
     "checklistRunning": "Exam in progress",
     "finalizeNeeds": "Grade these first: {sections}.",
-    "finalizeReady": "Everything is done. You can finalize the result."
+    "finalizeReady": "Everything is done. You can finalize the result.",
+    "problemsTitle": "Reported problems",
+    "problemAreaEXAM_END": "End of the exam",
+    "problemAreaSYSTEM_CHECK": "Device check",
+    "problemAreaLINK": "New link request",
+    "problemNoText": "No message was written."
   },
   "integrity": {
     "title": "Integrity",

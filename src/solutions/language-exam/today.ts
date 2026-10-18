@@ -1,13 +1,15 @@
 import { INTEGRITY_TONE, STATUS_TONE, shortDateTime } from "@/components/panel/bits";
 import type { Locale } from "@/i18n/locale";
 import { managerT } from "@/i18n/manager";
+import { problemWindowStart } from "@/lib/exam/problem-reports";
 import { listStudents } from "@/server/panel";
+import { recentProblemReports } from "@/server/problem-reports";
 import type { TodayItem } from "@/solutions/types";
 
 /** The exam's rows for the shared Today screen: the same facts the old dashboard showed. */
 export async function examToday(orgId: string, _userId: string, locale: Locale): Promise<TodayItem[]> {
   const t = managerT(locale);
-  const rows = await listStudents(orgId);
+  const [rows, reports] = await Promise.all([listStudents(orgId), recentProblemReports(orgId, problemWindowStart(new Date()))]);
   const review: TodayItem[] = rows
     .filter((r) => r.status === "AWAITING_REVIEW" || r.status === "AWAITING_GRADING")
     .map((r) => ({
@@ -53,5 +55,24 @@ export async function examToday(orgId: string, _userId: string, locale: Locale):
         },
       ],
     }));
-  return [...review, ...running];
+  // Students' "something went wrong" reports of the last week: one row, shown only when there are any,
+  // linking to the newest one's student page where all of that student's reports are listed.
+  const newest = reports[0];
+  const problems: TodayItem[] = newest
+    ? [
+        {
+          id: "language-exam:problems",
+          solution: "language-exam",
+          lane: "attention",
+          attention: "problems",
+          title: t("today.problemsTitle", { count: reports.length }),
+          subtitle: newest.name,
+          actionLabel: t("today.problemsOpen"),
+          href: `/exam/students/${newest.assessmentId}#problems`,
+          sortAt: reports[reports.length - 1].createdAt,
+          cells: [],
+        },
+      ]
+    : [];
+  return [...problems, ...review, ...running];
 }

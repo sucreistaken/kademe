@@ -541,7 +541,15 @@
     "reasonFULLSCREEN_EXITS": "Full screen was left too many times.",
     "terminatedNext": "Please contact your school.",
     "contact": "Questions: {email}",
-    "rights": "A request about my data"
+    "rights": "A request about my data",
+    "problemToggle": "Did something go wrong during the exam?",
+    "problemPlaceholder": "What happened? A few words are enough.",
+    "problemSend": "Send",
+    "problemSending": "Sending",
+    "problemSent": "Thank you, your school has received it.",
+    "problemFailed": "It could not be sent. Check your connection and try again.",
+    "problemRetry": "Try again",
+    "problemEmpty": "Write what happened first."
   },
   "hiringFrame": {
     "help": "Help",

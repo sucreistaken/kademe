@@ -123,8 +123,8 @@ export type TodayItem = {
   task?: TodayTaskKind;
   /** lane "task": the candidate's own words, shown quoted. lane "attention": a plain note under the title. */
   detail?: string | null;
-  /** lane "attention": which icon the row carries (inbox, clock, file). */
-  attention?: "requests" | "expiring" | "draft";
+  /** lane "attention": which icon the row carries (inbox, clock, file, alert). */
+  attention?: "requests" | "expiring" | "draft" | "problems";
   /** lane "attention": the row's own action words (default "Aç"). */
   actionLabel?: string;
 };

@@ -15,6 +15,9 @@ const REQUEST_LOCK_CLASS = 0x52455155; // "REQU"
  * the second sees the first. `message` must fit the table's 2000-character
  * CHECK (the routes bound it). Runs in its own transaction; to file the
  * request together with other writes, use fileCandidateRequestIn.
+ *
+ * PROBLEM reports are the exception: each one is its own fact (what went wrong
+ * at the end of the exam), so it is always filed, with no lock and no dedupe.
  */
 export async function fileCandidateRequest(input: CandidateRequestInput): Promise<{ filed: boolean }> {
   return db.transaction((tx) => fileCandidateRequestIn(tx, input));
@@ -23,7 +26,7 @@ export async function fileCandidateRequest(input: CandidateRequestInput): Promis
 type CandidateRequestInput = {
   orgId: string;
   assessmentId: string;
-  kind: "ACCOMMODATION" | "NEW_LINK";
+  kind: "ACCOMMODATION" | "NEW_LINK" | "PROBLEM";
   message: string | null;
 };
 
@@ -33,6 +36,10 @@ type CandidateRequestInput = {
  * until that transaction ends. Never reads the global db.
  */
 export async function fileCandidateRequestIn(x: Executor, input: CandidateRequestInput): Promise<{ filed: boolean }> {
+  if (input.kind === "PROBLEM") {
+    await x.insert(candidateRequests).values({ orgId: input.orgId, assessmentId: input.assessmentId, kind: input.kind, message: input.message });
+    return { filed: true };
+  }
   await x.execute(
     sql`select pg_advisory_xact_lock(${REQUEST_LOCK_CLASS}, hashtext(${input.assessmentId}::text || ':' || ${input.kind}::text))`,
   );

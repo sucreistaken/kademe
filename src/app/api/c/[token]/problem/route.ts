@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { messageOutbox } from "@/db/schema";
 import { candidateJson } from "@/lib/candidate-safe";
 import { message, readJson, withSolution } from "@/lib/candidate-api";
+import { problemMessage } from "@/lib/problem-message";
 import { fileCandidateRequestIn } from "@/server/candidate-requests";
 
 type Body = { area?: string; message?: string };
@@ -22,6 +23,10 @@ type Body = { area?: string; message?: string };
  * (area LINK) also files a NEW_LINK candidate request where the solution reads
  * them (ruling C7), so the team sees it next to the candidate; a repeat while
  * that request is open files nothing and mails nothing.
+ *
+ * For an exam every report also files a PROBLEM candidate request ("area: note"),
+ * the one place the teacher reads it (the outbox has no reader yet and no
+ * invitation id). Each report counts: no dedupe, only the route's rate limit.
  */
 export async function POST(
   req: NextRequest,
@@ -54,12 +59,20 @@ export async function POST(
           `Tarayıcı: ${request.headers.get("user-agent") ?? "-"}`,
       };
 
-      // The NEW_LINK request and the team's mail are written together or not
-      // at all. `note` is at most 2000 UTF-16 units, so it always fits
-      // candidate_requests' 2000 CHECK. While one NEW_LINK request is open a
-      // second is not filed and the team is not mailed again; the candidate's
-      // answer is the same (fileCandidateRequestIn).
+      // The requests and the team's mail are written together or not at all.
+      // `note` is at most 2000 UTF-16 units, so it always fits candidate_requests'
+      // 2000 CHECK. While one NEW_LINK request is open a second is not filed
+      // and the team is not mailed again; the candidate's answer is the same
+      // (fileCandidateRequestIn).
       await db.transaction(async (tx) => {
+        if (exam) {
+          await fileCandidateRequestIn(tx, {
+            orgId: ctx.assessment.orgId,
+            assessmentId: ctx.assessment.id,
+            kind: "PROBLEM",
+            message: problemMessage(area, note),
+          });
+        }
         if (area === "LINK" && solution.accommodationRequests) {
           const { filed } = await fileCandidateRequestIn(tx, {
             orgId: ctx.assessment.orgId,

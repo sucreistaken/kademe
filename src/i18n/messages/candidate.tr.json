@@ -541,7 +541,15 @@
     "reasonFULLSCREEN_EXITS": "Tam ekrandan çok sayıda çıkıldı.",
     "terminatedNext": "Okulunuzla iletişime geçin.",
     "contact": "Sorularınız için: {email}",
-    "rights": "Verilerimle ilgili talep"
+    "rights": "Verilerimle ilgili talep",
+    "problemToggle": "Sınavda bir sorun yaşadınız mı?",
+    "problemPlaceholder": "Ne oldu? Kısaca yazın.",
+    "problemSend": "Bildir",
+    "problemSending": "Gönderiliyor",
+    "problemSent": "Teşekkürler, okulunuza iletildi.",
+    "problemFailed": "Gönderilemedi. Bağlantınızı kontrol edip tekrar deneyin.",
+    "problemRetry": "Tekrar dene",
+    "problemEmpty": "Önce ne olduğunu yazın."
   },
   "hiringFrame": {
     "help": "Yardım",

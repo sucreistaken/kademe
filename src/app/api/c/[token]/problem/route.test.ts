@@ -107,10 +107,55 @@ describe("problem route", () => {
     expect(h.inserted.find((i) => i.table === "candidate_requests")?.values.message).toBe("y".repeat(2000));
   });
 
-  it("files no request where the solution does not read them (the exam)", async () => {
+  it("files no new-link request where the solution does not read them (the exam), only the problem report and the mail", async () => {
     h.solution = EXAM;
     h.ctx.assessment.solution = "LANGUAGE_EXAM";
     await send({ area: "LINK", message: "Yeni link" });
+    expect(h.inserted.filter((i) => i.table === "candidate_requests").map((i) => i.values.kind)).toEqual(["PROBLEM"]);
+    expect(h.inserted.map((i) => i.table).sort()).toEqual(["candidate_requests", "message_outbox"]);
+  });
+
+  it("files an exam report as a PROBLEM request (area: note) in the same transaction as the outbox row, and keeps the mail", async () => {
+    h.solution = EXAM;
+    h.ctx.assessment.solution = "LANGUAGE_EXAM";
+    expect((await send({ area: "EXAM_END", message: "  Das Audio ist ausgefallen.  " })).status).toBe(200);
+    expect(h.inserted.map((i) => i.table).sort()).toEqual(["candidate_requests", "message_outbox"]);
+    expect(h.via).toEqual(["tx", "tx"]);
+    expect(h.inserted.find((i) => i.table === "candidate_requests")?.values).toEqual({
+      orgId: "o1",
+      assessmentId: "a1",
+      kind: "PROBLEM",
+      message: "EXAM_END: Das Audio ist ausgefallen.",
+    });
+    expect(outbox()).toMatchObject({ kind: "STUDENT_PROBLEM", subject: "Öğrenci sorun bildirdi: Elif Kaya (EXAM_END)" });
+  });
+
+  it("files a PROBLEM request for every report (no dedupe)", async () => {
+    h.solution = EXAM;
+    h.ctx.assessment.solution = "LANGUAGE_EXAM";
+    await send({ area: "EXAM_END", message: "bir" });
+    await send({ area: "EXAM_END", message: "iki" });
+    expect(h.inserted.filter((i) => i.table === "candidate_requests").map((i) => i.values.message)).toEqual(["EXAM_END: bir", "EXAM_END: iki"]);
+  });
+
+  it("files a report with no words as its area alone", async () => {
+    h.solution = EXAM;
+    h.ctx.assessment.solution = "LANGUAGE_EXAM";
+    await send({ area: "SYSTEM_CHECK", message: "" });
+    expect(h.inserted.find((i) => i.table === "candidate_requests")?.values.message).toBe("SYSTEM_CHECK");
+  });
+
+  it("bounds an exam report to the 2000 the table allows", async () => {
+    h.solution = EXAM;
+    h.ctx.assessment.solution = "LANGUAGE_EXAM";
+    await send({ area: "EXAM_END", message: "y".repeat(2600) });
+    const message = h.inserted.find((i) => i.table === "candidate_requests")?.values.message as string;
+    expect(message).toHaveLength(2000);
+    expect(message.startsWith("EXAM_END: yy")).toBe(true);
+  });
+
+  it("files no PROBLEM request for hiring (its behaviour is unchanged)", async () => {
+    await send({ area: "HELP", message: "Yardım" });
     expect(h.inserted.map((i) => i.table)).toEqual(["message_outbox"]);
   });
 

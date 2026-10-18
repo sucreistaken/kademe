@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Check, Loader2, Mail, PowerOff, WifiOff } from "lucide-react";
+import { ExamEndReport } from "@/components/candidate/ExamEndReport";
 import { CandidateColumn } from "@/components/candidate/Shell";
 import { useProctor } from "@/components/candidate/proctor/ProctorProvider";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +19,8 @@ import { useT } from "@/i18n/candidate-client";
  * they are, the screen asks the student to keep the tab open instead of
  * telling them to rest. The result appears only as far as the school allows
  * and only once a teacher has finalized it; there is no course recommendation
- * here or anywhere else. The next step is always concrete: who to write to.
+ * here or anywhere else. The next step is always concrete: who to write to,
+ * and a way to report that something went wrong (collapsed until asked for).
  *
  * Soft look: finishing is worth a small celebration (the mascot pops in once
  * with a badge, motion-safe only) and the sections the student got
@@ -199,7 +201,11 @@ export function Finished({
           </section>
         ) : null}
 
-        <div className="mt-7 flex flex-col items-center gap-2 text-[13.5px] text-muted">
+        <div className="mt-5 flex justify-center">
+          <ExamEndReport token={token} />
+        </div>
+
+        <div className="mt-4 flex flex-col items-center gap-2 text-[13.5px] text-muted">
           {contactEmail ? (
             <span className="inline-flex flex-wrap items-center justify-center gap-1.5">
               <Mail aria-hidden className="size-4" strokeWidth={2} />

@@ -21,6 +21,8 @@ import { reportAllowed } from "@/components/panel/report/model";
 import { can } from "@/lib/authorize";
 import { isObjectiveSection, CEFR_LEVELS, type Section } from "@/lib/exam/types";
 import { listStudents, loadIntegrityView, loadResultView } from "@/server/panel";
+import { listProblemReports } from "@/server/problem-reports";
+import { isProblemArea, splitProblemMessage } from "@/lib/exam/problem-reports";
 import { loadRecordingSegments, recordingConsent } from "@/server/recordings";
 import { loadAcceptances } from "@/server/result-review";
 import { UndoStrip } from "@/components/ui/undo-strip";
@@ -53,6 +55,8 @@ export default async function ResultPage({
   const view = await loadResultView(user.orgId, id);
   if (!view) notFound();
   const row = (await listStudents(user.orgId)).find((r) => r.assessmentId === id);
+  // What the student said went wrong (end-of-exam and check-screen reports), newest first.
+  const problems = await listProblemReports(user.orgId, view.candidate.id);
   const { assessment, candidate, attempt, result } = view;
   const cfg = assessment.blueprintSnapshot;
   const computed = result?.computed ?? null;
@@ -210,6 +214,28 @@ export default async function ResultPage({
           )}
         </div>
       </div>
+
+      {problems.length ? (
+        <section id="problems" aria-labelledby="problems-title" className="mt-6 scroll-mt-6">
+          <h2 id="problems-title" className="mb-2.5 text-[12px] font-semibold tracking-[0.07em] text-muted uppercase">
+            {t("result.problemsTitle")} ({problems.length})
+          </h2>
+          <Card className="divide-y divide-line">
+            {problems.map((report) => {
+              const { area, note } = splitProblemMessage(report.message);
+              return (
+                <div key={report.id} className="px-5 py-3.5">
+                  <p className="text-[12.5px] text-muted">
+                    <span className="tnum">{shortDateTime(report.createdAt, locale)}</span>
+                    {area ? ` · ${isProblemArea(area) ? t(`result.problemArea${area}`) : area}` : ""}
+                  </p>
+                  <p className="mt-0.5 text-[14px] leading-[1.55] whitespace-pre-line text-ink">{note || t("result.problemNoText")}</p>
+                </div>
+              );
+            })}
+          </Card>
+        </section>
+      ) : null}
 
       <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_320px]">
         <div className="min-w-0">

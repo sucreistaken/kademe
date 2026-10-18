@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, ChevronRight, Clock, FilePenLine, Inbox } from "lucide-react";
+import { ArrowRight, ChevronRight, Clock, FilePenLine, Inbox, MessageSquareWarning } from "lucide-react";
 import { InviteMenu, InviteUnavailable } from "@/components/manager/invite-menu";
 import { inviteChoice } from "@/components/manager/invite-choice";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ export const dynamic = "force-dynamic";
 const YOU_SHOWN = 8;
 const AI_SHOWN = 10;
 const REVIEW_TAB = "/exam/students?tab=review";
-const ATTENTION_ICON = { requests: Inbox, expiring: Clock, draft: FilePenLine } as const;
+const ATTENTION_ICON = { requests: Inbox, expiring: Clock, draft: FilePenLine, problems: MessageSquareWarning } as const;
 const TEXT_LINK = "inline-flex min-h-11 items-center gap-1.5 text-[14px] font-medium text-ink hover:underline";
 
 function Cell({ cell }: { cell: TodayCell }) {

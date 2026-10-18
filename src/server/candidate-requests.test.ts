@@ -102,4 +102,14 @@ describe("fileCandidateRequest", () => {
     expect(seen.ops).toEqual([]);
     expect(own.map((o) => o.kind)).toEqual(["execute", "insert"]);
   });
+
+  it("files every PROBLEM report, even while an earlier one is unhandled, taking no lock and looking for no open request", async () => {
+    seen.open = [{ id: "r1" }];
+    const report = { ...input, kind: "PROBLEM" as const, message: "EXAM_END: Das Audio ist ausgefallen." };
+    expect(await fileCandidateRequest(report)).toEqual({ filed: true });
+    expect(await fileCandidateRequest(report)).toEqual({ filed: true });
+    expect(writes()).toHaveLength(2);
+    expect(writes()[0]).toMatchObject({ table: "candidate_requests", values: { orgId: "o1", assessmentId: "a1", kind: "PROBLEM", message: report.message } });
+    expect(seen.ops.some((o) => o.kind === "execute" || o.kind === "select")).toBe(false);
+  });
 });

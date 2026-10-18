@@ -1,0 +1,2 @@
+ALTER TABLE "candidate_requests" DROP CONSTRAINT "candidate_request_kind";--> statement-breakpoint
+ALTER TABLE "candidate_requests" ADD CONSTRAINT "candidate_request_kind" CHECK ("candidate_requests"."kind" IN ('ACCOMMODATION', 'NEW_LINK', 'PROBLEM'));

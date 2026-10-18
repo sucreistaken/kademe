@@ -138,7 +138,8 @@ export const deletionRequests = pgTable(
 
 /**
  * A candidate asking for something about their invitation that a person must
- * answer: an accommodation, or a new link. Core (any solution may write it),
+ * answer: an accommodation, or a new link; or a problem report (PROBLEM: the
+ * exam's end-of-exam "something went wrong", one row per report). Core (any solution may write it),
  * and it carries org_id itself so the manager queue filters by organisation
  * without a join. `kind` is a CHECKed text, not a pg enum, so a solution can
  * add a kind with a reviewed constraint change instead of a type rebuild.
@@ -166,7 +167,7 @@ export const candidateRequests = pgTable(
   (t) => [
     index("candidate_requests_org_created_idx").on(t.orgId, t.createdAt),
     index("candidate_requests_assessment_idx").on(t.assessmentId),
-    check("candidate_request_kind", sql`${t.kind} IN ('ACCOMMODATION', 'NEW_LINK')`),
+    check("candidate_request_kind", sql`${t.kind} IN ('ACCOMMODATION', 'NEW_LINK', 'PROBLEM')`),
     check("candidate_request_message_length", sql`char_length(${t.message}) <= 2000`),
     /** The request's organisation is its invitation's, enforced by the database. */
     foreignKey({

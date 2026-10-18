@@ -119,7 +119,9 @@
     "aiTitle": "AI hazırlıyor ({count})",
     "aiHint": "Bitince \"Senin kararın\" listesine düşer. Şimdi yapacağın bir şey yok.",
     "waited": "{days, plural, =0 {Bugün geldi} one {# gündür bekliyor} other {# gündür bekliyor}}",
-    "nextReason": "Önce bu: en uzun bekleyen"
+    "nextReason": "Önce bu: en uzun bekleyen",
+    "problemsTitle": "Son 7 günde {count} sorun bildirimi",
+    "problemsOpen": "Bildirimlere bak"
   },
   "students": {
     "title": "Öğrenciler",
@@ -461,7 +463,12 @@
     "checklistAi": "AI önerisi hazırlanıyor",
     "checklistRunning": "Sınav sürüyor",
     "finalizeNeeds": "Önce şunları değerlendirin: {sections}.",
-    "finalizeReady": "Her şey tamam. Sonucu kesinleştirebilirsiniz."
+    "finalizeReady": "Her şey tamam. Sonucu kesinleştirebilirsiniz.",
+    "problemsTitle": "Bildirilen sorunlar",
+    "problemAreaEXAM_END": "Sınavın sonu",
+    "problemAreaSYSTEM_CHECK": "Cihaz kontrolü",
+    "problemAreaLINK": "Yeni link isteği",
+    "problemNoText": "Mesaj yazılmadı."
   },
   "integrity": {
     "title": "Bütünlük",
