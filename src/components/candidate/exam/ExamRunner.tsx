@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CandidateColumn } from "@/components/candidate/Shell";
 import { buttonVariants } from "@/components/ui/button";
+import { Notice } from "@/components/ui/notice";
 import { BrandMark } from "@/components/visual/brand-mark";
 import { environmentFacts, useProctor } from "@/components/candidate/proctor/ProctorProvider";
 import { CheatWarning } from "@/components/candidate/proctor/CheatWarning";
@@ -11,6 +12,8 @@ import { Flag } from "lucide-react";
 import { ItemView } from "@/components/candidate/exam/ItemView";
 import { ListeningPlayer, SpeakingItem } from "@/components/candidate/exam/MediaItems";
 import { answerProgress, progressState } from "@/components/candidate/exam/answer-progress";
+import { nextButtonKind } from "@/components/candidate/exam/exam-bar";
+import { PartCounter } from "@/components/candidate/exam/PartCounter";
 import { WarmupOffer, WarmupPractice } from "@/components/candidate/exam/warmup/Warmup";
 import { INITIAL_WARMUP, warmupReduce, type WarmupAction, type WarmupState } from "@/components/candidate/exam/warmup/warmup-state";
 import { PRACTICE } from "@/components/candidate/exam/warmup/practice-data";
@@ -491,27 +494,47 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
         ? t("autosaved")
         : null;
 
-  // Asked in the bar itself, where the student just pressed: a recording still plays.
-  const leaveLine = leave ? (
-    <div role="alert" className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-[10px] bg-sun-soft px-4 py-2.5 text-[14px] text-ink">
-      <span>{t("leavePlaying")}</span>
-      <span className="flex gap-4">
-        <button
-          type="button"
-          onClick={() => {
-            const go = leave.go;
-            setLeave(null);
-            go();
-          }}
-          className="min-h-9 font-semibold underline underline-offset-2"
-        >
-          {t("leaveAnyway")}
-        </button>
-        <button type="button" onClick={() => setLeave(null)} className="min-h-9 font-semibold underline underline-offset-2">
-          {t("leaveStay")}
-        </button>
-      </span>
-    </div>
+  // Floating warnings: they sit over the page just above the bottom bar and add no height to it.
+  const noticeAction = "ml-2 min-h-9 font-semibold underline underline-offset-2";
+  const failureNotice = failure ? (
+    <Notice role="alert" className="max-w-[640px] shadow-panel">
+      {failure.text}
+      <button type="button" onClick={failure.retry} className={noticeAction}>
+        {t("retry")}
+      </button>
+    </Notice>
+  ) : save === "failed" ? (
+    <Notice role="alert" className="max-w-[640px] shadow-panel">
+      {n("saveFailed")}
+      <button type="button" onClick={() => void flush()} className={noticeAction}>
+        {t("retry")}
+      </button>
+    </Notice>
+  ) : null;
+  // Asked just above the bar, where the student pressed: a recording still plays.
+  const leaveNotice = leave ? (
+    <Notice role="alert" className="max-w-[640px] shadow-panel">
+      {t("leavePlaying")}
+      <button
+        type="button"
+        onClick={() => {
+          const go = leave.go;
+          setLeave(null);
+          go();
+        }}
+        className={noticeAction}
+      >
+        {t("leaveAnyway")}
+      </button>
+      <button type="button" onClick={() => setLeave(null)} className={noticeAction}>
+        {t("leaveStay")}
+      </button>
+    </Notice>
+  ) : null;
+  const timeUpNotice = timeUp ? (
+    <Notice role="status" className="max-w-[640px] shadow-panel">
+      {n("timeUpSaving")}
+    </Notice>
   ) : null;
 
   let footer: React.ReactNode = null;
@@ -530,8 +553,8 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
     const next = nextAfterGroup(sequences, members);
     footer = (
       <StepFooter
-        back={prev !== null ? { label: n("previous"), onClick: () => (busyRef.current ? undefined : goToGuarded(prev)) } : null}
-        // On a group page every question carries its own flag.
+        back={{ label: n("back"), disabled: prev === null, onClick: () => (busyRef.current || prev === null ? undefined : goToGuarded(prev)) }}
+        // On a group page every question carries its own flag; its slot keeps the width.
         secondary={
           group
             ? null
@@ -548,27 +571,23 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
         primary={{
           kind: "button",
           id: "next-item",
-          label: next !== null ? n("next") : n("reviewAndFinish"),
+          label: nextButtonKind(next) === "next" ? n("next") : n("finish"),
           busy,
           busyLabel: t("saving"),
           onClick: () => goToGuarded(next ?? "REVIEW"),
         }}
-        hint={hint}
-        dense
-        note={
-          <div className="flex flex-col gap-2">
-            {failureLine}
-            {leaveLine}
-            <NavStrip
-              entries={entries}
-              current={members}
-              disabled={busy}
-              compact
-              onJump={(s) => goToGuarded(s)}
-              onReview={next !== null ? () => goToGuarded("REVIEW") : null}
-            />
-          </div>
+        exam
+        status={save === "saving" ? t("saving") : save === "saved" ? t("autosaved") : null}
+        notice={
+          failureNotice || leaveNotice || timeUpNotice ? (
+            <>
+              {failureNotice}
+              {leaveNotice}
+              {timeUpNotice}
+            </>
+          ) : null
         }
+        note={<NavStrip entries={entries} current={members} disabled={busy} compact onJump={(s) => goToGuarded(s)} onReview={null} />}
       />
     );
   } else if (state.step === "ITEM" && item && progress) {
@@ -585,10 +604,16 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
           onClick: () => guarded(() => (filling === "PARTIAL" ? setConfirm("partial") : commit())),
         }}
         hint={hint}
+        notice={
+          failureNotice || leaveNotice ? (
+            <>
+              {failureNotice}
+              {leaveNotice}
+            </>
+          ) : null
+        }
         note={
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            {leaveLine}
-            {failureLine ?? <span />}
+          <div className="flex flex-wrap items-center justify-end gap-3">
             <button
               type="button"
               disabled={busy || finishing !== null}
@@ -768,6 +793,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
                         className="tnum mb-4 flex items-center gap-2.5 text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted outline-none"
                       >
                         {t("question", { n: nav ? g.sequence : cur.answered + idx + 1 })}
+                        <PartCounter progress={progressOf.get(g.sequence)} />
                         {nav ? (
                           <button
                             type="button"
@@ -815,6 +841,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
                   className="tnum mb-4 flex items-center gap-2.5 text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted outline-none"
                 >
                   {nav ? t("questionOf", { n: item.sequence, total: entries.length }) : t("question", { n: cur.answered + 1 })}
+                  <PartCounter progress={progressOf.get(item.sequence)} />
                   {flaggedHere ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-sun-soft px-2 py-0.5 text-[11.5px] font-semibold normal-case tracking-normal text-sun">
                       <Flag aria-hidden className="size-3 fill-sun-fill" strokeWidth={2} />

@@ -388,7 +388,10 @@
     "ruleSPEAKING": "Each task has a short thinking time, then recording time. Answer out loud in German."
   },
   "examNav": {
-    "previous": "Previous",
+    "back": "Back",
+    "finish": "Finish",
+    "partsFilled": "{filled} of {total} parts filled",
+    "legendButton": "What the colours mean",
     "next": "Next",
     "flag": "Flag",
     "unflag": "Remove flag",

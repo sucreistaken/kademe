@@ -10,13 +10,14 @@ import { cn } from "@/lib/cn";
 import { FOOTER_SPACE_VAR, footerButtonState, footerSpace, type FooterAction } from "./footer-action";
 import { JourneyProgress } from "./journey-progress";
 
-function Action({ action, variant, compact = false, dense = false }: { action: FooterAction; variant: "primary" | "secondary"; compact?: boolean; dense?: boolean }) {
+function Action({ action, variant, compact = false, exam = false }: { action: FooterAction; variant: "primary" | "secondary"; compact?: boolean; exam?: boolean }) {
   // Compact (a 480px Sheet): the button takes the column's width, no 200px minimum.
-  // Dense (the exam's question bar): one short row, so the question keeps the screen.
+  // Exam (the question bar): one fixed-size row, so each button has a fixed width
+  // (the flag is as wide in "Flag" as in "Flagged") and the bar never changes size.
   const size = compact
     ? "h-12 w-full px-4 text-[16px]"
-    : dense
-      ? "h-11 min-w-[148px] shrink-0 px-5 text-[15px]"
+    : exam
+      ? cn("h-11 shrink-0 px-3 text-[16px] whitespace-nowrap", variant === "primary" ? "w-[176px]" : "w-[168px]")
       : "h-[52px] min-w-[200px] shrink-0 px-6 text-[16px]";
   if (action.kind === "link") {
     return (
@@ -79,11 +80,13 @@ export function StepFooter({
   note,
   placement = "viewport",
   compact = false,
-  dense = false,
+  exam = false,
+  notice,
+  status,
 }: {
   primary?: FooterAction | null;
   secondary?: FooterAction | null;
-  back?: { label: string; onClick?: () => void; href?: string } | null;
+  back?: { label: string; onClick?: () => void; href?: string; disabled?: boolean } | null;
   journey?: { steps: number; current: number; label: string } | null;
   hint?: string | null;
   note?: ReactNode;
@@ -96,11 +99,23 @@ export function StepFooter({
    */
   compact?: boolean;
   /**
-   * The exam's question bar: the way back, the note (the question strip) and
-   * the buttons on one short row; the note wraps under them only when the
-   * window is too narrow. Off by default.
+   * The exam's question bar: ONE row of a fixed height that never wraps. The way
+   * back is a button on the left (shown disabled, not hidden, when there is no
+   * way back), the note (the question strip) fills the middle, and the flag and
+   * the primary button have fixed widths on the right (an invisible slot keeps
+   * the flag's width when there is no flag). No hint and no reasons: what used
+   * to wrap in the bar goes in `notice` and `status`. Off by default.
    */
-  dense?: boolean;
+  exam?: boolean;
+  /**
+   * Warnings (a recording still plays, a save failed, time is up): drawn in a
+   * layer fixed to the top edge of the bar, over the page above it. They add no
+   * height to the bar, so the measured room (--step-footer-space) stays put.
+   * Ignored by the compact layout.
+   */
+  notice?: ReactNode;
+  /** Exam bar only: what the screen reader hears politely (Saving / Saved); never drawn. */
+  status?: string | null;
 }) {
   const bar = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -172,28 +187,41 @@ export function StepFooter({
       </>
     );
   }
-  if (dense) {
+  const noticeLayer = notice ? (
+    <div data-step-footer-notice className="pointer-events-none absolute inset-x-0 bottom-full">
+      <div className="mx-auto flex max-w-[1200px] flex-col items-center gap-2 px-4 pb-3 sm:px-7 [&>*]:pointer-events-auto">{notice}</div>
+    </div>
+  ) : null;
+  if (exam) {
     return (
       <>
         {spacer}
         <div ref={bar} data-step-footer className={placement === "viewport" ? "fixed inset-x-0 bottom-0 z-30" : "sticky bottom-0 z-20"}>
+          {noticeLayer}
           <div className="border-t border-line bg-paper/95 backdrop-blur">
-            <div className="mx-auto flex max-w-[1000px] flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2.5 sm:px-7">
-              {backLink ? <div className="shrink-0">{backLink}</div> : null}
+            {/* 65px of row + the 1px edge above it: 66px at every state. */}
+            <div className="mx-auto flex h-[65px] max-w-[1200px] flex-nowrap items-center gap-x-3 px-4 sm:px-7">
+              {back ? (
+                <button
+                  type="button"
+                  disabled={back.disabled}
+                  onClick={back.onClick}
+                  className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "h-11 w-[112px] shrink-0 px-3 text-[16px] whitespace-nowrap")}
+                >
+                  <ChevronLeft className="size-4" strokeWidth={2} aria-hidden />
+                  {back.label}
+                </button>
+              ) : (
+                <div aria-hidden className="w-[112px] shrink-0" />
+              )}
               <div className="min-w-0 flex-1">{note}</div>
-              <div className="ml-auto flex items-center justify-end gap-x-3">
-                <div aria-live="polite" className="min-w-0 space-y-1">
-                  {reasons.map((r) => (
-                    <p key={r.id} id={r.id} className="max-w-[260px] text-right text-[13.5px] leading-[20px] text-ink">
-                      {r.text}
-                    </p>
-                  ))}
-                  {reasons.length === 0 && hint ? <p className="max-w-[260px] text-right text-[13.5px] leading-[20px] text-ink">{hint}</p> : null}
-                  {working ? <p className="sr-only">{working}</p> : null}
-                </div>
-                {secondary ? <Action action={secondary} variant="secondary" dense /> : null}
-                {primary ? <Action action={primary} variant="primary" dense /> : null}
-              </div>
+              {secondary ? <Action action={secondary} variant="secondary" exam /> : <div aria-hidden className="w-[168px] shrink-0" />}
+              {primary ? <Action action={primary} variant="primary" exam /> : null}
+            </div>
+            {/* The work under way and the save state, said politely and never drawn (the region exists before its words do). */}
+            <div aria-live="polite" className="sr-only">
+              {status ? <p>{status}</p> : null}
+              {working ? <p>{working}</p> : null}
             </div>
           </div>
         </div>
@@ -204,6 +232,7 @@ export function StepFooter({
     <>
       {spacer}
       <div ref={bar} data-step-footer className={placement === "viewport" ? "fixed inset-x-0 bottom-0 z-30" : "sticky bottom-0 z-20"}>
+        {noticeLayer}
         {journey ? <JourneyProgress steps={journey.steps} current={journey.current} label={journey.label} /> : null}
         <div className="border-t border-line bg-paper/95 backdrop-blur">
           <div className="mx-auto flex min-h-[84px] max-w-[1000px] items-center justify-between gap-x-6 px-4 py-4 sm:px-7">

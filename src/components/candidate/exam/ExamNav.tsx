@@ -1,9 +1,10 @@
 "use client";
 
-import type { Ref } from "react";
-import { Flag } from "lucide-react";
+import { useEffect, useRef, type Ref } from "react";
+import { CircleHelp, Flag } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { progressState } from "@/components/candidate/exam/answer-progress";
 import type { NavEntry } from "@/lib/exam/navigation";
 import { useT } from "@/i18n/candidate-client";
@@ -30,6 +31,31 @@ const CELL = {
   EMPTY: "border-line bg-surface text-ink-2 hover:border-line-strong",
 } as const;
 
+/** What the cell colours and the flag mean; the list the "?" popover and the wide strip both show. */
+function Legend({ className, hidden = false }: { className?: string; hidden?: boolean }) {
+  const n = useT("examNav");
+  return (
+    <ul aria-hidden={hidden || undefined} className={cn("flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] text-muted", className)}>
+      <li className="flex items-center gap-1.5">
+        <span className={cn("size-3 rounded-[3px] border", CELL.COMPLETE)} />
+        {n("legendComplete")}
+      </li>
+      <li className="flex items-center gap-1.5">
+        <span className={cn("size-3 rounded-[3px] border", CELL.PARTIAL)} />
+        {n("legendPartial")}
+      </li>
+      <li className="flex items-center gap-1.5">
+        <span className={cn("size-3 rounded-[3px] border", CELL.EMPTY)} />
+        {n("legendEmpty")}
+      </li>
+      <li className="flex items-center gap-1.5">
+        <FlagMark className="size-3.5" />
+        {n("legendFlagged")}
+      </li>
+    </ul>
+  );
+}
+
 export function NavStrip({
   entries,
   current,
@@ -43,61 +69,86 @@ export function NavStrip({
   current: number | readonly number[] | null;
   disabled: boolean;
   onJump: (sequence: number) => void;
-  /** Shown as a link next to the strip; the bar's own button says it on the last item. */
+  /** Shown as a link next to the strip (not in the compact bar: the bar's own button goes to the review step). */
   onReview: (() => void) | null;
-  /** In the one-row question bar: smaller cells, the legend only on wide windows (every cell says its state on hover). */
+  /**
+   * In the one-row question bar: smaller cells on one line that scrolls sideways
+   * when it is too long, the legend behind a "?" button, no review link. The
+   * strip never wraps, so the bar keeps its height.
+   */
   compact?: boolean;
 }) {
   const n = useT("examNav");
   const status = { COMPLETE: n("statusComplete"), PARTIAL: n("statusPartial"), EMPTY: n("statusEmpty") };
+  const list = useRef<HTMLOListElement>(null);
+  const currentKey = Array.isArray(current) ? current.join(",") : String(current);
+  // Keep the cell on screen in view when the strip scrolls (moves the strip only, never the page).
+  useEffect(() => {
+    if (!compact) return;
+    const strip = list.current?.parentElement;
+    const cell = list.current?.querySelector<HTMLElement>('[aria-current="step"]');
+    if (!strip || !cell) return;
+    const stripBox = strip.getBoundingClientRect();
+    const cellBox = cell.getBoundingClientRect();
+    if (cellBox.left < stripBox.left) strip.scrollLeft += cellBox.left - stripBox.left - 8;
+    else if (cellBox.right > stripBox.right) strip.scrollLeft += cellBox.right - stripBox.right + 8;
+  }, [compact, currentKey]);
+  const cells = entries.map((e) => {
+    const state = progressState(e);
+    const here = Array.isArray(current) ? current.includes(e.sequence) : e.sequence === current;
+    const label = [n("cell", { n: e.sequence }), status[state], e.flagged ? n("statusFlagged") : null].filter(Boolean).join(", ");
+    return (
+      <li key={e.sequence} className="shrink-0">
+        <button
+          type="button"
+          aria-label={label}
+          title={label}
+          aria-current={here ? "step" : undefined}
+          disabled={disabled}
+          onClick={() => (here && !Array.isArray(current) ? undefined : onJump(e.sequence))}
+          className={cn(
+            "tnum relative grid place-items-center rounded-[8px] border text-[13px] font-semibold transition-colors disabled:cursor-not-allowed",
+            compact ? "size-7" : "size-8",
+            CELL[state],
+            here && "ring-2 ring-ink ring-offset-2 ring-offset-paper",
+          )}
+        >
+          {e.sequence}
+          {e.flagged ? <FlagMark className="absolute -right-1.5 -top-1.5" /> : null}
+        </button>
+      </li>
+    );
+  });
+  if (compact) {
+    return (
+      <div className="flex min-w-0 items-center gap-2">
+        <nav aria-label={n("stripLabel")} className="min-w-0 overflow-x-auto px-2 py-2">
+          <ol ref={list} className="flex flex-nowrap gap-1">
+            {cells}
+          </ol>
+        </nav>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              aria-label={n("legendButton")}
+              title={n("legendButton")}
+              className="grid size-9 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-subtle hover:text-ink"
+            >
+              <CircleHelp className="size-5" strokeWidth={1.75} aria-hidden />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent side="top" align="end" sideOffset={14} className="w-auto max-w-[min(92vw,420px)] p-4">
+            <Legend className="flex gap-y-2 text-[14px] text-ink" />
+          </PopoverContent>
+        </Popover>
+      </div>
+    );
+  }
   return (
-    <nav aria-label={n("stripLabel")} className={cn("flex flex-wrap items-center gap-y-2", compact ? "gap-x-4" : "gap-x-5")}>
-      <ol className={cn("flex flex-wrap", compact ? "gap-1" : "gap-1.5")}>
-        {entries.map((e) => {
-          const state = progressState(e);
-          const here = Array.isArray(current) ? current.includes(e.sequence) : e.sequence === current;
-          const label = [n("cell", { n: e.sequence }), status[state], e.flagged ? n("statusFlagged") : null].filter(Boolean).join(", ");
-          return (
-            <li key={e.sequence}>
-              <button
-                type="button"
-                aria-label={label}
-                title={label}
-                aria-current={here ? "step" : undefined}
-                disabled={disabled}
-                onClick={() => (here && !Array.isArray(current) ? undefined : onJump(e.sequence))}
-                className={cn(
-                  "tnum relative grid place-items-center rounded-[8px] border text-[13px] font-semibold transition-colors disabled:cursor-not-allowed",
-                  compact ? "size-7" : "size-8",
-                  CELL[state],
-                  here && "ring-2 ring-ink ring-offset-2 ring-offset-paper",
-                )}
-              >
-                {e.sequence}
-                {e.flagged ? <FlagMark className="absolute -right-1.5 -top-1.5" /> : null}
-              </button>
-            </li>
-          );
-        })}
-      </ol>
-      <ul aria-hidden className={cn("flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] text-muted", compact ? "hidden xl:flex" : "flex")}>
-        <li className="flex items-center gap-1.5">
-          <span className={cn("size-3 rounded-[3px] border", CELL.COMPLETE)} />
-          {n("legendComplete")}
-        </li>
-        <li className="flex items-center gap-1.5">
-          <span className={cn("size-3 rounded-[3px] border", CELL.PARTIAL)} />
-          {n("legendPartial")}
-        </li>
-        <li className="flex items-center gap-1.5">
-          <span className={cn("size-3 rounded-[3px] border", CELL.EMPTY)} />
-          {n("legendEmpty")}
-        </li>
-        <li className="flex items-center gap-1.5">
-          <FlagMark className="size-3.5" />
-          {n("legendFlagged")}
-        </li>
-      </ul>
+    <nav aria-label={n("stripLabel")} className="flex flex-wrap items-center gap-x-5 gap-y-2">
+      <ol className="flex flex-wrap gap-1.5">{cells}</ol>
+      <Legend hidden className="flex" />
       {onReview ? (
         <button
           type="button"

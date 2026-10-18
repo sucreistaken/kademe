@@ -388,7 +388,10 @@
     "ruleSPEAKING": "Her görevde önce kısa bir düşünme süresi, sonra kayıt süresi var. Cevabınızı Almanca ve yüksek sesle verin."
   },
   "examNav": {
-    "previous": "Önceki",
+    "back": "Geri",
+    "finish": "Bitir",
+    "partsFilled": "{total} yerden {filled} tanesi dolu",
+    "legendButton": "Renklerin anlamı",
     "next": "Sonraki",
     "flag": "İşaretle",
     "unflag": "İşareti kaldır",
