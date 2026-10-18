@@ -58,6 +58,7 @@ export const ITEM_PROBLEM_CODES = [
   "WORDBANK_FEW_DISTRACTORS",
   "WORDBANK_DISTRACTOR_IS_ANSWER",
   "WORDBANK_DISTRACTOR_REPEAT",
+  "WORDBANK_ANSWER_VARIANT",
   "MATCH_FEW_ROWS",
   "MATCH_FEW_TARGETS",
   "MATCH_ROW_NO_TARGET",
@@ -234,8 +235,11 @@ export function itemProblems(item: ValidatableItem): ItemProblem[] {
  * Cloze: one answer per gap and exactly four choices that differ even when
  * read as the scorer reads them (`typedMatches`). Word bank: one whole-word
  * answer per gap, no choices, at least three whole-word distractors, none
- * equal to an answer or to another distractor. Two gaps may share an answer:
- * the pool then holds that word twice (see `wordBankWords`).
+ * equal to an answer or to another distractor (all read as the scorer reads
+ * them, so case, spacing and ß do not make a new word: a pool word shown in
+ * two spellings would mark itself as an answer). Two gaps may share an answer
+ * only when it is spelled exactly alike: the pool then holds that word twice,
+ * as two identical chips (see `wordBankWords`).
  */
 function textGapProblems(
   kind: ReturnType<typeof textGapKindOf>,
@@ -268,6 +272,10 @@ function textGapProblems(
   const taken = distractors.filter((d) => typedMatches(d, answers));
   if (taken.length) add("WORDBANK_DISTRACTOR_IS_ANSWER", { ids: taken });
   if (distractors.some((d, j) => distractors.some((e, k) => k > j && typedMatches(d, [e])))) add("WORDBANK_DISTRACTOR_REPEAT");
+  // The pool words of the answers (first accepted per gap): equal for the scorer but spelled differently is refused.
+  const poolAnswers = content.gaps.map((g) => ({ id: g.id, word: (key.answers[g.id]?.[0] ?? "").trim() })).filter((a) => a.word);
+  const variants = poolAnswers.filter((a, j) => poolAnswers.some((b, k) => k !== j && b.word !== a.word && typedMatches(a.word, [b.word])));
+  if (variants.length) add("WORDBANK_ANSWER_VARIANT", { ids: variants.map((a) => a.id) });
 }
 
 const list = (p: ItemProblem) => (p.ids ?? []).join(",");
@@ -344,6 +352,8 @@ export function problemText(p: ItemProblem): string {
       return `word bank distractors equal an answer: ${list(p)}`;
     case "WORDBANK_DISTRACTOR_REPEAT":
       return "word bank distractors repeat";
+    case "WORDBANK_ANSWER_VARIANT":
+      return `word bank answers differ only in spelling or case: ${list(p)}`;
     case "MATCH_FEW_ROWS":
       return "matching needs at least two rows";
     case "MATCH_FEW_TARGETS":

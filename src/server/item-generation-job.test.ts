@@ -45,3 +45,16 @@ describe("generateItems", () => {
     expect(rows.map((x) => [x.status, x.origin])).toEqual([["DRAFT", "AI"], ["DRAFT", "AI"]]);
   });
 });
+
+describe("few-shot examples", () => {
+  it("never takes a C-test, cloze or word-bank text as an example", async () => {
+    const { PgDialect } = await import("drizzle-orm/pg-core");
+    fake.results = [[], [], [{ id: "i1" }, { id: "i2" }]];
+    await generateItems("o1", "u1", { section: "GRAMMAR", level: "B1", itemType: "GAP_FILL", count: 2, withStimulus: false });
+    // The first where() is the examples query.
+    const where = fake.calls.find(([op]) => op === "where")![1][0];
+    const q = new PgDialect().sqlToQuery(where as never);
+    expect(q.sql).toMatch(/"skill_tag" not in \(\$\d+, \$\d+, \$\d+\)/);
+    expect(q.params).toEqual(expect.arrayContaining(["grammar.ctest", "grammar.cloze", "grammar.wordbank", "APPROVED", "GAP_FILL"]));
+  });
+});

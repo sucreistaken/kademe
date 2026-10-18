@@ -149,8 +149,18 @@ describe("validateItem: MC cloze and word bank (spec 2026-10-18)", () => {
     expect(codes(bank(["habe", "in", "zu", "Zu"]))).toEqual(["WORDBANK_DISTRACTOR_REPEAT"]);
   });
 
-  it("word bank: two gaps may share an answer (the pool then holds it twice)", () => {
+  it("word bank: two gaps may share an answer spelled exactly alike (the pool then holds it twice)", () => {
     expect(itemProblems(bank(["habe", "in", "zu"], { g1: ["nach"], g2: ["nach"] }))).toEqual([]);
+  });
+
+  it("word bank: no pool word may appear in two forms, which would give the answers away", () => {
+    // Answers equal for the scorer but spelled differently: "Der" and "der" side by side mark both as answers.
+    expect(itemProblems(bank(["habe", "in", "zu"], { g1: ["Der"], g2: ["der"] }))).toEqual([{ code: "WORDBANK_ANSWER_VARIANT", ids: ["g1", "g2"] }]);
+    expect(codes(bank(["habe", "in", "zu"], { g1: ["Straße"], g2: ["Strasse"] }))).toEqual(["WORDBANK_ANSWER_VARIANT"]);
+    // A distractor in another case than an answer, or two distractors in two cases.
+    expect(codes(bank(["habe", "in", "NACH"]))).toEqual(["WORDBANK_DISTRACTOR_IS_ANSWER"]);
+    expect(codes(bank(["habe", "In", "in"]))).toEqual(["WORDBANK_DISTRACTOR_REPEAT"]);
+    expect(validateItem(bank(["habe", "in", "zu"], { g1: ["Der"], g2: ["der"] }))).toEqual(["word bank answers differ only in spelling or case: g1,g2"]);
   });
 
   it("without the skill tag the same items keep the plain gap rules (C-tests and old items are unchanged)", () => {

@@ -192,8 +192,11 @@ export const isTextGap = (item: { skillTag: string }): boolean => textGapKindOf(
 /**
  * The words of a word bank's pool, unshuffled: the first accepted answer of
  * every gap in gap order, then the key's distractors. Empty entries are left
- * out. Two gaps with the same answer put that word in twice, so each pool word
- * fills at most one gap and both gaps can still be filled.
+ * out. Two gaps with the same answer put that word in twice (two identical
+ * chips), so each pool word fills at most one gap and both gaps can still be
+ * filled. Validation allows this only for an exactly equal spelling; answers
+ * that differ only in case or spelling, and distractors equal to an answer or
+ * to each other, are refused, since a word shown in two forms gives itself away.
  */
 export function wordBankWords(gapIds: string[], answers: Record<string, string[]>, distractors: string[] = []): string[] {
   return [...gapIds.map((g) => answers[g]?.[0] ?? ""), ...distractors].filter((w) => w.trim());

@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, notInArray } from "drizzle-orm";
 import { db } from "@/db";
 import { items, stimuli } from "@/db/schema";
 import { callJson } from "@/lib/ai-runs";
@@ -11,6 +11,7 @@ import {
   parseGeneratedBatch,
   type GenerationSpec,
 } from "@/lib/exam/item-generation";
+import { TEXT_GAP_SKILL_TAGS } from "@/lib/exam/types";
 
 /**
  * AI item generation for the bank. The model writes drafts only: every row is
@@ -19,11 +20,22 @@ import {
  * invented fallback item would be worse than none.
  */
 export async function generateItems(orgId: string, userId: string, spec: GenerationSpec) {
-  // Imitate what this school already approved, and avoid its topics.
+  // Imitate what this school already approved, and avoid its topics. Texts
+  // (C-test, cloze, word bank) are hand-written and never an example: the
+  // model would copy a whole text and its distractors (spec 2026-10-18).
   const examples = await db
     .select({ prompt: items.prompt, content: items.content, key: items.answerKey, rubric: items.rubric })
     .from(items)
-    .where(and(eq(items.orgId, orgId), eq(items.section, spec.section), eq(items.level, spec.level), eq(items.type, spec.itemType), eq(items.status, "APPROVED")))
+    .where(
+      and(
+        eq(items.orgId, orgId),
+        eq(items.section, spec.section),
+        eq(items.level, spec.level),
+        eq(items.type, spec.itemType),
+        eq(items.status, "APPROVED"),
+        notInArray(items.skillTag, Object.values(TEXT_GAP_SKILL_TAGS)),
+      ),
+    )
     .orderBy(desc(items.createdAt))
     .limit(MAX_FEW_SHOT);
   const topics = await db

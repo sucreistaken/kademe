@@ -845,6 +845,7 @@
     "p_WORDBANK_FEW_DISTRACTORS": "Kelime havuzunda en az üç çeldirici olmalı.",
     "p_WORDBANK_DISTRACTOR_IS_ANSWER": "Bir çeldirici bir boşluğun cevabıyla aynı ({ids}).",
     "p_WORDBANK_DISTRACTOR_REPEAT": "Kelime havuzunda iki çeldirici aynı.",
+    "p_WORDBANK_ANSWER_VARIANT": "Kelime havuzunda iki boşluğun cevabı yalnızca büyük/küçük harf ya da yazımla ayrılıyor ({ids}); aynı kelimeyse aynı yazılmalı.",
     "p_MATCH_FEW_ROWS": "En az iki satır gerekli.",
     "p_MATCH_FEW_TARGETS": "Hedef sayısı en az satır sayısı kadar olmalı.",
     "p_MATCH_ROW_NO_TARGET": "{n}. satırın eşi yok.",
