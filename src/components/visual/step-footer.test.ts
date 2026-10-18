@@ -1,7 +1,7 @@
 import { createElement, type ComponentProps } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { ABOVE_FOOTER, noticeSpace } from "./footer-action";
+import { ABOVE_FOOTER, EXAM_BAR_WIDTH, noticeSpace } from "./footer-action";
 import { frozenMarkup } from "./frozen-markup";
 import { StepFooter } from "./step-footer";
 
@@ -76,6 +76,21 @@ describe("StepFooter's exam bar (one fixed row)", () => {
     const without = html({ exam: true, primary: next, back: { label: "Back", onClick: noop } });
     expect(withFlag).toContain("w-[168px]");
     expect(without).toContain('<div aria-hidden="true" class="w-[168px] shrink-0"></div>');
+  });
+
+  it("draws its buttons at the widths EXAM_BAR_WIDTH names", () => {
+    const out = html({ exam: true, primary: next, secondary: flag, back: { label: "Back", onClick: noop } });
+    for (const w of Object.values(EXAM_BAR_WIDTH)) expect(out).toContain(`w-[${w}px]`);
+  });
+
+  it("shows only the spinner while the primary button works and says the work to screen readers", () => {
+    const out = html({ exam: true, primary: { ...next, busy: true, busyLabel: "Wird gespeichert" }, secondary: flag });
+    const button = out.match(/<button[^>]*id="next-item"[^>]*>([^]*?)<\/button>/)![1];
+    expect(button).toContain('data-slot="spinner"');
+    expect(button).toContain('<span class="sr-only">Wird gespeichert</span>');
+    expect(button.replace(/<[^>]*>[^<]*<\/span>/, "")).not.toContain("Wird gespeichert");
+    // Outside the exam bar a working button keeps its visible label.
+    expect(html({ primary: { ...next, busy: true, busyLabel: "Saving" } })).toMatch(/<\/svg>Saving<\/button>/);
   });
 
   it("draws no hint or reason inside the bar, only a screen-reader status", () => {

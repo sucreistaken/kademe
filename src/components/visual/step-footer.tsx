@@ -14,6 +14,8 @@ function Action({ action, variant, compact = false, exam = false }: { action: Fo
   // Compact (a 480px Sheet): the button takes the column's width, no 200px minimum.
   // Exam (the question bar): one fixed-size row, so each button has a fixed width
   // (the flag is as wide in "Flag" as in "Flagged") and the bar never changes size.
+  // The widths are EXAM_BAR_WIDTH; while it works, the button shows only its
+  // spinner and says the work to screen readers, so a long "saving" never overflows.
   const size = compact
     ? "h-12 w-full px-4 text-[16px]"
     : exam
@@ -53,7 +55,7 @@ function Action({ action, variant, compact = false, exam = false }: { action: Fo
       onClick={state.mode === "ready" ? action.onClick : undefined}
     >
       {state.mode === "busy" ? <Spinner aria-hidden="true" className="size-4" role={undefined} aria-label={undefined} /> : action.icon}
-      {state.label}
+      {exam && state.mode === "busy" ? <span className="sr-only">{state.label}</span> : state.label}
     </button>
   );
 }

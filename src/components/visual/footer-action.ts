@@ -61,3 +61,24 @@ export function noticeSpace(measured: number | null | undefined): string {
  * save failure never hides what the student still has to reach.
  */
 export const ABOVE_FOOTER = `calc(var(${FOOTER_SPACE_VAR}, 112px) + var(${NOTICE_SPACE_VAR}, 0px))`;
+
+/**
+ * The exam bar's fixed button widths in px (the bar never changes size; the
+ * classes in step-footer.tsx spell the same numbers). Back and the flag carry a
+ * 16px icon and an 8px gap; every button has 12px padding and a 2px border on
+ * each side.
+ */
+export const EXAM_BAR_WIDTH = { back: 112, flag: 168, primary: 176 } as const;
+
+/**
+ * At most this many px a label character takes in the bar (Nunito 16px bold and
+ * extra bold, Noto Sans Arabic for Arabic). Measured average on the five
+ * locales' bar labels: at most about 9.1px; a single W is about 18px, so the
+ * budget is an average, not a worst case for every letter.
+ */
+export const EXAM_BAR_CHAR_PX = 10;
+
+/** How many characters a label of the exam bar may have to fit its fixed button. */
+export function examBarLabelBudget(width: number, icon: boolean): number {
+  return Math.floor((width - 2 * (12 + 2) - (icon ? 16 + 8 : 0)) / EXAM_BAR_CHAR_PX);
+}
