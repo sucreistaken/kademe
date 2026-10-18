@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { section, type BlueprintConfig } from "./blueprint";
-import { simulateFixedForm, textGuess } from "./form-simulation";
+import { gateFailures, simulateFixedForm, textGuess, type FormAccuracy } from "./form-simulation";
 import { examTemplateByKey } from "./templates";
 import { CEFR_LEVELS } from "./types";
 
@@ -83,5 +83,46 @@ describe("simulateFixedForm with guessing (spec 2026-10-18)", () => {
     const a = simulateFixedForm(texts, "PLACEMENT", o);
     expect(simulateFixedForm(texts, "PLACEMENT", o)).toEqual(a);
     for (const l of CEFR_LEVELS) expect(a[l].withinOne).toBeGreaterThanOrEqual(a[l].exact);
+  });
+});
+
+describe("text weight, the floor in the estimate and the gate (spec 2026-10-18)", () => {
+  const small = { ...opts, runs: 200, cTestWeight: undefined };
+  const cloze = (levels: readonly (typeof CEFR_LEVELS)[number][]) =>
+    grammarOnly(section("GRAMMAR", 30, { distribution: NONE, texts: levels.map((level) => ({ level, kind: "CLOZE" as const })) }));
+
+  it("weighs a text as the engine does: gaps over four where the section weighs texts, else 1", () => {
+    const sixCTests = grammarOnly(section("GRAMMAR", 30, { distribution: NONE, cTestLevels: [...CEFR_LEVELS] }));
+    expect(simulateFixedForm(sixCTests, "PLACEMENT", small)).toEqual(simulateFixedForm(sixCTests, "PLACEMENT", { ...small, cTestWeight: 5 }));
+    const elevenGaps = { ...small, textGaps: { CLOZE: 11 } };
+    expect(simulateFixedForm(cloze(CEFR_LEVELS), "PLACEMENT", elevenGaps)).toEqual(simulateFixedForm(cloze(CEFR_LEVELS), "PLACEMENT", { ...elevenGaps, cTestWeight: 2.75 }));
+    // The opening C-test of an older form (cTest, no cTestLevels) weighs 1.
+    const opening = grammarOnly(section("GRAMMAR", 17, { distribution: { kind: "ABSOLUTE", perLevel: { A1: 3, A2: 3, B1: 3, B2: 3, C1: 3, C2: 3 } }, cTest: true }));
+    expect(simulateFixedForm(opening, "PLACEMENT", small)).toEqual(simulateFixedForm(opening, "PLACEMENT", { ...small, cTestWeight: 1 }));
+    expect(simulateFixedForm(opening, "PLACEMENT", small)).not.toEqual(simulateFixedForm(opening, "PLACEMENT", { ...small, cTestWeight: 5 }));
+  });
+
+  it("an estimate without the cloze floor places guessing A1 students higher", () => {
+    const o = { ...small, textGaps: { CLOZE: 11 } };
+    const form = cloze(["A2", "B1", "B2"]);
+    const floor = simulateFixedForm(form, "PLACEMENT", o);
+    const raw = simulateFixedForm(form, "PLACEMENT", { ...o, estimateGuess: false });
+    expect(raw.A1.over).toBeGreaterThan(floor.A1.over + 0.2);
+    // A C-test has no floor: the option changes nothing.
+    const cTests = grammarOnly(section("GRAMMAR", 15, { distribution: NONE, cTestLevels: ["A2", "B1", "B2"] }));
+    expect(simulateFixedForm(cTests, "PLACEMENT", { ...small, estimateGuess: false })).toEqual(simulateFixedForm(cTests, "PLACEMENT", small));
+  });
+
+  it("gateFailures: exact 2 points, within one 1 point below the MC form at A1-C1; A1 over 5 points above the C-tests", () => {
+    const flat = (exact: number, withinOne: number, over: number): FormAccuracy =>
+      Object.fromEntries(CEFR_LEVELS.map((l) => [l, { exact, withinOne, over }])) as FormAccuracy;
+    const mc = flat(0.6, 0.99, 0.3);
+    const cTest = flat(0.6, 0.99, 0.3);
+    expect(gateFailures(mc, cTest, flat(0.58, 0.98, 0.35))).toEqual([]);
+    expect(gateFailures(mc, cTest, flat(0.57, 0.98, 0.35))).toEqual(["A1", "A2", "B1", "B2", "C1"].map((l) => `${l} exact 57.00 < 58.00`));
+    expect(gateFailures(mc, cTest, flat(0.6, 0.97, 0.3))).toHaveLength(5);
+    expect(gateFailures(mc, cTest, flat(0.6, 0.99, 0.36))).toEqual(["A1 over 36.00 > 35.00"]);
+    // C2 is not gated.
+    expect(gateFailures(mc, cTest, { ...flat(0.6, 0.99, 0.3), C2: { exact: 0, withinOne: 0.5, over: 0 } })).toEqual([]);
   });
 });
