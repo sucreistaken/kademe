@@ -197,6 +197,16 @@ export default async function BankItemPage({ params, searchParams }: { params: P
               {item.rubric.register ? <p className="mt-1 text-[12.5px] text-vault-label">{item.rubric.register}</p> : null}
             </div>
           ) : null}
+          {item.rubric?.studentPoints?.length ? (
+            <div>
+              <div className="text-[11.5px] text-vault-label">{t("bankTools.studentPoints")}</div>
+              <ul lang="de" className="mt-1 list-disc pl-5 text-[13.5px]">
+                {item.rubric.studentPoints.map((p, i) => (
+                  <li key={i}>{p}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           <div className="tnum grid grid-cols-2 gap-2 text-[12.5px]">
             <div>
               <div className="text-vault-label">{t("bankTools.difficulty")}</div>

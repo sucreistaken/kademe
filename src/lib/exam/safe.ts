@@ -7,7 +7,9 @@ import { textGapKindOf, type ItemAnswer, type ItemSnapshot, type Presentation, t
  * It is a whitelist, built field by field per item type, so a new column on
  * `items` (a key, a rubric, a difficulty) can never ride along by accident.
  * Keys, rubrics, difficulty, skill tags, item and stimulus ids, and the
- * listening transcript are never copied. The student's own draft answer is.
+ * listening transcript are never copied. The student's own draft answer is,
+ * and so are a writing or speaking task's `studentPoints`, the one rubric
+ * field written for the student.
  *
  * `candidateSafe` in `src/lib/candidate-safe.ts` still strips known internal
  * field names from every candidate response as a second line of defence.
@@ -36,8 +38,8 @@ export type CandidateContent =
       right: Array<{ id: string; text: string }>;
     }
   | { kind: "SHORT_TEXT"; maxChars: number }
-  | { kind: "WRITING"; minWords: number; maxWords: number }
-  | { kind: "SPEAKING"; thinkSeconds: number; answerSeconds: number; maxTakes: number };
+  | { kind: "WRITING"; minWords: number; maxWords: number; studentPoints?: string[] }
+  | { kind: "SPEAKING"; thinkSeconds: number; answerSeconds: number; maxTakes: number; studentPoints?: string[] };
 
 export type CandidateStimulus =
   | { kind: "READING"; title: string; text: string }
@@ -125,6 +127,17 @@ function ordered<T extends { id: string }>(xs: T[], order: string[] | undefined)
   return out;
 }
 
+/**
+ * Writing and speaking: the rubric's `studentPoints` and nothing else from the
+ * rubric (its content points can hold answers and grader notes). Copied as
+ * plain strings, and only when there is at least one.
+ */
+function studentPointsOf(snapshot: ItemSnapshot): { studentPoints: string[] } | Record<string, never> {
+  if (snapshot.type !== "WRITING_PROMPT" && snapshot.type !== "SPEAKING_PROMPT") return {};
+  const points = (snapshot.rubric?.studentPoints ?? []).filter((p): p is string => typeof p === "string" && p.trim() !== "").map((p) => p.trim());
+  return points.length ? { studentPoints: points } : {};
+}
+
 const pickAnswer = (a: ItemAnswer | null, al: (id: string) => string): ItemAnswer | null =>
   a
     ? {
@@ -196,7 +209,7 @@ export function toCandidateItem(
       content = { kind: "SHORT_TEXT", maxChars: c.maxChars };
       break;
     case "WRITING":
-      content = { kind: "WRITING", minWords: c.minWords, maxWords: c.maxWords };
+      content = { kind: "WRITING", minWords: c.minWords, maxWords: c.maxWords, ...studentPointsOf(snapshot) };
       break;
     case "SPEAKING":
       content = {
@@ -204,6 +217,7 @@ export function toCandidateItem(
         thinkSeconds: c.thinkSeconds,
         answerSeconds: c.answerSeconds,
         maxTakes: c.maxTakes,
+        ...studentPointsOf(snapshot),
       };
       break;
   }

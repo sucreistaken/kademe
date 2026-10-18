@@ -724,6 +724,7 @@ function writingTask(
   words: [number, number],
   prompt: string,
   contentPoints: string[],
+  studentPoints: string[],
   register: string | undefined,
   explanation: string,
 ): SeedItem {
@@ -736,7 +737,7 @@ function writingTask(
     prompt,
     content: { kind: "WRITING", minWords: words[0], maxWords: words[1] },
     key: { kind: "NONE" },
-    rubric: register ? { contentPoints, register } : { contentPoints },
+    rubric: register ? { contentPoints, register, studentPoints } : { contentPoints, studentPoints },
     explanation,
   };
 }
@@ -763,6 +764,14 @@ const writingItems: SeedItem[] = [
       "4. Trainingszeit: Abend",
       "5. Bezahlung: Karte",
     ],
+    [
+      "Familienname",
+      "Straße und Hausnummer",
+      "Postleitzahl und Wohnort",
+      "Trainingszeit",
+      "Bezahlung",
+      "immer die Nummer und die Angabe schreiben",
+    ],
     "Formular (Stichworte)",
     "Formular mit fünf Feldern (Goethe A1, Schreiben Teil 1). Je Feld ein Punkt; kleine Rechtschreibfehler, die das Verständnis nicht stören, sind kein Fehler."),
   writingTask("form", "MID", FORM_WORDS,
@@ -781,6 +790,14 @@ const writingItems: SeedItem[] = [
       "4. Kurszeit: Abend",
       "5. Wie oft pro Woche: zweimal",
     ],
+    [
+      "Vorname und Familienname",
+      "Telefonnummer",
+      "Postleitzahl und Wohnort",
+      "Kurszeit",
+      "wie oft pro Woche",
+      "immer die Nummer und die Angabe schreiben",
+    ],
     "Formular (Stichworte)",
     "Formular mit fünf Feldern (Goethe A1, Schreiben Teil 1). Je Feld ein Punkt. Die Straße wird nicht gefragt; wer sie statt des Wohnorts einträgt, bekommt für Feld 3 keinen Punkt."),
   writingTask("message", "EASY", MESSAGE_WORDS,
@@ -794,6 +811,12 @@ const writingItems: SeedItem[] = [
       "Information: kommt erst später (um 20 Uhr), mit einem einfachen Grund",
       "Frage, was man mitbringen soll",
       "Anrede und Gruß (Hallo Leon ... / Viele Grüße)",
+    ],
+    [
+      "für die Einladung danken",
+      "sagen, dass Sie später kommen, und warum",
+      "fragen, was Sie mitbringen sollen",
+      "Anrede und Gruß",
     ],
     INFORMAL,
     MESSAGE_NOTE),
@@ -809,6 +832,12 @@ const writingItems: SeedItem[] = [
       "Frage nach den Hausaufgaben",
       "passende Anrede und Gruß mit Sie (Liebe Frau Wagner / Sehr geehrte Frau Wagner ... Viele Grüße)",
     ],
+    [
+      "sagen, dass Sie morgen nicht kommen",
+      "einen Grund nennen",
+      "nach den Hausaufgaben fragen",
+      "Anrede und Gruß",
+    ],
     FORMAL,
     MESSAGE_NOTE),
   writingTask("message", "MID", MESSAGE_WORDS,
@@ -823,6 +852,12 @@ const writingItems: SeedItem[] = [
       "Arbeitszeit (Tage oder Uhrzeit)",
       "Anrede und Gruß (Hallo Nina ... / Liebe Grüße)",
     ],
+    [
+      "wo Sie jetzt arbeiten",
+      "was Sie bei der Arbeit machen",
+      "wann Sie arbeiten",
+      "Anrede und Gruß",
+    ],
     INFORMAL,
     MESSAGE_NOTE),
   writingTask("email", "HARD", MESSAGE_WORDS,
@@ -836,6 +871,12 @@ const writingItems: SeedItem[] = [
       "Tage oder Uhrzeiten, an denen man arbeiten kann",
       "Frage nach dem Lohn pro Stunde",
       "formelle Anrede und Gruß (Sehr geehrte Damen und Herren ... Mit freundlichen Grüßen)",
+    ],
+    [
+      "wer Sie sind und was Sie jetzt machen",
+      "wann Sie arbeiten können",
+      "nach dem Lohn pro Stunde fragen",
+      "Anrede und Gruß",
     ],
     FORMAL,
     MESSAGE_NOTE),
@@ -856,6 +897,7 @@ function speakingTask(
   timing: Timing,
   prompt: string,
   contentPoints: string[],
+  studentPoints: string[],
   register?: string,
 ): SeedItem {
   return {
@@ -867,7 +909,7 @@ function speakingTask(
     prompt,
     content: { kind: "SPEAKING", ...timing },
     key: { kind: "NONE" },
-    rubric: register ? { contentPoints, register } : { contentPoints },
+    rubric: register ? { contentPoints, register, studentPoints } : { contentPoints, studentPoints },
     explanation: SPEAKING_NOTE,
   };
 }
@@ -882,6 +924,13 @@ const speakingItems: SeedItem[] = [
       "Sprachen, die man spricht",
       "Beruf, Arbeit, Schule oder Ausbildung (z. B. Ich bin Schülerin.)",
       "mindestens ein Hobby",
+    ],
+    [
+      "Name",
+      "Wohnort",
+      "Sprachen",
+      "Beruf, Arbeit oder Schule",
+      "Hobbys",
     ]),
   speakingTask("question", "EASY", SHORT,
     "Thema: Arbeit. Auf Ihrer Karte steht: \"Mittagspause?\"\n\n" +
@@ -891,6 +940,10 @@ const speakingItems: SeedItem[] = [
       "korrekte Frageform (W-Frage oder Verb an Position 1)",
       "eine passende kurze Antwort",
       "du oder Sie: unter Kollegen ist beides richtig",
+    ],
+    [
+      "eine Frage mit dem Wort auf der Karte stellen",
+      "selbst auf die Frage antworten",
     ]),
   speakingTask("question", "MID", SHORT,
     "Thema: Einkaufen. Auf Ihrer Karte steht: \"Supermarkt?\"\n\n" +
@@ -899,6 +952,10 @@ const speakingItems: SeedItem[] = [
       "eine verständliche Frage zum Wort \"Supermarkt\" (z. B. Wo ist hier ein Supermarkt? Wann gehst du in den Supermarkt?)",
       "korrekte Frageform (W-Frage oder Verb an Position 1)",
       "eine passende kurze Antwort",
+    ],
+    [
+      "eine Frage mit dem Wort auf der Karte stellen",
+      "selbst auf die Frage antworten",
     ],
     INFORMAL),
   speakingTask("request", "MID", SHORT,
@@ -909,6 +966,10 @@ const speakingItems: SeedItem[] = [
       "Gegenstand genannt (Kuli)",
       "Dank",
     ],
+    [
+      "höflich um den Kuli bitten",
+      "sich bedanken",
+    ],
     FORMAL),
   speakingTask("request", "HARD", SHORT,
     "Ihre Chefin, Frau Lang, sagt: \"Können Sie morgen schon um sieben Uhr kommen? Wir haben viel Arbeit.\" Sie können morgen nicht um sieben Uhr kommen.\n\n" +
@@ -917,6 +978,11 @@ const speakingItems: SeedItem[] = [
       "höfliche Absage (z. B. Das tut mir leid, ich kann nicht ...)",
       "einfacher Grund",
       "Vorschlag (andere Uhrzeit oder anderer Tag)",
+    ],
+    [
+      "höflich absagen",
+      "einen Grund nennen",
+      "einen Vorschlag machen",
     ],
     FORMAL),
   speakingTask("description", "HARD", LONGER,
@@ -929,6 +995,11 @@ const speakingItems: SeedItem[] = [
       "Tätigkeiten am Vormittag und am Nachmittag",
       "Tätigkeiten am Abend",
       "einfache Zeitangaben und Satzverbindungen (dann, danach, um ... Uhr)",
+    ],
+    [
+      "wann Sie aufstehen",
+      "was Sie am Vormittag und am Nachmittag machen",
+      "was Sie am Abend machen",
     ]),
 ];
 

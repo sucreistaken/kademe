@@ -15,7 +15,10 @@
  *
  * --sync-seed also brings the starter items an org already has up to the
  * current seed: answer key (accepted variants), difficulty (level + within),
- * explanation and rubric; and the body of READING texts. Matched by seed key,
+ * explanation and rubric (the grader's content points and, on writing and
+ * speaking tasks, the student points shown under the task; the seed key does
+ * not cover the rubric, so new student points reach existing rows only this
+ * way); and the body of READING texts. Matched by seed key,
  * origin SEED only. Never touched: TEACHER/AI items, starter items the school
  * edited (an audit row bank.edit), reading texts read by such an item, and the
  * status (RETIRED/REJECTED stay). Listening scripts are never changed (the

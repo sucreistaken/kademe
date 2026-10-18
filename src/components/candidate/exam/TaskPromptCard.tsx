@@ -68,12 +68,38 @@ function Segment({ seg, heading, ui }: { seg: TaskSegment; heading: string | nul
 }
 
 /**
+ * "Cover these points": the item's own student points, German phrases naming
+ * what to address. The label is the interface; the points stay German. Two
+ * columns from medium width keep the task screen short.
+ */
+function CoverPoints({ points, ui }: { points: string[]; ui: UiText }) {
+  const t = useT("examItems");
+  return (
+    <div className="rounded-[12px] border border-line bg-surface px-5 py-3">
+      <div {...ui} className={LABEL}>
+        {t("coverPoints")}
+      </div>
+      <ul
+        lang="de"
+        className={`mt-1.5 grid list-disc gap-x-8 gap-y-1 ps-5 text-[16px] leading-[1.5] marker:text-muted ${points.length > 2 ? "md:grid-cols-2" : ""}`}
+      >
+        {points.map((p, i) => (
+          <li key={i}>{p}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/**
  * A speaking or writing task laid out for the candidate: the topic as a small
  * label over a heading, the prompt card as a box of its own, the situation in a
  * soft box and the task lines as a bulleted list under "Göreviniz". The text is
- * the prompt's own, only arranged; nothing from the key or rubric is added.
+ * the prompt's own, only arranged. Under it, when the item has them, the
+ * student points (`studentPoints`, the one rubric field written for the
+ * student); nothing else from the key or rubric is added.
  */
-export function TaskPromptCard({ text, id }: { text: string; id?: string }) {
+export function TaskPromptCard({ text, id, points }: { text: string; id?: string; points?: string[] }) {
   const t = useT("examItems");
   // The card is German (left to right); the "Your task" label is the interface and keeps the student's language and direction.
   const uiLocale = useLocale();
@@ -98,6 +124,7 @@ export function TaskPromptCard({ text, id }: { text: string; id?: string }) {
       {segments.map((seg, i) => (
         <Segment key={i} seg={seg} heading={i === firstTasks ? t("taskHeading") : null} ui={ui} />
       ))}
+      {points && points.length > 0 ? <CoverPoints points={points} ui={ui} /> : null}
     </div>
   );
 }

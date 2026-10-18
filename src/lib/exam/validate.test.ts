@@ -84,6 +84,31 @@ describe("validateItem: the other new checks", () => {
   });
 });
 
+describe("validateItem: points shown to the student", () => {
+  const speaking = (studentPoints?: string[]): ValidatableItem => ({
+    type: "SPEAKING_PROMPT",
+    prompt: "Bitten Sie Herrn Braun um den Kuli.",
+    content: { kind: "SPEAKING", thinkSeconds: 20, answerSeconds: 30, maxTakes: 2 },
+    key: { kind: "NONE" },
+    rubric: { contentPoints: ["höfliche Bitte"], ...(studentPoints ? { studentPoints } : {}) },
+  });
+
+  it("are optional, and up to six short ones pass", () => {
+    expect(codes(speaking())).toEqual([]);
+    expect(codes(speaking(["höflich um den Kuli bitten", "sich bedanken"]))).toEqual([]);
+    expect(codes(speaking(["a", "b", "c", "d", "e", "x".repeat(80)]))).toEqual([]);
+  });
+
+  it("allow at most six, each 1 to 80 characters", () => {
+    expect(codes(speaking(["a", "b", "c", "d", "e", "f", "g"]))).toEqual(["STUDENT_POINTS_COUNT"]);
+    expect(itemProblems(speaking(["gut", "  ", "x".repeat(81)]))).toEqual([
+      { code: "STUDENT_POINT_TEXT", n: 2 },
+      { code: "STUDENT_POINT_TEXT", n: 3 },
+    ]);
+    expect(validateItem(speaking(["x".repeat(81)]))).toEqual(["point 1 for the student must be 1 to 80 characters"]);
+  });
+});
+
 describe("every problem has its sentence in both languages", () => {
   const tr = screensTr.bankTools as Record<string, string>;
   const en = screensEn.bankTools as Record<string, string>;

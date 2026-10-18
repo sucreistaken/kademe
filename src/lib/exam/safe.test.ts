@@ -186,12 +186,16 @@ describe("writing and speaking payloads", () => {
         ? { kind: "WRITING", minWords: 40, maxWords: 80 }
         : { kind: "SPEAKING", thinkSeconds: 30, answerSeconds: 60, maxTakes: 2 },
     key: { kind: "NONE" },
-    rubric: { contentPoints: ["MODEL_ANSWER_MARKER: 1. Familienname: Costa"], register: "REGISTER_MARKER" },
+    rubric: {
+      contentPoints: ["MODEL_ANSWER_MARKER: 1. Familienname: Costa"],
+      register: "REGISTER_MARKER",
+      studentPoints: ["Familienname", "einen Grund nennen"],
+    },
     explanation: "EXPLANATION_MARKER",
     points: 7,
   } as ItemSnapshot);
 
-  it.each(["WRITING_PROMPT", "SPEAKING_PROMPT"] as const)("%s carries no rubric, key, level, difficulty, points or explanation", (type) => {
+  it.each(["WRITING_PROMPT", "SPEAKING_PROMPT"] as const)("%s carries the student points but no other rubric field, key, level, difficulty, points or explanation", (type) => {
     const snap = productive(type);
     const item = toCandidateItem(snap, {}, null, 4, { maxPlays: 2 });
     const json = JSON.stringify(item);
@@ -205,7 +209,7 @@ describe("writing and speaking payloads", () => {
       "explanation",
       "level",
       "difficulty",
-      "points",
+      "\"points\"",
       "skillTag",
       "item-secret-id",
       "\"key\"",
@@ -213,15 +217,32 @@ describe("writing and speaking payloads", () => {
       expect(json, secret).not.toContain(secret);
     }
     expect(Object.keys(item).sort()).toEqual(["answer", "content", "prompt", "section", "sequence", "stimulus", "type"]);
+    expect(item.content).toMatchObject({ studentPoints: ["Familienname", "einen Grund nennen"] });
   });
 
-  it("gives only the length or the times as content", () => {
-    expect(toCandidateItem(productive("WRITING_PROMPT"), {}, null, 1, { maxPlays: 2 }).content).toEqual({ kind: "WRITING", minWords: 40, maxWords: 80 });
+  it("sends no student points when the rubric has none, or only blank ones", () => {
+    for (const rubric of [null, { contentPoints: ["x"] }, { contentPoints: ["x"], studentPoints: [] }, { contentPoints: ["x"], studentPoints: ["  "] }]) {
+      for (const type of ["WRITING_PROMPT", "SPEAKING_PROMPT"] as const) {
+        const item = toCandidateItem({ ...productive(type), rubric }, {}, null, 1, { maxPlays: 2 });
+        expect(item.content, JSON.stringify(rubric)).not.toHaveProperty("studentPoints");
+      }
+    }
+  });
+
+  it("never reads student points from a rubric on any other item type", () => {
+    const item = toCandidateItem({ ...listening, rubric: { contentPoints: ["x"], studentPoints: ["LEAK"] } }, {}, null, 1, { maxPlays: 2 });
+    expect(JSON.stringify(item)).not.toContain("LEAK");
+  });
+
+  it("gives only the length or the times and the student points as content", () => {
+    const studentPoints = ["Familienname", "einen Grund nennen"];
+    expect(toCandidateItem(productive("WRITING_PROMPT"), {}, null, 1, { maxPlays: 2 }).content).toEqual({ kind: "WRITING", minWords: 40, maxWords: 80, studentPoints });
     expect(toCandidateItem(productive("SPEAKING_PROMPT"), {}, null, 1, { maxPlays: 2 }).content).toEqual({
       kind: "SPEAKING",
       thinkSeconds: 30,
       answerSeconds: 60,
       maxTakes: 2,
+      studentPoints,
     });
   });
 });

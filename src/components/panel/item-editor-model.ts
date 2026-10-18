@@ -48,6 +48,8 @@ export type EditorDraft = {
   maxTakes: number;
   contentPoints: string;
   register: string;
+  /** Writing and speaking: the points shown to the student, one per line. */
+  studentPoints: string;
   /** A new reading text or listening script, for a new question only. */
   textTitle: string;
   textBody: string;
@@ -105,6 +107,7 @@ export function emptyDraft(type: ItemType, section: Section, level: Cefr): Edito
     maxTakes: 2,
     contentPoints: "",
     register: "",
+    studentPoints: "",
     textTitle: "",
     textBody: "",
   };
@@ -165,6 +168,7 @@ export function draftFromItem(item: EditableItem): EditorDraft {
   if (item.rubric) {
     d.contentPoints = item.rubric.contentPoints.join("\n");
     d.register = item.rubric.register ?? "";
+    d.studentPoints = (item.rubric.studentPoints ?? []).join("\n");
   }
   return d;
 }
@@ -175,9 +179,11 @@ export function draftToItem(d: EditorDraft): ValidatableItem & { rubric: ItemRub
   const idText = (xs: Array<{ id: string; text: string }>) => xs.map((x) => ({ id: x.id, text: cleanText(x.text) }));
   const rubric = (): ItemRubric => {
     const register = cleanText(d.register);
+    const studentPoints = d.studentPoints.split("\n").map((p) => cleanText(p)).filter(Boolean);
     return {
       contentPoints: d.contentPoints.split("\n").map((p) => cleanText(p)).filter(Boolean),
       ...(register ? { register } : {}),
+      ...(studentPoints.length ? { studentPoints } : {}),
     };
   };
   switch (d.type) {
@@ -301,7 +307,14 @@ export const saveItemSchema = z.object({
   prompt: z.string().max(6000),
   content: contentSchema,
   key: keySchema,
-  rubric: z.object({ contentPoints: z.array(z.string().max(500)).max(10), register: z.string().max(200).optional() }).nullable(),
+  // Loose bounds here; `itemProblems` holds the real limits for the student points and names them.
+  rubric: z
+    .object({
+      contentPoints: z.array(z.string().max(500)).max(10),
+      register: z.string().max(200).optional(),
+      studentPoints: z.array(z.string().max(500)).max(20).optional(),
+    })
+    .nullable(),
   explanation: z.string().max(2000),
   /** A new question only: its own reading text or listening script. */
   text: z.object({ title: z.string().max(200), body: z.string().max(12_000) }).nullable(),

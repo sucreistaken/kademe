@@ -881,6 +881,7 @@ function write(
   words: [number, number],
   prompt: string,
   contentPoints: string[],
+  studentPoints: string[],
   register: string,
   explanation: string,
 ): SeedItem {
@@ -893,7 +894,7 @@ function write(
     prompt,
     content: { kind: "WRITING", minWords: words[0], maxWords: words[1] },
     key: { kind: "NONE" },
-    rubric: { contentPoints, register },
+    rubric: { contentPoints, register, studentPoints },
     explanation,
   };
 }
@@ -919,6 +920,13 @@ const writingItems: SeedItem[] = [
       "nennt Nachteile oder Risiken",
       "eigene, begründete Position mit Beispiel; klarer Aufbau mit Einleitung und Schluss",
     ],
+    [
+      "die Rolle von Noten und Abschlüssen heute",
+      "Vorteile eines Verzichts",
+      "Nachteile oder Risiken",
+      "Ihre begründete Meinung mit einem Beispiel",
+      "Einleitung und Schluss",
+    ],
     FORUM, FORUM_NOTE),
   write("opinion", "MID", FORUM_WORDS,
     "In einem Forum zum Thema Arbeitswelt lautet die Frage: „Sollten Arbeitgeber festlegen dürfen, an wie vielen Tagen pro Woche die Beschäftigten im Büro anwesend sein müssen?“\n\n" +
@@ -932,6 +940,12 @@ const writingItems: SeedItem[] = [
       "Gründe aus Sicht der Arbeitgeber",
       "Gegenargumente aus Sicht der Beschäftigten",
       "begründeter eigener Lösungsvorschlag; Argumente sind verknüpft und gewichtet",
+    ],
+    [
+      "wie Arbeit zwischen Büro und Zuhause heute organisiert ist",
+      "warum Arbeitgeber feste Bürotage wünschen",
+      "was aus Sicht der Beschäftigten dagegen spricht",
+      "ein begründeter Vorschlag für eine faire Lösung",
     ],
     FORUM, FORUM_NOTE),
   write("opinion", "HARD", FORUM_WORDS,
@@ -947,6 +961,12 @@ const writingItems: SeedItem[] = [
       "Argumente gegen eine Offenlegungspflicht",
       "differenzierte eigene Position mit Bedingungen; abwägende Sprachmittel (zwar ... aber, sofern, insofern)",
     ],
+    [
+      "wofür KI-Werkzeuge im Berufsalltag genutzt werden",
+      "Argumente für eine Pflicht zur Offenlegung",
+      "Argumente dagegen",
+      "Ihre Position und unter welchen Bedingungen die Regel sinnvoll ist",
+    ],
     FORUM, FORUM_NOTE),
   write("formal", "EASY", EMAIL_WORDS,
     "Sie haben bei einem Weiterbildungsanbieter einen Präsenzkurs „Projektmanagement“ gebucht. Eine Woche vor Beginn erfahren Sie zufällig auf der Website, dass der Kurs nur noch online stattfindet. Man hat Sie darüber nicht informiert.\n\n" +
@@ -960,6 +980,13 @@ const writingItems: SeedItem[] = [
       "zeigt Verständnis für mögliche Gründe",
       "begründet, warum das Onlineformat für sie/ihn ein Problem ist",
       "konkreter Lösungsvorschlag (z. B. Umbuchung, Erstattung, späterer Präsenztermin); passende Anrede und Schlussformel",
+    ],
+    [
+      "das Problem schildern",
+      "Verständnis für mögliche Gründe zeigen",
+      "warum ein Onlinekurs für Sie schwierig ist",
+      "eine Lösung vorschlagen",
+      "Anrede und Schlussformel",
     ],
     FORMAL, EMAIL_NOTE),
   write("formal", "MID", EMAIL_WORDS,
@@ -975,6 +1002,12 @@ const writingItems: SeedItem[] = [
       "konstruktiver Vorschlag zur Priorisierung oder Umverteilung",
       "Bitte um ein Gespräch; diplomatischer Ton gegenüber der Vorgesetzten",
     ],
+    [
+      "sich für das Vertrauen bedanken",
+      "Ihre aktuelle Arbeitsbelastung",
+      "ein Vorschlag zur Verteilung oder Priorisierung der Aufgaben",
+      "um ein kurzes Gespräch bitten",
+    ],
     SEMI, EMAIL_NOTE),
   write("formal", "HARD", EMAIL_WORDS,
     "Sie sollen auf einer Fachtagung einen Vortrag halten. Im endgültigen Programm, das Sie gerade erhalten haben, steht Ihr Vortrag zur selben Zeit wie ein anderer Vortrag zu einem sehr ähnlichen Thema. Außerdem ist die Redezeit von dreißig auf fünfzehn Minuten gekürzt worden.\n\n" +
@@ -989,6 +1022,12 @@ const writingItems: SeedItem[] = [
       "erläutert die Folgen für den eigenen Vortrag",
       "realistischer Lösungsvorschlag; höflich-indirekte Formulierungen (Konjunktiv II, Bitte statt Forderung)",
     ],
+    [
+      "höflich auf beide Probleme hinweisen",
+      "Verständnis für die Planung zeigen",
+      "die Folgen für Ihren Vortrag",
+      "eine Lösung vorschlagen",
+    ],
     FORMAL, EMAIL_NOTE),
 ];
 
@@ -1002,6 +1041,7 @@ function speak(
   within: Within,
   prompt: string,
   contentPoints: string[],
+  studentPoints: string[],
   explanation: string,
 ): SeedItem {
   return {
@@ -1013,7 +1053,7 @@ function speak(
     prompt,
     content: { kind: "SPEAKING", ...(skill === "presentation" ? TALK : DISCUSS) },
     key: { kind: "NONE" },
-    rubric: { contentPoints, register: "formell (Sie), sachlich" },
+    rubric: { contentPoints, register: "formell (Sie), sachlich", studentPoints },
     explanation,
   };
 }
@@ -1036,6 +1076,12 @@ const speakingItems: SeedItem[] = [
       "Vor- und Nachteile mehrerer Lernformen",
       "eigene Meinung, Fazit; erkennbare Gliederung mit Einleitung, Überleitungen und Schluss",
     ],
+    [
+      "was lebenslanges Lernen ist und warum es wichtig ist",
+      "Weiterbildung in Ihrem beruflichen Umfeld",
+      "Vor- und Nachteile verschiedener Lernformen",
+      "Ihre Meinung und ein Fazit",
+    ],
     TALK_NOTE),
   speak("presentation", "MID",
     "Halten Sie einen Vortrag von etwa vier bis fünf Minuten zum Thema „Das Büro der Zukunft“.\n\n" +
@@ -1049,6 +1095,12 @@ const speakingItems: SeedItem[] = [
       "Chancen und Risiken aus zwei Perspektiven",
       "begründete eigene Position und Ausblick; flüssiger, zusammenhängender Vortrag",
     ],
+    [
+      "wie sich Arbeitsorte verändert haben",
+      "welche Rolle das Büro künftig spielen könnte",
+      "Chancen und Risiken für Beschäftigte und Unternehmen",
+      "Ihre Position und ein Ausblick",
+    ],
     TALK_NOTE),
   speak("presentation", "HARD",
     "Halten Sie einen Vortrag von etwa vier bis fünf Minuten zum Thema „Fachkräftemangel: Ursachen und Lösungswege“.\n\n" +
@@ -1061,6 +1113,12 @@ const speakingItems: SeedItem[] = [
       "mehrere Ursachen, sachlich verknüpft",
       "zwei bis drei Lösungswege mit Bewertung",
       "begründete Gewichtung und Schluss; differenzierter Wortschatz (z. B. Nominalstil, Abwägung)",
+    ],
+    [
+      "was Fachkräftemangel bedeutet",
+      "mögliche Ursachen",
+      "zwei oder drei Lösungswege und ihre Bewertung",
+      "welcher Weg Ihnen am besten erscheint, und warum",
     ],
     TALK_NOTE),
   speak("discussion", "EASY",
@@ -1077,6 +1135,12 @@ const speakingItems: SeedItem[] = [
       "Beispiel aus eigener Erfahrung",
       "Kompromissvorschlag; Redemittel der Diskussion (Einerseits ..., Ich gebe Ihnen recht, aber ...)",
     ],
+    [
+      "Ihre Meinung zur Regel mit Begründung",
+      "auf das Argument des Kollegen eingehen",
+      "ein Beispiel aus Ihrer Erfahrung",
+      "ein Kompromissvorschlag",
+    ],
     DISCUSS_NOTE),
   speak("discussion", "MID",
     "Lesen Sie die Meldung und nehmen Sie Stellung.\n\n" +
@@ -1092,6 +1156,12 @@ const speakingItems: SeedItem[] = [
       "nennt Grenzen der Regel (Berufe, Situationen)",
       "abwägendes Fazit; Gesprächsbeitrag ist zusammenhängend und adressatengerecht",
     ],
+    [
+      "Ihre Einschätzung der Regel mit Begründung",
+      "auf den Einwand der Kollegin reagieren",
+      "Berufe oder Situationen, in denen die Regel schwierig ist",
+      "ein Fazit",
+    ],
     DISCUSS_NOTE),
   speak("discussion", "HARD",
     "Lesen Sie die Meldung und nehmen Sie Stellung.\n\n" +
@@ -1106,6 +1176,13 @@ const speakingItems: SeedItem[] = [
       "greift die Argumente des Personalleiters auf und stellt Gegenargumente dar",
       "differenziert nach Lerninhalten",
       "konstruktiver Vorschlag zur Kombination; nuancierte Redemittel (Hypothesen, Einschränkungen)",
+    ],
+    [
+      "Ihre Bewertung der Entwicklung",
+      "auf die Argumente des Personalleiters eingehen",
+      "mögliche Gegenargumente",
+      "für welche Inhalte Videos geeignet sind und für welche nicht",
+      "wie man beide Formen verbinden könnte",
     ],
     DISCUSS_NOTE),
 ];

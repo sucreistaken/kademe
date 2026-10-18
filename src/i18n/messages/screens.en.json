@@ -729,6 +729,8 @@
     "maxWords": "Maximum words",
     "contentPoints": "Content points (one per line)",
     "register": "Register",
+    "studentPoints": "Points shown to the student",
+    "studentPointsHint": "One point per line, in German and short (at most 6 lines, 80 characters each). No answers, sample sentences or levels.",
     "thinkSeconds": "Thinking time (s)",
     "answerSeconds": "Answer time (s)",
     "maxTakes": "Takes",

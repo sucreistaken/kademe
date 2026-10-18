@@ -254,3 +254,41 @@ describe("starter bank items are well formed", () => {
     expect(JSON.stringify(SEED_BANK)).not.toContain("\u2014");
   });
 });
+
+describe("starter writing and speaking tasks name what to cover", () => {
+  const productive = SEED_BANK.items.filter((i) => i.type === "WRITING_PROMPT" || i.type === "SPEAKING_PROMPT");
+
+  it("every task has two to six short student points", () => {
+    expect(productive.length).toBeGreaterThanOrEqual(72);
+    for (const item of productive) {
+      const points = item.rubric?.studentPoints ?? [];
+      expect(points.length, item.prompt.slice(0, 60)).toBeGreaterThanOrEqual(2);
+      expect(points.length, item.prompt.slice(0, 60)).toBeLessThanOrEqual(6);
+      for (const p of points) expect(p.trim().length, p).toBeGreaterThan(0);
+    }
+  });
+
+  it("no point names a level, a sample, a quotation or a number", () => {
+    for (const item of productive) {
+      for (const p of item.rubric?.studentPoints ?? []) {
+        expect(p, p).not.toMatch(/\b[ABC][12]\b|Niveau|Stufe|z\. ?B\.|zum Beispiel|\.\.\.|["„“”«»]|\d/u);
+      }
+    }
+  });
+
+  it("the form tasks name the fields, never the values to fill in", () => {
+    const forms = productive.filter((i) => i.skillTag === "writing.form");
+    expect(forms.length).toBeGreaterThanOrEqual(2);
+    const text = JSON.stringify(forms.map((i) => i.rubric?.studentPoints));
+    for (const value of ["Costa", "Hafenstraße", "28195", "Bremen", "Abend", "Karte", "Tarek", "Mansour", "0176", "Leipzig", "zweimal"]) {
+      expect(text, value).not.toContain(value);
+    }
+    expect(forms[0].rubric?.studentPoints).toContain("Familienname");
+  });
+
+  it("the C2 rewrite task gives none of its model sentences", () => {
+    const rewrite = productive.find((i) => i.skillTag === "writing.transformation");
+    const text = JSON.stringify(rewrite?.rubric?.studentPoints).toLowerCase();
+    for (const word of ["trotz der", "mangels", "lässt sich", "angemeldeten", "sollten die"]) expect(text, word).not.toContain(word);
+  });
+});

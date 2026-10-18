@@ -76,6 +76,8 @@ export const ITEM_PROBLEM_CODES = [
   "SPEAKING_THINK_TIME",
   "SPEAKING_TAKES",
   "SPEAKING_POINTS",
+  "STUDENT_POINTS_COUNT",
+  "STUDENT_POINT_TEXT",
 ] as const;
 export type ItemProblemCode = (typeof ITEM_PROBLEM_CODES)[number];
 
@@ -121,6 +123,11 @@ export const WORD_BANK_MIN_DISTRACTORS = 3;
 
 /** One whole word: no inner space. */
 const isWholeWord = (w: string) => /^\S+$/u.test(w.trim());
+
+/** At most this many "cover these points" lines are shown to the student. */
+export const STUDENT_POINTS_MAX = 6;
+/** Each of them stays one short line. */
+export const STUDENT_POINT_MAX_CHARS = 80;
 
 /** The longest typed answer a short text item may allow. */
 export const SHORT_TEXT_MAX_CHARS = 2000;
@@ -225,6 +232,15 @@ export function itemProblems(item: ValidatableItem): ItemProblem[] {
     if (content.thinkSeconds < 0 || content.thinkSeconds > 300) add("SPEAKING_THINK_TIME");
     if (content.maxTakes < 1 || content.maxTakes > 3) add("SPEAKING_TAKES");
     if (!item.rubric || item.rubric.contentPoints.length === 0) add("SPEAKING_POINTS");
+  }
+
+  // Optional, but when a writing or speaking task names points for the student they stay short.
+  const studentPoints = content.kind === "WRITING" || content.kind === "SPEAKING" ? item.rubric?.studentPoints : undefined;
+  if (studentPoints) {
+    if (studentPoints.length > STUDENT_POINTS_MAX) add("STUDENT_POINTS_COUNT");
+    studentPoints.forEach((p, i) => {
+      if (!p.trim() || p.trim().length > STUDENT_POINT_MAX_CHARS) add("STUDENT_POINT_TEXT", { n: i + 1 });
+    });
   }
 
   return out;
@@ -388,6 +404,10 @@ export function problemText(p: ItemProblem): string {
       return "speaking takes must be 1 to 3";
     case "SPEAKING_POINTS":
       return "speaking needs content points";
+    case "STUDENT_POINTS_COUNT":
+      return `at most ${STUDENT_POINTS_MAX} points for the student`;
+    case "STUDENT_POINT_TEXT":
+      return `point ${p.n ?? 0} for the student must be 1 to ${STUDENT_POINT_MAX_CHARS} characters`;
   }
 }
 

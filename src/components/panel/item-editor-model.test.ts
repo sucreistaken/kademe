@@ -25,6 +25,7 @@ describe("draftFromItem / draftToItem round trip", () => {
     item({ type: "SHORT_TEXT", prompt: "Gegenteil von teuer?", content: { kind: "SHORT_TEXT", maxChars: 120 }, key: { kind: "SHORT_TEXT", accepted: ["billig", "günstig"] } }),
     item({ type: "WRITING_PROMPT", section: "WRITING", prompt: "Schreiben Sie eine E-Mail.", content: { kind: "WRITING", minWords: 80, maxWords: 120 }, key: { kind: "NONE" }, rubric: { contentPoints: ["Dank", "Frage"], register: "informell (du)" } }),
     item({ type: "SPEAKING_PROMPT", section: "SPEAKING", prompt: "Erzählen Sie.", content: { kind: "SPEAKING", thinkSeconds: 30, answerSeconds: 90, maxTakes: 2 }, key: { kind: "NONE" }, rubric: { contentPoints: ["Ort", "Zeit"] } }),
+    item({ type: "WRITING_PROMPT", section: "WRITING", prompt: "Schreiben Sie Jan.", content: { kind: "WRITING", minWords: 20, maxWords: 30 }, key: { kind: "NONE" }, rubric: { contentPoints: ["Dank: am Samstag"], studentPoints: ["sich bedanken", "einen Termin vorschlagen"] } }),
   ];
   it.each(cases.map((c) => [c.type, c] as const))("%s comes back unchanged", (_type, it) => {
     const d = draftFromItem(it);
@@ -32,6 +33,26 @@ describe("draftFromItem / draftToItem round trip", () => {
     const back = draftToItem(d);
     expect(back).toEqual({ type: it.type, prompt: it.prompt, content: it.content, key: it.key, rubric: it.rubric });
     expect(itemProblems(back)).toEqual([]);
+  });
+});
+
+describe("student points in the editor", () => {
+  const writing = item({ type: "WRITING_PROMPT", section: "WRITING", prompt: "Schreiben Sie Jan.", content: { kind: "WRITING", minWords: 20, maxWords: 30 }, key: { kind: "NONE" }, rubric: { contentPoints: ["Dank"] } });
+
+  it("reads one point per line, drops blank lines and sends them in the save payload", () => {
+    const d = { ...draftFromItem(writing), studentPoints: "  sich bedanken \n\n einen Termin vorschlagen" };
+    expect(draftToItem(d).rubric).toEqual({ contentPoints: ["Dank"], studentPoints: ["sich bedanken", "einen Termin vorschlagen"] });
+    expect(saveItemSchema.parse(saveInput(d, null)).rubric?.studentPoints).toEqual(["sich bedanken", "einen Termin vorschlagen"]);
+  });
+
+  it("leaves the field out when it is empty", () => {
+    expect(draftToItem(draftFromItem(writing)).rubric).toEqual({ contentPoints: ["Dank"] });
+  });
+
+  it("names a seventh point and a point over 80 characters while editing", () => {
+    const d = draftFromItem(writing);
+    expect(itemProblems(draftToItem({ ...d, studentPoints: ["a", "b", "c", "d", "e", "f", "g"].join("\n") })).map((p) => p.code)).toEqual(["STUDENT_POINTS_COUNT"]);
+    expect(itemProblems(draftToItem({ ...d, studentPoints: `kurz\n${"x".repeat(81)}` }))).toEqual([{ code: "STUDENT_POINT_TEXT", n: 2 }]);
   });
 });
 

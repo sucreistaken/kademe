@@ -419,6 +419,23 @@ function ProductiveFields({ draft, set }: { draft: EditorDraft; set: SetDraft })
         </label>
         <Input id="ed-register" value={draft.register} lang="de" maxLength={200} onChange={(e) => set({ register: e.target.value })} className={FIELD} />
       </div>
+      <div>
+        <label htmlFor="ed-student-points" className={LABEL}>
+          {t("studentPoints")}
+        </label>
+        <Textarea
+          id="ed-student-points"
+          value={draft.studentPoints}
+          rows={4}
+          lang="de"
+          aria-describedby="ed-student-points-hint"
+          onChange={(e) => set({ studentPoints: e.target.value })}
+          className="bg-surface text-[15px]"
+        />
+        <p id="ed-student-points-hint" className="mt-1.5 text-[13px] text-muted">
+          {t("studentPointsHint")}
+        </p>
+      </div>
     </div>
   );
 }

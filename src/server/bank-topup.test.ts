@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { thetaForLevel } from "@/lib/exam/cefr";
 import { seedItemKey } from "@/db/seed-bank/seed-key";
+import { SEED_BANK } from "@/db/seed-bank";
 import type { SeedBankPart, SeedItem } from "@/db/seed-bank/types";
 import {
   bankTopUpRefusal,
@@ -284,6 +285,57 @@ describe("planTopUp with syncSeed", () => {
       difficulty: thetaForLevel("B1", "HARD"),
       explanation: "Neu",
     });
+  });
+
+  it("brings the student points onto an existing writing or speaking starter item, rubric only", () => {
+    const task = (studentPoints?: string[]): SeedItem => ({
+      section: "SPEAKING",
+      level: "A1",
+      type: "SPEAKING_PROMPT",
+      skillTag: "speaking.request",
+      within: "MID",
+      prompt: "Bitten Sie Herrn Braun um den Kuli. Sagen Sie auch danke.",
+      content: { kind: "SPEAKING", thinkSeconds: 20, answerSeconds: 30, maxTakes: 2 },
+      key: { kind: "NONE" },
+      rubric: { contentPoints: ["höfliche Bitte", "Dank"], register: "formell (Sie)", ...(studentPoints ? { studentPoints } : {}) },
+      explanation: "Bewertung",
+    });
+    const seeded: SeedBankPart = { stimuli: [], items: [task(["höflich um den Kuli bitten", "sich bedanken"])] };
+    // The rubric is not part of the seed key, so the old row matches the new seed item.
+    expect(seedItemKey(task())).toBe(seedItemKey(seeded.items[0]));
+    const old = withFields(task());
+    const plan = planTopUp(seeded, { stimuli: [], items: [old] }, { syncSeed: true }).sync;
+    expect(plan.items).toEqual([
+      {
+        id: old.id,
+        section: "SPEAKING",
+        level: "A1",
+        prompt: seeded.items[0].prompt,
+        fields: ["rubric"],
+        set: { rubric: { contentPoints: ["höfliche Bitte", "Dank"], register: "formell (Sie)", studentPoints: ["höflich um den Kuli bitten", "sich bedanken"] } },
+      },
+    ]);
+    expect(formatSyncSummary(plan)[0]).toBe("sync items SPEAKING: A1 1");
+    // Run again on the synced row: nothing left to do.
+    const synced = { ...old, rubric: plan.items[0].set.rubric };
+    expect(planTopUp(seeded, { stimuli: [], items: [synced] }, { syncSeed: true }).sync.items).toEqual([]);
+    // A starter item the school edited keeps its own rubric.
+    const kept = planTopUp(seeded, { stimuli: [], items: [{ ...old, edited: true }] }, { syncSeed: true }).sync;
+    expect(kept.items).toEqual([]);
+    expect(kept.itemsKeptEdited).toBe(1);
+  });
+
+  it("syncs the student points of every starter writing and speaking task in the real bank", () => {
+    const productive = SEED_BANK.items.filter((i) => i.type === "WRITING_PROMPT" || i.type === "SPEAKING_PROMPT");
+    // As the rows were seeded before the student points existed.
+    const before = (i: SeedItem): SeedItem => ({ ...i, rubric: { contentPoints: i.rubric?.contentPoints ?? [], ...(i.rubric?.register ? { register: i.rubric.register } : {}) } });
+    const items = productive.map((i) => withFields(before(i), { seedKey: seedItemKey(i) }));
+    const plan = planTopUp({ stimuli: [], items: productive }, { stimuli: [], items }, { syncSeed: true }).sync;
+    expect(plan.items).toHaveLength(productive.length);
+    for (const [n, change] of plan.items.entries()) {
+      expect(change.fields).toEqual(["rubric"]);
+      expect(change.set.rubric).toEqual(productive[n].rubric);
+    }
   });
 
   it("compares keys regardless of jsonb key order", () => {

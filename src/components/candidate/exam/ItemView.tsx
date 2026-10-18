@@ -727,7 +727,7 @@ export function WritingItem({ item, answer, onChange, disabled }: ItemProps) {
   const { minWords, maxWords } = item.content;
   return (
     <div>
-      <TaskPromptCard text={item.prompt} id={promptId} />
+      <TaskPromptCard text={item.prompt} id={promptId} points={item.content.studentPoints} />
       <TaskExpectations id={expectId} section="WRITING" minWords={minWords} maxWords={maxWords} />
       <textarea
         ref={ref}

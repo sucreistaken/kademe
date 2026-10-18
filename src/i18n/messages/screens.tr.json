@@ -729,6 +729,8 @@
     "maxWords": "En fazla kelime",
     "contentPoints": "Değerlendirme noktaları (her satıra bir tane)",
     "register": "Üslup",
+    "studentPoints": "Öğrenciye gösterilen noktalar",
+    "studentPointsHint": "Her satıra bir nokta, Almanca ve kısa (en fazla 6 satır, satır başına 80 karakter). Cevap, örnek cümle ya da seviye yazmayın.",
     "thinkSeconds": "Düşünme süresi (sn)",
     "answerSeconds": "Cevap süresi (sn)",
     "maxTakes": "Deneme hakkı",

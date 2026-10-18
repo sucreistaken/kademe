@@ -77,6 +77,13 @@ export type ItemRubric = {
   contentPoints: string[];
   /** Expected register, e.g. "informell (du)" or "formell (Sie)". */
   register?: string;
+  /**
+   * The one part of the rubric the student sees: short German phrases naming
+   * what the answer should cover ("Begrüßung", "einen Grund nennen"). Written
+   * apart from `contentPoints`, which can hold answers and grader notes, so it
+   * never carries an answer, a sample sentence or a level.
+   */
+  studentPoints?: string[];
 };
 
 /** What the student submitted. Only the keys for the item type are set. */

@@ -920,6 +920,7 @@ function writingTask(
   words: [number, number],
   prompt: string,
   contentPoints: string[],
+  studentPoints: string[],
   register: string,
   explanation: string,
 ): SeedItem {
@@ -932,7 +933,7 @@ function writingTask(
     prompt,
     content: { kind: "WRITING", minWords: words[0], maxWords: words[1] },
     key: { kind: "NONE" },
-    rubric: { contentPoints, register },
+    rubric: { contentPoints, register, studentPoints },
     explanation,
   };
 }
@@ -959,6 +960,13 @@ const writingItems: SeedItem[] = [
       "Berufe, in denen Homeoffice nicht möglich ist, mit Beispiel",
       "Vorschlag für eine andere flexible Arbeitsform (z. B. Gleitzeit, Teilzeit, Arbeitszeitkonto)",
     ],
+    [
+      "Ihre Meinung zu einem Recht auf Homeoffice",
+      "Vor- und Nachteile für Beschäftigte",
+      "Berufe ohne Homeoffice, mit Beispielen",
+      "eine andere Möglichkeit für flexibles Arbeiten",
+      "Einleitung und Schluss",
+    ],
     FORUM, FORUM_EXPLANATION),
   writingTask("opinion", "HARD", FORUM_WORDS,
     "In einem Forum für Berufstätige wird diskutiert: „Wer soll für berufliche Weiterbildung bezahlen: die Beschäftigten selbst oder die Arbeitgeber?“\n\n" +
@@ -973,6 +981,13 @@ const writingItems: SeedItem[] = [
       "Nutzen für Arbeitgeber",
       "konkretes Beispiel aus eigener Erfahrung oder Umfeld",
       "eigene begründete Position zur Kostenfrage, ggf. mit Kompromiss",
+    ],
+    [
+      "warum Weiterbildung heute wichtig ist",
+      "Vorteile für Arbeitgeber",
+      "ein Beispiel aus Ihrer Erfahrung oder Ihrem Umfeld",
+      "wer die Kosten tragen sollte, mit Begründung",
+      "Einleitung und Schluss",
     ],
     FORUM, FORUM_EXPLANATION),
   writingTask("opinion", "MID", FORUM_WORDS,
@@ -989,6 +1004,13 @@ const writingItems: SeedItem[] = [
       "mögliche Nachteile der E-Mail-Sperre (z. B. Notfälle, Zeitzonen, weniger Flexibilität)",
       "eigener Vorschlag für eine Regelung mit Begründung",
     ],
+    [
+      "warum viele nach Feierabend erreichbar sind",
+      "Folgen für das Privatleben",
+      "Nachteile einer solchen Regel",
+      "Ihr Vorschlag für eine gute Regelung",
+      "Einleitung und Schluss",
+    ],
     FORUM, FORUM_EXPLANATION),
   writingTask("semiformal", "EASY", MESSAGE_WORDS,
     "Sie besuchen einen Weiterbildungskurs zum Thema Projektmanagement. Wegen einer Dienstreise können Sie an den nächsten beiden Terminen nicht teilnehmen. Schreiben Sie eine E-Mail an die Kursleiterin, Frau Lorenz (ca. 100 Wörter).\n\n" +
@@ -1001,6 +1023,13 @@ const writingItems: SeedItem[] = [
       "Frage nach dem Nachholen des Stoffes (z. B. Unterlagen, Aufzeichnung)",
       "konkreter Vorschlag (z. B. Online-Teilnahme, Zusatzaufgabe)",
       "Frage nach dem Zertifikat; formelle Anrede und Gruß",
+    ],
+    [
+      "Ihre Situation erklären",
+      "fragen, wie Sie den Stoff nachholen können",
+      "ein Vorschlag, wie Sie trotzdem teilnehmen könnten",
+      "nach dem Zertifikat fragen",
+      "Anrede und Gruß",
     ],
     FORMAL, MESSAGE_EXPLANATION),
   writingTask("semiformal", "MID", MESSAGE_WORDS,
@@ -1015,6 +1044,13 @@ const writingItems: SeedItem[] = [
       "konkreter Zeitvorschlag (z. B. früher anfangen, früher gehen)",
       "Lösung für das Team (Vertretung, Erreichbarkeit); formelle Anrede und Gruß",
     ],
+    [
+      "um eine Änderung der Arbeitszeiten bitten",
+      "den Kurs beschreiben und warum er wichtig ist",
+      "ein konkreter Vorschlag für neue Arbeitszeiten",
+      "wie die Aufgaben im Team erledigt werden",
+      "Anrede und Gruß",
+    ],
     FORMAL, MESSAGE_EXPLANATION),
   writingTask("formal", "HARD", MESSAGE_WORDS,
     "Sie haben im Auftrag Ihrer Firma an einer zweitägigen Fachtagung teilgenommen. Leider gab es einige organisatorische Probleme. Schreiben Sie eine E-Mail an den Veranstalter (ca. 100 Wörter).\n\n" +
@@ -1027,6 +1063,13 @@ const writingItems: SeedItem[] = [
       "Verständnis gezeigt, ohne die Kritik zurückzunehmen",
       "klare, höfliche Forderung (z. B. teilweise Erstattung, Gutschein)",
       "konstruktiver Vorschlag für die Zukunft; formelle Anrede und Gruß",
+    ],
+    [
+      "die Probleme beschreiben",
+      "Verständnis für den Veranstalter zeigen",
+      "eine angemessene Lösung fordern",
+      "ein Vorschlag für zukünftige Veranstaltungen",
+      "Anrede und Gruß",
     ],
     FORMAL, MESSAGE_EXPLANATION),
 ];
@@ -1045,6 +1088,7 @@ function speakingTask(
   timing: { thinkSeconds: number; answerSeconds: number; maxTakes: number },
   prompt: string,
   contentPoints: string[],
+  studentPoints: string[],
   register: string | undefined,
   explanation: string,
 ): SeedItem {
@@ -1057,7 +1101,7 @@ function speakingTask(
     prompt,
     content: { kind: "SPEAKING", ...timing },
     key: { kind: "NONE" },
-    rubric: register ? { contentPoints, register } : { contentPoints },
+    rubric: register ? { contentPoints, register, studentPoints } : { contentPoints, studentPoints },
     explanation,
   };
 }
@@ -1080,6 +1124,12 @@ const speakingItems: SeedItem[] = [
       "Vor- und Nachteile mit Beispielen",
       "begründete Meinung und klarer Schluss",
     ],
+    [
+      "das Thema vorstellen und erklären",
+      "eigene Erfahrungen mit Lernen oder Weiterbildung",
+      "Vor- und Nachteile mit Beispielen",
+      "Ihre Meinung und ein Schluss",
+    ],
     undefined, TALK_EXPLANATION),
   speakingTask("presentation", "HARD", TALK,
     "Halten Sie einen kurzen Vortrag (3 bis 4 Minuten) zum Thema „Mehrmals im Leben den Beruf wechseln: Chance oder Risiko?“\n\n" +
@@ -1093,6 +1143,12 @@ const speakingItems: SeedItem[] = [
       "Chancen und Risiken gegeneinander abgewogen",
       "eigene Position und Zusammenfassung",
     ],
+    [
+      "das Thema vorstellen",
+      "warum Menschen heute den Beruf wechseln",
+      "Chancen und Risiken abwägen",
+      "Ihre Meinung und eine Zusammenfassung",
+    ],
     undefined, TALK_EXPLANATION),
   speakingTask("discussion", "MID", DISCUSSION,
     "Ein Kollege sagt in einer Diskussion: „Großraumbüros sind modern und fördern die Zusammenarbeit. Einzelbüros sind nicht mehr zeitgemäß.“\n\n" +
@@ -1102,6 +1158,12 @@ const speakingItems: SeedItem[] = [
       "mindestens zwei Argumente mit Beispiel",
       "Eingehen auf das Argument der Zusammenarbeit",
       "Kompromissvorschlag (z. B. Ruhezonen, Mischformen)",
+    ],
+    [
+      "ob Sie zustimmen",
+      "Argumente und Beispiele",
+      "auf das Argument des Kollegen eingehen",
+      "ein Kompromissvorschlag",
     ],
     undefined, DISCUSSION_EXPLANATION),
   speakingTask("discussion", "HARD", DISCUSSION,
@@ -1113,6 +1175,11 @@ const speakingItems: SeedItem[] = [
       "Gegenargument genannt und darauf reagiert",
       "Zusammenfassung der Position",
     ],
+    [
+      "Ihre Meinung mit Begründung",
+      "ein Gegenargument nennen und darauf reagieren",
+      "Ihre Position am Ende zusammenfassen",
+    ],
     undefined, DISCUSSION_EXPLANATION),
   speakingTask("description", "EASY", SHORT,
     "Erzählen Sie von einer schwierigen Situation in Ihrem Berufs-, Studien- oder Schulalltag. Was ist passiert? Wie haben Sie reagiert? Was war das Ergebnis, und was haben Sie daraus gelernt?",
@@ -1121,6 +1188,12 @@ const speakingItems: SeedItem[] = [
       "eigene Reaktion und Vorgehen",
       "Ergebnis der Situation",
       "Lehre oder Rückblick (z. B. was man heute anders machen würde)",
+    ],
+    [
+      "was passiert ist",
+      "wie Sie reagiert haben",
+      "was das Ergebnis war",
+      "was Sie daraus gelernt haben",
     ],
     undefined,
     "Zusammenhängende Erzählung in der Vergangenheit; erwartet werden Zeitformen (Perfekt, Präteritum), Konnektoren und ggf. Konjunktiv II (\"würde heute anders ...\")."),
@@ -1135,6 +1208,13 @@ const speakingItems: SeedItem[] = [
       "realistischer Lösungsvorschlag",
       "Vorteile der Lösung begründet",
       "höfliche Bitte um einen Termin, passende Begrüßung und Verabschiedung",
+    ],
+    [
+      "das Problem beschreiben",
+      "eine Lösung vorschlagen",
+      "die Vorteile Ihrer Lösung erklären",
+      "um einen Gesprächstermin bitten",
+      "Begrüßung und Verabschiedung",
     ],
     FORMAL,
     "Höfliche, formelle Sprachnachricht an eine Vorgesetzte. Bewertung: Erfüllung, Kohärenz, Register (Sie, Konjunktiv II), Wortschatz, Strukturen, Aussprache."),
