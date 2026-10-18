@@ -7,12 +7,13 @@ import { Card } from "@/components/ui/card";
 import { Dot } from "@/components/panel/bits";
 import { problemSentence, type BankT } from "@/components/panel/bank-copy";
 import { keyText } from "@/components/panel/result/format";
+import { pickedTextKind } from "@/components/panel/result/review-cards";
 import { db } from "@/db";
 import { items, stimuli } from "@/db/schema";
 import { can } from "@/lib/authorize";
 import { withinOf } from "@/lib/exam/difficulty";
 import { itemProblems } from "@/lib/exam/validate";
-import type { ItemSnapshot } from "@/lib/exam/types";
+import { wordBankWords, type ItemSnapshot } from "@/lib/exam/types";
 import { getStorage } from "@/lib/storage";
 import { requireUser } from "@/server/session";
 import { managerLocale } from "@/i18n/manager-locale";
@@ -45,6 +46,11 @@ export default async function BankItemPage({ params, searchParams }: { params: P
   const audioUrl = stimulus?.audioKey ? await getStorage().getSignedUrl(stimulus.audioKey, 3600) : null;
   const snap = { ...item, key: item.answerKey, stimulus: null } as unknown as ItemSnapshot;
   const c = item.content;
+  // An MC cloze or word-bank text names its kind; a word bank also shows its pool and distractors.
+  const textKind = pickedTextKind(item);
+  const gapKey = item.answerKey.kind === "GAP" ? item.answerKey : null;
+  const distractors = textKind === "WORDBANK" ? (gapKey?.distractors ?? []) : [];
+  const pool = textKind === "WORDBANK" && c.kind === "GAP" && gapKey ? wordBankWords(c.gaps.map((g) => g.id), gapKey.answers, gapKey.distractors).sort((a, b) => a.localeCompare(b, "de")) : [];
   const canApprove = can(user, "bank:approve");
   const canWrite = can(user, "bank:write");
   const blocked = problems.length > 0 ? `${t("bankTools.invalidLead")} ${problems.join(" ")}` : needsAudio ? t("bank.needsAudio") : null;
@@ -68,7 +74,7 @@ export default async function BankItemPage({ params, searchParams }: { params: P
       </Link>
       <div className="mt-2 flex flex-wrap items-center gap-4">
         <h1 className="text-[22px] font-bold text-ink">
-          {t(`sectionName.${item.section}`)} · {item.level} · {t(`bankTools.within${within}`)} · {t(`bank.type${item.type}`)}
+          {t(`sectionName.${item.section}`)} · {item.level} · {t(`bankTools.within${within}`)} · {textKind ? t(`bank.textKind${textKind}`) : t(`bank.type${item.type}`)}
         </h1>
         <Dot tone={item.status === "APPROVED" ? "done" : "neutral"}>{t(`bank.status${item.status}`)}</Dot>
         <span className="text-[12.5px] text-muted">{item.origin === "SEED" ? t("bank.seedLabel") : t(`bank.origin${item.origin}`)}</span>
@@ -143,7 +149,11 @@ export default async function BankItemPage({ params, searchParams }: { params: P
                 </ul>
               </div>
             ) : null}
-            {c.kind === "GAP" ? (
+            {c.kind === "GAP" && textKind === "WORDBANK" ? (
+              <p lang="de" className="mt-3 text-[13px] text-muted">
+                <span className="font-medium">{t("bank.pool")}:</span> {pool.join(" · ")}
+              </p>
+            ) : c.kind === "GAP" ? (
               <p className="mt-3 text-[13px] text-muted">{c.gaps.map((g) => `[${g.id}] ${g.choices ? g.choices.join(" / ") : "…"}`).join("   ")}</p>
             ) : null}
             {c.kind === "WRITING" ? <p className="mt-3 text-[13px] text-muted">{c.minWords}-{c.maxWords}</p> : null}
@@ -162,6 +172,14 @@ export default async function BankItemPage({ params, searchParams }: { params: P
               {keyText(snap) || "-"}
             </p>
           </div>
+          {distractors.length ? (
+            <div>
+              <div className="text-[11.5px] text-vault-label">{t("bank.distractors")}</div>
+              <p lang="de" className="mt-1 text-[14px]">
+                {distractors.join(" · ")}
+              </p>
+            </div>
+          ) : null}
           {item.explanation ? (
             <div>
               <div className="text-[11.5px] text-vault-label">{t("bank.explanation")}</div>

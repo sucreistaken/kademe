@@ -70,6 +70,61 @@ describe("gapParts", () => {
   });
 });
 
+describe("MC cloze and word bank in the report", () => {
+  const cloze = snap({
+    type: "GAP_FILL",
+    skillTag: "grammar.cloze",
+    prompt: "Ich gehe {{g1}} Hause und bleibe {{g2}} dem Sofa.",
+    content: { kind: "GAP", gaps: [{ id: "g1", choices: ["nach", "zu", "in", "bei"] }, { id: "g2", choices: ["auf", "an", "über", "unter"] }] },
+    key: { kind: "GAP", answers: { g1: ["nach"], g2: ["auf"] } },
+  });
+  const wordbank = snap({
+    type: "GAP_FILL",
+    skillTag: "grammar.wordbank",
+    prompt: "Wir{{g1}} morgen {{g2}} Hamburg.",
+    content: { kind: "GAP", gaps: [{ id: "g1" }, { id: "g2" }] },
+    key: { kind: "GAP", answers: { g1: ["fahren"], g2: ["nach"] }, distractors: ["fährt", "zu", "bei"] },
+  });
+  it("cloze: numbered gaps with the four options, pick and key marked, shown as the student picked", () => {
+    const gaps = gapParts(cloze, { gaps: { g1: "zu", g2: "auf" } }, [])!.flatMap((p) => (p.kind === "gap" ? [p] : []));
+    expect(gaps.map((g) => [g.n, g.shown, g.correct, g.mark])).toEqual([
+      [1, "zu", "nach", "wrong"],
+      [2, "auf", "auf", "correct"],
+    ]);
+    expect(gaps[0].options.map((o) => [o.text, o.picked, o.correct])).toEqual([
+      ["nach", false, true],
+      ["zu", true, false],
+      ["in", false, false],
+      ["bei", false, false],
+    ]);
+  });
+  it("word bank: no word start is kept as a prefix and there are no options", () => {
+    const parts = gapParts(wordbank, { gaps: { g1: "fahren" } }, [])!;
+    const gaps = parts.flatMap((p) => (p.kind === "gap" ? [p] : []));
+    // "Wir" directly before the marker would be a C-test stem; a word-bank gap is a whole slot.
+    expect(gaps.map((g) => [g.prefix, g.shown, g.correct, g.mark, g.options.length])).toEqual([
+      ["", "fahren", "fahren", "correct", 0],
+      ["", "", "nach", "blank", 0],
+    ]);
+    expect(parts[0]).toEqual({ kind: "text", text: "Wir" });
+  });
+  it("buildDetail marks the question with its kind and counts every gap like the result screen", () => {
+    const responses = [resp("c", "g", 1, cloze, { gaps: { g1: "zu", g2: "auf" } }), resp("w", "g", 2, wordbank, { gaps: { g1: "fahren", g2: "zu" } })];
+    const src: DetailSource = { ...empty, sections: ["GRAMMAR"], skillLevels: { GRAMMAR: "A2" }, runs: [{ id: "g", section: "GRAMMAR", navigable: true }], responses };
+    const [sec] = buildDetail(src);
+    if (sec.kind !== "OBJECTIVE") throw new Error("objective");
+    expect(sec.blocks.flatMap((b) => b.questions.map((q) => q.kind === "GAP" && [q.textKind, q.cTest]))).toEqual([["CLOZE", false], ["WORDBANK", false]]);
+    const tally = answerTally(responses, {}, { navigable: true });
+    expect([sec.correct, sec.total]).toEqual([tally.correct, tally.total]);
+    expect([sec.correct, sec.total]).toEqual([2, 4]);
+  });
+  it("a C-test question is not a picked text", () => {
+    const [sec] = buildDetail({ ...empty, sections: ["GRAMMAR"], runs: [{ id: "g", section: "GRAMMAR", navigable: true }], responses: [resp("c1", "g", 1, ctest, { gaps: { g1: "in" } })] });
+    if (sec.kind !== "OBJECTIVE") throw new Error("objective");
+    expect(sec.blocks[0].questions[0]).toMatchObject({ kind: "GAP", cTest: true, textKind: null });
+  });
+});
+
 describe("buildDetail objective", () => {
   const choice = snap({
     type: "SINGLE_CHOICE",

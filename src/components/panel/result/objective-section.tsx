@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { acceptAsCorrect, undoAcceptAsCorrect } from "@/app/(manager)/exam/students/[id]/actions";
 import { Trajectory } from "@/components/panel/result/format";
+import { TextGapBody } from "@/components/panel/result/text-gap-review";
 import { reviewCard, plainPrompt, sectionScoreSummary, type GapSegment, type ReviewCard } from "@/components/panel/result/review-cards";
 import { canAcceptAsCorrect, canAcceptGap, responseState, type ReviewMark } from "@/components/panel/result/review-rows";
 import type { managerT } from "@/i18n/manager";
@@ -51,6 +52,8 @@ function InlineGap({ g, t }: { g: Extract<GapSegment, { kind: "gap" }>; t: T }) 
 }
 
 function CardBody({ card, r, t, tf, tab, canGrade, acceptedGaps }: { card: ReviewCard; r: Response; t: T; tf: (code: string) => string; tab: string; canGrade: boolean; acceptedGaps: readonly string[] }) {
+  // MC cloze and word bank: picked words, no hand acceptance (canAcceptGap is false for them too).
+  if (card.kind === "GAP" && card.textKind) return <TextGapBody card={card} t={t} />;
   if (card.kind === "GAP") {
     const gaps = card.segments.flatMap((s) => (s.kind === "gap" ? [s] : []));
     const actions = gaps.filter((g) => g.mark === "accepted" || canAcceptGap(r.itemSnapshot, r.answer ?? null, g.id, acceptedGaps));

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CTEST_POOL_INSTRUCTION } from "@/lib/exam/ctest-instruction";
 import type { ItemSnapshot } from "@/lib/exam/types";
-import { gapSegments, plainPrompt, reviewCard, sectionScoreSummary, splitTaskPrompt } from "./review-cards";
+import { gapSegments, pickedTextKind, plainPrompt, reviewCard, sectionScoreSummary, splitTaskPrompt } from "./review-cards";
 
 const base = { id: "i", section: "GRAMMAR", level: "B1", difficulty: 0, stimulusId: null, orderInStimulus: 0, rubric: null, points: 1, stimulus: null } as const;
 
@@ -41,12 +41,77 @@ describe("gapSegments", () => {
     const segs = gapSegments(grammarGap, { gaps: { g1: "dem" } }, ["g1"])!;
     expect(segs).toEqual([
       { kind: "text", text: "Ich gehe in " },
-      { kind: "gap", id: "g1", n: 1, stem: "", given: "dem", shown: "dem", expected: "das", mark: "accepted" },
+      { kind: "gap", id: "g1", n: 1, stem: "", given: "dem", shown: "dem", expected: "das", mark: "accepted", options: [] },
       { kind: "text", text: " Kino." },
     ]);
   });
   it("returns null for an item that is not a gap item", () => {
     expect(gapSegments({ ...grammarGap, content: { kind: "SHORT_TEXT", maxChars: 5 }, key: { kind: "NONE" } } as ItemSnapshot, null)).toBeNull();
+  });
+});
+
+const cloze = {
+  ...base,
+  skillTag: "grammar.cloze",
+  type: "GAP_FILL",
+  prompt: "Lesen Sie den Text.\n\nIch gehe {{g1}} Hause und bleibe {{g2}} dem Sofa.",
+  content: { kind: "GAP", gaps: [{ id: "g1", choices: ["nach", "zu", "in", "bei"] }, { id: "g2", choices: ["auf", "an", "über", "unter"] }] },
+  key: { kind: "GAP", answers: { g1: ["nach"], g2: ["auf"] } },
+} as ItemSnapshot;
+const wordbank = {
+  ...base,
+  skillTag: "grammar.wordbank",
+  type: "GAP_FILL",
+  prompt: "Wir {{g1}} morgen {{g2}} Hamburg.",
+  content: { kind: "GAP", gaps: [{ id: "g1" }, { id: "g2" }] },
+  key: { kind: "GAP", answers: { g1: ["fahren"], g2: ["nach"] }, distractors: ["fährt", "zu", "bei"] },
+} as ItemSnapshot;
+
+describe("MC cloze and word bank cards", () => {
+  it("the kind is read from the skill tag; C-tests and ordinary gaps are not a picked text", () => {
+    expect(pickedTextKind(cloze)).toBe("CLOZE");
+    expect(pickedTextKind(wordbank)).toBe("WORDBANK");
+    expect(pickedTextKind(ctest)).toBeNull();
+    expect(pickedTextKind(grammarGap)).toBeNull();
+  });
+  it("cloze: numbers the gaps in text order and carries the four options with the pick and the key", () => {
+    const card = reviewCard(cloze, { gaps: { g1: "zu", g2: "auf" } });
+    if (card.kind !== "GAP") throw new Error("gap");
+    expect(card).toMatchObject({ ctest: false, textKind: "CLOZE", right: 1, total: 2 });
+    const gaps = card.segments.flatMap((x) => (x.kind === "gap" ? [x] : []));
+    expect(gaps.map((g) => [g.n, g.shown, g.expected, g.mark])).toEqual([
+      [1, "zu", "nach", "wrong"],
+      [2, "auf", "auf", "correct"],
+    ]);
+    expect(gaps[0].options).toEqual([
+      { text: "nach", picked: false, correct: true },
+      { text: "zu", picked: true, correct: false },
+      { text: "in", picked: false, correct: false },
+      { text: "bei", picked: false, correct: false },
+    ]);
+    // A cloze text is never given a C-test stem: the word before the gap stays in the text.
+    expect(card.segments[0]).toEqual({ kind: "text", text: "Lesen Sie den Text.\n\nIch gehe " });
+  });
+  it("cloze: a gap left empty has no pick among the options", () => {
+    const card = reviewCard(cloze, { gaps: { g2: "an" } });
+    if (card.kind !== "GAP") throw new Error("gap");
+    const first = card.segments.find((x) => x.kind === "gap");
+    expect(first).toMatchObject({ mark: "blank", shown: "" });
+    expect(first && first.kind === "gap" && first.options.some((o) => o.picked)).toBe(false);
+  });
+  it("word bank: the student's word against the key, no options, and the text stays whole", () => {
+    const card = reviewCard(wordbank, { gaps: { g1: "fährt", g2: "nach" } });
+    if (card.kind !== "GAP") throw new Error("gap");
+    expect(card).toMatchObject({ textKind: "WORDBANK", right: 1, total: 2 });
+    const gaps = card.segments.flatMap((x) => (x.kind === "gap" ? [x] : []));
+    expect(gaps.map((g) => [g.shown, g.expected, g.mark, g.options])).toEqual([
+      ["fährt", "fahren", "wrong", []],
+      ["nach", "nach", "correct", []],
+    ]);
+  });
+  it("typed gap items keep textKind null and no options", () => {
+    expect(reviewCard(ctest, { gaps: { g1: "chte" } })).toMatchObject({ textKind: null });
+    expect(reviewCard(grammarGap, { gaps: { g1: "das" } })).toMatchObject({ textKind: null });
   });
 });
 

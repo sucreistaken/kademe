@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { WITHINS, withinOf, type Within } from "@/lib/exam/difficulty";
 import { cleanText } from "@/lib/exam/item-generation";
-import { CEFR_LEVELS, ITEM_TYPES, SECTIONS, type Cefr, type ItemContent, type ItemKey, type ItemRubric, type ItemType, type Section, type TfngValue } from "@/lib/exam/types";
+import { CEFR_LEVELS, ITEM_TYPES, SECTIONS, textGapKindOf, type Cefr, type ItemContent, type ItemKey, type ItemRubric, type ItemType, type Section, type TfngValue } from "@/lib/exam/types";
 import { gapMarkers, type ValidatableItem } from "@/lib/exam/validate";
 
 /**
@@ -52,6 +52,17 @@ export type EditorDraft = {
   textTitle: string;
   textBody: string;
 };
+
+/**
+ * The text kind a stored item has when its gaps are picked words: CLOZE (four
+ * choices per gap) or WORDBANK (a shared pool). Null for every other draft,
+ * C-tests included, which keep the ordinary gap form.
+ */
+export function pickedKindOfDraft(d: Pick<EditorDraft, "type" | "skillTag">): "CLOZE" | "WORDBANK" | null {
+  if (d.type !== "GAP_FILL" || !d.skillTag) return null;
+  const kind = textGapKindOf({ skillTag: d.skillTag });
+  return kind === "CLOZE" || kind === "WORDBANK" ? kind : null;
+}
 
 /** The types a teacher writes here: every objective type. Writing and speaking tasks are edited, not created. */
 export const CREATE_TYPES = ["SINGLE_CHOICE", "MULTI_CHOICE", "TRUE_FALSE_NG", "GAP_FILL", "MATCHING", "SHORT_TEXT"] as const satisfies readonly ItemType[];

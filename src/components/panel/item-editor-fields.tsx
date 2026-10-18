@@ -8,7 +8,7 @@ import { Disclosure } from "@/components/visual/disclosure";
 import { useMT } from "@/i18n/manager-client";
 import { cn } from "@/lib/cn";
 import type { TfngValue } from "@/lib/exam/types";
-import { insertGap, nextId, syncGaps, underscoresToMarkers, type EditorDraft } from "./item-editor-model";
+import { insertGap, nextId, pickedKindOfDraft, syncGaps, underscoresToMarkers, type EditorDraft } from "./item-editor-model";
 
 export type SetDraft = (patch: Partial<EditorDraft> | ((d: EditorDraft) => Partial<EditorDraft>)) => void;
 
@@ -263,9 +263,12 @@ function GapFields({ draft, set }: { draft: EditorDraft; set: SetDraft }) {
   const t = useMT("bankTools");
   const gaps = syncGaps(draft.prompt, draft.gaps);
   const patch = (id: string, p: Partial<EditorDraft["gaps"][number]>) => set((d) => ({ gaps: syncGaps(d.prompt, d.gaps).map((g) => (g.id === id ? { ...g, ...p } : g)) }));
+  // An MC cloze gap always has choices and a word-bank gap never does: the kind is the item's, so the mode toggle is not offered.
+  const kind = pickedKindOfDraft(draft);
   return (
     <fieldset>
       <legend className={LABEL}>{t("gaps")}</legend>
+      {kind === "CLOZE" ? <p className="mb-3 text-[13px] text-muted">{t("clozeHint")}</p> : null}
       {gaps.length === 0 ? <p className="text-[14px] text-muted">{t("noGaps")}</p> : null}
       <ol className="space-y-4">
         {gaps.map((g, i) => {
@@ -276,29 +279,42 @@ function GapFields({ draft, set }: { draft: EditorDraft; set: SetDraft }) {
                 <span className="text-[14px] font-semibold text-ink">
                   {name} <span className="font-normal text-muted">{`{{${g.id}}}`}</span>
                 </span>
-                <div role="radiogroup" aria-label={name} className="flex gap-2">
-                  {(["typed", "choice"] as const).map((m) => (
-                    <label key={m} className={segClass(g.mode === m)}>
-                      <input type="radio" name={`ed-gap-${g.id}`} className="sr-only" checked={g.mode === m} onChange={() => patch(g.id, { mode: m })} />
-                      {m === "typed" ? t("gapTyped") : t("gapChoice")}
-                    </label>
-                  ))}
-                </div>
+                {kind ? null : (
+                  <div role="radiogroup" aria-label={name} className="flex gap-2">
+                    {(["typed", "choice"] as const).map((m) => (
+                      <label key={m} className={segClass(g.mode === m)}>
+                        <input type="radio" name={`ed-gap-${g.id}`} className="sr-only" checked={g.mode === m} onChange={() => patch(g.id, { mode: m })} />
+                        {m === "typed" ? t("gapTyped") : t("gapChoice")}
+                      </label>
+                    ))}
+                  </div>
+                )}
               </div>
               <label className="block text-[13px] text-muted">
-                {t("gapAccepted")}
+                {kind ? t("gapAnswer") : t("gapAccepted")}
                 <Input value={g.accepted} lang="de" onChange={(e) => patch(g.id, { accepted: e.target.value })} className={cn(FIELD, "mt-1")} />
               </label>
-              {g.mode === "choice" ? (
+              {kind === "CLOZE" || (!kind && g.mode === "choice") ? (
                 <label className="block text-[13px] text-muted">
                   {t("gapChoices")}
-                  <Input value={g.choices} lang="de" onChange={(e) => patch(g.id, { choices: e.target.value })} className={cn(FIELD, "mt-1")} />
+                  <Input value={g.choices} lang="de" onChange={(e) => patch(g.id, kind ? { choices: e.target.value, mode: "choice" } : { choices: e.target.value })} className={cn(FIELD, "mt-1")} />
                 </label>
               ) : null}
             </li>
           );
         })}
       </ol>
+      {kind === "WORDBANK" ? (
+        <div className="mt-4">
+          <label htmlFor="ed-distractors" className={LABEL}>
+            {t("wordBankDistractors")}
+          </label>
+          <Input id="ed-distractors" value={draft.distractors} lang="de" aria-describedby="ed-distractors-hint" onChange={(e) => set({ distractors: e.target.value })} className={FIELD} />
+          <p id="ed-distractors-hint" className="mt-1.5 text-[13px] text-muted">
+            {t("wordBankHint")}
+          </p>
+        </div>
+      ) : null}
     </fieldset>
   );
 }

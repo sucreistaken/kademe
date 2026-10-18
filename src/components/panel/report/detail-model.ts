@@ -1,4 +1,5 @@
 import { itemTally } from "@/components/panel/result/answer-tally";
+import { gapOptions, pickedTextKind, type GapOption, type PickedTextKind } from "@/components/panel/result/review-cards";
 import { responseState, reviewRows, type ReviewMark } from "@/components/panel/result/review-rows";
 import { withPoolInstruction } from "@/lib/exam/ctest-instruction";
 import { CEFR_LEVELS, isCTest, isObjectiveSection, type Cefr, type ItemAnswer, type ItemSnapshot, type Section } from "@/lib/exam/types";
@@ -30,12 +31,14 @@ export type GapPart =
       /** The whole correct word, or the accepted spellings joined by " / " when the gap is not part of a word. */
       correct: string;
       mark: DetailMark;
+      /** MC cloze only: the four words with the student's pick and the key marked. Empty for every other gap. */
+      options: GapOption[];
     };
 
 export type DetailRow = { label: string; given: string; key: string; mark: DetailMark };
 
 export type DetailQuestion =
-  | { kind: "GAP"; n: number; level: Cefr; skillTag: string; cTest: boolean; parts: GapPart[] }
+  | { kind: "GAP"; n: number; level: Cefr; skillTag: string; cTest: boolean; /** MC cloze or word bank: gaps are picked words, listed gap by gap in the sheet. */ textKind: PickedTextKind | null; parts: GapPart[] }
   | { kind: "CHOICE"; n: number; level: Cefr; skillTag: string; stem: string; given: string; key: string; mark: DetailMark }
   | { kind: "ROWS"; n: number; level: Cefr; skillTag: string; variant: "TFNG" | "MATCHING"; stem: string; rows: DetailRow[] };
 
@@ -126,6 +129,8 @@ export function gapParts(s: ItemSnapshot, a: ItemAnswer | null, acceptedGaps: re
   if (!rows || rows.variant !== "GAP" || s.key.kind !== "GAP") return null;
   const key = s.key;
   const prompt = isCTest(s) ? withPoolInstruction(s.prompt) : s.prompt;
+  const textKind = pickedTextKind(s);
+  const choicesOf = (id: string) => (s.content.kind === "GAP" ? s.content.gaps.find((g) => g.id === id)?.choices : undefined);
   const byId = new Map(rows.rows.map((r) => [r.id, r]));
   const parts: GapPart[] = [];
   const re = /\{\{([^}]+)\}\}/g;
@@ -143,7 +148,8 @@ export function gapParts(s: ItemSnapshot, a: ItemAnswer | null, acceptedGaps: re
     n += 1;
     const prefix = /[^\s]*$/u.exec(before)?.[0] ?? "";
     // Only a word start counts as a prefix: it has to be letters ("Ha"), not "(" or a number.
-    const isWordStart = prefix.length > 0 && /^[\p{L}]+$/u.test(prefix);
+    // A cloze or word-bank gap is a whole empty slot, never the end of a word.
+    const isWordStart = !textKind && prefix.length > 0 && /^[\p{L}]+$/u.test(prefix);
     const kept = isWordStart ? prefix : "";
     if (kept) before = before.slice(0, before.length - kept.length);
     if (before) parts.push({ kind: "text", text: before });
@@ -158,7 +164,8 @@ export function gapParts(s: ItemSnapshot, a: ItemAnswer | null, acceptedGaps: re
       const fulls = accepted.filter((x) => x.toLocaleLowerCase("de-DE").startsWith(lower)).sort((x, y) => y.length - x.length);
       correct = fulls[0] ?? kept + (accepted[0] ?? "");
     }
-    parts.push({ kind: "gap", n, prefix: kept, given, shown, correct, mark: row.mark });
+    const options = textKind === "CLOZE" ? gapOptions(choicesOf(m[1]), given, accepted) : [];
+    parts.push({ kind: "gap", n, prefix: kept, given, shown, correct, mark: row.mark, options });
   }
   const rest = prompt.slice(pos);
   if (rest) parts.push({ kind: "text", text: rest });
@@ -177,7 +184,7 @@ function objectiveQuestion(r: DetailResponse, n: number, acceptedGaps: readonly 
     const parts = gapParts(s, a, acceptedGaps);
     if (!parts) return null;
     return {
-      question: { kind: "GAP", n, level: s.level, skillTag: s.skillTag, cTest: s.skillTag === "grammar.ctest", parts },
+      question: { kind: "GAP", n, level: s.level, skillTag: s.skillTag, cTest: s.skillTag === "grammar.ctest", textKind: pickedTextKind(s), parts },
       ...tally,
     };
   }

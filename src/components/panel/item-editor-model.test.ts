@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { difficultyFor } from "@/lib/exam/difficulty";
 import type { ItemContent, ItemKey } from "@/lib/exam/types";
 import { itemProblems } from "@/lib/exam/validate";
-import { draftFromItem, draftToItem, emptyDraft, insertGap, nextId, saveInput, saveItemSchema, syncGaps, underscoresToMarkers, type EditableItem } from "./item-editor-model";
+import { draftFromItem, draftToItem, emptyDraft, insertGap, nextId, pickedKindOfDraft, saveInput, saveItemSchema, syncGaps, underscoresToMarkers, type EditableItem } from "./item-editor-model";
 
 const item = (over: Partial<EditableItem> & { content: ItemContent; key: ItemKey }): EditableItem => ({
   type: "SINGLE_CHOICE",
@@ -67,6 +67,32 @@ describe("MC cloze and word-bank items in the editor (spec 2026-10-18)", () => {
       }),
     );
     expect(itemProblems(draftToItem(cloze)).map((p) => p.code)).toEqual(["CLOZE_CHOICE_COUNT"]);
+  });
+
+  it("names the picked kind of a stored item and nothing else", () => {
+    expect(pickedKindOfDraft(draftFromItem(bank))).toBe("WORDBANK");
+    expect(pickedKindOfDraft({ type: "GAP_FILL", skillTag: "grammar.cloze" })).toBe("CLOZE");
+    expect(pickedKindOfDraft({ type: "GAP_FILL", skillTag: "grammar.ctest" })).toBeNull();
+    expect(pickedKindOfDraft({ type: "GAP_FILL", skillTag: null })).toBeNull();
+    expect(pickedKindOfDraft({ type: "SINGLE_CHOICE", skillTag: "grammar.cloze" })).toBeNull();
+  });
+
+  it("editing a cloze gap's choices and a word bank's distractors is checked with the same rules", () => {
+    const cloze = draftFromItem(
+      item({
+        type: "GAP_FILL",
+        prompt: "Wir {{g1}} morgen.",
+        content: { kind: "GAP", gaps: [{ id: "g1", choices: ["fahren", "fährt", "fuhr", "fahrt"] }] },
+        key: { kind: "GAP", answers: { g1: ["fahren"] } },
+        skillTag: "grammar.cloze",
+      }),
+    );
+    expect(itemProblems(draftToItem(cloze))).toEqual([]);
+    const edited = { ...cloze, gaps: cloze.gaps.map((g) => ({ ...g, choices: "fahren | fährt | fuhr | fahren" })) };
+    expect(itemProblems(draftToItem(edited)).map((p) => p.code)).toEqual(["GAP_CHOICE_REPEAT"]);
+    const wb = draftFromItem(bank);
+    expect(itemProblems(draftToItem({ ...wb, distractors: "fährt | zu | nach" })).map((p) => p.code)).toEqual(["WORDBANK_DISTRACTOR_IS_ANSWER"]);
+    expect(itemProblems(draftToItem({ ...wb, distractors: "fährt | zu | bei | im Haus" })).map((p) => p.code)).toEqual(["WORDBANK_DISTRACTOR_NOT_WORD"]);
   });
 
   it("an item without a skill tag or distractors converts exactly as before", () => {

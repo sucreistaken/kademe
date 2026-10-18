@@ -68,6 +68,82 @@ function GapText({ parts, t }: { parts: GapPart[]; t: T }) {
   );
 }
 
+/** The tick (cyan) or cross (ink) of a picked-word gap, always with its word: colour is never the only signal. */
+function PickMark({ mark, t }: { mark: DetailMark; t: T }) {
+  const ok = mark === "correct" || mark === "accepted";
+  const word = mark === "accepted" ? t("resultReport.markAccepted") : t(`resultReport.mark${mark === "correct" ? "Correct" : mark === "wrong" ? "Wrong" : "Blank"}` as "resultReport.markWrong");
+  return (
+    <span className={cn("whitespace-nowrap font-semibold", ok ? "text-accent" : "text-ink")}>
+      <span aria-hidden>{ok ? "✓" : "✗"}</span> {word}
+    </span>
+  );
+}
+
+/**
+ * An MC cloze or word-bank text: the text with its gaps numbered as the
+ * student saw them, then one row per gap with the student's word, the right
+ * word, and for a cloze the four options. Right is a cyan tick, wrong an ink
+ * cross (DESIGN.md: never red in the answer review).
+ */
+function TextGapQuestion({ parts, t }: { parts: GapPart[]; t: T }) {
+  const gaps = parts.flatMap((p) => (p.kind === "gap" ? [p] : []));
+  const cloze = gaps.some((g) => g.options.length > 0);
+  return (
+    <>
+      <p lang="de" className="whitespace-pre-line leading-[1.9]">
+        {parts.map((p, i) =>
+          p.kind === "text" ? (
+            <span key={i}>{p.text}</span>
+          ) : (
+            <span key={i} className="whitespace-nowrap rounded-[3px] bg-canvas px-1">
+              <sup className="tnum mr-0.5 text-[0.7em] font-semibold text-muted">{p.n}</sup>
+              <span className={cn("font-semibold", !p.shown && "text-muted", p.mark === "wrong" && "line-through")}>{p.shown || t("resultReport.empty")}</span>
+            </span>
+          ),
+        )}
+      </p>
+      <table className="mt-2 w-full text-left">
+        <thead className="text-[0.85em] text-muted">
+          <tr>
+            <th className="w-[8%] py-0.5 pr-3 font-medium">{t("resultReport.gapNo")}</th>
+            <th className="py-0.5 pr-3 font-medium">{t("resultReport.yourAnswer")}</th>
+            <th className="py-0.5 pr-3 font-medium">{t("resultReport.correctAnswer")}</th>
+            {cloze ? <th className="py-0.5 pr-3 font-medium">{t("resultReport.options")}</th> : null}
+            <th className="py-0.5" />
+          </tr>
+        </thead>
+        <tbody>
+          {gaps.map((g) => (
+            <tr key={g.n} className="border-t border-line align-baseline">
+              <td className="tnum py-0.5 pr-3 text-muted">{g.n}</td>
+              <td lang="de" className={cn("py-0.5 pr-3 font-medium", !g.shown && "text-muted")}>
+                {g.shown || t("resultReport.empty")}
+              </td>
+              <td lang="de" className="py-0.5 pr-3">
+                {g.correct}
+              </td>
+              {cloze ? (
+                <td lang="de" className="py-0.5 pr-3 text-[0.9em]">
+                  {g.options.map((o, i) => (
+                    <span key={i} className={cn("mr-2 whitespace-nowrap", o.correct && "font-semibold", o.picked && !o.correct && "line-through")}>
+                      {o.text}
+                      {o.correct ? <span className="ml-0.5 font-bold text-accent">✓</span> : null}
+                      {o.picked && !o.correct ? <span className="ml-0.5 font-bold">✗</span> : null}
+                    </span>
+                  ))}
+                </td>
+              ) : null}
+              <td className="py-0.5 text-right">
+                <PickMark mark={g.mark} t={t} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </>
+  );
+}
+
 function Question({ q, t }: { q: DetailQuestion; t: T }) {
   const head = (
     <div className="mb-1 text-[0.85em] font-semibold uppercase tracking-[0.04em] text-muted">
@@ -78,7 +154,7 @@ function Question({ q, t }: { q: DetailQuestion; t: T }) {
     return (
       <div className="report-detail-q mt-3">
         {head}
-        <GapText parts={q.parts} t={t} />
+        {q.textKind ? <TextGapQuestion parts={q.parts} t={t} /> : <GapText parts={q.parts} t={t} />}
       </div>
     );
   }

@@ -2,7 +2,7 @@ import { hasAnswer, typedMatches } from "@/lib/exam/item-scoring";
 import { answerTally, type TallyAcceptances } from "./answer-tally";
 import { withPoolInstruction } from "@/lib/exam/ctest-instruction";
 import { matchingTargets } from "@/lib/exam/safe";
-import { isCTest, type ItemAnswer, type ItemSnapshot } from "@/lib/exam/types";
+import { isCTest, textGapKindOf, type ItemAnswer, type ItemSnapshot } from "@/lib/exam/types";
 import type { ReviewMark } from "./review-rows";
 
 /**
@@ -12,6 +12,18 @@ import type { ReviewMark } from "./review-rows";
  * printable report may reuse it, so nothing here knows about JSX or language:
  * the callers translate the marks and letters.
  */
+
+/** One of the four words of a multiple-choice cloze gap, in the order the key stores them. */
+export type GapOption = { text: string; picked: boolean; correct: boolean };
+
+/** The text kinds whose gaps are not typed: the student picked a given word. */
+export type PickedTextKind = "CLOZE" | "WORDBANK";
+
+/** CLOZE or WORDBANK for an item whose gaps the student picked, null for a typed gap item (C-test included). */
+export function pickedTextKind(s: { skillTag: string }): PickedTextKind | null {
+  const kind = textGapKindOf(s);
+  return kind === "CLOZE" || kind === "WORDBANK" ? kind : null;
+}
 
 export type GapSegment =
   | { kind: "text"; text: string }
@@ -29,6 +41,8 @@ export type GapSegment =
       /** The whole correct word (stem included). */
       expected: string;
       mark: ReviewMark;
+      /** MC cloze only: the four words with the student's pick and the key marked. Empty for every other gap. */
+      options: GapOption[];
     };
 
 export type ChoiceOption = { id: string; letter: string; text: string; picked: boolean; correct: boolean };
@@ -36,7 +50,7 @@ export type TfngRow = { id: string; text: string; given: string; key: string; ma
 export type MatchRow = { id: string; text: string; givenLetter: string; givenText: string; keyLetter: string; keyText: string; mark: ReviewMark };
 
 export type ReviewCard =
-  | { kind: "GAP"; ctest: boolean; segments: GapSegment[]; right: number; total: number }
+  | { kind: "GAP"; ctest: boolean; /** MC cloze or word bank: the gaps are picked words, never accepted by hand. */ textKind: PickedTextKind | null; segments: GapSegment[]; right: number; total: number }
   | { kind: "CHOICE"; multiple: boolean; options: ChoiceOption[]; mark: ReviewMark }
   | { kind: "TFNG"; rows: TfngRow[] }
   | { kind: "MATCHING"; rows: MatchRow[] }
@@ -54,6 +68,11 @@ export function plainPrompt(prompt: string): string {
   return prompt.replace(/\{\{[^}]+\}\}/g, "___");
 }
 
+/** The choices of one cloze gap as stored, with the student's pick and the key marked. */
+export function gapOptions(choices: readonly string[] | undefined, given: string, accepted: readonly string[]): GapOption[] {
+  return (choices ?? []).map((text) => ({ text, picked: !!given.trim() && typedMatches(given, [text]), correct: typedMatches(text, [...accepted]) }));
+}
+
 function stemBefore(text: string, ctest: boolean): string {
   return ctest ? (text.match(/[\p{L}\p{N}]+$/u)?.[0] ?? "") : "";
 }
@@ -69,6 +88,7 @@ export function gapSegments(s: ItemSnapshot, a: ItemAnswer | null, acceptedGaps:
   const k = s.key;
   if (c.kind !== "GAP" || k.kind !== "GAP") return null;
   const ctest = isCTest(s);
+  const cloze = textGapKindOf(s) === "CLOZE";
   const parts = (ctest ? withPoolInstruction(s.prompt) : s.prompt).split(MARKER);
   const out: GapSegment[] = [];
   let n = 0;
@@ -93,7 +113,9 @@ export function gapSegments(s: ItemSnapshot, a: ItemAnswer | null, acceptedGaps:
     const shown = !given ? "" : stem && !(wholeKey && full(given)) ? `${stem}${given}` : given;
     const mark: ReviewMark = acceptedGaps.includes(id) && given ? "accepted" : markOf(given, typedMatches(given, accepted));
     n += 1;
-    out.push({ kind: "gap", id, n, stem, given, shown, expected, mark });
+    // The choices as stored; the student saw them shuffled, which the teacher does not need.
+    const options = cloze ? gapOptions(c.gaps.find((g) => g.id === id)?.choices, given, accepted) : [];
+    out.push({ kind: "gap", id, n, stem, given, shown, expected, mark, options });
   });
   return out;
 }
@@ -106,7 +128,7 @@ export function reviewCard(s: ItemSnapshot, a: ItemAnswer | null, acceptedGaps: 
   if (c.kind === "GAP" && k.kind === "GAP") {
     const segments = gapSegments(s, a, acceptedGaps) ?? [];
     const gaps = segments.flatMap((g) => (g.kind === "gap" ? [g] : []));
-    return { kind: "GAP", ctest: isCTest(s), segments, right: gaps.filter((g) => g.mark === "correct" || g.mark === "accepted").length, total: gaps.length };
+    return { kind: "GAP", ctest: isCTest(s), textKind: pickedTextKind(s), segments, right: gaps.filter((g) => g.mark === "correct" || g.mark === "accepted").length, total: gaps.length };
   }
   if (c.kind === "CHOICE" && k.kind === "CHOICE") {
     const picked = answer.choiceIds ?? [];
