@@ -6,9 +6,10 @@ import { Illustration, ILLUSTRATION_NAMES } from "./illustrations";
 const ALLOWED = /^(none|var\(--color-illus-(line|fill|tint|sage|warm)\)|var\(--color-(mint|sky|sun|grape)-soft\))$/;
 
 describe("illustrations (HIRING-VISUAL-FLOW 2.2, K1)", () => {
-  it("has the eleven candidate and four panel drawings", () => {
-    expect(ILLUSTRATION_NAMES).toHaveLength(15);
-    expect(new Set(ILLUSTRATION_NAMES).size).toBe(15);
+  it("has the eleven candidate, four panel and four block-screen drawings", () => {
+    expect(ILLUSTRATION_NAMES).toHaveLength(19);
+    expect(new Set(ILLUSTRATION_NAMES).size).toBe(19);
+    for (const name of ["secondScreen", "shareEntireScreen", "fullscreen", "cameraFrame"]) expect(ILLUSTRATION_NAMES).toContain(name);
   });
 
   it.each(ILLUSTRATION_NAMES)("%s is hidden from assistive tech, inline only, and drawn with the illustration tones", (name) => {
@@ -26,6 +27,14 @@ describe("illustrations (HIRING-VISUAL-FLOW 2.2, K1)", () => {
     const colours = [...html.matchAll(/\s(?:fill|stroke)="([^"]+)"/g)].map((m) => m[1]);
     expect(colours.length).toBeGreaterThan(3);
     for (const colour of colours) expect(colour, `${name}: ${colour}`).toMatch(ALLOWED);
+  });
+
+  it("the block-screen pictures are 200 wide and 140 tall, so a block screen fits 650px", () => {
+    const html = renderToStaticMarkup(createElement(Illustration, { name: "secondScreen", size: "block" }));
+    expect(html).toContain("w-[200px]");
+    for (const name of ["secondScreen", "shareEntireScreen", "fullscreen", "cameraFrame"] as const) {
+      expect(renderToStaticMarkup(createElement(Illustration, { name }))).toContain('viewBox="0 0 200 140"');
+    }
   });
 
   it("sizes by role: hero 400 wide at most, a spot 160, the phone screen 342", () => {

@@ -8,7 +8,9 @@ import { environmentFacts, useProctor } from "@/components/candidate/proctor/Pro
 import { checkStep, planSteps, primaryEnabled, type CheckStep, type StepState, type Wait } from "@/components/candidate/proctor/check-steps";
 import { buttonVariants } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
+import { Illustration } from "@/components/visual/illustrations";
 import { Mascot, type MascotPose } from "@/components/visual/mascot";
+import { checkPicture } from "@/components/candidate/proctor/block-pictures";
 import { apiSend, candidateApiBase } from "@/lib/client/api";
 import { MEDIA_ERROR_KEY, mediaErrorKind } from "@/lib/client/media-error";
 import { stepPath } from "@/lib/candidate-routes";
@@ -213,6 +215,8 @@ export function SystemCheck({ token, policy }: { token: string; policy: Proctori
   const enabled = primaryEnabled(result) && !busy;
   const extendedNote = snap?.isExtended === true && policy.secondScreen === "WARN";
   const sentence = sentenceFor(result.step, result.wait, result.issue, t);
+  // A step that needs fixing is a state card: a picture of what to do instead of the mascot (none when no picture fits).
+  const picture = isIssue ? checkPicture(result.step, result.wait, result.issue) : null;
   const notes: string[] = [];
   if (result.step === "look" && snap?.model === "unavailable") notes.push(t("faceModelDown"));
   const askWindow = policy.secondScreen !== "OFF" && snap?.windowManagement === "idle" && result.step === plan.steps[0];
@@ -250,8 +254,8 @@ export function SystemCheck({ token, policy }: { token: string; policy: Proctori
       <div className="flex flex-col items-center text-center">
         {result.index !== null && result.total > 1 ? <Progress plan={plan.steps} current={result.index} t={t} /> : null}
 
-        <Mascot pose={POSE[result.step]} size="small" className="mt-5" />
-        <h1 ref={titleRef} tabIndex={-1} className="mt-4 text-[30px] leading-[38px] font-extrabold tracking-[-0.01em] text-ink outline-none">
+        {picture ? <Illustration name={picture} size="block" className="mt-4" /> : isIssue ? null : <Mascot pose={POSE[result.step]} size="small" className="mt-5" />}
+        <h1 ref={titleRef} tabIndex={-1} className={cn(isIssue && !picture ? "mt-6" : "mt-4", "text-[30px] leading-[38px] font-extrabold tracking-[-0.01em] text-ink outline-none")}>
           {title[result.step]}
         </h1>
         {result.step === "devices" && !isIssue ? <p className="mt-2 text-[17px] leading-[26px] text-ink-2">{t("devicesLead")}</p> : null}

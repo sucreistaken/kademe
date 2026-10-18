@@ -10,6 +10,8 @@ import { environmentFacts, useProctor } from "@/components/candidate/proctor/Pro
 import { CheatWarning } from "@/components/candidate/proctor/CheatWarning";
 import { Clock, Flag, ListChecks } from "lucide-react";
 import { SectionTile } from "@/components/visual/section-look";
+import { Illustration } from "@/components/visual/illustrations";
+import { RECOVER_PICTURE } from "@/components/candidate/proctor/block-pictures";
 import { ItemView } from "@/components/candidate/exam/ItemView";
 import { ListeningPlayer, SpeakingItem } from "@/components/candidate/exam/MediaItems";
 import { answerProgress, progressState } from "@/components/candidate/exam/answer-progress";
@@ -1019,6 +1021,7 @@ function RecoverPanel({ reasons, resume }: { reasons: Array<"FULLSCREEN" | "SCRE
   return (
     <div className="fixed inset-0 z-40 flex items-start justify-center bg-paper/70 px-4 pt-[18vh]">
       <div role="alertdialog" aria-labelledby="recover-title" className="w-full max-w-[460px] rounded-[14px] border border-line bg-surface p-6 shadow-modal">
+        <Illustration name={RECOVER_PICTURE[first]} size="block" className="mx-auto mb-4" />
         <h2 id="recover-title" className="text-[20px] font-bold text-ink">
           {title}
         </h2>

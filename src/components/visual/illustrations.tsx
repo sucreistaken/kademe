@@ -12,7 +12,7 @@ import { cn } from "@/lib/cn";
  * finish, problem and empty screens, never on a question screen (G11).
  * Static: no animation (2.3).
  *
- * One grammar for all fifteen, taken from the approved mockup: a soft panel
+ * One grammar for all nineteen, taken from the approved mockup: a soft panel
  * (fill), one quiet circle behind (a pastel), objects with a warm body and a
  * 1.5 ink line, and only small sage or pastel details (text bars, a dashed
  * trail, a highlighted part). The pastels are the --color-*-soft tokens, one
@@ -33,7 +33,11 @@ export type IllustrationName =
   | "emptyToday"
   | "emptyOpenings"
   | "emptyCandidates"
-  | "emptyLibrary";
+  | "emptyLibrary"
+  | "secondScreen"
+  | "shareEntireScreen"
+  | "fullscreen"
+  | "cameraFrame";
 
 const LINE = "var(--color-illus-line)";
 const FILL = "var(--color-illus-fill)";
@@ -359,6 +363,101 @@ const DRAWINGS: Record<IllustrationName, Drawing> = {
       </>
     ),
   },
+  // The proctoring block screens explain with a picture too, for students who read the UI language
+  // poorly: no mascot there (state cards, DESIGN.md), only objects, drawn to the same grammar.
+  // A laptop and a monitor whose cable is pulled apart; the monitor is crossed out.
+  secondScreen: {
+    width: 200,
+    height: 140,
+    body: (
+      <>
+        <Panel width={200} height={140} radius={18} />
+        <circle cx="34" cy="30" r="14" fill={SUN} />
+        <path d="M0 112 C50 106 150 118 200 110 V122 a18 18 0 0 1 -18 18 H18 a18 18 0 0 1 -18 -18 Z" fill={WARM} />
+        <rect x="20" y="58" width="64" height="42" rx="5" fill={WARM} {...ink} />
+        <rect x="26" y="64" width="52" height="30" rx="3" fill={FILL} />
+        <path d="M32 74 H62 M32 84 H52" {...bar} />
+        <path d="M12 109 H92 L86 100 H18 Z" fill={WARM} {...ink} />
+        <rect x="124" y="40" width="62" height="46" rx="5" fill={WARM} {...ink} />
+        <rect x="130" y="46" width="50" height="34" rx="3" fill={FILL} />
+        <path d="M147 55 L163 71 M163 55 L147 71" fill="none" {...ink} strokeWidth={2} />
+        <rect x="151" y="86" width="8" height="14" fill={WARM} {...ink} />
+        <path d="M138 109 H172 L166 100 H144 Z" fill={WARM} {...ink} />
+        <path d="M92 104 H106 M128 104 H141" fill="none" {...ink} />
+        <rect x="106" y="100" width="7" height="8" rx="2" fill={SAGE} {...ink} />
+        <path d="M113 102 H116 M113 106 H116" fill="none" {...ink} />
+        <rect x="121" y="100" width="7" height="8" rx="2" fill={SAGE} {...ink} />
+        <path d="M117 94 v-5 M112 94 l-3 -4 M122 94 l3 -4" {...soft} />
+      </>
+    ),
+  },
+  // The browser's share window with "Entire screen" lit and the pointer on it.
+  shareEntireScreen: {
+    width: 200,
+    height: 140,
+    body: (
+      <>
+        <Panel width={200} height={140} radius={18} />
+        <circle cx="168" cy="26" r="16" fill={SKY} />
+        <rect x="24" y="18" width="152" height="104" rx="8" fill={WARM} {...ink} />
+        <path d="M24 34 H176" fill="none" {...ink} />
+        <circle cx="35" cy="26" r="3" fill={TINT} />
+        <circle cx="45" cy="26" r="3" fill={TINT} />
+        <rect x="35" y="44" width="38" height="46" rx="6" fill={MINT} {...ink} strokeWidth={2} />
+        <rect x="40" y="52" width="28" height="19" rx="2" fill={WARM} {...ink} />
+        <path d="M41 82 H67" {...bar} />
+        <rect x="81" y="44" width="38" height="46" rx="6" {...soft} fill={FILL} />
+        <rect x="88" y="54" width="24" height="15" rx="2" {...soft} />
+        <path d="M88 60 H112" {...soft} />
+        <path d="M89 82 H111" {...bar} />
+        <rect x="127" y="44" width="38" height="46" rx="6" {...soft} fill={FILL} />
+        <path d="M134 66 V59 a3 3 0 0 1 3 -3 H147 L151 62 H158 V66 Z" {...soft} />
+        <path d="M135 82 H157" {...bar} />
+        <rect x="124" y="100" width="42" height="12" rx="6" fill={SAGE} {...ink} />
+        <path d="M60 76 V96 L64.5 91.5 L68 99.5 L71.5 98 L68 90 H74.5 Z" fill={WARM} {...ink} />
+      </>
+    ),
+  },
+  // A browser window with arrows pointing out to the four corners: full screen.
+  fullscreen: {
+    width: 200,
+    height: 140,
+    body: (
+      <>
+        <Panel width={200} height={140} radius={18} />
+        <circle cx="100" cy="70" r="46" fill={SKY} />
+        <rect x="58" y="36" width="84" height="64" rx="7" fill={WARM} {...ink} />
+        <path d="M58 50 H142" fill="none" {...ink} />
+        <circle cx="66" cy="43" r="2.5" fill={TINT} />
+        <circle cx="74" cy="43" r="2.5" fill={TINT} />
+        <rect x="66" y="58" width="68" height="34" rx="3" fill={FILL} />
+        <path d="M72 68 H112 M72 78 H100" {...bar} />
+        <path d="M50 40 L34 24 M34 33 V24 H43" fill="none" {...ink} strokeWidth={2} />
+        <path d="M150 40 L166 24 M157 24 H166 V33" fill="none" {...ink} strokeWidth={2} />
+        <path d="M50 96 L34 112 M34 103 V112 H43" fill="none" {...ink} strokeWidth={2} />
+        <path d="M150 96 L166 112 M157 112 H166 V103" fill="none" {...ink} strokeWidth={2} />
+      </>
+    ),
+  },
+  // A webcam view: a head-and-shoulders silhouette centred in a dashed frame guide.
+  cameraFrame: {
+    width: 200,
+    height: 140,
+    body: (
+      <>
+        <Panel width={200} height={140} radius={18} />
+        <circle cx="28" cy="28" r="12" fill={SUN} />
+        <rect x="34" y="10" width="132" height="106" rx="12" fill={WARM} {...ink} />
+        <circle cx="100" cy="16" r="2.5" fill={LINE} />
+        <rect x="42" y="22" width="116" height="86" rx="6" fill={SKY} />
+        <ellipse cx="100" cy="64" rx="28" ry="36" {...trail} />
+        <circle cx="100" cy="58" r="14" fill={WARM} {...ink} />
+        <path d="M68 108 C68 88 82 78 100 78 C118 78 132 88 132 108 Z" fill={WARM} {...ink} />
+        <path d="M50 38 V30 H58 M150 38 V30 H142 M50 92 V100 H58 M150 92 V100 H142" fill="none" {...ink} />
+        <path d="M100 116 V126 M82 128 H118" fill="none" {...ink} />
+      </>
+    ),
+  },
 };
 
 export const ILLUSTRATION_NAMES = Object.keys(DRAWINGS) as IllustrationName[];
@@ -368,6 +467,8 @@ const SIZE = {
   spot: "w-[160px]",
   phone: "w-full max-w-[342px]",
   small: "w-24",
+  // The proctoring block screens: 200 wide, 140 tall, so a block screen still fits about 650px of height.
+  block: "w-[200px]",
   // The guided flows' question region in the panel (manager mockup 3, 6).
   flow: "w-[200px] xl:w-[260px]",
 } as const;
