@@ -512,18 +512,20 @@ export function ExamRunner({
     ) : save === "failed" ? (
       <ErrorLine text={n("saveFailed")} onRetry={() => void flush()} />
     ) : null;
-  const hint = timeUp
-    ? n("timeUpSaving")
-    : filling === "PARTIAL" && progress && progress.total > 1
-      ? group && progressOf.size > 1
-        ? n("groupPartialHint", {
-            done: [...progressOf.values()].filter((p) => p.total > 0 && p.filled === p.total).length,
-            total: progressOf.size,
-          })
-        : n("partialHint", { filled: progress.filled, total: progress.total })
-      : save === "saved"
-        ? t("autosaved")
-        : null;
+  // Time-up text is a floating notice (timeUpNotice), never a line in the bar.
+  const hint =
+    timeUp
+      ? null
+      : filling === "PARTIAL" && progress && progress.total > 1
+        ? group && progressOf.size > 1
+          ? n("groupPartialHint", {
+              done: [...progressOf.values()].filter((p) => p.total > 0 && p.filled === p.total).length,
+              total: progressOf.size,
+            })
+          : n("partialHint", { filled: progress.filled, total: progress.total })
+        : save === "saved"
+          ? t("autosaved")
+          : null;
 
   // Floating warnings: they sit over the page just above the bottom bar and add no height to it.
   const noticeAction = "ms-2 min-h-9 font-semibold underline underline-offset-2";
@@ -574,7 +576,7 @@ export function ExamRunner({
       <StepFooter
         back={{ label: n("backToQuestions"), onClick: () => (busyRef.current ? undefined : goTo(sequences[sequences.length - 1])) }}
         primary={{ kind: "button", id: "finish-section", label: n("finishSection"), busy, busyLabel: t("saving"), onClick: () => setConfirm("finish") }}
-        hint={timeUp ? n("timeUpSaving") : null}
+        notice={timeUpNotice}
         note={failureLine}
       />
     );
@@ -636,10 +638,11 @@ export function ExamRunner({
         }}
         hint={hint}
         notice={
-          failureNotice || leaveNotice ? (
+          failureNotice || leaveNotice || timeUpNotice ? (
             <>
               {failureNotice}
               {leaveNotice}
+              {timeUpNotice}
             </>
           ) : null
         }

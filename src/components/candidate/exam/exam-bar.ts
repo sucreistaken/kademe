@@ -21,3 +21,21 @@ export function partCounter(progress: AnswerProgress | null | undefined): { fill
   const filled = Math.min(Math.max(progress.filled, 0), progress.total);
   return { filled, total: progress.total };
 }
+
+/** Which physical edges of a scrolling strip still hide cells (so they fade out). Right-to-left strips scroll with negative offsets. */
+export function overflowEdges(strip: { scrollLeft: number; scrollWidth: number; clientWidth: number }, rtl: boolean) {
+  const max = strip.scrollWidth - strip.clientWidth;
+  if (max <= 1) return { left: false, right: false };
+  const fromStart = Math.abs(strip.scrollLeft);
+  const moreAtStart = fromStart > 1;
+  const moreAtEnd = fromStart < max - 1;
+  return rtl ? { left: moreAtEnd, right: moreAtStart } : { left: moreAtStart, right: moreAtEnd };
+}
+
+/** The strip's own edge fade: 20px of the cells at each hidden edge dissolve, which says "more this way". */
+export function edgeFadeMask({ left, right }: { left: boolean; right: boolean }): { maskImage: string; WebkitMaskImage: string } | undefined {
+  if (!left && !right) return undefined;
+  const stops = [left ? "transparent 0, #000 20px" : "#000 0", right ? "#000 calc(100% - 20px), transparent 100%" : "#000 100%"];
+  const mask = `linear-gradient(to right, ${stops.join(", ")})`;
+  return { maskImage: mask, WebkitMaskImage: mask };
+}

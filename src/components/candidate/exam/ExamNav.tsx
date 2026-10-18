@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, type Ref } from "react";
+import { useEffect, useRef, useState, type Ref } from "react";
 import { CircleHelp, Flag } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { progressState } from "@/components/candidate/exam/answer-progress";
+import { edgeFadeMask, overflowEdges } from "@/components/candidate/exam/exam-bar";
 import type { NavEntry } from "@/lib/exam/navigation";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
@@ -82,7 +83,9 @@ export function NavStrip({
   const status = { COMPLETE: n("statusComplete"), PARTIAL: n("statusPartial"), EMPTY: n("statusEmpty") };
   const list = useRef<HTMLOListElement>(null);
   const currentKey = Array.isArray(current) ? current.join(",") : String(current);
+  const [edges, setEdges] = useState({ left: false, right: false });
   // Keep the cell on screen in view when the strip scrolls (moves the strip only, never the page).
+  // The margin clears the 20px edge fade.
   useEffect(() => {
     if (!compact) return;
     const strip = list.current?.parentElement;
@@ -90,9 +93,28 @@ export function NavStrip({
     if (!strip || !cell) return;
     const stripBox = strip.getBoundingClientRect();
     const cellBox = cell.getBoundingClientRect();
-    if (cellBox.left < stripBox.left) strip.scrollLeft += cellBox.left - stripBox.left - 8;
-    else if (cellBox.right > stripBox.right) strip.scrollLeft += cellBox.right - stripBox.right + 8;
+    if (cellBox.left < stripBox.left + 24) strip.scrollLeft += cellBox.left - stripBox.left - 24;
+    else if (cellBox.right > stripBox.right - 24) strip.scrollLeft += cellBox.right - stripBox.right + 24;
   }, [compact, currentKey]);
+  // Fade the edge that still hides cells; follows scrolling and resizing.
+  useEffect(() => {
+    if (!compact) return;
+    const strip = list.current?.parentElement;
+    if (!strip) return;
+    const measure = () => {
+      const next = overflowEdges(strip, getComputedStyle(strip).direction === "rtl");
+      setEdges((prev) => (prev.left === next.left && prev.right === next.right ? prev : next));
+    };
+    measure();
+    strip.addEventListener("scroll", measure, { passive: true });
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    observer?.observe(strip);
+    if (list.current) observer?.observe(list.current);
+    return () => {
+      strip.removeEventListener("scroll", measure);
+      observer?.disconnect();
+    };
+  }, [compact, entries.length]);
   const cells = entries.map((e) => {
     const state = progressState(e);
     const here = Array.isArray(current) ? current.includes(e.sequence) : e.sequence === current;
@@ -122,7 +144,11 @@ export function NavStrip({
   if (compact) {
     return (
       <div className="flex min-w-0 items-center gap-2">
-        <nav aria-label={n("stripLabel")} className="min-w-0 overflow-x-auto px-2 py-2">
+        <nav
+          aria-label={n("stripLabel")}
+          style={edgeFadeMask(edges)}
+          className="min-w-0 overflow-x-auto px-2 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
           <ol ref={list} className="flex flex-nowrap gap-1">
             {cells}
           </ol>
