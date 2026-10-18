@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
+import { DEFAULT_LOCALE, type CandidateLocale } from "@/i18n/locale";
 
 /**
  * What the candidate route's boundaries (error, not found, loading) need and
@@ -11,7 +11,7 @@ import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
  */
 export type CandidateFrame = {
   token: string;
-  locale: Locale;
+  locale: CandidateLocale;
   /** ORG_TIMEZONE, read on the server: the browser has no access to it. */
   timeZone: string;
   orgName: string | null;

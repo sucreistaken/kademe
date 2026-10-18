@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { BrandLockup } from "@/components/visual/brand-mark";
 import { candidateT } from "@/i18n/candidate";
-import type { Locale } from "@/i18n/locale";
+import { dirOf, type CandidateLocale } from "@/i18n/locale";
 
 /**
  * The candidate frame, straight off artboards A8, A9 and A12: a 56px bar over a
@@ -21,7 +21,7 @@ export function CandidateShell({
   wide = false,
   children,
 }: {
-  locale: Locale;
+  locale: CandidateLocale;
   meta?: React.ReactNode;
   language?: React.ReactNode;
   /**
@@ -41,7 +41,7 @@ export function CandidateShell({
 }) {
   const t = candidateT(locale);
   return (
-    <div lang={locale} className="min-h-dvh bg-paper">
+    <div lang={locale} dir={dirOf(locale)} className="min-h-dvh bg-paper">
       {header ? (
       <header className="flex h-16 items-center justify-between gap-4 border-b border-hairline bg-surface px-5 sm:px-7">
         <BrandLockup byline={t("common.byline")} />
@@ -58,7 +58,13 @@ export function CandidateShell({
   );
 }
 
-const LABEL: Record<Locale, string> = { tr: "Türkçe", en: "English" };
+const LABEL: Record<CandidateLocale, string> = {
+  tr: "Türkçe",
+  en: "English",
+  de: "Deutsch",
+  es: "Español",
+  ar: "العربية",
+};
 
 /**
  * Language is settled before the questions start, so the switch lives in the
@@ -69,8 +75,8 @@ export function LanguageSwitch({
   locales,
   current,
 }: {
-  locales: Locale[];
-  current: Locale;
+  locales: CandidateLocale[];
+  current: CandidateLocale;
 }) {
   if (locales.length < 2) return null;
   // A small segmented control: the current language is the raised pill.

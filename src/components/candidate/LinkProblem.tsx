@@ -7,7 +7,7 @@ import { apiSend } from "@/lib/client/api";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
 import { dateTime, shortDate } from "@/i18n/dates";
-import type { Locale } from "@/i18n/locale";
+import type { CandidateLocale } from "@/i18n/locale";
 import type { LinkProblem as Problem } from "@/lib/candidate-context";
 import { linkRequestHint, type NoReply } from "./request-wording";
 
@@ -28,7 +28,7 @@ export function LinkProblem({
   noReply,
 }: {
   token: string;
-  locale: Locale;
+  locale: CandidateLocale;
   problem: Problem;
   expiresAt?: number;
   notBefore?: number;

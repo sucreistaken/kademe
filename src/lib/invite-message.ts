@@ -1,3 +1,4 @@
+import type { CandidateLocale } from "@/i18n/locale";
 import { ORG_TIMEZONE } from "@/lib/org-timezone";
 
 /**
@@ -22,10 +23,17 @@ export type InviteMessageInput = {
   timeZone?: string;
 };
 
-const TAG = { tr: "tr-TR", en: "en-GB" } as const;
+/** Arabic keeps Latin digits (-nu-latn), the same as the exam screens. */
+const TAG: Record<CandidateLocale, string> = {
+  tr: "tr-TR",
+  en: "en-GB",
+  de: "de-DE",
+  es: "es-ES",
+  ar: "ar-u-nu-latn",
+};
 
 /** "14 Ekim 2026 09:30" / "14 October 2026 09:30", in the zone. */
-export function messageDateTime(at: Date, locale: "tr" | "en", timeZone: string = ORG_TIMEZONE): string {
+export function messageDateTime(at: Date, locale: CandidateLocale, timeZone: string = ORG_TIMEZONE): string {
   const parts = new Intl.DateTimeFormat(TAG[locale], {
     timeZone,
     day: "numeric",
@@ -52,10 +60,10 @@ export function turkishTimeSuffix(minutes: number): "da" | "de" | "ta" | "te" {
   return (["", "de", "de", "te", "te", "te", "da", "de", "de", "da"] as const)[unit] as "da" | "de" | "te";
 }
 
-/** "14 Ekim 2026 09:30'da" in Turkish; the plain date and time in English. */
-export function openingMoment(at: Date, locale: "tr" | "en", timeZone: string = ORG_TIMEZONE): string {
+/** "14 Ekim 2026 09:30'da" in Turkish; the plain date and time in every other language. */
+export function openingMoment(at: Date, locale: CandidateLocale, timeZone: string = ORG_TIMEZONE): string {
   const text = messageDateTime(at, locale, timeZone);
-  if (locale === "en") return text;
+  if (locale !== "tr") return text;
   const minutes = Number(text.slice(-2));
   return `${text}'${turkishTimeSuffix(minutes)}`;
 }

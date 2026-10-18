@@ -2,7 +2,7 @@
 
 import { NextIntlClientProvider } from "next-intl";
 import { messagesFor } from "@/i18n/candidate";
-import type { Locale } from "@/i18n/locale";
+import type { CandidateLocale } from "@/i18n/locale";
 
 /**
  * Wraps the candidate tree with its dictionary.
@@ -17,7 +17,7 @@ export function CandidateIntl({
   timeZone,
   children,
 }: {
-  locale: Locale;
+  locale: CandidateLocale;
   /** ORG_TIMEZONE, read on the server: the browser has no access to it. */
   timeZone: string;
   children: React.ReactNode;

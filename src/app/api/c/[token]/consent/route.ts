@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { candidateJson } from "@/lib/candidate-safe";
 import { hasConsented, recordConsent } from "@/lib/candidate-context";
+import { panelLocaleOf } from "@/i18n/locale";
 import { badRequest, clientIp, readJson, userAgent, withSolution } from "@/lib/candidate-api";
 
 /**
@@ -16,7 +17,7 @@ export async function GET(
     const text = await solution.candidate.consentText(ctx);
     return candidateJson({
       version: text.version,
-      body: text.body[ctx.locale] || text.body.tr,
+      body: text.body[panelLocaleOf(ctx.locale)] || text.body.tr,
       consented: await hasConsented(ctx.assessment.id),
     });
   });

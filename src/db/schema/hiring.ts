@@ -171,7 +171,7 @@ export const hiringVersions = pgTable(
     openingId: uuid("opening_id").notNull(),
     versionNumber: integer("version_number").notNull(),
     status: hiringVersionStatus("status").notNull().default("DRAFT"),
-    defaultLocale: locale("default_locale").notNull().default("tr"),
+    defaultLocale: locale("default_locale").$type<HiringLocale>().notNull().default("tr"),
     localeSet: jsonb("locale_set").$type<HiringLocale[]>().notNull().default(["tr"]),
     introTitle: jsonb("intro_title").$type<I18nText>(),
     introBody: jsonb("intro_body").$type<I18nText>(),

@@ -8,7 +8,7 @@ import {
   type SolutionKind,
 } from "@/lib/candidate-context";
 import { candidateT, type CandidateMessages } from "@/i18n/candidate";
-import { localeFromAcceptLanguage, type Locale } from "@/i18n/locale";
+import { candidateLocaleFromAcceptLanguage, type CandidateLocale } from "@/i18n/locale";
 import { servingSolution } from "@/solutions/registry.server";
 import type { SolutionModule } from "@/solutions/types";
 
@@ -34,7 +34,7 @@ export function userAgent(req: NextRequest): string | null {
   return req.headers.get("user-agent");
 }
 
-export function message(locale: Locale, code: ErrorCode): string {
+export function message(locale: CandidateLocale, code: ErrorCode): string {
   return candidateT(locale)(`errors.${code}`);
 }
 
@@ -103,7 +103,7 @@ export type CandidateRouteOptions = {
  * known one must not reveal itself through the invitation's own language.
  */
 function unknownTokenResponse(req: NextRequest) {
-  const locale = localeFromAcceptLanguage(req.headers.get("accept-language"));
+  const locale = candidateLocaleFromAcceptLanguage(req.headers.get("accept-language"));
   return candidateJson(
     { error: "INVALID", message: message(locale, "INVALID") },
     { status: PROBLEM_STATUS.INVALID },
@@ -130,7 +130,7 @@ export async function withCandidate(
   // loop use up the small budget reserved for problem reports.
   const bucket = `${ip}:${token.slice(0, 12)}:${new URL(req.url).pathname}`;
   if (!rateLimit(bucket, options.limit ?? 240, options.windowMs ?? 60_000)) {
-    const locale = localeFromAcceptLanguage(req.headers.get("accept-language"));
+    const locale = candidateLocaleFromAcceptLanguage(req.headers.get("accept-language"));
     return candidateJson(
       { error: "RATE_LIMITED", message: message(locale, "RATE_LIMITED") },
       { status: 429 },
@@ -156,7 +156,7 @@ export async function withCandidate(
       !!resolved.ctx && (options.allowProblems ?? []).includes(resolved.problem);
     if (!tolerated) {
       if (!resolved.ctx) return unknownTokenResponse(req);
-      const locale = resolved.ctx.locale as Locale;
+      const locale = resolved.ctx.locale;
       return candidateJson(
         { error: resolved.problem, message: message(locale, resolved.problem) },
         { status: PROBLEM_STATUS[resolved.problem] },
@@ -203,7 +203,7 @@ export function withSolution(
 
 export function fail(ctx: CandidateContext, code: ErrorCode, status: number) {
   return candidateJson(
-    { error: code, message: message(ctx.locale as Locale, code) },
+    { error: code, message: message(ctx.locale, code) },
     { status },
   );
 }

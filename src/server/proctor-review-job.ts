@@ -1,6 +1,7 @@
 import { and, asc, between, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { attempts, assessments, proctorAiReviews, proctorEvents, proctorEvidence } from "@/db/schema";
+import { panelLocaleOf } from "@/i18n/locale";
 import { callJson } from "@/lib/ai-runs";
 import { getReviewProvider } from "@/lib/ai-anthropic";
 import {
@@ -97,7 +98,7 @@ export async function runProctorReview(eventId: string): Promise<ReviewOutcome> 
     frames.map(async (f) => ({ mime: f.mime, base64: (await readAll(f.storageKey)).toString("base64") })),
   );
 
-  const messages = buildProctorReviewMessages({ eventType: row.event.type, frameKinds: kinds, locale: row.locale });
+  const messages = buildProctorReviewMessages({ eventType: row.event.type, frameKinds: kinds, locale: panelLocaleOf(row.locale) });
   const orgId = frames[0].orgId;
   try {
     const { response, runId } = await callJson(

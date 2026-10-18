@@ -64,7 +64,9 @@ describe("pageLocale", () => {
     expect(pageLocale()).toBe("tr");
     stubDocument("en");
     expect(pageLocale()).toBe("en");
-    stubDocument("de");
+    stubDocument("ar");
+    expect(pageLocale()).toBe("ar");
+    stubDocument("fr");
     expect(pageLocale()).toBe("tr");
   });
 });

@@ -22,7 +22,7 @@ import {
   positions,
   users,
 } from "@/db/schema";
-import { DEFAULT_LOCALE, isLocale, type Locale } from "@/i18n/locale";
+import { DEFAULT_LOCALE, isLocale, panelLocaleOf, type CandidateLocale, type Locale } from "@/i18n/locale";
 import { mintToken } from "@/lib/auth";
 import { outboxLinkPlaceholder } from "@/lib/outbox";
 import { orgDay, zonedDayStart, zoneLabel } from "@/lib/org-timezone";
@@ -321,11 +321,11 @@ export async function newHiringLink(
     });
     const parts = await messageParts(tx, user.orgId, opening.positionId, row.versionId);
     const words = {
-      locale: row.locale,
+      locale: panelLocaleOf(row.locale),
       candidateName: row.name ?? "",
       orgName: parts.orgName,
       positionName: parts.positionName,
-      deadline: deadlineText(expiresAt, row.locale),
+      deadline: deadlineText(expiresAt, panelLocaleOf(row.locale)),
       minutes: parts.minutes,
       contactEmail: opening.candidateContactEmail ?? parts.orgContact,
     };
@@ -535,7 +535,7 @@ export async function listOpeningCandidates(
     candidateId: string;
     name?: string | null;
     email?: string | null;
-    locale: Locale;
+    locale: CandidateLocale;
     invitedAt: Date;
     versionId: string;
     extraTimePct?: number;
@@ -631,7 +631,7 @@ export async function listOpeningCandidates(
       seq: i + 1,
       name: identity ? (r.name ?? null) : null,
       email: identity ? (r.email ?? null) : null,
-      locale: r.locale,
+      locale: panelLocaleOf(r.locale),
       invitedAt: r.invitedAt,
       link: link ? { id: link.id, status: link.status, expiresAt: link.expiresAt } : null,
       progress: candidateProgress({

@@ -3,6 +3,7 @@ import { CandidateIntl } from "@/components/candidate/Intl";
 import { ORG_TIMEZONE } from "@/lib/org-timezone";
 import { IntroConsent } from "@/components/candidate/IntroConsent";
 import { getConsentText, supportedLocales } from "@/lib/candidate-context";
+import { panelLocaleOf } from "@/i18n/locale";
 import { candidateSafe } from "@/lib/candidate-safe";
 import { solutionPage } from "@/lib/candidate-pages";
 import { enter, headerMeta, type SearchParams } from "@/app/a/[token]/shared";
@@ -48,7 +49,7 @@ export default async function CandidateEntryPage({
           state={candidateSafe(entry.state)}
           consent={{
             version: consent.version,
-            body: consent.body[entry.locale] || consent.body.tr,
+            body: consent.body[panelLocaleOf(entry.locale)] || consent.body.tr,
           }}
           supportEmail={entry.ctx.contactEmail}
           mediaRetentionDays={entry.ctx.mediaRetentionDays}

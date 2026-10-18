@@ -1,13 +1,16 @@
 // kademe-owned
 import { Check } from "lucide-react";
 import type { ReactNode } from "react";
-import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
+import { DEFAULT_LOCALE, type CandidateLocale } from "@/i18n/locale";
 import { cn } from "@/lib/cn";
 
 /** What a reader hears after a step's title; the check and the grey number only show it. The current step is aria-current. */
-const STATE_WORDS: Record<Locale, { done: string; todo: string }> = {
+const STATE_WORDS: Record<CandidateLocale, { done: string; todo: string }> = {
   tr: { done: "tamamlandı", todo: "sırada" },
   en: { done: "done", todo: "up next" },
+  de: { done: "erledigt", todo: "als Nächstes" },
+  es: { done: "completado", todo: "siguiente" },
+  ar: { done: "مكتمل", todo: "التالي" },
 };
 
 /**
@@ -23,7 +26,7 @@ export function PathSteps({
 }: {
   steps: Array<{ title: ReactNode; detail?: ReactNode; state?: "done" | "current" | "todo"; action?: ReactNode }>;
   label?: string;
-  locale?: Locale;
+  locale?: CandidateLocale;
   look?: "list" | "setup";
 }) {
   const words = STATE_WORDS[locale];

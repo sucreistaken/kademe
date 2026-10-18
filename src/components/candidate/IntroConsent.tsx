@@ -15,7 +15,7 @@ import { stepPath } from "@/lib/candidate-routes";
 import { cn } from "@/lib/cn";
 import type { CandidateState } from "@/lib/exam-flow";
 import { useT } from "@/i18n/candidate-client";
-import type { Locale } from "@/i18n/locale";
+import type { CandidateLocale } from "@/i18n/locale";
 
 /**
  * The first screen: what this exam is, how long it takes, and exactly what is
@@ -39,7 +39,7 @@ export function IntroConsent({
   mediaRetentionDays,
 }: {
   token: string;
-  locale: Locale;
+  locale: CandidateLocale;
   state: CandidateState;
   consent: { version: number; body: string };
   supportEmail: string | null;

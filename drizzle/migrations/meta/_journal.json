@@ -176,6 +176,13 @@
       "when": 1792337438381,
       "tag": "0024_candidate_request_problem",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1792340458366,
+      "tag": "0025_candidate_locales",
+      "breakpoints": true
     }
   ]
 }

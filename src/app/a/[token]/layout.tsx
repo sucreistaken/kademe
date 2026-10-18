@@ -3,7 +3,7 @@ import { ProctorProvider } from "@/components/candidate/proctor/ProctorProvider"
 import { CandidateFrameProvider, type CandidateFrame } from "@/components/candidate/frame-context";
 import { resolveToken } from "@/lib/candidate-context";
 import { ORG_TIMEZONE } from "@/lib/org-timezone";
-import { isLocale, localeFromAcceptLanguage } from "@/i18n/locale";
+import { isCandidateLocale, candidateLocaleFromAcceptLanguage } from "@/i18n/locale";
 
 /**
  * Keeps one proctoring engine alive across the student pages. Soft navigation
@@ -37,6 +37,6 @@ async function candidateFrame(token: string): Promise<CandidateFrame> {
   const ctx = await resolveToken(token)
     .then((r) => r.ctx ?? null)
     .catch(() => null);
-  const locale = ctx && isLocale(ctx.locale) ? ctx.locale : localeFromAcceptLanguage((await headers()).get("accept-language"));
+  const locale = ctx && isCandidateLocale(ctx.locale) ? ctx.locale : candidateLocaleFromAcceptLanguage((await headers()).get("accept-language"));
   return { token, locale, timeZone: ORG_TIMEZONE, orgName: ctx?.orgName ?? null, contactEmail: ctx?.contactEmail ?? null };
 }

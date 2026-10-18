@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { AiMessage } from "@/lib/ai";
 import { buildRepairMessages, parseModelJson, withoutEmDash } from "@/lib/ai-json";
 import type { DetailQuestion, DetailSection } from "@/components/panel/report/detail-model";
+import type { CandidateLocale } from "@/i18n/locale";
 import type { Cefr, Section } from "./types";
 
 /**
@@ -16,7 +17,7 @@ import type { Cefr, Section } from "./types";
  * transcript, answer text, name or e-mail.
  */
 
-export type FeedbackLocale = "tr" | "en";
+export type FeedbackLocale = CandidateLocale;
 
 export const FEEDBACK_LIMITS = { strengths: 3, improve: 4, topic: 80, why: 300, example: 200, exampleSide: 80, line: 240, nextStep: 300 } as const;
 
@@ -261,7 +262,13 @@ export function buildFeedbackInput(overall: string | null | undefined, sections:
 // Prompt
 // ---------------------------------------------------------------------------
 
-const LANGUAGE_NAME: Record<FeedbackLocale, string> = { tr: "Turkish", en: "English" };
+const LANGUAGE_NAME: Record<FeedbackLocale, string> = {
+  tr: "Turkish",
+  en: "English",
+  de: "German",
+  es: "Spanish",
+  ar: "Arabic",
+};
 
 export function buildFeedbackMessages(input: FeedbackInput, locale: FeedbackLocale): AiMessage[] {
   const system = [

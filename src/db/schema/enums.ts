@@ -1,5 +1,6 @@
 import { pgEnum } from "drizzle-orm/pg-core";
 import { PROCTOR_EVENT_TYPES } from "../../lib/proctor/taxonomy";
+import { CANDIDATE_LOCALES } from "../../i18n/locale";
 import { CEFR_LEVELS, EXAM_MODES, ITEM_TYPES, SECTIONS } from "../../lib/exam/types";
 
 /**
@@ -109,7 +110,8 @@ export const aiReviewStatus = pgEnum("ai_review_status", ["QUEUED", "DONE", "FAI
 export const aiVerdict = pgEnum("ai_verdict", ["CONFIRMED", "NOT_CONFIRMED", "UNCLEAR"]);
 export const teacherFlagStatus = pgEnum("teacher_flag_status", ["OPEN", "CONFIRMED", "DISMISSED"]);
 
-export const locale = pgEnum("locale", ["tr", "en"]);
+/** Candidate locales (tr, en for everyone; de, es, ar only for exam students). */
+export const locale = pgEnum("locale", CANDIDATE_LOCALES);
 
 /** Observation tags under a competency: evidence for (+) or against (-). */
 export const observationPolarity = pgEnum("observation_polarity", ["POSITIVE", "NEGATIVE"]);

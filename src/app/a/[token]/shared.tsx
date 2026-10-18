@@ -16,7 +16,7 @@ import { setAssessmentLocale, supportedLocales } from "@/lib/candidate-context";
 import { stepPath } from "@/lib/candidate-routes";
 import { candidateT } from "@/i18n/candidate";
 import { shortDate } from "@/i18n/dates";
-import { isLocale, DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
+import { isCandidateLocale, DEFAULT_LOCALE, type CandidateLocale } from "@/i18n/locale";
 
 /**
  * Every student page starts the same way: resolve the token on the server,
@@ -28,12 +28,12 @@ export type SearchParams = Promise<Record<string, string | string[] | undefined>
 
 export type PageEntry =
   | { kind: "problem"; node: React.ReactNode }
-  | { kind: "ok"; ctx: ExamCandidateContext; state: CandidateState; locale: Locale };
+  | { kind: "ok"; ctx: ExamCandidateContext; state: CandidateState; locale: CandidateLocale };
 
 function readLang(params: Record<string, string | string[] | undefined>) {
   const raw = params.lang;
   const value = Array.isArray(raw) ? raw[0] : raw;
-  return isLocale(value) ? value : null;
+  return isCandidateLocale(value) ? value : null;
 }
 
 /**
@@ -69,7 +69,7 @@ export async function enter(
 
   if (!resolved.ok) {
     const ctx = resolved.ctx;
-    const locale = (ctx?.locale as Locale | undefined) ?? DEFAULT_LOCALE;
+    const locale = ctx?.locale ?? DEFAULT_LOCALE;
     const summary = ctx ? await progressSummary(ctx) : undefined;
     // Before the exam opens: a waiting screen with the opening time, nothing to start.
     if (resolved.problem === "NOT_YET" && ctx?.link.notBefore) {
@@ -119,13 +119,13 @@ export async function enter(
     kind: "ok",
     ctx: resolved.ctx,
     state,
-    locale: resolved.ctx.locale as Locale,
+    locale: resolved.ctx.locale,
   };
 }
 
 /** The line in the top bar: who this was prepared for and until when. */
 export function headerMeta(ctx: ExamCandidateContext) {
-  const locale = ctx.locale as Locale;
+  const locale = ctx.locale;
   const t = candidateT(locale);
   const date = shortDate(ctx.link.expiresAt, locale);
   return ctx.candidate.fullName

@@ -7,7 +7,6 @@ import { resolveToken } from "@/lib/candidate-context";
 import type { PageSearchParams } from "@/lib/candidate-pages";
 import { servingSolution } from "@/solutions/registry.server";
 import { candidateT } from "@/i18n/candidate";
-import type { Locale } from "@/i18n/locale";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +37,7 @@ export default async function CandidateRightsPage({
 
   if (!ctx || !served) return <UnknownLink token={token} />;
 
-  const locale = ctx.locale as Locale;
+  const locale = ctx.locale;
   const t = candidateT(locale);
   const kinds: RightsKind[] = served.accommodationRequests ? ["ACCOMMODATION", ...DATA_RIGHTS] : DATA_RIGHTS;
   const sp = searchParams ? await searchParams : {};

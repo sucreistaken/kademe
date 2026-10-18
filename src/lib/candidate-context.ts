@@ -11,7 +11,7 @@ import {
 } from "@/db/schema";
 import { sha256 } from "@/lib/auth";
 import { windowProblem } from "@/lib/exam-window";
-import type { Locale } from "@/i18n/locale";
+import { CANDIDATE_LOCALES, type CandidateLocale } from "@/i18n/locale";
 
 /**
  * The candidate side of the core, server only. Every solution's candidate flow
@@ -46,7 +46,7 @@ export type CandidateContext = {
     location: string | null;
   };
   orgName: string;
-  locale: Locale;
+  locale: CandidateLocale;
   contactEmail: string | null;
   contactName: string | null;
   mediaRetentionDays: number;
@@ -112,10 +112,14 @@ export async function recordFirstSeen(ctx: CandidateContext, ip: string | null, 
     .where(and(eq(assessmentLinks.id, ctx.link.id), isNull(assessmentLinks.firstSeenIp)));
 }
 
-/** Interface languages offered to every candidate. */
-export const supportedLocales = (ctx: CandidateContext): Locale[] => (ctx ? ["tr", "en"] : ["tr"]);
+/**
+ * Interface languages offered to a candidate. Exam students get all five;
+ * hiring candidates stay on tr and en (the hiring flow has no de/es/ar copy).
+ */
+export const supportedLocales = (ctx: CandidateContext): CandidateLocale[] =>
+  !ctx ? ["tr"] : ctx.assessment.solution === "LANGUAGE_EXAM" ? [...CANDIDATE_LOCALES] : ["tr", "en"];
 
-export async function setAssessmentLocale(ctx: CandidateContext, locale: Locale) {
+export async function setAssessmentLocale(ctx: CandidateContext, locale: CandidateLocale) {
   await db.update(assessments).set({ locale }).where(eq(assessments.id, ctx.assessment.id));
   ctx.locale = locale;
 }

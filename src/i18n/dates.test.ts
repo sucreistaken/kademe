@@ -25,4 +25,13 @@ describe("zone-aware dates", () => {
     expect(shortDate(instant, "en")).toBe(inOrgZone);
     expect(managerShortDate(instant, "en")).toBe(inOrgZone);
   });
+
+  it("formats German, Spanish and Arabic, keeping Latin digits for Arabic", () => {
+    const at = new Date("2026-11-01T02:00:00Z");
+    expect(shortDate(at, "de", "Europe/Istanbul")).toMatch(/^1\. Nov/);
+    expect(dateTime(at, "es", "Europe/Istanbul")).toMatch(/05:00/);
+    const ar = dateTime(at, "ar", "Europe/Istanbul");
+    expect(ar).toMatch(/05:00/);
+    expect(ar).not.toMatch(/[\u0660-\u0669]/);
+  });
 });
