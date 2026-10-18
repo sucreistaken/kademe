@@ -303,7 +303,7 @@
     "minutes": "{n} dk",
     "items": "{n} soru",
     "itemsAdaptive": "{range} soru, cevaplarınıza göre",
-    "tasks": "{n} görev",
+    "tasks": "{n, plural, other {# görev}}",
     "total": "Toplam yaklaşık {n} dakika",
     "proctoredTitle": "Bu sınav gözetimlidir",
     "proctoredCamera": "Kameranız ve mikrofonunuz sınav boyunca açık kalır; görüntünüz ve sesiniz kaydedilir.",

@@ -303,7 +303,7 @@
     "minutes": "{n} Min.",
     "items": "{n} Fragen",
     "itemsAdaptive": "{range} Fragen, je nach Ihren Antworten",
-    "tasks": "{n} Aufgaben",
+    "tasks": "{n, plural, one {# Aufgabe} other {# Aufgaben}}",
     "total": "Insgesamt etwa {n} Minuten",
     "proctoredTitle": "Diese Prüfung wird beaufsichtigt",
     "proctoredCamera": "Kamera und Mikrofon bleiben während der gesamten Prüfung eingeschaltet; Bild und Ton werden aufgezeichnet.",

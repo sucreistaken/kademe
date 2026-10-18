@@ -303,7 +303,7 @@
     "minutes": "{n} min",
     "items": "{n} questions",
     "itemsAdaptive": "{range} questions, depending on your answers",
-    "tasks": "{n} tasks",
+    "tasks": "{n, plural, one {# task} other {# tasks}}",
     "total": "About {n} minutes in total",
     "proctoredTitle": "This exam is proctored",
     "proctoredCamera": "Your camera and microphone stay on for the whole exam; your picture and sound are recorded.",

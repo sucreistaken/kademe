@@ -303,7 +303,7 @@
     "minutes": "{n, plural, zero {{n} دقيقة} one {دقيقة واحدة} two {دقيقتان} few {{n} دقائق} many {{n} دقيقة} other {{n} دقيقة}}",
     "items": "{n, plural, zero {{n} سؤال} one {سؤال واحد} two {سؤالان} few {{n} أسئلة} many {{n} سؤالًا} other {{n} سؤال}}",
     "itemsAdaptive": "عدد الأسئلة: {range}، بحسب إجاباتك",
-    "tasks": "{n, plural, zero {{n} مهمة} one {مهمة واحدة} two {مهمتان} few {{n} مهام} many {{n} مهمة} other {{n} مهمة}}",
+    "tasks": "{n, plural, zero {# مهمة} one {مهمة واحدة} two {مهمتان} few {# مهام} many {# مهمة} other {# مهمة}}",
     "total": "نحو {n, plural, zero {{n} دقيقة} one {دقيقة واحدة} two {دقيقتين} few {{n} دقائق} many {{n} دقيقة} other {{n} دقيقة}} إجمالًا",
     "proctoredTitle": "هذا الامتحان مراقَب",
     "proctoredCamera": "تبقى الكاميرا والميكروفون قيد التشغيل طوال الامتحان، وتُسجَّل صورتك وصوتك.",

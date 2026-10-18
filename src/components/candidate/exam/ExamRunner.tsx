@@ -505,7 +505,9 @@ export function ExamRunner({
   const inputsOff = busy || timeUp;
   // The two-column views (reading text, listening group, cloze text with its option panel) outgrow the 1000px column of every other screen.
   const clozeHere = item?.content.kind === "GAP" && !!item.content.cloze;
-  const wideReading = state.step === "ITEM" && !nav?.review && (item?.stimulus?.kind === "READING" || !!group || clozeHere);
+  // Writing and speaking put the task and the answer side by side from lg width.
+  const taskSplit = item?.content.kind === "WRITING" || item?.content.kind === "SPEAKING";
+  const wideReading = state.step === "ITEM" && !nav?.review && (item?.stimulus?.kind === "READING" || !!group || clozeHere || taskSplit);
 
   const failureLine =
     failure ? (
@@ -876,7 +878,13 @@ export function ExamRunner({
             </div>
           </div>
         ) : item ? (
-          <div className={cn("mx-auto px-7 pb-10 pt-8", item.stimulus?.kind === "READING" || clozeHere ? "max-w-[1200px]" : "max-w-[760px]")}>
+          <div
+            className={cn(
+              "mx-auto px-7",
+              taskSplit ? "pb-4 pt-4" : "pb-10 pt-8",
+              item.stimulus?.kind === "READING" || clozeHere || taskSplit ? "max-w-[1200px]" : "max-w-[760px]",
+            )}
+          >
             <div className={cn(item.stimulus?.kind === "READING" && "grid gap-8 lg:grid-cols-2")}>
               {item.stimulus?.kind === "READING" ? (
                 <article className="rounded-[14px] border border-line bg-surface p-6 lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem-var(--step-footer-space,112px)-var(--step-notice-space,0px))] lg:overflow-y-auto">
@@ -888,7 +896,10 @@ export function ExamRunner({
                 <h2
                   ref={headingRef}
                   tabIndex={-1}
-                  className="tnum mb-6 flex items-center gap-2.5 text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted outline-none"
+                  className={cn(
+                    "tnum flex items-center gap-2.5 text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted outline-none",
+                    taskSplit ? "mb-3" : "mb-6",
+                  )}
                 >
                   {nav ? t("questionOf", { n: item.sequence, total: entries.length }) : t("question", { n: cur.answered + 1 })}
                   <PartCounter progress={progressOf.get(item.sequence)} />

@@ -12,7 +12,7 @@ import { ABOVE_FOOTER } from "@/components/visual/footer-action";
 import { TaskExpectations } from "./TaskExpectations";
 import { TaskPromptCard } from "./TaskPromptCard";
 import { ClozeItem } from "./ClozeItem";
-import { Instruction, radioKeys } from "./item-parts";
+import { Instruction, radioKeys, TASK_LEFT, TASK_RIGHT, TASK_SPLIT } from "./item-parts";
 import { useChipDrag } from "./use-chip-drag";
 
 /**
@@ -729,9 +729,12 @@ export function WritingItem({ item, answer, onChange, disabled }: ItemProps) {
   const words = (answer.text ?? "").trim().split(/\s+/u).filter(Boolean).length;
   const { minWords, maxWords } = item.content;
   return (
-    <div>
-      <TaskPromptCard text={item.prompt} id={promptId} points={item.content.studentPoints} pointsId={pointsId} />
-      <TaskExpectations id={expectId} section="WRITING" minWords={minWords} maxWords={maxWords} />
+    <div className={TASK_SPLIT}>
+      <div className={TASK_LEFT}>
+        <TaskPromptCard text={item.prompt} id={promptId} points={item.content.studentPoints} pointsId={pointsId} />
+        <TaskExpectations id={expectId} section="WRITING" minWords={minWords} maxWords={maxWords} />
+      </div>
+      <div className={TASK_RIGHT}>
       <textarea
         ref={ref}
         lang="de"
@@ -742,7 +745,7 @@ export function WritingItem({ item, answer, onChange, disabled }: ItemProps) {
         placeholder={t("writingPlaceholder")}
         onChange={(e) => onChange({ text: e.target.value })}
         rows={14}
-        className="mt-4 w-full resize-y rounded-[10px] border border-line-strong bg-surface px-4 py-3 text-[16px] leading-[1.65] text-ink"
+        className="w-full resize-y rounded-[10px] border border-line-strong bg-surface px-4 py-3 text-[16px] leading-[1.65] text-ink lg:min-h-0 lg:flex-1 lg:resize-none"
         {...NO_ASSIST}
       />
       <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
@@ -750,6 +753,7 @@ export function WritingItem({ item, answer, onChange, disabled }: ItemProps) {
         <span className={cn("tnum text-[13px]", words < minWords || words > maxWords ? "text-muted" : "text-ink")}>
           {t("words", { n: words })} · {t("wordsRange", { min: minWords, max: maxWords })}
         </span>
+      </div>
       </div>
     </div>
   );

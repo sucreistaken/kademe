@@ -11,6 +11,7 @@ import { formatCountdown } from "@/lib/timer";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
 import { buttonVariants } from "@/components/ui/button";
+import { TASK_LEFT, TASK_RIGHT, TASK_SPLIT } from "./item-parts";
 import { isGateOpen, markRevealed, playButtonMode, readRevealed } from "./listening-gate";
 import { sessionStore } from "./pending-answer";
 import { TaskExpectations } from "./TaskExpectations";
@@ -464,12 +465,14 @@ export function SpeakingItem({
 
   if (!content) return null;
   return (
-    <div>
-      <TaskPromptCard text={item.prompt} points={content.studentPoints} />
-      <TaskExpectations section="SPEAKING" thinkSeconds={content.thinkSeconds} answerSeconds={content.answerSeconds} />
-      <div className="mt-5 flex flex-col items-start gap-5 md:flex-row">
-        <video ref={videoRef} muted playsInline className="aspect-[4/3] w-full max-w-[360px] rounded-[10px] bg-ink object-cover" />
-        <div className="flex-1">
+    <div className={TASK_SPLIT}>
+      <div className={TASK_LEFT}>
+        <TaskPromptCard text={item.prompt} points={content.studentPoints} />
+        <TaskExpectations section="SPEAKING" thinkSeconds={content.thinkSeconds} answerSeconds={content.answerSeconds} />
+      </div>
+      <div className={cn(TASK_RIGHT, "gap-4")}>
+        <video ref={videoRef} muted playsInline className="mb-4 aspect-[4/3] w-full max-w-[300px] shrink-0 rounded-[10px] bg-ink object-cover lg:mb-0" />
+        <div className="shrink-0">
           {phase === "THINKING" ? (
             <>
               <div className="text-[13px] font-medium text-muted">{t("thinkTime")}</div>

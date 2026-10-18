@@ -23,3 +23,15 @@ export function radioKeys(e: KeyboardEvent<HTMLButtonElement>) {
   next.focus();
   next.click();
 }
+
+/**
+ * Two-column task screen (writing, speaking) from lg width: the task on the
+ * left, the answer controls on the right, the pair as tall as the room between
+ * the header and the bottom bar so the answer field never starts below the
+ * fold. Below lg the columns simply stack. The 8.5rem is the sticky header
+ * (57px), the screen padding and the question heading above the pair.
+ */
+export const TASK_SPLIT =
+  "lg:grid lg:h-[max(24rem,calc(100dvh-8.5rem-var(--step-footer-space,112px)-var(--step-notice-space,0px)))] lg:grid-cols-2 lg:gap-8";
+export const TASK_LEFT = "lg:min-h-0 lg:overflow-y-auto lg:pe-2";
+export const TASK_RIGHT = "mt-5 lg:mt-0 lg:flex lg:min-h-0 lg:flex-col lg:overflow-y-auto";
