@@ -30,14 +30,16 @@ describe("allocateMinutes", () => {
 describe("examTemplateFor", () => {
   it("picks the nearest template by mode, sections and minutes", () => {
     expect(examTemplateFor(shape({ skills: ["GRAMMAR"], targetMinutes: 15 })).key).toBe("quick-screen");
-    expect(examTemplateFor(shape({ targetMinutes: 50 })).key).toBe("placement");
+    expect(examTemplateFor(shape({ targetMinutes: 40 })).key).toBe("placement");
     expect(examTemplateFor(shape({ skills: ["GRAMMAR", "READING", "LISTENING", "WRITING", "SPEAKING"], targetMinutes: 20 })).key).toBe("placement");
     expect(examTemplateFor(shape({ mode: "LEVEL_VERIFICATION", targetMinutes: 30 })).key).toBe("level-check");
   });
 
-  it("pins the quick-screen/placement boundary by time ratio (about 44 minutes with no skills: 25 and 77)", () => {
-    expect(examTemplateFor(shape({ targetMinutes: 45 })).key).toBe("placement");
-    expect(examTemplateFor(shape({ targetMinutes: 43 })).key).toBe("quick-screen");
+  it("pins the quick-screen/placement boundary by time ratio (about 34 minutes with no skills: the quick screen is matched at 15, placement 77)", () => {
+    expect(examTemplateFor(shape({ targetMinutes: 40 })).key).toBe("placement");
+    expect(examTemplateFor(shape({ targetMinutes: 34 })).key).toBe("placement");
+    expect(examTemplateFor(shape({ targetMinutes: 33 })).key).toBe("quick-screen");
+    expect(examTemplateFor(shape({ targetMinutes: 30 })).key).toBe("quick-screen");
     expect(examTemplateFor(shape({ targetMinutes: 60 })).key).toBe("placement");
     expect(examTemplateFor(shape({ skills: ["GRAMMAR"], targetMinutes: 40 })).key).toBe("quick-screen");
   });
@@ -163,12 +165,12 @@ describe("text sections follow the minutes", () => {
   const kinds = (texts: Array<{ level: string; kind: string }> | undefined) => (texts ?? []).map((t) => `${t.kind} ${t.level}`);
   const grammarOf = (s: ExamShape) => buildExamConfig(s).config.sections.find((x) => x.section === "GRAMMAR")!;
 
-  it("placement: each kind scales with the minutes and keeps its middle levels", () => {
+  it("placement: fewer minutes drop the word banks, then the lowest cloze texts; more widen each kind", () => {
     for (const [target, cloze, wordBanks] of [
-      // All five sections at 77 minutes give grammar 27 of its 30: one cloze text fewer.
-      [77, ["A1", "A2", "B1", "B2", "C1"], ["A2", "B1", "B2"]],
-      [60, ["A2", "B1", "B2", "C1"], ["A2", "B1"]],
-      [45, ["A2", "B1", "B2"], ["A2", "B1"]],
+      // All five sections at 77 minutes give grammar 27 of its 30: one text fewer, the lowest word bank.
+      [77, ["A1", "A2", "B1", "B2", "C1", "C2"], ["B1", "B2"]],
+      [60, ["A1", "A2", "B1", "B2", "C1", "C2"], []],
+      [45, ["A2", "B1", "B2", "C1", "C2"], []],
       [120, ["A1", "A2", "B1", "B2", "C1", "C2"], ["A2", "B1", "B2", "C1"]],
     ] as const) {
       const s = shape({ skills: [...ALL], targetMinutes: target });
@@ -179,10 +181,11 @@ describe("text sections follow the minutes", () => {
     }
   });
 
-  it("quick screen: fewer minutes keep the middle levels, more widen upward first", () => {
+  it("quick screen: fewer minutes drop the word banks, then the lowest cloze texts; more widen upward first", () => {
     for (const [target, cloze, wordBanks] of [
-      [10, ["A2", "B1"], ["A2"]],
-      [15, ["A2", "B1"], ["A1", "A2"]],
+      [10, ["A2", "B1", "B2"], []],
+      [15, ["A1", "A2", "B1", "B2"], []],
+      [20, ["A1", "A2", "B1", "B2"], ["A2", "B1"]],
       [25, ["A1", "A2", "B1", "B2"], ["A1", "A2", "B1"]],
       [35, ["A1", "A2", "B1", "B2", "C1", "C2"], ["A1", "A2", "B1", "B2"]],
     ] as const) {
@@ -192,13 +195,29 @@ describe("text sections follow the minutes", () => {
     }
   });
 
-  it("textsFor: at least one cloze text; word banks may drop out beside one, never when they stand alone", () => {
+  it("a shorter AI-made quick screen keeps its hardest cloze text at B2 (final review I1)", () => {
+    for (const target of [15, 20, 25]) {
+      for (const skills of [["GRAMMAR"] as Section[], []]) {
+        const s = shape({ skills, targetMinutes: target });
+        expect(examTemplateFor(s).key, `${target} min`).toBe("quick-screen");
+        const cloze = (grammarOf(s).texts ?? []).filter((t) => t.kind === "CLOZE").map((t) => t.level);
+        expect(cloze.at(-1), `${target} min, skills [${skills.join(",")}]`).toBe("B2");
+        expect(cloze, `${target} min`).toContain("B1");
+      }
+    }
+  });
+
+  it("textsFor: at least one text, B2 kept longest; word banks drop out before cloze texts, never when they stand alone", () => {
     const t = (cloze: string[], wordBanks: string[]) => [
       ...cloze.map((level) => ({ level, kind: "CLOZE" as const })),
       ...wordBanks.map((level) => ({ level, kind: "WORDBANK" as const })),
     ] as Parameters<typeof textsFor>[0];
-    expect(kinds(textsFor(t(["A2", "B1", "B2"], ["B1"]), 0.1))).toEqual(["CLOZE B1"]);
-    expect(kinds(textsFor(t([], ["A2", "B1", "B2"]), 0.1))).toEqual(["WORDBANK B1"]);
+    expect(kinds(textsFor(t(["A2", "B1", "B2"], ["B1"]), 0.1))).toEqual(["CLOZE B2"]);
+    expect(kinds(textsFor(t(["A2", "B1", "B2"], ["B1"]), 0.5))).toEqual(["CLOZE B1", "CLOZE B2"]);
+    expect(kinds(textsFor(t(["A2", "B1", "B2"], ["B1"]), 0.75))).toEqual(["CLOZE A2", "CLOZE B1", "CLOZE B2"]);
+    expect(kinds(textsFor(t([], ["A2", "B1", "B2"]), 0.1))).toEqual(["WORDBANK B2"]);
+    // Above B2 the top is kept before the lowest levels: never cut the top of the span first.
+    expect(kinds(textsFor(t(["A1", "A2", "B1", "B2", "C1", "C2"], []), 0.5))).toEqual(["CLOZE B1", "CLOZE B2", "CLOZE C2"]);
     expect(kinds(textsFor(t(["B1"], ["B1"]), 1))).toEqual(["CLOZE B1", "WORDBANK B1"]);
   });
 

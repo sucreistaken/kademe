@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { Locale } from "@/i18n/locale";
 import { blueprintConfigSchema, enabledSections, estimatedMinutes, type BlueprintConfig, type CoverageRow, type SectionConfig } from "@/lib/exam/blueprint";
-import { EXAM_TEMPLATES, type ExamTemplate } from "@/lib/exam/templates";
+import { EXAM_TEMPLATES, type ExamTemplate, type ExamTemplateKey } from "@/lib/exam/templates";
 import { CEFR_LEVELS, isObjectiveSection, SECTIONS, type Cefr, type ExamMode, type Section, type TextGapKind } from "@/lib/exam/types";
 
 /**
@@ -28,6 +28,15 @@ export type ExamShape = { mode: ExamMode; targetMinutes: number | null; skills: 
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
 
 /**
+ * The minutes a template is matched at when they differ from its own. The quick
+ * screen grew from 15 to 25 minutes on 2026-10-18 (the measurement gate); the
+ * creator still matches it at 15, so the quick-screen/placement boundary with
+ * no skills named stays about 34 minutes (sqrt(15 * 77)) and a 40-minute
+ * request keeps the four-skill placement shape (final review ruling, 2026-10-18).
+ */
+const MATCH_MINUTES: Partial<Record<ExamTemplateKey, number>> = { "quick-screen": 15 };
+
+/**
  * Named skills must match the template's sections (the emphasis counts as
  * named). With no skills named, only a template that lacks the emphasis
  * section is pushed back: "okuma ağırlıklı" means more reading, not reading only.
@@ -44,7 +53,7 @@ export function examTemplateFor(p: ExamShape): ExamTemplate {
         ? 1
         : 0;
     // Stretching or shrinking a template by half costs as much as one section that does not match.
-    const minutes = p.targetMinutes ? 30 * Math.abs(Math.log2(estimatedMinutes(t.config) / p.targetMinutes)) : 0;
+    const minutes = p.targetMinutes ? 30 * Math.abs(Math.log2((MATCH_MINUTES[t.key] ?? estimatedMinutes(t.config)) / p.targetMinutes)) : 0;
     return differ * 30 + minutes;
   };
   const candidates = EXAM_TEMPLATES.filter((t) => t.mode === p.mode);
@@ -102,21 +111,44 @@ export function cTestLevelsFor(listed: Cefr[], minutes: number): Cefr[] {
 
 type SectionTexts = NonNullable<SectionConfig["texts"]>;
 
+/** The levels a shrunk text list keeps longest: B2, then B1, then the rest from the top down. */
+const KEEP_FIRST: Cefr[] = ["B2", "B1", "C2", "C1", "A2", "A1"];
+
+/** `keep` of the listed levels in KEEP_FIRST order, returned in CEFR order: the lowest go first. */
+function keepUpper(listed: Cefr[], keep: number): Cefr[] {
+  const kept = new Set(KEEP_FIRST.filter((l) => listed.includes(l)).slice(0, keep));
+  return listed.filter((l) => kept.has(l));
+}
+
 /**
  * Cloze texts and word banks scale with the section's minutes (`f` = new over
- * the template's), each kind on its own levels as `spanLevels` picks them. A
- * listed kind keeps at least one text, except that word banks may drop out of
- * a short section that still has a cloze text.
+ * the template's). More minutes: each kind widens its own span as
+ * `spanLevels` does. Fewer: the section keeps `round(texts * f)` texts (at
+ * least one) and sheds the word banks first, then the lowest cloze texts; B2
+ * and then B1 go last, and the top of the span is never cut first, so a short
+ * screen still tells the upper levels apart (final review 2026-10-18: a
+ * 20-minute screen used to keep A1 to B1 and place B2+ students too low).
  */
 export function textsFor(texts: SectionTexts, f: number): SectionTexts {
   const levelsOf = (kind: "CLOZE" | "WORDBANK") => CEFR_LEVELS.filter((l) => texts.some((t) => t.kind === kind && t.level === l));
   const cloze = levelsOf("CLOZE");
   const wordBanks = levelsOf("WORDBANK");
-  const keepCloze = cloze.length ? clamp(Math.round(cloze.length * f), 1, CEFR_LEVELS.length) : 0;
-  const keepWordBanks = wordBanks.length ? clamp(Math.round(wordBanks.length * f), keepCloze ? 0 : 1, CEFR_LEVELS.length) : 0;
+  const listed = cloze.length + wordBanks.length;
+  let clozeLevels: Cefr[];
+  let wordBankLevels: Cefr[];
+  if (f >= 1 || listed === 0) {
+    const widen = (levels: Cefr[]) => (levels.length ? spanLevels(levels, clamp(Math.round(levels.length * f), 1, CEFR_LEVELS.length)) : []);
+    clozeLevels = widen(cloze);
+    wordBankLevels = widen(wordBanks);
+  } else {
+    const keep = clamp(Math.round(listed * f), 1, listed);
+    const keepCloze = Math.min(cloze.length, keep);
+    clozeLevels = keepUpper(cloze, keepCloze);
+    wordBankLevels = keepUpper(wordBanks, keep - keepCloze);
+  }
   return [
-    ...(keepCloze ? spanLevels(cloze, keepCloze) : []).map((level) => ({ level, kind: "CLOZE" as const })),
-    ...(keepWordBanks ? spanLevels(wordBanks, keepWordBanks) : []).map((level) => ({ level, kind: "WORDBANK" as const })),
+    ...clozeLevels.map((level) => ({ level, kind: "CLOZE" as const })),
+    ...wordBankLevels.map((level) => ({ level, kind: "WORDBANK" as const })),
   ];
 }
 

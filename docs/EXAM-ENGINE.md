@@ -101,12 +101,16 @@ Hazır şablonlar sabit formdur (2026-10-18). Yerleştirme: DILBILGISI = A1'den 
 metin ve A1-B1 üç kelime havuzu, 25 dk (spec'in başlangıcı 15 dk idi, kapıdan geçmedi; aşağıda).
 Okuma süresi varsayımı: boşluklu metin yaklaşık 3.5 dk, kelime havuzu 3 dk, beşe yuvarlanır.
 AI oluşturucu şablonu süre oranıyla seçer (`exam-config.ts: examTemplateFor`): süre uyumu puanı
-`30 * |log2(şablon dakikası / hedef)|`; beceri söylenmediğinde hızlı tarama (25) ile yerleştirme
-(77) arasındaki sınır yaklaşık 44 dakikadır (15 dakikalık tarama varken 34 idi). Yeniden
-ölçeklemede (`exam-config.ts: textsFor`) her tür kendi sayısını süre oranıyla `round` eder; az
-ise orta seviyeleri tutar, fazla ise aralığı önce yukarı sonra aşağı genişletir; en az bir
-boşluklu metin kalır, kısa bölümde kelime havuzları düşebilir. Yeniden ölçeklenmiş formlar
-simüle edilmedi, yalnız şablonların kendisi. Eski `cTestLevels` bölümü hâlâ `floor(dakika / 5)`
+`30 * |log2(şablon dakikası / hedef)|`. Hızlı tarama bu karşılaştırmada hâlâ 15 dakika sayılır
+(`MATCH_MINUTES`), bu yüzden beceri söylenmediğinde hızlı tarama ile yerleştirme (77) arasındaki
+sınır eskisi gibi yaklaşık 34 dakikadır: 40 dakikalık istek dört becerili yerleştirme biçimini
+alır (son inceleme kararı, 2026-10-18). Yeniden ölçeklemede (`exam-config.ts: textsFor`) süre
+artınca her tür kendi sayısını süre oranıyla `round` eder ve aralığı önce yukarı sonra aşağı
+genişletir. Süre azalınca bölüm `round(metin * oran)` metin tutar (en az bir): önce kelime
+havuzları, sonra en düşük boşluklu metinler düşer; B2 ve B1 en son gider ve aralığın tepesi
+önce kesilmez (hızlı tarama 20 dk: A1-B2 boşluklu metin + A2, B1 kelime havuzu; 15 dk: A1-B2
+boşluklu metin; 10 dk: A2-B2). Yeniden ölçeklenmiş formlar simüle edilmedi, yalnız şablonların
+kendisi. Eski `cTestLevels` bölümü hâlâ `floor(dakika / 5)`
 metin tutar (`cTestLevelsFor`).
 
 Simülasyon ve kapı (`scripts/simulate-placement.ts`, 2026-10-18; seviye başına 4000 sanal
