@@ -6,7 +6,7 @@ Belirsiz sonuç öğretmene gider (2026-10-18, `platform/solutions`, canlıya ç
 Beş aday dili (tr/en/de/es/ar, göç 0025) ve öğrencinin sorun bildirimi (göç 0024), aynı dal: canlıya çıkış ve geri dönüş sırası "Canlıya çıkış planı: 2026-10-18 dalı" bölümünde.
 Son güncelleme: 2026-10-07 (Gelişmiş: tek kutu, AI önce, `platform/solutions` dalında, yerelde gerçek Gemini ile denendi; canlıya çıkmadı). Önceki: 2026-10-06 (işe alım plan 2b, görsel akış ve rehberli panel, `platform/solutions` dalında; bulut oturumunda tip, lint, test ve build ile doğrulandı, veritabanı betikleri ve tarayıcı turu yerel oturumu bekliyor; canlıya çıkmadı).
 Önceki: 2026-10-05 (işe alım plan 2, aday akışı, platform/solutions dalında, yerelde doğrulandı; canlıya çıkmadı); 2026-10-04 (çekirdek ayrımı ve işe alım plan 1, kütüphane ve alımlar, `platform/solutions` dalında, yerelde doğrulandı; canlıya çıkmadı).
-**Canlıda**: https://kademe.kadiray.com, `main` commit `2cf125c` (2026-10-16 18:45 UTC: krem zemin yerine Campus German beyazı ve soğuk griler; ondan önce `8e945da`, Campus German görünümü, Plan 1; ayrıntı "Canlıya çıkış: Campus German görünümü, Plan 1"). Önceki sürümler (aşağıdaki "Canlıya çıkış" bölümleri): `ab951b1` (okul yöneticisi geri bildirimi), `1d8d4c6` (onSET yerleştirme), `5a4f97e` (kurs grubu sürümü, 2026-10-14), `02760e3` (2026-10-07 akşam: Bugün yeni tasarım, 3 adımlı alım sihirbazı, "en az 2 değerlendirici" kuralı kaldırıldı, soru bankası v2; ayrıntı "Canlıya çıkış: sihirbaz ve banka v2"), `0142ff0` (Gelişmiş). Önceki not: commit `739f218` (`main`, 2026-10-05 sınav sıcak düzeltmesi; ayrıntı "Kararlar ve sapmalar"da).
+**Canlıda**: https://kademe.kadiray.com, `main` commit `bcc9d44` (2026-10-18 18:41 UTC: okul test revizyonu, dilbilgisi boşluklu metin ve kelime havuzu, beş aday dili, sabit alt bar, sorun bildirimi; ayrıntı "Canlıya çıkış: 2026-10-18 test revizyonu"). Önceki: `2cf125c` (2026-10-16 18:45 UTC: krem zemin yerine Campus German beyazı ve soğuk griler; ondan önce `8e945da`, Campus German görünümü, Plan 1; ayrıntı "Canlıya çıkış: Campus German görünümü, Plan 1"). Önceki sürümler (aşağıdaki "Canlıya çıkış" bölümleri): `ab951b1` (okul yöneticisi geri bildirimi), `1d8d4c6` (onSET yerleştirme), `5a4f97e` (kurs grubu sürümü, 2026-10-14), `02760e3` (2026-10-07 akşam: Bugün yeni tasarım, 3 adımlı alım sihirbazı, "en az 2 değerlendirici" kuralı kaldırıldı, soru bankası v2; ayrıntı "Canlıya çıkış: sihirbaz ve banka v2"), `0142ff0` (Gelişmiş). Önceki not: commit `739f218` (`main`, 2026-10-05 sınav sıcak düzeltmesi; ayrıntı "Kararlar ve sapmalar"da).
 Canlı veritabanı kullanıcı onayıyla sıfırlandı: eski işe alım verisi yok,
 panel kullanıcıları (parolalarıyla) taşındı, banka ve iki sınav yüklendi.
 
@@ -298,6 +298,27 @@ Not checked: the system check beyond its first screen (this Chrome has a second 
   aynı akşam silindi. Depoda yalnız `bank/audio` kaldı (95 MB, disk boş 4,3 GB).
 - Yedek: `/root/kademe-backups/before-delete-students-20261016T193242Z.dump` (712 KB). Satırlar bundan geri gelir, dosyalar gelmez.
 - Sonrası: `LANGUAGE_EXAM` daveti 0, `attempts` 0, medya/kare/kayıt satırı 0, `/login` 200.
+
+## Canlıya çıkış: 2026-10-18 test revizyonu (kullanıcı onayıyla: "canlıya al")
+
+- Kapsam: `bd349f9..bcc9d44` (44 commit), plan `~/.claude/plans/golden-launching-rain.md`, okul test dokümanı
+  `Kademe Test Revize.docx`. Sahibin kararları: dilbilgisi dokümandaki gibi (yerleştirme 30 dk, hızlı tarama 25 dk,
+  simülasyondaki isabet kaybı kabul), yazma/konuşmada seviyesiz ipuçları, belirsiz sonuç öğretmene, ilk girişte maskot.
+- Ön kontrol (salt okuma): `grammar.cloze`/`grammar.wordbank` madde ve cevap 0, çalışan bölüm 0, `candidate_requests` boş,
+  disk 4.2 GB boş.
+- Yedek: `/root/kademe-revize-20261018-1841.dump` (`/root/kademe-backups/` altında, 680 KB). 0025 geri alınamaz; tam
+  dönüş yalnız bu yedekten.
+- Deploy betiği: servis ve 5 zamanlayıcı durdu, pull `bcc9d44`, install, `db:migrate` (0024 + 0025), build, başlat.
+  Sonra: `locale` enum `tr,en,de,es,ar`; `candidate_request_kind` CHECK `PROBLEM` içeriyor; servis active,
+  zamanlayıcılar active, `/login` yerel ve https 200.
+- Banka: `bank:topup --production --confirm-db=127.0.0.1:5434/kademe --sync-seed` (`--retire-stale` YOK): madde
+  837 -> 873 (+36: 18 `grammar.cloze`, 18 `grammar.wordbank`, APPROVED), 72 yazma/konuşma maddesine `studentPoints`
+  işlendi. C-testler APPROVED kaldı (özel sınavlar için).
+- Doğrulama: yerelde Chrome turu 1280x626, sahte kamera (davet, beş bölüm, boşluk ekranı, alt bar 66 px sabit, dinleme
+  kapısı, sorun bildirimi panelde, öğretmen boşluk görünümü, Arapça sağdan sola giriş); yerel veritabanı provası 178/178.
+  Görülmeyen: son commit'in yazma/konuşma iki sütun düzeni (ikinci ekran yüzünden tarayıcıda açılamadı; testlerle),
+  sürükle-bırak (otomasyon tetiklemedi; tıklama çalışıyor), gerçek cihazda kamera ve Arapça yazı tipi.
+- Açık: ana dil kontrolü (yeni Almanca metinler, de/es/ar çeviriler), canlıda her şablondan bir davet denemesi.
 
 ## Canlıya çıkış: Campus German görünümü, Plan 1 (2026-10-16 akşam, kullanıcı onayıyla: "canlıya al")
 
