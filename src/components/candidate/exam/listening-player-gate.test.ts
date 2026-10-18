@@ -42,6 +42,11 @@ describe("ListeningPlayer read-first gate", () => {
     expect(html).not.toContain("listenStart");
   });
 
+  it("draws the play button disabled only when no play is left (a busy one stays focusable)", () => {
+    expect(render(1, "k")).toMatch(/<button type="button" class="[^"]*">listenPlay<\/button>/);
+    expect(render(0, "k")).toMatch(/<button type="button" disabled="" class="[^"]*">listenPlay<\/button>/);
+  });
+
   it("keeps the audio element while gated, so the start click can play it", () => {
     expect(render(2, "k")).toContain("<audio");
   });

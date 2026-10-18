@@ -2,9 +2,13 @@
 
 import { useT } from "@/i18n/candidate-client";
 
-type Expectations =
+type Expectations = (
   | { section: "WRITING"; minWords: number; maxWords: number }
-  | { section: "SPEAKING"; thinkSeconds: number; answerSeconds: number };
+  | { section: "SPEAKING"; thinkSeconds: number; answerSeconds: number }
+) & {
+  /** So the answer field can point at the box (aria-describedby). */
+  id?: string;
+};
 
 const CRITERIA = {
   WRITING: ["assessTask", "assessOrganised", "assessRange", "assessAccuracy"],
@@ -20,7 +24,7 @@ const CRITERIA = {
 export function TaskExpectations(props: Expectations) {
   const t = useT("examItems");
   return (
-    <div className="mt-5 rounded-[12px] border border-line bg-surface px-5 py-4">
+    <div id={props.id} className="mt-5 rounded-[12px] border border-line bg-surface px-5 py-4">
       <div className="text-[12px] font-semibold uppercase tracking-[0.06em] text-muted">{t("assessTitle")}</div>
       <p className="tnum mt-2 text-[15px] font-semibold text-ink">
         {props.section === "WRITING"

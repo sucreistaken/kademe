@@ -721,17 +721,19 @@ export function WritingItem({ item, answer, onChange, disabled }: ItemProps) {
   const t = useT("exam");
   const ref = useRef<HTMLTextAreaElement | null>(null);
   const promptId = useId();
+  const expectId = useId();
   if (item.content.kind !== "WRITING") return null;
   const words = (answer.text ?? "").trim().split(/\s+/u).filter(Boolean).length;
   const { minWords, maxWords } = item.content;
   return (
     <div>
       <TaskPromptCard text={item.prompt} id={promptId} />
-      <TaskExpectations section="WRITING" minWords={minWords} maxWords={maxWords} />
+      <TaskExpectations id={expectId} section="WRITING" minWords={minWords} maxWords={maxWords} />
       <textarea
         ref={ref}
         lang="de"
         aria-labelledby={promptId}
+        aria-describedby={expectId}
         value={answer.text ?? ""}
         disabled={disabled}
         placeholder={t("writingPlaceholder")}

@@ -11,7 +11,7 @@ import { formatCountdown } from "@/lib/timer";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
 import { buttonVariants } from "@/components/ui/button";
-import { isGateOpen, markRevealed, readRevealed } from "./listening-gate";
+import { isGateOpen, markRevealed, playButtonMode, readRevealed } from "./listening-gate";
 import { sessionStore } from "./pending-answer";
 import { TaskExpectations } from "./TaskExpectations";
 import { TaskPromptCard } from "./TaskPromptCard";
@@ -90,6 +90,14 @@ export function ListeningPlayer({
     setRevealed(!!gateKey && readRevealed(sessionStore(), gateKey));
   }, [gateKey]);
   const gated = !!gateKey && !isGateOpen({ revealed, playsLeft, maxPlays: stimulus.maxPlays });
+  // The gate's button goes away on its click: the focus then moves to the play button of the player that replaces it.
+  const playButton = useRef<HTMLButtonElement | null>(null);
+  const focusPlayer = useRef(false);
+  useEffect(() => {
+    if (gated || !focusPlayer.current) return;
+    focusPlayer.current = false;
+    playButton.current?.focus();
+  }, [gated]);
 
   const active = state === "LOADING" || state === "PLAYING";
   const reportActive = useRef(onActiveChange);
@@ -209,6 +217,7 @@ export function ListeningPlayer({
   }
 
   const free = state === "FAILED" && canReuse;
+  const playMode = playButtonMode({ state, freeRetry: free, playsLeft });
   const label =
     state === "LOADING"
       ? ti("listenLoading")
@@ -225,6 +234,7 @@ export function ListeningPlayer({
   /** One click: the player appears and the recording starts in the same user gesture. */
   function startListening() {
     if (gateKey) markRevealed(sessionStore(), gateKey);
+    focusPlayer.current = true;
     setRevealed(true);
     void play();
   }
@@ -237,10 +247,12 @@ export function ListeningPlayer({
       </div>
       <div className="mt-3 flex items-center gap-4">
         <button
+          ref={playButton}
           type="button"
-          onClick={play}
-          disabled={state === "LOADING" || state === "PLAYING" || (!free && playsLeft <= 0)}
-          className="h-11 shrink-0 rounded-[10px] border border-line-strong bg-surface px-4 text-[14px] font-semibold text-ink hover:bg-canvas disabled:cursor-not-allowed disabled:text-muted"
+          onClick={playMode === "ready" ? play : undefined}
+          disabled={playMode === "off"}
+          aria-disabled={playMode === "busy" || undefined}
+          className="h-11 shrink-0 rounded-[10px] border border-line-strong bg-surface px-4 text-[14px] font-semibold text-ink hover:bg-canvas disabled:cursor-not-allowed disabled:text-muted aria-disabled:cursor-wait aria-disabled:text-muted aria-disabled:hover:bg-surface"
         >
           {label}
         </button>

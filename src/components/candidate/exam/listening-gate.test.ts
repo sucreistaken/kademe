@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gateKey, isGateOpen, markRevealed, readRevealed } from "./listening-gate";
+import { gateKey, isGateOpen, markRevealed, playButtonMode, readRevealed } from "./listening-gate";
 import type { StorageLike } from "./pending-answer";
 
 function memory(): StorageLike {
@@ -59,5 +59,18 @@ describe("revealed flag", () => {
     expect(readRevealed(null, "k")).toBe(false);
     expect(() => markRevealed(throwing, "k")).not.toThrow();
     expect(readRevealed(throwing, "k")).toBe(false);
+  });
+});
+
+describe("playButtonMode", () => {
+  it("keeps the button focusable while a clip loads or plays, so focus moved there from the gate stays", () => {
+    expect(playButtonMode({ state: "LOADING", freeRetry: false, playsLeft: 1 })).toBe("busy");
+    expect(playButtonMode({ state: "PLAYING", freeRetry: false, playsLeft: 0 })).toBe("busy");
+  });
+
+  it("is off only when no play is left and no free retry is open", () => {
+    expect(playButtonMode({ state: "IDLE", freeRetry: false, playsLeft: 0 })).toBe("off");
+    expect(playButtonMode({ state: "FAILED", freeRetry: true, playsLeft: 0 })).toBe("ready");
+    expect(playButtonMode({ state: "IDLE", freeRetry: false, playsLeft: 2 })).toBe("ready");
   });
 });

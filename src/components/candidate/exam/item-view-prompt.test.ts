@@ -7,7 +7,8 @@ vi.mock("@/i18n/candidate-client", () => ({
 }));
 
 // The task card marks its interface label with the page language.
-vi.mock("next-intl", () => ({ useLocale: () => "en" }));
+const uiLocale = vi.hoisted(() => ({ value: "en" }));
+vi.mock("next-intl", () => ({ useLocale: () => uiLocale.value }));
 
 import type { CandidateItem } from "@/lib/exam/safe";
 import { ItemView } from "./ItemView";
@@ -112,6 +113,27 @@ describe("what writing and speaking expect", () => {
     for (const k of ["assessTask", "assessOrganised", "assessRange", "assessAccuracy"]) expect(html).toContain(k);
     expect(html).not.toContain("assessFluency");
     expect(html).not.toContain("assessPronunciation");
+  });
+
+  it("labels the writing field with the prompt and describes it with the expectations box", () => {
+    const html = render(writing);
+    const describedBy = html.match(/<textarea[^>]*aria-describedby="([^"]+)"/)?.[1];
+    expect(describedBy).toBeTruthy();
+    expect(html).toContain(`<div id="${describedBy}" class="mt-5 rounded-[12px]`);
+    expect(html.slice(html.indexOf(`id="${describedBy}"`))).toContain("expectLength(40,80)");
+  });
+
+  it("gives the task label the interface language and direction inside the German card", () => {
+    expect(render(writing)).toMatch(/<div lang="en" dir="ltr" class="[^"]*">taskHeading<\/div>/);
+    uiLocale.value = "ar";
+    try {
+      const html = render(writing);
+      expect(html).toMatch(/<div lang="ar" dir="rtl" class="[^"]*">taskHeading<\/div>/);
+      // The card itself stays German.
+      expect(html).toMatch(/<div id="[^"]+" lang="de" class="flex flex-col gap-4 text-ink">/);
+    } finally {
+      uiLocale.value = "en";
+    }
   });
 
   it("names no level, score or grading guidance", () => {

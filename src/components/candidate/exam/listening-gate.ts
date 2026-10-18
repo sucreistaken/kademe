@@ -34,3 +34,14 @@ export function markRevealed(storage: StorageLike | null, key: string): void {
     /* no storage: the screen still remembers it until a reload */
   }
 }
+
+/**
+ * The player's play button: truly disabled ("off") only when no play is left.
+ * While a clip loads or plays it is "busy": still focusable (aria-disabled, a
+ * click does nothing), so the focus moved onto it from the gate's button, which
+ * goes away on the click, is not dropped to the page.
+ */
+export function playButtonMode(s: { state: "IDLE" | "LOADING" | "PLAYING" | "FAILED"; freeRetry: boolean; playsLeft: number }): "ready" | "busy" | "off" {
+  if (s.state === "LOADING" || s.state === "PLAYING") return "busy";
+  return !s.freeRetry && s.playsLeft <= 0 ? "off" : "ready";
+}

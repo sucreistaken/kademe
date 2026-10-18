@@ -902,6 +902,8 @@ export function ExamRunner({
                 {item.stimulus?.kind === "LISTENING" ? (
                   <div className="mb-6">
                     <ListeningPlayer
+                      // One player per question: the next recording never draws the last one's open player for a frame.
+                      key={item.sequence}
                       token={token}
                       sectionPosition={cur.position}
                       sequence={item.sequence}

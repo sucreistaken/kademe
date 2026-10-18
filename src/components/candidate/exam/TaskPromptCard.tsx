@@ -3,6 +3,7 @@
 import { useLocale } from "next-intl";
 import { layoutTaskBlocks, parseTaskPrompt, type TaskSegment } from "@/lib/exam/task-prompt";
 import { useT } from "@/i18n/candidate-client";
+import { dirOf, isCandidateLocale } from "@/i18n/locale";
 
 const LABEL = "text-[12px] font-semibold uppercase tracking-[0.06em] text-muted";
 const BODY = "text-[17px] leading-[1.6]";
@@ -20,7 +21,9 @@ function List({ ordered, items, className }: { ordered: boolean; items: string[]
   );
 }
 
-function Segment({ seg, heading, uiLang }: { seg: TaskSegment; heading: string | null; uiLang: string }) {
+type UiText = { lang?: string; dir?: "ltr" | "rtl" };
+
+function Segment({ seg, heading, ui }: { seg: TaskSegment; heading: string | null; ui: UiText }) {
   switch (seg.kind) {
     case "situation":
       // The scene, set in a soft box so it reads apart from what the candidate has to do.
@@ -34,7 +37,11 @@ function Segment({ seg, heading, uiLang }: { seg: TaskSegment; heading: string |
     case "tasks":
       return (
         <div>
-          {heading ? <div lang={uiLang} className={LABEL}>{heading}</div> : null}
+          {heading ? (
+            <div {...ui} className={LABEL}>
+              {heading}
+            </div>
+          ) : null}
           <ul className={`${heading ? "mt-2" : ""} flex list-disc flex-col gap-2 ps-6 font-semibold marker:text-muted ${BODY}`}>
             {seg.items.map((it, j) => (
               <li key={j}>
@@ -68,8 +75,9 @@ function Segment({ seg, heading, uiLang }: { seg: TaskSegment; heading: string |
  */
 export function TaskPromptCard({ text, id }: { text: string; id?: string }) {
   const t = useT("examItems");
-  // The card is German; the "Your task" label is the interface and keeps the student's language.
-  const uiLang = useLocale();
+  // The card is German (left to right); the "Your task" label is the interface and keeps the student's language and direction.
+  const uiLocale = useLocale();
+  const ui: UiText = isCandidateLocale(uiLocale) ? { lang: uiLocale, dir: dirOf(uiLocale) } : {};
   const { topic, card, blocks } = parseTaskPrompt(text);
   const segments = layoutTaskBlocks(blocks);
   const firstTasks = segments.findIndex((s) => s.kind === "tasks");
@@ -88,7 +96,7 @@ export function TaskPromptCard({ text, id }: { text: string; id?: string }) {
         </div>
       ) : null}
       {segments.map((seg, i) => (
-        <Segment key={i} seg={seg} heading={i === firstTasks ? t("taskHeading") : null} uiLang={uiLang} />
+        <Segment key={i} seg={seg} heading={i === firstTasks ? t("taskHeading") : null} ui={ui} />
       ))}
     </div>
   );
