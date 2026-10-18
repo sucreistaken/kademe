@@ -36,6 +36,7 @@ describe("problem reports queries", () => {
     expect(seen.where).toContain('"assessments"."candidate_id" = $');
     expect(seen.params).toEqual(expect.arrayContaining(["o1", "PROBLEM", "c1"]));
     expect(seen.order).toContain('"candidate_requests"."created_at" desc');
+    expect(seen.where).toContain('"candidates"."deleted_at" is null');
   });
 
   it("lists the PROBLEM requests since a date, in the caller's organisation, newest first", async () => {
@@ -45,5 +46,6 @@ describe("problem reports queries", () => {
     expect(seen.where).toContain('"candidate_requests"."created_at" >= $');
     expect(seen.params).toEqual(expect.arrayContaining(["o1", "PROBLEM"]));
     expect(seen.order).toContain("desc");
+    expect(seen.where).toContain('"candidates"."deleted_at" is null');
   });
 });

@@ -3,6 +3,7 @@ import { and, desc, eq, gt, gte, lt, lte, or, sql, type SQL } from "drizzle-orm"
 import { Card } from "@/components/ui/card";
 import { PageHead } from "@/components/panel/bits";
 import { BankItemList } from "@/components/panel/bank-item-list";
+import { bankTypeKey } from "@/components/panel/bank-type";
 import { GenerateForm } from "@/components/panel/generate-form";
 import { db } from "@/db";
 import { items, stimuli } from "@/db/schema";
@@ -185,7 +186,7 @@ export default async function BankPage({ searchParams }: { searchParams: Promise
             section: t(`sectionName.${item.section}`),
             level: item.level,
             within: t(`bankTools.within${withinOf(item.level, item.difficulty)}`),
-            type: t(`bank.type${item.type}`),
+            type: t(bankTypeKey(item)),
             origin: t(`bank.origin${item.origin}`),
             originTone: item.origin === "AI" ? "neutral" : "done",
           }))}
