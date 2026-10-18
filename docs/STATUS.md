@@ -2,6 +2,7 @@
 
 Campus German redesign, Plan 1 (2026-10-16, `platform/solutions`, canlıya çıkmadı): bkz. "Campus German redesign, Plan 1" bölümü.
 Dilbilgisi boşluklu metin ve kelime havuzu (2026-10-18, `platform/solutions`, canlıya çıkmadı): bkz. "Dilbilgisi: boşluklu metin ve kelime havuzu" bölümü.
+Beş aday dili (tr/en/de/es/ar, göç 0025) ve öğrencinin sorun bildirimi (göç 0024), aynı dal: canlıya çıkış ve geri dönüş sırası "Canlıya çıkış planı: 2026-10-18 dalı" bölümünde.
 Son güncelleme: 2026-10-07 (Gelişmiş: tek kutu, AI önce, `platform/solutions` dalında, yerelde gerçek Gemini ile denendi; canlıya çıkmadı). Önceki: 2026-10-06 (işe alım plan 2b, görsel akış ve rehberli panel, `platform/solutions` dalında; bulut oturumunda tip, lint, test ve build ile doğrulandı, veritabanı betikleri ve tarayıcı turu yerel oturumu bekliyor; canlıya çıkmadı).
 Önceki: 2026-10-05 (işe alım plan 2, aday akışı, platform/solutions dalında, yerelde doğrulandı; canlıya çıkmadı); 2026-10-04 (çekirdek ayrımı ve işe alım plan 1, kütüphane ve alımlar, `platform/solutions` dalında, yerelde doğrulandı; canlıya çıkmadı).
 **Canlıda**: https://kademe.kadiray.com, `main` commit `2cf125c` (2026-10-16 18:45 UTC: krem zemin yerine Campus German beyazı ve soğuk griler; ondan önce `8e945da`, Campus German görünümü, Plan 1; ayrıntı "Canlıya çıkış: Campus German görünümü, Plan 1"). Önceki sürümler (aşağıdaki "Canlıya çıkış" bölümleri): `ab951b1` (okul yöneticisi geri bildirimi), `1d8d4c6` (onSET yerleştirme), `5a4f97e` (kurs grubu sürümü, 2026-10-14), `02760e3` (2026-10-07 akşam: Bugün yeni tasarım, 3 adımlı alım sihirbazı, "en az 2 değerlendirici" kuralı kaldırıldı, soru bankası v2; ayrıntı "Canlıya çıkış: sihirbaz ve banka v2"), `0142ff0` (Gelişmiş). Önceki not: commit `739f218` (`main`, 2026-10-05 sınav sıcak düzeltmesi; ayrıntı "Kararlar ve sapmalar"da).
@@ -177,27 +178,77 @@ kısmının yerine geçer). Ölçme ayrıntısı ve bütün simülasyon satırla
   türüne.
 - Şablonlar (`texts`): yerleştirme DILBILGISI 30 dk, A1-C2 altı boşluklu metin + A2, B1, B2 kelime havuzu
   (toplam yine 77 dk); hızlı seviye taraması 25 dk (önce 15), A1-B2 dört boşluklu metin + A1-B1 üç kelime
-  havuzu. AI oluşturucuda beceri söylenmediğinde hızlı tarama / yerleştirme sınırı yaklaşık 44 dk (önce 34);
-  yeniden ölçekleme her türü süre oranıyla tutar.
+  havuzu. AI oluşturucuda beceri söylenmediğinde hızlı tarama / yerleştirme sınırı yine yaklaşık 34 dk (hızlı
+  tarama bu karşılaştırmada 15 dk sayılır; 40 dakikalık istek yerleştirme biçimini alır). Kısalan bölüm önce kelime
+  havuzlarını, sonra en düşük boşluklu metinleri düşürür; B2 ve B1 en son gider (20 dk tarama A1-B2 boşluklu metni korur).
 - Kapı (`scripts/simulate-placement.ts`, tahminli cevaplar, seviye başına 4000, tohum 2026 ve 7): yerleştirme
   spec'in başlangıç bileşimiyle geçti. Hızlı taramanın 15 dakikalık başlangıcı geçmedi (A1 öğrencisinin
   %66'sı üste, C-test formunda %35); 20 dakikalık hiçbir bileşim iki tohumda geçmedi; 25 dakikalık bileşim
   seçildi. Dikkat: sıradan maddeler tahminsiz varsayılınca (`ITEM_GUESS=0`) yerleştirme kapıyı 1 puanın
   altında farkla geçemiyor, hızlı tarama tohum 7'de C1'de 1 puan kalıyor. Hızlı taramada C2 tam isabeti
   %0 (en zor metin B2), yerleştirmede C2 %59'dan %44'e düştü; kapı C2'yi ölçmez.
-- Banka: seviye başına 3 boşluklu metin (11 boşluk) ve 3 kelime havuzu (8 boşluk). Kör çözüm ve anadili
-  Almanca öğretmen okuması bekliyor; kör çözüm bazı metinleri değiştirebilir (sayılar aynı kalır).
+- Banka: seviye başına 3 boşluklu metin (11 boşluk) ve 3 kelime havuzu (8 boşluk). Kör çözüm yapıldı: 342/342
+  boşluk anahtarla eşleşti (A1-B1 171, B2-C2 171); işaretlenen noktalar `fe39ca1`'de düzeltildi. Anadili Almanca
+  öğretmen okuması bekliyor.
 - Mevcut sınavlar ve davet edilmiş öğrenciler kayıtlı yapılandırmayı korur; C-testler bankada kalır.
   Şablonun yeni hali ilk davette eski yayımlı şablon sınavını arşivleyip yenisini yayımlar
   (`ensureTemplateBlueprint`), ama yalnız banka kapsıyorsa.
-- Canlıya çıkış sırası (ayrı onayla): önce canlıda salt okuma kontrolü,
-  `select skill_tag, count(*) from items where skill_tag in ('grammar.cloze','grammar.wordbank') group by 1;`
-  ve aynısı `item_responses.item_snapshot->>'skillTag'` için (beklenen 0). Sonra deploy, hemen ardından
-  `bank:topup --production --sync-seed` (`--retire-stale` YOK: C-testler emekliye ayrılmaz). Sıra önemli:
-  eski kod yeni metinleri sıradan dilbilgisi sorusu gibi çekerdi. Deploy ile top-up arasında şablondan davet
-  `TEMPLATE_COVERAGE` döner (hiçbir şey arşivlenmez).
-- Doğrulanmadı: tarayıcıda uçtan uca (Claude in Chrome), gerçek öğrenci verisi (taban, ağırlık 4 ve metin
-  etkisi sd 0.5 varsayım), yeniden ölçeklenmiş formların simülasyonu.
+- Canlıya çıkış ve geri dönüş: "Canlıya çıkış planı: 2026-10-18 dalı" bölümü (sıra önemli: önce kod, hemen
+  ardından top-up; geri dönüşte önce yeni metinler emekliye).
+- Doğrulanmadı: tarayıcıda uçtan uca (Claude in Chrome), yerel veritabanında top-up ve şablon değişimi (prova
+  bekliyor), gerçek öğrenci verisi (taban, ağırlık 4 ve metin etkisi sd 0.5 varsayım), yeniden ölçeklenmiş
+  formların simülasyonu.
+
+## Canlıya çıkış planı: 2026-10-18 dalı (dilbilgisi metinleri, beş aday dili, sorun bildirimi; canlıda değil)
+
+Kapsam (`platform/solutions`, `bd349f9` sonrası): dilbilgisi boşluklu metin ve kelime havuzu (yukarıdaki bölüm);
+aday arayüzü beş dilde (tr, en, de, es, ar; Arapça sağdan sola, panel tr/en kalır), göç 0025; aday ekranları
+(tek satır alt bar, yüzen uyarılar, dinlemede "önce soruları okuyun" kapısı) ve öğrencinin sorun bildirimi
+(`candidate_requests` türü `PROBLEM`, öğrenci sayfasında ve Bugün'de), göç 0024. Canlıya çıkış "canlıya al" onayı ister.
+
+Göçler (`drizzle/migrations`):
+- `0024_candidate_request_problem`: `candidate_requests.kind` CHECK kısıtını düşürüp `PROBLEM` ile yeniden kurar
+  (küçük tabloda kısa bir ACCESS EXCLUSIVE kilit; mevcut satırlar yalnız ACCOMMODATION / NEW_LINK). Geri alınabilir,
+  ama ancak `PROBLEM` satırları silindikten sonra; eski kodla çalışırken geri almak gerekmez.
+- `0025_candidate_locales`: `locale` enum'una `de`, `es`, `ar` ekler. GERİ ALINAMAZ: PostgreSQL enum değerini
+  silmez (kullanılmayan değer zararsızdır). Bu yüzden göçten ÖNCE `pg_dump -Fc` yedeği alınır; şemanın tam
+  dönüşü yalnız bu yedekten geri yüklemeyle olur.
+- İkisi de deploy betiğinin `db:migrate` adımında, servis dururken ve build'den önce uygulanır. Yerel
+  `kademe_platform`'da uygulandı (son incelemede: göç günlüğündeki özetler SQL dosyalarınınkiyle aynı).
+
+Sıra:
+1. Sahibin onayı: yerleştirmede doğruluk takası (A1-B1 tam isabet ve C2, C-testlerin altında) ve 25 dakikalık
+   hızlı tarama.
+2. Canlıda salt okuma kontrolleri (beklenen sonuç parantezde):
+   - `select skill_tag, count(*) from items where skill_tag in ('grammar.cloze','grammar.wordbank') group by 1;` (0 satır)
+   - `select item_snapshot->>'skillTag', count(*) from item_responses where item_snapshot->>'skillTag' in ('grammar.cloze','grammar.wordbank') group by 1;` (0 satır)
+   - `select kind, count(*) from candidate_requests group by 1;` (yalnız ACCOMMODATION / NEW_LINK)
+   - `select count(*) from section_runs where completion='PENDING' and started_at is not null;` (0; betik de bakar)
+3. Yedek: `pg_dump -Fc` (deploy betiği alır; dosya adını not et, 0025'ten sonra tek dönüş yolu bu).
+4. Deploy: servis ve zamanlayıcılar durur, pull, install, `db:migrate` (0024 + 0025), build, başlat.
+5. Hemen ardından top-up (C-testler emekliye ayrılmaz, `--retire-stale` YOK):
+   `pnpm bank:topup --production --confirm-db=127.0.0.1:5434/kademe --sync-seed`
+   `--confirm-db` değeri `DATABASE_URL`'deki `host:port/veritabanı` ile birebir aynı olmalı; yoksa ya da farklıysa
+   betik "Refusing" yazıp 2 ile çıkar ve hiçbir şey yazmaz. Beklenen: kurum başına +36 dilbilgisi maddesi
+   (18 boşluklu metin, 18 kelime havuzu, APPROVED). Deploy ile top-up arasında şablondan davet `TEMPLATE_COVERAGE`
+   döner (hiçbir şey arşivlenmez); top-up'tan ÖNCE kod: eski kod yeni metinleri sıradan dilbilgisi sorusu gibi çekerdi.
+6. Sonra: 2. adımdaki sayımlar (yeni maddeler var, henüz sunulmamış), her şablondan bir davet (eski şablon sınavı
+   ARCHIVED, yenisi PUBLISHED), `/login` 200.
+
+Geri dönüş (eski bir commit'e dönmeden ÖNCE):
+1. Top-up yapıldıysa yeni metinleri emekliye ayır; eski kod yalnız C-testleri ayırır, boşluklu metin ve kelime
+   havuzu maddelerini sıradan dilbilgisi formlarına ve uyarlamalı bölümlere çekerdi (kelime havuzu havuzsuz
+   boşluk olarak görünürdü):
+   `UPDATE items SET status = 'RETIRED' WHERE skill_tag IN ('grammar.cloze', 'grammar.wordbank');`
+   Kontrol: `select status, count(*) from items where skill_tag in ('grammar.cloze','grammar.wordbank') group by 1;`
+   (yalnız RETIRED).
+2. Servis ve zamanlayıcıları durdur, `git checkout <önceki main>` (şu an `2cf125c`), install, build, başlat.
+   Göç geri alınmaz: `de`/`es`/`ar` enum değerleri ve `PROBLEM`'li CHECK yerinde kalır, eski kodda zararsız. Dil
+   için bir şey gerekmez: eski `messagesFor` de/es/ar için Türkçeye düşer.
+3. Dikkat (kod okumasından çıkarım, denenmedi): yeni kodun top-up sonrası yayımladığı şablon sınavları ve AI ile
+   kurulan metinli sınavlar `texts` taşır; eski kod bu alanı tanımaz (zod bilinmeyen alanı atar), bu sınavların
+   dilbilgisi bölümü madde bulamayabilir. Geri dönüşten sonra bu sınavlara davet göndermeden önce birini dene.
+4. Şemanın tamamen eski hale dönmesi gerekirse yalnız 3. adımdaki yedekten geri yükleme (bkz. "Geri dönüş B").
 
 ## Campus German redesign, Plan 1 (2026-10-16, `platform/solutions`, NOT deployed)
 
