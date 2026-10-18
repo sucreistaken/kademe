@@ -93,3 +93,37 @@ describe("the printable report for an MC cloze and a word bank", () => {
     expect(html).not.toMatch(/danger/);
   });
 });
+
+describe("the title of a text", () => {
+  const titled = {
+    ...cloze,
+    prompt: "Lesen Sie den Text. Wählen Sie für jede Lücke das passende Wort.\n\nMein Abend\n\nIch gehe {{g1}} Hause und bleibe {{g2}} dem Sofa.",
+  } as ItemSnapshot;
+  const answer = { gaps: { g1: "nach", g2: "auf" } };
+
+  it("review: the title is a heading of its own and the text starts after it", () => {
+    const html = body(titled, answer);
+    expect(html).toMatch(/<h4 lang="de"[^>]*font-bold[^>]*>Mein Abend<\/h4>/);
+    expect(html).toContain("Lesen Sie den Text.");
+    expect(html.indexOf("Lesen Sie")).toBeLessThan(html.indexOf("Mein Abend"));
+    expect(html.indexOf("Mein Abend")).toBeLessThan(html.indexOf("Ich gehe"));
+    // The title is not repeated inside the running text.
+    expect(html.match(/Mein Abend/g)).toHaveLength(1);
+  });
+
+  it("report: the title is a bold line of its own", () => {
+    const src: DetailSource = {
+      sections: ["GRAMMAR"],
+      skillLevels: { GRAMMAR: "A2" },
+      runs: [{ id: "g", section: "GRAMMAR", navigable: true }],
+      responses: [{ id: "c", sectionRunId: "g", sequence: 1, itemSnapshot: titled, answer, score: 1, notReached: false }],
+      gradings: [],
+      acceptances: {},
+      transcripts: {},
+      nameOf: {},
+    };
+    const html = renderToStaticMarkup(createElement(DetailSheet, { sections: buildDetail(src), studentName: "Ayşe", t: tr, locale: "tr" }));
+    expect(html).toMatch(/<p lang="de" class="mt-1 font-bold">Mein Abend<\/p>/);
+    expect(html.match(/Mein Abend/g)).toHaveLength(1);
+  });
+});

@@ -68,6 +68,19 @@ describe("question typography", () => {
     expect(html).not.toContain("text-ink-2");
   });
 
+  it("sets the question of a matching prompt as a stem between ruled instructions", () => {
+    const html = render({
+      ...base,
+      section: "READING",
+      type: "MATCHING",
+      prompt: "Lesen Sie die Situationen. Welche Anzeige passt? Jede Anzeige passt höchstens einmal.",
+      content: { kind: "MATCHING", left: [{ id: "l1", text: "Sie suchen einen Kurs." }], right: [{ id: "oaaaaa", text: "Anzeige A" }] },
+    });
+    expect(html).toMatch(/border-s-\[3px\] border-brand[^>]*>Lesen Sie die Situationen\.<\/p>/);
+    expect(html).toContain('class="whitespace-pre-line text-[17px] font-semibold leading-[1.6] text-ink">Welche Anzeige passt?</p>');
+    expect(html).toMatch(/border-s-\[3px\] border-brand[^>]*>Jede Anzeige passt höchstens einmal\.<\/p>/);
+  });
+
   it("draws a gap instruction as a ruled block above the sentence", () => {
     const html = render(gap);
     expect(html).toMatch(/border-s-\[3px\] border-brand[^>]*>Ergänzen Sie das fehlende Wort\.<\/p>/);

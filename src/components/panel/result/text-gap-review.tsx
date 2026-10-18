@@ -1,5 +1,6 @@
 import type { managerT } from "@/i18n/manager";
 import { cn } from "@/lib/cn";
+import { splitTextLead } from "@/lib/exam/prompt-instruction";
 import type { GapSegment, ReviewCard } from "./review-cards";
 import type { ReviewMark } from "./review-rows";
 
@@ -78,10 +79,23 @@ function Options({ g, t }: { g: Gap; t: T }) {
 export function TextGapBody({ card, t }: { card: Extract<ReviewCard, { kind: "GAP" }>; t: T }) {
   const gaps = card.segments.flatMap((s) => (s.kind === "gap" ? [s] : []));
   const cloze = card.textKind === "CLOZE";
+  // The text starts with the instruction and the German title: the title is a heading, not the first line of the text.
+  const first = card.segments[0];
+  const lead = first?.kind === "text" ? splitTextLead(first.text) : null;
   return (
     <>
+      {lead?.title && lead.instruction ? (
+        <p lang="de" className="text-[15px] leading-[1.6] text-ink-2">
+          {lead.instruction}
+        </p>
+      ) : null}
+      {lead?.title ? (
+        <h4 lang="de" className="mb-1 mt-2 text-[16px] font-bold leading-[1.4] text-ink">
+          {lead.title}
+        </h4>
+      ) : null}
       <p lang="de" className="whitespace-pre-line text-[15px] leading-[2] text-ink">
-        {card.segments.map((s, i) => (s.kind === "text" ? <span key={i}>{s.text}</span> : <InlineGap key={i} g={s} t={t} />))}
+        {card.segments.map((s, i) => (s.kind === "text" ? <span key={i}>{i === 0 && lead?.title ? lead.rest : s.text}</span> : <InlineGap key={i} g={s} t={t} />))}
       </p>
       <p className="tnum mt-1 text-[12px] text-muted">{t("resultReview.gapsRight", { right: card.right, total: card.total })}</p>
       <ol className="mt-2 flex flex-col divide-y divide-line border-t border-line">

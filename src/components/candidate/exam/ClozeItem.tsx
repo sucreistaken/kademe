@@ -3,10 +3,10 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useLocale } from "next-intl";
 import { isCandidateLocale, dirOf } from "@/i18n/locale";
-import { splitInstruction } from "@/lib/exam/prompt-instruction";
+import { splitInstruction, splitTitle } from "@/lib/exam/prompt-instruction";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
-import { activeGap, clickedFor, clozeParts, focusTarget, gapOrder, gapPosition, nextAfterPick, optionOfKey, tabStop, type ClickedGap } from "./cloze-model";
+import { activeGap, clickedFor, clozeKeyApplies, clozeParts, focusTarget, gapOrder, gapPosition, nextAfterPick, optionOfKey, tabStop, type ClickedGap } from "./cloze-model";
 import { Instruction } from "./item-parts";
 import type { ItemProps } from "./ItemView";
 
@@ -38,7 +38,9 @@ export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
 
   const content = item.content.kind === "GAP" ? item.content : null;
   const gaps = new Map((content?.gaps ?? []).map((g) => [g.id, g]));
-  const { instruction, content: passage } = splitInstruction(item.prompt, "stem");
+  const { instruction, content: lead } = splitInstruction(item.prompt, "stem");
+  // The German title heads the text; it is not its first line.
+  const { title, text: passage } = splitTitle(lead);
   const parts = clozeParts(passage);
   const order = gapOrder(parts, new Set(gaps.keys()));
   const open = activeGap(order, answer.gaps, clicked);
@@ -56,7 +58,7 @@ export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
     if (focusTick > 0) heading.current?.focus({ preventScroll: true });
   }, [focusTick]);
 
-  // Keys 1-4 pick for the open gap. A warning covering the page, a dialog or a modifier key is left alone.
+  // Keys 1-4 pick for the open gap. A warning covering the page, a dialog, a modifier key or a button elsewhere is left alone.
   const latest = useRef(pickOption);
   useEffect(() => {
     latest.current = pickOption;
@@ -68,6 +70,10 @@ export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
       // Typing in a field, or a dialog (finish, leave) asking something on top of the exam.
       if (el?.closest('input, textarea, select, [contenteditable], [role="dialog"], [role="alertdialog"]')) return;
       if (root.current?.closest("[inert]")) return;
+      // A pick moves focus to the panel, which must not pull it off the bottom bar or any other control outside this item.
+      const insideItem = !!el && !!root.current?.contains(el);
+      const onOutsideControl = !!el && !insideItem && !!el.matches('button, a[href], summary, [role="button"], [role="radio"], [role="checkbox"], [role="tab"], [role="link"], [role="switch"], [role="menuitem"]');
+      if (!clozeKeyApplies({ insideItem, onOutsideControl })) return;
       const index = optionOfKey(e.key, 4);
       if (index === null) return;
       e.preventDefault();
@@ -100,36 +106,39 @@ export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
         </div>
       ) : null}
       <div lang="de" className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
-        <p lang="de" className="whitespace-pre-line rounded-[14px] border border-line bg-surface p-6 text-[17px] font-medium leading-[2.2] text-ink">
-          {parts.map((part, i) => {
-            if ("text" in part) return <span key={i}>{part.text}</span>;
-            const gap = gaps.get(part.gapId);
-            if (!gap) return <span key={i}>____</span>;
-            const value = answer.gaps?.[gap.id] ?? "";
-            const isOpen = gap.id === open;
-            return (
-              <button
-                key={i}
-                type="button"
-                disabled={disabled}
-                aria-label={`${label(gap.id)}: ${value || ti("gapEmpty")}`}
-                aria-pressed={isOpen}
-                aria-controls={panelId}
-                data-cloze-gap={gap.id}
-                onClick={() => openGapNow(gap.id)}
-                // Wide enough for the longest of its words, so a pick never moves the text.
-                style={{ minWidth: `${widest(gap.id)}ch` }}
-                className={cn(
-                  "mx-0.5 inline-flex h-8 items-center justify-center whitespace-nowrap rounded-[6px] border px-2 align-middle text-[16px] font-medium leading-none",
-                  value ? "border-line-strong bg-surface text-ink" : "border-dashed border-line-strong bg-canvas text-muted",
-                  isOpen && "border-solid border-accent bg-accent-soft text-ink ring-2 ring-accent",
-                )}
-              >
-                {value ? <span lang="de">{value}</span> : number(gap.id)}
-              </button>
-            );
-          })}
-        </p>
+        <div lang="de" className="rounded-[14px] border border-line bg-surface p-6">
+          {title ? <h3 className="mb-3 text-[20px] font-bold leading-[1.3] text-ink">{title}</h3> : null}
+          <p className="whitespace-pre-line text-[17px] font-medium leading-[2.2] text-ink">
+            {parts.map((part, i) => {
+              if ("text" in part) return <span key={i}>{part.text}</span>;
+              const gap = gaps.get(part.gapId);
+              if (!gap) return <span key={i}>____</span>;
+              const value = answer.gaps?.[gap.id] ?? "";
+              const isOpen = gap.id === open;
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  disabled={disabled}
+                  aria-label={`${label(gap.id)}: ${value || ti("gapEmpty")}`}
+                  aria-pressed={isOpen}
+                  aria-controls={panelId}
+                  data-cloze-gap={gap.id}
+                  onClick={() => openGapNow(gap.id)}
+                  // Wide enough for the longest of its words, so a pick never moves the text.
+                  style={{ minWidth: `${widest(gap.id)}ch` }}
+                  className={cn(
+                    "mx-0.5 inline-flex h-8 items-center justify-center whitespace-nowrap rounded-[6px] border px-2 align-middle text-[16px] font-medium leading-none",
+                    value ? "border-line-strong bg-surface text-ink" : "border-dashed border-line-strong bg-canvas text-muted",
+                    isOpen && "border-solid border-accent bg-accent-soft text-ink ring-2 ring-accent",
+                  )}
+                >
+                  {value ? <span lang="de">{value}</span> : number(gap.id)}
+                </button>
+              );
+            })}
+          </p>
+        </div>
         {openGap && open ? (
           <div id={panelId} className="rounded-[14px] border border-line bg-surface p-5 lg:sticky lg:top-24">
             <h3

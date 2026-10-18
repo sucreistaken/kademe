@@ -3,7 +3,7 @@
 import { useId, useRef, useState } from "react";
 import { matchingTargets, type CandidateItem } from "@/lib/exam/safe";
 import { withPoolInstruction } from "@/lib/exam/ctest-instruction";
-import { splitInstruction } from "@/lib/exam/prompt-instruction";
+import { splitInstruction, splitPromptBlocks, splitTitle, type PromptBlock } from "@/lib/exam/prompt-instruction";
 import type { ItemAnswer, TfngValue } from "@/lib/exam/types";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
@@ -73,11 +73,25 @@ export function ItemView(props: ItemProps) {
  * `whole`: the prompt only says how to answer (true/false, matching).
  */
 function Prompt({ text, id, mode = "stem" }: { text: string; id?: string; mode?: "stem" | "whole" }) {
-  const { instruction, content } = splitInstruction(text, mode);
+  // A "whole" prompt can hold the question as well ("Welche Anzeige passt?"): that is set as a stem.
+  const blocks: PromptBlock[] =
+    mode === "whole"
+      ? splitPromptBlocks(text)
+      : (() => {
+          const { instruction, content } = splitInstruction(text, mode);
+          return [...(instruction ? [{ kind: "instruction" as const, text: instruction }] : []), ...(content ? [{ kind: "question" as const, text: content }] : [])];
+        })();
   return (
     <div id={id} lang="de" className="flex flex-col gap-3">
-      {instruction ? <Instruction text={instruction} /> : null}
-      {content ? <p className="whitespace-pre-line text-[17px] font-semibold leading-[1.6] text-ink">{content}</p> : null}
+      {blocks.map((b, i) =>
+        b.kind === "instruction" ? (
+          <Instruction key={i} text={b.text} />
+        ) : (
+          <p key={i} className="whitespace-pre-line text-[17px] font-semibold leading-[1.6] text-ink">
+            {b.text}
+          </p>
+        ),
+      )}
     </div>
   );
 }
@@ -285,7 +299,9 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
   // The stored C-test instruction asks to type letters; with the pool the student drags parts instead.
   // A word bank carries its own instruction.
   const prompt = pool && !wordBank ? withPoolInstruction(item.prompt) : item.prompt;
-  const { instruction, content: passage } = splitInstruction(prompt, "stem");
+  const { instruction, content: lead } = splitInstruction(prompt, "stem");
+  // A word-bank text has a German title as its second paragraph: it heads the text, it is not its first line.
+  const { title, text: passage } = wordBank ? splitTitle(lead) : { title: null, text: lead };
   const parts = passage.split(/(\{\{[A-Za-z0-9_-]+\}\})/g);
   const set = (id: string, value: string) => onChange({ gaps: { ...(answer.gaps ?? {}), [id]: value } });
   // Going back to "Seçin" removes the gap's answer instead of storing "".
@@ -333,6 +349,11 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
         <div lang="de" className="mb-4">
           <Instruction text={instruction} />
         </div>
+      ) : null}
+      {title ? (
+        <h3 lang="de" className="mb-2 text-[20px] font-bold leading-[1.3] text-ink">
+          {title}
+        </h3>
       ) : null}
       {/* A C-test passage is long running text, so it stays medium; a single sentence is the question and gets the stem weight. */}
       <p lang="de" className={cn("whitespace-pre-line text-[17px] leading-[2.1] text-ink", attached ? "font-medium" : "font-semibold")}>

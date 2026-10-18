@@ -1,6 +1,7 @@
 import type { Locale } from "@/i18n/locale";
 import type { managerT } from "@/i18n/manager";
 import { cn } from "@/lib/cn";
+import { splitTextLead } from "@/lib/exam/prompt-instruction";
 import type { DetailMark, DetailQuestion, DetailSection, DetailTask, GapPart } from "./detail-model";
 
 type T = ReturnType<typeof managerT>;
@@ -88,12 +89,21 @@ function PickMark({ mark, t }: { mark: DetailMark; t: T }) {
 function TextGapQuestion({ parts, t }: { parts: GapPart[]; t: T }) {
   const gaps = parts.flatMap((p) => (p.kind === "gap" ? [p] : []));
   const cloze = gaps.some((g) => g.options.length > 0);
+  // The text starts with the instruction and the German title: the title is a heading, not the first line of the text.
+  const first = parts[0];
+  const lead = first?.kind === "text" ? splitTextLead(first.text) : null;
   return (
     <>
+      {lead?.title && lead.instruction ? <p lang="de">{lead.instruction}</p> : null}
+      {lead?.title ? (
+        <p lang="de" className="mt-1 font-bold">
+          {lead.title}
+        </p>
+      ) : null}
       <p lang="de" className="whitespace-pre-line leading-[1.9]">
         {parts.map((p, i) =>
           p.kind === "text" ? (
-            <span key={i}>{p.text}</span>
+            <span key={i}>{i === 0 && lead?.title ? lead.rest : p.text}</span>
           ) : (
             <span key={i} className="whitespace-nowrap rounded-[3px] bg-canvas px-1">
               <sup className="tnum mr-0.5 text-[0.7em] font-semibold text-muted">{p.n}</sup>

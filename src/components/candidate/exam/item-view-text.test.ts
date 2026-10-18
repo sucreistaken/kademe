@@ -43,7 +43,7 @@ function cloze(n: number): CandidateItem {
   return toCandidateItem(
     snapshot(
       CLOZE_SKILL_TAG,
-      `Lesen Sie den Text. Wählen Sie für jede Lücke das passende Wort.\n\nMein Tag\n${text}`,
+      `Lesen Sie den Text. Wählen Sie für jede Lücke das passende Wort.\n\nMein Tag\n\n${text}`,
       { kind: "GAP", gaps: ids.map((id) => ({ id, choices: [`richtig${id}`, "falsch", "anders", "kurz"] })) },
       { kind: "GAP", answers: Object.fromEntries(ids.map((id) => [id, [`richtig${id}`]])) },
     ),
@@ -54,11 +54,11 @@ function cloze(n: number): CandidateItem {
   );
 }
 
-function wordBank(): CandidateItem {
+function wordBank(title = ""): CandidateItem {
   return toCandidateItem(
     snapshot(
       WORD_BANK_SKILL_TAG,
-      "Setzen Sie die passenden Wörter in die Lücken ein.\n\nIch {{g1}} Anna und {{g2}} in Berlin. Am Abend {{g3}} ich nach Hause.",
+      `Setzen Sie die passenden Wörter in die Lücken ein.\n\n${title ? `${title}\n\n` : ""}Ich {{g1}} Anna und {{g2}} in Berlin. Am Abend {{g3}} ich nach Hause.`,
       { kind: "GAP", gaps: [{ id: "g1" }, { id: "g2" }, { id: "g3" }] },
       { kind: "GAP", answers: { g1: ["heiße"], g2: ["wohne"], g3: ["gehe"] }, distractors: ["Hund", "blau", "gestern", "Straßenbahnhaltestelle"] },
     ),
@@ -68,6 +68,23 @@ function wordBank(): CandidateItem {
     { maxPlays: 0 },
   );
 }
+
+describe("the title of a cloze and a word-bank text", () => {
+  it("heads the cloze text as a heading, not as its first line", () => {
+    const html = render(cloze(3));
+    expect(html).toMatch(/<h3 class="mb-3 text-\[20px\] font-bold[^>]*>Mein Tag<\/h3>/);
+    expect(html.indexOf("Mein Tag")).toBeLessThan(html.indexOf("Satz 1"));
+    // The text paragraph starts with the first sentence.
+    expect(html).toMatch(/<p class="whitespace-pre-line[^>]*><span>Satz 1 mit /);
+  });
+
+  it("heads the word-bank text as a heading and leaves a bank without a title as it was", () => {
+    const html = render(wordBank("Mein Wochenende"));
+    expect(html).toMatch(/<h3 lang="de" class="mb-2 text-\[20px\] font-bold[^>]*>Mein Wochenende<\/h3>/);
+    expect(html).toMatch(/<p lang="de"[^>]*><span>Ich /);
+    expect(render(wordBank())).not.toContain("<h3");
+  });
+});
 
 describe("cloze item", () => {
   it("is not a C-test: no inputs, no drop-downs, no pool", () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activeGap, clickedFor, clozeParts, focusTarget, gapOrder, gapPosition, nextAfterPick, optionOfKey, tabStop } from "./cloze-model";
+import { activeGap, clickedFor, clozeParts, focusTarget, gapOrder, gapPosition, clozeKeyApplies, nextAfterPick, optionOfKey, tabStop } from "./cloze-model";
 
 const ORDER = ["g1", "g2", "g3", "g4"];
 
@@ -110,5 +110,13 @@ describe("arrow keys on the options", () => {
     expect(tabStop(["a", "b", "c", "d"], "c")).toBe(2);
     expect(tabStop(["a", "b", "c", "d"], "")).toBe(0);
     expect(tabStop(["a", "b", "c", "d"], "zzz")).toBe(0);
+  });
+});
+
+describe("clozeKeyApplies", () => {
+  it("acts inside the item and on non-controls (body, a heading), not on a control elsewhere", () => {
+    expect(clozeKeyApplies({ insideItem: true, onOutsideControl: false })).toBe(true);
+    expect(clozeKeyApplies({ insideItem: false, onOutsideControl: false })).toBe(true);
+    expect(clozeKeyApplies({ insideItem: false, onOutsideControl: true })).toBe(false);
   });
 });
