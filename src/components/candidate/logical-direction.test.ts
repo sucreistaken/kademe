@@ -73,11 +73,14 @@ describe("candidate screens use logical direction classes (RTL for Arabic)", () 
   it("the stylesheet keeps German content left to right inside an Arabic page", () => {
     const css = readFileSync(path.resolve(process.cwd(), "src/app/globals.css"), "utf8");
     expect(css).toMatch(/\[dir="rtl"\] \[lang="de"\]\s*\{\s*direction: ltr;\s*unicode-bidi: isolate;/);
-    expect(css).toMatch(/:lang\(ar\)\s*\{\s*font-family: var\(--font-noto-arabic\)/);
+    // Nunito first, then Noto Sans Arabic, then the Arial fallbacks (the order is arabicFontStack's).
+    expect(css).toMatch(/:lang\(ar\)\s*\{\s*font-family: var\(--font-arabic, var\(--font-sans\)\), ui-rounded, system-ui, sans-serif;/);
+    expect(css).not.toMatch(/:lang\(ar\)\s*\{\s*font-family: var\(--font-noto-arabic\)/);
   });
 
-  it("the Arabic face is not preloaded and brings no Arial fallback that would steal Latin text from Nunito", () => {
+  it("the Arabic face is not preloaded and the Arabic stack comes from both fonts' family lists", () => {
     const layout = readFileSync(path.resolve(process.cwd(), "src/app/layout.tsx"), "utf8");
     expect(layout).toMatch(/Noto_Sans_Arabic\(\{[^}]*subsets: \["arabic"\][^}]*preload: false[^}]*adjustFontFallback: false/);
+    expect(layout).toContain('"--font-arabic": arabicFontStack(nunito.style.fontFamily, notoArabic.style.fontFamily)');
   });
 });
