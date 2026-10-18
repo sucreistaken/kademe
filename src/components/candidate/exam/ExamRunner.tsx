@@ -14,6 +14,7 @@ import { ListeningPlayer, SpeakingItem } from "@/components/candidate/exam/Media
 import { answerProgress, progressState } from "@/components/candidate/exam/answer-progress";
 import { nextButtonKind } from "@/components/candidate/exam/exam-bar";
 import { PartCounter } from "@/components/candidate/exam/PartCounter";
+import { PassageBody } from "@/components/candidate/exam/PassageBody";
 import { WarmupOffer, WarmupPractice } from "@/components/candidate/exam/warmup/Warmup";
 import { INITIAL_WARMUP, warmupReduce, type WarmupAction, type WarmupState } from "@/components/candidate/exam/warmup/warmup-state";
 import { PRACTICE } from "@/components/candidate/exam/warmup/practice-data";
@@ -835,9 +836,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
               {item.stimulus?.kind === "READING" ? (
                 <article className="rounded-[14px] border border-line bg-surface p-6 lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem-var(--step-footer-space,112px))] lg:overflow-y-auto">
                   <div lang="de" className="text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted">{item.stimulus.title}</div>
-                  <div lang="de" className="mt-3 whitespace-pre-line text-[16px] leading-[1.75] text-ink">
-                    {item.stimulus.text}
-                  </div>
+                  <PassageBody text={item.stimulus.text} title={item.stimulus.title} />
                 </article>
               ) : null}
               <div>
