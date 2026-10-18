@@ -2,6 +2,7 @@
 
 Campus German redesign, Plan 1 (2026-10-16, `platform/solutions`, canlıya çıkmadı): bkz. "Campus German redesign, Plan 1" bölümü.
 Dilbilgisi boşluklu metin ve kelime havuzu (2026-10-18, `platform/solutions`, canlıya çıkmadı): bkz. "Dilbilgisi: boşluklu metin ve kelime havuzu" bölümü.
+Belirsiz sonuç öğretmene gider (2026-10-18, `platform/solutions`, canlıya çıkmadı): sınırda ya da hassasiyeti düşük (yerleştirme bayrağı) objektif sonuç artık kendiliğinden kesinleşmez, `AWAITING_REVIEW` kalır; öğrenciye "öğretmen inceleyecek" denir; ayrıntı `docs/EXAM-ENGINE.md` "Sonuç".
 Beş aday dili (tr/en/de/es/ar, göç 0025) ve öğrencinin sorun bildirimi (göç 0024), aynı dal: canlıya çıkış ve geri dönüş sırası "Canlıya çıkış planı: 2026-10-18 dalı" bölümünde.
 Son güncelleme: 2026-10-07 (Gelişmiş: tek kutu, AI önce, `platform/solutions` dalında, yerelde gerçek Gemini ile denendi; canlıya çıkmadı). Önceki: 2026-10-06 (işe alım plan 2b, görsel akış ve rehberli panel, `platform/solutions` dalında; bulut oturumunda tip, lint, test ve build ile doğrulandı, veritabanı betikleri ve tarayıcı turu yerel oturumu bekliyor; canlıya çıkmadı).
 Önceki: 2026-10-05 (işe alım plan 2, aday akışı, platform/solutions dalında, yerelde doğrulandı; canlıya çıkmadı); 2026-10-04 (çekirdek ayrımı ve işe alım plan 1, kütüphane ve alımlar, `platform/solutions` dalında, yerelde doğrulandı; canlıya çıkmadı).

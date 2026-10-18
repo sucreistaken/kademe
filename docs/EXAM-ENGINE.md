@@ -212,6 +212,14 @@ Mevcut sınavlar kayıtlı yapılandırmasını korur: yeni şekil için okul ş
   bölümlerin hassasiyet ağırlıklı birleşik tahmininden `P(theta >= beyan alt sınırı)`.
 - Sonuç, ilgili bir satır her değiştiğinde yeniden hesaplanır; kesinleşince donar.
 
+Belirsiz sonuç öğretmene gider (2026-10-18): yazma ve konuşması olmayan bir sınav (ör. hızlı tarama) eskiden
+bitince kendiliğinden kesinleşirdi. Artık hesaplanan sonuç sınırda (`NEAR_CUT`, `HIGH_UNCERTAINTY` ya da
+üretken beceri farkı) ya da önerilen seviye hesaplanan seviyeden farklıysa (`result.ts: isUncertainResult`)
+kesinleşmez, `AWAITING_REVIEW` kalır ve öğretmen karar verir; net sonuç yine kendiliğinden kesinleşir.
+Öğretmen nedeni öğrenci sayfasında (sınırda bayrağı ve gerekçeler) ve Bugün listesinde görür; öğrenci bitiş
+ekranında sonucun öğretmen tarafından inceleneceğini okur (`awaitingTeacher`, `waitingFor: "REVIEW"`).
+Seviye doğrulama sonucunda yerleştirme bayrağı yoktur, davranışı değişmedi.
+
 ## AI puanlama
 
 `grading.ts`: kriter bazlı öneri (görev, tutarlılık, çeşitlilik, doğruluk; konuşmada

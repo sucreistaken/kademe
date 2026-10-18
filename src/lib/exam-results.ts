@@ -32,7 +32,7 @@ import {
 } from "@/lib/exam/grading";
 import { blockerErrorCode, finalizeBlockers } from "@/lib/exam/finalize-blockers";
 import { hasAnswer } from "@/lib/exam/item-scoring";
-import { computeResult, type Decider, type SectionEvidence } from "@/lib/exam/result";
+import { autoFinalizes, computeResult, type Decider, type SectionEvidence } from "@/lib/exam/result";
 import { isObjectiveSection, type Cefr, type ProductiveSection, type Section } from "@/lib/exam/types";
 import { enqueueGrading } from "@/lib/queue";
 
@@ -364,11 +364,12 @@ export async function recomputeResult(attemptId: string) {
     .values(values)
     .onConflictDoUpdate({ target: examResults.attemptId, set: { status, computed, updatedAt: new Date() } });
 
-  // An exam with no writing or speaking has nothing for a teacher to judge:
-  // the engine's result is final the moment the attempt ends.
+  // An exam with no writing or speaking has nothing for a teacher to judge,
+  // so a clear engine result is final the moment the attempt ends. A borderline
+  // or imprecise one stays AWAITING_REVIEW: a teacher decides.
   const hasProductive = enabledSections(cfg).some((s) => !isObjectiveSection(s.section));
   const clean = evidenceComplete && !row.attempt.terminatedAt && row.attempt.integrityOutcome !== "INVALID";
-  if (status === "AWAITING_REVIEW" && !hasProductive && !anyUndecided && clean) {
+  if (autoFinalizes({ status, hasProductive, anyUndecided, clean, computed })) {
     await finalizeResult(attemptId, null, null);
   }
 }

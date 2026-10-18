@@ -27,6 +27,7 @@ import type { BankCount } from "@/lib/exam/blueprint";
 import { C_TEST_SKILL_TAG, CLOZE_SKILL_TAG, WORD_BANK_SKILL_TAG } from "@/lib/exam/types";
 import { enabledSections } from "@/lib/exam/blueprint";
 import type { Cefr, Section } from "@/lib/exam/types";
+import { isUncertainResult } from "@/lib/exam/result";
 import { getStorage } from "@/lib/storage";
 
 /**
@@ -60,6 +61,8 @@ export type StudentRow = {
   linkId: string | null;
   currentSection: Section | null;
   aiProposals: number;
+  /** The engine's result is borderline or imprecise and waits for a teacher (see isUncertainResult). */
+  uncertain: boolean;
 };
 
 export async function listStudents(orgId: string): Promise<StudentRow[]> {
@@ -131,6 +134,7 @@ export async function listStudents(orgId: string): Promise<StudentRow[]> {
       linkId: link && link.status === "NOT_STARTED" ? link.id : null,
       currentSection: openRuns.find((r) => r.attemptId === attempt?.id)?.section ?? null,
       aiProposals: proposals.find((p) => p.attemptId === attempt?.id)?.n ?? 0,
+      uncertain: !final && isUncertainResult(result?.computed),
     };
   });
 }

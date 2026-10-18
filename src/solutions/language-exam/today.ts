@@ -32,7 +32,9 @@ export async function examToday(orgId: string, _userId: string, locale: Locale):
               ? t("today.aiRunning")
               : r.aiProposals > 0
                 ? t("today.aiPending", { n: r.aiProposals })
-                : t("today.readyToFinalize"),
+                : r.uncertain
+                  ? t("today.borderline")
+                  : t("today.readyToFinalize"),
         },
         { kind: "dot", tone: INTEGRITY_TONE[r.integrity], text: t(`integrityLevel.${r.integrity}`) },
       ],

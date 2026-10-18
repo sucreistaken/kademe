@@ -45,7 +45,7 @@ import {
   type NavEntry,
   type NavTarget,
 } from "@/lib/exam/navigation";
-import { poolPosteriors } from "@/lib/exam/result";
+import { poolPosteriors, studentWaitingFor } from "@/lib/exam/result";
 import { makePresentation, toCandidateItem, unalias, type CandidateItem } from "@/lib/exam/safe";
 import {
   isObjectiveSection,
@@ -182,8 +182,10 @@ export type StudentResult = {
   overall?: Cefr | null;
   skills?: Array<{ section: Section; level: Cefr | null }>;
   outcome?: "PASS" | "FAIL" | "INCONCLUSIVE" | null;
-  /** True when writing or speaking are waiting for a teacher. */
+  /** True when a teacher still has to decide: writing or speaking, or an uncertain objective result. */
   awaitingTeacher: boolean;
+  /** Why: "PRODUCTIVE" (writing or speaking) or "REVIEW" (an uncertain result only); null when not waiting. */
+  waitingFor?: "PRODUCTIVE" | "REVIEW" | null;
 };
 
 export type CandidateState = {
@@ -398,10 +400,12 @@ async function finishedState(
   const [result] = await db.select().from(examResults).where(eq(examResults.attemptId, attempt.id)).limit(1);
   const hasProductive = enabledSections(cfg).some((s) => !isObjectiveSection(s.section));
   const released = !!result?.releasedAt;
+  const waitingFor = studentWaitingFor({ hasProductive, final: result?.status === "FINAL", computed: result?.computed });
   const student: StudentResult = {
     visibility: cfg.resultVisibility,
     released,
-    awaitingTeacher: hasProductive && result?.status !== "FINAL",
+    awaitingTeacher: waitingFor !== null,
+    waitingFor,
   };
   if (released && cfg.resultVisibility !== "NONE") {
     student.overall = (result?.finalOverall as Cefr | null) ?? null;

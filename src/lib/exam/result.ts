@@ -179,3 +179,41 @@ export function computeResult(input: {
 
   return { skills, overall, pooled, status, verification, placement };
 }
+
+/**
+ * True when the engine itself is not sure enough to release a level on its own:
+ * the placement is borderline (near a cut, imprecise, or a productive gap), or
+ * it recommends a level other than the computed one. Such a result waits for a
+ * teacher even when no writing or speaking is involved.
+ */
+export function isUncertainResult(computed: Pick<ComputedResult, "overall" | "placement"> | null | undefined): boolean {
+  const p = computed?.placement;
+  if (!p) return false;
+  return p.borderline || p.reasons.includes("HIGH_UNCERTAINTY") || (p.recommended !== null && p.recommended !== computed?.overall);
+}
+
+/**
+ * The engine finalizes by itself only when nothing needs a person: no writing
+ * or speaking, nothing undecided, complete and clean evidence, and a clear
+ * (not uncertain) computed result.
+ */
+export function autoFinalizes(input: {
+  status: string;
+  hasProductive: boolean;
+  anyUndecided: boolean;
+  clean: boolean;
+  computed: Pick<ComputedResult, "overall" | "placement"> | null | undefined;
+}): boolean {
+  return input.status === "AWAITING_REVIEW" && !input.hasProductive && !input.anyUndecided && input.clean && !isUncertainResult(input.computed);
+}
+
+/** What the finished screen tells the student while the result is not final. */
+export function studentWaitingFor(input: {
+  hasProductive: boolean;
+  final: boolean;
+  computed: Pick<ComputedResult, "overall" | "placement"> | null | undefined;
+}): "PRODUCTIVE" | "REVIEW" | null {
+  if (input.final) return null;
+  if (input.hasProductive) return "PRODUCTIVE";
+  return isUncertainResult(input.computed) ? "REVIEW" : null;
+}

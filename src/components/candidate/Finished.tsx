@@ -195,7 +195,7 @@ export function Finished({
               </>
             ) : (
               <p className="mt-2 text-[14.5px] leading-[1.6] text-ink-2">
-                {result.visibility === "NONE" ? t("none") : result.awaitingTeacher ? t("pending") : t("notReleased")}
+                {result.visibility === "NONE" ? t("none") : result.awaitingTeacher ? t(result.waitingFor === "REVIEW" ? "pendingReview" : "pending") : t("notReleased")}
               </p>
             )}
           </section>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BAND_CENTER } from "./cefr";
-import { computeResult, poolPosteriors, type SectionEvidence } from "./result";
+import { autoFinalizes, computeResult, isUncertainResult, poolPosteriors, studentWaitingFor, type SectionEvidence } from "./result";
 
 const rules = { overallAtLeastClaimed: true, minSkillOffset: -1, requiredSkills: [], minHoldProbability: 0.5 };
 const obj = (section: "GRAMMAR" | "READING" | "LISTENING", mean: number, sd = 0.4): SectionEvidence => ({
@@ -139,5 +139,59 @@ describe("placement sublevel and borderline", () => {
     });
     expect(r.placement).toBe(null);
     expect(r.verification!.outcome).toBe("FAIL");
+  });
+});
+
+describe("uncertain results go to a teacher", () => {
+  const place = (sections: SectionEvidence[]) => computeResult({ mode: "PLACEMENT", claimed: null, rules, sections });
+  const flow = { status: "AWAITING_REVIEW", hasProductive: false, anyUndecided: false, clean: true };
+  // Tight posteriors in the middle of a band: clear.
+  const clear = place([obj("GRAMMAR", BAND_CENTER.B1, 0.3), obj("READING", BAND_CENTER.B1, 0.3)]);
+  // Right at the B1/B2 cut: borderline.
+  const nearCut = place([obj("GRAMMAR", 0.05, 0.3), obj("READING", 0.05, 0.3)]);
+  // Wide posteriors (few usable answers): HIGH_UNCERTAINTY.
+  const imprecise = place([obj("GRAMMAR", BAND_CENTER.B2, 1.2), obj("READING", BAND_CENTER.B2, 1.2)]);
+
+  it("treats a clear result as certain, and an objective-only exam finalizes by itself", () => {
+    expect(clear.placement?.borderline).toBe(false);
+    expect(isUncertainResult(clear)).toBe(false);
+    expect(autoFinalizes({ ...flow, computed: clear })).toBe(true);
+    expect(studentWaitingFor({ hasProductive: false, final: false, computed: clear })).toBe(null);
+  });
+
+  it("holds a borderline result for the teacher", () => {
+    expect(nearCut.placement?.reasons).toContain("NEAR_CUT");
+    expect(isUncertainResult(nearCut)).toBe(true);
+    expect(autoFinalizes({ ...flow, computed: nearCut })).toBe(false);
+  });
+
+  it("holds an imprecise result (HIGH_UNCERTAINTY) for the teacher", () => {
+    expect(imprecise.placement?.reasons).toContain("HIGH_UNCERTAINTY");
+    expect(autoFinalizes({ ...flow, computed: imprecise })).toBe(false);
+  });
+
+  it("holds a result whose recommended level differs from the computed level", () => {
+    const c = { overall: "B2" as const, placement: { sublevel: "B2.1", borderline: false, reasons: [], recommended: "B1" as const } };
+    expect(isUncertainResult(c)).toBe(true);
+    expect(autoFinalizes({ ...flow, computed: c })).toBe(false);
+  });
+
+  it("still needs every other condition to auto-finalize", () => {
+    expect(autoFinalizes({ ...flow, hasProductive: true, computed: clear })).toBe(false);
+    expect(autoFinalizes({ ...flow, anyUndecided: true, computed: clear })).toBe(false);
+    expect(autoFinalizes({ ...flow, clean: false, computed: clear })).toBe(false);
+    expect(autoFinalizes({ ...flow, status: "AWAITING_GRADING", computed: clear })).toBe(false);
+  });
+
+  it("level verification has no placement flag and is unchanged", () => {
+    const v = computeResult({ mode: "LEVEL_VERIFICATION", claimed: "B1", rules, sections: [obj("GRAMMAR", 0.05, 1.2)] });
+    expect(isUncertainResult(v)).toBe(false);
+  });
+
+  it("tells the student a teacher is reviewing, only while not final", () => {
+    expect(studentWaitingFor({ hasProductive: false, final: false, computed: nearCut })).toBe("REVIEW");
+    expect(studentWaitingFor({ hasProductive: false, final: true, computed: nearCut })).toBe(null);
+    expect(studentWaitingFor({ hasProductive: true, final: false, computed: clear })).toBe("PRODUCTIVE");
+    expect(studentWaitingFor({ hasProductive: true, final: true, computed: clear })).toBe(null);
   });
 });
