@@ -131,7 +131,7 @@ function Field({
     <label className="block">
       <span className="text-[13px] font-medium text-ink">
         {label}
-        {hint ? <span className="ml-1.5 font-normal text-muted">{hint}</span> : null}
+        {hint ? <span className="ms-1.5 font-normal text-muted">{hint}</span> : null}
       </span>
       <input
         type={type}

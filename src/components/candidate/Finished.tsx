@@ -111,7 +111,7 @@ export function Finished({
           <p
             role="status"
             aria-live="polite"
-            className="mx-auto mt-4 flex max-w-[44ch] items-start justify-center gap-2.5 rounded-xl bg-sun-soft px-4 py-3 text-left text-[14px] font-semibold leading-[1.5] text-ink"
+            className="mx-auto mt-4 flex max-w-[44ch] items-start justify-center gap-2.5 rounded-xl bg-sun-soft px-4 py-3 text-start text-[14px] font-semibold leading-[1.5] text-ink"
           >
             {upload === "sending" ? (
               <Loader2 aria-hidden className="mt-0.5 size-4 shrink-0 text-sun motion-safe:animate-spin" strokeWidth={2.5} />
@@ -134,7 +134,7 @@ export function Finished({
               {sections.map((section) => (
                 <li key={section} className="relative">
                   <SectionTile section={section} size="lg" />
-                  <span aria-hidden className="absolute -bottom-1 -right-1 grid size-5 place-items-center rounded-full border-2 border-paper bg-accent text-white">
+                  <span aria-hidden className="absolute -bottom-1 -end-1 grid size-5 place-items-center rounded-full border-2 border-paper bg-accent text-white">
                     <Check className="size-3" strokeWidth={3.5} />
                   </span>
                   <span className="sr-only">{`${sec(section)}, ${v("sectionDone")}`}</span>

@@ -17,11 +17,11 @@ describe("Notice", () => {
     expect(h).not.toMatch(/danger|text-red|bg-red/);
   });
 
-  it("is left-aligned by default and lets a caller's text-center win", () => {
-    for (const tone of ["warn", "neutral"] as const) expect(NOTICE_CLASS[tone]).toContain("text-left");
+  it("is start-aligned by default and lets a caller's text-center win", () => {
+    for (const tone of ["warn", "neutral"] as const) expect(NOTICE_CLASS[tone]).toContain("text-start");
     const h = renderToStaticMarkup(createElement(Notice, { className: "text-center" } as ComponentProps<typeof Notice>, "Hi"));
     expect(h).toContain("text-center");
-    expect(h).not.toContain("text-left");
+    expect(h).not.toContain("text-start");
   });
 
   it("neutral is cream with ink text", () => {

@@ -198,8 +198,14 @@ describe("inviteStudentsAction: the exam", () => {
 
   it("an unknown screen language falls back to Turkish", async () => {
     state.ensureResult = { ok: true, blueprint: published("placement"), created: false };
-    await inviteStudentsAction(input({ locale: "de" as never, text: "Ayşe Yılmaz, ayse@ornek.com" }));
+    await inviteStudentsAction(input({ locale: "fr" as never, text: "Ayşe Yılmaz, ayse@ornek.com" }));
     expect(state.invited[0]).toMatchObject({ locale: "tr" });
+  });
+
+  it.each(["tr", "en", "de", "es", "ar"] as const)("passes the student's language %s on to the invitation", async (locale) => {
+    state.ensureResult = { ok: true, blueprint: published("placement"), created: false };
+    await inviteStudentsAction(input({ locale, text: "Ayşe Yılmaz, ayse@ornek.com" }));
+    expect(state.invited[0]).toMatchObject({ locale });
   });
 });
 

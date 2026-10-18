@@ -36,7 +36,7 @@ export function Countdown({
       {ratio !== null ? (
         <div className="relative mt-2 h-[3px] rounded-sm bg-line">
           <span
-            className="absolute inset-y-0 left-0 rounded-sm bg-accent transition-[width] duration-300"
+            className="absolute inset-y-0 start-0 rounded-sm bg-accent transition-[width] duration-300"
             style={{ width: `${ratio * 100}%` }}
           />
         </div>

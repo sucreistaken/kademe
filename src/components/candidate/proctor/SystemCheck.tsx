@@ -414,7 +414,7 @@ function Rules({ policy, t }: { policy: ProctoringPolicy; t: T }) {
     t("ruleTab"),
   ].filter((r): r is string => r !== null);
   return (
-    <ul className="mt-6 flex w-full max-w-[460px] flex-col gap-2.5 text-left">
+    <ul className="mt-6 flex w-full max-w-[460px] flex-col gap-2.5 text-start">
       {rules.map((r) => (
         <li key={r} className="flex items-start gap-3 rounded-[14px] bg-mint-soft px-4 py-3 text-[16px] leading-[24px] text-ink">
           <span aria-hidden className="mt-[9px] size-2 shrink-0 rounded-full bg-accent" />

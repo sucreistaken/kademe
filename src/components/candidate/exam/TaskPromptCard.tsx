@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale } from "next-intl";
 import { layoutTaskBlocks, parseTaskPrompt, type TaskSegment } from "@/lib/exam/task-prompt";
 import { useT } from "@/i18n/candidate-client";
 
@@ -10,7 +11,7 @@ function List({ ordered, items, className }: { ordered: boolean; items: string[]
   const Tag = ordered ? "ol" : "ul";
   return (
     <Tag
-      className={`flex flex-col gap-1.5 pl-6 ${ordered ? "list-decimal marker:font-semibold" : "list-disc"} marker:text-muted ${BODY} ${className ?? ""}`}
+      className={`flex flex-col gap-1.5 ps-6 ${ordered ? "list-decimal marker:font-semibold" : "list-disc"} marker:text-muted ${BODY} ${className ?? ""}`}
     >
       {items.map((l, j) => (
         <li key={j}>{l}</li>
@@ -19,7 +20,7 @@ function List({ ordered, items, className }: { ordered: boolean; items: string[]
   );
 }
 
-function Segment({ seg, heading }: { seg: TaskSegment; heading: string | null }) {
+function Segment({ seg, heading, uiLang }: { seg: TaskSegment; heading: string | null; uiLang: string }) {
   switch (seg.kind) {
     case "situation":
       // The scene, set in a soft box so it reads apart from what the candidate has to do.
@@ -33,8 +34,8 @@ function Segment({ seg, heading }: { seg: TaskSegment; heading: string | null })
     case "tasks":
       return (
         <div>
-          {heading ? <div className={LABEL}>{heading}</div> : null}
-          <ul className={`${heading ? "mt-2" : ""} flex list-disc flex-col gap-2 pl-6 font-semibold marker:text-muted ${BODY}`}>
+          {heading ? <div lang={uiLang} className={LABEL}>{heading}</div> : null}
+          <ul className={`${heading ? "mt-2" : ""} flex list-disc flex-col gap-2 ps-6 font-semibold marker:text-muted ${BODY}`}>
             {seg.items.map((it, j) => (
               <li key={j}>
                 {it.text}
@@ -67,6 +68,8 @@ function Segment({ seg, heading }: { seg: TaskSegment; heading: string | null })
  */
 export function TaskPromptCard({ text, id }: { text: string; id?: string }) {
   const t = useT("examItems");
+  // The card is German; the "Your task" label is the interface and keeps the student's language.
+  const uiLang = useLocale();
   const { topic, card, blocks } = parseTaskPrompt(text);
   const segments = layoutTaskBlocks(blocks);
   const firstTasks = segments.findIndex((s) => s.kind === "tasks");
@@ -85,7 +88,7 @@ export function TaskPromptCard({ text, id }: { text: string; id?: string }) {
         </div>
       ) : null}
       {segments.map((seg, i) => (
-        <Segment key={i} seg={seg} heading={i === firstTasks ? t("taskHeading") : null} />
+        <Segment key={i} seg={seg} heading={i === firstTasks ? t("taskHeading") : null} uiLang={uiLang} />
       ))}
     </div>
   );

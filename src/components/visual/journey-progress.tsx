@@ -14,7 +14,7 @@ export function JourneyProgress({ steps, current, label }: { steps: number; curr
           <span
             aria-hidden
             className={cn(
-              "absolute inset-y-0 left-0 rounded-full bg-accent transition-[width] duration-[240ms] ease-soft motion-reduce:transition-none",
+              "absolute inset-y-0 start-0 rounded-full bg-accent transition-[width] duration-[240ms] ease-soft motion-reduce:transition-none",
               i + 1 < current ? "w-full" : i + 1 === current ? "w-1/2" : "w-0",
             )}
           />

@@ -35,6 +35,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ChoiceCardGroup } from "@/components/visual/choice-card";
 import { StepScreen } from "@/components/visual/step-screen";
 import { useMT } from "@/i18n/manager-client";
+import { CANDIDATE_LANGUAGE_NAME, CANDIDATE_LOCALES, isCandidateLocale, type CandidateLocale } from "@/i18n/locale";
 import { bankCoverage, type BankCount, type BlueprintConfig } from "@/lib/exam/blueprint";
 import { CEFR_LEVELS, type Cefr } from "@/lib/exam/types";
 import { cn } from "@/lib/cn";
@@ -142,7 +143,7 @@ export function StudentInviteWizard({
   const [batch, setBatch] = useState<Cefr | null>(initialClaimed ?? null);
   /** Verification only: easier (-1) or harder (1) for this list; null keeps the exam's own setting. */
   const [shift, setShift] = useState<-1 | 0 | 1 | null>(null);
-  const [locale, setLocale] = useState<"tr" | "en">("tr");
+  const [locale, setLocale] = useState<CandidateLocale>("tr");
   // The exam window: "Hemen" or a set opening, and the last entry (default 14 days after the opening until the manager sets it).
   const [startMode, setStartMode] = useState<"now" | "later">("now");
   const [startDate, setStartDate] = useState(() => orgDay(laterDefault(nowIso), timeZone));
@@ -621,7 +622,7 @@ export function StudentInviteWizard({
                 ? [{ id: "claim", label: t("inviteClaim"), value: batch ?? t("inviteClaimPerRow"), edit: { onClick: change("exam") } }]
                 : []),
               ...(shiftScope?.applies ? [{ id: "shift", label: t("inviteShift"), value: shiftLabel(effectiveShift), edit: { onClick: change("exam") } }] : []),
-              { id: "language", label: inv("language"), value: <span lang={locale}>{locale === "en" ? "English" : "Türkçe"}</span>, edit: { onClick: change("language") } },
+              { id: "language", label: inv("language"), value: <span lang={locale}>{CANDIDATE_LANGUAGE_NAME[locale]}</span>, edit: { onClick: change("language") } },
               {
                 id: "opens",
                 label: w("rowOpens"),
@@ -751,13 +752,10 @@ export function StudentInviteWizard({
             name="invite-language"
             labelledBy="invite-language-label"
             look="panel"
-            columns={2}
+            columns={3}
             value={[locale]}
-            onChange={([v]) => setLocale(v === "en" ? "en" : "tr")}
-            items={[
-              { value: "tr", label: <span lang="tr">Türkçe</span> },
-              { value: "en", label: <span lang="en">English</span> },
-            ]}
+            onChange={([v]) => setLocale(isCandidateLocale(v) ? v : "tr")}
+            items={CANDIDATE_LOCALES.map((value) => ({ value, label: <span lang={value}>{CANDIDATE_LANGUAGE_NAME[value]}</span> }))}
           />
         </>
       ),

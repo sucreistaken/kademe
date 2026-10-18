@@ -3,7 +3,7 @@ import { CandidateIntl } from "@/components/candidate/Intl";
 import { ORG_TIMEZONE } from "@/lib/org-timezone";
 import { IntroConsent } from "@/components/candidate/IntroConsent";
 import { getConsentText, supportedLocales } from "@/lib/candidate-context";
-import { panelLocaleOf } from "@/i18n/locale";
+import { consentIsFallback, consentShownLocale } from "@/lib/consent-locale";
 import { candidateSafe } from "@/lib/candidate-safe";
 import { solutionPage } from "@/lib/candidate-pages";
 import { enter, headerMeta, type SearchParams } from "@/app/a/[token]/shared";
@@ -30,6 +30,7 @@ export default async function CandidateEntryPage({
   // The core consent read is the exam's alone: another solution's invitation
   // was answered by solutionPage above or stopped at enter() as an unknown token.
   const consent = await getConsentText(entry.ctx);
+  const shown = consentShownLocale(entry.locale, consent.body);
 
   return (
     <CandidateIntl locale={entry.locale} timeZone={ORG_TIMEZONE}>
@@ -49,7 +50,10 @@ export default async function CandidateEntryPage({
           state={candidateSafe(entry.state)}
           consent={{
             version: consent.version,
-            body: consent.body[panelLocaleOf(entry.locale)] || consent.body.tr,
+            body: consent.body[shown],
+            shown,
+            // Only the languages without a consent text of their own read English, with a way to the Turkish text.
+            turkishBody: consentIsFallback(entry.locale) && shown === "en" && consent.body.tr ? consent.body.tr : null,
           }}
           supportEmail={entry.ctx.contactEmail}
           mediaRetentionDays={entry.ctx.mediaRetentionDays}

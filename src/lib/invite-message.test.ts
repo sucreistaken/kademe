@@ -39,6 +39,27 @@ describe("inviteMessage", () => {
     expect(text).toContain("about 45 minutes");
   });
 
+  it.each(["de", "es", "ar"] as const)("%s has its own text with the link, the deadline and the length", (locale) => {
+    const text = inviteMessage({ ...base, locale, notBefore: new Date("2026-10-20T06:30:00Z") });
+    expect(text).toContain("http://localhost:3100/a/abc");
+    expect(text).toContain("23:59");
+    expect(text).toContain("09:30");
+    expect(text).toContain("45");
+    expect(text).toContain("Dilevi Kursu");
+    expect(text).toContain("Ayşe");
+    // Not the English or Turkish text, and Latin digits all the way.
+    expect(text).not.toContain("Your German level exam");
+    expect(text).not.toContain("Almanca seviye sınavınız");
+    expect(text).not.toMatch(/[\u0660-\u0669]/);
+  });
+
+  it("German and Spanish say the same things in their own words", () => {
+    expect(inviteMessage({ ...base, locale: "de" })).toContain("Hallo Ayşe, Ihr Deutsch-Einstufungstest für Dilevi Kursu ist bereit.");
+    expect(inviteMessage({ ...base, locale: "de" })).toContain("Letzter Einstieg: 28 Oktober 2026 23:59.");
+    expect(inviteMessage({ ...base, locale: "es" })).toContain("Hola Ayşe, su examen de nivel de alemán para Dilevi Kursu está listo.");
+    expect(inviteMessage({ ...base, locale: "es" })).toContain("Último acceso: 28 octubre 2026 23:59.");
+  });
+
   it("greets without a name when there is none", () => {
     expect(inviteMessage({ ...base, fullName: "  " }).startsWith("Merhaba, Dilevi Kursu için")).toBe(true);
   });

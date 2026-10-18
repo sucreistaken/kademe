@@ -19,7 +19,7 @@ export type InviteMessageInput = {
   notBefore?: Date | null;
   /** The exam's approximate length. */
   minutes: number;
-  locale: "tr" | "en";
+  locale: CandidateLocale;
   timeZone?: string;
 };
 
@@ -78,12 +78,30 @@ export function inviteMessage(input: InviteMessageInput): string {
   const tz = input.timeZone ?? ORG_TIMEZONE;
   const name = givenName(input.fullName);
   const deadline = messageDateTime(input.expiresAt, input.locale, tz);
-  if (input.locale === "en") {
-    const opens = input.notBefore ? ` The exam opens on ${openingMoment(input.notBefore, "en", tz)}.` : "";
-    return `Hello${name ? ` ${name}` : ""}, your German level exam for ${input.school} is ready. You can enter the exam with this link: ${input.url} .${opens} Last entry: ${deadline}. You need to take the exam on a computer (Chrome or Edge); it takes about ${input.minutes} minutes. If you have any questions, you can reply to this message.`;
+  const opensAt = input.notBefore ? openingMoment(input.notBefore, input.locale, tz) : "";
+  const { school, url, minutes } = input;
+  switch (input.locale) {
+    case "en": {
+      const opens = opensAt ? ` The exam opens on ${opensAt}.` : "";
+      return `Hello${name ? ` ${name}` : ""}, your German level exam for ${school} is ready. You can enter the exam with this link: ${url} .${opens} Last entry: ${deadline}. You need to take the exam on a computer (Chrome or Edge); it takes about ${minutes} minutes. If you have any questions, you can reply to this message.`;
+    }
+    case "de": {
+      const opens = opensAt ? ` Die Prüfung öffnet am ${opensAt}.` : "";
+      return `Hallo${name ? ` ${name}` : ""}, Ihr Deutsch-Einstufungstest für ${school} ist bereit. Sie können die Prüfung über diesen Link starten: ${url} .${opens} Letzter Einstieg: ${deadline}. Sie müssen die Prüfung an einem Computer (Chrome oder Edge) ablegen; sie dauert etwa ${minutes} Minuten. Bei Fragen können Sie auf diese Nachricht antworten.`;
+    }
+    case "es": {
+      const opens = opensAt ? ` El examen se abre el ${opensAt}.` : "";
+      return `Hola${name ? ` ${name}` : ""}, su examen de nivel de alemán para ${school} está listo. Puede entrar al examen con este enlace: ${url} .${opens} Último acceso: ${deadline}. Debe hacer el examen en un ordenador (Chrome o Edge); dura unos ${minutes} minutos. Si tiene alguna pregunta, puede responder a este mensaje.`;
+    }
+    case "ar": {
+      const opens = opensAt ? ` يفتح الامتحان في ${opensAt}.` : "";
+      return `مرحباً${name ? ` ${name}` : ""}، امتحان تحديد مستوى اللغة الألمانية الخاص بك لدى ${school} جاهز. يمكنك دخول الامتحان عبر هذا الرابط: ${url} .${opens} آخر موعد للدخول: ${deadline}. يجب أداء الامتحان على جهاز كمبيوتر (Chrome أو Edge)، ويستغرق حوالي ${minutes} دقيقة. إذا كانت لديك أي أسئلة، يمكنك الرد على هذه الرسالة.`;
+    }
+    case "tr": {
+      const opens = opensAt ? ` Sınav ${opensAt} açılacak.` : "";
+      return `Merhaba${name ? ` ${name}` : ""}, ${school} için Almanca seviye sınavınız hazır. Sınava bu linkten girebilirsiniz: ${url} .${opens} Son giriş tarihi: ${deadline}. Sınavı bilgisayardan (Chrome veya Edge) yapmanız gerekiyor, yaklaşık ${minutes} dakika sürer. Sorunuz olursa bu mesaja yanıt verebilirsiniz.`;
+    }
   }
-  const opens = input.notBefore ? ` Sınav ${openingMoment(input.notBefore, "tr", tz)} açılacak.` : "";
-  return `Merhaba${name ? ` ${name}` : ""}, ${input.school} için Almanca seviye sınavınız hazır. Sınava bu linkten girebilirsiniz: ${input.url} .${opens} Son giriş tarihi: ${deadline}. Sınavı bilgisayardan (Chrome veya Edge) yapmanız gerekiyor, yaklaşık ${input.minutes} dakika sürer. Sorunuz olursa bu mesaja yanıt verebilirsiniz.`;
 }
 
 /** Every student's text, one after the other, a rule between them. */

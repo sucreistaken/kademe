@@ -198,7 +198,7 @@ export function ChoiceCardGroup({
             </span>
             {/* A closed card offers no key: the shortcut does nothing then (useChoiceShortcuts listens only while the group is open). */}
             {item.shortcut && !off ? (
-              <kbd aria-hidden className="tnum ml-auto hidden rounded-md border border-line bg-paper px-1.5 text-[13px] text-muted lg:inline">
+              <kbd aria-hidden className="tnum ms-auto hidden rounded-md border border-line bg-paper px-1.5 text-[13px] text-muted lg:inline">
                 {item.shortcut}
               </kbd>
             ) : null}

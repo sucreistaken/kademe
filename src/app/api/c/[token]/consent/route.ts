@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { candidateJson } from "@/lib/candidate-safe";
 import { hasConsented, recordConsent } from "@/lib/candidate-context";
-import { panelLocaleOf } from "@/i18n/locale";
+import { consentShownLocale } from "@/lib/consent-locale";
 import { badRequest, clientIp, readJson, userAgent, withSolution } from "@/lib/candidate-api";
 
 /**
@@ -17,7 +17,7 @@ export async function GET(
     const text = await solution.candidate.consentText(ctx);
     return candidateJson({
       version: text.version,
-      body: text.body[panelLocaleOf(ctx.locale)] || text.body.tr,
+      body: text.body[consentShownLocale(ctx.locale, text.body)],
       consented: await hasConsented(ctx.assessment.id),
     });
   });
@@ -32,13 +32,16 @@ export async function POST(
   { params }: { params: Promise<{ token: string }> },
 ) {
   return withSolution(req, params, async (request, ctx, solution) => {
-    const body = await readJson<{ accepted?: boolean }>(request);
+    const body = await readJson<{ accepted?: boolean; shown?: string }>(request);
     if (!body?.accepted) {
       return badRequest(ctx, "CONSENT_REQUIRED");
     }
     if (!(await hasConsented(ctx.assessment.id))) {
       const text = await solution.candidate.consentText(ctx);
-      await recordConsent(ctx, text.id, clientIp(request), userAgent(request));
+      // The record names the language of the text the student read: English for a
+      // student in German, Spanish or Arabic, Turkish if they opened the Turkish text.
+      const shown = consentShownLocale(ctx.locale, text.body, body.shown);
+      await recordConsent(ctx, text.id, clientIp(request), userAgent(request), shown);
     }
     return candidateJson(await solution.candidate.loadState(ctx));
   });

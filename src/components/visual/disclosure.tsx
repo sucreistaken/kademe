@@ -27,7 +27,7 @@ export function Disclosure({
     <Collapsible defaultOpen={defaultOpen} className={cn(variant === "row" && "border-y border-line", className)}>
       <CollapsibleTrigger
         className={cn(
-          "group flex min-h-12 items-center gap-2 text-left text-[16px] text-ink",
+          "group flex min-h-12 items-center gap-2 text-start text-[16px] text-ink",
           variant === "row" ? "w-full justify-between font-medium" : "underline decoration-underline underline-offset-4 hover:decoration-ink",
         )}
       >

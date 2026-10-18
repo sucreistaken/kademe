@@ -295,6 +295,26 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/*
+ * Arabic screens (candidate language "ar"): Noto Sans Arabic leads the stack,
+ * Nunito stays behind it for the Latin letters and digits. The Arabic face is
+ * loaded lazily (preload is off), so only a page that uses :lang(ar) fetches it.
+ * German exam content keeps Nunito and runs left to right even inside an RTL
+ * page; every German element carries lang="de".
+ */
+@layer base {
+  :lang(ar) {
+    font-family: var(--font-noto-arabic), var(--font-sans);
+  }
+  :lang(de) {
+    font-family: var(--font-sans);
+  }
+  [dir="rtl"] [lang="de"] {
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+}
+
 /* Keyboard focus stays visible everywhere. The evaluation screen is driven by
    the keyboard, so this is load-bearing, not decoration.
    This outline (2px accent, 2px gap, HIRING-UX 8.2) is the only focus

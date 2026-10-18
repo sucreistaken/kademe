@@ -6,14 +6,15 @@ import { mobileMoment, serverDeviceHint } from "@/components/candidate/device";
 import { ORG_TIMEZONE } from "@/lib/org-timezone";
 import { ExamRunner } from "@/components/candidate/exam/ExamRunner";
 import { candidateSafe } from "@/lib/candidate-safe";
+import { supportedLocales } from "@/lib/candidate-context";
 import { enter, type SearchParams } from "@/app/a/[token]/shared";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Section introductions and questions. The language switch is gone from here
- * on purpose: changing language in the middle of a question moves the ground
- * under the student. A phone or tablet gets the desktop-only screen instead of
+ * Section introductions and questions. The language picker shows on the
+ * introductions only (the runner decides): changing language in the middle of
+ * a question moves the ground under the student. A phone or tablet gets the desktop-only screen instead of
  * the exam, whatever the proctoring (DesktopOnlyGate). The runner draws its
  * own header for the introduction and the questions alike, so the frame has
  * none: a brand bar here would double the exam bar, and be missing after a
@@ -40,7 +41,8 @@ export default async function ExamPage({
           need={{ camera: proctored && p.camera, screenShare: proctored && p.screenShare, writing: entry.state.sections.some((s) => s.section === "WRITING") }}
           moment={mobileMoment(entry.state)}
         >
-          <ExamRunner token={token} initial={candidateSafe(entry.state)} />
+          {/* Keyed by language so a switch on an introduction starts from the server's fresh state. */}
+          <ExamRunner key={entry.locale} token={token} initial={candidateSafe(entry.state)} locales={supportedLocales(entry.ctx)} />
         </DesktopOnlyGate>
       </CandidateShell>
     </CandidateIntl>

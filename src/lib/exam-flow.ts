@@ -28,6 +28,7 @@ import {
   type BlueprintConfig,
   type SectionConfig,
 } from "@/lib/exam/blueprint";
+import { candidateExamName } from "@/lib/exam/candidate-exam-name";
 import { levelFromTheta } from "@/lib/exam/cefr";
 import { hasAnswer, scoreItem } from "@/lib/exam/item-scoring";
 import {
@@ -251,7 +252,7 @@ export async function loadState(ctx: ExamCandidateContext): Promise<CandidateSta
   const sections = enabledSections(cfg);
   const base: CandidateState = {
     step: "CONSENT",
-    examName: ctx.assessment.examName,
+    examName: candidateExamName(ctx.assessment.examName, ctx.locale),
     orgName: ctx.orgName,
     mode: ctx.assessment.mode,
     claimedLevel: ctx.assessment.claimedLevel,

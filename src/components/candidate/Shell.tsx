@@ -1,5 +1,6 @@
-import Link from "next/link";
 import { BrandLockup } from "@/components/visual/brand-mark";
+import { DocumentLocale } from "@/components/candidate/DocumentLocale";
+import { LanguagePicker } from "@/components/candidate/LanguagePicker";
 import { candidateT } from "@/i18n/candidate";
 import { dirOf, type CandidateLocale } from "@/i18n/locale";
 
@@ -12,6 +13,9 @@ import { dirOf, type CandidateLocale } from "@/i18n/locale";
  * for the manager panel, and CSS `text-transform: uppercase` follows the
  * element's language, so an English kicker under a Turkish root would render as
  * "WRİTTEN ANSWER". Screen readers pick the right voice from the same attribute.
+ *
+ * `dir` is set here for the same reason, and DocumentLocale copies both onto
+ * <html> so portals (dialogs, menus) outside this subtree follow the language.
  */
 export function CandidateShell({
   locale,
@@ -42,6 +46,7 @@ export function CandidateShell({
   const t = candidateT(locale);
   return (
     <div lang={locale} dir={dirOf(locale)} className="min-h-dvh bg-paper">
+      <DocumentLocale locale={locale} />
       {header ? (
       <header className="flex h-16 items-center justify-between gap-4 border-b border-hairline bg-surface px-5 sm:px-7">
         <BrandLockup byline={t("common.byline")} />
@@ -58,18 +63,9 @@ export function CandidateShell({
   );
 }
 
-const LABEL: Record<CandidateLocale, string> = {
-  tr: "Türkçe",
-  en: "English",
-  de: "Deutsch",
-  es: "Español",
-  ar: "العربية",
-};
-
 /**
- * Language is settled before the questions start, so the switch lives in the
- * frame rather than in the stage bar: changing language halfway through an
- * answer would move the ground under the candidate.
+ * Server-side entry for the frame's language picker: nothing to show for a
+ * single language. The picker itself is a client component (LanguagePicker).
  */
 export function LanguageSwitch({
   locales,
@@ -79,27 +75,7 @@ export function LanguageSwitch({
   current: CandidateLocale;
 }) {
   if (locales.length < 2) return null;
-  // A small segmented control: the current language is the raised pill.
-  return (
-    <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-subtle p-0.5 text-[12.5px]">
-      {locales.map((locale) =>
-        locale === current ? (
-          <span key={locale} className="rounded-full bg-surface px-3 py-1 font-bold text-ink shadow-lip-soft">
-            {LABEL[locale]}
-          </span>
-        ) : (
-          <Link
-            key={locale}
-            href={`?lang=${locale}`}
-            lang={locale}
-            className="rounded-full px-3 py-1 font-semibold text-muted transition-colors hover:text-ink"
-          >
-            {LABEL[locale]}
-          </Link>
-        ),
-      )}
-    </span>
-  );
+  return <LanguagePicker locales={locales} current={current} />;
 }
 
 /**

@@ -41,7 +41,12 @@ export function IntroConsent({
   token: string;
   locale: CandidateLocale;
   state: CandidateState;
-  consent: { version: number; body: string };
+  /**
+   * The consent text on screen and the language it is in. `turkishBody` is set
+   * for a student whose language has no consent text of its own: they read the
+   * English text, and may switch to the Turkish one.
+   */
+  consent: { version: number; body: string; shown: "tr" | "en"; turkishBody: string | null };
   supportEmail: string | null;
   mediaRetentionDays: number;
 }) {
@@ -54,6 +59,7 @@ export function IntroConsent({
   const v = useT("visual");
   const [accepted, setAccepted] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [showTurkish, setShowTurkish] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mobile, setMobile] = useState(false);
@@ -66,11 +72,15 @@ export function IntroConsent({
     setMobile(isMobileDevice());
   }, []);
 
+  const readingTurkish = showTurkish && consent.turkishBody !== null;
+  const consentBody = readingTurkish ? consent.turkishBody : consent.body;
+
   async function start() {
     setBusy(true);
     setError(null);
     try {
-      const next = await apiSend<CandidateState>(token, "/consent", { accepted: true });
+      // The record names the language of the text that was on screen, so say which one it was.
+      const next = await apiSend<CandidateState>(token, "/consent", { accepted: true, ...(readingTurkish ? { shown: "tr" } : {}) });
       router.push(stepPath(token, next));
     } catch (err) {
       setError(err instanceof Error ? err.message : common("somethingWrong"));
@@ -193,10 +203,30 @@ export function IntroConsent({
             {t("details")}
             <ChevronDown aria-hidden className={cn("size-4 transition-transform motion-reduce:transition-none", showDetails && "rotate-180")} strokeWidth={2.25} />
           </button>
+          {/* No consent text in this language: say so, and offer the Turkish one next to the English one. Never translated by machine. */}
+          {consent.turkishBody !== null ? (
+            <p className="mt-2 text-[13px] leading-[1.5] text-ink-2">
+              {t("consentFallbackNote")}{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowTurkish((on) => !on);
+                  setShowDetails(true);
+                }}
+                className="rounded-md font-bold text-ink underline decoration-underline underline-offset-2 hover:decoration-ink"
+              >
+                {showTurkish ? t("consentShowEnglish") : t("consentShowTurkish")}
+              </button>
+            </p>
+          ) : null}
           {/* The full text scrolls inside the card, so opening it never pushes the button off the screen. */}
           {showDetails ? (
-            <p className="mt-2.5 max-h-[28vh] overflow-y-auto whitespace-pre-line border-t border-row-line pr-1 pt-2.5 text-[13px] leading-[1.6] text-ink-2">
-              {consent.body}
+            <p
+              lang={readingTurkish ? "tr" : consent.shown}
+              dir="ltr"
+              className="mt-2.5 max-h-[28vh] overflow-y-auto whitespace-pre-line border-t border-row-line pe-1 pt-2.5 text-start text-[13px] leading-[1.6] text-ink-2"
+            >
+              {consentBody}
             </p>
           ) : null}
         </div>

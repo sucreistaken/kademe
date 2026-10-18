@@ -6,6 +6,9 @@ vi.mock("@/i18n/candidate-client", () => ({
   useT: () => (key: string, values?: Record<string, unknown>) => (values ? `${key}(${Object.values(values).join(",")})` : key),
 }));
 
+// The task card marks its interface label with the page language.
+vi.mock("next-intl", () => ({ useLocale: () => "en" }));
+
 import type { CandidateItem } from "@/lib/exam/safe";
 import { ItemView } from "./ItemView";
 import { TaskExpectations } from "./TaskExpectations";
@@ -67,7 +70,7 @@ describe("question typography", () => {
 
   it("draws a gap instruction as a ruled block above the sentence", () => {
     const html = render(gap);
-    expect(html).toMatch(/border-l-\[3px\] border-brand[^>]*>Ergänzen Sie das fehlende Wort\.<\/p>/);
+    expect(html).toMatch(/border-s-\[3px\] border-brand[^>]*>Ergänzen Sie das fehlende Wort\.<\/p>/);
     expect(html).toContain("font-semibold");
     expect(html.indexOf("Ergänzen Sie")).toBeLessThan(html.indexOf("Gestern habe ich"));
     expect(html).not.toContain("{{g1}}");

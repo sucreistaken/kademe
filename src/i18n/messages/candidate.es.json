@@ -313,6 +313,9 @@
     "proctoredRetention": "Las grabaciones se conservan durante {days} días y después se eliminan.",
     "notProctored": "Este examen no está supervisado. Sus respuestas se guardan.",
     "details": "Detalles y texto de consentimiento",
+    "consentFallbackNote": "This consent text is not available in your language, so the English text is shown.",
+    "consentShowTurkish": "Show the Turkish text",
+    "consentShowEnglish": "Show the English text",
     "needTitle": "Qué necesita",
     "needComputer": "Un ordenador (Chrome o Edge actualizado)",
     "needCamera": "Cámara y micrófono",
@@ -378,6 +381,11 @@
     "stopRecording": "Detener la grabación",
     "retake": "Grabar de nuevo (quedan {n})",
     "recorded": "Su respuesta está grabada"
+  },
+  "examNames": {
+    "quickScreen": "Quick level screen",
+    "placement": "Placement test",
+    "levelCheck": "Four-skill level check"
   },
   "section": {
     "GRAMMAR": "Gramática",

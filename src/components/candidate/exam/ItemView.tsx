@@ -120,7 +120,7 @@ function ChoiceItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps)
               disabled={disabled}
               onClick={() => toggle(o.id)}
               className={cn(
-                "flex min-h-12 w-full items-center gap-3 rounded-[10px] border bg-surface px-4 py-3 text-left text-[16px] transition-colors",
+                "flex min-h-12 w-full items-center gap-3 rounded-[10px] border bg-surface px-4 py-3 text-start text-[16px] transition-colors",
                 on ? "border-accent bg-accent-soft text-ink" : "border-line text-ink hover:border-line-strong",
               )}
             >
@@ -362,7 +362,7 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
                   // Same width for every slot of the item (longest chip), so the size says nothing about the part.
                   style={{ minWidth: slotWidth }}
                   className={cn(
-                    "ml-0 mr-0.5 inline-flex h-8 items-center rounded-[6px] border align-middle text-[16px] leading-none text-ink",
+                    "ms-0 me-0.5 inline-flex h-8 items-center rounded-[6px] border align-middle text-[16px] leading-none text-ink",
                     wordBank ? "mx-0.5 justify-center px-2" : "justify-start px-0.5",
                     value ? "border-line-strong bg-surface" : "border-dashed border-line-strong bg-canvas",
                     (isSelected || drag?.over === gap.id) && "border-solid border-accent bg-accent-soft ring-2 ring-accent",
@@ -386,7 +386,7 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
                   onChange={(e) => set(gap.id, e.target.value)}
                   // The missing part is as long as the stem or one letter longer.
                   size={Math.max(stem.length + 1, value.length + 1, 2)}
-                  className="ml-0 mr-0.5 h-8 rounded-[6px] border border-line-strong bg-surface px-1 text-[16px] text-ink"
+                  className="ms-0 me-0.5 h-8 rounded-[6px] border border-line-strong bg-surface px-1 text-[16px] text-ink"
                   {...NO_ASSIST}
                 />
               </span>
@@ -550,7 +550,7 @@ function MatchingItem({ item, answer, onChange, disabled, hidePrompt }: ItemProp
                 if (!isDragClick()) clickTarget(r.id);
               }}
               className={cn(
-                "flex min-h-9 max-w-full cursor-grab touch-none select-none items-start gap-2 rounded-[8px] border bg-surface px-2.5 py-1.5 text-left text-[14px] leading-[1.45] text-ink hover:border-accent",
+                "flex min-h-9 max-w-full cursor-grab touch-none select-none items-start gap-2 rounded-[8px] border bg-surface px-2.5 py-1.5 text-start text-[14px] leading-[1.45] text-ink hover:border-accent",
                 elsewhere ? "border-dashed border-line-strong opacity-60" : "border-line-strong",
                 drag?.key === r.id && "opacity-40",
               )}

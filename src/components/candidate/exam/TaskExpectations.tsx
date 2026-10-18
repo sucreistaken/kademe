@@ -27,7 +27,7 @@ export function TaskExpectations(props: Expectations) {
           ? t("expectLength", { min: props.minWords, max: props.maxWords })
           : t("expectTimes", { think: props.thinkSeconds, answer: props.answerSeconds })}
       </p>
-      <ul className="mt-2 flex list-disc flex-col gap-1 pl-5 text-[15px] leading-[1.5] text-ink marker:text-muted">
+      <ul className="mt-2 flex list-disc flex-col gap-1 ps-5 text-[15px] leading-[1.5] text-ink marker:text-muted">
         {CRITERIA[props.section].map((k) => (
           <li key={k}>{t(k)}</li>
         ))}

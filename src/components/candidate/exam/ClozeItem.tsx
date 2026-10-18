@@ -154,7 +154,7 @@ export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
                     onKeyDown={(e) => moveFocus(e, i)}
                     onClick={() => pickOption(i)}
                     className={cn(
-                      "flex min-h-12 w-full items-center gap-3 rounded-[10px] border bg-surface px-4 py-3 text-left text-[16px] transition-colors",
+                      "flex min-h-12 w-full items-center gap-3 rounded-[10px] border bg-surface px-4 py-3 text-start text-[16px] transition-colors",
                       on ? "border-accent bg-accent-soft text-ink" : "border-line text-ink hover:border-line-strong",
                     )}
                   >

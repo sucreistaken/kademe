@@ -11,6 +11,7 @@ import { examTemplateByKey } from "@/lib/exam/templates";
 import type { Cefr } from "@/lib/exam/types";
 import { resolveWindow, type WindowFault, type WindowInput } from "@/lib/exam-window";
 import { managerLocale } from "@/i18n/manager-locale";
+import { isCandidateLocale, type CandidateLocale } from "@/i18n/locale";
 import { bankCounts } from "@/server/panel";
 import { createInvitation } from "@/server/invite";
 import { requireUser } from "@/server/session";
@@ -24,7 +25,8 @@ export type InviteStudentsInput = {
   exam: string;
   /** Verification exams: the claim for every row that does not name its own. */
   claimed: string | null;
-  locale: "tr" | "en";
+  /** The language the student sees the exam and the invitation in. */
+  locale: CandidateLocale;
   /** The exam window as typed (school time); omitted: open now, last entry in 14 days. The server resolves it again. */
   window?: WindowInput;
   /** Verification exams: one CEFR level easier (-1) or harder (1) for these students; omitted keeps the exam's own. */
@@ -75,7 +77,7 @@ export async function inviteStudentsAction(input: InviteStudentsInput): Promise<
   const choice = parseExamChoice(typeof input.exam === "string" ? input.exam : "");
   if (!choice) return { ok: false, code: "EXAM" };
   const batch: Cefr | null = isCefr(input.claimed) ? input.claimed : null;
-  const locale = input.locale === "en" ? "en" : "tr";
+  const locale: CandidateLocale = isCandidateLocale(input.locale) ? input.locale : "tr";
   // The window is checked before anything is published or written.
   const window = resolveWindow(cleanWindow(input.window), { now: new Date() });
   if (!window.ok) return { ok: false, code: "WINDOW", fault: window.fault };

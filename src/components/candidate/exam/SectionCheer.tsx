@@ -57,7 +57,7 @@ export function SectionCheer({
                 )}
               />
               {s.done ? (
-                <span aria-hidden className="absolute -bottom-1 -right-1 grid size-4 place-items-center rounded-full border-2 border-mint-soft bg-accent text-white">
+                <span aria-hidden className="absolute -bottom-1 -end-1 grid size-4 place-items-center rounded-full border-2 border-mint-soft bg-accent text-white">
                   <Check className="size-2.5" strokeWidth={3.5} />
                 </span>
               ) : null}

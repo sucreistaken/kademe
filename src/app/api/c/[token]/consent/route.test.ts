@@ -54,6 +54,34 @@ describe("consent route", () => {
   it("records exactly that text's id", async () => {
     const res = await POST(new NextRequest("http://localhost/api/c/x/consent", { method: "POST", body: JSON.stringify({ accepted: true }) }), { params });
     expect(res.status).toBe(200);
-    expect(h.recordConsent).toHaveBeenCalledWith(h.ctx, "ct-hiring", "127.0.0.1", "test");
+    expect(h.recordConsent).toHaveBeenCalledWith(h.ctx, "ct-hiring", "127.0.0.1", "test", "tr");
+  });
+
+  it("records the language of the text the student was shown: English for German, Spanish and Arabic", async () => {
+    for (const locale of ["de", "es", "ar"]) {
+      h.recordConsent.mockClear();
+      const ctx = { ...h.ctx, locale };
+      h.ctx = ctx;
+      await POST(new NextRequest("http://localhost/api/c/x/consent", { method: "POST", body: JSON.stringify({ accepted: true }) }), { params });
+      expect(h.recordConsent).toHaveBeenCalledWith(ctx, "ct-hiring", "127.0.0.1", "test", "en");
+    }
+    h.ctx = { ...h.ctx, locale: "tr" };
+  });
+
+  it("records Turkish when a student in another language opened the Turkish text, and ignores that choice for English", async () => {
+    h.ctx = { ...h.ctx, locale: "de" };
+    await POST(new NextRequest("http://localhost/api/c/x/consent", { method: "POST", body: JSON.stringify({ accepted: true, shown: "tr" }) }), { params });
+    expect(h.recordConsent).toHaveBeenLastCalledWith(h.ctx, "ct-hiring", "127.0.0.1", "test", "tr");
+    h.ctx = { ...h.ctx, locale: "en" };
+    await POST(new NextRequest("http://localhost/api/c/x/consent", { method: "POST", body: JSON.stringify({ accepted: true, shown: "tr" }) }), { params });
+    expect(h.recordConsent).toHaveBeenLastCalledWith(h.ctx, "ct-hiring", "127.0.0.1", "test", "en");
+    h.ctx = { ...h.ctx, locale: "tr" };
+  });
+
+  it("shows the English text to a German student", async () => {
+    h.ctx = { ...h.ctx, locale: "de" };
+    const res = await GET(new NextRequest("http://localhost/api/c/x/consent"), { params });
+    expect(await res.json()).toMatchObject({ body: "Hiring text" });
+    h.ctx = { ...h.ctx, locale: "tr" };
   });
 });

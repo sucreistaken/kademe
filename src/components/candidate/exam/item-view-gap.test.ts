@@ -22,9 +22,9 @@ function gapItem(attached: boolean): CandidateItem {
 const render = (item: CandidateItem) => renderToStaticMarkup(createElement(ItemView, { item, answer: {}, onChange: () => {} }));
 
 describe("gap items", () => {
-  it("C-test: each input sits right after its word stem, unbreakable, without a left margin and sized to the stem", () => {
+  it("C-test: each input sits right after its word stem, unbreakable, without a start margin and sized to the stem", () => {
     const html = render(gapItem(true));
-    expect(html).toMatch(/<span>Anleitung\.\n\nIch <\/span><span class="whitespace-nowrap">b<input[^>]*size="2"[^>]*class="ml-0 /);
+    expect(html).toMatch(/<span>Anleitung\.\n\nIch <\/span><span class="whitespace-nowrap">b<input[^>]*size="2"[^>]*class="ms-0 /);
     expect(html).toMatch(/<span> hier und <\/span><span class="whitespace-nowrap">arb<input[^>]*size="4"/);
     expect(html).not.toContain("mx-1");
   });

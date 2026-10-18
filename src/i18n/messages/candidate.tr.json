@@ -313,6 +313,9 @@
     "proctoredRetention": "Kayıtlar {days} gün saklanır, sonra silinir.",
     "notProctored": "Bu sınav gözetimsizdir. Cevaplarınız kaydedilir.",
     "details": "Ayrıntılar ve onay metni",
+    "consentFallbackNote": "Bu onay metni dilinizde mevcut değil, İngilizce metin gösteriliyor.",
+    "consentShowTurkish": "Türkçe metni göster",
+    "consentShowEnglish": "İngilizce metni göster",
     "needTitle": "İhtiyacınız olanlar",
     "needComputer": "Bilgisayar (güncel Chrome veya Edge)",
     "needCamera": "Kamera ve mikrofon",
@@ -378,6 +381,11 @@
     "stopRecording": "Kaydı bitir",
     "retake": "Yeniden kaydet ({n} hak kaldı)",
     "recorded": "Cevabınız kaydedildi"
+  },
+  "examNames": {
+    "quickScreen": "Hızlı seviye taraması",
+    "placement": "Yerleştirme sınavı",
+    "levelCheck": "Dört beceride seviye kontrolü"
   },
   "section": {
     "GRAMMAR": "Dilbilgisi",

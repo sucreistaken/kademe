@@ -55,7 +55,7 @@ export function ExamEndReport({ token }: { token: string }) {
         {t("problemToggle")}
       </button>
       {open ? (
-        <div id={id} className="mt-1 space-y-2 text-left">
+        <div id={id} className="mt-1 space-y-2 text-start">
           <label htmlFor={`${id}-text`} className="sr-only">
             {t("problemToggle")}
           </label>

@@ -313,6 +313,9 @@
     "proctoredRetention": "Recordings are kept for {days} days and then deleted.",
     "notProctored": "This exam is not proctored. Your answers are saved.",
     "details": "Details and consent text",
+    "consentFallbackNote": "This consent text is not available in your language, so the English text is shown.",
+    "consentShowTurkish": "Show the Turkish text",
+    "consentShowEnglish": "Show the English text",
     "needTitle": "What you need",
     "needComputer": "A computer (current Chrome or Edge)",
     "needCamera": "Camera and microphone",
@@ -378,6 +381,11 @@
     "stopRecording": "Stop recording",
     "retake": "Record again ({n} left)",
     "recorded": "Your answer is recorded"
+  },
+  "examNames": {
+    "quickScreen": "Quick level screen",
+    "placement": "Placement test",
+    "levelCheck": "Four-skill level check"
   },
   "section": {
     "GRAMMAR": "Grammar",

@@ -3,6 +3,8 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { assessmentLinks, assessments, auditLogs, candidates, examAssessments, examBlueprints, messageOutbox } from "@/db/schema";
 import { mintToken, safeEqual, sha256 } from "@/lib/auth";
+import type { CandidateLocale } from "@/i18n/locale";
+import { candidateExamName } from "@/lib/exam/candidate-exam-name";
 import type { Cefr } from "@/lib/exam/types";
 import { outboxLinkPlaceholder } from "@/lib/outbox";
 import { resolveSigningSecret } from "@/lib/signing-secret";
@@ -31,7 +33,7 @@ export type InviteInput = {
   fullName: string;
   email: string;
   claimedLevel: Cefr | null;
-  locale: "tr" | "en";
+  locale: CandidateLocale;
   invitedBy: string | null;
   baseUrl?: string;
   ttlDays?: number;
@@ -74,10 +76,34 @@ export const examLinkUrl = (raw: string, baseUrl?: string) => `${origin(baseUrl)
 /** The outbox message, with `link` where the student's link goes. The exam needs a computer (desktop only, 2026-10-14). */
 function inviteBody(input: Pick<InviteInput, "fullName" | "locale">, examName: string, link: string): string {
   const name = input.fullName.trim();
-  if (input.locale === "en") {
-    return [name ? `Hello ${name},` : "Hello,", `Your German exam "${examName}" is ready. To start: ${link}`, "Please open the link on a computer; the exam does not run on a phone or tablet."].join("\n\n");
+  switch (input.locale) {
+    case "en":
+      return [name ? `Hello ${name},` : "Hello,", `Your German exam "${examName}" is ready. To start: ${link}`, "Please open the link on a computer; the exam does not run on a phone or tablet."].join("\n\n");
+    case "de":
+      return [name ? `Hallo ${name},` : "Hallo,", `Ihre Deutschprüfung "${examName}" ist bereit. Zum Starten: ${link}`, "Bitte öffnen Sie den Link an einem Computer; die Prüfung läuft nicht auf einem Handy oder Tablet."].join("\n\n");
+    case "es":
+      return [name ? `Hola ${name},` : "Hola,", `Su examen de alemán "${examName}" está listo. Para empezar: ${link}`, "Abra el enlace en un ordenador; el examen no funciona en un móvil ni en una tableta."].join("\n\n");
+    case "ar":
+      return [name ? `مرحباً ${name}،` : "مرحباً،", `امتحان اللغة الألمانية "${examName}" جاهز. للبدء: ${link}`, "يرجى فتح الرابط على جهاز كمبيوتر؛ لا يعمل الامتحان على الهاتف أو الجهاز اللوحي."].join("\n\n");
+    case "tr":
+      return [name ? `Merhaba ${name},` : "Merhaba,", `"${examName}" Almanca sınavınız hazır. Başlamak için: ${link}`, "Linki bir bilgisayarda açın; sınav telefon veya tablette çalışmaz."].join("\n\n");
   }
-  return [name ? `Merhaba ${name},` : "Merhaba,", `"${examName}" Almanca sınavınız hazır. Başlamak için: ${link}`, "Linki bir bilgisayarda açın; sınav telefon veya tablette çalışmaz."].join("\n\n");
+}
+
+/** The outbox subject line, in the student's language. */
+function inviteSubject(locale: CandidateLocale, examName: string): string {
+  switch (locale) {
+    case "en":
+      return `Your German exam: ${examName}`;
+    case "de":
+      return `Ihre Deutschprüfung: ${examName}`;
+    case "es":
+      return `Su examen de alemán: ${examName}`;
+    case "ar":
+      return `امتحان اللغة الألمانية: ${examName}`;
+    case "tr":
+      return `Almanca sınavınız: ${examName}`;
+  }
 }
 
 export async function createInvitation(input: InviteInput): Promise<InviteResult> {
@@ -89,6 +115,8 @@ export async function createInvitation(input: InviteInput): Promise<InviteResult
   if (blueprint.status !== "PUBLISHED") return { ok: false, code: "NOT_PUBLISHED" };
   if (blueprint.mode === "LEVEL_VERIFICATION" && !input.claimedLevel) return { ok: false, code: "CLAIM_REQUIRED" };
 
+  // A template's default name is shown in the student's own language, as on the exam screen.
+  const shownName = candidateExamName(blueprint.name, input.locale);
   const linkId = randomUUID();
   const s = linkSecret();
   const raw = s ? examLinkToken(linkId, s) : mintToken().raw;
@@ -132,8 +160,8 @@ export async function createInvitation(input: InviteInput): Promise<InviteResult
       orgId: input.orgId,
       kind: "INVITE",
       toEmail: input.email,
-      subject: input.locale === "en" ? `Your German exam: ${blueprint.name}` : `Almanca sınavınız: ${blueprint.name}`,
-      body: inviteBody(input, blueprint.name, outboxLinkPlaceholder(assessment.id)),
+      subject: inviteSubject(input.locale, shownName),
+      body: inviteBody(input, shownName, outboxLinkPlaceholder(assessment.id)),
     });
     await tx.insert(auditLogs).values({
       orgId: input.orgId,

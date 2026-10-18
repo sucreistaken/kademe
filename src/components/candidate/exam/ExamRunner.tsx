@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
 import { CandidateColumn } from "@/components/candidate/Shell";
+import { LanguagePicker } from "@/components/candidate/LanguagePicker";
 import { buttonVariants } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
 import { BrandMark } from "@/components/visual/brand-mark";
@@ -41,6 +43,7 @@ import { recordingLabel } from "@/lib/proctor/recording-status";
 import { formatCountdown, SUBMIT_SLACK_MS } from "@/lib/timer";
 import { SectionCheer } from "@/components/candidate/exam/SectionCheer";
 import { useT } from "@/i18n/candidate-client";
+import { isCandidateLocale, type CandidateLocale } from "@/i18n/locale";
 import { cn } from "@/lib/cn";
 
 /**
@@ -77,8 +80,18 @@ function answersOf(c: CandidateState["current"]): Record<number, ItemAnswer> {
   return Object.fromEntries(shownItems(c).map((it) => [it.sequence, it.answer ?? {}]));
 }
 
-export function ExamRunner({ token, initial }: { token: string; initial: CandidateState }) {
+export function ExamRunner({
+  token,
+  initial,
+  locales = [],
+}: {
+  token: string;
+  initial: CandidateState;
+  /** Languages the student may switch to; the picker shows on section introductions only. */
+  locales?: CandidateLocale[];
+}) {
   const router = useRouter();
+  const lang = useLocale();
   const t = useT("exam");
   const n = useT("examNav");
   const cw = useT("cheatWarning");
@@ -513,7 +526,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
         : null;
 
   // Floating warnings: they sit over the page just above the bottom bar and add no height to it.
-  const noticeAction = "ml-2 min-h-9 font-semibold underline underline-offset-2";
+  const noticeAction = "ms-2 min-h-9 font-semibold underline underline-offset-2";
   const failureNotice = failure ? (
     <Notice role="alert" className="max-w-[640px] shadow-panel">
       {failure.text}
@@ -678,6 +691,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
             ) : null}
           </div>
           <div className="flex items-center gap-5">
+            {state.step === "SECTION_INTRO" && !inPractice && isCandidateLocale(lang) ? <LanguagePicker locales={locales} current={lang} /> : null}
             {proctored ? (
               <span className="hidden items-center gap-2 text-[12.5px] text-muted md:flex">
                 <span className="size-1.5 rounded-full bg-accent" aria-hidden />
@@ -834,7 +848,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
                             disabled={busy}
                             onClick={() => void toggleFlag(g.sequence)}
                             className={cn(
-                              "ml-auto inline-flex min-h-9 items-center gap-1.5 rounded-[8px] border px-3 text-[13px] font-medium normal-case tracking-normal disabled:cursor-not-allowed",
+                              "ms-auto inline-flex min-h-9 items-center gap-1.5 rounded-[8px] border px-3 text-[13px] font-medium normal-case tracking-normal disabled:cursor-not-allowed",
                               flagged ? "border-sun-fill bg-sun-fill text-ink" : "border-line bg-surface text-ink-2 hover:border-line-strong",
                             )}
                           >
@@ -1035,7 +1049,7 @@ function RecoverPanel({ reasons, resume }: { reasons: Array<"FULLSCREEN" | "SCRE
         </h2>
         <p className="mt-2 text-[14px] leading-[1.6] text-ink-2">{resume ? p("resumeBody") : firstEntry ? p("enterBody") : p("clockRuns")}</p>
         {resume ? (
-          <ul className="mt-3 flex list-disc flex-col gap-1 pl-5 text-[13.5px] text-ink-2">
+          <ul className="mt-3 flex list-disc flex-col gap-1 ps-5 text-[13.5px] text-ink-2">
             {reasons.map((r) => (
               <li key={r}>{p(`resume${r}` as "resumeCAMERA")}</li>
             ))}
@@ -1071,7 +1085,7 @@ function SelfView({ stream }: { stream: MediaStream }) {
       playsInline
       aria-label={p("pipLabel")}
       style={{ bottom: "var(--step-footer-space, 112px)" }}
-      className="fixed right-4 z-30 h-[90px] w-[120px] rounded-[8px] border border-line bg-ink object-cover shadow-panel"
+      className="fixed end-4 z-30 h-[90px] w-[120px] rounded-[8px] border border-line bg-ink object-cover shadow-panel"
     />
   );
 }

@@ -114,7 +114,7 @@ export function NavStrip({
           )}
         >
           {e.sequence}
-          {e.flagged ? <FlagMark className="absolute -right-1.5 -top-1.5" /> : null}
+          {e.flagged ? <FlagMark className="absolute -end-1.5 -top-1.5" /> : null}
         </button>
       </li>
     );

@@ -39,6 +39,15 @@ export function isCandidateLocale(value: unknown): value is CandidateLocale {
   return typeof value === "string" && (CANDIDATE_LOCALES as readonly string[]).includes(value);
 }
 
+/** Each candidate language in its own script: what a picker or a summary shows. */
+export const CANDIDATE_LANGUAGE_NAME: Record<CandidateLocale, string> = {
+  tr: "Türkçe",
+  en: "English",
+  de: "Deutsch",
+  es: "Español",
+  ar: "العربية",
+};
+
 /** Writing direction of a candidate locale: only Arabic runs right to left. */
 export function dirOf(locale: CandidateLocale): "ltr" | "rtl" {
   return locale === "ar" ? "rtl" : "ltr";

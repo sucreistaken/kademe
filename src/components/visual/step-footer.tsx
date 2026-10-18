@@ -139,12 +139,12 @@ export function StepFooter({
   const backLink = back ? (
     back.href ? (
       <Link href={back.href} className={backClass}>
-        <ChevronLeft className="size-4" strokeWidth={1.75} aria-hidden />
+        <ChevronLeft className="size-4 rtl:-scale-x-100" strokeWidth={1.75} aria-hidden />
         {back.label}
       </Link>
     ) : (
       <button type="button" onClick={back.onClick} className={backClass}>
-        <ChevronLeft className="size-4" strokeWidth={1.75} aria-hidden />
+        <ChevronLeft className="size-4 rtl:-scale-x-100" strokeWidth={1.75} aria-hidden />
         {back.label}
       </button>
     )
@@ -208,7 +208,7 @@ export function StepFooter({
                   onClick={back.onClick}
                   className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "h-11 w-[112px] shrink-0 px-3 text-[16px] whitespace-nowrap")}
                 >
-                  <ChevronLeft className="size-4" strokeWidth={2} aria-hidden />
+                  <ChevronLeft className="size-4 rtl:-scale-x-100" strokeWidth={2} aria-hidden />
                   {back.label}
                 </button>
               ) : (
@@ -246,11 +246,11 @@ export function StepFooter({
               {/* Reasons and the work under way are announced politely as they change (the region exists before its words do). */}
               <div aria-live="polite" className="min-w-0 space-y-1">
                 {reasons.map((r) => (
-                  <p key={r.id} id={r.id} className="max-w-[320px] text-right text-[14px] leading-[22px] text-ink">
+                  <p key={r.id} id={r.id} className="max-w-[320px] text-end text-[14px] leading-[22px] text-ink">
                     {r.text}
                   </p>
                 ))}
-                {reasons.length === 0 && hint ? <p className="max-w-[320px] text-right text-[14px] leading-[22px] text-ink">{hint}</p> : null}
+                {reasons.length === 0 && hint ? <p className="max-w-[320px] text-end text-[14px] leading-[22px] text-ink">{hint}</p> : null}
                 {working ? <p className="sr-only">{working}</p> : null}
               </div>
               {secondary ? <Action action={secondary} variant="secondary" /> : null}
