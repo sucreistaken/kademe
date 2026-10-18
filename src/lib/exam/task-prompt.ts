@@ -152,3 +152,58 @@ export function parseTaskPrompt(prompt: string): ParsedTaskPrompt {
   flush();
   return { topic, card, blocks };
 }
+
+/** The task as laid out on screen: situation in a soft box, task lines as an "Aufgabe" list. */
+export type TaskSegment =
+  | { kind: "situation"; lines: string[] }
+  | { kind: "tasks"; items: Array<{ text: string; lists: Array<{ ordered: boolean; items: string[] }> }> }
+  | { kind: "text"; lines: string[] }
+  | { kind: "list"; ordered: boolean; items: string[] };
+
+/**
+ * A task line is a polite imperative ("Bitten Sie ...", "Sagen Sie ..."),
+ * optionally led by "Dann", "Danach" and the like. Modal questions such as
+ * "Können Sie ...?" are not tasks.
+ */
+const TASK_LINE =
+  /^(?:(?:Dann|Danach|Zuerst|Zuletzt|Anschließend|Außerdem|Bitte|Nun|Am Ende|Zum Schluss)\s+)?\p{L}+(?:en|ln|rn) Sie\b/u;
+const MODAL_QUESTION = /^(?:Können|Könnten|Dürfen|Möchten|Wollen|Würden|Sollen|Müssen|Mögen|Haben|Hätten|Wären)\b/u;
+
+export function isTaskLine(line: string): boolean {
+  const t = line.trim();
+  return TASK_LINE.test(t) && !MODAL_QUESTION.test(t);
+}
+
+/**
+ * Splits the text blocks of a parsed prompt into situation lines and task
+ * lines, keeping the original order and every word. A list that follows a task
+ * line ending in a colon ("Gehen Sie auf diese Punkte ein:") belongs to it; any
+ * other list stays a list of its own. A prompt without a single task line comes
+ * back as plain text and lists, as before.
+ */
+export function layoutTaskBlocks(blocks: TaskBlock[]): TaskSegment[] {
+  const anyTask = blocks.some((b) => b.kind === "text" && b.lines.some(isTaskLine));
+  const out: TaskSegment[] = [];
+  for (const b of blocks) {
+    if (b.kind === "list") {
+      const last = out[out.length - 1];
+      const lead = last?.kind === "tasks" ? last.items[last.items.length - 1] : null;
+      if (lead && lead.text.endsWith(":") && lead.lists.length === 0) lead.lists.push({ ordered: b.ordered, items: b.items });
+      else out.push({ kind: "list", ordered: b.ordered, items: b.items });
+      continue;
+    }
+    for (const line of b.lines) {
+      const last = out[out.length - 1];
+      if (anyTask && isTaskLine(line)) {
+        if (last?.kind === "tasks") last.items.push({ text: line, lists: [] });
+        else out.push({ kind: "tasks", items: [{ text: line, lists: [] }] });
+        continue;
+      }
+      // Before the first task a plain line is the situation; after it, a note in the running text.
+      const kind = anyTask && !out.some((s) => s.kind === "tasks") ? "situation" : "text";
+      if (last?.kind === kind) last.lines.push(line);
+      else out.push({ kind, lines: [line] });
+    }
+  }
+  return out;
+}

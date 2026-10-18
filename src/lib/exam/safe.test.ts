@@ -171,3 +171,57 @@ describe("aliased ids", () => {
     expect(unalias(pres, "zzz")).toBe(null);
   });
 });
+
+describe("writing and speaking payloads", () => {
+  const productive = (type: "WRITING_PROMPT" | "SPEAKING_PROMPT"): ItemSnapshot => ({
+    ...listening,
+    section: type === "WRITING_PROMPT" ? "WRITING" : "SPEAKING",
+    type,
+    skillTag: type === "WRITING_PROMPT" ? "writing.email" : "speaking.request",
+    stimulusId: null,
+    stimulus: null,
+    prompt: "Schreiben Sie eine Nachricht.",
+    content:
+      type === "WRITING_PROMPT"
+        ? { kind: "WRITING", minWords: 40, maxWords: 80 }
+        : { kind: "SPEAKING", thinkSeconds: 30, answerSeconds: 60, maxTakes: 2 },
+    key: { kind: "NONE" },
+    rubric: { contentPoints: ["MODEL_ANSWER_MARKER: 1. Familienname: Costa"], register: "REGISTER_MARKER" },
+    explanation: "EXPLANATION_MARKER",
+    points: 7,
+  } as ItemSnapshot);
+
+  it.each(["WRITING_PROMPT", "SPEAKING_PROMPT"] as const)("%s carries no rubric, key, level, difficulty, points or explanation", (type) => {
+    const snap = productive(type);
+    const item = toCandidateItem(snap, {}, null, 4, { maxPlays: 2 });
+    const json = JSON.stringify(item);
+    for (const secret of [
+      "rubric",
+      "contentPoints",
+      "register",
+      "MODEL_ANSWER_MARKER",
+      "REGISTER_MARKER",
+      "EXPLANATION_MARKER",
+      "explanation",
+      "level",
+      "difficulty",
+      "points",
+      "skillTag",
+      "item-secret-id",
+      "\"key\"",
+    ]) {
+      expect(json, secret).not.toContain(secret);
+    }
+    expect(Object.keys(item).sort()).toEqual(["answer", "content", "prompt", "section", "sequence", "stimulus", "type"]);
+  });
+
+  it("gives only the length or the times as content", () => {
+    expect(toCandidateItem(productive("WRITING_PROMPT"), {}, null, 1, { maxPlays: 2 }).content).toEqual({ kind: "WRITING", minWords: 40, maxWords: 80 });
+    expect(toCandidateItem(productive("SPEAKING_PROMPT"), {}, null, 1, { maxPlays: 2 }).content).toEqual({
+      kind: "SPEAKING",
+      thinkSeconds: 30,
+      answerSeconds: 60,
+      maxTakes: 2,
+    });
+  });
+});

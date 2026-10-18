@@ -3,9 +3,11 @@
 import { useId, useRef, useState, type KeyboardEvent } from "react";
 import { matchingTargets, type CandidateItem } from "@/lib/exam/safe";
 import { withPoolInstruction } from "@/lib/exam/ctest-instruction";
+import { splitInstruction } from "@/lib/exam/prompt-instruction";
 import type { ItemAnswer, TfngValue } from "@/lib/exam/types";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
+import { TaskExpectations } from "./TaskExpectations";
 import { TaskPromptCard } from "./TaskPromptCard";
 import { useChipDrag } from "./use-chip-drag";
 
@@ -62,12 +64,24 @@ export function ItemView(props: ItemProps) {
   }
 }
 
-function Prompt({ text, id }: { text: string; id?: string }) {
+/**
+ * The one place an item's prompt is drawn. An instruction ("Ergänzen Sie ...",
+ * "Lesen Sie ...") gets a short block with a left rule so it reads apart from
+ * the question or sentence it belongs to; the question itself is 17px semibold.
+ * `whole`: the prompt only says how to answer (true/false, matching).
+ */
+function Prompt({ text, id, mode = "stem" }: { text: string; id?: string; mode?: "stem" | "whole" }) {
+  const { instruction, content } = splitInstruction(text, mode);
   return (
-    <p id={id} lang="de" className="whitespace-pre-line text-[17px] font-medium leading-[1.6] text-ink">
-      {text}
-    </p>
+    <div id={id} lang="de" className="flex flex-col gap-3">
+      {instruction ? <Instruction text={instruction} /> : null}
+      {content ? <p className="whitespace-pre-line text-[17px] font-semibold leading-[1.6] text-ink">{content}</p> : null}
+    </div>
   );
+}
+
+function Instruction({ text }: { text: string }) {
+  return <p className="whitespace-pre-line border-l-[3px] border-brand pl-3 text-[15px] leading-[1.55] text-ink">{text}</p>;
 }
 
 /**
@@ -126,8 +140,8 @@ function ChoiceItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps)
               disabled={disabled}
               onClick={() => toggle(o.id)}
               className={cn(
-                "flex min-h-12 w-full items-center gap-3 rounded-[10px] border bg-surface px-4 py-3 text-left text-[15px] transition-colors",
-                on ? "border-accent bg-accent-soft text-ink" : "border-line text-ink-2 hover:border-line-strong",
+                "flex min-h-12 w-full items-center gap-3 rounded-[10px] border bg-surface px-4 py-3 text-left text-[16px] transition-colors",
+                on ? "border-accent bg-accent-soft text-ink" : "border-line text-ink hover:border-line-strong",
               )}
             >
               <span
@@ -164,14 +178,14 @@ function TfngItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps) {
   ];
   return (
     <div>
-      {hidePrompt ? null : <Prompt text={item.prompt} />}
+      {hidePrompt ? null : <Prompt text={item.prompt} mode="whole" />}
       <div className={cn("flex flex-col gap-3", hidePrompt ? "mt-1" : "mt-4")}>
         {item.content.statements.map((s, n) => {
           const picked = answer.tfng?.[s.id];
           const textId = `${uid}-s${n}`;
           return (
             <div key={s.id} className="rounded-[10px] border border-line bg-surface px-4 py-3">
-              <p id={textId} lang="de" className="text-[15px] leading-[1.55] text-ink">
+              <p id={textId} lang="de" className="text-[16px] leading-[1.55] text-ink">
                 {s.text}
               </p>
               <div role="radiogroup" aria-labelledby={textId} className="mt-2.5 flex flex-wrap gap-2">
@@ -288,7 +302,8 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
   const gaps = new Map(item.content.gaps.map((g) => [g.id, g]));
   // The stored instruction asks to type letters; with the pool the student drags parts instead.
   const prompt = pool ? withPoolInstruction(item.prompt) : item.prompt;
-  const parts = prompt.split(/(\{\{[A-Za-z0-9_-]+\}\})/g);
+  const { instruction, content: passage } = splitInstruction(prompt, "stem");
+  const parts = passage.split(/(\{\{[A-Za-z0-9_-]+\}\})/g);
   const set = (id: string, value: string) => onChange({ gaps: { ...(answer.gaps ?? {}), [id]: value } });
   // Going back to "Seçin" removes the gap's answer instead of storing "".
   const pick = (id: string, value: string) => {
@@ -331,7 +346,13 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
   };
   return (
     <div>
-      <p lang="de" className="whitespace-pre-line text-[17px] font-medium leading-[2.1] text-ink">
+      {instruction ? (
+        <div lang="de" className="mb-4">
+          <Instruction text={instruction} />
+        </div>
+      ) : null}
+      {/* A C-test passage is long running text, so it stays medium; a single sentence is the question and gets the stem weight. */}
+      <p lang="de" className={cn("whitespace-pre-line text-[17px] leading-[2.1] text-ink", attached ? "font-medium" : "font-semibold")}>
         {parts.map((part, i) => {
           const m = marker(part);
           if (!m) {
@@ -521,7 +542,7 @@ function MatchingItem({ item, answer, onChange, disabled, hidePrompt }: ItemProp
   const dragged = drag ? targets.find((r) => r.id === drag.key) : undefined;
   return (
     <div>
-      {hidePrompt ? null : <Prompt text={item.prompt} />}
+      {hidePrompt ? null : <Prompt text={item.prompt} mode="whole" />}
       {/* On a page of several items with the same prompt, the drag note is said once too. */}
       {hidePrompt ? null : (
         <p lang="de" className="mt-3 text-[14px] text-ink-2">
@@ -696,6 +717,7 @@ export function WritingItem({ item, answer, onChange, disabled }: ItemProps) {
   return (
     <div>
       <TaskPromptCard text={item.prompt} id={promptId} />
+      <TaskExpectations section="WRITING" minWords={minWords} maxWords={maxWords} />
       <textarea
         ref={ref}
         lang="de"

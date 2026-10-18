@@ -796,7 +796,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
                         id={`item-${g.sequence}-label`}
                         ref={g.sequence === item.sequence ? headingRef : undefined}
                         tabIndex={-1}
-                        className="tnum mb-4 flex items-center gap-2.5 text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted outline-none"
+                        className="tnum mb-6 flex items-center gap-2.5 text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted outline-none"
                       >
                         {t("question", { n: nav ? g.sequence : cur.answered + idx + 1 })}
                         <PartCounter progress={progressOf.get(g.sequence)} />
@@ -844,7 +844,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
                 <h2
                   ref={headingRef}
                   tabIndex={-1}
-                  className="tnum mb-4 flex items-center gap-2.5 text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted outline-none"
+                  className="tnum mb-6 flex items-center gap-2.5 text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted outline-none"
                 >
                   {nav ? t("questionOf", { n: item.sequence, total: entries.length }) : t("question", { n: cur.answered + 1 })}
                   <PartCounter progress={progressOf.get(item.sequence)} />

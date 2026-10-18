@@ -204,7 +204,7 @@ describe("true / false / not given", () => {
     expect(gs).toHaveLength(2);
     for (const [i, text] of ["Der Kurs beginnt am Montag.", "Der Kurs kostet nichts."].entries()) {
       const id = gs[i].match(/^ aria-labelledby="([^"]+)"/)?.[1];
-      expect(html).toContain(`id="${id}" lang="de" class="text-[15px] leading-[1.55] text-ink">${text}</p>`);
+      expect(html).toContain(`id="${id}" lang="de" class="text-[16px] leading-[1.55] text-ink">${text}</p>`);
       expect(gs[i].match(/tabindex="0"/g)).toHaveLength(1);
     }
     expect(gs[1]).toMatch(/aria-checked="true" lang="de" tabindex="0"[^>]*>Falsch<\/button>/);

@@ -1005,7 +1005,18 @@
     "listenStalled": "The recording stopped. Check your internet connection and try again.",
     "listenBlocked": "The browser did not start the audio. Try again.",
     "listenFreeRetry": "The recording never started. Trying again does not use up another play.",
-    "listenFreeResume": "Resuming where it stopped does not use up another play."
+    "listenFreeResume": "Resuming where it stopped does not use up another play.",
+    "taskHeading": "Your task",
+    "assessTitle": "How it is assessed",
+    "assessTask": "Whether you do what the task asks",
+    "assessOrganised": "How well your text is organised and connected",
+    "assessCoherent": "How well your answer holds together",
+    "assessRange": "Range of words and structures",
+    "assessAccuracy": "Accuracy (grammar and word choice)",
+    "assessFluency": "Fluency",
+    "assessPronunciation": "Pronunciation",
+    "expectLength": "Length: {min} to {max} words",
+    "expectTimes": "{think} s to think, {answer} s to speak"
   },
   "visual": {
     "orgPill": "{org} has invited you",

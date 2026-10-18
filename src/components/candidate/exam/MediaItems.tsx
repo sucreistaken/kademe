@@ -10,6 +10,7 @@ import type { ItemAnswer } from "@/lib/exam/types";
 import { formatCountdown } from "@/lib/timer";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
+import { TaskExpectations } from "./TaskExpectations";
 import { TaskPromptCard } from "./TaskPromptCard";
 
 type PlayState = "IDLE" | "LOADING" | "PLAYING" | "FAILED";
@@ -410,6 +411,7 @@ export function SpeakingItem({
   return (
     <div>
       <TaskPromptCard text={item.prompt} />
+      <TaskExpectations section="SPEAKING" thinkSeconds={content.thinkSeconds} answerSeconds={content.answerSeconds} />
       <div className="mt-5 flex flex-col items-start gap-5 md:flex-row">
         <video ref={videoRef} muted playsInline className="aspect-[4/3] w-full max-w-[360px] rounded-[10px] bg-ink object-cover" />
         <div className="flex-1">

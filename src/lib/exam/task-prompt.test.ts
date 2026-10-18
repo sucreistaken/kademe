@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SEED_PARTS } from "@/db/seed-bank";
-import { parseTaskPrompt, splitTaskPrompt, type ParsedTaskPrompt } from "./task-prompt";
+import { isTaskLine, layoutTaskBlocks, parseTaskPrompt, splitTaskPrompt, type ParsedTaskPrompt, type TaskSegment } from "./task-prompt";
 
 /** Every letter and digit of a prompt, in order (list numbers excluded, the list draws them): what must survive the layout. */
 const letters = (s: string) => s.replace(/^\s*\d+[.)]\s+/gmu, "").replace(/[^\p{L}\p{N}]/gu, "");
@@ -92,5 +92,67 @@ describe("parseTaskPrompt", () => {
 describe("splitTaskPrompt (moved here from review-cards)", () => {
   it("still splits the topic from the card", () => {
     expect(splitTaskPrompt('Thema: Arbeit. Auf Ihrer Karte steht: "Mittagspause?"')).toEqual(["Thema: Arbeit.", 'Auf Ihrer Karte steht: "Mittagspause?"']);
+  });
+});
+
+describe("isTaskLine", () => {
+  it("accepts polite imperatives, also after a connecting word", () => {
+    for (const l of ["Bitten Sie Herrn Braun um den Kuli.", "Sagen Sie auch danke.", "Stellen Sie sich bitte vor.", "Dann antworten Sie selbst auf Ihre Frage.", "Schreiben Sie 20 bis 30 Wörter."]) {
+      expect(isTaskLine(l), l).toBe(true);
+    }
+  });
+
+  it("rejects situation lines, modal questions and relative clauses", () => {
+    for (const l of ["Sie sind im Büro.", "Sie helfen ihr mit dem Formular.", "Können Sie mir bitte helfen?", "Ihr Kollege, den Sie gut kennen, ist krank.", "Ihre Kollegin möchte trainieren."]) {
+      expect(isTaskLine(l), l).toBe(false);
+    }
+  });
+});
+
+describe("layoutTaskBlocks", () => {
+  const layout = (prompt: string) => layoutTaskBlocks(parseTaskPrompt(prompt).blocks);
+
+  it("puts the situation in one segment and the task lines in a task list", () => {
+    expect(layout("Sie sind im Büro. Sie haben keinen Kuli. Ihr Kollege Herr Braun hat einen Kuli.\n\nBitten Sie Herrn Braun um den Kuli. Sagen Sie auch danke.")).toEqual([
+      { kind: "situation", lines: ["Sie sind im Büro.", "Sie haben keinen Kuli.", "Ihr Kollege Herr Braun hat einen Kuli."] },
+      { kind: "tasks", items: [{ text: "Bitten Sie Herrn Braun um den Kuli.", lists: [] }, { text: "Sagen Sie auch danke.", lists: [] }] },
+    ]);
+  });
+
+  it("nests the list under a task line that ends in a colon", () => {
+    expect(layout("Erzählen Sie von Ihrem Tag:\n\n- wann\n- wo")).toEqual([
+      { kind: "tasks", items: [{ text: "Erzählen Sie von Ihrem Tag:", lists: [{ ordered: false, items: ["wann", "wo"] }] }] },
+    ]);
+  });
+
+  it("keeps a list that does not follow a colon as a list of its own", () => {
+    const segs = layout("Schreiben Sie die fünf Angaben.\n\n1. Familienname\n2. Wohnort");
+    expect(segs[1]).toEqual({ kind: "list", ordered: true, items: ["Familienname", "Wohnort"] });
+  });
+
+  it("leaves a prompt without any task line as plain text", () => {
+    expect(layout("Das Wetter ist schön. Wir gehen spazieren.")).toEqual([{ kind: "text", lines: ["Das Wetter ist schön.", "Wir gehen spazieren."] }]);
+  });
+
+  it("keeps every word of every real seed prompt, in order", () => {
+    const flat = (segs: TaskSegment[]) =>
+      segs
+        .flatMap((s) =>
+          s.kind === "tasks"
+            ? s.items.flatMap((i) => [i.text, ...i.lists.flatMap((l) => l.items)])
+            : s.kind === "list"
+              ? s.items
+              : s.lines,
+        )
+        .join(" ");
+    const blocksFlat = (p: ParsedTaskPrompt) => p.blocks.map((b) => (b.kind === "text" ? b.lines.join(" ") : b.items.join(" "))).join(" ");
+    let withTasks = 0;
+    for (const item of [...SEED_PARTS.writing.items, ...SEED_PARTS.speaking.items]) {
+      const p = parseTaskPrompt(item.prompt);
+      const segs = layoutTaskBlocks(p.blocks);
+      expect(flat(segs), item.prompt).toBe(blocksFlat(p));
+      if (segs.some((s) => s.kind === "tasks")) withTasks++;
+    }
+    expect(withTasks).toBeGreaterThan(40);
   });
 });
