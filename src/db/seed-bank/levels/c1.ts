@@ -1,5 +1,7 @@
 import type { TfngValue } from "@/lib/exam/types";
+import { cloze } from "../cloze";
 import { cTest } from "../ctest";
+import { wordBank } from "../wordbank";
 import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 
 /*
@@ -12,7 +14,8 @@ import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 /**
  * C1 starter bank (v2), written against docs/EXAM-BANK-RESEARCH.md, section C1.
  *
- * - Grammar: 24 items (8 EASY, 8 MID, 8 HARD) over the C1 inventory plus three C-tests.
+ * - Grammar: 24 items (8 EASY, 8 MID, 8 HARD) over the C1 inventory plus three C-tests,
+ *   three MC cloze texts and three word banks (spec 2026-10-18).
  * - Reading: 4 texts with 4 items each (word-level cloze, dense magazine article,
  *   commentary with sentence insertion, four positions to match).
  * - Listening: 3 clips with 4 items each (expert interview, lecture, discussion
@@ -276,6 +279,108 @@ const grammarItems: SeedItem[] = [
       11: ["chts"], 12: ["er"], 15: ["ns"], 16: ["kt"],
       17: ["sräume"], 18: ["dert"], 19: ["em"],
     },
+  }),
+];
+
+// MC cloze texts and word banks (spec 2026-10-18), each set easy to hard.
+const grammarTexts: SeedItem[] = [
+  cloze(LEVEL, "EASY", {
+    title: "Bargeld auf dem Rückzug",
+    first: "Lange galt Deutschland als ein Land, in dem man an der Kasse am liebsten mit Scheinen und Münzen bezahlt.",
+    body:
+      "Inzwischen hat sich das Bild jedoch spürbar [[gewandelt|gewandelte|wandelte|wandeln]]. " +
+      "Die Bundesbank teilte kürzlich mit, der Anteil der Barzahlungen im Einzelhandel [[sei|seien|wären|würde]] in den vergangenen fünf Jahren deutlich zurückgegangen. " +
+      "Vor allem jüngere Menschen greifen an der Kasse immer häufiger [[zum|zur|beim|am]] Smartphone. " +
+      "Diese Entwicklung ist durch die Pandemie zusätzlich beschleunigt [[worden|geworden|wurde|werden]]. " +
+      "Kritiker warnen allerdings davor, das Bargeld vorschnell [[abzuschaffen|abschaffen|abgeschafft|zu abschaffen]]. " +
+      "Sie geben zu bedenken, dass vor allem ältere Menschen, [[denen|die|deren|dessen]] der Umgang mit digitalen Zahlungsmitteln schwerfällt, benachteiligt würden. " +
+      "Zudem schützt Bargeld die Privatsphäre, [[da|denn|deshalb|trotzdem]] jede Kartenzahlung Datenspuren hinterlässt. " +
+      "Hinzu kommt die Frage, wie widerstandsfähig ein vollständig [[auf|an|von|über]] Strom und Internet [[angewiesenes|angewiesene|angewiesener|angewiesen]] Zahlungssystem im Krisenfall wäre. " +
+      "Eine vollständige [[Abschaffung|Abschaffen|abgeschaffte|Abschaffens]] des Bargelds ist in Deutschland dennoch nicht geplant. " +
+      "Gleichzeitig gewöhnen sich auch viele kleine Geschäfte [[daran|darauf|damit|dafür]], dass ihre Kundschaft selbst Kleinstbeträge mit der Karte bezahlt.",
+    last: "Ob das Bargeld eines Tages ganz verschwindet, werden am Ende wohl die Kundinnen und Kunden selbst entscheiden.",
+    note: "Perfekt eines reflexiven Verbs (g1), Konjunktiv I in der indirekten Rede (g2), greifen zu (g3), Perfekt Passiv mit worden (g4), warnen davor + zu-Infinitiv bei trennbarem Verb (g5), Relativpronomen im Dativ bei jemandem fällt etwas schwer (g6), da mit Verbendstellung (g7), angewiesen auf (g8), Partizipialattribut nach ein im Neutrum (g9), Nominalstil (g10), sich gewöhnen an mit Präpositionaladverb (g11).",
+  }),
+  cloze(LEVEL, "MID", {
+    title: "Mehrsprachigkeit in der Kita",
+    first: "Fast jedes dritte Kind, das in Deutschland eine Kita besucht, wächst mit mehr als einer Sprache auf.",
+    body:
+      "Lange [[wurde|hat|würde|worden]] angenommen, dass zwei Sprachen ein kleines Kind überfordern. " +
+      "Neuere Studien legen jedoch [[nahe|vor|zu|an]], dass eher das Gegenteil zutrifft. " +
+      "Eine Hamburger Sprachwissenschaftlerin betont, ein mehrsprachig aufwachsendes Kind [[entwickle|entwickeln|entwickelst|entwickelnd]] oft sogar ein feineres Gespür für sprachliche Strukturen. " +
+      "Entscheidend sei allerdings, dass beide Sprachen [[ausreichend|ausreichende|ausreichender|ausgereicht]] gefördert würden. " +
+      "Gerade bei Kindern, [[deren|dessen|denen|die]] Eltern zu Hause kaum Deutsch sprechen, kommt der Kita deshalb eine Schlüsselrolle zu. " +
+      "Im Alltag [[lässt|lassen|wird|ist]] sich dieser Anspruch allerdings nicht immer einlösen. " +
+      "Die meisten Fachkräfte sprechen selbst nur Deutsch, und Bilderbücher in anderen Sprachen sind oft nur schwer [[zu beschaffen|beschaffen|beschafft|zu beschafft]]. " +
+      "Einige Einrichtungen beziehen deshalb die Eltern gezielt [[in|an|auf|zu]] die Sprachförderung ein. " +
+      "[[Indem|Damit|Sodass|Wobei]] Mütter und Väter Lieder und Geschichten aus ihrer Herkunftssprache einbringen, erfahren die Kinder, dass ihre Familiensprache geschätzt wird. " +
+      "Solche Projekte stoßen bei den Familien [[auf|an|zu|bei]] große Resonanz. " +
+      "Ersten Auswertungen [[zufolge|laut|seitens|mittels]] verbessern sich dadurch sogar die Deutschkenntnisse der Kinder.",
+    last: "Mehrsprachigkeit erweist sich damit weniger als Hindernis denn als Chance, sofern sie gezielt begleitet wird.",
+    note: "unpersönliches Passiv im Präteritum (g1), nahelegen (g2), Konjunktiv I in der indirekten Rede (g3), Adjektiv als Adverb (g4), Relativpronomen im Genitiv Plural (g5), sich lassen + Infinitiv als Passiversatz (g6), sein + zu-Infinitiv als Passiversatz (g7), einbeziehen in (g8), indem (g9), auf Resonanz stoßen (g10), nachgestelltes zufolge (g11).",
+  }),
+  cloze(LEVEL, "HARD", {
+    title: "Wenn Antibiotika versagen",
+    first: "Antibiotika gehören zu den wichtigsten Errungenschaften der modernen Medizin.",
+    body:
+      "Ihre Wirksamkeit ist jedoch zunehmend [[gefährdet|gefährdend|gefährdete|Gefährdung]]. " +
+      "Weltweit sterben jährlich über eine Million Menschen an Infektionen, gegen [[die|denen|deren|welchen]] keines der gängigen Mittel mehr wirkt. " +
+      "Die Weltgesundheitsorganisation warnt seit Jahren, ohne entschlossenes Handeln [[drohe|drohen|drohten|gedroht]] eine Rückkehr in die Zeit vor der Entdeckung des Penicillins. " +
+      "Eine Hauptursache ist der übermäßige [[Einsatz|Einsetzen|eingesetzte|Einsätze]] von Antibiotika in der Tiermast. " +
+      "Die dort in großen Mengen [[verabreichten|verabreichenden|verabreicht|verabreichte]] Wirkstoffe gelangen über Gülle und Abwasser in die Umwelt. " +
+      "Aber auch in Arztpraxen werden Antibiotika häufig verschrieben, [[obwohl|weil|sodass|damit]] die Beschwerden von Viren verursacht werden, bei denen sie wirkungslos sind. " +
+      "Die Entwicklung neuer Wirkstoffe [[gilt|lässt|hält|stellt]] zudem als wirtschaftlich wenig attraktiv. " +
+      "[[Da|Denn|Weshalb|Sodass]] ein neues Antibiotikum möglichst selten eingesetzt werden soll, um Resistenzen vorzubeugen, lassen sich damit kaum Gewinne erzielen. " +
+      "Fachleute fordern daher, die Forschung durch staatliche Prämien wieder [[in Gang|zur Geltung|in Kraft|zur Sprache]] zu bringen. " +
+      "[[Angesichts|Ungeachtet|Mangels|Anstelle]] der wachsenden Bedrohung haben sich mehrere Staaten verpflichtet, den Einsatz in der Tiermast zu begrenzen. " +
+      "Ob diese Zusagen tatsächlich eingehalten [[werden|wird|worden|wurde]], bleibt allerdings abzuwarten.",
+    last: "Klar ist nur, dass jede unnötige Einnahme das Problem weiter verschärft.",
+    note: "Zustandspassiv (g1), Relativpronomen nach gegen + Akkusativ (g2), Konjunktiv I in der indirekten Rede (g3), Nominalstil (g4), erweitertes Partizipialattribut (g5), obwohl (g6), gelten als (g7), da im vorangestellten Nebensatz (g8), Funktionsverbgefüge in Gang bringen (g9), angesichts + Genitiv (g10), ob-Satz mit Passiv im Präsens (g11).",
+  }),
+  wordBank(LEVEL, "EASY", {
+    title: "Ehrenamt im Wandel",
+    first: "Rund ein Drittel der Menschen in Deutschland engagiert sich in seiner Freizeit ehrenamtlich.",
+    body:
+      "Doch die Art des Engagements hat sich in den letzten Jahren deutlich [[verändert]]. " +
+      "Immer weniger Menschen sind bereit, sich langfristig an einen Verein zu [[binden]]. " +
+      "Stattdessen bevorzugen sie zeitlich [[begrenzte]] Projekte, etwa die Organisation eines Stadtfestes. " +
+      "Viele Vereine haben deshalb Schwierigkeiten, ihre Vorstandsposten zu [[besetzen]]. " +
+      "Gleichzeitig wächst die [[Nachfrage]] nach Ehrenamtlichen in der Pflege und in der Flüchtlingshilfe. " +
+      "Experten [[empfehlen]] den Vereinen daher, flexiblere Formen der Mitarbeit anzubieten. " +
+      "Wer nur wenige Stunden im Monat [[investieren]] kann, sollte trotzdem willkommen sein. " +
+      "Auch eine offizielle [[Anerkennung]], zum Beispiel durch Bescheinigungen für spätere Bewerbungen, kann zusätzlich motivieren.",
+    last: "Denn ohne freiwilliges Engagement wäre vieles im gesellschaftlichen Leben schlicht nicht möglich.",
+    distractors: ["Mitglieder", "gegründet", "freiwillige", "Spenden", "teilgenommen"],
+  }),
+  wordBank(LEVEL, "MID", {
+    title: "Fachkräfte aus dem Ausland",
+    first: "Deutschland ist in vielen Branchen auf Arbeitskräfte aus dem Ausland angewiesen.",
+    body:
+      "Besonders in der Pflege und im Handwerk bleiben zahlreiche Stellen seit Jahren [[unbesetzt]]. " +
+      "Um die Zuwanderung zu [[erleichtern]], hat der Gesetzgeber die Hürden für qualifizierte Bewerber gesenkt. " +
+      "In der Praxis scheitern viele Verfahren jedoch an der langwierigen [[Prüfung]] ausländischer Abschlüsse. " +
+      "Die zuständigen Behörden sind chronisch [[überlastet]], sodass Antragsteller oft monatelang auf eine Entscheidung warten. " +
+      "Hinzu kommt, dass ausreichende Deutschkenntnisse häufig schon vor der Einreise [[nachgewiesen]] werden müssen. " +
+      "Einige Unternehmen [[übernehmen]] deshalb die Kosten für Sprachkurse und unterstützen ihre neuen Mitarbeiter bei der Wohnungssuche. " +
+      "Fachleute betonen, dass eine gelungene [[Integration]] nicht am Werkstor endet. " +
+      "Entscheidend sei auch, ob sich die Familien der Zugewanderten in ihrem neuen Umfeld [[wohlfühlen]].",
+    last: "Nur dann bleiben die dringend benötigten Fachkräfte auch langfristig im Land.",
+    distractors: ["Gehälter", "beantragt", "einwandern", "fremd", "Arbeitgeber"],
+  }),
+  wordBank(LEVEL, "HARD", {
+    title: "Moore als Klimaschützer",
+    first: "Moore bedecken nur einen kleinen Teil der weltweiten Landfläche, speichern aber enorme Mengen Kohlenstoff.",
+    body:
+      "In Deutschland wurden die meisten Moore jedoch im Laufe der Jahrhunderte [[entwässert]], um Flächen für die Landwirtschaft zu gewinnen. " +
+      "Sobald der Torf mit Luft in Berührung kommt, [[zersetzt]] er sich und setzt große Mengen Kohlendioxid frei. " +
+      "Trockengelegte Moore sind deshalb für einen [[erheblichen]] Teil der Treibhausgasemissionen der Landwirtschaft verantwortlich. " +
+      "Die Bundesregierung will daher in den kommenden Jahren zahlreiche Flächen wieder [[vernässen]]. " +
+      "Für die betroffenen Landwirte ist das allerdings mit [[Einbußen]] verbunden, da sich nasse Böden kaum mit herkömmlichen Maschinen bearbeiten lassen. " +
+      "Als Alternative gilt der Anbau von Schilf und Rohrkolben, die sich als [[Rohstoff]] für Dämmplatten oder Verpackungen eignen. " +
+      "Noch fehlt es allerdings an [[Abnehmern]], die solche Produkte in größeren Mengen kaufen. " +
+      "Fachleute [[plädieren]] deshalb für eine gezielte Förderung, bis sich ein Markt entwickelt hat.",
+    last: "Ohne die Bereitschaft der Landwirte wird der Schutz der Moore jedenfalls kaum gelingen.",
+    distractors: ["geerntet", "trocken", "Erträge", "pflanzen", "Umwelt"],
   }),
 ];
 
@@ -1012,7 +1117,7 @@ export const C1_PARTS: {
   writing: SeedBankPart;
   speaking: SeedBankPart;
 } = {
-  grammar: { stimuli: [], items: grammarItems },
+  grammar: { stimuli: [], items: [...grammarItems, ...grammarTexts] },
   reading: { stimuli: [R_PAUSEN, R_REPARATUR, R_WEITERBILDUNG, R_KI], items: readingItems },
   listening: { stimuli: [L_QUEREINSTIEG, L_GRUPPEN, L_GEHALT], items: listeningItems },
   writing: { stimuli: [], items: writingItems },

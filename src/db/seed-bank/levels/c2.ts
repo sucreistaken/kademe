@@ -1,5 +1,7 @@
 import type { TfngValue } from "@/lib/exam/types";
+import { cloze } from "../cloze";
 import { cTest } from "../ctest";
+import { wordBank } from "../wordbank";
 import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 
 /*
@@ -13,8 +15,9 @@ import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
  * C2 starter bank (Goethe-Zertifikat C2: Großes Deutsches Sprachdiplom as the
  * reference, see docs/EXAM-BANK-RESEARCH.md).
  *
- * - Grammar: 24 items (8 EASY, 8 MID, 8 HARD) plus three C-tests. Single choice
- *   and gap choices have four options, as at C1 and C2 in Goethe.
+ * - Grammar: 24 items (8 EASY, 8 MID, 8 HARD) plus three C-tests, three MC cloze
+ *   texts and three word banks (spec 2026-10-18). Single choice and gap choices
+ *   have four options, as at C1 and C2 in Goethe.
  * - Reading: four texts (commentary, essay with sections, report with removed
  *   paragraphs, four job ads), four items each.
  * - Listening: three clips (radio feature, two-person debate, expert
@@ -259,6 +262,106 @@ const grammarItems: SeedItem[] = [
       10: ["nem"], 11: ["matiken"], 13: ["chern"], 14: ["as"],
       16: ["ücke"], 18: ["ind"], 19: ["chtet"],
     },
+  }),
+];
+
+// MC cloze texts and word banks (spec 2026-10-18), each set easy to hard.
+const grammarTexts: SeedItem[] = [
+  cloze(LEVEL, "EASY", {
+    title: "Vom Wert des Zögerns",
+    first: "Wer zögert, gilt in einer auf Tempo getrimmten Gesellschaft rasch als entscheidungsschwach.",
+    body:
+      "Ist das Zögern [[etwa|eben|ja|halt]] nur ein Zeichen mangelnder Entschlusskraft? " +
+      "Wer so urteilt, übersieht, dass sich so manche kluge Entscheidung gerade [[dem|den|des|der]] Umstand verdankt, dass jemand nicht sofort zugegriffen hat. " +
+      "Erst das Innehalten verschafft jene Distanz, [[ohne die|ohne der|ohne deren|ohne denen]] sich eine Lage kaum nüchtern beurteilen lässt. " +
+      "Nicht von ungefähr [[rät|ratet|rate|riete]] eine alte Volksweisheit, wichtige Entscheidungen zu überschlafen. " +
+      "Freilich ist zwischen [[besonnenem|besonnenen|besonnenes|besinnendem]] Abwägen und bloßem Aufschieben zu unterscheiden. " +
+      "Das eine dient der Klärung, das andere der Vermeidung, [[wenngleich|weil|damit|sofern]] sich beide von außen betrachtet zum Verwechseln ähneln. " +
+      "Wer aufschiebt, hofft insgeheim, die Sache [[möge|mag|mögen|mochte]] sich von selbst erledigen. " +
+      "Der Besonnene hingegen wartet nicht [[mangels|ungeachtet|angesichts|zugunsten]] eines Plans, sondern um einen besseren zu finden. " +
+      "Er nimmt die Ungewissheit des Wartens bewusst [[in Kauf|in Anspruch|in Angriff|zum Anlass]], weil sich manche Dinge erst mit der Zeit [[erschließen|erschließt|erschlösse|erschließend]]. " +
+      "[[Insofern|Sofern|Sodass|Inwiefern]] ist das Zögern weniger ein Mangel als eine Form von Urteilskraft.",
+    last: "Gefährlich wird es erst dort, wo aus dem Innehalten ein dauerhaftes Ausweichen wird.",
+    note: "Modalpartikel etwa in der Entscheidungsfrage (g1), sich verdanken + Dativ (g2), Relativsatz mit ohne + Akkusativ (g3), Verbform von raten (g4), starke Adjektivdeklination im Dativ (g5), konzessives wenngleich (g6), Konjunktiv I für einen Wunsch in der indirekten Rede (g7), mangels + Genitiv (g8), Funktionsverbgefüge in Kauf nehmen (g9), Kongruenz bei sich erschließen (g10), insofern mit Verbzweitstellung (g11).",
+  }),
+  cloze(LEVEL, "MID", {
+    title: "Über das Übersetzen",
+    first: "Dass Übersetzen mehr ist als das Austauschen von Wörtern, weiß jeder, der es je ernsthaft versucht hat.",
+    body:
+      "Schon ein scheinbar schlichter Satz kann Anspielungen enthalten, [[für die|für deren|für denen|für welchen]] es in der Zielsprache keine Entsprechung gibt. " +
+      "Eine erfahrene Literaturübersetzerin bemerkte einmal, sie [[übertrage|überträgst|übertragest|übertragene]] nie Wörter, sondern stets Wirkungen. " +
+      "Ein Wortspiel etwa lässt sich selten wörtlich wiedergeben; [[vielmehr|sondern|zumal|obgleich]] muss für den Leser ein neues gefunden werden, das ähnlich funktioniert. " +
+      "Der im Original [[angelegte|anlegende|angelegten|angelegt]] Doppelsinn muss dann auf anderem Wege entstehen. " +
+      "Dabei [[gerät|bringt|stellt|setzt]] man leicht in Versuchung, sperrige Stellen zu glätten. " +
+      "Doch ein sperriger Satz ist [[nun einmal|denn|ruhig|bitte]] nicht dasselbe wie ein misslungener. " +
+      "Wer jede Unebenheit tilgt, [[bringt|nimmt|stellt|gibt]] den Text um seine Eigenart. " +
+      "[[Ungeachtet|Mangels|Zufolge|Anhand]] aller Theorien bleibt das Übersetzen letztlich eine Abfolge einzelner Entscheidungen, [[die|denen|deren|das]] sich kaum in Regeln fassen lassen. " +
+      "Eine gelungene Übersetzung liest sich, als [[wäre|ist|würde|hätte]] sie in der Zielsprache selbst entstanden. " +
+      "Ihr eigentliches Verdienst [[besteht|beruht|basiert|bezieht]] darin, dass man sie als solche gar nicht bemerkt.",
+    last: "Dass sie dennoch eine eigene schöpferische Leistung ist, wird darüber allzu oft vergessen.",
+    note: "Relativsatz mit für + Akkusativ (g1), Konjunktiv I in der indirekten Rede (g2), vielmehr nach Semikolon mit Inversion (g3), erweitertes Partizipialattribut (g4), in Versuchung geraten (g5), Modalpartikel nun einmal (g6), jemanden um etwas bringen (g7), ungeachtet + Genitiv (g8), Relativpronomen im Plural (g9), irrealer Vergleich mit als + Konjunktiv II (g10), bestehen in (g11).",
+  }),
+  cloze(LEVEL, "HARD", {
+    title: "Vom Verschwinden der Handschrift",
+    first: "Kaum eine Kulturtechnik ist in so kurzer Zeit so weit an den Rand gedrängt worden wie das Schreiben mit der Hand.",
+    body:
+      "Was über Jahrhunderte als Ausweis von Bildung [[galt|gilt|gälte|gegolten]], fristet heute ein Schattendasein auf Einkaufszetteln und Glückwunschkarten. " +
+      "[[So|Als|Wenn|Zu]] bedauerlich man diesen Wandel auch finden mag, aufhalten lässt er sich kaum. " +
+      "Neurowissenschaftler geben indes zu bedenken, beim Schreiben mit der Hand [[werde|werden|worden|würdet]] das Gelernte nachhaltiger im Gedächtnis verankert als beim Tippen. " +
+      "Die dabei [[erforderliche|erfordernde|erforderlich|erforderlichen]] Verlangsamung zwinge zur Auswahl und fördere so das Verstehen. " +
+      "Ein [[Verzicht|Verzichtung|Verzichte|verzichteter]] auf die Schreibschrift im Unterricht sei daher voreilig. " +
+      "[[Freilich|Folglich|Mithin|Somit]] beweist ein statistischer Zusammenhang noch keine Ursache. " +
+      "Viele Studien beruhen auf kleinen Stichproben, und [[mangels|zufolge|seitens|kraft]] verlässlicher Langzeitdaten lässt sich über die Wirkung im Erwachsenenalter bislang nur spekulieren. " +
+      "Ohnehin hieße es, die Handschrift zu unterschätzen, wollte man sie allein [[ihres|seines|ihrer|deren]] Nutzens wegen verteidigen. " +
+      "Wer von Hand schreibt, hinterlässt [[ja|etwa|denn|bloß]] stets auch eine Spur seiner selbst, die sich in keiner Schriftart [[nachbilden|nachbildet|nachgebildet|nachzubilden]] lässt. " +
+      "Dass mit der Handschrift auch diese persönliche Note allmählich in Vergessenheit [[gerät|fällt|geht|tritt]], wäre der eigentliche Verlust.",
+    last: "Ihn vermag keine noch so ausgefeilte Software auszugleichen.",
+    note: "Präteritum im Kontrast zu heute (g1), konzessives so ... auch (g2), Konjunktiv I Passiv in der indirekten Rede (g3), erweitertes Partizipialattribut mit Adjektiv (g4), Nominalstil (g5), einräumendes freilich (g6), mangels + Genitiv (g7), nachgestelltes wegen mit Possessivartikel im Genitiv (g8), Modalpartikel ja (g9), sich lassen + Infinitiv (g10), in Vergessenheit geraten (g11).",
+  }),
+  wordBank(LEVEL, "EASY", {
+    title: "Über die Höflichkeit",
+    first: "Höflichkeit steht im Ruf, eine bloße Äußerlichkeit zu sein, ein Relikt aus Zeiten steifer Umgangsformen.",
+    body:
+      "Dieser Vorwurf [[verkennt]] jedoch, welche Aufgabe sie im Zusammenleben erfüllt. " +
+      "Höfliche Formen schaffen einen [[Spielraum]], in dem Menschen einander begegnen können, ohne sich sogleich offenbaren zu müssen. " +
+      "Wer einem Fremden die Tür aufhält, [[bekundet]] damit keine Zuneigung, sondern lediglich Respekt. " +
+      "Gerade diese [[unverbindliche]] Form der Zuwendung macht Höflichkeit so wertvoll. " +
+      "Sie erlaubt es, Spannungen zu [[entschärfen]], bevor daraus offene Konflikte werden. " +
+      "Wer hingegen jede Floskel als [[heuchlerisch]] abtut, übersieht, dass Offenheit ohne Takt leicht verletzend wirkt. " +
+      "Nicht selten [[entpuppt]] sich die vielgepriesene Ehrlichkeit dann als bloße Rücksichtslosigkeit. " +
+      "Höflichkeit ist insofern weniger eine Frage der Etikette als eine der [[Haltung]].",
+    last: "Sie gesteht dem anderen zu, mehr zu sein als das, was er im Augenblick von sich zeigt.",
+    distractors: ["aufrichtig", "Vertrauen", "verletzt", "erwidern"],
+  }),
+  wordBank(LEVEL, "MID", {
+    title: "Die Ökonomie der Aufmerksamkeit",
+    first: "Aufmerksamkeit ist zu einer der knappsten Ressourcen unserer Zeit geworden.",
+    body:
+      "Unzählige Anbieter [[buhlen]] um die wenigen Sekunden, die ein Nutzer einem Inhalt zu schenken bereit ist. " +
+      "Viele Plattformen sind gezielt darauf [[ausgelegt]], den Blick möglichst lange an den Bildschirm zu binden. " +
+      "Was dabei auf der Strecke bleibt, ist die Fähigkeit zur [[Versenkung]] in eine einzige Sache. " +
+      "Wer ständig zwischen Reizen hin- und herspringt, verlernt allmählich, Langeweile zu [[ertragen]]. " +
+      "Dabei ist gerade sie häufig der [[Nährboden]] für eigenständige Gedanken. " +
+      "Kritiker sprechen bereits von einer [[schleichenden]] Entmündigung, die umso wirksamer sei, als sie kaum bemerkt werde. " +
+      "Andere halten solche Diagnosen für [[überzogen]] und verweisen darauf, dass schon jede neue Technik ähnliche Klagen hervorgerufen habe. " +
+      "Unbestritten ist jedenfalls, dass sich Aufmerksamkeit nicht beliebig [[vermehren]] lässt.",
+    last: "Wer sie verschenkt, sollte daher wenigstens wissen, an wen.",
+    distractors: ["Zerstreuung", "verzichten", "Ablenkung", "gesteigert", "Werbung"],
+  }),
+  wordBank(LEVEL, "HARD", {
+    title: "Stadt im Morgengrauen",
+    first: "Um diese Stunde gehört die Stadt noch niemandem.",
+    body:
+      "Die Straßen liegen [[verwaist]] da, als hätte man sie über Nacht geräumt. " +
+      "Nur hin und wieder [[durchbricht]] das Rumpeln eines Lieferwagens die Stille. " +
+      "Aus einer Bäckerei [[dringt]] der Geruch von frischem Brot, und hinter einzelnen Fenstern flackert bereits Licht. " +
+      "In diesem [[Zwischenzustand]] zwischen Nacht und Tag wirkt selbst das Vertraute seltsam fremd. " +
+      "Die Fassaden, tagsüber kaum eines Blickes [[gewürdigt]], treten plötzlich in ihrer ganzen Eigenart hervor. " +
+      "Man meint, die Stadt [[atme]] noch einmal tief durch, bevor sie sich dem Lärm des Tages überlässt. " +
+      "Doch dieser Zauber ist [[flüchtig]]. " +
+      "Wer ihn einmal bewusst erlebt hat, begegnet dem Gewohnten fortan mit größerer [[Behutsamkeit]].",
+    last: "Spätestens wenn die ersten Busse fahren, hat der Alltag die Stadt wieder für sich eingenommen.",
+    distractors: ["erwachen", "Dämmerung", "geschäftig", "verweilt", "betrachtet"],
   }),
 ];
 
@@ -1043,7 +1146,7 @@ export const C2_PARTS: {
   writing: SeedBankPart;
   speaking: SeedBankPart;
 } = {
-  grammar: { stimuli: [], items: grammarItems },
+  grammar: { stimuli: [], items: [...grammarItems, ...grammarTexts] },
   reading: { stimuli: readingStimuli, items: readingItems },
   listening: { stimuli: listeningStimuli, items: listeningItems },
   writing: { stimuli: [], items: writingItems },
