@@ -7,6 +7,7 @@ import { splitInstruction, splitPromptBlocks, splitTitle, type PromptBlock } fro
 import type { ItemAnswer, TfngValue } from "@/lib/exam/types";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
+import { ABOVE_FOOTER } from "@/components/visual/footer-action";
 import { TaskExpectations } from "./TaskExpectations";
 import { TaskPromptCard } from "./TaskPromptCard";
 import { ClozeItem } from "./ClozeItem";
@@ -445,10 +446,10 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
         })}
       </p>
       {pool && placement ? (
-        // Stays just above the fixed bottom bar, so the parts are in reach while the text scrolls.
+        // Stays just above the fixed bottom bar (and above a notice over it), so the parts are in reach while the text scrolls.
         // Capped at about a third of the window (scrolls inside), so the text keeps most of the screen.
         <div
-          style={{ bottom: "var(--step-footer-space, 112px)" }}
+          style={{ bottom: ABOVE_FOOTER }}
           className="sticky z-10 mt-4 max-h-[32dvh] overflow-y-auto overscroll-contain border-t border-hairline bg-canvas pb-2 pt-2"
         >
           <div role="group" aria-label={ti(wordBank ? "wordPool" : "ctestPool")}>

@@ -310,7 +310,7 @@ describe("globals.css gains only the step motion and the footer's scroll padding
   it("has the step-in and fade-in keyframes and pads scrolling only on a page with a step footer", () => {
     expect(css).toMatch(/@keyframes step-in \{[\s\S]*?translateY\(8px\)/);
     expect(css).toMatch(/@keyframes fade-in \{/);
-    expect(css).toMatch(/html:has\(\[data-step-footer\]\) \{\s*scroll-padding-bottom: calc\(var\(--step-footer-space, 112px\) \+ 8px\);\s*\}/);
+    expect(css).toMatch(/html:has\(\[data-step-footer\]\) \{\s*scroll-padding-bottom: calc\(var\(--step-footer-space, 112px\) \+ var\(--step-notice-space, 0px\) \+ 8px\);\s*\}/);
     expect(css.match(/scroll-padding/g)).toHaveLength(1);
   });
 });

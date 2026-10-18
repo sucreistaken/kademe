@@ -436,9 +436,9 @@ body {
   }
 }
 
-/* G9: a focused field scrolled into view is never left under the fixed step footer (the footer measures itself into the variable). */
+/* G9: a focused field scrolled into view is never left under the fixed step footer or a notice over it (both measure themselves into a variable). */
 html:has([data-step-footer]) {
-  scroll-padding-bottom: calc(var(--step-footer-space, 112px) + 8px);
+  scroll-padding-bottom: calc(var(--step-footer-space, 112px) + var(--step-notice-space, 0px) + 8px);
 }
 
 /* The finish screen's one celebratory moment: the medal pops in once, and a

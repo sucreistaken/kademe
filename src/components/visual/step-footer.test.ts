@@ -1,6 +1,7 @@
 import { createElement, type ComponentProps } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { ABOVE_FOOTER, noticeSpace } from "./footer-action";
 import { frozenMarkup } from "./frozen-markup";
 import { StepFooter } from "./step-footer";
 
@@ -90,8 +91,28 @@ describe("StepFooter's exam bar (one fixed row)", () => {
     expect(html({ exam: true, primary: next })).not.toContain("data-step-footer-notice");
   });
 
+  it("leaves room for a notice in the spacer while one shows (the bar keeps its height)", () => {
+    const withNotice = html({ exam: true, primary: next, notice: "Save failed" });
+    expect(withNotice).toMatch(/^<div aria-hidden="true" class="h-\[112px\]" style="height:calc\(var\(--step-footer-space, 112px\) \+ var\(--step-notice-space, 0px\)\)"/);
+    expect(withNotice).toContain("h-[65px]");
+    expect(html({ exam: true, primary: next })).toMatch(/^<div aria-hidden="true" class="h-\[112px\]" style="height:var\(--step-footer-space, 112px\)"/);
+  });
+
   it("gives the default footer the same notice layer, and nothing extra without one", () => {
     expect(html({ primary: next, notice: "Save failed" })).toContain("data-step-footer-notice");
     expect(html({ primary: next })).not.toContain("data-step-footer-notice");
+  });
+});
+
+describe("the room a notice takes", () => {
+  it("is its measured height rounded up, 0 when there is none", () => {
+    expect(noticeSpace(57.2)).toBe("58px");
+    expect(noticeSpace(0)).toBe("0px");
+    expect(noticeSpace(null)).toBe("0px");
+    expect(noticeSpace(Number.NaN)).toBe("0px");
+  });
+
+  it("is added to the bar's room for anything pinned above the bar", () => {
+    expect(ABOVE_FOOTER).toBe("calc(var(--step-footer-space, 112px) + var(--step-notice-space, 0px))");
   });
 });

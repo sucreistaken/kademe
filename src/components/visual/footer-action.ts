@@ -43,3 +43,21 @@ export const FOOTER_SPACE_VAR = "--step-footer-space";
 export function footerSpace(measured: number | null | undefined): string {
   return typeof measured === "number" && Number.isFinite(measured) && measured > 0 ? `${Math.ceil(measured) + 24}px` : "112px";
 }
+
+/** The CSS variable the floating notice layer writes on <html> while a notice shows. */
+export const NOTICE_SPACE_VAR = "--step-notice-space";
+
+/**
+ * The room a floating notice takes above the bar: its measured height (with the
+ * layer's own gap to the bar), 0 when there is none or it is not measured yet.
+ */
+export function noticeSpace(measured: number | null | undefined): string {
+  return typeof measured === "number" && Number.isFinite(measured) && measured > 0 ? `${Math.ceil(measured)}px` : "0px";
+}
+
+/**
+ * Where something pinned just above the bar sits (the word-bank and C-test
+ * pool tray, the finishing toast): above the bar and above any notice, so a
+ * save failure never hides what the student still has to reach.
+ */
+export const ABOVE_FOOTER = `calc(var(${FOOTER_SPACE_VAR}, 112px) + var(${NOTICE_SPACE_VAR}, 0px))`;

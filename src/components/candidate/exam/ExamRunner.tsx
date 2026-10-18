@@ -30,6 +30,7 @@ import { entersByTyping } from "@/components/candidate/exam/typed-input";
 import { gateKey } from "@/components/candidate/exam/listening-gate";
 import { clearPending, readPending, sessionStore, writePending, type PendingAnswer } from "@/components/candidate/exam/pending-answer";
 import { leavesGroup, memberRange, memberSequences, nextAfterGroup, prevBeforeGroup } from "@/components/candidate/exam/groups";
+import { ABOVE_FOOTER } from "@/components/visual/footer-action";
 import { StepFooter } from "@/components/visual/step-footer";
 import { useStepFocus } from "@/hooks/use-step-focus";
 import { apiSend } from "@/lib/client/api";
@@ -878,7 +879,7 @@ export function ExamRunner({
           <div className={cn("mx-auto px-7 pb-10 pt-8", item.stimulus?.kind === "READING" || clozeHere ? "max-w-[1200px]" : "max-w-[760px]")}>
             <div className={cn(item.stimulus?.kind === "READING" && "grid gap-8 lg:grid-cols-2")}>
               {item.stimulus?.kind === "READING" ? (
-                <article className="rounded-[14px] border border-line bg-surface p-6 lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem-var(--step-footer-space,112px))] lg:overflow-y-auto">
+                <article className="rounded-[14px] border border-line bg-surface p-6 lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem-var(--step-footer-space,112px)-var(--step-notice-space,0px))] lg:overflow-y-auto">
                   <div lang="de" className="text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted">{item.stimulus.title}</div>
                   <PassageBody text={item.stimulus.text} title={item.stimulus.title} />
                 </article>
@@ -936,7 +937,7 @@ export function ExamRunner({
       {finishing !== null ? (
         <div
           role="status"
-          style={{ bottom: "var(--step-footer-space, 112px)" }}
+          style={{ bottom: ABOVE_FOOTER }}
           className="fixed inset-x-0 z-30 mx-auto flex w-fit items-center gap-4 rounded-[10px] bg-ink px-5 py-3 text-[13.5px] text-white shadow-panel"
         >
           <span className="tnum">{t("finishingIn", { s: finishing })}</span>

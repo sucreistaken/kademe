@@ -211,6 +211,10 @@ describe("word-bank item", () => {
     expect((tray.match(/cursor-grab/g) ?? []).length).toBe(7);
   });
 
+  it("pins the tray above the bar and above a notice over it, so a save failure never hides the words", () => {
+    expect(render(wordBank())).toContain('style="bottom:calc(var(--step-footer-space, 112px) + var(--step-notice-space, 0px))"');
+  });
+
   it("keeps the text next to a slot as it is: no word stem is cut off the text before a gap", () => {
     const html = render(wordBank());
     expect(html).toContain("<span>Ich </span>");

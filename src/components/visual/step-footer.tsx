@@ -3,11 +3,11 @@
 
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/cn";
-import { FOOTER_SPACE_VAR, footerButtonState, footerSpace, type FooterAction } from "./footer-action";
+import { ABOVE_FOOTER, FOOTER_SPACE_VAR, footerButtonState, footerSpace, NOTICE_SPACE_VAR, noticeSpace, type FooterAction } from "./footer-action";
 import { JourneyProgress } from "./journey-progress";
 
 function Action({ action, variant, compact = false, exam = false }: { action: FooterAction; variant: "primary" | "secondary"; compact?: boolean; exam?: boolean }) {
@@ -110,7 +110,9 @@ export function StepFooter({
   /**
    * Warnings (a recording still plays, a save failed, time is up): drawn in a
    * layer fixed to the top edge of the bar, over the page above it. They add no
-   * height to the bar, so the measured room (--step-footer-space) stays put.
+   * height to the bar, so the measured room (--step-footer-space) stays put;
+   * the layer measures itself into --step-notice-space instead, and the spacer
+   * and whatever is pinned above the bar add that room while a notice shows.
    * Ignored by the compact layout.
    */
   notice?: ReactNode;
@@ -131,6 +133,20 @@ export function StepFooter({
       root.style.removeProperty(FOOTER_SPACE_VAR);
     };
   }, []);
+  // The notice layer, measured the same way (a state ref: it comes and goes, and moves between layouts).
+  const [noticeNode, setNoticeNode] = useState<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!noticeNode || typeof ResizeObserver === "undefined") return;
+    const root = document.documentElement;
+    const write = () => root.style.setProperty(NOTICE_SPACE_VAR, noticeSpace(noticeNode.getBoundingClientRect().height));
+    write();
+    const observer = new ResizeObserver(write);
+    observer.observe(noticeNode);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty(NOTICE_SPACE_VAR);
+    };
+  }, [noticeNode]);
 
   const states = [buttonState(secondary), buttonState(primary)];
   const reasons = states.flatMap((s) => (s && s.reason ? [{ id: `${s.id}-why`, text: s.reason }] : []));
@@ -149,7 +165,9 @@ export function StepFooter({
       </button>
     )
   ) : null;
-  const spacer = placement === "viewport" ? <div aria-hidden="true" className="h-[112px]" style={{ height: `var(${FOOTER_SPACE_VAR}, 112px)` }} /> : null;
+  // With a notice the spacer also leaves room for it, so the end of the page can still be scrolled clear.
+  const spacerHeight = notice && !compact ? ABOVE_FOOTER : `var(${FOOTER_SPACE_VAR}, 112px)`;
+  const spacer = placement === "viewport" ? <div aria-hidden="true" className="h-[112px]" style={{ height: spacerHeight }} /> : null;
   if (compact) {
     return (
       <>
@@ -188,7 +206,7 @@ export function StepFooter({
     );
   }
   const noticeLayer = notice ? (
-    <div data-step-footer-notice className="pointer-events-none absolute inset-x-0 bottom-full">
+    <div ref={setNoticeNode} data-step-footer-notice className="pointer-events-none absolute inset-x-0 bottom-full">
       <div className="mx-auto flex max-w-[1200px] flex-col items-center gap-2 px-4 pb-3 sm:px-7 [&>*]:pointer-events-auto">{notice}</div>
     </div>
   ) : null;
