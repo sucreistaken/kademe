@@ -4,12 +4,15 @@ import { cn } from "@/lib/cn";
 
 /**
  * HIRING-VISUAL-FLOW 2.2 (K1): flat, calm spot drawings, hand-written inline
- * SVG. No people, no faces, no photo, no text inside the drawing; only the
+ * SVG. No faces, no photo, no text inside the drawing (the one figure is the
+ * faceless head-and-shoulders silhouette of cameraFrame); only the
  * illustration tones and the soft pastel fills of the new look (mint, sky,
  * sun, grape); hidden from assistive technology (the screen's title carries
  * the meaning). The one drawing with a face is the mascot
- * (components/visual/mascot.tsx, docs/design/RULES.md rule 9), not these. They appear only on welcome, consent, permission,
- * finish, problem and empty screens, never on a question screen (G11).
+ * (components/visual/mascot.tsx, docs/design/RULES.md rule 9), not these. They appear on welcome, consent, permission,
+ * finish, problem and empty screens and on the proctoring block screens
+ * (secondScreen, shareEntireScreen, fullscreen, cameraFrame), which also cover
+ * the exam when the recover panel stops it. Never beside a question (G11).
  * Static: no animation (2.3).
  *
  * One grammar for all nineteen, taken from the approved mockup: a soft panel
@@ -450,11 +453,11 @@ const DRAWINGS: Record<IllustrationName, Drawing> = {
         <rect x="34" y="10" width="132" height="106" rx="12" fill={WARM} {...ink} />
         <circle cx="100" cy="16" r="2.5" fill={LINE} />
         <rect x="42" y="22" width="116" height="86" rx="6" fill={SKY} />
-        <ellipse cx="100" cy="64" rx="28" ry="36" {...trail} />
-        <circle cx="100" cy="58" r="14" fill={WARM} {...ink} />
-        <path d="M68 108 C68 88 82 78 100 78 C118 78 132 88 132 108 Z" fill={WARM} {...ink} />
+        <ellipse cx="100" cy="66" rx="34" ry="40" {...trail} />
+        <circle cx="100" cy="48" r="13" fill={WARM} {...ink} />
+        <path d="M70 96 C70 76 84 68 100 68 C116 68 130 76 130 96 Z" fill={WARM} {...ink} />
         <path d="M50 38 V30 H58 M150 38 V30 H142 M50 92 V100 H58 M150 92 V100 H142" fill="none" {...ink} />
-        <path d="M100 116 V126 M82 128 H118" fill="none" {...ink} />
+        <path d="M100 116 V128 M82 128 H118" fill="none" {...ink} />
       </>
     ),
   },

@@ -42,4 +42,21 @@ describe("illustrations (HIRING-VISUAL-FLOW 2.2, K1)", () => {
     expect(renderToStaticMarkup(createElement(Illustration, { name: "closed", size: "spot" }))).toContain("w-[160px]");
     expect(renderToStaticMarkup(createElement(Illustration, { name: "desktopOnly", size: "phone" }))).toContain("max-w-[342px]");
   });
+
+  it("cameraFrame: the stand's neck reaches its base and the silhouette sits in the middle of the oval", () => {
+    const html = renderToStaticMarkup(createElement(Illustration, { name: "cameraFrame" }));
+    const neck = html.match(/d="M100 116 V(\d+) M\d+ (\d+) H\d+"/);
+    expect(neck, "stand path").not.toBeNull();
+    expect(neck![1]).toBe(neck![2]);
+    const oval = html.match(/<ellipse cx="100" cy="(\d+)" rx="\d+" ry="(\d+)"/)!;
+    const head = html.match(/<circle cx="100" cy="(\d+)" r="(\d+)"/g)!.map((s) => s.match(/cy="(\d+)" r="(\d+)"/)!.map(Number)).find(([, , r]) => r > 5)!;
+    const shoulders = html.match(/d="M\d+ (\d+) C\d+ \d+ \d+ \d+ 100 (\d+) C[^"]* Z"/)!;
+    const top = head[1] - head[2];
+    const bottom = Number(shoulders[1]);
+    const middle = (top + bottom) / 2;
+    expect(Math.abs(middle - Number(oval[1]))).toBeLessThanOrEqual(2);
+    // The whole figure is inside the oval's height.
+    expect(top).toBeGreaterThanOrEqual(Number(oval[1]) - Number(oval[2]));
+    expect(bottom).toBeLessThanOrEqual(Number(oval[1]) + Number(oval[2]));
+  });
 });
