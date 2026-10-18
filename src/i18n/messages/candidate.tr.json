@@ -1074,6 +1074,7 @@
   },
   "mascot": {
     "cheerFirst": "İlk bölümü bitirdiniz. Hazır olduğunuzda devam edin.",
+    "startFirst": "Sınava başlıyorsunuz. İlk bölüm: {section}.",
     "cheerMore": "Bir bölümü daha bitirdiniz. Hazır olduğunuzda devam edin.",
     "cheerProgress": "{done} / {total} bölüm tamamlandı",
     "finishedBadge": "Sınavı tamamladınız"

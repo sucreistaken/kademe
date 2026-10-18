@@ -1074,6 +1074,7 @@
   },
   "mascot": {
     "cheerFirst": "You finished the first section. Continue whenever you are ready.",
+    "startFirst": "You are starting the exam. First section: {section}.",
     "cheerMore": "Another section done. Continue whenever you are ready.",
     "cheerProgress": "{done} of {total} sections done",
     "finishedBadge": "You completed the exam"

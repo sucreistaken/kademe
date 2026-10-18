@@ -8,7 +8,8 @@ import { Notice } from "@/components/ui/notice";
 import { BrandMark } from "@/components/visual/brand-mark";
 import { environmentFacts, useProctor } from "@/components/candidate/proctor/ProctorProvider";
 import { CheatWarning } from "@/components/candidate/proctor/CheatWarning";
-import { Flag } from "lucide-react";
+import { Clock, Flag, ListChecks } from "lucide-react";
+import { SectionTile } from "@/components/visual/section-look";
 import { ItemView } from "@/components/candidate/exam/ItemView";
 import { ListeningPlayer, SpeakingItem } from "@/components/candidate/exam/MediaItems";
 import { answerProgress, progressState } from "@/components/candidate/exam/answer-progress";
@@ -710,19 +711,16 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
             onLeave={() => warmDo({ type: "leave" })}
           />
         ) : state.step === "SECTION_INTRO" ? (
-          <CandidateColumn width={620}>
-            <SectionCheer sections={state.sections} />
+          <CandidateColumn width={720} padding="px-7 pt-6 pb-6">
+            <SectionCheer sections={state.sections} current={cur.section} position={cur.position} />
             {state.sections.some((x) => x.position === cur.position - 1 && x.skipped) ? (
-              <p role="status" className="mb-5 rounded-[10px] bg-subtle px-4 py-3 text-[14px] leading-[1.6] text-ink-2">
+              <p role="status" className="mb-4 rounded-[10px] bg-subtle px-4 py-3 text-[14px] leading-[1.6] text-ink-2">
                 {f("skippedNote")}
               </p>
             ) : null}
-            <div className="tnum text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted">
+            <div className="tnum text-[12.5px] font-bold uppercase tracking-[0.08em] text-muted">
               {t("sectionOf", { n: cur.position, total: cur.total })}
             </div>
-            <h1 ref={headingRef} tabIndex={-1} className="mt-2.5 text-[32px] font-bold leading-[1.2] tracking-[-0.03em] text-ink outline-none">
-              {sec(cur.section)}
-            </h1>
             {(() => {
               const s = state.sections.find((x) => x.position === cur.position)!;
               const count = s.itemsLabel.includes("-")
@@ -734,26 +732,41 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
                     : t("items", { n: s.itemsLabel });
               return (
                 <>
-                  <p className="tnum mt-2 text-[15px] text-ink-2">{`${t("minutes", { n: s.minutes })} · ${count}`}</p>
-                  <ul className="mt-6 flex list-disc flex-col gap-2 pl-5 text-[14.5px] leading-[1.6] text-ink-2">
-                    <li>
-                      {s.cTestOnly
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+                    <div className="flex items-center gap-4">
+                      <SectionTile section={cur.section} size="lg" className="size-14 rounded-2xl [&_svg]:size-7" />
+                      <h1 ref={headingRef} tabIndex={-1} className="text-[32px] font-bold leading-[1.2] tracking-[-0.03em] text-ink outline-none">
+                        {sec(cur.section)}
+                      </h1>
+                    </div>
+                    <div className="tnum flex flex-wrap gap-2">
+                      <span className="inline-flex h-9 items-center gap-2 rounded-full bg-cream px-3.5 text-[14px] font-bold text-ink">
+                        <Clock aria-hidden className="size-4 text-ink-2" strokeWidth={2.25} />
+                        {t("minutes", { n: s.minutes })}
+                      </span>
+                      <span className="inline-flex h-9 items-center gap-2 rounded-full bg-cream px-3.5 text-[14px] font-bold text-ink">
+                        <ListChecks aria-hidden className="size-4 text-ink-2" strokeWidth={2.25} />
+                        {count}
+                      </span>
+                    </div>
+                  </div>
+                  <ul className="mt-4 flex flex-col gap-1.5 text-[15px] leading-[1.5] text-ink">
+                    {[
+                      s.cTestOnly
                         ? n("ruleGRAMMARCTest", { n: s.itemsLabel, minutes: Math.max(1, Math.round(s.minutes / Number(s.itemsLabel))) })
                         : s.navigable && cur.section === "GRAMMAR"
                           ? n("ruleGRAMMARFixed")
                           : cur.section === "WRITING"
                             ? f(policy.clipboardBlock ? "ruleWritingPaste" : "ruleWritingPlain")
-                            : sec(`rule${cur.section}` as "ruleGRAMMAR", { plays: state.maxPlays })}
-                    </li>
-                    {s.navigable ? (
-                      <>
-                        <li>{n("ruleBack")}</li>
-                        <li>{n("ruleReview")}</li>
-                      </>
-                    ) : (
-                      <li>{t("ruleNoBack")}</li>
-                    )}
-                    <li>{t("ruleClock")}</li>
+                            : sec(`rule${cur.section}` as "ruleGRAMMAR", { plays: state.maxPlays }),
+                      ...(s.navigable ? [n("ruleBack"), n("ruleReview")] : [t("ruleNoBack")]),
+                      t("ruleClock"),
+                    ].map((rule) => (
+                      <li key={rule} className="flex items-start gap-3">
+                        <span aria-hidden className="mt-[8px] size-2 shrink-0 rounded-full bg-accent" />
+                        {rule}
+                      </li>
+                    ))}
                   </ul>
                 </>
               );
@@ -763,7 +776,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
               type="button"
               disabled={busy}
               onClick={start}
-              className={cn(buttonVariants({ variant: "primary", size: "lg" }), "mt-8 h-12 w-full")}
+              className={cn(buttonVariants({ variant: "primary", size: "lg" }), "mt-5 h-12 w-full")}
             >
               {busy ? t("saving") : t("startSection")}
             </button>

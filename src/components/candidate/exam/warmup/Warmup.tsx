@@ -35,9 +35,9 @@ export function WarmupOffer({ state, onTry, onSkip }: { state: WarmupState; onTr
   const t = useT("examFlow");
   if (state.phase === "offer") {
     return (
-      <div className="mt-7 rounded-[14px] border border-line bg-surface p-5">
-        <p className="text-[14.5px] font-medium leading-[1.6] text-ink">{t("warmOffer")}</p>
-        <div className="mt-4 flex gap-3">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-2xl bg-cream px-5 py-3">
+        <p className="min-w-0 flex-1 basis-64 text-[15px] font-medium leading-[1.5] text-ink">{t("warmOffer")}</p>
+        <div className="flex gap-3">
           <button type="button" onClick={onTry} className={solid}>
             {t("warmTry")}
           </button>
@@ -50,7 +50,7 @@ export function WarmupOffer({ state, onTry, onSkip }: { state: WarmupState; onTr
   }
   if (state.phase === "done") {
     return (
-      <p role="status" className="mt-7 rounded-[14px] bg-subtle px-5 py-4 text-[14.5px] font-semibold text-ink">
+      <p role="status" className="mt-4 rounded-2xl bg-cream px-5 py-3 text-[15px] font-semibold text-ink">
         {t("warmReady")}
       </p>
     );

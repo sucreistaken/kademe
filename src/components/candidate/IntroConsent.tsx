@@ -142,16 +142,18 @@ export function IntroConsent({
       >
         {/* The order reads left to right; the section number stays for screen readers. */}
         {state.sections.map((s) => (
-          <li key={s.section} className="flex items-center gap-3 rounded-xl border border-line bg-surface px-3 py-2.5 shadow-card">
-            <SectionTile section={s.section} />
-            <div className="min-w-0">
-              <div className="truncate text-[15px] font-bold leading-5 text-ink">
+          <li key={s.section} className="flex flex-col gap-2 rounded-xl border border-line bg-surface px-3 py-2.5 shadow-card">
+            <div className="flex items-center gap-2.5">
+              <SectionTile section={s.section} />
+              <div className="min-w-0 text-[15px] font-bold leading-5 text-ink">
                 <span className="sr-only">{v("sectionNumber", { n: s.position })}: </span>
                 {sec(s.section)}
               </div>
-              <div className="tnum truncate text-[12.5px] font-semibold text-ink-2">
-                {amount(s)} · {t("minutes", { n: s.minutes })}
-              </div>
+            </div>
+            {/* The amount and the minutes each get their own line, so neither is cut off. */}
+            <div className="tnum text-[13px] font-semibold leading-[1.35] text-ink-2">
+              <div>{amount(s)}</div>
+              <div>{t("minutes", { n: s.minutes })}</div>
             </div>
           </li>
         ))}
