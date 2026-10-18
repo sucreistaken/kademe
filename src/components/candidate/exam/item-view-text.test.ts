@@ -6,6 +6,9 @@ vi.mock("@/i18n/candidate-client", () => ({
   useT: () => (key: string, values?: Record<string, unknown>) => (values ? `${key}(${Object.values(values).join(",")})` : key),
 }));
 
+// The multiple-choice cloze marks its interface texts with the page language.
+vi.mock("next-intl", () => ({ useLocale: () => "en" }));
+
 import { toCandidateItem, type CandidateItem } from "@/lib/exam/safe";
 import type { ItemAnswer, ItemSnapshot } from "@/lib/exam/types";
 import { CLOZE_SKILL_TAG, WORD_BANK_SKILL_TAG } from "@/lib/exam/types";
@@ -139,7 +142,7 @@ describe("cloze item", () => {
 describe("cloze keyboard and announcements", () => {
   it("announces the open gap politely, with its place in the text", () => {
     const html = render(cloze(12), { gaps: { g1: "falsch" } });
-    expect(html).toMatch(/<p role="status" class="sr-only">gapOf\(2,12\)<\/p>/);
+    expect(html).toMatch(/<p lang="en" dir="ltr" role="status" class="sr-only">gapOf\(2,12\)<\/p>/);
   });
 
   it("adds the chosen word to the announcement when a filled gap is open", () => {
@@ -244,5 +247,22 @@ describe("word-bank item", () => {
     const json = JSON.stringify(wordBank());
     expect(json).not.toContain("answers");
     expect(json).not.toContain("distractors");
+  });
+});
+
+describe("German answer groups in the cloze and the word bank (left to right on an Arabic page)", () => {
+  const tagOf = (html: string, marker: string) => html.match(new RegExp(`<[a-z]+[^>]*${marker}[^>]*>`))?.[0] ?? "";
+
+  it("the multiple-choice cloze grid and its option list are German; the interface texts inside carry their own language and direction", () => {
+    const html = render(cloze(3));
+    expect(html).toMatch(/<div lang="de" class="grid gap-6/);
+    expect(tagOf(html, 'role="radiogroup"')).toContain('lang="de"');
+    expect(tagOf(html, 'role="status"')).toMatch(/lang="en" dir="ltr"/);
+    expect(html).toMatch(/<h3 lang="en" dir="ltr"/);
+  });
+
+  it("the word-bank chips sit in a German row inside a group whose label is the interface's", () => {
+    const html = render(wordBank());
+    expect(html).toMatch(/role="group" aria-label="[^"]*"><div lang="de" class="flex flex-wrap gap-1.5">/);
   });
 });

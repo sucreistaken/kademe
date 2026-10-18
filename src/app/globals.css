@@ -296,9 +296,10 @@ body {
 }
 
 /*
- * Arabic screens (candidate language "ar"): Noto Sans Arabic leads the stack,
- * Nunito stays behind it for the Latin letters and digits. The Arabic face is
- * loaded lazily (preload is off), so only a page that uses :lang(ar) fetches it.
+ * Arabic screens (candidate language "ar"): Noto Sans Arabic leads the stack and
+ * draws Arabic script only (its @font-face carries the Arabic unicode-range and
+ * the layout turns next/font's Arial fallback off), so Latin letters and digits
+ * fall through to Nunito. The face is loaded lazily (preload is off).
  * German exam content keeps Nunito and runs left to right even inside an RTL
  * page; every German element carries lang="de".
  */

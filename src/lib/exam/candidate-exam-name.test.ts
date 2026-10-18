@@ -49,4 +49,14 @@ describe("the exam name a student reads", () => {
     expect(candidateExamName("Placement test, 45 minutes", "tr")).toBe("Placement test, 45 minutes");
     expect(candidateExamName("Ekim grubu", "ar")).toBe("Ekim grubu");
   });
+
+  it("German, Spanish and Arabic have their own words for the template names and the consent note, not the English text", () => {
+    const en = candidateT("en");
+    for (const locale of ["de", "es", "ar"] as const) {
+      const t = candidateT(locale);
+      for (const key of ["examNames.quickScreen", "examNames.placement", "examNames.levelCheck", "exam.consentFallbackNote", "exam.consentShowTurkish", "exam.consentShowEnglish"] as const) {
+        expect(t(key), `${locale} ${key}`).not.toBe(en(key));
+      }
+    }
+  });
 });

@@ -108,7 +108,7 @@ function ChoiceItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps)
           <p className="mt-2 text-[12.5px] text-muted">{multiple ? t("pickMany") : t("pickOne")}</p>
         </>
       )}
-      <div role={multiple ? "group" : "radiogroup"} aria-labelledby={promptId} className="mt-4 flex flex-col gap-2">
+      <div role={multiple ? "group" : "radiogroup"} aria-labelledby={promptId} lang="de" className="mt-4 flex flex-col gap-2">
         {item.content.options.map((o, i) => {
           const on = picked.has(o.id);
           return (
@@ -164,7 +164,7 @@ function TfngItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps) {
           const picked = answer.tfng?.[s.id];
           const textId = `${uid}-s${n}`;
           return (
-            <div key={s.id} className="rounded-[10px] border border-line bg-surface px-4 py-3">
+            <div key={s.id} lang="de" className="rounded-[10px] border border-line bg-surface px-4 py-3">
               <p id={textId} lang="de" className="text-[16px] leading-[1.55] text-ink">
                 {s.text}
               </p>
@@ -430,28 +430,31 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
           style={{ bottom: "var(--step-footer-space, 112px)" }}
           className="sticky z-10 mt-4 max-h-[32dvh] overflow-y-auto overscroll-contain border-t border-hairline bg-canvas pb-2 pt-2"
         >
-          <div role="group" aria-label={ti(wordBank ? "wordPool" : "ctestPool")} className="flex flex-wrap gap-1.5">
-            {pool.map((chip, idx) =>
-              placement.used.has(idx) ? null : (
-                <button
-                  key={idx}
-                  type="button"
-                  lang="de"
-                  disabled={disabled}
-                  onPointerDown={(e) => onPointerDown(e, idx)}
-                  onClick={() => {
-                    if (!isDragClick()) clickChip(idx);
-                  }}
-                  className={cn(
-                    "h-8 min-w-8 cursor-grab touch-none select-none rounded-[8px] border border-line-strong bg-surface px-2.5 text-[15px] text-ink hover:bg-canvas",
-                    wordBank && "h-9 px-3 text-[16px]",
-                    drag?.key === idx && "opacity-40",
-                  )}
-                >
-                  {chip}
-                </button>
-              ),
-            )}
+          <div role="group" aria-label={ti(wordBank ? "wordPool" : "ctestPool")}>
+            {/* The chips are German, so left to right even on an Arabic page; the group's label stays in the interface language. */}
+            <div lang="de" className="flex flex-wrap gap-1.5">
+              {pool.map((chip, idx) =>
+                placement.used.has(idx) ? null : (
+                  <button
+                    key={idx}
+                    type="button"
+                    lang="de"
+                    disabled={disabled}
+                    onPointerDown={(e) => onPointerDown(e, idx)}
+                    onClick={() => {
+                      if (!isDragClick()) clickChip(idx);
+                    }}
+                    className={cn(
+                      "h-8 min-w-8 cursor-grab touch-none select-none rounded-[8px] border border-line-strong bg-surface px-2.5 text-[15px] text-ink hover:bg-canvas",
+                      wordBank && "h-9 px-3 text-[16px]",
+                      drag?.key === idx && "opacity-40",
+                    )}
+                  >
+                    {chip}
+                  </button>
+                ),
+              )}
+            </div>
           </div>
           {drag && pool ? (
             <div
@@ -535,7 +538,7 @@ function MatchingItem({ item, answer, onChange, disabled, hidePrompt }: ItemProp
         </p>
       )}
       {/* Stays under the page header while the rows scroll, so every row can take a drop. */}
-      <div aria-hidden data-match-tray className="sticky top-14 z-10 -mx-1 mt-3 flex flex-wrap gap-2 bg-canvas px-1 py-2">
+      <div aria-hidden data-match-tray lang={bare ? undefined : "de"} dir={bare ? "ltr" : undefined} className="sticky top-14 z-10 -mx-1 mt-3 flex flex-wrap gap-2 bg-canvas px-1 py-2">
         {targets.map((r) => {
           const elsewhere = used.has(r.id);
           return (
@@ -594,7 +597,7 @@ function MatchingItem({ item, answer, onChange, disabled, hidePrompt }: ItemProp
               <p id={rowId} lang="de" className="text-[15px] leading-[1.55] text-ink">
                 {l.text}
               </p>
-              <div role="radiogroup" aria-labelledby={rowId} className="mt-2.5 flex flex-wrap gap-1.5">
+              <div role="radiogroup" aria-labelledby={rowId} lang="de" className="mt-2.5 flex flex-wrap gap-1.5">
                 {targets.map((r, i) => {
                   const on = chosen?.id === r.id;
                   const elsewhere = !on && used.has(r.id);

@@ -298,3 +298,39 @@ describe("C-test word-part pool", () => {
     expect(at.has("g3")).toBe(false);
   });
 });
+
+/** The opening tags of every element with this role. */
+const openingTags = (html: string, role: string) => [...html.matchAll(new RegExp(`<[a-z]+[^>]*role="${role}"[^>]*>`, "g"))].map((m) => m[0]);
+
+describe("German answer groups stay left to right on an Arabic page (the [dir=rtl] [lang=de] rule needs lang=\"de\" on the group)", () => {
+  it("multiple-choice options are one German group", () => {
+    const choice: CandidateItem = {
+      sequence: 1,
+      section: "READING",
+      type: "SINGLE_CHOICE",
+      prompt: "Was ist richtig?",
+      content: { kind: "CHOICE", multiple: false, options: [{ id: "a", text: "Eins" }, { id: "b", text: "Zwei" }] },
+      stimulus: null,
+      answer: null,
+    };
+    const tags = openingTags(render(choice), "radiogroup");
+    expect(tags).toHaveLength(1);
+    expect(tags[0]).toContain('lang="de"');
+  });
+
+  it("each true/false statement and its answer buttons sit in one German row", () => {
+    const html = render(tfngItem("READING"));
+    const rows = html.split('class="rounded-[10px] border border-line bg-surface px-4 py-3"').length - 1;
+    expect(rows).toBe(2);
+    expect(html.match(/<div[^>]*lang="de"[^>]*class="rounded-\[10px\] border border-line bg-surface px-4 py-3"/g)).toHaveLength(2);
+  });
+
+  it("the matching tray and every row's letters are German", () => {
+    const html = render(sentences);
+    expect(html).toMatch(/data-match-tray="true" lang="de"/);
+    for (const tag of openingTags(html, "radiogroup")) expect(tag).toContain('lang="de"');
+    // Letters only ("Anzeige A" ... is the bare case): no German text in it, but left to right all the same.
+    const bareTray = render(ads).match(/<div[^>]*data-match-tray[^>]*>/)?.[0] ?? "";
+    expect(bareTray).toContain('dir="ltr"');
+  });
+});

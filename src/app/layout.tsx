@@ -11,11 +11,16 @@ const nunito = Nunito({
 
 // Nunito has no Arabic glyphs. The Arabic face is used only under :lang(ar)
 // (globals.css) and is not preloaded, so Turkish, English, German and Spanish
-// pages never download it.
+// pages never download it. adjustFontFallback is off on purpose: next/font would
+// otherwise add an "Arial" fallback face for this family with no unicode-range,
+// and Arial would then draw every Latin letter and digit on an Arabic page ahead
+// of Nunito. Without it the family holds only the Arabic face (whose unicode-range
+// is the Arabic script), so Latin text falls through to Nunito in the stack.
 const notoArabic = Noto_Sans_Arabic({
   variable: "--font-noto-arabic",
   subsets: ["arabic"],
   preload: false,
+  adjustFontFallback: false,
 });
 
 export const metadata: Metadata = {

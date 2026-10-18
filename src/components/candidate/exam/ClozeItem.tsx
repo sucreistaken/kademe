@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useLocale } from "next-intl";
+import { isCandidateLocale, dirOf } from "@/i18n/locale";
 import { splitInstruction } from "@/lib/exam/prompt-instruction";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
@@ -17,6 +19,9 @@ import type { ItemProps } from "./ItemView";
 export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
   const t = useT("exam");
   const ti = useT("examItems");
+  // The grid below is German (left to right), so the interface texts inside it say their own language and direction.
+  const uiLocale = useLocale();
+  const ui = isCandidateLocale(uiLocale) ? { lang: uiLocale, dir: dirOf(uiLocale) } : {};
   const root = useRef<HTMLDivElement | null>(null);
   const headingId = useId();
   const panelId = useId();
@@ -94,7 +99,7 @@ export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
           <Instruction text={instruction} />
         </div>
       ) : null}
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+      <div lang="de" className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
         <p lang="de" className="whitespace-pre-line rounded-[14px] border border-line bg-surface p-6 text-[17px] font-medium leading-[2.2] text-ink">
           {parts.map((part, i) => {
             if ("text" in part) return <span key={i}>{part.text}</span>;
@@ -128,6 +133,7 @@ export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
         {openGap && open ? (
           <div id={panelId} className="rounded-[14px] border border-line bg-surface p-5 lg:sticky lg:top-24">
             <h3
+              {...ui}
               ref={heading}
               id={headingId}
               tabIndex={-1}
@@ -136,11 +142,11 @@ export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
               {label(open)}
             </h3>
             {/* Said politely whenever another gap opens: where we are and, for a filled gap, its word. */}
-            <p role="status" className="sr-only">
+            <p {...ui} role="status" className="sr-only">
               {ti("gapOf", { n: place.n, total: place.total })}
               {chosen ? `, ${ti("clozeChosen", { word: chosen })}` : ""}
             </p>
-            <div role="radiogroup" aria-labelledby={headingId} className="mt-3 flex flex-col gap-2">
+            <div role="radiogroup" aria-labelledby={headingId} lang="de" className="mt-3 flex flex-col gap-2">
               {options.map((word, i) => {
                 const on = word === chosen;
                 return (
@@ -172,7 +178,7 @@ export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
                 );
               })}
             </div>
-            <p className="mt-3 text-[12.5px] text-muted">{t("clozeKeys")}</p>
+            <p {...ui} className="mt-3 text-[12.5px] text-muted">{t("clozeKeys")}</p>
           </div>
         ) : null}
       </div>

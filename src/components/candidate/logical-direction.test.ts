@@ -76,8 +76,8 @@ describe("candidate screens use logical direction classes (RTL for Arabic)", () 
     expect(css).toMatch(/:lang\(ar\)\s*\{\s*font-family: var\(--font-noto-arabic\)/);
   });
 
-  it("the Arabic face is not preloaded", () => {
+  it("the Arabic face is not preloaded and brings no Arial fallback that would steal Latin text from Nunito", () => {
     const layout = readFileSync(path.resolve(process.cwd(), "src/app/layout.tsx"), "utf8");
-    expect(layout).toMatch(/Noto_Sans_Arabic\(\{[^}]*subsets: \["arabic"\][^}]*preload: false/);
+    expect(layout).toMatch(/Noto_Sans_Arabic\(\{[^}]*subsets: \["arabic"\][^}]*preload: false[^}]*adjustFontFallback: false/);
   });
 });
