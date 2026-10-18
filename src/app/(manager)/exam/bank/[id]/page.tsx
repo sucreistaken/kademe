@@ -39,7 +39,7 @@ export default async function BankItemPage({ params, searchParams }: { params: P
   if (!row) notFound();
   const { item, stimulus } = row;
   const bt: BankT = (key, values) => t(`bankTools.${key}` as never, values as never);
-  const problems = itemProblems({ type: item.type, prompt: item.prompt, content: item.content, key: item.answerKey, rubric: item.rubric }).map((p) => problemSentence(bt, p));
+  const problems = itemProblems({ type: item.type, prompt: item.prompt, content: item.content, key: item.answerKey, rubric: item.rubric, skillTag: item.skillTag }).map((p) => problemSentence(bt, p));
   const within = withinOf(item.level, item.difficulty);
   const needsAudio = item.section === "LISTENING" && !stimulus?.audioKey;
   const audioUrl = stimulus?.audioKey ? await getStorage().getSignedUrl(stimulus.audioKey, 3600) : null;

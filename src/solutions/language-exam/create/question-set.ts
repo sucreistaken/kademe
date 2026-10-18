@@ -206,6 +206,7 @@ export const questionSetCreator: Creator<QuestionSetParams, QuestionSetDraft> = 
             content: items.content,
             answerKey: items.answerKey,
             rubric: items.rubric,
+            skillTag: items.skillTag,
             section: items.section,
             stimulusId: items.stimulusId,
             status: items.status,
@@ -224,7 +225,7 @@ export const questionSetCreator: Creator<QuestionSetParams, QuestionSetDraft> = 
     for (const id of mayApprove ? approve : []) {
       const r = byId.get(id);
       if (!r || r.status !== "DRAFT") continue;
-      if (validateItem({ type: r.type, prompt: r.prompt, content: r.content, key: r.answerKey, rubric: r.rubric }).length) {
+      if (validateItem({ type: r.type, prompt: r.prompt, content: r.content, key: r.answerKey, rubric: r.rubric, skillTag: r.skillTag }).length) {
         invalid += 1;
         continue;
       }

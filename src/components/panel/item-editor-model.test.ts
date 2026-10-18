@@ -35,6 +35,48 @@ describe("draftFromItem / draftToItem round trip", () => {
   });
 });
 
+describe("MC cloze and word-bank items in the editor (spec 2026-10-18)", () => {
+  const bank = item({
+    type: "GAP_FILL",
+    prompt: "Wir {{g1}} morgen {{g2}} Hamburg.",
+    content: { kind: "GAP", gaps: [{ id: "g1" }, { id: "g2" }] },
+    key: { kind: "GAP", answers: { g1: ["fahren"], g2: ["nach"] }, distractors: ["fährt", "zu", "bei"] },
+    skillTag: "grammar.wordbank",
+  });
+
+  it("a word bank comes back with its distractors and passes the word-bank rules", () => {
+    const d = draftFromItem(bank);
+    expect(d.skillTag).toBe("grammar.wordbank");
+    const back = draftToItem(d);
+    expect(back).toEqual({ type: bank.type, prompt: bank.prompt, content: bank.content, key: bank.key, rubric: null, skillTag: "grammar.wordbank" });
+    expect(itemProblems(back)).toEqual([]);
+    // The payload keeps the pool, so saving does not empty it.
+    expect(saveItemSchema.parse(saveInput(d, null)).key).toEqual(bank.key);
+  });
+
+  it("the word-bank and cloze rules show while editing", () => {
+    const d = draftFromItem(bank);
+    expect(itemProblems(draftToItem({ ...d, distractors: "fährt" })).map((p) => p.code)).toEqual(["WORDBANK_FEW_DISTRACTORS"]);
+    const cloze = draftFromItem(
+      item({
+        type: "GAP_FILL",
+        prompt: "Wir {{g1}} morgen.",
+        content: { kind: "GAP", gaps: [{ id: "g1", choices: ["fahren", "fährt", "fuhr"] }] },
+        key: { kind: "GAP", answers: { g1: ["fahren"] } },
+        skillTag: "grammar.cloze",
+      }),
+    );
+    expect(itemProblems(draftToItem(cloze)).map((p) => p.code)).toEqual(["CLOZE_CHOICE_COUNT"]);
+  });
+
+  it("an item without a skill tag or distractors converts exactly as before", () => {
+    const d = emptyDraft("GAP_FILL", "GRAMMAR", "B1");
+    expect(d.skillTag).toBeNull();
+    expect(d.distractors).toBe("");
+    expect(draftToItem({ ...d, prompt: "Ich warte {{g1}} dich." })).not.toHaveProperty("skillTag");
+  });
+});
+
 describe("an empty draft", () => {
   it("does not pass until the teacher marks the answer", () => {
     const d = emptyDraft("SINGLE_CHOICE", "GRAMMAR", "B1");

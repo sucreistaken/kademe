@@ -77,7 +77,7 @@ export async function setItemStatus(formData: FormData) {
   const row = await ownItem(id, user.orgId);
   if (!row) redirect("/exam/bank");
   if (status === "APPROVED") {
-    const problems = validateItem({ type: row.item.type, prompt: row.item.prompt, content: row.item.content, key: row.item.answerKey, rubric: row.item.rubric });
+    const problems = validateItem({ type: row.item.type, prompt: row.item.prompt, content: row.item.content, key: row.item.answerKey, rubric: row.item.rubric, skillTag: row.item.skillTag });
     if (problems.length) redirect(`/exam/bank/${id}?error=invalid`);
     if (row.item.section === "LISTENING" && !row.stimulus?.audioKey) redirect(`/exam/bank/${id}?error=audio`);
   }

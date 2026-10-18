@@ -138,7 +138,7 @@ export type Presentation = {
    * snapshot's `choices`. The answer is the choice text, so it needs no alias.
    */
   choiceOrder?: Record<string, number[]>;
-  /** C-test: seeds the word-part pool (see ctest-pool.ts), so a reload shows the same pool. */
+  /** C-test and word bank: seeds the pool (see ctest-pool.ts), so a reload shows the same pool. */
   poolSeed?: number;
 };
 
@@ -148,5 +148,53 @@ export type Presentation = {
  * item) or its `cTestLevels` (one per level) is set (see blueprint.ts).
  */
 export const C_TEST_SKILL_TAG = "grammar.ctest";
+/** Skill tag of a multiple-choice cloze text: every gap has exactly four choices (spec 2026-10-18). */
+export const CLOZE_SKILL_TAG = "grammar.cloze";
+/** Skill tag of a word-bank text: whole words from a shared pool, the key's distractors included (spec 2026-10-18). */
+export const WORD_BANK_SKILL_TAG = "grammar.wordbank";
 
+/**
+ * C-test-specific behaviour only: the stem drawn with its gap, the word-part
+ * pool, the teacher accepting a typed gap. Engine code shared by every text
+ * kind uses `isTextGap`.
+ */
 export const isCTest = (item: { skillTag: string }): boolean => item.skillTag === C_TEST_SKILL_TAG;
+
+/**
+ * The kinds of text-gap item. All are GAP_FILL items told apart by skill tag.
+ * None enters automatic item selection; a GRAMMAR section serves them only
+ * through its text plan (blueprint.ts `textPlanOf`).
+ */
+export const TEXT_GAP_KINDS = ["CTEST", "CLOZE", "WORDBANK"] as const;
+export type TextGapKind = (typeof TEXT_GAP_KINDS)[number];
+
+export const TEXT_GAP_SKILL_TAGS: Record<TextGapKind, string> = {
+  CTEST: C_TEST_SKILL_TAG,
+  CLOZE: CLOZE_SKILL_TAG,
+  WORDBANK: WORD_BANK_SKILL_TAG,
+};
+
+export function textGapKindOf(item: { skillTag: string }): TextGapKind | null {
+  switch (item.skillTag) {
+    case C_TEST_SKILL_TAG:
+      return "CTEST";
+    case CLOZE_SKILL_TAG:
+      return "CLOZE";
+    case WORD_BANK_SKILL_TAG:
+      return "WORDBANK";
+    default:
+      return null;
+  }
+}
+
+export const isTextGap = (item: { skillTag: string }): boolean => textGapKindOf(item) !== null;
+
+/**
+ * The words of a word bank's pool, unshuffled: the first accepted answer of
+ * every gap in gap order, then the key's distractors. Empty entries are left
+ * out. Two gaps with the same answer put that word in twice, so each pool word
+ * fills at most one gap and both gaps can still be filled.
+ */
+export function wordBankWords(gapIds: string[], answers: Record<string, string[]>, distractors: string[] = []): string[] {
+  return [...gapIds.map((g) => answers[g]?.[0] ?? ""), ...distractors].filter((w) => w.trim());
+}

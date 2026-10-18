@@ -1,4 +1,5 @@
-import type { ItemContent, ItemKey, ItemRubric, ItemType } from "./types";
+import { typedMatches } from "./item-scoring";
+import { textGapKindOf, type ItemContent, type ItemKey, type ItemRubric, type ItemType } from "./types";
 
 /**
  * Structural checks every item passes before it may enter the bank, whether a
@@ -18,6 +19,8 @@ export type ValidatableItem = {
   content: ItemContent;
   key: ItemKey;
   rubric?: ItemRubric | null;
+  /** Turns on the MC cloze and word-bank rules (`grammar.cloze`, `grammar.wordbank`). Missing: no text rules. */
+  skillTag?: string | null;
 };
 
 export const ITEM_PROBLEM_CODES = [
@@ -47,6 +50,14 @@ export const ITEM_PROBLEM_CODES = [
   "GAP_CHOICE_EMPTY",
   "GAP_ANSWER_NOT_CHOICE",
   "GAP_KEY_UNKNOWN",
+  "GAP_ONE_ANSWER",
+  "CLOZE_CHOICE_COUNT",
+  "WORDBANK_CHOICES",
+  "WORDBANK_ANSWER_NOT_WORD",
+  "WORDBANK_DISTRACTOR_NOT_WORD",
+  "WORDBANK_FEW_DISTRACTORS",
+  "WORDBANK_DISTRACTOR_IS_ANSWER",
+  "WORDBANK_DISTRACTOR_REPEAT",
   "MATCH_FEW_ROWS",
   "MATCH_FEW_TARGETS",
   "MATCH_ROW_NO_TARGET",
@@ -103,6 +114,12 @@ function duplicates(values: string[]): string[] {
 }
 
 const filled = (texts: string[]) => texts.filter((t) => t.trim());
+
+/** Fewest distractors a word bank needs, so the last gap is never a giveaway. */
+export const WORD_BANK_MIN_DISTRACTORS = 3;
+
+/** One whole word: no inner space. */
+const isWholeWord = (w: string) => /^\S+$/u.test(w.trim());
 
 /** The longest typed answer a short text item may allow. */
 export const SHORT_TEXT_MAX_CHARS = 2000;
@@ -170,6 +187,7 @@ export function itemProblems(item: ValidatableItem): ItemProblem[] {
     });
     const unknown = Object.keys(key.answers).filter((id) => !ids.includes(id));
     if (unknown.length) add("GAP_KEY_UNKNOWN", { ids: unknown });
+    textGapProblems(textGapKindOf({ skillTag: item.skillTag ?? "" }), content, key, add);
   }
 
   if (content.kind === "MATCHING" && key.kind === "MATCHING") {
@@ -209,6 +227,47 @@ export function itemProblems(item: ValidatableItem): ItemProblem[] {
   }
 
   return out;
+}
+
+/**
+ * MC cloze and word bank rules (spec 2026-10-18), on top of the gap rules.
+ * Cloze: one answer per gap and exactly four choices that differ even when
+ * read as the scorer reads them (`typedMatches`). Word bank: one whole-word
+ * answer per gap, no choices, at least three whole-word distractors, none
+ * equal to an answer or to another distractor. Two gaps may share an answer:
+ * the pool then holds that word twice (see `wordBankWords`).
+ */
+function textGapProblems(
+  kind: ReturnType<typeof textGapKindOf>,
+  content: Extract<ItemContent, { kind: "GAP" }>,
+  key: Extract<ItemKey, { kind: "GAP" }>,
+  add: (code: ItemProblemCode, extra?: Omit<ItemProblem, "code">) => void,
+) {
+  if (kind !== "CLOZE" && kind !== "WORDBANK") return;
+  content.gaps.forEach((g, i) => {
+    const at = { n: i + 1, ids: [g.id] };
+    const accepted = key.answers[g.id] ?? [];
+    if (accepted.length > 1) add("GAP_ONE_ANSWER", at);
+    if (kind === "CLOZE") {
+      const choices = g.choices ?? [];
+      if (choices.length !== 4) add("CLOZE_CHOICE_COUNT", at);
+      // The plain repeat check already reports texts equal up to case and spaces.
+      else if (!duplicates(filled(choices)).length && choices.some((c, j) => choices.some((d, k) => k > j && typedMatches(c, [d]))))
+        add("GAP_CHOICE_REPEAT", at);
+    } else {
+      if (g.choices) add("WORDBANK_CHOICES", at);
+      if (accepted.some((a) => a.trim() && !isWholeWord(a))) add("WORDBANK_ANSWER_NOT_WORD", at);
+    }
+  });
+  if (kind !== "WORDBANK") return;
+  const distractors = (key.distractors ?? []).filter((d) => d.trim());
+  if (distractors.length < WORD_BANK_MIN_DISTRACTORS) add("WORDBANK_FEW_DISTRACTORS", { detail: String(distractors.length) });
+  const notWords = distractors.filter((d) => !isWholeWord(d));
+  if (notWords.length) add("WORDBANK_DISTRACTOR_NOT_WORD", { ids: notWords });
+  const answers = content.gaps.flatMap((g) => key.answers[g.id] ?? []);
+  const taken = distractors.filter((d) => typedMatches(d, answers));
+  if (taken.length) add("WORDBANK_DISTRACTOR_IS_ANSWER", { ids: taken });
+  if (distractors.some((d, j) => distractors.some((e, k) => k > j && typedMatches(d, [e])))) add("WORDBANK_DISTRACTOR_REPEAT");
 }
 
 const list = (p: ItemProblem) => (p.ids ?? []).join(",");
@@ -269,6 +328,22 @@ export function problemText(p: ItemProblem): string {
       return `gap ${one(p)} answer is not among its choices`;
     case "GAP_KEY_UNKNOWN":
       return `key names unknown gaps ${list(p)}`;
+    case "GAP_ONE_ANSWER":
+      return `gap ${one(p)} needs exactly one answer`;
+    case "CLOZE_CHOICE_COUNT":
+      return `cloze gap ${one(p)} needs exactly four choices`;
+    case "WORDBANK_CHOICES":
+      return `word bank gap ${one(p)} has choices`;
+    case "WORDBANK_ANSWER_NOT_WORD":
+      return `word bank gap ${one(p)} answer is not one whole word`;
+    case "WORDBANK_DISTRACTOR_NOT_WORD":
+      return `word bank distractors are not whole words: ${list(p)}`;
+    case "WORDBANK_FEW_DISTRACTORS":
+      return `a word bank needs at least ${WORD_BANK_MIN_DISTRACTORS} distractors`;
+    case "WORDBANK_DISTRACTOR_IS_ANSWER":
+      return `word bank distractors equal an answer: ${list(p)}`;
+    case "WORDBANK_DISTRACTOR_REPEAT":
+      return "word bank distractors repeat";
     case "MATCH_FEW_ROWS":
       return "matching needs at least two rows";
     case "MATCH_FEW_TARGETS":

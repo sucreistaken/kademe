@@ -1,5 +1,5 @@
 import { hasAnswer, typedMatches } from "@/lib/exam/item-scoring";
-import type { ItemAnswer, ItemSnapshot } from "@/lib/exam/types";
+import { textGapKindOf, type ItemAnswer, type ItemSnapshot } from "@/lib/exam/types";
 
 /**
  * What the teacher's item table shows for one served item, as data. The
@@ -100,9 +100,13 @@ export function canAcceptAsCorrect(r: { itemSnapshot: ItemSnapshot; answer: Item
 /**
  * One gap the teacher may accept: it is typed (an empty gap can never be
  * accepted), the key does not already take it, and it was not accepted before.
+ * An MC cloze or word-bank gap never: the student picked a given option, and
+ * accepting a wrong one would score a guess.
  */
 export function canAcceptGap(s: ItemSnapshot, a: ItemAnswer | null, gapId: string, acceptedGaps: readonly string[] = []): boolean {
   if (s.type !== "GAP_FILL" || s.key.kind !== "GAP" || !(gapId in s.key.answers)) return false;
+  const kind = textGapKindOf(s);
+  if (kind === "CLOZE" || kind === "WORDBANK") return false;
   const given = a?.gaps?.[gapId] ?? "";
   return given.trim().length > 0 && !typedMatches(given, s.key.answers[gapId]) && !acceptedGaps.includes(gapId);
 }

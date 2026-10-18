@@ -112,10 +112,13 @@ export async function saveBankItem(user: SessionUser, input: SaveItemInput): Pro
 
   if (input.id) {
     const [row] = await db
-      .select({ id: items.id, type: items.type, section: items.section, level: items.level, difficulty: items.difficulty, status: items.status })
+      .select({ id: items.id, type: items.type, section: items.section, level: items.level, difficulty: items.difficulty, status: items.status, skillTag: items.skillTag })
       .from(items)
       .where(and(eq(items.id, input.id), eq(items.orgId, user.orgId)));
     if (!row) return { ok: false, code: "NOT_FOUND" };
+    // The stored skill tag adds the cloze and word-bank rules; the browser never sets it.
+    const textProblems = itemProblems({ ...candidate, skillTag: row.skillTag });
+    if (textProblems.length) return { ok: false, code: "INVALID", problems: textProblems };
     if (row.type !== input.type || row.section !== input.section) return { ok: false, code: "LOCKED" };
     if (row.status === "APPROVED" && !can(user, "bank:approve")) return { ok: false, code: "NO_RIGHT" };
     // A calibrated value survives a save that leaves level and word alone.
@@ -220,6 +223,7 @@ export async function bulkApproveItems(user: Pick<SessionUser, "id" | "orgId">, 
       content: items.content,
       answerKey: items.answerKey,
       rubric: items.rubric,
+      skillTag: items.skillTag,
       status: items.status,
       audioKey: stimuli.audioKey,
     })
@@ -233,7 +237,7 @@ export async function bulkApproveItems(user: Pick<SessionUser, "id" | "orgId">, 
       result.skipped += 1;
       continue;
     }
-    if (itemProblems({ type: r.type, prompt: r.prompt, content: r.content, key: r.answerKey, rubric: r.rubric }).length) {
+    if (itemProblems({ type: r.type, prompt: r.prompt, content: r.content, key: r.answerKey, rubric: r.rubric, skillTag: r.skillTag }).length) {
       result.invalid += 1;
       continue;
     }

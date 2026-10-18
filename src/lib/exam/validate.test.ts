@@ -92,3 +92,77 @@ describe("every problem has its sentence in both languages", () => {
     expect(en[key], key).toBeTruthy();
   });
 });
+
+describe("validateItem: MC cloze and word bank (spec 2026-10-18)", () => {
+  const prompt = "Ich {{g1}} gestern {{g2}} Berlin gefahren.";
+  const cloze = (gaps: Array<{ id: string; choices?: string[] }>, answers: Record<string, string[]>): ValidatableItem => ({
+    type: "GAP_FILL",
+    prompt,
+    content: { kind: "GAP", gaps },
+    key: { kind: "GAP", answers },
+    skillTag: "grammar.cloze",
+  });
+  const four = (first: string) => [first, "habe", "war", "wurde"];
+  const okCloze = () => cloze([{ id: "g1", choices: four("bin") }, { id: "g2", choices: ["nach", "in", "zu", "bei"] }], { g1: ["bin"], g2: ["nach"] });
+  const bank = (distractors: string[] | undefined, answers: Record<string, string[]> = { g1: ["bin"], g2: ["nach"] }, gaps: Array<{ id: string; choices?: string[] }> = [{ id: "g1" }, { id: "g2" }]): ValidatableItem => ({
+    type: "GAP_FILL",
+    prompt,
+    content: { kind: "GAP", gaps },
+    key: { kind: "GAP", answers, ...(distractors ? { distractors } : {}) },
+    skillTag: "grammar.wordbank",
+  });
+
+  it("passes a sound cloze and a sound word bank", () => {
+    expect(itemProblems(okCloze())).toEqual([]);
+    expect(itemProblems(bank(["habe", "in", "zu"]))).toEqual([]);
+  });
+
+  it("cloze: every gap has exactly four choices", () => {
+    expect(itemProblems(cloze([{ id: "g1", choices: ["bin", "habe", "war"] }, { id: "g2", choices: ["nach", "in", "zu", "bei"] }], { g1: ["bin"], g2: ["nach"] }))).toEqual([
+      { code: "CLOZE_CHOICE_COUNT", n: 1, ids: ["g1"] },
+    ]);
+    expect(codes(cloze([{ id: "g1", choices: [...four("bin"), "ist"] }, { id: "g2", choices: ["nach", "in", "zu", "bei"] }], { g1: ["bin"], g2: ["nach"] }))).toEqual(["CLOZE_CHOICE_COUNT"]);
+    expect(codes(cloze([{ id: "g1" }, { id: "g2", choices: ["nach", "in", "zu", "bei"] }], { g1: ["bin"], g2: ["nach"] }))).toEqual(["CLOZE_CHOICE_COUNT"]);
+  });
+
+  it("cloze: the choices differ as the scorer reads them, the answer is one of them, one answer per gap", () => {
+    // "dass" and "daß" are one answer for the scorer.
+    expect(codes(cloze([{ id: "g1", choices: ["dass", "daß", "ob", "wenn"] }, { id: "g2", choices: ["nach", "in", "zu", "bei"] }], { g1: ["dass"], g2: ["nach"] }))).toEqual(["GAP_CHOICE_REPEAT"]);
+    expect(codes(cloze([{ id: "g1", choices: ["Bin", "bin", "war", "habe"] }, { id: "g2", choices: ["nach", "in", "zu", "bei"] }], { g1: ["bin"], g2: ["nach"] }))).toEqual(["GAP_CHOICE_REPEAT"]);
+    expect(codes(cloze([{ id: "g1", choices: four("bin") }, { id: "g2", choices: ["nach", "in", "zu", "bei"] }], { g1: ["ist"], g2: ["nach"] }))).toEqual(["GAP_ANSWER_NOT_CHOICE"]);
+    expect(codes(cloze([{ id: "g1", choices: four("bin") }, { id: "g2", choices: ["nach", "in", "zu", "bei"] }], { g1: ["bin", "war"], g2: ["nach"] }))).toEqual(["GAP_ONE_ANSWER"]);
+  });
+
+  it("word bank: no choices, one whole word per gap", () => {
+    expect(codes(bank(["habe", "in", "zu"], undefined, [{ id: "g1", choices: four("bin") }, { id: "g2" }]))).toEqual(["WORDBANK_CHOICES"]);
+    expect(codes(bank(["habe", "in", "zu"], { g1: ["bin", "war"], g2: ["nach"] }))).toEqual(["GAP_ONE_ANSWER"]);
+    expect(itemProblems(bank(["habe", "in", "zu"], { g1: ["bin"], g2: ["nach dem"] }))).toEqual([{ code: "WORDBANK_ANSWER_NOT_WORD", n: 2, ids: ["g2"] }]);
+  });
+
+  it("word bank: at least three whole-word distractors, none an answer, none twice", () => {
+    expect(codes(bank(undefined))).toEqual(["WORDBANK_FEW_DISTRACTORS"]);
+    expect(codes(bank(["habe", "in", " "]))).toEqual(["WORDBANK_FEW_DISTRACTORS"]);
+    expect(itemProblems(bank(["habe", "in", "zu dem"]))).toEqual([{ code: "WORDBANK_DISTRACTOR_NOT_WORD", ids: ["zu dem"] }]);
+    // Read as the scorer reads them: case, ß and a trailing full stop do not make a new word.
+    expect(itemProblems(bank(["habe", "in", "Nach."]))).toEqual([{ code: "WORDBANK_DISTRACTOR_IS_ANSWER", ids: ["Nach."] }]);
+    expect(codes(bank(["Strasse", "in", "zu"], { g1: ["bin"], g2: ["Straße"] }))).toEqual(["WORDBANK_DISTRACTOR_IS_ANSWER"]);
+    expect(codes(bank(["habe", "in", "zu", "Zu"]))).toEqual(["WORDBANK_DISTRACTOR_REPEAT"]);
+  });
+
+  it("word bank: two gaps may share an answer (the pool then holds it twice)", () => {
+    expect(itemProblems(bank(["habe", "in", "zu"], { g1: ["nach"], g2: ["nach"] }))).toEqual([]);
+  });
+
+  it("without the skill tag the same items keep the plain gap rules (C-tests and old items are unchanged)", () => {
+    const plainCloze = { ...cloze([{ id: "g1", choices: ["bin", "habe", "war"] }, { id: "g2", choices: ["nach", "in", "zu", "bei"] }], { g1: ["bin", "war"], g2: ["nach"] }), skillTag: undefined };
+    expect(itemProblems(plainCloze)).toEqual([]);
+    const plainBank = { ...bank(undefined, { g1: ["bin"], g2: ["nach dem"] }), skillTag: null };
+    expect(itemProblems(plainBank)).toEqual([]);
+    expect(itemProblems({ ...plainBank, skillTag: "grammar.ctest" })).toEqual([]);
+  });
+
+  it("says each new problem in English for the engine", () => {
+    expect(validateItem(bank(["habe"]))).toEqual(["a word bank needs at least 3 distractors"]);
+    expect(validateItem(cloze([{ id: "g1" }, { id: "g2", choices: ["nach", "in", "zu", "bei"] }], { g1: ["bin"], g2: ["nach"] }))).toEqual(["cloze gap g1 needs exactly four choices"]);
+  });
+});

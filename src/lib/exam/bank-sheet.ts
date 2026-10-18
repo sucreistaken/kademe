@@ -29,7 +29,10 @@ import { gapMarkers, itemProblems, type ItemProblem } from "./validate";
  *               true/false: R / F / NG per statement ("R, F, NG"); gap fill:
  *               the answer per gap, gaps split by ";", spellings by "|";
  *               short text: accepted answers split by "|".
- *   explanation, skill   optional.
+ *   distractors gap fill only, optional: the key's wrong words split by "|",
+ *               the word-bank pool (skill grammar.wordbank) or C-test decoys.
+ *   explanation, skill   optional. The skill grammar.cloze or grammar.wordbank
+ *               turns on that text kind's rules (validate.ts).
  */
 
 export const OPTION_COLUMNS = ["a", "b", "c", "d", "e", "f", "g", "h"] as const;
@@ -45,6 +48,7 @@ export const SHEET_COLUMNS = [
   "question",
   ...OPTION_COLUMNS,
   "answer",
+  "distractors",
   "explanation",
   "skill",
 ] as const;
@@ -141,6 +145,7 @@ const HEADER_ALIASES: Record<SheetColumn, string[]> = {
   g: [],
   h: [],
   answer: ["answer", "cevap", "dogrucevap", "yanit", "key", "anahtar", "losung", "antwort"],
+  distractors: ["distractors", "distractor", "celdirici", "celdiriciler", "distraktoren"],
   explanation: ["explanation", "aciklama", "erklarung", "note", "not"],
   skill: ["skill", "skilltag", "beceri etiketi", "etiket", "tag"],
 };
@@ -392,7 +397,12 @@ export function rowToItem(row: SheetRow): { item: RowItem | null; issues: RowIss
         const parts = answer.split(/;|\n/).map((p) => p.trim());
         while (parts.length > ids.length && parts[parts.length - 1] === "") parts.pop();
         if (parts.length !== ids.length) issues.push(rowIssue("GAP_ANSWER_COUNT", { expected: ids.length, got: parts.length }));
-        key = { kind: "GAP", answers: Object.fromEntries(ids.map((id, i) => [id, splitAlternatives(parts[i] ?? "")])) };
+        const distractors = splitAlternatives(cell(row, "distractors"));
+        key = {
+          kind: "GAP",
+          answers: Object.fromEntries(ids.map((id, i) => [id, splitAlternatives(parts[i] ?? "")])),
+          ...(distractors.length ? { distractors } : {}),
+        };
       }
       break;
     }

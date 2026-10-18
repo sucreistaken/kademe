@@ -5,6 +5,7 @@ import { makePresentation, toCandidateItem, unalias } from "./safe";
 import {
   choiceAnswer,
   gapPrompt,
+  headerColumn,
   issueMessage,
   planImport,
   readSheet,
@@ -90,6 +91,28 @@ describe("rowToItem, per type", () => {
     const r = rowToItem(row({ type: "boşluk doldurma", question: "Kannst du mir ___ Buch geben?", a: "das | den | dem", answer: "das" }));
     expect(r.item?.content).toEqual({ kind: "GAP", gaps: [{ id: "g1", choices: ["das", "den", "dem"] }] });
     expect(codes(rowToItem(row({ type: "GAP_FILL", question: "Kannst du mir ___ Buch geben?", a: "das / den / dem", answer: "die" })))).toEqual(["GAP_ANSWER_NOT_CHOICE"]);
+  });
+
+  it("MC cloze (skill grammar.cloze): four choices per gap column, the cloze rules apply", () => {
+    const cells = { type: "GAP_FILL", skill: "grammar.cloze", question: "Wir ___ morgen ___ Hamburg.", a: "fahren | fährt | fuhr | gefahren", b: "nach | in | zu | bei", answer: "fahren; nach" };
+    const r = rowToItem(row(cells));
+    expect(r.issues).toEqual([]);
+    expect(r.item?.skillTag).toBe("grammar.cloze");
+    expect(r.item?.content).toEqual({ kind: "GAP", gaps: [{ id: "g1", choices: ["fahren", "fährt", "fuhr", "gefahren"] }, { id: "g2", choices: ["nach", "in", "zu", "bei"] }] });
+    expect(codes(rowToItem(row({ ...cells, b: "nach | in | zu" })))).toEqual(["CLOZE_CHOICE_COUNT"]);
+  });
+
+  it("word bank (skill grammar.wordbank): the distractors column fills the key's pool, the word-bank rules apply", () => {
+    expect(headerColumn("Çeldiriciler")).toBe("distractors");
+    expect(headerColumn("distractors")).toBe("distractors");
+    const cells = { type: "GAP_FILL", skill: "grammar.wordbank", question: "Wir ___ morgen ___ Hamburg.", answer: "fahren; nach", distractors: "fährt | zu | bei" };
+    const r = rowToItem(row(cells));
+    expect(r.issues).toEqual([]);
+    expect(r.item?.key).toEqual({ kind: "GAP", answers: { g1: ["fahren"], g2: ["nach"] }, distractors: ["fährt", "zu", "bei"] });
+    expect(codes(rowToItem(row({ ...cells, distractors: "fährt | zu" })))).toEqual(["WORDBANK_FEW_DISTRACTORS"]);
+    expect(codes(rowToItem(row({ ...cells, distractors: "" })))).toEqual(["WORDBANK_FEW_DISTRACTORS"]);
+    // An ordinary gap row keeps its key as before.
+    expect(rowToItem(row({ type: "GAP_FILL", question: "Ich warte ___ dich.", answer: "auf" })).item?.key).toEqual({ kind: "GAP", answers: { g1: ["auf"] } });
   });
 
   it("matching: row = target per cell, = target for an extra target, shared targets kept once", () => {

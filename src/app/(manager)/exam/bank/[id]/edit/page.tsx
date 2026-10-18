@@ -31,6 +31,7 @@ export default async function EditBankItemPage({ params }: { params: Promise<{ i
     key: item.answerKey,
     rubric: item.rubric,
     explanation: item.explanation,
+    skillTag: item.skillTag,
   });
   return (
     <main className="mx-auto w-full max-w-[1080px] px-page pt-6">

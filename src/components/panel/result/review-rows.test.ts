@@ -149,6 +149,13 @@ describe("per-gap acceptance", () => {
     expect(canAcceptGap(short, { text: "x" }, "g1")).toBe(false);
     expect(gapScore(gap, { gaps: { g1: " " } }, ["g1"])).toBe(0);
   });
+  it("an MC cloze or word-bank gap is never accepted: the student picked a given option; a C-test gap still is", () => {
+    const one = { ...gap, content: { kind: "GAP", gaps: [{ id: "g1" }] }, key: { kind: "GAP", answers: { g1: ["dem"] } } } as ItemSnapshot;
+    const a = { gaps: { g1: "den" } };
+    expect(canAcceptGap({ ...one, skillTag: "grammar.cloze" }, a, "g1")).toBe(false);
+    expect(canAcceptGap({ ...one, skillTag: "grammar.wordbank" }, a, "g1")).toBe(false);
+    expect(canAcceptGap({ ...one, skillTag: "grammar.ctest" }, a, "g1")).toBe(true);
+  });
   it("the row view marks accepted gaps", () => {
     const v = reviewRows(gap, { gaps: { g1: "x", g2: "" } }, ["g1", "g2"])!;
     expect(v.rows.map((r) => r.mark)).toEqual(["accepted", "blank"]);

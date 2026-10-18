@@ -24,6 +24,16 @@ export type EditorDraft = {
   statements: Array<{ id: string; text: string; answer: TfngValue | "" }>;
   /** Gap fill, in the order of the markers in the prompt. Spellings and choices are "|" separated. */
   gaps: Array<{ id: string; mode: "typed" | "choice"; accepted: string; choices: string }>;
+  /**
+   * Gap fill: the key's distractors ("|" separated), kept so saving a C-test
+   * or word bank does not drop its pool. Not edited in the form yet.
+   */
+  distractors: string;
+  /**
+   * The stored item's skill tag, read only: it turns on the cloze and word-bank
+   * rules in `itemProblems`. Null for a new item.
+   */
+  skillTag: string | null;
   /** Matching: rows with the id of their target, and the targets. */
   rows: Array<{ id: string; text: string; target: string }>;
   targets: Array<{ id: string; text: string }>;
@@ -71,6 +81,8 @@ export function emptyDraft(type: ItemType, section: Section, level: Cefr): Edito
     options: ["a", "b", "c", "d"].map((id) => ({ id, text: "", correct: false })),
     statements: ["s1", "s2", "s3"].map((id) => ({ id, text: "", answer: "" as const })),
     gaps: [],
+    distractors: "",
+    skillTag: null,
     rows: ["l1", "l2", "l3"].map((id) => ({ id, text: "", target: "" })),
     targets: ["r1", "r2", "r3", "r4"].map((id) => ({ id, text: "" })),
     accepted: "",
@@ -97,6 +109,8 @@ export type EditableItem = {
   key: ItemKey;
   rubric: ItemRubric | null;
   explanation: string | null;
+  /** Optional so callers without it keep working; see EditorDraft.skillTag. */
+  skillTag?: string | null;
 };
 
 export function draftFromItem(item: EditableItem): EditorDraft {
@@ -104,6 +118,7 @@ export function draftFromItem(item: EditableItem): EditorDraft {
   d.within = withinOf(item.level, item.difficulty);
   d.prompt = item.prompt;
   d.explanation = item.explanation ?? "";
+  d.skillTag = item.skillTag ?? null;
   const { content, key } = item;
   if (content.kind === "CHOICE") {
     const correct = key.kind === "CHOICE" ? key.correct : [];
@@ -116,6 +131,7 @@ export function draftFromItem(item: EditableItem): EditorDraft {
   if (content.kind === "GAP") {
     const answers = key.kind === "GAP" ? key.answers : {};
     d.gaps = content.gaps.map((g) => ({ id: g.id, mode: g.choices ? "choice" : "typed", accepted: joinBar(answers[g.id]), choices: joinBar(g.choices) }));
+    d.distractors = key.kind === "GAP" ? joinBar(key.distractors) : "";
   }
   if (content.kind === "MATCHING") {
     const pairs = key.kind === "MATCHING" ? key.pairs : {};
@@ -173,12 +189,14 @@ export function draftToItem(d: EditorDraft): ValidatableItem & { rubric: ItemRub
       };
     case "GAP_FILL": {
       const gaps = syncGaps(prompt, d.gaps);
+      const distractors = splitBar(d.distractors);
       return {
         type: d.type,
         prompt,
         content: { kind: "GAP", gaps: gaps.map((g) => (g.mode === "choice" ? { id: g.id, choices: splitBar(g.choices) } : { id: g.id })) },
-        key: { kind: "GAP", answers: Object.fromEntries(gaps.map((g) => [g.id, splitBar(g.accepted)])) },
+        key: { kind: "GAP", answers: Object.fromEntries(gaps.map((g) => [g.id, splitBar(g.accepted)])), ...(distractors.length ? { distractors } : {}) },
         rubric: null,
+        ...(d.skillTag ? { skillTag: d.skillTag } : {}),
       };
     }
     case "MATCHING":
