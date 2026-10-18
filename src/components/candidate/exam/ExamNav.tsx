@@ -255,6 +255,7 @@ export function ConfirmDialog({
   title,
   body,
   confirmLabel,
+  cancelLabel,
   busy,
   onConfirm,
   onCancel,
@@ -263,6 +264,8 @@ export function ConfirmDialog({
   title: string;
   body: string;
   confirmLabel: string;
+  /** Says where the safe choice leads ("Back to the exam"); the plain "Cancel" when omitted. */
+  cancelLabel?: string;
   busy: boolean;
   onConfirm: () => void;
   onCancel: () => void;
@@ -275,7 +278,7 @@ export function ConfirmDialog({
         <DialogDescription className="mt-2 text-[14.5px] leading-[1.6] text-ink-2">{body}</DialogDescription>
         <div className="mt-6 flex flex-wrap justify-end gap-3">
           <button type="button" onClick={onCancel} className={buttonVariants({ variant: "secondary", size: "lg" })}>
-            {n("cancel")}
+            {cancelLabel ?? n("cancel")}
           </button>
           <button
             type="button"

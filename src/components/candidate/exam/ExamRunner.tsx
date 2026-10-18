@@ -18,6 +18,7 @@ import { WarmupOffer, WarmupPractice } from "@/components/candidate/exam/warmup/
 import { INITIAL_WARMUP, warmupReduce, type WarmupAction, type WarmupState } from "@/components/candidate/exam/warmup/warmup-state";
 import { PRACTICE } from "@/components/candidate/exam/warmup/practice-data";
 import { ConfirmDialog, NavStrip, ReviewScreen, reviewCounts } from "@/components/candidate/exam/ExamNav";
+import { finishSummaryParts } from "@/components/candidate/exam/finish-summary";
 import { clearPending, readPending, sessionStore, writePending, type PendingAnswer } from "@/components/candidate/exam/pending-answer";
 import { leavesGroup, memberRange, memberSequences, nextAfterGroup, prevBeforeGroup } from "@/components/candidate/exam/groups";
 import { StepFooter } from "@/components/visual/step-footer";
@@ -471,6 +472,11 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
   const flaggedAt = (sequence: number) => entries.some((e) => e.sequence === sequence && e.flagged);
   const flaggedHere = !!item && flaggedAt(item.sequence);
   const counts = reviewCounts(entries);
+  const finishParts = finishSummaryParts(counts);
+  const finishLeft = finishParts.length
+    ? `${finishParts.map(({ part, count }) => n(part === "empty" ? "confirmFinishEmpty" : part === "partial" ? "confirmFinishPartial" : "confirmFinishFlagged", { count })).join(", ")}.`
+    : n("confirmFinishAllDone");
+  const finishBody = `${finishLeft} ${n("confirmFinishNoReturn")}`;
   const inputsOff = busy || timeUp;
   // The two-column views (reading text, listening group) outgrow the 1000px column of every other screen.
   const wideReading = state.step === "ITEM" && !nav?.review && (item?.stimulus?.kind === "READING" || !!group);
@@ -898,8 +904,9 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
       <ConfirmDialog
         open={confirm === "finish"}
         title={n("confirmFinishTitle")}
-        body={n("confirmFinishBody", { empty: counts.empty, partial: counts.partial, flagged: counts.flagged })}
-        confirmLabel={n("confirmFinishYes")}
+        body={finishBody}
+        confirmLabel={n(cur && cur.position >= cur.total ? "confirmFinishYesLast" : "confirmFinishYes")}
+        cancelLabel={n("confirmBackToExam")}
         busy={busy}
         onCancel={() => setConfirm(null)}
         onConfirm={() => {
@@ -912,6 +919,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
         title={n("confirmSkipTitle")}
         body={n("confirmSkipBody")}
         confirmLabel={n("confirmSkipYes")}
+        cancelLabel={n("confirmBackToQuestion")}
         busy={busy}
         onCancel={() => setConfirm(null)}
         onConfirm={() => {
@@ -924,6 +932,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
         title={n("confirmPartialTitle")}
         body={n("confirmPartialBody", { filled: progress?.filled ?? 0, total: progress?.total ?? 0 })}
         confirmLabel={n("confirmPartialYes")}
+        cancelLabel={n("confirmBackToQuestion")}
         busy={busy}
         onCancel={() => setConfirm(null)}
         onConfirm={() => {
