@@ -101,8 +101,8 @@ describe("cloze item", () => {
     const html = render(item, { gaps: { g1: "falsch", g2: "anders" } });
     expect(html).toContain("gapLabel(3)");
     // The two filled gaps show the chosen word in the text.
-    expect(html).toMatch(/data-cloze-gap="g1"[^>]*>falsch<\/button>/);
-    expect(html).toMatch(/data-cloze-gap="g2"[^>]*>anders<\/button>/);
+    expect(html).toMatch(/data-cloze-gap="g1"[^>]*><span lang="de">falsch<\/span><\/button>/);
+    expect(html).toMatch(/data-cloze-gap="g2"[^>]*><span lang="de">anders<\/span><\/button>/);
     expect(html).toMatch(/data-cloze-gap="g3"[^>]*>3<\/button>/);
   });
 
@@ -133,6 +133,48 @@ describe("cloze item", () => {
     const html = render(cloze(12));
     expect(html).toContain("lg:grid-cols-");
     expect(html).toContain("lg:sticky");
+  });
+});
+
+describe("cloze keyboard and announcements", () => {
+  it("announces the open gap politely, with its place in the text", () => {
+    const html = render(cloze(12), { gaps: { g1: "falsch" } });
+    expect(html).toMatch(/<p role="status" class="sr-only">gapOf\(2,12\)<\/p>/);
+  });
+
+  it("adds the chosen word to the announcement when a filled gap is open", () => {
+    const item = cloze(3);
+    const word = item.content.kind === "GAP" ? item.content.gaps[0].choices![1] : "";
+    const html = render(item, { gaps: { g1: word, g2: "anders", g3: "kurz" } });
+    // Everything is filled and nothing was clicked, so gap 1 is open.
+    expect(html).toContain(`gapOf(1,3), clozeChosen(${word})`);
+  });
+
+  it("links every gap to the option panel and makes the panel focusable by script", () => {
+    const html = render(cloze(2));
+    const panelId = html.match(/<div id="([^"]+)" class="rounded-\[14px\][^"]*lg:sticky/)?.[1];
+    expect(panelId).toBeTruthy();
+    expect((html.match(new RegExp(`aria-controls="${panelId}"`, "g")) ?? []).length).toBe(2);
+    expect(html).toMatch(/<h3[^>]*tabindex="-1"/);
+  });
+
+  it("does not bind arrow keys to a pick: options carry no radioKeys handler, only a Tab stop on one option", () => {
+    const html = render(cloze(2));
+    const panel = html.slice(html.indexOf('role="radiogroup"'));
+    expect((panel.match(/tabindex="0"/g) ?? []).length).toBe(1);
+    expect((panel.match(/tabindex="-1"/g) ?? []).length).toBe(3);
+  });
+
+  it("keeps a Tab stop when the saved word is not among the options (stale draft)", () => {
+    const html = render(cloze(2), { gaps: { g1: "nicht dabei" } });
+    const panel = html.slice(html.indexOf('role="radiogroup"'));
+    expect((panel.match(/tabindex="0"/g) ?? []).length).toBe(1);
+  });
+
+  it("puts German only on the visible word of a gap, not on its Turkish or English label", () => {
+    const html = render(cloze(2), { gaps: { g1: "falsch" } });
+    expect(html).not.toMatch(/<button[^>]*lang="de"[^>]*data-cloze-gap/);
+    expect(html).not.toMatch(/<button[^>]*data-cloze-gap[^>]*lang="de"/);
   });
 });
 
@@ -174,6 +216,28 @@ describe("word-bank item", () => {
     const tray = html.slice(html.indexOf('aria-label="wordPool"'));
     expect(tray).not.toContain(">heiße</button>");
     expect((tray.match(/cursor-grab/g) ?? []).length).toBe(6);
+  });
+
+  it("a word that fits two gaps is two identical chips; placing it once leaves one chip", () => {
+    const twice = toCandidateItem(
+      snapshot(
+        WORD_BANK_SKILL_TAG,
+        "Setzen Sie die passenden Wörter in die Lücken ein.\n\nIch gehe {{g1}} Hause und du gehst {{g2}} Hause. Dann essen wir {{g3}}.",
+        { kind: "GAP", gaps: [{ id: "g1" }, { id: "g2" }, { id: "g3" }] },
+        { kind: "GAP", answers: { g1: ["nach"], g2: ["nach"], g3: ["Brot"] }, distractors: ["Hund", "blau", "gestern"] },
+      ),
+      {},
+      null,
+      1,
+      { maxPlays: 0 },
+    );
+    const chips = (html: string) => [...html.slice(html.indexOf('aria-label="wordPool"')).matchAll(/cursor-grab[^>]*>([^<]+)<\/button>/g)].map((m) => m[1]);
+    expect(chips(render(twice)).filter((w) => w === "nach")).toHaveLength(2);
+    const once = render(twice, { gaps: { g1: "nach" } });
+    expect(chips(once).filter((w) => w === "nach")).toHaveLength(1);
+    expect(once).toMatch(/data-gap-slot="g1"[^>]*>nach<\/button>/);
+    const both = render(twice, { gaps: { g1: "nach", g2: "nach" } });
+    expect(chips(both).filter((w) => w === "nach")).toHaveLength(0);
   });
 
   it("serves the pool without telling which word fits which gap", () => {

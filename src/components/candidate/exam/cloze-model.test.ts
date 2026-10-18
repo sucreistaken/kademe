@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activeGap, clozeParts, gapOrder, nextAfterPick, optionOfKey } from "./cloze-model";
+import { activeGap, clickedFor, clozeParts, focusTarget, gapOrder, gapPosition, nextAfterPick, optionOfKey, tabStop } from "./cloze-model";
 
 const ORDER = ["g1", "g2", "g3", "g4"];
 
@@ -70,5 +70,45 @@ describe("option keys", () => {
   it("ignores every other key and a place the gap does not have", () => {
     for (const k of ["0", "5", "a", "Enter", "ArrowDown", "11", ""]) expect(optionOfKey(k, 4), k).toBeNull();
     expect(optionOfKey("4", 3)).toBeNull();
+  });
+});
+
+describe("a click belongs to its question", () => {
+  it("is used on the question it was made on and ignored on any other, so a new text opens on its first empty gap", () => {
+    const clicked = { sequence: 3, gapId: "g6" };
+    expect(clickedFor(clicked, 3)).toBe("g6");
+    expect(clickedFor(clicked, 4)).toBeNull();
+    expect(clickedFor(null, 3)).toBeNull();
+    // Gap ids repeat from text to text (g1..gN): the next text must not inherit "g6".
+    expect(activeGap(ORDER, {}, clickedFor(clicked, 4))).toBe("g1");
+  });
+});
+
+describe("where the student is", () => {
+  it("is the place of the open gap in the text and the number of gaps", () => {
+    expect(gapPosition(ORDER, "g3")).toEqual({ n: 3, total: 4 });
+    expect(gapPosition(ORDER, null)).toEqual({ n: 0, total: 4 });
+  });
+});
+
+describe("arrow keys on the options", () => {
+  it("only move focus, wrapping round, and Home and End jump", () => {
+    expect(focusTarget("ArrowDown", 0, 4)).toBe(1);
+    expect(focusTarget("ArrowRight", 3, 4)).toBe(0);
+    expect(focusTarget("ArrowUp", 0, 4)).toBe(3);
+    expect(focusTarget("ArrowLeft", 2, 4)).toBe(1);
+    expect(focusTarget("Home", 2, 4)).toBe(0);
+    expect(focusTarget("End", 1, 4)).toBe(3);
+  });
+
+  it("leave Enter, Space, digits and every other key alone, so they keep picking (or doing nothing) natively", () => {
+    for (const k of ["Enter", " ", "1", "Tab", "a"]) expect(focusTarget(k, 1, 4), k).toBeNull();
+    expect(focusTarget("ArrowDown", 0, 0)).toBeNull();
+  });
+
+  it("keep one Tab stop: the picked word, or the first when the saved word is not an option", () => {
+    expect(tabStop(["a", "b", "c", "d"], "c")).toBe(2);
+    expect(tabStop(["a", "b", "c", "d"], "")).toBe(0);
+    expect(tabStop(["a", "b", "c", "d"], "zzz")).toBe(0);
   });
 });

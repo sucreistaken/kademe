@@ -844,6 +844,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
                         ) : null}
                       </h2>
                       <ItemView
+                        key={g.sequence}
                         item={g}
                         answer={answers[g.sequence] ?? {}}
                         onChange={(a) => change(a, g.sequence)}
@@ -904,7 +905,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
                     engine={engine}
                   />
                 ) : (
-                  <ItemView item={item} answer={answer} onChange={change} disabled={inputsOff} />
+                  <ItemView key={item.sequence} item={item} answer={answer} onChange={change} disabled={inputsOff} />
                 )}
               </div>
             </div>

@@ -30,6 +30,48 @@ export function gapOrder(parts: ReturnType<typeof clozeParts>, known: ReadonlySe
   return order;
 }
 
+/** The gap id the student clicked, tagged with the question it was clicked on. */
+export type ClickedGap = { sequence: number; gapId: string } | null;
+
+/** A click on another question is not this question's click: a new text opens on its first empty gap. */
+export function clickedFor(clicked: ClickedGap, sequence: number): string | null {
+  return clicked && clicked.sequence === sequence ? clicked.gapId : null;
+}
+
+/** "Gap 3 of 12": the open gap's place in the text. 0 when the gap is not in the text. */
+export function gapPosition(order: readonly string[], id: string | null): { n: number; total: number } {
+  return { n: id ? order.indexOf(id) + 1 : 0, total: order.length };
+}
+
+/**
+ * Where an arrow key moves focus among the options of the open gap, or null for
+ * any other key. Arrows only move focus; they never pick (Enter, Space, a click
+ * or keys 1-4 pick), so browsing the words cannot answer a gap.
+ */
+export function focusTarget(key: string, at: number, count: number): number | null {
+  if (count <= 0) return null;
+  switch (key) {
+    case "ArrowDown":
+    case "ArrowRight":
+      return (at + 1) % count;
+    case "ArrowUp":
+    case "ArrowLeft":
+      return (at - 1 + count) % count;
+    case "Home":
+      return 0;
+    case "End":
+      return count - 1;
+    default:
+      return null;
+  }
+}
+
+/** The option that takes the Tab stop: the picked word, or the first when the saved word is not one of the options. */
+export function tabStop(options: readonly string[], chosen: string): number {
+  const at = options.indexOf(chosen);
+  return at >= 0 ? at : 0;
+}
+
 const isFilled = (gaps: Record<string, string> | undefined, id: string) => !!gaps?.[id]?.trim();
 
 /**

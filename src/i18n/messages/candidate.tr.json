@@ -1011,6 +1011,8 @@
     "matchUsedElsewhere": "başka bir satırda seçili",
     "matchClear": "Seçimi kaldır",
     "gapLabel": "Boşluk {n}",
+    "gapOf": "Boşluk {n} / {total}",
+    "clozeChosen": "seçili: {word}",
     "ctestPool": "Kelime parçaları",
     "gapEmpty": "boş",
     "wordPool": "Kelimeler",

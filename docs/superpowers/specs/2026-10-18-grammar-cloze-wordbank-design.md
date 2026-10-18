@@ -35,7 +35,7 @@ Started C-test attempts keep rendering and scoring exactly as before: invited st
 
 ## 3. Student-facing shape
 
-- MC cloze: German text on the left (sticky), gaps are empty numbered slots. Clicking a gap (or the first empty gap
+- MC cloze: German text on the left, the option panel on the right is sticky; gaps are empty numbered slots. Clicking a gap (or the first empty gap
   by default) shows "Boşluk n" / "Gap n" with 4 option buttons on the right. Picking fills the gap and moves to the
   next empty gap. Keys 1-4 pick. The student can change any gap.
 - Word bank: text with empty slots, a pool of whole words below; drag or click a word into a gap, click a filled gap

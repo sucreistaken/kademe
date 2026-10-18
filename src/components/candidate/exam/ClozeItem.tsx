@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { splitInstruction } from "@/lib/exam/prompt-instruction";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
-import { activeGap, clozeParts, gapOrder, nextAfterPick, optionOfKey } from "./cloze-model";
-import { Instruction, radioKeys } from "./item-parts";
+import { activeGap, clickedFor, clozeParts, focusTarget, gapOrder, gapPosition, nextAfterPick, optionOfKey, tabStop, type ClickedGap } from "./cloze-model";
+import { Instruction } from "./item-parts";
 import type { ItemProps } from "./ItemView";
 
 /**
@@ -19,8 +19,17 @@ export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
   const ti = useT("examItems");
   const root = useRef<HTMLDivElement | null>(null);
   const headingId = useId();
-  // The gap the student clicked; without one the first empty gap is open.
-  const [clicked, setClicked] = useState<string | null>(null);
+  const panelId = useId();
+  const heading = useRef<HTMLHeadingElement | null>(null);
+  // The gap the student clicked (on this question only); without one the first empty gap is open.
+  const [clickedAt, setClicked] = useState<ClickedGap>(null);
+  const clicked = clickedFor(clickedAt, item.sequence);
+  // Bumped by a pick or a gap click: focus then moves to the panel heading of the gap that is now open.
+  const [focusTick, setFocusTick] = useState(0);
+  const openGapNow = (gapId: string) => {
+    setClicked({ sequence: item.sequence, gapId });
+    setFocusTick((n) => n + 1);
+  };
 
   const content = item.content.kind === "GAP" ? item.content : null;
   const gaps = new Map((content?.gaps ?? []).map((g) => [g.id, g]));
@@ -35,8 +44,12 @@ export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
     if (disabled || !open || index >= options.length) return;
     const next = { ...(answer.gaps ?? {}), [open]: options[index] };
     onChange({ gaps: next });
-    setClicked(nextAfterPick(order, next, open));
+    openGapNow(nextAfterPick(order, next, open));
   };
+
+  useEffect(() => {
+    if (focusTick > 0) heading.current?.focus({ preventScroll: true });
+  }, [focusTick]);
 
   // Keys 1-4 pick for the open gap. A warning covering the page, a dialog or a modifier key is left alone.
   const latest = useRef(pickOption);
@@ -63,6 +76,15 @@ export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
   const number = (id: string) => order.indexOf(id) + 1;
   const label = (id: string) => ti("gapLabel", { n: number(id) });
   const chosen = open ? (answer.gaps?.[open] ?? "") : "";
+  const place = gapPosition(order, open);
+  const stop = tabStop(options, chosen);
+  // Arrows move focus between the words and never pick; Enter, Space, a click or keys 1-4 pick.
+  const moveFocus = (e: ReactKeyboardEvent<HTMLButtonElement>, at: number) => {
+    const to = focusTarget(e.key, at, options.length);
+    if (to === null) return;
+    e.preventDefault();
+    e.currentTarget.closest('[role="radiogroup"]')?.querySelectorAll<HTMLButtonElement>('[role="radio"]')[to]?.focus();
+  };
   const widest = (id: string) => Math.max(3, ...(gaps.get(id)?.choices ?? []).map((c) => c.length)) + 2;
 
   return (
@@ -84,12 +106,12 @@ export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
               <button
                 key={i}
                 type="button"
-                lang="de"
                 disabled={disabled}
                 aria-label={`${label(gap.id)}: ${value || ti("gapEmpty")}`}
                 aria-pressed={isOpen}
+                aria-controls={panelId}
                 data-cloze-gap={gap.id}
-                onClick={() => setClicked(gap.id)}
+                onClick={() => openGapNow(gap.id)}
                 // Wide enough for the longest of its words, so a pick never moves the text.
                 style={{ minWidth: `${widest(gap.id)}ch` }}
                 className={cn(
@@ -98,16 +120,26 @@ export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
                   isOpen && "border-solid border-accent bg-accent-soft text-ink ring-2 ring-accent",
                 )}
               >
-                {value || number(gap.id)}
+                {value ? <span lang="de">{value}</span> : number(gap.id)}
               </button>
             );
           })}
         </p>
         {openGap && open ? (
-          <div className="rounded-[14px] border border-line bg-surface p-5 lg:sticky lg:top-24">
-            <h3 id={headingId} className="tnum text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted">
+          <div id={panelId} className="rounded-[14px] border border-line bg-surface p-5 lg:sticky lg:top-24">
+            <h3
+              ref={heading}
+              id={headingId}
+              tabIndex={-1}
+              className="tnum text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted outline-none"
+            >
               {label(open)}
             </h3>
+            {/* Said politely whenever another gap opens: where we are and, for a filled gap, its word. */}
+            <p role="status" className="sr-only">
+              {ti("gapOf", { n: place.n, total: place.total })}
+              {chosen ? `, ${ti("clozeChosen", { word: chosen })}` : ""}
+            </p>
             <div role="radiogroup" aria-labelledby={headingId} className="mt-3 flex flex-col gap-2">
               {options.map((word, i) => {
                 const on = word === chosen;
@@ -118,8 +150,8 @@ export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
                     role="radio"
                     aria-checked={on}
                     disabled={disabled}
-                    tabIndex={on || (!chosen && i === 0) ? 0 : -1}
-                    onKeyDown={radioKeys}
+                    tabIndex={i === stop ? 0 : -1}
+                    onKeyDown={(e) => moveFocus(e, i)}
                     onClick={() => pickOption(i)}
                     className={cn(
                       "flex min-h-12 w-full items-center gap-3 rounded-[10px] border bg-surface px-4 py-3 text-left text-[16px] transition-colors",

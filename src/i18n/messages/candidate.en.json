@@ -1011,6 +1011,8 @@
     "matchUsedElsewhere": "chosen in another row",
     "matchClear": "Clear choice",
     "gapLabel": "Gap {n}",
+    "gapOf": "Gap {n} of {total}",
+    "clozeChosen": "chosen: {word}",
     "ctestPool": "Word pieces",
     "gapEmpty": "empty",
     "wordPool": "Words",
