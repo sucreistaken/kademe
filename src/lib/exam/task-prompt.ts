@@ -207,3 +207,31 @@ export function layoutTaskBlocks(blocks: TaskBlock[]): TaskSegment[] {
   }
   return out;
 }
+
+/** A list item that asks for something: a task line or a question. */
+const asks = (item: string) => isTaskLine(item) || item.trim().endsWith("?");
+
+/**
+ * The laid-out prompt already shows the candidate a list of what to do: two or
+ * more task lines, a list of two or more under a task line ending in a colon
+ * ("Gehen Sie auf diese Punkte ein:"), or a list of two or more task lines or
+ * questions on its own. A list of material (form fields, quotations, sentences
+ * to rewrite) does not count.
+ */
+export function promptListsTasks(segments: TaskSegment[]): boolean {
+  return segments.some((s) => {
+    if (s.kind === "tasks") return s.items.length >= 2 || s.items.some((it) => it.lists.some((l) => l.items.length >= 2));
+    if (s.kind === "list") return s.items.length >= 2 && s.items.every(asks);
+    return false;
+  });
+}
+
+/**
+ * The student points worth showing under a task: none when the prompt already
+ * lists what to do (the box would only repeat it), else the non-blank points.
+ */
+export function coverPointsFor(prompt: string, points: string[] | undefined): string[] {
+  const shown = (points ?? []).filter((p) => p.trim());
+  if (shown.length === 0) return [];
+  return promptListsTasks(layoutTaskBlocks(parseTaskPrompt(prompt).blocks)) ? [] : shown;
+}

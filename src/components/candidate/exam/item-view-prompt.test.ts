@@ -136,16 +136,47 @@ describe("what writing and speaking expect", () => {
     }
   });
 
-  it("shows the student points between the task and the assessment box, labelled in the interface language", () => {
-    const html = render({ ...writing, content: { ...writing.content, studentPoints: ["Begrüßung", "einen Grund nennen"] } as CandidateItem["content"] });
-    expect(html).toMatch(/<div lang="en" dir="ltr" class="[^"]*">coverPoints<\/div><ul lang="de"[^>]*><li>Begrüßung<\/li><li>einen Grund nennen<\/li><\/ul>/);
-    const task = html.indexOf("Gehen Sie auf diese Punkte ein:");
+  const withPoints = (prompt: string): CandidateItem => ({
+    ...writing,
+    prompt,
+    content: { kind: "WRITING", minWords: 40, maxWords: 80, studentPoints: ["Begrüßung", "einen Grund nennen"] },
+  });
+  // One task sentence and no list: the points add what the prompt does not spell out.
+  const openTask = withPoints("Ihr Chef ist krank.\n\nSchreiben Sie ihm eine Nachricht.");
+
+  it("shows the student points after the task card and before the assessment box, labelled in the interface language", () => {
+    const html = render(openTask);
+    expect(html).toMatch(/<div lang="en" dir="ltr" class="[^"]*">coverPoints<\/div><ul lang="de" class="[^"]*text-\[17px\][^"]*"><li>Begrüßung<\/li><li>einen Grund nennen<\/li><\/ul>/);
+    const task = html.indexOf("Schreiben Sie ihm eine Nachricht.");
     const points = html.indexOf("coverPoints");
     expect(task).toBeGreaterThan(-1);
     expect(points).toBeGreaterThan(task);
     expect(html.indexOf("assessTitle")).toBeGreaterThan(points);
     expect(html).not.toMatch(/\b[ABC][12]\b/);
     expect(html.toLowerCase()).not.toMatch(/level|score|contentpoints|register/);
+  });
+
+  it("keeps the field's name to the card and describes it with the points and the expectations", () => {
+    const html = render(openTask);
+    const labelledBy = html.match(/<textarea[^>]*aria-labelledby="([^"]+)"/)?.[1];
+    const describedBy = html.match(/<textarea[^>]*aria-describedby="([^"]+)"/)?.[1].split(" ") ?? [];
+    expect(describedBy).toHaveLength(2);
+    // The points box is not inside the labelling card.
+    const card = html.slice(html.indexOf(`id="${labelledBy}"`));
+    expect(card.slice(0, card.indexOf(`id="${describedBy[0]}"`))).not.toContain("<ul lang=\"de\"");
+    expect(html).toMatch(new RegExp(`<div id="${describedBy[0]}" class="[^"]*">[^]*?coverPoints`));
+    expect(html.slice(html.indexOf(`id="${describedBy[1]}"`))).toContain("expectLength(40,80)");
+  });
+
+  it("shows no points box when the prompt already lists the tasks", () => {
+    // Bullets under "Gehen Sie auf diese Punkte ein:".
+    expect(render(withPoints(writing.prompt))).not.toContain("coverPoints");
+    // Two task sentences, drawn as a list.
+    expect(render(withPoints("Ihr Chef ist krank.\n\nSchreiben Sie ihm eine Nachricht. Fragen Sie, wann er zurückkommt."))).not.toContain("coverPoints");
+    // A list of questions on its own.
+    expect(render(withPoints("Schreiben Sie Nina.\n\n- Wo arbeiten Sie?\n- Wann arbeiten Sie?"))).not.toContain("coverPoints");
+    const html = render(withPoints(writing.prompt));
+    expect(html.match(/<textarea[^>]*aria-describedby="([^"]+)"/)?.[1].split(" ")).toHaveLength(1);
   });
 
   it("shows no points box when the item has no student points", () => {

@@ -972,8 +972,7 @@ const writingItems: SeedItem[] = [
     ],
     [
       "die Kernaussagen mit eigenen Worten zusammenfassen",
-      "Zusammenfassung und eigene Meinung klar trennen",
-      "begründet Stellung nehmen",
+      "anschließend begründet Stellung nehmen",
     ],
     NEUTRAL,
     "C2: Zusammenfassen und Bewerten eines Fachtextes. Entscheidend ist die Paraphrase mit eigenen Mitteln und die saubere Trennung von Referat und Kommentar."),
@@ -1052,11 +1051,11 @@ const writingItems: SeedItem[] = [
       "textsortengerechter Leserbrief (Bezug auf den Artikel, Schluss mit Fazit), stilistisch souverän",
     ],
     [
-      "Bezug auf den Artikel",
-      "Stellung zu allen drei Aussagen",
-      "Ihre eigene, begründete Position",
-      "Auseinandersetzung mit Gegenargumenten",
-      "ein Fazit",
+      "sich auf den Artikel beziehen",
+      "zu allen drei Aussagen Stellung nehmen",
+      "eine eigene, begründete Position entwickeln",
+      "auf Gegenargumente eingehen",
+      "mit einem Fazit schließen",
     ],
     "formell/sachlich (Leserbrief)",
     "Leserbrief mit drei Bezugsaussagen wie Goethe C2 Schreiben Teil 2. Für die Stufe C2 zählt neben dem Inhalt die souveräne Verknüpfung (Konzessivsätze, Nominal- und Verbalstil gezielt eingesetzt)."),
@@ -1073,7 +1072,7 @@ const writingItems: SeedItem[] = [
     [
       "beide Positionen darstellen",
       "Argumente mit Beispielen stützen",
-      "ein begründetes eigenes Urteil",
+      "zu einem begründeten eigenen Urteil kommen",
     ],
     NEUTRAL,
     "Dialektische Erörterung auf C2-Niveau: Gewertet wird vor allem die Qualität der Abwägung, nicht die gewählte Position."),
@@ -1116,9 +1115,8 @@ const speakingItems: SeedItem[] = [
     ],
     [
       "einen komplexen Ablauf oder Fachbegriff wählen",
-      "ihn verständlich erklären",
+      "ihn einer Kollegin ohne Fachkenntnisse verständlich erklären",
       "Fachjargon vermeiden oder erklären",
-      "Überblick, Schritte und Zusammenfassung",
     ],
     "Sprachmittlung innerhalb des Deutschen: C2 zeigt sich in der Fähigkeit, Komplexes ohne Bedeutungsverlust zu vereinfachen.",
     "kollegial (du oder Sie)"),
@@ -1132,7 +1130,6 @@ const speakingItems: SeedItem[] = [
     ],
     [
       "auf den Einwand eingehen",
-      "berechtigte Punkte einräumen",
       "Ihre Position mit einem Argument oder einer Lösung verteidigen",
     ],
     "Entspricht der Nachfrage nach dem Vortrag in Goethe C2 Sprechen Teil 1: kurze Bedenkzeit, spontane, aber differenzierte Reaktion.",
@@ -1186,8 +1183,7 @@ const speakingItems: SeedItem[] = [
     ],
     [
       "die drei Aussagen gegeneinander abwägen",
-      "Grenzen jeder Aussage zeigen",
-      "ein eigenes Urteil mit Beispielen",
+      "zu einem eigenen Urteil kommen",
     ],
     "Anspruchsvollere Variante des C2-Monologs: abstraktes Thema, Aussagen mit unterschiedlichen Wertmaßstäben. Die Aussagen sind eigens formuliert und keinem Autor zugeordnet.",
     FORMAL),
@@ -1201,7 +1197,6 @@ const speakingItems: SeedItem[] = [
       "diplomatischer Ton: Abschwächungen, Konjunktiv II, angemessene Direktheit gegenüber einer Vorgesetzten",
     ],
     [
-      "das Ziel der Vorgesetzten anerkennen",
       "diplomatisch widersprechen",
       "Ihre Einschätzung begründen",
       "einen Kompromiss vorschlagen",

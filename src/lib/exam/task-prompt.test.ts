@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SEED_PARTS } from "@/db/seed-bank";
-import { isTaskLine, layoutTaskBlocks, parseTaskPrompt, splitTaskPrompt, type ParsedTaskPrompt, type TaskSegment } from "./task-prompt";
+import { coverPointsFor, isTaskLine, layoutTaskBlocks, parseTaskPrompt, promptListsTasks, splitTaskPrompt, type ParsedTaskPrompt, type TaskSegment } from "./task-prompt";
 
 /** Every letter and digit of a prompt, in order (list numbers excluded, the list draws them): what must survive the layout. */
 const letters = (s: string) => s.replace(/^\s*\d+[.)]\s+/gmu, "").replace(/[^\p{L}\p{N}]/gu, "");
@@ -154,5 +154,32 @@ describe("layoutTaskBlocks", () => {
       if (segs.some((s) => s.kind === "tasks")) withTasks++;
     }
     expect(withTasks).toBeGreaterThan(40);
+  });
+});
+
+describe("coverPointsFor", () => {
+  const points = ["Begrüßung", "einen Grund nennen"];
+  const lists = (prompt: string) => promptListsTasks(layoutTaskBlocks(parseTaskPrompt(prompt).blocks));
+
+  it("keeps the points when the prompt is one task with no list", () => {
+    expect(coverPointsFor("Sie sind krank. Schreiben Sie Ihrem Chef eine Nachricht.", points)).toEqual(points);
+    expect(coverPointsFor("Erzählen Sie von einer schwierigen Situation. Was ist passiert? Wie haben Sie reagiert?", points)).toEqual(points);
+  });
+
+  it("drops them when the prompt already lists what to do", () => {
+    expect(lists("Schreiben Sie Jan. Gehen Sie auf diese Punkte ein:\n- Dank\n- Frage")).toBe(true);
+    expect(lists("Bitten Sie Herrn Braun um den Kuli. Sagen Sie auch danke.")).toBe(true);
+    expect(lists("Schreiben Sie Nina.\n\n- Wo arbeiten Sie?\n- Was machen Sie bei der Arbeit?")).toBe(true);
+    expect(coverPointsFor("Bitten Sie Herrn Braun um den Kuli. Sagen Sie auch danke.", points)).toEqual([]);
+  });
+
+  it("does not count a list of material: quotations or sentences to rewrite", () => {
+    expect(lists("Halten Sie einen Vortrag zu diesen Aussagen.\n\n1. „Eins.“\n2. „Zwei.“")).toBe(false);
+    expect(lists("Formulieren Sie die Sätze um.\n\n1. Obwohl er müde war, kam er. (trotz)\n2. Man kann es nicht ändern. (lässt)")).toBe(false);
+  });
+
+  it("gives nothing for missing or blank points", () => {
+    expect(coverPointsFor("Schreiben Sie eine Nachricht.", undefined)).toEqual([]);
+    expect(coverPointsFor("Schreiben Sie eine Nachricht.", ["  "])).toEqual([]);
   });
 });

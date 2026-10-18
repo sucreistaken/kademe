@@ -4,6 +4,7 @@ import { useId, useRef, useState } from "react";
 import { matchingTargets, type CandidateItem } from "@/lib/exam/safe";
 import { withPoolInstruction } from "@/lib/exam/ctest-instruction";
 import { splitInstruction, splitPromptBlocks, splitTitle, type PromptBlock } from "@/lib/exam/prompt-instruction";
+import { coverPointsFor } from "@/lib/exam/task-prompt";
 import type { ItemAnswer, TfngValue } from "@/lib/exam/types";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
@@ -722,18 +723,20 @@ export function WritingItem({ item, answer, onChange, disabled }: ItemProps) {
   const ref = useRef<HTMLTextAreaElement | null>(null);
   const promptId = useId();
   const expectId = useId();
+  const pointsId = useId();
   if (item.content.kind !== "WRITING") return null;
+  const coverShown = coverPointsFor(item.prompt, item.content.studentPoints).length > 0;
   const words = (answer.text ?? "").trim().split(/\s+/u).filter(Boolean).length;
   const { minWords, maxWords } = item.content;
   return (
     <div>
-      <TaskPromptCard text={item.prompt} id={promptId} points={item.content.studentPoints} />
+      <TaskPromptCard text={item.prompt} id={promptId} points={item.content.studentPoints} pointsId={pointsId} />
       <TaskExpectations id={expectId} section="WRITING" minWords={minWords} maxWords={maxWords} />
       <textarea
         ref={ref}
         lang="de"
         aria-labelledby={promptId}
-        aria-describedby={expectId}
+        aria-describedby={coverShown ? `${pointsId} ${expectId}` : expectId}
         value={answer.text ?? ""}
         disabled={disabled}
         placeholder={t("writingPlaceholder")}

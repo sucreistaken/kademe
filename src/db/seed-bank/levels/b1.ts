@@ -976,7 +976,7 @@ const writingItems: SeedItem[] = [
     [
       "wie der Kurs war",
       "was Ihnen besonders gut gefallen hat, und warum",
-      "ein Vorschlag für etwas Gemeinsames",
+      "etwas Gemeinsames vorschlagen",
       "Anrede und Gruß",
     ],
     INFORMAL,

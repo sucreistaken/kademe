@@ -1027,7 +1027,7 @@ const writingItems: SeedItem[] = [
     [
       "Ihre Situation erklären",
       "fragen, wie Sie den Stoff nachholen können",
-      "ein Vorschlag, wie Sie trotzdem teilnehmen könnten",
+      "vorschlagen, wie Sie trotzdem teilnehmen könnten",
       "nach dem Zertifikat fragen",
       "Anrede und Gruß",
     ],
@@ -1047,7 +1047,7 @@ const writingItems: SeedItem[] = [
     [
       "um eine Änderung der Arbeitszeiten bitten",
       "den Kurs beschreiben und warum er wichtig ist",
-      "ein konkreter Vorschlag für neue Arbeitszeiten",
+      "neue Arbeitszeiten konkret vorschlagen",
       "wie die Aufgaben im Team erledigt werden",
       "Anrede und Gruß",
     ],
@@ -1068,7 +1068,7 @@ const writingItems: SeedItem[] = [
       "die Probleme beschreiben",
       "Verständnis für den Veranstalter zeigen",
       "eine angemessene Lösung fordern",
-      "ein Vorschlag für zukünftige Veranstaltungen",
+      "einen Vorschlag für künftige Veranstaltungen machen",
       "Anrede und Gruß",
     ],
     FORMAL, MESSAGE_EXPLANATION),
