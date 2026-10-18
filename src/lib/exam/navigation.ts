@@ -104,3 +104,26 @@ export function navEntries(
     .sort((a, b) => a.sequence - b.sequence)
     .map((r) => ({ sequence: r.sequence, ...answerProgress(r.content, r.answer), flagged: r.flagged }));
 }
+
+/** Where a listening recording sits among the section's recordings: "text 2 of 3". */
+export type ListeningPosition = { index: number; total: number };
+
+/**
+ * The 1-based place of `stimulusId` among the DISTINCT listening recordings of
+ * a section run, counted in item order (by sequence), and how many there are.
+ * Null when the recording is not among them. Needs every item of the run, so
+ * it is only asked for in a fixed form where the whole plan is served.
+ * Carries counts only: no ids and nothing from the keys leave this function.
+ */
+export function listeningPosition(
+  rows: ReadonlyArray<{ sequence: number; stimulusId: string | null; listening: boolean }>,
+  stimulusId: string | null,
+): ListeningPosition | null {
+  if (!stimulusId) return null;
+  const order: string[] = [];
+  for (const r of [...rows].sort((a, b) => a.sequence - b.sequence)) {
+    if (r.listening && r.stimulusId && !order.includes(r.stimulusId)) order.push(r.stimulusId);
+  }
+  const at = order.indexOf(stimulusId);
+  return at < 0 ? null : { index: at + 1, total: order.length };
+}

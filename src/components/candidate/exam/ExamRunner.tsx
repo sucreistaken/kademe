@@ -20,6 +20,7 @@ import { INITIAL_WARMUP, warmupReduce, type WarmupAction, type WarmupState } fro
 import { PRACTICE } from "@/components/candidate/exam/warmup/practice-data";
 import { ConfirmDialog, NavStrip, ReviewScreen, reviewCounts } from "@/components/candidate/exam/ExamNav";
 import { finishSummaryParts } from "@/components/candidate/exam/finish-summary";
+import { gateKey } from "@/components/candidate/exam/listening-gate";
 import { clearPending, readPending, sessionStore, writePending, type PendingAnswer } from "@/components/candidate/exam/pending-answer";
 import { leavesGroup, memberRange, memberSequences, nextAfterGroup, prevBeforeGroup } from "@/components/candidate/exam/groups";
 import { StepFooter } from "@/components/visual/step-footer";
@@ -241,6 +242,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
   const group = cur?.group && item ? cur.group : null;
   const shown = shownItems(cur);
   const members = memberSequences(group, item?.sequence ?? 0);
+  const listeningHeading = cur?.listening ? t("listenHeading", cur.listening) : t("listenHeadingPlain");
   const answer: ItemAnswer = (item && answers[item.sequence]) || {};
   const nav = cur?.nav ?? null;
   const clock = useStageClock(
@@ -782,6 +784,8 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
                   stimulus={item.stimulus}
                   engine={engine}
                   note={t("listenGroupNote")}
+                  heading={listeningHeading}
+                  gateKey={gateKey(token, cur.position, members[0])}
                   onActiveChange={(active) => {
                     audioActiveRef.current = active;
                     if (!active) setLeave(null);
@@ -862,6 +866,8 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
                       sequence={item.sequence}
                       stimulus={item.stimulus}
                       engine={engine}
+                      heading={listeningHeading}
+                      gateKey={gateKey(token, cur.position, item.sequence)}
                     />
                   </div>
                 ) : null}

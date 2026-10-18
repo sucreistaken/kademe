@@ -10,6 +10,9 @@ import type { ItemAnswer } from "@/lib/exam/types";
 import { formatCountdown } from "@/lib/timer";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
+import { buttonVariants } from "@/components/ui/button";
+import { isGateOpen, markRevealed, readRevealed } from "./listening-gate";
+import { sessionStore } from "./pending-answer";
 import { TaskExpectations } from "./TaskExpectations";
 import { TaskPromptCard } from "./TaskPromptCard";
 
@@ -41,6 +44,8 @@ export function ListeningPlayer({
   onActiveChange,
   className,
   note,
+  heading,
+  gateKey,
 }: {
   token: string;
   sectionPosition: number;
@@ -52,6 +57,10 @@ export function ListeningPlayer({
   className?: string;
   /** A calm line under the player, inside the same card. */
   note?: string;
+  /** "Listening text 2 of 3", above the player. */
+  heading?: string;
+  /** Turns on the read-first gate; the flag of this recording is kept under this key. */
+  gateKey?: string;
 }) {
   const t = useT("exam");
   const ti = useT("examItems");
@@ -73,6 +82,14 @@ export function ListeningPlayer({
   /** The failed play had started, so a free retry resumes rather than restarts. */
   const [midway, setMidway] = useState(false);
   const [progress, setProgress] = useState(0);
+  /** The student said they read the questions (or this tab remembers they did). */
+  const [revealed, setRevealed] = useState(false);
+  useEffect(() => {
+    // Read after mount: the server render has no sessionStorage.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setRevealed(!!gateKey && readRevealed(sessionStore(), gateKey));
+  }, [gateKey]);
+  const gated = !!gateKey && !isGateOpen({ revealed, playsLeft, maxPlays: stimulus.maxPlays });
 
   const active = state === "LOADING" || state === "PLAYING";
   const reportActive = useRef(onActiveChange);
@@ -205,8 +222,15 @@ export function ListeningPlayer({
   const failureText =
     failure === "STALLED" ? ti("listenStalled") : failure === "BLOCKED" ? ti("listenBlocked") : ti("listenLoadFailed");
 
-  return (
-    <div className={cn("rounded-[14px] border border-line bg-surface p-5", className)}>
+  /** One click: the player appears and the recording starts in the same user gesture. */
+  function startListening() {
+    if (gateKey) markRevealed(sessionStore(), gateKey);
+    setRevealed(true);
+    void play();
+  }
+
+  const playerCard = (
+    <div className="rounded-[14px] border border-line bg-surface p-5">
       {/* German upper case: under the Turkish page language "i" would become "İ". */}
       <div lang="de" className="text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted">
         {stimulus.title}
@@ -231,6 +255,26 @@ export function ListeningPlayer({
           {free ? ` ${midway ? ti("listenFreeResume") : ti("listenFreeRetry")}` : ""}
         </p>
       ) : null}
+      {note ? <p className="mt-3 text-[13px] leading-[1.5] text-muted">{note}</p> : null}
+    </div>
+  );
+
+  const gateCard = (
+    <div className="rounded-[14px] border border-line bg-surface p-5">
+      <div lang="de" className="text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted">
+        {stimulus.title}
+      </div>
+      <p className="mt-3 text-[15px] leading-[1.6] text-ink-2">{t("listenGate", { plays: playsLeft })}</p>
+      <button type="button" onClick={startListening} className={cn(buttonVariants({ variant: "primary", size: "lg" }), "mt-4 h-12 w-full")}>
+        {t("listenStart")}
+      </button>
+    </div>
+  );
+
+  return (
+    <div className={className}>
+      {heading ? <h2 className="mb-3 text-[17px] font-bold leading-[1.3] text-ink">{heading}</h2> : null}
+      {gated ? gateCard : playerCard}
       <audio
         ref={audioRef}
         preload="auto"
@@ -273,7 +317,6 @@ export function ListeningPlayer({
           window.setTimeout(() => engine?.suppressVoice("listening", false), 1000);
         }}
       />
-      {note ? <p className="mt-3 text-[13px] leading-[1.5] text-muted">{note}</p> : null}
     </div>
   );
 }

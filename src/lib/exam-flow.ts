@@ -36,8 +36,10 @@ import {
   decideMove,
   isNavigableConfig,
   isNavigableRun,
+  listeningPosition,
   navEntries,
   neighbour,
+  type ListeningPosition,
   type NavEntry,
   type NavTarget,
 } from "@/lib/exam/navigation";
@@ -208,6 +210,12 @@ export type CandidateState = {
      * any other item. One-way sections list only the testlet's open items.
      */
     group: CandidateItem[] | null;
+    /**
+     * Which recording of the section the listening page shows ("text 2 of 3").
+     * Null off a listening page, and in one-way sections, where the number of
+     * recordings is not known up front.
+     */
+    listening: ListeningPosition | null;
     /** Null in one-way sections (adaptive, speaking) and before a section starts. */
     nav: SectionNav | null;
   };
@@ -298,6 +306,7 @@ export async function loadState(ctx: ExamCandidateContext): Promise<CandidateSta
           itemTotal: null,
           item: null,
           group: null,
+          listening: null,
           nav: null,
         },
       };
@@ -324,6 +333,7 @@ export async function loadState(ctx: ExamCandidateContext): Promise<CandidateSta
           itemTotal: view.entries.length,
           item: view.item,
           group: view.group,
+          listening: view.listening,
           nav: { entries: view.entries, review: view.review },
         },
       };
@@ -351,6 +361,7 @@ export async function loadState(ctx: ExamCandidateContext): Promise<CandidateSta
         itemTotal: run.itemPlan ? run.itemPlan.length : null,
         item,
         group: await listeningGroup(ctx, run.id, item.sequence, true),
+        listening: null,
         nav: null,
       },
     };
@@ -719,7 +730,13 @@ async function serveWholePlan(ctx: ExamCandidateContext, runId: string) {
 async function navigableView(
   ctx: ExamCandidateContext,
   runId: string,
-): Promise<{ entries: NavEntry[]; item: CandidateItem | null; group: CandidateItem[] | null; review: boolean } | null> {
+): Promise<{
+  entries: NavEntry[];
+  item: CandidateItem | null;
+  group: CandidateItem[] | null;
+  listening: ListeningPosition | null;
+  review: boolean;
+} | null> {
   await serveWholePlan(ctx, runId);
   const [run] = await db.select().from(sectionRuns).where(eq(sectionRuns.id, runId));
   const rows = await db
@@ -732,7 +749,15 @@ async function navigableView(
   const entries = navEntries(rows.map((r) => ({ sequence: r.sequence, content: r.snapshot.content, answer: r.answer ?? null, flagged: r.flagged })));
   const item = run.navReview ? null : await candidateItemFor(ctx, rows.find((r) => r.sequence === sequence)!.id);
   const group = item ? await listeningGroup(ctx, runId, item.sequence, false) : null;
-  return { entries, item, group, review: run.navReview };
+  const anchor = rows.find((r) => r.sequence === sequence)?.snapshot;
+  const listening =
+    group && anchor
+      ? listeningPosition(
+          rows.map((r) => ({ sequence: r.sequence, stimulusId: r.snapshot.stimulusId, listening: r.snapshot.stimulus?.section === "LISTENING" })),
+          anchor.stimulusId,
+        )
+      : null;
+  return { entries, item, group, listening, review: run.navReview };
 }
 
 /**

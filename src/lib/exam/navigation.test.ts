@@ -8,6 +8,7 @@ import {
   decideMove,
   isNavigableConfig,
   isNavigableRun,
+  listeningPosition,
   navEntries,
   neighbour,
   type NavTarget,
@@ -139,5 +140,35 @@ describe("navEntries", () => {
       { sequence: 2, filled: 1, total: 2, flagged: true },
     ]);
     expect(Object.keys(entries[0]).sort()).toEqual(["filled", "flagged", "sequence", "total"]);
+  });
+});
+
+describe("listeningPosition", () => {
+  const row = (sequence: number, stimulusId: string | null, listening = true) => ({ sequence, stimulusId, listening });
+  const rows = [row(1, "g1", false), row(2, "a"), row(3, "a"), row(4, null, false), row(5, "b"), row(6, "c"), row(7, "c")];
+
+  it("counts distinct recordings in item order", () => {
+    expect(listeningPosition(rows, "a")).toEqual({ index: 1, total: 3 });
+    expect(listeningPosition(rows, "b")).toEqual({ index: 2, total: 3 });
+    expect(listeningPosition(rows, "c")).toEqual({ index: 3, total: 3 });
+  });
+
+  it("goes by sequence, not by the order the rows arrive in", () => {
+    expect(listeningPosition([...rows].reverse(), "b")).toEqual({ index: 2, total: 3 });
+  });
+
+  it("ignores reading stimuli and items without one", () => {
+    const mixed = [row(1, "r1", false), row(2, "l1"), row(3, "r1", false), row(4, "l2")];
+    expect(listeningPosition(mixed, "l2")).toEqual({ index: 2, total: 2 });
+  });
+
+  it("is a single recording of one", () => {
+    expect(listeningPosition([row(1, "x"), row(2, "x")], "x")).toEqual({ index: 1, total: 1 });
+  });
+
+  it("is null without a stimulus or for one that is not a listening recording of the run", () => {
+    expect(listeningPosition(rows, null)).toBeNull();
+    expect(listeningPosition(rows, "nope")).toBeNull();
+    expect(listeningPosition(rows, "g1")).toBeNull();
   });
 });
