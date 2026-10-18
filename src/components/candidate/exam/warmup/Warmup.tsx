@@ -27,7 +27,9 @@ const HINT_KEY = {
   speaking: "warmHintSpeaking",
 } as const;
 
-const quiet = "h-11 rounded-[10px] border border-line-strong bg-surface px-5 text-[14.5px] font-semibold text-ink hover:bg-canvas";
+/** The offer on the intro: "Try" is secondary and "Skip" a text button, so "Start the section" stays the only primary. */
+const trySecondary = cn(buttonVariants({ variant: "secondary", size: "lg" }), "h-11 px-5");
+const skipText = cn(buttonVariants({ variant: "ghost", size: "lg" }), "h-11 px-4 text-ink");
 const solid = cn(buttonVariants({ variant: "primary", size: "lg" }), "h-11 px-5");
 
 /** On the introduction: the offer, or the line that says the practice is over. */
@@ -38,10 +40,10 @@ export function WarmupOffer({ state, onTry, onSkip }: { state: WarmupState; onTr
       <div className="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-2xl bg-cream px-5 py-3">
         <p className="min-w-0 flex-1 basis-64 text-[15px] font-medium leading-[1.5] text-ink">{t("warmOffer")}</p>
         <div className="flex gap-3">
-          <button type="button" onClick={onTry} className={solid}>
+          <button type="button" onClick={onTry} className={trySecondary}>
             {t("warmTry")}
           </button>
-          <button type="button" onClick={onSkip} className={quiet}>
+          <button type="button" onClick={onSkip} className={skipText}>
             {t("warmSkip")}
           </button>
         </div>

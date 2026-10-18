@@ -104,10 +104,12 @@ export function IntroConsent({
     { icon: Clock, text: t("needTime", { n: state.estimatedMinutes }) },
   ];
 
-  // The amount line on a section tile: "10 soru", "6 metin", "2 görev".
+  // The amount on a section tile: "10 soru", "6 metin", "2 görev". An adaptive
+  // range reads "12-18 soru" here (short enough for one line); the exam's own
+  // section intro explains that it depends on the answers.
   const amount = (s: CandidateState["sections"][number]) =>
     s.itemsLabel.includes("-")
-      ? t("itemsAdaptive", { range: s.itemsLabel })
+      ? t("items", { n: s.itemsLabel })
       : s.section === "WRITING" || s.section === "SPEAKING"
         ? t("tasks", { n: s.itemsLabel })
         : s.cTestOnly
@@ -138,22 +140,21 @@ export function IntroConsent({
 
       <h2 className="sr-only">{v("sectionsTitle")}</h2>
       <ol
-        className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5"
+        className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5"
       >
         {/* The order reads left to right; the section number stays for screen readers. */}
         {state.sections.map((s) => (
-          <li key={s.section} className="flex flex-col gap-2 rounded-xl border border-line bg-surface px-3 py-2.5 shadow-card">
+          <li key={s.section} className="flex flex-col gap-1 rounded-xl border border-line bg-surface px-3 py-2 shadow-card">
             <div className="flex items-center gap-2.5">
-              <SectionTile section={s.section} />
+              <SectionTile section={s.section} className="size-8 rounded-lg [&_svg]:size-4" />
               <div className="min-w-0 text-[15px] font-bold leading-5 text-ink">
                 <span className="sr-only">{v("sectionNumber", { n: s.position })}: </span>
                 {sec(s.section)}
               </div>
             </div>
-            {/* The amount and the minutes each get their own line, so neither is cut off. */}
-            <div className="tnum text-[13px] font-semibold leading-[1.35] text-ink-2">
-              <div>{amount(s)}</div>
-              <div>{t("minutes", { n: s.minutes })}</div>
+            {/* Never cut off: the line wraps if it must, and the minutes stay together. */}
+            <div className="tnum text-[12.5px] font-semibold leading-[1.35] text-ink-2">
+              {amount(s)} · <span className="whitespace-nowrap">{t("minutes", { n: s.minutes })}</span>
             </div>
           </li>
         ))}
