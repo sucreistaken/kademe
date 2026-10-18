@@ -57,6 +57,68 @@ describe("starter bank coverage", () => {
   }
 });
 
+/** Levels that already have their MC cloze and word-bank texts; the content tasks add the rest. */
+const TEXT_LEVELS = ["A1", "A2"] as const;
+
+describe("starter MC cloze and word-bank texts", () => {
+  const textsOf = (level: string, skillTag: string) =>
+    SEED_BANK.items.filter((i) => i.level === level && i.skillTag === skillTag);
+  const gapsOf = (item: (typeof SEED_BANK.items)[number]) => {
+    if (item.content.kind !== "GAP" || item.key.kind !== "GAP") throw new Error("not a gap item");
+    return { gaps: item.content.gaps, key: item.key };
+  };
+  /** Instruction, title, text: the three paragraphs the builders write. */
+  const paragraphs = (item: (typeof SEED_BANK.items)[number]) => item.prompt.split("\n\n");
+
+  for (const level of TEXT_LEVELS) {
+    it(`${level}: three MC cloze texts, easy to hard, with 10 to 12 four-choice gaps`, () => {
+      const texts = textsOf(level, "grammar.cloze");
+      expect(texts.map((t) => t.within).sort()).toEqual(["EASY", "HARD", "MID"]);
+      for (const t of texts) {
+        expect(t.section).toBe("GRAMMAR");
+        expect(t.type).toBe("GAP_FILL");
+        const { gaps, key } = gapsOf(t);
+        expect(gaps.length, paragraphs(t)[1]).toBeGreaterThanOrEqual(10);
+        expect(gaps.length, paragraphs(t)[1]).toBeLessThanOrEqual(12);
+        for (const g of gaps) {
+          expect(g.choices).toHaveLength(4);
+          expect(key.answers[g.id]).toHaveLength(1);
+          expect(g.choices).toContain(key.answers[g.id][0]);
+        }
+      }
+    });
+
+    it(`${level}: three word banks, easy to hard, with 8 whole-word gaps and 4 to 5 distractors`, () => {
+      const texts = textsOf(level, "grammar.wordbank");
+      expect(texts.map((t) => t.within).sort()).toEqual(["EASY", "HARD", "MID"]);
+      for (const t of texts) {
+        const { gaps, key } = gapsOf(t);
+        expect(gaps, paragraphs(t)[1]).toHaveLength(8);
+        expect(gaps.every((g) => !g.choices)).toBe(true);
+        expect(key.distractors?.length, paragraphs(t)[1]).toBeGreaterThanOrEqual(4);
+        expect(key.distractors?.length, paragraphs(t)[1]).toBeLessThanOrEqual(5);
+        const pool = [...gaps.map((g) => key.answers[g.id][0]), ...(key.distractors ?? [])].map((w) => w.toLowerCase());
+        expect(new Set(pool).size, paragraphs(t)[1]).toBe(pool.length);
+      }
+    });
+
+    it(`${level}: every text has its own title and keeps its first and last sentence free of gaps`, () => {
+      const texts = [...textsOf(level, "grammar.cloze"), ...textsOf(level, "grammar.wordbank")];
+      expect(texts).toHaveLength(6);
+      const titles = texts.map((t) => paragraphs(t)[1]);
+      expect(new Set(titles).size).toBe(6);
+      for (const t of texts) {
+        const [, title, text] = paragraphs(t);
+        expect(title.length, title).toBeLessThanOrEqual(40);
+        expect(title).not.toContain("{{");
+        const sentences = text.split(/(?<=[.!?])\s+/);
+        expect(sentences[0], title).not.toContain("{{");
+        expect(sentences.at(-1), title).not.toContain("{{");
+      }
+    });
+  }
+});
+
 describe("starter C-tests accept the equally correct completions", () => {
   const ctest = (level: string) => SEED_BANK.items.find((i) => i.level === level && i.skillTag === "grammar.ctest")!;
   const accepts = (level: string, gap: string, typed: string) => {

@@ -1,5 +1,7 @@
 import type { TfngValue } from "@/lib/exam/types";
+import { cloze } from "../cloze";
 import { cTest } from "../ctest";
+import { wordBank } from "../wordbank";
 import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 
 /*
@@ -14,7 +16,7 @@ import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
  * (Goethe-Zertifikat A1: Start Deutsch 1).
  *
  * - Grammar: 24 items over the A1 inventory (8 EASY, 8 MID, 8 HARD) plus three
- *   C-tests.
+ *   C-tests, three MC cloze texts and three word banks (spec 2026-10-18).
  * - Reading: 4 short texts (note/email, job ads, door sign, SMS), 4 items each.
  * - Listening: 3 clips (station announcement, dialogue at work, answerphone
  *   message), 4 items each.
@@ -240,6 +242,85 @@ const grammarItems: SeedItem[] = [
       11: ["chts"], 13: ["schen"], 14: ["s"], 15: ["me"],
       16: ["den"], 18: ["önen"], 19: ["pe"],
     },
+  }),
+
+  // ---------------------------------------------------------------- MC cloze
+  cloze(LEVEL, "EASY", {
+    title: "Einkaufen am Samstag",
+    first: "Am Samstag gehe ich mit meiner Schwester einkaufen.",
+    body:
+      "Wir [[brauchen|braucht|brauche|brauchst]] Milch, Brot und Obst. " +
+      "Der Supermarkt [[ist|bin|bist|sind]] nicht weit, wir gehen [[zu|nach|in|an]] Fuß. " +
+      "Meine Schwester nimmt [[einen|ein|eine|einem]] Korb. Ich kaufe [[ein|eine|einen|einem]] Brot und vier Äpfel. " +
+      "Die Äpfel [[sind|ist|bist|seid]] heute sehr billig. Meine Schwester [[möchte|möchten|möchtest|möchtet]] auch Käse. " +
+      "Der Käse ist teuer, [[aber|sondern|dass|wenn]] er schmeckt sehr gut. Wir nehmen [[ihn|er|ihm|ihr]]. " +
+      "An der Kasse [[bezahle|bezahlst|bezahlt|bezahlen]] ich mit Karte. Dann gehen wir [[nach|zu|in|bei]] Hause.",
+    last: "Am Abend kochen wir zusammen eine Suppe.",
+    note: "Verbformen im Präsens (g1, g2, g6, g7, g10), zu Fuß / nach Hause (g3, g11), unbestimmter Artikel im Akkusativ (g4, g5), aber mit Hauptsatz (g8), Personalpronomen im Akkusativ (g9).",
+  }),
+  cloze(LEVEL, "MID", {
+    title: "Ein Tag im Büro",
+    first: "Herr Demir arbeitet in einem Büro in Hamburg.",
+    body:
+      "Er [[fängt|fange|fangt|fangen]] jeden Tag um acht Uhr an. Zuerst liest er [[seine|sein|seinen|seiner]] E-Mails. " +
+      "Um zehn Uhr telefoniert er [[mit|zu|an|für]] seiner Chefin. Mittags isst er in [[der|die|dem|den]] Kantine. " +
+      "Das Essen dort [[schmeckt|schmecke|schmecken|schmeckst]] gut und ist nicht teuer. " +
+      "Am Nachmittag [[muss|müssen|musst|müsst]] er noch einen Bericht schreiben. " +
+      "Der Bericht ist wichtig, [[denn|dass|deshalb|wenn]] die Chefin liest ihn morgen. " +
+      "Um fünf Uhr [[ist|hat|sind|bist]] er fertig. Er fährt mit [[dem|der|den|das]] Bus nach Hause. " +
+      "Dort wartet schon [[seine|sein|seinen|seinem]] Katze. Er gibt [[ihr|sie|ihm|ihn]] etwas zu essen.",
+    last: "Dann sitzt er auf dem Sofa und liest die Zeitung.",
+    note: "trennbares Verb (g1), Possessivartikel (g2, g10), Präpositionen mit Dativ (g3, g4, g9), Verbformen und Modalverb (g5, g6, g8), denn mit Hauptsatz (g7), Personalpronomen im Dativ (g11).",
+  }),
+  cloze(LEVEL, "HARD", {
+    title: "Eine Einladung",
+    first: "Liebe Mia, am Sonntag mache ich eine kleine Party.",
+    body:
+      "[[Hast|Hat|Habt|Habe]] du Zeit? Die Party beginnt [[um|am|im|in]] drei Uhr. " +
+      "Wir sitzen [[im|in|ins|am]] Garten, er ist klein, aber [[sehr|viel|viele|vielen]] schön. " +
+      "Ich lade auch [[meine|meinen|meiner|mein]] Freundinnen aus dem Deutschkurs ein. " +
+      "Kannst du einen Salat [[mitbringen|mitbringst|bringst|mitgebracht]]? " +
+      "Getränke [[brauchst|braucht|brauchen|brauche]] du nicht, ich habe genug. " +
+      "Ich habe leider [[keinen|kein|nicht|keine]] Grill, aber mein Nachbar gibt [[mir|mich|ich|mein]] seinen. " +
+      "Bitte [[ruf|rufst|ruft|rufen]] mich bis Freitag an. Ich freue mich [[auf|an|mit|zu]] dich!",
+    last: "Viele Grüße, deine Lena",
+    note: "Verbformen und Wortstellung (g1, g7), Zeitangabe mit um (g2), im Garten (g3), sehr + Adjektiv (g4), Possessivartikel im Plural (g5), Modalverb + Infinitiv (g6), kein (g8), Dativpronomen (g9), Imperativ (g10), sich freuen auf (g11).",
+  }),
+
+  // ---------------------------------------------------------------- word bank
+  wordBank(LEVEL, "EASY", {
+    title: "Mein Zimmer",
+    first: "Ich wohne mit zwei Freunden in einer Wohnung in Köln.",
+    body:
+      "Mein Zimmer ist klein, aber sehr [[hell]], denn es hat zwei große Fenster. " +
+      "Am [[Schreibtisch]] lerne ich jeden Abend Deutsch. Im Regal stehen viele [[Bücher]]. " +
+      "Ich schlafe gut, denn mein [[Bett]] ist neu und bequem. " +
+      "In der Küche [[koche]] ich am Wochenende für meine Freunde. Sie [[arbeiten]] beide in einem Hotel. " +
+      "Im [[Kühlschrank]] haben wir immer Milch und Käse. Die Miete [[kostet]] nur 400 Euro im Monat.",
+    last: "Ich wohne sehr gern hier.",
+    distractors: ["Lampe", "Tasche", "schläfst", "liest", "dunkel"],
+  }),
+  wordBank(LEVEL, "MID", {
+    title: "Paula im Café",
+    first: "Paula arbeitet seit Mai in einem Café am Markt.",
+    body:
+      "Sie [[steht]] jeden Tag um fünf Uhr auf. Zum Frühstück trinkt sie nur einen [[Tee]]. " +
+      "Das Café [[öffnet]] um sieben Uhr. Am Morgen kommen viele [[Gäste]]. Sie trinken Kaffee und essen [[Kuchen]]. " +
+      "Paula ist immer [[freundlich]] und hilft gern. Die Arbeit [[gefällt]] ihr sehr. " +
+      "Um zwei Uhr [[geht]] sie nach Hause.",
+    last: "Am Abend ist sie müde, aber glücklich.",
+    distractors: ["Tasse", "Tisch", "kaufen", "teuer", "wohnst"],
+  }),
+  wordBank(LEVEL, "HARD", {
+    title: "Ein Ausflug",
+    first: "Am Sonntag macht Familie Yilmaz einen Ausflug an einen See.",
+    body:
+      "Das Wetter ist [[sonnig]] und warm. Sie [[fahren]] mit dem Zug, denn sie haben kein Auto. " +
+      "Die Fahrt [[dauert]] eine Stunde. Die Kinder [[schwimmen]] im See. " +
+      "Der Vater liest eine [[Zeitung]], und die Mutter macht viele [[Fotos]]. " +
+      "Am Mittag sind alle [[hungrig]]. Sie essen Brot, Käse und [[Obst]].",
+    last: "Am Abend sind alle müde, aber sehr zufrieden.",
+    distractors: ["Buch", "Bahnhof", "regnet", "schwimmt", "billig"],
   }),
 ];
 

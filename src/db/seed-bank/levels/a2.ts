@@ -1,5 +1,7 @@
 import type { TfngValue } from "@/lib/exam/types";
+import { cloze } from "../cloze";
 import { cTest } from "../ctest";
+import { wordBank } from "../wordbank";
 import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 
 /*
@@ -11,7 +13,8 @@ import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 
 /**
  * A2 starter bank, written against docs/EXAM-BANK-RESEARCH.md (A2 section and
- * the item-writing rules). All texts are original.
+ * the item-writing rules). All texts are original. Grammar also holds three
+ * MC cloze texts and three word banks (spec 2026-10-18).
  *
  * Single-choice items have four options (Goethe practice uses three; the
  * fourth, d, is an extra wrong distractor). The key position is given
@@ -236,6 +239,91 @@ const grammarCTest3 = cTest(LEVEL, "MID", {
     15: ["ber"], 18: ["atten"], 20: ["um"],
   },
 });
+
+// MC cloze texts and word banks (spec 2026-10-18), each set easy to hard.
+const grammarTexts: SeedItem[] = [
+  cloze(LEVEL, "EASY", {
+    title: "Ein Wochenende in Berlin",
+    first: "Letztes Wochenende war ich mit meinem Bruder in Berlin.",
+    body:
+      "Wir [[sind|haben|hat|seid]] am Freitagabend mit dem Zug gefahren. " +
+      "Am Samstag haben wir den Fernsehturm [[besucht|gebesucht|besuchen|besuchte]]. " +
+      "Danach sind wir in [[ein|einem|einen|eine]] Museum gegangen. Das Museum war sehr [[interessant|interessiert|interessante|interessanten]]. " +
+      "Am Abend haben wir in einem kleinen Restaurant [[gegessen|geessen|gegesst|essen]]. " +
+      "Das Essen war gut und sogar [[billiger|billig|billigsten|billigere]] als in München. " +
+      "Am Sonntag sind wir im Hotel geblieben, [[weil|denn|deshalb|obwohl]] es den ganzen Tag [[geregnet|geregnen|regnete|regnen]] hat. " +
+      "Ich habe [[meiner|meine|meinem|meinen]] Mutter eine Karte [[geschrieben|geschreibt|schrieb|geschriebt]]. " +
+      "Die Reise hat [[uns|wir|unser|unsere]] sehr gut gefallen.",
+    last: "Im Sommer möchten wir noch einmal nach Berlin fahren.",
+    note: "Perfekt mit sein oder haben und Partizip II (g1, g2, g5, g8, g10), in + Akkusativ bei Richtung (g3), prädikatives Adjektiv (g4), Komparativ mit als (g6), weil mit Verb am Ende (g7), Possessivartikel im Dativ (g9), gefallen + Dativ (g11).",
+  }),
+  cloze(LEVEL, "MID", {
+    title: "Die neue Stelle",
+    first: "Seit zwei Wochen arbeitet Marco in einer großen Firma in Stuttgart.",
+    body:
+      "Früher [[musste|muss|müsste|musst]] er jeden Tag eine Stunde mit dem Bus fahren. Jetzt ist der Weg viel [[kürzer|kurz|kürzeste|kurzer]]. " +
+      "Er freut [[sich|ihn|ihm|er]] jeden Morgen auf die Arbeit. " +
+      "Am [[ersten|erste|erster|erstes]] Tag hat er [[den|dem|der|die]] Chef kennengelernt. " +
+      "Der Chef hat gesagt, [[dass|das|wenn|ob]] Marco sehr gut ins Team passt. " +
+      "Die Kollegen sind nett und helfen [[ihm|ihn|er|sein]] oft. Mittags essen alle zusammen [[in|im|ins|zu]] der Kantine. " +
+      "Wenn Marco eine Frage hat, [[fragt|fragen|fragst|gefragt]] er seine Kollegin Anna. " +
+      "Sie arbeitet schon [[seit|vor|für|ab]] zehn Jahren in der Firma. " +
+      "Marco findet die neue Stelle [[besser|gut|guter|beste]] als die alte.",
+    last: "Der Wechsel war für ihn die richtige Entscheidung.",
+    note: "Modalverb im Präteritum (g1), Komparativ (g2, g11), Reflexivpronomen (g3), Adjektivendung nach am (g4), Akkusativ (g5), dass-Satz (g6), helfen + Dativ (g7), in + Dativ (g8), Verb an erster Stelle nach dem Nebensatz (g9), seit + Dativ (g10).",
+  }),
+  cloze(LEVEL, "HARD", {
+    title: "Das Paket",
+    first: "Letzte Woche hat Frau Berger im Internet eine neue Kaffeemaschine bestellt.",
+    body:
+      "Das Paket sollte am Dienstag kommen, aber sie hat den ganzen Tag umsonst [[gewartet|gewarten|wartete|warten]]. " +
+      "Am Mittwoch war ein Zettel in [[ihrem|ihren|ihrer|ihr]] Briefkasten. " +
+      "Auf dem Zettel stand, [[dass|ob|wenn|weil]] das Paket bei [[der|die|dem|den]] Nachbarin im dritten Stock ist. " +
+      "Leider war die Nachbarin nicht da, [[deshalb|weil|denn|obwohl]] musste Frau Berger bis zum Abend warten. " +
+      "Am Abend hat sie das Paket endlich [[bekommen|gebekommen|bekamen|bekommt]], aber die Maschine war [[kaputt|kaputte|kaputten|kaputter]]. " +
+      "Frau Berger hat [[sich|ihr|ihm|ihre]] sehr geärgert. " +
+      "Sie hat beim Kundenservice angerufen und gefragt, [[ob|dass|wenn|weil]] sie die Maschine zurückschicken kann. " +
+      "Der Mitarbeiter war sehr [[freundlich|freundliche|freundlichen|freundlicher]] und hat sofort eine neue Maschine geschickt. " +
+      "Jetzt trinkt sie jeden Morgen einen [[heißen|heiße|heißer|heißes]] Kaffee.",
+    last: "Beim nächsten Mal kauft sie aber lieber im Geschäft ein.",
+    note: "Partizip II (g1, g6), Wechselpräposition mit Dativ (g2), dass- und ob-Satz (g3, g9), bei + Dativ (g4), deshalb mit Inversion (g5), prädikatives Adjektiv (g7, g10), Reflexivpronomen (g8), Adjektivendung im Akkusativ (g11).",
+  }),
+  wordBank(LEVEL, "EASY", {
+    title: "Beim Arzt",
+    first: "Gestern ist Jan mit starken Kopfschmerzen aufgewacht.",
+    body:
+      "Er hat sofort in der [[Praxis]] von Dr. Wolf angerufen. Die Frau am Telefon hat ihm einen [[Termin]] um zehn Uhr gegeben. " +
+      "Im [[Wartezimmer]] waren schon viele Leute. Die Ärztin hat ihn genau [[untersucht]]. " +
+      "Sie hat gesagt, dass er hohes [[Fieber]] hat. Er soll drei Tage im Bett [[bleiben]]. " +
+      "Außerdem hat sie ihm ein [[Medikament]] verschrieben. Er muss es dreimal am Tag [[nehmen]].",
+    last: "Nach einer Woche war Jan wieder gesund.",
+    distractors: ["Kopf", "Schmerzen", "gekocht", "laufen", "krank"],
+  }),
+  wordBank(LEVEL, "MID", {
+    title: "Der Umzug",
+    first: "Im März ist Selin mit ihrer Familie in eine größere Wohnung umgezogen.",
+    body:
+      "Die alte Wohnung war zu [[eng]] für vier Personen. Die neue Wohnung liegt in einem ruhigen [[Stadtteil]] am Stadtrand. " +
+      "Selin hat zwei Wochen lang viele [[Kartons]] gepackt. Am Samstag haben ihre Freunde beim Umzug [[geholfen]]. " +
+      "Leider gibt es im Haus keinen [[Aufzug]], deshalb mussten sie alles in den vierten Stock tragen. " +
+      "Am Abend waren alle sehr [[müde]]. Selin hat für alle Pizza [[bestellt]]. Jetzt hat jedes Kind ein eigenes [[Zimmer]].",
+    last: "Die ganze Familie fühlt sich in der neuen Wohnung sehr wohl.",
+    distractors: ["Treppe", "Küchen", "gewaschen", "schlafen", "breit"],
+  }),
+  wordBank(LEVEL, "HARD", {
+    title: "Eine Radtour",
+    first: "Am letzten Wochenende haben Tom und Lisa eine Radtour an der Elbe gemacht.",
+    body:
+      "Vorher haben sie den [[Wetterbericht]] gelesen, denn sie wollten nicht nass werden. " +
+      "Am Morgen war der Himmel noch [[bewölkt]], aber später hat die Sonne geschienen. " +
+      "Insgesamt sind sie ungefähr fünfzig [[Kilometer]] gefahren. Unterwegs haben sie in einem kleinen Dorf eine [[Pause]] gemacht. " +
+      "Dort haben sie Kaffee getrunken und frischen [[Kuchen]] gegessen. Am Nachmittag war plötzlich ein Reifen kaputt. " +
+      "Zum Glück hatte Tom sein [[Werkzeug]] dabei, und er hat den Reifen schnell [[repariert]]. " +
+      "Am Abend waren beide [[erschöpft]], aber sehr zufrieden.",
+    last: "Im Sommer wollen sie eine längere Tour machen.",
+    distractors: ["Brille", "Fahrkarte", "geschwommen", "geschlafen", "teuer"],
+  }),
+];
 
 // ================================================================ READING
 
@@ -946,7 +1034,7 @@ export const A2_PARTS: {
   writing: SeedBankPart;
   speaking: SeedBankPart;
 } = {
-  grammar: { stimuli: [], items: [...grammarItems, grammarCTest, grammarCTest2, grammarCTest3] },
+  grammar: { stimuli: [], items: [...grammarItems, grammarCTest, grammarCTest2, grammarCTest3, ...grammarTexts] },
   reading: { stimuli: readingStimuli, items: readingItems },
   listening: { stimuli: listeningStimuli, items: listeningItems },
   writing: { stimuli: [], items: writingItems },
