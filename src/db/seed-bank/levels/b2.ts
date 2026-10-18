@@ -287,7 +287,7 @@ const grammarTexts: SeedItem[] = [
     first: "In Deutschland landen jedes Jahr Millionen Tonnen Lebensmittel im Müll, obwohl sie oft noch genießbar sind.",
     body:
       "Ein großer Teil davon [[wird|werdet|worden|wirst]] in privaten Haushalten weggeworfen. " +
-      "Viele Menschen kaufen mehr ein, [[als|wie|wenn|dass]] sie tatsächlich brauchen. " +
+      "Viele Menschen kaufen mehr ein, [[als|ob|wenn|dass]] sie tatsächlich brauchen. " +
       "Außerdem verwechseln viele das Mindesthaltbarkeitsdatum [[mit|zu|von|für]] einem Verbrauchsdatum. " +
       "Dabei sind die meisten Produkte auch nach [[dem|den|der|des]] angegebenen Datum noch in Ordnung. " +
       "Um dieses Problem zu verringern, [[haben|sind|werden|habt]] einige Bäckereien eine einfache Idee entwickelt: " +
@@ -304,7 +304,7 @@ const grammarTexts: SeedItem[] = [
     first: "Das Stadtmuseum einer Kleinstadt am Rhein hatte lange mit sinkenden Besucherzahlen zu kämpfen.",
     body:
       "Vor zwei Jahren [[wurde|wird|würde|hat]] deshalb ein neues Konzept entwickelt. " +
-      "Die seit Jahrzehnten kaum [[veränderte|verändernde|veränderten|verändert]] Ausstellung wurde komplett neu gestaltet. " +
+      "Die seit Jahrzehnten kaum [[veränderte|verändernde|veränderten|verändert]] Ausstellung wurde komplett neu gestaltet; dafür blieb das Museum ein Jahr lang geschlossen. " +
       "Heute dürfen Besucher viele Objekte selbst [[anfassen|angefasst|anzufassen|anfasst]] und ausprobieren. " +
       "Außerdem gibt es nun ein Café, [[in|an|auf|über]] dem regelmäßig Lesungen und Konzerte stattfinden. " +
       "[[Besonders|Besondere|Besonderes|Besonderer]] beliebt sind die Führungen für Familien, bei [[denen|die|deren|dem]] Kinder in historische Kostüme schlüpfen dürfen. " +

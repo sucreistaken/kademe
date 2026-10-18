@@ -308,7 +308,7 @@ const grammarTexts: SeedItem[] = [
       "Was über Jahrhunderte als Ausweis von Bildung [[galt|gilt|gälte|gegolten]], fristet heute ein Schattendasein auf Einkaufszetteln und Glückwunschkarten. " +
       "[[So|Als|Wenn|Zu]] bedauerlich man diesen Wandel auch finden mag, aufhalten lässt er sich kaum. " +
       "Neurowissenschaftler geben indes zu bedenken, beim Schreiben mit der Hand [[werde|werden|worden|würdet]] das Gelernte nachhaltiger im Gedächtnis verankert als beim Tippen. " +
-      "Die dabei [[erforderliche|erfordernde|erforderlich|erforderlichen]] Verlangsamung zwinge zur Auswahl und fördere so das Verstehen. " +
+      "Die dabei [[unvermeidliche|unvermeidlichen|unvermeidlich|unvermeidlicher]] Verlangsamung zwinge zur Auswahl und fördere so das Verstehen. " +
       "Ein [[Verzicht|Verzichtung|Verzichte|verzichteter]] auf die Schreibschrift im Unterricht sei daher voreilig. " +
       "[[Freilich|Folglich|Mithin|Somit]] beweist ein statistischer Zusammenhang noch keine Ursache. " +
       "Viele Studien beruhen auf kleinen Stichproben, und [[mangels|zufolge|seitens|kraft]] verlässlicher Langzeitdaten lässt sich über die Wirkung im Erwachsenenalter bislang nur spekulieren. " +
@@ -316,7 +316,7 @@ const grammarTexts: SeedItem[] = [
       "Wer von Hand schreibt, hinterlässt [[ja|etwa|denn|bloß]] stets auch eine Spur seiner selbst, die sich in keiner Schriftart [[nachbilden|nachbildet|nachgebildet|nachzubilden]] lässt. " +
       "Dass mit der Handschrift auch diese persönliche Note allmählich in Vergessenheit [[gerät|fällt|geht|tritt]], wäre der eigentliche Verlust.",
     last: "Ihn vermag keine noch so ausgefeilte Software auszugleichen.",
-    note: "Präteritum im Kontrast zu heute (g1), konzessives so ... auch (g2), Konjunktiv I Passiv in der indirekten Rede (g3), erweitertes Partizipialattribut mit Adjektiv (g4), Nominalstil (g5), einräumendes freilich (g6), mangels + Genitiv (g7), nachgestelltes wegen mit Possessivartikel im Genitiv (g8), Modalpartikel ja (g9), sich lassen + Infinitiv (g10), in Vergessenheit geraten (g11).",
+    note: "Präteritum im Kontrast zu heute (g1), konzessives so ... auch (g2), Konjunktiv I Passiv in der indirekten Rede (g3), erweitertes Adjektivattribut (g4), Nominalstil (g5), einräumendes freilich (g6), mangels + Genitiv (g7), nachgestelltes wegen mit Possessivartikel im Genitiv (g8), Modalpartikel ja (g9), sich lassen + Infinitiv (g10), in Vergessenheit geraten (g11).",
   }),
   wordBank(LEVEL, "EASY", {
     title: "Über die Höflichkeit",
@@ -359,7 +359,7 @@ const grammarTexts: SeedItem[] = [
       "Die Fassaden, tagsüber kaum eines Blickes [[gewürdigt]], treten plötzlich in ihrer ganzen Eigenart hervor. " +
       "Man meint, die Stadt [[atme]] noch einmal tief durch, bevor sie sich dem Lärm des Tages überlässt. " +
       "Doch dieser Zauber ist [[flüchtig]]. " +
-      "Wer ihn einmal bewusst erlebt hat, begegnet dem Gewohnten fortan mit größerer [[Behutsamkeit]].",
+      "Wer ihn einmal bewusst erlebt hat, begegnet dem Gewohnten fortan mit größerer [[Achtsamkeit]].",
     last: "Spätestens wenn die ersten Busse fahren, hat der Alltag die Stadt wieder für sich eingenommen.",
     distractors: ["erwachen", "Dämmerung", "geschäftig", "verweilt", "betrachtet"],
   }),

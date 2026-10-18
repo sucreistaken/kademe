@@ -290,7 +290,7 @@ const grammarTexts: SeedItem[] = [
   }),
   wordBank(LEVEL, "EASY", {
     title: "Beim Arzt",
-    first: "Gestern ist Jan mit starken Kopfschmerzen aufgewacht.",
+    first: "Vor zwei Wochen ist Jan mit starken Kopfschmerzen aufgewacht.",
     body:
       "Er hat sofort in der [[Praxis]] von Dr. Wolf angerufen. Die Frau am Telefon hat ihm einen [[Termin]] um zehn Uhr gegeben. " +
       "Im [[Wartezimmer]] waren schon viele Leute. Die Ärztin hat ihn genau [[untersucht]]. " +

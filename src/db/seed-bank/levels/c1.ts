@@ -350,7 +350,7 @@ const grammarTexts: SeedItem[] = [
       "Wer nur wenige Stunden im Monat [[investieren]] kann, sollte trotzdem willkommen sein. " +
       "Auch eine offizielle [[Anerkennung]], zum Beispiel durch Bescheinigungen für spätere Bewerbungen, kann zusätzlich motivieren.",
     last: "Denn ohne freiwilliges Engagement wäre vieles im gesellschaftlichen Leben schlicht nicht möglich.",
-    distractors: ["Mitglieder", "gegründet", "freiwillige", "Spenden", "teilgenommen"],
+    distractors: ["Mitglieder", "gegründet", "freiwillige", "Beitrag", "teilgenommen"],
   }),
   wordBank(LEVEL, "MID", {
     title: "Fachkräfte aus dem Ausland",
