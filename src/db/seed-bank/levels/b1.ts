@@ -1,5 +1,7 @@
 import type { TfngValue } from "@/lib/exam/types";
+import { cloze } from "../cloze";
 import { cTest } from "../ctest";
+import { wordBank } from "../wordbank";
 import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 
 /*
@@ -12,7 +14,8 @@ import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 /**
  * B1 starter bank, written against docs/EXAM-BANK-RESEARCH.md (section B1).
  *
- * Grammar: 24 items (8 EASY, 10 MID, 6 HARD) plus three C-tests. Reading: 4 texts
+ * Grammar: 24 items (8 EASY, 10 MID, 6 HARD) plus three C-tests, three MC cloze
+ * texts and three word banks (spec 2026-10-18). Reading: 4 texts
  * with 4 items each. Listening: 3 clips with 4 items each. Writing and
  * speaking: 6 prompts each. Single-choice items have 4 options (Goethe B1
  * uses three; d is an extra wrong distractor); the correct option is given first and placed at `pos`, so the key
@@ -259,6 +262,106 @@ const grammarItems: SeedItem[] = [
       12: ["lt"], 13: ["elen"], 14: ["n"], 15: ["chts"],
       16: ["r"], 17: ["che"], 19: ["inen"],
     },
+  }),
+];
+
+// MC cloze texts and word banks (spec 2026-10-18), each set easy to hard.
+const grammarTexts: SeedItem[] = [
+  cloze(LEVEL, "EASY", {
+    title: "Ein Praktikum im Hotel",
+    first: "Im letzten Sommer hat Elif ein Praktikum in einem Hotel am Bodensee gemacht.",
+    body:
+      "Sie hatte sich schon im Winter [[um|über|an|zu]] die Stelle beworben. " +
+      "Das Hotel, in [[dem|das|den|der]] sie gearbeitet hat, liegt direkt am Wasser. " +
+      "Jeden Morgen [[musste|müsste|musstet|gemusst]] sie schon um sechs Uhr aufstehen, [[weil|denn|deshalb|trotzdem]] das Frühstück für die Gäste um sieben Uhr begann. " +
+      "Am Anfang hat sie vor allem in der Küche [[geholfen|geholft|gehelft|helfen]]. " +
+      "Später durfte sie auch an der Rezeption arbeiten und [[die|den|dem|der]] Gäste begrüßen. " +
+      "Viele Gäste kamen aus der Schweiz oder aus Österreich, und manche haben [[ihr|sie|ihre|ihn]] viel von ihrer Heimat erzählt. " +
+      "Die Arbeit war anstrengend, aber Elif hat [[sich|ihr|ihm|ihnen]] nie gelangweilt. " +
+      "Ihre Chefin war mit ihr sehr [[zufrieden|zufriedene|zufriedenen|zufriedener]]. " +
+      "Am letzten Tag hat sie Elif gefragt, [[ob|dass|wenn|als]] sie im nächsten Sommer wiederkommen möchte. " +
+      "Elif [[würde|wurde|würden|werde]] sehr gern zurückkommen, aber im nächsten Sommer muss sie ihre Abschlussprüfungen schreiben.",
+    last: "Mit zwei Kolleginnen aus dem Hotel schreibt sie sich bis heute regelmäßig Nachrichten.",
+    note: "sich bewerben um (g1), Relativpronomen nach Präposition (g2), Modalverb im Präteritum (g3), weil mit Verb am Ende (g4), Partizip II (g5), bestimmter Artikel im Akkusativ Plural (g6), erzählen + Dativ (g7), Reflexivpronomen (g8), prädikatives Adjektiv (g9), indirekte Frage mit ob (g10), höflicher Wunsch im Konjunktiv II (g11).",
+  }),
+  cloze(LEVEL, "MID", {
+    title: "Die Wohnungssuche",
+    first: "Seit drei Monaten suchen Jana und Tobias eine größere Wohnung in Leipzig.",
+    body:
+      "Sie brauchen ein zusätzliches Zimmer, [[weil|denn|deshalb|damit]] im Herbst ihr erstes Kind auf die Welt kommt. " +
+      "Jedes Wochenende sehen sie sich Wohnungen an, [[die|der|denen|deren]] sie im Internet gefunden haben. " +
+      "Leider sind die meisten Angebote entweder zu teuer [[oder|und|aber|sondern]] zu klein. " +
+      "Letzten Samstag haben sie eine Altbauwohnung besichtigt, [[in|an|auf|zu]] die sie sich sofort verliebt haben. " +
+      "Die Wohnung liegt in [[einer|einem|eine|einen]] ruhigen Seitenstraße und hat einen großen Balkon. " +
+      "Die Vermieterin war sehr nett und hat ihnen alle Räume [[gezeigt|zeigte|zeigen|gezeigen]]. " +
+      "Jana fragte, [[ob|dass|wenn|was]] Haustiere erlaubt sind, denn sie haben eine Katze. " +
+      "Die Vermieterin hatte nichts dagegen, aber [[viele|vielen|vieler|vieles]] andere Paare wollten die Wohnung auch haben. " +
+      "Deshalb haben Jana und Tobias am Abend noch eine freundliche E-Mail [[an|zu|bei|nach]] die Vermieterin geschrieben. " +
+      "Darin stand, dass sie sich sehr freuen [[würden|wurden|wären|würdet]], wenn sie die Wohnung bekommen könnten. " +
+      "Zwei Tage später kam endlich die Antwort, [[auf|für|an|nach]] die sie so ungeduldig gewartet hatten.",
+    last: "Die Vermieterin hat sich für die beiden entschieden, und im Juni ziehen sie ein.",
+    note: "weil mit Verb am Ende (g1), Relativpronomen im Akkusativ Plural (g2), entweder ... oder (g3), sich verlieben in + Akkusativ im Relativsatz (g4), Wechselpräposition mit Dativ (g5), Partizip II (g6), indirekte Frage mit ob (g7), Indefinitpronomen als Artikel (g8), schreiben an + Akkusativ (g9), Konjunktiv II mit würde (g10), warten auf im Relativsatz (g11).",
+  }),
+  cloze(LEVEL, "HARD", {
+    title: "Ärger mit der Heizung",
+    first: "Mitte Dezember ist in der Wohnung von Herrn Yilmaz plötzlich die Heizung ausgefallen.",
+    body:
+      "Weil es draußen sehr kalt war, rief er sofort [[bei|an|zu|mit]] der Hausverwaltung an. " +
+      "Eine Mitarbeiterin versprach, [[ihm|ihn|sein|er]] noch am selben Tag einen Techniker zu schicken. " +
+      "Doch am Abend war immer noch niemand [[gekommen|gekommt|kommen|kam]]. " +
+      "Herr Yilmaz schrieb deshalb eine E-Mail, [[in|an|auf|über]] der er sich [[über|auf|an|für]] den schlechten Service beschwerte. " +
+      "Am nächsten Morgen [[wurde|würde|hat|worden]] die Heizung endlich repariert. " +
+      "Der Techniker, [[der|den|dem|dessen]] sehr freundlich war, entschuldigte sich für die Verspätung. " +
+      "Ein kleines Teil war kaputt, [[deshalb|weil|denn|obwohl]] funktionierte die ganze Heizung nicht. " +
+      "[[Wenn|Als|Ob|Dass]] Herr Yilmaz die Nummer des Notdienstes gehabt hätte, hätte er nicht die ganze Nacht [[gefroren|gefriert|frieren|fror]]. " +
+      "Als Entschuldigung [[bot|bat|boten|geboten]] ihm die Hausverwaltung für Dezember eine kleine Mietminderung an.",
+    last: "Damit war Herr Yilmaz am Ende einigermaßen zufrieden.",
+    note: "bei jemandem anrufen (g1), schicken + Dativ (g2), Plusquamperfekt (g3), Relativsatz mit Präposition (g4), sich beschweren über (g5), Passiv im Präteritum (g6), Relativpronomen im Nominativ (g7), deshalb mit Inversion (g8), irrealer Bedingungssatz in der Vergangenheit (g9, g10), trennbares Verb im Präteritum (g11).",
+  }),
+  wordBank(LEVEL, "EASY", {
+    title: "Der erste Arbeitstag",
+    first: "Am Montag hat Sofia als Bürokauffrau in einer Spedition angefangen.",
+    body:
+      "Sie war sehr [[aufgeregt]] und ist deshalb schon um halb acht losgefahren. " +
+      "Am Empfang hat ein junger Kollege sie freundlich [[begrüßt]] und ihr das Gebäude gezeigt. " +
+      "Ihr [[Schreibtisch]] steht in einem hellen Büro direkt neben der Kaffeeküche. " +
+      "Am Vormittag musste Sofia viele [[Formulare]] ausfüllen und ein neues Passwort wählen. " +
+      "In der Mittagspause hat sie mit zwei Kolleginnen in der [[Kantine]] gegessen. " +
+      "Am Nachmittag durfte sie schon die ersten [[Kunden]] am Telefon beraten. " +
+      "Wenn sie eine Frage hatte, konnte sie jederzeit ihre [[Kollegin]] Frau Brandt fragen. " +
+      "Um vier Uhr [[endete]] ihr erster Arbeitstag.",
+    last: "Am Abend hat sie ihren Eltern erzählt, dass ihr die neue Stelle sehr gut gefällt.",
+    distractors: ["Bahnhof", "Suppe", "teuer", "geschlafen", "fahren"],
+  }),
+  wordBank(LEVEL, "MID", {
+    title: "Ein Kochkurs für Anfänger",
+    first: "Weil Daniel nicht mehr jeden Abend Fertiggerichte essen wollte, hat er sich für einen Kochkurs an der Volkshochschule angemeldet.",
+    body:
+      "Der Kurs findet jeden Donnerstag in einer großen [[Küche]] im Erdgeschoss statt. " +
+      "Die Gruppe besteht aus zwölf [[Teilnehmern]], und die meisten sind Anfänger wie er. " +
+      "Der Kursleiter ist ein ehemaliger [[Koch]], der jede Frage geduldig beantwortet. " +
+      "Am ersten Abend haben sie gelernt, wie man Zwiebeln richtig [[schneidet]]. " +
+      "Danach haben sie zusammen eine Gemüsesuppe gekocht, die allen sehr gut [[geschmeckt]] hat. " +
+      "Daniel war überrascht, wie [[einfach]] manche Gerichte eigentlich sind. " +
+      "Nach jedem Abend bekommen die Teilnehmer die [[Rezepte]], damit sie zu Hause weiter üben können. " +
+      "Inzwischen lädt Daniel am Wochenende manchmal Freunde zum [[Essen]] ein.",
+    last: "Seine Freunde finden, dass er schon viel besser kocht als am Anfang.",
+    distractors: ["Herd", "Hunger", "gebraten", "schläft", "müde"],
+  }),
+  wordBank(LEVEL, "HARD", {
+    title: "Die Bewerbung",
+    first: "Nach ihrer Ausbildung zur Pflegefachfrau wollte Amira in eine andere Stadt ziehen und hat sich deshalb bei mehreren Kliniken beworben.",
+    body:
+      "Ihren [[Lebenslauf]] hat sie sorgfältig überarbeitet und alle Praktika und Weiterbildungen darin aufgelistet. " +
+      "Zu jeder Bewerbung hat sie außerdem ein persönliches [[Anschreiben]] verfasst. " +
+      "Nach zwei Wochen bekam sie eine [[Einladung]] zu einem Vorstellungsgespräch in Hamburg. " +
+      "Sie hat sich gründlich [[vorbereitet]] und im Internet viel über die Klinik gelesen. " +
+      "Im Gespräch wollte die Pflegedienstleiterin wissen, wie Amira mit [[schwierigen]] Patienten umgeht. " +
+      "Amira hat [[ehrlich]] geantwortet und von ihren Erfahrungen auf der Kinderstation erzählt. " +
+      "Am Ende hat sie selbst nach dem [[Gehalt]] gefragt, das in der Pflege oft nicht besonders hoch ist. " +
+      "Eine Woche später rief die Klinik an und gab ihr die [[Zusage]] für die Stelle.",
+    last: "Im Oktober fängt Amira in Hamburg an und freut sich schon sehr auf die neue Aufgabe.",
+    distractors: ["Rente", "Urlaub", "gekündigt", "teuer", "bewirbt"],
   }),
 ];
 
@@ -1041,7 +1144,7 @@ export const B1_PARTS: {
   writing: SeedBankPart;
   speaking: SeedBankPart;
 } = {
-  grammar: { stimuli: [], items: grammarItems },
+  grammar: { stimuli: [], items: [...grammarItems, ...grammarTexts] },
   reading: { stimuli: [rEmail, rArtikel, rAnzeigen, rRegeln], items: readingItems },
   listening: { stimuli: [lMailbox, lFuehrung, lGespraech], items: listeningItems },
   writing: { stimuli: [], items: writingItems },

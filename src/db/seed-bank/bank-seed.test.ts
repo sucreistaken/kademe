@@ -58,7 +58,7 @@ describe("starter bank coverage", () => {
 });
 
 /** Levels that already have their MC cloze and word-bank texts; the content tasks add the rest. */
-const TEXT_LEVELS = ["A1", "A2"] as const;
+const TEXT_LEVELS = ["A1", "A2", "B1", "B2"] as const;
 
 describe("starter MC cloze and word-bank texts", () => {
   const textsOf = (level: string, skillTag: string) =>

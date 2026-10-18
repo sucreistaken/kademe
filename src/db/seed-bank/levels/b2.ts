@@ -1,5 +1,7 @@
 import type { TfngValue } from "@/lib/exam/types";
+import { cloze } from "../cloze";
 import { cTest } from "../ctest";
+import { wordBank } from "../wordbank";
 import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 
 /*
@@ -11,7 +13,8 @@ import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 
 /**
  * B2 starter bank, written against docs/EXAM-BANK-RESEARCH.md (B2 section):
- * - Grammar: 24 items (9 EASY, 9 MID, 6 HARD) over the B2 inventory, plus three C-tests.
+ * - Grammar: 24 items (9 EASY, 9 MID, 6 HARD) over the B2 inventory, plus three C-tests,
+ *   three MC cloze texts and three word banks (spec 2026-10-18).
  * - Reading: 4 texts with 4 items each (opinion set, article, sentence-gap text, rules).
  * - Listening: 3 clips with 4 items each (expert interview, short lecture, everyday conversation).
  * - Writing: 6 prompts (forum opinion about 150 words, semi-formal/formal message about 100 words).
@@ -277,7 +280,109 @@ const grammarCTest3 = cTest(LEVEL, "MID", {
   },
 });
 
-const grammar: SeedBankPart = { stimuli: [], items: [grammarCTest, grammarCTest2, grammarCTest3, ...grammarItems] };
+// MC cloze texts and word banks (spec 2026-10-18), each set easy to hard.
+const grammarTexts: SeedItem[] = [
+  cloze(LEVEL, "EASY", {
+    title: "Lebensmittel retten",
+    first: "In Deutschland landen jedes Jahr Millionen Tonnen Lebensmittel im Müll, obwohl sie oft noch genießbar sind.",
+    body:
+      "Ein großer Teil davon [[wird|werdet|worden|wirst]] in privaten Haushalten weggeworfen. " +
+      "Viele Menschen kaufen mehr ein, [[als|wie|wenn|dass]] sie tatsächlich brauchen. " +
+      "Außerdem verwechseln viele das Mindesthaltbarkeitsdatum [[mit|zu|von|für]] einem Verbrauchsdatum. " +
+      "Dabei sind die meisten Produkte auch nach [[dem|den|der|des]] angegebenen Datum noch in Ordnung. " +
+      "Um dieses Problem zu verringern, [[haben|sind|werden|habt]] einige Bäckereien eine einfache Idee entwickelt: " +
+      "Sie verkaufen Brot vom Vortag [[zu|für|um|auf]] einem deutlich niedrigeren Preis. " +
+      "Kunden, [[denen|die|dessen|den]] es auf jeden Euro ankommt, sparen so Geld, und gleichzeitig landet weniger Brot im Müll, [[was|dass|wo|wer]] auch der Umwelt hilft. " +
+      "Auch in Restaurants [[lässt|lasst|lassen|gelassen]] sich einiges verbessern. " +
+      "Viele Gäste trauen sich nicht, nach einer Box [[für|zu|an|mit]] ihre Reste zu fragen. " +
+      "[[Statt|Trotz|Wegen|Während]] das Essen auf dem Teller zu lassen, sollten sie das ruhig tun.",
+    last: "Die meisten Restaurants geben ihren Gästen die Reste nämlich gern mit.",
+    note: "Passiv im Präsens (g1), Vergleich mit als (g2), verwechseln mit (g3), nach + Dativ (g4), Perfekt mit haben (g5), zu einem Preis (g6), Relativpronomen im Dativ bei es kommt jemandem auf etwas an (g7), weiterführender Relativsatz mit was (g8), sich lassen + Infinitiv (g9), Box für + Akkusativ (g10), statt ... zu + Infinitiv (g11).",
+  }),
+  cloze(LEVEL, "MID", {
+    title: "Ein Museum erfindet sich neu",
+    first: "Das Stadtmuseum einer Kleinstadt am Rhein hatte lange mit sinkenden Besucherzahlen zu kämpfen.",
+    body:
+      "Vor zwei Jahren [[wurde|wird|würde|hat]] deshalb ein neues Konzept entwickelt. " +
+      "Die seit Jahrzehnten kaum [[veränderte|verändernde|veränderten|verändert]] Ausstellung wurde komplett neu gestaltet. " +
+      "Heute dürfen Besucher viele Objekte selbst [[anfassen|angefasst|anzufassen|anfasst]] und ausprobieren. " +
+      "Außerdem gibt es nun ein Café, [[in|an|auf|über]] dem regelmäßig Lesungen und Konzerte stattfinden. " +
+      "[[Besonders|Besondere|Besonderes|Besonderer]] beliebt sind die Führungen für Familien, bei [[denen|die|deren|dem]] Kinder in historische Kostüme schlüpfen dürfen. " +
+      "[[Trotz|Wegen|Dank|Durch]] der hohen Kosten für den Umbau sind die Eintrittspreise nicht gestiegen. " +
+      "Das liegt vor allem [[daran|darauf|dafür|davon]], dass die Stadt einen großen Teil der Kosten übernommen hat. " +
+      "Seit der [[Wiedereröffnung|wiedereröffnet|Wiedereröffnen|wiedereröffnete]] kommen dreimal so viele Besucher [[wie|als|wenn|denn]] vorher. " +
+      "Die Museumsleiterin ist überzeugt, dass sich der Aufwand [[gelohnt|gelohnen|lohnte|lohnen]] hat.",
+    last: "Inzwischen interessieren sich auch andere Museen der Region für das Konzept.",
+    note: "Passiv im Präteritum (g1), Partizipialattribut (g2), Modalverb + Infinitiv (g3), Relativsatz mit Präposition (g4), Adjektiv als Adverb (g5), Relativpronomen im Dativ Plural (g6), trotz + Genitiv (g7), liegen an mit Präpositionaladverb (g8), Nominalisierung (g9), so ... wie (g10), Perfekt eines reflexiven Verbs (g11).",
+  }),
+  cloze(LEVEL, "HARD", {
+    title: "Die Rückkehr der Nachtzüge",
+    first: "Lange Zeit galten Nachtzüge in Europa als altmodisch und unwirtschaftlich.",
+    body:
+      "[[Nachdem|Bevor|Obwohl|Solange]] viele Verbindungen in den vergangenen Jahrzehnten eingestellt worden waren, schien das Ende dieser Reiseform gekommen. " +
+      "Doch seit einigen Jahren ist die Nachfrage wieder deutlich [[gestiegen|gestiegt|stieg|gestiegene]]. " +
+      "Immer mehr Reisende verzichten bewusst [[auf|für|an|von]] Kurzstreckenflüge und wählen stattdessen die Bahn. " +
+      "[[Je|Desto|Umso|So]] länger die Strecke ist, desto attraktiver wird der Nachtzug im Vergleich zum Flugzeug. " +
+      "Die Betreiber stehen allerdings vor [[großen|große|großer|großes]] Herausforderungen. " +
+      "Viele der eingesetzten Waggons sind mehrere Jahrzehnte alt und müssen dringend [[ersetzt|ersetzen|ersetzten|ersetze]] werden. " +
+      "Neue Schlafwagen sind jedoch so teuer, [[dass|damit|ob|wenn]] sich viele Unternehmen eine Bestellung gut überlegen. " +
+      "Hinzu kommen hohe Gebühren für die Nutzung der Schienen, die in jedem Land anders [[berechnet|berechnen|berechneten|berechnend]] werden. " +
+      "Fachleute fordern daher eine stärkere [[Förderung|Fördern|fördernde|gefördert]] durch den Staat. " +
+      "Ob sich das Angebot langfristig [[durchsetzt|durchsetzen|durchgesetzt|durchzusetzen]], hängt also nicht zuletzt [[von|an|auf|für]] politischen Entscheidungen ab.",
+    last: "Für viele Reisende ist die Nacht im Zug jedenfalls schon heute eine echte Alternative.",
+    note: "nachdem mit Plusquamperfekt Passiv (g1), Perfekt mit sein (g2), verzichten auf (g3), je ... desto (g4), vor + Dativ Plural mit Adjektivendung (g5), Passiv mit Modalverb (g6), so ... dass (g7), Passiv im Relativsatz (g8), Nominalisierung (g9), ob-Satz mit trennbarem Verb (g10), abhängen von (g11).",
+  }),
+  wordBank(LEVEL, "EASY", {
+    title: "Das Repair-Café",
+    first: "In vielen Städten gibt es inzwischen sogenannte Repair-Cafés, in denen Freiwillige kaputte Geräte gemeinsam mit ihren Besitzern reparieren.",
+    body:
+      "Die Idee ist einfach: Statt einen defekten Toaster sofort [[wegzuwerfen]], bringt man ihn vorbei und lässt ihn prüfen. " +
+      "Häufig ist nur ein kleines [[Bauteil]] beschädigt, das sich problemlos austauschen lässt. " +
+      "Die Freiwilligen verfügen über viel [[Erfahrung]], weil viele von ihnen früher in einem Handwerk tätig waren. " +
+      "Die Hilfe selbst ist [[kostenlos]], bezahlt werden nur die Materialien. " +
+      "Viele Besucher [[genießen]] außerdem die Gelegenheit, mit Menschen aus der Nachbarschaft ins Gespräch zu kommen. " +
+      "Für die Umwelt ist das Prinzip ein großer [[Gewinn]], denn jedes reparierte Gerät bedeutet weniger Müll. " +
+      "Kritiker [[bemängeln]] allerdings, dass viele moderne Geräte so gebaut sind, dass man sie kaum öffnen kann. " +
+      "Sie fordern deshalb strengere [[Vorschriften]] für die Hersteller.",
+    last: "Bis es so weit ist, bleibt das Repair-Café für viele eine gute Alternative zum Neukauf.",
+    distractors: ["zerbrochen", "Verbraucher", "verkaufen", "neugierig", "Werkstatt"],
+  }),
+  wordBank(LEVEL, "MID", {
+    title: "Ein Garten für alle",
+    first: "Auf einer ehemaligen Brachfläche mitten in Hannover ist vor drei Jahren ein Gemeinschaftsgarten entstanden.",
+    body:
+      "Rund vierzig Anwohnerinnen und Anwohner [[bewirtschaften]] die Beete gemeinsam und teilen sich die Ernte. " +
+      "Wer mitmachen möchte, muss kein [[Vorwissen]] mitbringen, denn erfahrene Mitglieder zeigen den Neuen, worauf es ankommt. " +
+      "Die Aufgaben werden in einem Plan [[festgelegt]], damit jeder weiß, wann er mit dem Gießen an der Reihe ist. " +
+      "Viele berichten, dass ihnen die Gartenarbeit hilft, nach einem [[stressigen]] Arbeitstag abzuschalten. " +
+      "Außerdem sind im Garten zahlreiche [[Freundschaften]] entstanden, die weit über das gemeinsame Hobby hinausgehen. " +
+      "Die Stadt [[unterstützt]] das Projekt, indem sie das Grundstück kostenlos zur Verfügung stellt. " +
+      "Allerdings ist der [[Vertrag]] mit der Stadt zunächst auf fünf Jahre befristet. " +
+      "Die Mitglieder hoffen nun, dass er um weitere zehn Jahre [[verlängert]] wird.",
+    last: "Ein Sommerfest soll zeigen, wie wichtig der Garten inzwischen für das ganze Viertel geworden ist.",
+    distractors: ["Nachbarn", "geerntet", "verbietet", "fleißig", "Erlaubnis"],
+  }),
+  wordBank(LEVEL, "HARD", {
+    title: "Lärm in der Stadt",
+    first: "Verkehrslärm gehört in deutschen Großstädten zu den häufigsten Gründen für Beschwerden von Anwohnern.",
+    body:
+      "Dauerhafter Lärm ist dabei keineswegs nur [[lästig]], sondern kann auch der Gesundheit erheblich schaden. " +
+      "Studien zufolge [[erhöht]] er unter anderem das Risiko für Bluthochdruck und Schlafstörungen. " +
+      "Viele Städte haben deshalb [[Maßnahmen]] ergriffen, um die Belastung zu verringern. " +
+      "Auf zahlreichen Hauptstraßen wurde die zulässige [[Geschwindigkeit]] nachts auf 30 km/h begrenzt. " +
+      "Außerdem wird an besonders belasteten Stellen ein spezieller Asphalt [[verlegt]], der deutlich leiser ist. " +
+      "Kritiker [[bezweifeln]] jedoch, dass solche Schritte ausreichen. " +
+      "Sie verweisen darauf, dass der Lärm erst dann spürbar [[abnimmt]], wenn insgesamt weniger Autos unterwegs sind. " +
+      "Eine dauerhafte [[Lösung]] sehen sie daher vor allem im Ausbau von Bus, Bahn und Radwegen.",
+    last: "Ob sich diese Forderung politisch durchsetzen lässt, wird sich in den kommenden Jahren zeigen.",
+    distractors: ["Verkehr", "gestiegen", "verbieten", "Fahrzeuge", "Ampel"],
+  }),
+];
+
+const grammar: SeedBankPart = {
+  stimuli: [],
+  items: [grammarCTest, grammarCTest2, grammarCTest3, ...grammarItems, ...grammarTexts],
+};
 
 // ================================================================ READING
 
