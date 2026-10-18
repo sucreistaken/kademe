@@ -21,6 +21,7 @@ import {
   planFixedSection,
   productiveTaskLevels,
   resolveDistribution,
+  textKindsOf,
   textPlanOf,
   weighsTexts,
   type BankItem,
@@ -53,6 +54,7 @@ import {
   type ItemSnapshot,
   type Presentation,
   type Section,
+  type TextGapKind,
 } from "@/lib/exam/types";
 import { isProctored, type ProctoringPolicy } from "@/lib/proctor/policy";
 import { SUBMIT_SLACK_MS } from "@/lib/timer";
@@ -161,7 +163,9 @@ export type SectionSummary = {
   /** The student can go back, flag items and review before finishing this section. */
   navigable: boolean;
   /** GRAMMAR made only of texts (C-test, cloze, word bank): the intro counts texts, not questions. */
-  cTestOnly: boolean;
+  textOnly: boolean;
+  /** The kinds of text the section opens with (empty when it has none), so the intro and the warm-up can say how to answer. */
+  textKinds: TextGapKind[];
   done: boolean;
   /** Closed without a question because the bank had none left (BANK_EMPTY); the student is told. */
   skipped?: boolean;
@@ -253,15 +257,19 @@ export async function loadState(ctx: ExamCandidateContext): Promise<CandidateSta
     claimedLevel: ctx.assessment.claimedLevel,
     estimatedMinutes: estimatedMinutes(cfg),
     expiresAt: ctx.link.expiresAt.toISOString(),
-    sections: sections.map((s, i) => ({
-      section: s.section,
-      position: i + 1,
-      minutes: s.durationMinutes,
-      itemsLabel: itemsLabel(s, ctx.assessment.mode, ctx.assessment.claimedLevel, cfg.difficultyOffset),
-      navigable: isNavigableConfig(s),
-      cTestOnly: isTextOnly(s, ctx.assessment.mode, ctx.assessment.claimedLevel, cfg.difficultyOffset),
-      done: false,
-    })),
+    sections: sections.map((s, i) => {
+      const textOnly = isTextOnly(s, ctx.assessment.mode, ctx.assessment.claimedLevel, cfg.difficultyOffset);
+      return {
+        section: s.section,
+        position: i + 1,
+        minutes: s.durationMinutes,
+        itemsLabel: itemsLabel(s, ctx.assessment.mode, ctx.assessment.claimedLevel, cfg.difficultyOffset),
+        navigable: isNavigableConfig(s),
+        textOnly,
+        textKinds: textKindsOf(s, ctx.assessment.mode, ctx.assessment.claimedLevel),
+        done: false,
+      };
+    }),
     proctoring: cfg.proctoring,
     maxPlays: cfg.listening.maxPlays,
   };

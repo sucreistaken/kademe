@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState, type KeyboardEvent } from "react";
+import { useId, useRef, useState } from "react";
 import { matchingTargets, type CandidateItem } from "@/lib/exam/safe";
 import { withPoolInstruction } from "@/lib/exam/ctest-instruction";
 import { splitInstruction } from "@/lib/exam/prompt-instruction";
@@ -9,6 +9,8 @@ import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
 import { TaskExpectations } from "./TaskExpectations";
 import { TaskPromptCard } from "./TaskPromptCard";
+import { ClozeItem } from "./ClozeItem";
+import { Instruction, radioKeys } from "./item-parts";
 import { useChipDrag } from "./use-chip-drag";
 
 /**
@@ -52,7 +54,7 @@ export function ItemView(props: ItemProps) {
     case "TFNG":
       return <TfngItem {...props} />;
     case "GAP":
-      return <GapItem {...props} />;
+      return item.content.cloze ? <ClozeItem {...props} /> : <GapItem {...props} />;
     case "MATCHING":
       return <MatchingItem {...props} />;
     case "SHORT_TEXT":
@@ -78,28 +80,6 @@ function Prompt({ text, id, mode = "stem" }: { text: string; id?: string; mode?:
       {content ? <p className="whitespace-pre-line text-[17px] font-semibold leading-[1.6] text-ink">{content}</p> : null}
     </div>
   );
-}
-
-function Instruction({ text }: { text: string }) {
-  return <p className="whitespace-pre-line border-l-[3px] border-brand pl-3 text-[15px] leading-[1.55] text-ink">{text}</p>;
-}
-
-/**
- * Arrow keys, Home and End move through one radio group and pick, the way
- * native radio buttons do. Only the picked radio (or the first) is a tab stop.
- */
-function radioKeys(e: KeyboardEvent<HTMLButtonElement>) {
-  const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key] ?? 0;
-  if (!step && e.key !== "Home" && e.key !== "End") return;
-  const group = e.currentTarget.closest('[role="radiogroup"]');
-  const radios = [...(group?.querySelectorAll<HTMLButtonElement>('[role="radio"]:not(:disabled)') ?? [])];
-  const at = radios.indexOf(e.currentTarget);
-  if (at < 0) return;
-  e.preventDefault();
-  const next =
-    e.key === "Home" ? radios[0] : e.key === "End" ? radios[radios.length - 1] : radios[(at + step + radios.length) % radios.length];
-  next.focus();
-  next.click();
 }
 
 function ChoiceItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps) {
@@ -297,11 +277,14 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
     disabled: !!disabled,
   });
   if (item.content.kind !== "GAP") return null;
-  const pool = item.content.attached ? (item.content.pool ?? null) : null;
+  // C-test: word parts (attached to the stems); word bank: whole words in slots without stems.
+  const pool = item.content.pool ?? null;
+  const wordBank = !!pool && !item.content.attached;
   const placement = pool ? poolPlacement(pool, item.content.gaps.map((g) => g.id), answer.gaps) : null;
   const gaps = new Map(item.content.gaps.map((g) => [g.id, g]));
-  // The stored instruction asks to type letters; with the pool the student drags parts instead.
-  const prompt = pool ? withPoolInstruction(item.prompt) : item.prompt;
+  // The stored C-test instruction asks to type letters; with the pool the student drags parts instead.
+  // A word bank carries its own instruction.
+  const prompt = pool && !wordBank ? withPoolInstruction(item.prompt) : item.prompt;
   const { instruction, content: passage } = splitInstruction(prompt, "stem");
   const parts = passage.split(/(\{\{[A-Za-z0-9_-]+\}\})/g);
   const set = (id: string, value: string) => onChange({ gaps: { ...(answer.gaps ?? {}), [id]: value } });
@@ -331,7 +314,7 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
       setSelected(null);
     } else setSelected(selected === id ? null : id);
   };
-  const slotWidth = `${Math.max(4, ...(pool ?? []).map((c) => c.length)) + 2}ch`;
+  const slotWidth = `${Math.max(4, ...(pool ?? []).map((c) => c.length)) + (wordBank ? 3 : 2)}ch`;
   const typed = !pool && item.content.gaps.some((g) => !g.choices);
   const attached = !!item.content.attached;
   const marker = (part: string | undefined) => part?.match(/^\{\{([A-Za-z0-9_-]+)\}\}$/) ?? null;
@@ -372,19 +355,20 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
                   type="button"
                   lang="de"
                   disabled={disabled}
-                  aria-label={`${gapLabel(gap.id)}: ${value || ti("ctestEmpty")}`}
+                  aria-label={`${gapLabel(gap.id)}: ${value || ti("gapEmpty")}`}
                   aria-pressed={isSelected}
                   data-gap-slot={gap.id}
                   onClick={() => clickSlot(gap.id)}
                   // Same width for every slot of the item (longest chip), so the size says nothing about the part.
                   style={{ minWidth: slotWidth }}
                   className={cn(
-                    "ml-0 mr-0.5 inline-flex h-8 items-center justify-start rounded-[6px] border px-0.5 align-middle text-[16px] leading-none text-ink",
+                    "ml-0 mr-0.5 inline-flex h-8 items-center rounded-[6px] border align-middle text-[16px] leading-none text-ink",
+                    wordBank ? "mx-0.5 justify-center px-2" : "justify-start px-0.5",
                     value ? "border-line-strong bg-surface" : "border-dashed border-line-strong bg-canvas",
                     (isSelected || drag?.over === gap.id) && "border-solid border-accent bg-accent-soft ring-2 ring-accent",
                   )}
                 >
-                  {value}
+                  {value || (wordBank ? <span className="tnum text-[13px] text-muted">{gapNo.get(gap.id)}</span> : null)}
                 </button>
               </span>
             );
@@ -446,7 +430,7 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
           style={{ bottom: "var(--step-footer-space, 112px)" }}
           className="sticky z-10 mt-4 max-h-[32dvh] overflow-y-auto overscroll-contain border-t border-hairline bg-canvas pb-2 pt-2"
         >
-          <div role="group" aria-label={ti("ctestPool")} className="flex flex-wrap gap-1.5">
+          <div role="group" aria-label={ti(wordBank ? "wordPool" : "ctestPool")} className="flex flex-wrap gap-1.5">
             {pool.map((chip, idx) =>
               placement.used.has(idx) ? null : (
                 <button
@@ -460,6 +444,7 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
                   }}
                   className={cn(
                     "h-8 min-w-8 cursor-grab touch-none select-none rounded-[8px] border border-line-strong bg-surface px-2.5 text-[15px] text-ink hover:bg-canvas",
+                    wordBank && "h-9 px-3 text-[16px]",
                     drag?.key === idx && "opacity-40",
                   )}
                 >

@@ -15,6 +15,7 @@ import {
   productiveTaskLevels,
   resolveDistribution,
   sampleFixedForm,
+  textKindsOf,
   textPlanOf,
   weighsTexts,
   type BankCount,
@@ -435,6 +436,18 @@ describe("MC cloze and word-bank texts (spec 2026-10-18)", () => {
     expect(textPlanOf(section("GRAMMAR", 15, { cTest: true }), "LEVEL_VERIFICATION", "C1")).toEqual([{ level: "C1", kind: "CTEST" }]);
     expect(textPlanOf(section("GRAMMAR", 15), "PLACEMENT", null)).toEqual([]);
     expect(textPlanOf(section("READING", 15, { texts: [{ level: "B1", kind: "CLOZE" }] }), "PLACEMENT", null)).toEqual([]);
+  });
+
+  it("textKindsOf: each kind once in serving order, for the intro and the warm-up", () => {
+    const both = withTexts([
+      { level: "B2", kind: "WORDBANK" },
+      { level: "A1", kind: "CLOZE" },
+      { level: "B1", kind: "CLOZE" },
+    ]);
+    expect(textKindsOf(both, "PLACEMENT", null)).toEqual(["CLOZE", "WORDBANK"]);
+    expect(textKindsOf(withTexts([{ level: "B1", kind: "WORDBANK" }]), "PLACEMENT", null)).toEqual(["WORDBANK"]);
+    expect(textKindsOf(section("GRAMMAR", 30, { cTestLevels: ["A2", "B2"] }), "PLACEMENT", null)).toEqual(["CTEST"]);
+    expect(textKindsOf(section("GRAMMAR", 15), "PLACEMENT", null)).toEqual([]);
   });
 
   it("fixed form: the planned texts first, of the right kind, then a form that never holds a text", () => {

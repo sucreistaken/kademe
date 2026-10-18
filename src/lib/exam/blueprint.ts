@@ -352,6 +352,11 @@ export function textPlanOf(s: SectionConfig, mode: ExamMode, claimed: Cefr | nul
   return cTestLevelsOf(s, mode, claimed).map((level) => ({ level, kind: "CTEST" as const }));
 }
 
+/** The kinds of text a section opens with, each once, in serving order (cloze, word bank; or C-test). */
+export function textKindsOf(s: SectionConfig, mode: ExamMode, claimed: Cefr | null): TextGapKind[] {
+  return [...new Set(textPlanOf(s, mode, claimed).map((e) => e.kind))];
+}
+
 const fitsEntry = (i: BankItem, e: TextPlanEntry) => i.level === e.level && textGapKindOf(i) === e.kind;
 
 /**

@@ -4,10 +4,10 @@ import { useMemo, useState } from "react";
 import { CandidateColumn } from "@/components/candidate/Shell";
 import { buttonVariants } from "@/components/ui/button";
 import { ItemView } from "@/components/candidate/exam/ItemView";
-import { hintOf, PRACTICE, practiceItem } from "@/components/candidate/exam/warmup/practice-data";
+import { hintOf, practiceFor, practiceItem } from "@/components/candidate/exam/warmup/practice-data";
 import type { WarmupState } from "@/components/candidate/exam/warmup/warmup-state";
 import { useStepFocus } from "@/hooks/use-step-focus";
-import type { ItemAnswer, Section } from "@/lib/exam/types";
+import type { ItemAnswer, Section, TextGapKind } from "@/lib/exam/types";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
 
@@ -20,6 +20,8 @@ import { cn } from "@/lib/cn";
 const HINT_KEY = {
   choice: "warmHintChoice",
   ctest: "warmHintCTest",
+  cloze: "warmHintCloze",
+  wordbank: "warmHintWordBank",
   tfng: "warmHintTfng",
   matching: "warmHintMatching",
   listening: "warmHintListening",
@@ -62,6 +64,7 @@ export function WarmupOffer({ state, onTry, onSkip }: { state: WarmupState; onTr
 
 export function WarmupPractice({
   section,
+  textKinds,
   step,
   maxPlays,
   position,
@@ -69,6 +72,8 @@ export function WarmupPractice({
   onLeave,
 }: {
   section: Section;
+  /** The kinds of text the section holds, so the practice shows the way of answering the exam asks for. */
+  textKinds: readonly TextGapKind[];
   step: number;
   maxPlays: number;
   position: number;
@@ -76,9 +81,9 @@ export function WarmupPractice({
   onLeave: () => void;
 }) {
   const t = useT("examFlow");
-  const defs = PRACTICE[section];
+  const defs = practiceFor(section, textKinds);
   const def = defs[step];
-  const item = useMemo(() => practiceItem(section, step), [section, step]);
+  const item = useMemo(() => practiceItem(section, step, textKinds), [section, step, textKinds]);
   const [answers, setAnswers] = useState<Record<number, ItemAnswer>>({});
   const answer = answers[step] ?? {};
   const headingRef = useStepFocus<HTMLHeadingElement>(`warm:${position}:${step}`);

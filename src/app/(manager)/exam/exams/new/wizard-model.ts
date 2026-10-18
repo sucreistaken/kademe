@@ -78,14 +78,14 @@ export const sectionsWait = (choices: readonly SectionChoice[]): "NO_SECTION" | 
  * How a section picks its questions, in the words step 2 and the editor use:
  * an adaptive objective section follows the student's answers, a fixed one
  * gives everyone a set number per level, writing and speaking are tasks a
- * teacher grades. A grammar section made only of C-tests is "ctests": short
- * texts with missing letters, counted in texts.
+ * teacher grades. A grammar section made only of texts (cloze, word bank or
+ * legacy C-tests) is "texts": short gap-fill texts, counted in texts.
  */
 export function sectionKind(
-  s: Pick<SectionConfig, "section" | "adaptive"> & Partial<Pick<SectionConfig, "cTestLevels" | "distribution">>,
-): "adaptive" | "fixed" | "tasks" | "ctests" {
+  s: Pick<SectionConfig, "section" | "adaptive"> & Partial<Pick<SectionConfig, "cTestLevels" | "texts" | "distribution">>,
+): "adaptive" | "fixed" | "tasks" | "texts" {
   if (!isObjectiveSection(s.section)) return "tasks";
-  if (s.cTestLevels && !s.adaptive && (!s.distribution || isTextOnly(s as SectionConfig, "PLACEMENT", null, 0))) return "ctests";
+  if ((s.cTestLevels || s.texts) && !s.adaptive && (!s.distribution || isTextOnly(s as SectionConfig, "PLACEMENT", null, 0))) return "texts";
   return s.adaptive ? "adaptive" : "fixed";
 }
 

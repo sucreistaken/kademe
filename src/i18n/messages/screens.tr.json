@@ -179,7 +179,7 @@
     "templateCoverageBlocked": "Bu hazır sınav ilk kez kullanılacak: {section} {level} için bankada {available} onaylı soru var, {needed} gerekiyor.",
     "recommendedForNew": "Önerilen",
     "forWhomPlacement": "Yeni gelen öğrenciler için: hangi sınıfa gireceğini belirler.",
-    "forWhomQuick": "İlk görüşmede hızlı bir ön fikir için: üç C-test, kaba bir seviye verir.",
+    "forWhomQuick": "İlk görüşmede hızlı bir ön fikir için: birkaç kısa boşluk doldurma metni, kaba bir seviye verir.",
     "forWhomLevelCheck": "Seviyesini bildiğini söyleyen öğrenci için: o seviyeyi dört beceride doğrular."
   },
   "examWizard": {
@@ -199,7 +199,7 @@
     "aboutSPEAKING": "Öğrenci soruları sesli cevaplar, cevabı kaydedilir.",
     "kindAdaptive": "Sorular öğrencinin cevaplarına göre kolaylaşır ya da zorlaşır.",
     "kindFixed": "Herkes seviye başına belirli sayıda soru alır.",
-    "kindCTests": "{n} kısa metin (C-test), metin başına yaklaşık 5 dakika; öğrenci eksik harfleri yazar.",
+    "kindTexts": "{n} kısa metin, metin başına yaklaşık 5 dakika; öğrenci metinlerdeki boşlukları doldurur.",
     "kindTasks": "{n} görev; cevabı öğretmen değerlendirir.",
     "minus": "{section}: 1 dakika azalt",
     "plus": "{section}: 1 dakika artır",

@@ -66,7 +66,8 @@ describe("the sections step", () => {
     expect(sectionKind({ section: "GRAMMAR", adaptive: true })).toBe("adaptive");
     expect(sectionKind({ section: "READING", adaptive: false })).toBe("fixed");
     expect(sectionKind({ section: "SPEAKING", adaptive: false })).toBe("tasks");
-    expect(sectionKind({ section: "GRAMMAR", adaptive: false, cTestLevels: ["A2", "B1"] })).toBe("ctests");
+    expect(sectionKind({ section: "GRAMMAR", adaptive: false, cTestLevels: ["A2", "B1"] })).toBe("texts");
+    expect(sectionKind({ section: "GRAMMAR", adaptive: false, texts: [{ level: "A2", kind: "CLOZE" }] })).toBe("texts");
   });
 });
 

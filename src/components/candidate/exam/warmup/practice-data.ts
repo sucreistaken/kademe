@@ -1,5 +1,5 @@
 import { toCandidateItem, type CandidateItem } from "@/lib/exam/safe";
-import type { ItemSnapshot, Section } from "@/lib/exam/types";
+import { CLOZE_SKILL_TAG, C_TEST_SKILL_TAG, WORD_BANK_SKILL_TAG, type ItemSnapshot, type Section, type TextGapKind } from "@/lib/exam/types";
 import type { ValidatableItem } from "@/lib/exam/validate";
 
 /**
@@ -14,7 +14,7 @@ import type { ValidatableItem } from "@/lib/exam/validate";
  */
 
 export type PracticeDef = ValidatableItem & {
-  /** "grammar.ctest" draws the gaps attached to their word stems. */
+  /** A text tag draws the item as that kind of text: C-test gaps attached to their word stems, cloze, word bank. */
   skillTag?: string;
   /** A reading passage drawn above the question. */
   passage?: { title: string; body: string };
@@ -41,13 +41,6 @@ export const PRACTICE: Record<Section, PracticeDef[]> = {
         ],
       },
       key: { kind: "CHOICE", correct: ["b"] },
-    },
-    {
-      type: "GAP_FILL",
-      skillTag: "grammar.ctest",
-      prompt: "Ergänzen Sie die Wörter. Schreiben Sie nur die fehlenden Buchstaben.\n\nHeute ist das Wetter sch{{g1}}. Die Sonne sch{{g2}} und es ist wa{{g3}}.",
-      content: { kind: "GAP", gaps: [{ id: "g1" }, { id: "g2" }, { id: "g3" }] },
-      key: { kind: "GAP", answers: { g1: ["ön", "schön"], g2: ["eint", "scheint"], g3: ["rm", "warm"] } },
     },
   ],
   READING: [
@@ -118,11 +111,56 @@ export const PRACTICE: Record<Section, PracticeDef[]> = {
   ],
 };
 
+/** One small practice text per kind of text, shown after the choice question of a GRAMMAR section made of texts. */
+const TEXT_PRACTICE: Record<TextGapKind, PracticeDef> = {
+  CTEST: {
+    type: "GAP_FILL",
+    skillTag: C_TEST_SKILL_TAG,
+    prompt: "Ergänzen Sie die Wörter. Schreiben Sie nur die fehlenden Buchstaben.\n\nHeute ist das Wetter sch{{g1}}. Die Sonne sch{{g2}} und es ist wa{{g3}}.",
+    content: { kind: "GAP", gaps: [{ id: "g1" }, { id: "g2" }, { id: "g3" }] },
+    key: { kind: "GAP", answers: { g1: ["ön", "schön"], g2: ["eint", "scheint"], g3: ["rm", "warm"] } },
+  },
+  CLOZE: {
+    type: "GAP_FILL",
+    skillTag: CLOZE_SKILL_TAG,
+    prompt: "Wählen Sie für jede Lücke das passende Wort.\n\nHeute ist das Wetter {{g1}}. Die Sonne {{g2}} und es ist warm. Am Nachmittag gehe ich {{g3}} den Park.",
+    content: {
+      kind: "GAP",
+      gaps: [
+        { id: "g1", choices: ["blau", "schön", "alt", "leise"] },
+        { id: "g2", choices: ["scheinen", "schein", "scheint", "scheine"] },
+        { id: "g3", choices: ["auf", "mit", "in", "von"] },
+      ],
+    },
+    key: { kind: "GAP", answers: { g1: ["schön"], g2: ["scheint"], g3: ["in"] } },
+  },
+  WORDBANK: {
+    type: "GAP_FILL",
+    skillTag: WORD_BANK_SKILL_TAG,
+    prompt: "Setzen Sie die passenden Wörter in die Lücken ein. Einige Wörter bleiben übrig.\n\nIch {{g1}} Anna. Ich wohne in Berlin und {{g2}} in einem Café. Am Abend {{g3}} ich nach Hause.",
+    content: { kind: "GAP", gaps: [{ id: "g1" }, { id: "g2" }, { id: "g3" }] },
+    key: { kind: "GAP", answers: { g1: ["heiße"], g2: ["arbeite"], g3: ["gehe"] }, distractors: ["Hund", "blau", "gestern"] },
+  },
+};
+
+/**
+ * The practice steps of a section. GRAMMAR continues with one sample per kind
+ * of text the section really holds (cloze, word bank or C-test), so the warm-up
+ * shows the way of answering the exam will ask for; a grammar section without
+ * texts practises the choice question only.
+ */
+export function practiceFor(section: Section, textKinds: readonly TextGapKind[] = []): PracticeDef[] {
+  if (section !== "GRAMMAR" || textKinds.length === 0) return PRACTICE[section];
+  return [...PRACTICE.GRAMMAR, ...textKinds.map((k) => TEXT_PRACTICE[k])];
+}
+
 /** Which hint a practice step carries, picked from what the step shows. */
-export type PracticeHint = "choice" | "ctest" | "tfng" | "matching" | "listening" | "writing" | "speaking";
+export type PracticeHint = "choice" | "ctest" | "cloze" | "wordbank" | "tfng" | "matching" | "listening" | "writing" | "speaking";
 
 export function hintOf(def: PracticeDef): PracticeHint {
-  if (def.skillTag === "grammar.ctest") return "ctest";
+  if (def.skillTag === C_TEST_SKILL_TAG) return "ctest";
+  if (def.skillTag === CLOZE_SKILL_TAG) return "cloze";
+  if (def.skillTag === WORD_BANK_SKILL_TAG) return "wordbank";
   switch (def.content.kind) {
     case "TFNG":
       return def.sample ? "listening" : "tfng";
@@ -138,8 +176,8 @@ export function hintOf(def: PracticeDef): PracticeHint {
 }
 
 /** The item as the exam components draw it, built the way the server builds a real one. */
-export function practiceItem(section: Section, index: number): CandidateItem {
-  const def = PRACTICE[section][index];
+export function practiceItem(section: Section, index: number, textKinds: readonly TextGapKind[] = []): CandidateItem {
+  const def = practiceFor(section, textKinds)[index];
   const snapshot: ItemSnapshot = {
     id: `practice-${section}-${index}`,
     section,

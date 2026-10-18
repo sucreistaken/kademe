@@ -62,7 +62,7 @@
     "coverageOk": "The question bank covers this exam. Confirming publishes it and picks it in the invite form.",
     "coverageGaps": "The question bank has gaps. Confirming saves the exam as a draft:",
     "gap": "{level} {section}: {missing} questions missing",
-    "gapCTest": "{level} grammar: no C-test",
+    "gapCTest": "{level} grammar: no text",
     "coverageRecheck": "Coverage is checked again when you confirm.",
     "cardTitle": "Exams",
     "cardCount": "{count} exams"

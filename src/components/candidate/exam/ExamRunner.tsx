@@ -20,9 +20,11 @@ import { PartCounter } from "@/components/candidate/exam/PartCounter";
 import { PassageBody } from "@/components/candidate/exam/PassageBody";
 import { WarmupOffer, WarmupPractice } from "@/components/candidate/exam/warmup/Warmup";
 import { INITIAL_WARMUP, warmupReduce, type WarmupAction, type WarmupState } from "@/components/candidate/exam/warmup/warmup-state";
-import { PRACTICE } from "@/components/candidate/exam/warmup/practice-data";
+import { practiceFor } from "@/components/candidate/exam/warmup/practice-data";
 import { ConfirmDialog, NavStrip, ReviewScreen, reviewCounts } from "@/components/candidate/exam/ExamNav";
 import { finishSummaryParts } from "@/components/candidate/exam/finish-summary";
+import { textRuleKey } from "@/components/candidate/exam/section-rule";
+import { entersByTyping } from "@/components/candidate/exam/typed-input";
 import { gateKey } from "@/components/candidate/exam/listening-gate";
 import { clearPending, readPending, sessionStore, writePending, type PendingAnswer } from "@/components/candidate/exam/pending-answer";
 import { leavesGroup, memberRange, memberSequences, nextAfterGroup, prevBeforeGroup } from "@/components/candidate/exam/groups";
@@ -33,7 +35,7 @@ import { useStageClock } from "@/lib/client/use-stage-clock";
 import { stepPath } from "@/lib/candidate-routes";
 import type { CandidateState } from "@/lib/exam-flow";
 import { type MoveTo, type NavEntry } from "@/lib/exam/navigation";
-import type { ItemAnswer } from "@/lib/exam/types";
+import type { ItemAnswer, TextGapKind } from "@/lib/exam/types";
 import type { CandidateItem } from "@/lib/exam/safe";
 import { recordingLabel } from "@/lib/proctor/recording-status";
 import { formatCountdown, SUBMIT_SLACK_MS } from "@/lib/timer";
@@ -61,6 +63,9 @@ const codeOf = (err: unknown) => (err as { code?: string } | null)?.code ?? "";
 
 type SaveState = "idle" | "pending" | "saving" | "saved" | "failed";
 type Confirm = null | "skip" | "partial" | "finish";
+
+/** A section with no texts: a stable empty list for the warm-up. */
+const NO_KINDS: TextGapKind[] = [];
 
 /** The questions on the screen: a listening recording's whole group, or the one item. */
 function shownItems(c: CandidateState["current"]): CandidateItem[] {
@@ -233,6 +238,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
   const cur = state.current;
   const finishing = finishState && finishState.position === cur?.position ? finishState.left : null;
   const warmHere: WarmupState = (cur && warm[cur.position]) || INITIAL_WARMUP;
+  const sectionHere = cur ? state.sections.find((x) => x.position === cur.position) : undefined;
   const warmDo = (action: WarmupAction) => cur && setWarm((w) => ({ ...w, [cur.position]: warmupReduce(w[cur.position] ?? INITIAL_WARMUP, action) }));
   // The warm-up practice is not the exam: no big warnings there.
   const inPractice = state.step === "SECTION_INTRO" && warmHere.phase === "practice";
@@ -293,8 +299,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
     setSave("pending");
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
     // Typing waits for a pause; a click is saved almost at once.
-    const kind = shown.find((it) => it.sequence === sequence)?.content.kind;
-    const typed = kind === "WRITING" || kind === "SHORT_TEXT" || kind === "GAP" || kind === "SPEAKING";
+    const typed = entersByTyping(shown.find((it) => it.sequence === sequence)?.content);
     saveTimer.current = window.setTimeout(() => void flushRef.current(), was && was.sequence !== sequence ? 0 : typed ? 800 : 300);
   }
 
@@ -484,8 +489,9 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
     : n("confirmFinishAllDone");
   const finishBody = `${finishLeft} ${n("confirmFinishNoReturn")}`;
   const inputsOff = busy || timeUp;
-  // The two-column views (reading text, listening group) outgrow the 1000px column of every other screen.
-  const wideReading = state.step === "ITEM" && !nav?.review && (item?.stimulus?.kind === "READING" || !!group);
+  // The two-column views (reading text, listening group, cloze text with its option panel) outgrow the 1000px column of every other screen.
+  const clozeHere = item?.content.kind === "GAP" && !!item.content.cloze;
+  const wideReading = state.step === "ITEM" && !nav?.review && (item?.stimulus?.kind === "READING" || !!group || clozeHere);
 
   const failureLine =
     failure ? (
@@ -706,10 +712,11 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
         {state.step === "SECTION_INTRO" && warmHere.phase === "practice" ? (
           <WarmupPractice
             section={cur.section}
+            textKinds={sectionHere?.textKinds ?? NO_KINDS}
             step={warmHere.step}
             maxPlays={state.maxPlays}
             position={cur.position}
-            onNext={() => warmDo({ type: "next", total: PRACTICE[cur.section].length })}
+            onNext={() => warmDo({ type: "next", total: practiceFor(cur.section, sectionHere?.textKinds).length })}
             onLeave={() => warmDo({ type: "leave" })}
           />
         ) : state.step === "SECTION_INTRO" ? (
@@ -729,7 +736,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
                 ? t("itemsAdaptive", { range: s.itemsLabel })
                 : cur.section === "WRITING" || cur.section === "SPEAKING"
                   ? t("tasks", { n: s.itemsLabel })
-                  : s.cTestOnly
+                  : s.textOnly
                     ? n("texts", { n: s.itemsLabel })
                     : t("items", { n: s.itemsLabel });
               return (
@@ -754,8 +761,8 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
                   </div>
                   <ul className="mt-4 flex flex-col gap-1.5 text-[15px] leading-[1.5] text-ink">
                     {[
-                      s.cTestOnly
-                        ? n("ruleGRAMMARCTest", { n: s.itemsLabel, minutes: Math.max(1, Math.round(s.minutes / Number(s.itemsLabel))) })
+                      s.textOnly
+                        ? n(textRuleKey(s.textKinds), { n: s.itemsLabel, minutes: Math.max(1, Math.round(s.minutes / Number(s.itemsLabel))) })
                         : s.navigable && cur.section === "GRAMMAR"
                           ? n("ruleGRAMMARFixed")
                           : cur.section === "WRITING"
@@ -850,7 +857,7 @@ export function ExamRunner({ token, initial }: { token: string; initial: Candida
             </div>
           </div>
         ) : item ? (
-          <div className={cn("mx-auto px-7 pb-10 pt-8", item.stimulus?.kind === "READING" ? "max-w-[1200px]" : "max-w-[760px]")}>
+          <div className={cn("mx-auto px-7 pb-10 pt-8", item.stimulus?.kind === "READING" || clozeHere ? "max-w-[1200px]" : "max-w-[760px]")}>
             <div className={cn(item.stimulus?.kind === "READING" && "grid gap-8 lg:grid-cols-2")}>
               {item.stimulus?.kind === "READING" ? (
                 <article className="rounded-[14px] border border-line bg-surface p-6 lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem-var(--step-footer-space,112px))] lg:overflow-y-auto">

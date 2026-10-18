@@ -257,7 +257,7 @@ describe("C-test word-part pool", () => {
     // The German pool instruction says it; no second Turkish line.
     expect(html).not.toContain("ctestHint");
     expect(html).toContain('aria-label="ctestPool"');
-    expect(html).toMatch(/arb<button[^>]*aria-label="gapLabel\(1\): ctestEmpty"/);
+    expect(html).toMatch(/arb<button[^>]*aria-label="gapLabel\(1\): gapEmpty"/);
     expect(chips(html)).toEqual(pool);
   });
 

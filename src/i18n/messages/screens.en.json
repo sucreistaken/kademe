@@ -179,7 +179,7 @@
     "templateCoverageBlocked": "This ready exam is used for the first time: the bank has {available} approved items for {section} {level}; {needed} are needed.",
     "recommendedForNew": "Recommended",
     "forWhomPlacement": "For new students: decides which class they join.",
-    "forWhomQuick": "For a quick first impression: three C-tests, a rough level.",
+    "forWhomQuick": "For a quick first impression: a few short gap-fill texts, a rough level.",
     "forWhomLevelCheck": "For a student who states their level: checks it in four skills."
   },
   "examWizard": {
@@ -199,7 +199,7 @@
     "aboutSPEAKING": "The student answers out loud; the answer is recorded.",
     "kindAdaptive": "Questions get easier or harder with the student's answers.",
     "kindFixed": "Everyone gets a set number of questions per level.",
-    "kindCTests": "{n} short texts (C-tests), about 5 minutes per text; the student types the missing letters.",
+    "kindTexts": "{n} short texts, about 5 minutes per text; the student fills the gaps in each text.",
     "kindTasks": "{n, plural, one {# task} other {# tasks}}; a teacher grades the answer.",
     "minus": "{section}: 1 minute less",
     "plus": "{section}: 1 minute more",

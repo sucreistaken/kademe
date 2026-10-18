@@ -68,7 +68,7 @@ export function ExamReview({ draftId, summary, draft, actions }: { draftId: stri
             <ul className="mt-1 list-disc pl-5">
               {draft.gaps.map((g) => (
                 <li key={`${g.section}-${g.level}-${g.cTest}`}>
-                  {g.cTest ? t("gapCTest", { level: g.level }) : t("gap", { level: g.level, section: sec(g.section), missing: g.missing })}
+                  {g.cTest || g.text ? t("gapCTest", { level: g.level }) : t("gap", { level: g.level, section: sec(g.section), missing: g.missing })}
                 </li>
               ))}
             </ul>

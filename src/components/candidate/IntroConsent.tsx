@@ -112,7 +112,7 @@ export function IntroConsent({
       ? t("items", { n: s.itemsLabel })
       : s.section === "WRITING" || s.section === "SPEAKING"
         ? t("tasks", { n: s.itemsLabel })
-        : s.cTestOnly
+        : s.textOnly
           ? nav("texts", { n: s.itemsLabel })
           : t("items", { n: s.itemsLabel });
 
