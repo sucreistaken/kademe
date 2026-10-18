@@ -1,5 +1,6 @@
 import { mulberry32 } from "./adaptive";
 import { normalizeAnswer, typedMatches } from "./item-scoring";
+import { wordBankWords } from "./types";
 
 /**
  * The word-part pool of a C-test: the missing part of every gap plus plausible
@@ -113,6 +114,21 @@ export function buildCTestPool(
     }
   }
   return shuffled([...correct, ...picked], rng);
+}
+
+/**
+ * The pool of a word-bank text: the whole-word answer of every gap plus the
+ * key's distractors (`wordBankWords`), in a seeded shuffle. Nothing is
+ * generated or filtered here: validation already holds the distractors to
+ * whole words that no gap accepts. Same input and seed give the same pool.
+ */
+export function buildWordBankPool(
+  gapIds: string[],
+  answers: Record<string, string[]>,
+  seed: number,
+  distractors?: string[],
+): string[] {
+  return shuffled(wordBankWords(gapIds, answers, distractors), mulberry32(seed));
 }
 
 /** Stable seed for presentations stored before `poolSeed` existed. */

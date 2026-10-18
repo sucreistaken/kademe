@@ -1,22 +1,28 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
+  CLOZE_GUESS,
   eap,
+  guessOf,
   initialState,
   itemWeight,
   mulberry32,
   observationOf,
+  pCorrect,
   poolLeft,
+  pWithGuess,
   replay,
   replayResponseOf,
   selectNext,
   shouldStop,
   simulate,
   type AdaptiveConfig,
+  type Observation,
   type PoolItem,
+  type Posterior,
 } from "./adaptive";
 import { BAND_CENTER, levelFromTheta, thetaForLevel } from "./cefr";
-import { C_TEST_SKILL_TAG, CEFR_LEVELS, type ItemSnapshot } from "./types";
+import { C_TEST_SKILL_TAG, CEFR_LEVELS, CLOZE_SKILL_TAG, WORD_BANK_SKILL_TAG, type ItemSnapshot } from "./types";
 
 const config: AdaptiveConfig = {
   minItems: 10,
@@ -223,5 +229,132 @@ describe("weighted observations", () => {
     for (const url of [new URL("../exam-flow.ts", import.meta.url), new URL("./reestimate-run.ts", import.meta.url)]) {
       expect(readFileSync(url, "utf8"), url.pathname).not.toMatch(/itemSnapshot\.difficulty/);
     }
+  });
+});
+
+describe("guessing floor (spec 2026-10-18)", () => {
+  const prior = { mean: -0.5, sd: 1.5 };
+  /** The EAP exactly as it was before the floor (commit 55ce992), frozen for the regression below. */
+  function eapBefore(observations: Array<{ b: number; score: number; weight?: number }>, p: Posterior): Posterior {
+    const grid = Array.from({ length: 81 }, (_, i) => -4 + i * 0.1);
+    const logPost = grid.map((theta) => {
+      const z = (theta - p.mean) / p.sd;
+      let lp = -0.5 * z * z;
+      for (const o of observations) {
+        const q = Math.min(1 - 1e-9, Math.max(1e-9, 1 / (1 + Math.exp(-(theta - o.b)))));
+        const sc = Math.min(1, Math.max(0, o.score));
+        lp += (o.weight ?? 1) * (sc * Math.log(q) + (1 - sc) * Math.log(1 - q));
+      }
+      return lp;
+    });
+    const max = Math.max(...logPost);
+    const w = logPost.map((lp) => Math.exp(lp - max));
+    const total = w.reduce((a, b) => a + b, 0);
+    const mean = grid.reduce((acc, theta, i) => acc + theta * w[i], 0) / total;
+    const variance = grid.reduce((acc, theta, i) => acc + (theta - mean) ** 2 * w[i], 0) / total;
+    return { mean, sd: Math.sqrt(variance) };
+  }
+  const fixture: Observation[] = [
+    { b: -2.5, score: 1 },
+    { b: -1.5, score: 0.75, weight: 5 },
+    { b: -0.5, score: 0.4, weight: 4.5 },
+    { b: 0.5, score: 0 },
+    { b: 0.5, score: 1 },
+    { b: 1.5, score: 0.1, weight: 3 },
+    { b: 2.5, score: 0 },
+  ];
+
+  it("guess 0 or none gives the same posterior, to the last bit, as the EAP before the floor", () => {
+    const before = eapBefore(fixture, prior);
+    expect(eap(fixture, prior)).toEqual(before);
+    expect(eap(fixture.map((o) => ({ ...o, guess: 0 })), prior)).toEqual(before);
+    expect(pWithGuess(0.3, -0.2, 0)).toBe(pCorrect(0.3, -0.2));
+  });
+
+  it("the floor makes a right answer count for less: a quarter right on a cloze is chance, not ability", () => {
+    const chance = [{ b: thetaForLevel("B1"), score: 0.25, weight: 3 }];
+    expect(eap(chance.map((o) => ({ ...o, guess: CLOZE_GUESS })), prior).mean).toBeLessThan(eap(chance, prior).mean);
+    expect(pWithGuess(-10, 0, 0.25)).toBeCloseTo(0.25, 3);
+    expect(pWithGuess(10, 0, 0.25)).toBeCloseTo(1, 3);
+  });
+
+  const gapItem = (skillTag: string, gaps: number, distractors?: string[]) =>
+    ({
+      difficulty: -0.5,
+      skillTag,
+      stimulusId: null,
+      content: { kind: "GAP", gaps: Array.from({ length: gaps }, (_, i) => ({ id: `g${i + 1}`, ...(skillTag === CLOZE_SKILL_TAG ? { choices: ["a", "b", "c", "d"] } : {}) })) },
+      key: { kind: "GAP", answers: Object.fromEntries(Array.from({ length: gaps }, (_, i) => [`g${i + 1}`, [`w${i}`]])), ...(distractors ? { distractors } : {}) },
+    }) as unknown as ItemSnapshot;
+
+  it("guessOf: a quarter for a cloze, one over the pool for a word bank, 0 for a C-test and every other item", () => {
+    expect(guessOf(gapItem(CLOZE_SKILL_TAG, 12))).toBe(0.25);
+    expect(guessOf(gapItem(WORD_BANK_SKILL_TAG, 8, ["x", "y", "z", "v"]))).toBe(1 / 12);
+    expect(guessOf(gapItem(C_TEST_SKILL_TAG, 20, ["x"]))).toBe(0);
+    expect(guessOf(gapItem("grammar.dativ", 2))).toBe(0);
+  });
+
+  it("observationOf and replayResponseOf carry the floor and the text weight for both new kinds", () => {
+    const cloze = gapItem(CLOZE_SKILL_TAG, 12);
+    expect(observationOf(cloze, 0.5, true)).toEqual({ b: -0.5, score: 0.5, weight: 3, guess: 0.25 });
+    expect(observationOf(cloze, 0.5, false)).toEqual({ b: -0.5, score: 0.5, weight: 1, guess: 0.25 });
+    const bank = gapItem(WORD_BANK_SKILL_TAG, 8, ["x", "y", "z", "v"]);
+    expect(replayResponseOf({ itemId: "b", itemSnapshot: bank, score: 0.5 }, true)).toEqual({
+      itemId: "b", b: -0.5, skillTag: WORD_BANK_SKILL_TAG, stimulusId: null, score: 0.5, weight: 2, guess: 1 / 12,
+    });
+    expect(itemWeight(cloze, true)).toBe(3);
+    expect(itemWeight(bank, true)).toBe(2);
+    expect(itemWeight(bank, false)).toBe(1);
+    // The C-test and every older item carry no floor field at all.
+    expect(observationOf(gapItem(C_TEST_SKILL_TAG, 20), 0.7, true)).toEqual({ b: -0.5, score: 0.7, weight: 5 });
+  });
+
+  it("replay uses the floor", () => {
+    const cfg = { minItems: 1, maxItems: 10, targetSe: 0.3, priorMean: 0, priorSd: 1.5, randomesque: 1 };
+    const base = { itemId: "c", b: 0, skillTag: CLOZE_SKILL_TAG, stimulusId: null, score: 0.5, weight: 3 };
+    expect(replay(cfg, [{ ...base, guess: 0.25 }]).posterior.mean).toBeLessThan(replay(cfg, [base]).posterior.mean);
+  });
+
+  it("automatic selection never picks a cloze or a word bank", () => {
+    const pool: PoolItem[] = [
+      ...grammarPool(),
+      ...CEFR_LEVELS.flatMap((l) => [
+        { id: `cloze-${l}`, b: thetaForLevel(l), skillTag: CLOZE_SKILL_TAG, stimulusId: null, orderInStimulus: 0 },
+        { id: `bank-${l}`, b: thetaForLevel(l), skillTag: WORD_BANK_SKILL_TAG, stimulusId: null, orderInStimulus: 0 },
+      ]),
+    ];
+    const big = { ...config, maxItems: 200 };
+    const rng = mulberry32(12);
+    const responses: Parameters<typeof replay>[1] = [];
+    for (;;) {
+      const next = selectNext(replay(big, responses), pool, big, rng);
+      if (!next) break;
+      for (const id of next.itemIds) {
+        const item = pool.find((p) => p.id === id)!;
+        responses.push({ itemId: id, b: item.b, skillTag: item.skillTag, stimulusId: null, score: rng() < 0.5 ? 1 : 0 });
+      }
+    }
+    expect(responses.map((r) => r.itemId).filter((id) => /^(cloze|bank)-/.test(id))).toEqual([]);
+    expect(responses.length).toBe(grammarPool().length);
+  });
+
+  it("random answering on six 12-gap cloze texts (A1 to C2) places at most 5% at A2 or above; without the floor most of them", () => {
+    // A student who knows nothing and clicks at random gets each gap right with p = 1/4.
+    const rng = mulberry32(7);
+    const runs = 400;
+    let withFloor = 0;
+    let without = 0;
+    const placementPrior = { mean: BAND_CENTER.B1, sd: 1.5 };
+    for (let r = 0; r < runs; r++) {
+      const obs = CEFR_LEVELS.map((l) => {
+        let right = 0;
+        for (let g = 0; g < 12; g++) right += rng() < CLOZE_GUESS ? 1 : 0;
+        return { b: thetaForLevel(l), score: right / 12, weight: 3 };
+      });
+      if (CEFR_LEVELS.indexOf(levelFromTheta(eap(obs.map((o) => ({ ...o, guess: CLOZE_GUESS })), placementPrior).mean).level) >= 1) withFloor++;
+      if (CEFR_LEVELS.indexOf(levelFromTheta(eap(obs, placementPrior).mean).level) >= 1) without++;
+    }
+    expect(withFloor / runs).toBeLessThanOrEqual(0.05);
+    expect(without / runs).toBeGreaterThan(0.5);
   });
 });

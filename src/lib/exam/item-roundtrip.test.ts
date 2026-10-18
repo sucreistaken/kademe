@@ -196,3 +196,42 @@ describe("gap choices: shuffle round trip", () => {
     expect(makePresentation(typed, mulberry32(3))).toEqual({});
   });
 });
+
+describe("MC cloze and word bank: what the student sees -> the answer -> score", () => {
+  const prompt = "Wir {{g1}} morgen {{g2}} Hamburg.";
+  const cloze: ItemSnapshot = {
+    ...base,
+    section: "GRAMMAR",
+    type: "GAP_FILL",
+    skillTag: "grammar.cloze",
+    prompt,
+    content: { kind: "GAP", gaps: [{ id: "g1", choices: ["fahren", "fährt", "fuhr", "gefahren"] }, { id: "g2", choices: ["nach", "in", "zu", "bei"] }] },
+    key: { kind: "GAP", answers: { g1: ["fahren"], g2: ["nach"] } },
+  };
+  const bank: ItemSnapshot = {
+    ...cloze,
+    skillTag: "grammar.wordbank",
+    content: { kind: "GAP", gaps: [{ id: "g1" }, { id: "g2" }] },
+    key: { kind: "GAP", answers: { g1: ["fahren"], g2: ["nach"] }, distractors: ["fährt", "zu", "bei"] },
+  };
+
+  it("a cloze answered with the right choices scores 1, one wrong choice 0.5", () => {
+    for (let seed = 1; seed <= 10; seed++) {
+      const right = roundTrip(cloze, seed, () => ({ gaps: { g1: "fahren", g2: "nach" } }));
+      expect(right.item.content).toMatchObject({ cloze: true });
+      expect(right.score).toEqual({ score: 1, correct: true });
+      expect(roundTrip(cloze, seed, () => ({ gaps: { g1: "fuhr", g2: "nach" } })).score).toEqual({ score: 0.5, correct: false });
+    }
+  });
+
+  it("a word bank answered from its pool scores by the key", () => {
+    for (let seed = 1; seed <= 10; seed++) {
+      const { item, score } = roundTrip(bank, seed, (shown) => {
+        const pool = shown.content.kind === "GAP" ? shown.content.pool! : [];
+        return { gaps: { g1: pool.find((w) => w === "fahren")!, g2: pool.find((w) => w === "zu")! } };
+      });
+      expect(item.content.kind === "GAP" && item.content.pool).toHaveLength(5);
+      expect(score).toEqual({ score: 0.5, correct: false });
+    }
+  });
+});

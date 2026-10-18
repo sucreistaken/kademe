@@ -7,7 +7,7 @@ import {
   blueprintConfigSchema,
   cTestLevelsOf,
   defaultBlueprint,
-  isCTestOnly,
+  isTextOnly,
   nextAdaptiveItems,
   planFixedSection,
   section,
@@ -15,14 +15,15 @@ import {
   productiveTaskLevels,
   resolveDistribution,
   sampleFixedForm,
-  weighsCTests,
+  textPlanOf,
+  weighsTexts,
   type BankCount,
   type BankItem,
   type SectionConfig,
 } from "./blueprint";
 import { thetaForLevel } from "./cefr";
 import { isNavigableConfig } from "./navigation";
-import { C_TEST_SKILL_TAG, CEFR_LEVELS, SECTIONS, type Cefr } from "./types";
+import { C_TEST_SKILL_TAG, CEFR_LEVELS, CLOZE_SKILL_TAG, SECTIONS, WORD_BANK_SKILL_TAG, type Cefr } from "./types";
 
 describe("default blueprints", () => {
   it("the default placement blueprint is a fixed form (back, flag, review)", () => {
@@ -309,11 +310,11 @@ describe("C-test opening", () => {
     expect(isC(served[2])).toBe(false);
   });
 
-  it("isCTestOnly: a fixed GRAMMAR section with C-tests and no ordinary items", () => {
-    expect(isCTestOnly(listed(["B1"]), "PLACEMENT", null, 0)).toBe(true);
-    expect(isCTestOnly(listed(["B1"], { distribution: { kind: "RELATIVE", below: 0, at: 1, above: 0 } }), "PLACEMENT", null, 0)).toBe(false);
-    expect(isCTestOnly(listed(["B1"], { adaptive: true }), "PLACEMENT", null, 0)).toBe(false);
-    expect(isCTestOnly(fixed(false), "PLACEMENT", null, 0)).toBe(false);
+  it("isTextOnly: a fixed GRAMMAR section with C-tests and no ordinary items", () => {
+    expect(isTextOnly(listed(["B1"]), "PLACEMENT", null, 0)).toBe(true);
+    expect(isTextOnly(listed(["B1"], { distribution: { kind: "RELATIVE", below: 0, at: 1, above: 0 } }), "PLACEMENT", null, 0)).toBe(false);
+    expect(isTextOnly(listed(["B1"], { adaptive: true }), "PLACEMENT", null, 0)).toBe(false);
+    expect(isTextOnly(fixed(false), "PLACEMENT", null, 0)).toBe(false);
   });
 });
 
@@ -377,11 +378,143 @@ describe("productive task levels", () => {
   });
 });
 
-describe("weighsCTests", () => {
+describe("weighsTexts", () => {
   it("is on only for a GRAMMAR section with cTestLevels (exams taken before 2026-10-15 keep weight 1)", () => {
-    expect(weighsCTests(section("GRAMMAR", 30, { cTestLevels: ["A1", "B1"] }))).toBe(true);
-    expect(weighsCTests(section("GRAMMAR", 17, { adaptive: true, minItems: 10, maxItems: 16, targetSe: 0.45, cTest: true }))).toBe(false);
-    expect(weighsCTests(section("GRAMMAR", 17))).toBe(false);
-    expect(weighsCTests(section("READING", 20))).toBe(false);
+    expect(weighsTexts(section("GRAMMAR", 30, { cTestLevels: ["A1", "B1"] }))).toBe(true);
+    expect(weighsTexts(section("GRAMMAR", 17, { adaptive: true, minItems: 10, maxItems: 16, targetSe: 0.45, cTest: true }))).toBe(false);
+    expect(weighsTexts(section("GRAMMAR", 17))).toBe(false);
+    expect(weighsTexts(section("READING", 20))).toBe(false);
+  });
+});
+
+describe("MC cloze and word-bank texts (spec 2026-10-18)", () => {
+  const NONE = { kind: "ABSOLUTE" as const, perLevel: { A1: 0, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0 } };
+  type Texts = NonNullable<SectionConfig["texts"]>;
+  const withTexts = (texts: Texts, over: Partial<SectionConfig> = {}) => section("GRAMMAR", 30, { distribution: NONE, texts, ...over });
+  const pool: BankItem[] = CEFR_LEVELS.flatMap((level) => [
+    ...Array.from({ length: 6 }, (_, i) => ({ id: `${level}-${i}`, level, b: thetaForLevel(level), skillTag: `grammar.t${i % 3}`, stimulusId: null, orderInStimulus: 0 })),
+    { id: `ctest-${level}`, level, b: thetaForLevel(level), skillTag: C_TEST_SKILL_TAG, stimulusId: null, orderInStimulus: 0 },
+    { id: `cloze-${level}`, level, b: thetaForLevel(level), skillTag: CLOZE_SKILL_TAG, stimulusId: null, orderInStimulus: 0 },
+    { id: `bank-${level}`, level, b: thetaForLevel(level), skillTag: WORD_BANK_SKILL_TAG, stimulusId: null, orderInStimulus: 0 },
+  ]);
+  const isText = (id: string) => /^(ctest|cloze|bank)-/.test(id);
+
+  it("schema: texts for GRAMMAR only, no kind and level twice, both kinds at one level fine", () => {
+    const cfg = defaultBlueprint("PLACEMENT");
+    const put = (texts: unknown, target = "GRAMMAR") => ({ ...cfg, sections: cfg.sections.map((x) => (x.section === target ? { ...x, texts } : x)) });
+    expect(blueprintConfigSchema.safeParse(put([{ level: "B1", kind: "CLOZE" }, { level: "B1", kind: "WORDBANK" }])).success).toBe(true);
+    expect(blueprintConfigSchema.safeParse(put([{ level: "B1", kind: "CLOZE" }, { level: "B1", kind: "CLOZE" }])).success).toBe(false);
+    expect(blueprintConfigSchema.safeParse(put([])).success).toBe(false);
+    expect(blueprintConfigSchema.safeParse(put([{ level: "B1", kind: "CTEST" }])).success).toBe(false);
+    expect(blueprintConfigSchema.safeParse(put([{ level: "B1", kind: "CLOZE" }], "READING")).success).toBe(false);
+  });
+
+  it("textPlanOf: cloze easy to hard, then word banks easy to hard, whatever the stored order", () => {
+    const s = withTexts([
+      { level: "B2", kind: "WORDBANK" },
+      { level: "C1", kind: "CLOZE" },
+      { level: "A2", kind: "WORDBANK" },
+      { level: "A1", kind: "CLOZE" },
+      { level: "B1", kind: "CLOZE" },
+    ]);
+    expect(textPlanOf(s, "PLACEMENT", null)).toEqual([
+      { level: "A1", kind: "CLOZE" },
+      { level: "B1", kind: "CLOZE" },
+      { level: "C1", kind: "CLOZE" },
+      { level: "A2", kind: "WORDBANK" },
+      { level: "B2", kind: "WORDBANK" },
+    ]);
+  });
+
+  it("textPlanOf: texts replaces the legacy fields; without it the legacy fields give C-tests; other sections none", () => {
+    expect(textPlanOf(withTexts([{ level: "B1", kind: "CLOZE" }], { cTestLevels: ["A1"], cTest: true }), "PLACEMENT", null)).toEqual([{ level: "B1", kind: "CLOZE" }]);
+    expect(textPlanOf(section("GRAMMAR", 30, { cTestLevels: ["B2", "A2"] }), "PLACEMENT", null)).toEqual([
+      { level: "A2", kind: "CTEST" },
+      { level: "B2", kind: "CTEST" },
+    ]);
+    expect(textPlanOf(section("GRAMMAR", 15, { cTest: true }), "LEVEL_VERIFICATION", "C1")).toEqual([{ level: "C1", kind: "CTEST" }]);
+    expect(textPlanOf(section("GRAMMAR", 15), "PLACEMENT", null)).toEqual([]);
+    expect(textPlanOf(section("READING", 15, { texts: [{ level: "B1", kind: "CLOZE" }] }), "PLACEMENT", null)).toEqual([]);
+  });
+
+  it("fixed form: the planned texts first, of the right kind, then a form that never holds a text", () => {
+    const texts: Texts = [{ level: "B1", kind: "WORDBANK" }, { level: "A2", kind: "CLOZE" }, { level: "B2", kind: "CLOZE" }];
+    for (let seed = 1; seed <= 20; seed++) {
+      const ids = planFixedSection(withTexts(texts, { distribution: { kind: "RELATIVE", below: 2, at: 4, above: 2 } }), pool, "PLACEMENT", null, 0, mulberry32(seed));
+      expect(ids.slice(0, 3)).toEqual(["cloze-A2", "cloze-B2", "bank-B1"]);
+      expect(ids.slice(3).filter(isText)).toEqual([]);
+      expect(ids).toHaveLength(11);
+    }
+  });
+
+  it("fixed form skips an entry the bank has no text for", () => {
+    const thin = pool.filter((p) => p.id !== "cloze-B2");
+    expect(planFixedSection(withTexts([{ level: "B2", kind: "CLOZE" }, { level: "B2", kind: "WORDBANK" }]), thin, "PLACEMENT", null, 0, mulberry32(1))).toEqual(["bank-B2"]);
+  });
+
+  it("no form draws a cloze or word bank by itself, adaptive or fixed", () => {
+    for (let seed = 1; seed <= 20; seed++) {
+      const form = sampleFixedForm(pool, { A1: 8, A2: 8, B1: 8, B2: 8, C1: 8, C2: 8 }, mulberry32(seed));
+      expect(form.filter(isText)).toEqual([]);
+    }
+    const s = section("GRAMMAR", 20, { adaptive: true, minItems: 10, maxItems: 30, targetSe: 0.2 });
+    const cfg = adaptiveConfigFor(s, "PLACEMENT", null);
+    const responses: ReplayResponse[] = [];
+    const rng = mulberry32(3);
+    for (;;) {
+      const next = nextAdaptiveItems(s, "PLACEMENT", null, replay(cfg, responses), pool, cfg, rng);
+      if (!next) break;
+      for (const id of next.itemIds) responses.push({ itemId: id, b: pool.find((p) => p.id === id)!.b, skillTag: pool.find((p) => p.id === id)!.skillTag, stimulusId: null, score: rng() < 0.5 ? 1 : 0 });
+    }
+    expect(responses.length).toBe(30);
+    expect(responses.map((r) => r.itemId).filter(isText)).toEqual([]);
+  });
+
+  it("adaptive: the planned texts first, one at a time, across kinds, and a reload continues where the student was", () => {
+    const s = withTexts([{ level: "B1", kind: "WORDBANK" }, { level: "A2", kind: "CLOZE" }, { level: "B1", kind: "CLOZE" }], { adaptive: true, minItems: 6, maxItems: 10, targetSe: 0.3 });
+    const cfg = adaptiveConfigFor(s, "PLACEMENT", null);
+    const rng = mulberry32(5);
+    const responses: ReplayResponse[] = [];
+    for (let k = 0; k < 6; k++) {
+      const next = nextAdaptiveItems(s, "PLACEMENT", null, replay(cfg, responses), pool, cfg, rng)!;
+      expect(next.itemIds).toHaveLength(1);
+      const item = pool.find((p) => p.id === next.itemIds[0])!;
+      // Served, not yet answered: the next request still moves on.
+      responses.push({ itemId: item.id, b: item.b, skillTag: item.skillTag, stimulusId: null, score: k % 2 ? null : 0.5 });
+    }
+    const ids = responses.map((r) => r.itemId);
+    expect(ids.slice(0, 3)).toEqual(["cloze-A2", "cloze-B1", "bank-B1"]);
+    expect(ids.slice(3).filter(isText)).toEqual([]);
+  });
+
+  it("isTextOnly: a fixed GRAMMAR section of texts only", () => {
+    expect(isTextOnly(withTexts([{ level: "B1", kind: "CLOZE" }]), "PLACEMENT", null, 0)).toBe(true);
+    expect(isTextOnly(withTexts([{ level: "B1", kind: "CLOZE" }], { distribution: { kind: "RELATIVE", below: 0, at: 2, above: 0 } }), "PLACEMENT", null, 0)).toBe(false);
+    expect(isTextOnly(withTexts([{ level: "B1", kind: "WORDBANK" }], { adaptive: true }), "PLACEMENT", null, 0)).toBe(false);
+  });
+
+  it("weighsTexts: on for a section with texts", () => {
+    expect(weighsTexts(withTexts([{ level: "B1", kind: "CLOZE" }]))).toBe(true);
+    expect(weighsTexts(section("READING", 20, { texts: [{ level: "B1", kind: "CLOZE" }] }))).toBe(false);
+  });
+
+  it("coverage: one row per planned kind and level, counted from its own kind, and texts never count as items", () => {
+    const counts: BankCount[] = SECTIONS.flatMap((section) =>
+      CEFR_LEVELS.map((level) => ({ section, level, items: 20, stimuli: 3, ...(section === "GRAMMAR" ? { cTests: 1, clozeTexts: 2, wordBanks: level === "B1" ? 0 : 1 } : {}) })),
+    );
+    const cfg = defaultBlueprint("PLACEMENT");
+    cfg.sections = cfg.sections.map((s) =>
+      s.section === "GRAMMAR" ? { ...s, texts: [{ level: "B1", kind: "WORDBANK" }, { level: "A2", kind: "CLOZE" }, { level: "B1", kind: "CLOZE" }] as Texts } : s,
+    );
+    const res = bankCoverage(counts, cfg, "PLACEMENT", null);
+    const textRows = res.rows.filter((r) => r.text);
+    expect(textRows.map((r) => [r.text, r.level, r.needed, r.available, r.ok, r.cTest])).toEqual([
+      ["CLOZE", "A2", 1, 2, true, undefined],
+      ["CLOZE", "B1", 1, 2, true, undefined],
+      ["WORDBANK", "B1", 1, 0, false, undefined],
+    ]);
+    expect(res.ok).toBe(false);
+    // 20 approved grammar items at B1, of which 1 C-test, 2 cloze and 0 word banks: 17 ordinary ones.
+    expect(res.rows.find((r) => r.section === "GRAMMAR" && r.level === "B1" && !r.text)?.available).toBe(17);
   });
 });

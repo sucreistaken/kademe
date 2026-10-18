@@ -173,14 +173,15 @@ export const examCreator: Creator<ExamParams, ExamDraft> = {
     }
     const gaps = coverageGaps(coverage.rows);
     const followUps = gaps
-      .filter((g) => !g.cTest)
+      // Texts are hand-written, never generated: no question set fills them.
+      .filter((g) => !g.cTest && !g.text)
       .slice(0, MAX_FOLLOW_UPS)
       .map((g) => ({
         label: gapLabel(g),
         kind: "QUESTION_SET" as const,
         params: { specs: [{ section: g.section, level: g.level, itemType: "", count: Math.min(10, g.missing), topic: "" }] },
       }));
-    const notes = [COVERAGE_NOTE, ...(gaps.some((g) => g.cTest) ? [C_TEST_NOTE] : [])];
+    const notes = [COVERAGE_NOTE, ...(gaps.some((g) => g.cTest || g.text) ? [C_TEST_NOTE] : [])];
     return { ok: true, href: examHref, go: false, links: [{ label: OPEN_EXAM, href: examHref }], notes, followUps };
   },
 

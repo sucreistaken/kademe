@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { Locale } from "@/i18n/locale";
 import { blueprintConfigSchema, enabledSections, estimatedMinutes, type BlueprintConfig, type CoverageRow, type SectionConfig } from "@/lib/exam/blueprint";
 import { EXAM_TEMPLATES, type ExamTemplate } from "@/lib/exam/templates";
-import { CEFR_LEVELS, isObjectiveSection, SECTIONS, type Cefr, type ExamMode, type Section } from "@/lib/exam/types";
+import { CEFR_LEVELS, isObjectiveSection, SECTIONS, type Cefr, type ExamMode, type Section, type TextGapKind } from "@/lib/exam/types";
 
 /**
  * EXAM creator, pure part (spec 5.4): the nearest ready template, sections on
@@ -146,10 +146,13 @@ export function buildExamConfig(p: ExamShape): { template: ExamTemplate; config:
   return { template, config: blueprintConfigSchema.parse(config) };
 }
 
-export type CoverageGap = { section: Section; level: Cefr; missing: number; cTest: boolean };
+/** `text`: the missing content is a text of this kind (C-test rows also keep `cTest`). */
+export type CoverageGap = { section: Section; level: Cefr; missing: number; cTest: boolean; text?: TextGapKind };
 
 export function coverageGaps(rows: CoverageRow[]): CoverageGap[] {
-  return rows.filter((r) => !r.ok).map((r) => ({ section: r.section, level: r.level, missing: Math.max(1, r.needed - r.available), cTest: !!r.cTest }));
+  return rows
+    .filter((r) => !r.ok)
+    .map((r) => ({ section: r.section, level: r.level, missing: Math.max(1, r.needed - r.available), cTest: !!r.cTest, ...(r.text ? { text: r.text } : {}) }));
 }
 
 export function defaultExamName(templateName: string, minutes: number, locale: Locale): string {

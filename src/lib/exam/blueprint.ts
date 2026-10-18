@@ -3,14 +3,17 @@ import { PRESETS, proctoringPolicySchema } from "@/lib/proctor/policy";
 import { selectNext, type AdaptiveConfig, type AdaptiveState, type PoolItem } from "./adaptive";
 import { BAND_CENTER, levelIndex, shiftLevel } from "./cefr";
 import {
-  C_TEST_SKILL_TAG,
   CEFR_LEVELS,
-  isCTest,
   isObjectiveSection,
+  isTextGap,
   SECTIONS,
+  TEXT_GAP_KINDS,
+  TEXT_GAP_SKILL_TAGS,
+  textGapKindOf,
   type Cefr,
   type ExamMode,
   type Section,
+  type TextGapKind,
 } from "./types";
 
 /**
@@ -67,6 +70,17 @@ export const sectionConfigSchema = z.object({
    * `cTest` when present. Optional so stored configs stay valid.
    */
   cTestLevels: z.array(z.enum(CEFR_LEVELS)).min(1).max(CEFR_LEVELS.length).optional(),
+  /**
+   * GRAMMAR only: one MC cloze or word-bank text per entry, before the
+   * section's ordinary items (spec 2026-10-18). Served cloze texts first, then
+   * word banks, each easy to hard (see `textPlanOf`). Replaces `cTestLevels`
+   * and `cTest` when present. Optional so stored configs stay valid.
+   */
+  texts: z
+    .array(z.object({ level: z.enum(CEFR_LEVELS), kind: z.enum(["CLOZE", "WORDBANK"]) }))
+    .min(1)
+    .max(CEFR_LEVELS.length * 2)
+    .optional(),
 });
 
 export const passRulesSchema = z.object({
@@ -104,6 +118,11 @@ export const blueprintConfigSchema = z
         if (s.section !== "GRAMMAR") ctx.addIssue({ code: "custom", message: `${s.section}: cTestLevels is for GRAMMAR only` });
         if (new Set(s.cTestLevels).size !== s.cTestLevels.length)
           ctx.addIssue({ code: "custom", message: `${s.section}: cTestLevels repeats a level` });
+      }
+      if (s.texts) {
+        if (s.section !== "GRAMMAR") ctx.addIssue({ code: "custom", message: `${s.section}: texts is for GRAMMAR only` });
+        if (new Set(s.texts.map((t) => `${t.kind}:${t.level}`)).size !== s.texts.length)
+          ctx.addIssue({ code: "custom", message: `${s.section}: texts repeats a kind and level` });
       }
     }
     if (!cfg.sections.some((s) => s.enabled))
@@ -275,8 +294,8 @@ export function sampleFixedForm(
   for (const level of CEFR_LEVELS) {
     const want = perLevel[level];
     if (want <= 0) continue;
-    // C-tests are never drawn into a form; see cTestOpenings.
-    const atLevel = pool.filter((i) => i.level === level && !isCTest(i));
+    // Texts (C-test, cloze, word bank) are never drawn into a form; see textOpenings.
+    const atLevel = pool.filter((i) => i.level === level && !isTextGap(i));
     const singles = atLevel.filter((i) => !i.stimulusId);
     const groups = new Map<string, BankItem[]>();
     for (const i of atLevel.filter((x) => x.stimulusId)) {
@@ -296,29 +315,51 @@ export function sampleFixedForm(
   return units.sort((a, b) => a.b - b.b).flatMap((u) => u.ids);
 }
 
-/** The levels of the section's C-tests, easy to hard; empty when it has none. */
 /**
- * Whether a section's C-tests count as weighted super-items in the estimate.
- * Only sections with `cTestLevels`: exams created before 2026-10-15 have
- * `cTest: true` and their stored estimates used weight 1, so re-estimating
- * them (a teacher accepting a gap) must not move the result.
+ * Whether a section's texts count as weighted super-items in the estimate.
+ * Only sections with `cTestLevels` or `texts`: exams created before
+ * 2026-10-15 have `cTest: true` and their stored estimates used weight 1, so
+ * re-estimating them (a teacher accepting a gap) must not move the result.
  */
-export function weighsCTests(s: SectionConfig): boolean {
-  return s.section === "GRAMMAR" && !!s.cTestLevels;
+export function weighsTexts(s: SectionConfig): boolean {
+  return s.section === "GRAMMAR" && (!!s.cTestLevels || !!s.texts);
 }
 
+/** The levels of the section's legacy C-tests, easy to hard; empty when it has none. */
 export function cTestLevelsOf(s: SectionConfig, mode: ExamMode, claimed: Cefr | null): Cefr[] {
   if (s.section !== "GRAMMAR") return [];
   if (s.cTestLevels) return CEFR_LEVELS.filter((l) => s.cTestLevels!.includes(l));
   return s.cTest ? [anchorLevel(mode, claimed)] : [];
 }
 
+/** One text a GRAMMAR section opens with. */
+export type TextPlanEntry = { level: Cefr; kind: TextGapKind };
+
 /**
- * The C-tests that open the section: one per level of `cTestLevelsOf`, picked
- * at random when the bank has several, easy to hard. A level the bank has no
- * C-test for is skipped (the section then runs without it).
+ * The texts that open a section, in serving order; empty when it has none.
+ * `texts` (cloze first, then word banks, each easy to hard) replaces the
+ * legacy C-test fields; without it `cTestLevelsOf` gives C-tests, so a config
+ * stored before 2026-10-18 plans exactly as it did.
  */
-export function cTestOpenings(
+export function textPlanOf(s: SectionConfig, mode: ExamMode, claimed: Cefr | null): TextPlanEntry[] {
+  if (s.section !== "GRAMMAR") return [];
+  if (s.texts) {
+    const texts = s.texts;
+    return (["CLOZE", "WORDBANK"] as const).flatMap((kind) =>
+      CEFR_LEVELS.filter((level) => texts.some((t) => t.kind === kind && t.level === level)).map((level) => ({ level, kind })),
+    );
+  }
+  return cTestLevelsOf(s, mode, claimed).map((level) => ({ level, kind: "CTEST" as const }));
+}
+
+const fitsEntry = (i: BankItem, e: TextPlanEntry) => i.level === e.level && textGapKindOf(i) === e.kind;
+
+/**
+ * The texts that open the section: one per entry of `textPlanOf`, picked at
+ * random when the bank has several, in plan order. An entry the bank has no
+ * text for is skipped (the section then runs without it).
+ */
+export function textOpenings(
   s: SectionConfig,
   pool: BankItem[],
   mode: ExamMode,
@@ -326,20 +367,20 @@ export function cTestOpenings(
   rng: () => number,
 ): string[] {
   const ids: string[] = [];
-  for (const level of cTestLevelsOf(s, mode, claimed)) {
-    const candidates = pool.filter((i) => isCTest(i) && i.level === level);
+  for (const entry of textPlanOf(s, mode, claimed)) {
+    const candidates = pool.filter((i) => fitsEntry(i, entry));
     if (candidates.length > 0) ids.push(candidates[Math.floor(rng() * candidates.length)].id);
   }
   return ids;
 }
 
-/** A fixed GRAMMAR section made only of C-tests: the intro speaks of texts. */
-export function isCTestOnly(s: SectionConfig, mode: ExamMode, claimed: Cefr | null, difficultyOffset: number): boolean {
-  if (s.adaptive || cTestLevelsOf(s, mode, claimed).length === 0) return false;
+/** A fixed GRAMMAR section made only of texts: the intro speaks of texts. */
+export function isTextOnly(s: SectionConfig, mode: ExamMode, claimed: Cefr | null, difficultyOffset: number): boolean {
+  if (s.adaptive || textPlanOf(s, mode, claimed).length === 0) return false;
   return Object.values(resolveDistribution(s, mode, claimed, difficultyOffset)).every((n) => n === 0);
 }
 
-/** The item plan of a fixed objective section: its C-tests, if any, then the form. */
+/** The item plan of a fixed objective section: its texts, if any, then the form. */
 export function planFixedSection(
   s: SectionConfig,
   pool: BankItem[],
@@ -348,15 +389,15 @@ export function planFixedSection(
   difficultyOffset: number,
   rng: () => number,
 ): string[] {
-  const openings = cTestOpenings(s, pool, mode, claimed, rng);
+  const openings = textOpenings(s, pool, mode, claimed, rng);
   const form = sampleFixedForm(pool, resolveDistribution(s, mode, claimed, difficultyOffset), rng);
   return [...openings, ...form];
 }
 
 /**
  * The next unit of an adaptive section. The first units are the section's
- * C-tests (cTestLevelsOf), one at a time; their partial credit is then the
- * first observations of the estimate.
+ * texts (textPlanOf), one at a time; their partial credit is then the first
+ * observations of the estimate.
  */
 export function nextAdaptiveItems(
   s: SectionConfig,
@@ -367,12 +408,12 @@ export function nextAdaptiveItems(
   config: AdaptiveConfig,
   rng: () => number,
 ): { itemIds: string[] } | null {
-  // The engine never picks a C-test. Served C-tests are counted by skill tag,
-  // so a reload continues where the student was.
-  const levels = cTestLevelsOf(s, mode, claimed).filter((l) => pool.some((i) => isCTest(i) && i.level === l));
-  const served = state.tagCounts[C_TEST_SKILL_TAG] ?? 0;
-  if (served < levels.length) {
-    const candidates = pool.filter((i) => isCTest(i) && i.level === levels[served] && !state.usedItemIds.includes(i.id));
+  // The engine never picks a text. Served texts are counted by skill tag, so
+  // a reload continues where the student was.
+  const plan = textPlanOf(s, mode, claimed).filter((e) => pool.some((i) => fitsEntry(i, e)));
+  const served = TEXT_GAP_KINDS.reduce((n, kind) => n + (state.tagCounts[TEXT_GAP_SKILL_TAGS[kind]] ?? 0), 0);
+  if (served < plan.length) {
+    const candidates = pool.filter((i) => fitsEntry(i, plan[served]) && !state.usedItemIds.includes(i.id));
     if (candidates.length > 0) return { itemIds: [candidates[Math.floor(rng() * candidates.length)].id] };
   }
   return selectNext(state, pool, config, rng);
@@ -409,8 +450,10 @@ export type CoverageRow = {
   available: number;
   /** Reading / listening: texts available. Adaptive needs at least two per level. */
   units?: number;
-  /** This row is one of the section's C-tests, not its ordinary items. */
+  /** This row is one of the section's legacy C-tests, not its ordinary items. Set with `text: "CTEST"`. */
   cTest?: true;
+  /** This row is one of the section's texts, of this kind, not its ordinary items. */
+  text?: TextGapKind;
   ok: boolean;
 };
 
@@ -423,6 +466,10 @@ export type BankCount = {
   stimuli: number;
   /** C-tests among those items. They serve only as an opening, never as ordinary items. */
   cTests?: number;
+  /** MC cloze texts among those items. Openings only, as C-tests. */
+  clozeTexts?: number;
+  /** Word-bank texts among those items. Openings only, as C-tests. */
+  wordBanks?: number;
 };
 
 /**
@@ -440,9 +487,9 @@ export function bankCoverage(
   const rows: CoverageRow[] = [];
   const get = (section: Section, level: Cefr) => {
     const c = counts.find((x) => x.section === section && x.level === level);
-    const cTests = c?.cTests ?? 0;
-    // C-tests never enter automatic selection, so they do not count as items.
-    return { items: (c?.items ?? 0) - cTests, stimuli: c?.stimuli ?? 0, cTests };
+    const texts: Record<TextGapKind, number> = { CTEST: c?.cTests ?? 0, CLOZE: c?.clozeTexts ?? 0, WORDBANK: c?.wordBanks ?? 0 };
+    // Texts never enter automatic selection, so they do not count as items.
+    return { items: (c?.items ?? 0) - texts.CTEST - texts.CLOZE - texts.WORDBANK, stimuli: c?.stimuli ?? 0, texts };
   };
 
   const claims: Array<Cefr | null> =
@@ -487,11 +534,13 @@ export function bankCoverage(
         ok,
       });
     }
-    const cTestLevels = new Set(claims.flatMap((claim) => cTestLevelsOf(s, mode, claim)));
-    for (const l of CEFR_LEVELS) {
-      if (!cTestLevels.has(l)) continue;
-      const available = get(s.section, l).cTests;
-      rows.push({ section: s.section, level: l, needed: 1, available, cTest: true, ok: available >= 1 });
+    const planned = new Set(claims.flatMap((claim) => textPlanOf(s, mode, claim).map((e) => `${e.kind}:${e.level}`)));
+    for (const kind of TEXT_GAP_KINDS) {
+      for (const l of CEFR_LEVELS) {
+        if (!planned.has(`${kind}:${l}`)) continue;
+        const available = get(s.section, l).texts[kind];
+        rows.push({ section: s.section, level: l, needed: 1, available, ...(kind === "CTEST" ? { cTest: true as const } : {}), text: kind, ok: available >= 1 });
+      }
     }
   }
   return { ok: rows.every((r) => r.ok), rows };

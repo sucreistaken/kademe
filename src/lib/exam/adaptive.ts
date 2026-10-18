@@ -14,11 +14,15 @@
  * tampered client cannot move the estimate.
  */
 
-import { isCTest, type ItemContent, type ItemSnapshot } from "./types";
+import { isTextGap, textGapKindOf, wordBankWords, type ItemContent, type ItemKey, type ItemSnapshot } from "./types";
 
 export type Posterior = { mean: number; sd: number };
-/** One scored item. `weight` is how many independent items it counts as (default 1). */
-export type Observation = { b: number; score: number; weight?: number };
+/**
+ * One scored item. `weight` is how many independent items it counts as
+ * (default 1). `guess` is the chance of a right answer by guessing alone
+ * (default 0), the floor of `pWithGuess`.
+ */
+export type Observation = { b: number; score: number; weight?: number; guess?: number };
 
 export type AdaptiveConfig = {
   minItems: number;
@@ -55,6 +59,13 @@ const GRID: number[] = Array.from({ length: 81 }, (_, i) => -4 + i * 0.1);
 
 export const pCorrect = (theta: number, b: number): number => 1 / (1 + Math.exp(-(theta - b)));
 
+/**
+ * Rasch with a guessing floor: p = c + (1 - c) * sigma(theta - b). With c = 0
+ * it is exactly `pCorrect`, so every item without a floor estimates as before.
+ */
+export const pWithGuess = (theta: number, b: number, c: number): number =>
+  c > 0 ? c + (1 - c) * pCorrect(theta, b) : pCorrect(theta, b);
+
 export function information(theta: number, b: number): number {
   const p = pCorrect(theta, b);
   return p * (1 - p);
@@ -73,7 +84,7 @@ export function eap(observations: Observation[], prior: Posterior): Posterior {
     const z = (theta - prior.mean) / prior.sd;
     let lp = -0.5 * z * z;
     for (const o of observations) {
-      const p = Math.min(1 - 1e-9, Math.max(1e-9, pCorrect(theta, o.b)));
+      const p = Math.min(1 - 1e-9, Math.max(1e-9, pWithGuess(theta, o.b, o.guess ?? 0)));
       const s = Math.min(1, Math.max(0, o.score));
       lp += (o.weight ?? 1) * (s * Math.log(p) + (1 - s) * Math.log(1 - p));
     }
@@ -88,38 +99,61 @@ export function eap(observations: Observation[], prior: Posterior): Posterior {
 }
 
 /**
- * Gaps of one C-test text per unit of weight. Professionally a C-test text is
- * one "super-item" scored by its number of correct gaps (polytomous Rasch);
- * its gaps are not independent, so a 20-gap text is worth more than one item
- * and less than twenty. The divisor 4 (a 20-gap text weighs 5) is an
- * uncalibrated choice (spec 2026-10-15, docs/EXAM-ENGINE.md) until a partial credit model is fitted to real data.
+ * Gaps of one text (C-test, cloze, word bank) per unit of weight.
+ * Professionally such a text is one "super-item" scored by its number of
+ * correct gaps (polytomous Rasch); its gaps are not independent, so a 20-gap
+ * text is worth more than one item and less than twenty. The divisor 4 (a
+ * 20-gap text weighs 5) is an uncalibrated choice (spec 2026-10-15,
+ * docs/EXAM-ENGINE.md) until a partial credit model is fitted to real data.
  */
 export const C_TEST_GAPS_PER_WEIGHT = 4;
 
 /**
- * How many items one scored item counts as in the estimate. `weighCTests` is
- * off for sections that do not use `cTestLevels` (see blueprint.ts weighsCTests):
- * then every item weighs 1.
+ * How many items one scored item counts as in the estimate. `weighTexts` is
+ * off for sections that use neither `cTestLevels` nor `texts` (see
+ * blueprint.ts weighsTexts): then every item weighs 1.
  */
-export function itemWeight(item: { skillTag: string; content: ItemContent }, weighCTests: boolean): number {
-  if (!weighCTests || !isCTest(item) || item.content.kind !== "GAP") return 1;
+export function itemWeight(item: { skillTag: string; content: ItemContent }, weighTexts: boolean): number {
+  if (!weighTexts || !isTextGap(item) || item.content.kind !== "GAP") return 1;
   return Math.max(1, item.content.gaps.length / C_TEST_GAPS_PER_WEIGHT);
 }
 
+/** The guessing floor of an MC cloze gap: one of four choices. */
+export const CLOZE_GUESS = 1 / 4;
+
+/**
+ * The chance of getting one gap right by guessing alone (spec 2026-10-18,
+ * section 4): a quarter for an MC cloze, one over the pool size for a word
+ * bank, 0 for every other item, so attempts without those kinds re-estimate
+ * exactly as before.
+ */
+export function guessOf(item: { skillTag: string; content: ItemContent; key: ItemKey }): number {
+  const kind = textGapKindOf(item);
+  if (kind === "CLOZE") return CLOZE_GUESS;
+  if (kind === "WORDBANK" && item.content.kind === "GAP" && item.key.kind === "GAP") {
+    const words = wordBankWords(item.content.gaps.map((g) => g.id), item.key.answers, item.key.distractors).length;
+    return words > 0 ? 1 / words : 0;
+  }
+  return 0;
+}
+
 /** The observation a stored, scored response adds to the estimate. */
-export function observationOf(snapshot: Pick<ItemSnapshot, "difficulty" | "skillTag" | "content">, score: number, weighCTests: boolean): Observation {
-  return { b: snapshot.difficulty, score, weight: itemWeight(snapshot, weighCTests) };
+export function observationOf(snapshot: Pick<ItemSnapshot, "difficulty" | "skillTag" | "content" | "key">, score: number, weighTexts: boolean): Observation {
+  const guess = guessOf(snapshot);
+  return { b: snapshot.difficulty, score, weight: itemWeight(snapshot, weighTexts), ...(guess > 0 ? { guess } : {}) };
 }
 
 /** A stored response as `replay` reads it. */
-export function replayResponseOf(r: { itemId: string; itemSnapshot: ItemSnapshot; score: number | null }, weighCTests: boolean): ReplayResponse {
+export function replayResponseOf(r: { itemId: string; itemSnapshot: ItemSnapshot; score: number | null }, weighTexts: boolean): ReplayResponse {
+  const guess = guessOf(r.itemSnapshot);
   return {
     itemId: r.itemId,
     b: r.itemSnapshot.difficulty,
     skillTag: r.itemSnapshot.skillTag,
     stimulusId: r.itemSnapshot.stimulusId,
     score: r.score,
-    weight: itemWeight(r.itemSnapshot, weighCTests),
+    weight: itemWeight(r.itemSnapshot, weighTexts),
+    ...(guess > 0 ? { guess } : {}),
   };
 }
 
@@ -142,6 +176,8 @@ export type ReplayResponse = {
   score: number | null;
   /** See Observation.weight. */
   weight?: number;
+  /** See Observation.guess. */
+  guess?: number;
 };
 
 /** Rebuild the state from what is stored. Unanswered items still count as used. */
@@ -151,7 +187,7 @@ export function replay(config: AdaptiveConfig, responses: ReplayResponse[]): Ada
   for (const r of responses) tagCounts[r.skillTag] = (tagCounts[r.skillTag] ?? 0) + 1;
   return {
     posterior: eap(
-      answered.map((r) => ({ b: r.b, score: r.score as number, weight: r.weight })),
+      answered.map((r) => ({ b: r.b, score: r.score as number, weight: r.weight, guess: r.guess })),
       { mean: config.priorMean, sd: config.priorSd },
     ),
     answered: answered.length,
@@ -170,8 +206,8 @@ function units(pool: PoolItem[], state: AdaptiveState): Unit[] {
   const groups = new Map<string, PoolItem[]>();
   for (const item of pool) {
     if (used.has(item.id)) continue;
-    // A C-test is served only on purpose, as a section's opening (blueprint.ts).
-    if (isCTest(item)) continue;
+    // A text (C-test, cloze, word bank) is served only on purpose, as a section's opening (blueprint.ts).
+    if (isTextGap(item)) continue;
     if (item.stimulusId) {
       if (usedStimuli.has(item.stimulusId)) continue;
       const g = groups.get(item.stimulusId) ?? [];
@@ -198,7 +234,7 @@ export const poolLeft = (pool: PoolItem[], state: AdaptiveState): number => unit
 /**
  * The next item, or the next testlet. Closest difficulty to the current
  * estimate wins, with a small penalty for a skill tag already seen often so a
- * grammar section does not become twelve dative questions. C-tests are never
+ * grammar section does not become twelve dative questions. Texts are never
  * picked here: one takes a large share of a short section, and its unique tag
  * would always win the tag penalty.
  */

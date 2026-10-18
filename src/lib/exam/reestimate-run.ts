@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { attempts, examAssessments, itemResponses, sectionRuns } from "@/db/schema";
 import { eap, observationOf, replay, replayResponseOf, type Observation } from "@/lib/exam/adaptive";
-import { adaptiveConfigFor, weighsCTests } from "@/lib/exam/blueprint";
+import { adaptiveConfigFor, weighsTexts } from "@/lib/exam/blueprint";
 import { isObjectiveSection } from "@/lib/exam/types";
 
 /**
@@ -26,7 +26,7 @@ export async function reestimateRun(runId: string): Promise<void> {
   if (!ctx || !s) return;
 
   const all = await db.select().from(itemResponses).where(eq(itemResponses.sectionRunId, runId));
-  const w = weighsCTests(s);
+  const w = weighsTexts(s);
   const acfg = adaptiveConfigFor(s, ctx.exam.mode, ctx.exam.claimedLevel);
   const prior = { mean: acfg.priorMean, sd: acfg.priorSd };
   const state = replay(

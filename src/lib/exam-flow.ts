@@ -14,15 +14,15 @@ import {
 import { eap, mulberry32, observationOf, poolLeft, replay, replayResponseOf, shouldStop, type Observation, type Posterior } from "@/lib/exam/adaptive";
 import {
   adaptiveConfigFor,
-  cTestLevelsOf,
   enabledSections,
   estimatedMinutes,
-  isCTestOnly,
+  isTextOnly,
   nextAdaptiveItems,
   planFixedSection,
   productiveTaskLevels,
   resolveDistribution,
-  weighsCTests,
+  textPlanOf,
+  weighsTexts,
   type BankItem,
   type BlueprintConfig,
   type SectionConfig,
@@ -160,7 +160,7 @@ export type SectionSummary = {
   itemsLabel: string;
   /** The student can go back, flag items and review before finishing this section. */
   navigable: boolean;
-  /** GRAMMAR made only of C-tests: the intro counts texts, not questions. */
+  /** GRAMMAR made only of texts (C-test, cloze, word bank): the intro counts texts, not questions. */
   cTestOnly: boolean;
   done: boolean;
   /** Closed without a question because the bank had none left (BANK_EMPTY); the student is told. */
@@ -226,7 +226,7 @@ function itemsLabel(s: SectionConfig, mode: ExamMode, claimed: Cefr | null, offs
   if (!isObjectiveSection(s.section)) return String(s.tasks);
   if (s.adaptive) return `${s.minItems}-${s.maxItems}`;
   const dist = resolveDistribution(s, mode, claimed, offset);
-  const openings = cTestLevelsOf(s, mode, claimed).length;
+  const openings = textPlanOf(s, mode, claimed).length;
   return String(Object.values(dist).reduce((a, b) => a + b, 0) + openings);
 }
 
@@ -259,7 +259,7 @@ export async function loadState(ctx: ExamCandidateContext): Promise<CandidateSta
       minutes: s.durationMinutes,
       itemsLabel: itemsLabel(s, ctx.assessment.mode, ctx.assessment.claimedLevel, cfg.difficultyOffset),
       navigable: isNavigableConfig(s),
-      cTestOnly: isCTestOnly(s, ctx.assessment.mode, ctx.assessment.claimedLevel, cfg.difficultyOffset),
+      cTestOnly: isTextOnly(s, ctx.assessment.mode, ctx.assessment.claimedLevel, cfg.difficultyOffset),
       done: false,
     })),
     proctoring: cfg.proctoring,
@@ -684,7 +684,7 @@ export async function ensureCurrentItem(ctx: ExamCandidateContext, runId: string
       const cfg = adaptiveConfigFor(s, ctx.assessment.mode, ctx.assessment.claimedLevel);
       const state = replay(
         cfg,
-        responses.map((r) => replayResponseOf(r, weighsCTests(s))),
+        responses.map((r) => replayResponseOf(r, weighsTexts(s))),
       );
       const pool = await loadPool(ctx.assessment.orgId, run.section, tx);
       const stop = shouldStop(state, cfg, poolLeft(pool, state));
@@ -692,7 +692,7 @@ export async function ensureCurrentItem(ctx: ExamCandidateContext, runId: string
         await tx.update(sectionRuns).set({ stopReason: stop }).where(eq(sectionRuns.id, runId));
         return null;
       }
-      // The opening C-tests (GRAMMAR with cTest or cTestLevels) come first; the engine never picks one.
+      // The opening texts (GRAMMAR with texts, cTestLevels or cTest) come first; the engine never picks one.
       const next = nextAdaptiveItems(s, ctx.assessment.mode, ctx.assessment.claimedLevel, state, pool, cfg, mulberry32(Math.floor(Math.random() * 2 ** 31)));
       if (!next) return null;
       await serve(tx, runId, next.itemIds, nextSequence, s);
@@ -1010,7 +1010,7 @@ async function updateTheta(ctx: ExamCandidateContext, run: typeof sectionRuns.$i
   const rows = await db.select().from(itemResponses).where(eq(itemResponses.sectionRunId, run.id));
   const state = replay(
     cfg,
-    rows.map((r) => replayResponseOf(r, weighsCTests(s))),
+    rows.map((r) => replayResponseOf(r, weighsTexts(s))),
   );
   await db
     .update(itemResponses)
@@ -1096,13 +1096,13 @@ export async function closeSectionRun(runId: string, reason: "DONE" | "SUBMIT" |
     const acfg = adaptiveConfigFor(s, mode, claimedLevel);
     const state = replay(
       acfg,
-      all.map((r) => replayResponseOf(r, weighsCTests(s))),
+      all.map((r) => replayResponseOf(r, weighsTexts(s))),
     );
     thetaMean = state.posterior.mean;
     thetaSd = state.posterior.sd;
     // A navigable section scores everything at once, so the teacher's
     // trajectory chart is drawn here, in the order the items were served.
-    if (run.navigable) await writeTrajectory(all, { mean: acfg.priorMean, sd: acfg.priorSd }, weighsCTests(s));
+    if (run.navigable) await writeTrajectory(all, { mean: acfg.priorMean, sd: acfg.priorSd }, weighsTexts(s));
     const answered = all.filter((r) => r.answeredAt).length;
     if (s.adaptive && answered < s.minItems) {
       stopReason = "INSUFFICIENT";
@@ -1111,7 +1111,7 @@ export async function closeSectionRun(runId: string, reason: "DONE" | "SUBMIT" |
       // estimate at the starting prior (B1, or the claim) and beat answering.
       const observations = all
         .filter((r) => r.score !== null)
-        .map((r) => observationOf(r.itemSnapshot, r.score as number, weighsCTests(s)));
+        .map((r) => observationOf(r.itemSnapshot, r.score as number, weighsTexts(s)));
       const missing = s.minItems - answered;
       for (let i = 0; i < missing; i++) observations.push({ b: state.posterior.mean, score: 0 });
       const post = eap(observations, { mean: acfg.priorMean, sd: acfg.priorSd });
@@ -1149,11 +1149,11 @@ export async function closeSectionRun(runId: string, reason: "DONE" | "SUBMIT" |
 }
 
 /** The running estimate after each scored item, in sequence order; blanks count as wrong, as in the final estimate. */
-async function writeTrajectory(rows: ItemResponse[], prior: Posterior, weighCTests: boolean) {
+async function writeTrajectory(rows: ItemResponse[], prior: Posterior, weighTexts: boolean) {
   const observations: Observation[] = [];
   for (const r of [...rows].sort((a, b) => a.sequence - b.sequence)) {
     if (r.score === null) continue;
-    observations.push(observationOf(r.itemSnapshot, r.score, weighCTests));
+    observations.push(observationOf(r.itemSnapshot, r.score, weighTexts));
     const post = eap(observations, prior);
     await db.update(itemResponses).set({ thetaAfter: post.mean, seAfter: post.sd }).where(eq(itemResponses.id, r.id));
   }

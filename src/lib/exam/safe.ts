@@ -1,5 +1,5 @@
-import { buildCTestPool, seedFromText } from "./ctest-pool";
-import { isCTest, type ItemAnswer, type ItemSnapshot, type Presentation, type Section, type ItemType } from "./types";
+import { buildCTestPool, buildWordBankPool, seedFromText } from "./ctest-pool";
+import { textGapKindOf, type ItemAnswer, type ItemSnapshot, type Presentation, type Section, type ItemType } from "./types";
 
 /**
  * The only way an item reaches the student's browser.
@@ -21,7 +21,13 @@ export type CandidateContent =
       gaps: Array<{ id: string; choices: string[] | null }>;
       /** C-test: each input continues the word stem right before it. */
       attached?: true;
-      /** C-test: shuffled word parts to place, the missing parts plus decoys. Never says which fits where. */
+      /** MC cloze: every gap is an empty slot answered from its four choices in a side panel. */
+      cloze?: true;
+      /**
+       * C-test (with `attached`): shuffled word parts to place, the missing parts plus decoys.
+       * Word bank (without `attached`): shuffled whole words, the answers plus distractors.
+       * Never says which fits where.
+       */
       pool?: string[];
     }
   | {
@@ -152,27 +158,28 @@ export function toCandidateItem(
     case "TFNG":
       content = { kind: "TFNG", statements: c.statements.map((s) => ({ id: s.id, text: s.text })) };
       break;
-    case "GAP":
+    case "GAP": {
+      const kind = textGapKindOf(snapshot);
+      const gapIds = c.gaps.map((g) => g.id);
+      const seed = presentation.poolSeed ?? seedFromText(snapshot.prompt);
       content = {
         kind: "GAP",
         gaps: c.gaps.map((g) => ({
           id: g.id,
           choices: g.choices ? orderedChoices(g.choices, presentation.choiceOrder?.[g.id]) : null,
         })),
-        // Only the rendering hint leaves the server, never the skill tag itself.
-        ...(isCTest(snapshot) ? { attached: true as const } : {}),
-        ...(isCTest(snapshot) && snapshot.key.kind === "GAP"
-          ? {
-              pool: buildCTestPool(
-                c.gaps.map((g) => g.id),
-                snapshot.key.answers,
-                presentation.poolSeed ?? seedFromText(snapshot.prompt),
-                snapshot.key.distractors,
-              ),
-            }
+        // Only the rendering hints leave the server, never the skill tag itself.
+        ...(kind === "CTEST" ? { attached: true as const } : {}),
+        ...(kind === "CLOZE" ? { cloze: true as const } : {}),
+        ...(kind === "CTEST" && snapshot.key.kind === "GAP"
+          ? { pool: buildCTestPool(gapIds, snapshot.key.answers, seed, snapshot.key.distractors) }
+          : {}),
+        ...(kind === "WORDBANK" && snapshot.key.kind === "GAP"
+          ? { pool: buildWordBankPool(gapIds, snapshot.key.answers, seed, snapshot.key.distractors) }
           : {}),
       };
       break;
+    }
     case "MATCHING":
       content = {
         kind: "MATCHING",
@@ -228,7 +235,7 @@ export function toCandidateItem(
 
 /**
  * Fixed once, when the item is first served. Options, matching targets and
- * the choices of a drop-down gap are shuffled so the key's position says
+ * the choices of a drop-down or cloze gap are shuffled so the key's position says
  * nothing; statements and gaps keep their order because they follow the text,
  * and matching targets that carry their own letter keep letter order (see
  * `letteredTargets`).
@@ -268,9 +275,10 @@ export function makePresentation(snapshot: ItemSnapshot, rng: () => number): Pre
     for (const g of c.gaps) {
       if (g.choices && g.choices.length > 1) choiceOrder[g.id] = shuffle(g.choices.map((_, i) => i));
     }
+    const kind = textGapKindOf(snapshot);
     return {
       ...(Object.keys(choiceOrder).length ? { choiceOrder } : {}),
-      ...(isCTest(snapshot) ? { poolSeed: Math.floor(rng() * 2 ** 31) } : {}),
+      ...(kind === "CTEST" || kind === "WORDBANK" ? { poolSeed: Math.floor(rng() * 2 ** 31) } : {}),
     };
   }
   return {};

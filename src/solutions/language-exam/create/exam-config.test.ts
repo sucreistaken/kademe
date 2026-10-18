@@ -120,6 +120,19 @@ describe("coverage gaps", () => {
     ]);
   });
 
+  it("names the kind of a missing text (cloze, word bank, C-test)", () => {
+    const rows: CoverageRow[] = [
+      { section: "GRAMMAR", level: "A2", needed: 1, available: 0, text: "CLOZE", ok: false },
+      { section: "GRAMMAR", level: "B1", needed: 1, available: 0, text: "WORDBANK", ok: false },
+      { section: "GRAMMAR", level: "B2", needed: 1, available: 0, cTest: true, text: "CTEST", ok: false },
+    ];
+    expect(coverageGaps(rows)).toEqual([
+      { section: "GRAMMAR", level: "A2", missing: 1, cTest: false, text: "CLOZE" },
+      { section: "GRAMMAR", level: "B1", missing: 1, cTest: false, text: "WORDBANK" },
+      { section: "GRAMMAR", level: "B2", missing: 1, cTest: true, text: "CTEST" },
+    ]);
+  });
+
   it("finds gaps against an empty bank", () => {
     const { config } = buildExamConfig(shape({ targetMinutes: 40 }));
     expect(coverageGaps(bankCoverage([], config, "PLACEMENT", null).rows).length).toBeGreaterThan(0);

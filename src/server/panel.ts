@@ -24,7 +24,7 @@ import {
   users,
 } from "@/db/schema";
 import type { BankCount } from "@/lib/exam/blueprint";
-import { C_TEST_SKILL_TAG } from "@/lib/exam/types";
+import { C_TEST_SKILL_TAG, CLOZE_SKILL_TAG, WORD_BANK_SKILL_TAG } from "@/lib/exam/types";
 import { enabledSections } from "@/lib/exam/blueprint";
 import type { Cefr, Section } from "@/lib/exam/types";
 import { getStorage } from "@/lib/storage";
@@ -144,6 +144,8 @@ export async function bankCounts(orgId: string): Promise<BankCount[]> {
       n: sql<number>`count(*)::int`,
       s: sql<number>`count(distinct ${items.stimulusId})::int`,
       c: sql<number>`(count(*) filter (where ${items.skillTag} = ${C_TEST_SKILL_TAG}))::int`,
+      cz: sql<number>`(count(*) filter (where ${items.skillTag} = ${CLOZE_SKILL_TAG}))::int`,
+      wb: sql<number>`(count(*) filter (where ${items.skillTag} = ${WORD_BANK_SKILL_TAG}))::int`,
     })
     .from(items)
     .leftJoin(stimuli, eq(stimuli.id, items.stimulusId))
@@ -155,7 +157,7 @@ export async function bankCounts(orgId: string): Promise<BankCount[]> {
       ),
     )
     .groupBy(items.section, items.level);
-  return rows.map((r) => ({ section: r.section, level: r.level, items: r.n, stimuli: r.s, cTests: r.c }));
+  return rows.map((r) => ({ section: r.section, level: r.level, items: r.n, stimuli: r.s, cTests: r.c, clozeTexts: r.cz, wordBanks: r.wb }));
 }
 
 export async function publishedBlueprints(orgId: string) {

@@ -1,4 +1,4 @@
-import { defaultBlueprint, enabledSections, isCTestOnly, type BlueprintConfig, type SectionConfig } from "@/lib/exam/blueprint";
+import { defaultBlueprint, enabledSections, isTextOnly, type BlueprintConfig, type SectionConfig } from "@/lib/exam/blueprint";
 import type { ExamTemplateKey } from "@/lib/exam/templates";
 import { isObjectiveSection, type ExamMode, type Section } from "@/lib/exam/types";
 import { PRESETS, type PolicyPreset } from "@/lib/proctor/policy";
@@ -85,7 +85,7 @@ export function sectionKind(
   s: Pick<SectionConfig, "section" | "adaptive"> & Partial<Pick<SectionConfig, "cTestLevels" | "distribution">>,
 ): "adaptive" | "fixed" | "tasks" | "ctests" {
   if (!isObjectiveSection(s.section)) return "tasks";
-  if (s.cTestLevels && !s.adaptive && (!s.distribution || isCTestOnly(s as SectionConfig, "PLACEMENT", null, 0))) return "ctests";
+  if (s.cTestLevels && !s.adaptive && (!s.distribution || isTextOnly(s as SectionConfig, "PLACEMENT", null, 0))) return "ctests";
   return s.adaptive ? "adaptive" : "fixed";
 }
 
@@ -94,12 +94,12 @@ export function sectionKind(
  * (resolveDistribution); adaptive sections follow the student's answers and
  * ignore it (exam-flow plans only fixed sections with it). So it applies to
  * the enabled fixed objective sections, and is off when there are none. A
- * C-test-only section is left out: its texts come from `cTestLevels`, which
- * ignores the shift.
+ * text-only section is left out: its texts come from `cTestLevels` or
+ * `texts`, which ignore the shift.
  */
 export function levelShiftScope(config: BlueprintConfig): { applies: boolean; fixed: Section[]; adaptive: Section[] } {
   const objective = enabledSections(config).filter((s) => isObjectiveSection(s.section));
-  const fixed = objective.filter((s) => !s.adaptive && !isCTestOnly(s, "PLACEMENT", null, 0)).map((s) => s.section);
+  const fixed = objective.filter((s) => !s.adaptive && !isTextOnly(s, "PLACEMENT", null, 0)).map((s) => s.section);
   const adaptive = objective.filter((s) => s.adaptive).map((s) => s.section);
   return { applies: fixed.length > 0, fixed, adaptive };
 }

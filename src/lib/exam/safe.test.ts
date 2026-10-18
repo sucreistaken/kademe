@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { mulberry32 } from "./adaptive";
 import { letteredTargets, makePresentation, matchingTargets, toCandidateItem } from "./safe";
-import { C_TEST_SKILL_TAG, type ItemSnapshot } from "./types";
+import { C_TEST_SKILL_TAG, CLOZE_SKILL_TAG, WORD_BANK_SKILL_TAG, type ItemSnapshot } from "./types";
 
 const listening: ItemSnapshot = {
   id: "item-secret-id",
@@ -223,5 +223,97 @@ describe("writing and speaking payloads", () => {
       answerSeconds: 60,
       maxTakes: 2,
     });
+  });
+});
+
+describe("MC cloze and word-bank texts (spec 2026-10-18)", () => {
+  const text = (skillTag: string, withChoices: boolean): ItemSnapshot => ({
+    ...listening,
+    id: "text-secret-id",
+    section: "GRAMMAR",
+    level: "C1",
+    difficulty: 1.37,
+    type: "GAP_FILL",
+    skillTag,
+    stimulusId: null,
+    stimulus: null,
+    prompt: "Wir {{g1}} morgen {{g2}} Hamburg und {{g3}} dort Freunde.",
+    content: {
+      kind: "GAP",
+      gaps: withChoices
+        ? [
+            { id: "g1", choices: ["fahren", "fährt", "fuhr", "gefahren"] },
+            { id: "g2", choices: ["nach", "in", "zu", "bei"] },
+            { id: "g3", choices: ["besuchen", "besucht", "besuchte", "besuche"] },
+          ]
+        : [{ id: "g1" }, { id: "g2" }, { id: "g3" }],
+    },
+    key: {
+      kind: "GAP",
+      answers: { g1: ["fahren"], g2: ["nach"], g3: ["besuchen"] },
+      ...(withChoices ? {} : { distractors: ["fährt", "zu", "besucht", "gestern"] }),
+    },
+  });
+  const cloze = text(CLOZE_SKILL_TAG, true);
+  const bank = text(WORD_BANK_SKILL_TAG, false);
+
+  it("cloze: a rendering flag, the four choices of every gap shuffled once per student, no pool", () => {
+    const p = makePresentation(cloze, mulberry32(4));
+    expect(p.poolSeed).toBeUndefined();
+    expect(Object.keys(p.choiceOrder!)).toEqual(["g1", "g2", "g3"]);
+    const c = toCandidateItem(cloze, p, null, 1, { maxPlays: 2 });
+    expect(c.content).toMatchObject({ kind: "GAP", cloze: true });
+    expect(c.content).not.toHaveProperty("pool");
+    expect(c.content).not.toHaveProperty("attached");
+    const gaps = (c.content as { gaps: Array<{ id: string; choices: string[] }> }).gaps;
+    expect(gaps.map((g) => [...g.choices].sort())).toEqual([
+      ["fahren", "fährt", "fuhr", "gefahren"].sort(),
+      ["bei", "in", "nach", "zu"],
+      ["besuche", "besuchen", "besucht", "besuchte"],
+    ]);
+    // Over many students the key is not always in one place.
+    const firsts = new Set(Array.from({ length: 40 }, (_, i) => toCandidateItem(cloze, makePresentation(cloze, mulberry32(i + 1)), null, 1, { maxPlays: 2 })).map((x) => (x.content as { gaps: Array<{ choices: string[] }> }).gaps[0].choices[0]));
+    expect(firsts.size).toBeGreaterThan(1);
+  });
+
+  it("word bank: a pool of whole words, the answers plus the distractors, no stems and no attached flag", () => {
+    const p = makePresentation(bank, mulberry32(4));
+    expect(typeof p.poolSeed).toBe("number");
+    const c = toCandidateItem(bank, p, null, 1, { maxPlays: 2 });
+    expect(c.content).not.toHaveProperty("attached");
+    expect(c.content).not.toHaveProperty("cloze");
+    expect((c.content as { gaps: unknown }).gaps).toEqual([
+      { id: "g1", choices: null },
+      { id: "g2", choices: null },
+      { id: "g3", choices: null },
+    ]);
+    const pool = (c.content as { pool: string[] }).pool;
+    expect([...pool].sort()).toEqual(["besuchen", "besucht", "fahren", "fährt", "gestern", "nach", "zu"]);
+  });
+
+  it("word bank: the same pool on every reload, a different order for other students", () => {
+    const p = makePresentation(bank, mulberry32(9));
+    const a = toCandidateItem(bank, p, null, 1, { maxPlays: 2 });
+    const b = toCandidateItem(bank, JSON.parse(JSON.stringify(p)), null, 1, { maxPlays: 2 });
+    expect(a.content).toEqual(b.content);
+    const orders = new Set(Array.from({ length: 20 }, (_, i) => JSON.stringify((toCandidateItem(bank, makePresentation(bank, mulberry32(i + 100)), null, 1, { maxPlays: 2 }).content as { pool: string[] }).pool)));
+    expect(orders.size).toBeGreaterThan(1);
+  });
+
+  it("word bank: two gaps with the same answer give that word twice", () => {
+    const twice: ItemSnapshot = { ...bank, key: { kind: "GAP", answers: { g1: ["der"], g2: ["der"], g3: ["die"] }, distractors: ["das", "den", "dem"] } };
+    const pool = (toCandidateItem(twice, makePresentation(twice, mulberry32(2)), null, 1, { maxPlays: 2 }).content as { pool: string[] }).pool;
+    expect(pool.filter((w) => w === "der")).toHaveLength(2);
+  });
+
+  it("leaks no key, skill tag, level, difficulty or id for either kind", () => {
+    for (const item of [cloze, bank]) {
+      const c = toCandidateItem(item, makePresentation(item, mulberry32(3)), null, 1, { maxPlays: 2 });
+      expect(Object.keys(c).sort()).toEqual(["answer", "content", "prompt", "section", "sequence", "stimulus", "type"]);
+      const json = JSON.stringify(c);
+      for (const secret of [item.skillTag, "grammar.", "C1", "1.37", "text-secret-id", "answers", "distractors", "difficulty", "skillTag", "level", "key"]) {
+        expect(json, secret).not.toContain(secret);
+      }
+    }
   });
 });
