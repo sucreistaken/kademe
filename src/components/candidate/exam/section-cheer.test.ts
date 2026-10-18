@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cheerKind } from "./SectionCheer";
+import { cheerKind, cheerPose } from "./SectionCheer";
 
 describe("cheerKind", () => {
   it("welcomes on the first section with nothing finished", () => {
@@ -14,5 +14,12 @@ describe("cheerKind", () => {
     expect(cheerKind(1, 2)).toBe("first");
     expect(cheerKind(2, 3)).toBe("more");
     expect(cheerKind(4, 5)).toBe("more");
+  });
+
+  it("waves on the section 1 intro, celebrates once something is done, and is absent otherwise", () => {
+    expect(cheerPose(cheerKind(0, 1))).toBe("wave");
+    expect(cheerPose(cheerKind(0, 2))).toBeNull();
+    expect(cheerPose(cheerKind(1, 2))).toBe("celebrate");
+    expect(cheerPose(cheerKind(3, 4))).toBe("celebrate");
   });
 });

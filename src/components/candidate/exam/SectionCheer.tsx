@@ -1,12 +1,12 @@
 "use client";
 
 import { Check } from "lucide-react";
-import { Mascot } from "@/components/visual/mascot";
+import { Mascot, type MascotPose } from "@/components/visual/mascot";
 import { SectionTile, type SectionKey } from "@/components/visual/section-look";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
 
-/** Which headline the progress strip carries; the mascot shows only after a finished section. */
+/** Which headline the progress strip carries; it also decides the mascot (see cheerPose). */
 export type CheerKind = "start" | "first" | "more" | "none";
 
 /**
@@ -18,12 +18,18 @@ export function cheerKind(done: number, position: number): CheerKind {
   return done === 1 ? "first" : "more";
 }
 
+/** The intro of section 1 waves, later intros (something finished) celebrate, a skipped-first intro has no mascot. */
+export function cheerPose(kind: CheerKind): MascotPose | null {
+  if (kind === "start") return "wave";
+  return kind === "none" ? null : "celebrate";
+}
+
 /**
  * At the top of every section's intro. A row of the exam's section badges
  * (each in its own icon) ticks the finished ones and rings the current one, with "n of 5 sections done"
- * and one short line. Before the first section is done the line is a neutral
- * welcome and there is no mascot; once at least one is done the mascot
- * celebrates and the line encourages. It cheers finishing, never a score:
+ * and one short line. On the intro of section 1 the line is a neutral welcome
+ * and the mascot waves; once at least one is done the mascot celebrates and
+ * the line encourages. It cheers finishing, never a score:
  * nothing here says how any answer went. Never rendered on a question screen.
  */
 export function SectionCheer({
@@ -40,10 +46,11 @@ export function SectionCheer({
   const v = useT("visual");
   const done = sections.filter((s) => s.done).length;
   const kind = cheerKind(done, position);
+  const pose = cheerPose(kind);
   const line = kind === "start" ? t("startFirst", { section: sec(current) }) : kind === "first" ? t("cheerFirst") : kind === "more" ? t("cheerMore") : null;
   return (
     <div className="mb-3 flex items-center gap-4 rounded-2xl bg-mint-soft px-4 py-2.5">
-      {done > 0 ? <Mascot pose="celebrate" size="small" className="-my-2" /> : null}
+      {pose === "wave" ? <Mascot pose="wave" size="small" className="-my-2.5 w-14" /> : pose ? <Mascot pose={pose} size="small" className="-my-2" /> : null}
       <ul className="flex shrink-0 gap-1.5">
         {sections.map((s) => {
           const isCurrent = s.section === current && !s.done;

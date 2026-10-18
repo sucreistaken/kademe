@@ -127,7 +127,7 @@ This section is new: it turns the standing decisions (byline on front doors, non
 | Panel sign-in | Lockup, `{typography.wordmark}` | Yes | No [ASSUMPTION: teachers sign in daily; keep it quiet] | Faint cream leaves allowed |
 | Candidate welcome (exam and hiring) | Lockup, large | Yes | `wave`, hero | The school's own name is a neutral chip beside it; it carries no Campus German glyph [ASSUMPTION: resolves the mockup's chip that reused the petal glyph] |
 | Info, system check | Lockup in the candidate bar | Yes [ASSUMPTION: the clock is not running] | No (a face next to a camera preview is confusing) [ASSUMPTION] | |
-| Section intro, section break | Candidate bar with lockup | Yes on intro [ASSUMPTION]; break shows mark only | `celebrate` on the break, only after a section is finished; none on the intro | The bar carries the record indicator from the first section on (the shipped runner shows it on the intro too) and no timer |
+| Section intro, section break | Candidate bar with lockup | Yes on intro [ASSUMPTION]; break shows mark only | `celebrate` on the break, only after a section is finished; the intro of section 1 waves (`wave`, small, in the progress strip), later intros celebrate | The bar carries the record indicator from the first section on (the shipped runner shows it on the intro too) and no timer |
 | Question screen | Mark and word "Kademe" in `{typography.wordmark-sm}` | **Never** | **Never** | The bar, the passage and the bottom bar carry no brand message |
 | Proctor warning | None | **Never** | **Never** | The yellow glyph tile is the only illustration |
 | Finish screen | Lockup | Yes | `celebrate` | Level, if released, is shown as text |
