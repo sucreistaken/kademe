@@ -193,16 +193,22 @@ Ne değişti:
   seslerinin kulakla dinlenmesi, simülasyon (zorluk etiketten gelir, içerik değişikliği tahmin doğruluğunu
   modelde değiştirmez; gerçek kalibrasyon için öğrenci verisi gerekir).
 
-Canlıya çıkış (ayrı "canlıya al" onayı ister):
+Canlıya çıkış (ayrı "canlıya al" onayı ister). Sıra önemli: yeni dinleme kayıtlarının sesi yokken eski kayıtlar
+emekliye ayrılırsa dinleme bölümü boş kalır ve şablon davetleri `TEMPLATE_COVERAGE` döner (yerel provada görüldü:
+ses üretilmeden önce placement ve level-check dinlemede 0 madde buldu).
 1. Deploy (göç yok). Eski kod `twoWay` alanını tanımaz ve NG düğmesini gösterirdi; bu yüzden top-up deploy'dan SONRA.
-2. Geri dönüş için önce mevcut başlangıç maddelerini kaydet:
+2. Geri dönüş için mevcut başlangıç maddelerini kaydet:
    `\copy (select id from items where origin='SEED' and status='APPROVED') to '/tmp/seed-approved-before.csv'`
-3. `pnpm bank:topup --production --confirm-db=127.0.0.1:5434/kademe --retire-stale --sync-seed`
-   Yerel kopyada kurum başına beklenen (inceleme turları öncesi sayım, son hali biraz farklı): ~+300 madde,
-   ~+51 metin/kayıt, ~234 eski başlangıç maddesi emekliye.
-4. `pnpm bank:tts` (yeni dinleme kayıtları, ~40 klip, Gemini TTS; başarısız klip olursa tekrar çalıştır).
-5. Kontrol: her şablondan bir davet (`TEMPLATE_COVERAGE` dönmemeli), bir A1 doğrulama sınavında doğru/yanlışta
-   iki düğme, `select count(*) from stimuli where section='LISTENING' and audio_key is null` (0).
+3. Yeni maddeleri ekle, henüz hiçbir şeyi emekliye ayırma:
+   `pnpm bank:topup --production --confirm-db=127.0.0.1:5434/kademe`
+4. `pnpm bank:tts` (34 yeni dinleme kaydı, Gemini TTS; "failed 0" görülene kadar tekrar çalıştır).
+5. Şimdi eskileri emekliye ayır ve düzeltmeleri taşı:
+   `pnpm bank:topup --production --confirm-db=127.0.0.1:5434/kademe --retire-stale --sync-seed`
+   Yerel provada (`kademe_srcfix2`, `kademe_platform` kopyası) kurum başına: +328 madde, +51 metin/kayıt,
+   263 eski başlangıç maddesi emekliye, 34 madde ve 11 okuma metni eşitlendi.
+6. Kontrol: `select count(*) from stimuli where section='LISTENING' and audio_key is null` (0); her şablondan bir
+   davet (`TEMPLATE_COVERAGE` dönmemeli; provada üç şablon da tam karşılandı); bir A1 doğrulama sınavında
+   doğru/yanlışta iki düğme.
 
 Geri dönüş: yeni başlangıç maddelerini emekliye ayır, 2. adımdaki listeyi geri aç
 (`update items set status='APPROVED' where id in (...)`), sonra eski commit'e dön. Bu arada başlamış sınavlar
