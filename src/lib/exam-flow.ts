@@ -932,7 +932,7 @@ export function sanitizeAnswer(
     out.tfng = {};
     for (const s of c.statements) {
       const v = (a.tfng as Record<string, unknown>)[s.id];
-      if (v === "R" || v === "F" || v === "NG") out.tfng[s.id] = v;
+      if (v === "R" || v === "F" || (v === "NG" && !c.twoWay)) out.tfng[s.id] = v;
     }
   }
   if (c.kind === "GAP" && a.gaps && typeof a.gaps === "object") {

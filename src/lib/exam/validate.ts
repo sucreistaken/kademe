@@ -40,6 +40,7 @@ export const ITEM_PROBLEM_CODES = [
   "TFNG_ID_REPEAT",
   "TFNG_EMPTY",
   "TFNG_KEY_UNKNOWN",
+  "TFNG_TWO_WAY_NG",
   "GAP_NONE",
   "GAP_MARKER_REPEAT",
   "GAP_NO_MARKER",
@@ -171,6 +172,8 @@ export function itemProblems(item: ValidatableItem): ItemProblem[] {
     if (duplicates(ids).length) add("TFNG_ID_REPEAT");
     const unknown = Object.keys(key.answers).filter((id) => !ids.includes(id));
     if (unknown.length) add("TFNG_KEY_UNKNOWN", { ids: unknown });
+    const ng = content.statements.filter((s) => key.answers[s.id] === "NG").map((s) => s.id);
+    if (content.twoWay && ng.length) add("TFNG_TWO_WAY_NG", { ids: ng });
   }
 
   if (content.kind === "GAP" && key.kind === "GAP") {
@@ -332,6 +335,8 @@ export function problemText(p: ItemProblem): string {
       return "a statement is empty";
     case "TFNG_KEY_UNKNOWN":
       return `key names unknown statements ${list(p)}`;
+    case "TFNG_TWO_WAY_NG":
+      return `a Richtig/Falsch item keys "nicht im Text" for ${list(p)}`;
     case "GAP_NONE":
       return "no gaps";
     case "GAP_MARKER_REPEAT":

@@ -235,7 +235,7 @@ function TfngFields({ draft, set }: { draft: EditorDraft; set: SetDraft }) {
                 </button>
               </div>
               <div role="radiogroup" aria-label={name} className="flex flex-wrap gap-2 pl-8">
-                {TF.map((v) => (
+                {TF.filter((v) => !(draft.twoWay && v === "NG")).map((v) => (
                   <label key={v} className={segClass(s.answer === v)}>
                     <input type="radio" name={`ed-tf-${s.id}`} className="sr-only" checked={s.answer === v} onChange={() => set((d) => ({ statements: d.statements.map((x) => (x.id === s.id ? { ...x, answer: v } : x)) }))} />
                     {t(`answer${v}`)}
@@ -255,6 +255,17 @@ function TfngFields({ draft, set }: { draft: EditorDraft; set: SetDraft }) {
         <Plus className="size-4" aria-hidden />
         {t("addStatement")}
       </button>
+      <label className="mt-3 flex items-center gap-2 text-[14px] text-ink-2">
+        <input
+          type="checkbox"
+          checked={draft.twoWay}
+          onChange={(e) => {
+            const twoWay = e.target.checked;
+            set((d) => ({ twoWay, statements: twoWay ? d.statements.map((x) => (x.answer === "NG" ? { ...x, answer: "" } : x)) : d.statements }));
+          }}
+        />
+        {t("twoWay")}
+      </label>
     </fieldset>
   );
 }

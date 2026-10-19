@@ -49,7 +49,7 @@ export function answerFor(snap: ItemSnapshot, correct: boolean): ItemAnswer {
     return { choiceIds: wrong ? [wrong.id] : [] };
   }
   if (c.kind === "TFNG" && k.kind === "TFNG") {
-    const flip = { R: "F", F: "NG", NG: "R" } as const;
+    const flip = c.twoWay ? ({ R: "F", F: "R", NG: "R" } as const) : ({ R: "F", F: "NG", NG: "R" } as const);
     return {
       tfng: Object.fromEntries(c.statements.map((s) => [s.id, correct ? k.answers[s.id] : flip[k.answers[s.id]]])),
     };

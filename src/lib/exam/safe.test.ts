@@ -110,6 +110,17 @@ describe("C-test gaps", () => {
     expect(p.poolSeed).toBeUndefined();
   });
 
+  it("tells the student when only Richtig and Falsch are offered", () => {
+    const tfng = (twoWay?: boolean): ItemSnapshot => ({
+      ...listening,
+      type: "TRUE_FALSE_NG",
+      content: { kind: "TFNG", statements: [{ id: "s1", text: "Der Zug fährt um neun." }], ...(twoWay ? { twoWay } : {}) },
+      key: { kind: "TFNG", answers: { s1: "R" } },
+    });
+    expect(toCandidateItem(tfng(true), {}, null, 1, { maxPlays: 2 }).content).toMatchObject({ kind: "TFNG", twoWay: true });
+    expect(toCandidateItem(tfng(), {}, null, 1, { maxPlays: 2 }).content).not.toHaveProperty("twoWay");
+  });
+
   it("leaves an ordinary gap item as it was", () => {
     const c = toCandidateItem(gap("grammar.dativ"), {}, null, 1, { maxPlays: 2 });
     expect(c.content).toEqual({ kind: "GAP", gaps: [{ id: "g1", choices: null }] });

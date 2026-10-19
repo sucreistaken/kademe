@@ -22,6 +22,8 @@ export type EditorDraft = {
   options: Array<{ id: string; text: string; correct: boolean }>;
   /** True / false / not given. */
   statements: Array<{ id: string; text: string; answer: TfngValue | "" }>;
+  /** Richtig / Falsch only, no "nicht im Text". */
+  twoWay: boolean;
   /** Gap fill, in the order of the markers in the prompt. Spellings and choices are "|" separated. */
   gaps: Array<{ id: string; mode: "typed" | "choice"; accepted: string; choices: string }>;
   /**
@@ -93,6 +95,7 @@ export function emptyDraft(type: ItemType, section: Section, level: Cefr): Edito
     explanation: "",
     options: ["a", "b", "c", "d"].map((id) => ({ id, text: "", correct: false })),
     statements: ["s1", "s2", "s3"].map((id) => ({ id, text: "", answer: "" as const })),
+    twoWay: false,
     gaps: [],
     distractors: "",
     skillTag: null,
@@ -141,6 +144,7 @@ export function draftFromItem(item: EditableItem): EditorDraft {
   if (content.kind === "TFNG") {
     const answers = key.kind === "TFNG" ? key.answers : {};
     d.statements = content.statements.map((s) => ({ id: s.id, text: s.text, answer: answers[s.id] ?? "" }));
+    d.twoWay = !!content.twoWay;
   }
   if (content.kind === "GAP") {
     const answers = key.kind === "GAP" ? key.answers : {};
@@ -200,7 +204,7 @@ export function draftToItem(d: EditorDraft): ValidatableItem & { rubric: ItemRub
       return {
         type: d.type,
         prompt,
-        content: { kind: "TFNG", statements: idText(d.statements) },
+        content: { kind: "TFNG", statements: idText(d.statements), ...(d.twoWay ? { twoWay: true } : {}) },
         key: { kind: "TFNG", answers: Object.fromEntries(d.statements.filter((s) => s.answer).map((s) => [s.id, s.answer as TfngValue])) },
         rubric: null,
       };
@@ -277,7 +281,7 @@ const int = z.number().int().min(-1).max(100_000);
 
 export const contentSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("CHOICE"), options: z.array(idText).max(8) }),
-  z.object({ kind: z.literal("TFNG"), statements: z.array(idText).max(12) }),
+  z.object({ kind: z.literal("TFNG"), statements: z.array(idText).max(12), twoWay: z.boolean().optional() }),
   z.object({ kind: z.literal("GAP"), gaps: z.array(z.object({ id, choices: z.array(z.string().max(200)).max(10).optional() })).max(30) }),
   z.object({ kind: z.literal("MATCHING"), left: z.array(idText).max(12), right: z.array(idText).max(14) }),
   z.object({ kind: z.literal("SHORT_TEXT"), maxChars: int }),

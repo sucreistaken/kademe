@@ -74,6 +74,17 @@ describe("validateItem: the other new checks", () => {
     expect(codes(item)).toEqual(["TFNG_EMPTY", "TFNG_KEY_UNKNOWN"]);
   });
 
+  it("richtig/falsch only: \"nicht im Text\" cannot be a key", () => {
+    const item: ValidatableItem = {
+      type: "TRUE_FALSE_NG",
+      prompt: "Richtig oder falsch?",
+      content: { kind: "TFNG", twoWay: true, statements: [{ id: "s1", text: "Eins." }, { id: "s2", text: "Zwei." }] },
+      key: { kind: "TFNG", answers: { s1: "R", s2: "NG" } },
+    };
+    expect(codes(item)).toEqual(["TFNG_TWO_WAY_NG"]);
+    expect(codes({ ...item, key: { kind: "TFNG", answers: { s1: "R", s2: "F" } } })).toEqual([]);
+  });
+
   it("short text: a sensible length", () => {
     const item: ValidatableItem = { type: "SHORT_TEXT", prompt: "Gegenteil von teuer?", content: { kind: "SHORT_TEXT", maxChars: 0 }, key: { kind: "SHORT_TEXT", accepted: ["billig"] } };
     expect(codes(item)).toEqual(["SHORT_LENGTH"]);

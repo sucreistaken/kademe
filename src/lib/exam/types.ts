@@ -44,7 +44,8 @@ export type TfngValue = "R" | "F" | "NG";
 /** What the student may see, besides the prompt. Shape follows the item type. */
 export type ItemContent =
   | { kind: "CHOICE"; options: Array<{ id: string; text: string }> }
-  | { kind: "TFNG"; statements: Array<{ id: string; text: string }> }
+  /** `twoWay`: only Richtig / Falsch, no "nicht im Text" (ÖSD and telc A1-B1 use two answers). */
+  | { kind: "TFNG"; statements: Array<{ id: string; text: string }>; twoWay?: boolean }
   /** The prompt carries `{{id}}` markers where each gap sits. `choices` turns a
    *  gap into a drop-down; without it the gap is typed. */
   | { kind: "GAP"; gaps: Array<{ id: string; choices?: string[] }> }

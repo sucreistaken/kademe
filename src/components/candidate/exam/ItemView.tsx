@@ -170,7 +170,7 @@ function TfngItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps) {
   const values: Array<[TfngValue, string]> = [
     ["R", "Richtig"],
     ["F", "Falsch"],
-    ["NG", "Nicht im Text"],
+    ...(item.content.twoWay ? [] : ([["NG", "Nicht im Text"]] as Array<[TfngValue, string]>)),
   ];
   return (
     <div>
