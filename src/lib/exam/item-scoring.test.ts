@@ -17,6 +17,16 @@ describe("typed answers", () => {
     expect(typedMatches("DEM", ["dem"])).toBe(true);
   });
 
+  it("compares a phone number digit by digit, whatever the separators", () => {
+    for (const given of ["0421 38 27 56", "0421-382756", "0421/38 27 56", "0421382756."]) {
+      expect(typedMatches(given, ["0421 382756"]), given).toBe(true);
+    }
+    expect(typedMatches("0421 38 27 57", ["0421 382756"])).toBe(false);
+    expect(typedMatches("Tel. 0421 382756", ["0421 382756"])).toBe(false);
+    // A time keeps its listed spellings: four digits are not a number key.
+    expect(typedMatches("1430", ["14:30"])).toBe(false);
+  });
+
   it("accepts ss for ß and ae/oe/ue for umlauts", () => {
     expect(typedMatches("heisst", ["heißt"])).toBe(true);
     expect(typedMatches("fuer", ["für"])).toBe(true);

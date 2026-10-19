@@ -39,11 +39,22 @@ function withUmlauts(normalized: string): string {
   return UMLAUT_FALLBACK.reduce((s, [re, to]) => s.replace(re, to), normalized);
 }
 
+/**
+ * A phone or customer number: five or more digits and nothing but separators.
+ * Students write "0421 38 27 56", "0421-382756" or "0421/382756" for the same
+ * number, so such a key is compared digit by digit. Times ("14:30") have four
+ * digits and keep their listed spellings.
+ */
+const NUMBER_KEY = /^[\d\s./()+-]+$/u;
+const digitsOf = (s: string) => s.replace(/\D/gu, "");
+const isNumberKey = (k: string) => NUMBER_KEY.test(k) && digitsOf(k).length >= 5;
+
 export function typedMatches(given: string | undefined, accepted: string[]): boolean {
   if (!given || !given.trim()) return false;
   const g = normalizeAnswer(given);
   return accepted.some((a) => {
     const k = normalizeAnswer(a);
+    if (isNumberKey(k)) return NUMBER_KEY.test(g) && digitsOf(g) === digitsOf(k);
     return g === k || withUmlauts(g) === k || withUmlauts(g) === withUmlauts(k);
   });
 }
