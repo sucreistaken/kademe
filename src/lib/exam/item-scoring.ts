@@ -57,7 +57,7 @@ const isNumberKey = (k: string) => NUMBER_KEY.test(k) && digitsOf(k).length >= 5
  */
 function clockTime(normalized: string): string | null {
   const m =
-    /^(?:um\s*)?(\d{1,2})\s*(?:[:.h]|uhr)\s*(\d{2})\s*(?:uhr|h)?$/u.exec(normalized) ??
+    /^(?:um\s*)?(\d{1,2})(?:\s*(?:[:.h]|uhr)\s*|\s+)(\d{2})\s*(?:uhr|h)?$/u.exec(normalized) ??
     /^(?:um\s*)?(\d{1,2})()\s*(?:uhr|h)$/u.exec(normalized);
   if (!m) return null;
   const hours = Number(m[1]);

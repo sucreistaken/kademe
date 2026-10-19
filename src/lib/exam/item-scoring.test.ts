@@ -28,7 +28,7 @@ describe("typed answers", () => {
   });
 
   it("matches any digit spelling of a clock time", () => {
-    for (const given of ["14:30", "14.30", "14.30 Uhr", "14:30Uhr", "um 14.30", "14h30", "14 Uhr 30"]) {
+    for (const given of ["14:30", "14.30", "14.30 Uhr", "14:30Uhr", "um 14.30", "14h30", "14 Uhr 30", "14 30", "14:30 h"]) {
       expect(typedMatches(given, ["14:30"]), given).toBe(true);
     }
     expect(typedMatches("9 Uhr", ["9.00"])).toBe(true);
