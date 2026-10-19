@@ -49,12 +49,30 @@ const NUMBER_KEY = /^[\d\s./()+-]+$/u;
 const digitsOf = (s: string) => s.replace(/\D/gu, "");
 const isNumberKey = (k: string) => NUMBER_KEY.test(k) && digitsOf(k).length >= 5;
 
+/**
+ * A clock time in digits ("14:30", "14.30 Uhr", "9h30", "um 9 Uhr") as "H:MM",
+ * or null. Note-taking students write times every way, so a key that is a time
+ * matches any spelling of the same time. Times in words ("halb drei") stay
+ * listed in the key.
+ */
+function clockTime(normalized: string): string | null {
+  const m =
+    /^(?:um\s*)?(\d{1,2})\s*(?:[:.h]|uhr)\s*(\d{2})\s*(?:uhr|h)?$/u.exec(normalized) ??
+    /^(?:um\s*)?(\d{1,2})()\s*(?:uhr|h)$/u.exec(normalized);
+  if (!m) return null;
+  const hours = Number(m[1]);
+  const minutes = m[2] || "00";
+  return hours <= 24 && Number(minutes) < 60 ? `${hours}:${minutes}` : null;
+}
+
 export function typedMatches(given: string | undefined, accepted: string[]): boolean {
   if (!given || !given.trim()) return false;
   const g = normalizeAnswer(given);
   return accepted.some((a) => {
     const k = normalizeAnswer(a);
     if (isNumberKey(k)) return NUMBER_KEY.test(g) && digitsOf(g) === digitsOf(k);
+    const time = clockTime(k);
+    if (time && clockTime(g) === time) return true;
     return g === k || withUmlauts(g) === k || withUmlauts(g) === withUmlauts(k);
   });
 }

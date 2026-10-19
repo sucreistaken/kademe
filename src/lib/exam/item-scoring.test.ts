@@ -23,8 +23,19 @@ describe("typed answers", () => {
     }
     expect(typedMatches("0421 38 27 57", ["0421 382756"])).toBe(false);
     expect(typedMatches("Tel. 0421 382756", ["0421 382756"])).toBe(false);
-    // A time keeps its listed spellings: four digits are not a number key.
+    // Four digits are not a number key.
     expect(typedMatches("1430", ["14:30"])).toBe(false);
+  });
+
+  it("matches any digit spelling of a clock time", () => {
+    for (const given of ["14:30", "14.30", "14.30 Uhr", "14:30Uhr", "um 14.30", "14h30", "14 Uhr 30"]) {
+      expect(typedMatches(given, ["14:30"]), given).toBe(true);
+    }
+    expect(typedMatches("9 Uhr", ["9.00"])).toBe(true);
+    expect(typedMatches("09:30", ["9:30"])).toBe(true);
+    expect(typedMatches("14:35", ["14:30"])).toBe(false);
+    expect(typedMatches("halb drei", ["14:30"])).toBe(false);
+    expect(typedMatches("halb drei", ["14:30", "halb drei"])).toBe(true);
   });
 
   it("accepts ss for ß and ae/oe/ue for umlauts", () => {
