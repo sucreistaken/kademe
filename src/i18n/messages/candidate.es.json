@@ -309,6 +309,7 @@
     "proctoredCamera": "Su cámara y su micrófono permanecen activos durante todo el examen; se graban su imagen y su sonido.",
     "proctoredScreen": "Se comparte y se graba toda su pantalla.",
     "proctoredFullscreen": "El examen se realiza a pantalla completa; el cambio de ventana o de pestaña queda registrado.",
+    "proctoredNoCalls": "Durante el examen no esté en una videollamada ni comparta su pantalla en otra aplicación (como Meet, Zoom o Teams).",
     "proctoredAi": "Los momentos inusuales se marcan con ayuda de IA y los revisa su profesor. El sistema nunca suspende a nadie de forma automática.",
     "proctoredRetention": "Las grabaciones se conservan durante {days} días y después se eliminan.",
     "notProctored": "Este examen no está supervisado. Sus respuestas se guardan.",

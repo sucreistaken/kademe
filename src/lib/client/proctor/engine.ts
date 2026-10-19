@@ -24,6 +24,7 @@ import {
   type ActiveWarning,
   type WarningState,
 } from "@/lib/proctor/cheat-warning";
+import { INITIAL_LEAVE_STATE, stepLeave, type LeaveInput, type LeaveState } from "@/lib/proctor/leave-detector";
 import type { ProctoringPolicy } from "@/lib/proctor/policy";
 import type { ProctorEventType } from "@/lib/proctor/taxonomy";
 
@@ -151,6 +152,10 @@ export class ProctorEngine {
   private eventStart = new Map<string, number>();
   private screenDetails: ScreenDetailsLike | null = null;
   private secondScreenRaised = false;
+  /** Leaving the tab or the window (leave-detector.ts). */
+  private leave: LeaveState = { ...INITIAL_LEAVE_STATE };
+  /** Keeps the display awake while the exam runs, so a sleeping screen is not a "left the tab". */
+  private wakeLock: { release(): Promise<void>; addEventListener(type: "release", fn: () => void): void } | null = null;
 
   constructor(token: string) {
     this.token = token;
@@ -382,6 +387,57 @@ export class ProctorEngine {
     if (r.accepted) this.publishWarnings();
   }
 
+  // ------------------------------------------------------------- leaving
+
+  private feedLeave(input: LeaveInput) {
+    if (!this.snap.guarding) return;
+    const r = stepLeave(this.leave, input);
+    this.leave = r.state;
+    for (const a of r.actions) {
+      if (a.do === "BEGIN") {
+        const id = this.begin(a.kind, a.meta);
+        // Send the event first so the frame can be tied to it on the server; a second later
+        // the shared screen shows whatever was switched to.
+        void this.flush().then(() => window.setTimeout(() => void this.captureScreen("VIOLATION", id), a.kind === "TAB_HIDDEN" ? 1000 : 0));
+      } else {
+        const id = this.open.get(a.kind);
+        this.end(a.kind);
+        if (id && a.warn) this.warnFor(a.kind, id);
+      }
+    }
+  }
+
+  /**
+   * Runs one of our own prompts (the screen-share picker, fullscreen, a camera or
+   * screens permission). They take the focus; leave-detector.ts does not count
+   * that as leaving the exam.
+   */
+  private async prompting<T>(reason: string, fn: () => Promise<T>): Promise<T> {
+    this.feedLeave({ type: "promptStart", t: Date.now(), reason });
+    try {
+      return await fn();
+    } finally {
+      this.feedLeave({ type: "promptEnd", t: Date.now() });
+    }
+  }
+
+  /** The browser drops the lock whenever the tab is hidden; it is asked for again on return. */
+  private async holdWakeLock() {
+    const nav = navigator as Navigator & { wakeLock?: { request(type: "screen"): Promise<NonNullable<ProctorEngine["wakeLock"]>> } };
+    if (!this.snap.guarding || this.wakeLock || !nav.wakeLock || document.hidden) return;
+    try {
+      const lock = await nav.wakeLock.request("screen");
+      // The exam ended while the browser was answering.
+      if (!this.snap.guarding) return void lock.release().catch(() => undefined);
+      this.wakeLock = lock;
+      lock.addEventListener("release", () => {
+        if (this.wakeLock === lock) this.wakeLock = null;
+      });
+    } catch {
+      /* refused (battery saver, policy): a sleeping display is then recorded without a warning */
+    }
+  }
+
   /** Gaze and a missing face become a warning only once they have lasted long enough. */
   private armLong(type: "GAZE_AWAY" | "NO_FACE", eventId: string, onsetAt: number, afterMs: number) {
     this.cancelLong(type);
@@ -523,7 +579,7 @@ export class ProctorEngine {
     }
     this.set({ windowManagement: "asking" });
     try {
-      this.attachScreenDetails(await w.getScreenDetails());
+      this.attachScreenDetails(await this.prompting("SCREENS", () => w.getScreenDetails!()));
     } catch {
       this.set({ windowManagement: "denied" });
       this.markUnverifiable("window-management permission denied");
@@ -537,10 +593,14 @@ export class ProctorEngine {
     try {
       const stream = this.snap.devFake
         ? fakeCameraStream()
-        : await navigator.mediaDevices.getUserMedia({
-            video: { width: { ideal: 1280 }, height: { ideal: 720 } },
-            audio: { echoCancellation: true, noiseSuppression: false },
-          });
+        : await this.prompting("CAMERA", () =>
+            navigator.mediaDevices.getUserMedia({
+              video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+              // No echo cancellation: it removes whatever the speakers play from the
+              // microphone, a helper's voice from a call included.
+              audio: { echoCancellation: false, noiseSuppression: false },
+            }),
+          );
       this.cameraStream = stream;
       const video = stream.getVideoTracks()[0];
       const audio = stream.getAudioTracks()[0];
@@ -648,15 +708,17 @@ export class ProctorEngine {
         const md = navigator.mediaDevices as MediaDevices & {
           getDisplayMedia(o: unknown): Promise<MediaStream>;
         };
-        stream = await md.getDisplayMedia({
-          // No width cap: a capped Retina share would not match the screen size
-          // and be flagged as "another monitor". Frames are scaled down anyway.
-          video: { displaySurface: "monitor", frameRate: { ideal: 5, max: 5 } },
-          audio: false,
-          monitorTypeSurfaces: "include",
-          selfBrowserSurface: "exclude",
-          surfaceSwitching: "exclude",
-        });
+        stream = await this.prompting("SCREEN", () =>
+          md.getDisplayMedia({
+            // No width cap: a capped Retina share would not match the screen size
+            // and be flagged as "another monitor". Frames are scaled down anyway.
+            video: { displaySurface: "monitor", frameRate: { ideal: 5, max: 5 } },
+            audio: false,
+            monitorTypeSurfaces: "include",
+            selfBrowserSurface: "exclude",
+            surfaceSwitching: "exclude",
+          }),
+        );
       }
       const track = stream.getVideoTracks()[0];
       const settings = track.getSettings() as MediaTrackSettings & { displaySurface?: string };
@@ -700,7 +762,8 @@ export class ProctorEngine {
 
   async enterFullscreen() {
     try {
-      if (!document.fullscreenElement) await document.documentElement.requestFullscreen({ navigationUI: "hide" });
+      if (!document.fullscreenElement)
+        await this.prompting("FULLSCREEN", () => document.documentElement.requestFullscreen({ navigationUI: "hide" }));
       const kb = (navigator as Navigator & { keyboard?: { lock?: (keys: string[]) => Promise<void> } }).keyboard;
       await kb?.lock?.(["Escape"]).catch(() => undefined);
       this.everFullscreen = true;
@@ -926,33 +989,28 @@ export class ProctorEngine {
         this.instant("LARGE_TEXT_INSERT", { length: ie.data!.length });
       }
     });
+    // Leaving the tab or the window: leave-detector.ts decides what is recorded and what is warned.
     // The big warning is raised when the student comes back: that is when they can read it.
     on(document, "visibilitychange", () => {
-      if (document.hidden) {
-        const id = this.begin("TAB_HIDDEN");
-        // Send the event first so the frame can be tied to it on the server.
-        void this.flush().then(() => window.setTimeout(() => void this.captureScreen("VIOLATION", id), 1000));
-      } else {
-        const id = this.open.get("TAB_HIDDEN");
-        this.end("TAB_HIDDEN");
-        if (id) this.warnFor("TAB_HIDDEN", id);
+      if (document.hidden) this.feedLeave({ type: "hidden", t: Date.now() });
+      else {
+        this.feedLeave({ type: "visible", t: Date.now(), hasFocus: document.hasFocus() });
+        void this.holdWakeLock();
       }
     });
-    let blurTimer: number | null = null;
-    on(window, "blur", () => {
-      // The address bar, a permission prompt or the sharing bar also take
-      // focus for a moment; two seconds keeps those out of the report.
-      blurTimer = window.setTimeout(() => {
-        const id = this.begin("FOCUS_LOST");
-        void this.flush().then(() => this.captureScreen("VIOLATION", id));
-      }, 2000);
-    });
-    on(window, "focus", () => {
-      if (blurTimer) window.clearTimeout(blurTimer);
-      const id = this.open.get("FOCUS_LOST");
-      this.end("FOCUS_LOST");
-      if (id) this.warnFor("FOCUS_LOST", id);
-    });
+    // Not in the capture phase, and only the window's own events: a field losing focus inside
+    // the page (a click from the text box onto the reading text) also passes the window while
+    // capturing, and was once counted as leaving the exam.
+    on(window, "blur", (e) => e.target === window && this.feedLeave({ type: "blur", t: Date.now() }), false);
+    on(window, "focus", (e) => e.target === window && this.feedLeave({ type: "focus", t: Date.now() }), false);
+    for (const type of ["pointermove", "pointerdown", "keydown", "wheel", "touchstart"]) {
+      on(document, type, () => {
+        this.leave.lastInputAt = Date.now();
+      });
+    }
+    // Catches a focus or visibility event the browser did not send.
+    this.every(() => this.feedLeave({ type: "tick", t: Date.now(), hasFocus: document.hasFocus(), hidden: document.hidden }), 500);
+    void this.holdWakeLock();
     on(document, "fullscreenchange", () => {
       const fs = !!document.fullscreenElement || (this.snap.devFake && this.snap.fullscreen);
       this.set({ fullscreen: fs });
@@ -1066,6 +1124,8 @@ export class ProctorEngine {
     for (const t of this.longTimers.values()) window.clearTimeout(t);
     this.longTimers.clear();
     if (this.visionLoop) window.clearInterval(this.visionLoop);
+    void this.wakeLock?.release().catch(() => undefined);
+    this.wakeLock = null;
     // Cut the last segments while the tracks still run; they upload in the
     // background, and the last screen waits for them (drainRecording).
     await this.recording?.stop();

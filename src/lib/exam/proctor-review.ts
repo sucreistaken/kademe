@@ -117,6 +117,7 @@ export function buildProctorReviewMessages(input: ProctorReviewInput): AiMessage
     "- phoneOrDeviceVisible: whether a phone, tablet, second computer or similar device is visible.",
     "- lookingAwayFromScreen: whether the person is clearly turned or looking away from the screen.",
     "- nonExamContentOnScreen, for SCREEN frames only: YES if any non-exam application is visible (translator, AI chat, search engine, notes, messaging or anything else that is not the exam page), NO if only the exam is visible. For WEBCAM frames always NOT_APPLICABLE.",
+    "- A sign that the screen is also shared with another site or a call counts as non-exam content (YES): a second \"is sharing your screen\" bar naming another site such as meet.google.com, or video call controls or windows (Meet, Zoom, Teams). One sharing bar naming the exam's own site is expected and does not count; say in notes which site a sharing bar names.",
     "- For a SCREEN frame set personCount to 0 and the three person fields to false.",
     `- notes: at most one short factual sentence in ${language}, describing only what is visible.`,
     "",

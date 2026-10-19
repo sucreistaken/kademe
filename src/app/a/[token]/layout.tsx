@@ -4,6 +4,11 @@ import { CandidateFrameProvider, type CandidateFrame } from "@/components/candid
 import { resolveToken } from "@/lib/candidate-context";
 import { ORG_TIMEZONE } from "@/lib/org-timezone";
 import { isCandidateLocale, candidateLocaleFromAcceptLanguage } from "@/i18n/locale";
+import type { Metadata } from "next";
+
+// Chrome's own translate offer (the exam is German) is a bubble that can take the
+// focus, and a translated exam is no exam: the meta turns the offer off.
+export const metadata: Metadata = { other: { google: "notranslate" } };
 
 /**
  * Keeps one proctoring engine alive across the student pages. Soft navigation

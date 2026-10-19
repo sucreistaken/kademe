@@ -151,6 +151,12 @@ describe("reconcileVerdict", () => {
 });
 
 describe("buildProctorReviewMessages", () => {
+  it("asks screen frames for a second sharing bar or a call", () => {
+    const system = String(buildProctorReviewMessages({ eventType: "FOCUS_LOST", frameKinds: ["SCREEN"], locale: "en" })[0].content);
+    expect(system).toContain("meet.google.com");
+    expect(system).toContain("exam's own site is expected");
+  });
+
   it("states the forbidden inferences, the claim, the frames and the locale, with no em dash", () => {
     const msgs = buildProctorReviewMessages({
       eventType: "TAB_HIDDEN",

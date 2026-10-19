@@ -309,6 +309,7 @@
     "proctoredCamera": "Kameranız ve mikrofonunuz sınav boyunca açık kalır; görüntünüz ve sesiniz kaydedilir.",
     "proctoredScreen": "Ekranınızın tamamı paylaşılır ve kaydedilir.",
     "proctoredFullscreen": "Sınav tam ekranda yapılır; pencere veya sekme değiştirmek kaydedilir.",
+    "proctoredNoCalls": "Sınav boyunca görüntülü görüşmede olmayın ve ekranınızı başka bir uygulamada paylaşmayın (Meet, Zoom, Teams gibi).",
     "proctoredAi": "Şüpheli anlar yapay zekâ ile işaretlenir ve öğretmeniniz inceler. Sistem kimseyi otomatik olarak başarısız saymaz.",
     "proctoredRetention": "Kayıtlar {days} gün saklanır, sonra silinir.",
     "notProctored": "Bu sınav gözetimsizdir. Cevaplarınız kaydedilir.",

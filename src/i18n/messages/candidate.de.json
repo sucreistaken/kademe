@@ -309,6 +309,7 @@
     "proctoredCamera": "Kamera und Mikrofon bleiben während der gesamten Prüfung eingeschaltet; Bild und Ton werden aufgezeichnet.",
     "proctoredScreen": "Ihr gesamter Bildschirm wird geteilt und aufgezeichnet.",
     "proctoredFullscreen": "Die Prüfung läuft im Vollbild; das Wechseln von Fenstern oder Tabs wird aufgezeichnet.",
+    "proctoredNoCalls": "Während der Prüfung dürfen Sie an keinem Videoanruf teilnehmen und Ihren Bildschirm in keiner anderen App teilen (etwa Meet, Zoom oder Teams).",
     "proctoredAi": "Auffällige Momente werden mit KI-Unterstützung markiert und von Ihrer Lehrkraft geprüft. Das System lässt niemanden automatisch durchfallen.",
     "proctoredRetention": "Aufzeichnungen werden {days} Tage lang aufbewahrt und dann gelöscht.",
     "notProctored": "Diese Prüfung wird nicht beaufsichtigt. Ihre Antworten werden gespeichert.",

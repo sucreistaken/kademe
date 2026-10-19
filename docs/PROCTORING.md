@@ -13,7 +13,7 @@ oturum, IP) bunu kısmen yakalar. Hiçbir işaret öğrenciyi otomatik başarıs
 | Tüm ekran paylaşımı | `getDisplayMedia` + `getSettings().displaySurface === "monitor"` | Chromium'da yüksek; Firefox/Safari'de "doğrulanamadı" |
 | Paylaşım durdu | iz `ended` | yüksek |
 | Tam ekran | `requestFullscreen` + `fullscreenchange`, `keyboard.lock(["Escape"])` | yüksek (Esc Chromium'da basılı tutulmalı) |
-| Sekme/uygulama değişimi | `visibilitychange`, 2 sn toleranslı `blur` | yüksek, ama ikinci cihaz görünmez |
+| Sekme/uygulama değişimi | `visibilitychange`, 2 sn toleranslı pencere `blur`, 500 ms'lik `document.hasFocus()` yoklaması (`leave-detector.ts`) | yüksek, ama ikinci cihaz görünmez |
 | İkinci ekran | `screen.isExtended` + `change` | yalnızca Chromium; aynalama, HDMI bölücü görünmez |
 | Kopyala/yapıştır/sağ tık/kısayol | olay engelleme + kayıt | işletim sistemi kısayolları engellenemez, sadece fark edilir |
 | Tek seferde uzun metin | `beforeinput insertText` > 30 karakter | orta |
@@ -28,6 +28,60 @@ Kanıt: başlangıç (kimlik için göz karşılaştırması) karesi, periyodik 
 ekran (45 sn) kareleri, her ihlalde anlık kareler, ve 2026-10-14'ten beri **sınavın
 tamamının kaydı** (aşağıda "Sürekli kayıt"). İhlal klipleri ayrıca yazılmadı; kayıtta
 işaretin anına atlamak onların yerini tutuyor.
+
+## Sekmeden ve pencereden ayrılma
+
+`src/lib/proctor/leave-detector.ts` (saf, testli) neyin kaydedildiğine ve neyin büyük
+uyarıyı ("Sınav sekmesinden ayrıldınız") açtığına karar verir; motor tarayıcı
+olaylarını ona verir. 2026-10-19'da yanlış uyarılar üzerine yeniden yazıldı:
+
+- **Yalnız pencerenin kendi `blur`/`focus` olayları.** Eskiden dinleyici capture
+  aşamasındaydı: sayfa içinde bir alanın odağı bırakması (metin kutusundan okuma
+  metnine tıklamak, bir şıktan boş yere tıklamak) da pencereden geçiyordu, 2 sn sonra
+  `FOCUS_LOST` başlıyor, sonraki tıklamada öğrenci hiç çıkmadan uyarı açılıyordu.
+  Chrome'da bir test sayfasıyla gösterildi (eski mantık uyarı verdi, yenisi hiçbir şey
+  kaydetmedi) ve gerçek sınav sayfasında aynı tıklamalar artık olay üretmiyor.
+- **Kendi pencerelerimiz ayrılma değildir.** Ekran paylaşımı seçicisi, tam ekran,
+  kamera izni ve ekranlar izni açıkken ve kapandıktan sonraki 2,5 sn içinde başlayan
+  odak kaybı sayılmaz; odak bundan sonra da dönmezse uyarısız kaydedilir
+  (`meta.afterPrompt`).
+- **Girdi olmadan gelen kayıp uyarı açmaz.** Bilerek ayrılmak sayfa içinde bir girdiyle
+  başlar (fare tam ekran sayfanın üstünden geçer, Cmd/Alt/Win basılır). Son girdiden
+  10 sn'den uzun sonra gelen kayıp (ekranın uyuması, kendiliğinden öne gelen bir arama
+  ya da güncelleme penceresi) kaydedilir ama uyarı açmaz. Her olayda
+  `meta.inputGapMs` öğretmene bu boşluğu söyler. Kalan risk: 10 sn hiç dokunmadan
+  dört parmakla başka masaüstüne geçen biri uyarı görmez, olay ve ekran karesi yine
+  kaydedilir.
+- **Kaçan olaylar.** 500 ms'de bir `document.hasFocus()` okunur: gelmeyen `focus`
+  ya da `visible` olayının açık bıraktığı kaydı kapatır, gelmeyen `blur`'u yakalar.
+  Eski kodda art arda iki `blur` bir zamanlayıcıyı kaybettiriyor, uyarı öğrenci
+  döndükten sonra açılabiliyordu.
+- **Ekran uyumaz.** Sınav boyunca Screen Wake Lock tutulur (sekme gizlenince tarayıcı
+  bırakır, dönüşte yeniden istenir). Reddedilirse uyuyan ekran yukarıdaki kuralla
+  uyarısız kaydedilir.
+- **Çeviri teklifi kapalı.** `/a/*` sayfaları `<meta name="google" content="notranslate">`
+  taşır: Chrome Almanca sınava çeviri balonu açmaz.
+
+## Başka bir yerde ekran paylaşımı (Meet, Zoom)
+
+Bir web sayfası, ekranının başka bir uygulama ya da sekme tarafından da
+yakalandığını öğrenemez. Capture Handle yalnız yakalayan tarafa bilgi verir, Chrome
+yakalanan sayfaya söylemez (developer.chrome.com/blog/capture-handle). Sınav sekmesi
+tam ekranda ve odakta kaldıkça Meet'in arka plandaki paylaşımı hiçbir olay üretmez.
+Yapılanlar:
+
+- Giriş ekranı kuralı: görüntülü görüşmede olmamak, ekranı başka uygulamada
+  paylaşmamak (`exam.proctoredNoCalls`).
+- Gözetim mikrofonunda yankı iptali kapalı: yankı iptali hoparlörden çalınanı
+  mikrofondan siler, bir görüşmedeki yardımcının sesi de buna dahil. Artık konuşma
+  sesi algılaması bu sesi duyar (kulaklıkla gelen sesi duyamaz).
+- AI ikinci bakış ekran karelerinde ikinci bir "ekranınızı paylaşıyor" çubuğunu
+  (meet.google.com gibi başka bir siteyi adlandıran) ve görüşme pencerelerini sınav dışı
+  içerik sayar. **Doğrulanmadı:** Chrome'un paylaşım çubuğunun tüm ekran kaydında
+  görünüp görünmediği. Bir kez elle denenmeli (Meet'te tüm ekranı paylaş, sonra
+  sınavda paylaş, kayıtta iki çubuk var mı). Görünüyorsa, işaret beklemeden periyodik
+  ekran karelerine bakan bir tarama eklemek anlamlı olur (yeni olay türü, göç ve
+  maliyet kararı).
 
 ## Sürekli kayıt
 

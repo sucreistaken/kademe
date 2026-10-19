@@ -184,6 +184,7 @@ export function IntroConsent({
                 ...(p.camera ? [t("proctoredCamera")] : []),
                 ...(p.screenShare ? [t("proctoredScreen")] : []),
                 ...(p.fullscreen ? [t("proctoredFullscreen")] : []),
+                ...(p.camera || p.screenShare ? [t("proctoredNoCalls")] : []),
                 t("proctoredAi"),
                 t("proctoredRetention", { days: mediaRetentionDays }),
               ].map((line) => (
