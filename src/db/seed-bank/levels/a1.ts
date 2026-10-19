@@ -17,16 +17,20 @@ import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
  *
  * - Grammar: 24 items over the A1 inventory (8 EASY, 8 MID, 8 HARD) plus three
  *   C-tests, three MC cloze texts and three word banks (spec 2026-10-18).
- * - Reading: 4 short texts (note/email, job ads, door sign, SMS), 4 items each.
- * - Listening: 3 clips (station announcement, dialogue at work, answerphone
- *   message), 4 items each.
- * - Writing: 2 forms with 5 slots and 4 short messages of about 30 words.
- * - Speaking: introduction, two key-word questions, two requests, one short
- *   description.
+ * - Reading: 7 short texts and ad sets (e-mail, job ads, practice sign, SMS,
+ *   classified ads with a matching task, pool signs, supermarket flyer), 3 items
+ *   each. The true/false sets are two-way (Richtig / Falsch), as in ÖSD and telc.
+ * - Listening: 5 clips (station announcement, dialogue at work, two answerphone
+ *   messages one of which is a note-taking task, weather report), 3 items each.
+ *   A reworked script gets a new key ("-v3") because the audio is made from it.
+ * - Writing: 2 forms with 5 slots, an answer to a quoted message with three
+ *   questions and 3 short messages of about 30 words.
+ * - Speaking: introduction, a topic-word card, two key-word questions, two
+ *   requests, one short description.
  *
  * Single-choice items have 4 options. `choice` builders take the correct
  * option first and place it at `pos`, so the key positions are set explicitly
- * and spread over a, b and c (d is always a wrong distractor). Personal details that touch protected
+ * and spread over a to d. Personal details that touch protected
  * characteristics (age, origin) are left out of forms and prompts on purpose,
  * because the bank is also used in hiring.
  */
@@ -249,42 +253,42 @@ const grammarItems: SeedItem[] = [
     title: "Einkaufen am Samstag",
     first: "Am Samstag gehe ich mit meiner Schwester einkaufen.",
     body:
-      "Wir [[brauchen|braucht|brauche|brauchst]] Milch, Brot und Obst. " +
-      "Der Supermarkt [[ist|bin|bist|sind]] nicht weit, wir gehen [[zu|nach|in|an]] Fuß. " +
-      "Meine Schwester nimmt [[einen|ein|eine|einem]] Korb. Ich kaufe [[ein|eine|einen|einem]] Brot und vier Äpfel. " +
-      "Die Äpfel [[sind|ist|bist|seid]] heute sehr billig. Meine Schwester [[möchte|möchten|möchtest|möchtet]] auch Käse. " +
-      "Der Käse ist teuer, [[aber|sondern|dass|wenn]] er schmeckt sehr gut. Wir nehmen [[ihn|er|ihm|ihr]]. " +
-      "An der Kasse [[bezahle|bezahlst|bezahlt|bezahlen]] ich mit Karte. Dann gehen wir [[nach|zu|in|bei]] Hause.",
+      "Wir [[brauchen|brauche|gebraucht|benutzen]] Milch, Brot und Obst. " +
+      "Der Supermarkt [[ist|bin|sein|hat]] nicht weit, wir gehen zu Fuß. " +
+      "Meine Schwester nimmt [[einen|ein|eine|einem]] Korb. Ich kaufe heute [[kein|keine|nicht|nichts]] Fleisch, nur vier Äpfel. " +
+      "Die Äpfel sind heute [[sehr|viel|viele|mehr]] billig. Der Käse ist teuer, [[aber|sondern|dass|wenn]] er schmeckt sehr gut. " +
+      "Wir nehmen [[ihn|er|ihm|ihr]]. [[Um|Am|Im|In]] elf Uhr sind wir an der Kasse. " +
+      "Ich bezahle mit [[meiner|meine|meinen|mein]] Karte. Dann gehen wir [[nach|zu|in|bei]] Hause.",
     last: "Am Abend kochen wir zusammen eine Suppe.",
-    note: "Verbformen im Präsens (g1, g2, g6, g7, g10), zu Fuß / nach Hause (g3, g11), unbestimmter Artikel im Akkusativ (g4, g5), aber mit Hauptsatz (g8), Personalpronomen im Akkusativ (g9).",
+    note: "Verb und Bedeutung (g1), sein (g2), Akkusativ des unbestimmten Artikels (g3), kein bei Nomen ohne Artikel (g4), sehr + Adjektiv (g5), aber mit Hauptsatz (g6), Personalpronomen im Akkusativ (g7), Uhrzeit mit um (g8), Possessivartikel im Dativ nach mit (g9), nach Hause (g10).",
   }),
   cloze(LEVEL, "MID", {
     title: "Ein Tag im Büro",
     first: "Herr Demir arbeitet in einem Büro in Hamburg.",
     body:
-      "Er [[fängt|fange|fangt|fangen]] jeden Tag um acht Uhr an. Zuerst liest er [[seine|sein|seinen|seiner]] E-Mails. " +
+      "Das Büro ist [[im|in|ins|am]] ersten Stock. " +
+      "Er [[fängt|fange|anfängt|anfangen]] jeden Tag um acht Uhr an. Zuerst liest er [[seine|sein|seinen|seiner]] E-Mails. " +
       "Um zehn Uhr telefoniert er [[mit|zu|an|für]] seiner Chefin. Mittags isst er in [[der|die|dem|den]] Kantine. " +
-      "Das Essen dort [[schmeckt|schmecke|schmecken|schmeckst]] gut und ist nicht teuer. " +
-      "Am Nachmittag [[muss|müssen|musst|müsst]] er noch einen Bericht schreiben. " +
-      "Der Bericht ist wichtig, [[denn|dass|deshalb|wenn]] die Chefin liest ihn morgen. " +
-      "Um fünf Uhr [[ist|hat|sind|bist]] er fertig. Er fährt mit [[dem|der|den|das]] Bus nach Hause. " +
-      "Dort wartet schon [[seine|sein|seinen|seinem]] Katze. Er gibt [[ihr|sie|ihm|ihn]] etwas zu essen.",
+      "Das Essen dort [[schmeckt|schmecken|geschmeckt|fehlt]] gut und ist nicht teuer. " +
+      "Am Nachmittag schreibt er noch einen Bericht. Der Bericht ist wichtig, [[denn|dass|deshalb|wenn]] die Chefin liest ihn morgen. " +
+      "Heute hat er [[keine|kein|keinen|nicht]] Zeit für Sport. Um fünf Uhr [[ist|hat|sein|sind]] er fertig. " +
+      "Er fährt mit dem Bus nach Hause. Dort wartet schon seine Katze. Er gibt [[ihr|sie|ihm|ihn]] etwas zu essen.",
     last: "Dann sitzt er auf dem Sofa und liest die Zeitung.",
-    note: "trennbares Verb (g1), Possessivartikel (g2, g10), Präpositionen mit Dativ (g3, g4, g9), Verbformen und Modalverb (g5, g6, g8), denn mit Hauptsatz (g7), Personalpronomen im Dativ (g11).",
+    note: "Ort mit im (g1), trennbares Verb (g2), Possessivartikel im Plural (g3), telefonieren mit (g4), Dativ nach in (g5), Verb und Bedeutung (g6), denn mit Hauptsatz (g7), kein bei Nomen im Feminin (g8), sein (g9), Personalpronomen im Dativ (g10).",
   }),
   cloze(LEVEL, "HARD", {
     title: "Eine Einladung",
     first: "Liebe Mia, am Sonntag mache ich eine kleine Party.",
     body:
-      "[[Hast|Hat|Habt|Habe]] du Zeit? Die Party beginnt [[um|am|im|in]] drei Uhr. " +
+      "Ich schreibe dir, [[weil|denn|dass|ob]] ich dich einladen möchte. " +
+      "[[Hast|Hat|Bist|Kannst]] du Zeit? Die Party beginnt [[um|am|im|in]] drei Uhr. " +
       "Wir sitzen [[im|in|ins|am]] Garten, er ist klein, aber [[sehr|viel|viele|vielen]] schön. " +
       "Ich lade auch [[meine|meinen|meiner|mein]] Freundinnen aus dem Deutschkurs ein. " +
-      "Kannst du einen Salat [[mitbringen|mitbringst|bringst|mitgebracht]]? " +
-      "Getränke [[brauchst|braucht|brauchen|brauche]] du nicht, ich habe genug. " +
+      "Kannst du einen Salat [[mitbringen|mitgebracht|mitzubringen|mitbringst]]? " +
       "Ich habe leider [[keinen|kein|nicht|keine]] Grill, aber mein Nachbar gibt [[mir|mich|ich|mein]] seinen. " +
-      "Bitte [[ruf|rufst|ruft|rufen]] mich bis Freitag an. Ich freue mich [[auf|an|mit|zu]] dich!",
+      "Bitte [[ruf|rufst|angerufen|anrufen]] mich bis Freitag an. Ich freue mich [[auf|an|mit|zu]] dich!",
     last: "Viele Grüße, deine Lena",
-    note: "Verbformen und Wortstellung (g1, g7), Zeitangabe mit um (g2), im Garten (g3), sehr + Adjektiv (g4), Possessivartikel im Plural (g5), Modalverb + Infinitiv (g6), kein (g8), Dativpronomen (g9), Imperativ (g10), sich freuen auf (g11).",
+    note: "Nebensatz mit weil (g1), Frage mit haben (g2), Zeitangabe mit um (g3), Ort mit im (g4), sehr + Adjektiv (g5), Possessivartikel im Plural (g6), Modalverb + Infinitiv eines trennbaren Verbs (g7), kein bei maskulinem Nomen (g8), Dativpronomen (g9), du-Imperativ (g10), sich freuen auf (g11).",
   }),
 
   // ---------------------------------------------------------------- word bank
@@ -292,13 +296,14 @@ const grammarItems: SeedItem[] = [
     title: "Mein Zimmer",
     first: "Ich wohne mit zwei Freunden in einer Wohnung in Köln.",
     body:
-      "Mein Zimmer ist klein, aber sehr [[hell]], denn es hat zwei große Fenster. " +
+      "Mein Zimmer ist klein, aber sehr [[hell]], [[denn]] es hat zwei große Fenster. " +
       "Am [[Schreibtisch]] lerne ich jeden Abend Deutsch. Im Regal stehen viele [[Bücher]]. " +
-      "Ich schlafe gut, denn mein [[Bett]] ist neu und bequem. " +
-      "In der Küche [[koche]] ich am Wochenende für meine Freunde. Sie [[arbeiten]] beide in einem Hotel. " +
+      "Ich schlafe gut: Mein [[Bett]] ist neu und bequem. " +
+      "In der Küche [[koche]] ich am Wochenende für meine Freunde. Sie arbeiten beide in einem Hotel. " +
       "Im [[Kühlschrank]] haben wir immer Milch und Käse. Die Miete [[kostet]] nur 400 Euro im Monat.",
     last: "Ich wohne sehr gern hier.",
-    distractors: ["Lampe", "Tasche", "schläfst", "liest", "dunkel"],
+    distractors: ["weil", "dunkel", "Lampe", "kochst", "kosten"],
+    note: "Adjektiv, Konjunktion denn mit Hauptsatz (weil verlangt das Verb am Ende), Nomen mit Artikel und Plural, Verbformen zu ich und zu einem Singular-Subjekt.",
   }),
   wordBank(LEVEL, "MID", {
     title: "Paula im Café",
@@ -307,27 +312,29 @@ const grammarItems: SeedItem[] = [
       "Sie [[steht]] jeden Tag um fünf Uhr auf. Zum Frühstück trinkt sie nur einen [[Tee]]. " +
       "Das Café [[öffnet]] um sieben Uhr. Am Morgen kommen viele [[Gäste]]. Sie trinken Kaffee und essen [[Kuchen]]. " +
       "Paula ist immer [[freundlich]] und hilft gern. Die Arbeit [[gefällt]] ihr sehr. " +
-      "Um zwei Uhr [[geht]] sie nach Hause.",
+      "Um zwei Uhr geht sie [[nach]] Hause.",
     last: "Am Abend ist sie müde, aber glücklich.",
-    distractors: ["Tasse", "Tisch", "kaufen", "teuer", "wohnst"],
+    distractors: ["zu", "Tasse", "stehst", "teuer", "gefallen"],
+    note: "Verbformen zu sie / es / die Arbeit, Nomen im Singular und Plural, Adjektiv, nach Hause (zu Hause passt nicht zu gehen).",
   }),
   wordBank(LEVEL, "HARD", {
     title: "Ein Ausflug",
     first: "Am Sonntag macht Familie Yilmaz einen Ausflug an einen See.",
     body:
-      "Das Wetter ist [[sonnig]] und warm. Sie [[fahren]] mit dem Zug, denn sie haben kein Auto. " +
+      "Das Wetter ist [[sonnig]] und warm. Sie [[fahren]] mit dem Zug, [[denn]] sie haben kein Auto. " +
       "Die Fahrt [[dauert]] eine Stunde. Die Kinder [[schwimmen]] im See. " +
       "Der Vater liest eine [[Zeitung]], und die Mutter macht viele [[Fotos]]. " +
-      "Am Mittag sind alle [[hungrig]]. Sie essen Brot, Käse und [[Obst]].",
+      "Am Mittag sind alle [[hungrig]]. Sie essen Brot, Käse und Obst.",
     last: "Am Abend sind alle müde, aber sehr zufrieden.",
-    distractors: ["Buch", "Bahnhof", "regnet", "schwimmt", "billig"],
+    distractors: ["weil", "regnet", "schwimmt", "Buch", "billig"],
+    note: "Konjunktion denn mit Hauptsatz (weil verlangt das Verb am Ende), Verbformen im Plural und Singular, Nomen mit Genus (eine Zeitung, nicht eine Buch) und Plural, Adjektive.",
   }),
 ];
 
 // ---------------------------------------------------------------- READING
 
 type ReadingSkill = "gist" | "detail" | "inference" | "vocabulary" | "structure";
-const TFNG_PROMPT = "Richtig, falsch oder nicht im Text? Entscheiden Sie für jede Aussage.";
+const TFNG_PROMPT = "Richtig oder falsch? Entscheiden Sie für jede Aussage.";
 
 const text = (key: string, title: string, topic: string, body: string): SeedStimulus => ({
   key,
@@ -337,6 +344,17 @@ const text = (key: string, title: string, topic: string, body: string): SeedStim
   topic,
   body: body.trim(),
 });
+
+/** Statements of a two-way set: only Richtig / Falsch, as in ÖSD and telc A1. */
+function twoWaySet(statements: Array<[string, TfngValue]>) {
+  const ids = statements.map((_, i) => `s${i + 1}`);
+  return {
+    content: { kind: "TFNG" as const, twoWay: true, statements: statements.map(([t], i) => ({ id: ids[i], text: t })) },
+    key: { kind: "TFNG" as const, answers: Object.fromEntries(statements.map(([, v], i) => [ids[i], v])) },
+  };
+}
+
+const AD_LETTERS = ["Anzeige A", "Anzeige B", "Anzeige C", "Anzeige D"] as const;
 
 function forText(stimulusKey: string) {
   const base = (skill: ReadingSkill, within: Within, prompt: string, explanation: string) => ({
@@ -364,30 +382,44 @@ function forText(stimulusKey: string) {
         ...placeOptions(correct, distractors, pos),
       };
     },
-    /** Options are the three ads in fixed order plus "Keine Anzeige"; `pos` is the matching ad. */
+    /** Options are the four ads in fixed order; `pos` is the matching ad. Every option is a real ad. */
     ad(skill: ReadingSkill, within: Within, prompt: string, pos: Pos, explanation: string): SeedItem {
       return {
         ...base(skill, within, prompt, explanation),
         type: "SINGLE_CHOICE",
-        content: {
-          kind: "CHOICE",
-          options: [
-            { id: "a", text: "Anzeige A" },
-            { id: "b", text: "Anzeige B" },
-            { id: "c", text: "Anzeige C" },
-            { id: "d", text: "Keine Anzeige" },
-          ],
-        },
+        content: { kind: "CHOICE", options: AD_LETTERS.map((text, i) => ({ id: IDS[i], text })) },
         key: { kind: "CHOICE", correct: [IDS[pos]] },
       };
     },
     tfng(skill: ReadingSkill, within: Within, statements: Array<[string, TfngValue]>, explanation: string): SeedItem {
-      const ids = statements.map((_, i) => `s${i + 1}`);
       return {
         ...base(skill, within, TFNG_PROMPT, explanation),
         type: "TRUE_FALSE_NG",
-        content: { kind: "TFNG", statements: statements.map(([t], i) => ({ id: ids[i], text: t })) },
-        key: { kind: "TFNG", answers: Object.fromEntries(statements.map(([, v], i) => [ids[i], v])) },
+        ...twoWaySet(statements),
+      };
+    },
+    /**
+     * Situations to ads. `pairs[i]` is the 1-based position in `right` of the target for situation i;
+     * the last target is the leftover "no ad fits".
+     */
+    match(
+      skill: ReadingSkill,
+      within: Within,
+      prompt: string,
+      left: string[],
+      right: string[],
+      pairs: number[],
+      explanation: string,
+    ): SeedItem {
+      return {
+        ...base(skill, within, prompt, explanation),
+        type: "MATCHING",
+        content: {
+          kind: "MATCHING",
+          left: left.map((t, i) => ({ id: `l${i + 1}`, text: t })),
+          right: right.map((t, i) => ({ id: `r${i + 1}`, text: t })),
+        },
+        key: { kind: "MATCHING", pairs: Object.fromEntries(pairs.map((r, i) => [`l${i + 1}`, `r${r}`])) },
       };
     },
   };
@@ -400,7 +432,7 @@ const rArbeitstag = text(
   `
 Lieber Herr Okafor,
 
-herzlich willkommen in unserem Team! Ihr erster Arbeitstag ist am Montag. Bitte kommen Sie um neun Uhr, nicht um acht. Ich warte unten am Eingang auf Sie. Bringen Sie bitte Ihren Pass und ein Foto mit. Mittags essen wir zusammen, das Essen bezahlt die Firma. Am Nachmittag lernen Sie dann Ihre Kollegen kennen.
+herzlich willkommen im Team! Ihr erster Arbeitstag ist am Montag. Bitte kommen Sie um neun Uhr, nicht um acht. Ich warte unten am Eingang auf Sie. Bringen Sie bitte Ihren Pass und ein Foto mit. Mittags essen wir zusammen, das bezahlt die Firma. Am Nachmittag lernen Sie Ihre Kollegen kennen.
 
 Bis Montag!
 Petra Berger
@@ -409,17 +441,20 @@ Petra Berger
 
 const rJobs = text(
   "v2-r-a1-jobanzeigen",
-  "Drei Jobanzeigen",
+  "Vier Jobanzeigen",
   "Arbeitssuche",
   `
 Anzeige A
-Café am Markt sucht Kellnerin oder Kellner. Nur am Samstag und Sonntag, 10 bis 16 Uhr. Bitte rufen Sie an: 0341 22 80 17.
+Café am Markt sucht Kellnerin oder Kellner. Nur Samstag und Sonntag, 10 bis 16 Uhr. Bitte rufen Sie an: 0341 22 80 17.
 
 Anzeige B
-Hotel Lindenhof sucht Mitarbeiterin oder Mitarbeiter für die Rezeption. Montag bis Freitag, 7 bis 13 Uhr. Schreiben Sie uns eine E-Mail: job@hotel-lindenhof.de
+Hotel Lindenhof sucht Mitarbeiterin oder Mitarbeiter für die Rezeption. Montag bis Freitag, 7 bis 13 Uhr. Schreiben Sie eine E-Mail: job@hotel-lindenhof.de
 
 Anzeige C
 Supermarkt Frischkauf sucht Hilfe an der Kasse. Montag bis Freitag, 18 bis 22 Uhr. Kommen Sie einfach vorbei: Bahnhofstraße 4.
+
+Anzeige D
+Bäckerei Hahn sucht Verkäuferin oder Verkäufer. Dienstag bis Samstag, 6 bis 12 Uhr. Rufen Sie an: 0341 70 21 33.
 `,
 );
 
@@ -452,103 +487,237 @@ Sami
 `,
 );
 
+const rKleinanzeigen = text(
+  "v3-r-a1-kleinanzeigen",
+  "Kleinanzeigen aus der Stadt",
+  "Freizeit und Wohnen",
+  `
+Anzeige A
+Fahrrad zu verkaufen: blau, drei Jahre alt, 80 Euro. Tel. 030 23125 401
+
+Anzeige B
+Tanzkurs für Anfänger. Jeden Mittwoch um 19 Uhr in der Volkshochschule. Anmeldung online.
+
+Anzeige C
+Zimmer in WG frei: 14 qm, 280 Euro warm, ab 1. November. Tel. 030 23125 402
+
+Anzeige D
+Sprachcafé: Deutsch sprechen und neue Leute treffen. Freitag, 17 Uhr, Stadtbibliothek. Kostenlos!
+
+Anzeige E
+Schwimmkurs für Kinder. Samstag, 10 Uhr, Hallenbad. Sechs Wochen, 45 Euro.
+`,
+);
+
+const rSchilder = text(
+  "v3-r-a1-schilder-schwimmbad",
+  "Schilder im Schwimmbad",
+  "Freizeit und Sport",
+  `
+Schild 1 (am Beckenrand)
+Achtung! Der Boden ist nass. Bitte nicht rennen.
+
+Schild 2 (bei den Schließfächern)
+Ein Euro, bitte. Sie bekommen den Euro zurück, wenn Sie das Fach wieder aufmachen.
+
+Schild 3 (an der Kasse)
+Heute von 15 bis 17 Uhr Kinderschwimmen. Das große Becken ist in dieser Zeit geschlossen.
+`,
+);
+
+const rAngebote = text(
+  "v3-r-a1-supermarkt-angebote",
+  "Angebote im Supermarkt",
+  "Einkaufen",
+  `
+Supermarkt Grünberg: Angebote der Woche
+
+Äpfel, 1 kg: 1,99 Euro (nur Montag bis Mittwoch)
+Milch, 2 Liter: 1,50 Euro
+Mineralwasser, 6 Flaschen: 2,99 Euro (nur Donnerstag und Freitag)
+Brot: Montag bis Samstag, 17 bis 18 Uhr, zum halben Preis
+
+Geöffnet: Montag bis Samstag, 8 bis 20 Uhr
+`,
+);
+
 const arbeitstag = forText(rArbeitstag.key);
 const jobs = forText(rJobs.key);
 const praxis = forText(rPraxis.key);
 const sms = forText(rSms.key);
+const kleinanzeigen = forText(rKleinanzeigen.key);
+const schilder = forText(rSchilder.key);
+const angebote = forText(rAngebote.key);
 
 const readingItems: SeedItem[] = [
   // E-Mail: erster Arbeitstag
   arbeitstag.choice("gist", "EASY",
     "Warum schreibt Frau Berger diese E-Mail?",
-    "Herr Okafor beginnt bald eine neue Arbeit.",
-    ["Frau Berger sucht einen neuen Kollegen.", "Herr Okafor soll am Montag nicht kommen.", "Herr Okafor soll am Montag um acht Uhr kommen."], 1,
-    "Die E-Mail begrüßt Herrn Okafor im Team und informiert über seinen ersten Arbeitstag am Montag."),
+    "Sie erklärt Herrn Okafor, wie sein erster Arbeitstag abläuft.",
+    [
+      "Sie bittet Herrn Okafor, am Montag schon um acht Uhr zu kommen.",
+      "Sie fragt Herrn Okafor, ob er am Montag mit der Firma essen geht.",
+      "Sie sucht für das Team noch einen Kollegen, der am Montag anfängt.",
+    ], 1,
+    "Die E-Mail begrüßt Herrn Okafor im Team und sagt ihm, wann er kommen soll, was er mitbringt und was am ersten Tag passiert. Um acht Uhr soll er ausdrücklich nicht kommen; das Essen ist keine Frage, sondern eine Information; er ist selbst der neue Kollege."),
   arbeitstag.tfng("detail", "MID",
     [
-      ["Herr Okafor beginnt am Montag um acht Uhr.", "F"],
-      ["Herr Okafor trifft Frau Berger am Montag unten am Eingang.", "R"],
+      ["Herr Okafor soll am Montag erst um neun Uhr kommen.", "R"],
+      ["Herr Okafor muss sein Mittagessen am ersten Tag selbst bezahlen.", "F"],
+      ["Herr Okafor trifft seine Kollegen erst nach dem Mittagessen.", "R"],
     ],
-    "Er soll um neun Uhr kommen, \"nicht um acht\". Frau Berger wartet unten am Eingang auf ihn."),
+    "Er soll um neun Uhr kommen, \"nicht um acht\". Das Essen bezahlt die Firma, nicht er. Die Kollegen lernt er am Nachmittag kennen."),
   arbeitstag.choice("detail", "EASY",
-    "Was soll Herr Okafor mitbringen?",
+    "Was soll Herr Okafor am Montag mitbringen?",
     "seinen Pass und ein Foto",
-    ["Geld für das Mittagessen", "seinen Pass und einen Kuli", "sein Mittagessen und ein Foto"], 2,
-    "Im Text: \"Bringen Sie bitte Ihren Pass und ein Foto mit.\" Das Essen bezahlt die Firma."),
-  arbeitstag.tfng("detail", "MID",
     [
-      ["Herr Okafor bezahlt das Mittagessen selbst.", "F"],
-      ["Herr Okafor lernt am Vormittag seine Kollegen kennen.", "F"],
-    ],
-    "Das Mittagessen bezahlt die Firma. Die Kollegen lernt er am Nachmittag kennen, nicht am Vormittag."),
+      "seinen Pass und Geld für das Essen",
+      "ein Foto und sein eigenes Mittagessen",
+      "seinen Pass und eine Mappe mit Zeugnissen",
+    ], 3,
+    "Im Text: \"Bringen Sie bitte Ihren Pass und ein Foto mit.\" Das Essen bezahlt die Firma; von Zeugnissen steht nichts im Text."),
 
-  // Drei Jobanzeigen (Wo finden Sie Informationen?)
+  // Vier Jobanzeigen
   jobs.ad("detail", "EASY",
     "Sie suchen Arbeit und haben nur am Wochenende Zeit. Welche Anzeige passt?",
     0,
-    "Nur das Café sucht jemanden für Samstag und Sonntag. Hotel und Supermarkt suchen von Montag bis Freitag."),
+    "Nur das Café sucht jemanden für Samstag und Sonntag. Die Bäckerei braucht auch Dienstag bis Freitag, Hotel und Supermarkt suchen von Montag bis Freitag."),
   jobs.ad("detail", "MID",
-    "Sie können nur von Montag bis Freitag und nur bis 14 Uhr arbeiten. Welche Anzeige passt?",
-    1,
-    "Die Arbeit im Hotel ist von Montag bis Freitag, 7 bis 13 Uhr. Das Café sucht nur am Wochenende (und bis 16 Uhr), der Supermarkt am Abend (18 bis 22 Uhr)."),
+    "Sie möchten schon um sechs Uhr morgens anfangen. Welche Anzeige passt?",
+    3,
+    "Nur die Bäckerei beginnt um 6 Uhr (Dienstag bis Samstag, 6 bis 12 Uhr). Das Hotel beginnt um 7 Uhr, das Café um 10 Uhr, der Supermarkt um 18 Uhr."),
   jobs.ad("inference", "HARD",
     "Sie haben kein Telefon und keinen Computer. Welche Anzeige passt?",
     2,
-    "Beim Café muss man anrufen, beim Hotel eine E-Mail schreiben. Beim Supermarkt kann man einfach vorbeikommen."),
-  jobs.tfng("detail", "MID",
-    [
-      ["Im Hotel arbeitet man auch am Wochenende.", "F"],
-      ["Im Supermarkt arbeitet man am Abend.", "R"],
-    ],
-    "Das Hotel sucht von Montag bis Freitag. Die Arbeit im Supermarkt ist von 18 bis 22 Uhr, also am Abend."),
+    "Beim Café und bei der Bäckerei muss man anrufen, beim Hotel eine E-Mail schreiben. Beim Supermarkt kann man einfach vorbeikommen."),
 
   // Schild an der Arztpraxis
   praxis.tfng("detail", "EASY",
-    [["Die Praxis ist am Mittwochnachmittag offen.", "F"]],
-    "Mittwoch und Freitag sind nur von 8 bis 12 Uhr Sprechzeiten, am Nachmittag ist die Praxis geschlossen."),
+    [
+      ["Im August hilft ein anderer Arzt den Patienten von Dr. Yilmaz.", "R"],
+      ["Die Praxis hat am Mittwochnachmittag geöffnet.", "F"],
+    ],
+    "Vom 12. bis 23. August hilft Dr. Jonas Peters. Mittwoch und Freitag sind nur von 8 bis 12 Uhr Sprechzeiten, am Nachmittag ist die Praxis geschlossen."),
   praxis.choice("inference", "HARD",
-    "Sie arbeiten jeden Tag bis 14 Uhr. An welchem Tag können Sie am Nachmittag in die Praxis gehen?",
-    "am Dienstag",
-    ["am Mittwoch", "am Freitag", "am Samstag"], 0,
-    "Am Nachmittag (15 bis 18 Uhr) ist die Praxis nur am Montag, Dienstag und Donnerstag offen. Von den Optionen passt nur Dienstag."),
+    "Sie arbeiten bis 14 Uhr und möchten am Nachmittag zu Dr. Yilmaz. Wann können Sie in die Praxis gehen?",
+    "am Donnerstag um 16 Uhr",
+    ["am Mittwoch um 15 Uhr", "am Freitag um 16 Uhr", "am Dienstag um 13 Uhr"], 0,
+    "Am Nachmittag (15 bis 18 Uhr) ist die Praxis nur am Montag, Dienstag und Donnerstag offen. Mittwoch und Freitag ist am Nachmittag geschlossen; um 13 Uhr ist Mittagspause (12 bis 15 Uhr)."),
   praxis.choice("detail", "MID",
-    "Was sollen die Patienten vor dem Besuch machen?",
-    "in der Praxis anrufen",
-    ["eine E-Mail schreiben", "zu Dr. Peters gehen", "einen Brief an die Praxis schreiben"], 1,
-    "Im Text: \"Bitte rufen Sie vor Ihrem Besuch an und machen Sie einen Termin.\" Zu Dr. Peters geht man nur im Urlaub der Praxis."),
-  praxis.tfng("detail", "MID",
-    [["Im Urlaub von Dr. Yilmaz können die Patienten zu einem anderen Arzt gehen.", "R"]],
-    "Vom 12. bis 23. August hilft Dr. Jonas Peters am Marktplatz 3."),
+    "Was sollen Patienten tun, bevor sie in die Praxis kommen?",
+    "in der Praxis anrufen und einen Termin machen",
+    [
+      "zuerst eine E-Mail an Dr. Yilmaz schreiben",
+      "vor acht Uhr morgens in die Praxis kommen",
+      "ein Formular bei Dr. Peters abholen",
+    ], 2,
+    "Im Text: \"Bitte rufen Sie vor Ihrem Besuch an und machen Sie einen Termin.\" Von einer E-Mail oder einem Formular steht nichts im Text; Dr. Peters hilft nur im Urlaub der Praxis."),
 
   // SMS von Sami
-  sms.choice("detail", "EASY",
-    "Wo ist Sami jetzt?",
-    "im Zug",
-    ["am Bahnhof", "im Taxi", "im Bus"], 2,
-    "Sami schreibt: \"ich sitze noch im Zug\". Am Bahnhof ist er erst später, ein Taxi ist nur eine Möglichkeit."),
-  sms.choice("detail", "MID",
-    "Wann ist Sami am Bahnhof?",
-    "um 7:15 Uhr",
-    ["um 7:00 Uhr", "um 7:45 Uhr", "um 7:30 Uhr"], 0,
-    "\"Viertel nach sieben\" ist 7:15 Uhr. 7:00 Uhr war die alte Zeit (\"nicht um sieben\"); 7:45 Uhr wäre \"Viertel vor acht\"."),
   sms.choice("gist", "MID",
     "Was möchte Sami von Jana?",
-    "Sie soll ihn abholen.",
-    ["Sie soll ein Taxi bestellen.", "Sie soll ihn anrufen.", "Sie soll ihm seinen Koffer schicken."], 1,
+    "Sie soll ihn mit dem Auto am Bahnhof abholen.",
+    [
+      "Sie soll ihm ein Taxi zum Bahnhof bestellen.",
+      "Sie soll ihm später seinen schweren Koffer bringen.",
+      "Sie soll ihn anrufen und die Zugzeit sagen.",
+    ], 1,
     "Sami fragt: \"Kannst du mich bitte mit dem Auto abholen?\" Das Taxi nimmt er nur, wenn Jana nicht kann; er bittet um eine kurze Nachricht, nicht um einen Anruf."),
+  sms.choice("detail", "MID",
+    "Wann kommt Sami am Bahnhof an?",
+    "um 7:15 Uhr",
+    ["um 7:00 Uhr", "um 7:45 Uhr", "um 7:30 Uhr"], 2,
+    "\"Viertel nach sieben\" ist 7:15 Uhr. 7:00 Uhr war die alte Zeit (\"nicht um sieben\"); 7:45 Uhr wäre \"Viertel vor acht\"."),
   sms.tfng("inference", "HARD",
     [
-      ["Samis Koffer ist nicht leicht.", "R"],
+      ["Samis Koffer ist leicht.", "F"],
+      ["Sami kommt später am Bahnhof an, als er geplant hat.", "R"],
       ["Für Sami ist ein Taxi ein großes Problem.", "F"],
     ],
-    "Sein Koffer ist sehr schwer. Zum Taxi schreibt er: \"das ist kein Problem\"."),
+    "Sein Koffer ist \"sehr schwer\". Der Zug hat Verspätung. Zum Taxi schreibt er: \"das ist kein Problem\"."),
+
+  // Kleinanzeigen aus der Stadt
+  kleinanzeigen.match("detail", "MID",
+    "Welche Anzeige passt? Wenn keine Anzeige passt, wählen Sie \"Keine Anzeige passt\".",
+    [
+      "Sie möchten einen Computerkurs machen.",
+      "Sie möchten ein gebrauchtes Fahrrad kaufen.",
+      "Sie suchen ein Zimmer in einer Wohngemeinschaft.",
+      "Sie möchten Deutsch üben und nichts bezahlen.",
+      "Sie möchten tanzen lernen.",
+    ],
+    ["Anzeige A", "Anzeige B", "Anzeige C", "Anzeige D", "Anzeige E", "Keine Anzeige passt"],
+    [6, 1, 3, 4, 2],
+    "Fahrrad: A. Tanzkurs: B. Zimmer in der WG: C. Sprachcafé (kostenlos): D. Ein Computerkurs wird nirgends angeboten, auch wenn B und E ebenfalls Kurse sind. Anzeige E (Schwimmkurs) bleibt übrig."),
+  kleinanzeigen.choice("detail", "EASY",
+    "Wann kann man in das Zimmer einziehen?",
+    "ab dem 1. November",
+    ["jeden Mittwoch um 19 Uhr", "am Samstag um 10 Uhr", "jeden Freitag um 17 Uhr"], 3,
+    "Anzeige C: \"ab 1. November\". Mittwoch ist der Tanzkurs, Samstag der Schwimmkurs, Freitag das Sprachcafé."),
+  kleinanzeigen.tfng("detail", "MID",
+    [
+      ["Der Tanzkurs findet abends statt.", "R"],
+      ["Das Fahrrad ist ganz neu.", "F"],
+      ["Der Schwimmkurs ist für Erwachsene.", "F"],
+      ["Das Sprachcafé kostet kein Geld.", "R"],
+    ],
+    "Der Tanzkurs ist um 19 Uhr. Das Fahrrad ist drei Jahre alt. Der Schwimmkurs ist für Kinder. Das Sprachcafé ist kostenlos."),
+
+  // Schilder im Schwimmbad
+  schilder.choice("detail", "EASY",
+    "Was bedeutet Schild 1?",
+    "Man soll hier langsam gehen.",
+    ["Man soll hier nicht schwimmen.", "Man soll hier Schuhe tragen.", "Man soll hier nichts essen."], 0,
+    "\"Bitte nicht rennen\" heißt: langsam gehen, weil der Boden nass ist. Von Schwimmen, Schuhen oder Essen steht nichts auf dem Schild."),
+  schilder.choice("detail", "MID",
+    "Was gilt bei den Schließfächern?",
+    "Man zahlt einen Euro und bekommt ihn zurück.",
+    [
+      "Man zahlt einen Euro für jede Stunde im Bad.",
+      "Man zahlt zwei Euro und bekommt einen zurück.",
+      "Man zahlt einen Euro und gibt das Fach morgen zurück.",
+    ], 3,
+    "Schild 2: ein Euro, und man bekommt ihn wieder, wenn man das Fach aufmacht. Der Preis gilt nicht pro Stunde und nicht pro Tag."),
+  schilder.tfng("detail", "MID",
+    [
+      ["Um 16 Uhr können Erwachsene im großen Becken schwimmen.", "F"],
+      ["Das Kinderschwimmen dauert zwei Stunden.", "R"],
+    ],
+    "Von 15 bis 17 Uhr ist das große Becken geschlossen; das Kinderschwimmen dauert zwei Stunden."),
+
+  // Angebote im Supermarkt
+  angebote.choice("detail", "EASY",
+    "Sie möchten billige Äpfel kaufen. Wann gehen Sie in den Supermarkt?",
+    "am Dienstag um 10 Uhr",
+    ["am Freitag um 10 Uhr", "am Donnerstag um 10 Uhr", "am Samstag um 10 Uhr"], 1,
+    "Äpfel sind nur von Montag bis Mittwoch im Angebot. Donnerstag und Freitag gilt das Angebot für Mineralwasser."),
+  angebote.choice("detail", "MID",
+    "Wann ist das Brot billiger?",
+    "von Montag bis Samstag zwischen 17 und 18 Uhr",
+    [
+      "von Montag bis Samstag zwischen 8 und 9 Uhr",
+      "nur am Samstag zwischen 17 und 18 Uhr",
+      "von Montag bis Freitag zwischen 18 und 20 Uhr",
+    ], 2,
+    "Brot kostet Montag bis Samstag von 17 bis 18 Uhr den halben Preis. Die anderen Optionen ändern Zeit oder Tage."),
+  angebote.tfng("detail", "MID",
+    [
+      ["Mineralwasser ist die ganze Woche billig.", "F"],
+      ["Der Supermarkt hat auch am Sonntag geöffnet.", "F"],
+      ["Zwei Liter Milch kosten weniger als zwei Euro.", "R"],
+    ],
+    "Das Wasser ist nur Donnerstag und Freitag im Angebot. Geöffnet ist Montag bis Samstag, also nicht am Sonntag. Milch kostet 1,50 Euro."),
 ];
 
 // ---------------------------------------------------------------- LISTENING
 
-type ListeningSkill = "gist" | "detail" | "inference";
-const LISTEN_TFNG_PROMPT = "Richtig, falsch oder nicht im Text? Entscheiden Sie für jede Aussage.";
+type ListeningSkill = "gist" | "detail" | "inference" | "notes";
+const LISTEN_TFNG_PROMPT = "Richtig oder falsch? Entscheiden Sie für jede Aussage.";
 
+/*
+ * Listening scripts are never changed in place: the audio is made from the
+ * script. A reworked clip gets a new key ("-v3"), and its items point at it.
+ */
 function clip(
   key: string,
   title: string,
@@ -557,6 +726,13 @@ function clip(
   lines: string[],
 ): SeedStimulus {
   return { key, section: "LISTENING", level: LEVEL, title, topic, speakers, body: lines.join("\n") };
+}
+
+/** Every accepted way to write a phone number given in digit groups. */
+function phoneForms(groups: string[]): string[] {
+  const all = groups.join("");
+  const [first, ...rest] = groups;
+  return [...new Set([groups.join(" "), all, groups.join("-"), groups.join("/"), `${first} ${rest.join("")}`, `${first}-${rest.join("")}`, `${first}/${rest.join("")}`])];
 }
 
 function forClip(stimulusKey: string) {
@@ -586,12 +762,19 @@ function forClip(stimulusKey: string) {
       };
     },
     tfng(skill: ListeningSkill, within: Within, statements: Array<[string, TfngValue]>, explanation: string): SeedItem {
-      const ids = statements.map((_, i) => `s${i + 1}`);
       return {
         ...base(skill, within, LISTEN_TFNG_PROMPT, explanation),
         type: "TRUE_FALSE_NG",
-        content: { kind: "TFNG", statements: statements.map(([t], i) => ({ id: ids[i], text: t })) },
-        key: { kind: "TFNG", answers: Object.fromEntries(statements.map(([, v], i) => [ids[i], v])) },
+        ...twoWaySet(statements),
+      };
+    },
+    /** Note-taking: typed gaps, every accepted spelling listed per gap. */
+    notes(within: Within, prompt: string, gaps: Array<{ id: string; answers: string[] }>, explanation: string): SeedItem {
+      return {
+        ...base("notes", within, prompt, explanation),
+        type: "GAP_FILL",
+        content: { kind: "GAP", gaps: gaps.map((g) => ({ id: g.id })) },
+        key: { kind: "GAP", answers: Object.fromEntries(gaps.map((g) => [g.id, g.answers])) },
       };
     },
   };
@@ -599,23 +782,18 @@ function forClip(stimulusKey: string) {
 
 // Announcement: one voice, played once in the Goethe format.
 const lBahnhof = clip(
-  "v2-l-a1-durchsage-gleis",
+  "v2-l-a1-durchsage-gleis-v3",
   "Durchsage am Bahnhof",
   "Mobilität",
   [{ label: "Ansage", voice: "A" }],
   [
-    "Ansage: Achtung, bitte! Eine Information für alle Fahrgäste an Gleis vier.",
-    "Ansage: Der Regionalzug nach Erfurt, Abfahrt neun Uhr zwanzig, hat heute fünfzehn Minuten Verspätung.",
-    "Ansage: Er fährt also erst um neun Uhr fünfunddreißig.",
-    "Ansage: Und Achtung: Der Zug fährt heute nicht von Gleis vier. Er fährt von Gleis sieben.",
-    "Ansage: Die erste Klasse ist heute am Ende des Zuges.",
-    "Ansage: Vielen Dank.",
+    "Ansage: Achtung, bitte! Eine Information für alle Reisenden nach Erfurt. Der Regionalzug nach Erfurt, planmäßige Abfahrt neun Uhr zwanzig, hat heute etwa fünfzehn Minuten Verspätung. Ich wiederhole: Abfahrt nicht um neun Uhr zwanzig, sondern erst um neun Uhr fünfunddreißig. Und noch etwas: Der Zug fährt nicht von Gleis vier, sondern von Gleis sieben. Die erste Klasse ist heute hinten, am Ende des Zuges. Vielen Dank für Ihr Verständnis.",
   ],
 );
 
 // Dialogue at work: two voices, played twice in the Goethe format.
 const lKollege = clip(
-  "v2-l-a1-neuer-kollege",
+  "v2-l-a1-neuer-kollege-v3",
   "Der erste Tag im Büro",
   "Arbeit",
   [
@@ -624,73 +802,95 @@ const lKollege = clip(
   ],
   [
     "Frau Schmidt: Guten Morgen! Sind Sie der neue Kollege?",
-    "Herr Haddad: Ja, guten Morgen. Ich bin Karim Haddad. Heute ist mein erster Tag hier.",
-    "Frau Schmidt: Herzlich willkommen! Ich bin Anna Schmidt. Ihr Büro ist im zweiten Stock, Zimmer zweihundertvierzehn.",
-    "Herr Haddad: Danke. Und gibt es hier auch Kaffee?",
-    "Frau Schmidt: Ja, die Küche ist hier unten, gleich links. Der Kaffee kostet nichts.",
-    "Herr Haddad: Super! Und wann ist hier Mittagspause?",
-    "Frau Schmidt: Meistens um halb eins. Heute gehen wir zusammen essen. Kommen Sie mit?",
+    "Herr Haddad: Ja, guten Morgen. Haddad, Karim Haddad. Heute ist mein erster Tag.",
+    "Frau Schmidt: Ach so, herzlich willkommen! Ich bin Anna Schmidt. Ihr Büro ist im ersten Stock. Nein, Moment, im zweiten Stock. Zimmer zweihundertvierzehn.",
+    "Herr Haddad: Zweiter Stock, Zimmer zweihundertvierzehn. Gut. Gibt es hier auch Kaffee?",
+    "Frau Schmidt: Ja, die Küche ist gleich hier unten, links. Der Kaffee kostet nichts.",
+    "Herr Haddad: Na super! Und wann ist hier Mittagspause?",
+    "Frau Schmidt: Meistens um halb eins. Aber heute essen wir schon um zwölf, mit dem ganzen Team. Kommen Sie mit?",
     "Herr Haddad: Ja, sehr gern!",
   ],
 );
 
 // Answerphone message: one voice, played twice in the Goethe format.
 const lKurs = clip(
-  "v2-l-a1-mailbox-sprachkurs",
+  "v2-l-a1-mailbox-sprachkurs-v3",
   "Nachricht von der Sprachschule",
-  "Aus- und Weiterbildung",
+  "Sprachkurs",
   [{ label: "Frau Novak", voice: "A" }],
   [
-    "Frau Novak: Guten Tag, Herr Ramos, hier spricht Lucia Novak von der Sprachschule am Marktplatz.",
-    "Frau Novak: Es geht um Ihren Deutschkurs. Der Kurs ist jeden Dienstag und Donnerstag, am Abend von sechs bis acht Uhr.",
-    "Frau Novak: Wir haben aber ein neues Zimmer. Der Kurs ist jetzt im dritten Stock, Zimmer dreihundertzwölf. Er ist nicht mehr im ersten Stock.",
-    "Frau Novak: Das Buch müssen Sie nicht kaufen. Sie bekommen es in der ersten Stunde von uns.",
-    "Frau Novak: Bitte bezahlen Sie den Kurs bis Freitag. Haben Sie noch Fragen? Dann rufen Sie mich bitte an. Auf Wiederhören!",
+    "Frau Novak: Guten Tag, Herr Ramos, hier ist Lucia Novak von der Sprachschule am Marktplatz. Es geht um Ihren Deutschkurs. Der Kurs ist jeden Dienstag und Donnerstag, am Abend, von sechs bis acht Uhr. Ach ja, wir haben ein neues Zimmer: Der Kurs ist jetzt im dritten Stock, Zimmer dreihundertzwölf, nicht mehr im ersten Stock. Das Buch müssen Sie nicht kaufen, Sie bekommen es in der ersten Stunde von uns. Und bitte bezahlen Sie den Kurs bis Freitag. Noch einmal: bis Freitag. Haben Sie Fragen? Dann rufen Sie mich an. Auf Wiederhören!",
+  ],
+);
+
+// Answerphone message with a change of day: the student takes notes.
+const lZahnarzt = clip(
+  "v3-l-a1-mailbox-zahnarzt",
+  "Nachricht von der Zahnarztpraxis",
+  "Gesundheit",
+  [{ label: "Frau Keller", voice: "A" }],
+  [
+    "Frau Keller: Guten Tag, Frau Aydin, hier spricht Keller von der Zahnarztpraxis Dr. Behrens. Ihr Termin am Montag geht leider nicht, der Doktor ist krank. Wir haben aber einen neuen Termin für Sie: am Mittwoch, nein, Entschuldigung, am Donnerstag um vierzehn Uhr dreißig. Also Donnerstag, vierzehn Uhr dreißig. Wenn das nicht passt, rufen Sie uns bitte an. Unsere Nummer ist: null drei null, zwei drei eins zwei fünf, vier null drei. Ich wiederhole: null drei null, zwei drei eins zwei fünf, vier null drei. Auf Wiederhören!",
+  ],
+);
+
+// Radio tip: weather for the weekend.
+const lWetter = clip(
+  "v3-l-a1-radio-wetter",
+  "Das Wetter am Wochenende",
+  "Wetter und Freizeit",
+  [{ label: "Moderator", voice: "B" }],
+  [
+    "Moderator: Und jetzt das Wetter für das Wochenende. Am Samstag scheint am Vormittag die Sonne, und es wird schön warm, bis zu zweiundzwanzig Grad. Am Nachmittag kommt aber Regen. Also, nehmen Sie einen Schirm mit! Am Sonntag ist es kühler, nur fünfzehn Grad, aber es regnet nicht mehr. Ein Tipp für Sonntag: Im Zoo ist Familientag. Kinder zahlen keinen Eintritt. Der Zoo öffnet schon um neun Uhr. Das war das Wetter. Jetzt wieder Musik.",
   ],
 );
 
 const bahnhof = forClip(lBahnhof.key);
 const kollege = forClip(lKollege.key);
 const kurs = forClip(lKurs.key);
+const zahnarzt = forClip(lZahnarzt.key);
+const wetter = forClip(lWetter.key);
 
 const listeningItems: SeedItem[] = [
   // Durchsage am Bahnhof
   bahnhof.choice("gist", "EASY",
-    "Warum gibt es diese Durchsage?",
-    "Der Zug kommt heute zu spät.",
-    ["Heute fährt kein Zug nach Erfurt.", "Der Zug fährt heute früher ab.", "Der Zug hat heute weniger Wagen."], 2,
-    "Der Zug hat fünfzehn Minuten Verspätung; er fährt, aber später."),
+    "Worüber informiert die Durchsage?",
+    "Der Zug fährt später ab und von einem anderen Gleis.",
+    [
+      "Der Zug fährt früher ab und von einem anderen Gleis.",
+      "Der Zug fährt später ab, aber von Gleis vier wie immer.",
+      "Der Zug fällt aus und ein Bus fährt nach Erfurt.",
+    ], 2,
+    "Der Zug hat Verspätung und fährt von Gleis sieben statt von Gleis vier. Früher fährt er nicht; er fällt auch nicht aus."),
   bahnhof.choice("detail", "MID",
     "Wann fährt der Zug heute ab?",
     "um 9:35 Uhr",
     ["um 9:20 Uhr", "um 9:15 Uhr", "um 9:50 Uhr"], 0,
-    "9:20 Uhr ist die normale Abfahrt; mit fünfzehn Minuten Verspätung fährt der Zug um 9:35 Uhr."),
-  bahnhof.tfng("detail", "MID",
-    [["Der Zug fährt heute von Gleis vier ab.", "F"]],
-    "Die Fahrgäste warten an Gleis vier, aber der Zug fährt heute von Gleis sieben."),
-  bahnhof.choice("detail", "HARD",
-    "Wo ist heute die erste Klasse?",
-    "hinten",
-    ["vorne", "in der Mitte", "links"], 1,
-    "\"am Ende des Zuges\" bedeutet hinten."),
+    "9:20 Uhr ist die normale Abfahrt; mit fünfzehn Minuten Verspätung fährt der Zug um 9:35 Uhr, die Ansage wiederholt das ausdrücklich."),
+  bahnhof.tfng("detail", "HARD",
+    [
+      ["Wer in der ersten Klasse fährt, muss heute ans Ende des Zuges gehen.", "R"],
+      ["Der Zug fährt heute von Gleis vier ab.", "F"],
+    ],
+    "Die erste Klasse ist heute hinten, am Ende des Zuges. Die Fahrgäste warten an Gleis vier, aber der Zug fährt von Gleis sieben."),
 
   // Der erste Tag im Büro
-  kollege.tfng("gist", "EASY",
-    [["Herr Haddad arbeitet heute zum ersten Mal hier.", "R"]],
-    "Herr Haddad sagt: \"Heute ist mein erster Tag hier.\""),
   kollege.choice("detail", "EASY",
     "Wo ist das Büro von Herrn Haddad?",
     "im zweiten Stock",
-    ["im Erdgeschoss", "im ersten Stock", "im dritten Stock"], 2,
-    "Frau Schmidt sagt: \"Ihr Büro ist im zweiten Stock.\" Die Küche ist unten."),
-  kollege.tfng("detail", "MID",
-    [["Herr Haddad muss für den Kaffee bezahlen.", "F"]],
-    "\"Der Kaffee kostet nichts.\""),
-  kollege.choice("detail", "HARD",
-    "Wann ist meistens Mittagspause?",
-    "um 12:30 Uhr",
-    ["um 13:30 Uhr", "um 11:30 Uhr", "um 12:00 Uhr"], 0,
-    "\"halb eins\" ist 12:30 Uhr. 13:30 Uhr ist ein typischer Fehler (englisch \"half one\" bzw. \"eins halb\")."),
+    ["im Erdgeschoss", "im ersten Stock", "im dritten Stock"], 1,
+    "Frau Schmidt korrigiert sich: erst \"im ersten Stock\", dann \"im zweiten Stock\". Die Küche ist unten."),
+  kollege.choice("detail", "MID",
+    "Wann essen Frau Schmidt und Herr Haddad heute zu Mittag?",
+    "um 12 Uhr",
+    ["um 12:30 Uhr", "um 13 Uhr", "um 11:30 Uhr"], 3,
+    "Meistens ist die Pause um halb eins (12:30 Uhr), aber heute essen sie schon um zwölf."),
+  kollege.tfng("gist", "EASY",
+    [
+      ["Herr Haddad arbeitet schon lange in dieser Firma.", "F"],
+      ["Für den Kaffee in der Küche muss Herr Haddad nichts bezahlen.", "R"],
+    ],
+    "Herr Haddad sagt, heute sei sein erster Tag. Frau Schmidt sagt: \"Der Kaffee kostet nichts.\""),
 
   // Nachricht von der Sprachschule
   kurs.choice("detail", "EASY",
@@ -701,16 +901,61 @@ const listeningItems: SeedItem[] = [
   kurs.choice("detail", "MID",
     "Wo ist der Kurs jetzt?",
     "im dritten Stock",
-    ["im ersten Stock", "im zweiten Stock", "im Erdgeschoss"], 2,
+    ["im ersten Stock", "im zweiten Stock", "im Erdgeschoss"], 3,
     "Der Kurs ist jetzt im dritten Stock, nicht mehr im ersten Stock."),
   kurs.tfng("detail", "MID",
-    [["Herr Ramos muss das Kursbuch selbst kaufen.", "F"]],
-    "Er muss das Buch nicht kaufen, er bekommt es in der ersten Stunde von der Schule."),
-  kurs.choice("detail", "MID",
-    "Was soll Herr Ramos bis Freitag machen?",
-    "den Kurs bezahlen",
-    ["das Buch kaufen", "Frau Novak anrufen", "ein Buch bestellen"], 0,
-    "\"Bitte bezahlen Sie den Kurs bis Freitag.\" Anrufen soll er nur, wenn er Fragen hat."),
+    [
+      ["Herr Ramos muss das Kursbuch selbst kaufen.", "F"],
+      ["Herr Ramos soll den Kurs spätestens am Freitag bezahlen.", "R"],
+      ["Der Kurs findet am Vormittag statt.", "F"],
+    ],
+    "Er muss das Buch nicht kaufen, er bekommt es in der ersten Stunde. Bezahlen soll er bis Freitag. Der Kurs ist am Abend, von sechs bis acht Uhr."),
+
+  // Nachricht von der Zahnarztpraxis (Notizen)
+  zahnarzt.notes("MID",
+    "Hören Sie die Nachricht. Ergänzen Sie die Notizen.\n\nNeuer Termin bei Dr. Behrens\nTag: {{g1}}\nUhrzeit: {{g2}}\nTelefonnummer der Praxis: {{g3}}",
+    [
+      { id: "g1", answers: ["Donnerstag", "Do", "Do."] },
+      {
+        id: "g2",
+        answers: ["14:30", "14.30", "14 Uhr 30", "14:30 Uhr", "14.30 Uhr", "14 30", "vierzehn Uhr dreißig", "vierzehn Uhr dreissig", "vierzehn dreißig", "halb drei", "2:30 Uhr"],
+      },
+      { id: "g3", answers: phoneForms(["030", "23125", "403"]) },
+    ],
+    "Frau Keller nennt erst Mittwoch und korrigiert sich zu Donnerstag. Die Uhrzeit ist 14:30 Uhr (vierzehn Uhr dreißig, auch \"halb drei\" ist richtig). Die Nummer wird zweimal in Gruppen genannt: 030 23125 403. Es zählt, dass alle Ziffern stimmen; Leerzeichen und Bindestriche sind egal."),
+  zahnarzt.choice("gist", "EASY",
+    "Warum ruft die Praxis an?",
+    "Der alte Termin geht nicht, es gibt einen neuen.",
+    [
+      "Frau Aydin soll ihren Termin am Montag absagen.",
+      "Frau Aydin hat ihren Termin am Montag vergessen.",
+      "Der Doktor möchte Frau Aydin am Montag früher sehen.",
+    ], 0,
+    "Der Doktor ist krank, deshalb fällt der Termin am Montag aus, und die Praxis bietet einen neuen an."),
+  zahnarzt.tfng("detail", "MID",
+    [
+      ["Frau Aydin soll am Mittwoch in die Praxis kommen.", "F"],
+      ["Frau Aydin soll nur anrufen, wenn der neue Termin nicht passt.", "R"],
+    ],
+    "Mittwoch war ein Versprecher; der Termin ist am Donnerstag. Anrufen soll sie, wenn der Termin nicht passt."),
+
+  // Das Wetter am Wochenende
+  wetter.choice("detail", "EASY",
+    "Wann regnet es am Samstag?",
+    "am Samstagnachmittag",
+    ["am Samstagvormittag", "am Sonntagvormittag", "am Sonntagnachmittag"], 3,
+    "Am Samstag scheint am Vormittag die Sonne; am Nachmittag kommt der Regen. Am Sonntag regnet es nicht mehr."),
+  wetter.choice("detail", "MID",
+    "Wie warm wird es am Sonntag?",
+    "15 Grad",
+    ["22 Grad", "12 Grad", "25 Grad"], 0,
+    "Am Samstag sind es bis zu 22 Grad, am Sonntag nur 15 Grad."),
+  wetter.tfng("detail", "MID",
+    [
+      ["Im Zoo zahlen Kinder am Sonntag keinen Eintritt.", "R"],
+      ["Der Zoo öffnet am Sonntag um zehn Uhr.", "F"],
+    ],
+    "Familientag: Kinder zahlen nichts. Der Zoo öffnet schon um neun Uhr."),
 ];
 
 // ---------------------------------------------------------------- WRITING
@@ -801,21 +1046,19 @@ const writingItems: SeedItem[] = [
     "Formular (Stichworte)",
     "Formular mit fünf Feldern (Goethe A1, Schreiben Teil 1). Je Feld ein Punkt. Die Straße wird nicht gefragt; wer sie statt des Wohnorts einträgt, bekommt für Feld 3 keinen Punkt."),
   writingTask("message", "EASY", MESSAGE_WORDS,
-    "Ihr Freund Leon lädt Sie am Freitag um 19 Uhr zum Essen ein. Sie kommen gern, aber erst um 20 Uhr. Schreiben Sie Leon eine kurze Nachricht (circa 30 Wörter).\n\n" +
-      "- Danken Sie für die Einladung.\n" +
-      "- Sie kommen später. Warum?\n" +
-      "- Fragen Sie: Was sollen Sie mitbringen?\n\n" +
-      "Schreiben Sie auch eine Anrede und einen Gruß.",
+    "Ihr Freund Tim hat Ihnen diese Nachricht geschickt:\n\n" +
+      "\"Hallo! Am Samstag mache ich eine Grillparty im Park. Hast du Zeit? Wann kannst du kommen? Kannst du einen Salat mitbringen? Liebe Grüße, Tim\"\n\n" +
+      "Schreiben Sie Tim eine Antwort (circa 30 Wörter). Beantworten Sie alle drei Fragen. Schreiben Sie auch eine Anrede und einen Gruß.",
     [
-      "Dank für die Einladung",
-      "Information: kommt erst später (um 20 Uhr), mit einem einfachen Grund",
-      "Frage, was man mitbringen soll",
-      "Anrede und Gruß (Hallo Leon ... / Viele Grüße)",
+      "Antwort auf die erste Frage: hat Zeit oder nicht",
+      "Antwort auf die zweite Frage: Uhrzeit, zu der man kommen kann (bei einer Absage ein einfacher Grund)",
+      "Antwort auf die dritte Frage: bringt einen Salat mit oder nicht",
+      "Anrede und Gruß (Hallo Tim ... / Viele Grüße)",
     ],
     [
-      "für die Einladung danken",
-      "sagen, dass Sie später kommen, und warum",
-      "fragen, was Sie mitbringen sollen",
+      "sagen, ob Sie Zeit haben",
+      "sagen, wann Sie kommen können",
+      "sagen, ob Sie einen Salat mitbringen",
       "Anrede und Gruß",
     ],
     INFORMAL,
@@ -932,6 +1175,19 @@ const speakingItems: SeedItem[] = [
       "Beruf, Arbeit oder Schule",
       "Hobbys",
     ]),
+  speakingTask("topiccard", "MID", LONGER,
+    "Auf Ihrer Karte stehen sieben Wörter:\n\n" +
+      "Freunde - Wohnung - Essen - Hobby - Reisen - Sprachen - Wochenende\n\n" +
+      "Wählen Sie vier Wörter. Sagen Sie zu jedem Wort ein oder zwei Sätze über sich.",
+    [
+      "vier Wörter von der Karte gewählt",
+      "zu jedem Wort mindestens ein verständlicher Satz über sich",
+      "einfache Sätze mit Verb an Position 2 (Ich wohne ... / Am Wochenende spiele ich ...)",
+    ],
+    [
+      "vier Wörter von der Karte wählen",
+      "zu jedem Wort ein oder zwei Sätze sagen",
+    ]),
   speakingTask("question", "EASY", SHORT,
     "Thema: Arbeit. Auf Ihrer Karte steht: \"Mittagspause?\"\n\n" +
       "Stellen Sie einer Kollegin eine Frage mit diesem Wort. Dann antworten Sie selbst auf Ihre Frage.",
@@ -959,15 +1215,15 @@ const speakingItems: SeedItem[] = [
     ],
     INFORMAL),
   speakingTask("request", "MID", SHORT,
-    "Sie sind im Büro. Sie möchten etwas schreiben, aber Sie haben keinen Kuli. Ihr Kollege Herr Braun hat einen Kuli.\n\n" +
-      "Bitten Sie Herrn Braun um den Kuli. Sagen Sie auch danke.",
+    "Sie sind im Büro. Sie möchten etwas schreiben, aber Sie haben keinen Kugelschreiber. Ihr Kollege Herr Braun hat einen Kugelschreiber.\n\n" +
+      "Bitten Sie Herrn Braun um den Kugelschreiber. Sagen Sie auch danke.",
     [
       "höfliche Bitte (z. B. Können Sie mir bitte ... geben? / Haben Sie bitte ...?)",
-      "Gegenstand genannt (Kuli)",
+      "Gegenstand genannt (Kugelschreiber)",
       "Dank",
     ],
     [
-      "höflich um den Kuli bitten",
+      "höflich um den Kugelschreiber bitten",
       "sich bedanken",
     ],
     FORMAL),
@@ -1011,8 +1267,8 @@ export const A1_PARTS: {
   speaking: SeedBankPart;
 } = {
   grammar: { stimuli: [], items: grammarItems },
-  reading: { stimuli: [rArbeitstag, rJobs, rPraxis, rSms], items: readingItems },
-  listening: { stimuli: [lBahnhof, lKollege, lKurs], items: listeningItems },
+  reading: { stimuli: [rArbeitstag, rJobs, rPraxis, rSms, rKleinanzeigen, rSchilder, rAngebote], items: readingItems },
+  listening: { stimuli: [lBahnhof, lKollege, lKurs, lZahnarzt, lWetter], items: listeningItems },
   writing: { stimuli: [], items: writingItems },
   speaking: { stimuli: [], items: speakingItems },
 };

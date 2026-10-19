@@ -16,12 +16,16 @@ import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
  *
  * - Grammar: 24 items (8 EASY, 8 MID, 8 HARD) over the C1 inventory plus three C-tests,
  *   three MC cloze texts and three word banks (spec 2026-10-18).
- * - Reading: 4 texts with 4 items each (word-level cloze, dense magazine article,
- *   commentary with sentence insertion, four positions to match).
- * - Listening: 3 clips with 4 items each (expert interview, lecture, discussion
- *   reduced to two voices).
- * - Writing: 3 forum contributions (about 230 words) and 3 semi-formal emails (about 120 words).
- * - Speaking: 3 talks from bullet points and 3 discussion turns reacting to an input text.
+ * - Reading: 8 texts. Four long ones with 4 items each (word-level cloze, dense magazine
+ *   article, commentary with sentence insertion, four positions to match) and four short
+ *   ones (news item, report, forum post, six course ads to match) with 1 or 2 items each.
+ * - Listening: 6 clips. Three long ones with 4 items each (expert interview, lecture with
+ *   two questions, discussion in two voices) and three short ones (voicemail for note
+ *   taking, radio report, service call).
+ * - Writing: 3 forum contributions (about 230 words), 3 semi-formal emails (about 120 words)
+ *   and a letter that describes and discusses a table (about 250 words).
+ * - Speaking: 3 talks from bullet points, 2 discussion turns reacting to an input text and
+ *   a talk from a handout with three sources.
  *
  * Single choice items have four options at C1. `choice` takes the correct
  * option first and puts it at position `pos`, so key positions are set
@@ -94,8 +98,8 @@ const grammarItems: SeedItem[] = [
   // ------------------------------------------------ EASY
   gChoice("praepositionen", "EASY",
     "___ der hohen Kosten entschied sich die Geschäftsleitung gegen den Umzug in ein neues Bürogebäude.",
-    "Angesichts", ["Obwohl", "Ungeachtet", "Infolgedessen"], 0,
-    "„Angesichts“ + Genitiv nennt den Grund (= wegen). „Ungeachtet“ (= trotz) ergibt einen Widerspruch, „obwohl“ ist eine Konjunktion und braucht einen Nebensatz, „infolgedessen“ ist ein Adverb und kann kein Nomen anschließen."),
+    "Angesichts", ["Ungeachtet", "Mangels", "Anlässlich"], 0,
+    "„Angesichts“ + Genitiv nennt den Grund (= wegen). „Ungeachtet“ (= trotz) ergibt einen Widerspruch zur Entscheidung gegen den Umzug, „mangels“ meint ein Fehlen, „anlässlich“ nennt einen Anlass oder ein Ereignis und keinen Grund für die Entscheidung."),
   gChoice("modalverben_subjektiv", "EASY",
     "Was bedeutet der Satz? „Der Konzern soll bereits einen Käufer für die Sparte gefunden haben.“",
     "Es wird berichtet, dass der Konzern schon einen Käufer gefunden hat.",
@@ -115,25 +119,25 @@ const grammarItems: SeedItem[] = [
     ], 2,
     "Das Objekt des Verbs (den Vertrag unterzeichnen) wird bei der Nominalisierung zum Genitivattribut: die Unterzeichnung des Vertrags. Die Distraktoren behalten Akkusativ, Dativ oder Nominativ."),
   gGap("konjunktiv_i", "EASY",
-    "Setzen Sie das Verb im Konjunktiv I ein.\n\nDer Sprecher sagte: „Das Unternehmen hat die Zahlen sorgfältig geprüft.“\n→ Der Sprecher sagte, das Unternehmen {{g1}} die Zahlen sorgfältig geprüft.",
-    ["habe"], undefined,
-    "Konjunktiv I von „haben“ in der 3. Person Singular: „habe“. Er unterscheidet sich vom Indikativ „hat“ und ist deshalb hier die Standardform."),
+    "Ergänzen Sie das fehlende Wort.\n\nDie Sprecherin erklärte, die Maßnahmen {{g1}} bereits vor Monaten beschlossen worden.",
+    ["seien"], undefined,
+    "Indirekte Rede im Perfekt Passiv: Konjunktiv I von „sein“ in der 3. Person Plural, „seien“ (… beschlossen worden). Er unterscheidet sich vom Indikativ „sind“ und ist deshalb die Standardform; „wären“ wäre nur eine Ersatzform, wenn Konjunktiv I und Indikativ gleich lauteten."),
   gChoice("konnektoren", "EASY",
     "Die Filiale in Köln hat ihr Umsatzziel übertroffen, ___ die Filiale in Leipzig deutlich darunter geblieben ist.",
-    "wohingegen", ["zumal", "weshalb", "sobald"], 3,
-    "„Wohingegen“ stellt zwei Sachverhalte gegenüber (adversativ). „Zumal“ begründet zusätzlich, „weshalb“ leitet eine Folge ein, „sobald“ ist temporal; alle drei passen inhaltlich nicht."),
+    "wohingegen", ["zumal", "sodass", "sofern"], 3,
+    "„Wohingegen“ stellt zwei Sachverhalte gegenüber (adversativ). „Zumal“ ergänzt einen Grund, „sodass“ nennt eine Folge, „sofern“ eine Bedingung; alle drei leiten ebenfalls einen Nebensatz ein, passen inhaltlich aber nicht."),
   gChoice("praepositionen", "EASY",
     "___ ausreichender Anmeldungen musste der Kurs leider abgesagt werden.",
     "Mangels", ["Mittels", "Angesichts", "Hinsichtlich"], 0,
     "„Mangels“ + Genitiv bedeutet „weil etwas fehlt“. Nur so ergibt der Satz einen Sinn: Es gab nicht genug Anmeldungen. „Mittels“ (Instrument), „angesichts“ (Grund) und „hinsichtlich“ (Bezug) sind hier unlogisch."),
   gGap("funktionsverbgefuege", "EASY",
-    "Die neue Regelung zur mobilen Arbeit tritt am ersten Januar in {{g1}}.",
-    ["Kraft"], ["Wirkung", "Kraft", "Geltung", "Gültigkeit"],
-    "Feste Verbindung: „in Kraft treten“. Die anderen Nomen sind bedeutungsähnlich, bilden mit „treten“ aber keine Kollokation."),
+    "Der Vorschlag der Gemeinde fand bei den Anwohnern nur wenig {{g1}}.",
+    ["Anklang"], ["Anlass", "Anklang", "Anreiz", "Anteil"],
+    "Funktionsverbgefüge: „Anklang finden“ (= gut aufgenommen werden). „Anlass“, „Anreiz“ und „Anteil“ beginnen ähnlich, bilden mit „finden“ aber keine feste Verbindung."),
   gChoice("wortbildung", "EASY",
-    "Leider ___ Sie die Anforderungen der Stelle nicht in allen Punkten.",
-    "erfüllen", ["ausfüllen", "befüllen", "verfüllen"], 3,
-    "Anforderungen, Bedingungen oder Wünsche „erfüllt“ man. „Ausfüllen“ passt zu Formularen, „befüllen“ zu Behältern, „verfüllen“ zu Löchern oder Gruben."),
+    "Die Genehmigung ist an die ___ sämtlicher Auflagen geknüpft.",
+    "Einhaltung", ["Haltung", "Abhaltung", "Unterhaltung"], 3,
+    "Auflagen, Fristen und Regeln „hält man ein“: die Einhaltung. „Haltung“ (Einstellung), „Abhaltung“ (einer Sitzung) und „Unterhaltung“ (Gespräch, Zerstreuung) gehören zum selben Wortstamm, bilden mit „Auflagen“ aber keine sinnvolle Verbindung."),
 
   // ------------------------------------------------ MID
   gChoice("modalverben_subjektiv", "MID",
@@ -146,13 +150,13 @@ const grammarItems: SeedItem[] = [
     ], 2,
     "„Dürfte“ (Konjunktiv II von dürfen) drückt eine Vermutung mit hoher Wahrscheinlichkeit aus. Erlaubnis wäre „darf“, fremde Behauptung „soll“, Gewissheit gäbe der Indikativ wieder."),
   gGap("nominalisierung", "MID",
-    "Bilden Sie aus dem Verb „senken“ das passende Nomen.\n\nDie Firma will ihre Kosten senken.\n→ Die Firma strebt eine {{g1}} ihrer Kosten an.",
-    ["Senkung"], undefined,
-    "Zu „senken“ gehört das Nomen „die Senkung“ (Suffix -ung, feminin, passt zu „eine“)."),
+    "Formen Sie den Nebensatz in eine Nominalgruppe um.\n\nWeil die Preise kräftig gestiegen sind, haben viele Haushalte ihre Ausgaben eingeschränkt.\n→ Aufgrund des kräftigen {{g1}} der Preise haben viele Haushalte ihre Ausgaben eingeschränkt.",
+    ["Anstiegs", "Anstieges"], undefined,
+    "Nominalisierung von „steigen“: der Anstieg. Nach „aufgrund“ steht der Genitiv, das Nomen (maskulin, Singular) bekommt also die Endung -s oder -es: „des kräftigen Anstiegs / Anstieges der Preise“."),
   gGap("partizipialattribut", "MID",
     "Die von der Geschäftsleitung im Frühjahr {{g1}} Regeln gelten ab sofort für alle Abteilungen.",
-    ["beschlossenen"], ["beschlossene", "beschließenden", "beschlossenen", "beschlossen"],
-    "Erweitertes Partizipialattribut mit passivischer Bedeutung (die Regeln wurden beschlossen), also Partizip II. Nach dem bestimmten Artikel im Plural steht die schwache Endung -en: „die ... beschlossenen Regeln“."),
+    ["beschlossenen"], ["beschlossene", "beschließenden", "beschlossenen", "zu beschließenden"],
+    "Erweitertes Partizipialattribut mit passivischer Bedeutung (die Regeln wurden beschlossen), also Partizip II. Nach dem bestimmten Artikel im Plural steht die schwache Endung -en: „die ... beschlossenen Regeln“. „Beschließenden“ wäre aktiv, „zu beschließenden“ drückt etwas Künftiges aus, „beschlossene“ hat die falsche Endung."),
   gGap("partizipialattribut", "MID",
     "Ersetzen Sie den Relativsatz durch ein Partizipialattribut mit Partizip I.\n\ndie Beschäftigten, die in Teilzeit arbeiten\n→ die in Teilzeit {{g1}} Beschäftigten",
     ["arbeitenden"], undefined,
@@ -289,14 +293,14 @@ const grammarTexts: SeedItem[] = [
     first: "Lange galt Deutschland als ein Land, in dem man an der Kasse am liebsten mit Scheinen und Münzen bezahlt.",
     body:
       "Inzwischen hat sich das Bild jedoch spürbar [[gewandelt|gewandelte|wandelte|wandeln]]. " +
-      "Die Bundesbank teilte kürzlich mit, der Anteil der Barzahlungen im Einzelhandel [[sei|seien|wären|würde]] in den vergangenen fünf Jahren deutlich zurückgegangen. " +
-      "Vor allem jüngere Menschen greifen an der Kasse immer häufiger [[zum|zur|beim|am]] Smartphone. " +
+      "Die Bundesbank teilte kürzlich mit, der Anteil der Barzahlungen im Einzelhandel [[sei|habe|wurde|werde]] in den vergangenen fünf Jahren deutlich zurückgegangen. " +
+      "Vor allem in den Städten greifen viele Kundinnen und Kunden an der Kasse immer häufiger [[zum|ins|beim|am]] Smartphone. " +
       "Diese Entwicklung ist durch die Pandemie zusätzlich beschleunigt [[worden|geworden|wurde|werden]]. " +
-      "Kritiker warnen allerdings davor, das Bargeld vorschnell [[abzuschaffen|abschaffen|abgeschafft|zu abschaffen]]. " +
-      "Sie geben zu bedenken, dass vor allem ältere Menschen, [[denen|die|deren|dessen]] der Umgang mit digitalen Zahlungsmitteln schwerfällt, benachteiligt würden. " +
+      "Kritiker warnen allerdings davor, das Bargeld vorschnell [[abzuschaffen|abschaffen|abgeschafft|abzuschaffende]]. " +
+      "Sie geben zu bedenken, dass vor allem Menschen, [[denen|die|deren|dessen]] der Umgang mit digitalen Zahlungsmitteln schwerfällt, benachteiligt würden. " +
       "Zudem schützt Bargeld die Privatsphäre, [[da|denn|deshalb|trotzdem]] jede Kartenzahlung Datenspuren hinterlässt. " +
-      "Hinzu kommt die Frage, wie widerstandsfähig ein vollständig [[auf|an|von|über]] Strom und Internet [[angewiesenes|angewiesene|angewiesener|angewiesen]] Zahlungssystem im Krisenfall wäre. " +
-      "Eine vollständige [[Abschaffung|Abschaffen|abgeschaffte|Abschaffens]] des Bargelds ist in Deutschland dennoch nicht geplant. " +
+      "Hinzu kommt die Frage, wie widerstandsfähig ein vollständig [[auf|an|von|über]] Strom und Internet [[angewiesenes|angewiesen|anweisendes|anzuweisendes]] Zahlungssystem im Krisenfall wäre. " +
+      "Eine vollständige [[Abschaffung|Schaffung|Anschaffung|Abschaffens]] des Bargelds ist in Deutschland dennoch nicht geplant. " +
       "Gleichzeitig gewöhnen sich auch viele kleine Geschäfte [[daran|darauf|damit|dafür]], dass ihre Kundschaft selbst Kleinstbeträge mit der Karte bezahlt.",
     last: "Ob das Bargeld eines Tages ganz verschwindet, werden am Ende wohl die Kundinnen und Kunden selbst entscheiden.",
     note: "Perfekt eines reflexiven Verbs (g1), Konjunktiv I in der indirekten Rede (g2), greifen zu (g3), Perfekt Passiv mit worden (g4), warnen davor + zu-Infinitiv bei trennbarem Verb (g5), Relativpronomen im Dativ bei jemandem fällt etwas schwer (g6), da mit Verbendstellung (g7), angewiesen auf (g8), Partizipialattribut nach ein im Neutrum (g9), Nominalstil (g10), sich gewöhnen an mit Präpositionaladverb (g11).",
@@ -306,18 +310,18 @@ const grammarTexts: SeedItem[] = [
     first: "Fast jedes dritte Kind, das in Deutschland eine Kita besucht, wächst mit mehr als einer Sprache auf.",
     body:
       "Lange [[wurde|hat|würde|worden]] angenommen, dass zwei Sprachen ein kleines Kind überfordern. " +
-      "Neuere Studien legen jedoch [[nahe|vor|zu|an]], dass eher das Gegenteil zutrifft. " +
-      "Eine Hamburger Sprachwissenschaftlerin betont, ein mehrsprachig aufwachsendes Kind [[entwickle|entwickeln|entwickelst|entwickelnd]] oft sogar ein feineres Gespür für sprachliche Strukturen. " +
-      "Entscheidend sei allerdings, dass beide Sprachen [[ausreichend|ausreichende|ausreichender|ausgereicht]] gefördert würden. " +
+      "Neuere Studien legen jedoch [[nahe|zu|an|bei]], dass eher das Gegenteil zutrifft. " +
+      "Eine Hamburger Sprachwissenschaftlerin betont, ein mehrsprachig aufwachsendes Kind [[entwickle|entwickeln|entwickelnd|zu entwickeln]] oft sogar ein feineres Gespür für sprachliche Strukturen. " +
+      "Entscheidend sei allerdings, [[dass|damit|sodass|sofern]] beide Sprachen ausreichend gefördert würden. " +
       "Gerade bei Kindern, [[deren|dessen|denen|die]] Eltern zu Hause kaum Deutsch sprechen, kommt der Kita deshalb eine Schlüsselrolle zu. " +
       "Im Alltag [[lässt|lassen|wird|ist]] sich dieser Anspruch allerdings nicht immer einlösen. " +
-      "Die meisten Fachkräfte sprechen selbst nur Deutsch, und Bilderbücher in anderen Sprachen sind oft nur schwer [[zu beschaffen|beschaffen|beschafft|zu beschafft]]. " +
+      "Die meisten Fachkräfte sprechen selbst nur Deutsch, und Bilderbücher in anderen Sprachen sind oft nur schwer [[zu beschaffen|beschaffen|beschafft|beschaffend]]. " +
       "Einige Einrichtungen beziehen deshalb die Eltern gezielt [[in|an|auf|zu]] die Sprachförderung ein. " +
-      "[[Indem|Damit|Sodass|Wobei]] Mütter und Väter Lieder und Geschichten aus ihrer Herkunftssprache einbringen, erfahren die Kinder, dass ihre Familiensprache geschätzt wird. " +
+      "[[Indem|Damit|Sodass|Wobei]] Mütter und Väter Lieder und Geschichten in ihrer Familiensprache einbringen, erfahren die Kinder, dass auch diese Sprache geschätzt wird. " +
       "Solche Projekte stoßen bei den Familien [[auf|an|zu|bei]] große Resonanz. " +
       "Ersten Auswertungen [[zufolge|laut|seitens|mittels]] verbessern sich dadurch sogar die Deutschkenntnisse der Kinder.",
     last: "Mehrsprachigkeit erweist sich damit weniger als Hindernis denn als Chance, sofern sie gezielt begleitet wird.",
-    note: "unpersönliches Passiv im Präteritum (g1), nahelegen (g2), Konjunktiv I in der indirekten Rede (g3), Adjektiv als Adverb (g4), Relativpronomen im Genitiv Plural (g5), sich lassen + Infinitiv als Passiversatz (g6), sein + zu-Infinitiv als Passiversatz (g7), einbeziehen in (g8), indem (g9), auf Resonanz stoßen (g10), nachgestelltes zufolge (g11).",
+    note: "unpersönliches Passiv im Präteritum (g1), nahelegen (g2), Konjunktiv I in der indirekten Rede (g3), dass-Satz nach „entscheidend sei“ (g4), Relativpronomen im Genitiv Plural (g5), sich lassen + Infinitiv als Passiversatz (g6), sein + zu-Infinitiv als Passiversatz (g7), einbeziehen in (g8), indem (g9), auf Resonanz stoßen (g10), nachgestelltes zufolge (g11).",
   }),
   cloze(LEVEL, "HARD", {
     title: "Wenn Antibiotika versagen",
@@ -326,8 +330,8 @@ const grammarTexts: SeedItem[] = [
       "Ihre Wirksamkeit ist jedoch zunehmend [[gefährdet|gefährdend|gefährdete|Gefährdung]]. " +
       "Weltweit sterben jährlich über eine Million Menschen an Infektionen, gegen [[die|denen|deren|welchen]] keines der gängigen Mittel mehr wirkt. " +
       "Die Weltgesundheitsorganisation warnt seit Jahren, ohne entschlossenes Handeln [[drohe|drohen|drohten|gedroht]] eine Rückkehr in die Zeit vor der Entdeckung des Penicillins. " +
-      "Eine Hauptursache ist der übermäßige [[Einsatz|Einsetzen|eingesetzte|Einsätze]] von Antibiotika in der Tiermast. " +
-      "Die dort in großen Mengen [[verabreichten|verabreichenden|verabreicht|verabreichte]] Wirkstoffe gelangen über Gülle und Abwasser in die Umwelt. " +
+      "Eine Hauptursache ist der übermäßige [[Einsatz|Einsätze|Eingriff|Verzicht]] von Antibiotika in der Tiermast. " +
+      "Die dort in großen Mengen [[verabreichten|verabreichenden|verabreicht|zu verabreichenden]] Wirkstoffe gelangen über Gülle und Abwasser in die Umwelt. " +
       "Aber auch in Arztpraxen werden Antibiotika häufig verschrieben, [[obwohl|weil|sodass|damit]] die Beschwerden von Viren verursacht werden, bei denen sie wirkungslos sind. " +
       "Die Entwicklung neuer Wirkstoffe [[gilt|lässt|hält|stellt]] zudem als wirtschaftlich wenig attraktiv. " +
       "[[Da|Denn|Weshalb|Sodass]] ein neues Antibiotikum möglichst selten eingesetzt werden soll, um Resistenzen vorzubeugen, lassen sich damit kaum Gewinne erzielen. " +
@@ -345,42 +349,41 @@ const grammarTexts: SeedItem[] = [
       "Immer weniger Menschen sind bereit, sich langfristig an einen Verein zu [[binden]]. " +
       "Stattdessen bevorzugen sie zeitlich [[begrenzte]] Projekte, etwa die Organisation eines Stadtfestes. " +
       "Viele Vereine haben deshalb Schwierigkeiten, ihre Vorstandsposten zu [[besetzen]]. " +
-      "Gleichzeitig wächst die [[Nachfrage]] nach Ehrenamtlichen in der Pflege und in der Flüchtlingshilfe. " +
-      "Experten [[empfehlen]] den Vereinen daher, flexiblere Formen der Mitarbeit anzubieten. " +
-      "Wer nur wenige Stunden im Monat [[investieren]] kann, sollte trotzdem willkommen sein. " +
+      "Gleichzeitig wächst die Nachfrage [[nach]] Ehrenamtlichen in der Pflege und in der Flüchtlingshilfe. " +
+      "Experten [[empfehlen]] den Vereinen daher, flexiblere Formen der Mitarbeit anzubieten, [[damit]] auch Menschen mit wenig Zeit mitmachen können. " +
       "Auch eine offizielle [[Anerkennung]], zum Beispiel durch Bescheinigungen für spätere Bewerbungen, kann zusätzlich motivieren.",
     last: "Denn ohne freiwilliges Engagement wäre vieles im gesellschaftlichen Leben schlicht nicht möglich.",
-    distractors: ["Mitglieder", "gegründet", "freiwillige", "Beitrag", "teilgenommen"],
+    distractors: ["für", "obwohl", "Beteiligung", "gegründet", "investieren"],
   }),
   wordBank(LEVEL, "MID", {
-    title: "Fachkräfte aus dem Ausland",
-    first: "Deutschland ist in vielen Branchen auf Arbeitskräfte aus dem Ausland angewiesen.",
+    title: "Bibliotheken im Wandel",
+    first: "Wer an eine Bibliothek denkt, sieht meist stille Lesesäle und lange Regale voller Bücher vor sich.",
     body:
-      "Besonders in der Pflege und im Handwerk bleiben zahlreiche Stellen seit Jahren [[unbesetzt]]. " +
-      "Um die Zuwanderung zu [[erleichtern]], hat der Gesetzgeber die Hürden für qualifizierte Bewerber gesenkt. " +
-      "In der Praxis scheitern viele Verfahren jedoch an der langwierigen [[Prüfung]] ausländischer Abschlüsse. " +
-      "Die zuständigen Behörden sind chronisch [[überlastet]], sodass Antragsteller oft monatelang auf eine Entscheidung warten. " +
-      "Hinzu kommt, dass ausreichende Deutschkenntnisse häufig schon vor der Einreise [[nachgewiesen]] werden müssen. " +
-      "Einige Unternehmen [[übernehmen]] deshalb die Kosten für Sprachkurse und unterstützen ihre neuen Mitarbeiter bei der Wohnungssuche. " +
-      "Fachleute betonen, dass eine gelungene [[Integration]] nicht am Werkstor endet. " +
-      "Entscheidend sei auch, ob sich die Familien der Zugewanderten in ihrem neuen Umfeld [[wohlfühlen]].",
-    last: "Nur dann bleiben die dringend benötigten Fachkräfte auch langfristig im Land.",
-    distractors: ["Gehälter", "beantragt", "einwandern", "fremd", "Arbeitgeber"],
+      "Tatsächlich haben sich viele Häuser in den letzten Jahren stark [[gewandelt]]. " +
+      "Neben Büchern [[verleihen]] sie heute auch Werkzeug, Spiele und Saatgut. " +
+      "Die Ausleihe klassischer Medien geht zwar zurück, [[dafür]] nutzen mehr Menschen die Räume zum Lernen und zum Arbeiten. " +
+      "Gefragt sind vor allem ruhige [[Arbeitsplätze]] mit schnellem Internet. " +
+      "Ältere Gebäude stoßen dabei [[an]] ihre Grenzen, weil es an Steckdosen und Leitungen fehlt. " +
+      "Viele Städte bauen die Bibliotheken deshalb um, [[sodass]] künftig auch Kurse und Veranstaltungen stattfinden können. " +
+      "Das kostet Geld, und nicht überall ist man bereit, es [[bereitzustellen]]. " +
+      "Befürworter betonen den [[Gewinn]] für die gesamte Nachbarschaft, weil dort Menschen zusammenkommen, die sich sonst nie begegnen würden.",
+    last: "Ob der Umbau gelingt, entscheidet am Ende auch die Bereitschaft der Stadt, Bibliotheken als Treffpunkte ernst zu nehmen.",
+    distractors: ["obwohl", "darauf", "Regale", "bereitgestellt", "Verlust"],
   }),
   wordBank(LEVEL, "HARD", {
     title: "Moore als Klimaschützer",
     first: "Moore bedecken nur einen kleinen Teil der weltweiten Landfläche, speichern aber enorme Mengen Kohlenstoff.",
     body:
       "In Deutschland wurden die meisten Moore jedoch im Laufe der Jahrhunderte [[entwässert]], um Flächen für die Landwirtschaft zu gewinnen. " +
-      "Sobald der Torf mit Luft in Berührung kommt, [[zersetzt]] er sich und setzt große Mengen Kohlendioxid frei. " +
+      "[[Sobald]] der Torf mit Luft in Berührung kommt, zersetzt er sich und setzt große Mengen Kohlendioxid frei. " +
       "Trockengelegte Moore sind deshalb für einen [[erheblichen]] Teil der Treibhausgasemissionen der Landwirtschaft verantwortlich. " +
       "Die Bundesregierung will daher in den kommenden Jahren zahlreiche Flächen wieder [[vernässen]]. " +
       "Für die betroffenen Landwirte ist das allerdings mit [[Einbußen]] verbunden, da sich nasse Böden kaum mit herkömmlichen Maschinen bearbeiten lassen. " +
-      "Als Alternative gilt der Anbau von Schilf und Rohrkolben, die sich als [[Rohstoff]] für Dämmplatten oder Verpackungen eignen. " +
+      "Als Alternative gilt der Anbau von Schilf und Rohrkolben, die sich [[als]] Rohstoff für Dämmplatten oder Verpackungen eignen. " +
       "Noch fehlt es allerdings an [[Abnehmern]], die solche Produkte in größeren Mengen kaufen. " +
       "Fachleute [[plädieren]] deshalb für eine gezielte Förderung, bis sich ein Markt entwickelt hat.",
     last: "Ohne die Bereitschaft der Landwirte wird der Schutz der Moore jedenfalls kaum gelingen.",
-    distractors: ["geerntet", "trocken", "Erträge", "pflanzen", "Umwelt"],
+    distractors: ["Obwohl", "geringen", "Erträge", "pflanzen", "Käufer"],
   }),
 ];
 
@@ -495,141 +498,251 @@ const R_KI = text("ki-auswahl", "Software in der Personalauswahl: vier Stimmen",
   "D: Jonas Weber, Berater für Bewerbende\nIn meinen Beratungen erlebe ich, dass viele Menschen ihren Lebenslauf inzwischen vor allem für Maschinen schreiben. Sie übernehmen Schlagwörter aus der Stellenanzeige, in der Hoffnung, die automatische Vorauswahl zu überstehen. Das Ergebnis sind Unterlagen, die sich zum Verwechseln ähneln. Manche meiner Klientinnen und Klienten verbringen mehr Zeit damit, die vermeintlich richtigen Begriffe zu finden, als darüber nachzudenken, was sie eigentlich für die Stelle qualifiziert. Ich rate trotzdem dazu, individuell zu formulieren: Spätestens im Vorstellungsgespräch fällt auf, wenn hinter den richtigen Begriffen wenig Substanz steckt.",
 ]);
 
+// Text 5: short news item.
+const R_STADTBAEUME = text("stadtbaeume", "Hitzeinseln in der Innenstadt", "Stadtklima und Umwelt", [
+  "Wenn sich im Hochsommer die Innenstädte aufheizen, liegt die Temperatur zwischen den Häuserschluchten oft um mehrere Grad über der im Umland. Forschende sprechen von Hitzeinseln. Eine Untersuchung in sechs deutschen Großstädten hat nun gezeigt, dass Straßen mit älteren Laubbäumen an heißen Tagen spürbar kühler bleiben als baumlose Straßen, selbst wenn dort die Fassaden hell gestrichen sind. Entscheidend sei weniger der Schatten als die Verdunstung: Ein großer Baum gibt über seine Blätter an einem Sommertag mehrere Hundert Liter Wasser ab und entzieht der Umgebung dabei Wärme.",
+  "Der Effekt hängt allerdings von der Wasserversorgung ab. Bäume, die in verdichtetem Boden stehen und kaum Regen erhalten, stellen die Verdunstung bei Trockenheit weitgehend ein und kühlen dann deutlich weniger. Mehrere Städte erproben deshalb sogenannte Schwammstraßen, bei denen Regenwasser unter dem Pflaster gespeichert und zu den Wurzeln geleitet wird. Ob sich diese Technik im großen Maßstab bezahlt macht, ist noch offen, denn Umbau und Pflege sind teuer. Die Forschenden raten daher, zunächst vorhandene Altbäume zu schützen, statt allein auf junge Pflanzungen zu setzen, die erst nach Jahrzehnten ihre volle Wirkung entfalten.",
+]);
+
+// Text 6: report on a museum.
+const R_MUSEUM = text("museum", "Eintritt frei: Was ein Stadtmuseum erlebt hat", "Kultur und Museen", [
+  "Als das Stadtmuseum vor zwei Jahren beschloss, den Eintritt für alle abzuschaffen, rechnete die Leitung mit einem Ansturm und mit leeren Kassen. Eingetreten ist nur das Erste. Die Besucherzahl stieg im ersten Jahr um knapp die Hälfte. Die Einnahmen aus dem Kartenverkauf fielen weg, wurden aber zum Teil durch höhere Umsätze im Museumscafé und durch Spenden aufgefangen.",
+  "Interessanter als die Zahlen ist für die Direktorin, wer seitdem kommt. Früher besuchten vor allem Menschen das Haus, die ohnehin regelmäßig Ausstellungen sehen. Heute stehen häufiger Familien aus der Nachbarschaft in der Halle, die „mal eben für eine halbe Stunde“ hereinschauen. Das verändert die Arbeit: Die Texte an den Wänden werden kürzer, Führungen finden häufiger spontan statt. Eine Besucherbefragung zeigt allerdings, dass sich viele der Neuen kaum länger als eine Stunde im Haus aufhalten und seltener wiederkommen als frühere Gäste, die Eintritt bezahlt haben.",
+  "Kritiker meinen, Kultur, die nichts koste, werde auch nicht mehr wertgeschätzt. Die Direktorin hält dagegen, dass sich Wertschätzung nicht am Preis ablesen lasse. Sie räumt aber ein, dass das Museum nun stärker um Stammgäste werben müsse.",
+]);
+
+// Text 7: forum post.
+const R_GENOSSENSCHAFT = text("genossenschaft", "Erfahrungen mit einer Wohngenossenschaft", "Wohnen und Nachbarschaft", [
+  "Beitrag von Lena_K: Ich wollte kurz berichten, wie es uns seit dem Einzug in eine Wohngenossenschaft ergangen ist. Vor der Entscheidung hatte ich viele Fragen und habe kaum Erfahrungsberichte gefunden.",
+  "Man kauft keine Wohnung, sondern erwirbt Anteile an der Genossenschaft. Bei uns waren das einmalig rund zehntausend Euro, die man beim Auszug zurückbekommt. Die laufende Miete liegt etwa fünfzehn Prozent unter dem, was vergleichbare Wohnungen in der Gegend kosten, und sie kann nicht einfach erhöht werden, ohne dass die Mitglieder in der Versammlung zustimmen. Das ist der große Vorteil.",
+  "Der Preis dafür ist, dass man mitreden muss. Zwei Abende im Jahr gehören der Mitgliederversammlung, dazu kommen Arbeitsgruppen, etwa für den Garten oder die Hausordnung. Manche Nachbarn finden das lästig. Mir gefällt, dass dadurch Konflikte früh zur Sprache kommen, bevor sie sich aufstauen. Wer allerdings häufig umzieht, sollte es sich gut überlegen: Der Anteil bindet Geld, und die Wartelisten sind lang, sodass man nach einem schnellen Wohnungswechsel kaum neu anfangen kann. Ich würde es trotzdem wieder machen.",
+]);
+
+// Text 8: six course ads for a matching task (needs with two constraints).
+const R_FOTOKURSE = text("fotokurse", "Fotografie-Kurse an der Volkshochschule", "Freizeit und Kurse", [
+  "A: Naturfotografie mit der Spiegelreflexkamera\nDieser Kurs richtet sich an alle, die ihre Kamera bereits besitzen und die manuellen Einstellungen verstehen wollen. An sechs Dienstagabenden lernen Sie Blende, Belichtungszeit und Lichtführung kennen. Die Übungen finden in der Dämmerung in der näheren Umgebung statt. Die Gruppe ist auf zehn Personen begrenzt.",
+  "B: Fotografieren im Moor, Wochenendworkshop\nZwei Samstage im Mai, jeweils von neun bis sechzehn Uhr, im Naturschutzgebiet. Sie arbeiten mit Ihrer eigenen Kamera und üben, Landschaft, Pflanzen und Tiere bei wechselndem Licht aufzunehmen. Grundkenntnisse der Kameratechnik werden vorausgesetzt. Feste Schuhe sind erforderlich.",
+  "C: Bessere Bilder im Alltag\nIn einem einzigen Vormittag lernen Sie, Bildaufbau, Licht und einfache Bearbeitung gezielt einzusetzen. Eine Kamera brauchen Sie nicht, bringen Sie nur Ihr Telefon mit. Der Kurs findet an einem Samstag im Seminarraum der Volkshochschule statt, Vorkenntnisse sind nicht nötig.",
+  "D: Bildbearbeitung für Fotofreunde\nAn einem Wochenende bearbeiten Sie Ihre eigenen Aufnahmen am Computer. Die Rechner stehen im Schulungsraum bereit, Ihre Fotos bringen Sie auf einem Speichermedium mit. Der Kurs ist für Teilnehmende gedacht, die schon regelmäßig fotografieren, und behandelt Farbkorrektur und Retusche.",
+  "E: Porträts im Atelier\nEin Kurs an vier Donnerstagabenden. Sie lernen, Menschen im Studio mit Dauerlicht und Blitz zu fotografieren. Ausrüstung kann ausgeliehen werden, Vorkenntnisse sind nicht erforderlich. Zum Kurs gehört ein gemeinsames Abschlussshooting.",
+  "F: Analoge Fotografie und Dunkelkammer\nEin Intensivkurs in den Herbstferien, werktags jeweils vormittags, mit Filmentwicklung und Abzügen in der Dunkelkammer. Filmkameras stehen zur Verfügung. Plätze sind begrenzt, bitte melden Sie sich frühzeitig an.",
+]);
+
 const rPausen = forText(R_PAUSEN.key);
 const rReparatur = forText(R_REPARATUR.key);
 const rWeiterbildung = forText(R_WEITERBILDUNG.key);
 const rKi = forText(R_KI.key);
+const rBaeume = forText(R_STADTBAEUME.key);
+const rMuseum = forText(R_MUSEUM.key);
+const rGeno = forText(R_GENOSSENSCHAFT.key);
+const rFoto = forText(R_FOTOKURSE.key);
 
 const readingItems: SeedItem[] = [
   // Pausen
   rPausen.choice("vocabulary", "EASY", "Welches Wort passt in Lücke (1)?",
     "stieg", ["nahm", "legte", "kam"], 2,
-    "„ansteigen“: Die Fehlerquote stieg an. „Zunehmen“ und „zulegen“ bräuchten die Partikel „zu“, „ankommen“ passt inhaltlich nicht."),
+    "„ansteigen“: Die Fehlerquote stieg an. „Zunehmen“ und „zulegen“ bräuchten die Partikel „zu“, „annehmen“, „anlegen“ und „ankommen“ ergeben mit „Fehlerquote“ keinen Sinn."),
   rPausen.choice("vocabulary", "MID", "Welches Wort passt in Lücke (2)?",
-    "zurück", ["hin", "ab", "an"], 0,
-    "Feste Verbindung „etwas auf etwas zurückführen“ (= als Ursache nennen). Mit „hin“, „ab“ oder „an“ entsteht kein passendes Verb."),
+    "zurück", ["heraus", "hervor", "hinauf"], 0,
+    "Feste Verbindung „etwas auf etwas zurückführen“ (= als Ursache nennen). Mit „heraus“, „hervor“ oder „hinauf“ entsteht kein Verb, das zu „auf die begrenzte Kapazität“ passt."),
   rPausen.choice("detail", "MID", "Was stellte die Studie unter anderem fest?",
     "Wer ohne Pause arbeitete, hielt die eigene Leistung trotz zunehmender Fehler für gut.",
     [
-      "Die Fehlerquote der beiden Gruppen unterschied sich schon am Vormittag deutlich.",
-      "Auch die Gruppe mit Pausen machte am Nachmittag erheblich mehr Fehler.",
-      "Pausen wirkten nur, wenn sie länger als zehn Minuten dauerten.",
+      "Wer regelmäßig Pausen machte, arbeitete am Vormittag schon deutlich fehlerfreier als die anderen.",
+      "Wer ohne Pause arbeitete, merkte am Nachmittag selbst, dass die Genauigkeit nachließ.",
+      "Wer in der Pause spazieren ging, machte anschließend weniger Fehler als nach jeder anderen Pause.",
     ], 3,
-    "Absatz 2: Die Durcharbeitenden „merkten kaum etwas“ und schätzten ihre Leistung „bis zuletzt als gut ein“. Am Vormittag war die Fehlerquote nahezu gleich, der Anstieg am Nachmittag wird nur für die Durcharbeitenden berichtet, und laut Absatz 3 wirken schon Pausen von wenigen Minuten."),
+    "Absatz 2: Die Durcharbeitenden „merkten kaum etwas“ und schätzten ihre Leistung „bis zuletzt als gut ein“. Am Vormittag war die Fehlerquote in beiden Gruppen nahezu gleich. Der Spaziergang wird in Absatz 3 nur als wirksamer als Handy oder E-Mail genannt, nicht als Ergebnis der Studie; auch kurze Pausen von wenigen Minuten wirken."),
   rPausen.tfng("inference", "HARD",
     [
-      ["Wer mit der Pause wartet, bis er deutlich erschöpft ist, braucht laut Text länger, um wieder voll leistungsfähig zu werden.", "R"],
-      ["Feste Pausenzeiten haben sich in Unternehmen langfristig als wirksam erwiesen.", "F"],
-      ["Die Teilnehmenden durften selbst wählen, zu welcher Gruppe sie gehören wollten.", "NG"],
+      ["Wer ohne Unterbrechung arbeitete, bemerkte den Leistungsabfall am Nachmittag rasch und stellte sich darauf ein.", "F"],
+      ["Wer erst aufhört, wenn er sich bereits stark erschöpft fühlt, braucht danach deutlich mehr Zeit zur Erholung.", "R"],
+      ["Die Büroangestellten erhielten für die Teilnahme an der Untersuchung eine Bezahlung von ihren Arbeitgebern.", "NG"],
+      ["Wer in der Pause Nachrichten auf dem Handy liest, erholt sich dabei ebenso gut wie bei einem Spaziergang.", "F"],
     ],
-    "1 R: Absatz 3, Ende („braucht erheblich länger, um wieder zur vollen Leistungsfähigkeit zurückzufinden“). 2 F: Absatz 4, die Wirkung lässt sich „nur schwer sagen“, Langzeitstudien fehlen. 3 NG: Wie die Gruppen gebildet wurden, steht nicht im Text."),
+    "1 F: Absatz 2, die Betroffenen „merkten kaum etwas“ und hielten ihre Leistung für gut. 2 R: Absatz 3, wer erst bei deutlich spürbarer Erschöpfung aufhört, braucht „erheblich länger“ für die Rückkehr zur vollen Leistung. 3 NG: Die Teilnehmenden und ihre Aufgaben werden beschrieben, eine Bezahlung wird nicht erwähnt. 4 F: Absatz 3, Handy und Nachrichten beanspruchen dieselben geistigen Funktionen wie die Arbeit, ein Spaziergang ist „deutlich wirksamer“."),
 
   // Reparatur
   rReparatur.choice("gist", "MID", "Welche Aussage fasst den Text am besten zusammen?",
-    "Neue Regeln erleichtern Reparaturen, beseitigen aber nicht alle Hindernisse.",
+    "Die neuen Vorschriften erleichtern Reparaturen, lassen aber Preise, Nachwuchsmangel und Gewohnheiten weiter ungelöst.",
     [
-      "Durch die neuen Regeln werden Reparaturen künftig billiger als Neugeräte.",
-      "Die Hersteller unterstützen die neuen Regeln, weil sie neue Geschäfte ermöglichen.",
-      "Reparaturen scheitern vor allem daran, dass die Menschen sie grundsätzlich ablehnen.",
+      "Die neuen Vorschriften machen Reparaturen für Verbraucher künftig günstiger als den Kauf neuer Geräte.",
+      "Die Hersteller begrüßen die Vorschriften, weil sich mit Ersatzteilen und Reparaturdiensten mehr verdienen lässt.",
+      "Reparaturen scheitern heute vor allem am Willen der Verbraucher und weniger an Teilen oder Preisen.",
     ], 1,
-    "Der Text beschreibt die neuen Pflichten und danach offene Probleme: Preise, Kosten der Hersteller, Nachwuchs im Handwerk, Gewohnheiten. Die Preise werden gerade nicht geregelt; die Hersteller sind skeptisch; die meisten befürworten das Reparieren."),
+    "Der Text beschreibt die neuen Pflichten und danach offene Probleme: Preise, Kosten und Bedenken der Hersteller, Nachwuchs im Handwerk, Gewohnheiten. Die Preise werden gerade nicht geregelt; die Hersteller verweisen auf Kosten und Risiken; schon der erste Absatz sagt, das Problem liege „nicht unbedingt an mangelndem Willen“."),
   rReparatur.choice("detail", "EASY", "Was kritisieren die Umweltverbände an den neuen Vorschriften vor allem?",
-    "Sie legen nicht fest, wie viel Ersatzteile kosten dürfen.",
+    "Sie regeln die Verfügbarkeit von Ersatzteilen, aber nicht, wie viel diese kosten dürfen.",
     [
-      "Sie gelten nur für Smartphones, nicht für Haushaltsgeräte.",
-      "Sie erlauben es weiterhin, unabhängige Werkstätten auszuschließen.",
-      "Sie sehen keine Reparaturanleitungen vor.",
+      "Sie gelten zunächst nur für Smartphones und Waschmaschinen, aber nicht für Kühlschränke.",
+      "Sie verbieten Software nicht, die freie Werkstätten von der Reparatur ausschließt.",
+      "Sie verpflichten die Hersteller nicht, Reparaturanleitungen zugänglich zu machen.",
     ], 0,
-    "Absatz 3: Geregelt wird die Verfügbarkeit, „nicht aber deren Preis“. Die anderen Optionen widersprechen Absatz 2."),
+    "Absatz 3: Geregelt wird die Verfügbarkeit, „nicht aber deren Preis“. Die anderen Optionen widersprechen Absatz 2: Dort sind Kühlschränke genannt, die Software-Sperre wird untersagt, Anleitungen werden Pflicht."),
   rReparatur.choice("inference", "HARD", "Was lässt sich über die finanziellen Zuschüsse sagen, die einige Länder zahlen?",
-    "Wie stark sie tatsächlich wirken, lässt sich noch nicht genau sagen.",
+    "Ob die Zuschüsse zusätzliche Reparaturen auslösen, ist bisher nicht sicher zu sagen.",
     [
-      "Sie haben die Zahl der Reparaturen nicht erhöht.",
-      "Sie werden von den Herstellern finanziert.",
-      "Es gibt sie inzwischen in allen europäischen Ländern.",
+      "Sie haben bisher kaum jemanden dazu bewegt, ein defektes Gerät reparieren zu lassen.",
+      "Sie werden in den betreffenden Ländern vor allem von den Herstellern der Geräte bezahlt.",
+      "Sie gelten inzwischen als wichtigste Maßnahme, auf die sich die Länder Europas geeinigt haben.",
     ], 2,
-    "Absatz 3: Die Zahl der Reparaturen steigt, „wobei unklar bleibt, wie viele dieser Reparaturen ohnehin stattgefunden hätten“. Der tatsächliche Effekt ist also offen. Finanzierung und Verbreitung werden nicht genannt bzw. nur „einige Länder“."),
+    "Absatz 3: Die Zahl der Reparaturen steigt, „wobei unklar bleibt, wie viele dieser Reparaturen ohnehin stattgefunden hätten“. Der tatsächliche Effekt ist also offen. Zur Finanzierung durch die Hersteller und zu einer europaweiten Einigung steht nichts im Text."),
   rReparatur.tfng("detail", "MID",
     [
-      ["Hersteller dürfen freie Werkstätten künftig nicht mehr mit technischen Mitteln von Reparaturen fernhalten.", "R"],
-      ["Die Hersteller geben an, dass die Lagerung von Ersatzteilen keine zusätzlichen Kosten verursacht.", "F"],
-      ["Viele Reparaturbetriebe planen wegen der neuen Regeln, mehr Personal einzustellen.", "NG"],
+      ["Cafés, in denen Ehrenamtliche beim Reparieren helfen, werden in den meisten Städten von der Kommune bezuschusst.", "NG"],
+      ["Software, die ausschließlich Originalteile zulässt und freie Werkstätten dadurch ausbremst, soll künftig nicht mehr erlaubt sein.", "R"],
+      ["Die Umweltverbände lehnen die neuen Vorschriften grundsätzlich ab.", "F"],
+      ["Bei komplizierter Elektronik können Cafés mit freiwilligen Helfern eine Fachwerkstatt nicht ersetzen.", "R"],
     ],
-    "1 R: Absatz 2 (keine technischen Tricks wie Software, die nur Originalteile akzeptiert, um unabhängige Werkstätten auszuschließen). 2 F: Absatz 4, Lagerung „binde Kapital und Lagerfläche“. 3 NG: Der Text erwähnt nur fehlenden Nachwuchs, keine Einstellungspläne."),
+    "1 NG: Reparaturcafés werden beschrieben (Absatz 6), von einer Förderung durch Kommunen ist keine Rede. 2 R: Absatz 2, Hersteller dürfen unabhängige Werkstätten nicht durch technische Tricks wie Software, die nur Originalteile akzeptiert, ausschließen. 3 F: Absatz 3, die Verbände „begrüßen die Regeln grundsätzlich“, halten sie aber für unzureichend. 4 R: Absatz 6, Professionelle Werkstätten können solche Initiativen nicht ersetzen, bei komplexer Elektronik stoßen die Ehrenamtlichen schnell an ihre Grenzen."),
 
   // Weiterbildung
   rWeiterbildung.match("structure", "HARD",
     "Welcher Satz passt in welche Lücke? Zwei Sätze passen nicht.",
     ["Lücke [1]", "Lücke [2]", "Lücke [3]", "Lücke [4]"],
     [
-      "Automatisierung betrifft dagegen vor allem hoch qualifizierte Tätigkeiten.",
-      "So weit, so richtig, doch die Sache hat einen Haken.",
-      "Einige Unternehmen haben daraus bereits die Konsequenz gezogen und feste Lernzeiten in den Arbeitsalltag eingeplant.",
-      "Abendkurse aber muss man sich zeitlich erst einmal leisten können.",
-      "Wer sich weigert, sich weiterzubilden, verliert deshalb zu Recht seinen Arbeitsplatz.",
-      "Das hat weniger mit fehlender Motivation zu tun als mit fehlenden Angeboten und mangelnder Ermutigung durch Vorgesetzte.",
+      "Digitale Lernangebote haben in den letzten Jahren stark zugenommen.",
+      "Gegen diesen Gedanken ist im Grundsatz nichts einzuwenden, nur die Umsetzung ist fragwürdig.",
+      "Es spricht deshalb einiges dafür, Lernzeiten fest in den Arbeitsalltag einzuplanen.",
+      "Ausgerechnet sie wären auf neues Wissen am stärksten angewiesen.",
+      "Kritiker bemängeln, dass Zertifikate aus Kursen auf dem Arbeitsmarkt oft kaum beachtet werden.",
+      "Doch wer abends einen Kurs besuchen soll, muss dafür erst einmal Kraft und freie Zeit haben.",
     ],
-    [2, 4, 6, 3],
-    "[1] „Haken“ bereitet das „nämlich“ des Folgesatzes vor. [2] „Abendkurse“ greift die Kurse am Abend auf und leitet zu den Gruppen mit wenig Zeit über. [3] „Das“ bezieht sich auf die seltenere Teilnahme. [4] „feste Lernzeiten“ wird im nächsten Satz mit „Lernzeit als Arbeitszeit“ aufgenommen. Der Satz zur Automatisierung widerspricht Absatz 3, der Satz zum Arbeitsplatzverlust der Haltung des Kommentars."),
+    [2, 6, 4, 3],
+    "[1] Der Einwand („im Grundsatz nichts einzuwenden, nur ...“) bereitet das „nämlich“ des Folgesatzes vor: Die Verantwortung wird abgeladen. [2] „Doch“ setzt die Kosten- und Zeitfrage fort, der Folgesatz nennt Gruppen mit wenig Zeit. [3] „Sie“ bezieht sich auf die Beschäftigten in einfachen Tätigkeiten; „beiden Gruppen“ im Folgesatz setzt diese Aussage voraus. [4] „deshalb“ zieht die Folgerung aus den Vorteilen für Unternehmen; der nächste Satz spricht von „Lernzeit als Arbeitszeit“. Der Satz zu digitalen Angeboten und der zu den Zertifikaten sind zum Thema passend, schließen aber an keiner der vier Stellen an."),
   rWeiterbildung.choice("inference", "MID", "Welche Position vertritt der Kommentar?",
-    "Unternehmen sollten Weiterbildung als gemeinsame Aufgabe verstehen und Lernzeit ermöglichen.",
+    "Unternehmen sollten Weiterbildung als gemeinsame Aufgabe verstehen und Lernzeit ausdrücklich in der Arbeitszeit einplanen.",
     [
-      "Beschäftigte sollten gesetzlich zur Weiterbildung verpflichtet werden.",
-      "Weiterbildung ist allein Sache der einzelnen Beschäftigten.",
-      "Der Begriff des lebenslangen Lernens sollte nicht mehr verwendet werden.",
+      "Beschäftigte sollten gesetzlich zu regelmäßiger Weiterbildung verpflichtet werden, damit niemand zurückbleibt.",
+      "Weiterbildung muss Sache der Einzelnen bleiben, weil nur sie ihren eigenen Bedarf genau einschätzen können.",
+      "Der Begriff des lebenslangen Lernens sollte aufgegeben werden, weil er vor allem Druck erzeugt.",
     ], 3,
-    "Absatz 6 und Schluss: Lernzeit als Arbeitszeit, Investition für beide Seiten; wer Lernen fordert, muss Bedingungen schaffen. Zwang wird ausdrücklich abgelehnt („niemand gezwungen“); den Begriff kritisiert der Text nur, er will ihn nicht abschaffen."),
+    "Absatz 6 und Schluss: Lernzeit als Arbeitszeit, Investition für beide Seiten; wer Lernen fordert, muss Bedingungen schaffen. Zwang wird ausdrücklich abgelehnt („niemand gezwungen“); die Verantwortung der Beschäftigten ist nur ein Teil; den Begriff kritisiert der Text, er will ihn nicht abschaffen."),
   rWeiterbildung.choice("vocabulary", "EASY", "Was bedeutet „auf der Strecke bleiben“ im dritten Absatz?",
-    "nicht mithalten können und den Anschluss verlieren",
+    "nicht mehr mithalten können und den Anschluss verlieren",
     [
-      "unterwegs eine Pause einlegen",
-      "am bisherigen Arbeitsplatz bleiben",
-      "sich gegen Veränderungen wehren",
+      "unterwegs eine Pause einlegen und dann weitermachen",
+      "im alten Betrieb bleiben und keine neue Stelle suchen",
+      "sich gegen den Wandel wehren und alle Neuerungen blockieren",
     ], 1,
-    "Idiom „auf der Strecke bleiben“ = scheitern, zurückbleiben. Der Kontext (wachsende Kluft, Risiko beim technologischen Wandel) stützt diese Bedeutung."),
+    "Idiom „auf der Strecke bleiben“ = scheitern, zurückbleiben. Der Kontext (wachsende Kluft, Risiko beim technologischen Wandel) stützt diese Bedeutung. Die anderen Optionen lesen die Wendung wörtlich oder passen nicht zur Rolle der Betroffenen."),
   rWeiterbildung.tfng("detail", "MID",
     [
-      ["Laut Kommentar wird in wirtschaftlich schwierigen Zeiten oft zuerst bei der Weiterbildung gespart.", "R"],
-      ["Gut qualifizierte Beschäftigte bilden sich seltener weiter als gering qualifizierte.", "F"],
-      ["Die Gebühren für Weiterbildungskurse sind in den letzten Jahren deutlich gestiegen.", "NG"],
+      ["Wenn die Wirtschaft schlecht läuft, werden Weiterbildungsangebote in vielen Betrieben als Erstes gekürzt.", "R"],
+      ["Ein Seminar zum Zeitmanagement bringt wenig, solange sich an den Abläufen im Betrieb nichts ändert.", "R"],
+      ["Der Autor meint, Lernplattformen lösten das Zeitproblem der Beschäftigten, weil man dort jederzeit lernen kann.", "F"],
     ],
-    "1 R: Absatz 2 („in schlechten als Erstes streicht“). 2 F: Absatz 3, es ist umgekehrt. 3 NG: Dass Beschäftigte Gebühren oft selbst tragen, steht im Text, eine Preisentwicklung nicht."),
+    "1 R: Absatz 2 („in schlechten als Erstes streicht“). 2 R: Absatz 4, das Wochenendseminar verändert „oft wenig“, wenn die Abläufe gleich bleiben. 3 F: Absatz 5, die Plattformen verlagern das Lernen „in die Randzeiten des Tages“ und ersetzen keine eigene Lernzeit."),
 
   // KI-Auswahl
   rKi.match("gist", "MID",
     "Welche Aussage passt zu welcher Person? Eine Aussage passt zu keiner Person.",
     [
-      "Bei sehr vielen Bewerbungen ist eine maschinelle Vorauswahl eine echte Entlastung.",
-      "Bewerbende sollten erfahren, ob eine Maschine ihre Unterlagen prüft.",
-      "Wer seine Bewerbung nur auf passende Schlagwörter ausrichtet, kommt damit am Ende nicht weit.",
-      "Der Einsatz solcher Programme sollte gesetzlich verboten werden.",
+      "Wenn sich sehr viele Menschen auf eine Stelle bewerben, hilft ein Programm bei der ersten Sichtung.",
+      "Wer sich bewirbt, sollte wissen, ob ein Mensch oder ein System die Unterlagen beurteilt.",
+      "Wer seine Unterlagen nur nach Stichwörtern ausrichtet, fällt spätestens im persönlichen Gespräch auf.",
+      "Programme zur Vorauswahl sollten gesetzlich untersagt werden.",
     ],
     ["A: Miriam Kessler", "B: Tobias Hahn", "C: Leyla Aksoy", "D: Jonas Weber", "keine der Personen"],
     [2, 3, 4, 5],
-    "1 → B (mehrere Hundert Bewerbungen, ohne Unterstützung kaum zu bewältigen). 2 → C (Information der Bewerbenden „unverzichtbar“). 3 → D (spätestens im Gespräch fällt fehlende Substanz auf). 4 → niemand fordert ein Verbot."),
+    "1 → B (mehrere Hundert Bewerbungen, ohne Unterstützung kaum zu bewältigen). 2 → C (Information der Bewerbenden „unverzichtbar“). 3 → D (spätestens im Vorstellungsgespräch fällt fehlende Substanz auf). 4 → niemand fordert ein Verbot; C sagt ausdrücklich, ihr Argument richte sich nicht gegen solche Systeme."),
   rKi.choice("detail", "MID", "Unter welcher Voraussetzung kann Software laut Miriam Kessler zu gerechteren Entscheidungen beitragen?",
-    "wenn man ihre Ergebnisse immer wieder auf Benachteiligungen hin kontrolliert",
+    "wenn ihre Ergebnisse regelmäßig darauf geprüft werden, ob bestimmte Gruppen benachteiligt sind",
     [
-      "wenn sie die endgültige Entscheidung über die Einstellung trifft",
-      "wenn sie zusätzlich Fotos und Namen der Bewerbenden auswertet",
-      "wenn sie aus den bisherigen Einstellungen des Unternehmens lernt",
+      "wenn sie zusätzlich Fotos und Namen der Bewerbenden auswertet, um ein vollständigeres Bild zu bekommen",
+      "wenn sie aus den früheren Einstellungen des Unternehmens lernt und deren Muster fortführt",
+      "wenn sie die endgültige Entscheidung trifft, damit persönliche Vorlieben keine Rolle mehr spielen",
     ], 3,
     "Text A: Nur bei regelmäßiger Überprüfung, ob Gruppen systematisch schlechter abschneiden. Die Entscheidung soll beim Menschen bleiben; Fotos und Namen sind gerade die Störfaktoren; das Lernen aus alten Entscheidungen kritisiert Leyla Aksoy (C)."),
   rKi.choice("inference", "HARD", "Worin stimmen Miriam Kessler und Leyla Aksoy überein?",
-    "Programme können bestimmte Gruppen benachteiligen, wenn niemand genau hinsieht.",
+    "Programme können bestimmte Gruppen benachteiligen, wenn niemand ihre Ergebnisse genau kontrolliert.",
     [
-      "Programme urteilen grundsätzlich fairer als Menschen.",
-      "Bewerbende sollten ihre Unterlagen an die Software anpassen.",
-      "Videointerviews sollten nicht automatisch ausgewertet werden.",
+      "Menschen urteilen bei der Personalauswahl grundsätzlich fairer als jede Software.",
+      "Bewerbende sollten ihre Unterlagen gezielt an die Stichwörter der Software anpassen.",
+      "Videointerviews sollten in Unternehmen grundsätzlich nicht automatisch ausgewertet werden.",
     ], 2,
-    "A verlangt Kontrollen, ob Gruppen „systematisch schlechter abschneiden“; C warnt, dass Software alte Bevorzugungen „weniger sichtbar“ fortsetzt. Fairness „grundsätzlich“ behauptet A nicht; Anpassung an Software thematisiert D, Videointerviews B."),
+    "A verlangt Kontrollen, ob Gruppen „systematisch schlechter abschneiden“; C warnt, dass Software alte Bevorzugungen „weniger sichtbar“ fortsetzt. Beide halten Software nicht für schlechter als Menschen; Anpassung an Software thematisiert D, Videointerviews B."),
   rKi.tfng("detail", "EASY",
     [
-      ["Das Unternehmen von Tobias Hahn wertet Videointerviews inzwischen nicht mehr automatisch aus.", "R"],
-      ["Laut Leyla Aksoy können Entwickler immer nachvollziehen, wie ihr System zu einer Bewertung kommt.", "F"],
-      ["Jonas Weber hat früher selbst in einer Personalabteilung gearbeitet.", "NG"],
+      ["Nach Ansicht von Miriam Kessler darf eine Software die Auswahl unterstützen, aber nicht endgültig entscheiden.", "R"],
+      ["Leyla Aksoy lehnt den Einsatz lernender Systeme in der Personalauswahl grundsätzlich ab.", "F"],
+      ["Das Unternehmen von Tobias Hahn hat die Software für die Sichtung der Unterlagen bei einem externen Anbieter gekauft.", "NG"],
     ],
-    "1 R: Text B, das Verfahren wurde „wieder eingestellt“. 2 F: Text C, selbst Entwickler können es „oft nicht genau erklären“. 3 NG: Text D spricht nur über seine heutige Beratungstätigkeit, nicht über frühere Stellen."),
+    "1 R: Text A, die Entscheidung „muss in jedem Fall bei einem Menschen liegen“. 2 F: Text C, ihre Kritik sei „kein Argument gegen solche Systeme“, sondern eines für mehr Transparenz. 3 NG: Text B nennt die Software und ihren Nutzen, woher sie stammt, steht nicht im Text."),
+
+  // Stadtbäume
+  rBaeume.choice("detail", "MID", "Wovon hängt die kühlende Wirkung eines Stadtbaums nach der Untersuchung vor allem ab?",
+    "davon, ob der Baum genug Wasser bekommt und an heißen Tagen viel davon verdunsten kann",
+    [
+      "davon, wie dicht seine Krone ist und wie viel Schatten sie auf Straße und Fassaden wirft",
+      "davon, wie jung der Baum ist und wie schnell er in den ersten Jahren in die Höhe wächst",
+      "davon, ob die Häuser in der Umgebung hell gestrichen sind und Sonnenlicht zurückwerfen",
+    ], 0,
+    "Absatz 1 und 2: Entscheidend sei „weniger der Schatten als die Verdunstung“, und der Effekt hänge von der Wasserversorgung ab. Junge Pflanzungen entfalten ihre Wirkung erst nach Jahrzehnten; helle Fassaden sind in der Untersuchung gerade kein Ersatz für Bäume."),
+  rBaeume.choice("inference", "MID", "Was raten die Forschenden den Städten?",
+    "zuerst die vorhandenen alten Bäume zu schützen, bevor sie viele junge Bäume pflanzen",
+    [
+      "überall sofort Schwammstraßen zu bauen, weil sich deren Nutzen bereits eindeutig belegen lässt",
+      "bevorzugt junge Bäume zu pflanzen, weil diese schneller und stärker kühlen als alte Bäume",
+      "vor allem die Fassaden hell zu streichen, weil dadurch der Wasserbedarf der Bäume sinkt",
+    ], 2,
+    "Letzter Satz: „zunächst vorhandene Altbäume zu schützen, statt allein auf junge Pflanzungen zu setzen“. Ob sich Schwammstraßen bezahlt machen, sei „noch offen“; junge Bäume wirken erst nach Jahrzehnten; helle Fassaden werden nur als Vergleichswert erwähnt."),
+
+  // Museum
+  rMuseum.choice("detail", "EASY", "Was ist seit der Abschaffung des Eintritts geschehen?",
+    "Es kommen mehr Menschen, und ein Teil der fehlenden Einnahmen wird anderweitig ausgeglichen.",
+    [
+      "Die Besucherzahl hat sich verdoppelt, und die Gesamteinnahmen des Museums sind trotzdem gestiegen.",
+      "Das Publikum ist im Wesentlichen gleich geblieben, doch die Gäste bleiben jetzt deutlich länger.",
+      "Die Zahl der Stammgäste ist gestiegen, weil es jetzt häufiger spontane Führungen gibt.",
+    ], 1,
+    "Absatz 1: Die Besucherzahl stieg „um knapp die Hälfte“ (nicht verdoppelt), die Ticketeinnahmen fielen weg und wurden „zum Teil“ durch Café und Spenden aufgefangen. Absatz 2: Die Neuen bleiben kürzer und kommen seltener wieder."),
+  rMuseum.choice("inference", "MID", "Wie reagiert die Direktorin auf den Einwand der Kritiker?",
+    "Sie weist ihn zurück, räumt aber ein, dass sich Besucher schwerer an das Haus binden lassen.",
+    [
+      "Sie stimmt den Kritikern zu und will den Eintritt in absehbarer Zeit wieder einführen.",
+      "Sie bestreitet, dass die Besucherbefragung eine kürzere Aufenthaltsdauer der Neuen zeigt.",
+      "Sie hält den Einwand für berechtigt, weil kostenlose Angebote grundsätzlich weniger genutzt werden.",
+    ], 0,
+    "Absatz 3: Wertschätzung lasse sich „nicht am Preis ablesen“ (Zurückweisung), aber das Museum müsse „stärker um Stammgäste werben“ (Eingeständnis eines Bindungsproblems). Eine Rückkehr zum Eintritt ist nicht erwähnt; die Befragung wird nicht bestritten."),
+
+  // Genossenschaft
+  rGeno.choice("detail", "MID", "Was nennt die Verfasserin als Gegenleistung für die vergleichsweise niedrige Miete?",
+    "Die Bewohner müssen sich an Entscheidungen beteiligen und Aufgaben in der Gemeinschaft übernehmen.",
+    [
+      "Die Bewohner müssen beim Auszug einen Teil ihres Anteils dauerhaft in der Genossenschaft lassen.",
+      "Die Bewohner müssen für Garten und Gemeinschaftsräume zusätzlich zur Miete einen festen Betrag zahlen.",
+      "Die Bewohner müssen damit rechnen, dass die Miete nach jeder Versammlung schrittweise angehoben wird.",
+    ], 1,
+    "Absatz 3: „Der Preis dafür ist, dass man mitreden muss“ (Versammlung, Arbeitsgruppen). Der Anteil wird beim Auszug zurückgezahlt; zusätzliche Beträge werden nicht genannt; Mieterhöhungen brauchen die Zustimmung der Mitglieder."),
+  rGeno.choice("inference", "HARD", "Für wen ist das Modell nach der Einschätzung der Verfasserin weniger geeignet?",
+    "für Menschen, die voraussichtlich in absehbarer Zeit wieder umziehen müssen",
+    [
+      "für Menschen, die sich in Konflikten lieber zurückhalten und Streit meiden",
+      "für Menschen, die keinen größeren Geldbetrag auf einmal zurückzahlen können",
+      "für Menschen, die gern in Gärten arbeiten und Gemeinschaft ausdrücklich suchen",
+    ], 3,
+    "Letzter Absatz: Wer häufig umzieht, sollte es sich überlegen, weil der Anteil Geld bindet und die Wartelisten lang sind. Konflikte sieht die Verfasserin eher als Vorteil (sie kommen früh zur Sprache); der Anteil wird eingezahlt und zurückgezahlt, nicht umgekehrt; Garten-Arbeitsgruppen werden positiv erwähnt."),
+
+  // Fotokurse
+  rFoto.match("detail", "HARD",
+    "Welcher Kurs passt zu welcher Person? Zwei Kurse passen zu niemandem.",
+    [
+      "Herr Berger besitzt eine Kamera und will lernen, sie manuell einzustellen. Unter der Woche hat er abends keine Zeit, nur am Wochenende kann er teilnehmen.",
+      "Frau Köhler besitzt keine Kamera und will auch keine kaufen. Ihre Alltagsfotos möchte sie trotzdem verbessern, und sie kann sich dafür nur einen einzigen Vormittag freinehmen.",
+      "Herr Lindner fotografiert seit Jahren regelmäßig und will seine vorhandenen Aufnahmen nachträglich aufwerten. Ein leistungsfähiger Computer steht ihm zu Hause nicht zur Verfügung.",
+      "Frau Schulz möchte lernen, Menschen professionell zu fotografieren. Sie hat weder Vorkenntnisse noch Ausrüstung und kann nur abends.",
+    ],
+    [
+      "A: Naturfotografie mit der Spiegelreflexkamera",
+      "B: Fotografieren im Moor",
+      "C: Bessere Bilder im Alltag",
+      "D: Bildbearbeitung für Fotofreunde",
+      "E: Porträts im Atelier",
+      "F: Analoge Fotografie und Dunkelkammer",
+    ],
+    [2, 3, 4, 5],
+    "1 → B: Eigene Kamera und manuelle Einstellungen passen zu A und B, nur B liegt am Wochenende (A dienstagabends). 2 → C: Ohne eigene Kamera kommen C, E (Ausrüstung leihbar) und F (Filmkameras gestellt) in Frage, nur C dauert genau einen Vormittag. 3 → D: nachträgliche Bearbeitung mit Rechnern im Schulungsraum. 4 → E: Porträts im Studio, Ausrüstung leihbar, keine Vorkenntnisse, donnerstagabends. A und F bleiben übrig."),
 ];
 
 // ---------------------------------------------------------------- LISTENING
@@ -677,6 +790,16 @@ function forClip(stimulusKey: string) {
         key: { kind: "TFNG", answers: Object.fromEntries(statements.map(([, a], i) => [ids[i], a])) },
       };
     },
+    /** Note taking: one typed gap per entry of `answers`, each with every accepted spelling. */
+    notes(skill: LSkill, within: Within, prompt: string, answers: string[][], explanation: string): SeedItem {
+      const ids = answers.map((_, i) => `g${i + 1}`);
+      return {
+        ...base(skill, within, prompt, explanation),
+        type: "GAP_FILL",
+        content: { kind: "GAP", gaps: ids.map((id) => ({ id })) },
+        key: { kind: "GAP", answers: Object.fromEntries(ids.map((id, i) => [id, answers[i]])) },
+      };
+    },
     match(
       skill: LSkill,
       within: Within,
@@ -701,172 +824,270 @@ function forClip(stimulusKey: string) {
 }
 
 // Clip 1: expert interview (Goethe C1 Hören Teil 2 style).
-const L_QUEREINSTIEG = clip("quereinstieg", "Interview: Quereinstieg als Strategie", "Arbeit und Arbeitsmarkt",
+const L_QUEREINSTIEG = clip("quereinstieg-v3", "Interview: Quereinstieg als Strategie", "Arbeit und Arbeitsmarkt",
   [
     { label: "Moderator", voice: "B" },
     { label: "Frau Hartmann", voice: "A" },
   ],
   [
-    "Moderator: Herzlich willkommen zu unserer Sendung über die Arbeitswelt. Mein Gast ist heute die Arbeitsmarktforscherin Svenja Hartmann. Frau Hartmann, immer mehr Unternehmen werben gezielt um Quereinsteiger, also um Menschen, die ursprünglich etwas ganz anderes gelernt haben. Ist das eine Notlösung?",
-    "Frau Hartmann: Also, ganz ehrlich, am Anfang war es das oft. Wenn man auf eine Stelle keine einzige passende Bewerbung bekommt, wird man eben flexibler. Inzwischen beobachten wir aber, dass viele Betriebe den Quereinstieg ganz bewusst als Strategie nutzen. Und zwar nicht nur, weil Fachkräfte fehlen, sondern weil Leute mit einem anderen Hintergrund oft Perspektiven mitbringen, die im Team bisher gefehlt haben.",
-    "Moderator: Können Sie ein Beispiel nennen?",
-    "Frau Hartmann: Na ja, nehmen Sie eine ehemalige Erzieherin, die heute in der Softwareentwicklung arbeitet. Die bringt eine Fähigkeit mit, die in der IT gar nicht so selbstverständlich ist: Sie kann komplizierte Dinge so erklären, dass auch Laien sie verstehen. In Projekten, in denen Entwickler eng mit Kunden zusammenarbeiten, ist das unglaublich wertvoll.",
-    "Moderator: Gibt es Bereiche, in denen das besonders gut funktioniert?",
-    "Frau Hartmann: Erstaunlich gut klappt es überall dort, wo man vieles in der Praxis lernt und schnell sichtbare Fortschritte macht, etwa in der IT oder im Handwerk. Schwieriger ist es in Berufen, für die man eine staatliche Anerkennung braucht. Da führt an einer formalen Qualifikation einfach kein Weg vorbei.",
-    "Moderator: Spielt das Alter dabei eine Rolle? Viele denken ja, mit Mitte vierzig sei es für einen Neuanfang zu spät.",
-    "Frau Hartmann: Na ja, das ist ein verbreitetes Vorurteil. In unseren Daten sind die meisten Quereinsteiger zwischen dreißig und fünfundvierzig, und die Älteren schneiden keineswegs schlechter ab. Sie bringen oft mehr Lebenserfahrung mit und wissen genauer, was sie wollen. Was mit dem Alter allerdings zunimmt, sind die finanziellen Verpflichtungen, und das hat Folgen, auf die wir sicher gleich noch kommen.",
-    "Moderator: Das klingt fast zu schön. Wo liegen denn die Schwierigkeiten?",
-    "Frau Hartmann: Die größte Hürde ist, anders als viele denken, nicht die fachliche Einarbeitung. Die lässt sich mit guten Programmen in ein bis zwei Jahren schaffen. Schwieriger ist, dass viele Quereinsteiger anfangs deutlich weniger verdienen als in ihrem alten Beruf, jedenfalls wenn sie dort schon Berufserfahrung hatten. Das muss man sich erst einmal leisten können. Und dann gibt es noch ein Problem, über das selten gesprochen wird: Manche Teams nehmen die Neuen nicht richtig ernst. Da heißt es dann schnell: Die hat ja nicht einmal Informatik studiert.",
-    "Moderator: Was können Unternehmen dagegen tun?",
-    "Frau Hartmann: Eine ganze Menge. Am besten funktioniert es nach unseren Daten, wenn jede Person, die quer einsteigt, eine feste Ansprechperson im Team bekommt. Also nicht die Führungskraft, sondern eine erfahrene Kollegin oder einen Kollegen auf derselben Ebene. Dort, wo es das gab, waren nach drei Jahren noch rund vier von fünf Quereinsteigern im Betrieb. Ohne diese Begleitung war es, grob gesagt, nur gut die Hälfte.",
-    "Moderator: Würden Sie also jedem raten, den Schritt zu wagen?",
-    "Frau Hartmann: Jedem? Nein. Ich würde sagen: Wer sich für ein neues Feld wirklich interessiert und eine finanziell schwierige Anfangszeit in Kauf nehmen kann, hat heute bessere Chancen als je zuvor. Wer dagegen vor allem auf ein schnelles höheres Gehalt hofft, wird wahrscheinlich enttäuscht.",
+    "Moderator: Willkommen zu „Arbeitswelt aktuell“. Heute geht es um Quereinsteiger, also um Leute, die in einem Beruf arbeiten, den sie ursprünglich gar nicht gelernt haben. Bei mir im Studio ist die Arbeitsmarktforscherin Svenja Hartmann. Frau Hartmann, ist der Quereinstieg nicht eher eine Notlösung?",
+    "Frau Hartmann: Na ja, am Anfang war er das oft. Wenn auf eine Stelle keine einzige passende Bewerbung kommt, wird man eben flexibel. Aber das hat sich geändert. Viele Betriebe setzen heute ganz bewusst auf Quereinsteiger, und zwar nicht nur, weil Fachkräfte fehlen. Diese Leute bringen oft eine Sicht mit, die im Team bisher gefehlt hat.",
+    "Moderator: Haben Sie ein Beispiel?",
+    "Frau Hartmann: Klar. Eine ehemalige Erzieherin, die jetzt in der Softwareentwicklung arbeitet. Sie kann komplizierte Dinge erklären, ohne dass sich jemand dumm vorkommt. Das ist in der IT, ach, wie soll ich sagen, nicht gerade selbstverständlich. Gerade wenn Entwickler eng mit Kunden zusammenarbeiten, ist das Gold wert.",
+    "Moderator: Klappt das in jeder Branche?",
+    "Frau Hartmann: Nein. Gut klappt es dort, wo man viel in der Praxis lernt, also in der IT oder im Handwerk. Schwierig wird es bei Berufen mit staatlicher Anerkennung. Da kommt man an einem formalen Abschluss einfach nicht vorbei.",
+    "Moderator: Und wo hakt es sonst? Das klingt ja fast zu schön.",
+    "Frau Hartmann: Die größte Hürde ist, anders als viele denken, nicht die Einarbeitung. Die schafft man mit guten Programmen in ein, zwei Jahre. Schwierig ist das Geld. Viele verdienen anfangs deutlich weniger als in ihrem alten Beruf, jedenfalls wenn sie dort schon Erfahrung hatten. Das muss man sich erst mal leisten können. Und dann gibt es noch etwas, worüber kaum jemand spricht: Manche Teams nehmen die Neuen nicht ernst. Da heißt es dann schnell: Die hat ja nicht mal Informatik studiert.",
+    "Moderator: Was können Betriebe dagegen tun?",
+    "Frau Hartmann: Einiges. Am besten funktioniert eine feste Ansprechperson im Team. Nicht die Chefin, nicht der Chef, sondern jemand auf derselben Ebene, also eine erfahrene Kollegin oder ein Kollege. Wo es das gab, waren nach drei Jahren noch rund vier von fünf Quereinsteigern im Betrieb. Ohne diese Begleitung waren es nur gut die Hälfte. Also: vier von fünf mit Begleitung, gut die Hälfte ohne.",
+    "Moderator: Würden Sie denn jedem raten, den Schritt zu wagen?",
+    "Frau Hartmann: Jedem? Nein, nicht jedem. Wer sich wirklich für ein neues Feld interessiert und eine knappe Anfangszeit finanziell durchhalten kann, hat heute bessere Chancen als je zuvor. Wer dagegen nur schnell mehr Gehalt will, wird wahrscheinlich enttäuscht.",
   ],
 );
 
-// Clip 2: lecture, one voice (Goethe C1 Hören Teil 4 style).
-const L_GRUPPEN = clip("gruppenentscheidungen", "Vortrag: Wann Gruppen gut entscheiden", "Psychologie und Arbeit",
-  [{ label: "Dozent", voice: "B" }],
+// Clip 2: lecture with two questions from the audience (Goethe C1 Hören Teil 4 style).
+const L_GRUPPEN = clip("gruppenentscheidungen-v3", "Vortrag: Wann Gruppen gut entscheiden", "Psychologie und Arbeit",
   [
-    "Dozent: Guten Morgen, meine Damen und Herren. In unserer heutigen Sitzung geht es um eine Annahme, die in fast allen Organisationen als selbstverständlich gilt, nämlich dass Gruppen bessere Entscheidungen treffen als Einzelne.",
-    "Dozent: Auf den ersten Blick spricht vieles dafür. Mehrere Personen verfügen über mehr Wissen, sie können sich gegenseitig auf Fehler hinweisen, und eine gemeinsam getroffene Entscheidung wird später eher von allen mitgetragen. Die Forschung zeigt allerdings, dass sich diese Vorteile nur unter bestimmten Bedingungen tatsächlich einstellen.",
-    "Dozent: Ein gut untersuchtes Phänomen ist das sogenannte Gruppendenken. Gemeint ist die Tendenz, in einer Gruppe möglichst schnell Einigkeit herzustellen. Wer Zweifel hat, behält sie lieber für sich, um die gute Stimmung nicht zu gefährden oder nicht als Störenfried zu gelten. Das Ergebnis ist eine scheinbare Übereinstimmung, hinter der sich in Wirklichkeit ganz unterschiedliche Einschätzungen verbergen. Bemerkenswerterweise tritt dieses Phänomen besonders häufig in Gruppen auf, die sich gut verstehen und schon lange zusammenarbeiten. Gerade der Zusammenhalt, den wir im Allgemeinen für etwas Positives halten, kann hier also zum Problem werden.",
-    "Dozent: Besonders aufschlussreich finde ich Experimente, in denen jedes Gruppenmitglied vorab unterschiedliche Informationen erhielt. Um die richtige Lösung zu finden, hätten die Teilnehmenden ihr Wissen zusammentragen müssen. Was geschah stattdessen? Die Gruppen sprachen fast ausschließlich über die Informationen, die ohnehin alle kannten. Das, was nur eine einzelne Person wusste, kam kaum zur Sprache. Und so verfehlten viele Gruppen die beste Lösung, obwohl sie gemeinsam über alle nötigen Informationen verfügten.",
-    "Dozent: Woran liegt das? Eine naheliegende Erklärung ist, dass geteiltes Wissen in der Diskussion bestätigt wird. Wenn ich etwas sage, das alle anderen auch wissen, nicken sie, und ich wirke kompetent. Wenn ich dagegen etwas einbringe, das nur ich weiß, kann es niemand bestätigen, und ich wirke womöglich unsicher. Wer in der Gruppe gut dastehen will, hält sich also lieber an das, was ohnehin alle wissen.",
-    "Dozent: Nun könnte man meinen, die Lösung liege darin, einfach länger zu diskutieren. Das ist aber nur bedingt richtig. Wirksamer sind nach dem bisherigen Stand der Forschung strukturelle Maßnahmen. Zum Beispiel kann man die Mitglieder bitten, ihre Einschätzung zunächst jeweils für sich schriftlich festzuhalten, bevor überhaupt diskutiert wird. Eine andere Möglichkeit besteht darin, eine Person ausdrücklich damit zu beauftragen, Gegenargumente vorzubringen. Diese Rolle sollte übrigens wechseln, damit niemand dauerhaft als Bremser wahrgenommen wird.",
-    "Dozent: Auch die Reihenfolge der Wortmeldungen spielt eine Rolle. Wenn die ranghöchste Person zuerst ihre Meinung äußert, schließen sich die anderen häufig an, oft ohne es selbst zu bemerken. Ich empfehle Führungskräften daher, sich in Besprechungen zunächst zurückzuhalten und erst am Ende Stellung zu nehmen.",
-    "Dozent: Ich möchte damit nicht sagen, dass Einzelentscheidungen grundsätzlich besser sind. Gruppen haben ein großes Potenzial. Sie schöpfen es aber nur aus, wenn die Bedingungen stimmen. In der nächsten Sitzung schauen wir uns an, wie sich das in Online-Besprechungen verhält.",
+    { label: "Dozent", voice: "B" },
+    { label: "Studentin", voice: "A" },
+  ],
+  [
+    "Dozent: Guten Morgen zusammen. Heute geht es um eine Annahme, die fast jede Organisation für selbstverständlich hält: dass Gruppen bessere Entscheidungen treffen als Einzelne.",
+    "Dozent: Auf den ersten Blick spricht ja auch einiges dafür. Mehr Köpfe, mehr Wissen, man deckt gegenseitig Fehler auf, und was gemeinsam beschlossen wird, tragen hinterher meist alle mit. Die Forschung zeigt aber: Diese Vorteile stellen sich nur unter bestimmten Bedingungen ein.",
+    "Dozent: Fangen wir mit dem Gruppendenken an. Gemeint ist die Tendenz, möglichst schnell Einigkeit herzustellen. Wer Zweifel hat, behält sie für sich, um die Stimmung nicht zu stören. Am Ende sieht es nach Übereinstimmung aus, aber in Wirklichkeit denken alle etwas anderes. Und jetzt kommt das Überraschende: Das passiert besonders oft in Gruppen, die sich gut verstehen und schon lange zusammenarbeiten. Also ausgerechnet der Zusammenhalt, den wir sonst für etwas Gutes halten, wird dann zum Problem.",
+    "Dozent: Besonders aufschlussreich finde ich eine Reihe von Experimenten. Jedes Gruppenmitglied bekam vorab andere Informationen. Um die richtige Lösung zu finden, hätten alle ihr Wissen zusammentragen müssen. Und was passierte? Die Gruppen redeten fast nur über das, was ohnehin alle wussten. Was nur eine Person wusste, kam kaum zur Sprache. Viele Gruppen verfehlten deshalb die beste Lösung, obwohl sie gemeinsam alle nötigen Informationen hatten.",
+    "Studentin: Entschuldigung, darf ich kurz nachfragen? Woran liegt das denn?",
+    "Dozent: Gute Frage. Eine naheliegende Erklärung ist: Geteiltes Wissen wird bestätigt. Wenn ich etwas sage, was alle wissen, nicken die anderen, und ich wirke kompetent. Bringe ich dagegen etwas ein, das nur ich weiß, kann es niemand bestätigen, und ich wirke vielleicht unsicher. Also hält man sich lieber an das Bekannte.",
+    "Studentin: Und dann hilft es doch, einfach länger zu diskutieren, oder?",
+    "Dozent: Nur bedingt. Das ist ein verbreiteter Gedanke, aber wirksamer sind nach heutigem Stand strukturelle Maßnahmen. Man kann zum Beispiel die Mitglieder bitten, ihre Einschätzung erst für sich aufzuschreiben, bevor diskutiert wird. Oder man bestimmt eine Person, die ausdrücklich Gegenargumente vorbringt. Diese Rolle sollte übrigens wechseln, sonst gilt jemand dauerhaft als Bremser.",
+    "Dozent: Auch die Reihenfolge der Wortmeldungen zählt. Spricht die ranghöchste Person zuerst, schließen sich die anderen oft an, ohne es zu merken. Ich rate Führungskräften deshalb, sich zurückzuhalten und erst am Ende Stellung zu nehmen.",
+    "Dozent: Damit keine Missverständnisse entstehen: Einzelentscheidungen sind nicht grundsätzlich besser. Gruppen haben großes Potenzial, aber sie schöpfen es nur aus, wenn die Bedingungen stimmen. Nächste Woche, ach nein, in der übernächsten Sitzung, schauen wir uns an, wie das in Online-Besprechungen aussieht.",
   ],
 );
 
 // Clip 3: radio discussion, reduced to two voices (Goethe C1 Hören Teil 3 style).
-const L_GEHALT = clip("gehaltstransparenz", "Diskussion: Sollen Gehälter offengelegt werden?", "Arbeit und Gesellschaft",
+const L_GEHALT = clip("gehaltstransparenz-v3", "Diskussion: Sollen Gehälter offengelegt werden?", "Arbeit und Gesellschaft",
   [
     { label: "Frau Demir", voice: "A" },
     { label: "Herr Lorenz", voice: "B" },
   ],
   [
-    "Frau Demir: Herr Lorenz, Sie fordern, dass Unternehmen offenlegen, was ihre Beschäftigten verdienen. Ich muss gestehen, als Inhaberin eines kleinen Betriebs bereitet mir das ziemliche Bauchschmerzen.",
-    "Herr Lorenz: Das verstehe ich, aber ich möchte gleich etwas klarstellen. Es geht mir nicht darum, dass jeder die Gehaltsabrechnung seiner Kollegen einsehen kann. Mir geht es um nachvollziehbare Gehaltsbänder: Für jede Stelle wird festgelegt, zwischen welchem Mindest- und welchem Höchstbetrag das Gehalt liegt, und die Kriterien dafür sind allen bekannt.",
-    "Frau Demir: Na gut, das klingt schon weniger dramatisch. Trotzdem: In einem Betrieb mit zwölf Leuten weiß man doch sofort, wer gemeint ist. Und es gibt nun mal Gründe, warum jemand mehr verdient, die sich nicht in eine Tabelle pressen lassen. Etwa, weil jemand in einer schwierigen Phase geblieben ist, als andere gegangen sind.",
-    "Herr Lorenz: Aber genau das wäre doch ein Kriterium, das man benennen kann, nämlich Betriebszugehörigkeit oder besonderer Einsatz. Das Problem entsteht ja erst, wenn solche Gründe unausgesprochen bleiben. Dann vermuten die Leute nämlich ganz andere Gründe, und die sind meistens weniger schmeichelhaft.",
-    "Frau Demir: Und was ist mit denen, die bisher einfach besser verhandelt haben? Die wären dann doch die Verlierer.",
-    "Herr Lorenz: Nicht unbedingt. Niemandem wird etwas weggenommen. Aber wer künftig neu verhandelt, muss sich an denselben Kriterien messen lassen wie alle anderen.",
-    "Frau Demir: Das mag sein. Nur befürchte ich, dass die Offenlegung zunächst einmal vor allem eines erzeugt, und zwar Unruhe. Wer erfährt, dass er am unteren Ende seines Bandes liegt, ist doch erst mal frustriert.",
-    "Herr Lorenz: Kurzfristig, ja, das will ich gar nicht bestreiten. Aus Unternehmen, die umgestellt haben, wissen wir aber, dass sich die Lage meist nach etwa einem Jahr beruhigt. Und dann passiert etwas Interessantes: Die Gespräche über Gehalt werden sachlicher. Man verhandelt nicht mehr darüber, wer am geschicktesten pokert, sondern darüber, was jemand konkret tun muss, um weiterzukommen.",
-    "Frau Demir: Das gefällt mir, ehrlich gesagt. Gerade die Zurückhaltenden, die nie von sich aus nach einer Erhöhung fragen würden, hätten dann eine Chance. Wovon ich allerdings nicht überzeugt bin, ist, dass man das per Gesetz für alle Betriebe gleich regeln sollte. Für einen Konzern mit eigener Personalabteilung ist das etwas völlig anderes als für uns.",
-    "Herr Lorenz: Da sind wir gar nicht so weit auseinander. Ich könnte mir gut vorstellen, dass kleinere Betriebe mehr Zeit für die Umstellung bekommen und Unterstützung bei der Einführung.",
+    "Frau Demir: Herr Lorenz, Sie wollen, dass Firmen offenlegen, was ihre Leute verdienen. Ehrlich gesagt, als Inhaberin eines kleinen Betriebs bekomme ich dabei Bauchschmerzen.",
+    "Herr Lorenz: Das kann ich verstehen. Aber ich muss kurz etwas klarstellen: Niemand soll die Gehaltsabrechnung der Kollegen einsehen. Mir geht es um Gehaltsbänder. Für jede Stelle steht fest, zwischen welchem Mindest- und welchem Höchstbetrag das Gehalt liegt, und die Kriterien kennt jeder.",
+    "Frau Demir: Na gut, das klingt schon weniger dramatisch. Trotzdem: In einem Betrieb mit zwölf Leuten weiß doch sofort jeder, wer gemeint ist. Und manche Gründe passen nun mal in keine Tabelle. Zum Beispiel, wenn jemand in einer schwierigen Phase geblieben ist, als andere gegangen sind.",
+    "Herr Lorenz: Aber das kann man doch benennen! Betriebszugehörigkeit, besonderer Einsatz, das sind Kriterien. Das Problem entsteht erst, wenn solche Gründe unausgesprochen bleiben. Dann vermuten die Leute ganz andere Gründe, und die sind selten schmeichelhaft.",
+    "Frau Demir: Hm. Und die, die bisher einfach besser verhandelt haben? Die wären dann die Verlierer.",
+    "Herr Lorenz: Nicht unbedingt. Niemand verliert etwas. Aber wer künftig neu verhandelt, wird an denselben Kriterien gemessen wie alle anderen.",
+    "Frau Demir: Das mag sein. Ich befürchte nur, dass die Offenlegung erst einmal vor allem Unruhe bringt. Wer erfährt, dass er am unteren Ende seines Bandes liegt, ist doch frustriert.",
+    "Herr Lorenz: Kurzfristig ja, das bestreite ich gar nicht. Aber Firmen, die umgestellt haben, berichten: Nach etwa einem Jahr, also nach zwölf Monaten, beruhigt sich das meistens. Und dann werden die Gespräche sachlicher. Man verhandelt nicht mehr darüber, wer am besten pokert, sondern darüber, was man konkret tun muss, um weiterzukommen.",
+    "Frau Demir: Das gefällt mir, ehrlich gesagt. Gerade die Zurückhaltenden, die nie von sich aus nach mehr Geld fragen würden, hätten dann eine Chance. Aber per Gesetz für alle Betriebe gleich? Da bin ich nicht überzeugt. Für einen Konzern mit eigener Personalabteilung ist das etwas völlig anderes als für uns.",
+    "Herr Lorenz: Da liegen wir gar nicht so weit auseinander. Ich könnte mir gut vorstellen, dass kleinere Betriebe mehr Zeit bekommen und Unterstützung bei der Einführung.",
+  ],
+);
+
+// Clip 4: voicemail for note taking.
+const L_PHYSIO = clip("physio-nachricht", "Nachricht auf dem Anrufbeantworter", "Gesundheit und Termine",
+  [{ label: "Frau Reuter", voice: "A" }],
+  [
+    "Frau Reuter: Guten Tag, hier spricht Katrin Reuter von der Physiotherapiepraxis am Lindenplatz. Ich rufe an wegen Ihres Termins am Dienstag. Den muss ich leider verschieben, weil die neue Behandlungsliege für Raum zwei erst am Mittwoch geliefert wird. Ich könnte Ihnen stattdessen Donnerstag um halb zehn anbieten, nein, Entschuldigung, Donnerstag um halb elf. Falls das nicht passt, hätte ich noch den Freitag der kommenden Woche. Bitte bringen Sie dieses Mal ein großes Handtuch mit, und wenn Sie den Befundbericht Ihres Orthopäden haben, auch den. Rufen Sie mich bitte bis Mittwochmittag zurück, und zwar unter vier-sieben-drei, zwei-null-sechs-fünf. Ich wiederhole: vier-sieben-drei, zwei-null-sechs-fünf. Das ist meine Durchwahl. Vielen Dank, und bis bald.",
+  ],
+);
+
+// Clip 5: short radio report.
+const L_NACHTZUG = clip("nachtzug-beitrag", "Radiobeitrag: Nachtzüge kehren zurück", "Reisen und Verkehr",
+  [
+    { label: "Moderator", voice: "B" },
+    { label: "Reporterin", voice: "A" },
+  ],
+  [
+    "Moderator: Und jetzt zum Reisen. Nachtzüge galten lange als Auslaufmodell, doch jetzt kehren sie zurück. Unsere Reporterin Jana Wolf ist gestern selbst eine Nacht lang gefahren. Frau Wolf, wie war es?",
+    "Reporterin: Na ja, ehrlich gesagt besser als gedacht. Ich bin abends um zehn vor zehn in Berlin eingestiegen und morgens um halb acht in Wien angekommen. Das sind zehn Stunden, nein, genauer gesagt neun Stunden und vierzig Minuten. Ich hatte ein Abteil mit Liegen, und ich habe tatsächlich geschlafen.",
+    "Moderator: Und der Preis? Man hört ja, dass Nachtzüge teuer sind.",
+    "Reporterin: Das stimmt nur zum Teil. Wer früh bucht, zahlt für einen Sitzplatz manchmal weniger als im Tagzug. Die Liegeplätze sind etwas teurer, aber man spart ja ein Hotel. Das Problem ist ein anderes: Es gibt zu wenige Wagen. Viele sind über vierzig Jahre alt, und neue kommen erst in den nächsten Jahren. Deshalb sind beliebte Verbindungen im Sommer oft schon Monate vorher ausgebucht.",
+    "Moderator: Also lohnt es sich, früh zu planen.",
+    "Reporterin: Unbedingt. Und wer flexibel ist: Unter der Woche sind noch Plätze frei.",
+  ],
+);
+
+// Clip 6: service call.
+const L_HEIZUNG = clip("heizung-anruf", "Telefonat mit der Hausverwaltung", "Wohnen und Alltag",
+  [
+    { label: "Herr Berger", voice: "B" },
+    { label: "Frau Lenz", voice: "A" },
+  ],
+  [
+    "Herr Berger: Hausverwaltung Nordring, guten Tag, mein Name ist Berger.",
+    "Frau Lenz: Guten Tag, Lenz hier, ich wohne im Kastanienweg zwölf. Bei uns ist seit gestern Abend die Heizung kalt, im Bad und im Wohnzimmer.",
+    "Herr Berger: Seit gestern Abend, verstehe. Haben Sie schon geprüft, ob die Ventile aufgedreht sind?",
+    "Frau Lenz: Ja, alle. Die stehen auf vier. Das Wasser aus dem Hahn ist übrigens warm, nur die Heizkörper werden nicht warm.",
+    "Herr Berger: Hm. Dann liegt es vermutlich nicht an Ihrer Wohnung. Wir haben gestern die Anlage im Keller gewartet, möglicherweise ist dabei Luft ins System gelangt. Ich schicke den Techniker vorbei, und zwar morgen zwischen acht und zwölf Uhr. Passt Ihnen das?",
+    "Frau Lenz: Morgen früh geht leider nicht, ich habe bis elf einen Termin in der Praxis. Geht es auch nachmittags?",
+    "Herr Berger: Nachmittags kommt der Techniker erst ab Donnerstag. Dann sage ich Donnerstag, zwischen vierzehn und sechzehn Uhr.",
+    "Frau Lenz: Das ist aber erst in zwei Tagen. Bis dahin friere ich ja.",
+    "Herr Berger: Ich verstehe. Ich lasse Ihnen noch heute zwei Heizlüfter vom Hausmeister vorbeibringen, die können Sie so lange benutzen.",
+    "Frau Lenz: Ach so, das wäre wunderbar. Vielen Dank.",
   ],
 );
 
 const lQuer = forClip(L_QUEREINSTIEG.key);
 const lGruppen = forClip(L_GRUPPEN.key);
 const lGehalt = forClip(L_GEHALT.key);
+const lPhysio = forClip(L_PHYSIO.key);
+const lNachtzug = forClip(L_NACHTZUG.key);
+const lHeizung = forClip(L_HEIZUNG.key);
 
 const listeningItems: SeedItem[] = [
   // Quereinstieg
   lQuer.choice("gist", "EASY", "Wie hat sich die Haltung vieler Unternehmen zum Quereinstieg laut Frau Hartmann verändert?",
-    "Aus einer Notlösung ist eine bewusste Personalstrategie geworden.",
+    "Aus einer früheren Notlösung ist inzwischen eine ganz bewusste Strategie der Personalgewinnung geworden.",
     [
-      "Sie stellen Quereinsteiger nur noch ein, wenn sich gar keine Fachkräfte finden.",
-      "Sie ziehen Quereinsteiger inzwischen ausgebildeten Fachkräften grundsätzlich vor.",
-      "Sie lehnen den Quereinstieg zunehmend ab, weil die Einarbeitung zu teuer ist.",
+      "Sie stellen Quereinsteiger inzwischen nur noch ein, wenn sich gar keine Fachkräfte finden lassen.",
+      "Sie ziehen Quereinsteiger inzwischen ausgebildeten Fachkräften grundsätzlich vor, weil diese billiger sind.",
+      "Sie lehnen den Quereinstieg zunehmend ab, weil die Einarbeitung zu teuer und zu langwierig ist.",
     ], 1,
-    "„Am Anfang war es das oft [eine Notlösung] ... Inzwischen ... ganz bewusst als Strategie.“ Eine grundsätzliche Bevorzugung oder Ablehnung wird nicht genannt."),
+    "„Am Anfang war er das oft [eine Notlösung] ... Aber das hat sich geändert ... ganz bewusst.“ Eine grundsätzliche Bevorzugung oder Ablehnung wird nicht genannt."),
   lQuer.choice("detail", "MID", "Was nennt Frau Hartmann als größte Hürde für Quereinsteiger?",
-    "das zunächst niedrigere Einkommen",
+    "dass viele anfangs deutlich weniger Geld verdienen als in ihrem früheren Beruf",
     [
-      "die fachliche Einarbeitung",
-      "fehlende Abschlüsse in Informatik",
-      "die mangelnde Unterstützung durch Führungskräfte",
+      "dass die fachliche Einarbeitung mehrere Jahre dauert und kaum zu schaffen ist",
+      "dass für viele Berufe ein Studium der Informatik zwingend vorgeschrieben ist",
+      "dass die Führungskräfte den Quereinstieg im Team grundsätzlich nicht unterstützen",
     ], 3,
-    "Die fachliche Einarbeitung wird ausdrücklich verneint („nicht die fachliche Einarbeitung“); „schwieriger ist“, dass man anfangs weniger verdient. Das fehlende Studium ist nur ein Vorurteil mancher Teams."),
+    "Die fachliche Einarbeitung wird ausdrücklich verneint („nicht die Einarbeitung“, ein, zwei Jahre); „schwierig ist das Geld“. Das fehlende Studium ist nur eine Bemerkung mancher Teams, staatliche Anerkennung betrifft nur bestimmte Berufe."),
   lQuer.choice("detail", "MID", "Was zeigen die Daten zur Begleitung durch eine feste Ansprechperson?",
-    "Mit Begleitung bleiben deutlich mehr Quereinsteiger langfristig im Betrieb.",
+    "Mit einer festen Ansprechperson im Team bleiben deutlich mehr Quereinsteiger langfristig im Betrieb.",
     [
-      "Die Ansprechperson sollte am besten die direkte Führungskraft sein.",
-      "Ohne Begleitung verlassen fast alle Quereinsteiger den Betrieb im ersten Jahr.",
-      "Mit Begleitung ist die Einarbeitung schon nach drei Monaten abgeschlossen.",
+      "Die Begleitung gelingt am besten, wenn die direkte Führungskraft die Betreuung selbst übernimmt.",
+      "Ohne feste Begleitung verlässt ein Großteil der Quereinsteiger schon im ersten Jahr den Betrieb.",
+      "Mit Begleitung ist die fachliche Einarbeitung der Quereinsteiger schon nach wenigen Monaten abgeschlossen.",
     ], 0,
-    "Mit Ansprechperson sind nach drei Jahren rund vier von fünf noch im Betrieb, ohne nur gut die Hälfte. Die Führungskraft wird ausdrücklich ausgeschlossen („also nicht die Führungskraft“)."),
+    "Mit Ansprechperson sind nach drei Jahren rund vier von fünf noch im Betrieb, ohne nur gut die Hälfte. Die Führungskraft wird ausdrücklich ausgeschlossen („nicht die Chefin, nicht der Chef“); Zahlen zum ersten Jahr oder zu Monaten der Einarbeitung nennt sie nicht."),
   lQuer.choice("attitude", "HARD", "Wie steht Frau Hartmann zu der Frage, ob jeder den Quereinstieg wagen sollte?",
-    "Sie empfiehlt ihn nur unter bestimmten Voraussetzungen.",
+    "Sie empfiehlt ihn nur denen, die sich für das Feld interessieren und finanziell durchhalten können.",
     [
-      "Sie rät grundsätzlich davon ab.",
-      "Sie empfiehlt ihn vor allem wegen der besseren Verdienstmöglichkeiten.",
-      "Sie hält ihn für alle sinnvoll, die sich weiterbilden möchten.",
+      "Sie rät grundsätzlich davon ab, solange man dabei weniger verdient als im bisherigen Beruf.",
+      "Sie empfiehlt ihn vor allem denen, die schnell ein höheres Gehalt erreichen wollen.",
+      "Sie hält ihn für alle sinnvoll, die sich fachlich weiterentwickeln und Neues lernen möchten.",
     ], 2,
-    "„Jedem? Nein.“ Es lohnt sich bei echtem Interesse und wenn man eine finanziell schwierige Anfangszeit tragen kann; wer auf schnelles Geld hofft, wird enttäuscht."),
+    "„Jedem? Nein, nicht jedem.“ Es lohnt sich bei echtem Interesse und wenn man eine knappe Anfangszeit finanziell trägt; wer auf schnell mehr Gehalt hofft, wird enttäuscht."),
 
   // Gruppenentscheidungen
   lGruppen.choice("gist", "MID", "Worum geht es dem Dozenten in seinem Vortrag vor allem?",
-    "zu zeigen, unter welchen Bedingungen Gruppen ihre Stärken wirklich nutzen",
+    "zu zeigen, unter welchen Bedingungen Gruppen ihre Stärken wirklich nutzen und wann nicht",
     [
-      "zu beweisen, dass Einzelpersonen grundsätzlich klüger entscheiden",
-      "zu erklären, wie man Besprechungen zeitlich kürzer gestaltet",
-      "zu erklären, warum Gruppen in Online-Besprechungen schlechter entscheiden",
+      "zu beweisen, dass Einzelpersonen in den meisten Fällen die klügeren Entscheidungen treffen",
+      "zu erklären, mit welchen Methoden man Besprechungen zeitlich kürzer und effizienter gestaltet",
+      "zu erklären, warum Gruppen in Online-Besprechungen schlechtere Entscheidungen treffen",
     ], 2,
-    "Die Vorteile von Gruppen stellen sich „nur unter bestimmten Bedingungen“ ein; am Ende: „Ich möchte nicht sagen, dass Einzelentscheidungen grundsätzlich besser sind.“ Online-Besprechungen werden nur als Thema der nächsten Sitzung angekündigt."),
+    "Die Vorteile von Gruppen stellen sich „nur unter bestimmten Bedingungen“ ein; am Ende: „Einzelentscheidungen sind nicht grundsätzlich besser.“ Online-Besprechungen werden nur als Thema der übernächsten Sitzung angekündigt."),
   lGruppen.choice("detail", "MID", "Was geschah in den Experimenten, in denen die Mitglieder unterschiedliche Informationen hatten?",
-    "Die Gruppen sprachen vor allem über Wissen, das ohnehin alle hatten.",
+    "Die Gruppen sprachen vor allem über Informationen, die ohnehin alle Mitglieder schon kannten.",
     [
-      "Die Gruppen fanden fast immer die beste Lösung.",
-      "Die Gruppen brauchten deutlich länger als Einzelpersonen.",
-      "Die Teilnehmenden tauschten ihr Wissen vollständig aus.",
+      "Die Gruppen fanden fast immer die beste Lösung, weil sie ihr Wissen zusammentrugen.",
+      "Die Gruppen brauchten für ihre Entscheidung deutlich länger als die Einzelpersonen.",
+      "Die Teilnehmenden tauschten ihre unterschiedlichen Informationen vollständig untereinander aus.",
     ], 0,
-    "„fast ausschließlich über die Informationen, die ohnehin alle kannten“; Einzelwissen „kam kaum zur Sprache“, viele Gruppen „verfehlten die beste Lösung“. Zur Dauer sagt der Vortrag nichts."),
+    "„fast nur über das, was ohnehin alle wussten“; Einzelwissen „kam kaum zur Sprache“, viele Gruppen „verfehlten die beste Lösung“. Zur Dauer sagt der Vortrag nichts."),
   lGruppen.tfng("detail", "HARD",
     [
-      ["Laut Dozent genügt es meistens, in der Gruppe einfach länger zu diskutieren.", "F"],
-      ["Die Aufgabe, Gegenargumente vorzubringen, sollte nicht immer dieselbe Person übernehmen.", "R"],
-      ["In den meisten Unternehmen gibt es bereits feste Regeln gegen Gruppendenken.", "NG"],
+      ["Gruppendenken tritt laut Dozent vor allem in Gruppen auf, deren Mitglieder sich kaum kennen.", "F"],
+      ["In dem beschriebenen Experiment bestanden die Gruppen aus jeweils vier Personen.", "NG"],
+      ["Die Methode, Einschätzungen vorab schriftlich festzuhalten, wurde bereits in mehreren Firmen getestet.", "NG"],
+      ["Wer als Gegenredner auftritt, sollte diese Rolle nicht dauerhaft behalten, damit er nicht als Bremser gilt.", "R"],
     ],
-    "1 F: „nur bedingt richtig“, wirksamer sind strukturelle Maßnahmen. 2 R: „Diese Rolle sollte übrigens wechseln.“ 3 NG: Über Regeln in Unternehmen spricht der Dozent nicht."),
+    "1 F: Das Gruppendenken tritt „besonders oft“ in Gruppen auf, die sich gut verstehen und lange zusammenarbeiten. 2 NG: Das Experiment wird beschrieben, die Gruppengröße nicht genannt. 3 NG: Die Methode wird genannt, ob sie schon getestet wurde, sagt der Dozent nicht. 4 R: „Diese Rolle sollte übrigens wechseln, sonst gilt jemand dauerhaft als Bremser.“"),
   lGruppen.choice("detail", "EASY", "Was empfiehlt der Dozent Führungskräften?",
-    "die eigene Meinung in Besprechungen erst zum Schluss zu äußern",
+    "ihre eigene Meinung erst zum Schluss der Besprechung zu äußern, nach den anderen",
     [
-      "Besprechungen mit der eigenen Einschätzung zu eröffnen",
-      "wichtige Entscheidungen lieber allein zu treffen",
-      "die Rolle des Bremsers dauerhaft selbst zu übernehmen",
+      "Besprechungen mit der eigenen Einschätzung zu eröffnen, damit alle sich orientieren können",
+      "wichtige Entscheidungen lieber allein zu treffen, um Gruppendenken zu vermeiden",
+      "die Rolle des Gegenredners dauerhaft selbst zu übernehmen, damit niemand sonst als Bremser gilt",
     ], 3,
-    "„sich in Besprechungen zunächst zurückzuhalten und erst am Ende Stellung zu nehmen“, weil sich sonst die anderen anschließen."),
+    "„sich zurückzuhalten und erst am Ende Stellung zu nehmen“, weil sich sonst die anderen anschließen. Einzelentscheidungen empfiehlt er nicht, und die Gegenrede soll wechseln."),
 
   // Gehaltstransparenz
   lGehalt.match("attitude", "HARD",
     "Wer vertritt welche Ansicht?",
     [
-      "Eine Offenlegung führt am Anfang zu Unzufriedenheit.",
-      "Wenn Gründe für Gehaltsunterschiede nicht offen genannt werden, entstehen leicht falsche Vermutungen.",
-      "In kleinen Betrieben lassen sich Gehaltsangaben leicht einzelnen Personen zuordnen.",
-      "Über Gehälter sollte im Betrieb grundsätzlich nicht gesprochen werden.",
+      "Zu Beginn sorgt eine Offenlegung für Frust im Betrieb.",
+      "Werden Gründe für unterschiedliche Gehälter verschwiegen, rechnen sich die Leute eigene, oft ungünstige Erklärungen aus.",
+      "In einem Kleinbetrieb ist schnell klar, wessen Gehalt gemeint ist.",
+      "Gehälter sollten im Betrieb kein Gesprächsthema sein.",
     ],
     ["Frau Demir", "Herr Lorenz", "beide", "keiner von beiden"],
     [3, 2, 1, 4],
-    "1 beide: Frau Demir erwartet Unruhe und Frust, Herr Lorenz bestätigt: „Kurzfristig, ja.“ 2 Herr Lorenz: Das Problem entsteht, „wenn solche Gründe unausgesprochen bleiben“, dann vermuten die Leute „ganz andere Gründe“. 3 Frau Demir: „mit zwölf Leuten weiß man sofort, wer gemeint ist“. 4 vertritt niemand."),
+    "1 beide: Frau Demir erwartet Unruhe und Frust, Herr Lorenz bestätigt: „Kurzfristig ja.“ 2 Herr Lorenz: Das Problem entsteht, „wenn solche Gründe unausgesprochen bleiben“, dann vermuten die Leute „ganz andere Gründe“. 3 Frau Demir: „mit zwölf Leuten weiß doch sofort jeder, wer gemeint ist“. 4 vertritt niemand."),
   lGehalt.choice("detail", "EASY", "Was schlägt Herr Lorenz konkret vor?",
-    "Für jede Stelle soll ein nachvollziehbarer Gehaltsrahmen festgelegt werden.",
+    "Für jede Stelle soll ein nachvollziehbarer Gehaltsrahmen mit bekannten Kriterien gelten.",
     [
-      "Alle sollen die Gehaltsabrechnungen ihrer Kollegen einsehen können.",
-      "Alle auf derselben Stelle sollen genau gleich viel verdienen.",
-      "Erhöhungen sollen nur noch nach Betriebszugehörigkeit vergeben werden.",
+      "Jede Beschäftigte soll die Gehaltsabrechnungen der übrigen Kolleginnen und Kollegen einsehen dürfen.",
+      "Alle Beschäftigten auf derselben Stelle sollen künftig genau dasselbe Gehalt erhalten.",
+      "Gehaltserhöhungen sollen künftig ausschließlich nach der Dauer der Betriebszugehörigkeit vergeben werden.",
     ], 1,
     "Gehaltsbänder mit Mindest- und Höchstbetrag und bekannten Kriterien. Einsicht in einzelne Abrechnungen schließt er ausdrücklich aus; ein Band erlaubt Unterschiede; Betriebszugehörigkeit ist nur ein mögliches Kriterium."),
   lGehalt.choice("inference", "MID", "Welchen Vorteil der Offenlegung erkennt Frau Demir schließlich an?",
-    "Auch wer sich nicht traut zu verhandeln, würde fairer bezahlt.",
+    "Auch Zurückhaltende, die nie um mehr Geld bitten würden, bekämen eine faire Chance darauf.",
     [
-      "Die Unruhe im Betrieb würde sofort verschwinden.",
-      "Kleine Betriebe könnten leichter Personal gewinnen.",
-      "Ein Gesetz würde für alle Betriebe dieselben Bedingungen schaffen.",
+      "Die Unruhe im Betrieb würde sich nach der Einführung innerhalb weniger Wochen legen.",
+      "Kleine Betriebe könnten dadurch leichter neue Beschäftigte gewinnen, weil die Gehälter bekannt sind.",
+      "Eine gesetzliche Pflicht würde für alle Betriebe dieselben Bedingungen schaffen und wäre deshalb gerecht.",
     ], 3,
-    "„Gerade die Zurückhaltenden, die nie ... nach einer Erhöhung fragen würden, hätten dann eine Chance.“ Eine einheitliche gesetzliche Regelung lehnt sie ab; Unruhe erwartet sie gerade."),
+    "„Gerade die Zurückhaltenden, die nie von sich aus nach mehr Geld fragen würden, hätten dann eine Chance.“ Eine einheitliche gesetzliche Regelung lehnt sie ab; die Dauer bis zur Beruhigung nennt Herr Lorenz (etwa ein Jahr)."),
   lGehalt.choice("gist", "HARD", "Wie endet die Diskussion?",
-    "Beide nähern sich bei der Frage an, wie kleinere Betriebe berücksichtigt werden könnten.",
+    "Beide nähern sich an: Kleinere Betriebe könnten mehr Zeit und Unterstützung erhalten.",
     [
-      "Herr Lorenz gibt seine Forderung vollständig auf.",
-      "Frau Demir stimmt einer einheitlichen gesetzlichen Regelung zu.",
-      "Beide halten an völlig gegensätzlichen Positionen fest.",
+      "Herr Lorenz zieht seine Forderung zurück, weil er die Bedenken der Inhaberin teilt.",
+      "Frau Demir stimmt zu, dass eine einheitliche gesetzliche Regelung für alle Betriebe gelten sollte.",
+      "Beide bleiben bei ihren Positionen und beenden das Gespräch ohne jede Annäherung.",
     ], 0,
-    "„Da sind wir gar nicht so weit auseinander“: mehr Zeit und Unterstützung für kleinere Betriebe. Er hält an der Forderung fest, sie lehnt eine einheitliche Regelung ab."),
+    "„Da liegen wir gar nicht so weit auseinander“: mehr Zeit und Unterstützung für kleinere Betriebe. Er hält an der Forderung fest, sie lehnt eine einheitliche Regelung ab."),
+
+  // Physiotherapie: note taking
+  lPhysio.notes("detail", "MID",
+    "Sie hören eine Nachricht auf dem Anrufbeantworter. Notieren Sie die Informationen.\n\nNeuer Terminvorschlag (Wochentag): {{g1}}\nUhrzeit: {{g2}}\nMitzubringen: {{g3}}\nRückruf unter der Nummer: {{g4}}",
+    [
+      ["Donnerstag"],
+      ["halb elf", "10:30", "10.30", "10:30 Uhr", "10.30 Uhr", "10 Uhr 30", "zehn Uhr dreißig", "zehn Uhr dreissig", "um halb elf"],
+      ["Handtuch", "ein Handtuch", "das Handtuch", "großes Handtuch", "ein großes Handtuch", "Handtuch groß"],
+      ["4732065", "473 2065", "473 20 65", "473-2065", "473/2065", "473 / 2065", "4 7 3 2 0 6 5", "473 206 5", "vier sieben drei zwei null sechs fünf"],
+    ],
+    "Gap 1: Erst „halb zehn“, dann korrigiert zu „halb elf“, der Wochentag bleibt Donnerstag (der Freitag ist nur die Alternative). Gap 2: halb elf = 10:30 Uhr; die Korrektur „nein, Entschuldigung“ gilt. Gap 3: ein großes Handtuch; der Befundbericht ist nur „wenn vorhanden“. Gap 4: Die Durchwahl 473 2065 wird zweimal genannt. Jede Lücke zählt einzeln; Ziffern und ausgeschriebene Zahlen werden akzeptiert."),
+
+  // Nachtzug
+  lNachtzug.choice("detail", "MID", "Welches Hauptproblem der Nachtzüge nennt die Reporterin?",
+    "Die vorhandenen Wagen reichen nicht aus, deshalb sind beliebte Verbindungen schnell ausgebucht.",
+    [
+      "Die Liegeplätze sind so teuer, dass sich die Fahrt gegenüber Flug und Hotel kaum noch lohnt.",
+      "Die Fahrt dauert so lange, dass man in den Liegen kaum Schlaf findet und müde ankommt.",
+      "Viele Strecken werden nur im Sommer bedient, weil im Winter das Personal fehlt.",
+    ], 2,
+    "„Das Problem ist ein anderes: Es gibt zu wenige Wagen ... Deshalb sind beliebte Verbindungen ... oft schon Monate vorher ausgebucht.“ Die Reporterin hat gut geschlafen, die Preise nennt sie nur „zum Teil“ hoch; von Personalmangel spricht sie nicht."),
+  lNachtzug.choice("detail", "HARD", "Wie lange dauerte die Fahrt der Reporterin von Berlin nach Wien?",
+    "neun Stunden und vierzig Minuten",
+    [
+      "zehn Stunden und zehn Minuten",
+      "neun Stunden und zwanzig Minuten",
+      "zehn Stunden und vierzig Minuten",
+    ], 1,
+    "Abfahrt um zehn vor zehn (21.50 Uhr), Ankunft um halb acht (7.30 Uhr): 9 Stunden 40 Minuten. Die Reporterin nennt zuerst „zehn Stunden“ und korrigiert sich („nein, genauer gesagt neun Stunden und vierzig Minuten“)."),
+
+  // Heizung
+  lHeizung.choice("inference", "MID", "Was vermutet Herr Berger als Ursache für die kalten Heizkörper?",
+    "Bei der Wartung gestern könnte Luft in die Heizungsanlage im Keller gelangt sein.",
+    [
+      "Die Ventile in der Wohnung von Frau Lenz sind nicht weit genug geöffnet.",
+      "Die Anlage im Keller wurde gestern abgeschaltet und danach nicht wieder gestartet.",
+      "Die Warmwasserversorgung ist ausgefallen und hat die Heizkörper mit abgeschaltet.",
+    ], 3,
+    "„Wir haben gestern die Anlage im Keller gewartet, möglicherweise ist dabei Luft ins System gelangt.“ Die Ventile hat Frau Lenz bereits geprüft (Stufe vier), das Warmwasser funktioniert."),
+  lHeizung.choice("detail", "HARD", "Was vereinbaren die beiden am Ende des Gesprächs?",
+    "Der Techniker kommt am Donnerstagnachmittag, bis dahin bekommt Frau Lenz zwei Heizlüfter.",
+    [
+      "Der Techniker kommt schon morgen früh, und bis dahin bekommt Frau Lenz einen Heizlüfter.",
+      "Der Techniker kommt am Donnerstagvormittag, und Frau Lenz erhält zum Ausgleich eine Mietminderung.",
+      "Der Techniker kommt noch heute Nachmittag, und Frau Lenz soll sich in der Zwischenzeit ein Ersatzgerät leihen.",
+    ], 0,
+    "Der erste Vorschlag (morgen zwischen acht und zwölf) scheitert an Frau Lenz' Termin bis elf. Nachmittags kommt der Techniker erst ab Donnerstag, vereinbart ist Donnerstag zwischen vierzehn und sechzehn Uhr. Zwei Heizlüfter bringt der Hausmeister noch heute."),
 ];
 
 // ---------------------------------------------------------------- WRITING
@@ -876,7 +1097,7 @@ const SEMI = "halbformell (Sie, höflich-sachlich)";
 const FORMAL = "formell (Sie)";
 
 function write(
-  skill: "opinion" | "formal",
+  skill: "opinion" | "formal" | "data",
   within: Within,
   words: [number, number],
   prompt: string,
@@ -906,7 +1127,36 @@ const FORUM_NOTE =
 const EMAIL_NOTE =
   "Goethe C1 Schreiben Teil 2: E-Mail von etwa 120 Wörtern, formell oder halbformell je nach Empfänger (siehe Register). Wichtig sind alle Leitpunkte, ein angemessenes Register (Anrede, Gruß, höfliche Distanz) und ein klares Anliegen.";
 
+const TABLE_NOTE =
+  "Aufgabe mit Tabelle (Muster ÖSD C1 und TestDaF): Daten beschreiben, Gründe und Folgen erörtern, mit dem eigenen Land vergleichen und Stellung nehmen. Bewertet werden Aufgabenerfüllung (alle Punkte, treffende Wiedergabe der Daten), Kohärenz, Wortschatz für Veränderungen und Vergleiche sowie Register.";
+
 const writingItems: SeedItem[] = [
+  write("data", "HARD", [200, 300],
+    "Eine Stadtzeitung veröffentlicht die Ergebnisse einer Befragung zur Verkehrsmittelwahl in der Stadt Lindental und bittet um Leserbriefe. In beiden Jahren wurden rund 2000 Einwohner befragt, mit welchem Verkehrsmittel sie ihre alltäglichen Wege überwiegend zurücklegen.\n\n" +
+      "Verkehrsmittel | 2014 | 2024\n" +
+      "Auto | 41 % | 33 %\n" +
+      "Öffentlicher Nahverkehr | 22 % | 24 %\n" +
+      "Fahrrad | 14 % | 25 %\n" +
+      "zu Fuß | 23 % | 18 %\n\n" +
+      "Schreiben Sie einen Leserbrief (etwa 250 Wörter):\n" +
+      "- Beschreiben Sie die wichtigsten Veränderungen in der Tabelle.\n" +
+      "- Nennen Sie mögliche Gründe für diese Entwicklung.\n" +
+      "- Erläutern Sie, welche Folgen sie für die Stadt haben kann.\n" +
+      "- Vergleichen Sie die Lage mit der in Ihrem Land und nehmen Sie begründet Stellung.",
+    [
+      "beschreibt die zentralen Veränderungen zutreffend (Auto Rückgang, Fahrrad deutlicher Zuwachs, Nahverkehr leicht höher, Fußwege geringer) und wählt die wichtigsten aus",
+      "nennt plausible Gründe (z. B. Radwege, Kosten, Umweltbewusstsein, Parkraum)",
+      "erörtert Folgen für Verkehr, Flächennutzung, Umwelt oder Wirtschaft",
+      "vergleicht mit dem eigenen Land und nimmt begründet Stellung; Daten werden gedeutet, nicht nur aufgezählt",
+    ],
+    [
+      "die wichtigsten Veränderungen in der Tabelle",
+      "mögliche Gründe für die Entwicklung",
+      "Folgen für die Stadt",
+      "ein Vergleich mit Ihrem Land",
+      "Ihre begründete Meinung",
+    ],
+    "neutral bis formell (Leserbrief)", TABLE_NOTE),
   write("opinion", "MID", FORUM_WORDS,
     "Im Onlineforum einer Wirtschaftszeitschrift wird diskutiert: „Sollten Unternehmen bei der Personalauswahl auf Zeugnisnoten und formale Abschlüsse verzichten?“\n\n" +
       "Schreiben Sie einen Beitrag (etwa 230 Wörter). Gehen Sie auf folgende Punkte ein:\n" +
@@ -1041,7 +1291,7 @@ const TALK = { thinkSeconds: 240, answerSeconds: 300, maxTakes: 1 };
 const DISCUSS = { thinkSeconds: 120, answerSeconds: 180, maxTakes: 1 };
 
 function speak(
-  skill: "presentation" | "discussion",
+  skill: "presentation" | "discussion" | "handout",
   within: Within,
   prompt: string,
   contentPoints: string[],
@@ -1055,7 +1305,7 @@ function speak(
     skillTag: `speaking.${skill}`,
     within,
     prompt,
-    content: { kind: "SPEAKING", ...(skill === "presentation" ? TALK : DISCUSS) },
+    content: { kind: "SPEAKING", ...(skill === "discussion" ? DISCUSS : TALK) },
     key: { kind: "NONE" },
     rubric: { contentPoints, register: "formell (Sie), sachlich", studentPoints },
     explanation,
@@ -1064,6 +1314,8 @@ function speak(
 
 const TALK_NOTE =
   "Goethe C1 Sprechen Teil 1: Vortrag von etwa vier bis fünf Minuten. Bewertet werden Aufgabenerfüllung, Kohärenz und Flüssigkeit, Wortschatz, Strukturen und Aussprache.";
+const HANDOUT_NOTE =
+  "Muster ÖSD C1 Sprechen 3 und TestDaF: Vortrag auf der Grundlage eines Handouts mit mehreren Quellen. Bewertet werden Zusammenfassung der Quellen, Stellungnahme, Vergleich mit dem eigenen Land, Gliederung, Wortschatz und Strukturen.";
 const DISCUSS_NOTE =
   "Goethe C1 Sprechen Teil 2 (als aufgezeichneter Gesprächsbeitrag): auf einen Impuls reagieren, Position beziehen, Gegenargumente aufgreifen. Bewertet wird zusätzlich die Fähigkeit, auf andere Meinungen einzugehen.";
 
@@ -1167,28 +1419,28 @@ const speakingItems: SeedItem[] = [
       "ein Fazit",
     ],
     DISCUSS_NOTE),
-  speak("discussion", "HARD",
-    "Lesen Sie die Meldung und nehmen Sie Stellung.\n\n" +
-      "„Immer mehr Firmen ersetzen mehrtägige Präsenzschulungen durch kurze Lernvideos, die die Beschäftigten jederzeit am Arbeitsplatz ansehen können.“\n\n" +
-      "Ein Personalleiter sagt: „Das spart Zeit und Geld, und jeder lernt in seinem eigenen Tempo.“\n\n" +
-      "- Bewerten Sie diese Entwicklung.\n" +
-      "- Gehen Sie auf die Argumente des Personalleiters ein und nennen Sie mögliche Gegenargumente.\n" +
-      "- Erläutern Sie, für welche Lerninhalte Videos gut oder weniger gut geeignet sind.\n" +
-      "- Schlagen Sie vor, wie man beide Formen sinnvoll verbinden könnte.",
+  speak("handout", "HARD",
+    "Sie erhalten ein Handout zum Thema „Smartphones in der Schule“. Halten Sie anschließend einen Vortrag von etwa vier bis fünf Minuten.\n\n" +
+      "Quelle 1, Umfrage unter Eltern: Mehr als die Hälfte der Befragten möchte die private Handynutzung während des Schultags einschränken. Nur eine Minderheit fordert ein vollständiges Verbot.\n\n" +
+      "Quelle 2, Studie einer Universität: Schülerinnen und Schüler, die ihr Handy tagsüber in der Tasche lassen, erreichen in Konzentrationstests etwas bessere Werte. Bei den Leistungen in den Abschlussklassen fanden die Forschenden keinen eindeutigen Unterschied.\n\n" +
+      "Quelle 3, Auszug aus einem Zeitungsartikel: „Wer Jugendlichen das Gerät wegnimmt, nimmt ihnen auch ein Werkzeug zum Lernen. Entscheidend ist, dass die Schule den Umgang damit beibringt, statt ihn zu verbieten.“\n\n" +
+      "- Fassen Sie die Informationen der drei Quellen zusammen.\n" +
+      "- Sagen Sie, welche Regel Sie für sinnvoll halten, und begründen Sie das.\n" +
+      "- Vergleichen Sie mit der Situation in Ihrem Land.\n" +
+      "- Berichten Sie, wie Sie selbst mit dem Handy beim Lernen oder Arbeiten umgehen.",
     [
-      "begründete Bewertung der Entwicklung",
-      "greift die Argumente des Personalleiters auf und stellt Gegenargumente dar",
-      "differenziert nach Lerninhalten",
-      "konstruktiver Vorschlag zur Kombination; nuancierte Redemittel (Hypothesen, Einschränkungen)",
+      "gibt die drei Quellen sachlich und vollständig wieder, ohne sie wörtlich vorzulesen",
+      "bezieht begründet Stellung zu einer Regelung und greift dabei Informationen aus den Quellen auf",
+      "Vergleich mit dem eigenen Land",
+      "persönliche Erfahrung; klare Gliederung, Überleitungen und ein abschließendes Fazit",
     ],
     [
-      "Ihre Bewertung der Entwicklung",
-      "auf die Argumente des Personalleiters eingehen",
-      "mögliche Gegenargumente",
-      "für welche Inhalte Videos geeignet sind und für welche nicht",
-      "wie man beide Formen verbinden könnte",
+      "die drei Quellen zusammenfassen",
+      "Ihre Meinung mit Begründung",
+      "ein Vergleich mit Ihrem Land",
+      "Ihr eigener Umgang mit dem Handy",
     ],
-    DISCUSS_NOTE),
+    HANDOUT_NOTE),
 ];
 
 export const C1_PARTS: {
@@ -1199,8 +1451,8 @@ export const C1_PARTS: {
   speaking: SeedBankPart;
 } = {
   grammar: { stimuli: [], items: [...grammarItems, ...grammarTexts] },
-  reading: { stimuli: [R_PAUSEN, R_REPARATUR, R_WEITERBILDUNG, R_KI], items: readingItems },
-  listening: { stimuli: [L_QUEREINSTIEG, L_GRUPPEN, L_GEHALT], items: listeningItems },
+  reading: { stimuli: [R_PAUSEN, R_REPARATUR, R_WEITERBILDUNG, R_KI, R_STADTBAEUME, R_MUSEUM, R_GENOSSENSCHAFT, R_FOTOKURSE], items: readingItems },
+  listening: { stimuli: [L_QUEREINSTIEG, L_GRUPPEN, L_GEHALT, L_PHYSIO, L_NACHTZUG, L_HEIZUNG], items: listeningItems },
   writing: { stimuli: [], items: writingItems },
   speaking: { stimuli: [], items: speakingItems },
 };
