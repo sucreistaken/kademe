@@ -146,6 +146,11 @@ describe("bank quality: many short texts on many topics", () => {
       expect(stimuli(level).filter((s) => s.section === "LISTENING").length).toBeGreaterThanOrEqual(5);
     });
 
+    it(`${level}: every listening clip has at most two speakers (the TTS voices two)`, () => {
+      const crowded = stimuli(level).filter((s) => s.section === "LISTENING" && (s.speakers?.length ?? 0) > 2);
+      expect(crowded.map((s) => s.key)).toEqual([]);
+    });
+
     it(`${level}: on average no more than 3 items per text or clip`, () => {
       const linked = items(level).filter((i) => i.stimulusKey).length;
       expect(linked / stimuli(level).length).toBeLessThanOrEqual(3);
@@ -170,4 +175,16 @@ describe("bank quality: the task types the certificate exams use", () => {
       expect(items(level).filter((i) => i.section === "READING" && i.type === "MATCHING").length).toBeGreaterThanOrEqual(1);
     });
   }
+});
+
+/** Questions about a protected characteristic; the bank is also used in hiring. */
+const PROTECTED = /ihrem land|ihr land|heimatland|herkunftsland|woher kommen sie|woher kommst du|wie alt sind sie|wie alt bist du|ihr alter\b|ihre religion|ihre nationalität|staatsangehörigkeit/i;
+
+describe("bank quality: nothing asks for origin, age or religion", () => {
+  it("no prompt, statement, option or rubric point asks for a protected characteristic", () => {
+    const hits = SEED_BANK.items
+      .filter((i) => PROTECTED.test(JSON.stringify([i.prompt, i.content, i.rubric ?? null])))
+      .map((i) => `${i.level} ${i.section}: ${i.prompt.slice(0, 60)}`);
+    expect(hits).toEqual([]);
+  });
 });

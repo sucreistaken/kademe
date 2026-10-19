@@ -246,9 +246,9 @@ const grammarTexts: SeedItem[] = [
     title: "Ein Wochenende in Berlin",
     first: "Letztes Wochenende war ich mit meinem Bruder in Berlin.",
     body:
-      "Wir [[sind|haben|hatten|seid]] [[am|um|im|an]] Freitagabend mit dem Zug gefahren. " +
-      "Das Hotel lag nicht weit [[von|zu|bei|aus]] dem Bahnhof. " +
-      "Am Samstag haben wir den Fernsehturm [[besucht|besuchen|besuche|besuchte]]. " +
+      "Wir [[sind|haben|hatten|seid]] [[am|um|im|an]] Freitagabend mit dem Zug hingefahren. " +
+      "Das Hotel lag nicht weit [[von|zu|bei|aus]] der Innenstadt. " +
+      "Am Samstag haben wir den Fernsehturm [[besichtigt|besichtigen|besichtige|besichtigte]]. " +
       "Danach sind wir in [[ein|einem|einen|eine]] Museum gegangen. Das Museum war sehr [[interessant|interessiert|interessante|interessieren]]. " +
       "Am Abend haben wir in einem kleinen Restaurant gegessen. " +
       "Das Essen war gut und sogar [[billiger|billig|am billigsten|so billig]] als in München. " +
@@ -298,7 +298,7 @@ const grammarTexts: SeedItem[] = [
       "Sie hat gesagt, dass er hohes [[Fieber]] hat. Er soll drei Tage im Bett [[bleiben]]. " +
       "Außerdem hat sie ihm ein [[Medikament]] verschrieben. Er muss es dreimal am Tag [[nehmen]].",
     last: "Nach einer Woche war Jan wieder gesund.",
-    distractors: ["Krankenhaus", "Wartezeit", "untersuchen", "geblieben", "Husten"],
+    distractors: ["Rücken", "Wartezeit", "untersuchen", "geblieben", "Husten"],
   }),
   wordBank(LEVEL, "MID", {
     title: "Der Umzug",
@@ -456,7 +456,7 @@ Arztpraxis sucht Mitarbeiterin oder Mitarbeiter für die Anmeldung, 20 Stunden p
 `),
   readingText(R_NEWS, "Kurznachrichten aus der Stadt", "Kurznachrichten aus der Stadt", `
 Text 1
-Eine Untersuchung zeigt: Wer jeden Tag mit dem Fahrrad zur Arbeit oder zur Schule fährt, ist seltener krank. Schon zwanzig Minuten pro Tag reichen aus, sagen die Ärzte. Besonders Rücken und Herz profitieren, wenn man regelmäßig fährt.
+Eine Studie zeigt: Wer jeden Tag mit dem Fahrrad zur Arbeit oder zur Schule fährt, ist seltener krank. Schon zwanzig Minuten pro Tag reichen aus, sagen die Ärzte. Rücken und Herz bleiben gesund, wenn man regelmäßig fährt.
 
 Text 2
 Das Rad ist kaputt? In der Stadtteilwerkstatt in der Mühlenstraße helfen Freiwillige jeden Samstag von 10 bis 14 Uhr. Man bringt sein Fahrrad mit, und die Helferinnen und Helfer zeigen, wie man einen Reifen wechselt oder eine Bremse einstellt. Werkzeug ist vorhanden.
@@ -465,7 +465,7 @@ Text 3
 Die Stadt Waldkirchen sucht Freiwillige für den Frühjahrsputz. Am ersten Samstag im April sollen Parks, Spielplätze und das Flussufer wieder sauber werden. Müllsäcke und Handschuhe gibt es vor Ort. Danach lädt die Stadt alle zu einer Suppe im Rathaus ein.
 
 Text 4
-Ab Montag fährt die Buslinie 14 nicht mehr zum Hauptbahnhof, sondern nur noch bis zum Marktplatz. Der Grund sind Bauarbeiten in der Bahnhofstraße. Fahrgäste steigen am Marktplatz in die Straßenbahn um. Die Arbeiten dauern voraussichtlich bis Ende Mai.
+Ab Montag fährt die Buslinie 14 nicht mehr zum Hauptbahnhof, sondern nur noch bis zum Marktplatz. Der Grund sind Bauarbeiten in der Bahnhofstraße. Fahrgäste steigen am Marktplatz in die Straßenbahn um. Die Arbeiten dauern wahrscheinlich bis Ende Mai.
 
 Text 5
 Das Freibad am See hat seit gestern wieder geöffnet. Bei sonnigem Wetter ist es täglich von 9 bis 20 Uhr offen. Neu ist ein Kinderbecken mit einer Rutsche. Der Eintritt kostet vier Euro.
@@ -477,7 +477,7 @@ Hallenbad Stadtgarten: Wichtige Hinweise
 
 Bitte duschen Sie vor dem Schwimmen. Wer lange Haare hat, trägt im Wasser eine Badekappe.
 
-Die Schließfächer funktionieren mit einer Ein-Euro-Münze. Sie bekommen die Münze zurück, wenn Sie den Schlüssel wieder abschließen.
+Die Schließfächer funktionieren mit einer Ein-Euro-Münze. Sie bekommen die Münze zurück, wenn Sie das Fach wieder aufschließen.
 
 Am Mittwoch von 12 bis 14 Uhr gehört das große Becken der Wassergymnastik für Gruppen. Einzelne Gäste können in dieser Zeit das kleine Becken benutzen.
 
@@ -506,21 +506,21 @@ const readingItems: SeedItem[] = [
       "Sie bittet Aylin um Hilfe bei der Suche nach einer neuen Wohnung.",
       "Sie sagt Aylin, dass sie am Samstag leider keine Zeit zum Essen hat.",
       "Sie erzählt von ihrer neuen Arbeit im Möbelhaus und lädt Aylin zu einem Essen ein.",
-      "Sie fragt Aylin, ob sie in der Firma ihres Möbelhauses arbeiten möchte.",
+      "Sie fragt Aylin, ob sie auch im Möbelhaus arbeiten möchte.",
     ], 2,
     "Lena berichtet von der neuen Stelle und lädt Aylin zum Essen ein. Die Wohnungssuche wird nur erwähnt, um Hilfe bittet sie nicht; das Treffen sagt sie nicht ab, sie schlägt es vor; eine Stelle für Aylin ist kein Thema."),
   rEmail.choice("detail", "MID",
     "Was macht Lena in der neuen Firma?",
     [
       "Sie berät Kundinnen und Kunden im Möbelhaus und verkauft Möbel.",
-      "Sie arbeitet im Büro eines Möbelhauses und schreibt Rechnungen.",
+      "Sie erledigt im Möbelhaus die Büroarbeit, zum Beispiel Rechnungen.",
       "Sie fährt Möbel mit dem Lieferwagen zu den Kundinnen und Kunden nach Hause.",
       "Sie repariert kaputte Möbel in der Werkstatt des Möbelhauses.",
     ], 1,
     "Im Text: \"Ich bin jetzt im Büro von einem Möbelhaus und schreibe Rechnungen und E-Mails.\" Beratung und Verkauf, Lieferung und Reparatur kommen nicht vor."),
   rEmail.tfng("detail", "MID",
     [
-      ["Lena hat schon eine bezahlbare Wohnung in der Nähe der Firma gefunden.", "F"],
+      ["Lena hat schon eine günstige Wohnung in der Nähe der Firma gefunden.", "F"],
       ["Der Weg zur Arbeit dauert für Lena fast eine Stunde.", "R"],
       ["Aylin soll Lena bis Donnerstag antworten.", "R"],
     ],
@@ -539,10 +539,10 @@ const readingItems: SeedItem[] = [
   rBib.tfng("detail", "MID",
     [
       ["Für das Ausleihen eines Laptops muss man einen Ausweis der Bibliothek haben.", "R"],
-      ["Am Freitag ist die Bibliothek genauso lange geöffnet wie an den anderen Tagen.", "F"],
+      ["Am Freitag ist die Bibliothek genauso lange geöffnet wie von Montag bis Donnerstag.", "F"],
       ["Studierende zahlen für den Ausweis kein Geld.", "R"],
     ],
-    "1 R: \"Dafür braucht man nur einen Bibliotheksausweis.\" 2 F: Am Freitag schließt die Bibliothek um 18 Uhr, an den anderen Tagen um 22 Uhr. 3 R: Für Studierende ist der Ausweis kostenlos."),
+    "1 R: \"Dafür braucht man nur einen Bibliotheksausweis.\" 2 F: Am Freitag schließt die Bibliothek um 18 Uhr, von Montag bis Donnerstag um 22 Uhr. 3 R: Für Studierende ist der Ausweis kostenlos."),
   rBib.choice("detail", "MID",
     "Was gibt es jeden Dienstagabend in der Bibliothek?",
     [
@@ -558,7 +558,7 @@ const readingItems: SeedItem[] = [
     "Wer muss den Kurs \"Erste Hilfe im Betrieb\" besuchen?",
     [
       "Alle Beschäftigten, die in der Kantine im Erdgeschoss arbeiten.",
-      "Neue Mitarbeiterinnen und Mitarbeiter, die im Lager arbeiten.",
+      "Beschäftigte, die neu im Lager der Firma angefangen haben.",
       "Alle, die im Oktober in der Personalabteilung neu anfangen.",
       "Jede Person, die auch am Excel-Kurs im Oktober teilnimmt.",
     ], 1,
@@ -580,25 +580,25 @@ const readingItems: SeedItem[] = [
     "Welche Anzeige passt zu welcher Person? Für jede Person gibt es eine Anzeige. Drei Anzeigen bleiben übrig.",
     [
       "Jonas studiert von Montag bis Freitag. Am Wochenende möchte er Geld verdienen.",
-      "Frau Nowak kann nur am Vormittag arbeiten. Sie kennt sich gut mit dem Computer aus.",
+      "Frau Lorenz hat nur bis zwölf Uhr Zeit und arbeitet gern am PC.",
       "Herr Haddad arbeitet tagsüber und möchte nach der Arbeit sein Deutsch verbessern.",
     ],
     ["Anzeige A", "Anzeige B", "Anzeige C", "Anzeige D", "Anzeige E", "Anzeige F"],
     [1, 6, 4],
-    "Jonas: A (Aushilfe Samstag und Sonntag). Frau Nowak: F (nur vormittags, Computerkenntnisse). Herr Haddad: D (Deutschkurs am Abend). B ist werktags, C ist ein Angebot für Schüler, E ist eine Wohnung."),
+    "Jonas: A (Aushilfe Samstag und Sonntag). Frau Lorenz: F (nur vormittags, Computerkenntnisse). Herr Haddad: D (Deutschkurs am Abend). B ist werktags, C ist ein Angebot für Schüler, E ist eine Wohnung."),
   rAnz.choice("detail", "EASY",
     "Was steht in Anzeige B?",
     [
       "Die Arbeit findet samstags und sonntags statt und beginnt sofort.",
       "Die Arbeit beginnt erst im Dezember und endet am späten Abend.",
-      "Die Arbeit beginnt sofort und endet schon am frühen Nachmittag, ohne Wochenende.",
+      "Die Arbeit beginnt sofort und endet um 15 Uhr, am Wochenende hat man frei.",
       "Die Arbeit beginnt sofort, aber man braucht keinen Führerschein.",
     ], 2,
     "\"Montag bis Freitag, 7 bis 15 Uhr\" und \"Arbeitsbeginn: sofort\": sofort anfangen, am frühen Nachmittag Feierabend. Ein Führerschein ist nötig; Dezember gehört zur Wohnung in Anzeige E."),
   rAnz.tfng("detail", "MID",
     [
-      ["Die Wohnung in Anzeige E kann man ab dem ersten Dezember beziehen.", "R"],
-      ["In der Wohnung aus Anzeige E darf man ein Haustier halten.", "F"],
+      ["Man kann ab dem ersten Dezember in die Wohnung aus Anzeige E einziehen.", "R"],
+      ["In der Wohnung aus Anzeige E darf man ein Haustier haben.", "F"],
     ],
     "1 R: \"Frei ab 1. Dezember.\" 2 F: \"Keine Haustiere.\""),
 
@@ -630,7 +630,7 @@ const readingItems: SeedItem[] = [
   rNews.tfng("detail", "MID",
     [
       ["Der Eintritt ins Freibad kostet fünf Euro.", "F"],
-      ["Wegen einer Baustelle fährt die Linie 14 vorerst nicht mehr bis zum Hauptbahnhof.", "R"],
+      ["Wegen einer Baustelle fährt die Linie 14 im Moment nicht mehr bis zum Hauptbahnhof.", "R"],
       ["Das Freibad ist nur am Wochenende geöffnet.", "F"],
     ],
     "1 F: Der Eintritt kostet vier Euro. 2 R: Wegen Bauarbeiten in der Bahnhofstraße endet die Linie 14 am Marktplatz. 3 F: Das Freibad ist bei sonnigem Wetter täglich geöffnet."),
@@ -642,7 +642,7 @@ const readingItems: SeedItem[] = [
       "Sie müssen bis 14 Uhr warten, weil das ganze Hallenbad geschlossen ist.",
       "Sie dürfen im großen Becken schwimmen, wenn Sie eine Badekappe tragen.",
       "Sie können nur an der Wassergymnastik für Gruppen teilnehmen.",
-      "Sie können in dieser Zeit nur das kleine Becken im Hallenbad benutzen.",
+      "Sie dürfen in dieser Zeit nur im kleinen Becken schwimmen.",
     ], 3,
     "Am Mittwoch von 12 bis 14 Uhr ist das große Becken für die Gruppen reserviert, einzelne Gäste dürfen das kleine Becken benutzen. Das Bad bleibt also geöffnet; die Badekappe ist keine Bedingung für das große Becken."),
   rPool.choice("detail", "MID",
@@ -653,7 +653,7 @@ const readingItems: SeedItem[] = [
       "Man wirft eine Münze mit einem Euro ein und bekommt sie später wieder.",
       "Man zahlt einen Euro und bekommt dafür einen Gutschein für das Café.",
     ], 2,
-    "Die Ein-Euro-Münze funktioniert wie ein Pfand: Wer den Schlüssel wieder abschließt, bekommt sie zurück. Von zwei Euro, einem Preis pro Stunde oder einem Gutschein steht nichts im Text."),
+    "Die Ein-Euro-Münze funktioniert wie ein Pfand: Wer das Fach wieder aufschließt, bekommt sie zurück. Von zwei Euro, einem Preis pro Stunde oder einem Gutschein steht nichts im Text."),
   rPool.tfng("detail", "MID",
     [
       ["Am Sonntag schließt das Hallenbad später als am Freitag.", "F"],
@@ -684,7 +684,7 @@ const readingItems: SeedItem[] = [
   rFerien.tfng("detail", "EASY",
     [
       ["Die Familie hat eine Woche in der Wohnung verbracht.", "R"],
-      ["Herr Keller hat den Gästen Fahrräder zur Verfügung gestellt.", "R"],
+      ["Die Gäste konnten von Herrn Keller Fahrräder bekommen.", "R"],
       ["Zum See muss man mit dem Auto fahren.", "F"],
     ],
     "1 R: Die Familie war eine Woche dort. 2 R: Der Vermieter hat Fahrräder geliehen. 3 F: Der See ist nur fünf Minuten zu Fuß entfernt."),
@@ -746,6 +746,10 @@ function lTfng(
   };
 }
 
+/** Typed day and time answers are also right with a leading "am" or "um". */
+const onDay = (days: string[]) => [...days, ...days.map((d) => `am ${d}`)];
+const atTime = (times: string[]) => [...times, ...times.map((t) => `um ${t}`)];
+
 /** A note-taking item: the student types what they hear into labelled gaps. */
 function lGap(
   stimulusKey: string,
@@ -781,10 +785,10 @@ const listeningStimuli: SeedStimulus[] = [
     [{ label: "Frau Kraus", voice: "A" }],
     [
       "Frau Kraus: Guten Tag, Herr Rahimi, hier ist Sabine Kraus von der Firma Lindner Elektro. Sie haben sich bei uns als Lagerarbeiter beworben, und wir möchten Sie gern kennenlernen.",
-      "Frau Kraus: Also, wir wollten Sie erst am Dienstag einladen. Aber da ist unser Chef leider nicht im Haus. Können Sie auch am Mittwoch? Um halb zehn?",
+      "Frau Kraus: Also, wir wollten Sie zuerst am Dienstag einladen. Aber da ist unser Chef leider nicht im Haus. Können Sie auch am Mittwoch? Um halb zehn?",
       "Frau Kraus: Wir sind in der Hafenstraße siebzehn. Gehen Sie bitte zuerst zur Information, dort holt Sie dann jemand ab.",
       "Frau Kraus: Ach so, bringen Sie bitte Ihren Ausweis und Ihre Zeugnisse mit. Den Lebenslauf haben wir ja schon.",
-      "Frau Kraus: Rufen Sie mich bitte kurz zurück, ob der Termin passt. Meine Nummer ist null vier null, fünf fünf, drei acht, zwei eins. Noch einmal: null vier null, fünf fünf, drei acht, zwei eins. Vielen Dank, auf Wiederhören!",
+      "Frau Kraus: Rufen Sie mich bitte kurz zurück und sagen Sie mir, ob der Termin passt. Meine Nummer ist null vier null, fünf fünf, drei acht, zwei eins. Noch einmal: null vier null, fünf fünf, drei acht, zwei eins. Vielen Dank, auf Wiederhören!",
     ]),
   clip(L_ABSCHIED, "Eine Feier im Büro planen", "Feier und Geschenk",
     [
@@ -799,7 +803,7 @@ const listeningStimuli: SeedStimulus[] = [
       "Mira: Nein, nein, da hat Paula schon frei. Besser am Donnerstag davor. Um neun Uhr, vor der Teambesprechung.",
       "Daniel: Gut. Soll ich das Essen einkaufen?",
       "Mira: Nein, das macht Ahmet. Kannst du ein Geschenk besorgen? Wir sammeln von jedem fünf Euro.",
-      "Daniel: Klar. Paula fotografiert doch so gern. Wie wäre es mit einem Fotobuch? Mit Bildern aus der ganzen Welt?",
+      "Daniel: Klar. Paula fotografiert doch so gern. Wie wäre es mit einem Fotobuch? Mit schönen Bildern aus der ganzen Welt?",
       "Mira: Genau, super Idee! Ich schreibe heute noch eine E-Mail an alle. Aber Paula darf natürlich nichts wissen.",
       "Daniel: Alles klar, ich sage kein Wort.",
     ]),
@@ -809,7 +813,7 @@ const listeningStimuli: SeedStimulus[] = [
       { label: "Herr Nowak", voice: "B" },
     ],
     [
-      "Moderatorin: Guten Morgen und willkommen bei Arbeit heute. Bei mir im Studio ist Tomasz Nowak. Er hat den Beruf gewechselt und wird jetzt Gärtner. Herr Nowak, was haben Sie vorher gemacht?",
+      "Moderatorin: Guten Morgen und willkommen bei „Arbeit heute“. Bei mir im Studio ist Tomasz Nowak. Er hat den Beruf gewechselt und wird jetzt Gärtner. Herr Nowak, was haben Sie vorher gemacht?",
       "Herr Nowak: Guten Morgen. Ich habe zehn Jahre im Supermarkt gearbeitet, erst an der Kasse, dann im Lager. Die Arbeit war okay. Aber ich wollte schon immer lieber draußen arbeiten.",
       "Moderatorin: Und jetzt machen Sie eine Ausbildung zum Gärtner?",
       "Herr Nowak: Ja, genau. Ich bin im zweiten Jahr, insgesamt dauert sie drei Jahre. Vier Tage pro Woche arbeite ich in einer Gärtnerei, und ein Tag ist Berufsschule.",
@@ -833,7 +837,7 @@ const listeningStimuli: SeedStimulus[] = [
   clip(L_BAHNHOF, "Ansage am Bahnhof", "Reisen",
     [{ label: "Ansage", voice: "A" }],
     [
-      "Ansage: Achtung an Gleis vier! Der Regionalexpress nach Leipzig fährt heute nicht um vierzehn Uhr zwanzig ab, sondern erst um vierzehn Uhr fünfundvierzig. Ich wiederhole: erst um vierzehn Uhr fünfundvierzig. Der Zug hat ein technisches Problem und fährt nicht von Gleis vier, sondern von Gleis sechs. Bitte beachten Sie: Die Wagen für Fahrräder stehen am Ende des Zuges. Wir bitten um Entschuldigung.",
+      "Ansage: Achtung an Gleis vier! Der Regionalexpress nach Leipzig fährt heute nicht um vierzehn Uhr zwanzig ab, sondern erst um vierzehn Uhr fünfundvierzig. Ich wiederhole: erst um vierzehn Uhr fünfundvierzig. Grund ist eine technische Störung. Bitte beachten Sie außerdem: Der Zug fährt heute nicht von Gleis vier, sondern von Gleis sechs. Die Wagen für Fahrräder stehen am Ende des Zuges. Wir bitten um Entschuldigung.",
     ]),
   clip(L_ARZT, "Nachricht von der Arztpraxis", "Gesundheit",
     [{ label: "Frau Berg", voice: "B" }],
@@ -853,7 +857,7 @@ const listeningItems: SeedItem[] = [
       "Die Firma hat am Dienstag wegen eines Umzugs geschlossen.",
       "Frau Kraus hat am Dienstag selbst einen anderen Termin.",
     ], 1,
-    "\"Wir wollten Sie erst am Dienstag einladen. Aber da ist unser Chef leider nicht im Haus.\" Von einem Umzug, einem Termin von Frau Kraus oder Herrn Rahimis Arbeit ist keine Rede."),
+    "\"Wir wollten Sie zuerst am Dienstag einladen. Aber da ist unser Chef leider nicht im Haus.\" Von einem Umzug, einem Termin von Frau Kraus oder Herrn Rahimis Arbeit ist keine Rede."),
   lChoice(L_MAILBOX, "detail", "MID",
     "Was soll Herr Rahimi mitbringen?",
     [
@@ -866,23 +870,17 @@ const listeningItems: SeedItem[] = [
   lGap(L_MAILBOX, "HARD",
     "Notieren Sie die Angaben zum Gespräch und zum Rückruf.\n\nTag des Gesprächs: {{g1}}\nUhrzeit: {{g2}}\nTelefonnummer von Frau Kraus: {{g3}}",
     {
-      g1: ["Mittwoch"],
-      g2: [
-        "9.30", "9:30", "9.30 Uhr", "9:30 Uhr", "09.30", "09:30", "09.30 Uhr", "09:30 Uhr",
-        "9 Uhr 30", "neun Uhr dreißig", "halb zehn", "halb 10",
-      ],
-      g3: [
-        "040553821", "040 553821", "040 55 38 21", "040 5538 21", "04055 3821", "040 553 821",
-        "040-553821", "040-55 38 21", "040/553821", "040/55 38 21", "0405 53821",
-      ],
+      g1: onDay(["Mittwoch", "Mi"]),
+      g2: atTime(["9.30", "9 Uhr 30", "neun Uhr dreißig", "halb zehn", "halb 10"]),
+      g3: ["040553821"],
     },
-    "Die Firma hatte zuerst Dienstag gedacht, der Vorschlag gilt dann für Mittwoch (Korrektur im Text), und zwar um halb zehn. Die Nummer wird zweimal gesprochen: null vier null, fünf fünf, drei acht, zwei eins. Gezählt werden Ziffern in jeder üblichen Schreibweise."),
+    "Die Firma hatte zuerst Dienstag gedacht, der Vorschlag gilt dann für Mittwoch (Korrektur im Text), und zwar um halb zehn. Die Nummer wird zweimal gesprochen: null vier null, fünf fünf, drei acht, zwei eins. Bei der Telefonnummer zählen nur die Ziffern (Leerzeichen und Striche spielen keine Rolle); Tag und Uhrzeit gelten auch mit \"am\" oder \"um\" davor."),
 
   // ---------------------------------------------------------------- Abschied
   lChoice(L_ABSCHIED, "detail", "EASY",
     "Wo soll die Feier für Paula stattfinden?",
     [
-      "Im Büro, vor der Teambesprechung am Morgen.",
+      "Im Büro, bei einem gemeinsamen Frühstück.",
       "In einem Restaurant in der Nähe vom Büro.",
       "Bei Paula zu Hause am Donnerstagmorgen.",
       "In einem Café in der Stadt mit allen Kollegen.",
@@ -909,10 +907,10 @@ const listeningItems: SeedItem[] = [
   lChoice(L_INT_A, "detail", "EASY",
     "Warum hat Herr Nowak den Beruf gewechselt?",
     [
-      "Er hat im Lager zu viele Stunden gearbeitet und wenig Pausen gehabt.",
-      "Er wollte nach zehn Jahren an der Kasse mehr Geld verdienen.",
-      "Er wollte schon immer lieber draußen als drinnen im Lager oder an der Kasse arbeiten.",
-      "Er hatte Streit mit den Kollegen und wollte in eine kleinere Firma.",
+      "Er musste im Lager zu lange arbeiten und hatte kaum Pausen.",
+      "Er wollte nach zehn Jahren mehr Geld verdienen.",
+      "Er wollte lieber im Freien als drinnen arbeiten.",
+      "Er hatte Streit mit den Kollegen an der Kasse.",
     ], 2,
     "\"Die Arbeit war okay. Aber ich wollte schon immer lieber draußen arbeiten.\" Mehr Geld verdient er in der Ausbildung nicht, im Gegenteil (siehe Teil 2); Streit oder zu lange Arbeitszeiten werden nicht genannt."),
   lChoice(L_INT_A, "detail", "MID",
@@ -973,9 +971,9 @@ const listeningItems: SeedItem[] = [
       "Am Anfang des Zuges.",
       "In der Mitte des Zuges.",
       "Am Ende des Zuges.",
-      "Direkt hinter der Lokomotive.",
+      "Neben dem Wagen der ersten Klasse.",
     ], 2,
-    "\"Die Wagen für Fahrräder stehen am Ende des Zuges.\" Anfang des Zuges und die Plätze hinter der Lokomotive sind dasselbe und werden nicht genannt."),
+    "\"Die Wagen für Fahrräder stehen am Ende des Zuges.\" Anfang, Mitte und der Wagen der ersten Klasse werden nicht genannt."),
 
   // ---------------------------------------------------------------- Arztpraxis
   lChoice(L_ARZT, "gist", "EASY",
@@ -999,16 +997,11 @@ const listeningItems: SeedItem[] = [
   lGap(L_ARZT, "HARD",
     "Notieren Sie die Angaben zum neuen Termin.\n\nTag: {{g1}}\nUhrzeit: {{g2}}\nTelefonnummer der Praxis: {{g3}}",
     {
-      g1: ["Donnerstag"],
-      g2: [
-        "15.15", "15:15", "15.15 Uhr", "15:15 Uhr", "15 Uhr 15", "fünfzehn Uhr fünfzehn",
-        "Viertel nach drei", "viertel nach 3", "3.15", "3:15", "3.15 Uhr", "3:15 Uhr",
-      ],
-      g3: [
-        "02034791", "0203 4791", "0203 47 91", "0203-4791", "0203-47 91", "0203/4791", "0203/47 91", "020 34791", "02034 791",
-      ],
+      g1: onDay(["Donnerstag", "Do"]),
+      g2: atTime(["15.15", "3.15", "15 Uhr 15", "fünfzehn Uhr fünfzehn", "Viertel nach drei", "Viertel nach 3", "viertel nach drei"]),
+      g3: ["02034791"],
     },
-    "Der Mittwoch wird sofort zurückgenommen (Korrektur), der neue Termin ist Donnerstag um Viertel nach drei, also 15.15 Uhr. Die Nummer wird zweimal gesprochen: null zwei null drei, vier sieben, neun eins. Gezählt werden Ziffern in jeder üblichen Schreibweise."),
+    "Der Mittwoch wird sofort zurückgenommen (Korrektur), der neue Termin ist Donnerstag um Viertel nach drei, also 15.15 Uhr. Die Nummer wird zweimal gesprochen: null zwei null drei, vier sieben, neun eins. Bei der Telefonnummer zählen nur die Ziffern (Leerzeichen und Striche spielen keine Rolle); Tag und Uhrzeit gelten auch mit \"am\" oder \"um\" davor."),
 ];
 
 // ================================================================ WRITING
@@ -1032,15 +1025,20 @@ function writingTask(
     type: "WRITING_PROMPT",
     skillTag: `writing.${skill}`,
     within,
-    prompt,
+    prompt: /Anrede/.test(prompt) ? prompt : `${prompt} Vergessen Sie Anrede und Gruß nicht.`,
     content: { kind: "WRITING", minWords: words[0], maxWords: words[1] },
     key: { kind: "NONE" },
-    rubric: { contentPoints, register, studentPoints },
+    rubric: {
+      // The student list and the grader agree on greeting and closing.
+      contentPoints: contentPoints.some((c) => /Anrede/.test(c)) ? contentPoints : [...contentPoints, "Anrede und Gruß"],
+      register,
+      studentPoints,
+    },
     explanation,
   };
 }
 
-const INFORMAL_WORDS: [number, number] = [20, 30];
+const INFORMAL_WORDS: [number, number] = [20, 40];
 const SEMIFORMAL_WORDS: [number, number] = [30, 40];
 
 const writingItems: SeedItem[] = [
@@ -1102,24 +1100,24 @@ const writingItems: SeedItem[] = [
     INFORMAL,
     "Prüft Beschreiben und Bewerten im Alltag; Verben wie \"gefallen\" mit Dativ und \"aber\" oder \"trotzdem\" zeigen A2-Strukturen."),
   writingTask("email", "MID", SEMIFORMAL_WORDS,
-    "Sie besuchen einen Deutschkurs bei Frau Lange. Nächste Woche können Sie nicht zum Kurs kommen. Schreiben Sie Frau Lange eine E-Mail.\n\n" +
+    "Sie machen einen Schwimmkurs bei Herrn Aksoy. Am Donnerstag können Sie nicht zum Kurs kommen. Schreiben Sie Herrn Aksoy eine E-Mail.\n\n" +
       "- Entschuldigen Sie sich.\n" +
       "- Sagen Sie, warum Sie nicht kommen können.\n" +
-      "- Fragen Sie nach den Hausaufgaben.\n\n" +
+      "- Fragen Sie, ob Sie die Stunde an einem anderen Tag nachholen können.\n\n" +
       "Schreiben Sie 30 bis 40 Wörter.",
     [
-      "Entschuldigung, dass man nächste Woche fehlt",
-      "Grund nennen (z. B. Arbeit, Termin, Reise)",
-      "Frage nach Hausaufgaben oder Material",
+      "Entschuldigung, dass man am Donnerstag fehlt",
+      "Grund nennen (z. B. Arbeit, Termin, Erkältung)",
+      "Frage, ob man die Stunde an einem anderen Tag nachholen kann",
     ],
     [
       "sich entschuldigen",
       "sagen, warum Sie nicht kommen können",
-      "nach den Hausaufgaben fragen",
+      "fragen, ob Sie die Stunde nachholen können",
       "Anrede und Gruß",
     ],
     SEMIFORMAL,
-    "Halbformelle Mitteilung wie im Goethe A2, Schreiben Teil 2: Anrede \"Liebe Frau Lange\" oder \"Sehr geehrte Frau Lange\", durchgehend Sie, passender Gruß."),
+    "Halbformelle Mitteilung wie im Goethe A2, Schreiben Teil 2: Anrede \"Sehr geehrter Herr Aksoy\", durchgehend Sie, passender Gruß."),
   writingTask("email", "HARD", SEMIFORMAL_WORDS,
     "In Ihrer Wohnung funktioniert die Heizung nicht. Schreiben Sie eine E-Mail an Ihren Vermieter, Herrn Schäfer.\n\n" +
       "- Beschreiben Sie das Problem.\n" +
@@ -1232,7 +1230,7 @@ const speakingItems: SeedItem[] = [
       "Freizeit und Hobbys",
     ],
     undefined,
-    "Wie Goethe A2, Sprechen Teil 1, als Monolog. A2 zeigt sich an zusammenhängenden Sätzen und Details (seit wann, wie oft), nicht nur an Stichworten."),
+    "Wie Goethe A2, Sprechen Teil 1, als Monolog. A2 zeigt sich an zusammenhängenden Sätzen und Details (seit wann, wie oft), nicht nur an Stichworten. Alter, Herkunft o. Ä. werden nicht erwartet und nicht bewertet."),
   speakingTask("monologue", "MID", LONG,
     "Erzählen Sie über Ihren Alltag. Wie sieht ein normaler Tag bei Ihnen aus?\n\n" +
       "- Wann stehen Sie auf?\n" +
@@ -1257,18 +1255,18 @@ const speakingItems: SeedItem[] = [
     "Erzählen Sie über Ihr letztes Wochenende.\n\n" +
       "- Was haben Sie am Samstag gemacht?\n" +
       "- Was haben Sie am Sonntag gemacht?\n" +
-      "- Mit wem waren Sie zusammen?\n" +
+      "- Wo waren Sie, oder wohin sind Sie gegangen oder gefahren?\n" +
       "- Was hat Ihnen besonders gut gefallen?",
     [
       "Aktivitäten am Samstag im Perfekt",
       "Aktivitäten am Sonntag im Perfekt",
-      "mit wem (Personen nennen)",
+      "Ort: wo man war oder wohin man gegangen oder gefahren ist",
       "Bewertung: was gut gefallen hat und warum",
     ],
     [
       "was Sie am Samstag gemacht haben",
       "was Sie am Sonntag gemacht haben",
-      "mit wem Sie zusammen waren",
+      "wo Sie waren oder wohin Sie gegangen oder gefahren sind",
       "was Ihnen besonders gut gefallen hat",
     ],
     undefined,
@@ -1329,28 +1327,29 @@ const speakingItems: SeedItem[] = [
     undefined,
     "Zusammenhängendes Sprechen mit Begründung und Vergleich. Komparativ und weil-Sätze sind die Zielstrukturen dieser Aufgabe."),
   speakingTask("planning", "MID", LONG,
-    "Ihre Deutschklasse macht am Ende des Monats einen gemeinsamen Ausflug. Sie planen ihn mit einer Partnerin oder einem Partner. " +
-      "Auf der Karte stehen Vorschläge. Sprechen Sie über alle vier Punkte und einigen Sie sich. Sie können auch eigene Ideen nennen.\n\n" +
+    "Ihre Deutschklasse macht am Ende des Monats einen gemeinsamen Ausflug. Ihre Kurskollegin Lena sagt: " +
+      "\u201EIch möchte am Samstag ins Museum gehen. Wir fahren mit dem Bus, oder?\u201C\n\n" +
+      "Antworten Sie Lena. Reagieren Sie auf ihren Vorschlag und sprechen Sie über alle vier Punkte. Sie können auch eigene Ideen nennen.\n\n" +
       "Wohin? Freizeitpark, Museum, Wanderung, Schwimmbad\n" +
       "Wann? Samstag, Sonntag, nach dem Kurs unter der Woche\n" +
       "Wie kommen wir hin? Bus, Zug, Fahrgemeinschaft mit dem Auto\n" +
       "Was nehmen wir mit? Essen, Getränke, Kamera, Regenjacke",
     [
-      "einen Ort vorschlagen und begründen",
-      "Tag und Uhrzeit vorschlagen",
+      "reagiert auf Lenas Vorschlag (zustimmen oder höflich etwas anderes vorschlagen)",
+      "einen Ort nennen und begründen",
+      "Tag (und eventuell Uhrzeit) vorschlagen",
       "sagen, wie die Gruppe hinkommt",
       "sagen, was alle mitnehmen",
-      "auf Vorschläge reagieren (zustimmen oder höflich etwas anderes vorschlagen)",
     ],
     [
-      "einen Ort vorschlagen",
-      "Tag und Uhrzeit vorschlagen",
+      "auf Lenas Vorschlag reagieren",
+      "einen Ort nennen",
+      "einen Tag vorschlagen",
       "sagen, wie Sie hinkommen",
       "sagen, was Sie mitnehmen",
-      "auf Vorschläge reagieren",
     ],
     INFORMAL,
-    "Gemeinsames Planen mit Optionskarte wie im ÖSD-A2-Sprechen (Teil 2). Prüft Vorschläge (Wollen wir ...? Wie wäre es mit ...?), Zustimmung und Gegenvorschlag, dazu Begründungen mit weil. Die Karte nennt die Punkte, nicht die Entscheidung."),
+    "Planen mit Optionskarte wie im ÖSD-A2-Sprechen (Teil 2), als Antwort auf den Vorschlag einer Kurskollegin. Prüft Zustimmung oder Gegenvorschlag, Vorschläge (Wollen wir ...? Wie wäre es mit ...?) und Begründungen mit weil. Die Karte nennt die Punkte, nicht die Entscheidung."),
 ];
 
 // ================================================================ EXPORT

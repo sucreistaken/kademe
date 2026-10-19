@@ -77,7 +77,8 @@ Her madde ya bir betikle sayıldı ya da satırı okunarak kontrol edildi.
      "hiçbiri uymaz" seçenekli ilan eşleme, tek kelimelik açık boşluk metni, hata düzeltme metni,
      çok seçimli dinleme (MULTI_CHOICE).
    - Yazmada, sorularını yanıtlamak gereken gelen bir e-posta ya da ilan veren istem yok.
-   - Tablo verip yorumlatan istem ve "Ihrem Land" karşılaştırma maddesi hiç yok.
+   - Tablo verip yorumlatan istem ve karşılaştırma maddesi hiç yok. Sınavlar "Ihr Land" der; banka işe alımda da
+     kullanıldığı için biz köken sordurmayız, "Ihre Stadt oder Region" deriz.
 
 ## Düşürülen ya da yumuşatılan bulgular
 
@@ -118,7 +119,7 @@ Her madde ya bir betikle sayıldı ya da satırı okunarak kontrol edildi.
    - İşlev kelimesi havuzu: 15 kelime, 10 boşluk.
    - C1-C2 için tek kelimelik açık boşluk metni.
 9. Yazma: gelen e-postayı ya da ilanı istemin içinde ver, soruları yanıtlat (A1 3 soru ve yaklaşık 30 kelime,
-   A2 5 soru ve yaklaşık 50 kelime). B2 ve üstüne şikâyet mektubu ve "kendi ülkenizde" maddesi ekle.
+   A2 5 soru ve yaklaşık 50 kelime). B2 ve üstüne şikâyet mektubu ve "kendi şehrinizde" karşılaştırma maddesi ekle (köken sorulmaz).
    C1'e tablo yorumlama ekle.
 
 **P2, içerik genişletme:**

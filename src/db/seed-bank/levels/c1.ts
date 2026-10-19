@@ -151,8 +151,8 @@ const grammarItems: SeedItem[] = [
     "„Dürfte“ (Konjunktiv II von dürfen) drückt eine Vermutung mit hoher Wahrscheinlichkeit aus. Erlaubnis wäre „darf“, fremde Behauptung „soll“, Gewissheit gäbe der Indikativ wieder."),
   gGap("nominalisierung", "MID",
     "Formen Sie den Nebensatz in eine Nominalgruppe um.\n\nWeil die Preise kräftig gestiegen sind, haben viele Haushalte ihre Ausgaben eingeschränkt.\n→ Aufgrund des kräftigen {{g1}} der Preise haben viele Haushalte ihre Ausgaben eingeschränkt.",
-    ["Anstiegs", "Anstieges"], undefined,
-    "Nominalisierung von „steigen“: der Anstieg. Nach „aufgrund“ steht der Genitiv, das Nomen (maskulin, Singular) bekommt also die Endung -s oder -es: „des kräftigen Anstiegs / Anstieges der Preise“."),
+    ["Anstiegs", "Anstieges", "Ansteigens", "Steigens"], undefined,
+    "Nominalisierung von „steigen“: der Anstieg. Nach „aufgrund“ steht der Genitiv, das Nomen (maskulin, Singular) bekommt also die Endung -s oder -es: „des kräftigen Anstiegs / Anstieges der Preise“. Die substantivierten Infinitive „Ansteigens“ und „Steigens“ sind ebenfalls korrekt und werden akzeptiert."),
   gGap("partizipialattribut", "MID",
     "Die von der Geschäftsleitung im Frühjahr {{g1}} Regeln gelten ab sofort für alle Abteilungen.",
     ["beschlossenen"], ["beschlossene", "beschließenden", "beschlossenen", "zu beschließenden"],
@@ -241,7 +241,7 @@ const grammarItems: SeedItem[] = [
     variants: { 11: ["ber"] },
     // Wrong parts by the gap whose stem they target.
     distractors: {
-      1: ["chste"], 2: ["inem"], 3: ["m"], 4: ["ftigte"],
+      1: ["chste"], 2: ["inem"], 3: ["m"], 4: ["ftigtem"],
       5: ["eisen"], 7: ["chtungen"], 9: ["volle"], 10: ["inen"],
       12: ["nnst"], 14: ["anke"], 15: ["iben"], 16: ["tgebern"],
       17: ["eue"], 18: ["tzen"], 20: ["rauens"],
@@ -300,7 +300,7 @@ const grammarTexts: SeedItem[] = [
       "Sie geben zu bedenken, dass vor allem Menschen, [[denen|die|deren|dessen]] der Umgang mit digitalen Zahlungsmitteln schwerfällt, benachteiligt würden. " +
       "Zudem schützt Bargeld die Privatsphäre, [[da|denn|deshalb|trotzdem]] jede Kartenzahlung Datenspuren hinterlässt. " +
       "Hinzu kommt die Frage, wie widerstandsfähig ein vollständig [[auf|an|von|über]] Strom und Internet [[angewiesenes|angewiesen|anweisendes|anzuweisendes]] Zahlungssystem im Krisenfall wäre. " +
-      "Eine vollständige [[Abschaffung|Schaffung|Anschaffung|Abschaffens]] des Bargelds ist in Deutschland dennoch nicht geplant. " +
+      "Eine vollständige [[Abschaffung|Schaffung|Anschaffung|Abschaffens]] des Bargelds ist in Deutschland derzeit nicht geplant. " +
       "Gleichzeitig gewöhnen sich auch viele kleine Geschäfte [[daran|darauf|damit|dafür]], dass ihre Kundschaft selbst Kleinstbeträge mit der Karte bezahlt.",
     last: "Ob das Bargeld eines Tages ganz verschwindet, werden am Ende wohl die Kundinnen und Kunden selbst entscheiden.",
     note: "Perfekt eines reflexiven Verbs (g1), Konjunktiv I in der indirekten Rede (g2), greifen zu (g3), Perfekt Passiv mit worden (g4), warnen davor + zu-Infinitiv bei trennbarem Verb (g5), Relativpronomen im Dativ bei jemandem fällt etwas schwer (g6), da mit Verbendstellung (g7), angewiesen auf (g8), Partizipialattribut nach ein im Neutrum (g9), Nominalstil (g10), sich gewöhnen an mit Präpositionaladverb (g11).",
@@ -316,8 +316,8 @@ const grammarTexts: SeedItem[] = [
       "Gerade bei Kindern, [[deren|dessen|denen|die]] Eltern zu Hause kaum Deutsch sprechen, kommt der Kita deshalb eine Schlüsselrolle zu. " +
       "Im Alltag [[lässt|lassen|wird|ist]] sich dieser Anspruch allerdings nicht immer einlösen. " +
       "Die meisten Fachkräfte sprechen selbst nur Deutsch, und Bilderbücher in anderen Sprachen sind oft nur schwer [[zu beschaffen|beschaffen|beschafft|beschaffend]]. " +
-      "Einige Einrichtungen beziehen deshalb die Eltern gezielt [[in|an|auf|zu]] die Sprachförderung ein. " +
-      "[[Indem|Damit|Sodass|Wobei]] Mütter und Väter Lieder und Geschichten in ihrer Familiensprache einbringen, erfahren die Kinder, dass auch diese Sprache geschätzt wird. " +
+      "Einige Einrichtungen beziehen deshalb die Eltern gezielt [[in|an|auf|zu]] die Sprachförderung ein, [[indem|damit|sodass|obwohl]] sie diese bitten, Lieder und Geschichten in der Familiensprache vorzustellen. " +
+      "Die Kinder erfahren so, dass auch diese Sprache geschätzt wird. " +
       "Solche Projekte stoßen bei den Familien [[auf|an|zu|bei]] große Resonanz. " +
       "Ersten Auswertungen [[zufolge|laut|seitens|mittels]] verbessern sich dadurch sogar die Deutschkenntnisse der Kinder.",
     last: "Mehrsprachigkeit erweist sich damit weniger als Hindernis denn als Chance, sofern sie gezielt begleitet wird.",
@@ -343,7 +343,7 @@ const grammarTexts: SeedItem[] = [
   }),
   wordBank(LEVEL, "EASY", {
     title: "Ehrenamt im Wandel",
-    first: "Rund ein Drittel der Menschen in Deutschland engagiert sich in seiner Freizeit ehrenamtlich.",
+    first: "Rund ein Drittel der Menschen in Deutschland engagiert sich in ihrer Freizeit ehrenamtlich.",
     body:
       "Doch die Art des Engagements hat sich in den letzten Jahren deutlich [[verändert]]. " +
       "Immer weniger Menschen sind bereit, sich langfristig an einen Verein zu [[binden]]. " +
@@ -365,10 +365,10 @@ const grammarTexts: SeedItem[] = [
       "Gefragt sind vor allem ruhige [[Arbeitsplätze]] mit schnellem Internet. " +
       "Ältere Gebäude stoßen dabei [[an]] ihre Grenzen, weil es an Steckdosen und Leitungen fehlt. " +
       "Viele Städte bauen die Bibliotheken deshalb um, [[sodass]] künftig auch Kurse und Veranstaltungen stattfinden können. " +
-      "Das kostet Geld, und nicht überall ist man bereit, es [[bereitzustellen]]. " +
+      "Das kostet Geld, und nicht überall ist man bereit, es [[aufzubringen]]. " +
       "Befürworter betonen den [[Gewinn]] für die gesamte Nachbarschaft, weil dort Menschen zusammenkommen, die sich sonst nie begegnen würden.",
     last: "Ob der Umbau gelingt, entscheidet am Ende auch die Bereitschaft der Stadt, Bibliotheken als Treffpunkte ernst zu nehmen.",
-    distractors: ["obwohl", "darauf", "Regale", "bereitgestellt", "Verlust"],
+    distractors: ["obwohl", "darauf", "Regale", "aufgebracht", "Verlust"],
   }),
   wordBank(LEVEL, "HARD", {
     title: "Moore als Klimaschützer",
@@ -474,7 +474,7 @@ const R_REPARATUR = text("reparatur", "Reparieren statt wegwerfen: ein Recht mit
   "Umweltverbände begrüßen die Regeln grundsätzlich, halten sie aber für unzureichend. Ihre Kritik richtet sich vor allem darauf, dass zwar die Verfügbarkeit von Ersatzteilen geregelt wird, nicht aber deren Preis. Solange ein neues Display fast so viel koste wie ein neues Telefon, entscheide sich kaum jemand für die Reparatur, argumentiert eine Sprecherin. Einige Länder setzen deshalb zusätzlich auf finanzielle Anreize: Wer ein Gerät reparieren lässt, erhält einen Zuschuss zu den Kosten. Erste Auswertungen deuten darauf hin, dass solche Programme die Zahl der Reparaturen erhöhen, wobei unklar bleibt, wie viele dieser Reparaturen ohnehin stattgefunden hätten.",
   "Die Hersteller wiederum verweisen auf zusätzliche Kosten. Ersatzteile über viele Jahre zu lagern, binde Kapital und Lagerfläche; diese Kosten würden letztlich an die Kundschaft weitergegeben. Zudem warnen sie vor Sicherheitsrisiken, wenn Laien sich an Geräten mit Akkus oder Hochspannungsteilen versuchen. Kritiker halten dem entgegen, dass dieses Argument seit Jahren vorgebracht werde, um den Markt für Reparaturen zu kontrollieren.",
   "Für das Handwerk könnten die neuen Regeln eine Chance sein. Reparaturbetriebe klagen allerdings schon jetzt über fehlenden Nachwuchs. Eine Ausbildung im Bereich Elektronik ist anspruchsvoll, die Bezahlung im Vergleich zur Industrie eher bescheiden. Ohne qualifizierte Fachkräfte, so die Befürchtung, bleibe das Recht auf Reparatur in vielen Regionen ein Recht auf dem Papier.",
-  "Unabhängig von der Gesetzgebung ist in vielen Städten zudem eine Bewegung entstanden, die das Reparieren aus der Nische holen will. In sogenannten Reparaturcafés helfen Ehrenamtliche dabei, defekte Toaster, Lampen oder Fahrräder wieder instand zu setzen. Dort geht es nicht nur um das einzelne Gerät, sondern auch darum, Wissen weiterzugeben, das in vielen Familien verloren gegangen ist. Professionelle Werkstätten können solche Initiativen allerdings nicht ersetzen, zumal die Ehrenamtlichen bei komplexer Elektronik schnell an ihre Grenzen stoßen.",
+  "Unabhängig von der Gesetzgebung ist in vielen Städten zudem eine Bewegung entstanden, die das Reparieren aus der Nische holen will. In sogenannten Reparaturcafés helfen Ehrenamtliche dabei, defekte Toaster, Lampen oder Fahrräder wieder instand zu setzen. Dort geht es nicht nur um das einzelne Gerät, sondern auch darum, Wissen weiterzugeben, das in vielen Familien verloren gegangen ist. Solche Initiativen können professionelle Werkstätten allerdings nicht ersetzen, zumal die Ehrenamtlichen bei komplexer Elektronik schnell an ihre Grenzen stoßen.",
   "Letztlich hängt der Erfolg auch von den Verbraucherinnen und Verbrauchern selbst ab. Umfragen zufolge befürworten zwar die meisten das Reparieren, im Alltag greifen jedoch viele zum Neugerät, weil es bequemer ist oder weil ein neues Modell schlicht attraktiver erscheint. Gesetze können Hindernisse beseitigen; Gewohnheiten ändern sie nicht automatisch.",
 ]);
 
@@ -521,7 +521,7 @@ const R_GENOSSENSCHAFT = text("genossenschaft", "Erfahrungen mit einer Wohngenos
 // Text 8: six course ads for a matching task (needs with two constraints).
 const R_FOTOKURSE = text("fotokurse", "Fotografie-Kurse an der Volkshochschule", "Freizeit und Kurse", [
   "A: Naturfotografie mit der Spiegelreflexkamera\nDieser Kurs richtet sich an alle, die ihre Kamera bereits besitzen und die manuellen Einstellungen verstehen wollen. An sechs Dienstagabenden lernen Sie Blende, Belichtungszeit und Lichtführung kennen. Die Übungen finden in der Dämmerung in der näheren Umgebung statt. Die Gruppe ist auf zehn Personen begrenzt.",
-  "B: Fotografieren im Moor, Wochenendworkshop\nZwei Samstage im Mai, jeweils von neun bis sechzehn Uhr, im Naturschutzgebiet. Sie arbeiten mit Ihrer eigenen Kamera und üben, Landschaft, Pflanzen und Tiere bei wechselndem Licht aufzunehmen. Grundkenntnisse der Kameratechnik werden vorausgesetzt. Feste Schuhe sind erforderlich.",
+  "B: Fotografieren im Moor, Wochenendworkshop\nZwei Samstage im Mai, jeweils von neun bis sechzehn Uhr, im Naturschutzgebiet. Sie arbeiten mit Ihrer eigenen Kamera und lernen, Blende und Belichtungszeit bei wechselndem Licht selbst einzustellen. Vorkenntnisse sind nicht nötig. Feste Schuhe sind erforderlich.",
   "C: Bessere Bilder im Alltag\nIn einem einzigen Vormittag lernen Sie, Bildaufbau, Licht und einfache Bearbeitung gezielt einzusetzen. Eine Kamera brauchen Sie nicht, bringen Sie nur Ihr Telefon mit. Der Kurs findet an einem Samstag im Seminarraum der Volkshochschule statt, Vorkenntnisse sind nicht nötig.",
   "D: Bildbearbeitung für Fotofreunde\nAn einem Wochenende bearbeiten Sie Ihre eigenen Aufnahmen am Computer. Die Rechner stehen im Schulungsraum bereit, Ihre Fotos bringen Sie auf einem Speichermedium mit. Der Kurs ist für Teilnehmende gedacht, die schon regelmäßig fotografieren, und behandelt Farbkorrektur und Retusche.",
   "E: Porträts im Atelier\nEin Kurs an vier Donnerstagabenden. Sie lernen, Menschen im Studio mit Dauerlicht und Blitz zu fotografieren. Ausrüstung kann ausgeliehen werden, Vorkenntnisse sind nicht erforderlich. Zum Kurs gehört ein gemeinsames Abschlussshooting.",
@@ -575,7 +575,7 @@ const readingItems: SeedItem[] = [
     "Sie regeln die Verfügbarkeit von Ersatzteilen, aber nicht, wie viel diese kosten dürfen.",
     [
       "Sie gelten zunächst nur für Smartphones und Waschmaschinen, aber nicht für Kühlschränke.",
-      "Sie verbieten Software nicht, die freie Werkstätten von der Reparatur ausschließt.",
+      "Sie verbieten keine Software, die freie Werkstätten von der Reparatur ausschließt.",
       "Sie verpflichten die Hersteller nicht, Reparaturanleitungen zugänglich zu machen.",
     ], 0,
     "Absatz 3: Geregelt wird die Verfügbarkeit, „nicht aber deren Preis“. Die anderen Optionen widersprechen Absatz 2: Dort sind Kühlschränke genannt, die Software-Sperre wird untersagt, Anleitungen werden Pflicht."),
@@ -594,7 +594,7 @@ const readingItems: SeedItem[] = [
       ["Die Umweltverbände lehnen die neuen Vorschriften grundsätzlich ab.", "F"],
       ["Bei komplizierter Elektronik können Cafés mit freiwilligen Helfern eine Fachwerkstatt nicht ersetzen.", "R"],
     ],
-    "1 NG: Reparaturcafés werden beschrieben (Absatz 6), von einer Förderung durch Kommunen ist keine Rede. 2 R: Absatz 2, Hersteller dürfen unabhängige Werkstätten nicht durch technische Tricks wie Software, die nur Originalteile akzeptiert, ausschließen. 3 F: Absatz 3, die Verbände „begrüßen die Regeln grundsätzlich“, halten sie aber für unzureichend. 4 R: Absatz 6, Professionelle Werkstätten können solche Initiativen nicht ersetzen, bei komplexer Elektronik stoßen die Ehrenamtlichen schnell an ihre Grenzen."),
+    "1 NG: Reparaturcafés werden beschrieben (Absatz 6), von einer Förderung durch Kommunen ist keine Rede. 2 R: Absatz 2, Hersteller dürfen unabhängige Werkstätten nicht durch technische Tricks wie Software, die nur Originalteile akzeptiert, ausschließen. 3 F: Absatz 3, die Verbände „begrüßen die Regeln grundsätzlich“, halten sie aber für unzureichend. 4 R: Absatz 6, solche Initiativen können professionelle Werkstätten nicht ersetzen, bei komplexer Elektronik stoßen die Ehrenamtlichen schnell an ihre Grenzen."),
 
   // Weiterbildung
   rWeiterbildung.match("structure", "HARD",
@@ -719,7 +719,7 @@ const readingItems: SeedItem[] = [
     "für Menschen, die voraussichtlich in absehbarer Zeit wieder umziehen müssen",
     [
       "für Menschen, die sich in Konflikten lieber zurückhalten und Streit meiden",
-      "für Menschen, die keinen größeren Geldbetrag auf einmal zurückzahlen können",
+      "für Menschen, die dringend auf eine dauerhaft niedrige und stabile Miete angewiesen sind",
       "für Menschen, die gern in Gärten arbeiten und Gemeinschaft ausdrücklich suchen",
     ], 3,
     "Letzter Absatz: Wer häufig umzieht, sollte es sich überlegen, weil der Anteil Geld bindet und die Wartelisten lang sind. Konflikte sieht die Verfasserin eher als Vorteil (sie kommen früh zur Sprache); der Anteil wird eingezahlt und zurückgezahlt, nicht umgekehrt; Garten-Arbeitsgruppen werden positiv erwähnt."),
@@ -742,7 +742,7 @@ const readingItems: SeedItem[] = [
       "F: Analoge Fotografie und Dunkelkammer",
     ],
     [2, 3, 4, 5],
-    "1 → B: Eigene Kamera und manuelle Einstellungen passen zu A und B, nur B liegt am Wochenende (A dienstagabends). 2 → C: Ohne eigene Kamera kommen C, E (Ausrüstung leihbar) und F (Filmkameras gestellt) in Frage, nur C dauert genau einen Vormittag. 3 → D: nachträgliche Bearbeitung mit Rechnern im Schulungsraum. 4 → E: Porträts im Studio, Ausrüstung leihbar, keine Vorkenntnisse, donnerstagabends. A und F bleiben übrig."),
+    "1 → B: Eigene Kamera und manuelle Einstellungen (Blende, Belichtungszeit) passen zu A und B, nur B liegt am Wochenende (A dienstagabends). 2 → C: Ohne eigene Kamera kommen C, E (Ausrüstung leihbar) und F (Filmkameras gestellt) in Frage, nur C dauert genau einen Vormittag. 3 → D: nachträgliche Bearbeitung mit Rechnern im Schulungsraum. 4 → E: Porträts im Studio, Ausrüstung leihbar, keine Vorkenntnisse, donnerstagabends. A und F bleiben übrig."),
 ];
 
 // ---------------------------------------------------------------- LISTENING
@@ -837,9 +837,9 @@ const L_QUEREINSTIEG = clip("quereinstieg-v3", "Interview: Quereinstieg als Stra
     "Moderator: Klappt das in jeder Branche?",
     "Frau Hartmann: Nein. Gut klappt es dort, wo man viel in der Praxis lernt, also in der IT oder im Handwerk. Schwierig wird es bei Berufen mit staatlicher Anerkennung. Da kommt man an einem formalen Abschluss einfach nicht vorbei.",
     "Moderator: Und wo hakt es sonst? Das klingt ja fast zu schön.",
-    "Frau Hartmann: Die größte Hürde ist, anders als viele denken, nicht die Einarbeitung. Die schafft man mit guten Programmen in ein, zwei Jahre. Schwierig ist das Geld. Viele verdienen anfangs deutlich weniger als in ihrem alten Beruf, jedenfalls wenn sie dort schon Erfahrung hatten. Das muss man sich erst mal leisten können. Und dann gibt es noch etwas, worüber kaum jemand spricht: Manche Teams nehmen die Neuen nicht ernst. Da heißt es dann schnell: Die hat ja nicht mal Informatik studiert.",
+    "Frau Hartmann: Die größte Hürde ist, anders als viele denken, nicht die Einarbeitung. Die schafft man mit guten Programmen in ein, zwei Jahren. Schwierig ist das Geld. Viele verdienen anfangs deutlich weniger als in ihrem alten Beruf, jedenfalls wenn sie dort schon Erfahrung hatten. Das muss man sich erst mal leisten können. Und dann gibt es noch etwas, worüber kaum jemand spricht: Manche Teams nehmen die Neuen nicht ernst. Da heißt es dann schnell: Die hat ja nicht mal Informatik studiert.",
     "Moderator: Was können Betriebe dagegen tun?",
-    "Frau Hartmann: Einiges. Am besten funktioniert eine feste Ansprechperson im Team. Nicht die Chefin, nicht der Chef, sondern jemand auf derselben Ebene, also eine erfahrene Kollegin oder ein Kollege. Wo es das gab, waren nach drei Jahren noch rund vier von fünf Quereinsteigern im Betrieb. Ohne diese Begleitung waren es nur gut die Hälfte. Also: vier von fünf mit Begleitung, gut die Hälfte ohne.",
+    "Frau Hartmann: Einiges. Am besten funktioniert eine feste Ansprechperson im Team. Nicht die Chefin, nicht der Chef, sondern jemand auf derselben Ebene, also eine erfahrene Kollegin oder ein Kollege. Wo es das gab, waren nach drei Jahren noch rund vier von fünf Quereinsteigern im Betrieb. Ohne diese Begleitung war es nur gut die Hälfte. Also: vier von fünf mit Begleitung, gut die Hälfte ohne.",
     "Moderator: Würden Sie denn jedem raten, den Schritt zu wagen?",
     "Frau Hartmann: Jedem? Nein, nicht jedem. Wer sich wirklich für ein neues Feld interessiert und eine knappe Anfangszeit finanziell durchhalten kann, hat heute bessere Chancen als je zuvor. Wer dagegen nur schnell mehr Gehalt will, wird wahrscheinlich enttäuscht.",
   ],
@@ -879,53 +879,49 @@ const L_GEHALT = clip("gehaltstransparenz-v3", "Diskussion: Sollen Gehälter off
     "Frau Demir: Hm. Und die, die bisher einfach besser verhandelt haben? Die wären dann die Verlierer.",
     "Herr Lorenz: Nicht unbedingt. Niemand verliert etwas. Aber wer künftig neu verhandelt, wird an denselben Kriterien gemessen wie alle anderen.",
     "Frau Demir: Das mag sein. Ich befürchte nur, dass die Offenlegung erst einmal vor allem Unruhe bringt. Wer erfährt, dass er am unteren Ende seines Bandes liegt, ist doch frustriert.",
-    "Herr Lorenz: Kurzfristig ja, das bestreite ich gar nicht. Aber Firmen, die umgestellt haben, berichten: Nach etwa einem Jahr, also nach zwölf Monaten, beruhigt sich das meistens. Und dann werden die Gespräche sachlicher. Man verhandelt nicht mehr darüber, wer am besten pokert, sondern darüber, was man konkret tun muss, um weiterzukommen.",
+    "Herr Lorenz: Kurzfristig ja, das bestreite ich gar nicht. Aber Firmen, die umgestellt haben, berichten: Nach etwa einem Jahr beruhigt sich das meistens. Und dann werden die Gespräche sachlicher. Man verhandelt nicht mehr darüber, wer am besten pokert, sondern darüber, was man konkret tun muss, um weiterzukommen.",
     "Frau Demir: Das gefällt mir, ehrlich gesagt. Gerade die Zurückhaltenden, die nie von sich aus nach mehr Geld fragen würden, hätten dann eine Chance. Aber per Gesetz für alle Betriebe gleich? Da bin ich nicht überzeugt. Für einen Konzern mit eigener Personalabteilung ist das etwas völlig anderes als für uns.",
     "Herr Lorenz: Da liegen wir gar nicht so weit auseinander. Ich könnte mir gut vorstellen, dass kleinere Betriebe mehr Zeit bekommen und Unterstützung bei der Einführung.",
   ],
 );
 
-// Clip 4: voicemail for note taking.
-const L_PHYSIO = clip("physio-nachricht", "Nachricht auf dem Anrufbeantworter", "Gesundheit und Termine",
-  [{ label: "Frau Reuter", voice: "A" }],
+// Clip 4: short lecture for note taking (content under time pressure).
+const L_PHYSIO = clip("laerm-schlaf", "Kurzvortrag: Lärm und Schlaf", "Gesundheit und Lärm",
+  [{ label: "Dozentin", voice: "A" }],
   [
-    "Frau Reuter: Guten Tag, hier spricht Katrin Reuter von der Physiotherapiepraxis am Lindenplatz. Ich rufe an wegen Ihres Termins am Dienstag. Den muss ich leider verschieben, weil die neue Behandlungsliege für Raum zwei erst am Mittwoch geliefert wird. Ich könnte Ihnen stattdessen Donnerstag um halb zehn anbieten, nein, Entschuldigung, Donnerstag um halb elf. Falls das nicht passt, hätte ich noch den Freitag der kommenden Woche. Bitte bringen Sie dieses Mal ein großes Handtuch mit, und wenn Sie den Befundbericht Ihres Orthopäden haben, auch den. Rufen Sie mich bitte bis Mittwochmittag zurück, und zwar unter vier-sieben-drei, zwei-null-sechs-fünf. Ich wiederhole: vier-sieben-drei, zwei-null-sechs-fünf. Das ist meine Durchwahl. Vielen Dank, und bis bald.",
+    "Dozentin: Bei Verkehrslärm denken die meisten sofort an den Dauerpegel, also an den Mittelwert über die Nacht. Für den Schlaf entscheidend ist aber etwas anderes, nämlich einzelne laute Ereignisse, ein vorbeifahrender Lastwagen zum Beispiel oder ein Motorrad. Solche Lärmspitzen lösen Aufwachreaktionen aus, und zwar auch dann, wenn man sich am nächsten Morgen an nichts erinnert. Der Körper reagiert trotzdem, der Puls steigt.",
+    "Dozentin: Viele Städte versuchen deshalb, genau diese Spitzen zu senken. Am häufigsten setzt man bei der Geschwindigkeit an: Nachts darf dann nur noch deutlich langsamer gefahren werden. Ob das tatsächlich hilft, hängt allerdings davon ab, ob sich jemand um die Einhaltung kümmert. Wo niemand misst und niemand bestraft, fährt die Mehrheit wie gewohnt weiter.",
+    "Dozentin: Wer selbst etwas tun will, hat weniger Spielraum, als man denkt. Schallschutzfenster sind teuer und helfen nur, solange sie geschlossen bleiben. Wirksamer und oft kostenlos ist es, das Schlafzimmer in einen Raum zu verlegen, der nicht zur Straße liegt.",
   ],
 );
 
-// Clip 5: short radio report.
-const L_NACHTZUG = clip("nachtzug-beitrag", "Radiobeitrag: Nachtzüge kehren zurück", "Reisen und Verkehr",
+// Clip 5: radio commentary with hedged argument.
+const L_NACHTZUG = clip("nachtzug-kommentar", "Radiokommentar: Nachtzüge", "Reisen und Verkehr",
   [
     { label: "Moderator", voice: "B" },
-    { label: "Reporterin", voice: "A" },
+    { label: "Frau Wolf", voice: "A" },
   ],
   [
-    "Moderator: Und jetzt zum Reisen. Nachtzüge galten lange als Auslaufmodell, doch jetzt kehren sie zurück. Unsere Reporterin Jana Wolf ist gestern selbst eine Nacht lang gefahren. Frau Wolf, wie war es?",
-    "Reporterin: Na ja, ehrlich gesagt besser als gedacht. Ich bin abends um zehn vor zehn in Berlin eingestiegen und morgens um halb acht in Wien angekommen. Das sind zehn Stunden, nein, genauer gesagt neun Stunden und vierzig Minuten. Ich hatte ein Abteil mit Liegen, und ich habe tatsächlich geschlafen.",
-    "Moderator: Und der Preis? Man hört ja, dass Nachtzüge teuer sind.",
-    "Reporterin: Das stimmt nur zum Teil. Wer früh bucht, zahlt für einen Sitzplatz manchmal weniger als im Tagzug. Die Liegeplätze sind etwas teurer, aber man spart ja ein Hotel. Das Problem ist ein anderes: Es gibt zu wenige Wagen. Viele sind über vierzig Jahre alt, und neue kommen erst in den nächsten Jahren. Deshalb sind beliebte Verbindungen im Sommer oft schon Monate vorher ausgebucht.",
-    "Moderator: Also lohnt es sich, früh zu planen.",
-    "Reporterin: Unbedingt. Und wer flexibel ist: Unter der Woche sind noch Plätze frei.",
+    "Moderator: Nachtzüge sind wieder im Gespräch. Sie haben sich die Entwicklung angesehen, Frau Wolf, und sind skeptisch?",
+    "Frau Wolf: Skeptisch würde ich nicht sagen, eher vorsichtig. Dass die Leute die Nachtzüge annehmen, ist ja unübersehbar: Auf der Strecke von Berlin nach Wien sind die Betten im Sommer Wochen vorher weg. Aber genau da liegt für mich der Haken. Die Nachfrage beweist zunächst nur, dass das Angebot knapp ist. Viele Wagen sind über vierzig Jahre alt, und wer neue bestellt, wartet Jahre. Solange das so bleibt, bleibt der Nachtzug ein Produkt für Leute, die früh planen.",
+    "Moderator: Aber die Politik fördert doch.",
+    "Frau Wolf: Ja, mit Anschubhilfen. Nur ersetzt eine Anschubhilfe keine Fabrik. Ich halte es für ehrlicher, nicht so zu tun, als stünde der Nachtzug kurz davor, den Flug zu verdrängen. Auf ein paar Strecken kann er eine echte Alternative werden. Mehr würde ich vorerst nicht erwarten.",
   ],
 );
 
-// Clip 6: service call.
-const L_HEIZUNG = clip("heizung-anruf", "Telefonat mit der Hausverwaltung", "Wohnen und Alltag",
+// Clip 6: advice call with hedged information.
+const L_HEIZUNG = clip("mietminderung-beratung", "Beratungsgespräch: Heizungsausfall und Miete", "Wohnen und Recht",
   [
     { label: "Herr Berger", voice: "B" },
-    { label: "Frau Lenz", voice: "A" },
+    { label: "Frau Kramer", voice: "A" },
   ],
   [
-    "Herr Berger: Hausverwaltung Nordring, guten Tag, mein Name ist Berger.",
-    "Frau Lenz: Guten Tag, Lenz hier, ich wohne im Kastanienweg zwölf. Bei uns ist seit gestern Abend die Heizung kalt, im Bad und im Wohnzimmer.",
-    "Herr Berger: Seit gestern Abend, verstehe. Haben Sie schon geprüft, ob die Ventile aufgedreht sind?",
-    "Frau Lenz: Ja, alle. Die stehen auf vier. Das Wasser aus dem Hahn ist übrigens warm, nur die Heizkörper werden nicht warm.",
-    "Herr Berger: Hm. Dann liegt es vermutlich nicht an Ihrer Wohnung. Wir haben gestern die Anlage im Keller gewartet, möglicherweise ist dabei Luft ins System gelangt. Ich schicke den Techniker vorbei, und zwar morgen zwischen acht und zwölf Uhr. Passt Ihnen das?",
-    "Frau Lenz: Morgen früh geht leider nicht, ich habe bis elf einen Termin in der Praxis. Geht es auch nachmittags?",
-    "Herr Berger: Nachmittags kommt der Techniker erst ab Donnerstag. Dann sage ich Donnerstag, zwischen vierzehn und sechzehn Uhr.",
-    "Frau Lenz: Das ist aber erst in zwei Tagen. Bis dahin friere ich ja.",
-    "Herr Berger: Ich verstehe. Ich lasse Ihnen noch heute zwei Heizlüfter vom Hausmeister vorbeibringen, die können Sie so lange benutzen.",
-    "Frau Lenz: Ach so, das wäre wunderbar. Vielen Dank.",
+    "Herr Berger: Guten Tag. Bei uns funktioniert seit zehn Tagen die Heizung nicht, und mein Vermieter hat schon zweimal einen Handwerker versprochen, aber es kam niemand. Kann ich einfach weniger Miete zahlen?",
+    "Frau Kramer: Grundsätzlich ja, aber der Teufel steckt im Detail. Eine Minderung setzt voraus, dass Sie dem Vermieter den Mangel gemeldet haben, und zwar so, dass Sie es auch belegen können. Haben Sie das schriftlich?",
+    "Herr Berger: Ehrlich gesagt nur telefonisch.",
+    "Frau Kramer: Dann würde ich noch heute eine E-Mail schicken und darin die bisherigen Anrufe mit Datum aufführen. Das ersetzt die Meldung nicht, aber es dokumentiert sie. Zur Höhe kann ich Ihnen keine feste Zahl nennen. Das hängt davon ab, wie stark Ihre Wohnung betroffen ist und wie kalt es draußen ist. Bei einem Totalausfall im Winter geht es um deutlich mehr als bei einer Wohnung, die zwar kühl, aber noch nutzbar bleibt.",
+    "Herr Berger: Dann ziehe ich einfach einen Betrag ab, der mir angemessen erscheint.",
+    "Frau Kramer: Das würde ich Ihnen nicht raten. Zahlen Sie lieber unter Vorbehalt und lassen Sie die Höhe prüfen. Wenn Sie zu viel einbehalten, riskieren Sie im schlimmsten Fall eine Kündigung wegen Zahlungsrückstands.",
   ],
 );
 
@@ -963,7 +959,7 @@ const listeningItems: SeedItem[] = [
     ], 0,
     "Mit Ansprechperson sind nach drei Jahren rund vier von fünf noch im Betrieb, ohne nur gut die Hälfte. Die Führungskraft wird ausdrücklich ausgeschlossen („nicht die Chefin, nicht der Chef“); Zahlen zum ersten Jahr oder zu Monaten der Einarbeitung nennt sie nicht."),
   lQuer.choice("attitude", "HARD", "Wie steht Frau Hartmann zu der Frage, ob jeder den Quereinstieg wagen sollte?",
-    "Sie empfiehlt ihn nur denen, die sich für das Feld interessieren und finanziell durchhalten können.",
+    "Sie empfiehlt ihn nur Menschen mit echter Neugier auf das neue Fach und ausreichenden finanziellen Reserven.",
     [
       "Sie rät grundsätzlich davon ab, solange man dabei weniger verdient als im bisherigen Beruf.",
       "Sie empfiehlt ihn vor allem denen, die schnell ein höheres Gehalt erreichen wollen.",
@@ -1010,7 +1006,7 @@ const listeningItems: SeedItem[] = [
     "Wer vertritt welche Ansicht?",
     [
       "Zu Beginn sorgt eine Offenlegung für Frust im Betrieb.",
-      "Werden Gründe für unterschiedliche Gehälter verschwiegen, rechnen sich die Leute eigene, oft ungünstige Erklärungen aus.",
+      "Werden Gründe für unterschiedliche Gehälter verschwiegen, reimen sich die Leute eigene, oft wenig schmeichelhafte Erklärungen zusammen.",
       "In einem Kleinbetrieb ist schnell klar, wessen Gehalt gemeint ist.",
       "Gehälter sollten im Betrieb kein Gesprächsthema sein.",
     ],
@@ -1026,7 +1022,7 @@ const listeningItems: SeedItem[] = [
     ], 1,
     "Gehaltsbänder mit Mindest- und Höchstbetrag und bekannten Kriterien. Einsicht in einzelne Abrechnungen schließt er ausdrücklich aus; ein Band erlaubt Unterschiede; Betriebszugehörigkeit ist nur ein mögliches Kriterium."),
   lGehalt.choice("inference", "MID", "Welchen Vorteil der Offenlegung erkennt Frau Demir schließlich an?",
-    "Auch Zurückhaltende, die nie um mehr Geld bitten würden, bekämen eine faire Chance darauf.",
+    "Wer sich bisher nie getraut hat, mehr Gehalt zu fordern, würde künftig fairer behandelt als heute.",
     [
       "Die Unruhe im Betrieb würde sich nach der Einführung innerhalb weniger Wochen legen.",
       "Kleine Betriebe könnten dadurch leichter neue Beschäftigte gewinnen, weil die Gehälter bekannt sind.",
@@ -1034,7 +1030,7 @@ const listeningItems: SeedItem[] = [
     ], 3,
     "„Gerade die Zurückhaltenden, die nie von sich aus nach mehr Geld fragen würden, hätten dann eine Chance.“ Eine einheitliche gesetzliche Regelung lehnt sie ab; die Dauer bis zur Beruhigung nennt Herr Lorenz (etwa ein Jahr)."),
   lGehalt.choice("gist", "HARD", "Wie endet die Diskussion?",
-    "Beide nähern sich an: Kleinere Betriebe könnten mehr Zeit und Unterstützung erhalten.",
+    "Beide halten eine längere Übergangsfrist samt Hilfe bei der Umstellung für kleine Firmen für vorstellbar.",
     [
       "Herr Lorenz zieht seine Forderung zurück, weil er die Bedenken der Inhaberin teilt.",
       "Frau Demir stimmt zu, dass eine einheitliche gesetzliche Regelung für alle Betriebe gelten sollte.",
@@ -1042,52 +1038,52 @@ const listeningItems: SeedItem[] = [
     ], 0,
     "„Da liegen wir gar nicht so weit auseinander“: mehr Zeit und Unterstützung für kleinere Betriebe. Er hält an der Forderung fest, sie lehnt eine einheitliche Regelung ab."),
 
-  // Physiotherapie: note taking
-  lPhysio.notes("detail", "MID",
-    "Sie hören eine Nachricht auf dem Anrufbeantworter. Notieren Sie die Informationen.\n\nNeuer Terminvorschlag (Wochentag): {{g1}}\nUhrzeit: {{g2}}\nMitzubringen: {{g3}}\nRückruf unter der Nummer: {{g4}}",
+  // Lärm und Schlaf: note taking
+  lPhysio.notes("detail", "HARD",
+    "Sie hören einen Kurzvortrag. Ergänzen Sie die Notizen mit je einem Wort, das die Sprecherin sagt.\n\nGrößtes Problem: nicht der Dauerpegel, sondern kurze {{g1}}\nMaßnahme vieler Städte: nachts die {{g2}} senken\nWirkt nur, wenn sich jemand um die {{g3}} kümmert\nGünstigste Lösung für Betroffene: das {{g4}} in einen Raum abseits der Straße verlegen",
     [
-      ["Donnerstag"],
-      ["halb elf", "10:30", "10.30", "10:30 Uhr", "10.30 Uhr", "10 Uhr 30", "zehn Uhr dreißig", "zehn Uhr dreissig", "um halb elf"],
-      ["Handtuch", "ein Handtuch", "das Handtuch", "großes Handtuch", "ein großes Handtuch", "Handtuch groß"],
-      ["4732065", "473 2065", "473 20 65", "473-2065", "473/2065", "473 / 2065", "4 7 3 2 0 6 5", "473 206 5", "vier sieben drei zwei null sechs fünf"],
+      ["Lärmspitzen", "Lärmspitze", "Spitzen", "Spitze"],
+      ["Geschwindigkeit", "Geschwindigkeiten", "Fahrgeschwindigkeit", "Tempo"],
+      ["Einhaltung", "Überwachung", "Kontrolle"],
+      ["Schlafzimmer", "Schlafraum", "Schlafzimmers"],
     ],
-    "Gap 1: Erst „halb zehn“, dann korrigiert zu „halb elf“, der Wochentag bleibt Donnerstag (der Freitag ist nur die Alternative). Gap 2: halb elf = 10:30 Uhr; die Korrektur „nein, Entschuldigung“ gilt. Gap 3: ein großes Handtuch; der Befundbericht ist nur „wenn vorhanden“. Gap 4: Die Durchwahl 473 2065 wird zweimal genannt. Jede Lücke zählt einzeln; Ziffern und ausgeschriebene Zahlen werden akzeptiert."),
+    "Wie im ÖSD-Notizenformat steht in jeder Zeile genau eine Lücke für ein Wort, das die Sprecherin sagt. Lücke 1: „Solche Lärmspitzen lösen Aufwachreaktionen aus“ (nicht der Dauerpegel). Lücke 2: „bei der Geschwindigkeit ansetzen“, nachts nur noch langsamer fahren. Lücke 3: „ob sich jemand um die Einhaltung kümmert“; als Synonyme gelten Überwachung und Kontrolle. Lücke 4: das Schlafzimmer verlegen; die Zeile nennt die günstigste Lösung, Schallschutzfenster sind laut Text teuer und scheiden deshalb aus. Jede Lücke zählt einzeln, Groß- und Kleinschreibung und ae/oe/ue werden toleriert."),
 
   // Nachtzug
-  lNachtzug.choice("detail", "MID", "Welches Hauptproblem der Nachtzüge nennt die Reporterin?",
-    "Die vorhandenen Wagen reichen nicht aus, deshalb sind beliebte Verbindungen schnell ausgebucht.",
+  lNachtzug.choice("attitude", "HARD", "Wie beurteilt Frau Wolf die Zukunft der Nachtzüge?",
+    "Sie sieht auf einzelnen Strecken eine echte Chance, erwartet aber keinen breiten Ersatz für Flüge.",
     [
-      "Die Liegeplätze sind so teuer, dass sich die Fahrt gegenüber Flug und Hotel kaum noch lohnt.",
-      "Die Fahrt dauert so lange, dass man in den Liegen kaum Schlaf findet und müde ankommt.",
-      "Viele Strecken werden nur im Sommer bedient, weil im Winter das Personal fehlt.",
-    ], 2,
-    "„Das Problem ist ein anderes: Es gibt zu wenige Wagen ... Deshalb sind beliebte Verbindungen ... oft schon Monate vorher ausgebucht.“ Die Reporterin hat gut geschlafen, die Preise nennt sie nur „zum Teil“ hoch; von Personalmangel spricht sie nicht."),
-  lNachtzug.choice("detail", "HARD", "Wie lange dauerte die Fahrt der Reporterin von Berlin nach Wien?",
-    "neun Stunden und vierzig Minuten",
-    [
-      "zehn Stunden und zehn Minuten",
-      "neun Stunden und zwanzig Minuten",
-      "zehn Stunden und vierzig Minuten",
-    ], 1,
-    "Abfahrt um zehn vor zehn (21.50 Uhr), Ankunft um halb acht (7.30 Uhr): 9 Stunden 40 Minuten. Die Reporterin nennt zuerst „zehn Stunden“ und korrigiert sich („nein, genauer gesagt neun Stunden und vierzig Minuten“)."),
-
-  // Heizung
-  lHeizung.choice("inference", "MID", "Was vermutet Herr Berger als Ursache für die kalten Heizkörper?",
-    "Bei der Wartung gestern könnte Luft in die Heizungsanlage im Keller gelangt sein.",
-    [
-      "Die Ventile in der Wohnung von Frau Lenz sind nicht weit genug geöffnet.",
-      "Die Anlage im Keller wurde gestern abgeschaltet und danach nicht wieder gestartet.",
-      "Die Warmwasserversorgung ist ausgefallen und hat die Heizkörper mit abgeschaltet.",
-    ], 3,
-    "„Wir haben gestern die Anlage im Keller gewartet, möglicherweise ist dabei Luft ins System gelangt.“ Die Ventile hat Frau Lenz bereits geprüft (Stufe vier), das Warmwasser funktioniert."),
-  lHeizung.choice("detail", "HARD", "Was vereinbaren die beiden am Ende des Gesprächs?",
-    "Der Techniker kommt am Donnerstagnachmittag, bis dahin bekommt Frau Lenz zwei Heizlüfter.",
-    [
-      "Der Techniker kommt schon morgen früh, und bis dahin bekommt Frau Lenz einen Heizlüfter.",
-      "Der Techniker kommt am Donnerstagvormittag, und Frau Lenz erhält zum Ausgleich eine Mietminderung.",
-      "Der Techniker kommt noch heute Nachmittag, und Frau Lenz soll sich in der Zwischenzeit ein Ersatzgerät leihen.",
+      "Sie hält die Rückkehr für eine Modeerscheinung, die ohne dauerhafte Förderung wieder endet.",
+      "Sie rechnet damit, dass Nachtzüge bald auf den meisten Strecken mit Flügen konkurrieren.",
+      "Sie sieht das Hauptproblem darin, dass Fahrgäste lange Fahrzeiten kaum akzeptieren.",
     ], 0,
-    "Der erste Vorschlag (morgen zwischen acht und zwölf) scheitert an Frau Lenz' Termin bis elf. Nachmittags kommt der Techniker erst ab Donnerstag, vereinbart ist Donnerstag zwischen vierzehn und sechzehn Uhr. Zwei Heizlüfter bringt der Hausmeister noch heute."),
+    "„Auf ein paar Strecken kann er eine echte Alternative werden. Mehr würde ich vorerst nicht erwarten.“ Sie wendet sich ausdrücklich dagegen, den Nachtzug als baldigen Verdränger des Flugs darzustellen; die Fahrzeit und eine Modeerscheinung sprechen weder sie noch der Moderator an."),
+  lNachtzug.choice("inference", "HARD", "Welche Rolle spielen die ausgebuchten Betten auf der Strecke nach Wien in ihrer Argumentation?",
+    "Sie zeigen, dass die Nachfrage das vorhandene Angebot übersteigt, nicht dass es schon ausreicht.",
+    [
+      "Sie zeigen, dass Nachtzüge inzwischen auch ohne öffentliche Förderung wirtschaftlich arbeiten.",
+      "Sie zeigen, dass Reisende bereit sind, für Nachtzüge deutlich höhere Preise zu zahlen.",
+      "Sie zeigen, dass die neue Wagengeneration bereits auf den wichtigen Strecken im Einsatz ist.",
+    ], 2,
+    "„Die Nachfrage beweist zunächst nur, dass das Angebot knapp ist.“ Preise, Wirtschaftlichkeit ohne Förderung und neue Wagen werden nicht behauptet; die Wagen sind alt, neue lassen auf sich warten."),
+
+  // Mietminderung
+  lHeizung.choice("detail", "HARD", "Was sagt Frau Kramer zur Höhe einer Mietminderung?",
+    "Sie lasse sich nicht pauschal angeben, sondern hänge vom Ausmaß des Ausfalls und von der Witterung ab.",
+    [
+      "Sie betrage bei jedem Heizungsausfall einen festen Anteil der Monatsmiete.",
+      "Sie hänge davon ab, wie oft der Vermieter schon einen Handwerker versprochen habe.",
+      "Sie dürfe Herr Berger selbst festlegen, um den Vermieter unter Druck zu setzen.",
+    ], 1,
+    "„Zur Höhe kann ich Ihnen keine feste Zahl nennen. Das hängt davon ab, wie stark Ihre Wohnung betroffen ist und wie kalt es draußen ist.“ Die Zahl der Versprechen des Vermieters spielt dafür keine Rolle; vom Selbstfestlegen rät sie ausdrücklich ab."),
+  lHeizung.choice("inference", "HARD", "Wovor warnt Frau Kramer Herrn Berger?",
+    "Wenn er eigenmächtig zu viel einbehält, kann er selbst in Schwierigkeiten kommen.",
+    [
+      "Eine Mietminderung ist aussichtslos, weil der Mangel nicht schriftlich belegt ist.",
+      "Der Vermieter darf die Reparatur verweigern, solange noch Miete einbehalten wird.",
+      "Eine Meldung per E-Mail ist ungültig, wenn vorher schon telefoniert wurde.",
+    ], 3,
+    "„Grundsätzlich ja“ zur Minderung, schriftliche Dokumentation hilft nur; vor dem eigenmächtigen Abzug warnt sie mit dem Hinweis auf eine mögliche Kündigung wegen Zahlungsrückstands. Die anderen Aussagen macht sie nicht."),
 ];
 
 // ---------------------------------------------------------------- WRITING
@@ -1142,18 +1138,18 @@ const writingItems: SeedItem[] = [
       "- Beschreiben Sie die wichtigsten Veränderungen in der Tabelle.\n" +
       "- Nennen Sie mögliche Gründe für diese Entwicklung.\n" +
       "- Erläutern Sie, welche Folgen sie für die Stadt haben kann.\n" +
-      "- Vergleichen Sie die Lage mit der in Ihrem Land und nehmen Sie begründet Stellung.",
+      "- Vergleichen Sie die Lage mit der in Ihrer Stadt oder in einer Stadt, die Sie gut kennen, und nehmen Sie begründet Stellung.",
     [
       "beschreibt die zentralen Veränderungen zutreffend (Auto Rückgang, Fahrrad deutlicher Zuwachs, Nahverkehr leicht höher, Fußwege geringer) und wählt die wichtigsten aus",
       "nennt plausible Gründe (z. B. Radwege, Kosten, Umweltbewusstsein, Parkraum)",
       "erörtert Folgen für Verkehr, Flächennutzung, Umwelt oder Wirtschaft",
-      "vergleicht mit dem eigenen Land und nimmt begründet Stellung; Daten werden gedeutet, nicht nur aufgezählt",
+      "vergleicht mit der eigenen Stadt oder einer gut bekannten Stadt und nimmt begründet Stellung; Daten werden gedeutet, nicht nur aufgezählt",
     ],
     [
       "die wichtigsten Veränderungen in der Tabelle",
       "mögliche Gründe für die Entwicklung",
       "Folgen für die Stadt",
-      "ein Vergleich mit Ihrem Land",
+      "ein Vergleich mit einer Stadt, die Sie kennen",
       "Ihre begründete Meinung",
     ],
     "neutral bis formell (Leserbrief)", TABLE_NOTE),
@@ -1287,7 +1283,7 @@ const writingItems: SeedItem[] = [
 
 // ---------------------------------------------------------------- SPEAKING
 
-const TALK = { thinkSeconds: 240, answerSeconds: 300, maxTakes: 1 };
+const TALK = { thinkSeconds: 240, answerSeconds: 360, maxTakes: 1 };
 const DISCUSS = { thinkSeconds: 120, answerSeconds: 180, maxTakes: 1 };
 
 function speak(
@@ -1307,7 +1303,7 @@ function speak(
     prompt,
     content: { kind: "SPEAKING", ...(skill === "discussion" ? DISCUSS : TALK) },
     key: { kind: "NONE" },
-    rubric: { contentPoints, register: "formell (Sie), sachlich", studentPoints },
+    rubric: { contentPoints, register: skill === "discussion" ? "sachlich; Sie oder du (unter Kollegen ist beides richtig)" : "formell (Sie), sachlich", studentPoints },
     explanation,
   };
 }
@@ -1340,21 +1336,21 @@ const speakingItems: SeedItem[] = [
     ],
     TALK_NOTE),
   speak("presentation", "MID",
-    "Halten Sie einen Vortrag von etwa vier bis fünf Minuten zum Thema „Das Büro der Zukunft“.\n\n" +
-      "- Beschreiben Sie, wie sich Arbeitsorte in den letzten Jahren verändert haben.\n" +
-      "- Erläutern Sie, welche Rolle das Büro künftig spielen könnte.\n" +
-      "- Stellen Sie Chancen und Risiken dieser Entwicklung für Beschäftigte und Unternehmen dar.\n" +
+    "Halten Sie einen Vortrag von etwa vier bis fünf Minuten zum Thema „Nachrichten im Netz: Chancen und Risiken“.\n\n" +
+      "- Beschreiben Sie, wie sich die Art verändert hat, in der Menschen sich über das Tagesgeschehen informieren.\n" +
+      "- Erläutern Sie, welche Rolle klassische Medien künftig spielen könnten.\n" +
+      "- Stellen Sie Chancen und Risiken dieser Entwicklung für die Leserschaft und für die Gesellschaft dar.\n" +
       "- Beziehen Sie Stellung und runden Sie den Vortrag mit einem Ausblick ab.",
     [
-      "Beschreibung der Veränderungen von Arbeitsorten",
-      "Einschätzung der künftigen Rolle des Büros",
+      "Beschreibung der veränderten Mediennutzung",
+      "Einschätzung der künftigen Rolle klassischer Medien",
       "Chancen und Risiken aus zwei Perspektiven",
       "begründete eigene Position und Ausblick; flüssiger, zusammenhängender Vortrag",
     ],
     [
-      "wie sich Arbeitsorte verändert haben",
-      "welche Rolle das Büro künftig spielen könnte",
-      "Chancen und Risiken für Beschäftigte und Unternehmen",
+      "wie sich die Information über das Tagesgeschehen verändert hat",
+      "welche Rolle klassische Medien künftig spielen könnten",
+      "Chancen und Risiken für Leserschaft und Gesellschaft",
       "Ihre Position und ein Ausblick",
     ],
     TALK_NOTE),
@@ -1363,7 +1359,7 @@ const speakingItems: SeedItem[] = [
       "- Erklären Sie, was man unter Fachkräftemangel versteht.\n" +
       "- Nennen Sie mögliche Ursachen.\n" +
       "- Stellen Sie zwei oder drei Lösungswege vor und bewerten Sie diese.\n" +
-      "- Erläutern Sie, welchen Weg Sie für am vielversprechendsten halten, und begründen Sie das.",
+      "- Erläutern Sie, welchen Weg Sie für den vielversprechendsten halten, und begründen Sie das.",
     [
       "Begriffsklärung",
       "mehrere Ursachen, sachlich verknüpft",
@@ -1426,18 +1422,18 @@ const speakingItems: SeedItem[] = [
       "Quelle 3, Auszug aus einem Zeitungsartikel: „Wer Jugendlichen das Gerät wegnimmt, nimmt ihnen auch ein Werkzeug zum Lernen. Entscheidend ist, dass die Schule den Umgang damit beibringt, statt ihn zu verbieten.“\n\n" +
       "- Fassen Sie die Informationen der drei Quellen zusammen.\n" +
       "- Sagen Sie, welche Regel Sie für sinnvoll halten, und begründen Sie das.\n" +
-      "- Vergleichen Sie mit der Situation in Ihrem Land.\n" +
+      "- Vergleichen Sie mit der Situation an Schulen, die Sie kennen (zum Beispiel aus Ihrer Stadt oder aus Ihrer eigenen Schulzeit).\n" +
       "- Berichten Sie, wie Sie selbst mit dem Handy beim Lernen oder Arbeiten umgehen.",
     [
       "gibt die drei Quellen sachlich und vollständig wieder, ohne sie wörtlich vorzulesen",
       "bezieht begründet Stellung zu einer Regelung und greift dabei Informationen aus den Quellen auf",
-      "Vergleich mit dem eigenen Land",
+      "Vergleich mit Schulen, die die Person kennt",
       "persönliche Erfahrung; klare Gliederung, Überleitungen und ein abschließendes Fazit",
     ],
     [
       "die drei Quellen zusammenfassen",
       "Ihre Meinung mit Begründung",
-      "ein Vergleich mit Ihrem Land",
+      "ein Vergleich mit Schulen, die Sie kennen",
       "Ihr eigener Umgang mit dem Handy",
     ],
     HANDOUT_NOTE),

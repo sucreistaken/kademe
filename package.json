@@ -24,6 +24,7 @@
     "db:reset": "tsx scripts/db-reset.ts",
     "bank:tts": "tsx scripts/bank-tts.ts",
     "bank:topup": "tsx scripts/bank-topup.ts",
+    "bank:lock-listening": "tsx scripts/bank-lock-listening.ts",
     "verify:hiring-templates": "tsx scripts/verify-hiring-templates.ts",
     "verify:exam": "tsx scripts/verify-exam-flow.ts",
     "verify:hiring-immutability": "tsx scripts/verify-hiring-immutability.ts",

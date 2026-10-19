@@ -121,22 +121,22 @@ const grammarItems: SeedItem[] = [
     "Wenn ich das gewusst ___, wäre ich früher gekommen.",
     ["wäre", "würde", "hätte", "hatte"], 2,
     "Irrealer Bedingungssatz der Vergangenheit: hätte/wäre + Partizip II. „wissen“ bildet das Perfekt mit „haben“, also „gewusst hätte“. „hatte“ ist Indikativ."),
-  gChoice("konnektoren", "EASY",
-    "Können Sie mir bitte sagen, ___ der Kurs noch freie Plätze hat?",
-    ["wenn", "dass", "weil", "ob"], 3,
-    "Indirekte Ja/Nein-Frage: „ob“. „dass“ leitet einen Aussagesatz ein, „wenn“ und „weil“ nennen Bedingung bzw. Grund und ergeben nach „sagen“ keine Frage."),
+  gChoice("konnektoren", "MID",
+    "Ob wir mit dem Rad oder mit dem Bus fahren, entscheiden wir je ___, wie das Wetter wird.",
+    ["danach", "davon", "dann", "nachdem"], 3,
+    "Feste Wendung „je nachdem, wie ...“ (= abhängig davon, wie). „danach“, „davon“ und „dann“ bilden mit „je“ keine Wendung."),
   gChoice("funktionsverbgefuege", "EASY",
     "Bitte setzen Sie mich rechtzeitig in ___, falls sich der Termin ändert.",
     ["Kenntnis", "Wissen", "Erfahrung", "Gewissheit"], 0,
     "Feste Verbindung: jemanden von etwas in Kenntnis setzen (= informieren). Mit den anderen Nomen gibt es das Funktionsverbgefüge nicht (vgl. „in Erfahrung bringen“)."),
-  gChoice("konnektoren", "EASY",
-    "Das Angebot ist ___ günstig, aber die Lieferung dauert drei Wochen.",
-    ["sowohl", "zwar", "weder", "entweder"], 1,
-    "„zwar ... aber“ drückt einen Gegensatz aus. „sowohl ... als auch“, „weder ... noch“ und „entweder ... oder“ haben andere Partner; mit „aber“ ergeben sie keinen Satz."),
+  gChoice("konnektoren", "MID",
+    "Er hat nicht einmal angerufen, geschweige ___ sich entschuldigt.",
+    ["wenn", "denn", "weil", "dass"], 1,
+    "Feste Wendung „geschweige denn“ (= erst recht nicht). „wenn“, „weil“ und „dass“ sind keine Partner von „geschweige“."),
   gChoice("genitivpraepositionen", "EASY",
-    "Die Abschiedsfeier findet bei gutem Wetter ___ des Gebäudes im Garten statt.",
+    "Die Abschiedsfeier findet bei gutem Wetter ___ des Gebäudes auf der Terrasse statt.",
     ["innerhalb", "oberhalb", "außerhalb", "unterhalb"], 2,
-    "Der Garten liegt außerhalb des Gebäudes: „außerhalb“ + Genitiv. „innerhalb“ widerspricht „im Garten“, „oberhalb“ und „unterhalb“ beschreiben eine Lage über bzw. unter dem Gebäude."),
+    "Die Terrasse liegt außerhalb des Gebäudes: „außerhalb“ + Genitiv. „innerhalb“ widerspricht „auf der Terrasse“, „oberhalb“ und „unterhalb“ beschreiben eine Lage über bzw. unter dem Gebäude."),
   gGap("nominalisierung", "EASY",
     "Ergänzen Sie das passende Nomen zu „ankommen“. Bei Ihrer {{g1}} im Hotel erhalten Sie sofort den Zimmerschlüssel.",
     ["Ankunft"], undefined,
@@ -251,9 +251,11 @@ const grammarCTest2 = cTest(LEVEL, "MID", {
     "Allerdings kann eine kurze Nachricht kein echtes Gespräch ersetzen. " +
     "Wer ständig das eigene Leben mit den scheinbar perfekten Bildern anderer vergleicht, fühlt sich zudem oft unzufrieden.",
   last: "Für echte Freundschaften bleiben gemeinsame Erlebnisse deshalb auch im digitalen Zeitalter unverzichtbar.",
+  // g7 selten/seltener: "wenn man sich seltener sieht" is equally correct.
+  variants: { 7: ["tener"] },
   // Wrong parts by the gap whose stem they target.
   distractors: {
-    1: ["licht"], 2: ["ir"], 3: ["m"], 4: ["um"],
+    1: ["licht"], 2: ["ir"], 3: ["st"], 4: ["um"],
     6: ["ich"], 7: ["tene"], 9: ["nen"], 10: ["richten"],
     11: ["te"], 12: ["tzt"], 13: ["ndige"], 14: ["enes"],
     15: ["ehr"], 17: ["der"], 19: ["nd"],
@@ -346,7 +348,7 @@ const grammarTexts: SeedItem[] = [
       "Kritiker bemängeln allerdings, dass viele moderne Geräte kaum zu öffnen sind. " +
       "Sie fordern deshalb strengere Vorschriften für die Hersteller.",
     last: "Bis es so weit ist, bleibt das Repair-Café für viele eine gute Alternative zum Neukauf.",
-    distractors: ["durch", "vermeiden", "obwohl", "Zeit", "teuer"],
+    distractors: ["durch", "vermeiden", "obwohl", "Müll", "teuer"],
   }),
   wordBank(LEVEL, "MID", {
     title: "Ein Garten für alle",
@@ -529,14 +531,14 @@ const rMicrolearningItems: SeedItem[] = [
       "Weil die Gewerkschaft verlangt hatte, dass Lernzeit als Arbeitszeit anerkannt wird.",
       "Weil nach der Umstellung auf die App weniger Beschäftigte an den Pflichtschulungen teilnahmen.",
       "Weil die Kosten für Seminarräume und Reisen trotz der App weiter gestiegen waren.",
-      "Weil manche Beschäftigte am Anfang Mühe hatten, die neue Lern-App zu bedienen und zu nutzen.",
+      "Weil manche Beschäftigte anfangs Probleme mit der Technik der neuen Lern-App hatten.",
     ], 3,
     "Einige Beschäftigte hatten anfangs Schwierigkeiten mit der Technik, „deshalb“ gibt es Sprechstunden. Die Forderung der Gewerkschaften steht an anderer Stelle; Teilnahmequote und Kosten haben sich laut Text positiv entwickelt."),
   r2.choice("inference", "HARD",
     "Wozu dient der Hinweis auf mehr als zwanzig Stunden im Jahr am Ende des Textes?",
     [
       "Er belegt, dass tägliches Lernen mit der App für einen sicheren Lernerfolg ausreicht.",
-      "Er zeigt, dass auch kurze Einheiten viel Zeit ergeben und deren Anerkennung wichtig ist.",
+      "Er zeigt, dass auch kurze Einheiten viel Zeit ergeben und die Anerkennung der Lernzeit deshalb wichtig ist.",
       "Er erklärt, warum klassische Seminare mit mehr als zwanzig Stunden pro Jahr überflüssig werden.",
       "Er soll zeigen, dass Beschäftigte ihre Lernzeit meist freiwillig in der Freizeit verbringen.",
     ], 1,
@@ -588,7 +590,7 @@ const rPendelnItems: SeedItem[] = [
     [
       "Viele Beschäftigte möchten die Fahrt im Auto als Zeit für sich nutzen, ohne jemanden zu treffen.",
       "Am Arbeitsplatz gibt es für Fahrgemeinschaften zu wenige reservierte Parkplätze in der Nähe.",
-      "Die Beschäftigten fangen und hören zu sehr unterschiedlichen Zeiten mit der Arbeit auf.",
+      "Die Beschäftigten beginnen und beenden ihre Arbeit zu sehr unterschiedlichen Zeiten.",
       "Der Weg zur Arbeit ist für die meisten Befragten für eine gemeinsame Fahrt zu weit.",
     ], 2,
     "„Am häufigsten nannten die Befragten unterschiedliche Arbeitszeiten.“ Die Zeit für sich ist der zweite Grund, Parkplätze werden nur als Maßnahme einiger Arbeitgeber genannt, zur Entfernung steht nichts im Text."),
@@ -606,9 +608,9 @@ const rPendelnItems: SeedItem[] = [
       ["An dem Pilotprojekt beteiligten sich Beschäftigte aus einem einzelnen Unternehmen im Gewerbegebiet.", "F"],
       ["Nach einigen Wochen bewerteten viele Teilnehmende die Gespräche im Auto positiv.", "R"],
       ["Manche Arbeitgeber sorgen dafür, dass Mitfahrende sicher heimkommen, auch wenn die Fahrerin oder der Fahrer länger bleiben muss.", "R"],
-      ["Die meisten Unternehmen reservieren Parkplätze für Fahrgemeinschaften.", "F"],
+      ["Manche Unternehmen reservieren für Fahrgemeinschaften Parkplätze am Rand des Betriebsgeländes.", "F"],
     ],
-    "1: „Beschäftigte mehrerer Firmen“. 2: „die Gespräche ... als angenehm zu empfinden“. 3: Taxi-Heimfahrt. 4: Nur „manche Unternehmen“ reservieren Parkplätze."),
+    "1: „Beschäftigte mehrerer Firmen“. 2: „die Gespräche ... als angenehm zu empfinden“. 3: Taxi-Heimfahrt. 4: Die Parkplätze liegen „direkt vor dem Eingang“, nicht am Rand des Geländes."),
 ];
 
 // ---------------------------------------------------------------- Text 4: rules
@@ -863,7 +865,7 @@ const lPausen = clip(
     { label: "Dr. Brandt", voice: "A" },
   ],
   [
-    "Moderatorin: Willkommen zu unserer Sendung. Heute geht es um Pausen. Mein Gast ist der Arbeitspsychologe Jonas Brandt. Guten Tag, Herr Brandt.",
+    "Moderatorin: Willkommen zu unserer Sendung. Heute geht es um Pausen. Mein Gast ist der Arbeitspsychologe Doktor Jonas Brandt. Guten Tag, Herr Brandt.",
     "Dr. Brandt: Guten Tag.",
     "Moderatorin: Viele essen mittags am Schreibtisch und arbeiten einfach durch. Ist das wirklich so schlimm?",
     "Dr. Brandt: Na ja, schlimm ist vielleicht das falsche Wort. Aber klug ist es nicht. Das Gehirn kann sich nicht ewig konzentrieren. Nach etwa sechzig, nein, nach etwa neunzig Minuten lässt die Aufmerksamkeit deutlich nach.",
@@ -911,7 +913,7 @@ const lPausenItems: SeedItem[] = [
       ["Für das Homeoffice empfiehlt Dr. Brandt, Pausen fest einzuplanen.", "R"],
       ["Die Studie, an der Dr. Brandt beteiligt war, wurde in mehreren Ländern durchgeführt.", "NG"],
     ],
-    "1: Die Mittagspause soll mindestens dreißig Minuten dauern. 2: Genannt werden Aufstehen, Gehen, Fensterblick und Ortswechsel in Küche oder Flur, ein Vergleich Freiluft und Innenraum fehlt. 3: Pausen wie Termine in den Kalender eintragen. 4: Wo die Studie lief, sagt er nicht."),
+    "1: Die Mittagspause soll mindestens dreißig Minuten dauern. 2: Genannt werden Aufstehen, Gehen, Fensterblick und Ortswechsel zum Beispiel in die Küche, ein Vergleich Freiluft und Innenraum fehlt. 3: Pausen wie Termine in den Kalender eintragen. 4: Wo die Studie lief, sagt er nicht."),
   l1.choice("attitude", "HARD",
     "Welche Rolle spielen Führungskräfte nach Meinung von Dr. Brandt?",
     [
@@ -937,7 +939,7 @@ const lAufschieben = clip(
     "Referentin: Damit zum ersten Irrtum. Viele sagen: Unter Zeitdruck arbeite ich am besten. Na ja. Die Untersuchungen zeigen: Die Ergebnisse sind im Durchschnitt schlechter. Man fühlt sich produktiv, ja, weil man plötzlich sehr konzentriert ist. Aber für Korrekturen bleibt keine Zeit mehr.",
     "Referentin: Der zweite Irrtum betrifft die Motivation. Ich fange an, sobald ich motiviert bin, heißt es oft. Meistens ist es umgekehrt. Die Motivation kommt erst, wenn man schon angefangen hat und erste Fortschritte sieht.",
     "Referentin: Ein Beispiel. Eine Studentin muss eine Hausarbeit schreiben. Wochenlang öffnet sie die Datei nicht, weil ihr das Thema riesig vorkommt. Dann nimmt sie sich vor, nur zehn Minuten Stichpunkte zu sammeln. Am Ende schreibt sie zwei Stunden. Also: Nicht die Motivation bringt uns zum Anfangen, sondern das Anfangen bringt die Motivation.",
-    "Referentin: Was kann man nun tun? Erstens: große Aufgaben in sehr kleine Schritte zerlegen. Statt den ganzen Bericht schreiben lieber nur die Gliederung erstellen. Zweitens die Zwei-Minuten-Regel: Dauert eine Aufgabe weniger als zwei Minuten, erledigt man sie sofort. Und drittens: Ablenkungen verringern. Das Handy zum Beispiel in einen anderen Raum legen.",
+    "Referentin: Was kann man nun tun? Erstens: große Aufgaben in sehr kleine Schritte zerlegen. Statt gleich den ganzen Bericht zu schreiben, erstellt man erst mal nur die Gliederung. Zweitens die Zwei-Minuten-Regel: Dauert eine Aufgabe weniger als zwei Minuten, erledigt man sie sofort. Und drittens: Ablenkungen verringern. Das Handy zum Beispiel in einen anderen Raum legen.",
     "Referentin: Ein Punkt noch, der mir wichtig ist. Wer sich für das Aufschieben heftig kritisiert, schiebt danach meist noch mehr auf. Ein freundlicher Umgang mit sich selbst ist also nicht nur angenehmer, sondern auch wirksamer. Vielen Dank für Ihre Aufmerksamkeit.",
   ],
 );
@@ -997,7 +999,7 @@ const lTermin = clip(
     "Nina: Eigentlich schon. Aber die Kundin hat heute Morgen angerufen. Dienstag klappt doch nicht, sie ist an dem Tag auf einer Messe.",
     "Tarek: Ach so. Hat sie einen anderen Tag vorgeschlagen?",
     "Nina: Zuerst Montag. Aber da ist ja unsere Teambesprechung, die können wir nicht verschieben. Dann haben wir uns auf Donnerstag geeinigt. Donnerstag um zehn.",
-    "Tarek: Donnerstag passt mir gut. Nachmittags habe ich zwar einen Arzttermin, aber um zehn sind wir ja längst fertig.",
+    "Tarek: Donnerstag passt mir gut. Nachmittags habe ich zwar einen Arzttermin, aber bis dahin sind wir ja längst fertig.",
     "Nina: Eben. Das Problem ist ein anderes. Die Kundin will jetzt auch die Zahlen vom letzten Quartal sehen. Die haben wir bisher gar nicht in der Präsentation.",
     "Tarek: Hm. Die Zahlen hat doch Sabine aus der Buchhaltung. Soll ich sie fragen?",
     "Nina: Das wäre super. Ich kümmere mich solange um die Folien und baue die Struktur um. Mit dem Schluss war ich sowieso nicht zufrieden.",
@@ -1014,9 +1016,9 @@ const lTerminItems: SeedItem[] = [
     "Warum muss der Termin mit der Kundin verschoben werden?",
     [
       "Am geplanten Tag findet für Nina und Tarek eine wichtige Teambesprechung statt.",
-      "Die Kundin hat am geplanten Tag einen anderen beruflichen Termin außerhalb der Stadt.",
+      "Die Kundin hat am geplanten Tag einen anderen beruflichen Termin, nämlich eine Messe.",
       "Tarek hat am geplanten Tag einen Arzttermin und kann deshalb nicht teilnehmen.",
-      "Die Kundin ist am geplanten Tag krank und möchte niemanden ansteckend treffen.",
+      "Die Kundin ist am geplanten Tag krank und möchte niemanden anstecken.",
     ], 1,
     "Die Kundin ist am Dienstag auf einer Messe. Die Teambesprechung ist am Montag, der Arzttermin am Donnerstagnachmittag."),
   l3.choice("detail", "MID",
@@ -1050,18 +1052,18 @@ const lZahnarztItems: SeedItem[] = [
     [
       "Die Praxis hat den Termin im Computer versehentlich doppelt vergeben.",
       "Die Praxis bleibt am vereinbarten Tag wegen Bauarbeiten im Haus geschlossen.",
-      "Der Zahnarzt kann den vereinbarten Tag wegen einer Weiterbildung nicht einhalten.",
+      "Der Zahnarzt ist am vereinbarten Tag auf einer Weiterbildung.",
       "Die Praxis muss den Termin verschieben, weil ein Behandlungsgerät defekt ist.",
     ], 2,
     "Doktor Merz ist am Dienstag auf einer Fortbildung („Weiterbildung“), deshalb wird der Termin verschoben. Von einem Computerfehler, Bauarbeiten oder einem defekten Gerät ist keine Rede."),
   l4.notes("EASY",
     "Sie hören eine Nachricht auf dem Anrufbeantworter. Notieren Sie die Angaben.\n\nNeuer Termin: {{g1}}, {{g2}} Uhr\nRückruf unter der Nummer: {{g3}}",
     {
-      g1: ["Donnerstag", "Do"],
-      g2: ["14:30", "14.30", "14 30", "14:30 Uhr", "14.30 Uhr", "14 Uhr 30", "halb drei", "halb 3", "vierzehn Uhr dreißig", "vierzehn dreißig"],
-      g3: ["0411 558732", "0411558732", "0411 558 732", "0411/558732", "0411-558732", "0411 55 87 32", "0411/558 732", "null vier eins eins fünf fünf acht sieben drei zwei"],
+      g1: ["Donnerstag", "Do", "am Donnerstag", "am Do"],
+      g2: ["14:30", "14.30", "14 30", "14:30 Uhr", "14.30 Uhr", "14 Uhr 30", "halb drei", "halb 3", "vierzehn Uhr dreißig", "vierzehn dreißig", "um 14:30", "um 14.30", "um 14:30 Uhr", "um 14.30 Uhr", "um halb drei", "um halb 3", "halb drei", "halb drei Uhr", "halb 3 Uhr", "14.30h"],
+      g3: ["0411 558732"],
     },
-    "Die Sprecherin korrigiert sich beim Tag: nicht Mittwoch, sondern Donnerstag. Uhrzeit: vierzehn Uhr dreißig, also halb drei (14:30). Telefonnummer: 0411 und dann 558732, zur Kontrolle wiederholt."),
+    "Die Sprecherin korrigiert sich beim Tag: nicht Mittwoch, sondern Donnerstag. Uhrzeit: vierzehn Uhr dreißig, also halb drei (14:30). Telefonnummer: 0411 558732, zur Kontrolle wiederholt (der Scorer vergleicht Ziffern, Leerzeichen und Striche sind egal). Akzeptiert werden außerdem Tag und Uhrzeit mit „am“ bzw. „um“ sowie 14:30, 14.30 und halb drei."),
 ];
 
 // ---------------------------------------------------------------- Clip 5: station announcement
@@ -1073,7 +1075,7 @@ const lDurchsage = clip(
   [{ label: "Durchsage", voice: "A" }],
   [
     "Durchsage: Achtung auf Gleis vier! Der Regionalexpress nach Hannover, planmäßige Abfahrt vierzehn Uhr zwölf, fällt heute aus. Grund ist ein technischer Defekt am Zug.",
-    "Durchsage: Reisende nach Hannover nutzen bitte den Intercity auf Gleis sieben. Der Zug fährt um vierzehn Uhr zweiunddreißig, nicht um vierzehn Uhr zwölf. Ihre Fahrkarte gilt ohne Aufpreis. Ich wiederhole: Intercity nach Hannover, Gleis sieben, vierzehn Uhr zweiunddreißig.",
+    "Durchsage: Reisende nach Hannover nutzen bitte den Intercity auf Gleis sieben. Der Zug fährt zwanzig Minuten später, um vierzehn Uhr zweiunddreißig. Ihre Fahrkarte gilt ohne Aufpreis. Ich wiederhole: Intercity nach Hannover, Gleis sieben, vierzehn Uhr zweiunddreißig.",
     "Durchsage: Für Reisende nach Celle gilt: Der Ersatzbus fährt wie geplant um vierzehn Uhr fünfzehn von Haltestelle B vor dem Bahnhof. Wir bitten um Ihr Verständnis.",
   ],
 );
@@ -1089,10 +1091,15 @@ const lDurchsageItems: SeedItem[] = [
       "Für den Intercity auf Gleis sieben am Schalter einen Aufpreis bezahlen.",
     ], 1,
     "Der Intercity auf Gleis sieben ist der Ersatz, die Fahrkarte gilt ohne Aufpreis. Der Bus gilt nur für Reisende nach Celle."),
-  l5.choice("detail", "HARD",
-    "Wann und von welchem Gleis fährt der Zug, den die Reisenden nach Hannover nehmen sollen?",
-    ["Gleis sieben, 14.32 Uhr", "Gleis vier, 14.12 Uhr", "Gleis sieben, 14.15 Uhr", "Gleis vier, 14.32 Uhr"], 0,
-    "Gleis sieben, Abfahrt vierzehn Uhr zweiunddreißig (14.32 Uhr). 14.12 Uhr ist die ausgefallene Verbindung, 14.15 Uhr der Bus nach Celle."),
+  l5.choice("inference", "HARD",
+    "Frau Sander will nach Celle und kommt um 14.20 Uhr am Bahnhof an. Was bedeutet das für sie?",
+    [
+      "Sie kann in den Intercity auf Gleis sieben einsteigen, der nach Celle fährt.",
+      "Sie muss auf Gleis vier auf den nächsten Regionalexpress nach Celle warten.",
+      "Sie erreicht den Ersatzbus von Haltestelle B vor dem Bahnhof noch pünktlich.",
+      "Sie hat den Ersatzbus knapp verpasst und muss auf eine spätere Verbindung warten.",
+    ], 3,
+    "Der Ersatzbus nach Celle fährt „wie geplant“ um 14.15 Uhr; wer um 14.20 Uhr ankommt, hat ihn verpasst. Der Intercity fährt nach Hannover, ein Regionalexpress nach Celle wird nicht erwähnt."),
 ];
 
 // ---------------------------------------------------------------- Clip 6: street interview
@@ -1104,20 +1111,17 @@ const lUmfrage = clip(
   [
     { label: "Reporter", voice: "A" },
     { label: "Frau Berger", voice: "B" },
-    { label: "Herr Sommer", voice: "A" },
   ],
   [
     "Reporter: Wir fragen heute auf dem Marktplatz: Wie informieren Sie sich über das Tagesgeschehen? Entschuldigung, haben Sie kurz Zeit?",
     "Frau Berger: Ja, gern.",
     "Reporter: Zeitung, Fernsehen, Podcasts?",
-    "Frau Berger: Hauptsächlich Podcasts. Morgens auf dem Rad höre ich zwanzig Minuten Nachrichten, abends noch mal. Zeitung lese ich kaum noch, höchstens am Wochenende. Und Fernsehen? Nein, eigentlich gar nicht.",
+    "Frau Berger: Hauptsächlich Podcasts. Morgens auf dem Rad höre ich zwanzig Minuten Nachrichten, nein, eher dreißig, ich fahre ja eine ganze Weile. Abends höre ich noch mal rein. Zeitung lese ich kaum noch, höchstens am Wochenende. Und Fernsehen? Nein, eigentlich gar nicht.",
     "Reporter: Warum Podcasts?",
     "Frau Berger: Weil ich dabei etwas anderes machen kann. Beim Zeitunglesen muss ich still sitzen, und das schaffe ich nicht.",
-    "Reporter: Und bei Ihnen?",
-    "Herr Sommer: Ich bin da altmodisch. Ich lese jeden Morgen die gedruckte Zeitung, mit Kaffee, dreißig Minuten, das ist mein Ritual. Nein, warten Sie, eher vierzig Minuten. Podcasts habe ich mal probiert, aber ich schweife zu leicht ab. Wenn jemand redet und ich nebenbei koche, habe ich nach fünf Minuten nicht mehr zugehört.",
     "Reporter: Und Nachrichten im Internet?",
-    "Herr Sommer: Da bin ich skeptisch. Man weiß nie, wer dahintersteckt. Bei meiner Zeitung weiß ich, wer schreibt.",
-    "Reporter: Vielen Dank Ihnen beiden.",
+    "Frau Berger: Da bin ich skeptisch. Man weiß nie, wer dahintersteckt. Bei meinem Podcast weiß ich wenigstens, wer spricht.",
+    "Reporter: Vielen Dank Ihnen.",
   ],
 );
 
@@ -1133,9 +1137,9 @@ const lUmfrageItems: SeedItem[] = [
     ], 3,
     "„Weil ich dabei etwas anderes machen kann. Beim Zeitunglesen muss ich still sitzen.“ Qualität der Recherche oder regionale Themen nennt sie nicht."),
   l6.choice("detail", "HARD",
-    "Wie viel Zeit nimmt sich Herr Sommer morgens für die Zeitung?",
-    ["etwa dreißig Minuten", "etwa zwanzig Minuten", "etwa vierzig Minuten", "etwa sechzig Minuten"], 2,
-    "Er nennt zuerst dreißig Minuten und korrigiert sich: „eher vierzig Minuten“. Zwanzig Minuten hört Frau Berger Nachrichten."),
+    "Wie lange hört Frau Berger morgens Nachrichten?",
+    ["etwa zwanzig Minuten", "etwa vierzig Minuten", "etwa dreißig Minuten", "etwa sechzig Minuten"], 2,
+    "Sie nennt zuerst zwanzig Minuten und korrigiert sich: „eher dreißig“. Vierzig und sechzig Minuten werden nicht genannt."),
 ];
 
 const listening: SeedBankPart = {
@@ -1226,28 +1230,28 @@ const writingItems: SeedItem[] = [
     ],
     FORUM, FORUM_EXPLANATION),
   writingTask("opinion", "MID", FORUM_WORDS,
-    "Ein Unternehmen überlegt, nach Feierabend keine dienstlichen E-Mails mehr auf die Diensthandys der Beschäftigten weiterzuleiten. In einem Forum wird gefragt: „Ist das eine gute Idee?“\n\n" +
+    "In einem Online-Forum wird gefragt: „Sollen Geschäfte auch sonntags öffnen dürfen?“\n\n" +
       "Schreiben Sie einen Forumsbeitrag (ca. 150 Wörter). Gehen Sie auf die folgenden Punkte ein:\n" +
-      "- Warum sind viele Beschäftigte auch nach Feierabend erreichbar?\n" +
-      "- Welche Folgen kann das für das Privatleben haben?\n" +
-      "- Welche Nachteile könnte eine solche Regel haben?\n" +
+      "- Welche Vorteile hätten offene Geschäfte am Sonntag für Kundinnen und Kunden?\n" +
+      "- Welche Nachteile könnte das für die Beschäftigten im Handel haben?\n" +
+      "- Wie ist die Situation in Ihrer Stadt oder Region?\n" +
       "- Wie sollte eine gute Regelung Ihrer Meinung nach aussehen?\n\n" +
       "Schreiben Sie eine passende Einleitung und einen Schluss.",
     [
-      "Gründe für ständige Erreichbarkeit",
-      "Folgen für Privatleben und Erholung",
-      "mögliche Nachteile der E-Mail-Sperre (z. B. Notfälle, Zeitzonen, weniger Flexibilität)",
+      "Vorteile für Kundschaft (z. B. Flexibilität, Zeit zum Einkaufen)",
+      "Nachteile für Beschäftigte (z. B. Familienzeit, Erholung, Schichtarbeit)",
+      "Situation in der eigenen Stadt oder Region (Öffnungszeiten, Gewohnheiten)",
       "eigener Vorschlag für eine Regelung mit Begründung",
     ],
     [
-      "warum viele nach Feierabend erreichbar sind",
-      "Folgen für das Privatleben",
-      "Nachteile einer solchen Regel",
+      "Vorteile für die Kundschaft",
+      "Nachteile für die Beschäftigten",
+      "die Situation in Ihrer Stadt oder Region",
       "Ihr Vorschlag für eine gute Regelung",
       "Einleitung und Schluss",
     ],
     FORUM, FORUM_EXPLANATION),
-  writingTask("semiformal", "EASY", MESSAGE_WORDS,
+  writingTask("formal", "EASY", MESSAGE_WORDS,
     "Sie besuchen einen Weiterbildungskurs zum Thema Projektmanagement. Wegen einer Dienstreise können Sie an den nächsten beiden Terminen nicht teilnehmen. Schreiben Sie eine E-Mail an die Kursleiterin, Frau Lorenz (ca. 100 Wörter).\n\n" +
       "- Erklären Sie Ihre Situation.\n" +
       "- Fragen Sie, wie Sie den verpassten Stoff nachholen können.\n" +
@@ -1267,7 +1271,7 @@ const writingItems: SeedItem[] = [
       "Anrede und Gruß",
     ],
     FORMAL, MESSAGE_EXPLANATION),
-  writingTask("semiformal", "MID", MESSAGE_WORDS,
+  writingTask("formal", "MID", MESSAGE_WORDS,
     "Sie möchten ab dem nächsten Monat einen Abendkurs besuchen, der zweimal pro Woche um 17 Uhr beginnt. Schreiben Sie Ihrem Vorgesetzten, Herrn Okafor, eine E-Mail (ca. 100 Wörter).\n\n" +
       "- Bitten Sie um eine Änderung Ihrer Arbeitszeiten.\n" +
       "- Beschreiben Sie den Kurs und warum er für Sie wichtig ist.\n" +
@@ -1309,13 +1313,13 @@ const writingItems: SeedItem[] = [
     FORMAL, MESSAGE_EXPLANATION),
   writingTask("complaint", "MID", COMPLAINT_WORDS,
     "Sie haben ein Wellness-Wochenende gebucht, das in einer Anzeige beworben wurde. Leider war nicht alles so, wie versprochen. Lesen Sie die Anzeige und Ihre Notizen und schreiben Sie eine E-Mail an das Hotel (ca. 120 Wörter).\n\n" +
-      "Anzeige: „Seehotel Weserblick: Wellness-Wochenende für 189 Euro pro Person. Zwei Nächte im Doppelzimmer mit Seeblick, reichhaltiges Frühstücksbuffet bis 11 Uhr, freier Eintritt in die Saunalandschaft. Garantiert ruhige Lage!“\n\n" +
+      "Anzeige: „Seehotel Seeblick: Wellness-Wochenende für 189 Euro pro Person. Zwei Nächte im Doppelzimmer mit Seeblick, reichhaltiges Frühstücksbuffet bis 11 Uhr, freier Eintritt in die Saunalandschaft. Garantiert ruhige Lage!“\n\n" +
       "Ihre Notizen:\n" +
       "- Zimmer zur Straße, kein Seeblick\n" +
       "- ab 7 Uhr Baulärm vor dem Haus\n" +
       "- Frühstücksbuffet um 10 Uhr fast leer\n" +
       "- Sauna wegen Reparatur geschlossen\n\n" +
-      "Beschreiben Sie, was nicht in Ordnung war, und sagen Sie, was Sie vom Hotel erwarten.",
+      "Beschreiben Sie alle vier Punkte aus Ihren Notizen und sagen Sie, was Sie vom Hotel erwarten.",
     [
       "Bezug auf die Anzeige und das gebuchte Angebot",
       "alle vier Mängel sachlich beschrieben (Zimmer, Lärm, Frühstück, Sauna)",
@@ -1324,7 +1328,7 @@ const writingItems: SeedItem[] = [
     ],
     [
       "sich auf die Anzeige beziehen",
-      "die Mängel beschreiben",
+      "alle vier Mängel aus Ihren Notizen beschreiben",
       "eine Lösung verlangen",
       "Anrede und Gruß",
     ],
@@ -1334,19 +1338,19 @@ const writingItems: SeedItem[] = [
     "In einer Zeitschrift lesen Sie die Überschrift: „Immer mehr Menschen verzichten auf ein eigenes Auto.“ Schreiben Sie dazu einen Leserbrief (ca. 150 Wörter). Gehen Sie auf die folgenden Punkte ein:\n" +
       "- Wie finden Sie diese Entwicklung?\n" +
       "- Welche Erfahrungen haben Sie oder Ihr Umfeld mit Bus, Bahn, Fahrrad oder Carsharing?\n" +
-      "- Wie ist die Situation in Ihrem Land?\n" +
+      "- Wie ist die Situation in Ihrer Stadt oder Region?\n" +
       "- Was sollte sich ändern, damit mehr Menschen auf das Auto verzichten?\n\n" +
       "Schreiben Sie eine passende Einleitung und einen Schluss.",
     [
       "eigene, begründete Meinung zur Entwicklung",
       "konkrete Erfahrung mit anderen Verkehrsmitteln",
-      "Vergleich mit der Situation im eigenen Land (Verkehrsangebot, Gewohnheiten)",
+      "Vergleich mit der Situation in der eigenen Stadt oder Region (Verkehrsangebot, Gewohnheiten)",
       "Vorschlag, was sich ändern sollte, mit Begründung",
     ],
     [
       "Ihre Meinung zu dieser Entwicklung",
       "eigene Erfahrungen mit anderen Verkehrsmitteln",
-      "die Situation in Ihrem Land",
+      "die Situation in Ihrer Stadt oder Region",
       "ein Vorschlag, was sich ändern sollte",
       "Einleitung und Schluss",
     ],
@@ -1357,7 +1361,8 @@ const writing: SeedBankPart = { stimuli: [], items: writingItems };
 
 // ================================================================ SPEAKING
 
-const TALK = { thinkSeconds: 180, answerSeconds: 240, maxTakes: 1 };
+const TALK = { thinkSeconds: 180, answerSeconds: 300, maxTakes: 1 };
+const DEBATE = { thinkSeconds: 60, answerSeconds: 180, maxTakes: 1 };
 const DISCUSSION = { thinkSeconds: 60, answerSeconds: 150, maxTakes: 1 };
 const SHORT = { thinkSeconds: 60, answerSeconds: 120, maxTakes: 2 };
 
@@ -1497,9 +1502,9 @@ const speakingItems: SeedItem[] = [
     ],
     FORMAL,
     "Höfliche, formelle Sprachnachricht an eine Vorgesetzte. Bewertung: Erfüllung, Kohärenz, Register (Sie, Konjunktiv II), Wortschatz, Strukturen, Aussprache."),
-  speakingTask("debate", "HARD", DISCUSSION,
+  speakingTask("debate", "HARD", DEBATE,
     "Rollengespräch. Die Stadt plant, die Innenstadt für private Autos zu sperren. Sie nehmen an einer Diskussion teil und vertreten die Position DAFÜR. Ihr Gesprächspartner sagt: „Die Geschäfte verlieren ihre Kundschaft, Lieferungen werden teurer, und wer vom Land kommt, fährt künftig lieber gleich in die Stadt nebenan.“\n\n" +
-      "Bleiben Sie in Ihrer Rolle. Gehen Sie auf die Einwände ein und bringen Sie mindestens zwei neue Argumente, die Ihr Gesprächspartner noch nicht genannt hat. Nennen Sie ein Beispiel aus einer Stadt, die Sie kennen, und machen Sie am Ende einen Kompromissvorschlag.",
+      "Bleiben Sie in Ihrer Rolle. Gehen Sie auf alle drei Einwände ein und bringen Sie mindestens zwei neue Argumente, die Ihr Gesprächspartner noch nicht genannt hat. Nennen Sie ein Beispiel aus einer Stadt, die Sie kennen, und machen Sie am Ende einen Kompromissvorschlag.",
     [
       "Rolle (dafür) klar eingehalten",
       "auf die drei Einwände eingegangen",
@@ -1509,7 +1514,7 @@ const speakingItems: SeedItem[] = [
     ],
     [
       "Ihre Position vertreten",
-      "auf die Einwände reagieren",
+      "auf alle drei Einwände reagieren",
       "neue Argumente nennen",
       "ein Beispiel aus einer Stadt, die Sie kennen",
       "einen Kompromiss vorschlagen",

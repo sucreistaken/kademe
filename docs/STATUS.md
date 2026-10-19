@@ -3,6 +3,7 @@
 Campus German redesign, Plan 1 (2026-10-16, `platform/solutions`, canlıya çıkmadı): bkz. "Campus German redesign, Plan 1" bölümü.
 Dilbilgisi boşluklu metin ve kelime havuzu (2026-10-18, `platform/solutions`, canlıya çıkmadı): bkz. "Dilbilgisi: boşluklu metin ve kelime havuzu" bölümü.
 Gözetim: yanlış "sekmeden ayrıldınız" uyarısı ve Meet (2026-10-19, `platform/solutions`, canlıya çıkmadı): ayrıntı `docs/PROCTORING.md` "Sekmeden ve pencereden ayrılma" ve "Başka bir yerde ekran paylaşımı"; vaka dosyası `investigations/proctor-leave-warning-and-meet-share-investigation.md`.
+Soru havuzu, gerçek sınavlara göre yenilendi (2026-10-19, `platform/solutions`, canlıya çıkmadı): bkz. "Soru havuzu: ÖSD, telc ve TestDaF dersleri" bölümü.
 Belirsiz sonuç öğretmene gider (2026-10-18, `platform/solutions`, canlıya çıkmadı): sınırda ya da hassasiyeti düşük (yerleştirme bayrağı) objektif sonuç artık kendiliğinden kesinleşmez, `AWAITING_REVIEW` kalır; öğrenciye "öğretmen inceleyecek" denir; ayrıntı `docs/EXAM-ENGINE.md` "Sonuç".
 Beş aday dili (tr/en/de/es/ar, göç 0025) ve öğrencinin sorun bildirimi (göç 0024), aynı dal: canlıya çıkış ve geri dönüş sırası "Canlıya çıkış planı: 2026-10-18 dalı" bölümünde.
 Son güncelleme: 2026-10-07 (Gelişmiş: tek kutu, AI önce, `platform/solutions` dalında, yerelde gerçek Gemini ile denendi; canlıya çıkmadı). Önceki: 2026-10-06 (işe alım plan 2b, görsel akış ve rehberli panel, `platform/solutions` dalında; bulut oturumunda tip, lint, test ve build ile doğrulandı, veritabanı betikleri ve tarayıcı turu yerel oturumu bekliyor; canlıya çıkmadı).
@@ -166,6 +167,46 @@ Spec `docs/superpowers/specs/2026-10-06-advanced-ai-create-design.md`, plan
 - Canlı Gemini turunda bulunup düzeltilen: "okuma ağırlıklı" yalnız okuma sınavı kuruyordu (`43eded2`); değişiklik
   kutusu taslağı sunucuda güncelliyor ama kartlar yenilenmeden eski kalıyordu (`4705582`); toplam 100 iken "100 olmalı"
   yazıyordu (`488f3fe`).
+
+## Soru havuzu: ÖSD, telc ve TestDaF dersleri (2026-10-19, `platform/solutions`, canlıda değil)
+
+Kaynak: gerçek model sınavlar ve hazırlık kitapları (repo dışında, `~/Desktop/Projects/kademe-kaynaklar/`, telifli,
+commit edilmez); bulgular ve seviye raporları `docs/research/exam-sources-2026-10-19/`. Bankaya hiçbir metin
+kopyalanmadı, her şey özgün yazıldı.
+
+Ne değişti:
+- **Kalite kuralları test olarak** (`src/db/seed-bank/bank-quality.test.ts`): okuma ve dinlemede doğru şık en uzun
+  ya da en kısa şık en çok %30; doğru/yanlış setlerinde cevap kalıbı tahmin edilemez (NG sayısı ve yeri değişken,
+  aynı dizi tekrar etmez); A1-B1 yalnız Richtig/Falsch; seviye başına en az 6 okuma metni, 5 dinleme kaydı, metin
+  başına ortalama en çok 3 soru; metinlerin en az %40'ı iş dışı konu; her seviyede not alarak dinleme ve okumada
+  eşleştirme; dinleme kaydında en çok 2 konuşmacı (TTS iki ses yapar).
+- **Motor:** doğru/yanlış maddesi `twoWay` ile yalnız Richtig/Falsch sunar (`ca3bb72`; aday ekranı, doğrulama,
+  editör). Yazılan cevapta 5+ haneli numara rakam rakam, saat her rakam yazımında eşleşir (`02e76d7`, `376dac9`,
+  `d9dda7b`). Göç yok.
+- **Banka:** altı seviye yeniden yazıldı, sonra her seviye bağımsız bir "kör çözüm" incelemesinden (anahtarı
+  görmeden çözüp karşılaştırma, iki tur) geçti. Değişen dinleme metinleri yeni anahtar aldı (`-v3`), çünkü top-up
+  bir dinleme metnini yerinde değiştirmez. `listening-scripts.lock.json` ve `listening-lock.test.ts` bundan sonra
+  aynı anahtarla metin değişirse kırmızı verir (`pnpm bank:lock-listening` yeni kayıtları ekler).
+- Yerelde doğrulandı (`kademe_srcfix`, Chrome): A1 okuma ve dinlemede yalnız iki düğme, not alma boşlukları
+  dinleme sayfasında yazılabilir ve uzar; top-up ve `bank:tts` yeni kayıtlarla çalıştı.
+- Doğrulanmadı: yeni Almanca metinlerin anadil öğretmeni incelemesi (kör çözüm bir modeldi), yeni dinleme
+  seslerinin kulakla dinlenmesi, simülasyon (zorluk etiketten gelir, içerik değişikliği tahmin doğruluğunu
+  modelde değiştirmez; gerçek kalibrasyon için öğrenci verisi gerekir).
+
+Canlıya çıkış (ayrı "canlıya al" onayı ister):
+1. Deploy (göç yok). Eski kod `twoWay` alanını tanımaz ve NG düğmesini gösterirdi; bu yüzden top-up deploy'dan SONRA.
+2. Geri dönüş için önce mevcut başlangıç maddelerini kaydet:
+   `\copy (select id from items where origin='SEED' and status='APPROVED') to '/tmp/seed-approved-before.csv'`
+3. `pnpm bank:topup --production --confirm-db=127.0.0.1:5434/kademe --retire-stale --sync-seed`
+   Yerel kopyada kurum başına beklenen (inceleme turları öncesi sayım, son hali biraz farklı): ~+300 madde,
+   ~+51 metin/kayıt, ~234 eski başlangıç maddesi emekliye.
+4. `pnpm bank:tts` (yeni dinleme kayıtları, ~40 klip, Gemini TTS; başarısız klip olursa tekrar çalıştır).
+5. Kontrol: her şablondan bir davet (`TEMPLATE_COVERAGE` dönmemeli), bir A1 doğrulama sınavında doğru/yanlışta
+   iki düğme, `select count(*) from stimuli where section='LISTENING' and audio_key is null` (0).
+
+Geri dönüş: yeni başlangıç maddelerini emekliye ayır, 2. adımdaki listeyi geri aç
+(`update items set status='APPROVED' where id in (...)`), sonra eski commit'e dön. Bu arada başlamış sınavlar
+madde kopyasını taşıdığı için etkilenmez.
 
 ## Dilbilgisi: boşluklu metin ve kelime havuzu (2026-10-18, `platform/solutions`, canlıda değil)
 

@@ -121,10 +121,10 @@ const grammarItems: SeedItem[] = [
     "\"scheinbar\" = es sieht so aus, ist aber nicht so (Kontrast \"in Wahrheit\"). \"anscheinend\", \"offenbar\" und \"vermutlich\" drücken aus, dass etwas wahrscheinlich tatsächlich so ist."),
   // Was "als hätte" (a B2 point). "geschweige denn" is a fixed C2 phrase that only one word completes.
   gap("geschweige_denn", "EASY",
-    "Er hat sich nie für Verbandspolitik interessiert, {{g1}} denn für die Arbeit in einem Ausschuss.",
-    ["geschweige"],
-    "\"geschweige denn\" steigert eine Verneinung (= erst recht nicht). \"sondern denn\" und \"aber denn\" sind keine Wendungen des Deutschen, \"ganz denn\" ergibt keinen Satz; \"ganz zu schweigen\" verlangt \"von\" und kann hier nicht mit \"denn\" verbunden werden.",
-    ["geschweige", "sondern", "ganz", "aber"]),
+    "Er hat sich nie für Verbandspolitik interessiert, {{g1}} für die Arbeit in einem Ausschuss.",
+    ["geschweige denn"],
+    "\"geschweige denn\" steigert eine Verneinung (= erst recht nicht). \"sondern auch\" setzt eine Verneinung mit \"nicht nur\" voraus, \"und zwar\" präzisiert nur, \"obgleich\" leitet einen Nebensatz ein und kann hier keine Wortgruppe anschließen.",
+    ["geschweige denn", "sondern auch", "und zwar", "obgleich"]),
 
   // ---------------------------------------------------------------- MID
   choice("konzessiv", "MID",
@@ -193,9 +193,9 @@ const grammarItems: SeedItem[] = [
     ["beachte"],
     "Konjunktiv I als Aufforderung (Anleitungs- und Rezeptstil): \"man beachte\", gebildet aus Infinitivstamm + -e."),
   gap("partizipialattribut", "HARD",
-    "Der Ausschuss diskutierte die von der Kommission bereits im Frühjahr {{g1}} und seither mehrfach überarbeiteten Vorschläge.",
+    "Der Ausschuss diskutierte die von der Kommission bereits im Frühjahr {{g1}} Vorschläge erneut.",
     ["vorgelegten"],
-    "Erweitertes Partizipialattribut: Partizip II (passivisch, abgeschlossen: \"bereits im Frühjahr\") mit Adjektivendung, wie das koordinierte \"überarbeiteten\". \"vorzulegenden\" (Zukunft/Notwendigkeit) widerspricht \"bereits\", \"vorlegenden\" ist aktivisch, \"vorgelegt\" ohne Endung ist falsch.",
+    "Erweitertes Partizipialattribut: Partizip II (passivisch, abgeschlossen: \"bereits im Frühjahr\") mit Adjektivendung. \"vorzulegenden\" (Zukunft/Notwendigkeit) widerspricht \"bereits\", \"vorlegenden\" ist aktivisch, \"vorgelegt\" ohne Endung ist falsch.",
     ["vorgelegt", "vorlegenden", "vorgelegten", "vorzulegenden"]),
   choice("lexik_nuance", "HARD",
     "Sein Verhalten in der Besprechung war ausgesprochen ___: Er schmollte, weil sein Vorschlag abgelehnt worden war.",
@@ -213,7 +213,7 @@ const grammarItems: SeedItem[] = [
   // Present main clause: after "wusste" the written norm prefers "hatte teilnehmen können".
   choice("wortstellung", "HARD",
     "Sie weiß, dass er an der Sitzung nicht ___.",
-    ["hat teilnehmen können", "teilnehmen können hat", "teilnehmen gekonnt hat", "hat teilgenommen gekonnt"], "a",
+    ["hat teilnehmen können", "teilnehmen können hat", "hatte teilnehmen können", "hat teilgenommen gekonnt"], "a",
     "Perfekt mit Modalverb im Nebensatz: Ersatzinfinitiv (\"können\" statt \"gekonnt\"), und das finite \"hat\" steht vor dem doppelten Infinitiv, nicht am Ende."),
 
   // ---------------------------------------------------------------- C-test
@@ -315,10 +315,10 @@ const grammarTexts: SeedItem[] = [
     body:
       "Was über Jahrhunderte als Ausweis von Bildung [[galt|gilt|gälte|gegolten]], fristet heute ein Schattendasein auf Einkaufszetteln und Glückwunschkarten. " +
       "[[So|Als|Wenn|Zu]] bedauerlich man diesen Wandel auch finden mag, aufhalten lässt er sich kaum. " +
-      "Neurowissenschaftler geben indes zu bedenken, beim Schreiben mit der Hand [[werde|werden|worden|würde]] das Gelernte nachhaltiger im Gedächtnis verankert als beim Tippen. " +
+      "Neurowissenschaftler geben indes zu bedenken, beim Schreiben mit der Hand [[werde|werden|worden|wurde]] das Gelernte nachhaltiger im Gedächtnis verankert als beim Tippen. " +
       "Die dabei unvermeidliche Verlangsamung zwinge [[zur|zum|auf|für]] Auswahl und fördere so das Verstehen. " +
       "Ein [[Verzicht|Entzug|Abschied|Ausstieg]] auf die Schreibschrift im Unterricht sei daher voreilig. " +
-      "[[Freilich|Folglich|Mithin|Somit]] beweist ein statistischer Zusammenhang noch keine Ursache. " +
+      "[[Freilich|Folglich|Zumal|Sofern]] beweist ein statistischer Zusammenhang noch keine Ursache. " +
       "Viele Studien beruhen auf kleinen Stichproben, und [[mangels|zufolge|seitens|kraft]] verlässlicher Langzeitdaten lässt sich über die Wirkung im Erwachsenenalter bislang nur spekulieren. " +
       "Ohnehin hieße es, die Handschrift zu unterschätzen, wollte man sie allein ihres Nutzens [[wegen|willen|zuliebe|anstatt]] verteidigen. " +
       "Wer von Hand schreibt, hinterlässt [[ja|etwa|denn|bloß]] stets auch eine Spur seiner selbst, die sich in keiner Schriftart [[nachbilden|nachbildet|nachgebildet|nachzubilden]] lässt. " +
@@ -365,12 +365,12 @@ const grammarTexts: SeedItem[] = [
       "Die Straßen liegen [[verwaist]] da, als hätte man sie über Nacht geräumt. " +
       "Nur hin und wieder [[durchbricht]] das Rumpeln eines Lieferwagens die Stille. " +
       "Aus einer Bäckerei [[dringt]] der Geruch von frischem Brot, und hinter einzelnen Fenstern flackert bereits Licht. " +
-      "In diesem [[Zwischenzustand]] zwischen Nacht und Tag wirkt selbst das Vertraute seltsam fremd. " +
+      "In diesem [[Schwebezustand]] zwischen Nacht und Tag wirkt selbst das Vertraute seltsam fremd. " +
       "Die Fassaden, tagsüber kaum eines Blickes [[gewürdigt]], treten plötzlich in ihrer ganzen Eigenart hervor. " +
       "Man meint, die Stadt [[atme]] noch einmal tief durch, bevor sie sich dem Lärm des Tages überlässt. " +
       "Doch dieser Zauber ist [[flüchtig]]. " +
       "Wer ihn einmal bewusst erlebt hat, begegnet dem Gewohnten [[fortan]] mit größerer Achtsamkeit.",
-    last: "Spätestens wenn die ersten Busse fahren, hat der Alltag die Stadt wieder für sich eingenommen.",
+    last: "Spätestens wenn die ersten Busse fahren, hat der Alltag die Stadt wieder in Besitz genommen.",
     // zuvor is an adverb like fortan but contradicts the tense; betrachtet nearly fits gewürdigt but takes no genitive.
     distractors: ["erwachen", "Dämmerung", "geschäftig", "zuvor", "betrachtet"],
   }),
@@ -501,7 +501,7 @@ Am Ende geht es um eine Verschiebung dessen, was als professionell gilt. Profess
     level: LEVEL,
     title: "Weniger Tage, gleiche Arbeit? Bilanz eines Pilotversuchs",
     topic: "Arbeitszeit",
-    body: `Als die Geschäftsführung der Hallberg Messtechnik GmbH im vergangenen Frühjahr ankündigte, ein Jahr lang die Viertagewoche zu erproben, waren die Reaktionen gemischt. Für das Unternehmen, das Messinstrumente für Labore und Industriebetriebe herstellt, war der Versuch auch eine Antwort auf den Fachkräftemangel: Man hoffte, als Arbeitgeber attraktiver zu werden. Ein Teil der rund hundertachtzig Beschäftigten begrüßte die Aussicht auf ein verlängertes Wochenende, andere befürchteten, dieselbe Arbeit nun in kürzerer Zeit und unter größerem Druck erledigen zu müssen. Inzwischen liegt der Abschlussbericht vor, und er fällt differenzierter aus, als es Befürworter wie Gegner erwartet hatten.
+    body: `Als die Geschäftsführung der Hallberg Messtechnik GmbH im vergangenen Frühjahr ankündigte, ein Jahr lang die Viertagewoche zu erproben, waren die Reaktionen gemischt. Für das Unternehmen, das Messinstrumente für Labore und Industriebetriebe herstellt, war der Versuch in erster Linie eine Antwort auf den Fachkräftemangel: Man hoffte, als Arbeitgeber attraktiver zu werden. Ein Teil der rund hundertachtzig Beschäftigten begrüßte die Aussicht auf ein verlängertes Wochenende, andere befürchteten, dieselbe Arbeit nun in kürzerer Zeit und unter größerem Druck erledigen zu müssen. Inzwischen liegt der Abschlussbericht vor, und er fällt differenzierter aus, als es Befürworter wie Gegner erwartet hatten.
 
 [Lücke 1]
 
@@ -531,7 +531,7 @@ Anzeige C
 Die Velora Versicherungsgruppe sucht für ihr Servicecenter eine Teamleitung Kundenservice, unbefristet und in Vollzeit. Sie führen ein Team von zwölf Mitarbeitenden, planen die Schichten im Rahmen unserer Servicezeiten von sieben bis zwanzig Uhr und sind erste Ansprechperson, wenn Kundenanliegen eskalieren. Erfahrung in der Personalführung setzen wir voraus, die Branche ist für uns dagegen zweitrangig: Wer bereits Teams im Handel, in der Gastronomie oder in der Logistik geführt hat, ist herzlich willkommen. Da die Aufgabe ständige Ansprechbarkeit vor Ort erfordert, ist mobiles Arbeiten in dieser Position nicht möglich. Die fachliche Schulung übernehmen wir.
 
 Anzeige D
-Das Übersetzungsbüro Kessler & Partner erweitert seinen Pool freiberuflicher Übersetzerinnen und Übersetzer für die Sprachrichtungen Englisch-Deutsch und Deutsch-Englisch mit Schwerpunkt Recht: Verträge, Gutachten, Gerichtsentscheidungen. Sie bestimmen selbst, wie viele Aufträge Sie annehmen; eine Mindestabnahme gibt es nicht. Voraussetzung sind juristische Fachkenntnisse, etwa durch ein Studium oder eine Tätigkeit in einer Kanzlei, sowie Englischkenntnisse auf höchstem Niveau. Die Vergütung erfolgt pro Normzeile, die Zahlung innerhalb von vierzehn Tagen nach Lieferung.`,
+Das Übersetzungsbüro Kessler & Partner erweitert seinen Pool freiberuflicher Übersetzerinnen und Übersetzer für die Sprachrichtungen Englisch-Deutsch und Deutsch-Englisch mit Schwerpunkt Recht: Verträge, Gutachten, Gerichtsentscheidungen. Sie bestimmen selbst, wie viele Aufträge Sie annehmen; eine feste Auftragsmenge können wir allerdings nicht zusagen. Voraussetzung sind juristische Fachkenntnisse, etwa durch ein Studium oder eine Tätigkeit in einer Kanzlei, sowie Englischkenntnisse auf höchstem Niveau. Die Vergütung erfolgt pro Normzeile, die Zahlung innerhalb von vierzehn Tagen nach Lieferung.`,
   },
   {
     key: R_LAERM,
@@ -539,9 +539,9 @@ Das Übersetzungsbüro Kessler & Partner erweitert seinen Pool freiberuflicher �
     level: LEVEL,
     title: "Die Stadt, die nie schweigt",
     topic: "Umwelt, Lärm in der Stadt",
-    body: `Wer in einer Großstadt aufwächst, lernt früh, einen Teil der Welt auszublenden. Das Rauschen der Straße, das Dröhnen eines Presslufthammers, das Quietschen der Straßenbahn: Nach einiger Zeit nimmt man es kaum noch wahr. Die Lärmforschung hat allerdings Zweifel daran, dass dieses Ausblenden tatsächlich folgenlos bleibt. Messungen an Schlafenden zeigen, dass der Körper auf nächtlichen Verkehrslärm reagiert, selbst wenn die Betroffenen am Morgen schwören, tief und fest geschlafen zu haben: Der Puls steigt, der Blutdruck schwankt, und die Tiefschlafphasen werden kürzer. Gewöhnung, so der Befund, ist also eher eine Leistung der Wahrnehmung als des Organismus.
+    body: `Wer in einer Großstadt aufwächst, lernt früh, einen Teil der Welt auszublenden. Das Rauschen der Straße, das Dröhnen eines Presslufthammers, das Quietschen der Straßenbahn: Nach einiger Zeit nimmt man es kaum noch wahr. Die Lärmforschung hegt allerdings Zweifel daran, dass dieses Ausblenden tatsächlich folgenlos bleibt. Messungen an Schlafenden zeigen, dass der Körper auf nächtlichen Verkehrslärm reagiert, selbst wenn die Betroffenen am Morgen schwören, tief und fest geschlafen zu haben: Der Puls steigt, der Blutdruck schwankt, und die Tiefschlafphasen werden kürzer. Gewöhnung, so der Befund, ist also eher eine Leistung der Wahrnehmung als des Organismus.
 
-Besonders aufschlussreich sind Untersuchungen in der Nähe von Flughäfen, bei denen Schulkinder verglichen wurden, deren Klassenzimmer unter einer Einflugschneise lagen, mit Gleichaltrigen aus ruhigeren Vierteln. Die Kinder aus den lauten Klassen lasen im Durchschnitt etwas langsamer und schnitten bei Gedächtnisaufgaben schlechter ab. Die Forschenden mahnen allerdings zur Vorsicht: Lärm gehe häufig mit anderen Belastungen einher, etwa mit beengten Wohnverhältnissen, und lasse sich deshalb nur schwer als alleinige Ursache isolieren. Zwischen Korrelation und Kausalität liege auch hier ein weiter Weg.
+Besonders aufschlussreich sind Untersuchungen in der Nähe von Flughäfen, bei denen man Schulkinder, deren Klassenzimmer unter einer Einflugschneise lagen, mit Gleichaltrigen aus ruhigeren Vierteln verglich. Die Kinder aus den lauten Klassen lasen im Durchschnitt etwas langsamer und schnitten bei Gedächtnisaufgaben schlechter ab. Die Forschenden mahnen allerdings zur Vorsicht: Lärm gehe häufig mit anderen Belastungen einher, etwa mit beengten Wohnverhältnissen, und lasse sich deshalb nur schwer als alleinige Ursache isolieren. Zwischen Korrelation und Kausalität liege auch hier ein weiter Weg.
 
 Umstritten ist, was daraus folgt. Die einen fordern strengere Grenzwerte und verweisen darauf, dass leisere Reifen und Fahrbahnbeläge die Belastung nachweislich senken, ohne dass jemand auf Mobilität verzichten müsste. Andere halten dagegen, dass sich nicht jeder Schall über einen Kamm scheren lasse: Das Lachen von Kindern auf einem Spielplatz werde von Anwohnern selten als Störung empfunden, ein gleich lauter Rasenmäher dagegen schon. Entscheidend sei nicht allein die Lautstärke, sondern die Frage, ob man den Klang als sinnvoll, vermeidbar oder aufgezwungen erlebe. Wer selbst bestimmen könne, wann es laut werde, ertrage mehr.
 
@@ -575,10 +575,10 @@ const readingItems: SeedItem[] = [
   rK.choice("gist", "MID",
     "Welche Haltung vertritt der Autor insgesamt?",
     [
-      "Er hält Kennzahlen für ein Übel, das Unternehmen am besten ganz aus ihrem Alltag verbannen sollten.",
-      "Er hält Messen dort für sinnvoll, wo Abläufe standardisiert sind, nicht aber bei Arbeit, die auf Urteilskraft beruht.",
+      "Er hält Kennzahlen für ein Übel, das Unternehmen am besten ganz aus ihrem Arbeitsalltag und ihren Berichten verbannen sollten.",
+      "Er hält Messen dort für sinnvoll, wo Abläufe standardisiert sind, bei Arbeit, die auf Urteilskraft beruht, dagegen nur als Anlass für ein Gespräch.",
       "Er sieht in den Kennzahlen ein brauchbares Mittel, das sich mit genaueren Messverfahren und besser gewählten Zielwerten verbessern lässt.",
-      "Er meint, dass sich Beschäftigte gegen Messungen vor allem wehren, weil sie etwas vor der Leitung verbergen.",
+      "Er meint, dass sich Beschäftigte gegen Messungen vor allem wehren, weil sie etwas vor der Leitung und den Kollegen verbergen wollen.",
     ], "b",
     "Vorletzter Absatz: \"Nichts davon spricht dagegen, zu messen\", problematisch nur dort, \"wo Arbeit vor allem aus Urteilskraft besteht\". (a) widerspricht diesem Absatz, (c) ist der Einwand, den der Autor im vierten Absatz als unzureichend zurückweist, (d) ist der Verdacht aus dem ersten Absatz, den er gerade nicht teilt."),
   rK.choice("inference", "HARD",
@@ -627,7 +627,7 @@ const readingItems: SeedItem[] = [
     [
       ["Dem Autor zufolge zögern Menschen mit unfertigen Gedanken vor allem aus einer angeborenen Scheu.", "F"],
       ["Er hält es für hilfreich, wenn Führungskräfte selbst vorführen, wie man mit unausgereiften Gedanken umgeht.", "R"],
-      ["Er hält es für ausschlaggebend, dass erste Entwürfe nicht nach denselben Maßstäben bewertet werden wie endgültige Berichte.", "R"],
+      ["Seiner Ansicht nach hängt der Erfolg offener Entwürfe davon ab, dass man sie nicht so streng prüft wie fertige Arbeiten.", "R"],
     ],
     "1 F: Abschnitt B führt die Haltung auf Schule, Ausbildung und Sorge um den Ruf zurück, nicht auf eine angeborene Scheu. 2 R: Abschnitt E, Vorbildrolle der Vorgesetzten, die sich korrigieren lassen. 3 R: Abschnitt E, ein Entwurf darf nicht \"mit derselben Strenge\" beurteilt werden wie ein abgeschlossener Bericht."),
 
@@ -646,9 +646,9 @@ const readingItems: SeedItem[] = [
   rB.choice("detail", "MID",
     "Worauf führen die Forschenden die gewonnene Zeit vor allem zurück?",
     [
-      "auf ein höheres Arbeitstempo, das die Beschäftigten an vier Tagen durchhalten",
-      "auf den Wegfall von Tätigkeiten, deren Nutzen lange niemand mehr geprüft hatte",
-      "auf die neue Verteilung der Schichten, die den Maschinen mehr Laufzeit verschafft",
+      "auf ein höheres Arbeitstempo, das die Beschäftigten an nur vier Tagen pro Woche dauerhaft durchhalten",
+      "darauf, dass überflüssig gewordene Abläufe gestrichen wurden, die zuvor niemand angezweifelt hatte",
+      "auf die neue Verteilung der Schichten, durch die die Maschinen deutlich länger laufen konnten",
       "auf den Rückgang der Krankheitstage, durch den weniger Ausfälle ausgeglichen werden mussten",
     ], "b",
     "\"weniger aus einem schnelleren Arbeitstempo ... als aus dem Wegfall von Tätigkeiten, deren Nutzen ... niemand mehr hinterfragt hatte\". Schichten und Krankheitstage werden im Text genannt, aber nicht als Ursache der gewonnenen Zeit."),
@@ -658,21 +658,21 @@ const readingItems: SeedItem[] = [
       ["Die Forschenden sollen auch die Fortsetzung des Modells wissenschaftlich begleiten.", "NG"],
       ["In der Fertigung verlief die Anfangszeit mit dem neuen Schichtsystem holprig.", "R"],
     ],
-    "1 F: Der Versuch war \"auch eine Antwort auf den Fachkräftemangel\", ausgelöst durch die Geschäftsführung; die Belegschaft reagierte gemischt. 2 NG: Der Text nennt die Fortsetzung, sagt aber nichts darüber, ob die Forschenden sie begleiten. 3 R: \"erhebliche Reibungen\" in den ersten Wochen."),
+    "1 F: Der Versuch war \"in erster Linie eine Antwort auf den Fachkräftemangel\", angekündigt von der Geschäftsführung; die Belegschaft reagierte gemischt. 2 NG: Der Text nennt die Fortsetzung, sagt aber nichts darüber, ob die Forschenden sie begleiten. 3 R: \"erhebliche Reibungen\" in den ersten Wochen."),
 
   // Stellenanzeigen: selective reading (Goethe C2 Lesen Teil 4).
   rA.match("detail", "MID",
     "Welche Anzeige passt zu welcher Person? Wenn keine Anzeige passt, wählen Sie „keine passende Anzeige“.",
     [
       "Eine Juristin mit hervorragenden Englischkenntnissen sucht eine Nebentätigkeit, deren Umfang sie selbst steuern kann.",
-      "Ein Maschinenbauingenieur möchte, ohne umzuziehen, im Homeoffice Anleitungen schreiben; eine kurze Präsenzphase zu Beginn wäre für ihn kein Problem.",
+      "Ein Maschinenbauingenieur mit verhandlungssicherem Englisch möchte, ohne umzuziehen, im Homeoffice Anleitungen schreiben; eine kurze Präsenzphase zu Beginn wäre für ihn kein Problem.",
       "Ein Bewerber hat mehrere Jahre eine Filiale im Einzelhandel geleitet und möchte nun in einer anderen Branche Führungsverantwortung übernehmen.",
       "Eine Schulabgängerin ohne Berufserfahrung sucht einen Ausbildungsplatz im kaufmännischen Bereich.",
-      "Ein Betriebswirt mit langjähriger Erfahrung in gesetzlichen Berichtspflichten möchte höchstens dreißig Stunden pro Woche arbeiten.",
+      "Ein Absolvent der Betriebswirtschaftslehre mit langjähriger Erfahrung in gesetzlichen Berichtspflichten möchte höchstens dreißig Stunden pro Woche arbeiten.",
     ],
     ["Anzeige A", "Anzeige B", "Anzeige C", "Anzeige D", "keine passende Anzeige"],
     [4, 2, 3, 5, 1],
-    "Juristin, Umfang selbst bestimmt: D (freiberuflich, keine Mindestabnahme). Ingenieur, Homeoffice, Anleitungen: B (auch A erlaubt mobiles Arbeiten, aber nur zwei Tage und keine Anleitungen). Filialleiter, neue Branche: C (Branche zweitrangig, Führungserfahrung nötig). Ausbildungsplatz: keine Anzeige. Betriebswirt, Berichtspflichten, Teilzeit: A (ab 28 Stunden)."),
+    "Juristin, Umfang selbst bestimmt: D (freiberuflich, Auftragsmenge frei wählbar). Ingenieur, Homeoffice, Anleitungen: B (auch A erlaubt mobiles Arbeiten, aber nur zwei Tage und keine Anleitungen). Filialleiter, neue Branche: C (Branche zweitrangig, Führungserfahrung nötig). Ausbildungsplatz: keine Anzeige. Betriebswirtschaftler, Berichtspflichten, Teilzeit: A (ab 28 Stunden)."),
   rA.choice("detail", "MID",
     "Welche Aussage über die Stelle bei der Velora Versicherungsgruppe (Anzeige C) trifft zu?",
     [
@@ -689,7 +689,7 @@ const readingItems: SeedItem[] = [
       ["Wer sich bei der Kranbau Elmshagen AG bewirbt, muss während der gesamten Vertragslaufzeit am Standort anwesend sein.", "F"],
       ["Das Übersetzungsbüro garantiert seinen freien Mitarbeitenden eine feste monatliche Auftragsmenge.", "F"],
     ],
-    "1 R: Voll- oder Teilzeit ab 28 Wochenstunden. 2 NG: Servicezeiten bis zwanzig Uhr werden genannt, von Zuschlägen ist keine Rede. 3 F: Präsenz nur während der zweiwöchigen Einarbeitung. 4 F: Es gibt \"keine Mindestabnahme\", bezahlt wird pro Normzeile."),
+    "1 R: Voll- oder Teilzeit ab 28 Wochenstunden. 2 NG: Servicezeiten bis zwanzig Uhr werden genannt, von Zuschlägen ist keine Rede. 3 F: Präsenz nur während der zweiwöchigen Einarbeitung. 4 F: Eine feste Auftragsmenge kann das Büro \"nicht zusagen\"; bezahlt wird pro Normzeile."),
 
   // Lärm: MC on detail and inference, R/F/NG with two NG statements.
   rL.choice("detail", "MID",
@@ -734,7 +734,7 @@ const readingItems: SeedItem[] = [
     [
       "Es beweist durch eine Echtheitsprüfung, dass der Künstler das Werk eigenhändig geschaffen hat.",
       "Es dokumentiert, welche Besucherinnen und Besucher das Werk in den vergangenen Jahrzehnten besonders lange betrachtet haben.",
-      "Es lässt Spuren seiner Entstehung und seiner Geschichte erkennen, die keine Abbildung vollständig wiedergibt.",
+      "Es trägt ablesbare Spuren seiner Herstellung und seiner Besitzer, die sich auf Reproduktionen nur teilweise zeigen.",
       "Es entfaltet eine besondere Wirkung, die sich nur mit dem Wort „Aura“ beschreiben lässt.",
     ], "c",
     "Zweiter Absatz: Das Zeugnis-Argument ist das \"nüchternere\" im Gegensatz zur \"Aura\", die der Verfasser als wenig erklärend zurückweist (d). Überarbeitungen, Beschädigungen und die Besitzgeschichte sind am Original ablesbar. (a) und (b) kommen im Text nicht vor."),
@@ -878,7 +878,7 @@ const listeningStimuli: SeedStimulus[] = [
       "Seidel: Herr Okafor, Ihre Firma hat das Vorstellungsgespräch ja weitgehend abgeschafft. Stattdessen gibt es einen bezahlten Probetag. Wie kam es dazu?",
       "Okafor: Ganz ehrlich: Wir haben uns einfach zu oft getäuscht. Im Gespräch wirkten Leute brillant, und nach drei Wochen, na ja, eher nach vier, merkte man, dass sie mit den eigentlichen Aufgaben nicht klarkamen. Oder umgekehrt: Jemand war nervös, hat kaum ein Wort herausgebracht und war dann einer unserer Besten. So ein Gespräch, wie es meistens läuft, misst vor allem eins: wie gut sich jemand verkauft.",
       "Seidel: Da widerspreche ich gar nicht. Gespräche ohne feste Struktur sind unzuverlässig, das zeigt die Forschung seit Langem. Aber ob ein einziger Tag so viel aussagekräftiger ist, da habe ich meine Zweifel.",
-      "Okafor: Warum?",
+      "Okafor: Da sind wir uns einig: Ein Plaudergespräch ohne Leitfaden sagt wenig. Aber was spricht gegen einen ganzen Tag?",
       "Seidel: Ein Probetag ist eine künstliche Situation. Man kennt die Abläufe nicht, die Kollegen nicht, die Werkzeuge nicht. Am Ende sehen Sie, wie jemand mit Fremdheit umgeht, und nicht, wie er arbeitet.",
       "Okafor: Deshalb schicken wir vorab Material, damit keiner ins kalte Wasser springt. Und, offen gesagt: Sich schnell in einer fremden Umgebung zurechtzufinden, ist bei unseren Stellen keine Nebensache. Das gehört zum Job.",
       "Seidel: Darüber kann man streiten. Mein größeres Problem ist ein anderes: Wer kann sich überhaupt einen ganzen Tag freinehmen? Wer noch in ungekündigter Stellung ist und das seinem Chef nicht sagen will, oder wer feste Verpflichtungen hat, der hat da schlechte Karten.",
@@ -909,41 +909,45 @@ const listeningStimuli: SeedStimulus[] = [
       "Moderator: Was raten Sie Unternehmen?",
       "Brandstätter: Erstens: Vergleichsdaten sammeln, auch über gescheiterte Projekte. Zweitens: Wer einen Plan aufstellt, sollte ihn nicht selbst genehmigen. Und drittens, das klingt banal: Reserven offen ausweisen, statt sie in einzelnen Positionen zu verstecken. Versteckte Reserven werden nämlich verbraucht, ob man sie braucht oder nicht.",
     ]),
-  clip(L_SCHLAF, "Gesundheitstipp: Besser schlafen", "Gesundheit, Schlaf",
+  clip(L_SCHLAF, "Wissenschaftsmagazin: Schlaf und Lernen", "Gesundheit, Schlaf",
     [
       { label: "Moderatorin", voice: "A" },
       { label: "Lindqvist", voice: "B" },
     ],
     [
-      "Moderatorin: Weiter geht es mit unserem Gesundheitstipp. Heute geht es um den Schlaf, und zu Gast ist die Schlafmedizinerin Doktor Lindqvist. Frau Lindqvist, wo fängt man an?",
-      "Lindqvist: Mit dem Aufstehen, nicht mit dem Zubettgehen. Wer jeden Morgen zur gleichen Zeit aufsteht, auch sonntags, gibt dem Körper einen festen Anker. Der Abend regelt sich dann fast von selbst.",
-      "Moderatorin: Und das Handy im Bett? Alle sagen ja, das sei Gift.",
-      "Lindqvist: Na ja, das wird überschätzt. Nicht das Gerät ist das Problem, sondern, was man damit macht. Wer im Bett Nachrichten liest, die ihn aufregen, schläft schlecht. Wer ein Hörbuch laufen lässt, meist nicht.",
-      "Moderatorin: Was noch?",
-      "Lindqvist: Die Temperatur im Schlafzimmer. Viele schlafen bei zwanzig Grad, aber der Körper braucht es kühler: sechzehn bis, ach nein, sagen wir lieber: achtzehn Grad. Achtzehn, das merken sich die meisten leicht.",
-      "Moderatorin: Und Kaffee am Abend?",
-      "Lindqvist: Der letzte Kaffee spätestens um vierzehn Uhr. Koffein hält sich länger im Körper, als man denkt. Und die letzte große Mahlzeit mindestens zwei Stunden vor dem Schlafengehen, sonst arbeitet der Körper nachts weiter.",
-      "Moderatorin: Also vierzehn Uhr und zwei Stunden. Vielen Dank, Frau Lindqvist.",
-      "Lindqvist: Gern.",
+      "Moderatorin: Frau Lindqvist, es heißt ja gern, wer vor einer Prüfung durchlernt, statt zu schlafen, sei selber schuld. Stimmt das so pauschal?",
+      "Lindqvist: Pauschal stimmt fast nichts in meinem Fach. Richtig ist: Im Schlaf sortiert das Gehirn, was tagsüber hängen geblieben ist. Aber, und das wird gern unterschlagen, das gilt vor allem für Stoff, den man vorher auch wirklich verstanden hat. Wer nur stur auswendig paukt, hat nach acht Stunden Schlaf nicht automatisch mehr im Kopf, er hat lediglich weniger vergessen.",
+      "Moderatorin: Das klingt nach einem Trostpreis.",
+      "Lindqvist: Je nachdem. Für eine Vokabelliste ist es ein Gewinn, für eine Argumentationskette eher nicht. Und dann gibt es ein Gegenargument, das mich selbst lange beschäftigt hat: Die berühmten Studien stammen fast alle von jungen, gesunden Probanden im Labor. Ob sich das auf eine Familie mit Neugeborenem übertragen lässt, wage ich zu bezweifeln.",
+      "Moderatorin: Was raten Sie also?",
+      "Lindqvist: Weder Durchlernen noch Schlafen um jeden Preis, sondern etwas Unspektakuläres. Wer unter Zeitdruck steht, sollte den Stoff abends noch einmal kurz durchgehen, sofern er nicht völlig erschöpft ist, und danach schlafen. Der Mittagsschlaf, auf den viele schwören, bringt übrigens nur etwas, wenn er unter einer halben Stunde bleibt. Alles darüber macht eher träge als klug.",
     ]),
-  clip(L_BAHN, "Nachricht vom Reisebüro", "Reisen, Bahn",
-    [{ label: "Lorenz", voice: "A" }],
+  clip(L_BAHN, "Reiseradio: Nachtzug statt Flug?", "Reisen, Bahn",
     [
-      "Lorenz: Guten Tag, hier spricht Jana Lorenz vom Reisebüro Nordlicht, es geht um Ihre Buchung nach Hamburg am Freitag. Ihr Zug um acht Uhr zwölf fällt leider aus, wegen einer Störung, nein, Entschuldigung, wegen Bauarbeiten an der Strecke.",
-      "Lorenz: Ich habe Ihnen stattdessen den Zug um neun Uhr zwölf reserviert, nein, um neun Uhr zweiundvierzig, Gleis sieben. Ihr Sitzplatz ist dann Wagen fünf, Platz zweiundsechzig. Sie kommen dadurch anderthalb Stunden später an als geplant.",
-      "Lorenz: Wenn Ihnen das nicht passt, rufen Sie mich bitte bis morgen Mittag zurück, unter null vier drei eins, fünf fünf neun, drei eins acht sieben. Ich wiederhole: null vier drei eins, fünf fünf neun, drei eins acht sieben. Eine Umbuchung kostet Sie nichts. Danke und bis bald!",
+      { label: "Moderatorin", voice: "A" },
+      { label: "Hartmann", voice: "B" },
+    ],
+    [
+      "Moderatorin: Herr Hartmann, Sie sind gerade mit dem Nachtzug aus Wien zurückgekommen. Lohnt sich das, oder ist das Romantik für Leute, die Zeit haben?",
+      "Hartmann: Beides, ehrlich gesagt. Man kommt ausgeruht an, sofern man ein Schlafwagenabteil bucht. Im Sitzwagen, na ja, da fühlt man sich am nächsten Morgen, als hätte man die Nacht auf einer Parkbank verbracht. Und der Preis: Das Ticket war nicht billiger als der Flug, aber wer die Stunden am Flughafen mitrechnet und das Hotel für die eine Nacht spart, für den kommt es ungefähr aufs Gleiche heraus.",
+      "Moderatorin: Ungefähr gleich, das klingt vorsichtig.",
+      "Hartmann: Ist es auch. Die Bahn wirbt gern mit dem Klimaschutz, und das stimmt ja auch. Nur: Verspätet sich der Zug um zwei Stunden, was nicht selten vorkommt, fehlt der Anschlusszug, und der Vorteil ist schnell dahin. Man muss die Reise also mögen. Wer sie nur als Mittel zum Zweck sieht, wird enttäuscht.",
+      "Moderatorin: Und wem würden Sie sie trotzdem empfehlen?",
+      "Hartmann: Allen, die flexibel sind. Und ein Tipp, den mir niemand gegeben hat: das Frühstück am besten schon abends bestellen. Morgens ist es nämlich meistens ausverkauft, und das ausgerechnet auf einer Fahrt, bei der man nichts anderes zu tun hat, als zu warten.",
     ]),
-  clip(L_WOHNEN, "Straßenumfrage: Ein Gemeinschaftsraum im Haus?", "Wohnen, Nachbarschaft",
+  clip(L_WOHNEN, "Streitgespräch: Den Innenhof bebauen?", "Wohnen, Stadtplanung",
     [
       { label: "Behrens", voice: "A" },
       { label: "Aydin", voice: "B" },
     ],
     [
-      "Behrens: Ich wohne seit sechs Jahren in einem Haus mit Gemeinschaftsraum, und ich möchte ihn nicht missen. Ganz ehrlich, anfangs fand ich die Idee albern. Was soll man da schon machen? Inzwischen haben wir dort einen Flohmarkt organisiert, und zweimal im Monat kocht jemand für alle. Man kennt seine Nachbarn, und das ändert alles.",
-      "Aydin: Ich sehe das nüchterner. Ein Gemeinschaftsraum klingt gut, aber wer putzt ihn, wer verwaltet die Buchungen? In unserem Haus gab es so einen Raum, vier Jahre lang. Er stand die meiste Zeit leer. Jetzt ist ein Fahrradkeller daraus geworden, und alle sind zufrieden.",
-      "Behrens: Na ja, das liegt vielleicht daran, dass sich bei Ihnen niemand zuständig gefühlt hat. Bei uns hat eine Nachbarin die Schlüssel und führt die Liste. Ohne so jemanden funktioniert es nicht.",
-      "Aydin: Mag sein. Aber ich würde das Geld lieber in niedrigere Mieten stecken als in einen Raum, den die Hälfte nie betritt.",
-      "Behrens: Das schließt sich ja nicht aus. Der Raum kostet am Ende weniger als ein zusätzlicher Parkplatz.",
+      "Behrens: Wenn ich höre, der Innenhof dürfe auf keinen Fall bebaut werden, frage ich mich immer, wer dabei eigentlich gemeint ist. Die Bewohner der Altbauten, die heute den ruhigen Hof haben, oder die Familien, die seit Jahren eine bezahlbare Wohnung suchen?",
+      "Aydin: Das ist eine geschickte Gegenüberstellung, aber sie unterschlägt etwas. Ein Hof ist ja nicht bloß Restfläche. Wenn wir ihn zubauen, verlieren hundertzwanzig Haushalte ihren einzigen Grünraum, und die neuen Wohnungen entstehen, zumindest nach dem aktuellen Entwurf, überwiegend im oberen Preissegment.",
+      "Behrens: Das ließe sich regeln. Wir können Quoten festschreiben.",
+      "Aydin: Festschreiben kann man vieles. Die Erfahrung der letzten Jahre lehrt eher, dass Quoten nach der Baugenehmigung nachverhandelt werden. Ich will nicht unterstellen, dass das hier geplant ist, aber ich möchte es vertraglich ausgeschlossen sehen.",
+      "Behrens: Einverstanden, das nehme ich mit. Trotzdem bleibt mein Punkt: Wer jede Nachverdichtung ablehnt, sorgt dafür, dass die Preise weiter steigen, und das trifft nicht die, die schon eine Wohnung haben.",
+      "Aydin: Da stimme ich zu, nur zieht daraus nicht jeder denselben Schluss. Ich würde Dächer aufstocken und Parkplätze überbauen, bevor ich einen Hof opfere.",
+      "Behrens: Nett gesagt. Nur gehören die Dächer leider Eigentümern, die davon wenig halten.",
     ]),
 ];
 
@@ -1019,17 +1023,17 @@ const listeningItems: SeedItem[] = [
     [
       "Weil große Vorhaben heute deutlich besser geplant werden als noch vor zwanzig Jahren.",
       "Weil unvorhergesehene Störungen nach ihrer Erfahrung selten auftreten und kaum ins Gewicht fallen.",
-      "Weil sich die Abweichungen fast immer auf einer Seite sammeln, nämlich bei der späteren Fertigstellung.",
+      "Weil die Abweichungen nahezu immer in dieselbe Richtung weisen, nämlich zu längeren Laufzeiten.",
       "Weil die meisten Vorhaben am Ende doch noch rechtzeitig und im Kostenrahmen abgeschlossen werden.",
     ], "c",
     "Zufall würde Abweichungen in beide Richtungen erzeugen; \"fast alle auf derselben Seite\" spricht für einen systematischen Fehler. (b) widerspricht ihrer späteren Aussage, dass unvorhergesehene Ereignisse gerade zusammengenommen sehr wahrscheinlich sind."),
   lI.choice("detail", "HARD",
     "Warum setzen sich realistische Zeitpläne laut Brandstätter selten durch?",
     [
-      "Weil sie sich mit den üblichen Planungsmethoden kaum berechnen lassen und deshalb unsicher bleiben.",
+      "Weil sie sich mit den üblichen Planungsmethoden kaum berechnen lassen und deshalb stets unsicher bleiben.",
       "Weil Projektleitungen für spätere Verzögerungen persönlich haften und deshalb vorsichtig kalkulieren.",
       "Weil Vergleichsdaten anderer Unternehmen meist nicht zugänglich sind und eigene Erfahrungen fehlen.",
-      "Weil beim Zuschlag ein ehrgeiziger Zeitplan belohnt wird und ein vorsichtiger als Bedenkenträgertum gilt.",
+      "Weil bei der Vergabe kühne Terminplanung honoriert wird, vorsichtige Planer aber als Miesmacher gelten.",
     ], "d",
     "\"Optimismus wird also belohnt, und zwar genau dann, wenn entschieden wird\"; wer realistisch plant, gilt als Bedenkenträger. (b) steht im Gegensatz zu \"dann fühlt sich oft niemand mehr zuständig\"."),
   lI.choice("inference", "HARD",
@@ -1042,86 +1046,90 @@ const listeningItems: SeedItem[] = [
     ], "a",
     "\"Es lügt nicht, es rechnet nur mit einer Welt, die es so nicht gibt\" = keine Täuschung, aber eine verzerrte Annahme. (b) verneint sie ausdrücklich, (c) und (d) nehmen das Bild wörtlich."),
 
-  // Schlaftipp: note-taking with typed gaps
-  lS.notes("notes", "MID",
-    "Notieren Sie beim Hören die fehlenden Angaben.\n\nTemperatur im Schlafzimmer: {{g1}} Grad\nLetzter Kaffee: spätestens um {{g2}} Uhr\nLetzte große Mahlzeit: mindestens {{g3}} Stunden vor dem Schlafengehen",
+  // Schlaf und Lernen: note-taking of a qualification, an objection and a condition
+  lS.notes("notes", "HARD",
+    "Notieren Sie beim Hören die fehlenden Angaben in Stichworten.\n\nDer Schlaf festigt vor allem Stoff, der vorher {{g1}} wurde.\nEinwand gegen die Studien: Untersucht wurden fast nur {{g2}} im Labor.\nAbends noch einmal durchgehen, sofern man nicht völlig {{g3}} ist.",
     [
-      ["18", "achtzehn"],
-      ["14", "vierzehn", "14 Uhr", "14.00", "14:00", "14.00 Uhr", "vierzehn Uhr"],
-      ["2", "zwei"],
+      ["verstanden", "wirklich verstanden", "richtig verstanden", "auch wirklich verstanden", "begriffen", "wirklich begriffen", "nachvollzogen", "durchdrungen", "verinnerlicht"],
+      ["junge, gesunde Probanden", "junge gesunde Probanden", "junge und gesunde Probanden", "jungen, gesunden Probanden", "jungen gesunden Probanden", "junge, gesunde Menschen", "junge gesunde Menschen", "junge und gesunde Menschen", "junge, gesunde Leute", "junge gesunde Leute", "junge Menschen", "junge, gesunde Teilnehmer", "junge, gesunde Teilnehmende", "junge gesunde Teilnehmende", "junge Gesunde", "jung und gesund", "jung, gesund", "gesunde Probanden", "junge Probanden", "gesunde Versuchspersonen", "junge, gesunde Versuchspersonen"],
+      ["erschöpft", "übermüdet", "müde", "ausgelaugt", "fertig", "kaputt", "am Ende", "ausgepowert"],
     ],
-    "g1: Erst \"sechzehn\", dann Selbstkorrektur auf \"achtzehn\" (und wiederholt); \"zwanzig\" ist die übliche Temperatur, die sie kritisiert. g2: vierzehn Uhr (wiederholt von der Moderatorin). g3: zwei Stunden. Ziffern und Zahlwörter werden akzeptiert."),
-  lS.choice("detail", "MID",
-    "Was empfiehlt Frau Lindqvist als Erstes?",
-    [
-      "Man sollte abends zu einer festen Uhrzeit ins Bett gehen, auch wenn man noch nicht müde ist.",
-      "Man sollte morgens an jedem Tag zur selben Zeit aufstehen, auch sonntags und an anderen freien Tagen.",
-      "Man sollte am Wochenende länger schlafen, um unter der Woche verlorenen Schlaf nachzuholen.",
-      "Man sollte nach dem Aufstehen zuerst eine Weile ins Tageslicht gehen und erst dann frühstücken.",
-    ], "b",
-    "\"Mit dem Aufstehen, nicht mit dem Zubettgehen ... auch sonntags.\" (a) dreht die Reihenfolge um, (c) widerspricht dem Rat, auch sonntags zur gleichen Zeit aufzustehen, (d) wird nicht erwähnt."),
+    "g1: Einschränkung: Der Effekt gilt \"vor allem für Stoff, den man vorher auch wirklich verstanden hat\" (nicht für stures Auswendiglernen). g2: Gegenargument: Die Studien stammen \"fast alle von jungen, gesunden Probanden im Labor\". g3: Bedingung: den Stoff abends kurz durchgehen, \"sofern er nicht völlig erschöpft ist\". Sinnverwandte Wörter und Wendungen werden akzeptiert."),
   lS.choice("attitude", "HARD",
-    "Wie bewertet Frau Lindqvist das Handy im Bett?",
+    "Wie steht Frau Lindqvist zu der Behauptung, wer durchlerne, sei selber schuld?",
     [
-      "Sie hält es für das Hauptproblem, weil das Licht des Displays den Schlaf grundsätzlich stört.",
-      "Sie hält es für harmlos, solange man es spätestens eine Stunde vor dem Einschlafen weglegt.",
-      "Sie hält weniger das Gerät selbst für schädlich als das, was man damit im Bett tut.",
-      "Sie rät, es nachts im Schlafzimmer zu lassen, damit man im Notfall erreichbar bleibt.",
+      "Sie bestätigt sie, da Schlaf für jede Art von Lernstoff gleich wichtig ist.",
+      "Sie hält sie für zu pauschal, erkennt aber an, dass durchaus etwas an ihr dran ist.",
+      "Sie weist sie zurück, weil Schlaf nach ihrer Erfahrung beim Lernen kaum etwas bewirkt.",
+      "Sie hält sie für überholt, seit neuere Studien auch Familien mit Neugeborenen untersucht haben.",
+    ], "b",
+    "\"Pauschal stimmt fast nichts in meinem Fach\", danach folgt aber die Bestätigung, dass das Gehirn im Schlaf sortiert, wenn der Stoff verstanden wurde. (a) und (c) sind Extrempositionen, (d) behauptet eine Studienlage, die sie gerade bezweifelt."),
+  lS.choice("inference", "HARD",
+    "Warum bezweifelt Frau Lindqvist, dass die Laborstudien auf jeden Alltag übertragbar sind?",
+    [
+      "Weil die Labore den Schlaf der Teilnehmenden durch Messgeräte nachweislich verkürzt haben.",
+      "Weil zu wenige Menschen teilgenommen haben, um zuverlässige Durchschnittswerte zu liefern.",
+      "Weil die Teilnehmenden kaum die Lebenslagen abbilden, in denen Schlaf im Alltag wirklich knapp ist.",
+      "Weil im Labor überwiegend Leistungen gemessen wurden, die mit echten Prüfungen nichts zu tun haben.",
     ], "c",
-    "\"Nicht das Gerät ist das Problem, sondern, was man damit macht\": aufregende Nachrichten schaden, ein Hörbuch meist nicht. (a) gibt die verbreitete Meinung wieder, die sie als überschätzt bezeichnet; (b) und (d) werden nicht gesagt."),
+    "Die Studien stammen von jungen, gesunden Probanden; die Familie mit Neugeborenem steht stellvertretend für Lebenslagen mit knappem, gestörtem Schlaf. Die Schlussfolgerung muss aus dem Beispiel gezogen werden, sie wird nicht ausgesprochen. (a), (b) und (d) kommen im Gespräch nicht vor."),
 
-  // Nachricht vom Reisebüro: note-taking with a short answer
-  lB.short("notes", "MID",
-    "Notieren Sie die Telefonnummer, unter der Sie zurückrufen sollen.",
-    ["0431 559 3187", "04315593187", "0431-559-3187", "0431 5593187", "0431-5593187", "0431/5593187", "0431 / 559 3187", "(0431) 559 3187", "0431 - 559 - 3187"],
-    "Die Nummer wird zweimal genannt (null vier drei eins, fünf fünf neun, drei eins acht sieben). Alle gängigen Schreibweisen mit Leerzeichen, Bindestrich oder Schrägstrich werden akzeptiert."),
-  lB.choice("detail", "MID",
-    "Was gilt für die neue Verbindung?",
+  // Nachtzug: note-taking, irony and a hedged price judgement
+  lB.notes("notes", "HARD",
+    "Notieren Sie beim Hören die fehlenden Angaben in Stichworten.\n\nGut ausgeruht kommt man an, sofern man ein {{g1}} bucht.\nPreislich etwa gleich, wenn man die Zeit am Flughafen mitrechnet und {{g2}} spart.\nBei zwei Stunden Verspätung fehlt der {{g3}}.",
     [
-      "Sie fährt eine Stunde später als die gebuchte und startet von Gleis fünf.",
-      "Sie fährt anderthalb Stunden später als die gebuchte und startet von Gleis sieben.",
-      "Sie fährt anderthalb Stunden früher als die gebuchte und startet von Gleis sieben.",
-      "Sie fährt zur selben Zeit wie die gebuchte, hält aber an einem anderen Bahnhof.",
-    ], "b",
-    "Gebucht: acht Uhr zwölf. Ersatz: erst \"neun Uhr zwölf\", dann korrigiert auf \"neun Uhr zweiundvierzig\" (= anderthalb Stunden später), Gleis sieben. (a) verwendet die falsche, später korrigierte Uhrzeit und ein falsches Gleis."),
-  lB.choice("detail", "MID",
-    "Was soll die Kundin oder der Kunde tun, wenn die neue Verbindung nicht passt?",
+      ["Schlafwagenabteil", "Schlafwagen-Abteil", "Schlafwagen", "Abteil im Schlafwagen", "Schlafabteil", "Schlafwagenplatz", "Schlafplatz"],
+      ["das Hotel", "das Hotel für die eine Nacht", "das Hotel für eine Nacht", "Hotel für eine Nacht", "eine Nacht im Hotel", "eine Hotelnacht", "die Hotelnacht", "Hotelnacht", "das Hotelzimmer", "Hotelzimmer", "ein Hotel", "Hotel", "die Hotelübernachtung", "eine Hotelübernachtung", "Hotelübernachtung", "die Übernachtung", "Übernachtung", "die Hotelkosten", "Hotelkosten", "die Übernachtungskosten", "Übernachtungskosten", "die Hotelnacht"],
+      ["Anschlusszug", "Anschluss", "Anschlussverbindung", "Zuganschluss", "Anschlußzug"],
+    ],
+    "g1: Voraussetzung für Erholung: ein Schlafwagenabteil (im Sitzwagen nicht). g2: Das Ticket ist nicht billiger, aber rechnet man die Stunden am Flughafen mit und spart das Hotel für die Nacht, läuft es ungefähr aufs Gleiche hinaus. g3: Bei zwei Stunden Verspätung \"fehlt der Anschlusszug\". Sinnverwandte Wörter werden akzeptiert."),
+  lB.choice("inference", "HARD",
+    "Wie ist die Bemerkung gemeint, im Sitzwagen fühle man sich am Morgen, als hätte man die Nacht auf einer Parkbank verbracht?",
     [
-      "noch heute am Schalter im Bahnhof eine neue Fahrkarte kaufen",
-      "bis morgen Mittag zurückrufen, denn eine Umbuchung kostet nichts",
-      "bis Freitagmorgen eine E-Mail schreiben, wobei eine Gebühr anfällt",
-      "nichts tun, weil das Reisebüro bei Bedarf automatisch auf einen späteren Zug umbucht",
+      "Als Hinweis darauf, dass es im Sitzwagen keine Sitzplätze gibt und man draußen warten muss.",
+      "Als scherzhafte Übertreibung für die geringe Erholung, die man im Sitzwagen findet.",
+      "Als Beleg dafür, dass Bänke im Freien bequemer sind als Sitze in modernen Zügen.",
+      "Als Kritik daran, dass die Bahn zu wenig auf die Sauberkeit in den Wagen achtet.",
     ], "b",
-    "\"rufen Sie mich bitte bis morgen Mittag zurück ... Eine Umbuchung kostet Sie nichts.\" Die anderen Möglichkeiten werden nicht genannt."),
+    "Das Bild ist eine ironische Zuspitzung: Gemeint ist, dass man im Sitzen kaum schläft und zerschlagen ankommt, im Gegensatz zum Schlafwagenabteil. (a), (c) und (d) nehmen das Bild wörtlich oder deuten es als Kritik, die nicht gemeint ist."),
+  lB.choice("attitude", "HARD",
+    "Wie vergleicht Herr Hartmann die Kosten von Nachtzug und Flug?",
+    [
+      "Er hält den Zug für deutlich günstiger, weil das Ticket weniger kostet als der Flug.",
+      "Er hält beide nur dann für ungefähr gleich teuer, wenn man die Zeit am Flughafen und das Hotel einrechnet.",
+      "Er hält den Zug für teurer, weil man für den Schlafwagen einen hohen Aufpreis zahlen muss.",
+      "Er meint, der Preis spiele für die Entscheidung keine Rolle, solange man damit das Klima schont.",
+    ], "b",
+    "\"nicht billiger als der Flug\", aber mit Stunden am Flughafen und gespartem Hotel \"ungefähr gleich\"; die Moderatorin nennt das \"vorsichtig\", er bestätigt. (a) ist das Gegenteil, (c) und (d) werden nicht gesagt."),
 
-  // Straßenumfrage: who says what, and why
-  lW.choice("attitude", "MID",
-    "Wie hat sich die Einstellung von Frau Behrens entwickelt?",
+  // Innenhof: stance, rhetorical question, polite objection
+  lW.choice("attitude", "HARD",
+    "Was will Frau Behrens mit ihrer Frage erreichen, wer bei der Forderung, den Hof nicht zu bebauen, \"eigentlich gemeint ist\"?",
     [
-      "Sie war von Anfang an begeistert und hat die Idee im Haus selbst vorgeschlagen.",
-      "Sie stand der Idee zunächst skeptisch gegenüber und schätzt den Raum inzwischen sehr.",
-      "Sie hat den Raum anfangs oft genutzt, sieht ihn nach sechs Jahren aber kritischer.",
-      "Sie war lange unentschlossen und möchte nun ebenfalls niedrigere Mieten im Haus.",
+      "Sie will klären, welche Gruppen von der geplanten Bebauung tatsächlich betroffen sind.",
+      "Sie will den Gegnern unterstellen, vor allem die eigenen Vorteile zu verteidigen.",
+      "Sie will den Bewohnern der Altbauten zusichern, dass ihre Interessen Vorrang haben werden.",
+      "Sie will Herrn Aydin auffordern, die genaue Zahl der betroffenen Haushalte zu nennen.",
     ], "b",
-    "\"anfangs fand ich die Idee albern\" - \"ich möchte ihn nicht missen\". (a) und (c) widersprechen dem, (d) verwechselt sie mit Herrn Aydin."),
-  lW.choice("detail", "MID",
-    "Was ist aus dem Gemeinschaftsraum in Herrn Aydins Haus geworden?",
+    "Die Frage ist rhetorisch: Sie stellt die Bewohner mit Hof den Wohnungssuchenden gegenüber und legt nahe, dass die Gegner eigentlich ihre eigene Lage schützen. Aydin nennt die Gegenüberstellung \"geschickt\". (a) und (d) fassen sie als echte Frage auf, (c) widerspricht ihrer Position."),
+  lW.choice("detail", "HARD",
+    "Was verlangt Herr Aydin im Hinblick auf die versprochenen Quoten?",
     [
-      "Er wird heute für Feiern vermietet, damit sich die Hauskasse füllt.",
-      "Er wurde zu einem Fahrradkeller umgebaut, nachdem er kaum genutzt worden war.",
-      "Er musste geschlossen werden, weil sich Nachbarn über Lärm beschwert hatten.",
-      "Er wurde in eine zusätzliche Wohnung umgebaut, deren Miete der Hauskasse zufließt.",
+      "Dass die Stadt die Quoten nach der Baugenehmigung selbst überprüft und die Ergebnisse veröffentlicht.",
+      "Dass der Anteil bezahlbarer Wohnungen verbindlich vertraglich festgelegt wird.",
+      "Dass die Zahl der Neubauwohnungen im oberen Preissegment ganz gestrichen wird.",
+      "Dass Frau Behrens öffentlich erklärt, eine spätere Nachverhandlung sei nicht geplant.",
     ], "b",
-    "\"Er stand die meiste Zeit leer. Jetzt ist ein Fahrradkeller daraus geworden.\""),
+    "\"Ich will nicht unterstellen, dass das hier geplant ist, aber ich möchte es vertraglich ausgeschlossen sehen.\" Gemeint ist die Nachverhandlung der Quoten; sie soll vertraglich unmöglich sein. (a), (c) und (d) werden nicht gefordert."),
   lW.choice("inference", "HARD",
-    "Wie erklärt sich Frau Behrens, dass der Raum bei Herrn Aydin kaum genutzt wurde?",
+    "Wie ist die letzte Bemerkung von Frau Behrens über die Dächer gemeint?",
     [
-      "Der Raum war zu klein und schlecht ausgestattet, sodass er sich nicht für Feiern eignete.",
-      "Die Bewohner hatten kaum Interesse daran, ihre Nachbarn näher kennenzulernen.",
-      "Niemand hatte sich für die Verwaltung und die Schlüssel des Raums zuständig gefühlt.",
-      "Die Kosten für die Reinigung waren höher als der Nutzen, den der Raum den Bewohnern brachte.",
+      "Als Zustimmung dazu, dass Aufstockungen den besten Kompromiss darstellen würden.",
+      "Als Hinweis darauf, dass viele Dächer baulich für Aufstockungen gar nicht geeignet sind.",
+      "Als skeptischen Einwand, dass Aydins Alternative an den Eigentümern scheitern dürfte.",
+      "Als Angebot, mit den Eigentümern der Dächer selbst über eine Aufstockung zu verhandeln.",
     ], "c",
-    "\"das liegt vielleicht daran, dass sich bei Ihnen niemand zuständig gefühlt hat. Bei uns hat eine Nachbarin die Schlüssel und führt die Liste.\" Die Putzfrage stellt Herr Aydin selbst, nicht Frau Behrens (d)."),
+    "\"Nett gesagt. Nur gehören die Dächer leider Eigentümern, die davon wenig halten.\" Die Wendung \"Nett gesagt\" ist leicht ironisch und leitet einen skeptischen Einwand ein; die Alternative wird durch die Besitzverhältnisse in Frage gestellt. (a) widerspricht dem \"Nur\", (b) und (d) kommen nicht vor."),
 ];
 
 // ------------------------------------------------------------------ writing
@@ -1155,7 +1163,7 @@ function writingTask(
 
 const writingItems: SeedItem[] = [
   writingTask("summary", "EASY", [180, 260],
-    "Lesen Sie den folgenden Auszug aus einer Fachzeitschrift. Fassen Sie die Kernaussagen mit eigenen Worten zusammen und nehmen Sie anschließend begründet Stellung (insgesamt etwa 220 Wörter).\n\n" +
+    "Lesen Sie den folgenden Auszug aus einer Fachzeitschrift. Fassen Sie die Kernaussagen mit eigenen Worten zusammen und nehmen Sie anschließend begründet Stellung, insbesondere zu den genannten Gegenmaßnahmen (insgesamt etwa 220 Wörter).\n\n" +
       "„Die Verlagerung von Besprechungen in Videokonferenzen hat die Zahl der Termine nicht verringert, sondern erhöht. Weil Wege entfallen, lassen sich mehr Sitzungen in einen Tag pressen, und die Hemmschwelle, jemanden einzuladen, ist gesunken. Gleichzeitig fehlen die informellen Minuten vor und nach einem Treffen, in denen früher vieles nebenbei geklärt wurde. Manche Unternehmen reagieren mit besprechungsfreien Tagen, andere mit der Regel, dass jede Einladung ein schriftliches Ziel enthalten muss. Ob solche Maßnahmen dauerhaft wirken, ist bislang kaum untersucht.“",
     [
       "Zusammenfassung der Kernaussagen ohne wörtliche Übernahme (mehr Termine, Gründe dafür, Verlust informeller Gespräche, Gegenmaßnahmen, fehlende Forschung)",
@@ -1165,7 +1173,7 @@ const writingItems: SeedItem[] = [
     ],
     [
       "die Kernaussagen mit eigenen Worten zusammenfassen",
-      "anschließend begründet Stellung nehmen",
+      "anschließend begründet Stellung nehmen, besonders zu den Gegenmaßnahmen",
     ],
     NEUTRAL,
     "C2: Zusammenfassen und Bewerten eines Fachtextes. Entscheidend ist die Paraphrase mit eigenen Mitteln und die saubere Trennung von Referat und Kommentar."),
@@ -1216,7 +1224,7 @@ const writingItems: SeedItem[] = [
     ],
     FORMAL,
     "Quellengestützte Antwort auf eine Anfrage (Muster: ÖSD C2, Antwort anhand von Stichworten). Geprüft wird, ob jede Frage beantwortet ist und ob die Stichworte in eigenen Formulierungen und im passenden Register verarbeitet werden."),
-  writingTask("transformation", "MID", [50, 150],
+  writingTask("transformation", "MID", [30, 150],
     "In einem internen Papier sollen die folgenden sechs Sätze stilistisch überarbeitet werden. Formulieren Sie jeden Satz so um, dass die Bedeutung gleich bleibt und das Wort in Klammern verwendet wird. Das Wort in Klammern darf nicht verändert werden. Schreiben Sie nur die sechs neuen Sätze.\n\n" +
       "1. Obwohl sich die Abteilung sehr bemühte, wurde die Frist nicht eingehalten. (trotz)\n" +
       "2. Wenn die Zahlen weiter sinken, muss das Projekt neu bewertet werden. (Sollten)\n" +
@@ -1239,7 +1247,7 @@ const writingItems: SeedItem[] = [
     NEUTRAL,
     "Umformungsaufgabe wie Goethe C2 Schreiben Teil 1. Die Lösungen in den Inhaltspunkten sind Musterlösungen; jede bedeutungsgleiche, korrekte Lösung mit dem vorgegebenen Wort ist richtig."),
   writingTask("review", "MID", [300, 420],
-    "Ein Magazin veröffentlicht Rezensionen seiner Leserinnen und Leser. Besprechen Sie ein Sachbuch, einen längeren Artikel oder einen Vortrag zu einem gesellschaftlichen Thema (zum Beispiel Arbeit, Bildung, Technik oder Umwelt), das oder den Sie kennen (etwa 350 Wörter).\n\n" +
+    "Ein Magazin veröffentlicht Rezensionen seiner Leserinnen und Leser. Besprechen Sie ein Sachbuch, einen längeren Artikel, einen Vortrag, eine Dokumentation oder einen Podcast zu einem gesellschaftlichen Thema (zum Beispiel Arbeit, Bildung, Technik oder Umwelt), das oder den Sie kennen (etwa 350 Wörter).\n\n" +
       "Gehen Sie auf die folgenden drei Aspekte ein:\n" +
       "- Worum geht es, und welche zentrale These wird vertreten?\n" +
       "- Wie überzeugend sind Argumentation und Darstellung?\n" +
@@ -1261,7 +1269,7 @@ const writingItems: SeedItem[] = [
   writingTask("letter", "HARD", [320, 450],
     "In einer überregionalen Zeitung ist ein Artikel mit dem Titel „Immer erreichbar: Wer abends Mails liest, ist selbst schuld“ erschienen. Darin finden sich unter anderem diese drei Aussagen:\n\n" +
       "1. „Niemand wird gezwungen, nach Feierabend das Diensthandy einzuschalten.“\n" +
-      "2. „Feste Abschaltzeiten für Server sind eine bevormundende Lösung für ein individuelles Problem.“\n" +
+      "2. „Feste Sperrzeiten für dienstliche E-Mails sind eine bevormundende Lösung für ein individuelles Problem.“\n" +
       "3. „Wer flexibel arbeiten will, muss auch flexibel erreichbar sein.“\n\n" +
       "Schreiben Sie einen Leserbrief an die Zeitung (etwa 350 Wörter). Nehmen Sie zu allen drei Aussagen Stellung und entwickeln Sie dabei eine eigene, begründete Position.",
     [
@@ -1354,11 +1362,11 @@ const speakingItems: SeedItem[] = [
     ],
     "Entspricht der Nachfrage nach dem Vortrag in Goethe C2 Sprechen Teil 1: kurze Bedenkzeit, spontane, aber differenzierte Reaktion.",
     FORMAL),
-  speakingTask("presentation", "MID", { thinkSeconds: 240, answerSeconds: 300, maxTakes: 1 },
-    "Halten Sie einen Vortrag von etwa fünf Minuten zum Thema „Ständige Erreichbarkeit im Beruf“. Gehen Sie von den folgenden drei Aussagen aus, setzen Sie sie zueinander in Beziehung und entwickeln Sie Ihre eigene Position.\n\n" +
-      "1. „Erreichbarkeit ist heute eine Grundqualifikation, so wie Pünktlichkeit früher.“\n" +
-      "2. „Wer nie abschaltet, arbeitet nicht mehr, sondern nur länger.“\n" +
-      "3. „Nicht die Technik ist das Problem, sondern die unausgesprochenen Erwartungen.“",
+  speakingTask("presentation", "MID", { thinkSeconds: 240, answerSeconds: 360, maxTakes: 1 },
+    "Halten Sie einen Vortrag von etwa fünf Minuten zum Thema „Soziale Medien und Aufmerksamkeit“. Gehen Sie von den folgenden drei Aussagen aus, setzen Sie sie zueinander in Beziehung und entwickeln Sie Ihre eigene Position.\n\n" +
+      "1. „Wer ständig online ist, verlernt, sich zu langweilen, und verliert damit einen Teil seiner Kreativität.“\n" +
+      "2. „Soziale Netzwerke haben Freundschaften nicht ersetzt, sondern nur sichtbarer gemacht.“\n" +
+      "3. „Nicht das Medium bestimmt, wie wir damit umgehen, sondern die Regeln, die wir uns selbst setzen.“",
     [
       "gibt die drei Aussagen sinngemäß wieder und deutet sie",
       "setzt die Aussagen zueinander in Beziehung (Gemeinsamkeiten, Widersprüche)",
@@ -1374,7 +1382,7 @@ const speakingItems: SeedItem[] = [
     "Monolog nach Goethe C2 Sprechen Teil 1 (Positionen mit Zitaten abwägen). Die Aussagen sind eigens für diese Aufgabe formuliert.",
     FORMAL),
   speakingTask("discussion", "MID", { thinkSeconds: 60, answerSeconds: 180, maxTakes: 1 },
-    "Ihre Gesprächspartnerin in einer Diskussionsrunde vertritt folgende These: „Fachkenntnisse kann man nachschulen, Haltung nicht. Unternehmen sollten deshalb vor allem nach Persönlichkeit einstellen.“\n\n" +
+    "Ihre Gesprächspartnerin in einer Diskussionsrunde vertritt folgende These: „Fachwissen kann man nachträglich lernen, Haltung nicht. Unternehmen sollten deshalb vor allem nach Persönlichkeit einstellen.“\n\n" +
       "Nehmen Sie Stellung. Gehen Sie auf die These ein, wägen Sie Vor- und Nachteile ab und machen Sie deutlich, wo Sie zustimmen und wo nicht.",
     [
       "nimmt erkennbar Bezug auf die These und ihre Begründung",
@@ -1390,7 +1398,7 @@ const speakingItems: SeedItem[] = [
     ],
     "Interaktiver Teil nach Goethe C2 Sprechen Teil 2. Bewertet wird die Differenziertheit der Stellungnahme, nicht die Position.",
     FORMAL),
-  speakingTask("presentation", "HARD", { thinkSeconds: 300, answerSeconds: 300, maxTakes: 1 },
+  speakingTask("presentation", "HARD", { thinkSeconds: 300, answerSeconds: 360, maxTakes: 1 },
     "Halten Sie einen Vortrag von etwa fünf Minuten zum Thema „Was ist gute Arbeit?“. Gehen Sie von den folgenden drei Aussagen aus, wägen Sie sie gegeneinander ab und kommen Sie zu einem eigenen Urteil.\n\n" +
       "1. „Gute Arbeit erkennt man daran, dass man sie messen kann.“\n" +
       "2. „Gute Arbeit ist die, die man auch dann sorgfältig erledigt, wenn niemand hinsieht.“\n" +
@@ -1409,8 +1417,8 @@ const speakingItems: SeedItem[] = [
     FORMAL),
   // Role conflict: defend a rule against a complaint (Goethe C2 Sprechen, rule to uphold plus a concession).
   speakingTask("role_conflict", "MID", { thinkSeconds: 60, answerSeconds: 150, maxTakes: 1 },
-    "Sie leiten eine Stadtbibliothek. Seit Kurzem gilt in den Lesesälen die Regel, dass nicht gegessen und nur Wasser in verschlossenen Flaschen getrunken werden darf. Ein Stammgast, der fast täglich zum Lernen kommt, beschwert sich bei Ihnen: „Das ist unverschämt. Ich bin den ganzen Tag hier und soll nicht einmal einen Kaffee trinken dürfen. Andere Bibliotheken erlauben das längst.“\n\n" +
-      "Sie halten die Regel für sinnvoll, weil Bücher durch Flecken beschädigt wurden und der Reinigungsdienst überlastet war. Verteidigen Sie die Regel gegenüber dem Gast, zeigen Sie Verständnis für seinen Ärger und bieten Sie eine Lösung an.",
+    "Sie leiten eine Stadtbibliothek. Seit Kurzem gilt in den Lesesälen die Regel, dass nicht gegessen und nur Wasser in verschlossenen Flaschen getrunken werden darf. Ein Stammbesucher, der fast täglich zum Lernen kommt, beschwert sich bei Ihnen: „Das ist unverschämt. Ich bin den ganzen Tag hier und soll nicht einmal einen Kaffee trinken dürfen. Andere Bibliotheken erlauben das längst.“\n\n" +
+      "Sie halten die Regel für sinnvoll, weil Bücher durch Flecken beschädigt wurden und der Reinigungsdienst überlastet war. Verteidigen Sie die Regel gegenüber dem Besucher, zeigen Sie Verständnis für seinen Ärger und bieten Sie eine Lösung an.",
     [
       "zeigt Verständnis für den Ärger, ohne die Regel zurückzunehmen",
       "begründet die Regel sachlich mit Schutz der Bücher und Aufwand der Reinigung",
