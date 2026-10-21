@@ -32,7 +32,8 @@ describe("candidate locales", () => {
   it("reads the first supported language of Accept-Language", () => {
     expect(candidateLocaleFromAcceptLanguage("ar-EG,ar;q=0.9,en;q=0.5")).toBe("ar");
     expect(candidateLocaleFromAcceptLanguage("fr-FR,de;q=0.8")).toBe("de");
-    expect(candidateLocaleFromAcceptLanguage("fr-FR")).toBe("tr");
-    expect(candidateLocaleFromAcceptLanguage(null)).toBe("tr");
+    expect(candidateLocaleFromAcceptLanguage("fr-FR")).toBe("en");
+    expect(candidateLocaleFromAcceptLanguage(null)).toBe("en");
+    expect(candidateLocaleFromAcceptLanguage("tr-TR,tr;q=0.9")).toBe("tr");
   });
 });

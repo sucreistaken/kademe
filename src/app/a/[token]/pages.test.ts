@@ -46,6 +46,8 @@ vi.mock("@/solutions/registry.server", () => ({
 }));
 
 class Redirect extends Error {}
+// Unknown links follow the browser's language; the test has no request.
+vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
 vi.mock("next/navigation", () => ({
   redirect: (path: string) => {
     throw new Redirect(path);

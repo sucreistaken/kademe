@@ -27,19 +27,6 @@
     "none": "Yok",
     "undoing": "Geri alınıyor"
   },
-  "login": {
-    "title": "Giriş yap",
-    "lead": "Sınav paneline erişmek için hesabınızla giriş yapın.",
-    "email": "E-posta",
-    "password": "Parola",
-    "submit": "Giriş yap",
-    "checking": "Kontrol ediliyor…",
-    "invalid": "E-posta veya parola hatalı.",
-    "panelLead": "Panele girmek için panel şifresini yaz.",
-    "panelPassword": "Panel şifresi",
-    "panelInvalid": "Giriş yapılamadı. Şifreyi kontrol et; çok fazla hatalı denemeden sonra 15 dakika beklemen gerekir.",
-    "candidate": "Öğrenci misiniz? Sınav linkiniz e-postayla gönderildi, buradan giriş yapmanıza gerek yok."
-  },
   "errorPage": {
     "forbiddenTitle": "Rolün bunu yapamaz",
     "forbiddenBody": "Bu ekran ya da işlem için yetkin yok. Değerlendirici rolü yazma ve konuşma cevaplarını puanlar; sınav, banka ve davet işlemleri öğretmen ve sahip rollerine açıktır.",

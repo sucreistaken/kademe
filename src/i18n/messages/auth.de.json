@@ -1,0 +1,39 @@
+{
+  "login": {
+    "title": "Anmelden",
+    "lead": "Melden Sie sich an, um das Prüfungspanel zu öffnen.",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "submit": "Anmelden",
+    "checking": "Wird geprüft…",
+    "invalid": "E-Mail oder Passwort ist falsch.",
+    "panelLead": "Geben Sie das Panel-Passwort ein, um das Panel zu öffnen.",
+    "panelPassword": "Panel-Passwort",
+    "panelInvalid": "Anmeldung fehlgeschlagen. Prüfen Sie das Passwort; nach zu vielen Fehlversuchen müssen Sie 15 Minuten warten.",
+    "candidate": "Sind Sie Lernende oder Lernender? Ihr Prüfungslink wurde Ihnen per E-Mail geschickt; Sie müssen sich hier nicht anmelden."
+  },
+  "setup": {
+    "title": "Passwort festlegen",
+    "greeting": "Hallo {name}.",
+    "subtitle": "Ihr Konto wurde für {email} eingerichtet. Legen Sie ein Passwort fest, um das Panel zu öffnen.",
+    "password": "Passwort",
+    "passwordHint": "Mindestens {min} Zeichen.",
+    "confirm": "Passwort wiederholen",
+    "submit": "Passwort speichern",
+    "submitting": "Wird gespeichert…",
+    "invalidTitle": "Dieser Link funktioniert nicht.",
+    "invalidHint": "Er wurde vielleicht schon benutzt oder ist abgelaufen. Bitten Sie die Person, die Sie eingeladen hat, um einen neuen.",
+    "invalidBack": "Zur Anmeldung"
+  },
+  "setupErrors": {
+    "TOO_SHORT": "Das Passwort muss mindestens {min} Zeichen haben.",
+    "MISMATCH": "Die beiden Passwörter stimmen nicht überein.",
+    "TOKEN_INVALID": "Dieser Link ist nicht mehr gültig."
+  },
+  "brand": {
+    "byline": "ein Produkt von Campus German"
+  },
+  "language": {
+    "label": "Sprache"
+  }
+}

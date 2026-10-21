@@ -1,32 +1,34 @@
 import { Card } from "@/components/ui/card";
 import { BrandLockup } from "@/components/visual/brand-mark";
-import { managerT } from "@/i18n/manager";
-import { managerLocale } from "@/i18n/manager-locale";
+import { AuthLanguagePicker } from "@/components/auth/auth-language-picker";
+import { authT } from "@/i18n/auth";
+import { authLocale } from "@/i18n/manager-locale";
 import { panelPasswordHash } from "@/lib/panel-login";
 import { LoginForm } from "./login-form";
 
 /**
- * The panel's front door, in the language the browser asked for.
+ * The panel's front door, English unless the visitor picked another language.
  *
  * It used to be hardcoded Turkish, which meant an invited colleague could set
  * their password in English and then meet a Turkish login screen the next
  * morning. The locale comes from the same `kademe-lang` cookie the panel uses,
- * falling back to Accept-Language on a first visit.
+ * falling back to English on a first visit.
  *
  * With `PANEL_PASSWORD_HASH` configured the screen asks for the panel password
  * only; the action checks the same setting, so the two cannot disagree.
  */
 export default async function LoginPage() {
-  const locale = await managerLocale();
-  const t = managerT(locale);
+  const locale = await authLocale();
+  const t = authT(locale);
   const panelMode = panelPasswordHash() !== null;
 
   return (
     <main className="flex min-h-screen items-center justify-center px-6" lang={locale}>
       <div className="w-full max-w-[380px]">
-        <p className="mb-8">
+        <div className="mb-8 flex items-center justify-between gap-3">
           <BrandLockup byline={t("brand.byline")} markClassName="size-8" />
-        </p>
+          <AuthLanguagePicker current={locale} label={t("language.label")} />
+        </div>
 
         <Card className="p-7" elevated>
           <h1 className="text-[22px] font-extrabold tracking-[-0.01em]">

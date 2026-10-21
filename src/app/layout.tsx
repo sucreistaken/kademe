@@ -30,7 +30,7 @@ const notoArabic = Noto_Sans_Arabic({
 
 export const metadata: Metadata = {
   title: "Kademe | Campus German",
-  description: "Campus German'ın dil okulları için seviye sınavı ve aday değerlendirme platformu",
+  description: "Placement exams and candidate evaluation for language schools, by Campus German",
   applicationName: "Kademe",
   creator: "Campus German",
   publisher: "Campus German",
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
-      lang="tr"
+      lang="en"
       className={`${nunito.variable} ${notoArabic.variable} h-full antialiased`}
       style={{ "--font-arabic": arabicFontStack(nunito.style.fontFamily, notoArabic.style.fontFamily) } as CSSProperties}
     >

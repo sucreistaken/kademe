@@ -1,0 +1,39 @@
+{
+  "login": {
+    "title": "Giriş yap",
+    "lead": "Sınav paneline erişmek için hesabınızla giriş yapın.",
+    "email": "E-posta",
+    "password": "Parola",
+    "submit": "Giriş yap",
+    "checking": "Kontrol ediliyor…",
+    "invalid": "E-posta veya parola hatalı.",
+    "panelLead": "Panele girmek için panel şifresini yaz.",
+    "panelPassword": "Panel şifresi",
+    "panelInvalid": "Giriş yapılamadı. Şifreyi kontrol et; çok fazla hatalı denemeden sonra 15 dakika beklemen gerekir.",
+    "candidate": "Öğrenci misiniz? Sınav linkiniz e-postayla gönderildi, buradan giriş yapmanıza gerek yok."
+  },
+  "setup": {
+    "title": "Parolanı belirle",
+    "greeting": "Merhaba {name}.",
+    "subtitle": "Hesabın {email} adresine açıldı. Panele girmek için bir parola belirle.",
+    "password": "Parola",
+    "passwordHint": "En az {min} karakter.",
+    "confirm": "Parola tekrar",
+    "submit": "Parolayı kaydet",
+    "submitting": "Kaydediliyor…",
+    "invalidTitle": "Bu link çalışmıyor.",
+    "invalidHint": "Link kullanılmış ya da süresi dolmuş olabilir. Seni davet eden kişiden yenisini iste.",
+    "invalidBack": "Giriş ekranına git"
+  },
+  "setupErrors": {
+    "TOO_SHORT": "Parola en az {min} karakter olmalı.",
+    "MISMATCH": "İki parola aynı değil.",
+    "TOKEN_INVALID": "Bu link artık geçerli değil."
+  },
+  "brand": {
+    "byline": "bir Campus German ürünü"
+  },
+  "language": {
+    "label": "Dil"
+  }
+}

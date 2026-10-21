@@ -1,0 +1,39 @@
+{
+  "login": {
+    "title": "Iniciar sesión",
+    "lead": "Inicia sesión para abrir el panel de exámenes.",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "submit": "Iniciar sesión",
+    "checking": "Comprobando…",
+    "invalid": "El correo o la contraseña no son correctos.",
+    "panelLead": "Escribe la contraseña del panel para abrirlo.",
+    "panelPassword": "Contraseña del panel",
+    "panelInvalid": "No se pudo iniciar sesión. Revisa la contraseña; después de demasiados intentos fallidos tendrás que esperar 15 minutos.",
+    "candidate": "¿Eres estudiante? Te enviamos el enlace del examen por correo; no necesitas iniciar sesión aquí."
+  },
+  "setup": {
+    "title": "Crea tu contraseña",
+    "greeting": "Hola, {name}.",
+    "subtitle": "Tu cuenta está abierta con {email}. Crea una contraseña para entrar en el panel.",
+    "password": "Contraseña",
+    "passwordHint": "Al menos {min} caracteres.",
+    "confirm": "Repite la contraseña",
+    "submit": "Guardar la contraseña",
+    "submitting": "Guardando…",
+    "invalidTitle": "Este enlace no funciona.",
+    "invalidHint": "Puede que ya se haya usado o que haya caducado. Pide uno nuevo a la persona que te invitó.",
+    "invalidBack": "Ir a iniciar sesión"
+  },
+  "setupErrors": {
+    "TOO_SHORT": "La contraseña debe tener al menos {min} caracteres.",
+    "MISMATCH": "Las dos contraseñas no coinciden.",
+    "TOKEN_INVALID": "Este enlace ya no es válido."
+  },
+  "brand": {
+    "byline": "un producto de Campus German"
+  },
+  "language": {
+    "label": "Idioma"
+  }
+}

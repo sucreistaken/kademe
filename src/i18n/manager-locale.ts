@@ -1,8 +1,12 @@
 import { cookies, headers } from "next/headers";
 import {
+  DEFAULT_AUTH_LOCALE,
   DEFAULT_LOCALE,
+  isAuthLocale,
   isLocale,
   localeFromAcceptLanguage,
+  panelLocaleOf,
+  type AuthLocale,
   type Locale,
 } from "@/i18n/locale";
 
@@ -27,8 +31,21 @@ export async function managerLocale(): Promise<Locale> {
   const jar = await cookies();
   const chosen = jar.get(MANAGER_LOCALE_COOKIE)?.value;
   if (isLocale(chosen)) return chosen;
+  // German or Spanish picked on the sign-in screen: the panel has no such
+  // dictionary, and English is the nearer choice than Turkish.
+  if (isAuthLocale(chosen)) return panelLocaleOf(chosen);
   // Nobody has chosen yet: the browser's preference beats a hard default, but
   // only on the first render, because the switch writes the cookie.
   const header = (await headers()).get("accept-language");
   return header ? localeFromAcceptLanguage(header) : DEFAULT_LOCALE;
+}
+
+/**
+ * The sign-in and password setup screens. Same cookie as the panel, but four
+ * languages and no browser guessing: the front door is English until someone
+ * picks another language.
+ */
+export async function authLocale(): Promise<AuthLocale> {
+  const chosen = (await cookies()).get(MANAGER_LOCALE_COOKIE)?.value;
+  return isAuthLocale(chosen) ? chosen : DEFAULT_AUTH_LOCALE;
 }

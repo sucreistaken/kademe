@@ -1,8 +1,9 @@
 import { Card } from "@/components/ui/card";
 import { InlineLink } from "@/components/ui/inline-link";
 import { BrandLockup } from "@/components/visual/brand-mark";
-import { managerT } from "@/i18n/manager";
-import { managerLocale } from "@/i18n/manager-locale";
+import { AuthLanguagePicker } from "@/components/auth/auth-language-picker";
+import { authT } from "@/i18n/auth";
+import { authLocale } from "@/i18n/manager-locale";
 import { PASSWORD_MIN_LENGTH, resolveSetupToken } from "@/server/settings";
 import { SetupForm } from "./form";
 
@@ -24,8 +25,8 @@ export default async function SetupPage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
-  const locale = await managerLocale();
-  const t = managerT(locale);
+  const locale = await authLocale();
+  const t = authT(locale);
   const target = await resolveSetupToken(token);
 
   if (!target) {
@@ -35,9 +36,10 @@ export default async function SetupPage({
         className="flex min-h-screen items-center justify-center px-6"
       >
         <div className="w-full max-w-[380px]">
-          <p className="mb-8">
+          <div className="mb-8 flex items-center justify-between gap-3">
             <BrandLockup byline={t("brand.byline")} markClassName="size-8" />
-          </p>
+            <AuthLanguagePicker current={locale} label={t("language.label")} />
+          </div>
           <Card className="p-7" elevated>
             <h1 className="text-[19px] font-semibold tracking-tight">
               {t("setup.invalidTitle")}
@@ -58,9 +60,10 @@ export default async function SetupPage({
       className="flex min-h-screen items-center justify-center px-6"
     >
       <div className="w-full max-w-[380px]">
-        <p className="mb-8">
+        <div className="mb-8 flex items-center justify-between gap-3">
           <BrandLockup byline={t("brand.byline")} markClassName="size-8" />
-        </p>
+          <AuthLanguagePicker current={locale} label={t("language.label")} />
+        </div>
 
         <Card className="p-7" elevated>
           <h1 className="text-[19px] font-semibold tracking-tight">

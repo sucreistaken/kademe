@@ -234,23 +234,5 @@
     "EMAIL_INVALID": "Type a valid email address.",
     "ROLE_INVALID": "Pick a role.",
     "EMAIL_TAKEN": "That email already belongs to an account."
-  },
-  "setup": {
-    "title": "Set your password",
-    "greeting": "Hello {name}.",
-    "subtitle": "Your account is open on {email}. Set a password to enter the panel.",
-    "password": "Password",
-    "passwordHint": "At least {min} characters.",
-    "confirm": "Password again",
-    "submit": "Save the password",
-    "submitting": "Saving…",
-    "invalidTitle": "This link does not work.",
-    "invalidHint": "It may be used or expired. Ask the person who invited you for a new one.",
-    "invalidBack": "Go to the sign in screen"
-  },
-  "setupErrors": {
-    "TOO_SHORT": "The password has to be at least {min} characters.",
-    "MISMATCH": "The two passwords do not match.",
-    "TOKEN_INVALID": "This link is no longer valid."
   }
 }

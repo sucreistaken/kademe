@@ -16,7 +16,8 @@ import { setAssessmentLocale, supportedLocales } from "@/lib/candidate-context";
 import { stepPath } from "@/lib/candidate-routes";
 import { candidateT } from "@/i18n/candidate";
 import { shortDate } from "@/i18n/dates";
-import { isCandidateLocale, DEFAULT_LOCALE, type CandidateLocale } from "@/i18n/locale";
+import { isCandidateLocale, type CandidateLocale } from "@/i18n/locale";
+import { visitorLocale } from "@/i18n/visitor-locale";
 
 /**
  * Every student page starts the same way: resolve the token on the server,
@@ -69,7 +70,7 @@ export async function enter(
 
   if (!resolved.ok) {
     const ctx = resolved.ctx;
-    const locale = ctx?.locale ?? DEFAULT_LOCALE;
+    const locale = ctx?.locale ?? (await visitorLocale());
     const summary = ctx ? await progressSummary(ctx) : undefined;
     // Before the exam opens: a waiting screen with the opening time, nothing to start.
     if (resolved.problem === "NOT_YET" && ctx?.link.notBefore) {

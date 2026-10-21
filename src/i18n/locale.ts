@@ -39,6 +39,22 @@ export function isCandidateLocale(value: unknown): value is CandidateLocale {
   return typeof value === "string" && (CANDIDATE_LOCALES as readonly string[]).includes(value);
 }
 
+/**
+ * The public front door (sign in, password setup) in the languages a visitor
+ * can pick there. English first: it is the default for anyone who has not
+ * chosen. Behind the door the panel still speaks only `Locale`; see
+ * `panelLocaleOf`.
+ */
+export const AUTH_LOCALES = ["en", "de", "tr", "es"] as const;
+
+export type AuthLocale = (typeof AUTH_LOCALES)[number];
+
+export const DEFAULT_AUTH_LOCALE: AuthLocale = "en";
+
+export function isAuthLocale(value: unknown): value is AuthLocale {
+  return typeof value === "string" && (AUTH_LOCALES as readonly string[]).includes(value);
+}
+
 /** Each candidate language in its own script: what a picker or a summary shows. */
 export const CANDIDATE_LANGUAGE_NAME: Record<CandidateLocale, string> = {
   tr: "Türkçe",
@@ -61,12 +77,16 @@ export function panelLocaleOf(locale: CandidateLocale): Locale {
   return locale === "tr" ? "tr" : "en";
 }
 
-/** Same as localeFromAcceptLanguage, for the exam student's five languages. */
+/**
+ * Same as localeFromAcceptLanguage, for the exam student's five languages. A
+ * browser asking for none of them gets English, not Turkish: a French or Dutch
+ * student with a mistyped link should not meet a Turkish screen.
+ */
 export function candidateLocaleFromAcceptLanguage(header: string | null): CandidateLocale {
-  if (!header) return DEFAULT_LOCALE;
+  if (!header) return "en";
   for (const part of header.split(",")) {
     const tag = part.split(";")[0].trim().toLowerCase().slice(0, 2);
     if (isCandidateLocale(tag)) return tag;
   }
-  return DEFAULT_LOCALE;
+  return "en";
 }

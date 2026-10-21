@@ -7,7 +7,7 @@ import { LinkProblem } from "@/components/candidate/LinkProblem";
 import { loadState, progressSummary, resolveExamToken } from "@/lib/exam-flow";
 import { stepPath } from "@/lib/candidate-routes";
 import { solutionPage, type PageSearchParams } from "@/lib/candidate-pages";
-import { DEFAULT_LOCALE } from "@/i18n/locale";
+import { visitorLocale } from "@/i18n/visitor-locale";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +28,7 @@ export default async function DonePage({
   if (hosted !== undefined) return hosted;
   const resolved = await resolveExamToken(token);
   const ctx = resolved.ctx;
-  const locale = ctx?.locale ?? DEFAULT_LOCALE;
+  const locale = ctx?.locale ?? (await visitorLocale());
 
   if (resolved.ok) {
     const state = await loadState(resolved.ctx);
