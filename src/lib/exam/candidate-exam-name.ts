@@ -1,4 +1,6 @@
 import { candidateT } from "@/i18n/candidate";
+import candidateTr from "@/i18n/messages/candidate.tr.json";
+import candidateEn from "@/i18n/messages/candidate.en.json";
 import type { CandidateLocale } from "@/i18n/locale";
 import { EXAM_TEMPLATES, type ExamTemplateKey } from "@/lib/exam/templates";
 
@@ -26,6 +28,11 @@ const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\
  */
 export function candidateExamName(stored: string, locale: CandidateLocale): string {
   const t = candidateT(locale);
+  // The exam the seed and the production setup create is named after this
+  // dictionary entry, not after a template.
+  if (stored === candidateTr.exam.titlePlacement || stored === candidateEn.exam.titlePlacement) {
+    return t("exam.titlePlacement");
+  }
   for (const template of EXAM_TEMPLATES) {
     const name = () => t(`examNames.${NAME_KEY[template.key]}`);
     for (const from of ["tr", "en"] as const) {

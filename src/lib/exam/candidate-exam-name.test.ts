@@ -59,4 +59,11 @@ describe("the exam name a student reads", () => {
       }
     }
   });
+
+  it("the seeded placement exam name reads in the student's language", () => {
+    expect(candidateExamName("Almanca seviye tespit sınavı", "de")).toBe("Einstufungstest Deutsch");
+    expect(candidateExamName("Almanca seviye tespit sınavı", "es")).toBe("Examen de nivel de alemán");
+    expect(candidateExamName("Almanca seviye tespit sınavı", "en")).toBe("German placement exam");
+    expect(candidateExamName("German placement exam", "tr")).toBe("Almanca seviye tespit sınavı");
+  });
 });
