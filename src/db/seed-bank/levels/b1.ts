@@ -1104,7 +1104,7 @@ function clip(
   key: string,
   title: string,
   topic: string,
-  speakers: Array<{ label: string; voice: "A" | "B" }>,
+  speakers: Array<{ label: string; voice: "A" | "B" | "C" | "D" }>,
   lines: string[],
 ): SeedStimulus {
   return { key, section: "LISTENING", level: LEVEL, title, topic, speakers, body: lines.join("\n") };
@@ -1266,6 +1266,84 @@ const lFreibad = clip(
 );
 const freibad = forClip(lFreibad.key);
 
+// ---- Clip 6: phone call to a dance studio, table completion, one self-correction
+
+const lTanzkurs = clip(
+  "v3-l-b1-tanzkurs-telefon",
+  "Anruf im Tanzstudio",
+  "Tanzen und Freizeit",
+  [
+    { label: "Jan Vogel", voice: "B" },
+    { label: "Sandra", voice: "A" },
+  ],
+  [
+    "Jan Vogel: Tanzstudio Rhythmus, guten Tag, Sie sprechen mit Jan Vogel.",
+    "Sandra: Guten Tag, hier ist Sandra Kunz. Ich interessiere mich für Ihren Salsakurs für Anfänger. Wann geht der denn los?",
+    "Jan Vogel: Also, der nächste Kurs beginnt am zwölften Oktober, nein, Entschuldigung, am vierzehnten Oktober. Der zwölfte ist ein Sonntag, da haben wir zu. Also am vierzehnten.",
+    "Sandra: Am vierzehnten, gut. Und welcher Wochentag ist das?",
+    "Jan Vogel: Das ist ein Dienstag. Der Kurs findet jeden Dienstag statt, zehn Abende lang.",
+    "Sandra: Ach so. Und um wie viel Uhr?",
+    "Jan Vogel: Na ja, von neunzehn Uhr dreißig bis einundzwanzig Uhr. Also halb acht, ja, halb acht bis neun.",
+    "Sandra: Und was kostet das?",
+    "Jan Vogel: Zehn Abende kosten hundertzwanzig Euro. Hundertzwanzig, genau. Bezahlen können Sie dann am ersten Abend.",
+    "Sandra: Brauche ich einen festen Tanzpartner?",
+    "Jan Vogel: Nein, nein, einen Partner brauchen Sie nicht, wir wechseln im Kurs ständig. Bringen Sie nur bequeme Schuhe mit, Straßenschuhe sind in der Halle nicht erlaubt. Sie können sich übrigens gleich am Telefon anmelden.",
+    "Sandra: Prima, dann mache ich das sofort.",
+  ],
+);
+const tanzkurs = forClip(lTanzkurs.key);
+
+// ---- Clip 7: four housemates plan a party, table completion
+
+const lGrillparty = clip(
+  "v3-l-b1-hausparty-planung",
+  "Vier Mitbewohner planen ein Fest",
+  "Wohnen und Feiern",
+  [
+    { label: "Mila", voice: "A" },
+    { label: "Ole", voice: "B" },
+    { label: "Pia", voice: "C" },
+    { label: "Ruben", voice: "D" },
+  ],
+  [
+    "Mila: So, wir müssen noch das Hausfest planen. Ole, wann war das nochmal? Samstag, oder?",
+    "Ole: Ja, Samstag, der fünfzehnte, nein, Moment, der achtzehnte. Genau, der achtzehnte. Der fünfzehnte war ja schon letzte Woche.",
+    "Pia: Und wo machen wir das? Im Garten ist es abends schon viel zu kalt, um lange zu sitzen.",
+    "Ruben: Wir haben doch den Gemeinschaftsraum im Keller. Da passen dreißig Leute rein, und die Hausverwaltung hat schon zugesagt.",
+    "Mila: Gut, dann also Gemeinschaftsraum. Wer bringt was mit? Ich mache einen großen Nudelsalat.",
+    "Pia: Ich backe Kuchen. Zwei Kuchen, glaube ich, das reicht. Salat mache ich nicht, den macht ja Mila.",
+    "Ole: Und ich besorge die Musikanlage von meinem Cousin. Ruben, was ist mit dir?",
+    "Ruben: Ich kümmere mich um das Geschirr und die Becher. Ich habe noch welche vom letzten Mal.",
+    "Mila: Super. Und wann fangen wir an? Um achtzehn Uhr?",
+    "Ruben: Achtzehn Uhr passt. Ich bin bis fünf bei der Arbeit, das reicht gut.",
+  ],
+);
+const grillparty = forClip(lGrillparty.key);
+
+// ---- Clip 8: station information desk plus announcement, table completion
+
+const lBahn = clip(
+  "v3-l-b1-bahnauskunft",
+  "Auskunft am Bahnhof",
+  "Reisen mit der Bahn",
+  [
+    { label: "Durchsage", voice: "C" },
+    { label: "Reisende", voice: "A" },
+    { label: "Mitarbeiter", voice: "B" },
+  ],
+  [
+    "Durchsage: Achtung an Gleis vier. Der Regionalzug nach Karlsruhe hat zehn Minuten Verspätung. Wir bitten um Ihr Verständnis.",
+    "Reisende: Guten Tag, ich möchte morgen nach Freiburg fahren. Wann geht der nächste Zug am Vormittag?",
+    "Mitarbeiter: Moment, ich schaue nach. Es gibt einen Zug um acht Uhr vierzig. Nein, Entschuldigung, den gibt es nur samstags. Morgen ist Freitag, da fährt er um neun Uhr zehn. Also neun Uhr zehn.",
+    "Reisende: Neun Uhr zehn. Muss ich umsteigen?",
+    "Mitarbeiter: Ja, in Mannheim. Dort haben Sie acht Minuten Zeit, also nicht sehr viel. Die Ankunft in Freiburg ist um zwölf Uhr vierzehn.",
+    "Reisende: Und von welchem Gleis fährt der Zug ab?",
+    "Mitarbeiter: Von Gleis neun. Das ist ganz hinten, gehen Sie hier links durch die Unterführung.",
+    "Reisende: Gleis neun, gut. Danke Ihnen!",
+  ],
+);
+const bahn = forClip(lBahn.key);
+
 const listeningItems: SeedItem[] = [
   // ---- Clip 1
   mailbox.choice("detail", "EASY",
@@ -1414,6 +1492,104 @@ const listeningItems: SeedItem[] = [
       ["Im Sommer ist auch die Sauna geöffnet.", "F"],
     ],
     "Das Bad öffnet zwei Wochen früher als sonst (F); am Wochenende „ab acht“, sonst ab zehn (R); die Sauna erst im Herbst (F)."),
+
+  // ---- Clip 6 (table completion)
+  tanzkurs.notes("detail", "MID",
+    "Sie hören einen Anruf in einem Tanzstudio. Ergänzen Sie die Tabelle.\n\n" +
+      "Kurs: Salsa für Anfänger\n" +
+      "Beginn: {{g1}} Oktober\n" +
+      "Wochentag: {{g2}}\n" +
+      "Uhrzeit: {{g3}} Uhr\n" +
+      "Preis für zehn Abende: {{g4}} Euro",
+    [
+      ["14", "14.", "vierzehnten", "am 14.", "am vierzehnten", "der 14.", "der vierzehnte"],
+      ["Dienstag", "dienstags", "am Dienstag", "Di", "Di."],
+      ["19.30", "19:30", "19 30", "19 Uhr 30", "neunzehn Uhr dreißig", "halb acht", "19.30 Uhr", "19:30 Uhr", "um 19.30", "um 19:30"],
+      ["120", "hundertzwanzig", "120 Euro", "hundertzwanzig Euro", "120,00", "120 €", "120€", "120 EUR"],
+    ],
+    "Beginn: erst „zwölften“, dann Korrektur auf „vierzehnten“ Oktober; Dienstag; „neunzehn Uhr dreißig“ (= halb acht); „hundertzwanzig Euro“, zweimal genannt."),
+  tanzkurs.choice("detail", "MID",
+    "Was braucht Sandra für den Kurs?",
+    "Sie braucht nur bequeme Schuhe und muss keinen festen Partner mitbringen.",
+    [
+      "Sie braucht Tanzschuhe aus dem Studio und muss mit einer Partnerin kommen.",
+      "Sie braucht keine besonderen Schuhe, muss aber ihren Partner mitbringen.",
+      "Sie muss vorher einen Einstufungstest machen und Straßenschuhe tragen.",
+    ],
+    1,
+    "„Einen Partner brauchen Sie nicht ... Bringen Sie nur bequeme Schuhe mit, Straßenschuhe sind in der Halle nicht erlaubt.“"),
+  tanzkurs.tfng("detail", "MID",
+    [
+      ["Der Kurs beginnt an einem Sonntag.", "F"],
+      ["Der Kurs besteht aus zehn Abenden.", "R"],
+      ["Sandra muss die Gebühr noch heute am Telefon bezahlen.", "F"],
+    ],
+    "Der zwölfte (Sonntag) wird korrigiert, der Kurs beginnt am Dienstag, dem vierzehnten (F). „zehn Abende lang“ (R). Bezahlt wird „am ersten Abend“ (F)."),
+
+  // ---- Clip 7 (table completion, four voices)
+  grillparty.notes("detail", "MID",
+    "Sie hören vier Mitbewohner bei der Planung eines Fests. Ergänzen Sie die Tabelle.\n\n" +
+      "Datum des Fests: Samstag, der {{g1}}.\n" +
+      "Ort: {{g2}}\n" +
+      "Pia bringt mit: {{g3}}\n" +
+      "Ruben bringt mit: {{g4}}",
+    [
+      ["18", "18.", "achtzehnten", "achtzehnte", "der 18.", "der achtzehnte"],
+      ["Gemeinschaftsraum", "Keller", "im Keller", "im Gemeinschaftsraum", "Gemeinschaftsraum im Keller", "der Gemeinschaftsraum", "im Gemeinschaftsraum im Keller"],
+      ["Kuchen", "zwei Kuchen", "2 Kuchen", "Kuchen backen"],
+      ["Geschirr", "Becher", "Geschirr und Becher", "das Geschirr", "Becher und Geschirr", "Geschirr und die Becher", "das Geschirr und die Becher"],
+    ],
+    "Datum: Ole nennt erst den fünfzehnten und korrigiert auf den achtzehnten; Ort: Gemeinschaftsraum im Keller; Pia backt zwei Kuchen (den Salat macht Mila); Ruben bringt Geschirr und Becher."),
+  grillparty.choice("detail", "MID",
+    "Warum feiern die Mitbewohner nicht im Garten?",
+    "Weil es dort abends schon zu kalt ist, um lange zu sitzen.",
+    [
+      "Weil die Hausverwaltung den Garten für ein Fest nicht erlaubt hat.",
+      "Weil im Garten nicht genug Platz für dreißig Gäste vorhanden ist.",
+      "Weil sich die Nachbarn wegen der Musik im Garten beschweren würden.",
+    ],
+    2,
+    "Pia: „Im Garten ist es abends schon viel zu kalt.“ Die Hausverwaltung hat dem Gemeinschaftsraum zugestimmt."),
+  grillparty.tfng("detail", "MID",
+    [
+      ["Ole besorgt die Musikanlage für das Fest.", "R"],
+      ["Das Fest findet am fünfzehnten statt.", "F"],
+      ["Pia macht auch einen Salat für alle.", "F"],
+    ],
+    "Ole holt die Anlage von seinem Cousin (R). Der fünfzehnte war „schon letzte Woche“ (F). Den Salat macht Mila (F)."),
+
+  // ---- Clip 8 (table completion, announcement)
+  bahn.notes("detail", "MID",
+    "Sie hören ein Gespräch am Bahnhof. Ergänzen Sie die Tabelle.\n\n" +
+      "Zug nach Freiburg (morgen, Freitag)\n" +
+      "Abfahrt: {{g1}} Uhr\n" +
+      "Gleis: {{g2}}\n" +
+      "Umsteigen in: {{g3}}\n" +
+      "Ankunft in Freiburg: {{g4}} Uhr",
+    [
+      ["9.10", "9:10", "09:10", "09.10", "9 10", "9 Uhr 10", "neun Uhr zehn", "9.10 Uhr", "9:10 Uhr"],
+      ["9", "neun", "Gleis 9", "Gleis neun"],
+      ["Mannheim", "in Mannheim"],
+      ["12.14", "12:14", "12 14", "12 Uhr 14", "zwölf Uhr vierzehn", "12.14 Uhr", "12:14 Uhr"],
+    ],
+    "Abfahrt: Der Zug um acht Uhr vierzig fährt nur samstags, am Freitag fährt er um neun Uhr zehn (Korrektur). Gleis neun; Umsteigen in Mannheim; Ankunft zwölf Uhr vierzehn."),
+  bahn.choice("detail", "MID",
+    "Wie viel Zeit hat die Reisende in Mannheim zum Umsteigen?",
+    "Acht Minuten, sie muss also recht schnell zum Anschlusszug gehen.",
+    [
+      "Achtzehn Minuten, sie kann in Ruhe noch einen Kaffee trinken.",
+      "Dreizehn Minuten, dafür fährt der Zug dort auf demselben Gleis weiter.",
+      "Zwei Minuten, deshalb empfiehlt der Mitarbeiter einen späteren Zug.",
+    ],
+    0,
+    "„Dort haben Sie acht Minuten Zeit, also nicht sehr viel.“"),
+  bahn.tfng("detail", "MID",
+    [
+      ["Die Reisende muss auf dem Weg nach Freiburg einmal umsteigen.", "R"],
+      ["Der Zug um acht Uhr vierzig fährt auch am Freitag.", "F"],
+      ["Die Fahrt nach Freiburg dauert etwa drei Stunden.", "R"],
+    ],
+    "Umsteigen in Mannheim (R). Der frühe Zug fährt „nur samstags“ (F). Von 9.10 Uhr bis 12.14 Uhr sind es gut drei Stunden (R)."),
 ];
 
 // ================================================================ WRITING
@@ -1759,7 +1935,7 @@ export const B1_PARTS: {
 } = {
   grammar: { stimuli: [], items: [...grammarItems, ...grammarTexts] },
   reading: { stimuli: [rEmail, rArtikel, rAnzeigen, rRegeln, rForum, rNews, rHund, rMarkt, rChor, rSonntag, rWohnen, rUrlaub], items: readingItems },
-  listening: { stimuli: [lMailbox, lFuehrung, lGespraech, lWerkstatt, lFreibad], items: listeningItems },
+  listening: { stimuli: [lMailbox, lFuehrung, lGespraech, lWerkstatt, lFreibad, lTanzkurs, lGrillparty, lBahn], items: listeningItems },
   writing: { stimuli: [], items: writingItems },
   speaking: { stimuli: [], items: speakingItems },
 };
