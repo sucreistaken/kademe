@@ -253,12 +253,12 @@ const grammarItems: SeedItem[] = [
     title: "Einkaufen am Samstag",
     first: "Am Samstag gehe ich mit meiner Schwester einkaufen.",
     body:
-      "Wir [[brauchen|brauche|gebraucht|benutzen]] Milch, Brot und Obst. " +
-      "Der Supermarkt [[ist|bin|sein|hat]] nicht weit, wir gehen zu Fuß. " +
-      "Meine Schwester nimmt [[einen|ein|eine|einem]] Korb. Ich kaufe heute [[kein|keine|nicht|nichts]] Fleisch. Ich nehme vier Äpfel. " +
-      "Die Äpfel sind heute [[sehr|viel|viele|mehr]] billig. Der Käse ist teuer, [[aber|sondern|dass|wenn]] er schmeckt sehr gut. " +
-      "Wir nehmen [[ihn|er|ihm|ihr]]. [[Um|Am|Im|In]] elf Uhr sind wir an der Kasse. " +
-      "Ich bezahle mit [[meiner|meine|meinen|mein]] Karte. Dann gehen wir [[nach|zu|in|bei]] Hause.",
+      "Wir [[brauchen|brauche|gebraucht|benutzen#vocabulary]] Milch, Brot und Obst. " +
+      "Der Supermarkt [[ist|bin|sein|hat#praesens.sein]] nicht weit, wir gehen zu Fuß. " +
+      "Meine Schwester nimmt [[einen|ein|eine|einem#artikel.akkusativ]] Korb. Ich kaufe heute [[kein|keine|nicht|nichts#negation.kein]] Fleisch. Ich nehme vier Äpfel. " +
+      "Die Äpfel sind heute [[sehr|viel|viele|mehr#adjektiv]] billig. Der Käse ist teuer, [[aber|sondern|dass|wenn#konnektor]] er schmeckt sehr gut. " +
+      "Wir nehmen [[ihn|er|ihm|ihr#akkusativ]]. [[Um|Am|Im|In#praeposition.zeit]] elf Uhr sind wir an der Kasse. " +
+      "Ich bezahle mit [[meiner|meine|meinen|mein#dativ]] Karte. Dann gehen wir [[nach|zu|in|bei#praeposition]] Hause.",
     last: "Am Abend kochen wir zusammen eine Suppe.",
     note: "Verb und Bedeutung (g1), sein (g2), Akkusativ des unbestimmten Artikels (g3), kein bei Nomen ohne Artikel (g4), sehr + Adjektiv (g5), aber mit Hauptsatz (g6), Personalpronomen im Akkusativ (g7), Uhrzeit mit um (g8), Possessivartikel im Dativ nach mit (g9), nach Hause (g10).",
   }),
@@ -266,13 +266,13 @@ const grammarItems: SeedItem[] = [
     title: "Ein Tag im Büro",
     first: "Herr Demir arbeitet in einem Büro in Hamburg.",
     body:
-      "Das Büro ist [[im|in|ins|am]] ersten Stock. " +
-      "Er [[fängt|fange|anfängt|anfangen]] jeden Tag um acht Uhr an. Zuerst liest er [[seine|sein|seinen|seiner]] E-Mails. " +
-      "Um zehn Uhr telefoniert er [[mit|zu|an|für]] seiner Chefin. Mittags isst er in [[der|die|dem|den]] Kantine. " +
-      "Das Essen dort [[schmeckt|schmecken|geschmeckt|fehlt]] gut und ist nicht teuer. " +
-      "Am Nachmittag schreibt er noch einen Bericht. Der Bericht ist wichtig, [[denn|dass|deshalb|wenn]] die Chefin liest ihn morgen. " +
-      "Heute hat er [[keine|kein|keinen|nicht]] Zeit für Sport. Um fünf Uhr [[ist|hat|sein|sind]] er fertig. " +
-      "Er fährt mit dem Bus nach Hause. Dort wartet schon seine Katze. Er gibt [[ihr|sie|ihm|ihn]] etwas zu essen.",
+      "Das Büro ist [[im|in|ins|am#praeposition.ort]] ersten Stock. " +
+      "Er [[fängt|fange|anfängt|anfangen#trennbares_verb]] jeden Tag um acht Uhr an. Zuerst liest er [[seine|sein|seinen|seiner#possessiv]] E-Mails. " +
+      "Um zehn Uhr telefoniert er [[mit|zu|an|für#praeposition]] seiner Chefin. Mittags isst er in [[der|die|dem|den#wechselpraeposition]] Kantine. " +
+      "Das Essen dort [[schmeckt|schmecken|geschmeckt|fehlt#vocabulary]] gut und ist nicht teuer. " +
+      "Am Nachmittag schreibt er noch einen Bericht. Der Bericht ist wichtig, [[denn|dass|deshalb|wenn#konnektor]] die Chefin liest ihn morgen. " +
+      "Heute hat er [[keine|kein|keinen|nicht#negation.kein]] Zeit für Sport. Um fünf Uhr [[ist|hat|sein|sind#praesens.sein]] er fertig. " +
+      "Er fährt mit dem Bus nach Hause. Dort wartet schon seine Katze. Er gibt [[ihr|sie|ihm|ihn#dativ]] etwas zu essen.",
     last: "Dann sitzt er auf dem Sofa und liest die Zeitung.",
     note: "Ort mit im (g1), trennbares Verb (g2), Possessivartikel im Plural (g3), telefonieren mit (g4), Dativ nach in (g5), Verb und Bedeutung (g6), denn mit Hauptsatz (g7), kein bei Nomen im Feminin (g8), sein (g9), Personalpronomen im Dativ (g10).",
   }),
@@ -280,13 +280,13 @@ const grammarItems: SeedItem[] = [
     title: "Eine Einladung",
     first: "Liebe Mia, am Sonntag mache ich eine kleine Party.",
     body:
-      "Ich schreibe dir, [[weil|denn|aber|ob]] ich dich einladen möchte. " +
-      "[[Hast|Hat|Bist|Kannst]] du Zeit? Die Party beginnt [[um|am|im|in]] drei Uhr. " +
-      "Wir sitzen [[im|in|ins|am]] Garten, er ist klein, aber [[sehr|viel|viele|vielen]] schön. " +
-      "Ich lade auch [[meine|meinen|meiner|mein]] Freundinnen aus dem Deutschkurs ein. " +
-      "Kannst du einen Salat [[mitbringen|mitgebracht|mitzubringen|mitbringst]]? " +
-      "Ich habe leider [[keinen|kein|nicht|keine]] Grill, aber mein Nachbar gibt [[mir|mich|ich|mein]] seinen. " +
-      "Bitte [[ruf|rufst|angerufen|anrufen]] mich bis Freitag an. Ich freue mich [[auf|an|mit|zu]] dich!",
+      "Ich schreibe dir, [[weil|denn|aber|ob#konnektor]] ich dich einladen möchte. " +
+      "[[Hast|Hat|Bist|Kannst#praesens.haben]] du Zeit? Die Party beginnt [[um|am|im|in#praeposition.zeit]] drei Uhr. " +
+      "Wir sitzen [[im|in|ins|am#praeposition.ort]] Garten, er ist klein, aber [[sehr|viel|viele|vielen#adjektiv]] schön. " +
+      "Ich lade auch [[meine|meinen|meiner|mein#possessiv]] Freundinnen aus dem Deutschkurs ein. " +
+      "Kannst du einen Salat [[mitbringen|mitgebracht|mitzubringen|mitbringst#modalverb.satzklammer]]? " +
+      "Ich habe leider [[keinen|kein|nicht|keine#negation.akkusativ]] Grill, aber mein Nachbar gibt [[mir|mich|ich|mein#dativ]] seinen. " +
+      "Bitte [[ruf|rufst|angerufen|anrufen#imperativ.du]] mich bis Freitag an. Ich freue mich [[auf|an|mit|zu#verb_praeposition]] dich!",
     last: "Viele Grüße, deine Lena",
     note: "Nebensatz mit weil (g1), Frage mit haben (g2), Zeitangabe mit um (g3), Ort mit im (g4), sehr + Adjektiv (g5), Possessivartikel im Plural (g6), Modalverb + Infinitiv eines trennbaren Verbs (g7), kein bei maskulinem Nomen (g8), Dativpronomen (g9), du-Imperativ (g10), sich freuen auf (g11).",
   }),
@@ -296,11 +296,11 @@ const grammarItems: SeedItem[] = [
     title: "Mein Zimmer",
     first: "Ich wohne mit zwei Freunden in einer Wohnung in Köln.",
     body:
-      "Mein Zimmer ist klein, aber sehr [[hell]], [[denn]] es hat zwei große Fenster. " +
-      "Am [[Schreibtisch]] lerne ich jeden Abend Deutsch. Im Regal stehen viele [[Bücher]]. " +
-      "Ich schlafe gut: Mein [[Bett]] ist neu und bequem. " +
-      "In der Küche [[koche]] ich am Wochenende für meine Freunde. Am Samstag essen wir immer zusammen. " +
-      "Im [[Kühlschrank]] haben wir immer Milch und Käse. Die Miete [[kostet]] nur 400 Euro im Monat.",
+      "Mein Zimmer ist klein, aber sehr [[hell#adjektiv]], [[denn#konnektor]] es hat zwei große Fenster. " +
+      "Am [[Schreibtisch#vocabulary]] lerne ich jeden Abend Deutsch. Im Regal stehen viele [[Bücher#plural]]. " +
+      "Ich schlafe gut: Mein [[Bett#vocabulary]] ist neu und bequem. " +
+      "In der Küche [[koche#praesens.regelmaessig]] ich am Wochenende für meine Freunde. Am Samstag essen wir immer zusammen. " +
+      "Im [[Kühlschrank#vocabulary]] haben wir immer Milch und Käse. Die Miete [[kostet#praesens.regelmaessig]] nur 400 Euro im Monat.",
     last: "Ich wohne sehr gern hier.",
     distractors: ["weil", "dunkel", "Lampe", "kochst", "kosten"],
     note: "Adjektiv, Konjunktion denn mit Hauptsatz (weil verlangt das Verb am Ende), Nomen mit Artikel und Plural, Verbformen zu ich und zu einem Singular-Subjekt.",
@@ -309,10 +309,10 @@ const grammarItems: SeedItem[] = [
     title: "Paula im Café",
     first: "Paula arbeitet seit Mai in einem Café am Markt.",
     body:
-      "Sie [[steht]] jeden Tag um fünf Uhr auf. Zum Frühstück trinkt sie nur einen [[Tee]]. " +
-      "Das Café [[öffnet]] um sieben Uhr. Am Morgen kommen viele [[Gäste]]. Sie trinken Kaffee und essen [[Kuchen]]. " +
-      "Paula ist immer [[freundlich]] und hilft gern. Die Arbeit [[gefällt]] ihr sehr. " +
-      "Um zwei Uhr geht sie [[nach]] Hause.",
+      "Sie [[steht#trennbares_verb]] jeden Tag um fünf Uhr auf. Zum Frühstück trinkt sie nur einen [[Tee#vocabulary]]. " +
+      "Das Café [[öffnet#praesens.regelmaessig]] um sieben Uhr. Am Morgen kommen viele [[Gäste#plural]]. Sie trinken Kaffee und essen [[Kuchen#vocabulary]]. " +
+      "Paula ist immer [[freundlich#adjektiv]] und hilft gern. Die Arbeit [[gefällt#praesens]] ihr sehr. " +
+      "Um zwei Uhr geht sie [[nach#praeposition]] Hause.",
     last: "Am Abend ist sie müde, aber glücklich.",
     distractors: ["zu", "Tasse", "stehst", "teuer", "gefallen"],
     note: "Verbformen zu sie / es / die Arbeit, Nomen im Singular und Plural, Adjektiv, nach Hause (zu Hause passt nicht zu gehen).",
@@ -321,10 +321,10 @@ const grammarItems: SeedItem[] = [
     title: "Ein Tag in der Stadt",
     first: "Am Sonntag macht Familie Yilmaz einen Ausflug in die Stadt.",
     body:
-      "Das Wetter ist [[kühl]] und trocken. Sie [[fahren]] mit der Straßenbahn, [[denn]] sie haben kein Auto. " +
-      "Die Fahrt [[dauert]] zwanzig Minuten. Die Kinder [[sehen]] im Museum alte Autos. " +
-      "Der Vater kauft eine [[Karte]], und die Mutter macht viele [[Fotos]]. " +
-      "Am Mittag sind alle [[hungrig]]. Sie essen Suppe und Brot.",
+      "Das Wetter ist [[kühl#adjektiv]] und trocken. Sie [[fahren#praesens]] mit der Straßenbahn, [[denn#konnektor]] sie haben kein Auto. " +
+      "Die Fahrt [[dauert#praesens.regelmaessig]] zwanzig Minuten. Die Kinder [[sehen#praesens]] im Museum alte Autos. " +
+      "Der Vater kauft eine [[Karte#vocabulary]], und die Mutter macht viele [[Fotos#plural]]. " +
+      "Am Mittag sind alle [[hungrig#adjektiv]]. Sie essen Suppe und Brot.",
     last: "Am Abend sind alle müde, aber sehr zufrieden.",
     distractors: ["weil", "regnet", "sieht", "Buch", "billig"],
     note: "Konjunktion denn mit Hauptsatz (weil verlangt das Verb am Ende), Verbformen im Plural und Singular, Nomen mit Genus (eine Karte, nicht eine Buch) und Plural, Adjektive.",
