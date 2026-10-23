@@ -1238,8 +1238,8 @@ const lReiseWetter = clip(
   [
     { label: "Mia", voice: "A" },
     { label: "Jan", voice: "B" },
-    { label: "Frau Roth", voice: "C" },
-    { label: "Herr Kunz", voice: "D" },
+    { label: "Frau Roth", voice: "D" },
+    { label: "Herr Kunz", voice: "C" },
   ],
   [
     "Mia: Jan, fährst du heute mit dem Bus zu deiner Tante?",
@@ -1256,8 +1256,8 @@ const lEssenKleidung = clip(
   [
     { label: "Frau Berg", voice: "A" },
     { label: "Kellner", voice: "B" },
-    { label: "Verkäuferin", voice: "C" },
-    { label: "Herr Said", voice: "D" },
+    { label: "Verkäuferin", voice: "D" },
+    { label: "Herr Said", voice: "C" },
   ],
   [
     "Frau Berg: Guten Morgen. Haben Sie heute Pizza?",
@@ -1275,8 +1275,8 @@ const lWohnenFreizeit = clip(
   [
     { label: "Lena", voice: "A" },
     { label: "Tom", voice: "B" },
-    { label: "Anna", voice: "C" },
-    { label: "Paul", voice: "D" },
+    { label: "Anna", voice: "D" },
+    { label: "Paul", voice: "C" },
   ],
   [
     "Lena: Oh, du hast ein neues Bett? Das ist schön!",
@@ -1293,13 +1293,13 @@ const lNachrichtenOrte = clip(
   [
     { label: "Julia", voice: "A" },
     { label: "Herr Lang", voice: "B" },
-    { label: "Mia", voice: "C" },
+    { label: "Leon", voice: "C" },
     { label: "Frau Sommer", voice: "D" },
   ],
   [
     "Julia: Hallo Mama, ich bin's, Julia. Ich bin noch beim Einkaufen. Milch habe ich, Brot auch, aber Käse finde ich nicht. Ich bin gleich an der Kasse. Bis später!",
     "Herr Lang: Hallo Schatz, ich sitze hier und warte schon eine Stunde. Der Doktor hat so viele Patienten. Ich glaube, es dauert noch bis halb vier. Nein, bis vier.",
-    "Mia: Hallo Opa, hier ist Mia. Mein Zug kommt erst um fünf, nicht um vier. Ich warte hier auf Gleis drei. Kannst du mich dann abholen?",
+    "Leon: Hallo Opa, hier ist Leon. Mein Zug kommt erst um fünf, nicht um vier. Ich warte hier auf Gleis drei. Kannst du mich dann abholen?",
     "Frau Sommer: Hallo Tom, wir sitzen schon am Tisch, am Fenster. Ich habe schon einen Salat bestellt. Komm schnell, wir warten auf dich!",
   ],
 );
@@ -1311,8 +1311,8 @@ const lNachrichtenDinge = clip(
   [
     { label: "Frau Neumann", voice: "A" },
     { label: "Ben", voice: "B" },
-    { label: "Nora", voice: "C" },
-    { label: "Herr Bauer", voice: "D" },
+    { label: "Nora", voice: "D" },
+    { label: "Herr Bauer", voice: "C" },
   ],
   [
     "Frau Neumann: Guten Tag, hier ist Neumann. Meine Milch und der Käse sind ganz warm. Das Gerät macht keinen Ton mehr. Können Sie bitte morgen kommen?",
@@ -1327,16 +1327,16 @@ const lNachrichtenHobbys = clip(
   "Vier Nachrichten: Was machen die Leute?",
   "Hobbys am Wochenende",
   [
-    { label: "Sven", voice: "A" },
-    { label: "Hanna", voice: "B" },
+    { label: "Sven", voice: "B" },
+    { label: "Hanna", voice: "A" },
     { label: "Opa Karl", voice: "C" },
-    { label: "Yusuf", voice: "D" },
+    { label: "Elif", voice: "D" },
   ],
   [
     "Sven: Hi, hier ist Sven. Heute Abend koche ich für alle. Es gibt Rührei mit Brot, ganz einfach. Kommt um sieben, ja?",
     "Hanna: Hallo Lea, wir sind noch im Park, Ina und ich. Wir laufen schon eine Stunde, und wir sind gleich fertig. Dann kommen wir zu dir.",
     "Opa Karl: Hallo Kinder, ich bin hinten im Beet und pflanze Salat. Kommt doch kurz vorbei, es ist so schön heute!",
-    "Yusuf: Hallo Mama, wir spielen heute um drei gegen die Mannschaft aus Bonn. Kommst du zum Spiel? Ich spiele im Tor, nein, im Sturm!",
+    "Elif: Hallo Mama, wir spielen heute um drei gegen die Mannschaft aus Bonn. Kommst du zum Spiel? Ich spiele im Tor, nein, im Sturm!",
   ],
 );
 
@@ -1365,7 +1365,7 @@ const listeningNewItems: SeedItem[] = [
     "Herr Said sagt erst \"eine Jacke\" und korrigiert sich: \"einen Pullover\"."),
   // Wohnen und Freizeit
   whichPicture(wohnenFreizeit, "EASY",
-    "Was ist neu im Schlafzimmer?",
+    "Was hat Tom neu?",
     "obj.home.lamp", ["obj.home.bed", "obj.home.sofa"], 1,
     "Das Bett ist schon alt; neu ist die Lampe auf dem Nachttisch."),
   whichPicture(wohnenFreizeit, "MID",
@@ -1574,7 +1574,7 @@ const writingItems: SeedItem[] = [
     INFORMAL,
     MESSAGE_NOTE),
   writingTask("form", "MID", FORM_WORDS,
-    "Familie Hoffmann möchte im Schwimmbad \"Blauwasser\" jede Woche schwimmen gehen. Sie helfen Herrn Hoffmann mit dem Formular.\n\n" +
+    "Familie Hoffmann möchte im Sportverein \"Blauwasser\" jede Woche schwimmen gehen. Sie helfen Herrn Hoffmann mit dem Formular.\n\n" +
       "Herr und Frau Hoffmann kommen mit ihren drei Kindern. Sie wohnen in 50667 Köln. Sie möchten schwimmen, nicht Tennis oder Fußball spielen. Sie bezahlen jeden Monat.\n\n" +
       "Schreiben Sie die fünf Angaben für das Formular. Schreiben Sie immer die Nummer und die Angabe, zum Beispiel: \"1. Familienname: ...\"\n\n" +
       "1. Familienname\n" +
@@ -1791,7 +1791,7 @@ const speakingPictureItems: SeedItem[] = [
     ["Wo ist das?", "Was sehen Sie?", "Was kann man hier kaufen?"],
     [
       "Ort genannt: ein Markt oder Marktstand im Freien",
-      "Dinge genannt (frisches Gemüse, zum Beispiel Karotten oder Kürbisse)",
+      "Dinge genannt: Gemüse (jedes passende Gemüse- oder Obstwort zählt)",
       "mindestens zwei einfache, verständliche Sätze zum Bild",
       "Farben, Zahlen oder Mengen sind ein Plus",
     ],
@@ -1800,8 +1800,7 @@ const speakingPictureItems: SeedItem[] = [
     ["Wo sind die Menschen?", "Was machen die Menschen?", "Gibt es hier viele Bäume?"],
     [
       "Ort genannt: ein grüner Stadtpark",
-      "Tätigkeiten genannt (z. B. sitzen, liegen, spazieren gehen, sich unterhalten)",
-      "Freizeit genannt: Die Menschen verbringen ihre Freizeit im Park",
+      "Tätigkeiten genannt: was die Menschen in ihrer Freizeit machen (z. B. sitzen, liegen, spazieren gehen, sich unterhalten)",
       "Bäume, Wiese oder Wetter zu nennen ist ein Plus (jeder passende Satz)",
       "mindestens zwei einfache, verständliche Sätze zum Bild",
     ],
