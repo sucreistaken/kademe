@@ -15,13 +15,18 @@
  * 9-11 typed gaps, no guessing floor) at B2, C1 and C2; the placement is
  * tried with them in place of the C1 and C2 cloze texts (same minutes), and
  * on top of the earlier form (six cloze texts A1 to C2); (a) is the template since then.
+ * A0 (Pre-A1, 2026-10-24): the placed level is the result level, so a pooled
+ * mean below the A1 band is A0. Every table has an A0 column (students spread
+ * over the logit below the A1 band, simulated after C2 so the A1 to C2 draws
+ * are the earlier ones), and a last table runs the live templates for A1, A0
+ * and a student with no German who only guesses.
  * Run: pnpm tsx scripts/simulate-placement.ts   (RUNS=1000 for a quick look;
  * ITEM_GUESS=0 to let ordinary items be answered without guessing).
  */
 import { section, type BlueprintConfig, type SectionConfig } from "@/lib/exam/blueprint";
 import { gateFailures, simulateFixedForm, type FormAccuracy, type SimulationOptions } from "@/lib/exam/form-simulation";
 import { examTemplateByKey } from "@/lib/exam/templates";
-import { CEFR_LEVELS, type Cefr } from "@/lib/exam/types";
+import { CEFR_LEVELS, RESULT_LEVELS, type Cefr } from "@/lib/exam/types";
 
 const per = (counts: Partial<Record<Cefr, number>>) => ({
   kind: "ABSOLUTE" as const,
@@ -86,6 +91,7 @@ const options = (seed: number, clozeGaps = 11): SimulationOptions => ({
   itemGuess: ITEM_GUESS,
   textGaps: { CLOZE: clozeGaps, WORDBANK: 8, OPEN: 10 },
   wordBankDistractors: 4,
+  trueLevels: [...CEFR_LEVELS, "A0"],
 });
 
 const mcForm = (key: Key) =>
@@ -103,9 +109,10 @@ const textForm = (key: Key, c: Candidate) =>
   );
 
 const pct = (x: number) => `${(x * 100).toFixed(1)}`;
-const row = (name: string, a: FormAccuracy) =>
-  `| ${name} | ${CEFR_LEVELS.map((l) => `${pct(a[l].exact)} / ${pct(a[l].withinOne)} / ${pct(a[l].over)}`).join(" | ")} |`;
-const header = `| form | ${CEFR_LEVELS.join(" | ")} |\n|---|${CEFR_LEVELS.map(() => "---").join("|")}|`;
+const cell = (a: FormAccuracy[Cefr] | undefined) => (a ? `${pct(a.exact)} / ${pct(a.withinOne)} / ${pct(a.over)}` : "-");
+const COLUMNS = [...CEFR_LEVELS, "A0"] as const;
+const row = (name: string, a: FormAccuracy) => `| ${name} | ${COLUMNS.map((l) => cell(a[l])).join(" | ")} |`;
+const header = `| form | ${COLUMNS.join(" | ")} |\n|---|${COLUMNS.map(() => "---").join("|")}|`;
 
 for (const key of ["placement", "quick-screen"] as const) {
   const chosen: string[] = [];
@@ -164,3 +171,24 @@ for (const seed of SEEDS) {
   console.log(`\nGate (A1-C1 exact >= (a) - 2, within one >= (a) - 1; A1 over <= (b) + 5):\n${verdicts.join("\n")}`);
 }
 for (const c of OPEN_TRIALS) console.log(`\nplacement ${c.name}: ${openPasses.get(c.name) === SEEDS.length ? "passes at both seeds" : "does not pass at both seeds"}`);
+
+// A0 (Pre-A1), 2026-10-24: the live templates as they are (src/lib/exam/templates.ts). True ability: the A1 band,
+// the logit below it (A0, -4 to -3), and a student with no German at all (theta -8: right only by guessing).
+// Guessing on ordinary items as above, and none (ITEM_GUESS 0 here: blanks); cloze and word-bank gaps keep their floor.
+const NO_GERMAN = -8;
+const liveHeader = `| template, item guess | A1 band | A0 band (-4 to -3) | no German (theta ${NO_GERMAN}) |\n|---|---|---|---|`;
+const placedAs = (a: FormAccuracy[Cefr] | undefined) => cell(a);
+for (const seed of SEEDS) {
+  console.log(`\n## A0 (Pre-A1) on the live templates, seed ${seed}, ${RUNS} students per cell (exact / within one / over, %)\n`);
+  console.log(liveHeader);
+  for (const key of ["placement", "quick-screen"] as const) {
+    const config = examTemplateByKey(key)!.config;
+    for (const itemGuess of [ITEM_GUESS, 0]) {
+      const o = { ...options(seed), itemGuess };
+      const bands = simulateFixedForm(config, "PLACEMENT", { ...o, trueLevels: ["A1", "A0"] });
+      const none = simulateFixedForm(config, "PLACEMENT", { ...o, trueLevels: ["A0"], fixedTheta: NO_GERMAN });
+      console.log(`| ${key}, ${itemGuess} | ${placedAs(bands.A1)} | ${placedAs(bands.A0)} | ${placedAs(none.A0)} |`);
+    }
+  }
+}
+console.log(`\nResult levels: ${RESULT_LEVELS.join(", ")}; for A0 "exact" is placed A0, "within one" A0 or A1.`);

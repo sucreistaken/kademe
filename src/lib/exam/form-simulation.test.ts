@@ -49,8 +49,24 @@ describe("simulateFixedForm with guessing (spec 2026-10-18)", () => {
       C2: { exact: 0.65, withinOne: 1 },
     };
     const now = simulateFixedForm(sixCTests, "PLACEMENT", small);
-    for (const l of CEFR_LEVELS) expect({ exact: now[l].exact, withinOne: now[l].withinOne }, l).toEqual(before[l]);
+    for (const l of CEFR_LEVELS.filter((x) => x !== "A1")) expect({ exact: now[l].exact, withinOne: now[l].withinOne }, l).toEqual(before[l]);
+    // A0 (Pre-A1, 2026-10-24): the A1 students whose estimate falls below the A1 band are A0 now, where the
+    // A1 floor counted them exact before (9 of 200). Nobody else moved: the same share is placed above A1.
+    expect(now.A1).toEqual({ exact: 0.72, withinOne: 1, over: expect.closeTo(1 - before.A1.exact, 10) });
     expect(simulateFixedForm(sixCTests, "PLACEMENT", { ...small, itemGuess: 0 })).toEqual(now);
+  });
+
+  it("simulates A0 students after C2 without changing the A1 to C2 numbers", () => {
+    const now = simulateFixedForm(sixCTests, "PLACEMENT", small);
+    const withA0 = simulateFixedForm(sixCTests, "PLACEMENT", { ...small, trueLevels: [...CEFR_LEVELS, "A0"] });
+    for (const l of CEFR_LEVELS) expect(withA0[l], l).toEqual(now[l]);
+    expect(withA0.A0!.withinOne).toBeGreaterThanOrEqual(withA0.A0!.exact);
+    expect(withA0.A0!.exact + withA0.A0!.over).toBeCloseTo(1, 10);
+  });
+
+  it("a student with no German at all is placed A0 on a C-test form (no guessing on typed gaps)", () => {
+    const none = simulateFixedForm(sixCTests, "PLACEMENT", { ...small, trueLevels: ["A0"], fixedTheta: -8 });
+    expect(none.A0!.exact).toBe(1);
   });
 
   it("textGuess: a quarter for a cloze, one over the pool for a word bank, 0 for a C-test", () => {

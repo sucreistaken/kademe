@@ -1,8 +1,8 @@
 import { C_TEST_GAPS_PER_WEIGHT, CLOZE_GUESS, eap, mulberry32, pWithGuess, type Observation } from "./adaptive";
 import { adaptiveConfigFor, enabledSections, resolveDistribution, textPlanOf, weighsTexts, type BlueprintConfig } from "./blueprint";
-import { BAND_CENTER, levelFromTheta, thetaForLevel } from "./cefr";
+import { BAND_CENTER, PRE_A1_CUT, levelIndex, resultLevelFromTheta, thetaForLevel } from "./cefr";
 import { poolPosteriors } from "./result";
-import { CEFR_LEVELS, isObjectiveSection, type Cefr, type ExamMode, type TextGapKind } from "./types";
+import { CEFR_LEVELS, isObjectiveSection, type Cefr, type ExamMode, type ResultLevel, type TextGapKind } from "./types";
 
 /**
  * Simulated students of known level take a fixed form; the result is how
@@ -20,6 +20,12 @@ import { CEFR_LEVELS, isObjectiveSection, type Cefr, type ExamMode, type TextGap
  * when `itemGuess` is set, and only in the answers: the engine gives them no
  * floor. A text weighs what the engine gives it (`itemWeight`): its gaps over
  * four in a section that weighs texts, else 1.
+ *
+ * The placed level is the result level of the pooled mean, as the engine gives
+ * it: below the A1 band it is A0 (Pre-A1). A0 students (`trueLevels`) are
+ * spread over the logit below the A1 band, -4 to -3; `fixedTheta` puts every
+ * student at one ability instead (a very low one: a student with no German who
+ * only guesses).
  */
 
 export type SimulationOptions = {
@@ -42,10 +48,19 @@ export type SimulationOptions = {
   itemGuess?: number;
   /** Whether the estimate knows the cloze and word-bank floor (the engine does). Default true. */
   estimateGuess?: boolean;
+  /**
+   * True levels to simulate, in this order (default A1 to C2). Each level draws
+   * from the one random stream in turn, so listing A0 after C2 leaves the A1 to
+   * C2 numbers as they were.
+   */
+  trueLevels?: readonly ResultLevel[];
+  /** Every simulated student at this ability instead of spread over the level's band. */
+  fixedTheta?: number;
 };
 
-/** Per true level: placed exactly, within one level, and above the true level. */
-export type FormAccuracy = Record<Cefr, { exact: number; withinOne: number; over: number }>;
+export type LevelAccuracy = { exact: number; withinOne: number; over: number };
+/** Per true level: placed exactly, within one level, and above the true level. A0 only when simulated. */
+export type FormAccuracy = Record<Cefr, LevelAccuracy> & Partial<Record<"A0", LevelAccuracy>>;
 
 /** The levels the placement gate checks (spec 2026-10-18, section 4): C2 has no level above it to tell apart. */
 export const GATE_LEVELS: readonly Cefr[] = ["A1", "A2", "B1", "B2", "C1"];
@@ -88,13 +103,14 @@ export function simulateFixedForm(config: BlueprintConfig, mode: ExamMode, o: Si
   const within = ["EASY", "MID", "HARD"] as const;
   const objective = enabledSections(config).filter((s) => isObjectiveSection(s.section));
   const out = {} as FormAccuracy;
-  for (const level of CEFR_LEVELS) {
+  for (const level of o.trueLevels ?? CEFR_LEVELS) {
     let exact = 0;
     let withinOne = 0;
     let over = 0;
     for (let r = 0; r < o.runs; r++) {
-      // Spread across the band, not only its centre.
-      const theta = BAND_CENTER[level] - 0.5 + rng();
+      // Spread across the band, not only its centre. A0 is the logit below the A1 band.
+      const draw = rng();
+      const theta = o.fixedTheta ?? (level === "A0" ? PRE_A1_CUT - 1 + draw : BAND_CENTER[level] - 0.5 + draw);
       const posteriors = objective.map((s) => {
         const cfg = adaptiveConfigFor(s, mode, null);
         const dist = resolveDistribution(s, mode, null, config.difficultyOffset);
@@ -117,8 +133,8 @@ export function simulateFixedForm(config: BlueprintConfig, mode: ExamMode, o: Si
         }
         return eap(observations, { mean: cfg.priorMean, sd: cfg.priorSd });
       });
-      const got = levelFromTheta(poolPosteriors(posteriors)!.mean).level;
-      const signed = CEFR_LEVELS.indexOf(got) - CEFR_LEVELS.indexOf(level);
+      const got = resultLevelFromTheta(poolPosteriors(posteriors)!.mean);
+      const signed = levelIndex(got) - levelIndex(level);
       const diff = Math.abs(signed);
       if (diff === 0) exact++;
       if (diff <= 1) withinOne++;
