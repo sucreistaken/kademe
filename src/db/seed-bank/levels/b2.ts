@@ -400,11 +400,11 @@ const grammarSprachbausteine: SeedItem[] = [
       "Gegner fürchten allerdings, dass zu viele Parkplätze wegfallen, [[sodass#konnektor]] Anwohner und Geschäfte darunter leiden. " +
       "Wer sein Rad abstellen will, [[muss#modalverb.konjugation]] oft lange nach einem freien Bügel suchen. " +
       "Deshalb [[müssen#modalverb.konjugation]] die Städte auch mehr sichere Abstellplätze bauen. " +
-      "Die Stadt hat [[dafür#praepositionaladverb]] bereits zwei Millionen Euro bereitgestellt. " +
+      "Eine Stadt im Norden hat [[dafür#praepositionaladverb]] bereits zwei Millionen Euro bereitgestellt. " +
       "[[Trotz#praeposition]] der hohen Kosten halten die meisten Verwaltungen an ihren Plänen fest. " +
       "Sie sind sich einig, [[dass#konnektor]] etwas geschehen muss.",
     last: "Wie schnell sich die Straßen verändern, hängt am Ende von den Wählerinnen und Wählern ab.",
-    distractors: ["entlang", "darin", "bevor", "anstatt", "weder"],
+    distractors: ["entlang", "darin", "bevor", "Anstatt", "weder"],
     note: "Präpositionaladverbien (g1, g2, g8), Zeitpräposition (g3), wenn und sodass (g4, g5), Verbform nach Subjekt (g6, g7), trotz + Genitiv (g9), dass-Satz (g10).",
   }),
   wordBank(LEVEL, "MID", {
@@ -422,7 +422,7 @@ const grammarSprachbausteine: SeedItem[] = [
       "Das Angebot wächst so schnell, [[dass#konnektor]] kaum jemand den Überblick behält. " +
       "[[Seitdem#konnektor]] viele Plattformen eine Käufergarantie anbieten, ist das Vertrauen der Kunden jedoch gestiegen.",
     last: "Gebrauchtes zu kaufen ist damit für viele längst keine Notlösung mehr.",
-    distractors: ["darüber", "gegenüber", "weder", "ob", "worauf"],
+    distractors: ["woran", "Gegenüber", "weder", "Ob", "worauf"],
     note: "liegen in (g1), Genitivpräpositionen angesichts und mithilfe (g2, g8), bevor, indem, zumal, seitdem (g3, g4, g7, g10), dadurch und hinweisen auf (g5, g6), so ... dass (g9).",
   }),
   wordBank(LEVEL, "HARD", {
@@ -440,7 +440,7 @@ const grammarSprachbausteine: SeedItem[] = [
       "Außerdem sollten Anwohner [[dazu#praepositionaladverb]] ermutigt werden, Innenhöfe zu entsiegeln. " +
       "[[Sofern#konnektor]] die Kommunen dafür genug Geld bekommen, könnte sich die Lage in einigen Jahren spürbar verbessern.",
     last: "Bis dahin bleibt vielen Stadtbewohnern vor allem der Gang in den nächsten Park.",
-    distractors: ["kann", "daraus", "mithilfe", "wovon", "hierfür"],
+    distractors: ["kann", "daraus", "Mithilfe", "Wovon", "hierfür"],
     note: "liegen an, leiden unter, ermutigen zu (g1, g4, g9), aufgrund + Genitiv (g2), Satzadverbien folglich, dennoch, andernfalls (g3, g6, g8), wohingegen (g5), Verbform nach Subjekt (g7), sofern mit Verbendstellung (g10).",
   }),
 ];
@@ -452,27 +452,27 @@ const grammarOpen: SeedItem[] = [
     first: "Letzten Monat haben wir in unserer Familie einen Tag ohne Auto ausprobiert.",
     body:
       "Normalerweise bringe ich meine Tochter [[mit#praeposition]] dem Auto zur Schule. " +
-      "Diesmal haben wir uns [[dazu#praepositionaladverb]] entschlossen, den Bus zu nehmen. " +
-      "Der Bus fährt allerdings schon um 7.10 Uhr ab, [[sodass/weshalb/weswegen#konnektor]] wir früher aufstehen mussten. " +
+      "Diesmal haben wir uns [[für#verb_praeposition]] den Bus entschieden. " +
+      "Der Bus fuhr allerdings schon um 7.10 Uhr ab, [[sodass/weshalb/weswegen/wodurch#konnektor]] wir früher aufstehen mussten. " +
       "Meine Tochter fand das zuerst nicht lustig, [[denn#konnektor]] sie schläft morgens gern lang. " +
-      "Im Bus haben wir [[uns#reflexiv]] aber lange unterhalten, und sie hat mir von einem Streit mit ihrer Freundin erzählt, über [[den/welchen#relativsatz.praeposition]] sie sich schon lange ärgerte. " +
-      "Abends war ich [[viel/deutlich/wesentlich/erheblich#adjektiv.komparativ]] weniger gestresst als sonst, weil ich keinen Parkplatz suchen [[musste#modalverb.konjugation]]. " +
-      "Ich habe mir fest vorgenommen, das [[öfter/häufiger/regelmäßig/mehrmals#adjektiv.komparativ]] zu wiederholen.",
+      "Im Bus haben wir [[uns#reflexiv]] aber lange unterhalten, und sie hat mir von einem Streit erzählt, über [[den/welchen#relativsatz.praeposition]] sie sich schon lange ärgerte. " +
+      "Abends war ich [[viel/deutlich/wesentlich/erheblich/weit/etwas/spürbar/merklich/bedeutend/tatsächlich/wirklich/sogar#adjektiv.komparativ]] weniger gestresst als sonst, weil ich keinen Parkplatz suchen [[musste#modalverb.konjugation]]. " +
+      "Ich habe mir fest vorgenommen, das so bald [[wie/als#adjektiv.komparativ]] möglich zu wiederholen.",
     last: "Nur das frühe Aufstehen werde ich wahrscheinlich nie lieben.",
-    note: "mit dem Auto, sich dazu entschließen, sodass, denn mit Hauptsatz, Reflexivpronomen, Relativpronomen mit Präposition, Steigerung mit viel, Modalverb im Präteritum, Adverb der Häufigkeit.",
+    note: "mit dem Auto, sich für etwas entscheiden, sodass, denn mit Hauptsatz, Reflexivpronomen, Relativpronomen mit Präposition, Steigerung mit viel, Modalverb im Präteritum, so bald wie möglich.",
   }),
   openCloze(LEVEL, "MID", {
     title: "Ein Tag im Tierheim",
     first: "Im Tierheim am Stadtrand arbeiten mehr als sechzig Ehrenamtliche.",
     body:
-      "Viele von ihnen kommen jede Woche, [[obwohl/obgleich/wenngleich#konnektor.konzessiv]] sie dafür kein Geld bekommen. " +
+      "Viele von ihnen kommen jede Woche, [[obwohl/obgleich/wenngleich/obschon#konnektor.konzessiv]] sie dafür kein Geld bekommen. " +
       "Sie füttern die Tiere, reinigen die Käfige und gehen mit Hunden spazieren, [[die/welche#relativsatz]] sonst kaum Auslauf hätten. " +
-      "Wer mitmachen möchte, muss zuerst eine Schulung besuchen, [[in/bei#relativsatz.praeposition]] der gezeigt wird, wie man mit ängstlichen Tieren umgeht. " +
+      "Wer mitmachen möchte, muss zuerst eine Schulung besuchen, [[in/bei/auf#relativsatz.praeposition]] der gezeigt wird, wie man mit ängstlichen Tieren umgeht. " +
       "Das Tierheim ist [[auf#verb_praeposition]] Spenden angewiesen, weil es keine staatliche Unterstützung erhält. " +
-      "Besonders gefragt sind Sachspenden, [[wie/etwa#konnektor]] Decken oder Futter. " +
-      "Wenn es mehr Geld [[gäbe#konjunktiv2]], könnte man ein zweites Gebäude bauen. " +
+      "Besonders gefragt sind Sachspenden, [[wie/etwa/beispielsweise/insbesondere/speziell#konnektor]] Decken oder Futter. " +
+      "Wenn es mehr Geld [[gäbe/hätte/bekäme/erhielte#konjunktiv2]], könnte man ein zweites Gebäude bauen. " +
       "Im vergangenen Jahr [[wurden#passiv]] über vierhundert Tiere erfolgreich vermittelt. " +
-      "Die Mitarbeitenden freuen sich [[über#verb_praeposition]] jede Hilfe, denn das Wohl [[der/aller/unserer#artikel]] Tiere steht für alle an erster Stelle. " +
+      "Die Mitarbeitenden freuen sich [[über/auf#verb_praeposition]] jede Hilfe, denn das Wohl [[der/aller/unserer/dieser/ihrer#artikel]] Tiere steht für alle an erster Stelle. " +
       "Wer [[sich#reflexiv]] dafür interessiert, kann einfach vorbeikommen.",
     last: "Die Tür steht jeden Samstagvormittag offen.",
     note: "konzessiver Nebensatz, Relativpronomen im Nominativ Plural, Relativsatz mit Präposition, angewiesen auf, Vergleich mit wie, irrealer Wunsch im Konjunktiv II, Passiv im Präteritum, sich freuen über, Genitiv Plural, Reflexivpronomen.",
@@ -481,17 +481,17 @@ const grammarOpen: SeedItem[] = [
     title: "Das Ende der Postkarte",
     first: "Früher gehörte die Postkarte zu jedem Urlaub, heute wird sie immer seltener verschickt.",
     body:
-      "Die meisten Reisenden schicken stattdessen ein Foto per Handy, [[was#relativsatz.was]] schneller und billiger ist. " +
+      "Die meisten Reisenden schicken stattdessen Fotos per Handy, [[was#relativsatz.was]] schneller und billiger ist. " +
       "Ein Grund [[dafür/hierfür#praepositionaladverb]] ist, dass Nachrichten innerhalb von Sekunden ankommen. " +
-      "Eine Karte aus Spanien braucht [[dagegen/hingegen/jedoch/aber#konnektor]] oft mehr als eine Woche. " +
+      "Eine Karte aus Spanien braucht [[dagegen/hingegen/jedoch/aber/allerdings/wiederum/indes/indessen/demgegenüber#konnektor]] oft mehr als eine Woche. " +
       "Die Zahl [[der#artikel]] verschickten Karten sinkt seit Jahren. " +
-      "Viele Verlage haben [[deshalb/daher/darum/deswegen#konnektor]] neue Motive entwickelt, die man selbst gestalten kann. " +
-      "Auf manchen Karten [[wird#passiv.praesens]] heute zusätzlich ein QR-Code gedruckt, der zu einem Video führt. " +
+      "Viele Verlage haben neue Motive entwickelt, [[die/welche#relativsatz]] man selbst gestalten kann. " +
+      "Auf manchen Karten [[wird/ist#passiv.praesens]] heute zusätzlich ein QR-Code gedruckt, der zu einem Video führt. " +
       "Sammler schätzen vor allem handgeschriebene Grüße, [[deren#relativsatz]] Wert für sie weit über dem Preis einer Briefmarke liegt. " +
       "Viele halten [[an#verb_praeposition]] dieser Tradition fest, denn ohne diese Karten [[wäre#konjunktiv2.vergangenheit]] manche Reise nur halb so schön gewesen. " +
       "[[Trotz/Ungeachtet#praeposition]] der digitalen Konkurrenz bleibt der Briefkasten für viele ein Ort der Vorfreude.",
     last: "Und gerade das macht die Postkarte für sie unersetzlich.",
-    note: "weiterführender Relativsatz mit was, Präpositionaladverb, Konnektor des Gegensatzes, Genitiv Plural, Konnektor der Folge, Passiv Präsens, Relativpronomen im Genitiv, festhalten an, Konjunktiv II der Vergangenheit, trotz + Genitiv.",
+    note: "weiterführender Relativsatz mit was, Präpositionaladverb, Konnektor des Gegensatzes, Genitiv Plural, Relativpronomen im Akkusativ Plural, Passiv Präsens, Relativpronomen im Genitiv, festhalten an, Konjunktiv II der Vergangenheit, trotz + Genitiv.",
   }),
 ];
 
@@ -980,14 +980,14 @@ const insertionItems: SeedItem[] = [
     [3, 7, 5, 2, 6],
     "1: „nämlich“ begründet die Aussage über Stadt und Land. 2: Gegensatz („jedoch“) zur Befürchtung, „Der Grund dafür“ erklärt das Messergebnis. 3: Hitze auf dem Dach, „Deshalb ... täglich“. 4: „Zum einen“ wird von „Außerdem“ fortgesetzt. 5: „Dafür“ bezieht sich auf die geplante Vergrößerung. Die Sätze über Etikett und Winter haben keinen Bezug zu den Nachbarsätzen."),
   rIm1.choice("detail", "EASY",
-    "Warum besucht Carla Demir ihre Bienen im Sommer täglich?",
+    "Warum finden Bienen in der Stadt oft mehr Nahrung als auf den Feldern?",
     [
-      "Sie verkauft den frischen Honig jeden Tag an die Gäste des Hotels.",
-      "Sie sucht für die Holzkästen laufend neue Plätze auf anderen Dächern.",
-      "Sie muss die Völker vor der starken Hitze auf dem Dach schützen.",
-      "Sie kontrolliert regelmäßig, ob die Tiere Schadstoffe sammeln.",
+      "In der Stadt gibt es keine Rapsfelder, die den Bienen den Platz wegnehmen.",
+      "Städtische Imker füttern ihre Bienen zusätzlich mit selbst gemachtem Zuckerwasser.",
+      "In der Stadt blüht vom Frühjahr bis in den Herbst immer irgendwo etwas.",
+      "Auf dem Land halten die Imker deutlich weniger Völker als in der Stadt.",
     ], 2,
-    "Auf der Dachfläche wird es im Sommer sehr heiß, deshalb besucht sie die Völker täglich und spannt Planen über die Kästen. Verkauf, Suche nach Dächern und Schadstoffkontrolle sind nicht der Grund."),
+    "Auf den Feldern gibt es nach der Rapsblüte oft wochenlang kaum Nahrung, in der Stadt blüht dagegen von Frühjahr bis Herbst immer irgendwo etwas. Die anderen Gründe stehen nicht im Text."),
   rIm2.match("structure", "HARD", INSERT_PROMPT, INSERT_ROWS,
     insertTargets([
       "Wer einen besonders wertvollen Band findet, kann ihn von der Stadtbibliothek schätzen lassen.",
@@ -1001,7 +1001,7 @@ const insertionItems: SeedItem[] = [
     [4, 6, 2, 7, 5],
     "1: „Die Regeln sind bewusst einfach“ knüpft an das Fehlen von Gebühr, Ausweis und Frist an. 2: „Sie“ in der Folge sind die Paten. 3: „In solchen Fällen“ meint den Müll im Schrank. 4: Weil viele Nutzer auch Bibliotheksmitglieder sind, gibt es keine Konkurrenz („Deshalb“). 5: „Einer davon“ gehört zu den drei neuen Schränken, „Dafür“ nennt den Zuschuss. Die Sätze über den wertvollen Band und über Kinderbücher haben keinen Anschluss."),
   rIm2.choice("detail", "MID",
-    "Was hilft, wenn Müll in einem Bücherschrank landet?",
+    "Was hilft, wenn Dinge im Schrank landen, die nicht hineingehören?",
     [
       "Die Paten schließen den Schrank dauerhaft ab, bis er gereinigt ist.",
       "Kleine Schilder erklären, welche Dinge in den Schrank gehören.",
@@ -1025,7 +1025,7 @@ const insertionItems: SeedItem[] = [
     "Was hat sich an den Schulen verbessert, die den Unterrichtsbeginn nach hinten verlegten?",
     [
       "Die Jugendlichen gingen früher ins Bett und schliefen weniger lang.",
-      "Die Jugendlichen schliefen länger, und es gab weniger Krankmeldungen.",
+      "Die Noten wurden etwas besser, und weniger Jugendliche meldeten sich krank.",
       "Die Eltern bestimmten die Schlafenszeiten nun streng und gemeinsam.",
       "Die Unterrichtsstunden wurden kürzer, damit der Tag früher endete.",
     ], 1,
@@ -1119,7 +1119,7 @@ const opinionItems: SeedItem[] = [
       "Diese Person nennt die Kosten, die Kartenzahlungen für Geschäfte verursachen.",
       "Diese Person rät dazu, nach jeder Kartenzahlung einen Beleg zu verlangen.",
       "Diese Person schätzt vor allem, dass das Bezahlen schneller geht.",
-      "Diese Person behält mit Münzen und Scheinen besser den Überblick über die eigenen Ausgaben.",
+      "Diese Person behält mit Bargeld besser den Überblick über ihre Ausgaben.",
     ],
     ["Renate L.", "Tim S.", "Sofia M.", "Wolfgang E.", "Keine der vier Personen"],
     [3, 4, 5, 2, 1],
@@ -1129,7 +1129,7 @@ const opinionItems: SeedItem[] = [
       "Diese Person warnt davor, dass ein Verbot Kinder sozial ausgrenzen kann.",
       "Diese Person hält die Art der Nutzung für wichtiger als deren Dauer.",
       "Diese Person fordert, dass Hersteller Kinder-Apps besser auf Sicherheit prüfen lassen.",
-      "Diese Person wünscht sich für Kinder mehr freie Zeit ohne Programm und Technik.",
+      "Diese Person findet, dass Kinder auch unverplante Zeit ohne Geräte brauchen.",
       "Diese Person verlangt, dass auch die Erwachsenen die Regeln einhalten.",
     ],
     ["Katrin V.", "Lukas H.", "Petra W.", "Mehmet K.", "Keine der vier Personen"],
@@ -1227,12 +1227,12 @@ function forClip(stimulus: SeedStimulus) {
 // ---------------------------------------------------------------- Clip 1: expert interview
 
 const lPausen = clip(
-  "pausen-interview-v3",
+  "pausen-interview-v4",
   "Radiointerview: Warum Pausen keine verlorene Zeit sind",
   "Gesundheit: Pausen und Erholung",
   [
-    { label: "Moderatorin", voice: "B" },
-    { label: "Dr. Brandt", voice: "A" },
+    { label: "Moderatorin", voice: "A" },
+    { label: "Dr. Brandt", voice: "B" },
   ],
   [
     "Moderatorin: Willkommen zu unserer Sendung. Heute geht es um Pausen. Mein Gast ist der Arbeitspsychologe Doktor Jonas Brandt. Guten Tag, Herr Brandt.",
@@ -1298,10 +1298,10 @@ const lPausenItems: SeedItem[] = [
 // ---------------------------------------------------------------- Clip 2: short lecture
 
 const lAufschieben = clip(
-  "vortrag-aufschieben-v3",
+  "vortrag-aufschieben-v4",
   "Kurzvortrag: Warum wir Aufgaben aufschieben",
   "Psychologie: Selbstorganisation",
-  [{ label: "Referentin", voice: "B" }],
+  [{ label: "Referentin", voice: "A" }],
   [
     "Referentin: Guten Tag, meine Damen und Herren. Heute geht es um etwas, das fast jeder kennt: das Aufschieben.",
     "Referentin: Ich erkläre zuerst, was dahintersteckt. Dann besprechen wir zwei verbreitete Irrtümer. Und am Ende gibt es ein paar praktische Strategien.",
@@ -1356,12 +1356,12 @@ const lAufschiebenItems: SeedItem[] = [
 // ---------------------------------------------------------------- Clip 3: everyday conversation
 
 const lTermin = clip(
-  "kollegen-termin-v3",
+  "kollegen-termin-v4",
   "Gespräch unter Kollegen: Ein Termin wird verschoben",
   "Arbeit: Termine und Absprachen",
   [
-    { label: "Nina", voice: "B" },
-    { label: "Tarek", voice: "A" },
+    { label: "Nina", voice: "A" },
+    { label: "Tarek", voice: "B" },
   ],
   [
     "Nina: Hallo Tarek, hast du kurz Zeit? Es geht um den Kundentermin nächste Woche.",
@@ -1404,10 +1404,10 @@ const lTerminItems: SeedItem[] = [
 // ---------------------------------------------------------------- Clip 4: voicemail with typed notes
 
 const lZahnarzt = clip(
-  "voicemail-zahnarzt",
+  "voicemail-zahnarzt-v4",
   "Nachricht auf dem Anrufbeantworter",
   "Gesundheit: Termin in der Zahnarztpraxis",
-  [{ label: "Frau Winter", voice: "B" }],
+  [{ label: "Frau Winter", voice: "A" }],
   [
     "Frau Winter: Guten Tag, hier ist die Zahnarztpraxis Doktor Merz, mein Name ist Winter. Ich rufe wegen Ihres Termins am Dienstag an. Leider ist Doktor Merz an dem Tag auf einer Fortbildung. Wir müssen Ihren Termin deshalb verschieben.",
     "Frau Winter: Wir könnten Ihnen Mittwoch anbieten, nein, Entschuldigung, Donnerstag. Donnerstag um vierzehn Uhr dreißig, also halb drei. Bitte sagen Sie uns bis morgen Mittag Bescheid, ob das bei Ihnen passt.",
@@ -1475,12 +1475,12 @@ const lDurchsageItems: SeedItem[] = [
 // ---------------------------------------------------------------- Clip 6: street interview
 
 const lUmfrage = clip(
-  "umfrage-nachrichten",
+  "umfrage-nachrichten-v4",
   "Straßenumfrage: Wie informieren Sie sich?",
   "Medien: Nachrichten und Podcasts",
   [
-    { label: "Reporter", voice: "A" },
-    { label: "Frau Berger", voice: "B" },
+    { label: "Reporter", voice: "B" },
+    { label: "Frau Berger", voice: "A" },
   ],
   [
     "Reporter: Wir fragen heute auf dem Marktplatz: Wie informieren Sie sich über das Tagesgeschehen? Entschuldigung, haben Sie kurz Zeit?",
@@ -1554,7 +1554,7 @@ const lUrlaubItems: SeedItem[] = [
     [3, 4, 2, 1],
     "Josefine: höchstens fünfhundert Euro. Auto: wird von niemandem gewünscht (Murat nennt den Zug). Murat: „etwas ganz Neues sehen“, Portugal kennt er schon. Lena: Flug nach Faro, hundertachtundachtzig Euro (nach Selbstkorrektur)."),
   lw1.choice("detail", "HARD",
-    "Wie lange dauert die Zugfahrt nach Slowenien nach Murats Angabe?",
+    "Wie lange dauert die Zugfahrt nach Slowenien?",
     ["etwa zwölf Stunden", "etwa vierzehn Stunden", "etwa sechzehn Stunden", "etwa zehn Stunden"], 1,
     "Murat sagt erst „fast zwölf Stunden“ und korrigiert sich: „nein, vierzehn“, wegen des Umsteigens in Wien."),
 ];
@@ -1593,7 +1593,7 @@ const lHofItems: SeedItem[] = [
     [1, 3, 2, 4],
     "Frau Albers: Hochbeete mit Tomaten, Kräutern, Salat. Frau Seidel: Bänke für ruhige Abende. Herr Lindner: Räder im Flur, Fahrradständer. Spielplatz: Frau Seidel findet ihn zu laut, Herr Lindner braucht ihn nicht, niemand wünscht ihn."),
   lw2.choice("detail", "HARD",
-    "Wie viele Fahrräder stehen laut Herrn Lindner im Hausflur, wenn man die Kinderräder mitzählt?",
+    "Wie viele Fahrräder stehen im Hausflur, wenn man die Kinderräder mitzählt?",
     ["vierzehn", "zwölf", "zwanzig", "sechzehn"], 3,
     "Herr Lindner korrigiert sich: „vierzehn Räder, nein, sechzehn, wenn man die Kinderräder dazurechnet“. Zwanzig ist die Größe des geplanten Ständers."),
 ];
@@ -1631,7 +1631,7 @@ const lFilmItems: SeedItem[] = [
     [3, 4, 1, 2],
     "Cem: „ich hole mir jetzt das Buch“. Lob für den Hauptdarsteller: niemand, Cem findet ihn zu blass. Nora: hat das Buch vor Jahren gelesen. Ben: „Was mich gestört hat, war die Länge“."),
   lw3.choice("detail", "MID",
-    "Wie lange dauert der Film nach Bens Angabe?",
+    "Wie lange dauert der Film laut Kinokarte?",
     ["etwa hundertvierzig Minuten", "etwa hundertsechzig Minuten", "etwa hundertfünfzig Minuten", "etwa hundertachtzig Minuten"], 2,
     "Ben sagt erst „fast hundertsechzig Minuten“ und korrigiert: „nein, hundertfünfzig“."),
 ];
@@ -1665,7 +1665,7 @@ const lBrueckeItems: SeedItem[] = [
     "Was gilt während der Sperrung für Radfahrer?",
     [
       "Sie müssen wie die Autos die Umleitung am Hafen nehmen.",
-      "Sie dürfen die Brücke auf einem schmalen Streifen weiter benutzen.",
+      "Sie dürfen auf einem freigehaltenen Teil der Brücke weiter hinüber.",
       "Sie werden mit einem Ersatzbus auf die andere Seite gebracht.",
       "Sie dürfen die Brücke nur zu bestimmten Tageszeiten überqueren.",
     ], 1,
@@ -1691,7 +1691,7 @@ const lSchwimmbadItems: SeedItem[] = [
     [
       "im Sportbecken, aber nur auf zwei der Bahnen",
       "im Freibecken, falls das Wetter es erlaubt",
-      "im Lehrschwimmbecken im Untergeschoss",
+      "in einem kleineren Becken eine Etage tiefer",
       "in der Sporthalle neben dem Eingang",
     ], 2,
     "„nicht wie geplant im Sportbecken, sondern im Lehrschwimmbecken im Untergeschoss“. Zwei Bahnen im Sportbecken stehen den normalen Badegästen zur Verfügung."),
@@ -1699,7 +1699,7 @@ const lSchwimmbadItems: SeedItem[] = [
     "Was gilt heute für das Bistro?",
     [
       "Es bleibt wegen der Schulschwimmkurse den ganzen Tag geschlossen.",
-      "Es schließt eine Stunde früher als an anderen Tagen.",
+      "Es schließt früher als sonst, schon um sechs Uhr abends.",
       "Es öffnet erst am späten Nachmittag, nach dem Aqua-Fitness-Kurs.",
       "Es bietet heute nur noch Getränke und keine Speisen an.",
     ], 1,
@@ -2218,12 +2218,12 @@ const pictureItems: SeedItem[] = [
   pictureTask("EASY", "scene.b2.waste-sorting",
     "Sehen Sie sich das Bild an und sprechen Sie etwa zwei Minuten.\n\n" +
       "- Beschreiben Sie, was auf dem Bild zu sehen ist.\n" +
-      "- Wofür ist diese Einrichtung gedacht, und wie funktioniert sie?\n" +
+      "- Wofür sind diese Tonnen gedacht, und wie funktioniert das System?\n" +
       "- Warum ist Mülltrennung sinnvoll, und wo gibt es Schwierigkeiten?\n" +
       "- Wie wird in Ihrer Stadt oder Region mit Müll umgegangen, und was ist Ihre Meinung dazu?",
     [
       "Beschreibung: vier bunte Mülltonnen stehen nebeneinander zur Mülltrennung",
-      "Erklärung: verschiedene Tonnen für verschiedene Abfälle (z. B. Papier, Glas, Verpackungen, Restmüll)",
+      "Erklärung: verschiedene Tonnen für verschiedene Abfälle (Glas, Verpackungen, Papier und Pappe, Bioabfall; die Aufschriften auf den Tonnen sind spanisch)",
       "Vorteile der Mülltrennung (Recycling, Umweltschutz) und mögliche Schwierigkeiten (z. B. Unsicherheit, falsch sortierter Müll)",
       "Situation in der eigenen Stadt oder Region",
       "eigene, begründete Meinung oder Verbesserungsvorschlag",
