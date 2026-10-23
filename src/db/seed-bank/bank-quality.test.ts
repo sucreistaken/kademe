@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { imageRefsOf } from "@/lib/exam/image-refs";
 import { isFormatTopic, topicOf, TOPICS } from "@/lib/exam/topics";
 import { CEFR_LEVELS, CLOZE_SKILL_TAG, OPEN_CLOZE_SKILL_TAG, WORD_BANK_SKILL_TAG, type Cefr } from "@/lib/exam/types";
+import { imageStorageKey } from "./image";
+import manifest from "./images/manifest.json";
 import { SEED_BANK } from "./index";
 import type { SeedItem } from "./types";
 
@@ -291,11 +293,15 @@ describe("bank quality: insertion tasks use every spare paragraph at most once",
  */
 const SHORT_OF_TARGET: string[] = [];
 
-/** Pictures a reading and a listening unit of the same level share; one exam can show both. Remove when fixed. */
-const SHARED_PICTURES: Partial<Record<Cefr, string>> = {
-  // A1: obj.place.cinema (reading v4-r-a1-schilder-stadt, listening v5-l-a1-nachrichten-orte) and
-  // obj.food.pizza (reading v4-r-a1-zettel-kueche, listening v5-l-a1-gespraeche-essen-kleidung). Reported in B8.
-  A1: "obj.place.cinema, obj.food.pizza",
+/**
+ * Pictures (catalog ids) that a reading and a listening unit of the same level share today; one exam can show
+ * both. The test pins exactly this list, so a NEW overlap fails at once and a fixed one asks to be removed here.
+ */
+const KNOWN_SHARED_PICTURES: Partial<Record<Cefr, string[]>> = {
+  // TODO(content, reported in B8): A1 obj.place.cinema is in reading v4-r-a1-schilder-stadt and listening
+  // v5-l-a1-nachrichten-orte; obj.food.pizza is in reading v4-r-a1-zettel-kueche and listening
+  // v5-l-a1-gespraeche-essen-kleidung. An A1 author swaps one picture of each pair, then this entry goes.
+  A1: ["obj.food.pizza", "obj.place.cinema"],
 };
 
 describe("bank quality: enough units for three forms in a row", () => {
@@ -326,14 +332,17 @@ describe("bank quality: enough units for three forms in a row", () => {
 });
 
 describe("bank quality: reading and listening do not show the same picture", () => {
+  const idOf = new Map(manifest.images.map((e) => [imageStorageKey(e.sha16), e.id]));
   for (const level of CEFR_LEVELS) {
-    const test = SHARED_PICTURES[level] ? it.fails : it;
-    test(`${level}: no picture of a reading unit is also in a listening unit`, () => {
+    const known = KNOWN_SHARED_PICTURES[level] ?? [];
+    const name = known.length
+      ? `${level}: only the known pictures (${known.join(", ")}) are in both a reading and a listening unit`
+      : `${level}: no picture of a reading unit is also in a listening unit`;
+    it(name, () => {
       const pictures = (section: string) =>
-        new Map(items(level).filter((i) => i.section === section).flatMap((i) => imageRefsOf(i.content).map((r) => [r.storageKey, r.alt] as const)));
-      const reading = pictures("READING");
+        new Set(items(level).filter((i) => i.section === section).flatMap((i) => imageRefsOf(i.content).map((r) => idOf.get(r.storageKey) ?? r.storageKey)));
       const listening = pictures("LISTENING");
-      expect([...reading].filter(([k]) => listening.has(k)).map(([, alt]) => alt)).toEqual([]);
+      expect([...pictures("READING")].filter((id) => listening.has(id)).sort()).toEqual([...known].sort());
     });
   }
 });
