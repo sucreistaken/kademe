@@ -18,6 +18,7 @@ import {
   estimatedMinutes,
   isTextOnly,
   nextAdaptiveItems,
+  pickProductive,
   planFixedSection,
   productiveTaskLevels,
   resolveDistribution,
@@ -60,6 +61,7 @@ import {
 } from "@/lib/exam/types";
 import { isProctored, type ProctoringPolicy } from "@/lib/proctor/policy";
 import { SUBMIT_SLACK_MS } from "@/lib/timer";
+import { seenBy } from "@/server/exam-exposure";
 
 /**
  * The student side of an exam, server only.
@@ -462,6 +464,8 @@ async function loadPool(orgId: string, section: Section, x: Executor = db): Prom
       skillTag: items.skillTag,
       stimulusId: items.stimulusId,
       orderInStimulus: items.orderInStimulus,
+      type: items.type,
+      exposureCount: items.exposureCount,
       audioKey: stimuli.audioKey,
     })
     .from(items)
@@ -476,6 +480,8 @@ async function loadPool(orgId: string, section: Section, x: Executor = db): Prom
       skillTag: r.skillTag,
       stimulusId: r.stimulusId,
       orderInStimulus: r.orderInStimulus,
+      type: r.type,
+      exposureCount: r.exposureCount,
       section,
     }));
 }
@@ -489,22 +495,6 @@ async function provisionalLevel(attemptId: string): Promise<Cefr> {
       .map((r) => ({ mean: r.thetaMean as number, sd: r.thetaSd as number })),
   );
   return pooled ? levelFromTheta(pooled.mean).level : "B1";
-}
-
-/** Picks one task per level, avoiding a skill tag twice when the bank allows. */
-function pickProductive(pool: PoolRow[], levels: Cefr[], rng: () => number): string[] {
-  const chosen: string[] = [];
-  const tags = new Set<string>();
-  for (const level of levels) {
-    const candidates = pool.filter((p) => p.level === level && !chosen.includes(p.id));
-    const fresh = candidates.filter((c) => !tags.has(c.skillTag));
-    const from = fresh.length > 0 ? fresh : candidates;
-    if (from.length === 0) continue;
-    const pick = from[Math.floor(rng() * from.length)];
-    chosen.push(pick.id);
-    tags.add(pick.skillTag);
-  }
-  return chosen;
 }
 
 export type StartResult = { ok: true } | { ok: false; code: "SECTION_MISMATCH" | "NO_SECTION" | "BANK_EMPTY" | "NOT_READY" };
@@ -538,12 +528,18 @@ export async function startSection(ctx: ExamCandidateContext, position: number):
   const pool = await loadPool(ctx.assessment.orgId, s.section);
   let itemPlan: string[] | null = null;
   let taskLevels: string[] | null = null;
+  // A returning student (same school, same email) draws around what earlier
+  // exams served; when everything was seen the least served units fill the
+  // form, so this never blocks a start. Adaptive sections pick item by item
+  // and do not use it.
+  const planned = !isObjectiveSection(s.section) || !s.adaptive;
+  const avoid = planned ? await seenBy(ctx.assessment.orgId, ctx.candidate.email, ctx.assessment.id) : undefined;
   if (!isObjectiveSection(s.section)) {
     const provisional = await provisionalLevel(current.attempt.id);
     taskLevels = productiveTaskLevels(ctx.assessment.mode, ctx.assessment.claimedLevel, provisional, s.tasks);
-    itemPlan = pickProductive(pool, taskLevels as Cefr[], rng);
+    itemPlan = pickProductive(pool, taskLevels as Cefr[], rng, avoid);
   } else if (!s.adaptive) {
-    itemPlan = planFixedSection(s, pool, ctx.assessment.mode, ctx.assessment.claimedLevel, ctx.assessment.config.difficultyOffset, rng);
+    itemPlan = planFixedSection(s, pool, ctx.assessment.mode, ctx.assessment.claimedLevel, ctx.assessment.config.difficultyOffset, rng, avoid);
   }
   if ((itemPlan && itemPlan.length === 0) || pool.length === 0) {
     // The bank lost these items after the invitation (retired, rejected).

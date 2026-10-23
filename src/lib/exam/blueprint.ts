@@ -12,6 +12,7 @@ import {
   textGapKindOf,
   type Cefr,
   type ExamMode,
+  type ItemType,
   type Section,
   type TextGapKind,
 } from "./types";
@@ -269,7 +270,39 @@ export function resolveDistribution(
   return out;
 }
 
-export type BankItem = PoolItem & { level: Cefr };
+export type BankItem = PoolItem & {
+  level: Cefr;
+  /** The item type, for mixing formats in a form. Left out by older callers; the skill-tag family stands in. */
+  type?: ItemType;
+  /** How often the item was served in any exam. Orders stale units, least served first. Missing means 0. */
+  exposureCount?: number;
+};
+
+/**
+ * What the same student (same organisation, same email) was served in their
+ * other exams (src/server/exam-exposure.ts: seenBy). A unit is stale when any
+ * of its items was served or, for a text or clip, when any item of its
+ * stimulus was.
+ */
+export type Avoid = { itemIds: Set<string>; stimulusIds: Set<string> };
+
+/** Empty or missing: the draw is exactly the one made before `avoid` existed. */
+const isAvoiding = (avoid: Avoid | undefined): avoid is Avoid =>
+  !!avoid && (avoid.itemIds.size > 0 || avoid.stimulusIds.size > 0);
+
+const isStale = (unit: BankItem[], avoid: Avoid): boolean =>
+  unit.some((i) => avoid.itemIds.has(i.id) || (!!i.stimulusId && avoid.stimulusIds.has(i.stimulusId)));
+
+/** The skill-tag family: its first two parts ("speaking.planning.open" is "speaking.planning"). */
+export const skillTagFamily = (tag: string): string => tag.split(".").slice(0, 2).join(".");
+
+/** One item's format: its text kind, else its item type, else its skill-tag family. */
+const itemFormat = (i: BankItem): string => textGapKindOf(i) ?? i.type ?? skillTagFamily(i.skillTag);
+
+/** A unit's format: the formats of its items (a text with true/false and multiple-choice questions is one format). */
+const unitFormat = (unit: BankItem[]): string => [...new Set(unit.map(itemFormat))].sort().join("+");
+
+const unitExposure = (unit: BankItem[]): number => Math.max(...unit.map((i) => i.exposureCount ?? 0));
 
 function shuffle<T>(xs: T[], rng: () => number): T[] {
   const a = [...xs];
@@ -281,14 +314,51 @@ function shuffle<T>(xs: T[], rng: () => number): T[] {
 }
 
 /**
+ * Puts units in rounds of different formats: each next unit has a format not
+ * drawn yet in the current round, keeping the given order otherwise; a round
+ * ends when every format left was drawn. So the first few units of a level mix formats.
+ */
+function mixFormats(units: BankItem[][]): BankItem[][] {
+  const left = [...units];
+  const out: BankItem[][] = [];
+  let drawn = new Set<string>();
+  while (left.length > 0) {
+    let k = left.findIndex((u) => !drawn.has(unitFormat(u)));
+    if (k < 0) {
+      drawn = new Set();
+      k = 0;
+    }
+    const [unit] = left.splice(k, 1);
+    drawn.add(unitFormat(unit));
+    out.push(unit);
+  }
+  return out;
+}
+
+/**
+ * The order a returning student's units are drawn in: units they have not
+ * seen first (shuffled, formats mixed), then the stale ones, least served
+ * first (ties in shuffled order). The stale tail means a form is always full,
+ * even when the student has seen the whole bank.
+ */
+function freshFirst(units: BankItem[][], avoid: Avoid, rng: () => number): BankItem[][] {
+  const fresh = units.filter((u) => !isStale(u, avoid));
+  const stale = units.filter((u) => isStale(u, avoid));
+  return [...mixFormats(shuffle(fresh, rng)), ...shuffle(stale, rng).sort((a, b) => unitExposure(a) - unitExposure(b))];
+}
+
+/**
  * A fixed form: the planned item ids, easiest unit first. For reading and
  * listening whole texts are drawn until the level's count is reached, so a
- * level may get a question or two more than asked for.
+ * level may get a question or two more than asked for. With a non-empty
+ * `avoid` the units the student has not seen come first (see freshFirst);
+ * without it the draw is unchanged.
  */
 export function sampleFixedForm(
   pool: BankItem[],
   perLevel: Record<Cefr, number>,
   rng: () => number,
+  avoid?: Avoid,
 ): string[] {
   const units: Array<{ ids: string[]; b: number }> = [];
   for (const level of CEFR_LEVELS) {
@@ -306,7 +376,8 @@ export function sampleFixedForm(
       ...[...groups.values()].map((g) => [...g].sort((a, b) => a.orderInStimulus - b.orderInStimulus)),
     ];
     let taken = 0;
-    for (const unit of shuffle(candidates, rng)) {
+    const order = isAvoiding(avoid) ? freshFirst(candidates, avoid, rng) : shuffle(candidates, rng);
+    for (const unit of order) {
       if (taken >= want) break;
       units.push({ ids: unit.map((i) => i.id), b: unit.reduce((a, i) => a + i.b, 0) / unit.length });
       taken += unit.length;
@@ -362,7 +433,8 @@ const fitsEntry = (i: BankItem, e: TextPlanEntry) => i.level === e.level && text
 /**
  * The texts that open the section: one per entry of `textPlanOf`, picked at
  * random when the bank has several, in plan order. An entry the bank has no
- * text for is skipped (the section then runs without it).
+ * text for is skipped (the section then runs without it). With a non-empty
+ * `avoid` a text the student has not seen wins, else the least served one.
  */
 export function textOpenings(
   s: SectionConfig,
@@ -370,11 +442,17 @@ export function textOpenings(
   mode: ExamMode,
   claimed: Cefr | null,
   rng: () => number,
+  avoid?: Avoid,
 ): string[] {
   const ids: string[] = [];
   for (const entry of textPlanOf(s, mode, claimed)) {
     const candidates = pool.filter((i) => fitsEntry(i, entry));
-    if (candidates.length > 0) ids.push(candidates[Math.floor(rng() * candidates.length)].id);
+    if (candidates.length === 0) continue;
+    ids.push(
+      isAvoiding(avoid)
+        ? freshFirst(candidates.map((i) => [i]), avoid, rng)[0][0].id
+        : candidates[Math.floor(rng() * candidates.length)].id,
+    );
   }
   return ids;
 }
@@ -393,10 +471,61 @@ export function planFixedSection(
   claimed: Cefr | null,
   difficultyOffset: number,
   rng: () => number,
+  avoid?: Avoid,
 ): string[] {
-  const openings = textOpenings(s, pool, mode, claimed, rng);
-  const form = sampleFixedForm(pool, resolveDistribution(s, mode, claimed, difficultyOffset), rng);
+  const openings = textOpenings(s, pool, mode, claimed, rng, avoid);
+  const form = sampleFixedForm(pool, resolveDistribution(s, mode, claimed, difficultyOffset), rng, avoid);
   return [...openings, ...form];
+}
+
+/** The skill tag of a speaking task built around a picture. */
+export const PICTURE_TASK_TAG = "speaking.picture";
+
+/** The first task prefers a picture task, every later one avoids it; each falls back to any task. */
+function pictureRule(candidates: BankItem[], index: number): BankItem[] {
+  const preferred = candidates.filter((c) => (c.skillTag === PICTURE_TASK_TAG) === (index === 0));
+  return preferred.length > 0 ? preferred : candidates;
+}
+
+/**
+ * The writing or speaking tasks: one per level, avoiding a skill tag twice
+ * when the bank allows. A speaking section opens with a picture task when the
+ * bank has one at that level (pictureRule). With a non-empty `avoid` a task
+ * the student has not seen wins, preferring a skill-tag family not drawn yet
+ * in the section; when every task at the level was seen, the least served one.
+ * Without `avoid`, and with no picture task in the pool, the draw is the one
+ * made before either rule existed.
+ */
+export function pickProductive(pool: BankItem[], levels: Cefr[], rng: () => number, avoid?: Avoid): string[] {
+  const chosen: string[] = [];
+  const tags = new Set<string>();
+  const families = new Set<string>();
+  levels.forEach((level, index) => {
+    const candidates = pool.filter((p) => p.level === level && !chosen.includes(p.id));
+    if (candidates.length === 0) return;
+    let pick: BankItem;
+    if (!isAvoiding(avoid)) {
+      const from = pictureRule(candidates, index);
+      const newTag = from.filter((c) => !tags.has(c.skillTag));
+      const pickFrom = newTag.length > 0 ? newTag : from;
+      pick = pickFrom[Math.floor(rng() * pickFrom.length)];
+    } else {
+      const unseen = candidates.filter((c) => !isStale([c], avoid));
+      if (unseen.length > 0) {
+        const from = pictureRule(unseen, index);
+        const newFamily = from.filter((c) => !families.has(skillTagFamily(c.skillTag)));
+        const newTag = from.filter((c) => !tags.has(c.skillTag));
+        const pickFrom = newFamily.length > 0 ? newFamily : newTag.length > 0 ? newTag : from;
+        pick = pickFrom[Math.floor(rng() * pickFrom.length)];
+      } else {
+        pick = freshFirst(pictureRule(candidates, index).map((c) => [c]), avoid, rng)[0][0];
+      }
+    }
+    chosen.push(pick.id);
+    tags.add(pick.skillTag);
+    families.add(skillTagFamily(pick.skillTag));
+  });
+  return chosen;
 }
 
 /**
