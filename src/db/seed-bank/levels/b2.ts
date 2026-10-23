@@ -289,16 +289,16 @@ const grammarTexts: SeedItem[] = [
     title: "Lebensmittel retten",
     first: "In Deutschland landen jedes Jahr Millionen Tonnen Lebensmittel im Müll, obwohl vieles davon noch genießbar wäre.",
     body:
-      "Viele dieser Lebensmittel [[werden|wird|worden|geworden]] schon in privaten Haushalten weggeworfen. " +
-      "Manche Menschen kaufen mehr ein, [[als|wie|ob|dass]] sie wirklich brauchen. " +
-      "Außerdem verwechseln viele das Mindesthaltbarkeitsdatum [[mit|von|zu|für]] dem Verbrauchsdatum. " +
-      "Dabei sind die meisten Produkte auch nach [[dem|den|der|des]] angegebenen Datum noch in Ordnung. " +
-      "Um das Problem zu verringern, [[haben|sind|wurden|werden]] einige Bäckereien eine einfache Idee entwickelt: " +
-      "Sie verkaufen Brot vom Vortag [[zu|für|um|auf]] einem deutlich niedrigeren Preis. " +
-      "Kunden, [[denen|die|deren|dessen]] es auf jeden Euro ankommt, sparen so Geld, und weniger Brot landet im Müll, [[was|wer|wo|dass]] auch der Umwelt hilft. " +
-      "Auch in Restaurants [[gibt|ist|hat|wird]] es noch viel Spielraum. " +
-      "Viele Gäste trauen sich nicht, nach einer Box [[für|zu|an|mit]] ihre Reste zu fragen. " +
-      "[[Statt|Um|Außer|Bis]] das Essen auf dem Teller zu lassen, sollten sie ruhig fragen.",
+      "Viele dieser Lebensmittel [[werden|wird|worden|geworden#passiv.praesens]] schon in privaten Haushalten weggeworfen. " +
+      "Manche Menschen kaufen mehr ein, [[als|wie|ob|dass#konnektor]] sie wirklich brauchen. " +
+      "Außerdem verwechseln viele das Mindesthaltbarkeitsdatum [[mit|von|zu|für#verb_praeposition]] dem Verbrauchsdatum. " +
+      "Dabei sind die meisten Produkte auch nach [[dem|den|der|des#praeposition]] angegebenen Datum noch in Ordnung. " +
+      "Um das Problem zu verringern, [[haben|sind|wurden|werden#perfekt.hilfsverb]] einige Bäckereien eine einfache Idee entwickelt: " +
+      "Sie verkaufen Brot vom Vortag [[zu|für|um|auf#praeposition]] einem deutlich niedrigeren Preis. " +
+      "Kunden, [[denen|die|deren|dessen#relativsatz]] es auf jeden Euro ankommt, sparen so Geld, und weniger Brot landet im Müll, [[was|wer|wo|dass#relativsatz.was]] auch der Umwelt hilft. " +
+      "Auch in Restaurants [[gibt|ist|hat|wird#praesens.vokalwechsel]] es noch viel Spielraum. " +
+      "Viele Gäste trauen sich nicht, nach einer Box [[für|zu|an|mit#praeposition]] ihre Reste zu fragen. " +
+      "[[Statt|Um|Außer|Bis#infinitiv]] das Essen auf dem Teller zu lassen, sollten sie ruhig fragen.",
     last: "Die meisten Restaurants geben ihren Gästen die Reste nämlich gern mit.",
     note: "Passiv im Präsens (g1), Vergleich mit als (g2), verwechseln mit (g3), nach + Dativ (g4), Perfekt mit haben (g5), zu einem Preis (g6), Relativpronomen im Dativ bei es kommt jemandem auf etwas an (g7), weiterführender Relativsatz mit was (g8), es gibt (g9), Box für + Akkusativ (g10), statt ... zu + Infinitiv (g11).",
   }),
@@ -306,15 +306,15 @@ const grammarTexts: SeedItem[] = [
     title: "Ein Museum erfindet sich neu",
     first: "Das Stadtmuseum einer Kleinstadt am Rhein hatte lange mit sinkenden Besucherzahlen zu kämpfen.",
     body:
-      "Vor zwei Jahren [[wurde|wird|würde|hat]] deshalb ein neues Konzept entwickelt. " +
-      "Die seit Jahrzehnten kaum [[veränderte|verändernde|veränderten|verändert]] Ausstellung wurde komplett neu gestaltet, und das Museum blieb dafür ein Jahr lang geschlossen. " +
-      "Heute dürfen Besucher viele Objekte selbst [[anfassen|angefasst|anzufassen|anfasst]] und ausprobieren. " +
-      "Außerdem gibt es nun ein Café, [[in|an|auf|über]] dem regelmäßig Lesungen und Konzerte stattfinden. " +
-      "Besonders beliebt sind die Führungen für Familien, bei [[denen|die|deren|dem]] Kinder in historische Kostüme schlüpfen dürfen. " +
-      "[[Trotz|Wegen|Dank|Durch]] der hohen Kosten für den Umbau sind die Eintrittspreise kaum gestiegen. " +
-      "Das liegt vor allem [[daran|darauf|dafür|davon]], dass die Stadt einen großen Teil der Kosten übernommen hat. " +
-      "Seit der Wiedereröffnung kommen dreimal so viele Besucher [[wie|als|denn|wenn]] vorher. " +
-      "Die Museumsleiterin freut sich [[über|auf|an|von]] diesen Erfolg und ist überzeugt, dass sich der Aufwand [[gelohnt|lohnte|lohnt|lohnen]] hat.",
+      "Vor zwei Jahren [[wurde|wird|würde|hat#passiv]] deshalb ein neues Konzept entwickelt. " +
+      "Die seit Jahrzehnten kaum [[veränderte|verändernde|veränderten|verändert#partizipattribut]] Ausstellung wurde komplett neu gestaltet, und das Museum blieb dafür ein Jahr lang geschlossen. " +
+      "Heute dürfen Besucher viele Objekte selbst [[anfassen|angefasst|anzufassen|anfasst#modalverb.satzklammer]] und ausprobieren. " +
+      "Außerdem gibt es nun ein Café, [[in|an|auf|über#relativsatz.praeposition]] dem regelmäßig Lesungen und Konzerte stattfinden. " +
+      "Besonders beliebt sind die Führungen für Familien, bei [[denen|die|deren|dem#relativsatz.praeposition]] Kinder in historische Kostüme schlüpfen dürfen. " +
+      "[[Trotz|Wegen|Dank|Durch#genitiv.praeposition]] der hohen Kosten für den Umbau sind die Eintrittspreise kaum gestiegen. " +
+      "Das liegt vor allem [[daran|darauf|dafür|davon#praepositionaladverb]], dass die Stadt einen großen Teil der Kosten übernommen hat. " +
+      "Seit der Wiedereröffnung kommen dreimal so viele Besucher [[wie|als|denn|wenn#adjektiv.komparativ]] vorher. " +
+      "Die Museumsleiterin freut sich [[über|auf|an|von#verb_praeposition]] diesen Erfolg und ist überzeugt, dass sich der Aufwand [[gelohnt|lohnte|lohnt|lohnen#perfekt.partizip]] hat.",
     last: "Inzwischen interessieren sich auch andere Museen der Region für das Konzept.",
     note: "Passiv im Präteritum (g1), Partizipialattribut (g2), Modalverb + Infinitiv (g3), Relativsatz mit Präposition (g4), Präposition + Relativpronomen im Dativ Plural (g5), trotz + Genitiv (g6), liegen an mit Präpositionaladverb (g7), so viele ... wie (g8), sich freuen über (g9), Partizip II im Perfekt (g10).",
   }),
@@ -322,16 +322,16 @@ const grammarTexts: SeedItem[] = [
     title: "Die Rückkehr der Nachtzüge",
     first: "Lange Zeit galten Nachtzüge in Europa als altmodisch und unwirtschaftlich.",
     body:
-      "[[Nachdem|Bevor|Obwohl|Solange]] viele Verbindungen in den vergangenen Jahrzehnten eingestellt worden waren, schien das Ende dieser Reiseform gekommen. " +
-      "Doch seit einigen Jahren ist die Nachfrage wieder deutlich [[gestiegen|gestiegene|stieg|steigen]]. " +
-      "Immer mehr Reisende verzichten bewusst [[auf|für|an|von]] Kurzstreckenflüge und wählen stattdessen die Bahn. " +
-      "[[Je|Desto|Umso|Mehr]] länger die Strecke ist, desto attraktiver wird der Nachtzug im Vergleich zum Flugzeug. " +
-      "Die Betreiber stehen allerdings [[vor|von|bei|aus]] großen Herausforderungen. " +
-      "Viele der eingesetzten Waggons sind mehrere Jahrzehnte alt und müssen dringend [[ersetzt|ersetzen|ersetzten|ersetze]] werden. " +
-      "Neue Schlafwagen sind jedoch so teuer, [[dass|damit|ob|wenn]] sich viele Unternehmen eine Bestellung gut überlegen. " +
-      "Hinzu kommen hohe Gebühren für die Nutzung der Schienen, [[die|denen|deren|das]] in jedem Land anders ausfallen. " +
-      "Fachleute fordern daher eine stärkere [[Förderung|Fördern|Förderer|fördernde]] durch den Staat. " +
-      "Ob sich das Angebot langfristig [[durchsetzt|durchsetzen|durchgesetzt|durchzusetzen]], hängt also nicht zuletzt [[von|an|auf|für]] politischen Entscheidungen ab.",
+      "[[Nachdem|Bevor|Obwohl|Solange#konnektor]] viele Verbindungen in den vergangenen Jahrzehnten eingestellt worden waren, schien das Ende dieser Reiseform gekommen. " +
+      "Doch seit einigen Jahren ist die Nachfrage wieder deutlich [[gestiegen|gestiegene|stieg|steigen#perfekt.partizip]]. " +
+      "Immer mehr Reisende verzichten bewusst [[auf|für|an|von#verb_praeposition]] Kurzstreckenflüge und wählen stattdessen die Bahn. " +
+      "[[Je|Desto|Umso|Mehr#konnektor.zweiteilig]] länger die Strecke ist, desto attraktiver wird der Nachtzug im Vergleich zum Flugzeug. " +
+      "Die Betreiber stehen allerdings [[vor|von|bei|aus#praeposition]] großen Herausforderungen. " +
+      "Viele der eingesetzten Waggons sind mehrere Jahrzehnte alt und müssen dringend [[ersetzt|ersetzen|ersetzten|ersetze#passiv.modal]] werden. " +
+      "Neue Schlafwagen sind jedoch so teuer, [[dass|damit|ob|wenn#konnektor]] sich viele Unternehmen eine Bestellung gut überlegen. " +
+      "Hinzu kommen hohe Gebühren für die Nutzung der Schienen, [[die|denen|deren|das#relativsatz]] in jedem Land anders ausfallen. " +
+      "Fachleute fordern daher eine stärkere [[Förderung|Fördern|Förderer|fördernde#nominalisierung]] durch den Staat. " +
+      "Ob sich das Angebot langfristig [[durchsetzt|durchsetzen|durchgesetzt|durchzusetzen#trennbares_verb]], hängt also nicht zuletzt [[von|an|auf|für#verb_praeposition]] politischen Entscheidungen ab.",
     last: "Für viele Reisende ist die Nacht im Zug jedenfalls schon heute eine echte Alternative.",
     note: "nachdem mit Plusquamperfekt Passiv (g1), Perfekt mit sein (g2), verzichten auf (g3), je ... desto (g4), stehen vor (g5), Passiv mit Modalverb (g6), so ... dass (g7), Relativpronomen im Nominativ Plural (g8), Nominalisierung (g9), ob-Satz mit trennbarem Verb (g10), abhängen von (g11).",
   }),
@@ -339,12 +339,12 @@ const grammarTexts: SeedItem[] = [
     title: "Das Repair-Café",
     first: "In vielen Städten gibt es inzwischen Repair-Cafés, in denen Freiwillige kaputte Geräte gemeinsam mit ihren Besitzern reparieren.",
     body:
-      "Die Idee ist einfach: Man bringt einen defekten Toaster vorbei, [[anstatt]] ihn wegzuwerfen. " +
-      "Häufig ist nur ein kleines [[Bauteil]] beschädigt, das sich problemlos austauschen lässt. " +
-      "Die Freiwilligen haben viel [[Erfahrung]], weil viele von ihnen früher in einem Handwerk gearbeitet haben. " +
-      "Die Hilfe selbst ist [[kostenlos]], man zahlt nur [[für]] die Materialien. " +
-      "Viele Besucher [[genießen]] außerdem die Gelegenheit, mit Menschen aus der Nachbarschaft ins Gespräch zu kommen. " +
-      "Für die Umwelt ist das Prinzip ein großer [[Gewinn]], [[denn]] jedes reparierte Gerät bedeutet weniger Müll. " +
+      "Die Idee ist einfach: Man bringt einen defekten Toaster vorbei, [[anstatt#konnektor]] ihn wegzuwerfen. " +
+      "Häufig ist nur ein kleines [[Bauteil#vocabulary]] beschädigt, das sich problemlos austauschen lässt. " +
+      "Die Freiwilligen haben viel [[Erfahrung#vocabulary]], weil viele von ihnen früher in einem Handwerk gearbeitet haben. " +
+      "Die Hilfe selbst ist [[kostenlos#vocabulary]], man zahlt nur [[für#praeposition]] die Materialien. " +
+      "Viele Besucher [[genießen#vocabulary]] außerdem die Gelegenheit, mit Menschen aus der Nachbarschaft ins Gespräch zu kommen. " +
+      "Für die Umwelt ist das Prinzip ein großer [[Gewinn#vocabulary]], [[denn#konnektor]] jedes reparierte Gerät bedeutet weniger Müll. " +
       "Kritiker bemängeln allerdings, dass viele moderne Geräte kaum zu öffnen sind. " +
       "Sie fordern deshalb strengere Vorschriften für die Hersteller.",
     last: "Bis es so weit ist, bleibt das Repair-Café für viele eine gute Alternative zum Neukauf.",
@@ -354,13 +354,13 @@ const grammarTexts: SeedItem[] = [
     title: "Ein Garten für alle",
     first: "Auf einer ehemaligen Brachfläche mitten in Hannover ist vor drei Jahren ein Gemeinschaftsgarten entstanden.",
     body:
-      "Rund vierzig Anwohnerinnen und Anwohner [[bewirtschaften]] die Beete gemeinsam und teilen sich die Ernte. " +
-      "Wer mitmachen möchte, braucht kein [[Vorwissen]], [[da]] erfahrene Mitglieder den Neuen alles zeigen. " +
-      "Die Aufgaben werden in einem Plan [[festgelegt]], damit jeder weiß, wann er mit dem Gießen an der Reihe ist. " +
-      "Viele berichten, dass ihnen die Gartenarbeit nach einem [[stressigen]] Arbeitstag hilft abzuschalten. " +
-      "Die Stadt [[unterstützt]] das Projekt, indem sie das Grundstück kostenlos zur Verfügung stellt. " +
-      "[[Dank]] dieser Hilfe bleiben die Beiträge für die Mitglieder niedrig. " +
-      "Allerdings ist der Vertrag mit der Stadt zunächst auf fünf Jahre befristet, und die Mitglieder hoffen [[darauf]], dass er verlängert wird.",
+      "Rund vierzig Anwohnerinnen und Anwohner [[bewirtschaften#vocabulary]] die Beete gemeinsam und teilen sich die Ernte. " +
+      "Wer mitmachen möchte, braucht kein [[Vorwissen#vocabulary]], [[da#konnektor]] erfahrene Mitglieder den Neuen alles zeigen. " +
+      "Die Aufgaben werden in einem Plan [[festgelegt#vocabulary]], damit jeder weiß, wann er mit dem Gießen an der Reihe ist. " +
+      "Viele berichten, dass ihnen die Gartenarbeit nach einem [[stressigen#vocabulary]] Arbeitstag hilft abzuschalten. " +
+      "Die Stadt [[unterstützt#vocabulary]] das Projekt, indem sie das Grundstück kostenlos zur Verfügung stellt. " +
+      "[[Dank#genitiv.praeposition]] dieser Hilfe bleiben die Beiträge für die Mitglieder niedrig. " +
+      "Allerdings ist der Vertrag mit der Stadt zunächst auf fünf Jahre befristet, und die Mitglieder hoffen [[darauf#praepositionaladverb]], dass er verlängert wird.",
     last: "Ein Sommerfest soll zeigen, wie wichtig der Garten inzwischen für das ganze Viertel geworden ist.",
     distractors: ["obwohl", "vergessen", "mühelosen", "verhindert", "Trotz"],
   }),
@@ -368,14 +368,14 @@ const grammarTexts: SeedItem[] = [
     title: "Lärm in der Stadt",
     first: "Verkehrslärm gehört in deutschen Großstädten zu den häufigsten Gründen für Beschwerden von Anwohnern.",
     body:
-      "Dauerhafter Lärm ist [[keineswegs]] nur lästig, sondern kann auch der Gesundheit erheblich schaden. " +
-      "Studien [[zufolge]] erhöht er unter anderem das Risiko für Bluthochdruck und Schlafstörungen. " +
-      "Viele Städte haben deshalb Maßnahmen ergriffen, [[um]] die Belastung zu verringern. " +
-      "Auf zahlreichen Hauptstraßen wurde die zulässige [[Geschwindigkeit]] nachts auf 30 km/h begrenzt. " +
-      "Außerdem wird an besonders belasteten Stellen ein spezieller Asphalt [[verlegt]], der deutlich leiser ist. " +
-      "Kritiker [[bezweifeln]] jedoch, dass solche Schritte ausreichen. " +
-      "Sie verweisen darauf, dass der Lärm erst dann spürbar [[abnimmt]], wenn insgesamt weniger Autos unterwegs sind. " +
-      "Eine dauerhafte [[Lösung]] sehen sie daher vor allem im Ausbau von Bus, Bahn und Radwegen.",
+      "Dauerhafter Lärm ist [[keineswegs#negation]] nur lästig, sondern kann auch der Gesundheit erheblich schaden. " +
+      "Studien [[zufolge#praeposition]] erhöht er unter anderem das Risiko für Bluthochdruck und Schlafstörungen. " +
+      "Viele Städte haben deshalb Maßnahmen ergriffen, [[um#infinitiv.umzu]] die Belastung zu verringern. " +
+      "Auf zahlreichen Hauptstraßen wurde die zulässige [[Geschwindigkeit#vocabulary]] nachts auf 30 km/h begrenzt. " +
+      "Außerdem wird an besonders belasteten Stellen ein spezieller Asphalt [[verlegt#vocabulary]], der deutlich leiser ist. " +
+      "Kritiker [[bezweifeln#vocabulary]] jedoch, dass solche Schritte ausreichen. " +
+      "Sie verweisen darauf, dass der Lärm erst dann spürbar [[abnimmt#trennbares_verb]], wenn insgesamt weniger Autos unterwegs sind. " +
+      "Eine dauerhafte [[Lösung#vocabulary]] sehen sie daher vor allem im Ausbau von Bus, Bahn und Radwegen.",
     last: "Ob sich diese Forderung politisch durchsetzen lässt, wird sich in den kommenden Jahren zeigen.",
     distractors: ["gelegentlich", "damit", "Lautstärke", "entfernt", "befürchten"],
   }),
