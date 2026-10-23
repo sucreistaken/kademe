@@ -469,7 +469,12 @@
     "problemAreaEXAM_END": "Sınavın sonu",
     "problemAreaSYSTEM_CHECK": "Cihaz kontrolü",
     "problemAreaLINK": "Yeni link isteği",
-    "problemNoText": "Mesaj yazılmadı."
+    "problemNoText": "Mesaj yazılmadı.",
+    "showLevel": "Seviyeyi öğrenciye göster",
+    "levelShownNow": "Öğrenci seviyesini görüyor.",
+    "levelHiddenNow": "Öğrenci seviyesini görmüyor, yalnızca analizi görüyor.",
+    "levelSave": "Kaydet",
+    "levelHint": "Öğrenci her zaman analizi (bölüm bazında sayılar ve konular) alır, soruları asla."
   },
   "integrity": {
     "title": "Bütünlük",
@@ -1102,7 +1107,10 @@
       "B2": "Karmaşık metinlerin ana noktalarını anlar, anadili konuşanlarla rahat ve doğal biçimde konuşur, ayrıntılı metinler yazar.",
       "C1": "Uzun ve zor metinleri ve ima edilen anlamları anlar, kendini akıcı ve esnek biçimde ifade eder, düzenli ve ayrıntılı metinler üretir.",
       "C2": "Duyduğu ya da okuduğu hemen her şeyi zahmetsiz anlar, ince anlam farklarını doğru biçimde anlatır."
-    }
+    },
+    "copyStudent": "Öğrenci kopyası",
+    "copyTeacher": "Öğretmen kopyası",
+    "studentCopyHint": "Öğrenci kopyası: soru ve cevap anahtarı olmadan analiz."
   },
   "studentsExport": {
     "colName": "Ad soyad",

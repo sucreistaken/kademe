@@ -469,7 +469,12 @@
     "problemAreaEXAM_END": "End of the exam",
     "problemAreaSYSTEM_CHECK": "Device check",
     "problemAreaLINK": "New link request",
-    "problemNoText": "No message was written."
+    "problemNoText": "No message was written.",
+    "showLevel": "Show the level to the student",
+    "levelShownNow": "The student sees the level.",
+    "levelHiddenNow": "The student does not see the level, only the analysis.",
+    "levelSave": "Save",
+    "levelHint": "The student always gets the analysis (counts per section and topics), never the questions."
   },
   "integrity": {
     "title": "Integrity",
@@ -1102,7 +1107,10 @@
       "B2": "Understands the main points of complex texts, talks with native speakers comfortably and naturally, and writes detailed texts.",
       "C1": "Understands long, demanding texts and implied meaning, expresses ideas fluently and flexibly, and produces well-organised, detailed writing.",
       "C2": "Understands virtually everything heard or read with ease and conveys fine shades of meaning precisely."
-    }
+    },
+    "copyStudent": "Student copy",
+    "copyTeacher": "Teacher copy",
+    "studentCopyHint": "Student copy: the analysis without questions or answer keys."
   },
   "studentsExport": {
     "colName": "Full name",

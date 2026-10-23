@@ -1,4 +1,4 @@
-import { AnalysisView } from "@/components/candidate/AnalysisView";
+import { AnalysisView } from "@/components/candidate/exam/AnalysisView";
 import { BrandMark } from "@/components/visual/brand-mark";
 import { candidateT } from "@/i18n/candidate";
 import { dirOf, type CandidateLocale } from "@/i18n/locale";

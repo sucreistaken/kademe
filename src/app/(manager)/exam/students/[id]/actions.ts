@@ -18,7 +18,6 @@ import {
 } from "@/db/schema";
 import { buildDetail } from "@/components/panel/report/detail-model";
 import { canAcceptAsCorrect, canAcceptGap, gapScore } from "@/components/panel/result/review-rows";
-import { managerLocale } from "@/i18n/manager-locale";
 import { aiLimitReached } from "@/lib/ai-limit";
 import { callJson, markAiRunError } from "@/lib/ai-runs";
 import { isCefr } from "@/lib/exam/cefr";
@@ -216,7 +215,9 @@ export async function release(formData: FormData) {
   // An attempt the teacher judged invalid is not released.
   if (row.attempt.integrityOutcome === "INVALID") redirect(withQuery(back(assessmentId), { error: "invalid" }));
   const now = new Date();
-  await db.update(examResults).set({ releasedAt: now, releasedBy: user.id, updatedAt: now }).where(eq(examResults.id, row.result.id));
+  // The teacher decides per result whether the student sees the CEFR level; the analysis is always given.
+  const levelShown = formData.get("levelShown") === "on";
+  await db.update(examResults).set({ releasedAt: now, releasedBy: user.id, levelShown, updatedAt: now }).where(eq(examResults.id, row.result.id));
   await db.insert(examResultRevisions).values({ resultId: row.result.id, field: "release", after: now.toISOString(), changedBy: user.id });
   await db.insert(auditLogs).values({
     orgId: user.orgId,
@@ -224,6 +225,29 @@ export async function release(formData: FormData) {
     action: "result.release",
     subjectType: "exam_result",
     subjectId: row.result.id,
+    meta: { levelShown },
+  });
+  revalidatePath(back(assessmentId));
+  redirect(back(assessmentId));
+}
+
+/** Changes whether the student sees the CEFR level after the result was released. */
+export async function setLevelShown(formData: FormData) {
+  const user = await requireUser("result:finalize");
+  const assessmentId = String(formData.get("assessmentId"));
+  const row = await resultInOrg(assessmentId, user.orgId);
+  if (!row?.result || !row.result.releasedAt) redirect(back(assessmentId));
+  const levelShown = formData.get("levelShown") === "on";
+  const before = row.result.levelShown;
+  await db.update(examResults).set({ levelShown, updatedAt: new Date() }).where(eq(examResults.id, row.result.id));
+  await db.insert(examResultRevisions).values({ resultId: row.result.id, field: "levelShown", before, after: levelShown, changedBy: user.id });
+  await db.insert(auditLogs).values({
+    orgId: user.orgId,
+    actorId: user.id,
+    action: "result.level_shown",
+    subjectType: "exam_result",
+    subjectId: row.result.id,
+    meta: { levelShown },
   });
   revalidatePath(back(assessmentId));
   redirect(back(assessmentId));
@@ -422,7 +446,8 @@ export async function draftFeedback(formData: FormData) {
   });
   const aiDecided = Object.values(computed?.skills ?? {}).some((s) => s?.decider === "AI");
   const input = buildFeedbackInput(view.result?.finalOverall ?? (aiDecided ? null : (computed?.overall ?? null)), detail);
-  const locale = await managerLocale();
+  // The note is for the student, so it is drafted in the student's language.
+  const locale = row.assessment.locale;
   const messages = buildFeedbackMessages(input, locale);
   const meta = { orgId: user.orgId, purpose: "STUDENT_FEEDBACK", inputRef: `exam_result:${row.result.id}`, requestedBy: user.id } as const;
 
@@ -473,7 +498,7 @@ export async function saveFeedback(formData: FormData) {
   const parsed = feedbackFromForm((name) => String(formData.get(name) ?? ""));
   if (!parsed.ok) redirect(`${withQuery(back(assessmentId), { error: "feedbackEmpty" })}#feedback`);
   const now = new Date();
-  const store = approveFeedback(row.result.studentFeedback, parsed.content, user.id, now, await managerLocale());
+  const store = approveFeedback(row.result.studentFeedback, parsed.content, user.id, now, row.assessment.locale);
   await saveFeedbackRow(row.result.id, store);
   await auditFeedback(user.orgId, user.id, "feedback.approve", row.result.id, { edited: store.edited, runId: store.draftRunId });
   revalidatePath(back(assessmentId));

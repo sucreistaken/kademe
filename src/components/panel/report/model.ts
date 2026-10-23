@@ -8,12 +8,14 @@ import { CEFR_LEVELS, type Cefr, type Section } from "@/lib/exam/types";
  * carries levels only: no item, answer, key or AI score. The one piece of
  * free text is the teacher-approved feedback; a draft is never passed on.
  *
- * Deliberate decision (2026-10-16): the report is given to the student, so the
- * school must be able to show exactly what was answered wrongly. The detailed
- * part (detail-model.ts) therefore does carry the student's answers and the
- * keys. It still leaves out the reading passages and the listening
- * transcripts (titles only), to limit exposure of the item bank, and any AI
- * score the teacher did not adopt.
+ * Teacher copy (decision 2026-10-16, kept): the school must be able to show
+ * exactly what was answered wrongly, so the detailed part (detail-model.ts)
+ * carries the student's answers and the keys. It still leaves out the reading
+ * passages and the listening transcripts (titles only), to limit exposure of
+ * the item bank, and any AI score the teacher did not adopt. This is the
+ * teacher copy; the student copy has no questions or keys (owner 2026-10-23):
+ * it is the analysis in student-analysis.ts, printed from the student's own
+ * link or from here with `?copy=student`.
  */
 
 export type ReportSource = {

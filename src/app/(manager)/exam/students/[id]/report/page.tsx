@@ -3,11 +3,16 @@ import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { organizations } from "@/db/schema";
+import { buttonVariants } from "@/components/ui/button";
 import { PrintButton } from "@/components/panel/report/print-button";
 import { ReportSheet } from "@/components/panel/report/report-sheet";
 import { buildReport } from "@/components/panel/report/model";
 import { buildDetail } from "@/components/panel/report/detail-model";
 import { DetailSheet } from "@/components/panel/report/detail-sheet";
+import { StudentSheet } from "@/app/a/[token]/done/print/student-sheet";
+import { approvedFeedback } from "@/lib/exam/student-feedback";
+import type { StudentResult } from "@/lib/exam-flow";
+import { loadStudentAnalysis } from "@/server/student-analysis";
 import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
 import { resolveSigningSecret } from "@/lib/signing-secret";
@@ -34,7 +39,10 @@ export default async function ResultReportPage({
   const t = managerT(locale);
   const { id } = await params;
   // The detailed part is on unless the manager turned it off (?detail=0).
-  const withDetail = (await searchParams).detail !== "0";
+  const sp = await searchParams;
+  const withDetail = sp.detail !== "0";
+  // ?copy=student prints the student's sheet (the analysis, no questions or keys); the default is the teacher copy.
+  const studentCopy = sp.copy === "student";
   const view = await loadResultView(user.orgId, id);
   if (!view || !view.attempt) notFound();
   const { assessment, candidate, attempt, result } = view;
@@ -78,7 +86,7 @@ export default async function ResultReportPage({
   }
 
   // Everything below comes from the org-scoped result view and org-scoped acceptances.
-  const detail = withDetail
+  const detail = withDetail && !studentCopy
     ? buildDetail({
         sections: view.sections,
         skillLevels,
@@ -91,6 +99,60 @@ export default async function ResultReportPage({
       })
     : [];
 
+  const copyLinks = (
+    <div className="flex flex-wrap items-center justify-end gap-2">
+      {studentCopy ? (
+        <PrintButton label={t("resultReport.copyStudent")} />
+      ) : (
+        <Link href={`/exam/students/${id}/report?copy=student`} className={buttonVariants({ variant: "secondary", size: "lg" })}>
+          {t("resultReport.copyStudent")}
+        </Link>
+      )}
+      {studentCopy ? (
+        <Link href={`/exam/students/${id}/report`} className={buttonVariants({ variant: "secondary", size: "lg" })}>
+          {t("resultReport.copyTeacher")}
+        </Link>
+      ) : (
+        <PrintButton label={t("resultReport.copyTeacher")} />
+      )}
+    </div>
+  );
+
+  if (studentCopy) {
+    const cfg = assessment.blueprintSnapshot;
+    const analysis = await loadStudentAnalysis(user.orgId, attempt.id, view.sections, assessment.locale);
+    const levelShown = result?.levelShown ?? cfg.resultVisibility !== "NONE";
+    const studentResult: StudentResult = {
+      visibility: cfg.resultVisibility,
+      released: true,
+      awaitingTeacher: false,
+      levelShown,
+      overall: built.model.overall,
+      skills: cfg.resultVisibility === "FULL" ? built.model.skills : undefined,
+      analysis: analysis ?? undefined,
+      feedback: approvedFeedback(result?.studentFeedback),
+    };
+    return (
+      <main className="report-wrap bg-canvas px-6 py-8">
+        <div className="report-toolbar mx-auto mb-6 flex w-[210mm] max-w-full items-center justify-between gap-4">
+          <div>
+            {back}
+            <p className="mt-1 text-[12.5px] text-muted">{t("resultReport.studentCopyHint")}</p>
+          </div>
+          {copyLinks}
+        </div>
+        <StudentSheet
+          schoolName={built.model.schoolName}
+          studentName={built.model.studentName}
+          examName={built.model.examName}
+          date={built.model.finalizedAt ?? built.model.examDate}
+          result={studentResult}
+          locale={assessment.locale}
+        />
+      </main>
+    );
+  }
+
   return (
     <main className="report-wrap bg-canvas px-6 py-8">
       <div className="report-toolbar mx-auto mb-6 flex w-[210mm] max-w-full items-center justify-between gap-4">
@@ -99,7 +161,7 @@ export default async function ResultReportPage({
           <p className="mt-1 text-[12.5px] text-muted">{t("resultReport.printHint")}</p>
         </div>
         <div className="flex flex-col items-end gap-1">
-          <PrintButton label={t("resultReport.print")} />
+          {copyLinks}
           <Link
             href={withDetail ? `/exam/students/${id}/report?detail=0` : `/exam/students/${id}/report`}
             className="inline-flex items-center gap-2 text-[13px] text-ink"

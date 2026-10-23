@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Check, Loader2, Mail, PowerOff, WifiOff } from "lucide-react";
-import { AnalysisView } from "@/components/candidate/AnalysisView";
+import { AnalysisView } from "@/components/candidate/exam/AnalysisView";
 import { ExamEndReport } from "@/components/candidate/ExamEndReport";
 import { CandidateColumn } from "@/components/candidate/Shell";
 import { useProctor } from "@/components/candidate/proctor/ProctorProvider";

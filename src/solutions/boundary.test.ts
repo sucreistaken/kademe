@@ -14,6 +14,8 @@ import { describe, expect, it } from "vitest";
  */
 const KNOWN_COUPLINGS = [
   "src/app/a/[token]/done/page.tsx",
+  "src/app/a/[token]/done/print/page.tsx",
+  "src/app/a/[token]/done/print/student-sheet.tsx",
   "src/app/a/[token]/shared.tsx",
   "src/app/api/cron/grade/route.ts",
   "src/components/candidate/Finished.tsx",
@@ -35,7 +37,7 @@ const EXEMPT = [
   /^src\/components\/candidate\/exam\//,
   /^src\/lib\/exam\//,
   /^src\/lib\/(exam-flow|exam-results|exam-candidate-api)\.ts$/,
-  /^src\/server\/(panel|invite|simulate|bank-import|bank-topup|item-generation-job|template-blueprint|exam-exposure)\.ts$/,
+  /^src\/server\/(panel|invite|simulate|bank-import|bank-topup|item-generation-job|template-blueprint|exam-exposure|student-analysis)\.ts$/,
   /^src\/db\//,
   /\.test\.tsx?$/,
 ];

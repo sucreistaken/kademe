@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { finalize, overrideOverall, release, undoAcceptAsCorrect } from "@/app/(manager)/exam/students/[id]/actions";
+import { finalize, overrideOverall, release, setLevelShown, undoAcceptAsCorrect } from "@/app/(manager)/exam/students/[id]/actions";
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Notice } from "@/components/ui/notice";
@@ -61,6 +61,7 @@ export default async function ResultPage({
   const cfg = assessment.blueprintSnapshot;
   const computed = result?.computed ?? null;
   const final = result?.status === "FINAL";
+  const levelShownNow = result?.levelShown ?? cfg.resultVisibility !== "NONE";
   const tab = sp.tab ?? "summary";
   const tabs = ["summary", ...view.sections, "integrity"];
   const ended = !!attempt?.completedAt || !!attempt?.terminatedAt;
@@ -451,14 +452,32 @@ export default async function ResultPage({
                 <>
                   <p className="text-[13px] text-muted">{t("result.finalized", { date: shortDateTime(result?.finalizedAt ?? null, locale) })}</p>
                   {result?.releasedAt ? (
-                    <p className="mt-1 text-[13px] text-muted">{t("result.released", { date: shortDateTime(result.releasedAt, locale) })}</p>
-                  ) : cfg.resultVisibility === "NONE" ? (
-                    <p className="mt-1 text-[13px] text-muted">{t("result.visibilityNone")}</p>
+                    <>
+                      <p className="mt-1 text-[13px] text-muted">{t("result.released", { date: shortDateTime(result.releasedAt, locale) })}</p>
+                      <p className="mt-1 text-[13px] text-muted">{levelShownNow ? t("result.levelShownNow") : t("result.levelHiddenNow")}</p>
+                      {canFinalize ? (
+                        <form action={setLevelShown} className="mt-2 flex flex-wrap items-center gap-3">
+                          <input type="hidden" name="assessmentId" value={id} />
+                          <label className="flex items-center gap-2 text-[13px] text-ink">
+                            <input type="checkbox" name="levelShown" defaultChecked={levelShownNow} className="size-4 accent-[var(--color-accent)]" />
+                            {t("result.showLevel")}
+                          </label>
+                          <button type="submit" className={cn(buttonVariants({ variant: "secondary", size: "sm" }))}>
+                            {t("result.levelSave")}
+                          </button>
+                        </form>
+                      ) : null}
+                    </>
                   ) : attempt?.integrityOutcome === "INVALID" ? (
                     <p className="mt-1 text-[13px] text-muted">{t("result.errInvalid")}</p>
                   ) : canFinalize ? (
                     <form action={release} className="mt-3">
                       <input type="hidden" name="assessmentId" value={id} />
+                      <label className="mb-3 flex items-center gap-2 text-[13px] text-ink">
+                        <input type="checkbox" name="levelShown" defaultChecked={cfg.resultVisibility !== "NONE"} className="size-4 accent-[var(--color-accent)]" />
+                        {t("result.showLevel")}
+                      </label>
+                      <p className="-mt-1 mb-3 text-[12px] text-muted">{t("result.levelHint")}</p>
                       <button type="submit" className={cn(buttonVariants({ variant: "primary", size: "lg" }), "h-11 w-full")}>
                         {t("result.release")}
                       </button>
