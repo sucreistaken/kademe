@@ -241,19 +241,19 @@
     {
       "id": "obj.food.bread-rolls",
       "file": "obj.food.bread-rolls.webp",
-      "sha16": "795565e9c894d72c",
+      "sha16": "0cf8bb6e6f2c8b7b",
       "w": 960,
       "h": 640,
-      "alt": "Frische Brötchen liegen in einer Schüssel.",
+      "alt": "Brötchen liegen in einem Korb auf einem gedeckten Tisch.",
       "kind": "object",
       "category": "food",
       "levels": [
         "A1",
         "A2"
       ],
-      "sourceUrl": "https://www.pexels.com/photo/19987142/",
+      "sourceUrl": "https://www.pexels.com/photo/8251565/",
       "license": "Pexels License",
-      "author": "julianemonarifotografia"
+      "author": "filirovska"
     },
     {
       "id": "obj.food.cake",
@@ -768,19 +768,19 @@
     {
       "id": "obj.transport.taxi",
       "file": "obj.transport.taxi.webp",
-      "sha16": "13aa026e391e6121",
+      "sha16": "900e0e589a49ebe7",
       "w": 960,
       "h": 640,
-      "alt": "Ein gelbes Taxi fährt durch eine Straße in der Stadt.",
+      "alt": "Ein helles Taxi fährt auf einer Straße in der Stadt.",
       "kind": "object",
       "category": "transport",
       "levels": [
         "A1",
         "A2"
       ],
-      "sourceUrl": "https://www.pexels.com/photo/24589291/",
+      "sourceUrl": "https://www.pexels.com/photo/5721492/",
       "license": "Pexels License",
-      "author": "bylukemiller"
+      "author": "markus-winkler"
     },
     {
       "id": "obj.transport.train",
