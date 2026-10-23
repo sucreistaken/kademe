@@ -1320,18 +1320,18 @@
     {
       "id": "scene.c1.factory-robots",
       "file": "scene.c1.factory-robots.webp",
-      "sha16": "b22b6610927339cf",
+      "sha16": "186945256509b1b7",
       "w": 1200,
-      "h": 900,
-      "alt": "Gelbe Roboterarme arbeiten in einer modernen Fabrik.",
+      "h": 800,
+      "alt": "Industrieroboter montieren Teile in einer Fabrikhalle.",
       "kind": "scene",
       "category": "speaking",
       "levels": [
         "C1"
       ],
-      "sourceUrl": "https://www.pexels.com/photo/18471441/",
-      "license": "Pexels License",
-      "author": "delot"
+      "sourceUrl": "https://unsplash.com/photos/8gr6bObQLOI",
+      "license": "Unsplash License",
+      "author": "simonkadula"
     },
     {
       "id": "scene.c1.telemedicine",
@@ -1435,7 +1435,7 @@
       "sha16": "3774b65468cdc590",
       "w": 1200,
       "h": 800,
-      "alt": "Zwei Frauen sitzen im Restaurant am Tisch und schauen auf ihre Handys.",
+      "alt": "Zwei Frauen lachen gemeinsam über ein Handy am Esstisch.",
       "kind": "scene",
       "category": "speaking",
       "levels": [
