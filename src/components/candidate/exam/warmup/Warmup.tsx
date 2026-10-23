@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { CandidateColumn } from "@/components/candidate/Shell";
 import { buttonVariants } from "@/components/ui/button";
 import { ItemView } from "@/components/candidate/exam/ItemView";
@@ -35,14 +35,33 @@ const trySecondary = cn(buttonVariants({ variant: "secondary", size: "lg" }), "h
 const skipText = cn(buttonVariants({ variant: "ghost", size: "lg" }), "h-11 px-4 text-ink");
 const solid = cn(buttonVariants({ variant: "primary", size: "lg" }), "h-11 px-5");
 
-/** On the introduction: the offer, or the line that says the practice is over. */
-export function WarmupOffer({ state, onTry, onSkip }: { state: WarmupState; onTry: () => void; onSkip: () => void }) {
+/**
+ * On the introduction, the "get ready" row: the offer, or the line that says
+ * the practice is over. `video` (the how-it-works button) sits before "Try" and
+ * stays when the offer is gone, with `videoLead` as its line.
+ */
+export function WarmupOffer({
+  state,
+  onTry,
+  onSkip,
+  video,
+  videoLead,
+}: {
+  state: WarmupState;
+  onTry: () => void;
+  onSkip: () => void;
+  video?: ReactNode;
+  videoLead?: string;
+}) {
   const t = useT("examFlow");
+  const row = "mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-2xl bg-cream px-5 py-3";
+  const line = "min-w-0 flex-1 basis-64 text-[15px] font-medium leading-[1.5] text-ink";
   if (state.phase === "offer") {
     return (
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-2xl bg-cream px-5 py-3">
-        <p className="min-w-0 flex-1 basis-64 text-[15px] font-medium leading-[1.5] text-ink">{t("warmOffer")}</p>
+      <div className={row}>
+        <p className={line}>{t("warmOffer")}</p>
         <div className="flex gap-3">
+          {video}
           <button type="button" onClick={onTry} className={trySecondary}>
             {t("warmTry")}
           </button>
@@ -54,10 +73,25 @@ export function WarmupOffer({ state, onTry, onSkip }: { state: WarmupState; onTr
     );
   }
   if (state.phase === "done") {
-    return (
+    return video ? (
+      <div className={row}>
+        <p role="status" className={cn(line, "font-semibold")}>
+          {t("warmReady")}
+        </p>
+        {video}
+      </div>
+    ) : (
       <p role="status" className="mt-4 rounded-2xl bg-cream px-5 py-3 text-[15px] font-semibold text-ink">
         {t("warmReady")}
       </p>
+    );
+  }
+  if (state.phase === "skipped" && video) {
+    return (
+      <div className={row}>
+        <p className={line}>{videoLead}</p>
+        {video}
+      </div>
     );
   }
   return null;

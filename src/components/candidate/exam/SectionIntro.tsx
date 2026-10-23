@@ -1,6 +1,7 @@
 "use client";
 
-import type { Ref } from "react";
+import { useEffect, useState, type Ref } from "react";
+import { useTranslations } from "next-intl";
 import { Clock, ListChecks } from "lucide-react";
 import { CandidateColumn } from "@/components/candidate/Shell";
 import { buttonVariants } from "@/components/ui/button";
@@ -8,6 +9,10 @@ import { SectionTile } from "@/components/visual/section-look";
 import { SectionCheer } from "@/components/candidate/exam/SectionCheer";
 import { ErrorLine } from "@/components/candidate/exam/ErrorLine";
 import { WarmupOffer } from "@/components/candidate/exam/warmup/Warmup";
+import { TutorialButton } from "@/components/candidate/exam/tutorial/TutorialButton";
+import { TutorialPlayer } from "@/components/candidate/exam/tutorial/TutorialPlayer";
+import { TUTORIAL_SCRIPTS } from "@/components/candidate/exam/tutorial/scripts";
+import { useProctor } from "@/components/candidate/proctor/ProctorProvider";
 import type { WarmupAction, WarmupState } from "@/components/candidate/exam/warmup/warmup-state";
 import { textRuleKey } from "@/components/candidate/exam/section-rule";
 import type { CandidateState } from "@/lib/exam-flow";
@@ -15,7 +20,10 @@ import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
 import { introNeedsMixedPlaysRule } from "@/lib/exam/listening-plays";
 
-/** The screen before a section: its length, its rules, the warm-up offer and the start button. */
+/**
+ * The screen before a section: its length, its rules, the "get ready" row
+ * (the how-it-works video and the warm-up offer) and the start button.
+ */
 export function SectionIntro({
   sections,
   cur,
@@ -48,6 +56,20 @@ export function SectionIntro({
   const n = useT("examNav");
   const sec = useT("section");
   const f = useT("examFlow");
+  const tt = useTranslations("tutorial");
+  const { engine } = useProctor();
+  const [watching, setWatching] = useState(false);
+  // The tutorial speaks and is not the exam: while it is open its voice is not
+  // "talking during the exam" and no big warning covers it; both come back on close.
+  useEffect(() => {
+    if (!watching || !engine) return;
+    engine.suppressVoice("tutorial", true);
+    engine.suppressWarnings("tutorial", true);
+    return () => {
+      engine.suppressVoice("tutorial", false);
+      engine.suppressWarnings("tutorial", false);
+    };
+  }, [engine, watching]);
   return (
     <CandidateColumn width={720} padding="px-7 pt-6 pb-6">
       <SectionCheer sections={sections} current={cur.section} position={cur.position} />
@@ -111,7 +133,14 @@ export function SectionIntro({
           </>
         );
       })()}
-      <WarmupOffer state={warmHere} onTry={() => warmDo({ type: "try" })} onSkip={() => warmDo({ type: "skip" })} />
+      <WarmupOffer
+        state={warmHere}
+        onTry={() => warmDo({ type: "try" })}
+        onSkip={() => warmDo({ type: "skip" })}
+        video={<TutorialButton script={TUTORIAL_SCRIPTS[cur.section]} onOpen={() => setWatching(true)} />}
+        videoLead={tt("watchLead")}
+      />
+      <TutorialPlayer script={TUTORIAL_SCRIPTS[cur.section]} open={watching} onOpenChange={setWatching} />
       <button
         type="button"
         disabled={busy}

@@ -149,8 +149,7 @@ function PlayerBody({ script }: { script: TutorialScript }) {
           <DemoStage script={script} state={state} jump={jump} reducedMotion={reducedMotion} />
         </ScaledStage>
         <div className={cn("flex w-[300px] shrink-0 flex-col justify-center", !captionsOn && "sr-only")}>
-          <p className="tnum text-overline uppercase text-muted">{tt("step", { n: state.step + 1, total: timeline.steps.length })}</p>
-          <p role="status" aria-live="polite" className="mt-2 text-[19px] font-semibold leading-[1.5] text-ink">
+          <p role="status" aria-live="polite" className="text-[19px] font-semibold leading-[1.5] text-ink">
             {caption}
           </p>
         </div>
