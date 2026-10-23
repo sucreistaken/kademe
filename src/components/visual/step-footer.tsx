@@ -81,6 +81,7 @@ export function StepFooter({
   hint,
   note,
   placement = "viewport",
+  measure = true,
   compact = false,
   exam = false,
   notice,
@@ -92,7 +93,18 @@ export function StepFooter({
   journey?: { steps: number; current: number; label: string } | null;
   hint?: string | null;
   note?: ReactNode;
-  placement?: "viewport" | "sticky";
+  /**
+   * "viewport": fixed to the window with a spacer before it. "sticky": sticks to the
+   * bottom of its column. "contained": a plain relative bar inside its parent (no
+   * fixed or sticky position, no spacer), for a bar shown inside a demo frame.
+   */
+  placement?: "viewport" | "sticky" | "contained";
+  /**
+   * Write the bar's measured height into --step-footer-space and --step-notice-space on
+   * the page root. On by default; off for a contained demo bar that must not move the
+   * real page's room.
+   */
+  measure?: boolean;
   /**
    * A narrow column (the panel's Sheet, 480px): the way back and the step
    * label on one line, the buttons under it at full width (the filled one
@@ -124,7 +136,7 @@ export function StepFooter({
   const bar = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const node = bar.current;
-    if (!node || typeof ResizeObserver === "undefined") return;
+    if (!measure || !node || typeof ResizeObserver === "undefined") return;
     const root = document.documentElement;
     const write = () => root.style.setProperty(FOOTER_SPACE_VAR, footerSpace(node.getBoundingClientRect().height));
     write();
@@ -134,11 +146,11 @@ export function StepFooter({
       observer.disconnect();
       root.style.removeProperty(FOOTER_SPACE_VAR);
     };
-  }, []);
+  }, [measure]);
   // The notice layer, measured the same way (a state ref: it comes and goes, and moves between layouts).
   const [noticeNode, setNoticeNode] = useState<HTMLDivElement | null>(null);
   useEffect(() => {
-    if (!noticeNode || typeof ResizeObserver === "undefined") return;
+    if (!measure || !noticeNode || typeof ResizeObserver === "undefined") return;
     const root = document.documentElement;
     const write = () => root.style.setProperty(NOTICE_SPACE_VAR, noticeSpace(noticeNode.getBoundingClientRect().height));
     write();
@@ -148,7 +160,7 @@ export function StepFooter({
       observer.disconnect();
       root.style.removeProperty(NOTICE_SPACE_VAR);
     };
-  }, [noticeNode]);
+  }, [noticeNode, measure]);
 
   const states = [buttonState(secondary), buttonState(primary)];
   const reasons = states.flatMap((s) => (s && s.reason ? [{ id: `${s.id}-why`, text: s.reason }] : []));
@@ -169,12 +181,13 @@ export function StepFooter({
   ) : null;
   // With a notice the spacer also leaves room for it, so the end of the page can still be scrolled clear.
   const spacerHeight = notice && !compact ? ABOVE_FOOTER : `var(${FOOTER_SPACE_VAR}, 112px)`;
+  const placeClass = placement === "viewport" ? "fixed inset-x-0 bottom-0 z-30" : placement === "sticky" ? "sticky bottom-0 z-20" : "relative";
   const spacer = placement === "viewport" ? <div aria-hidden="true" className="h-[112px]" style={{ height: spacerHeight }} /> : null;
   if (compact) {
     return (
       <>
         {spacer}
-        <div ref={bar} data-step-footer className={placement === "viewport" ? "fixed inset-x-0 bottom-0 z-30" : "sticky bottom-0 z-20"}>
+        <div ref={bar} data-step-footer className={placeClass}>
           {journey ? <JourneyProgress steps={journey.steps} current={journey.current} label={journey.label} /> : null}
           <div className="space-y-3 border-t border-line bg-paper/95 py-3 backdrop-blur">
             {backLink || journey ? (
@@ -216,7 +229,7 @@ export function StepFooter({
     return (
       <>
         {spacer}
-        <div ref={bar} data-step-footer className={placement === "viewport" ? "fixed inset-x-0 bottom-0 z-30" : "sticky bottom-0 z-20"}>
+        <div ref={bar} data-step-footer className={placeClass}>
           {noticeLayer}
           <div className="border-t border-line bg-paper/95 backdrop-blur">
             {/* 65px of row + the 1px edge above it: 66px at every state. */}
@@ -251,7 +264,7 @@ export function StepFooter({
   return (
     <>
       {spacer}
-      <div ref={bar} data-step-footer className={placement === "viewport" ? "fixed inset-x-0 bottom-0 z-30" : "sticky bottom-0 z-20"}>
+      <div ref={bar} data-step-footer className={placeClass}>
         {noticeLayer}
         {journey ? <JourneyProgress steps={journey.steps} current={journey.current} label={journey.label} /> : null}
         <div className="border-t border-line bg-paper/95 backdrop-blur">

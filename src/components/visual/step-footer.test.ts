@@ -131,3 +131,23 @@ describe("the room a notice takes", () => {
     expect(ABOVE_FOOTER).toBe("calc(var(--step-footer-space, 112px) + var(--step-notice-space, 0px))");
   });
 });
+
+describe("StepFooter's contained placement and measure flag are opt-in", () => {
+  const primary = { kind: "button" as const, id: "go", label: "Start", onClick: noop };
+
+  it("contained: a relative bar with no fixed or sticky position and no spacer", () => {
+    for (const extra of [{}, { compact: true }, { exam: true }]) {
+      const out = html({ primary, placement: "contained", ...extra });
+      expect(out).toMatch(/<div[^>]*data-step-footer="true"[^>]*class="relative"/);
+      expect(out).not.toContain("fixed inset-x-0");
+      expect(out).not.toContain("sticky bottom-0");
+      expect(out).not.toContain('aria-hidden="true" class="h-[112px]"');
+    }
+  });
+
+  it("the default and sticky placements keep their classes, and measure=false changes no markup", () => {
+    expect(html({ primary })).toContain("fixed inset-x-0 bottom-0 z-30");
+    expect(html({ primary, placement: "sticky" })).toContain("sticky bottom-0 z-20");
+    expect(html({ primary, measure: false })).toEqual(html({ primary }));
+  });
+});
