@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { mulberry32 } from "./adaptive";
-import { letteredTargets, makePresentation, matchingTargets, toCandidateItem } from "./safe";
-import { C_TEST_SKILL_TAG, CLOZE_SKILL_TAG, WORD_BANK_SKILL_TAG, type ItemSnapshot } from "./types";
+import { imageForSlot, letteredTargets, makePresentation, matchingTargets, toCandidateItem } from "./safe";
+import { C_TEST_SKILL_TAG, CLOZE_SKILL_TAG, WORD_BANK_SKILL_TAG, type ImageRef, type ItemSnapshot } from "./types";
 
 const listening: ItemSnapshot = {
   id: "item-secret-id",
@@ -396,5 +396,91 @@ describe("open cloze candidate content", () => {
     const c = toCandidateItem(openItem, {}, null, 1, { maxPlays: 2 }).content;
     expect(c).toEqual({ kind: "GAP", gaps: [{ id: "g1", choices: null }], open: true });
     expect(JSON.stringify(c)).not.toMatch(/weil|nebensatz|topics|grammar\.open/);
+  });
+});
+
+describe("pictures reach the student as slots, never as keys", () => {
+  const pic = (n: string): ImageRef => ({ storageKey: `bank/images/${n.repeat(16)}.webp`, w: 960, h: 640, alt: `Alt ${n}` });
+  const base = { ...listening, stimulusId: null, stimulus: null };
+
+  const choice: ItemSnapshot = {
+    ...base,
+    prompt: "Welches Bild passt?",
+    content: {
+      kind: "CHOICE",
+      options: [
+        { id: "a", text: "", image: pic("a") },
+        { id: "b", text: "", image: pic("b") },
+        { id: "c", text: "mit Text" },
+      ],
+    },
+    key: { kind: "CHOICE", correct: ["b"] },
+  };
+  const matching: ItemSnapshot = {
+    ...base,
+    type: "MATCHING",
+    section: "READING",
+    prompt: "Ordnen Sie zu.",
+    content: {
+      kind: "MATCHING",
+      left: [{ id: "l1", text: "Eins" }, { id: "l2", text: "Zwei" }],
+      right: [{ id: "r1", text: "Bild A", image: pic("1") }, { id: "r2", text: "Bild B", image: pic("2") }, { id: "r3", text: "Bild C", image: pic("3") }],
+    },
+    key: { kind: "MATCHING", pairs: { l1: "r1", l2: "r2" } },
+  };
+  const speaking: ItemSnapshot = {
+    ...base,
+    section: "SPEAKING",
+    type: "SPEAKING_PROMPT",
+    prompt: "Beschreiben Sie die Bilder.",
+    content: { kind: "SPEAKING", thinkSeconds: 30, answerSeconds: 60, maxTakes: 2, images: [pic("d"), pic("e")] },
+    key: { kind: "NONE" },
+    rubric: { contentPoints: ["x"] },
+  };
+
+  it("choice options carry the alias as slot, size and alt only", () => {
+    const pres = makePresentation(choice, mulberry32(7));
+    const item = toCandidateItem(choice, pres, null, 1, { maxPlays: 2 });
+    const json = JSON.stringify(item);
+    expect(json).not.toContain("bank/images");
+    expect(json).not.toContain("storageKey");
+    if (item.content.kind !== "CHOICE") throw new Error("kind");
+    const withPic = item.content.options.filter((o) => o.image);
+    expect(withPic).toHaveLength(2);
+    for (const o of withPic) {
+      expect(o.image!.slot).toBe(o.id);
+      expect(Object.keys(o.image!).sort()).toEqual(["alt", "h", "slot", "w"]);
+    }
+    expect(item.content.options.find((o) => o.id === pres.alias!.c)!.image).toBeUndefined();
+  });
+
+  it("matching targets carry the alias as slot", () => {
+    const pres = makePresentation(matching, mulberry32(8));
+    const item = toCandidateItem(matching, pres, null, 2, { maxPlays: 2 });
+    expect(JSON.stringify(item)).not.toMatch(/bank\/images|storageKey/);
+    if (item.content.kind !== "MATCHING") throw new Error("kind");
+    expect(item.content.right.map((r) => r.image?.slot)).toEqual(item.content.right.map((r) => r.id));
+  });
+
+  it("task pictures get the slots p0, p1", () => {
+    const item = toCandidateItem(speaking, {}, null, 3, { maxPlays: 2 });
+    expect(JSON.stringify(item)).not.toMatch(/bank\/images|storageKey/);
+    expect(item.content).toMatchObject({ images: [{ slot: "p0", w: 960, h: 640, alt: "Alt d" }, { slot: "p1", alt: "Alt e" }] });
+  });
+
+  it("items without pictures gain no image fields", () => {
+    expect(JSON.stringify(toCandidateItem(listening, makePresentation(listening, mulberry32(1)), null, 1, { maxPlays: 2 }))).not.toContain("image");
+  });
+
+  it("imageForSlot resolves aliases and pN back to the picture and refuses anything else", () => {
+    const pres = makePresentation(choice, mulberry32(7));
+    expect(imageForSlot(choice, pres, pres.alias!.a)?.storageKey).toBe(`bank/images/${"a".repeat(16)}.webp`);
+    expect(imageForSlot(choice, pres, pres.alias!.c)).toBeNull();
+    expect(imageForSlot(choice, pres, "a")).toBeNull();
+    expect(imageForSlot(choice, pres, "p0")).toBeNull();
+    expect(imageForSlot(speaking, {}, "p1")?.alt).toBe("Alt e");
+    expect(imageForSlot(speaking, {}, "p2")).toBeNull();
+    expect(imageForSlot(speaking, {}, "o00000")).toBeNull();
+    expect(imageForSlot(listening, {}, "p0")).toBeNull();
   });
 });

@@ -1,5 +1,5 @@
 import { buildCTestPool, buildWordBankPool, seedFromText } from "./ctest-pool";
-import { textGapKindOf, type ItemAnswer, type ItemSnapshot, type Presentation, type Section, type ItemType } from "./types";
+import { textGapKindOf, type ImageRef, type ItemAnswer, type ItemSnapshot, type Presentation, type Section, type ItemType } from "./types";
 
 /**
  * The only way an item reaches the student's browser.
@@ -15,11 +15,18 @@ import { textGapKindOf, type ItemAnswer, type ItemSnapshot, type Presentation, t
  * field names from every candidate response as a second line of defence.
  */
 
+/**
+ * A picture as the student's browser knows it: never a storage key, only an
+ * opaque slot to ask the image route for ("o3k9x1" for an option or target,
+ * "p0" for a task picture), its size and the alt text.
+ */
+export type CandidateImage = { slot: string; w: number; h: number; alt: string };
+
 export type CandidateContent =
   | {
       kind: "CHOICE";
       multiple: boolean;
-      options: Array<{ id: string; text: string }>;
+      options: Array<{ id: string; text: string; image?: CandidateImage }>;
       /** Multiple choice: exactly this many boxes are to be ticked ("Kreuzen Sie 4 Antworten an"). */
       pick?: number;
     }
@@ -43,11 +50,11 @@ export type CandidateContent =
   | {
       kind: "MATCHING";
       left: Array<{ id: string; text: string }>;
-      right: Array<{ id: string; text: string }>;
+      right: Array<{ id: string; text: string; image?: CandidateImage }>;
     }
   | { kind: "SHORT_TEXT"; maxChars: number }
-  | { kind: "WRITING"; minWords: number; maxWords: number; studentPoints?: string[] }
-  | { kind: "SPEAKING"; thinkSeconds: number; answerSeconds: number; maxTakes: number; studentPoints?: string[] };
+  | { kind: "WRITING"; minWords: number; maxWords: number; studentPoints?: string[]; images?: CandidateImage[] }
+  | { kind: "SPEAKING"; thinkSeconds: number; answerSeconds: number; maxTakes: number; studentPoints?: string[]; images?: CandidateImage[] };
 
 export type CandidateStimulus =
   | { kind: "READING"; title: string; text: string }
@@ -75,6 +82,9 @@ function ownLetter(text: string): { letter: string; label: string } | null {
   if (suffixed) return { letter: suffixed[1], label: t };
   return null;
 }
+
+/** The letter a matching target names itself by ("Bild A" gives "A"), or null when it names none. */
+export const targetLetter = (text: string): string | null => ownLetter(text)?.letter ?? null;
 
 export type LetteredTarget<T> = T & { badge: string; label: string };
 
@@ -146,6 +156,16 @@ function studentPointsOf(snapshot: ItemSnapshot): { studentPoints: string[] } | 
   return points.length ? { studentPoints: points } : {};
 }
 
+/** The slot of a task picture: its position in the task's `images`. */
+export const taskImageSlot = (index: number) => `p${index}`;
+
+/** The student's view of a picture: the slot instead of the key. Nothing else of the reference is copied. */
+const candidateImage = (image: ImageRef | undefined, slot: string): { image: CandidateImage } | Record<string, never> =>
+  image ? { image: { slot, w: image.w, h: image.h, alt: image.alt } } : {};
+
+const taskImages = (images: ImageRef[] | undefined): { images: CandidateImage[] } | Record<string, never> =>
+  images?.length ? { images: images.map((im, i) => ({ slot: taskImageSlot(i), w: im.w, h: im.h, alt: im.alt })) } : {};
+
 const pickAnswer = (a: ItemAnswer | null, al: (id: string) => string): ItemAnswer | null =>
   a
     ? {
@@ -173,7 +193,7 @@ export function toCandidateItem(
       content = {
         kind: "CHOICE",
         multiple: snapshot.type === "MULTI_CHOICE",
-        options: ordered(c.options, presentation.order).map((o) => ({ id: al(o.id), text: o.text })),
+        options: ordered(c.options, presentation.order).map((o) => ({ id: al(o.id), text: o.text, ...candidateImage(o.image, al(o.id)) })),
         ...(snapshot.type === "MULTI_CHOICE" && c.pick !== undefined ? { pick: c.pick } : {}),
       };
       break;
@@ -217,6 +237,7 @@ export function toCandidateItem(
         right: ordered(c.right, letteredTargets(c.right)?.map((r) => r.id) ?? presentation.order).map((r) => ({
           id: al(r.id),
           text: r.text,
+          ...candidateImage(r.image, al(r.id)),
         })),
       };
       break;
@@ -224,7 +245,7 @@ export function toCandidateItem(
       content = { kind: "SHORT_TEXT", maxChars: c.maxChars };
       break;
     case "WRITING":
-      content = { kind: "WRITING", minWords: c.minWords, maxWords: c.maxWords, ...studentPointsOf(snapshot) };
+      content = { kind: "WRITING", minWords: c.minWords, maxWords: c.maxWords, ...studentPointsOf(snapshot), ...taskImages(c.images) };
       break;
     case "SPEAKING":
       content = {
@@ -233,6 +254,7 @@ export function toCandidateItem(
         answerSeconds: c.answerSeconds,
         maxTakes: c.maxTakes,
         ...studentPointsOf(snapshot),
+        ...taskImages(c.images),
       };
       break;
   }
@@ -317,5 +339,26 @@ export function makePresentation(snapshot: ItemSnapshot, rng: () => number): Pre
 export function unalias(presentation: Presentation, id: string): string | null {
   if (!presentation.alias) return id;
   for (const [orig, a] of Object.entries(presentation.alias)) if (a === id) return orig;
+  return null;
+}
+
+/**
+ * Which picture of a snapshot a slot names, or null. Option and target slots
+ * are the presentation's aliases (the ids the student already sees), task
+ * slots are "p0", "p1", ... Used by the image route; the key never leaves it.
+ */
+export function imageForSlot(snapshot: ItemSnapshot, presentation: Presentation, slot: string): ImageRef | null {
+  const c = snapshot.content;
+  if (c.kind === "CHOICE" || c.kind === "MATCHING") {
+    const list: Array<{ id: string; image?: ImageRef }> = c.kind === "CHOICE" ? c.options : c.right;
+    const orig = unalias(presentation, slot);
+    if (orig === null) return null;
+    return list.find((x) => x.id === orig)?.image ?? null;
+  }
+  if (c.kind === "WRITING" || c.kind === "SPEAKING") {
+    const m = /^p(\d+)$/.exec(slot);
+    if (!m) return null;
+    return c.images?.[Number(m[1])] ?? null;
+  }
   return null;
 }
