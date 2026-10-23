@@ -1,5 +1,6 @@
 # Kademe - durum ve devir belgesi
 
+Tur 2, sahip geri bildirimi 2026-10-24 (`platform/solutions`, canlıya çıkmadı): bkz. "Tur 2: 2026-10-24" bölümü.
 Ürün turu 2026-10-23 (canlıda 2026-10-23, `main` `1eafbb4`): bkz. "Ürün turu 2026-10-23" ve "Canlıya çıkış: 2026-10-23 ürün turu" bölümleri.
 Campus German redesign, Plan 1 (2026-10-16, `platform/solutions`, canlıya çıkmadı): bkz. "Campus German redesign, Plan 1" bölümü.
 Dilbilgisi boşluklu metin ve kelime havuzu (2026-10-18, `platform/solutions`, canlıya çıkmadı): bkz. "Dilbilgisi: boşluklu metin ve kelime havuzu" bölümü.
@@ -471,6 +472,77 @@ Not checked: the system check beyond its first screen (this Chrome has a second 
   aynı akşam silindi. Depoda yalnız `bank/audio` kaldı (95 MB, disk boş 4,3 GB).
 - Yedek: `/root/kademe-backups/before-delete-students-20261016T193242Z.dump` (712 KB). Satırlar bundan geri gelir, dosyalar gelmez.
 - Sonrası: `LANGUAGE_EXAM` daveti 0, `attempts` 0, medya/kare/kayıt satırı 0, `/login` 200.
+
+## Tur 2: 2026-10-24 (sahibin canlı denemesinden sonra)
+
+Sahip: "not defteri gibi klavyeyle yazabilsin", "sağ üstte tutorial", "speaking tarafına da not", "A0 seviyesi
+olmalı, hiç bilgisi yoksa CEFR'e göre", "sorularda hep aynı formatlar var".
+
+- **Not defteri:** "Yaz / Çiz" (varsayılan Yaz, 5000 karakter, umlaut tuşları, sınavın kopyala/yapıştır kuralı
+  aynen). Konuşma ekranında da var, kapalı başlar (ilk ekran sığsın). Notlar yine yalnız tarayıcı oturumunda.
+- **"How it works" düğmesi:** soru ekranında sağ üstte, o bölümün tanıtımını açar; süre işler (pencerede yazıyor),
+  gözetim sesi/uyarısı açıkken susar, süre biterse pencere kapanır. xl altında yalnız simge.
+- **Format karışımı:** ilk kez giren öğrenci de seviye başına karışık format görür (önceden yalnız tekrar girende).
+  Hiçbir metin/kayıt/madde ilk kez girenlerin formlarının %60'ından fazlasına girmez (başlangıç bankasında en çok
+  %48). Okuma 2.66 -> 2.84, dinleme 2.32 -> 2.58 biçim/seviye; okuma ve dinlemede her seviye 2+ biçim. Ayrıntı
+  `docs/EXAM-ENGINE.md`, ölçüm `src/lib/exam/format-mix.test.ts`.
+- **A0 (Pre-A1):** yalnız SONUÇ seviyesi (`result_level` enum, göç 0027: 4 sütun cast); maddeler A1-C2 kalır.
+  - Nesnel bölüm: ya yeterli kanıtla A1 bandının altında, ya da cevaplanan birimlerde tahmin düzeyinde
+    ("AT_CHANCE": cevaplanan A1-A2 birimleri VE bütün cevaplananlar şansın üstünde değil; en az 16 A1-A2 birimi
+    sunulmuş olmalı, tamamen boş bölümde 8). Boş bırakılan kanıt sayılmaz; doğru cevap Almanca kanıtıdır.
+  - Yazma/konuşma: YZ A0'ı yalnız boş ya da hiç Almanca cümle yoksa önerir; öğretmen seçebilir.
+  - Genel sonuç yine alt medyan. AT_CHANCE genel sonucu A0'a çekerken havuz tahmini A1+ ise `CHANCE_BELOW_POOLED`:
+    sonuç kendiliğinden kesinleşmez/yayınlanmaz, öğretmene gider. A0 yerleştirme önerisi A1.1.
+  - Simülasyon (4000 öğrenci, iki tohum): Almancası yok -> A0 %94-100 (yerleştirmede yazma/konuşma A0 iken);
+    A1 band merkezi yanlış A0 %0-0.8; seviye kontrolü A2 iddiası + tahminle işaretleyen Almancasız öğrenci A0'ı
+    %45-47 alır ama %100 FAIL olur (kabul edildi). Kapılar değişmedi.
+  - Kabul edilen davranış değişiklikleri: A1 iddiasında HOLD_PROBABILITY_LOW çıkabilir; -3 çevresinde NEAR_CUT
+    ile biraz daha çok öğretmen incelemesi; CSV'de net A0 için A1.1.
+- Testler: tam `pnpm test` geçti (hiring `transaction-executor.test.ts` yük altında bir kez zaman aşımı, tek
+  başına geçer). Yerel `kademe_platform`'a 0027 uygulandı (öncesi yedek scratchpad'de).
+- **Chrome'da denenmedi** (eklenti bağlantısı koptu). Canlıya almadan önce ya da hemen sonra bakılacak: not
+  defteri iki mod + konuşma, sağ üst düğme 1024 ve 1366 genişlikte saatle çakışmıyor mu, sonuç sayfasında A0 ve
+  AT_CHANCE satırı.
+
+**Canlıya alma (tek adım, banka değişmez):** "canlıya al" gelince güvenli dağıtım betiği (pg_dump -> deploy ->
+`db:migrate` 0027 -> build). Sonra: `/login` 200, sunulan parçalarda "How it works" ve "Draw" metinleri,
+`select udt_name from information_schema.columns where table_name='exam_results' and column_name='final_overall'`
+-> `result_level`.
+
+**Geri dönüş (A0 satırları varsa, yalnız gerekirse):** önce 0027 öncesi koda dön ya da servisi durdur, sonra
+(bir `_check` DB'de denendi):
+
+```sql
+BEGIN;
+UPDATE exam_results SET overall_override = 'A1' WHERE overall_override = 'A0';
+UPDATE exam_results SET final_overall = 'A1' WHERE final_overall = 'A0';
+UPDATE response_gradings SET ai_level = 'A1' WHERE ai_level = 'A0';
+UPDATE response_gradings SET final_level = 'A1' WHERE final_level = 'A0';
+UPDATE exam_results SET final_skills = (
+  SELECT jsonb_object_agg(k, CASE WHEN v->>'level' = 'A0' THEN jsonb_set(v, '{level}', '"A1"') ELSE v END)
+  FROM jsonb_each(final_skills) AS e(k, v))
+WHERE final_skills IS NOT NULL AND jsonb_typeof(final_skills) = 'object' AND final_skills <> '{}'::jsonb;
+UPDATE exam_results SET skill_overrides = (
+  SELECT jsonb_object_agg(k, CASE WHEN v->>'level' = 'A0' THEN jsonb_set(v, '{level}', '"A1"') ELSE v END)
+  FROM jsonb_each(skill_overrides) AS e(k, v))
+WHERE skill_overrides <> '{}'::jsonb;
+UPDATE exam_results SET computed = jsonb_set(computed, '{overall}', '"A1"') WHERE computed->>'overall' = 'A0';
+UPDATE exam_results SET computed = jsonb_set(computed, '{skills}', (
+  SELECT jsonb_object_agg(k, CASE WHEN v->>'level' = 'A0' THEN jsonb_set(v - 'reason', '{level}', '"A1"') ELSE v END)
+  FROM jsonb_each(computed->'skills') AS e(k, v)))
+WHERE jsonb_typeof(computed->'skills') = 'object' AND computed->'skills' <> '{}'::jsonb;
+UPDATE exam_results SET computed = jsonb_set(computed, '{placement,recommended}', '"A1"') WHERE computed->'placement'->>'recommended' = 'A0';
+ALTER TABLE "exam_results" ALTER COLUMN "overall_override" SET DATA TYPE "public"."cefr_level" USING "overall_override"::text::"public"."cefr_level";
+ALTER TABLE "exam_results" ALTER COLUMN "final_overall" SET DATA TYPE "public"."cefr_level" USING "final_overall"::text::"public"."cefr_level";
+ALTER TABLE "response_gradings" ALTER COLUMN "ai_level" SET DATA TYPE "public"."cefr_level" USING "ai_level"::text::"public"."cefr_level";
+ALTER TABLE "response_gradings" ALTER COLUMN "final_level" SET DATA TYPE "public"."cefr_level" USING "final_level"::text::"public"."cefr_level";
+DROP TYPE "public"."result_level";
+DELETE FROM drizzle.__drizzle_migrations WHERE created_at = 1792787596655;
+COMMIT;
+```
+
+Son satır 0027'yi göç kaydından siler; sonraki dağıtım yeniden uygular. Çevrilen satırlar A1 okunur; A0 geçmişi
+revizyon tablolarında kalır.
 
 ## Canlıya çıkış: 2026-10-23 ürün turu (kullanıcı onayıyla: "canlıya alalım")
 
