@@ -721,7 +721,7 @@ Sehr geehrte Damen und Herren,
 
 mit Erstaunen habe ich gelesen, dass der Wochenmarkt vom Marktplatz auf den Parkplatz am Stadtrand verlegt werden soll. Ich gehe seit über zwanzig Jahren jeden Samstag auf den Markt, und ich bin nicht der Einzige. Viele ältere Menschen aus unserer Straße kaufen dort ein, weil sie nur einen kurzen Weg haben. Am Stadtrand müssten sie einen Bus nehmen, der samstags nur alle vierzig Minuten fährt.
 
-Die Stadt sagt, auf dem Marktplatz sei im Sommer wegen der Cafés zu wenig Platz. Das kann ich nicht ganz von der Hand weisen. Aber dann sollte man die Tische der Cafés verkleinern und nicht den Markt wegschicken. Ich schlage vor, dass die Händler und die Stadt zuerst gemeinsam nach einer Lösung suchen. Erst danach sollte der Gemeinderat entscheiden.
+Die Stadt sagt, auf dem Marktplatz sei im Sommer wegen der Cafés zu wenig Platz. Da hat die Stadt nicht ganz unrecht. Aber dann sollte man die Tische der Cafés verkleinern und nicht den Markt wegschicken. Ich schlage vor, dass die Händler und die Stadt zuerst gemeinsam nach einer Lösung suchen. Erst danach sollte der Gemeinderat entscheiden.
 
 Mit freundlichen Grüßen
 Walter Hofmann
@@ -787,7 +787,7 @@ Hülya: Ich bin auf einem Dorf aufgewachsen und zum Studium in die Stadt gezogen
 
 Ivo: Mir ist es ziemlich egal, wo ich wohne. Hauptsache, der Weg zur Arbeit ist kurz und die Wohnung nicht zu teuer. Im Moment wohne ich am Stadtrand, und das passt gut.
 
-Jana: Mit Kindern ist das Land für mich ideal. Draußen können sie allein spielen, und die Schule ist im Nachbardorf. Allerdings sehe ich meine Freunde aus der Stadt nur noch selten, weil sie kaum zu Besuch kommen.
+Jana: Mit Kindern ist das Land für mich ideal. Draußen können sie allein spielen, und die Schule ist im Nachbardorf. Allerdings sehe ich, seit wir aufs Land gezogen sind, meine Freunde aus der Stadt nur noch selten, weil sie kaum zu Besuch kommen.
 `,
 );
 const wohnen = forText(rWohnen.key);
@@ -1023,7 +1023,7 @@ const readingItems: SeedItem[] = [
       ["Er findet, dass die Stadt mit ihrem Argument völlig falsch liegt.", "F"],
       ["Er möchte, dass zuerst Händler und Stadt gemeinsam nach einer Lösung suchen.", "R"],
     ],
-    "„seit über zwanzig Jahren jeden Samstag“ (Ja). Das Platzargument kann er „nicht ganz von der Hand weisen“, also liegt die Stadt nicht ganz falsch (Nein). Erst danach soll der Gemeinderat entscheiden (Ja)."),
+    "„seit über zwanzig Jahren jeden Samstag“ (Ja). Zum Platzargument sagt er „Da hat die Stadt nicht ganz unrecht“ (Nein). Erst danach soll der Gemeinderat entscheiden (Ja)."),
   markt.choice("detail", "MID",
     "Warum wäre der neue Platz für viele ältere Menschen ein Problem?",
     "Sie müssten mit dem Bus fahren, der samstags nur selten kommt.",
@@ -1250,7 +1250,7 @@ const werkstatt = forClip(lWerkstatt.key);
 // ---- Clip 5: radio tip, two voices
 
 const lFreibad = clip(
-  "v2-l-b1-freibad-tipp-v2",
+  "v2-l-b1-freibad-tipp-v3",
   "Freizeittipp im Radio",
   "Freizeit und Sport",
   [
@@ -1259,7 +1259,7 @@ const lFreibad = clip(
   ],
   [
     "Tobias Kern: Und jetzt unser Freizeittipp für das Wochenende. Meine Kollegin Nina Roth war für uns im Freibad am Südpark. Nina, was gibt es Neues?",
-    "Nina Roth: Hallo Tobias. Also, das Freibad macht in diesem Jahr schon am ersten Mai auf, zwei Wochen früher als sonst. Und der Eintritt ist billiger geworden: vier Euro fünfzig statt fünf Euro.",
+    "Nina Roth: Hallo Tobias. Also, das Freibad macht in diesem Jahr schon am ersten Mai auf, zwei Wochen früher als sonst. Und der Eintritt ist billiger geworden: vier Euro fünfzig statt fünf Euro. Kinder unter sechs Jahren kommen übrigens kostenlos rein.",
     "Tobias Kern: Das ist doch mal eine gute Nachricht. Und wann kann man schwimmen gehen?",
     "Nina Roth: Montag bis Freitag von zehn bis zwanzig Uhr, am Wochenende schon ab acht. Aber Achtung, bei Regen bleibt das Becken geschlossen. Dann kann man wenigstens in die Sauna, nein, Entschuldigung, die ist erst im Herbst wieder offen. Bei Regen ist also alles zu.",
     "Tobias Kern: Gut zu wissen. Danke dir, Nina!",
@@ -1488,11 +1488,11 @@ const listeningItems: SeedItem[] = [
     "Nina Roth verbessert sich: Die Sauna ist erst im Herbst wieder offen, „bei Regen ist also alles zu“."),
   freibad.tfng("detail", "MID",
     [
-      ["Das Freibad öffnet in diesem Jahr zur gleichen Zeit wie im letzten Jahr.", "F"],
-      ["Am Wochenende kann man schon früher als unter der Woche schwimmen gehen.", "R"],
-      ["Im Sommer ist auch die Sauna geöffnet.", "F"],
+      ["Unter der Woche kann man bis zwanzig Uhr schwimmen.", "R"],
+      ["Am Wochenende öffnet das Bad später als unter der Woche.", "F"],
+      ["Kleine Kinder müssen keinen Eintritt bezahlen.", "R"],
     ],
-    "Das Bad öffnet zwei Wochen früher als sonst (F); am Wochenende „ab acht“, sonst ab zehn (R); die Sauna erst im Herbst (F)."),
+    "Montag bis Freitag „von zehn bis zwanzig Uhr“ (R); am Wochenende „schon ab acht“, also früher (F); Kinder unter sechs Jahren „kostenlos“ (R)."),
 
   // ---- Clip 6 (table completion)
   tanzkurs.notes("detail", "MID",
@@ -1505,7 +1505,7 @@ const listeningItems: SeedItem[] = [
     [
       ["14", "14.", "vierzehnten", "am 14.", "am vierzehnten", "der 14.", "der vierzehnte"],
       ["Dienstag", "dienstags", "am Dienstag", "Di", "Di."],
-      ["19.30", "19:30", "19 30", "19 Uhr 30", "neunzehn Uhr dreißig", "halb acht", "19.30 Uhr", "19:30 Uhr", "um 19.30", "um 19:30", "19.30-21", "19:30-21:00", "19.30 bis 21", "19.30 bis 21 Uhr", "19:30 bis 21:00", "19.30-21.00", "halb acht bis neun", "halb acht"],
+      ["19.30", "19:30", "19 30", "19 Uhr 30", "neunzehn Uhr dreißig", "halb acht", "19.30 Uhr", "19:30 Uhr", "um 19.30", "um 19:30", "19.30-21", "19:30-21:00", "19.30 bis 21", "19.30 bis 21 Uhr", "19:30 bis 21:00", "19.30-21.00", "19.30 bis 21.00 Uhr", "halb acht bis neun", "halb acht bis neun Uhr"],
       ["120", "hundertzwanzig", "120 Euro", "hundertzwanzig Euro", "120,00", "120 €", "120€", "120 EUR"],
     ],
     "Beginn: erst „zwölften“, dann Korrektur auf „vierzehnten“ Oktober; Dienstag; „neunzehn Uhr dreißig“ (= halb acht; auch die Angabe mit Ende, bis einundzwanzig Uhr, wird akzeptiert); „hundertzwanzig Euro“ für den ganzen Kurs, zweimal genannt."),
@@ -1554,10 +1554,10 @@ const listeningItems: SeedItem[] = [
   grillparty.tfng("detail", "MID",
     [
       ["Ole besorgt die Musikanlage für das Fest.", "R"],
-      ["Im Gemeinschaftsraum ist Platz für dreißig Personen.", "R"],
+      ["Das Fest beginnt um siebzehn Uhr.", "F"],
       ["Pia macht auch einen Salat für alle.", "F"],
     ],
-    "Ole holt die Anlage von seinem Cousin (R). Im Gemeinschaftsraum „passen dreißig Leute rein“ (R). Den Salat macht Mila (F)."),
+    "Ole holt die Anlage von seinem Cousin (R). Es geht um „achtzehn Uhr“ (Ruben ist bis fünf bei der Arbeit) (F). Den Salat macht Mila (F)."),
 
   // ---- Clip 8 (table completion, announcement)
   bahn.notes("detail", "MID",
@@ -1575,7 +1575,7 @@ const listeningItems: SeedItem[] = [
     ],
     "Abfahrt: Der Zug um acht Uhr vierzig fährt nur samstags, am Freitag fährt er um neun Uhr zehn (Korrektur). Gleis neun; Umsteigen in Mannheim; Ankunft zwölf Uhr vierzehn."),
   bahn.choice("detail", "MID",
-    "Wie viel Zeit hat die Reisende in Mannheim zum Umsteigen?",
+    "Wie viel Zeit hat die Reisende beim Umsteigen?",
     "Acht Minuten, sie muss also recht schnell zum Anschlusszug gehen.",
     [
       "Achtzehn Minuten, sie kann in Ruhe noch einen Kaffee trinken.",
@@ -1587,10 +1587,10 @@ const listeningItems: SeedItem[] = [
   bahn.tfng("detail", "MID",
     [
       ["Die Reisende muss auf dem Weg nach Freiburg einmal umsteigen.", "R"],
-      ["Der Zug um acht Uhr vierzig fährt auch am Freitag.", "F"],
+      ["Der Regionalzug nach Karlsruhe fährt pünktlich ab.", "F"],
       ["Die Fahrt nach Freiburg dauert etwa drei Stunden.", "R"],
     ],
-    "Umsteigen in Mannheim (R). Der frühe Zug fährt „nur samstags“ (F). Von 9.10 Uhr bis 12.14 Uhr sind es gut drei Stunden (R)."),
+    "Umsteigen in Mannheim (R). Die Durchsage nennt „zehn Minuten Verspätung“ (F). Von 9.10 Uhr bis 12.14 Uhr sind es gut drei Stunden (R)."),
 ];
 
 // ================================================================ WRITING
@@ -1955,7 +1955,7 @@ function pictureTask(
 function pictureTasks(): SeedItem[] {
   return [
     pictureTask("scene.b1.city-cycling", "EASY",
-      "Wie kommen die Menschen in Ihrer Stadt oder Region meistens zur Arbeit, zur Schule oder zum Einkaufen? Was spricht für oder gegen das Fahrrad in der Stadt? Wie finden Sie das?",
+      "Wie kommen die Menschen in Ihrer Stadt oder Region meistens zur Arbeit, zur Schule oder zum Einkaufen? Was spricht für oder gegen das Fahrrad in der Stadt? Fahren Sie selbst gern Fahrrad? Warum (nicht)?",
       [
         "beschreibt das Bild: viele Menschen fahren in einer Stadt mit dem Fahrrad",
         "vergleicht mit der eigenen Stadt oder Region (Radwege, Verkehrsmittel, Wege im Alltag)",
@@ -1973,14 +1973,14 @@ function pictureTasks(): SeedItem[] {
       ],
       ["was auf dem Bild zu sehen ist", "Ihre eigene Erfahrung", "Vor- und Nachteile", "Ihre Meinung"]),
     pictureTask("scene.b1.library-study-group", "MID",
-      "Wo und mit wem lernen Sie am liebsten? Gibt es in Ihrer Stadt oder Region Orte zum gemeinsamen Lernen? Lernen Sie lieber allein oder in der Gruppe? Warum?",
+      "Wo lernen Sie am liebsten? Gibt es in Ihrer Stadt oder Region Orte zum gemeinsamen Lernen? Lernen Sie lieber allein oder in der Gruppe? Warum?",
       [
         "beschreibt das Bild: eine Gruppe von Studierenden lernt zusammen an einem Tisch",
-        "erzählt, wo und mit wem man selbst am liebsten lernt",
+        "erzählt, wo man selbst am liebsten lernt",
         "beschreibt Orte zum Lernen in der eigenen Stadt oder Region",
         "nennt Vor- oder Nachteile des Lernens in der Gruppe und begründet die eigene Meinung",
       ],
-      ["was auf dem Bild zu sehen ist", "wo und mit wem Sie am liebsten lernen", "Orte zum Lernen in Ihrer Stadt oder Region", "allein oder in der Gruppe: Ihre Meinung mit Gründen"]),
+      ["was auf dem Bild zu sehen ist", "wo Sie am liebsten lernen", "Orte zum Lernen in Ihrer Stadt oder Region", "allein oder in der Gruppe: Ihre Meinung mit Gründen"]),
     pictureTask("scene.b1.open-air-concert", "MID",
       "Waren Sie schon einmal bei einem Konzert oder einem Fest im Freien? Was gibt es in Ihrer Stadt oder Region für Veranstaltungen? Gehen Sie gern hin?",
       [
@@ -2014,8 +2014,8 @@ function slideTalk(
     "Folie 1: Einleitung\n" +
     "Folie 2: Eigene Erfahrung\n" +
     "Folie 3: Situation in Ihrer Stadt oder Region\n" +
-    "Folie 4: Vor- und Nachteile\n" +
-    "Folie 5: Schluss";
+    "Folie 4: Vor- und Nachteile, Ihre Meinung\n" +
+    "Folie 5: Schluss und Dank";
   return {
     section: "SPEAKING",
     level: LEVEL,
@@ -2044,8 +2044,8 @@ function slideTalks(): SeedItem[] {
     "das Thema vorstellen",
     "Ihre eigene Erfahrung",
     "die Situation in Ihrer Stadt oder Region",
-    "Vor- und Nachteile",
-    "Schluss (mit Dank an die Zuhörer)",
+    "Vor- und Nachteile, Ihre Meinung",
+    "Schluss und Dank",
   ];
   return [
     slideTalk("MID", { thinkSeconds: 90, answerSeconds: 150 }, "Mit dem Fahrrad durch die Stadt", points("Fahrrad in der Stadt"), student),
