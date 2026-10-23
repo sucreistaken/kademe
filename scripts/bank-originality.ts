@@ -13,6 +13,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { SEED_BANK } from "../src/db/seed-bank";
 import { addSource, findHits, itemStrings, stimulusStrings, type SeedString, type SourceIndex } from "../src/db/seed-bank/originality";
+import { ALLOWED_INSTRUCTIONS } from "../src/db/seed-bank/originality-allow";
 import { seedItemKey } from "../src/db/seed-bank/seed-key";
 import { parseArgs } from "../src/db/seed-bank/blind-items";
 
@@ -32,7 +33,7 @@ for (const it of SEED_BANK.items) if (!only || it.level === only) strings.push(.
 
 let hitStrings = 0;
 for (const s of strings) {
-  const hits = findHits(s.text, index);
+  const hits = findHits(s.text, index, ALLOWED_INSTRUCTIONS);
   if (hits.length === 0) continue;
   hitStrings++;
   console.log(`HIT ${s.level} ${s.section} ${s.where}: ${hits.length} shingle(s)`);

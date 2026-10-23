@@ -1,3 +1,4 @@
+import { ALLOWED_INSTRUCTIONS } from "./originality-allow";
 import { describe, expect, it } from "vitest";
 import {
   addSource,
@@ -71,5 +72,20 @@ describe("bank strings", () => {
     const reading: SeedStimulus = { ...base, section: "READING", body: "Hinweis: Guten Tag." };
     expect(stimulusStrings(listening)[1].text).toBe("Guten Tag.\nHallo.");
     expect(stimulusStrings(reading)[1].text).toBe("Hinweis: Guten Tag.");
+  });
+});
+
+describe("allowed instruction formulas", () => {
+  const index: SourceIndex = new Map();
+  addSource(index, "buch.txt", "Nehmen Sie Stellung und begründen Sie Ihre Meinung. Gehen Sie auf die Frage ein.");
+  it("does not count a shingle made only of allowed instruction phrases", () => {
+    const seed = "Und begründen Sie Ihre Meinung. Gehen Sie auf";
+    expect(findHits(seed, index)).toHaveLength(1);
+    expect(findHits(seed, index, ALLOWED_INSTRUCTIONS)).toEqual([]);
+  });
+  it("still counts an 8-word overlap that is not covered by allowed phrases", () => {
+    const idx: SourceIndex = new Map();
+    addSource(idx, "buch.txt", "Der Zug nach Hamburg fährt jeden Morgen pünktlich um sieben ab.");
+    expect(findHits("Der Zug nach Hamburg fährt jeden Morgen pünktlich", idx, ALLOWED_INSTRUCTIONS)).toHaveLength(1);
   });
 });

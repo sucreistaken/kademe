@@ -57,11 +57,39 @@ export function addSource(index: SourceIndex, name: string, text: string): void 
 
 export type OriginalityHit = { shingle: string; source: string };
 
-export function findHits(text: string, index: SourceIndex): OriginalityHit[] {
+/** Token positions of `words` that lie inside an occurrence of an allowed phrase. */
+function coveredPositions(words: string[], allowed: readonly string[]): boolean[] {
+  const covered = new Array<boolean>(words.length).fill(false);
+  for (const phrase of allowed) {
+    const p = tokenize(phrase);
+    if (p.length === 0) continue;
+    for (let i = 0; i + p.length <= words.length; i++) {
+      if (p.every((w, j) => words[i + j] === w)) for (let j = 0; j < p.length; j++) covered[i + j] = true;
+    }
+  }
+  return covered;
+}
+
+/**
+ * Shingles of `text` that appear in the index. A shingle whose 8 words all lie
+ * inside occurrences of `allowed` phrases (standard exam instructions) in the
+ * seed string does not count.
+ */
+export function findHits(text: string, index: SourceIndex, allowed: readonly string[] = []): OriginalityHit[] {
+  const words = tokenize(text);
+  const covered = allowed.length ? coveredPositions(words, allowed) : [];
+  const seen = new Set<string>();
   const hits: OriginalityHit[] = [];
-  for (const s of shingles(text)) {
-    const source = index.get(s);
-    if (source) hits.push({ shingle: s, source });
+  for (let i = 0; i + SHINGLE_SIZE <= words.length; i++) {
+    const window = words.slice(i, i + SHINGLE_SIZE);
+    if (isStopShingle(window)) continue;
+    if (allowed.length && covered.slice(i, i + SHINGLE_SIZE).every(Boolean)) continue;
+    const shingle = window.join(" ");
+    const source = index.get(shingle);
+    if (source && !seen.has(shingle)) {
+      seen.add(shingle);
+      hits.push({ shingle, source });
+    }
   }
   return hits;
 }
