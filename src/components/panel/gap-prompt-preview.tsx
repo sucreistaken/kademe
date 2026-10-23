@@ -1,3 +1,4 @@
+import { GapTable } from "@/components/gap-table";
 import { hasGapLayout, splitGapLayout } from "@/lib/exam/gap-layout";
 
 /** Gap markers shown as [g1] in the teacher's view. */
@@ -37,32 +38,7 @@ export function GapPromptPreview({ prompt }: { prompt: string }) {
             </dl>
           );
         }
-        return (
-          <div key={i} className="overflow-x-auto">
-            <table className="w-full border-collapse text-[15px]">
-              <thead>
-                <tr>
-                  {b.header.map((h, ci) => (
-                    <th key={ci} scope="col" className="border border-line bg-canvas px-3 py-1.5 text-start font-bold">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {b.rows.map((row, ri) => (
-                  <tr key={ri}>
-                    {row.map((cell, ci) => (
-                      <td key={ci} className="border border-line px-3 py-1.5">
-                        {show(cell)}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        );
+        return <GapTable key={i} header={b.header} rows={b.rows} idPrefix={`gp${i}`} compact renderCell={(c) => show(c.text)} />;
       })}
     </div>
   );

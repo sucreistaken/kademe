@@ -60,3 +60,11 @@ describe("splitGapLayout on the starter bank", () => {
     }
   });
 });
+
+describe("bare rows with an empty last cell", () => {
+  it("keeps the row in the table", () => {
+    const blocks = splitGapLayout("Fund | Angabe | Notiz\nMünzen | {{g1}} |\nKamm | {{g2}} | im Museum");
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]).toMatchObject({ kind: "table", rows: [["Münzen", "{{g1}}", ""], ["Kamm", "{{g2}}", "im Museum"]] });
+  });
+});

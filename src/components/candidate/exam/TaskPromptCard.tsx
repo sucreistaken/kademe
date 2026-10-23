@@ -1,6 +1,9 @@
 "use client";
 
+import { useId } from "react";
 import { useLocale } from "next-intl";
+import { GapTable } from "@/components/gap-table";
+import { splitGapLayout } from "@/lib/exam/gap-layout";
 import { coverPointsFor, layoutTaskBlocks, parseTaskPrompt, type TaskSegment } from "@/lib/exam/task-prompt";
 import { useT } from "@/i18n/candidate-client";
 import { dirOf, isCandidateLocale } from "@/i18n/locale";
@@ -107,9 +110,19 @@ export function TaskPromptCard({ text, id, points, pointsId }: { text: string; i
   // The card is German (left to right); the "Your task" label is the interface and keeps the student's language and direction.
   const uiLocale = useLocale();
   const ui: UiText = isCandidateLocale(uiLocale) ? { lang: uiLocale, dir: dirOf(uiLocale) } : {};
-  const { topic, card, blocks } = parseTaskPrompt(text);
-  const segments = layoutTaskBlocks(blocks);
-  const firstTasks = segments.findIndex((s) => s.kind === "tasks");
+  const tableId = useId();
+  // A pipe table in the task is shown as a read-only table; the prose around it is laid out as before.
+  const parts = splitGapLayout(text);
+  const parsed = parts.map((p) => {
+    if (p.kind === "table") return null;
+    const { topic, card, blocks } = parseTaskPrompt(p.kind === "prose" ? p.text : "");
+    return { topic, card, segments: layoutTaskBlocks(blocks) };
+  });
+  const lead = parsed.find((p) => p !== null) ?? null;
+  const topic = lead?.topic ?? null;
+  const card = lead?.card ?? null;
+  // The "Your task" heading goes over the first task list, wherever the table sits.
+  let headed = false;
   const cover = coverPointsFor(text, points);
   return (
     <>
@@ -126,9 +139,17 @@ export function TaskPromptCard({ text, id, points, pointsId }: { text: string; i
             <div className="mt-2 text-[26px] font-semibold leading-[1.3]">{card.text}</div>
           </div>
         ) : null}
-        {segments.map((seg, i) => (
-          <Segment key={i} seg={seg} heading={i === firstTasks ? t("taskHeading") : null} ui={ui} />
-        ))}
+        {parts.map((p, pi) =>
+          p.kind === "table" ? (
+            <GapTable key={pi} header={p.header} rows={p.rows} idPrefix={`${tableId}-${pi}`} />
+          ) : (
+            parsed[pi]?.segments.map((seg, i) => {
+              const heading = !headed && seg.kind === "tasks" ? t("taskHeading") : null;
+              if (heading) headed = true;
+              return <Segment key={`${pi}-${i}`} seg={seg} heading={heading} ui={ui} />;
+            })
+          ),
+        )}
       </div>
       {cover.length > 0 ? <CoverPoints points={cover} ui={ui} id={pointsId} /> : null}
     </>

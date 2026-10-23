@@ -21,17 +21,15 @@ const FORM_LINE = /^([^:{}]{1,40}):\s*(.*\{\{g\d+\}\}.*)$/;
 const SEPARATOR = /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?\s*$/;
 
 function cellsOf(line: string): string[] {
-  return line
-    .trim()
-    .replace(/^\|/, "")
-    .replace(/\|$/, "")
-    .split("|")
-    .map((c) => c.trim());
+  const t = line.trim();
+  // A framed row ("| a | b |") drops both outer pipes; a bare row keeps a trailing one as an empty last cell.
+  const body = t.startsWith("|") ? t.replace(/^\|/, "").replace(/\|$/, "") : t;
+  return body.split("|").map((c) => c.trim());
 }
 
 const hasPipe = (line: string) => line.includes("|");
 /** A bare table line separates its cells with a pipe that has a space on both sides. */
-const hasBareCells = (line: string) => / \| /.test(line);
+const hasBareCells = (line: string) => / \|(?: |$)/.test(line.trim());
 
 /** The table starting at `lines[i]`, with the index after its last line, or null. */
 function tableAt(lines: string[], i: number): { header: string[]; rows: string[][]; end: number } | null {

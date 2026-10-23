@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { matchingTargets, type CandidateItem } from "@/lib/exam/safe";
 import { withPoolInstruction } from "@/lib/exam/ctest-instruction";
+import { GapTable } from "@/components/gap-table";
 import { hasGapLayout, splitGapLayout } from "@/lib/exam/gap-layout";
 import { splitInstruction, splitPromptBlocks, splitTitle, type PromptBlock } from "@/lib/exam/prompt-instruction";
 import { coverPointsFor } from "@/lib/exam/task-prompt";
@@ -422,8 +423,15 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
       const gap = gaps.get(id);
       if (!gap) return <span key={id}>____</span>;
       const value = answer.gaps?.[id] ?? "";
-      const label = labelledBy ? { "aria-labelledby": labelledBy } : { "aria-label": gapLabel(id) };
-      return gap.choices ? (
+      // Several inputs can share a row label and column header, so each also names itself ("Boşluk 2").
+      const ownId = `${layoutId}-g-${id}`;
+      const label = labelledBy ? { "aria-labelledby": `${labelledBy} ${ownId}` } : { "aria-label": gapLabel(id) };
+      const own = labelledBy ? (
+        <span key={`${id}-label`} id={ownId} className="sr-only">
+          {gapLabel(id)}
+        </span>
+      ) : null;
+      const control = gap.choices ? (
         <select
           key={id}
           value={value}
@@ -452,6 +460,7 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
           {...NO_ASSIST}
         />
       );
+      return own ? [own, control] : control;
     };
     const inline = (text: string, labelledBy?: string) =>
       text.split(/(\{\{[A-Za-z0-9_-]+\}\})/g).map((part, i) => {
@@ -490,39 +499,13 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
               );
             }
             return (
-              <div key={bi} className="overflow-x-auto">
-                <table className="w-full border-collapse text-[16px] leading-[1.5]">
-                  <thead>
-                    <tr>
-                      {b.header.map((h, ci) => (
-                        <th key={ci} id={rid(`h${bi}`, 0, ci)} scope="col" className="border border-line bg-canvas px-3 py-2 text-start font-bold">
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {b.rows.map((row, ri) => (
-                      <tr key={ri}>
-                        {row.map((cell, ci) => {
-                          // The row label (first cell, when it holds no gap) and the column header name every input of the cell.
-                          const rowHead = !row[0].includes("{{") && ci > 0 ? `${rid(`r${bi}`, ri)} ` : "";
-                          const labelledBy = `${rowHead}${rid(`h${bi}`, 0, ci)}`;
-                          return ci === 0 && !cell.includes("{{") ? (
-                            <th key={ci} id={rid(`r${bi}`, ri)} scope="row" className="border border-line px-3 py-2 text-start font-semibold">
-                              {cell}
-                            </th>
-                          ) : (
-                            <td key={ci} className="border border-line px-3 py-2 align-middle">
-                              {inline(cell, labelledBy)}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <GapTable
+                key={bi}
+                header={b.header}
+                rows={b.rows}
+                idPrefix={`${layoutId}-t${bi}`}
+                renderCell={(c) => inline(c.text, c.labelledBy)}
+              />
             );
           })}
         </div>

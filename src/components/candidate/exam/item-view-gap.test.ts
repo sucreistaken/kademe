@@ -91,4 +91,12 @@ describe("gap items", () => {
     expect(html).not.toContain("aria-labelledby");
     expect(html).toContain("<span>Ich wohne in </span><input");
   });
+
+  it("gives each input of a cell its own name on top of the row and column labels", () => {
+    const html = render(typedItem("Ergänzen Sie.\n\nFund | Angabe\nBrücke | von {{g1}} bis {{g2}}\nKamm | {{g3}}", ["g1", "g2", "g3"]));
+    const names = [...html.matchAll(/<input[^>]*aria-labelledby="([^"]+)"/g)].map((m) => m[1]);
+    expect(names).toHaveLength(3);
+    expect(new Set(names).size).toBe(3);
+    for (const n of names) expect(n.split(" ")).toHaveLength(3);
+  });
 });
