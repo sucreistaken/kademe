@@ -1,4 +1,4 @@
-import { panelLocaleOf, type CandidateLocale, type Locale } from "@/i18n/locale";
+import { contentLocale, panelLocaleOf, type CandidateLocale, type Locale } from "@/i18n/locale";
 
 /** The consent copy exists in Turkish and English only; it is never machine-translated. */
 type ConsentBody = { tr: string; en: string };
@@ -17,6 +17,6 @@ export function consentIsFallback(locale: CandidateLocale): boolean {
  */
 export function consentShownLocale(locale: CandidateLocale, body: Partial<ConsentBody>, asked?: unknown): Locale {
   if (consentIsFallback(locale) && asked === "tr" && body.tr) return "tr";
-  const wanted = panelLocaleOf(locale);
+  const wanted = contentLocale(panelLocaleOf(locale));
   return body[wanted] ? wanted : "tr";
 }

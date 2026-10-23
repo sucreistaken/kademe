@@ -12,6 +12,7 @@ import { openingAccess } from "@/solutions/hiring/rules/access";
 import { firstInviteLines, formatInviteDeadline, MAX_INVITE_TEXT, parseInviteRows } from "@/solutions/hiring/rules/invitation";
 import { createHiringInvitation, type InviteRefusal } from "@/solutions/hiring/server/invitations";
 import { loadOpening } from "@/solutions/hiring/server/openings";
+import { contentLocale } from "@/i18n/locale";
 
 export type InviteOneResult =
   | { ok: true; url: string; name: string; expires: string; message: { subject: string; body: string } }
@@ -97,7 +98,7 @@ export async function inviteCandidateAction(input: unknown): Promise<InviteOneRe
   if (!parsed.success) return { ok: false, code: "FAILED" };
   const gated = await gate(parsed.data.openingId, parsed.data.deadline);
   if (!gated.ok) return gated;
-  const result = await inviteOne(gated.user, parsed.data, await managerLocale());
+  const result = await inviteOne(gated.user, parsed.data, contentLocale(await managerLocale()));
   if (result.ok) revalidatePath(`/hiring/openings/${parsed.data.openingId}`, "layout");
   return result;
 }
@@ -117,7 +118,7 @@ export async function inviteManyAction(input: unknown): Promise<{ results: Invit
   if (!parsed.success) return { results: [{ line: 0, fullName: "", email: "", result: { ok: false, code: "FAILED" } }] };
   const gated = await gate(parsed.data.openingId, parsed.data.deadline);
   if (!gated.ok) return { results: [{ line: 0, fullName: "", email: "", result: gated }] };
-  const locale = await managerLocale();
+  const locale = contentLocale(await managerLocale());
   const results: InviteManyRow[] = [];
   for (const row of parseInviteRows(parsed.data.text).rows.filter((r) => r.problem === null)) {
     const result = await inviteOne(gated.user, { openingId: parsed.data.openingId, fullName: row.fullName, email: row.email, locale: parsed.data.locale, deadline: parsed.data.deadline, allowDuplicate: false }, locale);

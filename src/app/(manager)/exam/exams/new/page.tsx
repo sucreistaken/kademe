@@ -5,6 +5,7 @@ import { managerT } from "@/i18n/manager";
 import { enabledSections, estimatedMinutes } from "@/lib/exam/blueprint";
 import { EXAM_TEMPLATES } from "@/lib/exam/templates";
 import { bankCounts } from "@/server/panel";
+import { contentLocale } from "@/i18n/locale";
 
 export const dynamic = "force-dynamic";
 
@@ -21,8 +22,8 @@ export default async function NewExamPage() {
   const templates: ExamTemplateCard[] = EXAM_TEMPLATES.map((x) => ({
     key: x.key,
     mode: x.mode,
-    name: x.name[locale],
-    summary: x.summary[locale],
+    name: x.name[contentLocale(locale)],
+    summary: x.summary[contentLocale(locale)],
     config: x.config,
     meta: t("exams.templateMeta", {
       mode: t(`mode.${x.mode}`),

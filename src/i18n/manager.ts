@@ -1,17 +1,23 @@
 import { createTranslator } from "next-intl";
-import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
+import { DEFAULT_LOCALE, type PanelLocale } from "@/i18n/locale";
 import baseTr from "@/i18n/messages/manager.tr.json";
 import baseEn from "@/i18n/messages/manager.en.json";
+import baseDe from "@/i18n/messages/manager.de.json";
 import settingsTr from "@/i18n/messages/settings.tr.json";
 import settingsEn from "@/i18n/messages/settings.en.json";
+import settingsDe from "@/i18n/messages/settings.de.json";
 import screensTr from "@/i18n/messages/screens.tr.json";
 import screensEn from "@/i18n/messages/screens.en.json";
+import screensDe from "@/i18n/messages/screens.de.json";
 import libraryTr from "@/i18n/messages/library.tr.json";
 import libraryEn from "@/i18n/messages/library.en.json";
+import libraryDe from "@/i18n/messages/library.de.json";
 import hiringTr from "@/i18n/messages/hiring.tr.json";
 import hiringEn from "@/i18n/messages/hiring.en.json";
+import hiringDe from "@/i18n/messages/hiring.de.json";
 import advancedTr from "@/i18n/messages/advanced.tr.json";
 import advancedEn from "@/i18n/messages/advanced.en.json";
+import advancedDe from "@/i18n/messages/advanced.de.json";
 
 /**
  * Manager-side dictionaries, mirroring `@/i18n/candidate`: the panel never ships
@@ -55,9 +61,19 @@ const en: ManagerMessages = {
   ...advancedEn,
 } satisfies ManagerMessages;
 
-export const managerMessages: Record<Locale, ManagerMessages> = { tr, en };
+// German is a copy of English until the translation pass: same keys, same types.
+const de: ManagerMessages = {
+  ...baseDe,
+  ...settingsDe,
+  ...screensDe,
+  ...libraryDe,
+  ...hiringDe,
+  ...advancedDe,
+} satisfies ManagerMessages;
 
-export function managerMessagesFor(locale: Locale): ManagerMessages {
+export const managerMessages: Record<PanelLocale, ManagerMessages> = { tr, en, de };
+
+export function managerMessagesFor(locale: PanelLocale): ManagerMessages {
   return managerMessages[locale] ?? managerMessages[DEFAULT_LOCALE];
 }
 
@@ -65,6 +81,6 @@ export function managerMessagesFor(locale: Locale): ManagerMessages {
  * A translator for server components and server actions. Client components use
  * `useMT()` under the provider instead.
  */
-export function managerT(locale: Locale) {
+export function managerT(locale: PanelLocale) {
   return createTranslator({ locale, messages: managerMessagesFor(locale) });
 }

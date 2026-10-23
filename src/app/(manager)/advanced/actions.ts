@@ -11,6 +11,7 @@ import { routeRequest } from "@/server/create/router";
 import { requireUser } from "@/server/session";
 import { creatorByKind, creatorsFor } from "@/solutions/registry.server";
 import type { CreateActionResult, CreateRefusal, Creator, CreatorCtx } from "@/solutions/types";
+import { contentLocale } from "@/i18n/locale";
 
 /**
  * The Advanced box (spec 2026-10-06-advanced-ai-create-design 5.5). Every
@@ -28,7 +29,7 @@ async function own(user: SessionUser, draftId: unknown): Promise<CreationDraftRo
 }
 
 async function ctxOf(user: SessionUser, draftId: string): Promise<CreatorCtx> {
-  return { orgId: user.orgId, userId: user.id, role: user.role, locale: await managerLocale(), draftId };
+  return { orgId: user.orgId, userId: user.id, role: user.role, locale: contentLocale(await managerLocale()), draftId };
 }
 
 /** The creator's draft step, under its own AI limit, recorded on the row either way. */
@@ -191,11 +192,11 @@ export async function startFollowUp(draftId: string, index: number): Promise<Cre
   if (!creator) return refuse("STATE");
   authorize(user, creator.capability);
   const locale = await managerLocale();
-  const checked = creator.validate(follow.params, locale, { useDefaults: true });
+  const checked = creator.validate(follow.params, contentLocale(locale), { useDefaults: true });
   if (!checked.ok) return refuse("INVALID");
-  const next = await insertDraft({ orgId: user.orgId, userId: user.id, request: follow.label[locale] });
+  const next = await insertDraft({ orgId: user.orgId, userId: user.id, request: follow.label[contentLocale(locale)] });
   await auditDraft(user.orgId, user.id, "create.route", next.id, { outcome: "FOLLOW_UP", kind: creator.kind, from: row.id });
-  const result = await buildDraft(user, creator, await ctxOf(user, next.id), checked.params, follow.label[locale], []);
+  const result = await buildDraft(user, creator, await ctxOf(user, next.id), checked.params, follow.label[contentLocale(locale)], []);
   revalidatePath("/advanced");
   return result.ok ? { ...result, href: `/advanced?draft=${next.id}` } : result;
 }

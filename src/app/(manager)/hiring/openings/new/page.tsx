@@ -7,6 +7,7 @@ import { requireUser } from "@/server/session";
 import { copySources, positionOptions } from "@/solutions/hiring/server/openings";
 import { templateCards } from "@/solutions/hiring/server/templates";
 import { templateByKey } from "@/solutions/hiring/templates/index";
+import { contentLocale } from "@/i18n/locale";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,7 @@ export default async function NewOpeningPage({ searchParams }: { searchParams: P
   const copy = typeof sp.copy === "string" && isUuid(sp.copy) ? sp.copy : null;
   // Mockup 4b's gallery in the panel's language; each card also carries its TR and EN names, so a
   // position named like a template preselects it (matchTemplate's rule) without the templates' content.
-  const templates = templateCards(locale).map((card) => {
+  const templates = templateCards(contentLocale(locale)).map((card) => {
     const name = templateByKey(card.key)?.name;
     return { ...card, names: name ? [name.tr, name.en] : [card.name] };
   });

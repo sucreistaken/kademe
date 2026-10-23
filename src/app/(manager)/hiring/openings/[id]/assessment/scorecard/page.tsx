@@ -19,6 +19,7 @@ import { workingState } from "@/solutions/hiring/server/working";
 import { openingFor } from "../../access";
 import { AssessmentNav, OpeningHeader } from "../../opening-header";
 import { matrixOf, pickVersion, viewContent } from "./data";
+import { contentLocale } from "@/i18n/locale";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +51,7 @@ export default async function ScorecardPage({
   if (!pick || !state.content) notFound();
   const content = await viewContent(pick, state.content, (versionId) => loadVersionContent(user.orgId, versionId));
   if (!content) notFound();
-  const matrix = matrixOf(content, locale, t);
+  const matrix = matrixOf(content, contentLocale(locale), t);
 
   let rows: ScorecardRow[];
   let enabled: boolean;
@@ -65,7 +66,7 @@ export default async function ScorecardPage({
       const f = state.facts.get(cid);
       return {
         id: cid,
-        name: pickText(f?.name, locale),
+        name: pickText(f?.name, contentLocale(locale)),
         missingLevels: f ? missingAnchorLevels(f.anchors) : [],
         measuredBy: matrix.measuredBy(cid),
         anchors: f?.anchors ?? {},
@@ -75,13 +76,13 @@ export default async function ScorecardPage({
     enabled = content.weightsEnabled;
     // Saved weights as they are (a competency added since has none: WEIGHTS_MISSING); otherwise the profile's.
     weights = content.weightsEnabled && content.draftWeights ? content.draftWeights : defaultWeights(used, profile);
-    levels = (scale?.levels ?? []).map((l) => ({ value: l.value, label: pickText(l.label, locale) }));
+    levels = (scale?.levels ?? []).map((l) => ({ value: l.value, label: pickText(l.label, contentLocale(locale)) }));
   } else {
     const [card, latest] = await Promise.all([loadScorecard(user.orgId, pick.version.id), liveWeights(user.orgId, pick.version.id)]);
     if (!card) notFound();
     rows = card.competencies.map((c) => ({
       id: c.id,
-      name: pickText(c.name, locale),
+      name: pickText(c.name, contentLocale(locale)),
       missingLevels: [],
       measuredBy: matrix.measuredBy(c.id),
       anchors: c.anchors,
@@ -92,7 +93,7 @@ export default async function ScorecardPage({
       : { enabled: card.weightsEnabled, weights: Object.fromEntries(card.competencies.map((c) => [c.id, c.weight])) };
     enabled = baseline.enabled;
     weights = baseline.weights;
-    levels = card.scale.levels.map((l) => ({ value: l.value, label: pickText(l.label, locale) }));
+    levels = card.scale.levels.map((l) => ({ value: l.value, label: pickText(l.label, contentLocale(locale)) }));
     if (latest) {
       const date = shortDate(latest.createdAt, locale);
       setNote = latest.reason ? t("hiringScorecard.activeSetDated", { date, reason: latest.reason }) : t("hiringScorecard.activeSetPublished", { date });
@@ -118,7 +119,7 @@ export default async function ScorecardPage({
 
   return (
     <main className="mx-auto max-w-[1360px] px-page py-8">
-      <OpeningHeader opening={opening} active="assessment" locale={locale} t={t} />
+      <OpeningHeader opening={opening} active="assessment" locale={contentLocale(locale)} t={t} />
       <div className="mt-4">
         <AssessmentNav opening={opening} active="scorecard" t={t} wizardStep="questions" />
       </div>

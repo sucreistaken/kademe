@@ -13,6 +13,7 @@ import { managerT } from "@/i18n/manager";
 import { bankCounts } from "@/server/panel";
 import { requireUser } from "@/server/session";
 import { sectionsWait, startDraft, wizardConfig, type ExamStart, type SectionChoice } from "./new/wizard-model";
+import { contentLocale } from "@/i18n/locale";
 
 /**
  * Exams (blueprints). A published exam never changes: invitations already
@@ -59,7 +60,7 @@ export async function createExamAction(input: CreateExamInput): Promise<CreateEx
         : null;
   const template = start?.kind === "template" ? examTemplateByKey(start.key) : null;
   if (!start || (start.kind === "template" && !template)) return { ok: false, code: "TEMPLATE" };
-  const draft = startDraft(start, template ? [{ key: template.key, mode: template.mode, name: template.name[locale], config: template.config }] : []);
+  const draft = startDraft(start, template ? [{ key: template.key, mode: template.mode, name: template.name[contentLocale(locale)], config: template.config }] : []);
   if (!draft) return { ok: false, code: "TEMPLATE" };
   const choices = Array.isArray(input.sections) ? input.sections.filter((c) => c && typeof c.section === "string").map((c) => ({ section: c.section, enabled: c.enabled === true, minutes: Number(c.minutes) })) : [];
   if (sectionsWait(choices) || !draft.config.sections.some((s) => choices.find((c) => c.section === s.section)?.enabled)) return { ok: false, code: "NO_SECTION" };
@@ -69,7 +70,7 @@ export async function createExamAction(input: CreateExamInput): Promise<CreateEx
   const config = parsed.data;
   const typed = typeof input.name === "string" ? input.name.trim().slice(0, 120) : "";
   const t = managerT(locale);
-  const name = typed || (template ? template.name[locale] : t(draft.mode === "PLACEMENT" ? "examWizard.defaultNamePlacement" : "examWizard.defaultNameVerification"));
+  const name = typed || (template ? template.name[contentLocale(locale)] : t(draft.mode === "PLACEMENT" ? "examWizard.defaultNamePlacement" : "examWizard.defaultNameVerification"));
   if (input.publish && !bankCoverage(await bankCounts(user.orgId), config, draft.mode, null).ok) return { ok: false, code: "COVERAGE" };
   try {
     const now = new Date();
@@ -78,7 +79,7 @@ export async function createExamAction(input: CreateExamInput): Promise<CreateEx
       .values({
         orgId: user.orgId,
         name,
-        description: template ? template.summary[locale] : "",
+        description: template ? template.summary[contentLocale(locale)] : "",
         mode: draft.mode,
         status: input.publish ? "PUBLISHED" : "DRAFT",
         config,

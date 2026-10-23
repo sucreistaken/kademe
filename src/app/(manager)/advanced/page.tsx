@@ -13,6 +13,7 @@ import { requireUser } from "@/server/session";
 import { creatorByKind, creatorsFor } from "@/solutions/registry.server";
 import type { AdvancedCard } from "@/solutions/types";
 import { answerQuestions, applyDraft, discardDraft, reviseDraft, startCreate, startFollowUp } from "./actions";
+import { contentLocale } from "@/i18n/locale";
 
 export const dynamic = "force-dynamic";
 /** The server actions on this page run the AI inline (spec 5.5); this covers them (route segment config, maxDuration.md). */
@@ -49,9 +50,9 @@ export default async function AdvancedPage({ searchParams }: { searchParams: Pro
   const creators = creatorsFor(user);
   const builder = creators.length > 0;
   const row = builder && typeof sp.draft === "string" ? await loadOwnDraft(user.orgId, user.id, sp.draft) : null;
-  const [cards, recent] = await Promise.all([advancedAreaCards(user.orgId, locale), builder ? recentDrafts(user.orgId, user.id) : Promise.resolve([])]);
-  const kinds = creators.map((c) => c.label[locale]);
-  const kindLabel = (kind: CreationDraftRow["kind"]) => (kind ? (creatorByKind(kind)?.label[locale] ?? kind) : t("advancedCreate.kindUnknown"));
+  const [cards, recent] = await Promise.all([advancedAreaCards(user.orgId, contentLocale(locale)), builder ? recentDrafts(user.orgId, user.id) : Promise.resolve([])]);
+  const kinds = creators.map((c) => c.label[contentLocale(locale)]);
+  const kindLabel = (kind: CreationDraftRow["kind"]) => (kind ? (creatorByKind(kind)?.label[contentLocale(locale)] ?? kind) : t("advancedCreate.kindUnknown"));
 
   const failureText = (d: CreationDraftRow): string => {
     switch (d.failure) {
@@ -76,14 +77,14 @@ export default async function AdvancedPage({ searchParams }: { searchParams: Pro
         const creator = creators.find((c) => c.kind === d.kind);
         if (!creator) return null;
         return creator.renderReview({
-          ctx: { orgId: user.orgId, userId: user.id, role: user.role, locale, draftId: d.id },
+          ctx: { orgId: user.orgId, userId: user.id, role: user.role, locale: contentLocale(locale), draftId: d.id },
           draft: d.draft,
           summary: d.summary ?? "",
           actions: { apply: applyDraft, discard: discardDraft, revise: reviseDraft },
         });
       }
       case "APPLIED":
-        return d.result ? <AppliedResult draftId={d.id} outcome={d.result} locale={locale} followUpAction={startFollowUp} /> : null;
+        return d.result ? <AppliedResult draftId={d.id} outcome={d.result} locale={contentLocale(locale)} followUpAction={startFollowUp} /> : null;
       case "FAILED":
         return (
           <Card className="space-y-2 p-card">

@@ -15,7 +15,7 @@ import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
 import { can } from "@/lib/authorize";
 import { noticeOf, one } from "@/lib/url-notice";
-import { shortDate } from "@/lib/format";
+import { shortDate, intlTag } from "@/lib/format";
 import { orgDay, zoneLabel } from "@/lib/org-timezone";
 import { loadPanelUsers } from "@/server/settings";
 import { canDecide } from "@/solutions/hiring/rules/access";
@@ -35,6 +35,7 @@ import { OverviewOnly, PUBLISHED_NOTICE_ID, PublishFooter, PublishSwitch, SETUP_
 import { SETUP_LABEL, setupNext, setupProgress, setupRowsOf, setupSkips } from "./setup-steps";
 import { setupHref } from "@/components/hiring/wizard/setup-model";
 import { startDraftAction } from "./assessment/edit/actions";
+import { contentLocale } from "@/i18n/locale";
 
 export const dynamic = "force-dynamic";
 
@@ -95,9 +96,9 @@ export default async function OpeningOverviewPage({
   const noTeam = target !== null && target.evaluators === 0;
   const deadlinePassed = target?.deadlineDay != null && target.deadlineDay < today;
   const view = funnelView(funnel, opening.finishSurveyEnabled);
-  const number = new Intl.NumberFormat(locale === "tr" ? "tr-TR" : "en-GB", { maximumFractionDigits: 1 });
+  const number = new Intl.NumberFormat(intlTag(locale), { maximumFractionDigits: 1 });
   const content = state.content;
-  const describe = (p: PublishProblem) => (content ? describeProblem(p, { content, facts: state.facts, locale, openingId: opening.id }, t) : null);
+  const describe = (p: PublishProblem) => (content ? describeProblem(p, { content, facts: state.facts, locale: contentLocale(locale), openingId: opening.id }, t) : null);
   const base = `/hiring/openings/${opening.id}`;
   const reason = closed
     ? t("hiringOverview.closedBody")
@@ -111,7 +112,7 @@ export default async function OpeningOverviewPage({
   const waitReason = block ? t(`hiringInvite.reason${block}`) : inviteWaitReason(closed, access.edit, t);
 
   // The setup path (4.5): the readiness rows, the advice steps passed with "Atla" (?skip=), then "Yayınla".
-  const setupRows = setupRowsOf({ state, opening, people, t, locale });
+  const setupRows = setupRowsOf({ state, opening, people, t, locale: contentLocale(locale) });
   const skipped = setupSkips(sp.skip);
   const progress = setupProgress(setupRows, skipped);
   const next = setupNext(setupRows, opening.id, skipped);
@@ -262,7 +263,7 @@ export default async function OpeningOverviewPage({
   return (
     // Header and body share one width, so the filled button stays next to the list it depends on.
     <main className="mx-auto max-w-[960px] px-page py-8">
-      <OpeningHeader opening={opening} active="overview" locale={locale} t={t} action={action} menu={menu} />
+      <OpeningHeader opening={opening} active="overview" locale={contentLocale(locale)} t={t} action={action} menu={menu} />
       {published ? (
         <UrlNotice params={NOTICE_PARAMS}>
           {/* B-M2: after "Yayınla" the summary and the setup card are gone; the focus lands here (PublishSwitch). */}

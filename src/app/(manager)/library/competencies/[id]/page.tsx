@@ -15,6 +15,7 @@ import { libraryUsage, loadCompetency, loadDefaultScale, type CompetencyDetail }
 import { isUuid } from "@/server/settings";
 import { requireUser } from "@/server/session";
 import { archiveCompetencyAction, restoreCompetencyAction } from "../../actions";
+import { contentLocale } from "@/i18n/locale";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +44,7 @@ export default async function CompetencyPage({
   if (!competency) notFound();
   const [scale, usage, sp] = await Promise.all([
     loadDefaultScale(user.orgId),
-    libraryUsage(user.orgId, { positionIds: [], competencyIds: [id] }, locale, user),
+    libraryUsage(user.orgId, { positionIds: [], competencyIds: [id] }, contentLocale(locale), user),
     searchParams,
   ]);
   const groups = usage.competencies[id] ?? [];
@@ -56,7 +57,7 @@ export default async function CompetencyPage({
       </Link>
       <div className="mt-3">
         <PageTitle
-          title={pickText(competency.name, locale)}
+          title={pickText(competency.name, contentLocale(locale))}
           sub={competency.archivedAt ? t("libCompetencies.archivedNote") : competency.seededUnreviewed ? t("libCompetencies.seeded") : undefined}
         />
       </div>
@@ -69,7 +70,7 @@ export default async function CompetencyPage({
           archived={competency.archivedAt !== null}
           seededUnreviewed={competency.seededUnreviewed}
           liveCount={liveCount(groups)}
-          locale={locale}
+          locale={contentLocale(locale)}
         />
         <aside className="space-y-6">
           <UsageBlock

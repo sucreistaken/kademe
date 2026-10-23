@@ -11,7 +11,7 @@ import {
 } from "@/db/schema";
 import { sha256 } from "@/lib/auth";
 import { windowProblem } from "@/lib/exam-window";
-import { CANDIDATE_LOCALES, panelLocaleOf, type CandidateLocale, type Locale } from "@/i18n/locale";
+import { CANDIDATE_LOCALES, contentLocale, panelLocaleOf, type CandidateLocale, type Locale } from "@/i18n/locale";
 
 /**
  * The candidate side of the core, server only. Every solution's candidate flow
@@ -147,7 +147,7 @@ export async function recordConsent(
   ip: string | null,
   userAgent: string | null,
   /** The language of the consent text the student was shown (consentShownLocale); defaults to the panel language of theirs. */
-  shown: Locale = panelLocaleOf(ctx.locale),
+  shown: Locale = contentLocale(panelLocaleOf(ctx.locale)),
 ) {
   await db.insert(consents).values({
     assessmentId: ctx.assessment.id,

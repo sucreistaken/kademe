@@ -11,6 +11,7 @@ import { bankCounts, listStudents, publishedBlueprints } from "@/server/panel";
 import { requireUser } from "@/server/session";
 import { isCurrentTemplate } from "@/server/template-blueprint";
 import { managerLocale } from "@/i18n/manager-locale";
+import { contentLocale } from "@/i18n/locale";
 
 export const dynamic = "force-dynamic";
 
@@ -54,8 +55,8 @@ export default async function InvitePage({ searchParams }: { searchParams: Promi
       value: examChoiceValue({ kind: "template", key: tpl.key }),
       group: "template" as const,
       templateKey: tpl.key,
-      name: tpl.name[locale],
-      summary: tpl.summary[locale],
+      name: tpl.name[contentLocale(locale)],
+      summary: tpl.summary[contentLocale(locale)],
       mode: tpl.mode,
       published: publishedTemplates.has(tpl.key),
       ...shape(tpl.config),

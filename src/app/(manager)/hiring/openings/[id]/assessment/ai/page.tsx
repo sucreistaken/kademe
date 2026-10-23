@@ -10,6 +10,7 @@ import { workingState } from "@/solutions/hiring/server/working";
 import { openingFor } from "../../access";
 import { AssessmentTabs, OpeningHeader } from "../../opening-header";
 import { setupStrip } from "../../setup-strip";
+import { contentLocale } from "@/i18n/locale";
 
 export const dynamic = "force-dynamic";
 
@@ -44,13 +45,13 @@ export default async function AiDraftPage({
   const content = state.content;
   if (!content) notFound();
   // 4.5: where a draft's setup path stands, for someone who may edit it (only the people are read; null otherwise).
-  const setup = await setupStrip({ orgId: user.orgId, opening, access, t, locale, state });
+  const setup = await setupStrip({ orgId: user.orgId, opening, access, t, locale: contentLocale(locale), state });
   const draftKey = noticeOf(sp, "draft", DRAFT_NOTICES);
   const draftNotice = draftKey ? t(draftKey) : null;
 
   return (
     <main className="mx-auto max-w-[1360px] px-page py-8">
-      <OpeningHeader opening={opening} active="assessment" locale={locale} t={t} setup={setup} />
+      <OpeningHeader opening={opening} active="assessment" locale={contentLocale(locale)} t={t} setup={setup} />
       <div className="mt-4">
         <AssessmentTabs openingId={opening.id} active="ai" t={t} />
       </div>
@@ -64,7 +65,7 @@ export default async function AiDraftPage({
       <AiDraft
         openingId={opening.id}
         initialJobAd={position?.jobDescription ?? ""}
-        library={options.map((o) => ({ id: o.id, name: pickText(o.name, locale) }))}
+        library={options.map((o) => ({ id: o.id, name: pickText(o.name, contentLocale(locale)) }))}
         locales={content.localeSet}
         mode={opening.status === "CLOSED" ? "closed" : state.draft ? "draft" : "live"}
         canEdit={access.edit}

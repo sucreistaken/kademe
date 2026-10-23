@@ -3,11 +3,11 @@ import {
   DEFAULT_AUTH_LOCALE,
   DEFAULT_LOCALE,
   isAuthLocale,
-  isLocale,
-  localeFromAcceptLanguage,
+  isPanelLocale,
+  panelLocaleFromAcceptLanguage,
   panelLocaleOf,
   type AuthLocale,
-  type Locale,
+  type PanelLocale,
 } from "@/i18n/locale";
 
 /**
@@ -27,17 +27,17 @@ export const MANAGER_LOCALE_COOKIE = "kademe-lang";
 /** One year. The panel language is not something anyone wants to re-pick. */
 export const MANAGER_LOCALE_MAX_AGE = 60 * 60 * 24 * 365;
 
-export async function managerLocale(): Promise<Locale> {
+export async function managerLocale(): Promise<PanelLocale> {
   const jar = await cookies();
   const chosen = jar.get(MANAGER_LOCALE_COOKIE)?.value;
-  if (isLocale(chosen)) return chosen;
-  // German or Spanish picked on the sign-in screen: the panel has no such
-  // dictionary, and English is the nearer choice than Turkish.
+  if (isPanelLocale(chosen)) return chosen;
+  // Spanish picked on the sign-in screen: the panel has no such dictionary,
+  // and English is the nearer choice than Turkish.
   if (isAuthLocale(chosen)) return panelLocaleOf(chosen);
   // Nobody has chosen yet: the browser's preference beats a hard default, but
   // only on the first render, because the switch writes the cookie.
   const header = (await headers()).get("accept-language");
-  return header ? localeFromAcceptLanguage(header) : DEFAULT_LOCALE;
+  return header ? panelLocaleFromAcceptLanguage(header) : DEFAULT_LOCALE;
 }
 
 /**

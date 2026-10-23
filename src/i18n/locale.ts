@@ -73,11 +73,43 @@ export function dirOf(locale: CandidateLocale): "ltr" | "rtl" {
 }
 
 /**
- * The panel only speaks Turkish and English. Anything a teacher reads that is
- * derived from a student's locale (review notes, reports) maps through here.
+ * The languages the admin panel speaks. `Locale` (tr/en) stays the language of
+ * database content (`I18nText`) and of the hiring candidate flow; the panel adds
+ * German on top of it.
  */
-export function panelLocaleOf(locale: CandidateLocale): Locale {
-  return locale === "tr" ? "tr" : "en";
+export const PANEL_LOCALES = ["tr", "en", "de"] as const;
+
+export type PanelLocale = (typeof PANEL_LOCALES)[number];
+
+export function isPanelLocale(value: unknown): value is PanelLocale {
+  return typeof value === "string" && (PANEL_LOCALES as readonly string[]).includes(value);
+}
+
+/**
+ * The content language behind a panel language. Database content (`I18nText`)
+ * and hiring copy exist only in tr/en, so German reads the English text.
+ */
+export function contentLocale(panel: PanelLocale): Locale {
+  return panel === "tr" ? "tr" : "en";
+}
+
+/**
+ * The panel speaks Turkish, English and German. Anything a teacher reads that
+ * is derived from a student's locale (review notes, reports) maps through here;
+ * Spanish and Arabic students' notes are read in English.
+ */
+export function panelLocaleOf(locale: CandidateLocale): PanelLocale {
+  return locale === "tr" || locale === "de" ? locale : "en";
+}
+
+/** Accept-Language for the panel's first render: tr, en or de, else the default. */
+export function panelLocaleFromAcceptLanguage(header: string | null): PanelLocale {
+  if (!header) return DEFAULT_LOCALE;
+  for (const part of header.split(",")) {
+    const tag = part.split(";")[0].trim().toLowerCase().slice(0, 2);
+    if (isPanelLocale(tag)) return tag;
+  }
+  return DEFAULT_LOCALE;
 }
 
 /**

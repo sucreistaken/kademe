@@ -7,6 +7,7 @@ import { orgDay, zoneLabel } from "@/lib/org-timezone";
 import { formatInviteDeadline } from "@/solutions/hiring/rules/invitation";
 import { extendHiringLink, markRequestHandled, newHiringLink } from "@/solutions/hiring/server/invitations";
 import { editableOpening, runningOpening } from "../access";
+import { contentLocale } from "@/i18n/locale";
 
 export type NewLinkResult =
   | { ok: true; url: string; expires: string; name: string; message: { subject: string; body: string } }
@@ -44,7 +45,7 @@ export async function newLinkAction(openingId: string, assessmentId: string): Pr
     return {
       ok: true,
       url: outcome.url,
-      expires: formatInviteDeadline(orgDay(outcome.expiresAt), locale, zoneLabel(locale)),
+      expires: formatInviteDeadline(orgDay(outcome.expiresAt), contentLocale(locale), zoneLabel(contentLocale(locale))),
       name: outcome.name,
       message: outcome.message,
     };

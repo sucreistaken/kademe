@@ -1,0 +1,56 @@
+{
+  "nav": {
+    "dashboard": "Today",
+    "students": "Students",
+    "exams": "Exams",
+    "bank": "Question bank",
+    "settings": "Settings",
+    "openMenu": "Open menu",
+    "menuTitle": "Menu",
+    "menuDescription": "Panel menu",
+    "signOut": "Sign out",
+    "language": "Sprache",
+    "languageTr": "TR",
+    "languageEn": "EN",
+    "languageDe": "DE",
+    "more": "More actions",
+    "advanced": "Advanced"
+  },
+  "common": {
+    "save": "Save",
+    "saving": "Saving",
+    "saved": "Saved",
+    "cancel": "Cancel",
+    "back": "Back",
+    "loading": "Loading",
+    "undo": "Undo",
+    "search": "Search",
+    "none": "None",
+    "undoing": "Undoing"
+  },
+  "errorPage": {
+    "forbiddenTitle": "Your role cannot do this",
+    "forbiddenBody": "You do not have permission for this screen or action. Reviewers grade writing and speaking; exams, the bank and invitations are for teachers and owners.",
+    "genericTitle": "Something went wrong",
+    "genericBody": "An unexpected error happened while loading this page. You can try again or go back to the dashboard.",
+    "retry": "Try again",
+    "toDashboard": "Back to the dashboard",
+    "reference": "Error code: {digest}"
+  },
+  "flow": {
+    "continue": "Continue",
+    "back": "Back",
+    "backToSummary": "Back to the summary",
+    "exit": "Leave",
+    "exitUnsaved": "Leave without saving",
+    "change": "Change",
+    "changed": "changed",
+    "stepLabel": "Step {n} / {total}",
+    "noChanges": "Nothing has changed.",
+    "skip": "Skip"
+  },
+  "brand": {
+    "byline": "a Campus German product",
+    "madeWith": "Prepared with Kademe, a Campus German product."
+  }
+}

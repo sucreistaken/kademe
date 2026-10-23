@@ -14,7 +14,7 @@ import { StatusDot } from "@/components/ui/status-dot";
 import { Textarea } from "@/components/ui/textarea";
 import { ChoiceCardGroup } from "@/components/visual/choice-card";
 import { useMT } from "@/i18n/manager-client";
-import { DEFAULT_LOCALE, isLocale, type Locale } from "@/i18n/locale";
+import { DEFAULT_LOCALE, contentLocale, isPanelLocale, type Locale } from "@/i18n/locale";
 import { firstInviteLines, formatInviteDay, MAX_INVITE_ROWS, parseInviteRows } from "@/solutions/hiring/rules/invitation";
 import { inviteCandidateAction, inviteManyAction, type InviteOneResult } from "@/app/(manager)/hiring/invite/actions";
 import { CopyField } from "./copy-field";
@@ -82,7 +82,7 @@ export function InviteForm({
   const common = useMT("hiringCommon");
   const flow = useMT("flow");
   const appLocale = useLocale();
-  const uiLocale: Locale = isLocale(appLocale) ? appLocale : DEFAULT_LOCALE;
+  const uiLocale: Locale = isPanelLocale(appLocale) ? contentLocale(appLocale) : DEFAULT_LOCALE;
   const [openingId, setOpeningId] = useState<string>(
     initialOpeningId && openings.some((o) => o.id === initialOpeningId) ? initialOpeningId : openings.length === 1 ? openings[0].id : "",
   );

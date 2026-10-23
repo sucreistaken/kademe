@@ -8,6 +8,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
 import { buildNav } from "@/solutions/registry";
+import { contentLocale } from "@/i18n/locale";
 
 /**
  * Panel shell (HIRING-UX 4.1): a 240px grouped side menu (Today, one group per
@@ -25,8 +26,8 @@ export default async function ManagerLayout({ children }: { children: React.Reac
     .map((p) => p[0])
     .slice(0, 2)
     .join("")
-    .toLocaleUpperCase(locale === "tr" ? "tr" : "en");
-  const groups = buildNav(locale, { today: t("nav.dashboard"), settings: t("nav.settings"), advanced: t("nav.advanced") });
+    .toLocaleUpperCase(locale);
+  const groups = buildNav(contentLocale(locale), { today: t("nav.dashboard"), settings: t("nav.settings"), advanced: t("nav.advanced") });
 
   return (
     <SidebarProvider lang={locale} style={{ "--sidebar-width": "240px" } as React.CSSProperties}>

@@ -12,6 +12,7 @@ import { managerT } from "@/i18n/manager";
 import { resolveSigningSecret } from "@/lib/signing-secret";
 import { loadIntegrityView, loadResultView } from "@/server/panel";
 import { requireUser } from "@/server/session";
+import { contentLocale } from "@/i18n/locale";
 
 export const dynamic = "force-dynamic";
 
@@ -105,7 +106,7 @@ export default async function IntegrityReportPage({ params }: { params: Promise<
         </div>
         <PrintButton label={t("resultReport.print")} />
       </div>
-      <IntegrityReportSheet model={model} t={t} locale={locale} />
+      <IntegrityReportSheet model={model} t={t} locale={contentLocale(locale)} />
     </main>
   );
 }

@@ -19,6 +19,7 @@ import { TONE } from "./[id]/opening-header";
 import { SETUP_LABEL } from "./[id]/setup-steps";
 import { loadCockpit, type CockpitRow } from "./cockpit";
 import { ScrollTo } from "./scroll-to";
+import { contentLocale } from "@/i18n/locale";
 
 export const dynamic = "force-dynamic";
 
@@ -121,7 +122,7 @@ export default async function OpeningsPage({ searchParams }: { searchParams: Pro
   const t = managerT(locale);
   const sp = await searchParams;
   const tab = cockpitTab(sp.tab);
-  const { runs, drafts, open, closed } = await loadCockpit(user, t, locale);
+  const { runs, drafts, open, closed } = await loadCockpit(user, t, contentLocale(locale));
   const total = drafts.length + open.length + closed.length;
   const addButton = runs ? (
     <Button asChild variant="primary">
@@ -163,7 +164,7 @@ export default async function OpeningsPage({ searchParams }: { searchParams: Pro
         .filter(Boolean)
         .join(" ")
     : t("hiringOpenings.summaryViewer", { count: total });
-  const rows = (list: CockpitRow[]) => list.map((row) => <Row key={row.opening.id} row={row} runs={runs} locale={locale} t={t} />);
+  const rows = (list: CockpitRow[]) => list.map((row) => <Row key={row.opening.id} row={row} runs={runs} locale={contentLocale(locale)} t={t} />);
 
   return (
     <main className="mx-auto max-w-[1360px] px-page py-8">

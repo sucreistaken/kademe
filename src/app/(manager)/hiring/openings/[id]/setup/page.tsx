@@ -14,6 +14,7 @@ import { workingState } from "@/solutions/hiring/server/working";
 import { openingFor } from "../access";
 import type { PublishNotice } from "../actions";
 import { describeProblem } from "../problems";
+import { contentLocale } from "@/i18n/locale";
 
 export const dynamic = "force-dynamic";
 
@@ -57,13 +58,13 @@ export default async function OpeningSetupPage({
 
   const archived = [...state.facts.values()].filter((f) => f.archived);
   const competencies = [
-    ...options.map((o) => ({ id: o.id, name: pickText(o.name, locale), archived: false })),
-    ...archived.map((f) => ({ id: f.id, name: pickText(f.name, locale), archived: true })),
+    ...options.map((o) => ({ id: o.id, name: pickText(o.name, contentLocale(locale)), archived: false })),
+    ...archived.map((f) => ({ id: f.id, name: pickText(f.name, contentLocale(locale)), archived: true })),
   ];
   const first = state.problems[0] ?? null;
   const blocking = first
     ? {
-        text: describeProblem(first, { content, facts: state.facts, locale, openingId: opening.id }, t).text,
+        text: describeProblem(first, { content, facts: state.facts, locale: contentLocale(locale), openingId: opening.id }, t).text,
         // An anchor or a weight is fixed on the scorecard: the footer offers that way there.
         scorecard: (ANCHOR_PROBLEMS as readonly string[]).includes(first.code) || (WEIGHT_PROBLEMS as readonly string[]).includes(first.code),
       }
@@ -80,7 +81,7 @@ export default async function OpeningSetupPage({
         key={content.id}
         openingId={opening.id}
         kicker={state.live ? t("hiringWizard.kickerEdit", { name: opening.name, number: content.number }) : t("hiringWizard.kicker", { name: opening.name })}
-        locale={locale}
+        locale={contentLocale(locale)}
         contentLocale={content.defaultLocale}
         stages={content.stages}
         competencies={competencies}
@@ -88,7 +89,7 @@ export default async function OpeningSetupPage({
         canDraft={Boolean(position?.jobDescription?.trim())}
         blocking={blocking}
         scorecard={{ ...line, href: `${base}/assessment/scorecard` }}
-        preview={{ ...candidatePreview(content, locale), href: `${base}/assessment/preview` }}
+        preview={{ ...candidatePreview(content, contentLocale(locale)), href: `${base}/assessment/preview` }}
         me={user.id}
         users={people.map((u) => ({ id: u.id, name: u.name, role: u.role, disabled: u.disabledAt !== null }))}
         saved={{

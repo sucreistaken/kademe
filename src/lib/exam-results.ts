@@ -13,7 +13,7 @@ import {
   transcripts,
 } from "@/db/schema";
 import type { FinalSkill } from "@/db/schema/exam";
-import { panelLocaleOf } from "@/i18n/locale";
+import { contentLocale, panelLocaleOf } from "@/i18n/locale";
 import { callJson } from "@/lib/ai-runs";
 import { enabledSections } from "@/lib/exam/blueprint";
 import { medianLevel } from "@/lib/exam/cefr";
@@ -158,7 +158,7 @@ export async function runGrading(gradingId: string): Promise<GradingOutcome> {
   const taskLevel = row.grading.taskLevel;
   const rubric = snap.rubric ?? { contentPoints: [] };
   // Teachers read the rationale; the panel language of the school is Turkish by default.
-  const rationaleLocale = panelLocaleOf(row.assessment.locale);
+  const rationaleLocale = contentLocale(panelLocaleOf(row.assessment.locale));
 
   let messages;
   let source: string;

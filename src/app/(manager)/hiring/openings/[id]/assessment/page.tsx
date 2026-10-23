@@ -13,6 +13,7 @@ import { openingFor } from "../access";
 import { AssessmentTabs, OpeningHeader } from "../opening-header";
 import { setupStrip } from "../setup-strip";
 import { versionHistory, type HistoryRow } from "./history";
+import { contentLocale } from "@/i18n/locale";
 
 export const dynamic = "force-dynamic";
 
@@ -35,18 +36,18 @@ export default async function AssessmentSummaryPage({ params }: { params: Promis
   const content = state.content;
   if (!content) notFound();
   // 4.5: where a draft's setup path stands, for someone who may edit it (only the people are read; null otherwise).
-  const setup = await setupStrip({ orgId: user.orgId, opening, access, t, locale, state });
+  const setup = await setupStrip({ orgId: user.orgId, opening, access, t, locale: contentLocale(locale), state });
   const stages = orderedStages(content);
   const questions = stages.reduce((sum, s) => sum + s.activities.length, 0);
   const minutes = Math.round(totalSeconds(content) / 60);
-  const measured = usedCompetencyIds(content).map((cid) => pickText(state.facts.get(cid)?.name, locale)).filter(Boolean);
+  const measured = usedCompetencyIds(content).map((cid) => pickText(state.facts.get(cid)?.name, contentLocale(locale))).filter(Boolean);
   const editable = access.edit && state.draft !== null;
   const builder = `/hiring/openings/${opening.id}/assessment/edit`;
 
   return (
     // The same page width as the builder, so switching the assessment tabs never moves the header.
     <main className="mx-auto max-w-[1360px] px-page py-8">
-      <OpeningHeader opening={opening} active="assessment" locale={locale} t={t} setup={setup} />
+      <OpeningHeader opening={opening} active="assessment" locale={contentLocale(locale)} t={t} setup={setup} />
       <div className="mt-4">
         <AssessmentTabs openingId={opening.id} active="summary" t={t} />
       </div>
@@ -73,7 +74,7 @@ export default async function AssessmentSummaryPage({ params }: { params: Promis
                     href={`${builder}?stage=${stage.id}`}
                     className="text-[14px] font-medium text-ink underline decoration-transparent underline-offset-4 transition-colors duration-[120ms] ease-out hover:decoration-line-strong"
                   >
-                    {pickText(stage.name, locale) || t("hiringBuilder.untitledStage", { n: i + 1 })}
+                    {pickText(stage.name, contentLocale(locale)) || t("hiringBuilder.untitledStage", { n: i + 1 })}
                   </Link>
                   <span className="tnum text-[13px] text-muted">
                     {t("hiringBuilder.summaryStage", { questions: orderedActivities(stage).length, minutes: Math.round(stage.durationSeconds / 60) })}

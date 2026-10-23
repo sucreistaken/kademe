@@ -15,6 +15,7 @@ import type { PublishNotice } from "../../actions";
 import { AssessmentTabs, OpeningHeader } from "../../opening-header";
 import { setupStrip } from "../../setup-strip";
 import { describeProblem } from "../../problems";
+import { contentLocale } from "@/i18n/locale";
 
 export const dynamic = "force-dynamic";
 
@@ -53,14 +54,14 @@ export default async function BuilderPage({
   const content = state.content;
   if (!content) notFound();
   // 4.5: where a draft's setup path stands, for someone who may edit it (only the people are read; null otherwise).
-  const setup = await setupStrip({ orgId: user.orgId, opening, access, t, locale, state });
+  const setup = await setupStrip({ orgId: user.orgId, opening, access, t, locale: contentLocale(locale), state });
   // Active competencies to pick from, plus archived ones still linked here (shown, never offered).
   const archived = [...state.facts.values()].filter((f) => f.archived);
   const competencies = [
-    ...options.map((o) => ({ id: o.id, name: pickText(o.name, locale), archived: false })),
-    ...archived.map((f) => ({ id: f.id, name: pickText(f.name, locale), archived: true })),
+    ...options.map((o) => ({ id: o.id, name: pickText(o.name, contentLocale(locale)), archived: false })),
+    ...archived.map((f) => ({ id: f.id, name: pickText(f.name, contentLocale(locale)), archived: true })),
   ];
-  const problems = state.problems.map((p) => describeProblem(p, { content, facts: state.facts, locale, openingId: opening.id }, t));
+  const problems = state.problems.map((p) => describeProblem(p, { content, facts: state.facts, locale: contentLocale(locale), openingId: opening.id }, t));
   const published = /^\d{1,6}$/.test(one(sp.published) ?? "") ? one(sp.published)! : null;
   const noticeKey = noticeOf(sp, "publish", PUBLISH_NOTICES) ?? noticeOf(sp, "draft", DRAFT_NOTICES);
   const notice = noticeKey ? t(noticeKey) : null;
@@ -69,7 +70,7 @@ export default async function BuilderPage({
 
   return (
     <main className="mx-auto max-w-[1360px] px-page py-8 pb-40">
-      <OpeningHeader opening={opening} active="assessment" locale={locale} t={t} setup={setup} />
+      <OpeningHeader opening={opening} active="assessment" locale={contentLocale(locale)} t={t} setup={setup} />
       <div className="mt-4">
         <AssessmentTabs openingId={opening.id} active="edit" t={t} />
       </div>
@@ -101,7 +102,7 @@ export default async function BuilderPage({
           stageId: stageParam && isUuid(stageParam) ? stageParam : null,
           activityId: activityParam && isUuid(activityParam) ? activityParam : null,
         }}
-        locale={locale}
+        locale={contentLocale(locale)}
         canEdit={access.edit}
         closed={opening.status === "CLOSED"}
         // The question check reads drafts only: a live version cannot change, so advice on it would lead nowhere.

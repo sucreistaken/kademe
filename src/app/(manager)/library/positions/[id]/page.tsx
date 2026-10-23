@@ -15,6 +15,7 @@ import { isUuid } from "@/server/settings";
 import { requireUser } from "@/server/session";
 import { SOLUTION_MANIFESTS } from "@/solutions/registry";
 import { archivePositionAction, restorePositionAction } from "../../actions";
+import { contentLocale } from "@/i18n/locale";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,7 @@ export default async function PositionPage({
   const [options, scale, usage, sp] = await Promise.all([
     activeCompetencyOptions(user.orgId),
     loadDefaultScale(user.orgId),
-    libraryUsage(user.orgId, { positionIds: [id], competencyIds: [] }, locale, user),
+    libraryUsage(user.orgId, { positionIds: [id], competencyIds: [] }, contentLocale(locale), user),
     searchParams,
   ]);
   const canWrite = can(user, "library:write");
@@ -57,7 +58,7 @@ export default async function PositionPage({
           action={
             action ? (
               <Button asChild variant="primary">
-                <Link href={action.href(position.id)}>{action.label[locale]}</Link>
+                <Link href={action.href(position.id)}>{action.label[contentLocale(locale)]}</Link>
               </Button>
             ) : undefined
           }
@@ -66,7 +67,7 @@ export default async function PositionPage({
       <div className="mt-section grid gap-section lg:grid-cols-[minmax(0,1fr)_320px]">
         <PositionForm
           id={position.id}
-          locale={locale}
+          locale={contentLocale(locale)}
           canWrite={canWrite && !archived}
           archived={archived}
           primary={!action}

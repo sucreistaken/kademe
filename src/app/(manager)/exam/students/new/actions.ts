@@ -11,7 +11,7 @@ import { examTemplateByKey } from "@/lib/exam/templates";
 import type { Cefr } from "@/lib/exam/types";
 import { resolveWindow, type WindowFault, type WindowInput } from "@/lib/exam-window";
 import { managerLocale } from "@/i18n/manager-locale";
-import { DEFAULT_CANDIDATE_LOCALE, isCandidateLocale, type CandidateLocale } from "@/i18n/locale";
+import { DEFAULT_CANDIDATE_LOCALE, isCandidateLocale, type CandidateLocale, contentLocale } from "@/i18n/locale";
 import { bankCounts } from "@/server/panel";
 import { createInvitation } from "@/server/invite";
 import { requireUser } from "@/server/session";
@@ -72,7 +72,7 @@ export async function inviteStudentsAction(input: InviteStudentsInput): Promise<
   const user = await requireUser("student:invite");
   const text = typeof input?.text === "string" ? input.text.slice(0, MAX_LIST_TEXT) : "";
   // The manager's language decides the capitals of a lower-case name, as in the wizard's preview.
-  const parsed = parseStudentRows(text, (await managerLocale()) === "en" ? "en" : "tr");
+  const parsed = parseStudentRows(text, contentLocale(await managerLocale()));
   if (listWait(parsed)) return { ok: false, code: "LIST" };
   const choice = parseExamChoice(typeof input.exam === "string" ? input.exam : "");
   if (!choice) return { ok: false, code: "EXAM" };
@@ -88,7 +88,7 @@ export async function inviteStudentsAction(input: InviteStudentsInput): Promise<
     if (!template) return { ok: false, code: "EXAM" };
     // Asked before anything is published, so a missing claim publishes nothing.
     if (template.mode === "LEVEL_VERIFICATION" && parsed.rows.some((r) => !claimFor(r, template.mode, batch))) return { ok: false, code: "CLAIM_REQUIRED" };
-    const ensured = await ensureTemplateBlueprint(user.orgId, user.id, template, await managerLocale());
+    const ensured = await ensureTemplateBlueprint(user.orgId, user.id, template, contentLocale(await managerLocale()));
     if (!ensured.ok) return { ok: false, code: ensured.code };
     bp = ensured.blueprint;
   } else {

@@ -14,6 +14,7 @@ import { openingFor } from "../access";
 import { OpeningHeader } from "../opening-header";
 import { setupStrip } from "../setup-strip";
 import { closeOpeningAction, reopenOpeningAction } from "./actions";
+import { contentLocale } from "@/i18n/locale";
 
 export const dynamic = "force-dynamic";
 
@@ -45,7 +46,7 @@ export default async function OpeningSettingsPage({
   const t = managerT(locale);
   const [all, sp] = await Promise.all([loadPanelUsers(user.orgId), searchParams]);
   // 4.5: a draft's setup path, one line under the tabs (after the people, ruling C21), judged on the people read above (B-M5).
-  const setup = await setupStrip({ orgId: user.orgId, opening, access, t, locale, people: all });
+  const setup = await setupStrip({ orgId: user.orgId, opening, access, t, locale: contentLocale(locale), people: all });
   const closed = opening.status === "CLOSED";
   const runs = canDecide(user.role);
   // Someone who only reads the opening sees the people on it, not the organisation's whole user list.
@@ -56,7 +57,7 @@ export default async function OpeningSettingsPage({
 
   return (
     <main className="mx-auto max-w-[1080px] px-page py-8">
-      <OpeningHeader opening={opening} active="settings" locale={locale} t={t} setup={setup} />
+      <OpeningHeader opening={opening} active="settings" locale={contentLocale(locale)} t={t} setup={setup} />
       {closed ? (
         <Card className="mt-section space-y-3 p-card">
           <h2 id={CLOSED_HEADING_ID} tabIndex={-1} className="text-[16px] leading-6 font-semibold text-ink outline-none">

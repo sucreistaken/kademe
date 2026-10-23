@@ -16,7 +16,7 @@ import { Disclosure } from "@/components/visual/disclosure";
 import { IconRow } from "@/components/visual/icon-row";
 import { stepFocusController } from "@/hooks/use-step-focus";
 import { useMT } from "@/i18n/manager-client";
-import { DEFAULT_LOCALE, isLocale } from "@/i18n/locale";
+import { DEFAULT_LOCALE, contentLocale, isPanelLocale } from "@/i18n/locale";
 import { clearHash, currentHash, isHashStepEntry, leaveHashStep, noHash, pushHash, subscribeHash } from "@/lib/client/hash-step";
 import { canDecide } from "@/solutions/hiring/rules/access";
 import { formatInviteDay } from "@/solutions/hiring/rules/invitation";
@@ -101,7 +101,7 @@ export function OpeningSettingsForm({
   const common = useMT("hiringCommon");
   const flowT = useMT("flow");
   const appLocale = useLocale();
-  const locale = isLocale(appLocale) ? appLocale : DEFAULT_LOCALE;
+  const locale = isPanelLocale(appLocale) ? contentLocale(appLocale) : DEFAULT_LOCALE;
   const router = useRouter();
   const [saved, setSaved] = useState(initial);
   const [value, setValue] = useState(initial);

@@ -16,6 +16,7 @@ import { pickText } from "@/lib/i18n-text";
 import { libraryUsage, listCompetencies, loadDefaultScale, type CompetencyRow } from "@/server/library";
 import { requireUser } from "@/server/session";
 import { startLibraryAction } from "../actions";
+import { contentLocale } from "@/i18n/locale";
 
 export const dynamic = "force-dynamic";
 
@@ -73,7 +74,7 @@ export default async function CompetenciesPage({ searchParams }: { searchParams:
   }
 
   const rows = await listCompetencies(user.orgId);
-  const usage = await libraryUsage(user.orgId, { positionIds: [], competencyIds: rows.map((r) => r.id) }, locale, user);
+  const usage = await libraryUsage(user.orgId, { positionIds: [], competencyIds: rows.map((r) => r.id) }, contentLocale(locale), user);
   const active = rows.filter((r) => !r.archivedAt);
   const archived = rows.filter((r) => r.archivedAt);
 
@@ -94,7 +95,7 @@ export default async function CompetenciesPage({ searchParams }: { searchParams:
             <TableRow key={row.id}>
               <TableCell>
                 <Link href={`/library/competencies/${row.id}`} className="font-medium text-ink hover:underline">
-                  {pickText(row.name, locale)}
+                  {pickText(row.name, contentLocale(locale))}
                 </Link>
                 {row.seededUnreviewed ? <p className="text-[12px] text-muted">{t("libCompetencies.seeded")}</p> : null}
               </TableCell>

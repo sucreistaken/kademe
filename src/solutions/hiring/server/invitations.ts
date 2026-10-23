@@ -22,7 +22,7 @@ import {
   positions,
   users,
 } from "@/db/schema";
-import { DEFAULT_LOCALE, isLocale, panelLocaleOf, type CandidateLocale, type Locale } from "@/i18n/locale";
+import { DEFAULT_LOCALE, contentLocale, isLocale, panelLocaleOf, type CandidateLocale, type Locale } from "@/i18n/locale";
 import { mintToken } from "@/lib/auth";
 import { outboxLinkPlaceholder } from "@/lib/outbox";
 import { orgDay, zonedDayStart, zoneLabel } from "@/lib/org-timezone";
@@ -321,11 +321,11 @@ export async function newHiringLink(
     });
     const parts = await messageParts(tx, user.orgId, opening.positionId, row.versionId);
     const words = {
-      locale: panelLocaleOf(row.locale),
+      locale: contentLocale(panelLocaleOf(row.locale)),
       candidateName: row.name ?? "",
       orgName: parts.orgName,
       positionName: parts.positionName,
-      deadline: deadlineText(expiresAt, panelLocaleOf(row.locale)),
+      deadline: deadlineText(expiresAt, contentLocale(panelLocaleOf(row.locale))),
       minutes: parts.minutes,
       contactEmail: opening.candidateContactEmail ?? parts.orgContact,
     };
@@ -631,7 +631,7 @@ export async function listOpeningCandidates(
       seq: i + 1,
       name: identity ? (r.name ?? null) : null,
       email: identity ? (r.email ?? null) : null,
-      locale: panelLocaleOf(r.locale),
+      locale: contentLocale(panelLocaleOf(r.locale)),
       invitedAt: r.invitedAt,
       link: link ? { id: link.id, status: link.status, expiresAt: link.expiresAt } : null,
       progress: candidateProgress({

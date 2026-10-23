@@ -21,6 +21,7 @@ import { solutionModules } from "@/solutions/registry.server";
 import type { TodayCell, TodayItem } from "@/solutions/types";
 import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
+import { contentLocale } from "@/i18n/locale";
 
 export const dynamic = "force-dynamic";
 
@@ -53,8 +54,8 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   const t = managerT(locale);
   const sp = await searchParams;
   const modules = solutionModules();
-  const items: TodayItem[] = (await Promise.all(modules.map((m) => m.today(user.orgId, user.id, locale)))).flat();
-  const labelOf = (key: TodayItem["solution"]) => modules.find((m) => m.key === key)?.label[locale] ?? "";
+  const items: TodayItem[] = (await Promise.all(modules.map((m) => m.today(user.orgId, user.id, contentLocale(locale))))).flat();
+  const labelOf = (key: TodayItem["solution"]) => modules.find((m) => m.key === key)?.label[contentLocale(locale)] ?? "";
   const now = new Date();
   const { you, ai } = splitQueue(items);
   const next = pickNextTask(items);
@@ -62,12 +63,12 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   const summary = todaySummary(items);
   const running = items.filter((i) => i.lane === "running");
   // H1: a solution with a control view of its own (hiring's openings) is one link away; everyone who sees its menu sees the link.
-  const overviews = modules.flatMap((m) => (m.overview ? [{ key: m.key, href: m.overview.href, label: m.overview.label[locale] }] : []));
+  const overviews = modules.flatMap((m) => (m.overview ? [{ key: m.key, href: m.overview.href, label: m.overview.label[contentLocale(locale)] }] : []));
   const expiring = await expiringLinks(user.orgId);
   // Extending a link needs the same right as inviting a student.
   const canExtend = can(user, "student:invite");
   // Every solution that can invite and that this user may invite for (HIRING-UX 4.5).
-  const invite = inviteChoice(inviteTargets(), (capability) => can(user, capability), locale);
+  const invite = inviteChoice(inviteTargets(), (capability) => can(user, capability), contentLocale(locale));
   const emphasis = inviteEmphasis({ next: next !== null, attention: attention.length });
   const inviteButton = (variant: "primary" | "secondary") =>
     invite.kind === "many" ? (

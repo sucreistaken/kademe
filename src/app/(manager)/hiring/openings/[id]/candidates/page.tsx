@@ -13,6 +13,7 @@ import { openingFor } from "../access";
 import { inviteBlock, inviteWaitReason } from "../invite-wait";
 import { OpeningHeader } from "../opening-header";
 import { candidatesNotice, NOTICE_PARAMS, noticeVoice } from "./notices";
+import { contentLocale } from "@/i18n/locale";
 
 export const dynamic = "force-dynamic";
 
@@ -59,7 +60,7 @@ export default async function OpeningCandidatesPage({
 
   return (
     <main className="mx-auto max-w-[1360px] px-page py-8">
-      <OpeningHeader opening={opening} active="candidates" locale={locale} t={t} action={action} />
+      <OpeningHeader opening={opening} active="candidates" locale={contentLocale(locale)} t={t} action={action} />
       {notice ? (
         <UrlNotice params={NOTICE_PARAMS}>
           {noticeVoice(notice).lead ? (
@@ -86,7 +87,7 @@ export default async function OpeningCandidatesPage({
             {access.edit ? <p className="text-[13px] text-muted">{target?.live ? t("hiringCandidates.emptyRuns") : t("hiringCandidates.emptyNotLive")}</p> : null}
           </div>
         ) : (
-          <CandidateTable rows={rows} openingId={opening.id} edit={access.edit} closed={closed} runs={runs} locale={locale} t={t} now={now} />
+          <CandidateTable rows={rows} openingId={opening.id} edit={access.edit} closed={closed} runs={runs} locale={contentLocale(locale)} t={t} now={now} />
         )}
       </Card>
     </main>

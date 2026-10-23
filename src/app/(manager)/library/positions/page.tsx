@@ -11,6 +11,7 @@ import { managerT } from "@/i18n/manager";
 import { can } from "@/lib/authorize";
 import { libraryUsage, listPositions, type PositionRow } from "@/server/library";
 import { requireUser } from "@/server/session";
+import { contentLocale } from "@/i18n/locale";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,7 @@ export default async function PositionsPage() {
   );
 
   const usage = rows.length
-    ? await libraryUsage(user.orgId, { positionIds: rows.map((r) => r.id), competencyIds: [] }, locale, user)
+    ? await libraryUsage(user.orgId, { positionIds: rows.map((r) => r.id), competencyIds: [] }, contentLocale(locale), user)
     : { positions: {}, competencies: {} };
   const table = (list: PositionRow[]) => (
     <Table>
