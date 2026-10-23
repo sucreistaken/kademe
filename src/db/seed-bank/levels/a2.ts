@@ -501,7 +501,7 @@ B
 Flohmarkt auf dem Schulhof am Samstag, dem 14. Juni, von 9 bis 15 Uhr. Ein Standplatz kostet 5 Euro. Kaffee und Kuchen gibt es vom Elternverein.
 
 C
-Der Wanderverein sucht neue Mitglieder. Wir treffen uns jeden ersten Sonntag im Monat um 8 Uhr am Bahnhof. Anfänger und Kinder sind willkommen.
+Der Wanderverein sucht neue Mitglieder. Wir treffen uns jeden ersten Sonntag im Monat um 8 Uhr am Bahnhof. Anfänger sind willkommen, Mindestalter 16 Jahre.
 
 D
 Kinderyoga für Kinder von 5 bis 8 Jahren, dienstags um 16 Uhr in der Turnhalle der Grundschule. Die Probestunde ist kostenlos.
@@ -523,7 +523,7 @@ Text 3
 Die Bücherei zieht um. Vom 3. bis zum 14. März bleibt sie deshalb geschlossen. Ab dem 17. März findet man alle Bücher im neuen Haus am Marktplatz. Wer Bücher ausgeliehen hat, darf sie bis dahin behalten.
 
 Text 4
-Wegen starkem Regen ist der Wanderweg am Fluss gesperrt, denn es fallen Steine vom Hang. Wanderer nehmen bitte den Weg über den Berg. Er ist etwa eine Stunde länger. Schilder zeigen den Weg.
+Nach dem starken Regen ist der Wanderweg am Fluss gesperrt, denn es fallen Steine vom Hang. Wanderer nehmen bitte den Weg über den Berg. Er ist etwa eine Stunde länger. Schilder zeigen den Weg.
 
 Text 5
 Ab Januar kommt die Müllabfuhr nicht mehr dienstags, sondern donnerstags. Der gelbe Sack wird weiter alle zwei Wochen abgeholt. Neue Kalender gibt es im Rathaus.
@@ -792,17 +792,17 @@ const readingItems: SeedItem[] = [
     "Welche Überschrift passt zu welchem Text? Für jeden Text gibt es eine Überschrift. Drei Überschriften bleiben übrig.",
     ["Text 1", "Text 2", "Text 3", "Text 4", "Text 5"],
     [
-      "A: Stadtfest mit Musik: Eintritt frei, Innenstadt gesperrt",
-      "B: Freibad bleibt auch im Winter geöffnet",
-      "C: Neuer Zoobewohner: Ein Elefantenbaby ist da",
-      "D: Bücherei zieht um und ist zwei Wochen zu",
-      "E: Wanderweg am Fluss wegen Regen gesperrt",
-      "F: Fahrradwege in der Stadt sollen breiter werden",
-      "G: Müllabfuhr kommt ab Januar an einem anderen Tag",
+      "A: Drei Bühnen, kein Eintritt: Am Wochenende wird gefeiert",
+      "B: Bücherei bekommt neue Öffnungszeiten",
+      "C: Großer Nachwuchs im Tierpark",
+      "D: Bücher bald am Marktplatz",
+      "E: Wanderer müssen einen Umweg machen",
+      "F: Zoo hat jetzt länger geöffnet",
+      "G: Neuer Abholtag für den Müll",
       "H: Karten für das Konzert sind schon ausverkauft",
     ],
     [1, 3, 4, 5, 7],
-    "Text 1 (Stadtfest): A. Text 2 (Elefant im Zoo): C. Text 3 (Umzug der Bücherei): D. Text 4 (gesperrter Wanderweg): E. Text 5 (neue Abholtage): G. B, F und H kommen in keinem Text vor."),
+    "Text 1 (Stadtfest mit freiem Eintritt): A. Text 2 (Elefantenbaby im Zoo): C. Text 3 (Umzug der Bücherei an den Marktplatz): D. Text 4 (gesperrter Weg, Ersatzweg über den Berg): E. Text 5 (Müllabfuhr kommt donnerstags): G. B und F klingen nach Text 3 und Text 2, aber dort geht es um Umzug und Schließung bzw. um das Tier, nicht um Öffnungszeiten. H kommt in keinem Text vor."),
   rNews2.tfng("detail", "MID",
     [
       ["Das Elefantenbaby ist schon in dieser Woche im Freigehege zu sehen.", "F"],
@@ -819,13 +819,13 @@ const readingItems: SeedItem[] = [
       "A: Einladung zum Sommerfest im Hof",
       "B: Der Aufzug ist wieder in Betrieb",
       "C: Am Donnerstag gibt es morgens kein Wasser",
-      "D: Wohnung im zweiten Stock zu vermieten",
-      "E: Neue Hausmeisterin stellt sich vor",
-      "F: Nach 22 Uhr bitte leise sein",
+      "D: Der Hausmeister hat im Juni Urlaub",
+      "E: Das Haus hat eine neue Hausmeisterin",
+      "F: Am Donnerstag kommt der Schornsteinfeger",
       "G: Fahrräder gehören in den Keller",
     ],
     [3, 7, 1, 5],
-    "Text 1 (Wasser abgestellt): C. Text 2 (Fahrräder im Hausflur): G. Text 3 (Fest im Hof): A. Text 4 (neue Hausmeisterin): E. B, D und F passen zu keinem Text."),
+    "Text 1 (Wasser abgestellt): C. Text 2 (Fahrräder im Hausflur): G. Text 3 (Fest im Hof): A. Text 4 (neue Hausmeisterin): E. B, D und F passen zu keinem Text (D klingt nach Text 4, dort geht es aber um eine neue Hausmeisterin, nicht um Urlaub)."),
   rHaus.choice("detail", "MID",
     "Was sollen die Mieterinnen und Mieter zum Hoffest mitbringen?",
     [
@@ -841,7 +841,7 @@ const readingItems: SeedItem[] = [
     "Sie wohnen im Süden. Wie ist das Wetter am Samstag?",
     [
       "Es regnet am Nachmittag besonders stark, und es ist sehr kalt.",
-      "Die Sonne scheint, und es wird bis zu 22 Grad warm.",
+      "Es ist den ganzen Tag sonnig und ziemlich warm.",
       "Der Himmel ist bewölkt, aber es bleibt den ganzen Tag trocken.",
       "Es weht ein starker Wind, und die Temperatur bleibt unter 15 Grad.",
     ], 1,
@@ -994,9 +994,9 @@ const L_BAHNHOF = "v3-l-a2-ansage-regionalexpress";
 const L_ARZT = "v3-l-a2-mailbox-arztpraxis";
 const L_BILD_WETTER = "v4-l-a2-bild-wetter-grillen";
 const L_BILD_SEE = "v4-l-a2-bild-fahrt-zum-see";
-const L_BILD_CAFE = "v4-l-a2-bild-bestellung-im-cafe";
-const L_TICK_WANDERUNG = "v4-l-a2-wanderung-mitbringen";
-const L_TICK_UMZUG = "v4-l-a2-umzug-vorbereitung";
+const L_BILD_CAFE = "v5-l-a2-bild-bestellung-im-cafe";
+const L_TICK_WANDERUNG = "v5-l-a2-wanderung-mitbringen";
+const L_TICK_UMZUG = "v5-l-a2-umzug-vorbereitung";
 const L_TICK_REISE = "v4-l-a2-staedtereise-preis";
 
 const listeningStimuli: SeedStimulus[] = [
@@ -1092,8 +1092,8 @@ const listeningStimuli: SeedStimulus[] = [
     ]),
   clip(L_BILD_CAFE, "Bestellung im Café", "Café und Essen",
     [
-      { label: "Kellner", voice: "A" },
-      { label: "Frau Weiß", voice: "B" },
+      { label: "Kellner", voice: "B" },
+      { label: "Frau Weiß", voice: "A" },
     ],
     [
       "Kellner: Guten Tag, was darf es sein?",
@@ -1107,8 +1107,8 @@ const listeningStimuli: SeedStimulus[] = [
     [
       { label: "Frau Dietrich", voice: "A" },
       { label: "Emre", voice: "B" },
-      { label: "Sofia", voice: "C" },
-      { label: "Herr Voss", voice: "D" },
+      { label: "Sofia", voice: "D" },
+      { label: "Herr Voss", voice: "C" },
     ],
     [
       "Frau Dietrich: So, liebe Leute, noch ein paar Informationen für die Wanderung am Samstag. Wir treffen uns um Viertel vor acht am Hauptbahnhof. Nein, Entschuldigung, am Busbahnhof, nicht am Hauptbahnhof!",
@@ -1128,7 +1128,7 @@ const listeningStimuli: SeedStimulus[] = [
     [
       { label: "Jana", voice: "A" },
       { label: "Omar", voice: "B" },
-      { label: "Frau Pohl", voice: "C" },
+      { label: "Frau Pohl", voice: "D" },
     ],
     [
       "Jana: Omar, am Samstag ist der Umzug. Haben wir alles geschafft? Ich mache mal eine Liste.",
@@ -1138,9 +1138,9 @@ const listeningStimuli: SeedStimulus[] = [
       "Jana: Gut. Den Strom habe ich heute Morgen ummelden lassen. Das ist erledigt. Und Internet haben wir vor einer Woche bestellt, der Techniker kommt am Montag.",
       "Omar: Prima. Die alte Wohnung putzen wir erst am Sonntag, nach dem Umzug.",
       "Jana: Stimmt. Die Schlüssel geben wir auch erst am Sonntag ab, bei der Vermieterin. Und Gardinen für die neue Wohnung haben wir noch nicht.",
-      "Omar: Die kaufen wir nächste Woche, wenn wir die Fenster gesehen haben. Und Hilfe beim Tragen? Ich habe Karim und Lisa gefragt, beide kommen am Samstag um neun.",
+      "Omar: Die kaufen wir nächste Woche, wenn wir die Fenster gesehen haben. Und Hilfe beim Tragen? Ich habe Karim und Lisa gefragt, beide kommen am Samstag um neun. Karim bringt sogar Kuchen mit, und Klebeband hat er auch.",
       "Jana: Das ist ja gut. Ach, da kommt Frau Pohl.",
-      "Frau Pohl: Entschuldigung, ich habe gehört, Sie ziehen um. Ich bringe Ihnen am Samstag Kaffee und Brötchen. Das ist kein Problem.",
+      "Frau Pohl: Entschuldigung, ich habe gehört, Sie ziehen um. Ich bringe Ihnen am Samstag Kaffee und Brötchen. Dann haben Sie etwas für die Pause.",
       "Jana: Oh, das ist sehr nett, vielen Dank!",
     ]),
   clip(L_TICK_REISE, "Anruf im Reisebüro", "Reise und Urlaub",
@@ -1362,6 +1362,7 @@ const listeningItems: SeedItem[] = [
       "Kartons und Klebeband.",
       "Mittagessen für alle.",
     ], 0,
+    // Karim's cake and tape are heard in the clip as distractors.
     "\"Ich bringe Ihnen am Samstag Kaffee und Brötchen.\""),
 
   // ---------------------------------------------------------------- Städtereise
@@ -1375,7 +1376,7 @@ const listeningItems: SeedItem[] = [
     [
       "Dreihundertvierzig Euro pro Person.",
       "Dreihundertneunzig Euro pro Person.",
-      "Vierhundertdreißig Euro für beide zusammen.",
+      "Siebenhundertachtzig Euro für beide zusammen.",
       "Dreihundertvierzig Euro für beide zusammen.",
     ], 0,
     "Frau Lenz nennt zuerst 390 Euro, korrigiert dann: Das ist der Preis mit Abendessen. Ohne Abendessen sind es 340 Euro pro Person."),
@@ -1754,20 +1755,20 @@ const speakingItems: SeedItem[] = [
 
   // ---------------------------------------------------------------- Bildaufgaben
   pictureTask("EASY", SHORT, "scene.a2.birthday-party",
-    "Sehen Sie sich das Bild an. Beschreiben Sie, was Sie sehen. Erzählen Sie dann: Wie haben Sie Ihren letzten Geburtstag gefeiert?\n\n" +
+    "Sehen Sie sich das Bild an. Beschreiben Sie, was Sie sehen. Erzählen Sie dann: Wie haben Sie Ihren letzten Geburtstag oder eine andere Feier gefeiert?\n\n" +
       "- Wer ist auf dem Bild? Was machen die Leute?\n" +
       "- Wie ist die Stimmung?\n" +
-      "- Wie haben Sie Ihren letzten Geburtstag gefeiert?",
+      "- Wie haben Sie Ihren letzten Geburtstag oder eine andere Feier gefeiert?",
     [
       "beschreibt, was zu sehen ist: Freunde, ein Geburtstag, ein Kuchen",
       "sagt etwas über die Stimmung oder die Personen (fröhlich, zusammen, feiern)",
-      "erzählt im Perfekt von der eigenen letzten Geburtstagsfeier (wo, mit wem, was gegessen oder gemacht)",
+      "erzählt im Perfekt von der eigenen letzten Geburtstagsfeier oder einer anderen Feier (wo, mit wem, was gegessen oder gemacht)",
       "mindestens ein Detail oder eine Bewertung (zum Beispiel was besonders schön war)",
     ],
     [
       "beschreiben, was auf dem Bild zu sehen ist",
       "sagen, wie die Stimmung ist",
-      "von Ihrem letzten Geburtstag erzählen",
+      "von einer Feier erzählen, an der Sie teilgenommen haben",
     ],
     "Bildbeschreibung mit Bezug zur eigenen Erfahrung (Präsens für das Bild, Perfekt für die eigene Feier). Wer nur Dinge aufzählt, erfüllt die Aufgabe nur teilweise."),
   pictureTask("MID", LONG, "scene.a2.cooking-together",
@@ -1791,23 +1792,23 @@ const speakingItems: SeedItem[] = [
     "Sehen Sie sich das Bild an. Beschreiben Sie, was Sie sehen. Sprechen Sie dann über Ihre eigene Erfahrung.\n\n" +
       "- Wo sind die Personen? Was machen sie?\n" +
       "- Was machen Sie, wenn Sie lange warten müssen?\n" +
-      "- Wann waren Sie zuletzt bei der Ärztin oder beim Arzt? Was ist passiert?",
+      "- Wie bekommt man in Ihrer Stadt oder Region einen Termin bei der Ärztin oder beim Arzt? Erzählen Sie.",
     [
       "beschreibt, was zu sehen ist: zwei Personen warten in einer Arztpraxis",
       "sagt, was man selbst beim Warten macht (zum Beispiel lesen, Handy, Musik hören)",
-      "erzählt im Perfekt von einem letzten Arztbesuch (Grund, was die Ärztin oder der Arzt gesagt hat)",
-      "mindestens ein Detail zum Ablauf (Termin, Wartezeit, Medikament)",
+      "erklärt, wie man einen Arzttermin bekommt (anrufen, online, persönlich, Wartezeit), im Präsens oder Perfekt",
+      "mindestens ein Detail zum Ablauf (Termin vereinbaren, Versichertenkarte, Wartezimmer)",
     ],
     [
       "beschreiben, wo die Personen sind und was sie machen",
       "sagen, was Sie beim Warten machen",
-      "von Ihrem letzten Arztbesuch erzählen",
+      "sagen, wie man einen Arzttermin bekommt",
     ],
-    "Bildbeschreibung plus Erlebnisbericht im Perfekt. Wortschatz rund um Gesundheit (Termin, Praxis, Wartezimmer) wird erwartet."),
+    "Bildbeschreibung plus Erklärung eines Alltagsablaufs. Es wird nicht nach der eigenen Gesundheit gefragt. Wortschatz rund um Praxis und Termin (Termin, Praxis, Wartezimmer) wird erwartet."),
   pictureTask("HARD", LONG, "scene.a2.moving-house",
     "Sehen Sie sich das Bild an. Beschreiben Sie, was Sie sehen. Sprechen Sie dann über einen Umzug.\n\n" +
       "- Was machen die beiden Personen?\n" +
-      "- Sind Sie schon einmal umgezogen? Erzählen Sie, was Sie gemacht haben.\n" +
+      "- Sind Sie schon einmal umgezogen? Erzählen Sie, was Sie gemacht haben. Wenn nicht: Erzählen Sie vom Umzug einer Freundin, eines Freundes oder aus Ihrer Familie.\n" +
       "- Was ist bei einem Umzug besonders anstrengend? Und was ist schön?",
     [
       "beschreibt, was zu sehen ist: ein Paar packt Umzugskartons aus",
@@ -1817,11 +1818,11 @@ const speakingItems: SeedItem[] = [
     ],
     [
       "beschreiben, was die Personen machen",
-      "von einem Umzug erzählen",
+      "von einem Umzug erzählen (Ihrem oder dem einer anderen Person)",
       "sagen, was anstrengend und was schön ist",
     ],
     "Anspruchsvoller, weil drei Teile verbunden werden müssen: beschreiben, erzählen, bewerten. Wer noch nie umgezogen ist, darf von einer anderen Person erzählen."),
-  pictureTask("HARD", SHORT, "scene.a2.train-platform",
+  pictureTask("HARD", LONG, "scene.a2.train-platform",
     "Sehen Sie sich das Bild an. Beschreiben Sie, was Sie sehen. Sagen Sie dann, was Sie in dieser Situation tun würden.\n\n" +
       "- Wo sind die Menschen? Worauf warten sie?\n" +
       "- Der Zug hat eine Stunde Verspätung. Was würden Sie tun?\n" +
