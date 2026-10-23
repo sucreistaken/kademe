@@ -1234,6 +1234,9 @@
     "A0Note": "A0 (Pre-A1): below A1, no German that can be scored yet.",
     "A0Class": "A0 (Pre-A1): starts in the first course, A1.1.",
     "A0Pick": "A0 (Pre-A1) only when there is no German to score: a blank answer or one not in German.",
-    "atChance": "At chance: the answers to the A1-A2 questions are no better than guessing, so A0"
+    "atChance": "At chance: {right} of {answered} answered A1-A2 units right, no better than guessing; so A0",
+    "atChanceBlank": "Left blank: nothing in this section was answered; so A0",
+    "chanceBelowPooled": "A0 comes from a section at chance, while the combined estimate is A1 or higher. A teacher decides.",
+    "rawEstimate": "Raw estimate (combined): {sublevel}"
   }
 }

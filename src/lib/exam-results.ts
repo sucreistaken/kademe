@@ -239,7 +239,7 @@ export async function runGrading(gradingId: string): Promise<GradingOutcome> {
     return { status: "FAILED", reason: lastError };
   }
 
-  proposal = capByTaskLevel(guardPreA1(verifyEvidence(proposal, source)), taskLevel);
+  proposal = capByTaskLevel(guardPreA1(verifyEvidence(proposal, source), source), taskLevel);
   const level = skillLevelFromCriteria(proposal) ?? proposal.overallLevel;
   await db
     .update(responseGradings)

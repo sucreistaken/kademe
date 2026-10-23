@@ -19,14 +19,17 @@
  * mean below the A1 band is A0. Every table has an A0 column (students spread
  * over the logit below the A1 band, simulated after C2 so the A1 to C2 draws
  * are the earlier ones), and a last table runs the live templates by the
- * engine's overall rule with the chance rule (chance.ts) for a student with no
- * German, A1 students and A0 students, against the targets of 2026-10-24.
+ * engine's overall rule with the chance rule (chance.ts), for students who guess
+ * and students who leave what they do not know blank, on the placement, the
+ * quick screen and the level check (A1 and A2 claims), against the targets of
+ * 2026-10-24.
  * Run: pnpm tsx scripts/simulate-placement.ts   (RUNS=1000 for a quick look;
  * ITEM_GUESS=0 to let ordinary items be answered without guessing).
  */
 import { section, type BlueprintConfig, type SectionConfig } from "@/lib/exam/blueprint";
 import { gateFailures, simulateFixedForm, type FormAccuracy, type SimulationOptions } from "@/lib/exam/form-simulation";
 import { examTemplateByKey } from "@/lib/exam/templates";
+import { BAND_CENTER } from "@/lib/exam/cefr";
 import { CEFR_LEVELS, RESULT_LEVELS, type Cefr } from "@/lib/exam/types";
 
 const per = (counts: Partial<Record<Cefr, number>>) => ({
@@ -173,37 +176,53 @@ for (const seed of SEEDS) {
 }
 for (const c of OPEN_TRIALS) console.log(`\nplacement ${c.name}: ${openPasses.get(c.name) === SEEDS.length ? "passes at both seeds" : "does not pass at both seeds"}`);
 
-// A0 (Pre-A1), 2026-10-24: the live templates as they are (src/lib/exam/templates.ts), placed by the engine's overall
-// rule: each objective section's result level, A0 when at chance (src/lib/exam/chance.ts, its live settings), then the
-// lower median with writing and speaking at the student's true level (a grader who is right: A0 for no German, A1 for
-// A1). "objective only" leaves writing and speaking out. True ability: no German at all (theta -8, right only by
-// guessing), A1 band centre (-2.5), the A1 band, the A0 band (-4 to -3). Guessing on ordinary items as above, and none
-// (0: wrong instead of guessed); cloze and word-bank gaps keep their floor. Targets (controller, 2026-10-24): no German
-// -> A0 at least 90%, A1 band centre false A0 at most 3%.
+// A0 (Pre-A1), 2026-10-24: the live templates as they are (src/lib/exam/templates.ts), placed by the engine's own
+// computeResult: each objective section with its chance test (src/lib/exam/chance.ts, live settings), writing and
+// speaking at the student's true level (a grader who is right: A0 for no German, A1 for A1, the claim for the claimed
+// band centre) or left out ("objective only"), the template's pass rules and the claim. Two behaviours: "guess"
+// answers everything (ordinary items with the floor above, gaps with their text floor), "blank" answers only what
+// the student knows and leaves the rest blank. True ability: no German at all (theta -8), A1 band centre (-2.5), the
+// A1 band, and for a verification the claimed band centre. Targets (controller, 2026-10-24): no German -> A0 at least
+// 90%, A1 centre and A1 band false A0 at most 3%; false FAIL at the claimed band centre is reported, with the same
+// figure without the chance rule for comparison.
 const NO_GERMAN = -8;
-const A1_CENTRE = -2.5;
-const pctA0 = (a: FormAccuracy[Cefr] | undefined) => (a ? pct(a.a0) : "-");
+const pctOf = (x: number | undefined) => (x === undefined ? "-" : pct(x));
 const liveHeader =
-  "| template, writing and speaking, item guess | no German: A0 | A1 centre: false A0 | A1 band: false A0 | A0 band: A0 |\n|---|---|---|---|---|";
+  "| template, writing and speaking, behaviour | no German: A0 | no German: FAIL | A1 centre: false A0 | A1 band: false A0 | claim centre: FAIL | same, no chance rule |\n|---|---|---|---|---|---|---|";
+type LiveRow = { key: "placement" | "quick-screen" | "level-check"; productive: "TRUE" | "NONE"; claimed?: Cefr };
+const LIVE: LiveRow[] = [
+  { key: "placement", productive: "TRUE" },
+  { key: "placement", productive: "NONE" },
+  { key: "quick-screen", productive: "NONE" },
+  { key: "level-check", productive: "TRUE", claimed: "A1" },
+  { key: "level-check", productive: "TRUE", claimed: "A2" },
+];
 const targets: string[] = [];
 for (const seed of SEEDS) {
-  console.log(`\n## A0 (Pre-A1) by the overall rule on the live templates, seed ${seed}, ${RUNS} students per cell (% placed A0)\n`);
+  console.log(`\n## A0 (Pre-A1) by the overall rule on the live templates, seed ${seed}, ${RUNS} students per cell (%)\n`);
   console.log(liveHeader);
-  for (const [key, productive] of [["placement", "TRUE"], ["placement", "NONE"], ["quick-screen", "NONE"]] as const) {
-    const config = examTemplateByKey(key)!.config;
-    const label = key === "placement" ? (productive === "TRUE" ? "at the true level" : "objective only") : "none in the template";
-    for (const itemGuess of key === "quick-screen" ? [ITEM_GUESS] : [ITEM_GUESS, 0]) {
-      const o = { ...options(seed), itemGuess, overall: { productive, chance: {} } };
-      const none = simulateFixedForm(config, "PLACEMENT", { ...o, trueLevels: ["A0"], fixedTheta: NO_GERMAN }).A0;
-      const centre = simulateFixedForm(config, "PLACEMENT", { ...o, trueLevels: ["A1"], fixedTheta: A1_CENTRE }).A1;
-      const bands = simulateFixedForm(config, "PLACEMENT", { ...o, trueLevels: ["A1", "A0"] });
-      console.log(`| ${key}, ${label}, ${itemGuess} | ${pctA0(none)} | ${pctA0(centre)} | ${pctA0(bands.A1)} | ${pctA0(bands.A0)} |`);
-      if (productive === "TRUE" || key === "quick-screen") {
-        const ok = (none?.a0 ?? 0) >= 0.9 && centre.a0 <= 0.03;
-        targets.push(`- seed ${seed}, ${key}, item guess ${itemGuess}: no German ${pctA0(none)}% A0, A1 centre ${pctA0(centre)}% false A0: ${ok ? "meets" : "MISSES"} the targets`);
+  for (const row of LIVE) {
+    const config = examTemplateByKey(row.key)!.config;
+    const mode = row.claimed ? "LEVEL_VERIFICATION" : "PLACEMENT";
+    const label = `${row.key}${row.claimed ? ` claim ${row.claimed}` : ""}, ${row.key === "quick-screen" ? "none in the template" : row.productive === "TRUE" ? "at the true level" : "objective only"}`;
+    for (const behaviour of ["GUESS", "BLANK"] as const) {
+      const o = { ...options(seed), itemGuess: ITEM_GUESS, behaviour, claimed: row.claimed, overall: { productive: row.productive, chance: {} } };
+      const none = simulateFixedForm(config, mode, { ...o, trueLevels: ["A0"], fixedTheta: NO_GERMAN }).A0!;
+      const centre = simulateFixedForm(config, mode, { ...o, trueLevels: ["A1"], fixedTheta: BAND_CENTER.A1 }).A1;
+      const band = simulateFixedForm(config, mode, { ...o, trueLevels: ["A1"] }).A1;
+      const claimCentre = row.claimed ? simulateFixedForm(config, mode, { ...o, trueLevels: [row.claimed], fixedTheta: BAND_CENTER[row.claimed] })[row.claimed] : undefined;
+      const claimNoRule = row.claimed
+        ? simulateFixedForm(config, mode, { ...o, overall: { productive: row.productive, chance: null }, trueLevels: [row.claimed], fixedTheta: BAND_CENTER[row.claimed] })[row.claimed]
+        : undefined;
+      console.log(
+        `| ${label}, ${behaviour.toLowerCase()} | ${pct(none.a0)} | ${row.claimed ? pct(none.fail) : "-"} | ${pct(centre.a0)} | ${pct(band.a0)} | ${pctOf(claimCentre?.fail)} | ${pctOf(claimNoRule?.fail)} |`,
+      );
+      if (row.productive === "TRUE" || row.key === "quick-screen") {
+        const ok = none.a0 >= 0.9 && centre.a0 <= 0.03 && band.a0 <= 0.03;
+        targets.push(`- seed ${seed}, ${label}, ${behaviour.toLowerCase()}: no German ${pct(none.a0)}% A0, A1 centre ${pct(centre.a0)}%, A1 band ${pct(band.a0)}% false A0: ${ok ? "meets" : "MISSES"} the targets`);
       }
     }
   }
 }
-console.log(`\nTargets (no German -> A0 >= 90%, A1 centre false A0 <= 3%):\n${targets.join("\n")}`);
+console.log(`\nTargets (no German -> A0 >= 90%, A1 centre and A1 band false A0 <= 3%):\n${targets.join("\n")}`);
 console.log(`\nResult levels: ${RESULT_LEVELS.join(", ")}; for A0 "exact" is placed A0, "within one" A0 or A1.`);

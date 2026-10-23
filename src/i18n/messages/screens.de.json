@@ -1234,6 +1234,9 @@
     "A0Note": "A0 (Pre-A1): unter A1, noch keine bewertbaren Deutschkenntnisse.",
     "A0Class": "A0 (Pre-A1): beginnt im ersten Kurs, A1.1.",
     "A0Pick": "A0 (Pre-A1) nur, wenn es nichts Deutsches zu bewerten gibt: eine leere oder nicht deutsche Antwort.",
-    "atChance": "Zufallsniveau: Die Antworten auf die A1-A2-Aufgaben sind nicht besser als Raten, daher A0"
+    "atChance": "Zufallsniveau: {right} von {answered} beantworteten A1-A2-Einheiten richtig, nicht besser als Raten; daher A0",
+    "atChanceBlank": "Leer gelassen: In diesem Abschnitt wurde nichts beantwortet; daher A0",
+    "chanceBelowPooled": "A0 kommt von einem Abschnitt auf Zufallsniveau, die Gesamtschätzung liegt bei A1 oder höher. Eine Lehrkraft entscheidet.",
+    "rawEstimate": "Rohschätzung (gesamt): {sublevel}"
   }
 }

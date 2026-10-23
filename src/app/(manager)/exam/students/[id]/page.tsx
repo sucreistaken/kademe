@@ -173,13 +173,29 @@ export default async function ResultPage({
             <div className="text-[12px] uppercase tracking-[0.04em] text-muted">{t("result.overall")}</div>
             <div className={cn("tnum text-[40px] font-bold leading-none", final ? "text-ink" : "text-ink-3")}>{overall ?? "-"}</div>
             {isPreA1(overall) ? <div className={cn("mt-1 text-[13px] font-semibold", final ? "text-ink" : "text-ink-3")}>{t("resultLevel.A0Name")}</div> : null}
+            {!final && computed?.reviewReasons?.includes("CHANCE_BELOW_POOLED") ? (
+              <div className="mt-1 max-w-[260px] text-[12.5px] leading-[1.45] text-ink-2">{t("resultLevel.chanceBelowPooled")}</div>
+            ) : null}
           </div>
           {assessment.mode === "PLACEMENT" && placement ? (
             <div className="max-w-[300px]">
-              {placement.sublevel ? (
-                <div className="tnum text-[14px] font-semibold text-ink">{t("result.sublevel", { sublevel: placement.sublevel })}</div>
-              ) : null}
-              {firstCourse ? <div className="text-[12.5px] text-ink-2">{t("resultLevel.A0Class")}</div> : null}
+              {isPreA1(overall) ? (
+                <>
+                  {/* An A0 result starts in the first course; the pooled sublevel is only the raw estimate. */}
+                  <div className="tnum text-[14px] font-semibold text-ink">{t("result.sublevel", { sublevel: FIRST_CLASS.sublevel })}</div>
+                  <div className="text-[12.5px] text-ink-2">{t("resultLevel.A0Class")}</div>
+                  {placement.sublevel && placement.sublevel !== FIRST_CLASS.sublevel ? (
+                    <div className="tnum text-[12.5px] text-muted">{t("resultLevel.rawEstimate", { sublevel: placement.sublevel })}</div>
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  {placement.sublevel ? (
+                    <div className="tnum text-[14px] font-semibold text-ink">{t("result.sublevel", { sublevel: placement.sublevel })}</div>
+                  ) : null}
+                  {firstCourse ? <div className="text-[12.5px] text-ink-2">{t("resultLevel.A0Class")}</div> : null}
+                </>
+              )}
               {placement.borderline ? (
                 <>
                   <div className="text-[13px] font-medium text-ink">{t("result.borderline")}</div>
@@ -296,7 +312,10 @@ export default async function ResultPage({
                           ? t("resultReview.skippedBankEmpty")
                           : isObjectiveSection(s as Section)
                           ? skill?.reason === "AT_CHANCE"
-                            ? `${t("resultLevel.atChance")} · ${t("resultReview.scoreSummary", { right: tally.correct, total: tally.total })}`
+                            ? skill.chance?.blank
+                              ? t("resultLevel.atChanceBlank")
+                              : // The tally the rule tested: answered A1-A2 units, not the whole section.
+                                t("resultLevel.atChance", { right: skill.chance?.right ?? 0, answered: skill.chance?.answered ?? 0 })
                             : skill?.insufficient
                             ? t("result.insufficient")
                             : precision

@@ -1,5 +1,5 @@
 import type { PassRules } from "./blueprint";
-import { compareLevels, levelFromTheta, medianLevel, probAtOrAbove, shiftLevel } from "./cefr";
+import { PRE_A1_CUT, compareLevels, levelFromTheta, medianLevel, probAtOrAbove, shiftLevel } from "./cefr";
 import type { Posterior } from "./adaptive";
 import type { ChanceTest } from "./chance";
 import { placementOf, type Placement } from "./placement";
@@ -33,8 +33,8 @@ export type SectionEvidence =
       answered: number;
       /** Below the section's minimum: too little to trust the level. */
       insufficient: boolean;
-      /** The section's score against pure guessing (chance.ts); absent where nobody computed it. */
-      chance?: Pick<ChanceTest, "atChance"> | null;
+      /** The section's answers against pure guessing (chance.ts); absent where nobody computed it. */
+      chance?: (Pick<ChanceTest, "atChance"> & Partial<Pick<ChanceTest, "blank" | "beginner" | "all">>) | null;
     }
   | {
       section: Section;
@@ -49,8 +49,10 @@ export type SkillReason = "AT_CHANCE";
 
 export type SkillResult = {
   level: ResultLevel | null;
-  /** Set when the level comes from a rule the teacher should see (AT_CHANCE). */
+  /** Set when the level comes from a rule the teacher should see (AT_CHANCE). A teacher's level drops it. */
   reason?: SkillReason;
+  /** AT_CHANCE only: the answered A1 to A2 units the rule tested, or a blank section. */
+  chance?: { right: number; answered: number; blank: boolean };
   decider: Decider | null;
   /** Objective sections only. */
   posterior?: Posterior;
@@ -66,9 +68,18 @@ export type VerificationReason =
   | `REQUIRED_SKILL_BELOW:${Section}`
   | "HOLD_PROBABILITY_LOW";
 
+/**
+ * Why a result must wait for a teacher whatever its mode. CHANCE_BELOW_POOLED: a
+ * section at chance pulls the overall level to A0 while the pooled estimate is
+ * at or above the A1 band; the two disagree, so a person decides.
+ */
+export type ReviewReason = "CHANCE_BELOW_POOLED";
+
 export type ComputedResult = {
   skills: Partial<Record<Section, SkillResult>>;
   overall: ResultLevel | null;
+  /** Absent on results stored before it existed, and when there is no such reason. */
+  reviewReasons?: ReviewReason[];
   /** From the objective sections pooled together. Null without any. */
   pooled: Posterior | null;
   status: "AWAITING_GRADING" | "AWAITING_REVIEW" | "READY";
@@ -100,16 +111,22 @@ export function poolPosteriors(ps: Posterior[]): Posterior | null {
 }
 
 /**
- * An objective section's level. Below the A1 band it is A0 (Pre-A1), but only
- * on sufficient evidence: a section that stopped short of its minimum keeps the
- * A1 floor, since a few answers (and the unanswered ones counted wrong) say too
- * little to call someone a beginner without any German. Such a result never
- * finalizes by itself; the teacher can still set A0.
+ * An objective section's level by its band. Below the A1 band it is A0
+ * (Pre-A1), but not when `keepA1`: a section that stopped short of its minimum
+ * (a few answers, and the unanswered ones counted wrong, say too little to call
+ * someone a beginner without any German; such a result never finalizes by
+ * itself), or one whose answers are credibly above chance (A0 means "shows no
+ * German"; blanks count as wrong in the estimate and can pull a student who
+ * answered some gaps right below the band). The teacher can still set A0.
  */
-export function objectiveLevel(posterior: Posterior, insufficient: boolean): ResultLevel {
+export function objectiveLevel(posterior: Posterior, keepA1: boolean): ResultLevel {
   const { level, belowScale } = levelFromTheta(posterior.mean);
-  return belowScale && !insufficient ? "A0" : level;
+  return belowScale && !keepA1 ? "A0" : level;
 }
+
+/** The section's answers are credibly above chance on either test (chance.ts): it shows German. */
+const showsGerman = (chance: { beginner?: { aboveChance: boolean }; all?: { aboveChance: boolean } } | null | undefined): boolean =>
+  chance?.beginner?.aboveChance === true || chance?.all?.aboveChance === true;
 
 export function computeResult(input: {
   mode: ExamMode;
@@ -124,9 +141,12 @@ export function computeResult(input: {
     if (e.kind === "OBJECTIVE") {
       // Not credibly above guessing: A0 whatever the band says (chance.ts decides only with enough units).
       const atChance = e.chance?.atChance === true;
+      const tested = e.chance?.beginner;
       skills[e.section] = {
-        level: atChance ? "A0" : objectiveLevel(e.posterior, e.insufficient),
-        ...(atChance ? { reason: "AT_CHANCE" as const } : {}),
+        level: atChance ? "A0" : objectiveLevel(e.posterior, e.insufficient || showsGerman(e.chance)),
+        ...(atChance
+          ? { reason: "AT_CHANCE" as const, chance: { right: tested?.right ?? 0, answered: tested?.answered ?? 0, blank: e.chance?.blank ?? false } }
+          : {}),
         decider: "ENGINE",
         posterior: e.posterior,
         pending: false,
@@ -143,7 +163,12 @@ export function computeResult(input: {
   }
   for (const [section, level] of Object.entries(input.overrides?.skills ?? {})) {
     const s = skills[section as Section];
-    if (s && level) skills[section as Section] = { ...s, level, decider: "TEACHER", pending: false };
+    if (!s || !level) continue;
+    // The teacher's level is not the chance rule's: its reason and tally go.
+    const { reason: _reason, chance: _chance, ...rest } = s;
+    void _reason;
+    void _chance;
+    skills[section as Section] = { ...rest, level, decider: "TEACHER", pending: false };
   }
 
   const levels = Object.values(skills)
@@ -206,16 +231,21 @@ export function computeResult(input: {
     placement = placementOf(pooled, productive, { insufficient });
   }
 
-  return { skills, overall, pooled, status, verification, placement };
+  const reviewReasons: ReviewReason[] = [];
+  if (overall === "A0" && pooled && pooled.mean >= PRE_A1_CUT && Object.values(skills).some((s) => s?.reason === "AT_CHANCE")) reviewReasons.push("CHANCE_BELOW_POOLED");
+
+  return { skills, overall, pooled, status, verification, placement, ...(reviewReasons.length ? { reviewReasons } : {}) };
 }
 
 /**
  * True when the engine itself is not sure enough to release a level on its own:
  * the placement is borderline (near a cut, imprecise, or a productive gap), or
- * it recommends a level other than the computed one. Such a result waits for a
- * teacher even when no writing or speaking is involved.
+ * it recommends a level other than the computed one; or, in any mode, a review
+ * reason (CHANCE_BELOW_POOLED). Such a result waits for a teacher even when no
+ * writing or speaking is involved.
  */
-export function isUncertainResult(computed: Pick<ComputedResult, "overall" | "placement"> | null | undefined): boolean {
+export function isUncertainResult(computed: Pick<ComputedResult, "overall" | "placement" | "reviewReasons"> | null | undefined): boolean {
+  if (computed?.reviewReasons?.length) return true;
   const p = computed?.placement;
   if (!p) return false;
   return p.borderline || p.reasons.includes("HIGH_UNCERTAINTY") || (p.recommended !== null && p.recommended !== computed?.overall);
@@ -231,7 +261,7 @@ export function autoFinalizes(input: {
   hasProductive: boolean;
   anyUndecided: boolean;
   clean: boolean;
-  computed: Pick<ComputedResult, "overall" | "placement"> | null | undefined;
+  computed: Pick<ComputedResult, "overall" | "placement" | "reviewReasons"> | null | undefined;
 }): boolean {
   return input.status === "AWAITING_REVIEW" && !input.hasProductive && !input.anyUndecided && input.clean && !isUncertainResult(input.computed);
 }
@@ -240,7 +270,7 @@ export function autoFinalizes(input: {
 export function studentWaitingFor(input: {
   hasProductive: boolean;
   final: boolean;
-  computed: Pick<ComputedResult, "overall" | "placement"> | null | undefined;
+  computed: Pick<ComputedResult, "overall" | "placement" | "reviewReasons"> | null | undefined;
 }): "PRODUCTIVE" | "REVIEW" | null {
   if (input.final) return null;
   if (input.hasProductive) return "PRODUCTIVE";

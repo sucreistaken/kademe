@@ -10,6 +10,7 @@ import {
   countWords,
   emptyAnswerReason,
   guardPreA1,
+  hasGermanSentence,
   parseGradingAnswer,
   skillLevelFromCriteria,
   speakingMetrics,
@@ -313,21 +314,36 @@ describe("A0 (Pre-A1) in AI grading", () => {
     if (res.ok) expect([res.proposal.overallLevel, res.proposal.criteria[0].level]).toEqual(["A0", "A0"]);
   });
 
-  it("keeps A0 when the model says the answer is empty or not German", () => {
-    for (const flag of ["EMPTY", "NOT_GERMAN"] as const) {
-      const out = guardPreA1(a0([flag]));
-      expect(out.overallLevel).toBe("A0");
+  it("keeps A0 when the model says the answer is empty or not German and it holds no German sentence", () => {
+    for (const [flag, source] of [["EMPTY", ""], ["NOT_GERMAN", "My name is Ali and I live in Izmir."], ["NOT_GERMAN", "Benim adım Ali. Hallo."]] as const) {
+      const out = guardPreA1(a0([flag]), source);
+      expect(out.overallLevel, source).toBe("A0");
       expect(out.criteria[0].level).toBe("A0");
       expect(out.flags).toEqual([flag]);
     }
   });
 
   it("raises an A0 with no such flag to A1 and marks it", () => {
-    const out = guardPreA1(a0(["OFF_TOPIC"]));
+    const out = guardPreA1(a0(["OFF_TOPIC"]), "");
     expect(out.overallLevel).toBe("A1");
     expect(out.criteria.map((c) => c.level)).toEqual(["A1", "A1"]);
     expect(out.flags).toEqual(["OFF_TOPIC", "A0_RAISED"]);
-    expect(guardPreA1(proposal({ RANGE: "B1" })).flags).toEqual([]);
+    expect(guardPreA1(proposal({ RANGE: "B1" }), "").flags).toEqual([]);
+  });
+
+  it("raises a NOT_GERMAN A0 to A1 when the answer still holds a German sentence", () => {
+    const out = guardPreA1(a0(["NOT_GERMAN"]), "I don't know much German. Ich heiße Ali und wohne in Izmir.");
+    expect(out.overallLevel).toBe("A1");
+    expect(out.flags).toEqual(["NOT_GERMAN", "A0_RAISED"]);
+  });
+
+  it("hasGermanSentence: three or more words, two German markers", () => {
+    expect(hasGermanSentence("Ich heiße Ali.")).toBe(true);
+    expect(hasGermanSentence("Hallo, ich bin Ayşe und ich komme aus der Türkei")).toBe(true);
+    expect(hasGermanSentence("I was in the house. Die!")).toBe(false);
+    expect(hasGermanSentence("Benim adım Ayşe, Türkiye'den geliyorum.")).toBe(false);
+    expect(hasGermanSentence("Hallo danke")).toBe(false);
+    expect(hasGermanSentence("")).toBe(false);
   });
 
   it("the model cannot claim A0_RAISED itself", () => {
@@ -338,7 +354,7 @@ describe("A0 (Pre-A1) in AI grading", () => {
   });
 
   it("A0 is under every task ceiling and counts in the criteria median", () => {
-    const capped = capByTaskLevel(a0(["NOT_GERMAN"]), "A1");
+    const capped = capByTaskLevel(guardPreA1(a0(["NOT_GERMAN"]), "Merhaba"), "A1");
     expect(capped.overallLevel).toBe("A0");
     expect(capped.flags).toEqual(["NOT_GERMAN"]);
     expect(skillLevelFromCriteria(proposal({ TASK_ACHIEVEMENT: "A0", COHERENCE: "A0", RANGE: "A1", ACCURACY: "A1" }))).toBe("A0");
@@ -357,6 +373,8 @@ describe("A0 (Pre-A1) in AI grading", () => {
     expect(system.content).toContain("level is one of A0, A1, A2, B1, B2, C1, C2");
     expect(system.content).toContain("A0 (Pre-A1) means the answer has no German that can be scored");
     expect(system.content).toContain("add the flag EMPTY or NOT_GERMAN");
+    expect(system.content).toContain("it contains no German sentence at all");
+    expect(system.content).toContain("If the answer contains at least one German sentence of the candidate's own");
     expect(system.content).not.toContain(EM_DASH);
   });
 

@@ -206,7 +206,7 @@ function commonRules(section: ProductiveSection, taskLevel: Cefr, locale: Ration
     "- If the answer is empty, add the flag EMPTY. If it is mostly not in German, add NOT_GERMAN. If it does not address the task, add OFF_TOPIC. If it is far below the required length, add TOO_SHORT. Still grade whatever German there is.",
     `- Give exactly one entry for each of these criteria: ${criteria}. No other criteria.`,
     "- level is one of A0, A1, A2, B1, B2, C1, C2. Choose the highest level whose descriptor the answer meets consistently, not the one it touches once.",
-    "- A0 (Pre-A1) means the answer has no German that can be scored: it is empty or not in German. Use A0 only then, for a criterion or overall, and add the flag EMPTY or NOT_GERMAN with it. Any German the candidate wrote or said, however short or faulty, is at least A1.",
+    "- A0 (Pre-A1) means the answer has no German that can be scored: it is empty, or it contains no German sentence at all (only another language, or single words copied from the task). Use A0 only then, for a criterion or overall, and add the flag EMPTY or NOT_GERMAN with it. If the answer contains at least one German sentence of the candidate's own, however short or faulty, the level is at least A1, even when most of it is in another language (you may still add NOT_GERMAN).",
     "- score is an integer from 0 to 5 relative to the task level: 0 no assessable performance, 1 far below the task level, 2 below it, 3 meets it, 4 above it, 5 clearly above it.",
     "- assessable is false only when the criterion cannot be judged from this material at all. Then explain why in the rationale and give no evidence.",
     "- rationale is one to three sentences naming what in the answer led to the level.",
@@ -502,13 +502,44 @@ export function verifyEvidence(proposal: GradingProposal, sourceText: string): G
 }
 
 /**
+ * Words that mark a German sentence and are rarely English or Turkish words
+ * (no "in", "was", "die", "will", "also", "hat"), lower case.
+ */
+const GERMAN_MARKERS = new Set(
+  (
+    "ich du er wir ihr ist bin bist sind war habe hast haben und oder aber nicht kein keine keinen der das den dem des " +
+    "ein eine einen einem einer mit zu zum zur im auf für fuer von auch sehr gern gerne heiße heisse heißt wohne wohnt komme " +
+    "kommt nach bei wie ja nein danke bitte hallo mein meine meinen dein deine unser unsere wo gut möchte moechte kann muss " +
+    "liebe lieber viele grüße gruesse heute morgen jetzt dann weil dass mich mir dich dir uns euch sich"
+  ).split(" "),
+);
+
+/**
+ * Whether a text holds at least one German sentence of the candidate's own: a
+ * stretch between sentence ends with three or more words, two of them German
+ * markers. A heuristic for the A0 guard, deliberately on the side of "there is
+ * German" (the teacher can still set A0).
+ */
+export function hasGermanSentence(text: string): boolean {
+  return text
+    .split(/[.!?;:\n]+/u)
+    .some((sentence) => {
+      const words = sentence.toLowerCase().match(/[\p{L}]+/gu) ?? [];
+      return words.length >= 3 && words.filter((w) => GERMAN_MARKERS.has(w)).length >= 2;
+    });
+}
+
+/**
  * A0 (Pre-A1) only for an answer with no German to score. The prompt asks the
- * model to say so with EMPTY or NOT_GERMAN; an A0 without either flag is
- * raised to A1 and marked `A0_RAISED`, so the teacher sees the model was
+ * model to say so with EMPTY or NOT_GERMAN and to give A0 only when the answer
+ * holds no German sentence. The code checks both: an A0 without either flag,
+ * or with them while the answer has a German sentence (`hasGermanSentence`),
+ * is raised to A1 and marked `A0_RAISED`, so the teacher sees the model was
  * overruled. The teacher can still set A0.
  */
-export function guardPreA1(proposal: GradingProposal): GradingProposal {
-  if (proposal.flags.includes("EMPTY") || proposal.flags.includes("NOT_GERMAN")) return { ...proposal, flags: [...proposal.flags] };
+export function guardPreA1(proposal: GradingProposal, source: string): GradingProposal {
+  const flagged = proposal.flags.includes("EMPTY") || proposal.flags.includes("NOT_GERMAN");
+  if (flagged && !hasGermanSentence(source)) return { ...proposal, flags: [...proposal.flags] };
   let raised = false;
   const lift = (level: ResultLevel): ResultLevel => {
     if (level !== "A0") return level;

@@ -1,40 +1,39 @@
 import { guessOf } from "./adaptive";
 import { compareLevels } from "./cefr";
-import { hasAnswer } from "./item-scoring";
 import { isTextGap, type Cefr, type ItemAnswer, type ItemSnapshot } from "./types";
 
 /**
- * The chance rule for A0 (Pre-A1): is an objective section's score credibly
- * above what pure guessing gives? If not, the section shows no German the
- * engine can tell from luck, and its level is A0 with the reason "AT_CHANCE",
- * whatever the ability band says. Pure, so the engine and the simulation share
- * it (src/lib/exam/form-simulation.ts).
+ * The chance rule for A0 (Pre-A1): A0 means "shows no German". A right answer
+ * anywhere is evidence of German; a blank is evidence of nothing. So the rule
+ * looks at the ANSWERED units only and asks whether they are right more often
+ * than pure guessing would make them. If not, the section's level is A0 with
+ * the reason "AT_CHANCE", whatever the ability band says. Pure, so the engine
+ * and the simulation share it (src/lib/exam/form-simulation.ts).
  *
- * Counted in answer units, the parts the engine already scores: one per
- * single-choice item, per statement (Richtig/Falsch), per pair (matching), per
- * gap, per correct box of a tick-n item. Each unit has a chance of being right
- * by guessing alone: one over the options, a third (a half for two-way
- * statements), one over the right-hand column, a quarter for a cloze gap, one
- * over the pool for a word bank, nothing for a typed answer. Under pure
- * guessing the right units are a sum of independent Bernoullis: the expected
- * count is the sum of the chances, its variance the sum of p(1 - p). A section
- * is at chance when
+ * Answer units are the parts the engine already scores: one per single-choice
+ * item, per statement (Richtig/Falsch), per pair (matching), per gap, per
+ * correct box of a tick-n item. A unit is answered when the student put
+ * something in it. Each has a chance of being right by guessing alone: one
+ * over the options, a third (a half for two-way statements), one over the
+ * right-hand column, a quarter for a cloze gap, one over the pool for a word
+ * bank, nothing for a typed answer. Under pure guessing the right units among
+ * the answered ones are a sum of independent Bernoullis: the expected count is
+ * the sum of their chances, its variance the sum of p(1 - p). Answered units
+ * are "not above chance" when
  *
- *   right <= expected + CHANCE_Z * sd     (one-sided, 98%)
+ *   right <= expected + CHANCE_Z * sd     (one-sided, 98%; no answered unit: trivially)
  *
- * Unanswered and unreached units score 0, like everywhere else.
- *
- * Only units written for A1 and A2 count (CHANCE_MAX_LEVEL), and only a
- * section with at least CHANCE_MIN_UNITS of them is judged. A real A1 student
- * is above chance on A1 to A2 material but near chance on B1 to C2, so
- * counting all of a section would call real beginners A0; and one short A1 or
- * A2 text (3 to 10 units in the bank) cannot tell A0 from A1. The placement's
- * grammar (30 such units) and the quick screen's (38) are judged; its reading
- * and listening (one A2 text or clip) are not. The simulation behind these
- * numbers is in docs/EXAM-ENGINE.md.
- *
- * A blank section (nothing answered) is at chance whatever its levels, once it
- * has BLANK_MIN_UNITS units: there is nothing to tell from luck.
+ * A section is at chance when BOTH hold:
+ *   1. its answered A1 to A2 units are not above chance, and
+ *   2. all its answered units are not above chance (right answers on B1 to C2
+ *      material are German too),
+ * and it served enough evidence: at least CHANCE_MIN_UNITS units written for
+ * A1 to A2 (CHANCE_MAX_LEVEL). A real A1 student is near chance on B1 to C2
+ * material, so the first test looks at beginner material; one short A1 or A2
+ * text (3 to 10 units in the bank) cannot tell A0 from A1, hence the minimum.
+ * A fully blank section (nothing answered) is at chance once it served
+ * BLANK_MIN_UNITS units of any level. The simulation behind these numbers is
+ * in docs/EXAM-ENGINE.md.
  *
  * Approximations: the gaps or statements of one item are not independent
  * under real answering, but they are under pure guessing, which is the
@@ -43,114 +42,144 @@ import { isTextGap, type Cefr, type ItemAnswer, type ItemSnapshot } from "./type
  * students above chance, never more).
  */
 
-/** One-sided 98% bound: chosen by simulation (no German -> A0 at least 97%, A1 band false A0 at most 2%). */
+/** One-sided 98% bound: chosen by simulation (docs/EXAM-ENGINE.md). */
 export const CHANCE_Z = 2.054;
-/** Fewer A1 to A2 answer units than this decide nothing: about two short texts' worth. */
+/** Fewer served A1 to A2 answer units than this decide nothing: about two short texts' worth. */
 export const CHANCE_MIN_UNITS = 16;
-/** A blank section needs this many units to count as at chance. */
+/** A blank section needs this many served units to count as at chance. */
 export const BLANK_MIN_UNITS = 8;
-/** Units written above this level are not counted. */
+/** Units written above this level do not count for the beginner test (they still count for the all-units test). */
 export const CHANCE_MAX_LEVEL: Cefr = "A2";
 
-/** One scored item as answer units: how many, the guessing mean and variance of its right units, and how many were right. */
-export type ChanceUnits = { units: number; expected: number; variance: number; right: number };
+/**
+ * One scored item as answer units: `units` served, `answered` of them with an
+ * answer, the guessing mean and variance of the right count over the answered
+ * units, and how many were right.
+ */
+export type ChanceUnits = { units: number; answered: number; expected: number; variance: number; right: number };
+
+/** Answered units against guessing. */
+export type ChanceTally = { answered: number; right: number; expected: number; sd: number; aboveChance: boolean };
 
 export type ChanceTest = {
-  /** Answer units counted (A1 to A2 items only, or all for a blank section). */
+  /** Served units written for A1 to A2. */
   units: number;
-  right: number;
-  /** Right units expected from pure guessing, and the sd of that count. */
-  expected: number;
-  sd: number;
-  /** Enough units for the rule to decide. */
+  /** The beginner test: answered A1 to A2 units. */
+  beginner: ChanceTally;
+  /** The all-units test: every answered unit of the section. */
+  all: ChanceTally;
+  /** Enough served units for the rule to decide. */
   enough: boolean;
   /** Nothing in the section was answered. */
   blank: boolean;
-  /** Decided: not credibly above chance (or blank). */
+  /** Decided: not above chance on both tests (or blank). */
   atChance: boolean;
 };
 
 export type ChanceOptions = { z?: number; minUnits?: number; maxLevel?: Cefr };
 
-const bernoulli = (units: number, p: number, score: number): ChanceUnits => ({
+/** Each answered unit right by guessing with probability `p`. */
+const bernoulli = (units: number, answered: number, p: number, right: number): ChanceUnits => ({
   units,
-  expected: units * p,
-  variance: units * p * (1 - p),
-  right: score * units,
+  answered,
+  expected: answered * p,
+  variance: answered * p * (1 - p),
+  right,
 });
 
-/** Answer units of one scored objective item; null for an item without them (writing, speaking). */
-export function chanceUnitsOf(snapshot: Pick<ItemSnapshot, "type" | "skillTag" | "content" | "key">, score: number): ChanceUnits | null {
+const filled = (v: unknown) => typeof v === "string" && v.trim().length > 0;
+
+/**
+ * Answer units of one scored objective item; null for an item without them
+ * (writing, speaking). Without `answer` (the simulation) every unit counts as
+ * answered.
+ */
+export function chanceUnitsOf(
+  snapshot: Pick<ItemSnapshot, "type" | "skillTag" | "content" | "key">,
+  score: number,
+  answer?: ItemAnswer | null,
+): ChanceUnits | null {
   const c = snapshot.content;
+  const all = answer === undefined;
+  const a = answer ?? {};
   switch (c.kind) {
     case "CHOICE": {
       const n = Math.max(1, c.options.length);
-      if (snapshot.type === "SINGLE_CHOICE") return bernoulli(1, 1 / n, score);
+      const picked = all || (a.choiceIds?.length ?? 0) > 0;
+      if (snapshot.type === "SINGLE_CHOICE") return bernoulli(1, picked ? 1 : 0, 1 / n, score);
       const correct = snapshot.key.kind === "CHOICE" ? Math.max(1, snapshot.key.correct.length) : 1;
-      return bernoulli(correct, Math.min(1, correct / n), score);
+      return bernoulli(correct, picked ? correct : 0, Math.min(1, correct / n), score * correct);
     }
-    case "TFNG":
-      return bernoulli(c.statements.length, c.twoWay ? 1 / 2 : 1 / 3, score);
-    case "MATCHING":
-      return bernoulli(c.left.length, 1 / Math.max(1, c.right.length), score);
+    case "TFNG": {
+      const answered = all ? c.statements.length : c.statements.filter((s) => filled(a.tfng?.[s.id])).length;
+      return bernoulli(c.statements.length, answered, c.twoWay ? 1 / 2 : 1 / 3, score * c.statements.length);
+    }
+    case "MATCHING": {
+      const answered = all ? c.left.length : c.left.filter((l) => filled(a.matches?.[l.id])).length;
+      return bernoulli(c.left.length, answered, 1 / Math.max(1, c.right.length), score * c.left.length);
+    }
     case "GAP": {
-      if (isTextGap(snapshot)) return bernoulli(c.gaps.length, guessOf(snapshot), score);
+      const isAnswered = (id: string) => all || filled(a.gaps?.[id]);
+      const right = score * c.gaps.length;
+      if (isTextGap(snapshot)) return bernoulli(c.gaps.length, c.gaps.filter((g) => isAnswered(g.id)).length, guessOf(snapshot), right);
       // An ordinary gap item: a drop-down gap is one of its choices, a typed one cannot be guessed.
-      const ps = c.gaps.map((g) => (g.choices?.length ? 1 / g.choices.length : 0));
+      const ps = c.gaps.filter((g) => isAnswered(g.id)).map((g) => (g.choices?.length ? 1 / g.choices.length : 0));
       return {
-        units: ps.length,
+        units: c.gaps.length,
+        answered: ps.length,
         expected: ps.reduce((s, p) => s + p, 0),
         variance: ps.reduce((s, p) => s + p * (1 - p), 0),
-        right: score * ps.length,
+        right,
       };
     }
     case "SHORT_TEXT":
-      return bernoulli(1, 0, score);
+      return bernoulli(1, all || filled(a.text) ? 1 : 0, 0, score);
     default:
       return null;
   }
 }
 
 const total = (units: ChanceUnits[]): ChanceUnits =>
-  units.reduce((a, u) => ({ units: a.units + u.units, expected: a.expected + u.expected, variance: a.variance + u.variance, right: a.right + u.right }), {
-    units: 0,
-    expected: 0,
-    variance: 0,
-    right: 0,
-  });
+  units.reduce(
+    (s, u) => ({ units: s.units + u.units, answered: s.answered + u.answered, expected: s.expected + u.expected, variance: s.variance + u.variance, right: s.right + u.right }),
+    { units: 0, answered: 0, expected: 0, variance: 0, right: 0 },
+  );
 
-/** Whether these units, together, are at chance (`blank`: nothing in the section was answered). */
-export function chanceTest(units: ChanceUnits[], options: ChanceOptions & { blank?: boolean } = {}): ChanceTest {
-  const z = options.z ?? CHANCE_Z;
-  const sum = total(units);
+function tally(sum: ChanceUnits, z: number): ChanceTally {
   const sd = Math.sqrt(sum.variance);
-  const blank = options.blank ?? false;
-  const enough = sum.units >= (blank ? BLANK_MIN_UNITS : (options.minUnits ?? CHANCE_MIN_UNITS));
-  // A rounding hair (0.9999 of a unit) must not lift a score over the bound.
-  const atChance = enough && (blank || sum.right <= sum.expected + z * sd + 1e-9);
-  return { units: sum.units, right: sum.right, expected: sum.expected, sd, enough, blank, atChance };
+  // No answered unit is trivially not above chance; a rounding hair (0.9999 of a unit) must not lift a score over the bound.
+  const aboveChance = sum.answered > 0 && sum.right > sum.expected + z * sd + 1e-9;
+  return { answered: sum.answered, right: Math.round(sum.right * 1000) / 1000, expected: sum.expected, sd, aboveChance };
 }
 
-/** True for an item the rule counts: written for A1 to `maxLevel`. */
+/**
+ * The chance test from a section's units, each with the level it was written
+ * for: the beginner test on A1 to `maxLevel`, the all-units test on all.
+ */
+export function chanceTest(units: Array<ChanceUnits & { level: Cefr }>, options: ChanceOptions = {}): ChanceTest {
+  const z = options.z ?? CHANCE_Z;
+  const low = total(units.filter((u) => countsForChance(u.level, options.maxLevel)));
+  const sum = total(units);
+  const beginner = tally(low, z);
+  const all = tally(sum, z);
+  const blank = sum.answered === 0;
+  const enough = blank ? sum.units >= BLANK_MIN_UNITS : low.units >= (options.minUnits ?? CHANCE_MIN_UNITS);
+  const atChance = enough && (blank || (!beginner.aboveChance && !all.aboveChance));
+  return { units: low.units, beginner, all, enough, blank, atChance };
+}
+
+/** True for an item the beginner test counts: written for A1 to `maxLevel`. */
 export const countsForChance = (level: Cefr, maxLevel: Cefr = CHANCE_MAX_LEVEL): boolean => compareLevels(level, maxLevel) <= 0;
 
-type ScoredResponse = {
-  itemSnapshot: Pick<ItemSnapshot, "type" | "skillTag" | "content" | "key" | "level">;
-  score: number | null;
-  answer: ItemAnswer | null;
-};
-
 /** The chance test of a section from its stored responses (unscored ones, e.g. writing, are skipped). */
-export function sectionChance(responses: ScoredResponse[], options: ChanceOptions = {}): ChanceTest {
-  const scored = responses.filter((r) => r.score !== null);
-  const unitsOf = (rs: ScoredResponse[]) =>
-    rs.flatMap((r) => {
-      const u = chanceUnitsOf(r.itemSnapshot, r.score as number);
-      return u ? [u] : [];
-    });
-  if (scored.length > 0 && scored.every((r) => !hasAnswer(r.itemSnapshot.type, r.answer))) return chanceTest(unitsOf(scored), { ...options, blank: true });
-  return chanceTest(
-    unitsOf(scored.filter((r) => countsForChance(r.itemSnapshot.level, options.maxLevel))),
-    options,
-  );
+export function sectionChance(
+  responses: Array<{ itemSnapshot: Pick<ItemSnapshot, "type" | "skillTag" | "content" | "key" | "level">; score: number | null; answer: ItemAnswer | null }>,
+  options: ChanceOptions = {},
+): ChanceTest {
+  const units = responses.flatMap((r) => {
+    if (r.score === null) return [];
+    const u = chanceUnitsOf(r.itemSnapshot, r.score, r.answer ?? null);
+    return u ? [{ ...u, level: r.itemSnapshot.level }] : [];
+  });
+  return chanceTest(units, options);
 }

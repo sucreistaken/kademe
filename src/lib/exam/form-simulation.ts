@@ -1,8 +1,8 @@
-import { C_TEST_GAPS_PER_WEIGHT, CLOZE_GUESS, eap, mulberry32, pWithGuess, type Observation } from "./adaptive";
+import { C_TEST_GAPS_PER_WEIGHT, CLOZE_GUESS, eap, mulberry32, pCorrect, pWithGuess, type Observation } from "./adaptive";
 import { adaptiveConfigFor, enabledSections, resolveDistribution, textPlanOf, weighsTexts, type BlueprintConfig } from "./blueprint";
-import { BAND_CENTER, PRE_A1_CUT, levelIndex, medianLevel, resultLevelFromTheta, thetaForLevel } from "./cefr";
-import { chanceTest, countsForChance, type ChanceUnits } from "./chance";
-import { poolPosteriors } from "./result";
+import { BAND_CENTER, PRE_A1_CUT, levelIndex, resultLevelFromTheta, thetaForLevel } from "./cefr";
+import { chanceTest, type ChanceOptions, type ChanceUnits } from "./chance";
+import { computeResult, isUncertainResult, poolPosteriors, type SectionEvidence } from "./result";
 import { CEFR_LEVELS, isObjectiveSection, type Cefr, type ExamMode, type ResultLevel, type TextGapKind } from "./types";
 
 /**
@@ -28,18 +28,24 @@ import { CEFR_LEVELS, isObjectiveSection, type Cefr, type ExamMode, type ResultL
  * student at one ability instead (a very low one: a student with no German who
  * only guesses).
  *
- * `overall` places by the engine's overall rule instead of the pooled mean:
- * each objective section's result level, A0 when the section is at chance
- * (chance.ts; an ordinary item's chance is `itemChance`, a four-option item by
- * default, whether or not the student guesses), then the lower median together
- * with the productive sections at the student's true level ("TRUE": a grader
- * who is right) or without them ("NONE").
+ * `overall` places by the engine's own `computeResult` instead of the pooled
+ * mean: each objective section with its chance test (chance.ts; an ordinary
+ * item's chance is `itemChance`, a four-option item by default, whether or not
+ * the student guesses), the productive sections at the student's true level
+ * ("TRUE": a grader who is right) or left out ("NONE"), the template's pass
+ * rules and `claimed` for a verification. It then also counts FAIL outcomes
+ * and results that would wait for a teacher (`isUncertainResult`).
+ *
+ * `behaviour`: "GUESS" (default) answers everything, ordinary items with the
+ * `itemGuess` floor and gaps with their text floor; "BLANK" answers only what
+ * the student knows (right with sigma(theta - b)) and leaves the rest blank:
+ * blanks score 0 in the estimate and are unanswered units for the chance rule.
  */
 
 export type OverallOptions = {
   productive: "TRUE" | "NONE";
   /** The chance rule's settings; null leaves it out (theta bands only). */
-  chance: { z?: number; minUnits?: number; maxLevel?: Cefr } | null;
+  chance: ChanceOptions | null;
   /** Chance of an ordinary item's single answer unit. Default 0.25. */
   itemChance?: number;
 };
@@ -74,10 +80,18 @@ export type SimulationOptions = {
   fixedTheta?: number;
   /** Place by the engine's overall rule (see above) instead of the pooled mean. */
   overall?: OverallOptions;
+  /** How the student answers what they do not know (see above). Default "GUESS". */
+  behaviour?: "GUESS" | "BLANK";
+  /** The claimed level of a verification; drives its item plan and its outcome. */
+  claimed?: Cefr;
 };
 
-/** `a0`: placed A0 (for an A0 student the same as `exact`; for an A1 student a false A0). */
-export type LevelAccuracy = { exact: number; withinOne: number; over: number; a0: number };
+/**
+ * `a0`: placed A0 (for an A0 student the same as `exact`; for an A1 student a
+ * false A0). With `overall` only: `fail`, the verification outcome is FAIL;
+ * `review`, the result would wait for a teacher. Both 0 otherwise.
+ */
+export type LevelAccuracy = { exact: number; withinOne: number; over: number; a0: number; fail: number; review: number };
 /** Per true level: placed exactly, within one level, and above the true level. A0 only when simulated. */
 export type FormAccuracy = Record<Cefr, LevelAccuracy> & Partial<Record<"A0", LevelAccuracy>>;
 
@@ -112,22 +126,6 @@ export function textGuess(kind: TextGapKind, gaps: number, wordBankDistractors =
   return 0;
 }
 
-/** The engine's overall level for one simulated student (see `OverallOptions`). */
-function overallOf(
-  sections: Array<{ posterior: { mean: number; sd: number }; units: Array<ChanceUnits & { level: Cefr }> }>,
-  o: OverallOptions,
-  productiveCount: number,
-  trueLevel: ResultLevel,
-): ResultLevel {
-  const levels: ResultLevel[] = sections.map(({ posterior, units }) => {
-    const chance = o.chance;
-    if (chance && chanceTest(units.filter((u) => countsForChance(u.level, chance.maxLevel)), chance).atChance) return "A0";
-    return resultLevelFromTheta(posterior.mean);
-  });
-  if (o.productive === "TRUE") for (let i = 0; i < productiveCount; i++) levels.push(trueLevel);
-  return medianLevel(levels) ?? "A0";
-}
-
 function normal(rng: () => number): number {
   const u = Math.max(rng(), 1e-12);
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rng());
@@ -136,33 +134,39 @@ function normal(rng: () => number): number {
 export function simulateFixedForm(config: BlueprintConfig, mode: ExamMode, o: SimulationOptions): FormAccuracy {
   const rng = mulberry32(o.seed);
   const within = ["EASY", "MID", "HARD"] as const;
+  const claimed = o.claimed ?? null;
+  const blanks = o.behaviour === "BLANK";
   const objective = enabledSections(config).filter((s) => isObjectiveSection(s.section));
-  const productiveCount = enabledSections(config).length - objective.length;
+  const productive = enabledSections(config).filter((s) => !isObjectiveSection(s.section));
   const out = {} as FormAccuracy;
   for (const level of o.trueLevels ?? CEFR_LEVELS) {
     let exact = 0;
     let withinOne = 0;
     let over = 0;
     let a0 = 0;
+    let fail = 0;
+    let review = 0;
     for (let r = 0; r < o.runs; r++) {
       // Spread across the band, not only its centre. A0 is the logit below the A1 band.
       const draw = rng();
       const theta = o.fixedTheta ?? (level === "A0" ? PRE_A1_CUT - 1 + draw : BAND_CENTER[level] - 0.5 + draw);
       const sections = objective.map((s) => {
-        const cfg = adaptiveConfigFor(s, mode, null);
-        const dist = resolveDistribution(s, mode, null, config.difficultyOffset);
+        const cfg = adaptiveConfigFor(s, mode, claimed);
+        const dist = resolveDistribution(s, mode, claimed, config.difficultyOffset);
         // Answer units for the chance rule, from the same answers (no extra draws).
         const units: Array<ChanceUnits & { level: Cefr }> = [];
         const itemChance = o.overall?.itemChance ?? 0.25;
         const observations: Observation[] = CEFR_LEVELS.flatMap((l) =>
           Array.from({ length: dist[l] }, () => {
             const b = thetaForLevel(l, within[Math.floor(rng() * 3)]);
-            const score = rng() < pWithGuess(theta, b, o.itemGuess ?? 0) ? 1 : 0;
-            units.push({ level: l, units: 1, expected: itemChance, variance: itemChance * (1 - itemChance), right: score });
+            // One draw per item either way: GUESS answers it (right with the floor), BLANK only when known.
+            const score = rng() < (blanks ? pCorrect(theta, b) : pWithGuess(theta, b, o.itemGuess ?? 0)) ? 1 : 0;
+            const answered = blanks ? score : 1;
+            units.push({ level: l, units: 1, answered, expected: answered * itemChance, variance: answered * itemChance * (1 - itemChance), right: score });
             return { b, score };
           }),
         );
-        for (const { level: l, kind } of textPlanOf(s, mode, null)) {
+        for (const { level: l, kind } of textPlanOf(s, mode, claimed)) {
           const b = thetaForLevel(l);
           const gaps = o.textGaps?.[kind] ?? o.cTestGaps;
           const guess = textGuess(kind, gaps, o.wordBankDistractors);
@@ -170,13 +174,32 @@ export function simulateFixedForm(config: BlueprintConfig, mode: ExamMode, o: Si
           const floor = o.estimateGuess === false ? 0 : guess;
           const onThisText = theta + o.textEffectSd * normal(rng);
           let right = 0;
-          for (let g = 0; g < gaps; g++) right += rng() < pWithGuess(onThisText, b, guess) ? 1 : 0;
+          for (let g = 0; g < gaps; g++) right += rng() < (blanks ? pCorrect(onThisText, b) : pWithGuess(onThisText, b, guess)) ? 1 : 0;
           observations.push({ b, score: right / gaps, weight, ...(floor > 0 ? { guess: floor } : {}) });
-          units.push({ level: l, units: gaps, expected: gaps * guess, variance: gaps * guess * (1 - guess), right });
+          const answered = blanks ? right : gaps;
+          units.push({ level: l, units: gaps, answered, expected: answered * guess, variance: answered * guess * (1 - guess), right });
         }
-        return { posterior: eap(observations, { mean: cfg.priorMean, sd: cfg.priorSd }), units };
+        return { section: s.section, posterior: eap(observations, { mean: cfg.priorMean, sd: cfg.priorSd }), units };
       });
-      const got = o.overall ? overallOf(sections, o.overall, productiveCount, level) : resultLevelFromTheta(poolPosteriors(sections.map((s) => s.posterior))!.mean);
+      let got: ResultLevel;
+      if (o.overall) {
+        const ov = o.overall;
+        const evidence: SectionEvidence[] = sections.map(({ section, posterior, units }) => ({
+          section,
+          kind: "OBJECTIVE",
+          posterior,
+          answered: 0,
+          insufficient: false,
+          chance: ov.chance ? chanceTest(units, ov.chance) : null,
+        }));
+        if (ov.productive === "TRUE") for (const p of productive) evidence.push({ section: p.section, kind: "PRODUCTIVE", level, decider: "TEACHER" });
+        const result = computeResult({ mode, claimed, sections: evidence, rules: config.passRules });
+        got = result.overall ?? "A0";
+        if (result.verification?.outcome === "FAIL") fail++;
+        if (isUncertainResult(result)) review++;
+      } else {
+        got = resultLevelFromTheta(poolPosteriors(sections.map((s) => s.posterior))!.mean);
+      }
       const signed = levelIndex(got) - levelIndex(level);
       const diff = Math.abs(signed);
       if (diff === 0) exact++;
@@ -184,7 +207,7 @@ export function simulateFixedForm(config: BlueprintConfig, mode: ExamMode, o: Si
       if (signed > 0) over++;
       if (got === "A0") a0++;
     }
-    out[level] = { exact: exact / o.runs, withinOne: withinOne / o.runs, over: over / o.runs, a0: a0 / o.runs };
+    out[level] = { exact: exact / o.runs, withinOne: withinOne / o.runs, over: over / o.runs, a0: a0 / o.runs, fail: fail / o.runs, review: review / o.runs };
   }
   return out;
 }

@@ -54,7 +54,7 @@ describe("simulateFixedForm with guessing (spec 2026-10-18)", () => {
     for (const l of CEFR_LEVELS.filter((x) => x !== "A1")) expect({ exact: now[l].exact, withinOne: now[l].withinOne }, l).toEqual(before[l]);
     // A0 (Pre-A1, 2026-10-24): the A1 students whose estimate falls below the A1 band are A0 now, where the
     // A1 floor counted them exact before (9 of 200). Nobody else moved: the same share is placed above A1.
-    expect(now.A1).toEqual({ exact: 0.72, withinOne: 1, over: expect.closeTo(1 - before.A1.exact, 10), a0: 0.045 });
+    expect(now.A1).toEqual({ exact: 0.72, withinOne: 1, over: expect.closeTo(1 - before.A1.exact, 10), a0: 0.045, fail: 0, review: 0 });
     expect(simulateFixedForm(sixCTests, "PLACEMENT", { ...small, itemGuess: 0 })).toEqual(now);
   });
 
@@ -164,6 +164,6 @@ describe("text weight, the floor in the estimate and the gate (spec 2026-10-18)"
     expect(gateFailures(mc, cTest, flat(0.6, 0.97, 0.3))).toHaveLength(5);
     expect(gateFailures(mc, cTest, flat(0.6, 0.99, 0.36))).toEqual(["A1 over 36.00 > 35.00"]);
     // C2 is not gated.
-    expect(gateFailures(mc, cTest, { ...flat(0.6, 0.99, 0.3), C2: { exact: 0, withinOne: 0.5, over: 0, a0: 0 } })).toEqual([]);
+    expect(gateFailures(mc, cTest, { ...flat(0.6, 0.99, 0.3), C2: { exact: 0, withinOne: 0.5, over: 0, a0: 0, fail: 0, review: 0 } })).toEqual([]);
   });
 });

@@ -1234,6 +1234,9 @@
     "A0Note": "A0 (Pre-A1): A1'in altında, henüz puanlanabilir Almanca yok.",
     "A0Class": "A0 (Pre-A1): ilk kurstan, A1.1'den başlar.",
     "A0Pick": "A0 (Pre-A1) yalnızca puanlanabilir Almanca yoksa: boş ya da Almanca olmayan cevap.",
-    "atChance": "Şans düzeyinde: A1-A2 sorularındaki cevaplar rastgele işaretlemeden iyi değil, bu yüzden A0"
+    "atChance": "Şans düzeyinde: A1-A2 sorularında cevaplanan {answered} birimden {right} doğru, rastgele işaretlemeden iyi değil; bu yüzden A0",
+    "atChanceBlank": "Boş bırakıldı: bu bölümde hiçbir soru cevaplanmadı; bu yüzden A0",
+    "chanceBelowPooled": "A0, şans düzeyindeki bir bölümden geliyor; birleşik tahmin A1 ya da üstünde. Öğretmen karar verir.",
+    "rawEstimate": "Ham tahmin (birleşik): {sublevel}"
   }
 }
