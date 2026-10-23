@@ -292,16 +292,16 @@ const grammarTexts: SeedItem[] = [
     title: "Bargeld auf dem Rückzug",
     first: "Lange galt Deutschland als ein Land, in dem man an der Kasse am liebsten mit Scheinen und Münzen bezahlt.",
     body:
-      "Inzwischen hat sich das Bild jedoch spürbar [[gewandelt|gewandelte|wandelte|wandeln]]. " +
-      "Die Bundesbank teilte kürzlich mit, der Anteil der Barzahlungen im Einzelhandel [[sei|habe|wurde|werde]] in den vergangenen fünf Jahren deutlich zurückgegangen. " +
-      "Vor allem in den Städten greifen viele Kundinnen und Kunden an der Kasse immer häufiger [[zum|ins|beim|am]] Smartphone. " +
-      "Diese Entwicklung ist durch die Pandemie zusätzlich beschleunigt [[worden|geworden|wurde|werden]]. " +
-      "Kritiker warnen allerdings davor, das Bargeld vorschnell [[abzuschaffen|abschaffen|abgeschafft|abzuschaffende]]. " +
-      "Sie geben zu bedenken, dass vor allem Menschen, [[denen|die|deren|dessen]] der Umgang mit digitalen Zahlungsmitteln schwerfällt, benachteiligt würden. " +
-      "Zudem schützt Bargeld die Privatsphäre, [[da|denn|deshalb|trotzdem]] jede Kartenzahlung Datenspuren hinterlässt. " +
-      "Hinzu kommt die Frage, wie widerstandsfähig ein vollständig [[auf|an|von|über]] Strom und Internet [[angewiesenes|angewiesen|anweisendes|anzuweisendes]] Zahlungssystem im Krisenfall wäre. " +
-      "Eine vollständige [[Abschaffung|Schaffung|Anschaffung|Abschaffens]] des Bargelds ist in Deutschland derzeit nicht geplant. " +
-      "Gleichzeitig gewöhnen sich auch viele kleine Geschäfte [[daran|darauf|damit|dafür]], dass ihre Kundschaft selbst Kleinstbeträge mit der Karte bezahlt.",
+      "Inzwischen hat sich das Bild jedoch spürbar [[gewandelt|gewandelte|wandelte|wandeln#perfekt.partizip]]. " +
+      "Die Bundesbank teilte kürzlich mit, der Anteil der Barzahlungen im Einzelhandel [[sei|habe|wurde|werde#konjunktiv_i]] in den vergangenen fünf Jahren deutlich zurückgegangen. " +
+      "Vor allem in den Städten greifen viele Kundinnen und Kunden an der Kasse immer häufiger [[zum|ins|beim|am#verb_praeposition]] Smartphone. " +
+      "Diese Entwicklung ist durch die Pandemie zusätzlich beschleunigt [[worden|geworden|wurde|werden#passiv.perfekt]]. " +
+      "Kritiker warnen allerdings davor, das Bargeld vorschnell [[abzuschaffen|abschaffen|abgeschafft|abzuschaffende#infinitiv]]. " +
+      "Sie geben zu bedenken, dass vor allem Menschen, [[denen|die|deren|dessen#relativsatz]] der Umgang mit digitalen Zahlungsmitteln schwerfällt, benachteiligt würden. " +
+      "Zudem schützt Bargeld die Privatsphäre, [[da|denn|deshalb|trotzdem#konnektor]] jede Kartenzahlung Datenspuren hinterlässt. " +
+      "Hinzu kommt die Frage, wie widerstandsfähig ein vollständig [[auf|an|von|über#verb_praeposition]] Strom und Internet [[angewiesenes|angewiesen|anweisendes|anzuweisendes#partizipattribut]] Zahlungssystem im Krisenfall wäre. " +
+      "Eine vollständige [[Abschaffung|Schaffung|Anschaffung|Abschaffens#nominalisierung]] des Bargelds ist in Deutschland derzeit nicht geplant. " +
+      "Gleichzeitig gewöhnen sich auch viele kleine Geschäfte [[daran|darauf|damit|dafür#praepositionaladverb]], dass ihre Kundschaft selbst Kleinstbeträge mit der Karte bezahlt.",
     last: "Ob das Bargeld eines Tages ganz verschwindet, werden am Ende wohl die Kundinnen und Kunden selbst entscheiden.",
     note: "Perfekt eines reflexiven Verbs (g1), Konjunktiv I in der indirekten Rede (g2), greifen zu (g3), Perfekt Passiv mit worden (g4), warnen davor + zu-Infinitiv bei trennbarem Verb (g5), Relativpronomen im Dativ bei jemandem fällt etwas schwer (g6), da mit Verbendstellung (g7), angewiesen auf (g8), Partizipialattribut nach ein im Neutrum (g9), Nominalstil (g10), sich gewöhnen an mit Präpositionaladverb (g11).",
   }),
@@ -309,17 +309,17 @@ const grammarTexts: SeedItem[] = [
     title: "Mehrsprachigkeit in der Kita",
     first: "Fast jedes dritte Kind, das in Deutschland eine Kita besucht, wächst mit mehr als einer Sprache auf.",
     body:
-      "Lange [[wurde|hat|würde|worden]] angenommen, dass zwei Sprachen ein kleines Kind überfordern. " +
-      "Neuere Studien legen jedoch [[nahe|zu|an|bei]], dass eher das Gegenteil zutrifft. " +
-      "Eine Hamburger Sprachwissenschaftlerin betont, ein mehrsprachig aufwachsendes Kind [[entwickle|entwickeln|entwickelnd|zu entwickeln]] oft sogar ein feineres Gespür für sprachliche Strukturen. " +
-      "Entscheidend sei allerdings, [[dass|damit|sodass|sofern]] beide Sprachen ausreichend gefördert würden. " +
-      "Gerade bei Kindern, [[deren|dessen|denen|die]] Eltern zu Hause kaum Deutsch sprechen, kommt der Kita deshalb eine Schlüsselrolle zu. " +
-      "Im Alltag [[lässt|lassen|wird|ist]] sich dieser Anspruch allerdings nicht immer einlösen. " +
-      "Die meisten Fachkräfte sprechen selbst nur Deutsch, und Bilderbücher in anderen Sprachen sind oft nur schwer [[zu beschaffen|beschaffen|beschafft|beschaffend]]. " +
-      "Einige Einrichtungen beziehen deshalb die Eltern gezielt [[in|an|auf|zu]] die Sprachförderung ein, [[indem|damit|sodass|obwohl]] sie diese bitten, Lieder und Geschichten in der Familiensprache vorzustellen. " +
+      "Lange [[wurde|hat|würde|worden#passiv]] angenommen, dass zwei Sprachen ein kleines Kind überfordern. " +
+      "Neuere Studien legen jedoch [[nahe|zu|an|bei#idiomatik]], dass eher das Gegenteil zutrifft. " +
+      "Eine Hamburger Sprachwissenschaftlerin betont, ein mehrsprachig aufwachsendes Kind [[entwickle|entwickeln|entwickelnd|zu entwickeln#konjunktiv_i]] oft sogar ein feineres Gespür für sprachliche Strukturen. " +
+      "Entscheidend sei allerdings, [[dass|damit|sodass|sofern#konnektor]] beide Sprachen ausreichend gefördert würden. " +
+      "Gerade bei Kindern, [[deren|dessen|denen|die#relativsatz]] Eltern zu Hause kaum Deutsch sprechen, kommt der Kita deshalb eine Schlüsselrolle zu. " +
+      "Im Alltag [[lässt|lassen|wird|ist#passiversatz]] sich dieser Anspruch allerdings nicht immer einlösen. " +
+      "Die meisten Fachkräfte sprechen selbst nur Deutsch, und Bilderbücher in anderen Sprachen sind oft nur schwer [[zu beschaffen|beschaffen|beschafft|beschaffend#passiversatz]]. " +
+      "Einige Einrichtungen beziehen deshalb die Eltern gezielt [[in|an|auf|zu#verb_praeposition]] die Sprachförderung ein, [[indem|damit|sodass|obwohl#konnektor.modal]] sie diese bitten, Lieder und Geschichten in der Familiensprache vorzustellen. " +
       "Die Kinder erfahren so, dass auch diese Sprache geschätzt wird. " +
-      "Solche Projekte stoßen bei den Familien [[auf|an|zu|bei]] große Resonanz. " +
-      "Ersten Auswertungen [[zufolge|laut|seitens|mittels]] verbessern sich dadurch sogar die Deutschkenntnisse der Kinder.",
+      "Solche Projekte stoßen bei den Familien [[auf|an|zu|bei#funktionsverbgefuege]] große Resonanz. " +
+      "Ersten Auswertungen [[zufolge|laut|seitens|mittels#praeposition]] verbessern sich dadurch sogar die Deutschkenntnisse der Kinder.",
     last: "Mehrsprachigkeit erweist sich damit weniger als Hindernis denn als Chance, sofern sie gezielt begleitet wird.",
     note: "unpersönliches Passiv im Präteritum (g1), nahelegen (g2), Konjunktiv I in der indirekten Rede (g3), dass-Satz nach „entscheidend sei“ (g4), Relativpronomen im Genitiv Plural (g5), sich lassen + Infinitiv als Passiversatz (g6), sein + zu-Infinitiv als Passiversatz (g7), einbeziehen in (g8), indem (g9), auf Resonanz stoßen (g10), nachgestelltes zufolge (g11).",
   }),
@@ -327,17 +327,17 @@ const grammarTexts: SeedItem[] = [
     title: "Wenn Antibiotika versagen",
     first: "Antibiotika gehören zu den wichtigsten Errungenschaften der modernen Medizin.",
     body:
-      "Ihre Wirksamkeit ist jedoch zunehmend [[gefährdet|gefährdend|gefährdete|Gefährdung]]. " +
-      "Weltweit sterben jährlich über eine Million Menschen an Infektionen, gegen [[die|denen|deren|welchen]] keines der gängigen Mittel mehr wirkt. " +
-      "Die Weltgesundheitsorganisation warnt seit Jahren, ohne entschlossenes Handeln [[drohe|drohen|drohten|gedroht]] eine Rückkehr in die Zeit vor der Entdeckung des Penicillins. " +
-      "Eine Hauptursache ist der übermäßige [[Einsatz|Einsätze|Eingriff|Verzicht]] von Antibiotika in der Tiermast. " +
-      "Die dort in großen Mengen [[verabreichten|verabreichenden|verabreicht|zu verabreichenden]] Wirkstoffe gelangen über Gülle und Abwasser in die Umwelt. " +
-      "Aber auch in Arztpraxen werden Antibiotika häufig verschrieben, [[obwohl|weil|sodass|damit]] die Beschwerden von Viren verursacht werden, bei denen sie wirkungslos sind. " +
-      "Die Entwicklung neuer Wirkstoffe [[gilt|lässt|hält|stellt]] zudem als wirtschaftlich wenig attraktiv. " +
-      "[[Da|Denn|Weshalb|Sodass]] ein neues Antibiotikum möglichst selten eingesetzt werden soll, um Resistenzen vorzubeugen, lassen sich damit kaum Gewinne erzielen. " +
-      "Fachleute fordern daher, die Forschung durch staatliche Prämien wieder [[in Gang|zur Geltung|in Kraft|zur Sprache]] zu bringen. " +
-      "[[Angesichts|Ungeachtet|Mangels|Anstelle]] der wachsenden Bedrohung haben sich mehrere Staaten verpflichtet, den Einsatz in der Tiermast zu begrenzen. " +
-      "Ob diese Zusagen tatsächlich eingehalten [[werden|wird|worden|wurde]], bleibt allerdings abzuwarten.",
+      "Ihre Wirksamkeit ist jedoch zunehmend [[gefährdet|gefährdend|gefährdete|Gefährdung#wortbildung]]. " +
+      "Weltweit sterben jährlich über eine Million Menschen an Infektionen, gegen [[die|denen|deren|welchen#relativsatz.praeposition]] keines der gängigen Mittel mehr wirkt. " +
+      "Die Weltgesundheitsorganisation warnt seit Jahren, ohne entschlossenes Handeln [[drohe|drohen|drohten|gedroht#konjunktiv_i]] eine Rückkehr in die Zeit vor der Entdeckung des Penicillins. " +
+      "Eine Hauptursache ist der übermäßige [[Einsatz|Einsätze|Eingriff|Verzicht#vocabulary]] von Antibiotika in der Tiermast. " +
+      "Die dort in großen Mengen [[verabreichten|verabreichenden|verabreicht|zu verabreichenden#partizipattribut]] Wirkstoffe gelangen über Gülle und Abwasser in die Umwelt. " +
+      "Aber auch in Arztpraxen werden Antibiotika häufig verschrieben, [[obwohl|weil|sodass|damit#konnektor.konzessiv]] die Beschwerden von Viren verursacht werden, bei denen sie wirkungslos sind. " +
+      "Die Entwicklung neuer Wirkstoffe [[gilt|lässt|hält|stellt#rektion]] zudem als wirtschaftlich wenig attraktiv. " +
+      "[[Da|Denn|Weshalb|Sodass#konnektor]] ein neues Antibiotikum möglichst selten eingesetzt werden soll, um Resistenzen vorzubeugen, lassen sich damit kaum Gewinne erzielen. " +
+      "Fachleute fordern daher, die Forschung durch staatliche Prämien wieder [[in Gang|zur Geltung|in Kraft|zur Sprache#funktionsverbgefuege]] zu bringen. " +
+      "[[Angesichts|Ungeachtet|Mangels|Anstelle#genitiv.praeposition]] der wachsenden Bedrohung haben sich mehrere Staaten verpflichtet, den Einsatz in der Tiermast zu begrenzen. " +
+      "Ob diese Zusagen tatsächlich eingehalten [[werden|wird|worden|wurde#passiv]], bleibt allerdings abzuwarten.",
     last: "Klar ist nur, dass jede unnötige Einnahme das Problem weiter verschärft.",
     note: "Zustandspassiv (g1), Relativpronomen nach gegen + Akkusativ (g2), Konjunktiv I in der indirekten Rede (g3), Nominalstil (g4), erweitertes Partizipialattribut (g5), obwohl (g6), gelten als (g7), da im vorangestellten Nebensatz (g8), Funktionsverbgefüge in Gang bringen (g9), angesichts + Genitiv (g10), ob-Satz mit Passiv im Präsens (g11).",
   }),
@@ -345,13 +345,13 @@ const grammarTexts: SeedItem[] = [
     title: "Ehrenamt im Wandel",
     first: "Rund ein Drittel der Menschen in Deutschland engagiert sich in ihrer Freizeit ehrenamtlich.",
     body:
-      "Doch die Art des Engagements hat sich in den letzten Jahren deutlich [[verändert]]. " +
-      "Immer weniger Menschen sind bereit, sich langfristig an einen Verein zu [[binden]]. " +
-      "Stattdessen bevorzugen sie zeitlich [[begrenzte]] Projekte, etwa die Organisation eines Stadtfestes. " +
-      "Viele Vereine haben deshalb Schwierigkeiten, ihre Vorstandsposten zu [[besetzen]]. " +
-      "Gleichzeitig wächst die Nachfrage [[nach]] Ehrenamtlichen in der Pflege und in der Flüchtlingshilfe. " +
-      "Experten [[empfehlen]] den Vereinen daher, flexiblere Formen der Mitarbeit anzubieten, [[damit]] auch Menschen mit wenig Zeit mitmachen können. " +
-      "Auch eine offizielle [[Anerkennung]], zum Beispiel durch Bescheinigungen für spätere Bewerbungen, kann zusätzlich motivieren.",
+      "Doch die Art des Engagements hat sich in den letzten Jahren deutlich [[verändert#perfekt.partizip]]. " +
+      "Immer weniger Menschen sind bereit, sich langfristig an einen Verein zu [[binden#infinitiv]]. " +
+      "Stattdessen bevorzugen sie zeitlich [[begrenzte#partizipattribut]] Projekte, etwa die Organisation eines Stadtfestes. " +
+      "Viele Vereine haben deshalb Schwierigkeiten, ihre Vorstandsposten zu [[besetzen#infinitiv]]. " +
+      "Gleichzeitig wächst die Nachfrage [[nach#verb_praeposition]] Ehrenamtlichen in der Pflege und in der Flüchtlingshilfe. " +
+      "Experten [[empfehlen#vocabulary]] den Vereinen daher, flexiblere Formen der Mitarbeit anzubieten, [[damit#konnektor]] auch Menschen mit wenig Zeit mitmachen können. " +
+      "Auch eine offizielle [[Anerkennung#vocabulary]], zum Beispiel durch Bescheinigungen für spätere Bewerbungen, kann zusätzlich motivieren.",
     last: "Denn ohne freiwilliges Engagement wäre vieles im gesellschaftlichen Leben schlicht nicht möglich.",
     distractors: ["für", "obwohl", "Beteiligung", "gegründet", "investieren"],
   }),
@@ -359,14 +359,14 @@ const grammarTexts: SeedItem[] = [
     title: "Bibliotheken im Wandel",
     first: "Wer an eine Bibliothek denkt, sieht meist stille Lesesäle und lange Regale voller Bücher vor sich.",
     body:
-      "Tatsächlich haben sich viele Häuser in den letzten Jahren stark [[gewandelt]]. " +
-      "Neben Büchern [[verleihen]] sie heute auch Werkzeug, Spiele und Saatgut. " +
-      "Die Ausleihe klassischer Medien geht zwar zurück, [[dafür]] nutzen mehr Menschen die Räume zum Lernen und zum Arbeiten. " +
-      "Gefragt sind vor allem ruhige [[Arbeitsplätze]] mit schnellem Internet. " +
-      "Ältere Gebäude stoßen dabei [[an]] ihre Grenzen, weil es an Steckdosen und Leitungen fehlt. " +
-      "Viele Städte bauen die Bibliotheken deshalb um, [[sodass]] künftig auch Kurse und Veranstaltungen stattfinden können. " +
-      "Das kostet Geld, und nicht überall ist man bereit, es [[aufzubringen]]. " +
-      "Befürworter betonen den [[Gewinn]] für die gesamte Nachbarschaft, weil dort Menschen zusammenkommen, die sich sonst nie begegnen würden.",
+      "Tatsächlich haben sich viele Häuser in den letzten Jahren stark [[gewandelt#perfekt.partizip]]. " +
+      "Neben Büchern [[verleihen#vocabulary]] sie heute auch Werkzeug, Spiele und Saatgut. " +
+      "Die Ausleihe klassischer Medien geht zwar zurück, [[dafür#konnektor]] nutzen mehr Menschen die Räume zum Lernen und zum Arbeiten. " +
+      "Gefragt sind vor allem ruhige [[Arbeitsplätze#vocabulary]] mit schnellem Internet. " +
+      "Ältere Gebäude stoßen dabei [[an#idiomatik]] ihre Grenzen, weil es an Steckdosen und Leitungen fehlt. " +
+      "Viele Städte bauen die Bibliotheken deshalb um, [[sodass#konnektor]] künftig auch Kurse und Veranstaltungen stattfinden können. " +
+      "Das kostet Geld, und nicht überall ist man bereit, es [[aufzubringen#infinitiv]]. " +
+      "Befürworter betonen den [[Gewinn#vocabulary]] für die gesamte Nachbarschaft, weil dort Menschen zusammenkommen, die sich sonst nie begegnen würden.",
     last: "Ob der Umbau gelingt, entscheidet am Ende auch die Bereitschaft der Stadt, Bibliotheken als Treffpunkte ernst zu nehmen.",
     distractors: ["obwohl", "darauf", "Regale", "aufgebracht", "Verlust"],
   }),
@@ -374,14 +374,14 @@ const grammarTexts: SeedItem[] = [
     title: "Moore als Klimaschützer",
     first: "Moore bedecken nur einen kleinen Teil der weltweiten Landfläche, speichern aber enorme Mengen Kohlenstoff.",
     body:
-      "In Deutschland wurden die meisten Moore jedoch im Laufe der Jahrhunderte [[entwässert]], um Flächen für die Landwirtschaft zu gewinnen. " +
-      "[[Sobald]] der Torf mit Luft in Berührung kommt, zersetzt er sich und setzt große Mengen Kohlendioxid frei. " +
-      "Trockengelegte Moore sind deshalb für einen [[erheblichen]] Teil der Treibhausgasemissionen der Landwirtschaft verantwortlich. " +
-      "Die Bundesregierung will daher in den kommenden Jahren zahlreiche Flächen wieder [[vernässen]]. " +
-      "Für die betroffenen Landwirte ist das allerdings mit [[Einbußen]] verbunden, da sich nasse Böden kaum mit herkömmlichen Maschinen bearbeiten lassen. " +
-      "Als Alternative gilt der Anbau von Schilf und Rohrkolben, die sich [[als]] Rohstoff für Dämmplatten oder Verpackungen eignen. " +
-      "Noch fehlt es allerdings an [[Abnehmern]], die solche Produkte in größeren Mengen kaufen. " +
-      "Fachleute [[plädieren]] deshalb für eine gezielte Förderung, bis sich ein Markt entwickelt hat.",
+      "In Deutschland wurden die meisten Moore jedoch im Laufe der Jahrhunderte [[entwässert#passiv]], um Flächen für die Landwirtschaft zu gewinnen. " +
+      "[[Sobald#konnektor]] der Torf mit Luft in Berührung kommt, zersetzt er sich und setzt große Mengen Kohlendioxid frei. " +
+      "Trockengelegte Moore sind deshalb für einen [[erheblichen#adjektivendung]] Teil der Treibhausgasemissionen der Landwirtschaft verantwortlich. " +
+      "Die Bundesregierung will daher in den kommenden Jahren zahlreiche Flächen wieder [[vernässen#infinitiv]]. " +
+      "Für die betroffenen Landwirte ist das allerdings mit [[Einbußen#vocabulary]] verbunden, da sich nasse Böden kaum mit herkömmlichen Maschinen bearbeiten lassen. " +
+      "Als Alternative gilt der Anbau von Schilf und Rohrkolben, die sich [[als#rektion]] Rohstoff für Dämmplatten oder Verpackungen eignen. " +
+      "Noch fehlt es allerdings an [[Abnehmern#vocabulary]], die solche Produkte in größeren Mengen kaufen. " +
+      "Fachleute [[plädieren#verb_praeposition]] deshalb für eine gezielte Förderung, bis sich ein Markt entwickelt hat.",
     last: "Ohne die Bereitschaft der Landwirte wird der Schutz der Moore jedenfalls kaum gelingen.",
     distractors: ["Obwohl", "geringen", "Erträge", "pflanzen", "Käufer"],
   }),
