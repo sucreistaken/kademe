@@ -61,7 +61,7 @@
     "total": "Insgesamt {minutes} Minuten",
     "coverageOk": "Die Fragenbank deckt diese Prüfung ab. Mit der Bestätigung wird sie veröffentlicht und im Einladungsformular ausgewählt.",
     "coverageGaps": "Die Fragenbank hat Lücken. Mit der Bestätigung wird die Prüfung als Entwurf gespeichert:",
-    "gap": "{level} {section}: {missing} Fragen fehlen",
+    "gap": "{level} {section}: {missing, plural, one {# Frage fehlt} other {# Fragen fehlen}}",
     "gapCTest": "{level} Grammatik: kein Text",
     "coverageRecheck": "Die Abdeckung wird bei der Bestätigung erneut geprüft.",
     "cardTitle": "Prüfungen",
