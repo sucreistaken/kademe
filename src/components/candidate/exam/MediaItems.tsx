@@ -286,7 +286,7 @@ export function ListeningPlayer({
 
   return (
     <div className={className}>
-      {heading ? <h2 className="mb-3 text-[17px] font-bold leading-[1.3] text-ink">{heading}</h2> : null}
+      {heading ? <h2 className="mb-3 text-title text-ink">{heading}</h2> : null}
       {gated ? gateCard : playerCard}
       <audio
         ref={audioRef}

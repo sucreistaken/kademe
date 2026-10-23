@@ -64,7 +64,7 @@ export function ReportSheet({ model, t, locale }: { model: ReportModel; t: T; lo
 
         <div className="mt-8">
           <div className="text-[12px] uppercase tracking-[0.06em] text-muted">{t("resultReport.student")}</div>
-          <h1 className="mt-1 break-words text-[30px] font-bold leading-tight tracking-[-0.02em]">{m.studentName}</h1>
+          <h1 className="mt-1 break-words text-headline">{m.studentName}</h1>
           <dl className="mt-3 grid grid-cols-2 gap-x-6 text-[13.5px]">
             <div>
               <dt className="text-[12px] uppercase tracking-[0.06em] text-muted">{t("resultReport.exam")}</dt>

@@ -3,7 +3,7 @@ import type { KeyboardEvent } from "react";
 /** Pieces shared by the item renderers. */
 
 export function Instruction({ text }: { text: string }) {
-  return <p className="whitespace-pre-line border-s-[3px] border-brand ps-3 text-[15px] leading-[1.55] text-ink">{text}</p>;
+  return <p className="whitespace-pre-line border-s-[3px] border-brand ps-3 text-[16px] leading-[1.55] text-ink">{text}</p>;
 }
 
 /**

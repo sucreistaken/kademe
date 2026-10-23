@@ -155,7 +155,7 @@ export default async function ResultPage({
       {/* Decision line */}
       <div className="mt-3 flex flex-wrap items-end justify-between gap-6 border-b border-line pb-6">
         <div>
-          <h1 className="text-[26px] font-bold tracking-[-0.02em] text-ink">{candidate.fullName}</h1>
+          <h1 className="text-headline text-ink">{candidate.fullName}</h1>
           <p className="mt-1 text-[13.5px] text-muted">
             {assessment.blueprintName} · {t(`mode.${assessment.mode}`)}
             {assessment.claimedLevel ? ` · ${t("mode.claimed", { level: assessment.claimedLevel })}` : ""} · {shortDateTime(attempt?.completedAt ?? null, locale)}

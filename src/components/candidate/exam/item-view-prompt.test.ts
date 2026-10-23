@@ -58,7 +58,7 @@ const writing: CandidateItem = {
 describe("question typography", () => {
   it("sets a plain question stem at 17px semibold ink with no instruction block", () => {
     const html = render(choice);
-    expect(html).toContain('class="whitespace-pre-line text-[17px] font-semibold leading-[1.6] text-ink">Wann fährt der Zug ab?</p>');
+    expect(html).toContain('class="whitespace-pre-line text-body-lg font-bold text-ink">Wann fährt der Zug ab?</p>');
     expect(html).not.toContain("border-l-[3px]");
   });
 
@@ -78,7 +78,7 @@ describe("question typography", () => {
       content: { kind: "MATCHING", left: [{ id: "l1", text: "Sie suchen einen Kurs." }], right: [{ id: "oaaaaa", text: "Anzeige A" }] },
     });
     expect(html).toMatch(/border-s-\[3px\] border-brand[^>]*>Lesen Sie die Situationen\.<\/p>/);
-    expect(html).toContain('class="whitespace-pre-line text-[17px] font-semibold leading-[1.6] text-ink">Welche Anzeige passt?</p>');
+    expect(html).toContain('class="whitespace-pre-line text-body-lg font-bold text-ink">Welche Anzeige passt?</p>');
     expect(html).toMatch(/border-s-\[3px\] border-brand[^>]*>Jede Anzeige passt höchstens einmal\.<\/p>/);
   });
 

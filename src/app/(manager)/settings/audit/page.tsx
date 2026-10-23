@@ -44,7 +44,7 @@ export default async function AuditPage({
   if (!can(user, "audit:read")) {
     return (
       <main className="mx-auto max-w-[1360px] px-6 py-8">
-        <h1 className="text-[26px] font-semibold tracking-tight">{t("audit.title")}</h1>
+        <h1 className="text-headline">{t("audit.title")}</h1>
         <Card className="mt-6 max-w-[560px] px-5 py-6">
           <p className="text-sm font-medium">{t("audit.noAccess.title")}</p>
           <p className="mt-1.5 text-[13px] text-muted">{t("audit.noAccess.hint")}</p>
@@ -114,7 +114,7 @@ export default async function AuditPage({
       </InlineLink>
       <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-[26px] font-semibold tracking-tight">{t("audit.title")}</h1>
+          <h1 className="text-headline">{t("audit.title")}</h1>
           <p className="mt-1 max-w-[640px] text-sm text-muted">{t("audit.subtitle")}</p>
         </div>
         <div className="text-right text-[13px] text-muted">

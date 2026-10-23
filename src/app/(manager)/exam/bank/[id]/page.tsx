@@ -84,7 +84,7 @@ export default async function BankItemPage({ params, searchParams }: { params: P
         {t("bank.backToBank")}
       </Link>
       <div className="mt-2 flex flex-wrap items-center gap-4">
-        <h1 className="text-[22px] font-bold text-ink">
+        <h1 className="text-headline text-ink">
           {t(`sectionName.${item.section}`)} · {item.level} · {t(`bankTools.within${within}`)} · {textKind ? t(`bank.textKind${textKind}`) : t(`bank.type${item.type}`)}
         </h1>
         <Dot tone={item.status === "APPROVED" ? "done" : "neutral"}>{t(`bank.status${item.status}`)}</Dot>

@@ -47,7 +47,7 @@ export function ItemHeading({
         id={id}
         ref={headingRef}
         tabIndex={-1}
-        className="tnum mb-6 flex items-center gap-2.5 text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted outline-none"
+        className="tnum mb-6 flex items-center gap-2.5 text-label text-ink-2 outline-none"
       >
         {label}
         <PartCounter progress={progress} />
@@ -74,7 +74,7 @@ export function ItemHeading({
       ref={headingRef}
       tabIndex={-1}
       className={cn(
-        "tnum flex items-center gap-2.5 text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted outline-none",
+        "tnum flex items-center gap-2.5 text-label text-ink-2 outline-none",
         compact ? "mb-3" : "mb-6",
       )}
     >

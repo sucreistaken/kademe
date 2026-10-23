@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { RowMenu, type RowMenuItem } from "./row-menu";
 
 /**
- * P2: a page's head: kicker, title (26/32, 600), one meta line, at most one
+ * P2: a page's head: kicker, title (text-headline), one meta line, at most one
  * filled action, everything else behind "⋯". The exam pages draw it through
  * PageHead, the hiring and library pages through PageTitle.
  */
@@ -23,9 +23,9 @@ export function PanelHeader({
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
-        {kicker ? <div className="mb-1 text-[13px] text-muted">{kicker}</div> : null}
-        <h1 className="text-[28px] leading-9 font-extrabold tracking-[-0.015em] text-ink">{title}</h1>
-        {meta ? <div className="mt-1 text-[14px] leading-[22px] text-muted">{meta}</div> : null}
+        {kicker ? <div className="mb-1 text-overline text-muted">{kicker}</div> : null}
+        <h1 className="text-headline text-ink">{title}</h1>
+        {meta ? <div className="mt-1 text-body text-muted">{meta}</div> : null}
       </div>
       {primary || menu ? (
         <div className="flex items-start gap-2">

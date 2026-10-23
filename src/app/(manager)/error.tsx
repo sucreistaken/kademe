@@ -33,7 +33,7 @@ export default function ManagerError({
 
   return (
     <main className="mx-auto max-w-[1360px] px-6 py-8">
-      <h1 className="text-[26px] font-semibold tracking-tight">
+      <h1 className="text-headline">
         {forbidden ? t("forbiddenTitle") : t("genericTitle")}
       </h1>
       <Card className="mt-6 max-w-[560px] px-5 py-6">

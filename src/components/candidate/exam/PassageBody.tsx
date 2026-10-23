@@ -4,7 +4,7 @@ import { passageBlocks } from "@/lib/exam/passage-blocks";
 export function PassageBody({ text, title }: { text: string; title: string }) {
   const blocks = passageBlocks(text, title);
   return (
-    <div lang="de" className="mt-3 flex flex-col gap-4 text-[16px] leading-[1.75] text-ink">
+    <div lang="de" className="mt-3 flex flex-col gap-4 text-passage text-ink">
       {blocks.map((b, i) =>
         b.kind === "card" ? (
           <section key={i} className="rounded-[16px] border border-line p-4">

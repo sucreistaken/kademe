@@ -62,7 +62,7 @@ export default async function SettingsPage({
   return (
     <main className="mx-auto max-w-[1360px] px-6 py-8">
       <div>
-        <h1 className="text-[26px] font-semibold tracking-tight">
+        <h1 className="text-headline">
           {t("settings.title")}
         </h1>
         <p className="mt-1 text-sm text-muted">{t("settings.subtitle")}</p>

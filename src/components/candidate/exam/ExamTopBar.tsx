@@ -59,7 +59,7 @@ export function ExamTopBar({
           {inQuestion ? (
             <>
               <span className="h-4 w-px bg-hairline" aria-hidden />
-              <span className="font-semibold text-ink">{sectionName}</span>
+              <span className="text-label text-ink">{sectionName}</span>
               <span className="tnum text-muted">{counter}</span>
             </>
           ) : null}

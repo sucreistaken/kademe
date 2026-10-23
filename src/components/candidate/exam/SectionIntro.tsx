@@ -52,7 +52,7 @@ export function SectionIntro({
           {f("skippedNote")}
         </p>
       ) : null}
-      <div className="tnum text-[12.5px] font-bold uppercase tracking-[0.08em] text-muted">
+      <div className="tnum text-overline uppercase text-muted">
         {t("sectionOf", { n: cur.position, total: cur.total })}
       </div>
       {(() => {
@@ -69,7 +69,7 @@ export function SectionIntro({
             <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
               <div className="flex items-center gap-4">
                 <SectionTile section={cur.section} size="lg" className="size-14 rounded-2xl [&_svg]:size-7" />
-                <h1 ref={headingRef} tabIndex={-1} className="text-[32px] font-bold leading-[1.2] tracking-[-0.03em] text-ink outline-none">
+                <h1 ref={headingRef} tabIndex={-1} className="text-headline-lg text-ink outline-none">
                   {sec(cur.section)}
                 </h1>
               </div>

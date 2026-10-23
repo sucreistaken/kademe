@@ -90,7 +90,7 @@ function Prompt({ text, id, mode = "stem" }: { text: string; id?: string; mode?:
         b.kind === "instruction" ? (
           <Instruction key={i} text={b.text} />
         ) : (
-          <p key={i} className="whitespace-pre-line text-[17px] font-semibold leading-[1.6] text-ink">
+          <p key={i} className="whitespace-pre-line text-body-lg font-bold text-ink">
             {b.text}
           </p>
         ),

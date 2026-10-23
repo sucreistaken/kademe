@@ -262,7 +262,7 @@ export function ReviewScreen({
   const flagged = entries.filter((e) => e.flagged).map(cell);
   return (
     <div className="mx-auto max-w-[680px] px-7 pb-10 pt-10">
-      <h1 ref={headingRef} tabIndex={-1} className="text-[28px] font-bold leading-[1.2] tracking-[-0.02em] text-ink outline-none">
+      <h1 ref={headingRef} tabIndex={-1} className="text-headline text-ink outline-none">
         {n("reviewTitle")}
       </h1>
       <p className="tnum mt-2.5 text-[15px] leading-[1.6] text-ink-2">{n("reviewLead", { answered: counts.answered, total: counts.total })}</p>
