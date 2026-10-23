@@ -3,7 +3,8 @@
  *
  * Usage: tsx scripts/bank-images.ts [rawDir]   (or env BANK_IMAGES_RAW)
  *
- * Reads every raw file named `<id>.<ext>` (jpg, jpeg, png, webp) plus two JSON
+ * Reads every raw file named `<id>.<ext>` (jpg, jpeg, png, webp, or svg for
+ * `chart.<level>.<name>` charts, which need no sources.json entry) plus two JSON
  * files that live next to them:
  *   - sources.json: { [id]: { sourceUrl, license, author } }
  *   - alts.json:    { [id]: "short neutral German description" }
@@ -16,12 +17,13 @@ import sharp from "sharp";
 
 const OUT_DIR = path.join(process.cwd(), "src/db/seed-bank/images");
 const MANIFEST = path.join(OUT_DIR, "manifest.json");
-const RAW_EXT = new Set([".jpg", ".jpeg", ".png", ".webp"]);
+const RAW_EXT = new Set([".jpg", ".jpeg", ".png", ".webp", ".svg"]);
 const QUALITY = 78;
 const OBJECT_WIDTH = 960;
 const SCENE_WIDTH = 1200;
+const CHART_SOURCE = { sourceUrl: "https://kademe.kadiray.com/original", license: "Original (Kademe)", author: "Kademe" };
 
-type Kind = "object" | "scene";
+type Kind = "object" | "scene" | "chart";
 
 interface ManifestEntry {
   id: string;
@@ -53,6 +55,9 @@ export function describeId(id: string): { kind: Kind; category: string; levels: 
   if (parts[0] === "scene" && parts.length === 3) {
     return { kind: "scene", category: "speaking", levels: [parts[1].toUpperCase()] };
   }
+  if (parts[0] === "chart" && parts.length === 3) {
+    return { kind: "chart", category: "chart", levels: [parts[1].toUpperCase()] };
+  }
   throw new Error(`Unrecognised catalog id: ${id}`);
 }
 
@@ -76,14 +81,15 @@ async function main() {
     if (!RAW_EXT.has(ext)) continue;
     const id = name.slice(0, -ext.length);
     const { kind, category, levels } = describeId(id);
-    const src = sources[id];
+    // Charts are drawn by us as SVG, so their provenance is fixed.
+    const src = kind === "chart" ? CHART_SOURCE : sources[id];
     const alt = alts[id];
     if (!src) throw new Error(`Missing source data for ${id} in sources.json`);
     if (!alt) throw new Error(`Missing alt text for ${id} in alts.json`);
 
-    const width = kind === "object" ? OBJECT_WIDTH : SCENE_WIDTH;
+    const width = kind === "object" ? OBJECT_WIDTH : SCENE_WIDTH; // charts use the scene width
     // sharp strips metadata by default; rotate() applies EXIF orientation first.
-    const buf = await sharp(path.join(rawDir, name))
+    const buf = await sharp(path.join(rawDir, name), ext === ".svg" ? { density: 144 } : undefined)
       .rotate()
       .resize({ width, withoutEnlargement: true })
       .webp({ quality: QUALITY })

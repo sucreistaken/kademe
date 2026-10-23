@@ -1,6 +1,54 @@
 {
   "images": [
     {
+      "id": "chart.c1.energie",
+      "file": "chart.c1.energie.webp",
+      "sha16": "0ea4665069ffae15",
+      "w": 1200,
+      "h": 800,
+      "alt": "Liniendiagramm: Stromerzeugung in Fiktivland von 2010 bis 2024, Anteil in Prozent. Erneuerbare Energien: 17 (2010), 22 (2012), 27 (2014), 31 (2016), 38 (2018), 44 (2020), 48 (2022), 53 (2024). Kohle: 42 (2010), 39 (2012), 36 (2014), 31 (2016), 26 (2018), 20 (2020), 17 (2022), 12 (2024). Quelle: fiktive Daten.",
+      "kind": "chart",
+      "category": "chart",
+      "levels": [
+        "C1"
+      ],
+      "sourceUrl": "https://kademe.kadiray.com/original",
+      "license": "Original (Kademe)",
+      "author": "Kademe"
+    },
+    {
+      "id": "chart.c1.medien",
+      "file": "chart.c1.medien.webp",
+      "sha16": "02d6b9986a612690",
+      "w": 1200,
+      "h": 800,
+      "alt": "Balkendiagramm: Durchschnittliche Mediennutzung pro Tag in Minuten in Fiktivland, 2014 und 2024. Fernsehen: 148 und 101. Streaming und Videoportale: 31 und 96. Gedruckte Zeitung: 22 und 9. Musik und Podcasts: 64 und 88. Bücher: 19 und 17. Quelle: fiktive Daten.",
+      "kind": "chart",
+      "category": "chart",
+      "levels": [
+        "C1"
+      ],
+      "sourceUrl": "https://kademe.kadiray.com/original",
+      "license": "Original (Kademe)",
+      "author": "Kademe"
+    },
+    {
+      "id": "chart.c1.tourismus",
+      "file": "chart.c1.tourismus.webp",
+      "sha16": "cb9c036c23b058ff",
+      "w": 1200,
+      "h": 800,
+      "alt": "Balkendiagramm: Übernachtungen in der Region Hohenstein im Jahr 2024, pro Monat in Tausend. Januar 82, Februar 95, März 61, April 38, Mai 44, Juni 70, Juli 118, August 131, September 76, Oktober 49, November 31, Dezember 104. Quelle: fiktive Daten.",
+      "kind": "chart",
+      "category": "chart",
+      "levels": [
+        "C1"
+      ],
+      "sourceUrl": "https://kademe.kadiray.com/original",
+      "license": "Original (Kademe)",
+      "author": "Kademe"
+    },
+    {
       "id": "obj.activity.cooking",
       "file": "obj.activity.cooking.webp",
       "sha16": "2022f74f31d81d6e",

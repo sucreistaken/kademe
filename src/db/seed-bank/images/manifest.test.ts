@@ -13,7 +13,7 @@ interface Entry {
   w: number;
   h: number;
   alt: string;
-  kind: "object" | "scene";
+  kind: "object" | "scene" | "chart";
   category: string;
   levels: string[];
   sourceUrl: string;
@@ -56,7 +56,13 @@ const SCENES: Record<string, string[]> = {
   c2: ["traffic-and-bike-lane", "art-museum", "phones-at-dinner", "wind-farm", "coworking"],
 };
 
+/** Charts we draw ourselves (SVG, German labels), by level. */
+const CHARTS: Record<string, string[]> = {
+  c1: ["energie", "medien", "tourismus"],
+};
+
 const EXPECTED_IDS = [
+  ...Object.entries(CHARTS).flatMap(([lvl, names]) => names.map((n) => `chart.${lvl}.${n}`)),
   ...Object.entries(OBJECTS).flatMap(([cat, names]) => names.map((n) => `obj.${cat}.${n}`)),
   ...Object.entries(SCENES).flatMap(([lvl, names]) => names.map((n) => `scene.${lvl}.${n}`)),
 ];
@@ -71,7 +77,7 @@ describe("bank image manifest", () => {
   it("covers the whole catalog and nothing else", () => {
     const ids = manifest.images.map((e) => e.id).sort();
     expect(ids).toEqual([...EXPECTED_IDS].sort());
-    expect(EXPECTED_IDS).toHaveLength(83);
+    expect(EXPECTED_IDS).toHaveLength(83 + Object.values(CHARTS).flat().length);
   });
 
   it.each(manifest.images.map((e) => [e.id, e] as const))("%s is a valid entry", (_id, e) => {
@@ -88,10 +94,14 @@ describe("bank image manifest", () => {
     expect(e.alt.trim().length).toBeGreaterThan(0);
     expect(e.alt).not.toContain(EM_DASH);
     expect(e.sourceUrl.startsWith("https://")).toBe(true);
+    if (e.id.startsWith("chart.")) {
+      expect(e.license).toBe("Original (Kademe)");
+      expect(e.sourceUrl).toBe("https://kademe.kadiray.com/original");
+    }
     expect(e.license.length).toBeGreaterThan(0);
     expect(e.author.length).toBeGreaterThan(0);
     expect(e.levels.length).toBeGreaterThan(0);
-    expect(e.kind).toBe(e.id.startsWith("scene.") ? "scene" : "object");
+    expect(e.kind).toBe(e.id.startsWith("scene.") ? "scene" : e.id.startsWith("chart.") ? "chart" : "object");
   });
 
   it("keeps the folder small and free of em dashes", () => {
