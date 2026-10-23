@@ -13,6 +13,8 @@ Kod: `src/lib/exam/` (saf, veritabanısız, vitest ile test edilir).
 - **CEFR bantları** (`cefr.ts`): her seviye 1 logit genişliğinde. Merkezler A1 -2.5,
   A2 -1.5, B1 -0.5, B2 0.5, C1 1.5, C2 2.5; kesim noktaları -2, -1, 0, 1, 2.
   **Bu bir kalibrasyon değil, bir sözleşmedir.** Gerçek öğrenci verisiyle hiç ayarlanmadı.
+  A1 bandının altı (theta < -3, `PRE_A1_CUT`) sonuçta A0'dır (Pre-A1, 2026-10-24, aşağıda "Sonuç");
+  madde ve görev seçimi A1'de taban yapar (`levelFromTheta`), A0 için madde yazılmaz.
 - **Soru zorluğu** seviyesinden gelir: `thetaForLevel(level, EASY|MID|HARD)`, bant
   merkezinin ±0.3'ü.
 - **Kısmi puan** (3 boşluktan 2'si doğru) kesirli Bernoulli olarak girer. Gerçek bir
@@ -335,6 +337,31 @@ metin türlerinde "metin başına yaklaşık n dakika" der (bölüm süresi / me
   bölümlerin hassasiyet ağırlıklı birleşik tahmininden `P(theta >= beyan alt sınırı)`.
 - Sonuç, ilgili bir satır her değiştiğinde yeniden hesaplanır; kesinleşince donar.
 
+**A0 (Pre-A1, 2026-10-24).** CEFR Companion Volume'un (2020) A1 öncesi bandı; ekranda ve kâğıtta
+"A0 (Pre-A1)". Sonuç seviyeleri `RESULT_LEVELS` (A0-C2, `ResultLevel`); madde, metin, görev seviyesi ve
+beyan edilen seviye `CEFR_LEVELS` (A1-C2) kalır. Veritabanında ayrı `result_level` enum'u yalnız sonuç
+kolonlarındadır (`exam_results.final_overall`, `overall_override`, `response_gradings.ai_level`,
+`final_level`; göç 0027, yalnız tür dönüşümü); `cefr_level` değişmedi, bir madde A0 olamaz.
+- Objektif bölüm: tahmin A1 bandının altındaysa (`belowScale`) A0 (`result.ts: objectiveLevel`), ama
+  yalnız yeterli kanıtla: asgariye ulaşmadan duran (INSUFFICIENT) bölüm A1 tabanında kalır, sonuç zaten
+  kendiliğinden kesinleşmez. Öğretmen yine A0 verebilir.
+- Yazma/konuşma: puanlanabilir Almanca yoksa (boş, Almanca değil) görev A0 olabilir. AI A0'ı yalnız EMPTY
+  ya da NOT_GERMAN bayrağıyla önerebilir; bayraksız A0, A1'e çıkarılır ve `A0_RAISED` ile işaretlenir
+  (`grading.ts: guardPreA1`). Boş cevapta AI çağrılmaz; öğretmen seçim listesinden A0'ı seçer.
+- Genel seviye: aynı alt medyan kuralı, A0 dahil. Doğrulamada A0 her beyanın altındadır (FAIL, aynı
+  gerekçe kodları); A1 beyanının "tutma olasılığı" artık `P(theta >= -3)` (önceden A1 için hep 1'di).
+- Yerleştirme: A0/A1 kesimi (-3) diğer kesimler gibi sınırda kuralına girer (`NEAR_CUT`, ±0.25; alt aday
+  A0), yani -3 çevresindeki sonuç öğretmene gider. A0'ın kendi sınıfı yoktur: önerilen sınıf ilk kurs,
+  A1.1 (`placement.ts: recommendedClassOf`, `FIRST_CLASS`); ara seviye A1 altında da A1.1'dir.
+- Simülasyon (`scripts/simulate-placement.ts`, tohum 2026 ve 7, 4000): yerleştirme tablolarında hiçbir A1-C2
+  hücresi değişmedi; hızlı taramada A1 tam isabet 0.1-0.3 puan düştü (A0'a yerleşen A1 öğrencileri), ±1
+  ve kapı kararları aynı. A0 bandındaki (-4 ile -3) öğrenci yerleştirme şablonunda %0 A0 alır (tahminle
+  %85'i A2 ve üstü), hızlı taramada %10; hiç Almancası olmayan, yalnız tahmin eden öğrenci (theta -8)
+  yerleştirmede %0 (sıradan maddelerde tahmin etmezse %16-18), hızlı taramada %86 A0. Neden: okuma (A2-C1) ve dinleme
+  (A2-B2) A1 altını ölçemez, önsel B1 (sd 1.5) ve sıradan maddelerde tahmin tahmini yukarı çeker. Her şeyi
+  boş bırakan yerleştirme öğrencisi: dilbilgisi A0 (-3.34), okuma ve dinleme A1 (-2.95, -2.93), birleşik
+  -3.13; yazma ve konuşma A0 ise genel A0 ve `NEAR_CUT` ile öğretmene gider.
+
 Belirsiz sonuç öğretmene gider (2026-10-18): yazma ve konuşması olmayan bir sınav (ör. hızlı tarama) eskiden
 bitince kendiliğinden kesinleşirdi. Artık hesaplanan sonuç sınırda (`NEAR_CUT`, `HIGH_UNCERTAINTY` ya da
 üretken beceri farkı) ya da önerilen seviye hesaplanan seviyeden farklıysa (`result.ts: isUncertainResult`)
@@ -359,6 +386,8 @@ akıcılık ve telaffuz). Güvenceler:
 - AI yalnızca önerir (`AI_PROPOSED`); nihai seviye öğretmen eylemiyle yazılır.
 - Alıntılanan her kanıt cevabın içinde aranır, bulunamayan silinir ve işaretlenir.
 - Seviye, görev seviyesinin bir üstüyle sınırlanır.
+- A0 (Pre-A1) yalnız puanlanabilir Almanca yokken ve EMPTY ya da NOT_GERMAN bayrağıyla; yoksa A1 yapılır
+  ve `A0_RAISED` ile işaretlenir.
 - Telaffuz transkriptten ölçülemez: her zaman `assessable: false`.
 - Boş cevap için AI çağrılmaz (`AI_FAILED: EMPTY`), öğretmen karar verir.
 - Her çağrı `ai_runs`'a yazılır.
