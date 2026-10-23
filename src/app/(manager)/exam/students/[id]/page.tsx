@@ -31,6 +31,7 @@ import { requireUser } from "@/server/session";
 import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
 import { cn } from "@/lib/cn";
+import { intlTag } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -403,7 +404,7 @@ export default async function ResultPage({
                     }))}
                     purgeOn={
                       recording.purgeAfter
-                        ? recording.purgeAfter.toLocaleDateString(locale === "en" ? "en-GB" : "tr-TR", { day: "numeric", month: "long", year: "numeric", timeZone: ORG_TIMEZONE })
+                        ? recording.purgeAfter.toLocaleDateString(intlTag(locale), { day: "numeric", month: "long", year: "numeric", timeZone: ORG_TIMEZONE })
                         : null
                     }
                   />

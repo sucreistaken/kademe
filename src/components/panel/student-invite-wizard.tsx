@@ -136,7 +136,7 @@ export function StudentInviteWizard({
   const inv = useMT("invite");
   const flow = useMT("flow");
   const w = useMT("examWindow");
-  const uiLocale = useLocale() === "en" ? "en" : "tr";
+  const uiLocale = useLocale() === "tr" ? "tr" : "en";
   const own = options.filter((o) => o.group === "own");
   const [text, setText] = useState("");
   const [choice, setChoice] = useState(initialChoice ?? (own.length === 1 ? own[0].value : ""));

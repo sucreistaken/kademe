@@ -13,6 +13,7 @@ import { ChoiceCardGroup } from "@/components/visual/choice-card";
 import { StepScreen } from "@/components/visual/step-screen";
 import { inviteUser, type InviteUserResult } from "@/app/(manager)/settings/actions";
 import { useMT } from "@/i18n/manager-client";
+import { intlTag } from "@/lib/format";
 
 export type RoleOption = {
   value: string;
@@ -207,7 +208,7 @@ function CreatedLink({ state, onAgain }: { state: Extract<InviteUserResult, { st
             {copied ? t("copied") : t("copy")}
           </Button>
         </div>
-        <p className="text-[13px] text-muted">{t("expiresOn", { date: new Date(state.expiresAt).toLocaleDateString(locale === "tr" ? "tr-TR" : "en-GB") })}</p>
+        <p className="text-[13px] text-muted">{t("expiresOn", { date: new Date(state.expiresAt).toLocaleDateString(intlTag(locale)) })}</p>
         <span role="status" className="sr-only">
           {copied ? t("copied") : ""}
         </span>

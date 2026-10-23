@@ -1,10 +1,11 @@
 import { BrandMark } from "@/components/visual/brand-mark";
 import { CEFR_LEVELS } from "@/lib/exam/types";
 import { dateTime } from "@/i18n/dates";
-import type { Locale } from "@/i18n/locale";
+import type { PanelLocale } from "@/i18n/locale";
 import type { managerT } from "@/i18n/manager";
 import { cn } from "@/lib/cn";
 import type { ReportModel } from "./model";
+import { intlTag } from "@/lib/format";
 
 type T = ReturnType<typeof managerT>;
 
@@ -28,8 +29,8 @@ const PRINT_CSS = `
 }
 `;
 
-const dayFmt = (d: Date, locale: Locale) =>
-  new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "tr-TR", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Istanbul" }).format(d);
+const dayFmt = (d: Date, locale: PanelLocale) =>
+  new Intl.DateTimeFormat(intlTag(locale), { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Istanbul" }).format(d);
 
 function LevelBar({ level }: { level: string | null }) {
   const at = level ? CEFR_LEVELS.indexOf(level as (typeof CEFR_LEVELS)[number]) : -1;
@@ -42,7 +43,7 @@ function LevelBar({ level }: { level: string | null }) {
   );
 }
 
-export function ReportSheet({ model, t, locale }: { model: ReportModel; t: T; locale: Locale }) {
+export function ReportSheet({ model, t, locale }: { model: ReportModel; t: T; locale: PanelLocale }) {
   const m = model;
   return (
     <>

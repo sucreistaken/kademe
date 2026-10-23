@@ -7,7 +7,7 @@ import { RoleSelect } from "@/components/settings/role-select";
 import { shortStamp } from "@/components/settings/stamp";
 import { managerT } from "@/i18n/manager";
 import { managerLocale } from "@/i18n/manager-locale";
-import type { Locale } from "@/i18n/locale";
+import type { PanelLocale } from "@/i18n/locale";
 import { can } from "@/lib/authorize";
 import { requireUser } from "@/server/session";
 import {
@@ -335,7 +335,7 @@ function UserRow({
   /** Invited, with a live setup link they have not used yet. */
   pendingSetup: boolean;
   mayWrite: boolean;
-  locale: Locale;
+  locale: PanelLocale;
   t: Translator;
   roleOptions: ReadonlyArray<{ value: string; label: string }>;
 }) {

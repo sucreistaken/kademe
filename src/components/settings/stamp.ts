@@ -1,4 +1,4 @@
-import type { Locale } from "@/i18n/locale";
+import type { PanelLocale } from "@/i18n/locale";
 
 /**
  * Timestamps for the settings and audit screens.
@@ -11,10 +11,10 @@ import type { Locale } from "@/i18n/locale";
  * views of the same recording a minute apart are two different events.
  */
 
-const TAG: Record<Locale, string> = { tr: "tr-TR", en: "en-GB" };
+const TAG: Record<PanelLocale, string> = { tr: "tr-TR", en: "en-GB", de: "de-DE" };
 
 /** "8 Eyl 2026 22:04:31" */
-export function auditStamp(date: Date, locale: Locale): string {
+export function auditStamp(date: Date, locale: PanelLocale): string {
   return new Intl.DateTimeFormat(TAG[locale], {
     day: "numeric",
     month: "short",
@@ -26,7 +26,7 @@ export function auditStamp(date: Date, locale: Locale): string {
 }
 
 /** "8 Eyl 2026 22:04" */
-export function shortStamp(date: Date, locale: Locale): string {
+export function shortStamp(date: Date, locale: PanelLocale): string {
   return new Intl.DateTimeFormat(TAG[locale], {
     day: "numeric",
     month: "short",

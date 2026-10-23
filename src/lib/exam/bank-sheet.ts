@@ -3,6 +3,7 @@ import { isWithin, parseWithin, type Within } from "./difficulty";
 import { cleanText } from "./item-generation";
 import { CEFR_LEVELS, type Cefr, type ItemContent, type ItemKey, type TfngValue } from "./types";
 import { gapMarkers, itemProblems, type ItemProblem } from "./validate";
+import { type PanelLocale } from "@/i18n/locale";
 
 /**
  * A school's own questions from a spreadsheet: one row per question, one
@@ -599,9 +600,10 @@ export function issueMessage(issue: RowIssue): { key: string; values: Record<str
 // The template
 // ---------------------------------------------------------------------------
 
-const TEMPLATE_HEADERS: Record<"tr" | "en", Record<string, string>> = {
+const TEMPLATE_HEADERS: Record<PanelLocale, Record<string, string>> = {
   tr: { type: "tip", section: "bölüm", level: "seviye", difficulty: "zorluk", text_title: "metin başlığı", text: "metin", question: "soru", answer: "cevap", explanation: "açıklama" },
   en: { type: "type", section: "section", level: "level", difficulty: "difficulty", text_title: "text_title", text: "text", question: "question", answer: "answer", explanation: "explanation" },
+  de: { type: "typ", section: "bereich", level: "niveau", difficulty: "schwierigkeit", text_title: "titel", text: "text", question: "frage", answer: "antwort", explanation: "erklärung" },
 };
 
 const TEMPLATE_COLUMNS = ["type", "section", "level", "difficulty", "text_title", "text", "question", "a", "b", "c", "d", "e", "f", "answer", "explanation"] as const;
@@ -611,9 +613,16 @@ const NEIGHBOUR_TEXT =
 
 type TemplateRow = Partial<Record<(typeof TEMPLATE_COLUMNS)[number], string>>;
 
-function templateRows(locale: "tr" | "en"): TemplateRow[] {
-  const tr = locale === "tr";
-  const sec = (s: ImportSection) => (tr ? { GRAMMAR: "Dilbilgisi", READING: "Okuma", LISTENING: "Dinleme" } : { GRAMMAR: "Grammar", READING: "Reading", LISTENING: "Listening" })[s];
+const SECTION_NAMES: Record<PanelLocale, Record<ImportSection, string>> = {
+  tr: { GRAMMAR: "Dilbilgisi", READING: "Okuma", LISTENING: "Dinleme" },
+  en: { GRAMMAR: "Grammar", READING: "Reading", LISTENING: "Listening" },
+  de: { GRAMMAR: "Grammatik", READING: "Lesen", LISTENING: "Hören" },
+};
+
+const EASY_WORD: Record<PanelLocale, string> = { tr: "Kolay", en: "Easy", de: "Leicht" };
+
+function templateRows(locale: PanelLocale): TemplateRow[] {
+  const sec = (s: ImportSection) => SECTION_NAMES[locale][s];
   return [
     {
       type: "SINGLE_CHOICE",
@@ -642,7 +651,7 @@ function templateRows(locale: "tr" | "en"): TemplateRow[] {
       type: "TRUE_FALSE_NG",
       section: sec("READING"),
       level: "A2",
-      difficulty: tr ? "Kolay" : "Easy",
+      difficulty: EASY_WORD[locale],
       text_title: "Neue Nachbarin",
       text: NEIGHBOUR_TEXT,
       question: "Lesen Sie den Text. Richtig, falsch oder nicht im Text?",
@@ -687,11 +696,13 @@ function templateRows(locale: "tr" | "en"): TemplateRow[] {
   ];
 }
 
+const TEMPLATE_FILENAME: Record<PanelLocale, string> = { tr: "kademe-soru-sablonu.csv", en: "kademe-question-template.csv", de: "kademe-fragenvorlage.csv" };
+
 /** The downloadable example file: one row per question type, in the panel's language. */
-export function templateCsv(locale: "tr" | "en"): { text: string; delimiter: Delimiter; filename: string } {
+export function templateCsv(locale: PanelLocale): { text: string; delimiter: Delimiter; filename: string } {
   // Excel in Turkish (and German) reads ";" as the list separator; English Excel reads ",".
-  const delimiter: Delimiter = locale === "tr" ? ";" : ",";
+  const delimiter: Delimiter = locale === "en" ? "," : ";";
   const head = TEMPLATE_COLUMNS.map((c) => TEMPLATE_HEADERS[locale][c] ?? c);
   const rows = templateRows(locale).map((r) => TEMPLATE_COLUMNS.map((c) => r[c] ?? ""));
-  return { text: toCsv([head, ...rows], delimiter), delimiter, filename: locale === "tr" ? "kademe-soru-sablonu.csv" : "kademe-question-template.csv" };
+  return { text: toCsv([head, ...rows], delimiter), delimiter, filename: TEMPLATE_FILENAME[locale] };
 }

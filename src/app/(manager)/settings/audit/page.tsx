@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { auditStamp } from "@/components/settings/stamp";
 import { managerMessagesFor, managerT } from "@/i18n/manager";
 import { managerLocale } from "@/i18n/manager-locale";
-import type { Locale } from "@/i18n/locale";
+import type { PanelLocale } from "@/i18n/locale";
 import { can } from "@/lib/authorize";
 import { requireUser } from "@/server/session";
 import {
@@ -354,7 +354,7 @@ function Row({
   noDetail,
 }: {
   row: AuditRow;
-  locale: Locale;
+  locale: PanelLocale;
   filters: AuditFilters;
   actionLabel: string;
   subjectLabel: string;

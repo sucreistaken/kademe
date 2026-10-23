@@ -1,6 +1,7 @@
 import { StatusDot, type StatusTone } from "@/components/ui/status-dot";
 import type { StudentStatus } from "@/server/panel";
 import { PanelHeader } from "@/components/manager/panel-header";
+import { intlTag } from "@/lib/format";
 
 /**
  * Small shared pieces of the teacher panel (soft look, 2026-10-14). A status
@@ -52,4 +53,4 @@ export function PageHead({ title, sub, action }: { title: React.ReactNode; sub?:
 }
 
 export const shortDateTime = (d: Date | null, locale: string) =>
-  d ? d.toLocaleString(locale === "en" ? "en-GB" : "tr-TR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Istanbul" }) : "-";
+  d ? d.toLocaleString(intlTag(locale), { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Istanbul" }) : "-";

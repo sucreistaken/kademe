@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ChoiceCardGroup } from "@/components/visual/choice-card";
 import { Disclosure } from "@/components/visual/disclosure";
 import { useMT } from "@/i18n/manager-client";
-import type { Locale } from "@/i18n/locale";
+import type { PanelLocale } from "@/i18n/locale";
 import { cn } from "@/lib/cn";
 import {
   IMPORT_SECTIONS,
@@ -79,7 +79,7 @@ function fixColumns(row: SheetRow, fileColumns: Set<SheetColumn>): SheetColumn[]
  * Orta / Zor for the whole file, changeable per row. Then the rows are added
  * as drafts and the last screen says "n eklendi, m hatalı".
  */
-export function BankUploadWizard({ locale }: { locale: Locale }) {
+export function BankUploadWizard({ locale }: { locale: PanelLocale }) {
   const t = useMT("bankTools");
   const sec = useMT("sectionName");
   const bank = useMT("bank");

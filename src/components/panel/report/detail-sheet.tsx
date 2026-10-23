@@ -1,4 +1,4 @@
-import type { Locale } from "@/i18n/locale";
+import type { PanelLocale } from "@/i18n/locale";
 import type { managerT } from "@/i18n/manager";
 import { cn } from "@/lib/cn";
 import { splitTextLead } from "@/lib/exam/prompt-instruction";
@@ -292,7 +292,7 @@ function Task({ task, section, t }: { task: DetailTask; section: string; t: T })
 }
 
 /** Teacher-only table of right / total per topic; task formats ("Text with gaps") are not topics and stay out. */
-function TopicTable({ s, t, locale }: { s: Extract<DetailSection, { kind: "OBJECTIVE" }>; t: T; locale: Locale }) {
+function TopicTable({ s, t, locale }: { s: Extract<DetailSection, { kind: "OBJECTIVE" }>; t: T; locale: PanelLocale }) {
   const rows = s.topics.filter((x) => !x.format);
   if (rows.length === 0) return null;
   return (
@@ -320,7 +320,7 @@ function TopicTable({ s, t, locale }: { s: Extract<DetailSection, { kind: "OBJEC
   );
 }
 
-function SectionBody({ s, t, locale }: { s: DetailSection; t: T; locale: Locale }) {
+function SectionBody({ s, t, locale }: { s: DetailSection; t: T; locale: PanelLocale }) {
   if (s.kind === "PRODUCTIVE") return <>{s.tasks.map((task) => <Task key={task.n} task={task} section={s.section} t={t} />)}</>;
   return (
     <>
@@ -346,7 +346,7 @@ function SectionBody({ s, t, locale }: { s: DetailSection; t: T; locale: Locale 
 }
 
 /** The question-by-question part of the report: one page-broken article per section. */
-export function DetailSheet({ sections, studentName, t, locale }: { sections: DetailSection[]; studentName: string; t: T; locale: Locale }) {
+export function DetailSheet({ sections, studentName, t, locale }: { sections: DetailSection[]; studentName: string; t: T; locale: PanelLocale }) {
   if (sections.length === 0) return null;
   return (
     <>

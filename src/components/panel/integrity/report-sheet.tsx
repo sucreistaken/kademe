@@ -1,10 +1,11 @@
 import { BrandMark } from "@/components/visual/brand-mark";
 import { SEVERITY_STYLE } from "@/components/panel/result/integrity-panel";
 import { dateTime } from "@/i18n/dates";
-import type { Locale } from "@/i18n/locale";
+import type { PanelLocale } from "@/i18n/locale";
 import type { managerT } from "@/i18n/manager";
 import { cn } from "@/lib/cn";
 import { clockTime, type FlagGroup } from "./groups";
+import { intlTag } from "@/lib/format";
 
 type T = ReturnType<typeof managerT>;
 
@@ -47,10 +48,10 @@ const PRINT_CSS = `
 }
 `;
 
-const dayFmt = (d: Date, locale: Locale) =>
-  new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "tr-TR", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Istanbul" }).format(d);
+const dayFmt = (d: Date, locale: PanelLocale) =>
+  new Intl.DateTimeFormat(intlTag(locale), { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Istanbul" }).format(d);
 
-export function IntegrityReportSheet({ model, t, locale }: { model: IntegrityReportModel; t: T; locale: Locale }) {
+export function IntegrityReportSheet({ model, t, locale }: { model: IntegrityReportModel; t: T; locale: PanelLocale }) {
   const m = model;
   return (
     <>

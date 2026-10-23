@@ -181,7 +181,7 @@ export function VideoPlayer({
             }}
             active={speed !== 1}
           >
-            {locale === "tr" ? String(speed).replace(".", ",") : String(speed)}×
+            {locale !== "en" ? String(speed).replace(".", ",") : String(speed)}×
           </PlayerButton>
           {transcriptText ? (
             <PlayerButton onClick={download}>{t("downloadTranscript")}</PlayerButton>
