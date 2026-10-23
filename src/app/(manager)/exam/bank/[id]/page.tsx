@@ -5,6 +5,7 @@ import { makeAudio, setItemStatus } from "@/app/(manager)/exam/bank/actions";
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dot } from "@/components/panel/bits";
+import { GapPromptPreview } from "@/components/panel/gap-prompt-preview";
 import { problemSentence, type BankT } from "@/components/panel/bank-copy";
 import { keyText } from "@/components/panel/result/format";
 import { pickedTextKind } from "@/components/panel/result/review-cards";
@@ -121,9 +122,7 @@ export default async function BankItemPage({ params, searchParams }: { params: P
             </Card>
           ) : null}
           <Card className="p-5">
-            <p lang="de" className="whitespace-pre-line text-[16px] font-medium leading-[1.6] text-ink">
-              {item.prompt.replace(/\{\{([^}]+)\}\}/g, "[$1]")}
-            </p>
+            <GapPromptPreview prompt={item.prompt} />
             {c.kind === "CHOICE" ? (
               <ol className="mt-3 flex flex-col gap-1.5">
                 {c.options.map((o, i) => (

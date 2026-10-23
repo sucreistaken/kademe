@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { matchingTargets, type CandidateItem } from "@/lib/exam/safe";
 import { withPoolInstruction } from "@/lib/exam/ctest-instruction";
+import { hasGapLayout, splitGapLayout } from "@/lib/exam/gap-layout";
 import { splitInstruction, splitPromptBlocks, splitTitle, type PromptBlock } from "@/lib/exam/prompt-instruction";
 import { coverPointsFor } from "@/lib/exam/task-prompt";
 import { tfngChoices } from "@/lib/exam/tfng-labels";
@@ -354,6 +355,7 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
   const t = useT("exam");
   const ti = useT("examItems");
   const lastFocused = useRef<{ id: string; el: HTMLInputElement } | null>(null);
+  const layoutId = useId();
   const [selected, setSelected] = useState<string | null>(null);
   const { drag, onPointerDown, isDragClick } = useChipDrag<number>({
     dropAt: (x, y) => (document.elementFromPoint(x, y)?.closest("[data-gap-slot]") as HTMLElement | null)?.dataset.gapSlot ?? null,
@@ -414,6 +416,119 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
     if (!attached || i === 0 || marker(parts[i - 1])) return "";
     return parts[i - 1].match(/[\p{L}\p{N}]+$/u)?.[0] ?? "";
   };
+  // A typed prompt with a table or a form (label lines) is laid out as one; any other prompt keeps the prose path below.
+  if (typed && !pool && !attached && !open && hasGapLayout(passage)) {
+    const typedInput = (id: string, labelledBy: string | undefined) => {
+      const gap = gaps.get(id);
+      if (!gap) return <span key={id}>____</span>;
+      const value = answer.gaps?.[id] ?? "";
+      const label = labelledBy ? { "aria-labelledby": labelledBy } : { "aria-label": gapLabel(id) };
+      return gap.choices ? (
+        <select
+          key={id}
+          value={value}
+          disabled={disabled}
+          {...label}
+          onChange={(e) => pick(id, e.target.value)}
+          className="mx-1 h-9 rounded-[8px] border border-line-strong bg-surface px-2 text-[16px] text-ink"
+        >
+          <option value="">{t("matchingPick")}</option>
+          {gap.choices.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <input
+          key={id}
+          value={value}
+          disabled={disabled}
+          {...label}
+          onFocus={(e) => (lastFocused.current = { id, el: e.currentTarget })}
+          onChange={(e) => set(id, e.target.value)}
+          size={Math.max(8, value.length + 2)}
+          className="mx-1 h-9 rounded-[8px] border border-line-strong bg-surface px-2 text-[16px] text-ink"
+          {...NO_ASSIST}
+        />
+      );
+    };
+    const inline = (text: string, labelledBy?: string) =>
+      text.split(/(\{\{[A-Za-z0-9_-]+\}\})/g).map((part, i) => {
+        const m = marker(part);
+        return m ? typedInput(m[1], labelledBy) : part ? <span key={i}>{part}</span> : null;
+      });
+    const rid = (kind: string, r: number, c = 0) => `${layoutId}-${kind}-${r}-${c}`;
+    return (
+      <div>
+        {instruction ? (
+          <div lang="de" className="mb-4">
+            <Instruction text={instruction} />
+          </div>
+        ) : null}
+        <div lang="de" className="flex flex-col gap-4 text-[17px] leading-[2.1] text-ink">
+          {splitGapLayout(passage).map((b, bi) => {
+            if (b.kind === "prose") {
+              return (
+                <p key={bi} className="whitespace-pre-line font-semibold">
+                  {inline(b.text)}
+                </p>
+              );
+            }
+            if (b.kind === "form") {
+              return (
+                <div key={bi} className="grid grid-cols-[minmax(0,max-content)_minmax(0,1fr)] items-center gap-x-4 gap-y-2 rounded-[14px] border border-line bg-surface px-4 py-3">
+                  {b.rows.map((row, ri) => (
+                    <div key={ri} className="contents">
+                      <span id={rid(`f${bi}`, ri)} className="text-[16px] font-semibold leading-[1.4]">
+                        {row.label}
+                      </span>
+                      <span className="text-[16px] leading-[1.4]">{inline(row.rest, rid(`f${bi}`, ri))}</span>
+                    </div>
+                  ))}
+                </div>
+              );
+            }
+            return (
+              <div key={bi} className="overflow-x-auto">
+                <table className="w-full border-collapse text-[16px] leading-[1.5]">
+                  <thead>
+                    <tr>
+                      {b.header.map((h, ci) => (
+                        <th key={ci} id={rid(`h${bi}`, 0, ci)} scope="col" className="border border-line bg-canvas px-3 py-2 text-start font-bold">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {b.rows.map((row, ri) => (
+                      <tr key={ri}>
+                        {row.map((cell, ci) => {
+                          // The row label (first cell, when it holds no gap) and the column header name every input of the cell.
+                          const rowHead = !row[0].includes("{{") && ci > 0 ? `${rid(`r${bi}`, ri)} ` : "";
+                          const labelledBy = `${rowHead}${rid(`h${bi}`, 0, ci)}`;
+                          return ci === 0 && !cell.includes("{{") ? (
+                            <th key={ci} id={rid(`r${bi}`, ri)} scope="row" className="border border-line px-3 py-2 text-start font-semibold">
+                              {cell}
+                            </th>
+                          ) : (
+                            <td key={ci} className="border border-line px-3 py-2 align-middle">
+                              {inline(cell, labelledBy)}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
   return (
     <div>
       {instruction ? (
