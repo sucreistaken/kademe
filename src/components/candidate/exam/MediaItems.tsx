@@ -443,7 +443,7 @@ export function SpeakingItem({
         <TaskImages sequence={item.sequence} images={content.images} />
         <TaskPromptCard text={item.prompt} points={content.studentPoints} />
         <TaskExpectations section="SPEAKING" thinkSeconds={content.thinkSeconds} answerSeconds={content.answerSeconds} />
-        <ScratchPad token={token} sectionPosition={sectionPosition} padKey={`speaking-${item.sequence}`} collapsible />
+        <ScratchPad token={token} sectionPosition={sectionPosition} padKey={`speaking-${item.sequence}`} collapsible defaultOpen={false} />
       </div>
       <div className={cn(TASK_RIGHT, "gap-4")}>
         <video ref={videoRef} muted playsInline className={SPEAKING_VIDEO} />

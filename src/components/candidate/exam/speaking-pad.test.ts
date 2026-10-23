@@ -21,12 +21,11 @@ const item: CandidateItem = {
 } as CandidateItem;
 
 describe("speaking screen notes", () => {
-  it("includes the collapsible notes pad beside the task card and the record controls", () => {
+  it("includes the notes pad folded by default so the task card fits the first screen", () => {
     const html = renderToStaticMarkup(createElement(SpeakingItem, { token: "t", sectionPosition: 2, item, answer: {}, onChange: () => {}, engine: null }));
-    expect(html).toContain("<textarea");
-    expect(html).toContain('aria-expanded="true"');
-    expect(html).toContain("modeType");
-    expect(html).toContain("modeDraw");
+    expect(html).toContain('aria-expanded="false"');
+    expect(html).not.toContain("<textarea");
+    expect(html).not.toContain("modeType");
     expect(html).toContain("<video");
   });
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Eraser, PenLine, Trash2 } from "lucide-react";
+import { ChevronDown, Eraser, Pencil, PenLine, Trash2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useT } from "@/i18n/candidate-client";
 import { NotesLayer } from "@/components/candidate/exam/notes/NotesLayer";
@@ -20,12 +20,14 @@ export type PadMode = "type" | "draw";
  * A small notes pad: typed notes (default) or pen drawing. Stays in this browser
  * tab; never graded. `collapsible` adds a header toggle (used on the speaking
  * screen, where space is tight); the notes are kept while it is folded.
+ * `defaultOpen={false}` starts it folded so the first screen fits without scrolling.
  */
 export function ScratchPad({
   token,
   sectionPosition,
   padKey,
   collapsible = false,
+  defaultOpen = true,
   initialMode = "type",
   className,
 }: {
@@ -33,6 +35,7 @@ export function ScratchPad({
   sectionPosition: number;
   padKey: string;
   collapsible?: boolean;
+  defaultOpen?: boolean;
   initialMode?: PadMode;
   className?: string;
 }) {
@@ -40,7 +43,7 @@ export function ScratchPad({
   const n = useT("notes");
   const { tool, setTool, clear, undo, canUndo, data, setData } = t;
   const [mode, setModeState] = useState<PadMode>(initialMode);
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(defaultOpen);
   const [textEl, setTextEl] = useState<HTMLTextAreaElement | null>(null);
   const text = data.text ?? "";
 
@@ -62,6 +65,7 @@ export function ScratchPad({
             className="me-2 flex items-center gap-1 text-[13px] font-semibold text-ink-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink"
           >
             <ChevronDown className={cn("size-4 transition-transform", !open && "-rotate-90 rtl:rotate-90")} aria-hidden="true" />
+            <Pencil className="size-3.5" aria-hidden="true" />
             {n("pad")}
           </button>
         ) : (

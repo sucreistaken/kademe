@@ -7,12 +7,12 @@ import { ScratchPad, type PadMode } from "@/components/candidate/exam/notes/Scra
 
 const Provider = NextIntlClientProvider as unknown as FC<{ locale: string; messages: Record<string, unknown>; children?: ReactNode }>;
 
-function html(initialMode?: PadMode, collapsible = false) {
+function html(initialMode?: PadMode, collapsible = false, defaultOpen?: boolean) {
   return renderToStaticMarkup(
     createElement(
       Provider,
       { locale: "en", messages: { notes: en.notes, exam: en.exam } },
-      createElement(ScratchPad, { token: "t", sectionPosition: 1, padKey: "speaking-3", initialMode, collapsible }),
+      createElement(ScratchPad, { token: "t", sectionPosition: 1, padKey: "speaking-3", initialMode, collapsible, defaultOpen }),
     ),
   );
 }
@@ -37,5 +37,12 @@ describe("ScratchPad", () => {
   it("has a fold toggle only when collapsible", () => {
     expect(html("type", true)).toContain('aria-expanded="true"');
     expect(html("type", false)).not.toContain("aria-expanded");
+  });
+  it("starts folded with a one-line toggle when defaultOpen is false", () => {
+    const out = html("type", true, false);
+    expect(out).toContain('aria-expanded="false"');
+    expect(out).toContain(en.notes.pad);
+    expect(out).not.toContain("<textarea");
+    expect(out).not.toContain(en.notes.padHint);
   });
 });
