@@ -1,11 +1,13 @@
 import { sql } from "drizzle-orm";
 import {
+  boolean,
   check,
   index,
   integer,
   jsonb,
   pgTable,
   real,
+  smallint,
   text,
   timestamp,
   uniqueIndex,
@@ -117,6 +119,11 @@ export const stimuli = pgTable(
     audioDurationMs: integer("audio_duration_ms"),
     /** Hash of script + voices the audio was made from, so a script edit is noticed. */
     audioSourceHash: text("audio_source_hash"),
+    /**
+     * Listening plays allowed for this clip. Null means the exam setting applies;
+     * the effective value is the smaller of the two.
+     */
+    maxPlays: smallint("max_plays"),
     origin: itemOrigin("origin").notNull().default("TEACHER"),
     aiRunId: uuid("ai_run_id").references(() => aiRuns.id, { onDelete: "set null" }),
     /** Seed key, so re-seeding and the TTS script can find the row. */
@@ -124,7 +131,10 @@ export const stimuli = pgTable(
     createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index("stimuli_org_section_level_idx").on(t.orgId, t.section, t.level)],
+  (t) => [
+    index("stimuli_org_section_level_idx").on(t.orgId, t.section, t.level),
+    check("stimuli_max_plays_range", sql`${t.maxPlays} IS NULL OR ${t.maxPlays} BETWEEN 1 AND 3`),
+  ],
 );
 
 /** One question in the bank. `content` is what a student may see; the rest is not. */
@@ -248,6 +258,11 @@ export const examResults = pgTable("exam_results", {
   finalizedAt: timestamp("finalized_at", { withTimezone: true }),
   releasedAt: timestamp("released_at", { withTimezone: true }),
   releasedBy: uuid("released_by").references(() => users.id, { onDelete: "set null" }),
+  /**
+   * The teacher's choice at release whether the student sees the CEFR level.
+   * Null follows the exam's resultVisibility.
+   */
+  levelShown: boolean("level_shown"),
   /** AI-drafted note for the student; only `approved` (a teacher's decision) ever reaches the report. */
   studentFeedback: jsonb("student_feedback").$type<StudentFeedbackStore>(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

@@ -51,6 +51,8 @@ export const candidates = pgTable(
   (t) => [
     index("candidates_org_idx").on(t.orgId),
     index("candidates_email_idx").on(t.email),
+    /** Finds earlier assessments of the same student so the exam does not repeat items. */
+    index("candidates_org_email_lower_idx").on(t.orgId, sql`lower(${t.email})`),
   ],
 );
 
@@ -70,8 +72,8 @@ export const assessments = pgTable(
       .references(() => candidates.id, { onDelete: "cascade" }),
     /** Copied onto every attempt; decides which solution's endpoints answer. */
     solution: solution("solution").notNull(),
-    /** Interface language. The exam content itself is German. */
-    locale: locale("locale").notNull().default("tr"),
+    /** Interface language. The exam content itself is German. Students default to English (owner, 2026-10-23). */
+    locale: locale("locale").notNull().default("en"),
     invitedBy: uuid("invited_by").references(() => users.id, {
       onDelete: "set null",
     }),
