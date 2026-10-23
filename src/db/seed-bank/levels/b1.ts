@@ -482,6 +482,21 @@ function forText(stimulusKey: string) {
         key: { kind: "TFNG", answers: Object.fromEntries(statements.map(([, v], i) => [`s${i + 1}`, v])) },
       };
     },
+    /** Ja / Nein wording (B1 and up): stored as R (Ja) and F (Nein). */
+    jaNein(
+      skill: ReadingSkill,
+      within: Within,
+      statements: Array<[string, TfngValue]>,
+      explanation: string,
+      prompt = "Lesen Sie den Text. Antworten Sie mit Ja oder Nein: Stimmt die Aussage mit dem Text überein?",
+    ): SeedItem {
+      return {
+        ...base(skill, within, prompt, explanation),
+        type: "TRUE_FALSE_NG",
+        content: { kind: "TFNG", twoWay: true, wording: "JA_NEIN", statements: statements.map(([text], i) => ({ id: `s${i + 1}`, text })) },
+        key: { kind: "TFNG", answers: Object.fromEntries(statements.map(([, v], i) => [`s${i + 1}`, v])) },
+      };
+    },
     match(
       skill: ReadingSkill,
       within: Within,
@@ -672,6 +687,132 @@ Der Fußballverein Eintracht Süd sucht dringend Trainer für seine Nachwuchsman
 );
 const news = forText(rNews.key);
 
+// ---- Text 7: forum post (Ja / Nein)
+
+const rHund = readingText(
+  "v3-r-b1-hund-forum",
+  "Ein Hund für unsere Familie?",
+  "Haustiere",
+  `
+Forum Haustiere: Ein Hund für unsere Familie?
+
+Von Tamara, heute, 09:40 Uhr
+
+Hallo zusammen, unsere beiden Kinder (acht und elf Jahre alt) wünschen sich seit Langem einen Hund. Mein Mann und ich sind noch nicht sicher. Wir wohnen in einer Mietwohnung im zweiten Stock, aber der Vermieter hat nichts dagegen, solange der Hund nicht den ganzen Tag bellt. Ich arbeite halbtags, mein Mann ist meistens ab 17 Uhr zu Hause. Ich habe Angst, dass die Kinder nach ein paar Wochen keine Lust mehr haben und dann alles an mir hängen bleibt. Eigentlich hatte ich an einen Hund aus dem Tierheim gedacht, weil viele Tiere dort ein neues Zuhause verdient haben. Mein Mann meint dagegen, ein Welpe vom Züchter sei leichter zu erziehen. Was sind eure Erfahrungen?
+
+Antwort von Rolf: Wir haben seit fünf Jahren einen Hund aus dem Tierheim und sind sehr glücklich damit. Lasst euch vorher gut beraten, die Mitarbeiter dort kennen die Tiere genau. Und eure Kinder sollten wissen: Ein Hund bedeutet auch Pflichten, nicht nur Spaß.
+`,
+);
+const hund = forText(rHund.key);
+
+// ---- Text 8: letter to the editor (Ja / Nein)
+
+const rMarkt = readingText(
+  "v3-r-b1-wochenmarkt-leserbrief",
+  "Leserbrief zum Wochenmarkt",
+  "Stadt und Einkaufen",
+  `
+Leserbrief: Der Wochenmarkt muss im Zentrum bleiben
+
+Zum Artikel „Wochenmarkt soll auf den Parkplatz am Stadtrand ziehen“ vom 3. Oktober
+
+Sehr geehrte Damen und Herren,
+
+mit Erstaunen habe ich gelesen, dass der Wochenmarkt vom Marktplatz auf den Parkplatz am Stadtrand verlegt werden soll. Ich gehe seit über zwanzig Jahren jeden Samstag auf den Markt, und ich bin nicht der Einzige. Viele ältere Menschen aus unserer Straße kaufen dort ein, weil sie nur einen kurzen Weg haben. Am Stadtrand müssten sie einen Bus nehmen, der samstags nur alle vierzig Minuten fährt.
+
+Die Stadt sagt, auf dem Marktplatz sei im Sommer wegen der Cafés zu wenig Platz. Das kann ich nicht ganz von der Hand weisen. Aber dann sollte man die Tische der Cafés verkleinern und nicht den Markt wegschicken. Ich schlage vor, dass die Händler und die Stadt zuerst gemeinsam nach einer Lösung suchen. Erst danach sollte der Gemeinderat entscheiden.
+
+Mit freundlichen Grüßen
+Walter Hofmann
+`,
+);
+const markt = forText(rMarkt.key);
+
+// ---- Text 9: personal letter (Ja / Nein)
+
+const rChor = readingText(
+  "v3-r-b1-chor-einladung",
+  "Eine Einladung zur Chorprobe",
+  "Musik und Freizeit",
+  `
+Liebe Marta,
+
+danke für deine Nachricht! Ich freue mich, dass du dich für unseren Chor interessierst. Wir treffen uns jeden Mittwoch um 19 Uhr im Gemeindehaus in der Lindenstraße, und die Probe dauert etwa zwei Stunden. Du musst keine Noten lesen können: Die meisten von uns lernen die Lieder nach Gehör, und unsere Leiterin spielt jede Stimme auf dem Klavier vor. Ich selbst habe erst mit vierzig angefangen und bereue es bis heute nicht.
+
+Im Dezember singen wir bei einem Weihnachtskonzert in der Kirche, und im Mai fahren wir als Chor für ein Wochenende nach Dresden. Der Beitrag beträgt acht Euro im Monat, aber die erste Probe ist für dich gratis. Komm doch einfach am nächsten Mittwoch vorbei. Wenn du nicht allein kommen möchtest, hole ich dich gern vor der Tür ab. Sag mir nur kurz Bescheid.
+
+Viele Grüße
+Henrik
+`,
+);
+const chor = forText(rChor.key);
+
+// ---- Text 10: who says what, a free Sunday
+
+const rSonntag = readingText(
+  "v3-r-b1-sonntag-meinungen",
+  "Wie verbringen Sie einen freien Sonntag?",
+  "Freizeit am Sonntag",
+  `
+Wie verbringen Sie am liebsten einen freien Sonntag? Fünf Leserinnen und Leser antworten.
+
+Anna: Bei mir muss am Sonntag alles ruhig sein. Ich schlafe lange, koche in Ruhe und lese ein Buch. Ich verabrede mich nie, denn die Woche ist laut genug. Nur am Nachmittag gehe ich eine Stunde spazieren, aber immer allein.
+
+Bernd: Ohne Sport geht bei mir nichts. Sonntags spiele ich mit Freunden Fußball, danach grillen wir zusammen. Zu Hause zu bleiben finde ich langweilig. Allerdings gebe ich zu, dass ich abends meistens zu müde für alles andere bin.
+
+Clara: Sonntag ist bei uns Familientag. Wir frühstücken zusammen, und dann machen wir alle gemeinsam etwas: ein Museum, einen Ausflug oder einen Spieleabend. Meine Kinder entscheiden abwechselnd, was wir machen. Was ich schade finde: Der Tag ist immer so schnell vorbei.
+
+Dennis: Ich nutze den Sonntag für Dinge, für die ich unter der Woche keine Zeit habe: Wäsche, Einkauf, Aufräumen. Das klingt nicht sehr schön, aber danach fühle ich mich gut, weil ich mit einer leeren Liste in die neue Woche starte. Am Abend treffe ich manchmal Freunde im Café.
+
+Eva: Bei mir ist Sonntag ein ganz normaler Tag, denn ich helfe im Restaurant meiner Eltern. Das macht mir Spaß, auch wenn ich am Montag dann oft müde bin.
+`,
+);
+const sonntag = forText(rSonntag.key);
+
+// ---- Text 11: who says what, city or country
+
+const rWohnen = readingText(
+  "v3-r-b1-stadt-oder-land",
+  "Stadt oder Land?",
+  "Wohnen in Stadt und Land",
+  `
+Stadt oder Land? Fünf Menschen erzählen, wo sie am liebsten wohnen.
+
+Franka: Ich bin vor drei Jahren aufs Land gezogen und würde nie zurückgehen. Mein Garten ist mir wichtiger als jedes Café. Nur das Auto nervt mich: Ohne eins kommt man hier kaum zum Arzt oder zum Einkaufen.
+
+Gero: Ich liebe die Stadt, weil immer etwas los ist. Kino, Konzerte, Restaurants: Alles ist zu Fuß erreichbar. Dafür zahle ich gern mehr Miete, auch wenn meine Wohnung klein ist.
+
+Hülya: Ich bin auf einem Dorf aufgewachsen und zum Studium in die Stadt gezogen. Heute bin ich unsicher. Die Stadt ist praktisch, aber ich vermisse die Ruhe und dass man seine Nachbarn kennt.
+
+Ivo: Mir ist es ziemlich egal, wo ich wohne. Hauptsache, der Weg zur Arbeit ist kurz und die Wohnung nicht zu teuer. Im Moment wohne ich am Stadtrand, und das passt gut.
+
+Jana: Mit Kindern ist das Land für mich ideal. Draußen können sie allein spielen, und die Schule ist im Nachbardorf. Allerdings sehe ich meine Freunde aus der Stadt nur noch selten, weil sie kaum zu Besuch kommen.
+`,
+);
+const wohnen = forText(rWohnen.key);
+
+// ---- Text 12: who says what, holidays
+
+const rUrlaub = readingText(
+  "v3-r-b1-urlaub-meinungen",
+  "Verreisen oder zu Hause bleiben?",
+  "Urlaub und Reisen",
+  `
+Verreisen oder zu Hause bleiben? Das sagen fünf Leserinnen und Leser.
+
+Kai: Jedes Jahr fliege ich in ein anderes Land. Ich will fremde Sprachen hören, neues Essen probieren und Menschen aus anderen Kulturen kennenlernen. Dass Fliegen schlecht für die Umwelt ist, weiß ich. Trotzdem verzichte ich lieber auf ein Auto als auf meine Reisen.
+
+Lale: Mir reicht ein Urlaub in Deutschland, am liebsten mit dem Zug. Wir fahren seit Jahren an die Ostsee, weil es dort einfach so schön ist. Ich muss nicht jedes Jahr etwas Neues sehen.
+
+Max: Ich bleibe im Urlaub meistens zu Hause. Eine Reise kostet meine Familie sehr viel Geld, und der Stress beim Packen und im Stau ist mir zu groß. Ich mache lieber Ausflüge in die Umgebung.
+
+Nora: Dieses Jahr fahre ich zum ersten Mal allein weg, eine Woche in die Berge. Ich habe ein bisschen Angst, dass ich mich langweile, aber ich möchte es ausprobieren.
+
+Olaf: Wir fahren mit dem Wohnwagen. So sind wir unabhängig und können spontan entscheiden, wohin es als Nächstes geht. Und die Kinder lieben es, draußen zu schlafen.
+`,
+);
+const urlaub = forText(rUrlaub.key);
+
 const readingItems: SeedItem[] = [
   // ---- Text 1
   email.tfng("detail", "MID",
@@ -854,6 +995,105 @@ const readingItems: SeedItem[] = [
       ["Neue Trainer müssen die Kosten ihrer Schulung nicht selbst tragen.", "R"],
     ],
     "Text 1: „Werkzeug ist vorhanden“ (R). Text 3: nur donnerstags bis 20 Uhr (F). Text 4: Der Verband bezahlt die Schulung (R)."),
+
+  // ---- Text 7 (Ja / Nein)
+  hund.jaNein("detail", "MID",
+    [
+      ["Tamara und ihr Mann sind sich einig, welchen Hund sie nehmen möchten.", "F"],
+      ["Der Vermieter erlaubt im Prinzip einen Hund in der Wohnung.", "R"],
+      ["Rolf hat mit seinem Hund aus dem Tierheim schlechte Erfahrungen gemacht.", "F"],
+    ],
+    "Tamara denkt an das Tierheim, ihr Mann an einen Welpen vom Züchter (Nein). Der Vermieter hat „nichts dagegen“, solange der Hund nicht ständig bellt (Ja). Rolf ist „sehr glücklich“ mit seinem Hund (Nein)."),
+  hund.choice("gist", "EASY",
+    "Warum schreibt Tamara ihren Beitrag?",
+    "Sie möchte von anderen hören, was sie bei der Entscheidung für einen Hund bedenken soll.",
+    [
+      "Sie sucht für ihren Hund aus dem Tierheim eine Person, die ihn tagsüber betreut.",
+      "Sie will dem Vermieter erklären, dass ein Hund in der Wohnung kein Problem ist.",
+      "Sie sucht einen Züchter, bei dem sie für ihre Kinder einen jungen Hund kaufen kann.",
+    ],
+    1,
+    "Tamara hat noch keinen Hund; sie fragt am Ende „Was sind eure Erfahrungen?“."),
+
+  // ---- Text 8 (Ja / Nein)
+  markt.jaNein("detail", "MID",
+    [
+      ["Herr Hofmann kauft schon sehr lange regelmäßig auf dem Wochenmarkt ein.", "R"],
+      ["Er hält die Argumente der Stadt für völlig falsch.", "F"],
+      ["Er möchte, dass zuerst Händler und Stadt gemeinsam nach einer Lösung suchen.", "R"],
+    ],
+    "„seit über zwanzig Jahren jeden Samstag“ (Ja). Das Platzargument kann er „nicht ganz von der Hand weisen“ (Nein). Erst danach soll der Gemeinderat entscheiden (Ja)."),
+  markt.choice("detail", "MID",
+    "Warum wäre der neue Platz für viele ältere Menschen ein Problem?",
+    "Sie müssten mit dem Bus fahren, der samstags nur selten kommt.",
+    [
+      "Sie finden auf dem Parkplatz am Stadtrand keinen Platz für ihre Autos.",
+      "Sie dürfen dort nicht mehr jeden Samstag einkaufen, sondern nur noch alle vierzig Minuten.",
+      "Sie kennen die Händler am Stadtrand nicht und kaufen deshalb lieber im Supermarkt.",
+    ],
+    0,
+    "Der Weg zum Stadtrand ist weit, und der Bus fährt samstags „nur alle vierzig Minuten“."),
+
+  // ---- Text 9 (Ja / Nein)
+  chor.jaNein("detail", "EASY",
+    [
+      ["Marta muss Noten lesen können, um im Chor mitzusingen.", "F"],
+      ["Henrik hat erst relativ spät mit dem Singen im Chor begonnen.", "R"],
+      ["Die erste Probe kostet für Marta nichts.", "R"],
+    ],
+    "„Du musst keine Noten lesen können“ (Nein). Henrik hat „erst mit vierzig angefangen“ (Ja). Die erste Probe ist „gratis“ (Ja)."),
+  chor.choice("detail", "MID",
+    "Was bietet Henrik Marta am Ende seines Briefes an?",
+    "Er kann sie vor dem Gebäude abholen, wenn sie nicht allein kommen möchte.",
+    [
+      "Er kann ihr vor der ersten Probe die Noten der Lieder zum Üben nach Hause schicken.",
+      "Er kann mit ihr im Mai zusammen für ein Wochenende nach Dresden fahren.",
+      "Er kann sie der Leiterin vorstellen, damit sie ein Instrument vorspielen darf.",
+    ],
+    3,
+    "„Wenn du nicht allein kommen möchtest, hole ich dich gern vor der Tür ab.“"),
+
+  // ---- Text 10 (who says what)
+  sonntag.match("detail", "MID",
+    "Wer sagt was? Lesen Sie die Aussagen der fünf Personen und ordnen Sie zu. Eine Person kann mehrmals passen, eine Person passt zu keiner Aussage.",
+    [
+      "Diese Person treibt sonntags mit anderen Sport.",
+      "Diese Person trifft sich am Sonntag nicht mit anderen.",
+      "Diese Person verbringt den Sonntag mit den Kindern.",
+      "Diese Person erledigt am Sonntag vor allem Hausarbeit.",
+      "Diese Person wünscht sich, der Sonntag würde länger dauern.",
+    ],
+    ["Anna", "Bernd", "Clara", "Dennis", "Eva"],
+    [2, 1, 3, 4, 3],
+    "Bernd spielt mit Freunden Fußball. Anna verabredet sich nie. Clara macht Familientag und findet den Tag zu kurz (zweimal Clara). Dennis erledigt Wäsche, Einkauf und Aufräumen. Eva arbeitet im Restaurant und passt zu keiner Aussage."),
+
+  // ---- Text 11 (who says what)
+  wohnen.match("detail", "MID",
+    "Wer sagt was? Lesen Sie die Aussagen der fünf Personen und ordnen Sie zu. Eine Person kann mehrmals passen, eine Person passt zu keiner Aussage.",
+    [
+      "Diese Person zahlt gern mehr Miete, um nah an Freizeitangeboten zu wohnen.",
+      "Diese Person kann sich nicht entscheiden, ob Stadt oder Land besser ist.",
+      "Diese Person kommt ohne eigenes Fahrzeug im Alltag kaum zurecht.",
+      "Diese Person hat den Wohnort vor allem wegen der Kinder gewählt.",
+      "Diese Person sieht Bekannte seltener, seit sie nicht mehr in der Stadt lebt.",
+    ],
+    ["Franka", "Gero", "Hülya", "Ivo", "Jana"],
+    [2, 3, 1, 5, 5],
+    "Gero zahlt „gern mehr Miete“. Hülya ist „unsicher“. Franka braucht ein Auto für Arzt und Einkauf. Jana wählt das Land wegen der Kinder und sieht ihre Freunde nur noch selten (zweimal Jana). Ivo passt zu keiner Aussage."),
+
+  // ---- Text 12 (who says what)
+  urlaub.match("detail", "MID",
+    "Wer sagt was? Lesen Sie die Aussagen der fünf Personen und ordnen Sie zu. Eine Person kann mehrmals passen, eine Person passt zu keiner Aussage.",
+    [
+      "Diese Person nimmt die Belastung der Umwelt durch das Reisen bewusst in Kauf.",
+      "Diese Person möchte im Urlaub andere Kulturen kennenlernen.",
+      "Diese Person fährt aus Gewohnheit jedes Jahr zum selben Ziel.",
+      "Diese Person verreist wegen der hohen Kosten und der Mühe nicht.",
+      "Diese Person möchte unterwegs flexibel bleiben.",
+    ],
+    ["Kai", "Lale", "Max", "Nora", "Olaf"],
+    [1, 1, 2, 3, 5],
+    "Kai fliegt trotz der Umweltfolgen und will fremde Kulturen sehen (zweimal Kai). Lale fährt seit Jahren an die Ostsee. Max nennt Kosten und Stress. Olaf will mit dem Wohnwagen spontan entscheiden. Nora passt zu keiner Aussage."),
 ];
 
 // ================================================================ LISTENING
@@ -1518,7 +1758,7 @@ export const B1_PARTS: {
   speaking: SeedBankPart;
 } = {
   grammar: { stimuli: [], items: [...grammarItems, ...grammarTexts] },
-  reading: { stimuli: [rEmail, rArtikel, rAnzeigen, rRegeln, rForum, rNews], items: readingItems },
+  reading: { stimuli: [rEmail, rArtikel, rAnzeigen, rRegeln, rForum, rNews, rHund, rMarkt, rChor, rSonntag, rWohnen, rUrlaub], items: readingItems },
   listening: { stimuli: [lMailbox, lFuehrung, lGespraech, lWerkstatt, lFreibad], items: listeningItems },
   writing: { stimuli: [], items: writingItems },
   speaking: { stimuli: [], items: speakingItems },
