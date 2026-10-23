@@ -41,22 +41,48 @@ export type ItemType = (typeof ITEM_TYPES)[number];
 
 export type TfngValue = "R" | "F" | "NG";
 
+/**
+ * A picture in the bank. Server only: `storageKey` is "bank/images/<sha16>.webp", content addressed like
+ * listening audio, and never reaches the student's browser (the student gets a slot, see safe.ts later).
+ */
+export type ImageRef = { storageKey: string; w: number; h: number; alt: string };
+
 /** What the student may see, besides the prompt. Shape follows the item type. */
 export type ItemContent =
-  | { kind: "CHOICE"; options: Array<{ id: string; text: string }> }
-  /** `twoWay`: only Richtig / Falsch, no "nicht im Text" (ÖSD and telc A1-B1 use two answers). */
-  | { kind: "TFNG"; statements: Array<{ id: string; text: string }>; twoWay?: boolean }
+  | {
+      kind: "CHOICE";
+      options: Array<{ id: string; text: string; image?: ImageRef }>;
+      /** MULTI_CHOICE only: the exact number of boxes to tick ("Kreuzen Sie 4 an"). Scoring is unchanged. */
+      pick?: number;
+    }
+  /** `twoWay`: only Richtig / Falsch, no "nicht im Text" (ÖSD and telc A1-B1 use two answers).
+   *  `wording`: "JA_NEIN" shows Ja / Nein / Text sagt dazu nichts instead of Richtig / Falsch / Nicht im Text;
+   *  the stored values stay R / F / NG. */
+  | {
+      kind: "TFNG";
+      statements: Array<{ id: string; text: string }>;
+      twoWay?: boolean;
+      wording?: "JA_NEIN";
+    }
   /** The prompt carries `{{id}}` markers where each gap sits. `choices` turns a
    *  gap into a drop-down; without it the gap is typed. */
   | { kind: "GAP"; gaps: Array<{ id: string; choices?: string[] }> }
   | {
       kind: "MATCHING";
       left: Array<{ id: string; text: string }>;
-      right: Array<{ id: string; text: string }>;
+      right: Array<{ id: string; text: string; image?: ImageRef }>;
     }
   | { kind: "SHORT_TEXT"; maxChars: number }
-  | { kind: "WRITING"; minWords: number; maxWords: number }
-  | { kind: "SPEAKING"; thinkSeconds: number; answerSeconds: number; maxTakes: number };
+  /** `images`: shown above the task, visible the whole time. */
+  | { kind: "WRITING"; minWords: number; maxWords: number; images?: ImageRef[] }
+  | {
+      kind: "SPEAKING";
+      thinkSeconds: number;
+      answerSeconds: number;
+      maxTakes: number;
+      /** Shown above the task, visible the whole time. */
+      images?: ImageRef[];
+    };
 
 /** Server only. */
 export type ItemKey =
@@ -66,8 +92,15 @@ export type ItemKey =
    * Every accepted spelling per gap. Compared after `normalizeAnswer`.
    * `distractors`: hand-written wrong word parts for a C-test pool. They live in
    * the key, not the content, so a seed sync can ship them without new items.
+   * `topics`: per gap id, a topic id from `topics.ts` (e.g. "dativ"). Lives in the key so a seed sync can
+   * ship it to existing texts; never sent to the student.
    */
-  | { kind: "GAP"; answers: Record<string, string[]>; distractors?: string[] }
+  | {
+      kind: "GAP";
+      answers: Record<string, string[]>;
+      distractors?: string[];
+      topics?: Record<string, string>;
+    }
   | { kind: "MATCHING"; pairs: Record<string, string> }
   | { kind: "SHORT_TEXT"; accepted: string[] }
   | { kind: "NONE" };
