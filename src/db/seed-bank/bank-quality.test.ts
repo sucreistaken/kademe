@@ -146,9 +146,12 @@ describe("bank quality: many short texts on many topics", () => {
       expect(stimuli(level).filter((s) => s.section === "LISTENING").length).toBeGreaterThanOrEqual(5);
     });
 
-    it(`${level}: every listening clip has at most two speakers (the TTS voices two)`, () => {
-      const crowded = stimuli(level).filter((s) => s.section === "LISTENING" && (s.speakers?.length ?? 0) > 2);
+    it(`${level}: every listening clip has at most four speakers, each with a distinct voice`, () => {
+      const clips = stimuli(level).filter((s) => s.section === "LISTENING");
+      const crowded = clips.filter((s) => (s.speakers?.length ?? 0) > 4);
       expect(crowded.map((s) => s.key)).toEqual([]);
+      const shared = clips.filter((s) => new Set((s.speakers ?? []).map((x) => x.voice)).size !== (s.speakers ?? []).length);
+      expect(shared.map((s) => s.key)).toEqual([]);
     });
 
     it(`${level}: on average no more than 3 items per text or clip`, () => {

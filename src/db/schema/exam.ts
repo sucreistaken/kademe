@@ -113,7 +113,7 @@ export const stimuli = pgTable(
     /** Reading: the passage. Listening: the script, which never reaches the student. */
     body: text("body").notNull(),
     topic: text("topic").notNull().default(""),
-    speakers: jsonb("speakers").$type<Array<{ label: string; voice: "A" | "B" }>>(),
+    speakers: jsonb("speakers").$type<Array<{ label: string; voice: "A" | "B" | "C" | "D" }>>(),
     audioKey: text("audio_key"),
     audioMime: text("audio_mime"),
     audioDurationMs: integer("audio_duration_ms"),

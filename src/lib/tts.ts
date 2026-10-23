@@ -33,10 +33,19 @@ export const TTS_MODELS = [
   "gemini-3.1-flash-tts-preview",
   "gemini-2.5-flash-preview-tts",
 ].filter((m, i, all) => all.indexOf(m) === i);
-/** Voice A and B of the seed format. Two clearly different prebuilt voices. */
-export const VOICES = { A: "Kore", B: "Charon" } as const;
+/**
+ * Voices of the seed format. A and B must never change: every stored clip's
+ * content hash includes the voice names. C and D are for clips with three or
+ * four speakers; all four are prebuilt voices from the Gemini speech docs
+ * (https://ai.google.dev/gemini-api/docs/speech-generation, descriptors: Kore
+ * Firm, Charon Informative, Puck Upbeat, Leda Youthful). The docs do not state
+ * a gender, so "Puck male / Leda female" is by ear, not documented.
+ */
+export const VOICES = { A: "Kore", B: "Charon", C: "Puck", D: "Leda" } as const;
 
-export type Speaker = { label: string; voice: "A" | "B" };
+export type VoiceKey = keyof typeof VOICES;
+
+export type Speaker = { label: string; voice: VoiceKey };
 
 export type ScriptTurn = { speaker: string; text: string };
 
@@ -114,6 +123,28 @@ export function buildTtsRequest(turns: ScriptTurn[], speakers: Speaker[], model:
   };
 }
 
+/**
+ * Splits turns into consecutive chunks of at most two distinct speakers each
+ * (the Gemini multi-speaker request voices two at most). Greedy, keeps turn
+ * order. A clip with two speakers or fewer comes back as a single chunk.
+ */
+export function chunkTurns(turns: ScriptTurn[]): ScriptTurn[][] {
+  const chunks: ScriptTurn[][] = [];
+  let current: ScriptTurn[] = [];
+  let seen = new Set<string>();
+  for (const turn of turns) {
+    if (!seen.has(turn.speaker) && seen.size >= 2) {
+      chunks.push(current);
+      current = [];
+      seen = new Set();
+    }
+    seen.add(turn.speaker);
+    current.push(turn);
+  }
+  if (current.length) chunks.push(current);
+  return chunks;
+}
+
 /** Wraps raw 16-bit PCM in a WAV header, for providers that return bare PCM. */
 export function pcmToWav(pcm: Uint8Array, sampleRate = 24000): Uint8Array {
   const header = Buffer.alloc(44);
@@ -144,13 +175,25 @@ export function wavDurationMs(wav: Uint8Array): number | null {
   return Math.round((dataBytes / byteRate) * 1000);
 }
 
-function toMp3(wav: Uint8Array): Uint8Array | null {
+/** Raw PCM payload of a WAV file (the bytes after the "data" chunk header). */
+function wavToPcm(wav: Uint8Array): Uint8Array {
+  const b = Buffer.from(wav);
+  const dataIndex = b.indexOf("data", 12, "ascii");
+  if (dataIndex < 0) return new Uint8Array(0);
+  const size = b.readUInt32LE(dataIndex + 4);
+  return new Uint8Array(b.subarray(dataIndex + 8, dataIndex + 8 + size));
+}
+
+const CHUNK_GAP_MS = 300;
+
+/** Converts WAV to mono MP3 with ffmpeg. Returns null when ffmpeg is missing or fails. */
+export function wavToMp3(wav: Uint8Array, opts: { bitrateKbps?: number } = {}): Uint8Array | null {
   const dir = tmpdir();
   const src = join(dir, `kademe-tts-${randomUUID()}.wav`);
   const dst = join(dir, `kademe-tts-${randomUUID()}.mp3`);
   try {
     writeFileSync(src, wav);
-    const r = spawnSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", "-i", src, "-ac", "1", "-b:a", "64k", dst]);
+    const r = spawnSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", "-i", src, "-ac", "1", "-b:a", `${opts.bitrateKbps ?? 64}k`, dst]);
     if (r.status !== 0) return null;
     return new Uint8Array(readFileSync(dst));
   } catch {
@@ -160,6 +203,8 @@ function toMp3(wav: Uint8Array): Uint8Array | null {
     rmSync(dst, { force: true });
   }
 }
+
+const toMp3 = (wav: Uint8Array) => wavToMp3(wav);
 
 export type SynthResult = { key: string; mime: string; durationMs: number | null; bytes: number; cached: boolean; model: string };
 
@@ -187,6 +232,36 @@ export async function synthesize(body: string, speakers: Speaker[]): Promise<Syn
   if (!apiKey) throw new Error("TTS_UNAVAILABLE: GOOGLE_AI_API_KEY is not set");
   const turns = parseScript(body, speakers);
   if (turns.length === 0) throw new Error("TTS: empty script");
+  const chunks = chunkTurns(turns);
+  let wav: Uint8Array;
+  let model: string;
+  if (chunks.length === 1) {
+    ({ wav, model } = await requestChunk(chunks[0], speakers, apiKey));
+  } else {
+    const parts: Uint8Array[] = [];
+    const gap = new Uint8Array(Math.round((24000 * CHUNK_GAP_MS) / 1000) * 2);
+    model = TTS_MODEL;
+    for (const chunk of chunks) {
+      const r = await requestChunk(chunk, speakers, apiKey);
+      if (parts.length) parts.push(gap);
+      parts.push(wavToPcm(r.wav));
+      model = r.model;
+    }
+    wav = pcmToWav(new Uint8Array(Buffer.concat(parts)));
+  }
+  const durationMs = wavDurationMs(wav);
+  const mp3 = toMp3(wav);
+  const [bytes, mime, ext] = mp3 ? [mp3, "audio/mpeg", "mp3" as const] : [wav, "audio/wav", "wav" as const];
+  const key = audioKeyFor(hash, ext);
+  await getStorage().putObject(key, mime, bytes);
+  return { key, mime, durationMs, bytes: bytes.byteLength, cached: false, model };
+}
+
+/**
+ * One generateContent call for one chunk (at most two speakers), trying each
+ * model in turn with retries on 5xx. Returns WAV.
+ */
+async function requestChunk(turns: ScriptTurn[], speakers: Speaker[], apiKey: string): Promise<{ wav: Uint8Array; model: string }> {
   let lastError = "";
   for (const model of TTS_MODELS) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
@@ -215,14 +290,27 @@ export async function synthesize(body: string, speakers: Speaker[]): Promise<Syn
         break;
       }
       const raw = new Uint8Array(Buffer.from(part.data, "base64"));
-      const wav = (part.mimeType ?? "").includes("wav") ? raw : pcmToWav(raw);
-      const durationMs = wavDurationMs(wav);
-      const mp3 = toMp3(wav);
-      const [bytes, mime, ext] = mp3 ? [mp3, "audio/mpeg", "mp3" as const] : [wav, "audio/wav", "wav" as const];
-      const key = audioKeyFor(hash, ext);
-      await getStorage().putObject(key, mime, bytes);
-      return { key, mime, durationMs, bytes: bytes.byteLength, cached: false, model };
+      return { wav: (part.mimeType ?? "").includes("wav") ? raw : pcmToWav(raw), model };
     }
   }
   throw new Error(`TTS failed after retries: ${lastError}`);
+}
+
+/**
+ * Storage-free narration: one voice, the text spoken as given (no style
+ * prefix). The speech docs list no language field in speechConfig and the
+ * model detects the language from the text, so `language` is accepted for the
+ * caller's bookkeeping and deliberately not sent.
+ */
+export async function synthesizeSpeech(
+  text: string,
+  opts: { voice: VoiceKey; language?: string },
+): Promise<{ wav: Uint8Array; durationMs: number | null; model: string }> {
+  const apiKey = process.env.GOOGLE_AI_API_KEY;
+  if (!apiKey) throw new Error("TTS_UNAVAILABLE: GOOGLE_AI_API_KEY is not set");
+  const trimmed = text.trim();
+  if (!trimmed) throw new Error("TTS: empty text");
+  const label = "Narrator";
+  const { wav, model } = await requestChunk([{ speaker: label, text: trimmed }], [{ label, voice: opts.voice }], apiKey);
+  return { wav, durationMs: wavDurationMs(wav), model };
 }

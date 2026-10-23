@@ -20,7 +20,7 @@ export type SeedStimulus = {
   body: string;
   topic: string;
   /** Listening only. Voice A and B are two different TTS voices. */
-  speakers?: Array<{ label: string; voice: "A" | "B" }>;
+  speakers?: Array<{ label: string; voice: "A" | "B" | "C" | "D" }>;
 };
 
 export type SeedItem = {
