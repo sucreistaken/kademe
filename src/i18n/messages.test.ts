@@ -20,6 +20,12 @@ import hiringTr from "@/i18n/messages/hiring.tr.json";
 import hiringEn from "@/i18n/messages/hiring.en.json";
 import advancedTr from "@/i18n/messages/advanced.tr.json";
 import advancedEn from "@/i18n/messages/advanced.en.json";
+import managerDe from "@/i18n/messages/manager.de.json";
+import settingsDe from "@/i18n/messages/settings.de.json";
+import screensDe from "@/i18n/messages/screens.de.json";
+import libraryDe from "@/i18n/messages/library.de.json";
+import hiringDe from "@/i18n/messages/hiring.de.json";
+import advancedDe from "@/i18n/messages/advanced.de.json";
 
 /**
  * A key present in one locale and missing in the other renders as the raw key
@@ -191,6 +197,59 @@ describe("dictionaries", () => {
     for (const [name, dict] of CANDIDATE_TRANSLATIONS) {
       expect(JSON.stringify(dict), `candidate.${name}`).not.toContain("\u2014");
     }
+  });
+});
+
+/**
+ * The panel speaks German too (owner 2026-10-23). Until the translation pass the
+ * German files are copies of the English ones; either way they must follow the
+ * Turkish key set, keep every ICU placeholder and tag, and stay free of empty
+ * strings and em dashes.
+ */
+describe("panel German dictionaries", () => {
+  const DE: Array<[string, unknown, unknown]> = [
+    ["manager", managerTr, managerDe],
+    ["settings", settingsTr, settingsDe],
+    ["screens", screensTr, screensDe],
+    ["library", libraryTr, libraryDe],
+    ["hiring", hiringTr, hiringDe],
+    ["advanced", advancedTr, advancedDe],
+  ];
+
+  it.each(DE)("%s.de.json has exactly the keys of %s.tr.json", (name, tr, de) => {
+    const source = new Set(leafKeys(tr));
+    const have = new Set(leafKeys(de));
+    const missing = [...source].filter((key) => !have.has(key)).sort();
+    const extra = [...have].filter((key) => !source.has(key)).sort();
+    const report = [
+      ...(missing.length ? [`${name}.de.json is missing ${missing.length} key(s): ${missing.join(", ")}`] : []),
+      ...(extra.length ? [`${name}.de.json has ${extra.length} key(s) not in ${name}.tr.json: ${extra.join(", ")}`] : []),
+    ];
+    expect(report, report.join("\n")).toEqual([]);
+  });
+
+  it.each(DE)("%s.de.json keeps the ICU placeholders and tags of %s.tr.json", (name, tr, de) => {
+    const report: string[] = [];
+    for (const key of leafKeys(tr)) {
+      const source = valueAt(tr, key);
+      const translated = valueAt(de, key);
+      if (typeof source !== "string" || typeof translated !== "string") continue;
+      const want = icuPlaceholders(source);
+      const got = icuPlaceholders(translated);
+      if (want.join("|") !== got.join("|")) {
+        report.push(`${name}.de.json "${key}": expected placeholders [${want.join(", ")}] but found [${got.join(", ")}]`);
+      }
+    }
+    expect(report, report.join("\n")).toEqual([]);
+  });
+
+  it.each(DE)("%s.de.json has no empty string and no em dash", (name, _tr, de) => {
+    const empty = leafKeys(de).filter((key) => {
+      const value = valueAt(de, key);
+      return typeof value === "string" && value.trim() === "";
+    });
+    expect(empty, name).toEqual([]);
+    expect(JSON.stringify(de), name).not.toContain("\u2014");
   });
 });
 

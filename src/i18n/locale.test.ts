@@ -8,6 +8,10 @@ import {
   dirOf,
   isCandidateLocale,
   isLocale,
+  PANEL_LOCALES,
+  contentLocale,
+  isPanelLocale,
+  panelLocaleFromAcceptLanguage,
   panelLocaleOf,
   type CandidateLocale,
 } from "@/i18n/locale";
@@ -34,9 +38,31 @@ describe("candidate locales", () => {
     expect(dirOf("de")).toBe("ltr");
   });
 
-  it("panelLocaleOf keeps Turkish and sends every other language to English", () => {
+  it("panelLocaleOf keeps Turkish and German and sends Spanish and Arabic to English", () => {
     expect(panelLocaleOf("tr")).toBe("tr");
-    expect(CANDIDATE_LOCALES.filter((l) => l !== "tr").map(panelLocaleOf)).toEqual(["en", "en", "en", "en"]);
+    expect(panelLocaleOf("de")).toBe("de");
+    expect(CANDIDATE_LOCALES.filter((l) => l !== "tr" && l !== "de").map(panelLocaleOf)).toEqual(["en", "es", "ar"].map(() => "en"));
+  });
+
+  it("the panel adds German on top of tr and en and Locale does not grow", () => {
+    expect([...PANEL_LOCALES]).toEqual(["tr", "en", "de"]);
+    expect([...LOCALES]).toEqual(["tr", "en"]);
+    expect(isPanelLocale("de")).toBe(true);
+    expect(isPanelLocale("es")).toBe(false);
+    expect(isLocale("de")).toBe(false);
+  });
+
+  it("contentLocale reads German panel users the English database text", () => {
+    expect(contentLocale("tr")).toBe("tr");
+    expect(contentLocale("en")).toBe("en");
+    expect(contentLocale("de")).toBe("en");
+  });
+
+  it("the first render of the panel follows Accept-Language over tr, en and de", () => {
+    expect(panelLocaleFromAcceptLanguage("de-DE,de;q=0.9,en;q=0.5")).toBe("de");
+    expect(panelLocaleFromAcceptLanguage("fr-FR,en;q=0.8")).toBe("en");
+    expect(panelLocaleFromAcceptLanguage("es-ES")).toBe("tr");
+    expect(panelLocaleFromAcceptLanguage(null)).toBe("tr");
   });
 
   it("reads the first supported language of Accept-Language", () => {
