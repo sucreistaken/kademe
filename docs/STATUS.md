@@ -1,6 +1,6 @@
 # Kademe - durum ve devir belgesi
 
-Ürün turu 2026-10-23 (`platform/solutions`, canlıya çıkmadı): bkz. "Ürün turu 2026-10-23" bölümü.
+Ürün turu 2026-10-23 (canlıda 2026-10-23, `main` `1eafbb4`): bkz. "Ürün turu 2026-10-23" ve "Canlıya çıkış: 2026-10-23 ürün turu" bölümleri.
 Campus German redesign, Plan 1 (2026-10-16, `platform/solutions`, canlıya çıkmadı): bkz. "Campus German redesign, Plan 1" bölümü.
 Dilbilgisi boşluklu metin ve kelime havuzu (2026-10-18, `platform/solutions`, canlıya çıkmadı): bkz. "Dilbilgisi: boşluklu metin ve kelime havuzu" bölümü.
 Gözetim: yanlış "sekmeden ayrıldınız" uyarısı ve Meet (2026-10-19, canlıda 2026-10-19): ayrıntı `docs/PROCTORING.md` "Sekmeden ve pencereden ayrılma" ve "Başka bir yerde ekran paylaşımı"; vaka dosyası `investigations/proctor-leave-warning-and-meet-share-investigation.md`.
@@ -10,7 +10,7 @@ Beş aday dili (tr/en/de/es/ar, göç 0025) ve öğrencinin sorun bildirimi (gö
 Giriş kapısı İngilizce (2026-10-21, canlıda 2026-10-21, `main` `8ea4bfe`, yedek `/root/kademe-backups/kademe-20261021-1402.dump`, göç yok): `/login` ve `/setup/<token>` çerez yoksa İngilizce açılır, bayraklı seçiciyle English/Deutsch/Türkçe/Español (`auth.*.json`, `authT`, `authLocale`); Almanca/İspanyolca seçen panelde İngilizce görür. Öğrencinin geçersiz linki tarayıcının diline göre, hiçbiri değilse İngilizce (eskiden Türkçe); kök `<html lang="en">`, açıklama İngilizce. Okul revizesi: "Dile rağmen metinlerde Türkçe çıktısı var". Açık: öğrenciye gösterilen yer tutucu adresler `okul@kademe.local` / `destek@kademe.local` gerçek değil; de/es/ar onay metni İngilizce, "Türkçe metni göster" düğmesi duruyor.
 Son güncelleme: 2026-10-07 (Gelişmiş: tek kutu, AI önce, `platform/solutions` dalında, yerelde gerçek Gemini ile denendi; canlıya çıkmadı). Önceki: 2026-10-06 (işe alım plan 2b, görsel akış ve rehberli panel, `platform/solutions` dalında; bulut oturumunda tip, lint, test ve build ile doğrulandı, veritabanı betikleri ve tarayıcı turu yerel oturumu bekliyor; canlıya çıkmadı).
 Önceki: 2026-10-05 (işe alım plan 2, aday akışı, platform/solutions dalında, yerelde doğrulandı; canlıya çıkmadı); 2026-10-04 (çekirdek ayrımı ve işe alım plan 1, kütüphane ve alımlar, `platform/solutions` dalında, yerelde doğrulandı; canlıya çıkmadı).
-**Canlıda**: https://kademe.kadiray.com, `main` commit `8ea4bfe` (2026-10-21 14:02 UTC: giriş ekranı İngilizce ve dört dilli bayrak seçici, öğrenci tarafında Türkçe sınav adı ve geçersiz link sızıntısı giderildi; HTTPS'te dört dil ve Almanca geçersiz link kontrol edildi). Önceki: `70912f7` (2026-10-19 11:49 UTC: soru havuzu ÖSD/telc/TestDaF derslerine göre yenilendi, Richtig/Falsch, yazılan numara ve saat eşleşmesi, gözetimde yanlış "sekmeden ayrıldınız" uyarısı ve Meet düzeltmesi; ayrıntı "Canlıya çıkış: 2026-10-19 soru havuzu ve gözetim"). Önceki: `bcc9d44` (2026-10-18 18:41 UTC: okul test revizyonu). Önceki: `2cf125c` (2026-10-16 18:45 UTC: krem zemin yerine Campus German beyazı ve soğuk griler; ondan önce `8e945da`, Campus German görünümü, Plan 1; ayrıntı "Canlıya çıkış: Campus German görünümü, Plan 1"). Önceki sürümler (aşağıdaki "Canlıya çıkış" bölümleri): `ab951b1` (okul yöneticisi geri bildirimi), `1d8d4c6` (onSET yerleştirme), `5a4f97e` (kurs grubu sürümü, 2026-10-14), `02760e3` (2026-10-07 akşam: Bugün yeni tasarım, 3 adımlı alım sihirbazı, "en az 2 değerlendirici" kuralı kaldırıldı, soru bankası v2; ayrıntı "Canlıya çıkış: sihirbaz ve banka v2"), `0142ff0` (Gelişmiş). Önceki not: commit `739f218` (`main`, 2026-10-05 sınav sıcak düzeltmesi; ayrıntı "Kararlar ve sapmalar"da).
+**Canlıda**: https://kademe.kadiray.com, `main` commit `1eafbb4` (2026-10-23 ~20:00 UTC: ürün turu; yeni formatlar, resimler, seviye başına 3 form, öğrenci analizi, not araçları, anlatımlı tanıtımlar, Almanca panel; ayrıntı "Canlıya çıkış: 2026-10-23 ürün turu"). Önceki: `8ea4bfe` (2026-10-21 14:02 UTC: giriş ekranı İngilizce ve dört dilli bayrak seçici, öğrenci tarafında Türkçe sınav adı ve geçersiz link sızıntısı giderildi; HTTPS'te dört dil ve Almanca geçersiz link kontrol edildi). Önceki: `70912f7` (2026-10-19 11:49 UTC: soru havuzu ÖSD/telc/TestDaF derslerine göre yenilendi, Richtig/Falsch, yazılan numara ve saat eşleşmesi, gözetimde yanlış "sekmeden ayrıldınız" uyarısı ve Meet düzeltmesi; ayrıntı "Canlıya çıkış: 2026-10-19 soru havuzu ve gözetim"). Önceki: `bcc9d44` (2026-10-18 18:41 UTC: okul test revizyonu). Önceki: `2cf125c` (2026-10-16 18:45 UTC: krem zemin yerine Campus German beyazı ve soğuk griler; ondan önce `8e945da`, Campus German görünümü, Plan 1; ayrıntı "Canlıya çıkış: Campus German görünümü, Plan 1"). Önceki sürümler (aşağıdaki "Canlıya çıkış" bölümleri): `ab951b1` (okul yöneticisi geri bildirimi), `1d8d4c6` (onSET yerleştirme), `5a4f97e` (kurs grubu sürümü, 2026-10-14), `02760e3` (2026-10-07 akşam: Bugün yeni tasarım, 3 adımlı alım sihirbazı, "en az 2 değerlendirici" kuralı kaldırıldı, soru bankası v2; ayrıntı "Canlıya çıkış: sihirbaz ve banka v2"), `0142ff0` (Gelişmiş). Önceki not: commit `739f218` (`main`, 2026-10-05 sınav sıcak düzeltmesi; ayrıntı "Kararlar ve sapmalar"da).
 Canlı veritabanı kullanıcı onayıyla sıfırlandı: eski işe alım verisi yok,
 panel kullanıcıları (parolalarıyla) taşındı, banka ve iki sınav yüklendi.
 
@@ -471,6 +471,25 @@ Not checked: the system check beyond its first screen (this Chrome has a second 
   aynı akşam silindi. Depoda yalnız `bank/audio` kaldı (95 MB, disk boş 4,3 GB).
 - Yedek: `/root/kademe-backups/before-delete-students-20261016T193242Z.dump` (712 KB). Satırlar bundan geri gelir, dosyalar gelmez.
 - Sonrası: `LANGUAGE_EXAM` daveti 0, `attempts` 0, medya/kare/kayıt satırı 0, `/login` 200.
+
+## Canlıya çıkış: 2026-10-23 ürün turu (kullanıcı onayıyla: "canlıya alalım")
+
+- `main` `8ea4bfe` -> `1eafbb4` (hızlı ileri). Ön kontrol: çalışan bölüm 0, ortamda `PROCTOR_DEV_FAKE` yok, depolama
+  yerel disk (`/var/lib/kademe/storage`), disk 4.0 GB boş (sonra 3.7 GB).
+- Yedek: `/root/kademe-backups/kademe-20261023-1957.dump`. Göç 0026 uygulandı. Servis ve 5 zamanlayıcı aktif,
+  `/login` 200 (yerel ve https).
+- Banka, tarifteki sırayla:
+  1. Geri dönüş listesi: `/root/kademe-backups/seed-approved-before-20261023-2002.txt` (503 madde).
+  2. Yalnız ekleme: +181 madde, +69 metin/kayıt, 82 katalog resmi yüklendi (onaylı başlangıç 503 -> 684).
+  3. `bank:tts`: 35 kayıt üretildi; 3 kayıt (v2-l-b2-kino-wer-sagt-was, v2-l-c1-touristen-diskussion,
+     v2-l-c1-lebensmittel-diskussion-v2) yedek modelde "Model tried to generate text" 400 hatası verdi. Aynı
+     içerik adresli dosyalar yerelden kopyalandı, `bank:tts` "reused" ile bağladı: failed 0.
+  4. `--retire-stale --sync-seed`: 24 emekliye, 38 madde eşitlendi; onaylı başlangıç 684 -> 660 (GRAMMAR 214,
+     READING 166, LISTENING 157, WRITING 47, SPEAKING 76), yerel provayla birebir aynı. Sesi olmayan onaylı
+     dinleme kaydı 0.
+- Duman testleri (HTTPS): `/login` 200, `/tutorial/en/GRAMMAR/gap.mp3` 200 `audio/mpeg`, tanıtım resmi 200,
+  sunulan CSS'te `::highlight(kademe-mark-yellow)` var.
+- Canlıda denenmedi: tam ekran turu (sahip canlıda kendisi denedi ve geri bildirim verdi; bkz. sonraki iş).
 
 ## Canlıya çıkış: 2026-10-19 soru havuzu ve gözetim (kullanıcı onayıyla: "tüm gelişmelerle canlıya al")
 
