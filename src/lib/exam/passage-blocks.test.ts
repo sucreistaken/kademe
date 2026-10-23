@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SEED_BANK } from "@/db/seed-bank";
-import { passageBlocks } from "./passage-blocks";
+import { parseCardHeading, passageBlocks } from "./passage-blocks";
 
 const KURS = `Berger Logistik: Weiterbildung im Herbst
 
@@ -13,6 +13,23 @@ Mittwoch, 15. Oktober, 8 bis 16 Uhr, Kantine (Erdgeschoss)
 
 Anmeldung bis zum 1. Oktober bei Frau Demir.`;
 
+describe("parseCardHeading", () => {
+  it.each([
+    ["Anzeige B", "B", null],
+    ["Kurs 1:", "1", null],
+    ["Kurs 1: Excel für Anfänger", "1", "Excel für Anfänger"],
+    ["Termin 2 - Mittwoch", "2", "Mittwoch"],
+    ["C)", "C", null],
+    ["A  Computerkurs", "A", "Computerkurs"],
+    ["A: Miriam Kessler", "A", "Miriam Kessler"],
+  ])("%s -> marker %s, title %s", (heading, marker, title) => {
+    expect(parseCardHeading(heading)).toEqual({ marker, title });
+  });
+  it("gives nothing for a line that is not a card heading", () => {
+    expect(parseCardHeading("Wir suchen eine Fahrerin.")).toEqual({ marker: null, title: null });
+  });
+});
+
 describe("passageBlocks", () => {
   it("turns the parts of the Weiterbildung notice into cards and keeps the company line as intro", () => {
     const blocks = passageBlocks(KURS, "Weiterbildung im Herbst");
@@ -21,9 +38,11 @@ describe("passageBlocks", () => {
       {
         kind: "card",
         heading: "Kurs 1: Excel für Anfänger",
+        marker: "1",
+        title: "Excel für Anfänger",
         lines: ["Montag, 6. und 13. Oktober, 9 bis 12 Uhr, Raum 104", "Tabellen und einfache Rechnungen am Computer. Bitte bringen Sie Ihren Laptop mit."],
       },
-      { kind: "card", heading: "Kurs 2: Erste Hilfe im Betrieb", lines: ["Mittwoch, 15. Oktober, 8 bis 16 Uhr, Kantine (Erdgeschoss)"] },
+      { kind: "card", heading: "Kurs 2: Erste Hilfe im Betrieb", marker: "2", title: "Erste Hilfe im Betrieb", lines: ["Mittwoch, 15. Oktober, 8 bis 16 Uhr, Kantine (Erdgeschoss)"] },
       { kind: "text", lines: ["Anmeldung bis zum 1. Oktober bei Frau Demir."] },
     ]);
   });
@@ -31,9 +50,9 @@ describe("passageBlocks", () => {
   it("makes a card of each lone-letter advert", () => {
     const blocks = passageBlocks("A\nCafé sucht Aushilfe.\n\nB\nWir suchen eine Fahrerin.\n\nC)\nNachhilfe in Mathematik.", "Kleinanzeigen");
     expect(blocks).toEqual([
-      { kind: "card", heading: "A", lines: ["Café sucht Aushilfe."] },
-      { kind: "card", heading: "B", lines: ["Wir suchen eine Fahrerin."] },
-      { kind: "card", heading: "C)", lines: ["Nachhilfe in Mathematik."] },
+      { kind: "card", heading: "A", marker: "A", title: null, lines: ["Café sucht Aushilfe."] },
+      { kind: "card", heading: "B", marker: "B", title: null, lines: ["Wir suchen eine Fahrerin."] },
+      { kind: "card", heading: "C)", marker: "C", title: null, lines: ["Nachhilfe in Mathematik."] },
     ]);
   });
 
@@ -42,8 +61,8 @@ describe("passageBlocks", () => {
     expect(ads.map((b) => b.kind)).toEqual(["card", "card"]);
     const courses = passageBlocks("A  Computerkurs\nWord und Excel.\n\nB  Fotostudio Klick\nBewerbungsfotos.", "Kurse");
     expect(courses).toEqual([
-      { kind: "card", heading: "A  Computerkurs", lines: ["Word und Excel."] },
-      { kind: "card", heading: "B  Fotostudio Klick", lines: ["Bewerbungsfotos."] },
+      { kind: "card", heading: "A  Computerkurs", marker: "A", title: "Computerkurs", lines: ["Word und Excel."] },
+      { kind: "card", heading: "B  Fotostudio Klick", marker: "B", title: "Fotostudio Klick", lines: ["Bewerbungsfotos."] },
     ]);
     const voices = passageBlocks("A: Miriam Kessler, Psychologin\nMeine Meinung.\n\nB: Tobias Hahn, Personalleiter\nUnsere Erfahrung.", "Stimmen");
     expect(voices.map((b) => b.kind)).toEqual(["card", "card"]);

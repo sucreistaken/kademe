@@ -98,6 +98,20 @@
   --color-diff-hard: #ffcaca;
   --color-diff-hard-lip: #f2a0a0;
 
+  /* Ad cards (Kleinanzeigen, notice boards) and their matching letters. Owner exception 2026-10-23: ad cards only. Ink text on all six. */
+  --color-ad-sky: #e4f1fb;
+  --color-ad-sky-lip: #c5dff2;
+  --color-ad-mint: #e3f5ec;
+  --color-ad-mint-lip: #c3e6d3;
+  --color-ad-peach: #fdebdd;
+  --color-ad-peach-lip: #f3cfb4;
+  --color-ad-lilac: #eee9fa;
+  --color-ad-lilac-lip: #d6ccf1;
+  --color-ad-butter: #fff7d9;
+  --color-ad-butter-lip: #f1e3a6;
+  --color-ad-sand: #f4eee6;
+  --color-ad-sand-lip: #e0d4c3;
+
   /* Semantic tones. Warnings and notices are yellow-soft with ink text. */
   --color-danger: #c42424;
   --color-danger-soft: #fbe9e7;

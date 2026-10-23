@@ -75,6 +75,19 @@ describe("Kademe tokens keep their meaning", () => {
     expect(theme[name]).toBe(value);
   });
 
+  it.each([
+    ["sky", "#e4f1fb", "#c5dff2"],
+    ["mint", "#e3f5ec", "#c3e6d3"],
+    ["peach", "#fdebdd", "#f3cfb4"],
+    ["lilac", "#eee9fa", "#d6ccf1"],
+    ["butter", "#fff7d9", "#f1e3a6"],
+    ["sand", "#f4eee6", "#e0d4c3"],
+  ])("ad tone %s is %s with lip %s and keeps ink text at 7:1", (tone, fill, lip) => {
+    expect(theme[`--color-ad-${tone}`]).toBe(fill);
+    expect(theme[`--color-ad-${tone}-lip`]).toBe(lip);
+    expect(contrast(theme["--color-ink"], fill)).toBeGreaterThanOrEqual(7);
+  });
+
   it("names the radius steps by shadcn role, with the soft pixels", () => {
     // shadcn radix-nova draws fields, menus and buttons with rounded-lg, cards
     // and dialogs with rounded-xl, items inside fields and menus with

@@ -124,6 +124,8 @@ the rules below follow it.
 10. Manager layouts are 1360px wide, candidate layouts 1000px. The candidate side
    is deliberately narrower: one decision per screen (preparation and finish screens may use two regions, question screens keep one focus; HIRING-VISUAL-FLOW G10).
 
+**Ad cards (owner 2026-10-23).** Classified ads and notice-board parts in a reading passage, and the matching letters that point at them, may use six pale tints (`--color-ad-sky|mint|peach|lilac|butter|sand` with a `-lip` shade each). This is an exception to "brand colors only as small accents" and applies to those cards only. Text stays ink (7:1 or better) and the letter is always shown, so color is never the only cue.
+
 ## Tokens
 
 Defined in `src/app/globals.css` and nowhere else.

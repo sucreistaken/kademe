@@ -9,6 +9,7 @@ import { tfngChoices } from "@/lib/exam/tfng-labels";
 import type { ItemAnswer } from "@/lib/exam/types";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
+import { AD_TONE_CLASSES, adTone } from "@/lib/exam/ad-tone";
 import { ABOVE_FOOTER } from "@/components/visual/footer-action";
 import { TaskExpectations } from "./TaskExpectations";
 import { TaskPromptCard } from "./TaskPromptCard";
@@ -581,6 +582,17 @@ function MatchingItem({ item, answer, onChange, disabled, hidePrompt }: ItemProp
   const bare = targets.every((r) => r.badge === "0" || /^(?:\p{L}+\s+)?[A-Z]$/u.test(r.label.trim()));
   const zero = targets.find((r) => r.badge === "0");
   const dragged = drag ? targets.find((r) => r.id === drag.key) : undefined;
+  // Lettered targets wear the tone of their advert card; "0" and non-lettered targets stay neutral grey.
+  const toneIndex = new Map(targets.map((r, i) => [r.id, i]));
+  const toneOf = (r: (typeof targets)[number]) => (bare && r.badge !== "0" ? AD_TONE_CLASSES[adTone(r.badge, toneIndex.get(r.id) ?? 0)] : null);
+  const letterDisc = (r: (typeof targets)[number], size: string) => {
+    const tone = toneOf(r);
+    return (
+      <span className={cn("flex shrink-0 items-center justify-center rounded-full border-2 text-label text-ink", size, tone ? cn("bg-surface", tone.disc) : "border-line bg-cream")}>
+        {r.badge}
+      </span>
+    );
+  };
   return (
     <div>
       {hidePrompt ? null : <Prompt text={item.prompt} mode="whole" />}
@@ -594,6 +606,7 @@ function MatchingItem({ item, answer, onChange, disabled, hidePrompt }: ItemProp
       <div aria-hidden data-match-tray lang={bare ? undefined : "de"} dir={bare ? "ltr" : undefined} className="sticky top-14 z-10 -mx-1 mt-3 flex flex-wrap gap-2 bg-canvas px-1 py-2">
         {targets.map((r) => {
           const elsewhere = used.has(r.id);
+          const tone = toneOf(r);
           return (
             <button
               key={r.id}
@@ -606,12 +619,13 @@ function MatchingItem({ item, answer, onChange, disabled, hidePrompt }: ItemProp
                 if (!isDragClick()) clickTarget(r.id);
               }}
               className={cn(
-                "flex min-h-9 max-w-full cursor-grab touch-none select-none items-start gap-2 rounded-[8px] border bg-surface px-2.5 py-1.5 text-start text-[14px] leading-[1.45] text-ink hover:border-accent",
-                elsewhere ? "border-dashed border-line-strong opacity-60" : "border-line-strong",
+                "flex min-h-9 max-w-full cursor-grab touch-none select-none items-start gap-2 rounded-[8px] border px-2.5 py-1.5 text-start text-[14px] leading-[1.45] text-ink hover:border-accent",
+                bare ? (tone ? tone.chip : "border-line bg-cream") : "bg-surface",
+                elsewhere ? (bare ? "border-dashed opacity-60" : "border-dashed border-line-strong opacity-60") : !bare && "border-line-strong",
                 drag?.key === r.id && "opacity-40",
               )}
             >
-              <span className="font-semibold">{r.badge}</span>
+              {bare ? letterDisc(r, "size-7") : <span className="font-semibold">{r.badge}</span>}
               {bare ? null : (
                 <span lang="de" className="text-ink-2">
                   {r.label}
@@ -654,6 +668,7 @@ function MatchingItem({ item, answer, onChange, disabled, hidePrompt }: ItemProp
                 {targets.map((r, i) => {
                   const on = chosen?.id === r.id;
                   const elsewhere = !on && used.has(r.id);
+                  const tone = toneOf(r);
                   return (
                     <button
                       key={r.id}
@@ -669,7 +684,9 @@ function MatchingItem({ item, answer, onChange, disabled, hidePrompt }: ItemProp
                       className={cn(
                         "flex h-10 min-w-10 items-center justify-center rounded-[8px] border px-2 text-[14px] font-semibold",
                         on
-                          ? "border-accent bg-accent text-white"
+                          ? tone
+                            ? cn("border-2 border-accent text-ink", tone.chip.split(" ")[0])
+                            : "border-accent bg-accent text-white"
                           : elsewhere
                             ? "border-dashed border-line-strong text-muted hover:border-accent hover:text-ink"
                             : "border-line-strong text-ink-2 hover:border-accent hover:text-ink",
@@ -682,7 +699,8 @@ function MatchingItem({ item, answer, onChange, disabled, hidePrompt }: ItemProp
               </div>
               {/* One line, reserved even when empty, so a pick never moves the rows below. */}
               <div className="mt-2 flex h-6 items-center justify-between gap-3">
-                <p lang="de" title={chosen?.label} className="min-w-0 truncate text-[14px] text-ink-2">
+                <p lang="de" title={chosen?.label} className="flex min-w-0 items-center gap-2 truncate text-[14px] text-ink-2">
+                  {chosen && bare ? letterDisc(chosen, "size-6") : null}
                   {chosen && !bare ? (
                     <>
                       <span aria-hidden>→ </span>
