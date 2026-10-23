@@ -1,6 +1,7 @@
 import type { PassRules } from "./blueprint";
 import { compareLevels, levelFromTheta, medianLevel, probAtOrAbove, shiftLevel } from "./cefr";
 import type { Posterior } from "./adaptive";
+import type { ChanceTest } from "./chance";
 import { placementOf, type Placement } from "./placement";
 import { PRODUCTIVE_SECTIONS, type Cefr, type ExamMode, type ProductiveSection, type ResultLevel, type Section } from "./types";
 
@@ -13,8 +14,9 @@ import { PRODUCTIVE_SECTIONS, type Cefr, type ExamMode, type ProductiveSection, 
  * levels, which a teacher may override with a reason.
  *
  * Levels here are result levels: below the A1 band a section is A0 (Pre-A1),
- * see `objectiveLevel`. A claimed level stays a CEFR level (A1 to C2), so A0
- * is below every claim.
+ * see `objectiveLevel`, and so is a section whose score is not credibly above
+ * pure guessing (`chance`, reason AT_CHANCE, see chance.ts). A claimed level
+ * stays a CEFR level (A1 to C2), so A0 is below every claim.
  *
  * Nothing in here decides for the teacher. `status` says what is still open,
  * and a verification is INCONCLUSIVE rather than FAIL while a skill is still
@@ -31,6 +33,8 @@ export type SectionEvidence =
       answered: number;
       /** Below the section's minimum: too little to trust the level. */
       insufficient: boolean;
+      /** The section's score against pure guessing (chance.ts); absent where nobody computed it. */
+      chance?: Pick<ChanceTest, "atChance"> | null;
     }
   | {
       section: Section;
@@ -40,8 +44,13 @@ export type SectionEvidence =
       decider: Decider | null;
     };
 
+/** Why a skill has its level, when it is not the plain band: AT_CHANCE is A0 by the chance rule. */
+export type SkillReason = "AT_CHANCE";
+
 export type SkillResult = {
   level: ResultLevel | null;
+  /** Set when the level comes from a rule the teacher should see (AT_CHANCE). */
+  reason?: SkillReason;
   decider: Decider | null;
   /** Objective sections only. */
   posterior?: Posterior;
@@ -113,8 +122,11 @@ export function computeResult(input: {
   const skills: Partial<Record<Section, SkillResult>> = {};
   for (const e of input.sections) {
     if (e.kind === "OBJECTIVE") {
+      // Not credibly above guessing: A0 whatever the band says (chance.ts decides only with enough units).
+      const atChance = e.chance?.atChance === true;
       skills[e.section] = {
-        level: objectiveLevel(e.posterior, e.insufficient),
+        level: atChance ? "A0" : objectiveLevel(e.posterior, e.insufficient),
+        ...(atChance ? { reason: "AT_CHANCE" as const } : {}),
         decider: "ENGINE",
         posterior: e.posterior,
         pending: false,

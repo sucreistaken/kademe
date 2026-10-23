@@ -38,6 +38,9 @@ describe("A0 (Pre-A1) copy", () => {
     expect(m.resultLevel.A0Name).toBe("Pre-A1");
     for (const text of [m.resultLevel.A0Note, m.resultLevel.A0Class, m.resultLevel.A0Pick]) expect(text.startsWith("A0 (Pre-A1)")).toBe(true);
     expect(m.resultLevel.A0Class).toContain("A1.1");
+    // The teacher sees why a section is A0 by the chance rule.
+    expect(m.resultLevel.atChance).toContain("A1-A2");
+    expect(m.resultLevel.atChance.endsWith("A0")).toBe(true);
     expect(m.resultReport.level.A0.length).toBeGreaterThan(20);
     expect(m.result.flagA0_RAISED).toContain("A1");
     expect(JSON.stringify([m.resultLevel, m.resultReport.level.A0, m.result.flagA0_RAISED])).not.toContain(EM_DASH);

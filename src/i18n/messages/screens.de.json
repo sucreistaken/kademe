@@ -1233,6 +1233,7 @@
     "A0Name": "Pre-A1",
     "A0Note": "A0 (Pre-A1): unter A1, noch keine bewertbaren Deutschkenntnisse.",
     "A0Class": "A0 (Pre-A1): beginnt im ersten Kurs, A1.1.",
-    "A0Pick": "A0 (Pre-A1) nur, wenn es nichts Deutsches zu bewerten gibt: eine leere oder nicht deutsche Antwort."
+    "A0Pick": "A0 (Pre-A1) nur, wenn es nichts Deutsches zu bewerten gibt: eine leere oder nicht deutsche Antwort.",
+    "atChance": "Zufallsniveau: Die Antworten auf die A1-A2-Aufgaben sind nicht besser als Raten, daher A0"
   }
 }

@@ -1233,6 +1233,7 @@
     "A0Name": "Pre-A1",
     "A0Note": "A0 (Pre-A1): A1'in altında, henüz puanlanabilir Almanca yok.",
     "A0Class": "A0 (Pre-A1): ilk kurstan, A1.1'den başlar.",
-    "A0Pick": "A0 (Pre-A1) yalnızca puanlanabilir Almanca yoksa: boş ya da Almanca olmayan cevap."
+    "A0Pick": "A0 (Pre-A1) yalnızca puanlanabilir Almanca yoksa: boş ya da Almanca olmayan cevap.",
+    "atChance": "Şans düzeyinde: A1-A2 sorularındaki cevaplar rastgele işaretlemeden iyi değil, bu yüzden A0"
   }
 }

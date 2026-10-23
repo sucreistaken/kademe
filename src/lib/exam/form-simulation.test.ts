@@ -36,6 +36,8 @@ describe("simulateFixedForm", () => {
 
 describe("simulateFixedForm with guessing (spec 2026-10-18)", () => {
   const small = { ...opts, runs: 200 };
+  // The live engine's weights and the simulation script's text sizes, with guessing.
+  const live = (runs: number) => ({ runs, seed: 11, cTestGaps: 20, textEffectSd: 0.5, itemGuess: 0.25, textGaps: { CLOZE: 11, WORDBANK: 8, OPEN: 10 }, wordBankDistractors: 4 });
   const sixCTests = grammarOnly(section("GRAMMAR", 30, { distribution: NONE, cTestLevels: [...CEFR_LEVELS] }));
 
   it("a legacy C-test form gives the very numbers the simulation gave before the change", () => {
@@ -52,7 +54,7 @@ describe("simulateFixedForm with guessing (spec 2026-10-18)", () => {
     for (const l of CEFR_LEVELS.filter((x) => x !== "A1")) expect({ exact: now[l].exact, withinOne: now[l].withinOne }, l).toEqual(before[l]);
     // A0 (Pre-A1, 2026-10-24): the A1 students whose estimate falls below the A1 band are A0 now, where the
     // A1 floor counted them exact before (9 of 200). Nobody else moved: the same share is placed above A1.
-    expect(now.A1).toEqual({ exact: 0.72, withinOne: 1, over: expect.closeTo(1 - before.A1.exact, 10) });
+    expect(now.A1).toEqual({ exact: 0.72, withinOne: 1, over: expect.closeTo(1 - before.A1.exact, 10), a0: 0.045 });
     expect(simulateFixedForm(sixCTests, "PLACEMENT", { ...small, itemGuess: 0 })).toEqual(now);
   });
 
@@ -67,6 +69,29 @@ describe("simulateFixedForm with guessing (spec 2026-10-18)", () => {
   it("a student with no German at all is placed A0 on a C-test form (no guessing on typed gaps)", () => {
     const none = simulateFixedForm(sixCTests, "PLACEMENT", { ...small, trueLevels: ["A0"], fixedTheta: -8 });
     expect(none.A0!.exact).toBe(1);
+    expect(none.A0!.a0).toBe(1);
+  });
+
+  it("the overall rule with the chance rule places a guessing student with no German A0 and leaves A1 students alone", () => {
+    const quick = examTemplateByKey("quick-screen")!.config;
+    const o = live(300);
+    const overall = { productive: "NONE" as const, chance: {} };
+    const none = simulateFixedForm(quick, "PLACEMENT", { ...o, trueLevels: ["A0"], fixedTheta: -8, overall }).A0!;
+    const a1 = simulateFixedForm(quick, "PLACEMENT", { ...o, trueLevels: ["A1"], fixedTheta: -2.5, overall }).A1;
+    expect(none.a0).toBeGreaterThan(0.9);
+    expect(a1.a0).toBeLessThan(0.05);
+    // Without the rule, fewer students with no German reach A0 (theta bands only).
+    const bandsOnly = simulateFixedForm(quick, "PLACEMENT", { ...o, trueLevels: ["A0"], fixedTheta: -8, overall: { productive: "NONE", chance: null } }).A0!;
+    expect(bandsOnly.a0).toBeLessThan(none.a0);
+  });
+
+  it("the overall rule counts the productive sections at the true level when asked", () => {
+    const placement = examTemplateByKey("placement")!.config;
+    const o = live(200);
+    const withWriting = simulateFixedForm(placement, "PLACEMENT", { ...o, trueLevels: ["A0"], fixedTheta: -8, overall: { productive: "TRUE", chance: {} } }).A0!;
+    const objectiveOnly = simulateFixedForm(placement, "PLACEMENT", { ...o, trueLevels: ["A0"], fixedTheta: -8, overall: { productive: "NONE", chance: {} } }).A0!;
+    expect(withWriting.a0).toBeGreaterThan(0.9);
+    expect(objectiveOnly.a0).toBeLessThan(withWriting.a0);
   });
 
   it("textGuess: a quarter for a cloze, one over the pool for a word bank, 0 for a C-test", () => {
@@ -139,6 +164,6 @@ describe("text weight, the floor in the estimate and the gate (spec 2026-10-18)"
     expect(gateFailures(mc, cTest, flat(0.6, 0.97, 0.3))).toHaveLength(5);
     expect(gateFailures(mc, cTest, flat(0.6, 0.99, 0.36))).toEqual(["A1 over 36.00 > 35.00"]);
     // C2 is not gated.
-    expect(gateFailures(mc, cTest, { ...flat(0.6, 0.99, 0.3), C2: { exact: 0, withinOne: 0.5, over: 0 } })).toEqual([]);
+    expect(gateFailures(mc, cTest, { ...flat(0.6, 0.99, 0.3), C2: { exact: 0, withinOne: 0.5, over: 0, a0: 0 } })).toEqual([]);
   });
 });

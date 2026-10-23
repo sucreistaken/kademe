@@ -1233,6 +1233,7 @@
     "A0Name": "Pre-A1",
     "A0Note": "A0 (Pre-A1): below A1, no German that can be scored yet.",
     "A0Class": "A0 (Pre-A1): starts in the first course, A1.1.",
-    "A0Pick": "A0 (Pre-A1) only when there is no German to score: a blank answer or one not in German."
+    "A0Pick": "A0 (Pre-A1) only when there is no German to score: a blank answer or one not in German.",
+    "atChance": "At chance: the answers to the A1-A2 questions are no better than guessing, so A0"
   }
 }

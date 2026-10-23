@@ -295,7 +295,9 @@ export default async function ResultPage({
                         : isBankEmptySkip(run)
                           ? t("resultReview.skippedBankEmpty")
                           : isObjectiveSection(s as Section)
-                          ? skill?.insufficient
+                          ? skill?.reason === "AT_CHANCE"
+                            ? `${t("resultLevel.atChance")} · ${t("resultReview.scoreSummary", { right: tally.correct, total: tally.total })}`
+                            : skill?.insufficient
                             ? t("result.insufficient")
                             : precision
                               ? t("result.basis", { correct: tally.correct, total: tally.total, precision })

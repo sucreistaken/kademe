@@ -31,6 +31,7 @@ import {
   verifyEvidence,
   type GradingProposal,
 } from "@/lib/exam/grading";
+import { sectionChance } from "@/lib/exam/chance";
 import { blockerErrorCode, finalizeBlockers } from "@/lib/exam/finalize-blockers";
 import { hasAnswer } from "@/lib/exam/item-scoring";
 import { autoFinalizes, computeResult, type Decider, type SectionEvidence } from "@/lib/exam/result";
@@ -296,6 +297,14 @@ export async function recomputeResult(attemptId: string) {
         .innerJoin(itemResponses, eq(itemResponses.id, responseGradings.itemResponseId))
         .where(inArray(itemResponses.sectionRunId, runIds))
     : [];
+  // The objective answers, for the chance rule (chance.ts): a section not credibly above guessing is A0.
+  const objectiveRunIds = runs.filter((r) => isObjectiveSection(r.section)).map((r) => r.id);
+  const objectiveAnswers = objectiveRunIds.length
+    ? await db
+        .select({ sectionRunId: itemResponses.sectionRunId, itemSnapshot: itemResponses.itemSnapshot, score: itemResponses.score, answer: itemResponses.answer })
+        .from(itemResponses)
+        .where(inArray(itemResponses.sectionRunId, objectiveRunIds))
+    : [];
 
   const evidence: SectionEvidence[] = [];
   let anyPending = false;
@@ -322,6 +331,7 @@ export async function recomputeResult(attemptId: string) {
         posterior: { mean: run.thetaMean, sd: run.thetaSd },
         answered: 0,
         insufficient: run.stopReason === "INSUFFICIENT",
+        chance: sectionChance(objectiveAnswers.filter((a) => a.sectionRunId === run.id)),
       });
       continue;
     }
