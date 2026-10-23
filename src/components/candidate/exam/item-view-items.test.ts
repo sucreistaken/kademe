@@ -8,7 +8,7 @@ vi.mock("@/i18n/candidate-client", () => ({
 
 import type { CandidateItem } from "@/lib/exam/safe";
 import type { ItemAnswer } from "@/lib/exam/types";
-import { ItemView, hasAnyAnswer, poolPlacement, withMatch } from "./ItemView";
+import { ItemView, hasAnyAnswer, poolPlacement, toggleTick, withMatch } from "./ItemView";
 
 const render = (item: CandidateItem, answer: ItemAnswer = {}) =>
   renderToStaticMarkup(createElement(ItemView, { item, answer, onChange: () => {} }));
@@ -344,5 +344,44 @@ describe("German answer groups stay left to right on an Arabic page (the [dir=rt
     // Letters only ("Anzeige A" ... is the bare case): no German text in it, but left to right all the same.
     const bareTray = render(ads).match(/<div[^>]*data-match-tray[^>]*>/)?.[0] ?? "";
     expect(bareTray).toContain('dir="ltr"');
+  });
+});
+
+describe("tick n multiple choice", () => {
+  const multi = (pick?: number): CandidateItem => ({
+    sequence: 1,
+    section: "LISTENING",
+    type: "MULTI_CHOICE",
+    prompt: "Was passt zum Text?",
+    content: {
+      kind: "CHOICE",
+      multiple: true,
+      options: ["a", "b", "c", "d", "e"].map((id) => ({ id, text: `Option ${id}` })),
+      ...(pick ? { pick } : {}),
+    },
+    stimulus: null,
+    answer: null,
+  });
+
+  it("says how many to tick and counts live", () => {
+    const html = render(multi(3), { choiceIds: ["a", "c"] });
+    expect(html).toContain("Kreuzen Sie 3 Antworten an.");
+    expect(html).toMatch(/aria-live="polite"[^>]*>2\/3</);
+    expect(html).not.toContain("pickMany");
+  });
+
+  it("keeps today's hint and no counter without pick", () => {
+    const html = render(multi());
+    expect(html).toContain("pickMany");
+    expect(html).not.toContain("aria-live");
+    expect(html).not.toContain("Kreuzen Sie");
+  });
+
+  it("blocks an extra tick once full and always allows unticking", () => {
+    expect(toggleTick(["a", "b"], "c", 3)).toEqual(["a", "b", "c"]);
+    const full = ["a", "b", "c"];
+    expect(toggleTick(full, "d", 3)).toBe(full);
+    expect(toggleTick(full, "b", 3)).toEqual(["a", "c"]);
+    expect(toggleTick(full, "d")).toEqual(["a", "b", "c", "d"]);
   });
 });

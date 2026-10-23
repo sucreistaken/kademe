@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { matchingTargets, type CandidateItem } from "@/lib/exam/safe";
 import { withPoolInstruction } from "@/lib/exam/ctest-instruction";
 import { splitInstruction, splitPromptBlocks, splitTitle, type PromptBlock } from "@/lib/exam/prompt-instruction";
@@ -99,17 +99,38 @@ function Prompt({ text, id, mode = "stem" }: { text: string; id?: string; mode?:
   );
 }
 
+/**
+ * The next set of ticked options after a click on `id`. With `pick` set, a
+ * click on an unticked box does nothing once `pick` boxes are ticked (same
+ * array back); unticking always works.
+ */
+export function toggleTick(picked: readonly string[], id: string, pick?: number): readonly string[] {
+  if (picked.includes(id)) return picked.filter((x) => x !== id);
+  if (pick !== undefined && picked.length >= pick) return picked;
+  return [...picked, id];
+}
+
 function ChoiceItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps) {
   const t = useT("exam");
   const promptId = useId();
+  const [fullHint, setFullHint] = useState(false);
+  const fullTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(fullTimer.current), []);
   if (item.content.kind !== "CHOICE") return null;
   const multiple = item.content.multiple;
+  const pick = multiple ? item.content.pick : undefined;
   const picked = new Set(answer.choiceIds ?? []);
   const toggle = (id: string) => {
     if (multiple) {
-      const next = new Set(picked);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      const before = answer.choiceIds ?? [];
+      const next = toggleTick(before, id, pick);
+      if (next === before) {
+        // Full: nothing changes, the counter says so for a moment.
+        setFullHint(true);
+        window.clearTimeout(fullTimer.current);
+        fullTimer.current = window.setTimeout(() => setFullHint(false), 1600);
+        return;
+      }
       onChange({ choiceIds: [...next] });
     } else onChange({ choiceIds: [id] });
   };
@@ -122,9 +143,18 @@ function ChoiceItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps)
       ) : (
         <>
           <Prompt text={item.prompt} id={promptId} />
-          <p className="mt-2 text-[12.5px] text-muted">{multiple ? t("pickMany") : t("pickOne")}</p>
+          {pick !== undefined ? null : <p className="mt-2 text-[12.5px] text-muted">{multiple ? t("pickMany") : t("pickOne")}</p>}
         </>
       )}
+      {pick !== undefined ? (
+        // German exam instruction plus a live counter; never a red state, "full" only turns the count to ink and semibold.
+        <p lang="de" className="mt-2 flex items-baseline gap-3 text-[14px] text-ink-2">
+          <span>{`Kreuzen Sie ${pick} Antworten an.`}</span>
+          <span aria-live="polite" className={cn("tnum text-[13px]", fullHint ? "font-semibold text-ink" : "text-muted")}>
+            {`${picked.size}/${pick}`}
+          </span>
+        </p>
+      ) : null}
       <div role={multiple ? "group" : "radiogroup"} aria-labelledby={promptId} lang="de" className="mt-4 flex flex-col gap-2">
         {item.content.options.map((o, i) => {
           const on = picked.has(o.id);

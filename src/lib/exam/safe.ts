@@ -16,7 +16,13 @@ import { textGapKindOf, type ItemAnswer, type ItemSnapshot, type Presentation, t
  */
 
 export type CandidateContent =
-  | { kind: "CHOICE"; multiple: boolean; options: Array<{ id: string; text: string }> }
+  | {
+      kind: "CHOICE";
+      multiple: boolean;
+      options: Array<{ id: string; text: string }>;
+      /** Multiple choice: exactly this many boxes are to be ticked ("Kreuzen Sie 4 Antworten an"). */
+      pick?: number;
+    }
   | { kind: "TFNG"; statements: Array<{ id: string; text: string }>; twoWay?: boolean; wording?: "JA_NEIN" }
   | {
       kind: "GAP";
@@ -166,6 +172,7 @@ export function toCandidateItem(
         kind: "CHOICE",
         multiple: snapshot.type === "MULTI_CHOICE",
         options: ordered(c.options, presentation.order).map((o) => ({ id: al(o.id), text: o.text })),
+        ...(snapshot.type === "MULTI_CHOICE" && c.pick !== undefined ? { pick: c.pick } : {}),
       };
       break;
     case "TFNG":

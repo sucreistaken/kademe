@@ -20,6 +20,8 @@ export type EditorDraft = {
   explanation: string;
   /** Choice: options with their correct mark. */
   options: Array<{ id: string; text: string; correct: boolean }>;
+  /** Multi choice "Kreuzen Sie n an": kept so saving does not drop it. Not edited in the form yet. */
+  pick: number | null;
   /** True / false / not given. */
   statements: Array<{ id: string; text: string; answer: TfngValue | "" }>;
   /** Richtig / Falsch only, no "nicht im Text". */
@@ -99,6 +101,7 @@ export function emptyDraft(type: ItemType, section: Section, level: Cefr): Edito
     statements: ["s1", "s2", "s3"].map((id) => ({ id, text: "", answer: "" as const })),
     twoWay: false,
     jaNein: false,
+    pick: null,
     gaps: [],
     distractors: "",
     skillTag: null,
@@ -143,6 +146,7 @@ export function draftFromItem(item: EditableItem): EditorDraft {
   if (content.kind === "CHOICE") {
     const correct = key.kind === "CHOICE" ? key.correct : [];
     d.options = content.options.map((o) => ({ id: o.id, text: o.text, correct: correct.includes(o.id) }));
+    d.pick = content.pick ?? null;
   }
   if (content.kind === "TFNG") {
     const answers = key.kind === "TFNG" ? key.answers : {};
@@ -200,7 +204,7 @@ export function draftToItem(d: EditorDraft): ValidatableItem & { rubric: ItemRub
       return {
         type: d.type,
         prompt,
-        content: { kind: "CHOICE", options: idText(d.options) },
+        content: { kind: "CHOICE", options: idText(d.options), ...(d.type === "MULTI_CHOICE" && d.pick !== null ? { pick: d.pick } : {}) },
         key: { kind: "CHOICE", correct: d.options.filter((o) => o.correct).map((o) => o.id) },
         rubric: null,
       };
@@ -284,7 +288,7 @@ const idText = z.object({ id, text: z.string().max(2000) });
 const int = z.number().int().min(-1).max(100_000);
 
 export const contentSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("CHOICE"), options: z.array(idText).max(8) }),
+  z.object({ kind: z.literal("CHOICE"), options: z.array(idText).max(8), pick: int.optional() }),
   z.object({ kind: z.literal("TFNG"), statements: z.array(idText).max(12), twoWay: z.boolean().optional(), wording: z.literal("JA_NEIN").optional() }),
   z.object({ kind: z.literal("GAP"), gaps: z.array(z.object({ id, choices: z.array(z.string().max(200)).max(10).optional() })).max(30) }),
   z.object({ kind: z.literal("MATCHING"), left: z.array(idText).max(12), right: z.array(idText).max(14) }),

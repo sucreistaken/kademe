@@ -135,6 +135,21 @@ describe("C-test gaps", () => {
     expect(plain.content).not.toHaveProperty("wording");
   });
 
+  it("passes pick through for multi choice and nothing else new", () => {
+    const options = ["a", "b", "c", "d", "e"].map((id) => ({ id, text: `Option ${id}` }));
+    const multi = (pick?: number): ItemSnapshot => ({
+      ...listening,
+      type: "MULTI_CHOICE",
+      content: { kind: "CHOICE", options, ...(pick ? { pick } : {}) },
+      key: { kind: "CHOICE", correct: ["a", "b"] },
+    });
+    const c = toCandidateItem(multi(2), {}, null, 1, { maxPlays: 2 }).content;
+    expect(c).toMatchObject({ kind: "CHOICE", multiple: true, pick: 2 });
+    expect(Object.keys(c).sort()).toEqual(["kind", "multiple", "options", "pick"]);
+    expect(JSON.stringify(c)).not.toContain("correct");
+    expect(toCandidateItem(multi(), {}, null, 1, { maxPlays: 2 }).content).not.toHaveProperty("pick");
+  });
+
   it("leaves an ordinary gap item as it was", () => {
     const c = toCandidateItem(gap("grammar.dativ"), {}, null, 1, { maxPlays: 2 });
     expect(c.content).toEqual({ kind: "GAP", gaps: [{ id: "g1", choices: null }] });

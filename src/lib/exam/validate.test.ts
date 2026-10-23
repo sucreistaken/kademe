@@ -231,3 +231,29 @@ describe("validateItem: Ja/Nein wording", () => {
     expect(itemProblems(choice).map((p) => p.code)).toEqual(["WORDING_KIND"]);
   });
 });
+
+describe("validateItem: tick n (pick)", () => {
+  const options = ["a", "b", "c", "d", "e"].map((id) => ({ id, text: `Option ${id}` }));
+  const multi = (pick: unknown, correct: string[], type: ValidatableItem["type"] = "MULTI_CHOICE"): ValidatableItem =>
+    ({ type, prompt: "Kreuzen Sie an.", content: { kind: "CHOICE", options, pick }, key: { kind: "CHOICE", correct } }) as unknown as ValidatableItem;
+  const codes = (i: ValidatableItem) => itemProblems(i).map((p) => p.code);
+  it("accepts a pick that matches the key", () => {
+    expect(codes(multi(3, ["a", "b", "c"]))).toEqual([]);
+    expect(codes(multi(4, ["a", "b", "c", "d"]))).toEqual([]);
+  });
+  it("refuses pick below 2, above options - 1 or not whole", () => {
+    expect(codes(multi(1, ["a"]))).toEqual(["PICK_RANGE"]);
+    expect(codes(multi(5, ["a", "b", "c", "d"]))).toEqual(["PICK_RANGE"]);
+    expect(codes(multi(2.5, ["a", "b"]))).toEqual(["PICK_RANGE"]);
+  });
+  it("refuses a key whose length differs from pick", () => {
+    expect(codes(multi(3, ["a", "b"]))).toEqual(["PICK_KEY_COUNT"]);
+  });
+  it("refuses pick on a single choice item", () => {
+    expect(codes(multi(2, ["a"], "SINGLE_CHOICE"))).toEqual(["PICK_KIND"]);
+  });
+  it("refuses pick on other content", () => {
+    const gapPick = { type: "TRUE_FALSE_NG", prompt: "Ja?", content: { kind: "TFNG", statements: [{ id: "s1", text: "x" }], pick: 2 }, key: { kind: "TFNG", answers: { s1: "R" } } } as unknown as ValidatableItem;
+    expect(codes(gapPick)).toEqual(["PICK_KIND"]);
+  });
+});

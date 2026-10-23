@@ -59,6 +59,15 @@ describe("scoring", () => {
     expect(scoreItem("SINGLE_CHOICE", choice, key, null)?.score).toBe(0);
   });
 
+  it("tick 4 of 8: ticking 4 with 3 right and 1 wrong scores 0.5", () => {
+    const opts = ["a", "b", "c", "d", "e", "f", "g", "h"].map((id) => ({ id, text: id }));
+    const content = { kind: "CHOICE" as const, options: opts, pick: 4 };
+    const key = { kind: "CHOICE" as const, correct: ["a", "b", "c", "d"] };
+    expect(scoreItem("MULTI_CHOICE", content, key, { choiceIds: ["a", "b", "c", "d"] })).toEqual({ score: 1, correct: true });
+    // max(0, 3 hits - 1 false pick) / 4 correct
+    expect(scoreItem("MULTI_CHOICE", content, key, { choiceIds: ["a", "b", "c", "e"] })?.score).toBe(0.5);
+  });
+
   it("multi choice subtracts wrong picks and never goes negative", () => {
     const key = { kind: "CHOICE" as const, correct: ["a", "b"] };
     expect(scoreItem("MULTI_CHOICE", choice, key, { choiceIds: ["a"] })?.score).toBe(0.5);

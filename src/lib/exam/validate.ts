@@ -42,6 +42,9 @@ export const ITEM_PROBLEM_CODES = [
   "TFNG_KEY_UNKNOWN",
   "TFNG_TWO_WAY_NG",
   "WORDING_KIND",
+  "PICK_KIND",
+  "PICK_RANGE",
+  "PICK_KEY_COUNT",
   "GAP_NONE",
   "GAP_MARKER_REPEAT",
   "GAP_NO_MARKER",
@@ -162,9 +165,18 @@ export function itemProblems(item: ValidatableItem): ItemProblem[] {
     if (item.type === "MULTI_CHOICE" && (key.correct.length < 1 || key.correct.length >= ids.length)) add("MULTI_KEY_COUNT");
   }
 
-  // `wording` belongs to true/false items; elsewhere it would be silently ignored.
-  const loose = content as { wording?: unknown };
+  // `wording` belongs to true/false items and `pick` to multi choice ones; elsewhere they would be silently ignored.
+  const loose = content as { wording?: unknown; pick?: unknown };
   if (loose.wording !== undefined && !(content.kind === "TFNG" && loose.wording === "JA_NEIN")) add("WORDING_KIND");
+
+  if (content.kind === "CHOICE" && key.kind === "CHOICE" && content.pick !== undefined) {
+    if (item.type !== "MULTI_CHOICE") add("PICK_KIND");
+    else {
+      const max = content.options.length - 1;
+      if (!Number.isInteger(content.pick) || content.pick < 2 || content.pick > max) add("PICK_RANGE", { detail: String(max) });
+      else if (key.correct.length !== content.pick) add("PICK_KEY_COUNT", { detail: `${content.pick}/${key.correct.length}` });
+    }
+  } else if (loose.pick !== undefined) add("PICK_KIND");
 
   if (content.kind === "TFNG" && key.kind === "TFNG") {
     const ids = content.statements.map((s) => s.id);
@@ -344,6 +356,12 @@ export function problemText(p: ItemProblem): string {
       return `a Richtig/Falsch item keys "nicht im Text" for ${list(p)}`;
     case "WORDING_KIND":
       return "wording is only for true/false items and only JA_NEIN";
+    case "PICK_KIND":
+      return "pick is only for multi choice items";
+    case "PICK_RANGE":
+      return `pick must be a whole number from 2 to ${p.detail ?? "the number of options minus one"}`;
+    case "PICK_KEY_COUNT":
+      return `pick and the number of correct options differ (${p.detail ?? ""})`;
     case "GAP_NONE":
       return "no gaps";
     case "GAP_MARKER_REPEAT":
