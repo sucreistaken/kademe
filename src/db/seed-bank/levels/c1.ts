@@ -924,10 +924,20 @@ function clip(
   slug: string,
   title: string,
   topic: string,
-  speakers: Array<{ label: string; voice: "A" | "B" }>,
+  speakers: Array<{ label: string; voice: "A" | "B" | "C" | "D" }>,
   lines: string[],
+  maxPlays?: 1 | 2 | 3,
 ): SeedStimulus {
-  return { key: `v2-l-c1-${slug}`, section: "LISTENING", level: LEVEL, title, topic, speakers, body: lines.join("\n") };
+  return {
+    key: `v2-l-c1-${slug}`,
+    section: "LISTENING",
+    level: LEVEL,
+    title,
+    topic,
+    speakers,
+    body: lines.join("\n"),
+    ...(maxPlays ? { maxPlays } : {}),
+  };
 }
 
 function forClip(stimulusKey: string) {
@@ -1096,12 +1106,139 @@ const L_HEIZUNG = clip("mietminderung-beratung", "Beratungsgespräch: Heizungsau
   ],
 );
 
+// Clip 7: interview with a table to complete, played once (new format: table completion).
+const L_AUSGRABUNG = clip("ausgrabung-tabelle", "Interview: Eine Ausgrabung am Fluss", "Geschichte und Archäologie",
+  [
+    { label: "Moderator", voice: "B" },
+    { label: "Frau Seidel", voice: "A" },
+  ],
+  [
+    "Moderator: Willkommen bei „Wissen am Mittag“. Mein Gast ist die Archäologin Ines Seidel, die in diesem Sommer an einer Ausgrabung am Flussufer bei Altenau beteiligt war. Frau Seidel, was haben Sie dort gefunden?",
+    "Frau Seidel: Zunächst einmal viel Holz, und das ist für uns ein Glücksfall. Normalerweise vergeht Holz im Boden. Aber in der Flussaue war die Erde so feucht, dass die Reste einer Holzbrücke erhalten geblieben sind. Wir haben die Hölzer datiert: Die Bäume wurden zwischen elfhundertneunzig und zwölfhundertzehn gefällt. Also, grob gesagt, um das Jahr zwölfhundert.",
+    "Moderator: Eine Brücke an dieser Stelle, das heißt, hier führte eine wichtige Straße entlang?",
+    "Frau Seidel: Ja, vermutlich eine Handelsstraße. Dafür spricht der zweite Fund, nämlich Münzen. Wir haben siebenundvierzig Silbermünzen gefunden, in einem kleinen Tonkrug, der unter einem Brückenpfeiler stand. Ach, wie soll ich sagen, man vermutet, dass jemand sein Geld in einer Notlage dort versteckt hat und nie zurückgekommen ist. Siebenundvierzig Münzen, das war damals ein ordentliches Vermögen.",
+    "Moderator: Und was hat Sie am meisten überrascht?",
+    "Frau Seidel: Ein Kamm aus Knochen. Ein ganz gewöhnlicher Kamm, würde man meinen. Aber er ist verziert, und zwar mit einem Muster, das wir sonst nur aus Skandinavien kennen. Das deutet darauf hin, dass der Besitzer von weit her kam und wie weit die Verbindungen damals reichten. Der Kamm ist übrigens nur vierzehn Zentimeter lang, nein, Entschuldigung, zwölf Zentimeter, ich muss mich korrigieren.",
+    "Moderator: Was geschieht jetzt mit den Funden?",
+    "Frau Seidel: Die Hölzer müssen konserviert werden, das dauert allein etwa drei Jahre, weil sie sehr langsam getrocknet werden müssen, sonst reißen sie. Die Münzen und der Kamm sollen im Frühjahr im Kreismuseum gezeigt werden.",
+  ],
+  1,
+);
+
+// Clip 8: lecture with a table to complete, two plays.
+const L_WOHNFORMEN = clip("wohnformen-tabelle", "Vortrag: Gemeinsam wohnen", "Wohnen und Gesellschaft",
+  [
+    { label: "Dozentin", voice: "A" },
+    { label: "Student", voice: "B" },
+  ],
+  [
+    "Dozentin: Guten Abend, meine Damen und Herren. Ich möchte Ihnen heute eine Befragung vorstellen, die unser Institut im vergangenen Jahr durchgeführt hat. Es ging um die Frage, wie Menschen in unserer Region wohnen, wenn sie nicht allein und nicht in der klassischen Kleinfamilie leben.",
+    "Dozentin: Beginnen wir mit der Wohngemeinschaft. Etwa neun Prozent der Befragten leben in einer Wohngemeinschaft. Der wichtigste Grund ist nach wie vor das Geld, also die Miete. Als größten Nachteil nannten die meisten, ach, wie soll ich sagen, den fehlenden Rückzugsraum.",
+    "Student: Entschuldigung, wie viele Haushalte haben Sie denn insgesamt befragt?",
+    "Dozentin: Gute Frage. Es waren zweitausendvierhundert Haushalte, ich wiederhole: zweitausendvierhundert. Die Zahl ist wichtig, weil sie zeigt, dass die Ergebnisse recht verlässlich sind.",
+    "Dozentin: Die zweite Form ist das Mehrgenerationenhaus. Hier leben nur etwa drei Prozent, aber die Zufriedenheit ist am höchsten. Der Hauptvorteil ist die gegenseitige Hilfe: Die Älteren passen auf die Kinder auf, die Jüngeren erledigen die Einkäufe. Das größte Problem ist, nein, Entschuldigung, ich verwechsle das gerade mit der Wohngemeinschaft: Über das Bad haben vor allem die Wohngemeinschaften geklagt. Im Mehrgenerationenhaus ging es hauptsächlich um den Lärm.",
+    "Dozentin: Als Drittes die Hausgemeinschaft mit Gemeinschaftsräumen. Jeder hat seine eigene Wohnung, aber es gibt einen gemeinsamen Garten und eine Werkstatt. Das sind fünf Prozent der Befragten. Der Hauptvorteil: Man hat Gesellschaft, wenn man sie will, und Ruhe, wenn man sie braucht. Das Hauptproblem sind die Wartelisten, im Durchschnitt zwei Jahre.",
+  ],
+);
+
+// Clip 9: interview with a table to complete, played once.
+const L_GETREIDE = clip("getreide-tabelle", "Interview: Brot aus alten Getreidesorten", "Ernährung und Handwerk",
+  [
+    { label: "Moderator", voice: "B" },
+    { label: "Frau Kern", voice: "A" },
+  ],
+  [
+    "Moderator: Frau Kern, in Ihrer Bäckerei liegen neben Weizenbrot auch Brote aus Dinkel, Emmer und Einkorn. Warum backen Sie mit diesen alten Getreidesorten?",
+    "Frau Kern: Na ja, zuerst aus Neugier, ehrlich gesagt. Aber dann haben mich die Eigenschaften überzeugt. Nehmen wir den Dinkel: Ein Dinkelbrot bleibt bis zu vier Tage frisch, nein, fünf, ich korrigiere mich, bis zu fünf Tage. Das ist deutlich länger als bei Weizen. Dafür kostet es etwa zwanzig Prozent mehr, weil das Korn aufwendiger zu verarbeiten ist.",
+    "Moderator: Und der Emmer?",
+    "Frau Kern: Der schmeckt nussig, fast ein bisschen süßlich. Aber der Teig ist klebrig und braucht viel Geduld. Er muss zwölf Stunden ruhen, also einen halben Tag, bevor man ihn backen kann.",
+    "Moderator: Dann bleibt noch der Einkorn.",
+    "Frau Kern: Der ist der Exot. Der Ertrag pro Hektar ist nur etwa halb so hoch wie bei Weizen, die Bauern bekommen also viel weniger vom Feld. Deshalb verkaufe ich das Brot nur in meinem Hofladen und nicht über Supermärkte, und die Kundschaft ist trotzdem treu.",
+    "Moderator: Lohnt sich das denn?",
+    "Frau Kern: Reich werde ich damit nicht. Aber die Leute kommen gezielt, und manche fahren dafür eine Stunde. Das hätte ich am Anfang nicht gedacht.",
+  ],
+  1,
+);
+
+// Clip 10: three-voice discussion (moderator and two guests).
+const L_TOURISMUS = clip("touristen-diskussion", "Radiodiskussion: Wohin mit den Touristen?", "Tourismus und Stadtleben",
+  [
+    { label: "Moderatorin", voice: "A" },
+    { label: "Herr Bauer", voice: "B" },
+    { label: "Herr Yilmaz", voice: "C" },
+  ],
+  [
+    "Moderatorin: Guten Abend. In unserer Altstadt werden es jedes Jahr mehr Besucher, und nicht alle freuen sich darüber. Bei mir sind Herr Bauer von der Anwohnerinitiative „Altstadt lebt“ und Herr Yilmaz vom Tourismusverband. Herr Bauer, was stört Sie genau?",
+    "Herr Bauer: Stören ist fast zu harmlos. Wir haben im Sommer Tage, an denen man mit dem Einkaufswagen nicht mehr durch die Gasse kommt. Die Bäckerei an der Ecke hat zugemacht, und jetzt sitzt dort ein Eisladen. Und die Mieten, na ja, Sie wissen ja, was Ferienwohnungen mit den Mieten machen.",
+    "Herr Yilmaz: Das Problem will ich gar nicht kleinreden. Aber ich muss kurz widersprechen: Die Bäckerei hat nicht wegen der Touristen zugemacht, sondern weil der Besitzer in den Ruhestand gegangen ist und keinen Nachfolger gefunden hat. Das habe ich selbst mit ihm besprochen.",
+    "Herr Bauer: Das mag im Einzelfall stimmen. Aber das Muster ist doch eindeutig: Läden für den täglichen Bedarf verschwinden, Souvenirgeschäfte ziehen ein.",
+    "Moderatorin: Herr Yilmaz, was schlagen Sie vor?",
+    "Herr Yilmaz: Wir müssen die Besucher besser verteilen. Heute drängen sich neunzig Prozent auf zwei Straßen, obwohl es in den Vierteln dahinter genauso schöne Ecken gibt. Wir arbeiten an einer App, die zeigt, wo gerade viel los ist und wo nicht. Und wir wollen Reisebusse nur noch am Stadtrand halten lassen.",
+    "Herr Bauer: Die App ist ein Anfang, ehrlich gesagt, aber sie löst nichts, wenn trotzdem alle zur selben Kirche wollen. Ich wäre für eine Begrenzung der Ferienwohnungen. In unserem Viertel gibt es inzwischen mehr Schlüsselkästen an den Haustüren als Namensschilder.",
+    "Herr Yilmaz: Eine Begrenzung halte ich für richtig, solange sie nicht alle trifft. Wer sein Zimmer an einzelnen Wochenenden vermietet, ist nicht das Problem. Das Problem sind Eigentümer, die zehn Wohnungen nur für Touristen halten.",
+    "Moderatorin: Da sind Sie sich also näher, als man denkt?",
+    "Herr Bauer: In dem Punkt ja. Beim Thema Eintritt für Tagesgäste nicht: Ich würde jeden Tagesbesucher zahlen lassen, so wie in anderen Städten.",
+    "Herr Yilmaz: Dagegen habe ich Bedenken. Eine Gebühr schreckt vor allem Familien mit wenig Geld ab, die Hotelgäste dagegen zahlen sie ohne Murren. Das wäre sozial nicht gerecht.",
+    "Moderatorin: Damit haben Sie schon einiges auf den Tisch gelegt. Wir hören nach der Musik, wie die Stadt darauf reagiert.",
+  ],
+);
+
+// Clip 11: three-voice discussion, played once.
+const L_PFLEGE = clip("pflege-technik-diskussion", "Gesprächsrunde: Technik in der häuslichen Pflege", "Gesundheit und Pflege",
+  [
+    { label: "Moderator", voice: "B" },
+    { label: "Frau Dr. Roth", voice: "A" },
+    { label: "Herr Klein", voice: "C" },
+  ],
+  [
+    "Moderator: Willkommen zu „Forum Gesundheit“. Heute geht es um Technik in der häuslichen Pflege: Sensoren, Notrufarmbänder, Videosprechstunden. Frau Dr. Roth, Sie forschen dazu. Wie ist Ihr Eindruck?",
+    "Frau Dr. Roth: Gemischt, um ehrlich zu sein. Es gibt Geräte, die wirklich helfen, zum Beispiel Sturzmelder. Wer allein lebt und stürzt, liegt oft über eine Stunde am Boden, bevor jemand kommt, nein, das war eine andere Untersuchung, ich korrigiere mich. In unserer Studie waren es im Mittel fünfunddreißig Minuten. Das lässt sich mit Technik deutlich verkürzen.",
+    "Herr Klein: Das kann ich bestätigen. Meine Mutter trägt seit einem Jahr so ein Armband, und ich schlafe ruhiger. Aber ich sage Ihnen auch, was mich stört: Bei einem Fehlalarm kommt erst mal ein Anruf aus einem Callcenter, und meine Mutter weiß gar nicht, wer da spricht.",
+    "Frau Dr. Roth: Das ist ein typisches Problem. Technik funktioniert dann gut, wenn sie in einen menschlichen Ablauf eingebettet ist. Ein Armband ersetzt keinen Besuch.",
+    "Moderator: Herr Klein, hat das Armband Ihre Besuche denn ersetzt?",
+    "Herr Klein: Nein, im Gegenteil! Ich komme eher öfter, weil ich weniger Angst habe. Was ich aber auch erlebt habe: Eine Nachbarin hat sich eine Kamera ins Wohnzimmer stellen lassen. Die wollte das gar nicht, die Kinder haben darauf bestanden. Da kippt es für mich. Technik, die man aus Sorge installiert, aber ohne Einwilligung, das geht nicht.",
+    "Frau Dr. Roth: Da bin ich ganz bei Ihnen. Einwilligung ist der entscheidende Punkt. Wer die Technik nicht will, sollte sie nicht bekommen, auch nicht zu seinem Besten. Ausnahmen gibt es, wenn jemand nicht mehr selbst entscheiden kann, aber dann muss eine rechtliche Betreuung entscheiden und nicht die Familie allein.",
+    "Moderator: Gibt es denn Technik, die Sie uneingeschränkt empfehlen?",
+    "Frau Dr. Roth: Uneingeschränkt ist ein großes Wort. Videosprechstunden zeigen gute Ergebnisse, vor allem auf dem Land, wo der nächste Hausarzt dreißig Kilometer entfernt ist. Aber auch da gilt: Wer schlecht hört oder sieht, hat davon wenig.",
+    "Herr Klein: Genau, und wer nie ein Tablet in der Hand hatte, braucht jemanden, der es zeigt. Dafür bräuchte es mehr Hilfe von den Kassen, nicht nur für das Gerät, sondern auch für die Einweisung.",
+    "Moderator: Das ist ein gutes Schlusswort. Danke Ihnen beiden.",
+  ],
+  1,
+);
+
+// Clip 12: three-voice discussion with a moderator and two guests.
+const L_TAFEL = clip("lebensmittel-diskussion", "Diskussion: Genießbares abgeben statt wegwerfen", "Ernährung und Umwelt",
+  [
+    { label: "Moderator", voice: "B" },
+    { label: "Frau Lang", voice: "A" },
+    { label: "Herr Voss", voice: "C" },
+  ],
+  [
+    "Moderator: Jedes Jahr landen in Deutschland Millionen Tonnen Lebensmittel im Müll, auch aus dem Handel. Ein neues Gesetz soll Supermärkte verpflichten, genießbare Ware abzugeben. Frau Lang, Sie arbeiten für eine Tafel, Herr Voss leitet einen Supermarkt. Frau Lang, begrüßen Sie das Gesetz?",
+    "Frau Lang: Grundsätzlich ja, aber mit Fragezeichen. Wir bekommen schon heute viel von den Märkten, und wir sagen nicht Nein. Das Problem ist die Logistik. Wir haben ehrenamtliche Fahrer und ein Auto, und das nur an drei Tagen. Wenn plötzlich jeder Markt täglich Ware abgibt, brechen wir zusammen.",
+    "Herr Voss: Ich verstehe das, und ich will das Gesetz nicht schlechtreden. Aber wir geben schon ab, was wir können. Was übrig bleibt, ist oft gar nicht mehr verwertbar, zum Beispiel Salat, der einen Tag zu lang in der Kühlung stand. Und wenn wir verpflichtet werden, haften wir, falls jemand krank wird. Das ist es, was mir Sorgen macht.",
+    "Frau Lang: Da muss ich kurz einhaken: Die Haftung ist gesetzlich geregelt. Wer Lebensmittel in gutem Glauben abgibt, haftet nicht. Das ist leider eines dieser Gerüchte, die sich hartnäckig halten.",
+    "Herr Voss: Gut, das wusste ich nicht so genau. Dann bleibt trotzdem die Frage der Kosten. Jemand muss die Ware sortieren, und das kostet Arbeitszeit, nicht viel, aber bei dünnen Gewinnspannen zählt jeder Euro.",
+    "Moderator: Gibt es einen Weg, den beide mitgehen könnten?",
+    "Frau Lang: Ich könnte mir vorstellen, dass die Städte uns Fahrzeuge und Kühlräume bezahlen. Dann wäre die Abgabe für den Handel kein Problem mehr, und wir könnten die Ware auch annehmen.",
+    "Herr Voss: Und ich würde als Gegenleistung gern steuerlich entlastet werden, wenn ich spende. Das wäre ein Anreiz statt einer Pflicht. Pflicht und Strafe, das halte ich für den falschen Ton.",
+    "Frau Lang: Einen Anreiz finde ich gut, aber ganz ohne Pflicht? Dann machen die Großen mit, die Kleinen nicht, und wir bekommen am Ende gar nichts zusammen. Ich bleibe dabei: Eine Pflicht ist nötig, aber sie muss mit Hilfe verbunden sein.",
+    "Moderator: Danke Ihnen beiden. Wie es weitergeht, hören Sie in den Nachrichten.",
+  ],
+);
+
 const lQuer = forClip(L_QUEREINSTIEG.key);
 const lGruppen = forClip(L_GRUPPEN.key);
 const lGehalt = forClip(L_GEHALT.key);
 const lPhysio = forClip(L_PHYSIO.key);
 const lNachtzug = forClip(L_NACHTZUG.key);
 const lHeizung = forClip(L_HEIZUNG.key);
+const lAusgrabung = forClip(L_AUSGRABUNG.key);
+const lWohnformen = forClip(L_WOHNFORMEN.key);
+const lGetreide = forClip(L_GETREIDE.key);
+const lTouristen = forClip(L_TOURISMUS.key);
+const lPflege = forClip(L_PFLEGE.key);
+const lTafel = forClip(L_TAFEL.key);
 
 const listeningItems: SeedItem[] = [
   // Quereinstieg
@@ -1255,6 +1392,147 @@ const listeningItems: SeedItem[] = [
       "Eine Meldung per E-Mail ist ungültig, wenn vorher schon telefoniert wurde.",
     ], 3,
     "„Grundsätzlich ja“ zur Minderung, schriftliche Dokumentation hilft nur; vor dem eigenmächtigen Abzug warnt sie mit dem Hinweis auf eine mögliche Kündigung wegen Zahlungsrückstands. Die anderen Aussagen macht sie nicht."),
+
+  // Ausgrabung: table completion, played once
+  lAusgrabung.notes("detail", "MID",
+    "Sie hören ein Interview. Ergänzen Sie die Tabelle mit je einem Wort oder einer Zahl.\n\n" +
+      "Fund | Angabe | Weiteres\n" +
+      "Holzbrücke | Bäume gefällt zwischen 1190 und {{g1}} | Konservierung dauert etwa {{g2}} Jahre\n" +
+      "Münzen | {{g3}} Silbermünzen | gefunden in einem {{g4}}\n" +
+      "Kamm | Länge: {{g5}} Zentimeter | Ausstellung im {{g6}}",
+    [
+      ["1210", "zwölfhundertzehn", "1.210"],
+      ["drei", "3"],
+      ["siebenundvierzig", "47"],
+      ["Tonkrug", "Krug"],
+      ["zwölf", "12"],
+      ["Frühjahr", "Frühling"],
+    ],
+    "g1 „zwischen elfhundertneunzig und zwölfhundertzehn“ (also 1210). g2 „etwa drei Jahre“ für die Konservierung. g3 „siebenundvierzig Silbermünzen“ (zweimal genannt). g4 „in einem kleinen Tonkrug“. g5 Selbstkorrektur: erst vierzehn, dann „nein, zwölf Zentimeter“, richtig ist zwölf. g6 „im Frühjahr im Kreismuseum“."),
+  lAusgrabung.choice("inference", "HARD", "Was schließt Frau Seidel aus dem Muster auf dem Kamm?",
+    "Der Besitzer kam vermutlich von weit her, die Verbindungen reichten weit.",
+    [
+      "Die Brücke wurde vermutlich von Händlern aus dem hohen Norden erbaut und bezahlt.",
+      "Der Fundort war im Mittelalter ein Zentrum für Arbeiten aus Knochen.",
+      "Der Kamm lag zusammen mit den Münzen im Versteck unter dem Pfeiler.",
+    ], 2,
+    "„Ein Muster, das wir sonst nur aus Skandinavien kennen ... der Besitzer kam von weit her und wie weit die Verbindungen damals reichten.“ Wer die Brücke baute, ob es eine Werkstatt gab und wo der Kamm lag, sagt sie nicht."),
+
+  // Wohnformen: table completion, two plays
+  lWohnformen.notes("detail", "HARD",
+    "Sie hören einen Vortrag über eine Befragung. Ergänzen Sie die Tabelle mit je einem Wort oder einer Zahl.\n\n" +
+      "Befragte Haushalte insgesamt: {{g1}}\n\n" +
+      "Wohnform | Anteil | Hauptvorteil | Hauptproblem\n" +
+      "Wohngemeinschaft | 9 % | geringe {{g2}} | fehlender {{g3}}\n" +
+      "Mehrgenerationenhaus | {{g4}} % | gegenseitige {{g5}} | {{g6}}\n" +
+      "Hausgemeinschaft | {{g7}} % | Gesellschaft und Ruhe | Wartezeit von {{g8}} Jahren",
+    [
+      ["2400", "zweitausendvierhundert", "2.400"],
+      ["Miete", "Mieten", "Mietkosten", "Kosten"],
+      ["Rückzugsraum", "Rückzug", "Rückzugsmöglichkeit"],
+      ["3", "drei"],
+      ["Hilfe", "Unterstützung"],
+      ["Lärm"],
+      ["5", "fünf"],
+      ["2", "zwei"],
+    ],
+    "g1 2400 Haushalte (wiederholt). g2 „das Geld, also die Miete“. g3 „den fehlenden Rückzugsraum“. g4 etwa drei Prozent. g5 „gegenseitige Hilfe“. g6 Selbstkorrektur: Das Bad nannten die Wohngemeinschaften, im Mehrgenerationenhaus ging es um den Lärm. g7 fünf Prozent. g8 Wartelisten von im Durchschnitt zwei Jahren."),
+  lWohnformen.choice("detail", "MID", "In welcher Wohnform ist die Zufriedenheit der Befragten laut der Dozentin am höchsten?",
+    "im Mehrgenerationenhaus, auch wenn dort nur sehr wenige Befragte leben",
+    [
+      "in der Wohngemeinschaft, weil dort die Miete besonders niedrig ist",
+      "in der Hausgemeinschaft, weil man dort kaum auf einen Platz warten muss",
+      "in der klassischen Kleinfamilie, mit der die Befragung verglichen wurde",
+    ], 0,
+    "„Hier leben nur etwa drei Prozent, aber die Zufriedenheit ist am höchsten.“ Die Wohngemeinschaft wird wegen des Geldes gewählt, in der Hausgemeinschaft sind die Wartelisten lang, und die Kleinfamilie war nicht Gegenstand der Befragung."),
+
+  // Getreide: table completion, played once
+  lGetreide.notes("detail", "MID",
+    "Sie hören ein Interview. Ergänzen Sie die Tabelle mit je einem Wort oder einer Zahl.\n\n" +
+      "Getreide | Besonderheit | Weiteres\n" +
+      "Dinkel | bleibt bis zu {{g1}} Tage frisch | etwa {{g2}} Prozent teurer\n" +
+      "Emmer | schmeckt {{g3}} | Teig muss {{g4}} Stunden ruhen\n" +
+      "Einkorn | Ertrag pro Hektar nur etwa {{g5}} so hoch wie bei Weizen | Verkauf nur im {{g6}}",
+    [
+      ["fünf", "5"],
+      ["zwanzig", "20"],
+      ["nussig"],
+      ["zwölf", "12"],
+      ["halb"],
+      ["Hofladen"],
+    ],
+    "g1 Selbstkorrektur: erst vier, dann „nein, fünf“, richtig ist fünf. g2 „etwa zwanzig Prozent mehr“. g3 „nussig“. g4 „zwölf Stunden ruhen“. g5 „nur etwa halb so hoch“. g6 „nur in meinem Hofladen“."),
+  lGetreide.choice("attitude", "MID", "Was sagt Frau Kern über ihre Kundschaft?",
+    "Viele Kunden kommen gezielt und nehmen dafür weite Wege in Kauf.",
+    [
+      "Die meisten Kunden kaufen die alten Sorten nur wegen des niedrigen Preises.",
+      "Die Kundschaft zieht Brot aus dem Supermarkt vor, weil es länger frisch bleibt.",
+      "Durch die alten Sorten hat sie in kurzer Zeit sehr viel Geld verdient.",
+    ], 3,
+    "„Die Leute kommen gezielt, und manche fahren dafür eine Stunde.“ Die alten Sorten sind teurer, nicht billiger; reich werde sie damit nicht; Supermärkte beliefert sie gar nicht."),
+
+  // Touristen: discussion with three voices
+  lTouristen.match("attitude", "HARD",
+    "Wer vertritt welche Ansicht?",
+    [
+      "Für Tagesgäste sollte ein Eintritt erhoben werden.",
+      "Läden für den täglichen Bedarf werden durch Souvenirgeschäfte verdrängt.",
+      "Reisebusse sollten ganz aus der Stadt verbannt werden.",
+      "Die Zahl der Ferienwohnungen sollte begrenzt werden.",
+    ],
+    ["Herr Bauer", "Herr Yilmaz", "beide", "keiner von beiden"],
+    [1, 1, 4, 3],
+    "1 Herr Bauer: „Ich würde jeden Tagesbesucher zahlen lassen“; Herr Yilmaz lehnt das als sozial ungerecht ab. 2 Herr Bauer: „Läden für den täglichen Bedarf verschwinden, Souvenirgeschäfte ziehen ein.“ 3 keiner: Herr Yilmaz will Busse nur am Stadtrand halten lassen, Herr Bauer äußert sich nicht dazu. 4 beide: Herr Bauer fordert eine Begrenzung, Herr Yilmaz hält sie „für richtig, solange sie nicht alle trifft“."),
+  lTouristen.choice("detail", "MID", "Was sagt Herr Yilmaz über die geschlossene Bäckerei?",
+    "Der Besitzer hat aus Altersgründen aufgehört, weil sich kein Nachfolger fand.",
+    [
+      "Sie musste schließen, weil ein Eisladen eine viel höhere Miete zahlen konnte.",
+      "Sie wurde auf Beschwerden von Anwohnern hin von der Stadt geschlossen.",
+      "Sie hat nach einem Streit mit dem Tourismusverband freiwillig aufgegeben.",
+    ], 1,
+    "„Der Besitzer ist in den Ruhestand gegangen und hat keinen Nachfolger gefunden.“ Herr Yilmaz widerspricht damit Herrn Bauers Beispiel; Miete, Beschwerden und einen Streit erwähnt er nicht."),
+
+  // Pflege: discussion with three voices, played once
+  lPflege.match("attitude", "HARD",
+    "Wer vertritt welche Ansicht?",
+    [
+      "Ein Notrufarmband kann Angehörige beruhigen.",
+      "Technik darf nur mit Einwilligung der betroffenen Person eingesetzt werden.",
+      "Geräte sollten den persönlichen Besuch bei Pflegebedürftigen weitgehend ersetzen.",
+      "Videosprechstunden sind auf dem Land besonders nützlich.",
+    ],
+    ["Frau Dr. Roth", "Herr Klein", "beide", "keiner von beiden"],
+    [2, 3, 4, 1],
+    "1 Herr Klein: „Ich schlafe ruhiger.“ 2 beide: Herr Klein („ohne Einwilligung, das geht nicht“) und Frau Dr. Roth („Einwilligung ist der entscheidende Punkt“). 3 keiner: Frau Dr. Roth sagt „Ein Armband ersetzt keinen Besuch“, Herr Klein besucht seine Mutter eher öfter. 4 Frau Dr. Roth: Videosprechstunden zeigen vor allem auf dem Land gute Ergebnisse."),
+  lPflege.choice("detail", "HARD", "Wie lange dauert es laut Frau Dr. Roths Studie im Mittel, bis ein Gestürzter ohne Technik Hilfe bekommt?",
+    "ungefähr eine halbe Stunde",
+    [
+      "deutlich mehr als eine ganze Stunde",
+      "etwa fünf Minuten",
+      "fast zwei Stunden",
+    ], 2,
+    "Sie nennt zuerst „über eine Stunde“, korrigiert sich aber: „In unserer Studie waren es im Mittel fünfunddreißig Minuten.“ Die Stunde stammt aus einer anderen Untersuchung."),
+
+  // Tafel: discussion with three voices
+  lTafel.match("attitude", "HARD",
+    "Wer vertritt welche Ansicht?",
+    [
+      "Wer Lebensmittel in gutem Glauben abgibt, muss nicht für Folgen einstehen.",
+      "Die Abgabe sollte freiwillig bleiben und steuerlich belohnt werden.",
+      "Das Wegwerfen von Lebensmitteln im Handel sollte mit Strafen belegt werden.",
+      "Ohne zusätzliche Unterstützung wäre eine Abgabepflicht schwer umzusetzen.",
+    ],
+    ["Frau Lang", "Herr Voss", "beide", "keiner von beiden"],
+    [1, 2, 4, 3],
+    "1 Frau Lang: Die Haftung sei gesetzlich geregelt, Herr Voss kannte das nicht genau. 2 Herr Voss: „Anreiz statt einer Pflicht“, steuerliche Entlastung. 3 keiner: Herr Voss hält „Pflicht und Strafe“ für den falschen Ton, Frau Lang fordert eine Pflicht, von Strafen spricht sie nicht. 4 beide: Frau Lang nennt die Logistik, Herr Voss die Kosten und die Haftungsangst."),
+  lTafel.choice("attitude", "MID", "Wie reagiert Herr Voss, als Frau Lang die Haftung anspricht?",
+    "Er räumt ein, die Rechtslage nicht genau gekannt zu haben, und nennt einen anderen Einwand.",
+    [
+      "Er bestreitet ihre Aussage energisch und besteht darauf, dass seine Sorge völlig berechtigt ist.",
+      "Er stimmt zu und zieht daraufhin alle seine Bedenken gegen das Gesetz zurück.",
+      "Er verweist auf ein Urteil, das die Haftung der Supermärkte bestätigt hat.",
+    ], 1,
+    "„Gut, das wusste ich nicht so genau. Dann bleibt trotzdem die Frage der Kosten.“ Er widerspricht nicht, gibt aber seine Position nicht ganz auf; ein Urteil erwähnt niemand."),
 ];
 
 // ---------------------------------------------------------------- WRITING
@@ -1619,7 +1897,7 @@ export const C1_PARTS: {
 } = {
   grammar: { stimuli: [], items: [...grammarItems, ...grammarTexts] },
   reading: { stimuli: [R_PAUSEN, R_REPARATUR, R_WEITERBILDUNG, R_KI, R_STADTBAEUME, R_MUSEUM, R_GENOSSENSCHAFT, R_FOTOKURSE, R_LAUFEN, R_BIBER, R_DIALEKT], items: readingItems },
-  listening: { stimuli: [L_QUEREINSTIEG, L_GRUPPEN, L_GEHALT, L_PHYSIO, L_NACHTZUG, L_HEIZUNG], items: listeningItems },
+  listening: { stimuli: [L_QUEREINSTIEG, L_GRUPPEN, L_GEHALT, L_PHYSIO, L_NACHTZUG, L_HEIZUNG, L_AUSGRABUNG, L_WOHNFORMEN, L_GETREIDE, L_TOURISMUS, L_PFLEGE, L_TAFEL], items: listeningItems },
   writing: { stimuli: [], items: writingItems },
   speaking: { stimuli: [], items: speakingItems },
 };
