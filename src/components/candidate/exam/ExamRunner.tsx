@@ -691,6 +691,9 @@ export function ExamRunner({
         recLabel={recLabel}
         screenShare={policy.screenShare}
         remainingMs={clock.remainingMs}
+        sectionMs={(state.sections.find((x) => x.position === cur.position)?.minutes ?? 0) * 60_000}
+        token={token}
+        sectionPosition={cur.position}
       />
 
       {blocked ? (

@@ -162,7 +162,7 @@ Behavioral. Visual specs live in `DESIGN.md`, Components.
 | Listening page | Dinleme | All items of one recording on one page; sticky player on the left, questions on the right; plays are limited and shown ("1 / 2 dinleme"). **Read first:** the questions show at once but the player waits behind a card ("Önce soruları ve şıkları okuyun. Hazır olduğunuzda dinlemeye başlayın. Kayıt 2 kez çalınabilir.", button "Soruları okudum, dinlemeye başla"); once opened it stays open, also after a reload or when the recording has been played. Leaving mid-play asks in the floating notice above the bar. |
 | Writing field | Yazma | Spell-check and paste off; word counter; autosave; no judgement of content. |
 | Speaking card | Konuşma | Task card ("Thema", "Karte"), think time then recording, the camera is already on; retries only if the exam allows. |
-| Timer pill | Exam bar | Server clock, tabular, never blinks, never turns red. In the last two minutes a text "Son 2 dakika" appears beside it. |
+| Timer pill | Exam bar, centered (owner 2026-10-23) | Server clock, tabular, never blinks, never turns red. The pill turns yellow-soft from 5 minutes left (sections longer than 10 minutes) and in the last 2 minutes; a small callout under it announces each threshold once per section run. |
 | Record indicator | Exam bar | States what is being captured: "Kamera, ses ve ekran kaydediliyor"; always visible during the exam. |
 | Proctor warning | Over the exam | `role="alertdialog"`, content behind is inert, focus trapped on the one button, Escape does nothing, the counter is per attempt, the clock note is always present. The button dismisses; it does not end anything. |
 | Zorluk selector | Invite step 2 (verification exams only) | Three tiles, Kolay, Orta and Zor, each with its step glyph, the word and a short hint; exactly one is selected. Teacher panel only, on the `diff-*` tints. Details below the table. |
@@ -231,7 +231,7 @@ Behavioral; the contrast ratios live in `DESIGN.md`, Colors.
 - Focus is always visible: 3px `{colors.primary-deep}` ring, 3px offset, on every control; the current cell keeps its ink ring in addition.
 - Controls are at least 24px in each direction on desktop; the primary controls are at least 44px tall. Cells shrink in sections with many items but never below 28px [ASSUMPTION: the section-length thresholds are not designed; the shipped strip wraps and the review screen is the full overview].
 - German content has `lang="de"` and `translate="no"`; everything else follows the chosen UI language.
-- The timer is not announced every second. Only "Son 2 dakika" and time-up are announced, politely [ASSUMPTION].
+- The timer is not announced every second. The 5-minute and last-2-minutes callouts (once each per section run) and time-up are announced, politely (owner 2026-10-23).
 - Reduced motion: the mascot pop and any progress animation are off; nothing else moves.
 - At browser zoom above 100% the first screens may scroll rather than clip; the "fits without scrolling" rule applies at 100% [ASSUMPTION].
 - Screen-reader titles carry the meaning of every decorative illustration (the mascot is `aria-hidden`).
