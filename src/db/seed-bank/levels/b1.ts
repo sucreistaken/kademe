@@ -281,16 +281,16 @@ const grammarTexts: SeedItem[] = [
     title: "Ein Praktikum im Hotel",
     first: "Im letzten Sommer hat Elif ein Praktikum in einem Hotel am Bodensee gemacht.",
     body:
-      "Sie hatte sich schon im Winter [[um|über|an|zu]] die Stelle beworben. " +
-      "Das Hotel, in [[dem|das|den|der]] sie gearbeitet hat, liegt direkt am Wasser. " +
-      "Jeden Morgen [[musste|müsste|musstest|muss]] sie schon um sechs Uhr aufstehen, [[weil|denn|deshalb|trotzdem]] das Frühstück für die Gäste um sieben Uhr begann. " +
-      "Am Anfang hat sie vor allem in der Küche [[geholfen|helfen|half|hilft]]. " +
-      "Später durfte sie auch an der Rezeption arbeiten und [[die|den|dem|der]] Gäste begrüßen. " +
-      "Viele Gäste kamen aus der Schweiz oder aus Österreich, und manche haben [[ihr|sie|ihre|ihn]] viel von ihrer Heimat erzählt. " +
-      "Die Arbeit war anstrengend, aber Elif hat [[sich|ihr|ihm|ihnen]] nie gelangweilt. " +
-      "Ihre Chefin war [[mit|von|bei|zu]] ihr sehr zufrieden. " +
-      "Am letzten Tag hat sie Elif gefragt, [[ob|dass|wenn|als]] sie im nächsten Sommer wiederkommen möchte. " +
-      "Elif [[würde|wurde|würden|geworden]] sehr gern zurückkommen, aber im nächsten Sommer muss sie ihre Abschlussprüfungen schreiben.",
+      "Sie hatte sich schon im Winter [[um|über|an|zu#verb_praeposition]] die Stelle beworben. " +
+      "Das Hotel, in [[dem|das|den|der#relativsatz.praeposition]] sie gearbeitet hat, liegt direkt am Wasser. " +
+      "Jeden Morgen [[musste|müsste|musstest|muss#praeteritum]] sie schon um sechs Uhr aufstehen, [[weil|denn|deshalb|trotzdem#konnektor]] das Frühstück für die Gäste um sieben Uhr begann. " +
+      "Am Anfang hat sie vor allem in der Küche [[geholfen|helfen|half|hilft#perfekt.partizip]]. " +
+      "Später durfte sie auch an der Rezeption arbeiten und [[die|den|dem|der#artikel.akkusativ]] Gäste begrüßen. " +
+      "Viele Gäste kamen aus der Schweiz oder aus Österreich, und manche haben [[ihr|sie|ihre|ihn#dativ]] viel von ihrer Heimat erzählt. " +
+      "Die Arbeit war anstrengend, aber Elif hat [[sich|ihr|ihm|ihnen#reflexiv]] nie gelangweilt. " +
+      "Ihre Chefin war [[mit|von|bei|zu#rektion]] ihr sehr zufrieden. " +
+      "Am letzten Tag hat sie Elif gefragt, [[ob|dass|wenn|als#nebensatz]] sie im nächsten Sommer wiederkommen möchte. " +
+      "Elif [[würde|wurde|würden|geworden#konjunktiv2]] sehr gern zurückkommen, aber im nächsten Sommer muss sie ihre Abschlussprüfungen schreiben.",
     last: "Mit zwei Kolleginnen aus dem Hotel schreibt sie sich bis heute regelmäßig Nachrichten.",
     note: "sich bewerben um (g1), Relativpronomen nach Präposition (g2), Modalverb im Präteritum (g3), weil mit Verb am Ende gegen denn, deshalb, trotzdem (g4), Partizip II (g5), bestimmter Artikel im Akkusativ Plural (g6), erzählen + Dativ (g7), Reflexivpronomen (g8), zufrieden mit (g9), indirekte Frage mit ob (g10), höflicher Wunsch im Konjunktiv II (g11).",
   }),
@@ -298,17 +298,17 @@ const grammarTexts: SeedItem[] = [
     title: "Die Wohnungssuche",
     first: "Seit drei Monaten suchen Jana und Tobias eine größere Wohnung in Leipzig.",
     body:
-      "Sie brauchen ein zusätzliches Zimmer, [[weil|denn|deshalb|damit]] im Herbst ihr erstes Kind auf die Welt kommt. " +
-      "[[Jedes|Jeden|Jedem|Jeder]] Wochenende sehen sie sich Wohnungen an, die sie im Internet gefunden haben. " +
-      "Leider sind die meisten Angebote entweder zu teuer [[oder|und|aber|sondern]] zu klein. " +
-      "Letzten Samstag haben sie eine Altbauwohnung besichtigt, in [[die|der|dem|das]] sie sich sofort verliebt haben. " +
-      "Die Wohnung liegt in [[einer|einem|eine|einen]] ruhigen Seitenstraße und hat einen großen Balkon. " +
-      "Die Vermieterin war sehr nett und hat ihnen alle Räume [[gezeigt|zeigte|zeigen|zeigt]]. " +
-      "Jana fragte, [[ob|dass|wenn|was]] Haustiere erlaubt sind, denn sie haben eine Katze. " +
-      "Die Vermieterin hatte nichts dagegen, aber [[viele|vielen|vieler|vieles]] andere Paare wollten die Wohnung auch haben. " +
-      "Deshalb [[haben|sind|werden|hat]] Jana und Tobias am Abend noch eine freundliche E-Mail an die Vermieterin geschrieben. " +
-      "Darin stand, dass sie sich sehr freuen [[würden|wurden|wären|würdet]], wenn sie die Wohnung bekommen könnten. " +
-      "Zwei Tage später kam endlich die Antwort, [[auf|für|an|nach]] die sie so ungeduldig gewartet hatten.",
+      "Sie brauchen ein zusätzliches Zimmer, [[weil|denn|deshalb|damit#konnektor]] im Herbst ihr erstes Kind auf die Welt kommt. " +
+      "[[Jedes|Jeden|Jedem|Jeder#akkusativ]] Wochenende sehen sie sich Wohnungen an, die sie im Internet gefunden haben. " +
+      "Leider sind die meisten Angebote entweder zu teuer [[oder|und|aber|sondern#konnektor.zweiteilig]] zu klein. " +
+      "Letzten Samstag haben sie eine Altbauwohnung besichtigt, in [[die|der|dem|das#relativsatz.praeposition]] sie sich sofort verliebt haben. " +
+      "Die Wohnung liegt in [[einer|einem|eine|einen#wechselpraeposition]] ruhigen Seitenstraße und hat einen großen Balkon. " +
+      "Die Vermieterin war sehr nett und hat ihnen alle Räume [[gezeigt|zeigte|zeigen|zeigt#perfekt.partizip]]. " +
+      "Jana fragte, [[ob|dass|wenn|was#nebensatz]] Haustiere erlaubt sind, denn sie haben eine Katze. " +
+      "Die Vermieterin hatte nichts dagegen, aber [[viele|vielen|vieler|vieles#adjektivendung]] andere Paare wollten die Wohnung auch haben. " +
+      "Deshalb [[haben|sind|werden|hat#perfekt.hilfsverb]] Jana und Tobias am Abend noch eine freundliche E-Mail an die Vermieterin geschrieben. " +
+      "Darin stand, dass sie sich sehr freuen [[würden|wurden|wären|würdet#konjunktiv2]], wenn sie die Wohnung bekommen könnten. " +
+      "Zwei Tage später kam endlich die Antwort, [[auf|für|an|nach#verb_praeposition]] die sie so ungeduldig gewartet hatten.",
     last: "Die Vermieterin hat sich für die beiden entschieden, und im Juni ziehen sie ein.",
     note: "weil mit Verb am Ende gegen damit, denn, deshalb (g1), Kasusreihe jeder (g2), entweder ... oder (g3), Relativpronomen im Akkusativ nach in (g4), Wechselpräposition mit Dativ (g5), Partizip II (g6), indirekte Frage mit ob (g7), Indefinitpronomen als Artikel (g8), Hilfsverb im Perfekt (g9), Konjunktiv II mit würde (g10), warten auf im Relativsatz (g11).",
   }),
@@ -316,15 +316,15 @@ const grammarTexts: SeedItem[] = [
     title: "Ärger mit der Heizung",
     first: "Mitte Dezember ist in der Wohnung von Herrn Yilmaz plötzlich die Heizung ausgefallen.",
     body:
-      "Weil es draußen sehr kalt war, rief er sofort [[bei|an|zu|mit]] der Hausverwaltung an. " +
-      "Eine Mitarbeiterin versprach, [[ihm|ihn|sein|er]] noch am selben Tag einen Techniker zu schicken. " +
-      "Doch am Abend war immer noch niemand [[gekommen|kommen|kam|kommt]]. " +
-      "Herr Yilmaz schrieb deshalb eine E-Mail, in [[der|die|dem|den]] er [[sich|sie|ihm|ihn]] über den schlechten Service beschwerte. " +
-      "Am nächsten Morgen [[wurde|würde|hat|worden]] die Heizung endlich repariert. " +
-      "Der Techniker war sehr freundlich und entschuldigte sich für [[die|der|dem|den]] Verspätung. " +
-      "Ein kleines Teil war kaputt, [[deshalb|weil|denn|obwohl]] funktionierte die ganze Heizung nicht. " +
-      "[[Wenn|Als|Ob|Dass]] Herr Yilmaz die Nummer des Notdienstes gehabt hätte, hätte er dort sofort [[angerufen|anrufen|anruft|rief]]. " +
-      "Als Entschuldigung [[bot|bat|boten|geboten]] ihm die Hausverwaltung für Dezember eine kleine Mietminderung an.",
+      "Weil es draußen sehr kalt war, rief er sofort [[bei|an|zu|mit#rektion]] der Hausverwaltung an. " +
+      "Eine Mitarbeiterin versprach, [[ihm|ihn|sein|er#dativ]] noch am selben Tag einen Techniker zu schicken. " +
+      "Doch am Abend war immer noch niemand [[gekommen|kommen|kam|kommt#plusquamperfekt]]. " +
+      "Herr Yilmaz schrieb deshalb eine E-Mail, in [[der|die|dem|den#relativsatz.praeposition]] er [[sich|sie|ihm|ihn#reflexiv]] über den schlechten Service beschwerte. " +
+      "Am nächsten Morgen [[wurde|würde|hat|worden#passiv]] die Heizung endlich repariert. " +
+      "Der Techniker war sehr freundlich und entschuldigte sich für [[die|der|dem|den#praeposition]] Verspätung. " +
+      "Ein kleines Teil war kaputt, [[deshalb|weil|denn|obwohl#konnektor]] funktionierte die ganze Heizung nicht. " +
+      "[[Wenn|Als|Ob|Dass#konjunktiv2.vergangenheit]] Herr Yilmaz die Nummer des Notdienstes gehabt hätte, hätte er dort sofort [[angerufen|anrufen|anruft|rief#konjunktiv2.vergangenheit]]. " +
+      "Als Entschuldigung [[bot|bat|boten|geboten#trennbares_verb]] ihm die Hausverwaltung für Dezember eine kleine Mietminderung an.",
     last: "Damit war Herr Yilmaz am Ende einigermaßen zufrieden.",
     note: "bei jemandem anrufen (g1), schicken + Dativ (g2), Plusquamperfekt (g3), Relativpronomen nach in im Dativ (g4), Reflexivpronomen bei sich beschweren (g5), Passiv im Präteritum (g6), für + Akkusativ (g7), deshalb mit Inversion gegen weil, denn, obwohl (g8), Konjunktion des irrealen Bedingungssatzes (g9), Partizip II im Konjunktiv II der Vergangenheit (g10), trennbares Verb im Präteritum (g11).",
   }),
@@ -332,12 +332,12 @@ const grammarTexts: SeedItem[] = [
     title: "Der erste Arbeitstag",
     first: "Am Montag hat Sofia als Bürokauffrau in einer Spedition angefangen.",
     body:
-      "Sie war sehr [[aufgeregt]] und ist [[deshalb]] schon um halb acht losgefahren. " +
+      "Sie war sehr [[aufgeregt#vocabulary]] und ist [[deshalb#konnektor]] schon um halb acht losgefahren. " +
       "Am Empfang hat ein freundlicher Kollege sie begrüßt und ihr das Gebäude gezeigt. " +
-      "Ihr [[Schreibtisch]] steht in einem hellen Büro [[neben]] der Kaffeeküche. " +
-      "Am Vormittag musste Sofia viele [[Formulare]] ausfüllen, [[bevor]] sie ihren eigenen Computer bekam. " +
-      "Am Nachmittag durfte sie schon die ersten [[Kunden]] am Telefon beraten. " +
-      "Wenn sie eine Frage hatte, konnte sie jederzeit ihre Kollegin Frau Brandt [[fragen]]. " +
+      "Ihr [[Schreibtisch#vocabulary]] steht in einem hellen Büro [[neben#praeposition]] der Kaffeeküche. " +
+      "Am Vormittag musste Sofia viele [[Formulare#plural]] ausfüllen, [[bevor#vocabulary]] sie ihren eigenen Computer bekam. " +
+      "Am Nachmittag durfte sie schon die ersten [[Kunden#plural]] am Telefon beraten. " +
+      "Wenn sie eine Frage hatte, konnte sie jederzeit ihre Kollegin Frau Brandt [[fragen#modalverb.satzklammer]]. " +
       "Um vier Uhr war ihr erster Arbeitstag zu Ende.",
     last: "Am Abend hat sie ihren Eltern erzählt, dass ihr die neue Stelle sehr gut gefällt.",
     distractors: ["denn", "ob", "durch", "Büros", "gefragt"],
@@ -347,14 +347,14 @@ const grammarTexts: SeedItem[] = [
     title: "Ein Kochkurs für Anfänger",
     first: "Weil Daniel nicht mehr jeden Abend Fertiggerichte essen wollte, hat er sich für einen Kochkurs an der Volkshochschule angemeldet.",
     body:
-      "Der Kurs findet jeden Donnerstag in einer großen [[Küche]] im Erdgeschoss statt. " +
-      "Die Gruppe besteht aus zwölf Teilnehmern, [[von]] denen die meisten Anfänger sind. " +
-      "Der Kursleiter ist ein ehemaliger Koch, [[der]] jede Frage geduldig beantwortet. " +
-      "Am ersten Abend haben sie gelernt, wie man Zwiebeln richtig [[schneidet]]. " +
-      "Danach haben sie zusammen eine Gemüsesuppe gekocht, die allen sehr gut [[geschmeckt]] hat. " +
-      "Daniel war überrascht, wie [[einfach]] manche Gerichte eigentlich sind. " +
-      "Nach jedem Abend bekommen die Teilnehmer die Rezepte, [[damit]] sie zu Hause weiter üben können. " +
-      "Inzwischen lädt Daniel am Wochenende manchmal Freunde zum [[Essen]] ein.",
+      "Der Kurs findet jeden Donnerstag in einer großen [[Küche#vocabulary]] im Erdgeschoss statt. " +
+      "Die Gruppe besteht aus zwölf Teilnehmern, [[von#relativsatz.praeposition]] denen die meisten Anfänger sind. " +
+      "Der Kursleiter ist ein ehemaliger Koch, [[der#relativsatz]] jede Frage geduldig beantwortet. " +
+      "Am ersten Abend haben sie gelernt, wie man Zwiebeln richtig [[schneidet#nebensatz]]. " +
+      "Danach haben sie zusammen eine Gemüsesuppe gekocht, die allen sehr gut [[geschmeckt#perfekt.partizip]] hat. " +
+      "Daniel war überrascht, wie [[einfach#adjektiv]] manche Gerichte eigentlich sind. " +
+      "Nach jedem Abend bekommen die Teilnehmer die Rezepte, [[damit#konnektor]] sie zu Hause weiter üben können. " +
+      "Inzwischen lädt Daniel am Wochenende manchmal Freunde zum [[Essen#vocabulary]] ein.",
     last: "Seine Freunde finden, dass er schon viel besser kocht als am Anfang.",
     distractors: ["mit", "dem", "geschnitten", "deshalb", "Herd"],
     note: "Präposition mit Dativ nach Partizip-Relativsatz (g2), Relativpronomen im Nominativ gegen Dativ (g3), finites Verb im Nebensatz gegen Partizip (g4), damit mit Verb am Ende gegen deshalb (g7).",
@@ -363,13 +363,13 @@ const grammarTexts: SeedItem[] = [
     title: "Die Bewerbung",
     first: "Nach ihrer Ausbildung zur Pflegefachfrau wollte Nadine in eine andere Stadt ziehen und hat sich deshalb bei mehreren Kliniken beworben.",
     body:
-      "Ihr Lebenslauf war schon zwei Jahre alt, [[deshalb]] hat sie ihn sorgfältig überarbeitet. " +
-      "Zu jeder Bewerbung hat sie außerdem ein persönliches [[Anschreiben]] verfasst. " +
-      "Nach zwei Wochen bekam sie eine [[Einladung]] zu einem Vorstellungsgespräch in Hamburg. " +
-      "Sie hat sich gründlich [[auf]] das Gespräch vorbereitet, [[weil]] sie die Stelle unbedingt haben wollte. " +
-      "Im Gespräch hat Nadine ehrlich geantwortet, [[ohne]] dabei zu übertreiben. " +
-      "Am Ende hat sie selbst nach dem [[Gehalt]] gefragt, das in der Pflege oft nicht besonders hoch ist. " +
-      "Eine Woche später rief die Klinik an und gab ihr die [[Zusage]] für die Stelle.",
+      "Ihr Lebenslauf war schon zwei Jahre alt, [[deshalb#konnektor]] hat sie ihn sorgfältig überarbeitet. " +
+      "Zu jeder Bewerbung hat sie außerdem ein persönliches [[Anschreiben#vocabulary]] verfasst. " +
+      "Nach zwei Wochen bekam sie eine [[Einladung#vocabulary]] zu einem Vorstellungsgespräch in Hamburg. " +
+      "Sie hat sich gründlich [[auf#verb_praeposition]] das Gespräch vorbereitet, [[weil#konnektor]] sie die Stelle unbedingt haben wollte. " +
+      "Im Gespräch hat Nadine ehrlich geantwortet, [[ohne#infinitiv.ohnezu]] dabei zu übertreiben. " +
+      "Am Ende hat sie selbst nach dem [[Gehalt#vocabulary]] gefragt, das in der Pflege oft nicht besonders hoch ist. " +
+      "Eine Woche später rief die Klinik an und gab ihr die [[Zusage#vocabulary]] für die Stelle.",
     last: "Im Oktober fängt Nadine in Hamburg an und freut sich schon sehr auf die neue Aufgabe.",
     distractors: ["denn", "über", "um", "Lebenslauf", "dass"],
     note: "deshalb mit Inversion gegen weil und denn (g1, g5), sich vorbereiten auf (g4), ohne ... zu gegen um ... zu (g6).",
