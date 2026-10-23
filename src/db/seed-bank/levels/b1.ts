@@ -374,6 +374,62 @@ const grammarTexts: SeedItem[] = [
     distractors: ["denn", "über", "um", "Lebenslauf", "dass"],
     note: "deshalb mit Inversion gegen weil und denn (g1, g5), sich vorbereiten auf (g4), ohne ... zu gegen um ... zu (g6).",
   }),
+
+  // ---- Sprachbausteine-15: ten gaps, fifteen words (five distractors of the same family).
+  // Family: prepositions. Every gap is fixed by a verb, a time expression or the case of its noun group.
+  wordBank(LEVEL, "MID", {
+    title: "Ein Tag im Kletterwald",
+    first: "Letzten Samstag sind wir mit der ganzen Familie in einen Kletterwald gefahren.",
+    body:
+      "Wir sind [[um#praeposition.zeit]] sieben Uhr losgefahren und waren [[nach#praeposition.zeit]] einer Stunde am Ziel. " +
+      "Der Weg zum Eingang führte [[durch#praeposition]] einen schmalen Tunnel unter der Straße. " +
+      "Alle Kinder müssen [[mit#praeposition]] einem Helm klettern, und Erwachsene dürfen nicht [[ohne#praeposition]] Sicherheitsgurt in die Bäume steigen. " +
+      "Mein Bruder klettert [[seit#praeposition.zeit]] drei Jahren in seiner Freizeit und kennt die Regeln gut. " +
+      "Meine Schwester hat sich vorher lange [[über#verb_praeposition]] die Sicherheit informiert, weil sie Angst vor großer Höhe hat. " +
+      "Meine Mutter hat die ganze Zeit [[auf#verb_praeposition]] die Kleinen aufgepasst. " +
+      "Am Ende haben wir uns [[bei#verb_praeposition]] den Trainern [[für#verb_praeposition]] ihre Hilfe bedankt.",
+    last: "Zum Abschied haben die Kinder gefragt, ob wir bald wiederkommen.",
+    distractors: ["aus", "von", "zu", "wegen", "bis"],
+    note: "Präpositionen: Uhrzeit, Zeitdauer, Richtung mit Akkusativ, feste Verbindungen (sich informieren über, aufpassen auf, sich bedanken bei und für); Distraktoren: Präpositionen, die in keine Lücke passen.",
+  }),
+  // Family: connectors. Word order and tense fix each gap (verb at the end, verb in second place, event order).
+  wordBank(LEVEL, "MID", {
+    title: "Eine Radtour mit Hindernissen",
+    first: "Am Sonntag wollten Paula und ihr Mann mit den Kindern eine lange Radtour am Fluss machen.",
+    body:
+      "Paula hat belegte Brote gemacht, [[damit#konnektor]] die Kinder unterwegs nicht hungrig werden. " +
+      "Das Wetter war schön, [[deshalb#konnektor]] sind alle schon um neun Uhr losgefahren. " +
+      "Nach zwanzig Kilometern wurde der Himmel dunkel, [[obwohl#konnektor.konzessiv]] der Wetterbericht keinen Regen angekündigt hatte. " +
+      "Der Regen wurde stärker, aber die Kinder wollten [[trotzdem#konnektor.konzessiv]] weiterfahren. " +
+      "Paula wollte lieber umkehren, [[weil#konnektor]] ihr Mann seit dem Morgen Halsschmerzen hatte. " +
+      "Ihr Mann sagte, [[dass#nebensatz]] eine heiße Suppe jetzt das Beste wäre. " +
+      "Die Kinder fragten, [[ob#nebensatz]] es im nächsten Dorf ein Café gibt. " +
+      "Im Café bestellten sie Suppe und Kakao, [[während#konnektor]] draußen der Regen gegen die Fenster klopfte. " +
+      "[[Nachdem#konnektor]] sie zwei Stunden im Café gesessen hatten, hörte der Regen endlich auf. " +
+      "Er hörte plötzlich ganz auf, [[sodass#konnektor]] sie den Rückweg ohne Regenjacke fahren konnten.",
+    last: "Am Abend waren alle müde, aber auch ein bisschen stolz.",
+    distractors: ["denn", "sondern", "falls", "bevor", "seitdem"],
+    note: "Konnektoren: Verb am Ende (weil, damit, obwohl, dass, ob, während, nachdem, sodass) gegen Verb in Position 2 (deshalb, trotzdem); Distraktoren: denn, sondern, falls, bevor, seitdem passen in keine Lücke.",
+  }),
+  // Family: da-compounds. The verb in each sentence fixes the preposition.
+  wordBank(LEVEL, "HARD", {
+    title: "Gemeinsam gärtnern in der Straße",
+    first: "In unserer Straße gibt es seit dem Frühjahr einen kleinen Gemeinschaftsgarten.",
+    body:
+      "Alle freuen sich [[darauf#praepositionaladverb]], im Sommer die ersten Tomaten zu ernten. " +
+      "Eine Gruppe von Freiwilligen kümmert sich [[darum#praepositionaladverb]], dass die Beete genug Wasser bekommen. " +
+      "Die Stadt sorgt [[dafür#praepositionaladverb]], dass wir Wasser aus einem Brunnen holen dürfen. " +
+      "Am Anfang hat niemand [[damit#praepositionaladverb]] gerechnet, dass so viele Leute mitmachen würden. " +
+      "Zur Eröffnung gab es ein kleines Fest, und alle Nachbarn konnten [[daran#praepositionaladverb]] teilnehmen. " +
+      "Nur ein älterer Herr war zuerst [[dagegen#praepositionaladverb]], weil er mehr Lärm befürchtete. " +
+      "Inzwischen gehört er selbst [[dazu#praepositionaladverb]] und gießt jeden Morgen die Pflanzen. " +
+      "Die Kinder helfen gern [[dabei#praepositionaladverb]], die Beete zu harken. " +
+      "Letzte Woche haben wir uns [[darüber#praepositionaladverb]] geärgert, dass jemand Salat gestohlen hat. " +
+      "Was halten Sie [[davon#praepositionaladverb]], uns einmal zu besuchen?",
+    last: "Wer Lust hat, kann jederzeit vorbeikommen und einfach mitmachen.",
+    distractors: ["darin", "daneben", "dahinter", "davor", "dazwischen"],
+    note: "Präpositionaladverbien: Das Verb oder Adjektiv legt die Präposition fest (sich freuen auf, sich kümmern um, sorgen für, rechnen mit, teilnehmen an, gegen sein, gehören zu, helfen bei, sich ärgern über, halten von); Distraktoren sind örtliche da-Wörter ohne passende Lücke.",
+  }),
 ];
 
 // ================================================================ READING
