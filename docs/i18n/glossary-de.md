@@ -11,7 +11,7 @@ stay unchanged. No em dash anywhere.
 | placement test | Einstufungstest | |
 | level check / level verification | Niveauprüfung | |
 | claimed level | angegebenes Niveau | |
-| section (of an exam) | Bereich | candidate hiring stages use "Phase" |
+| section (of an exam) | Abschnitt | masculine; candidate hiring stages use "Phase" |
 | stage (hiring) | Phase | as in candidate.de |
 | item / task (bank) | Aufgabe | |
 | question | Frage | hiring assessments and the bank question editor |
@@ -26,14 +26,14 @@ stay unchanged. No em dash anywhere.
 | invite / invitation | einladen / Einladung | |
 | invitation link | Einladungslink | |
 | student | Lernende (pl.), lernende Person, Lernende/r (tables) | |
-| candidate (hiring) | Bewerber | "Bewerber/in" only on candidate screens |
+| candidate (hiring) | Bewerber | masculine generic is used in the panel; "Bewerber/in" only on candidate screens |
 | teacher | Lehrkraft | |
 | manager | Manager | role name |
 | owner | Inhaber | role name |
-| reviewer (exam role) | Korrektor | role name |
+| reviewer (exam role) | Bewerter | role name; running text keeps "Bewertende" |
 | evaluator (hiring) | Bewertende, bewertende Person | |
 | decision maker | entscheidende Person | |
-| release a result | freigeben ("Lernenden anzeigen" on buttons) | |
+| release a result | für Lernende freigeben / freigegeben | "Freigegeben · {date}" for the state |
 | finalize | abschließen | |
 | result | Ergebnis | |
 | overall level | Gesamtniveau | |
@@ -41,7 +41,7 @@ stay unchanged. No em dash anywhere.
 | recommended class | Empfohlene Klasse | |
 | proctoring | Aufsicht | |
 | integrity | Integrität | |
-| flag (proctoring) | Hinweis | "serious flag" = schwerer Hinweis |
+| flag (proctoring) | Auffälligkeit | "serious flag" = schwere Auffälligkeit; never "Hinweis" |
 | dismiss (a flag) | verwerfen | |
 | recording | Aufnahme | |
 | transcript | Transkript | |
@@ -55,7 +55,8 @@ stay unchanged. No em dash anywhere.
 | observation tag | Beobachtungs-Tag | |
 | rating scale | Bewertungsskala | |
 | weights | Gewichte | |
-| opening (hiring) | Ausschreibung | |
+| opening (hiring) | Ausschreibung | one term for one process; "Auswahlverfahren" only in the openings subtitle |
+| hiring (module) | Recruiting | |
 | open a role | Stelle ausschreiben | |
 | position | Stelle | |
 | job ad | Stellenanzeige | |
