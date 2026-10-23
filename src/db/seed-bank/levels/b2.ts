@@ -469,7 +469,7 @@ const grammarOpen: SeedItem[] = [
       "Sie füttern die Tiere, reinigen die Käfige und gehen mit Hunden spazieren, [[die/welche#relativsatz]] sonst kaum Auslauf hätten. " +
       "Wer mitmachen möchte, muss zuerst eine Schulung besuchen, [[in/bei/auf#relativsatz.praeposition]] der gezeigt wird, wie man mit ängstlichen Tieren umgeht. " +
       "Das Tierheim ist [[auf#verb_praeposition]] Spenden angewiesen, weil es keine staatliche Unterstützung erhält. " +
-      "Besonders gefragt sind Sachspenden, [[wie/etwa/beispielsweise/insbesondere/speziell#konnektor]] Decken oder Futter. " +
+      "Besonders gefragt sind Sachspenden, [[wie/etwa/beispielsweise/insbesondere/speziell/darunter/vorwiegend/hauptsächlich/namentlich#konnektor]] Decken oder Futter. " +
       "Wenn es mehr Geld [[gäbe/hätte/bekäme/erhielte#konjunktiv2]], könnte man ein zweites Gebäude bauen. " +
       "Im vergangenen Jahr [[wurden#passiv]] über vierhundert Tiere erfolgreich vermittelt. " +
       "Die Mitarbeitenden freuen sich [[über/auf#verb_praeposition]] jede Hilfe, denn das Wohl [[der/aller/unserer/dieser/ihrer#artikel]] Tiere steht für alle an erster Stelle. " +
@@ -484,12 +484,12 @@ const grammarOpen: SeedItem[] = [
       "Die meisten Reisenden schicken stattdessen Fotos per Handy, [[was#relativsatz.was]] schneller und billiger ist. " +
       "Ein Grund [[dafür/hierfür#praepositionaladverb]] ist, dass Nachrichten innerhalb von Sekunden ankommen. " +
       "Eine Karte aus Spanien braucht [[dagegen/hingegen/jedoch/aber/allerdings/wiederum/indes/indessen/demgegenüber#konnektor]] oft mehr als eine Woche. " +
-      "Die Zahl [[der#artikel]] verschickten Karten sinkt seit Jahren. " +
+      "Die Zahl [[der/an/aller#artikel]] verschickten Karten sinkt seit Jahren. " +
       "Viele Verlage haben neue Motive entwickelt, [[die/welche#relativsatz]] man selbst gestalten kann. " +
       "Auf manchen Karten [[wird/ist#passiv.praesens]] heute zusätzlich ein QR-Code gedruckt, der zu einem Video führt. " +
       "Sammler schätzen vor allem handgeschriebene Grüße, [[deren#relativsatz]] Wert für sie weit über dem Preis einer Briefmarke liegt. " +
       "Viele halten [[an#verb_praeposition]] dieser Tradition fest, denn ohne diese Karten [[wäre#konjunktiv2.vergangenheit]] manche Reise nur halb so schön gewesen. " +
-      "[[Trotz/Ungeachtet#praeposition]] der digitalen Konkurrenz bleibt der Briefkasten für viele ein Ort der Vorfreude.",
+      "[[Trotz/Ungeachtet/Inmitten#praeposition]] der digitalen Konkurrenz bleibt der Briefkasten für viele ein Ort der Vorfreude.",
     last: "Und gerade das macht die Postkarte für sie unersetzlich.",
     note: "weiterführender Relativsatz mit was, Präpositionaladverb, Konnektor des Gegensatzes, Genitiv Plural, Relativpronomen im Akkusativ Plural, Passiv Präsens, Relativpronomen im Genitiv, festhalten an, Konjunktiv II der Vergangenheit, trotz + Genitiv.",
   }),
@@ -984,7 +984,7 @@ const insertionItems: SeedItem[] = [
     [
       "In der Stadt gibt es keine Rapsfelder, die den Bienen den Platz wegnehmen.",
       "Städtische Imker füttern ihre Bienen zusätzlich mit selbst gemachtem Zuckerwasser.",
-      "In der Stadt blüht vom Frühjahr bis in den Herbst immer irgendwo etwas.",
+      "In der Stadt gibt es über viele Monate hinweg ständig blühende Pflanzen.",
       "Auf dem Land halten die Imker deutlich weniger Völker als in der Stadt.",
     ], 2,
     "Auf den Feldern gibt es nach der Rapsblüte oft wochenlang kaum Nahrung, in der Stadt blüht dagegen von Frühjahr bis Herbst immer irgendwo etwas. Die anderen Gründe stehen nicht im Text."),
@@ -1004,7 +1004,7 @@ const insertionItems: SeedItem[] = [
     "Was hilft, wenn Dinge im Schrank landen, die nicht hineingehören?",
     [
       "Die Paten schließen den Schrank dauerhaft ab, bis er gereinigt ist.",
-      "Kleine Schilder erklären, welche Dinge in den Schrank gehören.",
+      "Hinweisschilder zeigen, was in den Schrank gelegt werden darf.",
       "Die Stadt entfernt jeden Schrank, in dem Müll gefunden wird.",
       "Nutzer zahlen eine kleine Gebühr, wenn sie etwas hineinlegen.",
     ], 1,
@@ -1025,11 +1025,11 @@ const insertionItems: SeedItem[] = [
     "Was hat sich an den Schulen verbessert, die den Unterrichtsbeginn nach hinten verlegten?",
     [
       "Die Jugendlichen gingen früher ins Bett und schliefen weniger lang.",
-      "Die Noten wurden etwas besser, und weniger Jugendliche meldeten sich krank.",
+      "Die Leistungen stiegen leicht, und es gab weniger Krankmeldungen.",
       "Die Eltern bestimmten die Schlafenszeiten nun streng und gemeinsam.",
       "Die Unterrichtsstunden wurden kürzer, damit der Tag früher endete.",
     ], 1,
-    "Nach dem Wechsel schliefen sie länger; die Noten wurden leicht besser und weniger Jugendliche meldeten sich krank. Die Schlafenszeiten werden im Text sogar als wenig hilfreich genannt."),
+    "Nach dem Wechsel wurden die Noten leicht besser und weniger Jugendliche meldeten sich krank. Die Schlafenszeiten werden im Text sogar als wenig hilfreich genannt."),
 ];
 
 // ---------------------------------------------------------------- Opinion matching (comments under an article)
@@ -1397,7 +1397,7 @@ const lTerminItems: SeedItem[] = [
     "Einigung auf „Donnerstag um zehn“. Montag wurde abgelehnt, Mittwoch ist nur das interne Vorbereitungstreffen, Dienstag fällt wegen der Messe aus."),
   l3.choice("inference", "HARD",
     "Wann treffen sich Nina und Tarek, um die Präsentation gemeinsam durchzugehen?",
-    ["Mittwoch um drei", "Donnerstag um zehn", "Dienstag um vier", "Mittwoch um vier"], 3,
+    ["Mittwoch um drei", "Montag um zehn", "Dienstag um vier", "Mittwoch um vier"], 3,
     "Nina schlägt erst Mittwoch um drei vor, korrigiert sich aber wegen einer anderen Besprechung: Mittwoch um vier. Donnerstag um zehn ist der Kundentermin."),
 ];
 
@@ -2230,7 +2230,7 @@ const pictureItems: SeedItem[] = [
     ],
     [
       "beschreiben, was auf dem Bild zu sehen ist",
-      "erklären, wie die Einrichtung funktioniert",
+      "erklären, wofür die Tonnen gedacht sind und wie das System funktioniert",
       "Vorteile und Schwierigkeiten nennen",
       "die Situation in Ihrer Stadt oder Region",
       "Ihre Meinung mit Begründung",

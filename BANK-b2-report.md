@@ -58,3 +58,7 @@ None blocking. Closest-fit: streiten über / verweisen auf / leiden unter tagged
 - Finding 23 (image ids car-sharing/crowded-tram do not match photos): not changed, manifest is not mine.
 - Recast under NEW keys (-v4): pausen-interview, vortrag-aufschieben, kollegen-termin, voicemail-zahnarzt, umfrage-nachrichten (5 clips: Moderatorin/Referentin/Nina/Frau Winter/Frau Berger now A, Dr. Brandt/Tarek/Reporter now B). The sixth, "Durchsage" (neutral announcer, voice A = female), was left as is; say if it should move. Old items retire in the top-up; the new keys are not in the lock file yet.
 - Checks: vitest shows the same 4 expected failures (listening-lock for the 11 new keys, wordbank count tests x3); originality 0 hits; tsc clean.
+
+## Fix round 2
+- kollegen-termin-v4: distractor "Donnerstag um zehn" -> "Montag um zehn". Honig, Teenager, Bücher MC keys paraphrased; Teenager rationale no longer cites hidden sentence D. Waste-sorting studentPoint 2 matches the prompt. Open cloze: Tierheim g5 + darunter/vorwiegend/hauptsächlich/namentlich; Postkarte g4 + an/aller, g10 + Inmitten.
+- Checks: originality 0 hits, tsc clean. vitest: the same expected failures plus a templates.test.ts simulation timeout (5 s, "multiple-choice form before onSET", seen earlier as flaky with the larger bank); not content related, not investigated further.
