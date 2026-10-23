@@ -246,16 +246,16 @@ const grammarTexts: SeedItem[] = [
     title: "Ein Wochenende in Berlin",
     first: "Letztes Wochenende war ich mit meinem Bruder in Berlin.",
     body:
-      "Wir [[sind|haben|hatten|seid]] [[am|um|im|an]] Freitagabend mit dem Zug hingefahren. " +
-      "Das Hotel lag nicht weit [[von|zu|bei|aus]] der Innenstadt. " +
-      "Am Samstag haben wir den Fernsehturm [[besichtigt|besichtigen|besichtige|besichtigte]]. " +
-      "Danach sind wir in [[ein|einem|einen|eine]] Museum gegangen. Das Museum war sehr [[interessant|interessiert|interessante|interessieren]]. " +
+      "Wir [[sind|haben|hatten|seid#perfekt.hilfsverb]] [[am|um|im|an#praeposition.zeit]] Freitagabend mit dem Zug hingefahren. " +
+      "Das Hotel lag nicht weit [[von|zu|bei|aus#praeposition]] der Innenstadt. " +
+      "Am Samstag haben wir den Fernsehturm [[besichtigt|besichtigen|besichtige|besichtigte#perfekt.partizip]]. " +
+      "Danach sind wir in [[ein|einem|einen|eine#wechselpraeposition]] Museum gegangen. Das Museum war sehr [[interessant|interessiert|interessante|interessieren#adjektiv]]. " +
       "Am Abend haben wir in einem kleinen Restaurant gegessen. " +
-      "Das Essen war gut und sogar [[billiger|billig|am billigsten|so billig]] als in München. " +
-      "Wir [[wollten|wollen|wollte|gewollt]] danach noch ins Theater gehen, aber es gab keine Karten mehr. " +
-      "Am Sonntag sind wir im Hotel geblieben, [[weil|denn|deshalb|obwohl]] es den ganzen Tag geregnet hat. " +
-      "Ich habe [[meiner|meine|meinem|meinen]] Mutter eine Karte geschrieben. " +
-      "Die Reise hat [[uns|wir|unser|unsere]] sehr gut gefallen.",
+      "Das Essen war gut und sogar [[billiger|billig|am billigsten|so billig#adjektiv.komparativ]] als in München. " +
+      "Wir [[wollten|wollen|wollte|gewollt#modalverb]] danach noch ins Theater gehen, aber es gab keine Karten mehr. " +
+      "Am Sonntag sind wir im Hotel geblieben, [[weil|denn|deshalb|obwohl#konnektor]] es den ganzen Tag geregnet hat. " +
+      "Ich habe [[meiner|meine|meinem|meinen#dativ]] Mutter eine Karte geschrieben. " +
+      "Die Reise hat [[uns|wir|unser|unsere#dativ]] sehr gut gefallen.",
     last: "Im Sommer möchten wir noch einmal nach Berlin fahren.",
     note: "Hilfsverb sein im Perfekt (g1), Zeitangabe am + Wochentagsteil (g2), von nach weit (g3), Partizip II (g4), in + Akkusativ bei Richtung (g5), prädikatives Adjektiv (g6), Komparativ mit als (g7), Modalverb im Präteritum (g8), weil mit Verb am Ende (g9), Dativ der Person bei schreiben (g10), gefallen + Dativ (g11).",
   }),
@@ -263,12 +263,12 @@ const grammarTexts: SeedItem[] = [
     title: "Die neue Stelle",
     first: "Seit zwei Wochen arbeitet Marco in einer großen Firma in Stuttgart.",
     body:
-      "Früher [[musste|muss|müsste|musst]] er jeden Tag eine Stunde mit dem Bus fahren. Jetzt ist der Weg viel [[kürzer|kurz|kürzeste|kurzer]]. " +
-      "Er freut [[sich|ihn|ihm|er]] jeden Morgen auf die Arbeit. " +
-      "Am [[ersten|erste|erster|erstes]] Tag hat er [[den|dem|der|die]] Chef kennengelernt. " +
-      "Der Chef hat gesagt, [[dass|das|wenn|ob]] Marco sehr gut ins Team passt. " +
-      "Die Kollegen sind nett und helfen [[ihm|ihn|er|sein]] oft. Mittags essen alle zusammen [[in|im|auf|zu]] der Kantine. " +
-      "Wenn Marco eine Frage hat, [[fragt|fragen|fragte|gefragt]] er seine Kollegin Anna, [[die|der|den|das]] schon [[seit|vor|für|ab]] zehn Jahren in der Firma arbeitet.",
+      "Früher [[musste|muss|müsste|musst#modalverb]] er jeden Tag eine Stunde mit dem Bus fahren. Jetzt ist der Weg viel [[kürzer|kurz|kürzeste|kurzer#adjektiv.komparativ]]. " +
+      "Er freut [[sich|ihn|ihm|er#reflexiv]] jeden Morgen auf die Arbeit. " +
+      "Am [[ersten|erste|erster|erstes#adjektivendung]] Tag hat er [[den|dem|der|die#akkusativ]] Chef kennengelernt. " +
+      "Der Chef hat gesagt, [[dass|das|wenn|ob#nebensatz]] Marco sehr gut ins Team passt. " +
+      "Die Kollegen sind nett und helfen [[ihm|ihn|er|sein#dativ]] oft. Mittags essen alle zusammen [[in|im|auf|zu#praeposition.ort]] der Kantine. " +
+      "Wenn Marco eine Frage hat, [[fragt|fragen|fragte|gefragt#wortstellung.inversion]] er seine Kollegin Anna, [[die|der|den|das#relativsatz]] schon [[seit|vor|für|ab#praeposition.zeit]] zehn Jahren in der Firma arbeitet.",
     last: "Der Wechsel war für ihn die richtige Entscheidung.",
     note: "Modalverb im Präteritum (g1), Komparativ (g2), Reflexivpronomen (g3), Adjektivendung nach am (g4), Akkusativ bei kennenlernen (g5), dass-Satz (g6), helfen + Dativ (g7), in + Dativ (g8), Verb an erster Stelle nach dem Nebensatz (g9), Relativpronomen (g10), seit + Dativ (g11).",
   }),
@@ -276,16 +276,16 @@ const grammarTexts: SeedItem[] = [
     title: "Das Paket",
     first: "Letzte Woche hat Frau Berger im Internet eine neue Kaffeemaschine bestellt.",
     body:
-      "Das Paket sollte [[am|um|im|an]] Dienstag kommen, aber sie hat den ganzen Tag umsonst [[gewartet|warten|wartete|erwartet]]. " +
-      "Am Mittwoch war ein Zettel in [[ihrem|ihren|ihrer|ihr]] Briefkasten. " +
-      "Auf dem Zettel stand, dass das Paket bei [[der|die|dem|den]] Nachbarin im dritten Stock ist. " +
-      "Frau Berger wollte es sofort [[abholen|abgeholt|abholt|abholte]]. " +
-      "Leider war die Nachbarin nicht da, [[deshalb|weil|denn|obwohl]] musste sie bis zum Abend warten. " +
-      "Am Abend hat sie das Paket endlich bekommen. [[Als|Wenn|Wann|Ob]] sie es öffnete, war die Maschine kaputt. " +
-      "Frau Berger hat [[sich|ihr|ihm|ihre]] sehr geärgert. " +
-      "Sie hat beim Kundenservice angerufen und gefragt, [[ob|dass|wenn|weil]] sie die Maschine zurückschicken kann. " +
-      "Der Mitarbeiter war sehr [[freundlich|freundlicher|Freundlichkeit|freundlichen]] und hat sofort eine neue Maschine geschickt. " +
-      "Jetzt trinkt sie jeden Morgen einen [[heißen|heiße|heißer|heißes]] Kaffee.",
+      "Das Paket sollte [[am|um|im|an#praeposition.zeit]] Dienstag kommen, aber sie hat den ganzen Tag umsonst [[gewartet|warten|wartete|erwartet#perfekt.partizip]]. " +
+      "Am Mittwoch war ein Zettel in [[ihrem|ihren|ihrer|ihr#possessiv]] Briefkasten. " +
+      "Auf dem Zettel stand, dass das Paket bei [[der|die|dem|den#dativ]] Nachbarin im dritten Stock ist. " +
+      "Frau Berger wollte es sofort [[abholen|abgeholt|abholt|abholte#modalverb.satzklammer]]. " +
+      "Leider war die Nachbarin nicht da, [[deshalb|weil|denn|obwohl#konnektor]] musste sie bis zum Abend warten. " +
+      "Am Abend hat sie das Paket endlich bekommen. [[Als|Wenn|Wann|Ob#konnektor.als_wenn]] sie es öffnete, war die Maschine kaputt. " +
+      "Frau Berger hat [[sich|ihr|ihm|ihre#reflexiv]] sehr geärgert. " +
+      "Sie hat beim Kundenservice angerufen und gefragt, [[ob|dass|wenn|weil#nebensatz]] sie die Maschine zurückschicken kann. " +
+      "Der Mitarbeiter war sehr [[freundlich|freundlicher|Freundlichkeit|freundlichen#adjektiv]] und hat sofort eine neue Maschine geschickt. " +
+      "Jetzt trinkt sie jeden Morgen einen [[heißen|heiße|heißer|heißes#adjektivendung]] Kaffee.",
     last: "Beim nächsten Mal kauft sie aber lieber im Geschäft ein.",
     note: "Zeitangabe mit am (g1), Partizip II von warten (g2), Possessivartikel im Dativ (g3), bei + Dativ (g4), Modalverb mit Infinitiv (g5), deshalb mit Inversion (g6), als bei einem einmaligen Ereignis in der Vergangenheit (g7), Reflexivpronomen (g8), indirekte Ja/Nein-Frage mit ob (g9), prädikatives Adjektiv (g10), Adjektivendung im Akkusativ (g11).",
   }),
@@ -293,10 +293,10 @@ const grammarTexts: SeedItem[] = [
     title: "Beim Arzt",
     first: "Vor zwei Wochen ist Jan mit starken Kopfschmerzen aufgewacht.",
     body:
-      "Er hat sofort in der [[Praxis]] von Dr. Wolf angerufen. Die Frau am Telefon hat ihm einen [[Termin]] um zehn Uhr gegeben. " +
-      "Im [[Wartezimmer]] waren schon viele Leute. Die Ärztin hat ihn genau [[untersucht]]. " +
-      "Sie hat gesagt, dass er hohes [[Fieber]] hat. Er soll drei Tage im Bett [[bleiben]]. " +
-      "Außerdem hat sie ihm ein [[Medikament]] verschrieben. Er muss es dreimal am Tag [[nehmen]].",
+      "Er hat sofort in der [[Praxis#vocabulary]] von Dr. Wolf angerufen. Die Frau am Telefon hat ihm einen [[Termin#vocabulary]] um zehn Uhr gegeben. " +
+      "Im [[Wartezimmer#vocabulary]] waren schon viele Leute. Die Ärztin hat ihn genau [[untersucht#vocabulary]]. " +
+      "Sie hat gesagt, dass er hohes [[Fieber#vocabulary]] hat. Er soll drei Tage im Bett [[bleiben#vocabulary]]. " +
+      "Außerdem hat sie ihm ein [[Medikament#vocabulary]] verschrieben. Er muss es dreimal am Tag [[nehmen#vocabulary]].",
     last: "Nach einer Woche war Jan wieder gesund.",
     distractors: ["Rücken", "Wartezeit", "untersuchen", "geblieben", "Husten"],
   }),
@@ -304,10 +304,10 @@ const grammarTexts: SeedItem[] = [
     title: "Der Umzug",
     first: "Im März ist Selin mit ihrer Familie in eine größere Wohnung umgezogen.",
     body:
-      "Die alte Wohnung war zu [[eng]] für vier Personen. Die neue Wohnung liegt in einem ruhigen [[Stadtteil]] am Stadtrand. " +
-      "Selin hat zwei Wochen lang viele [[Kartons]] gepackt. Am Samstag haben ihre Freunde beim Umzug [[geholfen]]. " +
-      "Leider gibt es im Haus keinen Aufzug, [[deshalb]] mussten sie alles in den vierten Stock tragen. " +
-      "Am Abend waren alle sehr [[müde]]. Selin hat für alle Pizza [[bestellt]]. Jetzt hat jedes Kind ein eigenes [[Zimmer]].",
+      "Die alte Wohnung war zu [[eng#vocabulary]] für vier Personen. Die neue Wohnung liegt in einem ruhigen [[Stadtteil#vocabulary]] am Stadtrand. " +
+      "Selin hat zwei Wochen lang viele [[Kartons#vocabulary]] gepackt. Am Samstag haben ihre Freunde beim Umzug [[geholfen#vocabulary]]. " +
+      "Leider gibt es im Haus keinen Aufzug, [[deshalb#konnektor]] mussten sie alles in den vierten Stock tragen. " +
+      "Am Abend waren alle sehr [[müde#vocabulary]]. Selin hat für alle Pizza [[bestellt#vocabulary]]. Jetzt hat jedes Kind ein eigenes [[Zimmer#vocabulary]].",
     last: "Die ganze Familie fühlt sich in der neuen Wohnung sehr wohl.",
     distractors: ["Treppe", "weil", "gewaschen", "breit", "Küchen"],
   }),
@@ -315,12 +315,12 @@ const grammarTexts: SeedItem[] = [
     title: "Eine Radtour",
     first: "Am letzten Wochenende haben Tom und Lisa eine Radtour an der Elbe gemacht.",
     body:
-      "Vorher haben sie den [[Wetterbericht]] gelesen, [[denn]] sie wollten nicht nass werden. " +
-      "Am Morgen war der Himmel noch [[bewölkt]], aber später hat die Sonne geschienen. " +
-      "Insgesamt sind sie ungefähr fünfzig [[Kilometer]] gefahren. Unterwegs haben sie in einem kleinen Dorf eine [[Pause]] gemacht. " +
+      "Vorher haben sie den [[Wetterbericht#vocabulary]] gelesen, [[denn#konnektor]] sie wollten nicht nass werden. " +
+      "Am Morgen war der Himmel noch [[bewölkt#vocabulary]], aber später hat die Sonne geschienen. " +
+      "Insgesamt sind sie ungefähr fünfzig [[Kilometer#vocabulary]] gefahren. Unterwegs haben sie in einem kleinen Dorf eine [[Pause#vocabulary]] gemacht. " +
       "Dort haben sie Kaffee getrunken und frischen Kuchen gegessen. Am Nachmittag war plötzlich ein Reifen kaputt. " +
-      "Zum Glück hatte Tom sein [[Werkzeug]] dabei, und er hat den Reifen schnell [[repariert]]. " +
-      "Am Abend waren beide [[erschöpft]], aber sehr zufrieden.",
+      "Zum Glück hatte Tom sein [[Werkzeug#vocabulary]] dabei, und er hat den Reifen schnell [[repariert#vocabulary]]. " +
+      "Am Abend waren beide [[erschöpft#vocabulary]], aber sehr zufrieden.",
     last: "Im Sommer wollen sie eine längere Tour machen.",
     distractors: ["weil", "Fahrkarte", "geschwommen", "teuer", "Brille"],
   }),
