@@ -220,6 +220,15 @@ kesinleşmez, `AWAITING_REVIEW` kalır ve öğretmen karar verir; net sonuç yin
 ekranında sonucun öğretmen tarafından inceleneceğini okur (`awaitingTeacher`, `waitingFor: "REVIEW"`).
 Seviye doğrulama sonucunda yerleştirme bayrağı yoktur, davranışı değişmedi.
 
+Öğrenciye analiz verilir, soru verilmez (2026-10-23): öğretmen sonucu yayınlayınca bitiş ekranı ve
+`/a/[token]/done/print` bölüm başına doğru/yanlış/boş sayılarını, kaçırılan ve iyi giden konuları
+(`student-analysis.ts`, boşluk konuları + `topicOf`, biçim konuları hariç) ve onaylı AI notunu gösterir;
+soru metni, seçenek, cevap ve anahtar hiçbir zaman yoktur. Seviyeyi göstermek öğretmenin kararıdır:
+`exam_results.level_shown` (yayınlarken kutu, sonradan değiştirilebilir, denetim kaydı); boşsa sınavın
+`resultVisibility` değeri belirler. Yazma ve konuşma "öğretmen değerlendirir" satırıdır. Panelde rapor
+sayfası iki kopya verir: öğrenci kopyası (`?copy=student`) ve soru soru öğretmen kopyası. AI not taslağı
+öğrencinin dilinde yazılır.
+
 ## AI puanlama
 
 `grading.ts`: kriter bazlı öneri (görev, tutarlılık, çeşitlilik, doğruluk; konuşmada
