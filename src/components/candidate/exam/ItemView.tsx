@@ -14,6 +14,7 @@ import { ABOVE_FOOTER } from "@/components/visual/footer-action";
 import { TaskExpectations } from "./TaskExpectations";
 import { TaskPromptCard } from "./TaskPromptCard";
 import { ClozeItem } from "./ClozeItem";
+import { ExamImage, TaskImages, pictureCaption } from "./ExamImage";
 import { Instruction, radioKeys, TASK_LEFT, TASK_RIGHT, TASK_SPLIT } from "./item-parts";
 import { useChipDrag } from "./use-chip-drag";
 
@@ -121,6 +122,7 @@ function ChoiceItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps)
   const multiple = item.content.multiple;
   const pick = multiple ? item.content.pick : undefined;
   const picked = new Set(answer.choiceIds ?? []);
+  const pictured = item.content.options.some((o) => o.image);
   const toggle = (id: string) => {
     if (multiple) {
       const before = answer.choiceIds ?? [];
@@ -156,9 +158,46 @@ function ChoiceItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps)
           </span>
         </p>
       ) : null}
-      <div role={multiple ? "group" : "radiogroup"} aria-labelledby={promptId} lang="de" className="mt-4 flex flex-col gap-2">
+      <div
+        role={multiple ? "group" : "radiogroup"}
+        aria-labelledby={promptId}
+        lang="de"
+        className={cn("mt-4", pictured ? cn("grid max-w-[720px] gap-3", item.content.options.length === 3 ? "grid-cols-3" : "grid-cols-2") : "flex flex-col gap-2")}
+      >
         {item.content.options.map((o, i) => {
           const on = picked.has(o.id);
+          if (pictured) {
+            const caption = o.image ? pictureCaption(o.text) : o.text;
+            return (
+              <button
+                key={o.id}
+                type="button"
+                role={multiple ? "checkbox" : "radio"}
+                aria-checked={on}
+                disabled={disabled}
+                onClick={() => toggle(o.id)}
+                className={cn(
+                  "flex min-w-0 flex-col gap-2 rounded-[14px] border bg-surface p-2 text-start text-[16px] transition-colors",
+                  on ? "border-accent bg-accent-soft text-ink ring-2 ring-accent" : "border-line text-ink hover:border-line-strong",
+                )}
+              >
+                {o.image ? <ExamImage sequence={item.sequence} image={o.image} /> : null}
+                <span className="flex items-start gap-2 px-1 pb-1">
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "flex size-6 shrink-0 items-center justify-center text-[12px] font-semibold",
+                      multiple ? "rounded-[5px]" : "rounded-full",
+                      on ? "bg-accent text-white" : "border border-line-strong text-muted",
+                    )}
+                  >
+                    {String.fromCharCode(65 + i)}
+                  </span>
+                  {caption ? <span lang="de">{caption}</span> : null}
+                </span>
+              </button>
+            );
+          }
           return (
             <button
               key={o.id}
@@ -580,6 +619,9 @@ function MatchingItem({ item, answer, onChange, disabled, hidePrompt }: ItemProp
   // "Anzeige A" says nothing the letter does not: the texts are in the reading
   // passage, so the list is left out and only a "0" target is explained.
   const bare = targets.every((r) => r.badge === "0" || /^(?:\p{L}+\s+)?[A-Z]$/u.test(r.label.trim()));
+  // Picture targets: the gallery above the rows carries the pictures and their text, so the tray and the picks show the letter only.
+  const gallery = targets.filter((r) => r.image);
+  const lettersOnly = bare || gallery.length > 0;
   const zero = targets.find((r) => r.badge === "0");
   const dragged = drag ? targets.find((r) => r.id === drag.key) : undefined;
   // Lettered targets wear the tone of their advert card; "0" and non-lettered targets stay neutral grey.
@@ -602,8 +644,24 @@ function MatchingItem({ item, answer, onChange, disabled, hidePrompt }: ItemProp
           {MATCH_INSTRUCTION}
         </p>
       )}
+      {gallery.length > 0 ? (
+        <div className="mt-4 grid max-w-[720px] grid-cols-2 gap-3 sm:grid-cols-3">
+          {gallery.map((r) => {
+            const caption = pictureCaption(r.text);
+            return (
+              <figure key={r.id} lang="de" className="m-0 min-w-0">
+                <div className="relative">
+                  <ExamImage sequence={item.sequence} image={r.image!} />
+                  <span className="absolute start-2 top-2 flex size-8 items-center justify-center rounded-full bg-white text-[15px] font-semibold text-ink shadow-sm">{r.badge}</span>
+                </div>
+                {caption ? <figcaption className="mt-1.5 text-[14px] text-ink-2">{caption}</figcaption> : null}
+              </figure>
+            );
+          })}
+        </div>
+      ) : null}
       {/* Stays under the page header while the rows scroll, so every row can take a drop. */}
-      <div aria-hidden data-match-tray lang={bare ? undefined : "de"} dir={bare ? "ltr" : undefined} className="sticky top-14 z-10 -mx-1 mt-3 flex flex-wrap gap-2 bg-canvas px-1 py-2">
+      <div aria-hidden data-match-tray lang={lettersOnly ? undefined : "de"} dir={lettersOnly ? "ltr" : undefined} className="sticky top-14 z-10 -mx-1 mt-3 flex flex-wrap gap-2 bg-canvas px-1 py-2">
         {targets.map((r) => {
           const elsewhere = used.has(r.id);
           const tone = toneOf(r);
@@ -613,20 +671,20 @@ function MatchingItem({ item, answer, onChange, disabled, hidePrompt }: ItemProp
               type="button"
               tabIndex={-1}
               disabled={disabled}
-              title={r.label}
+              title={r.image?.alt ?? r.label}
               onPointerDown={(e) => onPointerDown(e, r.id)}
               onClick={() => {
                 if (!isDragClick()) clickTarget(r.id);
               }}
               className={cn(
                 "flex min-h-9 max-w-full cursor-grab touch-none select-none items-start gap-2 rounded-[8px] border px-2.5 py-1.5 text-start text-[14px] leading-[1.45] text-ink hover:border-accent",
-                bare ? (tone ? tone.chip : "border-line bg-cream") : "bg-surface",
-                elsewhere ? (bare ? "border-dashed opacity-60" : "border-dashed border-line-strong opacity-60") : !bare && "border-line-strong",
+                lettersOnly ? (tone ? tone.chip : "border-line bg-cream") : "bg-surface",
+                elsewhere ? (lettersOnly ? "border-dashed opacity-60" : "border-dashed border-line-strong opacity-60") : !lettersOnly && "border-line-strong",
                 drag?.key === r.id && "opacity-40",
               )}
             >
-              {bare ? letterDisc(r, "size-7") : <span className="font-semibold">{r.badge}</span>}
-              {bare ? null : (
+              {lettersOnly ? letterDisc(r, "size-7") : <span className="font-semibold">{r.badge}</span>}
+              {lettersOnly ? null : (
                 <span lang="de" className="text-ink-2">
                   {r.label}
                 </span>
@@ -636,7 +694,7 @@ function MatchingItem({ item, answer, onChange, disabled, hidePrompt }: ItemProp
         })}
       </div>
       {/* The tray above already lists every target in full, so no second list. */}
-      {bare && zero ? (
+      {lettersOnly && zero ? (
         <p lang="de" className="mt-3 text-[14px] text-ink-2">
           0 = {zero.label}
         </p>
@@ -675,8 +733,8 @@ function MatchingItem({ item, answer, onChange, disabled, hidePrompt }: ItemProp
                       type="button"
                       role="radio"
                       aria-checked={on}
-                      aria-label={`${r.badge}: ${r.label}${elsewhere ? `, ${ti("matchUsedElsewhere")}` : ""}`}
-                      title={r.label}
+                      aria-label={`${r.badge}: ${r.image?.alt ?? r.label}${elsewhere ? `, ${ti("matchUsedElsewhere")}` : ""}`}
+                      title={r.image?.alt ?? r.label}
                       tabIndex={on || (!chosen && i === 0) ? 0 : -1}
                       disabled={disabled}
                       onKeyDown={radioKeys}
@@ -700,8 +758,8 @@ function MatchingItem({ item, answer, onChange, disabled, hidePrompt }: ItemProp
               {/* One line, reserved even when empty, so a pick never moves the rows below. */}
               <div className="mt-2 flex h-6 items-center justify-between gap-3">
                 <p lang="de" title={chosen?.label} className="flex min-w-0 items-center gap-2 truncate text-[14px] text-ink-2">
-                  {chosen && bare ? letterDisc(chosen, "size-6") : null}
-                  {chosen && !bare ? (
+                  {chosen && lettersOnly ? letterDisc(chosen, "size-6") : null}
+                  {chosen && !lettersOnly ? (
                     <>
                       <span aria-hidden>→ </span>
                       {chosen.label}
@@ -779,6 +837,7 @@ export function WritingItem({ item, answer, onChange, disabled }: ItemProps) {
   return (
     <div className={TASK_SPLIT}>
       <div className={TASK_LEFT}>
+        <TaskImages sequence={item.sequence} images={item.content.images} />
         <TaskPromptCard text={item.prompt} id={promptId} points={item.content.studentPoints} pointsId={pointsId} />
         <TaskExpectations id={expectId} section="WRITING" minWords={minWords} maxWords={maxWords} />
       </div>

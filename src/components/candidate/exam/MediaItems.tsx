@@ -15,6 +15,7 @@ import { TASK_LEFT, TASK_RIGHT, TASK_SPLIT } from "./item-parts";
 import { isGateOpen, markRevealed, playButtonMode, readRevealed } from "./listening-gate";
 import { sessionStore } from "./pending-answer";
 import { TaskExpectations } from "./TaskExpectations";
+import { TaskImages } from "./ExamImage";
 import { TaskPromptCard } from "./TaskPromptCard";
 
 type PlayState = "IDLE" | "LOADING" | "PLAYING" | "FAILED";
@@ -467,6 +468,7 @@ export function SpeakingItem({
   return (
     <div className={TASK_SPLIT}>
       <div className={TASK_LEFT}>
+        <TaskImages sequence={item.sequence} images={content.images} />
         <TaskPromptCard text={item.prompt} points={content.studentPoints} />
         <TaskExpectations section="SPEAKING" thinkSeconds={content.thinkSeconds} answerSeconds={content.answerSeconds} />
       </div>

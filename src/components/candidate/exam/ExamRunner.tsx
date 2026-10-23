@@ -10,6 +10,7 @@ import { CheatWarning } from "@/components/candidate/proctor/CheatWarning";
 import { Bookmark } from "lucide-react";
 import { Illustration } from "@/components/visual/illustrations";
 import { RECOVER_PICTURE } from "@/components/candidate/proctor/block-pictures";
+import { ImageSrcContext } from "@/components/candidate/exam/ExamImage";
 import { ItemView } from "@/components/candidate/exam/ItemView";
 import { ListeningPlayer, SpeakingItem } from "@/components/candidate/exam/MediaItems";
 import { answerProgress, progressState } from "@/components/candidate/exam/answer-progress";
@@ -678,6 +679,7 @@ export function ExamRunner({
               : t("question", { n: cur.answered + 1 });
 
   return (
+    <ImageSrcContext.Provider value={{ token, position: cur.position }}>
     <div className="relative">
       <ExamTopBar
         inQuestion={state.step === "ITEM"}
@@ -897,6 +899,7 @@ export function ExamRunner({
 
       {proctored && engine?.cameraStream && item?.content.kind !== "SPEAKING" ? <SelfView stream={engine.cameraStream} /> : null}
     </div>
+    </ImageSrcContext.Provider>
   );
 }
 
