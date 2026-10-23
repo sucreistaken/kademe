@@ -394,13 +394,13 @@ const grammarTexts: SeedItem[] = [
     body:
       "Für die Bewohner bedeutet das, [[dass#konnektor]] sie für jede Kleinigkeit ins nächste größere Dorf fahren müssen. " +
       "Besonders schwer haben es ältere Menschen, [[die/welche#relativsatz]] kein Auto besitzen. " +
-      "In einem Dorf im Allgäu wollten die Einwohner sich [[damit#praepositionaladverb]] nicht abfinden. " +
+      "In einem Dorf im Allgäu wollten die Einwohner sich [[damit/aber/jedoch/doch#praepositionaladverb]] nicht abfinden. " +
       "Sie gründeten eine Genossenschaft, [[der/welcher#relativsatz]] inzwischen mehr als zweihundert Mitglieder angehören. " +
       "Der Laden wird [[von/durch#passiv.praesens]] Freiwilligen geführt, die abwechselnd hinter der Theke stehen. " +
       "Zusätzlich [[gibt#praesens.vokalwechsel]] es einen kleinen Tisch, [[an/bei#praeposition]] dem man Kaffee trinken kann. " +
-      "Anfangs zweifelten viele daran, [[ob#nebensatz]] sich ein solcher Laden überhaupt rechnen würde. " +
+      "Anfangs zweifelten viele daran, [[ob/dass#nebensatz]] sich ein solcher Laden überhaupt rechnen würde. " +
       "Mittlerweile arbeitet er [[nicht#negation]] nur kostendeckend, sondern erwirtschaftet sogar einen kleinen Überschuss. " +
-      "Der Überschuss [[wird#passiv.praesens]] in die Dorfgemeinschaft investiert, zum Beispiel in einen Bus für Fahrten zum Arzt.",
+      "Der Überschuss [[wird/wurde#passiv.praesens]] in die Dorfgemeinschaft investiert, zum Beispiel in einen Bus für Fahrten zum Arzt.",
     last: "Andere Gemeinden haben das Modell inzwischen übernommen.",
     note: "dass-Satz nach „bedeutet“ (g1), Relativpronomen im Nominativ (g2), Präpositionaladverb bei „sich abfinden mit“ (g3), Relativpronomen im Dativ bei „angehören“ (g4), Passiv mit Urheber (g5), es gibt (g6), Präposition im Relativsatz (g7), ob-Satz nach „zweifeln daran“ (g8), nicht nur ... sondern auch (g9), Passiv Präsens (g10).",
   }),
@@ -429,8 +429,8 @@ const grammarTexts: SeedItem[] = [
       "Der Effekt war [[umso/desto#konnektor.zweiteilig]] stärker, je mehr Tiefschlaf die Teilnehmenden hatten. " +
       "Daraus [[lässt#passiversatz]] sich allerdings nicht schließen, dass man den Schlaf beliebig durch Pausen ersetzen kann. " +
       "Forschende warnen [[davor#praepositionaladverb]], die Ergebnisse vorschnell zu verallgemeinern. " +
-      "Die meisten Experimente wurden an jungen, gesunden Erwachsenen durchgeführt, [[weshalb/weswegen#konnektor]] offen bleibt, ob sie auch für Ältere gelten. " +
-      "Offen ist zudem, [[ob/inwieweit/inwiefern#nebensatz]] ein kurzer Mittagsschlaf einen Teil der Nachtruhe ersetzen kann. " +
+      "Die meisten Experimente wurden an jungen, gesunden Erwachsenen durchgeführt, [[weshalb/weswegen/sodass/wodurch/wobei/womit#konnektor]] offen bleibt, ob sie auch für Ältere gelten. " +
+      "Offen ist zudem, [[ob/inwieweit/inwiefern/wieweit#nebensatz]] ein kurzer Mittagsschlaf einen Teil der Nachtruhe ersetzen kann. " +
       "Wer unter Schlafmangel leidet, sollte [[nicht#negation]] zögern, ärztlichen Rat einzuholen. " +
       "Entscheidend ist ohnehin weniger die Dauer [[als#konnektor.modal]] die Regelmäßigkeit. " +
       "Ein fester Rhythmus trägt [[dazu#praepositionaladverb]] bei, dass der Körper zur Ruhe kommt.",
@@ -862,11 +862,11 @@ const readingItems: SeedItem[] = [
   rLaufen.jaNein("detail", "MID",
     [
       ["Laut Text lässt sich das Laufen leichter beginnen als viele andere Sportarten.", "R"],
-      ["Der Text nennt, wie viele Menschen in Deutschland regelmäßig laufen.", "NG"],
+      ["In Deutschland läuft inzwischen fast jeder Fünfte regelmäßig.", "NG"],
       ["Sportmediziner bewerten die Entwicklung des Laufens durchweg positiv.", "F"],
       ["Die Einrichtungen, die Städte für Läufer schaffen, werden von allen Anwohnern begrüßt.", "F"],
     ],
-    "1 Ja: Absatz 3, kaum Ausrüstung, keine Mitgliedschaft, kein fester Termin. 2 nichts dazu: Es gibt keine Zahlen zu den Läuferinnen und Läufern. 3 Nein: Absatz 7, die Mediziner haben „gemischte Gefühle“. 4 Nein: Absatz 9, „nicht überall stößt das auf Begeisterung“, Anwohner beschweren sich."),
+    "1 Ja: Absatz 3, kaum Ausrüstung, keine Mitgliedschaft, kein fester Termin. 2 nichts dazu: Zahlen zur Verbreitung des Laufens gibt der Text nicht. 3 Nein: Absatz 7, die Mediziner haben „gemischte Gefühle“. 4 Nein: Absatz 9, „nicht überall stößt das auf Begeisterung“, Anwohner beschweren sich."),
 
   // Biber: insertion of five sentences (5 of 7), then Ja / Nein
   rBiber.match("structure", "HARD",
@@ -888,9 +888,9 @@ const readingItems: SeedItem[] = [
       ["Der Biber lebt in Deutschland bis heute nur in abgelegenen Flusstälern.", "F"],
       ["Einige Gemeinden gleichen Schäden aus, die der Biber bei Landwirten verursacht.", "R"],
       ["Man kann den Wasserstand an einem Damm senken, ohne dass der Biber seinen Bau verlässt.", "R"],
-      ["Der Text sagt, wie viele Biber heute in deutschen Städten leben.", "NG"],
+      ["In deutschen Städten leben heute mehrere tausend Biber.", "NG"],
     ],
-    "1 Nein: Absatz 1, die Tiere besiedeln auch die Ränder großer Städte. 2 Ja: Absatz 2, mehrere Gemeinden zahlen Entschädigungen an Landwirte. 3 Ja: Absatz 4, ein Rohr durch den Damm senkt den Wasserstand, ohne dass der Biber seinen Bau aufgibt. 4 nichts dazu: Genannt wird nur die Zahl für ganz Deutschland."),
+    "1 Nein: Absatz 1, die Tiere besiedeln auch die Ränder großer Städte. 2 Ja: Absatz 2, mehrere Gemeinden zahlen Entschädigungen an Landwirte. 3 Ja: Absatz 4, ein Rohr durch den Damm senkt den Wasserstand, ohne dass der Biber seinen Bau aufgibt. 4 nichts dazu: Genannt wird nur die Zahl für ganz Deutschland, nicht die für Städte."),
 
   // Dialekt: insertion of five sentences (5 of 7), then Ja / Nein
   rDialekt.match("structure", "HARD",
@@ -909,7 +909,7 @@ const readingItems: SeedItem[] = [
     "[1] „Diese Prognose“ greift die Voraussage auf; „Statt zu verschwinden“ nennt, was stattdessen geschieht. [2] „Sie“ sind die jungen Leute, „beiden Sprachformen“ im Folgesatz sind Standardsprache und Mundart. [3] „früher“ steht im Gegensatz zu „Studien belegen inzwischen“. [4] „Sie setzen die Mundart gezielt ein“ gehört zu Radiosendern, Zeitungen und Unternehmen. [5] „Für sie“ bezieht sich auf die kleinen Mundarten. Die Zahl der Ortsdialekte und der Nord-Süd-Unterschied passen an keine Stelle."),
   rDialekt.jaNein("detail", "MID",
     [
-      ["Der Text nennt den Anteil der Jugendlichen, die regelmäßig Dialekt sprechen.", "NG"],
+      ["Mehr als die Hälfte der Jugendlichen spricht regelmäßig Dialekt.", "NG"],
       ["Kinder, die mit einer Mundart aufwachsen, drücken sich laut Text meist unsicherer aus.", "F"],
       ["Nach Ansicht der Skeptiker sind nicht alle Dialekte gleichermaßen in ihrem Bestand gesichert.", "R"],
     ],
@@ -1126,7 +1126,7 @@ const L_AUSGRABUNG = clip("ausgrabung-tabelle", "Interview: Eine Ausgrabung am F
 );
 
 // Clip 8: lecture with a table to complete, two plays.
-const L_WOHNFORMEN = clip("wohnformen-tabelle", "Vortrag: Gemeinsam wohnen", "Wohnen und Gesellschaft",
+const L_WOHNFORMEN = clip("wohnformen-tabelle-v2", "Vortrag: Gemeinsam wohnen", "Wohnen und Gesellschaft",
   [
     { label: "Dozentin", voice: "A" },
     { label: "Student", voice: "B" },
@@ -1136,7 +1136,7 @@ const L_WOHNFORMEN = clip("wohnformen-tabelle", "Vortrag: Gemeinsam wohnen", "Wo
     "Dozentin: Beginnen wir mit der Wohngemeinschaft. Etwa neun Prozent der Befragten leben in einer Wohngemeinschaft. Der wichtigste Grund ist nach wie vor das Geld, also die Miete. Als größten Nachteil nannten die meisten, ach, wie soll ich sagen, den fehlenden Rückzugsraum.",
     "Student: Entschuldigung, wie viele Haushalte haben Sie denn insgesamt befragt?",
     "Dozentin: Gute Frage. Es waren zweitausendvierhundert Haushalte, ich wiederhole: zweitausendvierhundert. Die Zahl ist wichtig, weil sie zeigt, dass die Ergebnisse recht verlässlich sind.",
-    "Dozentin: Die zweite Form ist das Mehrgenerationenhaus. Hier leben nur etwa drei Prozent, aber die Zufriedenheit ist am höchsten. Der Hauptvorteil ist die gegenseitige Hilfe: Die Älteren passen auf die Kinder auf, die Jüngeren erledigen die Einkäufe. Das größte Problem ist, nein, Entschuldigung, ich verwechsle das gerade mit der Wohngemeinschaft: Über das Bad haben vor allem die Wohngemeinschaften geklagt. Im Mehrgenerationenhaus ging es hauptsächlich um den Lärm.",
+    "Dozentin: Die zweite Form ist das Mehrgenerationenhaus. Hier leben nur etwa drei Prozent, aber die Zufriedenheit ist am höchsten. Der Hauptvorteil ist die gegenseitige Hilfe: Die Älteren passen auf die Kinder auf, die Jüngeren erledigen die Einkäufe. Das größte Problem sind die Kosten, nein, Entschuldigung, ich korrigiere mich: Im Mehrgenerationenhaus ging es hauptsächlich um den Lärm.",
     "Dozentin: Als Drittes die Hausgemeinschaft mit Gemeinschaftsräumen. Jeder hat seine eigene Wohnung, aber es gibt einen gemeinsamen Garten und eine Werkstatt. Das sind fünf Prozent der Befragten. Der Hauptvorteil: Man hat Gesellschaft, wenn man sie will, und Ruhe, wenn man sie braucht. Das Hauptproblem sind die Wartelisten, im Durchschnitt zwei Jahre.",
   ],
 );
@@ -1184,7 +1184,7 @@ const L_TOURISMUS = clip("touristen-diskussion", "Radiodiskussion: Wohin mit den
 );
 
 // Clip 11: three-voice discussion, played once.
-const L_PFLEGE = clip("pflege-technik-diskussion", "Gesprächsrunde: Technik in der häuslichen Pflege", "Gesundheit und Pflege",
+const L_PFLEGE = clip("pflege-technik-diskussion-v2", "Gesprächsrunde: Technik in der häuslichen Pflege", "Gesundheit und Pflege",
   [
     { label: "Moderator", voice: "B" },
     { label: "Frau Dr. Roth", voice: "A" },
@@ -1197,17 +1197,17 @@ const L_PFLEGE = clip("pflege-technik-diskussion", "Gesprächsrunde: Technik in 
     "Frau Dr. Roth: Das ist ein typisches Problem. Technik funktioniert dann gut, wenn sie in einen menschlichen Ablauf eingebettet ist. Ein Armband ersetzt keinen Besuch.",
     "Moderator: Herr Klein, hat das Armband Ihre Besuche denn ersetzt?",
     "Herr Klein: Nein, im Gegenteil! Ich komme eher öfter, weil ich weniger Angst habe. Was ich aber auch erlebt habe: Eine Nachbarin hat sich eine Kamera ins Wohnzimmer stellen lassen. Die wollte das gar nicht, die Kinder haben darauf bestanden. Da kippt es für mich. Technik, die man aus Sorge installiert, aber ohne Einwilligung, das geht nicht.",
-    "Frau Dr. Roth: Da bin ich ganz bei Ihnen. Einwilligung ist der entscheidende Punkt. Wer die Technik nicht will, sollte sie nicht bekommen, auch nicht zu seinem Besten. Ausnahmen gibt es, wenn jemand nicht mehr selbst entscheiden kann, aber dann muss eine rechtliche Betreuung entscheiden und nicht die Familie allein.",
+    "Frau Dr. Roth: Da bin ich ganz bei Ihnen. Einwilligung ist der entscheidende Punkt. Wer die Technik nicht will, sollte sie nicht bekommen, auch nicht zu seinem Besten.",
     "Moderator: Gibt es denn Technik, die Sie uneingeschränkt empfehlen?",
     "Frau Dr. Roth: Uneingeschränkt ist ein großes Wort. Videosprechstunden zeigen gute Ergebnisse, vor allem auf dem Land, wo der nächste Hausarzt dreißig Kilometer entfernt ist. Aber auch da gilt: Wer schlecht hört oder sieht, hat davon wenig.",
-    "Herr Klein: Genau, und wer nie ein Tablet in der Hand hatte, braucht jemanden, der es zeigt. Dafür bräuchte es mehr Hilfe von den Kassen, nicht nur für das Gerät, sondern auch für die Einweisung.",
+    "Herr Klein: Und noch etwas: Wer nie ein Tablet in der Hand hatte, braucht jemanden, der es zeigt. Dafür bräuchte es mehr Hilfe von den Kassen, nicht nur für das Gerät, sondern auch für die Einweisung.",
     "Moderator: Das ist ein gutes Schlusswort. Danke Ihnen beiden.",
   ],
   1,
 );
 
 // Clip 12: three-voice discussion with a moderator and two guests.
-const L_TAFEL = clip("lebensmittel-diskussion", "Diskussion: Genießbares abgeben statt wegwerfen", "Ernährung und Umwelt",
+const L_TAFEL = clip("lebensmittel-diskussion-v2", "Diskussion: Genießbares abgeben statt wegwerfen", "Ernährung und Umwelt",
   [
     { label: "Moderator", voice: "B" },
     { label: "Frau Lang", voice: "A" },
@@ -1218,7 +1218,7 @@ const L_TAFEL = clip("lebensmittel-diskussion", "Diskussion: Genießbares abgebe
     "Frau Lang: Grundsätzlich ja, aber mit Fragezeichen. Wir bekommen schon heute viel von den Märkten, und wir sagen nicht Nein. Das Problem ist die Logistik. Wir haben ehrenamtliche Fahrer und ein Auto, und das nur an drei Tagen. Wenn plötzlich jeder Markt täglich Ware abgibt, brechen wir zusammen.",
     "Herr Voss: Ich verstehe das, und ich will das Gesetz nicht schlechtreden. Aber wir geben schon ab, was wir können. Was übrig bleibt, ist oft gar nicht mehr verwertbar, zum Beispiel Salat, der einen Tag zu lang in der Kühlung stand. Und wenn wir verpflichtet werden, haften wir, falls jemand krank wird. Das ist es, was mir Sorgen macht.",
     "Frau Lang: Da muss ich kurz einhaken: Die Haftung ist gesetzlich geregelt. Wer Lebensmittel in gutem Glauben abgibt, haftet nicht. Das ist leider eines dieser Gerüchte, die sich hartnäckig halten.",
-    "Herr Voss: Gut, das wusste ich nicht so genau. Dann bleibt trotzdem die Frage der Kosten. Jemand muss die Ware sortieren, und das kostet Arbeitszeit, nicht viel, aber bei dünnen Gewinnspannen zählt jeder Euro.",
+    "Herr Voss: Gut, das wusste ich nicht so genau. Dann bleibt trotzdem die Frage der Kosten. Jemand muss die Ware sortieren, und das kostet Arbeitszeit. Wenn die Pflicht kommt, brauchen gerade kleine Märkte einen Ausgleich dafür, sonst schaffen sie das nicht.",
     "Moderator: Gibt es einen Weg, den beide mitgehen könnten?",
     "Frau Lang: Ich könnte mir vorstellen, dass die Städte uns Fahrzeuge und Kühlräume bezahlen. Dann wäre die Abgabe für den Handel kein Problem mehr, und wir könnten die Ware auch annehmen.",
     "Herr Voss: Und ich würde als Gegenleistung gern steuerlich entlastet werden, wenn ich spende. Das wäre ein Anreiz statt einer Pflicht. Pflicht und Strafe, das halte ich für den falschen Ton.",
@@ -1406,9 +1406,9 @@ const listeningItems: SeedItem[] = [
       ["siebenundvierzig", "47"],
       ["Tonkrug", "Krug"],
       ["zwölf", "12"],
-      ["Frühjahr", "Frühling"],
+      ["Frühjahr", "Frühling", "Kreismuseum", "Museum"],
     ],
-    "g1 „zwischen elfhundertneunzig und zwölfhundertzehn“ (also 1210). g2 „etwa drei Jahre“ für die Konservierung. g3 „siebenundvierzig Silbermünzen“ (zweimal genannt). g4 „in einem kleinen Tonkrug“. g5 Selbstkorrektur: erst vierzehn, dann „nein, zwölf Zentimeter“, richtig ist zwölf. g6 „im Frühjahr im Kreismuseum“."),
+    "g1 „zwischen elfhundertneunzig und zwölfhundertzehn“ (also 1210). g2 „etwa drei Jahre“ für die Konservierung. g3 „siebenundvierzig Silbermünzen“ (zweimal genannt). g4 „in einem kleinen Tonkrug“. g5 Selbstkorrektur: erst vierzehn, dann „nein, zwölf Zentimeter“, richtig ist zwölf. g6 „im Frühjahr im Kreismuseum“: Jahreszeit und Ort stehen direkt hintereinander, beide Wörter passen in die Zelle und werden akzeptiert."),
   lAusgrabung.choice("inference", "HARD", "Was schließt Frau Seidel aus dem Muster auf dem Kamm?",
     "Der Besitzer kam vermutlich von weit her, die Verbindungen reichten weit.",
     [
@@ -1436,7 +1436,7 @@ const listeningItems: SeedItem[] = [
       ["5", "fünf"],
       ["2", "zwei"],
     ],
-    "g1 2400 Haushalte (wiederholt). g2 „das Geld, also die Miete“. g3 „den fehlenden Rückzugsraum“. g4 etwa drei Prozent. g5 „gegenseitige Hilfe“. g6 Selbstkorrektur: Das Bad nannten die Wohngemeinschaften, im Mehrgenerationenhaus ging es um den Lärm. g7 fünf Prozent. g8 Wartelisten von im Durchschnitt zwei Jahren."),
+    "g1 2400 Haushalte (wiederholt). g2 „das Geld, also die Miete“. g3 „den fehlenden Rückzugsraum“. g4 etwa drei Prozent. g5 „gegenseitige Hilfe“. g6 Selbstkorrektur: erst „die Kosten“, dann „ich korrigiere mich“: Im Mehrgenerationenhaus ging es um den Lärm. g7 fünf Prozent. g8 Wartelisten von im Durchschnitt zwei Jahren."),
   lWohnformen.choice("detail", "MID", "In welcher Wohnform ist die Zufriedenheit der Befragten laut der Dozentin am höchsten?",
     "im Mehrgenerationenhaus, auch wenn dort nur sehr wenige Befragte leben",
     [
@@ -1456,12 +1456,12 @@ const listeningItems: SeedItem[] = [
     [
       ["fünf", "5"],
       ["zwanzig", "20"],
-      ["nussig"],
+      ["nussig", "süßlich"],
       ["zwölf", "12"],
       ["halb"],
       ["Hofladen"],
     ],
-    "g1 Selbstkorrektur: erst vier, dann „nein, fünf“, richtig ist fünf. g2 „etwa zwanzig Prozent mehr“. g3 „nussig“. g4 „zwölf Stunden ruhen“. g5 „nur etwa halb so hoch“. g6 „nur in meinem Hofladen“."),
+    "g1 Selbstkorrektur: erst vier, dann „nein, fünf“, richtig ist fünf. g2 „etwa zwanzig Prozent mehr“. g3 „nussig, fast ein bisschen süßlich“, beide Wörter werden akzeptiert. g4 „zwölf Stunden ruhen“. g5 „nur etwa halb so hoch“. g6 „nur in meinem Hofladen“."),
   lGetreide.choice("attitude", "MID", "Was sagt Frau Kern über ihre Kundschaft?",
     "Viele Kunden kommen gezielt und nehmen dafür weite Wege in Kauf.",
     [
@@ -1497,7 +1497,7 @@ const listeningItems: SeedItem[] = [
     "Wer vertritt welche Ansicht?",
     [
       "Ein Notrufarmband kann Angehörige beruhigen.",
-      "Technik darf nur mit Einwilligung der betroffenen Person eingesetzt werden.",
+      "Technik sollte grundsätzlich nur mit Einwilligung der betroffenen Person eingesetzt werden.",
       "Geräte sollten den persönlichen Besuch bei Pflegebedürftigen weitgehend ersetzen.",
       "Videosprechstunden sind auf dem Land besonders nützlich.",
     ],
@@ -1524,15 +1524,15 @@ const listeningItems: SeedItem[] = [
     ],
     ["Frau Lang", "Herr Voss", "beide", "keiner von beiden"],
     [1, 2, 4, 3],
-    "1 Frau Lang: Die Haftung sei gesetzlich geregelt, Herr Voss kannte das nicht genau. 2 Herr Voss: „Anreiz statt einer Pflicht“, steuerliche Entlastung. 3 keiner: Herr Voss hält „Pflicht und Strafe“ für den falschen Ton, Frau Lang fordert eine Pflicht, von Strafen spricht sie nicht. 4 beide: Frau Lang nennt die Logistik, Herr Voss die Kosten und die Haftungsangst."),
-  lTafel.choice("attitude", "MID", "Wie reagiert Herr Voss, als Frau Lang die Haftung anspricht?",
-    "Er räumt ein, die Rechtslage nicht genau gekannt zu haben, und nennt einen anderen Einwand.",
+    "1 Frau Lang: Die Haftung sei gesetzlich geregelt, Herr Voss kannte das nicht genau. 2 Herr Voss: „Anreiz statt einer Pflicht“, steuerliche Entlastung. 3 keiner: Herr Voss hält „Pflicht und Strafe“ für den falschen Ton, Frau Lang fordert eine Pflicht, von Strafen spricht sie nicht. 4 beide: Frau Lang nennt die Logistik („brechen wir zusammen“), Herr Voss verlangt für kleine Märkte einen Ausgleich, „sonst schaffen sie das nicht“."),
+  lTafel.choice("attitude", "MID", "Wie begründet Frau Lang, dass sie eine Pflicht für nötig hält?",
+    "Ohne Pflicht würden nur die großen Märkte mitmachen und die kleinen nicht.",
     [
-      "Er bestreitet ihre Aussage energisch und besteht darauf, dass seine Sorge völlig berechtigt ist.",
-      "Er stimmt zu und zieht daraufhin alle seine Bedenken gegen das Gesetz zurück.",
-      "Er verweist auf ein Urteil, das die Haftung der Supermärkte bestätigt hat.",
-    ], 1,
-    "„Gut, das wusste ich nicht so genau. Dann bleibt trotzdem die Frage der Kosten.“ Er widerspricht nicht, gibt aber seine Position nicht ganz auf; ein Urteil erwähnt niemand."),
+      "Ohne Pflicht würden die Märkte ihre Ware überhaupt nicht mehr an Tafeln abgeben.",
+      "Ohne Pflicht fehlten den Tafeln die Fahrer, die Ware abzuholen, in jedem Fall.",
+      "Ohne Pflicht blieben die Preise im Handel hoch und die Tafeln ohne Kundschaft.",
+    ], 0,
+    "Letzter Beitrag von Frau Lang: „Dann machen die Großen mit, die Kleinen nicht, und wir bekommen am Ende gar nichts zusammen.“ Dass die Märkte gar nichts mehr abgeben, behauptet sie nicht, sie bekommen ja schon heute viel."),
 ];
 
 // ---------------------------------------------------------------- WRITING
@@ -1573,7 +1573,7 @@ const EMAIL_NOTE =
   "Goethe C1 Schreiben Teil 2: E-Mail von etwa 120 Wörtern, formell oder halbformell je nach Empfänger (siehe Register). Wichtig sind alle Leitpunkte, ein angemessenes Register (Anrede, Gruß, höfliche Distanz) und ein klares Anliegen.";
 
 const TABLE_NOTE =
-  "Aufgabe mit Tabelle (Muster ÖSD C1 und TestDaF): Daten beschreiben, Gründe und Folgen erörtern, mit dem eigenen Land vergleichen und Stellung nehmen. Bewertet werden Aufgabenerfüllung (alle Punkte, treffende Wiedergabe der Daten), Kohärenz, Wortschatz für Veränderungen und Vergleiche sowie Register.";
+  "Aufgabe mit Tabelle (Muster ÖSD C1 und TestDaF): Daten beschreiben, Gründe und Folgen erörtern, mit Ihrer Stadt oder Region vergleichen und Stellung nehmen. Bewertet werden Aufgabenerfüllung (alle Punkte, treffende Wiedergabe der Daten), Kohärenz, Wortschatz für Veränderungen und Vergleiche sowie Register.";
 
 /** A chart description task: the same as `write`, with one original chart shown above the task. */
 function writeChart(
@@ -1776,7 +1776,7 @@ const writingItems: SeedItem[] = [
       "- Diskutieren Sie, ob der Rückgang gedruckter Medien ein Problem ist.\n" +
       "- Beschreiben Sie, wie sich die Mediennutzung in Ihrem Umfeld verändert hat.",
     [
-      "fasst die Kernaussagen zusammen: Fernsehen sinkt (148 auf 101 Minuten), Streaming steigt stark (31 auf 96), Musik und Podcasts steigen (64 auf 88), gedruckte Zeitung und Bücher sinken leicht oder deutlich (22 auf 9, 19 auf 17)",
+      "fasst die Kernaussagen zusammen: Fernsehen sinkt (148 auf 101 Minuten), Streaming steigt stark (31 auf 96), Musik und Podcasts steigen (64 auf 88), gedruckte Zeitung sinkt deutlich (22 auf 9), Bücher nur leicht (19 auf 17)",
       "nennt plausible Gründe (z. B. Smartphone, Streaming-Angebote, mobile Nutzung, veränderte Gewohnheiten)",
       "diskutiert den Rückgang gedruckter Medien mit Argumenten dafür und dagegen",
       "bezieht die Beobachtungen im eigenen Umfeld ein; passende Anrede und Schlussformel",
@@ -1797,7 +1797,7 @@ const writingItems: SeedItem[] = [
       "- Schlagen Sie Maßnahmen vor, um die Belastung in den Spitzenmonaten zu verringern oder die schwächeren Monate zu stärken.\n" +
       "- Verwenden Sie eine passende Anrede und Schlussformel.",
     [
-      "beschreibt die Verteilung: Spitze im Juli und August (118 und 131 Tausend), zweite Spitze im Dezember (104), Tiefpunkte im April und November (38 und 31)",
+      "beschreibt die Verteilung: Spitze im Juli und August (118 und 131 Tausend), zweite, winterliche Spitze von Dezember bis Februar (104, 82, 95), Tiefpunkte im April und November (38 und 31)",
       "vergleicht Höchst- und Tiefstwert (131 gegenüber 31, also rund das Vierfache)",
       "schildert Folgen der Spitzen (z. B. Verkehr, Lärm, Wohnungsmarkt) und der schwachen Monate (z. B. leere Betriebe, unsichere Einkommen)",
       "konkrete, begründete Maßnahmen (z. B. Angebote für Frühjahr und Herbst, Lenkung der Besucher, Preise nach Saison); formelle Anrede und Schlussformel",
@@ -1841,7 +1841,7 @@ function speak(
 const TALK_NOTE =
   "Goethe C1 Sprechen Teil 1: Vortrag von etwa vier bis fünf Minuten. Bewertet werden Aufgabenerfüllung, Kohärenz und Flüssigkeit, Wortschatz, Strukturen und Aussprache.";
 const HANDOUT_NOTE =
-  "Muster ÖSD C1 Sprechen 3 und TestDaF: Vortrag auf der Grundlage eines Handouts mit mehreren Quellen. Bewertet werden Zusammenfassung der Quellen, Stellungnahme, Vergleich mit dem eigenen Land, Gliederung, Wortschatz und Strukturen.";
+  "Muster ÖSD C1 Sprechen 3 und TestDaF: Vortrag auf der Grundlage eines Handouts mit mehreren Quellen. Bewertet werden Zusammenfassung der Quellen, Stellungnahme, Vergleich mit der eigenen Stadt oder Region, Gliederung, Wortschatz und Strukturen.";
 const DISCUSS_NOTE =
   "Goethe C1 Sprechen Teil 2 (als aufgezeichneter Gesprächsbeitrag): auf einen Impuls reagieren, Position beziehen, Gegenargumente aufgreifen. Bewertet wird zusätzlich die Fähigkeit, auf andere Meinungen einzugehen.";
 
@@ -2020,7 +2020,7 @@ const speakingItems: SeedItem[] = [
       "- Wägen Sie Chancen und Risiken ab.\n" +
       "- Sagen Sie, wie die Gesellschaft auf diese Entwicklung reagieren sollte.",
     [
-      "beschreibt das Bild: gelbe Roboterarme arbeiten in einer modernen Fabrik",
+      "beschreibt das Bild: Industrieroboter montieren Teile in einer Fabrikhalle",
       "erläutert Veränderungen (Automatisierung, neue Aufgaben, Umschulung, Produktivität)",
       "wägt Chancen (Entlastung von schwerer Arbeit, Effizienz) gegen Risiken (Arbeitsplatzverlust, Abhängigkeit, Ungleichheit) ab",
       "nennt konkrete Antworten der Gesellschaft (Weiterbildung, soziale Absicherung, Regeln); eigene Stellungnahme",
@@ -2056,45 +2056,61 @@ const speakingItems: SeedItem[] = [
     ["das Bild beschreiben", "Veränderungen erklären", "Videogespräche und Treffen vergleichen", "Situationen für persönliche Treffen nennen"],
     PICTURE_NOTE),
 
-  // Picture tasks (the three charts)
-  speakPicture("HARD", "chart.c1.energie",
-    "Sehen Sie sich die Grafik an. Sprechen Sie etwa drei Minuten.\n\n" +
-      "- Beschreiben Sie die Entwicklung der beiden Energieträger zwischen 2010 und 2024.\n" +
-      "- Nennen Sie den Zeitpunkt, an dem sich die Verhältnisse umkehren.\n" +
-      "- Sagen Sie, welche politischen Maßnahmen nötig wären, damit sich die Entwicklung fortsetzt, und begründen Sie Ihre Meinung.",
+  // Picture task (scene, overtourism)
+  speakPicture("MID", "scene.c1.tourist-crowd",
+    "Sehen Sie sich das Bild an. Sprechen Sie etwa drei Minuten.\n\n" +
+      "- Beschreiben Sie, was Sie auf dem Bild sehen.\n" +
+      "- Erklären Sie, welche Chancen und welche Probleme viele Besucher für eine historische Altstadt mit sich bringen.\n" +
+      "- Schlagen Sie Regeln oder Maßnahmen vor, damit Anwohner und Gäste gut miteinander auskommen.\n" +
+      "- Sagen Sie, wie Sie selbst am liebsten eine fremde Stadt besuchen.",
     [
-      "gibt die Kernzahlen wieder: erneuerbare Energien von 17 auf 53 Prozent, Kohle von 42 auf 12 Prozent",
-      "nennt den Wendepunkt um 2016, als beide bei etwa 31 Prozent lagen",
-      "nennt konkrete Maßnahmen (z. B. Ausbau der Netze und Speicher, Förderung, Ausstiegsdatum, Hilfen für betroffene Regionen)",
-      "begründete eigene Meinung; Datenwortschatz (ansteigen, zurückgehen, überholen)",
+      "beschreibt das Bild: viele Touristen auf einem historischen Platz in einer Altstadt",
+      "nennt Chancen (Einnahmen, Arbeitsplätze, Austausch) und Probleme (Gedränge, Lärm, steigende Mieten, Verdrängung von Läden)",
+      "macht konkrete, begründete Vorschläge (z. B. Besucherlenkung, Obergrenzen, Gebühren, Ruhezeiten)",
+      "schildert die eigene Art zu reisen und begründet sie",
     ],
-    ["die Entwicklung beschreiben", "den Wendepunkt nennen", "Maßnahmen vorschlagen und begründen"],
-    CHART_SPEAK_NOTE),
-  speakPicture("MID", "chart.c1.medien",
+    ["das Bild beschreiben", "Chancen und Probleme erklären", "Maßnahmen vorschlagen", "eigene Reiseweise begründen"],
+    PICTURE_NOTE),
+
+  // Picture tasks (three charts of their own, never the writing charts)
+  speakPicture("MID", "chart.c1.ehrenamt",
     "Sehen Sie sich die Grafik an. Sprechen Sie etwa drei Minuten.\n\n" +
-      "- Beschreiben Sie die Grafik und heben Sie die auffälligsten Veränderungen hervor.\n" +
-      "- Vergleichen Sie die Zahlen mit dem, was Sie in Ihrer Stadt oder Region beobachten.\n" +
-      "- Sagen Sie, ob Sie in dieser Entwicklung Gefahren sehen, und begründen Sie Ihre Meinung.",
+      "- Beschreiben Sie, wie sich das ehrenamtliche Engagement in den einzelnen Bereichen zwischen 2009 und 2023 verändert hat.\n" +
+      "- Vergleichen Sie das mit dem, was Sie in Ihrer Stadt oder Region beobachten.\n" +
+      "- Sagen Sie, wie man mehr Menschen für ein Ehrenamt gewinnen könnte, und begründen Sie Ihre Vorschläge.",
     [
-      "gibt auffällige Veränderungen wieder: Fernsehen sinkt von 148 auf 101 Minuten, Streaming steigt von 31 auf 96, gedruckte Zeitung sinkt von 22 auf 9",
-      "vergleicht mit eigenen Beobachtungen im Umfeld der Stadt oder Region",
-      "nennt mögliche Gefahren (z. B. weniger geprüfte Informationen, weniger Konzentration, Blasen) oder begründet, warum es keine gibt",
+      "gibt die auffälligsten Veränderungen wieder: Sport sinkt von 42 auf 35 Prozent, Soziales steigt von 22 auf 29, Umwelt steigt von 9 auf 17, Schule und Kita sinkt von 20 auf 15, Kultur bleibt fast gleich (18 auf 20)",
+      "vergleicht mit Beobachtungen in der eigenen Stadt oder Region",
+      "macht konkrete, begründete Vorschläge (z. B. flexible Einsätze, Anerkennung, Information, Zusammenarbeit mit Schulen)",
       "klare Gliederung; Wortschatz für Veränderungen und Vergleiche",
     ],
-    ["die auffälligsten Veränderungen beschreiben", "mit der eigenen Umgebung vergleichen", "mögliche Gefahren bewerten"],
+    ["die Veränderungen beschreiben", "mit der eigenen Umgebung vergleichen", "Vorschläge machen und begründen"],
     CHART_SPEAK_NOTE),
-  speakPicture("HARD", "chart.c1.tourismus",
+  speakPicture("HARD", "chart.c1.wasser",
     "Sehen Sie sich die Grafik an. Sprechen Sie etwa drei Minuten.\n\n" +
-      "- Beschreiben Sie, wie sich die Übernachtungen über das Jahr verteilen.\n" +
-      "- Erklären Sie, welche Probleme eine so ungleiche Verteilung für die Region haben kann.\n" +
-      "- Entwickeln Sie zwei oder drei Ideen, wie die Region die Übernachtungen gleichmäßiger über das Jahr verteilen könnte, und bewerten Sie diese.",
+      "- Beschreiben Sie die Entwicklung des Wasserverbrauchs zwischen 1990 und 2024.\n" +
+      "- Erklären Sie, warum der Verbrauch erst sank und danach wieder leicht stieg.\n" +
+      "- Sagen Sie, ob und wie der Verbrauch weiter gesenkt werden sollte, und begründen Sie Ihre Meinung.",
     [
-      "beschreibt die Verteilung: Höchstwert im August (131 Tausend), Spitzen im Juli und Dezember, Tiefpunkt im November (31 Tausend)",
-      "erklärt Probleme (überfüllte Spitzenmonate, ungenutzte Kapazitäten, saisonale Arbeit und Einkommen)",
-      "entwickelt zwei oder drei konkrete Ideen (z. B. Angebote für Frühjahr und Herbst, Tagungen, Veranstaltungen, Preisunterschiede) und bewertet Aufwand und Wirkung",
+      "gibt die Entwicklung wieder: von 147 Litern (1990) fallend bis 121 (2015), dann Anstieg auf 128 (2020) und leichter Rückgang auf 125 (2024)",
+      "nennt plausible Gründe für das Sinken (sparsamere Geräte, höhere Preise, Bewusstsein) und den Anstieg (z. B. mehr Zeit zu Hause, trockene Sommer, Gartenbewässerung)",
+      "begründete Stellungnahme mit konkreten Maßnahmen (z. B. Preisgestaltung, Regenwassernutzung, Aufklärung)",
+      "Datenwortschatz (sinken, sich verringern, wieder ansteigen, sich einpendeln)",
+    ],
+    ["die Entwicklung beschreiben", "Gründe für Sinken und Anstieg erklären", "Stellung nehmen und begründen"],
+    CHART_SPEAK_NOTE),
+  speakPicture("MID", "chart.c1.lernen",
+    "Sehen Sie sich die Grafik an. Sprechen Sie etwa drei Minuten.\n\n" +
+      "- Beschreiben Sie, welche Lernwege am häufigsten und welche am seltensten genannt werden.\n" +
+      "- Bewerten Sie Vor- und Nachteile von zwei Lernwegen Ihrer Wahl.\n" +
+      "- Geben Sie eine begründete Empfehlung, wie man als Erwachsener am besten eine Fremdsprache lernt.",
+    [
+      "gibt die Rangfolge wieder: Apps 46 Prozent, Filme und Serien 38, Sprachkurs vor Ort 31, Online-Kurs mit Lehrkraft 24, Selbststudium 18, Tandem 15",
+      "wägt Vor- und Nachteile von zwei Lernwegen ab (z. B. Flexibilität gegenüber Rückmeldung durch eine Lehrkraft, Sprechpraxis, Kosten)",
+      "spricht eine begründete Empfehlung aus und weist auf mögliche Kombinationen hin (Mehrfachnennungen)",
       "klare Gliederung mit Überleitungen",
     ],
-    ["die Verteilung beschreiben", "Probleme erklären", "Ideen entwickeln und bewerten"],
+    ["die Rangfolge beschreiben", "zwei Lernwege bewerten", "eine Empfehlung begründen"],
     CHART_SPEAK_NOTE),
 ];
 

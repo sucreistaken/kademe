@@ -1,12 +1,44 @@
 {
   "images": [
     {
+      "id": "chart.c1.ehrenamt",
+      "file": "chart.c1.ehrenamt.webp",
+      "sha16": "b92b4437873aa822",
+      "w": 1200,
+      "h": 800,
+      "alt": "Balkendiagramm: Ehrenamtliches Engagement in Fiktivland, Anteil der Engagierten nach Bereich in Prozent, 2009 und 2023. Sport: 42 und 35. Soziales: 22 und 29. Schule und Kita: 20 und 15. Kultur: 18 und 20. Umwelt: 9 und 17. Quelle: fiktive Daten.",
+      "kind": "chart",
+      "category": "chart",
+      "levels": [
+        "C1"
+      ],
+      "sourceUrl": "https://kademe.kadiray.com/original",
+      "license": "Original (Kademe)",
+      "author": "Kademe"
+    },
+    {
       "id": "chart.c1.energie",
       "file": "chart.c1.energie.webp",
       "sha16": "0ea4665069ffae15",
       "w": 1200,
       "h": 800,
       "alt": "Liniendiagramm: Stromerzeugung in Fiktivland von 2010 bis 2024, Anteil in Prozent. Erneuerbare Energien: 17 (2010), 22 (2012), 27 (2014), 31 (2016), 38 (2018), 44 (2020), 48 (2022), 53 (2024). Kohle: 42 (2010), 39 (2012), 36 (2014), 31 (2016), 26 (2018), 20 (2020), 17 (2022), 12 (2024). Quelle: fiktive Daten.",
+      "kind": "chart",
+      "category": "chart",
+      "levels": [
+        "C1"
+      ],
+      "sourceUrl": "https://kademe.kadiray.com/original",
+      "license": "Original (Kademe)",
+      "author": "Kademe"
+    },
+    {
+      "id": "chart.c1.lernen",
+      "file": "chart.c1.lernen.webp",
+      "sha16": "3281ddae6f720fe5",
+      "w": 1200,
+      "h": 800,
+      "alt": "Balkendiagramm: Wie Erwachsene in Fiktivland Fremdsprachen lernen, Anteil in Prozent, Mehrfachnennungen möglich. Apps 46, Filme und Serien 38, Sprachkurs vor Ort 31, Online-Kurs mit Lehrkraft 24, Selbststudium mit Büchern 18, Tandem und Austausch 15. Quelle: fiktive Daten.",
       "kind": "chart",
       "category": "chart",
       "levels": [
@@ -39,6 +71,22 @@
       "w": 1200,
       "h": 800,
       "alt": "Balkendiagramm: Übernachtungen in der Region Hohenstein im Jahr 2024, pro Monat in Tausend. Januar 82, Februar 95, März 61, April 38, Mai 44, Juni 70, Juli 118, August 131, September 76, Oktober 49, November 31, Dezember 104. Quelle: fiktive Daten.",
+      "kind": "chart",
+      "category": "chart",
+      "levels": [
+        "C1"
+      ],
+      "sourceUrl": "https://kademe.kadiray.com/original",
+      "license": "Original (Kademe)",
+      "author": "Kademe"
+    },
+    {
+      "id": "chart.c1.wasser",
+      "file": "chart.c1.wasser.webp",
+      "sha16": "79fcb041909f3e1a",
+      "w": 1200,
+      "h": 800,
+      "alt": "Liniendiagramm: Durchschnittlicher Wasserverbrauch pro Person und Tag in Litern in Fiktivland: 147 (1990), 136 (1995), 129 (2000), 126 (2005), 122 (2010), 121 (2015), 128 (2020), 125 (2024). Quelle: fiktive Daten.",
       "kind": "chart",
       "category": "chart",
       "levels": [

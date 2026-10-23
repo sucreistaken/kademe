@@ -58,7 +58,7 @@ const SCENES: Record<string, string[]> = {
 
 /** Charts we draw ourselves (SVG, German labels), by level. */
 const CHARTS: Record<string, string[]> = {
-  c1: ["energie", "medien", "tourismus"],
+  c1: ["energie", "medien", "tourismus", "ehrenamt", "wasser", "lernen"],
 };
 
 const EXPECTED_IDS = [
