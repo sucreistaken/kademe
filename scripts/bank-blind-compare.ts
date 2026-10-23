@@ -40,7 +40,7 @@ function showKey(key: ItemKey): string {
       return Object.entries(key.pairs).map(([k, v]) => `${k}=${v}`).join(", ");
     case "SHORT_TEXT":
       return key.accepted.join("/");
-    case "NONE":
+    default:
       return "-";
   }
 }

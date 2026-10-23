@@ -15,57 +15,10 @@
  */
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { SEED_BANK } from "../src/db/seed-bank";
-import { blindItems, parseArgs, parseLevel, type BlindItem } from "../src/db/seed-bank/blind-items";
+import { blindItems, parseArgs, parseLevel, renderSlots, type BlindItem } from "../src/db/seed-bank/blind-items";
 import type { Cefr } from "../src/lib/exam/types";
-import type { CandidateContent } from "../src/lib/exam/safe";
-import { matchingTargets } from "../src/lib/exam/safe";
 
 const args = parseArgs(process.argv.slice(2));
-
-function picture(x: unknown): string {
-  const o = x as { picture?: { alt?: string }; image?: { alt?: string }; alt?: string } | null;
-  const alt = o?.picture?.alt ?? o?.image?.alt ?? o?.alt;
-  return alt ? `[Bild: ${alt}] ` : "";
-}
-
-function renderSlots(item: BlindItem): { lines: string[]; template: string } {
-  const c: CandidateContent = item.candidate.content;
-  const lines: string[] = [];
-  switch (c.kind) {
-    case "CHOICE":
-      for (const o of c.options) lines.push(`- (${o.id}) ${picture(o)}${o.text}`);
-      return {
-        lines,
-        template: `${item.seedKey}: choice=${c.multiple ? "... (several ids, comma separated)" : "..."}`,
-      };
-    case "TFNG": {
-      const raw = item.item.content;
-      c.statements.forEach((s, i) => {
-        const src = raw.kind === "TFNG" ? raw.statements[i] : null;
-        lines.push(`${s.id}. ${picture(src)}${s.text}`);
-      });
-      lines.push(c.twoWay ? "Antwort je Aussage: R (richtig) oder F (falsch)." : "Antwort je Aussage: R (richtig), F (falsch) oder NG (nicht im Text).");
-      return { lines, template: `${item.seedKey}: ${c.statements.map((s) => `${s.id}=...`).join(", ")}` };
-    }
-    case "GAP":
-      for (const g of c.gaps) {
-        const hint = g.choices ? ` Auswahl: ${g.choices.join(" | ")}` : "";
-        lines.push(`- [${g.id}]${hint}`);
-      }
-      if (c.pool) lines.push(`Teile / Wörter zur Auswahl: ${c.pool.join(" | ")}`);
-      if (c.attached) lines.push("Jede Lücke setzt das Wort davor fort: schreibe das ganze Wort.");
-      return { lines, template: `${item.seedKey}: ${c.gaps.map((g) => `${g.id}=...`).join(", ")}` };
-    case "MATCHING": {
-      const rightRaw = item.item.content.kind === "MATCHING" ? item.item.content.right : [];
-      for (const l of c.left) lines.push(`- ${l.id}: ${l.text}`);
-      lines.push("Zuordnen zu:");
-      for (const t of matchingTargets(rightRaw)) lines.push(`- ${t.badge}: ${t.label}`);
-      return { lines, template: `${item.seedKey}: ${c.left.map((l) => `${l.id}=...`).join(", ")}` };
-    }
-    default:
-      return { lines, template: `${item.seedKey}: ...` };
-  }
-}
 
 function render(level: Cefr, items: BlindItem[]): string {
   const out: string[] = [

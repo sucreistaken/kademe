@@ -66,6 +66,29 @@ describe("bank strings", () => {
     expect(promptInContext(item)).toBe("Ich gebe dem Kind einen Apfel.");
     expect(itemStrings(item, "grammar-b1-x").map((s) => s.text)).toEqual(["Ich gebe dem Kind einen Apfel."]);
   });
+  it("includes key distractors and writing student points", () => {
+    const gap: SeedItem = {
+      section: "GRAMMAR",
+      level: "B1",
+      type: "GAP_FILL",
+      skillTag: "grammar.wordbank",
+      prompt: "Ich esse {{g1}}.",
+      content: { kind: "GAP", gaps: [{ id: "g1" }] },
+      key: { kind: "GAP", answers: { g1: ["Brot"] }, distractors: ["Käse", "Wurst"] },
+    };
+    expect(itemStrings(gap, "k").map((s) => s.text)).toEqual(["Ich esse Brot.", "Käse", "Wurst"]);
+    const writing: SeedItem = {
+      section: "WRITING",
+      level: "B1",
+      type: "WRITING_PROMPT",
+      skillTag: "writing.email",
+      prompt: "Schreiben Sie.",
+      content: { kind: "WRITING", minWords: 40, maxWords: 80 },
+      key: { kind: "NONE" },
+      rubric: { contentPoints: ["x"], studentPoints: ["einen Grund nennen"] },
+    };
+    expect(itemStrings(writing, "k").map((s) => s.text)).toEqual(["Schreiben Sie.", "einen Grund nennen"]);
+  });
   it("strips speaker labels from listening scripts only", () => {
     const base = { key: "l-1", level: "B1" as const, title: "T", topic: "x" };
     const listening: SeedStimulus = { ...base, section: "LISTENING", body: "Anna: Guten Tag.\nBen: Hallo." };

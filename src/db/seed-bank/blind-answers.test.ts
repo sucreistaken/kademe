@@ -36,6 +36,22 @@ describe("toItemAnswer", () => {
       toItemAnswer({ kind: "MATCHING", left: [], right: [] }, new Map([["l1", "b"], ["l2", "Z"]]), { A: "r1", B: "r2" }),
     ).toEqual({ matches: { l1: "r2" } });
   });
+  it("maps Ja / Nein words to R / F / NG and reads open gaps like typed gaps", () => {
+    expect(parseTfng("ja", "JA_NEIN")).toBe("R");
+    expect(parseTfng("J", "JA_NEIN")).toBe("R");
+    expect(parseTfng("n", "JA_NEIN")).toBe("F");
+    expect(parseTfng("Nein", "JA_NEIN")).toBe("F");
+    expect(parseTfng("t", "JA_NEIN")).toBe("NG");
+    expect(parseTfng("Text sagt dazu nichts", "JA_NEIN")).toBe("NG");
+    expect(parseTfng("n")).toBe("NG");
+    expect(
+      toItemAnswer(
+        { kind: "TFNG", statements: [], wording: "JA_NEIN" },
+        new Map([["s1", "J"], ["s2", "n"], ["s3", "T"]]),
+      ),
+    ).toEqual({ tfng: { s1: "R", s2: "F", s3: "NG" } });
+    expect(toItemAnswer({ kind: "GAP", gaps: [{ id: "g1" }] }, new Map([["g1", "weil"]]))).toEqual({ gaps: { g1: "weil" } });
+  });
   it("parseTfng accepts the long forms", () => {
     expect(parseTfng("Nicht im Text")).toBe("NG");
     expect(parseTfng("falsch")).toBe("F");

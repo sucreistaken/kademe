@@ -3,9 +3,9 @@ import type { ItemAnswer, ItemContent, TfngValue } from "@/lib/exam/types";
 /**
  * Parsing the filled blind-solve answer file. One line per item:
  *
- *   <seedKey>: g1=dem, g2=den     (typed gaps)
+ *   <seedKey>: g1=dem, g2=den     (typed gaps, also open cloze)
  *   <seedKey>: choice=b           (single choice; several: choice=a,c)
- *   <seedKey>: s1=R, s2=F, s3=NG  (true / false / not given)
+ *   <seedKey>: s1=R, s2=F, s3=NG  (true / false / not given; Ja / Nein: J, N, T)
  *   <seedKey>: l1=B, l2=D         (matching: left id = letter of the right column)
  *
  * Lines that do not start with a seed key are ignored, so the file may keep
@@ -44,8 +44,22 @@ const TFNG_WORDS: Record<string, TfngValue> = {
   "nicht im text": "NG",
 };
 
-export function parseTfng(raw: string): TfngValue | undefined {
-  return TFNG_WORDS[raw.trim().toLocaleLowerCase("de-DE")];
+/** Ja / Nein wording: J and N are yes and no, T is "Text sagt dazu nichts". */
+const JA_NEIN_WORDS: Record<string, TfngValue> = {
+  j: "R",
+  ja: "R",
+  n: "F",
+  nein: "F",
+  t: "NG",
+  "text sagt dazu nichts": "NG",
+  ng: "NG",
+};
+
+export function parseTfng(raw: string, wording?: "JA_NEIN"): TfngValue | undefined {
+  const w = raw.trim().toLocaleLowerCase("de-DE");
+  // The Ja / Nein words are also accepted under the Richtig / Falsch wording, except the clashing "n".
+  if (wording === "JA_NEIN") return JA_NEIN_WORDS[w] ?? TFNG_WORDS[w];
+  return TFNG_WORDS[w] ?? (w === "ja" || w === "nein" || w === "j" || w === "text sagt dazu nichts" || w === "t" ? JA_NEIN_WORDS[w] : undefined);
 }
 
 /** The template's placeholder values count as empty. */
@@ -73,7 +87,7 @@ export function toItemAnswer(
     case "TFNG": {
       const tfng: Record<string, TfngValue> = {};
       for (const [k, v] of filled) {
-        const t = parseTfng(v);
+        const t = parseTfng(v, content.wording);
         if (t) tfng[k] = t;
       }
       return Object.keys(tfng).length ? { tfng } : null;

@@ -132,6 +132,13 @@ export function itemStrings(item: SeedItem, itemKey: string): SeedString[] {
     for (const l of c.left) out.push(at(`left ${l.id}`, l.text));
     for (const r of c.right) out.push(at(`right ${r.id}`, r.text));
   }
+  if (c.kind === "GAP" && item.key.kind === "GAP") {
+    // Word-bank pool words: answers are read in context already, so only the distractors add new words.
+    for (const [i, d] of (item.key.distractors ?? []).entries()) out.push(at(`distractor ${i + 1}`, d));
+  }
+  if (c.kind === "WRITING" || c.kind === "SPEAKING") {
+    for (const [i, p] of (item.rubric?.studentPoints ?? []).entries()) out.push(at(`student point ${i + 1}`, p));
+  }
   return out.filter((s) => s.text.trim() !== "");
 }
 
