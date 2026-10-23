@@ -1,6 +1,8 @@
 import type { TfngValue } from "@/lib/exam/types";
 import { cloze } from "../cloze";
 import { cTest } from "../ctest";
+import { openCloze } from "../opencloze";
+import { img } from "../image";
 import { wordBank } from "../wordbank";
 import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 
@@ -385,6 +387,56 @@ const grammarTexts: SeedItem[] = [
     last: "Ohne die Bereitschaft der Landwirte wird der Schutz der Moore jedenfalls kaum gelingen.",
     distractors: ["Obwohl", "geringen", "Erträge", "pflanzen", "Käufer"],
   }),
+  // Open cloze: one typed word per gap (10 gaps each).
+  openCloze(LEVEL, "EASY", {
+    title: "Ein Dorf ohne Laden",
+    first: "In vielen ländlichen Gemeinden ist in den letzten Jahren der letzte Laden geschlossen worden.",
+    body:
+      "Für die Bewohner bedeutet das, [[dass#konnektor]] sie für jede Kleinigkeit ins nächste größere Dorf fahren müssen. " +
+      "Besonders schwer haben es ältere Menschen, [[die/welche#relativsatz]] kein Auto besitzen. " +
+      "In einem Dorf im Allgäu wollten die Einwohner sich [[damit#praepositionaladverb]] nicht abfinden. " +
+      "Sie gründeten eine Genossenschaft, [[der/welcher#relativsatz]] inzwischen mehr als zweihundert Mitglieder angehören. " +
+      "Der Laden wird [[von/durch#passiv.praesens]] Freiwilligen geführt, die abwechselnd hinter der Theke stehen. " +
+      "Zusätzlich [[gibt#praesens.vokalwechsel]] es einen kleinen Tisch, [[an/bei#praeposition]] dem man Kaffee trinken kann. " +
+      "Anfangs zweifelten viele daran, [[ob#nebensatz]] sich ein solcher Laden überhaupt rechnen würde. " +
+      "Mittlerweile arbeitet er [[nicht#negation]] nur kostendeckend, sondern erwirtschaftet sogar einen kleinen Überschuss. " +
+      "Der Überschuss [[wird#passiv.praesens]] in die Dorfgemeinschaft investiert, zum Beispiel in einen Bus für Fahrten zum Arzt.",
+    last: "Andere Gemeinden haben das Modell inzwischen übernommen.",
+    note: "dass-Satz nach „bedeutet“ (g1), Relativpronomen im Nominativ (g2), Präpositionaladverb bei „sich abfinden mit“ (g3), Relativpronomen im Dativ bei „angehören“ (g4), Passiv mit Urheber (g5), es gibt (g6), Präposition im Relativsatz (g7), ob-Satz nach „zweifeln daran“ (g8), nicht nur ... sondern auch (g9), Passiv Präsens (g10).",
+  }),
+  openCloze(LEVEL, "MID", {
+    title: "Der Wochenmarkt",
+    first: "Jeden Samstagmorgen verwandelt sich der Platz vor dem Rathaus in einen Wochenmarkt.",
+    body:
+      "Der Markt, [[dessen#relativsatz]] Anfänge bis ins Mittelalter zurückreichen, gehört zu den ältesten Einrichtungen der Stadt. " +
+      "Lange Zeit [[wurde#passiv]] dort fast nur Gemüse aus dem Umland verkauft. " +
+      "Heute bieten die Händler dagegen vieles an, [[was/das#relativsatz.was]] man im Supermarkt vergeblich sucht, etwa Wildkräuter oder Honig aus eigener Imkerei. " +
+      "Für viele Stammkunden ist der Einkauf weit mehr [[als#konnektor.modal]] eine Notwendigkeit, er gehört einfach zum Wochenende. " +
+      "Weil die Standgebühren stark gestiegen sind, denken manche Händler [[daran#praepositionaladverb]], den Stand aufzugeben. " +
+      "Die Stadt will [[sich#reflexiv]] deshalb dafür einsetzen, dass die Gebühren nicht mehr jedes Jahr steigen. " +
+      "Ein Händler meinte, ohne seine Stammkundschaft [[hätte#konjunktiv2.vergangenheit]] er schon vor Jahren aufgeben müssen. " +
+      "Dass er weitermacht, liegt [[an#verb_praeposition]] den Menschen, die jede Woche wiederkommen. " +
+      "Neue Stände sind [[kaum/nicht#negation]] in Sicht, [[denn#konnektor]] der Platz ist schon jetzt bis zur letzten Ecke belegt.",
+    last: "Wer am Samstag früh kommt, findet noch einen Parkplatz und die besten Äpfel.",
+    note: "Relativpronomen im Genitiv (g1), Passiv Präteritum (g2), Relativsatz mit „was“ nach „vieles“ (g3), Vergleich nach „mehr“ (g4), Präpositionaladverb bei „denken an“ (g5), Reflexivpronomen bei „sich einsetzen“ (g6), Konjunktiv II der Vergangenheit bei „ohne“ (g7), „liegen an“ (g8), Negation (g9), denn mit Verbzweitstellung (g10).",
+  }),
+  openCloze(LEVEL, "HARD", {
+    title: "Schlaf und Gedächtnis",
+    first: "Dass ausreichender Schlaf für die Gesundheit wichtig ist, bezweifelt heute kaum noch jemand.",
+    body:
+      "Während des Schlafs werden Eindrücke des Tages, [[die/welche#relativsatz]] im Gehirn zunächst nur kurzzeitig gespeichert waren, in dauerhafte Erinnerungen überführt. " +
+      "Probanden, [[denen#relativsatz]] nach dem Lernen eine Nachtruhe gegönnt wurde, erinnerten sich am nächsten Morgen an deutlich mehr Vokabeln als jene, die wach geblieben waren. " +
+      "Der Effekt war [[umso/desto#konnektor.zweiteilig]] stärker, je mehr Tiefschlaf die Teilnehmenden hatten. " +
+      "Daraus [[lässt#passiversatz]] sich allerdings nicht schließen, dass man den Schlaf beliebig durch Pausen ersetzen kann. " +
+      "Forschende warnen [[davor#praepositionaladverb]], die Ergebnisse vorschnell zu verallgemeinern. " +
+      "Die meisten Experimente wurden an jungen, gesunden Erwachsenen durchgeführt, [[weshalb/weswegen#konnektor]] offen bleibt, ob sie auch für Ältere gelten. " +
+      "Offen ist zudem, [[ob/inwieweit/inwiefern#nebensatz]] ein kurzer Mittagsschlaf einen Teil der Nachtruhe ersetzen kann. " +
+      "Wer unter Schlafmangel leidet, sollte [[nicht#negation]] zögern, ärztlichen Rat einzuholen. " +
+      "Entscheidend ist ohnehin weniger die Dauer [[als#konnektor.modal]] die Regelmäßigkeit. " +
+      "Ein fester Rhythmus trägt [[dazu#praepositionaladverb]] bei, dass der Körper zur Ruhe kommt.",
+    last: "Am Ende bleibt die einfache Erkenntnis, dass ein guter Schlaf kein Luxus ist.",
+    note: "Relativpronomen im Nominativ Plural (g1), Relativpronomen im Dativ (g2), je ... umso/desto (g3), sich lassen + Infinitiv als Passiversatz (g4), warnen davor (g5), weshalb als Konnektor (g6), indirekter Fragesatz (g7), Negation bei Aufforderung (g8), weniger ... als (g9), beitragen dazu (g10).",
+  }),
 ];
 
 // ---------------------------------------------------------------- READING
@@ -430,6 +482,16 @@ function forText(stimulusKey: string) {
         ...base(skill, within, "Richtig (R), falsch (F) oder steht nicht im Text (NG)?", explanation),
         type: "TRUE_FALSE_NG",
         content: { kind: "TFNG", statements: statements.map(([t], i) => ({ id: ids[i], text: t })) },
+        key: { kind: "TFNG", answers: Object.fromEntries(statements.map(([, a], i) => [ids[i], a])) },
+      };
+    },
+    /** Ja / Nein / Text sagt dazu nichts: stored as R / F / NG, shown with the Ja/Nein wording. */
+    jaNein(skill: RSkill, within: Within, statements: Array<[string, TfngValue]>, explanation: string): SeedItem {
+      const ids = statements.map((_, i) => `s${i + 1}`);
+      return {
+        ...base(skill, within, "Lesen Sie den Text. Sagt der Text Ja, Nein oder nichts dazu?", explanation),
+        type: "TRUE_FALSE_NG",
+        content: { kind: "TFNG", wording: "JA_NEIN", statements: statements.map(([t], i) => ({ id: ids[i], text: t })) },
         key: { kind: "TFNG", answers: Object.fromEntries(statements.map(([, a], i) => [ids[i], a])) },
       };
     },
@@ -528,6 +590,41 @@ const R_FOTOKURSE = text("fotokurse", "Fotografie-Kurse an der Volkshochschule",
   "F: Analoge Fotografie und Dunkelkammer\nEin Intensivkurs in den Herbstferien, werktags jeweils vormittags, mit Filmentwicklung und Abzügen in der Dunkelkammer. Filmkameras stehen zur Verfügung. Plätze sind begrenzt, bitte melden Sie sich frühzeitig an.",
 ]);
 
+// Text 9: magazine feature with five missing paragraphs (insertion 5/7, paragraph level).
+const R_LAUFEN = text("laufen", "Laufen: vom Sonderling zum Volkssport", "Sport und Freizeit", [
+  "Vor dreißig Jahren galt noch als Sonderling, wer frühmorgens im Trainingsanzug durch den Stadtpark lief. Heute gehört das Laufen zum Alltag fast jeder Großstadt: Auf den Wegen am Fluss herrscht schon vor sieben Uhr reger Betrieb, und an Wochenenden sperren Veranstalter ganze Straßenzüge für Volksläufe.",
+  "[1] ___",
+  "Dabei hat das Laufen gegenüber anderen Sportarten einen unschätzbaren Vorteil: Es erfordert kaum Ausrüstung, keine Mitgliedschaft und keinen festen Termin. Wer ein Paar passende Schuhe besitzt, kann im Grunde sofort loslegen.",
+  "[2] ___",
+  "Gleichzeitig hat sich rund um das Laufen eine ganze Industrie entwickelt. Spezialgeschäfte analysieren den Gang ihrer Kundschaft auf dem Laufband, Uhren zeichnen jeden Schritt auf, und Anwendungen auf dem Telefon vergleichen die eigene Leistung mit der von Tausenden Unbekannten.",
+  "[3] ___",
+  "Sportmediziner sehen diese Entwicklung mit gemischten Gefühlen. Einerseits bewege sich so eine Bevölkerungsgruppe, die früher kaum Sport getrieben habe. Andererseits beobachteten sie, dass Anfänger sich häufiger verletzen, weil sie zu schnell zu viel wollen.",
+  "[4] ___",
+  "Auch die Kommunen haben das Thema entdeckt. Einige Städte beleuchten inzwischen Laufstrecken, andere bauen an beliebten Startpunkten Umkleiden mit Duschen. Nicht überall stößt das auf Begeisterung: Anwohner beschweren sich über Lärm und über Hobbyläufer, die Fußwege blockieren.",
+  "[5] ___",
+  "Ob der Trend anhält, lässt sich schwer vorhersagen. Sicher ist nur, dass sich das Bild des einsamen Läufers gewandelt hat: Laufen ist zu einer gemeinsamen Beschäftigung geworden.",
+]);
+
+// Text 10: feature with five missing sentences (insertion 5/7, sentence level).
+const R_BIBER = text("biber", "Der Biber kehrt in die Stadt zurück", "Natur und Tiere", [
+  "Er galt in Mitteleuropa lange als ausgestorben: Im neunzehnten Jahrhundert war der Biber wegen seines Pelzes so stark bejagt worden, dass nur kleine Restbestände überlebten. [1] ___ Heute leben allein in Deutschland wieder mehr als dreißigtausend Tiere, und sie haben nicht nur abgelegene Flusstäler besiedelt, sondern auch die Ränder großer Städte.",
+  "Für Menschen, die in der Nähe eines Gewässers wohnen, ist der Biber mal Attraktion, mal Ärgernis. [2] ___ Wo ein Damm entsteht, staut sich das Wasser, und Wiesen, Wege und Keller können überflutet werden. Mehrere Gemeinden zahlen deshalb Entschädigungen an Landwirte.",
+  "Naturschützer betonen dagegen den ökologischen Nutzen. [3] ___ In solchen Tümpeln finden Libellen, Amphibien und seltene Fischarten einen Lebensraum, der vielerorts verloren gegangen ist.",
+  "Wie lässt sich das Zusammenleben organisieren? [4] ___ Wo ein Damm zum Problem wird, kann ein Rohr durch den Damm den Wasserstand senken, ohne dass der Biber seinen Bau aufgibt. Auch Schutzzäune um einzelne Obstbäume haben sich bewährt.",
+  "In Städten stellt sich die Frage noch einmal anders. [5] ___ Deshalb kontrollieren Mitarbeiter der Grünflächenämter regelmäßig Uferbäume, die der Biber angenagt hat, bevor sie auf Spaziergänger stürzen können.",
+  "Ob der Biber in der Großstadt dauerhaft heimisch wird, hängt auch davon ab, wie viel Wildnis die Menschen zulassen wollen.",
+]);
+
+// Text 11: essay on dialects (insertion 5/7, sentence level).
+const R_DIALEKT = text("dialekt", "Dialekte: totgesagt und doch lebendig", "Sprache und Gesellschaft", [
+  "Seit Jahrzehnten sagen manche Sprachforscher voraus, dass die deutschen Dialekte bald verschwinden werden. [1] ___ Statt zu verschwinden, wandeln sie sich: Sie verlieren seltene Wörter und besonders auffällige Lautungen, bleiben aber im Alltag erstaunlich lebendig.",
+  "Besonders deutlich zeigt sich das bei jungen Leuten. [2] ___ Viele wechseln mühelos zwischen beiden Sprachformen, je nachdem, mit wem sie gerade sprechen.",
+  "Dabei galt Dialekt lange als Zeichen mangelnder Bildung. [3] ___ Studien belegen inzwischen, dass Kinder, die mit einer Mundart aufwachsen, sich in der Regel nicht schlechter ausdrücken, oft sogar sicherer.",
+  "Auch in der Öffentlichkeit ist der Ton milder geworden. [4] ___ Sie setzen die Mundart gezielt ein, um Nähe zu schaffen, etwa in der Werbung einer Brauerei oder im Liedtext einer Popband.",
+  "Skeptiker weisen jedoch darauf hin, dass nicht jeder Dialekt gleich gute Chancen hat. [5] ___ Für sie sinkt die Zahl der Sprecher spürbar, und ohne Weitergabe in den Familien ist ihre Zukunft ungewiss.",
+  "Sprachwissenschaftler erwarten deshalb weniger ein Verschwinden als einen dauerhaften Wandel.",
+]);
+
 const rPausen = forText(R_PAUSEN.key);
 const rReparatur = forText(R_REPARATUR.key);
 const rWeiterbildung = forText(R_WEITERBILDUNG.key);
@@ -536,6 +633,9 @@ const rBaeume = forText(R_STADTBAEUME.key);
 const rMuseum = forText(R_MUSEUM.key);
 const rGeno = forText(R_GENOSSENSCHAFT.key);
 const rFoto = forText(R_FOTOKURSE.key);
+const rLaufen = forText(R_LAUFEN.key);
+const rBiber = forText(R_BIBER.key);
+const rDialekt = forText(R_DIALEKT.key);
 
 const readingItems: SeedItem[] = [
   // Pausen
@@ -743,6 +843,77 @@ const readingItems: SeedItem[] = [
     ],
     [2, 3, 4, 5],
     "1 → B: Eigene Kamera und manuelle Einstellungen (Blende, Belichtungszeit) passen zu A und B, nur B liegt am Wochenende (A dienstagabends). 2 → C: Ohne eigene Kamera kommen C, E (Ausrüstung leihbar) und F (Filmkameras gestellt) in Frage, nur C dauert genau einen Vormittag. 3 → D: nachträgliche Bearbeitung mit Rechnern im Schulungsraum. 4 → E: Porträts im Studio, Ausrüstung leihbar, keine Vorkenntnisse, donnerstagabends. A und F bleiben übrig."),
+
+  // Laufen: insertion of five paragraphs (5 of 7), then Ja / Nein
+  rLaufen.match("structure", "HARD",
+    "Welcher Absatz passt in welche Lücke? Zwei Absätze passen nicht.",
+    ["Lücke [1]", "Lücke [2]", "Lücke [3]", "Lücke [4]", "Lücke [5]"],
+    [
+      "Der erste Marathon der Neuzeit wurde 1896 in Athen ausgetragen. Seitdem hat sich die Strecke mehrfach geändert, bis sie 1921 auf 42,195 Kilometer festgelegt wurde.",
+      "Die Folgen dieser Aufrüstung sind nicht zu unterschätzen. Wer sich ständig mit anderen vergleicht, überschreitet leichter die eigenen Grenzen. Mancher Hobbyläufer trainiert inzwischen nach einem Plan, der eher an einen Leistungssportler erinnert.",
+      "Die Gründe für den Boom sind vielfältig. Viele Menschen suchen einen Ausgleich zum Alltag am Bildschirm, andere wollen etwas für ihre Gesundheit tun. Außerdem lässt sich der Sport bequem in den eigenen Tagesablauf einfügen.",
+      "Die ersten organisierten Volksläufe in Deutschland fanden in den Sechzigerjahren statt. Damals nahmen oft nur ein paar Dutzend Unentwegte teil, die von Passanten neugierig beäugt wurden.",
+      "Das zeigt, dass das Laufen längst auch ein Thema der Stadtplanung ist. Parks und Uferwege sollen künftig so gestaltet werden, dass Läufer, Radfahrer und Spaziergänger einander möglichst wenig stören. Das ist leichter gesagt als getan, denn der Platz ist begrenzt.",
+      "Vor allem aber hat das Laufen eine soziale Seite, die lange unterschätzt wurde. In fast jedem Stadtteil haben sich Gruppen gegründet, die sich zu festen Zeiten treffen und gemeinsam durch die Straßen ziehen. Für manche Teilnehmende ist das Beisammensein wichtiger als die zurückgelegte Strecke.",
+      "In einem Punkt sind sich die Fachleute dennoch einig: Entscheidend ist nicht das Tempo, sondern die Regelmäßigkeit. Wer mit kurzen Strecken beginnt und die Belastung langsam steigert, bleibt dem Sport meist über Jahre treu.",
+    ],
+    [3, 6, 2, 7, 5],
+    "[1] Der Absatz nennt die Gründe für den Boom; „Dabei“ im Folgeabsatz knüpft an den bequemen Einstieg an. [2] „Vor allem aber ... soziale Seite“ führt zu „Gleichzeitig hat sich ... eine ganze Industrie entwickelt“. [3] „Aufrüstung“ greift die Ausrüstung aus dem Absatz davor auf, und „diese Entwicklung“ im Folgeabsatz bezieht sich darauf. [4] „dennoch“ antwortet auf die gemischten Gefühle der Mediziner und leitet zu den Kommunen über. [5] „Das zeigt“ bezieht sich auf die Maßnahmen und Beschwerden im Absatz davor. Der Marathon und die frühen Volksläufe sind Geschichte und knüpfen an keine Lücke an."),
+  rLaufen.jaNein("detail", "MID",
+    [
+      ["Laut Text lässt sich das Laufen leichter beginnen als viele andere Sportarten.", "R"],
+      ["Der Text nennt, wie viele Menschen in Deutschland regelmäßig laufen.", "NG"],
+      ["Sportmediziner bewerten die Entwicklung des Laufens durchweg positiv.", "F"],
+      ["Die Einrichtungen, die Städte für Läufer schaffen, werden von allen Anwohnern begrüßt.", "F"],
+    ],
+    "1 Ja: Absatz 3, kaum Ausrüstung, keine Mitgliedschaft, kein fester Termin. 2 nichts dazu: Es gibt keine Zahlen zu den Läuferinnen und Läufern. 3 Nein: Absatz 7, die Mediziner haben „gemischte Gefühle“. 4 Nein: Absatz 9, „nicht überall stößt das auf Begeisterung“, Anwohner beschweren sich."),
+
+  // Biber: insertion of five sentences (5 of 7), then Ja / Nein
+  rBiber.match("structure", "HARD",
+    "Welcher Satz passt in welche Lücke? Zwei Sätze passen nicht.",
+    ["Lücke [1]", "Lücke [2]", "Lücke [3]", "Lücke [4]", "Lücke [5]"],
+    [
+      "Der Biber ist das größte Nagetier Europas und kann bis zu dreißig Kilogramm wiegen.",
+      "Durch die Dämme entstehen in begradigten Bächen wieder flache Wasserflächen und feuchte Wiesen.",
+      "Dort kommen sich Mensch und Tier besonders nah, und angenagte Bäume können zur Gefahr werden.",
+      "Erst gezielte Wiederansiedlungen und ein strenger Schutz ab den Sechzigerjahren ließen die Bestände langsam wieder wachsen.",
+      "Biber ernähren sich ausschließlich von Rinde, Zweigen und Wasserpflanzen.",
+      "Dabei setzen die meisten Fachleute zunächst auf Lösungen, bei denen das Tier bleiben darf.",
+      "Seine Bauwerke sind imposant, haben aber ihren Preis.",
+    ],
+    [4, 7, 2, 6, 3],
+    "[1] Nur die Wiederansiedlung erklärt den Sprung von den „kleinen Restbeständen“ zu „heute wieder mehr als dreißigtausend Tieren“. [2] „Bauwerke ... Preis“ führt zu „Wo ein Damm entsteht ...“. [3] „Wasserflächen und feuchte Wiesen“ werden mit „In solchen Tümpeln“ wieder aufgenommen. [4] „Dabei“ beantwortet die Frage nach dem Zusammenleben, das Rohr im Damm ist ein Beispiel für eine Lösung, bei der der Biber bleibt. [5] „Dort“ meint die Städte, „Deshalb kontrollieren ...“ nennt die Folge der Gefahr durch angenagte Bäume. Die Nahrung und die Größe des Tieres haben mit keiner Lücke zu tun."),
+  rBiber.jaNein("detail", "MID",
+    [
+      ["Der Biber lebt in Deutschland bis heute nur in abgelegenen Flusstälern.", "F"],
+      ["Einige Gemeinden gleichen Schäden aus, die der Biber bei Landwirten verursacht.", "R"],
+      ["Man kann den Wasserstand an einem Damm senken, ohne dass der Biber seinen Bau verlässt.", "R"],
+      ["Der Text sagt, wie viele Biber heute in deutschen Städten leben.", "NG"],
+    ],
+    "1 Nein: Absatz 1, die Tiere besiedeln auch die Ränder großer Städte. 2 Ja: Absatz 2, mehrere Gemeinden zahlen Entschädigungen an Landwirte. 3 Ja: Absatz 4, ein Rohr durch den Damm senkt den Wasserstand, ohne dass der Biber seinen Bau aufgibt. 4 nichts dazu: Genannt wird nur die Zahl für ganz Deutschland."),
+
+  // Dialekt: insertion of five sentences (5 of 7), then Ja / Nein
+  rDialekt.match("structure", "HARD",
+    "Welcher Satz passt in welche Lücke? Zwei Sätze passen nicht.",
+    ["Lücke [1]", "Lücke [2]", "Lücke [3]", "Lücke [4]", "Lücke [5]"],
+    [
+      "Vor allem kleine Mundarten in dünn besiedelten Regionen sind in Gefahr.",
+      "Im Süden des Sprachraums sind die Unterschiede zwischen den Mundarten traditionell größer als im Norden.",
+      "Sie sprechen in der Schule und im Alltag Standardsprache, im Freundeskreis aber häufig die Mundart ihrer Region.",
+      "Sprachwissenschaftler unterscheiden allein im deutschen Sprachraum mehrere hundert Ortsdialekte.",
+      "Diese Prognose hat sich bislang nur teilweise bewahrheitet.",
+      "Radiosender, Zeitungen und Unternehmen entdecken zunehmend den Wert des regionalen Klangs.",
+      "Lehrkräfte rieten Eltern früher häufig, zu Hause nur Hochdeutsch zu sprechen.",
+    ],
+    [5, 3, 7, 6, 1],
+    "[1] „Diese Prognose“ greift die Voraussage auf; „Statt zu verschwinden“ nennt, was stattdessen geschieht. [2] „Sie“ sind die jungen Leute, „beiden Sprachformen“ im Folgesatz sind Standardsprache und Mundart. [3] „früher“ steht im Gegensatz zu „Studien belegen inzwischen“. [4] „Sie setzen die Mundart gezielt ein“ gehört zu Radiosendern, Zeitungen und Unternehmen. [5] „Für sie“ bezieht sich auf die kleinen Mundarten. Die Zahl der Ortsdialekte und der Nord-Süd-Unterschied passen an keine Stelle."),
+  rDialekt.jaNein("detail", "MID",
+    [
+      ["Der Text nennt den Anteil der Jugendlichen, die regelmäßig Dialekt sprechen.", "NG"],
+      ["Kinder, die mit einer Mundart aufwachsen, drücken sich laut Text meist unsicherer aus.", "F"],
+      ["Nach Ansicht der Skeptiker sind nicht alle Dialekte gleichermaßen in ihrem Bestand gesichert.", "R"],
+    ],
+    "1 nichts dazu: Prozentzahlen werden nicht genannt. 2 Nein: Absatz 3, Kinder mit Mundart drücken sich „nicht schlechter, oft sogar sicherer“ aus. 3 Ja: Absatz 5, „nicht jeder Dialekt hat gleich gute Chancen“."),
 ];
 
 // ---------------------------------------------------------------- LISTENING
@@ -1447,7 +1618,7 @@ export const C1_PARTS: {
   speaking: SeedBankPart;
 } = {
   grammar: { stimuli: [], items: [...grammarItems, ...grammarTexts] },
-  reading: { stimuli: [R_PAUSEN, R_REPARATUR, R_WEITERBILDUNG, R_KI, R_STADTBAEUME, R_MUSEUM, R_GENOSSENSCHAFT, R_FOTOKURSE], items: readingItems },
+  reading: { stimuli: [R_PAUSEN, R_REPARATUR, R_WEITERBILDUNG, R_KI, R_STADTBAEUME, R_MUSEUM, R_GENOSSENSCHAFT, R_FOTOKURSE, R_LAUFEN, R_BIBER, R_DIALEKT], items: readingItems },
   listening: { stimuli: [L_QUEREINSTIEG, L_GRUPPEN, L_GEHALT, L_PHYSIO, L_NACHTZUG, L_HEIZUNG], items: listeningItems },
   writing: { stimuli: [], items: writingItems },
   speaking: { stimuli: [], items: speakingItems },
