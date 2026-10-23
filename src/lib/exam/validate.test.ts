@@ -257,3 +257,61 @@ describe("validateItem: tick n (pick)", () => {
     expect(codes(gapPick)).toEqual(["PICK_KIND"]);
   });
 });
+
+describe("validateItem: pictures", () => {
+  const pic = (alt = "Eine Katze sitzt auf dem Sofa.", key = "bank/images/0123456789abcdef.webp") => ({ storageKey: key, w: 960, h: 640, alt });
+  const choice = (options: Array<{ id: string; text: string; image?: ReturnType<typeof pic> }>): ValidatableItem => ({
+    type: "SINGLE_CHOICE",
+    prompt: "Welches Bild passt?",
+    content: { kind: "CHOICE", options },
+    key: { kind: "CHOICE", correct: ["a"] },
+  });
+  const speaking = (images: ReturnType<typeof pic>[] | undefined): ValidatableItem => ({
+    type: "SPEAKING_PROMPT",
+    prompt: "Beschreiben Sie das Bild.",
+    content: { kind: "SPEAKING", thinkSeconds: 20, answerSeconds: 30, maxTakes: 2, ...(images ? { images } : {}) },
+    key: { kind: "NONE" },
+    rubric: { contentPoints: ["Ort"] },
+  });
+
+  it("lets a picture option have no text when it has alt text", () => {
+    expect(codes(choice([{ id: "a", text: "", image: pic() }, { id: "b", text: "", image: pic("Ein Hund.") }, { id: "c", text: "", image: pic("Ein Baum.") }]))).toEqual([]);
+  });
+
+  it("still refuses an empty option without a picture", () => {
+    expect(itemProblems(choice([{ id: "a", text: "x", image: pic() }, { id: "b", text: "" }, { id: "c", text: "z" }]))).toEqual([{ code: "CHOICE_EMPTY", n: 2 }]);
+  });
+
+  it("refuses a picture without alt text, empty text or not", () => {
+    expect(itemProblems(choice([{ id: "a", text: "", image: pic("  ") }, { id: "b", text: "Hund", image: pic("") }, { id: "c", text: "Baum" }]))).toEqual([
+      { code: "IMAGE_ALT_EMPTY", n: 1 },
+      { code: "IMAGE_ALT_EMPTY", n: 2 },
+    ]);
+  });
+
+  it("refuses a storage key that is not a bank picture", () => {
+    expect(codes(choice([{ id: "a", text: "", image: pic("Ein Hund.", "../../etc/passwd") }, { id: "b", text: "Hund" }, { id: "c", text: "Baum" }]))).toEqual(["IMAGE_KEY"]);
+  });
+
+  it("matching picture targets must carry a letter", () => {
+    const m = (texts: string[]): ValidatableItem =>
+      matching({
+        right: texts.map((text, i) => ({ id: `r${i + 1}`, text, image: pic(`Bild ${i}`) })),
+      });
+    expect(codes(m(["Bild A", "Bild B", "Bild C"]))).toEqual([]);
+    expect(codes(m(["Bild A", "", "Bild C"]))).toEqual(["MATCH_IMAGE_NOT_LETTERED"]);
+    expect(codes(m(["Katze", "Hund", "Pferd"]))).toEqual(["MATCH_IMAGE_NOT_LETTERED", "MATCH_IMAGE_NOT_LETTERED", "MATCH_IMAGE_NOT_LETTERED"]);
+  });
+
+  it("task images: one or two pass, three fail, and only writing or speaking may have them", () => {
+    expect(codes(speaking(undefined))).toEqual([]);
+    expect(codes(speaking([pic()]))).toEqual([]);
+    expect(codes(speaking([pic(), pic("Ein Hund.")]))).toEqual([]);
+    expect(codes(speaking([pic(), pic("a"), pic("b")]))).toEqual(["IMAGES_COUNT"]);
+    const onChoice = choice([{ id: "a", text: "x" }, { id: "b", text: "y" }, { id: "c", text: "z" }]);
+    (onChoice.content as unknown as { images: unknown[] }).images = [pic()];
+    expect(codes(onChoice)).toEqual(["IMAGES_KIND"]);
+    const w = { type: "WRITING_PROMPT", prompt: "Schreiben Sie.", content: { kind: "WRITING", minWords: 20, maxWords: 40, images: [pic("")] }, key: { kind: "NONE" }, rubric: { contentPoints: ["x"] } } as ValidatableItem;
+    expect(codes(w)).toEqual(["IMAGE_ALT_EMPTY"]);
+  });
+});

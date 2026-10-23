@@ -92,7 +92,7 @@ async function main() {
   }
   for (const org of orgs) {
     const before = await seedCounts(org.id);
-    const r = await topUpSeedBank(org.id, { retireStale, syncSeed });
+    const r = await topUpSeedBank(org.id, { retireStale, syncSeed }, (m) => console.log(m));
     const after = await seedCounts(org.id);
     console.log(
       `${org.name}: items ${before.items} -> ${after.items} (+${r.itemsAdded}), approved starter items ${before.approved} -> ${after.approved}, texts/clips ${before.stimuli} -> ${after.stimuli} (+${r.stimuliAdded}), seed keys backfilled ${r.keysBackfilled}${retireStale ? `, retired ${r.itemsRetired}` : ""}${syncSeed ? `, synced ${r.itemsSynced} items and ${r.stimuliSynced} reading texts` : ""}`,

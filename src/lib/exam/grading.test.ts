@@ -266,6 +266,21 @@ describe("prompts", () => {
     expect(msgs[0].content).toContain(DESCRIPTORS.FLUENCY.B1);
   });
 
+  it("passes each task picture's alt text as a Bild line, in both prompts, and nothing when there is none", () => {
+    const images = [{ alt: "Eine Familie isst am Tisch." }, { alt: "  " }, { alt: "Ein Hund läuft im Park." }];
+    const metrics = speakingMetrics([{ text: "ich", startMs: 0, endMs: 400 }], 30_000);
+    const writing = buildWritingGradingMessages({ task: "Beschreiben Sie.", contentPoints: ["Ort"], taskLevel: "A2", images, minWords: 30, maxWords: 50, text, rationaleLocale: "en" });
+    const speaking = buildSpeakingGradingMessages({ task: "Beschreiben Sie.", contentPoints: ["Ort"], taskLevel: "A2", images, transcript: "ich sehe einen Hund", metrics, rationaleLocale: "en" });
+    for (const msgs of [writing, speaking]) {
+      expect(msgs[1].content).toContain("Bild: Eine Familie isst am Tisch.\nBild: Ein Hund läuft im Park.");
+      expect(msgs[1].content.match(/Bild:/g)).toHaveLength(2);
+      expect(msgs.map((m) => m.content).join("\n")).not.toContain(EM_DASH);
+    }
+    const plain = buildWritingGradingMessages({ task: "t", contentPoints: [], taskLevel: "B1", minWords: 80, maxWords: 120, text, rationaleLocale: "en" });
+    expect(plain[1].content).not.toContain("Bild:");
+    expect(plain[1].content).not.toContain("Pictures shown");
+  });
+
   it("repair messages append the bad answer and the error", () => {
     const base = buildWritingGradingMessages({
       task: "t",

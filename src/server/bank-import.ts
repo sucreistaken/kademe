@@ -1,12 +1,51 @@
 import { and, count, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { auditLogs, items, stimuli } from "@/db/schema";
+import { readFile } from "node:fs/promises";
 import { SEED_BANK } from "@/db/seed-bank";
+import { seedImageFilesUsedBy } from "@/db/seed-bank/image";
 import { seedItemKey } from "@/db/seed-bank/seed-key";
 import type { SeedItem, SeedStimulus } from "@/db/seed-bank/types";
+import type { ItemContent } from "@/lib/exam/types";
 import { thetaForLevel } from "@/lib/exam/cefr";
+import { getStorage } from "@/lib/storage";
 import { synthesize, ttsAvailable } from "@/lib/tts";
 import { planTopUp, retireCounts, seedOrderInStimulus, syncCounts } from "./bank-topup";
+
+/** True when the object is already in storage (the same probe `tts.ts` uses for audio). */
+async function stored(key: string): Promise<boolean> {
+  try {
+    const s = await getStorage().openStream(key, { start: 0, end: 0 });
+    await s.stream?.cancel?.();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export type ImageUploadCounts = { uploaded: number; present: number };
+
+/**
+ * Uploads the catalog pictures the given seed items use and storage does not
+ * hold yet. Content addressed, so a second run uploads nothing. Goes through
+ * the storage abstraction only (VM disk or R2). Runs before any item row is
+ * written, so an item never points at a picture that is not there.
+ */
+export async function ensureSeedImages(contents: ItemContent[], log: (m: string) => void = () => {}): Promise<ImageUploadCounts> {
+  const files = seedImageFilesUsedBy(contents);
+  let uploaded = 0;
+  let present = 0;
+  for (const f of files) {
+    if (await stored(f.storageKey)) {
+      present++;
+      continue;
+    }
+    await getStorage().putObject(f.storageKey, f.mime, new Uint8Array(await readFile(f.path)));
+    uploaded++;
+  }
+  if (files.length) log(`  images: ${uploaded} uploaded, ${present} already in storage`);
+  return { uploaded, present };
+}
 
 /**
  * Loads the hand-written starter bank into an organisation. Rows are APPROVED
@@ -20,6 +59,7 @@ import { planTopUp, retireCounts, seedOrderInStimulus, syncCounts } from "./bank
 export async function importSeedBank(orgId: string, options: { audio?: boolean; log?: (m: string) => void } = {}) {
   const log = options.log ?? (() => {});
   const byKey = new Map<string, string>();
+  const images = await ensureSeedImages(SEED_BANK.items.map((i) => i.content), log);
   let audioMade = 0;
   let audioReused = 0;
   let audioFailed = 0;
@@ -47,7 +87,7 @@ export async function importSeedBank(orgId: string, options: { audio?: boolean; 
     itemRow(orgId, item, seedItemKey(item), item.stimulusKey ? byKey.get(item.stimulusKey) ?? null : null, order.get(item) ?? 0),
   );
   for (let i = 0; i < rows.length; i += 100) await db.insert(items).values(rows.slice(i, i + 100));
-  return { stimuli: SEED_BANK.stimuli.length, items: rows.length, audioMade, audioReused, audioFailed };
+  return { stimuli: SEED_BANK.stimuli.length, items: rows.length, audioMade, audioReused, audioFailed, imagesUploaded: images.uploaded, imagesPresent: images.present };
 }
 
 /**
@@ -128,7 +168,9 @@ export async function previewTopUp(orgId: string, options: TopUpOptions = {}) {
   };
 }
 
-export async function topUpSeedBank(orgId: string, options: TopUpOptions = {}) {
+export async function topUpSeedBank(orgId: string, options: TopUpOptions = {}, log: (m: string) => void = () => {}) {
+  // Pictures first and outside the transaction: storage is not transactional, and uploads are idempotent.
+  const images = await ensureSeedImages(SEED_BANK.items.map((i) => i.content), log);
   return db.transaction(async (tx) => {
     const { haveStimuli, plan } = await loadTopUpState(tx, orgId, options);
 
@@ -219,6 +261,8 @@ export async function topUpSeedBank(orgId: string, options: TopUpOptions = {}) {
       itemsAdded: rows.length,
       keysBackfilled: plan.backfill.length,
       itemsRetired: retired,
+      imagesUploaded: images.uploaded,
+      imagesPresent: images.present,
       listeningWithoutAudio: plan.stimuli.filter((s) => s.section === "LISTENING").map((s) => s.key),
     };
   });

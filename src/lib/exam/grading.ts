@@ -216,12 +216,22 @@ function commonRules(section: ProductiveSection, taskLevel: Cefr, locale: Ration
   ];
 }
 
+/**
+ * The grader never sees pixels. A task picture reaches it as its alt text, one
+ * "Bild: <alt>" line each, so it knows what the candidate was shown.
+ */
+export function pictureLines(images: Array<{ alt: string }> | undefined): string[] {
+  return (images ?? []).flatMap((im) => (im.alt.trim() ? [`Bild: ${im.alt.trim()}`] : []));
+}
+
 function taskBlock(input: {
   task: string;
   contentPoints: string[];
   register?: string;
   taskLevel: Cefr;
+  images?: Array<{ alt: string }>;
 }): string[] {
+  const pictures = pictureLines(input.images);
   const points = input.contentPoints.length
     ? input.contentPoints.map((p, i) => `${i + 1}. ${p.trim()}`)
     : ["(none given)"];
@@ -231,6 +241,7 @@ function taskBlock(input: {
     '"""',
     input.task.trim(),
     '"""',
+    ...(pictures.length ? ["Pictures shown with the task (you only get their description):", ...pictures] : []),
     "Content points a complete answer covers:",
     ...points,
     ...(input.register ? [`Expected register: ${input.register.trim()}`] : []),
@@ -242,6 +253,8 @@ export type WritingGradingInput = {
   contentPoints: string[];
   register?: string;
   taskLevel: Cefr;
+  /** The task's pictures; only their alt text is used. */
+  images?: Array<{ alt: string }>;
   minWords: number;
   maxWords: number;
   text: string;
@@ -276,6 +289,8 @@ export type SpeakingGradingInput = {
   contentPoints: string[];
   register?: string;
   taskLevel: Cefr;
+  /** The task's pictures; only their alt text is used. */
+  images?: Array<{ alt: string }>;
   transcript: string;
   metrics: SpeakingMetrics;
   rationaleLocale: RationaleLocale;

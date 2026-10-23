@@ -235,3 +235,31 @@ describe("MC cloze and word bank: what the student sees -> the answer -> score",
     }
   });
 });
+
+describe("picture items: the student picks by slot, the key and the picture stay on the server", () => {
+  const pic = (n: string) => ({ storageKey: `bank/images/${n.repeat(16)}.webp`, w: 960, h: 640, alt: `Alt ${n}` });
+  const pictures: ItemSnapshot = {
+    ...base,
+    section: "READING",
+    type: "SINGLE_CHOICE",
+    skillTag: "reading.detail",
+    prompt: "Welches Bild passt zum Text?",
+    content: { kind: "CHOICE", options: [{ id: "a", text: "", image: pic("a") }, { id: "b", text: "", image: pic("b") }, { id: "c", text: "", image: pic("c") }] },
+    key: { kind: "CHOICE", correct: ["b"] },
+  };
+
+  it("scores 1 when the picked slot is the key's alias, for every shuffle", () => {
+    for (const seed of [1, 2, 3, 42, 99]) {
+      const { pres, item, stored, score } = roundTrip(pictures, seed, (item) => {
+        const options = item.content.kind === "CHOICE" ? item.content.options : [];
+        // The browser knows slots only: pick the one whose picture the alt text names "Alt b".
+        return { choiceIds: [options.find((o) => o.image?.alt === "Alt b")!.id] };
+      });
+      expect(JSON.stringify(item)).not.toMatch(/bank\/images|storageKey/);
+      expect(item.content.kind === "CHOICE" && item.content.options.every((o) => o.image?.slot === o.id)).toBe(true);
+      expect(stored.choiceIds).toEqual(["b"]);
+      expect(pres.alias!.b).not.toBe("b");
+      expect(score).toEqual({ score: 1, correct: true });
+    }
+  });
+});

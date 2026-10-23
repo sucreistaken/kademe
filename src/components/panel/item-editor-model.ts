@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { WITHINS, withinOf, type Within } from "@/lib/exam/difficulty";
+import { BANK_IMAGE_KEY } from "@/lib/exam/image-refs";
 import { cleanText } from "@/lib/exam/item-generation";
-import { CEFR_LEVELS, ITEM_TYPES, SECTIONS, textGapKindOf, type Cefr, type ItemContent, type ItemKey, type ItemRubric, type ItemType, type Section, type TfngValue } from "@/lib/exam/types";
+import { CEFR_LEVELS, ITEM_TYPES, SECTIONS, textGapKindOf, type Cefr, type ImageRef, type ItemContent, type ItemKey, type ItemRubric, type ItemType, type Section, type TfngValue } from "@/lib/exam/types";
 import { gapMarkers, type ValidatableItem } from "@/lib/exam/validate";
 
 /**
@@ -18,8 +19,8 @@ export type EditorDraft = {
   within: Within;
   prompt: string;
   explanation: string;
-  /** Choice: options with their correct mark. */
-  options: Array<{ id: string; text: string; correct: boolean }>;
+  /** Choice: options with their correct mark. A picture option keeps its `image`; the form does not edit pictures yet. */
+  options: Array<{ id: string; text: string; correct: boolean; image?: ImageRef }>;
   /** Gap fill: the key's per-gap topic ids, kept so saving does not drop them. Not edited in the form. */
   topics: Record<string, string> | null;
   /** Multi choice "Kreuzen Sie n an": kept so saving does not drop it. Not edited in the form yet. */
@@ -44,7 +45,9 @@ export type EditorDraft = {
   skillTag: string | null;
   /** Matching: rows with the id of their target, and the targets. */
   rows: Array<{ id: string; text: string; target: string }>;
-  targets: Array<{ id: string; text: string }>;
+  targets: Array<{ id: string; text: string; image?: ImageRef }>;
+  /** Writing and speaking: the task's pictures, kept so saving the text does not drop them. Not edited in the form yet. */
+  images: ImageRef[];
   /** Short text: accepted answers, "|" separated. */
   accepted: string;
   maxChars: number;
@@ -110,6 +113,7 @@ export function emptyDraft(type: ItemType, section: Section, level: Cefr): Edito
     skillTag: null,
     rows: ["l1", "l2", "l3"].map((id) => ({ id, text: "", target: "" })),
     targets: ["r1", "r2", "r3", "r4"].map((id) => ({ id, text: "" })),
+    images: [],
     accepted: "",
     maxChars: 200,
     minWords: 80,
@@ -148,7 +152,7 @@ export function draftFromItem(item: EditableItem): EditorDraft {
   const { content, key } = item;
   if (content.kind === "CHOICE") {
     const correct = key.kind === "CHOICE" ? key.correct : [];
-    d.options = content.options.map((o) => ({ id: o.id, text: o.text, correct: correct.includes(o.id) }));
+    d.options = content.options.map((o) => ({ id: o.id, text: o.text, correct: correct.includes(o.id), ...(o.image ? { image: o.image } : {}) }));
     d.pick = content.pick ?? null;
   }
   if (content.kind === "TFNG") {
@@ -166,7 +170,7 @@ export function draftFromItem(item: EditableItem): EditorDraft {
   if (content.kind === "MATCHING") {
     const pairs = key.kind === "MATCHING" ? key.pairs : {};
     d.rows = content.left.map((l) => ({ id: l.id, text: l.text, target: pairs[l.id] ?? "" }));
-    d.targets = content.right.map((r) => ({ id: r.id, text: r.text }));
+    d.targets = content.right.map((r) => ({ id: r.id, text: r.text, ...(r.image ? { image: r.image } : {}) }));
   }
   if (content.kind === "SHORT_TEXT") {
     d.maxChars = content.maxChars;
@@ -175,11 +179,13 @@ export function draftFromItem(item: EditableItem): EditorDraft {
   if (content.kind === "WRITING") {
     d.minWords = content.minWords;
     d.maxWords = content.maxWords;
+    d.images = content.images ?? [];
   }
   if (content.kind === "SPEAKING") {
     d.thinkSeconds = content.thinkSeconds;
     d.answerSeconds = content.answerSeconds;
     d.maxTakes = content.maxTakes;
+    d.images = content.images ?? [];
   }
   if (item.rubric) {
     d.contentPoints = item.rubric.contentPoints.join("\n");
@@ -200,6 +206,10 @@ function topicsOf(topics: Record<string, string> | null, gapIds: string[]): Reco
 export function draftToItem(d: EditorDraft): ValidatableItem & { rubric: ItemRubric | null } {
   const prompt = cleanText(d.prompt);
   const idText = (xs: Array<{ id: string; text: string }>) => xs.map((x) => ({ id: x.id, text: cleanText(x.text) }));
+  // Options and targets keep their picture when the teacher edits the text.
+  const withImage = (xs: Array<{ id: string; text: string; image?: ImageRef }>) =>
+    xs.map((x) => ({ id: x.id, text: cleanText(x.text), ...(x.image ? { image: x.image } : {}) }));
+  const taskImages = d.images.length ? { images: d.images } : {};
   const rubric = (): ItemRubric => {
     const register = cleanText(d.register);
     const studentPoints = d.studentPoints.split("\n").map((p) => cleanText(p)).filter(Boolean);
@@ -215,7 +225,7 @@ export function draftToItem(d: EditorDraft): ValidatableItem & { rubric: ItemRub
       return {
         type: d.type,
         prompt,
-        content: { kind: "CHOICE", options: idText(d.options), ...(d.type === "MULTI_CHOICE" && d.pick !== null ? { pick: d.pick } : {}) },
+        content: { kind: "CHOICE", options: withImage(d.options), ...(d.type === "MULTI_CHOICE" && d.pick !== null ? { pick: d.pick } : {}) },
         key: { kind: "CHOICE", correct: d.options.filter((o) => o.correct).map((o) => o.id) },
         rubric: null,
       };
@@ -244,19 +254,19 @@ export function draftToItem(d: EditorDraft): ValidatableItem & { rubric: ItemRub
       return {
         type: d.type,
         prompt,
-        content: { kind: "MATCHING", left: idText(d.rows), right: idText(d.targets) },
+        content: { kind: "MATCHING", left: idText(d.rows), right: withImage(d.targets) },
         key: { kind: "MATCHING", pairs: Object.fromEntries(d.rows.filter((r) => r.target).map((r) => [r.id, r.target])) },
         rubric: null,
       };
     case "SHORT_TEXT":
       return { type: d.type, prompt, content: { kind: "SHORT_TEXT", maxChars: Math.round(d.maxChars) }, key: { kind: "SHORT_TEXT", accepted: splitBar(d.accepted) }, rubric: null };
     case "WRITING_PROMPT":
-      return { type: d.type, prompt, content: { kind: "WRITING", minWords: Math.round(d.minWords), maxWords: Math.round(d.maxWords) }, key: { kind: "NONE" }, rubric: rubric() };
+      return { type: d.type, prompt, content: { kind: "WRITING", minWords: Math.round(d.minWords), maxWords: Math.round(d.maxWords), ...taskImages }, key: { kind: "NONE" }, rubric: rubric() };
     case "SPEAKING_PROMPT":
       return {
         type: d.type,
         prompt,
-        content: { kind: "SPEAKING", thinkSeconds: Math.round(d.thinkSeconds), answerSeconds: Math.round(d.answerSeconds), maxTakes: Math.round(d.maxTakes) },
+        content: { kind: "SPEAKING", thinkSeconds: Math.round(d.thinkSeconds), answerSeconds: Math.round(d.answerSeconds), maxTakes: Math.round(d.maxTakes), ...taskImages },
         key: { kind: "NONE" },
         rubric: rubric(),
       };
@@ -297,16 +307,19 @@ export function insertGap(prompt: string, at: number): { prompt: string; id: str
 
 const id = z.string().trim().min(1).max(20);
 const idText = z.object({ id, text: z.string().max(2000) });
+// A bank picture. The key is checked for shape here and again by `itemProblems`; a teacher cannot name an arbitrary path.
+const imageRef = z.object({ storageKey: z.string().regex(BANK_IMAGE_KEY), w: z.number().int().min(1).max(10_000), h: z.number().int().min(1).max(10_000), alt: z.string().max(500) });
+const pictureText = idText.extend({ image: imageRef.optional() });
 const int = z.number().int().min(-1).max(100_000);
 
 export const contentSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("CHOICE"), options: z.array(idText).max(8), pick: int.optional() }),
+  z.object({ kind: z.literal("CHOICE"), options: z.array(pictureText).max(8), pick: int.optional() }),
   z.object({ kind: z.literal("TFNG"), statements: z.array(idText).max(12), twoWay: z.boolean().optional(), wording: z.literal("JA_NEIN").optional() }),
   z.object({ kind: z.literal("GAP"), gaps: z.array(z.object({ id, choices: z.array(z.string().max(200)).max(10).optional() })).max(30) }),
-  z.object({ kind: z.literal("MATCHING"), left: z.array(idText).max(12), right: z.array(idText).max(14) }),
+  z.object({ kind: z.literal("MATCHING"), left: z.array(idText).max(12), right: z.array(pictureText).max(14) }),
   z.object({ kind: z.literal("SHORT_TEXT"), maxChars: int }),
-  z.object({ kind: z.literal("WRITING"), minWords: int, maxWords: int }),
-  z.object({ kind: z.literal("SPEAKING"), thinkSeconds: int, answerSeconds: int, maxTakes: int }),
+  z.object({ kind: z.literal("WRITING"), minWords: int, maxWords: int, images: z.array(imageRef).max(10).optional() }),
+  z.object({ kind: z.literal("SPEAKING"), thinkSeconds: int, answerSeconds: int, maxTakes: int, images: z.array(imageRef).max(10).optional() }),
 ]);
 
 export const keySchema = z.discriminatedUnion("kind", [

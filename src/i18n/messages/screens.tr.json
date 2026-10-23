@@ -840,7 +840,12 @@
     "p_PICK_KIND": "\"n tane işaretle\" yalnız çok seçimli sorularda olur.",
     "p_PICK_RANGE": "\"n tane işaretle\" 2 ile {detail} arasında bir tam sayı olmalı.",
     "p_PICK_KEY_COUNT": "\"n tane işaretle\" sayısı ile doğru şık sayısı eşit olmalı ({detail}).",
-    "p_TFNG_KEY_UNKNOWN": "Cevap anahtarında olmayan bir ifade var ({ids}).",
+    "p_IMAGES_KIND": "Görsel yalnızca yazma ve konuşma görevlerine eklenebilir.",
+    "p_IMAGES_COUNT": "Bir görevde en fazla {detail} görsel olabilir.",
+    "p_IMAGE_ALT_EMPTY": "{n}. görselin açıklaması (alt metin) boş.",
+    "p_IMAGE_KEY": "{n}. görsel bankadaki görsellerden biri değil.",
+    "p_MATCH_IMAGE_NOT_LETTERED": "{n}. görsel hedefin metninde bir harf olmalı, örneğin \"Bild A\"."
+,    "p_TFNG_KEY_UNKNOWN": "Cevap anahtarında olmayan bir ifade var ({ids}).",
     "p_GAP_NONE": "Soruda boşluk yok.",
     "p_GAP_MARKER_REPEAT": "Aynı boşluk işareti iki kez geçiyor.",
     "p_GAP_NO_MARKER": "Soru kökünde yeri olmayan boşluk var ({ids}).",

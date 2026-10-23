@@ -840,7 +840,12 @@
     "p_PICK_KIND": "\"Tick n\" is only for multiple choice questions.",
     "p_PICK_RANGE": "\"Tick n\" must be a whole number from 2 to {detail}.",
     "p_PICK_KEY_COUNT": "\"Tick n\" and the number of correct options must match ({detail}).",
-    "p_TFNG_KEY_UNKNOWN": "The answer key names a statement that does not exist ({ids}).",
+    "p_IMAGES_KIND": "Pictures can only be added to writing and speaking tasks.",
+    "p_IMAGES_COUNT": "A task can have at most {detail} pictures.",
+    "p_IMAGE_ALT_EMPTY": "Picture {n} has no description (alt text).",
+    "p_IMAGE_KEY": "Picture {n} is not a picture from the bank.",
+    "p_MATCH_IMAGE_NOT_LETTERED": "Picture target {n} needs a letter in its text, for example \"Bild A\"."
+,    "p_TFNG_KEY_UNKNOWN": "The answer key names a statement that does not exist ({ids}).",
     "p_GAP_NONE": "The question has no gap.",
     "p_GAP_MARKER_REPEAT": "A gap marker appears twice.",
     "p_GAP_NO_MARKER": "A gap has no place in the stem ({ids}).",

@@ -1,5 +1,7 @@
+import { BANK_IMAGE_KEY, imageRefsOf } from "./image-refs";
 import { typedMatches } from "./item-scoring";
-import { textGapKindOf, type ItemContent, type ItemKey, type ItemRubric, type ItemType } from "./types";
+import { targetLetter } from "./safe";
+import { textGapKindOf, type ImageRef, type ItemContent, type ItemKey, type ItemRubric, type ItemType } from "./types";
 
 /**
  * Structural checks every item passes before it may enter the bank, whether a
@@ -45,6 +47,11 @@ export const ITEM_PROBLEM_CODES = [
   "PICK_KIND",
   "PICK_RANGE",
   "PICK_KEY_COUNT",
+  "IMAGES_KIND",
+  "IMAGES_COUNT",
+  "IMAGE_ALT_EMPTY",
+  "IMAGE_KEY",
+  "MATCH_IMAGE_NOT_LETTERED",
   "GAP_NONE",
   "GAP_MARKER_REPEAT",
   "GAP_NO_MARKER",
@@ -157,7 +164,8 @@ export function itemProblems(item: ValidatableItem): ItemProblem[] {
     if (content.options.length < 3) add("CHOICE_TOO_FEW");
     if (duplicates(ids).length) add("CHOICE_ID_REPEAT");
     if (duplicates(filled(content.options.map((o) => o.text))).length) add("CHOICE_TEXT_REPEAT");
-    const empty = content.options.findIndex((o) => !o.text.trim());
+    // A picture option may have no text: its alt text (checked below) is what names it.
+    const empty = content.options.findIndex((o) => !o.text.trim() && !o.image);
     if (empty >= 0) add("CHOICE_EMPTY", { n: empty + 1 });
     const unknown = key.correct.filter((c) => !ids.includes(c));
     if (unknown.length) add("CHOICE_KEY_UNKNOWN", { ids: unknown });
@@ -177,6 +185,8 @@ export function itemProblems(item: ValidatableItem): ItemProblem[] {
       else if (key.correct.length !== content.pick) add("PICK_KEY_COUNT", { detail: `${content.pick}/${key.correct.length}` });
     }
   } else if (loose.pick !== undefined) add("PICK_KIND");
+
+  pictureProblems(content, add);
 
   if (content.kind === "TFNG" && key.kind === "TFNG") {
     const ids = content.statements.map((s) => s.id);
@@ -228,7 +238,7 @@ export function itemProblems(item: ValidatableItem): ItemProblem[] {
       const target = key.pairs[l.id];
       if (!target || !right.includes(target)) add("MATCH_ROW_NO_TARGET", { n: i + 1, ids: [l.id] });
     });
-    const emptyTarget = content.right.findIndex((r) => !r.text.trim());
+    const emptyTarget = content.right.findIndex((r) => !r.text.trim() && !r.image);
     if (emptyTarget >= 0) add("MATCH_TARGET_EMPTY", { n: emptyTarget + 1 });
     if (duplicates([...left, ...right]).length) add("MATCH_ID_REPEAT");
     if (duplicates(filled(content.left.map((l) => l.text))).length) add("MATCH_ROW_TEXT_REPEAT");
@@ -264,6 +274,35 @@ export function itemProblems(item: ValidatableItem): ItemProblem[] {
   }
 
   return out;
+}
+
+/**
+ * Pictures (option, target and task images). Every picture needs alt text (the
+ * grader and a screen reader get nothing else), a picture option or target
+ * may then have no text, a picture target in a matching item names itself by a
+ * letter ("Bild A"), `images` belongs to writing and speaking tasks only and a
+ * task has at most two. The storage key must be a bank picture's, never a path.
+ */
+export const TASK_IMAGES_MAX = 2;
+
+function pictureProblems(content: ItemContent, add: (code: ItemProblemCode, extra?: Omit<ItemProblem, "code">) => void) {
+  const loose = content as { images?: unknown[] };
+  const isTask = content.kind === "WRITING" || content.kind === "SPEAKING";
+  if (loose.images !== undefined && !isTask) add("IMAGES_KIND");
+  if (isTask && (content.images?.length ?? 0) > TASK_IMAGES_MAX) add("IMAGES_COUNT", { detail: String(TASK_IMAGES_MAX) });
+  const refs: Array<{ image: ImageRef; n: number }> = [];
+  if (content.kind === "CHOICE") content.options.forEach((o, i) => o.image && refs.push({ image: o.image, n: i + 1 }));
+  else if (content.kind === "MATCHING") content.right.forEach((r, i) => r.image && refs.push({ image: r.image, n: i + 1 }));
+  else imageRefsOf(content).forEach((image, i) => refs.push({ image, n: i + 1 }));
+  for (const { image, n } of refs) {
+    if (!image.alt || !image.alt.trim()) add("IMAGE_ALT_EMPTY", { n });
+    if (!BANK_IMAGE_KEY.test(image.storageKey ?? "")) add("IMAGE_KEY", { n });
+  }
+  if (content.kind === "MATCHING") {
+    content.right.forEach((r, i) => {
+      if (r.image && targetLetter(r.text) === null) add("MATCH_IMAGE_NOT_LETTERED", { n: i + 1 });
+    });
+  }
 }
 
 /**
@@ -362,6 +401,16 @@ export function problemText(p: ItemProblem): string {
       return `pick must be a whole number from 2 to ${p.detail ?? "the number of options minus one"}`;
     case "PICK_KEY_COUNT":
       return `pick and the number of correct options differ (${p.detail ?? ""})`;
+    case "IMAGES_KIND":
+      return "images are only for writing and speaking tasks";
+    case "IMAGES_COUNT":
+      return `a task has at most ${p.detail ?? TASK_IMAGES_MAX} images`;
+    case "IMAGE_ALT_EMPTY":
+      return `picture ${one(p)} has no alt text`;
+    case "IMAGE_KEY":
+      return `picture ${one(p)} does not point at a bank picture`;
+    case "MATCH_IMAGE_NOT_LETTERED":
+      return `picture target ${one(p)} needs a letter in its text, like "Bild A"`;
     case "GAP_NONE":
       return "no gaps";
     case "GAP_MARKER_REPEAT":

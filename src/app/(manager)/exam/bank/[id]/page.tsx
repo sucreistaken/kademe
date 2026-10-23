@@ -12,8 +12,9 @@ import { db } from "@/db";
 import { items, stimuli } from "@/db/schema";
 import { can } from "@/lib/authorize";
 import { withinOf } from "@/lib/exam/difficulty";
+import { imageRefsOf } from "@/lib/exam/image-refs";
 import { itemProblems } from "@/lib/exam/validate";
-import { wordBankWords, type ItemSnapshot } from "@/lib/exam/types";
+import { wordBankWords, type ImageRef, type ItemSnapshot } from "@/lib/exam/types";
 import { getStorage } from "@/lib/storage";
 import { requireUser } from "@/server/session";
 import { managerLocale } from "@/i18n/manager-locale";
@@ -44,6 +45,16 @@ export default async function BankItemPage({ params, searchParams }: { params: P
   const within = withinOf(item.level, item.difficulty);
   const needsAudio = item.section === "LISTENING" && !stimulus?.audioKey;
   const audioUrl = stimulus?.audioKey ? await getStorage().getSignedUrl(stimulus.audioKey, 3600) : null;
+  // Pictures are shown to the teacher from signed URLs, like the listening audio above.
+  const imageUrls = new Map<string, string>();
+  for (const ref of imageRefsOf(item.content)) {
+    if (!imageUrls.has(ref.storageKey)) imageUrls.set(ref.storageKey, await getStorage().getSignedUrl(ref.storageKey, 3600));
+  }
+  const pictureOf = (ref: ImageRef | undefined, className: string) =>
+    ref && imageUrls.get(ref.storageKey) ? (
+      // eslint-disable-next-line @next/next/no-img-element -- a signed storage URL, sized by the stored width and height
+      <img src={imageUrls.get(ref.storageKey)} alt={ref.alt} width={ref.w} height={ref.h} loading="lazy" className={className} />
+    ) : null;
   const snap = { ...item, key: item.answerKey, stimulus: null } as unknown as ItemSnapshot;
   const c = item.content;
   // An MC cloze or word-bank text names its kind; a word bank also shows its pool and distractors.
@@ -118,6 +129,7 @@ export default async function BankItemPage({ params, searchParams }: { params: P
                 {c.options.map((o, i) => (
                   <li key={o.id} lang="de" className="rounded-[8px] border border-line px-3 py-2 text-[14px] text-ink-2">
                     {String.fromCharCode(65 + i)}. {o.text}
+                    {pictureOf(o.image, "mt-2 h-auto max-h-[180px] w-auto max-w-full rounded-[6px]")}
                   </li>
                 ))}
               </ol>
@@ -144,6 +156,7 @@ export default async function BankItemPage({ params, searchParams }: { params: P
                   {c.right.map((r) => (
                     <li key={r.id} lang="de">
                       {r.text}
+                      {pictureOf(r.image, "mt-1 h-auto max-h-[140px] w-auto max-w-full rounded-[6px]")}
                     </li>
                   ))}
                 </ul>
@@ -155,6 +168,9 @@ export default async function BankItemPage({ params, searchParams }: { params: P
               </p>
             ) : c.kind === "GAP" ? (
               <p className="mt-3 text-[13px] text-muted">{c.gaps.map((g) => `[${g.id}] ${g.choices ? g.choices.join(" / ") : "…"}`).join("   ")}</p>
+            ) : null}
+            {(c.kind === "WRITING" || c.kind === "SPEAKING") && c.images?.length ? (
+              <div className="mt-3 flex flex-wrap gap-3">{c.images.map((im, i) => <span key={i}>{pictureOf(im, "h-auto max-h-[220px] w-auto max-w-full rounded-[8px]")}</span>)}</div>
             ) : null}
             {c.kind === "WRITING" ? <p className="mt-3 text-[13px] text-muted">{c.minWords}-{c.maxWords}</p> : null}
             {c.kind === "SPEAKING" ? (

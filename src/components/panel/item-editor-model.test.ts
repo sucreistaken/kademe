@@ -179,3 +179,54 @@ describe("saveInput", () => {
     expect(saveInput(d, null).prompt).toBe("Ein Satz – mit Strich");
   });
 });
+
+describe("pictures survive a text edit", () => {
+  const pic = (n: string) => ({ storageKey: `bank/images/${n.repeat(16)}.webp`, w: 960, h: 640, alt: `Alt ${n}` });
+
+  it("picture options keep their image when a teacher edits another option's text", () => {
+    const it0 = item({
+      content: { kind: "CHOICE", options: [{ id: "a", text: "", image: pic("a") }, { id: "b", text: "", image: pic("b") }, { id: "c", text: "Kein Bild" }] },
+      key: { kind: "CHOICE", correct: ["a"] },
+    });
+    const d = draftFromItem(it0);
+    const edited = { ...d, prompt: "Welches Bild?", options: d.options.map((o) => (o.id === "c" ? { ...o, text: "  Ohne Bild " } : o)) };
+    const back = draftToItem(edited);
+    expect(back.content).toEqual({ kind: "CHOICE", options: [{ id: "a", text: "", image: pic("a") }, { id: "b", text: "", image: pic("b") }, { id: "c", text: "Ohne Bild" }] });
+    expect(itemProblems(back)).toEqual([]);
+    expect(saveItemSchema.parse(saveInput(edited, null)).content).toEqual(back.content);
+  });
+
+  it("matching targets keep their image", () => {
+    const it0 = item({
+      type: "MATCHING",
+      section: "READING",
+      prompt: "Ordnen Sie zu.",
+      content: { kind: "MATCHING", left: [{ id: "l1", text: "Eins" }, { id: "l2", text: "Zwei" }], right: [{ id: "r1", text: "Bild A", image: pic("1") }, { id: "r2", text: "Bild B", image: pic("2") }, { id: "r3", text: "Bild C", image: pic("3") }] },
+      key: { kind: "MATCHING", pairs: { l1: "r1", l2: "r2" } },
+    });
+    const back = draftToItem(draftFromItem(it0));
+    expect(back.content).toEqual(it0.content);
+    expect(itemProblems(back)).toEqual([]);
+  });
+
+  it.each(["WRITING_PROMPT", "SPEAKING_PROMPT"] as const)("%s keeps its task pictures", (type) => {
+    const it0 = item({
+      type,
+      section: type === "WRITING_PROMPT" ? "WRITING" : "SPEAKING",
+      prompt: "Beschreiben Sie die Bilder.",
+      content: type === "WRITING_PROMPT" ? { kind: "WRITING", minWords: 20, maxWords: 40, images: [pic("d"), pic("e")] } : { kind: "SPEAKING", thinkSeconds: 20, answerSeconds: 40, maxTakes: 2, images: [pic("d"), pic("e")] },
+      key: { kind: "NONE" },
+      rubric: { contentPoints: ["Ort"] },
+    });
+    const d = draftFromItem(it0);
+    expect(d.images).toHaveLength(2);
+    const back = draftToItem({ ...d, prompt: "Beschreiben Sie beide Bilder." });
+    expect(back.content).toEqual(it0.content);
+    expect(saveItemSchema.parse(saveInput(d, null)).content).toEqual(it0.content);
+  });
+
+  it("the save schema refuses a picture whose key is not a bank picture", () => {
+    const d = draftFromItem(item({ content: { kind: "CHOICE", options: [{ id: "a", text: "", image: { ...pic("a"), storageKey: "../../secret" } }, { id: "b", text: "x" }, { id: "c", text: "y" }] }, key: { kind: "CHOICE", correct: ["b"] } }));
+    expect(saveItemSchema.safeParse(saveInput(d, null)).success).toBe(false);
+  });
+});
