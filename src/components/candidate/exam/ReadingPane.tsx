@@ -21,7 +21,8 @@ export function ReadingPane({
   return (
     <article className="rounded-[14px] border border-line bg-surface p-6 lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem-var(--step-footer-space,112px)-var(--step-notice-space,0px))] lg:overflow-y-auto">
       {notes.supported ? (
-        <div className="sticky top-0 z-10 -mx-6 -mt-6 mb-3 border-b border-line bg-surface px-5 py-2">
+        // lg:-top-6: inside the scrolling article a sticky child sticks within its padding, so top-0 would sit 24px low, over the title.
+        <div className="sticky top-0 z-10 -mx-6 -mt-6 lg:-top-6 mb-3 border-b border-line bg-surface px-5 py-2">
           <NotesToolbar controller={notes} pen />
         </div>
       ) : null}
