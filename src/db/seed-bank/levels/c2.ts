@@ -759,7 +759,7 @@ function clip(
   key: string,
   title: string,
   topic: string,
-  speakers: Array<{ label: string; voice: "A" | "B" }>,
+  speakers: Array<{ label: string; voice: "A" | "B" | "C" | "D" }>,
   lines: string[],
 ): SeedStimulus {
   return { key, section: "LISTENING", level: LEVEL, title, topic, speakers, body: lines.join("\n") };
@@ -847,7 +847,7 @@ function forClip(stimulusKey: string) {
 const L_FEATURE = "v2-l-c2-feature-telefonieren-v3";
 const L_DEBATTE = "v2-l-c2-debatte-probetag-v3";
 const L_INTERVIEW = "v2-l-c2-interview-planung-v3";
-const L_SCHLAF = "v2-l-c2-schlaf-tipp";
+const L_SCHLAF = "v2-l-c2-schlaf-tipp-v2";
 const L_BAHN = "v2-l-c2-bahn-nachricht";
 const L_WOHNEN = "v2-l-c2-umfrage-gemeinschaftsraum";
 
@@ -914,7 +914,7 @@ const listeningStimuli: SeedStimulus[] = [
   clip(L_SCHLAF, "Wissenschaftsmagazin: Schlaf und Lernen", "Gesundheit, Schlaf",
     [
       { label: "Moderatorin", voice: "A" },
-      { label: "Lindqvist", voice: "B" },
+      { label: "Lindqvist", voice: "D" },
     ],
     [
       "Moderatorin: Frau Lindqvist, es heißt ja gern, wer vor einer Prüfung durchlernt, statt zu schlafen, sei selber schuld. Stimmt das so pauschal?",
@@ -1461,14 +1461,14 @@ const grammarOpenTexts: SeedItem[] = [
     first: "Vereine, Rettungsdienste und Nachbarschaftsinitiativen leben von Menschen, die ihre Zeit unentgeltlich zur Verfügung stellen.",
     body:
       "Doch immer häufiger fehlt es [[an#praeposition]] Nachwuchs. " +
-      "Viele Vereine müssen ihr Angebot einschränken, [[falls/sofern/wenn#konnektor]] sich nicht bald neue Freiwillige finden. " +
+      "Viele Vereine müssen ihr Angebot einschränken, [[falls/sofern/wenn/sollten#konnektor]] sich nicht bald neue Freiwillige finden. " +
       "Wer heute eine Jugendgruppe leitet, muss Nachweise vorlegen, Fortbildungen besuchen und sich [[gegen#praeposition]] Haftungsrisiken absichern. " +
       "Manch einer fragt sich, [[ob#nebensatz]] der Aufwand überhaupt noch lohnt. " +
       "Wer ein Amt übernimmt, nimmt nicht selten erhebliche Mehrarbeit in [[Kauf#funktionsverbgefuege]]. " +
       "Bei Ehrungen und Neujahrsempfängen wird das Engagement zwar gewürdigt, [[doch/aber/jedoch#konnektor]] mit warmen Worten allein ist niemandem gedient. " +
       "Die Verbände fordern deshalb, den Freiwilligen bürokratische Hürden aus dem Weg [[zu#infinitiv]] räumen. " +
       "Auch Arbeitgeber sind gefragt: Sie könnten Beschäftigte, die ein Amt bekleiden, großzügiger freistellen, und zwar [[ohne#praeposition]] dass ihnen daraus Nachteile erwachsen. " +
-      "Entscheidend ist letztlich, dass das Ehrenamt nicht als Selbstverständlichkeit gilt, [[sondern#konnektor]] als eine Leistung, die der Gesellschaft [[zugute#idiomatik]] kommt.",
+      "Entscheidend ist letztlich, dass das Ehrenamt nicht als Selbstverständlichkeit gilt, [[sondern#konnektor]] als eine Leistung: Sie kommt der ganzen Gesellschaft [[zugute#idiomatik]].",
     last: "Wer das erkennt, wird die Engagierten künftig nicht nur loben, sondern entlasten.",
     note: "fehlen an (g1), konditionales falls/sofern (g2), sich absichern gegen (g3), indirekte Frage mit ob (g4), Funktionsverbgefüge in Kauf nehmen (g5), einräumendes zwar ... doch (g6), Infinitiv mit zu nach Verb (g7), ohne dass (g8), nicht ... sondern (g9), zugute kommen (g10).",
   }),
@@ -1478,15 +1478,15 @@ const grammarOpenTexts: SeedItem[] = [
     body:
       "Die Gründe sind vielfältig. [[Zum#konnektor.zweiteilig]] einen fehlt es an Nachfolgern, [[zum#konnektor.zweiteilig]] anderen lohnt sich der Betrieb kleiner Läden kaum noch. " +
       "Wer sich nicht [[mit#verb_praeposition]] der Rolle des bloßen Versorgers zufriedengeben wollte, versuchte es mit Postschalter, Café und Lieferdienst. " +
-      "Das Angebot wuchs, der Umsatz [[hingegen/dagegen/indes/indessen#konnektor]] kaum. " +
+      "Das Angebot wuchs, der Umsatz [[hingegen/dagegen/indes/indessen/jedoch/aber/allerdings/wiederum#konnektor]] stagnierte. " +
       "Manche Gemeinden greifen den Betreibern [[unter#idiomatik]] die Arme, indem sie die Räume mietfrei zur Verfügung stellen. " +
       "Andernorts haben sich Bewohner zu Genossenschaften zusammengeschlossen, [[um#infinitiv.umzu]] den Laden in eigener Regie zu führen. " +
       "Solche Modelle funktionieren allerdings nur, [[wenn/sofern/solange/falls#konnektor]] genügend Menschen dort auch tatsächlich einkaufen. " +
       "Viele ältere Dorfbewohner sind [[darauf#praepositionaladverb]] angewiesen, dass der Laden um die Ecke bleibt. " +
       "Hinzu [[kommt#trennbares_verb]], dass er mehr ist als eine Verkaufsstelle: Hier trifft man sich, hier erfährt man, wer im Krankenhaus liegt. " +
-      "Wo er fehlt, geht [[eben/halt/ja#idiomatik]] auch ein Stück Dorfleben verloren.",
+      "Wo er fehlt, geht mit [[ihm#dativ]] auch ein Stück Dorfleben verloren.",
     last: "Mancherorts hat man daraus bereits Konsequenzen gezogen.",
-    note: "zum einen ... zum anderen (g1, g2), sich zufriedengeben mit (g3), Gegensatz hingegen (g4), jemandem unter die Arme greifen (g5), Finalsatz um ... zu (g6), konditionales wenn/sofern (g7), angewiesen sein auf mit Pronominaladverb (g8), Hinzu kommt (g9), Modalpartikel eben (g10).",
+    note: "zum einen ... zum anderen (g1, g2), sich zufriedengeben mit (g3), Gegensatz hingegen (g4), jemandem unter die Arme greifen (g5), Finalsatz um ... zu (g6), konditionales wenn/sofern (g7), angewiesen sein auf mit Pronominaladverb (g8), Hinzu kommt (g9), Personalpronomen im Dativ nach mit (g10).",
   }),
   openCloze(LEVEL, "HARD", {
     title: "Warum uns Ruinen faszinieren",
@@ -1494,14 +1494,14 @@ const grammarOpenTexts: SeedItem[] = [
     body:
       "Streng [[genommen#idiomatik]] bewundern sie weniger das Bauwerk als seinen Verfall. " +
       "Der Reiz liegt [[darin#praepositionaladverb]], dass das Fehlende den Betrachter zum Ergänzen einlädt: Wo ein Dach fehlt, malt man sich eines aus. " +
-      "Ein vollständig erhaltenes Schloss lässt dieser Fantasie dagegen kaum [[Raum/Platz/Spielraum#idiomatik]]. " +
+      "Ein vollständig erhaltenes Schloss lässt dieser Fantasie dagegen kaum [[Raum/Platz/Spielraum/Freiraum#idiomatik]]. " +
       "Hinzu [[kommt#trennbares_verb]], dass Ruinen etwas Unaufdringliches haben: Sie erheben [[keinen#negation.kein]] Anspruch darauf, bewundert zu werden, und gerade deshalb tut man es. " +
       "Die Denkmalpflege steht daher [[vor#praeposition]] einem Dilemma. " +
       "[[Je#konnektor]] gründlicher saniert wird, [[desto/umso#konnektor]] stärker geht die Patina verloren, die Besucher so schätzen. " +
       "Wird dagegen nichts unternommen, droht binnen weniger Jahrzehnte der endgültige Einsturz. " +
       "Manche Fachleute plädieren deshalb für einen Mittelweg: [[So#konnektor.modal]] viel wie nötig sichern, so wenig wie möglich ergänzen. " +
       "Ob die Besucher in hundert Jahren noch dasselbe empfinden, steht [[dahin#idiomatik]]. " +
-      "Sicher ist nur, dass die Ruine nicht [[trotz/ungeachtet#genitiv.praeposition]] ihres Verfalls anzieht, sondern seinetwegen.",
+      "Sicher ist nur, dass die Ruine Besucher nicht [[trotz/ungeachtet#genitiv.praeposition]] ihres Verfalls anzieht, sondern seinetwegen.",
     last: "Ein Gebäude, das nichts mehr verbergen kann, wirkt auf viele ehrlicher als jedes restaurierte Schloss.",
     note: "streng genommen (g1), Pronominaladverb darin (g2), Raum/Spielraum lassen (g3), Hinzu kommt (g4), Anspruch erheben + Negation (g5), vor einem Dilemma stehen (g6), je ... desto (g7, g8), so viel ... so wenig (g9), dahinstehen (g10), trotz + Genitiv (g11).",
   }),
@@ -1684,10 +1684,10 @@ const readingItemsV3: SeedItem[] = [
   // Insertion 5/7: Streuobstwiese. Right order: r1 D1, r2 L3, r3 L1, r4 L5, r5 D2, r6 L2, r7 L4.
   forText(R_STREUOBST).match("structure", "MID", INSERT_PROMPT, GAPS_1_5,
     [
-      "Auch der Klimawandel setzt den Wiesen zu. Trockene Sommer schwächen die alten Bäume, und Schädlinge, die früher im Winter erfroren, überleben nun häufiger. Wissenschaftler empfehlen deshalb, robuste, regional bewährte Sorten zu pflanzen.",
+      "Auch der Klimawandel setzt den Wiesen zu. Trockene Sommer schwächen die alten Bäume, und Schädlinge, die früher im Winter erfroren, überleben nun häufiger und befallen vor allem die alten Hochstämme.",
       "Auf Dauer trägt dieses Modell jedoch nur, wenn sich genügend Menschen finden, die die Arbeit leisten. Die Besitzer der Flächen sind oft hochbetagt, ihre Kinder wohnen in der Stadt und haben mit dem Obstbau nichts im Sinn.",
       "Der Niedergang hatte wirtschaftliche Gründe. Niederstämmige Plantagen ließen sich maschinell bewirtschaften und lieferten verlässlichere Erträge, während der Pflege der hohen Bäume ein Aufwand gegenüberstand, den kaum jemand bezahlen wollte. Zeitweise gab es sogar Prämien für das Roden.",
-      "Politik und Verbände denken in Förderperioden von fünf oder sieben Jahren, die Bäume in Jahrzehnten. Dieser Unterschied im Zeithorizont wird in den meisten Konzepten bislang unterschätzt.",
+      "Ein Problem bleibt freilich der Maßstab: Politik und Verbände denken in Förderperioden von fünf oder sieben Jahren, die Bäume in Jahrzehnten. Dieser Unterschied im Zeithorizont wird in den meisten Konzepten bislang unterschätzt.",
       "In Süddeutschland ist die Lage besonders günstig, da dort traditionell mehr Obst angebaut wurde als im Norden. Die Region gehört daher zu den Gebieten mit den größten zusammenhängenden Beständen.",
       "Doch Artenvielfalt allein erhält keine Wiese. Die Bäume müssen geschnitten, die Flächen gemäht und überalterte Bestände durch Jungbäume ergänzt werden, und das alles bei Erträgen, die auf dem freien Markt kaum konkurrenzfähig sind.",
       "Nicht jeder sieht darin eine Lösung. Kritiker wenden ein, dass Patenschaften zwar Aufmerksamkeit erzeugen, die laufende Pflege aber nicht ersetzen: Ein Baum, der nur einmal im Jahr besucht wird, wachse sich nicht von selbst zu einem gesunden Bestand aus.",
@@ -1727,9 +1727,9 @@ const readingItemsV3: SeedItem[] = [
   forText(R_WIEDERAUFBAU).match("attitude", "MID", OPINION_PROMPT,
     [
       "Nachgebaute Gebäude sollten für alle als Nachbau kenntlich gemacht werden.",
-      "Das Geld sollte besser in den Bau von Wohnungen für Menschen mit geringem Einkommen fließen.",
+      "Die Mittel wären im sozialen Wohnungsbau besser angelegt.",
       "Die Zerstörung gehört zur Geschichte der Stadt und sollte sichtbar bleiben.",
-      "Vom Wiederaufbau profitieren vor allem Betriebe und Beschäftigte vor Ort.",
+      "Wirtschaftlich zahlt sich ein wiederaufgebautes Wahrzeichen für die Stadt aus.",
       "Für die Verbundenheit der Bewohner mit ihrer Stadt zählt ein vertrautes Stadtbild mehr als die Echtheit der Bausubstanz.",
     ],
     PERSONS_A_F, [1, 4, 3, 5, 2],
@@ -1741,7 +1741,7 @@ const readingItemsV3: SeedItem[] = [
       "Die Grammatik des Deutschen wird von englischen Wörtern nicht verändert.",
       "Öffentliche Stellen und Medien sollten bei der Wortwahl eine Vorbildfunktion übernehmen.",
       "Englische Wörter sind nur dort gerechtfertigt, wo das Deutsche keine gleichwertige Entsprechung hat.",
-      "Manche Menschen fühlen sich von englischen Bezeichnungen im öffentlichen Raum ausgeschlossen.",
+      "Englische Aufschriften im öffentlichen Raum erschweren manchen Menschen das Zurechtfinden.",
       "Übersetzte Fachbegriffe sind oft ungenauer und umständlicher als das englische Original.",
     ],
     PERSONS_A_F, [2, 6, 1, 3, 4],
@@ -1750,11 +1750,11 @@ const readingItemsV3: SeedItem[] = [
   // Opinion matching: Tempo 30 (unused: B).
   forText(R_TEMPO30).match("attitude", "HARD", OPINION_PROMPT,
     [
-      "Für sie ist die Verminderung des Verkehrslärms der wichtigste Grund für die Maßnahme.",
-      "Er befürchtet, dass durch langsameren Verkehr der öffentliche Nahverkehr unzuverlässiger wird.",
-      "Sie stützt ihre Haltung auf Erkenntnisse darüber, wie schwer Unfälle ausgehen.",
-      "Er hält durchgehende Radwege für wirksamer als die Verringerung der Geschwindigkeit.",
-      "Er will die Maßnahme zunächst in ausgewählten Straßen erproben und dann entscheiden.",
+      "Die Verminderung des Verkehrslärms ist der wichtigste Grund für die Maßnahme.",
+      "Langsamerer Verkehr macht Busse und Bahnen unzuverlässiger.",
+      "Entscheidend ist, wie schwer Unfälle ausgehen.",
+      "Durchgehende Radwege bringen mehr als eine niedrigere Geschwindigkeit.",
+      "Die Maßnahme sollte zuerst in einzelnen Straßen erprobt werden.",
     ],
     PERSONS_A_F, [1, 5, 3, 4, 6],
     "A schildert nächtlichen Lärm. E: Busse halten bei langsamem Verkehr den Fahrplan nicht ein. C: weniger Schwerverletzte und Tote. D: geschützte Radwege statt Schilder. F: einzelne Straßen, ein Jahr Erfahrungen. B (Taxifahrer, längere Fahrten) wird von keiner Aussage gemeint."),
@@ -1947,7 +1947,7 @@ const speakingPictureItems: SeedItem[] = [
     [
       "beschreibt, was zu sehen ist (mehrere Menschen arbeiten mit Laptops gemeinsam in einem Raum)",
       "deutet die Szene als Ausdruck eines Wandels der Arbeitswelt (Flexibilität, Gemeinschaft, Selbstorganisation)",
-      "bewertet die These differenziert (Vorteile wie Austausch und Struktur, Nachteile wie Ablenkung oder ständige Erreichbarkeit)",
+      "bewertet die These differenziert (z. B. räumliche Trennung von Wohnung und Arbeit gegenüber dem Homeoffice, aber Kollegen als Freundeskreis, Arbeit an Freizeitorten, ständige Erreichbarkeit)",
       "entwickelt eine eigene begründete Position und belegt sie mit Beispielen",
       "präziser Wortschatz zu Arbeit und Gesellschaft, Satzvariation und Kohärenz",
     ],
@@ -1958,10 +1958,10 @@ const speakingPictureItems: SeedItem[] = [
     ],
     "C2: abstrakte gesellschaftliche These, zu der das Bild nur den Anlass bietet. Wichtig ist die Abwägung mit Belegen."),
   pictureTask("scene.c2.phones-at-dinner", "EASY", { thinkSeconds: 45, answerSeconds: 120, maxTakes: 1 },
-    "Sehen Sie sich das Bild an. Beschreiben Sie, was die Personen tun, und überlegen Sie, was die Szene über den Umgang mit dem Smartphone verrät. Sagen Sie dann, ob Handys am Esstisch erlaubt sein sollten, und begründen Sie Ihre Meinung mit Beispielen aus Ihrer Erfahrung.",
+    "Sehen Sie sich das Bild an. Beschreiben Sie, was die beiden Frauen tun, und überlegen Sie, was die Szene über die Rolle des Smartphones im Alltag verrät. Sagen Sie dann, ob Handys beim gemeinsamen Essen erlaubt sein sollten, und begründen Sie Ihre Meinung mit Beispielen aus Ihrer Erfahrung.",
     [
-      "beschreibt die Szene (zwei Frauen sitzen im Restaurant am Tisch und schauen auf ihre Handys)",
-      "deutet sie, z. B. Ablenkung, fehlendes Gespräch, Gewohnheit, aber auch mögliche harmlose Erklärungen",
+      "beschreibt die Szene (zwei Frauen sitzen im Restaurant am Tisch, eine zeigt der anderen lächelnd etwas auf dem Handy)",
+      "deutet sie, z. B. Handy als Gesprächsanlass oder als Ablenkung, gemeinsames Erleben, Foto oder Nachricht zeigen",
       "nimmt klar Stellung und begründet mit mindestens einem Beispiel",
       "berücksichtigt unterschiedliche Situationen (Familie, Freunde, Geschäftsessen)",
       "natürlicher, flüssiger Ausdruck mit passenden Wendungen",
@@ -1969,7 +1969,7 @@ const speakingPictureItems: SeedItem[] = [
     [
       "das Bild beschreiben",
       "die Szene deuten",
-      "begründet zum Handy am Esstisch Stellung nehmen",
+      "begründet zum Handy beim gemeinsamen Essen Stellung nehmen",
     ],
     "Beschreiben und Deuten mit niedrigerer Abstraktion; die Position muss trotzdem begründet und differenziert sein."),
   pictureTask("scene.c2.traffic-and-bike-lane", "MID", { thinkSeconds: 60, answerSeconds: 150, maxTakes: 1 },
