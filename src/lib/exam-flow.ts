@@ -33,6 +33,9 @@ import { candidateExamName } from "@/lib/exam/candidate-exam-name";
 import { levelFromTheta } from "@/lib/exam/cefr";
 import { playsAllowed } from "@/lib/exam/listening-plays";
 import { hasAnswer, scoreItem } from "@/lib/exam/item-scoring";
+import { approvedFeedback, type FeedbackContent } from "@/lib/exam/student-feedback";
+import type { StudentAnalysis } from "@/lib/exam/student-analysis";
+import { loadStudentAnalysis } from "@/server/student-analysis";
 import {
   canFlag,
   canWrite,
@@ -189,6 +192,15 @@ export type StudentResult = {
   awaitingTeacher: boolean;
   /** Why: "PRODUCTIVE" (writing or speaking) or "REVIEW" (an uncertain result only); null when not waiting. */
   waitingFor?: "PRODUCTIVE" | "REVIEW" | null;
+  /**
+   * Whether the CEFR level (overall and per section) is shown: the teacher's choice at release
+   * (`exam_results.level_shown`), else the exam's visibility setting.
+   */
+  levelShown: boolean;
+  /** Present only once the result is released: counts and topics, never the questions. */
+  analysis?: StudentAnalysis;
+  /** The teacher-approved note, in the student's language, or null. */
+  feedback?: FeedbackContent | null;
 };
 
 export type CandidateState = {
@@ -404,13 +416,26 @@ async function finishedState(
   const hasProductive = enabledSections(cfg).some((s) => !isObjectiveSection(s.section));
   const released = !!result?.releasedAt;
   const waitingFor = studentWaitingFor({ hasProductive, final: result?.status === "FINAL", computed: result?.computed });
+  const levelShown = result?.levelShown ?? cfg.resultVisibility !== "NONE";
   const student: StudentResult = {
     visibility: cfg.resultVisibility,
     released,
     awaitingTeacher: waitingFor !== null,
     waitingFor,
+    levelShown,
   };
-  if (released && cfg.resultVisibility !== "NONE") {
+  // Released means a teacher finalized it and let the student see it.
+  if (released && result?.status === "FINAL") {
+    student.analysis =
+      (await loadStudentAnalysis(
+        ctx.assessment.orgId,
+        attempt.id,
+        enabledSections(cfg).map((s) => s.section),
+        ctx.locale,
+      )) ?? undefined;
+    student.feedback = approvedFeedback(result.studentFeedback);
+  }
+  if (released && result?.status === "FINAL" && levelShown) {
     student.overall = (result?.finalOverall as Cefr | null) ?? null;
     student.outcome = result?.finalOutcome ?? null;
     if (cfg.resultVisibility === "FULL") {

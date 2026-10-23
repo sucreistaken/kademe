@@ -63,7 +63,7 @@ export default async function DonePage({
         <Finished
           token={token}
           name={ctx.candidate.fullName ?? ""}
-          result={finished?.result ?? { visibility: "NONE", released: false, awaitingTeacher: true }}
+          result={finished?.result ?? { visibility: "NONE", released: false, awaitingTeacher: true, levelShown: false }}
           terminated={finished?.terminated ?? false}
           terminationReason={finished?.terminationReason ?? null}
           contactEmail={ctx.contactEmail}
