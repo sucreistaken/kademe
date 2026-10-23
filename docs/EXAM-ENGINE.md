@@ -246,9 +246,11 @@ gösterir.
 
 **Boşluk konuları.** Boşluklu metin ve kelime havuzu boşluklarına anahtarda (`key.topics`: boşluk
 kimliği -> konu kimliği) konu bağlanır; konu kataloğu `topics.ts` içindedir ve her tohum beceri etiketi
-ile boşluk konusu orada çözülmek zorundadır (`topics.test.ts`). Konu anahtarda durur, öğrenciye ya da
-tarayıcıya gitmez; öğrenci analizi yalnızca konu etiketlerini kullanır (bkz. Sonuç). Biçim konuları ("Boşluklu
-metin") öğrencinin çalışabileceği bir konu sayılmaz ve analizden çıkarılır.
+ile boşluk konusu orada çözülmek zorundadır (`topics.test.ts`). Hangi boşluğun hangi konuya bağlı olduğu
+anahtarda durur ve sınav sırasında tarayıcıya gitmez. Sonuçta öğrenci analizi konu başına yalnızca etiketi ve
+sayıları gösterir (bkz. Sonuç); katalogdaki konu kimlikleri (ör. `akkusativ`) analizle birlikte tarayıcıya
+gider ve orada liste anahtarı olarak kullanılır, gizli değildir. Biçim konuları ("Boşluklu metin")
+öğrencinin çalışabileceği bir konu sayılmaz ve analizden çıkarılır.
 
 **Öğrenci analizi.** Ayrıntı "Sonuç" bölümünde. Panel öğrenci kopyası (`?copy=student`) seviye
 gösterilince doğrulama sonucu satırını da basar; öğrenciye giden not yalnızca güçlü yönleri, konu +

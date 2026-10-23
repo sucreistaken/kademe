@@ -33,6 +33,7 @@ import { candidateExamName } from "@/lib/exam/candidate-exam-name";
 import { levelFromTheta } from "@/lib/exam/cefr";
 import { playsAllowed } from "@/lib/exam/listening-plays";
 import { hasAnswer, scoreItem } from "@/lib/exam/item-scoring";
+import { examDateOf, studentSheetDate } from "@/lib/exam/sheet-date";
 import { studentFacingFeedback, type StudentNote } from "@/lib/exam/student-feedback";
 import type { StudentAnalysis } from "@/lib/exam/student-analysis";
 import { loadStudentAnalysis } from "@/server/student-analysis";
@@ -404,6 +405,17 @@ async function countAnswered(runId: string) {
     .from(itemResponses)
     .where(and(eq(itemResponses.sectionRunId, runId), isNotNull(itemResponses.answeredAt)));
   return row?.n ?? 0;
+}
+
+/**
+ * The date on the student's printed result: the same source as the panel's
+ * student copy (the finalized day, else the exam day), see studentSheetDate.
+ * Only for a finished exam.
+ */
+export async function finishedSheetDate(ctx: ExamCandidateContext): Promise<Date | null> {
+  const { attempt } = await workingAttempt(ctx.assessment.id);
+  const [result] = await db.select({ finalizedAt: examResults.finalizedAt }).from(examResults).where(eq(examResults.attemptId, attempt.id)).limit(1);
+  return studentSheetDate({ finalizedAt: result?.finalizedAt, examDate: examDateOf(attempt) });
 }
 
 async function finishedState(

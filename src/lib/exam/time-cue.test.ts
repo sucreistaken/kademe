@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { crossedCue, timeCue, timeCueKey } from "./time-cue";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { crossedCue, TIME_NOTICE_MS, timeCue, timeCueKey } from "./time-cue";
 
 const LONG = 20 * 60_000;
 const SHORT = 8 * 60_000;
@@ -44,5 +46,16 @@ describe("crossedCue", () => {
 describe("timeCueKey", () => {
   it("is per attempt token and section position", () => {
     expect(timeCueKey("abc", 2)).toBe("kademe.exam.timecue.abc.2");
+  });
+});
+
+describe("time callout", () => {
+  it("hides itself after 12 seconds (spec)", () => {
+    expect(TIME_NOTICE_MS).toBe(12_000);
+  });
+  it("is the duration the timer pill uses", () => {
+    const pill = readFileSync(path.join(process.cwd(), "src/components/candidate/exam/TimerPill.tsx"), "utf8");
+    expect(pill).toContain("setTimeout(() => setNotice(null), TIME_NOTICE_MS)");
+    expect(pill).not.toMatch(/NOTICE_MS = /);
   });
 });

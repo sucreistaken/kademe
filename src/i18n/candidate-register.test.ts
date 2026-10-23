@@ -8,7 +8,7 @@ type Tree = { [key: string]: string | Tree };
 const flat = (tree: Tree, prefix = ""): [string, string][] =>
   Object.entries(tree).flatMap(([key, value]) => (typeof value === "string" ? [[prefix + key, value] as [string, string]] : flat(value, `${prefix}${key}.`)));
 
-const ROUND_KEY = /^(analysis\.|notes\.|tutorial\.|exam\.timeNotice|exam\.tickFull|section\.ruleLISTENINGMixed|examNav\.rule|examItems\.gapLabel)|[Mm]ark/;
+const ROUND_KEY = /^(analysis\.|notes\.|tutorial\.|exam\.timeNotice|exam\.pickFull|section\.ruleLISTENINGMixed|examNav\.rule|examItems\.gapLabel)|[Mm]ark/;
 const roundCopy = (messages: unknown) => flat(messages as Tree).filter(([key]) => ROUND_KEY.test(key));
 
 const DE_INFORMAL = /(?<![\p{L}])(du|dein|deine|deinen|deinem|deiner|deines|dich|dir)(?![\p{L}])/iu;

@@ -10,6 +10,7 @@ import { buildReport } from "@/components/panel/report/model";
 import { buildDetail } from "@/components/panel/report/detail-model";
 import { DetailSheet } from "@/components/panel/report/detail-sheet";
 import { StudentSheet } from "@/components/candidate/exam/student-sheet";
+import { examDateOf, studentSheetDate } from "@/lib/exam/sheet-date";
 import { studentFacingFeedback } from "@/lib/exam/student-feedback";
 import type { StudentResult } from "@/lib/exam-flow";
 import { loadStudentAnalysis } from "@/server/student-analysis";
@@ -56,7 +57,7 @@ export default async function ResultReportPage({
       schoolName: org?.name ?? "Kademe",
       studentName: candidate.fullName ?? "-",
       examName: assessment.blueprintName,
-      examDate: attempt.completedAt ?? attempt.startedAt,
+      examDate: examDateOf(attempt),
       sections: view.sections,
       finalOverall: result?.finalOverall,
       skillLevels,
@@ -146,7 +147,7 @@ export default async function ResultReportPage({
           schoolName={built.model.schoolName}
           studentName={built.model.studentName}
           examName={built.model.examName}
-          date={built.model.finalizedAt ?? built.model.examDate}
+          date={studentSheetDate({ finalizedAt: built.model.finalizedAt, examDate: built.model.examDate })}
           result={studentResult}
           locale={assessment.locale}
         />

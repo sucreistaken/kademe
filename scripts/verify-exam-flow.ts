@@ -8,7 +8,10 @@
  *     objective skill within one level of B1.
  *  2. The same for a B1 verification exam.
  *  3. Nothing the student is sent carries a key, a rubric, a difficulty, a
- *     listening transcript or the text of an accepted answer.
+ *     listening transcript, a picture's storage key or the text of an accepted
+ *     answer the student could not see anyway.
+ *  3b. When the bank has picture items, a served picture comes back from the
+ *     candidate image route as image/webp (the route handler, called in process).
  *  4. A section's deadline does not move on re-reads and restarts.
  *  5. A write after the deadline is refused (SECTION_EXPIRED).
  *  6. A listening clip cannot be played more often than allowed.
@@ -22,6 +25,7 @@
  */
 import "dotenv/config";
 import { refuseUnlessWorkingDb } from "../src/db/working-db-guard";
+import type { CandidateState } from "../src/lib/exam-flow";
 
 const RED = "\x1b[31m";
 const GREEN = "\x1b[32m";
@@ -52,7 +56,9 @@ async function main() {
   const { candidateSafe } = await import("../src/lib/candidate-safe");
   const { BAND_CENTER, levelFromTheta } = await import("../src/lib/exam/cefr");
   const { mulberry32 } = await import("../src/lib/exam/adaptive");
-  const { CEFR_LEVELS } = await import("../src/lib/exam/types");
+  const { CEFR_LEVELS, textGapKindOf } = await import("../src/lib/exam/types");
+  const { buildCTestPool, buildWordBankPool } = await import("../src/lib/exam/ctest-pool");
+  const { imageRefsOf } = await import("../src/lib/exam/image-refs");
 
   const [org] = await db.select().from(s.organizations).limit(1);
   if (!org) throw new Error("no organisation: run pnpm db:seed first");
@@ -146,27 +152,116 @@ async function main() {
   await run("placement", placement.id, null);
   await run("verification", verification.id, "B1");
 
+  const items = await db.select().from(s.items);
+
+  console.log("\nPictures");
+  // A fresh placement at A2, stopped on the first state that shows a picture, so the exam is still
+  // running and the route still answers for the link (a finished link is refused like an unknown one).
+  const pictureItems = items.filter((i) => imageRefsOf(i.content).length > 0).length;
+  const fixedPlacement = blueprints.find((b) => b.mode === "PLACEMENT") ?? placement;
+  const picInvite = await createInvitation({
+    orgId: org.id, blueprintId: fixedPlacement.id, fullName: "Verify pictures", email: `pictures-${Date.now()}@example.com`, claimedLevel: null, locale: "en", invitedBy: null,
+  });
+  if (!picInvite.ok) throw new Error(picInvite.code);
+  const shown = (st: CandidateState): { position: number; sequence: number; slot: string } | null => {
+    const cur = st.current;
+    if (st.step !== "ITEM" || !cur) return null;
+    for (const item of [cur.item, ...(cur.group ?? [])]) {
+      if (!item) continue;
+      const c = item.content;
+      const slots =
+        c.kind === "CHOICE" ? c.options.map((o) => o.image?.slot)
+        : c.kind === "MATCHING" ? c.right.map((r) => r.image?.slot)
+        : c.kind === "WRITING" || c.kind === "SPEAKING" ? (c.images ?? []).map((im) => im.slot)
+        : [];
+      const slot = slots.find((x): x is string => !!x);
+      if (slot) return { position: cur.position, sequence: item.sequence, slot };
+    }
+    return null;
+  };
+  class PictureShown extends Error {
+    constructor(readonly at: { position: number; sequence: number; slot: string }) {
+      super("picture shown");
+    }
+  }
+  let picture: { position: number; sequence: number; slot: string } | null = null;
+  try {
+    await simulateStudent(picInvite.rawToken, {
+      theta: BAND_CENTER.A2,
+      rng: mulberry32(11),
+      writing: () => "Ich wohne in Izmir und lerne Deutsch.",
+      speaking: () => "ich wohne in izmir",
+      onState: (st) => {
+        record(st);
+        const at = shown(st);
+        if (at) throw new PictureShown(at);
+      },
+    });
+  } catch (e) {
+    if (e instanceof PictureShown) picture = e.at;
+    else throw e;
+  }
+  if (!picture) {
+    if (pictureItems === 0) ok("the bank has no picture items: route check skipped");
+    else bad(`the bank has ${pictureItems} picture items but a whole placement served none`);
+  } else {
+    const { NextRequest } = await import("next/server");
+    const route = await import("../src/app/api/c/[token]/exam/image/[position]/[sequence]/[slot]/route");
+    const call = async (slot: string) => {
+      const params = { token: picInvite.rawToken, position: String(picture!.position), sequence: String(picture!.sequence), slot };
+      const url = `http://localhost:3100/api/c/${params.token}/exam/image/${params.position}/${params.sequence}/${slot}`;
+      return route.GET(new NextRequest(url), { params: Promise.resolve(params) });
+    };
+    const res = await call(picture.slot);
+    const bytes = Buffer.from(await res.arrayBuffer());
+    const webp = bytes.subarray(0, 4).toString("latin1") === "RIFF" && bytes.subarray(8, 12).toString("latin1") === "WEBP";
+    const where = `section ${picture.position}, item ${picture.sequence}, slot ${picture.slot}`;
+    if (res.status === 200 && res.headers.get("content-type") === "image/webp" && webp) ok(`image route serves a picture item as image/webp (${where}, ${bytes.length} bytes)`);
+    else bad(`image route for ${where}: ${res.status} ${res.headers.get("content-type")} webp bytes ${webp}`);
+    const missing = await call("zz9");
+    if (missing.status === 404) ok("an unknown slot is a plain 404");
+    else bad(`unknown slot answered ${missing.status}`);
+  }
+
   console.log("\nLeak scan over every state sent to the student");
   const bodies = sent.join("\n");
-  const items = await db.select().from(s.items);
   const stimuliRows = await db.select().from(s.stimuli).where(eq(s.stimuli.section, "LISTENING"));
-  const forbiddenNames = ["answerKey", "answer_key", "\"key\"", "rubric", "contentPoints", "difficulty", "skillTag", "explanation", "itemSnapshot", "audioKey", "thetaAfter", "isCorrect"];
+  const forbiddenNames = ["answerKey", "answer_key", "\"key\"", "rubric", "contentPoints", "difficulty", "skillTag", "explanation", "itemSnapshot", "audioKey", "thetaAfter", "isCorrect", "storageKey", "bank/images/"];
   const hits = forbiddenNames.filter((n) => bodies.includes(n));
-  if (hits.length === 0) ok(`no internal field names in ${sent.length} states`);
+  if (hits.length === 0) ok(`no internal field names, storage keys or picture paths in ${sent.length} states`);
   else bad(`internal names found: ${hits.join(", ")}`);
   const transcriptHits = stimuliRows.filter((st) => bodies.includes(st.body.split("\n")[0].slice(-40)));
   if (transcriptHits.length === 0) ok("no listening transcript text");
   else bad(`listening transcripts leaked: ${transcriptHits.map((t) => t.seedKey).join(", ")}`);
-  // Typed gaps only: a drop-down gap shows its options on purpose, answer included.
+  // Typed gaps only, and only answers the student cannot see on that item anyway: a drop-down gap shows its
+  // options, a word bank or C-test shows its pool (the answers included, on purpose). The student's own saved
+  // answers come back in "answer" fields of later states, so those fields are left out of this scan.
+  const visibleOn = (i: (typeof items)[number]): Set<string> => {
+    const words = new Set<string>();
+    if (i.content.kind !== "GAP" || i.answerKey.kind !== "GAP") return words;
+    for (const g of i.content.gaps) for (const c of g.choices ?? []) words.add(c);
+    const gapIds = i.content.gaps.map((g) => g.id);
+    const kind = textGapKindOf(i);
+    const pool =
+      kind === "WORDBANK" ? buildWordBankPool(gapIds, i.answerKey.answers, 0, i.answerKey.distractors)
+      : kind === "CTEST" ? buildCTestPool(gapIds, i.answerKey.answers, 0, i.answerKey.distractors)
+      : [];
+    for (const w of pool) words.add(w);
+    return words;
+  };
   const typedKeys = items
     .flatMap((i) => {
       if (i.answerKey.kind !== "GAP" || i.content.kind !== "GAP") return [];
       const key = i.answerKey;
-      return i.content.gaps.filter((g) => !g.choices).flatMap((g) => key.answers[g.id] ?? []);
+      const visible = visibleOn(i);
+      return i.content.gaps.filter((g) => !g.choices).flatMap((g) => (key.answers[g.id] ?? []).filter((a) => !visible.has(a)));
     })
     .filter((a) => a.length >= 7);
-  const keyHits = typedKeys.filter((k) => bodies.includes(`"${k}"`));
-  if (keyHits.length === 0) ok(`no accepted gap answers among ${typedKeys.length} checked`);
+  const withoutOwnAnswers = sent
+    .map((body) => JSON.stringify(JSON.parse(body), (k, v) => (k === "answer" ? undefined : v)))
+    .join("\n");
+  const keyHits = typedKeys.filter((k) => withoutOwnAnswers.includes(`"${k}"`));
+  if (keyHits.length === 0) ok(`no hidden typed gap answers among ${typedKeys.length} checked`);
   else bad(`accepted answers appear in student bodies: ${keyHits.slice(0, 5).join(", ")}`);
 
   console.log("\nClock and limits");

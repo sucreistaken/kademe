@@ -6,9 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
 import { formatCountdown } from "@/lib/timer";
-import { crossedCue, timeCue, timeCueKey, type TimeCue } from "@/lib/exam/time-cue";
-
-const NOTICE_MS = 10_000;
+import { crossedCue, TIME_NOTICE_MS, timeCue, timeCueKey, type TimeCue } from "@/lib/exam/time-cue";
 
 function readShown(key: string): string[] {
   try {
@@ -65,7 +63,7 @@ export function TimerPill({
 
   useEffect(() => {
     if (!notice) return;
-    const id = window.setTimeout(() => setNotice(null), NOTICE_MS);
+    const id = window.setTimeout(() => setNotice(null), TIME_NOTICE_MS);
     return () => window.clearTimeout(id);
   }, [notice]);
 

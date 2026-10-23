@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { PrintButton } from "@/components/panel/report/print-button";
 import { candidateT } from "@/i18n/candidate";
-import { loadState, resolveExamToken } from "@/lib/exam-flow";
+import { finishedSheetDate, loadState, resolveExamToken } from "@/lib/exam-flow";
 import { StudentSheet } from "@/components/candidate/exam/student-sheet";
 import { solutionPage } from "@/lib/candidate-pages";
 
@@ -25,6 +25,8 @@ export default async function StudentPrintPage({ params }: { params: Promise<{ t
   if (!state.finished || state.finished.terminated || !result?.released || !result.analysis) redirect(`/a/${encodeURIComponent(token)}/done`);
   const locale = ctx.locale;
   const t = candidateT(locale);
+  // The result's own day (as on the panel's student copy), not the day it is printed.
+  const date = await finishedSheetDate(ctx);
   return (
     <main className="report-wrap bg-canvas px-6 py-8">
       <div className="report-toolbar mx-auto mb-6 flex w-[210mm] max-w-full items-center justify-between gap-4">
@@ -40,7 +42,7 @@ export default async function StudentPrintPage({ params }: { params: Promise<{ t
         schoolName={state.orgName}
         studentName={ctx.candidate.fullName ?? ""}
         examName={state.examName}
-        date={state.finished ? new Date() : null}
+        date={date}
         result={result}
         locale={locale}
       />

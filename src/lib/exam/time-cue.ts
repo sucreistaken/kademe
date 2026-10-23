@@ -1,6 +1,9 @@
 /** How the exam clock should look and what it should announce. */
 export type TimeCue = "normal" | "low" | "last" | "up";
 
+/** How long the 5- and 2-minute callout stays before it hides itself (spec 2026-10-23: 12 s). */
+export const TIME_NOTICE_MS = 12_000;
+
 const LAST_MS = 120_000;
 const LOW_MS = 300_000;
 /** Sections up to 10 minutes get no "low" step: 5 minutes would be half of them. */
