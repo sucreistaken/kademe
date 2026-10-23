@@ -293,7 +293,7 @@ describe("a first-time student (avoid missing or empty)", () => {
 });
 
 const PINNED_PLAN_5A2260F = ["B1-c1", "B2-c0", "A2-s2", "A2-s3", "B1-s2", "B1-s4", "B1-s5", "B1-s6", "B2-s0", "B2-s5", "B2-s6"];
-const PINNED_PLAN = ["B1-c1", "B2-c0", "A2-s2", "A2-s3", "B1-x0-1", "B1-x0-2", "B1-x0-3", "B1-s7", "B2-s1", "B2-x3-1", "B2-x3-2", "B2-x3-3"];
+const PINNED_PLAN = ["B1-c1", "B2-c0", "A2-s2", "A2-s3", "B1-x0-1", "B1-x0-2", "B1-x0-3", "B1-s7", "B2-x3-1", "B2-x3-2", "B2-x3-3"];
 const PINNED_TASKS = ["talk-2", "talk-1", "plan-2"];
 
 describe("a returning student", () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SEED_BANK } from "@/db/seed-bank";
-import { itemFormatOf } from "./item-format";
+import { drawFormatOf, itemFormatOf } from "./item-format";
 import { CLOZE_SKILL_TAG, OPEN_CLOZE_SKILL_TAG, type ItemContent, type ItemType } from "./types";
 
 const image = { storageKey: "bank/images/0123456789abcdef.webp", w: 640, h: 480, alt: "Bild" };
@@ -35,10 +35,28 @@ describe("itemFormatOf", () => {
     expect(of("MATCHING", { kind: "MATCHING", left: rows, right: people })).toBe("MATCHING/LETTERS");
     const pictures = ["Bild A", "Bild B", "Bild C"].map((text, i) => ({ id: `r${i}`, text, image }));
     expect(of("MATCHING", { kind: "MATCHING", left: rows, right: pictures })).toBe("MATCHING/LETTERS/PICTURE");
+    // Picture targets with worded captions: the student still picks letters from the gallery (ItemView: lettersOnly).
+    const captioned = ["Ein Fahrrad", "Ein Regenschirm", "Eine Tasse"].map((text, i) => ({ id: `r${i}`, text, image }));
+    expect(of("MATCHING", { kind: "MATCHING", left: rows, right: captioned })).toBe("MATCHING/LETTERS/PICTURE");
     const headings = ["A: Neue Kurse im Herbst", "B: Freibad öffnet früher", "C: Linie 14 endet am Markt"].map((text, i) => ({ id: `r${i}`, text }));
     expect(of("MATCHING", { kind: "MATCHING", left: rows, right: headings })).toBe("MATCHING/WORDS");
     const names = ["Lena", "Murat", "Josefine", "Keine der drei Personen"].map((text, i) => ({ id: `r${i}`, text }));
     expect(of("MATCHING", { kind: "MATCHING", left: rows, right: names })).toBe("MATCHING/WORDS");
+  });
+
+  it("drawFormatOf falls back to the item type for content that breaks itemFormatOf, and never throws", () => {
+    const broken = [
+      { type: "MATCHING" as const, content: { kind: "MATCHING" } as unknown as ItemContent },
+      { type: "SINGLE_CHOICE" as const, content: { kind: "CHOICE" } as unknown as ItemContent },
+      { type: "TRUE_FALSE_NG" as const, content: null as unknown as ItemContent },
+    ];
+    for (const b of broken) {
+      const item = { ...b, skillTag: "reading.detail" };
+      expect(() => itemFormatOf(item)).toThrow();
+      expect(drawFormatOf(item)).toBe(b.type);
+    }
+    const fine = { type: "SINGLE_CHOICE" as const, skillTag: "reading.detail", content: { kind: "CHOICE" as const, options: options(4) } };
+    expect(drawFormatOf(fine)).toBe(itemFormatOf(fine));
   });
 
   it("every objective item of the starter bank has a format, and reading and listening offer several per level", () => {

@@ -229,7 +229,8 @@ küçük harf fark etmez) başka bir sınavda yeniden gelirse yeni form daha ön
 kaçınır. `server/exam-exposure.ts: seenBy`, öğrencinin diğer sınavlarındaki bütün `item_responses`
 satırlarından `Avoid` (soru ve metin kimlikleri) kurar; e-posta yoksa boş küme döner. `Avoid`
 doluyken `sampleFixedForm`, `textOpenings` ve `pickProductive` önce görülmemiş birimi seçer
-(`blueprint.ts: freshFirst`, biçimler karışık), hepsi görülmüşse en az maruz kalanı (`exposureCount`).
+(`blueprint.ts: freshFirst`; `sampleFixedForm`'da görülmemiş birimler arasında biçimler de karışır,
+`textOpenings` ve `pickProductive` biçim karıştırmaz), hepsi görülmüşse en az maruz kalanı (`exposureCount`).
 Boş `Avoid` ile açılış metinleri ve yazma / konuşma görevleri eskisiyle bit bit aynıdır; sabit form
 2026-10-24'ten beri ilk kez gelen öğrencide de biçimleri karıştırır (aşağıda, "Biçim karışımı";
 `blueprint-avoid.test.ts` neyin aynı kaldığını sabitler).
@@ -242,22 +243,29 @@ söyledi. Neden: biçim karışımı yalnız dönen öğrencinin çekilişindeyd
 ve dinlemesi düz karıştırmaydı, bir seviye çoğu kez yalnız çoktan seçmeliydi. Artık her sabit form
 biçimleri karıştırır (`blueprint.ts: mixFormats`). Biçim (`item-format.ts: itemFormatOf`): madde türü,
 Ja / Nein ifadesi, boşluklu metin türü, eşleştirme alt türü (yalnız harf: "Anzeige A", "Person B",
-"Bild C"; ya da yazılı hedef: başlık, cümle, isim), resim var / yok ve tick-n (`pick`). Okul bankasında
-biçim bölüm başlarken `content`'ten çıkarılır (`exam-flow.ts: formatsOf`). Her seviyede birimler
+"Bild C" ya da açıklamalı resim galerisi; ya da yazılı hedef: başlık, cümle, isim), resim var / yok ve
+tick-n (`pick`). Okul bankasında biçim, sabit objektif bölüm başlarken `content`'ten çıkarılır
+(`exam-flow.ts: formatsOf`); içeriği bozuk bir madde türüne düşer (`drawFormatOf`), bölümün başlamasını
+engellemez. Her seviyede birimler
 karıştırılır, aynı biçim kümesine sahip birimler bir grup olur (çoktan seçmeli + doğru/yanlış sorulu
 metin bir grup, yalnız çoktan seçmeli metin başka bir grup). Her grup rastgele bir başlangıç alır, k'ıncı
 birimi `(k + başlangıç) / boyut^0.75` sırasına girer (`FORMAT_SPREAD`); birimler bu sırayla çekilir. Böylece
 her biçim bazı formlarda erken, bazılarında geç gelir, büyük grup küçükten sık gelir, grup içinde sıra
 karıştırmadır. Düz sıralı dağıtım (0) her grubu ilk turda alırdı: bankada tek metni olan bir biçim, seviye
 biçim sayısı kadar metin çektiğinde her forma girerdi (seviye kontrolü A1 dinleme: tek kayıt formların
-%100'ünde; ilk denemede sahip bunu kabul etmedi, maruz kalma). Seviyenin çektiği birimler tek biçim
-gösterirse ve bir birim bunu ikiye çıkarabiliyorsa o birim öne alınır (`twoFormatsFirst`). Sayılar ve
+%100'ünde; ilk denemede sahip bunu kabul etmedi, maruz kalma). Okuma ve dinlemede seviyenin çektiği
+birimler tek biçim gösterirse ve en az iki görülmemiş birim bunu ikiye çıkarabiliyorsa bunlardan ilki öne
+alınır (`twoFormatsFirst`, `MIN_SECOND_FORMAT_UNITS`). Böyle tek bir birim varsa öne alınmaz: alınsa o
+seviyenin her formuna girerdi; maruz kalma ikinci biçimden önce gelir (yönetici kararı, 2026-10-24), o
+seviye bazı formlarda tek biçim gösterebilir. Dilbilgisi tek maddeleri yalnız karışır, öne alma yoktur.
+Sayılar ve
 seviyeler değişmedi (metin bütün çekilir, sayı dolana kadar); açılış metinleri ve yazma / konuşma görevleri
 aynıdır. Dönen öğrencide görülmemiş birimler yine önce gelir, karışım onların içinde yapılır.
 Ölçüm (`format-mix.test.ts`, başlangıç bankası, bağlam başına 200 ilk form; yerleştirme ve seviye
 kontrolünün altı beyan seviyesi): seviye başına ortalama biçim okumada 2.66'dan 2.84'e, dinlemede
 2.32'den 2.58'e; en az iki biçim gösteren seviye okumada %94'ten, dinlemede %85'ten %100'e; bölüm
-başına biçim okumada 4.04'ten 4.27'ye, dinlemede 3.79'dan 4.12'ye. Bir metnin, kaydın ya da maddenin
+başına biçim okumada 4.04'ten 4.27'ye, dinlemede 3.79'dan 4.12'ye; seviye kontrolü dilbilgisinde seviye
+başına 1.75'ten 1.98'e, iki biçim gösteren seviye %75'ten %98'e. Bir metnin, kaydın ya da maddenin
 girdiği en yüksek form payı bağlam başına %31-48 (önce %30-43); test %60'ı aşmasına izin vermez. İki
 seviye ortalaması (seviye kontrolü A2 ve B2, B1 dinleme) 2.48'den 2.46 ve 2.45'e iner: tek kayıt çeken,
 eşit büyüklükte iki gruplu seviye, beklenen değer düz karıştırmayla aynı (2.5), fark örnekleme. `pnpm

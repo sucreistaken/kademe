@@ -202,11 +202,11 @@ function contextExposure(): Array<{ template: string; context: string; before: n
 const MAX_UNIT_SHARE = 0.6;
 
 /**
- * Level cells whose average number of formats is below 655db25 and why. Both are a level of one clip (two
- * questions, every B1 clip has three) drawn from two format groups of four clips each, so the expected value
- * is the same as a plain shuffle (2.5 formats); 200 forms land a little under it.
+ * How far a level's average may sit under 655db25: sampling noise of 200 forms. Example: a level of one B1
+ * listening clip (every B1 clip has three questions) drawn from two format groups of four clips each has the
+ * expected value of a plain shuffle (2.5 formats), and 200 forms land at 2.45 to 2.46.
  */
-const EXPECTED_LOWER_LEVELS = ["level-check A2 LISTENING B1", "level-check B2 LISTENING B1"];
+const LEVEL_TOLERANCE = 0.05;
 
 if (process.env.FORMAT_MIX_TABLE) {
   const pct = (x: number) => `${Math.round(100 * x)}%`;
@@ -253,12 +253,10 @@ describe("every student gets a mix of formats (starter bank, first-time forms)",
     expect(sections.filter((c) => c.after > c.before).length).toBeGreaterThan(sections.length / 2);
   });
 
-  it("per level, shows as many formats as before on average, but for the listed levels", () => {
-    const lower = cells.filter((c) => c.level !== "all" && c.after < c.before);
+  it(`per level, shows as many formats as before on average, within ${LEVEL_TOLERANCE} (sampling noise)`, () => {
     const name = (c: Cell) => `${c.template} ${c.context} ${c.section} ${c.level}`;
-    expect(lower.filter((c) => !EXPECTED_LOWER_LEVELS.includes(name(c))).map((c) => `${name(c)}: ${c.before} -> ${c.after}`)).toEqual([]);
-    // The listed levels still show two formats in every form.
-    for (const c of lower) expect(c.twoAfter, name(c)).toBe(1);
+    const lower = cells.filter((c) => c.level !== "all" && c.after < c.before - LEVEL_TOLERANCE);
+    expect(lower.map((c) => `${name(c)}: ${c.before} -> ${c.after}`)).toEqual([]);
   });
 
   it("shows at least two formats per level in reading and listening, in every form, wherever the bank can", () => {

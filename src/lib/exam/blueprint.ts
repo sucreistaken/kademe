@@ -381,34 +381,46 @@ function mixFormats(units: BankItem[][], rng: () => number): BankItem[][] {
 }
 
 /**
+ * Units that must be able to give a level its second format before one is
+ * pulled forward (twoFormatsFirst). With a single such unit, pulling it would
+ * put it in every form of the level: exposure goes before the second format.
+ */
+const MIN_SECOND_FORMAT_UNITS = 2;
+
+/**
  * When the units a level takes from `order` show a single format, moves to the
- * front the first unit after which they show two, if any; else `order` as is.
- * A level of one text then gets a text with two formats, or a short text and
- * another one.
+ * front the first unit after which they show two, provided at least
+ * MIN_SECOND_FORMAT_UNITS units could do it; else `order` as is. A level of
+ * one text then gets a text with two formats, or a short text and another one.
  */
 function twoFormatsFirst(order: BankItem[][], want: number): BankItem[][] {
   if (formatCount(takeUnits(order, want)) >= 2) return order;
+  const moves: BankItem[][][] = [];
   for (let k = 1; k < order.length; k++) {
     const moved = [order[k], ...order.slice(0, k), ...order.slice(k + 1)];
-    if (formatCount(takeUnits(moved, want)) >= 2) return moved;
+    if (formatCount(takeUnits(moved, want)) >= 2) moves.push(moved);
   }
-  return order;
+  return moves.length >= MIN_SECOND_FORMAT_UNITS ? moves[0] : order;
 }
+
+/** How a fixed form orders a level: its item count, and whether to pull a second format forward. */
+type LevelMix = { want: number; secondFormat: boolean };
 
 /**
  * The order a level's units are drawn in: units the student has not seen
- * first (shuffled; with `want`, formats mixed and two formats where the fresh
- * units allow), then the stale ones, least served first (ties in shuffled
+ * first (shuffled; with `mix`, formats mixed and, when asked, a second format
+ * pulled forward), then the stale ones, least served first (ties in shuffled
  * order). The stale tail means a form is always full, even when the student
  * has seen the whole bank. A first-time student has seen nothing: every unit
  * is fresh.
  */
-function freshFirst(units: BankItem[][], avoid: Avoid, rng: () => number, want?: number): BankItem[][] {
+function freshFirst(units: BankItem[][], avoid: Avoid, rng: () => number, mix?: LevelMix): BankItem[][] {
   const fresh = units.filter((u) => !isStale(u, avoid));
   const stale = units.filter((u) => isStale(u, avoid));
   const shuffled = shuffle(fresh, rng);
+  const mixed = mix ? mixFormats(shuffled, rng) : shuffled;
   return [
-    ...(want === undefined ? shuffled : twoFormatsFirst(mixFormats(shuffled, rng), want)),
+    ...(mix?.secondFormat ? twoFormatsFirst(mixed, mix.want) : mixed),
     ...shuffle(stale, rng).sort((a, b) => unitExposure(a) - unitExposure(b)),
   ];
 }
@@ -417,17 +429,20 @@ function freshFirst(units: BankItem[][], avoid: Avoid, rng: () => number, want?:
  * A fixed form: the planned item ids, easiest unit first. For reading and
  * listening whole texts are drawn until the level's count is reached, so a
  * level may get a question or two more than asked for. Every draw mixes
- * formats (mixFormats, since 2026-10-24 for first-time students too) and a
- * level shows two formats whenever its fresh units can (twoFormatsFirst).
- * With a non-empty `avoid` the units the student has not seen come first (see
- * freshFirst).
+ * formats (mixFormats, since 2026-10-24 for first-time students too). In a
+ * READING or LISTENING `section` a level also shows two formats when at least
+ * two of its fresh units can give it the second one (twoFormatsFirst); grammar
+ * singles only mix. With a non-empty `avoid` the units the student has not
+ * seen come first (see freshFirst).
  */
 export function sampleFixedForm(
   pool: BankItem[],
   perLevel: Record<Cefr, number>,
   rng: () => number,
   avoid?: Avoid,
+  section?: Section,
 ): string[] {
+  const secondFormat = section === "READING" || section === "LISTENING";
   const units: Array<{ ids: string[]; b: number }> = [];
   for (const level of CEFR_LEVELS) {
     const want = perLevel[level];
@@ -443,7 +458,7 @@ export function sampleFixedForm(
       ...singles.map((i) => [i]),
       ...[...groups.values()].map((g) => [...g].sort((a, b) => a.orderInStimulus - b.orderInStimulus)),
     ];
-    for (const unit of takeUnits(freshFirst(candidates, avoid ?? NOTHING_SEEN, rng, want), want)) {
+    for (const unit of takeUnits(freshFirst(candidates, avoid ?? NOTHING_SEEN, rng, { want, secondFormat }), want)) {
       units.push({ ids: unit.map((i) => i.id), b: unit.reduce((a, i) => a + i.b, 0) / unit.length });
     }
   }
@@ -538,7 +553,7 @@ export function planFixedSection(
   avoid?: Avoid,
 ): string[] {
   const openings = textOpenings(s, pool, mode, claimed, rng, avoid);
-  const form = sampleFixedForm(pool, resolveDistribution(s, mode, claimed, difficultyOffset), rng, avoid);
+  const form = sampleFixedForm(pool, resolveDistribution(s, mode, claimed, difficultyOffset), rng, avoid, s.section);
   return [...openings, ...form];
 }
 

@@ -10,9 +10,10 @@ import { textGapKindOf, type ItemContent, type ItemType } from "./types";
  *   - a text with gaps: its kind (CTEST, CLOZE, WORDBANK, OPEN) and nothing else
  *   - else the item type, then
  *     - TRUE_FALSE_NG: JA_NEIN when it is worded Ja / Nein / Text sagt dazu nichts
- *     - MATCHING: LETTERS when every target is only a letter naming a text or a
- *       picture ("Anzeige A", "Person B", "Bild C"; the rule of ItemView.tsx
- *       MatchingItem, `bare`), else WORDS (headings, sentences, names)
+ *     - MATCHING: LETTERS when the student picks letters, as ItemView.tsx
+ *       MatchingItem decides (`lettersOnly`): every target is only a letter
+ *       naming a text ("Anzeige A", "Person B"), or the targets are pictures,
+ *       whatever their captions; else WORDS (headings, sentences, names)
  *     - MULTI_CHOICE: PICK when the student ticks an exact number of boxes
  *     - PICTURE when an option, a target or the task shows a picture
  *
@@ -31,9 +32,27 @@ export function itemFormatOf(item: { type: ItemType; skillTag: string; content: 
   return parts.join("/");
 }
 
-/** Every target is a bare letter (or the "0" target "Keine Anzeige passt"), as MatchingItem in ItemView.tsx decides. */
-function lettersOnly(right: Array<{ text: string }>): boolean {
-  return matchingTargets(right).every((r) => r.badge === "0" || /^(?:\p{L}+\s+)?[A-Z]$/u.test(r.label.trim()));
+/**
+ * The format of a bank item for drawing a form, never throwing: an item whose
+ * content does not have the shape its kind promises gets its item type, so one
+ * malformed item cannot stop a section from starting for every student.
+ */
+export function drawFormatOf(item: { type: ItemType; skillTag: string; content: ItemContent }): string {
+  try {
+    return itemFormatOf(item);
+  } catch {
+    return item.type;
+  }
+}
+
+/**
+ * The student picks letters, as MatchingItem in ItemView.tsx decides
+ * (`lettersOnly = bare || gallery.length > 0`): every target is a bare letter
+ * (or the "0" target "Keine Anzeige passt"), or some target is a picture.
+ */
+function lettersOnly(right: Array<{ text: string; image?: unknown }>): boolean {
+  const bare = matchingTargets(right).every((r) => r.badge === "0" || /^(?:\p{L}+\s+)?[A-Z]$/u.test(r.label.trim()));
+  return bare || right.some((r) => !!r.image);
 }
 
 function hasPicture(c: ItemContent): boolean {
