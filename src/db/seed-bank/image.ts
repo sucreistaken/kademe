@@ -13,7 +13,7 @@ import type { ImageRef, ItemContent } from "@/lib/exam/types";
  * the files (see `seedImageFiles`) before it inserts the items.
  */
 
-type ManifestEntry = { id: string; file: string; sha16: string; w: number; h: number; alt: string };
+type ManifestEntry = { id: string; file: string; sha16: string; w: number; h: number; alt: string; reserved?: string };
 
 const ENTRIES: ManifestEntry[] = manifest.images;
 const BY_ID = new Map(ENTRIES.map((e) => [e.id, e]));
@@ -25,6 +25,8 @@ export const imageStorageKey = (sha16: string) => `bank/images/${sha16}.webp`;
 export function img(id: string): ImageRef {
   const e = BY_ID.get(id);
   if (!e) throw new Error(`unknown seed picture "${id}" (see src/db/seed-bank/images/manifest.json)`);
+  // The how-it-works demos show these pictures (public/tutorial/img): a student must never meet them in a real item.
+  if (e.reserved) throw new Error(`seed picture "${id}" is reserved for the ${e.reserved} and cannot be used in an item`);
   return { storageKey: imageStorageKey(e.sha16), w: e.w, h: e.h, alt: e.alt };
 }
 

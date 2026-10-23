@@ -38,6 +38,8 @@ interface ManifestEntry {
   sourceUrl: string;
   license: string;
   author: string;
+  /** Kept on rewrite: the picture is a how-it-works demo picture (public/tutorial/img) and no item may use it. */
+  reserved?: "tutorial";
 }
 
 interface SourceInfo {
@@ -98,6 +100,7 @@ async function main() {
     const file = `${id}.webp`;
     fs.writeFileSync(path.join(OUT_DIR, file), buf);
 
+    const reserved = byId.get(id)?.reserved;
     byId.set(id, {
       id,
       file,
@@ -111,6 +114,7 @@ async function main() {
       sourceUrl: src.sourceUrl,
       license: src.license,
       author: src.author,
+      ...(reserved ? { reserved } : {}),
     });
     console.log(`${id} -> ${file} ${meta.width}x${meta.height} ${(buf.length / 1024).toFixed(0)} KB`);
   }

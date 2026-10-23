@@ -162,7 +162,8 @@
       ],
       "sourceUrl": "https://www.pexels.com/photo/7120398/",
       "license": "Pexels License",
-      "author": "pavel-danilyuk"
+      "author": "pavel-danilyuk",
+      "reserved": "tutorial"
     },
     {
       "id": "obj.activity.hiking",
@@ -247,7 +248,8 @@
       ],
       "sourceUrl": "https://www.pexels.com/photo/5582669/",
       "license": "Pexels License",
-      "author": "cottonbro"
+      "author": "cottonbro",
+      "reserved": "tutorial"
     },
     {
       "id": "obj.clothes.hat-scarf",
@@ -264,7 +266,8 @@
       ],
       "sourceUrl": "https://www.pexels.com/photo/906020/",
       "license": "Pexels License",
-      "author": "noellegracephotos"
+      "author": "noellegracephotos",
+      "reserved": "tutorial"
     },
     {
       "id": "obj.clothes.jacket",

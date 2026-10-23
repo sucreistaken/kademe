@@ -19,6 +19,7 @@ interface Entry {
   sourceUrl: string;
   license: string;
   author: string;
+  reserved?: "tutorial";
 }
 
 const manifest: { images: Entry[] } = JSON.parse(
@@ -102,6 +103,7 @@ describe("bank image manifest", () => {
     expect(e.author.length).toBeGreaterThan(0);
     expect(e.levels.length).toBeGreaterThan(0);
     expect(e.kind).toBe(e.id.startsWith("scene.") ? "scene" : e.id.startsWith("chart.") ? "chart" : "object");
+    if (e.reserved !== undefined) expect(e.reserved).toBe("tutorial");
   });
 
   it("keeps the folder small and free of em dashes", () => {

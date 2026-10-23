@@ -15,8 +15,14 @@ describe("img()", () => {
     expect(() => img("nope.nothing")).toThrow(/nope\.nothing/);
   });
 
+  it("throws on a picture reserved for the how-it-works demos and names it", () => {
+    const reserved = manifest.images.filter((e) => "reserved" in e && e.reserved);
+    expect(reserved.length).toBeGreaterThan(0);
+    for (const e of reserved) expect(() => img(e.id), e.id).toThrow(new RegExp(`${e.id.replace(/\./g, "\\.")}.*reserved`));
+  });
+
   it("every catalog picture has a valid key, alt text and a file whose bytes are webp", () => {
-    for (const e of manifest.images) {
+    for (const e of manifest.images.filter((i) => !("reserved" in i && i.reserved))) {
       const ref = img(e.id);
       expect(ref.storageKey, e.id).toMatch(BANK_IMAGE_KEY);
       expect(ref.alt.trim(), e.id).not.toBe("");

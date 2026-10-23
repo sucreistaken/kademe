@@ -859,9 +859,9 @@ const readingNewItems: SeedItem[] = [
       "Kein Kaffee mehr da! Bitte neuen kaufen. Danke, Ben",
       "Für das Abendbrot. Es gibt drei Sorten.",
     ],
-    [{ id: "obj.food.coffee" }, { id: "obj.food.cheese" }, { id: "obj.food.apples" }, { id: "obj.activity.guitar" }, { id: "obj.food.cake" }, { id: "obj.food.soup" }],
+    [{ id: "obj.food.coffee" }, { id: "obj.food.cheese" }, { id: "obj.food.apples" }, { id: "obj.transport.taxi" }, { id: "obj.food.cake" }, { id: "obj.food.soup" }],
     [5, 6, 3, 1, 2],
-    "Geburtstag, nicht essen: Kuchen (E). Warm machen, Löffel: Suppe (F). Frisch, waschen: Äpfel (C). Kein Kaffee mehr da: Kaffee (A). Abendbrot, drei Sorten: Käse (B). Die Gitarre (D) bleibt übrig."),
+    "Geburtstag, nicht essen: Kuchen (E). Warm machen, Löffel: Suppe (F). Frisch, waschen: Äpfel (C). Kein Kaffee mehr da: Kaffee (A). Abendbrot, drei Sorten: Käse (B). Das Taxi (D) bleibt übrig."),
   // Kurze Zettel und Schilder (4 signs, 5 pictures)
   signsToPictures(
     rZettelDinge.key,
