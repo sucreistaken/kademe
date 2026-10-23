@@ -7,7 +7,8 @@
 export type MarkKind = "highlight" | "underline";
 export type MarkColor = "yellow" | "green" | "pink" | "ink";
 
-export type Mark = { start: number; end: number; kind: MarkKind; color: MarkColor };
+/** `seq` is the insertion order (higher = newer); the cap drops the lowest first. */
+export type Mark = { start: number; end: number; kind: MarkKind; color: MarkColor; seq?: number };
 export type Point = [number, number];
 export type Stroke = { tool: "pen"; points: Point[] };
 export type NotesData = { marks: Mark[]; strokes: Stroke[] };
@@ -32,6 +33,7 @@ function mergeKind(marks: Mark[]): Mark[] {
     const last = out[out.length - 1];
     if (last && last.kind === m.kind && last.color === m.color && m.start <= last.end) {
       last.end = Math.max(last.end, m.end);
+      last.seq = Math.max(last.seq ?? 0, m.seq ?? 0);
     } else out.push({ ...m });
   }
   return out;
@@ -53,7 +55,8 @@ export function addMark(marks: readonly Mark[], mark: Mark): Mark[] {
     if (m.start < mark.start) kept.push({ ...m, end: mark.start });
     if (m.end > mark.end) kept.push({ ...m, start: mark.end });
   }
-  kept.push({ ...mark });
+  const newest = marks.reduce((n, m) => Math.max(n, m.seq ?? 0), 0);
+  kept.push({ ...mark, seq: newest + 1 });
   const highlights = mergeKind(kept.filter((m) => m.kind === "highlight"));
   const underlines = mergeKind(kept.filter((m) => m.kind === "underline"));
   return sortMarks([...highlights, ...underlines]);
@@ -97,14 +100,26 @@ export function makeStroke(points: readonly Point[]): Stroke {
 
 export const serializeNotes = (d: NotesData): string => JSON.stringify(d);
 
+/** Drop the `count` oldest marks by insertion order (not by text position), keeping position order. */
+function dropOldest(marks: Mark[], count: number): Mark[] {
+  const doomed = new Set(
+    marks
+      .map((m, i) => ({ i, seq: m.seq ?? 0 }))
+      .sort((a, b) => a.seq - b.seq || a.i - b.i)
+      .slice(0, count)
+      .map((x) => x.i),
+  );
+  return marks.filter((_, i) => !doomed.has(i));
+}
+
 /** Enforce the caps: the oldest marks and strokes go first, then strokes until the size fits. */
 export function capNotes(data: NotesData): NotesData {
-  let marks = data.marks.length > MAX_MARKS ? data.marks.slice(data.marks.length - MAX_MARKS) : data.marks;
+  let marks = data.marks.length > MAX_MARKS ? dropOldest(data.marks, data.marks.length - MAX_MARKS) : data.marks;
   let strokes = data.strokes.length > MAX_STROKES ? data.strokes.slice(data.strokes.length - MAX_STROKES) : data.strokes;
   let out: NotesData = { marks, strokes };
   while (serializeNotes(out).length > MAX_BYTES && (strokes.length > 0 || marks.length > 0)) {
     if (strokes.length > 0) strokes = strokes.slice(1);
-    else marks = marks.slice(1);
+    else marks = dropOldest(marks, 1);
     out = { marks, strokes };
   }
   return out;
@@ -130,7 +145,9 @@ export function parseNotes(raw: string | null | undefined): NotesData {
           KINDS.includes(m.kind as MarkKind) &&
           COLORS.includes(m.color as MarkColor)
         ) {
-          marks.push({ start: m.start as number, end: m.end as number, kind: m.kind as MarkKind, color: m.color as MarkColor });
+          const mark: Mark = { start: m.start as number, end: m.end as number, kind: m.kind as MarkKind, color: m.color as MarkColor };
+          if (Number.isInteger(m.seq) && (m.seq as number) > 0) mark.seq = m.seq as number;
+          marks.push(mark);
         }
       }
     }

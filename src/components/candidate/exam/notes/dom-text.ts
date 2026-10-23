@@ -3,7 +3,13 @@
  * text nodes, except text inside controls (options, chips, inputs), which is
  * never marked and so never shifts an offset.
  */
-const SKIP = "button, input, textarea, select, label, [draggable='true'], [data-notes-skip]";
+export const SKIP = "button, input, textarea, select, label, [draggable='true'], [data-notes-skip]";
+
+/** Whether a pointer target is (inside) a control the notes must leave alone; duck-typed so it also runs without a DOM. */
+export function isControlTarget(target: unknown): boolean {
+  const t = target as { closest?: (selector: string) => unknown } | null;
+  return typeof t?.closest === "function" && Boolean(t.closest(SKIP));
+}
 
 export function textNodesOf(root: Element): Text[] {
   const out: Text[] = [];

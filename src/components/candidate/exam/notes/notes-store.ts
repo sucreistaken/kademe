@@ -24,6 +24,13 @@ export function fnv1a(text: string): string {
 export const notesKey = (token: string, sectionPosition: number, title: string, text: string): string =>
   `${PREFIX}${token}.${sectionPosition}.${fnv1a(`${title}\n${text}`)}`;
 
+/**
+ * Content key for the question stems of a listening page. Prompts repeat across
+ * recordings, so the key is the page's position (its first question's sequence),
+ * like the scratch pad: "group-N" for a recording page, "item-N" for one question.
+ */
+export const stemsContentKey = (kind: "group" | "item", firstSequence: number): string => `${kind}-${firstSequence}`;
+
 export function browserNotesStorage(): NotesStorage | null {
   try {
     return typeof window === "undefined" ? null : window.sessionStorage;

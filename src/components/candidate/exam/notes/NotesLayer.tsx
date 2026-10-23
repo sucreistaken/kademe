@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef } from "react";
 import { cn } from "@/lib/cn";
 import { addMark, eraseMarksAt, eraseStrokesAt, makeStroke, type MarkColor, type Point, type Stroke } from "@/components/candidate/exam/notes/notes-model";
-import { offsetAtPoint, offsetOfPoint, rangeOfOffsets, textNodesOf } from "@/components/candidate/exam/notes/dom-text";
+import { isControlTarget, offsetAtPoint, offsetOfPoint, rangeOfOffsets, textNodesOf } from "@/components/candidate/exam/notes/dom-text";
 import { removeLayer, setLayerRanges, type HighlightName } from "@/components/candidate/exam/notes/highlight-registry";
 import type { NotesController } from "@/components/candidate/exam/notes/use-notes";
 
@@ -158,17 +158,29 @@ export function NotesLayer({
 
   const onRootDown = (e: React.PointerEvent) => {
     if (!active || tool !== "eraser" || e.button !== 0) return;
+    // Answer buttons, inputs, chips and labels keep working: no capture, no erase.
+    if (isControlTarget(e.target)) return;
     erasing.current = true;
     rootRef.current?.setPointerCapture(e.pointerId);
     eraseAt(e);
   };
   const onRootMove = (e: React.PointerEvent) => {
-    if (erasing.current) eraseAt(e);
+    if (!erasing.current) return;
+    // A lost pointerup must not leave the eraser stuck on.
+    if ((e.buttons & 1) === 0) {
+      erasing.current = false;
+      return;
+    }
+    eraseAt(e);
   };
   const onRootUp = (e: React.PointerEvent) => {
     if (!erasing.current) return;
     erasing.current = false;
-    rootRef.current?.releasePointerCapture(e.pointerId);
+    try {
+      rootRef.current?.releasePointerCapture(e.pointerId);
+    } catch {
+      /* capture already gone */
+    }
   };
 
   const onPenDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -182,6 +194,10 @@ export function NotesLayer({
   const onPenMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const pts = live.current;
     if (!pts) return;
+    if ((e.buttons & 1) === 0) {
+      onPenUp(e);
+      return;
+    }
     const ctx = e.currentTarget.getContext("2d");
     for (const ev of e.nativeEvent.getCoalescedEvents?.() ?? [e.nativeEvent]) {
       const r = rootRef.current!.getBoundingClientRect();
@@ -196,7 +212,11 @@ export function NotesLayer({
     const pts = live.current;
     live.current = null;
     if (!pts) return;
-    e.currentTarget.releasePointerCapture(e.pointerId);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      /* capture already gone */
+    }
     const stroke = makeStroke(pts);
     setData((prev) => ({ ...prev, strokes: [...prev.strokes, stroke] }));
   };
@@ -211,6 +231,7 @@ export function NotesLayer({
       onPointerMove={onRootMove}
       onPointerUp={onRootUp}
       onPointerCancel={onRootUp}
+      onLostPointerCapture={onRootUp}
     >
       {children}
       {active && pen ? (
@@ -223,6 +244,7 @@ export function NotesLayer({
           onPointerMove={onPenMove}
           onPointerUp={onPenUp}
           onPointerCancel={onPenUp}
+          onLostPointerCapture={onPenUp}
         />
       ) : null}
     </div>

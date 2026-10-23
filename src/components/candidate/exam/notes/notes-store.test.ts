@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clearAllNotes, fnv1a, loadNotes, notesKey, saveNotes, type NotesStorage } from "@/components/candidate/exam/notes/notes-store";
+import { clearAllNotes, fnv1a, loadNotes, notesKey, saveNotes, stemsContentKey, type NotesStorage } from "@/components/candidate/exam/notes/notes-store";
 
 function fake(): NotesStorage & { map: Map<string, string> } {
   const map = new Map<string, string>();
@@ -46,5 +46,15 @@ describe("notes store", () => {
     expect(() => clearAllNotes("a", bad)).not.toThrow();
     expect(() => clearAllNotes("a", null)).not.toThrow();
     expect(loadNotes(null, "k")).toEqual({ marks: [], strokes: [] });
+  });
+});
+
+describe("stems key", () => {
+  it("gives two recordings that share a prompt different note keys", () => {
+    const a = notesKey("tok", 2, "stems", stemsContentKey("group", 5));
+    const b = notesKey("tok", 2, "stems", stemsContentKey("group", 9));
+    expect(a).not.toBe(b);
+    expect(notesKey("tok", 2, "stems", stemsContentKey("item", 5))).not.toBe(a);
+    expect(notesKey("tok", 2, "stems", stemsContentKey("group", 5))).toBe(a);
   });
 });

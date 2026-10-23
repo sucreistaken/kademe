@@ -41,6 +41,7 @@ import { ExamTopBar } from "@/components/candidate/exam/ExamTopBar";
 import { ItemHeading } from "@/components/candidate/exam/ItemHeading";
 import { ReadingPane } from "@/components/candidate/exam/ReadingPane";
 import { ScratchPad } from "@/components/candidate/exam/notes/ScratchPad";
+import { stemsContentKey } from "@/components/candidate/exam/notes/notes-store";
 import { ListeningStems, StemNotes } from "@/components/candidate/exam/notes/StemNotes";
 import { SectionIntro } from "@/components/candidate/exam/SectionIntro";
 import { useT } from "@/i18n/candidate-client";
@@ -762,7 +763,7 @@ export function ExamRunner({
                 />
                 <ScratchPad token={token} sectionPosition={cur.position} padKey={`group-${members[0]}`} />
               </div>
-              <StemNotes token={token} sectionPosition={cur.position} contentKey={group.map((g) => g.prompt).join("\n")}>
+              <StemNotes token={token} sectionPosition={cur.position} contentKey={stemsContentKey("group", members[0])}>
               <div className="flex flex-col gap-8">
                 {group.map((g, idx) => {
                   const flagged = flaggedAt(g.sequence);
@@ -839,7 +840,7 @@ export function ExamRunner({
                     engine={engine}
                   />
                 ) : (
-                  <ListeningStems active={item.stimulus?.kind === "LISTENING"} token={token} sectionPosition={cur.position} contentKey={item.prompt}>
+                  <ListeningStems active={item.stimulus?.kind === "LISTENING"} token={token} sectionPosition={cur.position} contentKey={stemsContentKey("item", item.sequence)}>
                     <ItemView key={item.sequence} item={item} answer={answer} onChange={change} disabled={inputsOff} />
                   </ListeningStems>
                 )}

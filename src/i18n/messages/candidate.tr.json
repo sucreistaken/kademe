@@ -1274,6 +1274,6 @@
     "undo": "Geri al",
     "cleared": "Notlar temizlendi",
     "pad": "Karalama alanı",
-    "padHint": "Sadece sana özel, sınavda değerlendirilmez."
+    "padHint": "Yalnızca sizin içindir; değerlendirilmez, kaydedilmez ve kimseye gösterilmez."
   }
 }

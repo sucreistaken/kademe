@@ -21,11 +21,11 @@ describe("addMark", () => {
     expect(addMark([], hl(3, 3))).toEqual([]);
   });
   it("merges touching and overlapping marks of the same colour", () => {
-    expect(addMark([hl(0, 5)], hl(5, 9))).toEqual([hl(0, 9)]);
-    expect(addMark([hl(0, 5)], hl(3, 9))).toEqual([hl(0, 9)]);
+    expect(addMark([hl(0, 5)], hl(5, 9))).toEqual([{ ...hl(0, 9), seq: 1 }]);
+    expect(addMark([hl(0, 5)], hl(3, 9))).toEqual([{ ...hl(0, 9), seq: 1 }]);
   });
   it("splits a mark of another colour that it cuts into", () => {
-    expect(addMark([hl(0, 10, "green")], hl(3, 6, "pink"))).toEqual([hl(0, 3, "green"), hl(3, 6, "pink"), hl(6, 10, "green")]);
+    expect(addMark([hl(0, 10, "green")], hl(3, 6, "pink"))).toEqual([hl(0, 3, "green"), { ...hl(3, 6, "pink"), seq: 1 }, hl(6, 10, "green")]);
   });
   it("keeps highlights and underlines apart", () => {
     const u: Mark = { start: 2, end: 4, kind: "underline", color: "ink" };
@@ -81,5 +81,18 @@ describe("parseNotes", () => {
   it("drops malformed input", () => {
     expect(parseNotes("nope")).toEqual({ marks: [], strokes: [] });
     expect(parseNotes(JSON.stringify({ marks: [{ start: 5, end: 2, kind: "highlight", color: "yellow" }, { start: 0, end: 1, kind: "x", color: "red" }], strokes: [{ tool: "pen", points: [["a", 1]] }] }))).toEqual({ marks: [], strokes: [] });
+  });
+});
+
+describe("cap by age", () => {
+  it("drops the oldest inserted marks, not the ones at the end of the text", () => {
+    let marks: ReturnType<typeof addMark> = [];
+    for (let i = 0; i < MAX_MARKS; i++) marks = addMark(marks, hl(100 + i * 3, 101 + i * 3));
+    marks = addMark(marks, hl(0, 1));
+    const out = capNotes({ marks, strokes: [] });
+    expect(out.marks).toHaveLength(MAX_MARKS);
+    expect(out.marks.some((m) => m.start === 0)).toBe(true);
+    expect(out.marks.some((m) => m.start === 100)).toBe(false);
+    expect(out.marks.some((m) => m.start === 100 + (MAX_MARKS - 1) * 3)).toBe(true);
   });
 });
