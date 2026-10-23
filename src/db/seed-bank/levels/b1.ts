@@ -1489,10 +1489,10 @@ const listeningItems: SeedItem[] = [
   freibad.tfng("detail", "MID",
     [
       ["Unter der Woche kann man bis zwanzig Uhr schwimmen.", "R"],
-      ["Am Wochenende öffnet das Bad später als unter der Woche.", "F"],
-      ["Kleine Kinder müssen keinen Eintritt bezahlen.", "R"],
+      ["Am Wochenende kann man früher schwimmen gehen als unter der Woche.", "R"],
+      ["Kleine Kinder müssen den vollen Eintritt bezahlen.", "F"],
     ],
-    "Montag bis Freitag „von zehn bis zwanzig Uhr“ (R); am Wochenende „schon ab acht“, also früher (F); Kinder unter sechs Jahren „kostenlos“ (R)."),
+    "Montag bis Freitag „von zehn bis zwanzig Uhr“ (R); am Wochenende „schon ab acht“, also früher (R); Kinder unter sechs Jahren „kostenlos“, also nicht voller Preis (F)."),
 
   // ---- Clip 6 (table completion)
   tanzkurs.notes("detail", "MID",
