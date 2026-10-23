@@ -1575,6 +1575,26 @@ const EMAIL_NOTE =
 const TABLE_NOTE =
   "Aufgabe mit Tabelle (Muster ÖSD C1 und TestDaF): Daten beschreiben, Gründe und Folgen erörtern, mit dem eigenen Land vergleichen und Stellung nehmen. Bewertet werden Aufgabenerfüllung (alle Punkte, treffende Wiedergabe der Daten), Kohärenz, Wortschatz für Veränderungen und Vergleiche sowie Register.";
 
+/** A chart description task: the same as `write`, with one original chart shown above the task. */
+function writeChart(
+  within: Within,
+  words: [number, number],
+  chartId: string,
+  prompt: string,
+  contentPoints: string[],
+  studentPoints: string[],
+  register: string,
+  explanation: string,
+): SeedItem {
+  return {
+    ...write("data", within, words, prompt, contentPoints, studentPoints, register, explanation),
+    content: { kind: "WRITING", minWords: words[0], maxWords: words[1], images: [img(chartId)] },
+  };
+}
+
+const CHART_NOTE =
+  "Aufgabe mit Grafik (Muster ÖSD C1 und TestDaF): Daten beschreiben, Ursachen und Folgen erörtern, Stellung nehmen. Bewertet werden Aufgabenerfüllung (treffende Wiedergabe der Zahlen und Tendenzen, alle Leitpunkte), Kohärenz, Wortschatz für Veränderungen und Vergleiche sowie Register. Die Daten der Grafik sind erfunden.";
+
 const writingItems: SeedItem[] = [
   write("data", "HARD", [200, 300],
     "Eine Stadtzeitung veröffentlicht die Ergebnisse einer Befragung zur Verkehrsmittelwahl in der Stadt Lindental und bittet um Leserbriefe. In beiden Jahren wurden rund 2000 Einwohner befragt, mit welchem Verkehrsmittel sie ihre alltäglichen Wege überwiegend zurücklegen.\n\n" +
@@ -1728,6 +1748,67 @@ const writingItems: SeedItem[] = [
       "Anrede und Schlussformel",
     ],
     FORMAL, EMAIL_NOTE),
+
+  // Chart description tasks (one original chart each)
+  writeChart("HARD", [200, 280], "chart.c1.energie",
+    "Die Grafik zeigt, wie sich die Stromerzeugung in Fiktivland zwischen 2010 und 2024 entwickelt hat. Für den Blog des Studierendenwerks sollen Sie einen Beitrag schreiben (etwa 230 Wörter):\n" +
+      "- Beschreiben Sie die wichtigsten Entwicklungen in der Grafik.\n" +
+      "- Nennen Sie mögliche Ursachen und Folgen dieser Entwicklung.\n" +
+      "- Nehmen Sie Stellung: Sollte der Ausstieg aus der Kohle beschleunigt werden? Begründen Sie Ihre Meinung.",
+    [
+      "beschreibt den Anstieg der erneuerbaren Energien von 17 auf 53 Prozent und den Rückgang der Kohle von 42 auf 12 Prozent",
+      "erkennt den Wendepunkt um 2016, als beide Energieträger bei etwa 31 Prozent lagen, und dass die erneuerbaren Energien seitdem überwiegen",
+      "nennt plausible Ursachen (z. B. staatliche Förderung, günstigere Technik, Klimaschutz) und Folgen (z. B. Strompreise, Arbeitsplätze, Stabilität des Netzes)",
+      "begründete eigene Stellungnahme zum Kohleausstieg; Datenwortschatz (ansteigen, zurückgehen, überholen, sich verdreifachen) und Vergleiche",
+    ],
+    [
+      "die Entwicklung in der Grafik beschreiben",
+      "Ursachen und Folgen nennen",
+      "Stellung nehmen und begründen",
+      "Einleitung und Schluss",
+    ],
+    FORUM, CHART_NOTE),
+  writeChart("MID", [200, 280], "chart.c1.medien",
+    "Eine Zeitschrift bittet um Leserbriefe zum Thema „Wie verändert sich unsere Mediennutzung?“. Die Grafik zeigt, wie lange Menschen in Fiktivland 2014 und 2024 im Durchschnitt pro Tag verschiedene Medien genutzt haben.\n\n" +
+      "Schreiben Sie einen Leserbrief (etwa 230 Wörter):\n" +
+      "- Fassen Sie die wichtigsten Aussagen der Grafik zusammen.\n" +
+      "- Erklären Sie, welche Gründe es für die Veränderungen geben könnte.\n" +
+      "- Diskutieren Sie, ob der Rückgang gedruckter Medien ein Problem ist.\n" +
+      "- Beschreiben Sie, wie sich die Mediennutzung in Ihrem Umfeld verändert hat.",
+    [
+      "fasst die Kernaussagen zusammen: Fernsehen sinkt (148 auf 101 Minuten), Streaming steigt stark (31 auf 96), Musik und Podcasts steigen (64 auf 88), gedruckte Zeitung und Bücher sinken leicht oder deutlich (22 auf 9, 19 auf 17)",
+      "nennt plausible Gründe (z. B. Smartphone, Streaming-Angebote, mobile Nutzung, veränderte Gewohnheiten)",
+      "diskutiert den Rückgang gedruckter Medien mit Argumenten dafür und dagegen",
+      "bezieht die Beobachtungen im eigenen Umfeld ein; passende Anrede und Schlussformel",
+    ],
+    [
+      "die wichtigsten Aussagen der Grafik zusammenfassen",
+      "Gründe für die Veränderungen nennen",
+      "den Rückgang gedruckter Medien diskutieren",
+      "von Ihrem Umfeld berichten",
+      "Anrede und Schlussformel",
+    ],
+    SEMI, CHART_NOTE),
+  writeChart("HARD", [200, 300], "chart.c1.tourismus",
+    "Die Grafik zeigt die Übernachtungen in der Region Hohenstein im Jahr 2024. Sie wohnen in der Region. Die Gemeindeverwaltung bittet Anwohnerinnen und Anwohner um Rückmeldungen.\n\n" +
+      "Schreiben Sie einen Brief an die Gemeindeverwaltung (etwa 250 Wörter):\n" +
+      "- Beschreiben Sie, was die Grafik über die Verteilung der Übernachtungen über das Jahr zeigt.\n" +
+      "- Schildern Sie, welche Folgen die Spitzen für Anwohner und Region haben können.\n" +
+      "- Schlagen Sie Maßnahmen vor, um die Belastung in den Spitzenmonaten zu verringern oder die schwächeren Monate zu stärken.\n" +
+      "- Verwenden Sie eine passende Anrede und Schlussformel.",
+    [
+      "beschreibt die Verteilung: Spitze im Juli und August (118 und 131 Tausend), zweite Spitze im Dezember (104), Tiefpunkte im April und November (38 und 31)",
+      "vergleicht Höchst- und Tiefstwert (131 gegenüber 31, also rund das Vierfache)",
+      "schildert Folgen der Spitzen (z. B. Verkehr, Lärm, Wohnungsmarkt) und der schwachen Monate (z. B. leere Betriebe, unsichere Einkommen)",
+      "konkrete, begründete Maßnahmen (z. B. Angebote für Frühjahr und Herbst, Lenkung der Besucher, Preise nach Saison); formelle Anrede und Schlussformel",
+    ],
+    [
+      "die Verteilung der Übernachtungen beschreiben",
+      "Folgen für Anwohner und Region schildern",
+      "Maßnahmen vorschlagen",
+      "Anrede und Schlussformel",
+    ],
+    FORMAL, CHART_NOTE),
 ];
 
 // ---------------------------------------------------------------- SPEAKING
@@ -1763,6 +1844,36 @@ const HANDOUT_NOTE =
   "Muster ÖSD C1 Sprechen 3 und TestDaF: Vortrag auf der Grundlage eines Handouts mit mehreren Quellen. Bewertet werden Zusammenfassung der Quellen, Stellungnahme, Vergleich mit dem eigenen Land, Gliederung, Wortschatz und Strukturen.";
 const DISCUSS_NOTE =
   "Goethe C1 Sprechen Teil 2 (als aufgezeichneter Gesprächsbeitrag): auf einen Impuls reagieren, Position beziehen, Gegenargumente aufgreifen. Bewertet wird zusätzlich die Fähigkeit, auf andere Meinungen einzugehen.";
+
+const PICTURE = { thinkSeconds: 90, answerSeconds: 180, maxTakes: 1 };
+
+/** A picture task: one scene or chart stays on screen while the candidate speaks. */
+function speakPicture(
+  within: Within,
+  imageId: string,
+  prompt: string,
+  contentPoints: string[],
+  studentPoints: string[],
+  explanation: string,
+): SeedItem {
+  return {
+    section: "SPEAKING",
+    level: LEVEL,
+    type: "SPEAKING_PROMPT",
+    skillTag: "speaking.picture",
+    within,
+    prompt,
+    content: { kind: "SPEAKING", ...PICTURE, images: [img(imageId)] },
+    key: { kind: "NONE" },
+    rubric: { contentPoints, register: "sachlich, neutral bis formell", studentPoints },
+    explanation,
+  };
+}
+
+const PICTURE_NOTE =
+  "Aufgabe mit Bild (Muster Goethe C1 und ÖSD C1 Sprechen): das Bild beschreiben, das Thema einordnen, Vor- und Nachteile abwägen und Stellung nehmen. Bewertet werden Aufgabenerfüllung, Kohärenz und Flüssigkeit, Wortschatz, Strukturen und Aussprache.";
+const CHART_SPEAK_NOTE =
+  "Aufgabe mit Grafik (Muster TestDaF und ÖSD C1 Sprechen): die Daten der Grafik nachvollziehbar wiedergeben und zu einer Frage Stellung nehmen. Bewertet werden Genauigkeit der Datenwiedergabe, Gliederung, Wortschatz für Veränderungen und Vergleiche, Strukturen und Aussprache. Die Daten der Grafik sind erfunden.";
 
 const speakingItems: SeedItem[] = [
   speak("presentation", "MID",
@@ -1886,6 +1997,105 @@ const speakingItems: SeedItem[] = [
       "Ihr eigener Umgang mit dem Handy",
     ],
     HANDOUT_NOTE),
+
+  // Picture tasks (scenes)
+  speakPicture("MID", "scene.c1.urban-garden",
+    "Sehen Sie sich das Bild an. Sprechen Sie etwa drei Minuten.\n\n" +
+      "- Beschreiben Sie, was Sie auf dem Bild sehen.\n" +
+      "- Erklären Sie, welche Bedeutung Gemeinschaftsgärten für eine Stadt haben können.\n" +
+      "- Nennen Sie Vorteile und mögliche Probleme.\n" +
+      "- Sagen Sie, ob Sie selbst bei einem solchen Projekt mitmachen würden, und begründen Sie das.",
+    [
+      "beschreibt das Bild: ein Gemeinschaftsgarten mit Gewächshaus in einer Siedlung",
+      "nennt Vorteile (z. B. Gemeinschaft, frisches Gemüse, Klima, Erholung, Bildung)",
+      "nennt Probleme oder Grenzen (z. B. Fläche, Pflege, Wasser, Streit, Dauer des Engagements)",
+      "begründete eigene Position; klare Gliederung",
+    ],
+    ["das Bild beschreiben", "Bedeutung für die Stadt erklären", "Vorteile und Probleme nennen", "eigene Entscheidung begründen"],
+    PICTURE_NOTE),
+  speakPicture("HARD", "scene.c1.factory-robots",
+    "Sehen Sie sich das Bild an. Sprechen Sie etwa drei Minuten.\n\n" +
+      "- Beschreiben Sie das Bild.\n" +
+      "- Erläutern Sie, wie Roboter und künstliche Intelligenz die Arbeitswelt verändern.\n" +
+      "- Wägen Sie Chancen und Risiken ab.\n" +
+      "- Sagen Sie, wie die Gesellschaft auf diese Entwicklung reagieren sollte.",
+    [
+      "beschreibt das Bild: gelbe Roboterarme arbeiten in einer modernen Fabrik",
+      "erläutert Veränderungen (Automatisierung, neue Aufgaben, Umschulung, Produktivität)",
+      "wägt Chancen (Entlastung von schwerer Arbeit, Effizienz) gegen Risiken (Arbeitsplatzverlust, Abhängigkeit, Ungleichheit) ab",
+      "nennt konkrete Antworten der Gesellschaft (Weiterbildung, soziale Absicherung, Regeln); eigene Stellungnahme",
+    ],
+    ["das Bild beschreiben", "Veränderungen der Arbeitswelt erläutern", "Chancen und Risiken abwägen", "Vorschläge machen und Stellung nehmen"],
+    PICTURE_NOTE),
+  speakPicture("MID", "scene.c1.telemedicine",
+    "Sehen Sie sich das Bild an. Sprechen Sie etwa drei Minuten.\n\n" +
+      "- Beschreiben Sie, was Sie sehen.\n" +
+      "- Nennen Sie Vorteile und Grenzen von Arztgesprächen per Video, zum Beispiel für Menschen auf dem Land oder für ältere Menschen.\n" +
+      "- Sagen Sie, worauf beim Datenschutz geachtet werden sollte.\n" +
+      "- Geben Sie eine begründete Einschätzung, welche Rolle solche Angebote künftig spielen werden.",
+    [
+      "beschreibt das Bild: ein Arzt im weißen Kittel spricht per Video mit einem Patienten",
+      "nennt Vorteile (weniger Wege, schnellere Termine, Erreichbarkeit auf dem Land) und Grenzen (keine körperliche Untersuchung, technische Hürden, persönlicher Kontakt)",
+      "geht auf den Datenschutz ein (z. B. sichere Verbindung, Speicherung von Daten, Einwilligung)",
+      "begründete Einschätzung zur künftigen Rolle; klare Gliederung",
+    ],
+    ["das Bild beschreiben", "Vorteile und Grenzen nennen", "den Datenschutz ansprechen", "eine Einschätzung begründen"],
+    PICTURE_NOTE),
+  speakPicture("MID", "scene.c1.video-call",
+    "Sehen Sie sich das Bild an. Sprechen Sie etwa drei Minuten.\n\n" +
+      "- Beschreiben Sie das Bild.\n" +
+      "- Erklären Sie, wie Videogespräche die Kommunikation verändert haben.\n" +
+      "- Vergleichen Sie Videogespräche mit Treffen vor Ort.\n" +
+      "- Sagen Sie, in welchen Situationen ein persönliches Treffen unersetzlich bleibt.",
+    [
+      "beschreibt das Bild: eine Frau führt am Laptop ein Videogespräch mit mehreren Personen",
+      "erklärt Veränderungen (Entfernungen überbrücken, Zeit und Reisekosten sparen, ständige Erreichbarkeit)",
+      "vergleicht mit dem Treffen vor Ort (Vorteile: Nähe, Zwischentöne, spontane Gespräche; Nachteile: Müdigkeit, Missverständnisse, technische Störungen)",
+      "nennt Situationen, in denen ein persönliches Treffen unersetzlich ist, und begründet das",
+    ],
+    ["das Bild beschreiben", "Veränderungen erklären", "Videogespräche und Treffen vergleichen", "Situationen für persönliche Treffen nennen"],
+    PICTURE_NOTE),
+
+  // Picture tasks (the three charts)
+  speakPicture("HARD", "chart.c1.energie",
+    "Sehen Sie sich die Grafik an. Sprechen Sie etwa drei Minuten.\n\n" +
+      "- Beschreiben Sie die Entwicklung der beiden Energieträger zwischen 2010 und 2024.\n" +
+      "- Nennen Sie den Zeitpunkt, an dem sich die Verhältnisse umkehren.\n" +
+      "- Sagen Sie, welche politischen Maßnahmen nötig wären, damit sich die Entwicklung fortsetzt, und begründen Sie Ihre Meinung.",
+    [
+      "gibt die Kernzahlen wieder: erneuerbare Energien von 17 auf 53 Prozent, Kohle von 42 auf 12 Prozent",
+      "nennt den Wendepunkt um 2016, als beide bei etwa 31 Prozent lagen",
+      "nennt konkrete Maßnahmen (z. B. Ausbau der Netze und Speicher, Förderung, Ausstiegsdatum, Hilfen für betroffene Regionen)",
+      "begründete eigene Meinung; Datenwortschatz (ansteigen, zurückgehen, überholen)",
+    ],
+    ["die Entwicklung beschreiben", "den Wendepunkt nennen", "Maßnahmen vorschlagen und begründen"],
+    CHART_SPEAK_NOTE),
+  speakPicture("MID", "chart.c1.medien",
+    "Sehen Sie sich die Grafik an. Sprechen Sie etwa drei Minuten.\n\n" +
+      "- Beschreiben Sie die Grafik und heben Sie die auffälligsten Veränderungen hervor.\n" +
+      "- Vergleichen Sie die Zahlen mit dem, was Sie in Ihrer Stadt oder Region beobachten.\n" +
+      "- Sagen Sie, ob Sie in dieser Entwicklung Gefahren sehen, und begründen Sie Ihre Meinung.",
+    [
+      "gibt auffällige Veränderungen wieder: Fernsehen sinkt von 148 auf 101 Minuten, Streaming steigt von 31 auf 96, gedruckte Zeitung sinkt von 22 auf 9",
+      "vergleicht mit eigenen Beobachtungen im Umfeld der Stadt oder Region",
+      "nennt mögliche Gefahren (z. B. weniger geprüfte Informationen, weniger Konzentration, Blasen) oder begründet, warum es keine gibt",
+      "klare Gliederung; Wortschatz für Veränderungen und Vergleiche",
+    ],
+    ["die auffälligsten Veränderungen beschreiben", "mit der eigenen Umgebung vergleichen", "mögliche Gefahren bewerten"],
+    CHART_SPEAK_NOTE),
+  speakPicture("HARD", "chart.c1.tourismus",
+    "Sehen Sie sich die Grafik an. Sprechen Sie etwa drei Minuten.\n\n" +
+      "- Beschreiben Sie, wie sich die Übernachtungen über das Jahr verteilen.\n" +
+      "- Erklären Sie, welche Probleme eine so ungleiche Verteilung für die Region haben kann.\n" +
+      "- Entwickeln Sie zwei oder drei Ideen, wie die Region die Übernachtungen gleichmäßiger über das Jahr verteilen könnte, und bewerten Sie diese.",
+    [
+      "beschreibt die Verteilung: Höchstwert im August (131 Tausend), Spitzen im Juli und Dezember, Tiefpunkt im November (31 Tausend)",
+      "erklärt Probleme (überfüllte Spitzenmonate, ungenutzte Kapazitäten, saisonale Arbeit und Einkommen)",
+      "entwickelt zwei oder drei konkrete Ideen (z. B. Angebote für Frühjahr und Herbst, Tagungen, Veranstaltungen, Preisunterschiede) und bewertet Aufwand und Wirkung",
+      "klare Gliederung mit Überleitungen",
+    ],
+    ["die Verteilung beschreiben", "Probleme erklären", "Ideen entwickeln und bewerten"],
+    CHART_SPEAK_NOTE),
 ];
 
 export const C1_PARTS: {
