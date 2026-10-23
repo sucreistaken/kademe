@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ScratchPad } from "@/components/candidate/exam/notes/ScratchPad";
 import type { ProctorEngine } from "@/lib/client/proctor/engine";
 import { apiSend } from "@/lib/client/api";
 import { MEDIA_ERROR_KEY, mediaErrorKind } from "@/lib/client/media-error";
@@ -442,6 +443,7 @@ export function SpeakingItem({
         <TaskImages sequence={item.sequence} images={content.images} />
         <TaskPromptCard text={item.prompt} points={content.studentPoints} />
         <TaskExpectations section="SPEAKING" thinkSeconds={content.thinkSeconds} answerSeconds={content.answerSeconds} />
+        <ScratchPad token={token} sectionPosition={sectionPosition} padKey={`speaking-${item.sequence}`} collapsible />
       </div>
       <div className={cn(TASK_RIGHT, "gap-4")}>
         <video ref={videoRef} muted playsInline className={SPEAKING_VIDEO} />
