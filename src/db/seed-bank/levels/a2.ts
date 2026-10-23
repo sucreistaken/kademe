@@ -1,6 +1,7 @@
 import type { TfngValue } from "@/lib/exam/types";
 import { cloze } from "../cloze";
 import { cTest } from "../ctest";
+import { img } from "../image";
 import { wordBank } from "../wordbank";
 import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 
@@ -391,6 +392,10 @@ const R_ANZ = "v2-r-a2-anzeigen";
 const R_NEWS = "v3-r-a2-kurznachrichten";
 const R_POOL = "v3-r-a2-hallenbad-hinweise";
 const R_FERIEN = "v3-r-a2-ferienwohnung-bewertung";
+const R_ANZ2 = "v4-r-a2-angebote-stadtteil";
+const R_NEWS2 = "v4-r-a2-kurznachrichten-landkreis";
+const R_HAUS = "v4-r-a2-aushaenge-treppenhaus";
+const R_WETTER = "v4-r-a2-wetterbericht-wochenende";
 
 const readingStimuli: SeedStimulus[] = [
   readingText(R_EMAIL, "Eine E-Mail von Lena", "Arbeit und Wohnen", `
@@ -488,6 +493,63 @@ Ferienwohnung Seeblick in Bad Wiesen: 4 von 5 Sternen
 
 Wir waren im Mai eine Woche mit zwei Kindern in der Wohnung. Die Lage ist super: Der See ist nur fünf Minuten zu Fuß entfernt, und im Dorf gibt es einen Bäcker und einen kleinen Supermarkt. Die Wohnung war sauber, aber die Betten waren ziemlich hart, und das WLAN hat nur im Wohnzimmer funktioniert. Der Vermieter, Herr Keller, war sehr nett und hat uns Fahrräder geliehen. Wir kommen bestimmt wieder, aber dann im Juni, denn im Mai war das Wasser im See noch zu kalt.
 `),
+  readingText(R_ANZ2, "Angebote im Stadtteil", "Freizeit im Stadtteil", `
+A
+Töpferkurs für Anfänger, jeden Mittwoch von 18 bis 20 Uhr in der Volkshochschule. 12 Euro pro Abend, das Material ist im Preis enthalten.
+
+B
+Flohmarkt auf dem Schulhof am Samstag, dem 14. Juni, von 9 bis 15 Uhr. Ein Standplatz kostet 5 Euro. Kaffee und Kuchen gibt es vom Elternverein.
+
+C
+Der Wanderverein sucht neue Mitglieder. Wir treffen uns jeden ersten Sonntag im Monat um 8 Uhr am Bahnhof. Anfänger und Kinder sind willkommen.
+
+D
+Kinderyoga für Kinder von 5 bis 8 Jahren, dienstags um 16 Uhr in der Turnhalle der Grundschule. Die Probestunde ist kostenlos.
+
+E
+Gitarrenunterricht für Erwachsene, nur Einzelunterricht, 25 Euro für 45 Minuten. Bei Ihnen zu Hause oder in der Musikschule.
+
+F
+Repair-Café im Gemeindehaus: jeden zweiten Freitag von 15 bis 18 Uhr. Gemeinsam reparieren wir Lampen, Radios und Spielzeug. Alles ist kostenlos, über eine Spende freuen wir uns.
+`),
+  readingText(R_NEWS2, "Kurznachrichten aus dem Landkreis", "Kurznachrichten aus dem Landkreis", `
+Text 1
+Am Wochenende spielen beim Stadtfest auf drei Bühnen Bands aus der Region. Der Eintritt ist frei. Die Innenstadt ist gesperrt. Wer mit dem Auto kommt, parkt am besten auf dem großen Parkplatz am Fluss.
+
+Text 2
+Im Zoo ist ein kleiner Elefant geboren. Er wiegt schon hundert Kilo und trinkt viel Milch. Ab nächster Woche kann man das Tier jeden Tag von 10 bis 16 Uhr im Freigehege sehen.
+
+Text 3
+Die Bücherei zieht um. Vom 3. bis zum 14. März bleibt sie deshalb geschlossen. Ab dem 17. März findet man alle Bücher im neuen Haus am Marktplatz. Wer Bücher ausgeliehen hat, darf sie bis dahin behalten.
+
+Text 4
+Wegen starkem Regen ist der Wanderweg am Fluss gesperrt, denn es fallen Steine vom Hang. Wanderer nehmen bitte den Weg über den Berg. Er ist etwa eine Stunde länger. Schilder zeigen den Weg.
+
+Text 5
+Ab Januar kommt die Müllabfuhr nicht mehr dienstags, sondern donnerstags. Der gelbe Sack wird weiter alle zwei Wochen abgeholt. Neue Kalender gibt es im Rathaus.
+`),
+  readingText(R_HAUS, "Aushänge im Treppenhaus", "Wohnen im Mietshaus", `
+Text 1
+Am Donnerstag wird in unserem Haus von 8 bis 12 Uhr das Wasser abgestellt. Bitte füllen Sie vorher Flaschen oder Eimer. Danach funktioniert alles wieder wie immer.
+
+Text 2
+Im Hausflur stehen zu viele Fahrräder. Im Notfall kommt die Feuerwehr nicht durch. Bitte stellen Sie Ihr Rad in den Fahrradkeller. Der Schlüssel hängt beim Hausmeister.
+
+Text 3
+Wir feiern am 20. Juli ab 15 Uhr im Hof. Alle Mieterinnen und Mieter sind eingeladen. Jeder bringt etwas zu essen mit. Die Getränke bezahlt die Hausverwaltung.
+
+Text 4
+Seit dem 1. Juni ist Frau Ivanova unsere neue Hausmeisterin. Sie ist montags und mittwochs von 16 bis 17 Uhr im Keller, Raum 3, zu erreichen. Dort können Sie Schäden im Haus melden.
+`),
+  readingText(R_WETTER, "Das Wetter am Wochenende", "Wetter und Jahreszeiten", `
+Das Wetter am Wochenende
+
+Am Samstag ist es im Norden des Landes bewölkt. Ab Mittag fängt es an zu regnen, am Nachmittag besonders stark. Im Süden scheint dagegen die Sonne, und es wird bis zu 22 Grad warm.
+
+Am Sonntag wird es überall kälter. Im Norden weht ein starker Wind, und die Temperatur steigt nur auf 12 Grad. Im Süden bleibt es trocken, aber der Himmel ist bewölkt.
+
+Zu Beginn der neuen Woche kommt die Sonne zurück.
+`),
 ];
 
 const rEmail = forText(R_EMAIL);
@@ -497,6 +559,10 @@ const rAnz = forText(R_ANZ);
 const rNews = forText(R_NEWS);
 const rPool = forText(R_POOL);
 const rFerien = forText(R_FERIEN);
+const rAnz2 = forText(R_ANZ2);
+const rNews2 = forText(R_NEWS2);
+const rHaus = forText(R_HAUS);
+const rWetter = forText(R_WETTER);
 
 const readingItems: SeedItem[] = [
   // ---------------------------------------------------------------- E-Mail
@@ -688,6 +754,105 @@ const readingItems: SeedItem[] = [
       ["Zum See muss man mit dem Auto fahren.", "F"],
     ],
     "1 R: Die Familie war eine Woche dort. 2 R: Der Vermieter hat Fahrräder geliehen. 3 F: Der See ist nur fünf Minuten zu Fuß entfernt."),
+
+  // ---------------------------------------------------------------- Anzeigen, "Keine Anzeige passt"
+  rAnz.match("detail", "MID",
+    "Welche Anzeige passt zu welcher Person? Zu einer Person passt keine Anzeige. Dann wählen Sie „Keine Anzeige passt“.",
+    [
+      "Frau Kowalski sucht eine Wohnung mit Garten.",
+      "Mehmet hat einen Führerschein, fährt gern Auto und möchte sofort mit einer Arbeit am Vormittag und frühen Nachmittag anfangen.",
+      "Lea geht in die neunte Klasse und braucht Hilfe in Englisch.",
+    ],
+    ["Anzeige A", "Anzeige B", "Anzeige C", "Anzeige D", "Anzeige E", "Anzeige F", "Keine Anzeige passt"],
+    [7, 2, 3],
+    "Frau Kowalski: Anzeige E hat nur einen Balkon, einen Garten gibt es nirgends, also \"Keine Anzeige passt\". Mehmet: B (Fahrer, 7 bis 15 Uhr, sofort). Lea: C (Nachhilfe für Klasse 5 bis 10, auch Englisch)."),
+  rAnz2.match("detail", "MID",
+    "Welche Anzeige passt zu welcher Person? Zu einer Person passt keine Anzeige. Dann wählen Sie „Keine Anzeige passt“.",
+    [
+      "Herr Brandt hat zwei Kinder, sechs und acht Jahre alt, und sucht ein Bewegungsangebot für sie.",
+      "Frau Scholz hat zu Hause viele alte Sachen und möchte sie am Wochenende verkaufen.",
+      "Nuri möchte ein Instrument lernen, aber nicht in einer Gruppe.",
+      "Frau Peters sucht einen Schwimmkurs für Erwachsene.",
+    ],
+    ["Anzeige A", "Anzeige B", "Anzeige C", "Anzeige D", "Anzeige E", "Anzeige F", "Keine Anzeige passt"],
+    [4, 2, 5, 7],
+    "Herr Brandt: D (Kinderyoga für 5 bis 8 Jahre). Frau Scholz: B (Flohmarkt am Samstag). Nuri: E (nur Einzelunterricht). Frau Peters: Es gibt kein Schwimmangebot, also \"Keine Anzeige passt\"."),
+  rAnz2.choice("detail", "MID",
+    "Was muss man im Repair-Café bezahlen?",
+    [
+      "Man bezahlt fünf Euro für jeden Gegenstand, den man mitbringt.",
+      "Man bezahlt zwölf Euro pro Termin, dafür ist das Material dabei.",
+      "Man bezahlt nichts für die Reparatur, kann aber freiwillig Geld spenden.",
+      "Man bezahlt nur, wenn die Reparatur länger als eine Stunde dauert.",
+    ], 2,
+    "Anzeige F: \"Alles ist kostenlos, über eine Spende freuen wir uns.\" Die fünf Euro gehören zum Standplatz auf dem Flohmarkt (B), die zwölf Euro zum Töpferkurs (A)."),
+
+  // ---------------------------------------------------------------- Kurznachrichten Landkreis (Überschriften)
+  rNews2.match("gist", "MID",
+    "Welche Überschrift passt zu welchem Text? Für jeden Text gibt es eine Überschrift. Drei Überschriften bleiben übrig.",
+    ["Text 1", "Text 2", "Text 3", "Text 4", "Text 5"],
+    [
+      "A: Stadtfest mit Musik: Eintritt frei, Innenstadt gesperrt",
+      "B: Freibad bleibt auch im Winter geöffnet",
+      "C: Neuer Zoobewohner: Ein Elefantenbaby ist da",
+      "D: Bücherei zieht um und ist zwei Wochen zu",
+      "E: Wanderweg am Fluss wegen Regen gesperrt",
+      "F: Fahrradwege in der Stadt sollen breiter werden",
+      "G: Müllabfuhr kommt ab Januar an einem anderen Tag",
+      "H: Karten für das Konzert sind schon ausverkauft",
+    ],
+    [1, 3, 4, 5, 7],
+    "Text 1 (Stadtfest): A. Text 2 (Elefant im Zoo): C. Text 3 (Umzug der Bücherei): D. Text 4 (gesperrter Wanderweg): E. Text 5 (neue Abholtage): G. B, F und H kommen in keinem Text vor."),
+  rNews2.tfng("detail", "MID",
+    [
+      ["Das Elefantenbaby ist schon in dieser Woche im Freigehege zu sehen.", "F"],
+      ["Wer Bücher ausgeliehen hat, muss sie während des Umzugs nicht zurückgeben.", "R"],
+      ["Der gelbe Sack wird ab Januar jede Woche abgeholt.", "F"],
+    ],
+    "1 F: Das Tier ist erst ab nächster Woche zu sehen. 2 R: \"Wer Bücher ausgeliehen hat, darf sie bis dahin behalten.\" 3 F: Der gelbe Sack wird weiter alle zwei Wochen abgeholt, nur die Müllabfuhr kommt an einem anderen Tag."),
+
+  // ---------------------------------------------------------------- Aushänge (Überschriften)
+  rHaus.match("gist", "MID",
+    "Welche Überschrift passt zu welchem Aushang? Für jeden Text gibt es eine Überschrift. Drei Überschriften bleiben übrig.",
+    ["Text 1", "Text 2", "Text 3", "Text 4"],
+    [
+      "A: Einladung zum Sommerfest im Hof",
+      "B: Der Aufzug ist wieder in Betrieb",
+      "C: Am Donnerstag gibt es morgens kein Wasser",
+      "D: Wohnung im zweiten Stock zu vermieten",
+      "E: Neue Hausmeisterin stellt sich vor",
+      "F: Nach 22 Uhr bitte leise sein",
+      "G: Fahrräder gehören in den Keller",
+    ],
+    [3, 7, 1, 5],
+    "Text 1 (Wasser abgestellt): C. Text 2 (Fahrräder im Hausflur): G. Text 3 (Fest im Hof): A. Text 4 (neue Hausmeisterin): E. B, D und F passen zu keinem Text."),
+  rHaus.choice("detail", "MID",
+    "Was sollen die Mieterinnen und Mieter zum Hoffest mitbringen?",
+    [
+      "Getränke für alle Gäste, weil die Hausverwaltung nichts bezahlt.",
+      "Geld für das Fest, das der Hausmeister einsammelt.",
+      "Stühle und Tische für den Hof, denn dort gibt es keine.",
+      "Etwas zum Essen, das alle zusammen probieren können.",
+    ], 3,
+    "\"Jeder bringt etwas zu essen mit. Die Getränke bezahlt die Hausverwaltung.\" Von Geld, Stühlen oder Tischen steht nichts im Text."),
+
+  // ---------------------------------------------------------------- Wetterbericht
+  rWetter.choice("detail", "EASY",
+    "Sie wohnen im Süden. Wie ist das Wetter am Samstag?",
+    [
+      "Es regnet am Nachmittag besonders stark, und es ist sehr kalt.",
+      "Die Sonne scheint, und es wird bis zu 22 Grad warm.",
+      "Der Himmel ist bewölkt, aber es bleibt den ganzen Tag trocken.",
+      "Es weht ein starker Wind, und die Temperatur bleibt unter 15 Grad.",
+    ], 1,
+    "Im Süden \"scheint die Sonne, und es wird bis zu 22 Grad warm\". Regen und Wind gehören zum Norden, der bewölkte, trockene Himmel zum Sonntag im Süden."),
+  rWetter.tfng("detail", "MID",
+    [
+      ["Am Sonntag wird es im ganzen Land wärmer als am Samstag.", "F"],
+      ["Im Norden regnet es am Samstag schon am Vormittag.", "F"],
+      ["Am Montag soll die Sonne wieder scheinen.", "R"],
+    ],
+    "1 F: Am Sonntag wird es überall kälter. 2 F: Der Regen beginnt erst ab Mittag. 3 R: \"Zu Beginn der neuen Woche kommt die Sonne zurück.\""),
 ];
 
 // ================================================================ LISTENING
@@ -698,7 +863,7 @@ function clip(
   key: string,
   title: string,
   topic: string,
-  speakers: Array<{ label: string; voice: "A" | "B" }>,
+  speakers: Array<{ label: string; voice: "A" | "B" | "C" | "D" }>,
   lines: string[],
 ): SeedStimulus {
   return { key, section: "LISTENING", level: LEVEL, title, topic, speakers, body: lines.join("\n") };
@@ -772,6 +937,54 @@ function lGap(
   };
 }
 
+/** "Which picture?": three pictures from one category, the student picks the one that fits what they hear. */
+function lPicture(
+  stimulusKey: string,
+  within: Within,
+  prompt: string,
+  pictures: [string, string, string],
+  correct: 0 | 1 | 2,
+  explanation: string,
+): SeedItem {
+  const ids = ["a", "b", "c"] as const;
+  return {
+    section: "LISTENING",
+    level: LEVEL,
+    type: "SINGLE_CHOICE",
+    skillTag: "listening.detail",
+    within,
+    stimulusKey,
+    prompt,
+    content: { kind: "CHOICE", options: pictures.map((p, i) => ({ id: ids[i], text: `Bild ${ids[i].toUpperCase()}`, image: img(p) })) },
+    key: { kind: "CHOICE", correct: [ids[correct]] },
+    explanation,
+  };
+}
+
+/** "Tick 4 of 8": eight short options, exactly `correct.length` of them are right (pick = 4). */
+function lTick(
+  stimulusKey: string,
+  within: Within,
+  prompt: string,
+  options: string[],
+  correct: number[],
+  explanation: string,
+): SeedItem {
+  const ids = ["a", "b", "c", "d", "e", "f", "g", "h"];
+  return {
+    section: "LISTENING",
+    level: LEVEL,
+    type: "MULTI_CHOICE",
+    skillTag: "listening.detail",
+    within,
+    stimulusKey,
+    prompt,
+    content: { kind: "CHOICE", pick: correct.length, options: options.map((text, i) => ({ id: ids[i], text })) },
+    key: { kind: "CHOICE", correct: correct.map((i) => ids[i]) },
+    explanation,
+  };
+}
+
 // A changed listening script gets a new key (audio is made from the script), hence the v3 keys.
 const L_MAILBOX = "v3-l-a2-mailbox-vorstellungsgespraech";
 const L_ABSCHIED = "v3-l-a2-abschied-planen";
@@ -779,6 +992,12 @@ const L_INT_A = "v3-l-a2-interview-gaertnerei-1";
 const L_INT_B = "v3-l-a2-interview-gaertnerei-2";
 const L_BAHNHOF = "v3-l-a2-ansage-regionalexpress";
 const L_ARZT = "v3-l-a2-mailbox-arztpraxis";
+const L_BILD_WETTER = "v4-l-a2-bild-wetter-grillen";
+const L_BILD_SEE = "v4-l-a2-bild-fahrt-zum-see";
+const L_BILD_CAFE = "v4-l-a2-bild-bestellung-im-cafe";
+const L_TICK_WANDERUNG = "v4-l-a2-wanderung-mitbringen";
+const L_TICK_UMZUG = "v4-l-a2-umzug-vorbereitung";
+const L_TICK_REISE = "v4-l-a2-staedtereise-preis";
 
 const listeningStimuli: SeedStimulus[] = [
   clip(L_MAILBOX, "Nachricht auf der Mailbox", "Arbeitssuche",
@@ -844,6 +1063,102 @@ const listeningStimuli: SeedStimulus[] = [
     [
       "Frau Berg: Guten Tag, Frau Aydin, hier ist die Praxis von Doktor Wolf, Berg am Apparat. Ihr Termin am Montag muss leider ausfallen, die Ärztin ist krank. Können Sie stattdessen am Mittwoch kommen? Ach nein, Entschuldigung, der Mittwoch ist schon voll. Am Donnerstag, um Viertel nach drei, also fünfzehn Uhr fünfzehn.",
       "Frau Berg: Bitte bringen Sie Ihre Versichertenkarte mit. Wenn der Termin nicht passt, rufen Sie uns an, morgens zwischen acht und zwölf Uhr. Unsere Nummer ist null zwei null drei, vier sieben, neun eins. Ich wiederhole: null zwei null drei, vier sieben, neun eins. Danke und bis bald!",
+    ]),
+  clip(L_BILD_WETTER, "Grillen am Sonntag", "Wetter und Verabredung",
+    [
+      { label: "Hanna", voice: "A" },
+      { label: "Ben", voice: "B" },
+    ],
+    [
+      "Hanna: Ben, hast du schon den Wetterbericht gesehen? Wir wollen doch morgen grillen.",
+      "Ben: Ja, ich habe vorhin nachgeschaut. Also, morgen Vormittag regnet es noch, ziemlich stark sogar.",
+      "Hanna: Oje. Dann fällt das Grillen ins Wasser?",
+      "Ben: Nein, nein. Ab Mittag wird es besser. Am Nachmittag scheint die Sonne, und es wird richtig warm. Nur am Abend kommt wieder Wind.",
+      "Hanna: Prima. Dann grillen wir am Nachmittag, um vier Uhr, ja? Also nicht um zwei, um vier.",
+      "Ben: Genau, um vier. Ich bringe die Würstchen mit.",
+    ]),
+  clip(L_BILD_SEE, "Wie kommen wir zum See?", "Ausflug zum See",
+    [
+      { label: "Karin", voice: "A" },
+      { label: "Yusuf", voice: "B" },
+    ],
+    [
+      "Karin: Yusuf, wie kommen wir am Samstag zum Badesee? Nehmen wir die Straßenbahn?",
+      "Yusuf: Hm, die Straßenbahn fährt nur bis zum Stadtrand, das habe ich gestern gelesen. Dann müssen wir noch zwei Kilometer laufen.",
+      "Karin: Ach so. Und mit dem Fahrrad? Das ist doch schön.",
+      "Yusuf: Na ja, das sind mehr als zwanzig Kilometer. Zu weit, vor allem mit den vielen Taschen. Aber es gibt einen Bus, die Linie fünf. Der fährt direkt bis zum See, alle dreißig Minuten.",
+      "Karin: Super, dann nehmen wir den Bus. Um zehn Uhr?",
+      "Yusuf: Genau, um zehn Uhr am Marktplatz.",
+    ]),
+  clip(L_BILD_CAFE, "Bestellung im Café", "Café und Essen",
+    [
+      { label: "Kellner", voice: "A" },
+      { label: "Frau Weiß", voice: "B" },
+    ],
+    [
+      "Kellner: Guten Tag, was darf es sein?",
+      "Frau Weiß: Guten Tag. Ich hätte gern einen Kaffee und, äh, ein Stück Kuchen. Ach nein, warten Sie. Ich habe heute noch nichts gegessen, ich brauche etwas Warmes. Haben Sie eine Suppe?",
+      "Kellner: Ja, wir haben eine Tomatensuppe. Pizza gibt es leider erst am Abend.",
+      "Frau Weiß: Dann nehme ich die Suppe, bitte. Den Kaffee trinke ich danach.",
+      "Kellner: Sehr gern. Möchten Sie dazu ein Brötchen?",
+      "Frau Weiß: Nein danke, die Suppe reicht mir.",
+    ]),
+  clip(L_TICK_WANDERUNG, "Informationen zur Wanderung", "Wanderung und Ausrüstung",
+    [
+      { label: "Frau Dietrich", voice: "A" },
+      { label: "Emre", voice: "B" },
+      { label: "Sofia", voice: "C" },
+      { label: "Herr Voss", voice: "D" },
+    ],
+    [
+      "Frau Dietrich: So, liebe Leute, noch ein paar Informationen für die Wanderung am Samstag. Wir treffen uns um Viertel vor acht am Hauptbahnhof. Nein, Entschuldigung, am Busbahnhof, nicht am Hauptbahnhof!",
+      "Emre: Und was müssen wir mitbringen?",
+      "Frau Dietrich: Also, ganz wichtig sind richtige Wanderschuhe. Turnschuhe sind auf dem Berg zu glatt. Und eine Regenjacke, denn der Wetterbericht sagt: am Nachmittag vielleicht Regen.",
+      "Sofia: Soll ich dann auch einen Regenschirm mitnehmen?",
+      "Frau Dietrich: Nein, bitte keinen Schirm, der ist auf dem Berg viel zu unpraktisch. Die Jacke reicht.",
+      "Herr Voss: Und zu trinken? Gibt es unterwegs etwas?",
+      "Frau Dietrich: Nur im Gasthaus am Gipfel. Nehmen Sie deshalb unbedingt eine Flasche mit Wasser mit, mindestens einen Liter. Zum Mittagessen gehen wir ins Gasthaus, Sie müssen also kein Essen mitnehmen.",
+      "Emre: Gut. Und Sonnencreme? Es soll ja bewölkt sein.",
+      "Frau Dietrich: Ja, auch bei Wolken. Auf dem Berg ist die Sonne stärker, als man denkt. Sonnencreme bitte mitnehmen.",
+      "Sofia: Ich würde gern meine Kamera mitnehmen.",
+      "Frau Dietrich: Die lassen Sie bitte zu Hause, sie ist zu schwer. Das Handy reicht für Fotos. Und ein Handtuch brauchen Sie auch nicht, wir gehen ja nicht schwimmen.",
+      "Herr Voss: Gut zu wissen. Dann bis Samstag!",
+    ]),
+  clip(L_TICK_UMZUG, "Der Umzug am Samstag", "Umzug und Wohnen",
+    [
+      { label: "Jana", voice: "A" },
+      { label: "Omar", voice: "B" },
+      { label: "Frau Pohl", voice: "C" },
+    ],
+    [
+      "Jana: Omar, am Samstag ist der Umzug. Haben wir alles geschafft? Ich mache mal eine Liste.",
+      "Omar: Ja, gut. Also, die Kartons: Die sind alle gepackt. Ich habe gestern Abend die letzten Bücher eingepackt.",
+      "Jana: Super. Und den Lieferwagen? Hast du den schon gemietet?",
+      "Omar: Äh, nein, noch nicht. Das mache ich morgen. Die Firma hat noch Wagen frei.",
+      "Jana: Gut. Den Strom habe ich heute Morgen ummelden lassen. Das ist erledigt. Und Internet haben wir vor einer Woche bestellt, der Techniker kommt am Montag.",
+      "Omar: Prima. Die alte Wohnung putzen wir erst am Sonntag, nach dem Umzug.",
+      "Jana: Stimmt. Die Schlüssel geben wir auch erst am Sonntag ab, bei der Vermieterin. Und Gardinen für die neue Wohnung haben wir noch nicht.",
+      "Omar: Die kaufen wir nächste Woche, wenn wir die Fenster gesehen haben. Und Hilfe beim Tragen? Ich habe Karim und Lisa gefragt, beide kommen am Samstag um neun.",
+      "Jana: Das ist ja gut. Ach, da kommt Frau Pohl.",
+      "Frau Pohl: Entschuldigung, ich habe gehört, Sie ziehen um. Ich bringe Ihnen am Samstag Kaffee und Brötchen. Das ist kein Problem.",
+      "Jana: Oh, das ist sehr nett, vielen Dank!",
+    ]),
+  clip(L_TICK_REISE, "Anruf im Reisebüro", "Reise und Urlaub",
+    [
+      { label: "Frau Lenz", voice: "A" },
+      { label: "Herr Baran", voice: "B" },
+    ],
+    [
+      "Frau Lenz: Reisebüro Sonnenweg, Lenz, guten Tag.",
+      "Herr Baran: Guten Tag, hier ist Baran. Ich möchte für meine Frau und mich ein Wochenende in Wien buchen. Was ist denn alles im Preis dabei?",
+      "Frau Lenz: Gern. Also, drei Tage und zwei Nächte im Hotel, und das Frühstück ist dabei. Das Abendessen müssen Sie selbst bezahlen. Die Zugfahrt, hin und zurück, ist auch im Preis.",
+      "Herr Baran: Sehr gut. Und gibt es eine Stadtführung?",
+      "Frau Lenz: Ja, am Samstagvormittag, zwei Stunden, die ist inklusive. Den Eintritt für Museen zahlen Sie aber extra, je nach Museum.",
+      "Herr Baran: Verstehe. Und wie komme ich in Wien vom Bahnhof zum Hotel?",
+      "Frau Lenz: Sie bekommen eine Fahrkarte für Bus und Bahn in Wien, für alle drei Tage. Die ist auch im Preis. Eine Reiseversicherung ist nicht dabei, die müssen Sie selbst abschließen. Einen Parkplatz brauchen Sie ja nicht, Sie fahren mit dem Zug.",
+      "Herr Baran: Genau. Und was kostet das pro Person?",
+      "Frau Lenz: Moment, das Wochenende kostet dreihundertneunzig Euro. Ach nein, Entschuldigung, das ist der Preis mit Abendessen. Ohne Abendessen sind es dreihundertvierzig Euro pro Person.",
+      "Herr Baran: Dreihundertvierzig. Gut, dann buchen Sie das bitte für uns.",
     ]),
 ];
 
@@ -1002,6 +1317,68 @@ const listeningItems: SeedItem[] = [
       g3: ["02034791"],
     },
     "Der Mittwoch wird sofort zurückgenommen (Korrektur), der neue Termin ist Donnerstag um Viertel nach drei, also 15.15 Uhr. Die Nummer wird zweimal gesprochen: null zwei null drei, vier sieben, neun eins. Bei der Telefonnummer zählen nur die Ziffern (Leerzeichen und Striche spielen keine Rolle); Tag und Uhrzeit gelten auch mit \"am\" oder \"um\" davor."),
+
+  // ---------------------------------------------------------------- Welches Bild? (drei Bilder)
+  lPicture(L_BILD_WETTER, "EASY",
+    "Hören Sie das Gespräch. Wie ist das Wetter morgen um vier Uhr, wenn Hanna und Ben grillen? Welches Bild passt?",
+    ["obj.weather.rainy", "obj.weather.sunny", "obj.weather.windy"], 1,
+    "Regen gibt es nur am Vormittag, Wind erst am Abend. Am Nachmittag scheint die Sonne: Bild B. Alle drei Wetterlagen kommen vor, nur eine gilt für die Grillzeit."),
+  lPicture(L_BILD_SEE, "MID",
+    "Hören Sie das Gespräch. Wie fahren Karin und Yusuf am Samstag zum See? Welches Bild passt?",
+    ["obj.transport.tram", "obj.transport.bicycle", "obj.transport.bus"], 2,
+    "Die Straßenbahn fährt nur bis zum Stadtrand, mit dem Fahrrad ist es zu weit. Sie nehmen den Bus, Linie fünf: Bild C."),
+  lPicture(L_BILD_CAFE, "MID",
+    "Hören Sie das Gespräch. Was bestellt Frau Weiß zum Essen? Welches Bild passt?",
+    ["obj.food.soup", "obj.food.cake", "obj.food.pizza"], 0,
+    "Frau Weiß denkt zuerst an Kuchen, will dann aber etwas Warmes. Pizza gibt es erst am Abend. Sie bestellt die Suppe: Bild A."),
+
+  // ---------------------------------------------------------------- Wanderung
+  lTick(L_TICK_WANDERUNG, "MID",
+    "Hören Sie den Text. Was müssen die Teilnehmer zur Wanderung mitbringen? Kreuzen Sie vier Antworten an.",
+    ["Handtuch", "Wanderschuhe", "Regenjacke", "Mittagessen", "Kamera", "Sonnencreme", "Regenschirm", "Flasche mit Wasser"],
+    [1, 2, 5, 7],
+    "Richtig: Wanderschuhe, Regenjacke, Sonnencreme, Wasserflasche. Kein Schirm (die Jacke reicht), kein Essen (Mittagessen im Gasthaus), keine Kamera (zu schwer), kein Handtuch (man schwimmt nicht)."),
+  lChoice(L_TICK_WANDERUNG, "detail", "EASY",
+    "Wo und wann treffen sich die Wanderer am Samstag?",
+    [
+      "Am Hauptbahnhof um Viertel vor acht.",
+      "Am Busbahnhof um Viertel vor acht.",
+      "Am Busbahnhof um Viertel nach sieben.",
+      "Am Gasthaus am Gipfel um acht Uhr.",
+    ], 1,
+    "Frau Dietrich korrigiert sich: nicht am Hauptbahnhof, sondern am Busbahnhof, um Viertel vor acht."),
+
+  // ---------------------------------------------------------------- Umzug
+  lTick(L_TICK_UMZUG, "HARD",
+    "Hören Sie das Gespräch. Was ist vor dem Umzug schon erledigt? Kreuzen Sie vier Antworten an.",
+    ["Lieferwagen mieten", "Kartons packen", "Strom ummelden", "Wohnung putzen", "Internet bestellen", "Schlüssel abgeben", "Gardinen kaufen", "Helferinnen und Helfer fragen"],
+    [1, 2, 4, 7],
+    "Erledigt: Kartons gepackt, Strom ummelden lassen, Internet bestellt, Helfer gefragt (Karim und Lisa). Noch offen: Lieferwagen (morgen), Putzen und Schlüssel (Sonntag), Gardinen (nächste Woche)."),
+  lChoice(L_TICK_UMZUG, "detail", "MID",
+    "Was bringt Frau Pohl am Samstag mit?",
+    [
+      "Kaffee und Brötchen.",
+      "Kuchen und Tee.",
+      "Kartons und Klebeband.",
+      "Mittagessen für alle.",
+    ], 0,
+    "\"Ich bringe Ihnen am Samstag Kaffee und Brötchen.\""),
+
+  // ---------------------------------------------------------------- Städtereise
+  lTick(L_TICK_REISE, "MID",
+    "Hören Sie das Gespräch. Was ist im Preis der Reise enthalten? Kreuzen Sie vier Antworten an.",
+    ["Abendessen", "Frühstück", "Reiseversicherung", "Zugfahrt", "Stadtführung", "Eintritt in Museen", "Parkplatz", "Fahrkarte für Bus und Bahn"],
+    [1, 3, 4, 7],
+    "Im Preis: Frühstück, Zugfahrt, Stadtführung, Fahrkarte für Bus und Bahn. Nicht im Preis: Abendessen, Reiseversicherung, Museumseintritt; einen Parkplatz braucht das Paar nicht."),
+  lChoice(L_TICK_REISE, "detail", "HARD",
+    "Was kostet die Reise ohne Abendessen?",
+    [
+      "Dreihundertvierzig Euro pro Person.",
+      "Dreihundertneunzig Euro pro Person.",
+      "Vierhundertdreißig Euro für beide zusammen.",
+      "Dreihundertvierzig Euro für beide zusammen.",
+    ], 0,
+    "Frau Lenz nennt zuerst 390 Euro, korrigiert dann: Das ist der Preis mit Abendessen. Ohne Abendessen sind es 340 Euro pro Person."),
 ];
 
 // ================================================================ WRITING
@@ -1207,6 +1584,30 @@ function speakingTask(
   };
 }
 
+/** Picture task: describe a scene.a2.* picture, then say what you would do or have done. */
+function pictureTask(
+  within: Within,
+  timing: { thinkSeconds: number; answerSeconds: number; maxTakes: number },
+  pictureId: string,
+  prompt: string,
+  contentPoints: string[],
+  studentPoints: string[],
+  explanation: string,
+): SeedItem {
+  return {
+    section: "SPEAKING",
+    level: LEVEL,
+    type: "SPEAKING_PROMPT",
+    skillTag: "speaking.picture",
+    within,
+    prompt,
+    content: { kind: "SPEAKING", ...timing, images: [img(pictureId)] },
+    key: { kind: "NONE" },
+    rubric: { contentPoints, studentPoints },
+    explanation,
+  };
+}
+
 const SHORT = { thinkSeconds: 30, answerSeconds: 60, maxTakes: 2 };
 const LONG = { thinkSeconds: 45, answerSeconds: 90, maxTakes: 2 };
 
@@ -1350,6 +1751,93 @@ const speakingItems: SeedItem[] = [
     ],
     INFORMAL,
     "Planen mit Optionskarte wie im ÖSD-A2-Sprechen (Teil 2), als Antwort auf den Vorschlag einer Kurskollegin. Prüft Zustimmung oder Gegenvorschlag, Vorschläge (Wollen wir ...? Wie wäre es mit ...?) und Begründungen mit weil. Die Karte nennt die Punkte, nicht die Entscheidung."),
+
+  // ---------------------------------------------------------------- Bildaufgaben
+  pictureTask("EASY", SHORT, "scene.a2.birthday-party",
+    "Sehen Sie sich das Bild an. Beschreiben Sie, was Sie sehen. Erzählen Sie dann: Wie haben Sie Ihren letzten Geburtstag gefeiert?\n\n" +
+      "- Wer ist auf dem Bild? Was machen die Leute?\n" +
+      "- Wie ist die Stimmung?\n" +
+      "- Wie haben Sie Ihren letzten Geburtstag gefeiert?",
+    [
+      "beschreibt, was zu sehen ist: Freunde, ein Geburtstag, ein Kuchen",
+      "sagt etwas über die Stimmung oder die Personen (fröhlich, zusammen, feiern)",
+      "erzählt im Perfekt von der eigenen letzten Geburtstagsfeier (wo, mit wem, was gegessen oder gemacht)",
+      "mindestens ein Detail oder eine Bewertung (zum Beispiel was besonders schön war)",
+    ],
+    [
+      "beschreiben, was auf dem Bild zu sehen ist",
+      "sagen, wie die Stimmung ist",
+      "von Ihrem letzten Geburtstag erzählen",
+    ],
+    "Bildbeschreibung mit Bezug zur eigenen Erfahrung (Präsens für das Bild, Perfekt für die eigene Feier). Wer nur Dinge aufzählt, erfüllt die Aufgabe nur teilweise."),
+  pictureTask("MID", LONG, "scene.a2.cooking-together",
+    "Sehen Sie sich das Bild an. Beschreiben Sie, was Sie sehen. Sprechen Sie dann über Ihr eigenes Kochen.\n\n" +
+      "- Was machen die beiden Personen?\n" +
+      "- Kochen Sie gern allein oder mit anderen? Warum?\n" +
+      "- Was würden Sie heute Abend gern kochen?",
+    [
+      "beschreibt, was zu sehen ist: ein Mann und eine Frau kochen gemeinsam in der Küche",
+      "nennt Einzelheiten (Küche, Zutaten, Zusammenarbeit)",
+      "sagt, ob und mit wem man selbst gern kocht, mit Begründung (weil ..., denn ...)",
+      "formuliert einen Wunsch mit \"würde\" oder \"möchte\" (heute Abend gern kochen)",
+    ],
+    [
+      "beschreiben, was die Personen machen",
+      "sagen, ob Sie gern allein oder mit anderen kochen, und warum",
+      "sagen, was Sie heute Abend gern kochen würden",
+    ],
+    "Bild und eigene Vorlieben verbinden. Zielstrukturen sind Begründungen mit weil und Wünsche mit \"würde ... gern\" oder \"möchte\"."),
+  pictureTask("MID", LONG, "scene.a2.doctor-waiting",
+    "Sehen Sie sich das Bild an. Beschreiben Sie, was Sie sehen. Sprechen Sie dann über Ihre eigene Erfahrung.\n\n" +
+      "- Wo sind die Personen? Was machen sie?\n" +
+      "- Was machen Sie, wenn Sie lange warten müssen?\n" +
+      "- Wann waren Sie zuletzt bei der Ärztin oder beim Arzt? Was ist passiert?",
+    [
+      "beschreibt, was zu sehen ist: zwei Personen warten in einer Arztpraxis",
+      "sagt, was man selbst beim Warten macht (zum Beispiel lesen, Handy, Musik hören)",
+      "erzählt im Perfekt von einem letzten Arztbesuch (Grund, was die Ärztin oder der Arzt gesagt hat)",
+      "mindestens ein Detail zum Ablauf (Termin, Wartezeit, Medikament)",
+    ],
+    [
+      "beschreiben, wo die Personen sind und was sie machen",
+      "sagen, was Sie beim Warten machen",
+      "von Ihrem letzten Arztbesuch erzählen",
+    ],
+    "Bildbeschreibung plus Erlebnisbericht im Perfekt. Wortschatz rund um Gesundheit (Termin, Praxis, Wartezimmer) wird erwartet."),
+  pictureTask("HARD", LONG, "scene.a2.moving-house",
+    "Sehen Sie sich das Bild an. Beschreiben Sie, was Sie sehen. Sprechen Sie dann über einen Umzug.\n\n" +
+      "- Was machen die beiden Personen?\n" +
+      "- Sind Sie schon einmal umgezogen? Erzählen Sie, was Sie gemacht haben.\n" +
+      "- Was ist bei einem Umzug besonders anstrengend? Und was ist schön?",
+    [
+      "beschreibt, was zu sehen ist: ein Paar packt Umzugskartons aus",
+      "erzählt im Perfekt von einem eigenen Umzug (oder sagt, dass man noch nie umgezogen ist, und erzählt dann vom Umzug einer anderen Person)",
+      "nennt etwas Anstrengendes und etwas Schönes und begründet es",
+      "verbindet Sätze (und, aber, weil, danach, zuerst)",
+    ],
+    [
+      "beschreiben, was die Personen machen",
+      "von einem Umzug erzählen",
+      "sagen, was anstrengend und was schön ist",
+    ],
+    "Anspruchsvoller, weil drei Teile verbunden werden müssen: beschreiben, erzählen, bewerten. Wer noch nie umgezogen ist, darf von einer anderen Person erzählen."),
+  pictureTask("HARD", SHORT, "scene.a2.train-platform",
+    "Sehen Sie sich das Bild an. Beschreiben Sie, was Sie sehen. Sagen Sie dann, was Sie in dieser Situation tun würden.\n\n" +
+      "- Wo sind die Menschen? Worauf warten sie?\n" +
+      "- Der Zug hat eine Stunde Verspätung. Was würden Sie tun?\n" +
+      "- Wohin fahren Sie gern mit dem Zug?",
+    [
+      "beschreibt, was zu sehen ist: Menschen warten am Bahnsteig auf den Zug",
+      "sagt, was man bei einer Verspätung tun würde (zum Beispiel anrufen, ein Café suchen, den Fahrplan prüfen)",
+      "verwendet Konjunktiv II oder Vorschläge (Ich würde ..., Ich könnte ...)",
+      "nennt ein Reiseziel und einen Grund",
+    ],
+    [
+      "beschreiben, wo die Menschen sind und worauf sie warten",
+      "sagen, was Sie bei einer Verspätung tun würden",
+      "sagen, wohin Sie gern mit dem Zug fahren",
+    ],
+    "Bild, hypothetische Situation (würde-Form) und persönliche Vorliebe. Die würde-Form ist das Hauptziel dieser Aufgabe."),
 ];
 
 // ================================================================ EXPORT
