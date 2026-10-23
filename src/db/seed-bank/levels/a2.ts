@@ -771,7 +771,7 @@ const readingItems: SeedItem[] = [
     [
       "Herr Brandt hat zwei Kinder, sechs und acht Jahre alt, und sucht ein Bewegungsangebot für sie.",
       "Frau Scholz hat zu Hause viele alte Sachen und möchte sie am Wochenende verkaufen.",
-      "Nuri möchte ein Instrument lernen, aber nicht in einer Gruppe.",
+      "Nuri arbeitet als Krankenpfleger und möchte ein Instrument lernen, aber nicht in einer Gruppe.",
       "Frau Peters sucht einen Schwimmkurs für Erwachsene.",
     ],
     ["Anzeige A", "Anzeige B", "Anzeige C", "Anzeige D", "Anzeige E", "Anzeige F", "Keine Anzeige passt"],
@@ -832,7 +832,7 @@ const readingItems: SeedItem[] = [
       "Getränke für alle Gäste, weil die Hausverwaltung nichts bezahlt.",
       "Geld für das Fest, das der Hausmeister einsammelt.",
       "Stühle und Tische für den Hof, denn dort gibt es keine.",
-      "Etwas zum Essen, das alle zusammen probieren können.",
+      "Etwas zu essen, das alle zusammen probieren können.",
     ], 3,
     "\"Jeder bringt etwas zu essen mit. Die Getränke bezahlt die Hausverwaltung.\" Von Geld, Stühlen oder Tischen steht nichts im Text."),
 
@@ -991,7 +991,7 @@ const L_ABSCHIED = "v3-l-a2-abschied-planen";
 const L_INT_A = "v3-l-a2-interview-gaertnerei-1";
 const L_INT_B = "v3-l-a2-interview-gaertnerei-2";
 const L_BAHNHOF = "v3-l-a2-ansage-regionalexpress";
-const L_ARZT = "v3-l-a2-mailbox-arztpraxis";
+const L_ARZT = "v4-l-a2-mailbox-arztpraxis";
 const L_BILD_WETTER = "v4-l-a2-bild-wetter-grillen";
 const L_BILD_SEE = "v4-l-a2-bild-fahrt-zum-see";
 const L_BILD_CAFE = "v5-l-a2-bild-bestellung-im-cafe";
@@ -1059,7 +1059,7 @@ const listeningStimuli: SeedStimulus[] = [
       "Ansage: Achtung an Gleis vier! Der Regionalexpress nach Leipzig fährt heute nicht um vierzehn Uhr zwanzig ab, sondern erst um vierzehn Uhr fünfundvierzig. Ich wiederhole: erst um vierzehn Uhr fünfundvierzig. Grund ist eine technische Störung. Bitte beachten Sie außerdem: Der Zug fährt heute nicht von Gleis vier, sondern von Gleis sechs. Die Wagen für Fahrräder stehen am Ende des Zuges. Wir bitten um Entschuldigung.",
     ]),
   clip(L_ARZT, "Nachricht von der Arztpraxis", "Gesundheit",
-    [{ label: "Frau Berg", voice: "B" }],
+    [{ label: "Frau Berg", voice: "A" }],
     [
       "Frau Berg: Guten Tag, Frau Aydin, hier ist die Praxis von Doktor Wolf, Berg am Apparat. Ihr Termin am Montag muss leider ausfallen, die Ärztin ist krank. Können Sie stattdessen am Mittwoch kommen? Ach nein, Entschuldigung, der Mittwoch ist schon voll. Am Donnerstag, um Viertel nach drei, also fünfzehn Uhr fünfzehn.",
       "Frau Berg: Bitte bringen Sie Ihre Versichertenkarte mit. Wenn der Termin nicht passt, rufen Sie uns an, morgens zwischen acht und zwölf Uhr. Unsere Nummer ist null zwei null drei, vier sieben, neun eins. Ich wiederhole: null zwei null drei, vier sieben, neun eins. Danke und bis bald!",
@@ -1338,7 +1338,7 @@ const listeningItems: SeedItem[] = [
     ["Handtuch", "Wanderschuhe", "Regenjacke", "Mittagessen", "Kamera", "Sonnencreme", "Regenschirm", "Flasche mit Wasser"],
     [1, 2, 5, 7],
     "Richtig: Wanderschuhe, Regenjacke, Sonnencreme, Wasserflasche. Kein Schirm (die Jacke reicht), kein Essen (Mittagessen im Gasthaus), keine Kamera (zu schwer), kein Handtuch (man schwimmt nicht)."),
-  lChoice(L_TICK_WANDERUNG, "detail", "EASY",
+  lChoice(L_TICK_WANDERUNG, "detail", "MID",
     "Wo und wann treffen sich die Wanderer am Samstag?",
     [
       "Am Hauptbahnhof um Viertel vor acht.",
@@ -1755,10 +1755,10 @@ const speakingItems: SeedItem[] = [
 
   // ---------------------------------------------------------------- Bildaufgaben
   pictureTask("EASY", SHORT, "scene.a2.birthday-party",
-    "Sehen Sie sich das Bild an. Beschreiben Sie, was Sie sehen. Erzählen Sie dann: Wie haben Sie Ihren letzten Geburtstag oder eine andere Feier gefeiert?\n\n" +
+    "Sehen Sie sich das Bild an. Beschreiben Sie, was Sie sehen. Erzählen Sie dann von Ihrem letzten Geburtstag oder von einer anderen Feier.\n\n" +
       "- Wer ist auf dem Bild? Was machen die Leute?\n" +
       "- Wie ist die Stimmung?\n" +
-      "- Wie haben Sie Ihren letzten Geburtstag oder eine andere Feier gefeiert?",
+      "- Erzählen Sie von Ihrem letzten Geburtstag oder von einer anderen Feier: Wo und mit wem haben Sie gefeiert?",
     [
       "beschreibt, was zu sehen ist: Freunde, ein Geburtstag, ein Kuchen",
       "sagt etwas über die Stimmung oder die Personen (fröhlich, zusammen, feiern)",
@@ -1789,10 +1789,10 @@ const speakingItems: SeedItem[] = [
     ],
     "Bild und eigene Vorlieben verbinden. Zielstrukturen sind Begründungen mit weil und Wünsche mit \"würde ... gern\" oder \"möchte\"."),
   pictureTask("MID", LONG, "scene.a2.doctor-waiting",
-    "Sehen Sie sich das Bild an. Beschreiben Sie, was Sie sehen. Sprechen Sie dann über Ihre eigene Erfahrung.\n\n" +
+    "Sehen Sie sich das Bild an. Beschreiben Sie, was Sie sehen. Sprechen Sie dann über das Warten und über Arzttermine in Ihrer Stadt oder Region.\n\n" +
       "- Wo sind die Personen? Was machen sie?\n" +
       "- Was machen Sie, wenn Sie lange warten müssen?\n" +
-      "- Wie bekommt man in Ihrer Stadt oder Region einen Termin bei der Ärztin oder beim Arzt? Erzählen Sie.",
+      "- Wie bekommt man in Ihrer Stadt oder Region einen Termin bei der Ärztin oder beim Arzt? Erklären Sie.",
     [
       "beschreibt, was zu sehen ist: zwei Personen warten in einer Arztpraxis",
       "sagt, was man selbst beim Warten macht (zum Beispiel lesen, Handy, Musik hören)",
