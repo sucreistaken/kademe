@@ -1288,6 +1288,51 @@
     "close": "Close",
     "captions": "Captions",
     "seek": "Video position",
-    "time": "{current} of {total}"
+    "time": "{current} of {total}",
+    "GRAMMAR": {
+      "gap": "This question is a short text with gaps. You start with the framed gap.",
+      "pick": "Its words are on the right. Click the one that fits, and the next gap opens.",
+      "again": "Fill every gap the same way. To change a word, click its gap again.",
+      "mark": "Not sure? Press Mark and come back later.",
+      "strip": "The numbers at the bottom show all questions. Click one to go there, or press Back.",
+      "timer": "The clock shows the time left for this section.",
+      "next": "Press Next to go on. Your answers are saved automatically."
+    },
+    "READING": {
+      "passage": "The text is on the left. Here it is two short ads, A and B.",
+      "situations": "On the right are the situations. Find the ad that fits each one.",
+      "drag": "Drag the letter of the ad onto the situation.",
+      "click": "Or simply click the letter in the row.",
+      "notes": "These tools highlight or underline words in the text. Notes are not scored.",
+      "mark": "Press Mark to come back later. The numbers at the bottom take you to any question.",
+      "next": "Keep an eye on the clock at the top, then press Next."
+    },
+    "LISTENING": {
+      "read": "Before you listen, read the questions and the answer options.",
+      "play": "Then press the button. The recording starts at once and cannot be paused.",
+      "plays": "The player shows how many times you can still play the recording.",
+      "answer": "Answer while you listen: click a picture or a button.",
+      "mark": "Press Mark on a question to come back to it later.",
+      "strip": "The numbers at the bottom show all questions. Next takes you to the next recording.",
+      "timer": "The clock shows the time left for the whole section."
+    },
+    "WRITING": {
+      "task": "Your task is on the left. It says what to write and which points your text must cover.",
+      "type": "Write your text in the box on the right. It is saved automatically.",
+      "tools": "Under the box are buttons for ä, ö, ü and ß, and a counter for your words.",
+      "mark": "Press Mark to come back to the task later.",
+      "strip": "The numbers at the bottom show your tasks. Use them or Back to switch.",
+      "timer": "Keep an eye on the clock at the top.",
+      "next": "When you are done, press Next."
+    },
+    "SPEAKING": {
+      "task": "Your task is on the left. Read it and the points you should talk about.",
+      "think": "First you get thinking time. The clock counts down.",
+      "record": "When you are ready, press the button. Recording also starts by itself when thinking time ends.",
+      "talk": "Speak clearly. The clock shows how long you can still talk.",
+      "stop": "Press Stop recording when you are done. When the time is up, it stops by itself.",
+      "next": "Then press Save answer and continue. In this section you cannot go back.",
+      "timer": "The clock at the top shows the time left for the section."
+    }
   }
 }

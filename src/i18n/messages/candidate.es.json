@@ -1288,6 +1288,51 @@
     "close": "Cerrar",
     "captions": "Subtítulos",
     "seek": "Posición en el vídeo",
-    "time": "{current} de {total}"
+    "time": "{current} de {total}",
+    "GRAMMAR": {
+      "gap": "Esta pregunta es un texto corto con huecos. Empiece por el hueco enmarcado.",
+      "pick": "Las palabras están a la derecha. Haga clic en la que encaja y se abre el siguiente hueco.",
+      "again": "Rellene así cada hueco. Para cambiar una palabra, haga clic de nuevo en su hueco.",
+      "mark": "¿Tiene dudas? Pulse Marcar y vuelva más tarde.",
+      "strip": "Los números de abajo muestran todas las preguntas. Haga clic en uno para ir allí, o pulse Atrás.",
+      "timer": "El reloj muestra el tiempo que le queda para esta sección.",
+      "next": "Pulse Siguiente para continuar. Sus respuestas se guardan automáticamente."
+    },
+    "READING": {
+      "passage": "El texto está a la izquierda. Aquí son dos anuncios cortos, A y B.",
+      "situations": "A la derecha están las situaciones. Busque el anuncio adecuado para cada una.",
+      "drag": "Arrastre la letra del anuncio hasta la situación.",
+      "click": "O simplemente haga clic en la letra de la fila.",
+      "notes": "Estas herramientas resaltan o subrayan palabras del texto. Las notas no puntúan.",
+      "mark": "Pulse Marcar para volver más tarde. Con los números de abajo puede ir a cualquier pregunta.",
+      "next": "Vigile el reloj de arriba y después pulse Siguiente."
+    },
+    "LISTENING": {
+      "read": "Antes de escuchar, lea las preguntas y las opciones de respuesta.",
+      "play": "Después pulse el botón. La grabación empieza enseguida y no se puede pausar.",
+      "plays": "El reproductor muestra cuántas veces más puede escuchar la grabación.",
+      "answer": "Responda mientras escucha: haga clic en una imagen o en un botón.",
+      "mark": "Pulse Marcar en una pregunta para volver a ella más tarde.",
+      "strip": "Los números de abajo muestran todas las preguntas. Siguiente le lleva a la próxima grabación.",
+      "timer": "El reloj muestra el tiempo que queda para toda la sección."
+    },
+    "WRITING": {
+      "task": "Su tarea está a la izquierda. Indica qué escribir y qué puntos debe tratar su texto.",
+      "type": "Escriba su texto en el cuadro de la derecha. Se guarda automáticamente.",
+      "tools": "Debajo del cuadro hay botones para ä, ö, ü y ß, y un contador de palabras.",
+      "mark": "Pulse Marcar para volver a la tarea más tarde.",
+      "strip": "Los números de abajo muestran sus tareas. Úselos o pulse Atrás para cambiar.",
+      "timer": "Vigile el reloj de arriba.",
+      "next": "Cuando termine, pulse Siguiente."
+    },
+    "SPEAKING": {
+      "task": "Su tarea está a la izquierda. Léala junto con los puntos de los que debe hablar.",
+      "think": "Primero tiene tiempo para pensar. El reloj cuenta hacia atrás.",
+      "record": "Cuando quiera empezar, pulse el botón. La grabación también empieza sola al acabar el tiempo para pensar.",
+      "talk": "Hable con claridad. El reloj muestra cuánto tiempo puede seguir hablando.",
+      "stop": "Cuando termine, pulse Detener la grabación. Al acabar el tiempo, se detiene sola.",
+      "next": "Luego pulse Guardar respuesta y continuar. En esta sección no se puede volver atrás.",
+      "timer": "El reloj de arriba muestra el tiempo que queda para la sección."
+    }
   }
 }

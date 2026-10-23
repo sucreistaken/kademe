@@ -1288,6 +1288,51 @@
     "close": "Kapat",
     "captions": "Altyazı",
     "seek": "Videodaki konum",
-    "time": "{current} / {total}"
+    "time": "{current} / {total}",
+    "GRAMMAR": {
+      "gap": "Bu soru, boşlukları olan kısa bir metin. Çerçeveli boşluktan başlarsınız.",
+      "pick": "Seçenekler sağda. Uygun kelimeye tıklayın, sonraki boşluk kendiliğinden açılır.",
+      "again": "Her boşluğu aynı şekilde doldurun. Bir kelimeyi değiştirmek için boşluğuna yeniden tıklayın.",
+      "mark": "Emin değil misiniz? İşaretle'ye basın ve sonra geri dönün.",
+      "strip": "Alttaki numaralar tüm soruları gösterir. Bir numaraya tıklayarak o soruya gidin ya da Geri'ye basın.",
+      "timer": "Saat, bu bölüm için kalan süreyi gösterir.",
+      "next": "Devam etmek için Sonraki'ye basın. Cevaplarınız otomatik olarak kaydedilir."
+    },
+    "READING": {
+      "passage": "Metin solda. Burada A ve B adında iki kısa ilan var.",
+      "situations": "Sağda durumlar var. Her durum için uygun ilanı bulun.",
+      "drag": "İlanın harfini sürükleyip durumun üzerine bırakın.",
+      "click": "Ya da satırdaki harfe tıklamanız yeterli.",
+      "notes": "Bu araçlarla metindeki kelimeleri vurgulayabilir ya da altını çizebilirsiniz. Notlar puanlanmaz.",
+      "mark": "Sonra dönmek için İşaretle'ye basın. Alttaki numaralarla istediğiniz soruya gidebilirsiniz.",
+      "next": "Üstteki saate göz atın, sonra Sonraki'ye basın."
+    },
+    "LISTENING": {
+      "read": "Dinlemeden önce soruları ve cevap seçeneklerini okuyun.",
+      "play": "Sonra düğmeye basın. Kayıt hemen başlar ve duraklatılamaz.",
+      "plays": "Oynatıcı, kaydı kaç kez daha dinleyebileceğinizi gösterir.",
+      "answer": "Dinlerken cevaplayın: bir resme ya da bir düğmeye tıklayın.",
+      "mark": "Bir soruya sonra dönmek için o sorudaki İşaretle'ye basın.",
+      "strip": "Alttaki numaralar tüm soruları gösterir. Sonraki ile bir sonraki kayda geçersiniz.",
+      "timer": "Saat, bölümün tamamı için kalan süreyi gösterir."
+    },
+    "WRITING": {
+      "task": "Göreviniz solda. Ne yazacağınızı ve metninizin hangi noktaları içermesi gerektiğini söyler.",
+      "type": "Metninizi sağdaki kutuya yazın. Metniniz otomatik olarak kaydedilir.",
+      "tools": "Kutunun altında ä, ö, ü ve ß için düğmeler ve bir kelime sayacı var.",
+      "mark": "Göreve sonra dönmek için İşaretle'ye basın.",
+      "strip": "Alttaki numaralar görevlerinizi gösterir. Görevler arasında geçmek için onları ya da Geri'yi kullanın.",
+      "timer": "Üstteki saate göz atmayı unutmayın.",
+      "next": "Bitirdiğinizde Sonraki'ye basın."
+    },
+    "SPEAKING": {
+      "task": "Göreviniz solda. Görevi ve hakkında konuşmanız gereken noktaları okuyun.",
+      "think": "Önce düşünme süreniz var. Saat geriye doğru sayar.",
+      "record": "Hazır olduğunuzda düğmeye basın. Düşünme süresi bitince kayıt kendiliğinden de başlar.",
+      "talk": "Açık ve anlaşılır konuşun. Saat, ne kadar daha konuşabileceğinizi gösterir.",
+      "stop": "Bitirdiğinizde Kaydı bitir'e basın. Süre dolunca kayıt kendiliğinden durur.",
+      "next": "Sonra Cevabı kaydet ve devam et'e basın. Bu bölümde geri dönemezsiniz.",
+      "timer": "Üstteki saat, bölüm için kalan süreyi gösterir."
+    }
   }
 }

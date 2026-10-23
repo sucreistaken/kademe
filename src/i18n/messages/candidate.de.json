@@ -1288,6 +1288,51 @@
     "close": "Schließen",
     "captions": "Untertitel",
     "seek": "Position im Video",
-    "time": "{current} von {total}"
+    "time": "{current} von {total}",
+    "GRAMMAR": {
+      "gap": "Diese Frage ist ein kurzer Text mit Lücken. Sie beginnen mit der umrahmten Lücke.",
+      "pick": "Rechts stehen die Wörter dazu. Klicken Sie auf das passende Wort, dann öffnet sich die nächste Lücke.",
+      "again": "So füllen Sie jede Lücke. Um ein Wort zu ändern, klicken Sie noch einmal auf die Lücke.",
+      "mark": "Sie sind unsicher? Drücken Sie auf Markieren und kommen Sie später zurück.",
+      "strip": "Die Zahlen unten zeigen alle Fragen. Klicken Sie auf eine Zahl oder auf Zurück, um zu wechseln.",
+      "timer": "Die Uhr zeigt, wie viel Zeit Sie für diesen Teil noch haben.",
+      "next": "Mit Weiter geht es zur nächsten Frage. Ihre Antworten werden automatisch gespeichert."
+    },
+    "READING": {
+      "passage": "Links steht der Text. Hier sind es zwei kurze Anzeigen, A und B.",
+      "situations": "Rechts stehen die Situationen. Finden Sie zu jeder die passende Anzeige.",
+      "drag": "Ziehen Sie den Buchstaben der Anzeige auf die Situation.",
+      "click": "Oder klicken Sie einfach auf den Buchstaben in der Zeile.",
+      "notes": "Mit diesen Werkzeugen heben Sie Wörter im Text hervor oder unterstreichen sie. Notizen werden nicht bewertet.",
+      "mark": "Mit Markieren finden Sie eine Frage später leicht wieder. Über die Zahlen unten erreichen Sie jede Frage.",
+      "next": "Behalten Sie die Uhr oben im Blick und drücken Sie dann auf Weiter."
+    },
+    "LISTENING": {
+      "read": "Lesen Sie vor dem Hören die Fragen und die Antworten.",
+      "play": "Drücken Sie dann auf den Knopf. Die Aufnahme beginnt sofort und lässt sich nicht anhalten.",
+      "plays": "Der Player zeigt, wie oft Sie die Aufnahme noch hören können.",
+      "answer": "Antworten Sie schon beim Hören: Klicken Sie auf ein Bild oder einen Knopf.",
+      "mark": "Mit Markieren an einer Frage kommen Sie später leicht zu ihr zurück.",
+      "strip": "Die Zahlen unten zeigen alle Fragen. Mit Weiter kommen Sie zur nächsten Aufnahme.",
+      "timer": "Die Uhr zeigt die restliche Zeit für den ganzen Teil."
+    },
+    "WRITING": {
+      "task": "Links steht Ihre Aufgabe. Sie sagt, was Sie schreiben und welche Punkte Ihr Text enthalten muss.",
+      "type": "Schreiben Sie Ihren Text rechts in das Feld. Er wird automatisch gespeichert.",
+      "tools": "Unter dem Feld finden Sie Knöpfe für ä, ö, ü und ß und einen Wortzähler.",
+      "mark": "Mit Markieren finden Sie die Aufgabe später leicht wieder.",
+      "strip": "Die Zahlen unten zeigen Ihre Aufgaben. Mit ihnen oder mit Zurück wechseln Sie.",
+      "timer": "Behalten Sie die Uhr oben im Blick.",
+      "next": "Wenn Sie fertig sind, drücken Sie auf Weiter."
+    },
+    "SPEAKING": {
+      "task": "Links steht Ihre Aufgabe. Lesen Sie sie und die Punkte, über die Sie sprechen sollen.",
+      "think": "Zuerst haben Sie Zeit zum Nachdenken. Die Uhr zählt rückwärts.",
+      "record": "Wenn Sie bereit sind, drücken Sie auf den Knopf. Nach der Denkzeit beginnt die Aufnahme auch von selbst.",
+      "talk": "Sprechen Sie deutlich. Die Uhr zeigt, wie lange Sie noch sprechen können.",
+      "stop": "Wenn Sie fertig sind, drücken Sie auf Aufnahme beenden. Ist die Zeit um, endet sie von selbst.",
+      "next": "Drücken Sie dann auf Antwort speichern und weiter. In diesem Teil können Sie nicht zurück.",
+      "timer": "Die Uhr oben zeigt die restliche Zeit für diesen Teil."
+    }
   }
 }
