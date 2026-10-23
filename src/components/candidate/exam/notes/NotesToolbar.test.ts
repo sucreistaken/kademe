@@ -24,7 +24,7 @@ const controller = (over: Partial<NotesController>): NotesController => ({
 
 function html(c: NotesController, pen = true) {
   return renderToStaticMarkup(
-    createElement(NextIntlClientProvider, { locale: "en", messages: { notes: en.notes } }, createElement(NotesToolbar, { controller: c, pen })),
+    createElement(NextIntlClientProvider, { locale: "en", messages: { notes: en.notes }, children: createElement(NotesToolbar, { controller: c, pen }) }),
   );
 }
 
