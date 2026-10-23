@@ -11,7 +11,7 @@ import { examTemplateByKey } from "@/lib/exam/templates";
 import type { Cefr } from "@/lib/exam/types";
 import { resolveWindow, type WindowFault, type WindowInput } from "@/lib/exam-window";
 import { managerLocale } from "@/i18n/manager-locale";
-import { isCandidateLocale, type CandidateLocale } from "@/i18n/locale";
+import { DEFAULT_CANDIDATE_LOCALE, isCandidateLocale, type CandidateLocale } from "@/i18n/locale";
 import { bankCounts } from "@/server/panel";
 import { createInvitation } from "@/server/invite";
 import { requireUser } from "@/server/session";
@@ -77,7 +77,7 @@ export async function inviteStudentsAction(input: InviteStudentsInput): Promise<
   const choice = parseExamChoice(typeof input.exam === "string" ? input.exam : "");
   if (!choice) return { ok: false, code: "EXAM" };
   const batch: Cefr | null = isCefr(input.claimed) ? input.claimed : null;
-  const locale: CandidateLocale = isCandidateLocale(input.locale) ? input.locale : "tr";
+  const locale: CandidateLocale = isCandidateLocale(input.locale) ? input.locale : DEFAULT_CANDIDATE_LOCALE;
   // The window is checked before anything is published or written.
   const window = resolveWindow(cleanWindow(input.window), { now: new Date() });
   if (!window.ok) return { ok: false, code: "WINDOW", fault: window.fault };

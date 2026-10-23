@@ -204,7 +204,7 @@ async function main() {
 
   const links: string[] = [];
   const fresh1 = await createInvitation({
-    orgId: org.id, blueprintId: placement.id, fullName: "Ayşe Demir", email: "ayse.demir@example.com", claimedLevel: null, locale: "tr", invitedBy: owner.id,
+    orgId: org.id, blueprintId: placement.id, fullName: "Ayşe Demir", email: "ayse.demir@example.com", claimedLevel: null, locale: "en", invitedBy: owner.id,
   });
   const fresh2 = await createInvitation({
     orgId: org.id, blueprintId: verification.id, fullName: "Mehmet Kaya", email: "mehmet.kaya@example.com", claimedLevel: "B1", locale: "tr", invitedBy: owner.id,

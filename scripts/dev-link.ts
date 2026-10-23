@@ -9,6 +9,7 @@
  */
 import "dotenv/config";
 import { refuseUnlessWorkingDb } from "../src/db/working-db-guard";
+import { DEFAULT_CANDIDATE_LOCALE, isCandidateLocale, type CandidateLocale } from "../src/i18n/locale";
 
 function arg(name: string): string | undefined {
   const i = process.argv.indexOf(`--${name}`);
@@ -36,7 +37,7 @@ async function main() {
     fullName: arg("name") ?? "Dev Öğrenci",
     email: arg("email") ?? `dev-${Date.now()}@example.com`,
     claimedLevel: claimed ?? null,
-    locale: arg("lang") === "en" ? "en" : "tr",
+    locale: isCandidateLocale(arg("lang")) ? (arg("lang") as CandidateLocale) : DEFAULT_CANDIDATE_LOCALE,
     invitedBy: null,
   });
   if (!result.ok) throw new Error(result.code);

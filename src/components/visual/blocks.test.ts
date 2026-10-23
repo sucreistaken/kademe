@@ -257,7 +257,7 @@ describe("StatusScreen, IconRow and PathSteps", () => {
 
   it("PathSteps says done and still to come in words to readers, in the candidate's language, and nothing for a step without a state", () => {
     const steps = [{ title: "Bir", state: "done" }, { title: "İki", state: "current" }, { title: "Üç", state: "todo" }, { title: "Dört" }];
-    const tr = html(PathSteps, { steps });
+    const tr = html(PathSteps, { steps, locale: "tr" });
     expect(tr.match(/<span class="sr-only">[^<]*<\/span>/g)).toEqual(['<span class="sr-only">tamamlandı</span>', '<span class="sr-only">sırada</span>']);
     expect(tr).toMatch(/Bir[\s\S]*tamamlandı[\s\S]*Üç[\s\S]*sırada/);
     const en = html(PathSteps, { steps, locale: "en" });

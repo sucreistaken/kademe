@@ -1,5 +1,5 @@
 import { createTranslator } from "next-intl";
-import { DEFAULT_LOCALE, type CandidateLocale } from "@/i18n/locale";
+import { DEFAULT_CANDIDATE_LOCALE, type CandidateLocale } from "@/i18n/locale";
 import tr from "@/i18n/messages/candidate.tr.json";
 import en from "@/i18n/messages/candidate.en.json";
 import de from "@/i18n/messages/candidate.de.json";
@@ -30,7 +30,7 @@ export const candidateMessages: Record<CandidateLocale, CandidateMessages> = {
 };
 
 export function messagesFor(locale: CandidateLocale): CandidateMessages {
-  return candidateMessages[locale] ?? candidateMessages[DEFAULT_LOCALE];
+  return candidateMessages[locale] ?? candidateMessages[DEFAULT_CANDIDATE_LOCALE];
 }
 
 /**

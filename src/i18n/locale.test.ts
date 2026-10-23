@@ -1,13 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
   CANDIDATE_LOCALES,
+  DEFAULT_CANDIDATE_LOCALE,
+  DEFAULT_LOCALE,
   LOCALES,
   candidateLocaleFromAcceptLanguage,
   dirOf,
   isCandidateLocale,
   isLocale,
   panelLocaleOf,
+  type CandidateLocale,
 } from "@/i18n/locale";
+import { candidateMessages, messagesFor } from "@/i18n/candidate";
 
 describe("candidate locales", () => {
   it("adds de, es and ar for the exam student and leaves the panel on tr and en", () => {
@@ -16,6 +20,12 @@ describe("candidate locales", () => {
     expect(isLocale("de")).toBe(false);
     expect(isCandidateLocale("de")).toBe(true);
     expect(isCandidateLocale("fr")).toBe(false);
+  });
+
+  it("students default to English while the panel default stays Turkish (owner 2026-10-23)", () => {
+    expect(DEFAULT_CANDIDATE_LOCALE).toBe("en");
+    expect(DEFAULT_LOCALE).toBe("tr");
+    expect(messagesFor("xx" as CandidateLocale)).toBe(candidateMessages.en);
   });
 
   it("dirOf is rtl for Arabic only", () => {

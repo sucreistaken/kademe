@@ -35,6 +35,9 @@ export const CANDIDATE_LOCALES = ["tr", "en", "de", "es", "ar"] as const;
 
 export type CandidateLocale = (typeof CANDIDATE_LOCALES)[number];
 
+/** Owner 2026-10-23: students default to English. */
+export const DEFAULT_CANDIDATE_LOCALE: CandidateLocale = "en";
+
 export function isCandidateLocale(value: unknown): value is CandidateLocale {
   return typeof value === "string" && (CANDIDATE_LOCALES as readonly string[]).includes(value);
 }

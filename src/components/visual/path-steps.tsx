@@ -1,7 +1,7 @@
 // kademe-owned
 import { Check } from "lucide-react";
 import type { ReactNode } from "react";
-import { DEFAULT_LOCALE, type CandidateLocale } from "@/i18n/locale";
+import { DEFAULT_CANDIDATE_LOCALE, type CandidateLocale } from "@/i18n/locale";
 import { cn } from "@/lib/cn";
 
 /** What a reader hears after a step's title; the check and the grey number only show it. The current step is aria-current. */
@@ -21,7 +21,7 @@ const STATE_WORDS: Record<CandidateLocale, { done: string; todo: string }> = {
 export function PathSteps({
   steps,
   label,
-  locale = DEFAULT_LOCALE,
+  locale = DEFAULT_CANDIDATE_LOCALE,
   look = "list",
 }: {
   steps: Array<{ title: ReactNode; detail?: ReactNode; state?: "done" | "current" | "todo"; action?: ReactNode }>;

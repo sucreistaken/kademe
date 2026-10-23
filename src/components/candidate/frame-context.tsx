@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import { DEFAULT_LOCALE, type CandidateLocale } from "@/i18n/locale";
+import { DEFAULT_CANDIDATE_LOCALE, type CandidateLocale } from "@/i18n/locale";
 
 /**
  * What the candidate route's boundaries (error, not found, loading) need and
@@ -24,7 +24,7 @@ export function CandidateFrameProvider({ value, children }: { value: CandidateFr
   return <FrameContext.Provider value={value}>{children}</FrameContext.Provider>;
 }
 
-/** The frame, or a Turkish one with no school when a boundary renders outside the layout. */
+/** The frame, or an English one with no school when a boundary renders outside the layout. */
 export function useCandidateFrame(): CandidateFrame {
-  return useContext(FrameContext) ?? { token: "", locale: DEFAULT_LOCALE, timeZone: "Europe/Istanbul", orgName: null, contactEmail: null };
+  return useContext(FrameContext) ?? { token: "", locale: DEFAULT_CANDIDATE_LOCALE, timeZone: "Europe/Istanbul", orgName: null, contactEmail: null };
 }

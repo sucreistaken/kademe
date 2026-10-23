@@ -8,7 +8,7 @@ const html = (props: Record<string, unknown>) => renderToStaticMarkup(createElem
 
 /** The candidate side's paths and the panel's before the setup look (captured at the commit before Task 7). */
 const CASES: Array<Record<string, unknown>> = [
-  { label: "Yol", steps: [{ title: "Bir", state: "done" }, { title: "İki", state: "current", detail: "Ayrıntı", action: createElement("a", { href: "/x" }, "Git") }, { title: "Üç", state: "todo" }, { title: "Dört" }] },
+  { label: "Yol", locale: "tr", steps: [{ title: "Bir", state: "done" }, { title: "İki", state: "current", detail: "Ayrıntı", action: createElement("a", { href: "/x" }, "Git") }, { title: "Üç", state: "todo" }, { title: "Dört" }] },
   { locale: "en", steps: [{ title: "One", state: "done" }, { title: "Two", state: "current" }] },
 ];
 
@@ -19,7 +19,7 @@ describe("PathSteps", () => {
   });
 
   it("setup look: numbered 30px circles, done in the accent with a check, the current row on accent-soft with its action at the right (mockup 5)", () => {
-    const out = html({ look: "setup", label: "Yayına hazırlık", steps: [{ title: "Değerlendirmeyi kur", state: "done", detail: "8 soru" }, { title: "Ekibi ata", state: "current", action: createElement("a", { href: "/t" }, "Ekibe ekle") }, { title: "Yayınla", state: "todo" }] });
+    const out = html({ look: "setup", locale: "tr", label: "Yayına hazırlık", steps: [{ title: "Değerlendirmeyi kur", state: "done", detail: "8 soru" }, { title: "Ekibi ata", state: "current", action: createElement("a", { href: "/t" }, "Ekibe ekle") }, { title: "Yayınla", state: "todo" }] });
     expect(out).toContain('<ol aria-label="Yayına hazırlık"');
     expect(out).toContain("border-accent bg-accent text-white");
     expect(out).toContain("lucide-check");

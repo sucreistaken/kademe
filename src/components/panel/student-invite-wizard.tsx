@@ -35,7 +35,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ChoiceCardGroup } from "@/components/visual/choice-card";
 import { StepScreen } from "@/components/visual/step-screen";
 import { useMT } from "@/i18n/manager-client";
-import { CANDIDATE_LANGUAGE_NAME, CANDIDATE_LOCALES, isCandidateLocale, type CandidateLocale } from "@/i18n/locale";
+import { CANDIDATE_LANGUAGE_NAME, CANDIDATE_LOCALES, DEFAULT_CANDIDATE_LOCALE, isCandidateLocale, type CandidateLocale } from "@/i18n/locale";
 import { bankCoverage, type BankCount, type BlueprintConfig } from "@/lib/exam/blueprint";
 import { CEFR_LEVELS, type Cefr } from "@/lib/exam/types";
 import { cn } from "@/lib/cn";
@@ -143,7 +143,7 @@ export function StudentInviteWizard({
   const [batch, setBatch] = useState<Cefr | null>(initialClaimed ?? null);
   /** Verification only: easier (-1) or harder (1) for this list; null keeps the exam's own setting. */
   const [shift, setShift] = useState<-1 | 0 | 1 | null>(null);
-  const [locale, setLocale] = useState<CandidateLocale>("tr");
+  const [locale, setLocale] = useState<CandidateLocale>(DEFAULT_CANDIDATE_LOCALE);
   // The exam window: "Hemen" or a set opening, and the last entry (default 14 days after the opening until the manager sets it).
   const [startMode, setStartMode] = useState<"now" | "later">("now");
   const [startDate, setStartDate] = useState(() => orgDay(laterDefault(nowIso), timeZone));
@@ -754,7 +754,7 @@ export function StudentInviteWizard({
             look="panel"
             columns={3}
             value={[locale]}
-            onChange={([v]) => setLocale(isCandidateLocale(v) ? v : "tr")}
+            onChange={([v]) => setLocale(isCandidateLocale(v) ? v : DEFAULT_CANDIDATE_LOCALE)}
             items={CANDIDATE_LOCALES.map((value) => ({ value, label: <span lang={value}>{CANDIDATE_LANGUAGE_NAME[value]}</span> }))}
           />
         </>
