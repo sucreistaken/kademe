@@ -2,6 +2,7 @@ import type { CandidateMessages } from "@/i18n/candidate";
 import { SectionTile } from "@/components/visual/section-look";
 import type { StudentResult } from "@/lib/exam-flow";
 import type { Section } from "@/lib/exam/types";
+import { isPreA1, levelLabel } from "@/lib/exam/level-label";
 import { cn } from "@/lib/cn";
 
 /**
@@ -11,6 +12,8 @@ import { cn } from "@/lib/cn";
  * are plain ink pills (never red or green, no percentages) and nothing here
  * carries a question, an answer or a key. Pure markup: the caller passes the
  * translators, so it renders in a client component and in a server page alike.
+ * A0 reads "A0 (Pre-A1)" and, as the overall level, comes with a short line on
+ * what it means.
  */
 type Tr = (key: keyof CandidateMessages["analysis"] & string, values?: Record<string, string | number>) => string;
 
@@ -43,6 +46,7 @@ export function AnalysisView({
           <div className="min-w-0 flex-1">
             <div className="text-[13px] font-bold text-mint">{t("levelLabel")}</div>
             {result.outcome ? <p className="mt-1 text-[14px] leading-[1.5] text-ink-2">{t(`outcome${result.outcome}`)}</p> : null}
+            {isPreA1(result.overall) ? <p className="mt-1 text-[14px] leading-[1.5] text-ink-2">{t("levelA0Note")}</p> : null}
           </div>
           <div className="tnum text-[40px] font-black leading-none text-ink">{result.overall}</div>
         </div>
@@ -57,7 +61,7 @@ export function AnalysisView({
               <li key={s.section} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[14.5px]">
                 <SectionTile section={s.section} className="size-8 rounded-md [&>svg]:size-4" />
                 <span className="min-w-[7rem] flex-1 font-semibold text-ink-2">{sectionName(s.section)}</span>
-                {level ? <span className={pill}>{level}</span> : null}
+                {level ? <span className={pill}>{levelLabel(level, t("levelA0"))}</span> : null}
                 {s.teacherAssessed ? (
                   <span className="text-[13px] text-muted">{t("teacherAssessed")}</span>
                 ) : (

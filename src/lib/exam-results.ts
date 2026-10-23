@@ -24,6 +24,7 @@ import {
   capByTaskLevel,
   emptyAnswerReason,
   GRADING_JSON_SCHEMA,
+  guardPreA1,
   parseGradingAnswer,
   skillLevelFromCriteria,
   speakingMetrics,
@@ -33,7 +34,7 @@ import {
 import { blockerErrorCode, finalizeBlockers } from "@/lib/exam/finalize-blockers";
 import { hasAnswer } from "@/lib/exam/item-scoring";
 import { autoFinalizes, computeResult, type Decider, type SectionEvidence } from "@/lib/exam/result";
-import { isObjectiveSection, type Cefr, type ProductiveSection, type Section } from "@/lib/exam/types";
+import { isObjectiveSection, type ProductiveSection, type ResultLevel, type Section } from "@/lib/exam/types";
 import { enqueueGrading } from "@/lib/queue";
 
 /**
@@ -128,7 +129,7 @@ export async function findUngraded(limit = 20) {
 // ---------------------------------------------------------------------------
 
 export type GradingOutcome =
-  | { status: "PROPOSED"; level: Cefr | null }
+  | { status: "PROPOSED"; level: ResultLevel | null }
   | { status: "SKIPPED"; reason: string }
   | { status: "FAILED"; reason: string };
 
@@ -237,7 +238,7 @@ export async function runGrading(gradingId: string): Promise<GradingOutcome> {
     return { status: "FAILED", reason: lastError };
   }
 
-  proposal = capByTaskLevel(verifyEvidence(proposal, source), taskLevel);
+  proposal = capByTaskLevel(guardPreA1(verifyEvidence(proposal, source)), taskLevel);
   const level = skillLevelFromCriteria(proposal) ?? proposal.overallLevel;
   await db
     .update(responseGradings)
@@ -272,7 +273,7 @@ export async function runGrading(gradingId: string): Promise<GradingOutcome> {
 type GradingRow = typeof responseGradings.$inferSelect;
 
 /** The level a grading stands at now, and who put it there. */
-export function gradingLevel(g: GradingRow): { level: Cefr | null; decider: Decider | null } {
+export function gradingLevel(g: GradingRow): { level: ResultLevel | null; decider: Decider | null } {
   if (g.finalLevel) return { level: g.finalLevel, decider: "TEACHER" };
   if (g.status === "AI_PROPOSED" && g.aiLevel) return { level: g.aiLevel, decider: "AI" };
   return { level: null, decider: null };
@@ -329,7 +330,7 @@ export async function recomputeResult(attemptId: string) {
     const levels = mine.map(gradingLevel);
     if (mine.some((g) => g.status === "PENDING")) anyPending = true;
     if (mine.some((g) => !g.finalLevel)) anyUndecided = true;
-    const known = levels.map((l) => l.level).filter((l): l is Cefr => !!l);
+    const known = levels.map((l) => l.level).filter((l): l is ResultLevel => !!l);
     const complete = known.length === levels.length;
     evidence.push({
       section: s.section,
@@ -343,8 +344,8 @@ export async function recomputeResult(attemptId: string) {
   const overrides = {
     overall: existing?.overallOverride ?? null,
     skills: Object.fromEntries(
-      Object.entries(existing?.skillOverrides ?? {}).map(([k, v]) => [k, v.level as Cefr]),
-    ) as Partial<Record<Section, Cefr>>,
+      Object.entries(existing?.skillOverrides ?? {}).map(([k, v]) => [k, v.level as ResultLevel]),
+    ) as Partial<Record<Section, ResultLevel>>,
   };
   const computed = computeResult({
     mode: row.exam.mode,

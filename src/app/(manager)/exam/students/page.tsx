@@ -8,6 +8,7 @@ import { GroupReport } from "@/components/panel/students/group-report-panel";
 import { formatDeadline, isFreshInvite } from "@/components/panel/students/message";
 import { StudentMessageButton } from "@/components/panel/students/student-message-button";
 import { can } from "@/lib/authorize";
+import { levelLabel } from "@/lib/exam/level-label";
 import { listStudents, type StudentRow } from "@/server/panel";
 import { requireUser } from "@/server/session";
 import { managerLocale } from "@/i18n/manager-locale";
@@ -116,7 +117,7 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
             notStarted: t("studentsExport.notStarted"),
             levels: t("studentsExport.levels"),
             levelsNone: t("studentsExport.levelsNone"),
-            levelCount: (level, n) => t("studentsExport.levelCount", { level, n }),
+            levelCount: (level, n) => t("studentsExport.levelCount", { level: levelLabel(level, t("resultLevel.A0")), n }),
           }}
         />
         <Card className="mt-4 overflow-x-auto">
@@ -149,7 +150,7 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
                     <Level level={r.claimed} muted />
                   </td>
                   <td className="px-3 py-3">
-                    <Level level={r.level} muted={!r.levelFinal} />
+                    <Level level={r.level} muted={!r.levelFinal} preA1={t("resultLevel.A0")} />
                     {r.outcome ? <span className="ml-2 text-[12.5px] text-muted">{t(`result.outcome${r.outcome}`)}</span> : null}
                   </td>
                   <td className="px-3 py-3">

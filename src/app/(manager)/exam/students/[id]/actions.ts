@@ -20,7 +20,7 @@ import { buildDetail } from "@/components/panel/report/detail-model";
 import { canAcceptAsCorrect, canAcceptGap, gapScore } from "@/components/panel/result/review-rows";
 import { aiLimitReached } from "@/lib/ai-limit";
 import { callJson, markAiRunError } from "@/lib/ai-runs";
-import { isCefr } from "@/lib/exam/cefr";
+import { isResultLevel } from "@/lib/exam/cefr";
 import { reestimateRun } from "@/lib/exam/reestimate-run";
 import {
   FEEDBACK_JSON_SCHEMA,
@@ -121,7 +121,8 @@ export async function overrideGrading(formData: FormData) {
   const reason = String(formData.get("reason") ?? "").trim();
   if (!row) redirect("/exam/students");
   if (row.final || !row.ended) redirect(back(row.assessmentId, tab));
-  if (!isCefr(level) || reason.length < 3) redirect(withQuery(back(row.assessmentId, tab), { error: "reason" }));
+  // A0 (Pre-A1) is a valid choice: a task with no German to score.
+  if (!isResultLevel(level) || reason.length < 3) redirect(withQuery(back(row.assessmentId, tab), { error: "reason" }));
   const now = new Date();
   await db
     .update(responseGradings)
@@ -155,7 +156,7 @@ export async function overrideOverall(formData: FormData) {
   const row = await resultInOrg(assessmentId, user.orgId);
   if (!row?.result) redirect("/exam/students");
   if (row.result.status === "FINAL") redirect(back(assessmentId));
-  if (!isCefr(level) || reason.length < 3) redirect(withQuery(back(assessmentId), { error: "reason" }));
+  if (!isResultLevel(level) || reason.length < 3) redirect(withQuery(back(assessmentId), { error: "reason" }));
   await db
     .update(examResults)
     .set({ overallOverride: level, overallOverrideReason: reason, updatedAt: new Date() })

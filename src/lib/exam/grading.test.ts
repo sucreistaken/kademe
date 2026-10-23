@@ -9,6 +9,7 @@ import {
   capByTaskLevel,
   countWords,
   emptyAnswerReason,
+  guardPreA1,
   parseGradingAnswer,
   skillLevelFromCriteria,
   speakingMetrics,
@@ -16,11 +17,11 @@ import {
   type GradingProposal,
 } from "./grading";
 import { CRITERIA_BY_SECTION, DESCRIPTORS, CRITERIA } from "./cefr-descriptors";
-import { CEFR_LEVELS, type Cefr } from "./types";
+import { CEFR_LEVELS, type ResultLevel } from "./types";
 
 const EM_DASH = "\u2014";
 
-function proposal(levels: Partial<Record<string, Cefr>>, overall: Cefr = "B1"): GradingProposal {
+function proposal(levels: Partial<Record<string, ResultLevel>>, overall: ResultLevel = "B1"): GradingProposal {
   return {
     criteria: Object.entries(levels).map(([criterion, level]) => ({
       criterion: criterion as GradingProposal["criteria"][number]["criterion"],
@@ -296,6 +297,73 @@ describe("prompts", () => {
     expect(repair[2]).toEqual({ role: "assistant", content: "{bad" });
     expect(repair[3].content).toContain("missing criteria: RANGE");
     expect(repair[3].content).not.toContain(EM_DASH);
+  });
+});
+
+describe("A0 (Pre-A1) in AI grading", () => {
+  const a0 = (flags: GradingProposal["flags"]): GradingProposal => ({ ...proposal({ RANGE: "A0", ACCURACY: "A1" }, "A0"), flags });
+
+  it("accepts A0 from the model, for a criterion and overall", () => {
+    const json = JSON.parse(answerJson([...CRITERIA_BY_SECTION.WRITING]));
+    json.overallLevel = "A0";
+    json.criteria[0].level = "A0";
+    json.flags = ["NOT_GERMAN"];
+    const res = parseGradingAnswer(JSON.stringify(json), "WRITING");
+    expect(res.ok).toBe(true);
+    if (res.ok) expect([res.proposal.overallLevel, res.proposal.criteria[0].level]).toEqual(["A0", "A0"]);
+  });
+
+  it("keeps A0 when the model says the answer is empty or not German", () => {
+    for (const flag of ["EMPTY", "NOT_GERMAN"] as const) {
+      const out = guardPreA1(a0([flag]));
+      expect(out.overallLevel).toBe("A0");
+      expect(out.criteria[0].level).toBe("A0");
+      expect(out.flags).toEqual([flag]);
+    }
+  });
+
+  it("raises an A0 with no such flag to A1 and marks it", () => {
+    const out = guardPreA1(a0(["OFF_TOPIC"]));
+    expect(out.overallLevel).toBe("A1");
+    expect(out.criteria.map((c) => c.level)).toEqual(["A1", "A1"]);
+    expect(out.flags).toEqual(["OFF_TOPIC", "A0_RAISED"]);
+    expect(guardPreA1(proposal({ RANGE: "B1" })).flags).toEqual([]);
+  });
+
+  it("the model cannot claim A0_RAISED itself", () => {
+    const json = JSON.parse(answerJson([...CRITERIA_BY_SECTION.WRITING]));
+    json.flags = ["A0_RAISED"];
+    const res = parseGradingAnswer(JSON.stringify(json), "WRITING");
+    expect(res.ok && res.proposal.flags).toEqual([]);
+  });
+
+  it("A0 is under every task ceiling and counts in the criteria median", () => {
+    const capped = capByTaskLevel(a0(["NOT_GERMAN"]), "A1");
+    expect(capped.overallLevel).toBe("A0");
+    expect(capped.flags).toEqual(["NOT_GERMAN"]);
+    expect(skillLevelFromCriteria(proposal({ TASK_ACHIEVEMENT: "A0", COHERENCE: "A0", RANGE: "A1", ACCURACY: "A1" }))).toBe("A0");
+  });
+
+  it("tells the model when A0 is allowed", () => {
+    const [system] = buildWritingGradingMessages({
+      task: "Schreiben Sie.",
+      contentPoints: [],
+      taskLevel: "A1",
+      minWords: 30,
+      maxWords: 60,
+      text: "Hallo",
+      rationaleLocale: "en",
+    });
+    expect(system.content).toContain("level is one of A0, A1, A2, B1, B2, C1, C2");
+    expect(system.content).toContain("A0 (Pre-A1) means the answer has no German that can be scored");
+    expect(system.content).toContain("add the flag EMPTY or NOT_GERMAN");
+    expect(system.content).not.toContain(EM_DASH);
+  });
+
+  it("offers A0 in the provider schema", () => {
+    const text = JSON.stringify(GRADING_JSON_SCHEMA);
+    expect(text).toContain('"enum":["A0","A1","A2","B1","B2","C1","C2"]');
+    expect(text).not.toContain("A0_RAISED");
   });
 });
 

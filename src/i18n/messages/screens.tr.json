@@ -473,7 +473,8 @@
     "levelShownNow": "Öğrenci seviyesini görüyor.",
     "levelHiddenNow": "Öğrenci seviyesini görmüyor, yalnızca analizi görüyor.",
     "levelSave": "Kaydet",
-    "levelHint": "Öğrenci her zaman analizi (bölüm bazında sayılar ve konular) alır, soruları asla."
+    "levelHint": "Öğrenci her zaman analizi (bölüm bazında sayılar ve konular) alır, soruları asla.",
+    "flagA0_RAISED": "AI, A0 önerdi ama cevabı boş ya da Almanca dışı olarak işaretlemedi; A1'e çıkarıldı"
   },
   "integrity": {
     "title": "Bütünlük",
@@ -1109,7 +1110,8 @@
       "B1": "Gündelik konularda ana fikri anlar, seyahat ve iş gibi sık durumlarla başa çıkar, bağlantılı kısa metinler yazar.",
       "B2": "Karmaşık metinlerin ana noktalarını anlar, anadili konuşanlarla rahat ve doğal biçimde konuşur, ayrıntılı metinler yazar.",
       "C1": "Uzun ve zor metinleri ve ima edilen anlamları anlar, kendini akıcı ve esnek biçimde ifade eder, düzenli ve ayrıntılı metinler üretir.",
-      "C2": "Duyduğu ya da okuduğu hemen her şeyi zahmetsiz anlar, ince anlam farklarını doğru biçimde anlatır."
+      "C2": "Duyduğu ya da okuduğu hemen her şeyi zahmetsiz anlar, ince anlam farklarını doğru biçimde anlatır.",
+      "A0": "Almancanın en başındadır: henüz A1 düzeyinde değerlendirilebilecek bir dil kullanımı yoktur."
     },
     "copyStudent": "Öğrenci kopyası",
     "copyTeacher": "Öğretmen kopyası",
@@ -1225,5 +1227,12 @@
     "reportTechnical": "Teknik olaylar: {n} kayıt ({types}).",
     "reportFrames": "Örnek kareler",
     "reportNote": "İşaretler öğretmenin incelemesi için sıralanmıştır; tek başına karar değildir. Karar yukarıdaki bütünlük kararıdır."
+  },
+  "resultLevel": {
+    "A0": "A0 (Pre-A1)",
+    "A0Name": "Pre-A1",
+    "A0Note": "A0 (Pre-A1): A1'in altında, henüz puanlanabilir Almanca yok.",
+    "A0Class": "A0 (Pre-A1): ilk kurstan, A1.1'den başlar.",
+    "A0Pick": "A0 (Pre-A1) yalnızca puanlanabilir Almanca yoksa: boş ya da Almanca olmayan cevap."
   }
 }

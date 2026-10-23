@@ -12,6 +12,18 @@
 export const CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
 export type Cefr = (typeof CEFR_LEVELS)[number];
 
+/**
+ * The levels a result can carry: the CEFR levels and, below A1, A0, the Pre-A1
+ * band of the CEFR Companion Volume (2020): no German yet that can be scored.
+ * Items, tasks and claimed levels stay `Cefr` (A1 to C2): nothing is written
+ * for A0 and nobody claims it. Section, overall and teacher-set levels, the
+ * placement and every report use `ResultLevel`.
+ */
+export const RESULT_LEVELS = ["A0", ...CEFR_LEVELS] as const;
+export type ResultLevel = (typeof RESULT_LEVELS)[number];
+/** The result level below A1 (Pre-A1). */
+export const PRE_A1 = "A0" satisfies ResultLevel;
+
 export const SECTIONS = ["GRAMMAR", "READING", "LISTENING", "WRITING", "SPEAKING"] as const;
 export type Section = (typeof SECTIONS)[number];
 

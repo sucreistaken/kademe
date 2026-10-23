@@ -473,7 +473,8 @@
     "levelShownNow": "The student sees the level.",
     "levelHiddenNow": "The student does not see the level, only the analysis.",
     "levelSave": "Save",
-    "levelHint": "The student always gets the analysis (counts per section and topics), never the questions."
+    "levelHint": "The student always gets the analysis (counts per section and topics), never the questions.",
+    "flagA0_RAISED": "The AI proposed A0 without marking the answer as empty or not German; raised to A1"
   },
   "integrity": {
     "title": "Integrity",
@@ -1109,7 +1110,8 @@
       "B1": "Follows the main point of everyday topics, copes with common situations such as travel and work, and writes short connected texts.",
       "B2": "Understands the main points of complex texts, talks with native speakers comfortably and naturally, and writes detailed texts.",
       "C1": "Understands long, demanding texts and implied meaning, expresses ideas fluently and flexibly, and produces well-organised, detailed writing.",
-      "C2": "Understands virtually everything heard or read with ease and conveys fine shades of meaning precisely."
+      "C2": "Understands virtually everything heard or read with ease and conveys fine shades of meaning precisely.",
+      "A0": "Is at the very beginning of German: there is no language use yet that can be assessed at A1."
     },
     "copyStudent": "Student copy",
     "copyTeacher": "Teacher copy",
@@ -1225,5 +1227,12 @@
     "reportTechnical": "Technical events: {n} records ({types}).",
     "reportFrames": "Sample frames",
     "reportNote": "Flags are ordered for the teacher's review and are not a decision on their own. The decision is the integrity decision above."
+  },
+  "resultLevel": {
+    "A0": "A0 (Pre-A1)",
+    "A0Name": "Pre-A1",
+    "A0Note": "A0 (Pre-A1): below A1, no German that can be scored yet.",
+    "A0Class": "A0 (Pre-A1): starts in the first course, A1.1.",
+    "A0Pick": "A0 (Pre-A1) only when there is no German to score: a blank answer or one not in German."
   }
 }

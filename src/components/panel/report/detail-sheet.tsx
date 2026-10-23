@@ -1,6 +1,7 @@
 import type { PanelLocale } from "@/i18n/locale";
 import type { managerT } from "@/i18n/manager";
 import { cn } from "@/lib/cn";
+import { levelLabel } from "@/lib/exam/level-label";
 import { splitTextLead } from "@/lib/exam/prompt-instruction";
 import { topicLabel } from "@/lib/exam/topics";
 import type { DetailMark, DetailQuestion, DetailSection, DetailTask, GapPart } from "./detail-model";
@@ -263,7 +264,7 @@ function Task({ task, section, t }: { task: DetailTask; section: string; t: T })
       <div className="mt-3 border-t border-line pt-3">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <span className="font-semibold">{t("resultReport.teacherLevel")}</span>
-          <span className="tnum text-[1.3em] font-bold">{task.level ?? "-"}</span>
+          <span className="tnum text-[1.3em] font-bold">{levelLabel(task.level, t("resultLevel.A0")) ?? "-"}</span>
         </div>
         {task.decidedBy ? <p className="text-[0.9em] text-muted">{t("resultReport.teacherBy", { name: task.decidedBy })}</p> : null}
         {task.teacherNote ? (
@@ -278,7 +279,7 @@ function Task({ task, section, t }: { task: DetailTask; section: string; t: T })
             <ul className="mt-1 flex flex-col gap-1">
               {task.criteria.map((c) => (
                 <li key={c.criterion}>
-                  <span className="font-medium">{t(`result.crit${c.criterion}` as "result.critRANGE")}</span> <span className="tnum font-semibold">{c.level}</span>
+                  <span className="font-medium">{t(`result.crit${c.criterion}` as "result.critRANGE")}</span> <span className="tnum font-semibold">{levelLabel(c.level, t("resultLevel.A0"))}</span>
                   {c.note ? <span className="text-ink-2"> - {c.note}</span> : null}
                 </li>
               ))}
@@ -377,7 +378,7 @@ export function DetailSheet({ sections, studentName, t, locale }: { sections: De
                       {s.kind === "OBJECTIVE" ? <span className="font-semibold">{t("resultReport.score", { correct: s.correct, total: s.total })}</span> : null}
                       <span>
                         <span className="text-muted">{t("resultReport.levelLabel")} </span>
-                        <span className="text-[1.3em] font-bold">{s.level ?? "-"}</span>
+                        <span className="text-[1.3em] font-bold">{levelLabel(s.level, t("resultLevel.A0")) ?? "-"}</span>
                       </span>
                     </div>
                   </div>

@@ -594,7 +594,9 @@
     "back": "Volver",
     "outcomePASS": "Se confirmó el nivel que indicó.",
     "outcomeFAIL": "No se confirmó el nivel que indicó en este examen.",
-    "outcomeINCONCLUSIVE": "No hay pruebas suficientes para decidir; su escuela se pondrá en contacto con usted."
+    "outcomeINCONCLUSIVE": "No hay pruebas suficientes para decidir; su escuela se pondrá en contacto con usted.",
+    "levelA0": "A0 (Pre-A1)",
+    "levelA0Note": "A0 (Pre-A1) es la etapa anterior a A1, el primer nivel del MCER: su alemán está todavía en el comienzo."
   },
   "hiringFrame": {
     "help": "Ayuda",

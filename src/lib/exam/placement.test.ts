@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { placementOf, sublevelOf } from "./placement";
+import { FIRST_CLASS, placementOf, recommendedClassOf, sublevelOf } from "./placement";
 
 describe("sublevelOf", () => {
   it("splits each band at its centre", () => {
@@ -91,5 +91,54 @@ describe("placementOf", () => {
     const p = placementOf({ mean: 2.1, sd: 0.4 }, [])!;
     expect(p.sublevel).toBe("C2");
     expect(p.recommended).toBe("C1");
+  });
+});
+
+describe("A0 (Pre-A1) in the placement", () => {
+  it("treats the A0/A1 cut like every other cut: borderline near it, lower candidate A0", () => {
+    const below = placementOf({ mean: -3.1, sd: 0.4 }, [])!;
+    expect(below).toEqual({ sublevel: "A1.1", borderline: true, reasons: ["NEAR_CUT"], recommended: "A0" });
+    const above = placementOf({ mean: -2.8, sd: 0.4 }, [])!;
+    expect(above.reasons).toEqual(["NEAR_CUT"]);
+    expect(above.recommended).toBe("A0");
+    expect(placementOf({ mean: -3.5, sd: 0.4 }, [])!.borderline).toBe(false);
+    expect(placementOf({ mean: -2.5, sd: 0.4 }, [])!.borderline).toBe(false);
+  });
+
+  it("flags a productive skill a band from an A0 objective level", () => {
+    const p = placementOf({ mean: -3.6, sd: 0.4 }, [{ section: "WRITING", level: "A1" }])!;
+    expect(p.reasons).toEqual(["PRODUCTIVE_GAP:WRITING"]);
+    expect(p.recommended).toBe("A0");
+    expect(placementOf({ mean: -3.6, sd: 0.4 }, [{ section: "WRITING", level: "A0" }])!.borderline).toBe(false);
+  });
+
+  it("reads the objective level as A1 on thin evidence, as the sections do", () => {
+    const p = placementOf({ mean: -3.6, sd: 0.4 }, [{ section: "WRITING", level: "A1" }], { insufficient: true })!;
+    expect(p.borderline).toBe(false);
+  });
+});
+
+describe("recommendedClassOf", () => {
+  const clear = { sublevel: "B1.2", borderline: false, recommended: null };
+
+  it("is the level and its sublevel for a clear result", () => {
+    expect(recommendedClassOf("B1", clear)).toEqual({ level: "B1", sublevel: "B1.2", preA1: false });
+  });
+
+  it("is the lower candidate while borderline", () => {
+    expect(recommendedClassOf("B2", { sublevel: "B2.1", borderline: true, recommended: "B1" })).toEqual({ level: "B1", sublevel: "B2.1", preA1: false });
+  });
+
+  it("starts an A0 (Pre-A1) student in the first course, A1.1, and says why", () => {
+    expect(FIRST_CLASS).toEqual({ level: "A1", sublevel: "A1.1" });
+    expect(recommendedClassOf("A0", { sublevel: "A1.1", borderline: false, recommended: null })).toEqual({ level: "A1", sublevel: "A1.1", preA1: true });
+    // A teacher's A0 over a higher pooled sublevel still starts in the first course.
+    expect(recommendedClassOf("A0", clear)).toEqual({ level: "A1", sublevel: "A1.1", preA1: true });
+    // An A1 result whose lower candidate is A0 starts there too.
+    expect(recommendedClassOf("A1", { sublevel: "A1.1", borderline: true, recommended: "A0" })).toEqual({ level: "A1", sublevel: "A1.1", preA1: true });
+  });
+
+  it("ignores a stored recommendation that is not a level", () => {
+    expect(recommendedClassOf("B1", { sublevel: "B1.1", borderline: true, recommended: "X9" })).toEqual({ level: "B1", sublevel: "B1.1", preA1: false });
   });
 });

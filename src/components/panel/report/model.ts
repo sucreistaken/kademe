@@ -1,6 +1,8 @@
 import { createHmac } from "node:crypto";
 import { approvedFeedback, type FeedbackContent, type StudentFeedbackStore } from "@/lib/exam/student-feedback";
-import { CEFR_LEVELS, type Cefr, type Section } from "@/lib/exam/types";
+import { isResultLevel } from "@/lib/exam/cefr";
+import { recommendedClassOf, type RecommendedClass } from "@/lib/exam/placement";
+import type { ResultLevel, Section } from "@/lib/exam/types";
 
 /**
  * The printable result report, as data. Pure: the page loads the rows, this
@@ -38,17 +40,18 @@ export type ReportSource = {
   feedback?: StudentFeedbackStore | null;
 };
 
-export type ReportSkill = { section: Section; level: Cefr | null };
+export type ReportSkill = { section: Section; level: ResultLevel | null };
 
 export type ReportModel = {
   schoolName: string;
   studentName: string;
   examName: string;
   examDate: Date | null;
-  overall: Cefr;
+  /** A0 to C2; A0 is Pre-A1. */
+  overall: ResultLevel;
   skills: ReportSkill[];
-  /** Only for a placement exam with a stored placement. */
-  recommendedClass: { level: Cefr; sublevel: string | null } | null;
+  /** Only for a placement exam with a stored placement. A0 starts in the first course (`preA1`). */
+  recommendedClass: RecommendedClass | null;
   teacherName: string | null;
   finalizedAt: Date | null;
   verificationCode: string;
@@ -66,14 +69,14 @@ export function verificationCode(attemptId: string, secret: string): string {
   return createHmac("sha256", secret).update(`kademe-report:${attemptId}`).digest("hex").slice(0, 8).toUpperCase();
 }
 
-const asCefr = (v: string | null | undefined): Cefr | null => ((CEFR_LEVELS as readonly string[]).includes(v ?? "") ? (v as Cefr) : null);
+const asLevel = (v: string | null | undefined): ResultLevel | null => (isResultLevel(v) ? v : null);
 
 export function buildReport(src: ReportSource, secret: string): { ok: true; model: ReportModel } | { ok: false; reason: "NOT_FINAL" } {
-  const overall = asCefr(src.finalOverall);
+  const overall = asLevel(src.finalOverall);
   if (!reportAllowed(src.status) || !overall) return { ok: false, reason: "NOT_FINAL" };
-  const skills = src.sections.map((s) => ({ section: s as Section, level: asCefr(src.skillLevels[s]) }));
+  const skills = src.sections.map((s) => ({ section: s as Section, level: asLevel(src.skillLevels[s]) }));
   const p = src.mode === "PLACEMENT" ? src.placement : null;
-  const recommendedClass = p ? { level: (p.borderline ? asCefr(p.recommended) : null) ?? overall, sublevel: p.sublevel } : null;
+  const recommendedClass = p ? recommendedClassOf(overall, p) : null;
   return {
     ok: true,
     model: {

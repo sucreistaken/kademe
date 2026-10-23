@@ -54,14 +54,24 @@ describe("buildReport", () => {
       { section: "READING", level: "B2" },
       { section: "WRITING", level: null },
     ]);
-    expect(r.model.recommendedClass).toEqual({ level: "B1", sublevel: "B1.2" });
+    expect(r.model.recommendedClass).toEqual({ level: "B1", sublevel: "B1.2", preA1: false });
     expect(r.model.verificationCode).toBe(verificationCode(base.attemptId, "s"));
     expect(r.model.teacherName).toBe("Hoca");
   });
   it("recommends the lower class while borderline", () => {
     const r = buildReport({ ...base, placement: { sublevel: "B2.1", borderline: true, recommended: "B1" }, finalOverall: "B2" }, "s");
     if (!r.ok) throw new Error("expected ok");
-    expect(r.model.recommendedClass).toEqual({ level: "B1", sublevel: "B2.1" });
+    expect(r.model.recommendedClass).toEqual({ level: "B1", sublevel: "B2.1", preA1: false });
+  });
+  it("reports an A0 (Pre-A1) result, with A0 skills, and starts it in the first course", () => {
+    const r = buildReport({ ...base, finalOverall: "A0", skillLevels: { GRAMMAR: "A0", READING: "A1" }, placement: { sublevel: "A1.1", borderline: false, recommended: null } }, "s");
+    if (!r.ok) throw new Error("expected ok");
+    expect(r.model.overall).toBe("A0");
+    expect(r.model.skills.map((s) => s.level)).toEqual(["A0", "A1", null]);
+    expect(r.model.recommendedClass).toEqual({ level: "A1", sublevel: "A1.1", preA1: true });
+  });
+  it("still refuses a level that is not a result level", () => {
+    expect(buildReport({ ...base, finalOverall: "B3" }, "s").ok).toBe(false);
   });
   it("has no recommended class outside placement or without a stored placement", () => {
     for (const patch of [{ mode: "LEVEL_VERIFICATION" }, { placement: null }]) {
@@ -82,7 +92,7 @@ describe("buildReport", () => {
 describe("resultReport copy", () => {
   it("has the same keys in both languages and a sentence for every level", () => {
     expect(Object.keys(en.resultReport).sort()).toEqual(Object.keys(tr.resultReport).sort());
-    for (const l of ["A1", "A2", "B1", "B2", "C1", "C2"]) {
+    for (const l of ["A0", "A1", "A2", "B1", "B2", "C1", "C2"]) {
       expect(tr.resultReport.level[l as "A1"].length).toBeGreaterThan(20);
       expect(en.resultReport.level[l as "A1"].length).toBeGreaterThan(20);
     }

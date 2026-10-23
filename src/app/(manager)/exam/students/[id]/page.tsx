@@ -19,7 +19,9 @@ import { ExamRecordingPlayer } from "@/components/panel/result/recording-player"
 import { SpeakingEvidence } from "@/components/panel/result/speaking-evidence";
 import { reportAllowed } from "@/components/panel/report/model";
 import { can } from "@/lib/authorize";
-import { isObjectiveSection, CEFR_LEVELS, type Section } from "@/lib/exam/types";
+import { isObjectiveSection, RESULT_LEVELS, type Section } from "@/lib/exam/types";
+import { isPreA1, levelLabel } from "@/lib/exam/level-label";
+import { FIRST_CLASS, recommendedClassOf } from "@/lib/exam/placement";
 import { listStudents, loadIntegrityView, loadResultView } from "@/server/panel";
 import { listProblemReports } from "@/server/problem-reports";
 import { isProblemArea, splitProblemMessage } from "@/lib/exam/problem-reports";
@@ -72,6 +74,9 @@ export default async function ResultPage({
   const outcome = final ? result?.finalOutcome : computed?.verification?.outcome;
   // Results stored before the placement detail existed have no `placement`.
   const placement = computed?.placement ?? null;
+  // A0 is written "A0 (Pre-A1)" wherever there is room; an A0 placement starts in the first course.
+  const label = (level: string | null | undefined) => levelLabel(level, t("resultLevel.A0"));
+  const firstCourse = !!(overall && placement && recommendedClassOf(overall, placement).preA1);
 
   const runFor = (s: string) => view.runs.find((r) => r.section === s);
   const responsesFor = (s: string) => {
@@ -167,17 +172,21 @@ export default async function ResultPage({
           <div>
             <div className="text-[12px] uppercase tracking-[0.04em] text-muted">{t("result.overall")}</div>
             <div className={cn("tnum text-[40px] font-bold leading-none", final ? "text-ink" : "text-ink-3")}>{overall ?? "-"}</div>
+            {isPreA1(overall) ? <div className={cn("mt-1 text-[13px] font-semibold", final ? "text-ink" : "text-ink-3")}>{t("resultLevel.A0Name")}</div> : null}
           </div>
           {assessment.mode === "PLACEMENT" && placement ? (
             <div className="max-w-[300px]">
               {placement.sublevel ? (
                 <div className="tnum text-[14px] font-semibold text-ink">{t("result.sublevel", { sublevel: placement.sublevel })}</div>
               ) : null}
+              {firstCourse ? <div className="text-[12.5px] text-ink-2">{t("resultLevel.A0Class")}</div> : null}
               {placement.borderline ? (
                 <>
                   <div className="text-[13px] font-medium text-ink">{t("result.borderline")}</div>
                   {placement.recommended ? (
-                    <div className="tnum text-[12.5px] text-muted">{t("result.recommendedClass", { level: placement.recommended })}</div>
+                    <div className="tnum text-[12.5px] text-muted">
+                      {t("result.recommendedClass", { level: isPreA1(placement.recommended) ? FIRST_CLASS.sublevel : placement.recommended })}
+                    </div>
                   ) : null}
                   <ul className="mt-0.5 text-[12.5px] text-muted">
                     {placement.reasons.map((r) => (
@@ -278,6 +287,7 @@ export default async function ResultPage({
                     <span className="text-[14px] font-semibold text-ink">{t(`sectionName.${s as Section}`)}</span>
                     <span className={cn("tnum text-[18px] font-bold", decider === "TEACHER" || decider === "ENGINE" ? "text-ink" : "text-ink-3")}>
                       {skill?.level ?? "-"}
+                      {isPreA1(skill?.level) ? <span className="block text-[11px] font-semibold leading-tight">{t("resultLevel.A0Name")}</span> : null}
                     </span>
                     <span className="text-[13px] text-muted">
                       {!run?.submittedAt
@@ -327,7 +337,7 @@ export default async function ResultPage({
                 run={runFor(tab)}
                 acceptances={acceptances}
                 canGrade={canGrade && !final}
-                level={computed?.skills[tab as Section]?.level ?? null}
+                level={label(computed?.skills[tab as Section]?.level) ?? null}
               />
             )
           ) : null}
@@ -434,7 +444,7 @@ export default async function ResultPage({
                     <span className="text-[13.5px] text-ink-2">{t(`sectionName.${s as Section}`)}</span>
                     <span className="flex items-baseline gap-2">
                       <span className="text-[11.5px] text-muted">{skill?.decider ? t(`source.${override ? "TEACHER" : skill.decider}`) : ""}</span>
-                      <span className="tnum text-[15px] font-bold text-ink">{skill?.level ?? "-"}</span>
+                      <span className="tnum text-[15px] font-bold text-ink">{label(skill?.level) ?? "-"}</span>
                     </span>
                   </li>
                 );
@@ -442,7 +452,7 @@ export default async function ResultPage({
             </ul>
             <div className="mt-3 flex items-baseline justify-between border-t border-line pt-3">
               <span className="text-[13.5px] font-semibold text-ink">{t("result.overall")}</span>
-              <span className="tnum text-[20px] font-bold text-ink">{overall ?? "-"}</span>
+              <span className="tnum text-[20px] font-bold text-ink">{label(overall) ?? "-"}</span>
             </div>
             <p className="mt-1 text-[11.5px] text-muted">
               {result?.overallOverride ? `${t("source.TEACHER")}: ${result.overallOverrideReason ?? ""}` : t("result.overallRule")}
@@ -576,9 +586,9 @@ export default async function ResultPage({
                           <option value="" disabled>
                             {t("result.pickLevel")}
                           </option>
-                          {CEFR_LEVELS.map((l) => (
+                          {RESULT_LEVELS.map((l) => (
                             <option key={l} value={l}>
-                              {l}
+                              {label(l)}
                             </option>
                           ))}
                         </select>

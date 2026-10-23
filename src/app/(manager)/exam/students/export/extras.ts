@@ -2,7 +2,8 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { assessments, attempts, examAssessments, examResults, organizations } from "@/db/schema";
 import { enabledSections } from "@/lib/exam/blueprint";
-import { SECTIONS, type Cefr, type Section } from "@/lib/exam/types";
+import { recommendedClassOf } from "@/lib/exam/placement";
+import { SECTIONS, type Section } from "@/lib/exam/types";
 
 /**
  * What the student list rows do not carry: each skill's level, the recommended
@@ -12,7 +13,11 @@ import { SECTIONS, type Cefr, type Section } from "@/lib/exam/types";
  */
 export type StudentExtras = {
   skills: Partial<Record<Section, string>>;
-  recommended: Cefr | null;
+  /**
+   * The lower level a borderline placement recommends, as before; for an A0
+   * (Pre-A1) result the first course, "A1.1" (`recommendedClassOf`).
+   */
+  recommended: string | null;
   minutes: number;
 };
 
@@ -32,9 +37,12 @@ export async function loadStudentExtras(orgId: string): Promise<Map<string, Stud
       const level = final ? result?.finalSkills?.[s]?.level : result?.computed?.skills?.[s]?.level;
       if (level) skills[s] = level;
     }
+    const overall = final ? result?.finalOverall : result?.computed?.overall;
+    const placement = result?.computed?.placement;
+    const preA1Class = placement && overall ? recommendedClassOf(overall, placement) : null;
     out.set(id, {
       skills,
-      recommended: result?.computed?.placement?.recommended ?? null,
+      recommended: preA1Class?.preA1 ? preA1Class.sublevel : (placement?.recommended ?? null),
       minutes: enabledSections(exam).reduce((m, s) => m + s.durationMinutes, 0),
     });
   }

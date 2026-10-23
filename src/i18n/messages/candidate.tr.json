@@ -594,7 +594,9 @@
     "back": "Geri",
     "outcomePASS": "Beyan ettiğiniz seviye doğrulandı.",
     "outcomeFAIL": "Beyan ettiğiniz seviye bu sınavda doğrulanamadı.",
-    "outcomeINCONCLUSIVE": "Karar için yeterli kanıt yok; okulunuz sizinle iletişime geçecek."
+    "outcomeINCONCLUSIVE": "Karar için yeterli kanıt yok; okulunuz sizinle iletişime geçecek.",
+    "levelA0": "A0 (Pre-A1)",
+    "levelA0Note": "A0 (Pre-A1), Avrupa Ortak Dil Çerçevesi'nin ilk seviyesi olan A1'den önceki aşamadır: Almancada henüz en baştasınız."
   },
   "hiringFrame": {
     "help": "Yardım",

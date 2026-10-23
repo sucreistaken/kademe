@@ -1,5 +1,6 @@
 import { BrandMark } from "@/components/visual/brand-mark";
 import { CEFR_LEVELS } from "@/lib/exam/types";
+import { isPreA1 } from "@/lib/exam/level-label";
 import { dateTime } from "@/i18n/dates";
 import type { PanelLocale } from "@/i18n/locale";
 import type { managerT } from "@/i18n/manager";
@@ -32,6 +33,7 @@ const PRINT_CSS = `
 const dayFmt = (d: Date, locale: PanelLocale) =>
   new Intl.DateTimeFormat(intlTag(locale), { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Istanbul" }).format(d);
 
+/** A1 to C2 filled up to the level; A0 (Pre-A1) fills none, it lies below the bar. */
 function LevelBar({ level }: { level: string | null }) {
   const at = level ? CEFR_LEVELS.indexOf(level as (typeof CEFR_LEVELS)[number]) : -1;
   return (
@@ -45,6 +47,7 @@ function LevelBar({ level }: { level: string | null }) {
 
 export function ReportSheet({ model, t, locale }: { model: ReportModel; t: T; locale: PanelLocale }) {
   const m = model;
+  const anyPreA1 = isPreA1(m.overall) || m.skills.some((s) => isPreA1(s.level));
   return (
     <>
       <style>{PRINT_CSS}</style>
@@ -82,6 +85,7 @@ export function ReportSheet({ model, t, locale }: { model: ReportModel; t: T; lo
           <div>
             <div className="text-[12px] font-semibold uppercase tracking-[0.06em] text-accent">{t("resultReport.overall")}</div>
             <div className="tnum mt-1 text-[84px] font-bold leading-none text-accent-deep">{m.overall}</div>
+            {isPreA1(m.overall) ? <div className="mt-1 text-[15px] font-semibold text-accent-deep">{t("resultLevel.A0Name")}</div> : null}
           </div>
           <div className="min-w-0 flex-1 border-l border-accent/20 pl-8">
             {m.recommendedClass ? (
@@ -91,6 +95,7 @@ export function ReportSheet({ model, t, locale }: { model: ReportModel; t: T; lo
                   {m.recommendedClass.level}
                   {m.recommendedClass.sublevel ? <span className="ml-2 text-[15px] font-semibold">({m.recommendedClass.sublevel})</span> : null}
                 </div>
+                {m.recommendedClass.preA1 ? <p className="mt-0.5 text-[12.5px] text-ink-2">{t("resultLevel.A0Class")}</p> : null}
               </div>
             ) : null}
             <p className="text-[13.5px] leading-[1.55] text-ink-2">{t(`resultReport.level.${m.overall}`)}</p>
@@ -120,6 +125,7 @@ export function ReportSheet({ model, t, locale }: { model: ReportModel; t: T; lo
             <span />
           </div>
           <p className="mt-3 text-[11.5px] text-muted">{t("resultReport.scaleNote")}</p>
+          {anyPreA1 ? <p className="mt-1 text-[11.5px] text-muted">{t("resultLevel.A0Note")}</p> : null}
         </div>
 
         {m.feedback ? (

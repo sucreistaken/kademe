@@ -1,7 +1,7 @@
 import { pgEnum } from "drizzle-orm/pg-core";
 import { PROCTOR_EVENT_TYPES } from "../../lib/proctor/taxonomy";
 import { CANDIDATE_LOCALES } from "../../i18n/locale";
-import { CEFR_LEVELS, EXAM_MODES, ITEM_TYPES, SECTIONS } from "../../lib/exam/types";
+import { CEFR_LEVELS, EXAM_MODES, ITEM_TYPES, RESULT_LEVELS, SECTIONS } from "../../lib/exam/types";
 
 /**
  * Every fixed status list in the product, in one place. Adding a value is a
@@ -17,6 +17,12 @@ export const userRole = pgEnum("user_role", [
 export const examMode = pgEnum("exam_mode", EXAM_MODES);
 export const section = pgEnum("section", SECTIONS);
 export const cefrLevel = pgEnum("cefr_level", CEFR_LEVELS);
+/**
+ * Levels a result can carry: `cefr_level` and A0 (Pre-A1) below A1. Only the
+ * result columns use it (computed, AI and teacher levels); items, stimuli, task
+ * levels and claimed levels stay `cefr_level`, so nothing can be written for A0.
+ */
+export const resultLevel = pgEnum("result_level", RESULT_LEVELS);
 export const itemType = pgEnum("item_type", ITEM_TYPES);
 
 export const itemStatus = pgEnum("item_status", [

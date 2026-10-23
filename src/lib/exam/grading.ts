@@ -8,7 +8,7 @@ import {
   DESCRIPTORS,
   type Criterion,
 } from "./cefr-descriptors";
-import { CEFR_LEVELS, type Cefr, type ProductiveSection } from "./types";
+import { CEFR_LEVELS, RESULT_LEVELS, type Cefr, type ProductiveSection, type ResultLevel } from "./types";
 
 /**
  * AI grading of the productive sections: prompts, schema and the checks that
@@ -26,8 +26,12 @@ export type RationaleLocale = "tr" | "en";
 
 /** Flags the model may raise. */
 export const MODEL_FLAGS = ["OFF_TOPIC", "TOO_SHORT", "NOT_GERMAN", "EMPTY"] as const;
-/** Flags only this module sets, after checking the answer. */
-export const CODE_FLAGS = ["EVIDENCE_UNVERIFIED", "LEVEL_CAPPED"] as const;
+/**
+ * Flags only this module sets, after checking the answer. `A0_RAISED`: the
+ * model proposed A0 (Pre-A1) without saying the answer is empty or not German,
+ * so the level was raised to A1 (`guardPreA1`).
+ */
+export const CODE_FLAGS = ["EVIDENCE_UNVERIFIED", "LEVEL_CAPPED", "A0_RAISED"] as const;
 export const GRADING_FLAGS = [...MODEL_FLAGS, ...CODE_FLAGS] as const;
 export type GradingFlag = (typeof GRADING_FLAGS)[number];
 
@@ -41,7 +45,7 @@ export const LONG_PAUSE_MS = 2000;
 
 const criterionSchema = z.object({
   criterion: z.enum(CRITERIA),
-  level: z.enum(CEFR_LEVELS),
+  level: z.enum(RESULT_LEVELS),
   score: z.number().min(0).max(5),
   assessable: z.boolean(),
   rationale: z.string().max(2000),
@@ -50,7 +54,7 @@ const criterionSchema = z.object({
 
 export const gradingProposalSchema = z.object({
   criteria: z.array(criterionSchema).min(1).max(12),
-  overallLevel: z.enum(CEFR_LEVELS),
+  overallLevel: z.enum(RESULT_LEVELS),
   summary: z.string().max(3000),
   flags: z.array(z.enum(GRADING_FLAGS)).max(12),
 });
@@ -76,7 +80,7 @@ export const GRADING_JSON_SCHEMA: Record<string, unknown> = {
         required: ["criterion", "level", "score", "assessable", "rationale", "evidence"],
         properties: {
           criterion: { type: "string", enum: [...CRITERIA] },
-          level: { type: "string", enum: [...CEFR_LEVELS] },
+          level: { type: "string", enum: [...RESULT_LEVELS] },
           score: { type: "integer", description: "0 to 5, relative to the task level" },
           assessable: { type: "boolean" },
           rationale: { type: "string" },
@@ -88,7 +92,7 @@ export const GRADING_JSON_SCHEMA: Record<string, unknown> = {
         },
       },
     },
-    overallLevel: { type: "string", enum: [...CEFR_LEVELS] },
+    overallLevel: { type: "string", enum: [...RESULT_LEVELS] },
     summary: { type: "string" },
     flags: { type: "array", items: { type: "string", enum: [...MODEL_FLAGS] } },
   },
@@ -201,7 +205,8 @@ function commonRules(section: ProductiveSection, taskLevel: Cefr, locale: Ration
     "- Every evidence item is a short quote (at most about 12 words) copied verbatim from the answer. Never paraphrase, correct or translate a quote. Give at most 4 per criterion, fewer if the answer is short.",
     "- If the answer is empty, add the flag EMPTY. If it is mostly not in German, add NOT_GERMAN. If it does not address the task, add OFF_TOPIC. If it is far below the required length, add TOO_SHORT. Still grade whatever German there is.",
     `- Give exactly one entry for each of these criteria: ${criteria}. No other criteria.`,
-    "- level is one of A1, A2, B1, B2, C1, C2. Choose the highest level whose descriptor the answer meets consistently, not the one it touches once.",
+    "- level is one of A0, A1, A2, B1, B2, C1, C2. Choose the highest level whose descriptor the answer meets consistently, not the one it touches once.",
+    "- A0 (Pre-A1) means the answer has no German that can be scored: it is empty or not in German. Use A0 only then, for a criterion or overall, and add the flag EMPTY or NOT_GERMAN with it. Any German the candidate wrote or said, however short or faulty, is at least A1.",
     "- score is an integer from 0 to 5 relative to the task level: 0 no assessable performance, 1 far below the task level, 2 below it, 3 meets it, 4 above it, 5 clearly above it.",
     "- assessable is false only when the criterion cannot be judged from this material at all. Then explain why in the rationale and give no evidence.",
     "- rationale is one to three sentences naming what in the answer led to the level.",
@@ -496,10 +501,34 @@ export function verifyEvidence(proposal: GradingProposal, sourceText: string): G
   };
 }
 
-/** No level above one over the task level; see `capLine` for why. */
+/**
+ * A0 (Pre-A1) only for an answer with no German to score. The prompt asks the
+ * model to say so with EMPTY or NOT_GERMAN; an A0 without either flag is
+ * raised to A1 and marked `A0_RAISED`, so the teacher sees the model was
+ * overruled. The teacher can still set A0.
+ */
+export function guardPreA1(proposal: GradingProposal): GradingProposal {
+  if (proposal.flags.includes("EMPTY") || proposal.flags.includes("NOT_GERMAN")) return { ...proposal, flags: [...proposal.flags] };
+  let raised = false;
+  const lift = (level: ResultLevel): ResultLevel => {
+    if (level !== "A0") return level;
+    raised = true;
+    return "A1";
+  };
+  const criteria = proposal.criteria.map((c) => ({ ...c, level: lift(c.level) }));
+  const overallLevel = lift(proposal.overallLevel);
+  return {
+    ...proposal,
+    criteria,
+    overallLevel,
+    flags: raised ? withFlag(proposal.flags, "A0_RAISED") : [...proposal.flags],
+  };
+}
+
+/** No level above one over the task level; see `capLine` for why. A0 is below every ceiling. */
 export function capByTaskLevel(proposal: GradingProposal, taskLevel: Cefr): GradingProposal {
   const ceiling = shiftLevel(taskLevel, 1);
-  const cap = (level: Cefr) => (compareLevels(level, ceiling) > 0 ? ceiling : level);
+  const cap = (level: ResultLevel): ResultLevel => (compareLevels(level, ceiling) > 0 ? ceiling : level);
   let capped = false;
   const criteria = proposal.criteria.map((c) => {
     const level = cap(c.level);
@@ -521,6 +550,6 @@ export function capByTaskLevel(proposal: GradingProposal, taskLevel: Cefr): Grad
  * the lower median of the assessable criteria, so one strong criterion cannot
  * lift the result. Null when nothing could be assessed.
  */
-export function skillLevelFromCriteria(proposal: GradingProposal): Cefr | null {
+export function skillLevelFromCriteria(proposal: GradingProposal): ResultLevel | null {
   return medianLevel(proposal.criteria.filter((c) => c.assessable).map((c) => c.level));
 }

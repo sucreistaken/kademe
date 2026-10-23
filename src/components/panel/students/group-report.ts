@@ -1,7 +1,7 @@
-import { CEFR_LEVELS, type Cefr } from "@/lib/exam/types";
+import { RESULT_LEVELS, type ResultLevel } from "@/lib/exam/types";
 
 /** The part of a student row the group numbers need. */
-export type GroupRow = { status: string; level: Cefr | null; /** Serious flag groups the teacher has not dismissed. */ seriousFlags?: number };
+export type GroupRow = { status: string; level: ResultLevel | null; /** Serious flag groups the teacher has not dismissed. */ seriousFlags?: number };
 
 export type GroupCounts = {
   invited: number;
@@ -29,9 +29,9 @@ export function groupCounts(rows: readonly GroupRow[]): GroupCounts {
   };
 }
 
-/** Finished students per level, A1 to C2 in order (every level present, zero or not); a finished student with no level yet is not counted. */
-export function levelDistribution(rows: readonly GroupRow[]): Record<Cefr, number> {
-  const out = Object.fromEntries(CEFR_LEVELS.map((l) => [l, 0])) as Record<Cefr, number>;
+/** Finished students per level, A0 (Pre-A1) to C2 in order (every level present, zero or not); a finished student with no level yet is not counted. */
+export function levelDistribution(rows: readonly GroupRow[]): Record<ResultLevel, number> {
+  const out = Object.fromEntries(RESULT_LEVELS.map((l) => [l, 0])) as Record<ResultLevel, number>;
   for (const r of rows) if (FINISHED.has(r.status) && r.level) out[r.level] += 1;
   return out;
 }

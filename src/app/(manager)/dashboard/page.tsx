@@ -31,9 +31,9 @@ const REVIEW_TAB = "/exam/students?tab=review";
 const ATTENTION_ICON = { requests: Inbox, expiring: Clock, draft: FilePenLine, problems: MessageSquareWarning } as const;
 const TEXT_LINK = "inline-flex min-h-11 items-center gap-1.5 text-[14px] font-medium text-ink hover:underline";
 
-function Cell({ cell }: { cell: TodayCell }) {
+function Cell({ cell, preA1 }: { cell: TodayCell; preA1: string }) {
   if (cell.kind === "text") return <span className="text-[13.5px] text-ink-2">{cell.text}</span>;
-  if (cell.kind === "level") return <Level level={cell.text} muted={!cell.final} />;
+  if (cell.kind === "level") return <Level level={cell.text} muted={!cell.final} preA1={preA1} />;
   return <Dot tone={cell.tone}>{cell.text}</Dot>;
 }
 
@@ -194,7 +194,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
                         <span className={days !== null && days >= 3 ? "text-[12.5px] font-medium text-ink-2" : "text-[12.5px] text-muted"}>{waitedText(r) ?? r.subtitle}</span>
                       </span>
                       {r.cells.map((cell, i) => (
-                        <Cell key={i} cell={cell} />
+                        <Cell key={i} cell={cell} preA1={t("resultLevel.A0")} />
                       ))}
                       <span className="text-[13px] font-medium text-ink underline decoration-underline underline-offset-2">{t("today.review")}</span>
                     </Link>
@@ -242,7 +242,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
                     <Link key={r.id} href={r.href} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-canvas">
                       <span className="text-[14px] font-medium text-ink">{r.title}</span>
                       {r.cells.map((cell, i) => (
-                        <Cell key={i} cell={cell} />
+                        <Cell key={i} cell={cell} preA1={t("resultLevel.A0")} />
                       ))}
                     </Link>
                   ))

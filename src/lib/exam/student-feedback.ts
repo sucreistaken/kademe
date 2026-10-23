@@ -303,7 +303,7 @@ export function buildFeedbackMessages(input: FeedbackInput, locale: FeedbackLoca
     "- strengths: at most 3, short. Only things the summary supports, such as a high x/y in a section or a teacher's positive reason; never a level. An empty list is fine when nothing stands out.",
     "- improve: at most 4 topics, most important first, based on the skill tags with the most wrong answers. For each, say in one sentence what went wrong and fill the example field with one real wrong answer from the summary: student is what the student wrote, correct is the right form, both copied from the summary. When a topic has no example in the summary, leave both example fields as empty strings.",
     "- Keep each why to one sentence.",
-    "- Never mention a CEFR level (A1 to C2) or any level name in any field: the teacher may choose not to show the level to the student.",
+    "- Never mention a CEFR level (A0 to C2, Pre-A1 included) or any level name in any field: the teacher may choose not to show the level to the student.",
     "- nextStep: one concrete thing to practise next, in one or two sentences.",
     "- \"unanswered\" counts the questions of a skill tag that the student left empty; they are included in \"wrong\". Never use an unanswered question as an example. If a tag has unanswered questions, you may say the student left some questions blank (in Turkish, for example, \"boş bıraktığınız sorular\"), and give no example for a tag that only has blanks.",
     "- For writing and speaking you only get, sometimes, the teacher's own reason. Do not comment on text or speech you have not seen; you may restate the teacher's reason.",

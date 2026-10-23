@@ -59,4 +59,18 @@ describe("AnalysisView", () => {
   it("renders in the student's language", () => {
     expect(html(base, "de")).toContain("30 richtig");
   });
+
+  it("writes A0 as A0 (Pre-A1) and says what it means, only when the level is shown", () => {
+    const a0: StudentResult = { ...base, overall: "A0", skills: [{ section: "GRAMMAR", level: "A0" }] };
+    const out = html(a0);
+    expect(out).toContain(">A0<");
+    expect(out).toContain("A0 (Pre-A1)</span>");
+    expect(out).toContain("the stage before A1");
+    expect(html(a0, "de")).toContain("Ihr Deutsch steht noch ganz am Anfang");
+    const hidden = html({ ...a0, levelShown: false });
+    expect(hidden).not.toContain("A0");
+    expect(hidden).not.toContain("Pre-A1");
+    // Any other level gets no Pre-A1 line.
+    expect(html(base)).not.toContain("Pre-A1");
+  });
 });

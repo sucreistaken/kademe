@@ -594,7 +594,9 @@
     "back": "Back",
     "outcomePASS": "Your stated level was confirmed.",
     "outcomeFAIL": "Your stated level was not confirmed in this exam.",
-    "outcomeINCONCLUSIVE": "There is not enough evidence for a decision; your school will contact you."
+    "outcomeINCONCLUSIVE": "There is not enough evidence for a decision; your school will contact you.",
+    "levelA0": "A0 (Pre-A1)",
+    "levelA0Note": "A0 (Pre-A1) is the stage before A1, the first level of the CEFR: your German is at the very beginning."
   },
   "hiringFrame": {
     "help": "Help",

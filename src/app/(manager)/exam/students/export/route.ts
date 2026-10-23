@@ -11,6 +11,7 @@ import { loadIntegrityBriefs } from "@/components/panel/integrity/serious";
 import { loadStudentExtras } from "./extras";
 import { integrityCells } from "./integrity-columns";
 import { filterStudents, parseTab } from "./filter";
+import { levelLabel } from "@/lib/exam/level-label";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +59,8 @@ export async function GET(req: NextRequest) {
     .map((k) => t(`studentsExport.${k}` as "studentsExport.colName"))
     .concat([t("integrityFlags.colSerious"), t("integrityFlags.colOutcome")]);
 
+  // A0 is written with its name, "A0 (Pre-A1)", like on every other page.
+  const level = (l: string | null | undefined) => levelLabel(l, t("resultLevel.A0"));
   const body = rows.map((r) => {
     const x = extras.get(r.assessmentId);
     return [
@@ -67,12 +70,12 @@ export async function GET(req: NextRequest) {
       t(`status.${r.status}`),
       stamp(r.invitedAt),
       stamp(r.completedAt),
-      r.level,
-      x?.skills.GRAMMAR,
-      x?.skills.READING,
-      x?.skills.LISTENING,
-      x?.skills.WRITING,
-      x?.skills.SPEAKING,
+      level(r.level),
+      level(x?.skills.GRAMMAR),
+      level(x?.skills.READING),
+      level(x?.skills.LISTENING),
+      level(x?.skills.WRITING),
+      level(x?.skills.SPEAKING),
       x?.recommended,
       r.level ? t(r.levelFinal ? "studentsExport.resultFinal" : "studentsExport.resultDraft") : "",
       ...integrityCells({ integrity: r.integrity, brief: briefs.get(r.assessmentId) }, (o) => t(`integrity.outcome${o}`), t("integrityFlags.outcomeNone")),

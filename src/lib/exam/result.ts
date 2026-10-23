@@ -2,7 +2,7 @@ import type { PassRules } from "./blueprint";
 import { compareLevels, levelFromTheta, medianLevel, probAtOrAbove, shiftLevel } from "./cefr";
 import type { Posterior } from "./adaptive";
 import { placementOf, type Placement } from "./placement";
-import { PRODUCTIVE_SECTIONS, type Cefr, type ExamMode, type ProductiveSection, type Section } from "./types";
+import { PRODUCTIVE_SECTIONS, type Cefr, type ExamMode, type ProductiveSection, type ResultLevel, type Section } from "./types";
 
 /**
  * Turning section evidence into a result.
@@ -11,6 +11,10 @@ import { PRODUCTIVE_SECTIONS, type Cefr, type ExamMode, type ProductiveSection, 
  * give a level from a grader: first the AI's proposal, then whatever the
  * teacher confirms or sets. The overall level is the lower median of the skill
  * levels, which a teacher may override with a reason.
+ *
+ * Levels here are result levels: below the A1 band a section is A0 (Pre-A1),
+ * see `objectiveLevel`. A claimed level stays a CEFR level (A1 to C2), so A0
+ * is below every claim.
  *
  * Nothing in here decides for the teacher. `status` says what is still open,
  * and a verification is INCONCLUSIVE rather than FAIL while a skill is still
@@ -32,12 +36,12 @@ export type SectionEvidence =
       section: Section;
       kind: "PRODUCTIVE";
       /** Null while no grader has produced a level yet. */
-      level: Cefr | null;
+      level: ResultLevel | null;
       decider: Decider | null;
     };
 
 export type SkillResult = {
-  level: Cefr | null;
+  level: ResultLevel | null;
   decider: Decider | null;
   /** Objective sections only. */
   posterior?: Posterior;
@@ -55,7 +59,7 @@ export type VerificationReason =
 
 export type ComputedResult = {
   skills: Partial<Record<Section, SkillResult>>;
-  overall: Cefr | null;
+  overall: ResultLevel | null;
   /** From the objective sections pooled together. Null without any. */
   pooled: Posterior | null;
   status: "AWAITING_GRADING" | "AWAITING_REVIEW" | "READY";
@@ -86,19 +90,31 @@ export function poolPosteriors(ps: Posterior[]): Posterior | null {
   return { mean, sd: Math.sqrt(1 / precision) };
 }
 
+/**
+ * An objective section's level. Below the A1 band it is A0 (Pre-A1), but only
+ * on sufficient evidence: a section that stopped short of its minimum keeps the
+ * A1 floor, since a few answers (and the unanswered ones counted wrong) say too
+ * little to call someone a beginner without any German. Such a result never
+ * finalizes by itself; the teacher can still set A0.
+ */
+export function objectiveLevel(posterior: Posterior, insufficient: boolean): ResultLevel {
+  const { level, belowScale } = levelFromTheta(posterior.mean);
+  return belowScale && !insufficient ? "A0" : level;
+}
+
 export function computeResult(input: {
   mode: ExamMode;
   claimed: Cefr | null;
   sections: SectionEvidence[];
   rules: PassRules;
   /** Teacher overrides already saved. */
-  overrides?: { overall?: Cefr | null; skills?: Partial<Record<Section, Cefr>> };
+  overrides?: { overall?: ResultLevel | null; skills?: Partial<Record<Section, ResultLevel>> };
 }): ComputedResult {
   const skills: Partial<Record<Section, SkillResult>> = {};
   for (const e of input.sections) {
     if (e.kind === "OBJECTIVE") {
       skills[e.section] = {
-        level: levelFromTheta(e.posterior.mean).level,
+        level: objectiveLevel(e.posterior, e.insufficient),
         decider: "ENGINE",
         posterior: e.posterior,
         pending: false,
@@ -120,7 +136,7 @@ export function computeResult(input: {
 
   const levels = Object.values(skills)
     .map((s) => s!.level)
-    .filter((l): l is Cefr => l !== null);
+    .filter((l): l is ResultLevel => l !== null);
   const anyPending = Object.values(skills).some((s) => s!.pending);
   const overall = input.overrides?.overall ?? (anyPending ? null : medianLevel(levels));
 
@@ -174,7 +190,8 @@ export function computeResult(input: {
       const level = skills[section]?.level;
       return level ? [{ section, level }] : [];
     });
-    placement = placementOf(pooled, productive);
+    const insufficient = input.sections.some((e) => e.kind === "OBJECTIVE" && e.insufficient);
+    placement = placementOf(pooled, productive, { insufficient });
   }
 
   return { skills, overall, pooled, status, verification, placement };

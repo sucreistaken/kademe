@@ -61,6 +61,7 @@ import {
   type ItemAnswer,
   type ItemSnapshot,
   type Presentation,
+  type ResultLevel,
   type Section,
   type TextGapKind,
 } from "@/lib/exam/types";
@@ -186,9 +187,9 @@ export type SectionNav = { entries: NavEntry[]; review: boolean };
 export type StudentResult = {
   visibility: "NONE" | "OVERALL" | "FULL";
   released: boolean;
-  /** Present only once the teacher released it and visibility allows. */
-  overall?: Cefr | null;
-  skills?: Array<{ section: Section; level: Cefr | null }>;
+  /** Present only once the teacher released it and visibility allows. A0 is Pre-A1 (see `levelLabel`). */
+  overall?: ResultLevel | null;
+  skills?: Array<{ section: Section; level: ResultLevel | null }>;
   outcome?: "PASS" | "FAIL" | "INCONCLUSIVE" | null;
   /** True when a teacher still has to decide: writing or speaking, or an uncertain objective result. */
   awaitingTeacher: boolean;
@@ -450,12 +451,12 @@ async function finishedState(
     student.feedback = studentFacingFeedback(result.studentFeedback);
   }
   if (released && result?.status === "FINAL" && levelShown) {
-    student.overall = (result?.finalOverall as Cefr | null) ?? null;
+    student.overall = result?.finalOverall ?? null;
     student.outcome = result?.finalOutcome ?? null;
     if (cfg.resultVisibility === "FULL") {
       student.skills = Object.entries(result?.finalSkills ?? {}).map(([section, s]) => ({
         section: section as Section,
-        level: s.level as Cefr,
+        level: s.level as ResultLevel,
       }));
     }
   }

@@ -2,6 +2,7 @@ import { StatusDot, type StatusTone } from "@/components/ui/status-dot";
 import type { StudentStatus } from "@/server/panel";
 import { PanelHeader } from "@/components/manager/panel-header";
 import { intlTag } from "@/lib/format";
+import { levelLabel } from "@/lib/exam/level-label";
 
 /**
  * Small shared pieces of the teacher panel (soft look, 2026-10-14). A status
@@ -36,13 +37,14 @@ export function Dot({ tone, children, strong }: { tone: StatusTone; children: Re
   );
 }
 
-export function Level({ level, muted }: { level: string | null; muted?: boolean }) {
+/** `preA1`: how A0 reads ("A0 (Pre-A1)", `resultLevel.A0`); without it the chip shows the bare level. */
+export function Level({ level, muted, preA1 }: { level: string | null; muted?: boolean; preA1?: string }) {
   if (!level) return <span className="tnum text-[14px] font-bold text-muted">-</span>;
   return (
     <span
-      className={`tnum inline-grid min-w-9 place-items-center rounded-md border-2 px-1.5 py-px text-[13px] font-extrabold ${muted ? "border-hairline bg-subtle text-muted" : "border-line bg-surface text-ink"}`}
+      className={`tnum inline-grid min-w-9 place-items-center whitespace-nowrap rounded-md border-2 px-1.5 py-px text-[13px] font-extrabold ${muted ? "border-hairline bg-subtle text-muted" : "border-line bg-surface text-ink"}`}
     >
-      {level}
+      {preA1 ? levelLabel(level, preA1) : level}
     </span>
   );
 }

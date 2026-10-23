@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { CEFR_LEVELS } from "@/lib/exam/types";
+import { RESULT_LEVELS } from "@/lib/exam/types";
 import { groupCounts, levelDistribution, type GroupRow } from "./group-report";
 
 export type GroupReportLabels = {
@@ -13,7 +13,7 @@ export type GroupReportLabels = {
   serious: string;
   levels: string;
   levelsNone: string;
-  /** "{level} seviyesinde {n} öğrenci", already filled per level. */
+  /** "{level} seviyesinde {n} öğrenci", already filled per level (A0 with its name, "A0 (Pre-A1)"). */
   levelCount: (level: string, n: number) => string;
 };
 
@@ -21,8 +21,8 @@ export type GroupReportLabels = {
 export function GroupReport({ rows, labels }: { rows: readonly GroupRow[]; labels: GroupReportLabels }) {
   const c = groupCounts(rows);
   const dist = levelDistribution(rows);
-  const max = Math.max(1, ...CEFR_LEVELS.map((l) => dist[l]));
-  const total = CEFR_LEVELS.reduce((s, l) => s + dist[l], 0);
+  const max = Math.max(1, ...RESULT_LEVELS.map((l) => dist[l]));
+  const total = RESULT_LEVELS.reduce((s, l) => s + dist[l], 0);
   const counts: [string, number][] = [
     [labels.invited, c.invited],
     [labels.started, c.started],
@@ -50,7 +50,7 @@ export function GroupReport({ rows, labels }: { rows: readonly GroupRow[]; label
             <p className="mt-2 text-[13px] text-ink-2">{labels.levelsNone}</p>
           ) : (
             <ul className="mt-2 flex items-end gap-2" aria-label={labels.levels}>
-              {CEFR_LEVELS.map((l) => (
+              {RESULT_LEVELS.map((l) => (
                 <li key={l} className="flex flex-1 flex-col items-center gap-1" title={labels.levelCount(l, dist[l])} aria-label={labels.levelCount(l, dist[l])}>
                   <span className="tnum text-[12px] font-semibold text-ink">{dist[l]}</span>
                   <span className="flex h-12 w-full items-end rounded-md bg-subtle">

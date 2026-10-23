@@ -29,6 +29,7 @@ import {
   itemOrigin,
   itemStatus,
   itemType,
+  resultLevel,
   resultStatus,
   section,
   verificationOutcome,
@@ -196,12 +197,13 @@ export const responseGradings = pgTable(
     /** Level the task was written for. An answer can show at most one level above. */
     taskLevel: cefrLevel("task_level").notNull(),
     aiProposal: jsonb("ai_proposal").$type<GradingProposal>(),
-    aiLevel: cefrLevel("ai_level"),
+    /** Result levels (A0 to C2): an answer with no German to score can be A0. */
+    aiLevel: resultLevel("ai_level"),
     aiRunId: uuid("ai_run_id").references(() => aiRuns.id, { onDelete: "set null" }),
     aiModel: text("ai_model"),
     aiError: text("ai_error"),
     proposedAt: timestamp("proposed_at", { withTimezone: true }),
-    finalLevel: cefrLevel("final_level"),
+    finalLevel: resultLevel("final_level"),
     /** Per-criterion teacher levels, when the teacher changed them individually. */
     finalCriteria: jsonb("final_criteria").$type<Record<string, string>>(),
     decider: decider("decider"),
@@ -249,9 +251,9 @@ export const examResults = pgTable("exam_results", {
   computed: jsonb("computed").$type<ComputedResult>(),
   /** Teacher overrides of skill levels; the reason is required. */
   skillOverrides: jsonb("skill_overrides").$type<Record<string, FinalSkill>>().notNull().default({}),
-  overallOverride: cefrLevel("overall_override"),
+  overallOverride: resultLevel("overall_override"),
   overallOverrideReason: text("overall_override_reason"),
-  finalOverall: cefrLevel("final_overall"),
+  finalOverall: resultLevel("final_overall"),
   finalSkills: jsonb("final_skills").$type<Record<string, FinalSkill>>(),
   finalOutcome: verificationOutcome("final_outcome"),
   finalizedBy: uuid("finalized_by").references(() => users.id, { onDelete: "set null" }),

@@ -26,7 +26,7 @@ import {
 import type { BankCount } from "@/lib/exam/blueprint";
 import { C_TEST_SKILL_TAG, CLOZE_SKILL_TAG, OPEN_CLOZE_SKILL_TAG, WORD_BANK_SKILL_TAG } from "@/lib/exam/types";
 import { enabledSections } from "@/lib/exam/blueprint";
-import type { Cefr, Section } from "@/lib/exam/types";
+import type { Cefr, ResultLevel, Section } from "@/lib/exam/types";
 import { isUncertainResult } from "@/lib/exam/result";
 import { getStorage } from "@/lib/storage";
 
@@ -51,7 +51,8 @@ export type StudentRow = {
   mode: "PLACEMENT" | "LEVEL_VERIFICATION";
   claimed: Cefr | null;
   status: StudentStatus;
-  level: Cefr | null;
+  /** Result level (A0 to C2): the final one, else the engine's current estimate. */
+  level: ResultLevel | null;
   levelFinal: boolean;
   outcome: "PASS" | "FAIL" | "INCONCLUSIVE" | null;
   integrity: "CLEAR" | "REVIEW" | "ATTENTION" | "NONE" | "PENDING";
@@ -124,7 +125,7 @@ export async function listStudents(orgId: string): Promise<StudentRow[]> {
       mode: exam.mode,
       claimed: exam.claimedLevel,
       status,
-      level: ((final ? result?.finalOverall : result?.computed?.overall) ?? null) as Cefr | null,
+      level: (final ? result?.finalOverall : result?.computed?.overall) ?? null,
       levelFinal: final,
       outcome: final ? (result?.finalOutcome ?? null) : (result?.computed?.verification?.outcome ?? null),
       integrity,

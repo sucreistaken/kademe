@@ -101,6 +101,70 @@ describe("verification", () => {
   });
 });
 
+describe("A0 (Pre-A1)", () => {
+  const productive = (section: "WRITING" | "SPEAKING", level: "A0" | "A1" | "A2" | "B1"): SectionEvidence => ({ section, kind: "PRODUCTIVE", level, decider: "TEACHER" });
+
+  it("gives A0 to an objective section below the A1 band", () => {
+    const r = computeResult({ mode: "PLACEMENT", claimed: null, rules, sections: [obj("GRAMMAR", -3.4, 0.4)] });
+    expect(r.skills.GRAMMAR?.level).toBe("A0");
+    expect(r.overall).toBe("A0");
+    // The A1 band itself stays A1.
+    expect(computeResult({ mode: "PLACEMENT", claimed: null, rules, sections: [obj("GRAMMAR", -2.9, 0.4)] }).overall).toBe("A1");
+  });
+
+  it("keeps the A1 floor when the section stopped short of its minimum (thin evidence)", () => {
+    const thin = { ...(obj("GRAMMAR", -3.8) as Extract<SectionEvidence, { kind: "OBJECTIVE" }>), insufficient: true };
+    const r = computeResult({ mode: "PLACEMENT", claimed: null, rules, sections: [thin] });
+    expect(r.skills.GRAMMAR?.level).toBe("A1");
+    expect(r.skills.GRAMMAR?.insufficient).toBe(true);
+    expect(r.placement?.sublevel).toBe("A1.1");
+  });
+
+  it("takes A0 into the lower median of the skills like any level", () => {
+    const sections = [obj("GRAMMAR", -3.4), obj("READING", -2.9), obj("LISTENING", -2.9), productive("WRITING", "A0"), productive("SPEAKING", "A0")];
+    const r = computeResult({ mode: "PLACEMENT", claimed: null, rules, sections });
+    expect(Object.values(r.skills).map((s) => s!.level)).toEqual(["A0", "A1", "A1", "A0", "A0"]);
+    expect(r.overall).toBe("A0");
+    const one = computeResult({ mode: "PLACEMENT", claimed: null, rules, sections: [obj("GRAMMAR", BAND_CENTER.A2), obj("READING", BAND_CENTER.A2), productive("WRITING", "A0")] });
+    expect(one.overall).toBe("A2");
+  });
+
+  it("lets a teacher set A0 on a skill or the overall level", () => {
+    const r = computeResult({
+      mode: "PLACEMENT",
+      claimed: null,
+      rules,
+      sections: [obj("GRAMMAR", BAND_CENTER.A1), productive("WRITING", "A1")],
+      overrides: { skills: { WRITING: "A0" }, overall: "A0" },
+    });
+    expect(r.skills.WRITING).toMatchObject({ level: "A0", decider: "TEACHER" });
+    expect(r.overall).toBe("A0");
+  });
+
+  it("is below any claimed level: a verification fails as for any level below the claim", () => {
+    const r = computeResult({ mode: "LEVEL_VERIFICATION", claimed: "A1", rules, sections: [obj("GRAMMAR", -3.6, 0.3), productive("WRITING", "A0")] });
+    expect(r.overall).toBe("A0");
+    expect(r.verification!.outcome).toBe("FAIL");
+    expect(r.verification!.reasons).toContain("OVERALL_BELOW_CLAIMED");
+    // The skill floor for an A1 claim with offset -1 is A1 (no CEFR level below it): A0 is under it.
+    expect(r.verification!.reasons).toContain("SKILL_BELOW:GRAMMAR");
+    expect(r.verification!.reasons).toContain("SKILL_BELOW:WRITING");
+    expect(r.verification!.reasons).toContain("HOLD_PROBABILITY_LOW");
+  });
+
+  it("puts a placement just below the A1 band near the A0/A1 cut, so a teacher decides", () => {
+    const r = computeResult({ mode: "PLACEMENT", claimed: null, rules, sections: [obj("GRAMMAR", -3.1, 0.3), obj("READING", -3.1, 0.3)] });
+    expect(r.overall).toBe("A0");
+    expect(r.placement).toMatchObject({ sublevel: "A1.1", borderline: true, reasons: ["NEAR_CUT"], recommended: "A0" });
+    expect(isUncertainResult(r)).toBe(true);
+    // Far enough below the cut and precise: a clear A0 that may finalize by itself.
+    const clear = computeResult({ mode: "PLACEMENT", claimed: null, rules, sections: [obj("GRAMMAR", -3.6, 0.3), obj("READING", -3.6, 0.3)] });
+    expect(clear.overall).toBe("A0");
+    expect(clear.placement?.borderline).toBe(false);
+    expect(isUncertainResult(clear)).toBe(false);
+  });
+});
+
 describe("placement sublevel and borderline", () => {
   it("adds the sublevel from the pooled posterior", () => {
     const r = computeResult({

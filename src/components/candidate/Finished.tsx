@@ -13,6 +13,7 @@ import { SectionTile } from "@/components/visual/section-look";
 import type { StudentResult } from "@/lib/exam-flow";
 import { FINISH_DRAIN_MS, finishUploadPhase } from "@/lib/proctor/recording-status";
 import type { Section } from "@/lib/exam/types";
+import { isPreA1, levelLabel } from "@/lib/exam/level-label";
 import { useT } from "@/i18n/candidate-client";
 
 /**
@@ -195,6 +196,7 @@ export function Finished({
                   <div className="min-w-0 flex-1">
                     <div className="text-[13px] font-bold text-mint">{t("overall")}</div>
                     {result.outcome ? <p className="mt-1 text-[14px] leading-[1.5] text-ink-2">{t(`outcome${result.outcome}`)}</p> : null}
+                    {isPreA1(result.overall) ? <p className="mt-1 text-[14px] leading-[1.5] text-ink-2">{an("levelA0Note")}</p> : null}
                   </div>
                   <div className="tnum text-[44px] font-black leading-none text-ink">{result.overall ?? "-"}</div>
                 </div>
@@ -207,7 +209,7 @@ export function Finished({
                           <SectionTile section={s.section} className="size-8 rounded-md [&>svg]:size-4" />
                           <span className="flex-1 font-semibold text-ink-2">{sec(s.section)}</span>
                           <Badge tone="outline" size="md" className="tnum text-ink">
-                            {s.level ?? "-"}
+                            {levelLabel(s.level, an("levelA0")) ?? "-"}
                           </Badge>
                         </li>
                       ))}

@@ -160,7 +160,7 @@ describe("buildFeedbackInput", () => {
     const user = buildFeedbackMessages(input, "en")[1].content;
     expect(user).not.toMatch(/"(overall|level)"/);
     // The source's section levels (GRAMMAR A2, WRITING B1) do not appear anywhere in what is sent.
-    expect(user).not.toMatch(/"(A1|A2|B1|B2|C1|C2)"/);
+    expect(user).not.toMatch(/"(A0|A1|A2|B1|B2|C1|C2)"/);
   });
 });
 

@@ -3,7 +3,8 @@ import { gapOptions, pickedTextKind, type GapOption, type PickedTextKind } from 
 import { responseState, reviewRows, type ReviewMark } from "@/components/panel/result/review-rows";
 import { withPoolInstruction } from "@/lib/exam/ctest-instruction";
 import { isFormatTopic, topicLabel, topicOf, type TopicId } from "@/lib/exam/topics";
-import { CEFR_LEVELS, isCTest, isObjectiveSection, type Cefr, type ItemAnswer, type ItemSnapshot, type Section } from "@/lib/exam/types";
+import { isResultLevel } from "@/lib/exam/cefr";
+import { isCTest, isObjectiveSection, type Cefr, type ItemAnswer, type ItemSnapshot, type ResultLevel, type Section } from "@/lib/exam/types";
 
 /**
  * The detailed part of the printable report, as data: every question the
@@ -76,8 +77,8 @@ export type DetailTask = {
 export type TopicTally = { topic: TopicId; label: string; format: boolean; right: number; total: number };
 
 export type DetailSection =
-  | { section: Section; kind: "OBJECTIVE"; level: Cefr | null; correct: number; total: number; hasTfng: boolean; blocks: DetailBlock[]; topics: TopicTally[] }
-  | { section: Section; kind: "PRODUCTIVE"; level: Cefr | null; tasks: DetailTask[] };
+  | { section: Section; kind: "OBJECTIVE"; level: ResultLevel | null; correct: number; total: number; hasTfng: boolean; blocks: DetailBlock[]; topics: TopicTally[] }
+  | { section: Section; kind: "PRODUCTIVE"; level: ResultLevel | null; tasks: DetailTask[] };
 
 export type DetailResponse = {
   id: string;
@@ -113,7 +114,8 @@ export type DetailSource = {
   nameOf: Record<string, string>;
 };
 
-const asCefr = (v: string | null | undefined): Cefr | null => ((CEFR_LEVELS as readonly string[]).includes(v ?? "") ? (v as Cefr) : null);
+/** A section's final level: A0 (Pre-A1) to C2. */
+const asLevel = (v: string | null | undefined): ResultLevel | null => (isResultLevel(v) ? v : null);
 const STEM_MAX = 220;
 
 const squash = (s: string) => s.replace(/\{\{[^}]+\}\}/g, "___").replace(/\s+/g, " ").trim();
@@ -276,7 +278,7 @@ function objectiveSection(src: DetailSource, section: Section, runId: string | u
     lastStimulus = stimulusId;
     blocks[blocks.length - 1].questions.push(counted.question);
   }
-  return { section, kind: "OBJECTIVE", level: asCefr(src.skillLevels[section]), correct, total, hasTfng, blocks, topics: topicTallies(blocks) };
+  return { section, kind: "OBJECTIVE", level: asLevel(src.skillLevels[section]), correct, total, hasTfng, blocks, topics: topicTallies(blocks) };
 }
 
 function productiveSection(src: DetailSource, section: Section, runId: string | undefined): DetailSection {
@@ -313,7 +315,7 @@ function productiveSection(src: DetailSource, section: Section, runId: string | 
       summary: g?.status === "CONFIRMED" && g.aiProposal?.summary ? g.aiProposal.summary : null,
     };
   });
-  return { section, kind: "PRODUCTIVE", level: asCefr(src.skillLevels[section]), tasks };
+  return { section, kind: "PRODUCTIVE", level: asLevel(src.skillLevels[section]), tasks };
 }
 
 /** The detailed sections in exam order. Skips a section that has no run (nothing was served). */

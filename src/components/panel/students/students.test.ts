@@ -28,8 +28,13 @@ describe("group counts", () => {
     expect(groupCounts(withFlags).seriousFinished).toBe(2);
   });
 
-  it("spreads finished students over A1..C2, every level present", () => {
-    expect(levelDistribution(rows)).toEqual({ A1: 0, A2: 0, B1: 2, B2: 0, C1: 0, C2: 1 });
+  it("spreads finished students over A0..C2, every level present", () => {
+    expect(levelDistribution(rows)).toEqual({ A0: 0, A1: 0, A2: 0, B1: 2, B2: 0, C1: 0, C2: 1 });
+    expect(Object.keys(levelDistribution(rows))).toEqual(["A0", "A1", "A2", "B1", "B2", "C1", "C2"]);
+  });
+
+  it("counts A0 (Pre-A1) students in their own bar, below A1", () => {
+    expect(levelDistribution([...rows, { status: "FINAL", level: "A0" }, { status: "RELEASED", level: "A0" }]).A0).toBe(2);
   });
 
   it("ignores a level on a student who has not finished", () => {

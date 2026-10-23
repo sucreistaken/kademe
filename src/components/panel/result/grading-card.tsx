@@ -1,6 +1,7 @@
 import { confirmGrading, overrideGrading } from "@/app/(manager)/exam/students/[id]/actions";
 import type { GradingProposal } from "@/lib/exam/grading";
-import { CEFR_LEVELS } from "@/lib/exam/types";
+import { levelLabel } from "@/lib/exam/level-label";
+import { RESULT_LEVELS } from "@/lib/exam/types";
 import type { managerT } from "@/i18n/manager";
 
 type T = ReturnType<typeof managerT>;
@@ -19,6 +20,7 @@ type Grading = {
  * The AI's proposal next to the answer, criterion by criterion, with the quotes
  * it rests on. Confirming and changing are both outline buttons: the proposal
  * is a suggestion, not the screen's main action. A change needs a reason.
+ * The teacher may choose A0 (Pre-A1) for an answer with no German to score.
  */
 export function GradingCard({
   grading,
@@ -36,13 +38,14 @@ export function GradingCard({
   const p = grading.aiProposal;
   const decided = grading.status === "CONFIRMED" || grading.status === "OVERRIDDEN";
   const who = grading.decidedBy ? (nameOf[grading.decidedBy] ?? "") : "";
+  const label = (level: string | null) => levelLabel(level, t("resultLevel.A0"));
   return (
     <div className="rounded-[14px] border border-line bg-surface p-5">
       <div className="flex items-baseline justify-between gap-3">
         <div className="text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted">
           {decided ? t("source.TEACHER") : t("source.AI")}
         </div>
-        <div className="tnum text-[22px] font-bold text-ink">{grading.finalLevel ?? grading.aiLevel ?? "-"}</div>
+        <div className="tnum text-[22px] font-bold text-ink">{label(grading.finalLevel ?? grading.aiLevel) ?? "-"}</div>
       </div>
       {decided ? (
         <p className="mt-1 text-[12.5px] text-muted">
@@ -62,7 +65,7 @@ export function GradingCard({
               <li key={c.criterion} className="py-2.5">
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="text-[13.5px] font-medium text-ink">{t(`result.crit${c.criterion}` as "result.critRANGE")}</span>
-                  <span className="tnum text-[13.5px] font-semibold text-ink">{c.assessable ? c.level : "-"}</span>
+                  <span className="tnum text-[13.5px] font-semibold text-ink">{c.assessable ? label(c.level) : "-"}</span>
                 </div>
                 <p className="mt-0.5 text-[13px] leading-[1.55] text-muted">{c.assessable ? c.rationale : t("result.notAssessable")}</p>
                 {c.evidence.length ? (
@@ -93,7 +96,7 @@ export function GradingCard({
               <input type="hidden" name="gradingId" value={grading.id} />
               <input type="hidden" name="tab" value={tab} />
               <button type="submit" className="h-9 w-full rounded-[8px] border border-line-strong bg-surface text-[13.5px] font-medium text-ink hover:bg-canvas">
-                {t("result.confirm")} ({grading.aiLevel})
+                {t("result.confirm")} ({label(grading.aiLevel)})
               </button>
             </form>
           ) : null}
@@ -106,12 +109,13 @@ export function GradingCard({
                 <option value="" disabled>
                   {t("result.pickLevel")}
                 </option>
-                {CEFR_LEVELS.map((l) => (
+                {RESULT_LEVELS.map((l) => (
                   <option key={l} value={l}>
-                    {l}
+                    {label(l)}
                   </option>
                 ))}
               </select>
+              <p className="text-[12px] text-muted">{t("resultLevel.A0Pick")}</p>
               <label className="text-[12.5px] text-muted">
                 {t("result.reasonLabel")}
                 <textarea name="reason" required minLength={3} rows={2} placeholder={t("result.reasonPlaceholder")} className="mt-1 w-full rounded-[8px] border border-line bg-surface px-2 py-1.5 text-[13.5px] text-ink" />

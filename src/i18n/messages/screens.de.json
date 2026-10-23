@@ -473,7 +473,8 @@
     "levelShownNow": "Die lernende Person sieht das Niveau.",
     "levelHiddenNow": "Die lernende Person sieht das Niveau nicht, nur die Auswertung.",
     "levelSave": "Speichern",
-    "levelHint": "Die lernende Person erhält immer die Auswertung (Ergebnisse je Abschnitt und Themen), nie die Fragen."
+    "levelHint": "Die lernende Person erhält immer die Auswertung (Ergebnisse je Abschnitt und Themen), nie die Fragen.",
+    "flagA0_RAISED": "Die KI schlug A0 vor, ohne die Antwort als leer oder nicht deutsch zu markieren; auf A1 angehoben"
   },
   "integrity": {
     "title": "Integrität",
@@ -1109,7 +1110,8 @@
       "B1": "Versteht die Hauptpunkte alltäglicher Themen, kommt in üblichen Situationen wie Reisen und Arbeit zurecht und schreibt kurze zusammenhängende Texte.",
       "B2": "Versteht die Hauptpunkte komplexer Texte, unterhält sich mit Muttersprachlern ungezwungen und natürlich und schreibt ausführliche Texte.",
       "C1": "Versteht lange, anspruchsvolle Texte und implizite Bedeutungen, drückt sich flüssig und flexibel aus und schreibt gut gegliederte, ausführliche Texte.",
-      "C2": "Versteht praktisch alles Gehörte und Gelesene mühelos und gibt feine Bedeutungsnuancen genau wieder."
+      "C2": "Versteht praktisch alles Gehörte und Gelesene mühelos und gibt feine Bedeutungsnuancen genau wieder.",
+      "A0": "Steht ganz am Anfang des Deutschen: Es gibt noch keinen Sprachgebrauch, der sich auf A1 bewerten lässt."
     },
     "copyStudent": "Fassung für Lernende",
     "copyTeacher": "Fassung für Lehrkräfte",
@@ -1225,5 +1227,12 @@
     "reportTechnical": "Technische Ereignisse: {n, plural, one {# Eintrag} other {# Einträge}} ({types}).",
     "reportFrames": "Beispielbilder",
     "reportNote": "Die Auffälligkeiten sind für die Durchsicht durch die Lehrkraft sortiert und allein keine Entscheidung. Die Entscheidung ist die Integritätsentscheidung oben."
+  },
+  "resultLevel": {
+    "A0": "A0 (Pre-A1)",
+    "A0Name": "Pre-A1",
+    "A0Note": "A0 (Pre-A1): unter A1, noch keine bewertbaren Deutschkenntnisse.",
+    "A0Class": "A0 (Pre-A1): beginnt im ersten Kurs, A1.1.",
+    "A0Pick": "A0 (Pre-A1) nur, wenn es nichts Deutsches zu bewerten gibt: eine leere oder nicht deutsche Antwort."
   }
 }
