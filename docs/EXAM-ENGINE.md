@@ -342,23 +342,39 @@ metin türlerinde "metin başına yaklaşık n dakika" der (bölüm süresi / me
 beyan edilen seviye `CEFR_LEVELS` (A1-C2) kalır. Veritabanında ayrı `result_level` enum'u yalnız sonuç
 kolonlarındadır (`exam_results.final_overall`, `overall_override`, `response_gradings.ai_level`,
 `final_level`; göç 0027, yalnız tür dönüşümü); `cefr_level` değişmedi, bir madde A0 olamaz.
-- Objektif bölüm: tahmin A1 bandının altındaysa (`belowScale`) A0 (`result.ts: objectiveLevel`), ama
-  yalnız yeterli kanıtla: asgariye ulaşmadan duran (INSUFFICIENT) bölüm A1 tabanında kalır, sonuç zaten
-  kendiliğinden kesinleşmez. Öğretmen yine A0 verebilir.
-- Şans kuralı (2026-10-24, `chance.ts`): bölümün puanı saf tahminin verebileceğinin güvenilir biçimde üstünde
-  değilse bölüm, bandı ne derse desin A0'dır, gerekçe `AT_CHANCE` (öğretmen öğrenci sayfasında görür). Cevap
-  birimleriyle sayılır: tek seçimli madde 1 birim (şans 1/seçenek), Richtig/Falsch ifadesi 1/3 (iki yönlüde
-  1/2), eşleştirme çifti 1/sağ sütun, boşluklu metin boşluğu 1/4, kelime havuzu boşluğu 1/havuz, yazılan cevap
-  0, tick-n kutusu doğru/seçenek (biraz cömert, güvenli taraf). Saf tahminde doğru birim sayısının beklentisi
-  şansların toplamı, varyansı p(1-p) toplamı; `doğru <= beklenen + 2.054 * sd` (tek yönlü %98) ise şans
-  düzeyindedir. Yalnız A1-A2 maddelerinin birimleri sayılır ve en az 16 birim gerekir: gerçek bir A1 öğrencisi
-  B1-C2 malzemede de şansa yakındır (bütün bölüm sayılınca yerleştirmede A1 öğrencilerinin %3.5-6.9'u yanlış
-  A0 alıyordu), tek kısa A1/A2 metni (bankada 3-10 birim) A0'ı A1'den ayıramaz. Yerleştirme dilbilgisi 30, hızlı
-  tarama 38 birimle değerlendirilir; yerleştirmede okuma ve dinleme (tek A2 metni ya da kaydı) bu kurala girmez.
-  Hiçbir şey cevaplanmamış bölüm, seviyesi ne olursa olsun en az 8 birimle şans düzeyindedir.
+- Objektif bölüm: tahmin A1 bandının altındaysa (`belowScale`) A0 (`result.ts: objectiveLevel`), iki istisnayla
+  A1 tabanında kalır: asgariye ulaşmadan duran (INSUFFICIENT) bölüm, ve cevapları şansın güvenilir biçimde
+  üstünde olan bölüm (2026-10-24, ikinci tur: A0 "Almanca göstermiyor" demektir; boşluklar tahminde yanlış
+  sayıldığı için birkaç boşluğu doğru doldurup gerisini boş bırakan öğrenci bandın altına düşebilir). Öğretmen
+  yine A0 verebilir.
+- Şans kuralı (2026-10-24, `chance.ts`; ikinci turda yalnız cevaplanan birimlere geçti): bölümün cevapları saf
+  tahminin verebileceğinin güvenilir biçimde üstünde değilse bölüm, bandı ne derse desin A0'dır, gerekçe
+  `AT_CHANCE`; öğretmen öğrenci sayfasında test edilen sayıyı (A1-A2'de cevaplanan birimlerin kaçı doğru) ya da
+  "boş bırakıldı" görür. Doğru cevap her yerde Almanca kanıtıdır, boşluk hiçbir şeyin kanıtı değildir. Cevap
+  birimleri: tek seçimli madde 1 birim (şans 1/seçenek), Richtig/Falsch ifadesi 1/3 (iki yönlüde 1/2), eşleştirme
+  çifti 1/sağ sütun, boşluklu metin boşluğu 1/4, kelime havuzu boşluğu 1/havuz, yazılan cevap 0, tick-n kutusu
+  doğru/seçenek (biraz cömert, güvenli taraf); birim, içine bir şey yazılmış ya da seçilmişse cevaplanmıştır. Saf
+  tahminde cevaplanan birimler içindeki doğru sayısının beklentisi şansların toplamı, varyansı p(1-p) toplamı;
+  `doğru <= beklenen + 2.054 * sd` (tek yönlü %98; hiç cevaplanan birim yoksa kendiliğinden) ise şanstan iyi
+  değildir. Bölüm şans düzeyindedir, eğer HEM A1-A2 maddelerinde cevaplanan birimler HEM de bölümün bütün
+  cevaplanan birimleri şanstan iyi değilse (B1 ve üstündeki doğrular da sayılır) ve bölüm en az 16 A1-A2 birimi
+  sunmuşsa (cevaplanmış olsun olmasın). Hiçbir şey cevaplanmamış bölüm, seviyesi ne olursa olsun en az 8 sunulan
+  birimle şans düzeyindedir. Neden A1-A2 ve 16: gerçek bir A1 öğrencisi B1-C2 malzemede de şansa yakındır,
+  tek kısa A1/A2 metni (bankada 3-10 birim) A0'ı A1'den ayıramaz. Yerleştirme dilbilgisi 30, hızlı tarama 38
+  A1-A2 birimi sunar; yerleştirmede okuma ve dinleme (tek A2 metni ya da kaydı) bu kurala yalnız tamamen boşsa
+  girer. Seviye kontrolünün bölümleri küçüktür (simülasyonda madde başına bir birimle A1 beyanında 9-12, A2
+  beyanında 7-9 A1-A2 birimi); gerçek bankada Richtig/Falsch ve eşleştirme maddeleri birden çok birim sayar.
+  `AT_CHANCE`, asgariye ulaşmayan bölümün A1 tabanını da geçer (bölüm yine A0'dır); böyle bir sonuç zaten hiçbir
+  zaman kendiliğinden kesinleşmez (eksik kanıt), öğretmene gider. Öğretmen bölüme seviye verirse gerekçe düşer.
+- `CHANCE_BELOW_POOLED` (2026-10-24): şans düzeyindeki bir bölüm genel seviyeyi A0'a çekerken birleşik tahmin
+  A1 bandında ya da üstündeyse (`pooled >= -3`) sonuç bu inceleme gerekçesini taşır (`computed.reviewReasons`);
+  `isUncertainResult` hem yerleştirmede hem seviye doğrulamada doğrudur, sonuç kendiliğinden kesinleşmez ve
+  yayınlanmaz (hızlı taramanın otomatik yayını dahil), öğretmen karar verir; sayfada gerekçe yazar.
 - Yazma/konuşma: puanlanabilir Almanca yoksa (boş, Almanca değil) görev A0 olabilir. AI A0'ı yalnız EMPTY
-  ya da NOT_GERMAN bayrağıyla önerebilir; bayraksız A0, A1'e çıkarılır ve `A0_RAISED` ile işaretlenir
-  (`grading.ts: guardPreA1`). Boş cevapta AI çağrılmaz; öğretmen seçim listesinden A0'ı seçer.
+  ya da NOT_GERMAN bayrağıyla ve cevapta hiç Almanca cümle yokken önerebilir; aksi halde A0, A1'e çıkarılır ve
+  `A0_RAISED` ile işaretlenir (`grading.ts: guardPreA1`). Almanca cümle denetimi bir sezgidir
+  (`hasGermanSentence`: üç ya da daha çok kelimeli bir cümlede İngilizce ya da Türkçe olmayan iki Almanca işaret
+  kelimesi), "Almanca var" tarafına yanılır. Boş cevapta AI çağrılmaz; öğretmen seçim listesinden A0'ı seçer.
 - Genel seviye: aynı alt medyan kuralı, A0 dahil. Doğrulamada A0 her beyanın altındadır (FAIL, aynı
   gerekçe kodları); A1 beyanının "tutma olasılığı" artık `P(theta >= -3)` (önceden A1 için hep 1'di).
 - Yerleştirme: A0/A1 kesimi (-3) diğer kesimler gibi sınırda kuralına girer (`NEAR_CUT`, ±0.25; alt aday
@@ -373,16 +389,22 @@ kolonlarındadır (`exam_results.final_overall`, `overall_override`, `response_g
   boş bırakan yerleştirme öğrencisi: dilbilgisi A0 (-3.34), okuma ve dinleme A1 (-2.95, -2.93), birleşik
   -3.13; yazma ve konuşma A0 ise genel A0 ve `NEAR_CUT` ile öğretmene gider. Yukarıdaki sayılar birleşik
   tahminin bandıdır, şans kuralından öncedir.
-- Şans kuralıyla genel seviye (aynı betik, son tablo; bölüm seviyeleri + yazma ve konuşma öğrencinin gerçek
-  seviyesinde, yani doğru karar veren bir değerlendirici; % A0'a yerleşen, tohum 2026 / 7): hiç Almancası olmayan
-  öğrenci yerleştirmede tahminle %96.8 / %96.9, tahminsiz %97.3 / %97.5, hızlı taramada %97.1 / %96.4 A0 alır;
-  A1 bant merkezindeki (-2.5) öğrenci yerleştirmede %0.0, hızlı taramada %1.5 / %1.6 yanlış A0 (A1 bandının
-  tamamı %0.0 ve %2.6). Hedefler (en az %90, en çok %3) iki tohumda tutar; kapı tabloları değişmedi. Yerleştirmede
-  bu sonuç yazma ve konuşmanın A0 olmasına dayanır: yalnız objektif bölümlerle hiç Almancası olmayan öğrenci %0.1-19
-  A0 alır, çünkü okuma ve dinleme şans kuralına girmez. Denenenler (4000 öğrenci, iki tohum): bütün bölüm, z 1.645,
-  en az 8 birim (ilk öneri) yerleştirmede A1 merkezinde %3.5-6.9 yanlış A0 (yalnız objektif bölümlerle %59-99.7);
-  bütün bölüm z 1.282 %1.4-4.1; A1-A2 birimleri z 1.645 hiç Almancası olmayana %91.9-93.8, z 2.326 hızlı taramada
-  A1 merkezinde %2.8-3.0 ve bantta %4.4-4.5 yanlış A0. Seçilen: A1-A2 birimleri, z 2.054, en az 16.
+- Şans kuralıyla genel seviye (aynı betik, son tablo; `computeResult` ile: bölüm seviyeleri, yazma ve konuşma
+  öğrencinin gerçek seviyesinde yani doğru karar veren bir değerlendirici, şablonun geçme kuralları ve beyan;
+  4000 öğrenci, tohum 2026 / 7). İki davranış: "tahmin" her şeyi cevaplar, "boş" yalnız bildiğini cevaplar.
+  Hiç Almancası olmayan öğrenci (theta -8) A0 alır: yerleştirmede tahminle %95.0 / %95.5, boşla %100; hızlı
+  taramada tahminle %95.5 / %94.9, boşla %93.8 / %93.6; seviye kontrolü A1 beyanında %95.9 / %95.5 ve %100; A2
+  beyanında tahminle yalnız %45.5 / %47.1 (hedefi tutmaz; doğrulama sonucu yine %100 FAIL), boşla %100.
+  Yanlış A0, A1 bant merkezi ve A1 bandının tamamı: yerleştirmede %0.0, hızlı taramada tahminle %0.8 ve %1.7-1.8,
+  boşla %0.0; seviye kontrolünde en çok %0.4. Beyan merkezinde FAIL: A1 beyanı tahminle %7.9 / %8.3 (kuralsız
+  aynı), boşla %9.5 / %10.4 (kuralsız %40.5 / %40.0: cevaplarında Almanca olan bölümü bant A0'ına düşürmeme
+  kuralı sayesinde); A2 beyanı %0.2 ve %7.9 / %8.1 (kuralsız aynı). Kapı tabloları değişmedi. Yerleştirmede tahmin
+  eden öğrencinin A0'ı yazma ve konuşmanın A0 olmasına dayanır (yalnız objektif bölümlerle %0.1-0.4). Asgariyi 8
+  birime indirmek A2 beyanında tahmin edeni %100 A0 yapar ama A1 beyanının merkezinde FAIL'i %8'den %73'e çıkarır;
+  12 birim A2 beyanında bir şey değiştirmez, A1 beyanında FAIL'i %41'e çıkarır (1000 öğrenci, tohum 2026); en iyi
+  seçenek bugünkü ayardır. Birinci tur denemeleri (bütün
+  bölüm, z ve asgari değişkenleri) ve seçim gerekçesi aynen geçerli: bütün bölüm z 1.645 yerleştirmede A1
+  merkezinde %3.5-6.9 yanlış A0 veriyordu; seçilen A1-A2 birimleri, z 2.054, en az 16.
 
 Belirsiz sonuç öğretmene gider (2026-10-18): yazma ve konuşması olmayan bir sınav (ör. hızlı tarama) eskiden
 bitince kendiliğinden kesinleşirdi. Artık hesaplanan sonuç sınırda (`NEAR_CUT`, `HIGH_UNCERTAINTY` ya da
@@ -408,8 +430,8 @@ akıcılık ve telaffuz). Güvenceler:
 - AI yalnızca önerir (`AI_PROPOSED`); nihai seviye öğretmen eylemiyle yazılır.
 - Alıntılanan her kanıt cevabın içinde aranır, bulunamayan silinir ve işaretlenir.
 - Seviye, görev seviyesinin bir üstüyle sınırlanır.
-- A0 (Pre-A1) yalnız puanlanabilir Almanca yokken ve EMPTY ya da NOT_GERMAN bayrağıyla; yoksa A1 yapılır
-  ve `A0_RAISED` ile işaretlenir.
+- A0 (Pre-A1) yalnız puanlanabilir Almanca yokken: EMPTY ya da NOT_GERMAN bayrağıyla ve cevapta Almanca cümle
+  yokken; yoksa A1 yapılır ve `A0_RAISED` ile işaretlenir.
 - Telaffuz transkriptten ölçülemez: her zaman `assessable: false`.
 - Boş cevap için AI çağrılmaz (`AI_FAILED: EMPTY`), öğretmen karar verir.
 - Her çağrı `ai_runs`'a yazılır.
