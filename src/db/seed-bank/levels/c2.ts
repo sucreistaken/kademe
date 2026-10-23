@@ -1,6 +1,8 @@
 import type { TfngValue } from "@/lib/exam/types";
 import { cloze } from "../cloze";
 import { cTest } from "../ctest";
+import { img } from "../image";
+import { openCloze } from "../opencloze";
 import { wordBank } from "../wordbank";
 import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 
@@ -1452,6 +1454,556 @@ const speakingItems: SeedItem[] = [
     FORMAL),
 ];
 
+// Open cloze texts (OPEN): one typed word per gap, collocations and connectors.
+const grammarOpenTexts: SeedItem[] = [
+  openCloze(LEVEL, "EASY", {
+    title: "Das Ehrenamt unter Druck",
+    first: "Vereine, Rettungsdienste und Nachbarschaftsinitiativen leben von Menschen, die ihre Zeit unentgeltlich zur Verfügung stellen.",
+    body:
+      "Doch immer häufiger fehlt es [[an#praeposition]] Nachwuchs. " +
+      "Viele Vereine müssen ihr Angebot einschränken, [[falls/sofern/wenn#konnektor]] sich nicht bald neue Freiwillige finden. " +
+      "Wer heute eine Jugendgruppe leitet, muss Nachweise vorlegen, Fortbildungen besuchen und sich [[gegen#praeposition]] Haftungsrisiken absichern. " +
+      "Manch einer fragt sich, [[ob#nebensatz]] der Aufwand überhaupt noch lohnt. " +
+      "Wer ein Amt übernimmt, nimmt nicht selten erhebliche Mehrarbeit in [[Kauf#funktionsverbgefuege]]. " +
+      "Bei Ehrungen und Neujahrsempfängen wird das Engagement zwar gewürdigt, [[doch/aber/jedoch#konnektor]] mit warmen Worten allein ist niemandem gedient. " +
+      "Die Verbände fordern deshalb, den Freiwilligen bürokratische Hürden aus dem Weg [[zu#infinitiv]] räumen. " +
+      "Auch Arbeitgeber sind gefragt: Sie könnten Beschäftigte, die ein Amt bekleiden, großzügiger freistellen, und zwar [[ohne#praeposition]] dass ihnen daraus Nachteile erwachsen. " +
+      "Entscheidend ist letztlich, dass das Ehrenamt nicht als Selbstverständlichkeit gilt, [[sondern#konnektor]] als eine Leistung, die der Gesellschaft [[zugute#idiomatik]] kommt.",
+    last: "Wer das erkennt, wird die Engagierten künftig nicht nur loben, sondern entlasten.",
+    note: "fehlen an (g1), konditionales falls/sofern (g2), sich absichern gegen (g3), indirekte Frage mit ob (g4), Funktionsverbgefüge in Kauf nehmen (g5), einräumendes zwar ... doch (g6), Infinitiv mit zu nach Verb (g7), ohne dass (g8), nicht ... sondern (g9), zugute kommen (g10).",
+  }),
+  openCloze(LEVEL, "MID", {
+    title: "Wenn der Dorfladen schließt",
+    first: "Wo früher morgens die Brötchen über den Tresen gingen, hängt heute ein Schild mit der Aufschrift „Zu vermieten“.",
+    body:
+      "Die Gründe sind vielfältig. [[Zum#konnektor.zweiteilig]] einen fehlt es an Nachfolgern, [[zum#konnektor.zweiteilig]] anderen lohnt sich der Betrieb kleiner Läden kaum noch. " +
+      "Wer sich nicht [[mit#verb_praeposition]] der Rolle des bloßen Versorgers zufriedengeben wollte, versuchte es mit Postschalter, Café und Lieferdienst. " +
+      "Das Angebot wuchs, der Umsatz [[hingegen/dagegen/indes/indessen#konnektor]] kaum. " +
+      "Manche Gemeinden greifen den Betreibern [[unter#idiomatik]] die Arme, indem sie die Räume mietfrei zur Verfügung stellen. " +
+      "Andernorts haben sich Bewohner zu Genossenschaften zusammengeschlossen, [[um#infinitiv.umzu]] den Laden in eigener Regie zu führen. " +
+      "Solche Modelle funktionieren allerdings nur, [[wenn/sofern/solange/falls#konnektor]] genügend Menschen dort auch tatsächlich einkaufen. " +
+      "Viele ältere Dorfbewohner sind [[darauf#praepositionaladverb]] angewiesen, dass der Laden um die Ecke bleibt. " +
+      "Hinzu [[kommt#trennbares_verb]], dass er mehr ist als eine Verkaufsstelle: Hier trifft man sich, hier erfährt man, wer im Krankenhaus liegt. " +
+      "Wo er fehlt, geht [[eben/halt/ja#idiomatik]] auch ein Stück Dorfleben verloren.",
+    last: "Mancherorts hat man daraus bereits Konsequenzen gezogen.",
+    note: "zum einen ... zum anderen (g1, g2), sich zufriedengeben mit (g3), Gegensatz hingegen (g4), jemandem unter die Arme greifen (g5), Finalsatz um ... zu (g6), konditionales wenn/sofern (g7), angewiesen sein auf mit Pronominaladverb (g8), Hinzu kommt (g9), Modalpartikel eben (g10).",
+  }),
+  openCloze(LEVEL, "HARD", {
+    title: "Warum uns Ruinen faszinieren",
+    first: "Kaum ein Reisender lässt eine Burgruine links liegen, und selten sind Besucher so andächtig wie zwischen halb eingestürzten Mauern.",
+    body:
+      "Streng [[genommen#idiomatik]] bewundern sie weniger das Bauwerk als seinen Verfall. " +
+      "Der Reiz liegt [[darin#praepositionaladverb]], dass das Fehlende den Betrachter zum Ergänzen einlädt: Wo ein Dach fehlt, malt man sich eines aus. " +
+      "Ein vollständig erhaltenes Schloss lässt dieser Fantasie dagegen kaum [[Raum/Platz/Spielraum#idiomatik]]. " +
+      "Hinzu [[kommt#trennbares_verb]], dass Ruinen etwas Unaufdringliches haben: Sie erheben [[keinen#negation.kein]] Anspruch darauf, bewundert zu werden, und gerade deshalb tut man es. " +
+      "Die Denkmalpflege steht daher [[vor#praeposition]] einem Dilemma. " +
+      "[[Je#konnektor]] gründlicher saniert wird, [[desto/umso#konnektor]] stärker geht die Patina verloren, die Besucher so schätzen. " +
+      "Wird dagegen nichts unternommen, droht binnen weniger Jahrzehnte der endgültige Einsturz. " +
+      "Manche Fachleute plädieren deshalb für einen Mittelweg: [[So#konnektor.modal]] viel wie nötig sichern, so wenig wie möglich ergänzen. " +
+      "Ob die Besucher in hundert Jahren noch dasselbe empfinden, steht [[dahin#idiomatik]]. " +
+      "Sicher ist nur, dass die Ruine nicht [[trotz/ungeachtet#genitiv.praeposition]] ihres Verfalls anzieht, sondern seinetwegen.",
+    last: "Ein Gebäude, das nichts mehr verbergen kann, wirkt auf viele ehrlicher als jedes restaurierte Schloss.",
+    note: "streng genommen (g1), Pronominaladverb darin (g2), Raum/Spielraum lassen (g3), Hinzu kommt (g4), Anspruch erheben + Negation (g5), vor einem Dilemma stehen (g6), je ... desto (g7, g8), so viel ... so wenig (g9), dahinstehen (g10), trotz + Genitiv (g11).",
+  }),
+];
+
+// ------------------------------------------------- reading: insertion 5/7 and opinion matching
+
+const R_STREUOBST = "v3-r-c2-streuobstwiesen";
+const R_HOERBUCH = "v3-r-c2-hoerbuch-lesen";
+const R_STADTBAUM = "v3-r-c2-stadtbaeume-hitze";
+const R_WIEDERAUFBAU = "v3-r-c2-meinungen-wiederaufbau";
+const R_ANGLIZISMEN = "v3-r-c2-meinungen-anglizismen";
+const R_TEMPO30 = "v3-r-c2-meinungen-tempo30";
+
+const readingStimuliV3: SeedStimulus[] = [
+  {
+    key: R_STREUOBST,
+    section: "READING",
+    level: LEVEL,
+    title: "Die Rückkehr der Streuobstwiese",
+    topic: "Natur, Landschaft",
+    body: `Wer im Spätsommer über die Hügel der Region fährt, sieht sie noch immer: hochstämmige Apfel-, Birnen- und Zwetschgenbäume, die verstreut auf extensiv gemähten Wiesen stehen. Streuobstwiesen prägten über Jahrhunderte das Landschaftsbild, bis sie in der zweiten Hälfte des zwanzigsten Jahrhunderts massenhaft gerodet wurden. Heute gelten sie als einer der artenreichsten Lebensräume Mitteleuropas, und vielerorts bemüht man sich, sie zu erhalten.
+
+[Lücke 1]
+
+Dass ausgerechnet das Unrentable heute als schützenswert gilt, hat mit der Vielfalt zu tun, die in solchen Beständen steckt. Auf einer einzigen Wiese können Dutzende Obstsorten wachsen, und in den Baumhöhlen nisten Steinkauz, Wendehals und Gartenrotschwanz. Biologen schätzen, dass mehrere tausend Tier- und Pflanzenarten auf diesen Lebensraum angewiesen sind.
+
+[Lücke 2]
+
+Einen Ausweg haben mehrere Landkreise in der Vermarktung gefunden. Der Saft von Streuobst wird unter einer eigenen Herkunftsbezeichnung verkauft, und die Keltereien zahlen den Bewirtschaftern einen Aufpreis, der über dem üblichen Marktpreis liegt. Ein Teil der Verbraucher ist bereit, dafür mehr auszugeben.
+
+[Lücke 3]
+
+Hier setzen Patenschaftsmodelle an. Städter können einen Baum „adoptieren“, erhalten dafür im Herbst einen Teil der Ernte und werden zu Schnittkursen eingeladen. Wer einmal selbst an einem Baum geschnitten hat, so die Erfahrung der Organisatoren, bleibt der Wiese meist über Jahre verbunden.
+
+[Lücke 4]
+
+Die Betreiber der Patenschaftsprogramme räumen das ein. Sie betonen jedoch, dass es ihnen weniger um die einzelne Ernte gehe als darum, Wissen weiterzugeben, das sonst verloren ginge. Auch der fachgerechte Obstbaumschnitt werde inzwischen wieder gelehrt, weil die Nachfrage steige.
+
+[Lücke 5]
+
+Ein hochstämmiger Apfelbaum trägt erst nach etwa zehn Jahren zuverlässig Früchte, und es dauert Jahrzehnte, bis aus einer Pflanzung ein Lebensraum wird. Wer heute pflanzt, tut es deshalb vor allem für diejenigen, die in dreißig Jahren darunter sitzen.`,
+  },
+  {
+    key: R_HOERBUCH,
+    section: "READING",
+    level: LEVEL,
+    title: "Hören statt Lesen? Das Hörbuch wird erwachsen",
+    topic: "Literatur, Lesekultur",
+    body: `Vor zwanzig Jahren galt das Hörbuch noch als Notbehelf für Autofahrer und Sehbehinderte. Inzwischen hört nach Umfragen jeder dritte Erwachsene in Deutschland zumindest gelegentlich Bücher, und die Abonnementdienste verzeichnen Zuwächse, von denen der gedruckte Buchmarkt nur träumen kann. Die Frage, ob damit das Lesen aussterbe, wird seit Jahren gestellt und fällt meist zu einfach aus.
+
+[Lücke 1]
+
+Das hängt mit den Situationen zusammen, in denen gehört wird. Beim Bügeln, auf dem Weg zur Bahn oder beim Joggen ist Lesen schlicht unmöglich; Hörbücher erschließen also Zeit, die dem gedruckten Buch ohnehin nie zur Verfügung stand.
+
+[Lücke 2]
+
+Erklären lässt sich das mit dem Tempo. Wer liest, bestimmt es selbst, kann zurückspringen und an einer schwierigen Stelle verweilen. Wer hört, folgt dem Rhythmus der Sprecherin, und ein unaufmerksamer Moment bedeutet, dass ein Gedanke verloren geht. Viele Hörer spulen deshalb häufiger zurück, als sie zugeben würden.
+
+[Lücke 3]
+
+Das kann ein Gewinn sein, etwa bei Lyrik oder Dramen, die ursprünglich für den Vortrag geschrieben wurden. Es kann aber auch bevormunden: Wer einen Roman liest, hört im Kopf seine eigene Figur, wer ihn hört, die der Sprecherin. Manche Autoren lehnen Hörfassungen ihrer Bücher deshalb ab.
+
+[Lücke 4]
+
+Manche haben darauf reagiert, indem sie Hörbuch und gedrucktes Buch im Paket anbieten oder auf eigene Plattformen ausweichen. Buchhandlungen wiederum verkaufen Gutscheine für Hörbuch-Abos und treten damit in ein Geschäft ein, das sie lange den Konzernen überlassen hatten.
+
+[Lücke 5]
+
+Die Ausleihzahlen widersprechen damit der Furcht vor einem Entweder-oder: Dieselben Menschen, die Streams abrufen, leihen weiterhin gedruckte Bücher aus. Das Hörbuch erweist sich so weniger als Konkurrent denn als zusätzlicher Zugang zur Literatur.`,
+  },
+  {
+    key: R_STADTBAUM,
+    section: "READING",
+    level: LEVEL,
+    title: "Bäume gegen die Hitze der Stadt",
+    topic: "Stadtklima, Umwelt",
+    body: `An Sommertagen mit über dreißig Grad kann der Temperaturunterschied zwischen einem dicht bebauten Stadtviertel und dem Umland bis zu zehn Grad betragen. Asphalt und Beton speichern die Wärme und geben sie nachts nur langsam wieder ab, sodass es sich auch zu später Stunde kaum abkühlt. Für alte und kranke Menschen kann das gefährlich werden, und viele Städte suchen deshalb nach Wegen, ihre Straßen zu kühlen.
+
+[Lücke 1]
+
+So einfach, wie es klingt, ist das Pflanzen allerdings nicht. Unter dem Pflaster verlaufen Leitungen, Kanäle und Kabel, und für die Wurzeln bleibt oft nur eine Fläche von der Größe eines Fußabtreters. Bäume, die unter solchen Bedingungen wachsen, werden selten alt.
+
+[Lücke 2]
+
+Das hat seinen Preis. Eine solche Grube kostet ein Mehrfaches dessen, was bisher für einen Straßenbaum veranschlagt wurde, und viele Kommunen scheuen die Investition. Befürworter halten dagegen, dass sich der Aufwand rechne, weil ein gesunder Baum jahrzehntelang kühle und kaum ersetzt werden müsse.
+
+[Lücke 3]
+
+Die Wirkung dieser Maßnahmen ist jedoch begrenzt. Ein Sprühnebel kühlt nur dort, wo er fällt, und eine Fassadenbegrünung braucht im Sommer viel Wasser, das in langen Trockenphasen selbst knapp wird. Klimaforscher sehen darin deshalb eher eine Ergänzung als einen Ersatz für Bäume.
+
+[Lücke 4]
+
+Städte setzen deshalb auf Beteiligung. Anwohner dürfen mitentscheiden, welche Baumart gepflanzt wird, und übernehmen in manchen Vierteln in den ersten Jahren eine Gießpatenschaft für die Jungbäume. Wo das geschieht, so berichten Verwaltungen, werden auffallend weniger Bäume beschädigt.
+
+[Lücke 5]
+
+Wer also heute pflanzt, schützt weniger die Menschen des nächsten Sommers als die der nächsten Generation. Das ist für die Politik ein unbequemes Rechenexempel, denn die Erfolge fallen in eine Zeit, in der die Verantwortlichen längst nicht mehr im Amt sind.`,
+  },
+  {
+    key: R_WIEDERAUFBAU,
+    section: "READING",
+    level: LEVEL,
+    title: "Soll ein zerstörtes Wahrzeichen wiederaufgebaut werden? Stimmen aus der Stadt",
+    topic: "Stadtbild, Denkmalpflege",
+    body: `Person A (Jonas Weber, Architekt)
+Wer ein verlorenes Gebäude nachbaut, sollte das nicht verstecken. Ich habe nichts gegen eine Rekonstruktion, aber sie muss als solche erkennbar sein, etwa durch eine Tafel am Eingang oder eine bewusst andere Materialwahl im Inneren. Alles andere erweckt den Eindruck, die Geschichte habe nie eine Lücke gehabt.
+
+Person B (Ilse Brandt, Rentnerin)
+Ich bin in diesem Viertel aufgewachsen, und seit der Turm fehlt, erkenne ich es kaum wieder. Wenn ich ehrlich bin, ist mir egal, ob die Steine alt oder neu sind. Menschen brauchen ein Bild, an dem sie sich orientieren können, und dazu gehört ein Stadtbild, das ihnen vertraut ist.
+
+Person C (Deniz Kaya, Historiker)
+Die Zerstörung ist ein Teil dessen, was in dieser Stadt geschehen ist. Wer sie durch eine glatte Kopie überdeckt, tut so, als sei nichts passiert. Ich plädiere dafür, die Lücke auszuhalten und die Geschichte an dieser Stelle zu erzählen, statt sie zu überbauen.
+
+Person D (Maren Stolz, Stadtplanerin)
+Der Wiederaufbau würde nach den bisherigen Schätzungen rund achtzig Millionen Euro kosten. Mit diesem Betrag ließe sich eine ganze Wohnsiedlung für Menschen mit kleinem Einkommen errichten. Prestigeprojekte lösen die Probleme der Stadt nicht, sie verschieben sie nur.
+
+Person E (Paul Lenk, Tourismusverband)
+Schauen Sie sich andere Städte an, die ihr Wahrzeichen zurückbekommen haben: Die Besucherzahlen haben sich dort binnen weniger Jahre verdoppelt. Davon profitieren Gaststätten, Hotels und Läden, und wer sagt, das sei oberflächlich, übersieht, wie viele Arbeitsplätze daran hängen.
+
+Person F (Sofia Marin, Studentin)
+Ein nachgebautes Haus nützt nur dann etwas, wenn dort tatsächlich etwas stattfindet. Ich möchte keine Kulisse, in der nur Souvenirs verkauft werden. Mich würde überzeugen, wenn die Räume für Konzerte, Werkstätten und Treffen der Nachbarschaft offenstünden.`,
+  },
+  {
+    key: R_ANGLIZISMEN,
+    section: "READING",
+    level: LEVEL,
+    title: "Zu viel Englisch im Deutschen? Leserstimmen",
+    topic: "Sprache, Anglizismen",
+    body: `Person A (Katrin Obermann, Lektorin)
+Sprachen haben immer Wörter ausgeliehen, das Deutsche nicht zuletzt aus dem Französischen und Lateinischen. Ich habe nichts gegen Anglizismen, wo sie eine Lücke füllen. Wo es ein deutsches Wort gibt, das genauso gut passt, sehe ich aber keinen Grund, es zu verdrängen. Dann ist es schlicht Bequemlichkeit.
+
+Person B (Dr. Samuel Egger, Sprachwissenschaftler)
+Die Aufregung ist aus meiner Sicht unbegründet. Entscheidend für den Zustand einer Sprache sind ihr Satzbau und ihre Formen, und die bleiben vom Einzug englischer Wörter unberührt. Auch „Computer“ wird nach deutschen Regeln dekliniert, und niemand käme auf die Idee, im Plural „computers“ zu sagen.
+
+Person C (Helga Pfeiffer, Rentnerin)
+Neulich stand am Bahnhof „Service Point“ über einem Schalter, und ich habe zehn Minuten gebraucht, um zu verstehen, dass man dort Auskünfte bekommt. Ich fühle mich von dieser Sprache ausgeschlossen, besonders dann, wenn es um Dinge geht, die alle betreffen.
+
+Person D (Tobias Wern, IT-Berater)
+In meinem Fach ist Englisch Arbeitssprache, und das hat seinen Grund: Die Begriffe sind präzise und weltweit verständlich. Wer „Cloud“ oder „Backup“ übersetzt, erhält Wortungetüme, die niemand benutzt und die ungenauer sind als das Original. Die Praxis entscheidet, nicht die Grammatik.
+
+Person E (Leyla Sandmann, Lehrerin)
+Jugendliche mischen die Sprachen, weil sie damit zeigen, wer sie sind und wo sie dazugehören. Das war schon bei früheren Generationen so, nur waren die Quellen andere. Ich finde, Erwachsene sollten sich beim Kommentieren zurückhalten, denn Sprache lässt sich nicht von oben lenken.
+
+Person F (Reinhard Falk, Journalist)
+Privat soll jeder reden, wie er will. Anders ist es bei Ämtern, Verkehrsbetrieben und Redaktionen, die sich an alle wenden. Dort sollte es Leitlinien geben, und die Medien sollten mit gutem Beispiel vorangehen, statt jeden Trend mitzumachen.`,
+  },
+  {
+    key: R_TEMPO30,
+    section: "READING",
+    level: LEVEL,
+    title: "Tempo 30 in der ganzen Stadt? Stimmen zur Debatte",
+    topic: "Verkehr, Stadtleben",
+    body: `Person A (Gerda Neumann, Anwohnerin)
+Ich wohne seit dreißig Jahren an einer Hauptstraße. Nachts wache ich vom Dröhnen der Lastwagen auf, und bei geöffnetem Fenster kann ich mich im Wohnzimmer kaum unterhalten. Wenn Tempo 30 den Lärm auch nur halbiert, wäre das für mich der entscheidende Gewinn.
+
+Person B (Fabian Roth, Taxifahrer)
+Ich bin nicht gegen Sicherheit, aber ich fahre zehn Stunden am Tag und merke, wie sich die Wege ziehen. Gerade Fahrgäste, die einen Zug oder Flug erreichen müssen, haben wenig Verständnis, wenn die Fahrt länger dauert und mehr kostet. Wer so entscheidet, sollte auch Rücksicht auf diejenigen nehmen, die auf ihre Zeit angewiesen sind.
+
+Person C (Prof. Ines Albrecht, Verkehrsforscherin)
+Der Bremsweg wächst mit dem Quadrat der Geschwindigkeit. Das ist keine Meinung, sondern Physik. Die Auswertungen aus Städten, die Tempo 30 eingeführt haben, zeigen, dass die Zahl der Unfälle nur leicht zurückgeht, die der Schwerverletzten und Toten aber deutlich.
+
+Person D (Stefan Mehl, Fahrradhändler)
+Mich als Radfahrer interessiert nicht, ob neben mir mit dreißig oder fünfzig vorbeigefahren wird. Ich möchte nicht neben Autos fahren müssen. Was uns wirklich helfen würde, wären geschützte Radwege, die durchgehend befahrbar sind, statt Schildern am Straßenrand.
+
+Person E (Amara Diallo, Busfahrerin)
+Ein Bus, der im Schritttempo hinter Autos herfährt, hält keinen Fahrplan ein. Dann verpassen die Leute ihre Anschlüsse und steigen wieder ins Auto. Wenn Tempo 30 kommt, brauchen wir Busspuren, sonst schadet es dem Nahverkehr mehr, als es nützt.
+
+Person F (Walter Henning, Bürgermeister)
+Ich würde zunächst einzelne Straßen auswählen, in denen die Belastung am größten ist, und dort ein Jahr lang Erfahrungen sammeln. Danach kann man mit Zahlen entscheiden, statt mit Überzeugungen. Eine Stadt ist kein Labor, aber sie darf lernen.`,
+  },
+];
+
+const INSERT_PROMPT = "In den Text wurden fünf Absätze entfernt. Ordnen Sie jeder Lücke den passenden Absatz zu. Zwei Absätze passen nicht.";
+const GAPS_1_5 = ["Lücke 1", "Lücke 2", "Lücke 3", "Lücke 4", "Lücke 5"];
+const OPINION_PROMPT = "Welche Person vertritt welche Meinung? Eine Person bleibt übrig.";
+const PERSONS_A_F = ["Person A", "Person B", "Person C", "Person D", "Person E", "Person F"];
+
+const readingItemsV3: SeedItem[] = [
+  // Insertion 5/7: Streuobstwiese. Right order: r1 D1, r2 L3, r3 L1, r4 L5, r5 D2, r6 L2, r7 L4.
+  forText(R_STREUOBST).match("structure", "MID", INSERT_PROMPT, GAPS_1_5,
+    [
+      "Auch der Klimawandel setzt den Wiesen zu. Trockene Sommer schwächen die alten Bäume, und Schädlinge, die früher im Winter erfroren, überleben nun häufiger. Wissenschaftler empfehlen deshalb, robuste, regional bewährte Sorten zu pflanzen.",
+      "Auf Dauer trägt dieses Modell jedoch nur, wenn sich genügend Menschen finden, die die Arbeit leisten. Die Besitzer der Flächen sind oft hochbetagt, ihre Kinder wohnen in der Stadt und haben mit dem Obstbau nichts im Sinn.",
+      "Der Niedergang hatte wirtschaftliche Gründe. Niederstämmige Plantagen ließen sich maschinell bewirtschaften und lieferten verlässlichere Erträge, während der Pflege der hohen Bäume ein Aufwand gegenüberstand, den kaum jemand bezahlen wollte. Zeitweise gab es sogar Prämien für das Roden.",
+      "Politik und Verbände denken in Förderperioden von fünf oder sieben Jahren, die Bäume in Jahrzehnten. Dieser Unterschied im Zeithorizont wird in den meisten Konzepten bislang unterschätzt.",
+      "In Süddeutschland ist die Lage besonders günstig, da dort traditionell mehr Obst angebaut wurde als im Norden. Die Region gehört daher zu den Gebieten mit den größten zusammenhängenden Beständen.",
+      "Doch Artenvielfalt allein erhält keine Wiese. Die Bäume müssen geschnitten, die Flächen gemäht und überalterte Bestände durch Jungbäume ergänzt werden, und das alles bei Erträgen, die auf dem freien Markt kaum konkurrenzfähig sind.",
+      "Nicht jeder sieht darin eine Lösung. Kritiker wenden ein, dass Patenschaften zwar Aufmerksamkeit erzeugen, die laufende Pflege aber nicht ersetzen: Ein Baum, der nur einmal im Jahr besucht wird, wachse sich nicht von selbst zu einem gesunden Bestand aus.",
+    ],
+    [3, 6, 2, 7, 4],
+    "Lücke 1: Gründe für die Rodung; \"das Unrentable\" im folgenden Absatz greift den kaum bezahlbaren Aufwand auf. Lücke 2: \"Doch\" schließt an die Artenvielfalt an, \"Einen Ausweg\" im nächsten Absatz setzt ein wirtschaftliches Problem voraus. Lücke 3: \"dieses Modell\" ist die Vermarktung mit Aufpreis, \"Hier setzen Patenschaftsmodelle an\" antwortet auf den fehlenden Nachwuchs. Lücke 4: Kritik an den Patenschaften, im folgenden Absatz \"räumen das ein\". Lücke 5: Zeithorizonte, vorbereitend für den Baum, der erst nach zehn Jahren trägt. Nicht passend: der Klimawandel (kein Bezug zu den Nachbarabsätzen) und die regionale Verteilung (ohne Verbindung)."),
+
+  // Insertion 5/7: Hörbuch. Right order: r1 D1, r2 L4, r3 L2, r4 D2, r5 L5, r6 L1, r7 L3.
+  forText(R_HOERBUCH).match("structure", "HARD", INSERT_PROMPT, GAPS_1_5,
+    [
+      "Der Begriff „Hörbuch“ selbst stammt aus den Fünfzigerjahren, als erste Schallplattenlabels vollständige Lesungen herausbrachten. Die Kassette machte das Format ab den Siebzigern massentauglich.",
+      "Auch wirtschaftlich ist das Verhältnis der beiden Formen nicht spannungsfrei. Die großen Plattformen bezahlen die Verlage pro gehörter Stunde, und kleine Verlage klagen, dass die Beträge kaum die Produktionskosten decken, wenn ein Titel nur selten abgerufen wird.",
+      "Weniger eindeutig ist die Frage, ob man beim Hören dasselbe aufnimmt wie beim Lesen. Studien kommen hier zu widersprüchlichen Ergebnissen: Bei einfachen Erzählungen schneiden beide Formen ähnlich ab, bei dichten Sachtexten haben Lesende meist die Nase vorn.",
+      "Verlage rechnen deshalb damit, dass sich der Markt in den kommenden Jahren auf Hörbücher verlagern und der Druck gedruckter Bücher deutlich zurückgehen wird.",
+      "Gerade die öffentlichen Büchereien beobachten diese Entwicklung genau. Sie verleihen Hörbücher inzwischen digital, bieten Hörclubs an und führen genau Buch darüber, wer was ausleiht.",
+      "Die Zahlen sprechen zunächst für eine Ergänzung, nicht für eine Verdrängung. Wer viel hört, liest in der Regel auch viel: Die Gruppen überschneiden sich stärker, als man vermuten würde, und viele Befragte geben an, ein Hörbuch gerade deshalb zu wählen, weil sie sonst nicht zum Buch kämen.",
+      "Hinzu kommt eine Eigenheit des Mediums, die beim Lesen keine Rolle spielt: Die Stimme deutet. Eine gute Sprecherin legt Ironie, Zögern oder Spannung in den Vortrag, die im Text nur angelegt sind, und nimmt dem Zuhörer damit einen Teil der Interpretationsarbeit ab.",
+    ],
+    [6, 3, 7, 2, 5],
+    "Lücke 1: \"Das hängt mit den Situationen zusammen\" bezieht sich auf die Begründung, ein Hörbuch zu wählen, weil man sonst nicht zum Buch käme. Lücke 2: \"Erklären lässt sich das mit dem Tempo\" erklärt die unterschiedliche Aufnahme beim Hören und Lesen. Lücke 3: \"Das kann ein Gewinn sein\" bezieht sich auf die deutende Stimme. Lücke 4: \"darauf reagiert\" bezieht sich auf die geringen Vergütungen kleiner Verlage. Lücke 5: Büchereien als Beispiel; \"Die Ausleihzahlen\" folgen im Schlussabsatz. Nicht passend: der Begriff Hörbuch (Geschichte, ohne Bezug) und die Prognose zum Druck (widerspricht dem Tenor des Textes)."),
+
+  // Insertion 5/7: Stadtbäume. Right order: r1 L4, r2 D1, r3 L2, r4 L5, r5 L1, r6 D2, r7 L3.
+  forText(R_STADTBAUM).match("structure", "HARD", INSERT_PROMPT, GAPS_1_5,
+    [
+      "Ein weiteres Hindernis liegt in der Wahrnehmung der Anwohner. Wer vor dem Haus einen Baum bekommt, verliert womöglich einen Parkplatz, und Laub, Blütenstaub und klebrige Blattläuse sind keine Kleinigkeit für den, der darunter sein Auto abstellt.",
+      "Auch in anderen Ländern wird mit begrünten Dächern experimentiert. In Kopenhagen etwa sind sie bei Neubauten seit Jahren vorgeschrieben, und in Singapur wachsen ganze Gärten an den Wolkenkratzern.",
+      "Stadtplaner verfolgen daher inzwischen den Ansatz, den Wurzelraum bereits bei der Planung mitzudenken. Dazu gehören Baumgruben, die mehrere Kubikmeter groß sind, durchlässige Beläge und Rinnen, die Regenwasser gezielt zu den Wurzeln leiten.",
+      "Wie viel das alles bringt, lässt sich erst in Jahren beurteilen. Ein junger Baum kühlt kaum; seine volle Wirkung entfaltet er erst, wenn sich die Krone nach zwanzig oder dreißig Jahren geschlossen hat, und bis dahin muss er sich gegen Trockenheit, Streusalz und Bauarbeiten behaupten.",
+      "Der naheliegendste Weg ist der Baum. Eine große Linde verdunstet an einem heißen Tag mehrere hundert Liter Wasser und kühlt damit ihre Umgebung spürbar; zugleich wirft sie Schatten, der die Oberfläche der Straße um mehr als zwanzig Grad kühler hält, als die Sonne es täte.",
+      "Die Hitzetage haben in den vergangenen Jahrzehnten deutlich zugenommen. Während in den Fünfzigerjahren im Schnitt drei Tage pro Jahr über dreißig Grad lagen, sind es heute mehr als zwanzig.",
+      "Wo Bäume nicht möglich sind, behelfen sich manche Städte mit Alternativen. Begrünte Fassaden, helle Dachanstriche und Sprühnebel an Plätzen senken die gefühlte Temperatur, ohne dass dafür Wurzeln Platz brauchen.",
+    ],
+    [5, 3, 7, 1, 4],
+    "Lücke 1: \"Der naheliegendste Weg\" beantwortet die Suche nach Wegen aus der Einleitung, im nächsten Absatz \"So einfach, wie es klingt\". Lücke 2: \"Stadtplaner ... daher\" reagiert auf die engen Wurzelbereiche, \"Das hat seinen Preis\" bezieht sich auf die großen Baumgruben. Lücke 3: Alternativen zum Baum, im nächsten Absatz \"Die Wirkung dieser Maßnahmen\". Lücke 4: \"Ein weiteres Hindernis\" mit Anwohnern, \"deshalb auf Beteiligung\". Lücke 5: Zeithorizont des Baumwachstums, im nächsten Absatz \"Wer also heute pflanzt\". Nicht passend: begrünte Dächer im Ausland (nur ein Teil der Alternativen, ohne Bezug zum Absatz danach) und die Zunahme der Hitzetage (wiederholt die Einleitung)."),
+
+  // Opinion matching: Wiederaufbau (unused: F).
+  forText(R_WIEDERAUFBAU).match("attitude", "MID", OPINION_PROMPT,
+    [
+      "Nachgebaute Gebäude sollten für alle als Nachbau kenntlich gemacht werden.",
+      "Das Geld sollte besser in den Bau von Wohnungen für Menschen mit geringem Einkommen fließen.",
+      "Die Zerstörung gehört zur Geschichte der Stadt und sollte sichtbar bleiben.",
+      "Vom Wiederaufbau profitieren vor allem Betriebe und Beschäftigte vor Ort.",
+      "Für die Verbundenheit der Bewohner mit ihrer Stadt zählt ein vertrautes Stadtbild mehr als die Echtheit der Bausubstanz.",
+    ],
+    PERSONS_A_F, [1, 4, 3, 5, 2],
+    "A fordert Kennzeichnung (Tafel), D rechnet die Kosten gegen Wohnungsbau, C will die Lücke aushalten, E nennt Besucherzahlen und Arbeitsplätze, B nennt Vertrautheit des Stadtbildes bei gleichgültiger Echtheit. F (Nutzung statt Kulisse) wird von keiner Aussage gemeint."),
+
+  // Opinion matching: Anglizismen (unused: E).
+  forText(R_ANGLIZISMEN).match("attitude", "HARD", OPINION_PROMPT,
+    [
+      "Die Grammatik des Deutschen wird von englischen Wörtern nicht verändert.",
+      "Öffentliche Stellen und Medien sollten bei der Wortwahl eine Vorbildfunktion übernehmen.",
+      "Englische Wörter sind nur dort gerechtfertigt, wo das Deutsche keine gleichwertige Entsprechung hat.",
+      "Manche Menschen fühlen sich von englischen Bezeichnungen im öffentlichen Raum ausgeschlossen.",
+      "Übersetzte Fachbegriffe sind oft ungenauer und umständlicher als das englische Original.",
+    ],
+    PERSONS_A_F, [2, 6, 1, 3, 4],
+    "B: Satzbau und Formen bleiben unberührt. F: Leitlinien für Ämter und Medien. A: nur dort, wo eine Lücke gefüllt wird. C: ausgeschlossen am Bahnhof. D: Wortungetüme, ungenauer. E (Jugendliche mischen die Sprachen, Erwachsene sollen sich zurückhalten) wird von keiner Aussage gemeint."),
+
+  // Opinion matching: Tempo 30 (unused: B).
+  forText(R_TEMPO30).match("attitude", "HARD", OPINION_PROMPT,
+    [
+      "Für sie ist die Verminderung des Verkehrslärms der wichtigste Grund für die Maßnahme.",
+      "Er befürchtet, dass durch langsameren Verkehr der öffentliche Nahverkehr unzuverlässiger wird.",
+      "Sie stützt ihre Haltung auf Erkenntnisse darüber, wie schwer Unfälle ausgehen.",
+      "Er hält durchgehende Radwege für wirksamer als die Verringerung der Geschwindigkeit.",
+      "Er will die Maßnahme zunächst in ausgewählten Straßen erproben und dann entscheiden.",
+    ],
+    PERSONS_A_F, [1, 5, 3, 4, 6],
+    "A schildert nächtlichen Lärm. E: Busse halten bei langsamem Verkehr den Fahrplan nicht ein. C: weniger Schwerverletzte und Tote. D: geschützte Radwege statt Schilder. F: einzelne Straßen, ein Jahr Erfahrungen. B (Taxifahrer, längere Fahrten) wird von keiner Aussage gemeint."),
+];
+
+// ------------------------------------------------- listening: group discussions (three or four voices, played once)
+
+type Voice = "A" | "B" | "C" | "D";
+
+function discussion(
+  key: string,
+  title: string,
+  topic: string,
+  speakers: Array<{ label: string; voice: Voice }>,
+  lines: string[],
+): SeedStimulus {
+  return { key, section: "LISTENING", level: LEVEL, title, topic, speakers, body: lines.join("\n"), maxPlays: 1 };
+}
+
+const L_ZUCKER = "v3-l-c2-podium-zuckersteuer";
+const L_LANDARZT = "v3-l-c2-landarzt-gemeinde";
+const L_MUSIK = "v3-l-c2-musik-maschine";
+
+const listeningStimuliV3: SeedStimulus[] = [
+  discussion(L_ZUCKER, "Podiumsgespräch: Eine Abgabe auf Zucker?", "Gesundheit, Ernährung",
+    [
+      { label: "Moderatorin", voice: "A" },
+      { label: "Kessel", voice: "B" },
+      { label: "Yilmaz", voice: "C" },
+      { label: "Lorenz", voice: "D" },
+    ],
+    [
+      "Moderatorin: Guten Abend und willkommen zum Podiumsgespräch. Heute geht es um die Frage, ob der Staat auf stark gezuckerte Getränke eine Sonderabgabe erheben soll. Herr Doktor Kessel, Sie sind Ernährungsmediziner, Sie fangen an.",
+      "Kessel: Ja, also, ich mache es kurz, weil die Daten ziemlich klar sind. In Ländern, die so eine Abgabe eingeführt haben, ist der Verbrauch von Limonaden innerhalb von zwei Jahren um etwa ein Fünftel gesunken, also um zwanzig Prozent, nicht um zwei. Und das wirkt, weil viele Menschen gar nicht wissen, wie viel Zucker in einer Flasche steckt. Bei der Halbliterflasche sind es ungefähr fünfzehn Stück Würfelzucker. Fünfzehn!",
+      "Moderatorin: Herr Yilmaz, Sie stellen Getränke her. Teilen Sie die Zahlen?",
+      "Yilmaz: Die Zahlen schon, die Schlussfolgerung nicht. Ich habe nichts gegen Aufklärung, aber so eine Steuer trifft, na ja, vor allem die, die ohnehin wenig Geld haben. Und wissen Sie, was wir getan haben, ohne dass jemand es verlangt hätte? Wir haben die Rezepturen in den letzten fünf, nein, in den letzten sechs Jahren um ein Drittel zuckerärmer gemacht. Das geht schneller und freiwillig, wenn man uns lässt.",
+      "Lorenz: Freiwillig, das höre ich seit Jahren. Entschuldigung, dass ich dazwischengehe, aber als Mutter von drei Kindern sehe ich im Supermarkt, wie die Kleinen vor dem Regal stehen, genau auf Augenhöhe mit den bunten Flaschen. Da hilft keine Aufklärung. Mir wäre allerdings wichtig, dass die Einnahmen nicht im Haushalt verschwinden, sondern in Obst für die Kantinen fließen, sonst wird die Abgabe zur reinen Geldquelle.",
+      "Kessel: Da widerspreche ich nur halb. Eine feste Zweckbindung ist politisch heikel, aber Frau Lorenz hat recht, dass die Akzeptanz steigt, wenn man sieht, wohin das Geld geht.",
+      "Yilmaz: Und wenn der Preis steigt, kaufen die Leute eben im Nachbarland ein. Das erleben wir an den Grenzen schon heute.",
+      "Moderatorin: Frau Lorenz, trifft die Abgabe nicht doch die Falschen?",
+      "Lorenz: Kurzfristig ja, jeder Euro zählt bei einer Familie mit knappem Budget. Aber langfristig sind es genau diese Familien, die später mit Diabetes zu tun haben. Ich zahle lieber heute etwas mehr, als später zu pflegen, so hart sage ich das.",
+      "Kessel: Und die Hersteller haben bisher immer dann Zucker reduziert, wenn Druck da war, Herr Yilmaz. Der Druck kam nie von allein.",
+      "Yilmaz: Das ist unfair, aber gut, ich merke, wir kommen heute nicht zusammen.",
+      "Moderatorin: Dann bedanke ich mich bei Ihnen dreien.",
+    ]),
+  discussion(L_LANDARZT, "Radiogespräch: Wer behandelt uns auf dem Land?", "Gesundheit, Landleben",
+    [
+      { label: "Moderatorin", voice: "A" },
+      { label: "Hansen", voice: "B" },
+      { label: "Schreiber", voice: "D" },
+    ],
+    [
+      "Moderatorin: In vielen Landkreisen findet sich für frei werdende Hausarztpraxen kein Nachfolger. Ich spreche mit Frau Schreiber, Bürgermeisterin einer Gemeinde mit viertausend Einwohnern, und mit Doktor Hansen, der seit fünfunddreißig Jahren als Landarzt arbeitet. Frau Schreiber, wie ernst ist die Lage bei Ihnen?",
+      "Schreiber: Sehr ernst. Von ursprünglich vier Praxen sind uns zwei geblieben, und von diesen beiden hört eine in zwei, höchstens drei Jahren auf. Wir haben, ach was, wir haben alles probiert: eine Anzeige geschaltet, Wohnungen angeboten, sogar einen Zuschuss zur Praxiseinrichtung, zwölftausend Euro. Gemeldet hat sich: niemand.",
+      "Hansen: Das überrascht mich leider nicht. Wissen Sie, die jungen Kolleginnen und Kollegen scheuen nicht die Arbeit auf dem Land. Sie scheuen die Einzelpraxis. Wer allein in einer Praxis sitzt, hat keinen Urlaub, keine Vertretung, und nachts klingelt das Telefon. Ich habe das jahrzehntelang gemacht und würde es meinen Kindern, na ja, nicht unbedingt empfehlen.",
+      "Moderatorin: Was wäre die Alternative?",
+      "Hansen: Gemeinschaftspraxen. Drei, vier Ärzte, die sich abwechseln, dazu eine medizinische Fachangestellte mit erweiterten Aufgaben. Das funktioniert, aber es kostet eine Gemeinde Räume und Geduld.",
+      "Schreiber: Räume hätten wir, die alte Grundschule steht seit Jahren leer. Meine Sorge ist eine andere: Wenn wir das aufbauen, und dann kommt wieder niemand, hat die Gemeinde viel Geld versenkt, und das müsste ich im Gemeinderat erklären.",
+      "Hansen: Das Risiko bleibt, ja. Aber das Warten ist auch eine Entscheidung. Und ein Stück weit helfen Videosprechstunden. Bei Rezepten oder Befunden braucht niemand eine Stunde Fahrt. Für den Hausbesuch bei einer alten Dame ersetzt es allerdings nichts.",
+      "Schreiber: Bei uns haben viele Ältere nicht einmal Internet, das muss man ehrlich sagen. Zweiunddreißig Prozent der Haushalte, so die letzte Erhebung, ach nein, zweiundvierzig Prozent. Das ist fast die Hälfte.",
+      "Moderatorin: Herr Doktor Hansen, wie lange werden Sie selbst noch arbeiten?",
+      "Hansen: Eigentlich wollte ich mit fünfundsechzig aufhören. Jetzt bin ich siebzig. Wenn bis Jahresende niemand kommt, mache ich noch ein Jahr, aber nicht länger.",
+    ]),
+  discussion(L_MUSIK, "Gesprächsrunde: Musik aus der Maschine", "Kultur, Musik und Technik",
+    [
+      { label: "Moderatorin", voice: "A" },
+      { label: "Reuter", voice: "B" },
+      { label: "Pohl", voice: "C" },
+      { label: "Alvarez", voice: "D" },
+    ],
+    [
+      "Moderatorin: Ein Computer komponiert ein Stück, das man für Klaviermusik des neunzehnten Jahrhunderts halten könnte. Ist das Kunst? Wir sprechen mit dem Komponisten Matthias Reuter, der Musikproduzentin Carla Alvarez und dem Musikwissenschaftler Doktor Pohl. Herr Reuter, Sie zuerst.",
+      "Reuter: Ich versuche, nicht beleidigt zu sein. Nein, im Ernst: Ich benutze solche Programme selbst, um Ideen zu sammeln. Aber ein Stück wird für mich erst Kunst, wenn jemand etwas riskiert hat. Eine Maschine riskiert nichts. Sie rechnet aus, was wahrscheinlich gefällt.",
+      "Alvarez: Das klingt schön, aber, Moment, Matthias, bei meiner Arbeit sieht es ganz anders aus. Ich produziere Musik für Werbung und Filme, und für Hintergrundmusik, die niemand bewusst hört, bestelle ich heute nur noch generierte Stücke. Es geht schneller und kostet ein Zehntel. Ob das Kunst ist, ist mir an dieser Stelle völlig gleichgültig.",
+      "Pohl: Und genau da liegt das eigentliche Problem, finde ich, und nicht in der Frage nach der Kunst. Wovon sollen Komponistinnen und Komponisten künftig leben, wenn der Markt für Gebrauchsmusik wegbricht? Die Konzertmusik haben wir noch, aber die Berufsanfänger haben sich bisher durch genau diese Aufträge finanziert.",
+      "Reuter: Das ist ein Argument, das ich ernst nehme. Ich war mit zwanzig auch froh um jeden Auftrag, auch für eine Zahnpasta-Werbung, ich gebe es zu.",
+      "Moderatorin: Frau Alvarez, gäbe es einen Ausweg?",
+      "Alvarez: Kennzeichnung. Wenn ein Stück generiert wurde, soll das draufstehen, und die Datenbanken, aus denen die Programme lernen, sollten die Urheber bezahlen. Aktuell lernt die Software an Musik, die irgendjemand geschrieben hat, und bekommt dafür nicht einen Cent. Nicht einen!",
+      "Pohl: Da bin ich bei Ihnen. Rechtlich ist das übrigens offen. In dreißig Ländern, ach, in drei Dutzend Ländern, wird gerade darüber gestritten, und die Antworten fallen unterschiedlich aus.",
+      "Reuter: Ich würde noch etwas ergänzen: Für das Publikum zählt auch die Geschichte hinter dem Stück. Warum hat jemand das geschrieben, nach dem Tod seiner Mutter, nach einem Streit? Bei einer Maschine gibt es keine Geschichte, und ich glaube, dass uns das auf Dauer fehlen wird.",
+      "Pohl: Ob es fehlt oder ob wir uns daran gewöhnen, ist offen. Es gab dieselbe Debatte, als die Fotografie die Malerei bedrohte, und die Malerei hat sich verändert, nicht erledigt.",
+      "Moderatorin: Ein gutes Schlusswort. Ich danke Ihnen dreien.",
+    ]),
+];
+
+const lZ = forClip(L_ZUCKER);
+const lA = forClip(L_LANDARZT);
+const lM = forClip(L_MUSIK);
+
+const listeningItemsV3: SeedItem[] = [
+  lZ.match("attitude", "MID",
+    "Wer vertritt die folgende Meinung: Herr Kessel, Herr Yilmaz, Frau Lorenz oder keiner von den dreien?",
+    [
+      "Die Einnahmen sollten zweckgebunden verwendet werden.",
+      "Die Hersteller ändern ihre Rezepte nur unter äußerem Druck.",
+      "Freiwillige Maßnahmen der Branche wirken schneller als staatliche Eingriffe.",
+      "Die Abgabe sollte auf Süßigkeiten ausgedehnt werden.",
+    ],
+    ["Herr Kessel", "Herr Yilmaz", "Frau Lorenz", "keiner von den dreien"],
+    [3, 1, 2, 4],
+    "1 Lorenz: Obst für die Kantinen statt Haushalt. 2 Kessel: \"Der Druck kam nie von allein.\" 3 Yilmaz: \"schneller und freiwillig, wenn man uns lässt\". 4 niemand: Süßigkeiten werden nicht erwähnt."),
+  lZ.choice("detail", "MID",
+    "Um wie viel ist laut Herrn Kessel der Verbrauch von Limonade nach Einführung der Abgabe gesunken?",
+    [
+      "um etwa zwei Prozent",
+      "um etwa zwanzig Prozent",
+      "um etwa ein Drittel",
+      "um etwa fünfzehn Prozent",
+    ], "b",
+    "\"um etwa ein Fünftel gesunken, also um zwanzig Prozent, nicht um zwei\". Ein Drittel nennt Herr Yilmaz für die Zuckerreduktion der Rezepte, fünfzehn sind die Würfelzucker in einer Halbliterflasche."),
+
+  lA.tfng("detail", "MID",
+    [
+      ["Die Gemeinde hat bereits einen finanziellen Zuschuss für die Praxiseinrichtung in Aussicht gestellt.", "R"],
+      ["Doktor Hansen empfiehlt Einzelpraxen, weil sie mehr Freiheit bieten.", "F"],
+      ["Die Gemeinde plant, das leerstehende Schulgebäude zu verkaufen.", "NG"],
+    ],
+    "1 R: zwölftausend Euro Zuschuss. 2 F: Hansen nennt die Einzelpraxis als Grund, warum junge Ärzte abgeschreckt werden, und empfiehlt Gemeinschaftspraxen. 3 NG: Das Gebäude wird als mögliche Räumlichkeit genannt, ein Verkauf kommt nicht vor."),
+  lA.short("notes", "HARD",
+    "Wie viel Prozent der Haushalte haben laut Frau Schreiber kein Internet? Tragen Sie die Zahl ein.",
+    ["42", "42 Prozent", "42%", "zweiundvierzig", "zweiundvierzig Prozent"],
+    "Sie nennt erst zweiunddreißig, korrigiert sich dann aber: \"ach nein, zweiundvierzig Prozent\"."),
+
+  lM.match("attitude", "HARD",
+    "Wer vertritt die folgende Meinung: Herr Reuter, Frau Alvarez, Herr Pohl oder keiner von den dreien?",
+    [
+      "Für Hintergrundmusik ist die Frage, ob es Kunst ist, unwichtig.",
+      "Der Einsatz solcher Programme sollte grundsätzlich verboten werden.",
+      "Ein Stück wird erst durch ein künstlerisches Wagnis zur Kunst.",
+      "Die wirtschaftliche Lage junger Komponisten ist das größere Problem.",
+    ],
+    ["Herr Reuter", "Frau Alvarez", "Herr Pohl", "keiner von den dreien"],
+    [2, 4, 1, 3],
+    "1 Alvarez: \"völlig gleichgültig\". 2 niemand: Alle benutzen oder akzeptieren die Programme. 3 Reuter: \"Eine Maschine riskiert nichts.\" 4 Pohl: Markt für Gebrauchsmusik bricht weg, Berufsanfänger verlieren Aufträge."),
+  lM.choice("inference", "HARD",
+    "Warum erwähnt Herr Pohl die Fotografie?",
+    [
+      "Um zu zeigen, dass neue Technik Kunstformen eher wandelt als beendet.",
+      "Um zu belegen, dass Maschinen schon früher Künstler ersetzt haben.",
+      "Um zu begründen, dass Urheber auch früher kein Geld bekamen.",
+      "Um zu erklären, weshalb sich das Publikum heute wieder für Handwerk interessiert.",
+    ], "a",
+    "\"die Malerei hat sich verändert, nicht erledigt\": Die Fotografie ist ein Beispiel für eine Technik, die eine Kunstform nicht beendet, sondern verändert hat. Die anderen Optionen werden nicht gesagt."),
+];
+
+// ------------------------------------------------- speaking: pictures (describe, interpret, argue a position)
+
+function pictureTask(
+  imageId: string,
+  within: Within,
+  timing: { thinkSeconds: number; answerSeconds: number; maxTakes: number },
+  prompt: string,
+  contentPoints: string[],
+  studentPoints: string[],
+  explanation: string,
+): SeedItem {
+  return {
+    section: "SPEAKING",
+    level: LEVEL,
+    type: "SPEAKING_PROMPT",
+    skillTag: "speaking.picture",
+    within,
+    prompt,
+    content: { kind: "SPEAKING", ...timing, images: [img(imageId)] },
+    key: { kind: "NONE" },
+    rubric: { contentPoints, studentPoints },
+    explanation,
+  };
+}
+
+const speakingPictureItems: SeedItem[] = [
+  pictureTask("scene.c2.art-museum", "MID", { thinkSeconds: 60, answerSeconds: 150, maxTakes: 1 },
+    "Sehen Sie sich das Bild an. Beschreiben Sie kurz, was zu sehen ist, und deuten Sie die Szene: Was sagt sie über den Umgang mit Kunst aus? Beziehen Sie dann Stellung zu der Frage, ob staatliche Museen kostenlos zugänglich sein sollten. Begründen Sie Ihre Position und gehen Sie auf einen möglichen Einwand ein.",
+    [
+      "beschreibt knapp und genau, was auf dem Bild zu sehen ist (Besucher betrachten Gemälde in einem Kunstmuseum)",
+      "deutet die Szene, z. B. Aufmerksamkeit, Ruhe, Abstand, Bildung, kultureller Anspruch",
+      "bezieht Position zum freien Eintritt und stützt sie mit mindestens zwei Argumenten (Zugang für alle, Finanzierung, Wertschätzung)",
+      "geht auf einen Gegenstandpunkt ein und wägt ab, statt nur zu behaupten",
+      "gegliederter, flüssiger Vortrag mit differenziertem Wortschatz",
+    ],
+    [
+      "das Bild beschreiben",
+      "die Szene deuten",
+      "begründet zum Eintritt in staatliche Museen Stellung nehmen",
+      "auf einen Einwand eingehen",
+    ],
+    "C2: vom Beschreiben über das Deuten zum Argumentieren. Gewertet wird, ob die Position mit Gründen und Gegenargument entwickelt wird."),
+  pictureTask("scene.c2.coworking", "HARD", { thinkSeconds: 60, answerSeconds: 180, maxTakes: 1 },
+    "Sehen Sie sich das Bild an. Beschreiben Sie die Situation und erklären Sie, was die Szene über die Veränderung von Arbeitsorten aussagt. Diskutieren Sie anschließend die These, dass Gemeinschaftsbüros die Grenze zwischen Arbeit und Privatleben verwischen. Vertreten Sie eine eigene Position und begründen Sie sie.",
+    [
+      "beschreibt, was zu sehen ist (mehrere Menschen arbeiten mit Laptops gemeinsam in einem Raum)",
+      "deutet die Szene als Ausdruck eines Wandels der Arbeitswelt (Flexibilität, Gemeinschaft, Selbstorganisation)",
+      "bewertet die These differenziert (Vorteile wie Austausch und Struktur, Nachteile wie Ablenkung oder ständige Erreichbarkeit)",
+      "entwickelt eine eigene begründete Position und belegt sie mit Beispielen",
+      "präziser Wortschatz zu Arbeit und Gesellschaft, Satzvariation und Kohärenz",
+    ],
+    [
+      "das Bild beschreiben und deuten",
+      "die These zur Grenze zwischen Arbeit und Privatleben erörtern",
+      "eine eigene Position begründen",
+    ],
+    "C2: abstrakte gesellschaftliche These, zu der das Bild nur den Anlass bietet. Wichtig ist die Abwägung mit Belegen."),
+  pictureTask("scene.c2.phones-at-dinner", "EASY", { thinkSeconds: 45, answerSeconds: 120, maxTakes: 1 },
+    "Sehen Sie sich das Bild an. Beschreiben Sie, was die Personen tun, und überlegen Sie, was die Szene über den Umgang mit dem Smartphone verrät. Sagen Sie dann, ob Handys am Esstisch erlaubt sein sollten, und begründen Sie Ihre Meinung mit Beispielen aus Ihrer Erfahrung.",
+    [
+      "beschreibt die Szene (zwei Frauen sitzen im Restaurant am Tisch und schauen auf ihre Handys)",
+      "deutet sie, z. B. Ablenkung, fehlendes Gespräch, Gewohnheit, aber auch mögliche harmlose Erklärungen",
+      "nimmt klar Stellung und begründet mit mindestens einem Beispiel",
+      "berücksichtigt unterschiedliche Situationen (Familie, Freunde, Geschäftsessen)",
+      "natürlicher, flüssiger Ausdruck mit passenden Wendungen",
+    ],
+    [
+      "das Bild beschreiben",
+      "die Szene deuten",
+      "begründet zum Handy am Esstisch Stellung nehmen",
+    ],
+    "Beschreiben und Deuten mit niedrigerer Abstraktion; die Position muss trotzdem begründet und differenziert sein."),
+  pictureTask("scene.c2.traffic-and-bike-lane", "MID", { thinkSeconds: 60, answerSeconds: 150, maxTakes: 1 },
+    "Sehen Sie sich das Bild an. Beschreiben Sie die Verkehrssituation und deuten Sie, welcher Konflikt in der Szene steckt. Nehmen Sie dann Stellung zu der Frage, ob Städte Autofahrern zugunsten von Radfahrenden Raum wegnehmen sollten. Wägen Sie die Interessen der Beteiligten ab und entscheiden Sie sich.",
+    [
+      "beschreibt die Szene (ein Radfahrer fährt neben Autos auf einer Straße in der Stadt)",
+      "benennt den Konflikt um den begrenzten Straßenraum (Sicherheit, Tempo, Platz, Gleichberechtigung der Verkehrsarten)",
+      "wägt die Interessen von Autofahrern, Radfahrenden, Anwohnern und Wirtschaft ab",
+      "entscheidet sich für eine begründete Position und nennt konkrete Maßnahmen",
+      "klare Struktur, treffende Konnektoren und differenzierter Wortschatz",
+    ],
+    [
+      "das Bild beschreiben",
+      "den Konflikt in der Szene deuten",
+      "Interessen abwägen und eine Position begründen",
+    ],
+    "C2: Interessenabwägung in einer kommunalpolitischen Streitfrage; entscheidend sind Struktur und Begründungstiefe."),
+  pictureTask("scene.c2.wind-farm", "HARD", { thinkSeconds: 90, answerSeconds: 180, maxTakes: 1 },
+    "Sehen Sie sich das Bild an. Beschreiben Sie, was zu sehen ist, und deuten Sie, was die Szene über das Verhältnis von Energiegewinnung und Landschaft aussagt. Wer sollte Ihrer Meinung nach entscheiden, wo Windräder stehen dürfen: der Staat, die Gemeinde oder die Anwohner? Vertreten Sie eine Position und setzen Sie sich mit der Gegenseite auseinander.",
+    [
+      "beschreibt, was zu sehen ist (Windräder stehen auf einer grünen Wiese)",
+      "deutet den Gegensatz oder die Verbindung von Natur, Landschaft und Energiewende",
+      "bezieht Position zur Entscheidungsfrage und begründet sie (Verfahren, Beteiligung, Gemeinwohl, Eigeninteressen)",
+      "setzt sich mit mindestens einem Gegenargument auseinander und zieht ein Fazit",
+      "gehobener Wortschatz, komplexe Satzgefüge, überzeugender Aufbau",
+    ],
+    [
+      "das Bild beschreiben und deuten",
+      "begründet Stellung nehmen, wer über Windräder entscheiden soll",
+      "sich mit der Gegenseite auseinandersetzen",
+    ],
+    "C2: Beschreiben, Deuten und Argumentieren zu einer gesellschaftlich umstrittenen Planungsfrage, mit Fazit."),
+];
+
 export const C2_PARTS: {
   grammar: SeedBankPart;
   reading: SeedBankPart;
@@ -1459,9 +2011,9 @@ export const C2_PARTS: {
   writing: SeedBankPart;
   speaking: SeedBankPart;
 } = {
-  grammar: { stimuli: [], items: [...grammarItems, ...grammarTexts] },
-  reading: { stimuli: readingStimuli, items: readingItems },
-  listening: { stimuli: listeningStimuli, items: listeningItems },
+  grammar: { stimuli: [], items: [...grammarItems, ...grammarTexts, ...grammarOpenTexts] },
+  reading: { stimuli: [...readingStimuli, ...readingStimuliV3], items: [...readingItems, ...readingItemsV3] },
+  listening: { stimuli: [...listeningStimuli, ...listeningStimuliV3], items: [...listeningItems, ...listeningItemsV3] },
   writing: { stimuli: [], items: writingItems },
-  speaking: { stimuli: [], items: speakingItems },
+  speaking: { stimuli: [], items: [...speakingItems, ...speakingPictureItems] },
 };
