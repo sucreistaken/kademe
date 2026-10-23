@@ -152,9 +152,11 @@ describe("tutorial timeline", () => {
     expect(mergeAnswer({ choiceIds: ["a"] }, { choiceIds: ["b"] })).toEqual({ choiceIds: ["b"] });
   });
 
-  it("estimates narration from the caption's words and formats play time", () => {
+  it("estimates narration from the caption's words at the language's pace and formats play time", () => {
     expect(estimateNarrationMs("")).toBe(0);
-    expect(estimateNarrationMs("one two three")).toBe(500 + 3 * 420);
+    expect(estimateNarrationMs("one two three")).toBe(600 + 3 * 320);
+    expect(estimateNarrationMs("bir iki üç", "tr")).toBe(600 + 3 * 480);
+    expect(estimateNarrationMs("one two three", "xx")).toBe(600 + 3 * 320);
     expect(formatPlayTime(0)).toBe("0:00");
     expect(formatPlayTime(40_999)).toBe("0:40");
     expect(formatPlayTime(61_000)).toBe("1:01");

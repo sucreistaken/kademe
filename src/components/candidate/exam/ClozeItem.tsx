@@ -164,6 +164,7 @@ export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
                     type="button"
                     role="radio"
                     aria-checked={on}
+                    data-demo-option={word}
                     disabled={disabled}
                     tabIndex={i === stop ? 0 : -1}
                     onKeyDown={(e) => moveFocus(e, i)}

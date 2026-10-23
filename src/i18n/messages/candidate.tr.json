@@ -1275,5 +1275,19 @@
     "cleared": "Notlar temizlendi",
     "pad": "Karalama alanı",
     "padHint": "Yalnızca sizin içindir; değerlendirilmez, kaydedilmez ve kimseye gösterilmez."
+  },
+  "tutorial": {
+    "watch": "Nasıl çalıştığını izleyin ({time})",
+    "watchLead": "Bu bölümün nasıl çalıştığını kısa bir videoda görün.",
+    "title": "Nasıl çalışır: {section}",
+    "description": "Sınav ekranının sesli, kısa bir tanıtımı. Buradaki hiçbir şey sınavınıza dahil değildir.",
+    "step": "Adım {n} / {total}",
+    "play": "Oynat",
+    "pause": "Duraklat",
+    "replay": "Yeniden izle",
+    "close": "Kapat",
+    "captions": "Altyazı",
+    "seek": "Videodaki konum",
+    "time": "{current} / {total}"
   }
 }

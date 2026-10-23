@@ -1275,5 +1275,19 @@
     "cleared": "Notizen gelöscht",
     "pad": "Notizfläche",
     "padHint": "Nur für Sie, wird nicht bewertet und niemandem gezeigt."
+  },
+  "tutorial": {
+    "watch": "So funktioniert es ({time})",
+    "watchLead": "Ein kurzes Video zeigt, wie dieser Teil funktioniert.",
+    "title": "So funktioniert es: {section}",
+    "description": "Eine kurze Vorführung des Prüfungsbildschirms mit Sprecherstimme. Nichts davon gehört zu Ihrer Prüfung.",
+    "step": "Schritt {n} von {total}",
+    "play": "Abspielen",
+    "pause": "Pause",
+    "replay": "Noch einmal ansehen",
+    "close": "Schließen",
+    "captions": "Untertitel",
+    "seek": "Position im Video",
+    "time": "{current} von {total}"
   }
 }

@@ -8,12 +8,14 @@ import { cn } from "@/lib/cn";
  * Where exam pictures come from. ExamRunner provides the token and the
  * section position; an item adds its own sequence and the picture's slot. The
  * URL carries only those opaque numbers and slots, never a storage key.
+ * The tutorial's demo stage has no token: it maps a slot to a static file.
  */
-export type ImageSrc = { token: string; position: number };
+export type ImageSrc = { token: string; position: number } | { demo: (sequence: number, slot: string) => string };
 
 export const ImageSrcContext = createContext<ImageSrc | null>(null);
 
 export function imageUrl(src: ImageSrc, sequence: number, slot: string): string {
+  if ("demo" in src) return src.demo(sequence, slot);
   return `/api/c/${encodeURIComponent(src.token)}/exam/image/${src.position}/${sequence}/${encodeURIComponent(slot)}`;
 }
 

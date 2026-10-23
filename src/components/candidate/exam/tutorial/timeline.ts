@@ -18,10 +18,19 @@ export const CARRY_MS = 900;
 /** One typed character. */
 export const TYPE_CHAR_MS = 55;
 
-/** Narration time from the caption's length when there is no recording: about 2.4 words a second, plus a breath. */
-export function estimateNarrationMs(text: string): number {
+/**
+ * The narration voice's pace per word, by language, measured on the recorded
+ * captions (2026-10-23); Turkish and Arabic words are longer, so fewer of them
+ * take as long. Other languages use the English pace.
+ */
+export const MS_PER_WORD: Record<string, number> = { en: 320, de: 350, es: 390, tr: 480, ar: 480 };
+/** The quiet before and after a recorded caption. */
+export const NARRATION_PAD_MS = 600;
+
+/** Narration time from the caption's word count when there is no recording. */
+export function estimateNarrationMs(text: string, locale = "en"): number {
   const words = text.trim().split(/\s+/u).filter(Boolean).length;
-  return words === 0 ? 0 : 500 + words * 420;
+  return words === 0 ? 0 : NARRATION_PAD_MS + words * (MS_PER_WORD[locale] ?? MS_PER_WORD.en);
 }
 
 export function actionMs(action: DemoAction): number {

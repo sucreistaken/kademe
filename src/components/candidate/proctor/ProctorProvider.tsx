@@ -28,6 +28,15 @@ export function ProctorProvider({ token, children }: { token: string; children: 
   );
 }
 
+/**
+ * A subtree with no proctor: useProctor() gives no engine and no snapshot.
+ * The tutorial's demo stage draws the real exam bar inside it, so the live
+ * session's banners never show in the demo and nothing in it can reach the engine.
+ */
+export function WithoutProctor({ children }: { children: React.ReactNode }) {
+  return <ProctorContext.Provider value={{ engine: null }}>{children}</ProctorContext.Provider>;
+}
+
 const EMPTY: EngineSnapshot | null = null;
 
 export function useProctor(): { engine: ProctorEngine | null; snap: EngineSnapshot | null } {

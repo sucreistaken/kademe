@@ -508,6 +508,18 @@ body {
   }
 }
 
+/* The tutorial's fake cursor presses: a ring grows and fades once. Used with motion-safe only. */
+@keyframes tutorial-press {
+  from {
+    opacity: 0.9;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+
 /* G9: a focused field scrolled into view is never left under the fixed step footer or a notice over it (both measure themselves into a variable). */
 html:has([data-step-footer]) {
   scroll-padding-bottom: calc(var(--step-footer-space, 112px) + var(--step-notice-space, 0px) + 8px);

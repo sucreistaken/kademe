@@ -1275,5 +1275,19 @@
     "cleared": "Notas borradas",
     "pad": "Espacio para apuntes",
     "padHint": "Solo para usted; no se evalúa ni se muestra a nadie."
+  },
+  "tutorial": {
+    "watch": "Ver cómo funciona ({time})",
+    "watchLead": "Vea en un vídeo corto cómo funciona esta sección.",
+    "title": "Cómo funciona: {section}",
+    "description": "Una breve demostración narrada de la pantalla del examen. Nada de esto forma parte de su examen.",
+    "step": "Paso {n} de {total}",
+    "play": "Reproducir",
+    "pause": "Pausa",
+    "replay": "Ver de nuevo",
+    "close": "Cerrar",
+    "captions": "Subtítulos",
+    "seek": "Posición en el vídeo",
+    "time": "{current} de {total}"
   }
 }

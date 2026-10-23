@@ -57,6 +57,7 @@ export function ItemHeading({
             aria-pressed={flagged}
             disabled={flagBusy}
             onClick={onToggleFlag}
+            data-demo-mark=""
             className={cn(
               "ms-auto inline-flex min-h-9 items-center gap-1.5 rounded-[8px] border px-3 text-[13px] font-medium normal-case tracking-normal disabled:cursor-not-allowed",
               flagged ? "border-sun-fill bg-sun-fill text-ink" : "border-line bg-surface text-ink-2 hover:border-line-strong",

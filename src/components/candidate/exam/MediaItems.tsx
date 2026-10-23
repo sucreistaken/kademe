@@ -7,16 +7,15 @@ import { MEDIA_ERROR_KEY, mediaErrorKind } from "@/lib/client/media-error";
 import { ChunkedUploader, pickRecorderMime } from "@/lib/client/recorder";
 import type { CandidateItem, CandidateStimulus } from "@/lib/exam/safe";
 import type { ItemAnswer } from "@/lib/exam/types";
-import { formatCountdown } from "@/lib/timer";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
-import { buttonVariants } from "@/components/ui/button";
 import { TASK_LEFT, TASK_RIGHT, TASK_SPLIT } from "./item-parts";
 import { isGateOpen, markRevealed, playButtonMode, readRevealed } from "./listening-gate";
 import { sessionStore } from "./pending-answer";
 import { TaskExpectations } from "./TaskExpectations";
 import { TaskImages } from "./ExamImage";
 import { TaskPromptCard } from "./TaskPromptCard";
+import { ListeningGateCard, ListeningPlayerCard, SPEAKING_VIDEO, SpeakingClock } from "./media-cards";
 
 type PlayState = "IDLE" | "LOADING" | "PLAYING" | "FAILED";
 type PlayFailure = "LOAD" | "STALLED" | "BLOCKED";
@@ -242,48 +241,20 @@ export function ListeningPlayer({
   }
 
   const playerCard = (
-    <div className="rounded-[14px] border border-line bg-surface p-5">
-      {/* German upper case: under the Turkish page language "i" would become "İ". */}
-      <div lang="de" className="text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted">
-        {stimulus.title}
-      </div>
-      <div className="mt-3 flex items-center gap-4">
-        <button
-          ref={playButton}
-          type="button"
-          onClick={playMode === "ready" ? play : undefined}
-          disabled={playMode === "off"}
-          aria-disabled={playMode === "busy" || undefined}
-          className="h-11 shrink-0 rounded-[10px] border border-line-strong bg-surface px-4 text-[14px] font-semibold text-ink hover:bg-canvas disabled:cursor-not-allowed disabled:text-muted aria-disabled:cursor-wait aria-disabled:text-muted aria-disabled:hover:bg-surface"
-        >
-          {label}
-        </button>
-        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-line" aria-hidden>
-          <div className="h-full bg-ink-3 transition-[width]" style={{ width: `${Math.round(progress * 100)}%` }} />
-        </div>
-      </div>
-      <p className="tnum mt-2.5 text-[13px] text-muted">{playsLeft > 0 ? t("playsLeft", { n: playsLeft }) : t("noPlaysLeft")}</p>
-      {state === "FAILED" && failure ? (
-        <p role="alert" className="mt-1 text-[13px] text-danger">
-          {failureText}
-          {free ? ` ${midway ? ti("listenFreeResume") : ti("listenFreeRetry")}` : ""}
-        </p>
-      ) : null}
-      {note ? <p className="mt-3 text-[13px] leading-[1.5] text-muted">{note}</p> : null}
-    </div>
+    <ListeningPlayerCard
+      title={stimulus.title}
+      label={label}
+      playMode={playMode}
+      onPlay={play}
+      buttonRef={playButton}
+      progress={progress}
+      playsLeft={playsLeft}
+      failure={state === "FAILED" && failure ? `${failureText}${free ? ` ${midway ? ti("listenFreeResume") : ti("listenFreeRetry")}` : ""}` : null}
+      note={note}
+    />
   );
 
-  const gateCard = (
-    <div className="rounded-[14px] border border-line bg-surface p-5">
-      <div lang="de" className="text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted">
-        {stimulus.title}
-      </div>
-      <p className="mt-3 text-[15px] leading-[1.6] text-ink-2">{t("listenGate", { plays: playsLeft })}</p>
-      <button type="button" onClick={startListening} className={cn(buttonVariants({ variant: "primary", size: "lg" }), "mt-4 h-12 w-full")}>
-        {t("listenStart")}
-      </button>
-    </div>
-  );
+  const gateCard = <ListeningGateCard title={stimulus.title} playsLeft={playsLeft} onStart={startListening} />;
 
   return (
     <div className={className}>
@@ -473,28 +444,10 @@ export function SpeakingItem({
         <TaskExpectations section="SPEAKING" thinkSeconds={content.thinkSeconds} answerSeconds={content.answerSeconds} />
       </div>
       <div className={cn(TASK_RIGHT, "gap-4")}>
-        <video ref={videoRef} muted playsInline className="mb-4 aspect-[4/3] w-full max-w-[300px] shrink-0 rounded-[10px] bg-ink object-cover lg:mb-0" />
+        <video ref={videoRef} muted playsInline className={SPEAKING_VIDEO} />
         <div className="shrink-0">
-          {phase === "THINKING" ? (
-            <>
-              <div className="text-[13px] font-medium text-muted">{t("thinkTime")}</div>
-              <div className="tnum mt-1 text-[32px] font-bold text-accent">{formatCountdown(left)}</div>
-              <button type="button" onClick={() => void begin()} className="mt-3 h-10 rounded-[10px] border border-line-strong bg-surface px-4 text-[14px] font-medium text-ink hover:bg-canvas">
-                {t("startNow")}
-              </button>
-            </>
-          ) : null}
-          {phase === "RECORDING" ? (
-            <>
-              <div className="flex items-center gap-2 text-[13px] font-medium text-ink">
-                <span className="size-2 animate-pulse rounded-full bg-danger" aria-hidden /> {t("recordingNow")}
-              </div>
-              <div className="tnum mt-1 text-[32px] font-bold text-accent">{formatCountdown(left)}</div>
-              <button type="button" onClick={stop} className="mt-3 h-10 rounded-[10px] border border-line-strong bg-surface px-4 text-[14px] font-medium text-ink hover:bg-canvas">
-                {t("stopRecording")}
-              </button>
-            </>
-          ) : null}
+          {phase === "THINKING" ? <SpeakingClock phase="THINKING" leftMs={left} onAction={() => void begin()} /> : null}
+          {phase === "RECORDING" ? <SpeakingClock phase="RECORDING" leftMs={left} onAction={stop} /> : null}
           {phase === "UPLOADING" ? <p className="text-[14px] text-muted">{t("saving")}</p> : null}
           {phase === "DONE" ? (
             <>

@@ -1275,5 +1275,19 @@
     "cleared": "Notes cleared",
     "pad": "Scratch pad",
     "padHint": "Only for you, never graded or shown to anyone."
+  },
+  "tutorial": {
+    "watch": "Watch how it works ({time})",
+    "watchLead": "See in a short video how this section works.",
+    "title": "How it works: {section}",
+    "description": "A short narrated demo of the exam screen. Nothing here is part of your exam.",
+    "step": "Step {n} of {total}",
+    "play": "Play",
+    "pause": "Pause",
+    "replay": "Watch again",
+    "close": "Close",
+    "captions": "Captions",
+    "seek": "Video position",
+    "time": "{current} of {total}"
   }
 }

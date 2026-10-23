@@ -176,6 +176,7 @@ function ChoiceItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps)
                 type="button"
                 role={multiple ? "checkbox" : "radio"}
                 aria-checked={on}
+                data-demo-option={o.id}
                 disabled={disabled}
                 onClick={() => toggle(o.id)}
                 className={cn(
@@ -206,6 +207,7 @@ function ChoiceItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps)
               type="button"
               role={multiple ? "checkbox" : "radio"}
               aria-checked={on}
+              data-demo-option={o.id}
               disabled={disabled}
               onClick={() => toggle(o.id)}
               className={cn(
@@ -268,6 +270,7 @@ function TfngItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps) {
                       disabled={disabled}
                       onKeyDown={radioKeys}
                       onClick={() => onChange({ tfng: { ...(answer.tfng ?? {}), [s.id]: v } })}
+                      data-demo-option={`${s.id}:${v}`}
                       className={cn(
                         "flex h-10 min-w-12 items-center justify-center rounded-[8px] border px-3 text-[14px] font-semibold",
                         on ? "border-accent bg-accent text-white" : "border-line-strong text-ink-2 hover:border-accent hover:text-ink",
@@ -771,6 +774,7 @@ function MatchingItem({ item, answer, onChange, disabled, hidePrompt }: ItemProp
               disabled={disabled}
               title={r.image?.alt ?? r.label}
               onPointerDown={(e) => onPointerDown(e, r.id)}
+              data-demo-chip={r.id}
               onClick={() => {
                 if (!isDragClick()) clickTarget(r.id);
               }}
@@ -831,6 +835,7 @@ function MatchingItem({ item, answer, onChange, disabled, hidePrompt }: ItemProp
                       type="button"
                       role="radio"
                       aria-checked={on}
+                      data-demo-option={`${l.id}:${r.id}`}
                       aria-label={`${r.badge}: ${r.image?.alt ?? r.label}${elsewhere ? `, ${ti("matchUsedElsewhere")}` : ""}`}
                       title={r.image?.alt ?? r.label}
                       tabIndex={on || (!chosen && i === 0) ? 0 : -1}
@@ -934,7 +939,7 @@ export function WritingItem({ item, answer, onChange, disabled }: ItemProps) {
   const { minWords, maxWords } = item.content;
   return (
     <div className={TASK_SPLIT}>
-      <div className={TASK_LEFT}>
+      <div className={TASK_LEFT} data-demo-task="">
         <TaskImages sequence={item.sequence} images={item.content.images} />
         <TaskPromptCard text={item.prompt} id={promptId} points={item.content.studentPoints} pointsId={pointsId} />
         <TaskExpectations id={expectId} section="WRITING" minWords={minWords} maxWords={maxWords} />
