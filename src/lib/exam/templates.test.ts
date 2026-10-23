@@ -4,7 +4,7 @@ import { bankCoverage, blueprintConfigSchema, enabledSections, estimatedMinutes,
 import { gateFailures, simulateFixedForm, type SimulationOptions } from "./form-simulation";
 import { isNavigableConfig } from "./navigation";
 import { EXAM_TEMPLATES, examTemplateByKey } from "./templates";
-import { C_TEST_SKILL_TAG, CEFR_LEVELS, CLOZE_SKILL_TAG, isObjectiveSection, SECTIONS, WORD_BANK_SKILL_TAG } from "./types";
+import { C_TEST_SKILL_TAG, CEFR_LEVELS, CLOZE_SKILL_TAG, isObjectiveSection, OPEN_CLOZE_SKILL_TAG, SECTIONS, WORD_BANK_SKILL_TAG } from "./types";
 
 /** The seed bank as `bankCounts` would see it once imported (listening audio made). */
 function seedCounts(): BankCount[] {
@@ -19,6 +19,7 @@ function seedCounts(): BankCount[] {
         cTests: items.filter((i) => i.skillTag === C_TEST_SKILL_TAG).length,
         clozeTexts: items.filter((i) => i.skillTag === CLOZE_SKILL_TAG).length,
         wordBanks: items.filter((i) => i.skillTag === WORD_BANK_SKILL_TAG).length,
+        openTexts: items.filter((i) => i.skillTag === OPEN_CLOZE_SKILL_TAG).length,
       };
     }),
   );
@@ -161,14 +162,16 @@ describe("exam templates", () => {
   });
 
   it("the seed bank's texts do not count as ordinary grammar items", () => {
+    // The 2026-10-23 bank: 3 MC cloze texts everywhere; 3 word banks, 6 at B1 and B2 (3 classic + 3
+    // Sprachbausteine); 3 open cloze texts from B2 (bank-seed.test.ts checks their shape).
+    const want = { A1: [3, 3, 0], A2: [3, 3, 0], B1: [3, 6, 0], B2: [3, 6, 3], C1: [3, 3, 3], C2: [3, 3, 3] };
     const grammar = seedCounts().filter((c) => c.section === "GRAMMAR");
     for (const c of grammar) {
-      expect(c.clozeTexts, c.level).toBe(3);
-      expect(c.wordBanks, c.level).toBe(3);
+      expect([c.clozeTexts, c.wordBanks, c.openTexts], c.level).toEqual(want[c.level]);
     }
     // Read without its text counts, the bank seems to hold no texts and the template is not covered.
     const t = byKey("quick-screen");
-    const blind = seedCounts().map((c) => ({ ...c, clozeTexts: 0, wordBanks: 0 }));
+    const blind = seedCounts().map((c) => ({ ...c, clozeTexts: 0, wordBanks: 0, openTexts: 0 }));
     expect(bankCoverage(blind, t.config, t.mode, null).ok).toBe(false);
   });
 
@@ -211,6 +214,8 @@ describe("exam templates", () => {
       const b = simulateFixedForm(withGrammar(cTests), "PLACEMENT", opts);
       const c = simulateFixedForm(byKey(key).config, "PLACEMENT", opts);
       expect(gateFailures(a, b, c)).toEqual([]);
-    });
+      // 3000 simulated students take about 1.6 s alone but up to 9.4 s in the full parallel suite, past
+      // vitest's 5 s default; the assertions pass either way (checked 2026-10-23 with --testTimeout=60000).
+    }, 30_000);
   });
 });

@@ -18,21 +18,17 @@ import { CEFR_LEVELS, isObjectiveSection, isTextGap, textGapKindOf, type Cefr } 
  * cell that is not listed and on a listed cell that no longer repeats.
  */
 const EXPECTED_SHORTFALL: string[] = [
-  // Grammar singles: a claim at the end of the scale folds "below" or "above" onto it (9 a form, 27 for three; the bank has 24).
+  // Bank too small: a claim at the end of the scale folds "below" or "above" grammar onto it, 9 singles a form,
+  // 27 for three; A1 and C2 hold 24 each (bank of 2026-10-23).
   "level-check A1 GRAMMAR A1",
   "level-check C2 GRAMMAR C2",
-  // Reading texts (2026-10-23 bank): A1 seven texts of 3 for 8 a form; B2 sizes 4,4,4,3,2,2,1 for 6; C2 six of 3 for 8.
-  "level-check A1 READING A1",
-  "level-check B2 READING B2",
+  // Draw overshoot (whole texts): the bank could fill three disjoint forms, but whole texts overshoot the item
+  // count and form 1 must equal the legacy draw. C2 reading: 8 items a form, 24 for three; the bank has exactly
+  // 24 in 12 texts (six of 3, six of 1), so three forms of 3+3+1+1 would fit. A1 listening: 7 items a form, 21
+  // for three; 24 in 11 clips (3,3,3,3,3,2,2,2,1,1,1), so 3+3+1, 3+2+2 and 3+2+1+1 would fit. Every other
+  // reading and listening cell of the earlier list draws three forms without a repeat now.
   "level-check C2 READING C2",
-  // Listening clips: A1 and B1 five clips of 3, B2 4,4,3,2,2,2, C1 4,4,4,2,2,1, C2 six of 3.
   "level-check A1 LISTENING A1",
-  "level-check B1 LISTENING B1",
-  "level-check B2 LISTENING B2",
-  "level-check C1 LISTENING C1",
-  "level-check C2 LISTENING C2",
-  // Placement listening B1 asks for 4 questions: two clips of 3 a form, six for three; the bank has five.
-  "placement * LISTENING B1",
 ];
 
 /** Each sequence of forms starts from its own seed; a cell is short when any of them repeats there. */

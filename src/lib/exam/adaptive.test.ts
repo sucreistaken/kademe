@@ -176,7 +176,9 @@ describe("simulated students", () => {
       expect(withinOne / runs, `${level} within one`).toBeGreaterThanOrEqual(0.9);
       expect(exact / runs, `${level} exact`).toBeGreaterThanOrEqual(0.5);
     }
-  });
+    // 1200 simulated exams take about 0.5 s alone but up to 5.9 s in the full parallel suite, past vitest's
+    // 5 s default; the assertions pass either way (checked 2026-10-23 with --testTimeout=60000).
+  }, 30_000);
 });
 
 describe("weighted observations", () => {

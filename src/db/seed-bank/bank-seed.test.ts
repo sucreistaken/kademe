@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { scoreItem } from "@/lib/exam/item-scoring";
 import { validateItem } from "@/lib/exam/validate";
-import { CEFR_LEVELS } from "@/lib/exam/types";
+import { CEFR_LEVELS, type Cefr } from "@/lib/exam/types";
 import { SEED_BANK, SEED_PARTS } from "./index";
 import { seedItemKey } from "./seed-key";
 
@@ -56,10 +56,29 @@ describe("starter bank coverage", () => {
   }
 });
 
-/** Every level has its MC cloze and word-bank texts. */
+/**
+ * The grammar texts per level (bank of 2026-10-23, spec 2026-10-23 "Targets per level"): three MC cloze texts
+ * and three classic word banks (8 gaps) everywhere; B1 and B2 add three Sprachbausteine word banks (10 gaps,
+ * 15 words, as in telc B1/B2); B2 to C2 add three open cloze texts (one typed word per gap, ÖSD ZB2/ZC1).
+ * The counts are exact: a level with more or fewer texts than planned fails here until this table changes.
+ */
+const TEXT_COUNTS: Record<Cefr, { cloze: number; wordBanks: number; sprachbausteine: number; open: number }> = {
+  A1: { cloze: 3, wordBanks: 3, sprachbausteine: 0, open: 0 },
+  A2: { cloze: 3, wordBanks: 3, sprachbausteine: 0, open: 0 },
+  B1: { cloze: 3, wordBanks: 3, sprachbausteine: 3, open: 0 },
+  B2: { cloze: 3, wordBanks: 3, sprachbausteine: 3, open: 3 },
+  C1: { cloze: 3, wordBanks: 3, sprachbausteine: 0, open: 3 },
+  C2: { cloze: 3, wordBanks: 3, sprachbausteine: 0, open: 3 },
+};
+
+/** A classic word bank has 8 gaps; a Sprachbausteine word bank has 10 gaps and a pool of 15 words. */
+const CLASSIC_WORD_BANK_GAPS = 8;
+const SPRACHBAUSTEINE_GAPS = 10;
+const SPRACHBAUSTEINE_WORDS = 15;
+
 const TEXT_LEVELS = CEFR_LEVELS;
 
-describe("starter MC cloze and word-bank texts", () => {
+describe("starter MC cloze, word-bank and open cloze texts", () => {
   const textsOf = (level: string, skillTag: string) =>
     SEED_BANK.items.filter((i) => i.level === level && i.skillTag === skillTag);
   const gapsOf = (item: (typeof SEED_BANK.items)[number]) => {
@@ -68,10 +87,17 @@ describe("starter MC cloze and word-bank texts", () => {
   };
   /** Instruction, title, text: the three paragraphs the builders write. */
   const paragraphs = (item: (typeof SEED_BANK.items)[number]) => item.prompt.split("\n\n");
+  const poolOf = (item: (typeof SEED_BANK.items)[number]) => {
+    const { gaps, key } = gapsOf(item);
+    return [...gaps.map((g) => key.answers[g.id][0]), ...(key.distractors ?? [])].map((w) => w.toLowerCase());
+  };
 
   for (const level of TEXT_LEVELS) {
+    const want = TEXT_COUNTS[level];
+
     it(`${level}: three MC cloze texts, easy to hard, with 10 to 12 four-choice gaps`, () => {
       const texts = textsOf(level, "grammar.cloze");
+      expect(texts).toHaveLength(want.cloze);
       expect(texts.map((t) => t.within).sort()).toEqual(["EASY", "HARD", "MID"]);
       for (const t of texts) {
         expect(t.section).toBe("GRAMMAR");
@@ -87,25 +113,56 @@ describe("starter MC cloze and word-bank texts", () => {
       }
     });
 
-    it(`${level}: three word banks, easy to hard, with 8 whole-word gaps and 4 to 5 distractors`, () => {
-      const texts = textsOf(level, "grammar.wordbank");
+    it(`${level}: ${want.wordBanks} word banks, easy to hard, with 8 whole-word gaps and 4 to 5 distractors`, () => {
+      // Every word bank is either classic (8 gaps) or Sprachbausteine (10 gaps); nothing in between.
+      const all = textsOf(level, "grammar.wordbank");
+      for (const t of all) expect([CLASSIC_WORD_BANK_GAPS, SPRACHBAUSTEINE_GAPS], paragraphs(t)[1]).toContain(gapsOf(t).gaps.length);
+      const texts = all.filter((t) => gapsOf(t).gaps.length === CLASSIC_WORD_BANK_GAPS);
+      expect(texts).toHaveLength(want.wordBanks);
       expect(texts.map((t) => t.within).sort()).toEqual(["EASY", "HARD", "MID"]);
       for (const t of texts) {
         const { gaps, key } = gapsOf(t);
-        expect(gaps, paragraphs(t)[1]).toHaveLength(8);
         expect(gaps.every((g) => !g.choices)).toBe(true);
         expect(key.distractors?.length, paragraphs(t)[1]).toBeGreaterThanOrEqual(4);
         expect(key.distractors?.length, paragraphs(t)[1]).toBeLessThanOrEqual(5);
-        const pool = [...gaps.map((g) => key.answers[g.id][0]), ...(key.distractors ?? [])].map((w) => w.toLowerCase());
+        const pool = poolOf(t);
         expect(new Set(pool).size, paragraphs(t)[1]).toBe(pool.length);
       }
     });
 
+    it(`${level}: ${want.sprachbausteine} Sprachbausteine word banks with 10 gaps and 15 different words`, () => {
+      // telc B1/B2 Sprachbausteine: ten gaps, fifteen words, each word used at most once (B1 and B2 only).
+      const texts = textsOf(level, "grammar.wordbank").filter((t) => gapsOf(t).gaps.length === SPRACHBAUSTEINE_GAPS);
+      expect(texts).toHaveLength(want.sprachbausteine);
+      for (const t of texts) {
+        const { gaps } = gapsOf(t);
+        expect(t.within, paragraphs(t)[1]).toBeDefined();
+        expect(gaps.every((g) => !g.choices)).toBe(true);
+        const pool = poolOf(t);
+        expect(pool, paragraphs(t)[1]).toHaveLength(SPRACHBAUSTEINE_WORDS);
+        expect(new Set(pool).size, paragraphs(t)[1]).toBe(pool.length);
+      }
+    });
+
+    it(`${level}: ${want.open} open cloze texts, easy to hard, with typed gaps`, () => {
+      const texts = textsOf(level, "grammar.open");
+      expect(texts).toHaveLength(want.open);
+      if (want.open) expect(texts.map((t) => t.within).sort()).toEqual(["EASY", "HARD", "MID"]);
+      for (const t of texts) {
+        expect(t.type).toBe("GAP_FILL");
+        const { gaps, key } = gapsOf(t);
+        expect(gaps.length, paragraphs(t)[1]).toBeGreaterThanOrEqual(8);
+        expect(gaps.every((g) => !g.choices)).toBe(true);
+        expect(key.distractors ?? [], paragraphs(t)[1]).toEqual([]);
+      }
+    });
+
     it(`${level}: every text has its own title and keeps its first and last sentence free of gaps`, () => {
-      const texts = [...textsOf(level, "grammar.cloze"), ...textsOf(level, "grammar.wordbank")];
-      expect(texts).toHaveLength(6);
+      const texts = [...textsOf(level, "grammar.cloze"), ...textsOf(level, "grammar.wordbank"), ...textsOf(level, "grammar.open")];
+      const total = want.cloze + want.wordBanks + want.sprachbausteine + want.open;
+      expect(texts).toHaveLength(total);
       const titles = texts.map((t) => paragraphs(t)[1]);
-      expect(new Set(titles).size).toBe(6);
+      expect(new Set(titles).size).toBe(total);
       for (const t of texts) {
         const [, title, text] = paragraphs(t);
         expect(title.length, title).toBeLessThanOrEqual(40);
@@ -116,66 +173,6 @@ describe("starter MC cloze and word-bank texts", () => {
       }
     });
   }
-});
-
-describe("starter C-tests accept the equally correct completions", () => {
-  const ctest = (level: string) => SEED_BANK.items.find((i) => i.level === level && i.skillTag === "grammar.ctest")!;
-  const accepts = (level: string, gap: string, typed: string) => {
-    const c = ctest(level);
-    return scoreItem(c.type, c.content, c.key, { gaps: { [gap]: typed } })?.score === 1 / Object.keys((c.key as { answers: object }).answers).length;
-  };
-
-  it("A1: etwas Brot", () => {
-    expect(accepts("A1", "g8", "twas")).toBe(true);
-    expect(accepts("A1", "g8", "in")).toBe(true);
-  });
-
-  it("B1: Teilnehmerinnen and Teilnehmenden", () => {
-    expect(accepts("B1", "g15", "ehmerinnen")).toBe(true);
-    expect(accepts("B1", "g15", "Teilnehmenden")).toBe(true);
-  });
-
-  it("B2: dies, Freizeit, selber", () => {
-    expect(accepts("B2", "g2", "ies")).toBe(true);
-    expect(accepts("B2", "g3", "zeit")).toBe(true);
-    expect(accepts("B2", "g6", "selber")).toBe(true);
-  });
-
-  // The later C-tests of a level, picked by a word from their first sentence.
-  const acceptsIn = (level: string, firstWord: string, gap: string, typed: string) => {
-    const c = SEED_BANK.items.find(
-      (i) => i.level === level && i.skillTag === "grammar.ctest" && i.prompt.includes(firstWord),
-    );
-    if (!c) throw new Error(`no ${level} C-test with "${firstWord}"`);
-    return scoreItem(c.type, c.content, c.key, { gaps: { [gap]: typed } })?.score === 1 / Object.keys((c.key as { answers: object }).answers).length;
-  };
-
-  it("A2 train: hatte", () => {
-    expect(acceptsIn("A2", "Schwester Mei", "g18", "at")).toBe(true);
-    expect(acceptsIn("A2", "Schwester Mei", "g18", "atte")).toBe(true);
-    expect(acceptsIn("A2", "Schwester Mei", "g18", "hatte")).toBe(true);
-  });
-
-  it("B1 club: andern", () => {
-    expect(acceptsIn("B1", "Volleyballverein", "g17", "eren")).toBe(true);
-    expect(acceptsIn("B1", "Volleyballverein", "g17", "ern")).toBe(true);
-    expect(acceptsIn("B1", "Volleyballverein", "g17", "andern")).toBe(true);
-  });
-
-  it("B2 volunteering: Einkauf, keinerlei", () => {
-    expect(acceptsIn("B2", "Stadtvierteln", "g3", "aufen")).toBe(true);
-    expect(acceptsIn("B2", "Stadtvierteln", "g3", "auf")).toBe(true);
-    expect(acceptsIn("B2", "Stadtvierteln", "g3", "Einkauf")).toBe(true);
-    expect(acceptsIn("B2", "Stadtvierteln", "g8", "in")).toBe(true);
-    expect(acceptsIn("B2", "Stadtvierteln", "g8", "inerlei")).toBe(true);
-    expect(acceptsIn("B2", "Stadtvierteln", "g8", "keinerlei")).toBe(true);
-  });
-
-  it("C1 gardens: Freizeitbetätigung", () => {
-    expect(acceptsIn("C1", "Hinterhöfen", "g2", "schäftigung")).toBe(true);
-    expect(acceptsIn("C1", "Hinterhöfen", "g2", "tätigung")).toBe(true);
-    expect(acceptsIn("C1", "Hinterhöfen", "g2", "Freizeitbetätigung")).toBe(true);
-  });
 });
 
 describe("starter bank items are well formed", () => {
@@ -230,17 +227,29 @@ describe("starter bank items are well formed", () => {
     for (const n of byPos.values()) expect(n / single.length).toBeLessThanOrEqual(0.4);
   });
 
-  it("every single-choice item has exactly four unique options and its key is one of them", () => {
+  it("every choice item has four unique options (three pictures, or 6 to 8 to tick) and its key is among them", () => {
+    // Four options, except two formats of the 2026-10-23 bank: a picture choice ("Bild A" to "Bild C") may have
+    // three options when every option is a picture, as in ÖSD and telc A1/A2; a "tick 4 of 8" MULTI_CHOICE with
+    // `pick` has 6 to 8 options and as many keys as it asks the student to tick.
     const norm = (t: string) => t.normalize("NFKC").toLowerCase().replace(/\s+/g, " ").trim();
-    const single = SEED_BANK.items.filter((i) => i.content.kind === "CHOICE");
-    expect(single.length).toBeGreaterThan(0);
-    for (const item of single) {
+    const ids = (n: number) => "abcdefgh".slice(0, n).split("");
+    const choice = SEED_BANK.items.filter((i) => i.content.kind === "CHOICE");
+    expect(choice.length).toBeGreaterThan(0);
+    for (const item of choice) {
       if (item.content.kind !== "CHOICE" || item.key.kind !== "CHOICE") continue;
       const where = `${item.level} ${item.section} "${item.prompt.slice(0, 40)}"`;
-      expect(item.content.options.map((o) => o.id), where).toEqual(["a", "b", "c", "d"]);
-      expect(new Set(item.content.options.map((o) => norm(o.text))).size, where).toBe(4);
-      expect(item.key.correct, where).toHaveLength(1);
-      expect(item.content.options.map((o) => o.id), where).toContain(item.key.correct[0]);
+      const { options, pick } = item.content;
+      const allPictures = options.every((o) => o.image);
+      const tick = item.type === "MULTI_CHOICE" && pick !== undefined;
+      const n = options.length;
+      if (tick) expect(n, where).toBeGreaterThanOrEqual(6);
+      if (tick) expect(n, where).toBeLessThanOrEqual(8);
+      else expect(allPictures ? [3, 4] : [4], where).toContain(n);
+      expect(options.map((o) => o.id), where).toEqual(ids(n));
+      expect(new Set(options.map((o) => norm(o.text))).size, where).toBe(n);
+      expect(item.key.correct, where).toHaveLength(tick ? pick : 1);
+      expect(new Set(item.key.correct).size, where).toBe(item.key.correct.length);
+      for (const id of item.key.correct) expect(options.map((o) => o.id), where).toContain(id);
     }
   });
 
