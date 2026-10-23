@@ -23,7 +23,8 @@ const EXPECTED_SHORTFALL: string[] = [
   "level-check A1 GRAMMAR A1",
   "level-check C2 GRAMMAR C2",
   // Draw overshoot (whole texts): the bank could fill three disjoint forms, but whole texts overshoot the item
-  // count and form 1 must equal the legacy draw. C2 reading: 8 items a form, 24 for three; the bank has exactly
+  // count and the draw takes texts in shuffled, format-mixed order (blueprint.ts: mixFormats) without packing
+  // them to fit. C2 reading: 8 items a form, 24 for three; the bank has exactly
   // 24 in 12 texts (six of 3, six of 1), so three forms of 3+3+1+1 would fit. A1 listening: 7 items a form, 21
   // for three; 24 in 11 clips (3,3,3,3,3,2,2,2,1,1,1), so 3+3+1, 3+2+2 and 3+2+1+1 would fit. Every other
   // reading and listening cell of the earlier list draws three forms without a repeat now.

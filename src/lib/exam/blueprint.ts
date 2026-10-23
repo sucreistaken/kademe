@@ -272,8 +272,14 @@ export function resolveDistribution(
 
 export type BankItem = PoolItem & {
   level: Cefr;
-  /** The item type, for mixing formats in a form. Left out by older callers; the skill-tag family stands in. */
+  /** The item type. Stands in for `format` when that is left out. */
   type?: ItemType;
+  /**
+   * The item's format (item-format.ts: itemFormatOf), for mixing formats in a
+   * form. Left out by older callers: the text kind, else the item type stands
+   * in; with neither the format is unknown and the item mixes with nothing.
+   */
+  format?: string;
   /** How often the item was served in any exam. Orders stale units, least served first. Missing means 0. */
   exposureCount?: number;
 };
@@ -286,9 +292,14 @@ export type BankItem = PoolItem & {
  */
 export type Avoid = { itemIds: Set<string>; stimulusIds: Set<string> };
 
-/** Empty or missing: the draw is exactly the one made before `avoid` existed. */
+/**
+ * Empty or missing: texts and writing and speaking tasks are drawn exactly as
+ * before `avoid` existed. Fixed forms mix formats either way (sampleFixedForm).
+ */
 const isAvoiding = (avoid: Avoid | undefined): avoid is Avoid =>
   !!avoid && (avoid.itemIds.size > 0 || avoid.stimulusIds.size > 0);
+
+const NOTHING_SEEN: Avoid = { itemIds: new Set(), stimulusIds: new Set() };
 
 const isStale = (unit: BankItem[], avoid: Avoid): boolean =>
   unit.some((i) => avoid.itemIds.has(i.id) || (!!i.stimulusId && avoid.stimulusIds.has(i.stimulusId)));
@@ -296,11 +307,16 @@ const isStale = (unit: BankItem[], avoid: Avoid): boolean =>
 /** The skill-tag family: its first two parts ("speaking.planning.open" is "speaking.planning"). */
 export const skillTagFamily = (tag: string): string => tag.split(".").slice(0, 2).join(".");
 
-/** One item's format: its text kind, else its item type, else its skill-tag family. */
-const itemFormat = (i: BankItem): string => textGapKindOf(i) ?? i.type ?? skillTagFamily(i.skillTag);
+/** One item's format: as loaded, else its text kind, else its item type; null when unknown. */
+const itemFormat = (i: BankItem): string | null => i.format ?? textGapKindOf(i) ?? i.type ?? null;
 
-/** A unit's format: the formats of its items (a text with true/false and multiple-choice questions is one format). */
-const unitFormat = (unit: BankItem[]): string => [...new Set(unit.map(itemFormat))].sort().join("+");
+/** The formats of a unit, each once: a text with true/false and multiple-choice questions has two. */
+const unitFormats = (unit: BankItem[]): string[] => [
+  ...new Set(unit.flatMap((i) => {
+    const f = itemFormat(i);
+    return f ? [f] : [];
+  })),
+];
 
 const unitExposure = (unit: BankItem[]): number => Math.max(...unit.map((i) => i.exposureCount ?? 0));
 
@@ -314,45 +330,77 @@ function shuffle<T>(xs: T[], rng: () => number): T[] {
 }
 
 /**
- * Puts units in rounds of different formats: each next unit has a format not
- * drawn yet in the current round, keeping the given order otherwise; a round
- * ends when every format left was drawn. So the first few units of a level mix formats.
+ * New formats a unit is credited with, at most. Two already mix a level; with
+ * no cap the one text of a level with three or four formats would open every
+ * form, and the other texts would hardly be drawn.
  */
-function mixFormats(units: BankItem[][]): BankItem[][] {
-  const left = [...units];
+const MIX_GAIN_CAP = 2;
+
+/**
+ * Units that must add a format new to the section before that preference
+ * counts. With fewer it is dropped: it may steer a level towards a new
+ * format, never pin it to one or two texts.
+ */
+const MIN_SECTION_CHOICE = 3;
+
+/**
+ * Orders a level's units so the first ones drawn cover as many formats as
+ * they can. Each next unit comes from the units adding the most formats the
+ * level has not drawn yet (two or more count as two, see MIX_GAIN_CAP); of
+ * those, the first that adds a format `sectionFormats` (what earlier levels of
+ * the section drew) lacks, when at least MIN_SECTION_CHOICE do, else the
+ * first. "First" is the given (shuffled) order, so the draw stays random
+ * within formats. Once no unit adds a format the rest keep the given order.
+ */
+function mixFormats(units: BankItem[][], sectionFormats: ReadonlySet<string>): BankItem[][] {
+  const left = units.map((unit) => ({ unit, formats: unitFormats(unit) }));
   const out: BankItem[][] = [];
-  let drawn = new Set<string>();
+  const drawn = new Set<string>();
   while (left.length > 0) {
-    let k = left.findIndex((u) => !drawn.has(unitFormat(u)));
-    if (k < 0) {
-      drawn = new Set();
-      k = 0;
-    }
-    const [unit] = left.splice(k, 1);
-    drawn.add(unitFormat(unit));
+    const added = left.map(({ formats }) => formats.filter((f) => !drawn.has(f)));
+    const gain = added.map((a) => Math.min(a.length, MIX_GAIN_CAP));
+    const top = Math.max(...gain);
+    // Nothing left adds a format, and drawing more never will: the rest keep their order.
+    if (top === 0) return [...out, ...left.map(({ unit }) => unit)];
+    const tier = left.map((_, k) => k).filter((k) => gain[k] === top);
+    const newToSection = tier.filter((k) => added[k].some((f) => !sectionFormats.has(f)));
+    const pick = newToSection.length >= MIN_SECTION_CHOICE ? newToSection[0] : tier[0];
+    const [{ unit, formats }] = left.splice(pick, 1);
+    for (const f of formats) drawn.add(f);
     out.push(unit);
   }
   return out;
 }
 
 /**
- * The order a returning student's units are drawn in: units they have not
- * seen first (shuffled, formats mixed), then the stale ones, least served
- * first (ties in shuffled order). The stale tail means a form is always full,
- * even when the student has seen the whole bank.
+ * The order a level's units are drawn in: units the student has not seen
+ * first (shuffled, formats mixed), then the stale ones, least served first
+ * (ties in shuffled order). The stale tail means a form is always full, even
+ * when the student has seen the whole bank. A first-time student has seen
+ * nothing: every unit is fresh and the rng is used as by a plain shuffle.
  */
-function freshFirst(units: BankItem[][], avoid: Avoid, rng: () => number): BankItem[][] {
+function freshFirst(
+  units: BankItem[][],
+  avoid: Avoid,
+  rng: () => number,
+  sectionFormats: ReadonlySet<string> = new Set(),
+): BankItem[][] {
   const fresh = units.filter((u) => !isStale(u, avoid));
   const stale = units.filter((u) => isStale(u, avoid));
-  return [...mixFormats(shuffle(fresh, rng)), ...shuffle(stale, rng).sort((a, b) => unitExposure(a) - unitExposure(b))];
+  return [
+    ...mixFormats(shuffle(fresh, rng), sectionFormats),
+    ...shuffle(stale, rng).sort((a, b) => unitExposure(a) - unitExposure(b)),
+  ];
 }
 
 /**
  * A fixed form: the planned item ids, easiest unit first. For reading and
  * listening whole texts are drawn until the level's count is reached, so a
- * level may get a question or two more than asked for. With a non-empty
- * `avoid` the units the student has not seen come first (see freshFirst);
- * without it the draw is unchanged.
+ * level may get a question or two more than asked for. Every draw mixes
+ * formats (mixFormats, since 2026-10-24 for first-time students too): a level
+ * covers as many formats as its count allows, preferring formats the
+ * section's earlier levels did not draw. With a non-empty `avoid` the units
+ * the student has not seen come first (see freshFirst).
  */
 export function sampleFixedForm(
   pool: BankItem[],
@@ -361,6 +409,7 @@ export function sampleFixedForm(
   avoid?: Avoid,
 ): string[] {
   const units: Array<{ ids: string[]; b: number }> = [];
+  const sectionFormats = new Set<string>();
   for (const level of CEFR_LEVELS) {
     const want = perLevel[level];
     if (want <= 0) continue;
@@ -376,10 +425,10 @@ export function sampleFixedForm(
       ...[...groups.values()].map((g) => [...g].sort((a, b) => a.orderInStimulus - b.orderInStimulus)),
     ];
     let taken = 0;
-    const order = isAvoiding(avoid) ? freshFirst(candidates, avoid, rng) : shuffle(candidates, rng);
-    for (const unit of order) {
+    for (const unit of freshFirst(candidates, avoid ?? NOTHING_SEEN, rng, sectionFormats)) {
       if (taken >= want) break;
       units.push({ ids: unit.map((i) => i.id), b: unit.reduce((a, i) => a + i.b, 0) / unit.length });
+      for (const f of unitFormats(unit)) sectionFormats.add(f);
       taken += unit.length;
     }
   }

@@ -24,8 +24,19 @@ import { CEFR_LEVELS, CLOZE_SKILL_TAG, isObjectiveSection, isTextGap, textGapKin
  * Regression proof for `avoid` (no repeats for a returning student): a frozen
  * copy of the selection as it was at commit 5a2260f (sampleFixedForm and
  * textOpenings from blueprint.ts, pickProductive from exam-flow.ts), run side
- * by side with today's code. With `avoid` missing or empty the draw must not
- * move by a single item.
+ * by side with today's code.
+ *
+ * With `avoid` missing or empty, texts and writing and speaking tasks are
+ * drawn exactly as at 5a2260f (the picture task aside, tested below). Fixed
+ * forms no longer are, on purpose: after a live test the owner found a
+ * first-time student's questions "all the same format" (2026-10-24), because
+ * only a returning student's draw mixed formats. Since then every fixed form
+ * mixes formats (blueprint.ts: mixFormats; measured in format-mix.test.ts).
+ * What still holds for a first-time student, and is pinned here: the form
+ * uses the rng exactly as 5a2260f did, so nothing drawn after it moves; it
+ * is the form of a returning student who has seen nothing in the pool; and
+ * where a level has only one format (or none known) it is the 5a2260f draw
+ * item for item.
  */
 const legacy = {
   shuffle<T>(xs: T[], rng: () => number): T[] {
@@ -151,57 +162,122 @@ const pinnedSection = section("GRAMMAR", 20, {
   texts: [{ level: "B1", kind: "CLOZE" }, { level: "B2", kind: "CLOZE" }],
 });
 
-describe("without avoid the draw is the one of 5a2260f", () => {
+describe("a first-time student (avoid missing or empty)", () => {
   const pool = seedPool();
   const contexts = (mode: ExamMode): Array<{ claimed: Cefr | null; provisional: Cefr }> =>
     mode === "PLACEMENT"
       ? CEFR_LEVELS.map((provisional) => ({ claimed: null, provisional }))
       : CEFR_LEVELS.map((claimed) => ({ claimed, provisional: claimed }));
-
-  it("every template section, level and seed on the starter bank, with avoid missing or empty", () => {
-    let compared = 0;
+  type Visit = (s: SectionConfig, sectionPool: BankItem[], mode: ExamMode, claimed: Cefr | null, provisional: Cefr, offset: number, seed: number) => void;
+  /** Every template section in every context with its starter-bank pool, seeds 1 to 12; returns the number of draws. */
+  const everyDraw = (visit: Visit): number => {
+    let n = 0;
     for (const t of EXAM_TEMPLATES) {
       for (const s of t.config.sections) {
-        // Picture tasks are the one intended change (a speaking section opens with one); tested below.
+        // Picture tasks are an intended change of their own (a speaking section opens with one); tested below.
         const sectionPool = pool.filter((p) => p.section === s.section && p.skillTag !== PICTURE_TASK_TAG);
         for (const { claimed, provisional } of contexts(t.mode)) {
           for (let seed = 1; seed <= 12; seed++) {
-            if (isObjectiveSection(s.section)) {
-              const before = legacy.planFixedSection(s, sectionPool, t.mode, claimed, t.config.difficultyOffset, mulberry32(seed));
-              expect(planFixedSection(s, sectionPool, t.mode, claimed, t.config.difficultyOffset, mulberry32(seed))).toEqual(before);
-              expect(planFixedSection(s, sectionPool, t.mode, claimed, t.config.difficultyOffset, mulberry32(seed), empty())).toEqual(before);
-            } else {
-              const levels = productiveTaskLevels(t.mode, claimed, provisional, s.tasks);
-              const before = legacy.pickProductive(sectionPool, levels, mulberry32(seed));
-              expect(pickProductive(sectionPool, levels, mulberry32(seed))).toEqual(before);
-              expect(pickProductive(sectionPool, levels, mulberry32(seed), empty())).toEqual(before);
-            }
-            compared++;
+            visit(s, sectionPool, t.mode, claimed, provisional, t.config.difficultyOffset, seed);
+            n++;
           }
         }
       }
     }
+    return n;
+  };
+  /** The rng state after `draw` used it: its next number. */
+  const nextAfter = (seed: number, draw: (rng: () => number) => unknown): number => {
+    const rng = mulberry32(seed);
+    draw(rng);
+    return rng();
+  };
+
+  it("texts and writing and speaking tasks are drawn as at 5a2260f, on every template, context and seed", () => {
+    const compared = everyDraw((s, sectionPool, mode, claimed, provisional, _offset, seed) => {
+      if (isObjectiveSection(s.section)) {
+        const before = legacy.textOpenings(s, sectionPool, mode, claimed, mulberry32(seed));
+        expect(textOpenings(s, sectionPool, mode, claimed, mulberry32(seed))).toEqual(before);
+        expect(textOpenings(s, sectionPool, mode, claimed, mulberry32(seed), empty())).toEqual(before);
+      } else {
+        const levels = productiveTaskLevels(mode, claimed, provisional, s.tasks);
+        const before = legacy.pickProductive(sectionPool, levels, mulberry32(seed));
+        expect(pickProductive(sectionPool, levels, mulberry32(seed))).toEqual(before);
+        expect(pickProductive(sectionPool, levels, mulberry32(seed), empty())).toEqual(before);
+      }
+    });
     expect(compared).toBeGreaterThan(1000);
   });
 
-  it("every count, level and seed on a pool of singles, texts and cloze texts", () => {
+  it("a fixed form opens with the texts of 5a2260f and uses the rng exactly as it did", () => {
+    let changed = 0;
+    everyDraw((s, sectionPool, mode, claimed, _provisional, offset, seed) => {
+      if (!isObjectiveSection(s.section)) return;
+      const before = legacy.planFixedSection(s, sectionPool, mode, claimed, offset, mulberry32(seed));
+      const after = planFixedSection(s, sectionPool, mode, claimed, offset, mulberry32(seed));
+      const openings = legacy.textOpenings(s, sectionPool, mode, claimed, mulberry32(seed));
+      expect(after.slice(0, openings.length)).toEqual(openings);
+      // As many numbers taken from the rng: whatever is drawn after this section with the same rng does not move.
+      expect(nextAfter(seed, (rng) => planFixedSection(s, sectionPool, mode, claimed, offset, rng))).toBe(
+        nextAfter(seed, (rng) => legacy.planFixedSection(s, sectionPool, mode, claimed, offset, rng)),
+      );
+      if (after.join() !== before.join()) changed++;
+    });
+    // The format mix does change first-time forms; format-mix.test.ts measures how.
+    expect(changed).toBeGreaterThan(100);
+  });
+
+  it("a first-time form is the form of a returning student who has seen nothing in the pool", () => {
+    // The form only: a returning student's opening text is picked by another rule (least served when all were seen).
+    everyDraw((s, sectionPool, mode, claimed, _provisional, offset, seed) => {
+      if (!isObjectiveSection(s.section)) return;
+      const perLevel = resolveDistribution(s, mode, claimed, offset);
+      const missing = sampleFixedForm(sectionPool, perLevel, mulberry32(seed));
+      expect(planFixedSection(s, sectionPool, mode, claimed, offset, mulberry32(seed), empty())).toEqual(planFixedSection(s, sectionPool, mode, claimed, offset, mulberry32(seed)));
+      expect(sampleFixedForm(sectionPool, perLevel, mulberry32(seed), empty())).toEqual(missing);
+      expect(sampleFixedForm(sectionPool, perLevel, mulberry32(seed), foreign())).toEqual(missing);
+    });
     for (let seed = 1; seed <= 30; seed++) {
-      for (const offset of [-1, 0, 1]) {
-        for (const mode of ["PLACEMENT", "LEVEL_VERIFICATION"] as const) {
-          const before = legacy.planFixedSection(pinnedSection, synthetic, mode, "B1", offset, mulberry32(seed));
-          expect(planFixedSection(pinnedSection, synthetic, mode, "B1", offset, mulberry32(seed))).toEqual(before);
-          expect(planFixedSection(pinnedSection, synthetic, mode, "B1", offset, mulberry32(seed), empty())).toEqual(before);
-        }
-      }
       const perLevel = { A1: seed % 5, A2: 3, B1: 7, B2: 2, C1: seed % 3, C2: 1 };
-      expect(sampleFixedForm(synthetic, perLevel, mulberry32(seed), empty())).toEqual(legacy.sampleFixedForm(synthetic, perLevel, mulberry32(seed)));
+      const missing = sampleFixedForm(synthetic, perLevel, mulberry32(seed));
+      expect(sampleFixedForm(synthetic, perLevel, mulberry32(seed), empty())).toEqual(missing);
+      expect(sampleFixedForm(synthetic, perLevel, mulberry32(seed), foreign())).toEqual(missing);
     }
   });
 
-  it("a fixed seed draws the ids 5a2260f drew", () => {
-    // Printed by the code of 5a2260f for this pool, section and seed.
+  it("where every unit has one format, or none known, the form is the draw of 5a2260f", () => {
+    const oneFormat = (p: BankItem): BankItem => ({ ...p, format: "ONE" });
+    const unknown = (p: BankItem): BankItem => ({ ...p, format: undefined, type: undefined });
+    for (const strip of [oneFormat, unknown]) {
+      everyDraw((s, sectionPool, mode, claimed, _provisional, offset, seed) => {
+        if (!isObjectiveSection(s.section)) return;
+        const plain = sectionPool.map(strip);
+        expect(planFixedSection(s, plain, mode, claimed, offset, mulberry32(seed))).toEqual(legacy.planFixedSection(s, plain, mode, claimed, offset, mulberry32(seed)));
+      });
+      const plain = synthetic.map(strip);
+      for (let seed = 1; seed <= 30; seed++) {
+        for (const offset of [-1, 0, 1]) {
+          for (const mode of ["PLACEMENT", "LEVEL_VERIFICATION"] as const) {
+            const before = legacy.planFixedSection(pinnedSection, plain, mode, "B1", offset, mulberry32(seed));
+            expect(planFixedSection(pinnedSection, plain, mode, "B1", offset, mulberry32(seed))).toEqual(before);
+            expect(planFixedSection(pinnedSection, plain, mode, "B1", offset, mulberry32(seed), empty())).toEqual(before);
+          }
+        }
+      }
+    }
+  });
+
+  it("a fixed seed draws the pinned ids", () => {
+    // Printed by the code of 5a2260f for this pool, section and seed. This seed's shuffle already mixes formats, so
+    // the format mix keeps the draw.
+    expect(legacy.planFixedSection(pinnedSection, synthetic, "PLACEMENT", null, 0, mulberry32(2026))).toEqual(PINNED_PLAN);
     expect(planFixedSection(pinnedSection, synthetic, "PLACEMENT", null, 0, mulberry32(2026))).toEqual(PINNED_PLAN);
     expect(planFixedSection(pinnedSection, synthetic, "PLACEMENT", null, 0, mulberry32(2026), empty())).toEqual(PINNED_PLAN);
+    // Here 5a2260f drew two multiple-choice items; the mix keeps the first one shuffled and adds the first gap fill.
+    const singles = synthetic.filter((p) => !p.stimulusId && !isTextGap(p));
+    const twoAtB1 = { A1: 0, A2: 0, B1: 2, B2: 0, C1: 0, C2: 0 };
+    expect(legacy.sampleFixedForm(singles, twoAtB1, mulberry32(2020))).toEqual(["B1-s0", "B1-s2"]);
+    expect(sampleFixedForm(singles, twoAtB1, mulberry32(2020))).toEqual(["B1-s2", "B1-s3"]);
     const plain = tasks.filter((t) => t.skillTag !== PICTURE_TASK_TAG);
     expect(pickProductive(plain, ["B1", "B1", "B2"], mulberry32(2026))).toEqual(PINNED_TASKS);
     expect(pickProductive(plain, ["B1", "B1", "B2"], mulberry32(2026), empty())).toEqual(PINNED_TASKS);

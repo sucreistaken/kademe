@@ -111,6 +111,65 @@ describe("fixed forms", () => {
   });
 });
 
+describe("format mix in every fixed form (2026-10-24)", () => {
+  const only = (level: Cefr, n: number): Record<Cefr, number> => ({ A1: 0, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0, [level]: n });
+  const single = (id: string, level: Cefr, format: string): BankItem => ({ id, level, b: thetaForLevel(level), skillTag: "g", format, stimulusId: null, orderInStimulus: 0 });
+  /** A text whose questions have these formats, one question each, padded with the first format to `size`. */
+  const text = (id: string, level: Cefr, formats: string[], size = 4): BankItem[] =>
+    Array.from({ length: size }, (_, i) => ({ id: `${id}-${i}`, level, b: thetaForLevel(level), skillTag: "r", format: formats[i] ?? formats[0], stimulusId: id, orderInStimulus: i }));
+  const textsOf = (ids: string[]) => [...new Set(ids.map((id) => id.split("-")[0]))];
+  const seeds = Array.from({ length: 120 }, (_, i) => i + 1);
+
+  it("covers as many formats as the count allows, at random within each format", () => {
+    const pool = [
+      ...Array.from({ length: 6 }, (_, i) => single(`mc${i}`, "B1", "SINGLE_CHOICE")),
+      single("gap0", "B1", "GAP_FILL"),
+      single("gap1", "B1", "GAP_FILL"),
+      single("tf0", "B1", "TRUE_FALSE_NG"),
+    ];
+    const seen = new Set<string>();
+    for (const seed of seeds) {
+      const ids = sampleFixedForm(pool, only("B1", 3), mulberry32(seed));
+      expect(new Set(ids.map((id) => pool.find((p) => p.id === id)!.format)).size).toBe(3);
+      ids.forEach((id) => seen.add(id));
+    }
+    expect(seen.size).toBe(pool.length);
+  });
+
+  it("opens a level with a text of two formats or more, and a third format does not make a text win", () => {
+    const pool = [
+      ...text("two1", "B1", ["SINGLE_CHOICE", "TRUE_FALSE_NG"]),
+      ...text("two2", "B1", ["SINGLE_CHOICE", "TRUE_FALSE_NG"]),
+      ...text("three", "B1", ["SINGLE_CHOICE", "TRUE_FALSE_NG", "MATCHING/WORDS"]),
+      ...text("match", "B1", ["MATCHING/WORDS"]),
+      ...text("mc", "B1", ["SINGLE_CHOICE"]),
+    ];
+    const drawn = new Set<string>();
+    for (const seed of seeds) {
+      const ids = sampleFixedForm(pool, only("B1", 4), mulberry32(seed));
+      expect(ids).toHaveLength(4);
+      textsOf(ids).forEach((t) => drawn.add(t));
+    }
+    expect([...drawn].sort()).toEqual(["three", "two1", "two2"]);
+  });
+
+  it("prefers a format the section's earlier levels did not draw, when at least three texts offer one", () => {
+    const a2 = text("plain", "A2", ["SINGLE_CHOICE", "TRUE_FALSE_NG"]);
+    const fresh = ["new1", "new2", "new3"].flatMap((id) => text(id, "B1", ["SINGLE_CHOICE", "TRUE_FALSE_NG/JA_NEIN"]));
+    const usual = ["old1", "old2"].flatMap((id) => text(id, "B1", ["SINGLE_CHOICE", "TRUE_FALSE_NG"]));
+    const want = { ...only("A2", 4), B1: 4 };
+    const drawn = (pool: BankItem[]) => {
+      const out = new Set<string>();
+      for (const seed of seeds) textsOf(sampleFixedForm(pool, want, mulberry32(seed))).forEach((t) => out.add(t));
+      return [...out].sort();
+    };
+    expect(drawn([...a2, ...fresh, ...usual])).toEqual(["new1", "new2", "new3", "plain"]);
+    // With two such texts the preference is dropped, so it never pins a level to one or two texts.
+    const twoFresh = fresh.filter((i) => i.stimulusId !== "new3");
+    expect(drawn([...a2, ...twoFresh, ...usual])).toEqual(["new1", "new2", "old1", "old2", "plain"]);
+  });
+});
+
 describe("bank coverage", () => {
   const full: BankCount[] = SECTIONS.flatMap((section) =>
     CEFR_LEVELS.map((level) => ({ section, level, items: 12, stimuli: 3 })),

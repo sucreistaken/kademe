@@ -32,6 +32,7 @@ import {
 import { candidateExamName } from "@/lib/exam/candidate-exam-name";
 import { levelFromTheta } from "@/lib/exam/cefr";
 import { playsAllowed } from "@/lib/exam/listening-plays";
+import { itemFormatOf } from "@/lib/exam/item-format";
 import { hasAnswer, scoreItem } from "@/lib/exam/item-scoring";
 import { examDateOf, studentSheetDate } from "@/lib/exam/sheet-date";
 import { studentFacingFeedback, type StudentNote } from "@/lib/exam/student-feedback";
@@ -524,6 +525,20 @@ async function loadPool(orgId: string, section: Section, x: Executor = db): Prom
     }));
 }
 
+/**
+ * The format of every approved item of the section (item-format.ts), by item
+ * id, so a planned form can mix formats (blueprint.ts: mixFormats). Read once
+ * when a planned section starts: it needs `content`, which loadPool, run again
+ * for every item an adaptive section serves, leaves out.
+ */
+async function formatsOf(orgId: string, section: Section): Promise<Map<string, string>> {
+  const rows = await db
+    .select({ id: items.id, type: items.type, skillTag: items.skillTag, content: items.content })
+    .from(items)
+    .where(and(eq(items.orgId, orgId), eq(items.section, section), eq(items.status, "APPROVED")));
+  return new Map(rows.map((r) => [r.id, itemFormatOf(r)]));
+}
+
 /** Provisional level from the finished objective sections, for placing writing and speaking tasks. */
 async function provisionalLevel(attemptId: string): Promise<Cefr> {
   const runs = await runsOf(attemptId);
@@ -563,14 +578,18 @@ export async function startSection(ctx: ExamCandidateContext, position: number):
 
   const s = current.config;
   const rng = mulberry32(Math.floor(Math.random() * 2 ** 31));
-  const pool = await loadPool(ctx.assessment.orgId, s.section);
+  const planned = !isObjectiveSection(s.section) || !s.adaptive;
+  // A planned form mixes formats (blueprint.ts: mixFormats), so its pool
+  // carries each item's format; adaptive sections pick item by item.
+  const loaded = await loadPool(ctx.assessment.orgId, s.section);
+  const formats = planned ? await formatsOf(ctx.assessment.orgId, s.section) : null;
+  const pool = formats ? loaded.map((p) => ({ ...p, format: formats.get(p.id) })) : loaded;
   let itemPlan: string[] | null = null;
   let taskLevels: string[] | null = null;
   // A returning student (same school, same email) draws around what earlier
   // exams served; when everything was seen the least served units fill the
   // form, so this never blocks a start. Adaptive sections pick item by item
   // and do not use it.
-  const planned = !isObjectiveSection(s.section) || !s.adaptive;
   const avoid = planned ? await seenBy(ctx.assessment.orgId, ctx.candidate.email, ctx.assessment.id) : undefined;
   if (!isObjectiveSection(s.section)) {
     const provisional = await provisionalLevel(current.attempt.id);

@@ -10,6 +10,7 @@ import {
   type BlueprintConfig,
 } from "./blueprint";
 import { thetaForLevel } from "./cefr";
+import { itemFormatOf } from "./item-format";
 import { isObjectiveSection, type Cefr, type ExamMode, type Section } from "./types";
 
 /**
@@ -26,7 +27,7 @@ export type SeedPoolItem = BankItem & { section: Section; seed: SeedItem };
  * difficulty comes from the level and `within`, the items of a text count
  * from 1 in bank order, nothing was served yet, and every listening clip
  * counts as having audio. Ids are "seed-<index>"; a stimulus key stands in
- * for the stimulus id.
+ * for the stimulus id. The format is worked out as startSection does.
  */
 export function seedPool(bank: SeedBankPart = SEED_BANK): SeedPoolItem[] {
   const order = new Map<string, number>();
@@ -39,6 +40,7 @@ export function seedPool(bank: SeedBankPart = SEED_BANK): SeedPoolItem[] {
       level: item.level,
       b: thetaForLevel(item.level, item.within ?? "MID"),
       type: item.type,
+      format: itemFormatOf(item),
       skillTag: item.skillTag,
       stimulusId: item.stimulusKey ?? null,
       orderInStimulus: n,
