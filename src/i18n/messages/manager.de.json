@@ -1,56 +1,56 @@
 {
   "nav": {
-    "dashboard": "Today",
-    "students": "Students",
-    "exams": "Exams",
-    "bank": "Question bank",
-    "settings": "Settings",
-    "openMenu": "Open menu",
-    "menuTitle": "Menu",
-    "menuDescription": "Panel menu",
-    "signOut": "Sign out",
+    "dashboard": "Heute",
+    "students": "Lernende",
+    "exams": "Prüfungen",
+    "bank": "Fragenbank",
+    "settings": "Einstellungen",
+    "openMenu": "Menü öffnen",
+    "menuTitle": "Menü",
+    "menuDescription": "Panel-Menü",
+    "signOut": "Abmelden",
     "language": "Sprache",
     "languageTr": "TR",
     "languageEn": "EN",
     "languageDe": "DE",
-    "more": "More actions",
-    "advanced": "Advanced"
+    "more": "Weitere Aktionen",
+    "advanced": "Erweitert"
   },
   "common": {
-    "save": "Save",
-    "saving": "Saving",
-    "saved": "Saved",
-    "cancel": "Cancel",
-    "back": "Back",
-    "loading": "Loading",
-    "undo": "Undo",
-    "search": "Search",
-    "none": "None",
-    "undoing": "Undoing"
+    "save": "Speichern",
+    "saving": "Wird gespeichert",
+    "saved": "Gespeichert",
+    "cancel": "Abbrechen",
+    "back": "Zurück",
+    "loading": "Wird geladen",
+    "undo": "Rückgängig",
+    "search": "Suchen",
+    "none": "Keine",
+    "undoing": "Wird rückgängig gemacht"
   },
   "errorPage": {
-    "forbiddenTitle": "Your role cannot do this",
-    "forbiddenBody": "You do not have permission for this screen or action. Reviewers grade writing and speaking; exams, the bank and invitations are for teachers and owners.",
-    "genericTitle": "Something went wrong",
-    "genericBody": "An unexpected error happened while loading this page. You can try again or go back to the dashboard.",
-    "retry": "Try again",
-    "toDashboard": "Back to the dashboard",
-    "reference": "Error code: {digest}"
+    "forbiddenTitle": "Ihre Rolle darf das nicht",
+    "forbiddenBody": "Für diese Seite oder Aktion fehlt Ihnen die Berechtigung. Korrektoren bewerten Schreiben und Sprechen; Prüfungen, die Fragenbank und Einladungen sind Sache der Lehrkräfte und Inhaber.",
+    "genericTitle": "Etwas ist schiefgelaufen",
+    "genericBody": "Beim Laden dieser Seite ist ein unerwarteter Fehler aufgetreten. Sie können es erneut versuchen oder zur Übersicht zurückkehren.",
+    "retry": "Erneut versuchen",
+    "toDashboard": "Zurück zur Übersicht",
+    "reference": "Fehlercode: {digest}"
   },
   "flow": {
-    "continue": "Continue",
-    "back": "Back",
-    "backToSummary": "Back to the summary",
-    "exit": "Leave",
-    "exitUnsaved": "Leave without saving",
-    "change": "Change",
-    "changed": "changed",
-    "stepLabel": "Step {n} / {total}",
-    "noChanges": "Nothing has changed.",
-    "skip": "Skip"
+    "continue": "Weiter",
+    "back": "Zurück",
+    "backToSummary": "Zurück zur Zusammenfassung",
+    "exit": "Verlassen",
+    "exitUnsaved": "Ohne Speichern verlassen",
+    "change": "Ändern",
+    "changed": "geändert",
+    "stepLabel": "Schritt {n} / {total}",
+    "noChanges": "Nichts wurde geändert.",
+    "skip": "Überspringen"
   },
   "brand": {
-    "byline": "a Campus German product",
-    "madeWith": "Prepared with Kademe, a Campus German product."
+    "byline": "ein Produkt von Campus German",
+    "madeWith": "Erstellt mit Kademe, einem Produkt von Campus German."
   }
 }
