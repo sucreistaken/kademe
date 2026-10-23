@@ -330,65 +330,85 @@ function shuffle<T>(xs: T[], rng: () => number): T[] {
 }
 
 /**
- * New formats a unit is credited with, at most. Two already mix a level; with
- * no cap the one text of a level with three or four formats would open every
- * form, and the other texts would hardly be drawn.
+ * How a format group's size spreads it over the draw order (mixFormats). 0
+ * would be a plain round robin over formats: every group in the first round,
+ * so a format only one text has would be in every form of a level that takes
+ * as many texts as it has formats (level check A1 listening: one clip in 100%
+ * of first-time forms). 1 would draw formats in proportion to their units, a
+ * small format no more often than a shuffle does. 0.75 keeps every text under
+ * half of the first-time forms on the starter bank (format-mix.test.ts).
  */
-const MIX_GAIN_CAP = 2;
+const FORMAT_SPREAD = 0.75;
 
-/**
- * Units that must add a format new to the section before that preference
- * counts. With fewer it is dropped: it may steer a level towards a new
- * format, never pin it to one or two texts.
- */
-const MIN_SECTION_CHOICE = 3;
-
-/**
- * Orders a level's units so the first ones drawn cover as many formats as
- * they can. Each next unit comes from the units adding the most formats the
- * level has not drawn yet (two or more count as two, see MIX_GAIN_CAP); of
- * those, the first that adds a format `sectionFormats` (what earlier levels of
- * the section drew) lacks, when at least MIN_SECTION_CHOICE do, else the
- * first. "First" is the given (shuffled) order, so the draw stays random
- * within formats. Once no unit adds a format the rest keep the given order.
- */
-function mixFormats(units: BankItem[][], sectionFormats: ReadonlySet<string>): BankItem[][] {
-  const left = units.map((unit) => ({ unit, formats: unitFormats(unit) }));
+/** The units a level takes from `order`: whole units until `want` items are reached. */
+function takeUnits(order: BankItem[][], want: number): BankItem[][] {
   const out: BankItem[][] = [];
-  const drawn = new Set<string>();
-  while (left.length > 0) {
-    const added = left.map(({ formats }) => formats.filter((f) => !drawn.has(f)));
-    const gain = added.map((a) => Math.min(a.length, MIX_GAIN_CAP));
-    const top = Math.max(...gain);
-    // Nothing left adds a format, and drawing more never will: the rest keep their order.
-    if (top === 0) return [...out, ...left.map(({ unit }) => unit)];
-    const tier = left.map((_, k) => k).filter((k) => gain[k] === top);
-    const newToSection = tier.filter((k) => added[k].some((f) => !sectionFormats.has(f)));
-    const pick = newToSection.length >= MIN_SECTION_CHOICE ? newToSection[0] : tier[0];
-    const [{ unit, formats }] = left.splice(pick, 1);
-    for (const f of formats) drawn.add(f);
+  let taken = 0;
+  for (const unit of order) {
+    if (taken >= want) break;
     out.push(unit);
+    taken += unit.length;
   }
   return out;
 }
 
+const formatCount = (units: BankItem[][]): number => new Set(units.flatMap(unitFormats)).size;
+
+/**
+ * Interleaves formats at random. Units with the same formats form a group (a
+ * text with multiple-choice and true/false questions is one group, a text with
+ * only multiple choice another), in the given (shuffled) order. Each group
+ * takes a random phase in [0, 1), and its k-th unit the slot
+ * (k + phase) / size^FORMAT_SPREAD; units are drawn in slot order. So every
+ * format comes up early in some forms and late in others, a big group comes up
+ * more often than a small one, and within a group the order stays the shuffle.
+ * With one group the order is unchanged and the rng is not used.
+ */
+function mixFormats(units: BankItem[][], rng: () => number): BankItem[][] {
+  const groups = new Map<string, BankItem[][]>();
+  for (const unit of units) {
+    const key = unitFormats(unit).sort().join("+");
+    groups.set(key, [...(groups.get(key) ?? []), unit]);
+  }
+  if (groups.size < 2) return units;
+  return [...groups.values()]
+    .flatMap((group) => {
+      const phase = rng();
+      return group.map((unit, k) => ({ unit, slot: (k + phase) / group.length ** FORMAT_SPREAD }));
+    })
+    .sort((a, b) => a.slot - b.slot)
+    .map(({ unit }) => unit);
+}
+
+/**
+ * When the units a level takes from `order` show a single format, moves to the
+ * front the first unit after which they show two, if any; else `order` as is.
+ * A level of one text then gets a text with two formats, or a short text and
+ * another one.
+ */
+function twoFormatsFirst(order: BankItem[][], want: number): BankItem[][] {
+  if (formatCount(takeUnits(order, want)) >= 2) return order;
+  for (let k = 1; k < order.length; k++) {
+    const moved = [order[k], ...order.slice(0, k), ...order.slice(k + 1)];
+    if (formatCount(takeUnits(moved, want)) >= 2) return moved;
+  }
+  return order;
+}
+
 /**
  * The order a level's units are drawn in: units the student has not seen
- * first (shuffled, formats mixed), then the stale ones, least served first
- * (ties in shuffled order). The stale tail means a form is always full, even
- * when the student has seen the whole bank. A first-time student has seen
- * nothing: every unit is fresh and the rng is used as by a plain shuffle.
+ * first (shuffled; with `want`, formats mixed and two formats where the fresh
+ * units allow), then the stale ones, least served first (ties in shuffled
+ * order). The stale tail means a form is always full, even when the student
+ * has seen the whole bank. A first-time student has seen nothing: every unit
+ * is fresh.
  */
-function freshFirst(
-  units: BankItem[][],
-  avoid: Avoid,
-  rng: () => number,
-  sectionFormats: ReadonlySet<string> = new Set(),
-): BankItem[][] {
+function freshFirst(units: BankItem[][], avoid: Avoid, rng: () => number, want?: number): BankItem[][] {
   const fresh = units.filter((u) => !isStale(u, avoid));
   const stale = units.filter((u) => isStale(u, avoid));
+  const shuffled = shuffle(fresh, rng);
   return [
-    ...mixFormats(shuffle(fresh, rng), sectionFormats),
+    ...(want === undefined ? shuffled : twoFormatsFirst(mixFormats(shuffled, rng), want)),
     ...shuffle(stale, rng).sort((a, b) => unitExposure(a) - unitExposure(b)),
   ];
 }
@@ -397,10 +417,10 @@ function freshFirst(
  * A fixed form: the planned item ids, easiest unit first. For reading and
  * listening whole texts are drawn until the level's count is reached, so a
  * level may get a question or two more than asked for. Every draw mixes
- * formats (mixFormats, since 2026-10-24 for first-time students too): a level
- * covers as many formats as its count allows, preferring formats the
- * section's earlier levels did not draw. With a non-empty `avoid` the units
- * the student has not seen come first (see freshFirst).
+ * formats (mixFormats, since 2026-10-24 for first-time students too) and a
+ * level shows two formats whenever its fresh units can (twoFormatsFirst).
+ * With a non-empty `avoid` the units the student has not seen come first (see
+ * freshFirst).
  */
 export function sampleFixedForm(
   pool: BankItem[],
@@ -409,7 +429,6 @@ export function sampleFixedForm(
   avoid?: Avoid,
 ): string[] {
   const units: Array<{ ids: string[]; b: number }> = [];
-  const sectionFormats = new Set<string>();
   for (const level of CEFR_LEVELS) {
     const want = perLevel[level];
     if (want <= 0) continue;
@@ -424,12 +443,8 @@ export function sampleFixedForm(
       ...singles.map((i) => [i]),
       ...[...groups.values()].map((g) => [...g].sort((a, b) => a.orderInStimulus - b.orderInStimulus)),
     ];
-    let taken = 0;
-    for (const unit of freshFirst(candidates, avoid ?? NOTHING_SEEN, rng, sectionFormats)) {
-      if (taken >= want) break;
+    for (const unit of takeUnits(freshFirst(candidates, avoid ?? NOTHING_SEEN, rng, want), want)) {
       units.push({ ids: unit.map((i) => i.id), b: unit.reduce((a, i) => a + i.b, 0) / unit.length });
-      for (const f of unitFormats(unit)) sectionFormats.add(f);
-      taken += unit.length;
     }
   }
   return units.sort((a, b) => a.b - b.b).flatMap((u) => u.ids);

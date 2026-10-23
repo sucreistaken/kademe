@@ -13,9 +13,10 @@ import { CEFR_LEVELS, isObjectiveSection, isTextGap, textGapKindOf, type Cefr, t
  * FORMS first-time forms per context from the starter bank with the frozen
  * draw of 655db25 ("before") and today's (`planFixedSection`, "after") and
  * compares, per template, context, section and level, the distinct formats
- * (item-format.ts) of the items drawn there.
+ * (item-format.ts) of the items drawn there, and how often the most drawn
+ * text, clip or item turns up (exposure: students share what they saw).
  *
- * Print the table: FORMAT_MIX_TABLE=1 npx vitest run src/lib/exam/format-mix.test.ts
+ * Print the tables: FORMAT_MIX_TABLE=1 npx vitest run src/lib/exam/format-mix.test.ts --reporter=verbose
  */
 const FORMS = 200;
 
@@ -100,6 +101,10 @@ type Cell = {
   unitsBefore: number;
   unitsAfter: number;
   unitsInBank: number;
+  /** The largest share of forms one unit (text, clip, single item) is drawn into, and that unit. */
+  topShareBefore: number;
+  topShareAfter: number;
+  topUnitAfter: string;
   canShowTwo: boolean;
   /** After: forms showing fewer than two formats although the bank could show two. */
   shortForms: number;
@@ -115,12 +120,14 @@ function measure(t: ExamTemplate): Cell[] {
       const levels = CEFR_LEVELS.filter((l) => want[l] > 0);
       if (levels.length === 0) continue;
       const sectionPool = pool.filter((p) => p.section === s.section);
-      const tally = new Map<string, { before: number; after: number; twoBefore: number; twoAfter: number; short: number; usedBefore: Set<string>; usedAfter: Set<string> }>();
+      type Tally = { before: number; after: number; twoBefore: number; twoAfter: number; short: number; usedBefore: Map<string, number>; usedAfter: Map<string, number> };
+      const tally = new Map<string, Tally>();
       const row = (key: string) => {
-        const r = tally.get(key) ?? { before: 0, after: 0, twoBefore: 0, twoAfter: 0, short: 0, usedBefore: new Set<string>(), usedAfter: new Set<string>() };
+        const r = tally.get(key) ?? { before: 0, after: 0, twoBefore: 0, twoAfter: 0, short: 0, usedBefore: new Map(), usedAfter: new Map() };
         tally.set(key, r);
         return r;
       };
+      const top = (used: Map<string, number>): [string, number] => [...used].sort((a, b) => b[1] - a[1])[0] ?? ["", 0];
       const feasible = new Map(levels.map((l) => [l, canShowTwo(unitsAt(sectionPool, l), want[l])]));
       for (let seed = 1; seed <= FORMS; seed++) {
         const drawn = {
@@ -136,7 +143,8 @@ function measure(t: ExamTemplate): Cell[] {
             r[side] += n;
             if (n >= 2) r[side === "before" ? "twoBefore" : "twoAfter"]++;
             if (side === "after" && n < 2 && key !== "all" && feasible.get(key as Cefr)) r.short++;
-            for (const i of here) (side === "before" ? r.usedBefore : r.usedAfter).add(i.stimulusId ?? i.id);
+            const used = side === "before" ? r.usedBefore : r.usedAfter;
+            for (const unit of new Set(here.map((i) => i.stimulusId ?? i.id))) used.set(unit, (used.get(unit) ?? 0) + 1);
           }
         }
       }
@@ -155,6 +163,9 @@ function measure(t: ExamTemplate): Cell[] {
           unitsBefore: r.usedBefore.size,
           unitsAfter: r.usedAfter.size,
           unitsInBank: inBank,
+          topShareBefore: top(r.usedBefore)[1] / FORMS,
+          topShareAfter: top(r.usedAfter)[1] / FORMS,
+          topUnitAfter: top(r.usedAfter)[0],
           canShowTwo: key === "all" ? levels.some((l) => feasible.get(l)) : !!feasible.get(key as Cefr),
           shortForms: r.short,
         });
@@ -171,16 +182,48 @@ const template = (key: string): ExamTemplate => {
 };
 const cells = [...measure(template("placement")), ...measure(template("level-check"))];
 
+/** Per template and context, the largest share of forms any one unit is drawn into, before and after. */
+function contextExposure(): Array<{ template: string; context: string; before: number; after: number; unit: string }> {
+  const out = new Map<string, { template: string; context: string; before: number; after: number; unit: string }>();
+  for (const c of cells.filter((x) => x.level !== "all")) {
+    const key = `${c.template} ${c.context}`;
+    const e = out.get(key) ?? { template: c.template, context: c.context, before: 0, after: 0, unit: "" };
+    e.before = Math.max(e.before, c.topShareBefore);
+    if (c.topShareAfter > e.after) {
+      e.after = c.topShareAfter;
+      e.unit = `${c.section} ${c.level} ${byId.get(c.topUnitAfter)?.seed.stimulusKey ?? c.topUnitAfter}`;
+    }
+    out.set(key, e);
+  }
+  return [...out.values()];
+}
+
+/** Most forms one text, clip or item may be drawn into, per context (controller ruling 2026-10-24). */
+const MAX_UNIT_SHARE = 0.6;
+
+/**
+ * Level cells whose average number of formats is below 655db25 and why. Both are a level of one clip (two
+ * questions, every B1 clip has three) drawn from two format groups of four clips each, so the expected value
+ * is the same as a plain shuffle (2.5 formats); 200 forms land a little under it.
+ */
+const EXPECTED_LOWER_LEVELS = ["level-check A2 LISTENING B1", "level-check B2 LISTENING B1"];
+
 if (process.env.FORMAT_MIX_TABLE) {
   const pct = (x: number) => `${Math.round(100 * x)}%`;
   const lines = [
     `Distinct formats per form, ${FORMS} first-time forms per context, starter bank. before = 655db25, after = format mix.`,
-    "| template | context | section | level | formats before | formats after | 2+ formats before | 2+ formats after | units drawn before | units drawn after |",
-    "|---|---|---|---|---|---|---|---|---|---|",
+    "| template | context | section | level | formats before | formats after | 2+ formats before | 2+ formats after | units drawn before | units drawn after | top unit share before | top unit share after |",
+    "|---|---|---|---|---|---|---|---|---|---|---|---|",
     ...cells.map(
       (c) =>
-        `| ${c.template} | ${c.context} | ${c.section} | ${c.level} | ${c.before.toFixed(2)} | ${c.after.toFixed(2)} | ${pct(c.twoBefore)} | ${pct(c.twoAfter)} | ${c.unitsBefore} / ${c.unitsInBank} | ${c.unitsAfter} / ${c.unitsInBank} |`,
+        `| ${c.template} | ${c.context} | ${c.section} | ${c.level} | ${c.before.toFixed(2)} | ${c.after.toFixed(2)} | ${pct(c.twoBefore)} | ${pct(c.twoAfter)} | ${c.unitsBefore} / ${c.unitsInBank} | ${c.unitsAfter} / ${c.unitsInBank} | ${pct(c.topShareBefore)} | ${pct(c.topShareAfter)} |`,
     ),
+    "",
+    "Largest share of first-time forms one text, clip or item is drawn into, per context:",
+    "| template | context | before | after | unit (after) |",
+    "|---|---|---|---|---|",
+    ...contextExposure().map((e) => `| ${e.template} | ${e.context} | ${pct(e.before)} | ${pct(e.after)} | ${e.unit} |`),
+    "",
   ];
   const levelCells = cells.filter((c) => c.level !== "all");
   const avg = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
@@ -210,14 +253,12 @@ describe("every student gets a mix of formats (starter bank, first-time forms)",
     expect(sections.filter((c) => c.after > c.before).length).toBeGreaterThan(sections.length / 2);
   });
 
-  it("per level, shows as many formats as before on average, or two in every form", () => {
-    // A level of two questions takes one text: when the section prefers a text with a format the section has not
-    // shown yet (see mixFormats), that text may have two formats where a random one sometimes had three. Such a
-    // level still shows two formats in every form, where before it sometimes showed one.
-    const worse = cells
-      .filter((c) => c.level !== "all" && c.after < c.before && c.twoAfter < 1)
-      .map((c) => `${c.template} ${c.context} ${c.section} ${c.level}: ${c.before} -> ${c.after}`);
-    expect(worse).toEqual([]);
+  it("per level, shows as many formats as before on average, but for the listed levels", () => {
+    const lower = cells.filter((c) => c.level !== "all" && c.after < c.before);
+    const name = (c: Cell) => `${c.template} ${c.context} ${c.section} ${c.level}`;
+    expect(lower.filter((c) => !EXPECTED_LOWER_LEVELS.includes(name(c))).map((c) => `${name(c)}: ${c.before} -> ${c.after}`)).toEqual([]);
+    // The listed levels still show two formats in every form.
+    for (const c of lower) expect(c.twoAfter, name(c)).toBe(1);
   });
 
   it("shows at least two formats per level in reading and listening, in every form, wherever the bank can", () => {
@@ -228,8 +269,12 @@ describe("every student gets a mix of formats (starter bank, first-time forms)",
     for (const c of testlets) expect(c.twoAfter, `${c.template} ${c.context} ${c.section} ${c.level}`).toBe(1);
   });
 
+  it(`keeps exposure low: no text, clip or item is in more than ${MAX_UNIT_SHARE * 100}% of a context's forms`, () => {
+    const over = contextExposure().filter((e) => e.after > MAX_UNIT_SHARE);
+    expect(over.map((e) => `${e.template} ${e.context}: ${e.unit} in ${e.after * 100}%`)).toEqual([]);
+  });
+
   it("still draws at random: every level keeps at least three units in play", () => {
-    // The section preference needs three candidates (blueprint.ts: MIN_SECTION_CHOICE), so it never pins a level.
     const narrow = cells
       .filter((c) => c.level !== "all" && c.unitsAfter < Math.min(3, c.unitsInBank))
       .map((c) => `${c.template} ${c.context} ${c.section} ${c.level}: ${c.unitsAfter} of ${c.unitsInBank}`);

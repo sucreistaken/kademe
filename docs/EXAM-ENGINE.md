@@ -243,23 +243,27 @@ ve dinlemesi düz karıştırmaydı, bir seviye çoğu kez yalnız çoktan seçm
 biçimleri karıştırır (`blueprint.ts: mixFormats`). Biçim (`item-format.ts: itemFormatOf`): madde türü,
 Ja / Nein ifadesi, boşluklu metin türü, eşleştirme alt türü (yalnız harf: "Anzeige A", "Person B",
 "Bild C"; ya da yazılı hedef: başlık, cümle, isim), resim var / yok ve tick-n (`pick`). Okul bankasında
-biçim bölüm başlarken `content`'ten çıkarılır (`exam-flow.ts: formatsOf`). Her seviyede sıradaki
-birim, seviyeye en çok yeni biçim katan birimlerden seçilir; iki ve üstü iki sayılır, yoksa üç-dört
-biçimli tek metin her formu açardı. Bunlardan en az üçü bölümün önceki seviyelerinde çıkmamış bir biçim
-getiriyorsa onlardan biri seçilir (üçten azsa bu tercih düşer, seviye bir iki metne kilitlenmez).
-Eşitlikte karıştırılmış sıra korunur: rastgelelik biçim içinde kalır. Sayılar ve seviyeler değişmedi
-(metin bütün çekilir, sayı dolana kadar), rastgele sayı üreteci eskisi kadar kullanılır, açılış
-metinleri ve yazma / konuşma görevleri aynıdır. Dönen öğrencide görülmemiş birimler yine önce gelir.
+biçim bölüm başlarken `content`'ten çıkarılır (`exam-flow.ts: formatsOf`). Her seviyede birimler
+karıştırılır, aynı biçim kümesine sahip birimler bir grup olur (çoktan seçmeli + doğru/yanlış sorulu
+metin bir grup, yalnız çoktan seçmeli metin başka bir grup). Her grup rastgele bir başlangıç alır, k'ıncı
+birimi `(k + başlangıç) / boyut^0.75` sırasına girer (`FORMAT_SPREAD`); birimler bu sırayla çekilir. Böylece
+her biçim bazı formlarda erken, bazılarında geç gelir, büyük grup küçükten sık gelir, grup içinde sıra
+karıştırmadır. Düz sıralı dağıtım (0) her grubu ilk turda alırdı: bankada tek metni olan bir biçim, seviye
+biçim sayısı kadar metin çektiğinde her forma girerdi (seviye kontrolü A1 dinleme: tek kayıt formların
+%100'ünde; ilk denemede sahip bunu kabul etmedi, maruz kalma). Seviyenin çektiği birimler tek biçim
+gösterirse ve bir birim bunu ikiye çıkarabiliyorsa o birim öne alınır (`twoFormatsFirst`). Sayılar ve
+seviyeler değişmedi (metin bütün çekilir, sayı dolana kadar); açılış metinleri ve yazma / konuşma görevleri
+aynıdır. Dönen öğrencide görülmemiş birimler yine önce gelir, karışım onların içinde yapılır.
 Ölçüm (`format-mix.test.ts`, başlangıç bankası, bağlam başına 200 ilk form; yerleştirme ve seviye
-kontrolünün altı beyan seviyesi): seviye başına ortalama biçim okumada 2.66'dan 3.08'e, dinlemede
-2.32'den 2.84'e; en az iki biçim gösteren seviye okumada %94'ten, dinlemede %85'ten %100'e; bölüm
-başına biçim okumada 4.04'ten 4.91'e, dinlemede 3.79'dan 4.72'ye. Bedeli: ilk formlarda daha az metin
-döner (ör. seviye kontrolü C1 okuma, 200 formda 36 metinden 19'u); tek biçimli bir metin ilk formda
-ancak seviye birden çok metin çektiğinde çıkar; seviye kontrolünde beyan seviyesinde, biçimi bankada
-yalnız bir metinde olan metin neredeyse her forma girer (A1 okumada ilan eşleştirmeli metin %100, B1
-okumada %91; önce en yüksek pay %43). Çok biçimli dinleme kayıtları daha uzun olduğundan yerleştirme
-dinlemesi biraz uzar (`pnpm exam:form-timing`, p50 duyulan kelime 927'den 1002'ye). Tabloyu basmak
-için: `FORMAT_MIX_TABLE=1 npx vitest run src/lib/exam/format-mix.test.ts --reporter=verbose`.
+kontrolünün altı beyan seviyesi): seviye başına ortalama biçim okumada 2.66'dan 2.84'e, dinlemede
+2.32'den 2.58'e; en az iki biçim gösteren seviye okumada %94'ten, dinlemede %85'ten %100'e; bölüm
+başına biçim okumada 4.04'ten 4.27'ye, dinlemede 3.79'dan 4.12'ye. Bir metnin, kaydın ya da maddenin
+girdiği en yüksek form payı bağlam başına %31-48 (önce %30-43); test %60'ı aşmasına izin vermez. İki
+seviye ortalaması (seviye kontrolü A2 ve B2, B1 dinleme) 2.48'den 2.46 ve 2.45'e iner: tek kayıt çeken,
+eşit büyüklükte iki gruplu seviye, beklenen değer düz karıştırmayla aynı (2.5), fark örnekleme. `pnpm
+exam:form-timing` yerleştirme dinleme p50 / p95 duyulan kelime 927 / 1198'den 928 / 1162'ye; seviye kontrolü
+B1 dinleme 669 / 881'den 718 / 934'e, C1 1153 / 1450'den 1222 / 1456'ya. Tabloyu basmak için:
+`FORMAT_MIX_TABLE=1 npx vitest run src/lib/exam/format-mix.test.ts --reporter=verbose`.
 
 **Konuşmada ilk görev resimlidir.** `pickProductive`: ilk sıra `speaking.picture` görevidir
 (`PICTURE_TASK_TAG`), sonraki sıralar resimli görevden kaçınır. `Avoid` doluyken ilk sıra görülmemiş

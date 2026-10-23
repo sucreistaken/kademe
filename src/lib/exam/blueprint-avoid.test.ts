@@ -33,10 +33,10 @@ import { CEFR_LEVELS, CLOZE_SKILL_TAG, isObjectiveSection, isTextGap, textGapKin
  * only a returning student's draw mixed formats. Since then every fixed form
  * mixes formats (blueprint.ts: mixFormats; measured in format-mix.test.ts).
  * What still holds for a first-time student, and is pinned here: the form
- * uses the rng exactly as 5a2260f did, so nothing drawn after it moves; it
- * is the form of a returning student who has seen nothing in the pool; and
- * where a level has only one format (or none known) it is the 5a2260f draw
- * item for item.
+ * opens with the texts of 5a2260f; it is the form of a returning student who
+ * has seen nothing in the pool; and where every level has only one format (or
+ * none known) it is the 5a2260f draw item for item, using the rng as 5a2260f
+ * did.
  */
 const legacy = {
   shuffle<T>(xs: T[], rng: () => number): T[] {
@@ -209,7 +209,7 @@ describe("a first-time student (avoid missing or empty)", () => {
     expect(compared).toBeGreaterThan(1000);
   });
 
-  it("a fixed form opens with the texts of 5a2260f and uses the rng exactly as it did", () => {
+  it("a fixed form opens with the texts of 5a2260f", () => {
     let changed = 0;
     everyDraw((s, sectionPool, mode, claimed, _provisional, offset, seed) => {
       if (!isObjectiveSection(s.section)) return;
@@ -217,14 +217,22 @@ describe("a first-time student (avoid missing or empty)", () => {
       const after = planFixedSection(s, sectionPool, mode, claimed, offset, mulberry32(seed));
       const openings = legacy.textOpenings(s, sectionPool, mode, claimed, mulberry32(seed));
       expect(after.slice(0, openings.length)).toEqual(openings);
-      // As many numbers taken from the rng: whatever is drawn after this section with the same rng does not move.
-      expect(nextAfter(seed, (rng) => planFixedSection(s, sectionPool, mode, claimed, offset, rng))).toBe(
-        nextAfter(seed, (rng) => legacy.planFixedSection(s, sectionPool, mode, claimed, offset, rng)),
-      );
       if (after.join() !== before.join()) changed++;
     });
     // The format mix does change first-time forms; format-mix.test.ts measures how.
     expect(changed).toBeGreaterThan(100);
+  });
+
+  it("where every level has one format, the rng is used as 5a2260f used it", () => {
+    // The mix takes one number per format group, and only at a level with two groups or more.
+    const oneFormat = pool.map((p) => ({ ...p, format: "ONE" }));
+    everyDraw((s, _sectionPool, mode, claimed, _provisional, offset, seed) => {
+      if (!isObjectiveSection(s.section)) return;
+      const plain = oneFormat.filter((p) => p.section === s.section);
+      expect(nextAfter(seed, (rng) => planFixedSection(s, plain, mode, claimed, offset, rng))).toBe(
+        nextAfter(seed, (rng) => legacy.planFixedSection(s, plain, mode, claimed, offset, rng)),
+      );
+    });
   });
 
   it("a first-time form is the form of a returning student who has seen nothing in the pool", () => {
@@ -268,12 +276,12 @@ describe("a first-time student (avoid missing or empty)", () => {
   });
 
   it("a fixed seed draws the pinned ids", () => {
-    // Printed by the code of 5a2260f for this pool, section and seed. This seed's shuffle already mixes formats, so
-    // the format mix keeps the draw.
-    expect(legacy.planFixedSection(pinnedSection, synthetic, "PLACEMENT", null, 0, mulberry32(2026))).toEqual(PINNED_PLAN);
+    // PINNED_PLAN_5A2260F was printed by the code of 5a2260f for this pool, section and seed; PINNED_PLAN by
+    // today's (format mix, 2026-10-24). Same openings, then texts and singles interleaved by format.
+    expect(legacy.planFixedSection(pinnedSection, synthetic, "PLACEMENT", null, 0, mulberry32(2026))).toEqual(PINNED_PLAN_5A2260F);
     expect(planFixedSection(pinnedSection, synthetic, "PLACEMENT", null, 0, mulberry32(2026))).toEqual(PINNED_PLAN);
     expect(planFixedSection(pinnedSection, synthetic, "PLACEMENT", null, 0, mulberry32(2026), empty())).toEqual(PINNED_PLAN);
-    // Here 5a2260f drew two multiple-choice items; the mix keeps the first one shuffled and adds the first gap fill.
+    // Here 5a2260f drew two multiple-choice items; the mix draws one of each format.
     const singles = synthetic.filter((p) => !p.stimulusId && !isTextGap(p));
     const twoAtB1 = { A1: 0, A2: 0, B1: 2, B2: 0, C1: 0, C2: 0 };
     expect(legacy.sampleFixedForm(singles, twoAtB1, mulberry32(2020))).toEqual(["B1-s0", "B1-s2"]);
@@ -284,7 +292,8 @@ describe("a first-time student (avoid missing or empty)", () => {
   });
 });
 
-const PINNED_PLAN = ["B1-c1", "B2-c0", "A2-s2", "A2-s3", "B1-s2", "B1-s4", "B1-s5", "B1-s6", "B2-s0", "B2-s5", "B2-s6"];
+const PINNED_PLAN_5A2260F = ["B1-c1", "B2-c0", "A2-s2", "A2-s3", "B1-s2", "B1-s4", "B1-s5", "B1-s6", "B2-s0", "B2-s5", "B2-s6"];
+const PINNED_PLAN = ["B1-c1", "B2-c0", "A2-s2", "A2-s3", "B1-x0-1", "B1-x0-2", "B1-x0-3", "B1-s7", "B2-s1", "B2-x3-1", "B2-x3-2", "B2-x3-3"];
 const PINNED_TASKS = ["talk-2", "talk-1", "plan-2"];
 
 describe("a returning student", () => {

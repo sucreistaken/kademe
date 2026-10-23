@@ -120,7 +120,12 @@ describe("format mix in every fixed form (2026-10-24)", () => {
   const textsOf = (ids: string[]) => [...new Set(ids.map((id) => id.split("-")[0]))];
   const seeds = Array.from({ length: 120 }, (_, i) => i + 1);
 
-  it("covers as many formats as the count allows, at random within each format", () => {
+  const formatsIn = (pool: BankItem[], ids: string[]) => new Set(ids.map((id) => pool.find((p) => p.id === id)!.format));
+  /** Share of the seeds' draws that hold this text or item. */
+  const shareOf = (pool: BankItem[], want: Record<Cefr, number>, unit: string) =>
+    seeds.filter((seed) => textsOf(sampleFixedForm(pool, want, mulberry32(seed))).includes(unit)).length / seeds.length;
+
+  it("shows two formats or more in every draw, at random within each format", () => {
     const pool = [
       ...Array.from({ length: 6 }, (_, i) => single(`mc${i}`, "B1", "SINGLE_CHOICE")),
       single("gap0", "B1", "GAP_FILL"),
@@ -130,43 +135,37 @@ describe("format mix in every fixed form (2026-10-24)", () => {
     const seen = new Set<string>();
     for (const seed of seeds) {
       const ids = sampleFixedForm(pool, only("B1", 3), mulberry32(seed));
-      expect(new Set(ids.map((id) => pool.find((p) => p.id === id)!.format)).size).toBe(3);
+      expect(formatsIn(pool, ids).size).toBeGreaterThanOrEqual(2);
       ids.forEach((id) => seen.add(id));
     }
     expect(seen.size).toBe(pool.length);
   });
 
-  it("opens a level with a text of two formats or more, and a third format does not make a text win", () => {
+  it("a level that one text fills takes a text with two formats; short texts of one format are joined by another", () => {
     const pool = [
       ...text("two1", "B1", ["SINGLE_CHOICE", "TRUE_FALSE_NG"]),
       ...text("two2", "B1", ["SINGLE_CHOICE", "TRUE_FALSE_NG"]),
-      ...text("three", "B1", ["SINGLE_CHOICE", "TRUE_FALSE_NG", "MATCHING/WORDS"]),
       ...text("match", "B1", ["MATCHING/WORDS"]),
       ...text("mc", "B1", ["SINGLE_CHOICE"]),
     ];
     const drawn = new Set<string>();
-    for (const seed of seeds) {
-      const ids = sampleFixedForm(pool, only("B1", 4), mulberry32(seed));
-      expect(ids).toHaveLength(4);
-      textsOf(ids).forEach((t) => drawn.add(t));
-    }
-    expect([...drawn].sort()).toEqual(["three", "two1", "two2"]);
+    for (const seed of seeds) textsOf(sampleFixedForm(pool, only("B1", 4), mulberry32(seed))).forEach((t) => drawn.add(t));
+    expect([...drawn].sort()).toEqual(["two1", "two2"]);
+    const short = [...text("mc", "B1", ["SINGLE_CHOICE"], 2), ...text("mc2", "B1", ["SINGLE_CHOICE"], 2), ...text("tf", "B1", ["TRUE_FALSE_NG"], 2)];
+    for (const seed of seeds) expect(formatsIn(short, sampleFixedForm(short, only("B1", 4), mulberry32(seed))).size).toBe(2);
   });
 
-  it("prefers a format the section's earlier levels did not draw, when at least three texts offer one", () => {
-    const a2 = text("plain", "A2", ["SINGLE_CHOICE", "TRUE_FALSE_NG"]);
-    const fresh = ["new1", "new2", "new3"].flatMap((id) => text(id, "B1", ["SINGLE_CHOICE", "TRUE_FALSE_NG/JA_NEIN"]));
-    const usual = ["old1", "old2"].flatMap((id) => text(id, "B1", ["SINGLE_CHOICE", "TRUE_FALSE_NG"]));
-    const want = { ...only("A2", 4), B1: 4 };
-    const drawn = (pool: BankItem[]) => {
-      const out = new Set<string>();
-      for (const seed of seeds) textsOf(sampleFixedForm(pool, want, mulberry32(seed))).forEach((t) => out.add(t));
-      return [...out].sort();
-    };
-    expect(drawn([...a2, ...fresh, ...usual])).toEqual(["new1", "new2", "new3", "plain"]);
-    // With two such texts the preference is dropped, so it never pins a level to one or two texts.
-    const twoFresh = fresh.filter((i) => i.stimulusId !== "new3");
-    expect(drawn([...a2, ...twoFresh, ...usual])).toEqual(["new1", "new2", "old1", "old2", "plain"]);
+  it("spreads a format only one text has over the forms instead of putting it in every one", () => {
+    // Three formats, a level of three texts: a plain round robin over formats would take "match" every time.
+    const pool = [
+      ...["mc1", "mc2", "mc3", "mc4"].flatMap((id) => text(id, "B1", ["SINGLE_CHOICE"], 2)),
+      ...["tf1", "tf2", "tf3", "tf4"].flatMap((id) => text(id, "B1", ["TRUE_FALSE_NG"], 2)),
+      ...text("match", "B1", ["MATCHING/WORDS"], 2),
+    ];
+    const share = shareOf(pool, only("B1", 6), "match");
+    expect(share).toBeGreaterThan(0.1);
+    expect(share).toBeLessThan(0.6);
+    for (const seed of seeds) expect(formatsIn(pool, sampleFixedForm(pool, only("B1", 6), mulberry32(seed))).size).toBeGreaterThanOrEqual(2);
   });
 });
 
