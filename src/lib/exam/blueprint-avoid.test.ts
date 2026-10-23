@@ -294,16 +294,28 @@ describe("a returning student", () => {
 
     it("draws unseen tasks first and mixes skill-tag families", () => {
       const family = (id: string) => skillTagFamily(tasks.find((t) => t.id === id)!.skillTag);
-      const firsts = new Set<string>();
+      const seconds = new Set<string>();
       for (let seed = 1; seed <= 40; seed++) {
-        // Both picture tasks were seen: the opening falls back to the other tasks.
+        // Both picture tasks were seen: slot 0 still opens with the less exposed one (pic-2).
         const picks = pickProductive(tasks, ["B1", "B1"], mulberry32(seed), avoiding(["pic-1", "pic-2"]));
-        expect(picks.some((id) => id.startsWith("pic-"))).toBe(false);
-        // talk-1 and talk-2 differ in tag but share a family: never both.
+        expect(picks[0]).toBe("pic-2");
+        expect(picks[1].startsWith("pic-")).toBe(false);
+        // The picture family is picture, the second draw is another family.
         expect(new Set(picks.map(family)).size).toBe(2);
-        firsts.add(picks[0]);
+        seconds.add(picks[1]);
       }
-      expect(firsts).toEqual(new Set(["talk-1", "talk-2", "plan-1"]));
+      expect(seconds).toEqual(new Set(["talk-1", "talk-2", "plan-1"]));
+    });
+
+    it("keeps slot 0 a picture task for a student who has seen every task, falling back only without pictures", () => {
+      const everything = avoiding(tasks.map((t) => t.id));
+      for (let seed = 1; seed <= 40; seed++) {
+        expect(pickProductive(tasks, ["B1"], mulberry32(seed), everything)).toEqual(["pic-2"]);
+        // A level without any picture task still falls back to any task, the least served one.
+        expect(pickProductive(tasks, ["B2"], mulberry32(seed), avoiding(["plan-2"]))).toEqual(["plan-2"]);
+        const noPictures = tasks.filter((t) => t.skillTag !== PICTURE_TASK_TAG);
+        expect(pickProductive(noPictures, ["B1"], mulberry32(seed), avoiding(noPictures.map((t) => t.id)))).toEqual(["talk-2"]);
+      }
     });
 
     it("takes an unseen picture task first, and the least served task when all were seen", () => {

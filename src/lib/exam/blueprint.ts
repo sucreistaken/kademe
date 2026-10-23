@@ -493,6 +493,9 @@ function pictureRule(candidates: BankItem[], index: number): BankItem[] {
  * bank has one at that level (pictureRule). With a non-empty `avoid` a task
  * the student has not seen wins, preferring a skill-tag family not drawn yet
  * in the section; when every task at the level was seen, the least served one.
+ * The first slot stays a picture task even when the student has seen them all:
+ * it takes an unseen picture task, else the least served one, and only a level
+ * with no picture task at all falls back to any task.
  * Without `avoid`, and with no picture task in the pool, the draw is the one
  * made before either rule existed.
  */
@@ -510,7 +513,10 @@ export function pickProductive(pool: BankItem[], levels: Cefr[], rng: () => numb
       const pickFrom = newTag.length > 0 ? newTag : from;
       pick = pickFrom[Math.floor(rng() * pickFrom.length)];
     } else {
-      const unseen = candidates.filter((c) => !isStale([c], avoid));
+      // Slot 0 keeps the picture format: only picture tasks compete, seen or not.
+      const pictures = index === 0 ? candidates.filter((c) => c.skillTag === PICTURE_TASK_TAG) : [];
+      const field = pictures.length > 0 ? pictures : candidates;
+      const unseen = field.filter((c) => !isStale([c], avoid));
       if (unseen.length > 0) {
         const from = pictureRule(unseen, index);
         const newFamily = from.filter((c) => !families.has(skillTagFamily(c.skillTag)));
@@ -518,7 +524,7 @@ export function pickProductive(pool: BankItem[], levels: Cefr[], rng: () => numb
         const pickFrom = newFamily.length > 0 ? newFamily : newTag.length > 0 ? newTag : from;
         pick = pickFrom[Math.floor(rng() * pickFrom.length)];
       } else {
-        pick = freshFirst(pictureRule(candidates, index).map((c) => [c]), avoid, rng)[0][0];
+        pick = freshFirst(pictureRule(field, index).map((c) => [c]), avoid, rng)[0][0];
       }
     }
     chosen.push(pick.id);

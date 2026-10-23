@@ -363,7 +363,8 @@ export function approveFeedback(prev: StudentFeedbackStore | null, content: Feed
  * The stored value is checked again, so a row written by hand cannot put
  * anything unapproved or malformed on the sheet.
  */
-export type StudentNote = { strengths: string[]; improve: Array<{ topic: string; why: string }>; nextStep: string };
+/** `example?: never` keeps a FeedbackContent (which may carry examples) from being assigned here by mistake. */
+export type StudentNote = { strengths: string[]; improve: Array<{ topic: string; why: string; example?: never }>; nextStep: string };
 
 /**
  * The only form of the note that may leave the server for a student: strengths, the topics with their

@@ -128,6 +128,7 @@ export default async function ResultReportPage({
       awaitingTeacher: false,
       levelShown,
       overall: built.model.overall,
+      outcome: levelShown ? (result?.finalOutcome ?? null) : undefined,
       skills: cfg.resultVisibility === "FULL" ? built.model.skills : undefined,
       analysis: analysis ?? undefined,
       feedback: studentFacingFeedback(result?.studentFeedback),
