@@ -94,6 +94,11 @@ export type CandidateRouteOptions = {
    * check (spec 6, ruling C6).
    */
   serves?: (ctx: CandidateContext) => Promise<boolean>;
+  /**
+   * Replaces the pathname in the rate limit bucket. For routes with dynamic
+   * segments (an image per item and slot) so each URL does not get its own budget.
+   */
+  rateKey?: string;
 };
 
 /**
@@ -128,7 +133,7 @@ export async function withCandidate(
 
   // Per endpoint, not per token: a shared counter would let a busy autosave
   // loop use up the small budget reserved for problem reports.
-  const bucket = `${ip}:${token.slice(0, 12)}:${new URL(req.url).pathname}`;
+  const bucket = `${ip}:${token.slice(0, 12)}:${options.rateKey ?? new URL(req.url).pathname}`;
   if (!rateLimit(bucket, options.limit ?? 240, options.windowMs ?? 60_000)) {
     const locale = candidateLocaleFromAcceptLanguage(req.headers.get("accept-language"));
     return candidateJson(

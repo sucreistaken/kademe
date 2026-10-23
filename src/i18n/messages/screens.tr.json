@@ -844,8 +844,8 @@
     "p_IMAGES_COUNT": "Bir görevde en fazla {detail} görsel olabilir.",
     "p_IMAGE_ALT_EMPTY": "{n}. görselin açıklaması (alt metin) boş.",
     "p_IMAGE_KEY": "{n}. görsel bankadaki görsellerden biri değil.",
-    "p_MATCH_IMAGE_NOT_LETTERED": "{n}. görsel hedefin metninde bir harf olmalı, örneğin \"Bild A\"."
-,    "p_TFNG_KEY_UNKNOWN": "Cevap anahtarında olmayan bir ifade var ({ids}).",
+    "p_MATCH_IMAGE_NOT_LETTERED": "{n}. görsel hedefin metninde bir harf olmalı, örneğin \"Bild A\".",
+    "p_TFNG_KEY_UNKNOWN": "Cevap anahtarında olmayan bir ifade var ({ids}).",
     "p_GAP_NONE": "Soruda boşluk yok.",
     "p_GAP_MARKER_REPEAT": "Aynı boşluk işareti iki kez geçiyor.",
     "p_GAP_NO_MARKER": "Soru kökünde yeri olmayan boşluk var ({ids}).",

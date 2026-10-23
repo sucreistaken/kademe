@@ -4,10 +4,14 @@ const h = vi.hoisted(() => ({
   key: null as string | null,
   open: vi.fn(),
   lookup: vi.fn(),
+  options: undefined as unknown,
 }));
 
 vi.mock("@/lib/exam-candidate-api", () => ({
-  withExamCandidate: (req: Request, _params: unknown, handler: (r: Request, ctx: unknown) => Promise<Response>) => handler(req, { assessment: { id: "a1" } }),
+  withExamCandidate: (req: Request, _params: unknown, handler: (r: Request, ctx: unknown) => Promise<Response>, options?: unknown) => {
+    h.options = options;
+    return handler(req, { assessment: { id: "a1" } });
+  },
 }));
 vi.mock("@/lib/exam/served-image", () => ({
   servedImageKey: async (...args: unknown[]) => {
@@ -20,8 +24,8 @@ vi.mock("@/lib/storage", () => ({ getStorage: () => ({ openStream: h.open }) }))
 import { NextRequest } from "next/server";
 import { GET } from "./route";
 
-const call = (sequence: string, slot: string) =>
-  GET(new NextRequest(`http://localhost/api/c/t/exam/image/${sequence}/${slot}`), { params: Promise.resolve({ token: "t".repeat(43), sequence, slot }) });
+const call = (sequence: string, slot: string, position = "2") =>
+  GET(new NextRequest(`http://localhost/api/c/t/exam/image/${position}/${sequence}/${slot}`), { params: Promise.resolve({ token: "t".repeat(43), position, sequence, slot }) });
 
 beforeEach(() => {
   h.key = null;
@@ -40,8 +44,13 @@ describe("GET /exam/image/[sequence]/[slot]", () => {
     expect([...res.headers.entries()].join(" ")).not.toContain("bank/images");
     expect(res.headers.get("location")).toBeNull();
     expect(new Uint8Array(await res.arrayBuffer())).toEqual(new Uint8Array([1, 2, 3]));
-    expect(h.lookup).toHaveBeenCalledWith({ assessment: { id: "a1" } }, 4, "o0a1b2");
+    expect(h.lookup).toHaveBeenCalledWith({ assessment: { id: "a1" } }, 2, 4, "o0a1b2");
     expect(h.open).toHaveBeenCalledWith("bank/images/0123456789abcdef.webp");
+  });
+
+  it("uses one fixed rate limit bucket, not one per URL", async () => {
+    await call("1", "p0");
+    expect(h.options).toEqual({ rateKey: "exam-image" });
   });
 
   it("answers 404 for a sequence or slot that does not resolve (not served yet, not a picture)", async () => {
@@ -60,6 +69,12 @@ describe("GET /exam/image/[sequence]/[slot]", () => {
     h.key = "bank/images/0123456789abcdef.webp";
     const res = await call(sequence, slot);
     expect(res.status).toBe(404);
+    expect(h.lookup).not.toHaveBeenCalled();
+  });
+
+  it("answers 404 for a malformed section position without a lookup", async () => {
+    h.key = "bank/images/0123456789abcdef.webp";
+    expect((await call("1", "p0", "x")).status).toBe(404);
     expect(h.lookup).not.toHaveBeenCalled();
   });
 

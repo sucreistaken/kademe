@@ -74,6 +74,15 @@ describe("answerText and keyText", () => {
       expect(answerText(s, null)).toBe("");
     }
   });
+  it("a picture choice without text is named by its letter and alt text", () => {
+    const pics: ItemSnapshot = {
+      ...choice,
+      content: { kind: "CHOICE", options: [{ id: "a", text: "", image: { storageKey: "bank/images/0123456789abcdef.webp", w: 1, h: 1, alt: "Ein Hund." } }, { id: "b", text: "", image: { storageKey: "bank/images/fedcba9876543210.webp", w: 1, h: 1, alt: "Eine Katze." } }, { id: "c", text: "Baum" }] },
+      key: { kind: "CHOICE", correct: ["b"] },
+    };
+    expect(keyText(pics)).toBe("B: Eine Katze.");
+    expect(answerText(pics, { choiceIds: ["a", "c"] })).toBe("A: Ein Hund., Baum");
+  });
   it("matching", () => {
     expect(answerText(matching, { matches: { l1: "a" } })).toBe("1→Anzeige A  2→-");
     expect(keyText(matching)).toBe("1→Anzeige A  2→Anzeige B");

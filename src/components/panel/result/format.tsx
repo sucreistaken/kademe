@@ -8,6 +8,16 @@ import type { ItemAnswer, ItemSnapshot } from "@/lib/exam/types";
  * never sees any of this.
  */
 
+/** A choice option or matching target by its text; a picture without text by its letter and alt text ("B: Eine Katze."). */
+function optionLabel(o: { text: string; image?: { alt: string } }, index: number): string {
+  if (o.text.trim()) return o.text;
+  return o.image ? `${String.fromCharCode(65 + index)}: ${o.image.alt}` : "";
+}
+const optionTextById = (options: Array<{ id: string; text: string; image?: { alt: string } }>, id: string | undefined, fallback: string): string => {
+  const i = options.findIndex((o) => o.id === id);
+  return (i >= 0 ? optionLabel(options[i], i) : "") || fallback;
+};
+
 type TfLabel = (code: string) => string;
 const rawCode: TfLabel = (code) => code;
 
@@ -15,20 +25,20 @@ const rawCode: TfLabel = (code) => code;
 export function answerText(s: ItemSnapshot, a: ItemAnswer | null, tf: TfLabel = rawCode): string {
   if (!a || !hasAnswer(s.type, a)) return "";
   const c = s.content;
-  if (c.kind === "CHOICE") return (a.choiceIds ?? []).map((id) => c.options.find((o) => o.id === id)?.text ?? id).join(", ");
+  if (c.kind === "CHOICE") return (a.choiceIds ?? []).map((id) => optionTextById(c.options, id, id)).join(", ");
   if (c.kind === "TFNG") return c.statements.map((st, i) => `${i + 1}: ${a.tfng?.[st.id] ? tf(a.tfng[st.id]) : "-"}`).join("  ");
   if (c.kind === "GAP") return c.gaps.map((g) => a.gaps?.[g.id]?.trim() || "-").join(" | ");
-  if (c.kind === "MATCHING") return c.left.map((l, i) => `${i + 1}→${c.right.find((r) => r.id === a.matches?.[l.id])?.text ?? "-"}`).join("  ");
+  if (c.kind === "MATCHING") return c.left.map((l, i) => `${i + 1}→${optionTextById(c.right, a.matches?.[l.id], "-")}`).join("  ");
   return a.text ?? "";
 }
 
 export function keyText(s: ItemSnapshot, tf: TfLabel = rawCode): string {
   const c = s.content;
   const k = s.key;
-  if (c.kind === "CHOICE" && k.kind === "CHOICE") return k.correct.map((id) => c.options.find((o) => o.id === id)?.text ?? id).join(", ");
+  if (c.kind === "CHOICE" && k.kind === "CHOICE") return k.correct.map((id) => optionTextById(c.options, id, id)).join(", ");
   if (c.kind === "TFNG" && k.kind === "TFNG") return c.statements.map((st, i) => `${i + 1}: ${k.answers[st.id] ? tf(k.answers[st.id]) : "-"}`).join("  ");
   if (c.kind === "GAP" && k.kind === "GAP") return c.gaps.map((g) => (k.answers[g.id] ?? []).join(" / ")).join(" | ");
-  if (c.kind === "MATCHING" && k.kind === "MATCHING") return c.left.map((l, i) => `${i + 1}→${c.right.find((r) => r.id === k.pairs[l.id])?.text ?? "-"}`).join("  ");
+  if (c.kind === "MATCHING" && k.kind === "MATCHING") return c.left.map((l, i) => `${i + 1}→${optionTextById(c.right, k.pairs[l.id], "-")}`).join("  ");
   if (k.kind === "SHORT_TEXT") return k.accepted.join(" / ");
   return "";
 }

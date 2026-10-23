@@ -235,3 +235,24 @@ describe("withCandidate with acceptSolution and serves", () => {
     expect(handler).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("withCandidate rate limit bucket", () => {
+  const at = (token: string, path: string, options: Parameters<typeof withCandidate>[3]) =>
+    withCandidate(new NextRequest(`http://localhost/api/c/${token}/${path}`), Promise.resolve({ token }), async () => new Response("handled"), options);
+
+  it("is per pathname by default, so each distinct URL has its own budget", async () => {
+    resolveToken.mockResolvedValue({ ok: true, ctx: ctx("LANGUAGE_EXAM") });
+    const token = "bucket-token-default-pathname";
+    const statuses = [];
+    for (const n of [1, 2, 3]) statuses.push((await at(token, `exam/image/1/${n}/p0`, { limit: 2 })).status);
+    expect(statuses).toEqual([200, 200, 200]);
+  });
+
+  it("rateKey makes URLs share one budget", async () => {
+    resolveToken.mockResolvedValue({ ok: true, ctx: ctx("LANGUAGE_EXAM") });
+    const token = "bucket-token-fixed-ratekey";
+    const statuses = [];
+    for (const n of [1, 2, 3]) statuses.push((await at(token, `exam/image/1/${n}/p0`, { limit: 2, rateKey: "exam-image" })).status);
+    expect(statuses).toEqual([200, 200, 429]);
+  });
+});
