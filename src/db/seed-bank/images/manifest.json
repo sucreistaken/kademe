@@ -1,0 +1,1385 @@
+{
+  "images": [
+    {
+      "id": "obj.activity.cooking",
+      "file": "obj.activity.cooking.webp",
+      "sha16": "2022f74f31d81d6e",
+      "w": 960,
+      "h": 640,
+      "alt": "Eine Person brät in einer Pfanne Rührei.",
+      "kind": "object",
+      "category": "activity",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/4746518/",
+      "license": "Pexels License",
+      "author": "ketut-subiyanto"
+    },
+    {
+      "id": "obj.activity.football",
+      "file": "obj.activity.football.webp",
+      "sha16": "8a1b701cb114702b",
+      "w": 960,
+      "h": 720,
+      "alt": "Fußballspieler kämpfen auf dem Rasen um den Ball.",
+      "kind": "object",
+      "category": "activity",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/29920213/",
+      "license": "Pexels License",
+      "author": "bechir-lachiheb"
+    },
+    {
+      "id": "obj.activity.gardening",
+      "file": "obj.activity.gardening.webp",
+      "sha16": "595f9cc6e8b431a8",
+      "w": 960,
+      "h": 640,
+      "alt": "Eine Person pflanzt Salat im Gartenbeet.",
+      "kind": "object",
+      "category": "activity",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/7728874/",
+      "license": "Pexels License",
+      "author": "greta-hoffman"
+    },
+    {
+      "id": "obj.activity.guitar",
+      "file": "obj.activity.guitar.webp",
+      "sha16": "30e26b98d896c72c",
+      "w": 960,
+      "h": 641,
+      "alt": "Eine Hand spielt auf einer Akustikgitarre.",
+      "kind": "object",
+      "category": "activity",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/7120398/",
+      "license": "Pexels License",
+      "author": "pavel-danilyuk"
+    },
+    {
+      "id": "obj.activity.hiking",
+      "file": "obj.activity.hiking.webp",
+      "sha16": "203fc7e7902351cc",
+      "w": 960,
+      "h": 640,
+      "alt": "Eine Gruppe wandert auf einem Bergweg.",
+      "kind": "object",
+      "category": "activity",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/17317399/",
+      "license": "Pexels License",
+      "author": "luka-peric"
+    },
+    {
+      "id": "obj.activity.jogging",
+      "file": "obj.activity.jogging.webp",
+      "sha16": "48b047a9ca6d69a9",
+      "w": 960,
+      "h": 640,
+      "alt": "Zwei Frauen joggen in einem Park.",
+      "kind": "object",
+      "category": "activity",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/5163839/",
+      "license": "Pexels License",
+      "author": "gustavo-fring"
+    },
+    {
+      "id": "obj.activity.reading",
+      "file": "obj.activity.reading.webp",
+      "sha16": "bf414d7e126b8424",
+      "w": 960,
+      "h": 640,
+      "alt": "Eine ältere Frau liest auf dem Sofa ein Buch.",
+      "kind": "object",
+      "category": "activity",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/7394787/",
+      "license": "Pexels License",
+      "author": "ivan-s"
+    },
+    {
+      "id": "obj.activity.swimming",
+      "file": "obj.activity.swimming.webp",
+      "sha16": "57b4be4e2115f708",
+      "w": 960,
+      "h": 577,
+      "alt": "Ein Schwimmer schwimmt Kraulen in einem Becken.",
+      "kind": "object",
+      "category": "activity",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/36755663/",
+      "license": "Pexels License",
+      "author": "roodzn"
+    },
+    {
+      "id": "obj.clothes.dress",
+      "file": "obj.clothes.dress.webp",
+      "sha16": "9cc8cd1f6b4d707f",
+      "w": 960,
+      "h": 640,
+      "alt": "Zwei Frauen in langen Kleidern stehen vor Heuballen.",
+      "kind": "object",
+      "category": "clothes",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/5582669/",
+      "license": "Pexels License",
+      "author": "cottonbro"
+    },
+    {
+      "id": "obj.clothes.hat-scarf",
+      "file": "obj.clothes.hat-scarf.webp",
+      "sha16": "46d436add8490914",
+      "w": 960,
+      "h": 643,
+      "alt": "Eine Frau trägt im Winter eine Mütze und einen Schal.",
+      "kind": "object",
+      "category": "clothes",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/906020/",
+      "license": "Pexels License",
+      "author": "noellegracephotos"
+    },
+    {
+      "id": "obj.clothes.jacket",
+      "file": "obj.clothes.jacket.webp",
+      "sha16": "98500b4f89a3d06c",
+      "w": 960,
+      "h": 640,
+      "alt": "Zwei helle Jacken hängen an Kleiderbügeln.",
+      "kind": "object",
+      "category": "clothes",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/7671163/",
+      "license": "Pexels License",
+      "author": "ivan-s"
+    },
+    {
+      "id": "obj.clothes.shoes",
+      "file": "obj.clothes.shoes.webp",
+      "sha16": "e7fd3721e21feb5a",
+      "w": 960,
+      "h": 643,
+      "alt": "Ein Paar weiß-grüne Schuhe steht auf dem Boden.",
+      "kind": "object",
+      "category": "clothes",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/29521391/",
+      "license": "Pexels License",
+      "author": "siddhant-solanki"
+    },
+    {
+      "id": "obj.clothes.sweater",
+      "file": "obj.clothes.sweater.webp",
+      "sha16": "9af5add80d3beb46",
+      "w": 960,
+      "h": 649,
+      "alt": "Ein gestreifter Strickpullover liegt auf einem Tisch.",
+      "kind": "object",
+      "category": "clothes",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/45982/",
+      "license": "Pexels License",
+      "author": "dom-j"
+    },
+    {
+      "id": "obj.food.apples",
+      "file": "obj.food.apples.webp",
+      "sha16": "df0e53a606950599",
+      "w": 960,
+      "h": 640,
+      "alt": "Ein Haufen frischer roter Äpfel.",
+      "kind": "object",
+      "category": "food",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/12955951/",
+      "license": "Pexels License",
+      "author": "freestockpro"
+    },
+    {
+      "id": "obj.food.bread-rolls",
+      "file": "obj.food.bread-rolls.webp",
+      "sha16": "795565e9c894d72c",
+      "w": 960,
+      "h": 640,
+      "alt": "Frische Brötchen liegen in einer Schüssel.",
+      "kind": "object",
+      "category": "food",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/19987142/",
+      "license": "Pexels License",
+      "author": "julianemonarifotografia"
+    },
+    {
+      "id": "obj.food.cake",
+      "file": "obj.food.cake.webp",
+      "sha16": "1705f09e8254b224",
+      "w": 960,
+      "h": 640,
+      "alt": "Ein Stück Kuchen liegt auf einem schwarzen Teller.",
+      "kind": "object",
+      "category": "food",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/35286345/",
+      "license": "Pexels License",
+      "author": "anh-nguyen"
+    },
+    {
+      "id": "obj.food.cheese",
+      "file": "obj.food.cheese.webp",
+      "sha16": "714cb2d264e77a95",
+      "w": 960,
+      "h": 640,
+      "alt": "Eine Käseplatte mit verschiedenen Käsesorten.",
+      "kind": "object",
+      "category": "food",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/34278817/",
+      "license": "Pexels License",
+      "author": "justinagyarko"
+    },
+    {
+      "id": "obj.food.coffee",
+      "file": "obj.food.coffee.webp",
+      "sha16": "644209e507fad0ad",
+      "w": 960,
+      "h": 640,
+      "alt": "Eine Tasse Kaffee mit Milchschaum.",
+      "kind": "object",
+      "category": "food",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/459489/",
+      "license": "Pexels License",
+      "author": "pixabay"
+    },
+    {
+      "id": "obj.food.pizza",
+      "file": "obj.food.pizza.webp",
+      "sha16": "45a87cf08a932f5b",
+      "w": 960,
+      "h": 640,
+      "alt": "Frisch gebackene Pizzen mit Pilzen.",
+      "kind": "object",
+      "category": "food",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/5903316/",
+      "license": "Pexels License",
+      "author": "roman-odintsov"
+    },
+    {
+      "id": "obj.food.soup",
+      "file": "obj.food.soup.webp",
+      "sha16": "cd34e0faf404b4fc",
+      "w": 960,
+      "h": 640,
+      "alt": "Eine Tasse Suppe steht auf einem Teller.",
+      "kind": "object",
+      "category": "food",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/13422406/",
+      "license": "Pexels License",
+      "author": "mateusz-feliksik"
+    },
+    {
+      "id": "obj.food.tea",
+      "file": "obj.food.tea.webp",
+      "sha16": "9ba490c17b037e33",
+      "w": 960,
+      "h": 640,
+      "alt": "Eine Tasse Tee mit einer Zitronenscheibe.",
+      "kind": "object",
+      "category": "food",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/34835064/",
+      "license": "Pexels License",
+      "author": "cileklipalet"
+    },
+    {
+      "id": "obj.home.bed",
+      "file": "obj.home.bed.webp",
+      "sha16": "f5384c2badbc907b",
+      "w": 960,
+      "h": 636,
+      "alt": "Ein Bett mit Kissen und einer Decke in einem Schlafzimmer.",
+      "kind": "object",
+      "category": "home",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/6207451/",
+      "license": "Pexels License",
+      "author": "skylar-kang"
+    },
+    {
+      "id": "obj.home.fridge",
+      "file": "obj.home.fridge.webp",
+      "sha16": "bda1144c07d33f95",
+      "w": 960,
+      "h": 640,
+      "alt": "Ein schwarzer Kühlschrank steht in einer Küche.",
+      "kind": "object",
+      "category": "home",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/6835104/",
+      "license": "Pexels License",
+      "author": "curtis-adams"
+    },
+    {
+      "id": "obj.home.lamp",
+      "file": "obj.home.lamp.webp",
+      "sha16": "b1ee47a9d95222c9",
+      "w": 960,
+      "h": 640,
+      "alt": "Eine Lampe leuchtet auf einem Nachttisch neben dem Bett.",
+      "kind": "object",
+      "category": "home",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/29252570/",
+      "license": "Pexels License",
+      "author": "mateusz-pielech"
+    },
+    {
+      "id": "obj.home.sofa",
+      "file": "obj.home.sofa.webp",
+      "sha16": "1f5d36f13e586dc1",
+      "w": 960,
+      "h": 640,
+      "alt": "Ein grünes Sofa mit Kissen in einem Wohnzimmer.",
+      "kind": "object",
+      "category": "home",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/4846097/",
+      "license": "Pexels License",
+      "author": "rachel-claire"
+    },
+    {
+      "id": "obj.home.table-chairs",
+      "file": "obj.home.table-chairs.webp",
+      "sha16": "3aa2f7cb904a54e2",
+      "w": 960,
+      "h": 640,
+      "alt": "Ein Holztisch mit Stühlen in einem hellen Esszimmer.",
+      "kind": "object",
+      "category": "home",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/3935326/",
+      "license": "Pexels License",
+      "author": "curtis-adams"
+    },
+    {
+      "id": "obj.home.washing-machine",
+      "file": "obj.home.washing-machine.webp",
+      "sha16": "b9b9a629e72cc916",
+      "w": 960,
+      "h": 641,
+      "alt": "Bunte Wäsche liegt in einer Waschmaschine.",
+      "kind": "object",
+      "category": "home",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/11899611/",
+      "license": "Pexels License",
+      "author": "towfiqu-barbhuiya"
+    },
+    {
+      "id": "obj.place.bakery",
+      "file": "obj.place.bakery.webp",
+      "sha16": "c82f8dd4d20bea69",
+      "w": 960,
+      "h": 640,
+      "alt": "In einer Bäckerei liegen verschiedene Brote im Regal.",
+      "kind": "object",
+      "category": "place",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/32459865/",
+      "license": "Pexels License",
+      "author": "ani-hadushaj"
+    },
+    {
+      "id": "obj.place.cinema",
+      "file": "obj.place.cinema.webp",
+      "sha16": "8e84fbd6a24ff9c4",
+      "w": 960,
+      "h": 640,
+      "alt": "Menschen sitzen im Kino und tragen 3D-Brillen.",
+      "kind": "object",
+      "category": "place",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/7991266/",
+      "license": "Pexels License",
+      "author": "tima-miroshnichenko"
+    },
+    {
+      "id": "obj.place.doctor-waiting-room",
+      "file": "obj.place.doctor-waiting-room.webp",
+      "sha16": "5e2973bb973cca78",
+      "w": 960,
+      "h": 640,
+      "alt": "Ein heller Wartebereich in einer Arztpraxis mit Stühlen.",
+      "kind": "object",
+      "category": "place",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/8459996/",
+      "license": "Pexels License",
+      "author": "cristian-rojas"
+    },
+    {
+      "id": "obj.place.library",
+      "file": "obj.place.library.webp",
+      "sha16": "2b7f1c1debd60ae2",
+      "w": 960,
+      "h": 640,
+      "alt": "Eine Bibliothek mit langen Bücherregalen.",
+      "kind": "object",
+      "category": "place",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/7244576/",
+      "license": "Pexels License",
+      "author": "olgalioncat"
+    },
+    {
+      "id": "obj.place.pharmacy",
+      "file": "obj.place.pharmacy.webp",
+      "sha16": "3529e7415df1d298",
+      "w": 960,
+      "h": 640,
+      "alt": "Eine Apothekerin hilft einer älteren Frau in der Apotheke.",
+      "kind": "object",
+      "category": "place",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/8657366/",
+      "license": "Pexels License",
+      "author": "cottonbro"
+    },
+    {
+      "id": "obj.place.post-office",
+      "file": "obj.place.post-office.webp",
+      "sha16": "6144b50eb4b60bc6",
+      "w": 960,
+      "h": 541,
+      "alt": "Eine lächelnde Frau hält Pakete in den Händen.",
+      "kind": "object",
+      "category": "place",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/6868624/",
+      "license": "Pexels License",
+      "author": "kindelmedia"
+    },
+    {
+      "id": "obj.place.restaurant",
+      "file": "obj.place.restaurant.webp",
+      "sha16": "be41f2f58b4a2f44",
+      "w": 960,
+      "h": 641,
+      "alt": "Gäste sitzen in einem Restaurant an den Tischen.",
+      "kind": "object",
+      "category": "place",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/12181619/",
+      "license": "Pexels License",
+      "author": "cihanyuce"
+    },
+    {
+      "id": "obj.place.supermarket",
+      "file": "obj.place.supermarket.webp",
+      "sha16": "dbeea7f3edcb002e",
+      "w": 960,
+      "h": 640,
+      "alt": "Eine Frau geht durch einen Gang im Supermarkt.",
+      "kind": "object",
+      "category": "place",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/11608887/",
+      "license": "Pexels License",
+      "author": "jvceoner"
+    },
+    {
+      "id": "obj.place.swimming-pool",
+      "file": "obj.place.swimming-pool.webp",
+      "sha16": "9ab83ecdd83e6557",
+      "w": 960,
+      "h": 1440,
+      "alt": "Eine Schwimmerin mit Badekappe schwimmt im Becken.",
+      "kind": "object",
+      "category": "place",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/6012277/",
+      "license": "Pexels License",
+      "author": "tima-miroshnichenko"
+    },
+    {
+      "id": "obj.place.train-station",
+      "file": "obj.place.train-station.webp",
+      "sha16": "89fcbb76ab7cfe8a",
+      "w": 960,
+      "h": 641,
+      "alt": "Menschen gehen durch die Halle eines Bahnhofs.",
+      "kind": "object",
+      "category": "place",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/9601570/",
+      "license": "Pexels License",
+      "author": "satoshi"
+    },
+    {
+      "id": "obj.thing.book",
+      "file": "obj.thing.book.webp",
+      "sha16": "9a9f17cfcf29ac95",
+      "w": 960,
+      "h": 640,
+      "alt": "Offene Bücher liegen auf einem Tisch.",
+      "kind": "object",
+      "category": "thing",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/6550408/",
+      "license": "Pexels License",
+      "author": "tima-miroshnichenko"
+    },
+    {
+      "id": "obj.thing.flowers",
+      "file": "obj.thing.flowers.webp",
+      "sha16": "98fc1ed1a97c816d",
+      "w": 960,
+      "h": 640,
+      "alt": "Ein Blumenstrauß mit rosa Rosen.",
+      "kind": "object",
+      "category": "thing",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/30891127/",
+      "license": "Pexels License",
+      "author": "rsbhullar"
+    },
+    {
+      "id": "obj.thing.handbag",
+      "file": "obj.thing.handbag.webp",
+      "sha16": "8ed5b8bfe0863bb1",
+      "w": 960,
+      "h": 640,
+      "alt": "Eine Hand hält eine orange Handtasche.",
+      "kind": "object",
+      "category": "thing",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/8801036/",
+      "license": "Pexels License",
+      "author": "mart-production"
+    },
+    {
+      "id": "obj.thing.umbrella",
+      "file": "obj.thing.umbrella.webp",
+      "sha16": "a9985c6b04244fbe",
+      "w": 960,
+      "h": 641,
+      "alt": "Viele bunte Regenschirme hängen über einer Straße.",
+      "kind": "object",
+      "category": "thing",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/14363140/",
+      "license": "Pexels License",
+      "author": "gabiradde"
+    },
+    {
+      "id": "obj.thing.watch",
+      "file": "obj.thing.watch.webp",
+      "sha16": "86dbce2a0276c513",
+      "w": 960,
+      "h": 640,
+      "alt": "Eine Armbanduhr mit braunem Lederarmband.",
+      "kind": "object",
+      "category": "thing",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/28157826/",
+      "license": "Pexels License",
+      "author": "dream_-makkerzz"
+    },
+    {
+      "id": "obj.transport.bicycle",
+      "file": "obj.transport.bicycle.webp",
+      "sha16": "f2589063f5507776",
+      "w": 960,
+      "h": 640,
+      "alt": "Zwei alte Fahrräder lehnen an einer Hauswand.",
+      "kind": "object",
+      "category": "transport",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/37858364/",
+      "license": "Pexels License",
+      "author": "sebastian-tyszka"
+    },
+    {
+      "id": "obj.transport.bus",
+      "file": "obj.transport.bus.webp",
+      "sha16": "191c4c6c14cf0080",
+      "w": 960,
+      "h": 652,
+      "alt": "Ein grüner Linienbus fährt auf einer Straße in der Stadt.",
+      "kind": "object",
+      "category": "transport",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/32441052/",
+      "license": "Pexels License",
+      "author": "andres-alaniz"
+    },
+    {
+      "id": "obj.transport.car",
+      "file": "obj.transport.car.webp",
+      "sha16": "471207bf8a458217",
+      "w": 960,
+      "h": 640,
+      "alt": "Autos fahren abends auf einer nassen Stadtstraße.",
+      "kind": "object",
+      "category": "transport",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/6772855/",
+      "license": "Pexels License",
+      "author": "lorenzomessinaph"
+    },
+    {
+      "id": "obj.transport.taxi",
+      "file": "obj.transport.taxi.webp",
+      "sha16": "13aa026e391e6121",
+      "w": 960,
+      "h": 640,
+      "alt": "Ein gelbes Taxi fährt durch eine Straße in der Stadt.",
+      "kind": "object",
+      "category": "transport",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/24589291/",
+      "license": "Pexels License",
+      "author": "bylukemiller"
+    },
+    {
+      "id": "obj.transport.train",
+      "file": "obj.transport.train.webp",
+      "sha16": "aa55303917f17c9c",
+      "w": 960,
+      "h": 638,
+      "alt": "Zwei Personenzüge stehen an einem Bahnsteig.",
+      "kind": "object",
+      "category": "transport",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/17191791/",
+      "license": "Pexels License",
+      "author": "giovanni"
+    },
+    {
+      "id": "obj.transport.tram",
+      "file": "obj.transport.tram.webp",
+      "sha16": "2b32419c12d600b2",
+      "w": 960,
+      "h": 640,
+      "alt": "Eine orange Straßenbahn fährt durch die Stadt.",
+      "kind": "object",
+      "category": "transport",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/20014458/",
+      "license": "Pexels License",
+      "author": "catalin-moraru"
+    },
+    {
+      "id": "obj.weather.cloudy",
+      "file": "obj.weather.cloudy.webp",
+      "sha16": "b99164d624653af4",
+      "w": 960,
+      "h": 640,
+      "alt": "Dunkle Wolken ziehen über den Himmel.",
+      "kind": "object",
+      "category": "weather",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/4028944/",
+      "license": "Pexels License",
+      "author": "lucaspezeta"
+    },
+    {
+      "id": "obj.weather.rainy",
+      "file": "obj.weather.rainy.webp",
+      "sha16": "3cf88248bf2e2498",
+      "w": 960,
+      "h": 640,
+      "alt": "Eine Straße in der Stadt bei Regen, Menschen tragen Regenschirme.",
+      "kind": "object",
+      "category": "weather",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/5166265/",
+      "license": "Pexels License",
+      "author": "zhangkaiyv"
+    },
+    {
+      "id": "obj.weather.snowy",
+      "file": "obj.weather.snowy.webp",
+      "sha16": "354951fa79df7db7",
+      "w": 960,
+      "h": 863,
+      "alt": "Eine verschneite Straße in der Stadt.",
+      "kind": "object",
+      "category": "weather",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/6675103/",
+      "license": "Pexels License",
+      "author": "michal-dziekonski"
+    },
+    {
+      "id": "obj.weather.sunny",
+      "file": "obj.weather.sunny.webp",
+      "sha16": "067ea567b6955073",
+      "w": 960,
+      "h": 640,
+      "alt": "Ein Park mit grünen Bäumen unter blauem Himmel.",
+      "kind": "object",
+      "category": "weather",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/32973716/",
+      "license": "Pexels License",
+      "author": "railgunbreaker"
+    },
+    {
+      "id": "obj.weather.windy",
+      "file": "obj.weather.windy.webp",
+      "sha16": "d4898c6291eb9d65",
+      "w": 960,
+      "h": 640,
+      "alt": "Zwei Kiefern am Strand werden vom Wind gebogen.",
+      "kind": "object",
+      "category": "weather",
+      "levels": [
+        "A1",
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/30413650/",
+      "license": "Pexels License",
+      "author": "gottapics"
+    },
+    {
+      "id": "scene.a1.cafe",
+      "file": "scene.a1.cafe.webp",
+      "sha16": "ab388f7e6e188575",
+      "w": 1200,
+      "h": 688,
+      "alt": "Menschen sitzen draußen vor einem Café.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "A1"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/12259924/",
+      "license": "Pexels License",
+      "author": "amaurymic"
+    },
+    {
+      "id": "scene.a1.family-breakfast",
+      "file": "scene.a1.family-breakfast.webp",
+      "sha16": "69d7efce6b9e1ccf",
+      "w": 1200,
+      "h": 800,
+      "alt": "Mehrere Personen frühstücken zusammen an einem Tisch.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "A1"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/3756519/",
+      "license": "Pexels License",
+      "author": "alexy-almond"
+    },
+    {
+      "id": "scene.a1.market",
+      "file": "scene.a1.market.webp",
+      "sha16": "223cb200c22ff70f",
+      "w": 1200,
+      "h": 800,
+      "alt": "Ein Marktstand mit frischem Gemüse im Freien.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "A1"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/33554298/",
+      "license": "Pexels License",
+      "author": "airamdphoto"
+    },
+    {
+      "id": "scene.a1.park",
+      "file": "scene.a1.park.webp",
+      "sha16": "b11ad1257e7d4b36",
+      "w": 1200,
+      "h": 800,
+      "alt": "Menschen verbringen ihre Freizeit in einem grünen Stadtpark.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "A1"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/29817318/",
+      "license": "Pexels License",
+      "author": "daria-agafonova"
+    },
+    {
+      "id": "scene.a1.supermarket-checkout",
+      "file": "scene.a1.supermarket-checkout.webp",
+      "sha16": "72d4fbba0450687a",
+      "w": 1200,
+      "h": 801,
+      "alt": "Ein Paar bezahlt an der Kasse im Supermarkt.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "A1"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/4199399/",
+      "license": "Pexels License",
+      "author": "jack-sparrow"
+    },
+    {
+      "id": "scene.a2.birthday-party",
+      "file": "scene.a2.birthday-party.webp",
+      "sha16": "2142c6b6add10dc3",
+      "w": 1200,
+      "h": 675,
+      "alt": "Freunde feiern einen Geburtstag mit einem Kuchen.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/23495685/",
+      "license": "Pexels License",
+      "author": "silverkblack"
+    },
+    {
+      "id": "scene.a2.cooking-together",
+      "file": "scene.a2.cooking-together.webp",
+      "sha16": "2d0d6fdb092104bc",
+      "w": 1200,
+      "h": 800,
+      "alt": "Ein Mann und eine Frau kochen gemeinsam in der Küche.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/5427305/",
+      "license": "Pexels License",
+      "author": "amina-filkins"
+    },
+    {
+      "id": "scene.a2.doctor-waiting",
+      "file": "scene.a2.doctor-waiting.webp",
+      "sha16": "b47fe19e3eebae61",
+      "w": 1200,
+      "h": 800,
+      "alt": "Zwei Personen sitzen im Wartebereich einer Arztpraxis.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/4266942/",
+      "license": "Pexels License",
+      "author": "cedric-fauntleroy"
+    },
+    {
+      "id": "scene.a2.moving-house",
+      "file": "scene.a2.moving-house.webp",
+      "sha16": "b9032e36a486113f",
+      "w": 1200,
+      "h": 800,
+      "alt": "Ein Paar packt Umzugskartons aus.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/4554383/",
+      "license": "Pexels License",
+      "author": "cottonbro"
+    },
+    {
+      "id": "scene.a2.train-platform",
+      "file": "scene.a2.train-platform.webp",
+      "sha16": "6a16e1a976c60962",
+      "w": 1200,
+      "h": 801,
+      "alt": "Menschen warten am Bahnsteig eines Bahnhofs auf den Zug.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "A2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/691471/",
+      "license": "Pexels License",
+      "author": "clickerhappy"
+    },
+    {
+      "id": "scene.b1.city-cycling",
+      "file": "scene.b1.city-cycling.webp",
+      "sha16": "6d2df9f4e71ad775",
+      "w": 1200,
+      "h": 800,
+      "alt": "Viele Menschen fahren in der Stadt mit dem Fahrrad.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "B1"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/28683765/",
+      "license": "Pexels License",
+      "author": "viridianaor"
+    },
+    {
+      "id": "scene.b1.home-office",
+      "file": "scene.b1.home-office.webp",
+      "sha16": "a113b9576a372a83",
+      "w": 1200,
+      "h": 675,
+      "alt": "Eine junge Frau arbeitet zu Hause am Laptop.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "B1"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/36764810/",
+      "license": "Pexels License",
+      "author": "silverkblack"
+    },
+    {
+      "id": "scene.b1.library-study-group",
+      "file": "scene.b1.library-study-group.webp",
+      "sha16": "d50e47cfd6a0fd8f",
+      "w": 1200,
+      "h": 800,
+      "alt": "Eine Gruppe von Studierenden lernt zusammen an einem Tisch.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "B1"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/6684506/",
+      "license": "Pexels License",
+      "author": "andy-barbour"
+    },
+    {
+      "id": "scene.b1.open-air-concert",
+      "file": "scene.b1.open-air-concert.webp",
+      "sha16": "f8fc74886e3c7a20",
+      "w": 1200,
+      "h": 803,
+      "alt": "Eine große Menschenmenge hört ein Konzert im Freien.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "B1"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/17842579/",
+      "license": "Pexels License",
+      "author": "milodeckert"
+    },
+    {
+      "id": "scene.b1.volunteers",
+      "file": "scene.b1.volunteers.webp",
+      "sha16": "7704b1fd09a3f3bc",
+      "w": 1200,
+      "h": 675,
+      "alt": "Freiwillige in hellblauen Hemden sammeln Müll mit Müllsäcken.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "B1"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/36713507/",
+      "license": "Pexels License",
+      "author": "silverkblack"
+    },
+    {
+      "id": "scene.b2.car-sharing",
+      "file": "scene.b2.car-sharing.webp",
+      "sha16": "06ecb017578104de",
+      "w": 1200,
+      "h": 900,
+      "alt": "Ein Elektroauto wird an einer Ladesäule aufgeladen.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "B2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/9800006/",
+      "license": "Pexels License",
+      "author": "kindelmedia"
+    },
+    {
+      "id": "scene.b2.crowded-tram",
+      "file": "scene.b2.crowded-tram.webp",
+      "sha16": "149a59d5787b76e9",
+      "w": 1200,
+      "h": 800,
+      "alt": "Fahrgäste stehen dicht gedrängt in einem vollen Bus.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "B2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/28730072/",
+      "license": "Pexels License",
+      "author": "paul-de-vota"
+    },
+    {
+      "id": "scene.b2.senior-with-tablet",
+      "file": "scene.b2.senior-with-tablet.webp",
+      "sha16": "7079150e09dc2dab",
+      "w": 1200,
+      "h": 800,
+      "alt": "Ein älterer Mann sitzt auf dem Sofa und benutzt ein Tablet.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "B2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/27086492/",
+      "license": "Pexels License",
+      "author": "helenalopes"
+    },
+    {
+      "id": "scene.b2.team-meeting",
+      "file": "scene.b2.team-meeting.webp",
+      "sha16": "30ff57ad70725eb8",
+      "w": 1200,
+      "h": 800,
+      "alt": "Ein Team sitzt in einem Büro zu einer Besprechung zusammen.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "B2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/7108454/",
+      "license": "Pexels License",
+      "author": "tiger-lily"
+    },
+    {
+      "id": "scene.b2.waste-sorting",
+      "file": "scene.b2.waste-sorting.webp",
+      "sha16": "602f3a7068d39449",
+      "w": 1200,
+      "h": 796,
+      "alt": "Vier bunte Mülltonnen stehen nebeneinander zur Mülltrennung.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "B2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/10368942/",
+      "license": "Pexels License",
+      "author": "jan-van-der-wolf"
+    },
+    {
+      "id": "scene.c1.factory-robots",
+      "file": "scene.c1.factory-robots.webp",
+      "sha16": "b22b6610927339cf",
+      "w": 1200,
+      "h": 900,
+      "alt": "Gelbe Roboterarme arbeiten in einer modernen Fabrik.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "C1"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/18471441/",
+      "license": "Pexels License",
+      "author": "delot"
+    },
+    {
+      "id": "scene.c1.telemedicine",
+      "file": "scene.c1.telemedicine.webp",
+      "sha16": "cd99d3b8a15ab8d1",
+      "w": 1200,
+      "h": 675,
+      "alt": "Ein Arzt im weißen Kittel spricht per Video mit einem Patienten.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "C1"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/39192424/",
+      "license": "Pexels License",
+      "author": "silverkblack"
+    },
+    {
+      "id": "scene.c1.tourist-crowd",
+      "file": "scene.c1.tourist-crowd.webp",
+      "sha16": "7e6e3b1a6fc73571",
+      "w": 1200,
+      "h": 800,
+      "alt": "Viele Touristen sind auf einem historischen Platz in einer Altstadt.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "C1"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/38487587/",
+      "license": "Pexels License",
+      "author": "fotodruk"
+    },
+    {
+      "id": "scene.c1.urban-garden",
+      "file": "scene.c1.urban-garden.webp",
+      "sha16": "4e40f1865d850724",
+      "w": 1200,
+      "h": 800,
+      "alt": "Ein Gemeinschaftsgarten mit Gewächshaus in einer Siedlung.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "C1"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/37553146/",
+      "license": "Pexels License",
+      "author": "jan-wright"
+    },
+    {
+      "id": "scene.c1.video-call",
+      "file": "scene.c1.video-call.webp",
+      "sha16": "6820a7e50dbee9c9",
+      "w": 1200,
+      "h": 800,
+      "alt": "Eine Frau führt an einem Laptop ein Videogespräch mit mehreren Personen.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "C1"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/4226140/",
+      "license": "Pexels License",
+      "author": "shvetsa"
+    },
+    {
+      "id": "scene.c2.art-museum",
+      "file": "scene.c2.art-museum.webp",
+      "sha16": "1bd2abee6c3ac617",
+      "w": 1200,
+      "h": 800,
+      "alt": "Besucher betrachten Gemälde in einem Kunstmuseum.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "C2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/34633/",
+      "license": "Pexels License",
+      "author": "negativespace"
+    },
+    {
+      "id": "scene.c2.coworking",
+      "file": "scene.c2.coworking.webp",
+      "sha16": "74ce507b02a64398",
+      "w": 1200,
+      "h": 800,
+      "alt": "Mehrere Menschen arbeiten gemeinsam mit Laptops in einem Coworking-Raum.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "C2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/7550286/",
+      "license": "Pexels License",
+      "author": "mart-production"
+    },
+    {
+      "id": "scene.c2.phones-at-dinner",
+      "file": "scene.c2.phones-at-dinner.webp",
+      "sha16": "3774b65468cdc590",
+      "w": 1200,
+      "h": 800,
+      "alt": "Zwei Frauen sitzen im Restaurant am Tisch und schauen auf ihre Handys.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "C2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/9543917/",
+      "license": "Pexels License",
+      "author": "mikhail-nilov"
+    },
+    {
+      "id": "scene.c2.traffic-and-bike-lane",
+      "file": "scene.c2.traffic-and-bike-lane.webp",
+      "sha16": "be191acf37a1db42",
+      "w": 1200,
+      "h": 675,
+      "alt": "Ein Radfahrer fährt neben Autos auf einer Straße in der Stadt.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "C2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/14818474/",
+      "license": "Pexels License",
+      "author": "imperioame"
+    },
+    {
+      "id": "scene.c2.wind-farm",
+      "file": "scene.c2.wind-farm.webp",
+      "sha16": "64accdf7070613ac",
+      "w": 1200,
+      "h": 800,
+      "alt": "Windräder stehen auf einer grünen Wiese.",
+      "kind": "scene",
+      "category": "speaking",
+      "levels": [
+        "C2"
+      ],
+      "sourceUrl": "https://www.pexels.com/photo/5569023/",
+      "license": "Pexels License",
+      "author": "gervee"
+    }
+  ]
+}
