@@ -345,6 +345,17 @@ kolonlarındadır (`exam_results.final_overall`, `overall_override`, `response_g
 - Objektif bölüm: tahmin A1 bandının altındaysa (`belowScale`) A0 (`result.ts: objectiveLevel`), ama
   yalnız yeterli kanıtla: asgariye ulaşmadan duran (INSUFFICIENT) bölüm A1 tabanında kalır, sonuç zaten
   kendiliğinden kesinleşmez. Öğretmen yine A0 verebilir.
+- Şans kuralı (2026-10-24, `chance.ts`): bölümün puanı saf tahminin verebileceğinin güvenilir biçimde üstünde
+  değilse bölüm, bandı ne derse desin A0'dır, gerekçe `AT_CHANCE` (öğretmen öğrenci sayfasında görür). Cevap
+  birimleriyle sayılır: tek seçimli madde 1 birim (şans 1/seçenek), Richtig/Falsch ifadesi 1/3 (iki yönlüde
+  1/2), eşleştirme çifti 1/sağ sütun, boşluklu metin boşluğu 1/4, kelime havuzu boşluğu 1/havuz, yazılan cevap
+  0, tick-n kutusu doğru/seçenek (biraz cömert, güvenli taraf). Saf tahminde doğru birim sayısının beklentisi
+  şansların toplamı, varyansı p(1-p) toplamı; `doğru <= beklenen + 2.054 * sd` (tek yönlü %98) ise şans
+  düzeyindedir. Yalnız A1-A2 maddelerinin birimleri sayılır ve en az 16 birim gerekir: gerçek bir A1 öğrencisi
+  B1-C2 malzemede de şansa yakındır (bütün bölüm sayılınca yerleştirmede A1 öğrencilerinin %3.5-6.9'u yanlış
+  A0 alıyordu), tek kısa A1/A2 metni (bankada 3-10 birim) A0'ı A1'den ayıramaz. Yerleştirme dilbilgisi 30, hızlı
+  tarama 38 birimle değerlendirilir; yerleştirmede okuma ve dinleme (tek A2 metni ya da kaydı) bu kurala girmez.
+  Hiçbir şey cevaplanmamış bölüm, seviyesi ne olursa olsun en az 8 birimle şans düzeyindedir.
 - Yazma/konuşma: puanlanabilir Almanca yoksa (boş, Almanca değil) görev A0 olabilir. AI A0'ı yalnız EMPTY
   ya da NOT_GERMAN bayrağıyla önerebilir; bayraksız A0, A1'e çıkarılır ve `A0_RAISED` ile işaretlenir
   (`grading.ts: guardPreA1`). Boş cevapta AI çağrılmaz; öğretmen seçim listesinden A0'ı seçer.
@@ -360,7 +371,18 @@ kolonlarındadır (`exam_results.final_overall`, `overall_override`, `response_g
   yerleştirmede %0 (sıradan maddelerde tahmin etmezse %16-18), hızlı taramada %86 A0. Neden: okuma (A2-C1) ve dinleme
   (A2-B2) A1 altını ölçemez, önsel B1 (sd 1.5) ve sıradan maddelerde tahmin tahmini yukarı çeker. Her şeyi
   boş bırakan yerleştirme öğrencisi: dilbilgisi A0 (-3.34), okuma ve dinleme A1 (-2.95, -2.93), birleşik
-  -3.13; yazma ve konuşma A0 ise genel A0 ve `NEAR_CUT` ile öğretmene gider.
+  -3.13; yazma ve konuşma A0 ise genel A0 ve `NEAR_CUT` ile öğretmene gider. Yukarıdaki sayılar birleşik
+  tahminin bandıdır, şans kuralından öncedir.
+- Şans kuralıyla genel seviye (aynı betik, son tablo; bölüm seviyeleri + yazma ve konuşma öğrencinin gerçek
+  seviyesinde, yani doğru karar veren bir değerlendirici; % A0'a yerleşen, tohum 2026 / 7): hiç Almancası olmayan
+  öğrenci yerleştirmede tahminle %96.8 / %96.9, tahminsiz %97.3 / %97.5, hızlı taramada %97.1 / %96.4 A0 alır;
+  A1 bant merkezindeki (-2.5) öğrenci yerleştirmede %0.0, hızlı taramada %1.5 / %1.6 yanlış A0 (A1 bandının
+  tamamı %0.0 ve %2.6). Hedefler (en az %90, en çok %3) iki tohumda tutar; kapı tabloları değişmedi. Yerleştirmede
+  bu sonuç yazma ve konuşmanın A0 olmasına dayanır: yalnız objektif bölümlerle hiç Almancası olmayan öğrenci %0.1-19
+  A0 alır, çünkü okuma ve dinleme şans kuralına girmez. Denenenler (4000 öğrenci, iki tohum): bütün bölüm, z 1.645,
+  en az 8 birim (ilk öneri) yerleştirmede A1 merkezinde %3.5-6.9 yanlış A0 (yalnız objektif bölümlerle %59-99.7);
+  bütün bölüm z 1.282 %1.4-4.1; A1-A2 birimleri z 1.645 hiç Almancası olmayana %91.9-93.8, z 2.326 hızlı taramada
+  A1 merkezinde %2.8-3.0 ve bantta %4.4-4.5 yanlış A0. Seçilen: A1-A2 birimleri, z 2.054, en az 16.
 
 Belirsiz sonuç öğretmene gider (2026-10-18): yazma ve konuşması olmayan bir sınav (ör. hızlı tarama) eskiden
 bitince kendiliğinden kesinleşirdi. Artık hesaplanan sonuç sınırda (`NEAR_CUT`, `HIGH_UNCERTAINTY` ya da
