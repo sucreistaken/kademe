@@ -3,7 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { PrintButton } from "@/components/panel/report/print-button";
 import { candidateT } from "@/i18n/candidate";
 import { loadState, resolveExamToken } from "@/lib/exam-flow";
-import { StudentSheet } from "./student-sheet";
+import { StudentSheet } from "@/components/candidate/exam/student-sheet";
+import { solutionPage } from "@/lib/candidate-pages";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,8 @@ export const dynamic = "force-dynamic";
  */
 export default async function StudentPrintPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
+  // Like every /a/[token]/* page: a link another solution serves is an unknown link here.
+  if ((await solutionPage(token, "done")) !== undefined) notFound();
   const resolved = await resolveExamToken(token);
   const ctx = resolved.ctx;
   if (!ctx || (!resolved.ok && resolved.problem !== "COMPLETED")) notFound();

@@ -590,8 +590,10 @@
     "printHint": "Elige Imprimir y luego Guardar como PDF para conservar una copia.",
     "studentLabel": "Estudiante",
     "examLabel": "Examen",
-    "dateLabel": "Fecha",
-    "back": "Volver"
+    "back": "Volver",
+    "outcomePASS": "Se confirmó el nivel que indicó.",
+    "outcomeFAIL": "No se confirmó el nivel que indicó en este examen.",
+    "outcomeINCONCLUSIVE": "No hay pruebas suficientes para decidir; su escuela se pondrá en contacto con usted."
   },
   "hiringFrame": {
     "help": "Ayuda",

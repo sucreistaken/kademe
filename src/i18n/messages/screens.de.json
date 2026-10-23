@@ -410,7 +410,6 @@
     "release": "Show to student",
     "released": "Shown to student · {date}",
     "finalized": "Final · {date}",
-    "visibilityNone": "This exam does not show results to students.",
     "overallChange": "Change overall level",
     "overallRule": "Rule: lower median of the skill levels",
     "history": "Change history",

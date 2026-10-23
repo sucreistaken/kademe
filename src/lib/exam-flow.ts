@@ -33,7 +33,7 @@ import { candidateExamName } from "@/lib/exam/candidate-exam-name";
 import { levelFromTheta } from "@/lib/exam/cefr";
 import { playsAllowed } from "@/lib/exam/listening-plays";
 import { hasAnswer, scoreItem } from "@/lib/exam/item-scoring";
-import { approvedFeedback, type FeedbackContent } from "@/lib/exam/student-feedback";
+import { studentFacingFeedback, type StudentNote } from "@/lib/exam/student-feedback";
 import type { StudentAnalysis } from "@/lib/exam/student-analysis";
 import { loadStudentAnalysis } from "@/server/student-analysis";
 import {
@@ -200,7 +200,7 @@ export type StudentResult = {
   /** Present only once the result is released: counts and topics, never the questions. */
   analysis?: StudentAnalysis;
   /** The teacher-approved note, in the student's language, or null. */
-  feedback?: FeedbackContent | null;
+  feedback?: StudentNote | null;
 };
 
 export type CandidateState = {
@@ -416,7 +416,8 @@ async function finishedState(
   const hasProductive = enabledSections(cfg).some((s) => !isObjectiveSection(s.section));
   const released = !!result?.releasedAt;
   const waitingFor = studentWaitingFor({ hasProductive, final: result?.status === "FINAL", computed: result?.computed });
-  const levelShown = result?.levelShown ?? cfg.resultVisibility !== "NONE";
+  // Only a released result says anything about the level.
+  const levelShown = released && (result?.levelShown ?? cfg.resultVisibility !== "NONE");
   const student: StudentResult = {
     visibility: cfg.resultVisibility,
     released,
@@ -433,7 +434,7 @@ async function finishedState(
         enabledSections(cfg).map((s) => s.section),
         ctx.locale,
       )) ?? undefined;
-    student.feedback = approvedFeedback(result.studentFeedback);
+    student.feedback = studentFacingFeedback(result.studentFeedback);
   }
   if (released && result?.status === "FINAL" && levelShown) {
     student.overall = (result?.finalOverall as Cefr | null) ?? null;

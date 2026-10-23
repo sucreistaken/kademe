@@ -300,6 +300,7 @@ export function buildFeedbackMessages(input: FeedbackInput, locale: FeedbackLoca
     "- strengths: at most 3, short. Only things the summary supports (a high x/y, a section with a good level, a topic with no mistakes). An empty list is fine when nothing stands out.",
     "- improve: at most 4 topics, most important first, based on the skill tags with the most wrong answers. For each, say in one sentence what went wrong and fill the example field with one real wrong answer from the summary: student is what the student wrote, correct is the right form, both copied from the summary. When a topic has no example in the summary, leave both example fields as empty strings.",
     "- Keep each why to one sentence.",
+    "- Never mention a CEFR level (A1 to C2) or any level name in any field: the teacher may choose not to show the level to the student.",
     "- nextStep: one concrete thing to practise next, in one or two sentences.",
     "- \"unanswered\" counts the questions of a skill tag that the student left empty; they are included in \"wrong\". Never use an unanswered question as an example. If a tag has unanswered questions, you may say the student left some questions blank (in Turkish, for example, \"boş bıraktığın sorular\"), and give no example for a tag that only has blanks.",
     "- For writing and speaking you only get the final level and, sometimes, the teacher's own reason. Do not comment on text or speech you have not seen; you may restate the teacher's reason.",
@@ -362,6 +363,25 @@ export function approveFeedback(prev: StudentFeedbackStore | null, content: Feed
  * The stored value is checked again, so a row written by hand cannot put
  * anything unapproved or malformed on the sheet.
  */
+export type StudentNote = { strengths: string[]; improve: Array<{ topic: string; why: string }>; nextStep: string };
+
+/**
+ * The only form of the note that may leave the server for a student: strengths, the topics with their
+ * one-sentence reason, and the next step. The examples (the student's wrong form and the correct form)
+ * quote items, so they are dropped here and nowhere else.
+ */
+export function studentNote(content: FeedbackContent | null): StudentNote | null {
+  if (!content) return null;
+  return {
+    strengths: [...content.strengths],
+    improve: content.improve.map((x) => ({ topic: x.topic, why: x.why })),
+    nextStep: content.nextStep,
+  };
+}
+
+/** The approved note of a stored feedback row in its student-facing form, or null. */
+export const studentFacingFeedback = (store: StudentFeedbackStore | null | undefined): StudentNote | null => studentNote(approvedFeedback(store));
+
 export function approvedFeedback(store: StudentFeedbackStore | null | undefined): FeedbackContent | null {
   if (!store?.approved || !store.approvedAt || !store.approvedBy) return null;
   const v = validateFeedback(store.approved);

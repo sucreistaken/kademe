@@ -590,8 +590,10 @@
     "printHint": "Use Print and choose Save as PDF to keep a copy.",
     "studentLabel": "Student",
     "examLabel": "Exam",
-    "dateLabel": "Date",
-    "back": "Back"
+    "back": "Back",
+    "outcomePASS": "Your stated level was confirmed.",
+    "outcomeFAIL": "Your stated level was not confirmed in this exam.",
+    "outcomeINCONCLUSIVE": "There is not enough evidence for a decision; your school will contact you."
   },
   "hiringFrame": {
     "help": "Help",

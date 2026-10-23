@@ -590,8 +590,10 @@
     "printHint": "Wähle Drucken und dann Als PDF speichern, um eine Kopie aufzubewahren.",
     "studentLabel": "Teilnehmer",
     "examLabel": "Prüfung",
-    "dateLabel": "Datum",
-    "back": "Zurück"
+    "back": "Zurück",
+    "outcomePASS": "Ihr angegebenes Niveau wurde bestätigt.",
+    "outcomeFAIL": "Ihr angegebenes Niveau wurde in dieser Prüfung nicht bestätigt.",
+    "outcomeINCONCLUSIVE": "Es gibt nicht genug Anhaltspunkte für eine Entscheidung; Ihre Schule wird sich bei Ihnen melden."
   },
   "hiringFrame": {
     "help": "Hilfe",

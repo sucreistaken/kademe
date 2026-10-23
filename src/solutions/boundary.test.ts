@@ -9,13 +9,12 @@ import { describe, expect, it } from "vitest";
  * modules that predate it (they live in src/lib and src/server).
  *
  * Exam modules: @/lib/exam-flow, @/lib/exam-results, @/lib/exam-candidate-api,
- * @/lib/exam/*, @/server/{panel,invite,simulate,bank-import,bank-topup,item-generation-job,template-blueprint,exam-exposure}.
+ * @/lib/exam/*, @/server/{panel,invite,simulate,bank-import,bank-topup,item-generation-job,template-blueprint,exam-exposure,student-analysis}.
  * The codebase imports them only through the @/ alias.
  */
 const KNOWN_COUPLINGS = [
   "src/app/a/[token]/done/page.tsx",
   "src/app/a/[token]/done/print/page.tsx",
-  "src/app/a/[token]/done/print/student-sheet.tsx",
   "src/app/a/[token]/shared.tsx",
   "src/app/api/cron/grade/route.ts",
   "src/components/candidate/Finished.tsx",
@@ -43,14 +42,14 @@ const EXEMPT = [
 ];
 const EXAM_IMPORT = [
   /["']@\/lib\/(?:exam-flow|exam-results|exam-candidate-api|exam\/)/,
-  /["']@\/server\/(?:panel|invite|simulate|bank-import|item-generation-job|template-blueprint|exam-exposure)["']/,
+  /["']@\/server\/(?:panel|invite|simulate|bank-import|item-generation-job|template-blueprint|exam-exposure|student-analysis)["']/,
 ];
 
 /** Relative paths reach the same modules as the alias: `../../lib/exam-flow` is `@/lib/exam-flow`. */
 const EXAM_RELATIVE = [
   /["']\.{1,2}\/(?:[^"']*\/)?(?:exam-flow|exam-results|exam-candidate-api)["']/,
   /["']\.{1,2}\/(?:[^"']*\/)?lib\/exam\//,
-  /["']\.{1,2}\/(?:[^"']*\/)?server\/(?:panel|invite|simulate|bank-import|item-generation-job|template-blueprint|exam-exposure)["']/,
+  /["']\.{1,2}\/(?:[^"']*\/)?server\/(?:panel|invite|simulate|bank-import|item-generation-job|template-blueprint|exam-exposure|student-analysis)["']/,
 ];
 
 function files(dir: string): string[] {

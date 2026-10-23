@@ -46,11 +46,15 @@ vi.mock("@/solutions/registry.server", () => ({
 }));
 
 class Redirect extends Error {}
+class NotFound extends Error {}
 // Unknown links follow the browser's language; the test has no request.
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
 vi.mock("next/navigation", () => ({
   redirect: (path: string) => {
     throw new Redirect(path);
+  },
+  notFound: () => {
+    throw new NotFound();
   },
 }));
 
@@ -61,6 +65,7 @@ import DonePage from "./done/page";
 import PracticePage from "./practice/page";
 import StagePage from "./stage/[n]/page";
 import RightsPage from "./rights/page";
+import PrintPage from "./done/print/page";
 import { UnknownLink } from "@/components/candidate/UnknownLink";
 import { IntroConsent } from "@/components/candidate/IntroConsent";
 
@@ -151,6 +156,22 @@ describe("an invitation no live module serves", () => {
   it("is also what an exam invitation sees on the pages only a solution renders", async () => {
     for (const page of ["practice", "stage"] as const) {
       expect(await render(page, { ok: true, ctx: ctx("LANGUAGE_EXAM", "NOT_STARTED") })).toEqual(createElement(UnknownLink, { token: TOKEN }));
+    }
+  });
+});
+
+describe("the student print page", () => {
+  const print = () => PrintPage({ params: Promise.resolve({ token: TOKEN }) });
+
+  it("is an unknown link for a hiring invitation, served or not, exactly like an unknown token", async () => {
+    h.resolveToken.mockResolvedValue({ ok: false, problem: "INVALID" });
+    await expect(print()).rejects.toBeInstanceOf(NotFound);
+    for (const [, status, problem] of STATES) {
+      h.resolveToken.mockResolvedValue(hiringResolved(status, problem));
+      h.hiring = null;
+      await expect(print()).rejects.toBeInstanceOf(NotFound);
+      h.hiring = { dbKind: "HIRING", accommodationRequests: true, candidate: { renderPage: async () => createElement("main", null, "HIRING PAGE") } } satisfies Served;
+      await expect(print()).rejects.toBeInstanceOf(NotFound);
     }
   });
 });

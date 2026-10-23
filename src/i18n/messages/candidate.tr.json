@@ -590,8 +590,10 @@
     "printHint": "Bir kopyasını saklamak için Yazdır'ı seçip PDF olarak kaydet.",
     "studentLabel": "Öğrenci",
     "examLabel": "Sınav",
-    "dateLabel": "Tarih",
-    "back": "Geri"
+    "back": "Geri",
+    "outcomePASS": "Beyan ettiğiniz seviye doğrulandı.",
+    "outcomeFAIL": "Beyan ettiğiniz seviye bu sınavda doğrulanamadı.",
+    "outcomeINCONCLUSIVE": "Karar için yeterli kanıt yok; okulunuz sizinle iletişime geçecek."
   },
   "hiringFrame": {
     "help": "Yardım",

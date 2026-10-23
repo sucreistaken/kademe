@@ -410,7 +410,6 @@
     "release": "Öğrenciye göster",
     "released": "Öğrenciye gösterildi · {date}",
     "finalized": "Kesinleşti · {date}",
-    "visibilityNone": "Bu sınavda sonuç öğrenciye gösterilmez.",
     "overallChange": "Genel seviyeyi değiştir",
     "overallRule": "Kural: beceri seviyelerinin alt medyanı",
     "history": "Değişiklik geçmişi",

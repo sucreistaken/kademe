@@ -40,7 +40,10 @@ export function AnalysisView({
     <div className={cn("flex flex-col gap-5", className)}>
       {result.levelShown && result.overall ? (
         <div className="flex items-center gap-4 rounded-xl bg-mint-soft px-5 py-4">
-          <div className="min-w-0 flex-1 text-[13px] font-bold text-mint">{t("levelLabel")}</div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[13px] font-bold text-mint">{t("levelLabel")}</div>
+            {result.outcome ? <p className="mt-1 text-[14px] leading-[1.5] text-ink-2">{t(`outcome${result.outcome}`)}</p> : null}
+          </div>
           <div className="tnum text-[40px] font-black leading-none text-ink">{result.overall}</div>
         </div>
       ) : null}

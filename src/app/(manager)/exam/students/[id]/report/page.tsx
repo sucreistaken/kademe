@@ -9,8 +9,8 @@ import { ReportSheet } from "@/components/panel/report/report-sheet";
 import { buildReport } from "@/components/panel/report/model";
 import { buildDetail } from "@/components/panel/report/detail-model";
 import { DetailSheet } from "@/components/panel/report/detail-sheet";
-import { StudentSheet } from "@/app/a/[token]/done/print/student-sheet";
-import { approvedFeedback } from "@/lib/exam/student-feedback";
+import { StudentSheet } from "@/components/candidate/exam/student-sheet";
+import { studentFacingFeedback } from "@/lib/exam/student-feedback";
 import type { StudentResult } from "@/lib/exam-flow";
 import { loadStudentAnalysis } from "@/server/student-analysis";
 import { managerLocale } from "@/i18n/manager-locale";
@@ -130,7 +130,7 @@ export default async function ResultReportPage({
       overall: built.model.overall,
       skills: cfg.resultVisibility === "FULL" ? built.model.skills : undefined,
       analysis: analysis ?? undefined,
-      feedback: approvedFeedback(result?.studentFeedback),
+      feedback: studentFacingFeedback(result?.studentFeedback),
     };
     return (
       <main className="report-wrap bg-canvas px-6 py-8">
