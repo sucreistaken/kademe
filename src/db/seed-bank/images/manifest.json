@@ -3,10 +3,10 @@
     {
       "id": "chart.c1.ehrenamt",
       "file": "chart.c1.ehrenamt.webp",
-      "sha16": "b92b4437873aa822",
+      "sha16": "c82d329411a60d07",
       "w": 1200,
       "h": 800,
-      "alt": "Balkendiagramm: Ehrenamtliches Engagement in Fiktivland, Anteil der Engagierten nach Bereich in Prozent, 2009 und 2023. Sport: 42 und 35. Soziales: 22 und 29. Schule und Kita: 20 und 15. Kultur: 18 und 20. Umwelt: 9 und 17. Quelle: fiktive Daten.",
+      "alt": "Balkendiagramm: Ehrenamtliches Engagement in Fiktivland, Anteil der Engagierten nach Bereich in Prozent, 2009 und 2023, Mehrfachnennungen möglich. Sport: 42 und 35. Soziales: 22 und 29. Schule und Kita: 20 und 15. Kultur: 18 und 20. Umwelt: 9 und 17. Quelle: fiktive Daten.",
       "kind": "chart",
       "category": "chart",
       "levels": [

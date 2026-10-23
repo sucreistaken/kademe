@@ -416,7 +416,7 @@ const grammarTexts: SeedItem[] = [
       "Die Stadt will [[sich#reflexiv]] deshalb dafür einsetzen, dass die Gebühren nicht mehr jedes Jahr steigen. " +
       "Ein Händler meinte, ohne seine Stammkundschaft [[hätte#konjunktiv2.vergangenheit]] er schon vor Jahren aufgeben müssen. " +
       "Dass er weitermacht, liegt [[an#verb_praeposition]] den Menschen, die jede Woche wiederkommen. " +
-      "Neue Stände sind [[kaum/nicht#negation]] in Sicht, [[denn#konnektor]] der Platz ist schon jetzt bis zur letzten Ecke belegt.",
+      "Neue Stände sind [[kaum/nicht#negation]] in Sicht, [[denn/und#konnektor]] der Platz ist schon jetzt bis zur letzten Ecke belegt.",
     last: "Wer am Samstag früh kommt, findet noch einen Parkplatz und die besten Äpfel.",
     note: "Relativpronomen im Genitiv (g1), Passiv Präteritum (g2), Relativsatz mit „was“ nach „vieles“ (g3), Vergleich nach „mehr“ (g4), Präpositionaladverb bei „denken an“ (g5), Reflexivpronomen bei „sich einsetzen“ (g6), Konjunktiv II der Vergangenheit bei „ohne“ (g7), „liegen an“ (g8), Negation (g9), denn mit Verbzweitstellung (g10).",
   }),
@@ -1410,7 +1410,7 @@ const listeningItems: SeedItem[] = [
     ],
     "g1 „zwischen elfhundertneunzig und zwölfhundertzehn“ (also 1210). g2 „etwa drei Jahre“ für die Konservierung. g3 „siebenundvierzig Silbermünzen“ (zweimal genannt). g4 „in einem kleinen Tonkrug“. g5 Selbstkorrektur: erst vierzehn, dann „nein, zwölf Zentimeter“, richtig ist zwölf. g6 „im Frühjahr im Kreismuseum“: Jahreszeit und Ort stehen direkt hintereinander, beide Wörter passen in die Zelle und werden akzeptiert."),
   lAusgrabung.choice("inference", "HARD", "Was schließt Frau Seidel aus dem Muster auf dem Kamm?",
-    "Der Besitzer kam vermutlich von weit her, die Verbindungen reichten weit.",
+    "Der Kamm spricht dafür, dass der Ort damals weiträumige Kontakte hatte.",
     [
       "Die Brücke wurde vermutlich von Händlern aus dem hohen Norden erbaut und bezahlt.",
       "Der Fundort war im Mittelalter ein Zentrum für Arbeiten aus Knochen.",
@@ -1441,7 +1441,7 @@ const listeningItems: SeedItem[] = [
     "im Mehrgenerationenhaus, auch wenn dort nur sehr wenige Befragte leben",
     [
       "in der Wohngemeinschaft, weil dort die Miete besonders niedrig ist",
-      "in der Hausgemeinschaft, weil man dort kaum auf einen Platz warten muss",
+      "in der Hausgemeinschaft, weil dort jeder eine eigene Wohnung hat",
       "in der klassischen Kleinfamilie, mit der die Befragung verglichen wurde",
     ], 0,
     "„Hier leben nur etwa drei Prozent, aber die Zufriedenheit ist am höchsten.“ Die Wohngemeinschaft wird wegen des Geldes gewählt, in der Hausgemeinschaft sind die Wartelisten lang, und die Kleinfamilie war nicht Gegenstand der Befragung."),
@@ -1529,7 +1529,7 @@ const listeningItems: SeedItem[] = [
     "Ohne Pflicht würden nur die großen Märkte mitmachen und die kleinen nicht.",
     [
       "Ohne Pflicht würden die Märkte ihre Ware überhaupt nicht mehr an Tafeln abgeben.",
-      "Ohne Pflicht fehlten den Tafeln die Fahrer, die Ware abzuholen, in jedem Fall.",
+      "Ohne Pflicht hätten die Tafeln keine Fahrer, um die Ware abzuholen.",
       "Ohne Pflicht blieben die Preise im Handel hoch und die Tafeln ohne Kundschaft.",
     ], 0,
     "Letzter Beitrag von Frau Lang: „Dann machen die Großen mit, die Kleinen nicht, und wir bekommen am Ende gar nichts zusammen.“ Dass die Märkte gar nichts mehr abgeben, behauptet sie nicht, sie bekommen ja schon heute viel."),
@@ -2056,20 +2056,20 @@ const speakingItems: SeedItem[] = [
     ["das Bild beschreiben", "Veränderungen erklären", "Videogespräche und Treffen vergleichen", "Situationen für persönliche Treffen nennen"],
     PICTURE_NOTE),
 
-  // Picture task (scene, overtourism)
+  // Picture task (scene, public space)
   speakPicture("MID", "scene.c1.tourist-crowd",
     "Sehen Sie sich das Bild an. Sprechen Sie etwa drei Minuten.\n\n" +
       "- Beschreiben Sie, was Sie auf dem Bild sehen.\n" +
-      "- Erklären Sie, welche Chancen und welche Probleme viele Besucher für eine historische Altstadt mit sich bringen.\n" +
-      "- Schlagen Sie Regeln oder Maßnahmen vor, damit Anwohner und Gäste gut miteinander auskommen.\n" +
-      "- Sagen Sie, wie Sie selbst am liebsten eine fremde Stadt besuchen.",
+      "- Erklären Sie, was einen öffentlichen Platz in der Innenstadt für die Menschen attraktiv macht.\n" +
+      "- Nennen Sie Interessen, die auf einem solchen Platz aufeinandertreffen, und überlegen Sie, wie man sie ausgleichen kann.\n" +
+      "- Sagen Sie, welchen Ort in Ihrer Stadt oder Region Sie gern nutzen, und begründen Sie das.",
     [
-      "beschreibt das Bild: viele Touristen auf einem historischen Platz in einer Altstadt",
-      "nennt Chancen (Einnahmen, Arbeitsplätze, Austausch) und Probleme (Gedränge, Lärm, steigende Mieten, Verdrängung von Läden)",
-      "macht konkrete, begründete Vorschläge (z. B. Besucherlenkung, Obergrenzen, Gebühren, Ruhezeiten)",
-      "schildert die eigene Art zu reisen und begründet sie",
+      "beschreibt das Bild: viele Menschen auf einem historischen Platz in einer Altstadt",
+      "nennt Merkmale eines attraktiven Platzes (z. B. Sitzgelegenheiten, Grün, Schatten, Cafés, Märkte, Sicherheit, Erreichbarkeit)",
+      "benennt Interessenkonflikte (z. B. Gastronomie und Ruhe, Verkehr und Fußgänger, Veranstaltungen und Anwohner) und schlägt einen Ausgleich vor",
+      "schildert einen Ort in der eigenen Stadt oder Region und begründet die Wahl",
     ],
-    ["das Bild beschreiben", "Chancen und Probleme erklären", "Maßnahmen vorschlagen", "eigene Reiseweise begründen"],
+    ["das Bild beschreiben", "Merkmale eines attraktiven Platzes erklären", "Interessen und Ausgleich nennen", "einen eigenen Ort begründen"],
     PICTURE_NOTE),
 
   // Picture tasks (three charts of their own, never the writing charts)
@@ -2089,7 +2089,7 @@ const speakingItems: SeedItem[] = [
   speakPicture("HARD", "chart.c1.wasser",
     "Sehen Sie sich die Grafik an. Sprechen Sie etwa drei Minuten.\n\n" +
       "- Beschreiben Sie die Entwicklung des Wasserverbrauchs zwischen 1990 und 2024.\n" +
-      "- Erklären Sie, warum der Verbrauch erst sank und danach wieder leicht stieg.\n" +
+      "- Nennen Sie mögliche Gründe dafür, dass der Verbrauch erst sank und danach wieder leicht stieg.\n" +
       "- Sagen Sie, ob und wie der Verbrauch weiter gesenkt werden sollte, und begründen Sie Ihre Meinung.",
     [
       "gibt die Entwicklung wieder: von 147 Litern (1990) fallend bis 121 (2015), dann Anstieg auf 128 (2020) und leichter Rückgang auf 125 (2024)",
