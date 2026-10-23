@@ -1,6 +1,8 @@
 import type { TfngValue } from "@/lib/exam/types";
 import { cloze } from "../cloze";
 import { cTest } from "../ctest";
+import { openCloze } from "../opencloze";
+import { img } from "../image";
 import { wordBank } from "../wordbank";
 import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 
@@ -381,9 +383,117 @@ const grammarTexts: SeedItem[] = [
   }),
 ];
 
+// Sprachbausteine-15 (telc style): ten gaps, a pool of fifteen words (five do not fit), function-word families.
+const grammarSprachbausteine: SeedItem[] = [
+  wordBank(LEVEL, "EASY", {
+    title: "Mehr Platz für Fahrräder",
+    first: "Immer mehr Städte wollen den Radverkehr fördern.",
+    body:
+      "In vielen Rathäusern wird [[darüber#praepositionaladverb]] gestritten, wie viel Straßenfläche den Fahrrädern zustehen soll. " +
+      "Befürworter verweisen [[darauf#praepositionaladverb]], dass breite Radwege die Zahl der Unfälle verringern. " +
+      "[[Während#praeposition.zeit]] der Hauptverkehrszeit sind manche Straßen so voll, dass Radfahrer kaum vorankommen. " +
+      "Viele Menschen würden häufiger aufs Rad steigen, [[wenn#konnektor]] sie sich sicherer fühlten. " +
+      "Gegner fürchten allerdings, dass zu viele Parkplätze wegfallen, [[sodass#konnektor]] Anwohner und Geschäfte darunter leiden. " +
+      "Wer sein Rad abstellen will, [[muss#modalverb.konjugation]] oft lange nach einem freien Bügel suchen. " +
+      "Deshalb [[müssen#modalverb.konjugation]] die Städte auch mehr sichere Abstellplätze bauen. " +
+      "Die Stadt hat [[dafür#praepositionaladverb]] bereits zwei Millionen Euro bereitgestellt. " +
+      "[[Trotz#praeposition]] der hohen Kosten halten die meisten Verwaltungen an ihren Plänen fest. " +
+      "Sie sind sich einig, [[dass#konnektor]] etwas geschehen muss.",
+    last: "Wie schnell sich die Straßen verändern, hängt am Ende von den Wählerinnen und Wählern ab.",
+    distractors: ["entlang", "darin", "bevor", "anstatt", "weder"],
+    note: "Präpositionaladverbien (g1, g2, g8), Zeitpräposition (g3), wenn und sodass (g4, g5), Verbform nach Subjekt (g6, g7), trotz + Genitiv (g9), dass-Satz (g10).",
+  }),
+  wordBank(LEVEL, "MID", {
+    title: "Gebraucht statt neu kaufen",
+    first: "Der Handel mit gebrauchten Waren wächst seit einigen Jahren stark.",
+    body:
+      "Ein Grund liegt [[darin#praepositionaladverb]], dass viele Menschen nachhaltiger leben möchten. " +
+      "[[Angesichts#genitiv.praeposition]] steigender Preise schauen viele zuerst auf Online-Plattformen für Gebrauchtes. " +
+      "Manche Käufer verkaufen ihre alten Geräte, [[bevor#konnektor]] sie ein neues Modell bestellen. " +
+      "Andere sparen Geld, [[indem#konnektor.modal]] sie Kleidung tauschen, statt sie neu zu kaufen. " +
+      "Händler berichten, dass sie [[dadurch#praepositionaladverb]] neue Kundschaft gewinnen. " +
+      "Kritiker weisen allerdings [[darauf#praepositionaladverb]] hin, dass nicht jedes Angebot seriös ist. " +
+      "Man sollte beim Kauf vorsichtig sein, [[zumal#konnektor]] Fälschungen im Internet häufig vorkommen. " +
+      "[[Mithilfe#genitiv.praeposition]] einer einfachen Checkliste lässt sich vieles schnell prüfen. " +
+      "Das Angebot wächst so schnell, [[dass#konnektor]] kaum jemand den Überblick behält. " +
+      "[[Seitdem#konnektor]] viele Plattformen eine Käufergarantie anbieten, ist das Vertrauen der Kunden jedoch gestiegen.",
+    last: "Gebrauchtes zu kaufen ist damit für viele längst keine Notlösung mehr.",
+    distractors: ["darüber", "gegenüber", "weder", "ob", "worauf"],
+    note: "liegen in (g1), Genitivpräpositionen angesichts und mithilfe (g2, g8), bevor, indem, zumal, seitdem (g3, g4, g7, g10), dadurch und hinweisen auf (g5, g6), so ... dass (g9).",
+  }),
+  wordBank(LEVEL, "HARD", {
+    title: "Hitze in der Stadt",
+    first: "Im Sommer heizen sich Innenstädte deutlich stärker auf als das Umland.",
+    body:
+      "Das liegt vor allem [[daran#praepositionaladverb]], dass Beton und Asphalt die Wärme speichern und nachts nur langsam abgeben. " +
+      "[[Aufgrund#genitiv.praeposition]] der dichten Bebauung kann die Luft kaum zirkulieren. " +
+      "[[Folglich#konnektor]] kühlen viele Straßen auch nach Sonnenuntergang kaum ab. " +
+      "Besonders ältere Menschen leiden [[darunter#praepositionaladverb]], weil sie schlechter schlafen und häufiger Kreislaufprobleme bekommen. " +
+      "Mehrere Städte pflanzen deshalb neue Bäume, [[wohingegen#konnektor]] andere vor allem Fassaden und Dächer begrünen. " +
+      "[[Dennoch#konnektor.konzessiv]] reichen diese Maßnahmen allein nicht aus. " +
+      "Auch Hausbesitzer [[können#modalverb.konjugation]] ihren Beitrag leisten, etwa durch helle Fassadenfarben. " +
+      "Viele Fachleute fordern, bei Neubauten künftig mehr Grünflächen einzuplanen, [[andernfalls#konnektor]] werde sich das Problem verschärfen. " +
+      "Außerdem sollten Anwohner [[dazu#praepositionaladverb]] ermutigt werden, Innenhöfe zu entsiegeln. " +
+      "[[Sofern#konnektor]] die Kommunen dafür genug Geld bekommen, könnte sich die Lage in einigen Jahren spürbar verbessern.",
+    last: "Bis dahin bleibt vielen Stadtbewohnern vor allem der Gang in den nächsten Park.",
+    distractors: ["kann", "daraus", "mithilfe", "wovon", "hierfür"],
+    note: "liegen an, leiden unter, ermutigen zu (g1, g4, g9), aufgrund + Genitiv (g2), Satzadverbien folglich, dennoch, andernfalls (g3, g6, g8), wohingegen (g5), Verbform nach Subjekt (g7), sofern mit Verbendstellung (g10).",
+  }),
+];
+
+// Open cloze (ÖSD ZB2 / ZC1 style): the student types one word per gap.
+const grammarOpen: SeedItem[] = [
+  openCloze(LEVEL, "EASY", {
+    title: "Ein Tag ohne Auto",
+    first: "Letzten Monat haben wir in unserer Familie einen Tag ohne Auto ausprobiert.",
+    body:
+      "Normalerweise bringe ich meine Tochter [[mit#praeposition]] dem Auto zur Schule. " +
+      "Diesmal haben wir uns [[dazu#praepositionaladverb]] entschlossen, den Bus zu nehmen. " +
+      "Der Bus fährt allerdings schon um 7.10 Uhr ab, [[sodass/weshalb/weswegen#konnektor]] wir früher aufstehen mussten. " +
+      "Meine Tochter fand das zuerst nicht lustig, [[denn#konnektor]] sie schläft morgens gern lang. " +
+      "Im Bus haben wir [[uns#reflexiv]] aber lange unterhalten, und sie hat mir von einem Streit mit ihrer Freundin erzählt, über [[den/welchen#relativsatz.praeposition]] sie sich schon lange ärgerte. " +
+      "Abends war ich [[viel/deutlich/wesentlich/erheblich#adjektiv.komparativ]] weniger gestresst als sonst, weil ich keinen Parkplatz suchen [[musste#modalverb.konjugation]]. " +
+      "Ich habe mir fest vorgenommen, das [[öfter/häufiger/regelmäßig/mehrmals#adjektiv.komparativ]] zu wiederholen.",
+    last: "Nur das frühe Aufstehen werde ich wahrscheinlich nie lieben.",
+    note: "mit dem Auto, sich dazu entschließen, sodass, denn mit Hauptsatz, Reflexivpronomen, Relativpronomen mit Präposition, Steigerung mit viel, Modalverb im Präteritum, Adverb der Häufigkeit.",
+  }),
+  openCloze(LEVEL, "MID", {
+    title: "Ein Tag im Tierheim",
+    first: "Im Tierheim am Stadtrand arbeiten mehr als sechzig Ehrenamtliche.",
+    body:
+      "Viele von ihnen kommen jede Woche, [[obwohl/obgleich/wenngleich#konnektor.konzessiv]] sie dafür kein Geld bekommen. " +
+      "Sie füttern die Tiere, reinigen die Käfige und gehen mit Hunden spazieren, [[die/welche#relativsatz]] sonst kaum Auslauf hätten. " +
+      "Wer mitmachen möchte, muss zuerst eine Schulung besuchen, [[in/bei#relativsatz.praeposition]] der gezeigt wird, wie man mit ängstlichen Tieren umgeht. " +
+      "Das Tierheim ist [[auf#verb_praeposition]] Spenden angewiesen, weil es keine staatliche Unterstützung erhält. " +
+      "Besonders gefragt sind Sachspenden, [[wie/etwa#konnektor]] Decken oder Futter. " +
+      "Wenn es mehr Geld [[gäbe#konjunktiv2]], könnte man ein zweites Gebäude bauen. " +
+      "Im vergangenen Jahr [[wurden#passiv]] über vierhundert Tiere erfolgreich vermittelt. " +
+      "Die Mitarbeitenden freuen sich [[über#verb_praeposition]] jede Hilfe, denn das Wohl [[der/aller/unserer#artikel]] Tiere steht für alle an erster Stelle. " +
+      "Wer [[sich#reflexiv]] dafür interessiert, kann einfach vorbeikommen.",
+    last: "Die Tür steht jeden Samstagvormittag offen.",
+    note: "konzessiver Nebensatz, Relativpronomen im Nominativ Plural, Relativsatz mit Präposition, angewiesen auf, Vergleich mit wie, irrealer Wunsch im Konjunktiv II, Passiv im Präteritum, sich freuen über, Genitiv Plural, Reflexivpronomen.",
+  }),
+  openCloze(LEVEL, "HARD", {
+    title: "Das Ende der Postkarte",
+    first: "Früher gehörte die Postkarte zu jedem Urlaub, heute wird sie immer seltener verschickt.",
+    body:
+      "Die meisten Reisenden schicken stattdessen ein Foto per Handy, [[was#relativsatz.was]] schneller und billiger ist. " +
+      "Ein Grund [[dafür/hierfür#praepositionaladverb]] ist, dass Nachrichten innerhalb von Sekunden ankommen. " +
+      "Eine Karte aus Spanien braucht [[dagegen/hingegen/jedoch/aber#konnektor]] oft mehr als eine Woche. " +
+      "Die Zahl [[der#artikel]] verschickten Karten sinkt seit Jahren. " +
+      "Viele Verlage haben [[deshalb/daher/darum/deswegen#konnektor]] neue Motive entwickelt, die man selbst gestalten kann. " +
+      "Auf manchen Karten [[wird#passiv.praesens]] heute zusätzlich ein QR-Code gedruckt, der zu einem Video führt. " +
+      "Sammler schätzen vor allem handgeschriebene Grüße, [[deren#relativsatz]] Wert für sie weit über dem Preis einer Briefmarke liegt. " +
+      "Viele halten [[an#verb_praeposition]] dieser Tradition fest, denn ohne diese Karten [[wäre#konjunktiv2.vergangenheit]] manche Reise nur halb so schön gewesen. " +
+      "[[Trotz/Ungeachtet#praeposition]] der digitalen Konkurrenz bleibt der Briefkasten für viele ein Ort der Vorfreude.",
+    last: "Und gerade das macht die Postkarte für sie unersetzlich.",
+    note: "weiterführender Relativsatz mit was, Präpositionaladverb, Konnektor des Gegensatzes, Genitiv Plural, Konnektor der Folge, Passiv Präsens, Relativpronomen im Genitiv, festhalten an, Konjunktiv II der Vergangenheit, trotz + Genitiv.",
+  }),
+];
+
 const grammar: SeedBankPart = {
   stimuli: [],
-  items: [grammarCTest, grammarCTest2, grammarCTest3, ...grammarItems, ...grammarTexts],
+  items: [grammarCTest, grammarCTest2, grammarCTest3, ...grammarItems, ...grammarTexts, ...grammarSprachbausteine, ...grammarOpen],
 };
 
 // ================================================================ READING
