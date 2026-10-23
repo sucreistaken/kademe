@@ -349,6 +349,7 @@
     "skip": "Leer lassen und weiter",
     "pickOne": "Wählen Sie eine Option",
     "pickMany": "Wählen Sie alle passenden Optionen",
+    "pickFull": "Voll. Entfernen Sie eine Auswahl, um eine andere zu treffen.",
     "tfR": "Richtig",
     "tfF": "Falsch",
     "tfNG": "Steht nicht im Text",

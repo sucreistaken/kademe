@@ -77,6 +77,11 @@ export function pickedKindOfDraft(d: Pick<EditorDraft, "type" | "skillTag">): "C
   return kind === "CLOZE" || kind === "WORDBANK" ? kind : null;
 }
 
+/** An open (typed) text: its gaps are always typed, so the editor offers no dropdown for them. */
+export function isOpenDraft(d: Pick<EditorDraft, "type" | "skillTag">): boolean {
+  return d.type === "GAP_FILL" && !!d.skillTag && textGapKindOf({ skillTag: d.skillTag }) === "OPEN";
+}
+
 /** The types a teacher writes here: every objective type. Writing and speaking tasks are edited, not created. */
 export const CREATE_TYPES = ["SINGLE_CHOICE", "MULTI_CHOICE", "TRUE_FALSE_NG", "GAP_FILL", "MATCHING", "SHORT_TEXT"] as const satisfies readonly ItemType[];
 export const CREATE_SECTIONS = ["GRAMMAR", "READING", "LISTENING"] as const satisfies readonly Section[];
@@ -244,7 +249,7 @@ export function draftToItem(d: EditorDraft): ValidatableItem & { rubric: ItemRub
       return {
         type: d.type,
         prompt,
-        content: { kind: "GAP", gaps: gaps.map((g) => (g.mode === "choice" ? { id: g.id, choices: splitBar(g.choices) } : { id: g.id })) },
+        content: { kind: "GAP", gaps: gaps.map((g) => (g.mode === "choice" && !isOpenDraft(d) ? { id: g.id, choices: splitBar(g.choices) } : { id: g.id })) },
         key: { kind: "GAP", answers: Object.fromEntries(gaps.map((g) => [g.id, splitBar(g.accepted)])), ...(distractors.length ? { distractors } : {}), ...(topics ? { topics } : {}) },
         rubric: null,
         ...(d.skillTag ? { skillTag: d.skillTag } : {}),

@@ -349,6 +349,7 @@
     "skip": "Leave blank and continue",
     "pickOne": "Choose one option",
     "pickMany": "Choose every option that fits",
+    "pickFull": "Full. Remove a choice to pick another.",
     "tfR": "True",
     "tfF": "False",
     "tfNG": "Not in the text",

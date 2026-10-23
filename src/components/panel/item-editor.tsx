@@ -13,7 +13,7 @@ import { CEFR_LEVELS, type Cefr, type ItemType, type Section } from "@/lib/exam/
 import { itemProblems } from "@/lib/exam/validate";
 import { problemSentence } from "./bank-copy";
 import { ContentFields } from "./item-editor-fields";
-import { CREATE_SECTIONS, CREATE_TYPES, draftToItem, emptyDraft, pickedKindOfDraft, saveInput, type EditorDraft } from "./item-editor-model";
+import { CREATE_SECTIONS, CREATE_TYPES, draftToItem, emptyDraft, isOpenDraft, pickedKindOfDraft, saveInput, type EditorDraft } from "./item-editor-model";
 
 type Step = "type" | "content" | "level";
 const CREATE_STEPS: readonly Step[] = ["type", "content", "level"];
@@ -62,7 +62,7 @@ export function ItemEditor({
   const firstProblem = problems[0] ? problemSentence((k, v) => t(k as never, v), problems[0]) : needsText ? t("r_LISTENING_WITHOUT_TEXT") : null;
   // An MC cloze or word-bank text names its kind instead of the generic "gap fill".
   const pickedKind = pickedKindOfDraft(draft);
-  const typeLabel = pickedKind ? bank(`textKind${pickedKind}`) : bank(`type${draft.type}`);
+  const typeLabel = pickedKind ? bank(`textKind${pickedKind}`) : isOpenDraft(draft) ? bank("textKindOPEN") : bank(`type${draft.type}`);
   const steps = mode === "create" ? CREATE_STEPS : EDIT_STEPS;
   const nav = useFlowStep({ steps, firstInvalid: firstProblem ? "content" : null, mode: "hash" });
   const step = nav.step;

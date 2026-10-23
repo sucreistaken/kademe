@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import tr from "@/i18n/messages/candidate.tr.json";
 import en from "@/i18n/messages/candidate.en.json";
 import { apiGet, apiSend, isNetworkFailure, pageLocale } from "./api";
 
@@ -20,11 +19,11 @@ describe("network failures never show the browser's own words", () => {
     ["Chrome and Edge", "Failed to fetch"],
     ["Safari", "Load failed"],
     ["Firefox", "NetworkError when attempting to fetch resource."],
-  ])("%s: %s becomes the Turkish sentence with a NETWORK code", async (_browser, text) => {
+  ])("%s: %s becomes the candidate default (English) sentence with a NETWORK code", async (_browser, text) => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError(text)));
     const err = await apiGet("t".repeat(24), "/state").catch((e: unknown) => e);
     expect(err).toBeInstanceOf(Error);
-    expect((err as Error).message).toBe(tr.visual.networkError);
+    expect((err as Error).message).toBe(en.visual.networkError);
     expect((err as Error).message).not.toContain(text);
     expect((err as { code: string }).code).toBe("NETWORK");
     expect((err as { status: number }).status).toBe(0);
@@ -60,13 +59,15 @@ describe("network failures never show the browser's own words", () => {
 });
 
 describe("pageLocale", () => {
-  it("reads the candidate frame, falls back to Turkish without a DOM or for a language the product does not ship", () => {
-    expect(pageLocale()).toBe("tr");
+  it("reads the candidate frame, falls back to the candidate default (English) without a DOM or for a language the product does not ship", () => {
+    expect(pageLocale()).toBe("en");
     stubDocument("en");
     expect(pageLocale()).toBe("en");
     stubDocument("ar");
     expect(pageLocale()).toBe("ar");
     stubDocument("fr");
-    expect(pageLocale()).toBe("tr");
+    expect(pageLocale()).toBe("en");
+    stubDocument("de");
+    expect(pageLocale()).toBe("de");
   });
 });

@@ -30,6 +30,7 @@ describe("ExamTopBar left group", () => {
       } as never),
     );
     expect(html).toMatch(new RegExp(`<span title="${name}" class="[^"]*\\bmin-w-0\\b[^"]*\\btruncate\\b`));
+    expect(html).toContain("max-w-[calc(50%-6rem)]");
     expect(html).toMatch(/<span class="tnum shrink-0 whitespace-nowrap[^"]*">Frage 3 von 20/);
   });
 });

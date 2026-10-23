@@ -9,7 +9,7 @@ import { useMT } from "@/i18n/manager-client";
 import { cn } from "@/lib/cn";
 import { tfngLabels } from "@/lib/exam/tfng-labels";
 import type { TfngValue } from "@/lib/exam/types";
-import { insertGap, nextId, pickedKindOfDraft, syncGaps, underscoresToMarkers, type EditorDraft } from "./item-editor-model";
+import { insertGap, nextId, isOpenDraft, pickedKindOfDraft, syncGaps, underscoresToMarkers, type EditorDraft } from "./item-editor-model";
 
 export type SetDraft = (patch: Partial<EditorDraft> | ((d: EditorDraft) => Partial<EditorDraft>)) => void;
 
@@ -281,6 +281,8 @@ function GapFields({ draft, set }: { draft: EditorDraft; set: SetDraft }) {
   const patch = (id: string, p: Partial<EditorDraft["gaps"][number]>) => set((d) => ({ gaps: syncGaps(d.prompt, d.gaps).map((g) => (g.id === id ? { ...g, ...p } : g)) }));
   // An MC cloze gap always has choices and a word-bank gap never does: the kind is the item's, so the mode toggle is not offered.
   const kind = pickedKindOfDraft(draft);
+  // An open text types every gap: no dropdown toggle and no choices field.
+  const open = isOpenDraft(draft);
   return (
     <fieldset>
       <legend className={LABEL}>{t("gaps")}</legend>
@@ -295,7 +297,7 @@ function GapFields({ draft, set }: { draft: EditorDraft; set: SetDraft }) {
                 <span className="text-[14px] font-semibold text-ink">
                   {name} <span className="font-normal text-muted">{`{{${g.id}}}`}</span>
                 </span>
-                {kind ? null : (
+                {kind || open ? null : (
                   <div role="radiogroup" aria-label={name} className="flex gap-2">
                     {(["typed", "choice"] as const).map((m) => (
                       <label key={m} className={segClass(g.mode === m)}>
@@ -310,7 +312,7 @@ function GapFields({ draft, set }: { draft: EditorDraft; set: SetDraft }) {
                 {kind ? t("gapAnswer") : t("gapAccepted")}
                 <Input value={g.accepted} lang="de" onChange={(e) => patch(g.id, { accepted: e.target.value })} className={cn(FIELD, "mt-1")} />
               </label>
-              {kind === "CLOZE" || (!kind && g.mode === "choice") ? (
+              {kind === "CLOZE" || (!kind && !open && g.mode === "choice") ? (
                 <label className="block text-[13px] text-muted">
                   {t("gapChoices")}
                   <Input value={g.choices} lang="de" onChange={(e) => patch(g.id, kind ? { choices: e.target.value, mode: "choice" } : { choices: e.target.value })} className={cn(FIELD, "mt-1")} />

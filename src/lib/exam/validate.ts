@@ -71,6 +71,8 @@ export const ITEM_PROBLEM_CODES = [
   "WORDBANK_DISTRACTOR_IS_ANSWER",
   "WORDBANK_DISTRACTOR_REPEAT",
   "WORDBANK_ANSWER_VARIANT",
+  "OPEN_CHOICES",
+  "OPEN_ANSWER_NOT_WORD",
   "MATCH_FEW_ROWS",
   "MATCH_FEW_TARGETS",
   "MATCH_ROW_NO_TARGET",
@@ -314,7 +316,8 @@ function pictureProblems(content: ItemContent, add: (code: ItemProblemCode, extr
  * them, so case, spacing and ß do not make a new word: a pool word shown in
  * two spellings would mark itself as an answer). Two gaps may share an answer
  * only when it is spelled exactly alike: the pool then holds that word twice,
- * as two identical chips (see `wordBankWords`).
+ * as two identical chips (see `wordBankWords`). Open (typed) gaps: no choices and
+ * every accepted answer one whole word; several accepted spellings are allowed.
  */
 function textGapProblems(
   kind: ReturnType<typeof textGapKindOf>,
@@ -322,6 +325,15 @@ function textGapProblems(
   key: Extract<ItemKey, { kind: "GAP" }>,
   add: (code: ItemProblemCode, extra?: Omit<ItemProblem, "code">) => void,
 ) {
+  if (kind === "OPEN") {
+    // Typed gaps: no dropdown, and each accepted answer is one whole word (several spellings may be accepted).
+    content.gaps.forEach((g, i) => {
+      const at = { n: i + 1, ids: [g.id] };
+      if (g.choices) add("OPEN_CHOICES", at);
+      if ((key.answers[g.id] ?? []).some((a) => a.trim() && !isWholeWord(a))) add("OPEN_ANSWER_NOT_WORD", at);
+    });
+    return;
+  }
   if (kind !== "CLOZE" && kind !== "WORDBANK") return;
   content.gaps.forEach((g, i) => {
     const at = { n: i + 1, ids: [g.id] };
@@ -439,6 +451,10 @@ export function problemText(p: ItemProblem): string {
       return `word bank gap ${one(p)} has choices`;
     case "WORDBANK_ANSWER_NOT_WORD":
       return `word bank gap ${one(p)} answer is not one whole word`;
+    case "OPEN_CHOICES":
+      return `open gap ${one(p)} has choices`;
+    case "OPEN_ANSWER_NOT_WORD":
+      return `open gap ${one(p)} has an accepted answer that is not one whole word`;
     case "WORDBANK_DISTRACTOR_NOT_WORD":
       return `word bank distractors are not whole words: ${list(p)}`;
     case "WORDBANK_FEW_DISTRACTORS":

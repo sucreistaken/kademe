@@ -58,7 +58,7 @@ import { cn } from "@/lib/cn";
  * draft the server has not confirmed is also kept in this tab's
  * sessionStorage, so a dropped connection or a reload does not lose it.
  * In a navigable (fixed-form) section the bottom bar moves between items and
- * flags them, and the section ends from its review step; a one-way section
+ * marks them, and the section ends from its review step; a one-way section
  * (adaptive, speaking) keeps "save and continue".
  */
 
@@ -588,7 +588,7 @@ export function ExamRunner({
     footer = (
       <StepFooter
         back={{ label: n("back"), disabled: prev === null, onClick: () => (busyRef.current || prev === null ? undefined : goToGuarded(prev)) }}
-        // On a group page every question carries its own flag; its slot keeps the width.
+        // On a group page every question carries its own mark button; its slot keeps the width.
         secondary={
           group
             ? null

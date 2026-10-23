@@ -58,7 +58,7 @@ export function ExamTopBar({
   return (
     <header className="sticky top-0 z-20 border-b border-hairline bg-surface/95 backdrop-blur">
       <div className={cn("relative mx-auto flex h-14 items-center justify-between gap-4 px-7", wide ? "max-w-[1200px]" : "max-w-[1000px]")}>
-        <div className="flex min-w-0 max-w-[calc(50%-5rem)] items-center gap-3 text-[13.5px]">
+        <div className="flex min-w-0 max-w-[calc(50%-6rem)] items-center gap-3 text-[13.5px]">
           <span className="flex shrink-0 items-center gap-2 text-[16px] font-extrabold tracking-[-0.01em] text-ink">
             <BrandMark />
             {common("brand")}

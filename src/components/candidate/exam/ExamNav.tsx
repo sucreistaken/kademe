@@ -32,7 +32,7 @@ const CELL = {
   EMPTY: "border-line bg-surface text-ink-2 hover:border-line-strong",
 } as const;
 
-/** What the cell colours and the flag mean; the list the "?" popover and the wide strip both show. */
+/** What the cell colours and the mark mean; the list the "?" popover and the wide strip both show. */
 function Legend({ className, hidden = false }: { className?: string; hidden?: boolean }) {
   const n = useT("examNav");
   return (
@@ -212,7 +212,7 @@ function JumpList({
   items: Array<{ sequence: number; label: string; flagged: boolean }>;
   disabled: boolean;
   onJump: (s: number) => void;
-  /** The flagged list carries the flag in its heading too. */
+  /** The flagged list carries the mark in its heading too. */
   flagHeading?: boolean;
 }) {
   if (items.length === 0) return null;

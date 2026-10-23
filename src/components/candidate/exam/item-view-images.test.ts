@@ -39,7 +39,9 @@ describe("picture choice", () => {
 
   it("draws a three column grid of picture cards with alt text and slot URLs", () => {
     const html = render(three);
-    expect(html).toContain("grid-cols-3");
+    expect(html).toContain("grid-cols-2 sm:grid-cols-3");
+    expect(html).toContain('aria-label="A: Ein roter Bus"');
+    expect(html).toContain('aria-label="C: Ein Zug"');
     expect(html).toContain('alt="Ein roter Bus"');
     expect(html).toContain('width="640" height="480"');
     expect(html).toContain("/api/c/tok%20en/exam/image/2/7/oa1");
@@ -109,5 +111,15 @@ describe("task pictures", () => {
     expect(html).toContain("/api/c/tok%20en/exam/image/2/4/p1");
     expect(html).toContain('alt="Ein Park"');
     expect(html.indexOf("<img")).toBeLessThan(html.indexOf("Beschreiben"));
+  });
+});
+
+describe("tick-n live region", () => {
+  it("renders an empty polite region for the 'full' announcement next to the counter", () => {
+    const item = { ...choice([1, 2, 3].map((n) => ({ id: `o${n}`, text: `Text ${n}` }))) } as CandidateItem;
+    (item as { content: { multiple: boolean; pick?: number } }).content = { ...(item.content as object), kind: "CHOICE", multiple: true, pick: 2, options: [1, 2, 3].map((n) => ({ id: `o${n}`, text: `Text ${n}` })) } as never;
+    const html = render(item);
+    expect(html).toContain('<span aria-live="polite" class="sr-only"></span>');
+    expect(html).toContain("0/2");
   });
 });

@@ -9,8 +9,8 @@ import { cn } from "@/lib/cn";
 
 /**
  * A question's heading ("Question 3 of 20"), with its part counter. Two
- * variants: on a group page ("group", `id` set) it carries its own flag
- * button; on a single question ("single") it shows the flagged tag instead.
+ * variants: on a group page ("group", `id` set) it carries its own mark
+ * button; on a single question ("single") it shows the marked tag instead.
  */
 export function ItemHeading({
   variant,
@@ -32,9 +32,9 @@ export function ItemHeading({
   /** Group variant: the id the section's aria-labelledby points to. */
   id?: string;
   flagged: boolean;
-  /** Group variant: the flag button is disabled while an action is under way. */
+  /** Group variant: the mark button is disabled while an action is under way. */
   flagBusy?: boolean;
-  /** Group variant on a navigable section: shows the flag button. */
+  /** Group variant on a navigable section: shows the mark button. */
   onToggleFlag?: () => void;
   /** Single variant: a task page (writing, speaking) uses a tighter gap below. */
   compact?: boolean;

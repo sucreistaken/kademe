@@ -158,13 +158,16 @@ function ChoiceItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps)
           <span aria-live="polite" className={cn("tnum text-[13px]", fullHint ? "font-semibold text-ink" : "text-muted")}>
             {`${picked.size}/${pick}`}
           </span>
+          <span aria-live="polite" className="sr-only">
+            {fullHint ? t("pickFull") : ""}
+          </span>
         </p>
       ) : null}
       <div
         role={multiple ? "group" : "radiogroup"}
         aria-labelledby={promptId}
         lang="de"
-        className={cn("mt-4", pictured ? cn("grid max-w-[720px] gap-3", item.content.options.length === 3 ? "grid-cols-3" : "grid-cols-2") : "flex flex-col gap-2")}
+        className={cn("mt-4", pictured ? cn("grid max-w-[720px] gap-3", item.content.options.length === 3 ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2") : "flex flex-col gap-2")}
       >
         {item.content.options.map((o, i) => {
           const on = picked.has(o.id);
@@ -176,6 +179,7 @@ function ChoiceItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps)
                 type="button"
                 role={multiple ? "checkbox" : "radio"}
                 aria-checked={on}
+                aria-label={`${String.fromCharCode(65 + i)}: ${o.image?.alt ?? caption ?? o.text}`}
                 data-demo-option={o.id}
                 disabled={disabled}
                 onClick={() => toggle(o.id)}

@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Dot } from "@/components/panel/bits";
 import { GapPromptPreview } from "@/components/panel/gap-prompt-preview";
 import { problemSentence, type BankT } from "@/components/panel/bank-copy";
+import { bankTypeKey } from "@/components/panel/bank-type";
 import { keyText } from "@/components/panel/result/format";
 import { pickedTextKind } from "@/components/panel/result/review-cards";
 import { db } from "@/db";
@@ -86,7 +87,7 @@ export default async function BankItemPage({ params, searchParams }: { params: P
       </Link>
       <div className="mt-2 flex flex-wrap items-center gap-4">
         <h1 className="text-headline text-ink">
-          {t(`sectionName.${item.section}`)} · {item.level} · {t(`bankTools.within${within}`)} · {textKind ? t(`bank.textKind${textKind}`) : t(`bank.type${item.type}`)}
+          {t(`sectionName.${item.section}`)} · {item.level} · {t(`bankTools.within${within}`)} · {t(bankTypeKey(item))}
         </h1>
         <Dot tone={item.status === "APPROVED" ? "done" : "neutral"}>{t(`bank.status${item.status}`)}</Dot>
         <span className="text-[12.5px] text-muted">{item.origin === "SEED" ? t("bank.seedLabel") : t(`bank.origin${item.origin}`)}</span>
@@ -142,6 +143,8 @@ export default async function BankItemPage({ params, searchParams }: { params: P
                 ))}
               </ol>
             ) : null}
+            {c.kind === "TFNG" && c.wording === "JA_NEIN" ? <p className="mt-3 text-[13px] text-muted">{t("bank.wordingJaNein")}</p> : null}
+            {c.kind === "CHOICE" && c.pick !== undefined ? <p className="mt-3 text-[13px] text-muted">{t("bank.pickCount", { n: c.pick })}</p> : null}
             {c.kind === "MATCHING" ? (
               <div className="mt-3 grid grid-cols-2 gap-4 text-[14px] text-ink-2">
                 <ol className="list-decimal pl-5">

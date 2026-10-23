@@ -106,7 +106,7 @@ export function optionOfKey(key: string, count: number): number | null {
 /**
  * Whether keys 1-4 belong to the cloze item. They act when focus is inside the
  * item (a gap, an option), on the page body or on a heading the screen moved
- * focus to; a button or link outside the item (the bottom bar, Flag, the
+ * focus to; a button or link outside the item (the bottom bar, Mark, the
  * strip) keeps its own key presses, so a pick never pulls focus off it.
  */
 export function clozeKeyApplies(focus: { insideItem: boolean; onOutsideControl: boolean }): boolean {

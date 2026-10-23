@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { difficultyFor } from "@/lib/exam/difficulty";
 import type { ItemContent, ItemKey } from "@/lib/exam/types";
 import { itemProblems } from "@/lib/exam/validate";
-import { draftFromItem, draftToItem, emptyDraft, insertGap, nextId, pickedKindOfDraft, saveInput, saveItemSchema, syncGaps, underscoresToMarkers, type EditableItem } from "./item-editor-model";
+import { draftFromItem, draftToItem, emptyDraft, insertGap, isOpenDraft, nextId, pickedKindOfDraft, saveInput, saveItemSchema, syncGaps, underscoresToMarkers, type EditableItem } from "./item-editor-model";
 
 const item = (over: Partial<EditableItem> & { content: ItemContent; key: ItemKey }): EditableItem => ({
   type: "SINGLE_CHOICE",
@@ -89,6 +89,14 @@ describe("MC cloze and word-bank items in the editor (spec 2026-10-18)", () => {
       }),
     );
     expect(itemProblems(draftToItem(cloze)).map((p) => p.code)).toEqual(["CLOZE_CHOICE_COUNT"]);
+  });
+
+  it("recognises an open text and never writes choices for its gaps", () => {
+    expect(isOpenDraft({ type: "GAP_FILL", skillTag: "grammar.open" })).toBe(true);
+    expect(isOpenDraft({ type: "GAP_FILL", skillTag: "grammar.cloze" })).toBe(false);
+    expect(isOpenDraft({ type: "SINGLE_CHOICE", skillTag: "grammar.open" })).toBe(false);
+    const open = { ...emptyDraft("GAP_FILL", "GRAMMAR", "A2"), skillTag: "grammar.open", prompt: "Ich {{g1}} nach Berlin.", gaps: [{ id: "g1", mode: "choice" as const, accepted: "fahre", choices: "a|b|c|d" }] };
+    expect(draftToItem(open).content).toEqual({ kind: "GAP", gaps: [{ id: "g1" }] });
   });
 
   it("names the picked kind of a stored item and nothing else", () => {

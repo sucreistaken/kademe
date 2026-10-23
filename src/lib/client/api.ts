@@ -1,7 +1,7 @@
 "use client";
 
 import { messagesFor } from "@/i18n/candidate";
-import { DEFAULT_LOCALE, isCandidateLocale, type CandidateLocale } from "@/i18n/locale";
+import { DEFAULT_CANDIDATE_LOCALE, isCandidateLocale, type CandidateLocale } from "@/i18n/locale";
 
 /**
  * Thin client for `/api/c/*`. Every call carries the token from the URL and
@@ -19,11 +19,13 @@ export function candidateApiBase(token: string) {
  * The language the candidate is reading: the candidate frame carries it on
  * its root (`lang` on CandidateShell), which is the first element in the body
  * with one. A text in German inside a question comes later in the document.
+ * Without a candidate language the page speaks the candidate default (English); every
+ * hiring candidate page sets `lang` on its frame, so it never reaches the fallback.
  */
 export function pageLocale(): CandidateLocale {
-  if (typeof document === "undefined") return DEFAULT_LOCALE;
+  if (typeof document === "undefined") return DEFAULT_CANDIDATE_LOCALE;
   const lang = document.querySelector("body [lang]")?.getAttribute("lang") ?? document.documentElement?.lang;
-  return isCandidateLocale(lang) ? lang : DEFAULT_LOCALE;
+  return isCandidateLocale(lang) ? lang : DEFAULT_CANDIDATE_LOCALE;
 }
 
 /**

@@ -175,6 +175,19 @@ describe("validateItem: MC cloze and word bank (spec 2026-10-18)", () => {
     expect(itemProblems(bank(["habe", "in", "zu"], { g1: ["bin"], g2: ["nach dem"] }))).toEqual([{ code: "WORDBANK_ANSWER_NOT_WORD", n: 2, ids: ["g2"] }]);
   });
 
+  it("open gaps: no choices, every accepted answer one whole word, several spellings allowed", () => {
+    const open = (gaps: Array<{ id: string; choices?: string[] }>, answers: Record<string, string[]>): ValidatableItem => ({
+      type: "GAP_FILL",
+      prompt,
+      content: { kind: "GAP", gaps },
+      key: { kind: "GAP", answers },
+      skillTag: "grammar.open",
+    });
+    expect(itemProblems(open([{ id: "g1" }, { id: "g2" }], { g1: ["bin"], g2: ["nach", "in"] }))).toEqual([]);
+    expect(codes(open([{ id: "g1", choices: four("bin") }, { id: "g2" }], { g1: ["bin"], g2: ["nach"] }))).toEqual(["OPEN_CHOICES"]);
+    expect(itemProblems(open([{ id: "g1" }, { id: "g2" }], { g1: ["bin"], g2: ["nach", "in dem"] }))).toEqual([{ code: "OPEN_ANSWER_NOT_WORD", n: 2, ids: ["g2"] }]);
+  });
+
   it("word bank: at least three whole-word distractors, none an answer, none twice", () => {
     expect(codes(bank(undefined))).toEqual(["WORDBANK_FEW_DISTRACTORS"]);
     expect(codes(bank(["habe", "in", " "]))).toEqual(["WORDBANK_FEW_DISTRACTORS"]);
