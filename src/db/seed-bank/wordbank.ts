@@ -1,6 +1,6 @@
 import { typedMatches } from "@/lib/exam/item-scoring";
 import { WORD_BANK_SKILL_TAG } from "@/lib/exam/types";
-import { markGaps, textPrompt, type TextSpec } from "./cloze";
+import { markGaps, splitTopic, textPrompt, type TextSpec } from "./cloze";
 import type { SeedItem } from "./types";
 
 /*
@@ -13,7 +13,8 @@ import type { SeedItem } from "./types";
 /**
  * Word-bank builder (spec 2026-10-18). A short coherent text whose first and
  * last sentences stay intact; in the body every gap is written inline as
- * `[[answer]]`, one whole word. The pool shows the answers and the
+ * `[[answer]]` or `[[answer#topic]]`, one whole word (the optional `#topic` is a
+ * topic id from `topics.ts`, stored in `key.topics[gN]` and stripped from the text). The pool shows the answers and the
  * distractors as whole words; each pool word fits exactly one gap and a
  * distractor fits none (the author's job, checked by the blind solve).
  *
@@ -31,7 +32,10 @@ const isWholeWord = (w: string) => /^\S+$/u.test(w);
 
 export function wordBank(level: Level, within: Within, spec: TextSpec & { distractors: string[] }): SeedItem {
   const gaps: Array<{ id: string; answer: string }> = [];
-  const marked = markGaps(spec.body, (inner, n) => {
+  const topics: Record<string, string> = {};
+  const marked = markGaps(spec.body, (rawInner, n) => {
+    const { rest: inner, topic } = splitTopic(rawInner, n, "word-bank");
+    if (topic) topics[`g${n}`] = topic;
     if (inner.includes("|")) throw new Error(`word-bank gap ${n} takes one answer and no choices`);
     const answer = inner.trim();
     if (!answer) throw new Error(`word-bank gap ${n} has no answer`);
@@ -55,7 +59,12 @@ export function wordBank(level: Level, within: Within, spec: TextSpec & { distra
     within,
     prompt: textPrompt(INSTRUCTION, spec, marked),
     content: { kind: "GAP", gaps: gaps.map((g) => ({ id: g.id })) },
-    key: { kind: "GAP", answers: Object.fromEntries(gaps.map((g) => [g.id, [g.answer]])), distractors },
+    key: {
+      kind: "GAP",
+      answers: Object.fromEntries(gaps.map((g) => [g.id, [g.answer]])),
+      distractors,
+      ...(Object.keys(topics).length ? { topics } : {}),
+    },
     explanation:
       "Wortschatz-Lückentext: Erster und letzter Satz sind vollständig. Ganze Wörter aus einem Pool; jedes Wort passt in genau eine Lücke, die übrigen Wörter passen in keine. Jede Lücke zählt einzeln." +
       (spec.note ? ` Geprüft: ${spec.note}` : ""),

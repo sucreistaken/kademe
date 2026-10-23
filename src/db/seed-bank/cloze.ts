@@ -15,6 +15,10 @@ import type { SeedItem } from "./types";
  * inline as `[[answer|wrong1|wrong2|wrong3]]`. The student picks one of the
  * four words per gap, each gap scores on its own.
  *
+ * A gap may end in `#topic` (`[[answer|w1|w2|w3#topic]]`): a topic id from
+ * `topics.ts` for the placement report, stored in `key.topics[gN]` and stripped
+ * from the prompt and content. Without it nothing changes.
+ *
  * The answer's place among the choices is fixed here (the seed key hashes the
  * content) and the exam shuffles the choices again when it serves them.
  */
@@ -39,6 +43,19 @@ const INSTRUCTION = "Lesen Sie den Text. Wählen Sie für jede Lücke das passen
 
 const INLINE_GAP = /\[\[([^\]]*)\]\]/g;
 const BRACKETS = /\[\[|\]\]|\{\{|\}\}/;
+
+/**
+ * Splits an optional trailing `#topic` off a gap's inner text. Throws on an empty topic after "#" or a
+ * second "#". Shared by the cloze, word-bank and open-cloze builders.
+ */
+export function splitTopic(inner: string, n: number, label: string): { rest: string; topic: string | null } {
+  const hash = inner.indexOf("#");
+  if (hash < 0) return { rest: inner, topic: null };
+  const topic = inner.slice(hash + 1).trim();
+  if (!topic) throw new Error(`${label} gap ${n} has an empty topic after "#"`);
+  if (topic.includes("#")) throw new Error(`${label} gap ${n} has more than one "#"`);
+  return { rest: inner.slice(0, hash), topic };
+}
 
 /**
  * Replaces every `[[...]]` in `body` by a `{{gN}}` marker, numbered from 1 in
@@ -74,7 +91,10 @@ function answerSlot(answer: string, n: number): number {
 
 export function cloze(level: Level, within: Within, spec: TextSpec): SeedItem {
   const gaps: Array<{ id: string; answer: string; choices: string[] }> = [];
-  const marked = markGaps(spec.body, (inner, n) => {
+  const topics: Record<string, string> = {};
+  const marked = markGaps(spec.body, (rawInner, n) => {
+    const { rest: inner, topic } = splitTopic(rawInner, n, "cloze");
+    if (topic) topics[`g${n}`] = topic;
     const [answer, ...wrong] = inner.split("|").map((s) => s.trim());
     if (!answer) throw new Error(`cloze gap ${n} has no answer`);
     if (wrong.length !== 3) throw new Error(`cloze gap ${n} ("${answer}") needs exactly 3 distractors, has ${wrong.length}`);
@@ -96,7 +116,11 @@ export function cloze(level: Level, within: Within, spec: TextSpec): SeedItem {
     within,
     prompt: textPrompt(INSTRUCTION, spec, marked),
     content: { kind: "GAP", gaps: gaps.map((g) => ({ id: g.id, choices: g.choices })) },
-    key: { kind: "GAP", answers: Object.fromEntries(gaps.map((g) => [g.id, [g.answer]])) },
+    key: {
+      kind: "GAP",
+      answers: Object.fromEntries(gaps.map((g) => [g.id, [g.answer]])),
+      ...(Object.keys(topics).length ? { topics } : {}),
+    },
     explanation:
       "MC-Lückentext: Erster und letzter Satz sind vollständig. Jede Lücke hat vier Optionen, genau eine passt grammatisch und inhaltlich. Jede Lücke zählt einzeln." +
       (spec.note ? ` Geprüft: ${spec.note}` : ""),

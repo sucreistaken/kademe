@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { scoreItem } from "@/lib/exam/item-scoring";
 import { textGapKindOf, wordBankWords } from "@/lib/exam/types";
 import { validateItem } from "@/lib/exam/validate";
+import { SEED_BANK } from "./index";
+import { seedItemKey } from "./seed-key";
 import { wordBank } from "./wordbank";
 
 const spec = {
@@ -64,5 +66,49 @@ describe("wordBank", () => {
     expect(() => wordBank("A1", "MID", { ...spec, body: "Es ist [[hell|dunkel]]." })).toThrow(/one answer/);
     expect(() => wordBank("A1", "MID", { ...spec, body: "Es ist [[hell]] und [[hell]]." })).toThrow(/repeats/);
     expect(() => wordBank("A1", "MID", { ...spec, body: "Es ist [[ ]]." })).toThrow(/no answer/);
+  });
+});
+
+describe("wordBank #topic", () => {
+  const plain = wordBank("A1", "MID", spec);
+  const tagged = wordBank("A1", "MID", {
+    ...spec,
+    body: "Mein Zimmer ist sehr [[hell#adjektiv]]. Am [[Schreibtisch#nomen]] lerne ich Deutsch.",
+  });
+
+  it("strips the suffix and stores it in key.topics, keeping the distractors", () => {
+    expect(tagged.key).toEqual({
+      kind: "GAP",
+      answers: { g1: ["hell"], g2: ["Schreibtisch"] },
+      distractors: spec.distractors,
+      topics: { g1: "adjektiv", g2: "nomen" },
+    });
+    expect(tagged.prompt).not.toContain("#");
+    expect(plain.key).not.toHaveProperty("topics");
+    expect(validateItem(tagged)).toEqual([]);
+  });
+
+  it("keeps prompt, content and seed key unchanged for a shipped text", () => {
+    const real = SEED_BANK.items.find((i) => i.skillTag === "grammar.wordbank" && i.prompt.includes("Mein Zimmer ist klein"));
+    if (!real) throw new Error("shipped text not found");
+    const rebuilt = wordBank("A1", "EASY", {
+      title: "Mein Zimmer",
+      first: "Ich wohne mit zwei Freunden in einer Wohnung in Köln.",
+      body:
+        "Mein Zimmer ist klein, aber sehr [[hell#adjektiv]], [[denn#konnektor]] es hat zwei große Fenster. " +
+        "Am [[Schreibtisch]] lerne ich jeden Abend Deutsch. Im Regal stehen viele [[Bücher]]. " +
+        "Ich schlafe gut: Mein [[Bett]] ist neu und bequem. " +
+        "In der Küche [[koche]] ich am Wochenende für meine Freunde. Am Samstag essen wir immer zusammen. " +
+        "Im [[Kühlschrank]] haben wir immer Milch und Käse. Die Miete [[kostet]] nur 400 Euro im Monat.",
+      last: "Ich wohne sehr gern hier.",
+      distractors: ["weil", "dunkel", "Lampe", "kochst", "kosten"],
+    });
+    const input = (i: typeof real) => ({ section: i.section, level: i.level, type: i.type, prompt: i.prompt, content: i.content, stimulusKey: null });
+    expect(seedItemKey(input(rebuilt))).toBe(seedItemKey(input(real)));
+    expect(rebuilt.key).toMatchObject({ topics: { g1: "adjektiv", g2: "konnektor" } });
+  });
+
+  it("rejects an empty topic", () => {
+    expect(() => wordBank("A1", "MID", { ...spec, body: "Es ist [[hell#]]." })).toThrow(/empty topic/);
   });
 });
