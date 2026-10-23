@@ -11,7 +11,7 @@ import { StatusDot } from "@/components/ui/status-dot";
 import { Disclosure } from "@/components/visual/disclosure";
 import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
-import type { Locale } from "@/i18n/locale";
+import type { PanelLocale } from "@/i18n/locale";
 import { cn } from "@/lib/cn";
 import { shortDate } from "@/lib/format";
 import { requireUser } from "@/server/session";
@@ -38,7 +38,7 @@ const NEXT_LABEL = {
 } as const;
 
 /** One opening as a control row (KG1): status, progress, what needs attention, team and last day, and its one next step. */
-function Row({ row, runs, locale, t }: { row: CockpitRow; runs: boolean; locale: Locale; t: T }) {
+function Row({ row, runs, locale, t }: { row: CockpitRow; runs: boolean; locale: PanelLocale; t: T }) {
   const o = row.opening;
   const f = row.facts;
   const status = (
@@ -164,7 +164,7 @@ export default async function OpeningsPage({ searchParams }: { searchParams: Pro
         .filter(Boolean)
         .join(" ")
     : t("hiringOpenings.summaryViewer", { count: total });
-  const rows = (list: CockpitRow[]) => list.map((row) => <Row key={row.opening.id} row={row} runs={runs} locale={contentLocale(locale)} t={t} />);
+  const rows = (list: CockpitRow[]) => list.map((row) => <Row key={row.opening.id} row={row} runs={runs} locale={locale} t={t} />);
 
   return (
     <main className="mx-auto max-w-[1360px] px-page py-8">

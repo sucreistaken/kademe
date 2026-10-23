@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { Preview } from "@/components/hiring/preview/preview";
-import { LOCALES, contentLocale } from "@/i18n/locale";
+import { LOCALES } from "@/i18n/locale";
 import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
 import { candidateSafe } from "@/lib/candidate-safe";
@@ -34,7 +34,7 @@ export default async function PreviewPage({ params }: { params: Promise<{ id: st
   const stampVersionId = state.draft && access.edit && version.stages.length > 0 ? content.id : null;
   return (
     <main className="mx-auto max-w-[1360px] px-page py-8">
-      <OpeningHeader opening={opening} active="assessment" locale={contentLocale(locale)} t={t} />
+      <OpeningHeader opening={opening} active="assessment" locale={locale} t={t} />
       <div className="mt-4">
         <AssessmentNav opening={opening} active="preview" t={t} wizardStep="publish" />
       </div>

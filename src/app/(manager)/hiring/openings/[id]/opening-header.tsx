@@ -7,7 +7,7 @@ import { RouteTabs } from "@/components/manager/route-tabs";
 import type { RowMenuItem } from "@/components/manager/row-menu";
 import { OPENING_STATUS } from "@/components/hiring/status-vocabulary";
 import type { managerT } from "@/i18n/manager";
-import type { Locale } from "@/i18n/locale";
+import type { PanelLocale } from "@/i18n/locale";
 import { shortDate } from "@/lib/format";
 import type { OpeningStatus, OpeningDetail } from "@/solutions/hiring/server/openings";
 import type { SetupStripData } from "./setup-strip";
@@ -53,7 +53,8 @@ export function OpeningHeader({
 }: {
   opening: OpeningDetail;
   active: "overview" | "candidates" | "assessment" | "settings";
-  locale: Locale;
+  /** The panel language: the deadline is formatted in it. */
+  locale: PanelLocale;
   t: T;
   action?: React.ReactNode;
   menu?: RowMenuItem[];

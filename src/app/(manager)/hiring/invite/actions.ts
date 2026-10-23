@@ -6,7 +6,7 @@ import { can } from "@/lib/authorize";
 import { shortDate } from "@/lib/format";
 import { orgDay, zoneLabel } from "@/lib/org-timezone";
 import { managerLocale } from "@/i18n/manager-locale";
-import type { Locale } from "@/i18n/locale";
+import type { Locale, PanelLocale } from "@/i18n/locale";
 import { requireUser } from "@/server/session";
 import { openingAccess } from "@/solutions/hiring/rules/access";
 import { firstInviteLines, formatInviteDeadline, MAX_INVITE_TEXT, parseInviteRows } from "@/solutions/hiring/rules/invitation";
@@ -72,13 +72,13 @@ async function gate(openingId: string, deadline: string | null): Promise<Refused
 /** The last day the way the candidate's message states it (formatInviteDeadline), in the manager's language. */
 const lastDay = (expiresAt: Date, locale: Locale) => formatInviteDeadline(orgDay(expiresAt), locale, zoneLabel(locale));
 
-async function inviteOne(user: { id: string; orgId: string }, input: z.infer<typeof oneSchema>, locale: Locale): Promise<InviteOneResult> {
+async function inviteOne(user: { id: string; orgId: string }, input: z.infer<typeof oneSchema>, locale: Locale, panel: PanelLocale): Promise<InviteOneResult> {
   try {
     const result = await createHiringInvitation(
       { id: user.id, orgId: user.orgId },
       { openingId: input.openingId, fullName: input.fullName, email: input.email, locale: input.locale, deadline: input.deadline, allowDuplicate: input.allowDuplicate ?? false },
     );
-    if (!result.ok) return { ok: false, code: result.code, ...(result.existing ? { existing: { invitedAt: shortDate(result.existing.invitedAt, locale) } } : {}) };
+    if (!result.ok) return { ok: false, code: result.code, ...(result.existing ? { existing: { invitedAt: shortDate(result.existing.invitedAt, panel) } } : {}) };
     return { ok: true, url: result.url, name: input.fullName.replace(/\s+/g, " ").trim(), expires: lastDay(result.expiresAt, locale), message: result.message };
   } catch (error) {
     // The manager reads "Davet oluşturulamadı"; the cause stays in the server log.
@@ -98,7 +98,8 @@ export async function inviteCandidateAction(input: unknown): Promise<InviteOneRe
   if (!parsed.success) return { ok: false, code: "FAILED" };
   const gated = await gate(parsed.data.openingId, parsed.data.deadline);
   if (!gated.ok) return gated;
-  const result = await inviteOne(gated.user, parsed.data, contentLocale(await managerLocale()));
+  const panel = await managerLocale();
+  const result = await inviteOne(gated.user, parsed.data, contentLocale(panel), panel);
   if (result.ok) revalidatePath(`/hiring/openings/${parsed.data.openingId}`, "layout");
   return result;
 }
@@ -118,10 +119,11 @@ export async function inviteManyAction(input: unknown): Promise<{ results: Invit
   if (!parsed.success) return { results: [{ line: 0, fullName: "", email: "", result: { ok: false, code: "FAILED" } }] };
   const gated = await gate(parsed.data.openingId, parsed.data.deadline);
   if (!gated.ok) return { results: [{ line: 0, fullName: "", email: "", result: gated }] };
-  const locale = contentLocale(await managerLocale());
+  const panel = await managerLocale();
+  const locale = contentLocale(panel);
   const results: InviteManyRow[] = [];
   for (const row of parseInviteRows(parsed.data.text).rows.filter((r) => r.problem === null)) {
-    const result = await inviteOne(gated.user, { openingId: parsed.data.openingId, fullName: row.fullName, email: row.email, locale: parsed.data.locale, deadline: parsed.data.deadline, allowDuplicate: false }, locale);
+    const result = await inviteOne(gated.user, { openingId: parsed.data.openingId, fullName: row.fullName, email: row.email, locale: parsed.data.locale, deadline: parsed.data.deadline, allowDuplicate: false }, locale, panel);
     results.push({ line: row.line, fullName: row.fullName, email: row.email, result });
   }
   if (results.some((r) => r.result.ok)) revalidatePath(`/hiring/openings/${parsed.data.openingId}`, "layout");

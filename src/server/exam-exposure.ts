@@ -10,6 +10,13 @@ import type { Avoid } from "@/lib/exam/blueprint";
  * stimuli of those items. A new form draws around it (blueprint.ts: Avoid),
  * so a returning student does not meet the same questions again.
  *
+ * `not_reached` rows are counted on purpose: closing a section writes the same
+ * flag (`not_reached = true`, `answered_at` null) both for an item that was
+ * planned and never shown and for a shown adaptive or one-way item left
+ * unanswered, and nothing else on the row (its `served_at` is the close time
+ * for the first kind) tells them apart. Counting both only makes the next form
+ * avoid a few more items, which is the safe side of the guess.
+ *
  * One query; the candidate lookup uses candidates_org_email_lower_idx. No
  * email means no way to recognise the student: empty sets, today's draw.
  */

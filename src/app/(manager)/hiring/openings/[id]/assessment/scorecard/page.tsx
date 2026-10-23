@@ -119,7 +119,7 @@ export default async function ScorecardPage({
 
   return (
     <main className="mx-auto max-w-[1360px] px-page py-8">
-      <OpeningHeader opening={opening} active="assessment" locale={contentLocale(locale)} t={t} />
+      <OpeningHeader opening={opening} active="assessment" locale={locale} t={t} />
       <div className="mt-4">
         <AssessmentNav opening={opening} active="scorecard" t={t} wizardStep="questions" />
       </div>

@@ -43,6 +43,14 @@ describe("OpeningHeader", () => {
     ]);
   });
 
+  it("formats the deadline in the panel language, German included", () => {
+    const dated = { ...opening, deadlineAt: new Date("2026-03-04T12:00:00Z") } as unknown as OpeningDetail;
+    const deadline = (locale: "tr" | "en" | "de") => text(find(OpeningHeader({ opening: dated, active: "overview", locale, t: managerT(locale) }), PanelHeader)[0].props.meta as ReactNode);
+    expect(deadline("de")).toContain("4. März");
+    expect(deadline("en")).toContain("4 Mar");
+    expect(deadline("tr")).toContain("4 Mar");
+  });
+
   it("hands the header its ⋯ menu under 'Diğer işlemler' (nav.more), and none when the menu is empty", () => {
     const items = [{ label: "Ekip ve kurallar", href: "/x/settings" }];
     const [head] = find(OpeningHeader({ opening, active: "overview", locale: "tr", t: managerT("tr"), menu: items }), PanelHeader);

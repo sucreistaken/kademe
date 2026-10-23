@@ -3,7 +3,7 @@ import { PendingButton } from "@/components/ui/pending-button";
 import { StatusDot } from "@/components/ui/status-dot";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { managerT } from "@/i18n/manager";
-import type { Locale } from "@/i18n/locale";
+import type { PanelLocale } from "@/i18n/locale";
 import { ago, shortDate } from "@/lib/format";
 import type { CandidateProgress } from "@/solutions/hiring/rules/invitation";
 import type { CandidateRequestRow, OpeningCandidateRow } from "@/solutions/hiring/server/invitations";
@@ -22,7 +22,7 @@ type T = ReturnType<typeof managerT>;
  * for whoever runs the opening, also when it is closed (U2).
  * A plain function, not a component, so the row's markup is one tree.
  */
-function requestItem(request: CandidateRequestRow, { openingId, runs, locale, t, now }: { openingId: string; runs: boolean; locale: Locale; t: T; now: Date }) {
+function requestItem(request: CandidateRequestRow, { openingId, runs, locale, t, now }: { openingId: string; runs: boolean; locale: PanelLocale; t: T; now: Date }) {
   return (
     <li key={`${request.source}-${request.id}`} className="rounded-lg border border-line p-2 text-[13px] leading-5">
       <p className="font-medium text-ink">{KNOWN_REQUESTS.has(request.kind) ? t(`hiringCandidates.request${request.kind as "NEW_LINK"}`) : t("hiringCandidates.requestOther")}</p>
@@ -70,7 +70,7 @@ export function CandidateTable({
   edit: boolean;
   closed?: boolean;
   runs?: boolean;
-  locale: Locale;
+  locale: PanelLocale;
   t: T;
   now: Date;
 }) {

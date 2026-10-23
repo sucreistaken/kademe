@@ -57,7 +57,7 @@ export default async function OpeningSettingsPage({
 
   return (
     <main className="mx-auto max-w-[1080px] px-page py-8">
-      <OpeningHeader opening={opening} active="settings" locale={contentLocale(locale)} t={t} setup={setup} />
+      <OpeningHeader opening={opening} active="settings" locale={locale} t={t} setup={setup} />
       {closed ? (
         <Card className="mt-section space-y-3 p-card">
           <h2 id={CLOSED_HEADING_ID} tabIndex={-1} className="text-[16px] leading-6 font-semibold text-ink outline-none">

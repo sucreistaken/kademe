@@ -200,6 +200,67 @@ Notlar:
 - Yalnız Rasch modeli, metin etkisi ve tahmin varsayımı; gerçek öğrenci verisi yok.
 Mevcut sınavlar kayıtlı yapılandırmasını korur: yeni şekil için okul şablondan yeni sınav açar.
 
+## Sınav turu eklemeleri (2026-10-23)
+
+**Görülen soruları kaçınma (avoid / maruz kalma).** Aynı öğrenci (kuruluş içinde e-posta, büyük
+küçük harf fark etmez) başka bir sınavda yeniden gelirse yeni form daha önce gördüğü sorulardan
+kaçınır. `server/exam-exposure.ts: seenBy`, öğrencinin diğer sınavlarındaki bütün `item_responses`
+satırlarından `Avoid` (soru ve metin kimlikleri) kurar; e-posta yoksa boş küme döner. `Avoid`
+doluyken `sampleFixedForm`, `textOpenings` ve `pickProductive` önce görülmemiş birimi seçer
+(`blueprint.ts: freshFirst`, biçimler karışık), hepsi görülmüşse en az maruz kalanı (`exposureCount`).
+Boş `Avoid` ile çekiliş eskisiyle bit bit aynıdır (`blueprint-avoid.test.ts` bunu sabitler).
+`not_reached` satırlar da sayılır: bölüm kapanırken hem hiç gösterilmemiş planlı soru hem
+cevapsız kalmış tek yönlü soru aynı bayrakla yazılır ve satırdan ayırt edilemez; fazladan saymak
+yalnızca birkaç soruyu daha atlatır, güvenli taraftır.
+
+**Konuşmada ilk görev resimlidir.** `pickProductive`: ilk sıra `speaking.picture` görevidir
+(`PICTURE_TASK_TAG`), sonraki sıralar resimli görevden kaçınır. `Avoid` doluyken ilk sıra görülmemiş
+bir resimli görev seçer, hepsi görülmüşse en az maruz kalan resimli görevi; yalnızca o seviyede hiç
+resimli görev yoksa herhangi bir göreve düşer. Öğrenci bütün resimli görevleri görmüş olsa bile
+ilk görev resimli kalır.
+
+**Kayıt başına dinleme hakkı.** Sınav ayarı (`listening.maxPlays`, 1-3) bütün kayıtlar için tavandır;
+bir kayıt kendi `maxPlays` değeriyle bunu düşürebilir, yükseltemez, 1'in altına inmez
+(`listening-plays.ts: playsAllowed`). B2 ve üstü bazı kayıtlar bir kez çalar. Bölüm girişi, sınav
+ayarı 1'den büyükse ve bölümün çekebileceği seviyeler B2'ye ulaşıyorsa "bazı kayıtlar yalnızca bir
+kez çalar" kuralını söyler (`introNeedsMixedPlaysRule`, anahtar `section.ruleLISTENINGMixed`).
+Oynatıcı kalan hakkı gösterir.
+
+**Açık boşluklu metin (OPEN).** `texts` içinde `kind: "OPEN"` (beceri etiketi `grammar.open`): öğrenci
+her boşluğa bir kelime yazar, seçenek yoktur. Sıra: boşluklu metin, kelime havuzu, açık boşluk; her tür
+kolaydan zora. Puanlama diğer yazılan boşluklarla aynıdır (`typedMatches`); bir boşluk birden çok
+yazımı kabul edebilir. Doğrulama (`validate.ts`): açık boşlukta `choices` olamaz (`OPEN_CHOICES`) ve
+kabul edilen her cevap tek kelime olmalı (`OPEN_ANSWER_NOT_WORD`). Banka düzenleyicisi açık boşluk için
+seçenek düğmesini sunmaz; banka listesi ve madde sayfası bu maddeleri "Açık boşluklar (yazılan)" diye
+adlandırır.
+
+**Tick-n (çoktan seçmeli, tam n işaret).** `MULTI_CHOICE` içeriğinde `pick`: öğrenci "Kreuzen Sie n
+Antworten an" ve `k/n` sayacını görür. `pick` kadar kutu işaretliyken yeni kutu işaretlenmez (`ItemView.tsx:
+toggleTick`); işareti kaldırmak her zaman çalışır. Sayaç kısa süre kalın olur ve ekran okuyucuya
+"dolu" duyurulur (`exam.pickFull`); kırmızı durum yoktur. Puanlama değişmedi, `pick` yalnızca sunumu sınırlar.
+
+**Ja / Nein ifadesi.** `TFNG` içeriğinde `wording: "JA_NEIN"` Richtig / Falsch / Nicht im Text yerine Ja /
+Nein / Text sagt dazu nichts gösterir. Saklanan değerler R / F / NG kalır, bu yüzden puanlama ve eski
+kayıtlar etkilenmez. `twoWay` ile birleşebilir (NG yok). Banka madde sayfası bu ifadeyi ve `pick` değerini
+gösterir.
+
+**Boşluk konuları.** Boşluklu metin ve kelime havuzu boşluklarına anahtarda (`key.topics`: boşluk
+kimliği -> konu kimliği) konu bağlanır; konu kataloğu `topics.ts` içindedir ve her tohum beceri etiketi
+ile boşluk konusu orada çözülmek zorundadır (`topics.test.ts`). Konu anahtarda durur, öğrenciye ya da
+tarayıcıya gitmez; öğrenci analizi yalnızca konu etiketlerini kullanır (bkz. Sonuç). Biçim konuları ("Boşluklu
+metin") öğrencinin çalışabileceği bir konu sayılmaz ve analizden çıkarılır.
+
+**Öğrenci analizi.** Ayrıntı "Sonuç" bölümünde. Panel öğrenci kopyası (`?copy=student`) seviye
+gösterilince doğrulama sonucu satırını da basar; öğrenciye giden not yalnızca güçlü yönleri, konu +
+gerekçeyi ve sonraki adımı taşır, öğrencinin yanlış biçimi ile doğrusunu (örnekler) taşımaz
+(`student-feedback.ts: StudentNote`, `example?: never` ile tipte de engellenir).
+
+**Form zamanlaması.** Sınav saati (üstte ortada) bölümün kalan süresini gösterir. Kalan süre 5 dakikaya
+inince ("low", bölüm 10 dakikadan uzunsa) ve 2 dakikaya inince ("last") saatin altında sarı-yumuşak, hiç
+yanıp sönmeyen bir bildirim bir kez çıkar; bölüm çalışması başına bir kez gösterilir ve
+`sessionStorage`'da (`time-cue.ts`) hatırlanır, sayfa yenilenince tekrarlanmaz. Bölüm girişi, boşluklu
+metin türlerinde "metin başına yaklaşık n dakika" der (bölüm süresi / metin sayısı, en az 1).
+
 ## Sonuç
 
 `result.ts: computeResult`

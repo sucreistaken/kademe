@@ -70,7 +70,7 @@ export default async function BuilderPage({
 
   return (
     <main className="mx-auto max-w-[1360px] px-page py-8 pb-40">
-      <OpeningHeader opening={opening} active="assessment" locale={contentLocale(locale)} t={t} setup={setup} />
+      <OpeningHeader opening={opening} active="assessment" locale={locale} t={t} setup={setup} />
       <div className="mt-4">
         <AssessmentTabs openingId={opening.id} active="edit" t={t} />
       </div>

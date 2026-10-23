@@ -263,7 +263,7 @@ export default async function OpeningOverviewPage({
   return (
     // Header and body share one width, so the filled button stays next to the list it depends on.
     <main className="mx-auto max-w-[960px] px-page py-8">
-      <OpeningHeader opening={opening} active="overview" locale={contentLocale(locale)} t={t} action={action} menu={menu} />
+      <OpeningHeader opening={opening} active="overview" locale={locale} t={t} action={action} menu={menu} />
       {published ? (
         <UrlNotice params={NOTICE_PARAMS}>
           {/* B-M2: after "Yayınla" the summary and the setup card are gone; the focus lands here (PublishSwitch). */}
