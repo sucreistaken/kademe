@@ -1,7 +1,7 @@
 "use client";
 
 import type { Ref } from "react";
-import { Flag } from "lucide-react";
+import { Bookmark } from "lucide-react";
 import { PartCounter } from "@/components/candidate/exam/PartCounter";
 import type { AnswerProgress } from "@/components/candidate/exam/answer-progress";
 import { useT } from "@/i18n/candidate-client";
@@ -62,7 +62,7 @@ export function ItemHeading({
               flagged ? "border-sun-fill bg-sun-fill text-ink" : "border-line bg-surface text-ink-2 hover:border-line-strong",
             )}
           >
-            <Flag aria-hidden className={cn("size-3.5", flagged && "fill-ink")} strokeWidth={2} />
+            <Bookmark aria-hidden className={cn("size-3.5", flagged && "fill-ink")} strokeWidth={2} />
             {flagged ? cw("flagSet") : n("flag")}
           </button>
         ) : null}
@@ -82,7 +82,7 @@ export function ItemHeading({
       <PartCounter progress={progress} />
       {flagged ? (
         <span className="inline-flex items-center gap-1 rounded-full bg-sun-soft px-2 py-0.5 text-[11.5px] font-semibold normal-case tracking-normal text-sun">
-          <Flag aria-hidden className="size-3 fill-sun-fill" strokeWidth={2} />
+          <Bookmark aria-hidden className="size-3 fill-sun-fill" strokeWidth={2} />
           {n("flaggedTag")}
         </span>
       ) : null}

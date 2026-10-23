@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type Ref } from "react";
-import { CircleHelp, Flag } from "lucide-react";
+import { CircleHelp, Bookmark } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -15,13 +15,13 @@ import { cn } from "@/lib/cn";
  * The parts of a navigable (fixed-form) section that are not the question:
  * the progress strip in the bottom bar, the review step and the confirmation
  * before a step that cannot be undone. The cells say what the student filled
- * in and what they flagged, never whether an answer is right.
+ * in and what they marked, never whether an answer is right.
  */
 
-function FlagMark({ className }: { className?: string }) {
+function MarkBadge({ className }: { className?: string }) {
   return (
     <span aria-hidden className={cn("grid size-4 place-items-center rounded-full border border-sun-fill bg-sun-soft", className)}>
-      <Flag className="size-2.5 fill-sun-fill text-sun" strokeWidth={2} />
+      <Bookmark className="size-2.5 fill-sun-fill text-sun" strokeWidth={2} />
     </span>
   );
 }
@@ -50,7 +50,7 @@ function Legend({ className, hidden = false }: { className?: string; hidden?: bo
         {n("legendEmpty")}
       </li>
       <li className="flex items-center gap-1.5">
-        <FlagMark className="size-3.5" />
+        <MarkBadge className="size-3.5" />
         {n("legendFlagged")}
       </li>
     </ul>
@@ -136,7 +136,7 @@ export function NavStrip({
           )}
         >
           {e.sequence}
-          {e.flagged ? <FlagMark className="absolute -end-1.5 -top-1.5" /> : null}
+          {e.flagged ? <MarkBadge className="absolute -end-1.5 -top-1.5" /> : null}
         </button>
       </li>
     );
@@ -219,7 +219,7 @@ function JumpList({
   return (
     <section className="mt-6">
       <h2 className="flex items-center gap-2 text-[14px] font-semibold text-ink">
-        {flagHeading ? <FlagMark /> : null}
+        {flagHeading ? <MarkBadge /> : null}
         {title} <span className="tnum font-normal text-muted">({items.length})</span>
       </h2>
       <ul className="mt-2.5 flex flex-wrap gap-2">
@@ -232,7 +232,7 @@ function JumpList({
               className="tnum inline-flex min-h-11 items-center gap-2 rounded-[10px] border border-line bg-surface px-3.5 text-[14px] text-ink hover:border-line-strong disabled:cursor-not-allowed disabled:text-muted"
             >
               {i.label}
-              {i.flagged ? <FlagMark /> : null}
+              {i.flagged ? <MarkBadge /> : null}
             </button>
           </li>
         ))}

@@ -13,7 +13,7 @@ import { JourneyProgress } from "./journey-progress";
 function Action({ action, variant, compact = false, exam = false }: { action: FooterAction; variant: "primary" | "secondary"; compact?: boolean; exam?: boolean }) {
   // Compact (a 480px Sheet): the button takes the column's width, no 200px minimum.
   // Exam (the question bar): one fixed-size row, so each button has a fixed width
-  // (the flag is as wide in "Flag" as in "Flagged") and the bar never changes size.
+  // (the flag is as wide in "Mark" as in "Marked") and the bar never changes size.
   // The widths are EXAM_BAR_WIDTH; while it works, the button shows only its
   // spinner and says the work to screen readers, so a long "saving" never overflows.
   const size = compact
@@ -44,12 +44,12 @@ function Action({ action, variant, compact = false, exam = false }: { action: Fo
         size,
         "aria-disabled:cursor-wait",
         // A switched-on toggle (the question flag): filled amber, still a quiet button.
-        action.tone === "flagged" && "border-sun-fill bg-sun-fill text-ink hover:border-sun-fill hover:bg-sun-fill",
+        action.tone === "marked" && "border-sun-fill bg-sun-fill text-ink hover:border-sun-fill hover:bg-sun-fill",
       )}
       disabled={state.mode === "waiting"}
       aria-disabled={state.mode === "busy" || undefined}
       aria-describedby={state.describedBy}
-      aria-pressed={action.tone === "flagged" ? true : undefined}
+      aria-pressed={action.tone === "marked" ? true : undefined}
       aria-label={action.ariaLabel}
       title={action.ariaLabel}
       onClick={state.mode === "ready" ? action.onClick : undefined}

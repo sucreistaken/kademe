@@ -18,8 +18,8 @@ export type FooterAction =
       waitReason?: string | null;
       /** A small picture before the label. */
       icon?: ReactNode;
-      /** "flagged": a toggle that is on (filled amber); the button is then aria-pressed. */
-      tone?: "flagged";
+      /** "marked": a toggle that is on (filled amber); the button is then aria-pressed. */
+      tone?: "marked";
       /** What assistive technology and the tooltip say when the visible label alone is not the action. */
       ariaLabel?: string;
     }

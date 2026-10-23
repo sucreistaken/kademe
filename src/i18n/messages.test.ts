@@ -228,3 +228,11 @@ describe("auth dictionaries", () => {
     }
   });
 });
+
+describe("the candidate exam says Mark, never Flag (owner 2026-10-23)", () => {
+  it.each(["examNav", "cheatWarning"] as const)("no English %s string contains the word flag", (group) => {
+    const offenders = leafKeys(candidateEn[group], group)
+      .filter((key) => /flag/i.test(String(valueAt(candidateEn, key))));
+    expect(offenders).toEqual([]);
+  });
+});

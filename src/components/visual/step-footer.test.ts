@@ -60,7 +60,7 @@ describe("StepFooter's compact layout is opt-in (Task 22 fix round 1)", () => {
 });
 
 describe("StepFooter's exam bar (one fixed row)", () => {
-  const flag = { kind: "button", id: "flag-item", label: "Flag", onClick: noop } as const;
+  const flag = { kind: "button", id: "flag-item", label: "Mark", onClick: noop } as const;
   const next = { kind: "button", id: "next-item", label: "Next", onClick: noop } as const;
 
   it("is one row that never wraps, with the way back always present (disabled on the first question)", () => {

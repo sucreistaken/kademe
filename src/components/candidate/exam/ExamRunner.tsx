@@ -7,7 +7,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
 import { environmentFacts, useProctor } from "@/components/candidate/proctor/ProctorProvider";
 import { CheatWarning } from "@/components/candidate/proctor/CheatWarning";
-import { Flag } from "lucide-react";
+import { Bookmark } from "lucide-react";
 import { Illustration } from "@/components/visual/illustrations";
 import { RECOVER_PICTURE } from "@/components/candidate/proctor/block-pictures";
 import { ItemView } from "@/components/candidate/exam/ItemView";
@@ -592,8 +592,8 @@ export function ExamRunner({
                 kind: "button",
                 id: "flag-item",
                 label: flaggedHere ? cw("flagSet") : n("flag"),
-                icon: <Flag aria-hidden className={cn("size-4", flaggedHere && "fill-ink")} strokeWidth={2} />,
-                tone: flaggedHere ? "flagged" : undefined,
+                icon: <Bookmark aria-hidden className={cn("size-4", flaggedHere && "fill-ink")} strokeWidth={2} />,
+                tone: flaggedHere ? "marked" : undefined,
                 ariaLabel: flaggedHere ? cw("flagSetHelp") : undefined,
                 onClick: () => void toggleFlag(),
               }
