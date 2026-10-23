@@ -27,6 +27,10 @@ import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
  *   station announcement, street interview).
  * - Writing: 8 prompts (forum opinions, formal messages, a complaint built on an ad plus notes).
  * - Speaking: 7 prompts (talks, discussions, report, message, assigned-role debate).
+ * - Round 2 additions: reading insertion 5/7 (x3) and opinion matching (x3); listening who-says-what
+ *   with three voices (x3) and play-once clips (x3); Sprachbausteine-15 word banks (x3, 10 gaps,
+ *   5 distractors); open cloze (x3); speaking picture tasks (x4). Every cloze and word-bank gap
+ *   carries a #topic.
  *
  * Single-choice options are four; the key position is set explicitly per item and spread over
  * a to d. True/false/not-in-text sets differ in how many NG statements they hold and where.
@@ -2123,7 +2127,117 @@ const speakingItems: SeedItem[] = [
     "Rollengebundene Diskussion (ÖSD-Muster Sprechen 3): Die Rolle ist vorgegeben, bewertet wird auch, ob neue Argumente statt bloßer Wiederholung kommen. Bewertung: Erfüllung, Interaktion, Wortschatz, Strukturen, Aussprache."),
 ];
 
-const speaking: SeedBankPart = { stimuli: [], items: speakingItems };
+// ---------------------------------------------------------------- Picture tasks (describe, interpret, give an opinion)
+
+const PICTURE = { thinkSeconds: 60, answerSeconds: 150, maxTakes: 2 };
+const PICTURE_EXPLANATION =
+  "Bildbeschreibung mit Deutung und Meinung. Bewertung: Erfüllung (beschreiben, deuten, Stellung nehmen), Kohärenz, Wortschatz, Strukturen, Aussprache. Die Bewertung stützt sich auf die Bildbeschreibung in den Inhaltspunkten.";
+
+function pictureTask(
+  within: Within,
+  imageId: string,
+  prompt: string,
+  contentPoints: string[],
+  studentPoints: string[],
+): SeedItem {
+  return {
+    section: "SPEAKING",
+    level: LEVEL,
+    type: "SPEAKING_PROMPT",
+    skillTag: "speaking.picture",
+    within,
+    prompt,
+    content: { kind: "SPEAKING", ...PICTURE, images: [img(imageId)] },
+    key: { kind: "NONE" },
+    rubric: { contentPoints, studentPoints },
+    explanation: PICTURE_EXPLANATION,
+  };
+}
+
+const pictureItems: SeedItem[] = [
+  pictureTask("MID", "scene.b2.car-sharing",
+    "Sehen Sie sich das Bild an und sprechen Sie etwa zwei Minuten.\n\n" +
+      "- Beschreiben Sie, was Sie auf dem Bild sehen.\n" +
+      "- Erklären Sie, wofür das Bild stehen könnte.\n" +
+      "- Nennen Sie Vor- und Nachteile von Elektroautos.\n" +
+      "- Wie ist die Situation in Ihrer Stadt oder Region, und was ist Ihre Meinung dazu?",
+    [
+      "Beschreibung: ein Elektroauto wird an einer Ladesäule aufgeladen",
+      "Deutung: Wandel in der Mobilität, Klimaschutz, Alternative zum Verbrennungsmotor",
+      "Vorteile (z. B. weniger Abgase, leise) und Nachteile (z. B. Ladezeit, Reichweite, Preis)",
+      "Situation in der eigenen Stadt oder Region (Ladestationen, Nutzung von Elektroautos)",
+      "eigene, begründete Meinung",
+    ],
+    [
+      "beschreiben, was auf dem Bild zu sehen ist",
+      "erklären, wofür das Bild stehen könnte",
+      "Vor- und Nachteile nennen",
+      "die Situation in Ihrer Stadt oder Region",
+      "Ihre Meinung mit Begründung",
+    ]),
+  pictureTask("MID", "scene.b2.crowded-tram",
+    "Sehen Sie sich das Bild an und sprechen Sie etwa zwei Minuten.\n\n" +
+      "- Beschreiben Sie die Situation auf dem Bild.\n" +
+      "- Was könnte der Grund dafür sein, dass der Bus so voll ist?\n" +
+      "- Welche Folgen hat das für die Fahrgäste?\n" +
+      "- Was sollte sich Ihrer Meinung nach im öffentlichen Nahverkehr ändern? Wie ist es in Ihrer Stadt oder Region?",
+    [
+      "Beschreibung: Fahrgäste stehen dicht gedrängt in einem vollen Bus",
+      "mögliche Gründe (z. B. Berufsverkehr, zu wenige Fahrzeuge, seltene Verbindungen)",
+      "Folgen für die Fahrgäste (z. B. Stress, Verspätung, kein Sitzplatz, Ansteckungsgefahr)",
+      "eigener Vorschlag für Verbesserungen (z. B. dichtere Takte, mehr Busse, günstigere Tickets)",
+      "Vergleich mit der Situation in der eigenen Stadt oder Region",
+    ],
+    [
+      "die Situation beschreiben",
+      "mögliche Gründe für den vollen Bus nennen",
+      "Folgen für die Fahrgäste erklären",
+      "Verbesserungen vorschlagen",
+      "die Situation in Ihrer Stadt oder Region",
+    ]),
+  pictureTask("HARD", "scene.b2.senior-with-tablet",
+    "Sehen Sie sich das Bild an und sprechen Sie etwa zwei Minuten.\n\n" +
+      "- Beschreiben Sie, was Sie sehen.\n" +
+      "- Was kann ein Tablet oder Smartphone im Alltag für Menschen bedeuten, die nicht mit digitalen Geräten aufgewachsen sind?\n" +
+      "- Welche Chancen und welche Probleme sehen Sie dabei?\n" +
+      "- Wer sollte helfen, damit alle digitale Angebote nutzen können? Nehmen Sie Stellung.",
+    [
+      "Beschreibung: ein älterer Mann sitzt auf dem Sofa und benutzt ein Tablet",
+      "Deutung: Technik im Alltag, Kontakt zur Familie, Information, Unterhaltung",
+      "Chancen (z. B. Verbindung mit anderen, Selbstständigkeit) und Probleme (z. B. Überforderung, Betrug, fehlende Hilfe)",
+      "Vorschlag, wer unterstützen sollte (Familie, Kurse, Bibliotheken, Stadt)",
+      "begründete eigene Stellungnahme, ggf. Beispiel aus der Stadt oder Region",
+    ],
+    [
+      "beschreiben, was auf dem Bild zu sehen ist",
+      "was digitale Geräte im Alltag bedeuten können",
+      "Chancen und Probleme abwägen",
+      "wer helfen sollte",
+      "Ihre Stellungnahme mit Begründung",
+    ]),
+  pictureTask("EASY", "scene.b2.waste-sorting",
+    "Sehen Sie sich das Bild an und sprechen Sie etwa zwei Minuten.\n\n" +
+      "- Beschreiben Sie, was auf dem Bild zu sehen ist.\n" +
+      "- Wofür ist diese Einrichtung gedacht, und wie funktioniert sie?\n" +
+      "- Warum ist Mülltrennung sinnvoll, und wo gibt es Schwierigkeiten?\n" +
+      "- Wie wird in Ihrer Stadt oder Region mit Müll umgegangen, und was ist Ihre Meinung dazu?",
+    [
+      "Beschreibung: vier bunte Mülltonnen stehen nebeneinander zur Mülltrennung",
+      "Erklärung: verschiedene Tonnen für verschiedene Abfälle (z. B. Papier, Glas, Verpackungen, Restmüll)",
+      "Vorteile der Mülltrennung (Recycling, Umweltschutz) und mögliche Schwierigkeiten (z. B. Unsicherheit, falsch sortierter Müll)",
+      "Situation in der eigenen Stadt oder Region",
+      "eigene, begründete Meinung oder Verbesserungsvorschlag",
+    ],
+    [
+      "beschreiben, was auf dem Bild zu sehen ist",
+      "erklären, wie die Einrichtung funktioniert",
+      "Vorteile und Schwierigkeiten nennen",
+      "die Situation in Ihrer Stadt oder Region",
+      "Ihre Meinung mit Begründung",
+    ]),
+];
+
+const speaking: SeedBankPart = { stimuli: [], items: [...speakingItems, ...pictureItems] };
 
 export const B2_PARTS: {
   grammar: SeedBankPart;
