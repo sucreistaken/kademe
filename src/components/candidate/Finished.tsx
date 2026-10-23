@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Check, Loader2, Mail, PowerOff, WifiOff } from "lucide-react";
+import { AnalysisView } from "@/components/candidate/AnalysisView";
 import { ExamEndReport } from "@/components/candidate/ExamEndReport";
 import { CandidateColumn } from "@/components/candidate/Shell";
 import { useProctor } from "@/components/candidate/proctor/ProctorProvider";
@@ -51,6 +52,7 @@ export function Finished({
 }) {
   const t = useT("result");
   const sec = useT("section");
+  const an = useT("analysis");
   const v = useT("visual");
   const m = useT("mascot");
   const rec = useT("recordingSafety");
@@ -77,7 +79,7 @@ export function Finished({
   const pending = snap?.upload?.pending ?? 0;
   const upload = finishUploadPhase({ recorded: !!snap?.upload, stopped: streamsOff, pending, timedOut: drainTimedOut });
   const uploading = upload === "sending" || upload === "slow";
-  const released = result.released && result.visibility !== "NONE";
+  const released = result.released;
   return (
     <CandidateColumn width={560}>
       <div className="relative overflow-hidden rounded-2xl border border-line bg-surface px-6 pb-7 pt-8 shadow-card sm:px-8">
@@ -166,8 +168,22 @@ export function Finished({
 
         {!terminated ? (
           <section className="mt-7 border-t border-row-line pt-6">
-            <h2 className="text-[15px] font-extrabold text-ink">{v("nextTitle")}</h2>
-            {released ? (
+            <h2 className="text-[15px] font-extrabold text-ink">{released && result.analysis ? an("title") : v("nextTitle")}</h2>
+            {released && result.analysis ? (
+              <>
+                <AnalysisView result={result} t={an} sectionName={(s) => sec(s)} className="mt-3" />
+                <p className="mt-5 text-center">
+                  <a
+                    className="text-[14px] font-semibold text-ink underline decoration-underline underline-offset-2"
+                    href={`/a/${encodeURIComponent(token)}/done/print`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {an("print")}
+                  </a>
+                </p>
+              </>
+            ) : released && result.levelShown ? (
               <>
                 <div className="mt-3 flex items-center gap-4 rounded-xl bg-mint-soft px-5 py-4">
                   <div className="min-w-0 flex-1">
