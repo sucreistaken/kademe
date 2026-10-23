@@ -20,6 +20,8 @@ export function SectionIntro({
   sections,
   cur,
   maxPlays,
+  mode,
+  claimedLevel,
   clipboardBlock,
   warmHere,
   warmDo,
@@ -31,6 +33,8 @@ export function SectionIntro({
   sections: CandidateState["sections"];
   cur: NonNullable<CandidateState["current"]>;
   maxPlays: number;
+  mode: CandidateState["mode"];
+  claimedLevel: CandidateState["claimedLevel"];
   /** Writing: whether pasting is blocked, which changes the writing rule. */
   clipboardBlock: boolean;
   warmHere: WarmupState;
@@ -92,7 +96,7 @@ export function SectionIntro({
                     ? n("ruleGRAMMARFixed")
                     : cur.section === "WRITING"
                       ? f(clipboardBlock ? "ruleWritingPaste" : "ruleWritingPlain")
-                      : cur.section === "LISTENING" && introNeedsMixedPlaysRule(maxPlays)
+                      : cur.section === "LISTENING" && introNeedsMixedPlaysRule(maxPlays, mode, claimedLevel)
                         ? sec("ruleLISTENINGMixed", { plays: maxPlays })
                         : sec(`rule${cur.section}` as "ruleGRAMMAR", { plays: maxPlays }),
                 ...(s.navigable ? [n("ruleBack"), n("ruleReview")] : [t("ruleNoBack")]),

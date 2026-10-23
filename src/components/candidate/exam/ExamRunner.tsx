@@ -724,6 +724,8 @@ export function ExamRunner({
             sections={state.sections}
             cur={cur}
             maxPlays={state.maxPlays}
+            mode={state.mode}
+            claimedLevel={state.claimedLevel}
             clipboardBlock={policy.clipboardBlock}
             warmHere={warmHere}
             warmDo={warmDo}

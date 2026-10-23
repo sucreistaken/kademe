@@ -425,7 +425,7 @@ export function nextAdaptiveItems(
 }
 
 /** Levels an adaptive section may need, for the coverage check. */
-function adaptiveLevels(mode: ExamMode, claimed: Cefr | null): Cefr[] {
+export function adaptiveLevels(mode: ExamMode, claimed: Cefr | null): Cefr[] {
   if (mode === "PLACEMENT" || !claimed) return [...CEFR_LEVELS];
   const i = levelIndex(claimed);
   return CEFR_LEVELS.filter((_, j) => Math.abs(j - i) <= 1);
