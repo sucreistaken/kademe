@@ -59,7 +59,6 @@ describe("the section introduction", () => {
 
   it("opens the section's tutorial and pauses voice detection and the big warnings while it is open", () => {
     expect(src).toContain("<TutorialPlayer script={TUTORIAL_SCRIPTS[cur.section]} open={watching} onOpenChange={setWatching} />");
-    expect(src).toMatch(/engine\.suppressVoice\("tutorial", true\);\s*engine\.suppressWarnings\("tutorial", true\);/);
-    expect(src).toMatch(/return \(\) => \{\s*engine\.suppressVoice\("tutorial", false\);\s*engine\.suppressWarnings\("tutorial", false\);/);
+    expect(src).toContain('useTutorialSuppression(watching);');
   });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type Ref } from "react";
+import { useState, type Ref } from "react";
 import { useTranslations } from "next-intl";
 import { Clock, ListChecks } from "lucide-react";
 import { CandidateColumn } from "@/components/candidate/Shell";
@@ -10,9 +10,9 @@ import { SectionCheer } from "@/components/candidate/exam/SectionCheer";
 import { ErrorLine } from "@/components/candidate/exam/ErrorLine";
 import { WarmupOffer } from "@/components/candidate/exam/warmup/Warmup";
 import { TutorialButton } from "@/components/candidate/exam/tutorial/TutorialButton";
+import { useTutorialSuppression } from "@/components/candidate/exam/tutorial/use-tutorial-suppression";
 import { TutorialPlayer } from "@/components/candidate/exam/tutorial/TutorialPlayer";
 import { TUTORIAL_SCRIPTS } from "@/components/candidate/exam/tutorial/scripts";
-import { useProctor } from "@/components/candidate/proctor/ProctorProvider";
 import type { WarmupAction, WarmupState } from "@/components/candidate/exam/warmup/warmup-state";
 import { textRuleKey } from "@/components/candidate/exam/section-rule";
 import type { CandidateState } from "@/lib/exam-flow";
@@ -57,19 +57,8 @@ export function SectionIntro({
   const sec = useT("section");
   const f = useT("examFlow");
   const tt = useTranslations("tutorial");
-  const { engine } = useProctor();
   const [watching, setWatching] = useState(false);
-  // The tutorial speaks and is not the exam: while it is open its voice is not
-  // "talking during the exam" and no big warning covers it; both come back on close.
-  useEffect(() => {
-    if (!watching || !engine) return;
-    engine.suppressVoice("tutorial", true);
-    engine.suppressWarnings("tutorial", true);
-    return () => {
-      engine.suppressVoice("tutorial", false);
-      engine.suppressWarnings("tutorial", false);
-    };
-  }, [engine, watching]);
+  useTutorialSuppression(watching);
   return (
     <CandidateColumn width={720} padding="px-7 pt-6 pb-6">
       <SectionCheer sections={sections} current={cur.section} position={cur.position} />

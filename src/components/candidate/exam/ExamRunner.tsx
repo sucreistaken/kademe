@@ -704,7 +704,7 @@ export function ExamRunner({
         sectionPosition={cur.position}
         onWatchTutorial={() => setReplayFor(cur.position)}
       />
-      <TutorialReplay section={cur.section} open={replayFor === cur.position && state.step === "ITEM"} onOpenChange={(o) => setReplayFor(o ? cur.position : null)} />
+      <TutorialReplay section={cur.section} open={replayFor === cur.position && state.step === "ITEM" && !timeUp} onOpenChange={(o) => setReplayFor(o ? cur.position : null)} />
 
       {blocked ? (
         <RecoverPanel reasons={recover ? [recover] : resumeNeeded} resume={!recover && engine?.startedFrom === "exam"} />

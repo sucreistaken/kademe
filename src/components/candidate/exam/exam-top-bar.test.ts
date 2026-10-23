@@ -58,8 +58,9 @@ const bar = (props: Record<string, unknown>) => renderToStaticMarkup(createEleme
 describe("ExamTopBar how-it-works button", () => {
   it("shows on a question screen, icon-only below lg, and not on the introduction", () => {
     const html = bar({ inQuestion: true, onWatchTutorial: () => {} });
-    expect(html).toMatch(/<button type="button" aria-label="howItWorks"/);
-    expect(html).toMatch(/<span class="hidden lg:inline">howItWorks<\/span>/);
+    expect(html).toMatch(/<button type="button" title="howItWorks"/);
+    expect(html).not.toContain("aria-label");
+    expect(html).toMatch(/<span class="sr-only xl:not-sr-only[^"]*">howItWorks<\/span>/);
     expect(bar({ inQuestion: false, onWatchTutorial: () => {} })).not.toContain("howItWorks");
   });
 
@@ -74,15 +75,24 @@ describe("the exam runner's how-it-works video", () => {
   it("opens the current section's player with the clock note, only on the question screen", () => {
     const runner = here("ExamRunner.tsx");
     expect(runner).toContain("onWatchTutorial={() => setReplayFor(cur.position)}");
-    expect(runner).toContain('<TutorialReplay section={cur.section} open={replayFor === cur.position && state.step === "ITEM"}');
+    expect(runner).toContain('<TutorialReplay section={cur.section} open={replayFor === cur.position && state.step === "ITEM" && !timeUp}');
     const replay = here("tutorial/TutorialReplay.tsx");
     expect(replay).toContain("script={TUTORIAL_SCRIPTS[section]}");
     expect(replay).toContain('note={tt("clockRunning")}');
   });
 
-  it("pauses voice detection and the big warnings while open and releases them on close or unmount", () => {
-    const replay = here("tutorial/TutorialReplay.tsx");
-    expect(replay).toMatch(/engine\.suppressVoice\("tutorial", true\);\s*engine\.suppressWarnings\("tutorial", true\);/);
-    expect(replay).toMatch(/return \(\) => \{\s*engine\.suppressVoice\("tutorial", false\);\s*engine\.suppressWarnings\("tutorial", false\);/);
+  it("uses the shared suppression hook and closes the dialog when the section time runs out", () => {
+    expect(here("tutorial/TutorialReplay.tsx")).toContain("useTutorialSuppression(open);");
+    expect(here("ExamRunner.tsx")).toContain('open={replayFor === cur.position && state.step === "ITEM" && !timeUp}');
+  });
+});
+
+describe("ExamTopBar right group", () => {
+  it("is width-capped like the left one, with an unshrinkable button and a truncating recording label", () => {
+    const html = bar({ inQuestion: true, proctored: true, recLabel: null, onWatchTutorial: () => {} });
+    expect(html.match(/max-w-\[calc\(50%-6rem\)\]/g)).toHaveLength(2);
+    expect(html).toMatch(/<div class="flex min-w-0 max-w-\[calc\(50%-6rem\)\] items-center gap-5">/);
+    expect(html).toMatch(/<button[^>]*class="[^"]*\bshrink-0\b/);
+    expect(html).toMatch(/<span title="cameraOn"[^>]*>.*<span class="min-w-0 truncate">cameraOn<\/span>/);
   });
 });

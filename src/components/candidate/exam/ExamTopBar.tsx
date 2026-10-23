@@ -61,6 +61,7 @@ export function ExamTopBar({
   const rec = useT("recordingSafety");
   const common = useT("common");
   const tt = useTranslations("tutorial");
+  const recText = recLabel ? rec(recLabel) : screenShare ? t("recordingOn") : t("cameraOn");
   return (
     <header className="sticky top-0 z-20 border-b border-hairline bg-surface/95 backdrop-blur">
       <div className={cn("relative mx-auto flex h-14 items-center justify-between gap-4 px-7", wide ? "max-w-[1200px]" : "max-w-[1000px]")}>
@@ -77,24 +78,23 @@ export function ExamTopBar({
             </>
           ) : null}
         </div>
-        <div className="flex items-center gap-5">
+        <div className="flex min-w-0 max-w-[calc(50%-6rem)] items-center gap-5">
           {showLanguagePicker && isCandidateLocale(lang) ? <LanguagePicker locales={locales} current={lang} /> : null}
           {inQuestion && onWatchTutorial ? (
             <button
               type="button"
               onClick={onWatchTutorial}
-              aria-label={tt("howItWorks")}
               title={tt("howItWorks")}
-              className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full border border-hairline bg-surface px-2.5 text-[13px] font-semibold text-ink-2 transition-colors hover:bg-subtle hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink lg:px-3.5"
+              className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full border border-hairline bg-surface px-2.5 text-[13px] font-semibold text-ink-2 transition-colors hover:bg-subtle hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink xl:px-3.5"
             >
               <CirclePlay aria-hidden className="size-4" strokeWidth={2.25} />
-              <span className="hidden lg:inline">{tt("howItWorks")}</span>
+              <span className="sr-only xl:not-sr-only xl:whitespace-nowrap">{tt("howItWorks")}</span>
             </button>
           ) : null}
           {proctored ? (
-            <span className="hidden items-center gap-2 text-[12.5px] text-muted md:flex">
-              <span className="size-1.5 rounded-full bg-accent" aria-hidden />
-              {recLabel ? rec(recLabel) : screenShare ? t("recordingOn") : t("cameraOn")}
+            <span title={recText} className="hidden min-w-0 items-center gap-2 text-[12.5px] text-muted md:flex">
+              <span className="size-1.5 shrink-0 rounded-full bg-accent" aria-hidden />
+              <span className="min-w-0 truncate">{recText}</span>
             </span>
           ) : null}
         </div>
