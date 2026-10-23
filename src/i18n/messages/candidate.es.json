@@ -1275,7 +1275,11 @@
     "undo": "Deshacer",
     "cleared": "Notas borradas",
     "pad": "Espacio para apuntes",
-    "padHint": "Solo para usted; no se evalúa ni se muestra a nadie."
+    "padHint": "Solo para usted; no se evalúa, no se guarda tras el examen y no se muestra a nadie.",
+    "modeType": "Escribir",
+    "modeDraw": "Dibujar",
+    "modeLabel": "Modo de notas",
+    "textPlaceholder": "Escriba aquí sus notas"
   },
   "tutorial": {
     "watch": "Ver cómo funciona ({time})",

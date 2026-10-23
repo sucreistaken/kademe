@@ -1,11 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { capNotes, emptyNotes, isEmptyNotes, type MarkColor, type NotesData } from "@/components/candidate/exam/notes/notes-model";
+import { capNotes, emptyNotes, serializeNotes, type MarkColor, type NotesData } from "@/components/candidate/exam/notes/notes-model";
 import { browserNotesStorage, loadNotes, notesKey, saveNotes } from "@/components/candidate/exam/notes/notes-store";
 
 export type NotesTool = "none" | "highlight" | "underline" | "pen" | "eraser";
 export type HighlightColor = Exclude<MarkColor, "ink">;
+
+export type ClearScope = "text" | "strokes" | "all";
 
 export const UNDO_MS = 8000;
 
@@ -19,7 +21,8 @@ export type NotesController = {
   color: HighlightColor;
   setColor: (c: HighlightColor) => void;
   canUndo: boolean;
-  clear: () => void;
+  /** Clears the typed text, the pen strokes, or everything (default); the cleared notes can be restored with `undo`. */
+  clear: (scope?: ClearScope) => void;
   undo: () => void;
 };
 
@@ -62,10 +65,12 @@ export function useNotes(token: string, sectionPosition: number, title: string, 
     saveNotes(browserNotesStorage(), keyRef.current, value);
   }, []);
 
-  const clear = useCallback(() => {
-    if (isEmptyNotes(dataRef.current)) return;
-    setUndoData(dataRef.current);
-    setData(emptyNotes());
+  const clear = useCallback((scope: ClearScope = "all") => {
+    const current = dataRef.current;
+    const next: NotesData = scope === "text" ? { ...current, text: undefined } : scope === "strokes" ? { ...current, strokes: [] } : emptyNotes();
+    if (serializeNotes(next) === serializeNotes(current)) return;
+    setUndoData(current);
+    setData(next);
     window.clearTimeout(undoTimer.current);
     undoTimer.current = window.setTimeout(() => setUndoData(null), UNDO_MS);
   }, [setData]);

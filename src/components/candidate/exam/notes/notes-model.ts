@@ -11,17 +11,19 @@ export type MarkColor = "yellow" | "green" | "pink" | "ink";
 export type Mark = { start: number; end: number; kind: MarkKind; color: MarkColor; seq?: number };
 export type Point = [number, number];
 export type Stroke = { tool: "pen"; points: Point[] };
-export type NotesData = { marks: Mark[]; strokes: Stroke[] };
+/** `text` is the typed note of the scratch pad (absent when empty or in notes stored before it existed). */
+export type NotesData = { marks: Mark[]; strokes: Stroke[]; text?: string };
 
 export const MAX_MARKS = 200;
 export const MAX_STROKES = 300;
+export const MAX_TEXT = 5000;
 export const MAX_BYTES = 100 * 1024;
 /** A stroke is erased when the pointer passes within this many px of it. */
 export const ERASE_RADIUS = 8;
 
 export const emptyNotes = (): NotesData => ({ marks: [], strokes: [] });
 
-export const isEmptyNotes = (d: NotesData): boolean => d.marks.length === 0 && d.strokes.length === 0;
+export const isEmptyNotes = (d: NotesData): boolean => d.marks.length === 0 && d.strokes.length === 0 && !d.text;
 
 const sortMarks = (marks: Mark[]): Mark[] =>
   [...marks].sort((a, b) => a.start - b.start || a.end - b.end || a.kind.localeCompare(b.kind));
@@ -116,11 +118,13 @@ function dropOldest(marks: Mark[], count: number): Mark[] {
 export function capNotes(data: NotesData): NotesData {
   let marks = data.marks.length > MAX_MARKS ? dropOldest(data.marks, data.marks.length - MAX_MARKS) : data.marks;
   let strokes = data.strokes.length > MAX_STROKES ? data.strokes.slice(data.strokes.length - MAX_STROKES) : data.strokes;
-  let out: NotesData = { marks, strokes };
+  const text = data.text ? data.text.slice(0, MAX_TEXT) : "";
+  const build = (): NotesData => (text ? { marks, strokes, text } : { marks, strokes });
+  let out = build();
   while (serializeNotes(out).length > MAX_BYTES && (strokes.length > 0 || marks.length > 0)) {
     if (strokes.length > 0) strokes = strokes.slice(1);
     else marks = dropOldest(marks, 1);
-    out = { marks, strokes };
+    out = build();
   }
   return out;
 }
@@ -132,7 +136,7 @@ const COLORS: readonly MarkColor[] = ["yellow", "green", "pink", "ink"];
 export function parseNotes(raw: string | null | undefined): NotesData {
   if (!raw) return emptyNotes();
   try {
-    const v = JSON.parse(raw) as { marks?: unknown; strokes?: unknown };
+    const v = JSON.parse(raw) as { marks?: unknown; strokes?: unknown; text?: unknown };
     const marks: Mark[] = [];
     if (Array.isArray(v.marks)) {
       for (const m of v.marks as Array<Record<string, unknown>>) {
@@ -164,7 +168,7 @@ export function parseNotes(raw: string | null | undefined): NotesData {
         if (points.length > 0) strokes.push({ tool: "pen", points });
       }
     }
-    return capNotes({ marks: sortMarks(marks), strokes });
+    return capNotes({ marks: sortMarks(marks), strokes, text: typeof v.text === "string" ? v.text : undefined });
   } catch {
     return emptyNotes();
   }

@@ -77,7 +77,7 @@ export function NotesToolbar({ controller, pen = false, className }: { controlle
       <ToolButton label={t("eraser")} pressed={tool === "eraser"} onClick={() => toggle("eraser")}>
         <Eraser className="size-4" aria-hidden="true" />
       </ToolButton>
-      <ToolButton label={t("clear")} onClick={clear}>
+      <ToolButton label={t("clear")} onClick={() => clear()}>
         <Trash2 className="size-4" aria-hidden="true" />
       </ToolButton>
       {canUndo ? (

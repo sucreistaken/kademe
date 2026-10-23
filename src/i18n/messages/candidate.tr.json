@@ -1275,7 +1275,11 @@
     "undo": "Geri al",
     "cleared": "Notlar temizlendi",
     "pad": "Karalama alanı",
-    "padHint": "Yalnızca sizin içindir; değerlendirilmez, kaydedilmez ve kimseye gösterilmez."
+    "padHint": "Yalnızca sizin içindir; değerlendirilmez, sınavdan sonra saklanmaz ve kimseye gösterilmez.",
+    "modeType": "Yazın",
+    "modeDraw": "Çizin",
+    "modeLabel": "Not modu",
+    "textPlaceholder": "Notlarınızı buraya yazın"
   },
   "tutorial": {
     "watch": "Nasıl çalıştığını izleyin ({time})",

@@ -1275,7 +1275,11 @@
     "undo": "Rückgängig",
     "cleared": "Notizen gelöscht",
     "pad": "Notizfläche",
-    "padHint": "Nur für Sie, wird nicht bewertet und niemandem gezeigt."
+    "padHint": "Nur für Sie; wird nicht bewertet, nach der Prüfung nicht gespeichert und niemandem gezeigt.",
+    "modeType": "Tippen",
+    "modeDraw": "Zeichnen",
+    "modeLabel": "Notizmodus",
+    "textPlaceholder": "Tippen Sie hier Ihre Notizen"
   },
   "tutorial": {
     "watch": "So funktioniert es ({time})",

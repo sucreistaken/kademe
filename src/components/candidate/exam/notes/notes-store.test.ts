@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { clearAllNotes, fnv1a, loadNotes, notesKey, saveNotes, stemsContentKey, type NotesStorage } from "@/components/candidate/exam/notes/notes-store";
+import { MAX_TEXT } from "@/components/candidate/exam/notes/notes-model";
 
 function fake(): NotesStorage & { map: Map<string, string> } {
   const map = new Map<string, string>();
@@ -56,5 +57,29 @@ describe("stems key", () => {
     expect(a).not.toBe(b);
     expect(notesKey("tok", 2, "stems", stemsContentKey("item", 5))).not.toBe(a);
     expect(notesKey("tok", 2, "stems", stemsContentKey("group", 5))).toBe(a);
+  });
+});
+
+describe("typed pad text", () => {
+  it("saves and loads the text, and text alone keeps the notes non-empty", () => {
+    const s = fake();
+    saveNotes(s, "k", { marks: [], strokes: [], text: "Wortschatz: die Reise" });
+    expect(loadNotes(s, "k").text).toBe("Wortschatz: die Reise");
+    saveNotes(s, "k", { marks: [], strokes: [], text: undefined });
+    expect(s.map.size).toBe(0);
+  });
+  it("reads notes stored before the text field existed", () => {
+    const s = fake();
+    s.setItem("k", JSON.stringify({ marks: [], strokes: [{ tool: "pen", points: [[1, 2]] }] }));
+    const d = loadNotes(s, "k");
+    expect(d.strokes).toHaveLength(1);
+    expect(d.text).toBeUndefined();
+  });
+  it("caps the stored text at 5,000 characters and drops a non-string text", () => {
+    const s = fake();
+    saveNotes(s, "k", { marks: [], strokes: [], text: "ä".repeat(MAX_TEXT + 50) });
+    expect(loadNotes(s, "k").text).toHaveLength(MAX_TEXT);
+    s.setItem("k", JSON.stringify({ marks: [], strokes: [], text: 42 }));
+    expect(loadNotes(s, "k").text).toBeUndefined();
   });
 });

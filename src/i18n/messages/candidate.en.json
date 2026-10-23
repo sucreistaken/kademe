@@ -1275,7 +1275,11 @@
     "undo": "Undo",
     "cleared": "Notes cleared",
     "pad": "Scratch pad",
-    "padHint": "Only for you, never graded or shown to anyone."
+    "padHint": "Only for you; not graded, not saved after the exam, never shown to anyone.",
+    "modeType": "Type",
+    "modeDraw": "Draw",
+    "modeLabel": "Notes mode",
+    "textPlaceholder": "Type your notes here"
   },
   "tutorial": {
     "watch": "Watch how it works ({time})",
