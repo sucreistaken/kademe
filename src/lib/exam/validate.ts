@@ -41,6 +41,7 @@ export const ITEM_PROBLEM_CODES = [
   "TFNG_EMPTY",
   "TFNG_KEY_UNKNOWN",
   "TFNG_TWO_WAY_NG",
+  "WORDING_KIND",
   "GAP_NONE",
   "GAP_MARKER_REPEAT",
   "GAP_NO_MARKER",
@@ -160,6 +161,10 @@ export function itemProblems(item: ValidatableItem): ItemProblem[] {
     if (item.type === "SINGLE_CHOICE" && key.correct.length !== 1) add("SINGLE_KEY_COUNT");
     if (item.type === "MULTI_CHOICE" && (key.correct.length < 1 || key.correct.length >= ids.length)) add("MULTI_KEY_COUNT");
   }
+
+  // `wording` belongs to true/false items; elsewhere it would be silently ignored.
+  const loose = content as { wording?: unknown };
+  if (loose.wording !== undefined && !(content.kind === "TFNG" && loose.wording === "JA_NEIN")) add("WORDING_KIND");
 
   if (content.kind === "TFNG" && key.kind === "TFNG") {
     const ids = content.statements.map((s) => s.id);
@@ -337,6 +342,8 @@ export function problemText(p: ItemProblem): string {
       return `key names unknown statements ${list(p)}`;
     case "TFNG_TWO_WAY_NG":
       return `a Richtig/Falsch item keys "nicht im Text" for ${list(p)}`;
+    case "WORDING_KIND":
+      return "wording is only for true/false items and only JA_NEIN";
     case "GAP_NONE":
       return "no gaps";
     case "GAP_MARKER_REPEAT":

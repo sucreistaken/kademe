@@ -198,6 +198,18 @@ describe("true / false / not given", () => {
     }
   });
 
+  it("shows Ja / Nein / Text sagt dazu nichts for Ja/Nein items, and drops the third for two-way ones", () => {
+    const base = tfngItem("READING");
+    if (base.content.kind !== "TFNG") throw new Error("not tfng");
+    const ja: CandidateItem = { ...base, content: { ...base.content, wording: "JA_NEIN" } };
+    const html = render(ja);
+    for (const word of ["Ja", "Nein", "Text sagt dazu nichts"]) expect(html).toMatch(new RegExp(`lang="de"[^>]*>${word}</button>`));
+    expect(html).not.toContain(">Richtig<");
+    const two: CandidateItem = { ...base, content: { ...base.content, wording: "JA_NEIN", twoWay: true } };
+    expect(render(two)).not.toContain("Text sagt dazu nichts");
+    expect(render(two)).toContain(">Nein</button>");
+  });
+
   it("labels each statement's group by the statement and keeps one tab stop", () => {
     const html = render(tfngItem("READING"), { tfng: { s2: "F" } });
     const gs = groups(html).map((g) => g.split("</div>")[0]);

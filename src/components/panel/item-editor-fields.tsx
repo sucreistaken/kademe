@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Disclosure } from "@/components/visual/disclosure";
 import { useMT } from "@/i18n/manager-client";
 import { cn } from "@/lib/cn";
+import { tfngLabels } from "@/lib/exam/tfng-labels";
 import type { TfngValue } from "@/lib/exam/types";
 import { insertGap, nextId, pickedKindOfDraft, syncGaps, underscoresToMarkers, type EditorDraft } from "./item-editor-model";
 
@@ -238,7 +239,7 @@ function TfngFields({ draft, set }: { draft: EditorDraft; set: SetDraft }) {
                 {TF.filter((v) => !(draft.twoWay && v === "NG")).map((v) => (
                   <label key={v} className={segClass(s.answer === v)}>
                     <input type="radio" name={`ed-tf-${s.id}`} className="sr-only" checked={s.answer === v} onChange={() => set((d) => ({ statements: d.statements.map((x) => (x.id === s.id ? { ...x, answer: v } : x)) }))} />
-                    {t(`answer${v}`)}
+                    {tfngLabels(draft.jaNein ? "JA_NEIN" : undefined)[v]}
                   </label>
                 ))}
               </div>
@@ -265,6 +266,10 @@ function TfngFields({ draft, set }: { draft: EditorDraft; set: SetDraft }) {
           }}
         />
         {t("twoWay")}
+      </label>
+      <label className="mt-2 flex items-center gap-2 text-[14px] text-ink-2">
+        <input type="checkbox" checked={draft.jaNein} onChange={(e) => set({ jaNein: e.target.checked })} />
+        {t("jaNein")}
       </label>
     </fieldset>
   );

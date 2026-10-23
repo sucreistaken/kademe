@@ -212,3 +212,22 @@ describe("validateItem: MC cloze and word bank (spec 2026-10-18)", () => {
     expect(validateItem(cloze([{ id: "g1" }, { id: "g2", choices: ["nach", "in", "zu", "bei"] }], { g1: ["bin"], g2: ["nach"] }))).toEqual(["cloze gap g1 needs exactly four choices"]);
   });
 });
+
+describe("validateItem: Ja/Nein wording", () => {
+  const tf = (content: Record<string, unknown>, type: ValidatableItem["type"] = "TRUE_FALSE_NG"): ValidatableItem =>
+    ({ type, prompt: "Ja oder nein?", content, key: { kind: "TFNG", answers: { s1: "R" } } }) as unknown as ValidatableItem;
+  const statements = [{ id: "s1", text: "Er kommt." }];
+  it("accepts JA_NEIN on a true/false item", () => {
+    expect(itemProblems(tf({ kind: "TFNG", statements, wording: "JA_NEIN" }))).toEqual([]);
+  });
+  it("refuses any other wording value and wording on other content", () => {
+    expect(itemProblems(tf({ kind: "TFNG", statements, wording: "YES_NO" })).map((p) => p.code)).toEqual(["WORDING_KIND"]);
+    const choice = {
+      type: "SINGLE_CHOICE",
+      prompt: "Was?",
+      content: { kind: "CHOICE", options: [{ id: "a", text: "x" }, { id: "b", text: "y" }, { id: "c", text: "z" }], wording: "JA_NEIN" },
+      key: { kind: "CHOICE", correct: ["a"] },
+    } as unknown as ValidatableItem;
+    expect(itemProblems(choice).map((p) => p.code)).toEqual(["WORDING_KIND"]);
+  });
+});

@@ -121,6 +121,20 @@ describe("C-test gaps", () => {
     expect(toCandidateItem(tfng(), {}, null, 1, { maxPlays: 2 }).content).not.toHaveProperty("twoWay");
   });
 
+  it("passes the Ja/Nein wording through and nothing else new", () => {
+    const base = { ...listening, type: "TRUE_FALSE_NG" as const, key: { kind: "TFNG" as const, answers: { s1: "R" as const } } };
+    const ja = toCandidateItem(
+      { ...base, content: { kind: "TFNG", statements: [{ id: "s1", text: "Der Zug fährt um neun." }], wording: "JA_NEIN" } },
+      {},
+      null,
+      1,
+      { maxPlays: 2 },
+    );
+    expect(ja.content).toEqual({ kind: "TFNG", statements: [{ id: "s1", text: "Der Zug fährt um neun." }], wording: "JA_NEIN" });
+    const plain = toCandidateItem({ ...base, content: { kind: "TFNG", statements: [{ id: "s1", text: "Der Zug fährt um neun." }] } }, {}, null, 1, { maxPlays: 2 });
+    expect(plain.content).not.toHaveProperty("wording");
+  });
+
   it("leaves an ordinary gap item as it was", () => {
     const c = toCandidateItem(gap("grammar.dativ"), {}, null, 1, { maxPlays: 2 });
     expect(c.content).toEqual({ kind: "GAP", gaps: [{ id: "g1", choices: null }] });

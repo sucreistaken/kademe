@@ -17,7 +17,7 @@ import { textGapKindOf, type ItemAnswer, type ItemSnapshot, type Presentation, t
 
 export type CandidateContent =
   | { kind: "CHOICE"; multiple: boolean; options: Array<{ id: string; text: string }> }
-  | { kind: "TFNG"; statements: Array<{ id: string; text: string }>; twoWay?: boolean }
+  | { kind: "TFNG"; statements: Array<{ id: string; text: string }>; twoWay?: boolean; wording?: "JA_NEIN" }
   | {
       kind: "GAP";
       gaps: Array<{ id: string; choices: string[] | null }>;
@@ -173,6 +173,7 @@ export function toCandidateItem(
         kind: "TFNG",
         statements: c.statements.map((s) => ({ id: s.id, text: s.text })),
         ...(c.twoWay ? { twoWay: true } : {}),
+        ...(c.wording === "JA_NEIN" ? { wording: "JA_NEIN" as const } : {}),
       };
       break;
     case "GAP": {

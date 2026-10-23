@@ -5,7 +5,8 @@ import { matchingTargets, type CandidateItem } from "@/lib/exam/safe";
 import { withPoolInstruction } from "@/lib/exam/ctest-instruction";
 import { splitInstruction, splitPromptBlocks, splitTitle, type PromptBlock } from "@/lib/exam/prompt-instruction";
 import { coverPointsFor } from "@/lib/exam/task-prompt";
-import type { ItemAnswer, TfngValue } from "@/lib/exam/types";
+import { tfngChoices } from "@/lib/exam/tfng-labels";
+import type { ItemAnswer } from "@/lib/exam/types";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
 import { ABOVE_FOOTER } from "@/components/visual/footer-action";
@@ -161,17 +162,14 @@ function ChoiceItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps)
 
 /**
  * True / false / not given. The buttons carry the German words of the
- * instruction ("Richtig", "Falsch", "Nicht im Text"), the exam's language;
+ * instruction ("Richtig", "Falsch", "Nicht im Text", or "Ja", "Nein", "Text
+ * sagt dazu nichts" for Ja/Nein items), the exam's language;
  * bare letters confused students (school feedback 2026-10-16).
  */
 function TfngItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps) {
   const uid = useId();
   if (item.content.kind !== "TFNG") return null;
-  const values: Array<[TfngValue, string]> = [
-    ["R", "Richtig"],
-    ["F", "Falsch"],
-    ...(item.content.twoWay ? [] : ([["NG", "Nicht im Text"]] as Array<[TfngValue, string]>)),
-  ];
+  const values = tfngChoices({ twoWay: item.content.twoWay, wording: item.content.wording });
   return (
     <div>
       {hidePrompt ? null : <Prompt text={item.prompt} mode="whole" />}
