@@ -406,8 +406,8 @@ const grammarTexts: SeedItem[] = [
       "Ihr Mann sagte, [[dass#nebensatz]] eine heiße Suppe jetzt das Beste wäre. " +
       "Die Kinder fragten, [[ob#nebensatz]] es im nächsten Dorf ein Café gibt. " +
       "Im Café bestellten sie Suppe und Kakao, [[während#konnektor]] draußen der Regen gegen die Fenster klopfte. " +
-      "[[Nachdem#konnektor]] sie zwei Stunden im Café gesessen hatten, hörte der Regen endlich auf. " +
-      "Er hörte plötzlich ganz auf, [[sodass#konnektor]] sie den Rückweg ohne Regenjacke fahren konnten.",
+      "Der Regen hörte erst auf, [[nachdem#konnektor]] sie zwei Stunden im Café gesessen hatten. " +
+      "Dann kam sogar die Sonne heraus, [[sodass#konnektor]] sie den Rückweg ohne Regenjacke fahren konnten.",
     last: "Am Abend waren alle müde, aber auch ein bisschen stolz.",
     distractors: ["denn", "sondern", "falls", "bevor", "seitdem"],
     note: "Konnektoren: Verb am Ende (weil, damit, obwohl, dass, ob, während, nachdem, sodass) gegen Verb in Position 2 (deshalb, trotzdem); Distraktoren: denn, sondern, falls, bevor, seitdem passen in keine Lücke.",
@@ -424,7 +424,7 @@ const grammarTexts: SeedItem[] = [
       "Zur Eröffnung gab es ein kleines Fest, und alle Nachbarn konnten [[daran#praepositionaladverb]] teilnehmen. " +
       "Nur ein älterer Herr war zuerst [[dagegen#praepositionaladverb]], weil er mehr Lärm befürchtete. " +
       "Inzwischen gehört er selbst [[dazu#praepositionaladverb]] und gießt jeden Morgen die Pflanzen. " +
-      "Die Kinder helfen gern [[dabei#praepositionaladverb]], die Beete zu harken. " +
+      "Die Kinder helfen gern [[dabei#praepositionaladverb]], neue Blumen zu pflanzen. " +
       "Letzte Woche haben wir uns [[darüber#praepositionaladverb]] geärgert, dass jemand Salat gestohlen hat. " +
       "Was halten Sie [[davon#praepositionaladverb]], uns einmal zu besuchen?",
     last: "Wer Lust hat, kann jederzeit vorbeikommen und einfach mitmachen.",
@@ -1020,10 +1020,10 @@ const readingItems: SeedItem[] = [
   markt.jaNein("detail", "MID",
     [
       ["Herr Hofmann kauft schon sehr lange regelmäßig auf dem Wochenmarkt ein.", "R"],
-      ["Er hält die Argumente der Stadt für völlig falsch.", "F"],
+      ["Er findet, dass die Stadt mit ihrem Argument völlig falsch liegt.", "F"],
       ["Er möchte, dass zuerst Händler und Stadt gemeinsam nach einer Lösung suchen.", "R"],
     ],
-    "„seit über zwanzig Jahren jeden Samstag“ (Ja). Das Platzargument kann er „nicht ganz von der Hand weisen“ (Nein). Erst danach soll der Gemeinderat entscheiden (Ja)."),
+    "„seit über zwanzig Jahren jeden Samstag“ (Ja). Das Platzargument kann er „nicht ganz von der Hand weisen“, also liegt die Stadt nicht ganz falsch (Nein). Erst danach soll der Gemeinderat entscheiden (Ja)."),
   markt.choice("detail", "MID",
     "Warum wäre der neue Platz für viele ältere Menschen ein Problem?",
     "Sie müssten mit dem Bus fahren, der samstags nur selten kommt.",
@@ -1088,7 +1088,7 @@ const readingItems: SeedItem[] = [
     [
       "Diese Person nimmt die Belastung der Umwelt durch das Reisen bewusst in Kauf.",
       "Diese Person möchte im Urlaub andere Kulturen kennenlernen.",
-      "Diese Person fährt aus Gewohnheit jedes Jahr zum selben Ziel.",
+      "Diese Person fährt seit Jahren immer an denselben Ort.",
       "Diese Person verreist wegen der hohen Kosten und der Mühe nicht.",
       "Diese Person möchte unterwegs flexibel bleiben.",
     ],
@@ -1250,12 +1250,12 @@ const werkstatt = forClip(lWerkstatt.key);
 // ---- Clip 5: radio tip, two voices
 
 const lFreibad = clip(
-  "v2-l-b1-freibad-tipp",
+  "v2-l-b1-freibad-tipp-v2",
   "Freizeittipp im Radio",
   "Freizeit und Sport",
   [
-    { label: "Tobias Kern", voice: "A" },
-    { label: "Nina Roth", voice: "B" },
+    { label: "Tobias Kern", voice: "B" },
+    { label: "Nina Roth", voice: "A" },
   ],
   [
     "Tobias Kern: Und jetzt unser Freizeittipp für das Wochenende. Meine Kollegin Nina Roth war für uns im Freibad am Südpark. Nina, was gibt es Neues?",
@@ -1297,18 +1297,18 @@ const tanzkurs = forClip(lTanzkurs.key);
 // ---- Clip 7: four housemates plan a party, table completion
 
 const lGrillparty = clip(
-  "v3-l-b1-hausparty-planung",
+  "v3-l-b1-hausparty-planung-v2",
   "Vier Mitbewohner planen ein Fest",
   "Wohnen und Feiern",
   [
     { label: "Mila", voice: "A" },
     { label: "Ole", voice: "B" },
-    { label: "Pia", voice: "C" },
-    { label: "Ruben", voice: "D" },
+    { label: "Pia", voice: "D" },
+    { label: "Ruben", voice: "C" },
   ],
   [
     "Mila: So, wir müssen noch das Hausfest planen. Ole, wann war das nochmal? Samstag, oder?",
-    "Ole: Ja, Samstag, der fünfzehnte, nein, Moment, der achtzehnte. Genau, der achtzehnte. Der fünfzehnte war ja schon letzte Woche.",
+    "Ole: Ja, Samstag, der elfte, nein, Moment, der achtzehnte. Genau, der achtzehnte. Der elfte war ja schon letzte Woche.",
     "Pia: Und wo machen wir das? Im Garten ist es abends schon viel zu kalt, um lange zu sitzen.",
     "Ruben: Wir haben doch den Gemeinschaftsraum im Keller. Da passen dreißig Leute rein, und die Hausverwaltung hat schon zugesagt.",
     "Mila: Gut, dann also Gemeinschaftsraum. Wer bringt was mit? Ich mache einen großen Nudelsalat.",
@@ -1500,15 +1500,15 @@ const listeningItems: SeedItem[] = [
       "Kurs: Salsa für Anfänger\n" +
       "Beginn: {{g1}} Oktober\n" +
       "Wochentag: {{g2}}\n" +
-      "Uhrzeit: {{g3}} Uhr\n" +
-      "Preis für zehn Abende: {{g4}} Euro",
+      "Kursbeginn am Abend: {{g3}} Uhr\n" +
+      "Preis für den ganzen Kurs: {{g4}} Euro",
     [
       ["14", "14.", "vierzehnten", "am 14.", "am vierzehnten", "der 14.", "der vierzehnte"],
       ["Dienstag", "dienstags", "am Dienstag", "Di", "Di."],
-      ["19.30", "19:30", "19 30", "19 Uhr 30", "neunzehn Uhr dreißig", "halb acht", "19.30 Uhr", "19:30 Uhr", "um 19.30", "um 19:30"],
+      ["19.30", "19:30", "19 30", "19 Uhr 30", "neunzehn Uhr dreißig", "halb acht", "19.30 Uhr", "19:30 Uhr", "um 19.30", "um 19:30", "19.30-21", "19:30-21:00", "19.30 bis 21", "19.30 bis 21 Uhr", "19:30 bis 21:00", "19.30-21.00", "halb acht bis neun", "halb acht"],
       ["120", "hundertzwanzig", "120 Euro", "hundertzwanzig Euro", "120,00", "120 €", "120€", "120 EUR"],
     ],
-    "Beginn: erst „zwölften“, dann Korrektur auf „vierzehnten“ Oktober; Dienstag; „neunzehn Uhr dreißig“ (= halb acht); „hundertzwanzig Euro“, zweimal genannt."),
+    "Beginn: erst „zwölften“, dann Korrektur auf „vierzehnten“ Oktober; Dienstag; „neunzehn Uhr dreißig“ (= halb acht; auch die Angabe mit Ende, bis einundzwanzig Uhr, wird akzeptiert); „hundertzwanzig Euro“ für den ganzen Kurs, zweimal genannt."),
   tanzkurs.choice("detail", "MID",
     "Was braucht Sandra für den Kurs?",
     "Sie braucht nur bequeme Schuhe und muss keinen festen Partner mitbringen.",
@@ -1521,11 +1521,11 @@ const listeningItems: SeedItem[] = [
     "„Einen Partner brauchen Sie nicht ... Bringen Sie nur bequeme Schuhe mit, Straßenschuhe sind in der Halle nicht erlaubt.“"),
   tanzkurs.tfng("detail", "MID",
     [
-      ["Der Kurs beginnt an einem Sonntag.", "F"],
+      ["Sandra kann sich gleich am Telefon für den Kurs anmelden.", "R"],
       ["Der Kurs besteht aus zehn Abenden.", "R"],
       ["Sandra muss die Gebühr noch heute am Telefon bezahlen.", "F"],
     ],
-    "Der zwölfte (Sonntag) wird korrigiert, der Kurs beginnt am Dienstag, dem vierzehnten (F). „zehn Abende lang“ (R). Bezahlt wird „am ersten Abend“ (F)."),
+    "„Sie können sich übrigens gleich am Telefon anmelden“ (R). „zehn Abende lang“ (R). Bezahlt wird „am ersten Abend“ (F)."),
 
   // ---- Clip 7 (table completion, four voices)
   grillparty.notes("detail", "MID",
@@ -1540,7 +1540,7 @@ const listeningItems: SeedItem[] = [
       ["Kuchen", "zwei Kuchen", "2 Kuchen", "Kuchen backen"],
       ["Geschirr", "Becher", "Geschirr und Becher", "das Geschirr", "Becher und Geschirr", "Geschirr und die Becher", "das Geschirr und die Becher"],
     ],
-    "Datum: Ole nennt erst den fünfzehnten und korrigiert auf den achtzehnten; Ort: Gemeinschaftsraum im Keller; Pia backt zwei Kuchen (den Salat macht Mila); Ruben bringt Geschirr und Becher."),
+    "Datum: Ole nennt erst den elften und korrigiert auf den achtzehnten; Ort: Gemeinschaftsraum im Keller; Pia backt zwei Kuchen (den Salat macht Mila); Ruben bringt Geschirr und Becher."),
   grillparty.choice("detail", "MID",
     "Warum feiern die Mitbewohner nicht im Garten?",
     "Weil es dort abends schon zu kalt ist, um lange zu sitzen.",
@@ -1554,10 +1554,10 @@ const listeningItems: SeedItem[] = [
   grillparty.tfng("detail", "MID",
     [
       ["Ole besorgt die Musikanlage für das Fest.", "R"],
-      ["Das Fest findet am fünfzehnten statt.", "F"],
+      ["Im Gemeinschaftsraum ist Platz für dreißig Personen.", "R"],
       ["Pia macht auch einen Salat für alle.", "F"],
     ],
-    "Ole holt die Anlage von seinem Cousin (R). Der fünfzehnte war „schon letzte Woche“ (F). Den Salat macht Mila (F)."),
+    "Ole holt die Anlage von seinem Cousin (R). Im Gemeinschaftsraum „passen dreißig Leute rein“ (R). Den Salat macht Mila (F)."),
 
   // ---- Clip 8 (table completion, announcement)
   bahn.notes("detail", "MID",
@@ -1955,14 +1955,14 @@ function pictureTask(
 function pictureTasks(): SeedItem[] {
   return [
     pictureTask("scene.b1.city-cycling", "EASY",
-      "Wie kommen die Menschen in Ihrer Stadt oder Region meistens zur Arbeit, zur Schule oder zum Einkaufen? Wie finden Sie das?",
+      "Wie kommen die Menschen in Ihrer Stadt oder Region meistens zur Arbeit, zur Schule oder zum Einkaufen? Was spricht für oder gegen das Fahrrad in der Stadt? Wie finden Sie das?",
       [
         "beschreibt das Bild: viele Menschen fahren in einer Stadt mit dem Fahrrad",
         "vergleicht mit der eigenen Stadt oder Region (Radwege, Verkehrsmittel, Wege im Alltag)",
         "nennt mindestens einen Vor- oder Nachteil des Radfahrens in der Stadt",
         "äußert und begründet eine eigene Meinung",
       ],
-      ["was auf dem Bild zu sehen ist", "wie die Menschen in Ihrer Stadt oder Region unterwegs sind", "Ihre Meinung"]),
+      ["was auf dem Bild zu sehen ist", "wie die Menschen in Ihrer Stadt oder Region unterwegs sind", "Vor- und Nachteile des Fahrrads in der Stadt", "Ihre Meinung"]),
     pictureTask("scene.b1.home-office", "MID",
       "Haben Sie schon einmal zu Hause gearbeitet oder gelernt? Wie ist das bei Menschen in Ihrer Stadt oder Region? Was sind Vor- und Nachteile?",
       [
@@ -1973,14 +1973,14 @@ function pictureTasks(): SeedItem[] {
       ],
       ["was auf dem Bild zu sehen ist", "Ihre eigene Erfahrung", "Vor- und Nachteile", "Ihre Meinung"]),
     pictureTask("scene.b1.library-study-group", "MID",
-      "Wo und mit wem lernen Sie am liebsten? Gibt es in Ihrer Stadt oder Region Orte zum gemeinsamen Lernen?",
+      "Wo und mit wem lernen Sie am liebsten? Gibt es in Ihrer Stadt oder Region Orte zum gemeinsamen Lernen? Lernen Sie lieber allein oder in der Gruppe? Warum?",
       [
         "beschreibt das Bild: eine Gruppe von Studierenden lernt zusammen an einem Tisch",
         "erzählt, wo und mit wem man selbst am liebsten lernt",
         "beschreibt Orte zum Lernen in der eigenen Stadt oder Region",
         "nennt Vor- oder Nachteile des Lernens in der Gruppe und begründet die eigene Meinung",
       ],
-      ["was auf dem Bild zu sehen ist", "wo und mit wem Sie am liebsten lernen", "Orte zum Lernen in Ihrer Stadt oder Region"]),
+      ["was auf dem Bild zu sehen ist", "wo und mit wem Sie am liebsten lernen", "Orte zum Lernen in Ihrer Stadt oder Region", "allein oder in der Gruppe: Ihre Meinung mit Gründen"]),
     pictureTask("scene.b1.open-air-concert", "MID",
       "Waren Sie schon einmal bei einem Konzert oder einem Fest im Freien? Was gibt es in Ihrer Stadt oder Region für Veranstaltungen? Gehen Sie gern hin?",
       [
@@ -1998,7 +1998,7 @@ function pictureTasks(): SeedItem[] {
         "erklärt, warum solche Aktionen wichtig sind (Umwelt, Gemeinschaft)",
         "äußert und begründet eine eigene Meinung",
       ],
-      ["was auf dem Bild zu sehen ist", "Erfahrungen mit freiwilliger Hilfe", "Aktionen in Ihrer Stadt oder Region", "warum das wichtig ist"]),
+      ["was auf dem Bild zu sehen ist", "Erfahrungen mit freiwilliger Hilfe", "Aktionen in Ihrer Stadt oder Region", "warum das wichtig ist", "Ihre Meinung"]),
   ];
 }
 
@@ -2045,7 +2045,7 @@ function slideTalks(): SeedItem[] {
     "Ihre eigene Erfahrung",
     "die Situation in Ihrer Stadt oder Region",
     "Vor- und Nachteile",
-    "Schluss",
+    "Schluss (mit Dank an die Zuhörer)",
   ];
   return [
     slideTalk("MID", { thinkSeconds: 90, answerSeconds: 150 }, "Mit dem Fahrrad durch die Stadt", points("Fahrrad in der Stadt"), student),
