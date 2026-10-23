@@ -962,7 +962,7 @@ export function WritingItem({ item, answer, onChange, disabled }: ItemProps) {
         className="w-full resize-y rounded-[10px] border border-line-strong bg-surface px-4 py-3 text-[16px] leading-[1.65] text-ink lg:min-h-0 lg:flex-1 lg:resize-none"
         {...NO_ASSIST}
       />
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-3" data-demo="writing-tools">
         <UmlautBar onInsert={(ch) => onChange({ text: insertAt(ref.current, ch, answer.text ?? "") })} />
         <span className={cn("tnum text-[13px]", words < minWords || words > maxWords ? "text-muted" : "text-ink")}>
           {t("words", { n: words })} · {t("wordsRange", { min: minWords, max: maxWords })}

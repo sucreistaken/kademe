@@ -363,7 +363,7 @@
     "listenGate": "{plays, plural, one {First read the questions and the answer options. Start listening when you are ready. The recording can be played # time.} other {First read the questions and the answer options. Start listening when you are ready. The recording can be played # times.}}",
     "listenStart": "I have read the questions, start listening",
     "listenPlaying": "Playing",
-    "playsLeft": "{n} plays left",
+    "playsLeft": "{n, plural, one {# play left} other {# plays left}}",
     "noPlaysLeft": "No plays left",
     "readingText": "Text",
     "timeUp": "Time is up, your answers were saved.",

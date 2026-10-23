@@ -47,7 +47,7 @@ export type DemoAction =
  */
 export type Target =
   | { kind: "option" | "matchRow" | "tray" | "gap" | "chip"; item: number; id: string }
-  | { kind: "ui"; name: "timer" | "mark" | "next" | "strip" | "passage" | "player" | "notes" | "record" };
+  | { kind: "ui"; name: "timer" | "mark" | "next" | "strip" | "passage" | "player" | "notes" | "record" | "tools" };
 
 export type UiName = Extract<Target, { kind: "ui" }>["name"];
 

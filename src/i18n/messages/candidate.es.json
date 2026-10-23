@@ -363,7 +363,7 @@
     "listenGate": "{plays, plural, one {Primero lea las preguntas y las opciones de respuesta. Empiece a escuchar cuando esté listo/a. La grabación se puede reproducir # vez.} other {Primero lea las preguntas y las opciones de respuesta. Empiece a escuchar cuando esté listo/a. La grabación se puede reproducir # veces.}}",
     "listenStart": "He leído las preguntas, empezar a escuchar",
     "listenPlaying": "Reproduciendo",
-    "playsLeft": "Quedan {n} reproducciones",
+    "playsLeft": "{n, plural, one {Queda # reproducción} other {Quedan # reproducciones}}",
     "noPlaysLeft": "No quedan reproducciones",
     "readingText": "Texto",
     "timeUp": "Se acabó el tiempo, sus respuestas se guardaron.",

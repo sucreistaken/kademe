@@ -363,7 +363,7 @@
     "listenGate": "Önce soruları ve şıkları okuyun. Hazır olduğunuzda dinlemeye başlayın. Kayıt {plays} kez çalınabilir.",
     "listenStart": "Soruları okudum, dinlemeye başla",
     "listenPlaying": "Çalıyor",
-    "playsLeft": "{n} dinleme hakkı kaldı",
+    "playsLeft": "{n, plural, one {# dinleme hakkı kaldı} other {# dinleme hakkı kaldı}}",
     "noPlaysLeft": "Dinleme hakkınız doldu",
     "readingText": "Metin",
     "timeUp": "Süre doldu, cevaplarınız kaydedildi.",

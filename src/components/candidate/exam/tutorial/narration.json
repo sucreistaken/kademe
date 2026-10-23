@@ -761,8 +761,8 @@
       },
       "again": {
         "src": "/tutorial/ar/GRAMMAR/again.mp3",
-        "ms": 7720,
-        "hash": "02b1c6b3fffcce"
+        "ms": 6760,
+        "hash": "179e9ff6bb79e4"
       },
       "mark": {
         "src": "/tutorial/ar/GRAMMAR/mark.mp3",
@@ -771,8 +771,8 @@
       },
       "strip": {
         "src": "/tutorial/ar/GRAMMAR/strip.mp3",
-        "ms": 7680,
-        "hash": "02cb61fea650e1"
+        "ms": 5920,
+        "hash": "08ffcf0bbfa4c7"
       },
       "timer": {
         "src": "/tutorial/ar/GRAMMAR/timer.mp3",

@@ -363,7 +363,7 @@
     "listenGate": "{plays, plural, one {Lesen Sie zuerst die Fragen und die Antwortmöglichkeiten. Beginnen Sie mit dem Hören, wenn Sie bereit sind. Die Aufnahme kann # Mal abgespielt werden.} other {Lesen Sie zuerst die Fragen und die Antwortmöglichkeiten. Beginnen Sie mit dem Hören, wenn Sie bereit sind. Die Aufnahme kann # Mal abgespielt werden.}}",
     "listenStart": "Ich habe die Fragen gelesen, Hören starten",
     "listenPlaying": "Wiedergabe läuft",
-    "playsLeft": "Noch {n} Wiedergaben",
+    "playsLeft": "{n, plural, one {Noch # Wiedergabe} other {Noch # Wiedergaben}}",
     "noPlaysLeft": "Keine Wiedergaben mehr",
     "readingText": "Text",
     "timeUp": "Die Zeit ist abgelaufen, Ihre Antworten wurden gespeichert.",

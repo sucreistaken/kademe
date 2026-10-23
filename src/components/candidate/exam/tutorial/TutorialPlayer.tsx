@@ -102,10 +102,6 @@ function PlayerBody({ script }: { script: TutorialScript }) {
       if (el.paused && !el.ended) void el.play().catch(() => undefined);
     }
   }, [stepId, playing, jump, step?.start]);
-  useEffect(() => {
-    const all = audios.current;
-    return () => Object.values(all).forEach((el) => el?.pause());
-  }, []);
 
   const seek = useCallback(
     (to: number) => {
@@ -196,6 +192,8 @@ function PlayerBody({ script }: { script: TutorialScript }) {
           <audio
             key={s.id}
             ref={(el) => {
+              // React detaches the ref (null) when the player closes: stop the clip that was playing.
+              if (!el) audios.current[s.id]?.pause();
               audios.current[s.id] = el;
             }}
             src={entry.src}

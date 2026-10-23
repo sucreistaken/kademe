@@ -19,7 +19,7 @@ export const GRAMMAR_SCRIPT: TutorialScript = {
           cloze: true,
           gaps: [
             { id: "g1", choices: ["schlafe", "schläft", "schlafen", "geschlafen"] },
-            { id: "g2", choices: ["mit", "bei", "von", "zu"] },
+            { id: "g2", choices: ["mit", "für", "von", "zu"] },
             { id: "g3", choices: ["ins", "im", "in", "am"] },
           ],
         },

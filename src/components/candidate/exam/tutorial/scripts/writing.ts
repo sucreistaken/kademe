@@ -30,7 +30,7 @@ export const WRITING_SCRIPT: TutorialScript = {
       ],
     },
     { id: "type", actions: [{ do: "type", into: { kind: "gap", item: 0, id: "text" }, text: "Liebe Mia,\nam Samstag habe ich Geburtstag und mache eine kleine Party. Kommst du?" }] },
-    { id: "tools", actions: [{ do: "spotlight", on: { kind: "gap", item: 0, id: "text" } }] },
+    { id: "tools", actions: [{ do: "spotlight", on: { kind: "ui", name: "tools" } }] },
     { id: "mark", actions: [{ do: "click", on: { kind: "ui", name: "mark" }, mark: true }] },
     {
       id: "strip",

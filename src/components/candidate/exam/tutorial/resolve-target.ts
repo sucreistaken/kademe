@@ -32,6 +32,8 @@ const UI: Record<Extract<Target, { kind: "ui" }>["name"], TargetMatch[]> = {
   // The reading text's note tools.
   notes: [{ attr: "role", value: "toolbar" }],
   record: [{ attr: "data-demo", value: "record" }],
+  // The writing task's row with the umlaut buttons and the word counter.
+  tools: [{ attr: "data-demo", value: "writing-tools" }],
 };
 
 export function targetQuery(target: Target): TargetQuery {

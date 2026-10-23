@@ -26,6 +26,8 @@ export const TYPE_CHAR_MS = 55;
 export const MS_PER_WORD: Record<string, number> = { en: 320, de: 350, es: 390, tr: 480, ar: 560 };
 /** The quiet before and after a recorded caption. */
 export const NARRATION_PAD_MS = 600;
+/** The quiet gap after a recorded step, so two narrations never run back to back. */
+export const RECORDED_GAP_MS = 350;
 
 /** Narration time from the caption's word count when there is no recording. */
 export function estimateNarrationMs(text: string, locale = "en"): number {
