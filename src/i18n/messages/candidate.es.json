@@ -1259,5 +1259,19 @@
     "windowWhy": "Para comprobar de forma fiable si hay una segunda pantalla conectada, el navegador pedirá el permiso de «gestión de ventanas». Permítalo, por favor.",
     "windowDenied": "No pudimos comprobar si hay una segunda pantalla (no se concedió el permiso de gestión de ventanas). Asegúrese de usar una sola pantalla; se avisará a su profesor.",
     "windowUnsupported": "Este navegador no puede comprobar si hay una segunda pantalla. Asegúrese de usar una sola pantalla; se avisará a su profesor."
+  },
+  "notes": {
+    "toolbar": "Herramientas de notas",
+    "highlightYellow": "Resaltador amarillo",
+    "highlightGreen": "Resaltador verde",
+    "highlightPink": "Resaltador rosa",
+    "underline": "Subrayar",
+    "pen": "Lápiz",
+    "eraser": "Borrador",
+    "clear": "Borrar notas",
+    "undo": "Deshacer",
+    "cleared": "Notas borradas",
+    "pad": "Espacio para apuntes",
+    "padHint": "Solo para ti, no se evalúa ni se muestra a nadie."
   }
 }

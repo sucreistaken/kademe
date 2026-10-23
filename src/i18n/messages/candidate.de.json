@@ -1259,5 +1259,19 @@
     "windowWhy": "Um zuverlässig zu prüfen, ob ein zweiter Bildschirm angeschlossen ist, fragt der Browser nach der Berechtigung „Fensterverwaltung“. Bitte erlauben Sie sie.",
     "windowDenied": "Wir konnten nicht prüfen, ob ein zweiter Bildschirm vorhanden ist (die Berechtigung zur Fensterverwaltung wurde nicht erteilt). Achten Sie darauf, dass nur ein Bildschirm in Benutzung ist; Ihre Lehrkraft wird informiert.",
     "windowUnsupported": "Dieser Browser kann einen zweiten Bildschirm nicht prüfen. Achten Sie darauf, dass nur ein Bildschirm in Benutzung ist; Ihre Lehrkraft wird informiert."
+  },
+  "notes": {
+    "toolbar": "Notizwerkzeuge",
+    "highlightYellow": "Gelber Textmarker",
+    "highlightGreen": "Grüner Textmarker",
+    "highlightPink": "Rosa Textmarker",
+    "underline": "Unterstreichen",
+    "pen": "Stift",
+    "eraser": "Radierer",
+    "clear": "Notizen löschen",
+    "undo": "Rückgängig",
+    "cleared": "Notizen gelöscht",
+    "pad": "Notizfläche",
+    "padHint": "Nur für Sie, wird nicht bewertet und niemandem gezeigt."
   }
 }

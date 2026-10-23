@@ -40,6 +40,8 @@ import { ErrorLine } from "@/components/candidate/exam/ErrorLine";
 import { ExamTopBar } from "@/components/candidate/exam/ExamTopBar";
 import { ItemHeading } from "@/components/candidate/exam/ItemHeading";
 import { ReadingPane } from "@/components/candidate/exam/ReadingPane";
+import { ScratchPad } from "@/components/candidate/exam/notes/ScratchPad";
+import { ListeningStems, StemNotes } from "@/components/candidate/exam/notes/StemNotes";
 import { SectionIntro } from "@/components/candidate/exam/SectionIntro";
 import { useT } from "@/i18n/candidate-client";
 import type { CandidateLocale } from "@/i18n/locale";
@@ -758,7 +760,9 @@ export function ExamRunner({
                     if (!active) setLeave(null);
                   }}
                 />
+                <ScratchPad token={token} sectionPosition={cur.position} padKey={`group-${members[0]}`} />
               </div>
+              <StemNotes token={token} sectionPosition={cur.position} contentKey={group.map((g) => g.prompt).join("\n")}>
               <div className="flex flex-col gap-8">
                 {group.map((g, idx) => {
                   const flagged = flaggedAt(g.sequence);
@@ -786,6 +790,7 @@ export function ExamRunner({
                   );
                 })}
               </div>
+              </StemNotes>
             </div>
           </div>
         ) : item ? (
@@ -797,7 +802,7 @@ export function ExamRunner({
             )}
           >
             <div className={cn(item.stimulus?.kind === "READING" && "grid gap-8 lg:grid-cols-2")}>
-              {item.stimulus?.kind === "READING" ? <ReadingPane title={item.stimulus.title} text={item.stimulus.text} /> : null}
+              {item.stimulus?.kind === "READING" ? <ReadingPane title={item.stimulus.title} text={item.stimulus.text} token={token} sectionPosition={cur.position} /> : null}
               <div>
                 <ItemHeading
                   variant="single"
@@ -820,6 +825,7 @@ export function ExamRunner({
                       heading={listeningHeading}
                       gateKey={gateKey(token, cur.position, item.sequence)}
                     />
+                    <ScratchPad token={token} sectionPosition={cur.position} padKey={`item-${item.sequence}`} />
                   </div>
                 ) : null}
                 {item.content.kind === "SPEAKING" ? (
@@ -833,7 +839,9 @@ export function ExamRunner({
                     engine={engine}
                   />
                 ) : (
-                  <ItemView key={item.sequence} item={item} answer={answer} onChange={change} disabled={inputsOff} />
+                  <ListeningStems active={item.stimulus?.kind === "LISTENING"} token={token} sectionPosition={cur.position} contentKey={item.prompt}>
+                    <ItemView key={item.sequence} item={item} answer={answer} onChange={change} disabled={inputsOff} />
+                  </ListeningStems>
                 )}
               </div>
             </div>

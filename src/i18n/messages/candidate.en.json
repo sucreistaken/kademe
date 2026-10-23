@@ -1259,5 +1259,19 @@
     "windowWhy": "To check reliably whether a second screen is connected, the browser will ask for the \"window management\" permission. Please allow it.",
     "windowDenied": "We could not check for a second screen (window management permission was not given). Make sure you are on one screen; your teacher will be told.",
     "windowUnsupported": "This browser cannot check for a second screen. Make sure you are on one screen; your teacher will be told."
+  },
+  "notes": {
+    "toolbar": "Note tools",
+    "highlightYellow": "Yellow highlighter",
+    "highlightGreen": "Green highlighter",
+    "highlightPink": "Pink highlighter",
+    "underline": "Underline",
+    "pen": "Pen",
+    "eraser": "Eraser",
+    "clear": "Clear notes",
+    "undo": "Undo",
+    "cleared": "Notes cleared",
+    "pad": "Scratch pad",
+    "padHint": "Only for you, never graded or shown to anyone."
   }
 }

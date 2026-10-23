@@ -567,3 +567,23 @@ html:has([data-step-footer]) {
 .rounded-\[14px\] {
   border-radius: var(--radius-lg);
 }
+
+/* Exam note marks (CSS Custom Highlight API): soft tints, text stays ink. */
+::highlight(kademe-mark-yellow) {
+  background-color: #ffec99;
+  color: var(--color-ink);
+}
+::highlight(kademe-mark-green) {
+  background-color: #c4eed0;
+  color: var(--color-ink);
+}
+::highlight(kademe-mark-pink) {
+  background-color: #fbcfe0;
+  color: var(--color-ink);
+}
+::highlight(kademe-underline) {
+  text-decoration: underline;
+  text-decoration-color: var(--color-ink);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}

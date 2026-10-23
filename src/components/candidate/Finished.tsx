@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Check, Loader2, Mail, PowerOff, WifiOff } from "lucide-react";
+import { clearAllNotes } from "@/components/candidate/exam/notes/notes-store";
 import { AnalysisView } from "@/components/candidate/exam/AnalysisView";
 import { ExamEndReport } from "@/components/candidate/ExamEndReport";
 import { CandidateColumn } from "@/components/candidate/Shell";
@@ -59,6 +60,11 @@ export function Finished({
   const { engine, snap } = useProctor();
   const [streamsOff, setStreamsOff] = useState(false);
   const [drainTimedOut, setDrainTimedOut] = useState(false);
+
+  // The student's browser-only notes end with the exam.
+  useEffect(() => {
+    clearAllNotes(token);
+  }, [token]);
 
   useEffect(() => {
     let cancelled = false;

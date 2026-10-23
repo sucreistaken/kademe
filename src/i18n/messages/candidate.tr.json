@@ -1259,5 +1259,19 @@
     "windowWhy": "İkinci ekran olup olmadığını güvenle kontrol edebilmek için tarayıcı sizden \"pencere yönetimi\" izni isteyecek. Lütfen izin verin.",
     "windowDenied": "İkinci ekranı kontrol edemedik (pencere yönetimi izni verilmedi). Tek ekranda olduğunuzdan emin olun; bu durum öğretmeninize bildirilir.",
     "windowUnsupported": "Bu tarayıcı ikinci ekranı kontrol edemiyor. Tek ekranda olduğunuzdan emin olun; bu durum öğretmeninize bildirilir."
+  },
+  "notes": {
+    "toolbar": "Not araçları",
+    "highlightYellow": "Sarı fosforlu kalem",
+    "highlightGreen": "Yeşil fosforlu kalem",
+    "highlightPink": "Pembe fosforlu kalem",
+    "underline": "Altını çiz",
+    "pen": "Kalem",
+    "eraser": "Silgi",
+    "clear": "Notları temizle",
+    "undo": "Geri al",
+    "cleared": "Notlar temizlendi",
+    "pad": "Karalama alanı",
+    "padHint": "Sadece sana özel, sınavda değerlendirilmez."
   }
 }
