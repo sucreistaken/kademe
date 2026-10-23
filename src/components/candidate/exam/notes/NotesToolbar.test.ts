@@ -1,4 +1,4 @@
-import { createElement } from "react";
+import { createElement, type FC, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
 import { describe, expect, it } from "vitest";
@@ -6,6 +6,9 @@ import en from "@/i18n/messages/candidate.en.json";
 import { emptyNotes } from "@/components/candidate/exam/notes/notes-model";
 import { NotesToolbar } from "@/components/candidate/exam/notes/NotesToolbar";
 import type { NotesController } from "@/components/candidate/exam/notes/use-notes";
+
+// The real provider types `children` as a required prop, which createElement's third argument cannot satisfy.
+const Provider = NextIntlClientProvider as unknown as FC<{ locale: string; messages: Record<string, unknown>; children?: ReactNode }>;
 
 const noop = () => {};
 const controller = (over: Partial<NotesController>): NotesController => ({
@@ -24,7 +27,11 @@ const controller = (over: Partial<NotesController>): NotesController => ({
 
 function html(c: NotesController, pen = true) {
   return renderToStaticMarkup(
-    createElement(NextIntlClientProvider, { locale: "en", messages: { notes: en.notes }, children: createElement(NotesToolbar, { controller: c, pen }) }),
+    createElement(
+      Provider,
+      { locale: "en", messages: { notes: en.notes } },
+      createElement(NotesToolbar, { controller: c, pen }),
+    ),
   );
 }
 
