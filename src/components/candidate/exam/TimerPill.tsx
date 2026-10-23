@@ -83,18 +83,16 @@ export function TimerPill({
         <Clock aria-hidden className="size-5 text-ink-2" strokeWidth={2} />
         <span className="tnum text-button-lg text-ink">{formatCountdown(remainingMs)}</span>
       </span>
-      {notice ? (
-        <div
-          role="status"
-          aria-live="polite"
-          className="absolute start-1/2 top-full mt-2 flex w-max max-w-[360px] -translate-x-1/2 items-center gap-3 rounded-[12px] border border-sun-fill bg-sun-soft px-4 py-2 text-[14px] font-semibold text-ink shadow-lip-soft rtl:translate-x-1/2"
-        >
-          <span>{notice.cue === "low" ? t("timeNoticeLow", { minutes: notice.minutes }) : t("timeNoticeLast")}</span>
-          <Button type="button" size="sm" onClick={() => setNotice(null)}>
-            {t("timeNoticeOk")}
-          </Button>
-        </div>
-      ) : null}
+      <div role="status" aria-live="polite" className="absolute start-1/2 top-full -translate-x-1/2 rtl:translate-x-1/2">
+        {notice ? (
+          <div className="mt-2 flex w-max max-w-[360px] items-center gap-3 rounded-[12px] border border-sun-fill bg-sun-soft px-4 py-2 text-[14px] font-semibold text-ink shadow-lip-soft">
+            <span>{notice.cue === "low" ? t("timeNoticeLow", { minutes: notice.minutes }) : t("timeNoticeLast")}</span>
+            <Button type="button" size="sm" onClick={() => setNotice(null)}>
+              {t("timeNoticeOk")}
+            </Button>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

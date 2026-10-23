@@ -338,7 +338,6 @@
     "leaveAnyway": "Yine de geç",
     "leaveStay": "Kalayım",
     "timeLeft": "Kalan süre",
-    "lastMinutes": "Son 2 dakika",
     "timeNoticeLow": "Bu bölümde {minutes} dakikanız kaldı. Cevaplarınız siz ilerledikçe kaydedilir.",
     "timeNoticeLast": "Bu bölümün son 2 dakikası. Cevaplarınız siz ilerledikçe kaydedilir.",
     "timeNoticeOk": "Tamam",

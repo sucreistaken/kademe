@@ -58,16 +58,16 @@ export function ExamTopBar({
   return (
     <header className="sticky top-0 z-20 border-b border-hairline bg-surface/95 backdrop-blur">
       <div className={cn("relative mx-auto flex h-14 items-center justify-between gap-4 px-7", wide ? "max-w-[1200px]" : "max-w-[1000px]")}>
-        <div className="flex items-center gap-3 text-[13.5px]">
-          <span className="flex items-center gap-2 text-[16px] font-extrabold tracking-[-0.01em] text-ink">
+        <div className="flex min-w-0 max-w-[calc(50%-5rem)] items-center gap-3 text-[13.5px]">
+          <span className="flex shrink-0 items-center gap-2 text-[16px] font-extrabold tracking-[-0.01em] text-ink">
             <BrandMark />
             {common("brand")}
           </span>
           {inQuestion ? (
             <>
-              <span className="h-4 w-px bg-hairline" aria-hidden />
-              <span className="text-label text-ink">{sectionName}</span>
-              <span className="tnum text-muted">{counter}</span>
+              <span className="h-4 w-px shrink-0 bg-hairline" aria-hidden />
+              <span title={sectionName} className="min-w-0 truncate text-label text-ink">{sectionName}</span>
+              <span className="tnum shrink-0 whitespace-nowrap text-muted">{counter}</span>
             </>
           ) : null}
         </div>
