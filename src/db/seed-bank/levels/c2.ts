@@ -279,16 +279,16 @@ const grammarTexts: SeedItem[] = [
     title: "Vom Wert des Zögerns",
     first: "Wer zögert, gilt in einer auf Tempo getrimmten Gesellschaft rasch als entscheidungsschwach.",
     body:
-      "Ist das Zögern [[etwa|eben|ja|halt]] nur ein Zeichen mangelnder Entschlusskraft? " +
-      "Wer so urteilt, übersieht, dass sich so manche kluge Entscheidung gerade [[dem|den|des|der]] Umstand verdankt, dass jemand nicht sofort zugegriffen hat. " +
-      "Erst das Innehalten verschafft jene Distanz, [[ohne die|ohne der|ohne deren|ohne denen]] sich eine Lage kaum nüchtern beurteilen lässt. " +
-      "Nicht von ungefähr [[rät|berät|verrät|errät]] eine alte Volksweisheit, wichtige Entscheidungen zu überschlafen. " +
-      "Freilich ist [[zwischen|unter|bei|neben]] besonnenem Abwägen und bloßem Aufschieben zu unterscheiden. " +
-      "Das eine dient der Klärung, das andere der Vermeidung, [[wenngleich|weil|damit|sofern]] sich beide von außen betrachtet zum Verwechseln ähneln. " +
-      "Wer aufschiebt, hofft insgeheim, die Sache [[möge|mag|mögen|mochte]] sich von selbst erledigen. " +
-      "Der Besonnene hingegen wartet nicht [[mangels|ungeachtet|angesichts|zugunsten]] eines Plans, sondern um einen besseren zu finden. " +
-      "Er nimmt die Ungewissheit des Wartens bewusst [[in Kauf|in Anspruch|in Angriff|zum Anlass]], weil sich manche Dinge erst mit der Zeit [[erschließen|erschließt|erschlösse|erschließend]]. " +
-      "[[Insofern|Sofern|Sodass|Inwiefern]] ist das Zögern weniger ein Mangel als eine Form von Urteilskraft.",
+      "Ist das Zögern [[etwa|eben|ja|halt#idiomatik]] nur ein Zeichen mangelnder Entschlusskraft? " +
+      "Wer so urteilt, übersieht, dass sich so manche kluge Entscheidung gerade [[dem|den|des|der#rektion]] Umstand verdankt, dass jemand nicht sofort zugegriffen hat. " +
+      "Erst das Innehalten verschafft jene Distanz, [[ohne die|ohne der|ohne deren|ohne denen#relativsatz.praeposition]] sich eine Lage kaum nüchtern beurteilen lässt. " +
+      "Nicht von ungefähr [[rät|berät|verrät|errät#wortbildung]] eine alte Volksweisheit, wichtige Entscheidungen zu überschlafen. " +
+      "Freilich ist [[zwischen|unter|bei|neben#praeposition]] besonnenem Abwägen und bloßem Aufschieben zu unterscheiden. " +
+      "Das eine dient der Klärung, das andere der Vermeidung, [[wenngleich|weil|damit|sofern#konnektor.konzessiv]] sich beide von außen betrachtet zum Verwechseln ähneln. " +
+      "Wer aufschiebt, hofft insgeheim, die Sache [[möge|mag|mögen|mochte#konjunktiv_i]] sich von selbst erledigen. " +
+      "Der Besonnene hingegen wartet nicht [[mangels|ungeachtet|angesichts|zugunsten#genitiv.praeposition]] eines Plans, sondern um einen besseren zu finden. " +
+      "Er nimmt die Ungewissheit des Wartens bewusst [[in Kauf|in Anspruch|in Angriff|zum Anlass#funktionsverbgefuege]], weil sich manche Dinge erst mit der Zeit [[erschließen|erschließt|erschlösse|erschließend#reflexiv]]. " +
+      "[[Insofern|Sofern|Sodass|Inwiefern#konnektor]] ist das Zögern weniger ein Mangel als eine Form von Urteilskraft.",
     last: "Gefährlich wird es erst dort, wo aus dem Innehalten ein dauerhaftes Ausweichen wird.",
     note: "Modalpartikel etwa in der Entscheidungsfrage (g1), sich verdanken + Dativ (g2), Relativsatz mit ohne + Akkusativ (g3), Verben mit dem Stamm rat (g4), Präposition bei unterscheiden zwischen (g5), konzessives wenngleich (g6), Konjunktiv I für einen Wunsch in der indirekten Rede (g7), mangels + Genitiv (g8), Funktionsverbgefüge in Kauf nehmen (g9), Kongruenz bei sich erschließen (g10), insofern mit Verbzweitstellung (g11).",
   }),
@@ -296,16 +296,16 @@ const grammarTexts: SeedItem[] = [
     title: "Über das Übersetzen",
     first: "Dass Übersetzen mehr ist als das Austauschen von Wörtern, weiß jeder, der es je ernsthaft versucht hat.",
     body:
-      "Schon ein scheinbar schlichter Satz kann Anspielungen enthalten, [[für die|für deren|für denen|für welchen]] es in der Zielsprache keine Entsprechung gibt. " +
+      "Schon ein scheinbar schlichter Satz kann Anspielungen enthalten, [[für die|für deren|für denen|für welchen#relativsatz.praeposition]] es in der Zielsprache keine Entsprechung gibt. " +
       "Eine erfahrene Literaturübersetzerin bemerkte einmal, sie übertrage nie Wörter, sondern stets Wirkungen. " +
-      "Ein Wortspiel etwa lässt sich selten wörtlich wiedergeben; [[vielmehr|zumal|obgleich|wohingegen]] muss für den Leser ein neues gefunden werden, das ähnlich funktioniert. " +
-      "Der im Original [[angelegte|anzulegende|anlegende|angelegten]] Doppelsinn muss dann auf anderem Wege entstehen. " +
-      "Dabei [[gerät|bringt|stellt|setzt]] man leicht in Versuchung, sperrige Stellen zu glätten. " +
-      "Doch ein sperriger Satz ist [[nun einmal|denn|ruhig|bitte]] nicht dasselbe wie ein misslungener. " +
-      "Wer jede Unebenheit tilgt, [[bringt|nimmt|stellt|gibt]] den Text um seine Eigenart. " +
-      "[[Ungeachtet|Mangels|Zufolge|Anhand]] aller Theorien bleibt das Übersetzen letztlich eine Abfolge einzelner Entscheidungen, [[die|denen|deren|das]] sich kaum in Regeln fassen lassen. " +
-      "Eine gelungene Übersetzung liest sich, als [[wäre|ist|würde|hätte]] sie in der Zielsprache selbst entstanden. " +
-      "Ihr eigentliches Verdienst [[besteht|beruht|basiert|bezieht]] darin, dass man sie als solche gar nicht bemerkt.",
+      "Ein Wortspiel etwa lässt sich selten wörtlich wiedergeben; [[vielmehr|zumal|obgleich|wohingegen#konnektor]] muss für den Leser ein neues gefunden werden, das ähnlich funktioniert. " +
+      "Der im Original [[angelegte|anzulegende|anlegende|angelegten#partizipattribut]] Doppelsinn muss dann auf anderem Wege entstehen. " +
+      "Dabei [[gerät|bringt|stellt|setzt#funktionsverbgefuege]] man leicht in Versuchung, sperrige Stellen zu glätten. " +
+      "Doch ein sperriger Satz ist [[nun einmal|denn|ruhig|bitte#idiomatik]] nicht dasselbe wie ein misslungener. " +
+      "Wer jede Unebenheit tilgt, [[bringt|nimmt|stellt|gibt#rektion]] den Text um seine Eigenart. " +
+      "[[Ungeachtet|Mangels|Zufolge|Anhand#genitiv.praeposition]] aller Theorien bleibt das Übersetzen letztlich eine Abfolge einzelner Entscheidungen, [[die|denen|deren|das#relativsatz]] sich kaum in Regeln fassen lassen. " +
+      "Eine gelungene Übersetzung liest sich, als [[wäre|ist|würde|hätte#konjunktiv2]] sie in der Zielsprache selbst entstanden. " +
+      "Ihr eigentliches Verdienst [[besteht|beruht|basiert|bezieht#verb_praeposition]] darin, dass man sie als solche gar nicht bemerkt.",
     last: "Dass sie dennoch eine eigene schöpferische Leistung ist, wird darüber allzu oft vergessen.",
     note: "Relativsatz mit für + Akkusativ (g1), vielmehr nach Semikolon mit Inversion (g2), Partizipialattribut (g3), in Versuchung geraten (g4), Modalpartikel nun einmal (g5), jemanden um etwas bringen (g6), ungeachtet + Genitiv (g7), Relativpronomen im Plural (g8), irrealer Vergleich mit als + Konjunktiv II (g9), bestehen in (g10).",
   }),
@@ -313,16 +313,16 @@ const grammarTexts: SeedItem[] = [
     title: "Vom Verschwinden der Handschrift",
     first: "Kaum eine Kulturtechnik ist in so kurzer Zeit so weit an den Rand gedrängt worden wie das Schreiben mit der Hand.",
     body:
-      "Was über Jahrhunderte als Ausweis von Bildung [[galt|gilt|gälte|gegolten]], fristet heute ein Schattendasein auf Einkaufszetteln und Glückwunschkarten. " +
-      "[[So|Als|Wenn|Zu]] bedauerlich man diesen Wandel auch finden mag, aufhalten lässt er sich kaum. " +
-      "Neurowissenschaftler geben indes zu bedenken, beim Schreiben mit der Hand [[werde|werden|worden|wurde]] das Gelernte nachhaltiger im Gedächtnis verankert als beim Tippen. " +
-      "Die dabei unvermeidliche Verlangsamung zwinge [[zur|zum|auf|für]] Auswahl und fördere so das Verstehen. " +
-      "Ein [[Verzicht|Entzug|Abschied|Ausstieg]] auf die Schreibschrift im Unterricht sei daher voreilig. " +
-      "[[Freilich|Folglich|Zumal|Sofern]] beweist ein statistischer Zusammenhang noch keine Ursache. " +
-      "Viele Studien beruhen auf kleinen Stichproben, und [[mangels|zufolge|seitens|kraft]] verlässlicher Langzeitdaten lässt sich über die Wirkung im Erwachsenenalter bislang nur spekulieren. " +
-      "Ohnehin hieße es, die Handschrift zu unterschätzen, wollte man sie allein ihres Nutzens [[wegen|willen|zuliebe|anstatt]] verteidigen. " +
-      "Wer von Hand schreibt, hinterlässt [[ja|etwa|denn|bloß]] stets auch eine Spur seiner selbst, die sich in keiner Schriftart [[nachbilden|nachbildet|nachgebildet|nachzubilden]] lässt. " +
-      "Dass mit der Handschrift auch diese persönliche Note allmählich in Vergessenheit [[gerät|kommt|geht|tritt]], wäre der eigentliche Verlust.",
+      "Was über Jahrhunderte als Ausweis von Bildung [[galt|gilt|gälte|gegolten#praeteritum]], fristet heute ein Schattendasein auf Einkaufszetteln und Glückwunschkarten. " +
+      "[[So|Als|Wenn|Zu#konnektor.konzessiv]] bedauerlich man diesen Wandel auch finden mag, aufhalten lässt er sich kaum. " +
+      "Neurowissenschaftler geben indes zu bedenken, beim Schreiben mit der Hand [[werde|werden|worden|wurde#konjunktiv_i]] das Gelernte nachhaltiger im Gedächtnis verankert als beim Tippen. " +
+      "Die dabei unvermeidliche Verlangsamung zwinge [[zur|zum|auf|für#verb_praeposition]] Auswahl und fördere so das Verstehen. " +
+      "Ein [[Verzicht|Entzug|Abschied|Ausstieg#nominalisierung]] auf die Schreibschrift im Unterricht sei daher voreilig. " +
+      "[[Freilich|Folglich|Zumal|Sofern#konnektor]] beweist ein statistischer Zusammenhang noch keine Ursache. " +
+      "Viele Studien beruhen auf kleinen Stichproben, und [[mangels|zufolge|seitens|kraft#genitiv.praeposition]] verlässlicher Langzeitdaten lässt sich über die Wirkung im Erwachsenenalter bislang nur spekulieren. " +
+      "Ohnehin hieße es, die Handschrift zu unterschätzen, wollte man sie allein ihres Nutzens [[wegen|willen|zuliebe|anstatt#genitiv.praeposition]] verteidigen. " +
+      "Wer von Hand schreibt, hinterlässt [[ja|etwa|denn|bloß#idiomatik]] stets auch eine Spur seiner selbst, die sich in keiner Schriftart [[nachbilden|nachbildet|nachgebildet|nachzubilden#infinitiv]] lässt. " +
+      "Dass mit der Handschrift auch diese persönliche Note allmählich in Vergessenheit [[gerät|kommt|geht|tritt#funktionsverbgefuege]], wäre der eigentliche Verlust.",
     last: "Ihn vermag keine noch so ausgefeilte Software auszugleichen.",
     note: "Präteritum im Kontrast zu heute (g1), konzessives so ... auch (g2), Konjunktiv I Passiv in der indirekten Rede (g3), zwingen zu (g4), Nominalstil: Verzicht auf (g5), einräumendes freilich (g6), mangels + Genitiv (g7), nachgestelltes wegen nach dem Genitiv (g8), Modalpartikel ja (g9), sich lassen + Infinitiv (g10), in Vergessenheit geraten (g11).",
   }),
@@ -330,14 +330,14 @@ const grammarTexts: SeedItem[] = [
     title: "Über die Höflichkeit",
     first: "Höflichkeit steht im Ruf, eine bloße Äußerlichkeit zu sein, ein Relikt aus Zeiten steifer Umgangsformen.",
     body:
-      "Dieser Vorwurf [[verkennt]] jedoch, welche Aufgabe sie im Zusammenleben erfüllt. " +
-      "Höfliche Formen schaffen einen [[Spielraum]], in dem Menschen einander begegnen können, [[ohne]] sich sogleich offenbaren zu müssen. " +
-      "Wer einem Fremden die Tür aufhält, [[bekundet]] damit keine Zuneigung, sondern lediglich Respekt. " +
+      "Dieser Vorwurf [[verkennt#vocabulary]] jedoch, welche Aufgabe sie im Zusammenleben erfüllt. " +
+      "Höfliche Formen schaffen einen [[Spielraum#vocabulary]], in dem Menschen einander begegnen können, [[ohne#infinitiv.ohnezu]] sich sogleich offenbaren zu müssen. " +
+      "Wer einem Fremden die Tür aufhält, [[bekundet#vocabulary]] damit keine Zuneigung, sondern lediglich Respekt. " +
       "Gerade diese unverbindliche Form der Zuwendung macht Höflichkeit so wertvoll. " +
-      "Sie erlaubt es, Spannungen zu [[entschärfen]], [[bevor]] daraus offene Konflikte werden. " +
-      "Wer hingegen jede Floskel als [[heuchlerisch]] abtut, übersieht, dass Offenheit ohne Takt leicht verletzend wirkt. " +
+      "Sie erlaubt es, Spannungen zu [[entschärfen#vocabulary]], [[bevor#konnektor]] daraus offene Konflikte werden. " +
+      "Wer hingegen jede Floskel als [[heuchlerisch#adjektiv]] abtut, übersieht, dass Offenheit ohne Takt leicht verletzend wirkt. " +
       "Nicht selten entpuppt sich die vielgepriesene Ehrlichkeit dann als bloße Rücksichtslosigkeit. " +
-      "Höflichkeit ist insofern weniger eine Frage der Etikette als eine der [[Haltung]].",
+      "Höflichkeit ist insofern weniger eine Frage der Etikette als eine der [[Haltung#vocabulary]].",
     last: "Sie gesteht dem anderen zu, mehr zu sein als das, was er im Augenblick von sich zeigt.",
     // Function words (ohne, bevor) beside content words; damit nearly fits the two connector gaps, the rest nearly fit a verb, an adjective and a noun gap.
     distractors: ["damit", "aufrichtig", "Vertrauen", "verletzt"],
@@ -346,14 +346,14 @@ const grammarTexts: SeedItem[] = [
     title: "Die Ökonomie der Aufmerksamkeit",
     first: "Aufmerksamkeit ist zu einer der knappsten Ressourcen unserer Zeit geworden.",
     body:
-      "Unzählige Anbieter [[buhlen]] um die wenigen Sekunden, die ein Nutzer einem Inhalt zu schenken bereit ist. " +
-      "Viele Plattformen sind gezielt darauf [[ausgelegt]], den Blick möglichst lange an den Bildschirm zu binden. " +
-      "Was dabei auf der Strecke bleibt, ist die Fähigkeit zur [[Versenkung]] in eine einzige Sache. " +
-      "Wer ständig zwischen Reizen hin- und herspringt, verlernt allmählich, Langeweile zu [[ertragen]]. " +
+      "Unzählige Anbieter [[buhlen#vocabulary]] um die wenigen Sekunden, die ein Nutzer einem Inhalt zu schenken bereit ist. " +
+      "Viele Plattformen sind gezielt darauf [[ausgelegt#verb_praeposition]], den Blick möglichst lange an den Bildschirm zu binden. " +
+      "Was dabei auf der Strecke bleibt, ist die Fähigkeit zur [[Versenkung#nominalisierung]] in eine einzige Sache. " +
+      "Wer ständig zwischen Reizen hin- und herspringt, verlernt allmählich, Langeweile zu [[ertragen#infinitiv]]. " +
       "Dabei ist gerade sie häufig der Nährboden für eigenständige Gedanken. " +
-      "Kritiker sprechen bereits von einer [[schleichenden]] Entmündigung, die [[umso]] wirksamer sei, als sie kaum bemerkt werde. " +
-      "Andere halten solche Diagnosen für [[überzogen]] und verweisen darauf, dass schon jede neue Technik ähnliche Klagen hervorgerufen habe. " +
-      "Unbestritten ist jedenfalls, dass sich Aufmerksamkeit nicht beliebig [[vermehren]] lässt.",
+      "Kritiker sprechen bereits von einer [[schleichenden#adjektivendung]] Entmündigung, die [[umso#konnektor]] wirksamer sei, als sie kaum bemerkt werde. " +
+      "Andere halten solche Diagnosen für [[überzogen#adjektiv]] und verweisen darauf, dass schon jede neue Technik ähnliche Klagen hervorgerufen habe. " +
+      "Unbestritten ist jedenfalls, dass sich Aufmerksamkeit nicht beliebig [[vermehren#vocabulary]] lässt.",
     last: "Wer sie verschenkt, sollte daher wenigstens wissen, an wen.",
     // dagegen: an adverb like umso, but no gap takes it; the others nearly fit a noun, a verb and a participle gap.
     distractors: ["Zerstreuung", "verzichten", "gesteigert", "dagegen"],
@@ -362,14 +362,14 @@ const grammarTexts: SeedItem[] = [
     title: "Stadt im Morgengrauen",
     first: "Um diese Stunde gehört die Stadt noch niemandem.",
     body:
-      "Die Straßen liegen [[verwaist]] da, als hätte man sie über Nacht geräumt. " +
-      "Nur hin und wieder [[durchbricht]] das Rumpeln eines Lieferwagens die Stille. " +
-      "Aus einer Bäckerei [[dringt]] der Geruch von frischem Brot, und hinter einzelnen Fenstern flackert bereits Licht. " +
-      "In diesem [[Schwebezustand]] zwischen Nacht und Tag wirkt selbst das Vertraute seltsam fremd. " +
-      "Die Fassaden, tagsüber kaum eines Blickes [[gewürdigt]], treten plötzlich in ihrer ganzen Eigenart hervor. " +
-      "Man meint, die Stadt [[atme]] noch einmal tief durch, bevor sie sich dem Lärm des Tages überlässt. " +
-      "Doch dieser Zauber ist [[flüchtig]]. " +
-      "Wer ihn einmal bewusst erlebt hat, begegnet dem Gewohnten [[fortan]] mit größerer Achtsamkeit.",
+      "Die Straßen liegen [[verwaist#adjektiv]] da, als hätte man sie über Nacht geräumt. " +
+      "Nur hin und wieder [[durchbricht#vocabulary]] das Rumpeln eines Lieferwagens die Stille. " +
+      "Aus einer Bäckerei [[dringt#vocabulary]] der Geruch von frischem Brot, und hinter einzelnen Fenstern flackert bereits Licht. " +
+      "In diesem [[Schwebezustand#wortbildung]] zwischen Nacht und Tag wirkt selbst das Vertraute seltsam fremd. " +
+      "Die Fassaden, tagsüber kaum eines Blickes [[gewürdigt#partizipattribut]], treten plötzlich in ihrer ganzen Eigenart hervor. " +
+      "Man meint, die Stadt [[atme#konjunktiv_i]] noch einmal tief durch, bevor sie sich dem Lärm des Tages überlässt. " +
+      "Doch dieser Zauber ist [[flüchtig#adjektiv]]. " +
+      "Wer ihn einmal bewusst erlebt hat, begegnet dem Gewohnten [[fortan#lexik_nuance]] mit größerer Achtsamkeit.",
     last: "Spätestens wenn die ersten Busse fahren, hat der Alltag die Stadt wieder in Besitz genommen.",
     // zuvor is an adverb like fortan but contradicts the tense; betrachtet nearly fits gewürdigt but takes no genitive.
     distractors: ["erwachen", "Dämmerung", "geschäftig", "zuvor", "betrachtet"],
