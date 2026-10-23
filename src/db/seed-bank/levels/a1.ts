@@ -825,7 +825,7 @@ Guten Tag, hier ist Familie Brandt. Wir möchten am Freitag einen Tisch reservie
 const PLACE_PICTURES = {
   pharmacy: { id: "obj.place.pharmacy" },
   bakery: { id: "obj.place.bakery" },
-  cinema: { id: "obj.place.cinema" },
+  bicycle: { id: "obj.transport.bicycle" },
   post: { id: "obj.place.post-office" },
   library: { id: "obj.place.library" },
   pool: { id: "obj.place.swimming-pool" },
@@ -844,9 +844,9 @@ const readingNewItems: SeedItem[] = [
       "Pakete abholen oder abgeben. Heute bis 16 Uhr.",
       "Badekappe ist Pflicht. Kinder nur mit Eltern.",
     ],
-    [PLACE_PICTURES.pharmacy, PLACE_PICTURES.bakery, PLACE_PICTURES.cinema, PLACE_PICTURES.post, PLACE_PICTURES.library, PLACE_PICTURES.pool],
+    [PLACE_PICTURES.pharmacy, PLACE_PICTURES.bakery, PLACE_PICTURES.bicycle, PLACE_PICTURES.post, PLACE_PICTURES.library, PLACE_PICTURES.pool],
     [5, 2, 1, 4, 6],
-    "Bücher zurückbringen: Bibliothek (E). Brötchen: Bäckerei (B). Notdienst, Tabletten, Pflaster: Apotheke (A). Pakete abholen oder abgeben: Post (D). Badekappe: Schwimmbad (F). Das Kino (C) bleibt übrig."),
+    "Bücher zurückbringen: Bibliothek (E). Brötchen: Bäckerei (B). Notdienst, Tabletten, Pflaster: Apotheke (A). Pakete abholen oder abgeben: Post (D). Badekappe: Schwimmbad (F). Das Fahrrad (C) bleibt übrig."),
   // Zettel in der WG-Küche
   signsToPictures(
     rZettelKueche.key,
@@ -859,9 +859,9 @@ const readingNewItems: SeedItem[] = [
       "Kein Kaffee mehr da! Bitte neuen kaufen. Danke, Ben",
       "Für das Abendbrot. Es gibt drei Sorten.",
     ],
-    [{ id: "obj.food.coffee" }, { id: "obj.food.cheese" }, { id: "obj.food.apples" }, { id: "obj.food.pizza" }, { id: "obj.food.cake" }, { id: "obj.food.soup" }],
+    [{ id: "obj.food.coffee" }, { id: "obj.food.cheese" }, { id: "obj.food.apples" }, { id: "obj.thing.umbrella" }, { id: "obj.food.cake" }, { id: "obj.food.soup" }],
     [5, 6, 3, 1, 2],
-    "Geburtstag, nicht essen: Kuchen (E). Warm machen, Löffel: Suppe (F). Frisch, waschen: Äpfel (C). Kein Kaffee mehr da: Kaffee (A). Abendbrot, drei Sorten: Käse (B). Die Pizza (D) bleibt übrig."),
+    "Geburtstag, nicht essen: Kuchen (E). Warm machen, Löffel: Suppe (F). Frisch, waschen: Äpfel (C). Kein Kaffee mehr da: Kaffee (A). Abendbrot, drei Sorten: Käse (B). Der Regenschirm (D) bleibt übrig."),
   // Kurze Zettel und Schilder (4 signs, 5 pictures)
   signsToPictures(
     rZettelDinge.key,

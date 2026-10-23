@@ -298,10 +298,6 @@ const SHORT_OF_TARGET: string[] = [];
  * both. The test pins exactly this list, so a NEW overlap fails at once and a fixed one asks to be removed here.
  */
 const KNOWN_SHARED_PICTURES: Partial<Record<Cefr, string[]>> = {
-  // TODO(content, reported in B8): A1 obj.place.cinema is in reading v4-r-a1-schilder-stadt and listening
-  // v5-l-a1-nachrichten-orte; obj.food.pizza is in reading v4-r-a1-zettel-kueche and listening
-  // v5-l-a1-gespraeche-essen-kleidung. An A1 author swaps one picture of each pair, then this entry goes.
-  A1: ["obj.food.pizza", "obj.place.cinema"],
 };
 
 describe("bank quality: enough units for three forms in a row", () => {
