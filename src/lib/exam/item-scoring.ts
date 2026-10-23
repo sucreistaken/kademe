@@ -18,17 +18,19 @@ const UMLAUT_FALLBACK: Array<[RegExp, string]> = [
 
 /**
  * Canonical form of a typed answer: Unicode NFC, trimmed, inner whitespace
- * collapsed, trailing punctuation dropped, case folded.
+ * collapsed, no space before "%", trailing punctuation dropped, case folded.
  *
  * Case is folded because a gap at the start of a sentence invites "Dem" where
  * the key says "dem", and the exam measures grammar, not the shift key.
- * `ß` and `ss` are treated alike (Swiss German does not use `ß`).
+ * `ß` and `ss` are treated alike (Swiss German does not use `ß`). German
+ * style writes "42 %" and many students type "42%": the space is optional.
  */
 export function normalizeAnswer(raw: string): string {
   return raw
     .normalize("NFC")
     .trim()
     .replace(/\s+/g, " ")
+    .replace(/ %/gu, "%")
     .replace(/[.,;:!?]+$/u, "")
     .toLocaleLowerCase("de-DE")
     .replace(/ß/g, "ss");

@@ -17,6 +17,17 @@ describe("typed answers", () => {
     expect(typedMatches("DEM", ["dem"])).toBe(true);
   });
 
+  it("treats a space before % as optional", () => {
+    expect(normalizeAnswer("42 %")).toBe("42%");
+    expect(normalizeAnswer("42\u00a0%")).toBe("42%");
+    for (const given of ["42%", "42 %", "42  %", "42\u202f%"]) {
+      expect(typedMatches(given, ["42 %"]), given).toBe(true);
+      expect(typedMatches(given, ["42%"]), given).toBe(true);
+    }
+    expect(typedMatches("43 %", ["42%"])).toBe(false);
+    expect(typedMatches("42", ["42%"])).toBe(false);
+  });
+
   it("compares a phone number digit by digit, whatever the separators", () => {
     for (const given of ["0421 38 27 56", "0421-382756", "0421/38 27 56", "0421382756."]) {
       expect(typedMatches(given, ["0421 382756"]), given).toBe(true);

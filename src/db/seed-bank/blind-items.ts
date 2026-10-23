@@ -1,5 +1,6 @@
 import { matchingTargets, toCandidateItem, type CandidateContent, type CandidateItem } from "@/lib/exam/safe";
 import type { Cefr, ItemSnapshot } from "@/lib/exam/types";
+import { SHORT_TEXT_ID } from "./blind-answers";
 import { seedItemKey } from "./seed-key";
 import type { SeedBankPart, SeedItem, SeedStimulus } from "./types";
 
@@ -137,6 +138,10 @@ export function renderSlots(item: BlindItem): { lines: string[]; template: strin
       }
       return { lines, template: `${item.seedKey}: ${c.left.map((l) => `${l.id}=...`).join(", ")}` };
     }
+    case "SHORT_TEXT":
+      // One typed answer, compared by the engine's own scoring like a typed gap.
+      lines.push(`Kurze Antwort (höchstens ${c.maxChars} Zeichen).`);
+      return { lines, template: `${item.seedKey}: ${SHORT_TEXT_ID}=...` };
     default:
       return { lines, template: `${item.seedKey}: ...` };
   }

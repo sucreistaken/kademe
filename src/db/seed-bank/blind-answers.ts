@@ -7,12 +7,16 @@ import type { ItemAnswer, ItemContent, TfngValue } from "@/lib/exam/types";
  *   <seedKey>: choice=b           (single choice; several: choice=a,c)
  *   <seedKey>: s1=R, s2=F, s3=NG  (true / false / not given; Ja / Nein: J, N, T)
  *   <seedKey>: l1=B, l2=D         (matching: left id = letter of the right column)
+ *   <seedKey>: text=42 %          (short answer: the typed text)
  *
  * Lines that do not start with a seed key are ignored, so the file may keep
  * the surrounding Markdown. A value left empty counts as unanswered.
  */
 
 export type RawAnswers = Map<string, Map<string, string>>;
+
+/** The answer id of a SHORT_TEXT item's line ("<seedKey>: text=..."). */
+export const SHORT_TEXT_ID = "text";
 
 const LINE = /^\s*(?:[-*]\s+)?`?([a-z]+-[a-z0-9]+-[0-9a-f]{16})`?\s*:\s*(.*)$/u;
 /** Split on commas that start a new `id=` pair, so a gap value may itself contain commas. */
@@ -101,6 +105,10 @@ export function toItemAnswer(
         if (id) matches[k] = id;
       }
       return Object.keys(matches).length ? { matches } : null;
+    }
+    case "SHORT_TEXT": {
+      const text = filled.find(([k]) => k === SHORT_TEXT_ID)?.[1];
+      return text ? { text } : null;
     }
     default:
       return null;

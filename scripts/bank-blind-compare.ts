@@ -6,7 +6,7 @@
  */
 import { readFileSync } from "node:fs";
 import { SEED_BANK } from "../src/db/seed-bank";
-import { parseAnswerFile, toItemAnswer } from "../src/db/seed-bank/blind-answers";
+import { parseAnswerFile, SHORT_TEXT_ID, toItemAnswer } from "../src/db/seed-bank/blind-answers";
 import { blindItems, parseArgs, parseLevel, type BlindItem } from "../src/db/seed-bank/blind-items";
 import { scoreItem } from "../src/lib/exam/item-scoring";
 import type { ItemAnswer, ItemKey } from "../src/lib/exam/types";
@@ -25,6 +25,7 @@ function show(answer: ItemAnswer | null): string {
   if (answer.tfng) return Object.entries(answer.tfng).map(([k, v]) => `${k}=${v}`).join(", ");
   if (answer.gaps) return Object.entries(answer.gaps).map(([k, v]) => `${k}=${v}`).join(", ");
   if (answer.matches) return Object.entries(answer.matches).map(([k, v]) => `${k}=${v}`).join(", ");
+  if (answer.text !== undefined) return `${SHORT_TEXT_ID}=${answer.text}`;
   return "-";
 }
 

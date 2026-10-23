@@ -63,6 +63,15 @@ const items: SeedItem[] = [
     content: { kind: "GAP", gaps: [{ id: "g1" }, { id: "g2" }] },
     key: { kind: "GAP", answers: { g1: ["weil"], g2: ["ist"] } },
   },
+  {
+    section: "LISTENING",
+    level: "A2",
+    type: "SHORT_TEXT",
+    skillTag: "listening.detail",
+    prompt: "Wie viel Prozent?",
+    content: { kind: "SHORT_TEXT", maxChars: 40 },
+    key: { kind: "SHORT_TEXT", accepted: ["vierzig Prozent"] },
+  },
 ];
 const bank: SeedBankPart = { stimuli: [], items };
 const rendered = blindItems(bank, "A2").map((b) => renderSlots(b));
@@ -85,9 +94,14 @@ describe("renderSlots", () => {
     expect(rendered[5].lines).toContain("Schreibe in jede Lücke genau ein passendes Wort.");
     expect(rendered[5].template).toMatch(/: g1=\.\.\., g2=\.\.\.$/);
   });
+  it("gives a short answer item a text= template line", () => {
+    expect(rendered[6].lines).toEqual(["Kurze Antwort (höchstens 40 Zeichen)."]);
+    expect(rendered[6].template).toMatch(/^listening-a2-[0-9a-f]{16}: text=\.\.\.$/);
+  });
   it("never leaks key words", () => {
     const all = rendered.flatMap((r) => [...r.lines, r.template]).join("\n");
     expect(all).not.toContain("weil");
     expect(all).not.toContain("correct");
+    expect(all).not.toContain("vierzig");
   });
 });

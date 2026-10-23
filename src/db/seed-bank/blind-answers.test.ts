@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { scoreItem } from "@/lib/exam/item-scoring";
 import { parseAnswerFile, parseTfng, toItemAnswer } from "./blind-answers";
 
 const K1 = "grammar-b1-0123456789abcdef";
@@ -51,6 +52,15 @@ describe("toItemAnswer", () => {
       ),
     ).toEqual({ tfng: { s1: "R", s2: "F", s3: "NG" } });
     expect(toItemAnswer({ kind: "GAP", gaps: [{ id: "g1" }] }, new Map([["g1", "weil"]]))).toEqual({ gaps: { g1: "weil" } });
+  });
+  it("reads a short answer's text= line and scores it with the engine", () => {
+    const content = { kind: "SHORT_TEXT" as const, maxChars: 40 };
+    const key = { kind: "SHORT_TEXT" as const, accepted: ["42%"] };
+    const raw = parseAnswerFile(`${K2}: text=42 %`);
+    const answer = toItemAnswer(content, raw.get(K2));
+    expect(answer).toEqual({ text: "42 %" });
+    expect(scoreItem("SHORT_TEXT", content, key, answer)).toEqual({ score: 1, correct: true });
+    expect(toItemAnswer(content, new Map([["text", "..."]]))).toBeNull();
   });
   it("parseTfng accepts the long forms", () => {
     expect(parseTfng("Nicht im Text")).toBe("NG");
