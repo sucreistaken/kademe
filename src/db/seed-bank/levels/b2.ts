@@ -792,9 +792,245 @@ const rRadtourItems: SeedItem[] = [
     "Die Wirtin packte ungefragt Kaffee ein, das „hat ihn gerettet“. Die Tipps zu Etappen und Gepäck gibt der Autor selbst; ein Urteil über die beste Unterkunft steht nicht im Text."),
 ];
 
+// ---------------------------------------------------------------- Insertion 5 of 7 (three texts, one per form)
+
+/** Gap row labels and the lettered sentences of an insertion task: five places, seven sentences, two spare. */
+const INSERT_PROMPT =
+  "Lesen Sie den Text. Fünf Sätze fehlen. Welcher Satz (A bis G) passt in welche Lücke (1) bis (5)? Zwei Sätze passen in keine Lücke. Jeder Satz passt höchstens einmal.";
+const INSERT_ROWS = ["Lücke (1)", "Lücke (2)", "Lücke (3)", "Lücke (4)", "Lücke (5)"];
+const insertTargets = (sentences: string[]) => sentences.map((s, i) => `${String.fromCharCode(65 + i)}: ${s}`);
+
+const rImker = readingText(
+  "stadtimker-dach",
+  "Honig vom Hotelhochhaus",
+  "Natur: Bienen in der Stadt",
+  `
+Auf dem Dach eines Hotels in der Innenstadt stehen zwölf weiße Holzkästen, aus denen es leise summt. Seit drei Jahren hält die Hobbyimkerin Carla Demir hier Bienen. (1) ________ Auf den Feldern gibt es nach der Rapsblüte nämlich oft wochenlang kaum Nahrung, in der Stadt dagegen blüht vom Frühjahr bis in den Herbst immer irgendwo etwas.
+
+Viele Menschen glauben, dass Stadthonig nach Abgasen schmeckt. (2) ________ Der Grund dafür ist einfach: Die Bienen sammeln Nektar aus Blüten und nicht von der Straße.
+
+Ein einfaches Hobby ist die Imkerei auf dem Dach trotzdem nicht. (3) ________ Deshalb besucht Carla Demir ihre Völker im Sommer täglich und spannt Planen über die Kästen.
+
+Das Hotel hat von dem Projekt gleich zwei Vorteile. (4) ________ Außerdem steht der Honig jeden Morgen auf dem Frühstücksbüfett, und viele Gäste fragen, ob sie ein Glas kaufen können.
+
+Carla Demir will ihre Imkerei im nächsten Jahr vergrößern. (5) ________ Ob das klappt, entscheidet sich im Frühjahr.
+`,
+);
+const rBuecher = readingText(
+  "buecherschrank-ecke",
+  "Ein Schrank voller Bücher",
+  "Kultur: offene Bücherschränke",
+  `
+In vielen Städten stehen an Straßenecken und vor Bahnhöfen offene Bücherschränke, aus denen jeder Bücher mitnehmen darf. (1) ________ Die Regeln sind bewusst einfach gehalten: Wer ein Buch gelesen hat, stellt es zurück oder legt ein anderes hinein.
+
+Dass die Schränke meist ordentlich aussehen, ist kein Zufall. (2) ________ Sie räumen auf, sortieren Beschädigtes aus und achten darauf, dass alles trocken bleibt.
+
+Ganz ohne Probleme geht es allerdings nicht. (3) ________ In solchen Fällen helfen kleine Schilder, die erklären, was erwünscht ist.
+
+Viele Nutzerinnen und Nutzer greifen zu Büchern, die sie sich nie gekauft hätten. (4) ________ Deshalb sehen manche Stadtbibliotheken die Schränke eher als willkommene Ergänzung denn als Konkurrenz.
+
+Im nächsten Jahr sollen drei weitere Schränke dazukommen. (5) ________ Dafür hat die Stadt bereits einen Zuschuss bewilligt.
+`,
+);
+const rSchlaf = readingText(
+  "teenager-schlaf",
+  "Warum Teenager morgens müde sind",
+  "Gesundheit: Schlaf und Jugendliche",
+  `
+Um sieben Uhr morgens sitzen viele Jugendliche mit schweren Augen in der Schule, und Erwachsene erklären das gern mit einem Satz: zu spät ins Bett gegangen. (1) ________ In der Pubertät verschiebt sich nämlich die innere Uhr um etwa zwei Stunden nach hinten.
+
+Das Hormon Melatonin, das müde macht, wird bei Jugendlichen abends später ausgeschüttet als bei Kindern. (2) ________ Wer um elf Uhr noch hellwach ist, handelt also nicht unvernünftig, sondern folgt seiner Biologie.
+
+Der Unterricht beginnt aber an den meisten Schulen um acht Uhr oder früher. (3) ________ Die Folgen zeigen sich vor allem in der Konzentration am Vormittag.
+
+Einige Schulen haben den Beginn deshalb auf neun Uhr verschoben. (4) ________ Auch die Noten verbesserten sich leicht, und weniger Jugendliche meldeten sich krank.
+
+Für Eltern bedeutet das: Strenge Schlafenszeiten helfen wenig. (5) ________ Dazu gehört ein abgedunkeltes Zimmer und, so schwer es fällt, ein Handy, das nachts nicht neben dem Bett liegt.
+`,
+);
+
+const rIm1 = forText(rImker);
+const rIm2 = forText(rBuecher);
+const rIm3 = forText(rSchlaf);
+const insertionItems: SeedItem[] = [
+  rIm1.match("structure", "MID", INSERT_PROMPT, INSERT_ROWS,
+    insertTargets([
+      "Wer Honig kaufen möchte, sollte auf das Etikett und das Siegel achten.",
+      "Zum einen bestäuben die Bienen die Pflanzen auf der Terrasse, die dadurch deutlich mehr Früchte tragen.",
+      "Das überrascht viele: In der Stadt geht es Bienen oft besser als auf dem Land.",
+      "Im Winter bleiben die Bienen in ihren Kästen und leben von ihren Vorräten.",
+      "Auf der Dachfläche wird es im Sommer so heiß, dass die Völker ohne Schutz kaum überleben würden.",
+      "Dafür sucht sie jetzt weitere Dächer in der Nachbarschaft.",
+      "Messungen in mehreren Städten haben jedoch gezeigt, dass der Honig nicht stärker belastet ist als Honig vom Land.",
+    ]),
+    [3, 7, 5, 2, 6],
+    "1: „nämlich“ begründet die Aussage über Stadt und Land. 2: Gegensatz („jedoch“) zur Befürchtung, „Der Grund dafür“ erklärt das Messergebnis. 3: Hitze auf dem Dach, „Deshalb ... täglich“. 4: „Zum einen“ wird von „Außerdem“ fortgesetzt. 5: „Dafür“ bezieht sich auf die geplante Vergrößerung. Die Sätze über Etikett und Winter haben keinen Bezug zu den Nachbarsätzen."),
+  rIm1.choice("detail", "EASY",
+    "Warum besucht Carla Demir ihre Bienen im Sommer täglich?",
+    [
+      "Sie verkauft den frischen Honig jeden Tag an die Gäste des Hotels.",
+      "Sie sucht für die Holzkästen laufend neue Plätze auf anderen Dächern.",
+      "Sie muss die Völker vor der starken Hitze auf dem Dach schützen.",
+      "Sie kontrolliert regelmäßig, ob die Tiere Schadstoffe sammeln.",
+    ], 2,
+    "Auf der Dachfläche wird es im Sommer sehr heiß, deshalb besucht sie die Völker täglich und spannt Planen über die Kästen. Verkauf, Suche nach Dächern und Schadstoffkontrolle sind nicht der Grund."),
+  rIm2.match("structure", "HARD", INSERT_PROMPT, INSERT_ROWS,
+    insertTargets([
+      "Wer einen besonders wertvollen Band findet, kann ihn von der Stadtbibliothek schätzen lassen.",
+      "Manchmal landen dort aber auch kaputte Elektrogeräte oder alte Zeitschriften.",
+      "Kinderbücher sind meist schnell vergriffen, Fachbücher bleiben dagegen lange stehen.",
+      "Eine Gebühr, einen Ausweis oder eine Leihfrist gibt es dabei nicht.",
+      "Einer davon soll in einer ausgedienten Telefonzelle entstehen.",
+      "Fast jeder Schrank hat Paten, die ihn regelmäßig kontrollieren.",
+      "Einer Befragung zufolge ist die Mehrheit von ihnen zugleich Mitglied einer Bibliothek.",
+    ]),
+    [4, 6, 2, 7, 5],
+    "1: „Die Regeln sind bewusst einfach“ knüpft an das Fehlen von Gebühr, Ausweis und Frist an. 2: „Sie“ in der Folge sind die Paten. 3: „In solchen Fällen“ meint den Müll im Schrank. 4: Weil viele Nutzer auch Bibliotheksmitglieder sind, gibt es keine Konkurrenz („Deshalb“). 5: „Einer davon“ gehört zu den drei neuen Schränken, „Dafür“ nennt den Zuschuss. Die Sätze über den wertvollen Band und über Kinderbücher haben keinen Anschluss."),
+  rIm2.choice("detail", "MID",
+    "Was hilft, wenn Müll in einem Bücherschrank landet?",
+    [
+      "Die Paten schließen den Schrank dauerhaft ab, bis er gereinigt ist.",
+      "Kleine Schilder erklären, welche Dinge in den Schrank gehören.",
+      "Die Stadt entfernt jeden Schrank, in dem Müll gefunden wird.",
+      "Nutzer zahlen eine kleine Gebühr, wenn sie etwas hineinlegen.",
+    ], 1,
+    "„In solchen Fällen helfen kleine Schilder, die erklären, was erwünscht ist.“ Abschließen, Entfernen und Gebühren kommen im Text nicht vor (Gebühren gibt es ausdrücklich nicht)."),
+  rIm3.match("structure", "MID", INSERT_PROMPT, INSERT_ROWS,
+    insertTargets([
+      "Wichtiger ist, dass das Schlafzimmer ein Ort der Ruhe bleibt.",
+      "Erwachsene brauchen im Durchschnitt sieben bis acht Stunden Schlaf pro Nacht.",
+      "Die Schlafforschung sieht das inzwischen differenzierter.",
+      "Nach dem Wechsel schliefen die Jugendlichen im Durchschnitt fast eine Stunde länger pro Nacht.",
+      "Viele Sportvereine legen ihre Trainingszeiten deshalb auf den späten Nachmittag.",
+      "Viele Jugendliche können deshalb vor Mitternacht schlicht nicht einschlafen, selbst wenn sie es versuchen.",
+      "Studien zufolge schlafen sie dadurch an Schultagen im Schnitt ein bis zwei Stunden weniger, als sie bräuchten.",
+    ]),
+    [3, 6, 7, 4, 1],
+    "1: „differenzierter“ wird durch „nämlich“ begründet. 2: „deshalb“ folgt aus dem späten Melatonin. 3: „sie“ sind die Jugendlichen, „Die Folgen“ nennt die Wirkung des frühen Unterrichts. 4: „Auch die Noten“ setzt eine erste Verbesserung voraus. 5: „Wichtiger ist“ vergleicht mit den Schlafenszeiten, „Dazu“ führt es aus. Die Sätze über Erwachsene und Sportvereine passen zu keinem Nachbarsatz."),
+  rIm3.choice("detail", "MID",
+    "Was hat sich an den Schulen verbessert, die den Unterrichtsbeginn nach hinten verlegten?",
+    [
+      "Die Jugendlichen gingen früher ins Bett und schliefen weniger lang.",
+      "Die Jugendlichen schliefen länger, und es gab weniger Krankmeldungen.",
+      "Die Eltern bestimmten die Schlafenszeiten nun streng und gemeinsam.",
+      "Die Unterrichtsstunden wurden kürzer, damit der Tag früher endete.",
+    ], 1,
+    "Nach dem Wechsel schliefen sie länger; die Noten wurden leicht besser und weniger Jugendliche meldeten sich krank. Die Schlafenszeiten werden im Text sogar als wenig hilfreich genannt."),
+];
+
+// ---------------------------------------------------------------- Opinion matching (comments under an article)
+
+const OPINION_PROMPT =
+  "Wer äußert diese Meinung? Ordnen Sie jeder Aussage eine Person zu. Eine Aussage passt zu keiner der vier Personen.";
+
+const rTempo = readingText(
+  "kommentare-tempolimit",
+  "Kommentare: Tempolimit auf Autobahnen?",
+  "Verkehr: Tempolimit auf Autobahnen",
+  `
+Unter einem Zeitungsartikel zum Thema „Tempolimit auf Autobahnen?“ haben Leserinnen und Leser kommentiert.
+
+Heike R.
+Ich fahre jeden Tag fünfzig Kilometer zur Arbeit und mag es, wenn es zügig vorangeht. Aber im letzten Winter wäre ich im Nebel fast in ein Stauende gefahren, bei Tempo hundertvierzig. Seitdem sehe ich das anders: Ein festes Limit würde nur wenige Minuten kosten, und im Gegenzug fährt der ganze Verkehr gleichmäßiger.
+
+Dirk F.
+Ein einheitliches Limit für das ganze Land halte ich für zu grob. Nachts auf einer leeren Strecke ist hundertdreißig sinnvoll, bei Regen oder in Baustellen dagegen viel zu schnell. Besser wären elektronische Schilder, die das erlaubte Tempo je nach Wetter und Verkehr anpassen. Dann würden die Regeln auch eher akzeptiert.
+
+Mirjam T.
+Ich glaube, dass die Debatte vom eigentlichen Problem ablenkt. Ein Limit würde den Ausstoß von Abgasen nur geringfügig senken. Wer wirklich etwas für Klima und Sicherheit tun will, sollte das Geld lieber in bessere Bahnverbindungen stecken, damit weniger Leute überhaupt das Auto nehmen müssen.
+
+Jonas B.
+Es gibt längst viele Begrenzungen, an die sich kaum jemand hält. Mehr Schilder bringen also nichts. Ich wünsche mir, dass vorhandene Regeln endlich ernst genommen werden: mehr Kontrollen, auch mit Blitzern an unauffälligen Stellen, und spürbare Strafen für Raser.
+`,
+);
+const rBargeld = readingText(
+  "kommentare-bargeld",
+  "Kommentare: Nur noch Kartenzahlung?",
+  "Alltag: Bargeld und Kartenzahlung",
+  `
+Ein Café in der Innenstadt nimmt seit Kurzem kein Bargeld mehr an. Unter dem Bericht der Lokalzeitung haben Leserinnen und Leser kommentiert.
+
+Renate L.
+Ich zahle bewusst mit Münzen und Scheinen. Wenn ich sehe, wie das Geld im Portemonnaie weniger wird, überlege ich mir jeden Kauf zweimal. Mit der Karte verliere ich schnell den Überblick und schaue am Monatsende überrascht auf den Kontostand.
+
+Tim S.
+Ich habe seit Jahren kein Bargeld mehr dabei. Mit dem Handy bezahle ich in zwei Sekunden, das spart vor allem an der Kasse Zeit, wenn hinter einem zehn Leute warten. Das Café macht es richtig, und ich verstehe die Aufregung nicht.
+
+Sofia M.
+Mich stört, dass jeder Kauf gespeichert wird. Aus den Daten kann man ablesen, wo ich bin, was ich esse und wie oft ich ausgehe. Bargeld ist anonym, und ich möchte selbst entscheiden, wer das alles erfährt.
+
+Wolfgang E.
+Ich führe selbst einen kleinen Laden. Jede Kartenzahlung kostet mich eine Gebühr, und bei Kleinbeträgen bleibt kaum etwas übrig. Trotzdem biete ich beides an, weil ich meine Kundschaft nicht ausschließen möchte. Entscheiden sollten die Kunden und nicht die Betreiber.
+`,
+);
+const rBildschirm = readingText(
+  "kommentare-bildschirmzeit",
+  "Kommentare: Bildschirmzeit bei Kindern",
+  "Familie: Bildschirmzeit bei Kindern",
+  `
+Unter dem Artikel „Wie viel Bildschirmzeit ist für Kinder in Ordnung?“ schreiben Eltern und andere Leserinnen und Leser:
+
+Katrin V.
+Bei uns gelten feste Regeln: eine Stunde pro Tag, kein Handy am Esstisch, keine Geräte im Schlafzimmer. Das funktioniert aber nur, weil wir Eltern uns auch daran halten. Wer selbst beim Abendessen auf das Telefon schaut, kann von den Kindern nichts anderes verlangen.
+
+Lukas H.
+Ich finde die Frage nach den Minuten zweitrangig. Mein Sohn baut auf dem Tablet Modelle und lernt Programmieren, das ist etwas völlig anderes, als zwei Stunden lang Videos anzuschauen. Entscheidend ist, was die Kinder mit der Zeit anfangen.
+
+Petra W.
+Als Kind habe ich ganze Nachmittage im Garten verbracht und mich manchmal gelangweilt. Genau daraus sind meine besten Ideen entstanden. Heute sind die Terminkalender der Kinder voll, und wenn doch Zeit bleibt, greifen sie zum Gerät. Ich wünsche mir für sie mehr Stunden ohne Programm und ohne Technik.
+
+Mehmet K.
+Mein Sohn nutzt das Handy fast nur, um sich mit Freunden zu verabreden. Als wir es ihm eine Woche lang weggenommen haben, wurde er aus der Klassengruppe ausgeschlossen. Seitdem setze ich lieber auf Gespräche und Vertrauen als auf Verbote.
+`,
+);
+
+const rOp1 = forText(rTempo);
+const rOp2 = forText(rBargeld);
+const rOp3 = forText(rBildschirm);
+const opinionItems: SeedItem[] = [
+  rOp1.match("inference", "MID", OPINION_PROMPT,
+    [
+      "Diese Person hält ein Tempolimit für wenig wirksam und will lieber andere Verkehrsmittel stärken.",
+      "Diese Person schlägt vor, auf Autobahnen eine eigene Spur für Lastwagen einzurichten.",
+      "Diese Person begründet ihre Meinung mit einem eigenen Erlebnis.",
+      "Diese Person verlangt, dass bestehende Vorschriften strenger überwacht werden.",
+      "Diese Person möchte das erlaubte Tempo nicht pauschal festlegen, sondern der Lage anpassen.",
+    ],
+    ["Heike R.", "Dirk F.", "Mirjam T.", "Jonas B.", "Keine der vier Personen"],
+    [3, 5, 1, 4, 2],
+    "Mirjam: Limit senkt Abgase kaum, besser Bahn. Lastwagenspur: wird von niemandem genannt. Heike: Beinaheunfall im Nebel. Jonas: mehr Kontrollen und Strafen. Dirk: elektronische Schilder, die das Tempo je nach Wetter und Verkehr anpassen."),
+  rOp2.match("inference", "MID", OPINION_PROMPT,
+    [
+      "Diese Person sorgt sich um den Schutz persönlicher Daten.",
+      "Diese Person nennt die Kosten, die Kartenzahlungen für Geschäfte verursachen.",
+      "Diese Person rät dazu, nach jeder Kartenzahlung einen Beleg zu verlangen.",
+      "Diese Person schätzt vor allem, dass das Bezahlen schneller geht.",
+      "Diese Person behält mit Münzen und Scheinen besser den Überblick über die eigenen Ausgaben.",
+    ],
+    ["Renate L.", "Tim S.", "Sofia M.", "Wolfgang E.", "Keine der vier Personen"],
+    [3, 4, 5, 2, 1],
+    "Sofia: Kaufdaten werden gespeichert. Wolfgang: Gebühr pro Kartenzahlung. Belege: werden nicht erwähnt. Tim: spart Zeit an der Kasse. Renate: Überblick durch Münzen und Scheine."),
+  rOp3.match("inference", "HARD", OPINION_PROMPT,
+    [
+      "Diese Person warnt davor, dass ein Verbot Kinder sozial ausgrenzen kann.",
+      "Diese Person hält die Art der Nutzung für wichtiger als deren Dauer.",
+      "Diese Person fordert, dass Hersteller Kinder-Apps besser auf Sicherheit prüfen lassen.",
+      "Diese Person wünscht sich für Kinder mehr freie Zeit ohne Programm und Technik.",
+      "Diese Person verlangt, dass auch die Erwachsenen die Regeln einhalten.",
+    ],
+    ["Katrin V.", "Lukas H.", "Petra W.", "Mehmet K.", "Keine der vier Personen"],
+    [4, 2, 5, 3, 1],
+    "Mehmet: Ausschluss aus der Klassengruppe nach dem Handyentzug. Lukas: „was die Kinder mit der Zeit anfangen“. Sicherheit von Apps: wird nicht erwähnt. Petra: Stunden ohne Programm und Technik. Katrin: Eltern halten sich auch an die Regeln."),
+];
+
 const reading: SeedBankPart = {
-  stimuli: [rViertage, rMicrolearning, rPendeln, rCoworking, rWohnungen, rBibliothek, rRadtour],
+  stimuli: [
+    rViertage, rMicrolearning, rPendeln, rCoworking, rWohnungen, rBibliothek, rRadtour,
+    rImker, rBuecher, rSchlaf, rTempo, rBargeld, rBildschirm,
+  ],
   items: [
+    ...insertionItems,
+    ...opinionItems,
     ...rViertageItems,
     ...rMicrolearningItems,
     ...rPendelnItems,
@@ -814,10 +1050,20 @@ function clip(
   slug: string,
   title: string,
   topic: string,
-  speakers: Array<{ label: string; voice: "A" | "B" }>,
+  speakers: Array<{ label: string; voice: "A" | "B" | "C" | "D" }>,
   lines: string[],
+  maxPlays?: 1 | 2 | 3,
 ): SeedStimulus {
-  return { key: `v2-l-b2-${slug}`, section: "LISTENING", level: LEVEL, title, topic, speakers, body: lines.join("\n") };
+  return {
+    key: `v2-l-b2-${slug}`,
+    section: "LISTENING",
+    level: LEVEL,
+    title,
+    topic,
+    speakers,
+    body: lines.join("\n"),
+    ...(maxPlays ? { maxPlays } : {}),
+  };
 }
 
 function forClip(stimulus: SeedStimulus) {
@@ -839,6 +1085,16 @@ function forClip(stimulus: SeedStimulus) {
       correct: Pos,
       explanation: string,
     ): SeedItem => ({ ...base(skill, within, prompt, explanation), type: "SINGLE_CHOICE", ...choiceContent(options, correct) }),
+    /** "Who says what": statements (rows) matched to speakers (targets, a speaker may take two rows). */
+    match: (
+      skill: LSkill,
+      within: Within,
+      prompt: string,
+      left: string[],
+      right: string[],
+      pairs: number[],
+      explanation: string,
+    ): SeedItem => ({ ...base(skill, within, prompt, explanation), type: "MATCHING", ...matchContent(left, right, pairs) }),
     tfng: (skill: LSkill, within: Within, statements: Array<[string, TfngValue]>, explanation: string): SeedItem => ({
       ...base(skill, within, "Richtig, falsch oder nicht im Text? Entscheiden Sie für jede Aussage.", explanation),
       type: "TRUE_FALSE_NG",
@@ -1142,9 +1398,243 @@ const lUmfrageItems: SeedItem[] = [
     "Sie nennt zuerst zwanzig Minuten und korrigiert sich: „eher dreißig“. Vierzig und sechzig Minuten werden nicht genannt."),
 ];
 
+// ---------------------------------------------------------------- Who says what (three voices, one clip per form)
+
+const WSW_PROMPT =
+  "Wer sagt was? Hören Sie das Gespräch. Ordnen Sie jeder Aussage eine Person zu. Eine Aussage passt zu keiner der drei Personen.";
+
+const lUrlaub = clip(
+  "urlaub-wer-sagt-was",
+  "Gespräch unter Freunden: Wohin im Herbst?",
+  "Reisen: Urlaubsplanung unter Freunden",
+  [
+    { label: "Lena", voice: "A" },
+    { label: "Murat", voice: "B" },
+    { label: "Josefine", voice: "D" },
+  ],
+  [
+    "Lena: Also, wir müssen langsam mal entscheiden. Wohin fahren wir im Herbst? Ich hätte ja Lust auf Portugal.",
+    "Murat: Portugal, na ja. Da war ich letztes Jahr, und ehrlich gesagt war es mir zu voll. Ich würde gern mal etwas ganz Neues sehen. Wie heißt das noch, dieses Land zwischen Österreich und Kroatien? Ach so, Slowenien!",
+    "Josefine: Slowenien? Da kann man doch bestimmt viel wandern.",
+    "Murat: Genau, deshalb finde ich es ja so spannend. Seen, Berge, kleine Dörfer.",
+    "Josefine: Hm, Wandern ist nicht so meins, das wisst ihr. Mir wäre ein Ort am Wasser am liebsten, wo ich einfach nur liegen und lesen kann und nichts organisieren muss.",
+    "Lena: Dann passt Portugal doch! Ich war schon dreimal dort und kenne ein paar ruhige Strände. Und ich habe gestern schon mal nachgesehen: Der Flug nach Faro kostet hin und zurück hundertachtzig, nein, hundertachtundachtzig Euro.",
+    "Josefine: Hundertachtundachtzig, okay. Aber dazu kommt ja noch die Unterkunft. Ich kann in diesem Monat höchstens fünfhundert Euro für die ganze Reise ausgeben, also fünfhundert, mehr ist wirklich nicht drin.",
+    "Murat: Nach Slowenien käme man mit dem Zug, das wäre billiger. Die Fahrt dauert allerdings fast zwölf Stunden, nein, vierzehn, wegen des Umsteigens in Wien.",
+    "Lena: Vierzehn Stunden? Dann lieber fliegen.",
+    "Josefine: Lasst uns erst mal die Unterkünfte vergleichen. Ich schicke euch heute Abend ein paar Links, und dann entscheiden wir am Wochenende.",
+    "Lena: Gut, so machen wir es.",
+    "Murat: Einverstanden.",
+  ],
+);
+const lw1 = forClip(lUrlaub);
+const lUrlaubItems: SeedItem[] = [
+  lw1.match("detail", "MID", WSW_PROMPT,
+    [
+      "Diese Person muss bei den Kosten auf eine feste Obergrenze achten.",
+      "Diese Person würde am liebsten mit dem eigenen Auto fahren.",
+      "Diese Person wünscht sich ein Reiseziel, das sie noch nicht kennt.",
+      "Diese Person hat sich schon über den Preis eines Flugs informiert.",
+    ],
+    ["Lena", "Murat", "Josefine", "Keine der drei Personen"],
+    [3, 4, 2, 1],
+    "Josefine: höchstens fünfhundert Euro. Auto: wird von niemandem gewünscht (Murat nennt den Zug). Murat: „etwas ganz Neues sehen“, Portugal kennt er schon. Lena: Flug nach Faro, hundertachtundachtzig Euro (nach Selbstkorrektur)."),
+  lw1.choice("detail", "HARD",
+    "Wie lange dauert die Zugfahrt nach Slowenien nach Murats Angabe?",
+    ["etwa zwölf Stunden", "etwa vierzehn Stunden", "etwa sechzehn Stunden", "etwa zehn Stunden"], 1,
+    "Murat sagt erst „fast zwölf Stunden“ und korrigiert sich: „nein, vierzehn“, wegen des Umsteigens in Wien."),
+];
+
+const lHof = clip(
+  "hausversammlung-hof-wer-sagt-was",
+  "Hausversammlung: Was soll in den Innenhof?",
+  "Wohnen: Gestaltung des Innenhofs",
+  [
+    { label: "Frau Albers", voice: "A" },
+    { label: "Herr Lindner", voice: "B" },
+    { label: "Frau Seidel", voice: "D" },
+  ],
+  [
+    "Frau Albers: So, dann kommen wir zum Innenhof. Die Hausverwaltung hat uns sechshundert Euro für die Gestaltung zugesagt, und wir sollen vorschlagen, was damit passiert.",
+    "Herr Lindner: Dann muss ich gleich etwas sagen. Seit Monaten stehen die Fahrräder im Hausflur, und ich stolpere jeden Morgen darüber. Ich habe gezählt: vierzehn Räder, nein, sechzehn, wenn man die Kinderräder dazurechnet. Ein Fahrradständer im Hof wäre für mich das Wichtigste.",
+    "Frau Albers: Ein Ständer ist sinnvoll, keine Frage. Aber ich hätte gern auch Hochbeete. Tomaten, Kräuter, vielleicht Salat. Das Gießen könnten wir im Wechsel machen, ich schreibe einen Plan.",
+    "Frau Seidel: Ehrlich gesagt, ich würde am liebsten eine Bank oder zwei aufstellen. Einen Ort, wo man abends in Ruhe sitzen kann. Einen Spielplatz fände ich zu laut, das sage ich gleich.",
+    "Herr Lindner: Einen Spielplatz brauchen wir sowieso nicht, der Park ist nur zwei Minuten entfernt.",
+    "Frau Albers: Mit sechshundert Euro bekommen wir nicht alles. Ein Ständer für zwanzig Räder kostet schon etwa vierhundert.",
+    "Frau Seidel: Dann nehmen wir zuerst den Ständer und im Frühjahr die Beete, und die Bänke kommen, wenn wieder Geld da ist?",
+    "Herr Lindner: Damit kann ich leben.",
+    "Frau Albers: Gut, dann stimmen wir gleich ab.",
+  ],
+);
+const lw2 = forClip(lHof);
+const lHofItems: SeedItem[] = [
+  lw2.match("detail", "MID", WSW_PROMPT,
+    [
+      "Diese Person will, dass im Hof Gemüse und Kräuter angebaut werden.",
+      "Diese Person wünscht sich vor allem einen ruhigen Platz zum Sitzen.",
+      "Diese Person stört sich daran, dass Fahrräder im Hausflur im Weg stehen.",
+      "Diese Person möchte im Hof einen Spielplatz für Kinder anlegen.",
+    ],
+    ["Frau Albers", "Herr Lindner", "Frau Seidel", "Keine der drei Personen"],
+    [1, 3, 2, 4],
+    "Frau Albers: Hochbeete mit Tomaten, Kräutern, Salat. Frau Seidel: Bänke für ruhige Abende. Herr Lindner: Räder im Flur, Fahrradständer. Spielplatz: Frau Seidel findet ihn zu laut, Herr Lindner braucht ihn nicht, niemand wünscht ihn."),
+  lw2.choice("detail", "HARD",
+    "Wie viele Fahrräder stehen laut Herrn Lindner im Hausflur, wenn man die Kinderräder mitzählt?",
+    ["vierzehn", "zwölf", "zwanzig", "sechzehn"], 3,
+    "Herr Lindner korrigiert sich: „vierzehn Räder, nein, sechzehn, wenn man die Kinderräder dazurechnet“. Zwanzig ist die Größe des geplanten Ständers."),
+];
+
+const lFilm = clip(
+  "kino-wer-sagt-was",
+  "Nach dem Kino: Eine Romanverfilmung",
+  "Kultur: Verfilmung eines Romans",
+  [
+    { label: "Nora", voice: "A" },
+    { label: "Ben", voice: "B" },
+    { label: "Cem", voice: "C" },
+  ],
+  [
+    "Nora: So, das war er also, der Film. Ich war ja gespannt, weil ich das Buch schon vor Jahren gelesen habe.",
+    "Ben: Ich kannte die Geschichte gar nicht. Aber das Ende hat mich ehrlich gesagt ziemlich mitgenommen.",
+    "Cem: Mich auch. Nur die Szene am Bahnhof, ach, die war mir fast zu kitschig. Und die Hauptrolle, na ja, der Schauspieler war für mich zu blass, ich habe ihm das alles nicht richtig geglaubt.",
+    "Nora: Stimmt, im Buch ist die Figur viel vielschichtiger. Das haben sie im Film ziemlich zusammengestrichen. Dafür fand ich die Musik wunderbar.",
+    "Ben: Was mich gestört hat, war die Länge. Der Film dauert fast hundertsechzig Minuten, nein, hundertfünfzig, ich habe vorhin auf die Karte geschaut. Ab der Hälfte habe ich dauernd auf die Uhr gesehen.",
+    "Cem: Mir ist das gar nicht so lang vorgekommen. Aber ich glaube, ich hole mir jetzt das Buch. Wenn die Figur dort so viel mehr Tiefe hat, will ich das lesen.",
+    "Nora: Mach das, ich leihe dir meins gern.",
+    "Ben: Und wir gehen danach noch etwas essen, oder?",
+  ],
+);
+const lw3 = forClip(lFilm);
+const lFilmItems: SeedItem[] = [
+  lw3.match("detail", "HARD", WSW_PROMPT,
+    [
+      "Diese Person will sich jetzt die Buchvorlage besorgen.",
+      "Diese Person lobt die schauspielerische Leistung der Hauptrolle.",
+      "Diese Person kannte die Geschichte schon vor dem Kinobesuch.",
+      "Diese Person kritisiert vor allem die Länge des Films.",
+    ],
+    ["Nora", "Ben", "Cem", "Keine der drei Personen"],
+    [3, 4, 1, 2],
+    "Cem: „ich hole mir jetzt das Buch“. Lob für den Hauptdarsteller: niemand, Cem findet ihn zu blass. Nora: hat das Buch vor Jahren gelesen. Ben: „Was mich gestört hat, war die Länge“."),
+  lw3.choice("detail", "MID",
+    "Wie lange dauert der Film nach Bens Angabe?",
+    ["etwa hundertvierzig Minuten", "etwa hundertsechzig Minuten", "etwa hundertfünfzig Minuten", "etwa hundertachtzig Minuten"], 2,
+    "Ben sagt erst „fast hundertsechzig Minuten“ und korrigiert: „nein, hundertfünfzig“."),
+];
+
+// ---------------------------------------------------------------- Play once (announcements and news, one per form)
+
+const lBruecke = clip(
+  "nachrichten-bruecke-einmal",
+  "Radionachrichten: Brücke gesperrt",
+  "Verkehr: Brückensperrung",
+  [{ label: "Nachrichtensprecher", voice: "B" }],
+  [
+    "Nachrichtensprecher: Und nun zum Verkehr. Die Rheinbrücke zwischen Rheinfeld und Auenau wird ab kommendem Montag für voraussichtlich drei Wochen gesperrt. Grund sind Reparaturen an den Fahrbahnplatten, die bei einer Kontrolle im Frühjahr als beschädigt aufgefallen waren.",
+    "Nachrichtensprecher: Der Autoverkehr wird über die Umleitung am Hafen geführt. Das verlängert die Fahrzeit nach Angaben der Stadt um etwa fünfzehn Minuten. Lastwagen über siebeneinhalb Tonnen dürfen die Umleitung nicht benutzen und werden über die Autobahn geleitet.",
+    "Nachrichtensprecher: Fußgänger und Radfahrer können die Brücke weiterhin überqueren, für sie bleibt ein schmaler Streifen frei. Die Buslinien sieben und zwölf fahren während der Sperrung nur bis zur Haltestelle Rheinufer, von dort pendelt ein Ersatzbus. Weitere Informationen finden Sie auf der Internetseite der Stadt.",
+  ],
+  1,
+);
+const lo1 = forClip(lBruecke);
+const lBrueckeItems: SeedItem[] = [
+  lo1.choice("gist", "EASY",
+    "Warum wird die Rheinbrücke gesperrt?",
+    [
+      "Die Fahrbahn der Brücke muss repariert werden, weil Platten beschädigt sind.",
+      "Auf der Brücke soll eine neue Straßenbahnlinie gebaut werden.",
+      "Nach einem Unfall muss die Brücke auf Schäden untersucht werden.",
+      "Das Hochwasser des Flusses hat die Zufahrt zur Brücke überspült.",
+    ], 0,
+    "Reparaturen an den Fahrbahnplatten, die bei einer Kontrolle als beschädigt aufgefallen waren. Von Straßenbahn, Unfall oder Hochwasser ist keine Rede."),
+  lo1.choice("detail", "MID",
+    "Was gilt während der Sperrung für Radfahrer?",
+    [
+      "Sie müssen wie die Autos die Umleitung am Hafen nehmen.",
+      "Sie dürfen die Brücke auf einem schmalen Streifen weiter benutzen.",
+      "Sie werden mit einem Ersatzbus auf die andere Seite gebracht.",
+      "Sie dürfen die Brücke nur zu bestimmten Tageszeiten überqueren.",
+    ], 1,
+    "„Fußgänger und Radfahrer können die Brücke weiterhin überqueren, für sie bleibt ein schmaler Streifen frei.“ Umleitung und Ersatzbus gelten für Autos bzw. Busfahrgäste."),
+];
+
+const lSchwimmbad = clip(
+  "durchsage-schwimmbad-einmal",
+  "Durchsage im Schwimmbad",
+  "Freizeit: Schwimmbad und Öffnungszeiten",
+  [{ label: "Durchsage", voice: "A" }],
+  [
+    "Durchsage: Liebe Badegäste, wir informieren Sie über eine Änderung im heutigen Programm. Das Sportbecken ist zwischen vierzehn und sechzehn Uhr wegen eines Schulschwimmkurses nur eingeschränkt nutzbar. Zwei Bahnen stehen Ihnen weiterhin zur Verfügung.",
+    "Durchsage: Der Aqua-Fitness-Kurs um fünfzehn Uhr findet nicht wie geplant im Sportbecken statt, sondern im Lehrschwimmbecken im Untergeschoss. Treffpunkt ist wie gewohnt am Eingang der Umkleiden.",
+    "Durchsage: Außerdem bitten wir Sie, Wertsachen in den Schließfächern aufzubewahren. Für nicht abgeschlossene Spinde übernehmen wir keine Haftung. Das Bistro schließt heute schon um achtzehn Uhr, also eine Stunde früher als sonst. Vielen Dank für Ihr Verständnis.",
+  ],
+  1,
+);
+const lo2 = forClip(lSchwimmbad);
+const lSchwimmbadItems: SeedItem[] = [
+  lo2.choice("detail", "MID",
+    "Wo findet der Aqua-Fitness-Kurs heute statt?",
+    [
+      "im Sportbecken, aber nur auf zwei der Bahnen",
+      "im Freibecken, falls das Wetter es erlaubt",
+      "im Lehrschwimmbecken im Untergeschoss",
+      "in der Sporthalle neben dem Eingang",
+    ], 2,
+    "„nicht wie geplant im Sportbecken, sondern im Lehrschwimmbecken im Untergeschoss“. Zwei Bahnen im Sportbecken stehen den normalen Badegästen zur Verfügung."),
+  lo2.choice("detail", "EASY",
+    "Was gilt heute für das Bistro?",
+    [
+      "Es bleibt wegen der Schulschwimmkurse den ganzen Tag geschlossen.",
+      "Es schließt eine Stunde früher als an anderen Tagen.",
+      "Es öffnet erst am späten Nachmittag, nach dem Aqua-Fitness-Kurs.",
+      "Es bietet heute nur noch Getränke und keine Speisen an.",
+    ], 1,
+    "„Das Bistro schließt heute schon um achtzehn Uhr, also eine Stunde früher als sonst.“"),
+];
+
+const lStadtfest = clip(
+  "radiotipp-stadtfest-einmal",
+  "Radiotipp: Das Altstadtfest",
+  "Kultur: Stadtfest am Wochenende",
+  [{ label: "Moderatorin", voice: "D" }],
+  [
+    "Moderatorin: Und noch ein Tipp fürs Wochenende: In Rheinfeld beginnt am Freitagabend das Altstadtfest. Eröffnet wird es um neunzehn Uhr auf dem Marktplatz, der Eintritt ist an allen drei Tagen frei. Auf vier Bühnen spielen mehr als dreißig Bands, am Samstag gibt es außerdem einen Flohmarkt am Fluss.",
+    "Moderatorin: Wegen des erwarteten Andrangs bittet die Stadt, nicht mit dem Auto anzureisen. Am Samstag und Sonntag fahren die Straßenbahnen im Zehn-Minuten-Takt, und am Bahnhof gibt es einen kostenlosen Fahrradparkplatz. Wer doch mit dem Auto kommt, findet Plätze auf dem Messegelände, von dort fährt ein Shuttlebus.",
+    "Moderatorin: Bei Regen wird das Programm nicht abgesagt, die Bühnen sind überdacht. Nur der Flohmarkt fällt dann aus.",
+  ],
+  1,
+);
+const lo3 = forClip(lStadtfest);
+const lStadtfestItems: SeedItem[] = [
+  lo3.choice("detail", "MID",
+    "Wie bittet die Stadt die Besucher anzureisen?",
+    [
+      "mit den Straßenbahnen oder mit dem Fahrrad, nicht mit dem Auto",
+      "mit dem Auto, weil die Straßenbahnen am Wochenende nicht fahren",
+      "mit dem Shuttlebus, der alle zehn Minuten am Bahnhof abfährt",
+      "mit dem Zug, weil es am Marktplatz keine Parkplätze gibt",
+    ], 0,
+    "Die Stadt bittet, nicht mit dem Auto anzureisen; Straßenbahn im Zehn-Minuten-Takt, kostenloser Fahrradparkplatz am Bahnhof. Der Shuttlebus fährt vom Messegelände."),
+  lo3.choice("detail", "HARD",
+    "Was passiert bei Regen?",
+    [
+      "Das gesamte Programm wird auf den nächsten Tag verschoben.",
+      "Die Bühnen bleiben geschlossen, nur der Flohmarkt findet statt.",
+      "Das Programm läuft weiter, aber der Flohmarkt entfällt.",
+      "Der Eintritt wird in diesem Fall für alle Besucher ermäßigt.",
+    ], 2,
+    "„Bei Regen wird das Programm nicht abgesagt, die Bühnen sind überdacht. Nur der Flohmarkt fällt dann aus.“"),
+];
+
 const listening: SeedBankPart = {
-  stimuli: [lPausen, lAufschieben, lTermin, lZahnarzt, lDurchsage, lUmfrage],
-  items: [...lPausenItems, ...lAufschiebenItems, ...lTerminItems, ...lZahnarztItems, ...lDurchsageItems, ...lUmfrageItems],
+  stimuli: [
+    lPausen, lAufschieben, lTermin, lZahnarzt, lDurchsage, lUmfrage,
+    lUrlaub, lHof, lFilm, lBruecke, lSchwimmbad, lStadtfest,
+  ],
+  items: [
+    ...lPausenItems, ...lAufschiebenItems, ...lTerminItems, ...lZahnarztItems, ...lDurchsageItems, ...lUmfrageItems,
+    ...lUrlaubItems, ...lHofItems, ...lFilmItems, ...lBrueckeItems, ...lSchwimmbadItems, ...lStadtfestItems,
+  ],
 };
 
 // ================================================================ WRITING
