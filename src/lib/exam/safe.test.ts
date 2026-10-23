@@ -50,6 +50,16 @@ describe("what the student receives", () => {
     expect(item.stimulus).toEqual({ kind: "LISTENING", title: "Am Bahnhof", durationMs: 21000, playsLeft: 1, maxPlays: 2 });
   });
 
+  it("lowers plays to the clip's own limit and treats an old snapshot as the exam setting", () => {
+    const once = { ...listening, stimulus: { ...listening.stimulus!, maxPlays: 1 } };
+    expect(toCandidateItem(once, {}, null, 1, { maxPlays: 2 }).stimulus).toMatchObject({ playsLeft: 1, maxPlays: 1 });
+    expect(toCandidateItem(once, {}, null, 1, { maxPlays: 2, playsUsed: 1 }).stimulus).toMatchObject({ playsLeft: 0, maxPlays: 1 });
+    const loose = { ...listening, stimulus: { ...listening.stimulus!, maxPlays: 3 } };
+    expect(toCandidateItem(loose, {}, null, 1, { maxPlays: 2 }).stimulus).toMatchObject({ playsLeft: 2, maxPlays: 2 });
+    expect(toCandidateItem({ ...listening, stimulus: { ...listening.stimulus!, maxPlays: null } }, {}, null, 1, { maxPlays: 2 }).stimulus).toMatchObject({ maxPlays: 2 });
+    expect(toCandidateItem(listening, {}, null, 1, { maxPlays: 0 }).stimulus).toMatchObject({ playsLeft: 0, maxPlays: 0 });
+  });
+
   it("returns only the student's own answer fields", () => {
     const item = toCandidateItem(listening, {}, { choiceIds: ["a"], mediaAssetId: "m1" } as never, 1, { maxPlays: 2 });
     expect(item.answer).toEqual({ choiceIds: ["a"] });

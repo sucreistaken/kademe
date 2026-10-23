@@ -397,6 +397,7 @@
     "ruleGRAMMAR": "Her soruda bir seçenek işaretleyin ya da boşluğu doldurun. Sorular cevaplarınıza göre zorlaşır ya da kolaylaşır.",
     "ruleREADING": "Metin solda, sorular sağda. Metne istediğiniz kadar bakabilirsiniz.",
     "ruleLISTENING": "Her kaydı en fazla {plays} kez dinleyebilirsiniz ve ileri saramazsınız. Kulaklık önerilir.",
+    "ruleLISTENINGMixed": "Her kayıt en fazla {plays} kez çalar ve ileri saramazsınız. Bazı kayıtlar yalnızca bir kez çalar. Oynatıcı, her kaydı kaç kez dinleyebileceğinizi gösterir. Kulaklık önerilir.",
     "ruleWRITING": "Yazım denetimi ve yapıştırma kapalıdır. Cevabınız siz yazdıkça kaydedilir.",
     "ruleSPEAKING": "Her görevde önce kısa bir düşünme süresi, sonra kayıt süresi var. Cevabınızı Almanca ve yüksek sesle verin."
   },

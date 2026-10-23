@@ -963,6 +963,8 @@
     "audioFailed": "Audio failed: {reason}",
     "transcript": "Listening script (hidden from students)",
     "exposure": "served {n} times",
+    "plays": "Plays: {n}",
+    "playsExamSetting": "Plays: exam setting",
     "stimulus": "Text",
     "backToBank": "Question bank",
     "rowsOf": "{shown} of {total} items",

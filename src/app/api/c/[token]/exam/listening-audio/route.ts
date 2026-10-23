@@ -19,12 +19,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     if (!check.ok) return conflict(ctx, check.code);
     const stimulus = check.response.itemSnapshot.stimulus;
     if (!stimulus || stimulus.section !== "LISTENING" || !stimulus.audioKey) return conflict(ctx, "NOT_LISTENING");
-    const played = await recordPlay(ctx, check.run, stimulus.id);
+    const played = await recordPlay(ctx, check.run, stimulus.id, stimulus.maxPlays);
     if (!played.ok) return conflict(ctx, "PLAYS_EXHAUSTED");
     const url = await getStorage().getSignedUrl(stimulus.audioKey, 120);
     return candidateJson({
       src: url,
-      playsLeft: Math.max(0, ctx.assessment.config.listening.maxPlays - played.playsUsed),
+      playsLeft: Math.max(0, played.playsAllowed - played.playsUsed),
     });
   });
 }

@@ -963,6 +963,8 @@
     "audioFailed": "Ses üretilemedi: {reason}",
     "transcript": "Dinleme metni (öğrenci görmez)",
     "exposure": "{n} kez sunuldu",
+    "plays": "Dinleme hakkı: {n}",
+    "playsExamSetting": "Dinleme hakkı: sınav ayarı",
     "stimulus": "Metin",
     "backToBank": "Soru bankası",
     "rowsOf": "{shown} / {total} soru",

@@ -69,6 +69,8 @@ export type ExistingStimulus = {
   title?: string;
   body?: string;
   speakers?: SeedStimulus["speakers"] | null;
+  /** Listening plays allowed for the clip; null means the exam setting. */
+  maxPlays?: number | null;
   /** An item that reads this text was edited by the school (an audit row `bank.edit`). */
   itemEdited?: boolean;
 };
@@ -126,9 +128,13 @@ export type SyncStimulusChange = {
   body: string;
 };
 
+export type SyncPlaysChange = { id: string; key: string; level: SeedStimulus["level"]; maxPlays: number | null };
+
 export type SyncPlan = {
   items: SyncItemChange[];
   stimuli: SyncStimulusChange[];
+  /** Listening clips whose play limit differs from the seed (unedited starter clips only). */
+  plays: SyncPlaysChange[];
   /** Starter items that differ from the seed but were edited by the school, so they are left alone. */
   itemsKeptEdited: number;
   /** Reading texts that differ but are read by an item the school edited, so they are left alone. */
@@ -152,7 +158,7 @@ export function planSyncSeed(
   existing: { stimuli: ExistingStimulus[]; items: ExistingItem[] },
 ): SyncPlan {
   const wanted = new Map(bank.items.map((item) => [seedItemKey(item), item]));
-  const sync: SyncPlan = { items: [], stimuli: [], itemsKeptEdited: 0, stimuliKeptEdited: 0, listeningDiffs: [] };
+  const sync: SyncPlan = { items: [], stimuli: [], plays: [], itemsKeptEdited: 0, stimuliKeptEdited: 0, listeningDiffs: [] };
   for (const row of existing.items) {
     if (row.origin !== "SEED") continue;
     const seed = wanted.get(row.seedKey ?? seedItemKey({ ...row, stimulusKey: row.stimulusSeedKey }));
@@ -188,6 +194,9 @@ export function planSyncSeed(
     if (row.origin !== "SEED" || !row.seedKey || row.body === undefined) continue;
     const seed = seedStimuli.get(row.seedKey);
     if (!seed) continue;
+    if (seed.section === "LISTENING" && row.maxPlays !== undefined && (row.maxPlays ?? null) !== (seed.maxPlays ?? null) && !row.itemEdited) {
+      sync.plays.push({ id: row.id, key: seed.key, level: seed.level, maxPlays: seed.maxPlays ?? null });
+    }
     const sameVoices = canonicalJson(row.speakers ?? null) === canonicalJson(seed.speakers ?? null);
     if (seed.section === "LISTENING" || row.section === "LISTENING") {
       if (row.body !== seed.body || !sameVoices) sync.listeningDiffs.push({ id: row.id, key: seed.key, level: seed.level });
@@ -234,6 +243,7 @@ export function formatSyncSummary(sync: SyncPlan, examples = 3): string[] {
   for (const s of sync.stimuli.slice(0, examples)) lines.push(`e.g. text ${s.key}: ${s.title}`);
   if (sync.itemsKeptEdited) lines.push(`kept ${sync.itemsKeptEdited} starter items the school edited`);
   if (sync.stimuliKeptEdited) lines.push(`kept ${sync.stimuliKeptEdited} reading texts read by an item the school edited`);
+  if (sync.plays.length) lines.push(`sync listening play limits: ${sync.plays.length} clips`);
   if (sync.listeningDiffs.length)
     lines.push(`listening scripts differing from the seed (NOT changed, audio was made from them): ${sync.listeningDiffs.map((d) => d.key).join(", ")}`);
   return lines;
@@ -272,7 +282,7 @@ export function planTopUp(
       retire.push({ id: row.id, section: row.section, level: row.level });
     }
   }
-  const sync = options.syncSeed ? planSyncSeed(bank, existing) : { items: [], stimuli: [], itemsKeptEdited: 0, stimuliKeptEdited: 0, listeningDiffs: [] };
+  const sync = options.syncSeed ? planSyncSeed(bank, existing) : { items: [], stimuli: [], plays: [], itemsKeptEdited: 0, stimuliKeptEdited: 0, listeningDiffs: [] };
   return { stimuli, items, backfill, retire, keptEdited, sync };
 }
 

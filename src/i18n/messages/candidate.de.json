@@ -397,6 +397,7 @@
     "ruleGRAMMAR": "Wählen Sie bei jeder Frage eine Option oder füllen Sie die Lücke aus. Die Fragen werden je nach Ihren Antworten schwerer oder leichter.",
     "ruleREADING": "Links steht der Text, rechts die Fragen. Sie können ihn so oft lesen, wie Sie möchten.",
     "ruleLISTENING": "Sie können jede Aufnahme höchstens {plays} Mal abspielen, ohne vorzuspulen. Kopfhörer werden empfohlen.",
+    "ruleLISTENINGMixed": "Jede Aufnahme wird höchstens {plays} Mal abgespielt, ohne vorzuspulen. Manche Aufnahmen werden nur einmal abgespielt. Der Player zeigt, wie oft Sie jede Aufnahme hören können. Kopfhörer werden empfohlen.",
     "ruleWRITING": "Rechtschreibprüfung und Einfügen sind ausgeschaltet. Ihre Antwort wird beim Tippen gespeichert.",
     "ruleSPEAKING": "Jede Aufgabe hat eine kurze Bedenkzeit, danach folgt die Aufnahmezeit. Antworten Sie laut auf Deutsch."
   },

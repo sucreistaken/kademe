@@ -397,6 +397,7 @@
     "ruleGRAMMAR": "Choose an option or fill the gap in each question. Questions get harder or easier with your answers.",
     "ruleREADING": "The text is on the left, the questions on the right. Read it as often as you like.",
     "ruleLISTENING": "You can play each recording at most {plays} times, without skipping ahead. Headphones are recommended.",
+    "ruleLISTENINGMixed": "Each recording plays at most {plays} times, without skipping ahead. Some recordings play only once. The player shows how often you can listen to each one. Headphones are recommended.",
     "ruleWRITING": "Spell check and pasting are off. Your answer is saved as you type.",
     "ruleSPEAKING": "Each task has a short thinking time, then recording time. Answer out loud in German."
   },

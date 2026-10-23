@@ -236,6 +236,9 @@ export default async function BankItemPage({ params, searchParams }: { params: P
               {item.skillTag}
             </div>
             <div className="col-span-2 text-vault-label">{t("bank.exposure", { n: item.exposureCount })}</div>
+            {item.section === "LISTENING" && stimulus ? (
+              <div className="col-span-2 text-vault-label">{stimulus.maxPlays ? t("bank.plays", { n: stimulus.maxPlays }) : t("bank.playsExamSetting")}</div>
+            ) : null}
           </div>
           {item.section === "LISTENING" && stimulus ? (
             <div>

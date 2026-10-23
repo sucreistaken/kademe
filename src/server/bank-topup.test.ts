@@ -82,7 +82,7 @@ describe("planTopUp", () => {
       backfill: [],
       retire: [],
       keptEdited: 0,
-      sync: { items: [], stimuli: [], itemsKeptEdited: 0, stimuliKeptEdited: 0, listeningDiffs: [] },
+      sync: { items: [], stimuli: [], plays: [], itemsKeptEdited: 0, stimuliKeptEdited: 0, listeningDiffs: [] },
     });
   });
 
@@ -260,6 +260,7 @@ describe("planTopUp with syncSeed", () => {
     expect(sync({ stimuli: [readingStimulus()], items })).toEqual({
       items: [],
       stimuli: [],
+      plays: [],
       itemsKeptEdited: 0,
       stimuliKeptEdited: 0,
       listeningDiffs: [],
@@ -396,6 +397,22 @@ describe("planTopUp with syncSeed", () => {
     expect(plan.listeningDiffs).toEqual([{ id: "l1", key: "l-b1-a", level: "B1" }]);
     const same = planTopUp(listening, { stimuli: [{ ...row0, body: "A: Neu" }], items: [] }, { syncSeed: true }).sync;
     expect(same.listeningDiffs).toEqual([]);
+  });
+
+  it("syncs the play limit of an unedited starter clip and leaves an edited one alone", () => {
+    const listening: SeedBankPart = {
+      stimuli: [{ key: "l-b2-a", section: "LISTENING", level: "B2", title: "L", body: "A: Neu", topic: "t", speakers: [{ label: "A", voice: "A" }], maxPlays: 1 }],
+      items: [],
+    };
+    const row = { id: "l1", seedKey: "l-b2-a", origin: "SEED", section: "LISTENING" as const, level: "B2" as const, title: "L", body: "A: Neu", speakers: [{ label: "A", voice: "A" as const }], maxPlays: null };
+    const plan = planTopUp(listening, { stimuli: [row], items: [] }, { syncSeed: true }).sync;
+    expect(plan.plays).toEqual([{ id: "l1", key: "l-b2-a", level: "B2", maxPlays: 1 }]);
+    expect(planTopUp(listening, { stimuli: [{ ...row, itemEdited: true }], items: [] }, { syncSeed: true }).sync.plays).toEqual([]);
+    expect(planTopUp(listening, { stimuli: [{ ...row, maxPlays: 1 }], items: [] }, { syncSeed: true }).sync.plays).toEqual([]);
+    expect(planTopUp(listening, { stimuli: [row], items: [] }).sync.plays).toEqual([]);
+    // Rows loaded without the column (undefined) are not touched.
+    const unloaded = { ...row, maxPlays: undefined };
+    expect(planTopUp(listening, { stimuli: [unloaded], items: [] }, { syncSeed: true }).sync.plays).toEqual([]);
   });
 
   it("is idempotent: applying the plan leaves nothing for a second run", () => {

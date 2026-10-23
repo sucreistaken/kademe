@@ -21,6 +21,11 @@ export type SeedStimulus = {
   topic: string;
   /** Listening only. Voice A and B are two different TTS voices. */
   speakers?: Array<{ label: string; voice: "A" | "B" | "C" | "D" }>;
+  /**
+   * Listening only: plays allowed for this clip (real B2+ exams play some
+   * recordings once). Absent means the exam setting. Not part of any seed key.
+   */
+  maxPlays?: 1 | 2 | 3;
 };
 
 export type SeedItem = {

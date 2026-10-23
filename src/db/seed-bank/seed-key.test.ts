@@ -16,6 +16,12 @@ describe("seedItemKey", () => {
     expect(seedItemKey(base)).toMatch(/^reading-b1-[0-9a-f]{16}$/);
   });
 
+  it("does not change when the stimulus gains a play limit (existing keys stay stable)", () => {
+    const withLimit = { ...base, stimulus: { maxPlays: 1 } };
+    expect(seedItemKey(withLimit)).toBe(seedItemKey(base));
+    expect(seedItemKey(base)).toBe(seedItemKey({ ...base }));
+  });
+
   it("tells apart items that share a prompt but not the text or the content", () => {
     expect(seedItemKey(base)).not.toBe(seedItemKey({ ...base, stimulusKey: "r-b1-b" }));
     expect(seedItemKey(base)).not.toBe(

@@ -1,3 +1,4 @@
+import { playsAllowed } from "./listening-plays";
 import { buildCTestPool, buildWordBankPool, seedFromText } from "./ctest-pool";
 import { textGapKindOf, type ImageRef, type ItemAnswer, type ItemSnapshot, type Presentation, type Section, type ItemType } from "./types";
 
@@ -263,12 +264,14 @@ export function toCandidateItem(
   if (snapshot.stimulus?.section === "READING") {
     stimulus = { kind: "READING", title: snapshot.stimulus.title, text: snapshot.stimulus.body };
   } else if (snapshot.stimulus?.section === "LISTENING") {
+    // maxPlays 0 marks a practice item with no play limit to show; keep it 0.
+    const allowed = extras.maxPlays <= 0 ? 0 : playsAllowed(extras.maxPlays, snapshot.stimulus.maxPlays);
     stimulus = {
       kind: "LISTENING",
       title: snapshot.stimulus.title,
       durationMs: snapshot.stimulus.audioDurationMs,
-      playsLeft: Math.max(0, extras.maxPlays - (extras.playsUsed ?? 0)),
-      maxPlays: extras.maxPlays,
+      playsLeft: Math.max(0, allowed - (extras.playsUsed ?? 0)),
+      maxPlays: allowed,
     };
   }
 

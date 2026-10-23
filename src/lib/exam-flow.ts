@@ -30,6 +30,7 @@ import {
 } from "@/lib/exam/blueprint";
 import { candidateExamName } from "@/lib/exam/candidate-exam-name";
 import { levelFromTheta } from "@/lib/exam/cefr";
+import { playsAllowed } from "@/lib/exam/listening-plays";
 import { hasAnswer, scoreItem } from "@/lib/exam/item-scoring";
 import {
   canFlag,
@@ -624,6 +625,7 @@ async function buildSnapshot(itemId: string, x: Executor = db): Promise<ItemSnap
           body: stimulus.body,
           audioKey: stimulus.audioKey,
           audioDurationMs: stimulus.audioDurationMs,
+          maxPlays: stimulus.maxPlays,
         }
       : null,
   };
@@ -1192,8 +1194,9 @@ export async function recordPlay(
   ctx: ExamCandidateContext,
   run: typeof sectionRuns.$inferSelect,
   stimulusId: string,
-): Promise<{ ok: true; playsUsed: number } | { ok: false }> {
-  const max = ctx.assessment.config.listening.maxPlays;
+  clipMax?: number | null,
+): Promise<{ ok: true; playsUsed: number; playsAllowed: number } | { ok: false }> {
+  const max = playsAllowed(ctx.assessment.config.listening.maxPlays, clipMax);
   return db.transaction(async (tx) => {
     const [locked] = await tx.select().from(sectionRuns).where(eq(sectionRuns.id, run.id)).for("update");
     const used = locked.stimulusPlays[stimulusId] ?? 0;
@@ -1202,6 +1205,6 @@ export async function recordPlay(
       .update(sectionRuns)
       .set({ stimulusPlays: { ...locked.stimulusPlays, [stimulusId]: used + 1 } })
       .where(eq(sectionRuns.id, run.id));
-    return { ok: true as const, playsUsed: used + 1 };
+    return { ok: true as const, playsUsed: used + 1, playsAllowed: max };
   });
 }

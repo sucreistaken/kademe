@@ -159,6 +159,11 @@ export type StimulusSnapshot = {
   body: string;
   audioKey: string | null;
   audioDurationMs: number | null;
+  /**
+   * Plays allowed for this clip, lowering the exam setting (see playsAllowed).
+   * Absent or null, as in snapshots taken before the field existed, means the exam setting.
+   */
+  maxPlays?: number | null;
 };
 
 /**

@@ -13,6 +13,7 @@ import { textRuleKey } from "@/components/candidate/exam/section-rule";
 import type { CandidateState } from "@/lib/exam-flow";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
+import { introNeedsMixedPlaysRule } from "@/lib/exam/listening-plays";
 
 /** The screen before a section: its length, its rules, the warm-up offer and the start button. */
 export function SectionIntro({
@@ -91,7 +92,9 @@ export function SectionIntro({
                     ? n("ruleGRAMMARFixed")
                     : cur.section === "WRITING"
                       ? f(clipboardBlock ? "ruleWritingPaste" : "ruleWritingPlain")
-                      : sec(`rule${cur.section}` as "ruleGRAMMAR", { plays: maxPlays }),
+                      : cur.section === "LISTENING" && introNeedsMixedPlaysRule(maxPlays)
+                        ? sec("ruleLISTENINGMixed", { plays: maxPlays })
+                        : sec(`rule${cur.section}` as "ruleGRAMMAR", { plays: maxPlays }),
                 ...(s.navigable ? [n("ruleBack"), n("ruleReview")] : [t("ruleNoBack")]),
                 t("ruleClock"),
               ].map((rule) => (

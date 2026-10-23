@@ -118,6 +118,7 @@ async function loadTopUpState(tx: Executor, orgId: string, options: TopUpOptions
       title: stimuli.title,
       body: stimuli.body,
       speakers: stimuli.speakers,
+      maxPlays: stimuli.maxPlays,
     })
     .from(stimuli)
     .where(eq(stimuli.orgId, orgId));
@@ -238,7 +239,16 @@ export async function topUpSeedBank(orgId: string, options: TopUpOptions = {}, l
         .returning({ id: stimuli.id });
       stimuliSynced += done.length;
     }
-    if (itemsSynced > 0 || stimuliSynced > 0) {
+    let playsSynced = 0;
+    for (const c of plan.sync.plays) {
+      const done = await tx
+        .update(stimuli)
+        .set({ maxPlays: c.maxPlays })
+        .where(and(eq(stimuli.id, c.id), eq(stimuli.orgId, orgId), eq(stimuli.origin, "SEED"), eq(stimuli.section, "LISTENING")))
+        .returning({ id: stimuli.id });
+      playsSynced += done.length;
+    }
+    if (itemsSynced > 0 || stimuliSynced > 0 || playsSynced > 0) {
       await tx.insert(auditLogs).values({
         orgId,
         actorId: null,
@@ -247,6 +257,7 @@ export async function topUpSeedBank(orgId: string, options: TopUpOptions = {}, l
         meta: {
           items: itemsSynced,
           stimuli: stimuliSynced,
+          listeningPlays: playsSynced,
           bySectionLevel: syncCounts(plan.sync),
           itemsKeptEdited: plan.sync.itemsKeptEdited,
           stimuliKeptEdited: plan.sync.stimuliKeptEdited,
@@ -287,6 +298,7 @@ function stimulusRow(orgId: string, s: SeedStimulus) {
     body: s.body,
     topic: s.topic,
     speakers: s.speakers ?? null,
+    maxPlays: s.maxPlays ?? null,
     origin: "SEED" as const,
     seedKey: s.key,
   };

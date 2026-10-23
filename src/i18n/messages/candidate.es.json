@@ -397,6 +397,7 @@
     "ruleGRAMMAR": "En cada pregunta, elija una opción o rellene el hueco. Las preguntas se hacen más difíciles o más fáciles según sus respuestas.",
     "ruleREADING": "El texto está a la izquierda y las preguntas a la derecha. Léalo cuantas veces quiera.",
     "ruleLISTENING": "Puede reproducir cada grabación como máximo {plays} veces, sin saltar adelante. Se recomiendan auriculares.",
+    "ruleLISTENINGMixed": "Cada grabación se reproduce como máximo {plays} veces, sin saltar adelante. Algunas grabaciones se reproducen solo una vez. El reproductor muestra cuántas veces puede escuchar cada una. Se recomiendan auriculares.",
     "ruleWRITING": "El corrector ortográfico y el pegado están desactivados. Su respuesta se guarda mientras escribe.",
     "ruleSPEAKING": "Cada tarea tiene un breve tiempo para pensar y después el tiempo de grabación. Responda en voz alta en alemán."
   },
