@@ -2,6 +2,7 @@ import type { TfngValue } from "@/lib/exam/types";
 import { cloze } from "../cloze";
 import { cTest } from "../ctest";
 import { wordBank } from "../wordbank";
+import { img } from "../image";
 import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 
 /*
@@ -1924,7 +1925,134 @@ const speakingItems: SeedItem[] = [
       "ein Kompromissvorschlag",
     ],
     `Meinung äußern und begründen, Diskussion im Arbeitskontext. ${SPEAK_NOTE}`),
+  ...pictureTasks(),
+  ...slideTalks(),
 ];
+
+/** Picture task: describe the scene, compare it with the candidate's own city or region, give an opinion. */
+function pictureTask(
+  imageId: string,
+  within: Within,
+  question: string,
+  contentPoints: string[],
+  studentPoints: string[],
+): SeedItem {
+  return {
+    section: "SPEAKING",
+    level: LEVEL,
+    type: "SPEAKING_PROMPT",
+    skillTag: "speaking.picture",
+    within,
+    prompt:
+      "Sehen Sie sich das Bild an. Beschreiben Sie, was Sie sehen, und vergleichen Sie es mit Ihren eigenen Erfahrungen in Ihrer Stadt oder Region.\n\n" + question,
+    content: { kind: "SPEAKING", thinkSeconds: 30, answerSeconds: 90, maxTakes: 2, images: [img(imageId)] },
+    key: { kind: "NONE" },
+    rubric: { contentPoints, studentPoints },
+    explanation: `Bildbeschreibung mit Vergleich zur eigenen Erfahrung (B1): beschreiben, vergleichen, Meinung begründen. ${SPEAK_NOTE}`,
+  };
+}
+
+function pictureTasks(): SeedItem[] {
+  return [
+    pictureTask("scene.b1.city-cycling", "EASY",
+      "Wie kommen die Menschen in Ihrer Stadt oder Region meistens zur Arbeit, zur Schule oder zum Einkaufen? Wie finden Sie das?",
+      [
+        "beschreibt das Bild: viele Menschen fahren in einer Stadt mit dem Fahrrad",
+        "vergleicht mit der eigenen Stadt oder Region (Radwege, Verkehrsmittel, Wege im Alltag)",
+        "nennt mindestens einen Vor- oder Nachteil des Radfahrens in der Stadt",
+        "äußert und begründet eine eigene Meinung",
+      ],
+      ["was auf dem Bild zu sehen ist", "wie die Menschen in Ihrer Stadt oder Region unterwegs sind", "Ihre Meinung"]),
+    pictureTask("scene.b1.home-office", "MID",
+      "Haben Sie schon einmal zu Hause gearbeitet oder gelernt? Wie ist das bei Menschen in Ihrer Stadt oder Region? Was sind Vor- und Nachteile?",
+      [
+        "beschreibt das Bild: eine junge Frau arbeitet zu Hause am Laptop",
+        "berichtet von eigener Erfahrung oder von Erfahrungen in der Stadt oder Region",
+        "nennt Vorteile und Nachteile der Arbeit oder des Lernens zu Hause",
+        "äußert und begründet eine eigene Meinung",
+      ],
+      ["was auf dem Bild zu sehen ist", "Ihre eigene Erfahrung", "Vor- und Nachteile", "Ihre Meinung"]),
+    pictureTask("scene.b1.library-study-group", "MID",
+      "Wo und mit wem lernen Sie am liebsten? Gibt es in Ihrer Stadt oder Region Orte zum gemeinsamen Lernen?",
+      [
+        "beschreibt das Bild: eine Gruppe von Studierenden lernt zusammen an einem Tisch",
+        "erzählt, wo und mit wem man selbst am liebsten lernt",
+        "beschreibt Orte zum Lernen in der eigenen Stadt oder Region",
+        "nennt Vor- oder Nachteile des Lernens in der Gruppe und begründet die eigene Meinung",
+      ],
+      ["was auf dem Bild zu sehen ist", "wo und mit wem Sie am liebsten lernen", "Orte zum Lernen in Ihrer Stadt oder Region"]),
+    pictureTask("scene.b1.open-air-concert", "MID",
+      "Waren Sie schon einmal bei einem Konzert oder einem Fest im Freien? Was gibt es in Ihrer Stadt oder Region für Veranstaltungen? Gehen Sie gern hin?",
+      [
+        "beschreibt das Bild: eine große Menschenmenge hört ein Konzert im Freien",
+        "erzählt von eigenen Erfahrungen mit Konzerten oder Festen",
+        "nennt Veranstaltungen in der eigenen Stadt oder Region",
+        "begründet, ob man gern zu solchen Veranstaltungen geht",
+      ],
+      ["was auf dem Bild zu sehen ist", "Ihre Erfahrung mit Veranstaltungen im Freien", "Veranstaltungen in Ihrer Stadt oder Region", "Ihre Meinung"]),
+    pictureTask("scene.b1.volunteers", "HARD",
+      "Haben Sie oder Menschen in Ihrer Umgebung schon einmal freiwillig bei so einer Aktion geholfen? Was gibt es in Ihrer Stadt oder Region? Warum ist das wichtig?",
+      [
+        "beschreibt das Bild: Freiwillige in hellblauen Hemden sammeln Müll mit Müllsäcken",
+        "erzählt von eigener Erfahrung mit freiwilliger Hilfe oder von Aktionen in der Stadt oder Region",
+        "erklärt, warum solche Aktionen wichtig sind (Umwelt, Gemeinschaft)",
+        "äußert und begründet eine eigene Meinung",
+      ],
+      ["was auf dem Bild zu sehen ist", "Erfahrungen mit freiwilliger Hilfe", "Aktionen in Ihrer Stadt oder Region", "warum das wichtig ist"]),
+  ];
+}
+
+/** Slide talk: a short presentation along five given slide titles. */
+function slideTalk(
+  within: Within,
+  timing: { thinkSeconds: number; answerSeconds: number },
+  topic: string,
+  contentPoints: string[],
+  studentPoints: string[],
+): SeedItem {
+  const slideTitles =
+    "Folie 1: Einleitung\n" +
+    "Folie 2: Eigene Erfahrung\n" +
+    "Folie 3: Situation in Ihrer Stadt oder Region\n" +
+    "Folie 4: Vor- und Nachteile\n" +
+    "Folie 5: Schluss";
+  return {
+    section: "SPEAKING",
+    level: LEVEL,
+    type: "SPEAKING_PROMPT",
+    skillTag: "speaking.slidetalk",
+    within,
+    prompt:
+      `Halten Sie eine kurze Präsentation zum Thema „${topic}“. Sie haben fünf Folien mit diesen Titeln:\n\n${slideTitles}\n\n` +
+      "Sprechen Sie zu jeder Folie ein paar Sätze und halten Sie die ganze Präsentation in der vorgegebenen Zeit.",
+    content: { kind: "SPEAKING", ...timing, maxTakes: 1 },
+    key: { kind: "NONE" },
+    rubric: { contentPoints, studentPoints },
+    explanation: `Präsentation entlang von fünf vorgegebenen Folientiteln (Goethe B1 Sprechen Teil 2); alle fünf Folien müssen angemessen behandelt werden. ${SPEAK_NOTE}`,
+  };
+}
+
+function slideTalks(): SeedItem[] {
+  const points = (topic: string) => [
+    `Einleitung: stellt das Thema „${topic}“ vor`,
+    "eigene Erfahrung mit dem Thema",
+    "Situation in der eigenen Stadt oder Region",
+    "Vor- und Nachteile, mit eigener Meinung",
+    "Schluss und Dank",
+  ];
+  const student = [
+    "das Thema vorstellen",
+    "Ihre eigene Erfahrung",
+    "die Situation in Ihrer Stadt oder Region",
+    "Vor- und Nachteile",
+    "Schluss",
+  ];
+  return [
+    slideTalk("MID", { thinkSeconds: 90, answerSeconds: 150 }, "Mit dem Fahrrad durch die Stadt", points("Fahrrad in der Stadt"), student),
+    slideTalk("MID", { thinkSeconds: 90, answerSeconds: 150 }, "Freiwillige Arbeit im Verein oder in der Nachbarschaft", points("freiwillige Arbeit"), student),
+    slideTalk("HARD", { thinkSeconds: 120, answerSeconds: 180 }, "Bücher lesen: Papier oder Bildschirm?", points("Lesen auf Papier oder Bildschirm"), student),
+  ];
+}
 
 export const B1_PARTS: {
   grammar: SeedBankPart;
