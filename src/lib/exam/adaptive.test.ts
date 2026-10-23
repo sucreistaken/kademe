@@ -358,3 +358,10 @@ describe("guessing floor (spec 2026-10-18)", () => {
     expect(without / runs).toBeGreaterThan(0.5);
   });
 });
+
+describe("guessOf: open cloze", () => {
+  it("has no guessing floor for typed open gaps", async () => {
+    const { guessOf } = await import("./adaptive");
+    expect(guessOf({ skillTag: "grammar.open", content: { kind: "GAP", gaps: [{ id: "g1" }] }, key: { kind: "GAP", answers: { g1: ["weil"] } } })).toBe(0);
+  });
+});

@@ -193,6 +193,8 @@ export const C_TEST_SKILL_TAG = "grammar.ctest";
 export const CLOZE_SKILL_TAG = "grammar.cloze";
 /** Skill tag of a word-bank text: whole words from a shared pool, the key's distractors included (spec 2026-10-18). */
 export const WORD_BANK_SKILL_TAG = "grammar.wordbank";
+/** Skill tag of an open cloze text: one typed word per gap, every accepted spelling in the key (ÖSD ZB2/ZC1 style). */
+export const OPEN_CLOZE_SKILL_TAG = "grammar.open";
 
 /**
  * C-test-specific behaviour only: the stem drawn with its gap, the word-part
@@ -206,13 +208,14 @@ export const isCTest = (item: { skillTag: string }): boolean => item.skillTag ==
  * None enters automatic item selection; a GRAMMAR section serves them only
  * through its text plan (blueprint.ts `textPlanOf`).
  */
-export const TEXT_GAP_KINDS = ["CTEST", "CLOZE", "WORDBANK"] as const;
+export const TEXT_GAP_KINDS = ["CTEST", "CLOZE", "WORDBANK", "OPEN"] as const;
 export type TextGapKind = (typeof TEXT_GAP_KINDS)[number];
 
 export const TEXT_GAP_SKILL_TAGS: Record<TextGapKind, string> = {
   CTEST: C_TEST_SKILL_TAG,
   CLOZE: CLOZE_SKILL_TAG,
   WORDBANK: WORD_BANK_SKILL_TAG,
+  OPEN: OPEN_CLOZE_SKILL_TAG,
 };
 
 export function textGapKindOf(item: { skillTag: string }): TextGapKind | null {
@@ -223,6 +226,8 @@ export function textGapKindOf(item: { skillTag: string }): TextGapKind | null {
       return "CLOZE";
     case WORD_BANK_SKILL_TAG:
       return "WORDBANK";
+    case OPEN_CLOZE_SKILL_TAG:
+      return "OPEN";
     default:
       return null;
   }

@@ -63,6 +63,7 @@ describe("warm-up practice data", () => {
     expect(PRACTICE.GRAMMAR.map(hintOf)).toEqual(["choice"]);
     expect(practiceFor("GRAMMAR", ["CLOZE", "WORDBANK"]).map(hintOf)).toEqual(["choice", "cloze", "wordbank"]);
     expect(practiceFor("GRAMMAR", ["CTEST"]).map(hintOf)).toEqual(["choice", "ctest"]);
+    expect(practiceFor("GRAMMAR", ["OPEN"]).map(hintOf)).toEqual(["choice", "open"]);
     expect(PRACTICE.READING.map(hintOf)).toEqual(["tfng", "matching"]);
     expect(PRACTICE.LISTENING.map(hintOf)).toEqual(["listening"]);
     expect(PRACTICE.WRITING.map(hintOf)).toEqual(["writing"]);

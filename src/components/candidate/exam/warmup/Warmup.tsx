@@ -22,6 +22,7 @@ const HINT_KEY = {
   ctest: "warmHintCTest",
   cloze: "warmHintCloze",
   wordbank: "warmHintWordBank",
+  open: "warmHintOpen",
   tfng: "warmHintTfng",
   matching: "warmHintMatching",
   listening: "warmHintListening",

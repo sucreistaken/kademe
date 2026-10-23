@@ -219,6 +219,9 @@ describe("text sections follow the minutes", () => {
     // Above B2 the top is kept before the lowest levels: never cut the top of the span first.
     expect(kinds(textsFor(t(["A1", "A2", "B1", "B2", "C1", "C2"], []), 0.5))).toEqual(["CLOZE B1", "CLOZE B2", "CLOZE C2"]);
     expect(kinds(textsFor(t(["B1"], ["B1"]), 1))).toEqual(["CLOZE B1", "WORDBANK B1"]);
+    // Open cloze texts pass through untouched.
+    const withOpen = [...t(["A2", "B1", "B2"], []), { level: "B2", kind: "OPEN" }] as Parameters<typeof textsFor>[0];
+    expect(kinds(textsFor(withOpen, 0.1))).toEqual(["CLOZE B2", "OPEN B2"]);
   });
 
   it("an older C-test section keeps one text per five minutes, middle levels first, then wider upward (R11)", () => {

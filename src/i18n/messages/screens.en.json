@@ -930,6 +930,7 @@
     "typeGAP_FILL": "Gap fill",
     "textKindCLOZE": "Multiple-choice gaps",
     "textKindWORDBANK": "Word bank",
+    "textKindOPEN": "Open gaps (typed)",
     "distractors": "Distractors",
     "pool": "Words in the pool",
     "typeMATCHING": "Matching",

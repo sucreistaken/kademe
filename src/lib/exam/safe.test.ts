@@ -378,3 +378,23 @@ describe("MC cloze and word-bank texts (spec 2026-10-18)", () => {
     }
   });
 });
+
+describe("open cloze candidate content", () => {
+  const openItem: ItemSnapshot = {
+    ...listening,
+    section: "GRAMMAR",
+    type: "GAP_FILL",
+    skillTag: "grammar.open",
+    stimulusId: null,
+    stimulus: null,
+    prompt: "Lesen Sie den Text.\n\nTitel\n\nEins {{g1}} zwei.",
+    content: { kind: "GAP", gaps: [{ id: "g1" }] },
+    key: { kind: "GAP", answers: { g1: ["weil", "da"] }, topics: { g1: "nebensatz" } },
+  };
+
+  it("sends only the open rendering hint: no pool, no choices, no answers, no topics", () => {
+    const c = toCandidateItem(openItem, {}, null, 1, { maxPlays: 2 }).content;
+    expect(c).toEqual({ kind: "GAP", gaps: [{ id: "g1", choices: null }], open: true });
+    expect(JSON.stringify(c)).not.toMatch(/weil|nebensatz|topics|grammar\.open/);
+  });
+});

@@ -537,7 +537,7 @@ const SYSTEM_PROMPT = [
   "- Matching items have rows in left (ids l1, l2, ...), targets in right (ids r1, r2, ...) with at least as many targets as rows, preferably one extra, and pairs mapping each row id to one target id.",
   "- Writing and speaking tasks describe a realistic situation, name 3 or 4 content points in the prompt, and list the same points in contentPoints. register names the expected register, for example informell (du) or formell (Sie).",
   "- Fields that do not apply to the item type are sent as an empty array, 0 or an empty string.",
-  "- skillTag is a short lowercase tag such as grammar.dative-prepositions, reading.detail, reading.gist, listening.detail, writing.email-informal. Never use grammar.ctest, grammar.cloze or grammar.wordbank.",
+  "- skillTag is a short lowercase tag such as grammar.dative-prepositions, reading.detail, reading.gist, listening.detail, writing.email-informal. Never use grammar.ctest, grammar.cloze, grammar.wordbank or grammar.open.",
   "- explanation says in one or two German sentences why the key is correct, for the reviewing teacher.",
   "- within places the item inside its level: EASY, MID or HARD.",
   "- Never use the em dash character anywhere. Use commas, colons or the short dash instead.",
@@ -721,7 +721,7 @@ export function parseGeneratedBatch(text: string, spec: GenerationSpec): Generat
       itemErrors.push({ index, errors: converted.errors });
       return;
     }
-    // Texts (C-test, cloze, word bank) are hand-written (spec 2026-10-18), never generated.
+    // Texts (C-test, cloze, word bank, open cloze) are hand-written (spec 2026-10-18), never generated.
     if (isTextGap(converted.item)) {
       itemErrors.push({ index, errors: [`skill tag ${converted.item.skillTag} is reserved for hand-written texts`] });
       return;

@@ -285,7 +285,7 @@ describe("parseGeneratedBatch", () => {
     expect(r.batch.items.map((i) => i.skillTag)).toEqual(["grammar.prepositions"]);
     expect(r.itemErrors.map((e) => e.index)).toEqual([0, 1, 2]);
     expect(r.itemErrors[0].errors[0]).toContain("reserved for hand-written texts");
-    expect(buildGenerationMessages(grammarSpec, [], [])[0].content).toContain("Never use grammar.ctest, grammar.cloze or grammar.wordbank");
+    expect(buildGenerationMessages(grammarSpec, [], [])[0].content).toContain("Never use grammar.ctest, grammar.cloze, grammar.wordbank or grammar.open");
   });
 
   it("fails without a stimulus body when one is required", () => {

@@ -385,3 +385,30 @@ describe("tick n multiple choice", () => {
     expect(toggleTick(full, "d")).toEqual(["a", "b", "c", "d"]);
   });
 });
+
+describe("open cloze", () => {
+  const open: CandidateItem = {
+    sequence: 1,
+    section: "GRAMMAR",
+    type: "GAP_FILL",
+    prompt: "Lesen Sie den Text. Schreiben Sie in jede Lücke ein passendes Wort.\n\nEin Regentag\n\nHeute regnet es. Wir bleiben zu Hause, {{g1}} es regnet. Am Abend schlafen wir.",
+    content: { kind: "GAP", gaps: [{ id: "g1", choices: null }], open: true },
+    stimulus: null,
+    answer: null,
+  };
+
+  it("heads the text with its title and draws one typed input per gap, no pool and no select", () => {
+    const html = render(open, { gaps: { g1: "weil" } });
+    expect(html).toContain(">Ein Regentag</h3>");
+    expect(html).toMatch(/<input[^>]*value="weil"/);
+    expect(html).not.toContain("<select");
+    expect(html).not.toContain("wordPool");
+    expect(html).toContain("Wir bleiben zu Hause,");
+  });
+
+  it("gives every empty gap the same width whatever the answer", () => {
+    const two: CandidateItem = { ...open, content: { kind: "GAP", gaps: [{ id: "g1", choices: null }, { id: "g2", choices: null }], open: true }, prompt: open.prompt.replace("Am Abend", "{{g2}} Abend") };
+    const sizes = [...render(two).matchAll(/size="(\d+)"/g)].map((m) => m[1]);
+    expect(sizes).toEqual(["10", "10"]);
+  });
+});

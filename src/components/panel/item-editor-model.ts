@@ -20,6 +20,8 @@ export type EditorDraft = {
   explanation: string;
   /** Choice: options with their correct mark. */
   options: Array<{ id: string; text: string; correct: boolean }>;
+  /** Gap fill: the key's per-gap topic ids, kept so saving does not drop them. Not edited in the form. */
+  topics: Record<string, string> | null;
   /** Multi choice "Kreuzen Sie n an": kept so saving does not drop it. Not edited in the form yet. */
   pick: number | null;
   /** True / false / not given. */
@@ -102,6 +104,7 @@ export function emptyDraft(type: ItemType, section: Section, level: Cefr): Edito
     twoWay: false,
     jaNein: false,
     pick: null,
+    topics: null,
     gaps: [],
     distractors: "",
     skillTag: null,
@@ -158,6 +161,7 @@ export function draftFromItem(item: EditableItem): EditorDraft {
     const answers = key.kind === "GAP" ? key.answers : {};
     d.gaps = content.gaps.map((g) => ({ id: g.id, mode: g.choices ? "choice" : "typed", accepted: joinBar(answers[g.id]), choices: joinBar(g.choices) }));
     d.distractors = key.kind === "GAP" ? joinBar(key.distractors) : "";
+    d.topics = key.kind === "GAP" && key.topics ? { ...key.topics } : null;
   }
   if (content.kind === "MATCHING") {
     const pairs = key.kind === "MATCHING" ? key.pairs : {};
@@ -186,6 +190,13 @@ export function draftFromItem(item: EditableItem): EditorDraft {
 }
 
 /** The bank's shapes of a draft. Texts are trimmed and an em dash becomes the German en dash. */
+/** The kept topics of gaps that still exist, or undefined when none is left. */
+function topicsOf(topics: Record<string, string> | null, gapIds: string[]): Record<string, string> | undefined {
+  if (!topics) return undefined;
+  const kept = Object.fromEntries(Object.entries(topics).filter(([id]) => gapIds.includes(id)));
+  return Object.keys(kept).length ? kept : undefined;
+}
+
 export function draftToItem(d: EditorDraft): ValidatableItem & { rubric: ItemRubric | null } {
   const prompt = cleanText(d.prompt);
   const idText = (xs: Array<{ id: string; text: string }>) => xs.map((x) => ({ id: x.id, text: cleanText(x.text) }));
@@ -219,11 +230,12 @@ export function draftToItem(d: EditorDraft): ValidatableItem & { rubric: ItemRub
     case "GAP_FILL": {
       const gaps = syncGaps(prompt, d.gaps);
       const distractors = splitBar(d.distractors);
+      const topics = topicsOf(d.topics, gaps.map((g) => g.id));
       return {
         type: d.type,
         prompt,
         content: { kind: "GAP", gaps: gaps.map((g) => (g.mode === "choice" ? { id: g.id, choices: splitBar(g.choices) } : { id: g.id })) },
-        key: { kind: "GAP", answers: Object.fromEntries(gaps.map((g) => [g.id, splitBar(g.accepted)])), ...(distractors.length ? { distractors } : {}) },
+        key: { kind: "GAP", answers: Object.fromEntries(gaps.map((g) => [g.id, splitBar(g.accepted)])), ...(distractors.length ? { distractors } : {}), ...(topics ? { topics } : {}) },
         rubric: null,
         ...(d.skillTag ? { skillTag: d.skillTag } : {}),
       };
@@ -304,6 +316,7 @@ export const keySchema = z.discriminatedUnion("kind", [
     kind: z.literal("GAP"),
     answers: z.record(id, z.array(z.string().max(200)).max(10)),
     distractors: z.array(z.string().max(50)).max(40).optional(),
+    topics: z.record(id, z.string().max(40)).optional(),
   }),
   z.object({ kind: z.literal("MATCHING"), pairs: z.record(id, id) }),
   z.object({ kind: z.literal("SHORT_TEXT"), accepted: z.array(z.string().max(200)).max(20) }),

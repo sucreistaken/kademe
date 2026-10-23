@@ -930,6 +930,7 @@
     "typeGAP_FILL": "Boşluk doldurma",
     "textKindCLOZE": "Seçmeli boşluk",
     "textKindWORDBANK": "Kelime havuzu",
+    "textKindOPEN": "Açık boşluk (yazılır)",
     "distractors": "Çeldiriciler",
     "pool": "Havuzdaki kelimeler",
     "typeMATCHING": "Eşleştirme",

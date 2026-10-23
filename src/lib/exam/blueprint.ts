@@ -73,13 +73,13 @@ export const sectionConfigSchema = z.object({
   /**
    * GRAMMAR only: one MC cloze or word-bank text per entry, before the
    * section's ordinary items (spec 2026-10-18). Served cloze texts first, then
-   * word banks, each easy to hard (see `textPlanOf`). Replaces `cTestLevels`
+   * word banks, then open cloze texts, each easy to hard (see `textPlanOf`). Replaces `cTestLevels`
    * and `cTest` when present. Optional so stored configs stay valid.
    */
   texts: z
-    .array(z.object({ level: z.enum(CEFR_LEVELS), kind: z.enum(["CLOZE", "WORDBANK"]) }))
+    .array(z.object({ level: z.enum(CEFR_LEVELS), kind: z.enum(["CLOZE", "WORDBANK", "OPEN"]) }))
     .min(1)
-    .max(CEFR_LEVELS.length * 2)
+    .max(CEFR_LEVELS.length * 3)
     .optional(),
 });
 
@@ -337,7 +337,7 @@ export type TextPlanEntry = { level: Cefr; kind: TextGapKind };
 
 /**
  * The texts that open a section, in serving order; empty when it has none.
- * `texts` (cloze first, then word banks, each easy to hard) replaces the
+ * `texts` (cloze first, then word banks, then open cloze; each easy to hard) replaces the
  * legacy C-test fields; without it `cTestLevelsOf` gives C-tests, so a config
  * stored before 2026-10-18 plans exactly as it did.
  */
@@ -345,7 +345,7 @@ export function textPlanOf(s: SectionConfig, mode: ExamMode, claimed: Cefr | nul
   if (s.section !== "GRAMMAR") return [];
   if (s.texts) {
     const texts = s.texts;
-    return (["CLOZE", "WORDBANK"] as const).flatMap((kind) =>
+    return (["CLOZE", "WORDBANK", "OPEN"] as const).flatMap((kind) =>
       CEFR_LEVELS.filter((level) => texts.some((t) => t.kind === kind && t.level === level)).map((level) => ({ level, kind })),
     );
   }
@@ -475,6 +475,8 @@ export type BankCount = {
   clozeTexts?: number;
   /** Word-bank texts among those items. Openings only, as C-tests. */
   wordBanks?: number;
+  /** Open cloze texts (one typed word per gap) among those items. Openings only, as C-tests. */
+  openTexts?: number;
 };
 
 /**
@@ -492,9 +494,9 @@ export function bankCoverage(
   const rows: CoverageRow[] = [];
   const get = (section: Section, level: Cefr) => {
     const c = counts.find((x) => x.section === section && x.level === level);
-    const texts: Record<TextGapKind, number> = { CTEST: c?.cTests ?? 0, CLOZE: c?.clozeTexts ?? 0, WORDBANK: c?.wordBanks ?? 0 };
+    const texts: Record<TextGapKind, number> = { CTEST: c?.cTests ?? 0, CLOZE: c?.clozeTexts ?? 0, WORDBANK: c?.wordBanks ?? 0, OPEN: c?.openTexts ?? 0 };
     // Texts never enter automatic selection, so they do not count as items.
-    return { items: (c?.items ?? 0) - texts.CTEST - texts.CLOZE - texts.WORDBANK, stimuli: c?.stimuli ?? 0, texts };
+    return { items: (c?.items ?? 0) - texts.CTEST - texts.CLOZE - texts.WORDBANK - texts.OPEN, stimuli: c?.stimuli ?? 0, texts };
   };
 
   const claims: Array<Cefr | null> =

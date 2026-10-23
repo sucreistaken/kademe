@@ -427,6 +427,21 @@ describe("MC cloze and word-bank texts (spec 2026-10-18)", () => {
     ]);
   });
 
+  it("textPlanOf: open cloze texts come after word banks", () => {
+    const s = withTexts([
+      { level: "C1", kind: "OPEN" },
+      { level: "B2", kind: "WORDBANK" },
+      { level: "B1", kind: "OPEN" },
+      { level: "A1", kind: "CLOZE" },
+    ]);
+    expect(textPlanOf(s, "PLACEMENT", null)).toEqual([
+      { level: "A1", kind: "CLOZE" },
+      { level: "B2", kind: "WORDBANK" },
+      { level: "B1", kind: "OPEN" },
+      { level: "C1", kind: "OPEN" },
+    ]);
+  });
+
   it("textPlanOf: texts replaces the legacy fields; without it the legacy fields give C-tests; other sections none", () => {
     expect(textPlanOf(withTexts([{ level: "B1", kind: "CLOZE" }], { cTestLevels: ["A1"], cTest: true }), "PLACEMENT", null)).toEqual([{ level: "B1", kind: "CLOZE" }]);
     expect(textPlanOf(section("GRAMMAR", 30, { cTestLevels: ["B2", "A2"] }), "PLACEMENT", null)).toEqual([

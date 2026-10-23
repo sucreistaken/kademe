@@ -1,5 +1,5 @@
 import { toCandidateItem, type CandidateItem } from "@/lib/exam/safe";
-import { CLOZE_SKILL_TAG, C_TEST_SKILL_TAG, WORD_BANK_SKILL_TAG, type ItemSnapshot, type Section, type TextGapKind } from "@/lib/exam/types";
+import { CLOZE_SKILL_TAG, C_TEST_SKILL_TAG, OPEN_CLOZE_SKILL_TAG, WORD_BANK_SKILL_TAG, type ItemSnapshot, type Section, type TextGapKind } from "@/lib/exam/types";
 import type { ValidatableItem } from "@/lib/exam/validate";
 
 /**
@@ -141,11 +141,18 @@ const TEXT_PRACTICE: Record<TextGapKind, PracticeDef> = {
     content: { kind: "GAP", gaps: [{ id: "g1" }, { id: "g2" }, { id: "g3" }] },
     key: { kind: "GAP", answers: { g1: ["heiße"], g2: ["arbeite"], g3: ["gehe"] }, distractors: ["Hund", "blau", "gestern"] },
   },
+  OPEN: {
+    type: "GAP_FILL",
+    skillTag: OPEN_CLOZE_SKILL_TAG,
+    prompt: "Schreiben Sie in jede Lücke ein passendes Wort.\n\nMein Wochenende\n\nAm Samstag besuche ich meine Oma. Wir trinken {{g1}} Kaffee und essen Kuchen. Danach gehen wir {{g2}} den Park, {{g3}} das Wetter schön ist. Am Abend bin ich wieder zu Hause.",
+    content: { kind: "GAP", gaps: [{ id: "g1" }, { id: "g2" }, { id: "g3" }] },
+    key: { kind: "GAP", answers: { g1: ["einen"], g2: ["in", "durch"], g3: ["weil", "da"] } },
+  },
 };
 
 /**
  * The practice steps of a section. GRAMMAR continues with one sample per kind
- * of text the section really holds (cloze, word bank or C-test), so the warm-up
+ * of text the section really holds (cloze, word bank, open cloze or C-test), so the warm-up
  * shows the way of answering the exam will ask for; a grammar section without
  * texts practises the choice question only.
  */
@@ -155,12 +162,13 @@ export function practiceFor(section: Section, textKinds: readonly TextGapKind[] 
 }
 
 /** Which hint a practice step carries, picked from what the step shows. */
-export type PracticeHint = "choice" | "ctest" | "cloze" | "wordbank" | "tfng" | "matching" | "listening" | "writing" | "speaking";
+export type PracticeHint = "choice" | "ctest" | "cloze" | "wordbank" | "open" | "tfng" | "matching" | "listening" | "writing" | "speaking";
 
 export function hintOf(def: PracticeDef): PracticeHint {
   if (def.skillTag === C_TEST_SKILL_TAG) return "ctest";
   if (def.skillTag === CLOZE_SKILL_TAG) return "cloze";
   if (def.skillTag === WORD_BANK_SKILL_TAG) return "wordbank";
+  if (def.skillTag === OPEN_CLOZE_SKILL_TAG) return "open";
   switch (def.content.kind) {
     case "TFNG":
       return def.sample ? "listening" : "tfng";

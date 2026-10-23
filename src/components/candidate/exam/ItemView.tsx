@@ -324,14 +324,15 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
   // C-test: word parts (attached to the stems); word bank: whole words in slots without stems.
   const pool = item.content.pool ?? null;
   const wordBank = !!pool && !item.content.attached;
+  const open = !!item.content.open;
   const placement = pool ? poolPlacement(pool, item.content.gaps.map((g) => g.id), answer.gaps) : null;
   const gaps = new Map(item.content.gaps.map((g) => [g.id, g]));
   // The stored C-test instruction asks to type letters; with the pool the student drags parts instead.
   // A word bank carries its own instruction.
   const prompt = pool && !wordBank ? withPoolInstruction(item.prompt) : item.prompt;
   const { instruction, content: lead } = splitInstruction(prompt, "stem");
-  // A word-bank text has a German title as its second paragraph: it heads the text, it is not its first line.
-  const { title, text: passage } = wordBank ? splitTitle(lead) : { title: null, text: lead };
+  // A word-bank or open text has a German title as its second paragraph: it heads the text, it is not its first line.
+  const { title, text: passage } = wordBank || open ? splitTitle(lead) : { title: null, text: lead };
   const parts = passage.split(/(\{\{[A-Za-z0-9_-]+\}\})/g);
   const set = (id: string, value: string) => onChange({ gaps: { ...(answer.gaps ?? {}), [id]: value } });
   // Going back to "Seçin" removes the gap's answer instead of storing "".
@@ -385,8 +386,8 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
           {title}
         </h3>
       ) : null}
-      {/* A C-test passage is long running text, so it stays medium; a single sentence is the question and gets the stem weight. */}
-      <p lang="de" className={cn("whitespace-pre-line text-[17px] leading-[2.1] text-ink", attached ? "font-medium" : "font-semibold")}>
+      {/* A C-test or open passage is long running text, so it stays medium; a single sentence is the question and gets the stem weight. */}
+      <p lang="de" className={cn("whitespace-pre-line text-[17px] leading-[2.1] text-ink", attached || open ? "font-medium" : "font-semibold")}>
         {parts.map((part, i) => {
           const m = marker(part);
           if (!m) {
@@ -467,7 +468,8 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
               aria-label={gapLabel(gap.id)}
               onFocus={(e) => (lastFocused.current = { id: gap.id, el: e.currentTarget })}
               onChange={(e) => set(gap.id, e.target.value)}
-              size={Math.max(8, value.length + 2)}
+              // Open cloze: one width for every gap, so the size says nothing about the word (the key never reaches the browser).
+              size={open ? Math.max(10, value.length + 2) : Math.max(8, value.length + 2)}
               className="mx-1 h-9 rounded-[8px] border border-line-strong bg-surface px-2 text-[16px] text-ink"
               {...NO_ASSIST}
             />

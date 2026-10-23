@@ -54,7 +54,7 @@ describe("few-shot examples", () => {
     // The first where() is the examples query.
     const where = fake.calls.find(([op]) => op === "where")![1][0];
     const q = new PgDialect().sqlToQuery(where as never);
-    expect(q.sql).toMatch(/"skill_tag" not in \(\$\d+, \$\d+, \$\d+\)/);
+    expect(q.sql).toMatch(/"skill_tag" not in \(\$\d+, \$\d+, \$\d+, \$\d+\)/);
     expect(q.params).toEqual(expect.arrayContaining(["grammar.ctest", "grammar.cloze", "grammar.wordbank", "APPROVED", "GAP_FILL"]));
   });
 });

@@ -149,6 +149,8 @@ export function textsFor(texts: SectionTexts, f: number): SectionTexts {
   return [
     ...clozeLevels.map((level) => ({ level, kind: "CLOZE" as const })),
     ...wordBankLevels.map((level) => ({ level, kind: "WORDBANK" as const })),
+    // Open cloze texts are not rescaled by time here; they stay as the template lists them.
+    ...texts.filter((t) => t.kind === "OPEN"),
   ];
 }
 

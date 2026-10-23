@@ -8,12 +8,15 @@ describe("section rule for a text-only grammar section", () => {
     expect(textRuleKey(["CLOZE"])).toBe("ruleGRAMMARCloze");
     expect(textRuleKey(["WORDBANK"])).toBe("ruleGRAMMARWordBank");
     expect(textRuleKey(["CLOZE", "WORDBANK"])).toBe("ruleGRAMMARTexts");
+    expect(textRuleKey(["OPEN"])).toBe("ruleGRAMMAROpen");
+    expect(textRuleKey(["CLOZE", "OPEN"])).toBe("ruleGRAMMARTextsMixed");
+    expect(textRuleKey(["WORDBANK", "OPEN"])).toBe("ruleGRAMMARTextsMixed");
     expect(textRuleKey(["CTEST"])).toBe("ruleGRAMMARCTest");
     expect(textRuleKey([])).toBe("ruleGRAMMARCTest");
   });
 
   it("has copy in both languages for every rule, with the same placeholders", () => {
-    for (const kinds of [["CLOZE"], ["WORDBANK"], ["CLOZE", "WORDBANK"], ["CTEST"]] as const) {
+    for (const kinds of [["CLOZE"], ["WORDBANK"], ["CLOZE", "WORDBANK"], ["CTEST"], ["OPEN"], ["CLOZE", "OPEN"]] as const) {
       const key = textRuleKey(kinds);
       const tr = (trMessages.examNav as Record<string, string>)[key];
       const en = (enMessages.examNav as Record<string, string>)[key];

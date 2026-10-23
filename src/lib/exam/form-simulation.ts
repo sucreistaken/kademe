@@ -74,6 +74,7 @@ export function gateFailures(mc: FormAccuracy, cTest: FormAccuracy, form: FormAc
 export function textGuess(kind: TextGapKind, gaps: number, wordBankDistractors = 4): number {
   if (kind === "CLOZE") return CLOZE_GUESS;
   if (kind === "WORDBANK") return 1 / (gaps + wordBankDistractors);
+  // C-test and open cloze gaps are typed.
   return 0;
 }
 

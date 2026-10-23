@@ -31,6 +31,8 @@ export type CandidateContent =
       attached?: true;
       /** MC cloze: every gap is an empty slot answered from its four choices in a side panel. */
       cloze?: true;
+      /** Open cloze: running text with one typed word per gap, no side panel and no pool. */
+      open?: true;
       /**
        * C-test (with `attached`): shuffled word parts to place, the missing parts plus decoys.
        * Word bank (without `attached`): shuffled whole words, the answers plus distractors.
@@ -196,6 +198,7 @@ export function toCandidateItem(
         // Only the rendering hints leave the server, never the skill tag itself.
         ...(kind === "CTEST" ? { attached: true as const } : {}),
         ...(kind === "CLOZE" ? { cloze: true as const } : {}),
+        ...(kind === "OPEN" ? { open: true as const } : {}),
         ...(kind === "CTEST" && snapshot.key.kind === "GAP"
           ? { pool: buildCTestPool(gapIds, snapshot.key.answers, seed, snapshot.key.distractors) }
           : {}),

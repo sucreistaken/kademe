@@ -124,12 +124,14 @@ export const CLOZE_GUESS = 1 / 4;
 /**
  * The chance of getting one gap right by guessing alone (spec 2026-10-18,
  * section 4): a quarter for an MC cloze, one over the pool size for a word
- * bank, 0 for every other item, so attempts without those kinds re-estimate
+ * bank, 0 for every other item (typed ones included), so attempts without those kinds re-estimate
  * exactly as before.
  */
 export function guessOf(item: { skillTag: string; content: ItemContent; key: ItemKey }): number {
   const kind = textGapKindOf(item);
   if (kind === "CLOZE") return CLOZE_GUESS;
+  // A typed answer cannot be guessed.
+  if (kind === "OPEN") return 0;
   if (kind === "WORDBANK" && item.content.kind === "GAP" && item.key.kind === "GAP") {
     const words = wordBankWords(item.content.gaps.map((g) => g.id), item.key.answers, item.key.distractors).length;
     return words > 0 ? 1 / words : 0;
