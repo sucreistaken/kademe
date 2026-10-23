@@ -14,7 +14,7 @@
     "error_RATE_LIMITED": "Sie haben es zu oft versucht. Versuchen Sie es in einigen Minuten erneut.",
     "error_AI_UNAVAILABLE": "Die KI ist gerade ausgeschaltet.",
     "error_FAILED": "Der Entwurf konnte nicht vorbereitet werden. Versuchen Sie es erneut oder bauen Sie ihn von Hand.",
-    "error_FORBIDDEN": "Ihre Rolle darf hier nichts erstellen.",
+    "error_FORBIDDEN": "Mit Ihrer Rolle können Sie hier nichts erstellen.",
     "title": "Erweitert",
     "lead": "Sagen Sie in einem Satz, was Sie erstellen möchten; ich bereite den Entwurf vor, Sie prüfen und bestätigen ihn.",
     "leadReadOnly": "Prüfungen, die Fragenbank, Stellen und Kompetenzen finden Sie hier.",
@@ -34,7 +34,7 @@
     "unsupported": "Das kann ich hier nicht erstellen. Ich kann erstellen: {kinds}.",
     "manualHint": "Um es von Hand zu erstellen, nutzen Sie diese Seiten:",
     "appliedTitle": "Gespeichert",
-    "followUps": "Lücken füllen:",
+    "followUps": "Noch offen:",
     "haveTitle": "Was Sie haben",
     "editManually": "Von Hand bearbeiten",
     "recentTitle": "Ihre letzten Entwürfe",
@@ -48,9 +48,9 @@
     "status_FAILED": "Konnte nicht vorbereitet werden",
     "kindUnknown": "Unbekannt",
     "positionsCard": "Stellen",
-    "positionsCount": "{count} Stellen",
+    "positionsCount": "{count, plural, one {# Stelle} other {# Stellen}}",
     "competenciesCard": "Kompetenzen",
-    "competenciesCount": "{count} Kompetenzen"
+    "competenciesCount": "{count, plural, one {# Kompetenz} other {# Kompetenzen}}"
   },
   "createExam": {
     "name": "Name der Prüfung",
@@ -65,10 +65,10 @@
     "gapCTest": "{level} Grammatik: kein Text",
     "coverageRecheck": "Die Abdeckung wird bei der Bestätigung erneut geprüft.",
     "cardTitle": "Prüfungen",
-    "cardCount": "{count} Prüfungen"
+    "cardCount": "{count, plural, one {# Prüfung} other {# Prüfungen}}"
   },
   "createQuestions": {
-    "itemCount": "{count} neue Fragen",
+    "itemCount": "{count, plural, one {# neue Frage} other {# neue Fragen}}",
     "approveAll": "Alle freigeben",
     "approve": "Freigeben",
     "reject": "Ablehnen",
@@ -77,11 +77,11 @@
     "save": "Meine Auswahl speichern",
     "audioAfterApproval": "Das Audio wird bei der Freigabe erzeugt.",
     "noApprove": "Sie dürfen nicht freigeben; die Fragen, die Sie behalten, warten auf Freigabe.",
-    "dropped": "{count} Fragen haben die Prüfung nicht bestanden und wurden ausgelassen.",
-    "failedBatches": "{count} Stapel konnten nicht erzeugt werden.",
+    "dropped": "{count, plural, one {# Frage war fehlerhaft und wurde ausgelassen.} other {# Fragen waren fehlerhaft und wurden ausgelassen.}}",
+    "failedBatches": "{count, plural, one {# Stapel konnte nicht erzeugt werden.} other {# Stapel konnten nicht erzeugt werden.}}",
     "cardTitle": "Fragenbank",
-    "cardApproved": "{count} freigegebene Fragen",
-    "cardPending": "{count} Fragen warten auf Freigabe"
+    "cardApproved": "{count, plural, one {# freigegebene Frage} other {# freigegebene Fragen}}",
+    "cardPending": "{count, plural, one {# Frage wartet auf Freigabe} other {# Fragen warten auf Freigabe}}"
   },
   "createPosition": {
     "name": "Stelle",

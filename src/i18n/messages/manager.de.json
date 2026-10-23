@@ -26,11 +26,11 @@
     "undo": "Rückgängig",
     "search": "Suchen",
     "none": "Keine",
-    "undoing": "Wird rückgängig gemacht"
+    "undoing": "Rückgängig…"
   },
   "errorPage": {
-    "forbiddenTitle": "Ihre Rolle darf das nicht",
-    "forbiddenBody": "Für diese Seite oder Aktion fehlt Ihnen die Berechtigung. Korrektoren bewerten Schreiben und Sprechen; Prüfungen, die Fragenbank und Einladungen sind Sache der Lehrkräfte und Inhaber.",
+    "forbiddenTitle": "Dafür fehlt Ihrer Rolle die Berechtigung",
+    "forbiddenBody": "Für diese Seite oder Aktion fehlt Ihnen die Berechtigung. Die Rolle Bewerter ist nur für die Bewertung von Schreiben und Sprechen da; Prüfungen, die Fragenbank und Einladungen sind Sache der Lehrkräfte und Inhaber.",
     "genericTitle": "Etwas ist schiefgelaufen",
     "genericBody": "Beim Laden dieser Seite ist ein unerwarteter Fehler aufgetreten. Sie können es erneut versuchen oder zur Übersicht zurückkehren.",
     "retry": "Erneut versuchen",
@@ -46,7 +46,7 @@
     "change": "Ändern",
     "changed": "geändert",
     "stepLabel": "Schritt {n} / {total}",
-    "noChanges": "Nichts wurde geändert.",
+    "noChanges": "Es wurde nichts geändert.",
     "skip": "Überspringen"
   },
   "brand": {
