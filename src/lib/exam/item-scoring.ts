@@ -1,4 +1,4 @@
-import type { ItemAnswer, ItemContent, ItemKey, ItemType } from "./types";
+import type { ItemAnswer, ItemContent, ItemKey, ItemSnapshot, ItemType } from "./types";
 
 /**
  * Scoring objective items against their key. Productive items (writing,
@@ -77,6 +77,32 @@ export function typedMatches(given: string | undefined, accepted: string[]): boo
   });
 }
 
+export type GapOutcome = "right" | "wrong" | "blank";
+
+/** One gap's outcome, by the single rule the engine scores a gap with. */
+function gapOutcome(given: string | undefined, accepted: string[]): GapOutcome {
+  if (!given || !given.trim()) return "blank";
+  return typedMatches(given, accepted) ? "right" : "wrong";
+}
+
+/**
+ * Per gap of a GAP item: its topic (from `key.topics`, null when the key has none) and whether the answer
+ * is right, wrong or blank. Uses the same match as `scoreItem`, so tallies built from it agree with the
+ * score. A non-GAP item has no gaps.
+ */
+export function gapResults(
+  snapshot: Pick<ItemSnapshot, "key">,
+  answer: ItemAnswer | null | undefined,
+): Array<{ gapId: string; topic: string | null; outcome: GapOutcome }> {
+  const key = snapshot.key;
+  if (key.kind !== "GAP") return [];
+  return Object.keys(key.answers).map((gapId) => ({
+    gapId,
+    topic: key.topics?.[gapId] ?? null,
+    outcome: gapOutcome(answer?.gaps?.[gapId], key.answers[gapId]),
+  }));
+}
+
 export function scoreItem(
   type: ItemType,
   content: ItemContent,
@@ -111,7 +137,7 @@ export function scoreItem(
     }
     case "GAP": {
       const ids = Object.keys(key.answers);
-      const right = ids.filter((id) => typedMatches(a.gaps?.[id], key.answers[id])).length;
+      const right = ids.filter((id) => gapOutcome(a.gaps?.[id], key.answers[id]) === "right").length;
       const score = ids.length === 0 ? 0 : right / ids.length;
       return { score, correct: score === 1 };
     }

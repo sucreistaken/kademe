@@ -237,6 +237,53 @@ describe("buildDetail productive", () => {
   });
 });
 
+describe("topic tallies", () => {
+  const text = (topics?: Record<string, string>) =>
+    snap({
+      type: "GAP_FILL",
+      skillTag: "grammar.cloze",
+      prompt: "Ich gebe {{g1}} Mann {{g2}} Buch, weil {{g3}} regnet.",
+      content: { kind: "GAP", gaps: [{ id: "g1", choices: ["dem", "den", "der", "das"] }, { id: "g2", choices: ["ein", "eine", "einen", "einem"] }, { id: "g3", choices: ["es", "er", "sie", "man"] }] },
+      key: { kind: "GAP", answers: { g1: ["dem"], g2: ["ein"], g3: ["es"] }, ...(topics ? { topics } : {}) },
+    });
+  const detail = (item: ItemSnapshot, accepted: DetailSource["acceptances"] = {}) =>
+    buildDetail({
+      ...empty,
+      sections: ["GRAMMAR"],
+      skillLevels: { GRAMMAR: "A1" },
+      runs: [{ id: "g", section: "GRAMMAR", navigable: true }],
+      responses: [resp("t1", "g", 1, item, { gaps: { g1: "den", g2: "", g3: "es" } }), resp("c1", "g", 2, ctest, { gaps: {} })],
+      acceptances: accepted,
+    });
+
+  it("tallies right / total per gap topic and puts the gap topic on the gap part", () => {
+    const [g] = detail(text({ g1: "dativ", g2: "akkusativ", g3: "konnektor" }));
+    if (g.kind !== "OBJECTIVE") throw new Error("objective");
+    const q = g.blocks[0].questions[0];
+    if (q.kind !== "GAP") throw new Error("gap");
+    expect(q.parts.flatMap((p) => (p.kind === "gap" ? [p.topic] : []))).toEqual(["dativ", "akkusativ", "konnektor"]);
+    const t = (id: string) => g.topics.find((x) => x.topic === id);
+    expect([t("dativ")?.right, t("dativ")?.total]).toEqual([0, 1]);
+    expect([t("akkusativ")?.right, t("akkusativ")?.total]).toEqual([0, 1]);
+    expect([t("konnektor")?.right, t("konnektor")?.total, t("konnektor")?.label]).toEqual([1, 1, "Konnektoren"]);
+    expect(t("dativ")?.format).toBe(false);
+  });
+
+  it("counts a teacher-accepted gap as right", () => {
+    const [g] = detail(text({ g1: "dativ", g2: "akkusativ", g3: "konnektor" }), { t1: { gapIds: ["g1"] } });
+    if (g.kind !== "OBJECTIVE") throw new Error("objective");
+    expect(g.topics.find((x) => x.topic === "dativ")?.right).toBe(1);
+  });
+
+  it("falls back to the item's tag for old snapshots without key.topics and marks the format", () => {
+    const [g] = detail(text());
+    if (g.kind !== "OBJECTIVE") throw new Error("objective");
+    const cloze = g.topics.find((x) => x.topic === "cloze");
+    expect([cloze?.right, cloze?.total, cloze?.format]).toEqual([1, 3, true]);
+    expect(g.topics.some((x) => x.topic === "dativ")).toBe(false);
+  });
+});
+
 describe("detail copy", () => {
   it("has the same keys in both languages", () => {
     expect(Object.keys(en.resultReport).sort()).toEqual(Object.keys(tr.resultReport).sort());

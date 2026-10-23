@@ -2,6 +2,7 @@ import { itemTally } from "@/components/panel/result/answer-tally";
 import { gapOptions, pickedTextKind, type GapOption, type PickedTextKind } from "@/components/panel/result/review-cards";
 import { responseState, reviewRows, type ReviewMark } from "@/components/panel/result/review-rows";
 import { withPoolInstruction } from "@/lib/exam/ctest-instruction";
+import { isFormatTopic, topicLabel, topicOf, type TopicId } from "@/lib/exam/topics";
 import { CEFR_LEVELS, isCTest, isObjectiveSection, type Cefr, type ItemAnswer, type ItemSnapshot, type Section } from "@/lib/exam/types";
 
 /**
@@ -31,6 +32,8 @@ export type GapPart =
       /** The whole correct word, or the accepted spellings joined by " / " when the gap is not part of a word. */
       correct: string;
       mark: DetailMark;
+      /** The gap's topic id from the key (`key.topics`), null for an old snapshot or a text without gap topics. */
+      topic: string | null;
       /** MC cloze only: the four words with the student's pick and the key marked. Empty for every other gap. */
       options: GapOption[];
     };
@@ -69,8 +72,11 @@ export type DetailTask = {
   summary: string | null;
 };
 
+/** Right answers out of all answers asked for one topic; `format` marks a task format ("Text with gaps"), not a topic. */
+export type TopicTally = { topic: TopicId; label: string; format: boolean; right: number; total: number };
+
 export type DetailSection =
-  | { section: Section; kind: "OBJECTIVE"; level: Cefr | null; correct: number; total: number; hasTfng: boolean; blocks: DetailBlock[] }
+  | { section: Section; kind: "OBJECTIVE"; level: Cefr | null; correct: number; total: number; hasTfng: boolean; blocks: DetailBlock[]; topics: TopicTally[] }
   | { section: Section; kind: "PRODUCTIVE"; level: Cefr | null; tasks: DetailTask[] };
 
 export type DetailResponse = {
@@ -165,11 +171,36 @@ export function gapParts(s: ItemSnapshot, a: ItemAnswer | null, acceptedGaps: re
       correct = fulls[0] ?? kept + (accepted[0] ?? "");
     }
     const options = textKind === "CLOZE" ? gapOptions(choicesOf(m[1]), given, accepted) : [];
-    parts.push({ kind: "gap", n, prefix: kept, given, shown, correct, mark: row.mark, options });
+    parts.push({ kind: "gap", n, prefix: kept, given, shown, correct, mark: row.mark, topic: key.topics?.[m[1]] ?? null, options });
   }
   const rest = prompt.slice(pos);
   if (rest) parts.push({ kind: "text", text: rest });
   return parts;
+}
+
+/** One answered unit (a gap, a row, a choice) with its topic: the gap's own topic, else the item's tag. */
+export type TopicUnit = { topic: TopicId; mark: DetailMark };
+
+export function topicUnits(q: DetailQuestion): TopicUnit[] {
+  if (q.kind === "CHOICE") return [{ topic: topicOf(q.skillTag), mark: q.mark }];
+  if (q.kind === "ROWS") return q.rows.map((r) => ({ topic: topicOf(q.skillTag), mark: r.mark }));
+  return q.parts.flatMap((p) => (p.kind === "gap" ? [{ topic: topicOf(p.topic ?? q.skillTag), mark: p.mark }] : []));
+}
+
+/** Right / total per topic over the questions of a section, most missed first. */
+export function topicTallies(blocks: DetailBlock[]): TopicTally[] {
+  const by = new Map<TopicId, TopicTally>();
+  for (const b of blocks) {
+    for (const q of b.questions) {
+      for (const u of topicUnits(q)) {
+        const t = by.get(u.topic) ?? { topic: u.topic, label: topicLabel(u.topic, "de") ?? u.topic, format: isFormatTopic(u.topic), right: 0, total: 0 };
+        t.total += 1;
+        if (u.mark === "correct" || u.mark === "accepted") t.right += 1;
+        by.set(u.topic, t);
+      }
+    }
+  }
+  return [...by.values()].sort((a, b) => b.total - b.right - (a.total - a.right) || a.topic.localeCompare(b.topic));
 }
 
 type Counted = { question: DetailQuestion; correct: number; total: number };
@@ -245,7 +276,7 @@ function objectiveSection(src: DetailSource, section: Section, runId: string | u
     lastStimulus = stimulusId;
     blocks[blocks.length - 1].questions.push(counted.question);
   }
-  return { section, kind: "OBJECTIVE", level: asCefr(src.skillLevels[section]), correct, total, hasTfng, blocks };
+  return { section, kind: "OBJECTIVE", level: asCefr(src.skillLevels[section]), correct, total, hasTfng, blocks, topics: topicTallies(blocks) };
 }
 
 function productiveSection(src: DetailSource, section: Section, runId: string | undefined): DetailSection {

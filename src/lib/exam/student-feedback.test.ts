@@ -109,8 +109,8 @@ describe("buildFeedbackInput", () => {
 
   it("groups the wrong answers by skill tag, most wrong first, with at most two examples", () => {
     expect(grammar.weak.map((w) => [w.skillTag, w.wrong, w.total])).toEqual([
-      ["grammar.akkusativ", 3, 3],
-      ["grammar.ctest", 2, 4],
+      ["akkusativ", 3, 3],
+      ["ctest", 2, 4],
     ]);
     const akk = grammar.weak[0];
     expect(akk.examples).toHaveLength(2);
@@ -118,7 +118,7 @@ describe("buildFeedbackInput", () => {
   });
 
   it("shows C-test gaps as whole words with a little context, counts an empty gap but never gives it as an example", () => {
-    const c = grammar.weak.find((w) => w.skillTag === "grammar.ctest")!;
+    const c = grammar.weak.find((w) => w.skillTag === "ctest")!;
     expect([c.wrong, c.total, c.unanswered]).toEqual([2, 4, 1]);
     expect(c.examples).toEqual([{ context: "und ___ in", student: "arbx", correct: "arbeite" }]);
     expect(JSON.stringify(input)).not.toContain("(blank)");
@@ -132,11 +132,18 @@ describe("buildFeedbackInput", () => {
     };
     const g = buildFeedbackInput("A2", buildDetail(blanks)).sections[0];
     if (g.kind !== "OBJECTIVE") throw new Error("objective");
-    expect(g.weak[0]).toEqual({ skillTag: "grammar.akkusativ", wrong: 1, total: 1, unanswered: 1, examples: [] });
+    expect(g.weak[0]).toEqual({ skillTag: "akkusativ", label: "Akkusativ", format: false, wrong: 1, total: 1, unanswered: 1, examples: [] });
   });
 
   it("leaves out a tag with no mistakes", () => {
     expect(grammar.weak.some((w) => w.skillTag === "konnektor.konzessiv")).toBe(false);
+  });
+
+  it("marks a task format so the prompt and the report can skip it, and keeps real topics ahead of it", () => {
+    const c = grammar.weak.find((w) => w.skillTag === "ctest")!;
+    expect([c.format, c.label]).toEqual([true, "C-Test"]);
+    expect(grammar.weak.find((w) => w.skillTag === "akkusativ")?.format).toBe(false);
+    expect(grammar.weak.map((w) => w.format)).toEqual([false, true]);
   });
 
   it("gives writing only its level and the teacher's reason", () => {
@@ -163,7 +170,8 @@ describe("buildFeedbackMessages", () => {
     expect(system.content).toContain("Never use the em dash");
     expect(system.content).toContain("Never mention scores");
     expect(buildFeedbackMessages(buildFeedbackInput("B1", []), "tr")[0].content).toContain("Write in Turkish");
-    expect(user.content).toContain("grammar.akkusativ");
+    expect(user.content).toContain("Akkusativ");
+    expect(system.content).toContain("\"format\": true");
     expect(JSON.parse(user.content.slice(user.content.indexOf("{"))).overall).toBe("B1");
   });
 });
@@ -305,5 +313,50 @@ describe("an unapproved draft never reaches the report", () => {
   it("ignores a stored approved text that does not pass the checks", () => {
     const bad = { ...store, approved: { strengths: [], improve: [], nextStep: "" } as FeedbackContent, approvedBy: "u1", approvedAt: "x" };
     expect(model(bad).feedback).toBeNull();
+  });
+});
+
+describe("buildFeedbackInput by gap topic", () => {
+  const text = (topics: Record<string, string> | undefined) =>
+    snap({
+      type: "GAP_FILL",
+      skillTag: "grammar.cloze",
+      prompt: "Ich gebe {{g1}} Mann {{g2}} Buch, weil {{g3}} regnet.",
+      content: { kind: "GAP", gaps: [{ id: "g1" }, { id: "g2" }, { id: "g3" }] },
+      key: { kind: "GAP", answers: { g1: ["dem"], g2: ["ein"], g3: ["es"] }, ...(topics ? { topics } : {}) },
+    });
+  const run = (item: ItemSnapshot): ReturnType<typeof buildFeedbackInput>["sections"][number] => {
+    const src: DetailSource = {
+      sections: ["GRAMMAR"],
+      skillLevels: { GRAMMAR: "A2" },
+      runs: [{ id: "g", section: "GRAMMAR", navigable: true }],
+      responses: [resp("t1", "g", 1, item, { gaps: { g1: "den", g2: "", g3: "es" } })],
+      gradings: [],
+      acceptances: {},
+      transcripts: {},
+      nameOf: {},
+    };
+    return buildFeedbackInput("A2", buildDetail(src)).sections[0];
+  };
+
+  it("groups every gap by its own topic, with the German label", () => {
+    const g = run(text({ g1: "dativ", g2: "akkusativ", g3: "konnektor" }));
+    if (g.kind !== "OBJECTIVE") throw new Error("objective");
+    expect(g.weak.map((w) => [w.skillTag, w.label, w.format, w.wrong, w.total, w.unanswered])).toEqual([
+      ["akkusativ", "Akkusativ", false, 1, 1, 1],
+      ["dativ", "Dativ", false, 1, 1, 0],
+    ]);
+  });
+
+  it("falls back to the item's tag for a gap without a topic and for an old snapshot without key.topics", () => {
+    const old = run(text(undefined));
+    if (old.kind !== "OBJECTIVE") throw new Error("objective");
+    expect(old.weak.map((w) => [w.skillTag, w.format, w.wrong, w.total])).toEqual([["cloze", true, 2, 3]]);
+    const partial = run(text({ g1: "dativ" }));
+    if (partial.kind !== "OBJECTIVE") throw new Error("objective");
+    expect(partial.weak.map((w) => [w.skillTag, w.wrong, w.total])).toEqual([
+      ["dativ", 1, 1],
+      ["cloze", 1, 2],
+    ]);
   });
 });

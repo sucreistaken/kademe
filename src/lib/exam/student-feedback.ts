@@ -3,6 +3,7 @@ import type { AiMessage } from "@/lib/ai";
 import { buildRepairMessages, parseModelJson, withoutEmDash } from "@/lib/ai-json";
 import type { DetailQuestion, DetailSection } from "@/components/panel/report/detail-model";
 import type { CandidateLocale } from "@/i18n/locale";
+import { isFormatTopic, topicLabel, topicOf } from "./topics";
 import type { Cefr, Section } from "./types";
 
 /**
@@ -172,7 +173,14 @@ export function parseFeedbackAnswer(textAnswer: string): { ok: true; content: Fe
 
 export type FeedbackExample = { context?: string; student: string; correct: string };
 /** `wrong` counts unanswered units too; `unanswered` says how many of those were left empty. Examples are answered mistakes only. */
-export type FeedbackWeakTag = { skillTag: string; wrong: number; total: number; unanswered: number; examples: FeedbackExample[] };
+export type FeedbackWeakTag = {
+  /** The topic id (`topicOf` of the gap's topic or of the item's tag); old snapshots have no gap topics and use the tag. */
+  skillTag: string;
+  /** The topic in German for the model; the bare id when the catalog does not know it. */
+  label: string;
+  /** True for a task format ("Text with gaps"), which is not a topic. */
+  format: boolean;
+  wrong: number; total: number; unanswered: number; examples: FeedbackExample[] };
 export type FeedbackSectionInput =
   | { section: Section; kind: "OBJECTIVE"; level: Cefr | null; correct: number; total: number; weak: FeedbackWeakTag[] }
   | { section: Section; kind: "PRODUCTIVE"; level: Cefr | null; teacherReasons: string[] };
@@ -189,38 +197,41 @@ const short = (s: string, max: number) => {
   return t.length > max ? `${t.slice(0, max - 1).trimEnd()}...` : t;
 };
 
-/** One wrong unit (a gap, a row, a choice) of a question, with the little context the example needs. */
-function wrongUnits(q: DetailQuestion): { total: number; wrong: FeedbackExample[]; blank: number } {
+/** One answered unit (a gap, a row, a choice) of a question: its topic id, whether it was left blank, and the mistake as an example. */
+type FeedbackUnit = { topic: string; blank: boolean; wrong: FeedbackExample | null };
+
+/**
+ * The units of a question. A text-gap unit takes the gap's own topic (`key.topics`, which an old snapshot
+ * lacks) and falls back to the item's tag; every other unit takes the item's tag.
+ */
+function feedbackUnits(q: DetailQuestion): FeedbackUnit[] {
+  const itemTopic = topicOf(q.skillTag);
   if (q.kind === "CHOICE") {
-    if (q.mark === "blank") return { total: 1, wrong: [], blank: 1 };
-    return { total: 1, wrong: q.mark === "wrong" ? [{ context: short(q.stem, 80), student: short(q.given, EXAMPLE_MAX), correct: short(q.key, EXAMPLE_MAX) }] : [], blank: 0 };
+    if (q.mark === "blank") return [{ topic: itemTopic, blank: true, wrong: null }];
+    return [{ topic: itemTopic, blank: false, wrong: q.mark === "wrong" ? { context: short(q.stem, 80), student: short(q.given, EXAMPLE_MAX), correct: short(q.key, EXAMPLE_MAX) } : null }];
   }
   if (q.kind === "ROWS") {
-    return {
-      total: q.rows.length,
-      blank: q.rows.filter((r) => r.mark === "blank").length,
-      wrong: q.rows
-        .filter((r) => r.mark === "wrong")
-        .map((r) => ({ context: short(r.label, 80), student: short(r.given, EXAMPLE_MAX), correct: short(r.key, EXAMPLE_MAX) })),
-    };
+    return q.rows.map((r) => ({
+      topic: itemTopic,
+      blank: r.mark === "blank",
+      wrong: r.mark === "wrong" ? { context: short(r.label, 80), student: short(r.given, EXAMPLE_MAX), correct: short(r.key, EXAMPLE_MAX) } : null,
+    }));
   }
-  const gaps = q.parts.flatMap((p, i) => (p.kind === "gap" ? [{ p, i }] : []));
-  return {
-    total: gaps.length,
-    blank: gaps.filter(({ p }) => p.kind === "gap" && p.mark === "blank").length,
-    wrong: gaps
-      .filter(({ p }) => p.kind === "gap" && p.mark === "wrong")
-      .map(({ p, i }) => {
-        if (p.kind !== "gap") throw new Error("unreachable");
-        // The words around the gap say what the gap is about; only a few of them.
-        const before = q.parts[i - 1];
-        const after = q.parts[i + 1];
-        const left = before?.kind === "text" ? before.text.trim().split(/\s+/).slice(-3).join(" ") : "";
-        const right = after?.kind === "text" ? after.text.trim().split(/\s+/).slice(0, 2).join(" ") : "";
-        const context = [left, "___", right].filter(Boolean).join(" ");
-        return { context: short(context, 80), student: short(p.shown, EXAMPLE_MAX), correct: short(p.correct, EXAMPLE_MAX) };
-      }),
-  };
+  const units: FeedbackUnit[] = [];
+  q.parts.forEach((p, i) => {
+    if (p.kind !== "gap") return;
+    const topic = topicOf(p.topic ?? q.skillTag);
+    if (p.mark === "blank") return void units.push({ topic, blank: true, wrong: null });
+    if (p.mark !== "wrong") return void units.push({ topic, blank: false, wrong: null });
+    // The words around the gap say what the gap is about; only a few of them.
+    const before = q.parts[i - 1];
+    const after = q.parts[i + 1];
+    const left = before?.kind === "text" ? before.text.trim().split(/\s+/).slice(-3).join(" ") : "";
+    const right = after?.kind === "text" ? after.text.trim().split(/\s+/).slice(0, 2).join(" ") : "";
+    const context = [left, "___", right].filter(Boolean).join(" ");
+    units.push({ topic, blank: false, wrong: { context: short(context, 80), student: short(p.shown, EXAMPLE_MAX), correct: short(p.correct, EXAMPLE_MAX) } });
+  });
+  return units;
 }
 
 /**
@@ -239,18 +250,24 @@ export function buildFeedbackInput(overall: string | null | undefined, sections:
     const byTag = new Map<string, FeedbackWeakTag>();
     for (const block of s.blocks) {
       for (const q of block.questions) {
-        const u = wrongUnits(q);
-        const tag = byTag.get(q.skillTag) ?? { skillTag: q.skillTag, wrong: 0, total: 0, unanswered: 0, examples: [] };
-        tag.total += u.total;
-        tag.wrong += u.wrong.length + u.blank;
-        tag.unanswered += u.blank;
-        for (const e of u.wrong) if (tag.examples.length < MAX_EXAMPLES) tag.examples.push(e);
-        byTag.set(q.skillTag, tag);
+        for (const u of feedbackUnits(q)) {
+          const tag = byTag.get(u.topic) ?? { skillTag: u.topic, label: topicLabel(u.topic, "de") ?? u.topic, format: isFormatTopic(u.topic), wrong: 0, total: 0, unanswered: 0, examples: [] };
+          tag.total += 1;
+          if (u.blank) {
+            tag.wrong += 1;
+            tag.unanswered += 1;
+          } else if (u.wrong) {
+            tag.wrong += 1;
+            if (tag.examples.length < MAX_EXAMPLES) tag.examples.push(u.wrong);
+          }
+          byTag.set(u.topic, tag);
+        }
       }
     }
     const weak = [...byTag.values()]
       .filter((t) => t.wrong > 0)
-      .sort((a, b) => b.wrong - a.wrong || a.skillTag.localeCompare(b.skillTag))
+      // A task format ("Text with gaps") is not a topic to study: it sorts last so it never crowds a real topic out.
+      .sort((a, b) => Number(a.format) - Number(b.format) || b.wrong - a.wrong || a.skillTag.localeCompare(b.skillTag))
       .slice(0, MAX_TAGS_PER_SECTION);
     out.push({ section: s.section, kind: "OBJECTIVE", level: s.level, correct: s.correct, total: s.total, weak });
   }
@@ -278,7 +295,8 @@ export function buildFeedbackMessages(input: FeedbackInput, locale: FeedbackLoca
     "",
     "Rules:",
     "- Use only the summary you are given. Do not invent mistakes, scores or facts that are not in it.",
-    "- Name the grammar or skill topic concretely (for example \"Akkusativ-Artikel (den/einen)\" or \"Konnektoren mit obwohl\"), not a tag such as \"grammar.akkusativ\". Tags are hints for you, never to be copied.",
+    "- Name the grammar or skill topic concretely (for example \"Akkusativ-Artikel (den/einen)\" or \"Konnektoren mit obwohl\"), not a tag such as \"grammar.akkusativ\". Each entry has a German \"label\" for its topic; \"skillTag\" is an id for you, never to be copied.",
+    "- An entry with \"format\": true is a task format (for example a text with gaps), not a topic. Never name it as a topic to improve; you may still use its examples when they show a concrete mistake.",
     "- strengths: at most 3, short. Only things the summary supports (a high x/y, a section with a good level, a topic with no mistakes). An empty list is fine when nothing stands out.",
     "- improve: at most 4 topics, most important first, based on the skill tags with the most wrong answers. For each, say in one sentence what went wrong and fill the example field with one real wrong answer from the summary: student is what the student wrote, correct is the right form, both copied from the summary. When a topic has no example in the summary, leave both example fields as empty strings.",
     "- Keep each why to one sentence.",

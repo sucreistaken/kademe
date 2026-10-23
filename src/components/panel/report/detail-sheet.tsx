@@ -2,6 +2,7 @@ import type { Locale } from "@/i18n/locale";
 import type { managerT } from "@/i18n/manager";
 import { cn } from "@/lib/cn";
 import { splitTextLead } from "@/lib/exam/prompt-instruction";
+import { topicLabel } from "@/lib/exam/topics";
 import type { DetailMark, DetailQuestion, DetailSection, DetailTask, GapPart } from "./detail-model";
 
 type T = ReturnType<typeof managerT>;
@@ -290,10 +291,40 @@ function Task({ task, section, t }: { task: DetailTask; section: string; t: T })
   );
 }
 
-function SectionBody({ s, t }: { s: DetailSection; t: T }) {
+/** Teacher-only table of right / total per topic; task formats ("Text with gaps") are not topics and stay out. */
+function TopicTable({ s, t, locale }: { s: Extract<DetailSection, { kind: "OBJECTIVE" }>; t: T; locale: Locale }) {
+  const rows = s.topics.filter((x) => !x.format);
+  if (rows.length === 0) return null;
+  return (
+    <div className="mt-3">
+      <h3 className="text-[0.85em] font-semibold uppercase tracking-[0.04em] text-muted">{t("resultReport.topicsHeading")}</h3>
+      <table className="mt-1 w-full text-[0.95em]">
+        <thead>
+          <tr className="border-b border-line text-start text-[0.85em] text-muted">
+            <th className="py-1 pe-3 text-start font-semibold">{t("resultReport.topicCol")}</th>
+            <th className="py-1 text-end font-semibold">{t("resultReport.topicScoreCol")}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((x) => (
+            <tr key={x.topic} className="border-b border-line">
+              <td className="py-1 pe-3">{topicLabel(x.topic, locale) ?? x.label}</td>
+              <td className="tnum py-1 text-end">
+                {x.right} / {x.total}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function SectionBody({ s, t, locale }: { s: DetailSection; t: T; locale: Locale }) {
   if (s.kind === "PRODUCTIVE") return <>{s.tasks.map((task) => <Task key={task.n} task={task} section={s.section} t={t} />)}</>;
   return (
     <>
+      <TopicTable s={s} t={t} locale={locale} />
       {s.hasTfng ? <p className="mt-2 text-[0.9em] text-muted">{s.section === "LISTENING" ? t("resultReport.tfLegendListening") : t("resultReport.tfLegend")}</p> : null}
       {s.blocks.map((b, i) => (
         <div key={i} className="mt-4">
@@ -351,7 +382,7 @@ export function DetailSheet({ sections, studentName, t, locale }: { sections: De
                     </div>
                   </div>
                   {i === 0 ? <p className="mt-2 text-[0.9em] text-muted">{t("resultReport.detailIntro")}</p> : null}
-                  <SectionBody s={s} t={t} />
+                  <SectionBody s={s} t={t} locale={locale} />
                 </td>
               </tr>
             </tbody>
