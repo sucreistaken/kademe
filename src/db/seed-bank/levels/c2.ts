@@ -1053,7 +1053,7 @@ const listeningItems: SeedItem[] = [
     "Notieren Sie beim Hören die fehlenden Angaben in Stichworten.\n\nDer Schlaf festigt vor allem Stoff, der vorher {{g1}} wurde.\nEinwand gegen die Studien: Untersucht wurden fast nur {{g2}} im Labor.\nAbends noch einmal durchgehen, sofern man nicht völlig {{g3}} ist.",
     [
       ["verstanden", "wirklich verstanden", "richtig verstanden", "auch wirklich verstanden", "begriffen", "wirklich begriffen", "nachvollzogen", "durchdrungen", "verinnerlicht"],
-      ["junge, gesunde Probanden", "junge gesunde Probanden", "junge und gesunde Probanden", "jungen, gesunden Probanden", "jungen gesunden Probanden", "junge, gesunde Menschen", "junge gesunde Menschen", "junge und gesunde Menschen", "junge, gesunde Leute", "junge gesunde Leute", "junge Menschen", "junge, gesunde Teilnehmer", "junge, gesunde Teilnehmende", "junge gesunde Teilnehmende", "junge Gesunde", "jung und gesund", "jung, gesund", "gesunde Probanden", "junge Probanden", "gesunde Versuchspersonen", "junge, gesunde Versuchspersonen"],
+      ["junge, gesunde Probanden", "junge gesunde Probanden", "junge und gesunde Probanden", "jungen, gesunden Probanden", "jungen gesunden Probanden", "junge, gesunde Menschen", "junge gesunde Menschen", "junge und gesunde Menschen", "junge, gesunde Leute", "junge gesunde Leute", "junge Menschen", "junge, gesunde Teilnehmer", "junge, gesunde Teilnehmende", "junge gesunde Teilnehmende", "junge Gesunde", "jung und gesund", "jung, gesund", "gesunde Probanden", "junge Probanden", "gesunde Versuchspersonen", "junge, gesunde Versuchspersonen", "junge gesunde Versuchspersonen", "junge gesunde Teilnehmer", "junge und gesunde Teilnehmer", "junge Teilnehmer", "gesunde Menschen", "junge Leute", "junge und gesunde Leute", "junge und gesunde Versuchspersonen", "junge Versuchspersonen"],
       ["erschöpft", "übermüdet", "müde", "ausgelaugt", "fertig", "kaputt", "am Ende", "ausgepowert"],
     ],
     "g1: Einschränkung: Der Effekt gilt \"vor allem für Stoff, den man vorher auch wirklich verstanden hat\" (nicht für stures Auswendiglernen). g2: Gegenargument: Die Studien stammen \"fast alle von jungen, gesunden Probanden im Labor\". g3: Bedingung: den Stoff abends kurz durchgehen, \"sofern er nicht völlig erschöpft ist\". Sinnverwandte Wörter und Wendungen werden akzeptiert."),
@@ -1470,7 +1470,7 @@ const grammarOpenTexts: SeedItem[] = [
       "Auch Arbeitgeber sind gefragt: Sie könnten Beschäftigte, die ein Amt bekleiden, großzügiger freistellen, und zwar [[ohne#praeposition]] dass ihnen daraus Nachteile erwachsen. " +
       "Entscheidend ist letztlich, dass das Ehrenamt nicht als Selbstverständlichkeit gilt, [[sondern#konnektor]] als eine Leistung: Sie kommt der ganzen Gesellschaft [[zugute#idiomatik]].",
     last: "Wer das erkennt, wird die Engagierten künftig nicht nur loben, sondern entlasten.",
-    note: "fehlen an (g1), konditionales falls/sofern (g2), sich absichern gegen (g3), indirekte Frage mit ob (g4), Funktionsverbgefüge in Kauf nehmen (g5), einräumendes zwar ... doch (g6), Infinitiv mit zu nach Verb (g7), ohne dass (g8), nicht ... sondern (g9), zugute kommen (g10).",
+    note: "fehlen an (g1), konditionales falls/sofern/wenn oder Inversion mit sollten (g2), sich absichern gegen (g3), indirekte Frage mit ob (g4), Funktionsverbgefüge in Kauf nehmen (g5), einräumendes zwar ... doch (g6), Infinitiv mit zu nach Verb (g7), ohne dass (g8), nicht ... sondern (g9), zugutekommen mit getrennter Partikel im Verbzweitsatz (g10).",
   }),
   openCloze(LEVEL, "MID", {
     title: "Wenn der Dorfladen schließt",
@@ -1478,13 +1478,13 @@ const grammarOpenTexts: SeedItem[] = [
     body:
       "Die Gründe sind vielfältig. [[Zum#konnektor.zweiteilig]] einen fehlt es an Nachfolgern, [[zum#konnektor.zweiteilig]] anderen lohnt sich der Betrieb kleiner Läden kaum noch. " +
       "Wer sich nicht [[mit#verb_praeposition]] der Rolle des bloßen Versorgers zufriedengeben wollte, versuchte es mit Postschalter, Café und Lieferdienst. " +
-      "Das Angebot wuchs, der Umsatz [[hingegen/dagegen/indes/indessen/jedoch/aber/allerdings/wiederum#konnektor]] stagnierte. " +
+      "Das Angebot wuchs, der Umsatz [[hingegen/dagegen/indes/indessen/jedoch/aber/allerdings/wiederum/freilich#konnektor]] stagnierte. " +
       "Manche Gemeinden greifen den Betreibern [[unter#idiomatik]] die Arme, indem sie die Räume mietfrei zur Verfügung stellen. " +
       "Andernorts haben sich Bewohner zu Genossenschaften zusammengeschlossen, [[um#infinitiv.umzu]] den Laden in eigener Regie zu führen. " +
       "Solche Modelle funktionieren allerdings nur, [[wenn/sofern/solange/falls#konnektor]] genügend Menschen dort auch tatsächlich einkaufen. " +
       "Viele ältere Dorfbewohner sind [[darauf#praepositionaladverb]] angewiesen, dass der Laden um die Ecke bleibt. " +
       "Hinzu [[kommt#trennbares_verb]], dass er mehr ist als eine Verkaufsstelle: Hier trifft man sich, hier erfährt man, wer im Krankenhaus liegt. " +
-      "Wo er fehlt, geht mit [[ihm#dativ]] auch ein Stück Dorfleben verloren.",
+      "Wo er fehlt, geht mit [[ihm/Sicherheit/Bestimmtheit/diesem#dativ]] auch ein Stück Dorfleben verloren.",
     last: "Mancherorts hat man daraus bereits Konsequenzen gezogen.",
     note: "zum einen ... zum anderen (g1, g2), sich zufriedengeben mit (g3), Gegensatz hingegen (g4), jemandem unter die Arme greifen (g5), Finalsatz um ... zu (g6), konditionales wenn/sofern (g7), angewiesen sein auf mit Pronominaladverb (g8), Hinzu kommt (g9), Personalpronomen im Dativ nach mit (g10).",
   }),
@@ -1492,7 +1492,7 @@ const grammarOpenTexts: SeedItem[] = [
     title: "Warum uns Ruinen faszinieren",
     first: "Kaum ein Reisender lässt eine Burgruine links liegen, und selten sind Besucher so andächtig wie zwischen halb eingestürzten Mauern.",
     body:
-      "Streng [[genommen#idiomatik]] bewundern sie weniger das Bauwerk als seinen Verfall. " +
+      "Streng [[genommen/betrachtet/gesehen#idiomatik]] bewundern sie weniger das Bauwerk als seinen Verfall. " +
       "Der Reiz liegt [[darin#praepositionaladverb]], dass das Fehlende den Betrachter zum Ergänzen einlädt: Wo ein Dach fehlt, malt man sich eines aus. " +
       "Ein vollständig erhaltenes Schloss lässt dieser Fantasie dagegen kaum [[Raum/Platz/Spielraum/Freiraum#idiomatik]]. " +
       "Hinzu [[kommt#trennbares_verb]], dass Ruinen etwas Unaufdringliches haben: Sie erheben [[keinen#negation.kein]] Anspruch darauf, bewundert zu werden, und gerade deshalb tut man es. " +
@@ -1500,7 +1500,7 @@ const grammarOpenTexts: SeedItem[] = [
       "[[Je#konnektor]] gründlicher saniert wird, [[desto/umso#konnektor]] stärker geht die Patina verloren, die Besucher so schätzen. " +
       "Wird dagegen nichts unternommen, droht binnen weniger Jahrzehnte der endgültige Einsturz. " +
       "Manche Fachleute plädieren deshalb für einen Mittelweg: [[So#konnektor.modal]] viel wie nötig sichern, so wenig wie möglich ergänzen. " +
-      "Ob die Besucher in hundert Jahren noch dasselbe empfinden, steht [[dahin#idiomatik]]. " +
+      "Ob die Besucher in hundert Jahren noch dasselbe empfinden, steht [[dahin/infrage#idiomatik]]. " +
       "Sicher ist nur, dass die Ruine Besucher nicht [[trotz/ungeachtet#genitiv.praeposition]] ihres Verfalls anzieht, sondern seinetwegen.",
     last: "Ein Gebäude, das nichts mehr verbergen kann, wirkt auf viele ehrlicher als jedes restaurierte Schloss.",
     note: "streng genommen (g1), Pronominaladverb darin (g2), Raum/Spielraum lassen (g3), Hinzu kommt (g4), Anspruch erheben + Negation (g5), vor einem Dilemma stehen (g6), je ... desto (g7, g8), so viel ... so wenig (g9), dahinstehen (g10), trotz + Genitiv (g11).",
@@ -1571,7 +1571,7 @@ Manche haben darauf reagiert, indem sie Hörbuch und gedrucktes Buch im Paket an
 
 [Lücke 5]
 
-Die Ausleihzahlen widersprechen damit der Furcht vor einem Entweder-oder: Dieselben Menschen, die Streams abrufen, leihen weiterhin gedruckte Bücher aus. Das Hörbuch erweist sich so weniger als Konkurrent denn als zusätzlicher Zugang zur Literatur.`,
+Ihre Ausleihzahlen widersprechen der Furcht vor einem Entweder-oder: Dieselben Menschen, die Streams abrufen, leihen weiterhin gedruckte Bücher aus. Das Hörbuch erweist sich so weniger als Konkurrent denn als zusätzlicher Zugang zur Literatur.`,
   },
   {
     key: R_STADTBAUM,
@@ -1875,7 +1875,7 @@ const listeningItemsV3: SeedItem[] = [
     "1 R: zwölftausend Euro Zuschuss. 2 F: Hansen nennt die Einzelpraxis als Grund, warum junge Ärzte abgeschreckt werden, und empfiehlt Gemeinschaftspraxen. 3 NG: Das Gebäude wird als mögliche Räumlichkeit genannt, ein Verkauf kommt nicht vor."),
   lA.short("notes", "HARD",
     "Wie viel Prozent der Haushalte haben laut Frau Schreiber kein Internet? Tragen Sie die Zahl ein.",
-    ["42", "42 Prozent", "42%", "zweiundvierzig", "zweiundvierzig Prozent"],
+    ["42", "42 Prozent", "42%", "42 %", "zweiundvierzig %", "zweiundvierzig", "zweiundvierzig Prozent"],
     "Sie nennt erst zweiunddreißig, korrigiert sich dann aber: \"ach nein, zweiundvierzig Prozent\"."),
 
   lM.match("attitude", "HARD",
@@ -1960,7 +1960,7 @@ const speakingPictureItems: SeedItem[] = [
   pictureTask("scene.c2.phones-at-dinner", "EASY", { thinkSeconds: 45, answerSeconds: 120, maxTakes: 1 },
     "Sehen Sie sich das Bild an. Beschreiben Sie, was die beiden Frauen tun, und überlegen Sie, was die Szene über die Rolle des Smartphones im Alltag verrät. Sagen Sie dann, ob Handys beim gemeinsamen Essen erlaubt sein sollten, und begründen Sie Ihre Meinung mit Beispielen aus Ihrer Erfahrung.",
     [
-      "beschreibt die Szene (zwei Frauen sitzen im Restaurant am Tisch, eine zeigt der anderen lächelnd etwas auf dem Handy)",
+      "beschreibt die Szene (zwei Frauen sitzen im Restaurant am Tisch und lachen gemeinsam über ein Handy; eine zeigt der anderen etwas darauf)",
       "deutet sie, z. B. Handy als Gesprächsanlass oder als Ablenkung, gemeinsames Erleben, Foto oder Nachricht zeigen",
       "nimmt klar Stellung und begründet mit mindestens einem Beispiel",
       "berücksichtigt unterschiedliche Situationen (Familie, Freunde, Geschäftsessen)",
