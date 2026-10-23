@@ -9,6 +9,7 @@ import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
 import { DemoStage, STAGE_H, STAGE_W } from "./DemoStage";
 import type { TutorialScript } from "./script-types";
+import { createClipRegistry } from "./audio-refs";
 import { formatPlayTime, stateAtTimeline, stepIndexAt } from "./timeline";
 import { useTutorial } from "./use-tutorial";
 
@@ -88,10 +89,12 @@ function PlayerBody({ script }: { script: TutorialScript }) {
   }, [playing, total]);
 
   // Narration: the current step's file plays from where the step is; every other one is still.
-  const audios = useRef<Record<string, HTMLAudioElement | null>>({});
+  // One stable ref callback per clip (see audio-refs.ts): the frame-by-frame re-render must not detach them.
+  const [clips] = useState(() => createClipRegistry<HTMLAudioElement>());
+  useEffect(() => () => clips.pauseAll(), [clips]);
   const stepId = step?.id ?? "";
   useEffect(() => {
-    for (const [id, el] of Object.entries(audios.current)) {
+    for (const [id, el] of Object.entries(clips.current())) {
       if (!el) continue;
       if (id !== stepId || !playing) {
         el.pause();
@@ -101,18 +104,18 @@ function PlayerBody({ script }: { script: TutorialScript }) {
       if (Math.abs(el.currentTime - offset) > 0.3) el.currentTime = Math.min(offset, Number.isFinite(el.duration) ? el.duration : offset);
       if (el.paused && !el.ended) void el.play().catch(() => undefined);
     }
-  }, [stepId, playing, jump, step?.start]);
+  }, [clips, stepId, playing, jump, step?.start]);
 
   const seek = useCallback(
     (to: number) => {
       const index = stepIndexAt(timeline, Math.min(Math.max(0, to), total));
       const at = timeline.steps[index]?.start ?? 0;
-      for (const el of Object.values(audios.current)) if (el) el.currentTime = 0;
+      for (const el of Object.values(clips.current())) if (el) el.currentTime = 0;
       tRef.current = at;
       setT(at);
       setJump((j) => j + 1);
     },
-    [timeline, total],
+    [clips, timeline, total],
   );
   const ended = t >= total;
   const togglePlay = useCallback(() => {
@@ -191,11 +194,7 @@ function PlayerBody({ script }: { script: TutorialScript }) {
         return entry ? (
           <audio
             key={s.id}
-            ref={(el) => {
-              // React detaches the ref (null) when the player closes: stop the clip that was playing.
-              if (!el) audios.current[s.id]?.pause();
-              audios.current[s.id] = el;
-            }}
+            ref={clips.ref(s.id)}
             src={entry.src}
             preload="auto"
           />
