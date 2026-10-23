@@ -1,5 +1,6 @@
 # Kademe - durum ve devir belgesi
 
+Ürün turu 2026-10-23 (`platform/solutions`, canlıya çıkmadı): bkz. "Ürün turu 2026-10-23" bölümü.
 Campus German redesign, Plan 1 (2026-10-16, `platform/solutions`, canlıya çıkmadı): bkz. "Campus German redesign, Plan 1" bölümü.
 Dilbilgisi boşluklu metin ve kelime havuzu (2026-10-18, `platform/solutions`, canlıya çıkmadı): bkz. "Dilbilgisi: boşluklu metin ve kelime havuzu" bölümü.
 Gözetim: yanlış "sekmeden ayrıldınız" uyarısı ve Meet (2026-10-19, canlıda 2026-10-19): ayrıntı `docs/PROCTORING.md` "Sekmeden ve pencereden ayrılma" ve "Başka bir yerde ekran paylaşımı"; vaka dosyası `investigations/proctor-leave-warning-and-meet-share-investigation.md`.
@@ -12,6 +13,129 @@ Son güncelleme: 2026-10-07 (Gelişmiş: tek kutu, AI önce, `platform/solutions
 **Canlıda**: https://kademe.kadiray.com, `main` commit `8ea4bfe` (2026-10-21 14:02 UTC: giriş ekranı İngilizce ve dört dilli bayrak seçici, öğrenci tarafında Türkçe sınav adı ve geçersiz link sızıntısı giderildi; HTTPS'te dört dil ve Almanca geçersiz link kontrol edildi). Önceki: `70912f7` (2026-10-19 11:49 UTC: soru havuzu ÖSD/telc/TestDaF derslerine göre yenilendi, Richtig/Falsch, yazılan numara ve saat eşleşmesi, gözetimde yanlış "sekmeden ayrıldınız" uyarısı ve Meet düzeltmesi; ayrıntı "Canlıya çıkış: 2026-10-19 soru havuzu ve gözetim"). Önceki: `bcc9d44` (2026-10-18 18:41 UTC: okul test revizyonu). Önceki: `2cf125c` (2026-10-16 18:45 UTC: krem zemin yerine Campus German beyazı ve soğuk griler; ondan önce `8e945da`, Campus German görünümü, Plan 1; ayrıntı "Canlıya çıkış: Campus German görünümü, Plan 1"). Önceki sürümler (aşağıdaki "Canlıya çıkış" bölümleri): `ab951b1` (okul yöneticisi geri bildirimi), `1d8d4c6` (onSET yerleştirme), `5a4f97e` (kurs grubu sürümü, 2026-10-14), `02760e3` (2026-10-07 akşam: Bugün yeni tasarım, 3 adımlı alım sihirbazı, "en az 2 değerlendirici" kuralı kaldırıldı, soru bankası v2; ayrıntı "Canlıya çıkış: sihirbaz ve banka v2"), `0142ff0` (Gelişmiş). Önceki not: commit `739f218` (`main`, 2026-10-05 sınav sıcak düzeltmesi; ayrıntı "Kararlar ve sapmalar"da).
 Canlı veritabanı kullanıcı onayıyla sıfırlandı: eski işe alım verisi yok,
 panel kullanıcıları (parolalarıyla) taşındı, banka ve iki sınav yüklendi.
+
+## Ürün turu 2026-10-23 (`platform/solutions`, canlıya çıkmadı)
+
+**Durum.** Aralık `95a5b91..` bu bölümün commit'i (son kod commit'i `778d259`), `platform/solutions` dalında.
+Canlıya ÇIKMADI: canlı hâlâ `main` `8ea4bfe`. Canlıya almak sahibin tek satırlık "canlıya al" onayını ister;
+sahip kararı: bu turun tamamı tek bir canlıya çıkışla gider. Spec:
+`docs/superpowers/specs/2026-10-23-exam-product-round.md`.
+
+**Neler geldi.**
+- Sınav ekranı: "Flag" yerine "Mark" (yer imi ikonu; metin yalnız İngilizcede değişti); ortada süre hapı,
+  5 ve 2 dakika kala bölüm başına birer kez çıkan ve 12 sn sonra kendiliğinden kapanan uyarı (hiç kırmızı
+  değil); `DESIGN.md` tip ölçüleriyle büyüyen başlıklar; renkli ilan kartları (sahip istisnası); yazılan
+  boşluklarda tablo ve form düzeni.
+- Yeni biçimler: resimler (aday resim rotası bölüm sırası + soru sırası + slot ile; anahtar ve depo yolu
+  tarayıcıya gitmez), Ja/Nein ifadesi, "n tanesini işaretleyin" (MULTI_CHOICE `pick`), açık boşluklu metin
+  `OPEN` (yerleştirme şablonunda C1 ve C2, aşağıda), Sprachbausteine 15, metne yerleştirme 5/7, görüş
+  eşleştirme, 3-4 sesli "kim ne diyor", tablo tamamlama, form doldurma, tabela-resim eşleştirme, resimli
+  çoktan seçmeli, grafikle yazma ve konuşma (özgün SVG grafikler), konuşmada resimli ilk görev.
+- Dinleme: kayıt başına dinleme hakkı (B2'den itibaren bir kez); dört TTS sesi (A Kore kadın, B Charon erkek,
+  C Puck erkek, D Leda kadın).
+- Motor: boşluk başına konu ve konu kataloğu; tekrar giren öğrenci (aynı kurum + e-posta) önce görmediği
+  soruları alır (ilk kez girenin çekilişi aynı kaldı); konuşmada önce resimli görev.
+- Sonuç: öğrenci analizi (bölüm başına doğru/yanlış/boş, çalışılacak ve iyi giden konular, örneksiz onaylı
+  not); öğretmen her sonuçta seviyenin gösterilip gösterilmeyeceğini seçer (`exam_results.level_shown`,
+  denetim satırı); öğrencinin yazdırma sayfası `/a/[token]/done/print`, panelde `?copy=student`; öğretmen
+  soru soru kopyayı tutar.
+- Sınav yardımcıları: not araçları (vurgulama, altını çizme, kalem, silgi, geri alınabilir temizleme; yalnız
+  `sessionStorage`); anlatımlı "nasıl çalışır" turları (5 bölüm x 5 dil, `public/tutorial` altında 175 mp3,
+  ses Kore).
+- Diller: öğrenci varsayılanı İngilizce; yönetim paneli Almanca (Sie), sözlük `docs/i18n/glossary-de.md`.
+- Banka: başlangıç bankası 660 madde ve 136 metin/kayıt (atılabilir `kademe_final_check` üstünde `db:seed`
+  sayımı). İnceleyicinin yerel `bank:topup` sayımı: `kademe_platform`'da madde 849 -> 1334, metin/kayıt
+  78 -> 190; 2026-10-23 akşamı orada 1339 madde (923 APPROVED, 411 RETIRED, 5 DRAFT) ve 190 metin/kayıt.
+  Seviye başına 3 form hedefi; 89 resimlik katalog (83 fotoğraf Pexels/Unsplash, 6 özgün grafik); seviye
+  başına iki Opus kör çözüm turu; özgünlük kontrolü 0 eşleşme.
+- Göç 0026: `stimuli.max_plays` (CHECK 1..3), `candidates (org_id, lower(email))` dizini,
+  `assessments.locale` varsayılanı `'en'`, `exam_results.level_shown`.
+
+**Son düzeltme dalgası (2026-10-23).**
+- Anlatım her karede duruyordu: `TutorialPlayer`'ın ses ref'i satır içi bir fonksiyondu, oynatıcı her
+  animasyon karesinde yeniden çizildiği için React eski ref'i null ile çağırıp sesi durduruyordu. Artık id
+  başına sabit bir ref var (`tutorial/audio-refs.ts`), sesler yalnız oynatıcı kapanınca durur (birim testi;
+  tarayıcıda dinlenmedi).
+- Demo resimleri bankada kullanılamaz: A1 "Zettel in der WG-Küche" artık resmi gitar yerine taksi (anahtar
+  aynı; madde yeni seed key alır); katalogda üç demo resmi `reserved: "tutorial"`, `img()` onları reddeder;
+  bir test `public/tutorial/img` baytlarını bankanın kullandığı her resimle karşılaştırır.
+- AI öğrenci notu: resmi hitap (siz, Sie, usted, Arapçada resmi, İngilizcede nötr); modele genel ve bölüm
+  seviyesi gitmez (öğretmen seviyeyi gizleyebilir).
+- Yazdırma sayfası tarihi: sonucun kesinleştiği gün (yoksa sınav günü), paneldeki öğrenci kopyasıyla aynı
+  kaynak (`sheet-date.ts`); eskiden yazdırıldığı gündü.
+- `verify:exam`: kelime havuzu sözcükleri, açılır seçenekler ve öğrencinin kendi kaydedilmiş cevabı artık
+  sızıntı sayılmıyor (eski betik aynı veritabanında "Erfahrung" için yanlış FAIL verdi); `storageKey` ve
+  `bank/images/` taraması; resimli bir soru sunulunca resim rotası `image/webp` dönüyor mu (rota işleyicisi
+  süreç içinde çağrılır). `kademe_final_check` üstünde 43 `ok`, 0 FAIL, "All checks passed".
+- Açık boşluklu metin şablonda: `scripts/simulate-placement.ts` (a) C1 ve C2 boşluklu metin yerine açık
+  boşluklu metin, aynı 30 dk ve (b) eski forma ek olarak (40 dk) denedi. İkisi de iki tohumda kapıdan geçti,
+  (a) seçildi. Kapı satırları önce: "6 cloze A1-C2 + 3 word banks A2-B2, 30 min: PASS" (iki tohum); sonra:
+  "(a) cloze A1-B2 + word banks A2-B2 + open C1, C2, 30 min: PASS" (iki tohum). Tablolar
+  `docs/EXAM-ENGINE.md` "Açık boşluklu metin yerleştirmede". AI oluşturucunun yeniden ölçeklemesi açık
+  boşluklu metni boşluklu metin merdivenine koyar (`exam-config.ts: textsFor`).
+- Küçükler: süre uyarısı 12 sn (spec), kayıt testi `exam.pickFull`, `EXAM-ENGINE.md` konu kimliklerinin
+  tarayıcıya gittiğini (gizli değil, yalnız etiket ve sayı gösterilir) söylüyor.
+- Doğrulama: `tsc --noEmit` temiz; `eslint src scripts` 0 hata (1 eski uyarı, `exam/students/page.tsx`
+  `StudentRow`); `pnpm test` 414 dosya, 5292 geçti + 4 todo; `pnpm build` geçti (Next.js 16.3.4 Turbopack,
+  `::highlight` için 4 eski CSS uyarısı); `pnpm exam:form-timing` koştu.
+
+**Canlıya çıkış tarifi (sırayla).**
+1. Önce: çalışan bölüm yok; disk yeri (katalog resimleri depoya yaklaşık 6.5 MB, tutorial sesi checkout
+   içinde yaklaşık 5.7 MB, yeni dinleme sesleri); ortamda `PROCTOR_DEV_FAKE` yok.
+2. `pg_dump` ile yedek: `/root/kademe-backups/`.
+3. Deploy betiği (git pull, install, göç 0026, build). Tutorial mp3'leri checkout ile gelir. `bank:images`
+   canlıda ÇALIŞTIRILMAZ (yazarlık aracı; webp ve manifest commit'te).
+4. Geri dönüş için onaylı başlangıç maddelerini kaydet:
+   `\copy (select id from items where origin='SEED' and status='APPROVED') to '/tmp/seed-approved-before.csv'`
+5. Yeni maddeleri ekle, henüz hiçbir şeyi emekliye ayırma:
+   `pnpm bank:topup --production --confirm-db=127.0.0.1:5434/kademe` (yaklaşık 82 katalog resmini yükler,
+   "images: N uploaded" yazar). Yerleştirme şablonu artık C1 ve C2 açık boşluklu metin ister; canlı bankada
+   bu adımdan önce yoktur, o arada şablondan davet `TEMPLATE_COVERAGE` dönebilir (birim testine göre;
+   canlıda denenmedi). 3 ile 5 arasında davet açılmasın.
+6. `pnpm bank:tts`, "failed 0" görülene kadar (yerelde 64 kayıt flash-lite yedeğiyle üretildi; canlıda ses
+   farklı çıkar: VM'de birkaç kayıt dinlenmeli).
+7. `pnpm bank:topup --production --confirm-db=127.0.0.1:5434/kademe --retire-stale --sync-seed` (boşluk
+   konularını ve dinleme haklarını taşır, yeniden kurgulanan kayıtları ve değişen A1 maddesinin eskisini
+   emekliye ayırır).
+8. Önerilir: bütün sırayı önce yerelde `kademe` kopyası bir `_check` veritabanında prova et, sayıları yaz.
+9. Not: şablondan yayınlanmış eski yerleştirme sınavı, şablon değiştiği için ilk şablon davetinde emekliye
+   ayrılır ve yenisi yayınlanır (`ensureTemplateBlueprint`, birim testleri; canlıda denenmedi).
+
+**Duman testleri.** `/login` 200; `select count(*) from stimuli where section='LISTENING' and audio_key is
+null` 0; şablon kapsamı tam (her şablondan bir davet `TEMPLATE_COVERAGE` dönmez); HTTPS üzerinden bir dev
+linkinde resimli soru (resim rotası 200 `image/webp`); `/tutorial/en/GRAMMAR/gap.mp3` 200; sunulan CSS'te
+`::highlight(kademe-mark-yellow)`; sunulan bir chunk'ta "Watch how it works" ve "Remove mark"; panel DE'ye
+geçer.
+
+**Geri dönüş.** Göç yalnız ekler (eski kod yeni şemada çalışır); resimler ve sesler içerik adreslidir,
+kalabilir; 4. adımdaki listeyi geri aç (`update items set status='APPROVED' where id in (...)`) ve yeni
+başlangıç maddelerini emekliye ayır; önceki `main` `8ea4bfe`.
+
+**Açık sahip kararları.**
+- Şablon süreleri: yerleştirme okuması `exam:form-timing` p50 20 madde / 2948 kelime (p95 23 / 3539) 18
+  dakikada; dinleme 16 madde (şablon yorumu 12 der); seviye kontrolü okuması p50 C1 2662, C2 3080 kelime 25
+  dakikada. `pnpm exam:form-timing` ile yeniden zamanlanmalı.
+- Açık boşluklu metin: (a) seçildi; metin başına 3.5 dk yazma süresi varsayımı doğrulanmadı; daha temkinli
+  seçenek (b), 40 dk dilbilgisi.
+- `NONE` görünürlüklü ve otomatik yayınlı sınavlar artık analizi yayınlar (seviye gizli); daha önce yayınlanmış
+  `NONE` sonuçlar da artık analizi gösterir.
+- Resim lisansları (manifestte kaynaklar var).
+- Tekrarlar: konuşma 4. denemeden itibaren bir resimli görevi tekrarlar; uyarlamalı bölümler önceki
+  maddelerden kaçınmaz.
+- Tutorial sırasında sekmeden ayrılmak kaydedilir ama uyarı verilmez.
+- A1/A2 seviye kontrollerinde aynı nesne fotoğrafı iki farklı soruda görünebilir.
+
+**Doğrulanmadı.** Chrome turu yok (en/de/ar, not araçları, tutorial ve anlatımın kesilmeden çalması, bitiş
+ekranında seviye gösterili ve gizli, yazdırma kopyası ve tarihi, 1366'da Almanca panel, gözetim günlüğü):
+Chrome uzantısı bağlantısı koptu, son düzeltme dalgasında da tarayıcı açılmadı. 175 anlatım parçası ve yeni
+dinleme kayıtları dinlenmedi. Panelin ve yeni içeriğin ana dili Almanca olan biri tarafından okunması yok.
+Açık boşluklu metnin gerçek süresi ve yeniden ölçeklenmiş AI formları simüle edilmedi. `verify:exam` yalnız
+atılabilir `kademe_final_check` üstünde koştu (sonra silindi). Turbopack üretim build'i yerelde geçti; canlı
+deploy betiğinin aynı build'i kullandığı denetlenmedi.
+
+**Yeni betikler.** `bank:images`, `tutorial:tts`, `bank:originality`, `bank:blind-export` /
+`bank:blind-compare`, `exam:form-timing`; `scripts/simulate-placement.ts` açık boşluk denemeleriyle ve
+`verify:exam` resim rotası kontrolüyle genişledi.
 
 ## Ürün tek cümlede
 
