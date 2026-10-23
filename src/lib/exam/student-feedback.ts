@@ -4,7 +4,7 @@ import { buildRepairMessages, parseModelJson, withoutEmDash } from "@/lib/ai-jso
 import type { DetailQuestion, DetailSection } from "@/components/panel/report/detail-model";
 import type { CandidateLocale } from "@/i18n/locale";
 import { isFormatTopic, topicLabel, topicOf } from "./topics";
-import type { Cefr, Section } from "./types";
+import type { Section } from "./types";
 
 /**
  * A short note for the student, drafted by the AI and approved by a teacher.
@@ -12,10 +12,11 @@ import type { Cefr, Section } from "./types";
  * shown to a student until a teacher has approved (and possibly rewritten) it,
  * and the AI's own scores never appear in it.
  *
- * What the model gets is a compact summary: levels, x/y per section, the wrong
+ * What the model gets is a compact summary: x/y per section, the wrong
  * answers grouped by skill tag with one or two short examples, and the
- * teacher's own reason for a writing or speaking level. It gets no passage,
- * transcript, answer text, name or e-mail.
+ * teacher's own reason for a writing or speaking level. It gets no level (the
+ * teacher may hide the level from the student), passage, transcript, answer
+ * text, name or e-mail.
  */
 
 export type FeedbackLocale = CandidateLocale;
@@ -182,10 +183,11 @@ export type FeedbackWeakTag = {
   format: boolean;
   wrong: number; total: number; unanswered: number; examples: FeedbackExample[] };
 export type FeedbackSectionInput =
-  | { section: Section; kind: "OBJECTIVE"; level: Cefr | null; correct: number; total: number; weak: FeedbackWeakTag[] }
-  | { section: Section; kind: "PRODUCTIVE"; level: Cefr | null; teacherReasons: string[] };
+  | { section: Section; kind: "OBJECTIVE"; correct: number; total: number; weak: FeedbackWeakTag[] }
+  | { section: Section; kind: "PRODUCTIVE"; teacherReasons: string[] };
 
-export type FeedbackInput = { overall: Cefr | null; sections: FeedbackSectionInput[] };
+/** No overall or section level: the teacher may hide the level, so the note must not be able to give it away. */
+export type FeedbackInput = { sections: FeedbackSectionInput[] };
 
 const MAX_TAGS_PER_SECTION = 6;
 const MAX_EXAMPLES = 2;
@@ -237,14 +239,15 @@ function feedbackUnits(q: DetailQuestion): FeedbackUnit[] {
 /**
  * The compact summary the model sees, from the detail model of the report (so
  * it counts exactly what the report prints: a teacher-accepted answer is right,
- * a question the student never reached is not counted).
+ * a question the student never reached is not counted). The levels of the
+ * detail model are left out on purpose.
  */
-export function buildFeedbackInput(overall: string | null | undefined, sections: DetailSection[]): FeedbackInput {
+export function buildFeedbackInput(sections: DetailSection[]): FeedbackInput {
   const out: FeedbackSectionInput[] = [];
   for (const s of sections) {
     if (s.kind === "PRODUCTIVE") {
       const reasons = s.tasks.map((t) => t.teacherNote).filter((x): x is string => !!x).map((x) => short(x, REASON_MAX));
-      out.push({ section: s.section, kind: "PRODUCTIVE", level: s.level, teacherReasons: reasons });
+      out.push({ section: s.section, kind: "PRODUCTIVE", teacherReasons: reasons });
       continue;
     }
     const byTag = new Map<string, FeedbackWeakTag>();
@@ -269,10 +272,9 @@ export function buildFeedbackInput(overall: string | null | undefined, sections:
       // A task format ("Text with gaps") is not a topic to study: it sorts last so it never crowds a real topic out.
       .sort((a, b) => Number(a.format) - Number(b.format) || b.wrong - a.wrong || a.skillTag.localeCompare(b.skillTag))
       .slice(0, MAX_TAGS_PER_SECTION);
-    out.push({ section: s.section, kind: "OBJECTIVE", level: s.level, correct: s.correct, total: s.total, weak });
+    out.push({ section: s.section, kind: "OBJECTIVE", correct: s.correct, total: s.total, weak });
   }
-  const level = (["A1", "A2", "B1", "B2", "C1", "C2"] as const).find((l) => l === overall) ?? null;
-  return { overall: level, sections: out };
+  return { sections: out };
 }
 
 // ---------------------------------------------------------------------------
@@ -291,19 +293,20 @@ export function buildFeedbackMessages(input: FeedbackInput, locale: FeedbackLoca
   const system = [
     "You write a short feedback note for a student who took a German placement exam. A teacher will read, edit and approve it before the student sees it.",
     "",
-    `Write in ${LANGUAGE_NAME[locale]}. Keep German words, phrases and examples in German. Be plain, warm and concrete, like a good teacher speaking to the student ("you"). No flattery, no jargon.`,
+    `Write in ${LANGUAGE_NAME[locale]}. Keep German words, phrases and examples in German. Be plain, warm and concrete, like a good teacher speaking to the student. No flattery, no jargon.`,
+    "Address the student formally in every field: \"siz\" in Turkish, \"Sie\" in German, \"usted\" in Spanish, the formal register in Arabic, and plain neutral English.",
     "",
     "Rules:",
     "- Use only the summary you are given. Do not invent mistakes, scores or facts that are not in it.",
     "- Name the grammar or skill topic concretely (for example \"Akkusativ-Artikel (den/einen)\" or \"Konnektoren mit obwohl\"), not a tag such as \"grammar.akkusativ\". Each entry has a German \"label\" for its topic; \"skillTag\" is an id for you, never to be copied.",
     "- An entry with \"format\": true is a task format (for example a text with gaps), not a topic. Never name it as a topic to improve; you may still use its examples when they show a concrete mistake.",
-    "- strengths: at most 3, short. Only things the summary supports (a high x/y, a section with a good level, a topic with no mistakes). An empty list is fine when nothing stands out.",
+    "- strengths: at most 3, short. Only things the summary supports, such as a high x/y in a section or a teacher's positive reason; never a level. An empty list is fine when nothing stands out.",
     "- improve: at most 4 topics, most important first, based on the skill tags with the most wrong answers. For each, say in one sentence what went wrong and fill the example field with one real wrong answer from the summary: student is what the student wrote, correct is the right form, both copied from the summary. When a topic has no example in the summary, leave both example fields as empty strings.",
     "- Keep each why to one sentence.",
     "- Never mention a CEFR level (A1 to C2) or any level name in any field: the teacher may choose not to show the level to the student.",
     "- nextStep: one concrete thing to practise next, in one or two sentences.",
-    "- \"unanswered\" counts the questions of a skill tag that the student left empty; they are included in \"wrong\". Never use an unanswered question as an example. If a tag has unanswered questions, you may say the student left some questions blank (in Turkish, for example, \"boş bıraktığın sorular\"), and give no example for a tag that only has blanks.",
-    "- For writing and speaking you only get the final level and, sometimes, the teacher's own reason. Do not comment on text or speech you have not seen; you may restate the teacher's reason.",
+    "- \"unanswered\" counts the questions of a skill tag that the student left empty; they are included in \"wrong\". Never use an unanswered question as an example. If a tag has unanswered questions, you may say the student left some questions blank (in Turkish, for example, \"boş bıraktığınız sorular\"), and give no example for a tag that only has blanks.",
+    "- For writing and speaking you only get, sometimes, the teacher's own reason. Do not comment on text or speech you have not seen; you may restate the teacher's reason.",
     "- Never mention scores, probabilities, an AI, or how the exam is scored. Never show a numeric ability estimate. Do not compare the student with others. Do not recommend a course or class.",
     "- Never use the em dash character; use a comma, a colon or a plain hyphen.",
     "- Proofread every sentence once before answering; no repeated words.",
@@ -358,11 +361,6 @@ export function approveFeedback(prev: StudentFeedbackStore | null, content: Feed
   };
 }
 
-/**
- * What a student-facing report may print: the approved text, never a draft.
- * The stored value is checked again, so a row written by hand cannot put
- * anything unapproved or malformed on the sheet.
- */
 /** `example?: never` keeps a FeedbackContent (which may carry examples) from being assigned here by mistake. */
 export type StudentNote = { strengths: string[]; improve: Array<{ topic: string; why: string; example?: never }>; nextStep: string };
 
@@ -383,6 +381,11 @@ export function studentNote(content: FeedbackContent | null): StudentNote | null
 /** The approved note of a stored feedback row in its student-facing form, or null. */
 export const studentFacingFeedback = (store: StudentFeedbackStore | null | undefined): StudentNote | null => studentNote(approvedFeedback(store));
 
+/**
+ * What a student-facing report may print: the approved text, never a draft.
+ * The stored value is checked again, so a row written by hand cannot put
+ * anything unapproved or malformed on the sheet.
+ */
 export function approvedFeedback(store: StudentFeedbackStore | null | undefined): FeedbackContent | null {
   if (!store?.approved || !store.approvedAt || !store.approvedBy) return null;
   const v = validateFeedback(store.approved);

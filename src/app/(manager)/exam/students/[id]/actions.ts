@@ -444,8 +444,8 @@ export async function draftFeedback(formData: FormData) {
     transcripts: {},
     nameOf: {},
   });
-  const aiDecided = Object.values(computed?.skills ?? {}).some((s) => s?.decider === "AI");
-  const input = buildFeedbackInput(view.result?.finalOverall ?? (aiDecided ? null : (computed?.overall ?? null)), detail);
+  // No level reaches the model (the teacher may hide it from the student); only x/y, topics and reasons.
+  const input = buildFeedbackInput(detail);
   // The note is for the student, so it is drafted in the student's language.
   const locale = row.assessment.locale;
   const messages = buildFeedbackMessages(input, locale);

@@ -97,14 +97,13 @@ const source: DetailSource = {
 };
 
 describe("buildFeedbackInput", () => {
-  const input = buildFeedbackInput("B1", buildDetail(source));
+  const input = buildFeedbackInput(buildDetail(source));
   const grammar = input.sections[0];
   if (grammar.kind !== "OBJECTIVE") throw new Error("objective");
 
-  it("keeps the level and x/y per section", () => {
-    expect(input.overall).toBe("B1");
+  it("keeps x/y per section", () => {
     // 2 right gaps + 1 right choice = 3 of 8 units (4 gaps, 4 choices)
-    expect([grammar.section, grammar.level, grammar.correct, grammar.total]).toEqual(["GRAMMAR", "A2", 3, 8]);
+    expect([grammar.section, grammar.correct, grammar.total]).toEqual(["GRAMMAR", 3, 8]);
   });
 
   it("groups the wrong answers by skill tag, most wrong first, with at most two examples", () => {
@@ -130,7 +129,7 @@ describe("buildFeedbackInput", () => {
       responses: [resp("a1", "g", 1, choice("grammar.akkusativ", "Ich sehe ___ Mann.", ["den", "der"], "a"), { choiceIds: [] }, 0)],
       gradings: [],
     };
-    const g = buildFeedbackInput("A2", buildDetail(blanks)).sections[0];
+    const g = buildFeedbackInput(buildDetail(blanks)).sections[0];
     if (g.kind !== "OBJECTIVE") throw new Error("objective");
     expect(g.weak[0]).toEqual({ skillTag: "akkusativ", label: "Akkusativ", format: false, wrong: 1, total: 1, unanswered: 1, examples: [] });
   });
@@ -146,8 +145,8 @@ describe("buildFeedbackInput", () => {
     expect(grammar.weak.map((w) => w.format)).toEqual([false, true]);
   });
 
-  it("gives writing only its level and the teacher's reason", () => {
-    expect(input.sections[1]).toEqual({ section: "WRITING", kind: "PRODUCTIVE", level: "B1", teacherReasons: ["Gute Struktur, aber viele Kasusfehler."] });
+  it("gives writing only the teacher's reason", () => {
+    expect(input.sections[1]).toEqual({ section: "WRITING", kind: "PRODUCTIVE", teacherReasons: ["Gute Struktur, aber viele Kasusfehler."] });
   });
 
   it("carries no student text, task text, AI rationale, name or passage", () => {
@@ -155,24 +154,39 @@ describe("buildFeedbackInput", () => {
     for (const secret of ["STUDENT TEXT HERE", "SECRET-TASK", "AI RATIONALE", "AI SUMMARY", "Teacher Name"]) expect(sent).not.toContain(secret);
   });
 
-  it("does not turn an unreached or AI-only level into a level", () => {
-    const empty = buildFeedbackInput(undefined, buildDetail({ ...source, skillLevels: {} }));
-    expect(empty.overall).toBeNull();
-    expect(empty.sections.every((s) => s.level === null)).toBe(true);
+  it("sends no overall or section level, even when the result has levels (the teacher may hide them)", () => {
+    expect(Object.keys(input)).toEqual(["sections"]);
+    for (const s of input.sections) expect(Object.keys(s)).not.toContain("level");
+    const user = buildFeedbackMessages(input, "en")[1].content;
+    expect(user).not.toMatch(/"(overall|level)"/);
+    // The source's section levels (GRAMMAR A2, WRITING B1) do not appear anywhere in what is sent.
+    expect(user).not.toMatch(/"(A1|A2|B1|B2|C1|C2)"/);
   });
 });
 
 describe("buildFeedbackMessages", () => {
   it("asks for the report language, German kept, no em dash, no scores", () => {
-    const [system, user] = buildFeedbackMessages(buildFeedbackInput("B1", buildDetail(source)), "en");
+    const [system, user] = buildFeedbackMessages(buildFeedbackInput(buildDetail(source)), "en");
     expect(system.content).toContain("Write in English");
     expect(system.content).toContain("Keep German");
     expect(system.content).toContain("Never use the em dash");
     expect(system.content).toContain("Never mention scores");
-    expect(buildFeedbackMessages(buildFeedbackInput("B1", []), "tr")[0].content).toContain("Write in Turkish");
+    expect(buildFeedbackMessages(buildFeedbackInput([]), "tr")[0].content).toContain("Write in Turkish");
     expect(user.content).toContain("Akkusativ");
     expect(system.content).toContain("\"format\": true");
-    expect(JSON.parse(user.content.slice(user.content.indexOf("{"))).overall).toBe("B1");
+    expect(JSON.parse(user.content.slice(user.content.indexOf("{")))).not.toHaveProperty("overall");
+  });
+
+  it("asks for the formal register in every student language and never for a level", () => {
+    const system = buildFeedbackMessages(buildFeedbackInput([]), "tr")[0].content;
+    expect(system).toContain("Address the student formally");
+    for (const form of ["\"siz\" in Turkish", "\"Sie\" in German", "\"usted\" in Spanish", "formal register in Arabic", "neutral English"]) expect(system).toContain(form);
+    expect(system).toContain("boş bıraktığınız sorular");
+    expect(system).not.toContain("boş bıraktığın sorular");
+    expect(system).not.toContain("(\"you\")");
+    expect(system).toContain("Never mention a CEFR level");
+    expect(system).not.toContain("a section with a good level");
+    expect(system).not.toContain("final level");
   });
 });
 
@@ -336,7 +350,7 @@ describe("buildFeedbackInput by gap topic", () => {
       transcripts: {},
       nameOf: {},
     };
-    return buildFeedbackInput("A2", buildDetail(src)).sections[0];
+    return buildFeedbackInput(buildDetail(src)).sections[0];
   };
 
   it("groups every gap by its own topic, with the German label", () => {
