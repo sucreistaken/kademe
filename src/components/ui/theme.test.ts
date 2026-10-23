@@ -280,6 +280,35 @@ describe("shadcn variables carry the soft values", () => {
     expect(css).toContain('@source not "../**/*.test.ts";');
   });
 
+  it("defines the DESIGN.md type scale as font-size tokens", () => {
+    // [name, size, line-height, weight, letter-spacing or undefined]
+    const scale: [string, string, string, string, string?][] = [
+      ["display", "42px", "1.05", "900", "-0.025em"],
+      ["headline-lg", "34px", "1.1", "900", "-0.02em"],
+      ["headline", "30px", "1.2", "900", "-0.02em"],
+      ["title-lg", "24px", "1.25", "900"],
+      ["title", "21px", "1.3", "900"],
+      ["body-lg", "18px", "1.5", "600"],
+      ["body", "15px", "1.5", "600"],
+      ["label", "15px", "1.3", "800"],
+      ["label-sm", "13px", "1.3", "800"],
+      ["caption", "13px", "1.4", "700"],
+      ["overline", "13px", "1.3", "900", "0.1em"],
+      ["button", "17px", "1", "900"],
+      ["button-lg", "20px", "1", "900"],
+      ["numeral", "18px", "1", "900"],
+      ["passage", "17px", "1.75", "600"],
+    ];
+    for (const [name, size, lineHeight, weight, spacing] of scale) {
+      expect(theme[`--text-${name}`], name).toBe(size);
+      expect(theme[`--text-${name}--line-height`], name).toBe(lineHeight);
+      expect(theme[`--text-${name}--font-weight`], name).toBe(weight);
+      expect(theme[`--text-${name}--letter-spacing`], name).toBe(spacing);
+    }
+    // A text-* name must not also be a colour, or the utility becomes ambiguous.
+    for (const [name] of scale) expect(theme[`--color-${name}`], name).toBeUndefined();
+  });
+
   it("keeps dark: inert", () => {
     expect(css).toContain("@custom-variant dark (&:is(.dark *));");
   });

@@ -161,6 +161,62 @@
   /* Nunito: rounded terminals, latin-ext for Turkish and German. ui-rounded is SF Rounded on Apple. */
   --font-sans: var(--font-nunito), ui-rounded, system-ui, sans-serif;
 
+  /*
+   * Type scale from docs/design/ux-designs/ux-kademe-2026-10-16/DESIGN.md (Typography).
+   * Each token is a Tailwind v4 font-size utility (text-display, text-title, ...) that also
+   * sets line-height, weight and, where the spec gives one, letter-spacing. Screens adopt
+   * them separately; defining them here changes no existing screen.
+   */
+  --text-display: 42px;
+  --text-display--line-height: 1.05;
+  --text-display--font-weight: 900;
+  --text-display--letter-spacing: -0.025em;
+  --text-headline-lg: 34px;
+  --text-headline-lg--line-height: 1.1;
+  --text-headline-lg--font-weight: 900;
+  --text-headline-lg--letter-spacing: -0.02em;
+  --text-headline: 30px;
+  --text-headline--line-height: 1.2;
+  --text-headline--font-weight: 900;
+  --text-headline--letter-spacing: -0.02em;
+  --text-title-lg: 24px;
+  --text-title-lg--line-height: 1.25;
+  --text-title-lg--font-weight: 900;
+  --text-title: 21px;
+  --text-title--line-height: 1.3;
+  --text-title--font-weight: 900;
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: 1.5;
+  --text-body-lg--font-weight: 600;
+  --text-body: 15px;
+  --text-body--line-height: 1.5;
+  --text-body--font-weight: 600;
+  --text-label: 15px;
+  --text-label--line-height: 1.3;
+  --text-label--font-weight: 800;
+  --text-label-sm: 13px;
+  --text-label-sm--line-height: 1.3;
+  --text-label-sm--font-weight: 800;
+  --text-caption: 13px;
+  --text-caption--line-height: 1.4;
+  --text-caption--font-weight: 700;
+  --text-overline: 13px;
+  --text-overline--line-height: 1.3;
+  --text-overline--font-weight: 900;
+  --text-overline--letter-spacing: 0.1em;
+  --text-button: 17px;
+  --text-button--line-height: 1;
+  --text-button--font-weight: 900;
+  --text-button-lg: 20px;
+  --text-button-lg--line-height: 1;
+  --text-button-lg--font-weight: 900;
+  --text-numeral: 18px;
+  --text-numeral--line-height: 1;
+  --text-numeral--font-weight: 900;
+  --text-passage: 17px;
+  --text-passage--line-height: 1.75;
+  --text-passage--font-weight: 600;
+
   /* Radius under shadcn's role names: sm 9, md 13 (items), lg 18 (buttons, fields, menus), xl 30 (cards, dialog), 2xl 36. */
   --radius-sm: 9px;
   --radius-md: 13px;
