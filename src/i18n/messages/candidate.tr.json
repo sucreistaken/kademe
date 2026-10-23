@@ -1282,6 +1282,8 @@
     "textPlaceholder": "Notlarınızı buraya yazın"
   },
   "tutorial": {
+    "howItWorks": "Nasıl çalışır",
+    "clockRunning": "Siz izlerken süre işlemeye devam eder.",
     "watch": "Nasıl çalıştığını izleyin ({time})",
     "watchLead": "Bu bölümün nasıl çalıştığını kısa bir videoda görün.",
     "title": "Nasıl çalışır: {section}",

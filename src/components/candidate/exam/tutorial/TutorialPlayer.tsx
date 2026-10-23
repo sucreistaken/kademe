@@ -37,7 +37,18 @@ function usePrefersReducedMotion(): boolean {
   return reduced;
 }
 
-export function TutorialPlayer({ script, open, onOpenChange }: { script: TutorialScript; open: boolean; onOpenChange: (open: boolean) => void }) {
+export function TutorialPlayer({
+  script,
+  open,
+  onOpenChange,
+  note,
+}: {
+  script: TutorialScript;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  /** One extra line under the title, e.g. that the exam clock keeps running. */
+  note?: string;
+}) {
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
@@ -46,14 +57,14 @@ export function TutorialPlayer({ script, open, onOpenChange }: { script: Tutoria
           translate="no"
           className="notranslate fixed inset-3 z-50 flex flex-col overflow-hidden rounded-[16px] bg-paper shadow-modal outline-none sm:inset-4"
         >
-          {open ? <PlayerBody script={script} /> : null}
+          {open ? <PlayerBody script={script} note={note} /> : null}
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
   );
 }
 
-function PlayerBody({ script }: { script: TutorialScript }) {
+function PlayerBody({ script, note }: { script: TutorialScript; note?: string }) {
   const tt = useTranslations("tutorial");
   const sec = useT("section");
   const { captions, narration, timeline } = useTutorial(script);
@@ -142,6 +153,7 @@ function PlayerBody({ script }: { script: TutorialScript }) {
         <DialogPrimitive.Description className="sr-only">{tt("description")}</DialogPrimitive.Description>
         <span className="tnum shrink-0 text-[14px] text-muted">{tt("step", { n: state.step + 1, total: timeline.steps.length })}</span>
       </div>
+      {note ? <p className="shrink-0 border-b border-hairline bg-cream px-5 py-2 text-[14px] text-ink-2">{note}</p> : null}
 
       <div className="flex min-h-0 flex-1 gap-4 p-4">
         <ScaledStage>

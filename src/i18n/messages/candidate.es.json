@@ -1282,6 +1282,8 @@
     "textPlaceholder": "Escriba aquí sus notas"
   },
   "tutorial": {
+    "howItWorks": "Cómo funciona",
+    "clockRunning": "El tiempo sigue corriendo mientras usted lo ve.",
     "watch": "Ver cómo funciona ({time})",
     "watchLead": "Vea en un vídeo corto cómo funciona esta sección.",
     "title": "Cómo funciona: {section}",

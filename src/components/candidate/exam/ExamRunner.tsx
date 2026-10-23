@@ -38,6 +38,7 @@ import { recordingLabel } from "@/lib/proctor/recording-status";
 import { formatCountdown, SUBMIT_SLACK_MS } from "@/lib/timer";
 import { ErrorLine } from "@/components/candidate/exam/ErrorLine";
 import { ExamTopBar } from "@/components/candidate/exam/ExamTopBar";
+import { TutorialReplay } from "@/components/candidate/exam/tutorial/TutorialReplay";
 import { ItemHeading } from "@/components/candidate/exam/ItemHeading";
 import { ReadingPane } from "@/components/candidate/exam/ReadingPane";
 import { ScratchPad } from "@/components/candidate/exam/notes/ScratchPad";
@@ -99,6 +100,8 @@ export function ExamRunner({
   const cw = useT("cheatWarning");
   const sec = useT("section");
   const { engine, snap } = useProctor();
+  // Position of the section whose how-it-works video is open (a later section never inherits it).
+  const [replayFor, setReplayFor] = useState<number | null>(null);
   const [state, setState] = useState(initial);
   const [answers, setAnswers] = useState<Record<number, ItemAnswer>>(() => answersOf(initial.current));
   const [busy, setBusy] = useState(false);
@@ -699,7 +702,9 @@ export function ExamRunner({
         sectionMs={(state.sections.find((x) => x.position === cur.position)?.minutes ?? 0) * 60_000}
         token={token}
         sectionPosition={cur.position}
+        onWatchTutorial={() => setReplayFor(cur.position)}
       />
+      <TutorialReplay section={cur.section} open={replayFor === cur.position && state.step === "ITEM"} onOpenChange={(o) => setReplayFor(o ? cur.position : null)} />
 
       {blocked ? (
         <RecoverPanel reasons={recover ? [recover] : resumeNeeded} resume={!recover && engine?.startedFrom === "exam"} />
