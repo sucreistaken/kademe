@@ -1,6 +1,7 @@
 import type { TfngValue } from "@/lib/exam/types";
 import { cloze } from "../cloze";
 import { cTest } from "../ctest";
+import { img } from "../image";
 import { wordBank } from "../wordbank";
 import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 
@@ -709,6 +710,222 @@ const readingItems: SeedItem[] = [
     "Das Wasser ist nur Donnerstag und Freitag im Angebot. Geöffnet ist Montag bis Samstag, also nicht am Sonntag. Milch kostet 1,50 Euro."),
 ];
 
+// ---------------------------------------------------------------- READING (signs to pictures, form fill)
+
+/** Signs or notes to pictures: the pictures are the targets ("Bild A" ...), one stays spare. */
+function signsToPictures(
+  stimulusKey: string,
+  within: Within,
+  prompt: string,
+  signs: string[],
+  pictures: Array<{ id: string }>,
+  pairs: number[],
+  explanation: string,
+): SeedItem {
+  return {
+    section: "READING",
+    level: LEVEL,
+    type: "MATCHING",
+    skillTag: "reading.detail",
+    within,
+    stimulusKey,
+    prompt,
+    content: {
+      kind: "MATCHING",
+      left: signs.map((t, i) => ({ id: `l${i + 1}`, text: t })),
+      right: pictures.map((p, i) => ({ id: `r${i + 1}`, text: `Bild ${String.fromCharCode(65 + i)}`, image: img(p.id) })),
+    },
+    key: { kind: "MATCHING", pairs: Object.fromEntries(pairs.map((r, i) => [`l${i + 1}`, `r${r}`])) },
+    explanation,
+  };
+}
+
+/** A short form after a short text: typed gaps, every accepted spelling listed (numbers are compared by digit). */
+function formFill(
+  stimulusKey: string,
+  within: Within,
+  prompt: string,
+  gaps: Array<{ id: string; answers: string[] }>,
+  explanation: string,
+): SeedItem {
+  return {
+    section: "READING",
+    level: LEVEL,
+    type: "GAP_FILL",
+    skillTag: "reading.detail",
+    within,
+    stimulusKey,
+    prompt,
+    content: { kind: "GAP", gaps: gaps.map((g) => ({ id: g.id })) },
+    key: { kind: "GAP", answers: Object.fromEntries(gaps.map((g) => [g.id, g.answers])) },
+    explanation,
+  };
+}
+
+const rSchilderStadt = text(
+  "v4-r-a1-schilder-stadt",
+  "Schilder in der Stadt",
+  "Stadt und Orte",
+  `
+Sie gehen durch die Stadt und lesen Schilder an Türen und Fenstern.
+`,
+);
+
+const rZettelKueche = text(
+  "v4-r-a1-zettel-kueche",
+  "Zettel in der WG-Küche",
+  "Essen und Wohnen",
+  `
+In einer Wohngemeinschaft hängen kleine Zettel in der Küche.
+`,
+);
+
+const rZettelDinge = text(
+  "v4-r-a1-zettel-dinge",
+  "Kurze Zettel und Schilder",
+  "Dinge und Fundsachen",
+  `
+Im Bus, im Haus und auf der Straße finden Sie kurze Zettel und Schilder.
+`,
+);
+
+const rBibliothek = text(
+  "v4-r-a1-nachricht-bibliothek",
+  "Nachricht an die Bibliothek",
+  "Bibliothek und Freizeit",
+  `
+Guten Tag,
+ich möchte gern einen Bibliotheksausweis. Mein Name ist Marco Lenz, das schreibt man L-E-N-Z. Ich wohne in der Birkenstraße 7. Meine Telefonnummer ist 0221 49 38 17. Ich komme am Samstag um zehn Uhr bei Ihnen vorbei. Brauche ich ein Foto?
+Danke und viele Grüße
+Marco Lenz
+`,
+);
+
+const rKochkurs = text(
+  "v4-r-a1-mail-kochkurs",
+  "E-Mail an die Volkshochschule",
+  "Kochen und Freizeit",
+  `
+Hallo,
+ich möchte beim Kochkurs für Anfänger mitmachen. Ich heiße Aylin Demir. Der Kurs ist am Mittwoch, nicht am Dienstag, oder? Er beginnt um 18:30 Uhr, und er kostet 24 Euro. Muss ich die Lebensmittel mitbringen?
+Viele Grüße
+Aylin Demir
+`,
+);
+
+const rTisch = text(
+  "v4-r-a1-sms-tisch",
+  "Nachricht an ein Restaurant",
+  "Restaurant und Familie",
+  `
+Guten Tag, hier ist Familie Brandt. Wir möchten am Freitag einen Tisch reservieren. Wir sind vier Personen: meine Eltern, mein Bruder und ich. Wir kommen um 19 Uhr, nicht um 18 Uhr. Meine Handynummer ist 0151 238 44 71. Danke!
+`,
+);
+
+const PLACE_PICTURES = {
+  pharmacy: { id: "obj.place.pharmacy" },
+  bakery: { id: "obj.place.bakery" },
+  cinema: { id: "obj.place.cinema" },
+  post: { id: "obj.place.post-office" },
+  library: { id: "obj.place.library" },
+  pool: { id: "obj.place.swimming-pool" },
+};
+
+const readingNewItems: SeedItem[] = [
+  // Schilder in der Stadt (signs to pictures)
+  signsToPictures(
+    rSchilderStadt.key,
+    "EASY",
+    "Welches Schild passt zu welchem Bild? Ein Bild bleibt übrig.",
+    [
+      "Bücher bitte nach drei Wochen zurückbringen.",
+      "Heute frische Brötchen. Geöffnet von 6 bis 18 Uhr.",
+      "Notdienst heute bis 22 Uhr. Tabletten und Pflaster.",
+      "Pakete und Briefmarken: Schalter 2.",
+      "Badekappe ist Pflicht. Kinder nur mit Eltern.",
+    ],
+    [PLACE_PICTURES.pharmacy, PLACE_PICTURES.bakery, PLACE_PICTURES.cinema, PLACE_PICTURES.post, PLACE_PICTURES.library, PLACE_PICTURES.pool],
+    [5, 2, 1, 4, 6],
+    "Bücher zurückbringen: Bibliothek (E). Brötchen: Bäckerei (B). Notdienst, Tabletten, Pflaster: Apotheke (A). Pakete, Briefmarken: Post (D). Badekappe: Schwimmbad (F). Das Kino (C) bleibt übrig."),
+  // Zettel in der WG-Küche
+  signsToPictures(
+    rZettelKueche.key,
+    "MID",
+    "Welcher Zettel passt zu welchem Bild? Ein Bild bleibt übrig.",
+    [
+      "Bitte nicht essen! Das ist für Omas Geburtstag.",
+      "Bitte warm machen. Ihr braucht einen Löffel.",
+      "Frisch vom Markt. Bitte waschen und dann essen!",
+      "Kaffee ist alle! Bitte neuen kaufen. Danke, Ben",
+      "Für das Abendbrot. Es gibt drei Sorten.",
+    ],
+    [{ id: "obj.food.coffee" }, { id: "obj.food.cheese" }, { id: "obj.food.apples" }, { id: "obj.food.pizza" }, { id: "obj.food.cake" }, { id: "obj.food.soup" }],
+    [5, 6, 3, 1, 2],
+    "Geburtstag, nicht essen: Kuchen (E). Warm machen, Löffel: Suppe (F). Frisch, waschen: Äpfel (C). Kaffee ist alle: Kaffee (A). Abendbrot, drei Sorten: Käse (B). Die Pizza (D) bleibt übrig."),
+  // Kurze Zettel und Schilder (4 signs, 5 pictures)
+  signsToPictures(
+    rZettelDinge.key,
+    "HARD",
+    "Welcher Zettel passt zu welchem Bild? Ein Bild bleibt übrig.",
+    [
+      "Gefunden im Bus: orange, innen ein Schlüssel. Bitte beim Fahrer fragen.",
+      "Heute frisch: Rosen für 5 Euro der Strauß.",
+      "Regenschirme bitte hier lassen. Danke!",
+      "Neu: Krimis und Romane, jedes Buch nur 3 Euro.",
+    ],
+    [{ id: "obj.thing.watch" }, { id: "obj.thing.umbrella" }, { id: "obj.thing.book" }, { id: "obj.thing.handbag" }, { id: "obj.thing.flowers" }],
+    [4, 5, 2, 3],
+    "Gefunden im Bus, orange, Schlüssel innen: die orange Handtasche (D). Rosen: Blumen (E). Regenschirme: Schirme (B). Krimis und Romane: Bücher (C). Die Armbanduhr (A) bleibt übrig."),
+
+  // Form fill after a short text
+  formFill(
+    rBibliothek.key,
+    "MID",
+    "Lesen Sie den Text. Ergänzen Sie die Anmeldekarte.\n\nAnmeldekarte Stadtbibliothek\nFamilienname: {{g1}}\nStraße: {{g2}}\nTelefon: {{g3}}\nTag des Besuchs: {{g4}}",
+    [
+      { id: "g1", answers: ["Lenz", "Marco Lenz"] },
+      { id: "g2", answers: ["Birkenstraße 7", "Birkenstrasse 7", "Birkenstr. 7", "Birkenstraße", "Birkenstrasse", "Birkenstr."] },
+      { id: "g3", answers: ["0221 49 38 17"] },
+      { id: "g4", answers: ["Samstag", "am Samstag", "Sa", "Sa.", "am Sa", "am Sa."] },
+    ],
+    "Familienname: Lenz (auch mit Vornamen). Straße: Birkenstraße 7 (die Hausnummer ist nicht Pflicht). Telefon: 0221 49 38 17; bei der Nummer zählen nur die Ziffern, Leerzeichen und Bindestriche sind egal. Tag: Samstag."),
+  formFill(
+    rKochkurs.key,
+    "EASY",
+    "Lesen Sie den Text. Ergänzen Sie die Anmeldung.\n\nAnmeldung Kochkurs für Anfänger\nVorname: {{g1}}\nKurstag: {{g2}}\nUhrzeit: {{g3}}\nPreis: {{g4}}",
+    [
+      { id: "g1", answers: ["Aylin"] },
+      { id: "g2", answers: ["Mittwoch", "am Mittwoch", "Mi", "Mi.", "am Mi", "am Mi."] },
+      {
+        id: "g3",
+        answers: [
+          "18:30", "18.30", "18:30 Uhr", "18.30 Uhr", "18 Uhr 30", "18:30h", "18.30h", "18h30", "achtzehn Uhr dreißig", "achtzehn Uhr dreissig", "halb sieben", "halb 7", "6:30", "6.30", "6:30 Uhr", "6.30 Uhr",
+          "um 18:30", "um 18.30", "um 18:30 Uhr", "um 18.30 Uhr", "um 18 Uhr 30", "um halb sieben", "um halb 7",
+        ],
+      },
+      { id: "g4", answers: ["24 Euro", "24", "24 €", "24€", "24 EUR", "24,00 Euro", "24,00 €", "24,- Euro", "vierundzwanzig Euro"] },
+    ],
+    "Vorname: Aylin. Der Kurs ist am Mittwoch (\"nicht am Dienstag\" ist das Gegenbeispiel). Uhrzeit: 18:30 Uhr (auch \"halb sieben\"). Preis: 24 Euro."),
+  formFill(
+    rTisch.key,
+    "HARD",
+    "Lesen Sie den Text. Ergänzen Sie die Reservierung.\n\nReservierung im Restaurant\nName: {{g1}}\nPersonen: {{g2}}\nTag: {{g3}}\nUhrzeit: {{g4}}\nHandy: {{g5}}",
+    [
+      { id: "g1", answers: ["Brandt", "Familie Brandt"] },
+      { id: "g2", answers: ["4", "vier", "4 Personen", "vier Personen"] },
+      { id: "g3", answers: ["Freitag", "am Freitag", "Fr", "Fr.", "am Fr", "am Fr."] },
+      {
+        id: "g4",
+        answers: [
+          "19:00", "19.00", "19:00 Uhr", "19.00 Uhr", "19 Uhr", "19h", "19:00h", "19.00h", "neunzehn Uhr", "7 Uhr", "7:00", "7.00", "7:00 Uhr", "7.00 Uhr", "sieben Uhr",
+          "um 19:00", "um 19.00", "um 19 Uhr", "um 19:00 Uhr", "um 19.00 Uhr", "um neunzehn Uhr", "um 7 Uhr", "um sieben Uhr",
+        ],
+      },
+      { id: "g5", answers: ["0151 238 44 71"] },
+    ],
+    "Name: Brandt (auch \"Familie Brandt\"). Personen: vier. Tag: Freitag. Uhrzeit: 19 Uhr (nicht 18 Uhr, das ist die Korrektur im Text). Handynummer: 0151 238 44 71; es zählen nur die Ziffern."),
+];
+
 // ---------------------------------------------------------------- LISTENING
 
 type ListeningSkill = "gist" | "detail" | "inference" | "notes";
@@ -722,7 +939,7 @@ function clip(
   key: string,
   title: string,
   topic: string,
-  speakers: Array<{ label: string; voice: "A" | "B" }>,
+  speakers: Array<{ label: string; voice: "A" | "B" | "C" | "D" }>,
   lines: string[],
 ): SeedStimulus {
   return { key, section: "LISTENING", level: LEVEL, title, topic, speakers, body: lines.join("\n") };
@@ -954,6 +1171,223 @@ const listeningItems: SeedItem[] = [
     "Familientag: Kinder zahlen nichts. Der Zoo öffnet schon um neun Uhr."),
 ];
 
+// ---------------------------------------------------------------- LISTENING (which picture, short texts to photos)
+
+const PICTURE_LABELS = ["Bild A", "Bild B", "Bild C"] as const;
+
+/**
+ * "Which picture?": three pictures of one category, the student picks the one that fits the short dialogue.
+ * `pictures[0]` is the key; `pos` is where it stands among the three.
+ */
+function whichPicture(
+  stimulusKey: string,
+  within: Within,
+  prompt: string,
+  correct: string,
+  others: [string, string],
+  pos: 0 | 1 | 2,
+  explanation: string,
+): SeedItem {
+  const ids = [...others];
+  ids.splice(pos, 0, correct);
+  const letters = ["a", "b", "c"] as const;
+  return {
+    section: "LISTENING",
+    level: LEVEL,
+    type: "SINGLE_CHOICE",
+    skillTag: "listening.detail",
+    within,
+    stimulusKey,
+    prompt,
+    content: { kind: "CHOICE", options: ids.map((id, i) => ({ id: letters[i], text: PICTURE_LABELS[i], image: img(id) })) },
+    key: { kind: "CHOICE", correct: [letters[pos]] },
+    explanation,
+  };
+}
+
+/** Four short messages to five photos (one spare); `pairs[i]` is the 1-based photo of message i. */
+function messagesToPhotos(
+  stimulusKey: string,
+  within: Within,
+  photos: string[],
+  pairs: number[],
+  explanation: string,
+): SeedItem {
+  return {
+    section: "LISTENING",
+    level: LEVEL,
+    type: "MATCHING",
+    skillTag: "listening.detail",
+    within,
+    stimulusKey,
+    prompt: "Hören Sie die vier Nachrichten. Welches Bild passt zu welcher Nachricht? Ein Bild bleibt übrig.",
+    content: {
+      kind: "MATCHING",
+      left: pairs.map((_, i) => ({ id: `l${i + 1}`, text: `Nachricht ${i + 1}` })),
+      right: photos.map((id, i) => ({ id: `r${i + 1}`, text: `Bild ${String.fromCharCode(65 + i)}`, image: img(id) })),
+    },
+    key: { kind: "MATCHING", pairs: Object.fromEntries(pairs.map((r, i) => [`l${i + 1}`, `r${r}`])) },
+    explanation,
+  };
+}
+
+const lReiseWetter = clip(
+  "v4-l-a1-gespraeche-reise-wetter",
+  "Zwei kurze Gespräche: Reise und Wetter",
+  "Wege und Wetter",
+  [
+    { label: "Mia", voice: "A" },
+    { label: "Jan", voice: "B" },
+    { label: "Frau Roth", voice: "C" },
+    { label: "Herr Kunz", voice: "D" },
+  ],
+  [
+    "Mia: Jan, fährst du heute mit dem Bus zu deiner Tante?",
+    "Jan: Nein, nicht mit dem Bus. Also, der Zug ist zu weit weg. Ich nehme die Straßenbahn, die hält direkt vor ihrem Haus.",
+    "Frau Roth: Herr Kunz, wie wird das Wetter morgen? Regnet es wieder?",
+    "Herr Kunz: Na ja, heute regnet es noch, aber morgen nicht mehr. Morgen scheint die Sonne, den ganzen Tag. Windig ist es nur am Abend, ein bisschen.",
+  ],
+);
+
+const lEssenKleidung = clip(
+  "v4-l-a1-gespraeche-essen-kleidung",
+  "Zwei kurze Gespräche: Essen und Kleidung",
+  "Essen und Kleidung",
+  [
+    { label: "Frau Berg", voice: "A" },
+    { label: "Kellner", voice: "B" },
+    { label: "Verkäuferin", voice: "C" },
+    { label: "Herr Said", voice: "D" },
+  ],
+  [
+    "Frau Berg: Guten Tag. Haben Sie heute Pizza?",
+    "Kellner: Pizza gibt es erst am Abend. Aber die Suppe ist ganz frisch, die kann ich empfehlen.",
+    "Frau Berg: Ach so. Gut, dann nehme ich die Suppe.",
+    "Verkäuferin: Guten Tag, kann ich Ihnen helfen?",
+    "Herr Said: Ja, bitte. Ich suche eine Jacke. Ach nein, einen Pullover, es ist ja nur ein bisschen kühl.",
+  ],
+);
+
+const lWohnenFreizeit = clip(
+  "v4-l-a1-gespraeche-wohnen-freizeit",
+  "Zwei kurze Gespräche: Wohnen und Freizeit",
+  "Zuhause und Freizeit",
+  [
+    { label: "Lena", voice: "A" },
+    { label: "Tom", voice: "B" },
+    { label: "Anna", voice: "C" },
+    { label: "Paul", voice: "D" },
+  ],
+  [
+    "Lena: Oh, du hast ein neues Sofa? Das ist schön!",
+    "Tom: Nein, nein, das Sofa ist schon alt. Neu ist die Lampe, da hinten in der Ecke.",
+    "Anna: Paul, spielst du am Samstag wieder Fußball?",
+    "Paul: Nein, Samstag nicht, der Platz ist zu. Ich gehe schwimmen, im Hallenbad. Am Sonntag vielleicht wandern, mal sehen.",
+  ],
+);
+
+const lNachrichtenOrte = clip(
+  "v4-l-a1-nachrichten-orte",
+  "Vier Nachrichten: Wo sind die Leute?",
+  "Stadt und Orte",
+  [
+    { label: "Julia", voice: "A" },
+    { label: "Herr Lang", voice: "B" },
+    { label: "Mia", voice: "C" },
+    { label: "Frau Sommer", voice: "D" },
+  ],
+  [
+    "Julia: Hallo Mama, ich bin's, Julia. Ich stehe gerade in der Schlange und warte. Das Paket für Oma ist ziemlich schwer, na ja. Es dauert noch ein bisschen. Bis später!",
+    "Herr Lang: Hallo Schatz, ich bin kurz weg. Ich hole Tabletten gegen meinen Husten. Nein, nicht gegen Kopfschmerzen, nur Husten. Um drei bin ich wieder da.",
+    "Mia: Hallo Opa, hier ist Mia. Ich bin noch mit Lisa unterwegs. Wir suchen Bücher und leihen sie aus. Hier muss man leise sein, haha. Kannst du mich um fünf abholen?",
+    "Frau Sommer: Hallo Tom, bringst du bitte Brötchen mit? Zehn Stück, nein, acht. Der Laden an der Ecke macht schon um sieben auf.",
+  ],
+);
+
+const lNachrichtenDinge = clip(
+  "v4-l-a1-nachrichten-dinge",
+  "Vier Nachrichten: Worum geht es?",
+  "Fundsachen und Geschenke",
+  [
+    { label: "Frau Neumann", voice: "A" },
+    { label: "Ben", voice: "B" },
+    { label: "Nora", voice: "C" },
+    { label: "Herr Bauer", voice: "D" },
+  ],
+  [
+    "Frau Neumann: Guten Tag, hier ist Neumann. Ich habe gestern etwas im Zug vergessen. Es ist orange und klein, also nicht groß. Mein Schlüssel ist darin. Bitte rufen Sie mich an.",
+    "Ben: Hallo Anna, danke für die Einladung! Ich komme gern. Ich bringe Rosen für deine Mutter mit, die mag sie so gern.",
+    "Nora: Hallo Papa. Draußen regnet es ganz stark, und du hast wieder keinen mit. Er hängt noch im Flur, der bunte. Soll ich ihn bringen?",
+    "Herr Bauer: Hallo Oma, ich bin's. Du hast bald Geburtstag. Ich wollte erst eine Uhr kaufen, aber du hast ja schon eine. Also schenke ich dir ein Buch, einen Krimi.",
+  ],
+);
+
+const lNachrichtenHobbys = clip(
+  "v4-l-a1-nachrichten-hobbys",
+  "Vier Nachrichten: Was machen die Leute?",
+  "Hobbys am Wochenende",
+  [
+    { label: "Sven", voice: "A" },
+    { label: "Hanna", voice: "B" },
+    { label: "Opa Karl", voice: "C" },
+    { label: "Yusuf", voice: "D" },
+  ],
+  [
+    "Sven: Hi, hier ist Sven. Heute Abend koche ich für alle. Es gibt Rührei mit Brot, ganz einfach. Kommt um sieben, ja?",
+    "Hanna: Hallo Lea, wir sind noch im Park, Ina und ich. Wir laufen schon eine Stunde, und wir sind gleich fertig. Dann kommen wir zu dir.",
+    "Opa Karl: Hallo Kinder, ich bin hinten im Beet und pflanze Salat. Kommt doch kurz vorbei, es ist so schön heute!",
+    "Yusuf: Hallo Mama, wir spielen heute um drei gegen die Mannschaft aus Bonn. Kommst du zum Spiel? Ich spiele im Tor, nein, im Sturm!",
+  ],
+);
+
+const reiseWetter = lReiseWetter.key;
+const essenKleidung = lEssenKleidung.key;
+const wohnenFreizeit = lWohnenFreizeit.key;
+
+const listeningNewItems: SeedItem[] = [
+  // Reise und Wetter
+  whichPicture(reiseWetter, "EASY",
+    "Wie fährt Jan zu seiner Tante?",
+    "obj.transport.tram", ["obj.transport.train", "obj.transport.bus"], 1,
+    "Bus und Zug werden genannt, aber Jan nimmt die Straßenbahn: \"die hält direkt vor ihrem Haus\"."),
+  whichPicture(reiseWetter, "MID",
+    "Wie ist das Wetter morgen?",
+    "obj.weather.sunny", ["obj.weather.rainy", "obj.weather.windy"], 2,
+    "Heute regnet es noch, morgen scheint die Sonne. Wind gibt es nur am Abend, ein bisschen."),
+  // Essen und Kleidung
+  whichPicture(essenKleidung, "EASY",
+    "Was bestellt Frau Berg?",
+    "obj.food.soup", ["obj.food.pizza", "obj.food.cake"], 0,
+    "Pizza gibt es erst am Abend, deshalb nimmt Frau Berg die Suppe."),
+  whichPicture(essenKleidung, "MID",
+    "Was kauft Herr Said?",
+    "obj.clothes.sweater", ["obj.clothes.shoes", "obj.clothes.jacket"], 2,
+    "Herr Said sagt erst \"eine Jacke\" und korrigiert sich: \"einen Pullover\"."),
+  // Wohnen und Freizeit
+  whichPicture(wohnenFreizeit, "EASY",
+    "Was ist neu im Zimmer?",
+    "obj.home.lamp", ["obj.home.sofa", "obj.home.table-chairs"], 1,
+    "Das Sofa ist schon alt; neu ist die Lampe in der Ecke."),
+  whichPicture(wohnenFreizeit, "MID",
+    "Was macht Paul am Samstag?",
+    "obj.activity.swimming", ["obj.activity.hiking", "obj.activity.football"], 0,
+    "Fußball spielt er am Samstag nicht (der Platz ist zu), wandern vielleicht erst am Sonntag. Am Samstag geht er schwimmen."),
+
+  // Vier Nachrichten
+  messagesToPhotos(lNachrichtenOrte.key, "MID",
+    ["obj.place.library", "obj.place.bakery", "obj.place.cinema", "obj.place.post-office", "obj.place.pharmacy"],
+    [4, 5, 1, 2],
+    "Nachricht 1: Schlange, Paket für Oma: Post (D). Nachricht 2: Tabletten gegen Husten: Apotheke (E). Nachricht 3: Bücher ausleihen, leise sein: Bibliothek (A). Nachricht 4: Brötchen, Laden macht um sieben auf: Bäckerei (B). Das Kino (C) bleibt übrig."),
+  messagesToPhotos(lNachrichtenDinge.key, "HARD",
+    ["obj.thing.umbrella", "obj.thing.book", "obj.thing.watch", "obj.thing.flowers", "obj.thing.handbag"],
+    [5, 4, 1, 2],
+    "Nachricht 1: im Zug vergessen, orange, klein, Schlüssel darin: Handtasche (E). Nachricht 2: Rosen: Blumen (D). Nachricht 3: Regen, \"keinen mit\", hängt im Flur: Regenschirm (A). Nachricht 4: erst eine Uhr, dann ein Buch: Buch (B); die Uhr (C) bleibt übrig."),
+  messagesToPhotos(lNachrichtenHobbys.key, "EASY",
+    ["obj.activity.football", "obj.activity.reading", "obj.activity.cooking", "obj.activity.gardening", "obj.activity.jogging"],
+    [3, 5, 4, 1],
+    "Nachricht 1: Rührei, \"ich koche\": Kochen (C). Nachricht 2: \"wir laufen schon eine Stunde\" im Park: Joggen (E). Nachricht 3: Salat pflanzen im Beet: Gartenarbeit (D). Nachricht 4: Spiel gegen eine Mannschaft: Fußball (A). Lesen (B) bleibt übrig."),
+];
+
 // ---------------------------------------------------------------- WRITING
 
 const INFORMAL = "informell (du)";
@@ -1119,6 +1553,52 @@ const writingItems: SeedItem[] = [
     ],
     FORMAL,
     MESSAGE_NOTE),
+  writingTask("message", "MID", MESSAGE_WORDS,
+    "Sie sind im Urlaub am Meer. Schreiben Sie Ihrer Freundin Lara eine Postkarte (circa 30 Wörter).\n\n" +
+      "- Wo sind Sie?\n" +
+      "- Wie ist das Wetter?\n" +
+      "- Was machen Sie jeden Tag?\n\n" +
+      "Schreiben Sie auch eine Anrede und einen Gruß.",
+    [
+      "Ort des Urlaubs (am Meer, Stadt oder Strand genannt)",
+      "Wetter (z. B. Die Sonne scheint. Es regnet.)",
+      "eine Tätigkeit pro Tag (z. B. schwimmen, lesen, spazieren gehen)",
+      "Anrede und Gruß (Liebe Lara ... / Viele Grüße)",
+    ],
+    [
+      "wo Sie sind",
+      "wie das Wetter ist",
+      "was Sie jeden Tag machen",
+      "Anrede und Gruß",
+    ],
+    INFORMAL,
+    MESSAGE_NOTE),
+  writingTask("form", "MID", FORM_WORDS,
+    "Familie Hoffmann möchte am Samstag im Restaurant \"Zum Anker\" essen. Sie helfen Frau Hoffmann mit der Reservierung.\n\n" +
+      "Sie möchten um 18 Uhr kommen. Sie sind fünf Personen. Die Telefonnummer von Frau Hoffmann ist 0172 43 91 05.\n\n" +
+      "Schreiben Sie die fünf Angaben für die Reservierung. Schreiben Sie immer die Nummer und die Angabe, zum Beispiel: \"1. Familienname: ...\"\n\n" +
+      "1. Familienname\n" +
+      "2. Tag\n" +
+      "3. Uhrzeit\n" +
+      "4. Anzahl der Personen\n" +
+      "5. Telefonnummer",
+    [
+      "1. Familienname: Hoffmann",
+      "2. Tag: Samstag",
+      "3. Uhrzeit: 18 Uhr",
+      "4. Anzahl der Personen: fünf (5)",
+      "5. Telefonnummer: 0172 43 91 05",
+    ],
+    [
+      "Familienname",
+      "Tag",
+      "Uhrzeit",
+      "Anzahl der Personen",
+      "Telefonnummer",
+      "immer die Nummer und die Angabe schreiben",
+    ],
+    "Formular (Stichworte)",
+    "Formular mit fünf Feldern (Goethe A1, Schreiben Teil 1). Je Feld ein Punkt; bei der Telefonnummer zählen die Ziffern, nicht die Leerzeichen."),
 ];
 
 // ---------------------------------------------------------------- SPEAKING
@@ -1256,6 +1736,86 @@ const speakingItems: SeedItem[] = [
     ]),
 ];
 
+/**
+ * Picture task (task 1 of a form): describe a scene.a1.* picture in simple sentences. The AI grader never sees the
+ * pixels, only the picture's alt text, so the content points stay close to what the alt text says.
+ */
+function pictureTask(
+  within: Within,
+  timing: Timing,
+  pictureId: string,
+  questions: string[],
+  contentPoints: string[],
+  studentPoints: string[],
+): SeedItem {
+  return {
+    section: "SPEAKING",
+    level: LEVEL,
+    type: "SPEAKING_PROMPT",
+    skillTag: "speaking.picture",
+    within,
+    prompt:
+      "Sehen Sie das Bild an. Beschreiben Sie das Bild in einfachen Sätzen. Diese Fragen helfen Ihnen:\n\n" +
+      questions.map((q) => `- ${q}`).join("\n"),
+    content: { kind: "SPEAKING", ...timing, images: [img(pictureId)] },
+    key: { kind: "NONE" },
+    rubric: { contentPoints, studentPoints },
+    explanation: SPEAKING_NOTE + " Bildbeschreibung: Es genügen einfache Sätze wie \"Ich sehe ...\", \"Das ist ...\", \"Die Leute sitzen ...\". Weitere Details sind ein Plus, keine Pflicht.",
+  };
+}
+
+const PICTURE_TIMING: Timing = { thinkSeconds: 30, answerSeconds: 60, maxTakes: 2 };
+const PICTURE_TIMING_LONG: Timing = { thinkSeconds: 40, answerSeconds: 75, maxTakes: 2 };
+
+const speakingPictureItems: SeedItem[] = [
+  pictureTask("EASY", PICTURE_TIMING, "scene.a1.cafe",
+    ["Wo sind die Menschen?", "Wer ist auf dem Bild?", "Was machen die Personen?"],
+    [
+      "Ort genannt: draußen vor einem Café",
+      "Personen genannt (mehrere Menschen) und was sie tun (sie sitzen)",
+      "mindestens zwei einfache, verständliche Sätze zum Bild",
+      "weitere Details sind ein Plus (z. B. Tische, Stühle, Wetter)",
+    ],
+    ["wo die Menschen sind", "wer auf dem Bild ist", "was die Personen machen"]),
+  pictureTask("MID", PICTURE_TIMING, "scene.a1.family-breakfast",
+    ["Wer ist auf dem Bild?", "Was machen die Personen?", "Was gibt es zu essen? Wo sind sie?"],
+    [
+      "Personen genannt (mehrere Personen, zum Beispiel eine Familie oder Freunde)",
+      "Tätigkeit genannt: Sie frühstücken oder essen zusammen an einem Tisch",
+      "Essen oder Trinken genannt (z. B. Brot, Salat, Saft)",
+      "mindestens zwei einfache, verständliche Sätze zum Bild",
+    ],
+    ["wer auf dem Bild ist", "was die Personen machen", "was es zu essen gibt", "wo sie sind"]),
+  pictureTask("EASY", PICTURE_TIMING, "scene.a1.market",
+    ["Wo ist das?", "Was sehen Sie?", "Was kann man hier kaufen?"],
+    [
+      "Ort genannt: ein Markt oder Marktstand im Freien",
+      "Dinge genannt (frisches Gemüse, zum Beispiel Karotten oder Kürbisse)",
+      "mindestens zwei einfache, verständliche Sätze zum Bild",
+      "Farben, Zahlen oder Mengen sind ein Plus",
+    ],
+    ["wo das ist", "was Sie sehen", "was man hier kaufen kann"]),
+  pictureTask("MID", PICTURE_TIMING_LONG, "scene.a1.park",
+    ["Wo sind die Menschen?", "Was machen die Menschen?", "Wie ist das Wetter?"],
+    [
+      "Ort genannt: ein grüner Stadtpark",
+      "Tätigkeiten genannt (z. B. sitzen, liegen, spazieren gehen, sich unterhalten)",
+      "Wetter oder Jahreszeit genannt (z. B. Es ist schön, die Bäume sind grün)",
+      "mindestens zwei einfache, verständliche Sätze zum Bild",
+    ],
+    ["wo die Menschen sind", "was die Menschen machen", "wie das Wetter ist"]),
+  pictureTask("HARD", { thinkSeconds: 45, answerSeconds: 90, maxTakes: 2 }, "scene.a1.supermarket-checkout",
+    ["Wo sind die Personen?", "Wer ist auf dem Bild?", "Was machen die Personen?", "Was kaufen sie? Was würden Sie dort kaufen?"],
+    [
+      "Ort genannt: an der Kasse im Supermarkt",
+      "Personen genannt (ein Paar, ein Mann und eine Frau) und dass sie bezahlen oder einpacken",
+      "Waren genannt (z. B. Ananas, Tasche); weitere Details sind ein Plus",
+      "mindestens drei einfache, verständliche Sätze zum Bild",
+      "eigener Bezug (z. B. Ich kaufe im Supermarkt gern Obst.) ist ein Plus",
+    ],
+    ["wo die Personen sind", "wer auf dem Bild ist", "was die Personen machen", "was sie kaufen"]),
+];
+
 export const A1_PARTS: {
   grammar: SeedBankPart;
   reading: SeedBankPart;
@@ -1264,8 +1824,8 @@ export const A1_PARTS: {
   speaking: SeedBankPart;
 } = {
   grammar: { stimuli: [], items: grammarItems },
-  reading: { stimuli: [rArbeitstag, rJobs, rPraxis, rSms, rKleinanzeigen, rSchilder, rAngebote], items: readingItems },
-  listening: { stimuli: [lBahnhof, lKollege, lKurs, lZahnarzt, lWetter], items: listeningItems },
+  reading: { stimuli: [rArbeitstag, rJobs, rPraxis, rSms, rKleinanzeigen, rSchilder, rAngebote, rSchilderStadt, rZettelKueche, rZettelDinge, rBibliothek, rKochkurs, rTisch], items: [...readingItems, ...readingNewItems] },
+  listening: { stimuli: [lBahnhof, lKollege, lKurs, lZahnarzt, lWetter, lReiseWetter, lEssenKleidung, lWohnenFreizeit, lNachrichtenOrte, lNachrichtenDinge, lNachrichtenHobbys], items: [...listeningItems, ...listeningNewItems] },
   writing: { stimuli: [], items: writingItems },
-  speaking: { stimuli: [], items: speakingItems },
+  speaking: { stimuli: [], items: [...speakingItems, ...speakingPictureItems] },
 };
