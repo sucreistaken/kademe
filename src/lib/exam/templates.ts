@@ -26,11 +26,13 @@ import type { Cefr, ExamMode } from "./types";
  * four options each) and word banks (8 gaps, whole words dragged from a pool
  * with 4-5 extra words), cloze texts first, each kind easy to hard. A text is
  * one weighted observation (gaps / 4) with a guessing floor (a quarter for a
- * cloze gap, one over the pool for a word bank). The placement form has six
- * cloze texts A1 to C2 and word banks A2 to B2 (30 minutes, about 77 for the
- * whole test); the quick screen has cloze texts A1 to B2 and word banks A1 to
- * B1 (25 minutes). Reading time: about 3.5 minutes a cloze text, 3 a word
- * bank, rounded up to five.
+ * cloze gap, one over the pool for a word bank). The placement form has
+ * cloze texts A1 to B2, word banks A2 to B2 and open cloze texts (about 10
+ * typed gaps, no guessing floor) at C1 and C2 (30 minutes, about 77 for the
+ * whole test; until 2026-10-23 six cloze texts A1 to C2 and the same word
+ * banks); the quick screen has cloze texts A1 to B2 and word banks A1 to B1
+ * (25 minutes). Reading time: about 3.5 minutes a cloze or open cloze text, 3
+ * a word bank, rounded up to five.
  *
  * Measured on simulated students who guess (scripts/simulate-placement.ts,
  * 4000 per level, seed 2026; a quarter on every multiple-choice item and
@@ -41,8 +43,10 @@ import type { Cefr, ExamMode } from "./types";
  *     A1 0/41/100  A2 7/90/93  B1 32/99/68  B2 63/100/36  C1 83/100/10  C2 63/100/0
  *   placement, (b) six C-tests:
  *     A1 6/93/94  A2 35/100/65  B1 66/100/33  B2 84/100/12  C1 84/100/3  C2 59/100/0
- *   placement, (c) six cloze texts + three word banks:
+ *   placement, (c) six cloze texts + three word banks (until 2026-10-23):
  *     A1 2/76/98  A2 23/99/77  B1 58/100/42  B2 80/100/17  C1 83/100/2  C2 44/100/0
+ *   placement, (c) four cloze texts + three word banks + open cloze C1, C2:
+ *     A1 3/79/97  A2 24/99/76  B1 60/100/40  B2 83/100/14  C1 82/100/3  C2 49/100/0
  *   quick screen, (a) 24 multiple-choice items:
  *     A1 3/41/98  A2 12/71/88  B1 28/87/71  B2 45/93/52  C1 53/100/38  C2 83/100/0
  *   quick screen, (b) three C-tests A2 to B2:
@@ -53,7 +57,9 @@ import type { Cefr, ExamMode } from "./types";
  * (a), within one at most 1 below (a), A1 placed too high at most 5 points
  * above (b). Both forms pass at seeds 2026 and 7; each is the smallest of the
  * compositions tried that does (the 15-minute quick screen of the spec placed
- * 66% of A1 students too high). The low A1 and A2 exact rates of the
+ * 66% of A1 students too high). The open cloze placement (2026-10-23) also
+ * passes at both seeds in the same 30 minutes, so it replaced the six cloze
+ * texts. The low A1 and A2 exact rates of the
  * placement come from guessing on its reading and listening items, which the
  * engine gives no floor; they hit (a), (b) and (c) alike. The quick screen
  * has no text above B2, so a C2 student is placed at C1. docs/EXAM-ENGINE.md
@@ -68,10 +74,11 @@ const perLevel = (counts: Partial<Record<Cefr, number>>): Distribution => ({
 
 /** No ordinary items: the section is its texts. */
 const NO_ITEMS = perLevel({});
-/** Cloze texts, then word banks, each easy to hard (spec 2026-10-18). */
-const texts = (cloze: Cefr[], wordBanks: Cefr[]): NonNullable<SectionConfig["texts"]> => [
+/** Cloze texts, then word banks, then open cloze texts, each easy to hard (specs 2026-10-18 and 2026-10-23). */
+const texts = (cloze: Cefr[], wordBanks: Cefr[], open: Cefr[] = []): NonNullable<SectionConfig["texts"]> => [
   ...cloze.map((level) => ({ level, kind: "CLOZE" as const })),
   ...wordBanks.map((level) => ({ level, kind: "WORDBANK" as const })),
+  ...open.map((level) => ({ level, kind: "OPEN" as const })),
 ];
 /** One text of four questions per level, A2 to C1. */
 const READING_A2_C1 = perLevel({ A2: 4, B1: 4, B2: 4, C1: 4 });
@@ -125,14 +132,15 @@ const TEMPLATES: readonly ExamTemplate[] = [
     mode: "PLACEMENT",
     name: text("Yerleştirme sınavı", "Placement test"),
     summary: text(
-      "Dört beceri, yaklaşık 77 dakika. Dilbilgisi A1'den C2'ye altı çoktan seçmeli boşluklu metin ve üç kelime havuzuyla ölçülür. Bölüm içinde geri dönülebilir, soru işaretlenebilir. Öğrenciyi doğru sınıfa yerleştirir; sonucu öğretmen onaylar.",
-      "Four skills, about 77 minutes. Grammar is measured with six multiple-choice cloze texts from A1 to C2 and three word banks. Within a section the student can go back and flag questions. Places the student in the right class; a teacher confirms the result.",
+      "Dört beceri, yaklaşık 77 dakika. Dilbilgisi A1'den B2'ye dört çoktan seçmeli boşluklu metin, üç kelime havuzu ve C1, C2'de iki açık boşluklu metinle ölçülür. Bölüm içinde geri dönülebilir, soru işaretlenebilir. Öğrenciyi doğru sınıfa yerleştirir; sonucu öğretmen onaylar.",
+      "Four skills, about 77 minutes. Grammar is measured with four multiple-choice cloze texts from A1 to B2, three word banks and two open cloze texts at C1 and C2. Within a section the student can go back and flag questions. Places the student in the right class; a teacher confirms the result.",
     ),
     config: {
       version: 1,
       sections: [
-        // Six cloze texts A1 to C2, then word banks A2 to B2: the spec's start, it passed the gate (see above).
-        section("GRAMMAR", 30, { distribution: NO_ITEMS, texts: texts(["A1", "A2", "B1", "B2", "C1", "C2"], ["A2", "B1", "B2"]), minItems: 10, maxItems: 16, targetSe: 0.45 }),
+        // Cloze texts A1 to B2, word banks A2 to B2, open cloze C1 and C2 in place of the C1 and C2 cloze texts
+        // (2026-10-23): the same 30 minutes, and it passed the gate at both seeds (see above).
+        section("GRAMMAR", 30, { distribution: NO_ITEMS, texts: texts(["A1", "A2", "B1", "B2"], ["A2", "B1", "B2"], ["C1", "C2"]), minItems: 10, maxItems: 16, targetSe: 0.45 }),
         // Four texts of about 130 (A2) to 470 (C1) words, 16 questions.
         section("READING", 18, { distribution: READING_A2_C1, minItems: 5, maxItems: 8, targetSe: 0.55 }),
         // Three clips of 0.5-2.5 minutes, each played up to twice, 12 questions.

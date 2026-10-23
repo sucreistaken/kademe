@@ -94,7 +94,7 @@ describe("exam templates", () => {
     expect(t.config.proctoring.preset).toBe("STANDARD");
   });
 
-  it("placement: five sections, about 77 minutes, grammar is six cloze texts and three word banks", () => {
+  it("placement: five sections, about 77 minutes, grammar is cloze texts A1-B2, three word banks and open cloze C1, C2", () => {
     const t = byKey("placement");
     expect(estimatedMinutes(t.config)).toBe(77);
     expect(sectionOf("placement", "GRAMMAR")!.cTestLevels).toBeUndefined();
@@ -103,10 +103,12 @@ describe("exam templates", () => {
       durationMinutes: 30,
       distribution: { kind: "ABSOLUTE", perLevel: { A1: 0, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0 } },
       texts: [
-        ...CEFR_LEVELS.map((level) => ({ level, kind: "CLOZE" })),
+        ...(["A1", "A2", "B1", "B2"] as const).map((level) => ({ level, kind: "CLOZE" })),
         { level: "A2", kind: "WORDBANK" },
         { level: "B1", kind: "WORDBANK" },
         { level: "B2", kind: "WORDBANK" },
+        { level: "C1", kind: "OPEN" },
+        { level: "C2", kind: "OPEN" },
       ],
       minItems: 10,
       maxItems: 16,
@@ -114,6 +116,8 @@ describe("exam templates", () => {
     });
     expect(t.summary.tr).toContain("77 dakika");
     expect(t.summary.en).toContain("77 minutes");
+    expect(t.summary.tr).toContain("açık boşluklu");
+    expect(t.summary.en).toContain("open cloze texts at C1 and C2");
     expect(sectionOf("placement", "READING")).toMatchObject({
       adaptive: false,
       durationMinutes: 18,
@@ -149,14 +153,16 @@ describe("exam templates", () => {
     expect(t.config.autoRelease).toBe(false);
   });
 
-  it("placement's coverage asks for a cloze text at every level and word banks A2 to B2, no C-test, and the seed bank has them", () => {
+  it("placement's coverage asks for cloze texts A1 to B2, word banks A2 to B2 and open cloze C1, C2, no C-test, and the seed bank has them", () => {
     const t = byKey("placement");
     const rows = bankCoverage(seedCounts(), t.config, t.mode, null).rows.filter((r) => r.text);
     expect(rows.map((r) => `${r.text} ${r.level}`)).toEqual([
-      ...CEFR_LEVELS.map((l) => `CLOZE ${l}`),
+      ...(["A1", "A2", "B1", "B2"] as const).map((l) => `CLOZE ${l}`),
       "WORDBANK A2",
       "WORDBANK B1",
       "WORDBANK B2",
+      "OPEN C1",
+      "OPEN C2",
     ]);
     expect(rows.every((r) => r.ok)).toBe(true);
   });
@@ -187,7 +193,7 @@ describe("exam templates", () => {
   });
 
   it("placement's fixed form places simulated students within one level (pooled objective skills)", () => {
-    const acc = simulateFixedForm(byKey("placement").config, "PLACEMENT", { runs: 300, seed: 2026, cTestGaps: 20, textGaps: { CLOZE: 11, WORDBANK: 8 }, textEffectSd: 0.5 });
+    const acc = simulateFixedForm(byKey("placement").config, "PLACEMENT", { runs: 300, seed: 2026, cTestGaps: 20, textGaps: { CLOZE: 11, WORDBANK: 8, OPEN: 10 }, textEffectSd: 0.5 });
     for (const level of CEFR_LEVELS) {
       expect(acc[level].withinOne, `${level} within one`).toBeGreaterThanOrEqual(0.95);
       // C2 sits above the top text of the reading form; it is exact less often.
@@ -197,7 +203,7 @@ describe("exam templates", () => {
 
   // A smaller version of scripts/simulate-placement.ts (spec 2026-10-18, section 4).
   describe.each(["placement", "quick-screen"] as const)("%s passes the guessing gate", (key) => {
-    const opts: SimulationOptions = { runs: 1000, seed: 2026, cTestGaps: 20, textEffectSd: 0.5, itemGuess: 0.25, textGaps: { CLOZE: 11, WORDBANK: 8 }, wordBankDistractors: 4 };
+    const opts: SimulationOptions = { runs: 1000, seed: 2026, cTestGaps: 20, textEffectSd: 0.5, itemGuess: 0.25, textGaps: { CLOZE: 11, WORDBANK: 8, OPEN: 10 }, wordBankDistractors: 4 };
     const withGrammar = (grammar: SectionConfig) => ({ ...byKey(key).config, sections: byKey(key).config.sections.map((s) => (s.section === "GRAMMAR" ? grammar : s)) });
     const none = { A1: 0, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0 };
     const mc =

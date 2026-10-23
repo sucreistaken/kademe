@@ -95,19 +95,22 @@ havuzlarıyla açılır, her tür kolaydan zora. Puanlama boşluk başına deği
 oranı). Eski sınavlar kayıtlı yapılandırmasını (ve davet edilmiş öğrenci `blueprint_snapshot`'ını)
 korur; C-testler bankada ACTIVE kalır.
 
-Hazır şablonlar sabit formdur (2026-10-18). Yerleştirme: DILBILGISI = A1'den C2'ye altı
-çoktan seçmeli boşluklu metin ve A2, B1, B2 kelime havuzu, 30 dk; A2-C1 okuma ve A2-B2 dinleme
-(seviye başına bir metin ya da kayıt); toplam 77 dk. Hızlı seviye taraması: A1-B2 dört boşluklu
+Hazır şablonlar sabit formdur (2026-10-18). Yerleştirme: DILBILGISI = A1'den B2'ye dört
+çoktan seçmeli boşluklu metin, A2, B1, B2 kelime havuzu ve C1, C2'de iki açık boşluklu metin
+(`OPEN`, 2026-10-23; öncesinde A1-C2 altı çoktan seçmeli boşluklu metin), 30 dk; A2-C1 okuma ve
+A2-B2 dinleme (seviye başına bir metin ya da kayıt); toplam 77 dk. Hızlı seviye taraması: A1-B2 dört boşluklu
 metin ve A1-B1 üç kelime havuzu, 25 dk (spec'in başlangıcı 15 dk idi, kapıdan geçmedi; aşağıda).
-Okuma süresi varsayımı: boşluklu metin yaklaşık 3.5 dk, kelime havuzu 3 dk, beşe yuvarlanır.
+Okuma süresi varsayımı: boşluklu metin yaklaşık 3.5 dk, kelime havuzu 3 dk, açık boşluklu metin
+de 3.5 dk (doğrulanmadı: yazılan boşluk seçmekten yavaş, okunacak seçenek yok), beşe yuvarlanır.
 AI oluşturucu şablonu süre oranıyla seçer (`exam-config.ts: examTemplateFor`): süre uyumu puanı
 `30 * |log2(şablon dakikası / hedef)|`. Hızlı tarama bu karşılaştırmada hâlâ 15 dakika sayılır
 (`MATCH_MINUTES`), bu yüzden beceri söylenmediğinde hızlı tarama ile yerleştirme (77) arasındaki
 sınır eskisi gibi yaklaşık 34 dakikadır: 40 dakikalık istek dört becerili yerleştirme biçimini
 alır (son inceleme kararı, 2026-10-18). Yeniden ölçeklemede (`exam-config.ts: textsFor`) süre
 artınca her tür kendi sayısını süre oranıyla `round` eder ve aralığı önce yukarı sonra aşağı
-genişletir. Süre azalınca bölüm `round(metin * oran)` metin tutar (en az bir): önce kelime
-havuzları, sonra en düşük boşluklu metinler düşer; B2 ve B1 en son gider ve aralığın tepesi
+genişletir. Açık boşluklu metinler boşluklu metinlerle aynı merdivendedir, her seviye kendi türünü
+korur (2026-10-23). Süre azalınca bölüm `round(metin * oran)` metin tutar (en az bir): önce kelime
+havuzları, sonra merdivenin en düşük metinleri düşer; B2 ve B1 en son gider ve aralığın tepesi
 önce kesilmez (hızlı tarama 20 dk: A1-B2 boşluklu metin + A2, B1 kelime havuzu; 15 dk: A1-B2
 boşluklu metin; 10 dk: A2-B2). Yeniden ölçeklenmiş formlar simüle edilmedi, yalnız şablonların
 kendisi. Eski `cTestLevels` bölümü hâlâ `floor(dakika / 5)`
@@ -183,6 +186,25 @@ havuzu, 30 dk) iki tohumda geçti, seçildi. Hızlı taramada 15 dakikalık baş
 ilk geçen 25 dakikalık "4 boşluklu metin A1-B2 + kelime havuzu A1-B1" seçildi. Metin başına 14
 boşluk satırları varsayımdır: bankada 11 boşluklu metinler var. İkinci bir B1 boşluklu metni
 `texts` ile ifade edilemez (tür ve seviye başına bir metin), denenmedi.
+
+**Açık boşluklu metin yerleştirmede (2026-10-23).** Bankada B2, C1 ve C2'de üçer açık boşluklu
+metin var (9-11 yazılan boşluk, tahmin tabanı yok). `scripts/simulate-placement.ts` iki bileşimi
+aynı kapıyla denedi (simülasyonda açık boşluklu metin 10 boşluk): (a) C1 ve C2 çoktan seçmeli
+boşluklu metinlerin yerine açık boşluklu metin, aynı 30 dk; (b) bugünkü forma C1 ve C2 açık
+boşluklu metin eklemek (40 dk). İkisi de iki tohumda geçti; (a) aynı sürede geçtiği için seçildi.
+Tohum 2026 (tam / ±1 / üste, %):
+
+| Form | A1 | A2 | B1 | B2 | C1 | C2 |
+|---|---|---|---|---|---|---|
+| önceki: 6 boşluklu metin A1-C2 + 3 kelime havuzu A2-B2, 30 dk | 2.4 / 76.4 / 97.6 | 23.4 / 98.5 / 76.6 | 57.7 / 100.0 / 41.9 | 80.0 / 100.0 / 16.7 | 82.8 / 100.0 / 2.0 | 43.8 / 99.9 / 0.0 |
+| (a) 4 boşluklu metin A1-B2 + 3 kelime havuzu + açık C1, C2, 30 dk | 2.6 / 79.3 / 97.4 | 24.4 / 98.7 / 75.5 | 60.1 / 100.0 / 39.6 | 82.7 / 100.0 / 13.9 | 82.0 / 100.0 / 2.8 | 48.8 / 100.0 / 0.0 |
+| (b) 6 boşluklu metin + 3 kelime havuzu + açık C1, C2, 40 dk | 2.5 / 79.0 / 97.5 | 24.3 / 99.3 / 75.7 | 59.6 / 100.0 / 40.0 | 82.3 / 100.0 / 14.4 | 83.8 / 100.0 / 2.5 | 54.9 / 100.0 / 0.0 |
+
+Tohum 7'de (a) A1 2.5 / 79.3 / 97.5, C1 84.0 / 100.0 / 2.2, C2 48.8 / 99.9 / 0.0; geçti.
+`pnpm exam:form-timing` yerleştirme dilbilgisi (p50 / p95): önceki 9 metin, 91 / 93 puanlanan
+parça, 1577 / 1632 okunan kelime; (a) 9 metin, 89 / 92 parça, 1453 / 1513 kelime; (b) 11 metin,
+111 / 114 parça, 1901 / 1958 kelime (önceki 30 dakikanın oranıyla yaklaşık 36-37 dk, beşe
+yuvarlanınca 40).
 
 Notlar:
 - Yerleştirmede A1 ve A2 tam isabetinin düşük olması (a, b ve c'de) okuma ve dinleme maddelerinde

@@ -122,35 +122,46 @@ function keepUpper(listed: Cefr[], keep: number): Cefr[] {
 
 /**
  * Cloze texts and word banks scale with the section's minutes (`f` = new over
- * the template's). More minutes: each kind widens its own span as
- * `spanLevels` does. Fewer: the section keeps `round(texts * f)` texts (at
- * least one) and sheds the word banks first, then the lowest cloze texts; B2
- * and then B1 go last, and the top of the span is never cut first, so a short
- * screen still tells the upper levels apart (final review 2026-10-18: a
- * 20-minute screen used to keep A1 to B1 and place B2+ students too low).
+ * the template's). Open cloze texts (2026-10-23: the placement's C1 and C2)
+ * sit on one ladder with the multiple-choice cloze texts, each level keeping
+ * its kind. More minutes: the ladder and the word banks each widen their own
+ * span as `spanLevels` does (a new ladder level is a multiple-choice cloze
+ * text). Fewer: the section keeps `round(texts * f)` texts (at least one) and
+ * sheds the word banks first, then the lowest ladder texts; B2 and then B1 go
+ * last, and the top of the span is never cut first, so a short screen still
+ * tells the upper levels apart (final review 2026-10-18: a 20-minute screen
+ * used to keep A1 to B1 and place B2+ students too low).
  */
 export function textsFor(texts: SectionTexts, f: number): SectionTexts {
-  const levelsOf = (kind: "CLOZE" | "WORDBANK") => CEFR_LEVELS.filter((l) => texts.some((t) => t.kind === kind && t.level === l));
+  const levelsOf = (kind: "CLOZE" | "WORDBANK" | "OPEN") => CEFR_LEVELS.filter((l) => texts.some((t) => t.kind === kind && t.level === l));
   const cloze = levelsOf("CLOZE");
+  const open = levelsOf("OPEN");
   const wordBanks = levelsOf("WORDBANK");
-  const listed = cloze.length + wordBanks.length;
-  let clozeLevels: Cefr[];
+  const ladder = CEFR_LEVELS.filter((l) => cloze.includes(l) || open.includes(l));
+  /** The ladder texts at the kept levels: each level its own kind (both, if the section lists both there). */
+  const ladderAt = (levels: Cefr[]): SectionTexts =>
+    levels.flatMap((level) => {
+      const kinds = [...(cloze.includes(level) || !open.includes(level) ? ["CLOZE" as const] : []), ...(open.includes(level) ? ["OPEN" as const] : [])];
+      return kinds.map((kind) => ({ level, kind }));
+    });
+  const listed = ladder.length + wordBanks.length;
+  let ladderLevels: Cefr[];
   let wordBankLevels: Cefr[];
   if (f >= 1 || listed === 0) {
     const widen = (levels: Cefr[]) => (levels.length ? spanLevels(levels, clamp(Math.round(levels.length * f), 1, CEFR_LEVELS.length)) : []);
-    clozeLevels = widen(cloze);
+    ladderLevels = widen(ladder);
     wordBankLevels = widen(wordBanks);
   } else {
     const keep = clamp(Math.round(listed * f), 1, listed);
-    const keepCloze = Math.min(cloze.length, keep);
-    clozeLevels = keepUpper(cloze, keepCloze);
-    wordBankLevels = keepUpper(wordBanks, keep - keepCloze);
+    const keepLadder = Math.min(ladder.length, keep);
+    ladderLevels = keepUpper(ladder, keepLadder);
+    wordBankLevels = keepUpper(wordBanks, keep - keepLadder);
   }
+  const kept = ladderAt(ladderLevels);
   return [
-    ...clozeLevels.map((level) => ({ level, kind: "CLOZE" as const })),
+    ...kept.filter((t) => t.kind === "CLOZE"),
     ...wordBankLevels.map((level) => ({ level, kind: "WORDBANK" as const })),
-    // Open cloze texts are not rescaled by time here; they stay as the template lists them.
-    ...texts.filter((t) => t.kind === "OPEN"),
+    ...kept.filter((t) => t.kind === "OPEN"),
   ];
 }
 

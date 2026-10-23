@@ -11,6 +11,10 @@
  * (fewest minutes) that passes is the template's form. The bank holds 11-gap
  * cloze texts and 8-gap word banks with 4-5 distractors; 4 is simulated (the
  * larger floor). 14-gap rows are what-ifs: the bank has no such texts.
+ * Open cloze trials (spec 2026-10-23): the bank has open cloze texts (OPEN,
+ * 9-11 typed gaps, no guessing floor) at B2, C1 and C2; the placement is
+ * tried with them in place of the C1 and C2 cloze texts (same minutes), and
+ * on top of the earlier form (six cloze texts A1 to C2); (a) is the template since then.
  * Run: pnpm tsx scripts/simulate-placement.ts   (RUNS=1000 for a quick look;
  * ITEM_GUESS=0 to let ordinary items be answered without guessing).
  */
@@ -30,14 +34,19 @@ const withGrammar = (key: Key, grammar: SectionConfig): BlueprintConfig => {
   return cfg;
 };
 
-/** Reading time of one text: an 11-gap cloze about 3.5 minutes (about 14 gaps: 4.5), an 8-gap word bank 3; rounded up to five. */
-const minutesFor = (cloze: number, wordBanks: number, clozeGaps: number) => Math.ceil(((cloze * (clozeGaps >= 14 ? 4.5 : 3.5)) + wordBanks * 3) / 5) * 5;
-const textsOf = (cloze: Cefr[], wordBanks: Cefr[]) => [
+/**
+ * Reading time of one text: an 11-gap cloze about 3.5 minutes (about 14 gaps: 4.5), an 8-gap word bank 3, an
+ * open cloze (about 10 typed gaps in some 165 words, no options to read) taken as a cloze, 3.5; rounded up to five.
+ */
+const minutesFor = (cloze: number, wordBanks: number, clozeGaps: number, open = 0) =>
+  Math.ceil(((cloze * (clozeGaps >= 14 ? 4.5 : 3.5)) + wordBanks * 3 + open * 3.5) / 5) * 5;
+const textsOf = (cloze: Cefr[], wordBanks: Cefr[], open: Cefr[] = []) => [
   ...cloze.map((level) => ({ level, kind: "CLOZE" as const })),
   ...wordBanks.map((level) => ({ level, kind: "WORDBANK" as const })),
+  ...open.map((level) => ({ level, kind: "OPEN" as const })),
 ];
 
-type Candidate = { name: string; cloze: Cefr[]; wordBanks: Cefr[]; clozeGaps: number };
+type Candidate = { name: string; cloze: Cefr[]; wordBanks: Cefr[]; clozeGaps: number; open?: Cefr[] };
 const ALL = [...CEFR_LEVELS];
 const CANDIDATES: Record<Key, Candidate[]> = {
   // Spec start, then the spec's fallbacks in order. A second B1 cloze cannot be
@@ -75,7 +84,7 @@ const options = (seed: number, clozeGaps = 11): SimulationOptions => ({
   cTestGaps: 20,
   textEffectSd: 0.5,
   itemGuess: ITEM_GUESS,
-  textGaps: { CLOZE: clozeGaps, WORDBANK: 8 },
+  textGaps: { CLOZE: clozeGaps, WORDBANK: 8, OPEN: 10 },
   wordBankDistractors: 4,
 });
 
@@ -88,7 +97,10 @@ const cTestForm = (key: Key) =>
     ? withGrammar(key, section("GRAMMAR", 30, { distribution: per({}), cTestLevels: ALL }))
     : withGrammar(key, section("GRAMMAR", 15, { distribution: per({}), cTestLevels: ["A2", "B1", "B2"] }));
 const textForm = (key: Key, c: Candidate) =>
-  withGrammar(key, section("GRAMMAR", minutesFor(c.cloze.length, c.wordBanks.length, c.clozeGaps), { distribution: per({}), texts: textsOf(c.cloze, c.wordBanks) }));
+  withGrammar(
+    key,
+    section("GRAMMAR", minutesFor(c.cloze.length, c.wordBanks.length, c.clozeGaps, c.open?.length ?? 0), { distribution: per({}), texts: textsOf(c.cloze, c.wordBanks, c.open) }),
+  );
 
 const pct = (x: number) => `${(x * 100).toFixed(1)}`;
 const row = (name: string, a: FormAccuracy) =>
@@ -121,3 +133,34 @@ for (const key of ["placement", "quick-screen"] as const) {
   const passesBoth = CANDIDATES[key].find((c) => SEEDS.every((seed) => chosen.includes(`${seed}:${c.name}`)));
   console.log(`\n${key}: ${passesBoth ? `first composition passing at both seeds: ${passesBoth.name}` : "no composition passes at both seeds"}`);
 }
+
+// Open cloze in the placement (spec 2026-10-23): (a) replaces the C1 and C2 cloze texts with open cloze texts
+// in the same minutes; (b) adds open cloze at C1 and C2 to the earlier form. The gate is the one above. (a)
+// passed at both seeds and is the placement template since 2026-10-23 (src/lib/exam/templates.ts).
+const OPEN_TRIALS: Candidate[] = [
+  { name: "(a) cloze A1-B2 + word banks A2-B2 + open C1, C2", cloze: ["A1", "A2", "B1", "B2"], wordBanks: ["A2", "B1", "B2"], open: ["C1", "C2"], clozeGaps: 11 },
+  { name: "(b) 6 cloze A1-C2 + word banks A2-B2 + open C1, C2", cloze: ALL, wordBanks: ["A2", "B1", "B2"], open: ["C1", "C2"], clozeGaps: 11 },
+];
+const earlier: Candidate = CANDIDATES.placement[0];
+const openPasses = new Map<string, number>();
+for (const seed of SEEDS) {
+  console.log(`\n## placement with open cloze, seed ${seed}, ${RUNS} students per level, item guess ${ITEM_GUESS} (exact / within one / over, %)\n`);
+  console.log(header);
+  const mc = simulateFixedForm(mcForm("placement"), "PLACEMENT", options(seed));
+  const cTest = simulateFixedForm(cTestForm("placement"), "PLACEMENT", options(seed));
+  console.log(row("(a) multiple choice, before onSET", mc));
+  console.log(row("(b) C-tests", cTest));
+  const verdicts: string[] = [];
+  for (const c of [earlier, ...OPEN_TRIALS]) {
+    const form = textForm("placement", c);
+    const acc = simulateFixedForm(form, "PLACEMENT", options(seed, c.clozeGaps));
+    const minutes = form.sections.find((s) => s.section === "GRAMMAR")!.durationMinutes;
+    const name = c === earlier ? `until 2026-10-23: ${c.name}` : c.name;
+    console.log(row(`${name}, ${minutes} min`, acc));
+    const fails = gateFailures(mc, cTest, acc);
+    verdicts.push(`- ${name}, ${minutes} min: ${fails.length ? `FAIL (${fails.join("; ")})` : "PASS"}`);
+    if (!fails.length) openPasses.set(c.name, (openPasses.get(c.name) ?? 0) + 1);
+  }
+  console.log(`\nGate (A1-C1 exact >= (a) - 2, within one >= (a) - 1; A1 over <= (b) + 5):\n${verdicts.join("\n")}`);
+}
+for (const c of OPEN_TRIALS) console.log(`\nplacement ${c.name}: ${openPasses.get(c.name) === SEEDS.length ? "passes at both seeds" : "does not pass at both seeds"}`);

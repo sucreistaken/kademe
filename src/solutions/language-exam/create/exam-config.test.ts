@@ -166,18 +166,23 @@ describe("text sections follow the minutes", () => {
   const grammarOf = (s: ExamShape) => buildExamConfig(s).config.sections.find((x) => x.section === "GRAMMAR")!;
 
   it("placement: fewer minutes drop the word banks, then the lowest cloze texts; more widen each kind", () => {
-    for (const [target, cloze, wordBanks] of [
+    // Since 2026-10-23 the placement's C1 and C2 texts are open cloze texts; they sit on the cloze ladder.
+    for (const [target, cloze, wordBanks, open] of [
       // All five sections at 77 minutes give grammar 27 of its 30: one text fewer, the lowest word bank.
-      [77, ["A1", "A2", "B1", "B2", "C1", "C2"], ["B1", "B2"]],
-      [60, ["A1", "A2", "B1", "B2", "C1", "C2"], []],
-      [45, ["A2", "B1", "B2", "C1", "C2"], []],
-      [120, ["A1", "A2", "B1", "B2", "C1", "C2"], ["A2", "B1", "B2", "C1"]],
+      [77, ["A1", "A2", "B1", "B2"], ["B1", "B2"], ["C1", "C2"]],
+      [60, ["A1", "A2", "B1", "B2"], [], ["C1", "C2"]],
+      [45, ["A2", "B1", "B2"], [], ["C1", "C2"]],
+      [120, ["A1", "A2", "B1", "B2"], ["A2", "B1", "B2", "C1"], ["C1", "C2"]],
     ] as const) {
       const s = shape({ skills: [...ALL], targetMinutes: target });
       expect(examTemplateFor(s).key, `${target} min template`).toBe("placement");
       const g = grammarOf(s);
       expect(g.cTestLevels, `${target} min`).toBeUndefined();
-      expect(kinds(g.texts), `${target} min (${g.durationMinutes} grammar)`).toEqual([...cloze.map((l) => `CLOZE ${l}`), ...wordBanks.map((l) => `WORDBANK ${l}`)]);
+      expect(kinds(g.texts), `${target} min (${g.durationMinutes} grammar)`).toEqual([
+        ...cloze.map((l) => `CLOZE ${l}`),
+        ...wordBanks.map((l) => `WORDBANK ${l}`),
+        ...open.map((l) => `OPEN ${l}`),
+      ]);
     }
   });
 
@@ -219,9 +224,25 @@ describe("text sections follow the minutes", () => {
     // Above B2 the top is kept before the lowest levels: never cut the top of the span first.
     expect(kinds(textsFor(t(["A1", "A2", "B1", "B2", "C1", "C2"], []), 0.5))).toEqual(["CLOZE B1", "CLOZE B2", "CLOZE C2"]);
     expect(kinds(textsFor(t(["B1"], ["B1"]), 1))).toEqual(["CLOZE B1", "WORDBANK B1"]);
-    // Open cloze texts pass through untouched.
+    // An open cloze text at a level that also has a cloze text goes and stays with that level.
     const withOpen = [...t(["A2", "B1", "B2"], []), { level: "B2", kind: "OPEN" }] as Parameters<typeof textsFor>[0];
     expect(kinds(textsFor(withOpen, 0.1))).toEqual(["CLOZE B2", "OPEN B2"]);
+  });
+
+  it("textsFor: open cloze texts count as texts and sit on the cloze ladder, each level keeping its kind", () => {
+    const placement = [
+      ...["A1", "A2", "B1", "B2"].map((level) => ({ level, kind: "CLOZE" as const })),
+      ...["A2", "B1", "B2"].map((level) => ({ level, kind: "WORDBANK" as const })),
+      ...["C1", "C2"].map((level) => ({ level, kind: "OPEN" as const })),
+    ] as Parameters<typeof textsFor>[0];
+    // Half the minutes: round(9 / 2) = 5 texts, word banks first, then A1; the open C1 and C2 stay.
+    expect(kinds(textsFor(placement, 0.5))).toEqual(["CLOZE A2", "CLOZE B1", "CLOZE B2", "OPEN C1", "OPEN C2"]);
+    // A third: 3 texts, B2, B1 and the top of the span.
+    expect(kinds(textsFor(placement, 1 / 3))).toEqual(["CLOZE B1", "CLOZE B2", "OPEN C2"]);
+    expect(textsFor(placement, 0.5)).toHaveLength(5);
+    // The same minutes keep the list; more minutes widen the word banks, the full ladder has no room left.
+    expect(kinds(textsFor(placement, 1))).toEqual(kinds(placement));
+    expect(kinds(textsFor(placement, 4 / 3))).toEqual([...kinds(placement).slice(0, 4), "WORDBANK A2", "WORDBANK B1", "WORDBANK B2", "WORDBANK C1", "OPEN C1", "OPEN C2"]);
   });
 
   it("an older C-test section keeps one text per five minutes, middle levels first, then wider upward (R11)", () => {

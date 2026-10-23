@@ -10,7 +10,7 @@ vi.mock("@/server/panel", () => ({ bankCounts: async () => counts.value }));
 
 import { examCreator, MAX_FOLLOW_UPS, validateExamParams, type ExamParams } from "./exam";
 
-const FULL: BankCount[] = SECTIONS.flatMap((section) => CEFR_LEVELS.map((level) => ({ section, level, items: 200, stimuli: 50, cTests: 5, clozeTexts: 5, wordBanks: 5 })));
+const FULL: BankCount[] = SECTIONS.flatMap((section) => CEFR_LEVELS.map((level) => ({ section, level, items: 200, stimuli: 50, cTests: 5, clozeTexts: 5, wordBanks: 5, openTexts: 5 })));
 const ctx: CreatorCtx = { orgId: "o1", userId: "u1", role: "MANAGER", locale: "tr", draftId: "d1" };
 const params = (over: Partial<ExamParams> = {}): ExamParams => ({
   mode: "PLACEMENT",
