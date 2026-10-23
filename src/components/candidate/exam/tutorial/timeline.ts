@@ -23,7 +23,7 @@ export const TYPE_CHAR_MS = 55;
  * captions (2026-10-23); Turkish and Arabic words are longer, so fewer of them
  * take as long. Other languages use the English pace.
  */
-export const MS_PER_WORD: Record<string, number> = { en: 320, de: 350, es: 390, tr: 480, ar: 480 };
+export const MS_PER_WORD: Record<string, number> = { en: 320, de: 350, es: 390, tr: 480, ar: 560 };
 /** The quiet before and after a recorded caption. */
 export const NARRATION_PAD_MS = 600;
 

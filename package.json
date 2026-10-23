@@ -24,6 +24,7 @@
     "verify:queue": "tsx scripts/verify-queue-supervise.ts",
     "db:reset": "tsx scripts/db-reset.ts",
     "bank:tts": "tsx scripts/bank-tts.ts",
+    "tutorial:tts": "tsx scripts/tutorial-tts.ts",
     "bank:topup": "tsx scripts/bank-topup.ts",
     "bank:lock-listening": "tsx scripts/bank-lock-listening.ts",
     "bank:originality": "tsx scripts/bank-originality.ts",

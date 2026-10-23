@@ -1,1 +1,937 @@
-{}
+{
+  "en": {
+    "GRAMMAR": {
+      "gap": {
+        "src": "/tutorial/en/GRAMMAR/gap.mp3",
+        "ms": 4800,
+        "hash": "0c896bbe31ab0a"
+      },
+      "pick": {
+        "src": "/tutorial/en/GRAMMAR/pick.mp3",
+        "ms": 4760,
+        "hash": "1ce8f2b48afaba"
+      },
+      "again": {
+        "src": "/tutorial/en/GRAMMAR/again.mp3",
+        "ms": 5120,
+        "hash": "14fb5b63fc94ca"
+      },
+      "mark": {
+        "src": "/tutorial/en/GRAMMAR/mark.mp3",
+        "ms": 3480,
+        "hash": "1705ec943b2329"
+      },
+      "strip": {
+        "src": "/tutorial/en/GRAMMAR/strip.mp3",
+        "ms": 5480,
+        "hash": "110047d979ec4b"
+      },
+      "timer": {
+        "src": "/tutorial/en/GRAMMAR/timer.mp3",
+        "ms": 3280,
+        "hash": "00f10ece108ce5"
+      },
+      "next": {
+        "src": "/tutorial/en/GRAMMAR/next.mp3",
+        "ms": 4280,
+        "hash": "04a5da954edafe"
+      }
+    },
+    "READING": {
+      "passage": {
+        "src": "/tutorial/en/READING/passage.mp3",
+        "ms": 5520,
+        "hash": "0f238a02976a24"
+      },
+      "situations": {
+        "src": "/tutorial/en/READING/situations.mp3",
+        "ms": 5440,
+        "hash": "0f717cdf990cad"
+      },
+      "drag": {
+        "src": "/tutorial/en/READING/drag.mp3",
+        "ms": 3360,
+        "hash": "195a3eba6bc128"
+      },
+      "click": {
+        "src": "/tutorial/en/READING/click.mp3",
+        "ms": 2720,
+        "hash": "1fe9965c896e8f"
+      },
+      "notes": {
+        "src": "/tutorial/en/READING/notes.mp3",
+        "ms": 5760,
+        "hash": "1755e3aa6d9a6c"
+      },
+      "mark": {
+        "src": "/tutorial/en/READING/mark.mp3",
+        "ms": 5520,
+        "hash": "047dd4b30ecd15"
+      },
+      "next": {
+        "src": "/tutorial/en/READING/next.mp3",
+        "ms": 4320,
+        "hash": "1cc029ae8dd7f0"
+      }
+    },
+    "LISTENING": {
+      "read": {
+        "src": "/tutorial/en/LISTENING/read.mp3",
+        "ms": 4160,
+        "hash": "1311d22924d884"
+      },
+      "play": {
+        "src": "/tutorial/en/LISTENING/play.mp3",
+        "ms": 5800,
+        "hash": "053eb55ac91648"
+      },
+      "plays": {
+        "src": "/tutorial/en/LISTENING/plays.mp3",
+        "ms": 4200,
+        "hash": "02e1ded5d0ad1e"
+      },
+      "answer": {
+        "src": "/tutorial/en/LISTENING/answer.mp3",
+        "ms": 3960,
+        "hash": "0c671b53c46b11"
+      },
+      "mark": {
+        "src": "/tutorial/en/LISTENING/mark.mp3",
+        "ms": 4000,
+        "hash": "0d9ac7433066b1"
+      },
+      "strip": {
+        "src": "/tutorial/en/LISTENING/strip.mp3",
+        "ms": 5320,
+        "hash": "0da8348d6b84b6"
+      },
+      "timer": {
+        "src": "/tutorial/en/LISTENING/timer.mp3",
+        "ms": 3320,
+        "hash": "00b225a1aa2906"
+      }
+    },
+    "WRITING": {
+      "task": {
+        "src": "/tutorial/en/WRITING/task.mp3",
+        "ms": 5800,
+        "hash": "0154ccb514d8a9"
+      },
+      "type": {
+        "src": "/tutorial/en/WRITING/type.mp3",
+        "ms": 4200,
+        "hash": "1572dcedc046fb"
+      },
+      "tools": {
+        "src": "/tutorial/en/WRITING/tools.mp3",
+        "ms": 6680,
+        "hash": "1a2c372b30bf64"
+      },
+      "mark": {
+        "src": "/tutorial/en/WRITING/mark.mp3",
+        "ms": 3440,
+        "hash": "0c554e53a4857a"
+      },
+      "strip": {
+        "src": "/tutorial/en/WRITING/strip.mp3",
+        "ms": 5640,
+        "hash": "02253becbe0922"
+      },
+      "timer": {
+        "src": "/tutorial/en/WRITING/timer.mp3",
+        "ms": 1920,
+        "hash": "08d5b2f820e53f"
+      },
+      "next": {
+        "src": "/tutorial/en/WRITING/next.mp3",
+        "ms": 2480,
+        "hash": "0630e6de28940d"
+      }
+    },
+    "SPEAKING": {
+      "task": {
+        "src": "/tutorial/en/SPEAKING/task.mp3",
+        "ms": 4600,
+        "hash": "04cf72bb2b3f13"
+      },
+      "think": {
+        "src": "/tutorial/en/SPEAKING/think.mp3",
+        "ms": 3680,
+        "hash": "092c75fd8e4f03"
+      },
+      "record": {
+        "src": "/tutorial/en/SPEAKING/record.mp3",
+        "ms": 5960,
+        "hash": "1747fb6caf13bf"
+      },
+      "talk": {
+        "src": "/tutorial/en/SPEAKING/talk.mp3",
+        "ms": 3320,
+        "hash": "1941eeafc3e7e8"
+      },
+      "stop": {
+        "src": "/tutorial/en/SPEAKING/stop.mp3",
+        "ms": 5600,
+        "hash": "184b7a0f1f6e2e"
+      },
+      "next": {
+        "src": "/tutorial/en/SPEAKING/next.mp3",
+        "ms": 5280,
+        "hash": "0d8e6e04d1280b"
+      },
+      "timer": {
+        "src": "/tutorial/en/SPEAKING/timer.mp3",
+        "ms": 3760,
+        "hash": "0094a17b7db5dc"
+      }
+    }
+  },
+  "de": {
+    "GRAMMAR": {
+      "gap": {
+        "src": "/tutorial/de/GRAMMAR/gap.mp3",
+        "ms": 5520,
+        "hash": "03f13e51429f31"
+      },
+      "pick": {
+        "src": "/tutorial/de/GRAMMAR/pick.mp3",
+        "ms": 5800,
+        "hash": "091f35e35a2154"
+      },
+      "again": {
+        "src": "/tutorial/de/GRAMMAR/again.mp3",
+        "ms": 5640,
+        "hash": "171bb7a4d36006"
+      },
+      "mark": {
+        "src": "/tutorial/de/GRAMMAR/mark.mp3",
+        "ms": 5080,
+        "hash": "0833482e79600e"
+      },
+      "strip": {
+        "src": "/tutorial/de/GRAMMAR/strip.mp3",
+        "ms": 6920,
+        "hash": "0f8665b6a8f3f3"
+      },
+      "timer": {
+        "src": "/tutorial/de/GRAMMAR/timer.mp3",
+        "ms": 3880,
+        "hash": "1e970bad2f664f"
+      },
+      "next": {
+        "src": "/tutorial/de/GRAMMAR/next.mp3",
+        "ms": 5800,
+        "hash": "07e07c792ddfb1"
+      }
+    },
+    "READING": {
+      "passage": {
+        "src": "/tutorial/de/READING/passage.mp3",
+        "ms": 4880,
+        "hash": "0e2b706cd508b8"
+      },
+      "situations": {
+        "src": "/tutorial/de/READING/situations.mp3",
+        "ms": 5040,
+        "hash": "0adfe174e6e977"
+      },
+      "drag": {
+        "src": "/tutorial/de/READING/drag.mp3",
+        "ms": 3760,
+        "hash": "113337a44d7dfd"
+      },
+      "click": {
+        "src": "/tutorial/de/READING/click.mp3",
+        "ms": 3400,
+        "hash": "093b0ae326211d"
+      },
+      "notes": {
+        "src": "/tutorial/de/READING/notes.mp3",
+        "ms": 8040,
+        "hash": "1878dc6946d55a"
+      },
+      "mark": {
+        "src": "/tutorial/de/READING/mark.mp3",
+        "ms": 8040,
+        "hash": "09a8ce78c6a347"
+      },
+      "next": {
+        "src": "/tutorial/de/READING/next.mp3",
+        "ms": 4680,
+        "hash": "0605e327cba230"
+      }
+    },
+    "LISTENING": {
+      "read": {
+        "src": "/tutorial/de/LISTENING/read.mp3",
+        "ms": 4080,
+        "hash": "00f779cb15a492"
+      },
+      "play": {
+        "src": "/tutorial/de/LISTENING/play.mp3",
+        "ms": 6200,
+        "hash": "0141d34580a816"
+      },
+      "plays": {
+        "src": "/tutorial/de/LISTENING/plays.mp3",
+        "ms": 4080,
+        "hash": "1a430786168a21"
+      },
+      "answer": {
+        "src": "/tutorial/de/LISTENING/answer.mp3",
+        "ms": 4680,
+        "hash": "07449262e2e984"
+      },
+      "mark": {
+        "src": "/tutorial/de/LISTENING/mark.mp3",
+        "ms": 3840,
+        "hash": "15ea0e47bc2847"
+      },
+      "strip": {
+        "src": "/tutorial/de/LISTENING/strip.mp3",
+        "ms": 5080,
+        "hash": "08fad855b0e04d"
+      },
+      "timer": {
+        "src": "/tutorial/de/LISTENING/timer.mp3",
+        "ms": 3560,
+        "hash": "0566cdef7a5a78"
+      }
+    },
+    "WRITING": {
+      "task": {
+        "src": "/tutorial/de/WRITING/task.mp3",
+        "ms": 6480,
+        "hash": "026a5acfde8b95"
+      },
+      "type": {
+        "src": "/tutorial/de/WRITING/type.mp3",
+        "ms": 5040,
+        "hash": "125ba1116dafde"
+      },
+      "tools": {
+        "src": "/tutorial/de/WRITING/tools.mp3",
+        "ms": 6600,
+        "hash": "1672b74137c71f"
+      },
+      "mark": {
+        "src": "/tutorial/de/WRITING/mark.mp3",
+        "ms": 4000,
+        "hash": "0eddcd6a23e215"
+      },
+      "strip": {
+        "src": "/tutorial/de/WRITING/strip.mp3",
+        "ms": 5520,
+        "hash": "1f5cb83274e909"
+      },
+      "timer": {
+        "src": "/tutorial/de/WRITING/timer.mp3",
+        "ms": 2720,
+        "hash": "10d18413bfed0f"
+      },
+      "next": {
+        "src": "/tutorial/de/WRITING/next.mp3",
+        "ms": 3240,
+        "hash": "1bb16ea8d66f5f"
+      }
+    },
+    "SPEAKING": {
+      "task": {
+        "src": "/tutorial/de/SPEAKING/task.mp3",
+        "ms": 5840,
+        "hash": "0ec0188838ef87"
+      },
+      "think": {
+        "src": "/tutorial/de/SPEAKING/think.mp3",
+        "ms": 4320,
+        "hash": "185741c535519d"
+      },
+      "record": {
+        "src": "/tutorial/de/SPEAKING/record.mp3",
+        "ms": 6080,
+        "hash": "1378c9de9be476"
+      },
+      "talk": {
+        "src": "/tutorial/de/SPEAKING/talk.mp3",
+        "ms": 5040,
+        "hash": "0337cc6954eafb"
+      },
+      "stop": {
+        "src": "/tutorial/de/SPEAKING/stop.mp3",
+        "ms": 6720,
+        "hash": "18333ecf4c1e06"
+      },
+      "next": {
+        "src": "/tutorial/de/SPEAKING/next.mp3",
+        "ms": 6360,
+        "hash": "0638e9278cc58d"
+      },
+      "timer": {
+        "src": "/tutorial/de/SPEAKING/timer.mp3",
+        "ms": 3640,
+        "hash": "1de464a667a3dc"
+      }
+    }
+  },
+  "es": {
+    "GRAMMAR": {
+      "gap": {
+        "src": "/tutorial/es/GRAMMAR/gap.mp3",
+        "ms": 5200,
+        "hash": "182d3195aca238"
+      },
+      "pick": {
+        "src": "/tutorial/es/GRAMMAR/pick.mp3",
+        "ms": 6480,
+        "hash": "082efa75f9522f"
+      },
+      "again": {
+        "src": "/tutorial/es/GRAMMAR/again.mp3",
+        "ms": 5640,
+        "hash": "10b175d8bed64b"
+      },
+      "mark": {
+        "src": "/tutorial/es/GRAMMAR/mark.mp3",
+        "ms": 3840,
+        "hash": "027e68e1cfb3f6"
+      },
+      "strip": {
+        "src": "/tutorial/es/GRAMMAR/strip.mp3",
+        "ms": 7200,
+        "hash": "07926040c90de4"
+      },
+      "timer": {
+        "src": "/tutorial/es/GRAMMAR/timer.mp3",
+        "ms": 3320,
+        "hash": "0526305f6bc8b6"
+      },
+      "next": {
+        "src": "/tutorial/es/GRAMMAR/next.mp3",
+        "ms": 5160,
+        "hash": "05201c712a69b7"
+      }
+    },
+    "READING": {
+      "passage": {
+        "src": "/tutorial/es/READING/passage.mp3",
+        "ms": 5440,
+        "hash": "04cbede6443c72"
+      },
+      "situations": {
+        "src": "/tutorial/es/READING/situations.mp3",
+        "ms": 5880,
+        "hash": "06833c9f83f3e7"
+      },
+      "drag": {
+        "src": "/tutorial/es/READING/drag.mp3",
+        "ms": 3800,
+        "hash": "147d3ae0b3638f"
+      },
+      "click": {
+        "src": "/tutorial/es/READING/click.mp3",
+        "ms": 3640,
+        "hash": "17cad25ff9e1fb"
+      },
+      "notes": {
+        "src": "/tutorial/es/READING/notes.mp3",
+        "ms": 6640,
+        "hash": "02964cb618aedc"
+      },
+      "mark": {
+        "src": "/tutorial/es/READING/mark.mp3",
+        "ms": 6640,
+        "hash": "096845c1d5f840"
+      },
+      "next": {
+        "src": "/tutorial/es/READING/next.mp3",
+        "ms": 4360,
+        "hash": "0c84b7640029e4"
+      }
+    },
+    "LISTENING": {
+      "read": {
+        "src": "/tutorial/es/LISTENING/read.mp3",
+        "ms": 5320,
+        "hash": "16791dd96994b5"
+      },
+      "play": {
+        "src": "/tutorial/es/LISTENING/play.mp3",
+        "ms": 6760,
+        "hash": "09deb9f83471e3"
+      },
+      "plays": {
+        "src": "/tutorial/es/LISTENING/plays.mp3",
+        "ms": 4680,
+        "hash": "03256e61ede8bd"
+      },
+      "answer": {
+        "src": "/tutorial/es/LISTENING/answer.mp3",
+        "ms": 4440,
+        "hash": "0ed7e7b33f61c5"
+      },
+      "mark": {
+        "src": "/tutorial/es/LISTENING/mark.mp3",
+        "ms": 4640,
+        "hash": "1258a0605383cf"
+      },
+      "strip": {
+        "src": "/tutorial/es/LISTENING/strip.mp3",
+        "ms": 6440,
+        "hash": "197fe814966c16"
+      },
+      "timer": {
+        "src": "/tutorial/es/LISTENING/timer.mp3",
+        "ms": 3640,
+        "hash": "05f39025a38572"
+      }
+    },
+    "WRITING": {
+      "task": {
+        "src": "/tutorial/es/WRITING/task.mp3",
+        "ms": 6560,
+        "hash": "1ff711b83b9a59"
+      },
+      "type": {
+        "src": "/tutorial/es/WRITING/type.mp3",
+        "ms": 4960,
+        "hash": "0fa390c0f89cae"
+      },
+      "tools": {
+        "src": "/tutorial/es/WRITING/tools.mp3",
+        "ms": 8960,
+        "hash": "17315505e94451"
+      },
+      "mark": {
+        "src": "/tutorial/es/WRITING/mark.mp3",
+        "ms": 3400,
+        "hash": "12989ddcf840ef"
+      },
+      "strip": {
+        "src": "/tutorial/es/WRITING/strip.mp3",
+        "ms": 5880,
+        "hash": "1a61064736bf2c"
+      },
+      "timer": {
+        "src": "/tutorial/es/WRITING/timer.mp3",
+        "ms": 2080,
+        "hash": "1c4c575a9cae78"
+      },
+      "next": {
+        "src": "/tutorial/es/WRITING/next.mp3",
+        "ms": 3080,
+        "hash": "09595c09f8a65e"
+      }
+    },
+    "SPEAKING": {
+      "task": {
+        "src": "/tutorial/es/SPEAKING/task.mp3",
+        "ms": 5720,
+        "hash": "0c39df6d0a490d"
+      },
+      "think": {
+        "src": "/tutorial/es/SPEAKING/think.mp3",
+        "ms": 5160,
+        "hash": "02ee33548a30e3"
+      },
+      "record": {
+        "src": "/tutorial/es/SPEAKING/record.mp3",
+        "ms": 7440,
+        "hash": "0d30e308aa9f42"
+      },
+      "talk": {
+        "src": "/tutorial/es/SPEAKING/talk.mp3",
+        "ms": 5560,
+        "hash": "00ce90d2a8ef5d"
+      },
+      "stop": {
+        "src": "/tutorial/es/SPEAKING/stop.mp3",
+        "ms": 6840,
+        "hash": "1de1a3949cf52b"
+      },
+      "next": {
+        "src": "/tutorial/es/SPEAKING/next.mp3",
+        "ms": 7040,
+        "hash": "16a66e35efe9a8"
+      },
+      "timer": {
+        "src": "/tutorial/es/SPEAKING/timer.mp3",
+        "ms": 4320,
+        "hash": "07d52740d4d656"
+      }
+    }
+  },
+  "tr": {
+    "GRAMMAR": {
+      "gap": {
+        "src": "/tutorial/tr/GRAMMAR/gap.mp3",
+        "ms": 4960,
+        "hash": "19ec790bf34d30"
+      },
+      "pick": {
+        "src": "/tutorial/tr/GRAMMAR/pick.mp3",
+        "ms": 5440,
+        "hash": "066cbc37846e55"
+      },
+      "again": {
+        "src": "/tutorial/tr/GRAMMAR/again.mp3",
+        "ms": 6040,
+        "hash": "13c9df5d63bdf8"
+      },
+      "mark": {
+        "src": "/tutorial/tr/GRAMMAR/mark.mp3",
+        "ms": 3680,
+        "hash": "0dad4c2891364a"
+      },
+      "strip": {
+        "src": "/tutorial/tr/GRAMMAR/strip.mp3",
+        "ms": 6160,
+        "hash": "08f63a9b3c86e2"
+      },
+      "timer": {
+        "src": "/tutorial/tr/GRAMMAR/timer.mp3",
+        "ms": 3080,
+        "hash": "06cd7e67805d59"
+      },
+      "next": {
+        "src": "/tutorial/tr/GRAMMAR/next.mp3",
+        "ms": 6040,
+        "hash": "0a7db79e9c990b"
+      }
+    },
+    "READING": {
+      "passage": {
+        "src": "/tutorial/tr/READING/passage.mp3",
+        "ms": 5200,
+        "hash": "0babbda0ae53a8"
+      },
+      "situations": {
+        "src": "/tutorial/tr/READING/situations.mp3",
+        "ms": 4600,
+        "hash": "155cd65c71c0c3"
+      },
+      "drag": {
+        "src": "/tutorial/tr/READING/drag.mp3",
+        "ms": 3880,
+        "hash": "007a01df928434"
+      },
+      "click": {
+        "src": "/tutorial/tr/READING/click.mp3",
+        "ms": 3240,
+        "hash": "08422792ba61b1"
+      },
+      "notes": {
+        "src": "/tutorial/tr/READING/notes.mp3",
+        "ms": 7400,
+        "hash": "039f3e81cd655a"
+      },
+      "mark": {
+        "src": "/tutorial/tr/READING/mark.mp3",
+        "ms": 7200,
+        "hash": "1c61fcc65ca998"
+      },
+      "next": {
+        "src": "/tutorial/tr/READING/next.mp3",
+        "ms": 3720,
+        "hash": "1a92e093f6e0ec"
+      }
+    },
+    "LISTENING": {
+      "read": {
+        "src": "/tutorial/tr/LISTENING/read.mp3",
+        "ms": 4160,
+        "hash": "193517c39fe35c"
+      },
+      "play": {
+        "src": "/tutorial/tr/LISTENING/play.mp3",
+        "ms": 4840,
+        "hash": "174a773c7ec055"
+      },
+      "plays": {
+        "src": "/tutorial/tr/LISTENING/plays.mp3",
+        "ms": 4400,
+        "hash": "02f97fb925e632"
+      },
+      "answer": {
+        "src": "/tutorial/tr/LISTENING/answer.mp3",
+        "ms": 4760,
+        "hash": "089631b5ccd2f5"
+      },
+      "mark": {
+        "src": "/tutorial/tr/LISTENING/mark.mp3",
+        "ms": 4091,
+        "hash": "02ca463885f9b8"
+      },
+      "strip": {
+        "src": "/tutorial/tr/LISTENING/strip.mp3",
+        "ms": 5611,
+        "hash": "13f4430adc9af3"
+      },
+      "timer": {
+        "src": "/tutorial/tr/LISTENING/timer.mp3",
+        "ms": 3611,
+        "hash": "1a6776b3f7f6a9"
+      }
+    },
+    "WRITING": {
+      "task": {
+        "src": "/tutorial/tr/WRITING/task.mp3",
+        "ms": 6800,
+        "hash": "035b4b0170d1fa"
+      },
+      "type": {
+        "src": "/tutorial/tr/WRITING/type.mp3",
+        "ms": 5320,
+        "hash": "0121e366bd3673"
+      },
+      "tools": {
+        "src": "/tutorial/tr/WRITING/tools.mp3",
+        "ms": 7040,
+        "hash": "06b94416771c68"
+      },
+      "mark": {
+        "src": "/tutorial/tr/WRITING/mark.mp3",
+        "ms": 3560,
+        "hash": "0d065c98acd84c"
+      },
+      "strip": {
+        "src": "/tutorial/tr/WRITING/strip.mp3",
+        "ms": 6480,
+        "hash": "0f23fbd5b84268"
+      },
+      "timer": {
+        "src": "/tutorial/tr/WRITING/timer.mp3",
+        "ms": 2640,
+        "hash": "1c2d41d8e74a17"
+      },
+      "next": {
+        "src": "/tutorial/tr/WRITING/next.mp3",
+        "ms": 2680,
+        "hash": "0b9d59b8a7e157"
+      }
+    },
+    "SPEAKING": {
+      "task": {
+        "src": "/tutorial/tr/SPEAKING/task.mp3",
+        "ms": 5120,
+        "hash": "1024ec91d0715a"
+      },
+      "think": {
+        "src": "/tutorial/tr/SPEAKING/think.mp3",
+        "ms": 4080,
+        "hash": "10c4771ae329ec"
+      },
+      "record": {
+        "src": "/tutorial/tr/SPEAKING/record.mp3",
+        "ms": 5960,
+        "hash": "152bc18f189456"
+      },
+      "talk": {
+        "src": "/tutorial/tr/SPEAKING/talk.mp3",
+        "ms": 5960,
+        "hash": "02ba8f0ebb69cd"
+      },
+      "stop": {
+        "src": "/tutorial/tr/SPEAKING/stop.mp3",
+        "ms": 5080,
+        "hash": "0c04a441685e47"
+      },
+      "next": {
+        "src": "/tutorial/tr/SPEAKING/next.mp3",
+        "ms": 5640,
+        "hash": "111bb0403d4897"
+      },
+      "timer": {
+        "src": "/tutorial/tr/SPEAKING/timer.mp3",
+        "ms": 3760,
+        "hash": "03bac520d5a107"
+      }
+    }
+  },
+  "ar": {
+    "GRAMMAR": {
+      "gap": {
+        "src": "/tutorial/ar/GRAMMAR/gap.mp3",
+        "ms": 6440,
+        "hash": "09b8c8457a1baf"
+      },
+      "pick": {
+        "src": "/tutorial/ar/GRAMMAR/pick.mp3",
+        "ms": 6200,
+        "hash": "1471ea31386379"
+      },
+      "again": {
+        "src": "/tutorial/ar/GRAMMAR/again.mp3",
+        "ms": 7720,
+        "hash": "02b1c6b3fffcce"
+      },
+      "mark": {
+        "src": "/tutorial/ar/GRAMMAR/mark.mp3",
+        "ms": 5720,
+        "hash": "1d5d7c970bd0bb"
+      },
+      "strip": {
+        "src": "/tutorial/ar/GRAMMAR/strip.mp3",
+        "ms": 7680,
+        "hash": "02cb61fea650e1"
+      },
+      "timer": {
+        "src": "/tutorial/ar/GRAMMAR/timer.mp3",
+        "ms": 3840,
+        "hash": "0dc65a6d73875f"
+      },
+      "next": {
+        "src": "/tutorial/ar/GRAMMAR/next.mp3",
+        "ms": 6520,
+        "hash": "157c63aabc71dc"
+      }
+    },
+    "READING": {
+      "passage": {
+        "src": "/tutorial/ar/READING/passage.mp3",
+        "ms": 6560,
+        "hash": "10f876c51ca8fe"
+      },
+      "situations": {
+        "src": "/tutorial/ar/READING/situations.mp3",
+        "ms": 6320,
+        "hash": "095961391293ce"
+      },
+      "drag": {
+        "src": "/tutorial/ar/READING/drag.mp3",
+        "ms": 3240,
+        "hash": "00d39a7941bb0a"
+      },
+      "click": {
+        "src": "/tutorial/ar/READING/click.mp3",
+        "ms": 3560,
+        "hash": "1091bee97f1165"
+      },
+      "notes": {
+        "src": "/tutorial/ar/READING/notes.mp3",
+        "ms": 8440,
+        "hash": "15edcd4e671519"
+      },
+      "mark": {
+        "src": "/tutorial/ar/READING/mark.mp3",
+        "ms": 7120,
+        "hash": "1013e70495aeda"
+      },
+      "next": {
+        "src": "/tutorial/ar/READING/next.mp3",
+        "ms": 3880,
+        "hash": "0c3cc04757f93c"
+      }
+    },
+    "LISTENING": {
+      "read": {
+        "src": "/tutorial/ar/LISTENING/read.mp3",
+        "ms": 4640,
+        "hash": "065450102cc5c4"
+      },
+      "play": {
+        "src": "/tutorial/ar/LISTENING/play.mp3",
+        "ms": 6480,
+        "hash": "1ccd65fc765a83"
+      },
+      "plays": {
+        "src": "/tutorial/ar/LISTENING/plays.mp3",
+        "ms": 5520,
+        "hash": "0e022492e8cbbf"
+      },
+      "answer": {
+        "src": "/tutorial/ar/LISTENING/answer.mp3",
+        "ms": 4880,
+        "hash": "1eab1221c2e760"
+      },
+      "mark": {
+        "src": "/tutorial/ar/LISTENING/mark.mp3",
+        "ms": 5480,
+        "hash": "1d4bf860cfbfdb"
+      },
+      "strip": {
+        "src": "/tutorial/ar/LISTENING/strip.mp3",
+        "ms": 6440,
+        "hash": "090a9cf0ec9c75"
+      },
+      "timer": {
+        "src": "/tutorial/ar/LISTENING/timer.mp3",
+        "ms": 4000,
+        "hash": "0944e429be18c4"
+      }
+    },
+    "WRITING": {
+      "task": {
+        "src": "/tutorial/ar/WRITING/task.mp3",
+        "ms": 7920,
+        "hash": "053c80d23d183f"
+      },
+      "type": {
+        "src": "/tutorial/ar/WRITING/type.mp3",
+        "ms": 4960,
+        "hash": "1e73ea7074a26a"
+      },
+      "tools": {
+        "src": "/tutorial/ar/WRITING/tools.mp3",
+        "ms": 7920,
+        "hash": "10f2c1ae1c8520"
+      },
+      "mark": {
+        "src": "/tutorial/ar/WRITING/mark.mp3",
+        "ms": 3771,
+        "hash": "02bb5375a4cb32"
+      },
+      "strip": {
+        "src": "/tutorial/ar/WRITING/strip.mp3",
+        "ms": 7120,
+        "hash": "0295c864ef965d"
+      },
+      "timer": {
+        "src": "/tutorial/ar/WRITING/timer.mp3",
+        "ms": 2400,
+        "hash": "0179b9907e8842"
+      },
+      "next": {
+        "src": "/tutorial/ar/WRITING/next.mp3",
+        "ms": 2880,
+        "hash": "012649a22751cd"
+      }
+    },
+    "SPEAKING": {
+      "task": {
+        "src": "/tutorial/ar/SPEAKING/task.mp3",
+        "ms": 5920,
+        "hash": "0f8e79d889e223"
+      },
+      "think": {
+        "src": "/tutorial/ar/SPEAKING/think.mp3",
+        "ms": 5560,
+        "hash": "1145c396c2f94b"
+      },
+      "record": {
+        "src": "/tutorial/ar/SPEAKING/record.mp3",
+        "ms": 7880,
+        "hash": "1061b7bbe82a37"
+      },
+      "talk": {
+        "src": "/tutorial/ar/SPEAKING/talk.mp3",
+        "ms": 3400,
+        "hash": "12d17dc602c463"
+      },
+      "stop": {
+        "src": "/tutorial/ar/SPEAKING/stop.mp3",
+        "ms": 7080,
+        "hash": "12437e38b28de0"
+      },
+      "next": {
+        "src": "/tutorial/ar/SPEAKING/next.mp3",
+        "ms": 6280,
+        "hash": "1caf917961c177"
+      },
+      "timer": {
+        "src": "/tutorial/ar/SPEAKING/timer.mp3",
+        "ms": 4040,
+        "hash": "01f1ea36fe99d5"
+      }
+    }
+  }
+}
