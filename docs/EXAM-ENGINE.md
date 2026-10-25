@@ -479,7 +479,13 @@ gerçek model yoluyla (`gradeAnswer`, yani işin kullandığı fonksiyon, verita
 bir seviye içinde uyum, hedef seviyeye göre ortalama sapma, tekrar koşuların uyumu, bayrak kesinliği ve kapsamı, A0
 hedefli ama A0 olmayan cevaplar ve tavanı aşan öneriler için rapor yazar (`docs/research/grading-calibration-2026-10-25/`).
 Hedefler: tam uyum en az %70, bir seviye içinde en az %95, her A0 cevabı A0, tavanı aşan öneri yok, tekrar koşuların
-uyumu en az %90. İstem değişirse ya da model değişirse yeniden koşulur; sonuçlar turlara göre `summary.md` içindedir.
+uyumu en az %90. İstem değişirse ya da model değişirse yeniden koşulur; sonuçlar turlara göre `docs/research/grading-calibration-2026-10-25/README.md` içindedir.
+Son tur (`gemini-3.6-flash`, 3 koşu): tam uyum %83,5 (kör değerlendiricinin de tuttuğu 71 cevapta %87,8), bir seviye
+içinde %100, 17 A0 cevabının hepsi her koşuda A0, tavanı aşan öneri yok, koşular arası uyum %92,2; ilk durum (aynı
+sabit küme, eski istem) %49,4 / %96,5 / 10 A0 kaçağı idi. Üretimde tek model cevabı ve sağlayıcının varsayılan
+örnekleme ayarı kullanılır: sıcaklık 0 ve üç cevabın medyanı ölçüldü, koşular arası uyumu artırmadı (kalan oynaklık
+iki seviye arasında kalan sınır cevaplardadır, öğretmen kararı oradadır). Kalan sapma küçük ve yukarı yönlüdür
+(B2 cevaplarının yaklaşık yarısına C1 verir, kör değerlendiricilerin de üçünde C1 dediği cevaplar dahil).
 - İstemin ilkeleri (`commonRules`): seviyeler mutlaktır (kolay bir görevi eksiksiz yapmak seviyeyi yükseltmez), hatasız
   basit dil hâlâ basit dildir, şüphede alt seviye, ACCURACY en çok RANGE'in bir üstü, uzunluk seviye değildir,
   ezberlenmiş ya da görev metninden alınmış parçalar sayılmaz, konu dışı metin için TASK_ACHIEVEMENT en çok A1 ama dil
