@@ -1396,7 +1396,7 @@
     },
     "SPEAKING": {
       "task": "Links steht Ihre Aufgabe. Lesen Sie sie und die Punkte, über die Sie sprechen sollen.",
-      "think": "Rechts sehen Sie drei Schritte: Vorbereiten, Sprechen, Gespeichert. Zuerst bereiten Sie sich vor, die Uhr zählt rückwärts.",
+      "think": "Rechts sehen Sie drei Schritte: Vorbereiten, Sprechen, Gespeichert. Zuerst läuft die Vorbereitungszeit.",
       "record": "Wenn Sie bereit sind, drücken Sie die große Schaltfläche. Nach der Vorbereitungszeit startet die Aufnahme auch von selbst.",
       "talk": "Sprechen Sie deutlich. Die Uhr zeigt, wie lange Sie noch sprechen können.",
       "stop": "Wenn Sie fertig sind, drücken Sie auf Aufnahme beenden. Ist die Zeit um, endet sie von selbst.",

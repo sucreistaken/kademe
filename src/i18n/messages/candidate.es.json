@@ -1396,11 +1396,11 @@
     },
     "SPEAKING": {
       "task": "Su tarea está a la izquierda. Léala junto con los puntos de los que debe hablar.",
-      "think": "A la derecha hay tres pasos: Prepararse, Hablar y Guardado. Primero, el reloj cuenta atrás.",
+      "think": "A la derecha hay tres pasos: Prepararse, Hablar y Guardado. Primero se prepara.",
       "record": "Pulse el botón grande cuando quiera. La grabación también empieza sola al acabar la preparación.",
       "talk": "Hable con claridad. El reloj muestra cuánto tiempo puede seguir hablando.",
       "stop": "Cuando termine, pulse Detener la grabación. Al acabar el tiempo, se detiene sola.",
-      "next": "Su respuesta se guarda. Pulse Siguiente tarea. Aquí no se puede volver atrás.",
+      "next": "Su respuesta está guardada. Pulse Siguiente tarea; aquí no se vuelve atrás.",
       "timer": "El reloj de arriba muestra el tiempo que queda para la sección."
     }
   }

@@ -343,8 +343,8 @@
       },
       "think": {
         "src": "/tutorial/de/SPEAKING/think.mp3",
-        "ms": 9080,
-        "hash": "10dabdca4ab686"
+        "ms": 7720,
+        "hash": "1af1ee696ac04d"
       },
       "record": {
         "src": "/tutorial/de/SPEAKING/record.mp3",
@@ -530,8 +530,8 @@
       },
       "think": {
         "src": "/tutorial/es/SPEAKING/think.mp3",
-        "ms": 8600,
-        "hash": "09db9ce84380e1"
+        "ms": 7240,
+        "hash": "16f5f866a69609"
       },
       "record": {
         "src": "/tutorial/es/SPEAKING/record.mp3",
@@ -550,8 +550,8 @@
       },
       "next": {
         "src": "/tutorial/es/SPEAKING/next.mp3",
-        "ms": 7280,
-        "hash": "059a10032a6329"
+        "ms": 5640,
+        "hash": "1260d2fa03805d"
       },
       "timer": {
         "src": "/tutorial/es/SPEAKING/timer.mp3",
