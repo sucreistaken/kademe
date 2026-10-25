@@ -40,8 +40,8 @@
     "READING": {
       "passage": {
         "src": "/tutorial/en/READING/passage.mp3",
-        "ms": 5520,
-        "hash": "0f238a02976a24"
+        "ms": 5760,
+        "hash": "126d92db93b710"
       },
       "notes": {
         "src": "/tutorial/en/READING/notes.mp3",
@@ -57,6 +57,21 @@
         "src": "/tutorial/en/READING/next.mp3",
         "ms": 4320,
         "hash": "1cc029ae8dd7f0"
+      },
+      "gap": {
+        "src": "/tutorial/en/READING/gap.mp3",
+        "ms": 4400,
+        "hash": "1506cd9c283164"
+      },
+      "pick": {
+        "src": "/tutorial/en/READING/pick.mp3",
+        "ms": 3320,
+        "hash": "08ad300625287b"
+      },
+      "used": {
+        "src": "/tutorial/en/READING/used.mp3",
+        "ms": 5560,
+        "hash": "1047077bfa9981"
       }
     },
     "LISTENING": {
@@ -212,8 +227,8 @@
     "READING": {
       "passage": {
         "src": "/tutorial/de/READING/passage.mp3",
-        "ms": 4880,
-        "hash": "0e2b706cd508b8"
+        "ms": 4920,
+        "hash": "1fe06f0694cf63"
       },
       "notes": {
         "src": "/tutorial/de/READING/notes.mp3",
@@ -229,6 +244,21 @@
         "src": "/tutorial/de/READING/next.mp3",
         "ms": 4680,
         "hash": "0605e327cba230"
+      },
+      "gap": {
+        "src": "/tutorial/de/READING/gap.mp3",
+        "ms": 4760,
+        "hash": "1606999b570ca3"
+      },
+      "pick": {
+        "src": "/tutorial/de/READING/pick.mp3",
+        "ms": 3600,
+        "hash": "0337db03a01fdd"
+      },
+      "used": {
+        "src": "/tutorial/de/READING/used.mp3",
+        "ms": 7000,
+        "hash": "1e6860b3c71840"
       }
     },
     "LISTENING": {
@@ -384,8 +414,8 @@
     "READING": {
       "passage": {
         "src": "/tutorial/es/READING/passage.mp3",
-        "ms": 5440,
-        "hash": "04cbede6443c72"
+        "ms": 5880,
+        "hash": "13bd44bb034272"
       },
       "notes": {
         "src": "/tutorial/es/READING/notes.mp3",
@@ -401,6 +431,21 @@
         "src": "/tutorial/es/READING/next.mp3",
         "ms": 4360,
         "hash": "0c84b7640029e4"
+      },
+      "gap": {
+        "src": "/tutorial/es/READING/gap.mp3",
+        "ms": 4480,
+        "hash": "097bebb0a5c5bc"
+      },
+      "pick": {
+        "src": "/tutorial/es/READING/pick.mp3",
+        "ms": 4000,
+        "hash": "02f92a7df39ea2"
+      },
+      "used": {
+        "src": "/tutorial/es/READING/used.mp3",
+        "ms": 5120,
+        "hash": "04cf6842111432"
       }
     },
     "LISTENING": {
@@ -556,8 +601,8 @@
     "READING": {
       "passage": {
         "src": "/tutorial/tr/READING/passage.mp3",
-        "ms": 5200,
-        "hash": "0babbda0ae53a8"
+        "ms": 5640,
+        "hash": "16f0c284e81434"
       },
       "notes": {
         "src": "/tutorial/tr/READING/notes.mp3",
@@ -573,6 +618,21 @@
         "src": "/tutorial/tr/READING/next.mp3",
         "ms": 3720,
         "hash": "1a92e093f6e0ec"
+      },
+      "gap": {
+        "src": "/tutorial/tr/READING/gap.mp3",
+        "ms": 4120,
+        "hash": "195b2375874b14"
+      },
+      "pick": {
+        "src": "/tutorial/tr/READING/pick.mp3",
+        "ms": 3360,
+        "hash": "08fbc84e977f5a"
+      },
+      "used": {
+        "src": "/tutorial/tr/READING/used.mp3",
+        "ms": 5400,
+        "hash": "1ab4e407fa4120"
       }
     },
     "LISTENING": {
@@ -728,8 +788,8 @@
     "READING": {
       "passage": {
         "src": "/tutorial/ar/READING/passage.mp3",
-        "ms": 6560,
-        "hash": "10f876c51ca8fe"
+        "ms": 6920,
+        "hash": "19c825eaaa3051"
       },
       "notes": {
         "src": "/tutorial/ar/READING/notes.mp3",
@@ -745,6 +805,21 @@
         "src": "/tutorial/ar/READING/next.mp3",
         "ms": 3880,
         "hash": "0c3cc04757f93c"
+      },
+      "gap": {
+        "src": "/tutorial/ar/READING/gap.mp3",
+        "ms": 5160,
+        "hash": "1eaa75b1b316f0"
+      },
+      "pick": {
+        "src": "/tutorial/ar/READING/pick.mp3",
+        "ms": 3880,
+        "hash": "195a2d5b5c4d91"
+      },
+      "used": {
+        "src": "/tutorial/ar/READING/used.mp3",
+        "ms": 6320,
+        "hash": "0cba25f618aa77"
       }
     },
     "LISTENING": {
