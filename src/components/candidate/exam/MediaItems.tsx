@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ScratchPad } from "@/components/candidate/exam/notes/ScratchPad";
+import { useProctor } from "@/components/candidate/proctor/ProctorProvider";
+import { Notice } from "@/components/ui/notice";
 import type { ProctorEngine } from "@/lib/client/proctor/engine";
 import { apiSend } from "@/lib/client/api";
 import { MEDIA_ERROR_KEY, mediaErrorKind } from "@/lib/client/media-error";
@@ -16,7 +18,9 @@ import { sessionStore } from "./pending-answer";
 import { TaskExpectations } from "./TaskExpectations";
 import { TaskImages } from "./ExamImage";
 import { TaskPromptCard } from "./TaskPromptCard";
-import { ListeningGateCard, ListeningPlayerCard, SPEAKING_VIDEO, SpeakingClock } from "./media-cards";
+import { ListeningGateCard, ListeningPlayerCard } from "./media-cards";
+import { SPEAKING_VIDEO, SpeakingPanel } from "./SpeakingPanel";
+import { initialSpeakingPhase, type SpeakingPhase } from "./speaking-flow";
 
 type PlayState = "IDLE" | "LOADING" | "PLAYING" | "FAILED";
 type PlayFailure = "LOAD" | "STALLED" | "BLOCKED";
@@ -307,12 +311,16 @@ export function ListeningPlayer({
   );
 }
 
-type Phase = "THINKING" | "RECORDING" | "UPLOADING" | "DONE" | "FAILED";
+type Phase = SpeakingPhase;
 
 /**
  * Speaking: think, then record. The camera is the proctoring camera, already
  * on; recording only starts writing the answer. Parts upload while the
  * student talks, so a closed tab still leaves a playable answer.
+ *
+ * The right column is one recorder panel (SpeakingPanel). The phase is also
+ * reported upward (`onPhaseChange`), so the bottom bar can say what makes
+ * sense while the student prepares or records.
  */
 export function SpeakingItem({
   token,
@@ -321,6 +329,7 @@ export function SpeakingItem({
   answer,
   onChange,
   engine,
+  onPhaseChange,
 }: {
   token: string;
   sectionPosition: number;
@@ -328,11 +337,16 @@ export function SpeakingItem({
   answer: ItemAnswer;
   onChange: (a: ItemAnswer) => void;
   engine: ProctorEngine | null;
+  /** The recorder's phase, on every change; null when this question is left. */
+  onPhaseChange?: (phase: SpeakingPhase | null) => void;
 }) {
   const t = useT("exam");
   const f = useT("examFlow");
+  const { snap } = useProctor();
+  // The meter reads the proctoring microphone; with no such microphone there is no level to show.
+  const micLevel = snap && snap.mic === "ok" ? snap.micLevel : null;
   const content = item.content.kind === "SPEAKING" ? item.content : null;
-  const [phase, setPhase] = useState<Phase>(item.takesUsed && item.takesUsed > 0 ? "DONE" : "THINKING");
+  const [phase, setPhase] = useState<Phase>(initialSpeakingPhase(item.takesUsed));
   const [left, setLeft] = useState((content?.thinkSeconds ?? 30) * 1000);
   const [takes, setTakes] = useState(item.takesUsed ?? 0);
   const [error, setError] = useState<string | null>(null);
@@ -343,6 +357,15 @@ export function SpeakingItem({
   const startedAt = useRef(0);
 
   const maxTakes = content?.maxTakes ?? 1;
+
+  const reportPhase = useRef(onPhaseChange);
+  useEffect(() => {
+    reportPhase.current = onPhaseChange;
+  });
+  useEffect(() => {
+    reportPhase.current?.(phase);
+  }, [phase]);
+  useEffect(() => () => reportPhase.current?.(null), []);
 
   useEffect(() => {
     engine?.suppressVoice("speaking", phase === "THINKING" || phase === "RECORDING");
@@ -437,6 +460,7 @@ export function SpeakingItem({
   }
 
   if (!content) return null;
+  const failed = phase === "FAILED" || !!error;
   return (
     <div className={TASK_SPLIT}>
       <div className={TASK_LEFT}>
@@ -445,42 +469,39 @@ export function SpeakingItem({
         <TaskExpectations section="SPEAKING" thinkSeconds={content.thinkSeconds} answerSeconds={content.answerSeconds} />
         <ScratchPad token={token} sectionPosition={sectionPosition} padKey={`speaking-${item.sequence}`} collapsible defaultOpen={false} />
       </div>
-      <div className={cn(TASK_RIGHT, "gap-4")}>
-        <video ref={videoRef} muted playsInline className={SPEAKING_VIDEO} />
-        <div className="shrink-0">
-          {phase === "THINKING" ? <SpeakingClock phase="THINKING" leftMs={left} onAction={() => void begin()} /> : null}
-          {phase === "RECORDING" ? <SpeakingClock phase="RECORDING" leftMs={left} onAction={stop} /> : null}
-          {phase === "UPLOADING" ? <p className="text-[14px] text-muted">{t("saving")}</p> : null}
-          {phase === "DONE" ? (
-            <>
-              <p className="text-[14px] font-medium text-ink">{t("recorded")}</p>
-              {takes < maxTakes ? (
-                <button type="button" onClick={again} className="mt-3 h-10 rounded-[10px] border border-line-strong bg-surface px-4 text-[14px] font-medium text-ink hover:bg-canvas">
-                  {t("retake", { n: maxTakes - takes })}
+      <div className={TASK_RIGHT}>
+        <SpeakingPanel
+          phase={phase}
+          leftMs={left}
+          totalMs={(phase === "RECORDING" ? content.answerSeconds : content.thinkSeconds) * 1000}
+          video={<video ref={videoRef} muted playsInline aria-label={t("speakingCamera")} className={SPEAKING_VIDEO} />}
+          micLevel={micLevel}
+          retakesLeft={Math.max(0, maxTakes - takes)}
+          onStart={() => void begin()}
+          onStop={stop}
+          onRetake={again}
+          notice={error ? <Notice role="alert">{error}</Notice> : null}
+          fallback={
+            failed ? (
+              <div>
+                <button type="button" onClick={() => setTyping(true)} className={cn("text-[14px] font-semibold text-ink underline underline-offset-2", typing && "hidden")}>
+                  {t("speakingTextAlt")}
                 </button>
-              ) : null}
-            </>
-          ) : null}
-          {phase === "FAILED" || error ? (
-            <div className="mt-2">
-              {error ? <p className="text-[13px] text-danger">{error}</p> : null}
-              <button type="button" onClick={() => setTyping(true)} className={cn("mt-2 text-[13px] font-semibold text-ink underline underline-offset-2", typing && "hidden")}>
-                {t("speakingTextAlt")}
-              </button>
-              {typing ? (
-                <textarea
-                  lang="de"
-                  aria-label={f("speakingTextLabel")}
-                  rows={6}
-                  value={answer.text ?? ""}
-                  onChange={(e) => onChange({ ...answer, text: e.target.value, usedTextAlternative: true })}
-                  className="mt-2 w-full rounded-[10px] border border-line-strong bg-surface px-3 py-2 text-[15px]"
-                  spellCheck={false}
-                />
-              ) : null}
-            </div>
-          ) : null}
-        </div>
+                {typing ? (
+                  <textarea
+                    lang="de"
+                    aria-label={f("speakingTextLabel")}
+                    rows={6}
+                    value={answer.text ?? ""}
+                    onChange={(e) => onChange({ ...answer, text: e.target.value, usedTextAlternative: true })}
+                    className="w-full rounded-[10px] border border-line-strong bg-surface px-3 py-2 text-[15px]"
+                    spellCheck={false}
+                  />
+                ) : null}
+              </div>
+            ) : null
+          }
+        />
       </div>
     </div>
   );

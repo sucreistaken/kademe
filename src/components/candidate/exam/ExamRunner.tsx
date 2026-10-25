@@ -14,7 +14,8 @@ import { ImageSrcContext } from "@/components/candidate/exam/ExamImage";
 import { ItemView } from "@/components/candidate/exam/ItemView";
 import { ListeningPlayer, SpeakingItem } from "@/components/candidate/exam/MediaItems";
 import { answerProgress, progressState } from "@/components/candidate/exam/answer-progress";
-import { nextButtonKind } from "@/components/candidate/exam/exam-bar";
+import { nextButtonKind, showSelfView, speakingBarMode, speakingFooter } from "@/components/candidate/exam/exam-bar";
+import { initialSpeakingPhase, type SpeakingPhase } from "@/components/candidate/exam/speaking-flow";
 import { WarmupPractice } from "@/components/candidate/exam/warmup/Warmup";
 import { INITIAL_WARMUP, warmupReduce, type WarmupAction, type WarmupState } from "@/components/candidate/exam/warmup/warmup-state";
 import { practiceFor } from "@/components/candidate/exam/warmup/practice-data";
@@ -114,6 +115,8 @@ export function ExamRunner({
   /** A move waiting for "leave anyway" while a recording still plays. */
   const [leave, setLeave] = useState<{ go: () => void } | null>(null);
   const audioActiveRef = useRef(false);
+  /** The recorder phase of the speaking question on screen, for the bottom bar. */
+  const [speakingPhase, setSpeakingPhase] = useState<{ sequence: number; phase: SpeakingPhase } | null>(null);
   const busyRef = useRef(false);
   const answersRef = useRef<Record<number, ItemAnswer>>(answers);
   /** The newest draft the server has not confirmed yet (also in sessionStorage). */
@@ -628,18 +631,37 @@ export function ExamRunner({
       />
     );
   } else if (state.step === "ITEM" && item && progress) {
+    const skip = () => (busyRef.current ? undefined : guarded(() => setConfirm("skip")));
+    const save = () => guarded(() => (filling === "PARTIAL" ? setConfirm("partial") : commit()));
+    // A speaking question's bar follows its recorder (nothing to skip while it prepares or records); any other one-way question keeps "save and continue".
+    const speakingBar =
+      item.content.kind === "SPEAKING"
+        ? speakingFooter({
+            mode: speakingBarMode(speakingPhase?.sequence === item.sequence ? speakingPhase.phase : initialSpeakingPhase(item.takesUsed)),
+            filled: progress.filled > 0,
+            hasNext: cur.itemTotal === null || cur.answered + 1 < cur.itemTotal,
+            busy,
+            t,
+            onSkip: skip,
+            onSave: save,
+          })
+        : null;
     footer = (
       <StepFooter
-        secondary={{ kind: "button", id: "skip-item", label: t("skip"), onClick: () => (busyRef.current ? undefined : guarded(() => setConfirm("skip"))) }}
-        primary={{
-          kind: "button",
-          id: "save-next",
-          label: t("saveNext"),
-          busy,
-          busyLabel: t("saving"),
-          waitReason: progress.filled === 0 ? t("answerFirst") : null,
-          onClick: () => guarded(() => (filling === "PARTIAL" ? setConfirm("partial") : commit())),
-        }}
+        secondary={speakingBar ? speakingBar.secondary : { kind: "button", id: "skip-item", label: t("skip"), onClick: skip }}
+        primary={
+          speakingBar
+            ? speakingBar.primary
+            : {
+                kind: "button",
+                id: "save-next",
+                label: t("saveNext"),
+                busy,
+                busyLabel: t("saving"),
+                waitReason: progress.filled === 0 ? t("answerFirst") : null,
+                onClick: save,
+              }
+        }
         hint={hint}
         notice={
           failureNotice || leaveNotice || timeUpNotice ? (
@@ -843,6 +865,7 @@ export function ExamRunner({
                     answer={answer}
                     onChange={change}
                     engine={engine}
+                    onPhaseChange={(phase) => setSpeakingPhase(phase ? { sequence: item.sequence, phase } : null)}
                   />
                 ) : (
                   <ListeningStems active={item.stimulus?.kind === "LISTENING"} token={token} sectionPosition={cur.position} contentKey={stemsContentKey("item", item.sequence)}>
@@ -911,7 +934,7 @@ export function ExamRunner({
         }}
       />
 
-      {proctored && engine?.cameraStream && item?.content.kind !== "SPEAKING" ? <SelfView stream={engine.cameraStream} /> : null}
+      {showSelfView({ proctored, hasStream: !!engine?.cameraStream, itemKind: item?.content.kind }) && engine?.cameraStream ? <SelfView stream={engine.cameraStream} /> : null}
     </div>
     </ImageSrcContext.Provider>
   );

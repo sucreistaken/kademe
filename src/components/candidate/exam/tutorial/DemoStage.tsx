@@ -12,6 +12,7 @@ import { ImageSrcContext, type ImageSrc } from "@/components/candidate/exam/Exam
 import { ScratchPad } from "@/components/candidate/exam/notes/ScratchPad";
 import { StemNotes } from "@/components/candidate/exam/notes/StemNotes";
 import { answerProgress } from "@/components/candidate/exam/answer-progress";
+import { speakingBarMode, speakingFooter } from "@/components/candidate/exam/exam-bar";
 import { WithoutProctor } from "@/components/candidate/proctor/ProctorProvider";
 import { StepFooter } from "@/components/visual/step-footer";
 import type { CandidateItem } from "@/lib/exam/safe";
@@ -19,7 +20,7 @@ import type { NavEntry } from "@/lib/exam/navigation";
 import type { ItemAnswer } from "@/lib/exam/types";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
-import { DemoListeningPlayer, DemoSpeaking } from "./demo-media";
+import { DemoListeningPlayer, DemoSpeaking, demoSpeakingPhase } from "./demo-media";
 import { FakeCursor, glideMs } from "./FakeCursor";
 import { ITEM_ATTR, pressPoint, resolveTarget } from "./resolve-target";
 import type { Target, TutorialScript, UiName } from "./script-types";
@@ -158,12 +159,24 @@ const StageContent = memo(function StageContent({ script, answers, marks, uiPres
     </div>
   );
   const marked = !!marks[0];
-  const footer = oneWay ? (
+  // The speaking bar follows the demo recorder exactly as the exam's bar follows the real one.
+  const speakingBar = oneWay
+    ? speakingFooter({
+        mode: speakingBarMode(demoSpeakingPhase(presses("record"))),
+        filled: !!first && progressOf(0).filled > 0,
+        hasNext: nav.current < nav.total,
+        busy: false,
+        t: e,
+        onSkip: noop,
+        onSave: noop,
+      })
+    : null;
+  const footer = speakingBar ? (
     <StepFooter
       placement="contained"
       measure={false}
-      secondary={{ kind: "button", id: "tutorial-skip", label: e("skip"), onClick: noop }}
-      primary={{ kind: "button", id: "tutorial-next", label: e("saveNext"), waitReason: first && progressOf(0).filled === 0 ? e("answerFirst") : null, onClick: noop }}
+      secondary={speakingBar.secondary ? { ...speakingBar.secondary, id: "tutorial-skip" } : null}
+      primary={{ ...speakingBar.primary, id: "tutorial-next" }}
       note={
         <div className="flex flex-wrap items-center justify-end gap-3">
           <button type="button" className="text-[13.5px] text-muted underline decoration-underline underline-offset-2">

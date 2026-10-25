@@ -2,23 +2,19 @@
 
 import type { Ref } from "react";
 import { buttonVariants } from "@/components/ui/button";
-import { formatCountdown } from "@/lib/timer";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
 
 /**
- * How the listening player and the speaking clock look, with no audio, no
- * recorder and no request behind them. MediaItems drives them for the exam;
- * the tutorial's demo stage drives the same cards from its script, so the
- * demo draws exactly what the exam shows. `press` marks the card's button as
- * the point the tutorial's cursor presses (data-demo-press); the exam leaves it out.
+ * How the listening player looks, with no audio and no request behind it.
+ * MediaItems drives it for the exam; the tutorial's demo stage drives the same
+ * cards from its script, so the demo draws exactly what the exam shows (the
+ * speaking recorder is the same kind of thing: SpeakingPanel.tsx). `press`
+ * marks the card's button as the point the tutorial's cursor presses
+ * (data-demo-press); the exam leaves it out.
  */
 
 const TITLE = "text-[12.5px] font-medium uppercase tracking-[0.04em] text-muted";
-const QUIET_BUTTON = "mt-3 h-10 rounded-[10px] border border-line-strong bg-surface px-4 text-[14px] font-medium text-ink hover:bg-canvas";
-
-/** The camera picture of a speaking task (the exam puts the live camera in it). */
-export const SPEAKING_VIDEO = "mb-4 aspect-[4/3] w-full max-w-[300px] shrink-0 rounded-[10px] bg-ink object-cover lg:mb-0";
 
 /** Listening: the player with no seek bar, its play button, progress and the plays left. */
 export function ListeningPlayerCard({
@@ -95,29 +91,5 @@ export function ListeningGateCard({ title, playsLeft, onStart, press = false }: 
         {t("listenStart")}
       </button>
     </div>
-  );
-}
-
-/** Speaking: the thinking time or the recording, its countdown and its one button. */
-export function SpeakingClock({ phase, leftMs, onAction, press = false }: { phase: "THINKING" | "RECORDING"; leftMs: number; onAction?: () => void; press?: boolean }) {
-  const t = useT("exam");
-  return phase === "THINKING" ? (
-    <>
-      <div className="text-[13px] font-medium text-muted">{t("thinkTime")}</div>
-      <div className="tnum mt-1 text-[32px] font-bold text-accent">{formatCountdown(leftMs)}</div>
-      <button type="button" data-demo-press={press ? "" : undefined} onClick={onAction} className={QUIET_BUTTON}>
-        {t("startNow")}
-      </button>
-    </>
-  ) : (
-    <>
-      <div className="flex items-center gap-2 text-[13px] font-medium text-ink">
-        <span className="size-2 animate-pulse rounded-full bg-danger" aria-hidden /> {t("recordingNow")}
-      </div>
-      <div className="tnum mt-1 text-[32px] font-bold text-accent">{formatCountdown(leftMs)}</div>
-      <button type="button" data-demo-press={press ? "" : undefined} onClick={onAction} className={QUIET_BUTTON}>
-        {t("stopRecording")}
-      </button>
-    </>
   );
 }

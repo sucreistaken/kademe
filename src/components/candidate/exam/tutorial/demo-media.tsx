@@ -1,7 +1,9 @@
 "use client";
 
 import { UserRound } from "lucide-react";
-import { ListeningGateCard, ListeningPlayerCard, SPEAKING_VIDEO, SpeakingClock } from "@/components/candidate/exam/media-cards";
+import { ListeningGateCard, ListeningPlayerCard } from "@/components/candidate/exam/media-cards";
+import { SPEAKING_VIDEO, SpeakingPanel } from "@/components/candidate/exam/SpeakingPanel";
+import type { SpeakingPhase } from "@/components/candidate/exam/speaking-flow";
 import { TaskImages } from "@/components/candidate/exam/ExamImage";
 import { TaskExpectations } from "@/components/candidate/exam/TaskExpectations";
 import { TaskPromptCard } from "@/components/candidate/exam/TaskPromptCard";
@@ -13,7 +15,7 @@ import { cn } from "@/lib/cn";
 /**
  * The listening player and the speaking task as the exam draws them, driven
  * by the tutorial's clock instead of audio and a recorder: the same cards
- * (media-cards.tsx), no request, no microphone, no camera.
+ * (media-cards.tsx, SpeakingPanel.tsx), no request, no microphone, no camera.
  */
 
 /** A recording with no length given plays this long in the demo. */
@@ -63,16 +65,23 @@ export function DemoListeningPlayer({
   );
 }
 
+/** Where the demo's recorder is: before the first press it prepares, after it records, after the second it is saved. */
+export function demoSpeakingPhase(presses: readonly number[]): SpeakingPhase {
+  return presses.length === 0 ? "THINKING" : presses.length === 1 ? "RECORDING" : "DONE";
+}
+
 /**
- * Speaking: the task on the left; on the right the camera box and the clock.
- * The first press of the record button starts the recording, the second
- * stops it; nothing is recorded.
+ * Speaking: the task on the left; on the right the recorder panel, the same
+ * one the exam draws. The first press of its button starts the recording, the
+ * second stops it; nothing is recorded. The camera is a drawing and the
+ * microphone level a made-up wave, to show where they sit.
  */
 export function DemoSpeaking({ item, presses, t }: { item: CandidateItem; presses: readonly number[]; t: number }) {
-  const e = useT("exam");
   if (item.content.kind !== "SPEAKING") return null;
   const content = item.content;
-  const [start, stop] = presses;
+  const [start] = presses;
+  const phase = demoSpeakingPhase(presses);
+  const recording = phase === "RECORDING";
   return (
     <div className={TASK_SPLIT}>
       <div className={TASK_LEFT} data-demo-task="">
@@ -80,18 +89,21 @@ export function DemoSpeaking({ item, presses, t }: { item: CandidateItem; presse
         <TaskPromptCard text={item.prompt} points={content.studentPoints} />
         <TaskExpectations section="SPEAKING" thinkSeconds={content.thinkSeconds} answerSeconds={content.answerSeconds} />
       </div>
-      <div className={cn(TASK_RIGHT, "gap-4")}>
-        <div className={cn(SPEAKING_VIDEO, "flex items-center justify-center")}>
-          <UserRound aria-hidden className="size-16 text-ink-3" strokeWidth={1.5} />
-        </div>
-        <div className="shrink-0" data-demo="record">
-          {start === undefined ? (
-            <SpeakingClock phase="THINKING" leftMs={content.thinkSeconds * 1000 - t} press />
-          ) : stop === undefined ? (
-            <SpeakingClock phase="RECORDING" leftMs={content.answerSeconds * 1000 - (t - start)} press />
-          ) : (
-            <p className="text-[14px] font-medium text-ink">{e("recorded")}</p>
-          )}
+      <div className={TASK_RIGHT}>
+        <div data-demo="record" className="flex flex-col lg:flex-1">
+          <SpeakingPanel
+            phase={phase}
+            leftMs={recording ? content.answerSeconds * 1000 - (t - start) : content.thinkSeconds * 1000 - t}
+            totalMs={(recording ? content.answerSeconds : content.thinkSeconds) * 1000}
+            video={
+              <div className={cn(SPEAKING_VIDEO, "flex items-center justify-center")}>
+                <UserRound aria-hidden className="size-16 text-ink-3" strokeWidth={1.5} />
+              </div>
+            }
+            micLevel={recording ? 0.1 + 0.12 * Math.abs(Math.sin(t / 220)) : null}
+            retakesLeft={Math.max(0, content.maxTakes - 1)}
+            press
+          />
         </div>
       </div>
     </div>
