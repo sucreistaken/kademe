@@ -158,10 +158,10 @@ export function MatchPicker({
   const ui = useMatchUi();
   const content = useRef<HTMLDivElement | null>(null);
   const open = ui.openRow === rowId && !disabled;
-  const setOpen = (next: boolean) => ui.setOpenRow(next ? rowId : null);
+  const setOpen = (next: boolean) => (next ? ui.setOpenRow(rowId) : ui.closeRow(rowId));
   const pick = (targetId: string | null) => {
     onPick(targetId);
-    ui.setOpenRow(null);
+    ui.closeRow(rowId);
   };
 
   const trigger = (
@@ -233,7 +233,7 @@ export function MatchPicker({
         }}
         className={cn(
           RADIX_PANEL,
-          wide ? "w-(--radix-popover-trigger-width) min-w-[18rem]" : "w-[min(32rem,var(--radix-popover-content-available-width))]",
+          wide ? "w-(--radix-popover-trigger-width) min-w-[18rem]" : "w-[min(36rem,var(--radix-popover-content-available-width))]",
         )}
       >
         <Options rowId={rowId} choices={choices} clearLabel={clearLabel} onPick={pick} />

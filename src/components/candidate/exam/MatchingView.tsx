@@ -81,7 +81,7 @@ function MatchingBody({ item, answer, onChange, disabled, hidePrompt, prompt }: 
   const place = (targetId: string) => {
     if (disabled || !ui.openRow || !rowOrder.includes(ui.openRow)) return;
     setRow(ui.openRow, targetId);
-    ui.setOpenRow(null);
+    ui.closeRow(ui.openRow);
   };
 
   return (
