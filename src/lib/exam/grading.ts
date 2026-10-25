@@ -31,11 +31,14 @@ export const MODEL_FLAGS = ["OFF_TOPIC", "TOO_SHORT", "NOT_GERMAN", "EMPTY"] as 
  * model proposed A0 (Pre-A1) without saying the answer is empty or not German,
  * so the level was raised to A1 (`guardPreA1`).
  */
-export const CODE_FLAGS = ["EVIDENCE_UNVERIFIED", "LEVEL_CAPPED", "A0_RAISED"] as const;
+export const CODE_FLAGS = ["EVIDENCE_UNVERIFIED", "LEVEL_CAPPED", "A0_RAISED", "COPIED_TASK"] as const;
 export const GRADING_FLAGS = [...MODEL_FLAGS, ...CODE_FLAGS] as const;
 export type GradingFlag = (typeof GRADING_FLAGS)[number];
 
 export const MAX_EVIDENCE = 4;
+
+/** How the grading model is called: the same for the job and the calibration harness. */
+export const GRADING_CALL_OPTIONS: { maxTokens: number; temperature?: number; seed?: number } = { maxTokens: 4000 };
 
 /** The rationale a PRONUNCIATION criterion gets when only a transcript exists. */
 export const PRONUNCIATION_NOT_ASSESSABLE = "cannot be judged from a transcript";

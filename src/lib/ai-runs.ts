@@ -70,7 +70,13 @@ export async function callJson(
   jsonSchema: Record<string, unknown>,
   messages: AiMessage[],
   meta: CallMeta,
-  options: { maxTokens?: number; images?: Array<{ mime: string; base64: string }>; provider?: AiProvider } = {},
+  options: {
+    maxTokens?: number;
+    temperature?: number;
+    seed?: number;
+    images?: Array<{ mime: string; base64: string }>;
+    provider?: AiProvider;
+  } = {},
 ): Promise<{ response: AiJsonResponse; runId: string }> {
   const provider = options.provider ?? getAiProvider();
   const promptHash = hashPrompt(messages);
@@ -84,6 +90,8 @@ export async function callJson(
       schemaName,
       jsonSchema,
       maxTokens: options.maxTokens,
+      ...(options.temperature !== undefined ? { temperature: options.temperature } : {}),
+      ...(options.seed !== undefined ? { seed: options.seed } : {}),
       ...(options.images ? { images: options.images } : {}),
     });
     for (const transient of response.transientErrors) {

@@ -29,6 +29,14 @@ export type AiJsonRequest = {
   jsonSchema: Record<string, unknown>;
   maxTokens?: number;
   /**
+   * Sampling temperature and seed, for a caller that needs the same answer
+   * twice (grading). Left out of the request when not set: some models take no
+   * `temperature` (see `DEFAULT_AI_MODEL`), and the provider default stays what
+   * every other caller has always had.
+   */
+  temperature?: number;
+  seed?: number;
+  /**
    * Images attached to the last user turn (proctoring frames). Gemini and
    * OpenRouter take them; NVIDIA's text model refuses, rather than answering
    * about pictures it never saw.
@@ -388,6 +396,8 @@ class OpenAiCompatibleProvider implements AiProvider {
           model: this.config.model,
           messages: withImagesOpenAi(request),
           max_tokens: request.maxTokens ?? this.config.maxTokens,
+          ...(request.temperature !== undefined ? { temperature: request.temperature } : {}),
+          ...(request.seed !== undefined ? { seed: request.seed } : {}),
           response_format: {
             type: "json_schema",
             json_schema: {
@@ -795,6 +805,8 @@ class GeminiProvider implements AiProvider {
             responseMimeType: "application/json",
             responseSchema: toGeminiSchema(request.jsonSchema),
             maxOutputTokens: request.maxTokens ?? this.config.maxTokens,
+            ...(request.temperature !== undefined ? { temperature: request.temperature } : {}),
+            ...(request.seed !== undefined ? { seed: request.seed } : {}),
           },
         }),
         signal: AbortSignal.timeout(this.config.timeoutMs),

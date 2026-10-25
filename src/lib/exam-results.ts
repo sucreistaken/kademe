@@ -17,20 +17,8 @@ import { contentLocale, panelLocaleOf } from "@/i18n/locale";
 import { callJson } from "@/lib/ai-runs";
 import { enabledSections } from "@/lib/exam/blueprint";
 import { medianLevel } from "@/lib/exam/cefr";
-import {
-  buildGradingRepairMessages,
-  buildSpeakingGradingMessages,
-  buildWritingGradingMessages,
-  capByTaskLevel,
-  emptyAnswerReason,
-  GRADING_JSON_SCHEMA,
-  guardPreA1,
-  parseGradingAnswer,
-  skillLevelFromCriteria,
-  speakingMetrics,
-  verifyEvidence,
-  type GradingProposal,
-} from "@/lib/exam/grading";
+import { gradeAnswer, type GradingJob } from "@/lib/exam/grade-answer";
+import { GRADING_CALL_OPTIONS, GRADING_JSON_SCHEMA, speakingMetrics } from "@/lib/exam/grading";
 import { sectionChance } from "@/lib/exam/chance";
 import { blockerErrorCode, finalizeBlockers } from "@/lib/exam/finalize-blockers";
 import { hasAnswer } from "@/lib/exam/item-scoring";
@@ -162,13 +150,10 @@ export async function runGrading(gradingId: string): Promise<GradingOutcome> {
   // Teachers read the rationale; the panel language of the school is Turkish by default.
   const rationaleLocale = contentLocale(panelLocaleOf(row.assessment.locale));
 
-  let messages;
-  let source: string;
+  let job: GradingJob;
   if (snap.content.kind === "WRITING") {
-    source = answer.text ?? "";
-    const empty = emptyAnswerReason(source, snap.content.minWords);
-    if (empty === "EMPTY") return fail(gradingId, "EMPTY");
-    messages = buildWritingGradingMessages({
+    job = {
+      section: "WRITING",
       task: snap.prompt,
       contentPoints: rubric.contentPoints,
       register: rubric.register,
@@ -176,10 +161,11 @@ export async function runGrading(gradingId: string): Promise<GradingOutcome> {
       images: snap.content.images,
       minWords: snap.content.minWords,
       maxWords: snap.content.maxWords,
-      text: source,
+      text: answer.text ?? "",
       rationaleLocale,
-    });
+    };
   } else {
+    let source: string;
     let words: Array<{ text: string; startMs: number; endMs: number }> = [];
     let durationMs = 0;
     if (answer.usedTextAlternative) {
@@ -196,8 +182,8 @@ export async function runGrading(gradingId: string): Promise<GradingOutcome> {
       words = t.words ?? [];
       durationMs = t.durationMs ?? (words.length ? words[words.length - 1].endMs : 0);
     }
-    if (!source.trim()) return fail(gradingId, "EMPTY");
-    messages = buildSpeakingGradingMessages({
+    job = {
+      section: "SPEAKING",
       task: snap.prompt,
       contentPoints: rubric.contentPoints,
       register: rubric.register,
@@ -206,49 +192,35 @@ export async function runGrading(gradingId: string): Promise<GradingOutcome> {
       transcript: source,
       metrics: speakingMetrics(words, durationMs),
       rationaleLocale,
-    });
+    };
   }
 
   const purpose = section === "WRITING" ? "WRITING_GRADING" : "SPEAKING_GRADING";
   const meta = { orgId: row.org.id, purpose, inputRef: `item_response:${row.response.id}` } as const;
 
-  let proposal: GradingProposal | null = null;
-  let runId: string | null = null;
-  let model: string | null = null;
-  let lastError = "";
-  let attemptMessages = messages;
-  for (let round = 0; round < 2 && !proposal; round++) {
-    const { response, runId: id } = await callJson("cefr_grading", GRADING_JSON_SCHEMA, attemptMessages, meta, {
-      maxTokens: 4000,
-    });
-    runId = id;
-    model = response.model;
-    const parsed = parseGradingAnswer(response.text, section);
-    if (parsed.ok) proposal = parsed.proposal;
-    else {
-      lastError = parsed.error;
-      attemptMessages = buildGradingRepairMessages(messages, response.text, parsed.error);
-    }
-  }
-  if (!proposal) {
+  const graded = await gradeAnswer(job, async (messages) => {
+    const { response, runId } = await callJson("cefr_grading", GRADING_JSON_SCHEMA, messages, meta, GRADING_CALL_OPTIONS);
+    return { text: response.text, model: response.model, runId };
+  });
+  if (graded.status === "EMPTY") return fail(gradingId, "EMPTY");
+  if (graded.status === "UNPARSEABLE") {
     await db
       .update(responseGradings)
-      .set({ status: "AI_FAILED", aiError: `unparseable: ${lastError}`.slice(0, 1000), aiRunId: runId, aiModel: model, updatedAt: new Date() })
+      .set({ status: "AI_FAILED", aiError: `unparseable: ${graded.error}`.slice(0, 1000), aiRunId: graded.runId, aiModel: graded.model, updatedAt: new Date() })
       .where(eq(responseGradings.id, gradingId));
     await recomputeResult(row.attempt.id);
-    return { status: "FAILED", reason: lastError };
+    return { status: "FAILED", reason: graded.error };
   }
 
-  proposal = capByTaskLevel(guardPreA1(verifyEvidence(proposal, source), source), taskLevel);
-  const level = skillLevelFromCriteria(proposal) ?? proposal.overallLevel;
+  const { proposal, level } = graded;
   await db
     .update(responseGradings)
     .set({
       status: "AI_PROPOSED",
       aiProposal: proposal,
       aiLevel: level,
-      aiRunId: runId,
-      aiModel: model,
+      aiRunId: graded.runId,
+      aiModel: graded.model,
       aiError: null,
       proposedAt: new Date(),
       updatedAt: new Date(),

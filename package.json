@@ -41,6 +41,7 @@
     "dev:hiring-link": "tsx scripts/dev-hiring-link.ts",
     "verify:migration": "tsx scripts/verify-platform-migration.ts",
     "verify:grading": "tsx scripts/verify-grading.ts",
+    "grading:calibrate": "tsx scripts/grading-calibration.ts",
     "verify:proctor": "tsx scripts/verify-proctor.ts",
     "prebuild": "tsx scripts/fetch-proctor-assets.ts",
     "proctor:assets": "tsx scripts/fetch-proctor-assets.ts",
