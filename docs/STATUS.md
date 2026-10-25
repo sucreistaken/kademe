@@ -1,5 +1,6 @@
 # Kademe - durum ve devir belgesi
 
+Tur 3, sahip geri bildirimi 2026-10-25 (`platform/solutions`, canlıya çıkış aşağıda): bkz. "Tur 3: 2026-10-25" bölümü.
 Tur 2, sahip geri bildirimi 2026-10-24 (canlıda 2026-10-24, `main` `7b9e05c`): bkz. "Tur 2: 2026-10-24" bölümü.
 Ürün turu 2026-10-23 (canlıda 2026-10-23, `main` `1eafbb4`): bkz. "Ürün turu 2026-10-23" ve "Canlıya çıkış: 2026-10-23 ürün turu" bölümleri.
 Campus German redesign, Plan 1 (2026-10-16, `platform/solutions`, canlıya çıkmadı): bkz. "Campus German redesign, Plan 1" bölümü.
@@ -14,6 +15,64 @@ Son güncelleme: 2026-10-07 (Gelişmiş: tek kutu, AI önce, `platform/solutions
 **Canlıda**: https://kademe.kadiray.com, `main` commit `7b9e05c` (2026-10-24 ~01:10 TSİ: tur 2; klavyeli not defteri, sağ üstte tanıtım düğmesi, format karışımı, A0 sonuç seviyesi; ayrıntı "Tur 2: 2026-10-24"). Önceki: `1eafbb4` (2026-10-23 ~20:00 UTC: ürün turu; yeni formatlar, resimler, seviye başına 3 form, öğrenci analizi, not araçları, anlatımlı tanıtımlar, Almanca panel; ayrıntı "Canlıya çıkış: 2026-10-23 ürün turu"). Önceki: `8ea4bfe` (2026-10-21 14:02 UTC: giriş ekranı İngilizce ve dört dilli bayrak seçici, öğrenci tarafında Türkçe sınav adı ve geçersiz link sızıntısı giderildi; HTTPS'te dört dil ve Almanca geçersiz link kontrol edildi). Önceki: `70912f7` (2026-10-19 11:49 UTC: soru havuzu ÖSD/telc/TestDaF derslerine göre yenilendi, Richtig/Falsch, yazılan numara ve saat eşleşmesi, gözetimde yanlış "sekmeden ayrıldınız" uyarısı ve Meet düzeltmesi; ayrıntı "Canlıya çıkış: 2026-10-19 soru havuzu ve gözetim"). Önceki: `bcc9d44` (2026-10-18 18:41 UTC: okul test revizyonu). Önceki: `2cf125c` (2026-10-16 18:45 UTC: krem zemin yerine Campus German beyazı ve soğuk griler; ondan önce `8e945da`, Campus German görünümü, Plan 1; ayrıntı "Canlıya çıkış: Campus German görünümü, Plan 1"). Önceki sürümler (aşağıdaki "Canlıya çıkış" bölümleri): `ab951b1` (okul yöneticisi geri bildirimi), `1d8d4c6` (onSET yerleştirme), `5a4f97e` (kurs grubu sürümü, 2026-10-14), `02760e3` (2026-10-07 akşam: Bugün yeni tasarım, 3 adımlı alım sihirbazı, "en az 2 değerlendirici" kuralı kaldırıldı, soru bankası v2; ayrıntı "Canlıya çıkış: sihirbaz ve banka v2"), `0142ff0` (Gelişmiş). Önceki not: commit `739f218` (`main`, 2026-10-05 sınav sıcak düzeltmesi; ayrıntı "Kararlar ve sapmalar"da).
 Canlı veritabanı kullanıcı onayıyla sıfırlandı: eski işe alım verisi yok,
 panel kullanıcıları (parolalarıyla) taşındı, banka ve iki sınav yüklendi.
+
+## Tur 3: 2026-10-25 (sahibin gece turu, spec `docs/superpowers/specs/2026-10-25-exam-round-3.md`)
+
+Sahip: başlamadan önce "uygulamaları kapatın, ekranınız görünür" uyarısı görünür olsun; kayıt göstergesi saatin
+yanına; ses algılanınca uyarı büyük olsun; "Welcher Satz passt in welche Lücke?" akışı (metindeki boşluğa tıkla,
+açılır liste, kullanılan cümle düşer); eşleştirme, Ja/Nein ve ilan kartları düzgün; yazma görevinin tipografisi;
+konuşma ekranı; tanıtım videoları; sınav sonu anketi ve puan; kitaplardan yeni formatlar; AI değerlendirmesi
+standartlara göre ve tekrar tekrar ölçülerek, A0 dahil. Hepsi yerleştirme VE seviye doğrulama için (ortak ekranlar).
+Kullanıcı onayı: "bittikten sonra canlıya al", "tüm izni veriyorum".
+
+- **Başlamadan önce (WP3):** sistem kontrolünün son adımı tek kart: sarı kutuda "diğer uygulama ve sekmeleri
+  kapatın" ve politikaya göre "ekranınız/kameranız/sesiniz kaydedilir, öğretmeninize görünür"; altında kurallar;
+  "Diğer uygulamaları kapattım" kutusu işaretlenmeden başlat düğmesi kapalı (tam ekran hareketi aynı tıklama).
+  Kayıt göstergesi saatin sağında çip (kırmızı nokta, kısa metin, tam metin ipucu). VOICE ve NO_FACE artık üst
+  çubuğun altında büyük sarı kart (`ProctorNotice.tsx`, 19px, ikonlu, tıklamayı engellemez, kırmızı değil);
+  RECORDED/SECOND_SCREEN eski ince satır.
+- **Eşleştirme (WP1):** metne yerleştirmede boşluk işaretleri metnin içinde düğme; tıklayınca cümle listesi
+  (listbox), başka boşlukta kullanılan cümle alta iner ("1. boşlukta"), seçmek taşır. Diğer eşleştirmelerde her
+  satıra tek "Seçin ..." listesi. Sürükle-bırak ve yapışkan şerit bu iki türde kalktı (C-test/kelime havuzu aynı).
+  Bağlama hep ya hiç: işaret bulunamazsa satır başına liste. Richtig/Falsch ve Ja/Nein numaralı, eşit genişlikte
+  bölmeli düğme. İlan kartlarında harf + başlık tek satır. Cevap biçimi ve puanlama değişmedi.
+- **Konuşma ve yazma (WP2):** yazma/konuşma görevi rol başına tek ağırlık (`presentTask`); konuşmada sağda tek
+  kayıt paneli (Hazırlanın -> Konuşun -> Kaydedildi, halka sayaç, tek büyük düğme, kayıt noktası ve mikrofon
+  seviyesi); alt çubuk hazırlık/kayıtta "Boş bırak" göstermez. Kayıt ve yükleme mantığı değişmedi. Isınma
+  ekranındaki konuşma önizlemesi aynı panel.
+- **Anket (WP4):** bitiş ekranında isteğe bağlı kart (geniş ekranda kapanış kartının yanında): 1-5 yıldız, iki
+  1-5 soru (talimatlar, ekran), teknik sorun evet/hayır, 1000 karakter yorum. `POST /api/c/[token]/exam/feedback`,
+  ikinci gönderim ilkini korur. Göç 0028 `exam_feedback` (yalnız ekler; (assessment, org) bileşik FK). Panelde
+  sonuç sayfasında "Rückmeldung des Prüflings", Gelişmiş altında `/exam/feedback` özeti. Sonlandırılmış sınavda yok.
+  Saklama: aday kaydı silinince cascade ile gider.
+- **Banka (WP6):** 94 yeni madde, 33 metin/kayıt (20 dinleme), 7 format/varyant: kısa duyurular (A1-B2, iki not
+  alma), dört kişili "kim ne diyor" (A2-B1), basılı bilgiyi düzeltme (B2-C2), başlık eşleştirme (B1-C1),
+  okur yorumları lehte/aleyhte Ja/Nein (B1-B2), mektup boşluklu metni ve "ilan + cevap" Sprachbausteine, yeni
+  yazma/konuşma görevleri. 126 eski talimat tek üslupta yeniden yazıldı (istem seed anahtarının parçası: yeni
+  madde olarak girer, eskisi `--retire-stale` ile emekliye). Yerelde: 1335 -> 1555 madde, onaylı başlangıç
+  660 -> 880 -> (emeklilik) 754, metin/kayıt 190 -> 223. Kör çözüm 79/79. Ayrıntı ve tablolar
+  `docs/research/formats-2026-10-25.md`. Yeni renderer isteyenler (yapılmadı): C2 düzeltme okuma, çok cevaplı
+  tablo, "2 görevden birini seç".
+- **AI puanlama (WP5):** kural katmanı (`grading-rules.ts`: boş, görevi kopyalama, Almanca değil, çok az kelime
+  -> A0 önerisi, `ai_model='rule'`), sıkılaştırılmış istem (mutlak seviyeler, kriter başına Almanca yapı ve hata
+  örüntüleri, seviye başına çapa cevap, uzunluk seviye değildir), `structure-counts.ts`. Kalibrasyon seti 85 özgün
+  cevap (A0-C2, 25 tuzak), `pnpm grading:calibrate`. Gemini 3 koşu: tam uyum %49.4 -> %83.5, bir seviye içinde
+  %96.5 -> %100, A0 kaçırma 10/17 -> 0/17, görev tavanını aşan 0, koşular arası uyum %92.2. Rapor
+  `docs/research/grading-calibration-2026-10-25/`. **Davranış değişikliği:** boş yazma/konuşma cevabı artık
+  `AI_FAILED` değil, kuralla A0 önerisi (öğretmen yine onaylar); boş üretken bölümlü seviye kontrolü
+  INCONCLUSIVE yerine FAIL. `verify-no-german.ts`: 120 Almancasız simüle öğrencinin 118'i A0, seviye kontrolü
+  hepsi FAIL.
+- **Tanıtımlar:** okuma (boşluğa tıkla, seç, kullanılan alta iner), konuşma ve yazma yeni ekranları çiziyor;
+  değişen 43 anlatım parçası üretildi (`tutorial:tts`, 0 hata), konuşma de/es 45 sn altına kısaltıldı.
+- **Doğrulama:** `tsc` temiz; tam `pnpm test` yeşil; `verify:exam` atılabilir kopyada "All checks passed"
+  (sızıntı kontrolü artık başka bir çoktan seçmeli maddenin şık metnini sızıntı saymıyor: "um 14.30 Uhr").
+  Chrome'da (sahte kamera/ekran, 3150): Hazırsınız kartı ve kutu kilidi, saat yanındaki çip, büyük ses kartı
+  (elle tetiklendi), yazma görevi, konuşma paneli üç durum, metindeki boşluk listesi ve "alta iner",
+  eşleştirme listesi, Richtig/Falsch, okuma tanıtımı, C1 doğrulamada başlık eşleştirme, bitiş ekranı anketi.
+- **Açık / doğrulanmadı:** gerçek mikrofonla ses uyarısı ve seviye göstergesi; 20 yeni dinleme kaydı ve yeni
+  anlatımlar kimse tarafından dinlenmedi; yeni Almanca içerik ve puanlama çapaları ana dili Almanca biri
+  tarafından okunmadı; yerleştirme okuması p50 2971 -> 3226 kelime, süre 18 dk (sahip kararı); kapalı uçlu
+  konular: konu dışı ama akıcı metin dil seviyesini korur (OFF_TOPIC bayrağıyla), ezber kalıp sayılmaz.
 
 ## Ürün turu 2026-10-23 (`platform/solutions`, canlıya çıkmadı)
 
