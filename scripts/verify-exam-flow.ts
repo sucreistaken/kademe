@@ -19,6 +19,10 @@
  *  8. A fixed form is navigable: any item takes a draft, moves go back and
  *     forward, flags stick, the section closes only from the review step and
  *     every saved draft is scored then. An adaptive section refuses all of it.
+ *  9. The end-of-exam survey (route called in process): refused while the exam
+ *     runs, validated, stored once per invitation, a second answer absorbed,
+ *     the result untouched, the school's overview scoped to its organisation,
+ *     the database CHECKs and the (assessment, organisation) key hold.
  *
  * Run with (local working database only; it refuses the shared `kademe`):
  *   DATABASE_URL=postgresql://kademe:kademe@localhost:5434/kademe_platform pnpm verify:exam
@@ -81,6 +85,92 @@ async function main() {
 
   const sent: string[] = [];
   const record = (state: unknown) => sent.push(JSON.stringify(candidateSafe(state)));
+
+  // The end-of-exam survey route, called in process like the image route below.
+  const postFeedback = async (rawToken: string, body: unknown) => {
+    const { NextRequest } = await import("next/server");
+    const route = await import("../src/app/api/c/[token]/exam/feedback/route");
+    const res = await route.POST(
+      new NextRequest(`http://localhost:3100/api/c/${rawToken}/exam/feedback`, {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-forwarded-for": "10.9.9.9" },
+        body: JSON.stringify(body),
+      }),
+      { params: Promise.resolve({ token: rawToken }) },
+    );
+    return { status: res.status, body: (await res.json()) as Record<string, unknown> };
+  };
+  /** The Postgres error code of a failed write (drizzle wraps the driver's error in `cause`). */
+  const pgCode = (e: unknown): string => (e as { cause?: { code?: string }; code?: string } | null)?.cause?.code ?? (e as { code?: string } | null)?.code ?? "unknown";
+  const feedbackRows = (assessmentId: string) => db.select().from(s.examFeedback).where(eq(s.examFeedback.assessmentId, assessmentId));
+
+  /** Survey checks on a finished exam: validation, one answer, no effect on the result. */
+  async function feedbackChecks(rawToken: string, assessmentId: string, attemptId: string) {
+    const { feedbackOverview, hasExamFeedback } = await import("../src/server/exam-feedback");
+    const [resultBefore] = await db.select().from(s.examResults).where(eq(s.examResults.attemptId, attemptId));
+    const noRating = await postFeedback(rawToken, { clarity: 3 });
+    if (noRating.status === 400 && noRating.body.error === "SURVEY_INVALID") ok("survey: no rating is refused (SURVEY_INVALID) and stores nothing");
+    else bad(`survey without rating answered ${noRating.status} ${JSON.stringify(noRating.body)}`);
+    const tooLong = await postFeedback(rawToken, { overall: 4, comment: "x".repeat(1001) });
+    if (tooLong.status === 400 && tooLong.body.error === "REQUEST_INVALID" && (await feedbackRows(assessmentId)).length === 0) ok("survey: a comment over 1000 characters is refused");
+    else bad(`survey with a long comment answered ${tooLong.status}`);
+    if (!(await hasExamFeedback(org.id, assessmentId))) ok("survey: not answered yet, so the finished screen offers it");
+    else bad("survey reads as answered before any answer");
+
+    const first = await postFeedback(rawToken, { overall: 4, clarity: 5, usability: null, technicalProblem: true, comment: "  Der Ton war leise.  " });
+    const rows = await feedbackRows(assessmentId);
+    if (first.status === 200 && first.body.alreadyAnswered === false && rows.length === 1) ok("survey: the first answer is stored");
+    else bad(`first survey answer: ${first.status} ${JSON.stringify(first.body)} rows ${rows.length}`);
+    const row = rows[0];
+    if (row && row.orgId === org.id && row.overall === 4 && row.clarity === 5 && row.usability === null && row.technicalProblem === true && row.comment === "Der Ton war leise." && row.locale === "tr")
+      ok("survey: organisation, ratings, skipped question, technical flag, trimmed comment and the student's language are as sent");
+    else bad(`survey row differs: ${JSON.stringify(row)}`);
+
+    const second = await postFeedback(rawToken, { overall: 1, comment: "second try" });
+    const after = await feedbackRows(assessmentId);
+    if (second.status === 200 && second.body.alreadyAnswered === true && after.length === 1 && after[0].overall === 4 && after[0].comment === "Der Ton war leise.")
+      ok("survey: a second answer is absorbed, the first one stands");
+    else bad(`second survey answer: ${second.status} ${JSON.stringify(second.body)} rows ${after.length} overall ${after[0]?.overall}`);
+    if (await hasExamFeedback(org.id, assessmentId)) ok("survey: the server now knows it is answered (the card does not come back on reload)");
+    else bad("survey not known as answered");
+
+    const [resultAfter] = await db.select().from(s.examResults).where(eq(s.examResults.attemptId, attemptId));
+    if (JSON.stringify(resultBefore) === JSON.stringify(resultAfter)) ok("survey: the exam result is untouched");
+    else bad("the result changed when the survey was answered");
+
+    // The school's overview names its organisation: another one sees nothing of it.
+    const own = await feedbackOverview(org.id);
+    const [other] = await db.insert(s.organizations).values({ name: "Verify feedback other org" }).returning();
+    const withoutAnswer = (await db.select({ id: s.assessments.id }).from(s.assessments).where(eq(s.assessments.orgId, org.id))).find((a) => a.id !== assessmentId);
+    try {
+      const foreign = await feedbackOverview(other.id);
+      if (own.count >= 1 && own.comments.some((c) => c.assessmentId === assessmentId && c.comment === "Der Ton war leise.") && foreign.count === 0 && foreign.comments.length === 0 && foreign.averageOverall === null)
+        ok(`survey: the overview counts ${own.count} answer(s) for its own organisation and none for another`);
+      else bad(`overview scoping: own ${own.count}, other ${foreign.count}`);
+      // The database refuses a row that names an invitation under another organisation (the (assessment_id, org_id) key).
+      if (withoutAnswer) {
+        const crossOrg = await db.insert(s.examFeedback).values({ assessmentId: withoutAnswer.id, orgId: other.id, overall: 3, locale: "tr" }).then(() => null, (e: unknown) => pgCode(e));
+        if (crossOrg === "23503") ok("survey: the database refuses a row under another organisation than its invitation's (23503)");
+        else bad(`cross-organisation row: ${crossOrg ?? "accepted"}`);
+      }
+    } finally {
+      await db.delete(s.organizations).where(eq(s.organizations.id, other.id));
+    }
+    // A rating outside 1-5 or a comment over 1000 characters is refused by the CHECKs even when written around the route.
+    if (withoutAnswer) {
+      const tryInsert = (v: Partial<typeof s.examFeedback.$inferInsert>) =>
+        db.insert(s.examFeedback).values({ assessmentId: withoutAnswer.id, orgId: org.id, overall: 3, locale: "tr", ...v }).then(
+          async () => {
+            await db.delete(s.examFeedback).where(eq(s.examFeedback.assessmentId, withoutAnswer.id));
+            return "accepted";
+          },
+          (e: unknown) => pgCode(e),
+        );
+      const checks = [await tryInsert({ overall: 6 }), await tryInsert({ overall: 0 }), await tryInsert({ clarity: 7 }), await tryInsert({ usability: 0 }), await tryInsert({ comment: "y".repeat(1001) })];
+      if (checks.every((c) => c === "23514")) ok("survey: the database CHECKs refuse a rating outside 1-5 and a comment over 1000 characters");
+      else bad(`database checks answered ${checks.join(", ")}`);
+    }
+  }
 
   async function run(label: string, blueprintId: string, claimed: "B1" | null) {
     console.log(`\n${label}`);
@@ -146,6 +236,7 @@ async function main() {
     const again = await flow.workingAttempt(invite.assessmentId);
     if (again.attempt.id === attempt.id && again.finished) ok("still exactly one attempt, marked finished");
     else bad("a second attempt appeared");
+    await feedbackChecks(invite.rawToken, invite.assessmentId, attempt.id);
     return { invite, attempt };
   }
 
@@ -222,6 +313,12 @@ async function main() {
     if (missing.status === 404) ok("an unknown slot is a plain 404");
     else bad(`unknown slot answered ${missing.status}`);
   }
+
+  console.log("\nEnd-of-exam survey, before the end");
+  // The pictures invitation is still running (its screen was stopped on a picture): the survey opens only at the end.
+  const early = await postFeedback(picInvite.rawToken, { overall: 5 });
+  if (early.status === 409 && early.body.error === "NOT_FINISHED" && (await feedbackRows(picInvite.assessmentId)).length === 0) ok("an exam that is still running gets NOT_FINISHED and stores nothing");
+  else bad(`survey on a running exam: ${early.status} ${JSON.stringify(early.body)}`);
 
   console.log("\nLeak scan over every state sent to the student");
   const bodies = sent.join("\n");
