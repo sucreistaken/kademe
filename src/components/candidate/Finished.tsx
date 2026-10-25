@@ -95,8 +95,11 @@ export function Finished({
   const upload = finishUploadPhase({ recorded: !!snap?.upload, stopped: streamsOff, pending, timedOut: drainTimedOut });
   const uploading = upload === "sending" || upload === "slow";
   const released = result.released;
+  const survey = !terminated && !feedbackAnswered;
   return (
-    <CandidateColumn width={560}>
+    <CandidateColumn width={survey ? 1040 : 560}>
+      {/* With the survey open, wide screens put it beside the closing card so it is seen without scrolling. */}
+      <div className={survey ? "mx-auto max-w-[560px] lg:grid lg:max-w-none lg:grid-cols-[560px_minmax(0,1fr)] lg:items-start lg:gap-6" : undefined}>
       <div className="relative overflow-hidden rounded-2xl border border-line bg-surface px-6 pb-7 pt-8 shadow-card sm:px-8">
         {terminated ? (
           <span aria-hidden className="mx-auto grid size-16 place-items-center rounded-full bg-subtle text-muted">
@@ -252,8 +255,13 @@ export function Finished({
           </a>
         </div>
       </div>
-      {/* The experience survey: its own calm card under the closing one, skippable, never for an ended (terminated) exam. */}
-      {terminated ? null : <ExamFeedback token={token} answered={feedbackAnswered} />}
+      {/* The experience survey: its own calm card under (wide: beside) the closing one, skippable, never for an ended (terminated) exam. */}
+      {survey ? (
+        <div className="lg:sticky lg:top-6 lg:[&>section]:mt-0">
+          <ExamFeedback token={token} answered={feedbackAnswered} />
+        </div>
+      ) : null}
+      </div>
     </CandidateColumn>
   );
 }
