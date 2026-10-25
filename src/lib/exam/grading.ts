@@ -59,6 +59,8 @@ export const GRADING_CALL_OPTIONS: { maxTokens: number; temperature?: number; se
 
 /** The rationale a PRONUNCIATION criterion gets when only a transcript exists. */
 export const PRONUNCIATION_NOT_ASSESSABLE = "cannot be judged from a transcript";
+/** The rationale FLUENCY and PRONUNCIATION get when the "spoken" answer was typed because recording failed. */
+export const TYPED_NOT_ASSESSABLE = "cannot be judged from a typed answer";
 
 /** Long enough to cover a transcript gap a listener would notice. */
 export const LONG_PAUSE_MS = 2000;
@@ -325,6 +327,11 @@ export type SpeakingGradingInput = {
   images?: Array<{ alt: string }>;
   transcript: string;
   metrics: SpeakingMetrics;
+  /**
+   * The candidate typed the answer because recording failed. There is no sound and no timing, so
+   * FLUENCY and PRONUNCIATION cannot be judged; the text is graded as the answer to the speaking task.
+   */
+  typed?: boolean;
   rationaleLocale: RationaleLocale;
 };
 
@@ -333,25 +340,37 @@ export function buildSpeakingGradingMessages(input: SpeakingGradingInput): AiMes
   const system = [
     ...commonRules("SPEAKING", input.taskLevel, input.rationaleLocale),
     "",
-    "This answer was spoken and you only see an automatic transcript of it:",
-    "- Punctuation, capitalisation and sentence boundaries were added by the speech recogniser and are not reliable. Do not judge them.",
-    "- Filler words (ähm, äh, hm) and false starts may have been removed, and a misheard word may be a recognition error rather than the speaker's. Judge ACCURACY on patterns, not on single odd words.",
-    `- PRONUNCIATION cannot be judged from a transcript. Always set assessable to false for it, rationale "${PRONUNCIATION_NOT_ASSESSABLE}", and no evidence.`,
-    "- The timing figures are measured automatically. Use them as supporting information for FLUENCY only.",
+    ...(input.typed
+      ? [
+          "This answer was meant to be spoken, but recording failed and the candidate typed it. You see the typed text:",
+          `- There is no sound and no timing. FLUENCY and PRONUNCIATION cannot be judged: always set assessable to false for both, rationale "${TYPED_NOT_ASSESSABLE}", and no evidence.`,
+          "- Judge the other criteria on the text as the answer to the speaking task. Spelling and punctuation do not count here; they are not part of speaking.",
+        ]
+      : [
+          "This answer was spoken and you only see an automatic transcript of it:",
+          "- Punctuation, capitalisation and sentence boundaries were added by the speech recogniser and are not reliable. Do not judge them.",
+          "- Filler words (ähm, äh, hm) and false starts may have been removed, and a misheard word may be a recognition error rather than the speaker's. Judge ACCURACY on patterns, not on single odd words.",
+          `- PRONUNCIATION cannot be judged from a transcript. Always set assessable to false for it, rationale "${PRONUNCIATION_NOT_ASSESSABLE}", and no evidence.`,
+          "- The timing figures are measured automatically. Use them as supporting information for FLUENCY only.",
+        ]),
   ].join("\n");
   const user = [
     ...taskBlock(input),
     "",
-    "Timing measured by the system:",
-    `- words: ${m.wordCount}`,
-    `- words per minute: ${m.wordsPerMinute}`,
-    `- pauses longer than ${LONG_PAUSE_MS / 1000} seconds: ${m.longPauses}`,
-    `- mean pause between words: ${m.meanPauseMs} ms`,
-    `- share of the recording with speech: ${Math.round(m.speakingRatio * 100)}%`,
+    ...(input.typed
+      ? []
+      : [
+          "Timing measured by the system:",
+          `- words: ${m.wordCount}`,
+          `- words per minute: ${m.wordsPerMinute}`,
+          `- pauses longer than ${LONG_PAUSE_MS / 1000} seconds: ${m.longPauses}`,
+          `- mean pause between words: ${m.meanPauseMs} ms`,
+          `- share of the recording with speech: ${Math.round(m.speakingRatio * 100)}%`,
+        ]),
     `Word count of the transcript (counted by the system): ${countWords(input.transcript)}`,
     `Patterns found by a text search (approximate): ${structureLine(structureCounts(input.transcript), { sentences: false })}`,
     "",
-    "Transcript:",
+    input.typed ? "Typed answer:" : "Transcript:",
     '"""',
     input.transcript.trim(),
     '"""',
@@ -433,7 +452,7 @@ export type GradingParseResult =
   | { ok: true; proposal: GradingProposal }
   | { ok: false; error: string };
 
-export function parseGradingAnswer(text: string, section: ProductiveSection): GradingParseResult {
+export function parseGradingAnswer(text: string, section: ProductiveSection, options: { typed?: boolean } = {}): GradingParseResult {
   const json = parseModelJson(text);
   if (!json.ok) return json;
   const parsed = gradingProposalSchema.safeParse(json.json);
@@ -465,7 +484,10 @@ export function parseGradingAnswer(text: string, section: ProductiveSection): Gr
         .slice(0, MAX_EVIDENCE),
     };
     if (section === "SPEAKING" && name === "PRONUNCIATION") {
-      return { ...cleaned, assessable: false, rationale: PRONUNCIATION_NOT_ASSESSABLE, evidence: [] };
+      return { ...cleaned, assessable: false, rationale: options.typed ? TYPED_NOT_ASSESSABLE : PRONUNCIATION_NOT_ASSESSABLE, evidence: [] };
+    }
+    if (section === "SPEAKING" && name === "FLUENCY" && options.typed) {
+      return { ...cleaned, assessable: false, rationale: TYPED_NOT_ASSESSABLE, evidence: [] };
     }
     return cleaned;
   });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SEED_BANK } from "@/db/seed-bank";
+import { SEED_BANK, SEED_PARTS } from "@/db/seed-bank";
 import { skillLevelFromCriteria } from "./grading";
 import {
   COPIED_MIN_WORDS,
@@ -114,6 +114,25 @@ describe("ruleVerdict", () => {
     expect(ruleVerdict(input(form, { minWords: 10, register: "Formular (Stichworte)" }))).toBeNull();
     // A message task asks for sentences; the same fragments there are a failed answer.
     expect(ruleVerdict(input(form, { minWords: 20, register: "informell (du)" }))?.reason).toBe("FEW_WORDS");
+  });
+
+  it("handles cases written after the rules: a German greeting around English, a word list, a mixed answer, a copy with a new greeting", () => {
+    expect(ruleVerdict(input("Liebe Anna, I would like to come to your party on Saturday and I will bring a cake."))?.reason).toBe("NOT_GERMAN");
+    expect(ruleVerdict(input("Brot Milch Käse Butter Eier"))?.reason).toBe("FEW_WORDS");
+    // Turkish with one German sentence of her own: the model grades it (at least A1), no rule.
+    expect(ruleVerdict(input("Merhaba Tim, davetin için çok teşekkür ederim ve cumartesi günü gelebilirim. Ich komme um vier Uhr gern. Görüşürüz."))).toBeNull();
+    expect(ruleVerdict(input("Hallo Tina! Am Samstag mache ich eine Grillparty im Park. Hast du Zeit? Wann kannst du kommen?"))?.reason).toBe("COPIED_TASK");
+  });
+
+  it("does not call a correct form a copy of the task, nor a few field values a failed answer", () => {
+    for (const item of SEED_PARTS.writing.items.filter((i) => /formular/i.test(i.rubric?.register ?? ""))) {
+      const answer = (item.rubric?.contentPoints ?? []).join(" ");
+      const verdict = ruleVerdict({ section: "WRITING", text: answer, taskText: item.prompt, minWords: item.content.kind === "WRITING" ? item.content.minWords : undefined, register: item.rubric?.register });
+      expect(verdict, item.prompt.slice(0, 40)).toBeNull();
+    }
+    // The same labels in a message task are a copy.
+    expect(ruleVerdict(input(TASK))?.reason).toBe("COPIED_TASK");
+    expect(ruleVerdict(input(TASK, { register: "Formular (Stichworte)", minWords: 10 }))).toBeNull();
   });
 
   it("never fires on a long German answer", () => {

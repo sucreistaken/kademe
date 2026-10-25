@@ -156,6 +156,9 @@ export type RuleInput = {
   register?: string;
 };
 
+/** A form task ("Formular (Stichworte)"): the answer is field values, written under the labels the task shows. */
+const isFormTask = (input: RuleInput): boolean => /formular/i.test(input.register ?? "");
+
 /**
  * Whether a few words with no sentence in them is a failed answer. It is not for a
  * form task (the answer is "Costa", "28195 Bremen", "Karte") nor for a very short
@@ -163,7 +166,7 @@ export type RuleInput = {
  */
 function expectsSentences(input: RuleInput): boolean {
   if (input.section === "SPEAKING") return true;
-  return (input.minWords ?? 0) >= 20 && !/formular/i.test(input.register ?? "");
+  return (input.minWords ?? 0) >= 20 && !isFormTask(input);
 }
 
 /**
@@ -174,7 +177,8 @@ function expectsSentences(input: RuleInput): boolean {
 export function ruleVerdict(input: RuleInput): RuleVerdict | null {
   const words = countWords(input.text);
   if (words === 0) return { reason: "EMPTY", flags: ["EMPTY"] };
-  if (isCopiedFromTask(input.text, input.taskText)) return { reason: "COPIED_TASK", flags: ["COPIED_TASK"] };
+  // A correct form repeats the task's labels (up to two thirds of a perfect answer in the bank), so a form is not tested for copying.
+  if (!isFormTask(input) && isCopiedFromTask(input.text, input.taskText)) return { reason: "COPIED_TASK", flags: ["COPIED_TASK"] };
   const german = hasGermanSentence(input.text);
   if (!german && looksNotGerman(input.text)) return { reason: "NOT_GERMAN", flags: ["NOT_GERMAN"] };
   if (!german && words <= FEW_WORDS && expectsSentences(input)) {

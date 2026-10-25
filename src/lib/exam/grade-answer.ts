@@ -107,6 +107,7 @@ export async function gradeAnswer(job: GradingJob, call: ModelCall, options: Gra
   }
 
   const messages = messagesFor(job);
+  const typed = job.section === "SPEAKING" && !!job.typed;
   const samples = Math.max(1, Math.floor(options.samples ?? 1));
   let calls = 0;
   const proposed = (raw: GradingProposal, answer: ModelAnswer): GradeAnswerResult => {
@@ -122,7 +123,7 @@ export async function gradeAnswer(job: GradingJob, call: ModelCall, options: Gra
     calls += samples;
     const answers = settled.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
     if (answers.length === 0) throw (settled[0] as PromiseRejectedResult).reason;
-    const parsed = answers.map((a) => parseGradingAnswer(a.text, section));
+    const parsed = answers.map((a) => parseGradingAnswer(a.text, section, { typed }));
     const good = parsed.flatMap((p) => (p.ok ? [p.proposal] : []));
     if (good.length > 0) return proposed(mergeProposals(good), answers[parsed.findIndex((p) => p.ok)]);
   }
@@ -136,7 +137,7 @@ export async function gradeAnswer(job: GradingJob, call: ModelCall, options: Gra
     calls += 1;
     model = answer.model;
     runId = answer.runId;
-    const parsed = parseGradingAnswer(answer.text, section);
+    const parsed = parseGradingAnswer(answer.text, section, { typed });
     if (parsed.ok) return proposed(parsed.proposal, answer);
     lastError = parsed.error;
     attemptMessages = buildGradingRepairMessages(messages, answer.text, parsed.error);

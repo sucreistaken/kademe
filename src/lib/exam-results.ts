@@ -229,6 +229,7 @@ export async function runGrading(gradingId: string): Promise<GradingOutcome> {
       images: snap.content.kind === "SPEAKING" ? snap.content.images : undefined,
       transcript: source,
       metrics: speakingMetrics(words, durationMs),
+      typed: !!answer.usedTextAlternative,
       rationaleLocale,
     };
   }

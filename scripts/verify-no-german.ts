@@ -161,15 +161,38 @@ async function main() {
       }
       console.log(`${c.label}, ${behaviour}: ${n} students`);
       for (const [key, count] of tally) console.log(`    ${count} x ${key}`);
-      const allA0 = [...tally.keys()].every((k) => k.startsWith("A0 /"));
-      const allFail = c.claimed === null || [...tally.keys()].every((k) => k.includes("/ FAIL /"));
-      if (!allA0 || !allFail) {
+      // Round 2's target (docs/EXAM-ENGINE.md, "Sonuç"): no German at all gives A0 for at least 90% of the students;
+      // a student who guesses at random sometimes passes the chance rule on luck. A level check is FAIL for everyone.
+      const a0 = [...tally.entries()].filter(([k]) => k.startsWith("A0 /")).reduce((sum, [, count]) => sum + count, 0);
+      const notFail = c.claimed !== null && [...tally.keys()].some((k) => !k.includes("/ FAIL /"));
+      console.log(`    A0 for ${a0} of ${n}${c.claimed ? `, FAIL for ${notFail ? "NOT all" : "all"}` : ""}`);
+      if (a0 / n < 0.9 || notFail) {
         failed++;
-        console.log(`    NOT as round 2 meant (A0${c.claimed ? " and FAIL" : ""} for every student)`);
+        console.log(`    NOT as round 2 meant (A0 for at least 90%${c.claimed ? " and FAIL for every student" : ""})`);
       }
     }
   }
-  console.log(failed === 0 ? "\nAll no-German cases came out A0 (and FAIL for a level check)." : `\n${failed} case(s) did not come out as round 2 meant.`);
+  // A recording that arrives after its section closed reopens the A0 a rule proposed for the empty answer,
+  // unless a teacher has already decided on it.
+  const { reopenGradingForMedia } = await import("../src/lib/exam-results");
+  const ruled = await db
+    .select()
+    .from(s.responseGradings)
+    .where(and(eq(s.responseGradings.status, "AI_PROPOSED"), eq(s.responseGradings.aiModel, "rule")))
+    .limit(2);
+  if (ruled.length === 2) {
+    const [late, decided] = ruled;
+    await db.update(s.responseGradings).set({ status: "CONFIRMED", finalLevel: "A0" }).where(eq(s.responseGradings.id, decided.id));
+    await reopenGradingForMedia(late.itemResponseId);
+    await reopenGradingForMedia(decided.itemResponseId);
+    const [after] = await db.select().from(s.responseGradings).where(eq(s.responseGradings.id, late.id));
+    const [kept] = await db.select().from(s.responseGradings).where(eq(s.responseGradings.id, decided.id));
+    const reopened = after.status === "PENDING" && after.aiProposal === null && after.aiLevel === null;
+    const stayed = kept.status === "CONFIRMED" && kept.finalLevel === "A0";
+    console.log(`\nlate recording: the rule's A0 ${reopened ? "reopened" : "DID NOT reopen"}, the teacher's decision ${stayed ? "stayed" : "WAS CHANGED"}`);
+    if (!reopened || !stayed) failed++;
+  }
+  console.log(failed === 0 ? "\nEvery no-German case came out as round 2 meant (A0 for at least 90%, FAIL for every level check)." : `\n${failed} case(s) did not come out as round 2 meant.`);
   process.exit(failed === 0 ? 0 : 1);
 }
 

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { CRITERIA_BY_SECTION } from "./cefr-descriptors";
-import { RULE_MODEL, finishProposal, gradeAnswer, type GradingJob, type ModelCall } from "./grade-answer";
-import { mergeProposals, speakingMetrics, type GradingProposal } from "./grading";
+import { RULE_MODEL, finishProposal, gradeAnswer, messagesFor, type GradingJob, type ModelCall } from "./grade-answer";
+import { TYPED_NOT_ASSESSABLE, mergeProposals, speakingMetrics, type GradingProposal } from "./grading";
 import type { ResultLevel } from "./types";
 
 const TASK = "Ihr Freund Tim hat Ihnen eine Nachricht geschickt: „Hast du am Samstag Zeit? Wann kannst du kommen?“ Schreiben Sie Tim eine Antwort.";
@@ -259,5 +259,39 @@ describe("several answers of the model, merged by median", () => {
       throw new Error("provider down");
     };
     await expect(gradeAnswer(writing(GOOD), down, { samples: 3 })).rejects.toThrow("provider down");
+  });
+});
+
+describe("a speaking answer that was typed because recording failed", () => {
+  const typedJob = (): GradingJob => ({ ...(speaking("Ich heiße Ali und wohne in Berlin. Ich bin Student und spiele gern Fußball.") as Extract<GradingJob, { section: "SPEAKING" }>), typed: true });
+
+  it("tells the model there is no sound and sends no timing", () => {
+    const [system, user] = messagesFor(typedJob());
+    expect(system.content).toContain("recording failed and the candidate typed it");
+    expect(system.content).toContain("FLUENCY and PRONUNCIATION cannot be judged");
+    expect(system.content).not.toContain("automatic transcript");
+    expect(user.content).not.toContain("Timing measured by the system");
+    expect(user.content).toContain("Typed answer:");
+    // The ordinary spoken answer keeps its timing.
+    const [, spoken] = messagesFor(speaking("Ich heiße Ali."));
+    expect(spoken.content).toContain("Timing measured by the system");
+    expect(spoken.content).toContain("Transcript:");
+  });
+
+  it("forces FLUENCY and PRONUNCIATION to not assessable, whatever the model says", async () => {
+    const result = await gradeAnswer(typedJob(), reply(modelJson("SPEAKING", "A2").replace('"assessable":false', '"assessable":true')));
+    expect(result.status).toBe("PROPOSED");
+    if (result.status !== "PROPOSED") return;
+    const by = Object.fromEntries(result.proposal.criteria.map((c) => [c.criterion, c]));
+    expect(by.FLUENCY).toMatchObject({ assessable: false, rationale: TYPED_NOT_ASSESSABLE, evidence: [] });
+    expect(by.PRONUNCIATION).toMatchObject({ assessable: false, rationale: TYPED_NOT_ASSESSABLE });
+    expect(by.RANGE.assessable).toBe(true);
+    // The skill level comes from the four criteria that can be judged.
+    expect(result.level).toBe("A2");
+  });
+
+  it("leaves FLUENCY alone for a spoken answer", async () => {
+    const result = await gradeAnswer(speaking("Ich heiße Ali und wohne in Berlin. Ich bin Student."), reply(modelJson("SPEAKING", "A1")));
+    expect(result.status === "PROPOSED" && result.proposal.criteria.find((c) => c.criterion === "FLUENCY")?.assessable).toBe(true);
   });
 });
