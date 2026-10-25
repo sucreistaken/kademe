@@ -69,14 +69,19 @@ export function ExamImage({
   );
 }
 
-/** Task pictures above a writing or speaking task card; two sit side by side, at most ~300px tall. */
+/**
+ * Task pictures above a writing or speaking task card; two sit side by side,
+ * at most ~300px tall and never more than a third of the window, so the task
+ * text under the picture stays on the first screen. A picture that is taller
+ * than that is fitted whole (a chart must not lose its edges).
+ */
 export function TaskImages({ sequence, images }: { sequence: number; images: CandidateImage[] | undefined }) {
   if (!images?.length) return null;
   return (
     <div className="mb-4 flex gap-3">
       {images.slice(0, 2).map((im) => (
         <div key={im.slot} className="min-w-0 flex-1">
-          <ExamImage sequence={sequence} image={im} className="max-h-[300px]" />
+          <ExamImage sequence={sequence} image={im} className="max-h-[min(300px,32dvh)] object-contain" />
         </div>
       ))}
     </div>

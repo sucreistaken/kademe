@@ -95,9 +95,10 @@ describe("what writing and speaking expect", () => {
   it("splits the situation from the task lines and says how the task is assessed", () => {
     const html = speakingHtml();
     expect(html).toContain("bg-cream");
-    expect(html).toMatch(/bg-cream[^>]*><p>Sie sind im Büro\.<\/p><p>Ihr Kollege Herr Braun hat einen Kuli\.<\/p>/);
+    expect(html).toMatch(/data-role="situation"><div class="[^"]*"><p>Sie sind im Büro\.<\/p><p>Ihr Kollege Herr Braun hat einen Kuli\.<\/p>/);
     expect(html).toContain("taskHeading");
-    expect(html).toMatch(/<li>Bitten Sie Herrn Braun um den Kuli\.<\/li><li>Sagen Sie auch danke\.<\/li>/);
+    // The task lines are one block of semibold lines, not a bulleted list.
+    expect(html).toMatch(/data-role="task"><p>Bitten Sie Herrn Braun um den Kuli\.<\/p><p>Sagen Sie auch danke\.<\/p>/);
     expect(html).toContain("assessTitle");
     for (const k of ["assessTask", "assessCoherent", "assessRange", "assessAccuracy", "assessFluency", "assessPronunciation"]) {
       expect(html).toContain(k);
@@ -108,7 +109,7 @@ describe("what writing and speaking expect", () => {
 
   it("lists the writing points under the task line and shows the word range", () => {
     const html = render(writing);
-    expect(html).toMatch(/Gehen Sie auf diese Punkte ein:<ul[^>]*><li>Wünsche<\/li><li>Frage<\/li><\/ul>/);
+    expect(html).toMatch(/Gehen Sie auf diese Punkte ein:<\/p><\/div><\/div><ul[^>]*data-role="items"[^>]*>[^]*?<span class="min-w-0">Wünsche<\/span><\/li>[^]*?<span class="min-w-0">Frage<\/span><\/li><\/ul>/);
     expect(html).toContain("expectLength(40,80)");
     for (const k of ["assessTask", "assessOrganised", "assessRange", "assessAccuracy"]) expect(html).toContain(k);
     expect(html).not.toContain("assessFluency");
@@ -130,7 +131,7 @@ describe("what writing and speaking expect", () => {
       const html = render(writing);
       expect(html).toMatch(/<div lang="ar" dir="rtl" class="[^"]*">taskHeading<\/div>/);
       // The card itself stays German.
-      expect(html).toMatch(/<div id="[^"]+" lang="de" class="flex flex-col gap-4 text-ink">/);
+      expect(html).toMatch(/<div id="[^"]+" lang="de" class="flex flex-col gap-5 text-ink">/);
     } finally {
       uiLocale.value = "en";
     }
@@ -146,7 +147,7 @@ describe("what writing and speaking expect", () => {
 
   it("shows the student points after the task card and before the assessment box, labelled in the interface language", () => {
     const html = render(openTask);
-    expect(html).toMatch(/<div lang="en" dir="ltr" class="[^"]*">coverPoints<\/div><ul lang="de" class="[^"]*text-\[17px\][^"]*"><li>Begrüßung<\/li><li>einen Grund nennen<\/li><\/ul>/);
+    expect(html).toMatch(/<div lang="en" dir="ltr" class="[^"]*">coverPoints<\/div><ul lang="de" role="list" class="[^"]*text-\[16px\][^"]*"><li>Begrüßung<\/li><li>einen Grund nennen<\/li><\/ul>/);
     const task = html.indexOf("Schreiben Sie ihm eine Nachricht.");
     const points = html.indexOf("coverPoints");
     expect(task).toBeGreaterThan(-1);
@@ -164,7 +165,7 @@ describe("what writing and speaking expect", () => {
     // The points box is not inside the labelling card.
     const card = html.slice(html.indexOf(`id="${labelledBy}"`));
     expect(card.slice(0, card.indexOf(`id="${describedBy[0]}"`))).not.toContain("<ul lang=\"de\"");
-    expect(html).toMatch(new RegExp(`<div id="${describedBy[0]}" class="[^"]*">[^]*?coverPoints`));
+    expect(html).toMatch(new RegExp(`<div id="${describedBy[0]}" class="[^"]*"[^>]*>[^]*?coverPoints`));
     expect(html.slice(html.indexOf(`id="${describedBy[1]}"`))).toContain("expectLength(40,80)");
   });
 

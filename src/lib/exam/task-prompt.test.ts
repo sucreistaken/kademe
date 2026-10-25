@@ -1,6 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { SEED_PARTS } from "@/db/seed-bank";
-import { coverPointsFor, isTaskLine, layoutTaskBlocks, parseTaskPrompt, promptListsTasks, splitTaskPrompt, type ParsedTaskPrompt, type TaskSegment } from "./task-prompt";
+import {
+  coverPointsFor,
+  isTaskLine,
+  layoutTaskBlocks,
+  parseTaskPrompt,
+  presentTask,
+  promptListsTasks,
+  splitExample,
+  splitTaskPrompt,
+  type ParsedTaskPrompt,
+  type TaskSegment,
+  type TaskView,
+} from "./task-prompt";
 
 /** Every letter and digit of a prompt, in order (list numbers excluded, the list draws them): what must survive the layout. */
 const letters = (s: string) => s.replace(/^\s*\d+[.)]\s+/gmu, "").replace(/[^\p{L}\p{N}]/gu, "");
@@ -181,5 +193,185 @@ describe("coverPointsFor", () => {
   it("gives nothing for missing or blank points", () => {
     expect(coverPointsFor("Schreiben Sie eine Nachricht.", undefined)).toEqual([]);
     expect(coverPointsFor("Schreiben Sie eine Nachricht.", ["  "])).toEqual([]);
+  });
+});
+
+describe("sentences around straight quotes", () => {
+  it("ends the sentence at a closing straight quote that closed a question", () => {
+    const p = parseTaskPrompt('Ihr Freund Can fragt: "Wie ist deine neue Arbeit?" Schreiben Sie Can eine Nachricht.');
+    expect(p.blocks).toEqual([{ kind: "text", lines: ['Ihr Freund Can fragt: "Wie ist deine neue Arbeit?"', "Schreiben Sie Can eine Nachricht."] }]);
+  });
+
+  it("does not split after a quoted word that is not a sentence end", () => {
+    const p = parseTaskPrompt('Im Fitnessstudio "Aktiv" können Sie trainieren. Schreiben Sie uns.');
+    expect(p.blocks).toEqual([{ kind: "text", lines: ['Im Fitnessstudio "Aktiv" können Sie trainieren.', "Schreiben Sie uns."] }]);
+  });
+});
+
+describe("a line of single words", () => {
+  it("is all list, with no stray first word above it", () => {
+    const p = parseTaskPrompt("Auf Ihrer Karte stehen sieben Wörter:\n\nFreunde - Wohnung - Essen - Hobby");
+    expect(p.blocks).toEqual([
+      { kind: "text", lines: ["Auf Ihrer Karte stehen sieben Wörter:"] },
+      { kind: "list", ordered: false, items: ["Freunde", "Wohnung", "Essen", "Hobby"] },
+    ]);
+  });
+});
+
+describe("splitExample", () => {
+  it("takes a quoted example off the instruction", () => {
+    expect(splitExample('Schreiben Sie immer die Nummer und die Angabe, zum Beispiel: "1. Familienname: ..."')).toEqual({
+      text: "Schreiben Sie immer die Nummer und die Angabe, zum Beispiel:",
+      example: '"1. Familienname: ..."',
+    });
+    expect(splitExample("Schreiben Sie Lara (z. B.: „Hallo“)")).toEqual({ text: "Schreiben Sie Lara (z. B.:", example: "„Hallo“)" });
+  });
+
+  it("leaves a line without a quoted example whole", () => {
+    expect(splitExample("Nennen Sie ein Beispiel, zum Beispiel einen Ort.")).toEqual({ text: "Nennen Sie ein Beispiel, zum Beispiel einen Ort." });
+    expect(splitExample("Schreiben Sie Tim eine Antwort.")).toEqual({ text: "Schreiben Sie Tim eine Antwort." });
+  });
+});
+
+describe("presentTask", () => {
+  const present = (prompt: string): TaskView[] => presentTask(layoutTaskBlocks(parseTaskPrompt(prompt).blocks));
+  const kinds = (prompt: string) => present(prompt).map((v) => v.kind);
+
+  it("sets a short writing task as situation, task, points, note", () => {
+    const views = present(
+      "Sie haben eine neue Arbeit. Schreiben Sie Ihrer Freundin Nina eine Nachricht (circa 30 Wörter).\n\n- Wo arbeiten Sie jetzt?\n- Was machen Sie bei der Arbeit?\n\nSchreiben Sie auch eine Anrede und einen Gruß.",
+    );
+    expect(views).toEqual([
+      { kind: "situation", lines: ["Sie haben eine neue Arbeit."] },
+      { kind: "task", lines: [{ text: "Schreiben Sie Ihrer Freundin Nina eine Nachricht (circa 30 Wörter)." }] },
+      { kind: "points", ordered: false, items: ["Wo arbeiten Sie jetzt?", "Was machen Sie bei der Arbeit?"] },
+      { kind: "note", lines: [{ text: "Schreiben Sie auch eine Anrede und einen Gruß." }] },
+    ]);
+  });
+
+  it("sets a form task as the task, its example apart, and the fields as a numbered list", () => {
+    const views = present(
+      'Ihre Kollegin möchte trainieren. Sie helfen ihr mit dem Formular.\n\nSchreiben Sie die fünf Angaben. Schreiben Sie immer die Nummer und die Angabe, zum Beispiel: "1. Familienname: ..."\n\n1. Familienname\n2. Wohnort',
+    );
+    expect(kinds('Ihre Kollegin möchte trainieren.\n\nSchreiben Sie die Angaben.\n\n1. Familienname\n2. Wohnort')).toEqual(["situation", "task", "points"]);
+    expect(views[1]).toEqual({
+      kind: "task",
+      lines: [{ text: "Schreiben Sie die fünf Angaben." }, { text: "Schreiben Sie immer die Nummer und die Angabe, zum Beispiel:", example: '"1. Familienname: ..."' }],
+    });
+    expect(views[2]).toEqual({ kind: "points", ordered: true, items: ["Familienname", "Wohnort"] });
+  });
+
+  it("puts the list under a task line that ends in a colon after that line, and later task lines become notes", () => {
+    const views = present("Schreiben Sie einen Forumsbeitrag (ca. 150 Wörter). Gehen Sie auf die folgenden Punkte ein:\n- Meinung.\n- Beispiele.\n\nSchreiben Sie eine Einleitung und einen Schluss.");
+    expect(views.map((v) => v.kind)).toEqual(["task", "points", "note"]);
+    expect(views[0]).toMatchObject({ lines: [{ text: "Schreiben Sie einen Forumsbeitrag (ca. 150 Wörter)." }, { text: "Gehen Sie auf die folgenden Punkte ein:" }] });
+  });
+
+  it("keeps several task lines in one block, all of one role", () => {
+    const views = present("Sie sind im Büro.\n\nBitten Sie Herrn Braun um den Kuli. Sagen Sie auch danke.");
+    expect(views).toEqual([
+      { kind: "situation", lines: ["Sie sind im Büro."] },
+      { kind: "task", lines: [{ text: "Bitten Sie Herrn Braun um den Kuli." }, { text: "Sagen Sie auch danke." }] },
+    ]);
+  });
+
+  it("takes the material list under a colon lead-in into the situation, not into the points", () => {
+    const views = present("Sie lesen die Notizen. Ihre Notizen dazu:\n- Mai: nur am 12.\n- Anmeldung bis 30. April\n\nSchreiben Sie eine E-Mail.");
+    expect(views.map((v) => v.kind)).toEqual(["situation", "task"]);
+    expect(views[0]).toMatchObject({ list: { ordered: false, items: ["Mai: nur am 12.", "Anmeldung bis 30. April"] } });
+  });
+
+  it("keeps a task after a list of material a task (it is not a note)", () => {
+    const views = present("Sie haben ein Zimmer gebucht. Schreiben Sie eine E-Mail an das Hotel.\n\nIhre Notizen:\n- laut\n- kalt\n\nBeschreiben Sie beide Punkte.");
+    expect(views.map((v) => v.kind)).toEqual(["situation", "task", "text", "points", "task"]);
+  });
+
+  it("does not take a question for a task once a task is on screen", () => {
+    const views = present("Sehen Sie sich das Bild an. Beschreiben Sie, was Sie sehen.\n\nWie kommen Sie zur Arbeit? Fahren Sie selbst gern Fahrrad? Warum (nicht)?");
+    expect(views.map((v) => v.kind)).toEqual(["task", "text"]);
+    expect(views[1]).toEqual({ kind: "text", lines: ["Wie kommen Sie zur Arbeit?", "Fahren Sie selbst gern Fahrrad?", "Warum (nicht)?"] });
+  });
+
+  it("still takes a first line that asks as the task, and a colon line as a task", () => {
+    expect(kinds("Wohnen Sie lieber in der Stadt oder auf dem Land? Erzählen Sie.")).toEqual(["task"]);
+    expect(present("Erzählen Sie etwas über sich: Wer sind Sie?")[0]).toEqual({ kind: "task", lines: [{ text: "Erzählen Sie etwas über sich: Wer sind Sie?" }] });
+  });
+
+  it("takes the lead-in before a list as the task when the prompt has no task line", () => {
+    const views = present("Die Grafik zeigt die Stromerzeugung. Für den Blog sollen Sie einen Beitrag schreiben (etwa 230 Wörter):\n- Beschreiben Sie die Entwicklung.\n- Nehmen Sie Stellung.");
+    expect(views).toEqual([
+      { kind: "situation", lines: ["Die Grafik zeigt die Stromerzeugung."] },
+      { kind: "task", lines: [{ text: "Für den Blog sollen Sie einen Beitrag schreiben (etwa 230 Wörter):" }] },
+      { kind: "points", ordered: false, items: ["Beschreiben Sie die Entwicklung.", "Nehmen Sie Stellung."] },
+    ]);
+  });
+
+  it("leaves a prompt with neither task line nor list as plain text", () => {
+    expect(present("Das Wetter ist schön. Wir gehen spazieren.")).toEqual([{ kind: "text", lines: ["Das Wetter ist schön.", "Wir gehen spazieren."] }]);
+    expect(present("")).toEqual([]);
+  });
+
+  describe("on every real seed writing and speaking prompt", () => {
+    const items = [...SEED_PARTS.writing.items, ...SEED_PARTS.speaking.items];
+    const flat = (views: TaskView[]) =>
+      views
+        .flatMap((v) => {
+          switch (v.kind) {
+            case "situation":
+              return [...v.lines, ...(v.list?.items ?? [])];
+            case "task":
+            case "note":
+              return v.lines.flatMap((l) => [l.text, ...(l.example ? [l.example] : [])]);
+            case "points":
+              return v.items;
+            case "text":
+              return v.lines;
+          }
+        })
+        .join(" ");
+
+    it("loses no word and keeps the order (an example may only move onto its own line)", () => {
+      for (const item of items) {
+        const p = parseTaskPrompt(item.prompt);
+        const segs = layoutTaskBlocks(p.blocks);
+        const segFlat = segs
+          .flatMap((s) => (s.kind === "tasks" ? s.items.flatMap((i) => [i.text, ...i.lists.flatMap((l) => l.items)]) : s.kind === "list" ? s.items : s.lines))
+          .join(" ");
+        expect(letters(flat(presentTask(segs))), item.prompt).toBe(letters(segFlat));
+      }
+    });
+
+    it("never goes semibold, regular, semibold: no task block follows the points that follow a task", () => {
+      for (const item of items) {
+        const views = present(item.prompt);
+        const at = views.findIndex((v, i) => v.kind === "points" && views[i - 1]?.kind === "task");
+        if (at >= 0) expect(views.slice(at + 1).some((v) => v.kind === "task"), item.prompt).toBe(false);
+      }
+    });
+
+    it("has at most one situation box, and it comes first", () => {
+      for (const item of items) {
+        const views = present(item.prompt);
+        expect(views.filter((v) => v.kind === "situation").length, item.prompt).toBeLessThanOrEqual(2);
+        const first = views.findIndex((v) => v.kind === "situation");
+        if (first >= 0) expect(first, item.prompt).toBeLessThanOrEqual(1);
+      }
+    });
+
+    it("gives most prompts a task to read", () => {
+      const withTask = items.filter((i) => present(i.prompt).some((v) => v.kind === "task"));
+      expect(withTask.length).toBeGreaterThan(items.length * 0.9);
+    });
+
+    it("sets every form field list as a numbered list", () => {
+      const forms = items.filter((i) => /zum Beispiel: "1\./.test(i.prompt));
+      expect(forms.length).toBeGreaterThan(0);
+      for (const item of forms) {
+        const views = present(item.prompt);
+        const task = views.find((v) => v.kind === "task");
+        expect(task?.kind === "task" && task.lines.some((l) => l.example), item.prompt).toBe(true);
+        expect(views.some((v) => v.kind === "points" && v.ordered), item.prompt).toBe(true);
+      }
+    });
   });
 });

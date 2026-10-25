@@ -60,7 +60,11 @@ function sentences(text: string): string[] {
     else if ((c === "“" || c === "«" || c === "\u2018") && depth > 0) {
       depth--;
       closed = depth === 0;
-    } else if (c === '"') asciiOpen = !asciiOpen;
+    } else if (c === '"') {
+      asciiOpen = !asciiOpen;
+      // A closing straight quote ends the sentence when the quoted words did, like a closing typographic one.
+      closed = !asciiOpen;
+    }
     if (depth > 0) continue;
     // A sentence ends at . ! ? outside quotes, or at the closing mark of a quote that ended with one.
     const endsHere = asciiOpen ? false : closed ? /[.!?]/.test(text[i - 1] ?? "") : /[.!?]/.test(c);
@@ -84,6 +88,8 @@ function sentences(text: string): string[] {
 function inlineList(line: string): { lead: string; items: string[] } | null {
   const parts = line.split(/\s[-–]\s+(?=[\p{Lu}\d])/u);
   if (parts.length < 3) return null;
+  // One word before the first dash is not a lead-in but the first of a list of words ("Freunde - Wohnung - Essen").
+  if (!/\s/u.test(parts[0].trim())) return { lead: "", items: parts.map((p) => p.trim()) };
   return { lead: parts[0].trim(), items: parts.slice(1).map((p) => p.trim()) };
 }
 
@@ -142,7 +148,7 @@ export function parseTaskPrompt(prompt: string): ParsedTaskPrompt {
     inList = false;
     const inline = inlineList(line);
     if (inline) {
-      paragraph.push(inline.lead);
+      if (inline.lead) paragraph.push(inline.lead);
       flush();
       blocks.push({ kind: "list", ordered: false, items: inline.items });
       continue;
@@ -234,4 +240,106 @@ export function coverPointsFor(prompt: string, points: string[] | undefined): st
   const shown = (points ?? []).filter((p) => p.trim());
   if (shown.length === 0) return [];
   return promptListsTasks(layoutTaskBlocks(parseTaskPrompt(prompt).blocks)) ? [] : shown;
+}
+
+/**
+ * One line of a task. A line that quotes an example ("..., zum Beispiel:
+ * "1. Familienname: ..."") comes apart into the instruction and the example,
+ * so the example can be set apart.
+ */
+export type TaskLine = { text: string; example?: string };
+
+const EXAMPLE_LINE = /^(.*?\b(?:zum Beispiel|z\.\s?B\.)\s*:)\s*(["„“»‚].*)$/u;
+
+export function splitExample(text: string): TaskLine {
+  const m = text.trim().match(EXAMPLE_LINE);
+  return m ? { text: m[1].trim(), example: m[2].trim() } : { text: text.trim() };
+}
+
+/**
+ * A task as it is read on screen, one role per piece:
+ * - situation: the scene (and the material that goes with it, such as notes);
+ * - task: what to do, the lines that carry the weight;
+ * - points: the points to cover or the fields to fill, a bulleted or numbered list;
+ * - note: a requirement that follows the points ("Schreiben Sie auch eine Anrede und einen Gruß.");
+ * - text: any other running text, such as a quoted question.
+ */
+export type TaskView =
+  | { kind: "situation"; lines: string[]; list?: { ordered: boolean; items: string[] } }
+  | { kind: "task"; lines: TaskLine[] }
+  | { kind: "points"; ordered: boolean; items: string[] }
+  | { kind: "note"; lines: TaskLine[] }
+  | { kind: "text"; lines: string[] };
+
+/** A question is not an instruction: "Fahren Sie selbst gern Fahrrad?" is guiding text, "Erzählen Sie von sich: Wer sind Sie?" is still a task. */
+const isQuestion = (line: string) => line.trim().endsWith("?") && !line.includes(":");
+
+/**
+ * Arranges the segments of a laid-out prompt by role (presentation only; every
+ * word stays, in order). A list right after the situation joins it (notes the
+ * task refers to). A list right after the task is the points. Task lines that
+ * come after those points are notes, so a prompt never goes bold, regular,
+ * bold again. A prompt with no task line at all but a list under a lead-in that
+ * ends in a colon takes that lead-in as its task.
+ */
+export function presentTask(segments: TaskSegment[]): TaskView[] {
+  const out: TaskView[] = [];
+  let taskShown = false;
+  let pointsAfterTask = false;
+
+  const pushText = (lines: string[]) => {
+    const last = out[out.length - 1];
+    if (last?.kind === "text") last.lines.push(...lines);
+    else out.push({ kind: "text", lines });
+  };
+
+  for (const seg of segments) {
+    if (seg.kind === "situation") {
+      out.push({ kind: "situation", lines: [...seg.lines] });
+    } else if (seg.kind === "text") {
+      pushText(seg.lines);
+    } else if (seg.kind === "list") {
+      const last = out[out.length - 1];
+      // After a lead-in that ends in a colon ("Ihre Notizen dazu:") the list is the scene's material and stays in its box.
+      if (last?.kind === "situation" && !last.list && !taskShown && last.lines[last.lines.length - 1].trim().endsWith(":")) last.list = { ordered: seg.ordered, items: seg.items };
+      else {
+        // Only a list that follows the task line itself is "the points"; a list of material further down (notes, an advert) is not.
+        if (last?.kind === "task") pointsAfterTask = true;
+        out.push({ kind: "points", ordered: seg.ordered, items: seg.items });
+      }
+    } else {
+      let run: TaskLine[] = [];
+      const flush = () => {
+        if (run.length === 0) return;
+        out.push({ kind: pointsAfterTask ? "note" : "task", lines: run });
+        if (!pointsAfterTask) taskShown = true;
+        run = [];
+      };
+      for (const it of seg.items) {
+        if (it.lists.length === 0 && isQuestion(it.text) && (taskShown || run.length > 0)) {
+          flush();
+          pushText([it.text]);
+          continue;
+        }
+        run.push(splitExample(it.text));
+        if (it.lists.length > 0) {
+          flush();
+          for (const l of it.lists) out.push({ kind: "points", ordered: l.ordered, items: l.items });
+          pointsAfterTask = true;
+        }
+      }
+      flush();
+    }
+  }
+
+  if (!out.some((v) => v.kind === "task")) {
+    const at = out.findIndex((v, i) => v.kind === "text" && out[i + 1]?.kind === "points" && v.lines[v.lines.length - 1].trim().endsWith(":"));
+    const lead = at >= 0 ? out[at] : null;
+    if (lead?.kind === "text") {
+      const head = lead.lines.slice(0, -1);
+      const task: TaskView = { kind: "task", lines: [splitExample(lead.lines[lead.lines.length - 1])] };
+      out.splice(at, 1, ...(head.length > 0 ? [{ kind: "situation" as const, lines: head }, task] : [task]));
+    }
+  }
+  return out;
 }
