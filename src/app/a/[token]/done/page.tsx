@@ -8,6 +8,7 @@ import { loadState, progressSummary, resolveExamToken } from "@/lib/exam-flow";
 import { stepPath } from "@/lib/candidate-routes";
 import { solutionPage, type PageSearchParams } from "@/lib/candidate-pages";
 import { visitorLocale } from "@/i18n/visitor-locale";
+import { hasExamFeedback } from "@/server/exam-feedback";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +58,8 @@ export default async function DonePage({
   // COMPLETED links resolve with a context; read the finished state from it.
   const state = await loadState(ctx);
   const finished = state.finished;
+  // The server knows whether the experience survey is answered, so a reload does not offer it again.
+  const feedbackAnswered = await hasExamFeedback(ctx.assessment.orgId, ctx.assessment.id);
   return (
     <CandidateIntl locale={locale} timeZone={ORG_TIMEZONE}>
       <CandidateShell locale={locale} header={false}>
@@ -67,6 +70,7 @@ export default async function DonePage({
           terminated={finished?.terminated ?? false}
           terminationReason={finished?.terminationReason ?? null}
           contactEmail={ctx.contactEmail}
+          feedbackAnswered={feedbackAnswered}
           sections={state.sections.map((s) => s.section)}
         />
       </CandidateShell>

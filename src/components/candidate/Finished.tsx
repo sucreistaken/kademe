@@ -5,6 +5,7 @@ import { Check, Loader2, Mail, PowerOff, WifiOff } from "lucide-react";
 import { clearAllNotes } from "@/components/candidate/exam/notes/notes-store";
 import { AnalysisView } from "@/components/candidate/exam/AnalysisView";
 import { ExamEndReport } from "@/components/candidate/ExamEndReport";
+import { ExamFeedback } from "@/components/candidate/exam/ExamFeedback";
 import { CandidateColumn } from "@/components/candidate/Shell";
 import { useProctor } from "@/components/candidate/proctor/ProctorProvider";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +26,10 @@ import { useT } from "@/i18n/candidate-client";
  * here or anywhere else. The next step is always concrete: who to write to,
  * and a way to report that something went wrong (collapsed until asked for).
  *
+ * Under the closing card sits the optional experience survey (ExamFeedback):
+ * stars first, the rest once a star is chosen, one answer per exam, nothing
+ * about the exam's score or level.
+ *
  * Soft look: finishing is worth a small celebration (the mascot pops in once
  * with a badge, motion-safe only) and the sections the student got
  * through, each in its own colour. It celebrates finishing, never a score:
@@ -37,6 +42,7 @@ export function Finished({
   terminated,
   terminationReason,
   contactEmail,
+  feedbackAnswered,
   sections = [],
 }: {
   token: string;
@@ -45,6 +51,8 @@ export function Finished({
   terminated: boolean;
   terminationReason: string | null;
   contactEmail: string | null;
+  /** The server's word that the experience survey is already answered: the card is not offered again. */
+  feedbackAnswered: boolean;
   /**
    * The exam's sections, in order; empty draws no row. A finished, not
    * terminated attempt has every section closed (handed in or timed out), so
@@ -244,6 +252,8 @@ export function Finished({
           </a>
         </div>
       </div>
+      {/* The experience survey: its own calm card under the closing one, skippable, never for an ended (terminated) exam. */}
+      {terminated ? null : <ExamFeedback token={token} answered={feedbackAnswered} />}
     </CandidateColumn>
   );
 }
