@@ -6,7 +6,8 @@ import { CandidateColumn } from "@/components/candidate/Shell";
 import { MobileBlock, isMobileDevice } from "@/components/candidate/MobileBlock";
 import { environmentFacts, useProctor } from "@/components/candidate/proctor/ProctorProvider";
 import { checkStep, planSteps, primaryEnabled, type CheckStep, type StepState, type Wait } from "@/components/candidate/proctor/check-steps";
-import { buttonVariants } from "@/components/ui/button";
+import { ReadyRules, READY_WHY_ID } from "@/components/candidate/proctor/ReadyRules";
+import { buttonVariants, DisabledReason } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
 import { Illustration } from "@/components/visual/illustrations";
 import { Mascot, type MascotPose } from "@/components/visual/mascot";
@@ -43,6 +44,7 @@ export function SystemCheck({ token, policy }: { token: string; policy: Proctori
   const [bandwidth, setBandwidth] = useState<{ state: "measuring" | "ok" | "low" | "unknown"; mbps?: string }>({ state: "measuring" });
   const [quiet, setQuiet] = useState<"idle" | "working" | "done">("idle");
   const [lookConfirmed, setLookConfirmed] = useState(false);
+  const [rulesAccepted, setRulesAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [problemSent, setProblemSent] = useState(false);
@@ -130,6 +132,7 @@ export function SystemCheck({ token, policy }: { token: string; policy: Proctori
     screen: snap?.screen ?? "idle",
     surface: snap?.surface ?? null,
     lookConfirmed,
+    rulesAccepted,
   } satisfies StepState);
 
   // The room is measured by itself when the look step opens (3 seconds); the student only sees a sentence.
@@ -249,19 +252,24 @@ export function SystemCheck({ token, policy }: { token: string; policy: Proctori
               : t("cta")
             : t("devicesAction");
 
+  // The last screen carries the checklist card: a wider, tighter column so it fits a 1366x650 window with the button.
+  const last = result.step === "ready";
   return (
-    <CandidateColumn width={640}>
+    <CandidateColumn width={last ? 940 : 640} padding={last ? "px-7 pt-3 pb-3" : undefined}>
       <div className="flex flex-col items-center text-center">
-        {result.index !== null && result.total > 1 ? <Progress plan={plan.steps} current={result.index} t={t} /> : null}
+        {result.index !== null && result.total > 1 ? <Progress plan={plan.steps} current={result.index} t={t} compact={last} /> : null}
 
-        {picture ? <Illustration name={picture} size="block" className="mt-4" /> : isIssue ? null : <Mascot pose={POSE[result.step]} size="small" className="mt-5" />}
-        <h1 ref={titleRef} tabIndex={-1} className={cn(isIssue && !picture ? "mt-6" : "mt-4", "text-[30px] leading-[38px] font-extrabold tracking-[-0.01em] text-ink outline-none")}>
+        {picture ? (
+          <Illustration name={picture} size="block" className="mt-4" />
+        ) : isIssue ? null : (
+          <Mascot pose={POSE[result.step]} size="small" className={cn("mt-5", last && "[@media(max-height:760px)]:hidden")} />
+        )}
+        <h1 ref={titleRef} tabIndex={-1} className={cn(isIssue && !picture ? "mt-6" : last ? "mt-2" : "mt-4", "text-[30px] leading-[38px] font-extrabold tracking-[-0.01em] text-ink outline-none")}>
           {title[result.step]}
         </h1>
         {result.step === "devices" && !isIssue ? <p className="mt-2 text-[17px] leading-[26px] text-ink-2">{t("devicesLead")}</p> : null}
         {result.step === "look" && !sentence ? <p className="mt-2 text-[17px] leading-[26px] text-ink-2">{t("lookLead")}</p> : null}
         {result.step === "screen" && !isIssue ? <p className="mt-2 text-[17px] leading-[26px] text-ink-2">{t("screenLead")}</p> : null}
-        {result.step === "ready" ? <p className="mt-2 text-[17px] leading-[26px] text-ink-2">{t("readyLead")}</p> : null}
 
         {result.step === "look" && plan.look && policy.camera ? (
           <div className="mt-4 flex items-center gap-5">
@@ -270,7 +278,7 @@ export function SystemCheck({ token, policy }: { token: string; policy: Proctori
           </div>
         ) : null}
         {result.step === "screen" && !isIssue ? <PickerHint t={t} /> : null}
-        {result.step === "ready" ? <Rules policy={policy} t={t} /> : null}
+        {last ? <ReadyRules policy={policy} accepted={rulesAccepted} onChange={setRulesAccepted} /> : null}
 
         {sentence ? (
           isIssue ? (
@@ -278,7 +286,7 @@ export function SystemCheck({ token, policy }: { token: string; policy: Proctori
               {sentence}
             </Notice>
           ) : (
-            <p role="status" className="mt-6 max-w-[520px] text-[16px] font-semibold leading-[25px] text-ink">
+            <p role="status" className={cn(last ? "mt-3" : "mt-6", "max-w-[520px] text-[16px] font-semibold leading-[25px] text-ink")}>
               {sentence}
             </p>
           )
@@ -300,11 +308,14 @@ export function SystemCheck({ token, policy }: { token: string; policy: Proctori
             type="button"
             onClick={() => void press()}
             disabled={!enabled}
-            className={cn(buttonVariants({ variant: "primary", size: "lg" }), "mt-6 h-14 w-full max-w-[420px] px-6 text-[17px]")}
+            aria-describedby={result.wait === "rules" ? READY_WHY_ID : undefined}
+            className={cn(buttonVariants({ variant: "primary", size: "lg" }), last ? "mt-4 h-12" : "mt-6 h-14", "w-full max-w-[420px] px-6 text-[17px]")}
           >
             {result.wait === "preparing" ? t("preparing") : label}
           </button>
         ) : null}
+        {/* The box above is what the button waits for: say so next to it, never in a tooltip. */}
+        {result.wait === "rules" ? <DisabledReason id={READY_WHY_ID} className="mt-2 text-[14px]">{t("readyConfirmHint")}</DisabledReason> : null}
         {result.step === "screen" && result.issue === "screenDenied" ? (
           <div className="mt-3 max-w-[520px]">
             <button type="button" onClick={() => setFixOpen((v) => !v)} className="text-[14px] font-semibold text-ink underline decoration-underline underline-offset-2">
@@ -319,7 +330,7 @@ export function SystemCheck({ token, policy }: { token: string; policy: Proctori
           </p>
         ) : null}
 
-        <p className="mt-5 text-[14px] text-ink-3">
+        <p className={cn(last ? "mt-2" : "mt-5", "text-[14px] text-ink-3")}>
           {problemSent ? (
             t("problemSent")
           ) : (
@@ -362,7 +373,7 @@ function sentenceFor(step: CheckStep, wait: Wait | null, issue: string | null, t
   }
 }
 
-function Progress({ plan, current, t }: { plan: Array<Exclude<CheckStep, "blocked">>; current: number; t: T }) {
+function Progress({ plan, current, t, compact = false }: { plan: Array<Exclude<CheckStep, "blocked">>; current: number; t: T; compact?: boolean }) {
   const names = { devices: t("stepDevices"), look: t("stepLook"), screen: t("stepScreen"), ready: t("stepReady") } as const;
   return (
     <nav aria-label={t("stepsLabel")} className="w-full">
@@ -373,7 +384,8 @@ function Progress({ plan, current, t }: { plan: Array<Exclude<CheckStep, "blocke
           return (
             <li key={id} aria-current={state === "now" ? "step" : undefined} className="flex w-[130px] flex-col items-center gap-1.5">
               <span className={cn("h-1.5 w-full rounded-full", state === "next" ? "bg-line" : "bg-accent")} />
-              <span className={cn("text-[12.5px] leading-[17px]", state === "now" ? "font-bold text-ink" : "text-muted")}>{names[id]}</span>
+              {/* The last screen drops the names on a short window; the "Adım n / N" line above still says where the student is. */}
+              <span className={cn("text-[12.5px] leading-[17px]", state === "now" ? "font-bold text-ink" : "text-muted", compact && "[@media(max-height:700px)]:hidden")}>{names[id]}</span>
             </li>
           );
         })}
@@ -404,24 +416,6 @@ function PickerHint({ t }: { t: T }) {
       </div>
       <p className="text-[14px] font-bold text-accent">{t("screenHint")}</p>
     </div>
-  );
-}
-
-function Rules({ policy, t }: { policy: ProctoringPolicy; t: T }) {
-  const rules = [
-    policy.fullscreen ? t("ruleFullscreen") : null,
-    policy.secondScreen !== "OFF" ? t("ruleOneScreen") : null,
-    t("ruleTab"),
-  ].filter((r): r is string => r !== null);
-  return (
-    <ul className="mt-6 flex w-full max-w-[460px] flex-col gap-2.5 text-start">
-      {rules.map((r) => (
-        <li key={r} className="flex items-start gap-3 rounded-[14px] bg-mint-soft px-4 py-3 text-[16px] leading-[24px] text-ink">
-          <span aria-hidden className="mt-[9px] size-2 shrink-0 rounded-full bg-accent" />
-          {r}
-        </li>
-      ))}
-    </ul>
   );
 }
 

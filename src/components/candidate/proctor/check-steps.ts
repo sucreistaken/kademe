@@ -1,4 +1,5 @@
 import type { ProctoringPolicy } from "@/lib/proctor/policy";
+import { recordingLabel, type RecordingLabel } from "@/lib/proctor/recording-status";
 
 /**
  * The exam's system check as a guided flow: one screen, one real action. This
@@ -23,7 +24,9 @@ export type Wait =
   | "faceMany"
   | "quietWorking"
   | "browser"
-  | "secondScreen";
+  | "secondScreen"
+  /** The last screen's rules are not ticked yet; the button says so next to itself. */
+  | "rules";
 
 /** A step that needs fixing, shown as one sentence plus a retry. */
 export type Issue = "denied" | "lost" | "wrongSurface" | "screenDenied" | "unsupported";
@@ -71,6 +74,8 @@ export type StepState = {
   surface: "MONITOR" | "WRONG_SURFACE" | "UNVERIFIED" | null;
   /** The student pressed "Devam et" on the look step. */
   lookConfirmed: boolean;
+  /** The student ticked "Diğer uygulamaları kapattım, kurallara uyacağım." on the last screen. */
+  rulesAccepted: boolean;
 };
 
 export type StepResult = {
@@ -146,8 +151,27 @@ export function checkStep(plan: StepPlan, s: StepState): StepResult {
   }
 
   // Ready: the face and the quiet measurement still count at the last button, as the old rows did.
-  return at("ready", "start", lookWait(plan, s));
+  // The ticked rules come last, so a problem the student can fix is named before the box is asked for.
+  return at("ready", "start", lookWait(plan, s) ?? (s.rulesAccepted ? null : "rules"));
 }
 
 /** Whether the big button may be pressed: it has an action and nothing is waited for. */
 export const primaryEnabled = (r: StepResult): boolean => r.primary !== null && r.wait === null;
+
+/** The plain rules under the yellow callout, in the order they are shown. */
+export type PlainRule = "fullscreen" | "oneScreen" | "tab";
+
+/**
+ * What the last screen's checklist says, decided by the policy. The yellow
+ * callout always asks to close the other applications and, when anything is
+ * recorded, says what (the same words the exam header uses, so the promise
+ * made here is the one kept there). The plain rules are the old three pills:
+ * full screen and one screen only where the policy asks for them, and the tab.
+ */
+export function readyRules(policy: ProctoringPolicy): { recorded: RecordingLabel | null; plain: PlainRule[] } {
+  const plain: PlainRule[] = [];
+  if (policy.fullscreen) plain.push("fullscreen");
+  if (policy.secondScreen !== "OFF") plain.push("oneScreen");
+  plain.push("tab");
+  return { recorded: recordingLabel({ camera: policy.camera, audio: policy.microphone, screen: policy.screenShare }), plain };
+}

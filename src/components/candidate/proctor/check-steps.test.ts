@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { policyFromPreset } from "@/lib/proctor/policy";
-import { checkStep, planSteps, primaryEnabled, type StepState } from "./check-steps";
+import { checkStep, planSteps, primaryEnabled, readyRules, type StepState } from "./check-steps";
 
 const strict = planSteps(policyFromPreset("STRICT"));
 const standard = planSteps(policyFromPreset("STANDARD"));
@@ -19,7 +19,9 @@ const fresh: StepState = {
   screen: "idle",
   surface: null,
   lookConfirmed: false,
+  rulesAccepted: false,
 };
+const ticked = { rulesAccepted: true };
 const devicesOn: StepState = { ...fresh, camera: "ok", mic: "ok" };
 const seen: StepState = { ...devicesOn, model: "ready", faces: 1, quiet: "done" };
 
@@ -69,7 +71,7 @@ describe("step 1: camera and microphone", () => {
     expect(checkStep(strict, { ...fresh, camera: "ok", mic: "idle" }).step).toBe("devices");
   });
   it("OFF never asks for devices, even when their state is idle", () => {
-    expect(checkStep(off, fresh)).toMatchObject({ step: "ready", primary: "start", wait: null, total: 1 });
+    expect(checkStep(off, { ...fresh, ...ticked })).toMatchObject({ step: "ready", primary: "start", wait: null, total: 1 });
   });
 });
 
@@ -117,7 +119,7 @@ describe("step 3: screen share (STRICT only)", () => {
 });
 
 describe("the last screen and what still blocks the start", () => {
-  const done = { ...seen, lookConfirmed: true, screen: "ok" as const };
+  const done = { ...seen, lookConfirmed: true, screen: "ok" as const, ...ticked };
   it("is startable when every required thing is ok", () => {
     expect(primaryEnabled(checkStep(strict, done))).toBe(true);
     expect(checkStep(strict, done)).toMatchObject({ step: "ready", index: 4, total: 4 });
@@ -143,7 +145,50 @@ describe("the last screen and what still blocks the start", () => {
     expect(checkStep(standard, { ...seen, lookConfirmed: true, secondScreenBlocks: false, isExtended: true }).step).toBe("ready");
   });
   it("OFF is startable at once, but not before the engine is ready", () => {
-    expect(primaryEnabled(checkStep(off, fresh))).toBe(true);
+    expect(primaryEnabled(checkStep(off, { ...fresh, ...ticked }))).toBe(true);
     expect(primaryEnabled(checkStep(off, { ...fresh, ready: false }))).toBe(false);
+  });
+});
+
+describe("the last screen's tick (Diğer uygulamaları kapattım, kurallara uyacağım)", () => {
+  const readyUnticked = { ...seen, lookConfirmed: true, screen: "ok" as const };
+  it("keeps the start off until the rules are ticked, with its own wait so the button can say why", () => {
+    const r = checkStep(strict, readyUnticked);
+    expect(r).toMatchObject({ step: "ready", primary: "start", wait: "rules" });
+    expect(primaryEnabled(r)).toBe(false);
+    expect(primaryEnabled(checkStep(strict, { ...readyUnticked, ...ticked }))).toBe(true);
+  });
+  it("applies to every policy that reaches the last screen, OFF included", () => {
+    expect(checkStep(off, fresh)).toMatchObject({ step: "ready", wait: "rules" });
+    expect(checkStep(standard, { ...seen, lookConfirmed: true })).toMatchObject({ step: "ready", wait: "rules" });
+  });
+  it("names a fixable problem before it asks for the tick", () => {
+    expect(checkStep(strict, { ...readyUnticked, faces: 0 })).toMatchObject({ step: "ready", wait: "faceNone" });
+    expect(checkStep(strict, { ...readyUnticked, quiet: "idle" })).toMatchObject({ step: "ready", wait: "quietWorking" });
+  });
+  it("does not matter on the earlier steps", () => {
+    expect(checkStep(strict, fresh)).toMatchObject({ step: "devices", wait: null });
+    expect(primaryEnabled(checkStep(strict, seen))).toBe(true);
+  });
+  it("is not enough on its own: the engine, the browser and the second screen still come first", () => {
+    expect(checkStep(strict, { ...readyUnticked, ...ticked, ready: false })).toMatchObject({ wait: "preparing" });
+    expect(checkStep(strict, { ...readyUnticked, ...ticked, browserBlocked: true }).step).toBe("blocked");
+  });
+});
+
+describe("the checklist a policy shows on the last screen", () => {
+  it("STRICT: full screen, one screen, the tab, and the recording of camera, sound and screen", () => {
+    expect(readyRules(policyFromPreset("STRICT"))).toEqual({ recorded: "cameraAudioScreen", plain: ["fullscreen", "oneScreen", "tab"] });
+  });
+  it("STANDARD records camera and sound but not the screen", () => {
+    expect(readyRules(policyFromPreset("STANDARD"))).toEqual({ recorded: "cameraAudio", plain: ["fullscreen", "oneScreen", "tab"] });
+  });
+  it("OFF records nothing and asks only for the tab", () => {
+    expect(readyRules(policyFromPreset("OFF"))).toEqual({ recorded: null, plain: ["tab"] });
+  });
+  it("leaves out a rule the policy does not need, as the old pills did", () => {
+    const p = { ...policyFromPreset("STRICT"), fullscreen: false, secondScreen: "OFF" as const, microphone: false };
+    expect(readyRules(p)).toEqual({ recorded: "cameraScreen", plain: ["tab"] });
+    expect(readyRules({ ...p, camera: false })).toEqual({ recorded: "screen", plain: ["tab"] });
   });
 });
