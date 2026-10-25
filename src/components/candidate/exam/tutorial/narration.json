@@ -114,8 +114,8 @@
     "WRITING": {
       "task": {
         "src": "/tutorial/en/WRITING/task.mp3",
-        "ms": 5800,
-        "hash": "0154ccb514d8a9"
+        "ms": 7560,
+        "hash": "1590a672f8efc5"
       },
       "type": {
         "src": "/tutorial/en/WRITING/type.mp3",
@@ -156,13 +156,13 @@
       },
       "think": {
         "src": "/tutorial/en/SPEAKING/think.mp3",
-        "ms": 3680,
-        "hash": "092c75fd8e4f03"
+        "ms": 7040,
+        "hash": "0ec17fafd9a3f9"
       },
       "record": {
         "src": "/tutorial/en/SPEAKING/record.mp3",
-        "ms": 5960,
-        "hash": "1747fb6caf13bf"
+        "ms": 6080,
+        "hash": "06a571588b454e"
       },
       "talk": {
         "src": "/tutorial/en/SPEAKING/talk.mp3",
@@ -176,8 +176,8 @@
       },
       "next": {
         "src": "/tutorial/en/SPEAKING/next.mp3",
-        "ms": 5280,
-        "hash": "0d8e6e04d1280b"
+        "ms": 6640,
+        "hash": "0f29eeee819a14"
       },
       "timer": {
         "src": "/tutorial/en/SPEAKING/timer.mp3",
@@ -301,8 +301,8 @@
     "WRITING": {
       "task": {
         "src": "/tutorial/de/WRITING/task.mp3",
-        "ms": 6480,
-        "hash": "026a5acfde8b95"
+        "ms": 8440,
+        "hash": "06cbf38e946496"
       },
       "type": {
         "src": "/tutorial/de/WRITING/type.mp3",
@@ -343,13 +343,13 @@
       },
       "think": {
         "src": "/tutorial/de/SPEAKING/think.mp3",
-        "ms": 4320,
-        "hash": "185741c535519d"
+        "ms": 9080,
+        "hash": "10dabdca4ab686"
       },
       "record": {
         "src": "/tutorial/de/SPEAKING/record.mp3",
-        "ms": 6080,
-        "hash": "1378c9de9be476"
+        "ms": 6560,
+        "hash": "0229188de31cce"
       },
       "talk": {
         "src": "/tutorial/de/SPEAKING/talk.mp3",
@@ -364,7 +364,7 @@
       "next": {
         "src": "/tutorial/de/SPEAKING/next.mp3",
         "ms": 6360,
-        "hash": "0638e9278cc58d"
+        "hash": "072af40a8125a4"
       },
       "timer": {
         "src": "/tutorial/de/SPEAKING/timer.mp3",
@@ -488,8 +488,8 @@
     "WRITING": {
       "task": {
         "src": "/tutorial/es/WRITING/task.mp3",
-        "ms": 6560,
-        "hash": "1ff711b83b9a59"
+        "ms": 8640,
+        "hash": "09f09e283ece60"
       },
       "type": {
         "src": "/tutorial/es/WRITING/type.mp3",
@@ -530,13 +530,13 @@
       },
       "think": {
         "src": "/tutorial/es/SPEAKING/think.mp3",
-        "ms": 5160,
-        "hash": "02ee33548a30e3"
+        "ms": 8600,
+        "hash": "09db9ce84380e1"
       },
       "record": {
         "src": "/tutorial/es/SPEAKING/record.mp3",
-        "ms": 7440,
-        "hash": "0d30e308aa9f42"
+        "ms": 5840,
+        "hash": "059a38b631a89c"
       },
       "talk": {
         "src": "/tutorial/es/SPEAKING/talk.mp3",
@@ -550,8 +550,8 @@
       },
       "next": {
         "src": "/tutorial/es/SPEAKING/next.mp3",
-        "ms": 7040,
-        "hash": "16a66e35efe9a8"
+        "ms": 7280,
+        "hash": "059a10032a6329"
       },
       "timer": {
         "src": "/tutorial/es/SPEAKING/timer.mp3",
@@ -675,8 +675,8 @@
     "WRITING": {
       "task": {
         "src": "/tutorial/tr/WRITING/task.mp3",
-        "ms": 6800,
-        "hash": "035b4b0170d1fa"
+        "ms": 7520,
+        "hash": "04ce96f684aa11"
       },
       "type": {
         "src": "/tutorial/tr/WRITING/type.mp3",
@@ -717,13 +717,13 @@
       },
       "think": {
         "src": "/tutorial/tr/SPEAKING/think.mp3",
-        "ms": 4080,
-        "hash": "10c4771ae329ec"
+        "ms": 7640,
+        "hash": "09e50234dcb495"
       },
       "record": {
         "src": "/tutorial/tr/SPEAKING/record.mp3",
-        "ms": 5960,
-        "hash": "152bc18f189456"
+        "ms": 6120,
+        "hash": "12bcd37587d689"
       },
       "talk": {
         "src": "/tutorial/tr/SPEAKING/talk.mp3",
@@ -737,8 +737,8 @@
       },
       "next": {
         "src": "/tutorial/tr/SPEAKING/next.mp3",
-        "ms": 5640,
-        "hash": "111bb0403d4897"
+        "ms": 6040,
+        "hash": "004ef66d8774d5"
       },
       "timer": {
         "src": "/tutorial/tr/SPEAKING/timer.mp3",
@@ -862,8 +862,8 @@
     "WRITING": {
       "task": {
         "src": "/tutorial/ar/WRITING/task.mp3",
-        "ms": 7920,
-        "hash": "053c80d23d183f"
+        "ms": 7680,
+        "hash": "0c20c72909b7bd"
       },
       "type": {
         "src": "/tutorial/ar/WRITING/type.mp3",
@@ -904,13 +904,13 @@
       },
       "think": {
         "src": "/tutorial/ar/SPEAKING/think.mp3",
-        "ms": 5560,
-        "hash": "1145c396c2f94b"
+        "ms": 6880,
+        "hash": "0b0dbc84ed89f6"
       },
       "record": {
         "src": "/tutorial/ar/SPEAKING/record.mp3",
-        "ms": 7880,
-        "hash": "1061b7bbe82a37"
+        "ms": 7560,
+        "hash": "0d52c5f73f2677"
       },
       "talk": {
         "src": "/tutorial/ar/SPEAKING/talk.mp3",
@@ -924,8 +924,8 @@
       },
       "next": {
         "src": "/tutorial/ar/SPEAKING/next.mp3",
-        "ms": 6280,
-        "hash": "1caf917961c177"
+        "ms": 6680,
+        "hash": "02f5122df97fad"
       },
       "timer": {
         "src": "/tutorial/ar/SPEAKING/timer.mp3",
