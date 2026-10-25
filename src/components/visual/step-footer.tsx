@@ -84,6 +84,7 @@ export function StepFooter({
   measure = true,
   compact = false,
   exam = false,
+  wide = false,
   notice,
   status,
 }: {
@@ -121,6 +122,13 @@ export function StepFooter({
    * to wrap in the bar goes in `notice` and `status`. Off by default.
    */
   exam?: boolean;
+  /**
+   * The default bar as wide as the wide exam screens (1200px, like the top bar
+   * and the exam bar over them) instead of the 1000px candidate column, so its
+   * right edge lines up with the content above it. Off by default: every other
+   * bar draws exactly as before.
+   */
+  wide?: boolean;
   /**
    * Warnings (a recording still plays, a save failed, time is up): drawn in a
    * layer fixed to the top edge of the bar, over the page above it. They add no
@@ -268,7 +276,7 @@ export function StepFooter({
         {noticeLayer}
         {journey ? <JourneyProgress steps={journey.steps} current={journey.current} label={journey.label} /> : null}
         <div className="border-t border-line bg-paper/95 backdrop-blur">
-          <div className="mx-auto flex min-h-[84px] max-w-[1000px] items-center justify-between gap-x-6 px-4 py-4 sm:px-7">
+          <div className={cn("mx-auto flex min-h-[84px]", wide ? "max-w-[1200px]" : "max-w-[1000px]", "items-center justify-between gap-x-6 px-4 py-4 sm:px-7")}>
             <div className="shrink-0">{backLink}</div>
             <div className="flex min-w-0 items-center justify-end gap-x-4">
               {journey ? (
@@ -290,7 +298,7 @@ export function StepFooter({
               {primary ? <Action action={primary} variant="primary" /> : null}
             </div>
           </div>
-          {note ? <div className="mx-auto max-w-[1000px] px-4 pb-4 sm:px-7">{note}</div> : null}
+          {note ? <div className={cn("mx-auto", wide ? "max-w-[1200px]" : "max-w-[1000px]", "px-4 pb-4 sm:px-7")}>{note}</div> : null}
         </div>
       </div>
     </>

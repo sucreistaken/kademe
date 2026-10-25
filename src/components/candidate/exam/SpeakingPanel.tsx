@@ -119,6 +119,7 @@ export function SpeakingPanel({
   notice,
   fallback,
   press = false,
+  disabled = false,
 }: {
   phase: SpeakingPhase;
   /** The running phase's time left (preparation or speaking). */
@@ -139,6 +140,12 @@ export function SpeakingPanel({
   /** What the student may do instead (type the answer); shown with a failure. */
   fallback?: ReactNode;
   press?: boolean;
+  /**
+   * A look-only panel (the warm-up practice records nothing): the buttons are
+   * switched off, and the line that says recording starts by itself is left
+   * out, since in the practice it does not. The page says why.
+   */
+  disabled?: boolean;
 }) {
   const t = useT("exam");
   const recording = phase === "RECORDING";
@@ -193,19 +200,19 @@ export function SpeakingPanel({
 
       {phase === "THINKING" ? (
         <>
-          <button type="button" data-demo-press={press ? "" : undefined} onClick={onStart} className={cn(buttonVariants({ variant: "primary", size: "lg" }), BIG_BUTTON)}>
+          <button type="button" disabled={disabled} data-demo-press={press ? "" : undefined} onClick={onStart} className={cn(buttonVariants({ variant: "primary", size: "lg" }), BIG_BUTTON)}>
             {t("speakingStart")}
           </button>
-          <p className="-mt-1 text-center text-[13px] leading-[1.4] text-ink-2">{t("speakingPrepareHint")}</p>
+          {disabled ? null : <p className="-mt-1 text-center text-[13px] leading-[1.4] text-ink-2">{t("speakingPrepareHint")}</p>}
         </>
       ) : null}
       {recording ? (
-        <button type="button" data-demo-press={press ? "" : undefined} onClick={onStop} className={cn(buttonVariants({ variant: "primary", size: "lg" }), BIG_BUTTON)}>
+        <button type="button" disabled={disabled} data-demo-press={press ? "" : undefined} onClick={onStop} className={cn(buttonVariants({ variant: "primary", size: "lg" }), BIG_BUTTON)}>
           {t("stopRecording")}
         </button>
       ) : null}
       {phase === "DONE" && retakesLeft > 0 ? (
-        <button type="button" onClick={onRetake} className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "h-12 w-full text-[15px]")}>
+        <button type="button" disabled={disabled} onClick={onRetake} className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "h-12 w-full text-[15px]")}>
           <RotateCcw aria-hidden className="size-4" strokeWidth={2.25} />
           {t("retake", { n: retakesLeft })}
         </button>

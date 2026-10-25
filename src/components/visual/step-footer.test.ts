@@ -34,6 +34,20 @@ describe("StepFooter's compact layout is opt-in (Task 22 fix round 1)", () => {
     expect(before.every((m: string) => m.includes("min-w-[200px]"))).toBe(true);
   });
 
+  it("wide: the bar and its note are 1200px like the wide exam screens, and nothing else changes", () => {
+    const props: ComponentProps<typeof StepFooter> = {
+      primary: { kind: "button", id: "next", label: "Sonraki görev", onClick: noop, waitReason: "Kayıt bitince devam edebilirsiniz." },
+      note: "Bölümü şimdi bitir",
+    };
+    const normal = html(props);
+    const wide = html({ ...props, wide: true });
+    expect(normal).not.toContain("max-w-[1200px]");
+    expect(normal.match(/max-w-\[1000px\]/g)).toHaveLength(2);
+    expect(wide).not.toContain("max-w-[1000px]");
+    expect(wide.match(/max-w-\[1200px\]/g)).toHaveLength(2);
+    expect(wide.replaceAll("max-w-[1200px]", "max-w-[1000px]")).toBe(normal);
+  });
+
   it("in a narrow Sheet: full-width buttons without the 200px minimum, the filled one last, the reasons at full width under them", () => {
     const out = html({
       primary: { kind: "button", id: "invite-next", label: "Devam et", onClick: noop, waitReason: "Adayın adını ve soyadını yaz." },

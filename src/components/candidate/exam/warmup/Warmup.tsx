@@ -4,6 +4,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { CandidateColumn } from "@/components/candidate/Shell";
 import { buttonVariants } from "@/components/ui/button";
 import { ItemView } from "@/components/candidate/exam/ItemView";
+import { SPEAKING_VIDEO, SpeakingPanel } from "@/components/candidate/exam/SpeakingPanel";
 import { hintOf, practiceFor, practiceItem } from "@/components/candidate/exam/warmup/practice-data";
 import type { WarmupState } from "@/components/candidate/exam/warmup/warmup-state";
 import { useStepFocus } from "@/hooks/use-step-focus";
@@ -161,7 +162,7 @@ export function WarmupPractice({
           </article>
         ) : null}
         {item.content.kind === "SPEAKING" ? (
-          <SpeakingPreview prompt={item.prompt} />
+          <SpeakingPreview prompt={item.prompt} thinkSeconds={item.content.thinkSeconds} />
         ) : (
           <ItemView item={item} answer={answer} onChange={(next) => setAnswers((a) => ({ ...a, [step]: next }))} />
         )}
@@ -179,26 +180,26 @@ export function WarmupPractice({
   );
 }
 
-/** What the speaking answer area looks like. No camera, no recording. */
-function SpeakingPreview({ prompt }: { prompt: string }) {
+/**
+ * What the speaking answer area looks like: the exam's own recorder panel
+ * (steps, ring, big button) at its first step, switched off. No camera, no
+ * recording; the page's hint line says so.
+ */
+function SpeakingPreview({ prompt, thinkSeconds }: { prompt: string; thinkSeconds: number }) {
   const t = useT("examFlow");
-  const e = useT("exam");
   return (
     <div>
       <p lang="de" className="whitespace-pre-line text-[17px] font-medium leading-[1.6] text-ink">
         {prompt}
       </p>
-      <div className="mt-5 flex flex-col items-start gap-5 md:flex-row">
-        <div className="flex aspect-[4/3] w-full max-w-[360px] items-center justify-center rounded-[10px] bg-ink px-6 text-center text-[13.5px] text-white/80">
-          {t("warmSpeakingPreview")}
-        </div>
-        <div className="flex-1">
-          <div className="text-[13px] font-medium text-muted">{e("thinkTime")}</div>
-          <div className="tnum mt-1 text-[32px] font-bold text-accent">0:30</div>
-          <button type="button" disabled className="mt-3 h-10 rounded-[10px] border border-line-strong bg-surface px-4 text-[14px] font-medium text-ink disabled:cursor-not-allowed disabled:opacity-60">
-            {e("startNow")}
-          </button>
-        </div>
+      <div className="mt-5 max-w-[560px]">
+        <SpeakingPanel
+          phase="THINKING"
+          leftMs={thinkSeconds * 1000}
+          totalMs={thinkSeconds * 1000}
+          video={<div className={cn(SPEAKING_VIDEO, "flex items-center justify-center px-4 text-center text-[13.5px] text-white/80")}>{t("warmSpeakingPreview")}</div>}
+          disabled
+        />
       </div>
     </div>
   );

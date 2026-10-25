@@ -648,6 +648,8 @@ export function ExamRunner({
         : null;
     footer = (
       <StepFooter
+        // As wide as the top bar and the content above it, so the button lines up with them.
+        wide={wideReading}
         secondary={speakingBar ? speakingBar.secondary : { kind: "button", id: "skip-item", label: t("skip"), onClick: skip }}
         primary={
           speakingBar

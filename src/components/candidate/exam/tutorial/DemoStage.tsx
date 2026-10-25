@@ -175,7 +175,8 @@ const StageContent = memo(function StageContent({ script, answers, marks, uiPres
     <StepFooter
       placement="contained"
       measure={false}
-      secondary={speakingBar.secondary ? { ...speakingBar.secondary, id: "tutorial-skip" } : null}
+      wide={wide}
+      secondary={speakingBar.secondary ?{ ...speakingBar.secondary, id: "tutorial-skip" } : null}
       primary={{ ...speakingBar.primary, id: "tutorial-next" }}
       note={
         <div className="flex flex-wrap items-center justify-end gap-3">
