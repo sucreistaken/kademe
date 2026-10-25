@@ -17,7 +17,8 @@ import { contentLocale, panelLocaleOf } from "@/i18n/locale";
 import { callJson } from "@/lib/ai-runs";
 import { enabledSections } from "@/lib/exam/blueprint";
 import { medianLevel } from "@/lib/exam/cefr";
-import { gradeAnswer, type GradingJob } from "@/lib/exam/grade-answer";
+import { gradeAnswer, RULE_MODEL, type GradingJob } from "@/lib/exam/grade-answer";
+import { ruleProposal } from "@/lib/exam/grading-rules";
 import { GRADING_CALL_OPTIONS, GRADING_JSON_SCHEMA, speakingMetrics } from "@/lib/exam/grading";
 import { sectionChance } from "@/lib/exam/chance";
 import { blockerErrorCode, finalizeBlockers } from "@/lib/exam/finalize-blockers";
@@ -48,19 +49,42 @@ export async function openGradings(sectionRunId: string) {
     const snap = r.itemSnapshot;
     if (snap.type !== "WRITING_PROMPT" && snap.type !== "SPEAKING_PROMPT") continue;
     const answered = hasAnswer(snap.type, r.answer ?? null);
+    if (!answered) {
+      // Nothing was written or said: a fixed rule proposes A0 at once (no model call) and the
+      // teacher confirms it. A recording that arrives late reopens it (`reopenGradingForMedia`).
+      await db
+        .insert(responseGradings)
+        .values({
+          itemResponseId: r.id,
+          taskLevel: snap.level,
+          status: "AI_PROPOSED",
+          aiProposal: ruleProposal(snap.section as ProductiveSection, { reason: "EMPTY", flags: ["EMPTY"] }, await rationaleLocaleOfRun(sectionRunId)),
+          aiLevel: "A0",
+          aiModel: RULE_MODEL,
+          proposedAt: new Date(),
+        })
+        .onConflictDoNothing();
+      continue;
+    }
     const [grading] = await db
       .insert(responseGradings)
-      .values({
-        itemResponseId: r.id,
-        taskLevel: snap.level,
-        status: answered ? "PENDING" : "AI_FAILED",
-        aiError: answered ? null : "EMPTY",
-      })
+      .values({ itemResponseId: r.id, taskLevel: snap.level, status: "PENDING" })
       .onConflictDoNothing()
       .returning();
-    if (!grading || !answered) continue;
+    if (!grading) continue;
     if (await gradingInputReady(r.id)) await enqueueGrading(grading.id);
   }
+}
+
+/** The language a teacher reads a rationale in, from the assessment of the run's attempt. */
+async function rationaleLocaleOfRun(sectionRunId: string) {
+  const [row] = await db
+    .select({ locale: assessments.locale })
+    .from(sectionRuns)
+    .innerJoin(attempts, eq(attempts.id, sectionRuns.attemptId))
+    .innerJoin(assessments, eq(assessments.id, attempts.assessmentId))
+    .where(eq(sectionRuns.id, sectionRunId));
+  return contentLocale(panelLocaleOf(row?.locale ?? "en"));
 }
 
 /** Writing is ready at once; a spoken answer needs its transcript first. */
@@ -80,13 +104,27 @@ async function gradingInputReady(itemResponseId: string): Promise<boolean> {
 
 /**
  * A recording that finished after its section closed (slow upload, salvage)
- * reopens a grading that was closed as EMPTY, so it is graded like any other.
+ * reopens a grading that was closed as EMPTY, so it is graded like any other:
+ * the failed one of before, or the A0 a rule proposed for an empty answer, as
+ * long as no teacher has decided on it.
  */
 export async function reopenGradingForMedia(itemResponseId: string) {
+  const reopen = { status: "PENDING" as const, aiError: null, aiProposal: null, aiLevel: null, aiModel: null, proposedAt: null, updatedAt: new Date() };
   await db
     .update(responseGradings)
-    .set({ status: "PENDING", aiError: null, updatedAt: new Date() })
+    .set(reopen)
     .where(and(eq(responseGradings.itemResponseId, itemResponseId), eq(responseGradings.status, "AI_FAILED")));
+  await db
+    .update(responseGradings)
+    .set(reopen)
+    .where(
+      and(
+        eq(responseGradings.itemResponseId, itemResponseId),
+        eq(responseGradings.status, "AI_PROPOSED"),
+        eq(responseGradings.aiModel, RULE_MODEL),
+        isNull(responseGradings.finalLevel),
+      ),
+    );
 }
 
 /** Called by the transcription job once a recording has text. */
@@ -165,13 +203,13 @@ export async function runGrading(gradingId: string): Promise<GradingOutcome> {
       rationaleLocale,
     };
   } else {
-    let source: string;
+    // No recording and no typed text is an answer with nothing in it: a rule proposes A0 (EMPTY).
+    let source = "";
     let words: Array<{ text: string; startMs: number; endMs: number }> = [];
     let durationMs = 0;
     if (answer.usedTextAlternative) {
       source = answer.text ?? "";
-    } else {
-      if (!answer.mediaAssetId) return fail(gradingId, "EMPTY");
+    } else if (answer.mediaAssetId) {
       const [t] = await db
         .select({ text: transcripts.text, words: transcripts.words, durationMs: mediaAssets.durationMs })
         .from(transcripts)
@@ -202,7 +240,6 @@ export async function runGrading(gradingId: string): Promise<GradingOutcome> {
     const { response, runId } = await callJson("cefr_grading", GRADING_JSON_SCHEMA, messages, meta, GRADING_CALL_OPTIONS);
     return { text: response.text, model: response.model, runId };
   });
-  if (graded.status === "EMPTY") return fail(gradingId, "EMPTY");
   if (graded.status === "UNPARSEABLE") {
     await db
       .update(responseGradings)
@@ -228,15 +265,6 @@ export async function runGrading(gradingId: string): Promise<GradingOutcome> {
     .where(and(eq(responseGradings.id, gradingId), eq(responseGradings.status, "PENDING")));
   await recomputeResult(row.attempt.id);
   return { status: "PROPOSED", level };
-
-  async function fail(id: string, reason: string): Promise<GradingOutcome> {
-    await db
-      .update(responseGradings)
-      .set({ status: "AI_FAILED", aiError: reason, updatedAt: new Date() })
-      .where(eq(responseGradings.id, id));
-    await recomputeResult(row.attempt.id);
-    return { status: "FAILED", reason };
-  }
 }
 
 // ---------------------------------------------------------------------------

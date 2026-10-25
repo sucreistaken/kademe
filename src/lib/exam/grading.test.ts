@@ -17,7 +17,17 @@ import {
   verifyEvidence,
   type GradingProposal,
 } from "./grading";
-import { CRITERIA_BY_SECTION, DESCRIPTORS, CRITERIA } from "./cefr-descriptors";
+import {
+  CRITERIA_BY_SECTION,
+  DESCRIPTORS,
+  CRITERIA,
+  SPEAKING_ANCHORS,
+  SPEAKING_ANCHOR_TASK,
+  WRITING_ANCHORS,
+  WRITING_ANCHOR_TASK,
+} from "./cefr-descriptors";
+import { CALIBRATION_FIXTURES } from "./grading-calibration/fixtures";
+import { CALIBRATION_TASKS, resolveTask } from "./grading-calibration/tasks";
 import { CEFR_LEVELS, type ResultLevel } from "./types";
 
 const EM_DASH = "\u2014";
@@ -390,5 +400,91 @@ describe("GRADING_JSON_SCHEMA", () => {
     const text = JSON.stringify(toGeminiSchema(GRADING_JSON_SCHEMA));
     expect(text).not.toMatch(/oneOf|anyOf|additionalProperties/);
     expect(text).toContain("PRONUNCIATION");
+  });
+});
+
+describe("the standards in the prompt", () => {
+  const writing = buildWritingGradingMessages({
+    task: "Schreiben Sie Anna eine Antwort.",
+    contentPoints: ["zusagen"],
+    taskLevel: "B1",
+    minWords: 70,
+    maxWords: 110,
+    text: "Liebe Anna, ich komme gern zu deiner Party am Samstag.",
+    rationaleLocale: "en",
+  });
+  const speaking = buildSpeakingGradingMessages({
+    task: "Stellen Sie sich vor.",
+    contentPoints: ["Name"],
+    taskLevel: "A1",
+    transcript: "ich heiße Anna",
+    metrics: speakingMetrics([{ text: "ich", startMs: 0, endMs: 400 }], 30_000),
+    rationaleLocale: "en",
+  });
+
+  it("states the rules the calibration found missing", () => {
+    const system = writing[0].content;
+    expect(system).toContain("Levels are absolute CEFR levels of the language shown");
+    expect(system).toContain("A flawless answer that only uses A1 structures is A1");
+    expect(system).toContain("If you hesitate between two neighbouring levels, give the lower one");
+    expect(system).toContain("ACCURACY is never more than one level above RANGE");
+    expect(system).toContain("Length is not level");
+    expect(system).toContain("learnt by heart");
+    expect(system).toContain("Do not add TOO_SHORT");
+    expect(system).toContain("give TASK_ACHIEVEMENT at most A1");
+    expect(system).toContain("lower median of your criterion levels");
+    expect(system).not.toContain(EM_DASH);
+  });
+
+  it("shows the scale with one anchor per level, written for the section", () => {
+    for (const a of WRITING_ANCHORS) {
+      expect(writing[0].content).toContain(a.text);
+      expect(speaking[0].content).not.toContain(a.text);
+    }
+    for (const a of SPEAKING_ANCHORS) {
+      expect(speaking[0].content).toContain(a.text);
+      expect(writing[0].content).not.toContain(a.text);
+    }
+    expect(WRITING_ANCHORS.map((a) => a.level)).toEqual(["A1", "A2", "B1", "B2", "C1", "C2"]);
+    expect(SPEAKING_ANCHORS.map((a) => a.level)).toEqual(["A1", "A2", "B1", "B2", "C1"]);
+    expect(writing[0].content).toContain("They are NOT the answer to grade");
+    expect(JSON.stringify([WRITING_ANCHORS, SPEAKING_ANCHORS])).not.toContain(EM_DASH);
+  });
+
+  it("gives the length of the answer as a share of the minimum", () => {
+    expect(writing[1].content).toContain("(14% of the minimum)");
+  });
+
+  it("keeps the anchors out of the calibration set, so the calibration measures the prompt", () => {
+    const anchors = [...WRITING_ANCHORS, ...SPEAKING_ANCHORS].map((a) => a.text);
+    for (const f of CALIBRATION_FIXTURES) expect(anchors, f.id).not.toContain(f.text);
+    for (const t of CALIBRATION_TASKS) {
+      const prompt = resolveTask(t.id).prompt;
+      expect(prompt).not.toContain(WRITING_ANCHOR_TASK);
+      expect(prompt).not.toContain(SPEAKING_ANCHOR_TASK);
+    }
+  });
+});
+
+describe("criteria that cannot be assessed", () => {
+  const withPronunciation = (level: ResultLevel): GradingProposal => ({
+    criteria: [
+      { criterion: "RANGE", level: "A1", score: 2, assessable: true, rationale: "r", evidence: [] },
+      { criterion: "PRONUNCIATION", level, score: 0, assessable: false, rationale: PRONUNCIATION_NOT_ASSESSABLE, evidence: [] },
+    ],
+    overallLevel: "A1",
+    summary: "s",
+    flags: [],
+  });
+
+  it("are not raised from A0 and do not mark the proposal A0_RAISED", () => {
+    const out = guardPreA1(withPronunciation("A0"), "Ich heiße Ali und wohne in Berlin.");
+    expect(out.flags).toEqual([]);
+    expect(out.criteria[1].level).toBe("A0");
+  });
+
+  it("are not counted as capped", () => {
+    const out = capByTaskLevel(withPronunciation("C2"), "A1");
+    expect(out.flags).toEqual([]);
   });
 });

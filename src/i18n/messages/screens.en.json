@@ -385,6 +385,7 @@
     "flagTOO_SHORT": "Too short",
     "flagNOT_GERMAN": "Not German",
     "flagEMPTY": "Empty",
+    "flagCOPIED_TASK": "Copied from the task",
     "flagEVIDENCE_UNVERIFIED": "Some quotes were not found in the answer and were removed",
     "flagLEVEL_CAPPED": "Capped at one level above the task",
     "taskLevel": "Task level {level}",

@@ -385,6 +385,7 @@
     "flagTOO_SHORT": "Çok kısa",
     "flagNOT_GERMAN": "Almanca değil",
     "flagEMPTY": "Boş",
+    "flagCOPIED_TASK": "Görev metninden kopyalanmış",
     "flagEVIDENCE_UNVERIFIED": "Bazı alıntılar cevapta bulunamadı ve çıkarıldı",
     "flagLEVEL_CAPPED": "Görev seviyesinin bir üstüyle sınırlandı",
     "taskLevel": "Görev seviyesi {level}",

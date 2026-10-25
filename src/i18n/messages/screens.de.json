@@ -385,6 +385,7 @@
     "flagTOO_SHORT": "Zu kurz",
     "flagNOT_GERMAN": "Nicht Deutsch",
     "flagEMPTY": "Leer",
+    "flagCOPIED_TASK": "Aus der Aufgabe abgeschrieben",
     "flagEVIDENCE_UNVERIFIED": "Einige Zitate wurden in der Antwort nicht gefunden und entfernt",
     "flagLEVEL_CAPPED": "Auf ein Niveau über der Aufgabe begrenzt",
     "taskLevel": "Aufgabenniveau {level}",

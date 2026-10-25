@@ -152,6 +152,20 @@ describe("A0 (Pre-A1)", () => {
     expect(r.verification!.reasons).toContain("HOLD_PROBABILITY_LOW");
   });
 
+  it("fails a level check whose writing and speaking were left empty, as soon as a rule has proposed A0", () => {
+    // 2026-10-25: an empty answer used to leave the task without any level (AI_FAILED), so the skill
+    // waited for a teacher and the verification stayed INCONCLUSIVE. Now a rule proposes A0 for it.
+    const blank = (section: "WRITING" | "SPEAKING", level: "A0" | null): SectionEvidence => ({ section, kind: "PRODUCTIVE", level, decider: level ? "AI" : null });
+    const before = computeResult({ mode: "LEVEL_VERIFICATION", claimed: "A2", rules, sections: [obj("GRAMMAR", -3.6, 0.3), blank("WRITING", null), blank("SPEAKING", null)] });
+    expect(before.overall).toBeNull();
+    expect(before.verification!.outcome).toBe("INCONCLUSIVE");
+    const after = computeResult({ mode: "LEVEL_VERIFICATION", claimed: "A2", rules, sections: [obj("GRAMMAR", -3.6, 0.3), blank("WRITING", "A0"), blank("SPEAKING", "A0")] });
+    expect(after.overall).toBe("A0");
+    expect(after.verification!.outcome).toBe("FAIL");
+    // Still the AI's proposal: a teacher confirms it before the result is final.
+    expect(after.status).toBe("AWAITING_REVIEW");
+  });
+
   it("puts a placement just below the A1 band near the A0/A1 cut, so a teacher decides", () => {
     const r = computeResult({ mode: "PLACEMENT", claimed: null, rules, sections: [obj("GRAMMAR", -3.1, 0.3), obj("READING", -3.1, 0.3)] });
     expect(r.overall).toBe("A0");
