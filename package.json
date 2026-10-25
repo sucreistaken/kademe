@@ -33,6 +33,7 @@
     "verify:hiring-templates": "tsx scripts/verify-hiring-templates.ts",
     "verify:exam": "tsx scripts/verify-exam-flow.ts",
     "exam:form-timing": "tsx scripts/form-timing.ts",
+    "exam:format-inventory": "tsx scripts/format-inventory.ts",
     "verify:hiring-immutability": "tsx scripts/verify-hiring-immutability.ts",
     "verify:hiring-setup": "tsx scripts/verify-hiring-setup.ts",
     "verify:guard": "tsx scripts/verify-solution-guard.ts",
