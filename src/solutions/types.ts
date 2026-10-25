@@ -185,8 +185,11 @@ export interface Creator<P = unknown, D = unknown> {
   renderReview(input: CreatorReviewInput<D>): Promise<ReactNode>;
 }
 
-/** One "What you have" card on the Advanced page, already in the viewer's language. */
-export type AdvancedCard = { key: string; title: string; lines: string[]; href: string };
+/**
+ * One "What you have" card on the Advanced page, already in the viewer's language.
+ * `linkLabel` replaces the page's "Edit manually" for a card whose page is not an editor (the students' feedback overview).
+ */
+export type AdvancedCard = { key: string; title: string; lines: string[]; href: string; linkLabel?: string };
 
 /** Server-only: everything a solution answers for the core. */
 export interface SolutionModule extends SolutionManifest {

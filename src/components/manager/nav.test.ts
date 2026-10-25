@@ -59,7 +59,7 @@ describe("ManagerNav (P1)", () => {
     expect(out).toMatch(/<a [^>]*href="\/exam\/students"[^>]*aria-current="page"|<a [^>]*aria-current="page"[^>]*href="\/exam\/students"/);
   });
 
-  it.each(["/advanced", "/library/positions", "/library/competencies/c1", "/exam/exams", "/exam/exams/b1", "/exam/bank", "/exam/bank/items/i1"])(
+  it.each(["/advanced", "/library/positions", "/library/competencies/c1", "/exam/exams", "/exam/exams/b1", "/exam/bank", "/exam/bank/items/i1", "/exam/feedback"])(
     "marks Advanced on %s, the pages it leads to",
     (pathname) => {
       route.pathname = pathname;

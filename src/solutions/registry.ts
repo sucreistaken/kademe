@@ -23,8 +23,8 @@ export type NavGroupView = {
 
 export type SharedNavLabels = { today: string; settings: string; advanced: string };
 
-/** Advanced stays lit on the pages it leads to: the library and the exam's own editors. */
-export const ADVANCED_ACTIVE_FOR = ["/library", "/exam/exams", "/exam/bank"];
+/** Advanced stays lit on the pages it leads to: the library, the exam's own editors and the students' feedback overview. */
+export const ADVANCED_ACTIVE_FOR = ["/library", "/exam/exams", "/exam/bank", "/exam/feedback"];
 
 /**
  * The panel menu (spec 2026-10-06-advanced-ai-create-design 3): Today, one

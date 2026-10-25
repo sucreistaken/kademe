@@ -31,7 +31,7 @@ function AreaCard({ card, linkLabel }: { card: AdvancedCard; linkLabel: string }
         </p>
       ))}
       <Link href={card.href} className={`inline-block pt-1 ${LINK}`}>
-        {linkLabel}
+        {card.linkLabel ?? linkLabel}
       </Link>
     </Card>
   );

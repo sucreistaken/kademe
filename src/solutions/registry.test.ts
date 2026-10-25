@@ -63,7 +63,7 @@ describe("solution registry", () => {
     expect(nav.map((g) => g.label)).toEqual([null, "İşe alım", "Sınav", null, null]);
     expect(nav[1].items).toEqual([{ href: "/hiring/openings", label: "Alımlar", icon: "briefcase" }]);
     expect(nav[2].items).toEqual([{ href: "/exam/students", label: "Öğrenciler", icon: "users" }]);
-    expect(nav[3].items).toEqual([{ href: "/advanced", label: "Gelişmiş", icon: "library", activeFor: ["/library", "/exam/exams", "/exam/bank"] }]);
+    expect(nav[3].items).toEqual([{ href: "/advanced", label: "Gelişmiş", icon: "library", activeFor: ["/library", "/exam/exams", "/exam/bank", "/exam/feedback"] }]);
     expect(nav.flatMap((g) => g.items.map((i) => i.icon))).toEqual(["sun", "briefcase", "users", "library", "settings"]);
     expect(buildNav("en", { today: "Today", settings: "Settings", advanced: "Advanced" })[2].items.map((i) => i.label)).toEqual(["Students"]);
     expect(buildNav("en", shared)[1].items[0].label).toBe("Openings");

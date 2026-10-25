@@ -5,6 +5,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Notice } from "@/components/ui/notice";
 import { Dot, INTEGRITY_TONE, STATUS_TONE, shortDateTime } from "@/components/panel/bits";
+import { ExamFeedbackBox } from "@/components/panel/result/exam-feedback-box";
 import { FeedbackCard } from "@/components/panel/result/feedback-card";
 import { GradingCard } from "@/components/panel/result/grading-card";
 import { Highlighted } from "@/components/panel/result/format";
@@ -22,6 +23,7 @@ import { can } from "@/lib/authorize";
 import { isObjectiveSection, RESULT_LEVELS, type Section } from "@/lib/exam/types";
 import { isPreA1, levelLabel } from "@/lib/exam/level-label";
 import { FIRST_CLASS, recommendedClassOf } from "@/lib/exam/placement";
+import { examFeedbackOf } from "@/server/exam-feedback";
 import { listStudents, loadIntegrityView, loadResultView } from "@/server/panel";
 import { listProblemReports } from "@/server/problem-reports";
 import { isProblemArea, splitProblemMessage } from "@/lib/exam/problem-reports";
@@ -60,6 +62,8 @@ export default async function ResultPage({
   const row = (await listStudents(user.orgId)).find((r) => r.assessmentId === id);
   // What the student said went wrong (end-of-exam and check-screen reports), newest first.
   const problems = await listProblemReports(user.orgId, view.candidate.id);
+  // What the student rated after the exam (the end-of-exam survey), if they answered.
+  const feedback = await examFeedbackOf(user.orgId, id);
   const { assessment, candidate, attempt, result } = view;
   const cfg = assessment.blueprintSnapshot;
   const computed = result?.computed ?? null;
@@ -343,6 +347,7 @@ export default async function ResultPage({
                 t={t}
               />
             ) : null}
+            {feedback ? <ExamFeedbackBox feedback={feedback} locale={locale} t={t} className="mt-6" /> : null}
             </>
           ) : null}
 
