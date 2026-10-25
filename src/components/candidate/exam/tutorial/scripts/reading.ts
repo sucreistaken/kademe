@@ -1,36 +1,52 @@
+import type { CandidateStimulus } from "@/lib/exam/safe";
 import type { TutorialScript } from "../script-types";
 
-/** Reading: two short ads and two situations to match. Original demo text. */
+/**
+ * The demo text: two missing sentences, each gap at the start of its paragraph
+ * so its list opens right under the line's left edge. The list is drawn inside
+ * the reading pane (the stage has no page to put it on), so the text goes on
+ * for two more paragraphs: they give the pane the room the open list needs
+ * without a scroll bar. Original demo text.
+ */
+const PASSAGE = {
+  title: "Der Stadtpark",
+  text:
+    "(1) ________ Am Morgen ist er noch ruhig, und nur ein paar Läufer sind unterwegs.\n\n" +
+    "(2) ________ Dann sitzen viele Menschen auf den Bänken und lesen oder spielen Karten.\n\n" +
+    "Im Winter ist es hier still, und der Park schließt schon um fünf Uhr.\n\n" +
+    "Im Frühling blühen die Kirschbäume, und die ersten Gäste kommen zurück.",
+};
+
+const STIMULUS: CandidateStimulus = { kind: "READING", title: PASSAGE.title, text: PASSAGE.text };
+
+/** Reading: a text with two missing sentences. Click a gap, pick a sentence from the list. Original demo text. */
 export const READING_SCRIPT: TutorialScript = {
   section: "READING",
   stage: {
     layout: "reading",
     nav: { current: 5, total: 10 },
     clock: "23:40",
-    passage: {
-      title: "Kleinanzeigen",
-      text:
-        "Anzeige A: Fahrrad zu verkaufen\nGut erhaltenes Stadtrad mit Licht und Korb, drei Jahre alt. 120 Euro, Abholung in Lindenau.\n\n" +
-        "Anzeige B: Nachhilfe in Mathematik\nStudentin hilft Schülerinnen und Schülern der Klassen 5 bis 10. Montag bis Donnerstag ab 16 Uhr, 15 Euro pro Stunde.",
-    },
+    passage: PASSAGE,
     items: [
       {
         sequence: 5,
         section: "READING",
         type: "MATCHING",
-        prompt: "Lesen Sie die Situationen und die Anzeigen. Welche Anzeige passt?",
+        prompt: "Lesen Sie den Text. Zwei Sätze fehlen. Welcher Satz passt in welche Lücke? Ein Satz passt nicht.",
         content: {
           kind: "MATCHING",
           left: [
-            { id: "s1", text: "Ihr Sohn braucht Hilfe bei den Hausaufgaben in Mathe." },
-            { id: "s2", text: "Sie suchen ein günstiges Fahrrad für den Weg zur Arbeit." },
+            { id: "g1", text: "Lücke (1)" },
+            { id: "g2", text: "Lücke (2)" },
           ],
           right: [
-            { id: "ra", text: "Anzeige A" },
-            { id: "rb", text: "Anzeige B" },
+            // Short on purpose: each is one line in the open list, which keeps the list inside the pane.
+            { id: "ra", text: "A: Am Nachmittag kommen viele Familien." },
+            { id: "rb", text: "B: Er liegt mitten in der Stadt." },
+            { id: "rc", text: "C: Abends gibt es dort Konzerte." },
           ],
         },
-        stimulus: null,
+        stimulus: STIMULUS,
         answer: null,
       },
     ],
@@ -41,20 +57,27 @@ export const READING_SCRIPT: TutorialScript = {
       actions: [
         { do: "spotlight", on: { kind: "ui", name: "passage" } },
         { do: "move", to: { kind: "ui", name: "passage" } },
+        { do: "wait", ms: 2600 },
+        { do: "spotlight", on: { kind: "tray", item: 0, id: "" } },
+        { do: "move", to: { kind: "tray", item: 0, id: "" } },
       ],
     },
     {
-      id: "situations",
+      id: "gap",
+      actions: [{ do: "click", on: { kind: "matchRow", item: 0, id: "g1" }, opens: true }],
+    },
+    {
+      id: "pick",
+      actions: [{ do: "click", on: { kind: "option", item: 0, id: "g1:rb" }, answer: { matches: { g1: "rb" } } }],
+    },
+    {
+      id: "used",
       actions: [
-        { do: "spotlight", on: { kind: "matchRow", item: 0, id: "s1" } },
-        { do: "move", to: { kind: "matchRow", item: 0, id: "s1" } },
+        { do: "click", on: { kind: "matchRow", item: 0, id: "g2" }, opens: true },
+        { do: "wait", ms: 1200 },
+        { do: "click", on: { kind: "option", item: 0, id: "g2:ra" }, answer: { matches: { g2: "ra" } } },
       ],
     },
-    {
-      id: "drag",
-      actions: [{ do: "drag", from: { kind: "chip", item: 0, id: "rb" }, to: { kind: "matchRow", item: 0, id: "s1" }, answer: { matches: { s1: "rb" } } }],
-    },
-    { id: "click", actions: [{ do: "click", on: { kind: "option", item: 0, id: "s2:ra" }, answer: { matches: { s2: "ra" } } }] },
     {
       id: "notes",
       actions: [

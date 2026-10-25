@@ -8,6 +8,7 @@ import { ItemHeading } from "@/components/candidate/exam/ItemHeading";
 import { ItemView } from "@/components/candidate/exam/ItemView";
 import { ReadingPane } from "@/components/candidate/exam/ReadingPane";
 import { NavStrip } from "@/components/candidate/exam/ExamNav";
+import { MatchUiProvider } from "@/components/candidate/exam/match-ui";
 import { ImageSrcContext, type ImageSrc } from "@/components/candidate/exam/ExamImage";
 import { ScratchPad } from "@/components/candidate/exam/notes/ScratchPad";
 import { StemNotes } from "@/components/candidate/exam/notes/StemNotes";
@@ -80,11 +81,13 @@ type StageProps = {
   answers: readonly ItemAnswer[];
   marks: readonly boolean[];
   uiPresses: DemoState["uiPresses"];
+  /** The matching row or gap whose list the script has opened. */
+  open: DemoState["open"];
   /** Stage time, in steps of 100 ms (the clocks and the player's progress read it). */
   t: number;
 };
 
-const StageContent = memo(function StageContent({ script, answers, marks, uiPresses, t, content }: StageProps & { content: React.Ref<HTMLDivElement> }) {
+const StageContent = memo(function StageContent({ script, answers, marks, uiPresses, open, t, content }: StageProps & { content: React.Ref<HTMLDivElement> }) {
   const e = useT("exam");
   const n = useT("examNav");
   const cw = useT("cheatWarning");
@@ -136,11 +139,14 @@ const StageContent = memo(function StageContent({ script, answers, marks, uiPres
   } else if (first) {
     const reading = layout === "reading" && passage;
     const task = layout === "task";
+    // A text-insertion item has its gaps in the reading pane, so its scope for targets is the pane and the question together.
+    const scope = { [ITEM_ATTR]: 0 };
+    const match = reading && first.content.kind === "MATCHING" ? { item: first, answer: answers[0] ?? {}, onChange: noop } : undefined;
     body = (
       <div className={cn("mx-auto px-7", task ? "pb-4 pt-4" : "pb-10 pt-8", reading || clozeHere || task ? "max-w-[1200px]" : "max-w-[760px]")}>
-        <div className={cn(reading && "grid gap-8 lg:grid-cols-2")}>
-          {reading ? <ReadingPane title={passage.title} text={passage.text} token={DEMO_KEY} sectionPosition={0} /> : null}
-          <div {...{ [ITEM_ATTR]: 0 }}>
+        <div className={cn(reading && "grid gap-8 lg:grid-cols-2")} {...(reading ? scope : {})}>
+          {reading ? <ReadingPane title={passage.title} text={passage.text} token={DEMO_KEY} sectionPosition={0} match={match} /> : null}
+          <div {...(reading ? {} : scope)}>
             <ItemHeading variant="single" label={e("questionOf", { n: first.sequence, total: nav.total })} progress={progressOf(0)} flagged={!!marks[0]} compact={task} />
             {first.content.kind === "SPEAKING" ? (
               <DemoSpeaking item={first} presses={presses("record")} t={t} />
@@ -229,7 +235,9 @@ const StageContent = memo(function StageContent({ script, answers, marks, uiPres
           token={DEMO_KEY}
           sectionPosition={0}
         />
-        {body}
+        <MatchUiProvider inline openRow={open?.kind === "matchRow" ? open.id : null}>
+          {body}
+        </MatchUiProvider>
       </div>
       {footer}
     </div>
@@ -262,6 +270,7 @@ export function DemoStage({ script, state, jump, reducedMotion }: { script: Tuto
   const answers = useStable(state.answers);
   const marks = useStable(state.marks);
   const uiPresses = useStable(state.uiPresses);
+  const open = useStable(state.open);
 
   // Measured after each render: the targets move when the script fills an answer, and the content may scroll to show one.
   useLayoutEffect(() => {
@@ -319,7 +328,7 @@ export function DemoStage({ script, state, jump, reducedMotion }: { script: Tuto
       <ImageSrcContext.Provider value={DEMO_IMAGES}>
         <div ref={stage} className="relative overflow-hidden bg-paper" style={{ width: STAGE_W, height: STAGE_H }}>
           <div inert aria-hidden="true" className="h-full">
-            <StageContent script={script} answers={answers} marks={marks} uiPresses={uiPresses} t={t} content={content} />
+            <StageContent script={script} answers={answers} marks={marks} uiPresses={uiPresses} open={open} t={t} content={content} />
           </div>
           {overlay.spot ? (
             <div

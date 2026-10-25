@@ -114,6 +114,8 @@ export type DemoState = {
   typing: Target | null;
   /** When each part of the screen around the items was clicked. */
   uiPresses: Partial<Record<UiName, number[]>>;
+  /** The matching row or gap whose list a click has opened and no later click has closed. */
+  open: Target | null;
 };
 
 const RECORD_FIELDS = ["gaps", "matches", "tfng"] as const;
@@ -159,6 +161,7 @@ export function stateAtTimeline(script: TutorialScript, timeline: Timeline, time
     spotlight: null,
     typing: null,
     uiPresses: {},
+    open: null,
   };
   const pressed = (at: number, target: Target) => {
     state.press = { at, target };
@@ -183,6 +186,7 @@ export function stateAtTimeline(script: TutorialScript, timeline: Timeline, time
           const i = itemOf(action.on);
           if (action.answer && answers[i]) answers[i] = mergeAnswer(answers[i], action.answer);
           if (action.mark && i < marks.length) marks[i] = !marks[i];
+          state.open = action.opens ? action.on : null;
           break;
         }
         case "drag": {

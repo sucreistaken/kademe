@@ -43,21 +43,6 @@
         "ms": 5520,
         "hash": "0f238a02976a24"
       },
-      "situations": {
-        "src": "/tutorial/en/READING/situations.mp3",
-        "ms": 5440,
-        "hash": "0f717cdf990cad"
-      },
-      "drag": {
-        "src": "/tutorial/en/READING/drag.mp3",
-        "ms": 3360,
-        "hash": "195a3eba6bc128"
-      },
-      "click": {
-        "src": "/tutorial/en/READING/click.mp3",
-        "ms": 2720,
-        "hash": "1fe9965c896e8f"
-      },
       "notes": {
         "src": "/tutorial/en/READING/notes.mp3",
         "ms": 5760,
@@ -229,21 +214,6 @@
         "src": "/tutorial/de/READING/passage.mp3",
         "ms": 4880,
         "hash": "0e2b706cd508b8"
-      },
-      "situations": {
-        "src": "/tutorial/de/READING/situations.mp3",
-        "ms": 5040,
-        "hash": "0adfe174e6e977"
-      },
-      "drag": {
-        "src": "/tutorial/de/READING/drag.mp3",
-        "ms": 3760,
-        "hash": "113337a44d7dfd"
-      },
-      "click": {
-        "src": "/tutorial/de/READING/click.mp3",
-        "ms": 3400,
-        "hash": "093b0ae326211d"
       },
       "notes": {
         "src": "/tutorial/de/READING/notes.mp3",
@@ -417,21 +387,6 @@
         "ms": 5440,
         "hash": "04cbede6443c72"
       },
-      "situations": {
-        "src": "/tutorial/es/READING/situations.mp3",
-        "ms": 5880,
-        "hash": "06833c9f83f3e7"
-      },
-      "drag": {
-        "src": "/tutorial/es/READING/drag.mp3",
-        "ms": 3800,
-        "hash": "147d3ae0b3638f"
-      },
-      "click": {
-        "src": "/tutorial/es/READING/click.mp3",
-        "ms": 3640,
-        "hash": "17cad25ff9e1fb"
-      },
       "notes": {
         "src": "/tutorial/es/READING/notes.mp3",
         "ms": 6640,
@@ -604,21 +559,6 @@
         "ms": 5200,
         "hash": "0babbda0ae53a8"
       },
-      "situations": {
-        "src": "/tutorial/tr/READING/situations.mp3",
-        "ms": 4600,
-        "hash": "155cd65c71c0c3"
-      },
-      "drag": {
-        "src": "/tutorial/tr/READING/drag.mp3",
-        "ms": 3880,
-        "hash": "007a01df928434"
-      },
-      "click": {
-        "src": "/tutorial/tr/READING/click.mp3",
-        "ms": 3240,
-        "hash": "08422792ba61b1"
-      },
       "notes": {
         "src": "/tutorial/tr/READING/notes.mp3",
         "ms": 7400,
@@ -790,21 +730,6 @@
         "src": "/tutorial/ar/READING/passage.mp3",
         "ms": 6560,
         "hash": "10f876c51ca8fe"
-      },
-      "situations": {
-        "src": "/tutorial/ar/READING/situations.mp3",
-        "ms": 6320,
-        "hash": "095961391293ce"
-      },
-      "drag": {
-        "src": "/tutorial/ar/READING/drag.mp3",
-        "ms": 3240,
-        "hash": "00d39a7941bb0a"
-      },
-      "click": {
-        "src": "/tutorial/ar/READING/click.mp3",
-        "ms": 3560,
-        "hash": "1091bee97f1165"
       },
       "notes": {
         "src": "/tutorial/ar/READING/notes.mp3",

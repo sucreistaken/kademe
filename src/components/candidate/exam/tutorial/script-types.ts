@@ -28,11 +28,13 @@ export type TutorialStep = { id: string; minMs?: number; actions: DemoAction[] }
  * (gaps, matches, tfng) merge key by key. `mark: true` toggles the Mark of the
  * clicked item (a `ui` target marks the first item on the stage). A spotlight
  * holds until the next spotlight of the same step and ends with the step.
+ * `opens: true`: the click opens the list of a matching row or gap (the target
+ * is a `matchRow`); the list stays open until the next click.
  */
 export type DemoAction =
   | { do: "spotlight"; on: Target | null }
   | { do: "move"; to: Target }
-  | { do: "click"; on: Target; answer?: Partial<ItemAnswer>; mark?: boolean }
+  | { do: "click"; on: Target; answer?: Partial<ItemAnswer>; mark?: boolean; opens?: boolean }
   | { do: "drag"; from: Target; to: Target; answer: Partial<ItemAnswer> }
   | { do: "type"; into: Target; text: string }
   | { do: "wait"; ms: number };
@@ -40,10 +42,12 @@ export type DemoAction =
 /**
  * A place on the stage. `item` is the index into `stage.items`. Ids:
  * option = a choice option id, a cloze word, `<statement>:<value>` for true or
- * false, `<row>:<target>` for a matching row's letter button; matchRow = a
- * matching row id; tray = the matching tray (id unused); gap = a gap id, or
- * "text" for the item's free text field; chip = a matching target id in the
- * tray. `ui` names the parts of the screen around the item.
+ * false, `<row>:<target>` for an entry of a matching row's open list;
+ * matchRow = the button that opens a matching row's list (a gap in the reading
+ * text, or the row's "Choose" button), by row id; tray = the list of lettered
+ * sentences in a text-insertion item (id unused); gap = a gap id, or "text"
+ * for the item's free text field; chip = a drag chip (no screen has one now).
+ * `ui` names the parts of the screen around the item.
  */
 export type Target =
   | { kind: "option" | "matchRow" | "tray" | "gap" | "chip"; item: number; id: string }

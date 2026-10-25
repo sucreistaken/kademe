@@ -1103,7 +1103,9 @@
     "matchTargets": "Optionen",
     "matchHint": "Wählen Sie für jede Zeile einen Buchstaben.",
     "matchUsed": "Gewählt",
-    "matchUsedElsewhere": "in einer anderen Zeile gewählt",
+    "matchPlaceholder": "Wählen Sie ...",
+    "insertUsedIn": "in Lücke {n}",
+    "matchUsedAt": "bei Nr. {n}",
     "matchClear": "Auswahl löschen",
     "gapLabel": "Lücke {n}",
     "gapOf": "Lücke {n} von {total}",
@@ -1368,10 +1370,10 @@
       "next": "Mit Weiter geht es zur nächsten Frage. Ihre Antworten werden automatisch gespeichert."
     },
     "READING": {
-      "passage": "Links steht der Text. Hier sind es zwei kurze Anzeigen, A und B.",
-      "situations": "Rechts stehen die Situationen. Finden Sie zu jeder die passende Anzeige.",
-      "drag": "Ziehen Sie den Buchstaben der Anzeige auf die Situation.",
-      "click": "Oder klicken Sie einfach auf den Buchstaben in der Zeile.",
+      "passage": "Links steht der Text mit zwei Lücken. Rechts stehen die fehlenden Sätze.",
+      "gap": "Klicken Sie auf eine Lücke im Text. Eine Liste mit den Sätzen öffnet sich.",
+      "pick": "Wählen Sie den passenden Satz. Er erscheint in der Lücke.",
+      "used": "Ein Satz, den Sie schon verwendet haben, rutscht ans Ende der Liste. Wählen Sie für diese Lücke einen anderen.",
       "notes": "Mit diesen Werkzeugen heben Sie Wörter im Text hervor oder unterstreichen sie. Notizen werden nicht bewertet.",
       "mark": "Mit Markieren finden Sie eine Frage später leicht wieder. Über die Zahlen unten erreichen Sie jede Frage.",
       "next": "Behalten Sie die Uhr oben im Blick und drücken Sie dann auf Weiter."

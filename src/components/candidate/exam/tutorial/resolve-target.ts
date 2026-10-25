@@ -43,9 +43,9 @@ export function targetQuery(target: Target): TargetQuery {
     case "option":
       return { scope: target.item, anyOf: [{ attr: "data-demo-option", value: target.id }] };
     case "matchRow":
-      return { scope: target.item, anyOf: [{ attr: "data-match-drop", value: target.id }] };
+      return { scope: target.item, anyOf: [{ attr: "data-match-trigger", value: target.id }] };
     case "tray":
-      return { scope: target.item, anyOf: [{ attr: "data-match-tray", value: null }] };
+      return { scope: target.item, anyOf: [{ attr: "data-insert-list", value: null }] };
     case "chip":
       return { scope: target.item, anyOf: [{ attr: "data-demo-chip", value: target.id }] };
     case "gap":

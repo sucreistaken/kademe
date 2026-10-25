@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { matchingTargets, type CandidateItem } from "@/lib/exam/safe";
+import type { CandidateItem } from "@/lib/exam/safe";
 import { withPoolInstruction } from "@/lib/exam/ctest-instruction";
 import { GapTable } from "@/components/gap-table";
 import { hasGapLayout, splitGapLayout } from "@/lib/exam/gap-layout";
@@ -11,13 +11,14 @@ import { tfngChoices } from "@/lib/exam/tfng-labels";
 import type { ItemAnswer } from "@/lib/exam/types";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
-import { AD_TONE_CLASSES, adTone } from "@/lib/exam/ad-tone";
 import { ABOVE_FOOTER } from "@/components/visual/footer-action";
 import { TaskExpectations } from "./TaskExpectations";
 import { TaskPromptCard } from "./TaskPromptCard";
 import { ClozeItem } from "./ClozeItem";
 import { ExamImage, TaskImages, pictureCaption } from "./ExamImage";
 import { Instruction, radioKeys, TASK_LEFT, TASK_RIGHT, TASK_SPLIT } from "./item-parts";
+import { MatchingView } from "./MatchingView";
+export { withMatch } from "./match-targets";
 import { useChipDrag } from "./use-chip-drag";
 import { UmlautBar, insertAt } from "./umlaut-bar";
 
@@ -244,6 +245,10 @@ function ChoiceItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps)
  * instruction ("Richtig", "Falsch", "Nicht im Text", or "Ja", "Nein", "Text
  * sagt dazu nichts" for Ja/Nein items), the exam's language;
  * bare letters confused students (school feedback 2026-10-16).
+ *
+ * Each statement is a numbered row: the number and the statement (16px), and
+ * under the statement a segmented control of equal parts, the same width on
+ * every row, so the choices line up down the page.
  */
 function TfngItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps) {
   const uid = useId();
@@ -252,16 +257,23 @@ function TfngItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps) {
   return (
     <div>
       {hidePrompt ? null : <Prompt text={item.prompt} mode="whole" />}
-      <div className={cn("flex flex-col gap-3", hidePrompt ? "mt-1" : "mt-4")}>
+      <ol className={cn("flex flex-col gap-3", hidePrompt ? "mt-1" : "mt-4")}>
         {item.content.statements.map((s, n) => {
           const picked = answer.tfng?.[s.id];
           const textId = `${uid}-s${n}`;
           return (
-            <div key={s.id} lang="de" className="rounded-[10px] border border-line bg-surface px-4 py-3">
+            <li key={s.id} lang="de" className="grid grid-cols-[1.75rem_minmax(0,1fr)] gap-x-3 gap-y-3 rounded-[10px] border border-line bg-surface px-4 py-3.5">
+              <span aria-hidden className="tnum mt-0.5 flex size-7 items-center justify-center rounded-full bg-cream text-[13px] font-bold text-ink-2">
+                {n + 1}
+              </span>
               <p id={textId} lang="de" className="text-[16px] leading-[1.55] text-ink">
                 {s.text}
               </p>
-              <div role="radiogroup" aria-labelledby={textId} className="mt-2.5 flex flex-wrap gap-2">
+              <div
+                role="radiogroup"
+                aria-labelledby={textId}
+                className={cn("col-start-2 grid w-full rounded-[10px] border border-line-strong", values.length === 3 ? "max-w-[32rem] grid-cols-3" : "max-w-[22rem] grid-cols-2")}
+              >
                 {values.map(([v, label], i) => {
                   const on = picked === v;
                   return (
@@ -277,8 +289,8 @@ function TfngItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps) {
                       onClick={() => onChange({ tfng: { ...(answer.tfng ?? {}), [s.id]: v } })}
                       data-demo-option={`${s.id}:${v}`}
                       className={cn(
-                        "flex h-10 min-w-12 items-center justify-center rounded-[8px] border px-3 text-[14px] font-semibold",
-                        on ? "border-accent bg-accent text-white" : "border-line-strong text-ink-2 hover:border-accent hover:text-ink",
+                        "flex min-h-10 items-center justify-center border-s border-line-strong px-2 py-1.5 text-center text-[14px] font-semibold leading-tight first:rounded-s-[9px] first:border-s-0 last:rounded-e-[9px]",
+                        on ? "border-accent bg-accent text-white" : "bg-surface text-ink-2 hover:bg-canvas hover:text-ink",
                       )}
                     >
                       {label}
@@ -286,10 +298,10 @@ function TfngItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps) {
                   );
                 })}
               </div>
-            </div>
+            </li>
           );
         })}
-      </div>
+      </ol>
     </div>
   );
 }
@@ -645,230 +657,17 @@ function GapItem({ item, answer, onChange, disabled }: ItemProps) {
   );
 }
 
-/** A matching answer with one row set, or removed when `targetId` is null. Never stores "". */
-export function withMatch(matches: Record<string, string> | undefined, rowId: string, targetId: string | null) {
-  const next = { ...(matches ?? {}) };
-  if (targetId) next[rowId] = targetId;
-  else delete next[rowId];
-  return next;
-}
-
-/** Matching instruction shown above the rows, in the exam's language. */
-const MATCH_INSTRUCTION = "Ziehen Sie den passenden Buchstaben in jede Zeile oder klicken Sie ihn an.";
-
-/**
- * Matching: the targets stay in view as a lettered list and every row picks a
- * letter. A target picked in another row is faded but still allowed, because
- * some formats ("Keine Anzeige passt", "beide") fit more than one row. Rows
- * hold the aliased target ids the server sent; a cleared row is removed, never
- * stored as "".
- */
+/** Matching and text insertion: see MatchingView. The prompt is drawn here, where Prompt lives. */
 function MatchingItem({ item, answer, onChange, disabled, hidePrompt }: ItemProps) {
-  const ti = useT("examItems");
-  const uid = useId();
-  // Same pointer drag as GapItem. The letter buttons in each row stay the click and keyboard path.
-  const { drag, onPointerDown, isDragClick } = useChipDrag<string>({
-    dropAt: (x, y) => (document.elementFromPoint(x, y)?.closest("[data-match-drop]") as HTMLElement | null)?.dataset.matchDrop ?? null,
-    onDrop: (targetId, rowId) => setRow(rowId, targetId),
-    disabled: !!disabled,
-  });
-  // Row picked by clicking its card; the next tray click lands there, like GapItem's selected slot.
-  const [selectedRow, setSelectedRow] = useState<string | null>(null);
-  if (item.content.kind !== "MATCHING") return null;
-  const targets = matchingTargets(item.content.right);
-  const rows = item.content.left;
-  const matches = answer.matches ?? {};
-  const used = new Set(Object.values(matches).filter(Boolean));
-  const setRow = (rowId: string, targetId: string | null) => {
-    onChange({ matches: withMatch(matches, rowId, targetId) });
-    setSelectedRow(null);
-  };
-  const clickTarget = (targetId: string) => {
-    const row = selectedRow ?? rows.find((l) => !matches[l.id])?.id;
-    if (row) setRow(row, targetId);
-  };
-  // "Anzeige A" says nothing the letter does not: the texts are in the reading
-  // passage, so the list is left out and only a "0" target is explained.
-  const bare = targets.every((r) => r.badge === "0" || /^(?:\p{L}+\s+)?[A-Z]$/u.test(r.label.trim()));
-  // Picture targets: the gallery above the rows carries the pictures and their text, so the tray and the picks show the letter only.
-  const gallery = targets.filter((r) => r.image);
-  const lettersOnly = bare || gallery.length > 0;
-  const zero = targets.find((r) => r.badge === "0");
-  const dragged = drag ? targets.find((r) => r.id === drag.key) : undefined;
-  // Lettered targets wear the tone of their advert card; "0" and non-lettered targets stay neutral grey.
-  const toneIndex = new Map(targets.map((r, i) => [r.id, i]));
-  const toneOf = (r: (typeof targets)[number]) => (bare && r.badge !== "0" ? AD_TONE_CLASSES[adTone(r.badge, toneIndex.get(r.id) ?? 0)] : null);
-  const letterDisc = (r: (typeof targets)[number], size: string) => {
-    const tone = toneOf(r);
-    return (
-      <span className={cn("flex shrink-0 items-center justify-center rounded-full border-2 text-label text-ink", size, tone ? cn("bg-surface", tone.disc) : "border-line bg-cream")}>
-        {r.badge}
-      </span>
-    );
-  };
   return (
-    <div>
-      {hidePrompt ? null : <Prompt text={item.prompt} mode="whole" />}
-      {/* On a page of several items with the same prompt, the drag note is said once too. */}
-      {hidePrompt ? null : (
-        <p lang="de" className="mt-3 text-[14px] text-ink-2">
-          {MATCH_INSTRUCTION}
-        </p>
-      )}
-      {gallery.length > 0 ? (
-        <div className="mt-4 grid max-w-[720px] grid-cols-2 gap-3 sm:grid-cols-3">
-          {gallery.map((r) => {
-            const caption = pictureCaption(r.text);
-            return (
-              <figure key={r.id} lang="de" className="m-0 min-w-0">
-                <div className="relative">
-                  <ExamImage sequence={item.sequence} image={r.image!} />
-                  <span className="absolute start-2 top-2 flex size-8 items-center justify-center rounded-full bg-white text-[15px] font-semibold text-ink shadow-sm">{r.badge}</span>
-                </div>
-                {caption ? <figcaption className="mt-1.5 text-[14px] text-ink-2">{caption}</figcaption> : null}
-              </figure>
-            );
-          })}
-        </div>
-      ) : null}
-      {/* Stays under the page header while the rows scroll, so every row can take a drop. */}
-      <div aria-hidden data-match-tray lang={lettersOnly ? undefined : "de"} dir={lettersOnly ? "ltr" : undefined} className="sticky top-14 z-10 -mx-1 mt-3 flex flex-wrap gap-2 bg-canvas px-1 py-2">
-        {targets.map((r) => {
-          const elsewhere = used.has(r.id);
-          const tone = toneOf(r);
-          return (
-            <button
-              key={r.id}
-              type="button"
-              tabIndex={-1}
-              disabled={disabled}
-              title={r.image?.alt ?? r.label}
-              onPointerDown={(e) => onPointerDown(e, r.id)}
-              data-demo-chip={r.id}
-              onClick={() => {
-                if (!isDragClick()) clickTarget(r.id);
-              }}
-              className={cn(
-                "flex min-h-9 max-w-full cursor-grab touch-none select-none items-start gap-2 rounded-[8px] border px-2.5 py-1.5 text-start text-[14px] leading-[1.45] text-ink hover:border-accent",
-                lettersOnly ? (tone ? tone.chip : "border-line bg-cream") : "bg-surface",
-                elsewhere ? (lettersOnly ? "border-dashed opacity-60" : "border-dashed border-line-strong opacity-60") : !lettersOnly && "border-line-strong",
-                drag?.key === r.id && "opacity-40",
-              )}
-            >
-              {lettersOnly ? letterDisc(r, "size-7") : <span className="font-semibold">{r.badge}</span>}
-              {lettersOnly ? null : (
-                <span lang="de" className="text-ink-2">
-                  {r.label}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-      {/* The tray above already lists every target in full, so no second list. */}
-      {lettersOnly && zero ? (
-        <p lang="de" className="mt-3 text-[14px] text-ink-2">
-          0 = {zero.label}
-        </p>
-      ) : null}
-      <div className="mt-4 flex flex-col gap-2.5">
-        {item.content.left.map((l, n) => {
-          const chosen = targets.find((r) => r.id === matches[l.id]);
-          const rowId = `${uid}-row${n}`;
-          return (
-            <div
-              key={l.id}
-              data-match-row
-              data-match-drop={l.id}
-              onClick={(e) => {
-                // Empty space of the card selects the row; its buttons keep their own clicks.
-                if (disabled || (e.target as HTMLElement).closest("button")) return;
-                setSelectedRow(selectedRow === l.id ? null : l.id);
-              }}
-              className={cn(
-                "rounded-[10px] border bg-surface px-4 py-3",
-                chosen ? "border-line-strong" : "border-line",
-                (drag?.over === l.id || selectedRow === l.id) && "ring-2 ring-accent",
-              )}
-            >
-              <p id={rowId} lang="de" className="text-[15px] leading-[1.55] text-ink">
-                {l.text}
-              </p>
-              <div role="radiogroup" aria-labelledby={rowId} lang="de" className="mt-2.5 flex flex-wrap gap-1.5">
-                {targets.map((r, i) => {
-                  const on = chosen?.id === r.id;
-                  const elsewhere = !on && used.has(r.id);
-                  const tone = toneOf(r);
-                  return (
-                    <button
-                      key={r.id}
-                      type="button"
-                      role="radio"
-                      aria-checked={on}
-                      data-demo-option={`${l.id}:${r.id}`}
-                      aria-label={`${r.badge}: ${r.image?.alt ?? r.label}${elsewhere ? `, ${ti("matchUsedElsewhere")}` : ""}`}
-                      title={r.image?.alt ?? r.label}
-                      tabIndex={on || (!chosen && i === 0) ? 0 : -1}
-                      disabled={disabled}
-                      onKeyDown={radioKeys}
-                      onClick={() => setRow(l.id, r.id)}
-                      className={cn(
-                        "flex h-10 min-w-10 items-center justify-center rounded-[8px] border px-2 text-[14px] font-semibold",
-                        on
-                          ? tone
-                            ? cn("border-2 border-accent text-ink", tone.chip.split(" ")[0])
-                            : "border-accent bg-accent text-white"
-                          : elsewhere
-                            ? "border-dashed border-line-strong text-muted hover:border-accent hover:text-ink"
-                            : "border-line-strong text-ink-2 hover:border-accent hover:text-ink",
-                      )}
-                    >
-                      {r.badge}
-                    </button>
-                  );
-                })}
-              </div>
-              {/* One line, reserved even when empty, so a pick never moves the rows below. */}
-              <div className="mt-2 flex h-6 items-center justify-between gap-3">
-                <p lang="de" title={chosen?.label} className="flex min-w-0 items-center gap-2 truncate text-[14px] text-ink-2">
-                  {chosen && lettersOnly ? letterDisc(chosen, "size-6") : null}
-                  {chosen && !lettersOnly ? (
-                    <>
-                      <span aria-hidden>→ </span>
-                      {chosen.label}
-                    </>
-                  ) : null}
-                </p>
-                {chosen ? (
-                  <button
-                    type="button"
-                    disabled={disabled}
-                    onClick={(e) => {
-                      // The button goes away with the pick; keep keyboard focus in the row.
-                      const first = e.currentTarget.closest("[data-match-row]")?.querySelector<HTMLButtonElement>('[role="radio"]');
-                      setRow(l.id, null);
-                      window.setTimeout(() => first?.focus(), 0);
-                    }}
-                    className="shrink-0 text-[13px] text-muted underline decoration-underline underline-offset-2 hover:text-ink"
-                  >
-                    {ti("matchClear")}
-                  </button>
-                ) : null}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      {drag && dragged ? (
-        <div
-          aria-hidden
-          style={{ left: drag.x, top: drag.y }}
-          className="pointer-events-none fixed z-50 flex h-9 -translate-x-1/2 -translate-y-1/2 items-center rounded-[8px] border border-accent bg-surface px-3 text-[14px] font-semibold text-ink shadow-lg"
-        >
-          {dragged.badge}
-        </div>
-      ) : null}
-    </div>
+    <MatchingView
+      item={item}
+      answer={answer}
+      onChange={onChange}
+      disabled={disabled}
+      hidePrompt={hidePrompt}
+      prompt={<Prompt text={item.prompt} mode="whole" />}
+    />
   );
 }
 

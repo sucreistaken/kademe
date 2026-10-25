@@ -1103,7 +1103,9 @@
     "matchTargets": "Opciones",
     "matchHint": "Elija una letra para cada fila.",
     "matchUsed": "Elegida",
-    "matchUsedElsewhere": "elegida en otra fila",
+    "matchPlaceholder": "Elija ...",
+    "insertUsedIn": "en el hueco {n}",
+    "matchUsedAt": "en el n.º {n}",
     "matchClear": "Borrar la elección",
     "gapLabel": "Hueco {n}",
     "gapOf": "Hueco {n} de {total}",
@@ -1368,10 +1370,10 @@
       "next": "Pulse Siguiente para continuar. Sus respuestas se guardan automáticamente."
     },
     "READING": {
-      "passage": "El texto está a la izquierda. Aquí son dos anuncios cortos, A y B.",
-      "situations": "A la derecha están las situaciones. Busque el anuncio adecuado para cada una.",
-      "drag": "Arrastre la letra del anuncio hasta la situación.",
-      "click": "O simplemente haga clic en la letra de la fila.",
+      "passage": "El texto está a la izquierda, con dos huecos. A la derecha están las frases que faltan.",
+      "gap": "Haga clic en un hueco del texto. Se abre una lista con las frases.",
+      "pick": "Elija la frase adecuada. Aparece en el hueco.",
+      "used": "Una frase que ya ha usado pasa al final de la lista. Elija otra para este hueco.",
       "notes": "Estas herramientas resaltan o subrayan palabras del texto. Las notas no puntúan.",
       "mark": "Pulse Marcar para volver más tarde. Con los números de abajo puede ir a cualquier pregunta.",
       "next": "Vigile el reloj de arriba y después pulse Siguiente."

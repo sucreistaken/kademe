@@ -1103,7 +1103,9 @@
     "matchTargets": "Seçenekler",
     "matchHint": "Her satır için bir harf seçin.",
     "matchUsed": "Seçildi",
-    "matchUsedElsewhere": "başka bir satırda seçili",
+    "matchPlaceholder": "Seçin ...",
+    "insertUsedIn": "{n}. boşlukta",
+    "matchUsedAt": "{n}. satırda",
     "matchClear": "Seçimi kaldır",
     "gapLabel": "Boşluk {n}",
     "gapOf": "Boşluk {n} / {total}",
@@ -1368,10 +1370,10 @@
       "next": "Devam etmek için Sonraki'ye basın. Cevaplarınız otomatik olarak kaydedilir."
     },
     "READING": {
-      "passage": "Metin solda. Burada A ve B adında iki kısa ilan var.",
-      "situations": "Sağda durumlar var. Her durum için uygun ilanı bulun.",
-      "drag": "İlanın harfini sürükleyip durumun üzerine bırakın.",
-      "click": "Ya da satırdaki harfe tıklamanız yeterli.",
+      "passage": "Metin solda, içinde iki boşluk var. Eksik cümleler sağda listelenir.",
+      "gap": "Metindeki bir boşluğa tıklayın. Cümlelerin listesi açılır.",
+      "pick": "Uyan cümleyi seçin. Cümle boşlukta görünür.",
+      "used": "Daha önce kullandığınız cümle listenin altına iner. Bu boşluk için başka bir cümle seçin.",
       "notes": "Bu araçlarla metindeki kelimeleri vurgulayabilir ya da altını çizebilirsiniz. Notlar puanlanmaz.",
       "mark": "Sonra dönmek için İşaretle'ye basın. Alttaki numaralarla istediğiniz soruya gidebilirsiniz.",
       "next": "Üstteki saate göz atın, sonra Sonraki'ye basın."

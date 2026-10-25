@@ -42,6 +42,7 @@ import { ExamTopBar } from "@/components/candidate/exam/ExamTopBar";
 import { TutorialReplay } from "@/components/candidate/exam/tutorial/TutorialReplay";
 import { ItemHeading } from "@/components/candidate/exam/ItemHeading";
 import { ReadingPane } from "@/components/candidate/exam/ReadingPane";
+import { MatchUiScope } from "@/components/candidate/exam/match-ui";
 import { ScratchPad } from "@/components/candidate/exam/notes/ScratchPad";
 import { stemsContentKey } from "@/components/candidate/exam/notes/notes-store";
 import { ListeningStems, StemNotes } from "@/components/candidate/exam/notes/StemNotes";
@@ -831,8 +832,16 @@ export function ExamRunner({
               item.stimulus?.kind === "READING" || clozeHere || taskSplit ? "max-w-[1200px]" : "max-w-[760px]",
             )}
           >
-            <div className={cn(item.stimulus?.kind === "READING" && "grid gap-8 lg:grid-cols-2")}>
-              {item.stimulus?.kind === "READING" ? <ReadingPane title={item.stimulus.title} text={item.stimulus.text} token={token} sectionPosition={cur.position} /> : null}
+            <MatchUiScope scope={item.sequence} className={cn(item.stimulus?.kind === "READING" && "grid gap-8 lg:grid-cols-2")}>
+              {item.stimulus?.kind === "READING" ? (
+                <ReadingPane
+                  title={item.stimulus.title}
+                  text={item.stimulus.text}
+                  token={token}
+                  sectionPosition={cur.position}
+                  match={item.content.kind === "MATCHING" ? { item, answer, onChange: change, disabled: inputsOff } : undefined}
+                />
+              ) : null}
               <div>
                 <ItemHeading
                   variant="single"
@@ -875,7 +884,7 @@ export function ExamRunner({
                   </ListeningStems>
                 )}
               </div>
-            </div>
+            </MatchUiScope>
           </div>
         ) : null}
       </div>

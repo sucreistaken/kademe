@@ -1103,7 +1103,9 @@
     "matchTargets": "Options",
     "matchHint": "Pick a letter for each row.",
     "matchUsed": "Chosen",
-    "matchUsedElsewhere": "chosen in another row",
+    "matchPlaceholder": "Choose ...",
+    "insertUsedIn": "in gap {n}",
+    "matchUsedAt": "at no. {n}",
     "matchClear": "Clear choice",
     "gapLabel": "Gap {n}",
     "gapOf": "Gap {n} of {total}",
@@ -1368,10 +1370,10 @@
       "next": "Press Next to go on. Your answers are saved automatically."
     },
     "READING": {
-      "passage": "The text is on the left. Here it is two short ads, A and B.",
-      "situations": "On the right are the situations. Find the ad that fits each one.",
-      "drag": "Drag the letter of the ad onto the situation.",
-      "click": "Or simply click the letter in the row.",
+      "passage": "The text is on the left, with two gaps. The missing sentences are listed on the right.",
+      "gap": "Click a gap in the text. A list of the sentences opens.",
+      "pick": "Choose the sentence that fits. It appears in the gap.",
+      "used": "A sentence you have already used moves to the bottom of the list. Pick another one for this gap.",
       "notes": "These tools highlight or underline words in the text. Notes are not scored.",
       "mark": "Press Mark to come back later. The numbers at the bottom take you to any question.",
       "next": "Keep an eye on the clock at the top, then press Next."

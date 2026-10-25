@@ -36,13 +36,6 @@ function matchingItem(right: Array<{ id: string; text: string }>): CandidateItem
   };
 }
 
-const ads = matchingItem([
-  { id: "oaaaaa", text: "Anzeige A" },
-  { id: "obbbbb", text: "Anzeige B" },
-  { id: "occccc", text: "Anzeige C" },
-  { id: "odddde", text: "Keine Anzeige passt" },
-]);
-
 const sentences = matchingItem([
   { id: "ox1111", text: "Das spart Zeit und Geld." },
   { id: "ox2222", text: "Niemand hatte damit gerechnet." },
@@ -50,80 +43,20 @@ const sentences = matchingItem([
 ]);
 
 describe("matching items", () => {
-  it("shows every target in view with its letter, and no drop-down", () => {
-    const html = render(sentences);
-    expect(html).not.toContain("<select");
-    expect(html).not.toContain("matchTargets");
-    for (const [badge, text] of [
-      ["A", "Das spart Zeit und Geld."],
-      ["B", "Niemand hatte damit gerechnet."],
-      ["C", "Am Ende waren alle zufrieden."],
-    ]) {
-      // One list only: the drag tray, each chip with its letter and full text.
-      expect(html).toMatch(new RegExp(`<span class="font-semibold">${badge}</span><span lang="de"[^>]*>${text}</span>`));
-    }
-  });
-
-  it("uses the targets' own letters, leaves out a bare list and explains only 0", () => {
-    const html = render(ads);
-    expect(html).not.toContain("matchTargets");
-    expect(html).toContain(">0 = Keine Anzeige passt</p>");
-    expect(html).toContain('aria-label="A: Anzeige A"');
-    expect(html).toContain('aria-label="0: Keine Anzeige passt"');
-  });
-
-  it("gives each row a radio group labelled by the row text, with one tab stop", () => {
-    const html = render(sentences);
-    const rows = groups(html);
-    expect(rows).toHaveLength(3);
-    for (const g of rows) {
-      const id = g.match(/^ aria-labelledby="([^"]+)"/)?.[1];
-      expect(id).toBeTruthy();
-      expect(html).toContain(`id="${id}" lang="de"`);
-      const radios = g.split("</div>")[0].match(/role="radio"/g) ?? [];
-      expect(radios).toHaveLength(3);
-      expect(g.split("</div>")[0].match(/tabindex="0"/g)).toHaveLength(1);
-    }
-  });
-
-  it("marks the chosen target, fades it elsewhere, and offers to clear only that row", () => {
-    const html = render(sentences, { matches: { l1: "ox2222" } });
-    const [row1, row2, row3] = groups(html).map((g) => g.split("</div>")[0]);
-    expect(row1).toMatch(/aria-checked="true"[^>]*aria-label="B: Niemand hatte damit gerechnet\."/);
-    expect(row1.match(/tabindex="0"/g)).toHaveLength(1);
-    expect(row1).toMatch(/aria-checked="true"[^>]*tabindex="0"/);
-    // In the other rows B is still a choice, marked as used.
-    expect(row2).toContain('aria-label="B: Niemand hatte damit gerechnet., matchUsedElsewhere"');
-    expect(row2).toContain("border-dashed");
-    expect(row3).toContain("matchUsedElsewhere");
-    // The tray fades B, which is chosen.
-    expect(html).toMatch(/border-dashed border-line-strong opacity-60[^>]*><span class="font-semibold">B<\/span>/);
-    expect(html.match(/matchClear/g)).toHaveLength(1);
-    expect(html).toContain("→ </span>Niemand hatte damit gerechnet.");
-  });
-
-  it("offers a draggable letter tray, drop rows and the German note", () => {
-    const html = render(sentences);
-    const tray = html.split("data-match-tray")[1].split("</div>")[0];
-    expect(tray.match(/<button/g)).toHaveLength(3);
-    expect(tray).toContain("Das spart Zeit und Geld.");
-    expect(html.match(/data-match-drop="/g)).toHaveLength(3);
-    expect(html).toContain('data-match-drop="l1"');
-    expect(html).toContain("Ziehen Sie den passenden Buchstaben in jede Zeile oder klicken Sie ihn an.");
-    expect(html).not.toContain("matchHint");
-    // A bare list shows letters only, and a used target is faded in the tray.
-    const bareTray = render(ads, { matches: { l1: "oaaaaa" } }).split("data-match-tray")[1].split("</div>")[0];
-    expect(bareTray.match(/<button/g)).toHaveLength(4);
-    expect(bareTray).not.toContain('lang="de"');
-    expect(bareTray.match(/opacity-60/g)).toHaveLength(1);
-  });
-
   it("removes a cleared row instead of storing an empty value", () => {
     expect(withMatch({ l1: "ox1111", l2: "ox2222" }, "l1", null)).toEqual({ l2: "ox2222" });
     expect(withMatch(undefined, "l1", "ox1111")).toEqual({ l1: "ox1111" });
     expect(withMatch({ l1: "ox1111" }, "l1", "")).toEqual({});
     expect(hasAnyAnswer(sentences, { matches: withMatch({ l1: "ox1111" }, "l1", null) })).toBe(false);
     expect(hasAnyAnswer(sentences, { matches: { l1: "" } })).toBe(false);
+  });
+
+  it("moves a target to the row picked when each target is used once (text insertion), and shares it otherwise", () => {
+    expect(withMatch({ l1: "ox1111", l2: "ox2222" }, "l2", "ox1111", true)).toEqual({ l2: "ox1111" });
+    expect(withMatch({ l1: "ox1111" }, "l1", "ox1111", true)).toEqual({ l1: "ox1111" });
+    expect(withMatch({ l1: "ox1111" }, "l2", "ox1111")).toEqual({ l1: "ox1111", l2: "ox1111" });
+    // Clearing never touches another row.
+    expect(withMatch({ l1: "ox1111", l2: "ox1111" }, "l1", null, true)).toEqual({ l2: "ox1111" });
   });
 });
 
@@ -156,9 +89,9 @@ describe("hidePrompt", () => {
     expect(withHidden(tf)).toContain("Der Kurs beginnt am Montag.");
     expect(render(sentences)).toContain("Welche Anzeige passt?");
     expect(withHidden(sentences)).not.toContain("Welche Anzeige passt?");
-    // The German drag note goes with the prompt.
-    expect(render(sentences)).toContain("Ziehen Sie den passenden Buchstaben");
-    expect(withHidden(sentences)).not.toContain("Ziehen Sie den passenden Buchstaben");
+    // The German note on how to answer goes with the prompt.
+    expect(render(sentences)).toContain("Wählen Sie für jede Nummer die passende Antwort.");
+    expect(withHidden(sentences)).not.toContain("Wählen Sie für jede Nummer");
   });
 
   it("keeps a choice group labelled for screen readers when the prompt is hidden", () => {
@@ -176,15 +109,6 @@ describe("hidePrompt", () => {
     expect(html).toContain(`id="${id}"`);
     expect(html).toContain("sr-only");
     expect(html).not.toContain("pickOne");
-  });
-});
-
-describe("matching selection", () => {
-  it("has no selected row to begin with, and tray chips stay buttons outside the tab order", () => {
-    const html = render(sentences);
-    expect(html).not.toContain("ring-2");
-    const tray = html.split("data-match-tray")[1].split("</div>")[0];
-    expect(tray.match(/<button[^>]*tabindex="-1"/g)).toHaveLength(3);
   });
 });
 
@@ -332,18 +256,20 @@ describe("German answer groups stay left to right on an Arabic page (the [dir=rt
 
   it("each true/false statement and its answer buttons sit in one German row", () => {
     const html = render(tfngItem("READING"));
-    const rows = html.split('class="rounded-[10px] border border-line bg-surface px-4 py-3"').length - 1;
-    expect(rows).toBe(2);
-    expect(html.match(/<div[^>]*lang="de"[^>]*class="rounded-\[10px\] border border-line bg-surface px-4 py-3"/g)).toHaveLength(2);
+    expect(html.match(/<li[^>]*lang="de"[^>]*class="grid [^"]*rounded-\[10px\] border border-line bg-surface/g)).toHaveLength(2);
+    expect(openingTags(html, "radiogroup")).toHaveLength(2);
   });
 
-  it("the matching tray and every row's letters are German", () => {
-    const html = render(sentences);
-    expect(html).toMatch(/data-match-tray="true" lang="de"/);
-    for (const tag of openingTags(html, "radiogroup")) expect(tag).toContain('lang="de"');
-    // Letters only ("Anzeige A" ... is the bare case): no German text in it, but left to right all the same.
-    const bareTray = render(ads).match(/<div[^>]*data-match-tray[^>]*>/)?.[0] ?? "";
-    expect(bareTray).toContain('dir="ltr"');
+  it("a matching row is left to right, with only its statement and chosen text German (the button's words are the page's language)", () => {
+    const html = render(sentences, { matches: { l1: "ox1111" } });
+    const rows = [...html.matchAll(/<li[^>]*data-match-row="[^"]+"[^>]*>/g)].map((m) => m[0]);
+    expect(rows).toHaveLength(3);
+    for (const row of rows) {
+      expect(row).toContain('dir="ltr"');
+      expect(row).not.toContain('lang="de"');
+    }
+    expect(html).toMatch(/<p id="[^"]+" lang="de"[^>]*>Sie suchen einen Sprachkurs\.<\/p>/);
+    expect(html).toMatch(/<span lang="de" class="min-w-0 flex-1 truncate font-semibold">Das spart Zeit und Geld\.<\/span>/);
   });
 });
 

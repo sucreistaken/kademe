@@ -68,7 +68,7 @@ const STATE_TOGGLES = [
   {
     file: "src/components/candidate/exam/ItemView.tsx",
     classes: "border-accent bg-accent text-white",
-    uses: 2, // the chosen True/False/Not given radio, and the chosen matching letter
+    uses: 1, // the chosen True/False/Not given segment (a matching pick is a letter disc in a dropdown, not a filled button)
     why: "a chosen answer in a role=radio group, not an action",
   },
 ];

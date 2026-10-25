@@ -87,12 +87,14 @@ describe("picture matching", () => {
     answer: null,
   } as CandidateItem;
 
-  it("shows a lettered gallery and letter-only chips", () => {
+  it("shows a lettered gallery above one dropdown button per row, with no letter chips", () => {
     const html = render(item);
     expect(html).toContain('alt="Ein Fahrrad"');
     expect(html).toContain("/api/c/tok%20en/exam/image/2/3/ob2");
     expect(html).not.toContain("Bild A");
-    expect(html.match(/role="radio"/g)).toHaveLength(2);
+    expect(html).not.toContain('role="radio"');
+    expect(html.match(/aria-haspopup="listbox"/g)).toHaveLength(1);
+    expect(html.indexOf("<img")).toBeLessThan(html.indexOf("aria-haspopup"));
   });
 });
 

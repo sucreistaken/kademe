@@ -306,6 +306,25 @@ Nein / Text sagt dazu nichts gösterir. Saklanan değerler R / F / NG kalır, bu
 kayıtlar etkilenmez. `twoWay` ile birleşebilir (NG yok). Banka madde sayfası bu ifadeyi ve `pick` değerini
 gösterir.
 
+**Eşleştirme ve metne yerleştirme ekranı (tur 3, 2026-10-25).** Cevap biçimi (`answer.matches`: satır ->
+hedef) ve puanlama değişmedi; yalnız ekran. Sürükle-bırak ve yapışkan harf tepsisi kalktı (kelime havuzu ve
+C-testi sürüklemesi `GapItem`'de durur). Her seçim tek bir listeden yapılır (`MatchPicker.tsx`: Radix
+açılır pencere içinde `role="listbox"`; oklar, Home, End, yazılan harf, Enter/Boşluk, Esc; kapanınca odak
+düğmeye döner). Başka satırda seçili hedefler listenin altına iner, soluk görünür ve nerede olduğunu söyler
+("in Lücke 2", "bei Nr. 2"); yine seçilebilir (seçmek taşır). "0 / hiçbirine uymaz" hedefi hiç kullanılmış
+sayılmaz (`match-options.ts`). *Metne yerleştirme:* satırları "Lücke 1", "Lücke (1)", "Lücke [1]" olan
+eşleştirme maddesinin boşlukları okuma metninde (`PassageBody`) düğmeye dönüşür; metindeki işaret
+"(1) ________", "[1] ___" ya da "[Lücke 1]" olabilir (`insertion-gaps.ts: linkInsertion`, tohum bankasının
+12 maddesi testle bağlanır). Hepsi bulunamaz ya da belirsizse (tüm satırlar ya da hiçbiri) madde satır başına
+bir açılır listeye düşer. Soru sütununda yalnız yönerge ve A-G cümle listesi kalır, kullanılan cümle soluk
+görünür ve "-> 2" der; açık bir boşluk varken listeden bir cümleye tıklamak onu o boşluğa koyar. Okuma
+bölmesi ile soru sütunu açık listeyi `match-ui.tsx` bağlamı (`MatchUiScope`, ExamRunner'da) üzerinden paylaşır.
+*Öteki eşleştirme* (kişi-ilan, başlık, görüş, resim): numaralı satır, altında tek "Seç" düğmesi; ilan
+harfleri metindeki kartın başlığıyla gösterilir (`cardTitles`). Doğru/yanlış satırları numaralı, üç parçalı
+eşit genişlikte düğme grubudur. İlan kartları dar okuma bölmesinde tek sütundur (`@container`, iki sütun
+yalnız 46rem'den geniş metinde). Öğretici (okuma): bir boşluğa tıklar, listeyi açar, cümleyi seçer
+(`DemoAction.click.opens`, `DemoState.open`).
+
 **Boşluk konuları.** Boşluklu metin ve kelime havuzu boşluklarına anahtarda (`key.topics`: boşluk
 kimliği -> konu kimliği) konu bağlanır; konu kataloğu `topics.ts` içindedir ve her tohum beceri etiketi
 ile boşluk konusu orada çözülmek zorundadır (`topics.test.ts`). Hangi boşluğun hangi konuya bağlı olduğu

@@ -1,21 +1,26 @@
 "use client";
 
-import { PassageBody } from "@/components/candidate/exam/PassageBody";
+import { PassageBody, type PassageMatch } from "@/components/candidate/exam/PassageBody";
 import { NotesLayer } from "@/components/candidate/exam/notes/NotesLayer";
 import { NotesToolbar } from "@/components/candidate/exam/notes/NotesToolbar";
 import { useNotes } from "@/components/candidate/exam/notes/use-notes";
 
-/** The reading passage beside its questions: stays in view while the questions scroll. Carries the student's note tools. */
+/**
+ * The reading passage beside its questions: stays in view while the questions scroll. Carries the student's note tools.
+ * `match`: the text-insertion item shown beside it, whose gaps are drawn in the text.
+ */
 export function ReadingPane({
   title,
   text,
   token,
   sectionPosition,
+  match,
 }: {
   title: string;
   text: string;
   token: string;
   sectionPosition: number;
+  match?: PassageMatch;
 }) {
   const notes = useNotes(token, sectionPosition, title, text);
   return (
@@ -28,7 +33,7 @@ export function ReadingPane({
       ) : null}
       <div lang="de" className="text-title-lg text-ink">{title}</div>
       <NotesLayer controller={notes} pen>
-        <PassageBody text={text} title={title} />
+        <PassageBody text={text} title={title} match={match} />
       </NotesLayer>
     </article>
   );

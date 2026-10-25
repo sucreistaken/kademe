@@ -162,3 +162,44 @@ describe("tutorial timeline", () => {
     expect(formatPlayTime(61_000)).toBe("1:01");
   });
 });
+
+describe("a list opened by a click", () => {
+  const gap = { kind: "matchRow", item: 0, id: "s1" } as const;
+  const option = { kind: "option", item: 0, id: "s1:rb" } as const;
+  const opening: TutorialScript = {
+    section: "READING",
+    stage: { layout: "reading", items: [matching], nav: { current: 1, total: 1 }, clock: "10:00" },
+    steps: [
+      {
+        id: "open",
+        actions: [
+          { do: "click", on: gap, opens: true },
+          { do: "wait", ms: 300 },
+          { do: "click", on: option, answer: { matches: { s1: "rb" } } },
+        ],
+      },
+    ],
+  };
+
+  it("is shut until the press, open after it, and shut again by the next click, which fills the answer", () => {
+    const [openClick, , pick] = buildTimeline(opening).steps[0].actions;
+    expect(stateAt(opening, openClick.effect - 1).open).toBeNull();
+    expect(stateAt(opening, openClick.effect).open).toEqual(gap);
+    // The cursor is on its way to the entry and the list is still open.
+    const moving = stateAt(opening, pick.start + 10);
+    expect(moving.open).toEqual(gap);
+    expect(moving.cursor).toEqual(option);
+    expect(moving.answers[0]).toEqual({});
+    const picked = stateAt(opening, pick.effect);
+    expect(picked.open).toBeNull();
+    expect(picked.answers[0]).toEqual({ matches: { s1: "rb" } });
+  });
+
+  it("is a function of the time: seeking back shuts it and empties the answer", () => {
+    const tl = buildTimeline(opening);
+    expect(stateAt(opening, tl.total).open).toBeNull();
+    const back = stateAt(opening, 0);
+    expect(back.open).toBeNull();
+    expect(back.answers[0]).toEqual({});
+  });
+});
