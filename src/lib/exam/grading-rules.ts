@@ -7,6 +7,7 @@ import {
   type GradingProposal,
   type RationaleLocale,
 } from "./grading";
+import { wordTokens } from "./structure-counts";
 import type { ProductiveSection } from "./types";
 
 /**
@@ -24,12 +25,7 @@ import type { ProductiveSection } from "./types";
 // Copy of the task
 // ---------------------------------------------------------------------------
 
-const TOKEN = /[\p{L}\p{N}]+(?:['’-][\p{L}\p{N}]+)*/gu;
-
-/** Lower case word tokens, as the copy check and the German check count them. */
-export function wordTokens(text: string): string[] {
-  return text.normalize("NFC").toLowerCase().match(TOKEN) ?? [];
-}
+export { wordTokens };
 
 /**
  * Share of the answer's words that stand inside a run of three words that the

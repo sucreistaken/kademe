@@ -30,9 +30,9 @@ export type AiJsonRequest = {
   maxTokens?: number;
   /**
    * Sampling temperature and seed, for a caller that needs the same answer
-   * twice (grading). Left out of the request when not set: some models take no
-   * `temperature` (see `DEFAULT_AI_MODEL`), and the provider default stays what
-   * every other caller has always had.
+   * twice (grading). Only the Gemini path sends them, and only when set: the
+   * OpenAI compatible models may take no `temperature` at all (see
+   * `DEFAULT_AI_MODEL`), so they keep their provider default.
    */
   temperature?: number;
   seed?: number;
@@ -396,8 +396,6 @@ class OpenAiCompatibleProvider implements AiProvider {
           model: this.config.model,
           messages: withImagesOpenAi(request),
           max_tokens: request.maxTokens ?? this.config.maxTokens,
-          ...(request.temperature !== undefined ? { temperature: request.temperature } : {}),
-          ...(request.seed !== undefined ? { seed: request.seed } : {}),
           response_format: {
             type: "json_schema",
             json_schema: {

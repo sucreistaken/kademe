@@ -393,7 +393,11 @@ kolonlarındadır (`exam_results.final_overall`, `overall_override`, `response_g
   ya da NOT_GERMAN bayrağıyla ve cevapta hiç Almanca cümle yokken önerebilir; aksi halde A0, A1'e çıkarılır ve
   `A0_RAISED` ile işaretlenir (`grading.ts: guardPreA1`). Almanca cümle denetimi bir sezgidir
   (`hasGermanSentence`: üç ya da daha çok kelimeli bir cümlede İngilizce ya da Türkçe olmayan iki Almanca işaret
-  kelimesi), "Almanca var" tarafına yanılır. Boş cevapta AI çağrılmaz; öğretmen seçim listesinden A0'ı seçer.
+  kelimesi), "Almanca var" tarafına yanılır. Boş, görev metni olan, Almanca olmayan ya da birkaç sözcükten ibaret
+  cevapta AI çağrılmaz; sabit kural A0 önerir (`grading-rules.ts`, "AI puanlama" bölümü), öğretmen onaylar ya da seçim
+  listesinden değiştirir. Eskiden boş cevap `AI_FAILED` idi ve görev seviyesiz kalıyordu; artık A0 önerisi var, yani
+  hiç Almanca bilmeyen ve her şeyi boş bırakan öğrenci seviye kontrolünde `INCONCLUSIVE` değil `FAIL` alır
+  (`scripts/verify-no-german.ts`, 2026-10-25).
 - Genel seviye: aynı alt medyan kuralı, A0 dahil. Doğrulamada A0 her beyanın altındadır (FAIL, aynı
   gerekçe kodları); A1 beyanının "tutma olasılığı" artık `P(theta >= -3)` (önceden A1 için hep 1'di).
 - Yerleştirme: A0/A1 kesimi (-3) diğer kesimler gibi sınırda kuralına girer (`NEAR_CUT`, ±0.25; alt aday
@@ -444,16 +448,46 @@ sayfası iki kopya verir: öğrenci kopyası (`?copy=student`) ve soru soru öğ
 
 ## AI puanlama
 
-`grading.ts`: kriter bazlı öneri (görev, tutarlılık, çeşitlilik, doğruluk; konuşmada
-akıcılık ve telaffuz). Güvenceler:
+`grading.ts` (istem, şema, kontroller), `grade-answer.ts` (cevaptan öneriye giden yol; iş de kalibrasyon de bunu
+kullanır), `grading-rules.ts` (sayarak karar verilen durumlar), `structure-counts.ts` (dilbilgisi örüntü sayımı):
+kriter bazlı öneri (görev, tutarlılık, çeşitlilik, doğruluk; konuşmada akıcılık ve telaffuz). Güvenceler:
 - AI yalnızca önerir (`AI_PROPOSED`); nihai seviye öğretmen eylemiyle yazılır.
 - Alıntılanan her kanıt cevabın içinde aranır, bulunamayan silinir ve işaretlenir.
-- Seviye, görev seviyesinin bir üstüyle sınırlanır.
-- A0 (Pre-A1) yalnız puanlanabilir Almanca yokken: EMPTY ya da NOT_GERMAN bayrağıyla ve cevapta Almanca cümle
-  yokken; yoksa A1 yapılır ve `A0_RAISED` ile işaretlenir.
+- Seviye, görev seviyesinin bir üstüyle sınırlanır (`LEVEL_CAPPED`).
+- Nesnel durumlar modele sorulmaz, sabit kuralla A0 önerilir (`grading-rules.ts: ruleVerdict`, `ai_model = 'rule'`,
+  AI çağrısı yok, yine `AI_PROPOSED`, öğretmen onaylar): hiçbir şey yazılmamış ya da söylenmemiş (`EMPTY`), cevap
+  görev metninin kendisi (üç sözcüklük dizilerin %80'i görevde var, `COPIED_TASK`), cevap Almanca değil (İngilizce,
+  Türkçe, İspanyolca işlev sözcükleri ya da Arap yazısı payı %25 ve üstü, Almanca cümle yok, `NOT_GERMAN`), ya da
+  en fazla 12 sözcük ve içinde Almanca cümle yok (`TOO_SHORT`; form görevlerinde ve 20 sözcükten kısa asgarili
+  görevlerde uygulanmaz, çünkü cevap alan değeridir). Boş cevap eskiden `AI_FAILED: EMPTY` idi ve bölüm seviyesiz
+  kalıyordu (seviye kontrolü `INCONCLUSIVE`); artık A0 önerisi olur (`openGradings`), geç gelen kayıt bunu yeniden açar
+  (`reopenGradingForMedia`).
+- `TOO_SHORT` modelin değil kodun bayrağıdır: yazılı cevap asgarinin yarısından kısaysa.
+- Modelin A0'ı yalnız EMPTY ya da NOT_GERMAN bayrağıyla ve cevapta Almanca cümle yokken geçer; yoksa A1 yapılır ve
+  `A0_RAISED` ile işaretlenir. Değerlendirilemeyen kriter (telaffuz) A0 sınırına ve tavana girmez.
 - Telaffuz transkriptten ölçülemez: her zaman `assessable: false`.
-- Boş cevap için AI çağrılmaz (`AI_FAILED: EMPTY`), öğretmen karar verir.
-- Her çağrı `ai_runs`'a yazılır.
+- Her model çağrısı `ai_runs`'a yazılır (kural önerileri yazmaz, çünkü çağrı yoktur).
+
+**Standartlar ve kalibrasyon (2026-10-25).** Sahibin sorusu: AI yazma ve konuşmayı sabit ölçütlere göre doğru mu
+puanlıyor? `src/lib/exam/grading-calibration/` 85 özgün öğrenci cevabı tutar (12 yazma, 6 konuşma görevi, hepsi
+başlangıç bankasından; A0'dan C2'ye, ayrıca tuzaklar: konu dışı ama akıcı, ezberlenmiş şablon, çok uzun ama hatalı, kısa
+ama mükemmel, görev metni geri yapıştırılmış, tavanı aşan). Her cevabın hedef seviyesi, beklenen bayrakları ve tek satır
+gerekçesi vardır; hedefler bağımsız ve kör çalışan üç Opus değerlendiricisiyle de karşılaştırıldı (`blind-ratings.ts`,
+%84 tam, %99 bir seviye içinde). `pnpm grading:calibrate -- --label ad [--runs 3 --samples 1 --temperature t]` her cevabı
+gerçek model yoluyla (`gradeAnswer`, yani işin kullandığı fonksiyon, veritabanı yazısı yok) N kez koşar ve tam uyum,
+bir seviye içinde uyum, hedef seviyeye göre ortalama sapma, tekrar koşuların uyumu, bayrak kesinliği ve kapsamı, A0
+hedefli ama A0 olmayan cevaplar ve tavanı aşan öneriler için rapor yazar (`docs/research/grading-calibration-2026-10-25/`).
+Hedefler: tam uyum en az %70, bir seviye içinde en az %95, her A0 cevabı A0, tavanı aşan öneri yok, tekrar koşuların
+uyumu en az %90. İstem değişirse ya da model değişirse yeniden koşulur; sonuçlar turlara göre `summary.md` içindedir.
+- İstemin ilkeleri (`commonRules`): seviyeler mutlaktır (kolay bir görevi eksiksiz yapmak seviyeyi yükseltmez), hatasız
+  basit dil hâlâ basit dildir, şüphede alt seviye, ACCURACY en çok RANGE'in bir üstü, uzunluk seviye değildir,
+  ezberlenmiş ya da görev metninden alınmış parçalar sayılmaz, konu dışı metin için TASK_ACHIEVEMENT en çok A1 ama dil
+  diğer kriterlerde değerlendirilir, `overallLevel` kriterlerin alt medyanıdır. Seviye başına betimleyiciler Almanca
+  yapı ve hata işaretleri taşır (`cefr-descriptors.ts`), her seviye için bir örnek cevap (çapa) vardır; çapalar ne
+  bankadaki görevlerde ne kalibrasyon cevaplarındadır.
+- Kullanıcı mesajı, modelin yanlış sayamayacağı olguları da taşır: sözcük sayısı (asgarinin yüzdesi), konuşmada
+  ölçülen zamanlama ve `structure-counts.ts` ile örüntü sayımı (yan cümle türleri, ilgi cümlesi, Konjunktiv II, Partizip,
+  zu-Infinitiv, çift bağlaç, uzun sözcük). Sayımlar yaklaşıktır ve yalnız RANGE'e destektir; kodda seviye belirlemez.
 
 ## Başlangıç bankası
 

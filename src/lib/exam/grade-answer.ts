@@ -5,6 +5,7 @@ import {
   buildWritingGradingMessages,
   capByTaskLevel,
   guardPreA1,
+  mergeProposals,
   parseGradingAnswer,
   skillLevelFromCriteria,
   verifyEvidence,
@@ -72,7 +73,16 @@ export function finishProposal(raw: GradingProposal, job: GradingJob): GradingPr
   return withLengthFlag(checked, { section: job.section, text: source, minWords: job.section === "WRITING" ? job.minWords : undefined });
 }
 
-export async function gradeAnswer(job: GradingJob, call: ModelCall): Promise<GradeAnswerResult> {
+export type GradeOptions = {
+  /**
+   * How many independent model answers to take and merge (`mergeProposals`).
+   * They are asked for at the same time, so the wait is that of one answer.
+   * Default 1.
+   */
+  samples?: number;
+};
+
+export async function gradeAnswer(job: GradingJob, call: ModelCall, options: GradeOptions = {}): Promise<GradeAnswerResult> {
   const section: ProductiveSection = job.section;
   const verdict = ruleVerdict({
     section,
@@ -97,22 +107,37 @@ export async function gradeAnswer(job: GradingJob, call: ModelCall): Promise<Gra
   }
 
   const messages = messagesFor(job);
+  const samples = Math.max(1, Math.floor(options.samples ?? 1));
+  let calls = 0;
+  const proposed = (raw: GradingProposal, answer: ModelAnswer): GradeAnswerResult => {
+    const proposal = finishProposal(raw, job);
+    const level = skillLevelFromCriteria(proposal) ?? proposal.overallLevel;
+    return { status: "PROPOSED", source: "MODEL", proposal, level, raw, model: answer.model, runId: answer.runId, calls };
+  };
+
+  if (samples > 1) {
+    // Several answers at once; the ones that parse are merged. If none does, fall through to the repair attempt below.
+    // A call that failed is left out as long as another one answered; if every call failed, the first error is thrown.
+    const settled = await Promise.allSettled(Array.from({ length: samples }, () => call(messages)));
+    calls += samples;
+    const answers = settled.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
+    if (answers.length === 0) throw (settled[0] as PromiseRejectedResult).reason;
+    const parsed = answers.map((a) => parseGradingAnswer(a.text, section));
+    const good = parsed.flatMap((p) => (p.ok ? [p.proposal] : []));
+    if (good.length > 0) return proposed(mergeProposals(good), answers[parsed.findIndex((p) => p.ok)]);
+  }
+
   let attemptMessages = messages;
   let lastError = "";
   let model: string | null = null;
   let runId: string | null = null;
-  let calls = 0;
   for (let round = 0; round < 2; round++) {
     const answer = await call(attemptMessages);
     calls += 1;
     model = answer.model;
     runId = answer.runId;
     const parsed = parseGradingAnswer(answer.text, section);
-    if (parsed.ok) {
-      const proposal = finishProposal(parsed.proposal, job);
-      const level = skillLevelFromCriteria(proposal) ?? proposal.overallLevel;
-      return { status: "PROPOSED", source: "MODEL", proposal, level, raw: parsed.proposal, model: answer.model, runId: answer.runId, calls };
-    }
+    if (parsed.ok) return proposed(parsed.proposal, answer);
     lastError = parsed.error;
     attemptMessages = buildGradingRepairMessages(messages, answer.text, parsed.error);
   }

@@ -12,6 +12,8 @@ import type { CalibrationFixture } from "./types";
 /** One run of one fixture through the grading path. */
 export type RunOutcome = {
   status: "PROPOSED" | "EMPTY" | "UNPARSEABLE" | "ERROR";
+  /** A proposal made by a fixed rule (no model call) or by the model. */
+  source?: "MODEL" | "RULE";
   /** The level the skill would get (the stored `ai_level`), after the code checks. Null when nothing was proposed. */
   level: ResultLevel | null;
   /** The model's own overall judgement after the code checks. */
@@ -67,9 +69,16 @@ export type Summary = {
   diagnostics: { LEVEL_CAPPED: number; A0_RAISED: number; EVIDENCE_UNVERIFIED: number };
   unparseable: number;
   errors: number;
+  /** The same agreement over the fixtures nobody contests (see `contested` of `summarize`). Null without a contested list. */
+  uncontested: { fixtures: number; exact: number | null; withinOne: number | null } | null;
 };
 
-export function summarize(results: FixtureResult[]): Summary {
+/**
+ * `contested`: ids of fixtures whose target an independent rater did not share
+ * (`contestedFixtureIds`). The summary then also reports the agreement without
+ * them, so a disagreement about an edge case is told apart from a miss.
+ */
+export function summarize(results: FixtureResult[], contested?: ReadonlySet<string>): Summary {
   let runs = 0;
   let graded = 0;
   let exact = 0;
@@ -89,6 +98,7 @@ export function summarize(results: FixtureResult[]): Summary {
   const diagnostics = { LEVEL_CAPPED: 0, A0_RAISED: 0, EVIDENCE_UNVERIFIED: 0 };
   let unparseable = 0;
   let errors = 0;
+  const calm = { fixtures: 0, runs: 0, exact: 0, withinOne: 0 };
 
   for (const r of results) {
     const target = r.fixture.target;
@@ -101,7 +111,14 @@ export function summarize(results: FixtureResult[]): Summary {
       if (levels.some((l) => l !== "A0")) a0Misses.push(r.fixture.id);
     }
 
+    const isCalm = !!contested && !contested.has(r.fixture.id);
+    if (isCalm) calm.fixtures += 1;
     for (const run of r.runs) {
+      if (isCalm) {
+        calm.runs += 1;
+        if (run.level && levelDistance(run.level, target) === 0) calm.exact += 1;
+        if (run.level && Math.abs(levelDistance(run.level, target)) <= 1) calm.withinOne += 1;
+      }
       if (run.status === "UNPARSEABLE") unparseable += 1;
       if (run.status === "ERROR") errors += 1;
       if (run.level) {
@@ -177,6 +194,7 @@ export function summarize(results: FixtureResult[]): Summary {
     diagnostics,
     unparseable,
     errors,
+    uncontested: contested ? { fixtures: calm.fixtures, exact: ratio(calm.exact, calm.runs), withinOne: ratio(calm.withinOne, calm.runs) } : null,
   };
 }
 

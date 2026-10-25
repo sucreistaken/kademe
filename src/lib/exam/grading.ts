@@ -13,6 +13,7 @@ import {
   type Anchor,
   type Criterion,
 } from "./cefr-descriptors";
+import { structureCounts, structureLine } from "./structure-counts";
 import { CEFR_LEVELS, RESULT_LEVELS, type Cefr, type ProductiveSection, type ResultLevel } from "./types";
 
 /**
@@ -22,28 +23,39 @@ import { CEFR_LEVELS, RESULT_LEVELS, type Cefr, type ProductiveSection, type Res
  * What comes back is a proposal for a teacher, never a result. The code around
  * the model does the parts a model cannot be trusted with: counting words,
  * checking that every quoted piece of evidence is really in the answer, and
- * capping a level the task could not have shown.
+ * capping a level the task could not have shown. What is objective enough to
+ * be decided without a model (nothing written, the task copied back, not
+ * German, a few words, too short) is in `grading-rules.ts`; the path from an
+ * answer to a proposal is `grade-answer.ts`; the standards the model is held
+ * to are measured by `scripts/grading-calibration.ts`.
  */
 
 export { CRITERIA, CRITERIA_BY_SECTION, type Criterion };
 
 export type RationaleLocale = "tr" | "en";
 
-/** Flags the model may raise. */
-export const MODEL_FLAGS = ["OFF_TOPIC", "TOO_SHORT", "NOT_GERMAN", "EMPTY"] as const;
+/** Flags the model may raise: what it can judge from reading the answer. */
+export const MODEL_FLAGS = ["OFF_TOPIC", "NOT_GERMAN", "EMPTY"] as const;
 /**
- * Flags only this module sets, after checking the answer. `A0_RAISED`: the
- * model proposed A0 (Pre-A1) without saying the answer is empty or not German,
- * so the level was raised to A1 (`guardPreA1`).
+ * Flags only the code sets, after checking the answer.
+ * - `TOO_SHORT`: a written answer below half of the minimum length (counted, not judged); also set for
+ *   a few words with no sentence in them (`grading-rules.ts`).
+ * - `COPIED_TASK`: the answer is the task text handed back or read aloud (`grading-rules.ts`).
+ * - `A0_RAISED`: the model proposed A0 (Pre-A1) without saying the answer is empty or not German,
+ *   so the level was raised to A1 (`guardPreA1`).
  */
-export const CODE_FLAGS = ["EVIDENCE_UNVERIFIED", "LEVEL_CAPPED", "A0_RAISED", "COPIED_TASK"] as const;
+export const CODE_FLAGS = ["TOO_SHORT", "EVIDENCE_UNVERIFIED", "LEVEL_CAPPED", "A0_RAISED", "COPIED_TASK"] as const;
 export const GRADING_FLAGS = [...MODEL_FLAGS, ...CODE_FLAGS] as const;
 export type GradingFlag = (typeof GRADING_FLAGS)[number];
 
 export const MAX_EVIDENCE = 4;
 
-/** How the grading model is called: the same for the job and the calibration harness. */
-export const GRADING_CALL_OPTIONS: { maxTokens: number; temperature?: number; seed?: number } = { maxTokens: 4000 };
+/**
+ * How the grading model is called: the same for the job and the calibration harness.
+ * 8000 output tokens because the model's thinking counts against the ceiling and a long
+ * C-level answer with six criteria came back cut off at 4000.
+ */
+export const GRADING_CALL_OPTIONS: { maxTokens: number; temperature?: number; seed?: number } = { maxTokens: 8000 };
 
 /** The rationale a PRONUNCIATION criterion gets when only a transcript exists. */
 export const PRONUNCIATION_NOT_ASSESSABLE = "cannot be judged from a transcript";
@@ -115,17 +127,6 @@ export function countWords(text: string): number {
   return text
     .split(/\s+/)
     .filter((token) => /[\p{L}\p{N}]/u.test(token)).length;
-}
-
-/**
- * Whether an answer is worth sending to a model at all. A blank answer or one
- * far below the minimum is decided here, for free, and the same way every time.
- */
-export function emptyAnswerReason(text: string, minWords: number): "EMPTY" | "TOO_SHORT" | null {
-  const words = countWords(text ?? "");
-  if (words === 0) return "EMPTY";
-  if (words < 0.3 * minWords) return "TOO_SHORT";
-  return null;
 }
 
 export type TimedWord = { text: string; startMs: number; endMs: number };
@@ -222,6 +223,7 @@ function commonRules(section: ProductiveSection, taskLevel: Cefr, locale: Ration
     "- Levels are absolute CEFR levels of the language shown. They do not depend on the task: how completely or how neatly an easy task was done does not raise the level. A flawless answer that only uses A1 structures is A1; a text without a single subordinate clause or Perfekt form is not above A2 in RANGE.",
     "- For every criterion choose the highest level whose descriptor the answer meets consistently, not the one it touches once. Check the level above: if its signs are missing, the answer is not there yet. If you hesitate between two neighbouring levels, give the lower one. Be as strict as an experienced Goethe or telc examiner; most learners are below the level their best sentence suggests.",
     "- RANGE is what the candidate commands (vocabulary, structures); ACCURACY is the control of what they use. Count errors by pattern, not by number: a systematic error (verb position after a time word or in a weil clause, wrong case, missing article or ending) shows that the structure is not yet controlled and keeps ACCURACY at A2 or below however well the rest reads; an occasional slip in complex language does not lower a B2 or C1 answer. ACCURACY is never more than one level above RANGE.",
+    "- Do not read a high level from the absence of errors; check what the text does. The pattern counts in the user message come from a text search (approximate: it can miss a pattern or count one that is not there). A text without a subordinate clause, relative clause, Perfekt or Konjunktiv II form shows A1 range, or A2 at most with other signs; B1 range needs a few different patterns used correctly, B2 range a wide variety of them, and C1 range adds nominal style, participial constructions and precise or idiomatic wording.",
     "- Length is not level. A long answer full of errors is not a higher level than a short one with the same errors; a short answer that is accurate and varied is not a lower level because it is short. Length only matters for TASK_ACHIEVEMENT.",
     "- Only the candidate's own language counts. Text copied from the task, and passages that look learnt by heart and do not fit this task (a generic opening, an essay frame that would suit any topic, a standard application paragraph), are not the candidate's own production: do not count them in RANGE, COHERENCE or ACCURACY. Grade the sentences written for this task.",
     "- Every evidence item is a short quote (at most about 12 words) copied verbatim from the answer. Never paraphrase, correct or translate a quote. Give at most 4 per criterion, fewer if the answer is short.",
@@ -301,6 +303,7 @@ export function buildWritingGradingMessages(input: WritingGradingInput): AiMessa
     ...taskBlock(input),
     `Required length: ${input.minWords} to ${input.maxWords} words.`,
     `Word count of the answer (counted by the system, trust this number): ${words} (${Math.round((words / Math.max(1, input.minWords)) * 100)}% of the minimum)`,
+    `Patterns found by a text search (approximate): ${structureLine(structureCounts(input.text), { sentences: true })}`,
     "",
     "Answer:",
     '"""',
@@ -346,6 +349,7 @@ export function buildSpeakingGradingMessages(input: SpeakingGradingInput): AiMes
     `- mean pause between words: ${m.meanPauseMs} ms`,
     `- share of the recording with speech: ${Math.round(m.speakingRatio * 100)}%`,
     `Word count of the transcript (counted by the system): ${countWords(input.transcript)}`,
+    `Patterns found by a text search (approximate): ${structureLine(structureCounts(input.transcript), { sentences: false })}`,
     "",
     "Transcript:",
     '"""',
@@ -499,6 +503,35 @@ export function normalizeForEvidence(text: string): string {
     .replace(QUOTE_PUNCTUATION, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+/**
+ * One proposal out of several independent answers of the model to the same
+ * answer: for every criterion and for the overall level the lower median of the
+ * levels, a flag only when most answers raised it. The wording (rationale,
+ * quotes, summary) is taken from the first answer that gave the median level,
+ * so it is one answer's reasoning and not a patchwork. A single answer comes
+ * back unchanged. A model's level for the same text moves by a level now and
+ * then; the median of three does not.
+ */
+export function mergeProposals(proposals: GradingProposal[]): GradingProposal {
+  if (proposals.length === 0) throw new Error("nothing to merge");
+  if (proposals.length === 1) return proposals[0];
+  const first = proposals[0];
+  const criteria = first.criteria.map((c) => {
+    const entries = proposals.map((p) => p.criteria.find((x) => x.criterion === c.criterion)!);
+    const level = medianLevel(entries.map((e) => e.level))!;
+    const assessable = entries.filter((e) => e.assessable).length * 2 > entries.length;
+    const representative = entries.find((e) => e.level === level) ?? c;
+    const scores = entries.map((e) => e.score).sort((a, b) => a - b);
+    return { ...representative, level, assessable, score: scores[Math.floor((scores.length - 1) / 2)] };
+  });
+  const overallLevel = medianLevel(proposals.map((p) => p.overallLevel))!;
+  const summary = (proposals.find((p) => p.overallLevel === overallLevel) ?? first).summary;
+  const flags = [...new Set(proposals.flatMap((p) => p.flags))].filter(
+    (flag) => proposals.filter((p) => p.flags.includes(flag)).length * 2 > proposals.length,
+  );
+  return { criteria, overallLevel, summary, flags };
 }
 
 /**

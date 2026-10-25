@@ -8,7 +8,6 @@ import {
   buildWritingGradingMessages,
   capByTaskLevel,
   countWords,
-  emptyAnswerReason,
   guardPreA1,
   hasGermanSentence,
   parseGradingAnswer,
@@ -221,13 +220,12 @@ describe("speakingMetrics", () => {
   });
 });
 
-describe("emptyAnswerReason", () => {
-  it("classifies blank, too short and usable answers", () => {
-    expect(emptyAnswerReason("   \n ", 80)).toBe("EMPTY");
-    expect(emptyAnswerReason("... !!", 80)).toBe("EMPTY");
-    expect(emptyAnswerReason("Hallo ich bin Anna", 80)).toBe("TOO_SHORT");
-    expect(emptyAnswerReason(Array(24).fill("Wort").join(" "), 80)).toBeNull();
+describe("countWords", () => {
+  it("counts tokens with a letter or a digit, not punctuation", () => {
+    expect(countWords("   \n ")).toBe(0);
+    expect(countWords("... !!")).toBe(0);
     expect(countWords("Hallo, wie geht's? - gut")).toBe(4);
+    expect(countWords("28195 Bremen")).toBe(2);
   });
 });
 
@@ -356,11 +354,12 @@ describe("A0 (Pre-A1) in AI grading", () => {
     expect(hasGermanSentence("")).toBe(false);
   });
 
-  it("the model cannot claim A0_RAISED itself", () => {
+  it("the model cannot claim a flag the code owns (A0_RAISED, TOO_SHORT, COPIED_TASK)", () => {
     const json = JSON.parse(answerJson([...CRITERIA_BY_SECTION.WRITING]));
-    json.flags = ["A0_RAISED"];
+    json.flags = ["A0_RAISED", "TOO_SHORT", "COPIED_TASK", "OFF_TOPIC"];
     const res = parseGradingAnswer(JSON.stringify(json), "WRITING");
-    expect(res.ok && res.proposal.flags).toEqual([]);
+    expect(res.ok && res.proposal.flags).toEqual(["OFF_TOPIC"]);
+    expect(JSON.stringify(GRADING_JSON_SCHEMA)).not.toContain("TOO_SHORT");
   });
 
   it("A0 is under every task ceiling and counts in the criteria median", () => {

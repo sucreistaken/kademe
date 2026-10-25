@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { CRITERIA_BY_SECTION } from "./cefr-descriptors";
 import { RULE_MODEL, finishProposal, gradeAnswer, type GradingJob, type ModelCall } from "./grade-answer";
-import { speakingMetrics, type GradingProposal } from "./grading";
+import { mergeProposals, speakingMetrics, type GradingProposal } from "./grading";
 import type { ResultLevel } from "./types";
 
 const TASK = "Ihr Freund Tim hat Ihnen eine Nachricht geschickt: „Hast du am Samstag Zeit? Wann kannst du kommen?“ Schreiben Sie Tim eine Antwort.";
@@ -186,5 +186,78 @@ describe("finishProposal", () => {
     expect(out.flags).toEqual(expect.arrayContaining(["EVIDENCE_UNVERIFIED", "LEVEL_CAPPED"]));
     expect(out.flags).not.toContain("TOO_SHORT");
     expect(raw.flags).toEqual(["TOO_SHORT"]); // pure
+  });
+});
+
+describe("several answers of the model, merged by median", () => {
+  const proposal = (level: ResultLevel, over: Partial<GradingProposal> = {}): GradingProposal => ({
+    criteria: CRITERIA_BY_SECTION.WRITING.map((criterion) => ({ criterion, level, score: 3, assessable: true, rationale: `r ${level}`, evidence: [] })),
+    overallLevel: level,
+    summary: `s ${level}`,
+    flags: [],
+    ...over,
+  });
+
+  it("takes the lower median per criterion and overall, and the wording of an answer that gave it", () => {
+    const merged = mergeProposals([proposal("B2"), proposal("B1"), proposal("B1")]);
+    expect(merged.overallLevel).toBe("B1");
+    expect(merged.criteria.every((c) => c.level === "B1" && c.rationale === "r B1")).toBe(true);
+    expect(merged.summary).toBe("s B1");
+    // Two answers: the lower middle, so a disagreement errs on the side of not over-placing.
+    expect(mergeProposals([proposal("B2"), proposal("B1")]).overallLevel).toBe("B1");
+  });
+
+  it("keeps a flag only when most answers raised it, and a single answer unchanged", () => {
+    const merged = mergeProposals([proposal("B1", { flags: ["OFF_TOPIC"] }), proposal("B1", { flags: ["OFF_TOPIC", "NOT_GERMAN"] }), proposal("B1")]);
+    expect(merged.flags).toEqual(["OFF_TOPIC"]);
+    const one = proposal("A2");
+    expect(mergeProposals([one])).toBe(one);
+    expect(() => mergeProposals([])).toThrow();
+  });
+
+  it("calls the model once per sample, at the same time, and returns the median level", async () => {
+    const levels: ResultLevel[] = ["B2", "B1", "B1"];
+    let started = 0;
+    let concurrent = 0;
+    let peak = 0;
+    const call: ModelCall = async () => {
+      const text = modelJson("WRITING", levels[started++ % 3]);
+      concurrent += 1;
+      peak = Math.max(peak, concurrent);
+      await Promise.resolve();
+      concurrent -= 1;
+      return { text, model: "m", runId: "r" };
+    };
+    const result = await gradeAnswer(writing(GOOD, { taskLevel: "B2" }), call, { samples: 3 });
+    expect(result.status === "PROPOSED" && result.level).toBe("B1");
+    expect(result.status === "PROPOSED" && result.calls).toBe(3);
+    expect(peak).toBe(3);
+  });
+
+  it("goes on with the answers that parse, and with the repair attempt when none does", async () => {
+    let n = 0;
+    const oneBad: ModelCall = async () => ({ text: n++ === 0 ? "{bad" : modelJson("WRITING", "B1"), model: "m", runId: null });
+    const merged = await gradeAnswer(writing(GOOD, { taskLevel: "B1" }), oneBad, { samples: 3 });
+    expect(merged.status === "PROPOSED" && merged.level).toBe("B1");
+
+    let k = 0;
+    const allBadThenGood: ModelCall = async () => ({ text: k++ < 3 ? "{bad" : modelJson("WRITING", "A2"), model: "m", runId: null });
+    const repaired = await gradeAnswer(writing(GOOD), allBadThenGood, { samples: 3 });
+    expect(repaired.status === "PROPOSED" && repaired.level).toBe("A2");
+    expect(repaired.status === "PROPOSED" && repaired.calls).toBe(4);
+  });
+
+  it("survives one failed call and throws when every call fails", async () => {
+    let n = 0;
+    const flaky: ModelCall = async () => {
+      if (n++ === 1) throw new Error("503");
+      return { text: modelJson("WRITING", "A2"), model: "m", runId: null };
+    };
+    const ok = await gradeAnswer(writing(GOOD), flaky, { samples: 3 });
+    expect(ok.status).toBe("PROPOSED");
+    const down: ModelCall = async () => {
+      throw new Error("provider down");
+    };
+    await expect(gradeAnswer(writing(GOOD), down, { samples: 3 })).rejects.toThrow("provider down");
   });
 });

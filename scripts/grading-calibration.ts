@@ -10,10 +10,11 @@
  * fixture that was proposed above A0 and every proposal above the task cap.
  *
  * Run:   pnpm grading:calibrate -- --label round-1
- * Flags: --runs N (3)  --concurrency N (4)  --filter TEXT (fixture ids containing it)
+ * Flags: --runs N (3)  --samples N (1: model answers merged by median per run)  --concurrency N (4)  --filter TEXT (fixture ids containing it)
  *        --label NAME (run)  --out DIR (docs/research/grading-calibration-2026-10-25)
  *        --temperature T  --seed N  --resume (keep finished runs of the same label)
  *        --table (print the round by round table from the saved reports and stop)
+ *        --report (write the markdown of every saved round again and stop)
  * Needs GOOGLE_AI_API_KEY in .env (no key goes into any file). The provider is
  * pinned to Gemini on purpose: a silent fall back to another model would
  * measure a different grader.
@@ -24,6 +25,7 @@ import path from "node:path";
 import { getAiProvider } from "../src/lib/ai";
 import { gradeAnswer, type GradeAnswerResult, type GradingJob } from "../src/lib/exam/grade-answer";
 import { GRADING_CALL_OPTIONS, GRADING_JSON_SCHEMA, skillLevelFromCriteria } from "../src/lib/exam/grading";
+import { BLIND_RATINGS } from "../src/lib/exam/grading-calibration/blind-ratings";
 import { CALIBRATION_FIXTURES } from "../src/lib/exam/grading-calibration/fixtures";
 import {
   meetsGoals,
@@ -51,6 +53,7 @@ const LABEL = value("label", "run");
 const OUT = value("out", "docs/research/grading-calibration-2026-10-25");
 const TEMPERATURE = flag("temperature") ? Number(value("temperature", "")) : undefined;
 const SEED = flag("seed") ? Number(value("seed", "")) : undefined;
+const SAMPLES = Number(value("samples", "1"));
 
 // Pin Gemini before the provider is built.
 delete process.env.NVIDIA_API_KEY;
@@ -65,12 +68,16 @@ type Meta = {
   runs: number;
   temperature: number | null;
   seed: number | null;
+  samples: number;
   fixtures: number;
   modelCalls: number;
   inputTokens: number;
   outputTokens: number;
 };
 type Report = { meta: Meta; results: FixtureResult[] };
+
+/** Fixtures whose target an independent blind rater did not give (blind-ratings.ts). */
+const CONTESTED = new Set(CALIBRATION_FIXTURES.filter((f) => BLIND_RATINGS[f.id] !== f.target).map((f) => f.id));
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const pct = (x: number | null) => (x === null ? "-" : `${(x * 100).toFixed(1)}%`);
@@ -95,9 +102,6 @@ function jobFor(fixture: CalibrationFixture): GradingJob {
 }
 
 function outcomeOf(result: GradeAnswerResult): RunOutcome {
-  if (result.status === "EMPTY") {
-    return { status: "EMPTY", level: null, overall: null, rawLevel: null, criteria: {}, flags: ["EMPTY"], rawFlags: [] };
-  }
   if (result.status === "UNPARSEABLE") {
     return { status: "UNPARSEABLE", level: null, overall: null, rawLevel: null, criteria: {}, flags: [], rawFlags: [], error: result.error };
   }
@@ -109,6 +113,7 @@ function outcomeOf(result: GradeAnswerResult): RunOutcome {
   }
   return {
     status: "PROPOSED",
+    source: result.source,
     level: result.level,
     overall: result.proposal.overallLevel,
     rawLevel: skillLevelFromCriteria(result.raw) ?? result.raw.overallLevel,
@@ -125,7 +130,7 @@ function summaryLines(s: Summary): string[] {
     .join(", ");
   return [
     `fixtures ${s.fixtures}, runs ${s.runs}, graded ${s.graded}, unparseable ${s.unparseable}, errors ${s.errors}`,
-    `exact ${pct(s.exact)}, within one ${pct(s.withinOne)}`,
+    `exact ${pct(s.exact)}, within one ${pct(s.withinOne)}${s.uncontested ? `; on the ${s.uncontested.fixtures} fixtures a blind rater also holds: exact ${pct(s.uncontested.exact)}, within one ${pct(s.uncontested.withinOne)}` : ""}`,
     `repeated runs agree: pairwise ${pct(s.pairwise)}, fixtures with all runs equal ${pct(s.unanimous)}`,
     `A0 fixtures ${s.a0Fixtures}, not A0 in every run: ${s.a0Misses.length}${s.a0Misses.length ? ` (${s.a0Misses.join(", ")})` : ""}`,
     `above the task cap: final ${s.aboveCap}, raw model ${s.rawAboveCap}`,
@@ -137,12 +142,31 @@ function summaryLines(s: Summary): string[] {
   ];
 }
 
+const LEVELS = ["A0", "A1", "A2", "B1", "B2", "C1", "C2"] as const;
+
+function confusion(results: FixtureResult[]): string[] {
+  const grid = new Map<string, number>();
+  for (const r of results) {
+    for (const run of r.runs) {
+      const key = `${r.fixture.target}/${run.level ?? "none"}`;
+      grid.set(key, (grid.get(key) ?? 0) + 1);
+    }
+  }
+  const rows = ["| target \\ proposed | A0 | A1 | A2 | B1 | B2 | C1 | C2 | none |", "|---|---|---|---|---|---|---|---|---|"];
+  for (const target of LEVELS) {
+    const cells = [...LEVELS, "none"].map((p) => grid.get(`${target}/${p}`) ?? 0);
+    if (cells.every((n) => n === 0)) continue;
+    rows.push(`| ${target} | ${cells.map((n) => (n === 0 ? "." : String(n))).join(" | ")} |`);
+  }
+  return rows;
+}
+
 function markdown(meta: Meta, results: FixtureResult[], s: Summary): string {
   const goals = meetsGoals(s);
   const lines: string[] = [];
   lines.push(`# Grading calibration: ${meta.label}`, "");
   lines.push(
-    `Date ${meta.date}, provider ${meta.provider}, model ${meta.model}, ${meta.runs} runs per fixture, ${meta.fixtures} fixtures, temperature ${meta.temperature ?? "default"}, seed ${meta.seed ?? "none"}.`,
+    `Date ${meta.date}, provider ${meta.provider}, model ${meta.model}, ${meta.runs} runs per fixture, ${meta.fixtures} fixtures, temperature ${meta.temperature ?? "default"}, seed ${meta.seed ?? "none"}, ${meta.samples} model answer${meta.samples === 1 ? "" : "s"} per run (median).`,
     "",
   );
   lines.push(
@@ -150,10 +174,11 @@ function markdown(meta: Meta, results: FixtureResult[], s: Summary): string {
     "",
   );
   lines.push("## Summary", "", ...summaryLines(s).map((l) => `- ${l}`), "");
+  lines.push("## Confusion matrix (rows: target level, columns: proposed level, all runs)", "", ...confusion(results), "");
   lines.push("## Per fixture", "", "| fixture | kind | target | runs: final level, [raw model level] | flags seen | |", "|---|---|---|---|---|---|");
   for (const r of results) {
     const shown = r.runs
-      .map((x) => (x.status === "PROPOSED" ? `${x.level}${x.rawLevel !== x.level ? ` [${x.rawLevel}]` : ""}` : x.status))
+      .map((x) => (x.status === "PROPOSED" ? `${x.level}${x.source === "RULE" ? " (rule)" : x.rawLevel !== x.level ? ` [${x.rawLevel}]` : ""}` : x.status))
       .join(", ");
     const seen = [...new Set(r.runs.flatMap((x) => x.flags))].join(" ") || "-";
     const off = r.runs.some((x) => x.level !== r.fixture.target);
@@ -179,23 +204,40 @@ function markdown(meta: Meta, results: FixtureResult[], s: Summary): string {
 
 function printTable() {
   const files = readdirSync(OUT).filter((f) => f.endsWith(".json")).sort();
+  const reports = files.map((file) => JSON.parse(readFileSync(path.join(OUT, file), "utf8")) as Report);
   const rows = [
-    "| round | model | runs | fixtures | exact | within one | A0 misses | above cap | runs agree (pairwise) | all runs equal | goals |",
-    "|---|---|---|---|---|---|---|---|---|---|---|",
+    "| round | model | settings | runs | fixtures | exact | within one | exact (uncontested) | A0 misses | above cap | runs agree (pairwise) | all runs equal | goals |",
+    "|---|---|---|---|---|---|---|---|---|---|---|---|---|",
   ];
-  for (const file of files) {
-    const data = JSON.parse(readFileSync(path.join(OUT, file), "utf8")) as Report;
-    const s = summarize(data.results);
+  const bias = [
+    "| round | A1 | A2 | B1 | B2 | C1 | C2 |",
+    "|---|---|---|---|---|---|---|",
+  ];
+  for (const data of reports) {
+    const s = summarize(data.results, CONTESTED);
+    const settings = `temperature ${data.meta.temperature ?? "default"}${data.meta.samples > 1 ? `, median of ${data.meta.samples}` : ""}`;
     rows.push(
-      `| ${data.meta.label} | ${data.meta.model} | ${data.meta.runs} | ${s.fixtures} | ${pct(s.exact)} | ${pct(s.withinOne)} | ${s.a0Misses.length}/${s.a0Fixtures} | ${s.aboveCap} | ${pct(s.pairwise)} | ${pct(s.unanimous)} | ${meetsGoals(s).ok ? "met" : "not met"} |`,
+      `| ${data.meta.label} | ${data.meta.model} | ${settings} | ${data.meta.runs} | ${s.fixtures} | ${pct(s.exact)} | ${pct(s.withinOne)} | ${pct(s.uncontested?.exact ?? null)} | ${s.a0Misses.length}/${s.a0Fixtures} | ${s.aboveCap} | ${pct(s.pairwise)} | ${pct(s.unanimous)} | ${meetsGoals(s).ok ? "met" : "not met"} |`,
     );
+    const cell = (level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2") => (s.bias[level] ? `${s.bias[level]!.mean >= 0 ? "+" : ""}${s.bias[level]!.mean}` : "-");
+    bias.push(`| ${data.meta.label} | ${(["A1", "A2", "B1", "B2", "C1", "C2"] as const).map(cell).join(" | ")} |`);
   }
-  console.log(rows.join("\n"));
+  console.log(`${rows.join("\n")}\n\nMean signed bias by target level (levels above the target are positive):\n\n${bias.join("\n")}`);
 }
 
 async function main() {
   if (flag("table")) {
     printTable();
+    return;
+  }
+  if (flag("report")) {
+    // Writes the markdown of every saved round again (after the report format changed).
+    for (const file of readdirSync(OUT).filter((f) => f.endsWith(".json"))) {
+      const data = JSON.parse(readFileSync(path.join(OUT, file), "utf8")) as Report;
+      const meta: Meta = { ...data.meta, samples: data.meta.samples ?? 1 };
+      writeFileSync(path.join(OUT, file.replace(/\.json$/, ".md")), markdown(meta, data.results, summarize(data.results, CONTESTED)));
+      console.log(`wrote ${file.replace(/\.json$/, ".md")}`);
+    }
     return;
   }
 
@@ -264,6 +306,7 @@ async function main() {
     runs: RUNS,
     temperature: TEMPERATURE ?? null,
     seed: SEED ?? null,
+    samples: SAMPLES,
     fixtures: fixtures.length,
     modelCalls: calls,
     inputTokens,
@@ -285,7 +328,7 @@ async function main() {
       tasks.push(async () => {
         let outcome: RunOutcome;
         try {
-          outcome = outcomeOf(await gradeAnswer(jobFor(fixture), (messages) => callModel(messages, run)));
+          outcome = outcomeOf(await gradeAnswer(jobFor(fixture), (messages) => callModel(messages, run), { samples: SAMPLES }));
         } catch (error) {
           outcome = {
             status: "ERROR",
@@ -314,7 +357,7 @@ async function main() {
   save();
 
   const results = resultsNow();
-  const summary = summarize(results);
+  const summary = summarize(results, CONTESTED);
   writeFileSync(mdPath, markdown(meta(), results, summary));
   console.log(`\n${summaryLines(summary).join("\n")}`);
   console.log(`\nSaved ${jsonPath} and ${mdPath}. Model calls ${calls}, tokens in ${inputTokens}, out ${outputTokens}.`);

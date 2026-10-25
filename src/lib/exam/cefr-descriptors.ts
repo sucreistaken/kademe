@@ -63,8 +63,8 @@ export const DESCRIPTORS: Record<Criterion, Record<Cefr, string>> = {
     C2: "Seamless, logically structured text that guides the reader without effort; cohesion goes unnoticed; rhetorical control of emphasis and rhythm.",
   },
   RANGE: {
-    A1: "A very small stock of memorised words and fixed phrases for concrete personal needs; present tense main clauses only (Ich heiße, Ich habe, Ich komme); the same words repeated.",
-    A2: "Basic everyday vocabulary and simple sentence patterns: modal verbs, separable verbs, Perfekt, a simple weil, dass or wenn clause, und and aber; frequent repetition; gaps filled with simple words.",
+    A1: "A very small stock of memorised words and fixed phrases for concrete personal needs; present tense main clauses, modal verbs, imperatives and simple questions (Ich heiße, Ich kann, Ich möchte, Wie viel kostet?); no subordinate clause; the same words repeated.",
+    A2: "Basic everyday vocabulary and simple sentence patterns: Perfekt, Präteritum of sein and haben, Dativ, comparatives, a simple weil, dass or wenn clause, und and aber; frequent repetition; gaps filled with simple words.",
     B1: "Enough vocabulary for familiar topics, some circumlocution; main clauses plus common subordinate clauses (weil, dass, wenn, obwohl, damit), relative clauses, zu-infinitives, Konjunktiv II for wishes and polite requests; wording plain and repetitive.",
     B2: "Good range for general and familiar abstract topics; varies the formulation; handles complex sentences with ease: passive, Konjunktiv II and indirect speech, participial attributes, nominalisations, two-part connectors; some collocations and idiom.",
     C1: "Broad lexical repertoire including idiom and abstract vocabulary; nominal style, extended participial constructions, precise word choice; can say the same thing in several ways.",
