@@ -1386,7 +1386,7 @@
       "timer": "Saat, bölümün tamamı için kalan süreyi gösterir."
     },
     "WRITING": {
-      "task": "Göreviniz solda. Ne yazacağınızı ve metninizin hangi noktaları içermesi gerektiğini söyler.",
+      "task": "Göreviniz solda. Önce durum, sonra ne yazacağınız, sonra da metninizin içermesi gereken noktalar gelir.",
       "type": "Metninizi sağdaki kutuya yazın. Metniniz otomatik olarak kaydedilir.",
       "tools": "Kutunun altında ä, ö, ü ve ß için düğmeler ve bir kelime sayacı var.",
       "mark": "Göreve sonra dönmek için İşaretle'ye basın.",
@@ -1396,11 +1396,11 @@
     },
     "SPEAKING": {
       "task": "Göreviniz solda. Görevi ve hakkında konuşmanız gereken noktaları okuyun.",
-      "think": "Önce düşünme süreniz var. Saat geriye doğru sayar.",
-      "record": "Hazır olduğunuzda düğmeye basın. Düşünme süresi bitince kayıt kendiliğinden de başlar.",
+      "think": "Sağda üç adım var: Hazırlanın, Konuşun, Kaydedildi. Önce saat geriye sayarken hazırlanırsınız.",
+      "record": "Hazır olduğunuzda büyük düğmeye basın. Hazırlanma süresi bitince kayıt kendiliğinden de başlar.",
       "talk": "Açık ve anlaşılır konuşun. Saat, ne kadar daha konuşabileceğinizi gösterir.",
       "stop": "Bitirdiğinizde Kaydı bitir'e basın. Süre dolunca kayıt kendiliğinden durur.",
-      "next": "Sonra Cevabı kaydet ve devam et'e basın. Bu bölümde geri dönemezsiniz.",
+      "next": "Cevabınız kaydedilir. Sonra Sonraki görev'e basın. Bu bölümde geri dönemezsiniz.",
       "timer": "Üstteki saat, bölüm için kalan süreyi gösterir."
     }
   }

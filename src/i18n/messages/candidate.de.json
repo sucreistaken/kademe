@@ -1386,7 +1386,7 @@
       "timer": "Die Uhr zeigt die restliche Zeit für den ganzen Teil."
     },
     "WRITING": {
-      "task": "Links steht Ihre Aufgabe. Sie sagt, was Sie schreiben und welche Punkte Ihr Text enthalten muss.",
+      "task": "Links steht Ihre Aufgabe. Zuerst kommt die Situation, dann was Sie schreiben, dann die Punkte, die Ihr Text enthalten muss.",
       "type": "Schreiben Sie Ihren Text rechts in das Feld. Er wird automatisch gespeichert.",
       "tools": "Unter dem Feld finden Sie Knöpfe für ä, ö, ü und ß und einen Wortzähler.",
       "mark": "Mit Markieren finden Sie die Aufgabe später leicht wieder.",
@@ -1396,11 +1396,11 @@
     },
     "SPEAKING": {
       "task": "Links steht Ihre Aufgabe. Lesen Sie sie und die Punkte, über die Sie sprechen sollen.",
-      "think": "Zuerst haben Sie Zeit zum Nachdenken. Die Uhr zählt rückwärts.",
-      "record": "Wenn Sie bereit sind, drücken Sie auf den Knopf. Nach der Denkzeit beginnt die Aufnahme auch von selbst.",
+      "think": "Rechts sehen Sie drei Schritte: Vorbereiten, Sprechen, Gespeichert. Zuerst bereiten Sie sich vor, die Uhr zählt rückwärts.",
+      "record": "Wenn Sie bereit sind, drücken Sie die große Schaltfläche. Nach der Vorbereitungszeit startet die Aufnahme auch von selbst.",
       "talk": "Sprechen Sie deutlich. Die Uhr zeigt, wie lange Sie noch sprechen können.",
       "stop": "Wenn Sie fertig sind, drücken Sie auf Aufnahme beenden. Ist die Zeit um, endet sie von selbst.",
-      "next": "Drücken Sie dann auf Antwort speichern und weiter. In diesem Teil können Sie nicht zurück.",
+      "next": "Ihre Antwort ist gespeichert. Drücken Sie dann Nächste Aufgabe. Zurück geht es in diesem Teil nicht.",
       "timer": "Die Uhr oben zeigt die restliche Zeit für diesen Teil."
     }
   }

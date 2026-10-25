@@ -1386,7 +1386,7 @@
       "timer": "El reloj muestra el tiempo que queda para toda la sección."
     },
     "WRITING": {
-      "task": "Su tarea está a la izquierda. Indica qué escribir y qué puntos debe tratar su texto.",
+      "task": "Su tarea está a la izquierda. Primero la situación, luego qué escribir y después los puntos que debe tratar su texto.",
       "type": "Escriba su texto en el cuadro de la derecha. Se guarda automáticamente.",
       "tools": "Debajo del cuadro hay botones para ä, ö, ü y ß, y un contador de palabras.",
       "mark": "Pulse Marcar para volver a la tarea más tarde.",
@@ -1396,11 +1396,11 @@
     },
     "SPEAKING": {
       "task": "Su tarea está a la izquierda. Léala junto con los puntos de los que debe hablar.",
-      "think": "Primero tiene tiempo para pensar. El reloj cuenta hacia atrás.",
-      "record": "Cuando quiera empezar, pulse el botón. La grabación también empieza sola al acabar el tiempo para pensar.",
+      "think": "A la derecha hay tres pasos: Prepararse, Hablar y Guardado. Primero, el reloj cuenta atrás.",
+      "record": "Pulse el botón grande cuando quiera. La grabación también empieza sola al acabar la preparación.",
       "talk": "Hable con claridad. El reloj muestra cuánto tiempo puede seguir hablando.",
       "stop": "Cuando termine, pulse Detener la grabación. Al acabar el tiempo, se detiene sola.",
-      "next": "Luego pulse Guardar respuesta y continuar. En esta sección no se puede volver atrás.",
+      "next": "Su respuesta se guarda. Pulse Siguiente tarea. Aquí no se puede volver atrás.",
       "timer": "El reloj de arriba muestra el tiempo que queda para la sección."
     }
   }

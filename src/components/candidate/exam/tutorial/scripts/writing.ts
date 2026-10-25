@@ -12,9 +12,10 @@ export const WRITING_SCRIPT: TutorialScript = {
         sequence: 1,
         section: "WRITING",
         type: "WRITING_PROMPT",
+        // Shows every role of the new task card: the situation, the task, the points and the closing note.
         prompt:
-          "Sie haben am Samstag Geburtstag und machen eine kleine Party. Schreiben Sie Ihrer Freundin Mia eine E-Mail.\n\n" +
-          "- Laden Sie Mia ein.\n- Sagen Sie, wann und wo die Party ist.\n- Fragen Sie, ob Mia etwas mitbringen kann.\n\nSchreiben Sie 30 bis 40 Wörter.",
+          "Sie haben am Samstag Geburtstag und machen eine kleine Party. Schreiben Sie Ihrer Freundin Mia eine E-Mail (30 bis 40 Wörter).\n\n" +
+          "- Laden Sie Mia ein.\n- Sagen Sie, wann und wo die Party ist.\n- Fragen Sie, ob Mia etwas mitbringen kann.\n\nSchreiben Sie auch eine Anrede und einen Gruß.",
         content: { kind: "WRITING", minWords: 30, maxWords: 40, studentPoints: ["Mia einladen", "Zeit und Ort nennen", "fragen, ob Mia etwas mitbringt"] },
         stimulus: null,
         answer: null,
