@@ -56,7 +56,7 @@ Kademe is presented as "bir Campus German ürünü" (English: "a Campus German p
 | 2 | Invite setup for a new panel user | `/setup/[token]` | Invite link | Set a password | spine-only |
 | 3 | Candidate welcome and consent (exam) | `/a/[token]` | Invite link | What happens, what is recorded, consent | Flow 1 |
 | 4 | Candidate info form | `/a/[token]/info` | Welcome | Name and contact, prefilled | Flow 1 |
-| 5 | System check, four steps (camera and mic, "Sizi görüyoruz", screen share, "Hazırsınız") | `/a/[token]/check` | Info | Prove devices; end with "Tam ekrana geç ve sınavı başlat" | Flow 1 |
+| 5 | System check, four steps (camera and mic, "Sizi görüyoruz", screen share, "Hazırsınız") | `/a/[token]/check` | Info | Prove devices; end with the "Başlamadan önce" checklist (close every other app and tab, what is recorded, the rules) and its tick, then "Tam ekrana geç ve sınavı başlat" | Flow 1 |
 | 6 | Desktop-only screen | same URLs on a phone | Any candidate link | Explain, copy the link | spine-only (State Patterns) |
 | 7 | Link problem screens (invalid, not yet open, expired, completed) | same URLs | Any candidate link | Say what is wrong and the next step | spine-only (State Patterns) |
 | 8 | Section intro, optional warm-up | `/a/[token]/exam` | Check, or a section break | Rules, optional unscored practice, "Bölümü başlat" | Flow 1 |
@@ -262,7 +262,7 @@ Behavioral; the contrast ratios live in `DESIGN.md`, Colors.
 
 1. Elif opens the invite link from her school, Ege Dil Okulu. The welcome screen shows the `wave` mascot standing on the card, "Hoş geldiniz, Elif!", five neutral section pills, three needs (a current Chrome or Edge on a computer, camera and mic, the whole screen is shared), one consent checkbox and "Başlayalım". The byline is in the bar; the school's name is a chip. The screen fits without scrolling.
 2. She ticks the consent. "Başlayalım" is now usable; before she ticked it, the reason sat next to it.
-3. She confirms her info, then the system check runs in four steps: camera and mic, "Sizi görüyoruz" (her face is seen), "Ekranınızı paylaşın" (she picks "Tüm ekran"), "Hazırsınız" with three short rules. She presses "Tam ekrana geç ve sınavı başlat".
+3. She confirms her info, then the system check runs in four steps: camera and mic, "Sizi görüyoruz" (her face is seen), "Ekranınızı paylaşın" (she picks "Tüm ekran"), "Hazırsınız" with the "Başlamadan önce" checklist; she ticks "Diğer uygulamaları kapattım, kurallara uyacağım." to unlock the button. She presses "Tam ekrana geç ve sınavı başlat".
 4. The Dilbilgisi intro lists the rules and offers an unscored practice ("Dene" or "Geç"). She skips and presses "Bölümü başlat"; the intro says the clock starts now.
 5. Question 5 of 6 is a C-test: in "Jeden Samstag fahre ich mit dem Fahrrad zum Markt. Dort kau_ ich fris_ Obst..." she drags the part "fe" into the gap after "kau". The gap fills; the pool loses that chip. The cell for question 5 shows the partial badge, then answered. She flags question 3 to come back to.
 6. She switches to another tab by accident. A big card appears: a yellow `!` tile, "Sınav sekmesinden ayrıldınız", the rule, "Bu an kaydedildi ve öğretmeninize bildirildi.", "Bu sınavdaki 1. uyarınız", "Süre işlemeye devam ediyor. Kalan süre: 28:31". She presses "Anladım, sınava dön". No score, no accusation, the clock never paused.
