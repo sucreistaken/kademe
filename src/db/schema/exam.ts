@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   boolean,
   check,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -10,6 +11,7 @@ import {
   smallint,
   text,
   timestamp,
+  unique,
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
@@ -29,6 +31,7 @@ import {
   itemOrigin,
   itemStatus,
   itemType,
+  locale,
   resultLevel,
   resultStatus,
   section,
@@ -288,3 +291,52 @@ export const examResultRevisions = pgTable(
   (t) => [index("result_revisions_idx").on(t.resultId, t.at)],
 );
 
+/**
+ * The student's answer to the end-of-exam survey (placement and level
+ * verification alike): one row per invitation, written once from the finished
+ * screen and read only by the school's panel. It carries no score or level of
+ * the exam, and no personal data except what the student chooses to type in
+ * `comment`.
+ *
+ * Retention follows the invitation: the row is removed with its assessment,
+ * which the retention purge does when it deletes the candidate record (the
+ * same path as problem reports and every other free text a student typed).
+ * `locale` is the language the student read the survey in, so a comment can be
+ * read in context.
+ */
+export const examFeedback = pgTable(
+  "exam_feedback",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    assessmentId: uuid("assessment_id").notNull(),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    /** 1 (very poor) to 5 (very good). The only required answer. */
+    overall: smallint("overall").notNull(),
+    /** How clear the instructions were, 1 to 5; null when skipped. */
+    clarity: smallint("clarity"),
+    /** How easy the exam screen was to use, 1 to 5; null when skipped. */
+    usability: smallint("usability"),
+    /** "Did you have a technical problem?"; null when not answered. */
+    technicalProblem: boolean("technical_problem"),
+    comment: text("comment"),
+    locale: locale("locale").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    /** One answer per invitation; a second write finds this and does nothing. */
+    unique("exam_feedback_assessment_unique").on(t.assessmentId),
+    index("exam_feedback_org_created_idx").on(t.orgId, t.createdAt),
+    check("exam_feedback_overall_range", sql`${t.overall} BETWEEN 1 AND 5`),
+    check("exam_feedback_clarity_range", sql`${t.clarity} IS NULL OR ${t.clarity} BETWEEN 1 AND 5`),
+    check("exam_feedback_usability_range", sql`${t.usability} IS NULL OR ${t.usability} BETWEEN 1 AND 5`),
+    check("exam_feedback_comment_length", sql`char_length(${t.comment}) <= 1000`),
+    /** The row's organisation is its invitation's, enforced by the database (as candidate_requests). */
+    foreignKey({
+      name: "exam_feedback_assessment_org_fk",
+      columns: [t.assessmentId, t.orgId],
+      foreignColumns: [assessments.id, assessments.orgId],
+    }).onDelete("cascade"),
+  ],
+);
