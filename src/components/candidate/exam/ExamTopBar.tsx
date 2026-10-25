@@ -3,7 +3,7 @@
 import { CirclePlay } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { LanguagePicker } from "@/components/candidate/LanguagePicker";
-import { useProctor } from "@/components/candidate/proctor/ProctorProvider";
+import { ProctorInfoLine, ProctorNotice } from "@/components/candidate/exam/ProctorNotice";
 import { BrandMark } from "@/components/visual/brand-mark";
 import { TimerPill } from "@/components/candidate/exam/TimerPill";
 import { recordingLabel } from "@/lib/proctor/recording-status";
@@ -12,9 +12,20 @@ import { isCandidateLocale, type CandidateLocale } from "@/i18n/locale";
 import { cn } from "@/lib/cn";
 
 /**
+ * Which short line the recording chip carries: the screen when it is recorded
+ * (the thing a student forgets is visible), otherwise the camera. The full
+ * list of what is recorded stays in the chip's tooltip.
+ */
+export function recordingChipKind(recLabel: ReturnType<typeof recordingLabel>, screenShare: boolean): "screen" | "camera" {
+  if (recLabel) return recLabel === "screen" || recLabel === "cameraScreen" || recLabel === "cameraAudioScreen" ? "screen" : "camera";
+  return screenShare ? "screen" : "camera";
+}
+
+/**
  * The sticky bar over the exam: the brand, the section and question counter
  * while a question is open, the language picker on a section introduction,
- * the recording indicator and the time left.
+ * the time left with the recording chip beside it (where the eyes already
+ * are), and the proctor's notices under it.
  */
 export function ExamTopBar({
   inQuestion,
@@ -62,8 +73,10 @@ export function ExamTopBar({
   const common = useT("common");
   const tt = useTranslations("tutorial");
   const recText = recLabel ? rec(recLabel) : screenShare ? t("recordingOn") : t("cameraOn");
+  const chip = proctored ? <RecordingChip text={recordingChipKind(recLabel, screenShare) === "screen" ? t("recordingChipScreen") : t("recordingChipCamera")} full={recText} /> : null;
   return (
     <header className="sticky top-0 z-20 border-b border-hairline bg-surface/95 backdrop-blur">
+      <ProctorNotice />
       <div className={cn("relative mx-auto flex h-14 items-center justify-between gap-4 px-7", wide ? "max-w-[1200px]" : "max-w-[1000px]")}>
         <div className="flex min-w-0 max-w-[calc(50%-6rem)] items-center gap-3 text-[13.5px]">
           <span className="flex shrink-0 items-center gap-2 text-[16px] font-extrabold tracking-[-0.01em] text-ink">
@@ -91,29 +104,38 @@ export function ExamTopBar({
               <span className="sr-only xl:not-sr-only xl:whitespace-nowrap">{tt("howItWorks")}</span>
             </button>
           ) : null}
-          {proctored ? (
-            <span title={recText} className="hidden min-w-0 items-center gap-2 text-[12.5px] text-muted md:flex">
-              <span className="size-1.5 shrink-0 rounded-full bg-accent" aria-hidden />
-              <span className="min-w-0 truncate">{recText}</span>
-            </span>
-          ) : null}
         </div>
-        {inQuestion ? <TimerPill key={`${token}.${sectionPosition}`} remainingMs={remainingMs} sectionMs={sectionMs} token={token} sectionPosition={sectionPosition} /> : null}
+        {inQuestion ? (
+          <TimerPill key={`${token}.${sectionPosition}`} remainingMs={remainingMs} sectionMs={sectionMs} token={token} sectionPosition={sectionPosition} aside={chip} />
+        ) : chip ? (
+          // No clock on a section introduction: the chip stands alone in the middle.
+          <div className="absolute inset-y-0 start-1/2 flex -translate-x-1/2 items-center rtl:translate-x-1/2">{chip}</div>
+        ) : null}
       </div>
-      <Banner />
+      <ProctorInfoLine />
     </header>
   );
 }
 
-/** Non-modal, calm, under the header. Never an alert(). */
-function Banner() {
-  const p = useT("proctor");
-  const { snap } = useProctor();
-  const b = snap?.banner;
-  if (!b || b.kind === "recover") return null;
+/**
+ * "Something is recording you", next to the clock: a gently breathing red dot
+ * (the one place red is allowed besides the brand) and a few words. The full
+ * list is the tooltip and, for a screen reader, the hidden text; the visible
+ * words are short enough for the middle of a 1366px bar in every language and
+ * are cut with an ellipsis rather than ever running into a neighbour.
+ */
+function RecordingChip({ text, full }: { text: string; full: string }) {
   return (
-    <div role="status" className="border-t border-hairline bg-canvas">
-      <p className="mx-auto max-w-[1000px] px-7 py-2 text-[13px] text-ink-2">{p(b.reason)}</p>
-    </div>
+    <span
+      title={full}
+      data-recording-chip
+      className="hidden h-9 max-w-[230px] items-center gap-2 whitespace-nowrap rounded-full border-2 border-line bg-surface px-3 text-[13px] font-semibold text-ink shadow-lip-soft md:inline-flex"
+    >
+      <span aria-hidden className="size-2.5 shrink-0 rounded-full bg-red motion-safe:animate-[rec-pulse_1.6s_ease-in-out_infinite]" />
+      <span aria-hidden className="min-w-0 truncate">
+        {text}
+      </span>
+      <span className="sr-only">{full}</span>
+    </span>
   );
 }

@@ -30,17 +30,21 @@ function writeShown(key: string, shown: string[]): void {
  * The exam clock, centered in the top bar: a white pill that turns yellow-soft
  * when time runs low, never red and never blinking. When the clock steps into
  * "low" or "last" a small callout under it says so once per section run.
+ * `aside` hangs on the pill's trailing side (the recording chip), so the clock
+ * itself stays exactly in the middle of the bar.
  */
 export function TimerPill({
   remainingMs,
   sectionMs,
   token,
   sectionPosition,
+  aside,
 }: {
   remainingMs: number;
   sectionMs: number;
   token: string;
   sectionPosition: number;
+  aside?: React.ReactNode;
 }) {
   const t = useT("exam");
   const cue = timeCue(remainingMs, sectionMs);
@@ -81,6 +85,7 @@ export function TimerPill({
         <Clock aria-hidden className="size-5 text-ink-2" strokeWidth={2} />
         <span className="tnum text-button-lg text-ink">{formatCountdown(remainingMs)}</span>
       </span>
+      {aside ? <div className="absolute start-full top-1/2 ms-3 w-max -translate-y-1/2">{aside}</div> : null}
       <div role="status" aria-live="polite" className="absolute start-1/2 top-full -translate-x-1/2 rtl:translate-x-1/2">
         {notice ? (
           <div className="mt-2 flex w-max max-w-[360px] items-center gap-3 rounded-[12px] border border-sun-fill bg-sun-soft px-4 py-2 text-[14px] font-semibold text-ink shadow-lip-soft">
