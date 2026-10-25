@@ -357,7 +357,10 @@ async function main() {
   const withoutOwnAnswers = sent
     .map((body) => JSON.stringify(JSON.parse(body), (k, v) => (k === "answer" ? undefined : v)))
     .join("\n");
-  const keyHits = typedKeys.filter((k) => withoutOwnAnswers.includes(`"${k}"`));
+  // An option of another (multiple-choice) item can spell the same words, e.g. "um 14.30 Uhr": shown there it
+  // reveals nothing about the typed gap, so an exact option string is not a hit.
+  const optionTexts = new Set(items.flatMap((i) => (i.content.kind === "CHOICE" ? i.content.options.map((o) => o.text) : [])));
+  const keyHits = typedKeys.filter((k) => !optionTexts.has(k) && withoutOwnAnswers.includes(`"${k}"`));
   if (keyHits.length === 0) ok(`no hidden typed gap answers among ${typedKeys.length} checked`);
   else bad(`accepted answers appear in student bodies: ${keyHits.slice(0, 5).join(", ")}`);
 
