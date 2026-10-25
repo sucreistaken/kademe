@@ -67,7 +67,7 @@ const OTHER_LANGUAGE_WORDS: Record<"en" | "tr" | "es", Set<string>> = {
   en: new Set(
     ("the and is are to of you we my for with that this have not it can be but your our they he she i " +
       "would could please thank thanks dear regards hello sorry tomorrow today because very know think should " +
-      "what when where which there their them then from at as or if do does did will")
+      "what when where which there their them then from at as or if do does did")
       .split(" "),
   ),
   tr: new Set(
@@ -132,8 +132,11 @@ export function withLengthFlag(proposal: GradingProposal, input: { section: Prod
   return { ...proposal, flags };
 }
 
-/** Up to this many words with no German sentence in them is "a few words". */
-export const FEW_WORDS = 12;
+/**
+ * Up to this many words with no German sentence in them is "a few words". Low on purpose: a telegraphic
+ * but real A1 answer ("Ich Student. Wohne Berlin. Hobby Fußball.") is nine words and the model grades it.
+ */
+export const FEW_WORDS = 8;
 
 // ---------------------------------------------------------------------------
 // The verdict

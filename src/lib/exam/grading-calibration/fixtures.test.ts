@@ -7,7 +7,7 @@ import { CALIBRATION_FIXTURES } from "./fixtures";
 import { CALIBRATION_TASKS, matchingSeedItems, resolveTask } from "./tasks";
 import { metricsFor, timedWords, transcriptWords } from "./timing";
 
-const EM_DASH = "—";
+const EM_DASH = "\u2014";
 const writing = CALIBRATION_FIXTURES.filter((f) => resolveTask(f.task).section === "WRITING");
 const speaking = CALIBRATION_FIXTURES.filter((f) => resolveTask(f.task).section === "SPEAKING");
 

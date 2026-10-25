@@ -66,7 +66,7 @@ describe("structureLine", () => {
     for (const text of [written, spoken]) {
       expect(text).toContain("subordinate clauses with weil, dass, wenn or ob 1");
       expect(text).toContain("two-part connectors none");
-      expect(text).not.toContain("—");
+      expect(text).not.toContain("\u2014");
     }
   });
 });

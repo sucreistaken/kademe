@@ -17,7 +17,7 @@ import {
 import { CALIBRATION_FIXTURES } from "./grading-calibration/fixtures";
 import { resolveTask } from "./grading-calibration/tasks";
 
-const EM_DASH = "—";
+const EM_DASH = "\u2014";
 const TASK = "Ihr Freund Tim hat Ihnen diese Nachricht geschickt: „Hallo! Am Samstag mache ich eine Grillparty im Park. Hast du Zeit? Wann kannst du kommen?“ Schreiben Sie Tim eine Antwort.";
 
 const input = (text: string, over: Partial<RuleInput> = {}): RuleInput => ({
@@ -119,6 +119,8 @@ describe("ruleVerdict", () => {
   it("handles cases written after the rules: a German greeting around English, a word list, a mixed answer, a copy with a new greeting", () => {
     expect(ruleVerdict(input("Liebe Anna, I would like to come to your party on Saturday and I will bring a cake."))?.reason).toBe("NOT_GERMAN");
     expect(ruleVerdict(input("Brot Milch Käse Butter Eier"))?.reason).toBe("FEW_WORDS");
+    // A telegraphic but real A1 answer (nine words, five points) is the model's to grade, not a rule's.
+    expect(ruleVerdict({ section: "SPEAKING", text: "Ich Student. Wohne Berlin. Hobby Fußball. Name ist Ali.", taskText: TASK })).toBeNull();
     // Turkish with one German sentence of her own: the model grades it (at least A1), no rule.
     expect(ruleVerdict(input("Merhaba Tim, davetin için çok teşekkür ederim ve cumartesi günü gelebilirim. Ich komme um vier Uhr gern. Görüşürüz."))).toBeNull();
     expect(ruleVerdict(input("Hallo Tina! Am Samstag mache ich eine Grillparty im Park. Hast du Zeit? Wann kannst du kommen?"))?.reason).toBe("COPIED_TASK");

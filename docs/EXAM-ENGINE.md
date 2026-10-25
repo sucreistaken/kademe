@@ -458,7 +458,7 @@ kriter bazlı öneri (görev, tutarlılık, çeşitlilik, doğruluk; konuşmada 
   AI çağrısı yok, yine `AI_PROPOSED`, öğretmen onaylar): hiçbir şey yazılmamış ya da söylenmemiş (`EMPTY`), cevap
   görev metninin kendisi (üç sözcüklük dizilerin %80'i görevde var, `COPIED_TASK`), cevap Almanca değil (İngilizce,
   Türkçe, İspanyolca işlev sözcükleri ya da Arap yazısı payı %25 ve üstü, Almanca cümle yok, `NOT_GERMAN`), ya da
-  en fazla 12 sözcük ve içinde Almanca cümle yok (`TOO_SHORT`; form görevlerinde ve 20 sözcükten kısa asgarili
+  en fazla 8 sözcük ve içinde Almanca cümle yok (`TOO_SHORT`; form görevlerinde ve 20 sözcükten kısa asgarili
   görevlerde uygulanmaz, çünkü cevap alan değeridir; form görevinde kopya testi de yoktur, çünkü doğru bir form
   görevdeki etiketleri tekrar eder, bankadaki formlarda mükemmel cevabın %52-67'si). Boş cevap eskiden `AI_FAILED: EMPTY` idi ve bölüm seviyesiz
   kalıyordu (seviye kontrolü `INCONCLUSIVE`); artık A0 önerisi olur (`openGradings`), geç gelen kayıt bunu yeniden açar
