@@ -5,7 +5,9 @@ import { img } from "../image";
 import { openCloze } from "../opencloze";
 import { wordBank } from "../wordbank";
 import { LISTENING_RFN, READING_RFN } from "../instructions";
-import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
+import { withParts, type LevelParts } from "../author";
+import { C2_MORE } from "./c2-more";
+import type { SeedItem, SeedStimulus } from "../types";
 
 /*
  * A seed item's text is part of its seed key (seed-key.ts). Changing the
@@ -2005,16 +2007,13 @@ const speakingPictureItems: SeedItem[] = [
     "C2: Beschreiben, Deuten und Argumentieren zu einer gesellschaftlich umstrittenen Planungsfrage, mit Fazit."),
 ];
 
-export const C2_PARTS: {
-  grammar: SeedBankPart;
-  reading: SeedBankPart;
-  listening: SeedBankPart;
-  writing: SeedBankPart;
-  speaking: SeedBankPart;
-} = {
+const C2_BASE: LevelParts = {
   grammar: { stimuli: [], items: [...grammarItems, ...grammarTexts, ...grammarOpenTexts] },
   reading: { stimuli: [...readingStimuli, ...readingStimuliV3], items: [...readingItems, ...readingItemsV3] },
   listening: { stimuli: [...listeningStimuli, ...listeningStimuliV3], items: [...listeningItems, ...listeningItemsV3] },
   writing: { stimuli: [], items: writingItems },
   speaking: { stimuli: [], items: [...speakingItems, ...speakingPictureItems] },
 };
+
+/** The base units above plus the round 3 additions (c2-more.ts). */
+export const C2_PARTS: LevelParts = withParts(C2_BASE, C2_MORE);

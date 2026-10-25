@@ -4,7 +4,9 @@ import { cTest } from "../ctest";
 import { img } from "../image";
 import { wordBank } from "../wordbank";
 import { LISTENING_RF, READING_RF } from "../instructions";
-import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
+import { withParts, type LevelParts } from "../author";
+import { A2_MORE } from "./a2-more";
+import type { SeedItem, SeedStimulus } from "../types";
 
 /*
  * A seed item's text is part of its seed key (seed-key.ts). Changing the
@@ -1844,16 +1846,13 @@ const speakingItems: SeedItem[] = [
 
 // ================================================================ EXPORT
 
-export const A2_PARTS: {
-  grammar: SeedBankPart;
-  reading: SeedBankPart;
-  listening: SeedBankPart;
-  writing: SeedBankPart;
-  speaking: SeedBankPart;
-} = {
+const A2_BASE: LevelParts = {
   grammar: { stimuli: [], items: [...grammarItems, grammarCTest, grammarCTest2, grammarCTest3, ...grammarTexts] },
   reading: { stimuli: readingStimuli, items: readingItems },
   listening: { stimuli: listeningStimuli, items: listeningItems },
   writing: { stimuli: [], items: writingItems },
   speaking: { stimuli: [], items: speakingItems },
 };
+
+/** The base units above plus the round 3 additions (a2-more.ts). */
+export const A2_PARTS: LevelParts = withParts(A2_BASE, A2_MORE);

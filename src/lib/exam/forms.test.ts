@@ -15,22 +15,11 @@ import { CEFR_LEVELS, isObjectiveSection, isTextGap, textGapKindOf, type Cefr } 
  * not share an item or a text.
  *
  * Bank tasks shrink this list to empty: the test fails both on a repeat in a
- * cell that is not listed and on a listed cell that no longer repeats.
+ * cell that is not listed and on a listed cell that no longer repeats. Empty
+ * since 2026-10-25 (round 3 added A1 and C2 grammar singles, two A1 clips and
+ * two C2 texts); a future level-check draw that repeats lists its cell here again.
  */
-const EXPECTED_SHORTFALL: string[] = [
-  // Bank too small: a claim at the end of the scale folds "below" or "above" grammar onto it, 9 singles a form,
-  // 27 for three; A1 and C2 hold 24 each (bank of 2026-10-23).
-  "level-check A1 GRAMMAR A1",
-  "level-check C2 GRAMMAR C2",
-  // Draw overshoot (whole texts): the bank could fill three disjoint forms, but whole texts overshoot the item
-  // count and the draw takes texts in shuffled, format-mixed order (blueprint.ts: mixFormats) without packing
-  // them to fit. C2 reading: 8 items a form, 24 for three; the bank has exactly
-  // 24 in 12 texts (six of 3, six of 1), so three forms of 3+3+1+1 would fit. A1 listening: 7 items a form, 21
-  // for three; 24 in 11 clips (3,3,3,3,3,2,2,2,1,1,1), so 3+3+1, 3+2+2 and 3+2+1+1 would fit. Every other
-  // reading and listening cell of the earlier list draws three forms without a repeat now.
-  "level-check C2 READING C2",
-  "level-check A1 LISTENING A1",
-];
+const EXPECTED_SHORTFALL: string[] = [];
 
 /** Each sequence of forms starts from its own seed; a cell is short when any of them repeats there. */
 const SEEDS = [1, 2, 3, 4, 5, 6];

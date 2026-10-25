@@ -4,7 +4,9 @@ import { cTest } from "../ctest";
 import { wordBank } from "../wordbank";
 import { img } from "../image";
 import { LISTENING_RF, READING_RF, READING_YES_NO } from "../instructions";
-import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
+import { withParts, type LevelParts } from "../author";
+import { B1_MORE } from "./b1-more";
+import type { SeedItem, SeedStimulus } from "../types";
 
 /*
  * A seed item's text is part of its seed key (seed-key.ts). Changing the
@@ -2055,16 +2057,13 @@ function slideTalks(): SeedItem[] {
   ];
 }
 
-export const B1_PARTS: {
-  grammar: SeedBankPart;
-  reading: SeedBankPart;
-  listening: SeedBankPart;
-  writing: SeedBankPart;
-  speaking: SeedBankPart;
-} = {
+const B1_BASE: LevelParts = {
   grammar: { stimuli: [], items: [...grammarItems, ...grammarTexts] },
   reading: { stimuli: [rEmail, rArtikel, rAnzeigen, rRegeln, rForum, rNews, rHund, rMarkt, rChor, rSonntag, rWohnen, rUrlaub], items: readingItems },
   listening: { stimuli: [lMailbox, lFuehrung, lGespraech, lWerkstatt, lFreibad, lTanzkurs, lGrillparty, lBahn], items: listeningItems },
   writing: { stimuli: [], items: writingItems },
   speaking: { stimuli: [], items: speakingItems },
 };
+
+/** The base units above plus the round 3 additions (b1-more.ts). */
+export const B1_PARTS: LevelParts = withParts(B1_BASE, B1_MORE);

@@ -4,7 +4,9 @@ import { cTest } from "../ctest";
 import { img } from "../image";
 import { wordBank } from "../wordbank";
 import { LISTENING_RF, READING_RF } from "../instructions";
-import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
+import { withParts, type LevelParts } from "../author";
+import { A1_MORE } from "./a1-more";
+import type { SeedItem, SeedStimulus } from "../types";
 
 /*
  * A seed item's text is part of its seed key (seed-key.ts). Changing the
@@ -1818,16 +1820,13 @@ const speakingPictureItems: SeedItem[] = [
     ["wo die Personen sind", "wer auf dem Bild ist", "was die Personen machen", "was Sie gern im Supermarkt kaufen"]),
 ];
 
-export const A1_PARTS: {
-  grammar: SeedBankPart;
-  reading: SeedBankPart;
-  listening: SeedBankPart;
-  writing: SeedBankPart;
-  speaking: SeedBankPart;
-} = {
+const A1_BASE: LevelParts = {
   grammar: { stimuli: [], items: grammarItems },
   reading: { stimuli: [rArbeitstag, rJobs, rPraxis, rSms, rKleinanzeigen, rSchilder, rAngebote, rSchilderStadt, rZettelKueche, rZettelDinge, rBibliothek, rKochkurs, rTisch], items: [...readingItems, ...readingNewItems] },
   listening: { stimuli: [lBahnhof, lKollege, lKurs, lZahnarzt, lWetter, lReiseWetter, lEssenKleidung, lWohnenFreizeit, lNachrichtenOrte, lNachrichtenDinge, lNachrichtenHobbys], items: [...listeningItems, ...listeningNewItems] },
   writing: { stimuli: [], items: writingItems },
   speaking: { stimuli: [], items: [...speakingItems, ...speakingPictureItems] },
 };
+
+/** The base units above plus the round 3 additions (a1-more.ts). */
+export const A1_PARTS: LevelParts = withParts(A1_BASE, A1_MORE);

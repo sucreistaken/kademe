@@ -5,7 +5,9 @@ import { openCloze } from "../opencloze";
 import { img } from "../image";
 import { wordBank } from "../wordbank";
 import { LISTENING_RFN, READING_RFN, READING_YES_NO_NOT_SAID } from "../instructions";
-import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
+import { withParts, type LevelParts } from "../author";
+import { C1_MORE } from "./c1-more";
+import type { SeedItem, SeedStimulus } from "../types";
 
 /*
  * A seed item's text is part of its seed key (seed-key.ts). Changing the
@@ -2115,16 +2117,13 @@ const speakingItems: SeedItem[] = [
     CHART_SPEAK_NOTE),
 ];
 
-export const C1_PARTS: {
-  grammar: SeedBankPart;
-  reading: SeedBankPart;
-  listening: SeedBankPart;
-  writing: SeedBankPart;
-  speaking: SeedBankPart;
-} = {
+const C1_BASE: LevelParts = {
   grammar: { stimuli: [], items: [...grammarItems, ...grammarTexts] },
   reading: { stimuli: [R_PAUSEN, R_REPARATUR, R_WEITERBILDUNG, R_KI, R_STADTBAEUME, R_MUSEUM, R_GENOSSENSCHAFT, R_FOTOKURSE, R_LAUFEN, R_BIBER, R_DIALEKT], items: readingItems },
   listening: { stimuli: [L_QUEREINSTIEG, L_GRUPPEN, L_GEHALT, L_PHYSIO, L_NACHTZUG, L_HEIZUNG, L_AUSGRABUNG, L_WOHNFORMEN, L_GETREIDE, L_TOURISMUS, L_PFLEGE, L_TAFEL], items: listeningItems },
   writing: { stimuli: [], items: writingItems },
   speaking: { stimuli: [], items: speakingItems },
 };
+
+/** The base units above plus the round 3 additions (c1-more.ts). */
+export const C1_PARTS: LevelParts = withParts(C1_BASE, C1_MORE);

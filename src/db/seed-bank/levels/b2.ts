@@ -5,6 +5,8 @@ import { openCloze } from "../opencloze";
 import { img } from "../image";
 import { wordBank } from "../wordbank";
 import { LISTENING_RFN, READING_RFN } from "../instructions";
+import { withParts, type LevelParts } from "../author";
+import { B2_MORE } from "./b2-more";
 import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 
 /*
@@ -2240,10 +2242,7 @@ const pictureItems: SeedItem[] = [
 
 const speaking: SeedBankPart = { stimuli: [], items: [...speakingItems, ...pictureItems] };
 
-export const B2_PARTS: {
-  grammar: SeedBankPart;
-  reading: SeedBankPart;
-  listening: SeedBankPart;
-  writing: SeedBankPart;
-  speaking: SeedBankPart;
-} = { grammar, reading, listening, writing, speaking };
+const B2_BASE: LevelParts = { grammar, reading, listening, writing, speaking };
+
+/** The base units above plus the round 3 additions (b2-more.ts). */
+export const B2_PARTS: LevelParts = withParts(B2_BASE, B2_MORE);

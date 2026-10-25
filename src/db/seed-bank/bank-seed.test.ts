@@ -60,13 +60,15 @@ describe("starter bank coverage", () => {
  * The grammar texts per level (bank of 2026-10-23, spec 2026-10-23 "Targets per level"): three MC cloze texts
  * and three classic word banks (8 gaps) everywhere; B1 and B2 add three Sprachbausteine word banks (10 gaps,
  * 15 words, as in telc B1/B2); B2 to C2 add three open cloze texts (one typed word per gap, ÖSD ZB2/ZC1).
+ * Round 3 (2026-10-25) adds one letter-style MC cloze text at A2, B1 and B2 and one "advert and reply"
+ * Sprachbausteine text at B1 and B2 (telc style), so those levels hold a fourth.
  * The counts are exact: a level with more or fewer texts than planned fails here until this table changes.
  */
 const TEXT_COUNTS: Record<Cefr, { cloze: number; wordBanks: number; sprachbausteine: number; open: number }> = {
   A1: { cloze: 3, wordBanks: 3, sprachbausteine: 0, open: 0 },
-  A2: { cloze: 3, wordBanks: 3, sprachbausteine: 0, open: 0 },
-  B1: { cloze: 3, wordBanks: 3, sprachbausteine: 3, open: 0 },
-  B2: { cloze: 3, wordBanks: 3, sprachbausteine: 3, open: 3 },
+  A2: { cloze: 4, wordBanks: 3, sprachbausteine: 0, open: 0 },
+  B1: { cloze: 4, wordBanks: 3, sprachbausteine: 4, open: 0 },
+  B2: { cloze: 4, wordBanks: 3, sprachbausteine: 4, open: 3 },
   C1: { cloze: 3, wordBanks: 3, sprachbausteine: 0, open: 3 },
   C2: { cloze: 3, wordBanks: 3, sprachbausteine: 0, open: 3 },
 };
@@ -98,7 +100,7 @@ describe("starter MC cloze, word-bank and open cloze texts", () => {
     it(`${level}: three MC cloze texts, easy to hard, with 10 to 12 four-choice gaps`, () => {
       const texts = textsOf(level, "grammar.cloze");
       expect(texts).toHaveLength(want.cloze);
-      expect(texts.map((t) => t.within).sort()).toEqual(["EASY", "HARD", "MID"]);
+      expect([...new Set(texts.map((t) => t.within))].sort()).toEqual(["EASY", "HARD", "MID"]);
       for (const t of texts) {
         expect(t.section).toBe("GRAMMAR");
         expect(t.type).toBe("GAP_FILL");

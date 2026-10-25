@@ -168,9 +168,10 @@ describe("exam templates", () => {
   });
 
   it("the seed bank's texts do not count as ordinary grammar items", () => {
-    // The 2026-10-23 bank: 3 MC cloze texts everywhere; 3 word banks, 6 at B1 and B2 (3 classic + 3
-    // Sprachbausteine); 3 open cloze texts from B2 (bank-seed.test.ts checks their shape).
-    const want = { A1: [3, 3, 0], A2: [3, 3, 0], B1: [3, 6, 0], B2: [3, 6, 3], C1: [3, 3, 3], C2: [3, 3, 3] };
+    // The 2026-10-25 bank: 3 MC cloze texts, plus a letter-style one at A2, B1 and B2; 3 word banks, 7 at B1 and
+    // B2 (3 classic + 4 Sprachbausteine, one of them "advert and reply"); 3 open cloze texts from B2
+    // (bank-seed.test.ts checks their shape).
+    const want = { A1: [3, 3, 0], A2: [4, 3, 0], B1: [4, 7, 0], B2: [4, 7, 3], C1: [3, 3, 3], C2: [3, 3, 3] };
     const grammar = seedCounts().filter((c) => c.section === "GRAMMAR");
     for (const c of grammar) {
       expect([c.clozeTexts, c.wordBanks, c.openTexts], c.level).toEqual(want[c.level]);
