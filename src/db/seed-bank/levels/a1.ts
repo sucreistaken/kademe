@@ -3,6 +3,7 @@ import { cloze } from "../cloze";
 import { cTest } from "../ctest";
 import { img } from "../image";
 import { wordBank } from "../wordbank";
+import { LISTENING_RF, READING_RF } from "../instructions";
 import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 
 /*
@@ -335,7 +336,7 @@ const grammarItems: SeedItem[] = [
 // ---------------------------------------------------------------- READING
 
 type ReadingSkill = "gist" | "detail" | "inference" | "vocabulary" | "structure";
-const TFNG_PROMPT = "Richtig oder falsch? Entscheiden Sie für jede Aussage.";
+const TFNG_PROMPT = READING_RF;
 
 const text = (key: string, title: string, topic: string, body: string): SeedStimulus => ({
   key,
@@ -639,7 +640,7 @@ const readingItems: SeedItem[] = [
 
   // Kleinanzeigen aus der Stadt
   kleinanzeigen.match("detail", "MID",
-    "Welche Anzeige passt? Wenn keine Anzeige passt, wählen Sie \"Keine Anzeige passt\".",
+    "Lesen Sie die Situationen und die Anzeigen A bis E. Welche Anzeige passt zu welcher Situation? Jede Anzeige passt nur einmal. Wenn keine Anzeige passt, wählen Sie „Keine Anzeige passt“.",
     [
       "Sie möchten einen Computerkurs machen.",
       "Sie möchten ein gebrauchtes Fahrrad kaufen.",
@@ -836,7 +837,7 @@ const readingNewItems: SeedItem[] = [
   signsToPictures(
     rSchilderStadt.key,
     "EASY",
-    "Welches Schild passt zu welchem Bild? Ein Bild bleibt übrig.",
+    "Welches Bild passt zu welchem Schild? Ein Bild bleibt übrig.",
     [
       "Bücher bitte nach drei Wochen zurückbringen.",
       "Heute frische Brötchen. Geöffnet von 6 bis 18 Uhr.",
@@ -851,7 +852,7 @@ const readingNewItems: SeedItem[] = [
   signsToPictures(
     rZettelKueche.key,
     "MID",
-    "Welcher Zettel passt zu welchem Bild? Ein Bild bleibt übrig.",
+    "Welches Bild passt zu welchem Zettel? Ein Bild bleibt übrig.",
     [
       "Bitte nicht essen! Das ist für Omas Geburtstag.",
       "Bitte warm machen. Ihr braucht einen Löffel.",
@@ -866,7 +867,7 @@ const readingNewItems: SeedItem[] = [
   signsToPictures(
     rZettelDinge.key,
     "HARD",
-    "Welcher Zettel passt zu welchem Bild? Ein Bild bleibt übrig.",
+    "Welches Bild passt zu welchem Zettel? Ein Bild bleibt übrig.",
     [
       "Gefunden im Bus: orange, innen ein Schlüssel. Bitte beim Fahrer fragen.",
       "Heute frisch: Rosen für 4 Euro der Strauß.",
@@ -929,7 +930,7 @@ const readingNewItems: SeedItem[] = [
 // ---------------------------------------------------------------- LISTENING
 
 type ListeningSkill = "gist" | "detail" | "inference" | "notes";
-const LISTEN_TFNG_PROMPT = "Richtig oder falsch? Entscheiden Sie für jede Aussage.";
+const LISTEN_TFNG_PROMPT = LISTENING_RF;
 
 /*
  * Listening scripts are never changed in place: the audio is made from the

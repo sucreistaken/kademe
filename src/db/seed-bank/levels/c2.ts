@@ -4,6 +4,7 @@ import { cTest } from "../ctest";
 import { img } from "../image";
 import { openCloze } from "../opencloze";
 import { wordBank } from "../wordbank";
+import { LISTENING_RFN, READING_RFN } from "../instructions";
 import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 
 /*
@@ -411,7 +412,7 @@ function forText(stimulusKey: string) {
     tfng(skill: RSkill, within: Within, statements: Array<[string, TfngValue]>, explanation: string): SeedItem {
       const ids = statements.map((_, i) => `s${i + 1}`);
       return {
-        ...base(skill, within, "Richtig (R), falsch (F) oder nicht im Text (NG)?", explanation),
+        ...base(skill, within, READING_RFN, explanation),
         type: "TRUE_FALSE_NG",
         content: { kind: "TFNG", statements: statements.map(([text], i) => ({ id: ids[i], text })) },
         key: { kind: "TFNG", answers: Object.fromEntries(statements.map(([, v], i) => [ids[i], v])) },
@@ -604,7 +605,7 @@ const readingItems: SeedItem[] = [
 
   // Essay: statements to sections (Goethe C2 Lesen Teil 2), plus MC and R/F/NG.
   rE.match("structure", "MID",
-    "Ordnen Sie jeder Aussage den Abschnitt (A bis F) zu, in dem dieser Gedanke ausgedrückt wird. Ein Abschnitt bleibt übrig.",
+    "Lesen Sie den Text. In welchem Abschnitt (A bis F) steht welcher Gedanke? Ordnen Sie jeder Aussage einen Abschnitt zu. Ein Abschnitt bleibt übrig.",
     [
       "Auch das Gegenteil der kritisierten Haltung hat Nachteile.",
       "Wer früher Einblick gewährt hätte, hätte sich Aufwand und Enttäuschung erspart.",
@@ -635,7 +636,7 @@ const readingItems: SeedItem[] = [
 
   // Bericht: removed paragraphs (Goethe C2 Lesen Teil 3), plus MC and R/F/NG.
   rB.match("structure", "HARD",
-    "In den Text wurden drei Absätze entfernt. Ordnen Sie jeder Lücke den passenden Absatz zu. Ein Absatz passt nicht.",
+    "Lesen Sie den Text. Drei Absätze fehlen. Welcher Absatz passt in welche Lücke? Jeder Absatz passt nur einmal. Ein Absatz passt nicht.",
     ["Lücke 1", "Lücke 2", "Lücke 3"],
     [
       "Nicht verschwiegen wird im Bericht, dass der Kundendienst an seine Grenzen stieß. Da Kunden auch freitags eine Ansprechperson erwarten, musste dort ein rollierendes System eingeführt werden, das die Planung erheblich verkomplizierte. Die Zufriedenheit der Kunden blieb zwar stabil, im Team selbst wuchs jedoch der Unmut über die ständigen Absprachen.",
@@ -664,7 +665,7 @@ const readingItems: SeedItem[] = [
 
   // Stellenanzeigen: selective reading (Goethe C2 Lesen Teil 4).
   rA.match("detail", "MID",
-    "Welche Anzeige passt zu welcher Person? Wenn keine Anzeige passt, wählen Sie „keine passende Anzeige“.",
+    "Lesen Sie die Anzeigen A bis D. Welche Anzeige passt zu welcher Person? Jede Anzeige passt nur einmal. Wenn keine Anzeige passt, wählen Sie „keine passende Anzeige“.",
     [
       "Eine Juristin mit hervorragenden Englischkenntnissen sucht eine Nebentätigkeit, deren Umfang sie selbst steuern kann.",
       "Ein Maschinenbauingenieur mit verhandlungssicherem Englisch möchte, ohne umzuziehen, im Homeoffice Anleitungen schreiben; eine kurze Präsenzphase zu Beginn wäre für ihn kein Problem.",
@@ -794,7 +795,7 @@ function forClip(stimulusKey: string) {
     tfng(skill: LSkill, within: Within, statements: Array<[string, TfngValue]>, explanation: string): SeedItem {
       const ids = statements.map((_, i) => `s${i + 1}`);
       return {
-        ...base(skill, within, "Richtig (R), falsch (F) oder wird dazu nichts gesagt (NG)?", explanation),
+        ...base(skill, within, LISTENING_RFN, explanation),
         type: "TRUE_FALSE_NG",
         content: { kind: "TFNG", statements: statements.map(([text], i) => ({ id: ids[i], text })) },
         key: { kind: "TFNG", answers: Object.fromEntries(statements.map(([, v], i) => [ids[i], v])) },
@@ -990,7 +991,7 @@ const listeningItems: SeedItem[] = [
 
   // Streitgespräch: wer vertritt welche Meinung (Goethe C2 Hören Teil 2)
   lD.match("attitude", "HARD",
-    "Wer vertritt die folgende Meinung: nur Frau Seidel, nur Herr Okafor, beide oder keiner von beiden?",
+    "Hören Sie das Streitgespräch. Wer vertritt welche Meinung? Ordnen Sie jeder Aussage zu: nur Frau Seidel, nur Herr Okafor, beide oder keiner von beiden.",
     [
       "Vorstellungsgespräche ohne feste Struktur sind ein unzuverlässiges Auswahlinstrument.",
       "Auf einen Probetag kann man verzichten, wenn das Gespräch professionell geführt wird.",
@@ -1050,7 +1051,7 @@ const listeningItems: SeedItem[] = [
 
   // Schlaf und Lernen: note-taking of a qualification, an objection and a condition
   lS.notes("notes", "HARD",
-    "Notieren Sie beim Hören die fehlenden Angaben in Stichworten.\n\nDer Schlaf festigt vor allem Stoff, der vorher {{g1}} wurde.\nEinwand gegen die Studien: Untersucht wurden fast nur {{g2}} im Labor.\nAbends noch einmal durchgehen, sofern man nicht völlig {{g3}} ist.",
+    "Hören Sie den Beitrag. Ergänzen Sie die Notizen in Stichworten.\n\nDer Schlaf festigt vor allem Stoff, der vorher {{g1}} wurde.\nEinwand gegen die Studien: Untersucht wurden fast nur {{g2}} im Labor.\nAbends noch einmal durchgehen, sofern man nicht völlig {{g3}} ist.",
     [
       ["verstanden", "wirklich verstanden", "richtig verstanden", "auch wirklich verstanden", "begriffen", "wirklich begriffen", "nachvollzogen", "durchdrungen", "verinnerlicht"],
       ["junge, gesunde Probanden", "junge gesunde Probanden", "junge und gesunde Probanden", "jungen, gesunden Probanden", "jungen gesunden Probanden", "junge, gesunde Menschen", "junge gesunde Menschen", "junge und gesunde Menschen", "junge, gesunde Leute", "junge gesunde Leute", "junge Menschen", "junge, gesunde Teilnehmer", "junge, gesunde Teilnehmende", "junge gesunde Teilnehmende", "junge Gesunde", "jung und gesund", "jung, gesund", "gesunde Probanden", "junge Probanden", "gesunde Versuchspersonen", "junge, gesunde Versuchspersonen", "junge gesunde Versuchspersonen", "junge gesunde Teilnehmer", "junge und gesunde Teilnehmer", "junge Teilnehmer", "gesunde Menschen", "junge Leute", "junge und gesunde Leute", "junge und gesunde Versuchspersonen", "junge Versuchspersonen"],
@@ -1078,7 +1079,7 @@ const listeningItems: SeedItem[] = [
 
   // Nachtzug: note-taking, irony and a hedged price judgement
   lB.notes("notes", "HARD",
-    "Notieren Sie beim Hören die fehlenden Angaben in Stichworten.\n\nGut ausgeruht kommt man an, sofern man ein {{g1}} bucht.\nPreislich etwa gleich, wenn man die Zeit am Flughafen mitrechnet und {{g2}} spart.\nBei zwei Stunden Verspätung fehlt der {{g3}}.",
+    "Hören Sie den Beitrag. Ergänzen Sie die Notizen in Stichworten.\n\nGut ausgeruht kommt man an, sofern man ein {{g1}} bucht.\nPreislich etwa gleich, wenn man die Zeit am Flughafen mitrechnet und {{g2}} spart.\nBei zwei Stunden Verspätung fehlt der {{g3}}.",
     [
       ["Schlafwagenabteil", "Schlafwagen-Abteil", "Schlafwagen", "Abteil im Schlafwagen", "Schlafabteil", "Schlafwagenplatz", "Schlafplatz"],
       ["das Hotel", "das Hotel für die eine Nacht", "das Hotel für eine Nacht", "Hotel für eine Nacht", "eine Nacht im Hotel", "eine Hotelnacht", "die Hotelnacht", "Hotelnacht", "das Hotelzimmer", "Hotelzimmer", "ein Hotel", "Hotel", "die Hotelübernachtung", "eine Hotelübernachtung", "Hotelübernachtung", "die Übernachtung", "Übernachtung", "die Hotelkosten", "Hotelkosten", "die Übernachtungskosten", "Übernachtungskosten", "die Hotelnacht"],
@@ -1675,9 +1676,9 @@ Ich würde zunächst einzelne Straßen auswählen, in denen die Belastung am gr�
   },
 ];
 
-const INSERT_PROMPT = "In den Text wurden fünf Absätze entfernt. Ordnen Sie jeder Lücke den passenden Absatz zu. Zwei Absätze passen nicht.";
+const INSERT_PROMPT = "Lesen Sie den Text. Fünf Absätze fehlen. Welcher Absatz passt in welche Lücke? Jeder Absatz passt nur einmal. Zwei Absätze passen nicht.";
 const GAPS_1_5 = ["Lücke 1", "Lücke 2", "Lücke 3", "Lücke 4", "Lücke 5"];
-const OPINION_PROMPT = "Welche Person vertritt welche Meinung? Eine Person bleibt übrig.";
+const OPINION_PROMPT = "Lesen Sie die Beiträge der sechs Personen. Wer sagt was? Ordnen Sie jeder Aussage eine Person zu. Eine Person bleibt übrig.";
 const PERSONS_A_F = ["Person A", "Person B", "Person C", "Person D", "Person E", "Person F"];
 
 const readingItemsV3: SeedItem[] = [
@@ -1846,7 +1847,7 @@ const lM = forClip(L_MUSIK);
 
 const listeningItemsV3: SeedItem[] = [
   lZ.match("attitude", "MID",
-    "Wer vertritt die folgende Meinung: Herr Kessel, Herr Yilmaz, Frau Lorenz oder keiner von den dreien?",
+    "Hören Sie das Podiumsgespräch. Wer vertritt welche Meinung? Ordnen Sie jeder Aussage zu: Herr Kessel, Herr Yilmaz, Frau Lorenz oder keiner von den dreien.",
     [
       "Die Einnahmen sollten zweckgebunden verwendet werden.",
       "Die Hersteller ändern ihre Rezepte nur unter äußerem Druck.",
@@ -1879,7 +1880,7 @@ const listeningItemsV3: SeedItem[] = [
     "Sie nennt erst zweiunddreißig, korrigiert sich dann aber: \"ach nein, zweiundvierzig Prozent\"."),
 
   lM.match("attitude", "HARD",
-    "Wer vertritt die folgende Meinung: Herr Reuter, Frau Alvarez, Herr Pohl oder keiner von den dreien?",
+    "Hören Sie die Gesprächsrunde. Wer vertritt welche Meinung? Ordnen Sie jeder Aussage zu: Herr Reuter, Frau Alvarez, Herr Pohl oder keiner von den dreien.",
     [
       "Für Hintergrundmusik ist die Frage, ob es Kunst ist, unwichtig.",
       "Der Einsatz solcher Programme sollte grundsätzlich verboten werden.",

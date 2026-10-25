@@ -3,6 +3,7 @@ import { cloze } from "../cloze";
 import { cTest } from "../ctest";
 import { img } from "../image";
 import { wordBank } from "../wordbank";
+import { LISTENING_RF, READING_RF } from "../instructions";
 import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 
 /*
@@ -347,7 +348,7 @@ function forText(stimulusKey: string) {
     },
     tfng(skill: RSkill, within: Within, statements: Array<[string, TfngValue]>, explanation: string): SeedItem {
       return {
-        ...base(skill, within, "Richtig oder falsch?", explanation),
+        ...base(skill, within, READING_RF, explanation),
         type: "TRUE_FALSE_NG",
         ...tfngContent(statements),
       };
@@ -643,7 +644,7 @@ const readingItems: SeedItem[] = [
 
   // ---------------------------------------------------------------- Anzeigen
   rAnz.match("gist", "MID",
-    "Welche Anzeige passt zu welcher Person? Für jede Person gibt es eine Anzeige. Drei Anzeigen bleiben übrig.",
+    "Lesen Sie die Anzeigen A bis F. Welche Anzeige passt zu welcher Person? Jede Anzeige passt nur einmal. Drei Anzeigen bleiben übrig.",
     [
       "Jonas studiert von Montag bis Freitag. Am Wochenende möchte er Geld verdienen.",
       "Frau Lorenz hat nur bis zwölf Uhr Zeit und arbeitet gern am PC.",
@@ -670,7 +671,7 @@ const readingItems: SeedItem[] = [
 
   // ---------------------------------------------------------------- Kurznachrichten (Überschriften)
   rNews.match("gist", "MID",
-    "Welche Überschrift passt zu welchem Text? Für jeden Text gibt es eine Überschrift. Drei Überschriften bleiben übrig.",
+    "Lesen Sie die Texte 1 bis 5 und die Überschriften A bis H. Welche Überschrift passt zu welchem Text? Jede Überschrift passt nur einmal. Drei Überschriften bleiben übrig.",
     ["Text 1", "Text 2", "Text 3", "Text 4", "Text 5"],
     [
       "A: Fahrrad fahren hält gesund",
@@ -757,7 +758,7 @@ const readingItems: SeedItem[] = [
 
   // ---------------------------------------------------------------- Anzeigen, "Keine Anzeige passt"
   rAnz.match("detail", "MID",
-    "Welche Anzeige passt zu welcher Person? Zu einer Person passt keine Anzeige. Dann wählen Sie „Keine Anzeige passt“.",
+    "Lesen Sie die Anzeigen A bis F. Welche Anzeige passt zu welcher Person? Jede Anzeige passt nur einmal. Wenn keine Anzeige passt, wählen Sie „Keine Anzeige passt“.",
     [
       "Frau Kowalski sucht eine Wohnung mit Garten.",
       "Mehmet hat einen Führerschein, fährt gern Auto und möchte sofort mit einer Arbeit am Vormittag und frühen Nachmittag anfangen.",
@@ -767,7 +768,7 @@ const readingItems: SeedItem[] = [
     [7, 2, 3],
     "Frau Kowalski: Anzeige E hat nur einen Balkon, einen Garten gibt es nirgends, also \"Keine Anzeige passt\". Mehmet: B (Fahrer, 7 bis 15 Uhr, sofort). Lea: C (Nachhilfe für Klasse 5 bis 10, auch Englisch)."),
   rAnz2.match("detail", "MID",
-    "Welche Anzeige passt zu welcher Person? Zu einer Person passt keine Anzeige. Dann wählen Sie „Keine Anzeige passt“.",
+    "Lesen Sie die Anzeigen A bis F. Welche Anzeige passt zu welcher Person? Jede Anzeige passt nur einmal. Wenn keine Anzeige passt, wählen Sie „Keine Anzeige passt“.",
     [
       "Herr Brandt hat zwei Kinder, sechs und acht Jahre alt, und sucht ein Bewegungsangebot für sie.",
       "Frau Scholz hat zu Hause viele alte Sachen und möchte sie am Wochenende verkaufen.",
@@ -789,7 +790,7 @@ const readingItems: SeedItem[] = [
 
   // ---------------------------------------------------------------- Kurznachrichten Landkreis (Überschriften)
   rNews2.match("gist", "MID",
-    "Welche Überschrift passt zu welchem Text? Für jeden Text gibt es eine Überschrift. Drei Überschriften bleiben übrig.",
+    "Lesen Sie die Texte 1 bis 5 und die Überschriften A bis H. Welche Überschrift passt zu welchem Text? Jede Überschrift passt nur einmal. Drei Überschriften bleiben übrig.",
     ["Text 1", "Text 2", "Text 3", "Text 4", "Text 5"],
     [
       "A: Drei Bühnen, kein Eintritt: Am Wochenende wird gefeiert",
@@ -813,7 +814,7 @@ const readingItems: SeedItem[] = [
 
   // ---------------------------------------------------------------- Aushänge (Überschriften)
   rHaus.match("gist", "MID",
-    "Welche Überschrift passt zu welchem Aushang? Für jeden Text gibt es eine Überschrift. Drei Überschriften bleiben übrig.",
+    "Lesen Sie die Aushänge 1 bis 4 und die Überschriften A bis G. Welche Überschrift passt zu welchem Aushang? Jede Überschrift passt nur einmal. Drei Überschriften bleiben übrig.",
     ["Text 1", "Text 2", "Text 3", "Text 4"],
     [
       "A: Einladung zum Sommerfest im Hof",
@@ -905,7 +906,7 @@ function lTfng(
     skillTag: `listening.${skill}`,
     within,
     stimulusKey,
-    prompt: "Richtig oder falsch? Entscheiden Sie für jede Aussage.",
+    prompt: LISTENING_RF,
     ...tfngContent(statements),
     explanation,
   };
@@ -1183,7 +1184,7 @@ const listeningItems: SeedItem[] = [
     ], 3,
     "Ausweis und Zeugnisse; den Lebenslauf hat die Firma schon (\"Den Lebenslauf haben wir ja schon\"), von einem Passfoto ist nicht die Rede."),
   lGap(L_MAILBOX, "HARD",
-    "Notieren Sie die Angaben zum Gespräch und zum Rückruf.\n\nTag des Gesprächs: {{g1}}\nUhrzeit: {{g2}}\nTelefonnummer von Frau Kraus: {{g3}}",
+    "Hören Sie die Nachricht. Ergänzen Sie die Notizen.\n\nTag des Gesprächs: {{g1}}\nUhrzeit: {{g2}}\nTelefonnummer von Frau Kraus: {{g3}}",
     {
       g1: onDay(["Mittwoch", "Mi"]),
       g2: atTime(["9.30", "9 Uhr 30", "neun Uhr dreißig", "halb zehn", "halb 10"]),
@@ -1310,7 +1311,7 @@ const listeningItems: SeedItem[] = [
     ], 0,
     "\"Bitte bringen Sie Ihre Versichertenkarte mit.\""),
   lGap(L_ARZT, "HARD",
-    "Notieren Sie die Angaben zum neuen Termin.\n\nTag: {{g1}}\nUhrzeit: {{g2}}\nTelefonnummer der Praxis: {{g3}}",
+    "Hören Sie die Nachricht. Ergänzen Sie die Notizen.\n\nTag: {{g1}}\nUhrzeit: {{g2}}\nTelefonnummer der Praxis: {{g3}}",
     {
       g1: onDay(["Donnerstag", "Do"]),
       g2: atTime(["15.15", "3.15", "15 Uhr 15", "fünfzehn Uhr fünfzehn", "Viertel nach drei", "Viertel nach 3", "viertel nach drei"]),
@@ -1334,7 +1335,7 @@ const listeningItems: SeedItem[] = [
 
   // ---------------------------------------------------------------- Wanderung
   lTick(L_TICK_WANDERUNG, "MID",
-    "Hören Sie den Text. Was müssen die Teilnehmer zur Wanderung mitbringen? Kreuzen Sie vier Antworten an.",
+    "Hören Sie den Text. Was müssen die Teilnehmer zur Wanderung mitbringen?",
     ["Handtuch", "Wanderschuhe", "Regenjacke", "Mittagessen", "Kamera", "Sonnencreme", "Regenschirm", "Flasche mit Wasser"],
     [1, 2, 5, 7],
     "Richtig: Wanderschuhe, Regenjacke, Sonnencreme, Wasserflasche. Kein Schirm (die Jacke reicht), kein Essen (Mittagessen im Gasthaus), keine Kamera (zu schwer), kein Handtuch (man schwimmt nicht)."),
@@ -1350,7 +1351,7 @@ const listeningItems: SeedItem[] = [
 
   // ---------------------------------------------------------------- Umzug
   lTick(L_TICK_UMZUG, "HARD",
-    "Hören Sie das Gespräch. Was ist vor dem Umzug schon erledigt? Kreuzen Sie vier Antworten an.",
+    "Hören Sie das Gespräch. Was ist vor dem Umzug schon erledigt?",
     ["Lieferwagen mieten", "Kartons packen", "Strom ummelden", "Wohnung putzen", "Internet bestellen", "Schlüssel abgeben", "Gardinen kaufen", "Helferinnen und Helfer fragen"],
     [1, 2, 4, 7],
     "Erledigt: Kartons gepackt, Strom ummelden lassen, Internet bestellt, Helfer gefragt (Karim und Lisa). Noch offen: Lieferwagen (morgen), Putzen und Schlüssel (Sonntag), Gardinen (nächste Woche)."),
@@ -1367,7 +1368,7 @@ const listeningItems: SeedItem[] = [
 
   // ---------------------------------------------------------------- Städtereise
   lTick(L_TICK_REISE, "MID",
-    "Hören Sie das Gespräch. Was ist im Preis der Reise enthalten? Kreuzen Sie vier Antworten an.",
+    "Hören Sie das Gespräch. Was ist im Preis der Reise enthalten?",
     ["Abendessen", "Frühstück", "Reiseversicherung", "Zugfahrt", "Stadtführung", "Eintritt in Museen", "Parkplatz", "Fahrkarte für Bus und Bahn"],
     [1, 3, 4, 7],
     "Im Preis: Frühstück, Zugfahrt, Stadtführung, Fahrkarte für Bus und Bahn. Nicht im Preis: Abendessen, Reiseversicherung, Museumseintritt; einen Parkplatz braucht das Paar nicht."),

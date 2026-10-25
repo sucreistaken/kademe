@@ -4,6 +4,7 @@ import { cTest } from "../ctest";
 import { openCloze } from "../opencloze";
 import { img } from "../image";
 import { wordBank } from "../wordbank";
+import { LISTENING_RFN, READING_RFN, READING_YES_NO_NOT_SAID } from "../instructions";
 import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 
 /*
@@ -479,7 +480,7 @@ function forText(stimulusKey: string) {
     tfng(skill: RSkill, within: Within, statements: Array<[string, TfngValue]>, explanation: string): SeedItem {
       const ids = statements.map((_, i) => `s${i + 1}`);
       return {
-        ...base(skill, within, "Richtig (R), falsch (F) oder steht nicht im Text (NG)?", explanation),
+        ...base(skill, within, READING_RFN, explanation),
         type: "TRUE_FALSE_NG",
         content: { kind: "TFNG", statements: statements.map(([t], i) => ({ id: ids[i], text: t })) },
         key: { kind: "TFNG", answers: Object.fromEntries(statements.map(([, a], i) => [ids[i], a])) },
@@ -489,7 +490,7 @@ function forText(stimulusKey: string) {
     jaNein(skill: RSkill, within: Within, statements: Array<[string, TfngValue]>, explanation: string): SeedItem {
       const ids = statements.map((_, i) => `s${i + 1}`);
       return {
-        ...base(skill, within, "Lesen Sie den Text. Sagt der Text Ja, Nein oder nichts dazu?", explanation),
+        ...base(skill, within, READING_YES_NO_NOT_SAID, explanation),
         type: "TRUE_FALSE_NG",
         content: { kind: "TFNG", wording: "JA_NEIN", statements: statements.map(([t], i) => ({ id: ids[i], text: t })) },
         key: { kind: "TFNG", answers: Object.fromEntries(statements.map(([, a], i) => [ids[i], a])) },
@@ -698,7 +699,7 @@ const readingItems: SeedItem[] = [
 
   // Weiterbildung
   rWeiterbildung.match("structure", "HARD",
-    "Welcher Satz passt in welche Lücke? Zwei Sätze passen nicht.",
+    "Lesen Sie den Text. Vier Sätze fehlen. Welcher Satz passt in welche Lücke? Jeder Satz passt nur einmal. Zwei Sätze passen nicht.",
     ["Lücke [1]", "Lücke [2]", "Lücke [3]", "Lücke [4]"],
     [
       "Digitale Lernangebote haben in den letzten Jahren stark zugenommen.",
@@ -736,7 +737,7 @@ const readingItems: SeedItem[] = [
 
   // KI-Auswahl
   rKi.match("gist", "MID",
-    "Welche Aussage passt zu welcher Person? Eine Aussage passt zu keiner Person.",
+    "Lesen Sie die Beiträge der vier Personen. Wer sagt was? Ordnen Sie jeder Aussage eine Person zu. Eine Aussage passt zu keiner Person.",
     [
       "Wenn sich sehr viele Menschen auf eine Stelle bewerben, hilft ein Programm bei der ersten Sichtung.",
       "Wer sich bewirbt, sollte wissen, ob ein Mensch oder ein System die Unterlagen beurteilt.",
@@ -826,7 +827,7 @@ const readingItems: SeedItem[] = [
 
   // Fotokurse
   rFoto.match("detail", "HARD",
-    "Welcher Kurs passt zu welcher Person? Zwei Kurse passen zu niemandem.",
+    "Lesen Sie die Kursangebote A bis F. Welcher Kurs passt zu welcher Person? Jeder Kurs passt nur einmal. Zwei Kurse bleiben übrig.",
     [
       "Herr Berger besitzt eine Kamera und will lernen, sie manuell einzustellen. Unter der Woche hat er abends keine Zeit, nur am Wochenende kann er teilnehmen.",
       "Frau Köhler besitzt keine Kamera und will auch keine kaufen. Ihre Alltagsfotos möchte sie trotzdem verbessern, und sie kann sich dafür nur einen einzigen Vormittag freinehmen.",
@@ -846,7 +847,7 @@ const readingItems: SeedItem[] = [
 
   // Laufen: insertion of five paragraphs (5 of 7), then Ja / Nein
   rLaufen.match("structure", "HARD",
-    "Welcher Absatz passt in welche Lücke? Zwei Absätze passen nicht.",
+    "Lesen Sie den Text. Fünf Absätze fehlen. Welcher Absatz passt in welche Lücke? Jeder Absatz passt nur einmal. Zwei Absätze passen nicht.",
     ["Lücke [1]", "Lücke [2]", "Lücke [3]", "Lücke [4]", "Lücke [5]"],
     [
       "Der erste Marathon der Neuzeit wurde 1896 in Athen ausgetragen. Seitdem hat sich die Strecke mehrfach geändert, bis sie 1921 auf 42,195 Kilometer festgelegt wurde.",
@@ -870,7 +871,7 @@ const readingItems: SeedItem[] = [
 
   // Biber: insertion of five sentences (5 of 7), then Ja / Nein
   rBiber.match("structure", "HARD",
-    "Welcher Satz passt in welche Lücke? Zwei Sätze passen nicht.",
+    "Lesen Sie den Text. Fünf Sätze fehlen. Welcher Satz passt in welche Lücke? Jeder Satz passt nur einmal. Zwei Sätze passen nicht.",
     ["Lücke [1]", "Lücke [2]", "Lücke [3]", "Lücke [4]", "Lücke [5]"],
     [
       "Der Biber ist das größte Nagetier Europas und kann bis zu dreißig Kilogramm wiegen.",
@@ -894,7 +895,7 @@ const readingItems: SeedItem[] = [
 
   // Dialekt: insertion of five sentences (5 of 7), then Ja / Nein
   rDialekt.match("structure", "HARD",
-    "Welcher Satz passt in welche Lücke? Zwei Sätze passen nicht.",
+    "Lesen Sie den Text. Fünf Sätze fehlen. Welcher Satz passt in welche Lücke? Jeder Satz passt nur einmal. Zwei Sätze passen nicht.",
     ["Lücke [1]", "Lücke [2]", "Lücke [3]", "Lücke [4]", "Lücke [5]"],
     [
       "Vor allem kleine Mundarten in dünn besiedelten Regionen sind in Gefahr.",
@@ -965,7 +966,7 @@ function forClip(stimulusKey: string) {
     tfng(skill: LSkill, within: Within, statements: Array<[string, TfngValue]>, explanation: string): SeedItem {
       const ids = statements.map((_, i) => `s${i + 1}`);
       return {
-        ...base(skill, within, "Richtig (R), falsch (F) oder wird nicht gesagt (NG)?", explanation),
+        ...base(skill, within, LISTENING_RFN, explanation),
         type: "TRUE_FALSE_NG",
         content: { kind: "TFNG", statements: statements.map(([t], i) => ({ id: ids[i], text: t })) },
         key: { kind: "TFNG", answers: Object.fromEntries(statements.map(([, a], i) => [ids[i], a])) },
@@ -1311,7 +1312,7 @@ const listeningItems: SeedItem[] = [
 
   // Gehaltstransparenz
   lGehalt.match("attitude", "HARD",
-    "Wer vertritt welche Ansicht?",
+    "Hören Sie die Diskussion. Wer vertritt welche Ansicht? Ordnen Sie jeder Aussage zu: einer Person, beiden oder keiner von beiden.",
     [
       "Zu Beginn sorgt eine Offenlegung für Frust im Betrieb.",
       "Werden Gründe für unterschiedliche Gehälter verschwiegen, reimen sich die Leute eigene, oft wenig schmeichelhafte Erklärungen zusammen.",
@@ -1348,7 +1349,7 @@ const listeningItems: SeedItem[] = [
 
   // Lärm und Schlaf: note taking
   lPhysio.notes("detail", "HARD",
-    "Sie hören einen Kurzvortrag. Ergänzen Sie die Notizen mit je einem Wort, das die Sprecherin sagt.\n\nGrößtes Problem: nicht der Dauerpegel, sondern kurze {{g1}}\nMaßnahme vieler Städte: nachts die {{g2}} senken\nWirkt nur, wenn sich jemand um die {{g3}} kümmert\nGünstigste Lösung für Betroffene: das {{g4}} in einen Raum abseits der Straße verlegen",
+    "Hören Sie den Kurzvortrag. Ergänzen Sie die Notizen. Schreiben Sie in jede Lücke ein Wort, das die Sprecherin sagt.\n\nGrößtes Problem: nicht der Dauerpegel, sondern kurze {{g1}}\nMaßnahme vieler Städte: nachts die {{g2}} senken\nWirkt nur, wenn sich jemand um die {{g3}} kümmert\nGünstigste Lösung für Betroffene: das {{g4}} in einen Raum abseits der Straße verlegen",
     [
       ["Lärmspitzen", "Lärmspitze", "Spitzen", "Spitze"],
       ["Geschwindigkeit", "Geschwindigkeiten", "Fahrgeschwindigkeit", "Tempo"],
@@ -1395,7 +1396,7 @@ const listeningItems: SeedItem[] = [
 
   // Ausgrabung: table completion, played once
   lAusgrabung.notes("detail", "MID",
-    "Sie hören ein Interview. Ergänzen Sie die Tabelle mit je einem Wort oder einer Zahl.\n\n" +
+    "Hören Sie das Interview. Ergänzen Sie die Tabelle. Schreiben Sie in jede Lücke ein Wort oder eine Zahl.\n\n" +
       "Fund | Angabe | Weiteres\n" +
       "Holzbrücke | Bäume gefällt zwischen 1190 und {{g1}} | Konservierung dauert etwa {{g2}} Jahre\n" +
       "Münzen | {{g3}} Silbermünzen | gefunden in einem {{g4}}\n" +
@@ -1420,7 +1421,7 @@ const listeningItems: SeedItem[] = [
 
   // Wohnformen: table completion, two plays
   lWohnformen.notes("detail", "HARD",
-    "Sie hören einen Vortrag über eine Befragung. Ergänzen Sie die Tabelle mit je einem Wort oder einer Zahl.\n\n" +
+    "Hören Sie den Vortrag. Ergänzen Sie die Tabelle. Schreiben Sie in jede Lücke ein Wort oder eine Zahl.\n\n" +
       "Befragte Haushalte insgesamt: {{g1}}\n\n" +
       "Wohnform | Anteil | Hauptvorteil | Hauptproblem\n" +
       "Wohngemeinschaft | 9 % | geringe {{g2}} | fehlender {{g3}}\n" +
@@ -1448,7 +1449,7 @@ const listeningItems: SeedItem[] = [
 
   // Getreide: table completion, played once
   lGetreide.notes("detail", "MID",
-    "Sie hören ein Interview. Ergänzen Sie die Tabelle mit je einem Wort oder einer Zahl.\n\n" +
+    "Hören Sie das Interview. Ergänzen Sie die Tabelle. Schreiben Sie in jede Lücke ein Wort oder eine Zahl.\n\n" +
       "Getreide | Besonderheit | Weiteres\n" +
       "Dinkel | bleibt bis zu {{g1}} Tage frisch | etwa {{g2}} Prozent teurer\n" +
       "Emmer | schmeckt {{g3}} | Teig muss {{g4}} Stunden ruhen\n" +
@@ -1473,7 +1474,7 @@ const listeningItems: SeedItem[] = [
 
   // Touristen: discussion with three voices
   lTouristen.match("attitude", "HARD",
-    "Wer vertritt welche Ansicht?",
+    "Hören Sie die Diskussion. Wer vertritt welche Ansicht? Ordnen Sie jeder Aussage zu: einer Person, beiden oder keiner von beiden.",
     [
       "Für Tagesgäste sollte ein Eintritt erhoben werden.",
       "Läden für den täglichen Bedarf werden durch Souvenirgeschäfte verdrängt.",
@@ -1494,7 +1495,7 @@ const listeningItems: SeedItem[] = [
 
   // Pflege: discussion with three voices, played once
   lPflege.match("attitude", "HARD",
-    "Wer vertritt welche Ansicht?",
+    "Hören Sie die Diskussion. Wer vertritt welche Ansicht? Ordnen Sie jeder Aussage zu: einer Person, beiden oder keiner von beiden.",
     [
       "Ein Notrufarmband kann Angehörige beruhigen.",
       "Technik sollte grundsätzlich nur mit Einwilligung der betroffenen Person eingesetzt werden.",
@@ -1515,7 +1516,7 @@ const listeningItems: SeedItem[] = [
 
   // Tafel: discussion with three voices
   lTafel.match("attitude", "HARD",
-    "Wer vertritt welche Ansicht?",
+    "Hören Sie die Diskussion. Wer vertritt welche Ansicht? Ordnen Sie jeder Aussage zu: einer Person, beiden oder keiner von beiden.",
     [
       "Wer Lebensmittel in gutem Glauben abgibt, muss nicht für Folgen einstehen.",
       "Die Abgabe sollte freiwillig bleiben und steuerlich belohnt werden.",

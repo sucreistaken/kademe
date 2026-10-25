@@ -3,6 +3,7 @@ import { cloze } from "../cloze";
 import { cTest } from "../ctest";
 import { wordBank } from "../wordbank";
 import { img } from "../image";
+import { LISTENING_RF, READING_RF, READING_YES_NO } from "../instructions";
 import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 
 /*
@@ -474,7 +475,7 @@ function forText(stimulusKey: string) {
       within: Within,
       statements: Array<[string, TfngValue]>,
       explanation: string,
-      prompt = "Richtig oder falsch?",
+      prompt = READING_RF,
     ): SeedItem {
       return {
         ...base(skill, within, prompt, explanation),
@@ -489,7 +490,7 @@ function forText(stimulusKey: string) {
       within: Within,
       statements: Array<[string, TfngValue]>,
       explanation: string,
-      prompt = "Lesen Sie den Text. Antworten Sie mit Ja oder Nein: Stimmt die Aussage mit dem Text überein?",
+      prompt = READING_YES_NO,
     ): SeedItem {
       return {
         ...base(skill, within, prompt, explanation),
@@ -875,7 +876,7 @@ const readingItems: SeedItem[] = [
 
   // ---- Text 3
   anzeigen.match("detail", "MID",
-    "Lesen Sie die Situationen. Welche Anzeige passt? Jede Anzeige passt höchstens einmal. Wenn keine Anzeige passt, wählen Sie „Keine Anzeige passt“.",
+    "Lesen Sie die Situationen und die Anzeigen A bis H. Welche Anzeige passt zu welcher Situation? Jede Anzeige passt nur einmal. Wenn keine Anzeige passt, wählen Sie „Keine Anzeige passt“.",
     [
       "Elif muss in ihrer neuen Stelle mit Tabellen arbeiten, kennt sich aber mit dem Computer kaum aus. Sie hat nur abends Zeit.",
       "Marco möchte sich bewerben und ist unsicher, ob seine Unterlagen gut genug sind. Er hat zurzeit keine Arbeit.",
@@ -966,7 +967,7 @@ const readingItems: SeedItem[] = [
 
   // ---- Text 6
   news.match("gist", "MID",
-    "Lesen Sie die vier Kurzmeldungen. Welche Überschrift passt zu welchem Text? Drei Überschriften passen zu keinem Text.",
+    "Lesen Sie die Kurzmeldungen und die Überschriften A bis G. Welche Überschrift passt zu welchem Text? Jede Überschrift passt nur einmal. Drei Überschriften bleiben übrig.",
     ["Text 1", "Text 2", "Text 3", "Text 4"],
     [
       "A: Neues Stadion für den Fußballverein: Bau beginnt im Herbst",
@@ -1056,7 +1057,7 @@ const readingItems: SeedItem[] = [
 
   // ---- Text 10 (who says what)
   sonntag.match("detail", "MID",
-    "Wer sagt was? Lesen Sie die Aussagen der fünf Personen und ordnen Sie zu. Eine Person kann mehrmals passen, eine Person passt zu keiner Aussage.",
+    "Lesen Sie die Aussagen der fünf Personen. Wer sagt was? Ordnen Sie jeder Aussage eine Person zu. Eine Person kann mehrmals passen, eine Person passt zu keiner Aussage.",
     [
       "Diese Person treibt sonntags mit anderen Sport.",
       "Diese Person trifft sich am Sonntag nicht mit anderen.",
@@ -1070,7 +1071,7 @@ const readingItems: SeedItem[] = [
 
   // ---- Text 11 (who says what)
   wohnen.match("detail", "MID",
-    "Wer sagt was? Lesen Sie die Aussagen der fünf Personen und ordnen Sie zu. Eine Person kann mehrmals passen, eine Person passt zu keiner Aussage.",
+    "Lesen Sie die Aussagen der fünf Personen. Wer sagt was? Ordnen Sie jeder Aussage eine Person zu. Eine Person kann mehrmals passen, eine Person passt zu keiner Aussage.",
     [
       "Diese Person zahlt gern mehr Miete, um nah an Freizeitangeboten zu wohnen.",
       "Diese Person kann sich nicht entscheiden, ob Stadt oder Land besser ist.",
@@ -1084,7 +1085,7 @@ const readingItems: SeedItem[] = [
 
   // ---- Text 12 (who says what)
   urlaub.match("detail", "MID",
-    "Wer sagt was? Lesen Sie die Aussagen der fünf Personen und ordnen Sie zu. Eine Person kann mehrmals passen, eine Person passt zu keiner Aussage.",
+    "Lesen Sie die Aussagen der fünf Personen. Wer sagt was? Ordnen Sie jeder Aussage eine Person zu. Eine Person kann mehrmals passen, eine Person passt zu keiner Aussage.",
     [
       "Diese Person nimmt die Belastung der Umwelt durch das Reisen bewusst in Kauf.",
       "Diese Person möchte im Urlaub andere Kulturen kennenlernen.",
@@ -1136,7 +1137,7 @@ function forClip(stimulusKey: string) {
     /** Richtig / Falsch only, as in ÖSD and telc at B1. */
     tfng(skill: ListeningSkill, within: Within, statements: Array<[string, TfngValue]>, explanation: string): SeedItem {
       return {
-        ...base(skill, within, "Richtig oder falsch?", explanation),
+        ...base(skill, within, LISTENING_RF, explanation),
         type: "TRUE_FALSE_NG",
         content: { kind: "TFNG", twoWay: true, statements: statements.map(([text], i) => ({ id: `s${i + 1}`, text })) },
         key: { kind: "TFNG", answers: Object.fromEntries(statements.map(([, v], i) => [`s${i + 1}`, v])) },
@@ -1435,7 +1436,7 @@ const listeningItems: SeedItem[] = [
 
   // ---- Clip 4
   werkstatt.notes("detail", "MID",
-    "Sie hören eine Nachricht von einer Fahrradwerkstatt. Notieren Sie die Informationen.\n\n" +
+    "Hören Sie die Nachricht. Ergänzen Sie die Notizen.\n\n" +
       "Das Fahrrad kann ab {{g1}} abgeholt werden.\n" +
       "Die Reparatur kostet {{g2}} Euro.\n" +
       "Am Samstag ist die Werkstatt bis {{g3}} Uhr geöffnet.\n" +
@@ -1496,7 +1497,7 @@ const listeningItems: SeedItem[] = [
 
   // ---- Clip 6 (table completion)
   tanzkurs.notes("detail", "MID",
-    "Sie hören einen Anruf in einem Tanzstudio. Ergänzen Sie die Tabelle.\n\n" +
+    "Hören Sie das Telefongespräch. Ergänzen Sie die Tabelle.\n\n" +
       "Kurs: Salsa für Anfänger\n" +
       "Beginn: {{g1}} Oktober\n" +
       "Wochentag: {{g2}}\n" +
@@ -1529,7 +1530,7 @@ const listeningItems: SeedItem[] = [
 
   // ---- Clip 7 (table completion, four voices)
   grillparty.notes("detail", "MID",
-    "Sie hören vier Mitbewohner bei der Planung eines Fests. Ergänzen Sie die Tabelle.\n\n" +
+    "Hören Sie das Gespräch. Ergänzen Sie die Tabelle.\n\n" +
       "Datum des Fests: Samstag, der {{g1}}.\n" +
       "Ort: {{g2}}\n" +
       "Pia bringt mit: {{g3}}\n" +
@@ -1561,7 +1562,7 @@ const listeningItems: SeedItem[] = [
 
   // ---- Clip 8 (table completion, announcement)
   bahn.notes("detail", "MID",
-    "Sie hören ein Gespräch am Bahnhof. Ergänzen Sie die Tabelle.\n\n" +
+    "Hören Sie das Gespräch. Ergänzen Sie die Tabelle.\n\n" +
       "Zug nach Freiburg (morgen, Freitag)\n" +
       "Abfahrt: {{g1}} Uhr\n" +
       "Gleis: {{g2}}\n" +

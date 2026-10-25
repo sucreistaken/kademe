@@ -4,6 +4,7 @@ import { cTest } from "../ctest";
 import { openCloze } from "../opencloze";
 import { img } from "../image";
 import { wordBank } from "../wordbank";
+import { LISTENING_RFN, READING_RFN } from "../instructions";
 import type { SeedBankPart, SeedItem, SeedStimulus } from "../types";
 
 /*
@@ -532,7 +533,7 @@ function forText(stimulus: SeedStimulus) {
       within: Within,
       statements: Array<[string, TfngValue]>,
       explanation: string,
-      prompt = "Richtig (R), falsch (F) oder steht nicht im Text (NG)? Entscheiden Sie für jede Aussage.",
+      prompt = READING_RFN,
     ): SeedItem => ({ ...base(skill, within, prompt, explanation), type: "TRUE_FALSE_NG", ...tfngContent(statements) }),
     match: (
       skill: RSkill,
@@ -575,7 +576,7 @@ Bei uns im Handel wird ohnehin im Schichtsystem gearbeitet. Eine Vier-Tage-Woche
 const r1 = forText(rViertage);
 const rViertageItems: SeedItem[] = [
   r1.match("gist", "HARD",
-    "Wer äußert diese Meinung? Ordnen Sie jeder Aussage eine Person zu. Eine Person passt zu keiner Aussage.",
+    "Lesen Sie die Beiträge der fünf Personen. Wer sagt was? Ordnen Sie jeder Aussage eine Person zu. Eine Person passt zu keiner Aussage.",
     [
       "Diese Person hält eine einheitliche Regelung für alle im Betrieb für den falschen Weg.",
       "Diese Person sieht kritisch, dass manche den zusätzlichen freien Tag trotzdem dienstlich nutzen.",
@@ -687,7 +688,7 @@ Damit solche Angebote funktionieren, müssen allerdings auch die Arbeitgeber mit
 const r3 = forText(rPendeln);
 const rPendelnItems: SeedItem[] = [
   r3.match("structure", "HARD",
-    "Welcher Satz passt in welche Lücke? Zwei Sätze passen in keine Lücke.",
+    "Lesen Sie den Text. Vier Sätze fehlen. Welcher Satz passt in welche Lücke? Jeder Satz passt nur einmal. Zwei Sätze passen nicht.",
     ["Lücke 1", "Lücke 2", "Lücke 3", "Lücke 4"],
     [
       "Diese Vorteile kennen allerdings die wenigsten Pendlerinnen und Pendler.",
@@ -756,7 +757,7 @@ Die Küche steht allen zur Verfügung, Kaffee und Tee sind im Preis enthalten. B
 const r4 = forText(rCoworking);
 const rCoworkingItems: SeedItem[] = [
   r4.match("gist", "EASY",
-    "Welche Überschrift passt zu welchem Abschnitt? Drei Überschriften bleiben übrig.",
+    "Lesen Sie die Abschnitte 1 bis 5 und die Überschriften. Welche Überschrift passt zu welchem Abschnitt? Jede Überschrift passt nur einmal. Drei Überschriften bleiben übrig.",
     ["Abschnitt 1", "Abschnitt 2", "Abschnitt 3", "Abschnitt 4", "Abschnitt 5"],
     [
       "Beiträge und Rabatte für Mitglieder",
@@ -820,7 +821,7 @@ Zwei-Zimmer-Dachgeschosswohnung in der Innenstadt, 62 m², mit Balkon und Aufzug
 const r5 = forText(rWohnungen);
 const rWohnungenItems: SeedItem[] = [
   r5.match("detail", "HARD",
-    "Welche Anzeige passt zu welcher Person? Beide Bedingungen müssen erfüllt sein. Zu einer Person passt keine Anzeige, eine Anzeige bleibt übrig.",
+    "Lesen Sie die Anzeigen A bis F. Welche Anzeige passt zu welcher Person? Beide Bedingungen müssen erfüllt sein. Jede Anzeige passt nur einmal. Zu einer Person passt keine Anzeige, eine Anzeige bleibt übrig.",
     [
       "Ein Gastdozent bleibt nur bis Ende Mai in der Stadt und möchte zentral wohnen, ohne selbst Möbel zu kaufen.",
       "Herr Vogt hat einen großen Hund und wünscht sich eine Wohnung mit eigenem Garten.",
@@ -910,7 +911,7 @@ const rRadtourItems: SeedItem[] = [
 
 /** Gap row labels and the lettered sentences of an insertion task: five places, seven sentences, two spare. */
 const INSERT_PROMPT =
-  "Lesen Sie den Text. Fünf Sätze fehlen. Welcher Satz (A bis G) passt in welche Lücke (1) bis (5)? Zwei Sätze passen in keine Lücke. Jeder Satz passt höchstens einmal.";
+  "Lesen Sie den Text. Fünf Sätze fehlen. Welcher Satz (A bis G) passt in welche Lücke (1 bis 5)? Jeder Satz passt nur einmal. Zwei Sätze passen nicht.";
 const INSERT_ROWS = ["Lücke (1)", "Lücke (2)", "Lücke (3)", "Lücke (4)", "Lücke (5)"];
 const insertTargets = (sentences: string[]) => sentences.map((s, i) => `${String.fromCharCode(65 + i)}: ${s}`);
 
@@ -1035,7 +1036,7 @@ const insertionItems: SeedItem[] = [
 // ---------------------------------------------------------------- Opinion matching (comments under an article)
 
 const OPINION_PROMPT =
-  "Wer äußert diese Meinung? Ordnen Sie jeder Aussage eine Person zu. Eine Aussage passt zu keiner der vier Personen.";
+  "Lesen Sie die Beiträge der vier Personen. Wer sagt was? Ordnen Sie jeder Aussage eine Person zu. Eine Aussage passt zu keiner der vier Personen.";
 
 const rTempo = readingText(
   "kommentare-tempolimit",
@@ -1210,7 +1211,7 @@ function forClip(stimulus: SeedStimulus) {
       explanation: string,
     ): SeedItem => ({ ...base(skill, within, prompt, explanation), type: "MATCHING", ...matchContent(left, right, pairs) }),
     tfng: (skill: LSkill, within: Within, statements: Array<[string, TfngValue]>, explanation: string): SeedItem => ({
-      ...base(skill, within, "Richtig, falsch oder nicht im Text? Entscheiden Sie für jede Aussage.", explanation),
+      ...base(skill, within, LISTENING_RFN, explanation),
       type: "TRUE_FALSE_NG",
       ...tfngContent(statements),
     }),
@@ -1427,7 +1428,7 @@ const lZahnarztItems: SeedItem[] = [
     ], 2,
     "Doktor Merz ist am Dienstag auf einer Fortbildung („Weiterbildung“), deshalb wird der Termin verschoben. Von einem Computerfehler, Bauarbeiten oder einem defekten Gerät ist keine Rede."),
   l4.notes("EASY",
-    "Sie hören eine Nachricht auf dem Anrufbeantworter. Notieren Sie die Angaben.\n\nNeuer Termin: {{g1}}, {{g2}} Uhr\nRückruf unter der Nummer: {{g3}}",
+    "Hören Sie die Nachricht. Ergänzen Sie die Notizen.\n\nNeuer Termin: {{g1}}, {{g2}} Uhr\nRückruf unter der Nummer: {{g3}}",
     {
       g1: ["Donnerstag", "Do", "am Donnerstag", "am Do"],
       g2: ["14:30", "14.30", "14 30", "14:30 Uhr", "14.30 Uhr", "14 Uhr 30", "halb drei", "halb 3", "vierzehn Uhr dreißig", "vierzehn dreißig", "um 14:30", "um 14.30", "um 14:30 Uhr", "um 14.30 Uhr", "um halb drei", "um halb 3", "halb drei", "halb drei Uhr", "halb 3 Uhr", "14.30h"],
@@ -1515,7 +1516,7 @@ const lUmfrageItems: SeedItem[] = [
 // ---------------------------------------------------------------- Who says what (three voices, one clip per form)
 
 const WSW_PROMPT =
-  "Wer sagt was? Hören Sie das Gespräch. Ordnen Sie jeder Aussage eine Person zu. Eine Aussage passt zu keiner der drei Personen.";
+  "Hören Sie das Gespräch. Wer sagt was? Ordnen Sie jeder Aussage eine Person zu. Eine Aussage passt zu keiner der drei Personen.";
 
 const lUrlaub = clip(
   "urlaub-wer-sagt-was",
