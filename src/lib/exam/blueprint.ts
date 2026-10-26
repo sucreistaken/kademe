@@ -27,6 +27,9 @@ import {
 
 const count = z.number().int().min(0).max(60);
 
+/** How far from the anchor level a relative text may sit (`relativeTexts`). */
+export const MAX_TEXT_OFFSET = 2;
+
 const perLevelSchema = z.object({
   A1: count,
   A2: count,
@@ -82,6 +85,19 @@ export const sectionConfigSchema = z.object({
     .min(1)
     .max(CEFR_LEVELS.length * 3)
     .optional(),
+  /**
+   * GRAMMAR only: like `texts`, but each text sits at an offset from the anchor
+   * level (the claim for a verification, B1 for a placement) instead of at a
+   * fixed level, so one stored form fits every claim (spec 2026-10-26). An
+   * offset that falls off the scale folds onto its end level and a kind and
+   * level planned twice is served once (see `textPlanOf`). Served as `texts`
+   * are. Cannot be set together with `texts`. Optional so stored configs stay valid.
+   */
+  relativeTexts: z
+    .array(z.object({ offset: z.number().int().min(-MAX_TEXT_OFFSET).max(MAX_TEXT_OFFSET), kind: z.enum(["CLOZE", "WORDBANK", "OPEN"]) }))
+    .min(1)
+    .max((2 * MAX_TEXT_OFFSET + 1) * 3)
+    .optional(),
 });
 
 export const passRulesSchema = z.object({
@@ -124,6 +140,12 @@ export const blueprintConfigSchema = z
         if (s.section !== "GRAMMAR") ctx.addIssue({ code: "custom", message: `${s.section}: texts is for GRAMMAR only` });
         if (new Set(s.texts.map((t) => `${t.kind}:${t.level}`)).size !== s.texts.length)
           ctx.addIssue({ code: "custom", message: `${s.section}: texts repeats a kind and level` });
+      }
+      if (s.relativeTexts) {
+        if (s.section !== "GRAMMAR") ctx.addIssue({ code: "custom", message: `${s.section}: relativeTexts is for GRAMMAR only` });
+        if (s.texts) ctx.addIssue({ code: "custom", message: `${s.section}: texts and relativeTexts cannot both be set` });
+        if (new Set(s.relativeTexts.map((t) => `${t.kind}:${t.offset}`)).size !== s.relativeTexts.length)
+          ctx.addIssue({ code: "custom", message: `${s.section}: relativeTexts repeats a kind and offset` });
       }
     }
     if (!cfg.sections.some((s) => s.enabled))
@@ -467,12 +489,12 @@ export function sampleFixedForm(
 
 /**
  * Whether a section's texts count as weighted super-items in the estimate.
- * Only sections with `cTestLevels` or `texts`: exams created before
- * 2026-10-15 have `cTest: true` and their stored estimates used weight 1, so
- * re-estimating them (a teacher accepting a gap) must not move the result.
+ * Only sections with `cTestLevels`, `texts` or `relativeTexts`: exams created
+ * before 2026-10-15 have `cTest: true` and their stored estimates used weight
+ * 1, so re-estimating them (a teacher accepting a gap) must not move the result.
  */
 export function weighsTexts(s: SectionConfig): boolean {
-  return s.section === "GRAMMAR" && (!!s.cTestLevels || !!s.texts);
+  return s.section === "GRAMMAR" && (!!s.cTestLevels || !!s.texts || !!s.relativeTexts);
 }
 
 /** The levels of the section's legacy C-tests, easy to hard; empty when it has none. */
@@ -486,15 +508,31 @@ export function cTestLevelsOf(s: SectionConfig, mode: ExamMode, claimed: Cefr | 
 export type TextPlanEntry = { level: Cefr; kind: TextGapKind };
 
 /**
+ * The section's listed texts at their levels: `texts` as stored, or
+ * `relativeTexts` placed around the anchor level (`shiftLevel` folds an offset
+ * that falls off the scale onto the end level). `texts` wins if a config
+ * somehow has both (the schema refuses that). Null when it lists neither.
+ */
+function listedTexts(s: SectionConfig, mode: ExamMode, claimed: Cefr | null): Array<{ level: Cefr; kind: TextGapKind }> | null {
+  if (s.texts) return s.texts;
+  if (!s.relativeTexts) return null;
+  const anchor = anchorLevel(mode, claimed);
+  return s.relativeTexts.map((t) => ({ level: shiftLevel(anchor, t.offset), kind: t.kind }));
+}
+
+/**
  * The texts that open a section, in serving order; empty when it has none.
- * `texts` (cloze first, then word banks, then open cloze; each easy to hard) replaces the
- * legacy C-test fields; without it `cTestLevelsOf` gives C-tests, so a config
- * stored before 2026-10-18 plans exactly as it did.
+ * `texts` or `relativeTexts` (cloze first, then word banks, then open cloze;
+ * each easy to hard; a kind and level once, so relative texts that folded onto
+ * the same level are served once) replace the legacy C-test fields; without
+ * them `cTestLevelsOf` gives C-tests, so a config stored before 2026-10-18
+ * plans exactly as it did. Relative texts ignore the difficulty offset, as
+ * `texts` do.
  */
 export function textPlanOf(s: SectionConfig, mode: ExamMode, claimed: Cefr | null): TextPlanEntry[] {
   if (s.section !== "GRAMMAR") return [];
-  if (s.texts) {
-    const texts = s.texts;
+  const texts = listedTexts(s, mode, claimed);
+  if (texts) {
     return (["CLOZE", "WORDBANK", "OPEN"] as const).flatMap((kind) =>
       CEFR_LEVELS.filter((level) => texts.some((t) => t.kind === kind && t.level === level)).map((level) => ({ level, kind })),
     );

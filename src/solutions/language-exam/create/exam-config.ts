@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Locale } from "@/i18n/locale";
-import { blueprintConfigSchema, enabledSections, estimatedMinutes, type BlueprintConfig, type CoverageRow, type SectionConfig } from "@/lib/exam/blueprint";
+import { blueprintConfigSchema, enabledSections, estimatedMinutes, MAX_TEXT_OFFSET, type BlueprintConfig, type CoverageRow, type SectionConfig } from "@/lib/exam/blueprint";
 import { EXAM_TEMPLATES, type ExamTemplate, type ExamTemplateKey } from "@/lib/exam/templates";
 import { CEFR_LEVELS, isObjectiveSection, SECTIONS, type Cefr, type ExamMode, type Section, type TextGapKind } from "@/lib/exam/types";
 
@@ -165,12 +165,85 @@ export function textsFor(texts: SectionTexts, f: number): SectionTexts {
   ];
 }
 
+type SectionRelativeTexts = NonNullable<SectionConfig["relativeTexts"]>;
+
+/** Every offset a relative text may take, from the easiest to the hardest. */
+const TEXT_OFFSETS = Array.from({ length: 2 * MAX_TEXT_OFFSET + 1 }, (_, i) => i - MAX_TEXT_OFFSET);
+
+/** The offsets a shrunk relative list keeps longest: the claim itself, then one level up, one down, then the farther ones. */
+const KEEP_FIRST_OFFSETS = [0, 1, -1, 2, -2];
+
+/** `keepUpper` for offsets: `keep` of the listed ones in KEEP_FIRST_OFFSETS order, returned easy to hard. */
+function keepNearClaim(listed: number[], keep: number): number[] {
+  const kept = new Set(KEEP_FIRST_OFFSETS.filter((o) => listed.includes(o)).slice(0, keep));
+  return listed.filter((o) => kept.has(o));
+}
+
+/** `spanLevels` for offsets: fewer keep the middle of the listed ones, more widen upward first, then downward, within the allowed range. */
+function spanOffsets(listed: number[], keep: number): number[] {
+  if (keep <= listed.length) {
+    const start = Math.floor((listed.length - keep) / 2);
+    return listed.slice(start, start + keep);
+  }
+  let lo = Math.min(...listed);
+  let hi = Math.max(...listed);
+  let up = true;
+  while (hi - lo + 1 < keep) {
+    if (up && hi < MAX_TEXT_OFFSET) hi += 1;
+    else if (lo > -MAX_TEXT_OFFSET) lo -= 1;
+    else hi += 1;
+    up = !up;
+  }
+  return TEXT_OFFSETS.filter((o) => o >= lo && o <= hi);
+}
+
+/**
+ * `textsFor` for relative texts (the level check's grammar): cloze and open
+ * cloze texts on one ladder of offsets, word banks on their own, scaled with the
+ * section's minutes (`f`). More minutes widen each span (a new ladder offset is
+ * a multiple-choice cloze text), up to the offsets the schema allows. Fewer:
+ * `round(texts * f)` texts (at least one); word banks go first, then the ladder
+ * texts farthest from the claim, the claim itself last, so a short check still
+ * tests the claimed level.
+ */
+export function relativeTextsFor(texts: SectionRelativeTexts, f: number): SectionRelativeTexts {
+  const offsetsOf = (kind: "CLOZE" | "WORDBANK" | "OPEN") => TEXT_OFFSETS.filter((o) => texts.some((t) => t.kind === kind && t.offset === o));
+  const cloze = offsetsOf("CLOZE");
+  const open = offsetsOf("OPEN");
+  const wordBanks = offsetsOf("WORDBANK");
+  const ladder = TEXT_OFFSETS.filter((o) => cloze.includes(o) || open.includes(o));
+  const listed = ladder.length + wordBanks.length;
+  let ladderOffsets: number[];
+  let wordBankOffsets: number[];
+  if (f >= 1 || listed === 0) {
+    const widen = (offsets: number[]) => (offsets.length ? spanOffsets(offsets, Math.min(TEXT_OFFSETS.length, Math.max(1, Math.round(offsets.length * f)))) : []);
+    ladderOffsets = widen(ladder);
+    wordBankOffsets = widen(wordBanks);
+  } else {
+    const keep = clamp(Math.round(listed * f), 1, listed);
+    const keepLadder = Math.min(ladder.length, keep);
+    ladderOffsets = keepNearClaim(ladder, keepLadder);
+    wordBankOffsets = keepNearClaim(wordBanks, keep - keepLadder);
+  }
+  /** Each kept offset its own kind: a multiple-choice cloze text unless the section lists only an open one there. */
+  const ladderAt = ladderOffsets.flatMap((offset) => [
+    ...(cloze.includes(offset) || !open.includes(offset) ? [{ offset, kind: "CLOZE" as const }] : []),
+    ...(open.includes(offset) ? [{ offset, kind: "OPEN" as const }] : []),
+  ]);
+  return [
+    ...ladderAt.filter((t) => t.kind === "CLOZE"),
+    ...wordBankOffsets.map((offset) => ({ offset, kind: "WORDBANK" as const })),
+    ...ladderAt.filter((t) => t.kind === "OPEN"),
+  ];
+}
+
 /** Item counts follow the time: an adaptive section's limits and a fixed form's per-level counts scale with it. */
 function rescaleSection(s: SectionConfig, minutes: number, baseMinutes: number) {
   const f = minutes / baseMinutes;
   s.durationMinutes = minutes;
   if (!isObjectiveSection(s.section)) return;
   if (s.texts) s.texts = textsFor(s.texts, f);
+  else if (s.relativeTexts) s.relativeTexts = relativeTextsFor(s.relativeTexts, f);
   else if (s.cTestLevels) s.cTestLevels = cTestLevelsFor(s.cTestLevels, minutes);
   if (s.adaptive) {
     s.minItems = clamp(Math.round(s.minItems * f), 1, 60);

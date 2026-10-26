@@ -11,6 +11,7 @@ import {
   sectionKind,
   sectionsWait,
   startDraft,
+  textCount,
   totalMinutes,
   withProctoring,
   withSections,
@@ -118,5 +119,34 @@ describe("levelShiftScope (the editor's level shift)", () => {
     });
     expect(levelShiftScope(cfg([cTests, section("READING", 10)]))).toEqual({ applies: true, fixed: ["READING"], adaptive: [] });
     expect(levelShiftScope(cfg([cTests])).applies).toBe(false);
+  });
+
+  it("leaves the level check's relative texts out of the shift: only reading and listening move", () => {
+    const levelCheck = templates.find((t) => t.key === "level-check")!.config;
+    expect(levelShiftScope(levelCheck)).toEqual({ applies: true, fixed: ["READING", "LISTENING"], adaptive: [] });
+  });
+});
+
+describe("relative texts in the wizard (spec 2026-10-26)", () => {
+  const NONE = { kind: "ABSOLUTE" as const, perLevel: { A1: 0, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0 } };
+  const relative = [{ offset: 0, kind: "CLOZE" as const }, { offset: 1, kind: "CLOZE" as const }];
+
+  it("names a section of relative texts only as texts, and one with ordinary items as fixed", () => {
+    expect(sectionKind({ section: "GRAMMAR", adaptive: false, relativeTexts: relative })).toBe("texts");
+    expect(sectionKind({ section: "GRAMMAR", adaptive: false, relativeTexts: relative, distribution: NONE })).toBe("texts");
+    expect(sectionKind({ section: "GRAMMAR", adaptive: false, relativeTexts: relative, distribution: { kind: "RELATIVE", below: 0, at: 2, above: 0 } })).toBe("fixed");
+    expect(sectionKind({ section: "GRAMMAR", adaptive: true, relativeTexts: relative })).toBe("adaptive");
+  });
+
+  it("the level check's grammar shows as texts and counts the texts around B1 (a claim at either end has one fewer)", () => {
+    const check = templates.find((t) => t.key === "level-check")!;
+    const grammar = check.config.sections.find((s) => s.section === "GRAMMAR")!;
+    expect(sectionKind(grammar)).toBe("texts");
+    expect(textCount(grammar, check.mode)).toBe(4);
+    // The other templates count the texts they list.
+    const placement = templates.find((t) => t.key === "placement")!;
+    expect(textCount(placement.config.sections.find((s) => s.section === "GRAMMAR")!, placement.mode)).toBe(9);
+    const quick = templates.find((t) => t.key === "quick-screen")!;
+    expect(textCount(quick.config.sections.find((s) => s.section === "GRAMMAR")!, quick.mode)).toBe(7);
   });
 });

@@ -14,6 +14,7 @@ import {
   sectionKind,
   sectionsWait,
   startDraft,
+  textCount,
   totalMinutes,
   wizardConfig,
   type ExamStart,
@@ -271,7 +272,7 @@ export function NewExamWizard({ templates, counts }: { templates: ExamTemplateCa
                       {sec(s.section)}
                     </Label>
                     <p id={`${id}-about`} className="mt-0.5 text-[13.5px] leading-5 text-ink-2">
-                      {t(`about${s.section}`)} {kind === "tasks" ? t("kindTasks", { n: s.tasks }) : kind === "adaptive" ? t("kindAdaptive") : kind === "texts" ? t("kindTexts", { n: s.texts?.length ?? s.cTestLevels?.length ?? 0 }) : t("kindFixed")}
+                      {t(`about${s.section}`)} {kind === "tasks" ? t("kindTasks", { n: s.tasks }) : kind === "adaptive" ? t("kindAdaptive") : kind === "texts" ? t("kindTexts", { n: textCount(s, draft.mode) }) : t("kindFixed")}
                     </p>
                   </div>
                   <div className={cn("flex items-center gap-1.5", !c.enabled && "opacity-50")}>

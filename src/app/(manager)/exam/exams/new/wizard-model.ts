@@ -1,4 +1,4 @@
-import { defaultBlueprint, enabledSections, isTextOnly, type BlueprintConfig, type SectionConfig } from "@/lib/exam/blueprint";
+import { defaultBlueprint, enabledSections, isTextOnly, textPlanOf, type BlueprintConfig, type SectionConfig } from "@/lib/exam/blueprint";
 import type { ExamTemplateKey } from "@/lib/exam/templates";
 import { isObjectiveSection, type ExamMode, type Section } from "@/lib/exam/types";
 import { PRESETS, type PolicyPreset } from "@/lib/proctor/policy";
@@ -78,24 +78,33 @@ export const sectionsWait = (choices: readonly SectionChoice[]): "NO_SECTION" | 
  * How a section picks its questions, in the words step 2 and the editor use:
  * an adaptive objective section follows the student's answers, a fixed one
  * gives everyone a set number per level, writing and speaking are tasks a
- * teacher grades. A grammar section made only of texts (cloze, word bank or
- * legacy C-tests) is "texts": short gap-fill texts, counted in texts.
+ * teacher grades. A grammar section made only of texts (cloze, word bank,
+ * relative texts or legacy C-tests) is "texts": short gap-fill texts, counted
+ * in texts.
  */
 export function sectionKind(
-  s: Pick<SectionConfig, "section" | "adaptive"> & Partial<Pick<SectionConfig, "cTestLevels" | "texts" | "distribution">>,
+  s: Pick<SectionConfig, "section" | "adaptive"> & Partial<Pick<SectionConfig, "cTestLevels" | "texts" | "relativeTexts" | "distribution">>,
 ): "adaptive" | "fixed" | "tasks" | "texts" {
   if (!isObjectiveSection(s.section)) return "tasks";
-  if ((s.cTestLevels || s.texts) && !s.adaptive && (!s.distribution || isTextOnly(s as SectionConfig, "PLACEMENT", null, 0))) return "texts";
+  if ((s.cTestLevels || s.texts || s.relativeTexts) && !s.adaptive && (!s.distribution || isTextOnly(s as SectionConfig, "PLACEMENT", null, 0))) return "texts";
   return s.adaptive ? "adaptive" : "fixed";
 }
+
+/**
+ * How many texts the wizard says a "texts" section has. Relative texts depend
+ * on the claim, which a new exam does not have yet, so they are counted around
+ * B1 (a verification claim at either end of the scale folds one text onto
+ * another and gets one fewer).
+ */
+export const textCount = (s: SectionConfig, mode: ExamMode): number => textPlanOf(s, mode, null).length;
 
 /**
  * The editor's "Seviyeyi kaydır": it moves every fixed-form level one step
  * (resolveDistribution); adaptive sections follow the student's answers and
  * ignore it (exam-flow plans only fixed sections with it). So it applies to
  * the enabled fixed objective sections, and is off when there are none. A
- * text-only section is left out: its texts come from `cTestLevels` or
- * `texts`, which ignore the shift.
+ * text-only section is left out: its texts come from `cTestLevels`, `texts` or
+ * `relativeTexts`, which ignore the shift.
  */
 export function levelShiftScope(config: BlueprintConfig): { applies: boolean; fixed: Section[]; adaptive: Section[] } {
   const objective = enabledSections(config).filter((s) => isObjectiveSection(s.section));

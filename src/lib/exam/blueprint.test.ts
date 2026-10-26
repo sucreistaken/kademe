@@ -633,3 +633,203 @@ describe("MC cloze and word-bank texts (spec 2026-10-18)", () => {
     expect(res.rows.find((r) => r.section === "GRAMMAR" && r.level === "B1" && !r.text)?.available).toBe(17);
   });
 });
+
+describe("relative texts (spec 2026-10-26)", () => {
+  const NONE = { kind: "ABSOLUTE" as const, perLevel: { A1: 0, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0 } };
+  type Relative = NonNullable<SectionConfig["relativeTexts"]>;
+  /** The level check's grammar: cloze one level below, at and one above the claim, a word bank at the claim. */
+  const LEVEL_CHECK: Relative = [
+    { offset: -1, kind: "CLOZE" },
+    { offset: 0, kind: "CLOZE" },
+    { offset: 1, kind: "CLOZE" },
+    { offset: 0, kind: "WORDBANK" },
+  ];
+  const withRelative = (relativeTexts: Relative, over: Partial<SectionConfig> = {}) => section("GRAMMAR", 15, { distribution: NONE, relativeTexts, ...over });
+  const pool: BankItem[] = CEFR_LEVELS.flatMap((level) => [
+    ...Array.from({ length: 6 }, (_, i) => ({ id: `${level}-${i}`, level, b: thetaForLevel(level), skillTag: `grammar.t${i % 3}`, stimulusId: null, orderInStimulus: 0 })),
+    ...[0, 1].flatMap((k) => [
+      { id: `cloze-${level}-${k}`, level, b: thetaForLevel(level), skillTag: CLOZE_SKILL_TAG, stimulusId: null, orderInStimulus: 0 },
+      { id: `bank-${level}-${k}`, level, b: thetaForLevel(level), skillTag: WORD_BANK_SKILL_TAG, stimulusId: null, orderInStimulus: 0 },
+    ]),
+  ]);
+  const planOf = (s: SectionConfig, claimed: Cefr | null) => textPlanOf(s, claimed ? "LEVEL_VERIFICATION" : "PLACEMENT", claimed).map((e) => `${e.kind} ${e.level}`);
+  /** "cloze-B1-1" is the text "cloze-B1". */
+  const kindAndLevel = (ids: string[]) => ids.map((id) => id.replace(/-\d$/, ""));
+
+  it("schema: GRAMMAR only, offsets within two levels, no kind and offset twice, never together with texts", () => {
+    const cfg = defaultBlueprint("LEVEL_VERIFICATION");
+    const put = (relativeTexts: unknown, over: Record<string, unknown> = {}, target = "GRAMMAR") => ({
+      ...cfg,
+      sections: cfg.sections.map((x) => (x.section === target ? { ...x, relativeTexts, ...over } : x)),
+    });
+    expect(blueprintConfigSchema.safeParse(put(LEVEL_CHECK)).success).toBe(true);
+    // The same offset with two kinds, and one kind at several offsets, are fine.
+    expect(blueprintConfigSchema.safeParse(put([{ offset: 0, kind: "CLOZE" }, { offset: 0, kind: "OPEN" }, { offset: -2, kind: "CLOZE" }, { offset: 2, kind: "WORDBANK" }])).success).toBe(true);
+    expect(blueprintConfigSchema.safeParse(put([{ offset: 0, kind: "CLOZE" }, { offset: 0, kind: "CLOZE" }])).success).toBe(false);
+    expect(blueprintConfigSchema.safeParse(put([])).success).toBe(false);
+    expect(blueprintConfigSchema.safeParse(put([{ offset: 3, kind: "CLOZE" }])).success).toBe(false);
+    expect(blueprintConfigSchema.safeParse(put([{ offset: -3, kind: "CLOZE" }])).success).toBe(false);
+    expect(blueprintConfigSchema.safeParse(put([{ offset: 0.5, kind: "CLOZE" }])).success).toBe(false);
+    expect(blueprintConfigSchema.safeParse(put([{ offset: 0, kind: "CTEST" }])).success).toBe(false);
+    expect(blueprintConfigSchema.safeParse(put(LEVEL_CHECK, {}, "READING")).success).toBe(false);
+    // texts and relativeTexts are exclusive.
+    expect(blueprintConfigSchema.safeParse(put(LEVEL_CHECK, { texts: [{ level: "B1", kind: "CLOZE" }] })).success).toBe(false);
+    expect(blueprintConfigSchema.safeParse(put(undefined, { texts: [{ level: "B1", kind: "CLOZE" }] })).success).toBe(true);
+  });
+
+  it("a config stored without the field stays valid, parses without it and plans as before", () => {
+    for (const mode of ["PLACEMENT", "LEVEL_VERIFICATION"] as const) {
+      const stored = JSON.parse(JSON.stringify(defaultBlueprint(mode)));
+      const parsed = blueprintConfigSchema.parse(stored);
+      expect(parsed.sections.some((s) => "relativeTexts" in s)).toBe(false);
+      const grammar = parsed.sections.find((s) => s.section === "GRAMMAR")!;
+      expect(weighsTexts(grammar)).toBe(false);
+      expect(textPlanOf(grammar, mode, "B2")).toEqual([]);
+      expect(isTextOnly(grammar, mode, "B2", 0)).toBe(false);
+    }
+    // The level check as it was stored before 2026-10-26: ordinary items around the claim, no texts.
+    const before = section("GRAMMAR", 15, { distribution: { kind: "RELATIVE", below: 3, at: 6, above: 3 }, cTest: false });
+    expect(blueprintConfigSchema.safeParse({ ...defaultBlueprint("LEVEL_VERIFICATION"), sections: [before] }).success).toBe(true);
+    expect(textPlanOf(before, "LEVEL_VERIFICATION", "B1")).toEqual([]);
+    expect(resolveDistribution(before, "LEVEL_VERIFICATION", "B1", 0)).toEqual({ A1: 0, A2: 3, B1: 6, B2: 3, C1: 0, C2: 0 });
+  });
+
+  it("textPlanOf: the level check's texts around every claim, folding at the ends of the scale", () => {
+    const s = withRelative(LEVEL_CHECK);
+    expect(planOf(s, "A1")).toEqual(["CLOZE A1", "CLOZE A2", "WORDBANK A1"]);
+    expect(planOf(s, "A2")).toEqual(["CLOZE A1", "CLOZE A2", "CLOZE B1", "WORDBANK A2"]);
+    expect(planOf(s, "B1")).toEqual(["CLOZE A2", "CLOZE B1", "CLOZE B2", "WORDBANK B1"]);
+    expect(planOf(s, "B2")).toEqual(["CLOZE B1", "CLOZE B2", "CLOZE C1", "WORDBANK B2"]);
+    expect(planOf(s, "C1")).toEqual(["CLOZE B2", "CLOZE C1", "CLOZE C2", "WORDBANK C1"]);
+    expect(planOf(s, "C2")).toEqual(["CLOZE C1", "CLOZE C2", "WORDBANK C2"]);
+  });
+
+  it("textPlanOf: the anchor is B1 for a placement and for a verification without a claim", () => {
+    const s = withRelative(LEVEL_CHECK);
+    expect(planOf(s, null)).toEqual(["CLOZE A2", "CLOZE B1", "CLOZE B2", "WORDBANK B1"]);
+    expect(textPlanOf(s, "LEVEL_VERIFICATION", null)).toEqual(textPlanOf(s, "PLACEMENT", null));
+    // A claim does not move a placement.
+    expect(textPlanOf(s, "PLACEMENT", "C2")).toEqual(textPlanOf(s, "PLACEMENT", null));
+  });
+
+  it("textPlanOf: a kind and level planned twice is served once; order is cloze, word bank, open, each easy to hard", () => {
+    // Offsets -2, -1, 0 from an A1 claim all land on A1.
+    expect(planOf(withRelative([{ offset: 0, kind: "CLOZE" }, { offset: -1, kind: "CLOZE" }, { offset: -2, kind: "CLOZE" }]), "A1")).toEqual(["CLOZE A1"]);
+    expect(planOf(withRelative([{ offset: 2, kind: "OPEN" }, { offset: 1, kind: "OPEN" }]), "C1")).toEqual(["OPEN C2"]);
+    const mixed = withRelative([
+      { offset: 2, kind: "OPEN" },
+      { offset: 1, kind: "WORDBANK" },
+      { offset: 0, kind: "OPEN" },
+      { offset: 1, kind: "CLOZE" },
+      { offset: -1, kind: "WORDBANK" },
+      { offset: -1, kind: "CLOZE" },
+    ]);
+    expect(planOf(mixed, "B1")).toEqual(["CLOZE A2", "CLOZE B2", "WORDBANK A2", "WORDBANK B2", "OPEN B1", "OPEN C1"]);
+    // Three kinds at one offset are three texts at one level.
+    expect(planOf(withRelative([{ offset: 0, kind: "CLOZE" }, { offset: 0, kind: "WORDBANK" }, { offset: 0, kind: "OPEN" }]), "B2")).toEqual(["CLOZE B2", "WORDBANK B2", "OPEN B2"]);
+  });
+
+  it("textPlanOf: relative texts replace the legacy fields; texts win if a config somehow has both; other sections plan nothing", () => {
+    expect(planOf(withRelative([{ offset: 0, kind: "CLOZE" }], { cTestLevels: ["A1"], cTest: true }), "B2")).toEqual(["CLOZE B2"]);
+    const both = { ...withRelative([{ offset: 0, kind: "CLOZE" }]), texts: [{ level: "A1" as const, kind: "WORDBANK" as const }] };
+    expect(planOf(both, "B2")).toEqual(["WORDBANK A1"]);
+    expect(planOf({ ...withRelative(LEVEL_CHECK), section: "READING" }, "B2")).toEqual([]);
+  });
+
+  it("the difficulty offset does not move relative texts, as it does not move texts", () => {
+    const s = withRelative(LEVEL_CHECK);
+    const ids = (offset: number) => planFixedSection(s, pool, "LEVEL_VERIFICATION", "B2", offset, mulberry32(4));
+    expect(ids(-1)).toEqual(ids(0));
+    expect(ids(1)).toEqual(ids(0));
+    expect(isTextOnly(s, "LEVEL_VERIFICATION", "B2", -1)).toBe(true);
+    expect(isTextOnly(s, "LEVEL_VERIFICATION", "B2", 1)).toBe(true);
+  });
+
+  it("textKindsOf, isTextOnly and weighsTexts see relative texts, for every claim", () => {
+    const s = withRelative(LEVEL_CHECK);
+    for (const claimed of CEFR_LEVELS) {
+      expect(textKindsOf(s, "LEVEL_VERIFICATION", claimed), claimed).toEqual(["CLOZE", "WORDBANK"]);
+      expect(isTextOnly(s, "LEVEL_VERIFICATION", claimed, 0), claimed).toBe(true);
+    }
+    expect(textKindsOf(withRelative([{ offset: 0, kind: "WORDBANK" }]), "LEVEL_VERIFICATION", "A1")).toEqual(["WORDBANK"]);
+    // Ordinary items next to the texts, or an adaptive section, are not text-only.
+    expect(isTextOnly(withRelative(LEVEL_CHECK, { distribution: { kind: "RELATIVE", below: 0, at: 2, above: 0 } }), "LEVEL_VERIFICATION", "B1", 0)).toBe(false);
+    expect(isTextOnly(withRelative(LEVEL_CHECK, { adaptive: true }), "LEVEL_VERIFICATION", "B1", 0)).toBe(false);
+    expect(weighsTexts(s)).toBe(true);
+    expect(weighsTexts(section("READING", 20, { relativeTexts: LEVEL_CHECK }))).toBe(false);
+    expect(weighsTexts(section("GRAMMAR", 15, { distribution: { kind: "RELATIVE", below: 3, at: 6, above: 3 }, cTest: false }))).toBe(false);
+  });
+
+  it("fixed form: the planned texts around the claim in serving order, then a form that never holds a text", () => {
+    const s = withRelative(LEVEL_CHECK);
+    for (let seed = 1; seed <= 10; seed++) {
+      expect(kindAndLevel(planFixedSection(s, pool, "LEVEL_VERIFICATION", "C2", 0, mulberry32(seed)))).toEqual(["cloze-C1", "cloze-C2", "bank-C2"]);
+      expect(kindAndLevel(planFixedSection(s, pool, "LEVEL_VERIFICATION", "B1", 0, mulberry32(seed)))).toEqual(["cloze-A2", "cloze-B1", "cloze-B2", "bank-B1"]);
+    }
+    // With ordinary items next to them, the texts still come first.
+    const mixedForm = planFixedSection(withRelative(LEVEL_CHECK, { distribution: { kind: "RELATIVE", below: 1, at: 2, above: 1 } }), pool, "LEVEL_VERIFICATION", "B1", 0, mulberry32(1));
+    expect(kindAndLevel(mixedForm).slice(0, 4)).toEqual(["cloze-A2", "cloze-B1", "cloze-B2", "bank-B1"]);
+    expect(mixedForm).toHaveLength(8);
+  });
+
+  it("fixed form skips a planned text the bank does not have, and never serves another level in its place", () => {
+    const thin = pool.filter((p) => !p.id.startsWith("bank-B1"));
+    expect(kindAndLevel(planFixedSection(withRelative(LEVEL_CHECK), thin, "LEVEL_VERIFICATION", "B1", 0, mulberry32(2)))).toEqual(["cloze-A2", "cloze-B1", "cloze-B2"]);
+  });
+
+  it("adaptive: the planned texts around the claim come first, one at a time", () => {
+    const s = withRelative(LEVEL_CHECK, { adaptive: true, minItems: 6, maxItems: 10, targetSe: 0.3 });
+    const cfg = adaptiveConfigFor(s, "LEVEL_VERIFICATION", "A1");
+    const rng = mulberry32(5);
+    const responses: ReplayResponse[] = [];
+    for (let k = 0; k < 4; k++) {
+      const next = nextAdaptiveItems(s, "LEVEL_VERIFICATION", "A1", replay(cfg, responses), pool, cfg, rng)!;
+      expect(next.itemIds).toHaveLength(1);
+      const item = pool.find((p) => p.id === next.itemIds[0])!;
+      responses.push({ itemId: item.id, b: item.b, skillTag: item.skillTag, stimulusId: null, score: 0.5 });
+    }
+    // An A1 claim folds to cloze A1, A2 and a word bank A1; the fourth unit is an ordinary item.
+    expect(kindAndLevel(responses.slice(0, 3).map((r) => r.itemId))).toEqual(["cloze-A1", "cloze-A2", "bank-A1"]);
+    expect(responses[3].itemId).toMatch(/^[A-C][12]-\d$/);
+  });
+
+  describe("coverage", () => {
+    const counts = (over: (c: BankCount) => BankCount = (c) => c): BankCount[] =>
+      SECTIONS.flatMap((section) =>
+        CEFR_LEVELS.map((level) => over({ section, level, items: 20, stimuli: 3, ...(section === "GRAMMAR" ? { clozeTexts: 2, wordBanks: 2 } : {}) })),
+      );
+    const cfg = () => {
+      const c = defaultBlueprint("LEVEL_VERIFICATION");
+      c.sections = c.sections.map((x) => (x.section === "GRAMMAR" ? withRelative(LEVEL_CHECK) : x));
+      return c;
+    };
+    const textRows = (claimed: Cefr | null) =>
+      bankCoverage(counts(), cfg(), "LEVEL_VERIFICATION", claimed)
+        .rows.filter((r) => r.text)
+        .map((r) => `${r.text} ${r.level}`);
+
+    it("one row per text of the claim's plan; the union of every claim without a claim given", () => {
+      expect(textRows("A1")).toEqual(["CLOZE A1", "CLOZE A2", "WORDBANK A1"]);
+      expect(textRows("C2")).toEqual(["CLOZE C1", "CLOZE C2", "WORDBANK C2"]);
+      expect(textRows("B1")).toEqual(["CLOZE A2", "CLOZE B1", "CLOZE B2", "WORDBANK B1"]);
+      // No claim: cloze at every level and a word bank at every level.
+      expect(textRows(null)).toEqual([...CEFR_LEVELS.map((l) => `CLOZE ${l}`), ...CEFR_LEVELS.map((l) => `WORDBANK ${l}`)]);
+    });
+
+    it("a level with no word bank fails only the claims that plan one there", () => {
+      const noWordBankC2 = counts((c) => (c.section === "GRAMMAR" && c.level === "C2" ? { ...c, wordBanks: 0 } : c));
+      for (const claimed of CEFR_LEVELS) {
+        expect(bankCoverage(noWordBankC2, cfg(), "LEVEL_VERIFICATION", claimed).ok, claimed).toBe(claimed !== "C2");
+      }
+      const all = bankCoverage(noWordBankC2, cfg(), "LEVEL_VERIFICATION", null);
+      expect(all.ok).toBe(false);
+      expect(all.rows.filter((r) => !r.ok).map((r) => `${r.text} ${r.level}`)).toEqual(["WORDBANK C2"]);
+    });
+
+    it("texts are not ordinary items: a text-only grammar section asks for no single items", () => {
+      const res = bankCoverage(counts(), cfg(), "LEVEL_VERIFICATION", "B1");
+      expect(res.rows.filter((r) => r.section === "GRAMMAR" && !r.text)).toEqual([]);
+      expect(res.ok).toBe(true);
+    });
+  });
+});

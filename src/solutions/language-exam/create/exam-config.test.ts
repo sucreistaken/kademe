@@ -12,6 +12,7 @@ import {
   examTemplateFor,
   initialSectionEdits,
   MIN_SECTION_MINUTES,
+  relativeTextsFor,
   textsFor,
   type ExamShape,
 } from "./exam-config";
@@ -243,6 +244,49 @@ describe("text sections follow the minutes", () => {
     // The same minutes keep the list; more minutes widen the word banks, the full ladder has no room left.
     expect(kinds(textsFor(placement, 1))).toEqual(kinds(placement));
     expect(kinds(textsFor(placement, 4 / 3))).toEqual([...kinds(placement).slice(0, 4), "WORDBANK A2", "WORDBANK B1", "WORDBANK B2", "WORDBANK C1", "OPEN C1", "OPEN C2"]);
+  });
+
+  it("relativeTextsFor: the level check's texts scale with the minutes, the claim kept longest, word bank first to go", () => {
+    type Relative = Parameters<typeof relativeTextsFor>[0];
+    const rel = (cloze: number[], wordBanks: number[]) =>
+      [...cloze.map((offset) => ({ offset, kind: "CLOZE" as const })), ...wordBanks.map((offset) => ({ offset, kind: "WORDBANK" as const }))] as Relative;
+    const names = (texts: Relative) => texts.map((t) => `${t.kind} ${t.offset}`);
+    const levelCheck = rel([-1, 0, 1], [0]);
+    expect(names(relativeTextsFor(levelCheck, 1))).toEqual(["CLOZE -1", "CLOZE 0", "CLOZE 1", "WORDBANK 0"]);
+    // Fewer minutes: round(4 * f) texts, at least one; the word bank goes first, then the cloze texts farthest from the claim
+    // (the one above is kept before the one below), the claim itself last.
+    expect(names(relativeTextsFor(levelCheck, 0.75))).toEqual(["CLOZE -1", "CLOZE 0", "CLOZE 1"]);
+    expect(names(relativeTextsFor(levelCheck, 0.5))).toEqual(["CLOZE 0", "CLOZE 1"]);
+    expect(names(relativeTextsFor(levelCheck, 0.25))).toEqual(["CLOZE 0"]);
+    expect(names(relativeTextsFor(levelCheck, 0.05))).toEqual(["CLOZE 0"]);
+    // More minutes: each span widens, upward first, within two levels of the claim.
+    expect(names(relativeTextsFor(levelCheck, 1.25))).toEqual(["CLOZE -1", "CLOZE 0", "CLOZE 1", "CLOZE 2", "WORDBANK 0"]);
+    expect(names(relativeTextsFor(levelCheck, 1.5))).toEqual(["CLOZE -2", "CLOZE -1", "CLOZE 0", "CLOZE 1", "CLOZE 2", "WORDBANK 0", "WORDBANK 1"]);
+    expect(names(relativeTextsFor(levelCheck, 10))).toEqual(["CLOZE -2", "CLOZE -1", "CLOZE 0", "CLOZE 1", "CLOZE 2", "WORDBANK -2", "WORDBANK -1", "WORDBANK 0", "WORDBANK 1", "WORDBANK 2"]);
+    // A list of word banks alone stays word banks; an open cloze text keeps its kind on the ladder.
+    expect(names(relativeTextsFor(rel([], [0, 1]), 0.1))).toEqual(["WORDBANK 0"]);
+    const withOpen = [...rel([-1, 0], [0]), { offset: 1, kind: "OPEN" as const }] as Relative;
+    expect(names(relativeTextsFor(withOpen, 0.5))).toEqual(["CLOZE 0", "OPEN 1"]);
+    // Whatever the minutes, the result is a valid list.
+    for (const f of [0.01, 0.3, 0.6, 0.9, 1, 1.1, 1.7, 3, 20]) {
+      const out = relativeTextsFor(levelCheck, f);
+      expect(out.length).toBeGreaterThanOrEqual(1);
+      expect(new Set(names(out)).size).toBe(out.length);
+      for (const t of out) expect(Math.abs(t.offset)).toBeLessThanOrEqual(2);
+    }
+  });
+
+  it("an AI-made level check scales its grammar texts with the minutes and stays valid", () => {
+    const grammarAt = (target: number) => {
+      const s = buildExamConfig(shape({ mode: "LEVEL_VERIFICATION", targetMinutes: target })).config.sections.find((x) => x.section === "GRAMMAR")!;
+      expect([s.texts, s.cTestLevels]).toEqual([undefined, undefined]);
+      return s;
+    };
+    expect(grammarAt(97).relativeTexts).toEqual(examTemplateFor(shape({ mode: "LEVEL_VERIFICATION" })).config.sections.find((x) => x.section === "GRAMMAR")!.relativeTexts);
+    const counts = [30, 60, 97, 120].map((target) => grammarAt(target).relativeTexts!.length);
+    expect(counts.every((n, i) => i === 0 || n >= counts[i - 1])).toBe(true);
+    expect(counts[0]).toBeLessThan(counts[2]);
+    expect(counts[3]).toBeGreaterThan(counts[2]);
   });
 
   it("an older C-test section keeps one text per five minutes, middle levels first, then wider upward (R11)", () => {
