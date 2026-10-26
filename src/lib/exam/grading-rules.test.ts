@@ -174,11 +174,38 @@ describe("ruleProposal", () => {
   it("has no em dash in any text", () => {
     for (const reason of ["EMPTY", "COPIED_TASK", "NOT_GERMAN", "FEW_WORDS"] as const) {
       for (const section of ["WRITING", "SPEAKING"] as const) {
-        for (const locale of ["en", "tr"] as const) {
+        for (const locale of ["en", "tr", "de"] as const) {
           const p = ruleProposal(section, { reason, flags: [] }, locale);
           expect(JSON.stringify(p).includes(EM_DASH)).toBe(false);
         }
       }
+    }
+  });
+
+  it("writes a German proposal for every reason and section, in German only, and says which language it is in", () => {
+    const seen = new Set<string>();
+    for (const reason of ["EMPTY", "COPIED_TASK", "NOT_GERMAN", "FEW_WORDS"] as const) {
+      for (const section of ["WRITING", "SPEAKING"] as const) {
+        const de = ruleProposal(section, { reason, flags: [] }, "de");
+        expect(de.rationaleLocale).toBe("de");
+        expect(de.summary).toContain("A0 (Pre-A1) ergibt sich aus einer festen Regel");
+        // Not the Turkish or the English text, and no Turkish letter.
+        for (const other of ["tr", "en"] as const) expect(de.summary).not.toContain(ruleProposal(section, { reason, flags: [] }, other).criteria[0].rationale);
+        expect(de.summary).not.toMatch(/[ışğİŞĞ]/u);
+        expect(de.summary).not.toMatch(/\b(the|answer|fixed rule|teacher decides)\b/i);
+        const rationale = de.criteria[0].rationale;
+        expect(rationale.startsWith("Es ") || rationale.startsWith("Die ")).toBe(true);
+        expect(rationale.endsWith(".")).toBe(true);
+        seen.add(rationale);
+      }
+    }
+    // Four reasons, each worded for writing and for speaking.
+    expect(seen.size).toBe(8);
+  });
+
+  it("the rationale language is stored on every language's proposal", () => {
+    for (const locale of ["tr", "en", "de"] as const) {
+      expect(ruleProposal("WRITING", { reason: "EMPTY", flags: ["EMPTY"] }, locale).rationaleLocale).toBe(locale);
     }
   });
 });

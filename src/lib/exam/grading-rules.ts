@@ -194,6 +194,7 @@ const REASON_TEXT: Record<RuleReason, Record<RationaleLocale, { writing: string;
   EMPTY: {
     en: { writing: "No text was written.", speaking: "No speech could be transcribed." },
     tr: { writing: "Hiçbir metin yazılmadı.", speaking: "Konuşma yazıya dökülemedi." },
+    de: { writing: "Es wurde kein Text geschrieben.", speaking: "Es konnte keine gesprochene Antwort transkribiert werden." },
   },
   COPIED_TASK: {
     en: {
@@ -204,10 +205,18 @@ const REASON_TEXT: Record<RuleReason, Record<RationaleLocale, { writing: string;
       writing: "Cevap görev metnini tekrar ediyor; adaya ait Almanca yok.",
       speaking: "Cevap görev metnini sesli okuyor; adaya ait Almanca yok.",
     },
+    de: {
+      writing: "Die Antwort wiederholt den Aufgabentext; sie enthält kein eigenes Deutsch der lernenden Person.",
+      speaking: "Die Antwort liest den Aufgabentext vor; sie enthält kein eigenes Deutsch der lernenden Person.",
+    },
   },
   NOT_GERMAN: {
     en: { writing: "The answer is not in German; there is no German to score.", speaking: "The answer is not in German; there is no German to score." },
     tr: { writing: "Cevap Almanca değil; puanlanabilir Almanca yok.", speaking: "Cevap Almanca değil; puanlanabilir Almanca yok." },
+    de: {
+      writing: "Die Antwort ist nicht auf Deutsch geschrieben; es gibt kein bewertbares Deutsch.",
+      speaking: "Die Antwort ist nicht auf Deutsch gesprochen; es gibt kein bewertbares Deutsch.",
+    },
   },
   FEW_WORDS: {
     en: {
@@ -218,17 +227,22 @@ const REASON_TEXT: Record<RuleReason, Record<RationaleLocale, { writing: string;
       writing: "Cevap yalnızca birkaç sözcük ya da selamlama; puanlanabilir kendi cümlesi yok.",
       speaking: "Cevap yalnızca birkaç sözcük ya da ses; puanlanabilir kendi cümlesi yok.",
     },
+    de: {
+      writing: "Die Antwort besteht nur aus wenigen Wörtern oder Grußformeln; es gibt keinen eigenen Satz, der sich bewerten ließe.",
+      speaking: "Die Antwort besteht nur aus wenigen Wörtern oder Lauten; es gibt keinen eigenen Satz, der sich bewerten ließe.",
+    },
   },
 };
 
 const RULE_NOTE: Record<RationaleLocale, string> = {
   en: "A0 (Pre-A1) was set by a fixed rule, not by the model. The teacher decides.",
   tr: "A0 (Pre-A1) modelin değil sabit bir kuralın sonucudur. Karar öğretmenindir.",
+  de: "A0 (Pre-A1) ergibt sich aus einer festen Regel, nicht aus dem Modell. Die Entscheidung trifft die Lehrkraft.",
 };
 
 /**
  * The proposal for an answer a rule decided: A0 in every criterion, the reason
- * in the teacher's language, no quotes. Pronunciation stays "cannot be judged".
+ * in the language of `locale` (German for every new grading), no quotes. Pronunciation stays "cannot be judged".
  */
 export function ruleProposal(section: ProductiveSection, verdict: RuleVerdict, locale: RationaleLocale): GradingProposal {
   const reason = REASON_TEXT[verdict.reason][locale][section === "WRITING" ? "writing" : "speaking"];
@@ -241,5 +255,6 @@ export function ruleProposal(section: ProductiveSection, verdict: RuleVerdict, l
     overallLevel: "A0",
     summary: `${reason} ${RULE_NOTE[locale]}`,
     flags: [...verdict.flags],
+    rationaleLocale: locale,
   };
 }

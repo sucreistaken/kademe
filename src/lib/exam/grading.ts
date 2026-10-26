@@ -32,7 +32,17 @@ import { CEFR_LEVELS, RESULT_LEVELS, type Cefr, type ProductiveSection, type Res
 
 export { CRITERIA, CRITERIA_BY_SECTION, type Criterion };
 
-export type RationaleLocale = "tr" | "en";
+/**
+ * The language a rationale and a summary are written in. "tr" and "en" are what gradings stored before
+ * 2026-10-26 hold (they followed the student's language); `DEFAULT_RATIONALE_LOCALE` is what every new one gets.
+ */
+export type RationaleLocale = "tr" | "en" | "de";
+
+/**
+ * Owner 2026-10-25: the printed report is German throughout, and the panel speaks German, so the AI's
+ * notes are written in German whatever language the student sat the exam in.
+ */
+export const DEFAULT_RATIONALE_LOCALE: RationaleLocale = "de";
 
 /** Flags the model may raise: what it can judge from reading the answer. */
 export const MODEL_FLAGS = ["OFF_TOPIC", "NOT_GERMAN", "EMPTY"] as const;
@@ -81,7 +91,12 @@ export const gradingProposalSchema = z.object({
   flags: z.array(z.enum(GRADING_FLAGS)).max(12),
 });
 
-export type GradingProposal = z.infer<typeof gradingProposalSchema>;
+/**
+ * `rationaleLocale` is set by the code that stores a proposal, never by the model: the language its
+ * rationales and summary are written in. A proposal stored without it is from before German notes
+ * (Turkish or English), which the German report leaves out.
+ */
+export type GradingProposal = z.infer<typeof gradingProposalSchema> & { rationaleLocale?: RationaleLocale };
 export type CriterionGrade = GradingProposal["criteria"][number];
 
 /**
@@ -199,10 +214,14 @@ function anchorBlock(section: ProductiveSection): string[] {
   ];
 }
 
+const LOCALE_LINE: Record<RationaleLocale, string> = {
+  tr: "Write every rationale and the summary in Turkish. Evidence quotes stay in the original German, copied exactly.",
+  en: "Write every rationale and the summary in English. Evidence quotes stay in the original German, copied exactly.",
+  de: "Write every rationale and the summary in German, in precise, natural prose as a German teacher would write it for a colleague, using the usual German grammar terms (Verbstellung, Nebensatz, Perfekt, Konjunktiv II). Refer to the person who wrote the answer as \"die lernende Person\". Evidence quotes stay in the original German, copied exactly.",
+};
+
 function localeLine(locale: RationaleLocale): string {
-  return locale === "tr"
-    ? "Write every rationale and the summary in Turkish. Evidence quotes stay in the original German, copied exactly."
-    : "Write every rationale and the summary in English. Evidence quotes stay in the original German, copied exactly.";
+  return LOCALE_LINE[locale];
 }
 
 function capLine(taskLevel: Cefr): string {

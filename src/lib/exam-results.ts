@@ -13,13 +13,12 @@ import {
   transcripts,
 } from "@/db/schema";
 import type { FinalSkill } from "@/db/schema/exam";
-import { contentLocale, panelLocaleOf } from "@/i18n/locale";
 import { callJson } from "@/lib/ai-runs";
 import { enabledSections } from "@/lib/exam/blueprint";
 import { medianLevel } from "@/lib/exam/cefr";
 import { gradeAnswer, RULE_MODEL, type GradingJob } from "@/lib/exam/grade-answer";
 import { ruleProposal } from "@/lib/exam/grading-rules";
-import { GRADING_CALL_OPTIONS, GRADING_JSON_SCHEMA, speakingMetrics } from "@/lib/exam/grading";
+import { DEFAULT_RATIONALE_LOCALE, GRADING_CALL_OPTIONS, GRADING_JSON_SCHEMA, speakingMetrics } from "@/lib/exam/grading";
 import { sectionChance } from "@/lib/exam/chance";
 import { blockerErrorCode, finalizeBlockers } from "@/lib/exam/finalize-blockers";
 import { hasAnswer } from "@/lib/exam/item-scoring";
@@ -58,7 +57,7 @@ export async function openGradings(sectionRunId: string) {
           itemResponseId: r.id,
           taskLevel: snap.level,
           status: "AI_PROPOSED",
-          aiProposal: ruleProposal(snap.section as ProductiveSection, { reason: "EMPTY", flags: ["EMPTY"] }, await rationaleLocaleOfRun(sectionRunId)),
+          aiProposal: ruleProposal(snap.section as ProductiveSection, { reason: "EMPTY", flags: ["EMPTY"] }, DEFAULT_RATIONALE_LOCALE),
           aiLevel: "A0",
           aiModel: RULE_MODEL,
           proposedAt: new Date(),
@@ -74,17 +73,6 @@ export async function openGradings(sectionRunId: string) {
     if (!grading) continue;
     if (await gradingInputReady(r.id)) await enqueueGrading(grading.id);
   }
-}
-
-/** The language a teacher reads a rationale in, from the assessment of the run's attempt. */
-async function rationaleLocaleOfRun(sectionRunId: string) {
-  const [row] = await db
-    .select({ locale: assessments.locale })
-    .from(sectionRuns)
-    .innerJoin(attempts, eq(attempts.id, sectionRuns.attemptId))
-    .innerJoin(assessments, eq(assessments.id, attempts.assessmentId))
-    .where(eq(sectionRuns.id, sectionRunId));
-  return contentLocale(panelLocaleOf(row?.locale ?? "en"));
 }
 
 /** Writing is ready at once; a spoken answer needs its transcript first. */
@@ -185,8 +173,9 @@ export async function runGrading(gradingId: string): Promise<GradingOutcome> {
   const section = snap.section as ProductiveSection;
   const taskLevel = row.grading.taskLevel;
   const rubric = snap.rubric ?? { contentPoints: [] };
-  // Teachers read the rationale; the panel language of the school is Turkish by default.
-  const rationaleLocale = contentLocale(panelLocaleOf(row.assessment.locale));
+  // Teachers read the rationale and the printed report is German: every new grading is written in German,
+  // whatever language the student sat the exam in.
+  const rationaleLocale = DEFAULT_RATIONALE_LOCALE;
 
   let job: GradingJob;
   if (snap.content.kind === "WRITING") {
@@ -255,7 +244,7 @@ export async function runGrading(gradingId: string): Promise<GradingOutcome> {
     .update(responseGradings)
     .set({
       status: "AI_PROPOSED",
-      aiProposal: proposal,
+      aiProposal: { ...proposal, rationaleLocale },
       aiLevel: level,
       aiRunId: graded.runId,
       aiModel: graded.model,

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { toGeminiSchema } from "@/lib/ai";
 import {
+  DEFAULT_RATIONALE_LOCALE,
   GRADING_JSON_SCHEMA,
   PRONUNCIATION_NOT_ASSESSABLE,
   buildGradingRepairMessages,
@@ -253,6 +254,24 @@ describe("prompts", () => {
     expect(msgs[0].content).toContain("Do not infer personality, emotion, origin");
     expect(msgs[0].content).toContain(DESCRIPTORS.ACCURACY.C2);
     expect(msgs[0].content).not.toContain(DESCRIPTORS.FLUENCY.B1);
+  });
+
+  it("asks for German rationales and summary by default, in the other two languages when told to", () => {
+    expect(DEFAULT_RATIONALE_LOCALE).toBe("de");
+    const system = (rationaleLocale: "tr" | "en" | "de") =>
+      buildWritingGradingMessages({ task: "t", contentPoints: [], taskLevel: "B1", minWords: 80, maxWords: 120, text, rationaleLocale })[0].content;
+    const de = system(DEFAULT_RATIONALE_LOCALE);
+    expect(de).toContain("Write every rationale and the summary in German");
+    expect(de).toContain("Evidence quotes stay in the original German, copied exactly.");
+    expect(de).not.toContain("in Turkish");
+    expect(de).not.toContain("in English");
+    expect(de).not.toContain(EM_DASH);
+    expect(system("tr")).toContain("in Turkish");
+    expect(system("en")).toContain("in English");
+    // The spoken task carries the same line.
+    const metrics = speakingMetrics([{ text: "ich", startMs: 0, endMs: 400 }], 30_000);
+    const speaking = buildSpeakingGradingMessages({ task: "t", contentPoints: [], taskLevel: "A1", transcript: "ich heiße Anna", metrics, rationaleLocale: "de" });
+    expect(speaking[0].content).toContain("Write every rationale and the summary in German");
   });
 
   it("speaking messages carry the transcript, the metrics and the transcript caveats", () => {
