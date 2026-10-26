@@ -1,5 +1,6 @@
 # Kademe - durum ve devir belgesi
 
+Tur 4, sahip geri bildirimi 2026-10-25 akşam (`platform/solutions`, canlıya çıkışı aşağıda): bkz. "Tur 4: 2026-10-26" bölümü.
 Tur 3, sahip geri bildirimi 2026-10-25 (canlıda 2026-10-25, `main` `0d031ed`): bkz. "Tur 3: 2026-10-25" bölümü.
 Tur 2, sahip geri bildirimi 2026-10-24 (canlıda 2026-10-24, `main` `7b9e05c`): bkz. "Tur 2: 2026-10-24" bölümü.
 Ürün turu 2026-10-23 (canlıda 2026-10-23, `main` `1eafbb4`): bkz. "Ürün turu 2026-10-23" ve "Canlıya çıkış: 2026-10-23 ürün turu" bölümleri.
@@ -15,6 +16,36 @@ Son güncelleme: 2026-10-07 (Gelişmiş: tek kutu, AI önce, `platform/solutions
 **Canlıda**: https://kademe.kadiray.com, `main` commit `0d031ed` (2026-10-25 ~10:10 UTC: tur 3; ayrıntı "Tur 3: 2026-10-25"). Önceki: `7b9e05c` (2026-10-24 ~01:10 TSİ: tur 2; klavyeli not defteri, sağ üstte tanıtım düğmesi, format karışımı, A0 sonuç seviyesi; ayrıntı "Tur 2: 2026-10-24"). Önceki: `1eafbb4` (2026-10-23 ~20:00 UTC: ürün turu; yeni formatlar, resimler, seviye başına 3 form, öğrenci analizi, not araçları, anlatımlı tanıtımlar, Almanca panel; ayrıntı "Canlıya çıkış: 2026-10-23 ürün turu"). Önceki: `8ea4bfe` (2026-10-21 14:02 UTC: giriş ekranı İngilizce ve dört dilli bayrak seçici, öğrenci tarafında Türkçe sınav adı ve geçersiz link sızıntısı giderildi; HTTPS'te dört dil ve Almanca geçersiz link kontrol edildi). Önceki: `70912f7` (2026-10-19 11:49 UTC: soru havuzu ÖSD/telc/TestDaF derslerine göre yenilendi, Richtig/Falsch, yazılan numara ve saat eşleşmesi, gözetimde yanlış "sekmeden ayrıldınız" uyarısı ve Meet düzeltmesi; ayrıntı "Canlıya çıkış: 2026-10-19 soru havuzu ve gözetim"). Önceki: `bcc9d44` (2026-10-18 18:41 UTC: okul test revizyonu). Önceki: `2cf125c` (2026-10-16 18:45 UTC: krem zemin yerine Campus German beyazı ve soğuk griler; ondan önce `8e945da`, Campus German görünümü, Plan 1; ayrıntı "Canlıya çıkış: Campus German görünümü, Plan 1"). Önceki sürümler (aşağıdaki "Canlıya çıkış" bölümleri): `ab951b1` (okul yöneticisi geri bildirimi), `1d8d4c6` (onSET yerleştirme), `5a4f97e` (kurs grubu sürümü, 2026-10-14), `02760e3` (2026-10-07 akşam: Bugün yeni tasarım, 3 adımlı alım sihirbazı, "en az 2 değerlendirici" kuralı kaldırıldı, soru bankası v2; ayrıntı "Canlıya çıkış: sihirbaz ve banka v2"), `0142ff0` (Gelişmiş). Önceki not: commit `739f218` (`main`, 2026-10-05 sınav sıcak düzeltmesi; ayrıntı "Kararlar ve sapmalar"da).
 Canlı veritabanı kullanıcı onayıyla sıfırlandı: eski işe alım verisi yok,
 panel kullanıcıları (parolalarıyla) taşındı, banka ve iki sınav yüklendi.
+
+## Tur 4: 2026-10-26 (sahip mesajları 2026-10-25 akşam, spec `docs/superpowers/specs/2026-10-26-exam-round-4.md`)
+
+Sahip: okul en çok seviye doğrulamayı kullanacak, dilbilgisi yerleştirmedeki gibi metin üzerinden boşluk doldurma
+olsun; A0 belgede ve değerlendirmede olabilsin, konuşma ve yazmada hiç yok; raporda Türkçe metin çıkıyor, rapor
+tamamen Almanca olsun; bitince canlıya al.
+
+- **Seviye doğrulama dilbilgisi (WP1):** `relativeTexts` (GRAMMAR, beyan edilen seviyeye göre ofset; ölçeğin
+  ucunda A1/C2'ye katlanır, aynı tür ve seviye bir kez). Şablon: L-1, L, L+1 çoktan seçmeli boşluklu metin + L'de
+  kelime havuzu, 15 dk (A1 ve C2 beyanında 3 metin). Eski yapılandırmalar aynen planlanır. Şablondan yayınlanmış
+  eski seviye kontrolü ilk şablon davetinde emekliye ayrılır, yenisi yayınlanır (`ensureTemplateBlueprint`; yerel
+  kopyada denendi). Gönderilmiş davetler eski formuyla kalır. Simülasyon (4000/hücre, tohum 2026 ve 7): Almancası
+  olmayan A2 beyanı A0 %45-47 -> %97.6; beyan merkezinde tahmin eden öğrenci FAIL A1 %8 -> %9-10, A2 %0.2 -> %0.6-0.9;
+  bilmediğini boş bırakan öğrenci A2 beyanında %8 -> %14 FAIL (metin boşluğu tahmin bekler; sahip kararı açık).
+- **Almanca rapor (WP2):** öğretmen kopyası (özet + soru soru) panel dili ne olursa olsun Almanca: etiketler,
+  tarih (de-DE), bölüm ve seviye adları; şablonun varsayılan adı Almanca adına çevrilir ("Niveaukontrolle in vier
+  Fertigkeiten"), okulun yazdığı ad aynen. AI gerekçe ve özetleri artık her yeni puanlamada Almanca
+  (`DEFAULT_RATIONALE_LOCALE`, kural metinleri de); eski Türkçe/İngilizce AI notları Almanca raporda basılmaz.
+  Öğrenciye onaylı geri bildirim öğrencinin dilinde: Almanca değilse raporda yerine "öğrenci kopyasında" satırı.
+  Öğrenci kopyası öğrencinin dilinde kalır, Türkçe şablon adı artık sızmaz. Seviye çubuğu A0..C2 (A0 kendi hücresi).
+- **A0 yazma/konuşma (WP3):** iz: boş, atlanan, ulaşılmayan görev tur 3'ten beri kural A0 önerisi alıyor; sahibin
+  23 Ekim sınavı bundan önce (boş cevap AI_FAILED, seviye "-"), geriye dönük düzeltilmedi. Düzeltilen: konuşma
+  kaydının transkripti boş gelirse (sessizlik) boş transkript yazılır ve kural A0 önerir (eskiden sonsuza dek
+  PENDING); 24 saatte transkripti gelmeyen kayıt AI_FAILED "seviyeyi siz belirleyin" olur (A0 uydurulmaz).
+  Bitiş ekranında genel seviye "A0 (Pre-A1)".
+- **Doğrulama:** `tsc` temiz, `eslint src scripts` 0 hata, `pnpm test` 452 dosya 5890/5890. Claude in Chrome
+  (yerel inceleme sunucusu, kopya veritabanı): rapor Almanca, A0 hücresi; şablondan B1 seviye doğrulama daveti,
+  dilbilgisi girişi "4 short texts ... 15 min", sunulan plan A2/B1/B2 boşluklu metin + B1 kelime havuzu.
+  Doğrulanmadı: yeni Almanca gerekçe istemi gerçek modelle koşmadı (kalibrasyon yok), Scribe'ın sessiz kayda
+  gerçek cevabı (taklit edildi), A4 sayfasının baskıda tek sayfaya sığması.
 
 ## Tur 3: 2026-10-25 (sahibin gece turu, spec `docs/superpowers/specs/2026-10-25-exam-round-3.md`)
 
