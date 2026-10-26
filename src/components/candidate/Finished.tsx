@@ -9,6 +9,7 @@ import { ExamFeedback } from "@/components/candidate/exam/ExamFeedback";
 import { CandidateColumn } from "@/components/candidate/Shell";
 import { useProctor } from "@/components/candidate/proctor/ProctorProvider";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/cn";
 import { Mascot } from "@/components/visual/mascot";
 import { SectionTile } from "@/components/visual/section-look";
 import type { StudentResult } from "@/lib/exam-flow";
@@ -209,7 +210,10 @@ export function Finished({
                     {result.outcome ? <p className="mt-1 text-[14px] leading-[1.5] text-ink-2">{t(`outcome${result.outcome}`)}</p> : null}
                     {isPreA1(result.overall) ? <p className="mt-1 text-[14px] leading-[1.5] text-ink-2">{an("levelA0Note")}</p> : null}
                   </div>
-                  <div className="tnum text-[44px] font-black leading-none text-ink">{result.overall ?? "-"}</div>
+                  {/* "A0 (Pre-A1)" is long: it gets a smaller size than the one-token levels. */}
+                  <div className={cn("tnum font-black text-ink", isPreA1(result.overall) ? "text-end text-[26px] leading-tight" : "text-[44px] leading-none")}>
+                    {levelLabel(result.overall, an("levelA0")) ?? "-"}
+                  </div>
                 </div>
                 {result.skills?.length ? (
                   <>
