@@ -200,7 +200,7 @@ describe("buildDetail objective", () => {
 describe("buildDetail productive", () => {
   const w = snap({ type: "WRITING_PROMPT", section: "WRITING", prompt: "Schreiben Sie eine E-Mail.", content: { kind: "WRITING", minWords: 20, maxWords: 80 }, key: { kind: "NONE" } });
   const sp = snap({ type: "SPEAKING_PROMPT", section: "SPEAKING", prompt: "Erzählen Sie.", content: { kind: "SPEAKING", thinkSeconds: 5, answerSeconds: 60, maxTakes: 1 }, key: { kind: "NONE" } });
-  const proposal = { criteria: [{ criterion: "RANGE", level: "B1", assessable: true, rationale: "Gute Vielfalt." }], summary: "Solid." };
+  const proposal = { criteria: [{ criterion: "RANGE", level: "B1", assessable: true, rationale: "Gute Vielfalt." }], summary: "Solid.", rationaleLocale: "de" };
   const g = (over: Partial<DetailGrading>): DetailGrading => ({ itemResponseId: "w1", status: "CONFIRMED", finalLevel: "B1", finalCriteria: null, reason: null, decidedBy: "u1", aiProposal: proposal, ...over });
   const base: DetailSource = {
     ...empty,
@@ -216,6 +216,16 @@ describe("buildDetail productive", () => {
     if (wr.kind !== "PRODUCTIVE") throw new Error("productive");
     expect(wr.tasks[0]).toMatchObject({ text: "Liebe Anna, wie geht es dir?", words: 6, level: "B1", decidedBy: "Hoca", summary: "Solid.", teacherNote: null });
     expect(wr.tasks[0].criteria).toEqual([{ criterion: "RANGE", level: "B1", note: "Gute Vielfalt." }]);
+  });
+  it("leaves out AI notes that are not German (stored before German notes), keeping the criterion levels", () => {
+    const old = { criteria: proposal.criteria.map((c) => ({ ...c, rationale: "Good variety." })), summary: "Solid." };
+    for (const aiProposal of [old, { ...old, rationaleLocale: "tr" }, { ...old, rationaleLocale: "en" }]) {
+      const [wr] = buildDetail({ ...base, gradings: [g({ aiProposal })] });
+      if (wr.kind !== "PRODUCTIVE") throw new Error("productive");
+      expect(wr.tasks[0]).toMatchObject({ level: "B1", summary: null });
+      expect(wr.tasks[0].criteria).toEqual([{ criterion: "RANGE", level: "B1", note: null }]);
+      expect(JSON.stringify(wr)).not.toContain("Good variety");
+    }
   });
   it("drops the AI wording when the teacher changed the level, keeping the reason and own criterion levels", () => {
     const [wr] = buildDetail({ ...base, gradings: [g({ status: "OVERRIDDEN", finalLevel: "A2", reason: "Too many errors", finalCriteria: { RANGE: "A2" } })] });

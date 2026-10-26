@@ -6,7 +6,7 @@ import { organizations } from "@/db/schema";
 import { buttonVariants } from "@/components/ui/button";
 import { PrintButton } from "@/components/panel/report/print-button";
 import { ReportSheet } from "@/components/panel/report/report-sheet";
-import { buildReport } from "@/components/panel/report/model";
+import { buildReport, TEACHER_COPY_LOCALE } from "@/components/panel/report/model";
 import { buildDetail } from "@/components/panel/report/detail-model";
 import { DetailSheet } from "@/components/panel/report/detail-sheet";
 import { StudentSheet } from "@/components/candidate/exam/student-sheet";
@@ -27,6 +27,10 @@ export const dynamic = "force-dynamic";
  * One student's printable level report. Same audience and org scope as the
  * result page (`loadResultView` filters by the user's org), and it exists only
  * for a FINAL result: anything else gets the reason instead of a sheet.
+ *
+ * Language: the toolbar and the hints around a sheet follow the panel language
+ * (`t`); the teacher copy itself is always German (`sheetT`), and the student
+ * copy is in the student's own language.
  */
 export default async function ResultReportPage({
   params,
@@ -38,6 +42,7 @@ export default async function ResultReportPage({
   const user = await requireUser();
   const locale = await managerLocale();
   const t = managerT(locale);
+  const sheetT = managerT(TEACHER_COPY_LOCALE);
   const { id } = await params;
   // The detailed part is on unless the manager turned it off (?detail=0).
   const sp = await searchParams;
@@ -176,8 +181,8 @@ export default async function ResultReportPage({
           </Link>
         </div>
       </div>
-      <ReportSheet model={built.model} t={t} locale={locale} />
-      <DetailSheet sections={detail} studentName={built.model.studentName} t={t} locale={locale} />
+      <ReportSheet model={built.model} t={sheetT} locale={TEACHER_COPY_LOCALE} />
+      <DetailSheet sections={detail} studentName={built.model.studentName} t={sheetT} locale={TEACHER_COPY_LOCALE} />
     </main>
   );
 }

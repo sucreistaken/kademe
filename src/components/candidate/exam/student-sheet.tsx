@@ -3,6 +3,7 @@ import { BrandMark } from "@/components/visual/brand-mark";
 import { candidateT } from "@/i18n/candidate";
 import { dirOf, type CandidateLocale } from "@/i18n/locale";
 import type { StudentResult } from "@/lib/exam-flow";
+import { candidateExamName } from "@/lib/exam/candidate-exam-name";
 
 /**
  * The student's copy of the result: the same analysis as the finish screen on
@@ -68,7 +69,8 @@ export function StudentSheet({
           <h1 className="mt-1 break-words text-headline">{studentName}</h1>
           <div className="mt-3 text-[13.5px]">
             <div className="text-[12px] uppercase tracking-[0.06em] text-muted">{an("examLabel")}</div>
-            <div className="mt-0.5 font-medium">{examName}</div>
+            {/* A template's default name is stored in the manager's language; the student reads it in theirs. */}
+            <div className="mt-0.5 font-medium">{candidateExamName(examName, locale)}</div>
           </div>
         </div>
 

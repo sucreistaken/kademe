@@ -66,4 +66,18 @@ describe("the exam name a student reads", () => {
     expect(candidateExamName("Almanca seviye tespit sınavı", "en")).toBe("German placement exam");
     expect(candidateExamName("German placement exam", "tr")).toBe("Almanca seviye tespit sınavı");
   });
+
+  it("the level check stored in Turkish (the owner's printed report) reads in German, with or without the length", () => {
+    expect(candidateExamName("Dört beceride seviye kontrolü", "de")).toBe("Niveaukontrolle in vier Fertigkeiten");
+    expect(candidateExamName("Dört beceride seviye kontrolü, 75 dk", "de")).toBe("Niveaukontrolle in vier Fertigkeiten, 75 Min.");
+    expect(candidateExamName("Four-skill level check", "de")).toBe("Niveaukontrolle in vier Fertigkeiten");
+    expect(candidateExamName("Four-skill level check, 75 min", "de")).toBe("Niveaukontrolle in vier Fertigkeiten, 75 Min.");
+  });
+
+  it("is idempotent: a name that was already mapped stays as it is", () => {
+    for (const locale of ["tr", "en", "de", "es", "ar"] as const) {
+      const once = candidateExamName("Dört beceride seviye kontrolü, 75 dk", locale);
+      expect(candidateExamName(once, locale)).toBe(once);
+    }
+  });
 });

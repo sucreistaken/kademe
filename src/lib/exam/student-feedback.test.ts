@@ -316,10 +316,23 @@ describe("an unapproved draft never reaches the report", () => {
   });
   it("shows the approved text, and a draft written after it does not replace it", () => {
     const approved: FeedbackContent = { strengths: ["APPROVED"], improve: [], nextStep: "APPROVED NEXT" };
-    const redrafted = { ...store, approved, approvedBy: "u1", approvedAt: "2026-10-16T11:00:00.000Z" };
+    // The German report prints the note only when it is written in German.
+    const redrafted = { ...store, locale: "de" as const, approved, approvedBy: "u1", approvedAt: "2026-10-16T11:00:00.000Z" };
     const m = model(redrafted);
     expect(m.feedback).toEqual(approved);
+    expect(m.feedbackOnStudentCopy).toBe(false);
     expect(JSON.stringify(m)).not.toContain("DRAFT");
+  });
+  it("leaves an approved note in another language off the German report and points to the student copy", () => {
+    const approved: FeedbackContent = { strengths: ["APPROVED"], improve: [], nextStep: "APPROVED NEXT" };
+    for (const locale of ["tr", "en", "es", "ar"] as const) {
+      const m = model({ ...store, locale, approved, approvedBy: "u1", approvedAt: "2026-10-16T11:00:00.000Z" });
+      expect(m.feedback, locale).toBeNull();
+      expect(m.feedbackOnStudentCopy, locale).toBe(true);
+      expect(JSON.stringify(m), locale).not.toContain("APPROVED");
+    }
+    // Nothing approved: no note and no pointer to one.
+    expect(model(store).feedbackOnStudentCopy).toBe(false);
   });
   it("still refuses a result that is not final, feedback or not", () => {
     expect(buildReport({ ...report, status: "READY", feedback: { ...store, approved: draft, approvedBy: "u1", approvedAt: "x" } }, "s").ok).toBe(false);

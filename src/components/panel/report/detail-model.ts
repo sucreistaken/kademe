@@ -97,7 +97,8 @@ export type DetailGrading = {
   finalCriteria: Record<string, string> | null;
   reason: string | null;
   decidedBy: string | null;
-  aiProposal: { criteria: Array<{ criterion: string; level: string; assessable: boolean; rationale: string }>; summary: string } | null;
+  /** `rationaleLocale` is the language of the notes; a proposal stored before German notes has none (Turkish or English). */
+  aiProposal: { criteria: Array<{ criterion: string; level: string; assessable: boolean; rationale: string }>; summary: string; rationaleLocale?: string } | null;
 };
 
 export type DetailSource = {
@@ -290,12 +291,14 @@ function productiveSection(src: DetailSource, section: Section, runId: string | 
     const mediaId = r.answer?.mediaAssetId;
     const transcript = section === "SPEAKING" && mediaId ? (src.transcripts[mediaId]?.trim() || null) : null;
     const criteria: TeacherCriterion[] = [];
+    // The report is German: the AI's wording is printed only when it was written in German, never as Turkish or English text.
+    const germanNotes = g?.aiProposal?.rationaleLocale === "de";
     if (decided && g?.aiProposal) {
       for (const c of g.aiProposal.criteria) {
         if (!c.assessable) continue;
         // A per-criterion level the teacher set wins; the AI's wording is only kept when the teacher confirmed the proposal.
         const own = g.finalCriteria?.[c.criterion];
-        if (g.status === "CONFIRMED") criteria.push({ criterion: c.criterion, level: own ?? c.level, note: c.rationale || null });
+        if (g.status === "CONFIRMED") criteria.push({ criterion: c.criterion, level: own ?? c.level, note: germanNotes ? c.rationale || null : null });
         else if (own) criteria.push({ criterion: c.criterion, level: own, note: null });
       }
     } else if (decided && g?.finalCriteria) {
@@ -312,7 +315,7 @@ function productiveSection(src: DetailSource, section: Section, runId: string | 
       decidedBy: decided && g?.decidedBy ? (src.nameOf[g.decidedBy] ?? null) : null,
       teacherNote: g?.status === "OVERRIDDEN" && g.reason?.trim() ? g.reason.trim() : null,
       criteria,
-      summary: g?.status === "CONFIRMED" && g.aiProposal?.summary ? g.aiProposal.summary : null,
+      summary: g?.status === "CONFIRMED" && germanNotes && g.aiProposal?.summary ? g.aiProposal.summary : null,
     };
   });
   return { section, kind: "PRODUCTIVE", level: asLevel(src.skillLevels[section]), tasks };

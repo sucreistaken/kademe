@@ -1,5 +1,6 @@
 import { BrandMark } from "@/components/visual/brand-mark";
-import { CEFR_LEVELS } from "@/lib/exam/types";
+import { RESULT_LEVELS } from "@/lib/exam/types";
+import { candidateExamName } from "@/lib/exam/candidate-exam-name";
 import { isPreA1 } from "@/lib/exam/level-label";
 import { dateTime } from "@/i18n/dates";
 import type { PanelLocale } from "@/i18n/locale";
@@ -33,12 +34,12 @@ const PRINT_CSS = `
 const dayFmt = (d: Date, locale: PanelLocale) =>
   new Intl.DateTimeFormat(intlTag(locale), { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Istanbul" }).format(d);
 
-/** A1 to C2 filled up to the level; A0 (Pre-A1) fills none, it lies below the bar. */
+/** A0 (Pre-A1) to C2, one cell each, filled up to the level: an A0 skill fills the first cell only. */
 function LevelBar({ level }: { level: string | null }) {
-  const at = level ? CEFR_LEVELS.indexOf(level as (typeof CEFR_LEVELS)[number]) : -1;
+  const at = level ? RESULT_LEVELS.indexOf(level as (typeof RESULT_LEVELS)[number]) : -1;
   return (
     <div className="flex gap-1" aria-hidden>
-      {CEFR_LEVELS.map((l, i) => (
+      {RESULT_LEVELS.map((l, i) => (
         <div key={l} className={cn("h-2.5 flex-1 rounded-full", i <= at ? "bg-accent" : "bg-line")} />
       ))}
     </div>
@@ -72,7 +73,7 @@ export function ReportSheet({ model, t, locale }: { model: ReportModel; t: T; lo
           <dl className="mt-3 grid grid-cols-2 gap-x-6 text-[13.5px]">
             <div>
               <dt className="text-[12px] uppercase tracking-[0.06em] text-muted">{t("resultReport.exam")}</dt>
-              <dd className="mt-0.5 font-medium">{m.examName}</dd>
+              <dd className="mt-0.5 font-medium">{candidateExamName(m.examName, locale)}</dd>
             </div>
             <div>
               <dt className="text-[12px] uppercase tracking-[0.06em] text-muted">{t("resultReport.examDate")}</dt>
@@ -116,7 +117,7 @@ export function ReportSheet({ model, t, locale }: { model: ReportModel; t: T; lo
           <div className="mt-2 grid grid-cols-[34mm_1fr_14mm] gap-4" aria-hidden>
             <span />
             <div className="flex gap-1">
-              {CEFR_LEVELS.map((l) => (
+              {RESULT_LEVELS.map((l) => (
                 <span key={l} className="tnum flex-1 text-center text-[10.5px] text-muted">
                   {l}
                 </span>
@@ -127,6 +128,16 @@ export function ReportSheet({ model, t, locale }: { model: ReportModel; t: T; lo
           <p className="mt-3 text-[11.5px] text-muted">{t("resultReport.scaleNote")}</p>
           {anyPreA1 ? <p className="mt-1 text-[11.5px] text-muted">{t("resultLevel.A0Note")}</p> : null}
         </div>
+
+        {!m.feedback && m.feedbackOnStudentCopy ? (
+          // The approved note is in the student's language; it is on the student copy, not here.
+          <section className="mt-6 rounded-[14px] bg-canvas px-5 py-3" aria-labelledby="report-feedback">
+            <h2 id="report-feedback" className="text-[13px] font-semibold uppercase tracking-[0.06em] text-muted">
+              {t("resultReport.feedbackTitle")}
+            </h2>
+            <p className="mt-1 text-[12.5px] leading-[1.5] text-ink-2">{t("resultReport.feedbackOnStudentCopy")}</p>
+          </section>
+        ) : null}
 
         {m.feedback ? (
           <section className="mt-6 rounded-[14px] bg-canvas px-5 py-4" aria-labelledby="report-feedback">

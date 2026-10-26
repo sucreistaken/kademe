@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildReport, reportAllowed, verificationCode, type ReportSource } from "./model";
 import tr from "@/i18n/messages/screens.tr.json";
 import en from "@/i18n/messages/screens.en.json";
+import de from "@/i18n/messages/screens.de.json";
 
 const base: ReportSource = {
   status: "FINAL",
@@ -84,7 +85,7 @@ describe("buildReport", () => {
     const r = buildReport(base, "s");
     if (!r.ok) throw new Error("expected ok");
     expect(Object.keys(r.model).sort()).toEqual(
-      ["schoolName", "studentName", "examName", "examDate", "overall", "skills", "recommendedClass", "teacherName", "finalizedAt", "verificationCode", "feedback"].sort(),
+      ["schoolName", "studentName", "examName", "examDate", "overall", "skills", "recommendedClass", "teacherName", "finalizedAt", "verificationCode", "feedback", "feedbackOnStudentCopy"].sort(),
     );
   });
 });
@@ -92,9 +93,11 @@ describe("buildReport", () => {
 describe("resultReport copy", () => {
   it("has the same keys in both languages and a sentence for every level", () => {
     expect(Object.keys(en.resultReport).sort()).toEqual(Object.keys(tr.resultReport).sort());
+    expect(Object.keys(de.resultReport).sort()).toEqual(Object.keys(tr.resultReport).sort());
     for (const l of ["A0", "A1", "A2", "B1", "B2", "C1", "C2"]) {
       expect(tr.resultReport.level[l as "A1"].length).toBeGreaterThan(20);
       expect(en.resultReport.level[l as "A1"].length).toBeGreaterThan(20);
+      expect(de.resultReport.level[l as "A1"].length).toBeGreaterThan(20);
     }
   });
 });

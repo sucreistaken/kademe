@@ -1089,6 +1089,7 @@
     "feedbackTitle": "Teacher's feedback",
     "feedbackImprove": "To work on",
     "feedbackNext": "Next step",
+    "feedbackOnStudentCopy": "The feedback for the student is written in the student's language and is on the student copy.",
     "tfLegendListening": "R = True, F = False, NG = Not in the recording",
     "question": "Question {n}",
     "task": "Task",

@@ -2,6 +2,7 @@ import { createHmac } from "node:crypto";
 import { approvedFeedback, type FeedbackContent, type StudentFeedbackStore } from "@/lib/exam/student-feedback";
 import { isResultLevel } from "@/lib/exam/cefr";
 import { recommendedClassOf, type RecommendedClass } from "@/lib/exam/placement";
+import type { PanelLocale } from "@/i18n/locale";
 import type { ResultLevel, Section } from "@/lib/exam/types";
 
 /**
@@ -18,7 +19,14 @@ import type { ResultLevel, Section } from "@/lib/exam/types";
  * teacher copy; the student copy has no questions or keys (owner 2026-10-23):
  * it is the analysis in student-analysis.ts, printed from the student's own
  * link or from here with `?copy=student`.
+ *
+ * Language (owner 2026-10-25): the teacher copy is printed in German whatever
+ * language the panel is open in. The page renders both sheets with
+ * `TEACHER_COPY_LOCALE`; only the toolbar around them follows the panel language.
  */
+
+/** The language of the printed teacher copy (summary and detail sheet). */
+export const TEACHER_COPY_LOCALE = "de" as const satisfies PanelLocale;
 
 export type ReportSource = {
   status: string | null | undefined;
@@ -55,8 +63,10 @@ export type ReportModel = {
   teacherName: string | null;
   finalizedAt: Date | null;
   verificationCode: string;
-  /** The teacher-approved feedback for the student, or null. A draft is never here. */
+  /** The teacher-approved feedback for the student, or null. A draft is never here. Only German feedback is printed. */
   feedback: FeedbackContent | null;
+  /** Approved feedback exists but is written in the student's language: the German sheet points to the student copy instead. */
+  feedbackOnStudentCopy: boolean;
 };
 
 /** A report is only for a decided result: the teacher finalised it. */
@@ -77,6 +87,9 @@ export function buildReport(src: ReportSource, secret: string): { ok: true; mode
   const skills = src.sections.map((s) => ({ section: s as Section, level: asLevel(src.skillLevels[s]) }));
   const p = src.mode === "PLACEMENT" ? src.placement : null;
   const recommendedClass = p ? recommendedClassOf(overall, p) : null;
+  // The note is written in the student's language, for the student; the German sheet prints it only when it is German.
+  const approved = approvedFeedback(src.feedback);
+  const german = src.feedback?.locale === "de";
   return {
     ok: true,
     model: {
@@ -90,7 +103,8 @@ export function buildReport(src: ReportSource, secret: string): { ok: true; mode
       teacherName: src.teacherName,
       finalizedAt: src.finalizedAt,
       verificationCode: verificationCode(src.attemptId, secret),
-      feedback: approvedFeedback(src.feedback),
+      feedback: approved && german ? approved : null,
+      feedbackOnStudentCopy: !!approved && !german,
     },
   };
 }

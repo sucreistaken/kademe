@@ -1089,6 +1089,7 @@
     "feedbackTitle": "Rückmeldung der Lehrkraft",
     "feedbackImprove": "Zum Üben",
     "feedbackNext": "Nächster Schritt",
+    "feedbackOnStudentCopy": "Die Rückmeldung für die lernende Person ist in deren Sprache verfasst und steht in der Fassung für Lernende.",
     "tfLegendListening": "R = Richtig, F = Falsch, NG = Nicht in der Aufnahme",
     "question": "Frage {n}",
     "task": "Aufgabe",

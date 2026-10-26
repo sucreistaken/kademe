@@ -1089,6 +1089,7 @@
     "feedbackTitle": "Öğretmenin geri bildirimi",
     "feedbackImprove": "Üzerinde çalışılacaklar",
     "feedbackNext": "Sonraki adım",
+    "feedbackOnStudentCopy": "Öğrenciye yönelik geri bildirim öğrencinin dilinde yazılmıştır ve öğrenci kopyasında yer alır.",
     "tfLegendListening": "R = Doğru, F = Yanlış, NG = Kayıtta geçmiyor",
     "question": "Soru {n}",
     "task": "Görev",
