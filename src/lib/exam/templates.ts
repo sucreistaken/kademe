@@ -65,6 +65,24 @@ import type { Cefr, ExamMode } from "./types";
  * has no text above B2, so a C2 student is placed at C1. docs/EXAM-ENGINE.md
  * has every row; templates.test.ts keeps a smaller version of the placement
  * simulation.
+ *
+ * The level check's grammar is gap-fill texts too (spec 2026-10-26; the owner
+ * expects schools to use the level check most and wants the gaps filled in a
+ * text, as in the placement test, not in 12 single sentences). Texts sit
+ * around the claimed level L (`relativeTexts`, offsets from L): multiple-choice
+ * cloze texts at L-1, L and L+1 and a word bank at L, served easy to hard, in
+ * the same 15 minutes (about 13.5 minutes of reading in the middle of the
+ * scale). At the ends of the scale the offsets fold: an A1 claim gets cloze
+ * A1, A2 and a word bank A1, a C2 claim cloze C1, C2 and a word bank C2. The
+ * difficulty offset does not move them, as it does not move `texts`. Same
+ * simulation (last table, 4000 per cell, seeds 2026 and 7, writing and
+ * speaking at the true level), students who guess, before -> after: no German
+ * is A0 in 95.9 / 95.5% -> 99.7 / 99.6% of A1 claims and 45.5 / 47.1% ->
+ * 97.6 / 97.6% of A2 claims; false A0 for A1 students stays at most 0.1%; a
+ * student at the claim's band centre fails 7.9 / 8.3% -> 10.0 / 9.1% (A1
+ * claim) and 0.2 / 0.2% -> 0.6 / 0.9% (A2 claim). A student who leaves what
+ * they do not know blank fails at the claim's centre more often (A2 claim:
+ * 7.9 / 8.1% -> 14.3 / 13.7%), because a text gap's estimate expects a guess.
  */
 
 const perLevel = (counts: Partial<Record<Cefr, number>>): Distribution => ({
@@ -79,6 +97,15 @@ const texts = (cloze: Cefr[], wordBanks: Cefr[], open: Cefr[] = []): NonNullable
   ...cloze.map((level) => ({ level, kind: "CLOZE" as const })),
   ...wordBanks.map((level) => ({ level, kind: "WORDBANK" as const })),
   ...open.map((level) => ({ level, kind: "OPEN" as const })),
+];
+/**
+ * The same, but each text sits at an offset from the claimed level (spec 2026-10-26): the level check's
+ * grammar. Off the scale the offset folds onto A1 or C2 and a text planned twice is served once.
+ */
+const relativeTexts = (cloze: number[], wordBanks: number[], open: number[] = []): NonNullable<SectionConfig["relativeTexts"]> => [
+  ...cloze.map((offset) => ({ offset, kind: "CLOZE" as const })),
+  ...wordBanks.map((offset) => ({ offset, kind: "WORDBANK" as const })),
+  ...open.map((offset) => ({ offset, kind: "OPEN" as const })),
 ];
 /** One text of four questions per level, A2 to C1. */
 const READING_A2_C1 = perLevel({ A2: 4, B1: 4, B2: 4, C1: 4 });
@@ -161,15 +188,16 @@ const TEMPLATES: readonly ExamTemplate[] = [
     mode: "LEVEL_VERIFICATION",
     name: text("Dört beceride seviye kontrolü", "Four-skill level check"),
     summary: text(
-      "Goethe ve telc düzeninde sabit form, yaklaşık 97 dakika. Beyan edilen seviyeyi dört beceride ölçer; konuşma şart.",
-      "A fixed form in the Goethe and telc shape, about 97 minutes. Checks the claimed level in all four skills; speaking must hold.",
+      "Goethe ve telc düzeninde sabit form, yaklaşık 97 dakika. Beyan edilen seviyeyi dört beceride ölçer; dilbilgisi, beyan edilen seviyenin çevresindeki boşluklu metinlerle ölçülür. Konuşma şart.",
+      "A fixed form in the Goethe and telc shape, about 97 minutes. Checks the claimed level in all four skills; grammar is gap-fill texts around the claimed level. Speaking must hold.",
     ),
     config: {
       version: 1,
       sections: [
         section("READING", 25, { distribution: { kind: "RELATIVE", below: 2, at: 6, above: 2 } }),
         section("LISTENING", 20, { distribution: { kind: "RELATIVE", below: 2, at: 5, above: 2 } }),
-        section("GRAMMAR", 15, { distribution: { kind: "RELATIVE", below: 3, at: 6, above: 3 }, cTest: false }),
+        // Gap-fill texts around the claim (spec 2026-10-26): cloze one level below, at and one above, a word bank at the claim.
+        section("GRAMMAR", 15, { distribution: NO_ITEMS, relativeTexts: relativeTexts([-1, 0, 1], [0]) }),
         section("WRITING", 25, { tasks: 2 }),
         section("SPEAKING", 12, { tasks: 2 }),
       ],

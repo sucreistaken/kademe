@@ -26,7 +26,7 @@ Kod: `src/lib/exam/` (saf, veritabanısız, vitest ile test edilir).
   saymak tahmini olduğundan kesin gösterirdi, tek madde saymak ise 20 boşluklu metni 1
   soruluk ağırlığa indirirdi. `4` bir kalibrasyon değil, gerçek veriyle hiç ayarlanmadı.
   Gerçek veri birikince yerini bir kısmi puan modeli (boşluk başına kategori) almalı.
-  Ağırlık yalnız `cTestLevels` ya da `texts` olan bölümde uygulanır (`blueprint.ts: weighsTexts`);
+  Ağırlık yalnız `cTestLevels`, `texts` ya da `relativeTexts` olan bölümde uygulanır (`blueprint.ts: weighsTexts`);
   eski `cTest: true` bölümü ağırlık 1 kalır. Neden: 2026-10-15 öncesi sınavların kayıtlı tahminleri
   ağırlık 1 ile hesaplandı; bir öğretmen tek boşluğu kabul edip `reestimateRun` çalışınca sonuç
   başka bir sebeple kaymamalı. 2026-10-18'den beri aynı ağırlık çoktan seçmeli boşluklu metne
@@ -96,6 +96,60 @@ hâlâ çalışır ve çapa seviyede tek C-test demektir (`blueprint.ts: cTestLe
 havuzlarıyla açılır, her tür kolaydan zora. Puanlama boşluk başına değişmedi (doğru boşlukların
 oranı). Eski sınavlar kayıtlı yapılandırmasını (ve davet edilmiş öğrenci `blueprint_snapshot`'ını)
 korur; C-testler bankada ACTIVE kalır.
+
+**Seviye kontrolünde dilbilgisi boşluklu metindir (2026-10-26).** Sahip, seviye kontrolünün en çok
+kullanacakları sınav olduğunu ve dilbilgisinin yerleştirmedeki gibi doğrudan metin üzerinde boşluk
+doldurularak ölçülmesini istedi (12 tek cümle yerine). Bölüm `relativeTexts` alır (yalnız DILBILGISI):
+`{ offset: -2..2, kind: "CLOZE" | "WORDBANK" | "OPEN" }` listesi. Her metnin seviyesi çapadan hesaplanır:
+`shiftLevel(çapa, offset)`; çapa doğrulamada beyan edilen seviye, yerleştirmede (ve beyansız doğrulamada) B1
+(`blueprint.ts: anchorLevel`). Ölçeğin ucundan taşan offset uca katlanır (`resolveDistribution` gibi) ve aynı
+tür ve seviyeye düşen girdiler bir kez sunulur; sıra `texts` ile aynıdır (boşluklu metin, kelime havuzu, açık
+boşluk; her tür kolaydan zora), `textPlanOf` hesaplar. `texts` ile birlikte verilemez (şema reddeder; ikisi de
+varsa `texts` kazanır). Alanı olmayan eski yapılandırmalar bit bit aynı planlanır (`blueprint-legacy.test.ts`).
+Alanı gören yerler: `weighsTexts` (ağırlıklı süper madde), `isTextOnly` ve `textKindsOf` (öğrenci girişi,
+ısınma), kapsam denetimi (`bankCoverage`: beyansız doğrulamada altı beyanın birleşimi, yani her seviyede
+boşluklu metin ve kelime havuzu ister), yeni sınav sihirbazı (`wizard-model.ts: sectionKind`, `textCount`; metin
+sayısı B1 çevresinde sayılır, ucundaki beyan bir eksik alır) ve yapay zekâ sınav oluşturucunun süre
+ölçekleyicisi (`exam-config.ts: relativeTextsFor`: süre azalınca önce kelime havuzu, sonra beyandan en uzak
+boşluklu metin düşer, beyan en son gider; süre artınca her aralık önce yukarı sonra aşağı genişler, ±2 ile
+sınırlı). Zorluk kaydırması (`difficultyOffset`) `texts` gibi bu metinleri kaydırmaz; bu yüzden seviye kaydırma
+kapsamından çıkar (`levelShiftScope`: seviye kontrolünde yalnız okuma ve dinleme kayar; davet ekranı
+etkilenen bölümleri Okuma, Dinleme diye sayar, `inviteShiftHint`).
+
+Seviye kontrolü şablonu: DILBILGISI 15 dk, sıradan madde yok; çoktan seçmeli boşluklu metin L-1, L, L+1 ve
+kelime havuzu L (A1 beyanı: A1, A2 boşluklu metin + A1 kelime havuzu; C2 beyanı: C1, C2 boşluklu metin + C2
+kelime havuzu); toplam yine 97 dk. Puanlama yerleştirmedeki metinlerle aynıdır (ağırlık 2.75 ve 2, tahmin
+tabanı). Eski dilbilgisi: seviye başına 3 / 6 / 3, yani 12 sıradan madde. Sıradan madde kalmadığı için
+dilbilgisinin biçim karışımı (aşağıda, "Biçim karışımı") artık yok; metinler forma hiç çekilmez, her metin
+türü kendi havuzundan rastgele seçilir. `pnpm exam:form-timing` seviye kontrolü dilbilgisi (p50 / p95; metin,
+puanlanan parça, okunan kelime): A1 3 / 3, 29 / 30, 404 / 448; A2 4 / 4, 40 / 41, 625 / 673; B1 4 / 4, 42 / 43,
+739 / 813; B2 4 / 4, 42 / 43, 794 / 869; C1 4 / 4, 41 / 41, 813 / 871; C2 3 / 3, 30 / 30, 602 / 615. Yerleştirme
+dilbilgisi 30 dk için 90 / 92 parça ve 1490 / 1570 kelime (dakikada 3 parça, 50-52 kelime); seviye kontrolü B2 ve
+C1'de dakikada yaklaşık 2.8 parça ve 53-58 kelime, yani aynı yük. Banka sınırı: boşluklu metin A1, C1, C2'de ve
+kelime havuzu A1, A2, C1, C2'de tam üçer tane var, bu üç ardışık formu yinelemesiz doldurur
+(`forms.test.ts`: dört form hâlâ tam, üç formdan sonra yineleme beklenir).
+
+Yayınlanmış sınavlar: `ensureTemplateBlueprint` (`server/template-blueprint.ts`) yayınlı şablon sınavının
+`mode` ve `config` değerini koddaki şablonla `canonicalJson` ile karşılaştırır (`isCurrentTemplate`); fark
+varsa (burada DILBILGISI bölümü değişti) eski sınavı ARCHIVED yapar, güncel şablonu aynı işlemde yayınlar ve
+`blueprint.archive` denetim satırı yazar (`template-blueprint.test.ts`: "retires a level check published before
+2026-10-26"). Davet edilmiş öğrenciler `blueprint_snapshot` ile gönderildikleri formu korur; veri göçü yok.
+Banka güncel şablonu karşılamazsa (beyansız kontrol: her seviyede boşluklu metin ve kelime havuzu) eski sınav
+yayınlı kalır ve davet `TEMPLATE_COVERAGE` verir.
+
+Simülasyon (`scripts/simulate-placement.ts`, son tablo, 4000 öğrenci, tohum 2026 / 7, yazma ve konuşma
+öğrencinin gerçek seviyesinde): sayılar aşağıda, "Şans kuralıyla genel seviye" maddesinde (A1 ve A2 beyanı).
+Aynı `simulateFixedForm` çağrısıyla altı beyan için (tohum 2026 / 7, tahmin eden öğrenci; yazma ve konuşma
+gerçek seviyede, şans kuralı açık): beyan bandının merkezindeki öğrenci FAIL: A1 %10.0 / 9.1 (önce 7.9 / 8.3),
+A2-C2 %0.6-0.9 (önce 0.2-0.4); beyanın bir altındaki öğrenci %100 FAIL (değişmedi), bir üstündeki %0.0-0.3 FAIL;
+birleşik objektif seviye beyan seviyesinde tam isabet %60-66 (önce %49-53; C2 beyanı hariç, orada %98-99), ±1
+%99.8-100. Bilmediği boşlukları boş bırakan öğrenci (tahmin etmez) kendi beyanında daha çok FAIL alır: A2-C2
+beyanlarında %11.6-14.7 (önce %6.3-8.5), A1'de %10.4 / 10.3 (önce 9.5 / 10.4). Neden: bir metin boşluğunun tahmini
+şansla doğru olmayı bekler (tahmin tabanı); boş bırakan öğrencinin doğruları bu beklentinin altında kalır, tahmin
+düşük çıkar. Aynı etki yerleştirmede var ("Tabanın etkisi", aşağıda), sıradan maddelerde yoktu. Denenen ama
+seçilmeyen (yalnız tohum 2026, A2, B1, C1 beyanı): kelime havuzunu L ve L+1'de (5 metin) ya da L-1, L, L+1'de
+(6 metin) vermek bu oranı yalnız yaklaşık 1 puan azalttı (boş: %12.9-13.7), tam isabeti 1-3 puan artırdı ve 15
+dakikaya sığmaz; seçilen dört metin kalır.
 
 Hazır şablonlar sabit formdur (2026-10-18). Yerleştirme: DILBILGISI = A1'den B2'ye dört
 çoktan seçmeli boşluklu metin, A2, B1, B2 kelime havuzu ve C1, C2'de iki açık boşluklu metin
@@ -259,7 +313,9 @@ biçim sayısı kadar metin çektiğinde her forma girerdi (seviye kontrolü A1 
 birimler tek biçim gösterirse ve en az iki görülmemiş birim bunu ikiye çıkarabiliyorsa bunlardan ilki öne
 alınır (`twoFormatsFirst`, `MIN_SECOND_FORMAT_UNITS`). Böyle tek bir birim varsa öne alınmaz: alınsa o
 seviyenin her formuna girerdi; maruz kalma ikinci biçimden önce gelir (yönetici kararı, 2026-10-24), o
-seviye bazı formlarda tek biçim gösterebilir. Dilbilgisi tek maddeleri yalnız karışır, öne alma yoktur.
+seviye bazı formlarda tek biçim gösterebilir. Dilbilgisi tek maddeleri yalnız karışır, öne alma yoktur
+(seviye kontrolü dilbilgisi 2026-10-26'dan beri yalnız metindir, forma tek madde girmez; bu bölümdeki dilbilgisi
+ölçümleri o tarihten öncesidir).
 Sayılar ve
 seviyeler değişmedi (metin bütün çekilir, sayı dolana kadar); açılış metinleri ve yazma / konuşma görevleri
 aynıdır. Dönen öğrencide görülmemiş birimler yine önce gelir, karışım onların içinde yapılır.
@@ -383,6 +439,8 @@ kolonlarındadır (`exam_results.final_overall`, `overall_override`, `response_g
   A1-A2 birimi sunar; yerleştirmede okuma ve dinleme (tek A2 metni ya da kaydı) bu kurala yalnız tamamen boşsa
   girer. Seviye kontrolünün bölümleri küçüktür (simülasyonda madde başına bir birimle A1 beyanında 9-12, A2
   beyanında 7-9 A1-A2 birimi); gerçek bankada Richtig/Falsch ve eşleştirme maddeleri birden çok birim sayar.
+  Yalnız dilbilgisi 2026-10-26'dan beri A1 ve A2 beyanında 30 A1-A2 birimi sunar (A1 ve A2 boşluklu metin 22 birim,
+  kelime havuzu 8; A2 beyanında B1 metni sayılmaz) ve kurala girer; eskiden 12 sıradan maddeyle girmezdi.
   `AT_CHANCE`, asgariye ulaşmayan bölümün A1 tabanını da geçer (bölüm yine A0'dır); böyle bir sonuç zaten hiçbir
   zaman kendiliğinden kesinleşmez (eksik kanıt), öğretmene gider. Öğretmen bölüme seviye verirse gerekçe düşer.
 - `CHANCE_BELOW_POOLED` (2026-10-24): şans düzeyindeki bir bölüm genel seviyeyi A0'a çekerken birleşik tahmin
@@ -416,16 +474,20 @@ kolonlarındadır (`exam_results.final_overall`, `overall_override`, `response_g
   öğrencinin gerçek seviyesinde yani doğru karar veren bir değerlendirici, şablonun geçme kuralları ve beyan;
   4000 öğrenci, tohum 2026 / 7). İki davranış: "tahmin" her şeyi cevaplar, "boş" yalnız bildiğini cevaplar.
   Hiç Almancası olmayan öğrenci (theta -8) A0 alır: yerleştirmede tahminle %95.0 / %95.5, boşla %100; hızlı
-  taramada tahminle %95.5 / %94.9, boşla %93.8 / %93.6; seviye kontrolü A1 beyanında %95.9 / %95.5 ve %100; A2
-  beyanında tahminle yalnız %45.5 / %47.1 (hedefi tutmaz; doğrulama sonucu yine %100 FAIL), boşla %100.
+  taramada tahminle %95.5 / %94.9, boşla %93.8 / %93.6; seviye kontrolü A1 beyanında %99.7 / %99.6 (2026-10-26
+  öncesi, dilbilgisi 12 sıradan madde iken: %95.9 / %95.5) ve boşla %100; A2 beyanında tahminle %97.6 / %97.6
+  (öncesi yalnız %45.5 / %47.1, hedefi tutmuyordu), boşla %100; doğrulama sonucu %100 FAIL.
   Yanlış A0, A1 bant merkezi ve A1 bandının tamamı: yerleştirmede %0.0, hızlı taramada tahminle %0.8 ve %1.7-1.8,
-  boşla %0.0; seviye kontrolünde en çok %0.4. Beyan merkezinde FAIL: A1 beyanı tahminle %7.9 / %8.3 (kuralsız
-  aynı), boşla %9.5 / %10.4 (kuralsız %40.5 / %40.0: cevaplarında Almanca olan bölümü bant A0'ına düşürmeme
-  kuralı sayesinde); A2 beyanı %0.2 ve %7.9 / %8.1 (kuralsız aynı). Kapı tabloları değişmedi. Yerleştirmede tahmin
+  boşla %0.0; seviye kontrolünde en çok %0.1 (öncesi %0.4). Beyan merkezinde FAIL: A1 beyanı tahminle %10.0 / %9.1
+  (kuralsız %10.8 / %9.8; öncesi %7.9 / %8.3), boşla %10.4 / %10.3 (kuralsız %49.0 / %47.0; öncesi %9.5 / %10.4 ve
+  %40.5 / %40.0: cevaplarında Almanca olan bölümü bant A0'ına düşürmeme kuralı sayesinde); A2 beyanı tahminle
+  %0.6 / %0.9 ve boşla %14.3 / %13.7 (kuralsız hemen aynı; öncesi %0.2 ve %7.9 / %8.1). Boşla satırlarındaki artış
+  metin boşluğunun tahmin tabanından gelir (yukarıda, "Seviye kontrolünde dilbilgisi boşluklu metindir"). Kapı
+  tabloları değişmedi. Yerleştirmede tahmin
   eden öğrencinin A0'ı yazma ve konuşmanın A0 olmasına dayanır (yalnız objektif bölümlerle %0.1-0.4). Asgariyi 8
   birime indirmek A2 beyanında tahmin edeni %100 A0 yapar ama A1 beyanının merkezinde FAIL'i %8'den %73'e çıkarır;
-  12 birim A2 beyanında bir şey değiştirmez, A1 beyanında FAIL'i %41'e çıkarır (1000 öğrenci, tohum 2026); en iyi
-  seçenek bugünkü ayardır. Birinci tur denemeleri (bütün
+  12 birim A2 beyanında bir şey değiştirmez, A1 beyanında FAIL'i %41'e çıkarır (1000 öğrenci, tohum 2026; bu
+  denemeler seviye kontrolü dilbilgisi 12 sıradan maddeyken yapıldı); en iyi seçenek bugünkü ayardır. Birinci tur denemeleri (bütün
   bölüm, z ve asgari değişkenleri) ve seçim gerekçesi aynen geçerli: bütün bölüm z 1.645 yerleştirmede A1
   merkezinde %3.5-6.9 yanlış A0 veriyordu; seçilen A1-A2 birimleri, z 2.054, en az 16.
 

@@ -18,6 +18,9 @@ import { CEFR_LEVELS, isObjectiveSection, isTextGap, textGapKindOf, type Cefr } 
  * cell that is not listed and on a listed cell that no longer repeats. Empty
  * since 2026-10-25 (round 3 added A1 and C2 grammar singles, two A1 clips and
  * two C2 texts); a future level-check draw that repeats lists its cell here again.
+ * The level check's grammar is texts since 2026-10-26 (cloze around the claim,
+ * a word bank at it): the bank has three cloze texts and three word banks at A1,
+ * C1 and C2 (a word bank at A2 as well), exactly enough for three forms there.
  */
 const EXPECTED_SHORTFALL: string[] = [];
 

@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { SEED_BANK } from "@/db/seed-bank";
-import { bankCoverage, blueprintConfigSchema, enabledSections, estimatedMinutes, section, type BankCount, type SectionConfig } from "./blueprint";
+import { bankCoverage, blueprintConfigSchema, enabledSections, estimatedMinutes, isTextOnly, section, textKindsOf, textPlanOf, weighsTexts, type BankCount, type SectionConfig } from "./blueprint";
+import { BAND_CENTER } from "./cefr";
 import { gateFailures, simulateFixedForm, type SimulationOptions } from "./form-simulation";
 import { isNavigableConfig } from "./navigation";
 import { EXAM_TEMPLATES, examTemplateByKey } from "./templates";
-import { C_TEST_SKILL_TAG, CEFR_LEVELS, CLOZE_SKILL_TAG, isObjectiveSection, OPEN_CLOZE_SKILL_TAG, SECTIONS, WORD_BANK_SKILL_TAG } from "./types";
+import { C_TEST_SKILL_TAG, CEFR_LEVELS, CLOZE_SKILL_TAG, isObjectiveSection, OPEN_CLOZE_SKILL_TAG, SECTIONS, WORD_BANK_SKILL_TAG, type Cefr } from "./types";
 
 /** The seed bank as `bankCounts` would see it once imported (listening audio made). */
 function seedCounts(): BankCount[] {
@@ -140,17 +141,88 @@ describe("exam templates", () => {
     expect(t.config.autoRelease).toBe(false);
   });
 
-  it("level check: fixed Goethe/telc shape, about 97 minutes, speaking required", () => {
+  it("level check: fixed Goethe/telc shape, about 97 minutes, speaking required, grammar is gap-fill texts around the claim", () => {
     const t = byKey("level-check");
     expect(estimatedMinutes(t.config)).toBe(97);
     expect(sectionOf("level-check", "READING")).toMatchObject({ adaptive: false, durationMinutes: 25, distribution: { kind: "RELATIVE", below: 2, at: 6, above: 2 } });
     expect(sectionOf("level-check", "LISTENING")).toMatchObject({ adaptive: false, durationMinutes: 20, distribution: { kind: "RELATIVE", below: 2, at: 5, above: 2 } });
-    expect(sectionOf("level-check", "GRAMMAR")).toMatchObject({ adaptive: false, durationMinutes: 15, distribution: { kind: "RELATIVE", below: 3, at: 6, above: 3 }, cTest: false });
+    const grammar = sectionOf("level-check", "GRAMMAR")!;
+    expect(grammar).toMatchObject({
+      adaptive: false,
+      durationMinutes: 15,
+      // No ordinary items: the section is its texts (spec 2026-10-26).
+      distribution: { kind: "ABSOLUTE", perLevel: { A1: 0, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0 } },
+      relativeTexts: [
+        { offset: -1, kind: "CLOZE" },
+        { offset: 0, kind: "CLOZE" },
+        { offset: 1, kind: "CLOZE" },
+        { offset: 0, kind: "WORDBANK" },
+      ],
+    });
+    expect([grammar.texts, grammar.cTestLevels, grammar.cTest]).toEqual([undefined, undefined, undefined]);
     expect(sectionOf("level-check", "WRITING")).toMatchObject({ durationMinutes: 25, tasks: 2 });
     expect(sectionOf("level-check", "SPEAKING")).toMatchObject({ durationMinutes: 12, tasks: 2 });
     expect(t.config.passRules).toEqual({ overallAtLeastClaimed: true, minSkillOffset: -1, requiredSkills: ["SPEAKING"], minHoldProbability: 0.5 });
     expect(t.config.resultVisibility).toBe("FULL");
     expect(t.config.autoRelease).toBe(false);
+    expect(t.summary.tr).toContain("97 dakika");
+    expect(t.summary.tr).toContain("boşluklu metin");
+    expect(t.summary.en).toContain("97 minutes");
+    expect(t.summary.en).toContain("gap-fill texts around the claimed level");
+  });
+
+  it("level check: the grammar texts follow the claim, folding at the ends of the scale, and the section is made of texts only", () => {
+    const grammar = sectionOf("level-check", "GRAMMAR")!;
+    const plan = (claimed: Cefr) => textPlanOf(grammar, "LEVEL_VERIFICATION", claimed).map((e) => `${e.kind} ${e.level}`);
+    expect(plan("A1")).toEqual(["CLOZE A1", "CLOZE A2", "WORDBANK A1"]);
+    expect(plan("A2")).toEqual(["CLOZE A1", "CLOZE A2", "CLOZE B1", "WORDBANK A2"]);
+    expect(plan("B1")).toEqual(["CLOZE A2", "CLOZE B1", "CLOZE B2", "WORDBANK B1"]);
+    expect(plan("B2")).toEqual(["CLOZE B1", "CLOZE B2", "CLOZE C1", "WORDBANK B2"]);
+    expect(plan("C1")).toEqual(["CLOZE B2", "CLOZE C1", "CLOZE C2", "WORDBANK C1"]);
+    expect(plan("C2")).toEqual(["CLOZE C1", "CLOZE C2", "WORDBANK C2"]);
+    for (const claimed of CEFR_LEVELS) {
+      expect(isTextOnly(grammar, "LEVEL_VERIFICATION", claimed, 0), claimed).toBe(true);
+      expect(textKindsOf(grammar, "LEVEL_VERIFICATION", claimed), claimed).toEqual(["CLOZE", "WORDBANK"]);
+      expect(weighsTexts(grammar)).toBe(true);
+    }
+  });
+
+  it("level check: the seed bank covers every claimed level, with its cloze texts and word bank, and without a claim", () => {
+    const t = byKey("level-check");
+    for (const claimed of [...CEFR_LEVELS, null] as const) {
+      const res = bankCoverage(seedCounts(), t.config, t.mode, claimed);
+      expect(res.rows.filter((r) => !r.ok), String(claimed)).toEqual([]);
+      const grammar = res.rows.filter((r) => r.section === "GRAMMAR");
+      // Text-only grammar asks for texts, never for single items.
+      expect(grammar.every((r) => r.text), String(claimed)).toBe(true);
+      expect(grammar.map((r) => `${r.text} ${r.level}`)).toEqual(
+        claimed
+          ? textPlanOf(sectionOf("level-check", "GRAMMAR")!, t.mode, claimed).map((e) => `${e.kind} ${e.level}`)
+          : [...CEFR_LEVELS.map((l) => `CLOZE ${l}`), ...CEFR_LEVELS.map((l) => `WORDBANK ${l}`)],
+      );
+    }
+  });
+
+  // A smaller version of the level-check rows of scripts/simulate-placement.ts (guessing students, productive skills at the true level).
+  it("level check: simulated students who guess fail one level below the claim, pass at the claim and are placed within one level", () => {
+    const config = byKey("level-check").config;
+    const opts: SimulationOptions = { runs: 400, seed: 2026, cTestGaps: 20, textEffectSd: 0.5, itemGuess: 0.25, textGaps: { CLOZE: 11, WORDBANK: 8, OPEN: 10 }, wordBankDistractors: 4 };
+    for (const claimed of CEFR_LEVELS) {
+      const overall = { ...opts, claimed, overall: { productive: "TRUE" as const, chance: {} } };
+      const at = simulateFixedForm(config, "LEVEL_VERIFICATION", { ...overall, trueLevels: [claimed], fixedTheta: BAND_CENTER[claimed] })[claimed];
+      expect(at.fail, `${claimed} centre fails`).toBeLessThanOrEqual(0.15);
+      if (claimed !== "A1") {
+        const index = CEFR_LEVELS.indexOf(claimed);
+        const below = CEFR_LEVELS[index - 1];
+        expect(simulateFixedForm(config, "LEVEL_VERIFICATION", { ...overall, trueLevels: [below], fixedTheta: BAND_CENTER[below] })[below].fail, `${claimed} one level below`).toBeGreaterThanOrEqual(0.95);
+      }
+      const pooled = simulateFixedForm(config, "LEVEL_VERIFICATION", { ...opts, claimed, trueLevels: [claimed] })[claimed];
+      expect(pooled.withinOne, `${claimed} within one`).toBeGreaterThanOrEqual(0.95);
+    }
+    // Someone with no German at all: A0 at an A1 claim and FAIL everywhere.
+    const noGerman = (claimed: Cefr) => simulateFixedForm(config, "LEVEL_VERIFICATION", { ...opts, claimed, overall: { productive: "TRUE", chance: {} }, trueLevels: ["A0"], fixedTheta: -8 }).A0!;
+    expect(noGerman("A1").a0).toBeGreaterThanOrEqual(0.9);
+    for (const claimed of CEFR_LEVELS) expect(noGerman(claimed).fail, `${claimed} no German`).toBe(1);
   });
 
   it("placement's coverage asks for cloze texts A1 to B2, word banks A2 to B2 and open cloze C1, C2, no C-test, and the seed bank has them", () => {

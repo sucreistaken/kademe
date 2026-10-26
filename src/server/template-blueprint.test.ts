@@ -170,6 +170,34 @@ describe("ensureTemplateBlueprint", () => {
     expect(audit[0].meta).toMatchObject({ template: "placement", reason: "template-changed", replacedBy: "new-bp" });
   });
 
+  it("retires a level check published before 2026-10-26 (grammar as single items) and publishes the one with grammar texts", async () => {
+    const t = examTemplateByKey("level-check")!;
+    // The template as production had it: grammar of 12 single items around the claim.
+    const old = {
+      ...t.config,
+      sections: t.config.sections.map((s) => (s.section === "GRAMMAR" ? section("GRAMMAR", 15, { distribution: { kind: "RELATIVE", below: 3, at: 6, above: 3 }, cTest: false }) : s)),
+    };
+    expect(isCurrentTemplate({ mode: t.mode, config: reordered(old) as typeof t.config }, t)).toBe(false);
+    expect(isCurrentTemplate({ mode: t.mode, config: reordered(t.config) as typeof t.config }, t)).toBe(true);
+    state.selects = [[{ id: "old-check", templateKey: "level-check", status: "PUBLISHED", mode: t.mode, config: reordered(old) }]];
+    state.retired = [{ id: "old-check" }];
+    const r = await ensureTemplateBlueprint("o1", "u1", t, "tr");
+    expect(r).toMatchObject({ ok: true, created: true, blueprint: { id: "new-bp", config: t.config } });
+    expect(state.updates).toHaveLength(1);
+    expect(state.updates[0].set).toMatchObject({ status: "ARCHIVED" });
+    const bp = state.inserts.find((i) => i.table === "blueprint")!.values as { config: typeof t.config; description: string };
+    const grammar = bp.config.sections.find((s) => s.section === "GRAMMAR")!;
+    expect(grammar.relativeTexts).toHaveLength(4);
+    expect(bp.description).toBe(t.summary.tr);
+    const audit = state.inserts.find((i) => i.table === "audit")!.values as Array<{ action: string; subjectId: string; meta: Record<string, unknown> }>;
+    expect(audit.map((a) => [a.action, a.subjectId])).toEqual([
+      ["blueprint.archive", "old-check"],
+      ["blueprint.create", "new-bp"],
+      ["blueprint.publish", "new-bp"],
+    ]);
+    expect(audit[0].meta).toMatchObject({ template: "level-check", reason: "template-changed", replacedBy: "new-bp" });
+  });
+
   it("keeps the old exam published when the bank does not cover the current template", async () => {
     const t = examTemplateByKey("placement")!;
     state.selects = [[{ id: "stale-bp", templateKey: "placement", status: "PUBLISHED", mode: t.mode, config: adaptivePlacement() }]];
