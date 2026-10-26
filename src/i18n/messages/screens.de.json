@@ -29,6 +29,7 @@
   },
   "transcript": {
     "notReady": "Das Transkript dieser Antwort ist noch nicht fertig.",
+    "noSpeech": "In dieser Aufnahme wurde keine Sprache erkannt, daher lautet der Vorschlag A0. Hören Sie die Aufnahme an, bevor Sie das Niveau bestätigen.",
     "clickToSeek": "Klicken Sie auf eine Zeile, dann springt das Video dorthin.",
     "noTimings": "Dieses Transkript hat keine Zeitmarken.",
     "showRest": "{count, plural, one {Restliche Zeile anzeigen} other {Restliche # Zeilen anzeigen}}"

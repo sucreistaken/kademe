@@ -11,18 +11,21 @@ export function SpeakingEvidence({
   words,
   text,
   name,
+  noSpeech = false,
 }: {
   src: string;
   words: TranscriptWord[];
   text: string;
   name: string;
+  /** A transcript exists and is empty. */
+  noSpeech?: boolean;
 }) {
   const player = useRef<PlayerHandle | null>(null);
   const [ms, setMs] = useState(0);
   return (
     <div className="flex flex-col gap-3">
       <VideoPlayer src={src} onTimeUpdate={setMs} handleRef={player} transcriptText={text} transcriptName={name} />
-      <Transcript words={words} text={text} currentMs={ms} onSeek={(t) => player.current?.seekTo(t)} />
+      <Transcript words={words} text={text} currentMs={ms} onSeek={(t) => player.current?.seekTo(t)} noSpeech={noSpeech} />
     </div>
   );
 }

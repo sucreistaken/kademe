@@ -7,7 +7,7 @@ import {
   superviseQueue,
   type TranscriptionJob,
 } from "@/lib/queue";
-import { findUntranscribed, runTranscription } from "@/lib/transcribe-job";
+import { failAbandonedTranscriptions, findUntranscribed, runTranscription } from "@/lib/transcribe-job";
 import { getTranscriber } from "@/lib/transcription";
 
 export const dynamic = "force-dynamic";
@@ -54,6 +54,9 @@ export async function POST(req: NextRequest) {
   const missed = await findUntranscribed();
   for (const asset of missed) await enqueueTranscription(asset.id);
 
+  // Recordings the net above no longer reaches: their gradings need a teacher, not more waiting.
+  const abandoned = await failAbandonedTranscriptions();
+
   const boss = await queue();
   const jobs = await boss.fetch<TranscriptionJob>(TRANSCRIPTION_QUEUE, {
     batchSize: BATCH,
@@ -82,6 +85,7 @@ export async function POST(req: NextRequest) {
     provider: transcriber.name,
     supervised,
     swept: missed.length,
+    abandoned,
     fetched: jobs.length,
     results,
   });

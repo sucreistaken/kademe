@@ -50,17 +50,20 @@ export function Transcript({
   text,
   currentMs,
   onSeek,
+  noSpeech = false,
 }: {
   words: TranscriptWord[];
   text: string;
   currentMs: number;
   onSeek: (ms: number) => void;
+  /** The provider transcribed the recording and heard no speech: a result, not a wait. */
+  noSpeech?: boolean;
 }) {
   const t = useMT("transcript");
   const [expanded, setExpanded] = useState(false);
   const segments = useMemo(() => toSegments(words, text), [words, text]);
   if (segments.length === 0) {
-    return <p className="text-[13px] text-muted">{t("notReady")}</p>;
+    return <p className="text-[13px] text-muted">{t(noSpeech ? "noSpeech" : "notReady")}</p>;
   }
 
   const hasTimings = segments.some((s) => s.endMs > 0);

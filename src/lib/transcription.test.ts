@@ -1,5 +1,13 @@
-import { describe, expect, it } from "vitest";
-import { estimateCostUsd, mapScribeResponse } from "@/lib/transcription";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { estimateCostUsd, getTranscriber, mapScribeResponse } from "@/lib/transcription";
+
+// Local storage posts the file itself; the provider call is stubbed per test.
+vi.mock("@/lib/storage", () => ({
+  getStorage: () => ({
+    name: "local",
+    openStream: async () => ({ stream: new Response("audio bytes").body }),
+  }),
+}));
 
 /**
  * The review screen seeks the video from a click on a transcript word, so the
@@ -68,9 +76,74 @@ describe("mapScribeResponse", () => {
     expect(result.costUsd).toBeNull();
   });
 
-  it("refuses an empty transcript rather than writing a blank row", () => {
-    expect(() => mapScribeResponse({ text: "   ", words: [] }, model)).toThrow(
-      /empty transcript/,
+  it("maps a response with no speech to an empty transcript, not to an error", () => {
+    // A silent recording is a successful call with nothing in it. It has to reach the
+    // grading as "no words" (rule: A0, EMPTY), so it must not look like a failed call.
+    const silent = mapScribeResponse({ language_code: "deu", text: "   ", words: [] }, model);
+    expect(silent).toEqual({
+      text: "",
+      words: [],
+      language: "deu",
+      model,
+      costUsd: null,
+      durationMs: null,
+    });
+  });
+
+  it("treats a response that holds only spacing as empty", () => {
+    const result = mapScribeResponse(
+      { text: "", words: [{ text: " ", type: "spacing", start: 0, end: 1 }] },
+      model,
     );
+    expect(result.text).toBe("");
+    expect(result.words).toEqual([]);
+  });
+
+  it("still refuses a response that is not a transcript at all", () => {
+    // No `text` is a malformed answer from the provider, a technical failure that has to
+    // be retried. Only a response that says "no speech" may become an empty transcript.
+    expect(() => mapScribeResponse({}, model)).toThrow(/without a text field/);
+    expect(() => mapScribeResponse({ words: [] }, model)).toThrow(/without a text field/);
+    expect(() => mapScribeResponse({ text: null } as never, model)).toThrow(/without a text field/);
+  });
+});
+
+describe("the Scribe call: only a successful answer without speech is an empty transcript", () => {
+  const input = { storageKey: "media/o/a/r/m1.webm", mime: "video/webm", languageHint: "de" };
+  const transcribe = () => {
+    vi.stubEnv("ELEVENLABS_API_KEY", "test-key");
+    return getTranscriber().transcribe(input);
+  };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  it("returns an empty transcript for a 200 with blank text", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ language_code: "deu", text: "", words: [] })));
+    const result = await transcribe();
+    expect(result.text).toBe("");
+    expect(result.words).toEqual([]);
+  });
+
+  it("throws on a server error, so the job is retried", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("upstream down", { status: 503 })));
+    await expect(transcribe()).rejects.toThrow(/Scribe 503/);
+  });
+
+  it("throws on a rejected key, so the job is retried", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("invalid api key", { status: 401 })));
+    await expect(transcribe()).rejects.toThrow(/Scribe 401/);
+  });
+
+  it("throws when the network call itself fails", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Promise.reject(new TypeError("fetch failed"))));
+    await expect(transcribe()).rejects.toThrow(/fetch failed/);
+  });
+
+  it("throws on a 200 that is not a transcript", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ detail: "something else" })));
+    await expect(transcribe()).rejects.toThrow(/without a text field/);
   });
 });

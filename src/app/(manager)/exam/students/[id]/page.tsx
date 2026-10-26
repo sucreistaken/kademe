@@ -394,7 +394,7 @@ export default async function ResultPage({
                             ) : null}
                           </>
                         ) : media && view.mediaUrls[media.id] ? (
-                          <SpeakingEvidence src={view.mediaUrls[media.id]} words={tr?.words ?? []} text={tr?.text ?? ""} name={candidate.fullName ?? "transcript"} />
+                          <SpeakingEvidence src={view.mediaUrls[media.id]} words={tr?.words ?? []} text={tr?.text ?? ""} noSpeech={!!tr && !tr.text.trim()} name={candidate.fullName ?? "transcript"} />
                         ) : (
                           <p className="text-[14px] text-muted">{t("result.noRecording")}</p>
                         )}

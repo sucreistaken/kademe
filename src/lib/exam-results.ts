@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, lt, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, lt, notExists, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   assessments,
@@ -115,10 +115,30 @@ export async function reopenGradingForMedia(itemResponseId: string) {
     );
 }
 
-/** Called by the transcription job once a recording has text. */
+/**
+ * `ai_error` of a speaking grading that was closed because its recording never got a transcript
+ * (`failGradingsWithoutTranscript`). The card shows it as "No AI proposal (...). Set the level yourself."
+ */
+export const NO_TRANSCRIPT_ERROR = "no transcript: the recording could not be transcribed";
+
+/**
+ * Called by the transcription job once a recording has a transcript (an empty one too: a recording with
+ * no speech in it is graded, by rule, as A0). A grading closed for want of a transcript is reopened by
+ * a transcript that arrives after all, unless a teacher has decided on it meanwhile (that is no longer AI_FAILED).
+ */
 export async function gradeAfterTranscript(mediaAssetId: string) {
   const [asset] = await db.select().from(mediaAssets).where(eq(mediaAssets.id, mediaAssetId));
   if (!asset?.itemResponseId) return;
+  await db
+    .update(responseGradings)
+    .set({ status: "PENDING", aiError: null, updatedAt: new Date() })
+    .where(
+      and(
+        eq(responseGradings.itemResponseId, asset.itemResponseId),
+        eq(responseGradings.status, "AI_FAILED"),
+        eq(responseGradings.aiError, NO_TRANSCRIPT_ERROR),
+      ),
+    );
   const [grading] = await db
     .select()
     .from(responseGradings)
@@ -137,6 +157,51 @@ export async function findUngraded(limit = 20) {
   const ready: string[] = [];
   for (const r of rows) if (await gradingInputReady(r.itemResponseId)) ready.push(r.id);
   return ready;
+}
+
+/**
+ * Closes the speaking gradings whose recording is older than `recordedBefore` and still has no
+ * transcript: transcription gave up on it (the cron's safety net only looks at the last day), so
+ * the grading would sit PENDING for ever behind "the AI proposal is on its way". It becomes AI_FAILED
+ * with `NO_TRANSCRIPT_ERROR`: the teacher sees that no proposal is coming, the result moves from
+ * "AI is grading" to "waiting for your review", and the teacher sets the level (any, A0 included).
+ *
+ * This is deliberately not an A0. A failed transcription (provider down, bad key, unreadable file,
+ * a file that is not audio) says nothing about the candidate's German. Only a transcript that came
+ * back successfully with no speech in it is A0, and that one exists as a row and is graded by rule.
+ * Returns how many gradings were closed.
+ */
+export async function failGradingsWithoutTranscript(recordedBefore: Date, limit = 50): Promise<number> {
+  const stuck = await db
+    .select({ id: responseGradings.id, attemptId: sectionRuns.attemptId })
+    .from(responseGradings)
+    .innerJoin(itemResponses, eq(itemResponses.id, responseGradings.itemResponseId))
+    .innerJoin(sectionRuns, eq(sectionRuns.id, itemResponses.sectionRunId))
+    .innerJoin(mediaAssets, sql`${mediaAssets.id}::text = ${itemResponses.answer}->>'mediaAssetId'`)
+    .where(
+      and(
+        eq(responseGradings.status, "PENDING"),
+        lt(mediaAssets.createdAt, recordedBefore),
+        // A typed answer needs no transcript.
+        sql`coalesce(${itemResponses.answer}->>'usedTextAlternative', 'false') <> 'true'`,
+        notExists(db.select({ one: sql`1` }).from(transcripts).where(eq(transcripts.mediaAssetId, mediaAssets.id))),
+      ),
+    )
+    .limit(limit);
+  const attemptIds = new Set<string>();
+  let closed = 0;
+  for (const g of stuck) {
+    const done = await db
+      .update(responseGradings)
+      .set({ status: "AI_FAILED", aiError: NO_TRANSCRIPT_ERROR, updatedAt: new Date() })
+      .where(and(eq(responseGradings.id, g.id), eq(responseGradings.status, "PENDING")))
+      .returning({ id: responseGradings.id });
+    if (done.length === 0) continue;
+    closed += 1;
+    attemptIds.add(g.attemptId);
+  }
+  for (const attemptId of attemptIds) await recomputeResult(attemptId);
+  return closed;
 }
 
 // ---------------------------------------------------------------------------

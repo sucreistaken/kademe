@@ -29,6 +29,7 @@
   },
   "transcript": {
     "notReady": "The transcript of this answer is not ready yet.",
+    "noSpeech": "No speech was detected in this recording, so the proposal is A0. Listen to it before you confirm the level.",
     "clickToSeek": "Click a line and the video jumps there.",
     "noTimings": "This transcript has no timestamps.",
     "showRest": "{count, plural, one {Show the remaining line} other {Show the remaining # lines}}"

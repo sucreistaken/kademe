@@ -29,6 +29,7 @@
   },
   "transcript": {
     "notReady": "Bu cevabın transkripti henüz hazır değil.",
+    "noSpeech": "Bu kayıtta konuşma algılanmadı, bu yüzden öneri A0. Seviyeyi onaylamadan önce kaydı dinleyin.",
     "clickToSeek": "Satıra tıkla, video oraya gider.",
     "noTimings": "Bu transkriptte zaman damgası yok.",
     "showRest": "Kalan {count} satırı göster"

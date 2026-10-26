@@ -19,8 +19,13 @@ import { transcriptionHintFor } from "@/solutions/registry";
  *
  * Deliberately does nothing on the unhappy paths except record them: a media
  * asset with no transcript renders as "no transcript yet" on the review screen,
- * which is honest. Writing an approximation, or an empty row, would be read as
- * "this is what the student said".
+ * which is honest. Writing an approximation, or a row for a call that failed,
+ * would be read as "this is what the student said".
+ *
+ * One thing is not an unhappy path: the provider answered and heard no speech.
+ * That is stored as a transcript with empty text and goes on to grading like any
+ * other (a rule proposes A0, flag EMPTY). Without the row the grading would wait
+ * for a transcript that never comes.
  */
 
 export type TranscriptionOutcome =
@@ -130,8 +135,10 @@ export async function runTranscription(
  * the provider genuinely cannot read would otherwise be re-queued forever after
  * its retries were exhausted.
  */
+export const TRANSCRIPTION_WINDOW_MS = 24 * 60 * 60 * 1000;
+
 export async function findUntranscribed(limit = 20) {
-  const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const dayAgo = new Date(Date.now() - TRANSCRIPTION_WINDOW_MS);
   return db
     .select({ id: mediaAssets.id })
     .from(mediaAssets)
@@ -149,4 +156,15 @@ export async function findUntranscribed(limit = 20) {
       ),
     )
     .limit(limit);
+}
+
+/**
+ * What happens to a speaking answer whose recording is past the window above and still has no
+ * transcript: its grading is closed as "no proposal, set the level yourself" so a teacher sees it
+ * needs a manual level instead of waiting for an AI proposal that is not coming. No level is
+ * invented: a failed transcription is not evidence of no German (see `failGradingsWithoutTranscript`).
+ */
+export async function failAbandonedTranscriptions(now: Date = new Date()): Promise<number> {
+  const { failGradingsWithoutTranscript } = await import("@/lib/exam-results");
+  return failGradingsWithoutTranscript(new Date(now.getTime() - TRANSCRIPTION_WINDOW_MS));
 }

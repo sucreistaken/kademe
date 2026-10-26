@@ -9,11 +9,16 @@ import { getStorage } from "@/lib/storage";
  * only works with word level timestamps, so a provider that cannot give them is
  * not usable here.
  *
- * Two hard rules:
+ * Three hard rules:
  *  1. A failed transcription writes nothing. The review screen already says
  *     "this answer has no transcript yet"; inventing text would put words in a
  *     candidate's mouth and be scored as if they had said them.
- *  2. Every call is recorded in `ai_runs`, because the EU AI Act traceability
+ *  2. A transcription that succeeded and found no speech is not a failure: it
+ *     is written as a transcript with empty text. That is the one fact the
+ *     provider gave us about a silent recording, and the grading needs it (an
+ *     answer with no speech is A0, see `ruleVerdict`). Only a response that
+ *     does not look like a transcription at all is an error.
+ *  3. Every call is recorded in `ai_runs`, because the EU AI Act traceability
  *     story for this product is "we can show you every model call we made".
  */
 
@@ -127,6 +132,12 @@ class ElevenLabsTranscriber implements Transcriber {
  * Only `word` entries are kept. `spacing` and `audio_event` entries carry no
  * position a manager would want to click on, and would clutter the transcript
  * with blanks.
+ *
+ * A response with a `text` that is blank maps to an empty transcript (no text,
+ * no words): the provider heard no speech. A response with no `text` at all is
+ * not a transcript, so it throws and the job retries, the same as a network
+ * error. The two must not be confused: "no speech" can end in A0, "no answer
+ * from the provider" must never.
  */
 export function mapScribeResponse(
   body: ScribeResponse,
@@ -146,8 +157,10 @@ export function mapScribeResponse(
       endMs: Math.round(w.end * 1000),
     }));
 
-  const text = (body.text ?? "").trim();
-  if (!text) throw new Error("Scribe returned an empty transcript");
+  if (typeof body.text !== "string") {
+    throw new Error("Scribe returned a response without a text field");
+  }
+  const text = body.text.trim();
 
   const durationMs = words.length > 0 ? words[words.length - 1].endMs : null;
 
