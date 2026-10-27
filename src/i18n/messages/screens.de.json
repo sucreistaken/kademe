@@ -865,7 +865,7 @@
     "p_GAP_ANSWER_NOT_CHOICE": "Die richtige Antwort von Lücke {n} gehört nicht zu ihrer Auswahl.",
     "p_GAP_KEY_UNKNOWN": "Der Lösungsschlüssel nennt eine Lücke, die es nicht gibt ({ids}).",
     "p_GAP_ONE_ANSWER": "Lücke {n} braucht genau eine richtige Antwort.",
-    "p_CLOZE_CHOICE_COUNT": "In einem Multiple-Choice-Lückentext braucht Lücke {n} genau vier Auswahlmöglichkeiten.",
+    "p_CLOZE_CHOICE_COUNT": "In einem Multiple-Choice-Lückentext braucht Lücke {n} drei oder vier Auswahlmöglichkeiten.",
     "p_WORDBANK_CHOICES": "In einem Text mit Wortpool darf Lücke {n} keine Auswahlmöglichkeiten haben.",
     "p_WORDBANK_ANSWER_NOT_WORD": "In einem Text mit Wortpool muss die Antwort von Lücke {n} ein ganzes Wort sein.",
     "p_OPEN_CHOICES": "In einem offenen Text darf Lücke {n} keine Auswahlmöglichkeiten haben.",

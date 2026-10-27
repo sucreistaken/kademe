@@ -153,8 +153,9 @@ describe("validateItem: MC cloze and word bank (spec 2026-10-18)", () => {
     expect(itemProblems(bank(["habe", "in", "zu"]))).toEqual([]);
   });
 
-  it("cloze: every gap has exactly four choices", () => {
-    expect(itemProblems(cloze([{ id: "g1", choices: ["bin", "habe", "war"] }, { id: "g2", choices: ["nach", "in", "zu", "bei"] }], { g1: ["bin"], g2: ["nach"] }))).toEqual([
+  it("cloze: every gap has three or four choices", () => {
+    expect(codes(cloze([{ id: "g1", choices: ["bin", "habe", "war"] }, { id: "g2", choices: ["nach", "in", "zu", "bei"] }], { g1: ["bin"], g2: ["nach"] }))).toEqual([]);
+    expect(itemProblems(cloze([{ id: "g1", choices: ["bin", "habe", "war", "ist", "sind"] }, { id: "g2", choices: ["nach", "in", "zu", "bei"] }], { g1: ["bin"], g2: ["nach"] }))).toEqual([
       { code: "CLOZE_CHOICE_COUNT", n: 1, ids: ["g1"] },
     ]);
     expect(codes(cloze([{ id: "g1", choices: [...four("bin"), "ist"] }, { id: "g2", choices: ["nach", "in", "zu", "bei"] }], { g1: ["bin"], g2: ["nach"] }))).toEqual(["CLOZE_CHOICE_COUNT"]);

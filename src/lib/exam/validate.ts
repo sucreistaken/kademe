@@ -341,7 +341,8 @@ function textGapProblems(
     if (accepted.length > 1) add("GAP_ONE_ANSWER", at);
     if (kind === "CLOZE") {
       const choices = g.choices ?? [];
-      if (choices.length !== 4) add("CLOZE_CHOICE_COUNT", at);
+      // Three (a/b/c, course tests) or four (the bank) choices per gap.
+      if (choices.length < 3 || choices.length > 4) add("CLOZE_CHOICE_COUNT", at);
       // The plain repeat check already reports texts equal up to case and spaces.
       else if (!duplicates(filled(choices)).length && choices.some((c, j) => choices.some((d, k) => k > j && typedMatches(c, [d]))))
         add("GAP_CHOICE_REPEAT", at);

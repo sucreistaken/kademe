@@ -83,7 +83,7 @@ describe("MC cloze and word-bank items in the editor (spec 2026-10-18)", () => {
       item({
         type: "GAP_FILL",
         prompt: "Wir {{g1}} morgen.",
-        content: { kind: "GAP", gaps: [{ id: "g1", choices: ["fahren", "fährt", "fuhr"] }] },
+        content: { kind: "GAP", gaps: [{ id: "g1", choices: ["fahren", "fährt", "fuhr", "gefahren", "fahrt"] }] },
         key: { kind: "GAP", answers: { g1: ["fahren"] } },
         skillTag: "grammar.cloze",
       }),

@@ -118,7 +118,7 @@ export function itemWeight(item: { skillTag: string; content: ItemContent }, wei
   return Math.max(1, item.content.gaps.length / C_TEST_GAPS_PER_WEIGHT);
 }
 
-/** The guessing floor of an MC cloze gap: one of four choices. */
+/** The guessing floor of an MC cloze gap: one of four choices (a gap with three choices: one of three, see `guessOf`). */
 export const CLOZE_GUESS = 1 / 4;
 
 /**
@@ -129,7 +129,12 @@ export const CLOZE_GUESS = 1 / 4;
  */
 export function guessOf(item: { skillTag: string; content: ItemContent; key: ItemKey }): number {
   const kind = textGapKindOf(item);
-  if (kind === "CLOZE") return CLOZE_GUESS;
+  if (kind === "CLOZE") {
+    // The mean of one over each gap's choices: exactly CLOZE_GUESS for the bank's four-choice texts, a third
+    // for a course test's a/b/c gaps (spec 2026-10-28).
+    const counts = item.content.kind === "GAP" ? item.content.gaps.map((g) => g.choices?.length ?? 0).filter((n) => n > 0) : [];
+    return counts.length ? counts.reduce((a, n) => a + 1 / n, 0) / counts.length : CLOZE_GUESS;
+  }
   // A typed answer cannot be guessed.
   if (kind === "OPEN") return 0;
   if (kind === "WORDBANK" && item.content.kind === "GAP" && item.key.kind === "GAP") {

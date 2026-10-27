@@ -99,7 +99,7 @@ describe("rowToItem, per type", () => {
     expect(r.issues).toEqual([]);
     expect(r.item?.skillTag).toBe("grammar.cloze");
     expect(r.item?.content).toEqual({ kind: "GAP", gaps: [{ id: "g1", choices: ["fahren", "fährt", "fuhr", "gefahren"] }, { id: "g2", choices: ["nach", "in", "zu", "bei"] }] });
-    expect(codes(rowToItem(row({ ...cells, b: "nach | in | zu" })))).toEqual(["CLOZE_CHOICE_COUNT"]);
+    expect(codes(rowToItem(row({ ...cells, b: "nach | in | zu | bei | an" })))).toEqual(["CLOZE_CHOICE_COUNT"]);
   });
 
   it("word bank (skill grammar.wordbank): the distractors column fills the key's pool, the word-bank rules apply", () => {

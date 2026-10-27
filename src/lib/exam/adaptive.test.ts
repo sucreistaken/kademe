@@ -296,6 +296,12 @@ describe("guessing floor (spec 2026-10-18)", () => {
     expect(guessOf(gapItem("grammar.dativ", 2))).toBe(0);
   });
 
+  it("guessOf: a third for a cloze whose gaps have three choices (course tests, spec 2026-10-28)", () => {
+    const abc = gapItem(CLOZE_SKILL_TAG, 6) as unknown as { content: { gaps: Array<{ id: string; choices?: string[] }> } };
+    abc.content.gaps = abc.content.gaps.map((g) => ({ ...g, choices: ["a", "b", "c"] }));
+    expect(guessOf(abc as unknown as ItemSnapshot)).toBeCloseTo(1 / 3, 12);
+  });
+
   it("observationOf and replayResponseOf carry the floor and the text weight for both new kinds", () => {
     const cloze = gapItem(CLOZE_SKILL_TAG, 12);
     expect(observationOf(cloze, 0.5, true)).toEqual({ b: -0.5, score: 0.5, weight: 3, guess: 0.25 });

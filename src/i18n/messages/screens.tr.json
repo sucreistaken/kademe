@@ -865,7 +865,7 @@
     "p_GAP_ANSWER_NOT_CHOICE": "{n}. boşluğun doğru cevabı seçenekler arasında yok.",
     "p_GAP_KEY_UNKNOWN": "Cevap anahtarında olmayan bir boşluk var ({ids}).",
     "p_GAP_ONE_ANSWER": "{n}. boşlukta tam bir doğru cevap olmalı.",
-    "p_CLOZE_CHOICE_COUNT": "Boşluk doldurma metninde {n}. boşlukta tam dört seçenek olmalı.",
+    "p_CLOZE_CHOICE_COUNT": "Boşluk doldurma metninde {n}. boşlukta üç ya da dört seçenek olmalı.",
     "p_WORDBANK_CHOICES": "Kelime havuzlu metinde {n}. boşlukta seçenek olmamalı.",
     "p_WORDBANK_ANSWER_NOT_WORD": "Kelime havuzlu metinde {n}. boşluğun cevabı tek bir kelime olmalı.",
     "p_OPEN_CHOICES": "Açık uçlu metinde {n}. boşlukta seçenek olmamalı.",

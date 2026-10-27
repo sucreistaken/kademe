@@ -865,7 +865,7 @@
     "p_GAP_ANSWER_NOT_CHOICE": "The correct answer of gap {n} is not among its choices.",
     "p_GAP_KEY_UNKNOWN": "The answer key names a gap that does not exist ({ids}).",
     "p_GAP_ONE_ANSWER": "Gap {n} needs exactly one correct answer.",
-    "p_CLOZE_CHOICE_COUNT": "In a multiple-choice cloze, gap {n} needs exactly four choices.",
+    "p_CLOZE_CHOICE_COUNT": "In a multiple-choice cloze, gap {n} needs three or four choices.",
     "p_WORDBANK_CHOICES": "In a word bank text, gap {n} must not have choices.",
     "p_WORDBANK_ANSWER_NOT_WORD": "In a word bank text, the answer of gap {n} must be one whole word.",
     "p_OPEN_CHOICES": "In an open text, gap {n} must not have choices.",
