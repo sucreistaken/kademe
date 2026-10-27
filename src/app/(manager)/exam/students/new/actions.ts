@@ -31,6 +31,8 @@ export type InviteStudentsInput = {
   window?: WindowInput;
   /** Verification exams: one CEFR level easier (-1) or harder (1) for these students; omitted keeps the exam's own. */
   shift?: -1 | 0 | 1 | null;
+  /** Course tests (spec 2026-10-28): force form A or B for every row; omitted or null alternates A, B, A, B (a returning student gets the unseen one). */
+  courseForm?: "A" | "B" | null;
 };
 
 export type InviteFailure = "BLUEPRINT_NOT_FOUND" | "NOT_PUBLISHED" | "CLAIM_REQUIRED" | "GENERIC";

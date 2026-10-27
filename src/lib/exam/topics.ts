@@ -1,4 +1,8 @@
 import type { CandidateLocale } from "@/i18n/locale";
+import { A1_COURSE_TOPICS } from "./topics-course/a1";
+import { A2_COURSE_TOPICS } from "./topics-course/a2";
+import { B1_COURSE_TOPICS } from "./topics-course/b1";
+import { B2_COURSE_TOPICS } from "./topics-course/b2";
 
 export type TopicId = string;
 export type Topic = {
@@ -319,6 +323,11 @@ export const TOPICS: Record<TopicId, Topic> = {
     format: true,
     label: { tr: "Kelime tamamlama (C-test)", en: "Word completion (C-test)", de: "C-Test", es: "Completar palabras (C-test)", ar: "إكمال الكلمات (C-Test)" },
   },
+  // Topics first used by the course tests (spec 2026-10-28), one file per level.
+  ...A1_COURSE_TOPICS,
+  ...A2_COURSE_TOPICS,
+  ...B1_COURSE_TOPICS,
+  ...B2_COURSE_TOPICS,
 };
 
 /** Old or drifted spellings to their catalog id. */

@@ -16,6 +16,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import type { BlueprintConfig } from "@/lib/exam/blueprint";
+import type { CommonWritingError, CoursePoints, CourseRubricProposal } from "@/lib/exam/course/types";
 import type { GradingProposal } from "@/lib/exam/grading";
 import type { ComputedResult } from "@/lib/exam/result";
 import type { StudentFeedbackStore } from "@/lib/exam/student-feedback";
@@ -132,6 +133,8 @@ export const stimuli = pgTable(
     aiRunId: uuid("ai_run_id").references(() => aiRuns.id, { onDelete: "set null" }),
     /** Seed key, so re-seeding and the TTS script can find the row. */
     seedKey: text("seed_key"),
+    /** A course test form this text belongs to ("B1.1:A", spec 2026-10-28); null for the bank. */
+    courseForm: text("course_form"),
     createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -173,6 +176,13 @@ export const items = pgTable(
     exposureCount: integer("exposure_count").notNull().default(0),
     /** Seed key (see seed-bank/seed-key.ts), so the bank top-up knows which starter items an org has. */
     seedKey: text("seed_key"),
+    /**
+     * A course test form this item belongs to ("B1.1:A", spec 2026-10-28) and
+     * its position in its section. Null for the bank: random draws, coverage
+     * and the bank screen never see course items, a course form serves only them.
+     */
+    courseForm: text("course_form"),
+    courseOrder: integer("course_order"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -180,6 +190,7 @@ export const items = pgTable(
     index("items_pool_idx").on(t.orgId, t.section, t.level, t.status),
     index("items_stimulus_idx").on(t.stimulusId),
     uniqueIndex("items_seed_key_per_org").on(t.orgId, t.seedKey),
+    index("items_course_form_idx").on(t.orgId, t.courseForm, t.section, t.courseOrder),
   ],
 );
 
@@ -209,6 +220,10 @@ export const responseGradings = pgTable(
     finalLevel: resultLevel("final_level"),
     /** Per-criterion teacher levels, when the teacher changed them individually. */
     finalCriteria: jsonb("final_criteria").$type<Record<string, string>>(),
+    /** Course tests (spec 2026-10-28): the AI's rubric points proposal (purpose COURSE_RUBRIC). Null otherwise. */
+    courseProposal: jsonb("course_proposal").$type<CourseRubricProposal>(),
+    /** Course tests: the decided points per criterion and the ticked common errors. Null until decided. */
+    coursePoints: jsonb("course_points").$type<{ points: CoursePoints; commonErrors?: CommonWritingError[] }>(),
     decider: decider("decider"),
     decidedBy: uuid("decided_by").references(() => users.id, { onDelete: "set null" }),
     decidedAt: timestamp("decided_at", { withTimezone: true }),

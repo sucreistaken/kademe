@@ -62,6 +62,7 @@
   "mode": {
     "PLACEMENT": "Einstufung",
     "LEVEL_VERIFICATION": "Niveauprüfung",
+    "COURSE_TEST": "Kurstest",
     "claimed": "Angegeben: {level}"
   },
   "sectionName": {

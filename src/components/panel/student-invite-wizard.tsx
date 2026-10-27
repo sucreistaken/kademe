@@ -37,7 +37,7 @@ import { StepScreen } from "@/components/visual/step-screen";
 import { useMT } from "@/i18n/manager-client";
 import { CANDIDATE_LANGUAGE_NAME, CANDIDATE_LOCALES, DEFAULT_CANDIDATE_LOCALE, isCandidateLocale, type CandidateLocale } from "@/i18n/locale";
 import { bankCoverage, type BankCount, type BlueprintConfig } from "@/lib/exam/blueprint";
-import { CEFR_LEVELS, type Cefr } from "@/lib/exam/types";
+import { CEFR_LEVELS, type Cefr, type ExamMode } from "@/lib/exam/types";
 import { cn } from "@/lib/cn";
 import { DEFAULT_WINDOW_DAYS, orgTime, resolveWindow, zonedMoment, type WindowInput } from "@/lib/exam-window";
 import { inviteMessage, inviteMessages, messageDateTime, type InviteMessageInput } from "@/lib/invite-message";
@@ -54,7 +54,7 @@ export type ExamOption = {
   group: "own" | "template";
   name: string;
   summary: string | null;
-  mode: "PLACEMENT" | "LEVEL_VERIFICATION";
+  mode: ExamMode;
   published: boolean;
   /** Set on a ready exam: which template it is. */
   templateKey?: string;

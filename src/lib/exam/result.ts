@@ -2,6 +2,7 @@ import type { PassRules } from "./blueprint";
 import { PRE_A1_CUT, compareLevels, levelFromTheta, medianLevel, probAtOrAbove, shiftLevel } from "./cefr";
 import type { Posterior } from "./adaptive";
 import type { ChanceTest } from "./chance";
+import type { CourseResult } from "./course/types";
 import { placementOf, type Placement } from "./placement";
 import { PRODUCTIVE_SECTIONS, type Cefr, type ExamMode, type ProductiveSection, type ResultLevel, type Section } from "./types";
 
@@ -94,6 +95,11 @@ export type ComputedResult = {
    * posterior. Null otherwise; absent on results stored before it existed.
    */
   placement?: Placement | null;
+  /**
+   * COURSE_TEST only (spec 2026-10-28): raw points, cut scores and the next
+   * course. Null otherwise; absent on results stored before it existed.
+   */
+  course?: CourseResult | null;
 };
 
 /**

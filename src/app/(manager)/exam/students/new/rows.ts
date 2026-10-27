@@ -1,4 +1,4 @@
-import type { Cefr } from "@/lib/exam/types";
+import type { Cefr, ExamMode } from "@/lib/exam/types";
 
 /**
  * Inviting many students at once, pure: the pasted or uploaded list, and the
@@ -174,7 +174,7 @@ export function listWait(parsed: ParsedStudents): "EMPTY" | "PROBLEMS" | "TOO_MA
  * The verification claim of each row: its own level when the line had one,
  * otherwise the batch's. Placement exams have no claim.
  */
-export function claimFor(row: Pick<StudentRow, "claimed">, mode: "PLACEMENT" | "LEVEL_VERIFICATION", batch: Cefr | null): Cefr | null {
+export function claimFor(row: Pick<StudentRow, "claimed">, mode: ExamMode, batch: Cefr | null): Cefr | null {
   if (mode !== "LEVEL_VERIFICATION") return null;
   return row.claimed ?? batch;
 }
@@ -245,7 +245,7 @@ export function inviteFirstInvalid(input: { listReady: boolean; examReady: boole
 }
 
 /** The exam step waits for a choice and, on a verification exam, for a claim on every row. */
-export function examWait(input: { mode: "PLACEMENT" | "LEVEL_VERIFICATION" | null; rows: readonly Pick<StudentRow, "claimed">[]; batch: Cefr | null }): "EXAM" | "CLAIM" | null {
+export function examWait(input: { mode: ExamMode | null; rows: readonly Pick<StudentRow, "claimed">[]; batch: Cefr | null }): "EXAM" | "CLAIM" | null {
   const mode = input.mode;
   if (!mode) return "EXAM";
   if (mode === "LEVEL_VERIFICATION" && input.rows.some((r) => !claimFor(r, mode, input.batch))) return "CLAIM";

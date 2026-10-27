@@ -105,6 +105,7 @@ export const aiPurpose = pgEnum("ai_purpose", [
   "HIRING_ROLE_BRIEF", // asks the manager about a role, then writes a summary and a job ad they can correct
   "HIRING_REVISE", // rewrites a draft assessment (or one question) on the manager's instruction; undoable
   "STUDENT_FEEDBACK", // a short note for the student on a finished exam; a teacher edits and approves it before the report shows it
+  "COURSE_RUBRIC", // proposed rubric points for a course test's writing or speaking answer; a teacher confirms or changes them
 ]);
 
 export const proctorEventType = pgEnum("proctor_event_type", PROCTOR_EVENT_TYPES);

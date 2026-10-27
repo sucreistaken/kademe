@@ -62,6 +62,7 @@
   "mode": {
     "PLACEMENT": "Seviye tespiti",
     "LEVEL_VERIFICATION": "Seviye doğrulama",
+    "COURSE_TEST": "Kurs sınavı",
     "claimed": "Beyan {level}"
   },
   "sectionName": {

@@ -26,7 +26,7 @@ import {
 import type { BankCount } from "@/lib/exam/blueprint";
 import { C_TEST_SKILL_TAG, CLOZE_SKILL_TAG, OPEN_CLOZE_SKILL_TAG, WORD_BANK_SKILL_TAG } from "@/lib/exam/types";
 import { enabledSections } from "@/lib/exam/blueprint";
-import type { Cefr, ResultLevel, Section } from "@/lib/exam/types";
+import type { Cefr, ExamMode, ResultLevel, Section } from "@/lib/exam/types";
 import { isUncertainResult } from "@/lib/exam/result";
 import { getStorage } from "@/lib/storage";
 
@@ -48,7 +48,7 @@ export type StudentRow = {
   name: string;
   email: string;
   examName: string;
-  mode: "PLACEMENT" | "LEVEL_VERIFICATION";
+  mode: ExamMode;
   claimed: Cefr | null;
   status: StudentStatus;
   /** Result level (A0 to C2): the final one, else the engine's current estimate. */

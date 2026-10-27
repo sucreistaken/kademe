@@ -9,7 +9,7 @@ import type { InviteStudentsInput } from "./actions";
  * publisher's own rules are in src/server/template-blueprint.test.ts, the
  * list's parsing in ./rows.test.ts.
  */
-type Row = { id: string; orgId: string; mode: "PLACEMENT" | "LEVEL_VERIFICATION"; status: string; config: unknown; name: string };
+type Row = { id: string; orgId: string; mode: "PLACEMENT" | "LEVEL_VERIFICATION" | "COURSE_TEST"; status: string; config: unknown; name: string };
 const state = vi.hoisted(() => ({
   rows: [] as Array<Record<string, unknown>>,
   coverageOk: true,

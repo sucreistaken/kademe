@@ -36,7 +36,7 @@ export type ProductiveSection = (typeof PRODUCTIVE_SECTIONS)[number];
 export const isObjectiveSection = (s: Section): s is ObjectiveSection =>
   (OBJECTIVE_SECTIONS as readonly string[]).includes(s);
 
-export const EXAM_MODES = ["PLACEMENT", "LEVEL_VERIFICATION"] as const;
+export const EXAM_MODES = ["PLACEMENT", "LEVEL_VERIFICATION", "COURSE_TEST"] as const;
 export type ExamMode = (typeof EXAM_MODES)[number];
 
 export const ITEM_TYPES = [

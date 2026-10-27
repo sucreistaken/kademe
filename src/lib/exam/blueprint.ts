@@ -2,6 +2,7 @@ import { z } from "zod";
 import { PRESETS, proctoringPolicySchema } from "@/lib/proctor/policy";
 import { selectNext, type AdaptiveConfig, type AdaptiveState, type PoolItem } from "./adaptive";
 import { BAND_CENTER, levelIndex, shiftLevel } from "./cefr";
+import { courseConfigSchema } from "./course/types";
 import {
   CEFR_LEVELS,
   isObjectiveSection,
@@ -123,6 +124,12 @@ export const blueprintConfigSchema = z
     passRules: passRulesSchema,
     proctoring: proctoringPolicySchema,
     listening: z.object({ maxPlays: z.number().int().min(1).max(3) }),
+    /**
+     * COURSE_TEST only (spec 2026-10-28): which course test, which form (set
+     * per invitation, null on the published exam) and its cut scores.
+     * Optional so stored configs stay valid.
+     */
+    course: courseConfigSchema.optional(),
   })
   .superRefine((cfg, ctx) => {
     const seen = new Set<Section>();
