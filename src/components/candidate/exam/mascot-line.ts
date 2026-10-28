@@ -48,3 +48,14 @@ export function lettersShown(count: number, length: number): number {
 export function isTalking(count: number, length: number): boolean {
   return length > 0 && lettersShown(count, length) < length;
 }
+
+/**
+ * What the bubble shows. The line is typed in only while the mascot is to talk
+ * (`talk`: the student is preparing) and motion is fine; under
+ * prefers-reduced-motion, or once the student is recording or has recorded, the
+ * whole line is there at once and the mouth stays closed.
+ */
+export function bubbleState(o: { length: number; typed: number; talk: boolean; reducedMotion: boolean }): { shown: number; talking: boolean } {
+  if (!o.talk || o.reducedMotion) return { shown: o.length, talking: false };
+  return { shown: lettersShown(o.typed, o.length), talking: isTalking(o.typed, o.length) };
+}

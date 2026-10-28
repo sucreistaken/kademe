@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MASCOT_LINE_MAX, isTalking, lettersShown, mascotLine, typingStepMs } from "./mascot-line";
+import { MASCOT_LINE_MAX, bubbleState, isTalking, lettersShown, mascotLine, typingStepMs } from "./mascot-line";
 
 describe("what the mascot says", () => {
   it("is the first sentence of the task", () => {
@@ -80,5 +80,33 @@ describe("typing the line in", () => {
     expect(isTalking(10, 10)).toBe(false);
     expect(isTalking(40, 10)).toBe(false);
     expect(isTalking(0, 0)).toBe(false);
+  });
+});
+
+describe("what the bubble shows (reduced motion and the other phases)", () => {
+  const base = { length: 27, talk: true, reducedMotion: false };
+
+  it("types the line in while the student prepares: nothing at first, the mouth moving, the whole line at the end and the mouth shut", () => {
+    expect(bubbleState({ ...base, typed: 0 })).toEqual({ shown: 0, talking: true });
+    expect(bubbleState({ ...base, typed: 13 })).toEqual({ shown: 13, talking: true });
+    expect(bubbleState({ ...base, typed: 26 })).toEqual({ shown: 26, talking: true });
+    expect(bubbleState({ ...base, typed: 27 })).toEqual({ shown: 27, talking: false });
+    expect(bubbleState({ ...base, typed: 500 })).toEqual({ shown: 27, talking: false });
+  });
+
+  it("under prefers-reduced-motion shows the whole line at once and never moves the mouth, whatever has been typed", () => {
+    for (const typed of [0, 1, 13, 27]) {
+      expect(bubbleState({ ...base, typed, reducedMotion: true }), String(typed)).toEqual({ shown: 27, talking: false });
+    }
+  });
+
+  it("shows the whole line and a closed mouth once the student records or has recorded (talk off), even half way through typing", () => {
+    for (const typed of [0, 5, 27]) {
+      expect(bubbleState({ ...base, typed, talk: false }), String(typed)).toEqual({ shown: 27, talking: false });
+    }
+  });
+
+  it("has nothing to move for an empty line", () => {
+    expect(bubbleState({ length: 0, typed: 0, talk: true, reducedMotion: false })).toEqual({ shown: 0, talking: false });
   });
 });
