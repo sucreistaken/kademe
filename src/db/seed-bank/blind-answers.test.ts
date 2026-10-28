@@ -22,6 +22,23 @@ describe("parseAnswerFile", () => {
   });
 });
 
+describe("parseAnswerFile with a course form's seed keys", () => {
+  const C1 = "course-b1-1-a-reading-b1-0123456789abcdef";
+  const C2 = "course-b1-a-grammar-b1-fedcba9876543210";
+
+  it("reads the longer keys of a course form, with or without a list bullet or backticks", () => {
+    const out = parseAnswerFile([`${C1}: s1=R, s2=F`, `- \`${C2}\`: g1=dem`, "course-b1-a-grammar-b1: not a key line"].join("\n"));
+    expect([...out.keys()]).toEqual([C1, C2]);
+    expect(Object.fromEntries(out.get(C1)!)).toEqual({ s1: "R", s2: "F" });
+    expect(Object.fromEntries(out.get(C2)!)).toEqual({ g1: "dem" });
+  });
+
+  it("still ignores Markdown that merely looks like a key", () => {
+    const out = parseAnswerFile(["## 3. READING", "### Text: Reise", "**Aufgabe:** Was stimmt?", "Antwort je Aussage: R (richtig) oder F (falsch).", "- (a) Eins"].join("\n"));
+    expect([...out.keys()]).toEqual([]);
+  });
+});
+
 describe("toItemAnswer", () => {
   it("treats the template placeholder and empty values as unanswered", () => {
     const pairs = new Map([["g1", "..."], ["g2", ""]]);

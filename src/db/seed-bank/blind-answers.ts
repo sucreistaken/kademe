@@ -18,7 +18,12 @@ export type RawAnswers = Map<string, Map<string, string>>;
 /** The answer id of a SHORT_TEXT item's line ("<seedKey>: text=..."). */
 export const SHORT_TEXT_ID = "text";
 
-const LINE = /^\s*(?:[-*]\s+)?`?([a-z]+-[a-z0-9]+-[0-9a-f]{16})`?\s*:\s*(.*)$/u;
+/**
+ * A seed key: lower-case words joined by dashes, ending in the 16 hex digits of
+ * the content hash. "grammar-b1-<hash>" in the bank, and a course form's
+ * "course-b1-1-a-reading-b1-<hash>" (course-seed.ts).
+ */
+const LINE = /^\s*(?:[-*]\s+)?`?([a-z][a-z0-9]*(?:-[a-z0-9]+)*-[0-9a-f]{16})`?\s*:\s*(.*)$/u;
 /** Split on commas that start a new `id=` pair, so a gap value may itself contain commas. */
 const PAIR_SPLIT = /,\s*(?=[A-Za-z0-9_]+\s*=)/u;
 

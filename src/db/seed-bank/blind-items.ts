@@ -1,6 +1,9 @@
+import { courseFormKey, parseCourseFormKey } from "@/lib/exam/course/types";
 import { matchingTargets, toCandidateItem, type CandidateContent, type CandidateItem } from "@/lib/exam/safe";
 import type { Cefr, ItemSnapshot } from "@/lib/exam/types";
 import { SHORT_TEXT_ID } from "./blind-answers";
+import { courseItemSeedKey } from "./course-seed";
+import type { SeedCourseForm } from "./course-tests/types";
 import { seedItemKey } from "./seed-key";
 import type { SeedBankPart, SeedItem, SeedStimulus } from "./types";
 
@@ -16,15 +19,16 @@ export type BlindItem = {
   letterToRightId: Record<string, string>;
 };
 
-export function blindItems(bank: SeedBankPart, level: Cefr): BlindItem[] {
-  const stimuli = new Map(bank.stimuli.map((s) => [s.key, s]));
+/** An item and the seed key its database row has (the bank's content hash, or a course form's prefixed one). */
+type BlindEntry = { item: SeedItem; seedKey: string };
+
+/** The objective entries as the solver sees them, in the order given. */
+function buildBlindItems(entries: BlindEntry[], stimuli: Map<string, SeedStimulus>): BlindItem[] {
   const out: BlindItem[] = [];
-  for (const item of bank.items) {
-    if (item.level !== level) continue;
+  for (const { item, seedKey } of entries) {
     if (item.section !== "GRAMMAR" && item.section !== "READING" && item.section !== "LISTENING") continue;
     if (item.key.kind === "NONE") continue;
     const stimulus = item.stimulusKey ? (stimuli.get(item.stimulusKey) ?? null) : null;
-    const seedKey = seedItemKey(item);
     const snapshot: ItemSnapshot = {
       id: seedKey,
       section: item.section,
@@ -60,6 +64,52 @@ export function blindItems(bank: SeedBankPart, level: Cefr): BlindItem[] {
   }
   return out;
 }
+
+export function blindItems(bank: SeedBankPart, level: Cefr): BlindItem[] {
+  const stimuli = new Map(bank.stimuli.map((s) => [s.key, s]));
+  return buildBlindItems(
+    bank.items.filter((item) => item.level === level).map((item) => ({ item, seedKey: seedItemKey(item) })),
+    stimuli,
+  );
+}
+
+/**
+ * The objective items of one course test form (spec 2026-10-28) in serving
+ * order: the form's sections in telc order, each item where the form serves it,
+ * under the seed key its database row has (so an answers file names the rows
+ * the form will serve). Writing and speaking tasks have no key and are not
+ * part of a blind solve.
+ */
+export function courseBlindItems(form: SeedCourseForm): BlindItem[] {
+  const stimuli = new Map<string, SeedStimulus>();
+  const entries: BlindEntry[] = [];
+  for (const section of form.sections) {
+    for (const s of section.stimuli) stimuli.set(s.key, s);
+    for (const item of section.items) entries.push({ item, seedKey: courseItemSeedKey(form.key, form.form, item) });
+  }
+  return buildBlindItems(entries, stimuli);
+}
+
+/**
+ * `--course <key>:<form>` (for example B1.1:A) or `--course all`: the forms of
+ * the seed that the option names. `all` gives every form there is, none
+ * included; a form that is not in the seed is an error that lists what is.
+ */
+export function selectCourseForms(raw: string, forms: readonly SeedCourseForm[]): SeedCourseForm[] {
+  if (raw.trim().toLowerCase() === "all") return [...forms];
+  const parsed = parseCourseFormKey(raw.trim().toUpperCase());
+  if (!parsed) throw new Error(`--course must be <key>:<form>, for example B1.1:A, or all (got "${raw}")`);
+  const found = forms.find((f) => f.key === parsed.key && f.form === parsed.form);
+  if (!found) {
+    const have = forms.map((f) => courseFormKey(f.key, f.form)).join(", ") || "none yet";
+    throw new Error(`course form ${courseFormKey(parsed.key, parsed.form)} is not in the seed (forms in the seed: ${have})`);
+  }
+  return [found];
+}
+
+/** The file a course form's blind-solve export is written to by default: "blind-course-b1-1-a.md". */
+export const courseBlindFileName = (form: Pick<SeedCourseForm, "key" | "form">): string =>
+  `blind-course-${courseFormKey(form.key, form.form).toLowerCase().replace(/[.:]/g, "-")}.md`;
 
 /** Plain argument parser: `--name value` pairs, `--flag` alone is "true". */
 export function parseArgs(argv: string[]): Record<string, string> {
