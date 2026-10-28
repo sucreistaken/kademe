@@ -1,6 +1,6 @@
 # Kademe - durum ve devir belgesi
 
-Kurs sınavları (canlıda 2026-10-28 ~12:45 UTC, `main` `2df4790`, yedek `/root/kademe-backups/kademe-20261028-1245.dump`, göç 0029, banka +424 kurs sorusu): bkz. "Kurs sınavları: 2026-10-28" bölümü.
+Kurs sınavları (canlıda 2026-10-28 ~12:45 UTC, düzen düzeltmesiyle ~13:48 UTC `main` `848c9b7`, yedek `/root/kademe-backups/kademe-20261028-1245.dump`, göç 0029, banka +424 kurs sorusu): bkz. "Kurs sınavları: 2026-10-28" bölümü.
 Tur 4, sahip geri bildirimi 2026-10-25 akşam (canlıda 2026-10-26 ~10:50 UTC, `main` `5e90445`, yedek `/root/kademe-backups/kademe-20261026-1049.dump`, göç yok, banka değişmedi): bkz. "Tur 4: 2026-10-26" bölümü.
 Tur 3, sahip geri bildirimi 2026-10-25 (canlıda 2026-10-25, `main` `0d031ed`): bkz. "Tur 3: 2026-10-25" bölümü.
 Tur 2, sahip geri bildirimi 2026-10-24 (canlıda 2026-10-24, `main` `7b9e05c`): bkz. "Tur 2: 2026-10-24" bölümü.
@@ -41,8 +41,15 @@ turundan sonra "direkt bitirene kadar çalış, en sonda canlıya al, öğretmen
 - **Doğrulama:** `tsc` temiz, `eslint` 0 hata, `vitest` (aşağıdaki sayı). Gerçek veritabanı kopyasında uçtan uca:
   öğrenci B1 formunu çözdü, Gemini yazmayı 3/3/3 ve konuşmayı ölçütlerle puanladı, öğretmen kararı ve kesinleştirme
   sonucu %68.9 ama konuşma 8/20 yüzünden "Nicht bestanden, B1.2, Schwerpunkt Sprechen" verdi (öğretmenin kuralı).
-  Panel sayfaları sunucuda hatasız oluştu. **Doğrulanmadı:** Chrome'da görsel tur (yerel inceleme sunucusu Chrome'da
-  hata sayfası verdi), maskot animasyonu, gerçek mikrofonla konuşma kaydı, yazdırma.
+  Panel sayfaları sunucuda hatasız oluştu. Chrome turu (bu Mac'in Chrome'u, yerel inceleme sunucusu, sahte kamera):
+  davet sihirbazında Kurs sonu sınavı > B1, özet "74 puan, ~95 dk, A/B sırayla"; öğrenci girişi Abschlusstest B1,
+  bölümler telc sırasıyla; okuma ve Sprachbausteine öğretmenin metinleri, boşlukta 3 seçenek; dinleme oynatıcısı;
+  yazma görevi; konuşmada maskot cümleyi balonda yazıyor ("Stellen Sie sich bitte kurz vor."); bitiş ekranında
+  puan yok; öğretmen ekranında AI önerisi, onay, kesinleştirme ("Not passed, Continue in course A2.2"), Almanca
+  Bewertungsbogen ve öğrenci kopyası. Turda bulunan tek hata: 1280 px'de yazma/konuşma puanlama ekranı dar sol
+  sütuna sıkışıyordu (ana nokta tablosu kelime kelime kırılıyordu); 2xl'e kadar alt alta, analiz tam genişlik
+  (`848c9b7`, aynı gün canlıda, yedek `kademe-20261028-1348.dump`). **Doğrulanmadı:** gerçek mikrofonla konuşma
+  kaydı, yazdırma (A4), canlıda bir kurs sınavı.
 - **Sahibe açık sorular:** ara sınav %60 eşiği (öğretmenin değil, bizim seçimimiz); öğretmenin B1 sınavındaki kör
   çözüm notları (anahtar kelime eşleşmeleri, B2 seviyesinde bir Partizip, "zu kamen" türü çeldiriciler) aynen bırakıldı;
   B1 sözlü kartındaki "Herkunft" maddesi kullanılmadı; dinlemeler ve formlar bir Almanca öğretmeni tarafından
