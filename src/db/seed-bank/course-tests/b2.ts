@@ -27,6 +27,7 @@
 import type { SeedCourseForm } from "./types";
 import { INTERIM_A } from "./b2/interim-a";
 import { INTERIM_B } from "./b2/interim-b";
+import { FINAL_A } from "./b2/final-a";
 
-/** B2 course tests (spec 2026-10-28): Zwischentest B2.1, forms A and B. The Abschlusstest B2 forms are merged in by the lead. */
-export const B2_COURSE_FORMS: SeedCourseForm[] = [INTERIM_A, INTERIM_B];
+/** B2 course tests (spec 2026-10-28): Zwischentest B2.1 and Abschlusstest B2, forms A and B each. */
+export const B2_COURSE_FORMS: SeedCourseForm[] = [INTERIM_A, INTERIM_B, FINAL_A];
