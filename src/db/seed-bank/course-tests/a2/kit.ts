@@ -119,10 +119,9 @@ export function writingPrompt(situation: string, points: [string, string, string
 /** Spec 2026-10-28, level adaptation A2: Schreiben 40-60 words. */
 export const WRITING_WORDS: [number, number] = [40, 60];
 
-/** Spec 2026-10-28, level adaptation A2: introduce yourself (30/60), talk about your life (60/90), proposals (60/75); one take. */
+/** Spec 2026-10-28, level adaptation A2: introduce yourself (think 30 s, answer 60 s), talk about your life (60/90); one take. */
 export const INTRO_TIME = { thinkSeconds: 30, answerSeconds: 60, maxTakes: 1 };
 export const LIFE_TIME = { thinkSeconds: 60, answerSeconds: 90, maxTakes: 1 };
-export const PROPOSAL_TIME = { thinkSeconds: 60, answerSeconds: 75, maxTakes: 1 };
 
 /** Task 1 of every form: introduce yourself. Never origin, age or religion. */
 export const INTRO_PROMPT =
@@ -140,7 +139,6 @@ export const INTRO_EXPLANATION =
 const CLASS_SOURCES = {
   brochure: "https://www.klett-sprachen.de/downloads/23384/netzwerk-neu-a2-broschuere/pdf",
   firstHalf: "https://www.klett-sprachen.es/downloads/23818/programacion-de-netzwerk-neu-a2-1-para-eeooii/pdf",
-  secondHalf: "https://www.klett-sprachen.es/downloads/25144/programacion-de-netzwerk-neu-a2-2-para-eeooii/pdf",
   toc: "https://d-nb.info/122079631X/04",
 };
 
@@ -164,26 +162,6 @@ export function interimSyllabus(): SeedCourseForm["syllabus"] {
       "Kap. 4: Gefühle und Feste (wenn, reflexive Verben)",
       "Kap. 5: Leben in der Stadt (höfliche Bitten mit „könnte“, Adjektivendungen, ohne/mit)",
       "Kap. 6: Arbeitswelten (werden, Adjektive nach ein/kein)",
-    ],
-  };
-}
-
-/** What the Abschlusstest A2 covers: all twelve chapters. */
-export function finalSyllabus(): SeedCourseForm["syllabus"] {
-  return {
-    source:
-      `Klett, Netzwerk neu A2: Lernziele je Kapitel (Broschüre ${CLASS_SOURCES.brochure}); Grammatik und Themen der Kapitel 1-6 ` +
-      `(Klett España, Programación Netzwerk neu A2.1 ${CLASS_SOURCES.firstHalf}) und 7-12 (Programación Netzwerk neu A2.2 ${CLASS_SOURCES.secondHalf}); ` +
-      `Kapitelfolge (Inhaltsverzeichnis ${CLASS_SOURCES.toc})`,
-    chapters: "Netzwerk neu A2, Kapitel 1-12",
-    topics: [
-      ...interimSyllabus().topics,
-      "Kap. 7: Unterwegs (indirekte Fragesätze, lokale Präpositionen)",
-      "Kap. 8: Lernen und Ratschläge (sollte, was für ein)",
-      "Kap. 9: Sport und Vorschläge (deshalb, trotzdem, Verben mit Dativ)",
-      "Kap. 10: Zusammen leben (als und wenn, Wechselpräpositionen)",
-      "Kap. 11: Wünsche und Pläne (Fragen mit Präposition, Verben mit Präposition)",
-      "Kap. 12: Unterhaltung (Relativsätze, man und jemand, etwas und nichts)",
     ],
   };
 }
