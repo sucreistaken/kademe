@@ -158,6 +158,11 @@ describe("claimFor", () => {
     expect(claimFor({ claimed: null }, "LEVEL_VERIFICATION", null)).toBeNull();
     expect(claimFor({ claimed: "A2" }, "PLACEMENT", "B1")).toBeNull();
   });
+
+  it("a course test has no claim, whatever the line or the batch says", () => {
+    expect(claimFor({ claimed: "A2" }, "COURSE_TEST", "B1")).toBeNull();
+    expect(claimFor({ claimed: null }, "COURSE_TEST", "B1")).toBeNull();
+  });
 });
 
 describe("the result's CSV and copy text", () => {
@@ -209,6 +214,10 @@ describe("the wizard's steps", () => {
     expect(examWait({ mode: "LEVEL_VERIFICATION", rows, batch: null })).toBe("CLAIM");
     expect(examWait({ mode: "LEVEL_VERIFICATION", rows, batch: "B1" })).toBeNull();
     expect(examWait({ mode: "LEVEL_VERIFICATION", rows: [{ claimed: "C1" }], batch: null })).toBeNull();
+  });
+
+  it("the exam step of a course test never waits for a claim", () => {
+    expect(examWait({ mode: "COURSE_TEST", rows: [{ claimed: null }, { claimed: null }], batch: null })).toBeNull();
   });
 
   it("names the rows that already have an open invitation, in any letter case", () => {

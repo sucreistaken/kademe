@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { adaptiveLevels, bankCoverage, productiveTaskLevels, type BankCount } from "../blueprint";
+import { adaptiveLevels, anchorLevel, bankCoverage, blueprintConfigSchema, defaultBlueprint, productiveTaskLevels, type BankCount } from "../blueprint";
 import { examTemplateByKey } from "../templates";
-import { CEFR_LEVELS, SECTIONS, type ItemContent, type Section } from "../types";
+import { CEFR_LEVELS, EXAM_MODES, SECTIONS, type ItemContent, type Section } from "../types";
 import { COURSE_TESTS, courseSections } from "./catalog";
 import { courseBlueprint } from "./config";
 import { courseCoverage, foldCourseCounts, type CourseCountRow } from "./coverage";
@@ -197,6 +197,26 @@ describe("bankCoverage with course rows", () => {
 });
 
 describe("the other mode switches", () => {
+  it.each(EXAM_MODES)("%s: the starting blueprint is valid and every mode switch in blueprint.ts answers", (mode) => {
+    const cfg = defaultBlueprint(mode);
+    expect(blueprintConfigSchema.safeParse(cfg).success).toBe(true);
+    // Only a course test carries its course.
+    expect(!!cfg.course).toBe(mode === "COURSE_TEST");
+    expect(CEFR_LEVELS).toContain(anchorLevel(mode, null));
+    expect(CEFR_LEVELS).toContain(anchorLevel(mode, "A2"));
+    expect(Array.isArray(adaptiveLevels(mode, null))).toBe(true);
+    expect(productiveTaskLevels(mode, null, "B1", 2)).toHaveLength(2);
+    expect(Array.isArray(bankCoverage([], cfg, mode, null).rows)).toBe(true);
+    // An empty bank covers none of them.
+    expect(bankCoverage([], cfg, mode, null).ok).toBe(false);
+  });
+
+  it("a course test anchors on B1 like a placement and ignores a claim", () => {
+    expect(anchorLevel("COURSE_TEST", null)).toBe("B1");
+    expect(anchorLevel("COURSE_TEST", "C1")).toBe("B1");
+    expect(anchorLevel("LEVEL_VERIFICATION", "C1")).toBe("C1");
+  });
+
   it("a course test has no adaptive levels", () => {
     expect(adaptiveLevels("COURSE_TEST", null)).toEqual([]);
     expect(adaptiveLevels("COURSE_TEST", "B1")).toEqual([]);
