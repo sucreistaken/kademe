@@ -43,11 +43,11 @@ Trotzdem ist Yusuf Karaca zufrieden: „Was funktioniert, gehört nicht in den M
 
 const rRad = readingText(
   "course-b1-final-b-r-rad-im-alltag",
-  "Vier Texte zum Fahrrad im Alltag",
-  "Fahrrad und Stadt",
+  "Vier Texte aus dem Alltag",
+  "Alltag und Nachbarschaft",
   `
 Text A - Stellenanzeige
-Die Fahrradwerkstatt „Pedal“ sucht ab sofort eine Aushilfe für den Verkauf (samstags, acht Stunden). Sie sollten freundlich sein und sich für Fahrräder interessieren. Erfahrung ist nicht nötig, wir zeigen Ihnen alles. Bitte rufen Sie uns an oder kommen Sie vorbei: Telefon 0711 55 66 77, Kirchstraße 8.
+Die Fahrradwerkstatt „Pedal“ sucht ab sofort eine Aushilfe für den Verkauf (samstags, acht Stunden). Sie sollten freundlich sein und sich für Fahrräder interessieren. Erfahrung ist nicht nötig, wir zeigen Ihnen alles. Bitte rufen Sie uns an oder kommen Sie vorbei: Telefon 0221 4710 321, Kirchstraße 8.
 
 Text B - Aushang im Hausflur
 Liebe Mieterinnen und Mieter, am Samstag, dem 14. September, wird der Hof gemeinsam aufgeräumt. Wir beginnen um 10 Uhr. Wer mithelfen möchte, trägt sich bitte bis zum 10. September in die Liste neben dem Briefkasten ein. Getränke und Brötchen bringt die Hausverwaltung mit.
@@ -117,7 +117,7 @@ const reading = [
     `${TEXTE}\n\nWo kann man sich telefonisch melden?`,
     ["Text D", "Text A", "Text C"],
     1,
-    "Text A: „Bitte rufen Sie uns an ...: Telefon 0711 55 66 77“. In Text B trägt man sich in eine Liste ein.",
+    "Text A: „Bitte rufen Sie uns an ...: Telefon 0221 4710 321“. In Text B trägt man sich in eine Liste ein.",
   ),
 ];
 
@@ -146,10 +146,10 @@ Leyla
 const sentences = [
   grammarChoice(
     "konnektor.zweiteilig",
-    "Unser Dirigent spielt ___ Klavier ___ Geige, er unterrichtet also beides.",
+    "Unser Dirigent spielt ___ Klavier ___ Geige, er kann also beides.",
     ["weder … noch", "entweder … oder", "sowohl … als auch", "zwar … aber"],
     2,
-    "Geprüftes Grammatikphänomen: zweiteiliger Konnektor („sowohl … als auch“); „unterrichtet also beides“ schließt „entweder … oder“ und „weder … noch“ aus.",
+    "Geprüftes Grammatikphänomen: zweiteiliger Konnektor („sowohl … als auch“); „er kann also beides“ schließt „entweder … oder“ und „weder … noch“ aus.",
   ),
   grammarChoice(
     "konnektor.zweiteilig",
@@ -269,7 +269,7 @@ const lReparatur = listeningClip(
   "Technik und Reklamation",
   [{ label: "Herr Hoffmann", voice: "B" }],
   [
-    "Herr Hoffmann: Guten Tag, Herr Lindner, hier ist Hoffmann von der Firma Technik Hoffmann. Ihr Laptop ist fertig. Eigentlich sollte die Reparatur sechzig Euro kosten, aber wir mussten auch den Akku tauschen. Deshalb kostet sie jetzt neunzig Euro. Hundertzwanzig Euro wären es gewesen, wenn wir auch den Bildschirm hätten ersetzen müssen, aber das war zum Glück nicht nötig. Sie können den Laptop ab morgen abholen, montags bis freitags von zehn bis achtzehn Uhr, samstags nur bis dreizehn Uhr. Bitte bringen Sie die Quittung mit, die Sie bei der Abgabe bekommen haben. Auf Wiederhören.",
+    "Herr Hoffmann: Guten Tag, Herr Lindner, hier ist Hoffmann von der Firma Technik Hoffmann. Ihr Laptop ist fertig. Die Reparatur sollte eigentlich sechzig Euro kosten. Wir mussten aber auch den Akku tauschen, das sind dreißig Euro mehr. Sie zahlen also neunzig Euro. Sie können den Laptop ab morgen abholen, montags bis freitags von zehn bis achtzehn Uhr, samstags nur bis dreizehn Uhr. Bitte bringen Sie die Quittung mit, die Sie bei der Abgabe bekommen haben. Auf Wiederhören.",
   ],
 );
 
@@ -345,9 +345,9 @@ const listening = [
     lReparatur,
     "detail",
     "Wie viel muss Herr Lindner für die Reparatur bezahlen?",
-    ["60 Euro", "120 Euro", "90 Euro"],
+    ["60 Euro", "30 Euro", "90 Euro"],
     2,
-    "90 Euro: „Deshalb kostet sie jetzt neunzig Euro.“ 60 Euro war der erste Preis, 120 Euro wären es mit neuem Bildschirm gewesen.",
+    "90 Euro: „Sie zahlen also neunzig Euro.“ 60 Euro war der erste Preis, 30 Euro sind der Aufpreis für den neuen Akku.",
   ),
   listeningChoice(
     lServicetelefon,
@@ -436,14 +436,14 @@ const speaking = [
   ),
   speakingTask(
     "planning",
-    "Machen Sie bitte Vorschläge für einen Ausflug.\n\nSie und Ihre Kolleginnen und Kollegen möchten am Wochenende gemeinsam einen Ausflug machen. Machen Sie Vorschläge und sagen Sie, warum Sie das gut finden:\n- Wohin soll der Ausflug gehen, und wann fahren Sie los?\n- Wie kommen Sie dorthin, und was kostet das?\n- Was soll es zu essen und zu trinken geben, und wer bringt etwas mit?\n- Wer organisiert was, und wer muss noch informiert werden?\nSagen Sie am Schluss, welcher Punkt Ihnen am wichtigsten ist.",
+    "Machen Sie bitte Vorschläge für einen Ausflug.\n\nSie und Ihre Kolleginnen und Kollegen möchten am Wochenende gemeinsam einen Ausflug machen. Machen Sie Vorschläge und sagen Sie, warum Sie das gut finden:\n- Wohin soll der Ausflug gehen?\n- Wie kommen Sie dorthin?\n- Was soll es zu essen und zu trinken geben?\n- Welcher Punkt ist Ihnen am wichtigsten, und warum?",
     [
-      "macht Vorschläge zu mindestens drei der vier Punkte (Ziel und Zeit, Anreise und Kosten, Essen und Trinken, Organisation)",
+      "macht Vorschläge zu mindestens zwei der drei Planungspunkte (Ziel, Anreise, Essen und Trinken)",
       "begründet die Vorschläge (weil, denn, deshalb)",
       "benutzt Formen für Vorschläge (Wir könnten ..., Ich schlage vor, ..., Wie wäre es, wenn ...)",
-      "sagt am Schluss, welcher Punkt am wichtigsten ist, und warum",
+      "sagt, welcher Punkt am wichtigsten ist, und warum",
     ],
-    "Gemeinsam planen als Monolog, parallel zu Version A (Abschiedsfest): Vorschläge machen und eine Meinung äußern. Bewertung: Kommunikation, Wortschatz, Grammatik, Aussprache, Kohärenz je 0 bis 4 Punkte.",
+    "Gemeinsam planen als Monolog, parallel zu Version A (Abschiedsfest): drei Planungspunkte und eine Meinung. Bewertung: Kommunikation, Wortschatz, Grammatik, Aussprache, Kohärenz je 0 bis 4 Punkte.",
   ),
 ];
 

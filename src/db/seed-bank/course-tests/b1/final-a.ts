@@ -152,10 +152,10 @@ const sentences = [
   ),
   grammarChoice(
     "konnektor.zweiteilig",
-    "Herr Berger hat ___ Zeit ___ Lust, am Samstag mitzumachen.",
+    "Herr Berger hat ___ Zeit ___ Lust, am Samstag mitzumachen. Er bleibt lieber zu Hause.",
     ["sowohl … als auch", "nicht nur … sondern auch", "weder … noch", "je … desto"],
     2,
-    "Geprüftes Grammatikphänomen: zweiteiliger Konnektor, Negation („weder … noch“).",
+    "Geprüftes Grammatikphänomen: zweiteiliger Konnektor, Negation („weder … noch“). Hinweis: Der zweite Satz („Er bleibt lieber zu Hause.“) wurde zur Vorlage der Lehrkraft ergänzt, damit nur „weder … noch“ passt (ohne ihn passen auch „sowohl … als auch“ und „nicht nur … sondern auch“).",
   ),
   grammarChoice(
     "infinitiv.zu",
@@ -268,7 +268,7 @@ const lKundendienst = listeningClip(
   "Technik und Reklamation",
   [{ label: "Frau Okafor", voice: "D" }],
   [
-    "Frau Okafor: Guten Tag, Frau Petrović, hier spricht Okafor vom Kundendienst der Firma Elektro Lang. Es geht um Ihre Waschmaschine. Unser Techniker kann leider nicht am Dienstag kommen, wie wir es besprochen hatten, sondern erst am Donnerstag. Er ist dann zwischen acht und zwölf Uhr bei Ihnen. Die Reparatur kostet nichts, denn die Maschine hat noch Garantie. Bitte legen Sie nur die Rechnung vom Kauf bereit. Die Garantiekarte brauchen wir nicht, und einen Ausweis müssen Sie auch nicht zeigen. Wenn der Termin nicht passt, rufen Sie uns zurück: null, sieben, eins, eins, vier, zwei, sechs. Auf Wiederhören.",
+    "Frau Okafor: Guten Tag, Frau Petrović, hier spricht Okafor vom Kundendienst der Firma Elektro Lang. Es geht um Ihre Waschmaschine. Unser Techniker kann leider nicht am Dienstag kommen, wie wir es besprochen hatten, sondern erst am Donnerstag. Er ist dann zwischen acht und zwölf Uhr bei Ihnen. Die Reparatur kostet nichts, denn die Maschine hat noch Garantie. Damit der Techniker das gleich prüfen kann, legen Sie bitte die Rechnung vom Kauf bereit. Die Garantiekarte haben wir schon im System, und seinen Ausweis zeigt Ihnen der Techniker an der Tür. Wenn der Termin nicht passt, rufen Sie uns zurück: null, sieben, eins, eins, vier, zwei, sechs. Auf Wiederhören.",
   ],
 );
 
@@ -298,7 +298,7 @@ const lErsatzbus = listeningClip(
   "Stadt und Verkehr",
   [{ label: "Durchsage", voice: "A" }],
   [
-    "Durchsage: Liebe Fahrgäste, wegen einer Baustelle am Marktplatz fahren die Straßenbahnlinien zwölf und vierzehn bis zum fünfzehnten Mai nicht durch die Innenstadt. Bitte steigen Sie am Hauptbahnhof in den Ersatzbus um. Die Haltestelle des Ersatzbusses ist nicht vor dem Bahnhof, sondern hinter dem Rathaus. Nein, Entschuldigung, hinter dem Theater. Die Fahrt dauert etwa zehn Minuten länger als sonst. Wer eine Monatskarte hat, fährt im Ersatzbus kostenlos. Alle anderen Fahrgäste kaufen beim Busfahrer ein Zusatzticket für einen Euro zwanzig. Geld für die längere Fahrzeit können wir leider nicht zurückgeben. Aktuelle Informationen finden Sie auf unserer Internetseite.",
+    "Durchsage: Liebe Fahrgäste, wegen einer Baustelle am Marktplatz fahren die Straßenbahnlinien zwölf und vierzehn bis zum fünfzehnten Mai nicht durch die Innenstadt. Bitte steigen Sie am Hauptbahnhof in den Ersatzbus um. Die Haltestelle des Ersatzbusses finden Sie hinter dem Theater. Die Fahrt dauert etwa zehn Minuten länger als sonst. Wer eine Monatskarte hat, fährt im Ersatzbus kostenlos. Alle anderen Fahrgäste kaufen beim Busfahrer ein Zusatzticket für einen Euro zwanzig. Eine Erstattung für die längere Fahrzeit ist leider nicht möglich. Aktuelle Informationen finden Sie auf unserer Internetseite.",
   ],
 );
 
@@ -345,7 +345,7 @@ const listening = [
     "Was soll Frau Petrović für den Termin bereitlegen?",
     ["die Garantiekarte des Geräts", "die Rechnung vom Kauf", "ihren Personalausweis"],
     1,
-    "Die Rechnung vom Kauf: „Bitte legen Sie nur die Rechnung vom Kauf bereit.“ Garantiekarte und Ausweis werden ausdrücklich nicht gebraucht.",
+    "Die Rechnung vom Kauf: „legen Sie bitte die Rechnung vom Kauf bereit“. Die Garantiekarte hat die Firma schon im System, den Ausweis zeigt der Techniker.",
   ),
   listeningChoice(
     lBewerbung,
@@ -369,7 +369,7 @@ const listening = [
     "Was gilt für Fahrgäste mit einer Monatskarte?",
     ["Sie fahren im Ersatzbus ohne Zusatzkosten.", "Sie kaufen beim Busfahrer ein Zusatzticket.", "Sie bekommen Geld für die längere Fahrzeit zurück."],
     0,
-    "Mit Monatskarte ist der Ersatzbus kostenlos. Das Zusatzticket kaufen alle anderen Fahrgäste, Geld für die längere Fahrzeit gibt es nicht zurück.",
+    "Mit Monatskarte ist der Ersatzbus kostenlos. Das Zusatzticket kaufen alle anderen Fahrgäste, eine Erstattung für die längere Fahrzeit ist nicht möglich.",
   ),
   listeningTfng(
     lTheater,
@@ -412,7 +412,7 @@ const writing = [
 const speaking = [
   speakingTask(
     "introduction",
-    "Stellen Sie sich bitte kurz vor.\n\nSprechen Sie über diese Punkte:\n- Ihr Name\n- Ihre Stadt oder Region\n- Ihr Beruf oder Ihre Tätigkeit\n- Ihre Freizeit\n- Ihre Sprachen",
+    "Stellen Sie sich bitte kurz vor.\n\nSprechen Sie über diese Punkte:\n- Ihr Name\n- Die Stadt oder Region, in der Sie wohnen\n- Ihr Beruf oder Ihre Tätigkeit\n- Ihre Freizeit\n- Ihre Sprachen",
     [
       "nennt den Namen und die Stadt oder Region, in der man lebt",
       "sagt, was man beruflich oder in der Ausbildung macht",
@@ -434,14 +434,14 @@ const speaking = [
   ),
   speakingTask(
     "planning",
-    "Machen Sie bitte Vorschläge für ein Abschiedsfest.\n\nEine Kollegin verlässt bald die Firma. Sie planen ein Abschiedsfest für sie. Machen Sie Vorschläge und sagen Sie, warum Sie das gut finden:\n- Wann und wo soll das Fest stattfinden?\n- Was soll es zu essen und zu trinken geben, und wer organisiert das?\n- Soll es ein gemeinsames Geschenk geben, und wie wird es organisiert?\n- Wer lädt die Kollegin ein, und wer muss noch informiert werden?\nSagen Sie am Schluss, welcher Punkt Ihnen am wichtigsten ist.",
+    "Machen Sie bitte Vorschläge für ein Abschiedsfest.\n\nEine Kollegin verlässt bald die Firma. Sie planen ein Abschiedsfest für sie. Machen Sie Vorschläge und sagen Sie, warum Sie das gut finden:\n- Wann und wo soll das Fest stattfinden?\n- Was soll es zu essen und zu trinken geben?\n- Soll es ein gemeinsames Geschenk geben?\n- Welcher Punkt ist Ihnen am wichtigsten, und warum?",
     [
-      "macht Vorschläge zu mindestens drei der vier Punkte (Zeit und Ort, Essen und Trinken, Geschenk, Einladung)",
+      "macht Vorschläge zu mindestens zwei der drei Planungspunkte (Zeit und Ort, Essen und Trinken, Geschenk)",
       "begründet die Vorschläge (weil, denn, deshalb)",
       "benutzt Formen für Vorschläge (Wir könnten ..., Ich schlage vor, ..., Wie wäre es, wenn ...)",
-      "sagt am Schluss, welcher Punkt am wichtigsten ist, und warum",
+      "sagt, welcher Punkt am wichtigsten ist, und warum",
     ],
-    "Gemeinsam planen als Monolog (Karte 3 der mündlichen Prüfung, Halil Bey): Vorschläge machen und eine Meinung äußern. Bewertung: Kommunikation, Wortschatz, Grammatik, Aussprache, Kohärenz je 0 bis 4 Punkte.",
+    "Gemeinsam planen als Monolog (Karte 3 der mündlichen Prüfung, Halil Bey, gekürzt auf drei Planungspunkte und eine Meinung): Vorschläge machen und eine Meinung äußern. Bewertung: Kommunikation, Wortschatz, Grammatik, Aussprache, Kohärenz je 0 bis 4 Punkte.",
   ),
 ];
 
