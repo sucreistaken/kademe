@@ -13,6 +13,16 @@ import {
   type SpeakingGradingInput,
   type WritingGradingInput,
 } from "./grading";
+import {
+  buildCourseRepairMessages,
+  buildCourseRubricMessages,
+  courseRuleProposal,
+  finishCourseProposal,
+  isEmptyCourseAnswer,
+  parseCourseRubricAnswer,
+  type CourseRubricJob,
+} from "./course/rubric-grading";
+import type { CourseRubricProposal } from "./course/types";
 import { ruleProposal, ruleVerdict, withLengthFlag, type RuleReason } from "./grading-rules";
 import type { ProductiveSection, ResultLevel } from "./types";
 
@@ -141,6 +151,58 @@ export async function gradeAnswer(job: GradingJob, call: ModelCall, options: Gra
     if (parsed.ok) return proposed(parsed.proposal, answer);
     lastError = parsed.error;
     attemptMessages = buildGradingRepairMessages(messages, answer.text, parsed.error);
+  }
+  return { status: "UNPARSEABLE", error: lastError, model, runId, calls };
+}
+
+// ---------------------------------------------------------------------------
+// Course tests (spec 2026-10-28): rubric points instead of CEFR levels
+// ---------------------------------------------------------------------------
+
+export type CourseGradeResult =
+  | {
+      status: "PROPOSED";
+      /** Who made it: the model (then the code checked it) or a fixed rule (nothing written or said), with no model call. */
+      source: "MODEL" | "RULE";
+      proposal: CourseRubricProposal;
+      /** The model's name, or `RULE_MODEL`. */
+      model: string;
+      runId: string | null;
+      /** How many model calls it took (0 for a rule, 2 when the first answer was unusable). */
+      calls: number;
+    }
+  | { status: "UNPARSEABLE"; error: string; model: string | null; runId: string | null; calls: number };
+
+/**
+ * One course test answer in, one rubric proposal out: the path of `gradeAnswer`
+ * for the school's marking sheet. An answer with no word in it is 0 in every
+ * criterion by rule; otherwise the model proposes the points and the code
+ * checks them (`finishCourseProposal`), with one repair attempt when the first
+ * answer is unusable. A model that fails altogether throws or comes back
+ * UNPARSEABLE: the caller turns that into a grading for the teacher, never a
+ * zero.
+ */
+export async function gradeCourseAnswer(job: CourseRubricJob, call: ModelCall): Promise<CourseGradeResult> {
+  if (isEmptyCourseAnswer(job)) {
+    return { status: "PROPOSED", source: "RULE", proposal: courseRuleProposal(job.section, job.leitpunkte), model: RULE_MODEL, runId: null, calls: 0 };
+  }
+  const messages = buildCourseRubricMessages(job);
+  let attemptMessages = messages;
+  let lastError = "";
+  let model: string | null = null;
+  let runId: string | null = null;
+  let calls = 0;
+  for (let round = 0; round < 2; round++) {
+    const answer = await call(attemptMessages);
+    calls += 1;
+    model = answer.model;
+    runId = answer.runId;
+    const parsed = parseCourseRubricAnswer(answer.text, job);
+    if (parsed.ok) {
+      return { status: "PROPOSED", source: "MODEL", proposal: finishCourseProposal(parsed.proposal, job), model: answer.model, runId: answer.runId, calls };
+    }
+    lastError = parsed.error;
+    attemptMessages = buildCourseRepairMessages(messages, answer.text, parsed.error);
   }
   return { status: "UNPARSEABLE", error: lastError, model, runId, calls };
 }
