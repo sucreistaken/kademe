@@ -108,7 +108,7 @@ export default async function BankPage({ searchParams }: { searchParams: Promise
               <tr key={s} className="border-t border-line">
                 <td className="py-1.5 text-left text-ink-2">{t(`sectionName.${s}`)}</td>
                 {CEFR_LEVELS.map((l) => {
-                  const c = counts.find((x) => x.section === s && x.level === l);
+                  const c = counts.find((x) => !x.courseForm && x.section === s && x.level === l);
                   return (
                     <td key={l} className="py-1.5">
                       <Link href={q({ tab: "approved", section: s, level: l })} className={cn("inline-block min-w-8 rounded px-1", c?.items ? "text-ink" : "font-semibold text-danger")}>
