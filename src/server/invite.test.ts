@@ -47,6 +47,16 @@ vi.mock("@/db", async () => {
   };
 });
 
+/** Which forms of a course test each e-mail sat before (server/exam-exposure.ts), and what was asked. */
+const exposure = vi.hoisted(() => ({ seen: new Map<string, Set<string>>(), asked: [] as unknown[][] }));
+vi.mock("@/server/exam-exposure", () => ({
+  courseFormsSeenBy: async (...args: unknown[]) => {
+    exposure.asked.push(args);
+    return exposure.seen;
+  },
+}));
+
+import { courseBlueprint } from "@/lib/exam/course/config";
 import { outboxLinkPlaceholder } from "@/lib/outbox";
 import { createInvitation, examLinkToken, inviteLink, linkVerdict } from "./invite";
 
@@ -57,6 +67,8 @@ const linkRow = () => state.inserts.find((i) => i.table === "assessmentLinks")!.
 beforeEach(() => {
   state.selects = [];
   state.inserts = [];
+  exposure.seen = new Map();
+  exposure.asked = [];
   vi.unstubAllEnvs();
   vi.stubEnv("AUTH_SECRET", "");
   vi.stubEnv("APP_ORIGIN", "https://kademe.example");
@@ -115,6 +127,94 @@ describe("createInvitation", () => {
     state.selects = [[{ ...blueprint, mode: "LEVEL_VERIFICATION" }]];
     expect(await createInvitation({ orgId: "o1", blueprintId: "bp1", fullName: "A B", email: "a@b.co", claimedLevel: null, locale: "tr", invitedBy: null })).toEqual({ ok: false, code: "CLAIM_REQUIRED" });
     expect(state.inserts).toEqual([]);
+  });
+});
+
+describe("createInvitation: a course test", () => {
+  const course = { id: "bp-course", orgId: "o1", name: "Kurs ara sınavı B1.1", mode: "COURSE_TEST", status: "PUBLISHED", config: courseBlueprint("B1.1") };
+  const invite = (over: Record<string, unknown> = {}) =>
+    createInvitation({ orgId: "o1", blueprintId: "bp-course", fullName: "Ayşe Yılmaz", email: "Ayse@Ornek.com", claimedLevel: null, locale: "en", invitedBy: "u1", ...over });
+  const stored = () => state.inserts.find((i) => i.table === "examAssessments")!.values as { mode: string; claimedLevel: unknown; blueprintSnapshot: { course?: { key: string; form: string | null; rules: unknown }; sections: unknown[] } };
+
+  it("needs no claimed level and keeps none, even when one is passed", async () => {
+    state.selects = [[course]];
+    expect(await invite()).toMatchObject({ ok: true });
+    expect(stored()).toMatchObject({ mode: "COURSE_TEST", claimedLevel: null });
+    state.inserts = [];
+    state.selects = [[course]];
+    expect(await invite({ claimedLevel: "B2" })).toMatchObject({ ok: true });
+    expect(stored().claimedLevel).toBeNull();
+    const audit = state.inserts.find((i) => i.table === "auditLogs")!.values as { meta: Record<string, unknown> };
+    expect(audit.meta).toMatchObject({ mode: "COURSE_TEST", claimedLevel: null, course: "B1.1" });
+  });
+
+  it("writes the form into the student's copy of the exam and leaves the published exam as it was", async () => {
+    state.selects = [[course]];
+    const r = await invite({ courseForm: "B" });
+    expect(r).toMatchObject({ ok: true, courseForm: "B" });
+    expect(stored().blueprintSnapshot.course).toEqual({ key: "B1.1", form: "B", rules: courseBlueprint("B1.1").course!.rules });
+    expect(stored().blueprintSnapshot.sections).toEqual(courseBlueprint("B1.1").sections);
+    expect(course.config.course!.form).toBeNull();
+    // A form that was asked for needs no lookup.
+    expect(exposure.asked).toEqual([]);
+  });
+
+  it("without a form gives the one the student has not seen, else A", async () => {
+    const cases: Array<[string[], string]> = [
+      [["A"], "B"],
+      [["B"], "A"],
+      [[], "A"],
+      [["A", "B"], "A"],
+    ];
+    for (const [sat, form] of cases) {
+      state.inserts = [];
+      exposure.asked = [];
+      exposure.seen = new Map([["ayse@ornek.com", new Set(sat)]]);
+      state.selects = [[course]];
+      expect(await invite()).toMatchObject({ ok: true, courseForm: form });
+      expect(stored().blueprintSnapshot.course?.form).toBe(form);
+      expect(exposure.asked).toEqual([["o1", ["Ayse@Ornek.com"], "B1.1"]]);
+    }
+  });
+
+  it("treats a form that is not A or B as not given", async () => {
+    exposure.seen = new Map([["ayse@ornek.com", new Set(["B"])]]);
+    for (const bad of ["C", "a", "", null]) {
+      state.inserts = [];
+      state.selects = [[course]];
+      expect(await invite({ courseForm: bad })).toMatchObject({ ok: true, courseForm: "A" });
+    }
+  });
+
+  it("names the test in German in the mail, whatever language the exam was published in", async () => {
+    state.selects = [[course]];
+    await invite({ locale: "en" });
+    const mail = state.inserts.find((i) => i.table === "messageOutbox")!.values as { subject: string; body: string };
+    expect(mail.subject).toBe("Your German exam: Zwischentest B1.1");
+    expect(mail.body).toContain('"Zwischentest B1.1"');
+    state.inserts = [];
+    state.selects = [[{ ...course, name: "Mid-course test B1.1" }]];
+    await invite({ locale: "tr" });
+    expect((state.inserts.find((i) => i.table === "messageOutbox")!.values as { subject: string }).subject).toBe("Almanca sınavınız: Zwischentest B1.1");
+  });
+
+  it("refuses a draft, and a course exam that does not say which course it is, writing nothing", async () => {
+    state.selects = [[{ ...course, status: "DRAFT" }]];
+    expect(await invite()).toEqual({ ok: false, code: "NOT_PUBLISHED" });
+    const withoutCourse = { ...course.config };
+    delete withoutCourse.course;
+    state.selects = [[{ ...course, config: withoutCourse }]];
+    expect(await invite()).toEqual({ ok: false, code: "BLUEPRINT_NOT_FOUND" });
+    expect(state.inserts).toEqual([]);
+  });
+
+  it("leaves the other exams alone: no form, no lookup, the config as it was", async () => {
+    state.selects = [[blueprint]];
+    const r = await createInvitation({ orgId: "o1", blueprintId: "bp1", fullName: "Ayşe Yılmaz", email: "ayse@ornek.com", claimedLevel: null, locale: "tr", invitedBy: "u1", courseForm: "B" });
+    expect(r.ok).toBe(true);
+    expect("courseForm" in r).toBe(false);
+    expect(exposure.asked).toEqual([]);
+    expect(stored().blueprintSnapshot).toBe(blueprint.config);
   });
 });
 

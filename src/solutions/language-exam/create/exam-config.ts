@@ -23,7 +23,14 @@ export const EMPHASIS_FACTOR = 1.5;
 const MIN_TARGET = 10;
 const MAX_TARGET = 120;
 
-export type ExamShape = { mode: ExamMode; targetMinutes: number | null; skills: Section[]; emphasis: Section | null; speakingRequired: boolean | null };
+/**
+ * The modes the creator builds an exam in: placement and level check. A course
+ * test (spec 2026-10-28) is one of eight ready tests with fixed forms that
+ * the invite publishes itself; the creator neither offers it nor rescales it.
+ */
+export type CreatorMode = Exclude<ExamMode, "COURSE_TEST">;
+
+export type ExamShape = { mode: CreatorMode; targetMinutes: number | null; skills: Section[]; emphasis: Section | null; speakingRequired: boolean | null };
 
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
 

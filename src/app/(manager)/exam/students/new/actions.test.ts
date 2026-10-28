@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { courseExamTemplate } from "@/lib/exam/course/templates";
 import { examTemplateByKey, type ExamTemplate } from "@/lib/exam/templates";
 import { orgTime } from "@/lib/exam-window";
 import type { InviteStudentsInput } from "./actions";
@@ -19,6 +20,9 @@ const state = vi.hoisted(() => ({
   invited: [] as Array<Record<string, unknown>>,
   invite: null as null | ((input: Record<string, unknown>) => unknown),
   revalidated: [] as string[],
+  /** Which forms of the course test each e-mail sat before (server/exam-exposure.ts), and what was asked. */
+  seen: new Map<string, Set<string>>(),
+  seenAsked: [] as unknown[][],
 }));
 
 vi.mock("@/db", () => ({
@@ -29,6 +33,12 @@ vi.mock("@/server/session", () => ({
   requireUser: async () => ({ id: "u1", orgId: "o1", email: "m@x", name: "M", role: "MANAGER" }),
 }));
 vi.mock("@/server/panel", () => ({ bankCounts: async () => [] }));
+vi.mock("@/server/exam-exposure", () => ({
+  courseFormsSeenBy: async (...args: unknown[]) => {
+    state.seenAsked.push(args);
+    return state.seen;
+  },
+}));
 vi.mock("@/lib/exam/blueprint", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/exam/blueprint")>()),
   bankCoverage: (_c: unknown, _cfg: unknown, _mode: unknown, claim: string | null) => {
@@ -69,6 +79,8 @@ beforeEach(() => {
   state.invited = [];
   state.invite = null;
   state.revalidated = [];
+  state.seen = new Map();
+  state.seenAsked = [];
 });
 
 describe("inviteStudentsAction: the list", () => {
@@ -242,5 +254,127 @@ describe("inviteStudentsAction: the exam window", () => {
     expect(await inviteStudentsAction(input({ window }))).toEqual({ ok: false, code: "WINDOW", fault });
     expect(state.ensured).toEqual([]);
     expect(state.invited).toEqual([]);
+  });
+});
+
+describe("inviteStudentsAction: a course test", () => {
+  const COURSE = "template:course-b1-1";
+  const publishedCourse = (key: Parameters<typeof courseExamTemplate>[0] = "B1.1", id = "bp-course"): Row => {
+    const t = courseExamTemplate(key);
+    return { id, orgId: "o1", mode: t.mode, status: "PUBLISHED", config: t.config, name: t.name.en };
+  };
+  /** The invitation as createInvitation answers it: the form it was given goes back. */
+  const echoForm = (i: Record<string, unknown>) => ({ ok: true, url: "http://localhost:3100/a/x", expiresAt: new Date("2026-10-28T10:00:00Z"), ...(i.courseForm ? { courseForm: i.courseForm } : {}) });
+  const formsInvited = () => state.invited.map((i) => i.courseForm);
+
+  it("publishes the course template on the first invite and needs no claimed level", async () => {
+    state.ensureResult = { ok: true, blueprint: publishedCourse(), created: true };
+    const r = await inviteStudentsAction(input({ exam: COURSE }));
+    expect(r).toMatchObject({ ok: true, examName: "Mid-course test B1.1" });
+    expect(state.ensured).toEqual([{ orgId: "o1", key: "course-b1-1", locale: "en" }]);
+    expect(state.invited.map((i) => i.claimedLevel)).toEqual([null, null, null]);
+    expect(state.invited.every((i) => i.blueprintId === "bp-course" && i.difficultyOffset === undefined)).toBe(true);
+    // The bank is asked once, for no claim: a course test is covered by its two forms.
+    expect(state.coverageClaims).toEqual([null]);
+  });
+
+  it("gives the list A, B, A down its rows and hands each student's form back", async () => {
+    state.ensureResult = { ok: true, blueprint: publishedCourse(), created: false };
+    state.invite = echoForm;
+    const r = await inviteStudentsAction(input({ exam: COURSE }));
+    expect(formsInvited()).toEqual(["A", "B", "A"]);
+    expect(r).toMatchObject({ ok: true, created: [{ fullName: "Ayşe Yılmaz", form: "A" }, { fullName: "Can Demir", form: "B" }, { fullName: "Deniz Kaya", form: "A" }] });
+  });
+
+  it("forces form A or B for every row when the teacher chose one, without looking anyone up", async () => {
+    state.ensureResult = { ok: true, blueprint: publishedCourse(), created: false };
+    state.seen = new Map([["ayse@ornek.com", new Set(["A"])]]);
+    await inviteStudentsAction(input({ exam: COURSE, courseForm: "B" }));
+    expect(formsInvited()).toEqual(["B", "B", "B"]);
+    state.invited = [];
+    await inviteStudentsAction(input({ exam: COURSE, courseForm: "A" }));
+    expect(formsInvited()).toEqual(["A", "A", "A"]);
+    expect(state.seenAsked).toEqual([]);
+  });
+
+  it("gives a returning student the form they have not seen, and leaves the others' forms where the list put them", async () => {
+    state.ensureResult = { ok: true, blueprint: publishedCourse(), created: false };
+    state.seen = new Map([["ayse@ornek.com", new Set(["A"])], ["deniz@ornek.com", new Set(["B"])]]);
+    await inviteStudentsAction(input({ exam: COURSE, courseForm: null }));
+    // Row 1 would be A but sat A: B. Row 2 nobody has seen: B. Row 3 sat B: A.
+    expect(formsInvited()).toEqual(["B", "B", "A"]);
+    // One lookup for the whole list, by the pasted e-mails, for this course test.
+    expect(state.seenAsked).toEqual([["o1", ["ayse@ornek.com", "can@ornek.com", "deniz@ornek.com"], "B1.1"]]);
+  });
+
+  it("alternates a student who sat both forms like a new one", async () => {
+    state.ensureResult = { ok: true, blueprint: publishedCourse(), created: false };
+    state.seen = new Map([["can@ornek.com", new Set(["A", "B"])]]);
+    await inviteStudentsAction(input({ exam: COURSE }));
+    expect(formsInvited()).toEqual(["A", "B", "A"]);
+  });
+
+  it("ignores a batch claim, a difficulty shift and a form that is not A or B", async () => {
+    state.ensureResult = { ok: true, blueprint: publishedCourse(), created: false };
+    await inviteStudentsAction(input({ exam: COURSE, claimed: "B1", shift: 1, courseForm: "C" as never }));
+    expect(state.invited.map((i) => i.claimedLevel)).toEqual([null, null, null]);
+    expect(state.invited.map((i) => i.difficultyOffset)).toEqual([undefined, undefined, undefined]);
+    expect(formsInvited()).toEqual(["A", "B", "A"]);
+  });
+
+  it("a student whose invitation fails keeps the others' forms", async () => {
+    state.ensureResult = { ok: true, blueprint: publishedCourse(), created: false };
+    state.invite = (i) => {
+      if (i.email === "can@ornek.com") throw new Error("boom");
+      return echoForm(i);
+    };
+    const r = await inviteStudentsAction(input({ exam: COURSE }));
+    expect(r).toMatchObject({ ok: true, created: [{ email: "ayse@ornek.com", form: "A" }, { email: "deniz@ornek.com", form: "A" }], failed: [{ email: "can@ornek.com", code: "GENERIC" }] });
+  });
+
+  it("invites nobody when the bank does not hold both forms, and looks nobody up", async () => {
+    state.ensureResult = { ok: true, blueprint: publishedCourse(), created: false };
+    state.coverageOk = false;
+    expect(await inviteStudentsAction(input({ exam: COURSE }))).toEqual({ ok: false, code: "COVERAGE" });
+    expect(state.invited).toEqual([]);
+    expect(state.seenAsked).toEqual([]);
+    state.coverageOk = true;
+    state.ensureResult = { ok: false, code: "TEMPLATE_COVERAGE" };
+    expect(await inviteStudentsAction(input({ exam: COURSE }))).toEqual({ ok: false, code: "TEMPLATE_COVERAGE" });
+    expect(state.invited).toEqual([]);
+  });
+
+  it("invites on a course exam the school already published, by its id, the same way", async () => {
+    state.rows = [publishedCourse("A2", "own-course")];
+    state.invite = echoForm;
+    const r = await inviteStudentsAction(input({ exam: "blueprint:own-course" }));
+    expect(r).toMatchObject({ ok: true });
+    expect(state.ensured).toEqual([]);
+    expect(formsInvited()).toEqual(["A", "B", "A"]);
+    expect(state.seenAsked.map((a) => a[2])).toEqual(["A2"]);
+  });
+
+  it("refuses a course exam that does not say which course it is", async () => {
+    const row = publishedCourse("A2", "own-course");
+    const config = { ...(row.config as Record<string, unknown>) };
+    delete config.course;
+    state.rows = [{ ...row, config }];
+    expect(await inviteStudentsAction(input({ exam: "blueprint:own-course" }))).toEqual({ ok: false, code: "EXAM" });
+    expect(state.invited).toEqual([]);
+  });
+
+  it("the other exams get no form and no lookup", async () => {
+    state.ensureResult = { ok: true, blueprint: published("placement"), created: false };
+    state.invite = echoForm;
+    const r = await inviteStudentsAction(input({ courseForm: "B" }));
+    expect(r).toMatchObject({ ok: true });
+    expect(state.invited.every((i) => !("courseForm" in i))).toBe(true);
+    expect((r as { created: Array<Record<string, unknown>> }).created.every((c) => !("form" in c))).toBe(true);
+    expect(state.seenAsked).toEqual([]);
+  });
+
+  it("an unknown course template is no exam", async () => {
+    expect(await inviteStudentsAction(input({ exam: "template:course-c1" }))).toEqual({ ok: false, code: "EXAM" });
+    expect(state.ensured).toEqual([]);
   });
 });

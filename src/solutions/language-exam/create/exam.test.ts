@@ -56,6 +56,15 @@ describe("validateExamParams", () => {
     expect(validateExamParams("nonsense", "tr").ok).toBe(false);
     expect(validateExamParams({ mode: "PLACEMENT", skills: "all" }, "tr")).toMatchObject({ ok: true, params: { skills: [] } });
   });
+
+  it("never offers a course test: the router's COURSE_TEST is no mode, so it asks again", () => {
+    // Course tests (spec 2026-10-28) are the eight ready tests with fixed forms; this creator builds placement and level checks only.
+    for (const mode of ["COURSE_TEST", "course-b1", "Zwischentest"]) {
+      expect(validateExamParams({ mode, targetMinutes: 40 }, "en")).toMatchObject({ ok: false, questions: [{ id: "mode" }] });
+    }
+    expect(JSON.stringify(examCreator.paramsJsonSchema)).not.toContain("COURSE");
+    expect(examCreator.routerGuide).not.toContain("COURSE");
+  });
 });
 
 describe("examCreator.draft", () => {

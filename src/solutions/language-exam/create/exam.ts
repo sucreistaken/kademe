@@ -5,7 +5,7 @@ import { auditLogs, examBlueprints } from "@/db/schema";
 import type { Locale } from "@/i18n/locale";
 import { bankCoverage, estimatedMinutes, type BlueprintConfig } from "@/lib/exam/blueprint";
 import type { ExamTemplateKey } from "@/lib/exam/templates";
-import { CEFR_LEVELS, SECTIONS, type Cefr, type ExamMode } from "@/lib/exam/types";
+import { CEFR_LEVELS, SECTIONS, type Cefr } from "@/lib/exam/types";
 import { bankCounts } from "@/server/panel";
 import type { ApplyResult, Creator, CreatorValidation } from "@/solutions/types";
 import {
@@ -16,6 +16,7 @@ import {
   examEditsSchema,
   SECTION_LABEL,
   type CoverageGap,
+  type CreatorMode,
   type ExamShape,
 } from "./exam-config";
 
@@ -29,7 +30,7 @@ import {
 export type ExamParams = ExamShape & { claimedLevel: Cefr | null; name: string | null };
 export type ExamDraft = {
   name: string;
-  mode: ExamMode;
+  mode: CreatorMode;
   claimedLevel: Cefr | null;
   templateKey: ExamTemplateKey;
   config: BlueprintConfig;

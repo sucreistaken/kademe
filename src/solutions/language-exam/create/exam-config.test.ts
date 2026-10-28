@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { bankCoverage, blueprintConfigSchema, enabledSections, estimatedMinutes, type CoverageRow } from "@/lib/exam/blueprint";
-import { SECTIONS, type ExamMode, type Section } from "@/lib/exam/types";
+import { SECTIONS, type Section } from "@/lib/exam/types";
 import {
   allocateMinutes,
   applyExamEdits,
@@ -14,6 +14,7 @@ import {
   MIN_SECTION_MINUTES,
   relativeTextsFor,
   textsFor,
+  type CreatorMode,
   type ExamShape,
 } from "./exam-config";
 
@@ -48,7 +49,7 @@ describe("examTemplateFor", () => {
 
 describe("buildExamConfig", () => {
   it("stays inside the schema for every mode, section set and minutes 10..120", () => {
-    for (const mode of ["PLACEMENT", "LEVEL_VERIFICATION"] as ExamMode[]) {
+    for (const mode of ["PLACEMENT", "LEVEL_VERIFICATION"] as CreatorMode[]) {
       for (const skills of subsets) {
         for (let target = 10; target <= 120; target++) {
           const { config } = buildExamConfig(shape({ mode, skills, targetMinutes: target }));
