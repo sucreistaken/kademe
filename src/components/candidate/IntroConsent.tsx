@@ -101,7 +101,7 @@ export function IntroConsent({
     );
   }
 
-  // A course test claims no level and estimates none: it is a course test, called by its German name above (the page sets it).
+  // A course test claims no level and estimates none: it is a course test, called by its German name above (enter() sets it).
   const title =
     state.mode === "COURSE_TEST"
       ? t("titleCourseTest")

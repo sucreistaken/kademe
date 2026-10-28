@@ -440,8 +440,8 @@ async function finishedState(
   const hasProductive = enabledSections(cfg).some((s) => !isObjectiveSection(s.section));
   const released = !!result?.releasedAt;
   const waitingFor = studentWaitingFor({ hasProductive, final: result?.status === "FINAL", computed: result?.computed });
-  // Only a released result says anything about the level.
-  const levelShown = released && (result?.levelShown ?? cfg.resultVisibility !== "NONE");
+  // Only a released result says anything about the level, and a course test has no level to say (spec 2026-10-28).
+  const levelShown = released && !cfg.course && (result?.levelShown ?? cfg.resultVisibility !== "NONE");
   const student: StudentResult = {
     visibility: cfg.resultVisibility,
     released,
