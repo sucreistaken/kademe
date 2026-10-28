@@ -86,7 +86,7 @@ const reading = [
     "detail",
     "Lesen Sie den Zeitungsartikel. Sind die Aussagen richtig oder falsch? Kreuzen Sie an.",
     [
-      ["Bei einem Haustausch bezahlt man keine Miete für die fremde Wohnung.", "R"],
+      ["Beim Haustausch zahlen sich die Familien gegenseitig nichts für die Wohnung.", "R"],
       ["Familie Haddad hatte vor dem Urlaub keinen Kontakt zu der dänischen Familie.", "F"],
       ["Familie Haddad plant für das nächste Jahr wieder einen Urlaub mit Haustausch.", "R"],
     ],
