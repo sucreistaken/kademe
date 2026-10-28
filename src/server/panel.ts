@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, ne, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   assessmentLinks,
@@ -140,7 +140,11 @@ export async function listStudents(orgId: string): Promise<StudentRow[]> {
   });
 }
 
-/** Approved, servable items per section and level; listening needs audio. */
+/**
+ * Approved, servable items per section and level; listening needs audio. The
+ * bank only: course test rows (course_form set, spec 2026-10-28) are served by
+ * their own form and never count towards a placement or level check's coverage.
+ */
 export async function bankCounts(orgId: string): Promise<BankCount[]> {
   const rows = await db
     .select({
@@ -159,6 +163,8 @@ export async function bankCounts(orgId: string): Promise<BankCount[]> {
       and(
         eq(items.orgId, orgId),
         eq(items.status, "APPROVED"),
+        isNull(items.courseForm),
+        isNull(stimuli.courseForm),
         sql`(${items.section} <> 'LISTENING' or ${stimuli.audioKey} is not null)`,
       ),
     )

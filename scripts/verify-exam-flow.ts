@@ -51,7 +51,7 @@ async function main() {
     process.exit(2);
     return;
   }
-  const { and, eq } = await import("drizzle-orm");
+  const { and, eq, isNull } = await import("drizzle-orm");
   const { db } = await import("../src/db");
   const s = await import("../src/db/schema");
   const { createInvitation } = await import("../src/server/invite");
@@ -243,7 +243,8 @@ async function main() {
   await run("placement", placement.id, null);
   await run("verification", verification.id, "B1");
 
-  const items = await db.select().from(s.items);
+  // The bank only: course test rows (course_form set) are never served by a placement or level check.
+  const items = await db.select().from(s.items).where(isNull(s.items.courseForm));
 
   console.log("\nPictures");
   // A fresh placement at A2, stopped on the first state that shows a picture, so the exam is still
@@ -322,7 +323,7 @@ async function main() {
 
   console.log("\nLeak scan over every state sent to the student");
   const bodies = sent.join("\n");
-  const stimuliRows = await db.select().from(s.stimuli).where(eq(s.stimuli.section, "LISTENING"));
+  const stimuliRows = await db.select().from(s.stimuli).where(and(eq(s.stimuli.section, "LISTENING"), isNull(s.stimuli.courseForm)));
   const forbiddenNames = ["answerKey", "answer_key", "\"key\"", "rubric", "contentPoints", "difficulty", "skillTag", "explanation", "itemSnapshot", "audioKey", "thetaAfter", "isCorrect", "storageKey", "bank/images/"];
   const hits = forbiddenNames.filter((n) => bodies.includes(n));
   if (hits.length === 0) ok(`no internal field names, storage keys or picture paths in ${sent.length} states`);

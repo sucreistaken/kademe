@@ -1,4 +1,4 @@
-import { and, desc, eq, notInArray } from "drizzle-orm";
+import { and, desc, eq, isNull, notInArray } from "drizzle-orm";
 import { db } from "@/db";
 import { items, stimuli } from "@/db/schema";
 import { callJson } from "@/lib/ai-runs";
@@ -23,6 +23,8 @@ export async function generateItems(orgId: string, userId: string, spec: Generat
   // Imitate what this school already approved, and avoid its topics. Texts
   // (C-test, cloze, word bank) are hand-written and never an example: the
   // model would copy a whole text and its distractors (spec 2026-10-18).
+  // Course test rows (course_form set, spec 2026-10-28) belong to their form,
+  // not to the bank: neither an example nor a topic to avoid.
   const examples = await db
     .select({ prompt: items.prompt, content: items.content, key: items.answerKey, rubric: items.rubric })
     .from(items)
@@ -33,6 +35,7 @@ export async function generateItems(orgId: string, userId: string, spec: Generat
         eq(items.level, spec.level),
         eq(items.type, spec.itemType),
         eq(items.status, "APPROVED"),
+        isNull(items.courseForm),
         notInArray(items.skillTag, Object.values(TEXT_GAP_SKILL_TAGS)),
       ),
     )
@@ -41,7 +44,7 @@ export async function generateItems(orgId: string, userId: string, spec: Generat
   const topics = await db
     .select({ topic: stimuli.topic })
     .from(stimuli)
-    .where(and(eq(stimuli.orgId, orgId), eq(stimuli.section, spec.section), eq(stimuli.level, spec.level)))
+    .where(and(eq(stimuli.orgId, orgId), eq(stimuli.section, spec.section), eq(stimuli.level, spec.level), isNull(stimuli.courseForm)))
     .limit(20);
   const messages = buildGenerationMessages(spec, examples, topics.map((t) => t.topic).filter(Boolean));
   const meta = { orgId, purpose: "ITEM_GENERATION" as const, requestedBy: userId, inputRef: `${spec.section}/${spec.level}/${spec.itemType}` };

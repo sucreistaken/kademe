@@ -1,4 +1,4 @@
-import { and, count, eq, inArray, ne } from "drizzle-orm";
+import { and, count, eq, inArray, isNull, ne } from "drizzle-orm";
 import { db } from "@/db";
 import { examBlueprints, items } from "@/db/schema";
 import type { Locale } from "@/i18n/locale";
@@ -22,7 +22,8 @@ export async function examAdvancedCards(orgId: string, locale: Locale): Promise<
     db
       .select({ status: items.status, n: count() })
       .from(items)
-      .where(and(eq(items.orgId, orgId), inArray(items.status, ["APPROVED", "DRAFT"])))
+      // The bank's questions only: course test rows have no place in the bank (spec 2026-10-28).
+      .where(and(eq(items.orgId, orgId), isNull(items.courseForm), inArray(items.status, ["APPROVED", "DRAFT"])))
       .groupBy(items.status),
     feedbackTotals(orgId),
   ]);

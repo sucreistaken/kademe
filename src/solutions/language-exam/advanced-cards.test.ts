@@ -20,6 +20,17 @@ describe("examAdvancedCards", () => {
     ]);
   });
 
+  it("counts the bank's questions only: course test rows (course_form set) are not part of the bank", async () => {
+    const { PgDialect } = await import("drizzle-orm/pg-core");
+    fake.calls = [];
+    fake.results = [[{ n: 0 }], []];
+    await examAdvancedCards("o1", "en");
+    // The exams count has its own where(); the bank count is the second one.
+    const wheres = fake.calls.filter(([op]) => op === "where").map(([, a]) => new PgDialect().sqlToQuery(a[0] as never).sql);
+    expect(wheres[1]).toContain('"items"."course_form" is null');
+    expect(wheres[1]).toContain('"items"."status" in');
+  });
+
   it("says there is no feedback yet instead of an average of nothing", async () => {
     fake.results = [[{ n: 0 }], []];
     totals.value = { ...totals.value, count: 0, averageOverall: null };

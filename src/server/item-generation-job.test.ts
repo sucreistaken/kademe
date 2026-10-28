@@ -46,6 +46,18 @@ describe("generateItems", () => {
   });
 });
 
+describe("course test rows", () => {
+  it("are neither an example for the model nor a topic to avoid (course_form set means not the bank)", async () => {
+    const { PgDialect } = await import("drizzle-orm/pg-core");
+    fake.results = [[], [], [{ id: "i1" }, { id: "i2" }]];
+    await generateItems("o1", "u1", { section: "READING", level: "B1", itemType: "SINGLE_CHOICE", count: 2, withStimulus: false });
+    // The first where() is the examples query, the second the earlier topics.
+    const [examples, topics] = fake.calls.filter(([op]) => op === "where").map(([, a]) => new PgDialect().sqlToQuery(a[0] as never).sql);
+    expect(examples).toContain('"items"."course_form" is null');
+    expect(topics).toContain('"stimuli"."course_form" is null');
+  });
+});
+
 describe("few-shot examples", () => {
   it("never takes a C-test, cloze or word-bank text as an example", async () => {
     const { PgDialect } = await import("drizzle-orm/pg-core");

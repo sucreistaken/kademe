@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { makeAudio, setItemStatus } from "@/app/(manager)/exam/bank/actions";
+import { bankItem } from "@/app/(manager)/exam/bank/bank-scope";
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dot } from "@/components/panel/bits";
@@ -39,7 +40,7 @@ export default async function BankItemPage({ params, searchParams }: { params: P
     .select({ item: items, stimulus: stimuli })
     .from(items)
     .leftJoin(stimuli, eq(stimuli.id, items.stimulusId))
-    .where(and(eq(items.id, id), eq(items.orgId, user.orgId)));
+    .where(and(eq(items.id, id), bankItem(user.orgId)));
   if (!row) notFound();
   const { item, stimulus } = row;
   const bt: BankT = (key, values) => t(`bankTools.${key}` as never, values as never);

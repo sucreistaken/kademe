@@ -7,6 +7,7 @@ import { planImport, scriptSpeakers, titleFromBody, IMPORT_SECTIONS, IMPORT_TYPE
 import { difficultyFor, withinOf } from "@/lib/exam/difficulty";
 import { itemProblems, type ItemProblem } from "@/lib/exam/validate";
 import type { SaveItemInput } from "@/components/panel/item-editor-model";
+import { bankItem } from "./bank-scope";
 
 /**
  * The bank's writes that are more than a status flip: a spreadsheet import,
@@ -114,7 +115,7 @@ export async function saveBankItem(user: SessionUser, input: SaveItemInput): Pro
     const [row] = await db
       .select({ id: items.id, type: items.type, section: items.section, level: items.level, difficulty: items.difficulty, status: items.status, skillTag: items.skillTag })
       .from(items)
-      .where(and(eq(items.id, input.id), eq(items.orgId, user.orgId)));
+      .where(and(eq(items.id, input.id), bankItem(user.orgId)));
     if (!row) return { ok: false, code: "NOT_FOUND" };
     // The stored skill tag adds the cloze and word-bank rules; the browser never sets it.
     const textProblems = itemProblems({ ...candidate, skillTag: row.skillTag });
@@ -137,7 +138,7 @@ export async function saveBankItem(user: SessionUser, input: SaveItemInput): Pro
         // Saving an approved item is approving what was saved.
         ...(row.status === "APPROVED" ? { reviewedBy: user.id, reviewedAt: now } : {}),
       })
-      .where(and(eq(items.id, row.id), eq(items.orgId, user.orgId)));
+      .where(and(eq(items.id, row.id), bankItem(user.orgId)));
     await db.insert(auditLogs).values({ orgId: user.orgId, actorId: user.id, action: "bank.edit", subjectType: "item", subjectId: row.id, meta: { status: row.status } });
     return { ok: true, id: row.id, status: row.status };
   }
@@ -229,7 +230,7 @@ export async function bulkApproveItems(user: Pick<SessionUser, "id" | "orgId">, 
     })
     .from(items)
     .leftJoin(stimuli, eq(stimuli.id, items.stimulusId))
-    .where(and(eq(items.orgId, user.orgId), inArray(items.id, unique)));
+    .where(and(bankItem(user.orgId), inArray(items.id, unique)));
   const ok: string[] = [];
   for (const id of unique) {
     const r = rows.find((x) => x.id === id);
@@ -252,7 +253,7 @@ export async function bulkApproveItems(user: Pick<SessionUser, "id" | "orgId">, 
     await db
       .update(items)
       .set({ status: "APPROVED", reviewedBy: user.id, reviewedAt: now, updatedAt: now })
-      .where(and(eq(items.orgId, user.orgId), inArray(items.id, ok)));
+      .where(and(bankItem(user.orgId), inArray(items.id, ok)));
     await db.insert(auditLogs).values(ok.map((id) => ({ orgId: user.orgId, actorId: user.id, action: "bank.approved", subjectType: "item", subjectId: id, meta: { via: "bulk" } })));
   }
   result.approved = ok.length;

@@ -16,6 +16,7 @@ import { CEFR_LEVELS } from "@/lib/exam/types";
 import { validateItem } from "@/lib/exam/validate";
 import { synthesize } from "@/lib/tts";
 import { bulkApproveItems, importSheetRows, MAX_BULK, saveBankItem, type BulkApproveResult, type SaveResult } from "./bank-items";
+import { bankItem } from "./bank-scope";
 import { generateItems } from "@/server/item-generation-job";
 import { requireUser } from "@/server/session";
 
@@ -24,7 +25,7 @@ async function ownItem(id: string, orgId: string) {
     .select({ item: items, stimulus: stimuli })
     .from(items)
     .leftJoin(stimuli, eq(stimuli.id, items.stimulusId))
-    .where(and(eq(items.id, id), eq(items.orgId, orgId)));
+    .where(and(eq(items.id, id), bankItem(orgId)));
   return row ?? null;
 }
 
@@ -84,7 +85,7 @@ export async function setItemStatus(formData: FormData) {
   await db
     .update(items)
     .set({ status, reviewedBy: user.id, reviewedAt: new Date(), updatedAt: new Date() })
-    .where(and(eq(items.id, id), eq(items.orgId, user.orgId)));
+    .where(and(eq(items.id, id), bankItem(user.orgId)));
   await db.insert(auditLogs).values({ orgId: user.orgId, actorId: user.id, action: `bank.${status.toLowerCase()}`, subjectType: "item", subjectId: id });
   refreshBank(id);
   redirect(`/exam/bank/${id}`);

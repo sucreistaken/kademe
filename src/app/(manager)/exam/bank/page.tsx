@@ -11,6 +11,7 @@ import { can } from "@/lib/authorize";
 import { isWithin, withinOf, withinRange, type Within } from "@/lib/exam/difficulty";
 import { CEFR_LEVELS, SECTIONS, type Cefr, type Section } from "@/lib/exam/types";
 import { bankCounts } from "@/server/panel";
+import { bankItem } from "./bank-scope";
 import { requireUser } from "@/server/session";
 import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
@@ -45,7 +46,7 @@ export default async function BankPage({ searchParams }: { searchParams: Promise
   const limit = Math.min(MAX_ROWS, Math.max(1, Math.floor(Number(sp.limit)) || PAGE));
   const counts = await bankCounts(user.orgId);
   const where = and(
-    eq(items.orgId, user.orgId),
+    bankItem(user.orgId),
     eq(items.status, TABS[tab]),
     section ? eq(items.section, section) : undefined,
     level ? eq(items.level, level) : undefined,
@@ -62,7 +63,7 @@ export default async function BankPage({ searchParams }: { searchParams: Promise
   const tabCounts = await db
     .select({ status: items.status, n: sql<number>`count(*)::int` })
     .from(items)
-    .where(eq(items.orgId, user.orgId))
+    .where(bankItem(user.orgId))
     .groupBy(items.status);
   const q = (patch: Record<string, string | null>) => {
     const p = new URLSearchParams();

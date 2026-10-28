@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
+import { bankItem } from "@/app/(manager)/exam/bank/bank-scope";
 import { ItemEditor } from "@/components/panel/item-editor";
 import { draftFromItem } from "@/components/panel/item-editor-model";
 import { db } from "@/db";
@@ -18,7 +19,7 @@ export default async function EditBankItemPage({ params }: { params: Promise<{ i
     .select({ item: items, title: stimuli.title, body: stimuli.body })
     .from(items)
     .leftJoin(stimuli, eq(stimuli.id, items.stimulusId))
-    .where(and(eq(items.id, id), eq(items.orgId, user.orgId)));
+    .where(and(eq(items.id, id), bankItem(user.orgId)));
   if (!row) notFound();
   const { item } = row;
   const initial = draftFromItem({
