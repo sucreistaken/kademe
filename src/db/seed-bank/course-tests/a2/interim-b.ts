@@ -51,7 +51,7 @@ const reading = [
     "MID",
     [
       ["Die Idee für das Experiment hatten die Kinder.", "F"],
-      ["Lukas fiel der Samstag am schwersten, weil seine Freunde ihn nicht erreichen konnten.", "R"],
+      ["Für Lukas war der Samstag am schwersten, weil seine Freunde ihn nicht erreichen konnten.", "R"],
       ["Die Familie möchte das Experiment im Sommer noch einmal machen.", "R"],
     ],
     "1 F: Die Idee hatte der Vater, Ivan Novak. 2 R: Lukas fand den Samstag am schwersten, denn seine Freunde konnten ihn nicht erreichen. 3 R: Das Experiment hat der Familie so gut gefallen, dass sie es im Sommer noch einmal machen möchte.",
@@ -199,7 +199,7 @@ const elektro = s.clip("elektro", "Radiowerbung eines Elektrogeschäfts", "Medie
 ]);
 
 const vhs = s.clip("vhs", "Telefonansage der Volkshochschule", "Kurs und Schule", [{ label: "Ansage", voice: "D" }], [
-  "Ansage: Herzlich willkommen bei der Volkshochschule Nord. Für den Abendkurs Deutsch gibt es zwei Änderungen. Erstens: Am Dienstag findet der Unterricht nicht im Raum zwölf statt, sondern im Raum einundzwanzig, weil der Boden in Raum zwölf repariert wird. Zweitens: Am Donnerstag fällt der Kurs aus, weil die Lehrerin eine Fortbildung hat. Den Termin holen wir am Samstag nach, von zehn bis dreizehn Uhr. Bitte sagen Sie es auch den anderen Teilnehmerinnen und Teilnehmern. Wenn Sie Fragen haben, rufen Sie das Sekretariat an. Es ist täglich von acht bis zwölf Uhr besetzt. Vielen Dank!",
+  "Ansage: Herzlich willkommen bei der Volkshochschule Nord. Für den Abendkurs Deutsch gibt es zwei Änderungen. Erstens: Am Dienstag findet der Unterricht nicht im Raum zwölf statt, sondern im Raum einundzwanzig, weil man im Raum zwölf den Boden repariert. Zweitens: Am Donnerstag gibt es keinen Unterricht, weil die Lehrerin krank ist. Dafür haben wir einen Extra-Termin am Samstag, von zehn bis dreizehn Uhr. Bitte sagen Sie es auch den anderen Teilnehmerinnen und Teilnehmern. Wenn Sie Fragen haben, rufen Sie das Sekretariat an. Es ist täglich von acht bis zwölf Uhr besetzt. Vielen Dank!",
 ]);
 
 const gespraech = s.clip(
@@ -214,22 +214,17 @@ const gespraech = s.clip(
     "Frau Lang: Guten Tag, Herr Aydin. Schön, dass Sie da sind. Setzen Sie sich bitte.",
     "Herr Aydin: Guten Tag, Frau Lang. Vielen Dank.",
     "Frau Lang: Sie möchten bei uns im Lager arbeiten. Haben Sie schon Erfahrung?",
-    "Herr Aydin: Ja, ich habe zwei Jahre in einem Supermarkt gearbeitet. Ich habe die Regale eingeräumt und die Waren kontrolliert.",
-    "Frau Lang: Sprechen Sie auch ein bisschen Englisch? Wir bekommen viele Lieferungen aus dem Ausland.",
-    "Herr Aydin: Ja, ein bisschen. Ich lerne seit einem Jahr Englisch, aber mein Deutsch ist besser.",
+    "Herr Aydin: Ja, ich war zwei Jahre im Supermarkt. Ich habe Regale eingeräumt und Waren kontrolliert.",
     "Frau Lang: Und warum möchten Sie die Stelle wechseln?",
-    "Herr Aydin: Der Supermarkt hat leider geschlossen. Außerdem möchte ich gern am Vormittag arbeiten, weil ich am Nachmittag einen Deutschkurs besuche.",
-    "Frau Lang: Das passt gut. Bei uns beginnt die Arbeit um sechs Uhr und endet um vierzehn Uhr. Ist das ein Problem für Sie?",
-    "Herr Aydin: Nein, früh aufstehen finde ich nicht schlimm. Aber ich habe kein Auto. Wie komme ich zu Ihnen?",
-    "Frau Lang: Mit der Straßenbahn, Linie vier. Sie hält direkt vor der Firma. Und am Wochenende müssen Sie nicht arbeiten.",
-    "Herr Aydin: Das ist prima. Und was ziehe ich bei der Arbeit an?",
-    "Frau Lang: Arbeitskleidung bekommen Sie von uns. Nur die Schuhe müssen Sie selbst mitbringen.",
-    "Herr Aydin: Kein Problem, Arbeitsschuhe habe ich schon. Und wie viel verdiene ich?",
+    "Herr Aydin: Der Supermarkt hat zugemacht. Außerdem möchte ich gern am Vormittag arbeiten, weil ich am Nachmittag einen Deutschkurs habe.",
+    "Frau Lang: Das passt gut. Bei uns beginnt die Arbeit um sechs Uhr und endet um zwei. Und am Wochenende müssen Sie nicht arbeiten.",
+    "Herr Aydin: Das ist prima. Aber ich habe kein Auto. Wie komme ich zu Ihnen?",
+    "Frau Lang: Mit der Straßenbahn, Linie vier. Sie hält direkt vor der Firma.",
+    "Herr Aydin: Gut. Und wie viel verdiene ich?",
     "Frau Lang: Am Anfang bezahlen wir vierzehn Euro pro Stunde. Nach drei Monaten bekommen Sie einen Euro mehr.",
-    "Herr Aydin: Gut. Und wann kann ich anfangen?",
-    "Frau Lang: Am ersten Juli. Sie bekommen noch einen Brief mit dem Vertrag. Bringen Sie ihn bitte unterschrieben zurück.",
-    "Herr Aydin: Mache ich. Vielen Dank, Frau Lang, und auf Wiedersehen!",
-    "Frau Lang: Auf Wiedersehen, Herr Aydin!",
+    "Herr Aydin: Danke. Und wann kann ich anfangen?",
+    "Frau Lang: Am ersten Juli. Sie bekommen noch einen Brief mit dem Vertrag.",
+    "Herr Aydin: Danke, Frau Lang! Auf Wiedersehen!",
   ],
 );
 
@@ -261,20 +256,20 @@ const listening = [
     "detail",
     "MID",
     "Warum findet der Kurs am Dienstag in einem anderen Raum statt?",
-    "Weil der Boden im Kursraum repariert wird.",
-    ["Weil die Lehrerin eine Fortbildung hat.", "Weil am Samstag ein Termin nachgeholt wird."],
+    "Weil man den Boden repariert.",
+    ["Weil die Lehrerin krank ist.", "Weil am Samstag auch Unterricht ist."],
     0,
-    "Der Boden in Raum zwölf wird repariert, deshalb ist der Unterricht in Raum einundzwanzig. Die Fortbildung der Lehrerin ist der Grund, warum der Kurs am Donnerstag ausfällt; der Samstag ist der Nachholtermin.",
+    "Im Raum zwölf repariert man den Boden, deshalb ist der Unterricht in Raum einundzwanzig. Die kranke Lehrerin ist der Grund, warum am Donnerstag kein Unterricht ist; der Samstag ist der Extra-Termin dafür.",
   ),
   lGespraech.tfng(
     "detail",
     "MID",
     [
-      ["Herr Aydin hat zwei Jahre in einem Supermarkt gearbeitet.", "R"],
+      ["Herr Aydin möchte lieber am Vormittag als am Nachmittag arbeiten.", "R"],
       ["Herr Aydin muss auch am Wochenende arbeiten.", "F"],
       ["Herr Aydin bekommt von Anfang an fünfzehn Euro pro Stunde.", "F"],
     ],
-    "1 R: \"Ich habe zwei Jahre in einem Supermarkt gearbeitet.\" 2 F: \"Am Wochenende müssen Sie nicht arbeiten.\" 3 F: Am Anfang sind es vierzehn Euro, erst nach drei Monaten einen Euro mehr.",
+    "1 R: \"Außerdem möchte ich gern am Vormittag arbeiten, weil ich am Nachmittag einen Deutschkurs habe.\" 2 F: \"Am Wochenende müssen Sie nicht arbeiten.\" 3 F: Am Anfang sind es vierzehn Euro, erst nach drei Monaten einen Euro mehr.",
   ),
 ];
 
@@ -307,12 +302,12 @@ const speaking = [
     "monologue",
     "MID",
     LIFE_TIME,
-    "Erzählen Sie bitte, wie Sie Handy und Internet benutzen.\n\n- Wie oft benutzen Sie Ihr Handy, und wofür?\n- Was benutzen Sie am liebsten, und warum?\n- Was ist gut, was ist nicht so gut?\n- Wie war das früher, ohne Handy?",
+    "Erzählen Sie bitte, wie Sie Handy und Internet benutzen.\n\n- Wie oft benutzen Sie Ihr Handy, und wofür?\n- Was benutzen Sie am liebsten, und warum?\n- Was ist gut, was ist nicht so gut?\n- Was finden Sie wichtiger: Handy oder Computer?",
     [
       "Sagen, wie oft und wofür man Handy und Internet benutzt (mit Beispielen)",
       "Eine App, ein Gerät oder ein Programm nennen, das man am liebsten benutzt, mit Grund",
       "Vorteile und Nachteile nennen (zum Beispiel praktisch, aber teuer oder zu viel Zeit)",
-      "Früher und heute vergleichen",
+      "Handy und Computer vergleichen und eine Meinung mit Grund nennen",
     ],
     [],
     "Über das eigene Leben sprechen (Kapitel 3: Medien im Alltag). Erwartet werden Vergleiche (Komparativ, Superlativ, „als“, „wie“) und Meinungen mit „dass“ oder „weil“.",

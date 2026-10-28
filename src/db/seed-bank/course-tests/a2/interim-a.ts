@@ -50,9 +50,9 @@ const reading = [
     "detail",
     "MID",
     [
-      ["In der Schule gehörte Sport zu Nilays Lieblingsfächern.", "R"],
+      ["Nilay mochte Sport in der Schule sehr gern.", "R"],
       ["Nach dem Abschluss wollte Nilay sofort Bäckerin werden.", "F"],
-      ["Das frühe Aufstehen fällt Nilay auch heute noch schwer.", "R"],
+      ["Das frühe Aufstehen ist für Nilay auch heute noch schwer.", "R"],
     ],
     "1 R: Kunst und Sport waren ihre Lieblingsfächer. 2 F: Sie wollte zuerst Erzieherin werden, das Praktikum in der Bäckerei kam danach. 3 R: Nur das frühe Aufstehen findet sie noch immer schwer.",
   ),
@@ -80,11 +80,11 @@ const reading = [
     viertel,
     "detail",
     "MID",
-    "Wer war heute in einer Behörde?",
+    "Wer war heute auf einem Amt?",
     "Text D",
     ["Text B", "Text A"],
     1,
-    "Text D: Die Schreiberin war im Bürgeramt und hat dort einen neuen Termin bekommen. Text A und Text B sprechen nicht von einem Amt.",
+    "Text D: Die Schreiberin war im Bürgeramt (ein Amt) und hat dort einen Termin für Donnerstag bekommen. Text A und Text B sprechen nicht von einem Amt.",
   ),
 ];
 
@@ -94,12 +94,12 @@ const cloze = cloze3("MID", {
   title: "Eine Nachricht aus Wien",
   first: "Liebe Jana, ich wohne jetzt seit zwei Wochen in Wien.",
   body:
-    "Ich [[bin|habe|hatte#perfekt.hilfsverb]] an einem Samstag mit dem Zug angekommen und wohne zuerst bei [[meiner|meine|meinem#dativ]] Tante. " +
+    "Ich [[bin|habe|hatte#perfekt.hilfsverb]] an einem Samstag mit dem Zug angekommen und wohne im Moment bei [[meiner|meine|meinem#dativ]] Tante. " +
     "In der ersten Woche [[musste|muss|müsste#praeteritum]] ich viele Formulare ausfüllen, aber jetzt ist alles fertig. " +
     "Wien ist viel [[größer|groß|am größten#adjektiv.komparativ]] als Graz, aber ich finde die Stadt sehr schön. " +
-    "Am Wochenende treffen wir [[uns|euch|sich#reflexiv]] mit ein paar Kollegen und gehen in die [[neue|neuen|neues#adjektivendung]] Bar am Fluss.",
+    "Am Wochenende treffen meine Tante und ich [[uns|euch|sich#reflexiv]] mit ein paar Freunden und gehen in die [[neue|neuen|neues#adjektivendung]] Bar am Fluss.",
   last: "Schreib mir bald, wie es dir in Graz geht!",
-  note: "Perfekt mit „sein“ bei ankommen (g1), Possessivartikel im Dativ nach „bei“ (g2), Modalverb im Präteritum (g3), Komparativ mit „als“ (g4), Reflexivpronomen zu „wir“ (g5), Adjektivendung nach dem bestimmten Artikel (g6).",
+  note: "Perfekt mit „sein“ bei ankommen (g1), Possessivartikel im Dativ nach „bei“ (g2), Modalverb im Präteritum (g3), Komparativ mit „als“ (g4), Reflexivpronomen zu „meine Tante und ich“ (g5), Adjektivendung nach dem bestimmten Artikel (g6).",
 });
 
 const sentences = [
@@ -189,15 +189,15 @@ const sentences = [
 // ================================================================ LISTENING
 
 const buergeramt = s.clip("buergeramt", "Nachricht vom Bürgeramt", "Behörde und Termin", [{ label: "Frau Weber", voice: "A" }], [
-  "Frau Weber: Guten Tag, Frau Yilmaz, hier ist das Bürgeramt Nord, Weber am Apparat. Sie haben einen Termin für Ihren neuen Pass, am Dienstag um zehn Uhr. Leider ist meine Kollegin am Dienstag krank. Es tut mir wirklich leid für die Umstände. Können Sie stattdessen am Mittwoch kommen, um halb zwölf? Wenn der Mittwoch nicht geht, rufen Sie mich bitte bis Montag an. Unsere Nummer ist null drei null, zwei zwei eins, vier vier. Ich wiederhole: null drei null, zwei zwei eins, vier vier. Bitte bringen Sie ein Foto mit. Das Bürgeramt ist am Mittwoch übrigens bis achtzehn Uhr geöffnet, an den anderen Tagen nur bis sechzehn Uhr. Vielen Dank und auf Wiederhören!",
+  "Frau Weber: Guten Tag, Frau Yilmaz, hier ist das Bürgeramt Nord, Weber am Apparat. Sie haben einen Termin für Ihren neuen Pass, am Dienstag um zehn Uhr. Leider ist meine Kollegin krank und kann am Dienstag nicht arbeiten. Entschuldigen Sie bitte die Umstände. Können Sie stattdessen am Mittwoch kommen, um halb zwölf? Wenn der Mittwoch nicht geht, rufen Sie mich bitte bis Montag an. Unsere Nummer ist null drei null, zwei zwei eins, vier vier. Ich wiederhole: null drei null, zwei zwei eins, vier vier. Bitte bringen Sie ein Foto mit. Das Bürgeramt ist am Mittwoch übrigens bis achtzehn Uhr geöffnet, an den anderen Tagen nur bis sechzehn Uhr. Vielen Dank und auf Wiederhören!",
 ]);
 
 const kino = s.clip("kino", "Durchsage im Kino", "Kino und Film", [{ label: "Durchsage", voice: "B" }], [
-  "Durchsage: Guten Abend, liebe Gäste, und herzlich willkommen im Kino Rex! Zuerst eine Änderung im Programm: Der Krimi um zweiundzwanzig Uhr fällt heute leider aus, weil der Film nicht rechtzeitig angekommen ist. Wer dafür schon eine Karte gekauft hat, bekommt das Geld an der Kasse zurück. Die Komödie „Das Geburtstagsgeschenk“ beginnt wie geplant um zwanzig Uhr, in Saal drei. Und noch ein Tipp für das Wochenende: Am Samstag und am Sonntag gibt es Popcorn und Getränke zum halben Preis. Karten für den Kinderfilm am Sonntag bekommen Sie schon heute an der Kasse oder im Internet. Parkplätze finden Sie hinter dem Kino. Wir wünschen Ihnen einen schönen Abend!",
+  "Durchsage: Guten Abend, liebe Gäste, und herzlich willkommen im Kino Rex! Zuerst eine Änderung im Programm: Der Krimi um zweiundzwanzig Uhr läuft heute leider nicht, weil der Film nicht rechtzeitig angekommen ist. Wer dafür schon eine Karte gekauft hat, bekommt das Geld an der Kasse zurück. Die Komödie „Das Geburtstagsgeschenk“ beginnt wie geplant um zwanzig Uhr, in Saal drei. Und noch ein Tipp für das Wochenende: Am Samstag und am Sonntag gibt es Popcorn und Getränke zum halben Preis. Karten für den Kinderfilm am Sonntag bekommen Sie schon heute an der Kasse oder im Internet. Parkplätze finden Sie hinter dem Kino. Wir wünschen Ihnen einen schönen Abend!",
 ]);
 
 const bahnhof = s.clip("bahnhof", "Ansage am Bahnhof", "Reisen mit der Bahn", [{ label: "Ansage", voice: "D" }], [
-  "Ansage: Achtung an Gleis fünf! Der Regionalexpress nach Würzburg fährt heute nicht von Gleis fünf, sondern von Gleis zwei. Ich wiederhole: von Gleis zwei. Bitte gehen Sie über die Treppe oder mit dem Aufzug zum anderen Gleis. Der Zug hat etwa zehn Minuten Verspätung, weil ein Zug vor ihm technische Probleme hatte. Reisende nach Fulda nehmen bitte nicht diesen Zug, sondern den Zug auf Gleis neun. Er fährt pünktlich ab. Fahrgäste mit einer Reservierung behalten ihren Platz im Zug nach Würzburg. Wir bitten um Entschuldigung und wünschen Ihnen eine gute Reise.",
+  "Ansage: Achtung an Gleis fünf! Der Regionalexpress nach Würzburg fährt heute nicht von Gleis fünf, sondern von Gleis zwei. Ich wiederhole: von Gleis zwei. Bitte nehmen Sie die Treppe oder den Aufzug zum anderen Gleis. Der Zug hat etwa zehn Minuten Verspätung, weil ein Zug vor ihm technische Probleme hatte. Reisende nach Fulda nehmen bitte nicht diesen Zug, sondern den Zug auf Gleis neun. Er fährt pünktlich ab. Fahrgäste mit einer Reservierung behalten ihren Platz im Zug nach Würzburg. Wir bitten um Entschuldigung und wünschen Ihnen eine gute Reise.",
 ]);
 
 const geburtstag = s.clip(
@@ -210,23 +210,17 @@ const geburtstag = s.clip(
   ],
   [
     "Selin: Hallo Jonas, hier ist Selin. Hast du kurz Zeit?",
-    "Jonas: Hallo Selin! Ja, klar. Ich sitze gerade im Bus, aber ich kann gut telefonieren.",
+    "Jonas: Hallo Selin! Ja, klar. Ich sitze gerade im Bus.",
     "Selin: Du hast ja bald Geburtstag. Wie feierst du denn?",
-    "Jonas: Am Samstag, mit ein paar Freunden. Zu Hause ist die Wohnung leider zu klein, also gehen wir essen.",
+    "Jonas: Am Samstag, mit ein paar Freunden. Zu Hause ist die Wohnung zu klein, also gehen wir essen.",
     "Selin: Gute Idee! Weißt du schon, wohin?",
     "Jonas: Ja, ins „Da Luigi“. Dort gibt es die beste Pizza der Stadt. Ich habe gestern angerufen, aber niemand hat abgenommen. Ich probiere es morgen noch einmal.",
-    "Selin: Hm, ich war letzte Woche im „Da Luigi“. Das Essen war gut, aber es war sehr laut. Und die Pizza war ziemlich teuer.",
-    "Jonas: Wirklich? Das wusste ich nicht. Dann vielleicht lieber das chinesische Restaurant am Markt. Das ist billiger, glaube ich.",
-    "Selin: Das kenne ich nicht, aber ich komme heute Nachmittag sowieso daran vorbei. Soll ich dort anrufen?",
+    "Selin: Hm, ich war letzte Woche dort. Das Essen war gut, aber es war sehr laut. Und die Pizza war nicht billig, ich habe fast zwanzig Euro bezahlt!",
+    "Jonas: Echt? Das wusste ich nicht. Dann vielleicht lieber das chinesische Restaurant am Markt.",
+    "Selin: Das kenne ich nicht, aber ich komme heute sowieso daran vorbei. Soll ich dort anrufen?",
     "Jonas: Ja, gern! Wir sind acht Personen. Kommt dein Bruder auch?",
     "Selin: Leider nicht, er muss am Samstag arbeiten. Aber ich komme gern, und ich bringe einen Kuchen mit.",
-    "Jonas: Oh, das ist nett! Aber bitte keinen Schokoladenkuchen, den hatte ich letztes Jahr schon.",
-    "Selin: Na gut, dann backe ich einen Apfelkuchen. Wann treffen wir uns eigentlich?",
-    "Jonas: Um sieben Uhr, glaube ich. Ist das für dich okay?",
-    "Selin: Ja, perfekt. Und was wünschst du dir eigentlich zum Geburtstag?",
-    "Jonas: Ach, ich brauche nichts. Eine Einladung zum Essen mit allen Freunden ist doch schon das schönste Geschenk.",
-    "Selin: Das ist lieb von dir. Ich schreibe dir, wenn ich einen Tisch habe.",
-    "Jonas: Prima, danke dir! Bis Samstag!",
+    "Jonas: Super, danke dir! Dann bis Samstag.",
   ],
 );
 
@@ -241,17 +235,17 @@ const listening = [
     "Sie soll bis Montag im Bürgeramt anrufen.",
     ["Sie soll am Dienstag trotzdem um zehn Uhr kommen.", "Sie soll ein Foto per Post schicken."],
     2,
-    "\"Wenn der Mittwoch nicht geht, rufen Sie mich bitte bis Montag an.\" Der Dienstagstermin fällt aus, weil die Kollegin krank ist. Das Foto soll sie zum Termin mitbringen, nicht schicken.",
+    "\"Wenn der Mittwoch nicht geht, rufen Sie mich bitte bis Montag an.\" Der Dienstagstermin geht nicht, weil die Kollegin krank ist. Das Foto soll sie zum Termin mitbringen, nicht schicken.",
   ),
   choice3(
     kino,
     "detail",
     "MID",
     "Was passiert heute mit dem Krimi?",
-    "Er wird heute Abend leider nicht gezeigt.",
+    "Man kann ihn heute nicht sehen.",
     ["Er beginnt später als geplant.", "Er kostet am Wochenende nur den halben Preis."],
     1,
-    "\"Der Krimi um zweiundzwanzig Uhr fällt heute leider aus.\" Der halbe Preis gilt am Wochenende für Popcorn und Getränke, von einer späteren Anfangszeit ist keine Rede.",
+    "\"Der Krimi um zweiundzwanzig Uhr läuft heute leider nicht.\" Der halbe Preis gilt am Wochenende für Popcorn und Getränke, von einer späteren Anfangszeit ist keine Rede.",
   ),
   choice3(
     bahnhof,
@@ -268,10 +262,10 @@ const listening = [
     "MID",
     [
       ["Jonas hat schon einen Tisch im Restaurant reserviert.", "F"],
-      ["Selin findet die Pizza im „Da Luigi“ ziemlich teuer.", "R"],
+      ["Selin findet die Pizza im „Da Luigi“ teuer.", "R"],
       ["Selins Bruder kommt am Samstag mit.", "F"],
     ],
-    "1 F: Niemand hat abgenommen, Jonas will es morgen noch einmal versuchen. 2 R: \"Die Pizza war ziemlich teuer.\" 3 F: Er muss am Samstag arbeiten.",
+    "1 F: Niemand hat abgenommen, Jonas will es morgen noch einmal versuchen. 2 R: \"Die Pizza war nicht billig, ich habe fast zwanzig Euro bezahlt!\" 3 F: Er muss am Samstag arbeiten.",
   ),
 ];
 
@@ -304,15 +298,15 @@ const speaking = [
     "monologue",
     "MID",
     LIFE_TIME,
-    "Erzählen Sie bitte von Ihrer Schulzeit.\n\n- Welche Schule haben Sie besucht?\n- Welche Fächer mochten Sie gern, welche nicht?\n- Was war schwierig, was war schön?\n- Was haben Sie nach der Schule gemacht?",
+    "Erzählen Sie bitte von Ihrer ersten Arbeit oder von Ihrem ersten Kurs.\n\n- Was haben Sie dort gemacht?\n- Wo war das, und wie lange?\n- Wie waren die Menschen dort?\n- Was war gut, was war schwierig?",
     [
-      "Die Schule nennen (Art der Schule, Dauer oder Ort)",
-      "Lieblingsfächer und Fächer, die man nicht mochte, mit einem Grund",
-      "Etwas Schwieriges und etwas Schönes aus der Schulzeit nennen",
-      "Sagen, was nach der Schule kam (Ausbildung, Studium oder Arbeit)",
+      "Sagen, was man dort gemacht hat (Aufgaben bei der Arbeit oder im Kurs)",
+      "Ort und Dauer nennen",
+      "Die Menschen dort beschreiben (Kollegen, Lehrerinnen und Lehrer, andere Teilnehmende)",
+      "Etwas Gutes und etwas Schwieriges nennen",
     ],
     [],
-    "Über das eigene Leben sprechen (Kapitel 2: Schulzeit). Erwartet werden Vergangenheitsformen (Präteritum von sein und haben, Modalverben, Perfekt) und Begründungen mit „weil“.",
+    "Über das eigene Leben sprechen (Kapitel 2 und 6: Erfahrungen in Schule, Ausbildung und Arbeit). Erwartet werden Vergangenheitsformen (Präteritum von sein und haben, Modalverben, Perfekt) und Begründungen mit „weil“; die Karte setzt keine bestimmte Schulbildung voraus.",
   ),
 ];
 
