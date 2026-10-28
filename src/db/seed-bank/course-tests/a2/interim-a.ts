@@ -189,15 +189,15 @@ const sentences = [
 // ================================================================ LISTENING
 
 const buergeramt = s.clip("buergeramt", "Nachricht vom Bürgeramt", "Behörde und Termin", [{ label: "Frau Weber", voice: "A" }], [
-  "Frau Weber: Guten Tag, Frau Yilmaz, hier ist das Bürgeramt Nord, Weber am Apparat. Sie haben einen Termin für Ihren neuen Pass, am Dienstag um zehn Uhr. Leider ist meine Kollegin am Dienstag krank. Können Sie stattdessen am Mittwoch kommen, um halb zwölf? Wenn der Mittwoch nicht geht, rufen Sie mich bitte bis Montag an. Unsere Nummer ist null drei null, zwei zwei eins, vier vier. Ich wiederhole: null drei null, zwei zwei eins, vier vier. Bitte bringen Sie ein Foto mit. Vielen Dank und auf Wiederhören!",
+  "Frau Weber: Guten Tag, Frau Yilmaz, hier ist das Bürgeramt Nord, Weber am Apparat. Sie haben einen Termin für Ihren neuen Pass, am Dienstag um zehn Uhr. Leider ist meine Kollegin am Dienstag krank. Es tut mir wirklich leid für die Umstände. Können Sie stattdessen am Mittwoch kommen, um halb zwölf? Wenn der Mittwoch nicht geht, rufen Sie mich bitte bis Montag an. Unsere Nummer ist null drei null, zwei zwei eins, vier vier. Ich wiederhole: null drei null, zwei zwei eins, vier vier. Bitte bringen Sie ein Foto mit. Das Bürgeramt ist am Mittwoch übrigens bis achtzehn Uhr geöffnet, an den anderen Tagen nur bis sechzehn Uhr. Vielen Dank und auf Wiederhören!",
 ]);
 
 const kino = s.clip("kino", "Durchsage im Kino", "Kino und Film", [{ label: "Durchsage", voice: "B" }], [
-  "Durchsage: Guten Abend, liebe Gäste, und herzlich willkommen im Kino Rex! Zuerst eine Änderung im Programm: Der Krimi um zweiundzwanzig Uhr fällt heute leider aus, weil der Film nicht rechtzeitig angekommen ist. Wer dafür schon eine Karte gekauft hat, bekommt das Geld an der Kasse zurück. Die Komödie „Das Geburtstagsgeschenk“ beginnt wie geplant um zwanzig Uhr, in Saal drei. Und noch ein Tipp für das Wochenende: Am Samstag und am Sonntag gibt es Popcorn und Getränke zum halben Preis. Wir wünschen Ihnen einen schönen Abend!",
+  "Durchsage: Guten Abend, liebe Gäste, und herzlich willkommen im Kino Rex! Zuerst eine Änderung im Programm: Der Krimi um zweiundzwanzig Uhr fällt heute leider aus, weil der Film nicht rechtzeitig angekommen ist. Wer dafür schon eine Karte gekauft hat, bekommt das Geld an der Kasse zurück. Die Komödie „Das Geburtstagsgeschenk“ beginnt wie geplant um zwanzig Uhr, in Saal drei. Und noch ein Tipp für das Wochenende: Am Samstag und am Sonntag gibt es Popcorn und Getränke zum halben Preis. Karten für den Kinderfilm am Sonntag bekommen Sie schon heute an der Kasse oder im Internet. Parkplätze finden Sie hinter dem Kino. Wir wünschen Ihnen einen schönen Abend!",
 ]);
 
 const bahnhof = s.clip("bahnhof", "Ansage am Bahnhof", "Reisen mit der Bahn", [{ label: "Ansage", voice: "D" }], [
-  "Ansage: Achtung an Gleis fünf! Der Regionalexpress nach Würzburg fährt heute nicht von Gleis fünf, sondern von Gleis zwei. Ich wiederhole: von Gleis zwei. Bitte gehen Sie über die Treppe oder mit dem Aufzug zum anderen Gleis. Der Zug hat etwa zehn Minuten Verspätung, weil ein Zug vor ihm technische Probleme hatte. Reisende nach Fulda nehmen bitte nicht diesen Zug, sondern den Zug auf Gleis neun. Er fährt pünktlich ab. Wir bitten um Entschuldigung und wünschen Ihnen eine gute Reise.",
+  "Ansage: Achtung an Gleis fünf! Der Regionalexpress nach Würzburg fährt heute nicht von Gleis fünf, sondern von Gleis zwei. Ich wiederhole: von Gleis zwei. Bitte gehen Sie über die Treppe oder mit dem Aufzug zum anderen Gleis. Der Zug hat etwa zehn Minuten Verspätung, weil ein Zug vor ihm technische Probleme hatte. Reisende nach Fulda nehmen bitte nicht diesen Zug, sondern den Zug auf Gleis neun. Er fährt pünktlich ab. Fahrgäste mit einer Reservierung behalten ihren Platz im Zug nach Würzburg. Wir bitten um Entschuldigung und wünschen Ihnen eine gute Reise.",
 ]);
 
 const geburtstag = s.clip(
@@ -223,7 +223,9 @@ const geburtstag = s.clip(
     "Jonas: Oh, das ist nett! Aber bitte keinen Schokoladenkuchen, den hatte ich letztes Jahr schon.",
     "Selin: Na gut, dann backe ich einen Apfelkuchen. Wann treffen wir uns eigentlich?",
     "Jonas: Um sieben Uhr, glaube ich. Ist das für dich okay?",
-    "Selin: Ja, perfekt. Ich schreibe dir, wenn ich einen Tisch habe.",
+    "Selin: Ja, perfekt. Und was wünschst du dir eigentlich zum Geburtstag?",
+    "Jonas: Ach, ich brauche nichts. Eine Einladung zum Essen mit allen Freunden ist doch schon das schönste Geschenk.",
+    "Selin: Das ist lieb von dir. Ich schreibe dir, wenn ich einen Tisch habe.",
     "Jonas: Prima, danke dir! Bis Samstag!",
   ],
 );
