@@ -1,4 +1,5 @@
 import type { SeedBankPart, SeedItem, SeedStimulus } from "@/db/seed-bank/types";
+import type { CourseSeed, CourseSeedItem, CourseSeedStimulus } from "@/db/seed-bank/course-seed";
 import { canonicalJson, seedItemKey } from "@/db/seed-bank/seed-key";
 import { thetaForLevel } from "@/lib/exam/cefr";
 import { refuseUnlessThrowAwayDb, refuseUnlessWorkingDb } from "@/db/working-db-guard";
@@ -73,6 +74,8 @@ export type ExistingStimulus = {
   maxPlays?: number | null;
   /** An item that reads this text was edited by the school (an audit row `bank.edit`). */
   itemEdited?: boolean;
+  /** The course test form the text belongs to ("B1.1:A"); null or absent for the bank. */
+  courseForm?: string | null;
 };
 
 export type ExistingItem = {
@@ -94,6 +97,11 @@ export type ExistingItem = {
   difficulty?: number;
   explanation?: string | null;
   rubric?: ItemRubric | null;
+  /** The course test form the item belongs to ("B1.1:A"); null or absent for the bank. */
+  courseForm?: string | null;
+  /** Course items only: the serving position and the text numbering --sync-seed compares. */
+  courseOrder?: number | null;
+  orderInStimulus?: number;
 };
 
 export type TopUpPlan = {
@@ -108,7 +116,8 @@ export type TopUpPlan = {
   sync: SyncPlan;
 };
 
-export type SyncField = "key" | "difficulty" | "explanation" | "rubric";
+/** "order" is for course items: where a form serves them (course_order, order_in_stimulus). */
+export type SyncField = "key" | "difficulty" | "explanation" | "rubric" | "order";
 
 export type SyncItemChange = {
   id: string;
@@ -116,7 +125,7 @@ export type SyncItemChange = {
   level: SeedItem["level"];
   prompt: string;
   fields: SyncField[];
-  set: { answerKey?: ItemKey; difficulty?: number; explanation?: string | null; rubric?: ItemRubric | null };
+  set: { answerKey?: ItemKey; difficulty?: number; explanation?: string | null; rubric?: ItemRubric | null; courseOrder?: number; orderInStimulus?: number };
 };
 
 export type SyncStimulusChange = {
@@ -146,70 +155,106 @@ export type SyncPlan = {
 /** Difficulty is stored as a 4-byte float: 0.3 comes back as 0.30000001. */
 const DIFFICULTY_EPSILON = 1e-4;
 
+const emptySync = (): SyncPlan => ({ items: [], stimuli: [], plays: [], itemsKeptEdited: 0, stimuliKeptEdited: 0, listeningDiffs: [] });
+
+/** The rows of the bank proper. Course test rows (course_form set) have their own planner, planCourseTopUp. */
+function bankRows(existing: { stimuli: ExistingStimulus[]; items: ExistingItem[] }) {
+  return { stimuli: existing.stimuli.filter((s) => !s.courseForm), items: existing.items.filter((i) => !i.courseForm) };
+}
+
+/** What a sync run compares a row with: the seed item and text it stands for, if any. */
+type SyncSeed = {
+  itemFor(row: ExistingItem): { item: SeedItem; courseOrder?: number; orderInStimulus?: number } | undefined;
+  stimulusFor(row: ExistingStimulus): SeedStimulus | undefined;
+};
+
+/**
+ * The comparison behind --sync-seed, for any set of rows that can name the
+ * seed they stand for: the bank (planSyncSeed) and the course forms
+ * (planCourseTopUp).
+ */
+function syncAgainst(seed: SyncSeed, existing: { stimuli: ExistingStimulus[]; items: ExistingItem[] }): SyncPlan {
+  const sync = emptySync();
+  for (const row of existing.items) {
+    if (row.origin !== "SEED") continue;
+    const wanted = seed.itemFor(row);
+    if (!wanted) continue;
+    const item = wanted.item;
+    const set: SyncItemChange["set"] = {};
+    const fields: SyncField[] = [];
+    if (row.answerKey !== undefined && canonicalJson(row.answerKey) !== canonicalJson(item.key)) {
+      set.answerKey = item.key;
+      fields.push("key");
+    }
+    const difficulty = thetaForLevel(item.level, item.within ?? "MID");
+    if (row.difficulty !== undefined && Math.abs(row.difficulty - difficulty) > DIFFICULTY_EPSILON) {
+      set.difficulty = difficulty;
+      fields.push("difficulty");
+    }
+    if (row.explanation !== undefined && (row.explanation ?? null) !== (item.explanation ?? null)) {
+      set.explanation = item.explanation ?? null;
+      fields.push("explanation");
+    }
+    if (row.rubric !== undefined && canonicalJson(row.rubric ?? null) !== canonicalJson(item.rubric ?? null)) {
+      set.rubric = item.rubric ?? null;
+      fields.push("rubric");
+    }
+    // A form is served in the order its file lists the items, so a moved item has to move in the database too.
+    if (wanted.courseOrder !== undefined && row.courseOrder !== undefined && row.courseOrder !== wanted.courseOrder) set.courseOrder = wanted.courseOrder;
+    if (wanted.orderInStimulus !== undefined && row.orderInStimulus !== undefined && row.orderInStimulus !== wanted.orderInStimulus) set.orderInStimulus = wanted.orderInStimulus;
+    if (set.courseOrder !== undefined || set.orderInStimulus !== undefined) fields.push("order");
+    if (fields.length === 0) continue;
+    if (row.edited) {
+      sync.itemsKeptEdited += 1;
+      continue;
+    }
+    sync.items.push({ id: row.id, section: row.section, level: row.level, prompt: item.prompt, fields, set });
+  }
+  for (const row of existing.stimuli) {
+    if (row.origin !== "SEED" || !row.seedKey || row.body === undefined) continue;
+    const text = seed.stimulusFor(row);
+    if (!text) continue;
+    if (text.section === "LISTENING" && row.maxPlays !== undefined && (row.maxPlays ?? null) !== (text.maxPlays ?? null) && !row.itemEdited) {
+      sync.plays.push({ id: row.id, key: text.key, level: text.level, maxPlays: text.maxPlays ?? null });
+    }
+    const sameVoices = canonicalJson(row.speakers ?? null) === canonicalJson(text.speakers ?? null);
+    if (text.section === "LISTENING" || row.section === "LISTENING") {
+      if (row.body !== text.body || !sameVoices) sync.listeningDiffs.push({ id: row.id, key: text.key, level: text.level });
+      continue;
+    }
+    if (row.body === text.body) continue;
+    if (row.itemEdited) {
+      sync.stimuliKeptEdited += 1;
+      continue;
+    }
+    sync.stimuli.push({ id: row.id, key: text.key, section: text.section, level: text.level, title: text.title, body: text.body });
+  }
+  return sync;
+}
+
 /**
  * --sync-seed: the starter items and texts an organisation has, compared with
  * the current bank. Only origin SEED rows matched by seed key are looked at;
  * teacher and AI rows, and starter items the school edited, never change.
  * Status is never part of it. Reading texts are updated; listening scripts
- * only reported.
+ * only reported. Course test rows are not looked at (see planCourseTopUp).
  */
 export function planSyncSeed(
   bank: SeedBankPart,
   existing: { stimuli: ExistingStimulus[]; items: ExistingItem[] },
 ): SyncPlan {
   const wanted = new Map(bank.items.map((item) => [seedItemKey(item), item]));
-  const sync: SyncPlan = { items: [], stimuli: [], plays: [], itemsKeptEdited: 0, stimuliKeptEdited: 0, listeningDiffs: [] };
-  for (const row of existing.items) {
-    if (row.origin !== "SEED") continue;
-    const seed = wanted.get(row.seedKey ?? seedItemKey({ ...row, stimulusKey: row.stimulusSeedKey }));
-    if (!seed) continue;
-    const set: SyncItemChange["set"] = {};
-    const fields: SyncField[] = [];
-    if (row.answerKey !== undefined && canonicalJson(row.answerKey) !== canonicalJson(seed.key)) {
-      set.answerKey = seed.key;
-      fields.push("key");
-    }
-    const difficulty = thetaForLevel(seed.level, seed.within ?? "MID");
-    if (row.difficulty !== undefined && Math.abs(row.difficulty - difficulty) > DIFFICULTY_EPSILON) {
-      set.difficulty = difficulty;
-      fields.push("difficulty");
-    }
-    if (row.explanation !== undefined && (row.explanation ?? null) !== (seed.explanation ?? null)) {
-      set.explanation = seed.explanation ?? null;
-      fields.push("explanation");
-    }
-    if (row.rubric !== undefined && canonicalJson(row.rubric ?? null) !== canonicalJson(seed.rubric ?? null)) {
-      set.rubric = seed.rubric ?? null;
-      fields.push("rubric");
-    }
-    if (fields.length === 0) continue;
-    if (row.edited) {
-      sync.itemsKeptEdited += 1;
-      continue;
-    }
-    sync.items.push({ id: row.id, section: row.section, level: row.level, prompt: seed.prompt, fields, set });
-  }
   const seedStimuli = new Map(bank.stimuli.map((s) => [s.key, s]));
-  for (const row of existing.stimuli) {
-    if (row.origin !== "SEED" || !row.seedKey || row.body === undefined) continue;
-    const seed = seedStimuli.get(row.seedKey);
-    if (!seed) continue;
-    if (seed.section === "LISTENING" && row.maxPlays !== undefined && (row.maxPlays ?? null) !== (seed.maxPlays ?? null) && !row.itemEdited) {
-      sync.plays.push({ id: row.id, key: seed.key, level: seed.level, maxPlays: seed.maxPlays ?? null });
-    }
-    const sameVoices = canonicalJson(row.speakers ?? null) === canonicalJson(seed.speakers ?? null);
-    if (seed.section === "LISTENING" || row.section === "LISTENING") {
-      if (row.body !== seed.body || !sameVoices) sync.listeningDiffs.push({ id: row.id, key: seed.key, level: seed.level });
-      continue;
-    }
-    if (row.body === seed.body) continue;
-    if (row.itemEdited) {
-      sync.stimuliKeptEdited += 1;
-      continue;
-    }
-    sync.stimuli.push({ id: row.id, key: seed.key, section: seed.section, level: seed.level, title: seed.title, body: seed.body });
-  }
-  return sync;
+  return syncAgainst(
+    {
+      itemFor: (row) => {
+        const item = wanted.get(row.seedKey ?? seedItemKey({ ...row, stimulusKey: row.stimulusSeedKey }));
+        return item && { item };
+      },
+      stimulusFor: (row) => (row.seedKey ? seedStimuli.get(row.seedKey) : undefined),
+    },
+    bankRows(existing),
+  );
 }
 
 /** Counts per section and level of the items and texts a sync would change, in bank order. */
@@ -251,9 +296,11 @@ export function formatSyncSummary(sync: SyncPlan, examples = 3): string[] {
 
 export function planTopUp(
   bank: SeedBankPart,
-  existing: { stimuli: ExistingStimulus[]; items: ExistingItem[] },
+  allRows: { stimuli: ExistingStimulus[]; items: ExistingItem[] },
   options: { retireStale?: boolean; syncSeed?: boolean } = {},
 ): TopUpPlan {
+  // Course test rows are not in the bank's seed, so --retire-stale would retire them: they belong to planCourseTopUp.
+  const existing = bankRows(allRows);
   const haveStimuli = new Set(existing.stimuli.map((s) => s.seedKey).filter((k): k is string => !!k));
   const stimuli = bank.stimuli.filter((s) => !haveStimuli.has(s.key));
 
@@ -282,7 +329,7 @@ export function planTopUp(
       retire.push({ id: row.id, section: row.section, level: row.level });
     }
   }
-  const sync = options.syncSeed ? planSyncSeed(bank, existing) : { items: [], stimuli: [], plays: [], itemsKeptEdited: 0, stimuliKeptEdited: 0, listeningDiffs: [] };
+  const sync = options.syncSeed ? planSyncSeed(bank, existing) : emptySync();
   return { stimuli, items, backfill, retire, keptEdited, sync };
 }
 
@@ -305,6 +352,93 @@ export function formatRetireCounts(retire: TopUpPlan["retire"]): string[] {
   const bySection = new Map<string, string[]>();
   for (const c of retireCounts(retire)) bySection.set(c.section, [...(bySection.get(c.section) ?? []), `${c.level} ${c.n}`]);
   return [...bySection].map(([section, parts]) => `${section}: ${parts.join(", ")}`);
+}
+
+export type CourseRetire = TopUpPlan["retire"][number] & { courseForm: string };
+
+export type CourseTopUpPlan = {
+  /** Texts and clips of the course forms the org lacks. */
+  stimuli: CourseSeedStimulus[];
+  /** Items of the course forms the org lacks. */
+  items: CourseSeedItem[];
+  /** Stale course items to set RETIRED; empty unless `retireStale` was asked for. */
+  retire: CourseRetire[];
+  /** Stale course items kept because the school edited them (only counted with `retireStale`). */
+  keptEdited: number;
+  /**
+   * Course items that are still APPROVED although their form no longer has
+   * them. Unlike a stale bank item (one more choice in a pool), a stale course
+   * item is served next to the form's current items, so the summary warns when
+   * it is not being retired.
+   */
+  stale: number;
+  /** What --sync-seed would update; empty unless `syncSeed` was asked for. */
+  sync: SyncPlan;
+};
+
+/**
+ * The top-up of the course test forms (spec 2026-10-28) for one organisation,
+ * worked out without a database like planTopUp. It looks at the rows with a
+ * course form only, and planTopUp at the rest: the two never retire or sync
+ * each other's rows.
+ *
+ * Rows are matched by seed key (courseSeed gives every row of a form a key
+ * that starts with the form). --retire-stale retires the APPROVED starter
+ * course items whose key is no longer in the given forms, --sync-seed brings
+ * key, difficulty, explanation, rubric, reading texts and the serving order
+ * up to the file, exactly as for the bank.
+ */
+export function planCourseTopUp(
+  course: CourseSeed,
+  allRows: { stimuli: ExistingStimulus[]; items: ExistingItem[] },
+  options: { retireStale?: boolean; syncSeed?: boolean } = {},
+): CourseTopUpPlan {
+  const existing = {
+    stimuli: allRows.stimuli.filter((s) => !!s.courseForm),
+    items: allRows.items.filter((i) => !!i.courseForm),
+  };
+  const haveStimuli = new Set(existing.stimuli.map((s) => s.seedKey).filter((k): k is string => !!k));
+  const haveItems = new Set(existing.items.map((i) => i.seedKey).filter((k): k is string => !!k));
+  const wanted = new Map(course.items.map((c) => [c.seedKey, c]));
+  const staleRows: CourseRetire[] = [];
+  let editedStale = 0;
+  for (const row of existing.items) {
+    if (row.origin !== "SEED" || row.status !== "APPROVED") continue;
+    if (row.seedKey && wanted.has(row.seedKey)) continue;
+    if (row.edited) {
+      editedStale += 1;
+      continue;
+    }
+    staleRows.push({ id: row.id, section: row.section, level: row.level, courseForm: row.courseForm! });
+  }
+  const seedTexts = new Map(course.stimuli.map((s) => [s.seedKey, { ...s.stimulus, key: s.seedKey }]));
+  const sync = options.syncSeed
+    ? syncAgainst(
+        {
+          itemFor: (row) => {
+            const c = row.seedKey ? wanted.get(row.seedKey) : undefined;
+            return c && { item: c.item, courseOrder: c.courseOrder, orderInStimulus: c.orderInStimulus };
+          },
+          stimulusFor: (row) => (row.seedKey ? seedTexts.get(row.seedKey) : undefined),
+        },
+        existing,
+      )
+    : emptySync();
+  return {
+    stimuli: course.stimuli.filter((s) => !haveStimuli.has(s.seedKey)),
+    items: course.items.filter((i) => !haveItems.has(i.seedKey)),
+    retire: options.retireStale ? staleRows : [],
+    keptEdited: options.retireStale ? editedStale : 0,
+    stale: staleRows.length,
+    sync,
+  };
+}
+
+/** One summary line per course form: "B1.1:A 3". Empty when nothing retires. */
+export function formatCourseRetire(retire: CourseRetire[]): string[] {
+  const byForm = new Map<string, number>();
+  for (const r of retire) byForm.set(r.courseForm, (byForm.get(r.courseForm) ?? 0) + 1);
+  return [...byForm].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([form, n]) => `${form} ${n}`);
 }
 
 /** 1-based position of every stimulus item among the items of its stimulus, as the first import numbered them. */
