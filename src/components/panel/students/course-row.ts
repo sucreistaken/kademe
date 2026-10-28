@@ -36,15 +36,16 @@ export function studentCourseOf(input: {
   const config = input.course;
   if (!config) return null;
   const computed = input.computed?.course ?? null;
+  // The frozen outcome wins once the result is final; a final result that carries none falls back to what the engine and the teacher say.
   const frozen = input.finalOutcome === "PASS" || input.finalOutcome === "FAIL" ? input.finalOutcome : null;
-  const outcome = input.final ? frozen : effectiveCourseOutcome(computed, courseOutcomeOverrideOf(input.skillOverrides));
+  const outcome = (input.final ? frozen : null) ?? effectiveCourseOutcome(computed, courseOutcomeOverrideOf(input.skillOverrides));
   return {
     key: config.key,
     form: computed?.form ?? config.form,
     points: computed?.total ?? null,
     max: computed?.max ?? courseTotals(config.key).points,
     outcome,
-    final: input.final && frozen !== null,
+    final: input.final,
     recommendation: computed?.recommendation ?? null,
   };
 }

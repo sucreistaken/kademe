@@ -16,6 +16,7 @@ import {
   responseGradings,
   sectionRuns,
 } from "@/db/schema";
+import { courseOutcomeOverrideOf } from "@/components/panel/course/outcome";
 import { buildDetail } from "@/components/panel/report/detail-model";
 import { canAcceptAsCorrect, canAcceptGap, gapScore } from "@/components/panel/result/review-rows";
 import { aiLimitReached } from "@/lib/ai-limit";
@@ -80,6 +81,18 @@ async function resultInOrg(assessmentId: string, orgId: string) {
 }
 
 const back = (assessmentId: string, tab?: string) => `/exam/students/${assessmentId}${tab ? `?tab=${tab}` : ""}`;
+
+/**
+ * A course test freezes the teacher's PASS or FAIL (overrideCourseOutcome in
+ * course-actions.ts) as its final outcome, whatever the engine computed. When
+ * the engine already applied it, or there is none, nothing is written.
+ */
+async function freezeCourseOutcomeOverride(resultId: string) {
+  const [fresh] = await db.select().from(examResults).where(eq(examResults.id, resultId));
+  if (!fresh?.computed?.course) return;
+  const override = courseOutcomeOverrideOf(fresh.skillOverrides);
+  if (override && fresh.finalOutcome !== override.outcome) await db.update(examResults).set({ finalOutcome: override.outcome }).where(eq(examResults.id, resultId));
+}
 
 export async function confirmGrading(formData: FormData) {
   const user = await requireUser("result:grade");
@@ -196,6 +209,7 @@ export async function finalize(formData: FormData) {
   // Already final (a double click, or another teacher got there first): the page shows the final state, no second revision.
   if (!done.ok && done.code === "ALREADY_FINAL") redirect(back(assessmentId));
   if (!done.ok) fail(done.code);
+  await freezeCourseOutcomeOverride(row.result.id);
   await db.insert(examResultRevisions).values({ resultId: row.result.id, field: "finalize", after: true, changedBy: user.id });
   await db.insert(auditLogs).values({
     orgId: user.orgId,
