@@ -115,7 +115,8 @@ export function WritingBlock({
   const text = response.answer?.text ?? "";
   const words = wordCount(text);
   return (
-    <section id={`t-${response.id}`} className="grid scroll-mt-6 gap-5 xl:grid-cols-[1fr_380px]">
+    // Side by side only on a wide screen: at 1280 px the panel menu and the totals column leave the text too narrow.
+    <section id={`t-${response.id}`} className="grid scroll-mt-6 gap-5 2xl:grid-cols-[minmax(0,1fr)_380px]">
       <div className="flex min-w-0 flex-col gap-4">
         <TaskPrompt prompt={response.itemSnapshot.prompt} label={t("result.taskLevel", { level: response.itemSnapshot.level })} />
         <div className="rounded-[14px] border border-line bg-surface p-5">
@@ -131,9 +132,13 @@ export function WritingBlock({
             <p className="text-[14px] text-muted">{t("result.noAnswer")}</p>
           )}
         </div>
-        {proposal ? <Analysis proposal={proposal} t={t} /> : null}
       </div>
       {grading ? <GradingPanel t={t} grading={grading} section="WRITING" tab={tab} canGrade={canGrade} nameOf={nameOf} /> : null}
+      {proposal ? (
+        <div className="min-w-0 2xl:col-span-2">
+          <Analysis proposal={proposal} t={t} />
+        </div>
+      ) : null}
     </section>
   );
 }

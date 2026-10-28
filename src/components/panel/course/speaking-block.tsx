@@ -40,7 +40,7 @@ export function SpeakingBlock({
 }) {
   const typed = !!response.answer?.usedTextAlternative;
   return (
-    <section id={`t-${response.id}`} className="grid scroll-mt-6 gap-5 xl:grid-cols-[1fr_380px]">
+    <section id={`t-${response.id}`} className="grid scroll-mt-6 gap-5 2xl:grid-cols-[minmax(0,1fr)_380px]">
       <div className="min-w-0">
         <p className="tnum text-[12.5px] font-semibold text-muted">{t("courseResult.taskOf", { n: index, total })}</p>
         <TaskPrompt prompt={response.itemSnapshot.prompt} label={t("result.taskLevel", { level: response.itemSnapshot.level })} />
