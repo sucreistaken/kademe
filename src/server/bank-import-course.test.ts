@@ -186,9 +186,9 @@ describe("topUpSeedBank loads the course forms as their own rows", () => {
   });
 
   it("a bank run without course forms in the seed leaves the loaded course rows alone, retire-stale included", async () => {
-    // The default seed has no course forms: the course rows are absent from it, yet only a course run may retire them.
+    // A seed with no course forms: the course rows are absent from it, yet only a course run may retire them.
     fake.results = [loadedStimuli(), [bankRow("Bank eins"), bankRow("Bank zwei"), ...loadedCourseItems()], []];
-    const r = await topUpSeedBank("org-1", { retireStale: true });
+    const r = await topUpSeedBank("org-1", { retireStale: true, courseForms: [] });
     // Nothing retired in the bank; the (empty) course seed retires every course row, which is its own plan's call.
     expect(r.itemsRetired).toBe(0);
     expect(r.course.itemsAdded).toBe(0);
