@@ -14,6 +14,7 @@ import {
 } from "@/lib/exam-flow";
 import { setAssessmentLocale, supportedLocales } from "@/lib/candidate-context";
 import { stepPath } from "@/lib/candidate-routes";
+import { candidateTestName } from "@/lib/exam/course/student-view";
 import { candidateT } from "@/i18n/candidate";
 import { shortDate } from "@/i18n/dates";
 import { isCandidateLocale, type CandidateLocale } from "@/i18n/locale";
@@ -119,7 +120,8 @@ export async function enter(
   return {
     kind: "ok",
     ctx: resolved.ctx,
-    state,
+    // A course test is called by its German name on every student screen, whatever name the exam was stored under.
+    state: { ...state, examName: candidateTestName(state.examName, resolved.ctx.assessment.config) },
     locale: resolved.ctx.locale,
   };
 }

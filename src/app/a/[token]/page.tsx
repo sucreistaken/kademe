@@ -6,7 +6,6 @@ import { getConsentText, supportedLocales } from "@/lib/candidate-context";
 import { consentIsFallback, consentShownLocale } from "@/lib/consent-locale";
 import { candidateSafe } from "@/lib/candidate-safe";
 import { solutionPage } from "@/lib/candidate-pages";
-import { candidateTestName } from "@/lib/exam/course/student-view";
 import { enter, headerMeta, type SearchParams } from "@/app/a/[token]/shared";
 
 export const dynamic = "force-dynamic";
@@ -48,8 +47,7 @@ export default async function CandidateEntryPage({
         <IntroConsent
           token={token}
           locale={entry.locale}
-          // A course test is called by its German name, whatever name the exam was stored under.
-          state={candidateSafe({ ...entry.state, examName: candidateTestName(entry.state.examName, entry.ctx.assessment.config) })}
+          state={candidateSafe(entry.state)}
           consent={{
             version: consent.version,
             body: consent.body[shown],

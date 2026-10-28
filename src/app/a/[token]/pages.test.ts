@@ -18,6 +18,8 @@ const h = vi.hoisted(() => ({
   resolveExamToken: vi.fn<(token: string) => Promise<unknown>>(),
   /** What the hiring module answers when asked to serve; null: not live or not served. */
   hiring: null as unknown,
+  /** What the exam's state reads as for the page being rendered. */
+  state: {} as Record<string, unknown>,
 }));
 
 // Nothing may reach the database.
@@ -35,7 +37,7 @@ vi.mock("@/lib/candidate-context", () => ({
 // The exam's resolver, as its contract reads: a non-exam invitation is INVALID with no context.
 vi.mock("@/lib/exam-flow", () => ({
   resolveExamToken: (token: string) => h.resolveExamToken(token),
-  loadState: async () => ({ step: "CONSENT", proctoring: {}, sections: [] }),
+  loadState: async () => h.state,
   progressSummary: async () => ({ done: 0, total: 4 }),
 }));
 
@@ -133,6 +135,7 @@ beforeEach(() => {
     return resolved;
   });
   h.hiring = null;
+  h.state = { step: "CONSENT", proctoring: {}, sections: [] };
 });
 
 describe("an invitation no live module serves", () => {
@@ -200,12 +203,38 @@ describe("a module with its own pages", () => {
   });
 });
 
+/** The first element of `type` in a rendered tree, or null. */
+function find(node: ReactNode, type: unknown): ReactElement<Record<string, unknown>> | null {
+  if (!node || typeof node !== "object") return null;
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      const found = find(child, type);
+      if (found) return found;
+    }
+    return null;
+  }
+  const element = node as ReactElement<{ children?: ReactNode }>;
+  return element.type === type ? (element as ReactElement<Record<string, unknown>>) : find(element.props?.children, type);
+}
+
 describe("the exam keeps the core pages", () => {
   it("reads the core consent text for an exam invitation on the landing", async () => {
     const exam = ctx("LANGUAGE_EXAM", "NOT_STARTED");
     const page = await render("landing", { ok: true, ctx: exam });
     expect(h.getConsentText).toHaveBeenCalledWith(exam);
     expect(contains(page, IntroConsent)).toBe(true);
+  });
+
+  it("calls a course test by its German name on the landing, and leaves the name of any other exam alone", async () => {
+    h.state = { step: "CONSENT", proctoring: {}, sections: [], examName: "Yerleştirme sınavı", mode: "COURSE_TEST" };
+    const exam = ctx("LANGUAGE_EXAM", "NOT_STARTED");
+    const course = { ...exam, assessment: { ...exam.assessment, config: { course: { key: "B1", form: "A" } } } };
+    const named = find(await render("landing", { ok: true, ctx: course }), IntroConsent);
+    expect((named?.props.state as { examName: string }).examName).toBe("Abschlusstest B1");
+
+    h.state = { step: "CONSENT", proctoring: {}, sections: [], examName: "Yerleştirme sınavı", mode: "PLACEMENT" };
+    const plain = find(await render("landing", { ok: true, ctx: { ...exam, assessment: { ...exam.assessment, config: {} } } }), IntroConsent);
+    expect((plain?.props.state as { examName: string }).examName).toBe("Yerleştirme sınavı");
   });
 
   it("never reads the core consent for a served hiring invitation that renders no page of its own", async () => {
