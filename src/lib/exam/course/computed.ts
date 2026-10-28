@@ -76,6 +76,7 @@ function objectiveScore(
 const zeroTask = (section: ProductiveSection): ResolvedCourseTask => ({
   points: Object.fromEntries(COURSE_CRITERIA[section].map((id) => [id, 0])),
   complete: true,
+  proposed: true,
   decided: true,
 });
 
@@ -114,24 +115,27 @@ export function buildCourseComputed(input: CourseComputedInput): ComputedResult 
     speaking: tasks.SPEAKING ? tasks.SPEAKING.map((t) => t.points) : null,
   });
 
-  // Who stands behind each productive section, in the shape the blockers and the checklist already read:
-  // no CEFR level (a course test has none), the decider, and pending while a task has no number yet.
+  // Who stands behind each productive section, in the shape the blockers and the checklist already read: no CEFR
+  // level (a course test has none), the decider, and pending while a task has neither a proposal nor a decision
+  // (the AI is working, it failed, or the task has no grading yet). A proposal that still lacks one number
+  // (AUSSPRACHE from a transcript) is the teacher's to complete, so it is "AI", not pending, although the
+  // section's points stay pending in `course` until the number is set.
   const skills: Partial<Record<Section, SkillResult>> = {};
   for (const section of ["WRITING", "SPEAKING"] as const) {
     const list = tasks[section];
     if (!list) continue;
-    const complete = list.length > 0 && list.every((t) => t.complete);
-    const decided = complete && list.every((t) => t.decided);
-    skills[section] = { level: null, decider: decided ? "TEACHER" : complete ? "AI" : null, pending: !complete, insufficient: false };
+    const proposed = list.length > 0 && list.every((t) => t.proposed);
+    const decided = proposed && list.every((t) => t.decided);
+    skills[section] = { level: null, decider: decided ? "TEACHER" : proposed ? "AI" : null, pending: !proposed, insufficient: false };
   }
 
-  const anyPending = Object.values(course.sections).some((s) => s.pending);
+  const waitingForPoints = Object.entries(course.sections).some(([section, s]) => s.pending && !skills[section as Section]?.decider);
   const anyOpen = Object.values(skills).some((s) => s.decider === "AI");
   return {
     skills,
     overall: null,
     pooled: null,
-    status: anyPending ? "AWAITING_GRADING" : anyOpen ? "AWAITING_REVIEW" : "READY",
+    status: waitingForPoints ? "AWAITING_GRADING" : anyOpen ? "AWAITING_REVIEW" : "READY",
     verification: null,
     placement: null,
     course,

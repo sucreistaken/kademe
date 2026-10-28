@@ -42,6 +42,11 @@ export type ResolvedCourseTask = {
   points: CourseTaskPoints;
   /** Every criterion has a number. */
   complete: boolean;
+  /**
+   * The row has a proposal (the AI's or a rule's) or a teacher's decision, so a person can act on it,
+   * even when a criterion still lacks its number. False while the AI is working, after it failed, or without a row.
+   */
+  proposed: boolean;
   /** A teacher confirmed or changed the task and nothing is left open. */
   decided: boolean;
 };
@@ -60,7 +65,8 @@ const isNumber = (v: unknown): v is number => typeof v === "number" && Number.is
 export function resolveCourseTask(section: CourseProductiveSection, grading: CourseGradingView | null | undefined): ResolvedCourseTask {
   const teacher = !!grading && isTeacherStatus(grading.status);
   // A proposal only counts once it exists as one: a pending or failed row has none.
-  const proposed = grading && (grading.status === "AI_PROPOSED" || teacher) ? proposalPoints(grading.courseProposal) : {};
+  const standing = !!grading && (grading.status === "AI_PROPOSED" || teacher);
+  const proposed = standing ? proposalPoints(grading?.courseProposal) : {};
   const decidedPoints = teacher ? (grading?.coursePoints?.points ?? {}) : {};
   const points: CourseTaskPoints = {};
   for (const id of COURSE_CRITERIA[section]) {
@@ -69,7 +75,7 @@ export function resolveCourseTask(section: CourseProductiveSection, grading: Cou
     points[id] = isNumber(mine) ? mine : isNumber(ai) ? ai : null;
   }
   const complete = COURSE_CRITERIA[section].every((id) => isNumber(points[id]));
-  return { points, complete, decided: teacher && complete };
+  return { points, complete, proposed: standing, decided: teacher && complete };
 }
 
 /** The points of a task, criterion by criterion, added up (null while any criterion has no number). */

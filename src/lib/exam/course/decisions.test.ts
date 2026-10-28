@@ -31,7 +31,7 @@ const proposed = (p: CourseRubricProposal | null): CourseGradingView => ({ statu
 describe("resolveCourseTask", () => {
   it("takes the AI's points while nobody decided", () => {
     const r = resolveCourseTask("WRITING", proposed(writing({ INHALT: 3, WORTSCHATZ: 2, GRAMMATIK: 1 })));
-    expect(r).toEqual({ points: { INHALT: 3, WORTSCHATZ: 2, GRAMMATIK: 1 }, complete: true, decided: false });
+    expect(r).toEqual({ points: { INHALT: 3, WORTSCHATZ: 2, GRAMMATIK: 1 }, complete: true, proposed: true, decided: false });
   });
 
   it("takes the teacher's points where he set them and the AI's for the rest", () => {
@@ -40,7 +40,7 @@ describe("resolveCourseTask", () => {
       courseProposal: writing({ INHALT: 3, WORTSCHATZ: 2, GRAMMATIK: 1 }),
       coursePoints: { points: { INHALT: 1, GRAMMATIK: 0 } },
     });
-    expect(r).toEqual({ points: { INHALT: 1, WORTSCHATZ: 2, GRAMMATIK: 0 }, complete: true, decided: true });
+    expect(r).toEqual({ points: { INHALT: 1, WORTSCHATZ: 2, GRAMMATIK: 0 }, complete: true, proposed: true, decided: true });
   });
 
   it("counts a confirmation without stored points as the proposal confirmed", () => {
@@ -51,8 +51,7 @@ describe("resolveCourseTask", () => {
   it("has nothing for a pending or failed grading, or for none at all", () => {
     for (const g of [{ status: "PENDING", courseProposal: null, coursePoints: null }, { status: "AI_FAILED", courseProposal: null, coursePoints: null }, null, undefined] as const) {
       const r = resolveCourseTask("SPEAKING", g);
-      expect(r.complete).toBe(false);
-      expect(r.decided).toBe(false);
+      expect(r).toMatchObject({ complete: false, proposed: false, decided: false });
       expect(Object.values(r.points)).toEqual([null, null, null, null, null]);
     }
   });
@@ -64,8 +63,9 @@ describe("resolveCourseTask", () => {
 
   it("is incomplete while AUSSPRACHE has no number, confirmed or not", () => {
     const p = speaking({ KOMMUNIKATION: 3, WORTSCHATZ: 3, GRAMMATIK: 2, AUSSPRACHE: null, KOHAERENZ: 3 });
-    expect(resolveCourseTask("SPEAKING", proposed(p))).toMatchObject({ complete: false, decided: false });
-    expect(resolveCourseTask("SPEAKING", { status: "CONFIRMED", courseProposal: p, coursePoints: null })).toMatchObject({ complete: false, decided: false });
+    // The proposal stands (a teacher can act on it) although a number is missing.
+    expect(resolveCourseTask("SPEAKING", proposed(p))).toMatchObject({ complete: false, proposed: true, decided: false });
+    expect(resolveCourseTask("SPEAKING", { status: "CONFIRMED", courseProposal: p, coursePoints: null })).toMatchObject({ complete: false, proposed: true, decided: false });
     const set = resolveCourseTask("SPEAKING", { status: "OVERRIDDEN", courseProposal: p, coursePoints: { points: { AUSSPRACHE: 2 } } });
     expect(set).toMatchObject({ complete: true, decided: true });
     expect(set.points.AUSSPRACHE).toBe(2);

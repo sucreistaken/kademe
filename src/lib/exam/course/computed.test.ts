@@ -192,12 +192,18 @@ describe("the writing and speaking sections", () => {
     const noPronunciation = proposal("SPEAKING", { KOMMUNIKATION: 3, WORTSCHATZ: 3, GRAMMATIK: 2, AUSSPRACHE: null, KOHAERENZ: 3 });
     s.gradings = s.gradings.map((g) => (g.itemResponseId === "s1" ? { ...g, courseProposal: noPronunciation } : g));
     const a = buildCourseComputed(s);
+    // The points wait, but the AI has proposed: the teacher completes the task, so the result awaits review, not the AI.
     expect(a.course?.sections.SPEAKING).toEqual({ points: null, max: 20, pending: true });
-    expect(a.status).toBe("AWAITING_GRADING");
+    expect(a.course).toMatchObject({ total: null, outcome: null, recommendation: null });
+    expect(a.skills.SPEAKING).toEqual({ level: null, decider: "AI", pending: false, insufficient: false });
+    expect(a.status).toBe("AWAITING_REVIEW");
 
+    // Confirming without setting the number does not decide the task.
     const confirmedWithout = scenario();
     confirmedWithout.gradings = confirmedWithout.gradings.map((g) => (g.itemResponseId === "s1" ? { ...confirmed(g), courseProposal: noPronunciation } : g));
-    expect(buildCourseComputed(confirmedWithout).course?.sections.SPEAKING?.pending).toBe(true);
+    const stillOpen = buildCourseComputed(confirmedWithout);
+    expect(stillOpen.course?.sections.SPEAKING?.pending).toBe(true);
+    expect(stillOpen.skills.SPEAKING?.decider).toBe("AI");
 
     // The teacher sets the number: the task is decided and the section scores.
     const set = scenario();
