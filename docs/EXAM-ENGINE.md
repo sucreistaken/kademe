@@ -569,6 +569,31 @@ Almanca kontrolünü bir öğretmen yapmadı; bankada "başlangıç içeriği" e
 `bank-seed.test.ts` sayıları, anahtar geçerliliğini, doğru şık dağılımını ve em-dash
 yokluğunu denetler.
 
+## Kurs sınavları (2026-10-28)
+
+Spec: `docs/superpowers/specs/2026-10-28-course-tests-design.md`. Üçüncü sınav türü `COURSE_TEST`: kurs ara sınavı
+(Zwischentest A1.1, A2.1, B1.1, B2.1) ve kurs sonu sınavı (Abschlusstest A1, A2, B1, B2), her biri A ve B formuyla.
+Kaynak: Campus German öğretmeninin B1 sınavı ve değerlendirme formu; A1-B1 müfredatı Netzwerk neu (.1 = Kap. 1-6),
+B2 kitapsız (Goethe/telc B2 listeleri).
+
+- **Seviye tahmini yok.** Rasch/EAP, A0 ve şans kuralı kurs sınavında çalışmaz. Her puanlanan birim (boşluk,
+  Richtig/Falsch ifadesi, soru) 1 puandır (`course/units.ts`); yarım puan yok. Bölüm üst sınırı formdaki birim
+  sayısıdır, ulaşılmayan ve boş birim 0.
+- **Formlar sabittir.** Sorular ve metinler `items.course_form` / `stimuli.course_form` (`B1.1:A`) ve
+  `course_order` ile saklanır; bölüm planı bu sıradır, rastgelelik ve tekrar kaçınması yok. Kurs satırları hiçbir
+  rastgele çekilişe, banka kapsamına, AI üretimine ya da banka ekranına girmez (`isNull(course_form)`).
+  Form davetle atanır: listede A, B, A, B; aynı e-postayla birini görmüş öğrenci diğerini alır; öğretmen zorlayabilir.
+- **Yazma ve konuşma** ölçüt puanıyla: yazma İNHALT, WORTSCHATZ, GRAMMATIK 0-3 (en çok 9), konuşma her görevde 5 ölçüt
+  0-4; bölüm puanı görev toplamlarının ortalamasının tabanı (en çok 20). AI (`COURSE_RUBRIC`, Almanca) önerir,
+  öğretmen onaylar ya da gerekçeyle değiştirir. AUSSPRACHE dökümden ölçülemezse boş gelir ve öğretmen girer.
+  Boş görev kuraldan 0, yükleme ya da döküm hatası asla 0 değil.
+- **Karar** (`course/result.ts`): eşik `puan >= tavan(yüzde * üst sınır / 100)`. Ara sınav %60 ve İNHALT > 0; kurs
+  sonu %65, konuşma %60, İNHALT > 0. Kurs sonunda geçemeyen: %59-65 L.2, %43.75-59 L.1, altı bir alt seviyenin .2'si
+  (A1 altı A1.1); yalnız konuşma ya da İNHALT yüzünden kalan L.2 ve "Schwerpunkt". Geçen: ara sınav L.2, kurs sonu
+  üst seviyenin .1'i. Sonuç, her üretken puan kararlaşana kadar `AWAITING_REVIEW` kalır, kendiliğinden kesinleşmez.
+- **İçerik kontrolü:** her form `course-forms.test.ts` kurallarından ve bağımsız kör çözümden geçer
+  (`pnpm bank:blind-export --course all`). Dinleme metni değişirse anahtarı da değişir (`bank:lock-listening`).
+
 ## Sonraki adım
 
 Gerçek sınav verisi birikince `b` değerlerini veriden kestirmek (Rasch kalibrasyonu),

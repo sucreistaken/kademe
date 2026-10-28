@@ -161,3 +161,11 @@ migration, bank top-up with course forms, TTS, STATUS log.
 4. Speaking points over several tasks: floor of the mean task total.
 5. FINAL failed only by the speaking minimum or INHALT 0: L.2 with a focus flag (Halil Bey's sheet says this for
    speaking; the lead applies the same to writing).
+6. Halil Bey's Abschlusstest B1 form A is word for word except where the blind review found two keys: Aufgabe B
+   sentence 2 ("Herr Berger hat ____ Zeit ____ Lust") also takes "sowohl ... als auch", so a context sentence was
+   added that only "weder ... noch" fits; some listening scripts and the planning task were made more natural.
+   Other review notes on his form (keyword matching, a B2 participle, "zu kamen" type distractors) are kept as he
+   wrote them and listed for the owner.
+7. AUSSPRACHE cannot be judged from a transcript: the AI leaves it empty and the teacher sets it, so every speaking
+   task waits for the teacher (as every productive grading does anyway).
+8. Estimated test times with the speaking timers: about 59 minutes (Zwischentest) and 95 minutes (Abschlusstest).
