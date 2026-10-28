@@ -2,6 +2,7 @@ import { candidateT } from "@/i18n/candidate";
 import candidateTr from "@/i18n/messages/candidate.tr.json";
 import candidateEn from "@/i18n/messages/candidate.en.json";
 import type { CandidateLocale } from "@/i18n/locale";
+import { courseGermanNameOf } from "@/lib/exam/course/templates";
 import { EXAM_TEMPLATES, type ExamTemplateKey } from "@/lib/exam/templates";
 
 /** The dictionary key (namespace `examNames`) that holds each template's name. */
@@ -25,8 +26,15 @@ const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\
  * name in Turkish or English, with or without the length, the template's name
  * in the student's language is shown instead. A name the manager typed or
  * edited is shown as stored.
+ *
+ * A course test is the exception that needs no dictionary: "Zwischentest B1.1"
+ * and "Abschlusstest B1" are proper names, so whatever language the manager's
+ * panel stored ("Kurs ara sınavı B1.1", "Mid-course test B1.1"), every student
+ * reads the German one.
  */
 export function candidateExamName(stored: string, locale: CandidateLocale): string {
+  const course = courseGermanNameOf(stored);
+  if (course) return course;
   const t = candidateT(locale);
   // The exam the seed and the production setup create is named after this
   // dictionary entry, not after a template.

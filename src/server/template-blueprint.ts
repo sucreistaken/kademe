@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { auditLogs, examBlueprints } from "@/db/schema";
 import type { Locale } from "@/i18n/locale";
 import { bankCoverage } from "@/lib/exam/blueprint";
-import type { ExamTemplate } from "@/lib/exam/templates";
+import type { ReadyExamTemplate } from "@/lib/exam/templates";
 import { bankCounts } from "@/server/panel";
 
 type Blueprint = typeof examBlueprints.$inferSelect;
@@ -37,7 +37,7 @@ export function canonicalJson(value: unknown): string {
  * template changed after the exam was published, e.g. the 2026-10-14 switch
  * from adaptive sections to fixed forms.
  */
-export function isCurrentTemplate(row: Pick<Blueprint, "mode" | "config">, template: Pick<ExamTemplate, "mode" | "config">): boolean {
+export function isCurrentTemplate(row: Pick<Blueprint, "mode" | "config">, template: Pick<ReadyExamTemplate, "mode" | "config">): boolean {
   return row.mode === template.mode && canonicalJson(row.config) === canonicalJson(template.config);
 }
 
@@ -45,8 +45,8 @@ export function isCurrentTemplate(row: Pick<Blueprint, "mode" | "config">, templ
  * The organisation's published exam for a ready template: the one the invite
  * form published before, or a new one published now. A new one passes the
  * same bank coverage check as publishing from the editor (every level, or
- * every claim a manager could choose), so a template never becomes an exam
- * the bank cannot fill.
+ * every claim a manager could choose; a course test: both of its forms), so a
+ * template never becomes an exam the bank cannot fill.
  *
  * A published exam from an earlier version of the template is retired
  * (ARCHIVED) and the current template is published in its place, in one
@@ -63,7 +63,7 @@ export function isCurrentTemplate(row: Pick<Blueprint, "mode" | "config">, templ
 export async function ensureTemplateBlueprint(
   orgId: string,
   userId: string,
-  template: ExamTemplate,
+  template: ReadyExamTemplate,
   locale: Locale,
 ): Promise<TemplateBlueprintResult> {
   const [existing] = await published(orgId, template.key);

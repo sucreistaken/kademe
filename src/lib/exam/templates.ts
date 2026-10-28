@@ -1,6 +1,7 @@
 import type { I18nText } from "@/db/schema/types";
 import { PRESETS } from "@/lib/proctor/policy";
 import { section, type BlueprintConfig, type Distribution, type PassRules, type SectionConfig } from "./blueprint";
+import { courseExamTemplateByKey } from "./course/templates";
 import type { Cefr, ExamMode } from "./types";
 
 /**
@@ -217,4 +218,18 @@ export const EXAM_TEMPLATES: ExamTemplate[] = TEMPLATES.map((t) => structuredClo
 export function examTemplateByKey(key: string): ExamTemplate | null {
   const t = TEMPLATES.find((x) => x.key === key);
   return t ? structuredClone(t) : null;
+}
+
+/**
+ * What an invite needs of a ready exam, whichever kind it is: the three
+ * templates above or one of the eight course tests (course/templates.ts). The
+ * course tests stay out of EXAM_TEMPLATES on purpose: the exam wizard and the
+ * AI exam creator list that array, and a course test is neither copied nor
+ * edited nor drawn from the bank.
+ */
+export type ReadyExamTemplate = Pick<ExamTemplate, "mode" | "name" | "summary" | "config"> & { key: string };
+
+/** The ready exam an invite's `template:<key>` names, or null. */
+export function readyTemplateByKey(key: string): ReadyExamTemplate | null {
+  return examTemplateByKey(key) ?? courseExamTemplateByKey(key);
 }

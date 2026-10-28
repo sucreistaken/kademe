@@ -2,6 +2,8 @@ import { z } from "zod";
 import { PRESETS, proctoringPolicySchema } from "@/lib/proctor/policy";
 import { selectNext, type AdaptiveConfig, type AdaptiveState, type PoolItem } from "./adaptive";
 import { BAND_CENTER, levelIndex, shiftLevel } from "./cefr";
+import { courseBlueprint } from "./course/config";
+import { courseCoverage } from "./course/coverage";
 import { courseConfigSchema } from "./course/types";
 import {
   CEFR_LEVELS,
@@ -220,13 +222,19 @@ export function adaptivePlacementBlueprint(): BlueprintConfig {
   };
 }
 
+/** The course test a blank COURSE_TEST blueprint starts as: B1, the course Halil Bey's test is written for. */
+const DEFAULT_COURSE_KEY = "B1";
+
 /**
- * Sensible starting points for the two modes. Both are fixed forms (the
- * student can go back, flag and review). The placement one keeps the
- * multiple-choice grammar form the placement template had before 2026-10-15,
- * for schools that start blank and want it.
+ * Sensible starting points for the modes. All are fixed forms (the student can
+ * go back, flag and review). The placement one keeps the multiple-choice
+ * grammar form the placement template had before 2026-10-15, for schools that
+ * start blank and want it. A course test has no blank form: it starts as the
+ * B1 Abschlusstest (course tests are published from their templates, see
+ * course/templates.ts).
  */
 export function defaultBlueprint(mode: ExamMode): BlueprintConfig {
+  if (mode === "COURSE_TEST") return courseBlueprint(DEFAULT_COURSE_KEY);
   if (mode === "PLACEMENT") {
     return {
       version: 1,
@@ -269,7 +277,11 @@ export const enabledSections = (cfg: BlueprintConfig): SectionConfig[] =>
 export const estimatedMinutes = (cfg: BlueprintConfig): number =>
   enabledSections(cfg).reduce((m, s) => m + s.durationMinutes, 0);
 
-/** Where a relative distribution is anchored. */
+/**
+ * Where a relative distribution is anchored: the claim in a verification, B1
+ * otherwise. A course test has no claim and draws nothing by level (its form
+ * is fixed), so it falls on B1 like a placement; nothing reads it there.
+ */
 export const anchorLevel = (mode: ExamMode, claimed: Cefr | null): Cefr =>
   mode === "LEVEL_VERIFICATION" && claimed ? claimed : "B1";
 
@@ -683,8 +695,9 @@ export function nextAdaptiveItems(
   return selectNext(state, pool, config, rng);
 }
 
-/** Levels an adaptive section may need, for the coverage check. */
+/** Levels an adaptive section may need, for the coverage check. A course test has no adaptive section. */
 export function adaptiveLevels(mode: ExamMode, claimed: Cefr | null): Cefr[] {
+  if (mode === "COURSE_TEST") return [];
   if (mode === "PLACEMENT" || !claimed) return [...CEFR_LEVELS];
   const i = levelIndex(claimed);
   return CEFR_LEVELS.filter((_, j) => Math.abs(j - i) <= 1);
@@ -693,7 +706,9 @@ export function adaptiveLevels(mode: ExamMode, claimed: Cefr | null): Cefr[] {
 /**
  * Levels of the writing / speaking tasks. Verification tests the claim itself.
  * Placement follows the provisional level from the objective sections and, with
- * more than one task, reaches one level up to see where the ceiling is.
+ * more than one task, reaches one level up to see where the ceiling is. A
+ * course test asks every task at the course's own level, which the caller
+ * passes as `provisional` (the objective sections do not move it).
  */
 export function productiveTaskLevels(
   mode: ExamMode,
@@ -701,6 +716,7 @@ export function productiveTaskLevels(
   provisional: Cefr,
   tasks: number,
 ): Cefr[] {
+  if (mode === "COURSE_TEST") return Array(tasks).fill(provisional);
   if (mode === "LEVEL_VERIFICATION" && claimed) return Array(tasks).fill(claimed);
   const plan: number[] = tasks === 1 ? [0] : tasks === 2 ? [0, 1] : tasks === 3 ? [-1, 0, 1] : [-1, 0, 1, 1];
   return plan.map((d) => shiftLevel(provisional, d));
@@ -718,6 +734,8 @@ export type CoverageRow = {
   cTest?: true;
   /** This row is one of the section's texts, of this kind, not its ordinary items. */
   text?: TextGapKind;
+  /** Course tests: the form this row counts ("B1.1:A"). Unset on a bank row. */
+  courseForm?: string;
   ok: boolean;
 };
 
@@ -736,13 +754,23 @@ export type BankCount = {
   wordBanks?: number;
   /** Open cloze texts (one typed word per gap) among those items. Openings only, as C-tests. */
   openTexts?: number;
+  /**
+   * A course test form ("B1.1:A", spec 2026-10-28): this row counts that form's
+   * items only. Course items are never part of the bank's rows, and the bank's
+   * coverage ignores course rows (bankCoverage), as every random draw does.
+   */
+  courseForm?: string;
+  /** Course rows: the scored units of those items (a cloze text counts its gaps; `items` counts the item once). */
+  points?: number;
 };
 
 /**
  * Whether the bank holds enough approved content for this blueprint. With a
  * claimed level it answers for that student; without, for every level the
  * exam could reach. The editor shows this live and invite and publish are
- * refused while it fails, so nobody meets an empty section mid-exam.
+ * refused while it fails, so nobody meets an empty section mid-exam. A course
+ * test is covered by its own two forms, not by the bank (courseCoverage), and
+ * the other modes never count a course form's rows.
  */
 export function bankCoverage(
   counts: BankCount[],
@@ -750,9 +778,10 @@ export function bankCoverage(
   mode: ExamMode,
   claimed: Cefr | null,
 ): { ok: boolean; rows: CoverageRow[] } {
+  if (mode === "COURSE_TEST") return courseCoverage(counts, cfg);
   const rows: CoverageRow[] = [];
   const get = (section: Section, level: Cefr) => {
-    const c = counts.find((x) => x.section === section && x.level === level);
+    const c = counts.find((x) => !x.courseForm && x.section === section && x.level === level);
     const texts: Record<TextGapKind, number> = { CTEST: c?.cTests ?? 0, CLOZE: c?.clozeTexts ?? 0, WORDBANK: c?.wordBanks ?? 0, OPEN: c?.openTexts ?? 0 };
     // Texts never enter automatic selection, so they do not count as items.
     return { items: (c?.items ?? 0) - texts.CTEST - texts.CLOZE - texts.WORDBANK - texts.OPEN, stimuli: c?.stimuli ?? 0, texts };

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNull, ne, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   assessmentLinks,
@@ -24,6 +24,7 @@ import {
   users,
 } from "@/db/schema";
 import type { BankCount } from "@/lib/exam/blueprint";
+import { foldCourseCounts } from "@/lib/exam/course/coverage";
 import { C_TEST_SKILL_TAG, CLOZE_SKILL_TAG, OPEN_CLOZE_SKILL_TAG, WORD_BANK_SKILL_TAG } from "@/lib/exam/types";
 import { enabledSections } from "@/lib/exam/blueprint";
 import type { Cefr, ExamMode, ResultLevel, Section } from "@/lib/exam/types";
@@ -142,8 +143,10 @@ export async function listStudents(orgId: string): Promise<StudentRow[]> {
 
 /**
  * Approved, servable items per section and level; listening needs audio. The
- * bank only: course test rows (course_form set, spec 2026-10-28) are served by
- * their own form and never count towards a placement or level check's coverage.
+ * bank's rows never count a course form's items (spec 2026-10-28: the two
+ * never mix); those come after them as rows of their own, one per course form,
+ * section and level, with `courseForm` set (course/coverage.ts), so
+ * bankCoverage can answer for a course test with the same counts.
  */
 export async function bankCounts(orgId: string): Promise<BankCount[]> {
   const rows = await db
@@ -169,7 +172,24 @@ export async function bankCounts(orgId: string): Promise<BankCount[]> {
       ),
     )
     .groupBy(items.section, items.level);
-  return rows.map((r) => ({ section: r.section, level: r.level, items: r.n, stimuli: r.s, cTests: r.c, clozeTexts: r.cz, wordBanks: r.wb, openTexts: r.op }));
+  // Units are counted from the items' content, like the result does, so this reads each course item once.
+  const course = await db
+    .select({
+      courseForm: items.courseForm,
+      section: items.section,
+      level: items.level,
+      content: items.content,
+      answerKey: items.answerKey,
+      stimulusId: items.stimulusId,
+      audioKey: stimuli.audioKey,
+    })
+    .from(items)
+    .leftJoin(stimuli, eq(stimuli.id, items.stimulusId))
+    .where(and(eq(items.orgId, orgId), eq(items.status, "APPROVED"), isNotNull(items.courseForm)));
+  return [
+    ...rows.map((r) => ({ section: r.section, level: r.level, items: r.n, stimuli: r.s, cTests: r.c, clozeTexts: r.cz, wordBanks: r.wb, openTexts: r.op })),
+    ...foldCourseCounts(course),
+  ];
 }
 
 export async function publishedBlueprints(orgId: string) {
