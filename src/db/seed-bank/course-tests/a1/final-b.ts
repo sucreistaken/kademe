@@ -396,7 +396,7 @@ const listening = [
     "EASY",
     "Wo steigen die Fahrgäste nach Bonn um?",
     "in Köln",
-    ["in Bonn", "in Aachen"],
+    ["in Düsseldorf", "in Aachen"],
     1,
     "Fahrgäste nach Bonn steigen in Köln um. Die Fahrgäste nach Aachen bleiben im Zug.",
   ),
