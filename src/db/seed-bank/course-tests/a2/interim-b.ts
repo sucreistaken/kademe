@@ -39,7 +39,7 @@ Text C - Beitrag im Forum
 Hallo zusammen, ich habe nächsten Samstag Geburtstag und möchte mit zehn Freunden essen gehen. Kennt ihr ein gutes Restaurant in der Innenstadt? Es soll nicht zu teuer sein, und wir möchten gern draußen sitzen. Vegetarisches Essen ist wichtig, weil zwei Freundinnen kein Fleisch essen. Danke für eure Tipps! Dilara
 
 Text D - Blogeintrag
-Gestern war ich zum ersten Mal im Freiluftkino am Fluss. Wir haben Decken mitgebracht und Popcorn gegessen. Der Film war lustig, aber es war ziemlich kalt, deshalb habe ich nach der Hälfte meine Jacke angezogen. Nächstes Mal nehme ich einen dicken Pullover mit! Der Eintritt war billig, nur sechs Euro. Wer mitkommen möchte, schreibt mir einfach.
+Gestern war ich zum ersten Mal im Freiluftkino am Fluss. Wir haben Decken geliehen und Popcorn gegessen. Der Film war lustig, aber es war ziemlich kalt, deshalb habe ich nach der Hälfte meine Jacke angezogen. Nächstes Mal ziehe ich gleich einen dicken Pullover an! Der Eintritt war billig, nur sechs Euro. Wer mitkommen möchte, schreibt mir einfach.
 `,
 );
 
@@ -64,7 +64,7 @@ const reading = [
     "Text B",
     ["Text C", "Text D"],
     0,
-    "Text B: \"Bringen Sie, wenn möglich, Ihren eigenen Laptop mit.\" In Text D haben die Besucher Decken mitgebracht, aber das ist eine Erzählung über gestern, keine Aufforderung. Text C nennt nichts, was man mitbringen soll.",
+    "Text B: \"Bringen Sie, wenn möglich, Ihren eigenen Laptop mit.\" Text D erzählt von einem Kinoabend (Decken, Popcorn, Pullover), enthält aber keine Aufforderung, etwas mitzubringen. Text C nennt nichts, was man mitbringen soll.",
   ),
   choice3(
     angebote,
