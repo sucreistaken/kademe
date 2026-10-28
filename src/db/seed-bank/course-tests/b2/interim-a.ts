@@ -308,7 +308,7 @@ export const INTERIM_A: SeedCourseForm = {
             "Sie sollen das Wasser vor dem Trinken abkochen.",
             "Sie sollen bei den Stadtwerken eine Notversorgung anmelden.",
           ], 0,
-          "„Sich schon am Abend vorher einen Vorrat anzulegen.“ Die Notversorgung betrifft nur Haushalte, die aus gesundheitlichen Gründen auf Wasser angewiesen sind; zum Abkochen sagt die Meldung nichts."),
+          "„Sich schon am Abend vorher einen Vorrat anzulegen.“ Die Notversorgung betrifft nur Haushalte, die aus gesundheitlichen Gründen auf Wasser angewiesen sind; das Wasser abzukochen ist laut Meldung nicht nötig."),
         tfng("LISTENING", L4, "detail", "MID",
           [
             ["Jonas hat seine Konten in den sozialen Netzwerken gelöscht.", "F"],
