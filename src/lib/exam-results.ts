@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, lt, notExists, sql } from "drizzle-orm";
+import { and, eq, getTableColumns, inArray, isNull, lt, notExists, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   assessments,
@@ -16,16 +16,17 @@ import type { FinalSkill } from "@/db/schema/exam";
 import { callJson } from "@/lib/ai-runs";
 import { enabledSections } from "@/lib/exam/blueprint";
 import { medianLevel } from "@/lib/exam/cefr";
-import { gradeAnswer, RULE_MODEL, type GradingJob } from "@/lib/exam/grade-answer";
+import { gradeAnswer, gradeCourseAnswer, RULE_MODEL, type GradingJob } from "@/lib/exam/grade-answer";
 import { ruleProposal } from "@/lib/exam/grading-rules";
-import { DEFAULT_RATIONALE_LOCALE, GRADING_CALL_OPTIONS, GRADING_JSON_SCHEMA, speakingMetrics } from "@/lib/exam/grading";
+import { DEFAULT_RATIONALE_LOCALE, GRADING_CALL_OPTIONS, GRADING_JSON_SCHEMA, speakingMetrics, type TimedWord } from "@/lib/exam/grading";
 import { sectionChance } from "@/lib/exam/chance";
 import { buildCourseComputed } from "@/lib/exam/course/computed";
 import { effectiveCourseOutcome } from "@/lib/exam/course/decisions";
+import { courseRubricSchema, courseRuleProposal, type CourseRubricJob } from "@/lib/exam/course/rubric-grading";
 import { blockerErrorCode, finalizeBlockers } from "@/lib/exam/finalize-blockers";
 import { hasAnswer } from "@/lib/exam/item-scoring";
 import { autoFinalizes, computeResult, type Decider, type SectionEvidence } from "@/lib/exam/result";
-import { isObjectiveSection, type ProductiveSection, type ResultLevel, type Section } from "@/lib/exam/types";
+import { isObjectiveSection, type ItemAnswer, type ProductiveSection, type ResultLevel, type Section } from "@/lib/exam/types";
 import { enqueueGrading } from "@/lib/queue";
 import { loadAcceptances } from "@/server/result-review";
 
@@ -46,11 +47,33 @@ import { loadAcceptances } from "@/server/result-review";
 const TRANSCRIBABLE = ["READY", "INCOMPLETE"] as const;
 
 export async function openGradings(sectionRunId: string) {
-  const responses = await db.select().from(itemResponses).where(eq(itemResponses.sectionRunId, sectionRunId));
+  // Each response comes with the mode of its exam: a course test is graded in rubric points, not levels.
+  const responses = await db
+    .select({ ...getTableColumns(itemResponses), examMode: examAssessments.mode })
+    .from(itemResponses)
+    .innerJoin(sectionRuns, eq(sectionRuns.id, itemResponses.sectionRunId))
+    .innerJoin(attempts, eq(attempts.id, sectionRuns.attemptId))
+    .innerJoin(examAssessments, eq(examAssessments.assessmentId, attempts.assessmentId))
+    .where(eq(itemResponses.sectionRunId, sectionRunId));
   for (const r of responses) {
     const snap = r.itemSnapshot;
     if (snap.type !== "WRITING_PROMPT" && snap.type !== "SPEAKING_PROMPT") continue;
     const answered = hasAnswer(snap.type, r.answer ?? null);
+    if (!answered && r.examMode === "COURSE_TEST") {
+      // A course test task nobody answered (or never reached): 0 in every criterion by rule, for the teacher to confirm.
+      await db
+        .insert(responseGradings)
+        .values({
+          itemResponseId: r.id,
+          taskLevel: snap.level,
+          status: "AI_PROPOSED",
+          courseProposal: courseRuleProposal(snap.section as ProductiveSection, snap.rubric?.contentPoints ?? []),
+          aiModel: RULE_MODEL,
+          proposedAt: new Date(),
+        })
+        .onConflictDoNothing();
+      continue;
+    }
     if (!answered) {
       // Nothing was written or said: a fixed rule proposes A0 at once (no model call) and the
       // teacher confirms it. A recording that arrives late reopens it (`reopenGradingForMedia`).
@@ -100,7 +123,7 @@ async function gradingInputReady(itemResponseId: string): Promise<boolean> {
  * long as no teacher has decided on it.
  */
 export async function reopenGradingForMedia(itemResponseId: string) {
-  const reopen = { status: "PENDING" as const, aiError: null, aiProposal: null, aiLevel: null, aiModel: null, proposedAt: null, updatedAt: new Date() };
+  const reopen = { status: "PENDING" as const, aiError: null, aiProposal: null, courseProposal: null, aiLevel: null, aiModel: null, proposedAt: null, updatedAt: new Date() };
   await db
     .update(responseGradings)
     .set(reopen)
@@ -224,6 +247,7 @@ export async function runGrading(gradingId: string): Promise<GradingOutcome> {
       run: sectionRuns,
       attempt: attempts,
       assessment: assessments,
+      exam: examAssessments,
       org: organizations,
     })
     .from(responseGradings)
@@ -231,10 +255,13 @@ export async function runGrading(gradingId: string): Promise<GradingOutcome> {
     .innerJoin(sectionRuns, eq(sectionRuns.id, itemResponses.sectionRunId))
     .innerJoin(attempts, eq(attempts.id, sectionRuns.attemptId))
     .innerJoin(assessments, eq(assessments.id, attempts.assessmentId))
+    .innerJoin(examAssessments, eq(examAssessments.assessmentId, assessments.id))
     .innerJoin(organizations, eq(organizations.id, assessments.orgId))
     .where(eq(responseGradings.id, gradingId));
   if (!row) return { status: "SKIPPED", reason: "grading is gone" };
   if (row.grading.status !== "PENDING") return { status: "SKIPPED", reason: `status is ${row.grading.status}` };
+  // A course test is graded in rubric points against its own prompt, not in CEFR levels.
+  if (row.exam?.mode === "COURSE_TEST") return runCourseGrading(gradingId, row);
 
   const snap = row.response.itemSnapshot;
   const answer = row.response.answer ?? {};
@@ -261,22 +288,8 @@ export async function runGrading(gradingId: string): Promise<GradingOutcome> {
     };
   } else {
     // No recording and no typed text is an answer with nothing in it: a rule proposes A0 (EMPTY).
-    let source = "";
-    let words: Array<{ text: string; startMs: number; endMs: number }> = [];
-    let durationMs = 0;
-    if (answer.usedTextAlternative) {
-      source = answer.text ?? "";
-    } else if (answer.mediaAssetId) {
-      const [t] = await db
-        .select({ text: transcripts.text, words: transcripts.words, durationMs: mediaAssets.durationMs })
-        .from(transcripts)
-        .innerJoin(mediaAssets, eq(mediaAssets.id, transcripts.mediaAssetId))
-        .where(eq(transcripts.mediaAssetId, answer.mediaAssetId));
-      if (!t) return { status: "SKIPPED", reason: "transcript not ready" };
-      source = t.text;
-      words = t.words ?? [];
-      durationMs = t.durationMs ?? (words.length ? words[words.length - 1].endMs : 0);
-    }
+    const spoken = await spokenAnswer(answer);
+    if (!spoken) return { status: "SKIPPED", reason: "transcript not ready" };
     job = {
       section: "SPEAKING",
       task: snap.prompt,
@@ -284,8 +297,8 @@ export async function runGrading(gradingId: string): Promise<GradingOutcome> {
       register: rubric.register,
       taskLevel,
       images: snap.content.kind === "SPEAKING" ? snap.content.images : undefined,
-      transcript: source,
-      metrics: speakingMetrics(words, durationMs),
+      transcript: spoken.source,
+      metrics: speakingMetrics(spoken.words, spoken.durationMs),
       typed: !!answer.usedTextAlternative,
       rationaleLocale,
     };
@@ -323,6 +336,94 @@ export async function runGrading(gradingId: string): Promise<GradingOutcome> {
     .where(and(eq(responseGradings.id, gradingId), eq(responseGradings.status, "PENDING")));
   await recomputeResult(row.attempt.id);
   return { status: "PROPOSED", level };
+}
+
+/**
+ * What was said: the transcript with its word timings and the recording's
+ * length, or the text typed when recording failed. An answer with neither is
+ * empty. Null while a recording has no transcript yet.
+ */
+async function spokenAnswer(answer: ItemAnswer): Promise<{ source: string; words: TimedWord[]; durationMs: number } | null> {
+  if (answer.usedTextAlternative) return { source: answer.text ?? "", words: [], durationMs: 0 };
+  if (!answer.mediaAssetId) return { source: "", words: [], durationMs: 0 };
+  const [t] = await db
+    .select({ text: transcripts.text, words: transcripts.words, durationMs: mediaAssets.durationMs })
+    .from(transcripts)
+    .innerJoin(mediaAssets, eq(mediaAssets.id, transcripts.mediaAssetId))
+    .where(eq(transcripts.mediaAssetId, answer.mediaAssetId));
+  if (!t) return null;
+  const words = t.words ?? [];
+  return { source: t.text, words, durationMs: t.durationMs ?? (words.length ? words[words.length - 1].endMs : 0) };
+}
+
+type CourseGradingContext = {
+  response: typeof itemResponses.$inferSelect;
+  attempt: typeof attempts.$inferSelect;
+  exam: typeof examAssessments.$inferSelect;
+  org: typeof organizations.$inferSelect;
+};
+
+/**
+ * The grading job of a course test answer (spec 2026-10-28): the model proposes
+ * rubric points (`course_proposal`, German rationales), a teacher confirms or
+ * changes them. A model that cannot be used closes the grading as AI_FAILED so
+ * the teacher grades it: never as a zero.
+ */
+async function runCourseGrading(gradingId: string, row: CourseGradingContext): Promise<GradingOutcome> {
+  const snap = row.response.itemSnapshot;
+  const answer = row.response.answer ?? {};
+  const course = row.exam.blueprintSnapshot.course;
+  const failed = async (reason: string, model: string | null = null, runId: string | null = null): Promise<GradingOutcome> => {
+    await db
+      .update(responseGradings)
+      .set({ status: "AI_FAILED", aiError: reason.slice(0, 1000), aiRunId: runId, aiModel: model, updatedAt: new Date() })
+      .where(and(eq(responseGradings.id, gradingId), eq(responseGradings.status, "PENDING")));
+    await recomputeResult(row.attempt.id);
+    return { status: "FAILED", reason };
+  };
+  if (!course) return failed("course test without a course configuration");
+
+  const base = { courseKey: course.key, level: snap.level, task: snap.prompt, leitpunkte: snap.rubric?.contentPoints ?? [], register: snap.rubric?.register };
+  let job: CourseRubricJob;
+  if (snap.content.kind === "WRITING") {
+    job = { section: "WRITING", ...base, images: snap.content.images, minWords: snap.content.minWords, maxWords: snap.content.maxWords, text: answer.text ?? "" };
+  } else {
+    const spoken = await spokenAnswer(answer);
+    if (!spoken) return { status: "SKIPPED", reason: "transcript not ready" };
+    job = {
+      section: "SPEAKING",
+      ...base,
+      images: snap.content.kind === "SPEAKING" ? snap.content.images : undefined,
+      answerSeconds: snap.content.kind === "SPEAKING" ? snap.content.answerSeconds : undefined,
+      transcript: spoken.source,
+      metrics: speakingMetrics(spoken.words, spoken.durationMs),
+      typed: !!answer.usedTextAlternative,
+    };
+  }
+
+  const meta = { orgId: row.org.id, purpose: "COURSE_RUBRIC", inputRef: `item_response:${row.response.id}` } as const;
+  const schema = courseRubricSchema(job.section);
+  const graded = await gradeCourseAnswer(job, async (messages) => {
+    const { response, runId } = await callJson("course_rubric", schema, messages, meta, GRADING_CALL_OPTIONS);
+    return { text: response.text, model: response.model, runId };
+  });
+  if (graded.status === "UNPARSEABLE") return failed(`unparseable: ${graded.error}`, graded.model, graded.runId);
+
+  await db
+    .update(responseGradings)
+    .set({
+      status: "AI_PROPOSED",
+      courseProposal: graded.proposal,
+      aiRunId: graded.runId,
+      aiModel: graded.model,
+      aiError: null,
+      proposedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(and(eq(responseGradings.id, gradingId), eq(responseGradings.status, "PENDING")));
+  await recomputeResult(row.attempt.id);
+  // A rubric proposal has no CEFR level.
+  return { status: "PROPOSED", level: null };
 }
 
 // ---------------------------------------------------------------------------
