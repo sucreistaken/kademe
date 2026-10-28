@@ -9,7 +9,7 @@ import { CourseGradingEditor } from "./grading-editor";
 import { COMMON_ERROR_IDS, editorCriteria, type CourseGradingStatus } from "./grading-model";
 
 // The real provider types `children` as required, which createElement's third argument cannot satisfy.
-const Provider = NextIntlClientProvider as unknown as FC<{ locale: string; messages: Record<string, unknown>; children?: ReactNode }>;
+const Provider = NextIntlClientProvider as unknown as FC<{ locale: string; messages: Record<string, unknown>; timeZone?: string; children?: ReactNode }>;
 const noop = () => {};
 
 const writingProposal = (points: [number, number, number] = [3, 2, 1], commonErrors: CourseRubricProposal["commonErrors"] = ["SPELLING", "CASE"]): CourseRubricProposal => ({

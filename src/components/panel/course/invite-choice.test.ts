@@ -8,12 +8,12 @@ import tr from "@/i18n/messages/screens.tr.json";
 import { CourseFormPicker, CourseKindChoice } from "./invite-choice";
 
 // The real provider types `children` as required, which createElement's third argument cannot satisfy.
-const Provider = NextIntlClientProvider as unknown as FC<{ locale: string; messages: Record<string, unknown>; children?: ReactNode }>;
+const Provider = NextIntlClientProvider as unknown as FC<{ locale: string; messages: Record<string, unknown>; timeZone?: string; children?: ReactNode }>;
 const noop = () => {};
 
 const dict = { de, en, tr };
 const render = (locale: keyof typeof dict, child: ReactNode) =>
-  renderToStaticMarkup(createElement(Provider, { locale, messages: { courseInvite: dict[locale].courseInvite } }, child));
+  renderToStaticMarkup(createElement(Provider, { locale, timeZone: "Europe/Berlin", messages: { courseInvite: dict[locale].courseInvite } }, child));
 
 /** Every radio of the markup with its group, value and checked state (React does not keep prop order in the markup). */
 function radios(html: string, name: string): Array<{ value: string; checked: boolean }> {
