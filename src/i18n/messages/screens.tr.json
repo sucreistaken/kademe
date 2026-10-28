@@ -1324,7 +1324,7 @@
     "pendingShort": "bekliyor",
     "totalRow": "TOPLAM",
     "remarkAuto": "Otomatik sayıldı",
-    "remarkWaiting": "Senin değerlendirmeni bekliyor",
+    "remarkWaiting": "Değerlendirmenizi bekliyor",
     "remarkWriting": "İçerik {content} · Kelime bilgisi {vocab} · Dilbilgisi {grammar}",
     "remarkSpeaking": "Görevler: {tasks}. Ortalama, aşağı yuvarlanır.",
     "thresholdPass": "Geçme sınırı: toplam puanın %{pct} kadarı, yani {max} puanın {points} puanı.",
