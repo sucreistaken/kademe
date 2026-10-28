@@ -1,6 +1,6 @@
 # Kademe - durum ve devir belgesi
 
-Kurs sınavları (2026-10-28, canlıya çıkış bu bölümün sonunda): bkz. "Kurs sınavları: 2026-10-28" bölümü.
+Kurs sınavları (canlıda 2026-10-28 ~12:45 UTC, `main` `2df4790`, yedek `/root/kademe-backups/kademe-20261028-1245.dump`, göç 0029, banka +424 kurs sorusu): bkz. "Kurs sınavları: 2026-10-28" bölümü.
 Tur 4, sahip geri bildirimi 2026-10-25 akşam (canlıda 2026-10-26 ~10:50 UTC, `main` `5e90445`, yedek `/root/kademe-backups/kademe-20261026-1049.dump`, göç yok, banka değişmedi): bkz. "Tur 4: 2026-10-26" bölümü.
 Tur 3, sahip geri bildirimi 2026-10-25 (canlıda 2026-10-25, `main` `0d031ed`): bkz. "Tur 3: 2026-10-25" bölümü.
 Tur 2, sahip geri bildirimi 2026-10-24 (canlıda 2026-10-24, `main` `7b9e05c`): bkz. "Tur 2: 2026-10-24" bölümü.
@@ -47,6 +47,18 @@ turundan sonra "direkt bitirene kadar çalış, en sonda canlıya al, öğretmen
   çözüm notları (anahtar kelime eşleşmeleri, B2 seviyesinde bir Partizip, "zu kamen" türü çeldiriciler) aynen bırakıldı;
   B1 sözlü kartındaki "Herkunft" maddesi kullanılmadı; dinlemeler ve formlar bir Almanca öğretmeni tarafından
   okunmadı.
+- **Doğrulama sayıları:** `vitest` 489 dosya 6891/6891, `tsc` temiz, `eslint` 0 hata (1 eski uyarı).
+- **Canlıya çıkış (2026-10-28 ~12:45 UTC):** çalışan bölüm 0 iken `pg_dump` (`kademe-20261028-1245.dump`, 1.27 MB), servis
+  ve 5 zamanlayıcı durdu, `git pull` (`e0edd14` -> `2df4790`), `pnpm install`, `db:migrate` (0029), build, `.next/cache`
+  silindi, hepsi başladı; `/login` 127.0.0.1 ve HTTPS 200, `PROCTOR_DEV_FAKE` yok, build'de `Zwischentest`,
+  `COURSE_RUBRIC`, `course_form` var. Banka: onaylı başlangıç listesi `seed-approved-before-20261028-1252.txt`;
+  80 kurs sesi yerelde üretilip `/var/lib/kademe/storage/bank/audio/` altına kopyalandı; `bank:topup` 424 kurs sorusu ve
+  112 metin/kayıt ekledi (form başına 21 ya da 32), `bank:tts` 80/80 (0 hata), `--retire-stale --sync-seed` 0
+  değişiklik, sesi olmayan onaylı dinleme 0, banka 754 onaylı başlangıç sorusuyla aynen. Canlıda tarayıcı turu
+  yapılmadı; kurs şablonu ilk kurs davetinde yayınlanır. Geri dönüş: servis ve zamanlayıcıları durdur,
+  `git checkout e0edd14`, build, başlat (0029 geri alınmaz; eski kod yeni kolonları ve kurs satırlarını yok sayar, ama
+  eski kod kurs satırlarını rastgele çekilişte görür: geri dönülürse önce `update items set status='RETIRED' where
+  course_form is not null`).
 
 ## Tur 4: 2026-10-26 (sahip mesajları 2026-10-25 akşam, spec `docs/superpowers/specs/2026-10-26-exam-round-4.md`)
 
