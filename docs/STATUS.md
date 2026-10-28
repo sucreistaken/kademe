@@ -1,5 +1,6 @@
 # Kademe - durum ve devir belgesi
 
+Alan adı (2026-10-28 ~14:41 UTC, `main` `01d6a54`, yedek `kademe-20261028-1441.dump`): okulun alan adı https://kademe.campusgerman.com aynı sunucuya bakıyor (DNS okul tarafında, 34.40.39.112). Caddy iki adı da sunuyor (`kademe.campusgerman.com, kademe.kadiray.com {`, Let's Encrypt sertifikası 2027-01-26'ya kadar), `APP_ORIGIN=https://kademe.campusgerman.com` (yeni davet linkleri bu adresle), `next.config.ts` server action izinli adreslerine eklendi. Eski adres yönlendirilmedi: gönderilmiş linkler ve süren sınavlar bozulmasın diye çalışmaya devam ediyor. Geri dönüş: `/etc/caddy/Caddyfile.bak-20261028-1440` ve `/etc/kademe/kademe.env.bak-20261028-1440`, Caddy reload ve servis yeniden başlatma.
 Kurs sınavları (canlıda 2026-10-28 ~12:45 UTC, düzen düzeltmesiyle ~13:48 UTC `main` `848c9b7`, yedek `/root/kademe-backups/kademe-20261028-1245.dump`, göç 0029, banka +424 kurs sorusu): bkz. "Kurs sınavları: 2026-10-28" bölümü.
 Tur 4, sahip geri bildirimi 2026-10-25 akşam (canlıda 2026-10-26 ~10:50 UTC, `main` `5e90445`, yedek `/root/kademe-backups/kademe-20261026-1049.dump`, göç yok, banka değişmedi): bkz. "Tur 4: 2026-10-26" bölümü.
 Tur 3, sahip geri bildirimi 2026-10-25 (canlıda 2026-10-25, `main` `0d031ed`): bkz. "Tur 3: 2026-10-25" bölümü.
