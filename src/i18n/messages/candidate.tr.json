@@ -298,6 +298,7 @@
   "exam": {
     "titlePlacement": "Almanca seviye tespit sınavı",
     "titleVerification": "Almanca {level} seviye doğrulama",
+    "titleCourseTest": "Almanca kurs sınavı",
     "lead": "{org} sizi Almanca sınavına davet etti. Sınav tamamen tarayıcıda yapılır, bir şey kurmanız gerekmez.",
     "sectionsTitle": "Bölümler",
     "minutes": "{n} dk",
@@ -421,6 +422,7 @@
     "ruleREADING": "Metin solda, sorular sağda. Metne istediğiniz kadar bakabilirsiniz.",
     "ruleLISTENING": "Her kaydı en fazla {plays} kez dinleyebilirsiniz ve ileri saramazsınız. Kulaklık önerilir.",
     "ruleLISTENINGMixed": "Her kayıt en fazla {plays} kez çalar ve ileri saramazsınız. Bazı kayıtlar yalnızca bir kez çalar. Oynatıcı, her kaydı kaç kez dinleyebileceğinizi gösterir. Kulaklık önerilir.",
+    "ruleLISTENINGCourse": "Her kaydı en fazla {plays} kez dinleyebilirsiniz ve ileri saramazsınız. Oynatıcı, kaç dinleme hakkınızın kaldığını gösterir. Kulaklık önerilir.",
     "ruleWRITING": "Yazım denetimi ve yapıştırma kapalıdır. Cevabınız siz yazdıkça kaydedilir.",
     "ruleSPEAKING": "Her görevde önce kısa bir düşünme süresi, sonra kayıt süresi var. Cevabınızı Almanca ve yüksek sesle verin."
   },
@@ -454,6 +456,7 @@
     "ruleGRAMMARTextsMixed": "{n} kısa metin, kolaydan zora. Cevaplama şekli metinden metne değişir: her metnin üstündeki yönerge ne yapacağınızı söyler. Metin başına yaklaşık {minutes} dakika.",
     "texts": "{n} metin",
     "ruleGRAMMARFixed": "Her soruda bir seçenek işaretleyin ya da boşlukları doldurun. Sorular kolaydan zora doğru sıralıdır.",
+    "ruleGRAMMARCourse": "Metindeki ve tek tek cümlelerdeki her boşluk için uygun seçeneği işaretleyin.",
     "partialHint": "Bu soruda {total} yerden {filled} tanesi dolu.",
     "groupPartialHint": "Bu sayfada {total} sorudan {done} tanesi tam.",
     "saveFailed": "Son değişikliğiniz henüz kaydedilmedi. Bu sekmede tutuluyor ve yeniden gönderiliyor.",
@@ -573,6 +576,7 @@
     "pending": "Yazma ve konuşma cevaplarınızı öğretmeniniz değerlendiriyor. Sonuç kesinleşince bu linkten görebilirsiniz.",
     "pendingReview": "Sonucunuz kesin değil, öğretmeniniz inceleyip karar verecek. Sonuç kesinleşince bu linkten görebilirsiniz.",
     "notReleased": "Sonucunuz henüz yayımlanmadı. Yayımlanınca bu linkten görebilirsiniz.",
+    "courseWait": "Sonucunuzu öğretmeniniz sizinle paylaşacak. Yayımlandığında bu linkten de görebilirsiniz.",
     "overall": "Seviyeniz",
     "skills": "Beceriler",
     "outcomePASS": "Beyan ettiğiniz seviye doğrulandı.",
@@ -618,7 +622,16 @@
     "outcomeFAIL": "Beyan ettiğiniz seviye bu sınavda doğrulanamadı.",
     "outcomeINCONCLUSIVE": "Karar için yeterli kanıt yok; okulunuz sizinle iletişime geçecek.",
     "levelA0": "A0 (Pre-A1)",
-    "levelA0Note": "A0 (Pre-A1), Avrupa Ortak Dil Çerçevesi'nin ilk seviyesi olan A1'den önceki aşamadır: Almancada henüz en baştasınız."
+    "levelA0Note": "A0 (Pre-A1), Avrupa Ortak Dil Çerçevesi'nin ilk seviyesi olan A1'den önceki aşamadır: Almancada henüz en baştasınız.",
+    "courseResultLabel": "Sonucunuz",
+    "courseOutcomePASS": "Geçtiniz",
+    "courseOutcomeFAIL": "Geçemediniz",
+    "courseTotal": "Toplam: {max} puan üzerinden {points}",
+    "coursePoints": "{max} puan üzerinden {points}",
+    "courseNext": "Devam edeceğiniz kurs: {course}",
+    "courseNextTeacher": "Hangi kursla devam edeceğinizi öğretmeniniz size söyleyecek.",
+    "courseFocusSPEAKING": "Özellikle konuşmayı çalışmanız önerilir.",
+    "courseFocusWRITING": "Özellikle yazmayı çalışmanız önerilir."
   },
   "feedback": {
     "title": "Sınavı değerlendirin",

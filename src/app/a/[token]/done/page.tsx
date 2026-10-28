@@ -72,6 +72,7 @@ export default async function DonePage({
           contactEmail={ctx.contactEmail}
           feedbackAnswered={feedbackAnswered}
           sections={state.sections.map((s) => s.section)}
+          mode={state.mode}
         />
       </CandidateShell>
     </CandidateIntl>

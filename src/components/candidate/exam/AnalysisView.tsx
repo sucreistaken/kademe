@@ -1,6 +1,7 @@
 import type { CandidateMessages } from "@/i18n/candidate";
 import { SectionTile } from "@/components/visual/section-look";
 import type { StudentResult } from "@/lib/exam-flow";
+import type { StudentCourseResult } from "@/lib/exam/course/student-view";
 import type { Section } from "@/lib/exam/types";
 import { isPreA1, levelLabel } from "@/lib/exam/level-label";
 import { cn } from "@/lib/cn";
@@ -14,6 +15,12 @@ import { cn } from "@/lib/cn";
  * translators, so it renders in a client component and in a server page alike.
  * A0 reads "A0 (Pre-A1)" and, as the overall level, comes with a short line on
  * what it means.
+ *
+ * A course test (`result.course`, spec 2026-10-28) has no level: the box on top
+ * holds the outcome (passed or not, the same calm box either way), the total,
+ * the course to continue in and, when it applies, the skill to practise; each
+ * section row carries its points instead of right, wrong and blank. The
+ * topics, the strong topics and the approved note below are the same.
  */
 type Tr = (key: keyof CandidateMessages["analysis"] & string, values?: Record<string, string | number>) => string;
 
@@ -21,6 +28,19 @@ const STRONG_MAX = 6;
 
 const pill = "tnum inline-flex items-center rounded-full bg-subtle px-2.5 py-0.5 text-[12.5px] font-semibold text-ink";
 const chip = "inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1 text-[13.5px] font-semibold text-ink";
+
+/** The outcome of a course test. One box for passed and not passed: the colour never follows the result. */
+function CourseOutcome({ course, t }: { course: StudentCourseResult; t: Tr }) {
+  return (
+    <div data-role="course-outcome" className="rounded-xl bg-mint-soft px-5 py-4">
+      <div className="text-[13px] font-bold text-mint">{t("courseResultLabel")}</div>
+      <p className="mt-1 text-[26px] font-extrabold leading-[1.2] text-ink">{t(course.outcome === "PASS" ? "courseOutcomePASS" : "courseOutcomeFAIL")}</p>
+      <p className="tnum mt-2 text-[14px] font-semibold leading-[1.5] text-ink-2">{t("courseTotal", { points: course.total, max: course.max })}</p>
+      <p className="mt-1 text-[14px] leading-[1.5] text-ink-2">{course.recommendation ? t("courseNext", { course: course.recommendation }) : t("courseNextTeacher")}</p>
+      {course.focus ? <p className="mt-1 text-[14px] leading-[1.5] text-ink-2">{t(course.focus === "SPEAKING" ? "courseFocusSPEAKING" : "courseFocusWRITING")}</p> : null}
+    </div>
+  );
+}
 
 export function AnalysisView({
   result,
@@ -35,13 +55,17 @@ export function AnalysisView({
   className?: string;
 }) {
   const analysis = result.analysis;
-  if (!analysis) return null;
+  const course = result.course ?? null;
+  if (!analysis && !course) return null;
   const feedback = result.feedback;
   const levelBySection = new Map((result.skills ?? []).map((s) => [s.section, s.level]));
-  const strong = analysis.strongTopics.slice(0, STRONG_MAX);
+  const strong = (analysis?.strongTopics ?? []).slice(0, STRONG_MAX);
+  const missedTopics = analysis?.missedTopics ?? [];
   return (
     <div className={cn("flex flex-col gap-5", className)}>
-      {result.levelShown && result.overall ? (
+      {course ? (
+        <CourseOutcome course={course} t={t} />
+      ) : result.levelShown && result.overall ? (
         <div className="flex items-center gap-4 rounded-xl bg-mint-soft px-5 py-4">
           <div className="min-w-0 flex-1">
             <div className="text-[13px] font-bold text-mint">{t("levelLabel")}</div>
@@ -55,33 +79,41 @@ export function AnalysisView({
       <section>
         <h3 className="text-[13px] font-bold text-muted">{t("sectionsTitle")}</h3>
         <ul className="mt-2 flex flex-col gap-2.5">
-          {analysis.sections.map((s) => {
-            const level = result.levelShown ? levelBySection.get(s.section) : null;
-            return (
-              <li key={s.section} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[14.5px]">
-                <SectionTile section={s.section} className="size-8 rounded-md [&>svg]:size-4" />
-                <span className="min-w-[7rem] flex-1 font-semibold text-ink-2">{sectionName(s.section)}</span>
-                {level ? <span className={pill}>{levelLabel(level, t("levelA0"))}</span> : null}
-                {s.teacherAssessed ? (
-                  <span className="text-[13px] text-muted">{t("teacherAssessed")}</span>
-                ) : (
-                  <span className="flex flex-wrap gap-1.5">
-                    <span className={pill}>{t("right", { count: s.right })}</span>
-                    <span className={pill}>{t("wrong", { count: s.wrong })}</span>
-                    <span className={pill}>{t("blank", { count: s.blank })}</span>
-                  </span>
-                )}
-              </li>
-            );
-          })}
+          {course
+            ? course.sections.map((s) => (
+                <li key={s.section} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[14.5px]">
+                  <SectionTile section={s.section} className="size-8 rounded-md [&>svg]:size-4" />
+                  <span className="min-w-[7rem] flex-1 font-semibold text-ink-2">{sectionName(s.section)}</span>
+                  <span className={pill}>{t("coursePoints", { points: s.points, max: s.max })}</span>
+                </li>
+              ))
+            : (analysis?.sections ?? []).map((s) => {
+                const level = result.levelShown ? levelBySection.get(s.section) : null;
+                return (
+                  <li key={s.section} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[14.5px]">
+                    <SectionTile section={s.section} className="size-8 rounded-md [&>svg]:size-4" />
+                    <span className="min-w-[7rem] flex-1 font-semibold text-ink-2">{sectionName(s.section)}</span>
+                    {level ? <span className={pill}>{levelLabel(level, t("levelA0"))}</span> : null}
+                    {s.teacherAssessed ? (
+                      <span className="text-[13px] text-muted">{t("teacherAssessed")}</span>
+                    ) : (
+                      <span className="flex flex-wrap gap-1.5">
+                        <span className={pill}>{t("right", { count: s.right })}</span>
+                        <span className={pill}>{t("wrong", { count: s.wrong })}</span>
+                        <span className={pill}>{t("blank", { count: s.blank })}</span>
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
         </ul>
       </section>
 
-      {analysis.missedTopics.length ? (
+      {missedTopics.length ? (
         <section>
           <h3 className="text-[13px] font-bold text-muted">{t("practiceTitle")}</h3>
           <ul className="mt-2 flex flex-wrap gap-2">
-            {analysis.missedTopics.map((m) => (
+            {missedTopics.map((m) => (
               <li key={m.topic} className={chip}>
                 <span>{m.label}</span>
                 <span className="tnum text-[12.5px] font-medium text-muted">{t("missedOf", { missed: m.missed, asked: m.asked })}</span>

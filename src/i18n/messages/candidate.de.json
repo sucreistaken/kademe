@@ -298,6 +298,7 @@
   "exam": {
     "titlePlacement": "Einstufungstest Deutsch",
     "titleVerification": "Überprüfung des Deutschniveaus {level}",
+    "titleCourseTest": "Deutsch-Kurstest",
     "lead": "{org} hat Sie zu einer Deutschprüfung eingeladen. Sie läuft komplett in Ihrem Browser, Sie müssen nichts installieren.",
     "sectionsTitle": "Abschnitte",
     "minutes": "{n} Min.",
@@ -421,6 +422,7 @@
     "ruleREADING": "Links steht der Text, rechts die Fragen. Sie können ihn so oft lesen, wie Sie möchten.",
     "ruleLISTENING": "Sie können jede Aufnahme höchstens {plays} Mal abspielen, ohne vorzuspulen. Kopfhörer werden empfohlen.",
     "ruleLISTENINGMixed": "Jede Aufnahme wird höchstens {plays} Mal abgespielt, ohne vorzuspulen. Manche Aufnahmen werden nur einmal abgespielt. Der Player zeigt, wie oft Sie jede Aufnahme hören können. Kopfhörer werden empfohlen.",
+    "ruleLISTENINGCourse": "Sie können jede Aufnahme höchstens {plays} Mal abspielen, ohne vorzuspulen. Der Player zeigt, wie oft Sie noch hören können. Kopfhörer werden empfohlen.",
     "ruleWRITING": "Rechtschreibprüfung und Einfügen sind ausgeschaltet. Ihre Antwort wird beim Tippen gespeichert.",
     "ruleSPEAKING": "Jede Aufgabe hat eine kurze Bedenkzeit, danach folgt die Aufnahmezeit. Antworten Sie laut auf Deutsch."
   },
@@ -454,6 +456,7 @@
     "ruleGRAMMARTextsMixed": "{n} kurze Texte, von leichter zu schwerer. Wie Sie antworten, ändert sich von Text zu Text: Die Aufgabe über jedem Text sagt es Ihnen. Etwa {minutes} Minuten pro Text.",
     "texts": "{n} Texte",
     "ruleGRAMMARFixed": "Wählen Sie bei jeder Frage eine Option oder füllen Sie die Lücken aus. Die Fragen gehen von leichter zu schwerer.",
+    "ruleGRAMMARCourse": "Wählen Sie für jede Lücke im Text und in den einzelnen Sätzen die passende Option.",
     "partialHint": "{filled} von {total} Teilen dieser Frage sind ausgefüllt.",
     "groupPartialHint": "{done} von {total} Fragen auf dieser Seite sind vollständig.",
     "saveFailed": "Ihre letzte Änderung ist noch nicht gespeichert. Sie bleibt in diesem Tab erhalten und wird erneut gesendet.",
@@ -573,6 +576,7 @@
     "pending": "Ihre Lehrkraft prüft Ihre Schreib- und Sprechleistung. Sobald das Ergebnis feststeht, sehen Sie es unter diesem Link.",
     "pendingReview": "Ihr Ergebnis liegt nah an einer Grenze, deshalb prüft Ihre Lehrkraft es und entscheidet. Sobald das Ergebnis feststeht, sehen Sie es unter diesem Link.",
     "notReleased": "Ihr Ergebnis wurde noch nicht freigegeben. Sobald es freigegeben ist, sehen Sie es unter diesem Link.",
+    "courseWait": "Ihre Lehrkraft teilt Ihnen Ihr Ergebnis mit. Sobald es freigegeben ist, sehen Sie es auch unter diesem Link.",
     "overall": "Ihr Niveau",
     "skills": "Fertigkeiten",
     "outcomePASS": "Ihr angegebenes Niveau wurde bestätigt.",
@@ -618,7 +622,16 @@
     "outcomeFAIL": "Ihr angegebenes Niveau wurde in dieser Prüfung nicht bestätigt.",
     "outcomeINCONCLUSIVE": "Es gibt nicht genug Anhaltspunkte für eine Entscheidung; Ihre Schule wird sich bei Ihnen melden.",
     "levelA0": "A0 (Pre-A1)",
-    "levelA0Note": "A0 (Pre-A1) ist die Stufe vor A1, dem ersten Niveau des GER: Ihr Deutsch steht noch ganz am Anfang."
+    "levelA0Note": "A0 (Pre-A1) ist die Stufe vor A1, dem ersten Niveau des GER: Ihr Deutsch steht noch ganz am Anfang.",
+    "courseResultLabel": "Ihr Ergebnis",
+    "courseOutcomePASS": "Bestanden",
+    "courseOutcomeFAIL": "Nicht bestanden",
+    "courseTotal": "Gesamt: {points} von {max} Punkten",
+    "coursePoints": "{points} von {max} Punkten",
+    "courseNext": "Weiter mit Kurs: {course}",
+    "courseNextTeacher": "Ihre Lehrkraft sagt Ihnen, in welchem Kurs Sie weitermachen.",
+    "courseFocusSPEAKING": "Üben Sie besonders das Sprechen.",
+    "courseFocusWRITING": "Üben Sie besonders das Schreiben."
   },
   "feedback": {
     "title": "Bewerten Sie die Prüfung",

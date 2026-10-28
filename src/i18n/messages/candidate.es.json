@@ -298,6 +298,7 @@
   "exam": {
     "titlePlacement": "Examen de nivel de alemán",
     "titleVerification": "Verificación del nivel {level} de alemán",
+    "titleCourseTest": "Prueba del curso de alemán",
     "lead": "{org} le ha invitado a un examen de alemán. Se realiza por completo en su navegador, sin instalar nada.",
     "sectionsTitle": "Secciones",
     "minutes": "{n} min",
@@ -421,6 +422,7 @@
     "ruleREADING": "El texto está a la izquierda y las preguntas a la derecha. Léalo cuantas veces quiera.",
     "ruleLISTENING": "Puede reproducir cada grabación como máximo {plays} veces, sin saltar adelante. Se recomiendan auriculares.",
     "ruleLISTENINGMixed": "Cada grabación se reproduce como máximo {plays} veces, sin saltar adelante. Algunas grabaciones se reproducen solo una vez. El reproductor muestra cuántas veces puede escuchar cada una. Se recomiendan auriculares.",
+    "ruleLISTENINGCourse": "Puede reproducir cada grabación como máximo {plays} veces, sin saltar adelante. El reproductor muestra cuántas veces puede aún escuchar. Se recomiendan auriculares.",
     "ruleWRITING": "El corrector ortográfico y el pegado están desactivados. Su respuesta se guarda mientras escribe.",
     "ruleSPEAKING": "Cada tarea tiene un breve tiempo para pensar y después el tiempo de grabación. Responda en voz alta en alemán."
   },
@@ -454,6 +456,7 @@
     "ruleGRAMMARTextsMixed": "{n} textos breves, de más fácil a más difícil. La forma de responder cambia de un texto a otro: la instrucción sobre cada texto se lo indica. Unos {minutes} minutos por texto.",
     "texts": "{n} textos",
     "ruleGRAMMARFixed": "En cada pregunta, elija una opción o rellene los huecos. Las preguntas van de más fáciles a más difíciles.",
+    "ruleGRAMMARCourse": "Elija la opción que encaja en cada hueco, tanto en el texto como en las frases sueltas.",
     "partialHint": "{filled} de {total} partes de esta pregunta están completadas.",
     "groupPartialHint": "{done} de {total} preguntas de esta página están completas.",
     "saveFailed": "Su último cambio aún no está guardado. Se conserva en esta pestaña y se está enviando de nuevo.",
@@ -573,6 +576,7 @@
     "pending": "Su profesor está revisando su expresión escrita y oral. Podrá ver el resultado en este enlace cuando sea definitivo.",
     "pendingReview": "Su resultado está cerca de un límite, por lo que su profesor lo revisará y decidirá. Podrá ver el resultado en este enlace cuando sea definitivo.",
     "notReleased": "Su resultado aún no se ha publicado. Lo verá en este enlace cuando lo esté.",
+    "courseWait": "Su profesor le comunicará su resultado. Cuando se publique, también podrá verlo en este enlace.",
     "overall": "Su nivel",
     "skills": "Destrezas",
     "outcomePASS": "Se confirmó el nivel que indicó.",
@@ -618,7 +622,16 @@
     "outcomeFAIL": "No se confirmó el nivel que indicó en este examen.",
     "outcomeINCONCLUSIVE": "No hay pruebas suficientes para decidir; su escuela se pondrá en contacto con usted.",
     "levelA0": "A0 (Pre-A1)",
-    "levelA0Note": "A0 (Pre-A1) es la etapa anterior a A1, el primer nivel del MCER: su alemán está todavía en el comienzo."
+    "levelA0Note": "A0 (Pre-A1) es la etapa anterior a A1, el primer nivel del MCER: su alemán está todavía en el comienzo.",
+    "courseResultLabel": "Su resultado",
+    "courseOutcomePASS": "Superado",
+    "courseOutcomeFAIL": "No superado",
+    "courseTotal": "Total: {points} de {max} puntos",
+    "coursePoints": "{points} de {max} puntos",
+    "courseNext": "Curso para continuar: {course}",
+    "courseNextTeacher": "Su profesor le indicará en qué curso continuar.",
+    "courseFocusSPEAKING": "Practique especialmente la expresión oral.",
+    "courseFocusWRITING": "Practique especialmente la expresión escrita."
   },
   "feedback": {
     "title": "Valore el examen",

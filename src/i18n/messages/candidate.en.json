@@ -298,6 +298,7 @@
   "exam": {
     "titlePlacement": "German placement exam",
     "titleVerification": "German {level} level verification",
+    "titleCourseTest": "German course test",
     "lead": "{org} has invited you to a German exam. It runs entirely in your browser, nothing to install.",
     "sectionsTitle": "Sections",
     "minutes": "{n} min",
@@ -421,6 +422,7 @@
     "ruleREADING": "The text is on the left, the questions on the right. Read it as often as you like.",
     "ruleLISTENING": "You can play each recording at most {plays} times, without skipping ahead. Headphones are recommended.",
     "ruleLISTENINGMixed": "Each recording plays at most {plays} times, without skipping ahead. Some recordings play only once. The player shows how often you can listen to each one. Headphones are recommended.",
+    "ruleLISTENINGCourse": "You can play each recording at most {plays} times, without skipping ahead. The player shows how many plays you have left. Headphones are recommended.",
     "ruleWRITING": "Spell check and pasting are off. Your answer is saved as you type.",
     "ruleSPEAKING": "Each task has a short thinking time, then recording time. Answer out loud in German."
   },
@@ -454,6 +456,7 @@
     "ruleGRAMMARTextsMixed": "{n} short texts, from easier to harder. How you answer changes from text to text: the instruction above each text tells you. About {minutes} minutes per text.",
     "texts": "{n} texts",
     "ruleGRAMMARFixed": "Choose an option or fill the gaps in each question. Questions go from easier to harder.",
+    "ruleGRAMMARCourse": "Choose the option that fits each gap, in the text and in the single sentences.",
     "partialHint": "{filled} of {total} parts of this question are filled in.",
     "groupPartialHint": "{done} of {total} questions on this page are complete.",
     "saveFailed": "Your latest change is not saved yet. It is kept in this tab and being sent again.",
@@ -573,6 +576,7 @@
     "pending": "Your teacher is reviewing your writing and speaking. You can see the result on this link once it is final.",
     "pendingReview": "Your result is close to a boundary, so your teacher will review it and decide. You can see the result on this link once it is final.",
     "notReleased": "Your result has not been released yet. You will see it on this link once it is.",
+    "courseWait": "Your teacher will share your result with you. Once it is released, you can also see it on this link.",
     "overall": "Your level",
     "skills": "Skills",
     "outcomePASS": "Your stated level was confirmed.",
@@ -618,7 +622,16 @@
     "outcomeFAIL": "Your stated level was not confirmed in this exam.",
     "outcomeINCONCLUSIVE": "There is not enough evidence for a decision; your school will contact you.",
     "levelA0": "A0 (Pre-A1)",
-    "levelA0Note": "A0 (Pre-A1) is the stage before A1, the first level of the CEFR: your German is at the very beginning."
+    "levelA0Note": "A0 (Pre-A1) is the stage before A1, the first level of the CEFR: your German is at the very beginning.",
+    "courseResultLabel": "Your result",
+    "courseOutcomePASS": "Passed",
+    "courseOutcomeFAIL": "Not passed",
+    "courseTotal": "Total: {points} of {max} points",
+    "coursePoints": "{points} of {max} points",
+    "courseNext": "Course to continue in: {course}",
+    "courseNextTeacher": "Your teacher will tell you which course to continue in.",
+    "courseFocusSPEAKING": "Practise speaking in particular.",
+    "courseFocusWRITING": "Practise writing in particular."
   },
   "feedback": {
     "title": "Rate the exam",

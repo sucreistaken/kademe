@@ -14,7 +14,7 @@ import { Mascot } from "@/components/visual/mascot";
 import { SectionTile } from "@/components/visual/section-look";
 import type { StudentResult } from "@/lib/exam-flow";
 import { FINISH_DRAIN_MS, finishUploadPhase } from "@/lib/proctor/recording-status";
-import type { Section } from "@/lib/exam/types";
+import type { ExamMode, Section } from "@/lib/exam/types";
 import { isPreA1, levelLabel } from "@/lib/exam/level-label";
 import { useT } from "@/i18n/candidate-client";
 
@@ -23,8 +23,11 @@ import { useT } from "@/i18n/candidate-client";
  * When the exam was recorded, its last segments are still uploading: until
  * they are, the screen asks the student to keep the tab open instead of
  * telling them to rest. The result appears only as far as the school allows
- * and only once a teacher has finalized it; there is no course recommendation
- * here or anywhere else. The next step is always concrete: who to write to,
+ * and only once a teacher has finalized it; a level exam recommends no course.
+ * A course test (`mode`, spec 2026-10-28) has no level at all: until the
+ * teacher releases it the screen says the teacher will share the result, and
+ * after that it shows the outcome, the points and the course to continue in.
+ * The next step is always concrete: who to write to,
  * and a way to report that something went wrong (collapsed until asked for).
  *
  * Under the closing card sits the optional experience survey (ExamFeedback):
@@ -45,6 +48,7 @@ export function Finished({
   contactEmail,
   feedbackAnswered,
   sections = [],
+  mode,
 }: {
   token: string;
   name: string;
@@ -54,6 +58,8 @@ export function Finished({
   contactEmail: string | null;
   /** The server's word that the experience survey is already answered: the card is not offered again. */
   feedbackAnswered: boolean;
+  /** What kind of exam this was; a course test has no level and says so. Absent: a level exam. */
+  mode?: ExamMode;
   /**
    * The exam's sections, in order; empty draws no row. A finished, not
    * terminated attempt has every section closed (handed in or timed out), so
@@ -96,6 +102,9 @@ export function Finished({
   const upload = finishUploadPhase({ recorded: !!snap?.upload, stopped: streamsOff, pending, timedOut: drainTimedOut });
   const uploading = upload === "sending" || upload === "slow";
   const released = result.released;
+  const courseTest = mode === "COURSE_TEST";
+  // The analysis, or a course test's result: both are drawn by AnalysisView.
+  const analysed = released && !!(result.analysis || result.course);
   const survey = !terminated && !feedbackAnswered;
   return (
     <CandidateColumn width={survey ? 1040 : 560}>
@@ -187,8 +196,8 @@ export function Finished({
 
         {!terminated ? (
           <section className="mt-7 border-t border-row-line pt-6">
-            <h2 className="text-[15px] font-extrabold text-ink">{released && result.analysis ? an("title") : v("nextTitle")}</h2>
-            {released && result.analysis ? (
+            <h2 className="text-[15px] font-extrabold text-ink">{analysed ? an("title") : v("nextTitle")}</h2>
+            {analysed ? (
               <>
                 <AnalysisView result={result} t={an} sectionName={(s) => sec(s)} className="mt-3" />
                 <p className="mt-5 text-center">
@@ -202,7 +211,7 @@ export function Finished({
                   </a>
                 </p>
               </>
-            ) : released && result.levelShown ? (
+            ) : released && result.levelShown && !courseTest ? (
               <>
                 <div className="mt-3 flex items-center gap-4 rounded-xl bg-mint-soft px-5 py-4">
                   <div className="min-w-0 flex-1">
@@ -234,7 +243,13 @@ export function Finished({
               </>
             ) : (
               <p className="mt-2 text-[14.5px] leading-[1.6] text-ink-2">
-                {result.visibility === "NONE" ? t("none") : result.awaitingTeacher ? t(result.waitingFor === "REVIEW" ? "pendingReview" : "pending") : t("notReleased")}
+                {courseTest
+                  ? t("courseWait")
+                  : result.visibility === "NONE"
+                    ? t("none")
+                    : result.awaitingTeacher
+                      ? t(result.waitingFor === "REVIEW" ? "pendingReview" : "pending")
+                      : t("notReleased")}
               </p>
             )}
           </section>

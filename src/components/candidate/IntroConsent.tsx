@@ -101,10 +101,13 @@ export function IntroConsent({
     );
   }
 
+  // A course test claims no level and estimates none: it is a course test, called by its German name above (the page sets it).
   const title =
-    state.mode === "LEVEL_VERIFICATION" && state.claimedLevel
-      ? t("titleVerification", { level: state.claimedLevel })
-      : t("titlePlacement");
+    state.mode === "COURSE_TEST"
+      ? t("titleCourseTest")
+      : state.mode === "LEVEL_VERIFICATION" && state.claimedLevel
+        ? t("titleVerification", { level: state.claimedLevel })
+        : t("titlePlacement");
 
   // What to bring: a computer always (desktop only), a camera when the exam watches.
   const needs: Array<{ icon: LucideIcon; text: string }> = [

@@ -5,6 +5,7 @@ import { candidateT } from "@/i18n/candidate";
 import { finishedSheetDate, loadState, resolveExamToken } from "@/lib/exam-flow";
 import { StudentSheet } from "@/components/candidate/exam/student-sheet";
 import { solutionPage } from "@/lib/candidate-pages";
+import { candidateTestName } from "@/lib/exam/course/student-view";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export default async function StudentPrintPage({ params }: { params: Promise<{ t
   if (!ctx || (!resolved.ok && resolved.problem !== "COMPLETED")) notFound();
   const state = await loadState(ctx);
   const result = state.finished?.result;
-  if (!state.finished || state.finished.terminated || !result?.released || !result.analysis) redirect(`/a/${encodeURIComponent(token)}/done`);
+  if (!state.finished || state.finished.terminated || !result?.released || !(result.analysis || result.course)) redirect(`/a/${encodeURIComponent(token)}/done`);
   const locale = ctx.locale;
   const t = candidateT(locale);
   // The result's own day (as on the panel's student copy), not the day it is printed.
@@ -41,7 +42,7 @@ export default async function StudentPrintPage({ params }: { params: Promise<{ t
       <StudentSheet
         schoolName={state.orgName}
         studentName={ctx.candidate.fullName ?? ""}
-        examName={state.examName}
+        examName={candidateTestName(state.examName, ctx.assessment.config)}
         date={date}
         result={result}
         locale={locale}

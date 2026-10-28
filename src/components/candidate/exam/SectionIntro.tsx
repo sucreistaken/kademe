@@ -104,12 +104,16 @@ export function SectionIntro({
                 s.textOnly
                   ? n(textRuleKey(s.textKinds), { n: s.itemsLabel, minutes: Math.max(1, Math.round(s.minutes / Number(s.itemsLabel))) })
                   : s.navigable && cur.section === "GRAMMAR"
-                    ? n("ruleGRAMMARFixed")
+                    // A course test's form is not ordered by difficulty, so it must not promise "easier to harder".
+                    ? n(mode === "COURSE_TEST" ? "ruleGRAMMARCourse" : "ruleGRAMMARFixed")
                     : cur.section === "WRITING"
                       ? f(clipboardBlock ? "ruleWritingPaste" : "ruleWritingPlain")
-                      : cur.section === "LISTENING" && introNeedsMixedPlaysRule(maxPlays, mode, claimedLevel)
-                        ? sec("ruleLISTENINGMixed", { plays: maxPlays })
-                        : sec(`rule${cur.section}` as "ruleGRAMMAR", { plays: maxPlays }),
+                      : cur.section === "LISTENING" && mode === "COURSE_TEST"
+                        // Every clip follows the exam's count unless it carries its own lower one; the player shows what is left.
+                        ? sec("ruleLISTENINGCourse", { plays: maxPlays })
+                        : cur.section === "LISTENING" && introNeedsMixedPlaysRule(maxPlays, mode, claimedLevel)
+                          ? sec("ruleLISTENINGMixed", { plays: maxPlays })
+                          : sec(`rule${cur.section}` as "ruleGRAMMAR", { plays: maxPlays }),
                 ...(s.navigable ? [n("ruleBack"), n("ruleReview")] : [t("ruleNoBack")]),
                 t("ruleClock"),
               ].map((rule) => (

@@ -35,6 +35,7 @@ import { COURSE_TESTS, courseSections } from "@/lib/exam/course/catalog";
 import { singleInviteForm } from "@/lib/exam/course/forms";
 import { coursePlanOf, type CoursePlanRow } from "@/lib/exam/course/plan";
 import { courseFormKey, type CourseForm, type CourseKey } from "@/lib/exam/course/types";
+import { studentCourseResult, type StudentCourseResult } from "@/lib/exam/course/student-view";
 import { playsAllowed } from "@/lib/exam/listening-plays";
 import { drawFormatOf } from "@/lib/exam/item-format";
 import { hasAnswer, scoreItem } from "@/lib/exam/item-scoring";
@@ -208,6 +209,8 @@ export type StudentResult = {
   analysis?: StudentAnalysis;
   /** The teacher-approved note, in the student's language, or null. */
   feedback?: StudentNote | null;
+  /** A course test, once the teacher released it: outcome, points per section, the course to continue in. No level. */
+  course?: StudentCourseResult;
 };
 
 export type CandidateState = {
@@ -456,6 +459,7 @@ async function finishedState(
         ctx.locale,
       )) ?? undefined;
     student.feedback = studentFacingFeedback(result.studentFeedback);
+    student.course = studentCourseResult(result.computed?.course, result.finalOutcome) ?? undefined;
   }
   if (released && result?.status === "FINAL" && levelShown) {
     student.overall = result?.finalOverall ?? null;
