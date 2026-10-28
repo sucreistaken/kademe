@@ -9,6 +9,9 @@ import { inviteStudentsAction, type InviteStudentsResult } from "@/app/(manager)
 import {
   alreadyInvited,
   claimFor,
+  courseChoiceValue,
+  courseFormOf,
+  courseKeyOfChoice,
   csvFileName,
   decodeCsv,
   examWait,
@@ -21,12 +24,14 @@ import {
   parseStudentRows,
   studentsCsv,
   studentsTsv,
+  type CourseFormChoice,
   type InviteStep,
   type InvitedStudent,
 } from "@/app/(manager)/exam/students/new/rows";
 import { flowJourney } from "@/components/manager/flow-model";
 import { GuidedFlow, useFlowStep, type FlowStep } from "@/components/manager/guided-flow";
 import { SummaryRows } from "@/components/manager/summary-rows";
+import { CourseFormPicker, CourseKindChoice } from "@/components/panel/course/invite-choice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,6 +42,8 @@ import { StepScreen } from "@/components/visual/step-screen";
 import { useMT } from "@/i18n/manager-client";
 import { CANDIDATE_LANGUAGE_NAME, CANDIDATE_LOCALES, DEFAULT_CANDIDATE_LOCALE, isCandidateLocale, type CandidateLocale } from "@/i18n/locale";
 import { bankCoverage, type BankCount, type BlueprintConfig } from "@/lib/exam/blueprint";
+import { COURSE_TESTS } from "@/lib/exam/course/catalog";
+import type { CourseKey, CourseTestKind } from "@/lib/exam/course/types";
 import { CEFR_LEVELS, type Cefr, type ExamMode } from "@/lib/exam/types";
 import { cn } from "@/lib/cn";
 import { DEFAULT_WINDOW_DAYS, orgTime, resolveWindow, zonedMoment, type WindowInput } from "@/lib/exam-window";
@@ -51,16 +58,20 @@ import { orgDay, zoneLabel } from "@/lib/org-timezone";
  */
 export type ExamOption = {
   value: string;
-  group: "own" | "template";
+  /** "course": the eight course tests (spec 2026-10-28), picked as a kind and then a course, not as a card of their own. */
+  group: "own" | "template" | "course";
   name: string;
   summary: string | null;
   mode: ExamMode;
   published: boolean;
   /** Set on a ready exam: which template it is. */
   templateKey?: string;
-  config: BlueprintConfig;
+  /** Null on a course test: its sections are fixed by the course catalog and never drawn from the bank. */
+  config: BlueprintConfig | null;
   minutes: number;
   sections: number;
+  /** Set on a course test: which course, and the points one form is worth. */
+  course?: { key: CourseKey; points: number };
 };
 
 type Done = Extract<InviteStudentsResult, { ok: true }>;
@@ -136,10 +147,17 @@ export function StudentInviteWizard({
   const inv = useMT("invite");
   const flow = useMT("flow");
   const w = useMT("examWindow");
+  const cw = useMT("courseInvite");
   const uiLocale = useLocale() === "tr" ? "tr" : "en";
   const own = options.filter((o) => o.group === "own");
   const [text, setText] = useState("");
   const [choice, setChoice] = useState(initialChoice ?? (own.length === 1 ? own[0].value : ""));
+  // Course tests are picked in two moves: the kind (Zwischentest, Abschlusstest), then the course. The kind is kept apart from `choice`, which names a course only once both are chosen.
+  const [courseKind, setCourseKind] = useState<CourseTestKind | null>(() => {
+    const key = courseKeyOfChoice(initialChoice ?? "");
+    return key ? COURSE_TESTS[key].kind : null;
+  });
+  const [courseForm, setCourseForm] = useState<CourseFormChoice>("AUTO");
   const [batch, setBatch] = useState<Cefr | null>(initialClaimed ?? null);
   /** Verification only: easier (-1) or harder (1) for this list; null keeps the exam's own setting. */
   const [shift, setShift] = useState<-1 | 0 | 1 | null>(null);
@@ -164,19 +182,22 @@ export function StudentInviteWizard({
   const parsed = useMemo(() => parseStudentRows(text, uiLocale), [text, uiLocale]);
   const listReason = listWait(parsed);
   const exam = options.find((o) => o.value === choice) ?? null;
-  const examReason = examWait({ mode: exam?.mode ?? null, rows: parsed.rows, batch });
+  const isCourse = exam?.mode === "COURSE_TEST";
+  const examReason = examWait({ mode: exam?.mode ?? null, rows: parsed.rows, batch, courseKind });
   const nav = useFlowStep({ steps: INVITE_STEPS, firstInvalid: inviteFirstInvalid({ listReady: !listReason, examReady: !examReason }), mode: "hash" });
   const step = nav.step;
   // A verification exam is checked for each claim on the list; a template's first use for every claim (it is published here).
   const claims = exam?.mode === "LEVEL_VERIFICATION" ? [...new Set(parsed.rows.map((r) => claimFor(r, "LEVEL_VERIFICATION", batch)))] : [null];
   // The difficulty choice: verification exams whose fixed sections a level shift can move.
-  const shiftScope = exam?.mode === "LEVEL_VERIFICATION" ? levelShiftScope(exam.config) : null;
+  const shiftScope = exam?.mode === "LEVEL_VERIFICATION" && exam.config ? levelShiftScope(exam.config) : null;
   const shiftChosen = shiftScope?.applies && shift !== null ? shift : null;
-  const effectiveShift = shiftChosen ?? exam?.config.difficultyOffset ?? 0;
-  const examConfig = exam && shiftChosen !== null ? { ...exam.config, difficultyOffset: shiftChosen } : exam?.config;
+  const effectiveShift = shiftChosen ?? exam?.config?.difficultyOffset ?? 0;
+  const examConfig = exam?.config ? (shiftChosen !== null ? { ...exam.config, difficultyOffset: shiftChosen } : exam.config) : null;
+  // A course test has no bank coverage to check here: its form is stored whole, and the server refuses an invite whose form is missing.
   const missing = exam && examConfig
     ? claims.flatMap((c) => bankCoverage(counts, examConfig, exam.mode, exam.published ? c : null).rows.filter((r) => !r.ok)).slice(0, 1)[0] ?? null
     : null;
+  const formLabel = (f: CourseFormChoice) => cw(`form${f}`);
   const shiftLabel = (v: number) => t(v < 0 ? "shiftEasier" : v > 0 ? "shiftHarder" : "shiftNormal");
   const repeated = alreadyInvited(parsed.rows, openEmails);
   const startAt = startMode === "later" ? zonedMoment({ date: startDate, time: startTime }, timeZone) : null;
@@ -228,7 +249,16 @@ export function StudentInviteWizard({
     setRefusal(null);
     start(async () => {
       try {
-        const r = await inviteStudentsAction({ text, exam: exam.value, claimed: batch, locale, window: windowInput, shift: shiftChosen });
+        const r = await inviteStudentsAction({
+          text,
+          exam: exam.value,
+          claimed: batch,
+          locale,
+          window: windowInput,
+          shift: shiftChosen,
+          // A course test: null alternates A, B, A, B on the server; an exam of any other kind has no form.
+          ...(isCourse ? { courseForm: courseFormOf(courseForm) } : {}),
+        });
         if (r.ok) setDone(r);
         else {
           setRefusal(r.code);
@@ -386,7 +416,12 @@ export function StudentInviteWizard({
     </p>
   ) : null;
   const primaryLabel = fromSummary ? flow("backToSummary") : flow("continue");
-  const examMeta = (o: ExamOption) => inv("examMeta", { minutes: o.minutes, sections: o.sections, preset: inv(`preset${o.config.proctoring.preset}`) });
+  const examMeta = (o: ExamOption) =>
+    o.course
+      ? cw("examMeta", { points: o.course.points, minutes: o.minutes })
+      : o.config
+        ? inv("examMeta", { minutes: o.minutes, sections: o.sections, preset: inv(`preset${o.config.proctoring.preset}`) })
+        : "";
   const examItems = (group: "own" | "template") =>
     options
       .filter((o) => o.group === group)
@@ -415,6 +450,46 @@ export function StudentInviteWizard({
           ),
         };
       });
+  const examGroup = (g: "own" | "template") =>
+    options.some((o) => o.group === g) ? (
+      <div key={g} className="space-y-2">
+        <p id={`invite-exam-${g}`} className="text-[13px] font-medium text-muted">
+          {g === "own" ? inv("groupOwn") : inv("groupTemplates")}
+        </p>
+        <ChoiceCardGroup
+          type="single"
+          name="invite-exam"
+          labelledBy={`invite-exam-${g}`}
+          look="panel"
+          value={[choice]}
+          onChange={([v]) =>
+            edit(() => {
+              setChoice(v ?? "");
+              setCourseKind(null);
+              setShift(null);
+            })
+          }
+          items={examItems(g)}
+        />
+      </div>
+    ) : null;
+  // Course tests: the two kinds as cards, then (once a kind is picked, right under it) the course. No claimed level: a course test is scored by points.
+  const chosenCourse = courseKeyOfChoice(choice);
+  const courseGroup = options.some((o) => o.group === "course") ? (
+    <CourseKindChoice
+      kind={courseKind}
+      course={chosenCourse}
+      onKind={(kind) =>
+        edit(() => {
+          setCourseKind(kind);
+          // A course of the other kind no longer applies; one of the same kind stays chosen.
+          if (!chosenCourse || COURSE_TESTS[chosenCourse].kind !== kind) setChoice("");
+          setShift(null);
+        })
+      }
+      onCourse={(key) => edit(() => setChoice(courseChoiceValue(key)))}
+    />
+  ) : null;
 
   const screens: Record<InviteStep, FlowStep> = {
     list: {
@@ -513,29 +588,9 @@ export function StudentInviteWizard({
       note: refusal === "EXAM" || refusal === "CLAIM_REQUIRED" ? refusalNote : null,
       body: (
         <div className="space-y-6">
-          {(["template", "own"] as const)
-            .filter((g) => options.some((o) => o.group === g))
-            .map((g) => (
-              <div key={g} className="space-y-2">
-                <p id={`invite-exam-${g}`} className="text-[13px] font-medium text-muted">
-                  {g === "own" ? inv("groupOwn") : inv("groupTemplates")}
-                </p>
-                <ChoiceCardGroup
-                  type="single"
-                  name="invite-exam"
-                  labelledBy={`invite-exam-${g}`}
-                  look="panel"
-                  value={[choice]}
-                  onChange={([v]) =>
-                    edit(() => {
-                      setChoice(v ?? "");
-                      setShift(null);
-                    })
-                  }
-                  items={examItems(g)}
-                />
-              </div>
-            ))}
+          {examGroup("template")}
+          {courseGroup}
+          {examGroup("own")}
           {exam?.mode === "LEVEL_VERIFICATION" ? (
             <fieldset className="space-y-2">
               <legend className="text-[14px] font-medium text-ink">{t("inviteClaim")}</legend>
@@ -576,6 +631,7 @@ export function StudentInviteWizard({
               <p className="text-[13px] text-muted">{t("inviteShiftHint", { list: shiftScope.fixed.map((s) => sec(s)).join(", ") })}</p>
             </fieldset>
           ) : null}
+          {isCourse ? <CourseFormPicker value={courseForm} onChange={(f) => edit(() => setCourseForm(f))} /> : null}
           {missing ? (
             <p className="text-[14px] leading-[22px] text-ink">
               {inv(exam?.published ? "coverageBlocked" : "templateCoverageBlocked", { section: sec(missing.section), level: missing.level, available: missing.available, needed: missing.needed })}{" "}
@@ -622,6 +678,7 @@ export function StudentInviteWizard({
                 ? [{ id: "claim", label: t("inviteClaim"), value: batch ?? t("inviteClaimPerRow"), edit: { onClick: change("exam") } }]
                 : []),
               ...(shiftScope?.applies ? [{ id: "shift", label: t("inviteShift"), value: shiftLabel(effectiveShift), edit: { onClick: change("exam") } }] : []),
+              ...(isCourse ? [{ id: "form", label: cw("formRow"), value: formLabel(courseForm), edit: { onClick: change("exam") } }] : []),
               { id: "language", label: inv("language"), value: <span lang={locale}>{CANDIDATE_LANGUAGE_NAME[locale]}</span>, edit: { onClick: change("language") } },
               {
                 id: "opens",

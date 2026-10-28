@@ -4,6 +4,9 @@ import { organizations } from "@/db/schema";
 import { ORG_TIMEZONE } from "@/lib/org-timezone";
 import { StudentInviteWizard, type ExamOption } from "@/components/panel/student-invite-wizard";
 import { estimatedMinutes, enabledSections, type BlueprintConfig } from "@/lib/exam/blueprint";
+import { COURSE_TESTS } from "@/lib/exam/course/catalog";
+import { courseKeyOfTemplate, courseTemplateKey } from "@/lib/exam/course/template-keys";
+import { COURSE_KEYS } from "@/lib/exam/course/types";
 import { examChoiceValue } from "@/lib/exam/exam-choice";
 import { EXAM_TEMPLATES } from "@/lib/exam/templates";
 import { CEFR_LEVELS, type Cefr } from "@/lib/exam/types";
@@ -11,7 +14,9 @@ import { bankCounts, listStudents, publishedBlueprints } from "@/server/panel";
 import { requireUser } from "@/server/session";
 import { isCurrentTemplate } from "@/server/template-blueprint";
 import { managerLocale } from "@/i18n/manager-locale";
+import { managerT } from "@/i18n/manager";
 import { contentLocale } from "@/i18n/locale";
+import { courseChoiceValue, courseTotals } from "./rows";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +35,7 @@ const shape = (config: BlueprintConfig) => ({ config, minutes: estimatedMinutes(
 export default async function InvitePage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const user = await requireUser("student:invite");
   const locale = await managerLocale();
+  const t = managerT(locale);
   const [blueprints, counts, students] = await Promise.all([publishedBlueprints(user.orgId), bankCounts(user.orgId), listStudents(user.orgId)]);
   const publishedTemplates = new Set(
     blueprints.flatMap((b) => {
@@ -61,10 +67,28 @@ export default async function InvitePage({ searchParams }: { searchParams: Promi
       published: publishedTemplates.has(tpl.key),
       ...shape(tpl.config),
     })),
+    // The eight course tests (spec 2026-10-28). The wizard shows them as a kind and then a course, not as cards of their own; their sections come from the catalog, not from a blueprint config.
+    ...COURSE_KEYS.map((key) => {
+      const { points, minutes } = courseTotals(key);
+      return {
+        value: courseChoiceValue(key),
+        group: "course" as const,
+        templateKey: courseTemplateKey(key),
+        name: `${t(`courseInvite.kind${COURSE_TESTS[key].kind}`)} ${key}`,
+        summary: null,
+        mode: "COURSE_TEST" as const,
+        published: blueprints.some((b) => b.templateKey === courseTemplateKey(key)),
+        config: null,
+        minutes,
+        sections: 5,
+        course: { key, points },
+      };
+    }),
   ];
-  // The exam wizard and Advanced "create" send a just-published exam here (`?exam=<id>&claimed=<level>`).
+  // The exam wizard and Advanced "create" send a just-published exam here (`?exam=<id>&claimed=<level>`); a course test's exam page sends its own blueprint, which is the course's ready exam.
   const sp = await searchParams;
-  const wanted = typeof sp.exam === "string" ? examChoiceValue({ kind: "blueprint", id: sp.exam }) : null;
+  const courseBlueprintKey = typeof sp.exam === "string" ? courseKeyOfTemplate(blueprints.find((b) => b.id === sp.exam)?.templateKey ?? "") : null;
+  const wanted = courseBlueprintKey ? courseChoiceValue(courseBlueprintKey) : typeof sp.exam === "string" ? examChoiceValue({ kind: "blueprint", id: sp.exam }) : null;
   const initialChoice = wanted && options.some((o) => o.value === wanted) ? wanted : undefined;
   const initialClaimed = typeof sp.claimed === "string" && (CEFR_LEVELS as readonly string[]).includes(sp.claimed) ? (sp.claimed as Cefr) : undefined;
   // A student who still has a link to use: a new invitation would be a second exam, so the last step names them.

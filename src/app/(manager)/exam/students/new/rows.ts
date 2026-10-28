@@ -1,3 +1,7 @@
+import { COURSE_TESTS, courseSections } from "@/lib/exam/course/catalog";
+import { courseKeyOfTemplate, courseTemplateKey } from "@/lib/exam/course/template-keys";
+import { COURSE_KEYS, SPEAKING_MAX, WRITING_MAX, type CourseForm, type CourseKey, type CourseTestKind } from "@/lib/exam/course/types";
+import { examChoiceValue, parseExamChoice } from "@/lib/exam/exam-choice";
 import type { Cefr, ExamMode } from "@/lib/exam/types";
 
 /**
@@ -244,12 +248,56 @@ export function inviteFirstInvalid(input: { listReady: boolean; examReady: boole
   return null;
 }
 
-/** The exam step waits for a choice and, on a verification exam, for a claim on every row. */
-export function examWait(input: { mode: ExamMode | null; rows: readonly Pick<StudentRow, "claimed">[]; batch: Cefr | null }): "EXAM" | "CLAIM" | null {
+/**
+ * The exam step waits for a choice, on a verification exam for a claim on
+ * every row, and on a course test (kind picked, course not yet) for the course.
+ */
+export function examWait(input: {
+  mode: ExamMode | null;
+  rows: readonly Pick<StudentRow, "claimed">[];
+  batch: Cefr | null;
+  /** The course test kind the manager picked, whether or not a course is chosen yet. */
+  courseKind?: CourseTestKind | null;
+}): "EXAM" | "CLAIM" | "COURSE" | null {
   const mode = input.mode;
-  if (!mode) return "EXAM";
+  if (!mode) return input.courseKind ? "COURSE" : "EXAM";
   if (mode === "LEVEL_VERIFICATION" && input.rows.some((r) => !claimFor(r, mode, input.batch))) return "CLAIM";
   return null;
+}
+
+// ---------------------------------------------------------------------------
+// Course tests (spec 2026-10-28): the exam step offers the two kinds, then the
+// course, and the choice value is the ready exam of that course.
+// ---------------------------------------------------------------------------
+
+export const COURSE_KINDS = ["INTERIM", "FINAL"] as const satisfies readonly CourseTestKind[];
+
+/** The courses of one kind in the picker's order: A1.1 A2.1 B1.1 B2.1, or A1 A2 B1 B2. */
+export const courseKeysOfKind = (kind: CourseTestKind): CourseKey[] => COURSE_KEYS.filter((k) => COURSE_TESTS[k].kind === kind);
+
+/** The exam-choice value of a course test: `template:course-b1-1`. */
+export const courseChoiceValue = (key: CourseKey): string => examChoiceValue({ kind: "template", key: courseTemplateKey(key) });
+
+/** The course a choice value names, or null for any other exam. */
+export function courseKeyOfChoice(value: string): CourseKey | null {
+  const choice = parseExamChoice(value);
+  return choice?.kind === "template" ? courseKeyOfTemplate(choice.key) : null;
+}
+
+/** The form picker: automatic (A, B, A, B in list order; a returning student gets the form not seen yet) or one form for everybody. */
+export const COURSE_FORM_CHOICES = ["AUTO", "A", "B"] as const;
+export type CourseFormChoice = (typeof COURSE_FORM_CHOICES)[number];
+
+/** `InviteStudentsInput.courseForm` for a picker value: null lets the server alternate. */
+export const courseFormOf = (choice: CourseFormChoice): CourseForm | null => (choice === "AUTO" ? null : choice);
+
+/** What one form of a course test is worth and takes: the catalog's points (one per objective unit, the writing and speaking rubrics) and section minutes. */
+export function courseTotals(key: CourseKey): { points: number; minutes: number } {
+  const plan = courseSections(key);
+  return {
+    points: plan.reduce((sum, p) => sum + (p.section === "WRITING" ? WRITING_MAX : p.section === "SPEAKING" ? SPEAKING_MAX : p.units), 0),
+    minutes: plan.reduce((sum, p) => sum + p.minutes, 0),
+  };
 }
 
 /** Rows whose e-mail already has an open invitation: a new one is a second exam, so the last look names them. */

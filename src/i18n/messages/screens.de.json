@@ -293,6 +293,7 @@
     "inviteWaitTOO_MANY": "Sie können höchstens {max} Lernende auf einmal einladen. Teilen Sie die Liste.",
     "inviteWaitEXAM": "Wählen Sie eine Prüfung.",
     "inviteWaitCLAIM": "Wählen Sie das angegebene Niveau.",
+    "inviteWaitCOURSE": "Wählen Sie den Kurs.",
     "inviteWaitCOVERAGE": "Die Fragenbank hat nicht genug Aufgaben für diese Prüfung.",
     "inviteErrLIST": "Einige Zeilen müssen korrigiert werden.",
     "inviteExamTitle": "Welche Prüfung?",
@@ -1279,5 +1280,22 @@
     "atChanceBlank": "Leer gelassen: In diesem Abschnitt wurde nichts beantwortet; daher A0",
     "chanceBelowPooled": "A0 kommt von einem Abschnitt auf Zufallsniveau, die Gesamtschätzung liegt bei A1 oder höher. Eine Lehrkraft entscheidet.",
     "rawEstimate": "Rohschätzung (gesamt): {sublevel}"
+  },
+  "courseInvite": {
+    "group": "Kurstests",
+    "kindINTERIM": "Zwischentest",
+    "kindFINAL": "Abschlusstest",
+    "kindINTERIMHint": "Am Ende der ersten Hälfte eines Niveaus.",
+    "kindFINALHint": "Am Ende eines ganzen Niveaus.",
+    "courseLegend": "Welcher Kurs?",
+    "courseHintINTERIM": "Wer besteht, geht in der zweiten Hälfte desselben Niveaus weiter; wer nicht besteht, wiederholt die erste Hälfte.",
+    "courseHintFINAL": "Wer besteht, beginnt das nächste Niveau (Teil 1). Für alle anderen empfiehlt Kademe, in welchem Kurs es weitergeht.",
+    "formLegend": "Form der Prüfung",
+    "formAUTO": "Automatisch (A/B abwechselnd)",
+    "formA": "Form A",
+    "formB": "Form B",
+    "formHint": "Automatisch: Die Lernenden der Liste erhalten abwechselnd Form A und B; wer schon eine Form kennt, erhält die andere. Mit Form A oder B erhalten alle dieselbe Form.",
+    "formRow": "Form",
+    "examMeta": "{points} Punkte · etwa {minutes} Min."
   }
 }

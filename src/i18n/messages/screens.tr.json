@@ -293,6 +293,7 @@
     "inviteWaitTOO_MANY": "Bir seferde en fazla {max} öğrenci davet edebilirsin. Listeyi böl.",
     "inviteWaitEXAM": "Bir sınav seç.",
     "inviteWaitCLAIM": "Beyan edilen seviyeyi seç.",
+    "inviteWaitCOURSE": "Kursu seç.",
     "inviteWaitCOVERAGE": "Bankada bu sınav için yeterli soru yok.",
     "inviteErrLIST": "Listede düzeltilmesi gereken satır var.",
     "inviteExamTitle": "Hangi sınava?",
@@ -1279,5 +1280,22 @@
     "atChanceBlank": "Boş bırakıldı: bu bölümde hiçbir soru cevaplanmadı; bu yüzden A0",
     "chanceBelowPooled": "A0, şans düzeyindeki bir bölümden geliyor; birleşik tahmin A1 ya da üstünde. Öğretmen karar verir.",
     "rawEstimate": "Ham tahmin (birleşik): {sublevel}"
+  },
+  "courseInvite": {
+    "group": "Kurs sınavları",
+    "kindINTERIM": "Kurs ara sınavı",
+    "kindFINAL": "Kurs sonu sınavı",
+    "kindINTERIMHint": "Kursun ilk yarısı bitince.",
+    "kindFINALHint": "Seviyenin sonunda.",
+    "courseLegend": "Hangi kurs?",
+    "courseHintINTERIM": "Geçen öğrenci aynı seviyenin ikinci yarısına geçer, geçemeyen ilk yarıyı tekrarlar.",
+    "courseHintFINAL": "Geçen öğrenci bir üst seviyeye başlar (1. bölüm). Geçemeyen için Kademe hangi kursa dönüleceğini önerir.",
+    "formLegend": "Sınav formu",
+    "formAUTO": "Otomatik (A/B dönüşümlü)",
+    "formA": "A formu",
+    "formB": "B formu",
+    "formHint": "Otomatik: listedekiler sırayla A, B, A, B formunu alır; daha önce bir formu gören öğrenci diğerini alır. A ya da B seçersen herkes o formu alır.",
+    "formRow": "Form",
+    "examMeta": "{points} puan · yaklaşık {minutes} dk"
   }
 }

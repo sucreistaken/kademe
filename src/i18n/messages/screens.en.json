@@ -293,6 +293,7 @@
     "inviteWaitTOO_MANY": "You can invite at most {max} students at once. Split the list.",
     "inviteWaitEXAM": "Pick an exam.",
     "inviteWaitCLAIM": "Pick the claimed level.",
+    "inviteWaitCOURSE": "Pick the course.",
     "inviteWaitCOVERAGE": "The bank does not have enough questions for this exam.",
     "inviteErrLIST": "The list has lines to fix.",
     "inviteExamTitle": "Which exam?",
@@ -1279,5 +1280,22 @@
     "atChanceBlank": "Left blank: nothing in this section was answered; so A0",
     "chanceBelowPooled": "A0 comes from a section at chance, while the combined estimate is A1 or higher. A teacher decides.",
     "rawEstimate": "Raw estimate (combined): {sublevel}"
+  },
+  "courseInvite": {
+    "group": "Course tests",
+    "kindINTERIM": "Mid-course test",
+    "kindFINAL": "End-of-course test",
+    "kindINTERIMHint": "At the end of the first half of a level.",
+    "kindFINALHint": "At the end of a whole level.",
+    "courseLegend": "Which course?",
+    "courseHintINTERIM": "A student who passes continues in the second half of the same level; one who does not repeats the first half.",
+    "courseHintFINAL": "A student who passes starts the next level (part 1). For the others Kademe recommends which course to join.",
+    "formLegend": "Test form",
+    "formAUTO": "Automatic (alternating A/B)",
+    "formA": "Form A",
+    "formB": "Form B",
+    "formHint": "Automatic: the list gets form A, B, A, B in turn, and a returning student gets the form they have not seen. Choosing A or B gives everyone that form.",
+    "formRow": "Form",
+    "examMeta": "{points} points · about {minutes} min"
   }
 }

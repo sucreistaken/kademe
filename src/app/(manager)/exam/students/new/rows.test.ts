@@ -3,6 +3,13 @@ import {
   alreadyInvited,
   claimFor,
   cleanStudentName,
+  COURSE_FORM_CHOICES,
+  COURSE_KINDS,
+  courseChoiceValue,
+  courseFormOf,
+  courseKeyOfChoice,
+  courseKeysOfKind,
+  courseTotals,
   csvFileName,
   decodeCsv,
   examWait,
@@ -207,6 +214,51 @@ describe("the wizard's steps", () => {
   it("names the rows that already have an open invitation, in any letter case", () => {
     expect(alreadyInvited([{ email: "Ayse@Ornek.com" }, { email: "can@ornek.com" }], ["ayse@ornek.com"])).toEqual(["Ayse@Ornek.com"]);
     expect(alreadyInvited([{ email: "can@ornek.com" }], [])).toEqual([]);
+  });
+});
+
+describe("the course test choice (spec 2026-10-28)", () => {
+  it("offers the two kinds, each with its four courses in level order", () => {
+    expect(COURSE_KINDS).toEqual(["INTERIM", "FINAL"]);
+    expect(courseKeysOfKind("INTERIM")).toEqual(["A1.1", "A2.1", "B1.1", "B2.1"]);
+    expect(courseKeysOfKind("FINAL")).toEqual(["A1", "A2", "B1", "B2"]);
+  });
+
+  it("turns a course into the exam-choice value of its ready exam, and back", () => {
+    expect(courseChoiceValue("B1.1")).toBe("template:course-b1-1");
+    expect(courseChoiceValue("B1")).toBe("template:course-b1");
+    for (const kind of COURSE_KINDS) {
+      for (const key of courseKeysOfKind(kind)) expect(courseKeyOfChoice(courseChoiceValue(key))).toBe(key);
+    }
+  });
+
+  it("does not take another exam for a course", () => {
+    expect(courseKeyOfChoice("template:placement")).toBeNull();
+    expect(courseKeyOfChoice("blueprint:course-b1")).toBeNull();
+    expect(courseKeyOfChoice("template:course-c1")).toBeNull();
+    expect(courseKeyOfChoice("")).toBeNull();
+  });
+
+  it("maps the form picker to the invite's courseForm: automatic is null", () => {
+    expect(COURSE_FORM_CHOICES).toEqual(["AUTO", "A", "B"]);
+    expect(courseFormOf("AUTO")).toBeNull();
+    expect(courseFormOf("A")).toBe("A");
+    expect(courseFormOf("B")).toBe("B");
+  });
+
+  it("knows what a form is worth: 56 points for a Zwischentest, 74 for an Abschlusstest", () => {
+    for (const key of courseKeysOfKind("INTERIM")) expect(courseTotals(key).points).toBe(56);
+    for (const key of courseKeysOfKind("FINAL")) expect(courseTotals(key).points).toBe(74);
+    expect(courseTotals("B1.1").minutes).toBe(59);
+    expect(courseTotals("B1").minutes).toBe(95);
+  });
+
+  it("waits for the course once a kind is picked, and for the exam before that", () => {
+    const rows = [{ claimed: null }];
+    expect(examWait({ mode: null, rows, batch: null })).toBe("EXAM");
+    expect(examWait({ mode: null, rows, batch: null, courseKind: "INTERIM" })).toBe("COURSE");
+    // A course test needs no claimed level.
+    expect(examWait({ mode: "COURSE_TEST", rows, batch: null, courseKind: "FINAL" })).toBeNull();
   });
 });
 
