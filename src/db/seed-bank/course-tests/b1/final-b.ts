@@ -223,10 +223,10 @@ const sentences = [
   ),
   grammarChoice(
     "praepositionaladverb",
-    "Wir haben lange über das Programm diskutiert und uns schließlich ___ geeinigt.",
+    "Die neuen Noten sind noch nicht da, und wir warten schon seit Wochen ___.",
     ["darüber", "davon", "daran", "darauf"],
     3,
-    "Geprüftes Grammatikphänomen: Pronominaladverb („sich einigen auf“ + Akkusativ: „darauf“).",
+    "Geprüftes Grammatikphänomen: Pronominaladverb („warten auf“ + Akkusativ: „darauf“).",
   ),
   grammarChoice(
     "passiv.praeteritum",
@@ -259,7 +259,7 @@ const lFlughafen = listeningClip(
   "Reisen und Flughafen",
   [{ label: "Durchsage", voice: "D" }],
   [
-    "Durchsage: Guten Tag, meine Damen und Herren. Eine Information für die Passagiere des Fluges nach Lissabon, planmäßiger Abflug um zwölf Uhr dreißig. Das Boarding beginnt nicht an Gate B sieben, sondern an Gate B zwölf. Ich wiederhole: Gate B zwölf. Das Boarding beginnt um zwölf Uhr. Die Gepäckabgabe schließt schon um elf Uhr dreißig, bitte beeilen Sie sich. Halten Sie Ihre Bordkarte und Ihren Ausweis bereit. Passagiere nach Madrid warten bitte weiter an Gate A drei. Vielen Dank.",
+    "Durchsage: Guten Tag, meine Damen und Herren. Eine Information für die Passagiere des Fluges nach Lissabon, planmäßiger Abflug um zwölf Uhr dreißig. Der Flug geht heute nicht von Gate B sieben ab, sondern von Gate B zwölf. Ich wiederhole: von Gate B zwölf. Das Boarding beginnt um zwölf Uhr. Die Gepäckabgabe schließt schon um elf Uhr dreißig, bitte beeilen Sie sich. Halten Sie Ihre Bordkarte und Ihren Ausweis bereit. Passagiere nach Madrid warten bitte weiter an Gate A drei. Vielen Dank.",
   ],
 );
 
@@ -438,7 +438,7 @@ const speaking = [
     "planning",
     "Machen Sie bitte Vorschläge für einen Ausflug.\n\nSie und Ihre Kolleginnen und Kollegen möchten am Wochenende gemeinsam einen Ausflug machen. Machen Sie Vorschläge und sagen Sie, warum Sie das gut finden:\n- Wohin soll der Ausflug gehen, und wann fahren Sie los?\n- Wie kommen Sie dorthin, und was kostet das?\n- Was soll es zu essen und zu trinken geben, und wer bringt etwas mit?\n- Wer organisiert was, und wer muss noch informiert werden?\nSagen Sie am Schluss, welcher Punkt Ihnen am wichtigsten ist.",
     [
-      "macht Vorschläge zu mindestens drei der vier Punkten (Ziel und Zeit, Anreise und Kosten, Essen und Trinken, Organisation)",
+      "macht Vorschläge zu mindestens drei der vier Punkte (Ziel und Zeit, Anreise und Kosten, Essen und Trinken, Organisation)",
       "begründet die Vorschläge (weil, denn, deshalb)",
       "benutzt Formen für Vorschläge (Wir könnten ..., Ich schlage vor, ..., Wie wäre es, wenn ...)",
       "sagt am Schluss, welcher Punkt am wichtigsten ist, und warum",

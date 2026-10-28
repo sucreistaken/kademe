@@ -4,7 +4,7 @@ import type { Topic, TopicId } from "../topics";
 export const B1_COURSE_TOPICS: Record<TopicId, Topic> = {
   "infinitiv.zu": {
     parent: "infinitiv",
-    label: { tr: "zu ile mastar", en: "Infinitive with zu", de: "Infinitiv mit „zu“", es: "Infinitivo con zu", ar: "المصدر مع zu" },
+    label: { tr: "zu'lu mastar (Infinitiv mit zu)", en: "Infinitive with zu", de: "Infinitiv mit „zu“", es: "Infinitivo con zu", ar: "المصدر مع zu" },
   },
   "passiv.praeteritum": {
     parent: "passiv",
