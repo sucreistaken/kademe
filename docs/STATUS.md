@@ -1,5 +1,6 @@
 # Kademe - durum ve devir belgesi
 
+Kurs sınavları (2026-10-28, canlıya çıkış bu bölümün sonunda): bkz. "Kurs sınavları: 2026-10-28" bölümü.
 Tur 4, sahip geri bildirimi 2026-10-25 akşam (canlıda 2026-10-26 ~10:50 UTC, `main` `5e90445`, yedek `/root/kademe-backups/kademe-20261026-1049.dump`, göç yok, banka değişmedi): bkz. "Tur 4: 2026-10-26" bölümü.
 Tur 3, sahip geri bildirimi 2026-10-25 (canlıda 2026-10-25, `main` `0d031ed`): bkz. "Tur 3: 2026-10-25" bölümü.
 Tur 2, sahip geri bildirimi 2026-10-24 (canlıda 2026-10-24, `main` `7b9e05c`): bkz. "Tur 2: 2026-10-24" bölümü.
@@ -16,6 +17,36 @@ Son güncelleme: 2026-10-07 (Gelişmiş: tek kutu, AI önce, `platform/solutions
 **Canlıda**: https://kademe.kadiray.com, `main` commit `5e90445` (2026-10-26 ~10:50 UTC: tur 4; ayrıntı "Tur 4: 2026-10-26"). Önceki: `0d031ed` (2026-10-25 ~10:10 UTC: tur 3; ayrıntı "Tur 3: 2026-10-25"). Önceki: `7b9e05c` (2026-10-24 ~01:10 TSİ: tur 2; klavyeli not defteri, sağ üstte tanıtım düğmesi, format karışımı, A0 sonuç seviyesi; ayrıntı "Tur 2: 2026-10-24"). Önceki: `1eafbb4` (2026-10-23 ~20:00 UTC: ürün turu; yeni formatlar, resimler, seviye başına 3 form, öğrenci analizi, not araçları, anlatımlı tanıtımlar, Almanca panel; ayrıntı "Canlıya çıkış: 2026-10-23 ürün turu"). Önceki: `8ea4bfe` (2026-10-21 14:02 UTC: giriş ekranı İngilizce ve dört dilli bayrak seçici, öğrenci tarafında Türkçe sınav adı ve geçersiz link sızıntısı giderildi; HTTPS'te dört dil ve Almanca geçersiz link kontrol edildi). Önceki: `70912f7` (2026-10-19 11:49 UTC: soru havuzu ÖSD/telc/TestDaF derslerine göre yenilendi, Richtig/Falsch, yazılan numara ve saat eşleşmesi, gözetimde yanlış "sekmeden ayrıldınız" uyarısı ve Meet düzeltmesi; ayrıntı "Canlıya çıkış: 2026-10-19 soru havuzu ve gözetim"). Önceki: `bcc9d44` (2026-10-18 18:41 UTC: okul test revizyonu). Önceki: `2cf125c` (2026-10-16 18:45 UTC: krem zemin yerine Campus German beyazı ve soğuk griler; ondan önce `8e945da`, Campus German görünümü, Plan 1; ayrıntı "Canlıya çıkış: Campus German görünümü, Plan 1"). Önceki sürümler (aşağıdaki "Canlıya çıkış" bölümleri): `ab951b1` (okul yöneticisi geri bildirimi), `1d8d4c6` (onSET yerleştirme), `5a4f97e` (kurs grubu sürümü, 2026-10-14), `02760e3` (2026-10-07 akşam: Bugün yeni tasarım, 3 adımlı alım sihirbazı, "en az 2 değerlendirici" kuralı kaldırıldı, soru bankası v2; ayrıntı "Canlıya çıkış: sihirbaz ve banka v2"), `0142ff0` (Gelişmiş). Önceki not: commit `739f218` (`main`, 2026-10-05 sınav sıcak düzeltmesi; ayrıntı "Kararlar ve sapmalar"da).
 Canlı veritabanı kullanıcı onayıyla sıfırlandı: eski işe alım verisi yok,
 panel kullanıcıları (parolalarıyla) taşındı, banka ve iki sınav yüklendi.
+
+## Kurs sınavları: 2026-10-28 (spec `docs/superpowers/specs/2026-10-28-course-tests-design.md`)
+
+Kullanıcı: okulun öğretmeninin kur sonu sınavlarıyla sistemi besle, A1.1/A1.2/B1.1/B1.2 gibi modüller olsun; soru
+turundan sonra "direkt bitirene kadar çalış, en sonda canlıya al, öğretmene bir şey sorma".
+
+- **Yeni sınav türü `COURSE_TEST`** (göç 0029: `exam_mode`, `ai_purpose COURSE_RUBRIC`, `items/stimuli.course_form`,
+  `items.course_order`, `response_gradings.course_proposal/course_points`). 8 sınav, her biri A ve B formu (16 form):
+  kurs ara sınavı Zwischentest A1.1, A2.1, B1.1, B2.1; kurs sonu sınavı Abschlusstest A1, A2, B1, B2. Sınavlar telc
+  sırasıyla Lesen, Sprachbausteine, Hören, Schreiben, Sprechen; ara 56, son 74 puan.
+- **Puan ve karar:** her birim 1 puan; yazma 3 ölçüt x 0-3, konuşma görev başına 5 ölçüt x 0-4 (öğretmenin formu).
+  Ara sınav %60, kurs sonu %65 + konuşma %60 + İnhalt > 0; kalanlara puan aralığına göre kurs önerisi (L.2, L.1, alt
+  seviye) ve "Schwerpunkt". AI (Gemini) önerir, öğretmen onaylar; AUSSPRACHE dökümden ölçülemez, öğretmen girer.
+- **Ekranlar:** davette "Kurs ara/sonu sınavı", kurs ve form seçimi (A/B sırayla, dönen öğrenciye görmediği form);
+  öğrenci listesinde kurs, puan ve Bestanden; sonuç sayfası değerlendirme formu gibi (bölüm tablosu, ölçüt seçicileri,
+  ana nokta kontrolü, hata listesi, en sık hatalar, sonucu gerekçeyle değiştirme); Almanca Bewertungsbogen raporu
+  ve öğrenci kopyası; konuşma görevinde maskot görevi konuşma balonunda söyler (yalnız kurs sınavında). Boşluklu
+  metin 3 seçenekli (a/b/c) de olabilir.
+- **İçerik:** Abschlusstest B1 Form A öğretmenin yazılı sınavı (iki anahtarlı bir cümleye bağlam eklendi); diğer 15
+  form öğretmenin formatında yazıldı (A1-B1 Netzwerk neu içindekiler, B2 Goethe/telc B2 listeleri). Her form
+  bağımsız kör çözümde 576/576 anahtarla aynı; 80 dinleme kaydı üretildi ve kilitlendi.
+- **Doğrulama:** `tsc` temiz, `eslint` 0 hata, `vitest` (aşağıdaki sayı). Gerçek veritabanı kopyasında uçtan uca:
+  öğrenci B1 formunu çözdü, Gemini yazmayı 3/3/3 ve konuşmayı ölçütlerle puanladı, öğretmen kararı ve kesinleştirme
+  sonucu %68.9 ama konuşma 8/20 yüzünden "Nicht bestanden, B1.2, Schwerpunkt Sprechen" verdi (öğretmenin kuralı).
+  Panel sayfaları sunucuda hatasız oluştu. **Doğrulanmadı:** Chrome'da görsel tur (yerel inceleme sunucusu Chrome'da
+  hata sayfası verdi), maskot animasyonu, gerçek mikrofonla konuşma kaydı, yazdırma.
+- **Sahibe açık sorular:** ara sınav %60 eşiği (öğretmenin değil, bizim seçimimiz); öğretmenin B1 sınavındaki kör
+  çözüm notları (anahtar kelime eşleşmeleri, B2 seviyesinde bir Partizip, "zu kamen" türü çeldiriciler) aynen bırakıldı;
+  B1 sözlü kartındaki "Herkunft" maddesi kullanılmadı; dinlemeler ve formlar bir Almanca öğretmeni tarafından
+  okunmadı.
 
 ## Tur 4: 2026-10-26 (sahip mesajları 2026-10-25 akşam, spec `docs/superpowers/specs/2026-10-26-exam-round-4.md`)
 

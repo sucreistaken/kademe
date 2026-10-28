@@ -96,7 +96,7 @@ export type CommonWritingError = keyof typeof COMMON_WRITING_ERRORS;
 
 /**
  * What the AI proposes for one writing or speaking answer of a course test
- * (`response_gradings.ai_proposal` for purpose COURSE_RUBRIC). German text.
+ * (`response_gradings.course_proposal`, purpose COURSE_RUBRIC). German text.
  */
 export type CourseRubricProposal = {
   kind: "COURSE_RUBRIC";
