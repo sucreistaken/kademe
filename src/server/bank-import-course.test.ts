@@ -28,7 +28,7 @@ import { courseSeed } from "@/db/seed-bank/course-seed";
 import { fixtureCourseForm } from "@/db/seed-bank/course-fixture";
 import { seedItemKey } from "@/db/seed-bank/seed-key";
 import { thetaForLevel } from "@/lib/exam/cefr";
-import { courseSeedCounts, importSeedBank, previewTopUp, seedCounts, topUpSeedBank } from "./bank-import";
+import { clipsWithoutAudio, courseSeedCounts, importSeedBank, previewTopUp, seedCounts, topUpSeedBank } from "./bank-import";
 
 const form = fixtureCourseForm("B1.1", "A");
 const course = courseSeed([form]);
@@ -274,5 +274,19 @@ describe("the counts of the top-up summary", () => {
     const courseWheres = (calls("where") as unknown[][]).map((a) => sqlOf(a[0]).sql);
     expect(courseWheres).toHaveLength(3);
     for (const w of courseWheres) expect(w).toContain('"course_form" is not null');
+  });
+});
+
+describe("clipsWithoutAudio (pnpm bank:tts)", () => {
+  it("asks for every listening clip without audio, whatever its course form", async () => {
+    const clips = [{ id: "c1", seedKey: "l-b1-x", courseForm: null }, { id: "c2", seedKey: "course-b1-1-a-fx-l-durchsage", courseForm: "B1.1:A" }];
+    fake.results = [clips];
+    expect(await clipsWithoutAudio()).toEqual(clips);
+    const [where] = calls("where")[0] as [unknown];
+    const q = sqlOf(where);
+    expect(q.sql).toContain('"section" = $1');
+    expect(q.sql).toContain('"audio_key" is null');
+    expect(q.sql).not.toContain("course_form");
+    expect(q.params).toEqual(["LISTENING"]);
   });
 });

@@ -394,6 +394,18 @@ export async function topUpSeedBank(orgId: string, options: TopUpOptions = {}, l
   });
 }
 
+/**
+ * Every listening clip without audio, for `pnpm bank:tts`: the bank's and the
+ * course test forms' alike (a clip of a course form has a course_form and needs
+ * its audio just the same), in every organisation.
+ */
+export async function clipsWithoutAudio() {
+  return db
+    .select()
+    .from(stimuli)
+    .where(and(eq(stimuli.section, "LISTENING"), isNull(stimuli.audioKey)));
+}
+
 /** Seed counts of the bank in an organisation (course rows are not part of it), for the top-up script's before/after line. */
 export async function seedCounts(orgId: string) {
   const [[i], [a], [s]] = await Promise.all([
