@@ -29,7 +29,7 @@ const reading1 = readingText(
   "Zeitungsartikel: Mehr Grün gegen die Hitze",
   "Umwelt und Stadt: Hitze und Stadtbäume",
   `
-Im Sommer kann es in dicht bebauten Stadtvierteln um mehrere Grad wärmer sein als im Umland. Stadtplaner sprechen von „Hitzeinseln“: Asphalt und Beton speichern die Wärme tagsüber und geben sie nachts nur langsam wieder ab. Hinzu kommt, dass es in solchen Vierteln kaum Wiesen oder Gärten gibt, die die Luft abkühlen könnten. Besonders für ältere Menschen, Kleinkinder und Kranke können solche Nächte zur Belastung werden.
+Im Sommer kann es in dicht bebauten Stadtvierteln um mehrere Grad wärmer sein als im Umland. Stadtplaner sprechen von „Hitzeinseln“: Asphalt und Beton speichern die Wärme tagsüber und geben sie nachts nur langsam wieder ab. Auch fehlen in solchen Vierteln oft Wiesen und Gärten, die die Luft abkühlen könnten. Besonders für ältere Menschen, Kleinkinder und Kranke können solche Nächte zur Belastung werden.
 
 Eine mittelgroße Stadt im Rheinland hat deshalb vor drei Jahren ein Programm gestartet: Bis zum Jahr 2030 sollen mehr als fünftausend Bäume gepflanzt werden, vor allem in Straßen ohne Grün. Die Umweltdezernentin Katarina Horvat erklärt, ein ausgewachsener Baum könne die Temperatur in seiner Umgebung um bis zu drei Grad senken, weil er Schatten spendet und Wasser verdunstet. Außerdem binde er Staub und verbessere die Luft. Das Programm kostet insgesamt rund drei Millionen Euro, ein Teil davon wird vom Land gefördert.
 
@@ -258,7 +258,7 @@ export const INTERIM_B: SeedCourseForm = {
           "Wo wird erwähnt, dass eine Behörde unter bestimmten Bedingungen die Kosten übernimmt?",
           ["Text A", "Text C", "Text D"], 1,
           "Text C: Die Agentur für Arbeit übernimmt die Kursgebühr, wenn ein Bildungsgutschein vorliegt. Text A erwähnt keine Kosten, Text D auch nicht."),
-        whichText(R2, "gist", "MID",
+        whichText(R2, "detail", "MID",
           "Wer warnt davor, einen Berufswechsel zu überstürzen?",
           ["Text B", "Text C", "Text D"], 0,
           "Text B: „Überstürzen Sie nichts.“ Text C wirbt für einen Kurs, Text D berichtet von einem Praktikum, nicht von einem Berufswechsel."),

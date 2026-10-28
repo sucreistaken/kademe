@@ -159,7 +159,7 @@ const listening3 = clip(
   [{ label: "Sprecherin", voice: "D" }],
   [
     "Sprecherin: Und noch eine Meldung für alle Haushalte im Stadtteil Nordend. Wegen Bauarbeiten an einer Hauptleitung wird morgen zwischen neun und fünfzehn Uhr das Wasser abgestellt. Die Stadtwerke empfehlen, sich schon am Abend vorher einen Vorrat anzulegen, zum Beispiel zehn Liter pro Person zum Kochen und Trinken.",
-    "Sprecherin: Wer aus gesundheitlichen Gründen auf Wasser angewiesen ist, kann sich unter der Nummer null vier null drei, acht acht, sieben sieben melden. Dann wird eine Notversorgung organisiert. Nach dem Ende der Arbeiten kann das Wasser eine Zeit lang bräunlich aussehen. Das ist ungefährlich, lassen Sie es einfach einige Minuten laufen.",
+    "Sprecherin: Wer aus gesundheitlichen Gründen auf Wasser angewiesen ist, kann sich unter der Nummer null vier null drei, acht acht, sieben sieben melden. Dann wird eine Notversorgung organisiert. Nach dem Ende der Arbeiten kann das Wasser eine Zeit lang bräunlich aussehen. Das ist ungefährlich, und abkochen müssen Sie es auch nicht. Lassen Sie es einfach einige Minuten laufen.",
   ],
   2,
 );
