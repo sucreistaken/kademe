@@ -47,16 +47,16 @@ const reading2 = readingText(
   "Umwelt und Reisen: Mitfahrbörse, Verzicht auf Flüge, Regionalticket, Radurlaub",
   `
 Text A: Aushang am Schwarzen Brett
-Mitfahrbörse für den Weg zur Arbeit! Das Umweltteam unserer Firma startet im Januar eine Mitfahrbörse. Wer morgens allein mit dem Auto fährt, kann sich in eine Liste eintragen und Kolleginnen und Kollegen aus demselben Stadtteil mitnehmen. Fahrerinnen und Fahrer, die mindestens dreimal pro Woche jemanden mitnehmen, erhalten einen reservierten Parkplatz direkt am Eingang. Eine Informationsveranstaltung findet am 12. Dezember um 16 Uhr im Besprechungsraum 2 statt. Bitte melden Sie sich bis zum 9. Dezember im Büro des Umweltteams an.
+Gemeinsam statt allein zur Arbeit: Ab Januar richtet das Umweltteam eine Mitfahrbörse ein. Wer bislang allein mit dem Auto pendelt, kann sich in eine Liste eintragen und Kolleginnen und Kollegen aus demselben Stadtteil mitnehmen; die Teilnahme ist selbstverständlich kostenlos. Wer mindestens dreimal pro Woche Mitfahrende hat, bekommt als Dankeschön einen reservierten Parkplatz direkt am Haupteingang. Wie die Vermittlung im Einzelnen funktioniert, erklären wir bei einer Informationsveranstaltung am 12. Dezember um 16 Uhr in Besprechungsraum 2. Da die Zahl der Plätze begrenzt ist, melden Sie sich bitte bis zum 9. Dezember im Büro des Umweltteams an.
 
 Text B: Beitrag in einem Reiseforum
-Ich fliege seit zwei Jahren nicht mehr, weil ich die Umweltbelastung nicht länger ausblenden konnte, und ehrlich gesagt vermisse ich es kaum. Früher habe ich für ein langes Wochenende gern einen Billigflug gebucht. Heute fahre ich mit dem Zug, auch wenn die Reise länger dauert. Mein Tipp: Wer im Zug ein gutes Buch dabeihat, empfindet die Fahrt nicht als verlorene Zeit, sondern als Teil des Urlaubs. Lena
+Seit zwei Jahren steige ich in kein Flugzeug mehr. Den Ausschlag hat ein CO2-Rechner gegeben, der mir vor Augen geführt hat, wie viel ein einziger Wochenendtrip mit dem Flugzeug verursacht. Früher habe ich solche Billigflüge gebucht, ohne lange nachzudenken; heute nehme ich den Zug, auch wenn ich dafür oft einen Tag länger unterwegs bin. Ich vermisse dabei kaum etwas. Wer im Zug ein gutes Buch dabeihat, erlebt die Fahrt nicht als verlorene Zeit, sondern als Teil des Urlaubs. Lena
 
 Text C: Anzeige
-Bahn und Bus zum Pauschalpreis! Mit dem Regionalticket „Nordland“ fahren Sie einen Monat lang beliebig oft in allen Bussen und Regionalzügen der Region. Das Ticket kostet 49 Euro und lohnt sich schon bei mehr als zwei Fahrten pro Woche. Studierende und Auszubildende zahlen nur 29 Euro. Erhältlich in allen Kundenzentren und in der App. An Wochenenden dürfen Sie Ihr Fahrrad kostenlos mitnehmen.
+Mit dem Regionalticket „Nordland“ sind Sie einen ganzen Monat lang in allen Bussen und Regionalzügen der Region unterwegs, so oft Sie wollen. Der Preis von 49 Euro rechnet sich bereits, wenn Sie mehr als zweimal pro Woche fahren. Studierende und Auszubildende zahlen lediglich 29 Euro, sofern sie einen gültigen Nachweis vorlegen. Das Ticket ist monatlich kündbar und in allen Kundenzentren sowie in unserer App erhältlich. Am Wochenende reist Ihr Fahrrad kostenlos mit.
 
 Text D: Blogeintrag
-Zwei Wochen Radurlaub an der Donau mit Gepäcktransport? Das hatte ich mir eigentlich viel bequemer vorgestellt, fast wie Schummeln. Dann hat mich überrascht, wie anstrengend schon die ersten Etappen waren, und wie schön es war, abends ohne Gepäckprobleme anzukommen. Die Unterkünfte waren oft einfach, aber das Essen war überall hervorragend. Würde ich es wiederholen? Auf jeden Fall, aber vorher würde ich mir einen Trainingsplan machen. Marek
+Zwei Wochen mit dem Rad an der Donau entlang, das Gepäck wird von Hotel zu Hotel gebracht: Ich gebe zu, dass ich das für eine Art Pauschalurlaub für Bequeme hielt. Umso überraschter war ich, wie sehr mich schon die ersten Etappen gefordert haben, und wie angenehm es war, abends ohne schwere Taschen anzukommen. Billig war die Reise nicht, allein der Gepäcktransport kostete 150 Euro extra, aber das war es mir wert. Die Unterkünfte waren schlicht, das Essen dafür hervorragend. Ob ich es wiederholen würde? Unbedingt, allerdings nur mit vorherigem Training. Marek
 `,
 );
 
@@ -234,7 +234,7 @@ const listening6 = clip(
     "Elena: Das ist typisch. Die Apps trainieren Vokabeln, aber kaum das Sprechen. Ich habe vor zwei Jahren Italienisch gelernt, erst auch nur mit einer App, und dann habe ich einen Abendkurs gebucht. Der Unterschied war riesig.",
     "Tomasz: Weil man dort mit Menschen redet?",
     "Elena: Genau. Und weil man Fehler macht, ohne dass es peinlich ist. Die Lehrerin hat mich ständig korrigiert, das hat anfangs genervt, aber es hat mich weitergebracht.",
-    "Tomasz: Ein Kurs ist aber teurer. Und ich weiß nicht, ob ich nach der Arbeit noch zweimal pro Woche in einen Raum fahren will. Außerdem fahre ich nur im Mai in den Urlaub, nach Andalusien. Bis dahin reicht es vielleicht auch so.",
+    "Tomasz: Ein Kurs ist aber teurer. Und ich weiß nicht, ob ich nach der Arbeit noch zweimal pro Woche in einen Raum fahren will. Außerdem brauche ich Spanisch eigentlich nur für meinen Urlaub im Mai, in Andalusien. Bis dahin reicht es vielleicht auch so.",
     "Elena: Dann such dir doch einen Tandempartner. Es gibt Plattformen, da findest du jemanden, der Spanisch spricht und Deutsch lernen will. Ihr trefft euch online oder im Café und redet abwechselnd in beiden Sprachen.",
     "Tomasz: Das klingt nach einer guten Mischung. Kostenlos, flexibel, und ich müsste mich nicht in einen Kurs setzen.",
     "Elena: Ja, aber verlass dich nicht nur darauf. Eine Freundin von mir hat es versucht, und nach drei Wochen waren beide zu beschäftigt. Setzt euch feste Termine, sonst versandet das.",
@@ -251,17 +251,17 @@ const writing = writingTask(
   "In einem Online-Forum Ihrer Stadt wird diskutiert: „Soll in allen Wohngebieten Tempo 30 gelten?“ Schreiben Sie einen Beitrag für das Forum.\n\n" +
     "- Äußern Sie Ihre Meinung und begründen Sie sie mit einem Beispiel.\n" +
     "- Nennen Sie ein Gegenargument und gehen Sie darauf ein.\n" +
-    "- Machen Sie einen Vorschlag, wie man die Regelung umsetzen könnte, und erklären Sie, welchen Nutzen er hätte.\n\n" +
+    "- Machen Sie einen Vorschlag, wie man den Verkehr in Wohngebieten aus Ihrer Sicht sinnvoll regeln könnte, und erklären Sie, welchen Nutzen das hätte.\n\n" +
     "Schreiben Sie ca. 120-150 Wörter. Denken Sie an eine passende Einleitung und einen Schluss.",
   [
     "Eigene Meinung zu Tempo 30 klar formuliert UND mit einem konkreten Beispiel begründet (z. B. Sicherheit der Kinder, Lärm, Fahrzeit)",
     "Ein Gegenargument genannt (z. B. längere Fahrzeiten, mehr Stau, Nachteile für Handwerk und Handel) UND darauf eingegangen (entkräftet oder relativiert)",
-    "Vorschlag zur Umsetzung genannt (z. B. nur vor Schulen, nachts, Probephase) UND den Nutzen des Vorschlags erklärt",
+    "Vorschlag zur Regelung des Verkehrs in Wohngebieten genannt, passend zur eigenen Meinung (z. B. Tempo 30 nur vor Schulen oder nachts, Probephase, mehr Kontrollen, Zebrastreifen, Tempo 50 beibehalten) UND den Nutzen des Vorschlags erklärt",
   ],
   [
     "Ihre Meinung mit einem Beispiel begründen",
     "ein Gegenargument nennen und darauf eingehen",
-    "einen Vorschlag machen und seinen Nutzen erklären",
+    "einen Vorschlag zur Regelung machen und seinen Nutzen erklären",
   ],
   REGISTER.forum,
   "Forumsbeitrag mit Meinung: drei Leitpunkte mit je zwei Teilaspekten, Einleitung und Schluss erwartet, keine formelle Anrede nötig. Erwartet werden Konnektoren, Nebensätze, Konjunktiv II für Vorschläge und abwägende Formulierungen.",
@@ -330,25 +330,25 @@ export const FINAL_A: SeedCourseForm = {
           ],
           "1: „Als Grund nannten viele Befragte, dass die Berichte sie belasteten.“ 2: Der Text nennt die Umfrage „international“, aber keine Zahl von Ländern. 3: Yilmaz warnt davor, Nachrichtenmüdigkeit „als Desinteresse zu deuten“. 4: Über den Aufwand für die Redaktionen sagt der Text nichts. 5: „Erste Auswertungen zeigen, dass solche Beiträge ... länger gelesen werden.“"),
         whichText(R2, "detail", "MID",
-          "Welcher Text nennt einen niedrigeren Preis für eine bestimmte Gruppe?",
-          ["Text A", "Text C", "Text D"], 1,
-          "Text C: Studierende und Auszubildende zahlen nur 29 Euro. In Text A geht es um einen reservierten Parkplatz, nicht um einen Preis."),
+          "Welcher Text nennt eine Ermäßigung für bestimmte Personengruppen?",
+          ["Text A", "Text B", "Text C"], 2,
+          "Text C: Studierende und Auszubildende zahlen lediglich 29 statt 49 Euro. Text A nennt eine kostenlose Teilnahme für alle, Text B erwähnt Billigflüge, aber keinen Preisnachlass für eine Gruppe."),
         whichText(R2, "detail", "MID",
-          "In welchem Text wird zu einer Veranstaltung eingeladen, für die man sich anmelden muss?",
+          "Welcher Text nennt einen Termin, für den man rechtzeitig Bescheid geben muss?",
           ["Text A", "Text B", "Text D"], 0,
-          "Text A: Informationsveranstaltung am 12. Dezember, Anmeldung bis zum 9. Dezember."),
+          "Text A: Informationsveranstaltung am 12. Dezember, Anmeldung bis zum 9. Dezember. Text B und Text D nennen keinen Termin."),
         whichText(R2, "inference", "MID",
-          "Wer schildert, dass etwas anders war, als er es sich vorgestellt hatte?",
-          ["Text B", "Text C", "Text D"], 2,
-          "Text D: Der Radurlaub mit Gepäcktransport hatte sich der Verfasser „viel bequemer vorgestellt“. Text B beschreibt eine Veränderung des Verhaltens, keine enttäuschte Erwartung."),
+          "Wessen Vorstellung von einer Reise hat sich als falsch erwiesen?",
+          ["Text A", "Text C", "Text D"], 2,
+          "Text D: Der Verfasser hielt die Radreise „für eine Art Pauschalurlaub für Bequeme“ und war überrascht, wie anstrengend sie war. Text A und Text C sind Mitteilung und Anzeige ohne eigene Erfahrung."),
         whichText(R2, "gist", "MID",
-          "Wer verzichtet aus Umweltgründen auf eine bestimmte Reiseart?",
+          "Wer hat seine Reisegewohnheiten aus ökologischen Gründen umgestellt?",
           ["Text A", "Text B", "Text C"], 1,
-          "Text B: Die Verfasserin fliegt nicht mehr, weil sie „die Umweltbelastung nicht länger ausblenden konnte“. Text A wirbt für Fahrgemeinschaften, ohne dass jemand verzichtet."),
-        whichText(R2, "detail", "EASY",
-          "Wer erhält einen Vorteil, wenn er regelmäßig andere Personen mitnimmt?",
+          "Text B: Die Verfasserin fliegt nach einem Blick in einen CO2-Rechner nicht mehr und fährt mit dem Zug. Text A ruft erst zu Fahrgemeinschaften auf, Text C wirbt für ein Ticket."),
+        whichText(R2, "detail", "MID",
+          "Wo werden Personen belohnt, die ihr Auto mit anderen teilen?",
           ["Text A", "Text C", "Text D"], 0,
-          "Text A: Wer mindestens dreimal pro Woche jemanden mitnimmt, bekommt einen reservierten Parkplatz. In Text C geht es um die Mitnahme des eigenen Fahrrads."),
+          "Text A: Wer mindestens dreimal pro Woche Mitfahrende hat, bekommt einen reservierten Parkplatz. In Text C reist nur das Fahrrad kostenlos mit."),
       ],
     },
     {

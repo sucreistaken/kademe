@@ -47,16 +47,16 @@ const reading2 = readingText(
   "Gesundheit: Gesundheitstag, Laufen, Yogakurs, Fitnessuhr",
   `
 Text A: Aushang in der Kantine
-Gesundheitstag am 20. März! Liebe Kolleginnen und Kollegen, am Donnerstag, dem 20. März, findet von 10 bis 15 Uhr in der Kantine unser erster Gesundheitstag statt. Sie können Ihren Blutdruck messen lassen, an einem kurzen Rückentraining teilnehmen und sich zu gesunder Ernährung beraten lassen. Die Teilnahme gilt als Arbeitszeit. Für das Rückentraining sind die Plätze begrenzt, bitte melden Sie sich bis zum 14. März in der Personalabteilung an. Ihr Betriebsrat
+Gesundheitstag am 20. März. Liebe Kolleginnen und Kollegen, auf Anregung vieler von Ihnen veranstalten wir am Donnerstag, dem 20. März, von 10 bis 15 Uhr in der Kantine erstmals einen Gesundheitstag. Neben einer Blutdruckmessung und einer Ernährungsberatung bietet eine Physiotherapeutin ein halbstündiges Rückentraining an, das sich besonders an Beschäftigte mit Bildschirmarbeitsplatz richtet. Die Teilnahme ist kostenlos und wird als Arbeitszeit angerechnet. Da für das Rückentraining nur zwanzig Plätze zur Verfügung stehen, melden Sie sich hierfür bitte bis zum 14. März in der Personalabteilung an. Ihr Betriebsrat
 
 Text B: Beitrag in einem Sportforum
-Ich habe vor einem Jahr mit dem Laufen angefangen, nachdem mir mein Arzt wegen meiner Rückenschmerzen zu mehr Bewegung geraten hatte. Am Anfang bin ich viel zu schnell gestartet und hatte nach zwei Wochen keine Lust mehr. Mein Rat an alle, die anfangen wollen: Lauft lieber langsam und nur kurze Strecken, und gönnt euch zwischen den Trainingstagen eine Pause. Inzwischen schaffe ich zehn Kilometer. Tobias
+Vor einem Jahr hat mir mein Arzt wegen ständiger Rückenschmerzen zu mehr Bewegung geraten, also habe ich mit dem Laufen angefangen. Den Fehler, den wohl fast alle Anfänger machen, habe ich natürlich auch gemacht: Ich bin viel zu schnell gestartet und hatte nach zwei Wochen Knieschmerzen und keine Lust mehr. Lauft lieber langsam, auch wenn es sich anfangs fast peinlich anfühlt, und legt zwischen zwei Trainingstagen immer eine Pause ein. Heute schaffe ich zehn Kilometer, und meine Rückenschmerzen sind so gut wie verschwunden. Tobias
 
 Text C: Kursanzeige
-Yoga für Einsteiger: sanfte Übungen für mehr Beweglichkeit und weniger Stress. Der Kurs läuft zehn Wochen, immer mittwochs von 18 bis 19.30 Uhr in der Volkshochschule Mitte. Kursgebühr: 95 Euro. Viele Krankenkassen erstatten bis zu 80 Prozent, wenn Sie regelmäßig teilnehmen. Bitte bringen Sie eine Decke und bequeme Kleidung mit. Ein Einstieg ist jederzeit möglich, solange Plätze frei sind.
+Yoga für Einsteiger: Mit sanften Übungen werden Sie beweglicher und lernen, im Alltag besser mit Stress umzugehen. Der Kurs umfasst zehn Termine, jeweils mittwochs von 18 bis 19.30 Uhr in der Volkshochschule Mitte. Die Gebühr beträgt 95 Euro; viele Krankenkassen übernehmen bis zu 80 Prozent davon, vorausgesetzt, Sie haben an mindestens acht Terminen teilgenommen. Bitte bringen Sie eine Decke und bequeme Kleidung mit. Ein Einstieg ist jederzeit möglich, solange noch Plätze frei sind.
 
 Text D: Blogeintrag
-Einen Monat lang habe ich jeden Schritt, jede Stunde Schlaf und jeden Pulsschlag mit einer Fitnessuhr gemessen. Ich hatte gehofft, dass mich die Zahlen motivieren würden. Stattdessen habe ich schlechter geschlafen, weil ich abends ständig kontrolliert habe, ob ich mein Tagesziel erreicht hatte. Seit ein paar Wochen trage ich die Uhr nur noch beim Sport, und plötzlich macht mir Bewegung wieder Spaß. Amira
+Einen Monat lang habe ich jeden Schritt, jede Stunde Schlaf und jeden Pulsschlag mit einer Fitnessuhr aufgezeichnet, die mich immerhin 250 Euro gekostet hatte. Eigentlich sollten mich die Zahlen motivieren. Tatsächlich habe ich schlechter geschlafen, weil ich abends immer wieder kontrolliert habe, ob ich mein Tagesziel erreicht hatte, und mich geärgert habe, wenn nicht. Inzwischen trage ich die Uhr nur noch beim Sport, und siehe da: Bewegung macht mir wieder Spaß. Amira
 `,
 );
 
@@ -331,26 +331,26 @@ export const FINAL_B: SeedCourseForm = {
             ["Katharina Brandt empfiehlt, die Arbeitszeit erst zu verkürzen, wenn überflüssige Termine gestrichen sind.", "R"],
           ],
           "1: „ein halbes Jahr lang ausprobiert“. 2: Mensah „war anfangs skeptisch“. 3: Die Beschäftigten arbeiten „in zwei Gruppen mit unterschiedlichen freien Tagen“. 4: Gewerkschaften werden im Text nicht erwähnt. 5: „zuerst überflüssige Termine und Abläufe streichen und erst danach die Arbeitszeit verkürzen“."),
-        whichText(R2, "gist", "EASY",
-          "Welcher Text richtet sich an die Beschäftigten eines Betriebs?",
+        whichText(R2, "gist", "MID",
+          "Welcher Text wendet sich an die Belegschaft eines Unternehmens?",
           ["Text A", "Text B", "Text D"], 0,
-          "Text A: Aushang des Betriebsrats an die Kolleginnen und Kollegen. Text B richtet sich an alle, die mit dem Laufen anfangen wollen."),
+          "Text A: Aushang des Betriebsrats an die Kolleginnen und Kollegen. Text B richtet sich an Laufanfänger im Forum, Text D ist ein persönlicher Blog."),
         whichText(R2, "detail", "MID",
-          "Wo erfährt man, dass man sich einen Teil der Kosten erstatten lassen kann?",
+          "Wo kann man einen Teil des Geldes zurückbekommen?",
           ["Text A", "Text C", "Text D"], 1,
-          "Text C: Viele Krankenkassen erstatten bis zu 80 Prozent. In Text A gilt die Teilnahme als Arbeitszeit, von Kosten ist nicht die Rede."),
+          "Text C: Viele Krankenkassen übernehmen bis zu 80 Prozent der Gebühr. Text A ist kostenlos, Text D nennt nur den Preis der Uhr."),
         whichText(R2, "inference", "MID",
-          "Wer berichtet, dass ein Hilfsmittel anders gewirkt hat als erwartet?",
+          "Wer berichtet, dass ein Hilfsmittel eine andere Wirkung hatte als erhofft?",
           ["Text B", "Text C", "Text D"], 2,
-          "Text D: Die Fitnessuhr sollte motivieren, stattdessen schlief die Verfasserin schlechter. Text B beschreibt einen falschen Start, aber kein Hilfsmittel."),
+          "Text D: Die Fitnessuhr sollte motivieren, stattdessen schlief die Verfasserin schlechter. Text B beschreibt einen falschen Start beim Laufen, aber kein Hilfsmittel."),
         whichText(R2, "detail", "MID",
-          "Wer gibt Tipps, wie man mit einer Sportart beginnen sollte?",
+          "Wer warnt Einsteiger vor einem typischen Fehler?",
           ["Text A", "Text B", "Text D"], 1,
-          "Text B: „Lauft lieber langsam und nur kurze Strecken.“ Text D berichtet nur von eigenen Erfahrungen, Text A lädt zu einem Gesundheitstag ein."),
+          "Text B: Den Fehler „viel zu schnell gestartet“ machen fast alle Anfänger, deshalb: „Lauft lieber langsam.“ Text D berichtet nur von eigenen Erfahrungen, Text A lädt zu einem Gesundheitstag ein."),
         whichText(R2, "detail", "MID",
-          "Wo wird eine Frist für die Anmeldung genannt?",
+          "Wo ist eine Teilnahme nur nach rechtzeitiger Rückmeldung möglich?",
           ["Text A", "Text C", "Text D"], 0,
-          "Text A: Anmeldung bis zum 14. März. In Text C ist ein Einstieg jederzeit möglich, solange Plätze frei sind."),
+          "Text A: Für das Rückentraining muss man sich bis zum 14. März anmelden. In Text C ist ein Einstieg jederzeit möglich, solange Plätze frei sind."),
       ],
     },
     {
