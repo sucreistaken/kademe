@@ -14,7 +14,9 @@ import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
 import { TASK_LEFT, TASK_RIGHT, TASK_SPLIT } from "./item-parts";
 import { isGateOpen, markRevealed, playButtonMode, readRevealed } from "./listening-gate";
+import { mascotLine } from "./mascot-line";
 import { sessionStore } from "./pending-answer";
+import { SpeakingMascot } from "./SpeakingMascot";
 import { TaskExpectations } from "./TaskExpectations";
 import { TaskImages } from "./ExamImage";
 import { TaskPromptCard } from "./TaskPromptCard";
@@ -321,6 +323,12 @@ type Phase = SpeakingPhase;
  * The right column is one recorder panel (SpeakingPanel). The phase is also
  * reported upward (`onPhaseChange`), so the bottom bar can say what makes
  * sense while the student prepares or records.
+ *
+ * A course test (`courseTest`, spec 2026-10-28) puts the mascot at the top of
+ * the left column, above the task card, saying the task's first sentence. It
+ * sits in the flow of that column (which scrolls inside itself), so it never
+ * covers the recorder, the clock or the bottom bar. Every other exam is
+ * drawn exactly as before.
  */
 export function SpeakingItem({
   token,
@@ -330,6 +338,7 @@ export function SpeakingItem({
   onChange,
   engine,
   onPhaseChange,
+  courseTest = false,
 }: {
   token: string;
   sectionPosition: number;
@@ -339,6 +348,8 @@ export function SpeakingItem({
   engine: ProctorEngine | null;
   /** The recorder's phase, on every change; null when this question is left. */
   onPhaseChange?: (phase: SpeakingPhase | null) => void;
+  /** This exam is a course test: the mascot says the task. */
+  courseTest?: boolean;
 }) {
   const t = useT("exam");
   const f = useT("examFlow");
@@ -461,9 +472,12 @@ export function SpeakingItem({
 
   if (!content) return null;
   const failed = phase === "FAILED" || !!error;
+  const mascotSays = courseTest ? mascotLine(item.prompt) : null;
   return (
     <div className={TASK_SPLIT}>
       <div className={TASK_LEFT}>
+        {/* The line is typed in only while the student prepares; opened later, or while recording, it is already whole. */}
+        {mascotSays ? <SpeakingMascot line={mascotSays} talk={phase === "THINKING"} /> : null}
         <TaskImages sequence={item.sequence} images={content.images} />
         <TaskPromptCard text={item.prompt} points={content.studentPoints} />
         <TaskExpectations section="SPEAKING" thinkSeconds={content.thinkSeconds} answerSeconds={content.answerSeconds} />

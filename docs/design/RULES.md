@@ -121,6 +121,19 @@ the rules below follow it.
    steps, never on a question screen. It speaks only in short encouraging
    lines between sections and at the end, never about right or wrong. Badges
    are for students only and never show a score or level.
+
+   **One exception, the speaking task of a course test (user decision
+   2026-10-28, spec `docs/superpowers/specs/2026-10-28-course-tests-design.md`).**
+   There, and only there, the mascot stands beside the task card in a fifth
+   pose, `talk` (one hand lifted), and "says" the first sentence of the task in
+   a speech bubble that types in while its mouth moves. It is CSS and a timer
+   only: no sound, nothing about the answer, hidden from assistive technology
+   (the card carries the same sentence). Under `prefers-reduced-motion` nothing
+   is typed and the mouth does not move, the whole sentence is shown at once.
+   It sits in the left column above the card, so it never covers the recorder,
+   the clock or the bottom bar. Everywhere else, in every other exam mode and on
+   every other question screen, the old rule stands (no mascot on a question
+   screen, the four poses of DESIGN.md).
 10. Manager layouts are 1360px wide, candidate layouts 1000px. The candidate side
    is deliberately narrower: one decision per screen (preparation and finish screens may use two regions, question screens keep one focus; HIRING-VISUAL-FLOW G10).
 

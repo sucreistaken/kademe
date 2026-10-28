@@ -877,6 +877,7 @@ export function ExamRunner({
                     onChange={change}
                     engine={engine}
                     onPhaseChange={(phase) => setSpeakingPhase(phase ? { sequence: item.sequence, phase } : null)}
+                    courseTest={state.mode === "COURSE_TEST"}
                   />
                 ) : (
                   <ListeningStems active={item.stimulus?.kind === "LISTENING"} token={token} sectionPosition={cur.position} contentKey={stemsContentKey("item", item.sequence)}>

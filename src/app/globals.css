@@ -555,6 +555,25 @@ html:has([data-step-footer]) {
   }
 }
 
+/* The mascot's open mouth while it says a line (Mascot pose="talk" talking, the speaking task of a course
+   test): it opens and closes about its own centre, a little irregular like speech. Used with motion-safe
+   only; the screen stops it by dropping `talking` when the line is complete. */
+@keyframes mascot-talk {
+  0%,
+  100% {
+    transform: scaleY(0.25);
+  }
+  25% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.45);
+  }
+  75% {
+    transform: scaleY(0.85);
+  }
+}
+
 /*
  * Literal radii, bridged to the radius scale. Screens written before the soft
  * look draw corners as literal pixels (rounded-[10px] on most buttons and

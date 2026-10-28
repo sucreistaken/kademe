@@ -5,19 +5,22 @@ import { cn } from "@/lib/cn";
 /**
  * The mascot, "Canlı basamak": the tallest step of the logo come alive, standing
  * on the two smaller steps. It is the only drawing with a face (docs/design/
- * RULES.md rule 9). Four poses: `wave` (welcome, wizard starts), `celebrate`
+ * RULES.md rule 9). Five poses: `wave` (welcome, wizard starts), `celebrate`
  * (a section or the whole exam finished, with confetti), `think` (one hand on
  * the chin, eyes up: a wizard step that asks a decision), `rest` (eyes closed,
- * a small z: empty screens). Never on a question screen.
+ * a small z: empty screens) and `talk` (one hand lifted, saying a line). Never
+ * on a question screen, with one exception: `talk` stands beside the speaking
+ * task of a course test (spec 2026-10-28, RULES.md rule 9).
  *
  * Inline SVG in brand tokens only: a yellow body (the mark's tallest step) on a
  * cyan and a red step, ink face, red cheeks at 40%. Hidden from assistive
- * technology (the screen's title carries the meaning). The one motion is a
- * gentle pop on `celebrate`, switched off under prefers-reduced-motion.
+ * technology (the screen's title carries the meaning). Two motions, both
+ * switched off under prefers-reduced-motion: a gentle pop on `celebrate`, and
+ * the open mouth of `talk` while `talking` is set (a smile otherwise).
  */
-export type MascotPose = "wave" | "celebrate" | "think" | "rest";
+export type MascotPose = "wave" | "celebrate" | "think" | "rest" | "talk";
 
-export const MASCOT_POSES: readonly MascotPose[] = ["wave", "celebrate", "think", "rest"];
+export const MASCOT_POSES: readonly MascotPose[] = ["wave", "celebrate", "think", "rest", "talk"];
 
 const SIZE = {
   hero: "w-full max-w-[260px]",
@@ -80,7 +83,39 @@ function Eyes({ up = false }: { up?: boolean }) {
 const LINE = { strokeWidth: 3.5, strokeLinecap: "round", strokeLinejoin: "round", fill: "none", className: "stroke-ink" } as const;
 const ARM = { strokeWidth: 9, strokeLinecap: "round", fill: "none", className: "stroke-yellow" } as const;
 
-const POSES: Record<MascotPose, ReactNode> = {
+/**
+ * The mouth of the `talk` pose. At rest the smile of `wave`. While talking, an
+ * open mouth that opens and closes about its own centre (the `mascot-talk`
+ * keyframes in globals.css, motion-safe only like `pop-in`): under
+ * prefers-reduced-motion it stays still, and the screen does not ask for it
+ * then (it shows the whole line at once).
+ */
+function TalkMouth({ talking }: { talking: boolean }) {
+  if (!talking) return <path d="M121 110 Q129 118 137 110" {...LINE} />;
+  return (
+    <g data-mouth="open" className="origin-center [transform-box:fill-box] motion-safe:animate-[mascot-talk_260ms_ease-in-out_infinite]">
+      <ellipse cx="129" cy="114" rx="7" ry="5.5" className="fill-ink" />
+      <ellipse cx="129" cy="117" rx="3.8" ry="2" className="fill-red opacity-70" />
+    </g>
+  );
+}
+
+/** One hand lifted to gesture, the face turned to whoever it speaks to. */
+function talkPose(talking: boolean): ReactNode {
+  return (
+    <>
+      <Steps />
+      <Body />
+      <path d="M156 118 Q176 114 176 98" {...ARM} />
+      <circle cx="176" cy="93" r="7" className="fill-yellow" />
+      <Eyes />
+      {cheeks(110)}
+      <TalkMouth talking={talking} />
+    </>
+  );
+}
+
+const POSES: Record<Exclude<MascotPose, "talk">, ReactNode> = {
   wave: (
     <>
       <Steps />
@@ -138,16 +173,29 @@ const POSES: Record<MascotPose, ReactNode> = {
   ),
 };
 
-export function Mascot({ pose, size = "spot", className }: { pose: MascotPose; size?: keyof typeof SIZE; className?: string }) {
+export function Mascot({
+  pose,
+  size = "spot",
+  className,
+  talking = false,
+}: {
+  pose: MascotPose;
+  size?: keyof typeof SIZE;
+  className?: string;
+  /** `talk` only: the mouth moves while the line is being said, a smile once it is done. */
+  talking?: boolean;
+}) {
+  const moving = pose === "talk" && talking;
   return (
     <svg
       viewBox="0 0 200 200"
       aria-hidden="true"
       focusable="false"
       data-pose={pose}
+      data-talking={moving ? "true" : undefined}
       className={cn("h-auto shrink-0", SIZE[size], pose === "celebrate" && "motion-safe:animate-[pop-in_520ms_cubic-bezier(0.2,0.8,0.2,1)_both]", className)}
     >
-      {POSES[pose]}
+      {pose === "talk" ? talkPose(moving) : POSES[pose]}
     </svg>
   );
 }
