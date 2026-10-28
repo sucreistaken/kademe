@@ -46,6 +46,8 @@ export const users = pgTable(
     totpSecret: text("totp_secret"),
     totpConfirmedAt: timestamp("totp_confirmed_at", { withTimezone: true }),
     lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
+    /** The panel language this person last chose (tr, en, de); null: not chosen yet. */
+    locale: text("locale"),
     disabledAt: timestamp("disabled_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import authEn from "@/i18n/messages/auth.en.json";
 import authDe from "@/i18n/messages/auth.de.json";
 import authTr from "@/i18n/messages/auth.tr.json";
-import authEs from "@/i18n/messages/auth.es.json";
 import candidateTr from "@/i18n/messages/candidate.tr.json";
 import candidateEn from "@/i18n/messages/candidate.en.json";
 import candidateDe from "@/i18n/messages/candidate.de.json";
@@ -254,7 +253,7 @@ describe("panel German dictionaries", () => {
 });
 
 /**
- * The sign-in and setup screens speak four languages. English is the source;
+ * The sign-in and setup screens speak the panel's three languages. English is the source;
  * the others follow key for key and keep its placeholders, and nothing Turkish
  * may survive in a language other than Turkish (school review: "Dile rağmen
  * metinlerde Türkçe çıktısı var").
@@ -263,7 +262,6 @@ describe("auth dictionaries", () => {
   const OTHERS = [
     ["de", authDe],
     ["tr", authTr],
-    ["es", authEs],
   ] as const;
 
   it.each(OTHERS)("auth.%s.json has exactly the keys of auth.en.json", (_name, dict) => {
@@ -280,7 +278,6 @@ describe("auth dictionaries", () => {
   it.each([
     ["en", authEn],
     ["de", authDe],
-    ["es", authEs],
   ] as const)("auth.%s.json has no Turkish letters", (_name, dict) => {
     for (const key of leafKeys(dict)) {
       expect(String(valueAt(dict, key)), key).not.toMatch(/[çğışİÇĞŞ]/);

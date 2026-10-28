@@ -61,7 +61,7 @@ vi.mock("@/db", () => {
 });
 vi.mock("next/headers", () => ({
   headers: async () => new Headers({ "x-forwarded-for": h.ip, "user-agent": "vitest" }),
-  cookies: async () => ({ set: (name: string) => h.cookies.push(name) }),
+  cookies: async () => ({ get: () => undefined, set: (name: string) => h.cookies.push(name) }),
 }));
 vi.mock("next/navigation", () => ({
   redirect: (to: string) => {
@@ -77,6 +77,7 @@ vi.mock("@/lib/auth", async (importActual) => ({
 }));
 
 import { login } from "./actions";
+import { signInLocale } from "@/i18n/locale";
 import { panelLoginLimiter } from "@/lib/panel-login";
 
 const PANEL_PASSWORD = "fake-panel-pass-for-tests";
@@ -121,7 +122,8 @@ describe("login in panel-password mode", () => {
     await expect(login({}, form({ password: PANEL_PASSWORD }))).rejects.toThrow("REDIRECT /dashboard");
     expect(h.sessions).toEqual([OWNER.id]);
     expect(h.cookies).toEqual(["kademe_session"]);
-    expect(h.reads).toHaveLength(1);
+    // The owner, then the owner's saved panel language.
+    expect(h.reads).toHaveLength(2);
     const { sql, params } = h.reads[0];
     expect(sql).toMatch(/"role" = \$1/);
     expect(params).toContain("OWNER");
@@ -209,5 +211,22 @@ describe("login in e-mail mode (PANEL_PASSWORD_HASH unset)", () => {
   it("does not accept a password alone", async () => {
     await expect(login({}, form({ password: PANEL_PASSWORD }))).resolves.toEqual({ code: "INVALID" });
     expect(h.sessions).toEqual([]);
+  });
+});
+
+describe("signInLocale", () => {
+  it("keeps the language picked on the sign-in screen and saves it to the account", () => {
+    expect(signInLocale("de", null)).toEqual({ save: "de" });
+    expect(signInLocale("de", "tr")).toEqual({ save: "de" });
+    expect(signInLocale("tr", "tr")).toEqual({});
+  });
+
+  it("opens a new browser in the account's saved language", () => {
+    expect(signInLocale(undefined, "de")).toEqual({ cookie: "de" });
+    expect(signInLocale("es", "tr")).toEqual({ cookie: "tr" });
+  });
+
+  it("leaves the browser's language when nothing was ever picked", () => {
+    expect(signInLocale(undefined, null)).toEqual({});
   });
 });

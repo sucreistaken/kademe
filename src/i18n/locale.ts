@@ -45,10 +45,10 @@ export function isCandidateLocale(value: unknown): value is CandidateLocale {
 /**
  * The public front door (sign in, password setup) in the languages a visitor
  * can pick there. English first: it is the default for anyone who has not
- * chosen. Behind the door the panel still speaks only `Locale`; see
- * `panelLocaleOf`.
+ * chosen. Only the panel's own languages (2026-10-28): the language picked
+ * here is the panel's after signing in.
  */
-export const AUTH_LOCALES = ["en", "de", "tr", "es"] as const;
+export const AUTH_LOCALES = ["en", "de", "tr"] as const;
 
 export type AuthLocale = (typeof AUTH_LOCALES)[number];
 
@@ -124,4 +124,16 @@ export function candidateLocaleFromAcceptLanguage(header: string | null): Candid
     if (isCandidateLocale(tag)) return tag;
   }
   return "en";
+}
+
+/**
+ * The panel language after signing in. A language picked on the sign-in
+ * screen (the cookie) is the panel's and becomes the person's own; with none
+ * picked in this browser, the one the person chose before, on any browser.
+ * Neither: the panel follows the browser, as before. Pure.
+ */
+export function signInLocale(cookie: string | undefined, saved: string | null): { cookie?: string; save?: string } {
+  if (isPanelLocale(cookie)) return cookie === saved ? {} : { save: cookie };
+  if (isPanelLocale(saved)) return { cookie: saved };
+  return {};
 }

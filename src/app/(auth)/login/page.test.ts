@@ -3,7 +3,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { hash } from "@node-rs/argon2";
 
 vi.mock("./actions", () => ({ login: async () => ({}) }));
-const locale = vi.hoisted(() => ({ value: "tr" as "tr" | "en" | "de" | "es" }));
+vi.mock("@/app/(manager)/locale-action", () => ({ setManagerLocale: async () => {} }));
+const locale = vi.hoisted(() => ({ value: "tr" as "tr" | "en" | "de" }));
 vi.mock("@/i18n/manager-locale", () => ({ authLocale: async () => locale.value }));
 
 import LoginPage from "./page";
@@ -40,7 +41,7 @@ describe("login page", () => {
   });
 
   // A visitor who picked German, English or Spanish must not meet Turkish.
-  it.each(["en", "de", "es"] as const)("has no Turkish text in %s", async (code) => {
+  it.each(["en", "de"] as const)("has no Turkish text in %s", async (code) => {
     locale.value = code;
     vi.stubEnv("PANEL_PASSWORD_HASH", "");
     const html = await render();

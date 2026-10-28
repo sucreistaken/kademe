@@ -13,6 +13,8 @@ import {
   hashPassword,
 } from "@/lib/auth";
 import { clientKey, panelLoginLimiter, panelPasswordHash } from "@/lib/panel-login";
+import { signInLocale } from "@/i18n/locale";
+import { MANAGER_LOCALE_COOKIE, MANAGER_LOCALE_MAX_AGE } from "@/i18n/manager-locale";
 
 const schema = z.object({
   email: z.string().email(),
@@ -143,8 +145,14 @@ async function startSession(userId: string) {
     expires: session.expiresAt,
   });
 
+  const [account] = await db.select({ locale: users.locale }).from(users).where(eq(users.id, userId)).limit(1);
+  const lang = signInLocale(jar.get(MANAGER_LOCALE_COOKIE)?.value, account?.locale ?? null);
+  if (lang.cookie) {
+    jar.set(MANAGER_LOCALE_COOKIE, lang.cookie, { httpOnly: false, sameSite: "lax", path: "/", maxAge: MANAGER_LOCALE_MAX_AGE });
+  }
+
   await db
     .update(users)
-    .set({ lastLoginAt: new Date() })
+    .set({ lastLoginAt: new Date(), ...(lang.save ? { locale: lang.save } : {}) })
     .where(eq(users.id, userId));
 }
