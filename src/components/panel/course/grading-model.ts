@@ -1,5 +1,6 @@
 import {
   COMMON_WRITING_ERRORS,
+  CRITERION_LABEL_DE,
   CRITERION_MAX,
   SPEAKING_CRITERIA,
   WRITING_CRITERIA,
@@ -76,6 +77,27 @@ export function readCommonErrors(form: FormData): { ok: true; errors: CommonWrit
   if (!asked.every(isCommonError)) return { ok: false };
   const set = new Set<string>(asked);
   return { ok: true, errors: COMMON_ERROR_IDS.filter((id) => set.has(id)) };
+}
+
+/** One row of the grading form: the criterion, its German name, and what the AI said about it. */
+export type EditorCriterion = {
+  id: CourseCriterion;
+  /** The German name of the criterion (CRITERION_LABEL_DE). */
+  label: string;
+  /** What the AI proposed; null when it could not judge this criterion. */
+  proposed: number | null;
+  rationale: string | null;
+};
+
+/** One row per criterion of the section with the AI's points and rationale, in the sheet's order. */
+export function editorCriteria(section: GradedSection, proposal: CourseRubricProposal | null | undefined): EditorCriterion[] {
+  const { points } = proposalPoints(proposal, section);
+  return criteriaOf(section).map((id) => ({
+    id,
+    label: CRITERION_LABEL_DE[id],
+    proposed: points[id] ?? null,
+    rationale: proposal?.criteria.find((c) => c.id === id)?.rationale || null,
+  }));
 }
 
 /** What the AI proposed per criterion, and the criteria it left open (not assessable, missing, or out of range). */

@@ -5,6 +5,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Notice } from "@/components/ui/notice";
 import { Dot, INTEGRITY_TONE, STATUS_TONE, shortDateTime } from "@/components/panel/bits";
+import { CourseResultPage } from "@/components/panel/course/course-result-page";
 import { ExamFeedbackBox } from "@/components/panel/result/exam-feedback-box";
 import { FeedbackCard } from "@/components/panel/result/feedback-card";
 import { GradingCard } from "@/components/panel/result/grading-card";
@@ -65,6 +66,10 @@ export default async function ResultPage({
   // What the student rated after the exam (the end-of-exam survey), if they answered.
   const feedback = await examFeedbackOf(user.orgId, id);
   const { assessment, candidate, attempt, result } = view;
+  // A course test is graded on its own screen: Halil Bey's marking sheet (src/components/panel/course). The level exams keep this page.
+  if (assessment.mode === "COURSE_TEST") {
+    return <CourseResultPage user={user} locale={locale} view={view} row={row} problems={problems} feedback={feedback} sp={sp} id={id} />;
+  }
   const cfg = assessment.blueprintSnapshot;
   const computed = result?.computed ?? null;
   const final = result?.status === "FINAL";
