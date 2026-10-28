@@ -109,7 +109,7 @@ const grammar = [
       "Ich [[bin|ist|bist#praesens.sein]] jetzt seit zwei Wochen hier. " +
       "Meine Lehrerin [[spricht|sprecht|sprechen#praesens.vokalwechsel]] langsam und deutlich. " +
       "Der Kurs beginnt jeden Tag [[um|am|im#praeposition.zeit]] neun Uhr. " +
-      "Nach dem Kurs trinke ich oft [[einen|ein|eine#artikel.akkusativ]] Kaffee. " +
+      "Mittags trinke ich oft [[einen|ein|eine#artikel.akkusativ]] Kaffee. " +
       "Am Nachmittag [[muss|musst|müssen#modalverb.konjugation]] ich arbeiten. " +
       "Am Abend habe ich leider [[keine|kein|nicht#negation.kein]] Zeit mehr.",
     last: "Hast du am Wochenende Zeit?",
@@ -136,11 +136,11 @@ const grammar = [
   sentence(
     "plural",
     "MID",
-    "In der Küche stehen vier ___.",
+    "Wir brauchen noch vier ___.",
     "Stühle",
     ["Stuhl", "Stuhle", "Stühlen"],
     3,
-    "Plural von „der Stuhl“: die Stühle (Umlaut + -e). „Stuhl“ ist der Singular, „Stühlen“ steht nur im Dativ Plural.",
+    "Plural von „der Stuhl“: die Stühle (Umlaut + -e). „Stuhl“ ist der Singular, „Stuhle“ eine falsche Form ohne Umlaut, „Stühlen“ steht nur im Dativ Plural.",
   ),
   sentence(
     "imperativ.sie",
