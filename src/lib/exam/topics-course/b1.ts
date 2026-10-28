@@ -10,4 +10,22 @@ export const B1_COURSE_TOPICS: Record<TopicId, Topic> = {
     parent: "passiv",
     label: { tr: "Edilgen çatı (Präteritum)", en: "Passive in the simple past", de: "Passiv im Präteritum", es: "Pasiva en pretérito", ar: "المبني للمجهول في الماضي البسيط (Präteritum)" },
   },
+  "konnektor.kausal": {
+    parent: "konnektor",
+    label: { tr: "Sebep bağlaçları (weil, da)", en: "Causal connectors (weil, da)", de: "Kausale Konnektoren (weil, da)", es: "Conectores causales (weil, da)", ar: "أدوات الربط السببية (weil, da)" },
+  },
+  "konnektor.konsekutiv": {
+    parent: "konnektor",
+    label: { tr: "Sonuç bağlaçları (deshalb, so ... dass)", en: "Connectors of consequence (deshalb, so ... dass)", de: "Konsekutive Konnektoren (deshalb, so ... dass)", es: "Conectores consecutivos (deshalb, so ... dass)", ar: "أدوات الربط الدالة على النتيجة (deshalb, so ... dass)" },
+  },
+  "konnektor.final": {
+    parent: "konnektor",
+    label: { tr: "Amaç cümleleri (damit, um ... zu)", en: "Clauses of purpose (damit, um ... zu)", de: "Finalsätze (damit, um ... zu)", es: "Oraciones finales (damit, um ... zu)", ar: "جمل الغرض (damit, um ... zu)" },
+  },
+  lassen: {
+    label: { tr: "lassen fiili (yaptırmak)", en: "The verb lassen", de: "Das Verb „lassen“", es: "El verbo lassen", ar: "الفعل lassen" },
+  },
+  futur: {
+    label: { tr: "Gelecek zaman (Futur I)", en: "Future tense (Futur I)", de: "Futur I", es: "Futuro (Futur I)", ar: "زمن المستقبل (Futur I)" },
+  },
 };
