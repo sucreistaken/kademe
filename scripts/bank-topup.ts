@@ -26,6 +26,16 @@
  * org before writing (counts per section and level, first examples); one audit
  * row bank.sync_seed per org when something changed. A second run changes nothing.
  *
+ * The course test forms (src/db/seed-bank/course-tests, spec 2026-10-28) are
+ * loaded in the same run, as their own rows: seed keys "course-<course>-<form>-...",
+ * course_form and course_order (the item's position in its section). They never
+ * mix with the bank: --retire-stale and --sync-seed treat the two separately
+ * (a course row is not retired because the bank lacks it, nor a bank row because
+ * the forms lack it), and the course part is summarised on its own lines. A form
+ * item that changed gets a new seed key, so without --retire-stale the old row
+ * stays APPROVED next to the new one and the form would serve both: the summary
+ * warns about it, and a rollout runs with --retire-stale.
+ *
  *   DATABASE_URL=postgresql://kademe:kademe@localhost:5434/kademe_bank_check pnpm bank:topup
  *   pnpm bank:topup --org <uuid>
  *   pnpm bank:topup --allow-working-db
@@ -38,7 +48,7 @@
  *   pnpm bank:topup --production --confirm-db=127.0.0.1:5434/kademe --retire-stale --sync-seed
  */
 import "dotenv/config";
-import { bankTopUpRefusal, databaseTarget, formatRetireCounts, formatSyncSummary } from "../src/server/bank-topup";
+import { bankTopUpRefusal, databaseTarget, formatCoursePreview, formatCourseResult, formatRetireCounts, formatSyncSummary } from "../src/server/bank-topup";
 
 async function main() {
   const args = process.argv.slice(2);
@@ -65,7 +75,7 @@ async function main() {
   const { eq } = await import("drizzle-orm");
   const { db } = await import("../src/db");
   const { organizations } = await import("../src/db/schema");
-  const { previewTopUp, seedCounts, topUpSeedBank } = await import("../src/server/bank-import");
+  const { courseSeedCounts, previewTopUp, seedCounts, topUpSeedBank } = await import("../src/server/bank-import");
 
   const orgs = await db
     .select({ id: organizations.id, name: organizations.name })
@@ -87,18 +97,22 @@ async function main() {
         console.log(`    sync-seed: update ${p.sync.items.length} starter items and ${p.sync.stimuli.length} reading texts`);
         for (const line of formatSyncSummary(p.sync)) console.log(`      ${line}`);
       }
+      for (const line of formatCoursePreview(p.course, { retireStale, syncSeed })) console.log(`    ${line}`);
     }
     console.log("Applying (one transaction per organisation)...");
   }
   for (const org of orgs) {
     const before = await seedCounts(org.id);
+    const courseBefore = await courseSeedCounts(org.id);
     const r = await topUpSeedBank(org.id, { retireStale, syncSeed }, (m) => console.log(m));
     const after = await seedCounts(org.id);
+    const courseAfter = await courseSeedCounts(org.id);
     console.log(
       `${org.name}: items ${before.items} -> ${after.items} (+${r.itemsAdded}), approved starter items ${before.approved} -> ${after.approved}, texts/clips ${before.stimuli} -> ${after.stimuli} (+${r.stimuliAdded}), seed keys backfilled ${r.keysBackfilled}${retireStale ? `, retired ${r.itemsRetired}` : ""}${syncSeed ? `, synced ${r.itemsSynced} items and ${r.stimuliSynced} reading texts` : ""}`,
     );
-    if (r.listeningWithoutAudio.length)
-      console.log(`  new clips without audio (run pnpm bank:tts): ${r.listeningWithoutAudio.join(", ")}`);
+    for (const line of formatCourseResult(org.name, courseBefore, courseAfter, r.course, { retireStale, syncSeed })) console.log(line);
+    const withoutAudio = [...r.listeningWithoutAudio, ...r.course.listeningWithoutAudio];
+    if (withoutAudio.length) console.log(`  new clips without audio (run pnpm bank:tts): ${withoutAudio.join(", ")}`);
   }
   process.exit(0);
 }

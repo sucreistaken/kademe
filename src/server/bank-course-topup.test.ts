@@ -4,7 +4,18 @@ import { fixtureCourseForm } from "@/db/seed-bank/course-fixture";
 import { seedItemKey } from "@/db/seed-bank/seed-key";
 import type { SeedBankPart, SeedItem } from "@/db/seed-bank/types";
 import { thetaForLevel } from "@/lib/exam/cefr";
-import { formatCourseRetire, formatSyncSummary, planCourseTopUp, planSyncSeed, planTopUp, type ExistingItem, type ExistingStimulus } from "./bank-topup";
+import {
+  formatCoursePreview,
+  formatCourseResult,
+  formatCourseRetire,
+  formatSyncSummary,
+  planCourseTopUp,
+  planSyncSeed,
+  planTopUp,
+  staleCourseWarning,
+  type ExistingItem,
+  type ExistingStimulus,
+} from "./bank-topup";
 
 const course = courseSeed([fixtureCourseForm("B1.1", "A")]);
 
@@ -285,5 +296,54 @@ describe("planCourseTopUp with syncSeed", () => {
     expect(first.items).toHaveLength(3);
     const applied = old.map((o) => ({ ...o, ...(first.items.find((c) => c.id === o.id)?.set ?? {}) }));
     expect(sync({ stimuli: [], items: applied }).items).toEqual([]);
+  });
+});
+
+describe("the printed course summary", () => {
+  const preview = (over: Partial<Parameters<typeof formatCoursePreview>[0]> = {}) => ({
+    active: true,
+    stimuliToInsert: 2,
+    itemsToInsert: 9,
+    retire: [],
+    keptEdited: 0,
+    stale: 0,
+    sync: planCourseTopUp(course, loaded(), { syncSeed: true }).sync,
+    ...over,
+  });
+
+  it("says nothing when the course forms are not part of the run (an empty seed and no course rows)", () => {
+    expect(formatCoursePreview(preview({ active: false }), { retireStale: true, syncSeed: true })).toEqual([]);
+    expect(formatCourseResult("Org", { items: 0, approved: 0, stimuli: 0 }, { items: 0, approved: 0, stimuli: 0 }, { itemsAdded: 0, stimuliAdded: 0, itemsRetired: 0, itemsSynced: 0, stimuliSynced: 0, staleLeft: 0, listeningWithoutAudio: [] }, {})).toEqual([]);
+  });
+
+  it("prints what would be inserted, retired per form and synced, on lines of its own", () => {
+    const retire = [
+      { id: "1", section: "GRAMMAR" as const, level: "B1" as const, courseForm: "B1.1:A" },
+      { id: "2", section: "GRAMMAR" as const, level: "B1" as const, courseForm: "B1.1:A" },
+    ];
+    const items = [courseRow(course.items[3], { explanation: "alt" })];
+    const sync = planCourseTopUp(course, { stimuli: [], items }, { syncSeed: true }).sync;
+    expect(formatCoursePreview(preview({ retire, keptEdited: 1, sync }), { retireStale: true, syncSeed: true })).toEqual([
+      "course forms: insert 9 items and 2 texts/clips, retire 2 stale course items (kept 1 the school edited)",
+      "retire course B1.1:A 2",
+      "sync-seed: update 1 course items and 0 reading texts",
+      "  sync items GRAMMAR: B1 1",
+      "  e.g. GRAMMAR B1 [explanation] Ich ___ müde.",
+    ]);
+  });
+
+  it("warns about course items left APPROVED when the run does not retire them, and only then", () => {
+    expect(formatCoursePreview(preview({ stale: 3 }), {})).toEqual(["course forms: insert 9 items and 2 texts/clips", staleCourseWarning(3)]);
+    expect(formatCoursePreview(preview({ stale: 3 }), { retireStale: true }).join("\n")).not.toContain("WARNING");
+  });
+
+  it("prints the course counts before and after, with the warning for what stayed", () => {
+    const r = { itemsAdded: 9, stimuliAdded: 2, itemsRetired: 0, itemsSynced: 0, stimuliSynced: 0, staleLeft: 1, listeningWithoutAudio: ["course-b1-1-a-fx-l-durchsage"] };
+    expect(formatCourseResult("Campus", { items: 0, approved: 0, stimuli: 0 }, { items: 9, approved: 9, stimuli: 2 }, r, {})).toEqual([
+      "Campus: course items 0 -> 9 (+9), approved course items 0 -> 9, course texts/clips 0 -> 2 (+2)",
+      `  ${staleCourseWarning(1)}`,
+    ]);
+    const done = formatCourseResult("Campus", { items: 9, approved: 9, stimuli: 2 }, { items: 9, approved: 8, stimuli: 2 }, { ...r, itemsAdded: 0, stimuliAdded: 0, itemsRetired: 1, itemsSynced: 2, stimuliSynced: 1, staleLeft: 0 }, { retireStale: true, syncSeed: true });
+    expect(done).toEqual(["Campus: course items 9 -> 9 (+0), approved course items 9 -> 8, course texts/clips 2 -> 2 (+0), retired 1, synced 2 items and 1 reading texts"]);
   });
 });

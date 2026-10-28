@@ -441,6 +441,45 @@ export function formatCourseRetire(retire: CourseRetire[]): string[] {
   return [...byForm].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([form, n]) => `${form} ${n}`);
 }
 
+/** The warning for course items that outlived their form: a form would serve them next to its current items. */
+export const staleCourseWarning = (n: number): string =>
+  `WARNING: ${n} course items are no longer in their form but still APPROVED, so the form would serve them next to its current items. Run with --retire-stale.`;
+
+/** The course part of a per-org preview, as lines without their base indent. Empty when the course forms are not part of the run. */
+export function formatCoursePreview(
+  c: { active: boolean; stimuliToInsert: number; itemsToInsert: number; retire: CourseRetire[]; keptEdited: number; stale: number; sync: SyncPlan },
+  options: { retireStale?: boolean; syncSeed?: boolean },
+): string[] {
+  if (!c.active) return [];
+  const retire = options.retireStale ? `, retire ${c.retire.length} stale course items (kept ${c.keptEdited} the school edited)` : "";
+  const lines = [`course forms: insert ${c.itemsToInsert} items and ${c.stimuliToInsert} texts/clips${retire}`];
+  for (const line of formatCourseRetire(c.retire)) lines.push(`retire course ${line}`);
+  if (!options.retireStale && c.stale > 0) lines.push(staleCourseWarning(c.stale));
+  if (options.syncSeed) {
+    lines.push(`sync-seed: update ${c.sync.items.length} course items and ${c.sync.stimuli.length} reading texts`);
+    for (const line of formatSyncSummary(c.sync)) lines.push(`  ${line}`);
+  }
+  return lines;
+}
+
+type SeedCountsRow = { items: number; approved: number; stimuli: number };
+
+/** The course line of the summary printed after a top-up. Empty when the organisation has no course rows before or after. */
+export function formatCourseResult(
+  org: string,
+  before: SeedCountsRow,
+  after: SeedCountsRow,
+  r: { itemsAdded: number; stimuliAdded: number; itemsRetired: number; itemsSynced: number; stimuliSynced: number; staleLeft: number; listeningWithoutAudio: string[] },
+  options: { retireStale?: boolean; syncSeed?: boolean },
+): string[] {
+  if (before.items === 0 && after.items === 0) return [];
+  const lines = [
+    `${org}: course items ${before.items} -> ${after.items} (+${r.itemsAdded}), approved course items ${before.approved} -> ${after.approved}, course texts/clips ${before.stimuli} -> ${after.stimuli} (+${r.stimuliAdded})${options.retireStale ? `, retired ${r.itemsRetired}` : ""}${options.syncSeed ? `, synced ${r.itemsSynced} items and ${r.stimuliSynced} reading texts` : ""}`,
+  ];
+  if (r.staleLeft > 0) lines.push(`  ${staleCourseWarning(r.staleLeft)}`);
+  return lines;
+}
+
 /** 1-based position of every stimulus item among the items of its stimulus, as the first import numbered them. */
 export function seedOrderInStimulus(bank: SeedBankPart): Map<SeedItem, number> {
   const counter = new Map<string, number>();
