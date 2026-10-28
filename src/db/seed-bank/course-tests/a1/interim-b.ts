@@ -26,7 +26,7 @@ const alltag = readingText(
   "Mein Alltag",
   "Beruf und Tagesablauf",
   `
-Ich heiße Marco und bin Koch von Beruf. Ich arbeite in einem Restaurant in Leipzig. Mein Tag beginnt früh: Ich stehe um halb sechs auf und frühstücke mit meiner Frau und unseren zwei Kindern. Um sieben Uhr bringe ich die Kinder in die Schule. Dann fahre ich mit dem Fahrrad zur Arbeit.
+Ich heiße Marco und bin Koch von Beruf. Ich arbeite in einem Restaurant in Leipzig. Mein Tag beginnt früh: Ich stehe um halb sechs auf, und wir frühstücken zusammen: meine Frau, unsere zwei Kinder und ich. Um sieben Uhr bringe ich die Kinder in die Schule. Dann fahre ich mit dem Fahrrad zur Arbeit.
 
 Von zehn bis vierzehn Uhr kochen wir das Mittagessen, dann habe ich Pause. Am Abend arbeite ich noch einmal von 17 bis 22 Uhr. Das ist lang! Aber am Sonntag und Montag habe ich frei. Dann spielen wir im Park Fußball oder wir besuchen meine Eltern.
 `,
@@ -38,13 +38,13 @@ const vierTexte = readingText(
   "Alltag in der Stadt",
   `
 Text A: Aushang in der Bäckerei
-Frische Brötchen ab 6 Uhr! Die Bäckerei Hahn ist montags geschlossen. Dienstag bis Samstag sind wir von 6 bis 18 Uhr für Sie da. Am Sonntag ist offen von 7 bis 12 Uhr.
+Frische Brötchen ab 6 Uhr! Die Bäckerei Hahn ist montags geschlossen. Dienstag bis Samstag sind wir von 6 bis 18 Uhr für Sie da. Am Sonntag haben wir von 7 bis 12 Uhr geöffnet.
 
 Text B: Nachricht von Paul
 Hallo Anna, es tut mir leid, ich komme zehn Minuten später. Mein Bus hat Verspätung. Du kannst im Café warten. Bis gleich! Paul
 
 Text C: Anzeige
-Zimmer frei! Schönes Zimmer in einer WG, 14 qm, 300 Euro. Küche und Bad zusammen. Ab 1. Mai. Bitte rufen Sie an: 0341 88 71 20 (Frau Koch)
+Zimmer frei! Schönes Zimmer in einer WG, 14 qm, 300 Euro. Küche und Bad benutzen wir gemeinsam. Ab 1. Mai. Bitte rufen Sie an: 0341 88 71 20 (Frau Koch)
 
 Text D: Beitrag im Internetforum
 Hallo, ich spiele gern Fußball und suche eine Mannschaft in Leipzig. Ich kann am Dienstag und am Donnerstag am Abend spielen. Wer spielt mit? Danke! Amir
@@ -76,19 +76,19 @@ const reading = [
     vierTexte.key,
     "gist",
     "MID",
-    "In welchem Text sucht jemand eine Mannschaft?",
+    "In welchem Text möchte jemand Sport machen?",
     ["Text B", "Text A", "Text D"],
     "Text D",
-    "Amir spielt gern Fußball und sucht eine Mannschaft in Leipzig (Text D). In der Bäckerei (Text A) geht es um Öffnungszeiten, in Text B um eine Verspätung.",
+    "Amir spielt gern Fußball und sucht eine Mannschaft in Leipzig (Text D). In der Bäckerei (Text A) geht es um Öffnungszeiten, in Text B um eine Verspätung, in Text C um ein Zimmer.",
   ),
   whichText(
     vierTexte.key,
     "gist",
     "MID",
-    "In welchem Text entschuldigt sich jemand?",
+    "In welchem Text kommt jemand zu spät?",
     ["Text D", "Text B", "Text C"],
     "Text B",
-    "Paul schreibt: „Es tut mir leid, ich komme zehn Minuten später.“ Er entschuldigt sich für seine Verspätung (Text B). In den Texten C und D steht keine Entschuldigung.",
+    "Paul schreibt: „Ich komme zehn Minuten später. Mein Bus hat Verspätung.“ Er kommt zu spät (Text B). In den Texten C und D geht es nicht um eine Verspätung.",
   ),
 ];
 
@@ -165,11 +165,11 @@ const grammar = [
   sentence(
     "trennbares_verb",
     "MID",
-    "Wann kommt der Zug in Hamburg ___?",
-    "an",
-    ["ab", "auf", "mit"],
+    "Ich lade dich am Samstag zu meiner Party ___.",
+    "ein",
+    ["an", "auf", "ab"],
     1,
-    "Das trennbare Verb heißt „ankommen“; die Vorsilbe steht am Satzende. „abkommen“, „aufkommen“ und „mitkommen“ passen nicht zu „in Hamburg“.",
+    "Das trennbare Verb heißt „einladen“; die Vorsilbe steht am Satzende. „anladen“ gibt es nicht, „aufladen“ und „abladen“ haben eine andere Bedeutung und passen nicht zu „Party“.",
   ),
   sentence(
     "modalverb.satzklammer",
@@ -219,7 +219,7 @@ const weg = clip(
   "Stadt und Wege",
   [{ label: "Frau Böhm", voice: "A" }],
   [
-    "Frau Böhm: Hallo, Herr Yilmaz, hier ist Frau Böhm von der Sprachschule. Sie möchten zu uns kommen? Das ist einfach. Vom Bahnhof gehen Sie geradeaus bis zur Post. An der Post gehen Sie nach links, nicht nach rechts. Dann sehen Sie schon die Schule. Bis morgen!",
+    "Frau Böhm: Hallo, Herr Yilmaz, hier ist Frau Böhm von der Sprachschule. Sie möchten morgen zu uns kommen. Das ist ganz einfach. Vom Bahnhof gehen Sie geradeaus bis zur Post. An der Post gehen Sie nach links, nicht nach rechts. Dann sehen Sie schon die Schule. Bis morgen!",
   ],
 );
 
@@ -232,19 +232,22 @@ const cafe = clip(
     { label: "Frau Said", voice: "D" },
   ],
   [
-    "Kellner: Guten Tag! Was möchten Sie trinken?",
-    "Frau Said: Guten Tag. Ich möchte einen Tee, bitte. Und meine Freundin möchte einen Kaffee.",
+    "Kellner: Guten Tag! Hier ist die Karte. Was möchten Sie trinken?",
+    "Frau Said: Guten Tag. Ich möchte einen Tee, bitte.",
     "Kellner: Sehr gern. Möchten Sie auch etwas essen? Heute haben wir Suppe und Kuchen.",
     "Frau Said: Die Suppe möchte ich nicht. Haben Sie auch einen Salat?",
     "Kellner: Ja, einen Salat mit Käse. Er kostet fünf Euro.",
-    "Frau Said: Dann nehme ich einen Salat und ein Stück Kuchen.",
+    "Frau Said: Gut, dann nehme ich einen Salat und ein Stück Kuchen.",
     "Kellner: Welchen Kuchen? Wir haben Apfelkuchen und Schokoladenkuchen.",
     "Frau Said: Den Apfelkuchen, bitte.",
-    "Kellner: Gut. Ein Tee, ein Kaffee, ein Salat und ein Apfelkuchen. Kommt sofort!",
-    "Frau Said: Entschuldigung, wir möchten bezahlen.",
-    "Kellner: Das macht zusammen elf Euro vierzig.",
-    "Frau Said: Hier sind fünfzehn Euro. Stimmt so.",
+    "Kellner: Gut. Ein Tee, ein Salat und ein Apfelkuchen. Kommt sofort!",
+    "Frau Said: Danke.",
+    "Kellner: So, bitte schön. Guten Appetit! Schmeckt es?",
+    "Frau Said: Ja, sehr gut, danke. Entschuldigung, ich möchte bezahlen.",
+    "Kellner: Gern. Das macht zusammen elf Euro achtzig.",
+    "Frau Said: Bitte schön.",
     "Kellner: Vielen Dank! Einen schönen Tag noch.",
+    "Frau Said: Danke, Ihnen auch. Auf Wiedersehen!",
   ],
 );
 
@@ -285,10 +288,10 @@ const listening = [
     "MID",
     [
       ["Die Frau möchte einen Tee.", "R"],
-      ["Die Frau bestellt einen Apfelkuchen.", "R"],
-      ["Die Rechnung kostet fünfzehn Euro.", "F"],
+      ["Die Frau bestellt eine Suppe.", "F"],
+      ["Der Salat kostet elf Euro.", "F"],
     ],
-    "Frau Said bestellt für sich einen Tee und den Apfelkuchen. Die Rechnung ist elf Euro vierzig; fünfzehn Euro gibt sie dem Kellner, mit „Stimmt so“.",
+    "Die Frau bestellt einen Tee. Die Suppe möchte sie nicht; sie nimmt einen Salat und Apfelkuchen. Der Salat kostet fünf Euro; elf Euro achtzig kostet alles zusammen.",
   ),
 ];
 
@@ -320,12 +323,12 @@ const speaking = [
     "introduction",
     "EASY",
     INTRO,
-    "Erzählen Sie bitte etwas über sich.\n\n- Name\n- Stadt oder Region, wo Sie wohnen\n- Arbeit, Schule oder Studium\n- Hobbys\n- Sprachen",
+    "Erzählen Sie bitte etwas über sich.\n\n- Name\n- Stadt oder Region, wo Sie wohnen\n- Arbeit, Schule oder Studium\n- Familie\n- Sprachen",
     [
       "Name (Ich heiße ... / Mein Name ist ...)",
       "Wohnort (Ich wohne in ...)",
       "Arbeit, Schule, Studium oder Ausbildung (Ich bin ... / Ich studiere ...)",
-      "mindestens ein Hobby (Ich lese gern ... / Mein Hobby ist ...)",
+      "Familie, z. B. Geschwister oder Kinder (Ich habe einen Bruder. / Ich habe zwei Kinder.)",
       "Sprachen, die man spricht (Ich spreche ...)",
     ],
     SPEAKING_NOTE,

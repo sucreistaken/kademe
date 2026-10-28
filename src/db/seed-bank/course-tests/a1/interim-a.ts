@@ -30,7 +30,7 @@ Hallo Nora,
 
 jetzt wohne ich schon eine Woche in Hamburg. Die Stadt ist groß und schön! Meine Wohnung ist klein, aber sie ist ganz nah am Bahnhof. Im Haus gegenüber gibt es einen Supermarkt und eine Bäckerei. Das ist praktisch.
 
-Ich arbeite in einem Café in der Stadt. Ich fahre mit dem Bus, das dauert zwanzig Minuten. Ein Auto habe ich nicht. Am Samstag habe ich frei. Dann gehe ich mit einer Kollegin auf den Markt, und am Abend gehen wir ins Kino.
+Ich arbeite in einem Café in der Stadt. Ich fahre mit dem Bus. Das dauert zwanzig Minuten. Ein Auto habe ich nicht. Am Samstag habe ich frei. Dann gehe ich auf den Markt, und am Abend gehe ich ins Kino.
 
 Hast du am Wochenende Zeit? Kommst du nach Hamburg?
 
@@ -45,7 +45,7 @@ const vierTexte = readingText(
   "Freizeit und Einkaufen",
   `
 Text A: Aushang im Schwimmbad
-Achtung! Das Schwimmbad ist am Mittwoch geschlossen. Ab Donnerstag sind wir wieder von 8 bis 20 Uhr für Sie da. Die Sauna ist ab Freitag auch wieder offen.
+Achtung! Das Schwimmbad ist am Mittwoch, den 12. Juni, geschlossen. Ab Donnerstag sind wir wieder von 8 bis 20 Uhr für Sie da. Die Sauna ist ab Freitag auch wieder offen.
 
 Text B: Nachricht von Lea
 Hallo Tim, wir gehen am Samstag ins Kino. Der Film beginnt um 20 Uhr. Wir treffen uns um halb acht am Bahnhof. Kommst du auch? Lea
@@ -74,7 +74,7 @@ const reading = [
     vierTexte.key,
     "detail",
     "EASY",
-    "In welchem Text steht ein Preis?",
+    "In welchem Text steht, wie viel etwas kostet?",
     ["Text B", "Text C", "Text D"],
     "Text C",
     "Nur Text C nennt einen Preis (60 Euro). Text A nennt Öffnungszeiten, Text B ein Treffen, Text D sucht einen Kurs.",
@@ -83,19 +83,19 @@ const reading = [
     vierTexte.key,
     "gist",
     "MID",
-    "In welchem Text sucht jemand einen Kurs?",
+    "In welchem Text möchte jemand eine Sprache lernen?",
     ["Text A", "Text B", "Text D"],
     "Text D",
-    "Mehmet möchte Deutsch lernen und sucht einen Kurs am Abend. Im Schwimmbad (Text A) geht es um Öffnungszeiten, in Text B um das Kino.",
+    "Mehmet möchte Deutsch lernen und sucht einen Kurs am Abend (Text D). Im Schwimmbad (Text A) geht es um Öffnungszeiten, in Text B um das Kino, in Text C um ein Sofa.",
   ),
   whichText(
     vierTexte.key,
     "detail",
     "EASY",
-    "In welchem Text ist etwas an einem Tag geschlossen?",
+    "In welchem Text ist etwas geschlossen?",
     ["Text A", "Text C", "Text B"],
     "Text A",
-    "Das Schwimmbad ist am Mittwoch geschlossen (Text A). In den Texten B und C steht das nicht.",
+    "Das Schwimmbad ist am Mittwoch geschlossen (Text A). In den Texten B und C steht nichts von „geschlossen“.",
   ),
 ];
 
@@ -104,9 +104,9 @@ const reading = [
 const grammar = [
   cloze3("MID", {
     title: "Eine Nachricht an Pia",
-    first: "Hallo Pia, ich schreibe dir aus meinem Deutschkurs in Köln.",
+    first: "Hallo Pia, ich mache jetzt einen Deutschkurs in Köln.",
     body:
-      "Ich [[bin|ist|bist#praesens.sein]] jetzt seit zwei Wochen hier. " +
+      "Ich [[bin|ist|bist#praesens.sein]] schon zwei Wochen hier. " +
       "Meine Lehrerin [[spricht|sprecht|sprechen#praesens.vokalwechsel]] langsam und deutlich. " +
       "Der Kurs beginnt jeden Tag [[um|am|im#praeposition.zeit]] neun Uhr. " +
       "Mittags trinke ich oft [[einen|ein|eine#artikel.akkusativ]] Kaffee. " +
@@ -206,7 +206,7 @@ const erdbeeren = clip(
   "Einkaufen",
   [{ label: "Ansage", voice: "D" }],
   [
-    "Ansage: Liebe Kunden, heute haben wir frische Erdbeeren. Ein Kilo kostet nur zwei Euro fünfzig, nicht drei Euro fünfzig wie sonst. Und die Äpfel? Ein Kilo Äpfel kostet einen Euro neunzig.",
+    "Ansage: Liebe Kunden, heute haben wir frische Erdbeeren. Ein Kilo kostet nur zwei Euro fünfzig, nicht drei Euro fünfzig wie sonst. Auch die Äpfel sind billig: Ein Kilo kostet einen Euro neunzig.",
   ],
 );
 
@@ -241,17 +241,18 @@ const party = clip(
   [
     "Mira: Hallo, Jonas! Wie geht's?",
     "Jonas: Hallo, Mira! Gut, danke. Und dir?",
-    "Mira: Auch gut. Du, am Samstag habe ich Geburtstag. Ich mache eine kleine Party. Kommst du?",
+    "Mira: Auch gut, danke. Du, am Samstag habe ich Geburtstag. Ich mache eine kleine Party. Kommst du?",
     "Jonas: Oh, herzlichen Glückwunsch! Wann ist die Party?",
     "Mira: Um sieben Uhr, bei mir zu Hause.",
     "Jonas: Hm. Am Samstag arbeite ich bis sechs Uhr. Aber ich kann um halb acht kommen. Ist das okay?",
-    "Mira: Ja, super! Das ist kein Problem.",
-    "Jonas: Kann ich etwas mitbringen? Kuchen oder Salat?",
+    "Mira: Ja, super! Das ist kein Problem. Wir essen erst um acht.",
+    "Jonas: Gut. Kann ich etwas mitbringen? Kuchen oder Salat?",
     "Mira: Einen Salat, gern. Den Kuchen kaufe ich schon.",
-    "Jonas: Gut. Ich mache einen Nudelsalat. Wie viele Gäste kommen denn?",
-    "Mira: Zehn Personen. Meine Schwester kommt auch.",
-    "Jonas: Toll! Dann bis Samstag. Tschüss!",
-    "Mira: Tschüss, Jonas!",
+    "Jonas: Okay. Ich mache einen Nudelsalat. Wie viele Gäste kommen denn?",
+    "Mira: Zehn Personen. Meine Schwester kommt auch, und zwei Freunde aus dem Deutschkurs.",
+    "Jonas: Toll! Dann sehe ich alle wieder. Also, bis Samstag!",
+    "Mira: Bis Samstag, Jonas. Tschüss!",
+    "Jonas: Tschüss!",
   ],
 );
 

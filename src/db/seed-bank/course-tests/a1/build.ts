@@ -55,11 +55,23 @@ export function sentence(
   return { section: "GRAMMAR", level: LEVEL, type: "SINGLE_CHOICE", skillTag: `grammar.${skill}`, within, prompt, ...choiceOf(correct, distractors, pos), explanation };
 }
 
-/** Index of the answer among its three choices: spread by gap and answer, the same on every build. */
-function answerSlot(answer: string, n: number): number {
-  let h = n;
-  for (const ch of answer) h = (h * 31 + ch.codePointAt(0)!) % 10007;
-  return h % 3;
+const SLOT_ORDERS = [
+  [0, 1, 2],
+  [0, 2, 1],
+  [1, 0, 2],
+  [1, 2, 0],
+  [2, 0, 1],
+  [2, 1, 0],
+];
+
+/**
+ * Index of the answer among its three choices. Each run of three gaps uses every place once, in an order taken
+ * from the text's title, so the places are spread and the same on every build (the exam shuffles them again).
+ */
+function answerSlot(title: string, n: number): number {
+  let h = Math.floor((n - 1) / 3);
+  for (const ch of title) h = (h * 31 + ch.codePointAt(0)!) % 10007;
+  return SLOT_ORDERS[h % SLOT_ORDERS.length][(n - 1) % 3];
 }
 
 /**
@@ -80,7 +92,7 @@ export function cloze3(within: Within, spec: TextSpec): SeedItem {
     // Read as the scorer reads them: case, ß/ss and ae/ä do not tell two options apart.
     if (options.some((o, j) => options.some((p, k) => k > j && typedMatches(o, [p])))) throw new Error(`cloze gap ${n} ("${answer}") has two equal options`);
     const choices = [...wrong];
-    choices.splice(answerSlot(answer, n), 0, answer);
+    choices.splice(answerSlot(spec.title, n), 0, answer);
     gaps.push({ id: `g${n}`, answer, choices });
   });
   return {
