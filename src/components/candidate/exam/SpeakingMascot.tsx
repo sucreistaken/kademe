@@ -52,10 +52,10 @@ export function SpeakingMascot({ line, talk }: { line: string; talk: boolean }) 
 
   const shown = typing ? lettersShown(typed, line.length) : line.length;
   return (
-    <div data-speaking-mascot aria-hidden="true" className="mb-4 flex items-start gap-1.5">
-      {/* The drawing starts 18px down its 64px box; the 12px pulled up leaves it clear of the column's scroll edge. */}
-      <Mascot pose="talk" talking={typing && isTalking(typed, line.length)} size="small" className="-mt-3 w-16 rtl:-scale-x-100" />
-      <div className="relative min-w-0 flex-1 rounded-[18px] border-2 border-line bg-surface px-3.5 py-2.5 shadow-lip-soft">
+    <div data-speaking-mascot aria-hidden="true" className="mb-4 flex items-start gap-2">
+      {/* The drawing starts 20px down its 72px box; the 14px pulled up leaves it clear of the column's scroll edge. */}
+      <Mascot pose="talk" talking={typing && isTalking(typed, line.length)} size="small" className="-mt-3.5 w-[72px] rtl:-scale-x-100" />
+      <div className="relative min-w-0 flex-1 rounded-lg border-2 border-line bg-surface px-3.5 py-2.5 shadow-lip-soft">
         {/* The tail points at the mascot, on the start side of the bubble in either direction. */}
         <span className="absolute -start-[7px] top-4 size-3 rotate-45 border-b-2 border-s-2 border-line bg-surface rtl:border-b-0 rtl:border-t-2" />
         <p lang="de" className="text-[15px] font-bold leading-[1.45] text-ink">

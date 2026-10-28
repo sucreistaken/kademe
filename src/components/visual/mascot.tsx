@@ -94,8 +94,8 @@ function TalkMouth({ talking }: { talking: boolean }) {
   if (!talking) return <path d="M121 110 Q129 118 137 110" {...LINE} />;
   return (
     <g data-mouth="open" className="origin-center [transform-box:fill-box] motion-safe:animate-[mascot-talk_260ms_ease-in-out_infinite]">
-      <ellipse cx="129" cy="114" rx="7" ry="5.5" className="fill-ink" />
-      <ellipse cx="129" cy="117" rx="3.8" ry="2" className="fill-red opacity-70" />
+      <ellipse cx="129" cy="115" rx="9.5" ry="8" className="fill-ink" />
+      <ellipse cx="129" cy="119.5" rx="5" ry="2.8" className="fill-red opacity-70" />
     </g>
   );
 }
