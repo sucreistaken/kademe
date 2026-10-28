@@ -40,7 +40,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: {
-      allowedOrigins: ["kademe.kadiray.com"],
+      allowedOrigins: ["kademe.campusgerman.com", "kademe.kadiray.com"],
     },
   },
 };
