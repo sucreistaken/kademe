@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Dot, INTEGRITY_TONE, Level, PageHead, STATUS_TONE, shortDateTime } from "@/components/panel/bits";
 import { StudentLinkButton } from "@/components/panel/student-link-button";
 import { loadIntegrityBriefs } from "@/components/panel/integrity/serious";
+import { CourseResultCell } from "@/components/panel/students/course-cells";
 import { GroupReport } from "@/components/panel/students/group-report-panel";
 import { formatDeadline, isFreshInvite } from "@/components/panel/students/message";
 import { StudentMessageButton } from "@/components/panel/students/student-message-button";
@@ -144,14 +145,24 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
                   </td>
                   <td className="px-3 py-3 text-[13.5px] text-ink-2">
                     {r.examName}
-                    <span className="block text-[12px] text-muted">{t(`mode.${r.mode}`)}</span>
+                    <span className="block text-[12px] text-muted">
+                      {t(`mode.${r.mode}`)}
+                      {r.course?.form ? ` · ${t("courseStudents.form", { form: r.course.form })}` : ""}
+                    </span>
                   </td>
                   <td className="px-3 py-3">
-                    <Level level={r.claimed} muted />
+                    {/* A course test claims no level: its column names the course (B1.1, B1). */}
+                    <Level level={r.course ? r.course.key : r.claimed} muted />
                   </td>
                   <td className="px-3 py-3">
-                    <Level level={r.level} muted={!r.levelFinal} preA1={t("resultLevel.A0")} />
-                    {r.outcome ? <span className="ml-2 text-[12.5px] text-muted">{t(`result.outcome${r.outcome}`)}</span> : null}
+                    {r.course ? (
+                      <CourseResultCell course={r.course} t={t} />
+                    ) : (
+                      <>
+                        <Level level={r.level} muted={!r.levelFinal} preA1={t("resultLevel.A0")} />
+                        {r.outcome ? <span className="ml-2 text-[12.5px] text-muted">{t(`result.outcome${r.outcome}`)}</span> : null}
+                      </>
+                    )}
                   </td>
                   <td className="px-3 py-3">
                     <Dot tone={STATUS_TONE[r.status]}>{t(`status.${r.status}`)}</Dot>

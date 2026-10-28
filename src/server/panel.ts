@@ -23,6 +23,7 @@ import {
   transcripts,
   users,
 } from "@/db/schema";
+import { studentCourseOf, type StudentCourse } from "@/components/panel/students/course-row";
 import type { BankCount } from "@/lib/exam/blueprint";
 import { foldCourseCounts } from "@/lib/exam/course/coverage";
 import { C_TEST_SKILL_TAG, CLOZE_SKILL_TAG, OPEN_CLOZE_SKILL_TAG, WORD_BANK_SKILL_TAG } from "@/lib/exam/types";
@@ -65,6 +66,8 @@ export type StudentRow = {
   aiProposals: number;
   /** The engine's result is borderline or imprecise and waits for a teacher (see isUncertainResult). */
   uncertain: boolean;
+  /** A course test (spec 2026-10-28): the course, form, points and outcome in place of a CEFR level. Null for every other exam. */
+  course: StudentCourse | null;
 };
 
 export async function listStudents(orgId: string): Promise<StudentRow[]> {
@@ -118,6 +121,11 @@ export async function listStudents(orgId: string): Promise<StudentRow[]> {
     const proctored = exam.blueprintSnapshot.proctoring.preset !== "OFF";
     const integrity = !proctored ? "NONE" : attempt?.integritySummary?.level ?? "PENDING";
     const final = result?.status === "FINAL";
+    // A course test is scored in points: its list row carries the course, points and outcome, and no CEFR level or verification outcome.
+    const course =
+      exam.mode === "COURSE_TEST"
+        ? studentCourseOf({ course: exam.blueprintSnapshot.course, computed: result?.computed, skillOverrides: result?.skillOverrides, finalOutcome: result?.finalOutcome, final })
+        : null;
     return {
       assessmentId: assessment.id,
       name: candidate.fullName ?? "",
@@ -126,9 +134,9 @@ export async function listStudents(orgId: string): Promise<StudentRow[]> {
       mode: exam.mode,
       claimed: exam.claimedLevel,
       status,
-      level: (final ? result?.finalOverall : result?.computed?.overall) ?? null,
+      level: course ? null : ((final ? result?.finalOverall : result?.computed?.overall) ?? null),
       levelFinal: final,
-      outcome: final ? (result?.finalOutcome ?? null) : (result?.computed?.verification?.outcome ?? null),
+      outcome: course ? null : final ? (result?.finalOutcome ?? null) : (result?.computed?.verification?.outcome ?? null),
       integrity,
       invitedAt: assessment.createdAt,
       completedAt: attempt?.completedAt ?? null,
@@ -137,6 +145,7 @@ export async function listStudents(orgId: string): Promise<StudentRow[]> {
       currentSection: openRuns.find((r) => r.attemptId === attempt?.id)?.section ?? null,
       aiProposals: proposals.find((p) => p.attemptId === attempt?.id)?.n ?? 0,
       uncertain: !final && isUncertainResult(result?.computed),
+      course,
     };
   });
 }

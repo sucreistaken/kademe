@@ -1,6 +1,7 @@
-import { COURSE_TESTS, courseSections } from "@/lib/exam/course/catalog";
+import { courseTotals } from "@/components/panel/course/totals";
+import { COURSE_TESTS } from "@/lib/exam/course/catalog";
 import { courseKeyOfTemplate, courseTemplateKey } from "@/lib/exam/course/template-keys";
-import { COURSE_KEYS, SPEAKING_MAX, WRITING_MAX, type CourseForm, type CourseKey, type CourseTestKind } from "@/lib/exam/course/types";
+import { COURSE_KEYS, type CourseForm, type CourseKey, type CourseTestKind } from "@/lib/exam/course/types";
 import { examChoiceValue, parseExamChoice } from "@/lib/exam/exam-choice";
 import type { Cefr, ExamMode } from "@/lib/exam/types";
 
@@ -291,14 +292,7 @@ export type CourseFormChoice = (typeof COURSE_FORM_CHOICES)[number];
 /** `InviteStudentsInput.courseForm` for a picker value: null lets the server alternate. */
 export const courseFormOf = (choice: CourseFormChoice): CourseForm | null => (choice === "AUTO" ? null : choice);
 
-/** What one form of a course test is worth and takes: the catalog's points (one per objective unit, the writing and speaking rubrics) and section minutes. */
-export function courseTotals(key: CourseKey): { points: number; minutes: number } {
-  const plan = courseSections(key);
-  return {
-    points: plan.reduce((sum, p) => sum + (p.section === "WRITING" ? WRITING_MAX : p.section === "SPEAKING" ? SPEAKING_MAX : p.units), 0),
-    minutes: plan.reduce((sum, p) => sum + p.minutes, 0),
-  };
-}
+export { courseTotals };
 
 /** Rows whose e-mail already has an open invitation: a new one is a second exam, so the last look names them. */
 export function alreadyInvited(rows: readonly Pick<StudentRow, "email">[], openEmails: readonly string[]): string[] {

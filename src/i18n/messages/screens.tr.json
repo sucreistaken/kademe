@@ -132,7 +132,7 @@
     "tabReview": "İnceleme bekleyen",
     "tabRunning": "Süren",
     "tabFinal": "Kesinleşen",
-    "search": "Ad veya e-posta ara",
+    "search": "Ad, e-posta veya kurs ara",
     "colStudent": "Öğrenci",
     "colExam": "Sınav",
     "colClaimed": "Beyan",
@@ -1297,5 +1297,11 @@
     "formHint": "Otomatik: listedekiler sırayla A, B, A, B formunu alır; daha önce bir formu gören öğrenci diğerini alır. A ya da B seçersen herkes o formu alır.",
     "formRow": "Form",
     "examMeta": "{points} puan · yaklaşık {minutes} dk"
+  },
+  "courseStudents": {
+    "outcomePASS": "Geçti",
+    "outcomeFAIL": "Geçmedi",
+    "pointsTitle": "{max} puanın {points} puanı",
+    "form": "{form} formu"
   }
 }

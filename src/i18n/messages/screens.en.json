@@ -132,7 +132,7 @@
     "tabReview": "Waiting for review",
     "tabRunning": "In progress",
     "tabFinal": "Final",
-    "search": "Search name or email",
+    "search": "Search name, email or course",
     "colStudent": "Student",
     "colExam": "Exam",
     "colClaimed": "Claimed",
@@ -1297,5 +1297,11 @@
     "formHint": "Automatic: the list gets form A, B, A, B in turn, and a returning student gets the form they have not seen. Choosing A or B gives everyone that form.",
     "formRow": "Form",
     "examMeta": "{points} points · about {minutes} min"
+  },
+  "courseStudents": {
+    "outcomePASS": "Passed",
+    "outcomeFAIL": "Not passed",
+    "pointsTitle": "{points} of {max} points",
+    "form": "Form {form}"
   }
 }

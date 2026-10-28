@@ -63,6 +63,10 @@ export async function GET(req: NextRequest) {
   const level = (l: string | null | undefined) => levelLabel(l, t("resultLevel.A0"));
   const body = rows.map((r) => {
     const x = extras.get(r.assessmentId);
+    // A course test has no CEFR level: its overall cell reads "Bestanden 52/74" and its recommendation is the next course.
+    const c = r.course;
+    const overall = c ? (c.outcome ? `${t(`courseStudents.outcome${c.outcome}`)}${c.points !== null ? ` ${c.points}/${c.max}` : ""}` : "") : level(r.level);
+    const skill = (s: "GRAMMAR" | "READING" | "LISTENING" | "WRITING" | "SPEAKING") => (c ? "" : level(x?.skills[s]));
     return [
       r.name,
       r.email,
@@ -70,14 +74,14 @@ export async function GET(req: NextRequest) {
       t(`status.${r.status}`),
       stamp(r.invitedAt),
       stamp(r.completedAt),
-      level(r.level),
-      level(x?.skills.GRAMMAR),
-      level(x?.skills.READING),
-      level(x?.skills.LISTENING),
-      level(x?.skills.WRITING),
-      level(x?.skills.SPEAKING),
-      x?.recommended,
-      r.level ? t(r.levelFinal ? "studentsExport.resultFinal" : "studentsExport.resultDraft") : "",
+      overall,
+      skill("GRAMMAR"),
+      skill("READING"),
+      skill("LISTENING"),
+      skill("WRITING"),
+      skill("SPEAKING"),
+      c ? c.recommendation : x?.recommended,
+      (c ? c.outcome : r.level) ? t(r.levelFinal ? "studentsExport.resultFinal" : "studentsExport.resultDraft") : "",
       ...integrityCells({ integrity: r.integrity, brief: briefs.get(r.assessmentId) }, (o) => t(`integrity.outcome${o}`), t("integrityFlags.outcomeNone")),
     ];
   });

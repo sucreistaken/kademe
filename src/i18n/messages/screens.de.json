@@ -132,7 +132,7 @@
     "tabReview": "Wartet auf Durchsicht",
     "tabRunning": "Laufend",
     "tabFinal": "Abgeschlossen",
-    "search": "Name oder E-Mail suchen",
+    "search": "Name, E-Mail oder Kurs suchen",
     "colStudent": "Lernende/r",
     "colExam": "Prüfung",
     "colClaimed": "Angegeben",
@@ -1297,5 +1297,11 @@
     "formHint": "Automatisch: Die Lernenden der Liste erhalten abwechselnd Form A und B; wer schon eine Form kennt, erhält die andere. Mit Form A oder B erhalten alle dieselbe Form.",
     "formRow": "Form",
     "examMeta": "{points} Punkte · etwa {minutes} Min."
+  },
+  "courseStudents": {
+    "outcomePASS": "Bestanden",
+    "outcomeFAIL": "Nicht bestanden",
+    "pointsTitle": "{points} von {max} Punkten",
+    "form": "Form {form}"
   }
 }
