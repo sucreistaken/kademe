@@ -86,3 +86,55 @@ describe("finalizeChecklist", () => {
     expect(r.done).toBe(0);
   });
 });
+
+describe("a course test result", () => {
+  const section = (points: number | null, max: number) => ({ points, max, pending: points === null });
+  const courseResult = (over: Partial<NonNullable<ComputedResult["course"]>> = {}): NonNullable<ComputedResult["course"]> => ({
+    key: "B1",
+    form: "A",
+    sections: { READING: section(8, 10), WRITING: section(7, 9), SPEAKING: section(14, 20) },
+    total: 29,
+    max: 39,
+    pct: 74.4,
+    outcome: "PASS",
+    reasons: [],
+    recommendation: "B2.1",
+    focus: null,
+    ...over,
+  });
+  /** No CEFR level, no overall: only who stands behind the writing and speaking points. */
+  const levelless = (over: Partial<SkillResult>): SkillResult => skill({ level: null, ...over });
+  const course = (skills: ComputedResult["skills"], over: Partial<ComputedResult> = {}): ComputedResult =>
+    computed(skills, { overall: null, course: courseResult(), ...over });
+
+  it("lists the writing and speaking sections whose points are only the AI's, without any level", () => {
+    const c = course({ WRITING: levelless({ decider: "AI" }), SPEAKING: levelless({ decider: "TEACHER" }) }, { status: "AWAITING_REVIEW" });
+    expect(finalizeBlockers(c)).toEqual([{ code: "UNDECIDED", sections: ["WRITING"] }]);
+  });
+  it("blocks on a task that has no points yet", () => {
+    const c = course(
+      { WRITING: levelless({ decider: null, pending: true }), SPEAKING: levelless({ decider: "AI" }) },
+      { status: "AWAITING_GRADING", course: courseResult({ total: null, outcome: null, recommendation: null }) },
+    );
+    expect(finalizeBlockers(c)).toEqual([{ code: "GRADING" }, { code: "UNDECIDED", sections: ["SPEAKING"] }]);
+  });
+  it("may be finalized once every task is decided, though a course test has no overall level", () => {
+    expect(finalizeBlockers(course({ WRITING: levelless({ decider: "TEACHER" }), SPEAKING: levelless({ decider: "TEACHER" }) }))).toEqual([]);
+  });
+  it("has nothing to freeze without a verdict", () => {
+    const c = course({ WRITING: levelless({ decider: "TEACHER" }) }, { course: courseResult({ outcome: null }) });
+    expect(finalizeBlockers(c)).toEqual([{ code: "NO_OVERALL" }]);
+  });
+  it("is done in the checklist when it has points (objective) or all its tasks are decided (writing, speaking), with no level anywhere", () => {
+    const c = course({ WRITING: levelless({ decider: "TEACHER" }), SPEAKING: levelless({ decider: "AI" }) }, { status: "AWAITING_REVIEW" });
+    const r = finalizeChecklist({
+      sections: ["READING", "LISTENING", "WRITING", "SPEAKING"],
+      computed: c,
+      submitted: new Set(["READING", "LISTENING", "WRITING", "SPEAKING"]),
+      tasks: { WRITING: [{ id: "w1", status: "CONFIRMED", decided: true }], SPEAKING: [{ id: "s1", status: "CONFIRMED", decided: true }, { id: "s2", status: "AI_PROPOSED", decided: false }] },
+    });
+    // LISTENING has no entry in the course result: nothing scored it, so it is still running.
+    expect(r.rows.map((x) => [x.section, x.state])).toEqual([["READING", "done"], ["LISTENING", "running"], ["WRITING", "done"], ["SPEAKING", "todo"]]);
+    expect(r.rows[3]).toMatchObject({ open: 1, total: 2, firstOpenResponseId: "s2" });
+  });
+});

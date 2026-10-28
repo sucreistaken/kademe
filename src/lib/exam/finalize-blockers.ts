@@ -13,11 +13,15 @@ export type FinalizeBlocker =
   | { code: "RUNNING" }
   /** No result has been computed yet. */
   | { code: "NO_RESULT" }
-  /** A writing or speaking task still waits for its AI proposal. */
+  /** A writing or speaking task still waits for its AI proposal (a course test: or any section still has no points). */
   | { code: "GRADING" }
-  /** These skills carry an AI level the teacher has not confirmed or changed. */
+  /**
+   * These skills carry an AI level (a course test: AI points) the teacher has not
+   * confirmed or changed. A course result lists WRITING and SPEAKING in `skills`
+   * without a level, so this reads the same for it.
+   */
   | { code: "UNDECIDED"; sections: Section[] }
-  /** Every skill has a decider but no overall level came out (nothing to freeze). */
+  /** Every skill has a decider but no overall level came out (a course test: no pass / fail), so there is nothing to freeze. */
   | { code: "NO_OVERALL" };
 
 /** Every reason finalize would refuse, in the order the teacher should deal with them. Empty means it may run. */
@@ -29,7 +33,9 @@ export function finalizeBlockers(computed: ComputedResult | null | undefined, en
   if (computed.status === "AWAITING_GRADING" || skills.some(([, s]) => s.pending)) out.push({ code: "GRADING" });
   const undecided = skills.filter(([, s]) => s.decider === "AI").map(([section]) => section);
   if (undecided.length) out.push({ code: "UNDECIDED", sections: undecided });
-  if (out.length === 0 && !computed.overall) out.push({ code: "NO_OVERALL" });
+  // A course test freezes a pass or fail (the points' verdict, or the teacher's override), not a level.
+  const frozen = computed.course ? computed.course.outcome : computed.overall;
+  if (out.length === 0 && !frozen) out.push({ code: "NO_OVERALL" });
   return out;
 }
 
@@ -62,7 +68,9 @@ export type ChecklistTask = { id: string; status: "PENDING" | "AI_PROPOSED" | "A
  * use. A writing or speaking section is done when the computed skill was
  * decided by the teacher (every task confirmed or changed, or a skill
  * override); otherwise it points at the first task that is still open. Only a
- * section whose run is still going is "running".
+ * section whose run is still going is "running". A course result has no skill
+ * levels: there an objective section is done once it has points, and a writing
+ * or speaking section once the teacher decided all its tasks.
  */
 export function finalizeChecklist(input: {
   sections: readonly string[];
@@ -72,16 +80,18 @@ export function finalizeChecklist(input: {
   /** The graded tasks of each writing or speaking section, in order. */
   tasks: Partial<Record<string, ChecklistTask[]>>;
 }): { rows: ChecklistRow[]; done: number; total: number } {
+  const course = input.computed?.course ?? null;
   const rows = input.sections.map((name): ChecklistRow => {
     const section = name as Section;
     const skill = input.computed?.skills[section];
     if (isObjectiveSection(section)) {
-      const state: ChecklistState = input.submitted.has(section) && skill?.level ? "done" : "running";
+      const scored = course ? course.sections[section]?.pending === false : !!skill?.level;
+      const state: ChecklistState = input.submitted.has(section) && scored ? "done" : "running";
       return { section, kind: "AUTO", state, open: 0, total: 0, firstOpenResponseId: null, aiPending: 0 };
     }
     const tasks = input.tasks[section] ?? [];
     const open = tasks.filter((t) => !t.decided);
-    const decidedByTeacher = !!skill?.level && skill.decider === "TEACHER" && !skill.pending;
+    const decidedByTeacher = (!!skill?.level || !!course) && skill?.decider === "TEACHER" && !skill.pending;
     let state: ChecklistState;
     if (decidedByTeacher) state = "done";
     else if (!input.submitted.has(section)) state = "running";

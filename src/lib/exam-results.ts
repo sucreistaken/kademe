@@ -20,11 +20,14 @@ import { gradeAnswer, RULE_MODEL, type GradingJob } from "@/lib/exam/grade-answe
 import { ruleProposal } from "@/lib/exam/grading-rules";
 import { DEFAULT_RATIONALE_LOCALE, GRADING_CALL_OPTIONS, GRADING_JSON_SCHEMA, speakingMetrics } from "@/lib/exam/grading";
 import { sectionChance } from "@/lib/exam/chance";
+import { buildCourseComputed } from "@/lib/exam/course/computed";
+import { effectiveCourseOutcome } from "@/lib/exam/course/decisions";
 import { blockerErrorCode, finalizeBlockers } from "@/lib/exam/finalize-blockers";
 import { hasAnswer } from "@/lib/exam/item-scoring";
 import { autoFinalizes, computeResult, type Decider, type SectionEvidence } from "@/lib/exam/result";
 import { isObjectiveSection, type ProductiveSection, type ResultLevel, type Section } from "@/lib/exam/types";
 import { enqueueGrading } from "@/lib/queue";
+import { loadAcceptances } from "@/server/result-review";
 
 /**
  * Grading and results, server only.
@@ -342,6 +345,8 @@ export async function recomputeResult(attemptId: string) {
     .innerJoin(examAssessments, eq(examAssessments.assessmentId, attempts.assessmentId))
     .where(eq(attempts.id, attemptId));
   if (!row) return;
+  // A course test is scored by raw points and fixed cut scores, not by the ability estimate.
+  if (row.exam.mode === "COURSE_TEST") return recomputeCourseResult(row);
   const cfg = row.exam.blueprintSnapshot;
   const runs = await db.select().from(sectionRuns).where(eq(sectionRuns.attemptId, attemptId));
   const runIds = runs.map((r) => r.id);
@@ -442,6 +447,79 @@ export async function recomputeResult(attemptId: string) {
   }
 }
 
+/**
+ * A course test's result (spec 2026-10-28): the same rows and the same upsert as
+ * any exam, but the numbers are raw points and the verdict is the school's cut
+ * scores (`buildCourseComputed`). There is no CEFR estimate, and a course test is
+ * never finalized by the engine: a teacher confirms every writing and speaking
+ * task and then finalizes.
+ */
+async function recomputeCourseResult(row: { attempt: typeof attempts.$inferSelect; exam: typeof examAssessments.$inferSelect }) {
+  const attemptId = row.attempt.id;
+  const cfg = row.exam.blueprintSnapshot;
+  if (!cfg.course) {
+    console.error(`[exam-results] course test attempt ${attemptId} has no course configuration; result left as it was`);
+    return;
+  }
+  const [owner] = await db.select({ orgId: assessments.orgId }).from(assessments).where(eq(assessments.id, row.attempt.assessmentId));
+  const runs = await db.select().from(sectionRuns).where(eq(sectionRuns.attemptId, attemptId));
+  const runIds = runs.map((r) => r.id);
+  const responses = runIds.length
+    ? await db
+        .select({
+          id: itemResponses.id,
+          sectionRunId: itemResponses.sectionRunId,
+          sequence: itemResponses.sequence,
+          itemSnapshot: itemResponses.itemSnapshot,
+          answer: itemResponses.answer,
+          score: itemResponses.score,
+        })
+        .from(itemResponses)
+        .where(inArray(itemResponses.sectionRunId, runIds))
+    : [];
+  const sectionOf = new Map(runs.map((r) => [r.id, r.section]));
+  const productiveIds: string[] = [];
+  const objectiveIds: string[] = [];
+  for (const r of responses) {
+    const section = sectionOf.get(r.sectionRunId);
+    if (section) (isObjectiveSection(section) ? objectiveIds : productiveIds).push(r.id);
+  }
+  const gradings = productiveIds.length
+    ? await db
+        .select({
+          itemResponseId: responseGradings.itemResponseId,
+          status: responseGradings.status,
+          courseProposal: responseGradings.courseProposal,
+          coursePoints: responseGradings.coursePoints,
+        })
+        .from(responseGradings)
+        .where(inArray(responseGradings.itemResponseId, productiveIds))
+    : [];
+  const acceptances = owner && objectiveIds.length ? await loadAcceptances(owner.orgId, objectiveIds) : {};
+
+  const ended = !!row.attempt.completedAt || !!row.attempt.terminatedAt;
+  const computed = buildCourseComputed({
+    config: cfg.course,
+    sections: enabledSections(cfg).map((s) => s.section),
+    runs,
+    responses,
+    gradings,
+    acceptances,
+    ended,
+  });
+
+  const [existing] = await db.select().from(examResults).where(eq(examResults.attemptId, attemptId));
+  let status: "IN_PROGRESS" | "AWAITING_GRADING" | "AWAITING_REVIEW" | "FINAL";
+  if (existing?.status === "FINAL") status = "FINAL";
+  else if (!ended) status = "IN_PROGRESS";
+  else if (gradings.some((g) => g.status === "PENDING")) status = "AWAITING_GRADING";
+  else status = "AWAITING_REVIEW";
+  await db
+    .insert(examResults)
+    .values({ attemptId, status, computed, updatedAt: new Date() })
+    .onConflictDoUpdate({ target: examResults.attemptId, set: { status, computed, updatedAt: new Date() } });
+}
+
 /** Freezes the current computed result as final. `userId` null means the engine did it. */
 export async function finalizeResult(attemptId: string, userId: string | null, reason: string | null) {
   const [result] = await db.select().from(examResults).where(eq(examResults.attemptId, attemptId));
@@ -457,7 +535,9 @@ export async function finalizeResult(attemptId: string, userId: string | null, r
   const [blocker] = finalizeBlockers(c);
   if (blocker) return { ok: false as const, code: blockerErrorCode(blocker) };
   const overall = c.overall;
-  if (!overall) return { ok: false as const, code: "NOT_READY" };
+  // A course test freezes its pass / fail, not a level.
+  const courseOutcome = c.course ? effectiveCourseOutcome(c.course, result.skillOverrides) : null;
+  if (c.course ? !courseOutcome : !overall) return { ok: false as const, code: "NOT_READY" };
 
   const at = new Date().toISOString();
   const finalSkills: Record<string, FinalSkill> = {};
@@ -486,7 +566,7 @@ export async function finalizeResult(attemptId: string, userId: string | null, r
       status: "FINAL",
       finalOverall: overall,
       finalSkills,
-      finalOutcome: c.verification?.outcome ?? null,
+      finalOutcome: c.course ? courseOutcome : (c.verification?.outcome ?? null),
       finalizedBy: userId,
       finalizedAt: now,
       ...(release ? { releasedAt: now, releasedBy: userId } : {}),
