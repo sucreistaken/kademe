@@ -263,6 +263,8 @@ function evaluationOf(src: CourseReportSource, course: CourseResult, rows: Sheet
 // The sheet
 // ---------------------------------------------------------------------------
 
+export type CourseSheetRow = SheetRow & { cell: PointCell };
+
 export type CourseReportModel = {
   header: {
     schoolName: string;
@@ -278,8 +280,13 @@ export type CourseReportModel = {
     writtenPoints: number;
     oralPoints: number;
   };
-  /** One row per section of the exam, in its order. */
-  sections: SheetRow[];
+  /**
+   * One row per section of the exam, in its order. `cell` is what the sheet prints: the points, marked as
+   * proposed while a writing or speaking task rests on the AI's numbers, or open while the section is pending.
+   */
+  sections: CourseSheetRow[];
+  /** The total as the sheet prints it: open while pending, proposed while any section is. */
+  total: PointCell;
   writing: RubricBlock | null;
   speaking: RubricBlock | null;
   evaluation: CourseEvaluation;
@@ -296,13 +303,21 @@ export function buildCourseReport(src: CourseReportSource, secret: string): { ok
   const key = src.config?.key ?? course?.key;
   if (!reportAllowed(src.status) || !course || !key) return { ok: false, reason: "NOT_FINAL" };
 
-  const sections = sheetRows(src.sections, course, key);
-  const rowOf = (section: CourseProductiveSection) => sections.find((r) => r.section === section);
+  const rows = sheetRows(src.sections, course, key);
+  const rowOf = (section: CourseProductiveSection) => rows.find((r) => r.section === section);
   const writingRow = rowOf("WRITING");
   const speakingRow = rowOf("SPEAKING");
   const writing = writingRow ? rubricOf("WRITING", src, writingRow) : null;
   const speaking = speakingRow ? rubricOf("SPEAKING", src, speakingRow) : null;
-  const evaluation = evaluationOf(src, course, sections);
+  const evaluation = evaluationOf(src, course, rows);
+  const blockOf = (section: string) => (section === "WRITING" ? writing : section === "SPEAKING" ? speaking : null);
+  const sections: CourseSheetRow[] = rows.map((r) => {
+    if (r.pending || r.points === null) return { ...r, cell: OPEN };
+    const proposed = blockOf(r.section)?.tasks.some((t) => t.total.state === "PROPOSED") ?? false;
+    return { ...r, cell: { points: r.points, state: proposed ? "PROPOSED" : "DECIDED" } };
+  });
+  const total: PointCell =
+    evaluation.total === null ? OPEN : { points: evaluation.total, state: sections.some((r) => r.cell.state === "PROPOSED") ? "PROPOSED" : "DECIDED" };
 
   const blocks = [writing, speaking].filter((b): b is RubricBlock => b !== null);
   const cells = blocks.flatMap((b) => b.tasks.flatMap((t) => [...Object.values(t.cells), t.total]));
@@ -326,6 +341,7 @@ export function buildCourseReport(src: CourseReportSource, secret: string): { ok
         oralPoints,
       },
       sections,
+      total,
       writing,
       speaking,
       evaluation,

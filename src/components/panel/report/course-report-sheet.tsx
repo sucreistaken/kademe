@@ -53,8 +53,6 @@ function Points({ cell, t }: { cell: PointCell; t: T }) {
   );
 }
 
-const sectionPoints = (points: number | null): PointCell => (points === null ? { points: null, state: "OPEN" } : { points, state: "DECIDED" });
-
 /**
  * The criteria of one productive section as the Bewertungsbogen lays them out:
  * one row per criterion with its maximum, the points of each task in a column
@@ -231,7 +229,7 @@ export function CourseReportSheet({ model, t, locale }: { model: CourseReportMod
                           <td className="py-1.5 pr-3 font-semibold">{t(`courseResult.section${r.section}`)}</td>
                           <td className="tnum px-2 py-1.5 text-right text-muted">{r.max}</td>
                           <td className="px-2 py-1.5 text-right">
-                            <Points cell={sectionPoints(r.pending ? null : r.points)} t={t} />
+                            <Points cell={r.cell} t={t} />
                           </td>
                           <td className="tnum py-1.5 pl-4 text-[9pt] text-ink-2">{remark(r.section)}</td>
                         </tr>
@@ -242,7 +240,7 @@ export function CourseReportSheet({ model, t, locale }: { model: CourseReportMod
                         <td className="py-2 pr-3 font-extrabold">{t("courseResult.totalRow")}</td>
                         <td className="tnum px-2 py-2 text-right font-semibold">{e.max}</td>
                         <td className="px-2 py-2 text-right text-[12pt]">
-                          <Points cell={sectionPoints(e.total)} t={t} />
+                          <Points cell={m.total} t={t} />
                         </td>
                         <td className="py-2 pl-4">
                           <span className="text-[9pt] text-muted">{t("courseResult.einstufung")}: </span>
