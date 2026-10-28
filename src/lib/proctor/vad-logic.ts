@@ -5,11 +5,14 @@
  * Two features per sample: band energy in the speech range (dB), and spectral
  * flatness (0 = pure tone, 1 = white noise). Speech is loud AND tonal. A
  * keyboard click is loud but broadband, and short, so it fails both the
- * flatness test and the openMs hold. The noise floor is calibrated per room at
- * the check step, because a quiet dorm and a busy kitchen differ by 20 dB.
+ * flatness test and the open vote. The noise floor is calibrated per room at
+ * the check step, because a quiet dorm and a busy kitchen differ by 20 dB,
+ * and only ever rises from there when the room stays louder for a while.
  *
  * We only decide "someone is talking". Audio is never recorded or uploaded.
  */
+
+import { windowedVote } from "./signals";
 
 export type VadSample = {
   t: number;
@@ -21,11 +24,26 @@ export type VadSample = {
 export type VadOptions = {
   floorDb: number;
   marginDb?: number;
+  /** Window the open vote is taken over. */
   openMs?: number;
+  /** Window the close vote is taken over. */
   closeMs?: number;
+  /** Share of voiced samples in the open window needed to open. */
+  openRatio?: number;
+  /** Share of voiced samples in the close window at or below which it closes. */
+  closeRatio?: number;
+  /** How far back the floor looks when it follows the room; 0 keeps the calibrated floor. */
+  adaptMs?: number;
 };
 
 export const MAX_SPEECH_FLATNESS = 0.5;
+
+/**
+ * Share of the adaptive window that must be loud before the floor rises to it.
+ * Talking has pauses, so a conversation never holds the floor up; a fan, an
+ * air conditioner or a television left on does, and stops being "voice".
+ */
+const ADAPT_PERCENTILE = 0.1;
 
 /**
  * 80th percentile of the calibration samples, linearly interpolated. Higher
@@ -34,25 +52,53 @@ export const MAX_SPEECH_FLATNESS = 0.5;
  * Returns null when there is nothing to calibrate from.
  */
 export function calibrateFloor(samplesDb: number[]): number | null {
-  const xs = samplesDb.filter(Number.isFinite).sort((a, b) => a - b);
+  return percentile(samplesDb, 0.8);
+}
+
+function percentile(samples: number[], q: number): number | null {
+  const xs = samples.filter(Number.isFinite).sort((a, b) => a - b);
   if (xs.length === 0) return null;
-  const pos = 0.8 * (xs.length - 1);
+  const pos = q * (xs.length - 1);
   const lo = Math.floor(pos);
   const hi = Math.ceil(pos);
   return xs[lo] + (xs[hi] - xs[lo]) * (pos - lo);
 }
 
-export function createVad({ floorDb, marginDb = 12, openMs = 1000, closeMs = 800 }: VadOptions) {
-  const threshold = floorDb + marginDb;
+export function createVad({
+  floorDb,
+  marginDb = 12,
+  openMs = 1500,
+  closeMs = 1000,
+  openRatio = 0.6,
+  closeRatio = 0.2,
+  adaptMs = 30_000,
+}: VadOptions) {
+  // Speech is syllables with short gaps, so "voiced" flickers every 100 ms.
+  // The decision is a majority over a window, not an unbroken run.
+  const newVote = () => windowedVote(openMs, closeMs, openRatio, closeRatio);
+  let vote = newVote();
   let open = false;
-  let since: number | null = null;
   let suppressed = false;
+  // The floor only rises above the calibrated one: a room that got louder
+  // after the check (a fan turned on) must not flag the whole exam.
+  const history: Array<{ t: number; db: number }> = [];
+  let floor = floorDb;
+
+  function follow(s: VadSample) {
+    if (adaptMs <= 0 || !Number.isFinite(s.bandDb)) return;
+    history.push({ t: s.t, db: s.bandDb });
+    while (history.length > 0 && history[0].t < s.t - adaptMs) history.shift();
+    if (s.t - history[0].t < adaptMs / 2) return;
+    const loud = percentile(history.map((h) => h.db), ADAPT_PERCENTILE);
+    floor = Math.max(floorDb, loud ?? floorDb);
+  }
 
   function push(s: VadSample): "START" | "END" | null {
     // While suppressed (the exam itself is playing audio, or the candidate is
-    // on a speaking task) an open interval is closed and none can start.
+    // on a speaking task) an open interval is closed and none can start. The
+    // exam's own sound does not move the floor either.
     if (suppressed) {
-      since = null;
+      vote = newVote();
       if (open) {
         open = false;
         return "END";
@@ -60,18 +106,13 @@ export function createVad({ floorDb, marginDb = 12, openMs = 1000, closeMs = 800
       return null;
     }
 
+    follow(s);
     const voiced =
-      Number.isFinite(s.bandDb) && s.bandDb > threshold && s.flatness < MAX_SPEECH_FLATNESS;
-    const flipping = open ? !voiced : voiced;
-    if (!flipping) {
-      since = null;
-      return null;
-    }
-    if (since === null) since = s.t;
-    if (s.t - since < (open ? closeMs : openMs)) return null;
-    open = !open;
-    since = null;
-    return open ? "START" : "END";
+      Number.isFinite(s.bandDb) && s.bandDb > floor + marginDb && s.flatness < MAX_SPEECH_FLATNESS;
+    const edge = vote(s.t, voiced);
+    if (!edge) return null;
+    open = edge.kind === "START";
+    return edge.kind;
   }
 
   return {
@@ -85,6 +126,10 @@ export function createVad({ floorDb, marginDb = 12, openMs = 1000, closeMs = 800
     },
     get open() {
       return open;
+    },
+    /** The floor in use now: the calibrated one, or higher if the room got louder. */
+    get floorDb() {
+      return floor;
     },
   };
 }

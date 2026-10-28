@@ -2,7 +2,7 @@
 
 import { candidateApiBase } from "@/lib/client/api";
 import { calibrateFloor, createVad, type Vad } from "@/lib/proctor/vad-logic";
-import { createSignalTracker, type SignalTracker } from "@/lib/proctor/signals";
+import { countPeople, createSignalTracker, type SignalTracker } from "@/lib/proctor/signals";
 import { yawPitchFromMatrix } from "@/lib/proctor/head-pose";
 import { verifyDisplaySurface } from "@/lib/proctor/environment";
 import { ProctorRecording } from "@/lib/client/proctor/recording";
@@ -805,14 +805,20 @@ export class ProctorEngine {
           outputFacialTransformationMatrixes: true,
         });
       const face = await withTimeout(make("GPU").catch(() => make("CPU")), 20_000);
-      const phone = policy.aiSignals.phone
+      // One object model for phones and for people: a second person the face
+      // model misses (turned away, far behind, half in frame) still has a body.
+      const objectCategories = [
+        ...(policy.aiSignals.phone ? ["cell phone"] : []),
+        ...(policy.aiSignals.face ? ["person"] : []),
+      ];
+      const objects = objectCategories.length > 0
         ? await withTimeout(
             vision.ObjectDetector.createFromOptions(files, {
               baseOptions: { modelAssetPath: `${ASSETS}/efficientdet_lite0.tflite`, delegate: "CPU" },
               runningMode: "VIDEO",
-              categoryAllowlist: ["cell phone"],
+              categoryAllowlist: objectCategories,
               scoreThreshold: 0.3,
-              maxResults: 3,
+              maxResults: 6,
             }),
             20_000,
           ).catch(() => null)
@@ -820,6 +826,7 @@ export class ProctorEngine {
       this.tracker = createSignalTracker();
       let tick = 0;
       let slow = 0;
+      let people: number | null = null;
       this.visionLoop = window.setInterval(() => {
         const video = this.camVideo;
         if (!video || video.readyState < 2) return;
@@ -843,13 +850,21 @@ export class ProctorEngine {
           (score("eyeLookInLeft") > 0.6 && score("eyeLookOutRight") > 0.6);
         let phoneScore: number | null = null;
         tick++;
-        if (phone && tick % 4 === 0) {
-          const d = phone.detectForVideo(video, ts + 0.5);
-          phoneScore = Math.max(0, ...d.detections.map((x) => x.categories[0]?.score ?? 0));
+        if (objects && tick % 4 === 0) {
+          const d = objects.detectForVideo(video, ts + 0.5);
+          const found = d.detections.map((x) => ({ name: x.categories[0]?.categoryName, score: x.categories[0]?.score ?? 0, box: x.boundingBox }));
+          if (policy.aiSignals.phone) {
+            phoneScore = Math.max(0, ...found.filter((x) => x.name === "cell phone").map((x) => x.score));
+          }
+          if (policy.aiSignals.face) {
+            const frameArea = video.videoWidth * video.videoHeight;
+            people = this.snap.devFake ? null : countPeople(found.filter((x) => x.name === "person"), frameArea);
+          }
         }
         if (faces !== this.snap.faces) this.set({ faces });
         if (this.snap.guarding && this.tracker) {
-          const events = this.tracker.push({ t: Date.now(), faces, yawDeg: yaw, pitchDeg: pitch, eyesAway, phoneScore, lastKeyAt: this.lastKeyAt });
+          // The object model runs every 4th frame; its count holds in between.
+          const events = this.tracker.push({ t: Date.now(), faces, people, yawDeg: yaw, pitchDeg: pitch, eyesAway, phoneScore, lastKeyAt: this.lastKeyAt });
           for (const e of events) this.onSignal(e.kind, e.type, e.t);
         }
         // Slow machine: halve the rate rather than freeze the exam.

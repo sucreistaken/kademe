@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createSignalTracker, type SignalEvent, type SignalFrame } from "./signals";
+import { countPeople, createSignalTracker, type SignalEvent, type SignalFrame } from "./signals";
 
 const STEP = 200;
 
@@ -72,6 +72,29 @@ describe("MULTIPLE_FACES", () => {
 
   it("ignores a second face that passes by", () => {
     expect(only(play([[1800, { faces: 2 }], [3000, {}]]), "MULTIPLE_FACES")).toEqual([]);
+  });
+
+  it("starts on a second face the model finds only on most frames", () => {
+    // Found on 3 of every 4 frames: a strict run never lasts 2 seconds.
+    const flicker = (t: number) => ({ faces: (t / STEP) % 4 === 3 ? 1 : 2 });
+    const ev = only(play([[1000, {}], [5000, flicker], [3000, {}]]), "MULTIPLE_FACES");
+    expect(ev.map((e) => e.kind)).toEqual(["START", "END"]);
+    expect(ev[0].t).toBe(1000);
+    expect(ev[1].t).toBe(6000);
+  });
+
+  it("ignores a second face seen on a few scattered frames", () => {
+    const rare = (t: number) => ({ faces: (t / STEP) % 4 === 0 ? 2 : 1 });
+    expect(only(play([[10_000, rare]]), "MULTIPLE_FACES")).toEqual([]);
+  });
+
+  it("counts a second body the face model does not see", () => {
+    const ev = play([[1000, {}], [4000, { people: 2 }], [3000, { people: 1 }]]);
+    expect(only(ev, "MULTIPLE_FACES")).toEqual([
+      { kind: "START", type: "MULTIPLE_FACES", t: 1000 },
+      { kind: "END", type: "MULTIPLE_FACES", t: 5000 },
+    ]);
+    expect(only(ev, "GAZE_AWAY")).toEqual([]);
   });
 
   it("does not fire NO_FACE or GAZE_AWAY for a crowd", () => {
@@ -165,5 +188,32 @@ describe("PHONE_DETECTED", () => {
     const tracker = createSignalTracker({ phoneThreshold: 0.95 });
     const ev = play([[10_000, scored(Array(10).fill(0.9))]], tracker);
     expect(only(ev, "PHONE_DETECTED")).toEqual([]);
+  });
+});
+
+describe("countPeople", () => {
+  const FRAME = 640 * 360;
+  const box = (originX: number, originY: number, width: number, height: number, score = 0.8) => ({
+    score,
+    box: { originX, originY, width, height },
+  });
+
+  it("counts two separate people", () => {
+    expect(countPeople([box(50, 20, 200, 340), box(420, 60, 150, 300)], FRAME)).toBe(2);
+  });
+
+  it("counts a head box inside the candidate's body box once", () => {
+    expect(countPeople([box(100, 0, 400, 360), box(220, 10, 150, 160)], FRAME)).toBe(1);
+  });
+
+  it("skips weak and tiny boxes", () => {
+    expect(countPeople([box(100, 0, 400, 360), box(500, 50, 100, 200, 0.4)], FRAME)).toBe(1);
+    // 20 x 40 px is a photo on the wall.
+    expect(countPeople([box(100, 0, 400, 360), box(560, 20, 20, 40)], FRAME)).toBe(1);
+  });
+
+  it("returns 0 for nothing usable", () => {
+    expect(countPeople([], FRAME)).toBe(0);
+    expect(countPeople([{ score: 0.9 }], FRAME)).toBe(0);
   });
 });
