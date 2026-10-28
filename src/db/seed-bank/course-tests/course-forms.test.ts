@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { courseSections, COURSE_TESTS } from "@/lib/exam/course/catalog";
-import { courseFormKey } from "@/lib/exam/course/types";
+import { COURSE_FORMS, COURSE_KEYS, courseFormKey } from "@/lib/exam/course/types";
 import { courseUnits } from "@/lib/exam/course/units";
 import { topicOf, TOPICS } from "@/lib/exam/topics";
 import { CLOZE_SKILL_TAG } from "@/lib/exam/types";
@@ -18,6 +18,11 @@ const EM_DASH = "—";
 const textsOf = (v: unknown): string[] => (typeof v === "string" ? [v] : Array.isArray(v) ? v.flatMap(textsOf) : v && typeof v === "object" ? Object.values(v).flatMap(textsOf) : []);
 
 describe("course test forms", () => {
+  it("has forms A and B of every course test", () => {
+    const keys = COURSE_FORMS_SEED.map((f) => courseFormKey(f.key, f.form)).sort();
+    expect(keys).toEqual(COURSE_KEYS.flatMap((k) => COURSE_FORMS.map((f) => courseFormKey(k, f))).sort());
+  });
+
   it("has at most one form per course key and form letter", () => {
     const keys = COURSE_FORMS_SEED.map((f) => courseFormKey(f.key, f.form));
     expect(new Set(keys).size).toBe(keys.length);
