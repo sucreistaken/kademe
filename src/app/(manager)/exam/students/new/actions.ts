@@ -6,12 +6,15 @@ import { db } from "@/db";
 import { examBlueprints } from "@/db/schema";
 import { bankCoverage } from "@/lib/exam/blueprint";
 import { isCefr } from "@/lib/exam/cefr";
+import { assignCourseForms, isCourseForm } from "@/lib/exam/course/forms";
+import type { CourseForm, CourseKey } from "@/lib/exam/course/types";
 import { parseExamChoice } from "@/lib/exam/exam-choice";
-import { examTemplateByKey } from "@/lib/exam/templates";
+import { readyTemplateByKey } from "@/lib/exam/templates";
 import type { Cefr } from "@/lib/exam/types";
 import { resolveWindow, type WindowFault, type WindowInput } from "@/lib/exam-window";
 import { managerLocale } from "@/i18n/manager-locale";
 import { DEFAULT_CANDIDATE_LOCALE, isCandidateLocale, type CandidateLocale, contentLocale } from "@/i18n/locale";
+import { courseFormsSeenBy } from "@/server/exam-exposure";
 import { bankCounts } from "@/server/panel";
 import { createInvitation } from "@/server/invite";
 import { requireUser } from "@/server/session";
@@ -41,11 +44,22 @@ export type InviteStudentsResult =
   | {
       ok: true;
       examName: string;
-      created: Array<{ line: number; fullName: string; email: string; url: string; expiresAt: string; notBefore: string | null }>;
+      /** `form`: a course test only, the form this student was given. */
+      created: Array<{ line: number; fullName: string; email: string; url: string; expiresAt: string; notBefore: string | null; form?: CourseForm }>;
       failed: Array<{ line: number; fullName: string; email: string; code: InviteFailure }>;
     }
   | { ok: false; code: "LIST" | "EXAM" | "CLAIM_REQUIRED" | "COVERAGE" | "TEMPLATE_COVERAGE" | "GENERIC" }
   | { ok: false; code: "WINDOW"; fault: WindowFault };
+
+/**
+ * The form of every row of a course test list, in list order: the forced one,
+ * else A, B, A, B around what each student (same e-mail) already sat in this
+ * school (course/forms.ts). Nothing is looked up when a form is forced.
+ */
+async function courseFormsFor(orgId: string, key: CourseKey, rows: ReadonlyArray<{ email: string }>, forced: CourseForm | null): Promise<CourseForm[]> {
+  const seen = forced ? new Map<string, Set<CourseForm>>() : await courseFormsSeenBy(orgId, rows.map((r) => r.email), key);
+  return assignCourseForms(rows.map((r) => seen.get(r.email.trim().toLowerCase()) ?? new Set<CourseForm>()), forced);
+}
 
 /** The posted window with only strings in it (a server action's input is not typed at runtime). */
 function cleanWindow(w: unknown): WindowInput {
@@ -69,6 +83,11 @@ function cleanWindow(w: unknown): WindowInput {
  * published on its first use after the editor's coverage check. Each student
  * is one invitation of its own; one that fails is reported on its line and
  * the others stand.
+ *
+ * A course test (spec 2026-10-28) has no claim; each student is given one of
+ * its two forms (course/forms.ts): the one the teacher forced, else A, B, A,
+ * B in the order of the list, except a returning student, who gets the form
+ * they have not seen.
  */
 export async function inviteStudentsAction(input: InviteStudentsInput): Promise<InviteStudentsResult> {
   const user = await requireUser("student:invite");
@@ -86,7 +105,7 @@ export async function inviteStudentsAction(input: InviteStudentsInput): Promise<
 
   let bp: typeof examBlueprints.$inferSelect | undefined;
   if (choice.kind === "template") {
-    const template = examTemplateByKey(choice.key);
+    const template = readyTemplateByKey(choice.key);
     if (!template) return { ok: false, code: "EXAM" };
     // Asked before anything is published, so a missing claim publishes nothing.
     if (template.mode === "LEVEL_VERIFICATION" && parsed.rows.some((r) => !claimFor(r, template.mode, batch))) return { ok: false, code: "CLAIM_REQUIRED" };
@@ -107,14 +126,18 @@ export async function inviteStudentsAction(input: InviteStudentsInput): Promise<
   for (const claim of new Set(claims)) {
     if (!bankCoverage(counts, config, exam.mode, claim).ok) return { ok: false, code: "COVERAGE" };
   }
+  // A course test gives each student a form: forced for all, else alternating down the list around what they sat before.
+  const courseKey = exam.mode === "COURSE_TEST" ? exam.config.course?.key : undefined;
+  if (exam.mode === "COURSE_TEST" && !courseKey) return { ok: false, code: "EXAM" };
+  const forms = courseKey ? await courseFormsFor(user.orgId, courseKey, parsed.rows, isCourseForm(input.courseForm) ? input.courseForm : null) : null;
 
   const created: Extract<InviteStudentsResult, { ok: true }>["created"] = [];
   const failed: Extract<InviteStudentsResult, { ok: true }>["failed"] = [];
   for (const [i, row] of parsed.rows.entries()) {
     const fullName = row.fullName.replace(/\s+/g, " ").trim();
     try {
-      const r = await createInvitation({ orgId: user.orgId, blueprintId: exam.id, fullName, email: row.email, claimedLevel: claims[i], locale, invitedBy: user.id, notBefore: window.notBefore, expiresAt: window.expiresAt, difficultyOffset: shift });
-      if (r.ok) created.push({ line: row.line, fullName, email: row.email, url: r.url, expiresAt: r.expiresAt.toISOString(), notBefore: r.notBefore?.toISOString() ?? null });
+      const r = await createInvitation({ orgId: user.orgId, blueprintId: exam.id, fullName, email: row.email, claimedLevel: claims[i], locale, invitedBy: user.id, notBefore: window.notBefore, expiresAt: window.expiresAt, difficultyOffset: shift, ...(forms ? { courseForm: forms[i] } : {}) });
+      if (r.ok) created.push({ line: row.line, fullName, email: row.email, url: r.url, expiresAt: r.expiresAt.toISOString(), notBefore: r.notBefore?.toISOString() ?? null, ...(r.courseForm ? { form: r.courseForm } : {}) });
       else failed.push({ line: row.line, fullName, email: row.email, code: r.code });
     } catch {
       failed.push({ line: row.line, fullName, email: row.email, code: "GENERIC" });

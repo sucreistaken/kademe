@@ -5,9 +5,12 @@ import { assessmentLinks, assessments, auditLogs, candidates, examAssessments, e
 import { mintToken, safeEqual, sha256 } from "@/lib/auth";
 import type { CandidateLocale } from "@/i18n/locale";
 import { candidateExamName } from "@/lib/exam/candidate-exam-name";
+import { isCourseForm, singleInviteForm } from "@/lib/exam/course/forms";
+import type { CourseForm, CourseKey } from "@/lib/exam/course/types";
 import type { Cefr } from "@/lib/exam/types";
 import { outboxLinkPlaceholder } from "@/lib/outbox";
 import { resolveSigningSecret } from "@/lib/signing-secret";
+import { courseFormsSeenBy } from "@/server/exam-exposure";
 
 /**
  * Invites one student to one exam. Shared by the panel, the seed and the dev
@@ -42,10 +45,16 @@ export type InviteInput = {
   expiresAt?: Date;
   /** This student's level shift (-1 easier, 1 harder), written into their copy of the exam; omitted keeps the exam's own. */
   difficultyOffset?: -1 | 0 | 1;
+  /**
+   * Course tests (spec 2026-10-28): the form this student sits, written into
+   * their copy of the exam. Omitted or null: the form they have not seen yet,
+   * else A (a list of students chooses per row, see course/forms.ts).
+   */
+  courseForm?: CourseForm | null;
 };
 
 export type InviteResult =
-  | { ok: true; assessmentId: string; candidateId: string; rawToken: string; url: string; expiresAt: Date; notBefore: Date | null }
+  | { ok: true; assessmentId: string; candidateId: string; rawToken: string; url: string; expiresAt: Date; notBefore: Date | null; courseForm?: CourseForm }
   | { ok: false; code: "BLUEPRINT_NOT_FOUND" | "NOT_PUBLISHED" | "CLAIM_REQUIRED" };
 
 /**
@@ -106,6 +115,13 @@ function inviteSubject(locale: CandidateLocale, examName: string): string {
   }
 }
 
+/** The form of a course test invitation: the one asked for, else the one this student has not seen, else A. */
+async function courseFormFor(input: InviteInput, key: CourseKey): Promise<CourseForm> {
+  if (isCourseForm(input.courseForm)) return input.courseForm;
+  const seen = await courseFormsSeenBy(input.orgId, [input.email], key);
+  return singleInviteForm(seen.get(input.email.trim().toLowerCase()) ?? new Set());
+}
+
 export async function createInvitation(input: InviteInput): Promise<InviteResult> {
   const [blueprint] = await db
     .select()
@@ -114,6 +130,16 @@ export async function createInvitation(input: InviteInput): Promise<InviteResult
   if (!blueprint) return { ok: false, code: "BLUEPRINT_NOT_FOUND" };
   if (blueprint.status !== "PUBLISHED") return { ok: false, code: "NOT_PUBLISHED" };
   if (blueprint.mode === "LEVEL_VERIFICATION" && !input.claimedLevel) return { ok: false, code: "CLAIM_REQUIRED" };
+
+  // Only a verification has a claim; a course test never needs one (spec 2026-10-28). It sits one of
+  // its two forms instead. A COURSE_TEST blueprint that does not say which course it is cannot be
+  // served, so nobody is invited to it.
+  const claimedLevel = blueprint.mode === "LEVEL_VERIFICATION" ? input.claimedLevel : null;
+  const course = blueprint.mode === "COURSE_TEST" ? blueprint.config.course : undefined;
+  if (blueprint.mode === "COURSE_TEST" && !course) return { ok: false, code: "BLUEPRINT_NOT_FOUND" };
+  const courseForm = course ? await courseFormFor(input, course.key) : null;
+  const shifted = input.difficultyOffset === undefined ? blueprint.config : { ...blueprint.config, difficultyOffset: input.difficultyOffset };
+  const snapshot = course && courseForm ? { ...shifted, course: { ...course, form: courseForm } } : shifted;
 
   // A template's default name is shown in the student's own language, as on the exam screen.
   const shownName = candidateExamName(blueprint.name, input.locale);
@@ -143,9 +169,9 @@ export async function createInvitation(input: InviteInput): Promise<InviteResult
       assessmentId: assessment.id,
       blueprintId: blueprint.id,
       blueprintName: blueprint.name,
-      blueprintSnapshot: input.difficultyOffset === undefined ? blueprint.config : { ...blueprint.config, difficultyOffset: input.difficultyOffset },
+      blueprintSnapshot: snapshot,
       mode: blueprint.mode,
-      claimedLevel: blueprint.mode === "LEVEL_VERIFICATION" ? input.claimedLevel : null,
+      claimedLevel,
     });
     await tx.insert(assessmentLinks).values({
       id: linkId,
@@ -169,11 +195,11 @@ export async function createInvitation(input: InviteInput): Promise<InviteResult
       action: "student.invite",
       subjectType: "assessment",
       subjectId: assessment.id,
-      meta: { blueprintId: blueprint.id, mode: blueprint.mode, claimedLevel: input.claimedLevel },
+      meta: { blueprintId: blueprint.id, mode: blueprint.mode, claimedLevel, ...(course && courseForm ? { course: course.key, form: courseForm } : {}) },
     });
     return { assessmentId: assessment.id, candidateId: candidate.id };
   });
-  return { ok: true, ...result, rawToken: raw, url, expiresAt, notBefore };
+  return { ok: true, ...result, rawToken: raw, url, expiresAt, notBefore, ...(courseForm ? { courseForm } : {}) };
 }
 
 export type InviteLinkResult =

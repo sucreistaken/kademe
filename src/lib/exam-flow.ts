@@ -31,6 +31,10 @@ import {
 } from "@/lib/exam/blueprint";
 import { candidateExamName } from "@/lib/exam/candidate-exam-name";
 import { levelFromTheta } from "@/lib/exam/cefr";
+import { COURSE_TESTS, courseSections } from "@/lib/exam/course/catalog";
+import { singleInviteForm } from "@/lib/exam/course/forms";
+import { coursePlanOf, type CoursePlanRow } from "@/lib/exam/course/plan";
+import { courseFormKey, type CourseForm, type CourseKey } from "@/lib/exam/course/types";
 import { playsAllowed } from "@/lib/exam/listening-plays";
 import { drawFormatOf } from "@/lib/exam/item-format";
 import { hasAnswer, scoreItem } from "@/lib/exam/item-scoring";
@@ -67,7 +71,7 @@ import {
 } from "@/lib/exam/types";
 import { isProctored, type ProctoringPolicy } from "@/lib/proctor/policy";
 import { SUBMIT_SLACK_MS } from "@/lib/timer";
-import { seenBy } from "@/server/exam-exposure";
+import { courseFormsSeenBy, seenBy } from "@/server/exam-exposure";
 
 /**
  * The student side of an exam, server only.
@@ -247,8 +251,11 @@ export type CandidateState = {
   finished?: { terminated: boolean; terminationReason: string | null; result: StudentResult };
 };
 
-function itemsLabel(s: SectionConfig, mode: ExamMode, claimed: Cefr | null, offset: number): string {
+function itemsLabel(s: SectionConfig, mode: ExamMode, claimed: Cefr | null, offset: number, course?: CourseKey): string {
   if (!isObjectiveSection(s.section)) return String(s.tasks);
+  // A course form is fixed and holds the catalog's scored units: a gap, a statement or a question each.
+  const units = mode === "COURSE_TEST" && course ? courseSections(course).find((p) => p.section === s.section)?.units : undefined;
+  if (units !== undefined) return String(units);
   if (s.adaptive) return `${s.minItems}-${s.maxItems}`;
   const dist = resolveDistribution(s, mode, claimed, offset);
   const openings = textPlanOf(s, mode, claimed).length;
@@ -284,7 +291,7 @@ export async function loadState(ctx: ExamCandidateContext): Promise<CandidateSta
         section: s.section,
         position: i + 1,
         minutes: s.durationMinutes,
-        itemsLabel: itemsLabel(s, ctx.assessment.mode, ctx.assessment.claimedLevel, cfg.difficultyOffset),
+        itemsLabel: itemsLabel(s, ctx.assessment.mode, ctx.assessment.claimedLevel, cfg.difficultyOffset, cfg.course?.key),
         navigable: isNavigableConfig(s),
         textOnly,
         textKinds: textKindsOf(s, ctx.assessment.mode, ctx.assessment.claimedLevel),
@@ -494,8 +501,12 @@ type PoolRow = BankItem & { section: Section };
  * Approved items the exam may serve. Listening clips without audio are left out.
  * Inside a transaction pass its `x`: a read on the global db there waits for a
  * second pool connection and can starve the pool.
+ *
+ * The pool is the bank's: an item or text that belongs to a course test form
+ * (`course_form` set) is never drawn into a placement or a level check, only
+ * its own form serves it (loadCourseForm).
  */
-async function loadPool(orgId: string, section: Section, x: Executor = db): Promise<PoolRow[]> {
+export async function loadPool(orgId: string, section: Section, x: Executor = db): Promise<PoolRow[]> {
   const rows = await x
     .select({
       id: items.id,
@@ -510,7 +521,7 @@ async function loadPool(orgId: string, section: Section, x: Executor = db): Prom
     })
     .from(items)
     .leftJoin(stimuli, eq(stimuli.id, items.stimulusId))
-    .where(and(eq(items.orgId, orgId), eq(items.section, section), eq(items.status, "APPROVED")));
+    .where(and(eq(items.orgId, orgId), eq(items.section, section), eq(items.status, "APPROVED"), isNull(items.courseForm), isNull(stimuli.courseForm)));
   return rows
     .filter((r) => section !== "LISTENING" || !!r.audioKey)
     .map((r) => ({
@@ -532,13 +543,54 @@ async function loadPool(orgId: string, section: Section, x: Executor = db): Prom
  * when a fixed objective section starts: it needs `content`, which loadPool,
  * run again for every item an adaptive section serves, leaves out. A malformed
  * item falls back to its type (drawFormatOf) instead of failing the start.
+ * The bank's items only, like loadPool.
  */
-async function formatsOf(orgId: string, section: Section): Promise<Map<string, string>> {
-  const rows = await db
+export async function formatsOf(orgId: string, section: Section, x: Executor = db): Promise<Map<string, string>> {
+  const rows = await x
     .select({ id: items.id, type: items.type, skillTag: items.skillTag, content: items.content })
     .from(items)
-    .where(and(eq(items.orgId, orgId), eq(items.section, section), eq(items.status, "APPROVED")));
+    .where(and(eq(items.orgId, orgId), eq(items.section, section), eq(items.status, "APPROVED"), isNull(items.courseForm)));
   return new Map(rows.map((r) => [r.id, drawFormatOf(r)]));
+}
+
+/**
+ * The approved items of one course test form in one section, with what the
+ * plan needs of them (spec 2026-10-28: a form is its own items, in their own
+ * order). `formKey` is "<course key>:<form>", e.g. "B1.1:A".
+ */
+async function loadCourseForm(orgId: string, formKey: string, section: Section, x: Executor = db): Promise<CoursePlanRow[]> {
+  return x
+    .select({ id: items.id, courseOrder: items.courseOrder, orderInStimulus: items.orderInStimulus, audioKey: stimuli.audioKey })
+    .from(items)
+    .leftJoin(stimuli, eq(stimuli.id, items.stimulusId))
+    .where(and(eq(items.orgId, orgId), eq(items.section, section), eq(items.status, "APPROVED"), eq(items.courseForm, formKey)));
+}
+
+/**
+ * The course test and the form this invitation sits. The invitation's own
+ * snapshot names the form (invite.ts). An invitation without one (made before
+ * forms, or by hand) gets the form its student has not seen, else A
+ * (singleInviteForm), and that choice is written into the snapshot while it is
+ * still unset, so a reload, the next section and a parallel request all serve
+ * the same form. Null when the exam does not say which course it is: nothing
+ * can be served then.
+ */
+async function courseFormOf(ctx: ExamCandidateContext): Promise<{ key: CourseKey; form: CourseForm } | null> {
+  const course = ctx.assessment.config.course;
+  if (!course) return null;
+  if (course.form) return { key: course.key, form: course.form };
+  const email = ctx.candidate.email?.trim().toLowerCase() ?? "";
+  const seen = await courseFormsSeenBy(ctx.assessment.orgId, [email], course.key, ctx.assessment.id);
+  const chosen = singleInviteForm(seen.get(email) ?? new Set());
+  const [written] = await db
+    .update(examAssessments)
+    .set({ blueprintSnapshot: sql`jsonb_set(${examAssessments.blueprintSnapshot}, '{course,form}', ${JSON.stringify(chosen)}::jsonb)` })
+    .where(and(eq(examAssessments.assessmentId, ctx.assessment.id), sql`${examAssessments.blueprintSnapshot} #>> '{course,form}' is null`))
+    .returning({ snapshot: examAssessments.blueprintSnapshot });
+  if (written) return { key: course.key, form: written.snapshot.course?.form ?? chosen };
+  // Another request set it first: serve what it chose.
+  const [current] = await db.select({ snapshot: examAssessments.blueprintSnapshot }).from(examAssessments).where(eq(examAssessments.assessmentId, ctx.assessment.id));
+  return { key: course.key, form: current?.snapshot.course?.form ?? chosen };
 }
 
 /** Provisional level from the finished objective sections, for placing writing and speaking tasks. */
@@ -567,18 +619,14 @@ async function readyForExam(ctx: ExamCandidateContext, attempt: typeof attempts.
   return true;
 }
 
-/**
- * Starts the current section. Idempotent: a second call, a double click or a
- * reload return the section as it is, and the deadline never moves.
- */
-export async function startSection(ctx: ExamCandidateContext, position: number): Promise<StartResult> {
-  const current = await currentSection(ctx);
-  if (!current) return { ok: false, code: "NO_SECTION" };
-  if (!(await readyForExam(ctx, current.attempt))) return { ok: false, code: "NOT_READY" };
-  if (current.position !== position) return { ok: false, code: "SECTION_MISMATCH" };
-  if (current.run?.startedAt) return { ok: true };
+/** What a section serves: the planned item ids (null for an adaptive section), the level asked per task, and whether the bank had nothing at all. */
+type SectionPlan = { itemPlan: string[] | null; taskLevels: string[] | null; poolEmpty: boolean };
 
-  const s = current.config;
+/**
+ * A placement or level check section: drawn from the bank by the blueprint's
+ * rules (blueprint.ts), around what the same student was served before.
+ */
+async function planDrawnSection(ctx: ExamCandidateContext, attemptId: string, s: SectionConfig): Promise<SectionPlan> {
   const rng = mulberry32(Math.floor(Math.random() * 2 ** 31));
   const planned = !isObjectiveSection(s.section) || !s.adaptive;
   // A fixed objective form mixes formats (blueprint.ts: mixFormats), so its
@@ -596,13 +644,47 @@ export async function startSection(ctx: ExamCandidateContext, position: number):
   // and do not use it.
   const avoid = planned ? await seenBy(ctx.assessment.orgId, ctx.candidate.email, ctx.assessment.id) : undefined;
   if (!isObjectiveSection(s.section)) {
-    const provisional = await provisionalLevel(current.attempt.id);
+    const provisional = await provisionalLevel(attemptId);
     taskLevels = productiveTaskLevels(ctx.assessment.mode, ctx.assessment.claimedLevel, provisional, s.tasks);
     itemPlan = pickProductive(pool, taskLevels as Cefr[], rng, avoid);
   } else if (!s.adaptive) {
     itemPlan = planFixedSection(s, pool, ctx.assessment.mode, ctx.assessment.claimedLevel, ctx.assessment.config.difficultyOffset, rng, avoid);
   }
-  if ((itemPlan && itemPlan.length === 0) || pool.length === 0) {
+  return { itemPlan, taskLevels, poolEmpty: pool.length === 0 };
+}
+
+/**
+ * A course test section (spec 2026-10-28): the invitation's form, whole, in
+ * its own order. Nothing is drawn and nothing is avoided because the student
+ * met it before, so two students on the same form meet the same questions in
+ * the same order, and the objective sections, writing and speaking are served
+ * alike. Every task is asked at the course's own level. A form with nothing in
+ * this section plans nothing, and the section is skipped as an empty bank is.
+ */
+async function planCourseSection(ctx: ExamCandidateContext, s: SectionConfig): Promise<SectionPlan> {
+  const course = await courseFormOf(ctx);
+  if (!course) return { itemPlan: [], taskLevels: null, poolEmpty: true };
+  const rows = await loadCourseForm(ctx.assessment.orgId, courseFormKey(course.key, course.form), s.section);
+  const itemPlan = coursePlanOf(rows, s.section);
+  const taskLevels = isObjectiveSection(s.section) ? null : productiveTaskLevels("COURSE_TEST", null, COURSE_TESTS[course.key].level, itemPlan.length);
+  return { itemPlan, taskLevels, poolEmpty: false };
+}
+
+/**
+ * Starts the current section. Idempotent: a second call, a double click or a
+ * reload return the section as it is, and the deadline never moves.
+ */
+export async function startSection(ctx: ExamCandidateContext, position: number): Promise<StartResult> {
+  const current = await currentSection(ctx);
+  if (!current) return { ok: false, code: "NO_SECTION" };
+  if (!(await readyForExam(ctx, current.attempt))) return { ok: false, code: "NOT_READY" };
+  if (current.position !== position) return { ok: false, code: "SECTION_MISMATCH" };
+  if (current.run?.startedAt) return { ok: true };
+
+  const s = current.config;
+  const { itemPlan, taskLevels, poolEmpty } =
+    ctx.assessment.mode === "COURSE_TEST" ? await planCourseSection(ctx, s) : await planDrawnSection(ctx, current.attempt.id, s);
+  if ((itemPlan && itemPlan.length === 0) || poolEmpty) {
     // The bank lost these items after the invitation (retired, rejected).
     // Skip the section rather than trap the student in front of it; the
     // report shows it as SKIPPED and the teacher sees why.
