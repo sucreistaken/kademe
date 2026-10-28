@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { db } from "@/db";
 import { messageOutbox } from "@/db/schema";
@@ -5,6 +6,7 @@ import { candidateJson } from "@/lib/candidate-safe";
 import { message, readJson, withSolution } from "@/lib/candidate-api";
 import { problemMessage } from "@/lib/problem-message";
 import { fileCandidateRequestIn } from "@/server/candidate-requests";
+import { sendOutboxAfterResponse } from "@/server/mail";
 
 type Body = { area?: string; message?: string };
 
@@ -46,6 +48,7 @@ export async function POST(
       const assessmentLine = exam ? `Sınav: ${title}` : `Değerlendirme: ${solution.label.tr} · ${title}`;
 
       const mail = {
+        id: randomUUID(),
         orgId: ctx.assessment.orgId,
         kind: "STUDENT_PROBLEM" as const,
         toEmail: ctx.contactEmail ?? "okul@kademe.local",
@@ -64,6 +67,7 @@ export async function POST(
       // 2000 CHECK. While one NEW_LINK request is open a second is not filed
       // and the team is not mailed again; the candidate's answer is the same
       // (fileCandidateRequestIn).
+      let written = false;
       await db.transaction(async (tx) => {
         if (exam) {
           await fileCandidateRequestIn(tx, {
@@ -83,7 +87,9 @@ export async function POST(
           if (!filed) return;
         }
         await tx.insert(messageOutbox).values(mail);
+        written = true;
       });
+      if (written) sendOutboxAfterResponse([{ id: mail.id }]);
 
       return candidateJson({
         received: true,

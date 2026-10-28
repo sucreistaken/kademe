@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useLocale } from "next-intl";
-import { Copy, Download, FileUp, Info, Monitor, UserPlus } from "lucide-react";
+import { Copy, Download, FileUp, Info, Mail, Monitor, UserPlus } from "lucide-react";
 import { levelShiftScope } from "@/app/(manager)/exam/exams/new/wizard-model";
 import { inviteStudentsAction, type InviteStudentsResult } from "@/app/(manager)/exam/students/new/actions";
 import {
@@ -116,7 +116,8 @@ function useCopied() {
  * the exam, a last look where the student's screen language holds its
  * default and opens its own step with "Değiştir". "N daveti oluştur" invites
  * everyone; the result lists every student with their link, "Tümünü
- * kopyala" and "CSV indir". Nothing is e-mailed: the school shares the links,
+ * kopyala" and "CSV indir". Where the server has SMTP settings the students are
+ * also e-mailed (src/server/mail.ts); the school can still share the links,
  * and each link can be copied again later from the student list.
  */
 export function StudentInviteWizard({
@@ -326,6 +327,12 @@ export function StudentInviteWizard({
             <Monitor className="mt-0.5 size-5 shrink-0 text-ink" strokeWidth={1.75} aria-hidden />
             <p className="text-[14px] leading-[22px] text-ink-2">{t("inviteComputer")}</p>
           </div>
+          {done.mailed && students.length ? (
+            <div className="flex gap-3 rounded-[14px] border border-line bg-canvas px-4 py-3.5">
+              <Mail className="mt-0.5 size-5 shrink-0 text-ink" strokeWidth={1.75} aria-hidden />
+              <p className="text-[14px] leading-[22px] text-ink-2">{t("inviteMailed")}</p>
+            </div>
+          ) : null}
           {students.length ? (
             <>
               <div className="flex flex-wrap items-center gap-3">

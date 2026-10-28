@@ -319,6 +319,7 @@
     "inviteDoneExam": "{exam} · Links gültig bis {date}",
     "inviteDoneListLabel": "Eingeladene Lernende und ihre Links",
     "inviteComputer": "Sagen Sie den Lernenden, dass sie die Prüfung an einem Computer ablegen sollen; auf Smartphones und Tablets lässt sie sich nicht öffnen.",
+    "inviteMailed": "Die Einladungen werden auch an die E-Mail-Adressen der Lernenden gesendet. Die Links stehen weiterhin unten.",
     "inviteFailedTitle": "{count, plural, one {Eine lernende Person konnte nicht eingeladen werden} other {# Lernende konnten nicht eingeladen werden}}",
     "inviteFailedRow": "Zeile {line}, {name} ({email}):",
     "copyAll": "Alle kopieren",

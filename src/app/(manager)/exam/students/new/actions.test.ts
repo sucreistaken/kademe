@@ -96,6 +96,7 @@ describe("inviteStudentsAction: the list", () => {
         { line: 3, fullName: "Deniz Kaya", email: "deniz@ornek.com", url: "http://localhost:3100/a/tok-3", expiresAt: "2026-10-28T10:00:00.000Z", notBefore: null },
       ],
       failed: [],
+      mailed: false,
     });
     expect(state.ensured).toEqual([{ orgId: "o1", key: "placement", locale: "en" }]);
     expect(state.invited).toHaveLength(3);

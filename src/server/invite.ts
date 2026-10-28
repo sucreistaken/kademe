@@ -54,7 +54,7 @@ export type InviteInput = {
 };
 
 export type InviteResult =
-  | { ok: true; assessmentId: string; candidateId: string; rawToken: string; url: string; expiresAt: Date; notBefore: Date | null; courseForm?: CourseForm }
+  | { ok: true; assessmentId: string; candidateId: string; rawToken: string; url: string; expiresAt: Date; notBefore: Date | null; courseForm?: CourseForm; outboxId: string }
   | { ok: false; code: "BLUEPRINT_NOT_FOUND" | "NOT_PUBLISHED" | "CLAIM_REQUIRED" };
 
 /**
@@ -149,6 +149,7 @@ export async function createInvitation(input: InviteInput): Promise<InviteResult
   const expiresAt = input.expiresAt ?? new Date(Date.now() + (input.ttlDays ?? LINK_TTL_DAYS) * 86_400_000);
   const notBefore = input.notBefore ?? null;
   const url = examLinkUrl(raw, input.baseUrl);
+  const outboxId = randomUUID();
 
   const result = await db.transaction(async (tx) => {
     const [candidate] = await tx
@@ -183,6 +184,7 @@ export async function createInvitation(input: InviteInput): Promise<InviteResult
       attemptsAllowed: 1,
     });
     await tx.insert(messageOutbox).values({
+      id: outboxId,
       orgId: input.orgId,
       kind: "INVITE",
       toEmail: input.email,
@@ -199,7 +201,7 @@ export async function createInvitation(input: InviteInput): Promise<InviteResult
     });
     return { assessmentId: assessment.id, candidateId: candidate.id };
   });
-  return { ok: true, ...result, rawToken: raw, url, expiresAt, notBefore, ...(courseForm ? { courseForm } : {}) };
+  return { ok: true, ...result, rawToken: raw, url, expiresAt, notBefore, outboxId, ...(courseForm ? { courseForm } : {}) };
 }
 
 export type InviteLinkResult =

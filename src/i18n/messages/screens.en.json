@@ -319,6 +319,7 @@
     "inviteDoneExam": "{exam} · links open until {date}",
     "inviteDoneListLabel": "Invited students and their links",
     "inviteComputer": "Tell the students to take the exam on a computer; it does not open on phones or tablets.",
+    "inviteMailed": "The invitations are also being sent to the students' e-mail addresses. The links stay below as well.",
     "inviteFailedTitle": "{count, plural, one {One student could not be invited} other {# students could not be invited}}",
     "inviteFailedRow": "Line {line}, {name} ({email}):",
     "copyAll": "Copy all",

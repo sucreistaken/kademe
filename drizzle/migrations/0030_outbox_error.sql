@@ -1,0 +1,1 @@
+ALTER TABLE "message_outbox" ADD COLUMN "error" text;

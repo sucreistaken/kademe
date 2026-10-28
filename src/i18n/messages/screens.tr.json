@@ -319,6 +319,7 @@
     "inviteDoneExam": "{exam} · linkler {date} tarihine kadar geçerli",
     "inviteDoneListLabel": "Davet edilen öğrenciler ve linkleri",
     "inviteComputer": "Öğrencilere sınava bilgisayardan girmelerini söyle; telefonda ve tablette sınav açılmaz.",
+    "inviteMailed": "Davetler öğrencilerin e-posta adreslerine de gönderiliyor. Linkler aşağıda yine duruyor.",
     "inviteFailedTitle": "{count, plural, one {Bir öğrenci için davet oluşturulamadı} other {# öğrenci için davet oluşturulamadı}}",
     "inviteFailedRow": "{line}. satır, {name} ({email}):",
     "copyAll": "Tümünü kopyala",

@@ -17,6 +17,7 @@ import { DEFAULT_CANDIDATE_LOCALE, isCandidateLocale, type CandidateLocale, cont
 import { courseFormsSeenBy } from "@/server/exam-exposure";
 import { bankCounts } from "@/server/panel";
 import { createInvitation } from "@/server/invite";
+import { sendOutboxAfterResponse, type OutboxSend } from "@/server/mail";
 import { requireUser } from "@/server/session";
 import { ensureTemplateBlueprint } from "@/server/template-blueprint";
 import { claimFor, listWait, MAX_LIST_TEXT, parseStudentRows } from "./rows";
@@ -47,6 +48,8 @@ export type InviteStudentsResult =
       /** `form`: a course test only, the form this student was given. */
       created: Array<{ line: number; fullName: string; email: string; url: string; expiresAt: string; notBefore: string | null; form?: CourseForm }>;
       failed: Array<{ line: number; fullName: string; email: string; code: InviteFailure }>;
+      /** The invitations also go out by e-mail (the server has SMTP settings, src/server/mail.ts). */
+      mailed: boolean;
     }
   | { ok: false; code: "LIST" | "EXAM" | "CLAIM_REQUIRED" | "COVERAGE" | "TEMPLATE_COVERAGE" | "GENERIC" }
   | { ok: false; code: "WINDOW"; fault: WindowFault };
@@ -133,10 +136,12 @@ export async function inviteStudentsAction(input: InviteStudentsInput): Promise<
 
   const created: Extract<InviteStudentsResult, { ok: true }>["created"] = [];
   const failed: Extract<InviteStudentsResult, { ok: true }>["failed"] = [];
+  const mail: OutboxSend[] = [];
   for (const [i, row] of parsed.rows.entries()) {
     const fullName = row.fullName.replace(/\s+/g, " ").trim();
     try {
       const r = await createInvitation({ orgId: user.orgId, blueprintId: exam.id, fullName, email: row.email, claimedLevel: claims[i], locale, invitedBy: user.id, notBefore: window.notBefore, expiresAt: window.expiresAt, difficultyOffset: shift, ...(forms ? { courseForm: forms[i] } : {}) });
+      if (r.ok) mail.push({ id: r.outboxId, assessmentId: r.assessmentId, link: r.url });
       if (r.ok) created.push({ line: row.line, fullName, email: row.email, url: r.url, expiresAt: r.expiresAt.toISOString(), notBefore: r.notBefore?.toISOString() ?? null, ...(r.courseForm ? { form: r.courseForm } : {}) });
       else failed.push({ line: row.line, fullName, email: row.email, code: r.code });
     } catch {
@@ -144,5 +149,6 @@ export async function inviteStudentsAction(input: InviteStudentsInput): Promise<
     }
   }
   if (created.length) revalidatePath("/exam/students");
-  return { ok: true, examName: exam.name, created, failed };
+  const mailed = sendOutboxAfterResponse(mail);
+  return { ok: true, examName: exam.name, created, failed, mailed };
 }

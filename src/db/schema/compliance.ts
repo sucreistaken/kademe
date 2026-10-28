@@ -92,9 +92,10 @@ export const aiRuns = pgTable(
 );
 
 /**
- * Mail abstraction. In the MVP nothing is actually sent: the row is written and
- * the manager copies the link out of the UI. Switching to a real provider later
- * means writing a different Mailer, not changing any caller.
+ * Every message the platform would mail. The row is always written; where the
+ * server has SMTP settings (src/server/mail.ts) exam invitations and problem
+ * reports are also sent, and `sent_at` or `error` records the outcome. The
+ * manager can still copy every link out of the panel.
  */
 export const messageOutbox = pgTable(
   "message_outbox",
@@ -108,6 +109,8 @@ export const messageOutbox = pgTable(
     subject: text("subject").notNull(),
     body: text("body").notNull(),
     sentAt: timestamp("sent_at", { withTimezone: true }),
+    /** The last send attempt's failure, short; null when sent or never tried. */
+    error: text("error"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
