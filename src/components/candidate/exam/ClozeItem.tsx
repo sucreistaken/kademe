@@ -12,8 +12,10 @@ import type { ItemProps } from "./ItemView";
 
 /**
  * Multiple-choice cloze: the German text on the left with numbered gaps, the
- * four words of the open gap on the right. A pick fills the gap and moves on to
- * the next empty one; a filled gap opens again when clicked. Keys 1-4 pick.
+ * words of the open gap on the right (four in the bank's texts, three in a
+ * course test's a/b/c gaps). A pick fills the gap and moves on to the next
+ * empty one; a filled gap opens again when clicked. The number keys 1 to 3 or 4
+ * pick, as many as the open gap has words.
  * The panel sticks while a long text scrolls, so the options stay in reach.
  */
 export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
@@ -58,10 +60,11 @@ export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
     if (focusTick > 0) heading.current?.focus({ preventScroll: true });
   }, [focusTick]);
 
-  // Keys 1-4 pick for the open gap. A warning covering the page, a dialog, a modifier key or a button elsewhere is left alone.
-  const latest = useRef(pickOption);
+  // The number keys pick for the open gap. A warning covering the page, a dialog, a modifier key or a button elsewhere is left alone.
+  // The listener is bound once, so the pick and the open gap's word count (3 or 4) are read from here on every key.
+  const latest = useRef({ pick: pickOption, count: options.length });
   useEffect(() => {
-    latest.current = pickOption;
+    latest.current = { pick: pickOption, count: options.length };
   });
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -74,10 +77,10 @@ export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
       const insideItem = !!el && !!root.current?.contains(el);
       const onOutsideControl = !!el && !insideItem && !!el.matches('button, a[href], summary, [role="button"], [role="radio"], [role="checkbox"], [role="tab"], [role="link"], [role="switch"], [role="menuitem"]');
       if (!clozeKeyApplies({ insideItem, onOutsideControl })) return;
-      const index = optionOfKey(e.key, 4);
+      const index = optionOfKey(e.key, latest.current.count);
       if (index === null) return;
       e.preventDefault();
-      latest.current(index);
+      latest.current.pick(index);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -89,7 +92,7 @@ export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
   const chosen = open ? (answer.gaps?.[open] ?? "") : "";
   const place = gapPosition(order, open);
   const stop = tabStop(options, chosen);
-  // Arrows move focus between the words and never pick; Enter, Space, a click or keys 1-4 pick.
+  // Arrows move focus between the words and never pick; Enter, Space, a click or a number key pick.
   const moveFocus = (e: ReactKeyboardEvent<HTMLButtonElement>, at: number) => {
     const to = focusTarget(e.key, at, options.length);
     if (to === null) return;
@@ -188,7 +191,7 @@ export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
                 );
               })}
             </div>
-            <p {...ui} className="mt-3 text-[12.5px] text-muted">{t("clozeKeys")}</p>
+            <p {...ui} className="mt-3 text-[12.5px] text-muted">{t("clozeKeys", { max: options.length })}</p>
           </div>
         ) : null}
       </div>

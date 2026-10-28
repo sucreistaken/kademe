@@ -71,6 +71,25 @@ describe("option keys", () => {
     for (const k of ["0", "5", "a", "Enter", "ArrowDown", "11", ""]) expect(optionOfKey(k, 4), k).toBeNull();
     expect(optionOfKey("4", 3)).toBeNull();
   });
+
+  it("a gap with three words (a course test) is picked by 1 to 3, and 4 is left alone", () => {
+    expect([1, 2, 3].map((k) => optionOfKey(String(k), 3))).toEqual([0, 1, 2]);
+    for (const k of ["0", "4", "5", "9"]) expect(optionOfKey(k, 3), k).toBeNull();
+  });
+
+  it("no key picks when the gap has no words (no open gap)", () => {
+    for (const k of ["1", "2", "3", "4"]) expect(optionOfKey(k, 0), k).toBeNull();
+  });
+});
+
+describe("arrow keys with three words", () => {
+  it("wrap round the three, and End lands on the third", () => {
+    expect(focusTarget("ArrowDown", 2, 3)).toBe(0);
+    expect(focusTarget("ArrowUp", 0, 3)).toBe(2);
+    expect(focusTarget("End", 0, 3)).toBe(2);
+    expect(tabStop(["a", "b", "c"], "c")).toBe(2);
+    expect(tabStop(["a", "b", "c"], "d")).toBe(0);
+  });
 });
 
 describe("a click belongs to its question", () => {

@@ -1,7 +1,7 @@
 /**
  * Which gap of a multiple-choice cloze is open, and what a pick does. Pure, so
  * the rules (first empty gap by default, a pick moves on to the next empty one,
- * keys 1-4) are tested without a browser.
+ * the number keys) are tested without a browser.
  */
 
 const MARKER = /^\{\{([A-Za-z0-9_-]+)\}\}$/;
@@ -46,7 +46,7 @@ export function gapPosition(order: readonly string[], id: string | null): { n: n
 /**
  * Where an arrow key moves focus among the options of the open gap, or null for
  * any other key. Arrows only move focus; they never pick (Enter, Space, a click
- * or keys 1-4 pick), so browsing the words cannot answer a gap.
+ * or a number key pick), so browsing the words cannot answer a gap.
  */
 export function focusTarget(key: string, at: number, count: number): number | null {
   if (count <= 0) return null;
@@ -96,7 +96,11 @@ export function nextAfterPick(order: readonly string[], gaps: Record<string, str
   return from;
 }
 
-/** Index of the option a key picks ("1" is the first), or null when the key is not an option of this gap. */
+/**
+ * Index of the option a key picks ("1" is the first), or null when the key is not an option of this gap.
+ * `count` is the open gap's own number of words (four in the bank's texts, three in a course test's a/b/c gaps):
+ * with three words "4" is no option key, so it is left alone.
+ */
 export function optionOfKey(key: string, count: number): number | null {
   if (!/^[1-9]$/.test(key)) return null;
   const at = Number(key) - 1;
@@ -104,7 +108,7 @@ export function optionOfKey(key: string, count: number): number | null {
 }
 
 /**
- * Whether keys 1-4 belong to the cloze item. They act when focus is inside the
+ * Whether the number keys belong to the cloze item. They act when focus is inside the
  * item (a gap, an option), on the page body or on a heading the screen moved
  * focus to; a button or link outside the item (the bottom bar, Mark, the
  * strip) keeps its own key presses, so a pick never pulls focus off it.

@@ -379,7 +379,7 @@
     "reload": "Reload the page",
     "writingPlaceholder": "Write your answer in German",
     "shortPlaceholder": "Your answer",
-    "clozeKeys": "You can also pick with the 1-4 keys on the keyboard.",
+    "clozeKeys": "You can also pick with the 1-{max} keys on the keyboard.",
     "speakingTextAlt": "If recording does not work you may type your answer; your teacher will see that.",
     "thinkTime": "Thinking time",
     "startNow": "Start now",

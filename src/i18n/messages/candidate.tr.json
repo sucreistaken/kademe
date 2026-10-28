@@ -379,7 +379,7 @@
     "reload": "Sayfayı yenile",
     "writingPlaceholder": "Cevabınızı Almanca yazın",
     "shortPlaceholder": "Cevabınız",
-    "clozeKeys": "Klavyede 1-4 tuşlarıyla da seçebilirsiniz.",
+    "clozeKeys": "Klavyede 1-{max} tuşlarıyla da seçebilirsiniz.",
     "speakingTextAlt": "Kayıt yapılamıyorsa cevabınızı yazabilirsiniz; öğretmeniniz bunu görecek.",
     "thinkTime": "Düşünme süresi",
     "startNow": "Şimdi başla",

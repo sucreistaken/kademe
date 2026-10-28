@@ -36,15 +36,15 @@ function snapshot(skillTag: string, prompt: string, content: ItemSnapshot["conte
   };
 }
 
-/** A cloze text of `n` gaps, each with four words; served the way the server serves it. */
-function cloze(n: number): CandidateItem {
+/** A cloze text of `n` gaps, each with four words (`words` 3 for a course test's a/b/c gaps); served the way the server serves it. */
+function cloze(n: number, words = 4): CandidateItem {
   const ids = Array.from({ length: n }, (_, i) => `g${i + 1}`);
   const text = ids.map((id, i) => `Satz ${i + 1} mit {{${id}}} und mehr Text.`).join(" ");
   return toCandidateItem(
     snapshot(
       CLOZE_SKILL_TAG,
       `Lesen Sie den Text. Wählen Sie für jede Lücke das passende Wort.\n\nMein Tag\n\n${text}`,
-      { kind: "GAP", gaps: ids.map((id) => ({ id, choices: [`richtig${id}`, "falsch", "anders", "kurz"] })) },
+      { kind: "GAP", gaps: ids.map((id) => ({ id, choices: [`richtig${id}`, "falsch", "anders", "kurz"].slice(0, words) })) },
       { kind: "GAP", answers: Object.fromEntries(ids.map((id) => [id, [`richtig${id}`]])) },
     ),
     {},
@@ -195,6 +195,47 @@ describe("cloze keyboard and announcements", () => {
     const html = render(cloze(2), { gaps: { g1: "falsch" } });
     expect(html).not.toMatch(/<button[^>]*lang="de"[^>]*data-cloze-gap/);
     expect(html).not.toMatch(/<button[^>]*data-cloze-gap[^>]*lang="de"/);
+  });
+});
+
+describe("cloze item with three words per gap (a/b/c, course tests)", () => {
+  const panelOf = (html: string) => html.slice(html.indexOf('role="radiogroup"'));
+
+  it("opens a gap with three radio buttons numbered 1 to 3 and says the keys go to 3", () => {
+    const panel = panelOf(render(cloze(3, 3)));
+    expect((panel.match(/role="radio"/g) ?? []).length).toBe(3);
+    for (const n of [1, 2, 3]) expect(panel).toContain(`>${n}</span>`);
+    expect(panel).not.toContain(">4</span>");
+    expect(panel).toContain("clozeKeys(3)");
+    expect(panel).not.toContain("clozeKeys(4)");
+  });
+
+  it("the four-word gap of the bank still says 1 to 4", () => {
+    const panel = panelOf(render(cloze(3)));
+    expect((panel.match(/role="radio"/g) ?? []).length).toBe(4);
+    expect(panel).toContain("clozeKeys(4)");
+  });
+
+  it("keeps one Tab stop on the three words and reaches the others by arrows", () => {
+    const panel = panelOf(render(cloze(2, 3)));
+    expect((panel.match(/tabindex="0"/g) ?? []).length).toBe(1);
+    expect((panel.match(/tabindex="-1"/g) ?? []).length).toBe(2);
+  });
+
+  it("checks the picked word, and the text still shows one numbered button per gap", () => {
+    const item = cloze(2, 3);
+    const gaps = item.content.kind === "GAP" ? item.content.gaps : [];
+    const html = render(item, { gaps: { g1: gaps[0].choices![2], g2: gaps[1].choices![0] } });
+    expect((html.match(/aria-checked="true"/g) ?? []).length).toBe(1);
+    expect((html.match(/data-cloze-gap=/g) ?? []).length).toBe(2);
+    expect(html).toContain("gapOf(1,2)");
+  });
+
+  it("keeps the option panel's group labelled by the gap heading, as with four words", () => {
+    const html = render(cloze(2, 3));
+    const labelledBy = html.match(/role="radiogroup" aria-labelledby="([^"]+)"/)?.[1];
+    expect(labelledBy).toBeTruthy();
+    expect(html).toContain(`id="${labelledBy}"`);
   });
 });
 

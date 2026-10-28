@@ -379,7 +379,7 @@
     "reload": "Seite neu laden",
     "writingPlaceholder": "Schreiben Sie Ihre Antwort auf Deutsch",
     "shortPlaceholder": "Ihre Antwort",
-    "clozeKeys": "Sie können auch mit den Tasten 1-4 auf der Tastatur wählen.",
+    "clozeKeys": "Sie können auch mit den Tasten 1-{max} auf der Tastatur wählen.",
     "speakingTextAlt": "Wenn die Aufnahme nicht funktioniert, dürfen Sie Ihre Antwort tippen; Ihre Lehrkraft sieht das.",
     "thinkTime": "Bedenkzeit",
     "startNow": "Jetzt starten",

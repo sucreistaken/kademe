@@ -379,7 +379,7 @@
     "reload": "Recargar la página",
     "writingPlaceholder": "Escriba su respuesta en alemán",
     "shortPlaceholder": "Su respuesta",
-    "clozeKeys": "También puede elegir con las teclas 1-4 del teclado.",
+    "clozeKeys": "También puede elegir con las teclas 1-{max} del teclado.",
     "speakingTextAlt": "Si la grabación no funciona, puede escribir su respuesta; su profesor lo verá.",
     "thinkTime": "Tiempo para pensar",
     "startNow": "Empezar ahora",
