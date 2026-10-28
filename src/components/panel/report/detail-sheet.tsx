@@ -156,10 +156,10 @@ function TextGapQuestion({ parts, t }: { parts: GapPart[]; t: T }) {
   );
 }
 
-function Question({ q, t }: { q: DetailQuestion; t: T }) {
+function Question({ q, t, levels }: { q: DetailQuestion; t: T; levels: boolean }) {
   const head = (
     <div className="mb-1 text-[0.85em] font-semibold uppercase tracking-[0.04em] text-muted">
-      {t("resultReport.question", { n: q.n })} <span className="tnum font-normal">{q.level}</span>
+      {t("resultReport.question", { n: q.n })} {levels ? <span className="tnum font-normal">{q.level}</span> : null}
     </div>
   );
   if (q.kind === "GAP") {
@@ -227,7 +227,8 @@ function Question({ q, t }: { q: DetailQuestion; t: T }) {
   );
 }
 
-function Task({ task, section, t }: { task: DetailTask; section: string; t: T }) {
+function Task({ task, section, t, levels }: { task: DetailTask; section: string; t: T; levels: boolean }) {
+  const decision = levels || !!task.decidedBy || !!task.teacherNote || task.criteria.length > 0 || !!task.summary;
   return (
     <div className="report-detail-q mt-4 rounded-[8px] border border-line p-4">
       <div className="text-[0.85em] font-semibold uppercase tracking-[0.04em] text-muted">
@@ -261,33 +262,37 @@ function Task({ task, section, t }: { task: DetailTask; section: string; t: T })
         </div>
       ) : null}
 
-      <div className="mt-3 border-t border-line pt-3">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <span className="font-semibold">{t("resultReport.teacherLevel")}</span>
-          <span className="tnum text-[1.3em] font-bold">{levelLabel(task.level, t("resultLevel.A0")) ?? "-"}</span>
+      {decision ? (
+        <div className="mt-3 border-t border-line pt-3">
+          {levels ? (
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <span className="font-semibold">{t("resultReport.teacherLevel")}</span>
+              <span className="tnum text-[1.3em] font-bold">{levelLabel(task.level, t("resultLevel.A0")) ?? "-"}</span>
+            </div>
+          ) : null}
+          {task.decidedBy ? <p className="text-[0.9em] text-muted">{t("resultReport.teacherBy", { name: task.decidedBy })}</p> : null}
+          {task.teacherNote ? (
+            <p className="mt-1">
+              <span className="font-medium">{t("resultReport.teacherNote")}: </span>
+              {task.teacherNote}
+            </p>
+          ) : null}
+          {task.criteria.length ? (
+            <div className="mt-2">
+              <div className="text-[0.85em] font-semibold text-muted">{t("resultReport.criteria")}</div>
+              <ul className="mt-1 flex flex-col gap-1">
+                {task.criteria.map((c) => (
+                  <li key={c.criterion}>
+                    <span className="font-medium">{t(`result.crit${c.criterion}` as "result.critRANGE")}</span> <span className="tnum font-semibold">{levelLabel(c.level, t("resultLevel.A0"))}</span>
+                    {c.note ? <span className="text-ink-2"> - {c.note}</span> : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {task.summary ? <p className="mt-2 text-ink-2">{task.summary}</p> : null}
         </div>
-        {task.decidedBy ? <p className="text-[0.9em] text-muted">{t("resultReport.teacherBy", { name: task.decidedBy })}</p> : null}
-        {task.teacherNote ? (
-          <p className="mt-1">
-            <span className="font-medium">{t("resultReport.teacherNote")}: </span>
-            {task.teacherNote}
-          </p>
-        ) : null}
-        {task.criteria.length ? (
-          <div className="mt-2">
-            <div className="text-[0.85em] font-semibold text-muted">{t("resultReport.criteria")}</div>
-            <ul className="mt-1 flex flex-col gap-1">
-              {task.criteria.map((c) => (
-                <li key={c.criterion}>
-                  <span className="font-medium">{t(`result.crit${c.criterion}` as "result.critRANGE")}</span> <span className="tnum font-semibold">{levelLabel(c.level, t("resultLevel.A0"))}</span>
-                  {c.note ? <span className="text-ink-2"> - {c.note}</span> : null}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-        {task.summary ? <p className="mt-2 text-ink-2">{task.summary}</p> : null}
-      </div>
+      ) : null}
     </div>
   );
 }
@@ -321,8 +326,8 @@ function TopicTable({ s, t, locale }: { s: Extract<DetailSection, { kind: "OBJEC
   );
 }
 
-function SectionBody({ s, t, locale }: { s: DetailSection; t: T; locale: PanelLocale }) {
-  if (s.kind === "PRODUCTIVE") return <>{s.tasks.map((task) => <Task key={task.n} task={task} section={s.section} t={t} />)}</>;
+function SectionBody({ s, t, locale, levels }: { s: DetailSection; t: T; locale: PanelLocale; levels: boolean }) {
+  if (s.kind === "PRODUCTIVE") return <>{s.tasks.map((task) => <Task key={task.n} task={task} section={s.section} t={t} levels={levels} />)}</>;
   return (
     <>
       <TopicTable s={s} t={t} locale={locale} />
@@ -338,7 +343,7 @@ function SectionBody({ s, t, locale }: { s: DetailSection; t: T; locale: PanelLo
             </h3>
           ) : null}
           {b.questions.map((q) => (
-            <Question key={q.n} q={q} t={t} />
+            <Question key={q.n} q={q} t={t} levels={levels} />
           ))}
         </div>
       ))}
@@ -346,8 +351,24 @@ function SectionBody({ s, t, locale }: { s: DetailSection; t: T; locale: PanelLo
   );
 }
 
-/** The question-by-question part of the report: one page-broken article per section. */
-export function DetailSheet({ sections, studentName, t, locale }: { sections: DetailSection[]; studentName: string; t: T; locale: PanelLocale }) {
+/**
+ * The question-by-question part of the report: one page-broken article per section.
+ * `levels` false (a course test, which has no CEFR level) leaves out every level:
+ * the section's, each question's and the teacher's level of a task.
+ */
+export function DetailSheet({
+  sections,
+  studentName,
+  t,
+  locale,
+  levels = true,
+}: {
+  sections: DetailSection[];
+  studentName: string;
+  t: T;
+  locale: PanelLocale;
+  levels?: boolean;
+}) {
   if (sections.length === 0) return null;
   return (
     <>
@@ -376,14 +397,16 @@ export function DetailSheet({ sections, studentName, t, locale }: { sections: De
                     <h2 className="text-[1.5em] font-bold tracking-[-0.01em]">{t(`sectionName.${s.section}`)}</h2>
                     <div className="tnum flex items-baseline gap-4">
                       {s.kind === "OBJECTIVE" ? <span className="font-semibold">{t("resultReport.score", { correct: s.correct, total: s.total })}</span> : null}
-                      <span>
-                        <span className="text-muted">{t("resultReport.levelLabel")} </span>
-                        <span className="text-[1.3em] font-bold">{levelLabel(s.level, t("resultLevel.A0")) ?? "-"}</span>
-                      </span>
+                      {levels ? (
+                        <span>
+                          <span className="text-muted">{t("resultReport.levelLabel")} </span>
+                          <span className="text-[1.3em] font-bold">{levelLabel(s.level, t("resultLevel.A0")) ?? "-"}</span>
+                        </span>
+                      ) : null}
                     </div>
                   </div>
                   {i === 0 ? <p className="mt-2 text-[0.9em] text-muted">{t("resultReport.detailIntro")}</p> : null}
-                  <SectionBody s={s} t={t} locale={locale} />
+                  <SectionBody s={s} t={t} locale={locale} levels={levels} />
                 </td>
               </tr>
             </tbody>
