@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CandidateColumn } from "@/components/candidate/Shell";
 import { MobileBlock, isMobileDevice } from "@/components/candidate/MobileBlock";
+import { blocksDevice } from "@/components/candidate/device";
 import { environmentFacts, useProctor } from "@/components/candidate/proctor/ProctorProvider";
 import { checkStep, planSteps, primaryEnabled, type CheckStep, type StepState, type Wait } from "@/components/candidate/proctor/check-steps";
 import { ReadyRules, READY_WHY_ID } from "@/components/candidate/proctor/ReadyRules";
@@ -28,13 +29,18 @@ import { cn } from "@/lib/cn";
  * the start is exactly what the old checklist's rows blocked. Browser, single
  * screen and connection checks run in the background and speak only when they
  * fail.
+ *
+ * A phone gets the desktop-only screen when the exam watches the camera or the
+ * screen, unless the exam runs on phones (`allowMobile`, the web check). Such
+ * an exam watches nothing, so the flow never sends it here; the flag is still
+ * honoured, so no path shows it the phone screen.
  */
 
 type T = TypedT<"examCheck">;
 
 const POSE: Record<CheckStep, MascotPose> = { devices: "wave", look: "think", screen: "think", ready: "wave", blocked: "think" };
 
-export function SystemCheck({ token, policy }: { token: string; policy: ProctoringPolicy }) {
+export function SystemCheck({ token, policy, allowMobile = false }: { token: string; policy: ProctoringPolicy; allowMobile?: boolean }) {
   const router = useRouter();
   const t = useT("examCheck");
   const f = useT("examFlow");
@@ -212,7 +218,7 @@ export function SystemCheck({ token, policy }: { token: string; policy: Proctori
     }
   }
 
-  if (mobile && (policy.screenShare || policy.camera)) return <MobileBlock token={token} need={{ camera: policy.camera, screenShare: policy.screenShare }} />;
+  if (blocksDevice(mobile, allowMobile) && (policy.screenShare || policy.camera)) return <MobileBlock token={token} need={{ camera: policy.camera, screenShare: policy.screenShare }} />;
 
   const isIssue = result.issue !== null || result.step === "blocked";
   const enabled = primaryEnabled(result) && !busy;

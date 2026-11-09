@@ -39,6 +39,7 @@ import { studentCourseResult, type StudentCourseResult } from "@/lib/exam/course
 import { playsAllowed } from "@/lib/exam/listening-plays";
 import { drawFormatOf } from "@/lib/exam/item-format";
 import { hasAnswer, scoreItem } from "@/lib/exam/item-scoring";
+import { mobileAllowed } from "@/lib/exam/mobile";
 import { examDateOf, studentSheetDate } from "@/lib/exam/sheet-date";
 import { studentFacingFeedback, type StudentNote } from "@/lib/exam/student-feedback";
 import type { StudentAnalysis } from "@/lib/exam/student-analysis";
@@ -224,6 +225,12 @@ export type CandidateState = {
   sections: SectionSummary[];
   proctoring: ProctoringPolicy;
   maxPlays: number;
+  /**
+   * The exam runs on a phone or a tablet (mobile.ts: mobileAllowed, the public
+   * web check). Absent or false: desktop only, and a phone gets the
+   * desktop-only screen on the consent screen, the check and the exam page.
+   */
+  allowMobile?: boolean;
   current?: {
     section: Section;
     position: number;
@@ -303,6 +310,7 @@ export async function loadState(ctx: ExamCandidateContext): Promise<CandidateSta
     }),
     proctoring: cfg.proctoring,
     maxPlays: cfg.listening.maxPlays,
+    allowMobile: mobileAllowed(cfg),
   };
 
   if (!(await hasConsented(ctx.assessment.id))) return base;

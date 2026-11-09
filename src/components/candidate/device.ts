@@ -2,6 +2,11 @@
  * The language exam is desktop only (user decision 2026-10-14). These are the
  * pure halves of that rule, shared by the browser check (isMobileDevice in
  * MobileBlock.tsx) and the exam page's gate (DesktopOnlyGate).
+ *
+ * One exception (2026-11-09): an exam whose state says `allowMobile` (the
+ * public web check, see src/lib/exam/mobile.ts) runs on a phone or a tablet,
+ * so none of the three places that block a phone (the consent screen, the
+ * system check, the exam page) shows it the desktop-only screen.
  */
 
 /** What the browser says about itself. */
@@ -35,9 +40,19 @@ export function serverDeviceHint(h: { get(name: string): string | null } | null)
   return h.get("sec-ch-ua-mobile") === "?1" || PHONE_UA.test(h.get("user-agent") ?? "") ? "mobile" : "unknown";
 }
 
-/** What the exam page shows for a device verdict: nothing at all until the device is known. */
-export function examPageView(device: "mobile" | "desktop" | "unknown"): "block" | "exam" | "wait" {
-  return device === "mobile" ? "block" : device === "desktop" ? "exam" : "wait";
+/**
+ * What the exam page shows for a device verdict: nothing at all until the
+ * device is known. A phone is blocked unless the exam runs on phones
+ * (`allowMobile`); then it gets the exam like a computer.
+ */
+export function examPageView(device: "mobile" | "desktop" | "unknown", allowMobile = false): "block" | "exam" | "wait" {
+  if (device === "unknown") return "wait";
+  return device === "mobile" && !allowMobile ? "block" : "exam";
+}
+
+/** Whether the consent screen and the system check show this device the desktop-only screen. */
+export function blocksDevice(mobile: boolean, allowMobile = false): boolean {
+  return mobile && !allowMobile;
 }
 
 /**

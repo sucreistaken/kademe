@@ -320,6 +320,7 @@
     "consentShowEnglish": "Mostrar el texto en inglés",
     "needTitle": "Qué necesita",
     "needComputer": "Un ordenador (Chrome o Edge actualizado)",
+    "needPhoneOrComputer": "Un móvil, una tableta o un ordenador",
     "needCamera": "Cámara y micrófono",
     "needQuiet": "Una sala tranquila",
     "needTime": "Unos {n} minutos sin interrupciones",

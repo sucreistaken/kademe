@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, Check, ChevronDown, Clock, Laptop, ShieldCheck, VolumeX, type LucideIcon } from "lucide-react";
+import { Camera, Check, ChevronDown, Clock, Laptop, ShieldCheck, Smartphone, VolumeX, type LucideIcon } from "lucide-react";
 import { CandidateColumn } from "@/components/candidate/Shell";
 import { MobileBlock, isMobileDevice } from "@/components/candidate/MobileBlock";
+import { blocksDevice } from "@/components/candidate/device";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Notice } from "@/components/ui/notice";
@@ -29,7 +30,9 @@ import type { CandidateLocale } from "@/i18n/locale";
  *
  * The exam is desktop only (user decision 2026-10-14): a phone or tablet gets
  * the MobileBlock instead, whatever the proctoring, with the real reasons for
- * this exam.
+ * this exam. An exam that runs on phones (`state.allowMobile`, the web check)
+ * shows a phone this screen like a computer, and asks for "a phone, tablet or
+ * computer" instead of a computer.
  */
 export function IntroConsent({
   token,
@@ -88,7 +91,7 @@ export function IntroConsent({
     }
   }
 
-  if (mobile) {
+  if (blocksDevice(mobile, state.allowMobile)) {
     return (
       <MobileBlock
         token={token}
@@ -109,9 +112,9 @@ export function IntroConsent({
         ? t("titleVerification", { level: state.claimedLevel })
         : t("titlePlacement");
 
-  // What to bring: a computer always (desktop only), a camera when the exam watches.
+  // What to bring: a computer (desktop only) or, for an exam that runs on phones, any of the three; a camera when the exam watches.
   const needs: Array<{ icon: LucideIcon; text: string }> = [
-    { icon: Laptop, text: t("needComputer") },
+    state.allowMobile ? { icon: Smartphone, text: t("needPhoneOrComputer") } : { icon: Laptop, text: t("needComputer") },
     ...(proctored && p.camera ? [{ icon: Camera, text: t("needCamera") }] : []),
     { icon: VolumeX, text: t("needQuiet") },
     { icon: Clock, text: t("needTime", { n: state.estimatedMinutes }) },

@@ -19,22 +19,29 @@ const noSubscribe = () => () => undefined;
  * runner's effects (a draft resend, the proctoring engine) never run on a
  * phone, no section starts or advances, and the student continues on a
  * computer where they left off.
+ *
+ * An exam that runs on phones (`allowMobile`, the public web check) lets a
+ * phone through to the exam. Its server snapshot is always "unknown", so the
+ * exam still mounts only after hydration, on a phone as on a computer, and a
+ * phone's first paint is never the desktop-only screen.
  */
 export function DesktopOnlyGate({
   token,
   serverHint,
   need,
   moment,
+  allowMobile = false,
   children,
 }: {
   token: string;
   serverHint: "mobile" | "unknown";
   need: MobileNeeds;
   moment: MobileMoment;
+  allowMobile?: boolean;
   children?: ReactNode;
 }) {
-  const device = useSyncExternalStore(noSubscribe, () => (isMobileDevice() ? "mobile" : "desktop"), () => serverHint);
-  const view = examPageView(device);
+  const device = useSyncExternalStore(noSubscribe, () => (isMobileDevice() ? "mobile" : "desktop"), () => (allowMobile ? "unknown" : serverHint));
+  const view = examPageView(device, allowMobile);
   if (view === "block") return <MobileBlock token={token} need={need} moment={moment} />;
   if (view === "wait") return null;
   return <>{children}</>;

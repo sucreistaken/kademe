@@ -320,6 +320,7 @@
     "consentShowEnglish": "İngilizce metni göster",
     "needTitle": "İhtiyacınız olanlar",
     "needComputer": "Bilgisayar (güncel Chrome veya Edge)",
+    "needPhoneOrComputer": "Telefon, tablet veya bilgisayar",
     "needCamera": "Kamera ve mikrofon",
     "needQuiet": "Sessiz bir oda",
     "needTime": "Yaklaşık {n} dakika kesintisiz zaman",

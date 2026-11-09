@@ -320,6 +320,7 @@
     "consentShowEnglish": "عرض النص الإنجليزي",
     "needTitle": "ما يلزمك",
     "needComputer": "جهاز كمبيوتر (بإصدار حديث من Chrome أو Edge)",
+    "needPhoneOrComputer": "هاتف أو جهاز لوحي أو كمبيوتر",
     "needCamera": "كاميرا وميكروفون",
     "needQuiet": "غرفة هادئة",
     "needTime": "نحو {n, plural, zero {{n} دقيقة} one {دقيقة واحدة} two {دقيقتين} few {{n} دقائق} many {{n} دقيقة} other {{n} دقيقة}} دون انقطاع",

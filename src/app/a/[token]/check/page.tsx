@@ -35,7 +35,7 @@ export default async function CandidateCheckPage({
           />
         }
       >
-        <SystemCheck token={token} policy={entry.state.proctoring} />
+        <SystemCheck token={token} policy={entry.state.proctoring} allowMobile={entry.state.allowMobile === true} />
       </CandidateShell>
     </CandidateIntl>
   );

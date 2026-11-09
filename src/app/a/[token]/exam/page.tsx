@@ -15,7 +15,8 @@ export const dynamic = "force-dynamic";
  * Section introductions and questions. The language picker shows on the
  * introductions only (the runner decides): changing language in the middle of
  * a question moves the ground under the student. A phone or tablet gets the desktop-only screen instead of
- * the exam, whatever the proctoring (DesktopOnlyGate). The runner draws its
+ * the exam, whatever the proctoring (DesktopOnlyGate), unless the exam runs on phones (the web check's
+ * `allowMobile`). The runner draws its
  * own header for the introduction and the questions alike, so the frame has
  * none: a brand bar here would double the exam bar, and be missing after a
  * reload.
@@ -40,6 +41,7 @@ export default async function ExamPage({
           serverHint={serverDeviceHint(await headers())}
           need={{ camera: proctored && p.camera, screenShare: proctored && p.screenShare, writing: entry.state.sections.some((s) => s.section === "WRITING") }}
           moment={mobileMoment(entry.state)}
+          allowMobile={entry.state.allowMobile === true}
         >
           {/* Keyed by language so a switch on an introduction starts from the server's fresh state. */}
           <ExamRunner key={entry.locale} token={token} initial={candidateSafe(entry.state)} locales={supportedLocales(entry.ctx)} />
