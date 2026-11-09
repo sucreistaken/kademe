@@ -1,5 +1,6 @@
 # Kademe - durum ve devir belgesi
 
+Web check, the website's level test (2026-11-09, branch `web-check`, NOT deployed, no migration, new env `KADEME_PUBLIC_SECRET`): the website asks `POST /api/public/placement` for a link to a 25-minute grammar test that runs on phones; every other exam stays desktop only. See "Web check: 2026-11-09" (contract and deploy checklist there).
 Gözetim: iki kişi ve arka plan sesi (canlıda 2026-10-28 23:25 UTC, `main` `d5c5d2a`, yedek `/root/kademe-backups/kademe-20261028T232529Z.dump`, göç yok): ikinci kişi artık yüz modeline ek olarak nesne modelinin "person" sınıfıyla da sayılır (2 sn'de bir; zayıf, minik ve iç içe kutular sayılmaz) ve MULTIPLE_FACES 2 sn'lik pencerede karelerin %60'ıyla başlar (eskiden kesintisiz 2 sn). Ses: 1,5 sn'lik pencerede örneklerin %60'ı (heceler arası boşluk kesmez); taban son 30 sn sürekli yüksekse yükselir (klima, TV bir kez işaretlenir), kalibrasyonun altına inmez. Ayrıntı `docs/PROCTORING.md` sinyal tablosu. Birim testleri ve canlıda `/login` 200 (iki adres), yeni kod canlı pakette. Doğrulanmadı: gerçek kamerada ikinci kişi, gerçek odada ses, yavaş makinede ek model yükü.
 E-posta ve panel dili (canlıda 2026-10-28, `main` `b62c619`, yedek `/root/kademe-backups/` altında o saatin dökümü, göç 0030 `message_outbox.error` + 0031 `users.locale`): (1) Sınav davetleri ve öğrenci sorun bildirimleri SMTP ile gönderilebiliyor (`src/server/mail.ts`, nodemailer). Sunucuda `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS` yoksa hiçbir şey gönderilmez, panel eskisi gibi link kopyalatır; canlıda şu an tanımlı DEĞİL. Açmak için `/etc/kademe/kademe.env`'e `SMTP_HOST=smtp.hostinger.com`, `SMTP_PORT=465`, `SMTP_USER=exam@campusgerman.com`, `SMTP_PASS=...`, `MAIL_FROM="Campus German <exam@campusgerman.com>"` yazıp servisi yeniden başlat. Gönderim yanıttan sonra yapılır, link o anda yerine konur, satıra `sent_at` ya da `error` yazılır; davet sihirbazı "e-postayla da gönderiliyor" notu gösterir. İşe alım aday davetleri gönderilmez (yalnız sınav). Gerçek gönderim hiç denenmedi. (2) Giriş ekranında seçilen dil girişten sonra panelde kalır ve hesaba kaydedilir; çerezi olmayan yeni tarayıcıda kayıtlı dil açılır; panelin TR/EN/DE düğmesi de hesaba yazar. Panelde İspanyolca olmadığı için giriş ekranından İspanyolca kalktı. Canlıda giriş ekranının üç dili ve Türkçe'ye geçişi Chrome'da görüldü; girişten sonraki panel dili canlıda denenmedi (şifre yok), birim testleriyle kapsandı.
 Alan adı (2026-10-28 ~14:41 UTC, `main` `01d6a54`, yedek `kademe-20261028-1441.dump`): okulun alan adı https://kademe.campusgerman.com aynı sunucuya bakıyor (DNS okul tarafında, 34.40.39.112). Caddy iki adı da sunuyor (`kademe.campusgerman.com, kademe.kadiray.com {`, Let's Encrypt sertifikası 2027-01-26'ya kadar), `APP_ORIGIN=https://kademe.campusgerman.com` (yeni davet linkleri bu adresle), `next.config.ts` server action izinli adreslerine eklendi. Eski adres yönlendirilmedi: gönderilmiş linkler ve süren sınavlar bozulmasın diye çalışmaya devam ediyor. Geri dönüş: `/etc/caddy/Caddyfile.bak-20261028-1440` ve `/etc/kademe/kademe.env.bak-20261028-1440`, Caddy reload ve servis yeniden başlatma.
@@ -20,6 +21,77 @@ Son güncelleme: 2026-10-07 (Gelişmiş: tek kutu, AI önce, `platform/solutions
 **Canlıda**: https://kademe.kadiray.com, `main` commit `5e90445` (2026-10-26 ~10:50 UTC: tur 4; ayrıntı "Tur 4: 2026-10-26"). Önceki: `0d031ed` (2026-10-25 ~10:10 UTC: tur 3; ayrıntı "Tur 3: 2026-10-25"). Önceki: `7b9e05c` (2026-10-24 ~01:10 TSİ: tur 2; klavyeli not defteri, sağ üstte tanıtım düğmesi, format karışımı, A0 sonuç seviyesi; ayrıntı "Tur 2: 2026-10-24"). Önceki: `1eafbb4` (2026-10-23 ~20:00 UTC: ürün turu; yeni formatlar, resimler, seviye başına 3 form, öğrenci analizi, not araçları, anlatımlı tanıtımlar, Almanca panel; ayrıntı "Canlıya çıkış: 2026-10-23 ürün turu"). Önceki: `8ea4bfe` (2026-10-21 14:02 UTC: giriş ekranı İngilizce ve dört dilli bayrak seçici, öğrenci tarafında Türkçe sınav adı ve geçersiz link sızıntısı giderildi; HTTPS'te dört dil ve Almanca geçersiz link kontrol edildi). Önceki: `70912f7` (2026-10-19 11:49 UTC: soru havuzu ÖSD/telc/TestDaF derslerine göre yenilendi, Richtig/Falsch, yazılan numara ve saat eşleşmesi, gözetimde yanlış "sekmeden ayrıldınız" uyarısı ve Meet düzeltmesi; ayrıntı "Canlıya çıkış: 2026-10-19 soru havuzu ve gözetim"). Önceki: `bcc9d44` (2026-10-18 18:41 UTC: okul test revizyonu). Önceki: `2cf125c` (2026-10-16 18:45 UTC: krem zemin yerine Campus German beyazı ve soğuk griler; ondan önce `8e945da`, Campus German görünümü, Plan 1; ayrıntı "Canlıya çıkış: Campus German görünümü, Plan 1"). Önceki sürümler (aşağıdaki "Canlıya çıkış" bölümleri): `ab951b1` (okul yöneticisi geri bildirimi), `1d8d4c6` (onSET yerleştirme), `5a4f97e` (kurs grubu sürümü, 2026-10-14), `02760e3` (2026-10-07 akşam: Bugün yeni tasarım, 3 adımlı alım sihirbazı, "en az 2 değerlendirici" kuralı kaldırıldı, soru bankası v2; ayrıntı "Canlıya çıkış: sihirbaz ve banka v2"), `0142ff0` (Gelişmiş). Önceki not: commit `739f218` (`main`, 2026-10-05 sınav sıcak düzeltmesi; ayrıntı "Kararlar ve sapmalar"da).
 Canlı veritabanı kullanıcı onayıyla sıfırlandı: eski işe alım verisi yok,
 panel kullanıcıları (parolalarıyla) taşındı, banka ve iki sınav yüklendi.
+
+## Web check: 2026-11-09 (branch `web-check`, not deployed; spec campusg `research/09-kademe.md` section 2 and `docs/TRY-FLOW.md`)
+
+Owner (2026-11-09): the website registers a visitor and hands out a Kademe level-test link that works on phones;
+Kademe may be changed for this. Written in English (global rule from 2026-10-16).
+
+- **Template `web-check`** (`src/lib/exam/templates.ts`, `webCheckTemplate()`): the quick screen's config (grammar
+  only: cloze A1-B2, word banks A1-B1, 25 min, `autoRelease`) with two differences, `PRESETS.OFF` and
+  `allowMobile: true`. Kept out of `EXAM_TEMPLATES` and `readyTemplateByKey`: the wizard, the AI creator and the
+  invite form never offer it. Name "Çevrim içi seviye testi" / "Online level test", in all five student languages
+  (`examNames.webCheck`). The ready templates and the eight course tests keep their configs (hash pin in
+  `src/lib/exam/web-check.test.ts`), so nothing published is retired.
+- **Phones**: new blueprint flag `allowMobile` (optional, zod), honoured only while proctoring is OFF with no
+  camera, microphone, screen share or fullscreen and no enabled writing or speaking (`src/lib/exam/mobile.ts`,
+  `mobileAllowed`). The candidate state carries it; the consent screen, the system check and the exam page's
+  `DesktopOnlyGate` show a phone the desktop-only screen only when it is false (`blocksDevice`, `examPageView`).
+  The consent screen then asks for "a phone, tablet or computer". Every other exam stays desktop only exactly as
+  before (it has no flag). Below 640px only (`max-sm`, nothing changes from 640px up): the exam top bar drops its
+  side caps, the bottom bar's way back and flag are icon buttons and Next fits its words, the review bar stacks
+  (`StepFooter stackOnPhone`), the cloze words are pinned above the bar in two columns like the word pool.
+- **Endpoint** `POST /api/public/placement` (`src/app/api/public/placement/route.ts`, server to server only):
+  header `Authorization: Bearer <KADEME_PUBLIC_SECRET>` (`safeEqual`, as `/api/cron/*`). Body
+  `{ "name", "email", "phone"?, "locale": "tr|en|de|es|ar", "consent": true, "crmLeadId"?, "utm"?: { "source",
+  "medium", "campaign", "term", "content" } }` (`utm_` prefix also accepted). Answer `201 { "url", "expiresAt" }`
+  for a new invitation, `200` with the same shape for the open one of the same e-mail (any case) from the last 24
+  hours (not started or in progress). Errors: `503` secret unset or under 32 characters (never open), `403
+  forbidden`, `400 CONSENT_REQUIRED`, `400 INVALID_FIELD` + `field`, `400 INVALID_BODY`, `413 BODY_TOO_LARGE`
+  (over 8 KB), `429 RATE_LIMITED` (in process: 30 a minute in all, 5 a minute per e-mail), `429 DAILY_LIMIT`
+  (database: 3 new links per e-mail in 24 hours), `503 NOT_SET_UP` / `TEMPLATE_COVERAGE`, `500`. Always
+  `Cache-Control: no-store`. The core route checks caller and body (`src/lib/public-placement.ts`) and reaches the
+  exam through the solution contract (`SolutionModule.publicPlacement`, `src/solutions/language-exam/
+  public-placement.ts`), so no new core-to-exam import (boundary test). Requests for one e-mail run one at a time in
+  the process.
+- **Invitation**: the first active owner's organisation (as the panel password signs in), `invitedBy` null, link 3
+  days, name and e-mail on the candidate row (the info step is skipped), `phone` stored, `candidates.extra` =
+  `websiteConsentAt`, `crmLeadId`, `utm_*`; audit `student.invite` with `via: "public-placement"`, no actor. The first
+  request publishes the template with no creator (`ensureTemplateBlueprint` takes a null user). Kademe sends no mail
+  for it: the website shows or sends the link; the outbox row's text drops the "open it on a computer" line.
+- **Verified (2026-11-09, local, throwaway `kademe_webcheck_check` on 5434, dev server :3107)**: `tsc` clean, `eslint`
+  0 errors (the old warning), `vitest` 498 files 6989/6989 (before: 490 / 6908). curl: no or wrong secret 403, consent
+  false 400, bad e-mail 400 `email`, new 201 with `no-store`, same e-mail again 200 with the same link, a fourth new
+  link in 24 hours 429 `DAILY_LIMIT`; rows as above. With an iPhone user agent the exam page of a desktop-only exam
+  renders "Open this exam on a computer", the web check's does not. Claude in Chrome, 390px frame with
+  `navigator.userAgentData.mobile` set before the page's scripts: a desktop-only exam shows the phone block, the web
+  check its consent, intro and questions; 5 cloze gaps and 2 word-bank gaps answered by tap, the rest through the
+  same buttons by script; finish; the done page showed "Your level B1" at once (`FINAL`, finalized by the engine,
+  released). The same screens at 1280px: bar buttons 112/168/176 px, panel at the top right, as before.
+- **Not verified**: a real phone (iOS Safari, Android Chrome; only the emulation above), dragging word chips by
+  touch (taps only), production, the website Worker's side.
+- **Open for the owner**: (1) a borderline or imprecise result still goes to a teacher (`isUncertainResult`, sd over
+  0.6 or within 0.25 of a cut): the test run above had sd 0.59, so some visitors will read that the result "is close
+  to a boundary, so your teacher will review it" (`result.pendingReview`) instead of a level; decide whether the web
+  check should release those too. (2) The section intro still says the four options appear "on the right"
+  (`section.ruleGRAMMARTexts`; on a phone they sit at the bottom). (3) The consent text is the school's exam text;
+  research 09 suggests a short web version. (4) Cap 3 a day and 3-day links are constants in
+  `public-placement.ts`. (5) A copy of the web-check exam made in the editor keeps `allowMobile`; it only acts
+  while the copy stays unwatched without writing or speaking.
+
+**Deploy checklist (owner, not done):**
+1. Merge `web-check` into `main` (the owner's call).
+2. On the VM, the usual way: running sections 0, `pg_dump` backup, stop the service and the 5 timers, `git pull`,
+   `pnpm install`, `pnpm db:migrate` (no new migration in this branch), build, delete `.next/cache`, start everything.
+3. Secret: `openssl rand -hex 32`, write `KADEME_PUBLIC_SECRET=<value>` into `/etc/kademe/kademe.env`, restart the
+   service. The same value goes to the website Worker as a secret (`wrangler secret put KADEME_PUBLIC_SECRET`); never
+   into a browser or the repo.
+4. Check: `curl -s -o /dev/null -w '%{http_code}\n' -X POST https://kademe.campusgerman.com/api/public/placement`
+   answers 403 (503 means the secret is missing or short). One real call with a test e-mail answers 201 and a
+   `https://kademe.campusgerman.com/a/...` link; open it on a phone; delete the test student in the panel afterwards.
+5. Rollback: remove the secret and restart (the endpoint answers 503, nothing else changes), or check out the previous
+   `main` and build. Nothing to undo in the database; links already given keep working (older code reads them as
+   desktop-only exams).
 
 ## Kurs sınavları: 2026-10-28 (spec `docs/superpowers/specs/2026-10-28-course-tests-design.md`)
 
