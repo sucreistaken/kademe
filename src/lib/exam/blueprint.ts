@@ -132,6 +132,13 @@ export const blueprintConfigSchema = z
      * Optional so stored configs stay valid.
      */
     course: courseConfigSchema.optional(),
+    /**
+     * The exam may run on a phone or a tablet (the public web check,
+     * 2026-11-09). Honoured only while nothing is watched and there is no
+     * writing or speaking (mobile.ts: mobileAllowed). Optional so stored
+     * configs stay valid; absent means desktop only, as every exam was.
+     */
+    allowMobile: z.boolean().optional(),
   })
   .superRefine((cfg, ctx) => {
     const seen = new Set<Section>();

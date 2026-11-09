@@ -410,7 +410,8 @@
   "examNames": {
     "quickScreen": "Prueba rápida de nivel",
     "placement": "Prueba de nivel",
-    "levelCheck": "Control de nivel en las cuatro destrezas"
+    "levelCheck": "Control de nivel en las cuatro destrezas",
+    "webCheck": "Prueba de nivel en línea"
   },
   "section": {
     "GRAMMAR": "Gramática",

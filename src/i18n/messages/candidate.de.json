@@ -410,7 +410,8 @@
   "examNames": {
     "quickScreen": "Kurzer Einstufungstest",
     "placement": "Einstufungstest",
-    "levelCheck": "Niveaukontrolle in vier Fertigkeiten"
+    "levelCheck": "Niveaukontrolle in vier Fertigkeiten",
+    "webCheck": "Online-Einstufungstest"
   },
   "section": {
     "GRAMMAR": "Grammatik",

@@ -410,7 +410,8 @@
   "examNames": {
     "quickScreen": "Quick level screen",
     "placement": "Placement test",
-    "levelCheck": "Four-skill level check"
+    "levelCheck": "Four-skill level check",
+    "webCheck": "Online level test"
   },
   "section": {
     "GRAMMAR": "Grammar",

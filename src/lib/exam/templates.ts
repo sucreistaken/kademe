@@ -233,3 +233,40 @@ export type ReadyExamTemplate = Pick<ExamTemplate, "mode" | "name" | "summary" |
 export function readyTemplateByKey(key: string): ReadyExamTemplate | null {
   return examTemplateByKey(key) ?? courseExamTemplateByKey(key);
 }
+
+export const WEB_CHECK_KEY = "web-check";
+
+export type WebCheckTemplate = Omit<ExamTemplate, "key"> & { key: typeof WEB_CHECK_KEY };
+
+/**
+ * The public web check (2026-11-09, campusg research/09-kademe.md section 2):
+ * the level test a visitor the school's website registered takes, from a link
+ * POST /api/public/placement hands the website. It is the quick screen, with
+ * the same grammar (cloze texts A1 to B2, word banks A1 to B1, 25 minutes) and
+ * the same disabled sections, and two differences only:
+ *   - nothing is watched (PRESETS.OFF: no camera, microphone or fullscreen,
+ *     which the quick screen asks for), so the exam needs no system check;
+ *   - it runs on a phone or a tablet (`allowMobile`, see mobile.ts).
+ * The level is shown the moment the result is final (`autoRelease`, as in the
+ * quick screen); a borderline or uncertain result still waits for a teacher
+ * (docs/EXAM-ENGINE.md "Sonuç").
+ *
+ * Kept out of TEMPLATES, EXAM_TEMPLATES and readyTemplateByKey on purpose: the
+ * exam wizard, the AI exam creator and the invite form never offer it, so
+ * only the public endpoint invites to it. Built from the quick screen each
+ * time, so a later change to the quick screen's grammar reaches it too.
+ */
+export function webCheckTemplate(): WebCheckTemplate {
+  const quick = TEMPLATES.find((t) => t.key === "quick-screen");
+  if (!quick) throw new Error("the quick screen template is missing");
+  return {
+    key: WEB_CHECK_KEY,
+    mode: "PLACEMENT",
+    name: text("Çevrim içi seviye testi", "Online level test"),
+    summary: text(
+      "Hızlı taramanın 25 dakikalık dilbilgisi bölümü: A1'den B2'ye dört çoktan seçmeli boşluklu metin ve üç kelime havuzu. Gözetimsiz, telefonda da çalışır; seviye, sonuç kesinleşince öğrenciye gösterilir. Yalnız okulun web sitesi bu sınava davet eder.",
+      "The quick screen's 25-minute grammar section: four multiple-choice cloze texts and three word banks from A1 to B2. Not proctored, runs on phones too; the student sees the level once the result is final. Only the school's website invites to this exam.",
+    ),
+    config: { ...structuredClone(quick.config), proctoring: structuredClone(PRESETS.OFF), allowMobile: true },
+  };
+}

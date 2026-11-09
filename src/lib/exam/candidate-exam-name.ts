@@ -3,14 +3,18 @@ import candidateTr from "@/i18n/messages/candidate.tr.json";
 import candidateEn from "@/i18n/messages/candidate.en.json";
 import type { CandidateLocale } from "@/i18n/locale";
 import { courseGermanNameOf } from "@/lib/exam/course/templates";
-import { EXAM_TEMPLATES, type ExamTemplateKey } from "@/lib/exam/templates";
+import { EXAM_TEMPLATES, webCheckTemplate, type ExamTemplateKey, type WebCheckTemplate } from "@/lib/exam/templates";
 
 /** The dictionary key (namespace `examNames`) that holds each template's name. */
 const NAME_KEY = {
   "quick-screen": "quickScreen",
   placement: "placement",
   "level-check": "levelCheck",
-} as const satisfies Record<ExamTemplateKey, string>;
+  "web-check": "webCheck",
+} as const satisfies Record<ExamTemplateKey | WebCheckTemplate["key"], string>;
+
+/** Every template whose default name is translated: the three ready ones and the public web check. */
+const NAMED_TEMPLATES = [...EXAM_TEMPLATES, webCheckTemplate()];
 
 /** The unit `defaultExamName` writes after the minutes, per manager language. */
 const STORED_UNIT = { tr: "dk", en: "min" } as const;
@@ -41,7 +45,7 @@ export function candidateExamName(stored: string, locale: CandidateLocale): stri
   if (stored === candidateTr.exam.titlePlacement || stored === candidateEn.exam.titlePlacement) {
     return t("exam.titlePlacement");
   }
-  for (const template of EXAM_TEMPLATES) {
+  for (const template of NAMED_TEMPLATES) {
     const name = () => t(`examNames.${NAME_KEY[template.key]}`);
     for (const from of ["tr", "en"] as const) {
       const base = template.name[from];
