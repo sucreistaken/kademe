@@ -4,7 +4,7 @@ import type { SQL } from "drizzle-orm";
 import { bankCoverage, section, type BankCount } from "@/lib/exam/blueprint";
 import { COURSE_TESTS, courseSections } from "@/lib/exam/course/catalog";
 import { courseFormKey, type CourseForm, type CourseKey } from "@/lib/exam/course/types";
-import { examTemplateByKey, readyTemplateByKey } from "@/lib/exam/templates";
+import { examTemplateByKey, readyTemplateByKey, webCheckTemplate } from "@/lib/exam/templates";
 
 /**
  * ensureTemplateBlueprint over a fake database: `selects` are the rows each
@@ -198,6 +198,35 @@ describe("ensureTemplateBlueprint", () => {
       ["blueprint.publish", "new-bp"],
     ]);
     expect(audit[0].meta).toMatchObject({ template: "level-check", reason: "template-changed", replacedBy: "new-bp" });
+  });
+
+  it("publishes without a manager (the web check): no creator, audit rows without an actor", async () => {
+    const t = webCheckTemplate();
+    const r = await ensureTemplateBlueprint("o1", null, t, "tr");
+    expect(r).toMatchObject({ ok: true, created: true, blueprint: { id: "new-bp" } });
+    const bp = state.inserts.find((i) => i.table === "blueprint")!.values;
+    expect(bp).toMatchObject({ orgId: "o1", name: t.name.tr, mode: "PLACEMENT", status: "PUBLISHED", config: t.config, templateKey: "web-check", createdBy: null });
+    expect((bp as { config: { allowMobile?: boolean } }).config.allowMobile).toBe(true);
+    const audit = state.inserts.find((i) => i.table === "audit")!.values as Array<{ action: string; actorId: string | null }>;
+    expect(audit.map((a) => [a.action, a.actorId])).toEqual([
+      ["blueprint.create", null],
+      ["blueprint.publish", null],
+    ]);
+  });
+
+  it("without a manager, an older web check is retired by nobody and the current one published", async () => {
+    const t = webCheckTemplate();
+    const older = { ...t.config, sections: t.config.sections.map((s) => (s.section === "GRAMMAR" ? { ...s, durationMinutes: 20 } : s)) };
+    state.selects = [[{ id: "old-web", templateKey: "web-check", status: "PUBLISHED", mode: t.mode, config: older }]];
+    state.retired = [{ id: "old-web" }];
+    const r = await ensureTemplateBlueprint("o1", null, t, "tr");
+    expect(r).toMatchObject({ ok: true, created: true });
+    const audit = state.inserts.find((i) => i.table === "audit")!.values as Array<{ action: string; actorId: string | null; subjectId: string }>;
+    expect(audit.map((a) => [a.action, a.subjectId, a.actorId])).toEqual([
+      ["blueprint.archive", "old-web", null],
+      ["blueprint.create", "new-bp", null],
+      ["blueprint.publish", "new-bp", null],
+    ]);
   });
 
   it("keeps the old exam published when the bank does not cover the current template", async () => {

@@ -59,10 +59,15 @@ export function isCurrentTemplate(row: Pick<Blueprint, "mode" | "config">, templ
  * a second call that read the same old row waits on its row lock, then
  * retires nothing (the row is no longer PUBLISHED), its insert does nothing
  * and it reads the winner's row.
+ *
+ * `userId` is the manager whose invite publishes it, or null when no person
+ * does: the public web check (POST /api/public/placement) publishes its
+ * template itself, so the exam has no creator and the audit rows no actor
+ * (both columns are nullable).
  */
 export async function ensureTemplateBlueprint(
   orgId: string,
-  userId: string,
+  userId: string | null,
   template: ReadyExamTemplate,
   locale: Locale,
 ): Promise<TemplateBlueprintResult> {
