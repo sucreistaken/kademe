@@ -73,8 +73,12 @@ Kademe may be changed for this. Written in English (global rule from 2026-10-16)
 - **Open for the owner**: (1) a borderline or imprecise result still goes to a teacher (`isUncertainResult`, sd over
   0.6 or within 0.25 of a cut): the test run above had sd 0.59, so some visitors will read that the result "is close
   to a boundary, so your teacher will review it" (`result.pendingReview`) instead of a level; decide whether the web
-  check should release those too. (2) The section intro still says the four options appear "on the right"
-  (`section.ruleGRAMMARTexts`; on a phone they sit at the bottom). (3) The consent text is the school's exam text;
+  check should release those too. (2) Done (`e38e1d5`, `79d3a8d`): the intro's cloze rule
+  (`examNav.ruleGRAMMARTexts` / `ruleGRAMMARCloze`) and the warm-up's cloze hint said the options appear "on the
+  right", where ClozeItem puts them only from lg (1024px) up. An exam that runs on phones now shows "on the right"
+  from lg up and "below the text" under it (`ClozeLayoutText`, CSS at the cloze grid's breakpoint), in all five
+  candidate languages; other exams keep their one line. vitest 499 files 7019/7019, `tsc` and `eslint` as before;
+  not looked at in a browser. (3) The consent text is the school's exam text;
   research 09 suggests a short web version. (4) Cap 3 a day and 3-day links are constants in
   `public-placement.ts`. (5) A copy of the web-check exam made in the editor keeps `allowMobile`; it only acts
   while the copy stays unwatched without writing or speaking.
