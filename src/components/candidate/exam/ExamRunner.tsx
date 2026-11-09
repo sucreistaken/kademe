@@ -764,6 +764,7 @@ export function ExamRunner({
             mode={state.mode}
             claimedLevel={state.claimedLevel}
             clipboardBlock={policy.clipboardBlock}
+            allowMobile={state.allowMobile === true}
             warmHere={warmHere}
             warmDo={warmDo}
             busy={busy}

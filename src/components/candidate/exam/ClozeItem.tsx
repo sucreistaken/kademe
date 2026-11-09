@@ -20,6 +20,9 @@ import type { ItemProps } from "./ItemView";
  * On a phone (below 640px, the web check) it sits under the text instead, so
  * it is pinned above the bottom bar like the word pool, with the words in two
  * columns and no keyboard hint. From 640px up it is as it was.
+ * The panel is on the right only from the lg breakpoint up (the grid's two
+ * columns); below lg it follows the text. ClozeLayoutText switches its words
+ * at the same breakpoint.
  */
 export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
   const t = useT("exam");
@@ -202,5 +205,21 @@ export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
         ) : null}
       </div>
     </div>
+  );
+}
+
+/**
+ * A line that says where the cloze words appear, for an exam that runs on
+ * phones (allowMobile, the web check): `wide` (on the right) from the lg
+ * breakpoint up, where the grid above has two columns, and `narrow` (below the
+ * text) under it. Switched in CSS at the grid's own breakpoint, so the first
+ * paint already fits the screen and a screen reader reads only the visible one.
+ */
+export function ClozeLayoutText({ wide, narrow }: { wide: string; narrow: string }) {
+  return (
+    <span>
+      <span className="max-lg:hidden">{wide}</span>
+      <span className="lg:hidden">{narrow}</span>
+    </span>
   );
 }

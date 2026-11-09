@@ -14,7 +14,8 @@ import { useTutorialSuppression } from "@/components/candidate/exam/tutorial/use
 import { TutorialPlayer } from "@/components/candidate/exam/tutorial/TutorialPlayer";
 import { TUTORIAL_SCRIPTS } from "@/components/candidate/exam/tutorial/scripts";
 import type { WarmupAction, WarmupState } from "@/components/candidate/exam/warmup/warmup-state";
-import { textRuleKey } from "@/components/candidate/exam/section-rule";
+import { belowRuleKey, textRuleKey } from "@/components/candidate/exam/section-rule";
+import { ClozeLayoutText } from "@/components/candidate/exam/ClozeItem";
 import type { CandidateState } from "@/lib/exam-flow";
 import { useT } from "@/i18n/candidate-client";
 import { cn } from "@/lib/cn";
@@ -31,6 +32,7 @@ export function SectionIntro({
   mode,
   claimedLevel,
   clipboardBlock,
+  allowMobile = false,
   warmHere,
   warmDo,
   busy,
@@ -45,6 +47,8 @@ export function SectionIntro({
   claimedLevel: CandidateState["claimedLevel"];
   /** Writing: whether pasting is blocked, which changes the writing rule. */
   clipboardBlock: boolean;
+  /** The exam runs on phones (the web check): a rule that places the cloze words follows the layout. */
+  allowMobile?: boolean;
   warmHere: WarmupState;
   warmDo: (action: WarmupAction) => unknown;
   busy: boolean;
@@ -79,6 +83,9 @@ export function SectionIntro({
             : s.textOnly
               ? n("texts", { n: s.itemsLabel })
               : t("items", { n: s.itemsLabel });
+        const perText = { n: s.itemsLabel, minutes: Math.max(1, Math.round(s.minutes / Number(s.itemsLabel))) };
+        // Only an exam that runs on phones says where the words are by screen width; every other exam keeps one line.
+        const below = s.textOnly && allowMobile ? belowRuleKey(textRuleKey(s.textKinds)) : null;
         return (
           <>
             <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
@@ -102,7 +109,7 @@ export function SectionIntro({
             <ul className="mt-4 flex flex-col gap-1.5 text-[15px] leading-[1.5] text-ink">
               {[
                 s.textOnly
-                  ? n(textRuleKey(s.textKinds), { n: s.itemsLabel, minutes: Math.max(1, Math.round(s.minutes / Number(s.itemsLabel))) })
+                  ? n(textRuleKey(s.textKinds), perText)
                   : s.navigable && cur.section === "GRAMMAR"
                     // A course test's form is not ordered by difficulty, so it must not promise "easier to harder".
                     ? n(mode === "COURSE_TEST" ? "ruleGRAMMARCourse" : "ruleGRAMMARFixed")
@@ -116,10 +123,10 @@ export function SectionIntro({
                           : sec(`rule${cur.section}` as "ruleGRAMMAR", { plays: maxPlays }),
                 ...(s.navigable ? [n("ruleBack"), n("ruleReview")] : [t("ruleNoBack")]),
                 t("ruleClock"),
-              ].map((rule) => (
+              ].map((rule, i) => (
                 <li key={rule} className="flex items-start gap-3">
                   <span aria-hidden className="mt-[8px] size-2 shrink-0 rounded-full bg-accent" />
-                  {rule}
+                  {i === 0 && below ? <ClozeLayoutText wide={rule} narrow={n(below, perText)} /> : rule}
                 </li>
               ))}
             </ul>
