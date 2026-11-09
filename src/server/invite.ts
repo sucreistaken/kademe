@@ -7,6 +7,7 @@ import type { CandidateLocale } from "@/i18n/locale";
 import { candidateExamName } from "@/lib/exam/candidate-exam-name";
 import { isCourseForm, singleInviteForm } from "@/lib/exam/course/forms";
 import type { CourseForm, CourseKey } from "@/lib/exam/course/types";
+import { mobileAllowed } from "@/lib/exam/mobile";
 import type { Cefr } from "@/lib/exam/types";
 import { outboxLinkPlaceholder } from "@/lib/outbox";
 import { resolveSigningSecret } from "@/lib/signing-secret";
@@ -51,6 +52,12 @@ export type InviteInput = {
    * else A (a list of students chooses per row, see course/forms.ts).
    */
   courseForm?: CourseForm | null;
+  /** The student's phone, when the invitation already knows it (the public web check); omitted leaves it to the info step. */
+  phone?: string | null;
+  /** Where the student came from, kept on the candidate row (`candidates.extra`): the website's lead id and UTM tags. */
+  extra?: Record<string, string>;
+  /** How the invitation was made, written into its audit row (`via`, e.g. "public-placement"); omitted for the panel and the scripts. */
+  via?: string;
 };
 
 export type InviteResult =
@@ -82,21 +89,28 @@ function linkSecret(): string | null {
 const origin = (baseUrl?: string) => baseUrl ?? process.env.APP_ORIGIN ?? "http://localhost:3100";
 export const examLinkUrl = (raw: string, baseUrl?: string) => `${origin(baseUrl)}/a/${raw}`;
 
-/** The outbox message, with `link` where the student's link goes. The exam needs a computer (desktop only, 2026-10-14). */
-function inviteBody(input: Pick<InviteInput, "fullName" | "locale">, examName: string, link: string): string {
+/**
+ * The outbox message, with `link` where the student's link goes. The exam
+ * needs a computer (desktop only, 2026-10-14), and the last paragraph says so;
+ * an exam that runs on phones (`onPhones`, the web check) leaves it out.
+ */
+function inviteBody(input: Pick<InviteInput, "fullName" | "locale">, examName: string, link: string, onPhones = false): string {
   const name = input.fullName.trim();
-  switch (input.locale) {
-    case "en":
-      return [name ? `Hello ${name},` : "Hello,", `Your German exam "${examName}" is ready. To start: ${link}`, "Please open the link on a computer; the exam does not run on a phone or tablet."].join("\n\n");
-    case "de":
-      return [name ? `Hallo ${name},` : "Hallo,", `Ihre Deutschprüfung "${examName}" ist bereit. Zum Starten: ${link}`, "Bitte öffnen Sie den Link an einem Computer; die Prüfung läuft nicht auf einem Handy oder Tablet."].join("\n\n");
-    case "es":
-      return [name ? `Hola ${name},` : "Hola,", `Su examen de alemán "${examName}" está listo. Para empezar: ${link}`, "Abra el enlace en un ordenador; el examen no funciona en un móvil ni en una tableta."].join("\n\n");
-    case "ar":
-      return [name ? `مرحباً ${name}،` : "مرحباً،", `امتحان اللغة الألمانية "${examName}" جاهز. للبدء: ${link}`, "يرجى فتح الرابط على جهاز كمبيوتر؛ لا يعمل الامتحان على الهاتف أو الجهاز اللوحي."].join("\n\n");
-    case "tr":
-      return [name ? `Merhaba ${name},` : "Merhaba,", `"${examName}" Almanca sınavınız hazır. Başlamak için: ${link}`, "Linki bir bilgisayarda açın; sınav telefon veya tablette çalışmaz."].join("\n\n");
-  }
+  const paragraphs = ((): [string, string, string] => {
+    switch (input.locale) {
+      case "en":
+        return [name ? `Hello ${name},` : "Hello,", `Your German exam "${examName}" is ready. To start: ${link}`, "Please open the link on a computer; the exam does not run on a phone or tablet."];
+      case "de":
+        return [name ? `Hallo ${name},` : "Hallo,", `Ihre Deutschprüfung "${examName}" ist bereit. Zum Starten: ${link}`, "Bitte öffnen Sie den Link an einem Computer; die Prüfung läuft nicht auf einem Handy oder Tablet."];
+      case "es":
+        return [name ? `Hola ${name},` : "Hola,", `Su examen de alemán "${examName}" está listo. Para empezar: ${link}`, "Abra el enlace en un ordenador; el examen no funciona en un móvil ni en una tableta."];
+      case "ar":
+        return [name ? `مرحباً ${name}،` : "مرحباً،", `امتحان اللغة الألمانية "${examName}" جاهز. للبدء: ${link}`, "يرجى فتح الرابط على جهاز كمبيوتر؛ لا يعمل الامتحان على الهاتف أو الجهاز اللوحي."];
+      case "tr":
+        return [name ? `Merhaba ${name},` : "Merhaba,", `"${examName}" Almanca sınavınız hazır. Başlamak için: ${link}`, "Linki bir bilgisayarda açın; sınav telefon veya tablette çalışmaz."];
+    }
+  })();
+  return (onPhones ? paragraphs.slice(0, 2) : paragraphs).join("\n\n");
 }
 
 /** The outbox subject line, in the student's language. */
@@ -154,7 +168,7 @@ export async function createInvitation(input: InviteInput): Promise<InviteResult
   const result = await db.transaction(async (tx) => {
     const [candidate] = await tx
       .insert(candidates)
-      .values({ orgId: input.orgId, fullName: input.fullName, email: input.email })
+      .values({ orgId: input.orgId, fullName: input.fullName, email: input.email, ...(input.phone ? { phone: input.phone } : {}), ...(input.extra ? { extra: input.extra } : {}) })
       .returning();
     const [assessment] = await tx
       .insert(assessments)
@@ -189,7 +203,7 @@ export async function createInvitation(input: InviteInput): Promise<InviteResult
       kind: "INVITE",
       toEmail: input.email,
       subject: inviteSubject(input.locale, shownName),
-      body: inviteBody(input, shownName, outboxLinkPlaceholder(assessment.id)),
+      body: inviteBody(input, shownName, outboxLinkPlaceholder(assessment.id), mobileAllowed(snapshot)),
     });
     await tx.insert(auditLogs).values({
       orgId: input.orgId,
@@ -197,7 +211,7 @@ export async function createInvitation(input: InviteInput): Promise<InviteResult
       action: "student.invite",
       subjectType: "assessment",
       subjectId: assessment.id,
-      meta: { blueprintId: blueprint.id, mode: blueprint.mode, claimedLevel, ...(course && courseForm ? { course: course.key, form: courseForm } : {}) },
+      meta: { blueprintId: blueprint.id, mode: blueprint.mode, claimedLevel, ...(course && courseForm ? { course: course.key, form: courseForm } : {}), ...(input.via ? { via: input.via } : {}) },
     });
     return { assessmentId: assessment.id, candidateId: candidate.id };
   });

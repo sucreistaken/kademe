@@ -57,6 +57,7 @@ vi.mock("@/server/exam-exposure", () => ({
 }));
 
 import { courseBlueprint } from "@/lib/exam/course/config";
+import { examTemplateByKey, webCheckTemplate } from "@/lib/exam/templates";
 import { outboxLinkPlaceholder } from "@/lib/outbox";
 import { createInvitation, examLinkToken, inviteLink, linkVerdict } from "./invite";
 
@@ -127,6 +128,53 @@ describe("createInvitation", () => {
     state.selects = [[{ ...blueprint, mode: "LEVEL_VERIFICATION" }]];
     expect(await createInvitation({ orgId: "o1", blueprintId: "bp1", fullName: "A B", email: "a@b.co", claimedLevel: null, locale: "tr", invitedBy: null })).toEqual({ ok: false, code: "CLAIM_REQUIRED" });
     expect(state.inserts).toEqual([]);
+  });
+});
+
+describe("createInvitation: the public web check (2026-11-09)", () => {
+  const web = { ...blueprint, id: "bp-web", name: webCheckTemplate().name.tr, config: webCheckTemplate().config };
+  const values = (table: string) => state.inserts.find((i) => i.table === table)!.values;
+
+  it("keeps the phone and the origin on the candidate and says in the audit row how it was made", async () => {
+    state.selects = [[web]];
+    const r = await createInvitation({
+      orgId: "o1",
+      blueprintId: "bp-web",
+      fullName: "Ada Lovelace",
+      email: "ada@example.com",
+      claimedLevel: null,
+      locale: "en",
+      invitedBy: null,
+      ttlDays: 3,
+      phone: "+49 30 1234567",
+      extra: { source: "web-check", crmLeadId: "lead-7", utm_source: "instagram" },
+      via: "public-placement",
+    });
+    expect(r.ok).toBe(true);
+    expect(values("candidates")).toEqual({ orgId: "o1", fullName: "Ada Lovelace", email: "ada@example.com", phone: "+49 30 1234567", extra: { source: "web-check", crmLeadId: "lead-7", utm_source: "instagram" } });
+    expect(values("assessments")).toMatchObject({ invitedBy: null, locale: "en" });
+    expect(values("auditLogs")).toMatchObject({ actorId: null, action: "student.invite", meta: { blueprintId: "bp-web", mode: "PLACEMENT", via: "public-placement" } });
+  });
+
+  it("an invitation from the panel writes the candidate and the audit row as before", async () => {
+    state.selects = [[blueprint]];
+    await createInvitation({ orgId: "o1", blueprintId: "bp1", fullName: "Ayşe Yılmaz", email: "ayse@ornek.com", claimedLevel: null, locale: "tr", invitedBy: "u1" });
+    expect(values("candidates")).toEqual({ orgId: "o1", fullName: "Ayşe Yılmaz", email: "ayse@ornek.com" });
+    expect(values("auditLogs").meta).toEqual({ blueprintId: "bp1", mode: "PLACEMENT", claimedLevel: null });
+  });
+
+  it.each(["tr", "en", "de", "es", "ar"] as const)("%s: the mail of an exam that runs on phones does not send the student to a computer", async (locale) => {
+    state.selects = [[web]];
+    await createInvitation({ orgId: "o1", blueprintId: "bp-web", fullName: "Ada", email: "ada@example.com", claimedLevel: null, locale, invitedBy: null });
+    const onPhone = (values("messageOutbox") as { body: string }).body;
+    state.inserts = [];
+    state.selects = [[{ ...web, config: examTemplateByKey("quick-screen")!.config }]];
+    await createInvitation({ orgId: "o1", blueprintId: "bp-web", fullName: "Ada", email: "ada@example.com", claimedLevel: null, locale, invitedBy: null });
+    const desktop = (values("messageOutbox") as { body: string }).body;
+    // The same greeting and link line; only the desktop-only paragraph is gone.
+    expect(desktop.startsWith(onPhone)).toBe(true);
+    expect(desktop.split("\n\n")).toHaveLength(3);
+    expect(onPhone.split("\n\n")).toHaveLength(2);
   });
 });
 
