@@ -58,6 +58,7 @@ describe("section rule for a text-only grammar section", () => {
       const pairs: Array<[string, string]> = [
         [m.examNav.ruleGRAMMARCloze, m.examNav.ruleGRAMMARClozeBelow],
         [m.examNav.ruleGRAMMARTexts, m.examNav.ruleGRAMMARTextsBelow],
+        [m.examFlow.warmHintCloze, m.examFlow.warmHintClozeBelow],
       ];
       for (const [wideText, belowText] of pairs) {
         expect(wideText, locale).toContain(wide);

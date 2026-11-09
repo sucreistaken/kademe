@@ -1223,6 +1223,7 @@
     "warmHintChoice": "Haga clic en una de las opciones. También puede elegir con el ratón o con las teclas de flecha.",
     "warmHintCTest": "Se da el comienzo de cada palabra. Arrastre los fragmentos que faltan a los huecos o haga clic en ellos. Sobran algunos fragmentos.",
     "warmHintCloze": "Haga clic en un hueco y a la derecha aparecen cuatro opciones. Al elegir una, pasa al siguiente hueco; haga clic en un hueco relleno para cambiar su elección.",
+    "warmHintClozeBelow": "Haga clic en un hueco y debajo del texto aparecen cuatro opciones. Al elegir una, pasa al siguiente hueco; haga clic en un hueco relleno para cambiar su elección.",
     "warmHintWordBank": "Arrastre las palabras a los huecos o haga clic en ellas para colocarlas. Sobran algunas palabras. Haga clic en una palabra colocada para retirarla.",
     "warmHintOpen": "Escriba una palabra en cada hueco. No escriba más de una palabra. Use los botones de abajo para ä, ö, ü y ß.",
     "warmHintTfng": "Para cada frase elija Verdadero, Falso o No está en el texto.",

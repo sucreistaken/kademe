@@ -4,6 +4,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { CandidateColumn } from "@/components/candidate/Shell";
 import { buttonVariants } from "@/components/ui/button";
 import { ItemView } from "@/components/candidate/exam/ItemView";
+import { ClozeLayoutText } from "@/components/candidate/exam/ClozeItem";
 import { SPEAKING_VIDEO, SpeakingPanel } from "@/components/candidate/exam/SpeakingPanel";
 import { hintOf, practiceFor, practiceItem } from "@/components/candidate/exam/warmup/practice-data";
 import type { WarmupState } from "@/components/candidate/exam/warmup/warmup-state";
@@ -104,6 +105,7 @@ export function WarmupPractice({
   step,
   maxPlays,
   position,
+  allowMobile = false,
   onNext,
   onLeave,
 }: {
@@ -113,6 +115,8 @@ export function WarmupPractice({
   step: number;
   maxPlays: number;
   position: number;
+  /** The exam runs on phones (the web check): the cloze hint follows the layout (ClozeLayoutText). */
+  allowMobile?: boolean;
   onNext: () => void;
   onLeave: () => void;
 }) {
@@ -140,7 +144,9 @@ export function WarmupPractice({
       <h1 ref={headingRef} tabIndex={-1} className="mt-3 text-[15px] font-medium leading-[1.6] text-ink-2 outline-none">
         {t("warmNote")}
       </h1>
-      <p className="mt-2 rounded-[10px] bg-canvas px-4 py-3 text-[14px] leading-[1.6] text-ink-2">{hintText}</p>
+      <p className="mt-2 rounded-[10px] bg-canvas px-4 py-3 text-[14px] leading-[1.6] text-ink-2">
+        {allowMobile && hint === "cloze" ? <ClozeLayoutText wide={hintText} narrow={t("warmHintClozeBelow")} /> : hintText}
+      </p>
 
       <div className="mt-6">
         {def.passage ? (

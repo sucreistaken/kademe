@@ -1223,6 +1223,7 @@
     "warmHintChoice": "Seçeneklerden birine tıklayın. Fareyle ya da ok tuşlarıyla seçebilirsiniz.",
     "warmHintCTest": "Her kelimenin başı hazır. Eksik parçaları sürükleyerek ya da tıklayarak boşluklara yerleştirin. Bazı parçalar artar.",
     "warmHintCloze": "Bir boşluğa tıklayın, sağda dört seçenek çıkar. Birini seçince sıradaki boşluğa geçilir; dolu bir boşluğa tıklayarak seçiminizi değiştirebilirsiniz.",
+    "warmHintClozeBelow": "Bir boşluğa tıklayın, metnin altında dört seçenek çıkar. Birini seçince sıradaki boşluğa geçilir; dolu bir boşluğa tıklayarak seçiminizi değiştirebilirsiniz.",
     "warmHintWordBank": "Kelimeleri sürükleyerek ya da tıklayarak boşluklara yerleştirin. Bazı kelimeler artar. Yerleştirdiğiniz kelimeye tıklarsanız geri döner.",
     "warmHintOpen": "Her boşluğa bir kelime yazın. Birden fazla kelime yazmayın. ä, ö, ü ve ß için alttaki tuşları kullanın.",
     "warmHintTfng": "Her cümle için Doğru, Yanlış ya da Metinde yok seçin.",

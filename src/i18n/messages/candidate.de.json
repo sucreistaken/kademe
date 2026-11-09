@@ -1223,6 +1223,7 @@
     "warmHintChoice": "Klicken Sie auf eine der Optionen. Sie können auch mit der Maus oder den Pfeiltasten wählen.",
     "warmHintCTest": "Der Anfang jedes Wortes ist vorgegeben. Ziehen Sie die fehlenden Teile in die Lücken oder klicken Sie sie an. Einige Teile bleiben übrig.",
     "warmHintCloze": "Klicken Sie auf eine Lücke, dann erscheinen rechts vier Optionen. Mit der Auswahl springen Sie zur nächsten Lücke; klicken Sie auf eine ausgefüllte Lücke, um Ihre Wahl zu ändern.",
+    "warmHintClozeBelow": "Klicken Sie auf eine Lücke, dann erscheinen unter dem Text vier Optionen. Mit der Auswahl springen Sie zur nächsten Lücke; klicken Sie auf eine ausgefüllte Lücke, um Ihre Wahl zu ändern.",
     "warmHintWordBank": "Ziehen Sie die Wörter in die Lücken oder klicken Sie sie an, um sie einzusetzen. Einige Wörter bleiben übrig. Klicken Sie auf ein eingesetztes Wort, um es zurückzunehmen.",
     "warmHintOpen": "Schreiben Sie in jede Lücke ein Wort. Schreiben Sie nicht mehr als ein Wort. Für ä, ö, ü und ß nutzen Sie die Tasten darunter.",
     "warmHintTfng": "Wählen Sie für jeden Satz Richtig, Falsch oder Steht nicht im Text.",

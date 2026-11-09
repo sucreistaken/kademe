@@ -1223,6 +1223,7 @@
     "warmHintChoice": "Click one of the options. You can also pick with the mouse or the arrow keys.",
     "warmHintCTest": "The start of each word is given. Drag the missing pieces into the gaps or click them. Some pieces are left over.",
     "warmHintCloze": "Click a gap and four options appear on the right. Picking one moves you on to the next gap; click a filled gap to change your choice.",
+    "warmHintClozeBelow": "Click a gap and four options appear below the text. Picking one moves you on to the next gap; click a filled gap to change your choice.",
     "warmHintWordBank": "Drag the words into the gaps or click them to place them. Some words are left over. Click a placed word to take it back.",
     "warmHintOpen": "Type one word in each gap. Do not write more than one word. Use the buttons below for ä, ö, ü and ß.",
     "warmHintTfng": "For each sentence choose True, False or Not in the text.",

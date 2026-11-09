@@ -753,6 +753,7 @@ export function ExamRunner({
             step={warmHere.step}
             maxPlays={state.maxPlays}
             position={cur.position}
+            allowMobile={state.allowMobile === true}
             onNext={() => warmDo({ type: "next", total: practiceFor(cur.section, sectionHere?.textKinds).length })}
             onLeave={() => warmDo({ type: "leave" })}
           />
