@@ -17,6 +17,7 @@ import { examToday } from "./today";
 import { examCreator } from "./create/exam";
 import { questionSetCreator } from "./create/question-set";
 import { examAdvancedCards } from "./advanced-cards";
+import { webCheckPlacement } from "./public-placement";
 
 async function requireExam(ctx: CandidateContext): Promise<ExamCandidateContext> {
   const exam = await loadExamContext(ctx);
@@ -33,6 +34,8 @@ export const languageExamModule: SolutionModule = {
   today: examToday,
   creators: [examCreator, questionSetCreator],
   advancedCards: examAdvancedCards,
+  // The website's level test (2026-11-09): a web-check link for a registered visitor.
+  publicPlacement: (request) => webCheckPlacement(request),
 
   async proctorPolicy(assessmentId) {
     const [row] = await db

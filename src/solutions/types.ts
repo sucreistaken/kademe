@@ -3,7 +3,7 @@ import type { StatusTone } from "@/components/ui/status-dot";
 import type { Executor } from "@/db/executor";
 import type { consentTexts, mediaAssets } from "@/db/schema";
 import type { solution } from "@/db/schema/enums";
-import type { Locale } from "@/i18n/locale";
+import type { CandidateLocale, Locale } from "@/i18n/locale";
 import type { Capability } from "@/lib/authorize";
 import type { CandidateContext, ResolveResult } from "@/lib/candidate-context";
 import type { ProctoringPolicy } from "@/lib/proctor/policy";
@@ -191,6 +191,33 @@ export interface Creator<P = unknown, D = unknown> {
  */
 export type AdvancedCard = { key: string; title: string; lines: string[]; href: string; linkLabel?: string };
 
+// ---------------------------------------------------------------------------
+// The website's public level test (2026-11-09, POST /api/public/placement)
+// ---------------------------------------------------------------------------
+
+/** The five UTM tags a request may carry. */
+export type UtmTag = "source" | "medium" | "campaign" | "term" | "content";
+
+/** A visitor the school's website registered, as the core checked the request (src/lib/public-placement.ts). */
+export type PublicPlacementRequest = {
+  fullName: string;
+  email: string;
+  phone: string | null;
+  locale: CandidateLocale;
+  crmLeadId: string | null;
+  utm: Partial<Record<UtmTag, string>>;
+};
+
+/**
+ * `reused`: the visitor's open link from the last 24 hours, not a new one.
+ * NOT_SET_UP: no organisation to invite into. DAILY_LIMIT: this e-mail had its
+ * new links for the day. TEMPLATE_COVERAGE: the bank cannot fill the test.
+ * INVITE_FAILED: the invitation was refused.
+ */
+export type PublicPlacementResult =
+  | { ok: true; url: string; expiresAt: Date; reused: boolean }
+  | { ok: false; code: "NOT_SET_UP" | "DAILY_LIMIT" | "TEMPLATE_COVERAGE" | "INVITE_FAILED" };
+
 /** Server-only: everything a solution answers for the core. */
 export interface SolutionModule extends SolutionManifest {
   /** Rows for the shared Today screen. */
@@ -251,4 +278,11 @@ export interface SolutionModule extends SolutionManifest {
   creators?: Creator[];
   /** Advanced page, "What you have": this solution's area cards. Omitted: none. */
   advancedCards?(orgId: string, locale: Locale): Promise<AdvancedCard[]>;
+  /**
+   * The website's public level test (2026-11-09): a test link for a visitor
+   * the school's website registered, asked for only through POST
+   * /api/public/placement (which checked the caller's secret and the body).
+   * Omitted: the solution offers none.
+   */
+  publicPlacement?(request: PublicPlacementRequest): Promise<PublicPlacementResult>;
 }
