@@ -17,6 +17,9 @@ import type { ItemProps } from "./ItemView";
  * empty one; a filled gap opens again when clicked. The number keys 1 to 3 or 4
  * pick, as many as the open gap has words.
  * The panel sticks while a long text scrolls, so the options stay in reach.
+ * On a phone (below 640px, the web check) it sits under the text instead, so
+ * it is pinned above the bottom bar like the word pool, with the words in two
+ * columns and no keyboard hint. From 640px up it is as it was.
  */
 export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
   const t = useT("exam");
@@ -143,7 +146,10 @@ export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
           </p>
         </div>
         {openGap && open ? (
-          <div id={panelId} className="rounded-[14px] border border-line bg-surface p-5 lg:sticky lg:top-24">
+          <div
+            id={panelId}
+            className="rounded-[14px] border border-line bg-surface p-5 lg:sticky lg:top-24 max-sm:sticky max-sm:bottom-[calc(var(--step-footer-space,112px)+var(--step-notice-space,0px)+0.5rem)] max-sm:z-10 max-sm:max-h-[42dvh] max-sm:overflow-y-auto max-sm:overscroll-contain max-sm:p-3 max-sm:shadow-panel"
+          >
             <h3
               {...ui}
               ref={heading}
@@ -158,7 +164,7 @@ export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
               {ti("gapOf", { n: place.n, total: place.total })}
               {chosen ? `, ${ti("clozeChosen", { word: chosen })}` : ""}
             </p>
-            <div role="radiogroup" aria-labelledby={headingId} lang="de" className="mt-3 flex flex-col gap-2">
+            <div role="radiogroup" aria-labelledby={headingId} lang="de" className="mt-3 flex flex-col gap-2 max-sm:mt-2 max-sm:grid max-sm:grid-cols-2">
               {options.map((word, i) => {
                 const on = word === chosen;
                 return (
@@ -173,7 +179,7 @@ export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
                     onKeyDown={(e) => moveFocus(e, i)}
                     onClick={() => pickOption(i)}
                     className={cn(
-                      "flex min-h-12 w-full items-center gap-3 rounded-[10px] border bg-surface px-4 py-3 text-start text-[16px] transition-colors",
+                      "flex min-h-12 w-full items-center gap-3 rounded-[10px] border bg-surface px-4 py-3 text-start text-[16px] transition-colors max-sm:min-h-11 max-sm:gap-2 max-sm:px-3 max-sm:py-2",
                       on ? "border-accent bg-accent-soft text-ink" : "border-line text-ink hover:border-line-strong",
                     )}
                   >
@@ -191,7 +197,7 @@ export function ClozeItem({ item, answer, onChange, disabled }: ItemProps) {
                 );
               })}
             </div>
-            <p {...ui} className="mt-3 text-[12.5px] text-muted">{t("clozeKeys", { max: options.length })}</p>
+            <p {...ui} className="mt-3 text-[12.5px] text-muted max-sm:hidden">{t("clozeKeys", { max: options.length })}</p>
           </div>
         ) : null}
       </div>

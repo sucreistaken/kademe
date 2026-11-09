@@ -16,10 +16,18 @@ function Action({ action, variant, compact = false, exam = false }: { action: Fo
   // (the flag is as wide in "Mark" as in "Marked") and the bar never changes size.
   // The widths are EXAM_BAR_WIDTH; while it works, the button shows only its
   // spinner and says the work to screen readers, so a long "saving" never overflows.
+  // On a phone (below 640px, the web check) the fixed widths cannot fit: a
+  // button with an icon (the flag) shows only its icon, its words for screen
+  // readers, and the primary button is as wide as its words.
+  const iconOnlyOnPhone = exam && variant === "secondary" && action.kind === "button" && !!action.icon;
   const size = compact
     ? "h-12 w-full px-4 text-[16px]"
     : exam
-      ? cn("h-11 shrink-0 px-3 text-[16px] whitespace-nowrap", variant === "primary" ? "w-[176px]" : "w-[168px]")
+      ? cn(
+          "h-11 shrink-0 px-3 text-[16px] whitespace-nowrap",
+          variant === "primary" ? "w-[176px] max-sm:w-auto max-sm:min-w-[96px] max-sm:px-4" : "w-[168px]",
+          variant === "secondary" && (iconOnlyOnPhone ? "max-sm:w-11 max-sm:px-0" : "max-sm:w-auto"),
+        )
       : "h-[52px] min-w-[200px] shrink-0 px-6 text-[16px]";
   if (action.kind === "link") {
     return (
@@ -55,7 +63,7 @@ function Action({ action, variant, compact = false, exam = false }: { action: Fo
       onClick={state.mode === "ready" ? action.onClick : undefined}
     >
       {state.mode === "busy" ? <Spinner aria-hidden="true" className="size-4" role={undefined} aria-label={undefined} /> : action.icon}
-      {exam && state.mode === "busy" ? <span className="sr-only">{state.label}</span> : state.label}
+      {exam && state.mode === "busy" ? <span className="sr-only">{state.label}</span> : iconOnlyOnPhone ? <span className="max-sm:sr-only">{state.label}</span> : state.label}
     </button>
   );
 }
@@ -87,6 +95,7 @@ export function StepFooter({
   wide = false,
   notice,
   status,
+  stackOnPhone = false,
 }: {
   primary?: FooterAction | null;
   secondary?: FooterAction | null;
@@ -119,7 +128,9 @@ export function StepFooter({
    * way back), the note (the question strip) fills the middle, and the flag and
    * the primary button have fixed widths on the right (an invisible slot keeps
    * the flag's width when there is no flag). No hint and no reasons: what used
-   * to wrap in the bar goes in `notice` and `status`. Off by default.
+   * to wrap in the bar goes in `notice` and `status`. Off by default. Below
+   * 640px (a phone, the web check) the way back and the flag are icon buttons
+   * and the primary button fits its words, so the row fits a 360px screen.
    */
   exam?: boolean;
   /**
@@ -140,6 +151,13 @@ export function StepFooter({
   notice?: ReactNode;
   /** Exam bar only: what the screen reader hears politely (Saving / Saved); never drawn. */
   status?: string | null;
+  /**
+   * The default bar on a phone (below 640px, the web check's review step): the
+   * button takes the whole width and the way back goes under it, instead of
+   * the two running into each other on one line. Off by default: every other
+   * bar draws exactly as before.
+   */
+  stackOnPhone?: boolean;
 }) {
   const bar = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -247,16 +265,16 @@ export function StepFooter({
                   type="button"
                   disabled={back.disabled}
                   onClick={back.onClick}
-                  className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "h-11 w-[112px] shrink-0 px-3 text-[16px] whitespace-nowrap")}
+                  className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "h-11 w-[112px] shrink-0 px-3 text-[16px] whitespace-nowrap max-sm:w-11 max-sm:px-0")}
                 >
                   <ChevronLeft className="size-4 rtl:-scale-x-100" strokeWidth={2} aria-hidden />
-                  {back.label}
+                  <span className="max-sm:sr-only">{back.label}</span>
                 </button>
               ) : (
-                <div aria-hidden className="w-[112px] shrink-0" />
+                <div aria-hidden className="w-[112px] shrink-0 max-sm:w-11" />
               )}
               <div className="min-w-0 flex-1">{note}</div>
-              {secondary ? <Action action={secondary} variant="secondary" exam /> : <div aria-hidden className="w-[168px] shrink-0" />}
+              {secondary ? <Action action={secondary} variant="secondary" exam /> : <div aria-hidden className="w-[168px] shrink-0 max-sm:w-11" />}
               {primary ? <Action action={primary} variant="primary" exam /> : null}
             </div>
             {/* The work under way and the save state, said politely and never drawn (the region exists before its words do). */}
@@ -276,9 +294,16 @@ export function StepFooter({
         {noticeLayer}
         {journey ? <JourneyProgress steps={journey.steps} current={journey.current} label={journey.label} /> : null}
         <div className="border-t border-line bg-paper/95 backdrop-blur">
-          <div className={cn("mx-auto flex min-h-[84px]", wide ? "max-w-[1200px]" : "max-w-[1000px]", "items-center justify-between gap-x-6 px-4 py-4 sm:px-7")}>
-            <div className="shrink-0">{backLink}</div>
-            <div className="flex min-w-0 items-center justify-end gap-x-4">
+          <div
+            className={cn(
+              "mx-auto flex min-h-[84px]",
+              wide ? "max-w-[1200px]" : "max-w-[1000px]",
+              "items-center justify-between gap-x-6 px-4 py-4 sm:px-7",
+              stackOnPhone && "max-sm:flex-col-reverse max-sm:items-stretch max-sm:gap-y-1 max-sm:py-3",
+            )}
+          >
+            <div className={cn("shrink-0", stackOnPhone && "max-sm:self-center")}>{backLink}</div>
+            <div className={cn("flex min-w-0 items-center justify-end gap-x-4", stackOnPhone && "max-sm:flex-col max-sm:items-stretch max-sm:gap-y-2")}>
               {journey ? (
                 <span aria-hidden className="tnum shrink-0 text-[14px] whitespace-nowrap text-muted">
                   {journey.label}

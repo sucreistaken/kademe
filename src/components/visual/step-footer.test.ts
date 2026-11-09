@@ -82,14 +82,40 @@ describe("StepFooter's exam bar (one fixed row)", () => {
     expect(out).not.toContain("flex-wrap ");
     expect(out).toContain("flex-nowrap");
     expect(out).toContain("h-[65px]");
-    expect(out).toMatch(/<button[^>]*disabled=""[^>]*>[^]*Back<\/button>/);
+    expect(out).toMatch(/<button[^>]*disabled=""[^>]*>[^]*Back<\/span><\/button>/);
   });
 
   it("keeps the flag slot's width when there is no flag (a listening page)", () => {
     const withFlag = html({ exam: true, primary: next, secondary: flag, back: { label: "Back", onClick: noop } });
     const without = html({ exam: true, primary: next, back: { label: "Back", onClick: noop } });
     expect(withFlag).toContain("w-[168px]");
-    expect(without).toContain('<div aria-hidden="true" class="w-[168px] shrink-0"></div>');
+    // On a phone the empty slot is as wide as the flag's icon button there.
+    expect(without).toContain('<div aria-hidden="true" class="w-[168px] shrink-0 max-sm:w-11"></div>');
+  });
+
+  it("on a phone (below 640px, the web check): the way back and the flag are icon buttons, the primary fits its words", () => {
+    const icon = createElement("svg", { "data-icon": "bookmark" });
+    const out = html({ exam: true, primary: next, secondary: { ...flag, icon }, back: { label: "Back", onClick: noop } });
+    const button = (id: string) => out.match(new RegExp(`<button[^>]*id="${id}"[^>]*>([^]*?)</button>`))!;
+    // The labels stay for screen readers and come back from 640px up.
+    expect(out).toMatch(/<button[^>]*class="[^"]*\bw-\[112px\][^"]*\bmax-sm:w-11\b[^"]*"[^>]*>[^]*<span class="max-sm:sr-only">Back<\/span><\/button>/);
+    expect(button("flag-item")[0]).toMatch(/class="[^"]*\bw-\[168px\][^"]*\bmax-sm:w-11\b/);
+    expect(button("flag-item")[1]).toContain('<span class="max-sm:sr-only">Mark</span>');
+    expect(button("next-item")[0]).toMatch(/class="[^"]*\bw-\[176px\][^"]*\bmax-sm:w-auto\b/);
+    expect(button("next-item")[1]).toBe("Next");
+    // A secondary action without an icon keeps its words on a phone.
+    const skip = html({ exam: true, primary: next, secondary: { kind: "button", id: "skip", label: "Skip", onClick: noop } });
+    expect(skip.match(/<button[^>]*id="skip"[^>]*>([^]*?)<\/button>/)![1]).toBe("Skip");
+  });
+
+  it("stackOnPhone: only the bar that asks for it stacks on a phone; the default bar is unchanged", () => {
+    const props = { back: { label: "Back to the questions", onClick: noop }, primary: { kind: "button", id: "finish-section", label: "Finish the section", onClick: noop } } as const;
+    const plain = html(props);
+    const stacked = html({ ...props, stackOnPhone: true });
+    expect(plain).not.toContain("max-sm:");
+    expect(stacked).toContain("max-sm:flex-col-reverse max-sm:items-stretch");
+    // Apart from the phone classes, the two are the same markup.
+    expect(stacked.replace(/ max-sm:[^\s"]+/g, "")).toBe(plain);
   });
 
   it("draws its buttons at the widths EXAM_BAR_WIDTH names", () => {

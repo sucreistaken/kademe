@@ -26,6 +26,11 @@ export function recordingChipKind(recLabel: ReturnType<typeof recordingLabel>, s
  * while a question is open, the language picker on a section introduction,
  * the time left with the recording chip beside it (where the eyes already
  * are), and the proctor's notices under it.
+ *
+ * On a phone (below 640px; only an exam that runs on phones gets there, the
+ * web check) the sides drop their caps and the bar its wide padding, and the
+ * section and counter stay out of the bar: the question's own line under it
+ * says them. From 640px up the bar is as it was.
  */
 export function ExamTopBar({
   inQuestion,
@@ -77,21 +82,21 @@ export function ExamTopBar({
   return (
     <header className="sticky top-0 z-20 border-b border-hairline bg-surface/95 backdrop-blur">
       <ProctorNotice />
-      <div className={cn("relative mx-auto flex h-14 items-center justify-between gap-4 px-7", wide ? "max-w-[1200px]" : "max-w-[1000px]")}>
-        <div className="flex min-w-0 max-w-[calc(50%-6rem)] items-center gap-3 text-[13.5px]">
+      <div className={cn("relative mx-auto flex h-14 items-center justify-between gap-4 px-7 max-sm:px-4", wide ? "max-w-[1200px]" : "max-w-[1000px]")}>
+        <div className="flex min-w-0 max-w-[calc(50%-6rem)] items-center gap-3 text-[13.5px] max-sm:max-w-none">
           <span className="flex shrink-0 items-center gap-2 text-[16px] font-extrabold tracking-[-0.01em] text-ink">
             <BrandMark />
             {common("brand")}
           </span>
           {inQuestion ? (
             <>
-              <span className="h-4 w-px shrink-0 bg-hairline" aria-hidden />
-              <span title={sectionName} className="min-w-0 truncate text-label text-ink">{sectionName}</span>
-              <span className="tnum shrink-0 whitespace-nowrap text-muted">{counter}</span>
+              <span className="h-4 w-px shrink-0 bg-hairline max-sm:hidden" aria-hidden />
+              <span title={sectionName} className="min-w-0 truncate text-label text-ink max-sm:hidden">{sectionName}</span>
+              <span className="tnum shrink-0 whitespace-nowrap text-muted max-sm:hidden">{counter}</span>
             </>
           ) : null}
         </div>
-        <div className="flex min-w-0 max-w-[calc(50%-6rem)] items-center gap-5">
+        <div className="flex min-w-0 max-w-[calc(50%-6rem)] items-center gap-5 max-sm:max-w-none">
           {showLanguagePicker && isCandidateLocale(lang) ? <LanguagePicker locales={locales} current={lang} /> : null}
           {inQuestion && onWatchTutorial ? (
             <button

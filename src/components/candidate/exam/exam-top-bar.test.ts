@@ -100,12 +100,25 @@ describe("ExamTopBar right group", () => {
   it("is width-capped like the left one, with an unshrinkable button and no recording copy of its own", () => {
     const html = bar({ inQuestion: true, proctored: true, recLabel: null, onWatchTutorial: () => {} });
     expect(html.match(/max-w-\[calc\(50%-6rem\)\]/g)).toHaveLength(2);
-    expect(html).toMatch(/<div class="flex min-w-0 max-w-\[calc\(50%-6rem\)\] items-center gap-5">/);
+    // The cap is lifted only on a phone (below 640px), where the bar has no room for it.
+    expect(html).toMatch(/<div class="flex min-w-0 max-w-\[calc\(50%-6rem\)\] items-center gap-5 max-sm:max-w-none">/);
     expect(html).toMatch(/<button[^>]*class="[^"]*\bshrink-0\b/);
     // The small grey line at the far right is gone: the chip beside the clock replaced it.
-    const right = html.split('items-center gap-5">')[1].split('<div class="absolute inset-y-0')[0];
+    const right = html.split('items-center gap-5 max-sm:max-w-none">')[1].split('<div class="absolute inset-y-0')[0];
     expect(right).not.toContain("data-recording-chip");
     expect(right).not.toContain("cameraOn");
+  });
+});
+
+describe("ExamTopBar on a phone (below 640px, the web check)", () => {
+  it("lifts both caps, narrows the padding and leaves the section and counter to the line under the bar", () => {
+    const html = bar({ inQuestion: true, onWatchTutorial: () => {} });
+    expect(html.match(/max-sm:max-w-none/g)).toHaveLength(2);
+    expect(html).toMatch(/class="relative mx-auto flex h-14 [^"]*\bpx-7 max-sm:px-4\b/);
+    expect(html).toMatch(/<span title="Lesen" class="[^"]*\bmax-sm:hidden\b/);
+    expect(html).toMatch(/<span class="tnum shrink-0 whitespace-nowrap text-muted max-sm:hidden">Frage 3 von 20/);
+    // The introduction's bar (no question open) shows no section or counter at any width, as before.
+    expect(bar({ inQuestion: false })).not.toContain("Frage 3 von 20");
   });
 });
 

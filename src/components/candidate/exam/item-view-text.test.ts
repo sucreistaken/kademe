@@ -328,3 +328,17 @@ describe("German answer groups in the cloze and the word bank (left to right on 
     expect(html).toMatch(/role="group" aria-label="[^"]*"><div lang="de" class="flex flex-wrap gap-1.5">/);
   });
 });
+
+describe("the cloze options on a phone (below 640px, the web check)", () => {
+  it("are pinned above the bottom bar in two columns, without the keyboard hint; from 640px up as before", () => {
+    const html = render(cloze(3));
+    const panel = html.match(/<div id="[^"]+" class="([^"]+)"><h3/)![1];
+    // From lg up the panel still sticks at the top beside the text.
+    expect(panel).toContain("lg:sticky lg:top-24");
+    expect(panel).toMatch(/\bmax-sm:sticky\b/);
+    expect(panel).toContain("max-sm:bottom-[calc(var(--step-footer-space,112px)+var(--step-notice-space,0px)+0.5rem)]");
+    expect(panel).toMatch(/\bmax-sm:max-h-\[42dvh\] max-sm:overflow-y-auto\b/);
+    expect(html).toMatch(/role="radiogroup"[^>]*class="mt-3 flex flex-col gap-2 max-sm:mt-2 max-sm:grid max-sm:grid-cols-2"/);
+    expect(html).toMatch(/<p lang="en" dir="ltr" class="mt-3 text-\[12.5px\] text-muted max-sm:hidden">clozeKeys\(4\)<\/p>/);
+  });
+});

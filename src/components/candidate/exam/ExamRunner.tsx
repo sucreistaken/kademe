@@ -586,6 +586,8 @@ export function ExamRunner({
         primary={{ kind: "button", id: "finish-section", label: n("finishSection"), busy, busyLabel: t("saving"), onClick: () => setConfirm("finish") }}
         notice={timeUpNotice}
         note={failureLine}
+        // A phone (the web check): the button over the way back, not beside it.
+        stackOnPhone
       />
     );
   } else if (state.step === "ITEM" && nav && item) {
