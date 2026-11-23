@@ -1,9 +1,17 @@
 import type { PassRules } from "./blueprint";
-import { PRE_A1_CUT, compareLevels, levelFromTheta, medianLevel, probAtOrAbove, shiftLevel } from "./cefr";
+import { PRE_A1_CUT, compareLevels, levelFromTheta, medianLevel } from "./cefr";
 import type { Posterior } from "./adaptive";
 import type { ChanceTest } from "./chance";
 import type { CourseResult } from "./course/types";
 import { placementOf, type Placement } from "./placement";
+import {
+  aboveClaimPossible,
+  objectiveVerdict,
+  productiveVerdict,
+  type SkillVerdict,
+  type TaskEvidence,
+  type VerificationBands,
+} from "./verification";
 import { PRODUCTIVE_SECTIONS, type Cefr, type ExamMode, type ProductiveSection, type ResultLevel, type Section } from "./types";
 
 /**
@@ -36,6 +44,8 @@ export type SectionEvidence =
       insufficient: boolean;
       /** The section's answers against pure guessing (chance.ts); absent where nobody computed it. */
       chance?: (Pick<ChanceTest, "atChance"> & Partial<Pick<ChanceTest, "blank" | "beginner" | "all">>) | null;
+      /** LEVEL_VERIFICATION: raw points by band against the claim (verification.ts). Absent: no points to judge. */
+      bands?: VerificationBands;
     }
   | {
       section: Section;
@@ -43,6 +53,8 @@ export type SectionEvidence =
       /** Null while no grader has produced a level yet. */
       level: ResultLevel | null;
       decider: Decider | null;
+      /** LEVEL_VERIFICATION: the level of each task and whether its take was cut by the timer. Absent: one task at `level`. */
+      tasks?: TaskEvidence[];
     };
 
 /** Why a skill has its level, when it is not the plain band: AT_CHANCE is A0 by the chance rule. */
@@ -59,6 +71,14 @@ export type SkillResult = {
   posterior?: Posterior;
   pending: boolean;
   insufficient: boolean;
+  /** LEVEL_VERIFICATION only: the skill's verdict (verification.ts), which replaces the level there. */
+  verdict?: SkillVerdict;
+  /** LEVEL_VERIFICATION, objective sections: earned and served units below, at and above the claim. */
+  bands?: VerificationBands;
+  /** LEVEL_VERIFICATION, writing and speaking: each task's level, and whether its take hit the answer time cap. */
+  tasks?: Array<{ level: ResultLevel | null; truncated: boolean }>;
+  /** LEVEL_VERIFICATION: a teacher's skill level decided the verdict. */
+  overridden?: boolean;
 };
 
 export type VerificationReason =
@@ -67,7 +87,12 @@ export type VerificationReason =
   | "OVERALL_BELOW_CLAIMED"
   | `SKILL_BELOW:${Section}`
   | `REQUIRED_SKILL_BELOW:${Section}`
-  | "HOLD_PROBABILITY_LOW";
+  | "HOLD_PROBABILITY_LOW"
+  | `SKILL_FAIL:${Section}`
+  | `SKILL_BORDERLINE:${Section}`
+  | `SKILL_SPLIT:${Section}`
+  | `TRUNCATED_TAKE:${Section}`
+  | `FEW_AT_CLAIM_UNITS:${Section}`;
 
 /**
  * Why a result must wait for a teacher whatever its mode. CHANCE_BELOW_POOLED: a
@@ -88,7 +113,10 @@ export type ComputedResult = {
     claimed: Cefr;
     outcome: "PASS" | "FAIL" | "INCONCLUSIVE";
     reasons: VerificationReason[];
-    holdProbability: number | null;
+    /** Results stored before 2026-11-24 only: the verdict no longer reads it. */
+    holdProbability?: number | null;
+    /** Teacher only: the pooled claim+1 units suggest a higher-level test. */
+    hint?: "ABOVE_CLAIM_POSSIBLE";
   } | null;
   /**
    * PLACEMENT only: sublevel and borderline flag from the pooled objective
@@ -133,6 +161,80 @@ export function objectiveLevel(posterior: Posterior, keepA1: boolean): ResultLev
 /** The section's answers are credibly above chance on either test (chance.ts): it shows German. */
 const showsGerman = (chance: { beginner?: { aboveChance: boolean }; all?: { aboveChance: boolean } } | null | undefined): boolean =>
   chance?.beginner?.aboveChance === true || chance?.all?.aboveChance === true;
+
+/**
+ * The verification verdict (verification.ts): each skill gets a verdict from
+ * raw points or task levels, a teacher's skill level replaces it, and the
+ * verdicts decide the claim. Fills `verdict`, `bands` and `tasks` on `skills`.
+ */
+function verifyClaim(input: {
+  claimed: Cefr;
+  sections: SectionEvidence[];
+  skills: Partial<Record<Section, SkillResult>>;
+  rules: PassRules;
+  overridden: Set<Section>;
+  anyPending: boolean;
+}): NonNullable<ComputedResult["verification"]> {
+  const { claimed, skills, rules } = input;
+  const reasons: VerificationReason[] = [];
+  const allBands: VerificationBands[] = [];
+  const verdicts: Array<[Section, SkillVerdict]> = [];
+
+  for (const e of input.sections) {
+    const s = skills[e.section];
+    if (!s) continue;
+    let verdict: SkillVerdict;
+    if (e.kind === "OBJECTIVE") {
+      if (e.bands) {
+        s.bands = e.bands;
+        allBands.push(e.bands);
+      }
+      if (e.chance?.atChance === true) verdict = "FAIL";
+      else verdict = e.bands ? objectiveVerdict(e.bands) : "INCONCLUSIVE";
+    } else {
+      const tasks = e.tasks ?? [{ level: e.level, decider: e.decider }];
+      s.tasks = tasks.map((t) => ({ level: t.level, truncated: !!t.truncated }));
+      verdict = s.pending ? "FAIL" : productiveVerdict(tasks, claimed);
+    }
+    if (input.overridden.has(e.section) && s.level) {
+      verdict = compareLevels(s.level, claimed) >= 0 ? "PASS" : "FAIL";
+      s.overridden = true;
+    }
+    if (!s.pending) s.verdict = verdict;
+    verdicts.push([e.section, verdict]);
+  }
+
+  if (input.anyPending) reasons.push("AWAITING_GRADING");
+  const requiredMissing = rules.requiredSkills.some((sec) => !skills[sec]?.level);
+  if (Object.values(skills).some((s) => s!.insufficient) || requiredMissing) reasons.push("INSUFFICIENT_EVIDENCE");
+  const incomplete = reasons.length > 0;
+
+  let outcome: "PASS" | "FAIL" | "INCONCLUSIVE" = "INCONCLUSIVE";
+  let hint: "ABOVE_CLAIM_POSSIBLE" | undefined;
+  if (!incomplete) {
+    const decided = verdicts.filter(([sec]) => !skills[sec]?.pending);
+    for (const [section, verdict] of decided) {
+      const reason: Partial<Record<SkillVerdict, VerificationReason>> = {
+        FAIL: `SKILL_FAIL:${section}`,
+        BORDERLINE: `SKILL_BORDERLINE:${section}`,
+        SPLIT: `SKILL_SPLIT:${section}`,
+        TRUNCATED: `TRUNCATED_TAKE:${section}`,
+        INCONCLUSIVE: `FEW_AT_CLAIM_UNITS:${section}`,
+      };
+      const r = reason[verdict];
+      if (r) reasons.push(r);
+      if (verdict === "FAIL" && rules.requiredSkills.includes(section)) reasons.push(`REQUIRED_SKILL_BELOW:${section}`);
+    }
+    const notPass = decided.filter(([, v]) => v !== "PASS");
+    const onlyTolerable =
+      notPass.length === 1 && notPass[0][1] === "BORDERLINE" && !rules.requiredSkills.includes(notPass[0][0]);
+    if (decided.some(([, v]) => v === "FAIL")) outcome = "FAIL";
+    else if (notPass.length === 0 || onlyTolerable) outcome = "PASS";
+    if (notPass.length === 0 && aboveClaimPossible(allBands, claimed)) hint = "ABOVE_CLAIM_POSSIBLE";
+  }
+
+  return { claimed, outcome, reasons, ...(hint ? { hint } : {}) };
+}
 
 export function computeResult(input: {
   mode: ExamMode;
@@ -192,39 +294,14 @@ export function computeResult(input: {
 
   let verification: ComputedResult["verification"] = null;
   if (input.mode === "LEVEL_VERIFICATION" && input.claimed) {
-    const claimed = input.claimed;
-    const rules = input.rules;
-    const reasons: VerificationReason[] = [];
-    const holdProbability = pooled ? probAtOrAbove(pooled, claimed) : null;
-
-    if (anyPending) reasons.push("AWAITING_GRADING");
-    const requiredMissing = rules.requiredSkills.some((sec) => !skills[sec]?.level);
-    if (Object.values(skills).some((s) => s!.insufficient) || requiredMissing) reasons.push("INSUFFICIENT_EVIDENCE");
-    const inconclusive = reasons.length > 0;
-
-    if (!inconclusive) {
-      if (rules.overallAtLeastClaimed && overall && compareLevels(overall, claimed) < 0)
-        reasons.push("OVERALL_BELOW_CLAIMED");
-      if (rules.minSkillOffset !== null) {
-        const floor = shiftLevel(claimed, rules.minSkillOffset);
-        for (const [section, s] of Object.entries(skills)) {
-          if (s!.level && compareLevels(s!.level, floor) < 0) reasons.push(`SKILL_BELOW:${section as Section}`);
-        }
-      }
-      for (const section of rules.requiredSkills) {
-        const s = skills[section];
-        if (s?.level && compareLevels(s.level, claimed) < 0) reasons.push(`REQUIRED_SKILL_BELOW:${section}`);
-      }
-      if (rules.minHoldProbability !== null && holdProbability !== null && holdProbability < rules.minHoldProbability)
-        reasons.push("HOLD_PROBABILITY_LOW");
-    }
-
-    verification = {
-      claimed,
-      outcome: inconclusive ? "INCONCLUSIVE" : reasons.length === 0 ? "PASS" : "FAIL",
-      reasons,
-      holdProbability,
-    };
+    verification = verifyClaim({
+      claimed: input.claimed,
+      sections: input.sections,
+      skills,
+      rules: input.rules,
+      overridden: new Set(Object.entries(input.overrides?.skills ?? {}).filter(([, l]) => !!l).map(([k]) => k as Section)),
+      anyPending,
+    });
   }
 
   let placement: Placement | null = null;
@@ -243,6 +320,8 @@ export function computeResult(input: {
   return { skills, overall, pooled, status, verification, placement, ...(reviewReasons.length ? { reviewReasons } : {}) };
 }
 
+type ResultShape = Pick<ComputedResult, "overall" | "placement" | "reviewReasons"> & { verification?: ComputedResult["verification"] };
+
 /**
  * True when the engine itself is not sure enough to release a level on its own:
  * the placement is borderline (near a cut, imprecise, or a productive gap), or
@@ -250,8 +329,10 @@ export function computeResult(input: {
  * reason (CHANCE_BELOW_POOLED). Such a result waits for a teacher even when no
  * writing or speaking is involved.
  */
-export function isUncertainResult(computed: Pick<ComputedResult, "overall" | "placement" | "reviewReasons"> | null | undefined): boolean {
+export function isUncertainResult(computed: ResultShape | null | undefined): boolean {
   if (computed?.reviewReasons?.length) return true;
+  // A verification the engine could not decide (borderline, split, truncated, too few units) is the teacher's call.
+  if (computed?.verification?.outcome === "INCONCLUSIVE") return true;
   const p = computed?.placement;
   if (!p) return false;
   return p.borderline || p.reasons.includes("HIGH_UNCERTAINTY") || (p.recommended !== null && p.recommended !== computed?.overall);
@@ -267,7 +348,7 @@ export function autoFinalizes(input: {
   hasProductive: boolean;
   anyUndecided: boolean;
   clean: boolean;
-  computed: Pick<ComputedResult, "overall" | "placement" | "reviewReasons"> | null | undefined;
+  computed: ResultShape | null | undefined;
 }): boolean {
   return input.status === "AWAITING_REVIEW" && !input.hasProductive && !input.anyUndecided && input.clean && !isUncertainResult(input.computed);
 }
@@ -276,7 +357,7 @@ export function autoFinalizes(input: {
 export function studentWaitingFor(input: {
   hasProductive: boolean;
   final: boolean;
-  computed: Pick<ComputedResult, "overall" | "placement" | "reviewReasons"> | null | undefined;
+  computed: ResultShape | null | undefined;
 }): "PRODUCTIVE" | "REVIEW" | null {
   if (input.final) return null;
   if (input.hasProductive) return "PRODUCTIVE";

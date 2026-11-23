@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BAND_CENTER } from "./cefr";
+import type { VerificationBands } from "./verification";
 import { autoFinalizes, computeResult, isUncertainResult, poolPosteriors, studentWaitingFor, type SectionEvidence } from "./result";
 
 const rules = { overallAtLeastClaimed: true, minSkillOffset: -1, requiredSkills: [], minHoldProbability: 0.5 };
@@ -10,6 +11,13 @@ const obj = (section: "GRAMMAR" | "READING" | "LISTENING", mean: number, sd = 0.
   answered: 12,
   insufficient: false,
 });
+/** Raw points by band: [earned, served] below, at and above the claim. */
+const bands = (below: [number, number], at: [number, number], above: [number, number] = [0, 0]): VerificationBands => ({
+  below: { earned: below[0], served: below[1] },
+  at: { earned: at[0], served: at[1] },
+  above: { earned: above[0], served: above[1] },
+});
+const objB = (section: "GRAMMAR" | "READING" | "LISTENING", b: VerificationBands): SectionEvidence => ({ ...(obj(section, 0) as Extract<SectionEvidence, { kind: "OBJECTIVE" }>), bands: b });
 const prod = (section: "WRITING" | "SPEAKING", level: "B1" | "B2" | "A2" | null, decider: "AI" | "TEACHER" | null = "AI"): SectionEvidence => ({
   section,
   kind: "PRODUCTIVE",
@@ -69,10 +77,10 @@ describe("verification", () => {
       mode: "LEVEL_VERIFICATION",
       claimed: "B1",
       rules,
-      sections: [obj("GRAMMAR", BAND_CENTER.B1 + 0.3), obj("READING", BAND_CENTER.B2), prod("WRITING", "B1", "TEACHER")],
+      sections: [objB("GRAMMAR", bands([4, 6], [5, 8])), objB("READING", bands([5, 6], [7, 8])), prod("WRITING", "B1", "TEACHER")],
     });
     expect(r.verification!.outcome).toBe("PASS");
-    expect(r.verification!.holdProbability!).toBeGreaterThan(0.5);
+    expect(r.verification!.holdProbability).toBeUndefined();
   });
 
   it("fails with named reasons", () => {
@@ -80,12 +88,12 @@ describe("verification", () => {
       mode: "LEVEL_VERIFICATION",
       claimed: "B2",
       rules,
-      sections: [obj("GRAMMAR", BAND_CENTER.A2), obj("READING", BAND_CENTER.B1), prod("WRITING", "A2", "TEACHER")],
+      sections: [objB("GRAMMAR", bands([2, 6], [2, 8])), objB("READING", bands([5, 6], [7, 8])), prod("WRITING", "A2", "TEACHER")],
     });
     expect(r.verification!.outcome).toBe("FAIL");
-    expect(r.verification!.reasons).toContain("OVERALL_BELOW_CLAIMED");
-    expect(r.verification!.reasons).toContain("SKILL_BELOW:GRAMMAR");
-    expect(r.verification!.reasons).toContain("HOLD_PROBABILITY_LOW");
+    expect(r.verification!.reasons).toContain("SKILL_FAIL:GRAMMAR");
+    expect(r.verification!.reasons).toContain("SKILL_FAIL:WRITING");
+    expect(r.verification!.reasons).not.toContain("SKILL_FAIL:READING");
   });
 
   it("is inconclusive while grading is pending or evidence is thin", () => {
@@ -142,14 +150,12 @@ describe("A0 (Pre-A1)", () => {
   });
 
   it("is below any claimed level: a verification fails as for any level below the claim", () => {
-    const r = computeResult({ mode: "LEVEL_VERIFICATION", claimed: "A1", rules, sections: [obj("GRAMMAR", -3.6, 0.3), productive("WRITING", "A0")] });
+    const r = computeResult({ mode: "LEVEL_VERIFICATION", claimed: "A1", rules, sections: [objB("GRAMMAR", bands([0, 0], [2, 8])), productive("WRITING", "A0")] });
     expect(r.overall).toBe("A0");
     expect(r.verification!.outcome).toBe("FAIL");
-    expect(r.verification!.reasons).toContain("OVERALL_BELOW_CLAIMED");
-    // The skill floor for an A1 claim with offset -1 is A1 (no CEFR level below it): A0 is under it.
-    expect(r.verification!.reasons).toContain("SKILL_BELOW:GRAMMAR");
-    expect(r.verification!.reasons).toContain("SKILL_BELOW:WRITING");
-    expect(r.verification!.reasons).toContain("HOLD_PROBABILITY_LOW");
+    // A0 is one level under an A1 claim: the task is below it.
+    expect(r.verification!.reasons).toContain("SKILL_FAIL:GRAMMAR");
+    expect(r.verification!.reasons).toContain("SKILL_FAIL:WRITING");
   });
 
   it("fails a level check whose writing and speaking were left empty, as soon as a rule has proposed A0", () => {
@@ -262,8 +268,18 @@ describe("uncertain results go to a teacher", () => {
   });
 
   it("level verification has no placement flag and is unchanged", () => {
-    const v = computeResult({ mode: "LEVEL_VERIFICATION", claimed: "B1", rules, sections: [obj("GRAMMAR", 0.05, 1.2)] });
+    const v = computeResult({ mode: "LEVEL_VERIFICATION", claimed: "B1", rules, sections: [objB("GRAMMAR", bands([4, 6], [6, 8]))] });
+    expect(v.verification!.outcome).toBe("PASS");
     expect(isUncertainResult(v)).toBe(false);
+    expect(autoFinalizes({ ...flow, computed: v })).toBe(true);
+  });
+
+  it("an inconclusive verification never finalizes by itself and the student waits for review", () => {
+    const v = computeResult({ mode: "LEVEL_VERIFICATION", claimed: "B1", rules, sections: [objB("GRAMMAR", bands([3, 6], [4, 8])), objB("READING", bands([3, 6], [4, 8]))] });
+    expect(v.verification!.outcome).toBe("INCONCLUSIVE");
+    expect(isUncertainResult(v)).toBe(true);
+    expect(autoFinalizes({ ...flow, computed: v })).toBe(false);
+    expect(studentWaitingFor({ hasProductive: false, final: false, computed: v })).toBe("REVIEW");
   });
 
   it("tells the student a teacher is reviewing, only while not final", () => {

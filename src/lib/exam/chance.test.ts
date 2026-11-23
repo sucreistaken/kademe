@@ -211,7 +211,7 @@ describe("the chance rule in the result", () => {
   it("fails a verification on a section at chance like any section below the claim", () => {
     const r = computeResult({ mode: "LEVEL_VERIFICATION", claimed: "A2", rules, sections: [obj("GRAMMAR", BAND_CENTER.A2, true), obj("READING", BAND_CENTER.A2)] });
     expect(r.verification!.outcome).toBe("FAIL");
-    expect(r.verification!.reasons).toContain("SKILL_BELOW:GRAMMAR");
+    expect(r.verification!.reasons).toContain("SKILL_FAIL:GRAMMAR");
   });
 
   it("keeps the tested tally on an AT_CHANCE skill, and says when the section was blank", () => {

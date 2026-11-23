@@ -26,7 +26,8 @@ import { courseRubricSchema, courseRuleProposal, type CourseRubricJob } from "@/
 import { blockerErrorCode, finalizeBlockers } from "@/lib/exam/finalize-blockers";
 import { hasAnswer } from "@/lib/exam/item-scoring";
 import { autoFinalizes, computeResult, type Decider, type SectionEvidence } from "@/lib/exam/result";
-import { isObjectiveSection, type ItemAnswer, type ProductiveSection, type ResultLevel, type Section } from "@/lib/exam/types";
+import { reachedAnswerCap, verificationBands, type TaskEvidence } from "@/lib/exam/verification";
+import { isObjectiveSection, type Cefr, type ItemAnswer, type ProductiveSection, type ResultLevel, type Section } from "@/lib/exam/types";
 import { enqueueGrading } from "@/lib/queue";
 import { loadAcceptances } from "@/server/result-review";
 
@@ -439,6 +440,30 @@ export function gradingLevel(g: GradingRow): { level: ResultLevel | null; decide
   return { level: null, decider: null };
 }
 
+/**
+ * The speaking answers of these runs whose recording reached the answer time cap
+ * (verification.ts: reachedAnswerCap): the timer cut them off, so a teacher
+ * judges the take, never the engine.
+ */
+async function truncatedSpeakingTasks(runIds: string[]): Promise<Set<string>> {
+  const out = new Set<string>();
+  if (runIds.length === 0) return out;
+  const rows = await db
+    .select({ id: itemResponses.id, itemSnapshot: itemResponses.itemSnapshot, answer: itemResponses.answer })
+    .from(itemResponses)
+    .where(inArray(itemResponses.sectionRunId, runIds));
+  const mediaIds = rows.flatMap((r) => (r.answer?.mediaAssetId ? [r.answer.mediaAssetId] : []));
+  if (mediaIds.length === 0) return out;
+  const media = await db.select({ id: mediaAssets.id, durationMs: mediaAssets.durationMs }).from(mediaAssets).where(inArray(mediaAssets.id, mediaIds));
+  const durationOf = new Map(media.map((m) => [m.id, m.durationMs]));
+  for (const r of rows) {
+    const content = r.itemSnapshot.content;
+    if (content.kind !== "SPEAKING" || !r.answer?.mediaAssetId) continue;
+    if (reachedAnswerCap(durationOf.get(r.answer.mediaAssetId), content.answerSeconds)) out.add(r.id);
+  }
+  return out;
+}
+
 export async function recomputeResult(attemptId: string) {
   const [row] = await db
     .select({ attempt: attempts, exam: examAssessments })
@@ -467,6 +492,10 @@ export async function recomputeResult(attemptId: string) {
         .where(inArray(itemResponses.sectionRunId, objectiveRunIds))
     : [];
 
+  // A verification judges a speaking take cut by the timer by hand: which tasks hit their answer cap.
+  const verifying = row.exam.mode === "LEVEL_VERIFICATION" && !!row.exam.claimedLevel;
+  const truncatedTasks = verifying ? await truncatedSpeakingTasks(runs.filter((r) => r.section === "SPEAKING").map((r) => r.id)) : new Set<string>();
+
   const evidence: SectionEvidence[] = [];
   let anyPending = false;
   let anyUndecided = false;
@@ -493,6 +522,7 @@ export async function recomputeResult(attemptId: string) {
         answered: 0,
         insufficient: run.stopReason === "INSUFFICIENT",
         chance: sectionChance(objectiveAnswers.filter((a) => a.sectionRunId === run.id)),
+        ...(verifying ? { bands: verificationBands(objectiveAnswers.filter((a) => a.sectionRunId === run.id), row.exam.claimedLevel as Cefr) } : {}),
       });
       continue;
     }
@@ -508,6 +538,11 @@ export async function recomputeResult(attemptId: string) {
       kind: "PRODUCTIVE",
       level: complete ? medianLevel(known) : null,
       decider: complete ? (levels.every((l) => l.decider === "TEACHER") ? "TEACHER" : "AI") : null,
+      ...(verifying
+        ? {
+            tasks: mine.map((g, i): TaskEvidence => ({ level: levels[i].level, decider: levels[i].decider, truncated: truncatedTasks.has(g.itemResponseId) })),
+          }
+        : {}),
     });
   }
 
