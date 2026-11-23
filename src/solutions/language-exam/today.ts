@@ -23,7 +23,9 @@ export async function examToday(orgId: string, _userId: string, locale: Locale):
       sortAt: r.completedAt,
       cells: [
         { kind: "text", text: `${t(`mode.${r.mode}`)}${r.claimed ? ` · ${t("mode.claimed", { level: r.claimed })}` : ""}` },
-        { kind: "level", text: r.level, final: r.levelFinal },
+        r.mode === "LEVEL_VERIFICATION"
+          ? { kind: "text", text: r.outcome ? t(`result.outcome${r.outcome}`) : "-" }
+          : { kind: "level", text: r.level, final: r.levelFinal },
         {
           kind: "dot",
           tone: r.status === "AWAITING_GRADING" ? "neutral" : "warn",

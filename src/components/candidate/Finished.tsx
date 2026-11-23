@@ -212,6 +212,31 @@ export function Finished({
                 </p>
               </>
             ) : released && result.levelShown && !courseTest ? (
+              result.verification ? (
+                <>
+                  {/* A level verification: whether the stated level holds, never a letter or a point. */}
+                  <div className="mt-3 rounded-xl bg-mint-soft px-5 py-4">
+                    <div className="text-[13px] font-bold text-mint">{t("verificationTitle")}</div>
+                    {result.outcome ? <p className="mt-1 text-[15px] font-semibold leading-[1.5] text-ink">{t(`outcome${result.outcome}`)}</p> : null}
+                  </div>
+                  {result.verification.skills.length ? (
+                    <>
+                      <h3 className="mt-5 text-[13px] font-bold text-muted">{t("skills")}</h3>
+                      <ul className="mt-2 flex flex-col gap-2">
+                        {result.verification.skills.map((s) => (
+                          <li key={s.section} className="flex items-center gap-3 text-[14.5px]">
+                            <SectionTile section={s.section} className="size-8 rounded-md [&>svg]:size-4" />
+                            <span className="flex-1 font-semibold text-ink-2">{sec(s.section)}</span>
+                            <Badge tone="outline" size="md" className="text-ink">
+                              {t(s.reached ? "skillReached" : "skillNotReached")}
+                            </Badge>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : null}
+                </>
+              ) : (
               <>
                 <div className="mt-3 flex items-center gap-4 rounded-xl bg-mint-soft px-5 py-4">
                   <div className="min-w-0 flex-1">
@@ -241,6 +266,7 @@ export function Finished({
                   </>
                 ) : null}
               </>
+              )
             ) : (
               <p className="mt-2 text-[14.5px] leading-[1.6] text-ink-2">
                 {courseTest

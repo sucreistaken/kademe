@@ -92,7 +92,8 @@ export type VerificationReason =
   | `SKILL_BORDERLINE:${Section}`
   | `SKILL_SPLIT:${Section}`
   | `TRUNCATED_TAKE:${Section}`
-  | `FEW_AT_CLAIM_UNITS:${Section}`;
+  | `FEW_AT_CLAIM_UNITS:${Section}`
+  | "TEACHER_DECISION";
 
 /**
  * Why a result must wait for a teacher whatever its mode. CHANCE_BELOW_POOLED: a
@@ -173,6 +174,8 @@ function verifyClaim(input: {
   skills: Partial<Record<Section, SkillResult>>;
   rules: PassRules;
   overridden: Set<Section>;
+  /** The level a teacher set as the overall result: in a verification it is the decision on the claim. */
+  overallOverride: ResultLevel | null;
   anyPending: boolean;
 }): NonNullable<ComputedResult["verification"]> {
   const { claimed, skills, rules } = input;
@@ -231,6 +234,11 @@ function verifyClaim(input: {
     if (decided.some(([, v]) => v === "FAIL")) outcome = "FAIL";
     else if (notPass.length === 0 || onlyTolerable) outcome = "PASS";
     if (notPass.length === 0 && aboveClaimPossible(allBands, claimed)) hint = "ABOVE_CLAIM_POSSIBLE";
+    // The teacher's own call on the whole claim (an overall level with a reason) wins over every rule above.
+    if (input.overallOverride) {
+      outcome = compareLevels(input.overallOverride, claimed) >= 0 ? "PASS" : "FAIL";
+      reasons.push("TEACHER_DECISION");
+    }
   }
 
   return { claimed, outcome, reasons, ...(hint ? { hint } : {}) };
@@ -300,6 +308,7 @@ export function computeResult(input: {
       skills,
       rules: input.rules,
       overridden: new Set(Object.entries(input.overrides?.skills ?? {}).filter(([, l]) => !!l).map(([k]) => k as Section)),
+      overallOverride: input.overrides?.overall ?? null,
       anyPending,
     });
   }

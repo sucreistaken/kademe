@@ -85,7 +85,7 @@ describe("buildReport", () => {
     const r = buildReport(base, "s");
     if (!r.ok) throw new Error("expected ok");
     expect(Object.keys(r.model).sort()).toEqual(
-      ["schoolName", "studentName", "examName", "examDate", "overall", "skills", "recommendedClass", "teacherName", "finalizedAt", "verificationCode", "feedback", "feedbackOnStudentCopy"].sort(),
+      ["schoolName", "studentName", "examName", "examDate", "overall", "skills", "recommendedClass", "teacherName", "finalizedAt", "verificationCode", "feedback", "feedbackOnStudentCopy", "verification"].sort(),
     );
   });
 });

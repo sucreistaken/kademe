@@ -59,12 +59,18 @@ export function AnalysisView({
   if (!analysis && !course) return null;
   const feedback = result.feedback;
   const levelBySection = new Map((result.skills ?? []).map((s) => [s.section, s.level]));
+  const reachedBySection = new Map((result.verification?.skills ?? []).map((s) => [s.section, s.reached]));
   const strong = (analysis?.strongTopics ?? []).slice(0, STRONG_MAX);
   const missedTopics = analysis?.missedTopics ?? [];
   return (
     <div className={cn("flex flex-col gap-5", className)}>
       {course ? (
         <CourseOutcome course={course} t={t} />
+      ) : result.levelShown && result.verification && result.outcome ? (
+        <div className="rounded-xl bg-mint-soft px-5 py-4">
+          <div className="text-[13px] font-bold text-mint">{t("verificationTitle")}</div>
+          <p className="mt-1 text-[15px] font-semibold leading-[1.5] text-ink">{t(`outcome${result.outcome}`)}</p>
+        </div>
       ) : result.levelShown && result.overall ? (
         <div className="flex items-center gap-4 rounded-xl bg-mint-soft px-5 py-4">
           <div className="min-w-0 flex-1">
@@ -94,6 +100,7 @@ export function AnalysisView({
                     <SectionTile section={s.section} className="size-8 rounded-md [&>svg]:size-4" />
                     <span className="min-w-[7rem] flex-1 font-semibold text-ink-2">{sectionName(s.section)}</span>
                     {level ? <span className={pill}>{levelLabel(level, t("levelA0"))}</span> : null}
+                    {result.levelShown && reachedBySection.has(s.section) ? <span className={pill}>{t(reachedBySection.get(s.section) ? "skillReached" : "skillNotReached")}</span> : null}
                     {s.teacherAssessed ? (
                       <span className="text-[13px] text-muted">{t("teacherAssessed")}</span>
                     ) : (

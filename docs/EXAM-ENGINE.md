@@ -508,6 +508,73 @@ soru metni, seçenek, cevap ve anahtar hiçbir zaman yoktur. Seviyeyi göstermek
 sayfası iki kopya verir: öğrenci kopyası (`?copy=student`) ve soru soru öğretmen kopyası. AI not taslağı
 öğrencinin dilinde yazılır.
 
+### Seviye doğrulama kararı (2026-11-24)
+
+Seviye doğrulamasında (`LEVEL_VERIFICATION`) karar artık yetenek kestirimiyle (theta) verilmez. Neden: nesnel
+bölümler geniş bir önselle EAP ile puanlanır ve kolay maddelerde neredeyse tam doğru bir örüntü B2 veya C1
+çıkarır (tavan etkisi). Gerçek vaka: A2 beyanı, okuma A1 ve A2 birimlerinde 10,67/11 ("B2"), dinleme hep doğru
+("C1"), konuşmada alt medyan A1 çıktığı için sonuç FAIL oldu; öğrenci ve okul B2/C1 harfini gördü. Yerleştirme
+(`PLACEMENT`) ve kurs sınavı (`COURSE_TEST`) aynen eskisi gibidir. Kod: `src/lib/exam/verification.ts`
+(kurallar), `result.ts` (`verifyClaim`), `verification-view.ts` (ekranlar için "ulaşıldı / ulaşılamadı /
+öğretmen incelemesi").
+
+**Nesnel beceri (okuma, dinleme, dilbilgisi)** ham puanla karar verir. Birimler `chance.ts` ile aynıdır (seçmeli
+madde başına bir, boşluk başına bir, doğru/yanlış ifadesi başına bir, eşleştirme satırı başına bir). Boş ve
+ulaşılamamış birim 0 sayılır. Birimler maddenin seviyesine göre beyana göre gruplanır: altı (beyan-1), beyan
+seviyesi, üstü (beyan+1). A1 beyanında "alt" A1'e katlanır, hepsi beyan seviyesindedir; C2'de üst yoktur.
+Dilbilgisinde beyan+1 cloze yalnız "üst" kanıtıdır; beyan-1 ve beyan cloze ile kelime bankası karara girer.
+
+| Sonuç | Koşul |
+|---|---|
+| PASS | (alt + beyan) kazanılan/sunulan >= %60 VE yalnız beyan seviyesi >= %50 |
+| BORDERLINE | (alt + beyan) %50-59, ya da (alt + beyan) >= %60 iken beyan seviyesi koruması tutmadı |
+| FAIL | (alt + beyan) < %50 |
+| INCONCLUSIVE | beyan seviyesinde 4'ten az sunulan birim (`FEW_AT_CLAIM_UNITS`) |
+
+`AT_CHANCE` kuralı (`chance.ts`) yine FAIL'e zorlar. Yüzde karşılaştırmaları ondalık yuvarlama payıyla yapılır
+(tam %60 geçer).
+
+**Üretken beceri (yazma, konuşma)**, görevler beyan seviyesinde yazıldığı için görev başına seviyeye bakar
+(öğretmenin son seviyesi, yoksa AI seviyesi, `gradingLevel`): tüm görevler >= beyan ise PASS; hepsi beyanın
+altındaysa ya da herhangi biri iki veya daha fazla seviye altındaysa FAIL; bir kısmı >= beyan, bir kısmı tam bir
+seviye altındaysa SPLIT (otomatik karar yok, öğretmen karar verir). Konuşma kaydı cevap süresi sınırına
+ulaştıysa (`media_assets.duration_ms >= answerSeconds*1000 - 1500`, `reachedAnswerCap`) o alıştırma TRUNCATED
+sayılır: tek başına FAIL vermez, beceriyi öğretmene gönderir (öğretmen o görevi kendisi onaylamışsa bayrak kalkar).
+Not verilmemiş görev varsa `AWAITING_GRADING` (eskisi gibi). `medianLevel` değişmedi; yalnız bu mod dallanır.
+
+**Genel karar (mevcut `PASS / FAIL / INCONCLUSIVE` değerleri, veritabanı enum'u değişmedi):**
+
+- PASS: tüm beceriler PASS, ya da tam bir "zorunlu olmayan" nesnel beceri BORDERLINE ve gerisi PASS.
+- FAIL: herhangi bir beceri FAIL (zorunlu beceri de dahil).
+- INCONCLUSIVE (öğretmen incelemesi): geri kalan her şey (SPLIT, TRUNCATED, iki veya daha fazla BORDERLINE, az
+  birimli beceri, BORDERLINE/SPLIT/TRUNCATED olan zorunlu beceri, bekleyen not). INCONCLUSIVE sonuç kendiliğinden
+  finalize olmaz (`isUncertainResult`), öğrenci "öğretmen karar verecek" görür.
+- Nedenler: `SKILL_FAIL`, `SKILL_BORDERLINE`, `SKILL_SPLIT`, `TRUNCATED_TAKE`, `FEW_AT_CLAIM_UNITS` (`:BECERI`),
+  `REQUIRED_SKILL_BELOW`, `TEACHER_DECISION`.
+- Öğretmen kararı kuralları yener: bir beceri düzeyi (`skillOverrides`) >= beyan ise PASS, altındaysa FAIL; "genel
+  seviye" değiştirme formu doğrulamada beyan hakkındaki karardır (>= beyan PASS, altı FAIL, neden zorunlu).
+- `minSkillOffset`, `minHoldProbability`, `overallAtLeastClaimed` bu modda artık karar vermez (saklı
+  taslaklarda durur, şema geriye uyumludur); `requiredSkills` geçerlidir. `holdProbability` hesaplanmaz.
+- Theta hesaplanıp saklanır (yörünge grafiği), harf olarak gösterilmez.
+- Öğretmene ipucu: tüm nesnel becerilerin beyan+1 birimleri birlikte >= %75 kazanılmış (en az 4 sunulan birim) ve
+  tüm beceriler PASS ise `verification.hint = "ABOVE_CLAIM_POSSIBLE"` ("B1 olabilir, daha yüksek seviyeli bir
+  sınav düşünün"). C2 beyanında yoktur.
+
+**Gösterim:** doğrulamada hiçbir ekran harf göstermez. Öğrenci: beceri başına "ulaşıldı / ulaşılamadı" (puan ve
+harf yok), genel "seviye doğrulandı / doğrulanamadı / öğretmen karar verecek". Öğretmen ek olarak beceri başına
+alt/beyan/üst kazanılan/sunulan puanı, ipucunu ve bayrakları (sınırda, bölünmüş, kesilmiş kayıt) görür.
+Yerleştirme ve kurs sınavı ekranları harflerini korur.
+
+**Eşikler bir kabuldür (konvansiyon), standart belirleme (standard setting) sonucu değildir.** %60 / %50 / %75
+Goethe'nin A2'yi %60'ta geçirmesinden esinlenmiştir; hiçbir gerçek öğrenci verisiyle ayarlanmadı. Rasch
+simülasyonunda (`templates.test.ts`; gerçek veri değil) beyan seviyesinin tam merkezindeki
+öğrenci A2 ve üstü beyanlarda yaklaşık %25, A1'de yaklaşık %50 FAIL olur; bir seviye aşağıdaki öğrenci hep FAIL,
+bir seviye yukarıdaki öğrenci nadiren FAIL olur. Gerçek verilerle ayarlanmadan sabit sayılmamalıdır.
+
+Eski sonuçlar: dondurulmuş (FINAL) sonuçların `finalOutcome` ve `finalSkills` alanlarına dokunulmaz. FINAL
+olmayanlar `pnpm exam:recompute-verification --confirm-db=<host:port/db> [--dry-run]` ile yeniden hesaplanır
+(öncesi/sonrası çıktı, finalize etmez).
+
 ## AI puanlama
 
 `grading.ts` (istem, şema, kontroller), `grade-answer.ts` (cevaptan öneriye giden yol; iş de kalibrasyon de bunu

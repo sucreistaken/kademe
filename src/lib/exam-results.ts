@@ -464,7 +464,12 @@ async function truncatedSpeakingTasks(runIds: string[]): Promise<Set<string>> {
   return out;
 }
 
-export async function recomputeResult(attemptId: string) {
+/**
+ * Recomputes the stored result of an attempt from its rows. `dryRun` computes without writing
+ * (the recompute script's preview); `finalize: false` leaves an auto-finalizable result open.
+ * Returns the computed result and its status, or undefined when there is nothing to compute.
+ */
+export async function recomputeResult(attemptId: string, options: { dryRun?: boolean; finalize?: boolean } = {}) {
   const [row] = await db
     .select({ attempt: attempts, exam: examAssessments })
     .from(attempts)
@@ -472,7 +477,10 @@ export async function recomputeResult(attemptId: string) {
     .where(eq(attempts.id, attemptId));
   if (!row) return;
   // A course test is scored by raw points and fixed cut scores, not by the ability estimate.
-  if (row.exam.mode === "COURSE_TEST") return recomputeCourseResult(row);
+  if (row.exam.mode === "COURSE_TEST") {
+    if (options.dryRun) return;
+    return void (await recomputeCourseResult(row));
+  }
   const cfg = row.exam.blueprintSnapshot;
   const runs = await db.select().from(sectionRuns).where(eq(sectionRuns.attemptId, attemptId));
   const runIds = runs.map((r) => r.id);
@@ -567,6 +575,7 @@ export async function recomputeResult(attemptId: string) {
   else if (anyPending) status = "AWAITING_GRADING";
   else status = "AWAITING_REVIEW";
 
+  if (options.dryRun) return { computed, status };
   const values = { attemptId, status, computed, updatedAt: new Date() };
   await db
     .insert(examResults)
@@ -578,9 +587,10 @@ export async function recomputeResult(attemptId: string) {
   // or imprecise one stays AWAITING_REVIEW: a teacher decides.
   const hasProductive = enabledSections(cfg).some((s) => !isObjectiveSection(s.section));
   const clean = evidenceComplete && !row.attempt.terminatedAt && row.attempt.integrityOutcome !== "INVALID";
-  if (autoFinalizes({ status, hasProductive, anyUndecided, clean, computed })) {
+  if (options.finalize !== false && autoFinalizes({ status, hasProductive, anyUndecided, clean, computed })) {
     await finalizeResult(attemptId, null, null);
   }
+  return { computed, status };
 }
 
 /**

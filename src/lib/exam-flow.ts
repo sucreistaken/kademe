@@ -31,6 +31,7 @@ import {
 } from "@/lib/exam/blueprint";
 import { candidateExamName } from "@/lib/exam/candidate-exam-name";
 import { levelFromTheta } from "@/lib/exam/cefr";
+import { studentVerificationSkills, verificationSkillStates } from "@/lib/exam/verification-view";
 import { COURSE_TESTS, courseSections } from "@/lib/exam/course/catalog";
 import { singleInviteForm } from "@/lib/exam/course/forms";
 import { coursePlanOf, type CoursePlanRow } from "@/lib/exam/course/plan";
@@ -196,6 +197,11 @@ export type StudentResult = {
   overall?: ResultLevel | null;
   skills?: Array<{ section: Section; level: ResultLevel | null }>;
   outcome?: "PASS" | "FAIL" | "INCONCLUSIVE" | null;
+  /**
+   * A level verification (spec 2026-11-24): the student sees whether each skill reached the claim, never a
+   * letter or a point, and `overall` / `skills` stay empty. A skill that waits for a teacher is left out.
+   */
+  verification?: { skills: Array<{ section: Section; reached: boolean }> };
   /** True when a teacher still has to decide: writing or speaking, or an uncertain objective result. */
   awaitingTeacher: boolean;
   /** Why: "PRODUCTIVE" (writing or speaking) or "REVIEW" (an uncertain result only); null when not waiting. */
@@ -462,9 +468,14 @@ async function finishedState(
     student.course = studentCourseResult(result.computed?.course, result.finalOutcome) ?? undefined;
   }
   if (released && result?.status === "FINAL" && levelShown) {
-    student.overall = result?.finalOverall ?? null;
     student.outcome = result?.finalOutcome ?? null;
-    if (cfg.resultVisibility === "FULL") {
+    if (ctx.assessment.mode === "LEVEL_VERIFICATION" && ctx.assessment.claimedLevel) {
+      const states = verificationSkillStates({ claimed: ctx.assessment.claimedLevel, computed: result?.computed, finalSkills: result?.finalSkills, outcome: result?.finalOutcome });
+      student.verification = { skills: cfg.resultVisibility === "FULL" ? studentVerificationSkills(states, result?.finalOutcome) : [] };
+    } else {
+      student.overall = result?.finalOverall ?? null;
+    }
+    if (cfg.resultVisibility === "FULL" && !student.verification) {
       student.skills = Object.entries(result?.finalSkills ?? {}).map(([section, s]) => ({
         section: section as Section,
         level: s.level as ResultLevel,

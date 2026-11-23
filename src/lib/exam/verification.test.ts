@@ -185,6 +185,15 @@ describe("claim verdict", () => {
     expect(down.outcome).toBe("FAIL");
   });
 
+  it("a teacher's overall level decides the claim: at or above passes, below fails", () => {
+    const sections = [obj("READING", bands([5, 5], [5, 5])), prod("SPEAKING", [task("A1", true), task("A2")])];
+    expect(verify("A2", sections).outcome).toBe("INCONCLUSIVE");
+    const up = verify("A2", sections, { overrides: { overall: "A2" } });
+    expect(up.outcome).toBe("PASS");
+    expect(up.reasons).toContain("TEACHER_DECISION");
+    expect(verify("A2", sections, { overrides: { overall: "A1" } }).outcome).toBe("FAIL");
+  });
+
   it("waits while a grading is pending", () => {
     const v = verify("A2", [obj("READING", bands([5, 5], [5, 5])), { section: "SPEAKING", kind: "PRODUCTIVE", level: null, decider: null }]);
     expect(v.outcome).toBe("INCONCLUSIVE");

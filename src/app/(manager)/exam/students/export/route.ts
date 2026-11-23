@@ -65,8 +65,11 @@ export async function GET(req: NextRequest) {
     const x = extras.get(r.assessmentId);
     // A course test has no CEFR level: its overall cell reads "Bestanden 52/74" and its recommendation is the next course.
     const c = r.course;
-    const overall = c ? (c.outcome ? `${t(`courseStudents.outcome${c.outcome}`)}${c.points !== null ? ` ${c.points}/${c.max}` : ""}` : "") : level(r.level);
-    const skill = (s: "GRAMMAR" | "READING" | "LISTENING" | "WRITING" | "SPEAKING") => (c ? "" : level(x?.skills[s]));
+    // A level verification shows its verdict and, per skill, reached / not reached / teacher review: no letters (spec 2026-11-24).
+    const verifying = r.mode === "LEVEL_VERIFICATION";
+    const overall = c ? (c.outcome ? `${t(`courseStudents.outcome${c.outcome}`)}${c.points !== null ? ` ${c.points}/${c.max}` : ""}` : "") : verifying ? (r.outcome ? t(`result.outcome${r.outcome}`) : "") : level(r.level);
+    const shown = { REACHED: t("result.skillReached"), NOT_REACHED: t("result.skillNotReached"), REVIEW: t("result.skillReview") } as const;
+    const skill = (s: "GRAMMAR" | "READING" | "LISTENING" | "WRITING" | "SPEAKING") => (c ? "" : verifying ? (x?.verification?.[s] ? shown[x.verification[s]!] : "") : level(x?.skills[s]));
     return [
       r.name,
       r.email,
@@ -81,7 +84,7 @@ export async function GET(req: NextRequest) {
       skill("WRITING"),
       skill("SPEAKING"),
       c ? c.recommendation : x?.recommended,
-      (c ? c.outcome : r.level) ? t(r.levelFinal ? "studentsExport.resultFinal" : "studentsExport.resultDraft") : "",
+      (c ? c.outcome : verifying ? r.outcome : r.level) ? t(r.levelFinal ? "studentsExport.resultFinal" : "studentsExport.resultDraft") : "",
       ...integrityCells({ integrity: r.integrity, brief: briefs.get(r.assessmentId) }, (o) => t(`integrity.outcome${o}`), t("integrityFlags.outcomeNone")),
     ];
   });

@@ -3,6 +3,7 @@ import { adaptiveConfigFor, enabledSections, resolveDistribution, textPlanOf, we
 import { BAND_CENTER, PRE_A1_CUT, levelIndex, resultLevelFromTheta, thetaForLevel } from "./cefr";
 import { chanceTest, type ChanceOptions, type ChanceUnits } from "./chance";
 import { computeResult, isUncertainResult, poolPosteriors, type SectionEvidence } from "./result";
+import { bandsFromUnits } from "./verification";
 import { CEFR_LEVELS, isObjectiveSection, type Cefr, type ExamMode, type ResultLevel, type TextGapKind } from "./types";
 
 /**
@@ -191,6 +192,8 @@ export function simulateFixedForm(config: BlueprintConfig, mode: ExamMode, o: Si
           answered: 0,
           insufficient: false,
           chance: ov.chance ? chanceTest(units, ov.chance) : null,
+          // A verification is decided by raw points on these units (verification.ts), not by the estimate.
+          ...(mode === "LEVEL_VERIFICATION" && claimed ? { bands: bandsFromUnits(units, claimed) } : {}),
         }));
         if (ov.productive === "TRUE") for (const p of productive) evidence.push({ section: p.section, kind: "PRODUCTIVE", level, decider: "TEACHER" });
         const result = computeResult({ mode, claimed, sections: evidence, rules: config.passRules });

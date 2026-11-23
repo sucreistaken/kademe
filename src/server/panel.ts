@@ -134,7 +134,8 @@ export async function listStudents(orgId: string): Promise<StudentRow[]> {
       mode: exam.mode,
       claimed: exam.claimedLevel,
       status,
-      level: course ? null : ((final ? result?.finalOverall : result?.computed?.overall) ?? null),
+      // A level verification shows its verdict, never a letter (spec 2026-11-24).
+      level: course || exam.mode === "LEVEL_VERIFICATION" ? null : ((final ? result?.finalOverall : result?.computed?.overall) ?? null),
       levelFinal: final,
       outcome: course ? null : final ? (result?.finalOutcome ?? null) : (result?.computed?.verification?.outcome ?? null),
       integrity,

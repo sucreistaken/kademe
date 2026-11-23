@@ -48,7 +48,8 @@ function LevelBar({ level }: { level: string | null }) {
 
 export function ReportSheet({ model, t, locale }: { model: ReportModel; t: T; locale: PanelLocale }) {
   const m = model;
-  const anyPreA1 = isPreA1(m.overall) || m.skills.some((s) => isPreA1(s.level));
+  const v = m.verification;
+  const anyPreA1 = !v && (isPreA1(m.overall) || m.skills.some((s) => isPreA1(s.level)));
   return (
     <>
       <style>{PRINT_CSS}</style>
@@ -82,6 +83,13 @@ export function ReportSheet({ model, t, locale }: { model: ReportModel; t: T; lo
           </dl>
         </div>
 
+        {v ? (
+          <div className="mt-8 rounded-[20px] bg-accent-soft px-8 py-7">
+            <div className="text-[12px] font-semibold uppercase tracking-[0.06em] text-accent">{t("resultReport.claimTitle")}</div>
+            <div className="tnum mt-1 text-[15px] font-semibold text-ink-2">{t("resultReport.claimedLevel", { level: v.claimed })}</div>
+            <div className="mt-2 text-[26px] font-bold leading-tight text-accent-deep">{t(`resultReport.claim${v.outcome ?? "INCONCLUSIVE"}`)}</div>
+          </div>
+        ) : (
         <div className="mt-8 flex items-center gap-8 rounded-[20px] bg-accent-soft px-8 py-7">
           <div>
             <div className="text-[12px] font-semibold uppercase tracking-[0.06em] text-accent">{t("resultReport.overall")}</div>
@@ -102,9 +110,21 @@ export function ReportSheet({ model, t, locale }: { model: ReportModel; t: T; lo
             <p className="text-[13.5px] leading-[1.55] text-ink-2">{t(`resultReport.level.${m.overall}`)}</p>
           </div>
         </div>
+        )}
 
         <div className="mt-8">
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.06em] text-muted">{t("resultReport.skills")}</h2>
+          {v ? (
+            <ul className="mt-3 flex flex-col gap-3.5">
+              {v.skills.map((s) => (
+                <li key={s.section} className="flex items-center justify-between gap-4 border-b border-line pb-2.5">
+                  <span className="text-[14px] font-medium">{t(`sectionName.${s.section}`)}</span>
+                  <span className="text-[15px] font-bold">{t(s.shown === "REACHED" ? "resultReport.skillReached" : s.shown === "NOT_REACHED" ? "resultReport.skillNotReached" : "resultReport.skillReview")}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+          <>
           <ul className="mt-3 flex flex-col gap-3.5">
             {m.skills.map((s) => (
               <li key={s.section} className="grid grid-cols-[34mm_1fr_14mm] items-center gap-4">
@@ -127,6 +147,8 @@ export function ReportSheet({ model, t, locale }: { model: ReportModel; t: T; lo
           </div>
           <p className="mt-3 text-[11.5px] text-muted">{t("resultReport.scaleNote")}</p>
           {anyPreA1 ? <p className="mt-1 text-[11.5px] text-muted">{t("resultLevel.A0Note")}</p> : null}
+          </>
+          )}
         </div>
 
         {!m.feedback && m.feedbackOnStudentCopy ? (

@@ -3,7 +3,8 @@ import { approvedFeedback, type FeedbackContent, type StudentFeedbackStore } fro
 import { isResultLevel } from "@/lib/exam/cefr";
 import { recommendedClassOf, type RecommendedClass } from "@/lib/exam/placement";
 import type { PanelLocale } from "@/i18n/locale";
-import type { ResultLevel, Section } from "@/lib/exam/types";
+import type { Cefr, ResultLevel, Section } from "@/lib/exam/types";
+import type { SkillShown } from "@/lib/exam/verification";
 
 /**
  * The printable result report, as data. Pure: the page loads the rows, this
@@ -46,6 +47,8 @@ export type ReportSource = {
   attemptId: string;
   /** The stored feedback row; only its teacher-approved text can reach the model. */
   feedback?: StudentFeedbackStore | null;
+  /** A level verification (spec 2026-11-24): the claim, the verdict and what each skill shows. Set only for that mode. */
+  verification?: { claimed: Cefr; outcome: "PASS" | "FAIL" | "INCONCLUSIVE" | null; skills: Array<{ section: Section; shown: SkillShown }> } | null;
 };
 
 export type ReportSkill = { section: Section; level: ResultLevel | null };
@@ -67,6 +70,8 @@ export type ReportModel = {
   feedback: FeedbackContent | null;
   /** Approved feedback exists but is written in the student's language: the German sheet points to the student copy instead. */
   feedbackOnStudentCopy: boolean;
+  /** A level verification: the sheet shows the verdict and reached / not reached per skill, no level or scale. Null otherwise. */
+  verification: { claimed: Cefr; outcome: "PASS" | "FAIL" | "INCONCLUSIVE" | null; skills: Array<{ section: Section; shown: SkillShown }> } | null;
 };
 
 /** A report is only for a decided result: the teacher finalised it. */
@@ -105,6 +110,7 @@ export function buildReport(src: ReportSource, secret: string): { ok: true; mode
       verificationCode: verificationCode(src.attemptId, secret),
       feedback: approved && german ? approved : null,
       feedbackOnStudentCopy: !!approved && !german,
+      verification: src.mode === "LEVEL_VERIFICATION" ? (src.verification ?? null) : null,
     },
   };
 }

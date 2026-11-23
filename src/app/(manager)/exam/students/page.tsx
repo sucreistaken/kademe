@@ -159,8 +159,14 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
                       <CourseResultCell course={r.course} t={t} />
                     ) : (
                       <>
-                        <Level level={r.level} muted={!r.levelFinal} preA1={t("resultLevel.A0")} />
-                        {r.outcome ? <span className="ml-2 text-[12.5px] text-muted">{t(`result.outcome${r.outcome}`)}</span> : null}
+                        {r.mode === "LEVEL_VERIFICATION" ? (
+                          <span className={r.levelFinal ? "text-[13px] font-medium text-ink" : "text-[13px] text-muted"}>{r.outcome ? t(`result.outcome${r.outcome}`) : "-"}</span>
+                        ) : (
+                          <>
+                            <Level level={r.level} muted={!r.levelFinal} preA1={t("resultLevel.A0")} />
+                            {r.outcome ? <span className="ml-2 text-[12.5px] text-muted">{t(`result.outcome${r.outcome}`)}</span> : null}
+                          </>
+                        )}
                       </>
                     )}
                   </td>

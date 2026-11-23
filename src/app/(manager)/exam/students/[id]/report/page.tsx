@@ -20,6 +20,7 @@ import { loadStudentAnalysis } from "@/server/student-analysis";
 import { managerLocale } from "@/i18n/manager-locale";
 import { managerT } from "@/i18n/manager";
 import { resolveSigningSecret } from "@/lib/signing-secret";
+import { studentVerificationSkills, verificationSkillStates } from "@/lib/exam/verification-view";
 import { loadResultView } from "@/server/panel";
 import { loadAcceptances } from "@/server/result-review";
 import { requireUser } from "@/server/session";
@@ -217,6 +218,14 @@ export default async function ResultReportPage({
       finalizedAt: result?.finalizedAt ?? null,
       attemptId: attempt.id,
       feedback: result?.studentFeedback ?? null,
+      verification:
+        assessment.mode === "LEVEL_VERIFICATION" && assessment.claimedLevel
+          ? {
+              claimed: assessment.claimedLevel,
+              outcome: (result?.finalOutcome as "PASS" | "FAIL" | "INCONCLUSIVE" | null | undefined) ?? null,
+              skills: verificationSkillStates({ claimed: assessment.claimedLevel, computed: result?.computed, finalSkills: result?.finalSkills, outcome: result?.finalOutcome as "PASS" | "FAIL" | "INCONCLUSIVE" | null }).map((s) => ({ section: s.section, shown: s.shown })),
+            }
+          : null,
     },
     resolveSigningSecret(process.env),
   );
@@ -231,9 +240,13 @@ export default async function ResultReportPage({
       released: true,
       awaitingTeacher: false,
       levelShown,
-      overall: built.model.overall,
+      // A level verification: reached / not reached per skill, no letters (spec 2026-11-24).
+      overall: built.model.verification ? undefined : built.model.overall,
       outcome: levelShown ? (result?.finalOutcome ?? null) : undefined,
-      skills: cfg.resultVisibility === "FULL" ? built.model.skills : undefined,
+      skills: cfg.resultVisibility === "FULL" && !built.model.verification ? built.model.skills : undefined,
+      verification: built.model.verification
+        ? { skills: cfg.resultVisibility === "FULL" ? studentVerificationSkills(verificationSkillStates({ claimed: built.model.verification.claimed, computed: result?.computed, finalSkills: result?.finalSkills, outcome: built.model.verification.outcome }), built.model.verification.outcome) : [] }
+        : undefined,
       analysis: analysis ?? undefined,
       feedback: studentFacingFeedback(result?.studentFeedback),
     };

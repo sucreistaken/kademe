@@ -266,36 +266,8 @@ export function BlueprintEditor({
             {mode === "LEVEL_VERIFICATION" ? (
               <div className="rounded-[10px] border border-vault-line p-3">
                 <div className="text-[13px] font-semibold">{t("passRules")}</div>
-                <label className="mt-2 flex items-center gap-2 text-[12.5px]">
-                  <input type="checkbox" checked={cfg.passRules.overallAtLeastClaimed} disabled={readOnly} onChange={(e) => setCfg({ ...cfg, passRules: { ...cfg.passRules, overallAtLeastClaimed: e.target.checked } })} className="accent-accent" />
-                  {t("overallAtLeastClaimed")}
-                </label>
-                <label className={cn(vlabel, "mt-2")}>
-                  <select
-                    value={cfg.passRules.minSkillOffset ?? "none"}
-                    disabled={readOnly}
-                    onChange={(e) => setCfg({ ...cfg, passRules: { ...cfg.passRules, minSkillOffset: e.target.value === "none" ? null : Number(e.target.value) } })}
-                    className={vfield}
-                  >
-                    <option value="none">{t("noSkillRule")}</option>
-                    <option value={0}>{t("minSkillOffset", { offset: "" })}</option>
-                    <option value={-1}>{t("minSkillOffset", { offset: "-1" })}</option>
-                    <option value={-2}>{t("minSkillOffset", { offset: "-2" })}</option>
-                  </select>
-                </label>
-                <label className={cn(vlabel, "mt-2")}>
-                  {t("minHold")}
-                  <input
-                    type="number"
-                    step={0.05}
-                    min={0}
-                    max={0.99}
-                    value={cfg.passRules.minHoldProbability ?? ""}
-                    disabled={readOnly}
-                    onChange={(e) => setCfg({ ...cfg, passRules: { ...cfg.passRules, minHoldProbability: e.target.value === "" ? null : Math.max(0, Math.min(0.99, Number(e.target.value))) } })}
-                    className={vfield}
-                  />
-                </label>
+                {/* The old fields (overall at the claim, skill floor, holding probability) stay in stored blueprints but no longer decide a verification. */}
+                <p className="mt-2 text-[12.5px] leading-[1.5] text-ink-2">{t("passRulesNote")}</p>
               </div>
             ) : null}
 

@@ -24,6 +24,8 @@ import { can } from "@/lib/authorize";
 import { isObjectiveSection, RESULT_LEVELS, type Section } from "@/lib/exam/types";
 import { isPreA1, levelLabel } from "@/lib/exam/level-label";
 import { FIRST_CLASS, recommendedClassOf } from "@/lib/exam/placement";
+import { hintLevel } from "@/lib/exam/verification";
+import { verificationSkillStates, type VerificationSkillState } from "@/lib/exam/verification-view";
 import { examFeedbackOf } from "@/server/exam-feedback";
 import { listStudents, loadIntegrityView, loadResultView } from "@/server/panel";
 import { listProblemReports } from "@/server/problem-reports";
@@ -81,6 +83,19 @@ export default async function ResultPage({
   const canFinalize = can(user, "result:finalize");
   const overall = final ? result?.finalOverall : (computed?.overall ?? null);
   const outcome = final ? result?.finalOutcome : computed?.verification?.outcome;
+  // A level verification shows reached / not reached per skill and never a letter (spec 2026-11-24).
+  const claimed = assessment.mode === "LEVEL_VERIFICATION" ? assessment.claimedLevel : null;
+  const vStates = claimed ? verificationSkillStates({ claimed, computed, finalSkills: final ? result?.finalSkills : null, outcome }) : null;
+  const vState = (s: string) => vStates?.find((x) => x.section === s) ?? null;
+  const shownLabel = (st: VerificationSkillState | null) => (st ? t(st.shown === "REACHED" ? "result.skillReached" : st.shown === "NOT_REACHED" ? "result.skillNotReached" : "result.skillReview") : "-");
+  const pointsOf = (b: { earned: number; served: number }) => `${Math.round(b.earned * 10) / 10}/${b.served}`;
+  const flagsOf = (st: VerificationSkillState | null) => [
+    ...(st?.verdict === "BORDERLINE" ? [t("result.flagBorderline")] : []),
+    ...(st?.verdict === "SPLIT" ? [t("result.flagSplit")] : []),
+    ...(st?.verdict === "TRUNCATED" ? [t("result.flagTruncated")] : []),
+    ...(st?.bands && st.bands.at.served < 4 ? [t("result.flagFewUnits")] : []),
+  ];
+  const hintTarget = claimed ? hintLevel(claimed) : null;
   // Results stored before the placement detail existed have no `placement`.
   const placement = computed?.placement ?? null;
   // A0 is written "A0 (Pre-A1)" wherever there is room; an A0 placement starts in the first course.
@@ -178,6 +193,7 @@ export default async function ResultPage({
           </p>
         </div>
         <div className="flex items-end gap-8">
+          {claimed ? null : (
           <div>
             <div className="text-[12px] uppercase tracking-[0.04em] text-muted">{t("result.overall")}</div>
             <div className={cn("tnum text-[40px] font-bold leading-none", final ? "text-ink" : "text-ink-3")}>{overall ?? "-"}</div>
@@ -186,6 +202,7 @@ export default async function ResultPage({
               <div className="mt-1 max-w-[260px] text-[12.5px] leading-[1.45] text-ink-2">{t("resultLevel.chanceBelowPooled")}</div>
             ) : null}
           </div>
+          )}
           {assessment.mode === "PLACEMENT" && placement ? (
             <div className="max-w-[300px]">
               {isPreA1(overall) ? (
@@ -227,14 +244,13 @@ export default async function ResultPage({
             </div>
           ) : null}
           {assessment.mode === "LEVEL_VERIFICATION" ? (
-            <div className="max-w-[260px]">
-              <div className={cn("text-[14px] font-semibold", final ? "text-ink" : "text-ink-3")}>
+            <div className="max-w-[300px]">
+              <div className="text-[12px] uppercase tracking-[0.04em] text-muted">{t("result.claimHeading")}</div>
+              <div className={cn("text-[20px] font-bold leading-tight", final ? "text-ink" : "text-ink-3")}>
                 {outcome ? `${final ? "" : `${t("result.preliminary")}: `}${t(`result.outcome${outcome}`)}` : "-"}
               </div>
-              {computed?.verification?.holdProbability != null ? (
-                <div className="tnum text-[12.5px] text-muted">
-                  {t("result.hold", { p: Math.round(computed.verification.holdProbability * 100) })}
-                </div>
+              {computed?.verification?.hint && hintTarget ? (
+                <div className="mt-1 text-[12.5px] font-medium text-ink">{t("result.hintAboveClaim", { level: hintTarget })}</div>
               ) : null}
             </div>
           ) : null}
@@ -308,19 +324,27 @@ export default async function ResultPage({
                 const precision = sd === null ? "" : sd < 0.45 ? t("result.precisionGood") : sd < 0.7 ? t("result.precisionFair") : t("result.precisionLow");
                 const decider = skill?.decider;
                 return (
-                  <Link key={s} href={`/exam/students/${id}?tab=${s}`} className="grid grid-cols-[140px_60px_1fr] items-center gap-4 px-5 py-4 hover:bg-canvas">
+                  <Link key={s} href={`/exam/students/${id}?tab=${s}`} className={cn("grid items-center gap-4 px-5 py-4 hover:bg-canvas", claimed ? "grid-cols-[140px_130px_1fr]" : "grid-cols-[140px_60px_1fr]")}>
                     <span className="text-[14px] font-semibold text-ink">{t(`sectionName.${s as Section}`)}</span>
+                    {claimed ? (
+                      <span className={cn("text-[14px] font-bold", vState(s)?.shown === "REVIEW" || !skill?.verdict ? "text-ink-3" : "text-ink")}>
+                        {skill?.pending ? "-" : shownLabel(vState(s))}
+                      </span>
+                    ) : (
                     <span className={cn("tnum text-[18px] font-bold", decider === "TEACHER" || decider === "ENGINE" ? "text-ink" : "text-ink-3")}>
                       {skill?.level ?? "-"}
                       {isPreA1(skill?.level) ? <span className="block text-[11px] font-semibold leading-tight">{t("resultLevel.A0Name")}</span> : null}
                     </span>
+                    )}
                     <span className="text-[13px] text-muted">
                       {!run?.submittedAt
                         ? t("result.inProgress")
                         : isBankEmptySkip(run)
                           ? t("resultReview.skippedBankEmpty")
                           : isObjectiveSection(s as Section)
-                          ? skill?.reason === "AT_CHANCE"
+                          ? claimed && skill?.bands
+                            ? [t("result.bandPoints", { below: pointsOf(skill.bands.below), at: pointsOf(skill.bands.at), above: pointsOf(skill.bands.above) }), ...flagsOf(vState(s))].join(" · ")
+                            : skill?.reason === "AT_CHANCE"
                             ? skill.chance?.blank
                               ? t("resultLevel.atChanceBlank")
                               : // The tally the rule tested: answered A1-A2 units, not the whole section.
@@ -330,6 +354,8 @@ export default async function ResultPage({
                             : precision
                               ? t("result.basis", { correct: tally.correct, total: tally.total, precision })
                               : t("resultReview.scoreSummary", { right: tally.correct, total: tally.total })
+                          : claimed && flagsOf(vState(s)).length
+                            ? flagsOf(vState(s)).join(" · ")
                           : decider
                             ? t(`source.${decider}`)
                             : // Same word as the checklist: the teacher can grade now, the AI proposal is only a help.
@@ -368,7 +394,7 @@ export default async function ResultPage({
                 run={runFor(tab)}
                 acceptances={acceptances}
                 canGrade={canGrade && !final}
-                level={label(computed?.skills[tab as Section]?.level) ?? null}
+                level={claimed ? null : (label(computed?.skills[tab as Section]?.level) ?? null)}
               />
             )
           ) : null}
@@ -475,19 +501,32 @@ export default async function ResultPage({
                     <span className="text-[13.5px] text-ink-2">{t(`sectionName.${s as Section}`)}</span>
                     <span className="flex items-baseline gap-2">
                       <span className="text-[11.5px] text-muted">{skill?.decider ? t(`source.${override ? "TEACHER" : skill.decider}`) : ""}</span>
-                      <span className="tnum text-[15px] font-bold text-ink">{label(skill?.level) ?? "-"}</span>
+                      {claimed ? (
+                        <span className="text-[13.5px] font-bold text-ink">{skill?.pending ? "-" : shownLabel(vState(s))}</span>
+                      ) : (
+                        <span className="tnum text-[15px] font-bold text-ink">{label(skill?.level) ?? "-"}</span>
+                      )}
                     </span>
                   </li>
                 );
               })}
             </ul>
-            <div className="mt-3 flex items-baseline justify-between border-t border-line pt-3">
-              <span className="text-[13.5px] font-semibold text-ink">{t("result.overall")}</span>
-              <span className="tnum text-[20px] font-bold text-ink">{label(overall) ?? "-"}</span>
-            </div>
-            <p className="mt-1 text-[11.5px] text-muted">
-              {result?.overallOverride ? `${t("source.TEACHER")}: ${result.overallOverrideReason ?? ""}` : t("result.overallRule")}
-            </p>
+            {claimed ? (
+              <div className="mt-3 border-t border-line pt-3">
+                <span className="text-[13.5px] font-semibold text-ink">{outcome ? t(`result.outcome${outcome}`) : "-"}</span>
+                {result?.overallOverride ? <p className="mt-1 text-[11.5px] text-muted">{`${t("source.TEACHER")}: ${result.overallOverrideReason ?? ""}`}</p> : null}
+              </div>
+            ) : (
+              <>
+                <div className="mt-3 flex items-baseline justify-between border-t border-line pt-3">
+                  <span className="text-[13.5px] font-semibold text-ink">{t("result.overall")}</span>
+                  <span className="tnum text-[20px] font-bold text-ink">{label(overall) ?? "-"}</span>
+                </div>
+                <p className="mt-1 text-[11.5px] text-muted">
+                  {result?.overallOverride ? `${t("source.TEACHER")}: ${result.overallOverrideReason ?? ""}` : t("result.overallRule")}
+                </p>
+              </>
+            )}
 
             <div className="mt-5">
               {final ? (
@@ -609,7 +648,8 @@ export default async function ResultPage({
                   </div>
                   {attempt?.completedAt ? (
                     <details className="mt-4" open={sp.error === "reason"}>
-                      <summary className="cursor-pointer text-[12.5px] text-ink underline underline-offset-2">{t("result.overallChange")}</summary>
+                      <summary className="cursor-pointer text-[12.5px] text-ink underline underline-offset-2">{claimed ? t("result.claimDecision") : t("result.overallChange")}</summary>
+                      {claimed ? <p className="mt-2 text-[12.5px] leading-[1.45] text-ink-2">{t("result.claimDecisionNote")}</p> : null}
                       {sp.error === "reason" ? <p className="mt-2 text-[12.5px] font-medium text-danger">{t("result.reasonRequired")}</p> : null}
                       <form action={overrideOverall} className="mt-2 flex flex-col gap-2">
                         <input type="hidden" name="assessmentId" value={id} />

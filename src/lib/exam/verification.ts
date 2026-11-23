@@ -57,11 +57,18 @@ type ScoredResponse = { itemSnapshot: Pick<ItemSnapshot, "type" | "skillTag" | "
  * is "above" evidence like any other item at that level.
  */
 export function verificationBands(responses: ScoredResponse[], claimed: Cefr): VerificationBands {
-  const bands = emptyBands();
-  for (const r of responses) {
+  const units = responses.flatMap((r) => {
     const u = chanceUnitsOf(r.itemSnapshot, r.score ?? 0, r.answer ?? null);
-    if (!u) continue;
-    const b = bands[bandOf(r.itemSnapshot.level, claimed)];
+    return u ? [{ ...u, level: r.itemSnapshot.level }] : [];
+  });
+  return bandsFromUnits(units, claimed);
+}
+
+/** The same sums from answer units that already carry their level (the simulation has them). */
+export function bandsFromUnits(units: Array<{ level: Cefr; units: number; right: number }>, claimed: Cefr): VerificationBands {
+  const bands = emptyBands();
+  for (const u of units) {
+    const b = bands[bandOf(u.level, claimed)];
     b.served += u.units;
     b.earned += Math.min(u.units, Math.max(0, u.right));
   }
