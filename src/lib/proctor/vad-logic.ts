@@ -64,6 +64,9 @@ function percentile(samples: number[], q: number): number | null {
   return xs[lo] + (xs[hi] - xs[lo]) * (pos - lo);
 }
 
+/** The exam's voice window: most of 3.5 s must be speech-like before an event opens (2026-11-24, drinking and coughing warned at 1.5 s). */
+export const VOICE_OPEN_MS = 3500;
+
 export function createVad({
   floorDb,
   marginDb = 12,

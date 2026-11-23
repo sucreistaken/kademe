@@ -1757,7 +1757,7 @@ const speakingItems: SeedItem[] = [
     "Planen mit Optionskarte wie im ÖSD-A2-Sprechen (Teil 2), als Antwort auf den Vorschlag einer Kurskollegin. Prüft Zustimmung oder Gegenvorschlag, Vorschläge (Wollen wir ...? Wie wäre es mit ...?) und Begründungen mit weil. Die Karte nennt die Punkte, nicht die Entscheidung."),
 
   // ---------------------------------------------------------------- Bildaufgaben
-  pictureTask("EASY", SHORT, "scene.a2.birthday-party",
+  pictureTask("EASY", LONG, "scene.a2.birthday-party",
     "Sehen Sie sich das Bild an. Beschreiben Sie, was Sie sehen. Erzählen Sie dann von Ihrem letzten Geburtstag oder von einer anderen Feier.\n\n" +
       "- Wer ist auf dem Bild? Was machen die Leute?\n" +
       "- Wie ist die Stimmung?\n" +

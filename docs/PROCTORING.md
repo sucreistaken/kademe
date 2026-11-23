@@ -22,7 +22,7 @@ oturum, IP) bunu kısmen yakalar. Hiçbir işaret öğrenciyi otomatik başarıs
 | Yüz yok / birden fazla kişi | MediaPipe FaceLandmarker, 2 fps, histerezis; birden fazla kişi ayrıca EfficientDet "person" (2 sn'de bir; zayıf, minik ve iç içe kutular sayılmaz) ve 2 sn'lik pencerede karelerin %60'ı (2026-10-29) | iyi ışıkta iyi; arkası dönük ya da yarım görünen ikinci kişi artık gövdeden sayılır |
 | Bakış | baş açısı + göz blendshape'leri, yazarken aşağı bakış muaf | gürültülü, düşük ağırlık, canlı uyarı yok |
 | Telefon | EfficientDet "cell phone", 3 karede 2 | kamera açısındaysa; kadraj dışı telefon görünmez |
-| Konuşma sesi | bant enerjisi + spektral düzlük, sessizlik kalibrasyonu; 1,5 sn'lik pencerede örneklerin %60'ı (heceler arası boşluk kesmez), taban son 30 sn sürekli yüksek kalırsa yükselir, kalibrasyonun altına inmez (2026-10-29) | orta; konuşma ve dinleme sırasında kapalı; sürekli açık TV/klima bir kez işaretlenir, sonra susar |
+| Konuşma sesi | bant enerjisi + spektral düzlük, sessizlik kalibrasyonu; 3,5 sn'lik pencerede örneklerin %60'ı (heceler arası boşluk kesmez; 2026-11-24'te 1,5 sn'den çıktı, su içmek ve öksürük uyarı veriyordu), sınavdaki ilk ses olayı yalnız kaydedilir, öğrenciye uyarı ikinci olaydan itibaren çıkar, taban son 30 sn sürekli yüksek kalırsa yükselir, kalibrasyonun altına inmez (2026-10-29) | orta; konuşma ve dinleme sırasında kapalı; sürekli açık TV/klima bir kez işaretlenir, sonra susar |
 
 Kanıt: başlangıç (kimlik için göz karşılaştırması) karesi, periyodik kamera (30 sn) ve
 ekran (45 sn) kareleri, her ihlalde anlık kareler, ve 2026-10-14'ten beri **sınavın

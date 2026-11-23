@@ -1,7 +1,7 @@
 "use client";
 
 import { candidateApiBase } from "@/lib/client/api";
-import { calibrateFloor, createVad, type Vad } from "@/lib/proctor/vad-logic";
+import { calibrateFloor, createVad, VOICE_OPEN_MS, type Vad } from "@/lib/proctor/vad-logic";
 import { countPeople, createSignalTracker, type SignalTracker } from "@/lib/proctor/signals";
 import { yawPitchFromMatrix } from "@/lib/proctor/head-pose";
 import { verifyDisplaySurface } from "@/lib/proctor/environment";
@@ -132,6 +132,8 @@ export class ProctorEngine {
   private audioCtx: AudioContext | null = null;
   private analyser: AnalyserNode | null = null;
   private vad: Vad | null = null;
+  /** Voice events seen this sitting. The first one is only recorded: a cough or a sip of water should not warn. */
+  private voiceEvents = 0;
   private voiceSuppressors = new Set<string>();
   private tracker: SignalTracker | null = null;
   private lastKeyAt: number | null = null;
@@ -673,7 +675,8 @@ export class ProctorEngine {
         const edge = this.vad!.push({ t: Date.now(), bandDb, flatness });
         if (edge === "START") {
           this.begin("VOICE_DETECTED");
-          this.showBanner({ kind: "act", reason: "VOICE" }, 6000);
+          this.voiceEvents += 1;
+          if (this.voiceEvents > 1) this.showBanner({ kind: "act", reason: "VOICE" }, 6000);
         } else if (edge === "END") this.end("VOICE_DETECTED");
       }
     }, 100);
@@ -686,7 +689,9 @@ export class ProctorEngine {
     this.lastBand = [];
     await new Promise((r) => setTimeout(r, 3000));
     const floor = calibrateFloor(this.lastBand);
-    if (floor !== null) this.vad = createVad({ floorDb: floor });
+    // Exam rooms need about 3.5 s of speech before a voice event opens: short
+    // sounds (a cough, drinking, a chair) never last that long.
+    if (floor !== null) this.vad = createVad({ floorDb: floor, openMs: VOICE_OPEN_MS });
     this.set({ quietFloor: floor });
     return floor;
   }
