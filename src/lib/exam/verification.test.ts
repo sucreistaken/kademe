@@ -134,8 +134,12 @@ describe("claim verdict", () => {
     ]);
     expect(v.outcome).toBe("INCONCLUSIVE");
     expect(v.reasons).toEqual(["TRUNCATED_TAKE:SPEAKING"]);
-    // The hint needs every skill to pass, which a truncated speaking skill is not yet.
-    expect(v.hint).toBeUndefined();
+    // The hint reads the objective skills only: a speaking take cut by the timer says nothing about B1.
+    expect(v.hint).toBe("ABOVE_CLAIM_POSSIBLE");
+    // Graded take not cut (the real recording was 50.6 s of 60): the tasks split, a teacher decides all the same.
+    const split = verify("A2", [obj("READING", bands([5.67, 6], [5, 5], [3, 4]), 1.2), prod("SPEAKING", [task("A1"), task("A2")])]);
+    expect(split.outcome).toBe("INCONCLUSIVE");
+    expect(split.reasons).toEqual(["SKILL_SPLIT:SPEAKING"]);
   });
 
   it("shows the hint when every skill passes and the claim+1 units were mostly earned", () => {
@@ -168,6 +172,13 @@ describe("claim verdict", () => {
     expect(verify("A2", [...sections, obj("LISTENING", bands([3, 6], [4, 8]))]).outcome).toBe("INCONCLUSIVE");
     const required = computeResult({ mode: "LEVEL_VERIFICATION", claimed: "A2", rules: { ...rules, requiredSkills: ["GRAMMAR"] }, sections }).verification!;
     expect(required.outcome).toBe("INCONCLUSIVE");
+  });
+
+  it("one objective skill below the cut goes to the teacher while the pool holds; far below, at chance or two failing skills fail", () => {
+    const one = [obj("READING", bands([5, 5], [5, 5])), obj("LISTENING", bands([5, 5], [5, 5])), obj("GRAMMAR", bands([2, 5], [2, 5]))];
+    expect(verify("A2", one).outcome).toBe("INCONCLUSIVE");
+    const two = [obj("READING", bands([5, 5], [5, 5])), obj("LISTENING", bands([2, 5], [2, 5])), obj("GRAMMAR", bands([2, 5], [2, 5]))];
+    expect(verify("A2", two).outcome).toBe("FAIL");
   });
 
   it("fails on any failing skill, a required one included, and on a skill at chance", () => {

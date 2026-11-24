@@ -7,6 +7,8 @@ import { placementOf, type Placement } from "./placement";
 import {
   aboveClaimPossible,
   objectiveVerdict,
+  clearlyBelow,
+  poolBands,
   productiveVerdict,
   type SkillVerdict,
   type TaskEvidence,
@@ -228,12 +230,28 @@ function verifyClaim(input: {
       if (r) reasons.push(r);
       if (verdict === "FAIL" && rules.requiredSkills.includes(section)) reasons.push(`REQUIRED_SKILL_BELOW:${section}`);
     }
+    // One objective section is a handful of units (a single hard cloze text moves it by 20%), so the
+    // objective skills decide together: their claim-1 and claim units pooled. A single objective skill
+    // that misses while the pool holds goes to the teacher instead of failing the claim.
+    const objective = new Set(input.sections.filter((e) => e.kind === "OBJECTIVE").map((e) => e.section));
+    const pool = poolBands(allBands);
+    const poolVerdict = allBands.length > 0 ? objectiveVerdict(pool) : null;
+    const isObjective = (sec: Section) => objective.has(sec) && !input.overridden.has(sec);
+    const productiveFail = decided.some(([sec, v]) => !isObjective(sec) && v === "FAIL");
+    const objectiveFails = decided.filter(([sec, v]) => isObjective(sec) && v === "FAIL").length;
+    // A section at chance, or far below the cut, is no measurement noise: it fails the claim on its own.
+    const clearObjectiveFail = input.sections.some(
+      (e) => e.kind === "OBJECTIVE" && isObjective(e.section) && (e.chance?.atChance === true || (e.bands ? clearlyBelow(e.bands) : false)),
+    );
     const notPass = decided.filter(([, v]) => v !== "PASS");
-    const onlyTolerable =
-      notPass.length === 1 && notPass[0][1] === "BORDERLINE" && !rules.requiredSkills.includes(notPass[0][0]);
-    if (decided.some(([, v]) => v === "FAIL")) outcome = "FAIL";
-    else if (notPass.length === 0 || onlyTolerable) outcome = "PASS";
-    if (notPass.length === 0 && aboveClaimPossible(allBands, claimed)) hint = "ABOVE_CLAIM_POSSIBLE";
+    // With the pool passing, a borderline objective skill is tolerated; anything else not passing goes to the teacher.
+    const tolerable = ([sec, v]: [Section, SkillVerdict]) => isObjective(sec) && v === "BORDERLINE" && !rules.requiredSkills.includes(sec);
+    const objectiveHolds = poolVerdict === null || poolVerdict === "PASS";
+    if (productiveFail || clearObjectiveFail || poolVerdict === "FAIL" || objectiveFails >= 2) outcome = "FAIL";
+    else if (objectiveHolds && notPass.length <= 1 && notPass.every(tolerable)) outcome = "PASS";
+    // The hint reads only the objective skills: a speaking take cut by the timer says nothing about claim+1.
+    const objectivePass = decided.filter(([sec]) => objective.has(sec)).every(([, v]) => v === "PASS");
+    if (objectivePass && !productiveFail && aboveClaimPossible(allBands, claimed)) hint = "ABOVE_CLAIM_POSSIBLE";
     // The teacher's own call on the whole claim (an overall level with a reason) wins over every rule above.
     if (input.overallOverride) {
       outcome = compareLevels(input.overallOverride, claimed) >= 0 ? "PASS" : "FAIL";

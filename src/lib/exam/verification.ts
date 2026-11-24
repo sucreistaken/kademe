@@ -25,6 +25,8 @@ export const PASS_POOLED = 0.6;
 export const BORDERLINE_POOLED = 0.5;
 /** The share of the claim units alone that a pass also needs. */
 export const PASS_AT_CLAIM = 0.5;
+/** Below this share of its claim-1 and claim units one objective skill fails the claim by itself (no longer noise). */
+export const CLEAR_FAIL_POOLED = 0.25;
 /** Fewer served claim units than this decide nothing. */
 export const MIN_AT_CLAIM_UNITS = 4;
 /** The teacher hint: share of the pooled claim+1 units earned. */
@@ -87,6 +89,12 @@ export function objectiveVerdict(bands: VerificationBands): ObjectiveVerdict {
   return "BORDERLINE";
 }
 
+/** The skill's claim-1 and claim units are far below the cut (enough of them to say so). */
+export function clearlyBelow(bands: VerificationBands): boolean {
+  const served = bands.below.served + bands.at.served;
+  return bands.at.served >= MIN_AT_CLAIM_UNITS && (bands.below.earned + bands.at.earned) / served < CLEAR_FAIL_POOLED - EPS;
+}
+
 export type TaskEvidence = {
   level: ResultLevel | null;
   decider: "ENGINE" | "AI" | "TEACHER" | null;
@@ -126,6 +134,17 @@ export function productiveVerdict(tasks: TaskEvidence[], claimed: Cefr): Product
 
 /** The level the hint points at, or null for a C2 claim. */
 export const hintLevel = (claimed: Cefr): Cefr | null => (claimed === "C2" ? null : shiftLevel(claimed, 1));
+
+/** Every band of several objective skills added up. */
+export function poolBands(all: VerificationBands[]): VerificationBands {
+  const pool = emptyBands();
+  for (const b of all)
+    for (const k of ["below", "at", "above"] as const) {
+      pool[k].earned += b[k].earned;
+      pool[k].served += b[k].served;
+    }
+  return pool;
+}
 
 /** Pooled claim+1 units of all objective skills. */
 export function pooledAbove(all: VerificationBands[]): BandPoints {

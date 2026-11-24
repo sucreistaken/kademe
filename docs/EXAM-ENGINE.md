@@ -544,11 +544,18 @@ Not verilmemiş görev varsa `AWAITING_GRADING` (eskisi gibi). `medianLevel` de�
 
 **Genel karar (mevcut `PASS / FAIL / INCONCLUSIVE` değerleri, veritabanı enum'u değişmedi):**
 
-- PASS: tüm beceriler PASS, ya da tam bir "zorunlu olmayan" nesnel beceri BORDERLINE ve gerisi PASS.
-- FAIL: herhangi bir beceri FAIL (zorunlu beceri de dahil).
-- INCONCLUSIVE (öğretmen incelemesi): geri kalan her şey (SPLIT, TRUNCATED, iki veya daha fazla BORDERLINE, az
-  birimli beceri, BORDERLINE/SPLIT/TRUNCATED olan zorunlu beceri, bekleyen not). INCONCLUSIVE sonuç kendiliğinden
-  finalize olmaz (`isUncertainResult`), öğrenci "öğretmen karar verecek" görür.
+Tek bir nesnel bölüm birkaç birimden ibarettir (zor bir cloze metni payı %20 oynatır), bu yüzden nesnel beceriler
+birlikte karar verir: tüm nesnel bölümlerin beyan-1 ve beyan birimleri toplanır (havuz) ve aynı eşiklerle
+(%60 / beyan seviyesi %50 / %50 altı FAIL) değerlendirilir.
+
+- FAIL: havuz FAIL; ya da iki veya daha fazla nesnel beceri FAIL; ya da bir nesnel bölüm şans düzeyinde
+  (`AT_CHANCE`) veya %25'in altında (`CLEAR_FAIL_POOLED`); ya da yazma/konuşma FAIL; ya da öğretmenin beyan altı
+  bir beceri düzeyi.
+- PASS: havuz PASS ve en fazla bir "zorunlu olmayan" nesnel beceri BORDERLINE, gerisi PASS.
+- INCONCLUSIVE (öğretmen incelemesi): geri kalan her şey. Havuz geçerken tek bir nesnel becerinin FAIL olması
+  da buraya düşer (gürültü olabilir). SPLIT, TRUNCATED, az birimli beceri, BORDERLINE/SPLIT/TRUNCATED olan zorunlu
+  beceri, bekleyen not da. INCONCLUSIVE sonuç kendiliğinden finalize olmaz (`isUncertainResult`), öğrenci
+  "öğretmen karar verecek" görür.
 - Nedenler: `SKILL_FAIL`, `SKILL_BORDERLINE`, `SKILL_SPLIT`, `TRUNCATED_TAKE`, `FEW_AT_CLAIM_UNITS` (`:BECERI`),
   `REQUIRED_SKILL_BELOW`, `TEACHER_DECISION`.
 - Öğretmen kararı kuralları yener: bir beceri düzeyi (`skillOverrides`) >= beyan ise PASS, altındaysa FAIL; "genel
@@ -556,8 +563,9 @@ Not verilmemiş görev varsa `AWAITING_GRADING` (eskisi gibi). `medianLevel` de�
 - `minSkillOffset`, `minHoldProbability`, `overallAtLeastClaimed` bu modda artık karar vermez (saklı
   taslaklarda durur, şema geriye uyumludur); `requiredSkills` geçerlidir. `holdProbability` hesaplanmaz.
 - Theta hesaplanıp saklanır (yörünge grafiği), harf olarak gösterilmez.
-- Öğretmene ipucu: tüm nesnel becerilerin beyan+1 birimleri birlikte >= %75 kazanılmış (en az 4 sunulan birim) ve
-  tüm beceriler PASS ise `verification.hint = "ABOVE_CLAIM_POSSIBLE"` ("B1 olabilir, daha yüksek seviyeli bir
+- Öğretmene ipucu: tüm nesnel becerilerin beyan+1 birimleri birlikte >= %75 kazanılmış (en az 4 sunulan birim),
+  tüm nesnel beceriler PASS ve yazma/konuşma FAIL değilse (kesilmiş bir konuşma kaydı beyan+1 hakkında bir şey
+  söylemez) `verification.hint = "ABOVE_CLAIM_POSSIBLE"` ("B1 olabilir, daha yüksek seviyeli bir
   sınav düşünün"). C2 beyanında yoktur.
 
 **Gösterim:** doğrulamada hiçbir ekran harf göstermez. Öğrenci: beceri başına "ulaşıldı / ulaşılamadı" (puan ve
@@ -567,9 +575,11 @@ Yerleştirme ve kurs sınavı ekranları harflerini korur.
 
 **Eşikler bir kabuldür (konvansiyon), standart belirleme (standard setting) sonucu değildir.** %60 / %50 / %75
 Goethe'nin A2'yi %60'ta geçirmesinden esinlenmiştir; hiçbir gerçek öğrenci verisiyle ayarlanmadı. Rasch
-simülasyonunda (`templates.test.ts`; gerçek veri değil) beyan seviyesinin tam merkezindeki
-öğrenci A2 ve üstü beyanlarda yaklaşık %25, A1'de yaklaşık %50 FAIL olur; bir seviye aşağıdaki öğrenci hep FAIL,
-bir seviye yukarıdaki öğrenci nadiren FAIL olur. Gerçek verilerle ayarlanmadan sabit sayılmamalıdır.
+simülasyonunda (`templates.test.ts`; gerçek veri değil, 1000 öğrenci), yazma/konuşma beyan seviyesinde iken: beyan
+seviyesinin tam merkezindeki öğrenci A2 ve üstünde yaklaşık %4 FAIL, %36 öğretmen, %60 PASS; A1 beyanında (daha
+kolay seviye yok) %17 FAIL. Bir seviye aşağıdaki öğrencinin nesnel kısmı yaklaşık %5 PASS verir (konuşma ve yazma
+da beyanın altındaysa sonuç FAIL olur). Bölüm başına "herhangi bir FAIL, sınav FAIL" kuralı merkezdeki öğrencinin
+%26'sını düşürüyordu, havuz bu yüzden var. Gerçek verilerle ayarlanmadan sabit sayılmamalıdır.
 
 Eski sonuçlar: dondurulmuş (FINAL) sonuçların `finalOutcome` ve `finalSkills` alanlarına dokunulmaz. FINAL
 olmayanlar `pnpm exam:recompute-verification --confirm-db=<host:port/db> [--dry-run]` ile yeniden hesaplanır

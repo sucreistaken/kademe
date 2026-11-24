@@ -210,10 +210,10 @@ describe("exam templates", () => {
     for (const claimed of CEFR_LEVELS) {
       const overall = { ...opts, claimed, overall: { productive: "TRUE" as const, chance: {} } };
       const at = simulateFixedForm(config, "LEVEL_VERIFICATION", { ...overall, trueLevels: [claimed], fixedTheta: BAND_CENTER[claimed] })[claimed];
-      // The raw-points rule (verification.ts, 60% pooled) is a convention: a student exactly at the centre of the claimed
-      // level lands on its edge. Simulated: about a quarter fail from A2 up and half at A1 (no easier level to pool);
-      // the rest pass or go to a teacher. One level above the claim almost never fails, one level below always does.
-      expect(at.fail, `${claimed} centre fails`).toBeLessThanOrEqual(0.55);
+      // The raw-points rule (verification.ts, 60% on the objective skills pooled) is a convention. A student at the
+      // centre of the claimed level rarely fails (about 4% from A2 up; about 17% at A1, which has no easier level to
+      // pool); the uncertain ones go to a teacher. One level above almost never fails, one level below always does.
+      expect(at.fail, `${claimed} centre fails`).toBeLessThanOrEqual(claimed === "A1" ? 0.25 : 0.08);
       if (claimed !== "C2") {
         const above = CEFR_LEVELS[CEFR_LEVELS.indexOf(claimed) + 1];
         expect(simulateFixedForm(config, "LEVEL_VERIFICATION", { ...overall, trueLevels: [above], fixedTheta: BAND_CENTER[above] })[above].fail, `${claimed} one level above`).toBeLessThanOrEqual(0.1);
